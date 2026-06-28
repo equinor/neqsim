@@ -10,8 +10,8 @@ import neqsim.process.mechanicaldesign.mixer.MixerMechanicalDesign;
  * Cost estimation class for mixers.
  *
  * <p>
- * This class provides mixer-specific cost estimation methods for static mixers, inline mixers, and
- * mixing tees used in process applications.
+ * This class provides mixer-specific cost estimation methods for static mixers, inline mixers, and mixing tees used in
+ * process applications.
  * </p>
  *
  * <p>

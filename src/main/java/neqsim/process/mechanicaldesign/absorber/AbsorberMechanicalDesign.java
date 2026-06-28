@@ -45,11 +45,10 @@ public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
     super.readDesignSpecifications();
 
     if (getDesignStandard().containsKey("pressure vessel design code")) {
-      System.out.println("pressure vessel code standard: "
-          + getDesignStandard().get("pressure vessel design code").getStandardName());
-      wallThickness =
-          ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
-              .calcWallThickness();
+      System.out.println(
+          "pressure vessel code standard: " + getDesignStandard().get("pressure vessel design code").getStandardName());
+      wallThickness = ((PressureVesselDesignStandard) getDesignStandard().get("pressure vessel design code"))
+          .calcWallThickness();
     } else {
       System.out.println("no pressure vessel code standard specified......");
       return;
@@ -65,14 +64,12 @@ public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
     }
 
     if (getDesignStandard().containsKey("separator process design")) {
-      System.out.println("separator process design: "
-          + getDesignStandard().get("separator process design").getStandardName());
-      gasLoadFactor =
-          ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-              .getGasLoadFactor();
-      volumeSafetyFactor =
-          ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
-              .getVolumetricDesignFactor();
+      System.out.println(
+          "separator process design: " + getDesignStandard().get("separator process design").getStandardName());
+      gasLoadFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
+          .getGasLoadFactor();
+      volumeSafetyFactor = ((SeparatorDesignStandard) getDesignStandard().get("separator process design"))
+          .getVolumetricDesignFactor();
     } else {
       System.out.println("no separator process design specified......");
     }
@@ -100,8 +97,8 @@ public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
     double materialsCost = 0.0;
     // double sepLength = 0.0;
 
-    double gasDensity = ((Separator) getProcessEquipment()).getGasOutStream().getThermoSystem()
-        .getPhase(0).getPhysicalProperties().getDensity();
+    double gasDensity = ((Separator) getProcessEquipment()).getGasOutStream().getThermoSystem().getPhase(0)
+        .getPhysicalProperties().getDensity();
     double liqDensity = 1000.0; // ((SimpleTEGAbsorber)
     // getProcessEquipment()).getLiquidOutStream().getThermoSystem().getPhase(1).getPhysicalProperties().getDensity();
 
@@ -109,8 +106,8 @@ public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
     // getProcessEquipment()).getThermoSystem().getPhase(0).getVolume() / 1e5;
 
     double maxGasVelocity = gasLoadFactor * Math.sqrt((liqDensity - gasDensity) / gasDensity);
-    innerDiameter = Math.sqrt(4.0 * getMaxDesignVolumeFlow()
-        / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
+    innerDiameter = Math.sqrt(
+        4.0 * getMaxDesignVolumeFlow() / (neqsim.thermo.ThermodynamicConstantsInterface.pi * maxGasVelocity * Fg));
     tantanLength = innerDiameter * 5.0;
     System.out.println("inner Diameter " + innerDiameter);
 
@@ -141,8 +138,8 @@ public class AbsorberMechanicalDesign extends SeparatorMechanicalDesign {
     System.out.println("wall thickness: " + separator.getName() + " " + getWallThickness() + " mm");
     System.out.println("separator dry weigth: " + emptyVesselWeight + " kg");
     System.out.println("total skid weigth: " + totalSkidWeight + " kg");
-    System.out.println("foot print: width:" + moduleWidth + " length " + moduleLength + " height "
-        + moduleHeight + " meter.");
+    System.out.println(
+        "foot print: width:" + moduleWidth + " length " + moduleLength + " height " + moduleHeight + " meter.");
     System.out.println("mechanical price: " + materialsCost + " kNOK");
 
     setWeigthVesselShell(emptyVesselWeight);

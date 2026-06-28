@@ -8,10 +8,9 @@ import neqsim.process.mechanicaldesign.reactor.ReactorMechanicalDesign;
  * Screening-level purchased equipment cost estimator for reactor vessels.
  *
  * <p>
- * The estimate combines a vertical pressure-vessel cost with catalyst, bed internals, distributors,
- * and nozzles. It is intended for early reservoir-to-market and topside process screening where the
- * reactor duty is represented by a NeqSim reactor unit and {@link ReactorMechanicalDesign} has
- * produced vessel and catalyst dimensions.
+ * The estimate combines a vertical pressure-vessel cost with catalyst, bed internals, distributors, and nozzles. It is
+ * intended for early reservoir-to-market and topside process screening where the reactor duty is represented by a
+ * NeqSim reactor unit and {@link ReactorMechanicalDesign} has produced vessel and catalyst dimensions.
  * </p>
  *
  * @author esol
@@ -70,8 +69,7 @@ public class ReactorCostEstimate extends UnitCostEstimateBaseClass {
     ReactorMechanicalDesign reactorDesign = (ReactorMechanicalDesign) mechanicalEquipment;
     double volume = 0.0;
     if (reactorDesign.getVesselDiameter() > 0.0 && reactorDesign.getVesselLength() > 0.0) {
-      volume = Math.PI * Math.pow(reactorDesign.getVesselDiameter() / 2.0, 2.0)
-          * reactorDesign.getVesselLength();
+      volume = Math.PI * Math.pow(reactorDesign.getVesselDiameter() / 2.0, 2.0) * reactorDesign.getVesselLength();
     }
 
     double vesselCost = getCostCalculator().calcVerticalVesselCostByVolume(volume);

@@ -78,12 +78,11 @@ public class EjectorMechanicalDesign extends MechanicalDesign {
    * @param suctionConnectionLength suction connection length in m
    * @param dischargeConnectionLength discharge connection length in m
    */
-  public void updateDesign(double mixingPressure, double motiveNozzleThroatArea,
-      double motiveNozzleExitVelocity, double suctionInletArea, double suctionInletVelocity,
-      double mixingChamberArea, double mixingChamberVelocity, double diffuserOutletArea,
-      double diffuserOutletVelocity, double entrainmentRatio, double motiveNozzleEffectiveLength,
-      double suctionInletLength, double mixingChamberLength, double diffuserOutletLength,
-      double bodyVolume, double connectedPipingVolume, double suctionConnectionLength,
+  public void updateDesign(double mixingPressure, double motiveNozzleThroatArea, double motiveNozzleExitVelocity,
+      double suctionInletArea, double suctionInletVelocity, double mixingChamberArea, double mixingChamberVelocity,
+      double diffuserOutletArea, double diffuserOutletVelocity, double entrainmentRatio,
+      double motiveNozzleEffectiveLength, double suctionInletLength, double mixingChamberLength,
+      double diffuserOutletLength, double bodyVolume, double connectedPipingVolume, double suctionConnectionLength,
       double dischargeConnectionLength) {
     this.mixingPressure = mixingPressure;
     this.motiveNozzleThroatArea = motiveNozzleThroatArea;

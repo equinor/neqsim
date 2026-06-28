@@ -8,10 +8,9 @@ import neqsim.process.mechanicaldesign.filter.FilterMechanicalDesign;
  * Screening-level purchased equipment cost estimator for filter vessels.
  *
  * <p>
- * The estimate combines a horizontal pressure-vessel correlation with cartridge element, nozzle,
- * and instrumentation allowances. It intentionally uses the dimensions and element count produced
- * by {@link FilterMechanicalDesign} so the process-level cost rollup reflects the same mechanical
- * screening basis as the unit design.
+ * The estimate combines a horizontal pressure-vessel correlation with cartridge element, nozzle, and instrumentation
+ * allowances. It intentionally uses the dimensions and element count produced by {@link FilterMechanicalDesign} so the
+ * process-level cost rollup reflects the same mechanical screening basis as the unit design.
  * </p>
  *
  * @author esol
@@ -25,8 +24,7 @@ public class FilterCostEstimate extends UnitCostEstimateBaseClass {
   private double elementCostUSD = 450.0;
 
   /**
-   * Nozzle, skid, instrumentation, and element-retainer allowance as a fraction of vessel and
-   * element cost.
+   * Nozzle, skid, instrumentation, and element-retainer allowance as a fraction of vessel and element cost.
    */
   private double auxiliariesFraction = 0.35;
 
@@ -43,8 +41,7 @@ public class FilterCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Set the typical filter element cost.
    *
-   * @param elementCostUSD element cost in USD per installed element, negative values are clamped to
-   *        zero
+   * @param elementCostUSD element cost in USD per installed element, negative values are clamped to zero
    */
   public void setElementCostUSD(double elementCostUSD) {
     this.elementCostUSD = Math.max(0.0, elementCostUSD);
@@ -53,8 +50,7 @@ public class FilterCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Set the auxiliary-cost fraction for nozzles, skid, retainers, and instrumentation.
    *
-   * @param auxiliariesFraction auxiliary fraction of vessel and element cost, negative values are
-   *        clamped to zero
+   * @param auxiliariesFraction auxiliary fraction of vessel and element cost, negative values are clamped to zero
    */
   public void setAuxiliariesFraction(double auxiliariesFraction) {
     this.auxiliariesFraction = Math.max(0.0, auxiliariesFraction);

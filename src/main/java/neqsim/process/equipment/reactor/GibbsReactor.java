@@ -21,9 +21,9 @@ import neqsim.thermo.system.SystemInterface;
  * Gibbs reactor for chemical equilibrium calculations using Gibbs free energy minimization.
  *
  * <p>
- * This reactor computes chemical equilibrium compositions by minimizing the total Gibbs free energy
- * of the system subject to elemental mass balance constraints. The implementation uses the
- * Newton-Raphson method with Lagrange multipliers to solve the constrained optimization problem.
+ * This reactor computes chemical equilibrium compositions by minimizing the total Gibbs free energy of the system
+ * subject to elemental mass balance constraints. The implementation uses the Newton-Raphson method with Lagrange
+ * multipliers to solve the constrained optimization problem.
  * </p>
  *
  * <h2>Key Features</h2>
@@ -43,9 +43,8 @@ import neqsim.thermo.system.SystemInterface;
  * G = Σ nᵢ(μᵢ⁰ + RT ln(φᵢyᵢP)) - Σ λⱼ(Σ aᵢⱼnᵢ - bⱼ)
  * </pre>
  * <p>
- * where nᵢ are molar amounts, μᵢ⁰ is standard chemical potential, φᵢ is fugacity coefficient, yᵢ is
- * mole fraction, λⱼ are Lagrange multipliers, aᵢⱼ are stoichiometric coefficients, and bⱼ are
- * element totals.
+ * where nᵢ are molar amounts, μᵢ⁰ is standard chemical potential, φᵢ is fugacity coefficient, yᵢ is mole fraction, λⱼ
+ * are Lagrange multipliers, aᵢⱼ are stoichiometric coefficients, and bⱼ are element totals.
  * </p>
  *
  * <h2>Usage Example</h2>
@@ -70,8 +69,7 @@ import neqsim.thermo.system.SystemInterface;
  */
 public class GibbsReactor extends TwoPortEquipment {
   /**
-   * Get the relative mass balance error as a percentage. Computed as
-   * {@code 100 * |massIn - massOut| / massIn}.
+   * Get the relative mass balance error as a percentage. Computed as {@code 100 * |massIn - massOut| / massIn}.
    *
    * @return relative mass balance error in percent (e.g., 0.001 means 0.001%)
    */
@@ -97,8 +95,7 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   // Thread-local reusable system for fugacity calculations to minimize cloning
-  private transient ThreadLocal<neqsim.thermo.system.SystemInterface> tempFugacitySystem =
-      new ThreadLocal<>();
+  private transient ThreadLocal<neqsim.thermo.system.SystemInterface> tempFugacitySystem = new ThreadLocal<>();
 
   /**
    * Ensures tempFugacitySystem is initialized (handles deserialization case).
@@ -147,13 +144,13 @@ public class GibbsReactor extends TwoPortEquipment {
       return getPower();
     }
     switch (unit.trim().toLowerCase()) {
-      case "kw":
-        return -enthalpyOfReactions;
-      case "mw":
-        return -enthalpyOfReactions / 1000.0;
-      case "w":
-      default:
-        return -enthalpyOfReactions * 1000.0;
+    case "kw":
+      return -enthalpyOfReactions;
+    case "mw":
+      return -enthalpyOfReactions / 1000.0;
+    case "w":
+    default:
+      return -enthalpyOfReactions * 1000.0;
     }
   }
 
@@ -173,8 +170,8 @@ public class GibbsReactor extends TwoPortEquipment {
       String compName = componentNames.get(i);
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp == null) {
-        logger.warn("Component '" + compName
-            + "' not found in gibbsReactDatabase. Neglecting from enthalpy calculation.");
+        logger.warn(
+            "Component '" + compName + "' not found in gibbsReactDatabase. Neglecting from enthalpy calculation.");
         continue;
       }
       totalH += n.get(i) * comp.calculateEnthalpy(T, i);
@@ -199,8 +196,8 @@ public class GibbsReactor extends TwoPortEquipment {
       String compName = componentNames.get(i);
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp == null) {
-        logger.warn("Component '" + compName
-            + "' not found in gibbsReactDatabase. Neglecting from Gibbs energy calculation.");
+        logger.warn(
+            "Component '" + compName + "' not found in gibbsReactDatabase. Neglecting from Gibbs energy calculation.");
         continue;
       }
       totalG += n.get(i) * comp.calculateGibbsEnergy(T, i);
@@ -271,8 +268,8 @@ public class GibbsReactor extends TwoPortEquipment {
       String compName = componentNames.get(i);
       GibbsComponent comp = componentMap.get(compName.toLowerCase());
       if (comp == null) {
-        logger.warn("Component '" + compName
-            + "' not found in gibbsReactDatabase. Neglecting from enthalpy calculation.");
+        logger.warn(
+            "Component '" + compName + "' not found in gibbsReactDatabase. Neglecting from enthalpy calculation.");
         continue;
       }
       totalH += n.get(i) * comp.calculateEnthalpy(T, i); // Use 298.15K for standard enthalpy
@@ -333,8 +330,8 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Set the energy mode of the reactor using a string (case-insensitive). Accepts "adiabatic" or
-   * "isothermal" (case-insensitive).
+   * Set the energy mode of the reactor using a string (case-insensitive). Accepts "adiabatic" or "isothermal"
+   * (case-insensitive).
    *
    * @param mode String representing the energy mode
    * @throws java.lang.IllegalArgumentException if the mode is not recognized
@@ -344,14 +341,14 @@ public class GibbsReactor extends TwoPortEquipment {
       throw new IllegalArgumentException("Energy mode string cannot be null");
     }
     switch (mode.trim().toLowerCase()) {
-      case "adiabatic":
-        setEnergyMode(EnergyMode.ADIABATIC);
-        break;
-      case "isothermal":
-        setEnergyMode(EnergyMode.ISOTHERMAL);
-        break;
-      default:
-        throw new IllegalArgumentException("Unknown energy mode: " + mode);
+    case "adiabatic":
+      setEnergyMode(EnergyMode.ADIABATIC);
+      break;
+    case "isothermal":
+      setEnergyMode(EnergyMode.ISOTHERMAL);
+      break;
+    default:
+      throw new IllegalArgumentException("Unknown energy mode: " + mode);
     }
   }
 
@@ -386,7 +383,7 @@ public class GibbsReactor extends TwoPortEquipment {
   // Results from the last calculation
   private double[] lambda = new double[7]; // O, N, C, H, S, Ar, Z
   private Map<String, Double> lagrangeContributions = new HashMap<>();
-  private String[] elementNames = {"O", "N", "C", "H", "S", "Ar", "Z"};
+  private String[] elementNames = { "O", "N", "C", "H", "S", "Ar", "Z" };
   private List<String> processedComponents = new ArrayList<>();
   private Map<String, Double> objectiveFunctionValues = new HashMap<>();
   // Set of inert components (names in lowercase). Inert components are present in the
@@ -464,15 +461,15 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Check whether a component has been automatically excluded from the optimization matrix because
-   * one or more of its constituent elements is not available in the feed.
+   * Check whether a component has been automatically excluded from the optimization matrix because one or more of its
+   * constituent elements is not available in the feed.
    *
    * <p>
-   * A species can only form if every element it contains is present in the feed. When an element
-   * has zero total feed availability, the corresponding element mass-balance constraint row is
-   * degenerate (its "determinator" is zero) and every species requiring that element is frozen at
-   * its feed amount and removed as an optimization variable. This prevents the solver from creating
-   * spurious trace amounts of species (for example sulfuric acid when no sulfur is fed).
+   * A species can only form if every element it contains is present in the feed. When an element has zero total feed
+   * availability, the corresponding element mass-balance constraint row is degenerate (its "determinator" is zero) and
+   * every species requiring that element is frozen at its feed amount and removed as an optimization variable. This
+   * prevents the solver from creating spurious trace amounts of species (for example sulfuric acid when no sulfur is
+   * fed).
    * </p>
    *
    * @param componentName the name of the component to check
@@ -483,14 +480,13 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Determine which components must be excluded from the optimization matrix for the current run
-   * because at least one of their constituent elements is not available in the feed.
+   * Determine which components must be excluded from the optimization matrix for the current run because at least one
+   * of their constituent elements is not available in the feed.
    *
    * <p>
-   * Uses the already-computed inlet element mole balance ({@link #elementMoleBalanceIn}). For each
-   * component, if it has a non-zero coefficient for an element whose total feed availability is at
-   * or below {@link #ELEMENT_ZERO_THRESHOLD}, the component is added to
-   * {@link #feedExcludedComponents}. The result is recomputed on every run.
+   * Uses the already-computed inlet element mole balance ({@link #elementMoleBalanceIn}). For each component, if it has
+   * a non-zero coefficient for an element whose total feed availability is at or below {@link #ELEMENT_ZERO_THRESHOLD},
+   * the component is added to {@link #feedExcludedComponents}. The result is recomputed on every run.
    * </p>
    *
    * @param system the thermodynamic system whose components are checked
@@ -508,8 +504,8 @@ public class GibbsReactor extends TwoPortEquipment {
         if (Math.abs(elements[j]) > ELEMENT_ZERO_THRESHOLD
             && Math.abs(elementMoleBalanceIn[j]) <= ELEMENT_ZERO_THRESHOLD) {
           feedExcludedComponents.add(compName.toLowerCase());
-          logger.debug("Excluding component '" + compName + "' from Gibbs matrix: element '"
-              + elementNames[j] + "' not available in feed.");
+          logger.debug("Excluding component '" + compName + "' from Gibbs matrix: element '" + elementNames[j]
+              + "' not available in feed.");
           break;
         }
       }
@@ -532,9 +528,9 @@ public class GibbsReactor extends TwoPortEquipment {
    * Enable Armijo backtracking line search for guaranteed Gibbs energy decrease.
    *
    * <p>
-   * When enabled, the Newton step is scaled by alpha in (0, 1] such that the Armijo sufficient
-   * decrease condition is satisfied: G(n + alpha * dn) &lt;= G(n) + c1 * alpha * grad^T * dn. This
-   * replaces fixed damping with an adaptive, globally convergent strategy.
+   * When enabled, the Newton step is scaled by alpha in (0, 1] such that the Armijo sufficient decrease condition is
+   * satisfied: G(n + alpha * dn) &lt;= G(n) + c1 * alpha * grad^T * dn. This replaces fixed damping with an adaptive,
+   * globally convergent strategy.
    * </p>
    *
    * <p>
@@ -562,9 +558,9 @@ public class GibbsReactor extends TwoPortEquipment {
    * Enable Tikhonov regularization for ill-conditioned Jacobians.
    *
    * <p>
-   * When the condition number of the Jacobian exceeds {@code regularizationThreshold}, a
-   * regularization term tau * I is added to the Hessian block: H_reg = H + tau * I. This prevents
-   * divergence near phase boundaries where the Hessian becomes singular.
+   * When the condition number of the Jacobian exceeds {@code regularizationThreshold}, a regularization term tau * I is
+   * added to the Hessian block: H_reg = H + tau * I. This prevents divergence near phase boundaries where the Hessian
+   * becomes singular.
    * </p>
    *
    * <p>
@@ -604,15 +600,15 @@ public class GibbsReactor extends TwoPortEquipment {
   private transient List<Double> elementBalanceErrorHistory = new ArrayList<>();
 
   /**
-   * Column scaling factors from the NASA CEA log-mole transformation applied to the Jacobian. Each
-   * entry j stores the factor by which Jacobian column j was multiplied. The Newton step
-   * deltaX_scaled must be divided by these factors to obtain the true deltaX in mole units.
+   * Column scaling factors from the NASA CEA log-mole transformation applied to the Jacobian. Each entry j stores the
+   * factor by which Jacobian column j was multiplied. The Newton step deltaX_scaled must be divided by these factors to
+   * obtain the true deltaX in mole units.
    */
   private transient double[] columnScaleFactors = null;
 
   /**
-   * Maximum relative change per step in moles, following NASA CEA step limiting (Gordon &amp;
-   * McBride, 1994, NASA RP-1311). Prevents overshooting in Newton-Raphson iterations:
+   * Maximum relative change per step in moles, following NASA CEA step limiting (Gordon &amp; McBride, 1994, NASA
+   * RP-1311). Prevents overshooting in Newton-Raphson iterations:
    * {@code max |alpha * deltaX[i]| / n_i &lt; MAX_STEP_LIMIT}.
    */
   private static final double MAX_STEP_LIMIT = Math.log(5.0);
@@ -726,10 +722,10 @@ public class GibbsReactor extends TwoPortEquipment {
      * @param coeffEh coefficient Eh for Gibbs calculations
      * @param coeffGh coefficient Gh for Gibbs calculations
      */
-    public GibbsComponent(String molecule, double[] elements, double[] heatCapacityCoeffs,
-        double deltaHf298, double deltaGf298, double deltaSf298, double coeffAg, double coeffBg,
-        double coeffCg, double coeffDg, double coeffEg, double coeffFg, double coeffAh,
-        double coeffBh, double coeffCh, double coeffDh, double coeffEh, double coeffGh) {
+    public GibbsComponent(String molecule, double[] elements, double[] heatCapacityCoeffs, double deltaHf298,
+        double deltaGf298, double deltaSf298, double coeffAg, double coeffBg, double coeffCg, double coeffDg,
+        double coeffEg, double coeffFg, double coeffAh, double coeffBh, double coeffCh, double coeffDh, double coeffEh,
+        double coeffGh) {
       this.molecule = molecule;
       this.elements = elements.clone();
       this.heatCapacityCoeffs = heatCapacityCoeffs.clone();
@@ -790,13 +786,13 @@ public class GibbsReactor extends TwoPortEquipment {
     public double calculateGibbsEnergy(double temperature, int compNumber) {
       double T = temperature;
       // If any Gibbs coefficients are not NaN, use polynomial formula
-      if (!Double.isNaN(coeffAg) || !Double.isNaN(coeffBg) || !Double.isNaN(coeffCg)
-          || !Double.isNaN(coeffDg) || !Double.isNaN(coeffEg) || !Double.isNaN(coeffFg)) {
+      if (!Double.isNaN(coeffAg) || !Double.isNaN(coeffBg) || !Double.isNaN(coeffCg) || !Double.isNaN(coeffDg)
+          || !Double.isNaN(coeffEg) || !Double.isNaN(coeffFg)) {
         double gibbsPoly = (Double.isNaN(coeffAg) ? 0.0 : coeffAg) * Math.pow(T, 5)
             + (Double.isNaN(coeffBg) ? 0.0 : coeffBg) * Math.pow(T, 4)
             + (Double.isNaN(coeffCg) ? 0.0 : coeffCg) * Math.pow(T, 3)
-            + (Double.isNaN(coeffDg) ? 0.0 : coeffDg) * Math.pow(T, 2)
-            + (Double.isNaN(coeffEg) ? 0.0 : coeffEg) * T + (Double.isNaN(coeffFg) ? 0.0 : coeffFg);
+            + (Double.isNaN(coeffDg) ? 0.0 : coeffDg) * Math.pow(T, 2) + (Double.isNaN(coeffEg) ? 0.0 : coeffEg) * T
+            + (Double.isNaN(coeffFg) ? 0.0 : coeffFg);
         return gibbsPoly;
       }
       // Otherwise, use standard calculation with I and J functions
@@ -817,16 +813,16 @@ public class GibbsReactor extends TwoPortEquipment {
       double dC = correctedCoeffs[2];
       double dD = correctedCoeffs[3];
 
-      double deltaGf_RT = deltaGf_RT_ref + I + (1 / R) * (J / T + (-dA * Math.log(T) - dB / 2.0 * T
-          - dC / 6.0 * Math.pow(T, 2) - dD / 12.0 * Math.pow(T, 3)) / 1000);
+      double deltaGf_RT = deltaGf_RT_ref + I + (1 / R) * (J / T
+          + (-dA * Math.log(T) - dB / 2.0 * T - dC / 6.0 * Math.pow(T, 2) - dD / 12.0 * Math.pow(T, 3)) / 1000);
       double deltaGf = deltaGf_RT * R * T;
 
       return deltaGf;
     }
 
     /**
-     * Calculate corrected heat capacity coefficients dA, dB, dC, dD by subtracting elemental
-     * contributions. dA = A - nO*AO - nN*AN - nC*AC - nH*AH - nS*AS
+     * Calculate corrected heat capacity coefficients dA, dB, dC, dD by subtracting elemental contributions. dA = A -
+     * nO*AO - nN*AN - nC*AC - nH*AH - nS*AS
      *
      * @param compNumber component index
      * @return array of corrected coefficients [dA, dB, dC, dD]
@@ -839,33 +835,32 @@ public class GibbsReactor extends TwoPortEquipment {
       double D = system.getComponent(compNumber).getCpD();
 
       // Element heat capacity coefficients [A, B, C, D]
-      double[] cpO = {12.73, 7.60E-03, -3.58E-06, 6.56E-10};
-      double[] cpN = {14.4415, -7.85E-04, 4.04E-06, -1.44E-09};
-      double[] cpC = {8.43, 0.00E+00, 0.00E+00, 0.00E+00};
-      double[] cpH = {14.544, -9.60E-04, 2.00E-06, -4.35E-10};
-      double[] cpS = {17.815, 0.001, 0.000, 0.000};
+      double[] cpO = { 12.73, 7.60E-03, -3.58E-06, 6.56E-10 };
+      double[] cpN = { 14.4415, -7.85E-04, 4.04E-06, -1.44E-09 };
+      double[] cpC = { 8.43, 0.00E+00, 0.00E+00, 0.00E+00 };
+      double[] cpH = { 14.544, -9.60E-04, 2.00E-06, -4.35E-10 };
+      double[] cpS = { 17.815, 0.001, 0.000, 0.000 };
 
       // Calculate dA, dB, dC, dD by subtracting elemental contributions
       // dA = A - nO*AO - nN*AN - nC*AC - nH*AH - nS*AS
-      double dA = A - (elements[0] * cpO[0]) - (elements[1] * cpN[0]) - (elements[2] * cpC[0])
-          - (elements[3] * cpH[0]) - (elements[4] * cpS[0]);
+      double dA = A - (elements[0] * cpO[0]) - (elements[1] * cpN[0]) - (elements[2] * cpC[0]) - (elements[3] * cpH[0])
+          - (elements[4] * cpS[0]);
 
-      double dB = B - (elements[0] * cpO[1]) - (elements[1] * cpN[1]) - (elements[2] * cpC[1])
-          - (elements[3] * cpH[1]) - (elements[4] * cpS[1]);
+      double dB = B - (elements[0] * cpO[1]) - (elements[1] * cpN[1]) - (elements[2] * cpC[1]) - (elements[3] * cpH[1])
+          - (elements[4] * cpS[1]);
 
-      double dC = C - (elements[0] * cpO[2]) - (elements[1] * cpN[2]) - (elements[2] * cpC[2])
-          - (elements[3] * cpH[2]) - (elements[4] * cpS[2]);
+      double dC = C - (elements[0] * cpO[2]) - (elements[1] * cpN[2]) - (elements[2] * cpC[2]) - (elements[3] * cpH[2])
+          - (elements[4] * cpS[2]);
 
-      double dD = D - (elements[0] * cpO[3]) - (elements[1] * cpN[3]) - (elements[2] * cpC[3])
-          - (elements[3] * cpH[3]) - (elements[4] * cpS[3]);
+      double dD = D - (elements[0] * cpO[3]) - (elements[1] * cpN[3]) - (elements[2] * cpC[3]) - (elements[3] * cpH[3])
+          - (elements[4] * cpS[3]);
 
-      return new double[] {dA, dB, dC, dD};
+      return new double[] { dA, dB, dC, dD };
     }
 
     /**
-     * Calculate the corrected formation enthalpy term J. J = ΔH°f - ΔA*TR - ΔB/2*TR² - ΔC/3*TR³ -
-     * ΔD/4*TR⁴ where TR is the reference temperature and ΔA, ΔB, ΔC, ΔD are corrected heat capacity
-     * coefficients.
+     * Calculate the corrected formation enthalpy term J. J = ΔH°f - ΔA*TR - ΔB/2*TR² - ΔC/3*TR³ - ΔD/4*TR⁴ where TR is
+     * the reference temperature and ΔA, ΔB, ΔC, ΔD are corrected heat capacity coefficients.
      *
      * @param compNumber component index
      * @return corrected formation enthalpy term J
@@ -879,18 +874,16 @@ public class GibbsReactor extends TwoPortEquipment {
       double dD = correctedCoeffs[3];
 
       // Calculate J = ΔH°f - ΔA*TR - ΔB/2*TR² - ΔC/3*TR³ - ΔD/4*TR⁴
-      double J =
-          deltaHf298 - (dA * REFERENCE_TEMPERATURE - dB / 2.0 * Math.pow(REFERENCE_TEMPERATURE, 2)
-              - dC / 3.0 * Math.pow(REFERENCE_TEMPERATURE, 3)
-              - dD / 4.0 * Math.pow(REFERENCE_TEMPERATURE, 4)) / 1000;
+      double J = deltaHf298 - (dA * REFERENCE_TEMPERATURE - dB / 2.0 * Math.pow(REFERENCE_TEMPERATURE, 2)
+          - dC / 3.0 * Math.pow(REFERENCE_TEMPERATURE, 3) - dD / 4.0 * Math.pow(REFERENCE_TEMPERATURE, 4)) / 1000;
 
       return J;
     }
 
     /**
-     * Calculate the I term for thermodynamic calculations. I = (1/R) × [J/TR + ΔA×ln(TR) + ΔB/2×TR
-     * + ΔC/6×TR² + ΔD/12×TR³] where R is the gas constant, TR is the reference temperature, and J
-     * is the corrected formation enthalpy term.
+     * Calculate the I term for thermodynamic calculations. I = (1/R) × [J/TR + ΔA×ln(TR) + ΔB/2×TR + ΔC/6×TR² +
+     * ΔD/12×TR³] where R is the gas constant, TR is the reference temperature, and J is the corrected formation
+     * enthalpy term.
      *
      * @param compNumber component index
      * @return the I term
@@ -910,9 +903,9 @@ public class GibbsReactor extends TwoPortEquipment {
       double J = calculateJ(compNumber);
 
       // Calculate I = (1/R) × [J/TR + ΔA×ln(TR) + ΔB/2×TR + ΔC/6×TR² + ΔD/12×TR³]
-      double I = (1.0 / R) * (-(J / REFERENCE_TEMPERATURE) + (dA * Math.log(REFERENCE_TEMPERATURE)
-          + dB / 2.0 * REFERENCE_TEMPERATURE + dC / 6.0 * Math.pow(REFERENCE_TEMPERATURE, 2)
-          + dD / 12.0 * Math.pow(REFERENCE_TEMPERATURE, 3)) / 1000);
+      double I = (1.0 / R)
+          * (-(J / REFERENCE_TEMPERATURE) + (dA * Math.log(REFERENCE_TEMPERATURE) + dB / 2.0 * REFERENCE_TEMPERATURE
+              + dC / 6.0 * Math.pow(REFERENCE_TEMPERATURE, 2) + dD / 12.0 * Math.pow(REFERENCE_TEMPERATURE, 3)) / 1000);
 
       return I;
     }
@@ -927,14 +920,13 @@ public class GibbsReactor extends TwoPortEquipment {
     public double calculateEnthalpy(double temperature, int compNumber) {
       double T = temperature;
       // If any enthalpy coefficients are not NaN, use polynomial formula
-      if (!Double.isNaN(coeffAh) || !Double.isNaN(coeffBh) || !Double.isNaN(coeffCh)
-          || !Double.isNaN(coeffDh) || !Double.isNaN(coeffEh) || !Double.isNaN(coeffGh)) {
+      if (!Double.isNaN(coeffAh) || !Double.isNaN(coeffBh) || !Double.isNaN(coeffCh) || !Double.isNaN(coeffDh)
+          || !Double.isNaN(coeffEh) || !Double.isNaN(coeffGh)) {
         double enthalpyPoly = (Double.isNaN(coeffAh) ? 0.0 : coeffAh) * Math.pow(T, 5)
             + (Double.isNaN(coeffBh) ? 0.0 : coeffBh) * Math.pow(T, 4)
             + (Double.isNaN(coeffCh) ? 0.0 : coeffCh) * Math.pow(T, 3)
             + (Double.isNaN(coeffDh) ? 0.0 : coeffDh) * Math.pow(T, 2)
-            + (Double.isNaN(coeffEh) ? 0.0 : coeffEh) * Math.pow(T, 1)
-            + (Double.isNaN(coeffGh) ? 0.0 : coeffGh);
+            + (Double.isNaN(coeffEh) ? 0.0 : coeffEh) * Math.pow(T, 1) + (Double.isNaN(coeffGh) ? 0.0 : coeffGh);
         return enthalpyPoly;
       }
       // Otherwise, use standard calculation
@@ -947,10 +939,10 @@ public class GibbsReactor extends TwoPortEquipment {
       double dC = correctedCoeffs[2];
       double dD = correctedCoeffs[3];
 
-      double deltaH = deltaHf298 + (dA * (T - REFERENCE_TEMPERATURE)
-          + dB / 2.0 * (Math.pow(T, 2) - Math.pow(REFERENCE_TEMPERATURE, 2))
-          + dC / 3.0 * (Math.pow(T, 3) - Math.pow(REFERENCE_TEMPERATURE, 3))
-          + dD / 4.0 * (Math.pow(T, 4) - Math.pow(REFERENCE_TEMPERATURE, 4))) / 1000;
+      double deltaH = deltaHf298
+          + (dA * (T - REFERENCE_TEMPERATURE) + dB / 2.0 * (Math.pow(T, 2) - Math.pow(REFERENCE_TEMPERATURE, 2))
+              + dC / 3.0 * (Math.pow(T, 3) - Math.pow(REFERENCE_TEMPERATURE, 3))
+              + dD / 4.0 * (Math.pow(T, 4) - Math.pow(REFERENCE_TEMPERATURE, 4))) / 1000;
 
       return deltaH;
     }
@@ -994,11 +986,9 @@ public class GibbsReactor extends TwoPortEquipment {
   private void loadGibbsDatabase() {
     try {
       // Load main Gibbs database
-      InputStream inputStream =
-          getClass().getResourceAsStream("/data/GibbsReactDatabase/GibbsReactDatabase.csv");
+      InputStream inputStream = getClass().getResourceAsStream("/data/GibbsReactDatabase/GibbsReactDatabase.csv");
       if (inputStream == null) {
-        inputStream = getClass()
-            .getResourceAsStream("/neqsim/data/GibbsReactDatabase/GibbsReactDatabase.csv");
+        inputStream = getClass().getResourceAsStream("/neqsim/data/GibbsReactDatabase/GibbsReactDatabase.csv");
       }
       if (inputStream == null) {
         inputStream = getClass().getResourceAsStream("/neqsim/data/GibbsReactDatabase.csv");
@@ -1064,8 +1054,7 @@ public class GibbsReactor extends TwoPortEquipment {
             double[] heatCapCoeffs = new double[4];
             int heatCapStartIndex = 9; // after 8 elements
             for (int i = 0; i < 4; i++) {
-              heatCapCoeffs[i] =
-                  Double.parseDouble(parts[i + heatCapStartIndex].trim().replace(",", "."));
+              heatCapCoeffs[i] = Double.parseDouble(parts[i + heatCapStartIndex].trim().replace(",", "."));
             }
             int thermoStartIndex = heatCapStartIndex + 4; // 13
             String deltaHf298Str = parts[thermoStartIndex].trim().replace(",", ".");
@@ -1081,19 +1070,13 @@ public class GibbsReactor extends TwoPortEquipment {
               defaultCoeffs[k] = Double.NaN;
             }
             double[] coeffs = extraCoeffMap.getOrDefault(molecule.toLowerCase(), defaultCoeffs);
-            GibbsComponent component = new GibbsComponent(molecule, elements, heatCapCoeffs,
-                deltaHf298, deltaGf298, deltaSf298, coeffs.length > 0 ? coeffs[0] : Double.NaN,
-                coeffs.length > 1 ? coeffs[1] : Double.NaN,
-                coeffs.length > 2 ? coeffs[2] : Double.NaN,
-                coeffs.length > 3 ? coeffs[3] : Double.NaN,
-                coeffs.length > 4 ? coeffs[4] : Double.NaN,
-                coeffs.length > 5 ? coeffs[5] : Double.NaN,
-                coeffs.length > 6 ? coeffs[6] : Double.NaN,
-                coeffs.length > 7 ? coeffs[7] : Double.NaN,
-                coeffs.length > 8 ? coeffs[8] : Double.NaN,
-                coeffs.length > 9 ? coeffs[9] : Double.NaN,
-                coeffs.length > 10 ? coeffs[10] : Double.NaN,
-                coeffs.length > 11 ? coeffs[11] : Double.NaN);
+            GibbsComponent component = new GibbsComponent(molecule, elements, heatCapCoeffs, deltaHf298, deltaGf298,
+                deltaSf298, coeffs.length > 0 ? coeffs[0] : Double.NaN, coeffs.length > 1 ? coeffs[1] : Double.NaN,
+                coeffs.length > 2 ? coeffs[2] : Double.NaN, coeffs.length > 3 ? coeffs[3] : Double.NaN,
+                coeffs.length > 4 ? coeffs[4] : Double.NaN, coeffs.length > 5 ? coeffs[5] : Double.NaN,
+                coeffs.length > 6 ? coeffs[6] : Double.NaN, coeffs.length > 7 ? coeffs[7] : Double.NaN,
+                coeffs.length > 8 ? coeffs[8] : Double.NaN, coeffs.length > 9 ? coeffs[9] : Double.NaN,
+                coeffs.length > 10 ? coeffs[10] : Double.NaN, coeffs.length > 11 ? coeffs[11] : Double.NaN);
             gibbsDatabase.add(component);
             componentMap.put(molecule.toLowerCase(), component);
             componentMap.put(molecule.trim().toLowerCase(), component);
@@ -1201,8 +1184,7 @@ public class GibbsReactor extends TwoPortEquipment {
         try {
           system.addComponent(component.getMolecule(), 1E-6);
         } catch (Exception e) {
-          logger
-              .debug("Could not add component " + component.getMolecule() + ": " + e.getMessage());
+          logger.debug("Could not add component " + component.getMolecule() + ": " + e.getMessage());
         }
       }
     }
@@ -1251,8 +1233,8 @@ public class GibbsReactor extends TwoPortEquipment {
     // Debug logging for element balance
     logger.debug("=== Element Balance (mol/sec) ===");
     for (int i = 0; i < elementNames.length; i++) {
-      logger.debug(String.format("%s: IN=%.6e, OUT=%.6e, DIFF=%.6e", elementNames[i],
-          elementMoleBalanceIn[i], elementMoleBalanceOut[i], elementMoleBalanceDiff[i]));
+      logger.debug(String.format("%s: IN=%.6e, OUT=%.6e, DIFF=%.6e", elementNames[i], elementMoleBalanceIn[i],
+          elementMoleBalanceOut[i], elementMoleBalanceDiff[i]));
     }
 
     // Calculate objective function values
@@ -1315,8 +1297,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * @param elementBalance Array to store the element balance
    * @param isInput true if this is input balance, false if output balance
    */
-  private void calculateElementMoleBalance(SystemInterface system, double[] elementBalance,
-      boolean isInput) {
+  private void calculateElementMoleBalance(SystemInterface system, double[] elementBalance, boolean isInput) {
     // Reset balance
     for (int i = 0; i < elementBalance.length; i++) {
       elementBalance[i] = 0.0;
@@ -1342,9 +1323,8 @@ public class GibbsReactor extends TwoPortEquipment {
         continue;
       }
       double[] elements = comp.getElements();
-      logger.debug("Component " + compName + " elements: O=" + elements[0] + ", N=" + elements[1]
-          + ", C=" + elements[2] + ", H=" + elements[3] + ", S=" + elements[4] + ", Ar="
-          + elements[5] + ", Z=" + elements[6]);
+      logger.debug("Component " + compName + " elements: O=" + elements[0] + ", N=" + elements[1] + ", C=" + elements[2]
+          + ", H=" + elements[3] + ", S=" + elements[4] + ", Ar=" + elements[5] + ", Z=" + elements[6]);
       for (int j = 0; j < elementNames.length; j++) {
         elementBalance[j] += elements[j] * moles;
       }
@@ -1401,8 +1381,8 @@ public class GibbsReactor extends TwoPortEquipment {
 
       // Calculate objective function: F = Gf0 + RT*ln(phi) + RT*ln(yi) + RT*ln(P/Pref) -
       // lagrangeSum
-      double F = Gf0 + RT * Math.log(phi[i]) + RT * Math.log(yi)
-          + RT * Math.log(system.getPressure("bara") / 1.0) - lagrangeSum;
+      double F = Gf0 + RT * Math.log(phi[i]) + RT * Math.log(yi) + RT * Math.log(system.getPressure("bara") / 1.0)
+          - lagrangeSum;
       objectiveFunctionValues.put(compName, F);
     }
   }
@@ -1446,8 +1426,8 @@ public class GibbsReactor extends TwoPortEquipment {
     Map<String, Map<String, Double>> contributions = new HashMap<>();
 
     // Use the components that were actually processed in the last run
-    List<String> componentsToProcess =
-        processedComponents.isEmpty() ? new ArrayList<>(finalMoles.keySet()) : processedComponents;
+    List<String> componentsToProcess = processedComponents.isEmpty() ? new ArrayList<>(finalMoles.keySet())
+        : processedComponents;
 
     for (String compName : componentsToProcess) {
       Map<String, Double> compContributions = new HashMap<>();
@@ -1561,9 +1541,9 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Calculate the objective minimization vector. This vector contains the F values for each
-   * component and the mass balance constraints. The system is in equilibrium when this vector is
-   * zero. Only includes elements that are actually present in the system.
+   * Calculate the objective minimization vector. This vector contains the F values for each component and the mass
+   * balance constraints. The system is in equilibrium when this vector is zero. Only includes elements that are
+   * actually present in the system.
    */
   private void calculateObjectiveMinimizationVector() {
     // Find which elements are actually present in the system
@@ -1602,8 +1582,8 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Build objective vector matching the optimization variables (variableComponents) and active
-   * element balances. This excludes inert components from the variable part but keeps balances.
+   * Build objective vector matching the optimization variables (variableComponents) and active element balances. This
+   * excludes inert components from the variable part but keeps balances.
    *
    * @return the objective vector for optimization variables
    */
@@ -1636,9 +1616,9 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Calculate the Jacobian matrix for the Newton-Raphson method. The Jacobian represents the
-   * derivatives of the objective function with respect to the variables. Only includes elements
-   * that are actually present in the system to avoid singular matrices.
+   * Calculate the Jacobian matrix for the Newton-Raphson method. The Jacobian represents the derivatives of the
+   * objective function with respect to the variables. Only includes elements that are actually present in the system to
+   * avoid singular matrices.
    */
   private void calculateJacobian() {
     // If there are no optimization variables (all components inert or none present), nothing to do
@@ -1688,15 +1668,13 @@ public class GibbsReactor extends TwoPortEquipment {
       // Use outlet_mole for calculations, but with a minimum value to avoid numerical issues
       // Find outlet mole corresponding to this variable component (use processedComponentIndexMap)
       int globalIdx = processedComponentIndexMap.getOrDefault(compI, -1);
-      double ni = (globalIdx >= 0 && globalIdx < outlet_mole.size()) ? outlet_mole.get(globalIdx)
-          : MIN_MOLES;
+      double ni = (globalIdx >= 0 && globalIdx < outlet_mole.size()) ? outlet_mole.get(globalIdx) : MIN_MOLES;
       double niForJacobian = Math.max(ni, MIN_JACOBIAN_MOLES); // Use minimum of 1e-6 for Jacobian
       // calculation
       for (int j = 0; j < numComponents; j++) {
         String compJ = variableComponents.get(j);
         int globalJ = processedComponentIndexMap.getOrDefault(compJ, -1);
-        double dfugdn = (globalIdx >= 0 && globalJ >= 0)
-            ? system.getPhase(0).getComponent(globalIdx).getdfugdn(globalJ)
+        double dfugdn = (globalIdx >= 0 && globalJ >= 0) ? system.getPhase(0).getComponent(globalIdx).getdfugdn(globalJ)
             : 0.0;
         if (i == j) {
           // Diagonal: ∂F_i/∂n_i = RT * (1/n_i - 1/N + ∂ln(φ_i)/∂n_i)
@@ -1838,8 +1816,7 @@ public class GibbsReactor extends TwoPortEquipment {
       }
       return result;
     } catch (RuntimeException e) {
-      logger.warn(
-          "Jacobian matrix inversion failed: " + e.getMessage() + ". Trying pseudo-inverse...");
+      logger.warn("Jacobian matrix inversion failed: " + e.getMessage() + ". Trying pseudo-inverse...");
       // Fallback to pseudo-inverse
       try {
         SimpleMatrix ejmlMatrix = new SimpleMatrix(jacobianMatrix);
@@ -1863,13 +1840,12 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Solve the Newton-Raphson linear system J_scaled * deltaX_scaled = -F using LU decomposition,
-   * then unscale using the column scaling factors from the NASA CEA log-mole transformation.
+   * Solve the Newton-Raphson linear system J_scaled * deltaX_scaled = -F using LU decomposition, then unscale using the
+   * column scaling factors from the NASA CEA log-mole transformation.
    *
    * <p>
-   * The Jacobian was column-scaled: J_scaled[:,j] = J[:,j] * n_j. Solving gives deltaX_scaled, and
-   * the true step is deltaX[j] = deltaX_scaled[j] / n_j. Falls back to pseudo-inverse if LU solve
-   * fails (e.g., singular matrix).
+   * The Jacobian was column-scaled: J_scaled[:,j] = J[:,j] * n_j. Solving gives deltaX_scaled, and the true step is
+   * deltaX[j] = deltaX_scaled[j] / n_j. Falls back to pseudo-inverse if LU solve fails (e.g., singular matrix).
    * </p>
    *
    * @param objectiveVector the right-hand side vector F
@@ -1881,8 +1857,7 @@ public class GibbsReactor extends TwoPortEquipment {
     }
     try {
       SimpleMatrix jMatrix = new SimpleMatrix(jacobianMatrix);
-      SimpleMatrix fVector =
-          new SimpleMatrix(objectiveVector.length, 1, true, objectiveVector).scale(-1.0);
+      SimpleMatrix fVector = new SimpleMatrix(objectiveVector.length, 1, true, objectiveVector).scale(-1.0);
 
       // Use EJML's solve() which internally uses LU decomposition — O(n^3/3) vs O(n^3) for
       // explicit inverse. See Nocedal & Wright, Numerical Optimization (2000), Ch. 3.
@@ -1920,10 +1895,9 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Unscale a Newton step vector using the column scaling factors from the log-mole transformation.
-   * The scaled system solves J_s * Δξ = -F where J_s = J * D (D = diag(n_j)). Recovering the
-   * original step: Δn = D * Δξ, so Δn_j = n_j * Δξ_j. Lagrange multiplier entries have scale factor
-   * 1.0 (no change).
+   * Unscale a Newton step vector using the column scaling factors from the log-mole transformation. The scaled system
+   * solves J_s * Δξ = -F where J_s = J * D (D = diag(n_j)). Recovering the original step: Δn = D * Δξ, so Δn_j = n_j *
+   * Δξ_j. Lagrange multiplier entries have scale factor 1.0 (no change).
    *
    * @param deltaX the Newton step vector to unscale in place
    */
@@ -1937,8 +1911,8 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Enforce minimum concentration threshold to prevent numerical issues. If any component has moles
-   * less than MIN_MOLES, it will be set to MIN_MOLES.
+   * Enforce minimum concentration threshold to prevent numerical issues. If any component has moles less than
+   * MIN_MOLES, it will be set to MIN_MOLES.
    *
    * @param system The thermodynamic system to check and modify
    */
@@ -1959,8 +1933,8 @@ public class GibbsReactor extends TwoPortEquipment {
       double currentMoles = system.getComponent(i).getNumberOfMolesInPhase();
 
       if (currentMoles < MIN_MOLES) {
-        logger.info("Component {} has very low concentration ({}), setting to minimum: {}",
-            compName, currentMoles, MIN_MOLES);
+        logger.info("Component {} has very low concentration ({}), setting to minimum: {}", compName, currentMoles,
+            MIN_MOLES);
         system.addComponent(i, MIN_MOLES - currentMoles, 0);
         modified = true;
       }
@@ -2018,8 +1992,8 @@ public class GibbsReactor extends TwoPortEquipment {
     for (GibbsComponent comp : gibbsDatabase) {
       String molecule = comp.getMolecule();
       double[] elements = comp.getElements();
-      logger.debug(" {}: O={}, N={}, C={}, H={}, S={}, Ar={}", molecule, elements[0], elements[1],
-          elements[2], elements[3], elements[4], elements[5]);
+      logger.debug(" {}: O={}, N={}, C={}, H={}, S={}, Ar={}", molecule, elements[0], elements[1], elements[2],
+          elements[3], elements[4], elements[5]);
     }
 
     logger.debug("Component map keys:");
@@ -2108,8 +2082,8 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Verify that the Jacobian inverse is correct by multiplying J * J^-1. Should return the identity
-   * matrix if the inverse is correct.
+   * Verify that the Jacobian inverse is correct by multiplying J * J^-1. Should return the identity matrix if the
+   * inverse is correct.
    *
    * @return True if the inverse is correct (within tolerance)
    */
@@ -2140,8 +2114,8 @@ public class GibbsReactor extends TwoPortEquipment {
           double value = resultData[i * n + j];
           double expected = (i == j) ? 1.0 : 0.0;
           if (Math.abs(value - expected) > tolerance) {
-            logger.warn("Jacobian inverse verification failed at [" + i + "," + j + "]: "
-                + "expected " + expected + ", got " + value);
+            logger.warn("Jacobian inverse verification failed at [" + i + "," + j + "]: " + "expected " + expected
+                + ", got " + value);
             return false;
           }
         }
@@ -2154,10 +2128,9 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Perform one Newton-Raphson iteration step to calculate the delta vector (dX). Uses LU
-   * decomposition to solve J * dX = -F directly (Nocedal &amp; Wright, 2000), falling back to
-   * J^{-1} * F if LU solve is not available. The LU approach is ~3x faster and more numerically
-   * stable than explicit matrix inversion.
+   * Perform one Newton-Raphson iteration step to calculate the delta vector (dX). Uses LU decomposition to solve J * dX
+   * = -F directly (Nocedal &amp; Wright, 2000), falling back to J^{-1} * F if LU solve is not available. The LU
+   * approach is ~3x faster and more numerically stable than explicit matrix inversion.
    *
    * @return The delta vector (dX) for updating variables, or null if calculation fails
    */
@@ -2187,8 +2160,7 @@ public class GibbsReactor extends TwoPortEquipment {
     if (jacobianInverse != null) {
       try {
         SimpleMatrix jacobianInverseEJML = new SimpleMatrix(jacobianInverse);
-        SimpleMatrix objectiveVectorEJML =
-            new SimpleMatrix(objectiveVector.length, 1, true, objectiveVector);
+        SimpleMatrix objectiveVectorEJML = new SimpleMatrix(objectiveVector.length, 1, true, objectiveVector);
         SimpleMatrix deltaXMatrix = jacobianInverseEJML.mult(objectiveVectorEJML).scale(-1.0);
         int nRows = deltaXMatrix.numRows();
         double[] fallbackResult = new double[nRows];
@@ -2208,8 +2180,8 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Perform a Newton-Raphson iteration update. Updates outlet compositions with damping factor and
-   * Lagrange multipliers directly.
+   * Perform a Newton-Raphson iteration update. Updates outlet compositions with damping factor and Lagrange multipliers
+   * directly.
    *
    * @param deltaX The delta vector from Newton-Raphson iteration
    * @param alphaComposition Damping factor for composition updates (e.g., 0.0001)
@@ -2226,8 +2198,8 @@ public class GibbsReactor extends TwoPortEquipment {
     int numActiveElements = activeElementIndices.size();
 
     if (deltaX.length != numComponents + numActiveElements) {
-      logger.warn("Delta vector size mismatch: expected " + (numComponents + numActiveElements)
-          + ", got " + deltaX.length);
+      logger.warn(
+          "Delta vector size mismatch: expected " + (numComponents + numActiveElements) + ", got " + deltaX.length);
       return false;
     }
 
@@ -2339,8 +2311,8 @@ public class GibbsReactor extends TwoPortEquipment {
       for (int i = 0; i < elementNames.length; i++) {
         // Always show Z element, and others only if significant differences
         if (elementNames[i].equals("Z") || Math.abs(elementMoleBalanceDiff[i]) > 1e-10) {
-          logger.debug(String.format("%s: IN=%.6e, OUT=%.6e, DIFF=%.6e", elementNames[i],
-              elementMoleBalanceIn[i], elementMoleBalanceOut[i], elementMoleBalanceDiff[i]));
+          logger.debug(String.format("%s: IN=%.6e, OUT=%.6e, DIFF=%.6e", elementNames[i], elementMoleBalanceIn[i],
+              elementMoleBalanceOut[i], elementMoleBalanceDiff[i]));
         }
       }
 
@@ -2352,12 +2324,11 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Get the fugacity coefficient array for all components in a specified phase using the current
-   * outlet composition. Uses direct phase composition assignment for efficiency.
+   * Get the fugacity coefficient array for all components in a specified phase using the current outlet composition.
+   * Uses direct phase composition assignment for efficiency.
    *
    * @param phaseNameOrIndex Name or index of the phase (e.g., "gas", "oil", "aqueous", or 0/1/2)
-   * @return Fugacity coefficient (phi) array for all components in the specified phase, or
-   *         Double.NaN if not found
+   * @return Fugacity coefficient (phi) array for all components in the specified phase, or Double.NaN if not found
    */
   public double[] getFugacityCoefficient(Object phaseNameOrIndex) {
     int phaseIndex = 0;
@@ -2438,13 +2409,12 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Enable the mathematically consistent off-diagonal Jacobian formulation. This is now always
-   * enabled (the RT-corrected formulation is the only implementation). This method is retained for
-   * backward compatibility but has no effect.
+   * Enable the mathematically consistent off-diagonal Jacobian formulation. This is now always enabled (the
+   * RT-corrected formulation is the only implementation). This method is retained for backward compatibility but has no
+   * effect.
    *
    * @param useConsistent ignored — consistent formulation is always active
-   * @deprecated The consistent off-diagonal formulation is now always enabled. This setter is a
-   *             no-op.
+   * @deprecated The consistent off-diagonal formulation is now always enabled. This setter is a no-op.
    */
   @Deprecated
   public void setUseConsistentOffDiagonal(boolean useConsistent) {
@@ -2490,10 +2460,9 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Set minimum number of iterations before convergence is checked. Default is 100. The solver will
-   * not declare convergence before completing this many iterations, even if the convergence
-   * criterion is satisfied. Setting this too high wastes iterations; too low may cause premature
-   * termination.
+   * Set minimum number of iterations before convergence is checked. Default is 100. The solver will not declare
+   * convergence before completing this many iterations, even if the convergence criterion is satisfied. Setting this
+   * too high wastes iterations; too low may cause premature termination.
    *
    * @param minIterations Minimum iterations before convergence check (must be at least 1)
    */
@@ -2511,11 +2480,10 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Enable or disable NASA CEA-style adaptive step sizing (Gordon &amp; McBride, 1994, NASA
-   * RP-1311). When enabled, the step size is automatically computed each iteration to limit the
-   * maximum relative change in component moles, allowing larger steps when safe and smaller steps
-   * near steep gradients. When disabled, the fixed {@code dampingComposition} factor is used for
-   * all iterations.
+   * Enable or disable NASA CEA-style adaptive step sizing (Gordon &amp; McBride, 1994, NASA RP-1311). When enabled, the
+   * step size is automatically computed each iteration to limit the maximum relative change in component moles,
+   * allowing larger steps when safe and smaller steps near steep gradients. When disabled, the fixed
+   * {@code dampingComposition} factor is used for all iterations.
    *
    * @param useAdaptive true to enable adaptive step sizing
    */
@@ -2536,9 +2504,8 @@ public class GibbsReactor extends TwoPortEquipment {
    * Enable or disable Armijo backtracking line search.
    *
    * <p>
-   * When enabled, the Newton step is adaptively scaled to guarantee sufficient decrease in the
-   * total Gibbs free energy at each iteration. This provides a globally convergent algorithm
-   * replacing fixed damping.
+   * When enabled, the Newton step is adaptively scaled to guarantee sufficient decrease in the total Gibbs free energy
+   * at each iteration. This provides a globally convergent algorithm replacing fixed damping.
    * </p>
    *
    * @param useArmijo true to enable Armijo line search
@@ -2721,12 +2688,12 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Perform Armijo backtracking line search to find a step size that guarantees sufficient decrease
-   * in the total Gibbs free energy.
+   * Perform Armijo backtracking line search to find a step size that guarantees sufficient decrease in the total Gibbs
+   * free energy.
    *
    * <p>
-   * Starting from alpha = alpha_max, the step is contracted by factor rho until the Armijo
-   * condition is satisfied: G(n + alpha*dn) &lt;= G(n) + c1*alpha*grad^T*dn.
+   * Starting from alpha = alpha_max, the step is contracted by factor rho until the Armijo condition is satisfied: G(n
+   * + alpha*dn) &lt;= G(n) + c1*alpha*grad^T*dn.
    * </p>
    *
    * <p>
@@ -2754,8 +2721,8 @@ public class GibbsReactor extends TwoPortEquipment {
     // If directional derivative is non-negative, Newton direction is not a descent direction;
     // fall back to the max alpha (steepest descent would be needed, but we just use the step)
     if (directionalDerivative >= 0.0) {
-      logger.debug("Armijo: directional derivative non-negative ({}), using alphaMax={}",
-          directionalDerivative, alphaMax);
+      logger.debug("Armijo: directional derivative non-negative ({}), using alphaMax={}", directionalDerivative,
+          alphaMax);
       return alphaMax;
     }
 
@@ -2783,8 +2750,7 @@ public class GibbsReactor extends TwoPortEquipment {
       // Armijo condition: G(trial) <= G(current) + c1 * alpha * grad^T * dn
       double sufficientDecrease = currentG + armijoC1 * alpha * directionalDerivative;
       if (trialG <= sufficientDecrease) {
-        logger.debug("Armijo accepted: alpha={}, G={} -> {}, backtracks={}", alpha, currentG,
-            trialG, k);
+        logger.debug("Armijo accepted: alpha={}, G={} -> {}, backtracks={}", alpha, currentG, trialG, k);
         // Restore moles (the actual update will happen in performIterationUpdate)
         for (int i = 0; i < outlet_mole.size(); i++) {
           outlet_mole.set(i, savedMoles.get(i));
@@ -2809,12 +2775,12 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Apply Tikhonov regularization to the Jacobian matrix if the condition number exceeds the
-   * threshold. Adds tau*I to the Hessian (composition-composition) block of the Jacobian.
+   * Apply Tikhonov regularization to the Jacobian matrix if the condition number exceeds the threshold. Adds tau*I to
+   * the Hessian (composition-composition) block of the Jacobian.
    *
    * <p>
-   * This converts the saddle-point system into a positive-definite system when the Hessian is
-   * nearly singular, ensuring the Newton direction remains well-defined.
+   * This converts the saddle-point system into a positive-definite system when the Hessian is nearly singular, ensuring
+   * the Newton direction remains well-defined.
    * </p>
    *
    * @return the condition number of the (possibly regularized) Jacobian
@@ -2854,11 +2820,10 @@ public class GibbsReactor extends TwoPortEquipment {
   }
 
   /**
-   * Calculate adaptive step size using NASA CEA-style step limiting (Gordon &amp; McBride, 1994).
-   * Limits the maximum relative mole change so that no <em>major</em> component changes by more
-   * than a factor of {@code e^MAX_STEP_LIMIT} (~5x) in a single step. Components with moles below a
-   * significance threshold are excluded from the limiting (they are growing from near-zero and need
-   * large relative steps).
+   * Calculate adaptive step size using NASA CEA-style step limiting (Gordon &amp; McBride, 1994). Limits the maximum
+   * relative mole change so that no <em>major</em> component changes by more than a factor of {@code e^MAX_STEP_LIMIT}
+   * (~5x) in a single step. Components with moles below a significance threshold are excluded from the limiting (they
+   * are growing from near-zero and need large relative steps).
    *
    * @param deltaX The raw Newton step vector
    * @param requestedAlpha The starting step size (typically 1.0)
@@ -2956,8 +2921,7 @@ public class GibbsReactor extends TwoPortEquipment {
       logger.info("Armijo line search enabled: c1={}, rho={}", armijoC1, armijoRho);
     }
     if (useRegularization) {
-      logger.info("Tikhonov regularization enabled: threshold={}, tau={}", regularizationThreshold,
-          regularizationTau);
+      logger.info("Tikhonov regularization enabled: threshold={}, tau={}", regularizationThreshold, regularizationTau);
     }
 
     for (int iteration = 1; iteration <= maxIterations; iteration++) {
@@ -2977,9 +2941,9 @@ public class GibbsReactor extends TwoPortEquipment {
           double gibbs = comp.calculateGibbsEnergy(T, i);
           double enthalpy = comp.calculateEnthalpy(T, i);
           double entropy = comp.calculateEntropy(T, i);
-          logger.debug(String.format(
-              "Component: %s, GibbsEnergy: %.2f kJ/mol, Enthalpy: %.2f kJ/mol, Entropy: %.2f kJ/(mol·K)",
-              compName, gibbs, enthalpy, entropy));
+          logger.debug(
+              String.format("Component: %s, GibbsEnergy: %.2f kJ/mol, Enthalpy: %.2f kJ/mol, Entropy: %.2f kJ/(mol·K)",
+                  compName, gibbs, enthalpy, entropy));
         }
       }
 
@@ -3031,14 +2995,12 @@ public class GibbsReactor extends TwoPortEquipment {
       logger.debug("deltaXNorm (full update vector): {}", deltaXNorm);
 
       if (iteration == 1) {
-        G = calculateMixtureGibbsEnergy(processedComponents, outlet_mole, componentMap,
-            system.getTemperature());
+        G = calculateMixtureGibbsEnergy(processedComponents, outlet_mole, componentMap, system.getTemperature());
         logger.debug("Initial Gibbs energy G = " + G);
         GOLD = G;
       } else {
         GOLD = G;
-        G = calculateMixtureGibbsEnergy(processedComponents, outlet_mole, componentMap,
-            system.getTemperature());
+        G = calculateMixtureGibbsEnergy(processedComponents, outlet_mole, componentMap, system.getTemperature());
         dG = G - GOLD;
         logger.debug("Gibbs energy change dG = " + dG);
       }
@@ -3072,10 +3034,9 @@ public class GibbsReactor extends TwoPortEquipment {
       }
 
       // Check convergence (require minimum iterations for stability)
-      if ((deltaXNorm < convergenceTolerance && iteration >= minIterations)
-          || iteration == maxIterations) {
-        logger.info((deltaXNorm < convergenceTolerance ? "Converged" : "Max iterations reached")
-            + " at iteration " + iteration + " with delta norm = " + deltaXNorm);
+      if ((deltaXNorm < convergenceTolerance && iteration >= minIterations) || iteration == maxIterations) {
+        logger.info((deltaXNorm < convergenceTolerance ? "Converged" : "Max iterations reached") + " at iteration "
+            + iteration + " with delta norm = " + deltaXNorm);
         converged = deltaXNorm < convergenceTolerance;
         finalConvergenceError = deltaXNorm;
         updateSystemWithNewCompositions();
@@ -3111,8 +3072,7 @@ public class GibbsReactor extends TwoPortEquipment {
         // Set final convergence error for diagnostics and throw an exception to signal failure
         logger.warn("Iteration update failed at iteration " + iteration);
         finalConvergenceError = deltaXNorm;
-        throw new RuntimeException(
-            "Iteration update failed at iteration " + iteration + ", deltaXNorm=" + deltaXNorm);
+        throw new RuntimeException("Iteration update failed at iteration " + iteration + ", deltaXNorm=" + deltaXNorm);
       }
 
       // Debug logging for element balance during iterations
@@ -3125,8 +3085,8 @@ public class GibbsReactor extends TwoPortEquipment {
         elementErrorNorm += diff * diff;
         // Always show Z element, and others only if significant differences
         if (elementNames[i].equals("Z") || Math.abs(diff) > 1e-10) {
-          logger.debug(String.format("  %s: IN=%.6e, OUT=%.6e, DIFF=%.6e", elementNames[i],
-              elementMoleBalanceIn[i], elementMoleBalanceOut[i], diff));
+          logger.debug(String.format("  %s: IN=%.6e, OUT=%.6e, DIFF=%.6e", elementNames[i], elementMoleBalanceIn[i],
+              elementMoleBalanceOut[i], diff));
         }
       }
       elementBalanceErrorHistory.add(Math.sqrt(elementErrorNorm));

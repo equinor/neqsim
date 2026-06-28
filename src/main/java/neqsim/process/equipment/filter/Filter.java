@@ -406,8 +406,7 @@ public class Filter extends TwoPortEquipment {
       return;
     }
     double volumetricFlowM3s = Math.max(0.0, inStream.getFlowRate("m3/hr") / 3600.0);
-    holdupResidenceTime =
-        volumetricFlowM3s > 0.0 ? holdupVolume / volumetricFlowM3s : Double.POSITIVE_INFINITY;
+    holdupResidenceTime = volumetricFlowM3s > 0.0 ? holdupVolume / volumetricFlowM3s : Double.POSITIVE_INFINITY;
   }
 
   /**
@@ -483,14 +482,11 @@ public class Filter extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public String toJson(neqsim.process.util.report.ReportConfig cfg) {
-    if (cfg != null && cfg
-        .getDetailLevel(getName()) == neqsim.process.util.report.ReportConfig.DetailLevel.HIDE) {
+    if (cfg != null && cfg.getDetailLevel(getName()) == neqsim.process.util.report.ReportConfig.DetailLevel.HIDE) {
       return null;
     }
-    neqsim.process.util.monitor.FilterResponse res =
-        new neqsim.process.util.monitor.FilterResponse(this);
+    neqsim.process.util.monitor.FilterResponse res = new neqsim.process.util.monitor.FilterResponse(this);
     res.applyConfig(cfg);
-    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(res);
+    return new com.google.gson.GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(res);
   }
 }

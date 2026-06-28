@@ -24,8 +24,8 @@ import neqsim.process.mechanicaldesign.manifold.ManifoldMechanicalDesignCalculat
  * </ul>
  *
  * <p>
- * Design includes wall thickness, velocity limits, branch reinforcement, support design, and
- * vibration analysis per applicable codes.
+ * Design includes wall thickness, velocity limits, branch reinforcement, support design, and vibration analysis per
+ * applicable codes.
  * </p>
  *
  * @author ASMF
@@ -115,8 +115,7 @@ public class ManifoldMechanicalDesign extends MechanicalDesign {
     }
 
     // Load database parameters
-    dataSource.loadIntoCalculator(calculator, getCompanySpecificDesignStandards(),
-        designStandardCode, "Manifold");
+    dataSource.loadIntoCalculator(calculator, getCompanySpecificDesignStandards(), designStandardCode, "Manifold");
   }
 
   /** {@inheritDoc} */
@@ -156,8 +155,7 @@ public class ManifoldMechanicalDesign extends MechanicalDesign {
       JsonObject calcObj = JsonParser.parseString(calculator.toJson()).getAsJsonObject();
       jsonObj.add("designCalculations", calcObj);
 
-      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-          .toJson(jsonObj);
+      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
     } catch (Exception e) {
       return "{\"error\": \"" + e.getMessage() + "\"}";
     }

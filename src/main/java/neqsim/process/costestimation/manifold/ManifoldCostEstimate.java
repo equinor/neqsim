@@ -9,10 +9,9 @@ import neqsim.process.mechanicaldesign.manifold.ManifoldMechanicalDesignCalculat
  * Screening-level purchased equipment cost estimator for process manifolds.
  *
  * <p>
- * The estimate uses the dry weight and topology produced by {@link ManifoldMechanicalDesign}, with
- * allowances for valves, branch hubs, instrumentation, and location-specific fabrication
- * complexity. It covers onshore, topside, and subsea manifolds in the same process cost rollup used
- * for other unit operations.
+ * The estimate uses the dry weight and topology produced by {@link ManifoldMechanicalDesign}, with allowances for
+ * valves, branch hubs, instrumentation, and location-specific fabrication complexity. It covers onshore, topside, and
+ * subsea manifolds in the same process cost rollup used for other unit operations.
  * </p>
  *
  * @author esol
@@ -50,8 +49,7 @@ public class ManifoldCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Set valve, hub, and instrument allowance per branch.
    *
-   * @param branchAllowanceUSD allowance in USD per inlet/outlet branch, negative values are clamped
-   *        to zero
+   * @param branchAllowanceUSD allowance in USD per inlet/outlet branch, negative values are clamped to zero
    */
   public void setBranchAllowanceUSD(double branchAllowanceUSD) {
     this.branchAllowanceUSD = Math.max(0.0, branchAllowanceUSD);
@@ -65,19 +63,15 @@ public class ManifoldCostEstimate extends UnitCostEstimateBaseClass {
     }
 
     ManifoldMechanicalDesign manifoldDesign = (ManifoldMechanicalDesign) mechanicalEquipment;
-    int branchCount =
-        Math.max(manifoldDesign.getNumberOfInlets() + manifoldDesign.getNumberOfOutlets(), 1);
+    int branchCount = Math.max(manifoldDesign.getNumberOfInlets() + manifoldDesign.getNumberOfOutlets(), 1);
     double weight = manifoldDesign.getWeightTotal();
     if (weight <= 0.0) {
       weight = estimateDryWeight(manifoldDesign, branchCount);
     }
 
-    double fabricationCost =
-        weight * baseCostUSDPerKg * locationFactor(manifoldDesign.getLocation())
-            * materialFactor(manifoldDesign.getMaterialGrade())
-            * typeFactor(manifoldDesign.getManifoldType());
-    double branchCost =
-        branchCount * branchAllowanceUSD * pressureFactor(manifoldDesign.getHeaderDiameter());
+    double fabricationCost = weight * baseCostUSDPerKg * locationFactor(manifoldDesign.getLocation())
+        * materialFactor(manifoldDesign.getMaterialGrade()) * typeFactor(manifoldDesign.getManifoldType());
+    double branchCost = branchCount * branchAllowanceUSD * pressureFactor(manifoldDesign.getHeaderDiameter());
     double subseaInstallationAllowance = subseaInstallationAllowance(manifoldDesign);
 
     return fabricationCost + branchCost + subseaInstallationAllowance;
@@ -99,8 +93,7 @@ public class ManifoldCostEstimate extends UnitCostEstimateBaseClass {
     double headerThickness = Math.max(headerDiameter * 0.04, 0.008);
     double branchThickness = Math.max(branchDiameter * 0.04, 0.006);
     double headerWeight = Math.PI * headerDiameter * headerThickness * headerLength * steelDensity;
-    double branchWeight =
-        Math.PI * branchDiameter * branchThickness * branchLength * steelDensity * branchCount;
+    double branchWeight = Math.PI * branchDiameter * branchThickness * branchLength * steelDensity * branchCount;
     return (headerWeight + branchWeight) * 2.2;
   }
 

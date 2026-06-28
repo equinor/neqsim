@@ -15,9 +15,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Mechanical design calculations for centrifugal pumps per API 610.
  *
  * <p>
- * This class provides sizing and design calculations for centrifugal pumps based on API 610
- * (Centrifugal Pumps for Petroleum, Petrochemical and Natural Gas Industries) and Hydraulic
- * Institute standards. Calculations include:
+ * This class provides sizing and design calculations for centrifugal pumps based on API 610 (Centrifugal Pumps for
+ * Petroleum, Petrochemical and Natural Gas Industries) and Hydraulic Institute standards. Calculations include:
  * </p>
  * <ul>
  * <li>Impeller diameter sizing based on head and flow requirements</li>
@@ -288,8 +287,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
 
     // Calculate design conditions with margins
     designPressure = dischargePressure * DESIGN_PRESSURE_MARGIN;
-    designTemperature =
-        Math.max(suctionTemperature, dischargeTemperature) + DESIGN_TEMPERATURE_MARGIN;
+    designTemperature = Math.max(suctionTemperature, dischargeTemperature) + DESIGN_TEMPERATURE_MARGIN;
 
     // Calculate specific speeds
     if (volumeFlowRate > 0 && pumpHead > 0) {
@@ -348,7 +346,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     double estimatedSpeed = targetNs * Math.pow(headM, 0.75) / Math.sqrt(flowM3min);
 
     // Round to standard motor speeds (50 Hz)
-    double[] standardSpeeds = {2950, 1475, 985, 740};
+    double[] standardSpeeds = { 2950, 1475, 985, 740 };
     double closestSpeed = standardSpeeds[0];
     double minDiff = Math.abs(estimatedSpeed - closestSpeed);
 
@@ -505,9 +503,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     casingWallThickness = Math.max(6.0, casingWallThickness);
 
     // Maximum allowable working pressure
-    maxAllowableWorkingPressure =
-        (2.0 * allowableStressMPa * jointEfficiency * (casingWallThickness - 3.0))
-            / (casingDiameterMm + 0.6 * (casingWallThickness - 3.0)) * 10.0; // bara
+    maxAllowableWorkingPressure = (2.0 * allowableStressMPa * jointEfficiency * (casingWallThickness - 3.0))
+        / (casingDiameterMm + 0.6 * (casingWallThickness - 3.0)) * 10.0; // bara
   }
 
   /**
@@ -533,8 +530,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     driverPower = shaftPowerKW * driverMargin;
 
     // Round up to standard motor sizes (IEC frame sizes)
-    double[] standardPowers = {0.75, 1.1, 1.5, 2.2, 3.0, 4.0, 5.5, 7.5, 11.0, 15.0, 18.5, 22.0,
-        30.0, 37.0, 45.0, 55.0, 75.0, 90.0, 110.0, 132.0, 160.0, 200.0, 250.0, 315.0, 400.0};
+    double[] standardPowers = { 0.75, 1.1, 1.5, 2.2, 3.0, 4.0, 5.5, 7.5, 11.0, 15.0, 18.5, 22.0, 30.0, 37.0, 45.0, 55.0,
+        75.0, 90.0, 110.0, 132.0, 160.0, 200.0, 250.0, 315.0, 400.0 };
 
     for (double standardPower : standardPowers) {
       if (standardPower >= driverPower) {
@@ -583,7 +580,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     double dischargeDiameterMm = 2.0 * Math.sqrt(dischargeArea / Math.PI) * 1000.0;
 
     // Convert to standard pipe sizes (inches)
-    double[] standardSizes = {1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0};
+    double[] standardSizes = { 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0 };
 
     for (double size : standardSizes) {
       if (size * 25.4 >= suctionDiameterMm) {
@@ -622,8 +619,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    */
   private void calculateWeights(double flowM3h, double designPressureBara) {
     // Impeller weight
-    double impellerVolume =
-        Math.PI * Math.pow(impellerDiameter / 2000.0, 2) * (impellerWidth / 1000.0) * 0.3;
+    double impellerVolume = Math.PI * Math.pow(impellerDiameter / 2000.0, 2) * (impellerWidth / 1000.0) * 0.3;
     impellerWeight = impellerVolume * STEEL_DENSITY;
 
     // Shaft weight (estimate length based on pump type)
@@ -635,8 +631,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     double casingOD = (impellerDiameter * 1.15 + 2.0 * casingWallThickness) / 1000.0; // m
     double casingID = impellerDiameter * 1.15 / 1000.0; // m
     double casingLength = (impellerWidth + 100.0) / 1000.0 * numberOfStages; // m
-    double casingVolume =
-        Math.PI / 4.0 * (Math.pow(casingOD, 2) - Math.pow(casingID, 2)) * casingLength;
+    double casingVolume = Math.PI / 4.0 * (Math.pow(casingOD, 2) - Math.pow(casingID, 2)) * casingLength;
     casingWeight = casingVolume * STEEL_DENSITY * 2.0; // Factor for volute shape
 
     // Motor weight based on power (empirical correlation)
@@ -660,8 +655,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     couplingWeight = 10.0 + driverPower * 0.1;
 
     // Total weight
-    double emptyWeight = casingWeight + impellerWeight + shaftWeight + motorWeight + baseplateWeight
-        + sealWeight + couplingWeight;
+    double emptyWeight = casingWeight + impellerWeight + shaftWeight + motorWeight + baseplateWeight + sealWeight
+        + couplingWeight;
 
     // Add piping, supports, instrumentation (30% factor)
     weightPiping = emptyWeight * 0.15;
@@ -894,20 +889,20 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] columnNames = {"Parameter", "Value", "Unit"};
-    String[][] data = {{"Pump Type", pumpType.toString(), ""},
-        {"Number of Stages", String.valueOf(numberOfStages), ""},
-        {"Rated Speed", String.format("%.0f", ratedSpeed), "rpm"},
-        {"Specific Speed", String.format("%.1f", specificSpeed), "-"},
-        {"Impeller Diameter", String.format("%.1f", impellerDiameter), "mm"},
-        {"Shaft Diameter", String.format("%.1f", shaftDiameter), "mm"},
-        {"Driver Power", String.format("%.1f", driverPower), "kW"},
-        {"Design Pressure", String.format("%.1f", designPressure), "bara"},
-        {"Design Temperature", String.format("%.1f", designTemperature), "°C"},
-        {"NPSHr", String.format("%.1f", npshRequired), "m"},
-        {"Suction Nozzle", String.format("%.0f", suctionNozzleSize), "inch"},
-        {"Discharge Nozzle", String.format("%.0f", dischargeNozzleSize), "inch"},
-        {"Total Weight", String.format("%.0f", getWeightTotal()), "kg"}};
+    String[] columnNames = { "Parameter", "Value", "Unit" };
+    String[][] data = { { "Pump Type", pumpType.toString(), "" },
+        { "Number of Stages", String.valueOf(numberOfStages), "" },
+        { "Rated Speed", String.format("%.0f", ratedSpeed), "rpm" },
+        { "Specific Speed", String.format("%.1f", specificSpeed), "-" },
+        { "Impeller Diameter", String.format("%.1f", impellerDiameter), "mm" },
+        { "Shaft Diameter", String.format("%.1f", shaftDiameter), "mm" },
+        { "Driver Power", String.format("%.1f", driverPower), "kW" },
+        { "Design Pressure", String.format("%.1f", designPressure), "bara" },
+        { "Design Temperature", String.format("%.1f", designTemperature), "°C" },
+        { "NPSHr", String.format("%.1f", npshRequired), "m" },
+        { "Suction Nozzle", String.format("%.0f", suctionNozzleSize), "inch" },
+        { "Discharge Nozzle", String.format("%.0f", dischargeNozzleSize), "inch" },
+        { "Total Weight", String.format("%.0f", getWeightTotal()), "kg" } };
 
     JTable table = new JTable(data, columnNames);
     JScrollPane scrollPane = new JScrollPane(table);
@@ -921,8 +916,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    * {@inheritDoc}
    *
    * <p>
-   * Returns a pump-specific response with additional fields for hydraulic data, driver sizing, and
-   * NPSH requirements.
+   * Returns a pump-specific response with additional fields for hydraulic data, driver sizing, and NPSH requirements.
    * </p>
    */
   @Override
@@ -1159,8 +1153,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     // Validate NPSH margin
     if (npshRequired > 0 && npshAvailable > 0) {
       if (!validateNpshMargin(npshAvailable, npshRequired)) {
-        result.addIssue("NPSH margin " + String.format("%.2f", npshAvailable / npshRequired)
-            + " below required " + String.format("%.2f", npshMarginFactor));
+        result.addIssue("NPSH margin " + String.format("%.2f", npshAvailable / npshRequired) + " below required "
+            + String.format("%.2f", npshMarginFactor));
       }
     }
 
@@ -1174,14 +1168,13 @@ public class PumpMechanicalDesign extends MechanicalDesign {
 
     // Validate suction specific speed
     if (suctionSpecificSpeed > 0 && !validateSuctionSpecificSpeed(suctionSpecificSpeed)) {
-      result.addIssue("Suction specific speed " + String.format("%.0f", suctionSpecificSpeed)
-          + " exceeds maximum " + String.format("%.0f", maxSuctionSpecificSpeed));
+      result.addIssue("Suction specific speed " + String.format("%.0f", suctionSpecificSpeed) + " exceeds maximum "
+          + String.format("%.0f", maxSuctionSpecificSpeed));
     }
 
     // Validate design margins
     if (driverMargin < 1.05) {
-      result.addIssue(
-          "Driver power margin " + String.format("%.2f", driverMargin) + " below recommended 1.05");
+      result.addIssue("Driver power margin " + String.format("%.2f", driverMargin) + " below recommended 1.05");
     }
 
     result.setValid(result.getIssues().isEmpty());
@@ -1193,12 +1186,9 @@ public class PumpMechanicalDesign extends MechanicalDesign {
    */
   public void loadProcessDesignParameters() {
     try (
-        neqsim.util.database.NeqSimProcessDesignDataBase database =
-            new neqsim.util.database.NeqSimProcessDesignDataBase();
-        java.sql.ResultSet dataSet =
-            database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
-                + "EQUIPMENTTYPE='Pump' AND Company='" + getCompanySpecificDesignStandards()
-                + "'")) {
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
+            + "EQUIPMENTTYPE='Pump' AND Company='" + getCompanySpecificDesignStandards() + "'")) {
 
       while (dataSet.next()) {
         String spec = dataSet.getString("SPECIFICATION");
@@ -1207,30 +1197,30 @@ public class PumpMechanicalDesign extends MechanicalDesign {
         double value = (minVal + maxVal) / 2.0;
 
         switch (spec) {
-          case "NPSHMarginFactor":
-            this.npshMarginFactor = value;
-            break;
-          case "HydraulicPowerMargin":
-            this.hydraulicPowerMargin = value;
-            break;
-          case "PreferredOperatingRegionLow":
-            this.porLowFraction = value;
-            break;
-          case "PreferredOperatingRegionHigh":
-            this.porHighFraction = value;
-            break;
-          case "AllowableOperatingRegionLow":
-            this.aorLowFraction = value;
-            break;
-          case "AllowableOperatingRegionHigh":
-            this.aorHighFraction = value;
-            break;
-          case "SuctionSpecificSpeedMax":
-            this.maxSuctionSpecificSpeed = value;
-            break;
-          default:
-            // Ignore unknown parameters
-            break;
+        case "NPSHMarginFactor":
+          this.npshMarginFactor = value;
+          break;
+        case "HydraulicPowerMargin":
+          this.hydraulicPowerMargin = value;
+          break;
+        case "PreferredOperatingRegionLow":
+          this.porLowFraction = value;
+          break;
+        case "PreferredOperatingRegionHigh":
+          this.porHighFraction = value;
+          break;
+        case "AllowableOperatingRegionLow":
+          this.aorLowFraction = value;
+          break;
+        case "AllowableOperatingRegionHigh":
+          this.aorHighFraction = value;
+          break;
+        case "SuctionSpecificSpeedMax":
+          this.maxSuctionSpecificSpeed = value;
+          break;
+        default:
+          // Ignore unknown parameters
+          break;
         }
       }
     } catch (Exception ex) {

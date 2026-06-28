@@ -19,14 +19,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Regression tests guarding the reservoir-to-market weight and CAPEX coverage of the built-in
- * NeqSim cost estimators.
+ * Regression tests guarding the reservoir-to-market weight and CAPEX coverage of the built-in NeqSim cost estimators.
  *
  * <p>
- * These tests verify that (1) process vessels report a finite, non-zero weight and a sane installed
- * cost per kilogram (guarding against the volume-vs-weight magnitude bug), (2) flowlines/pipelines
- * report a non-zero steel weight, and (3) wells contribute a rough all-in drilling-and-completion
- * CAPEX that is not inflated by module factors.
+ * These tests verify that (1) process vessels report a finite, non-zero weight and a sane installed cost per kilogram
+ * (guarding against the volume-vs-weight magnitude bug), (2) flowlines/pipelines report a non-zero steel weight, and
+ * (3) wells contribute a rough all-in drilling-and-completion CAPEX that is not inflated by module factors.
  * </p>
  *
  * @author esol
@@ -75,8 +73,7 @@ public class CostWeightCoverageTest {
     // carbon-steel pressure vessel PEC is roughly $10-1500 per kg of shell weight.
     assertTrue(costPerKg < 2000.0,
         "Separator PEC per kg unrealistically high (" + costPerKg + " $/kg) - magnitude bug?");
-    assertTrue(costPerKg > 1.0,
-        "Separator PEC per kg unrealistically low (" + costPerKg + " $/kg)");
+    assertTrue(costPerKg > 1.0, "Separator PEC per kg unrealistically low (" + costPerKg + " $/kg)");
   }
 
   @Test
@@ -230,7 +227,7 @@ public class CostWeightCoverageTest {
     Manifold manifold = new Manifold("Topside Production Manifold");
     manifold.addStream(feedA);
     manifold.addStream(feedB);
-    manifold.setSplitFactors(new double[] {0.4, 0.4, 0.2});
+    manifold.setSplitFactors(new double[] { 0.4, 0.4, 0.2 });
     manifold.run();
 
     manifold.initMechanicalDesign();
