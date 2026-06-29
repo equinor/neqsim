@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "../../neqsim-septic"
+		},
+		{
+			"path": ".."
+		}
+	],
+	"settings": {
+		"java.configuration.updateBuildConfiguration": "interactive",
+		"powershell.cwd": "neqsim-septic"
+	}
+}
