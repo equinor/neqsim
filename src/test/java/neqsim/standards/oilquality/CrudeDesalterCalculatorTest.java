@@ -69,23 +69,19 @@ public class CrudeDesalterCalculatorTest {
    */
   @Test
   void testFromProcessStreams() {
-    neqsim.thermo.system.SystemSrkEos crudeFluid =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 5.0);
+    neqsim.thermo.system.SystemSrkEos crudeFluid = new neqsim.thermo.system.SystemSrkEos(298.15, 5.0);
     crudeFluid.addComponent("nC10", 1.0);
     crudeFluid.setMixingRule("classic");
-    neqsim.process.equipment.stream.Stream crude =
-        new neqsim.process.equipment.stream.Stream("crude", crudeFluid);
+    neqsim.process.equipment.stream.Stream crude = new neqsim.process.equipment.stream.Stream("crude", crudeFluid);
     crude.setFlowRate(100000.0, "kg/hr");
     crude.setTemperature(25.0, "C");
     crude.setPressure(5.0, "bara");
     crude.run();
 
-    neqsim.thermo.system.SystemSrkEos washFluid =
-        new neqsim.thermo.system.SystemSrkEos(298.15, 5.0);
+    neqsim.thermo.system.SystemSrkEos washFluid = new neqsim.thermo.system.SystemSrkEos(298.15, 5.0);
     washFluid.addComponent("water", 1.0);
     washFluid.setMixingRule("classic");
-    neqsim.process.equipment.stream.Stream wash =
-        new neqsim.process.equipment.stream.Stream("wash", washFluid);
+    neqsim.process.equipment.stream.Stream wash = new neqsim.process.equipment.stream.Stream("wash", washFluid);
     wash.setFlowRate(6000.0, "kg/hr");
     wash.setTemperature(25.0, "C");
     wash.setPressure(5.0, "bara");
@@ -96,8 +92,7 @@ public class CrudeDesalterCalculatorTest {
     calc.setStageConfiguration(1, 0.9, 0.003);
     calc.calcPerformance();
 
-    assertTrue(calc.getEffectiveWashFraction() > 0.0,
-        "Effective wash fraction should be derived from the streams");
+    assertTrue(calc.getEffectiveWashFraction() > 0.0, "Effective wash fraction should be derived from the streams");
     assertTrue(calc.getOutletSaltContent() < 50.0, "Outlet salt should be below the 50 PTB inlet");
     assertNotNull(calc.toJson());
   }

@@ -74,24 +74,21 @@ public class ControlValveGasSizing_IEC_60534_2_1Test {
   }
 
   /**
-   * The {@code fromValve} bridge should populate flow, pressures and density from a run throttling
-   * valve.
+   * The {@code fromValve} bridge should populate flow, pressures and density from a run throttling valve.
    */
   @Test
   void testFromProcessValve() {
     neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
     fluid.addComponent("methane", 1.0);
     fluid.setMixingRule("classic");
-    neqsim.process.equipment.stream.Stream feed =
-        new neqsim.process.equipment.stream.Stream("feed", fluid);
+    neqsim.process.equipment.stream.Stream feed = new neqsim.process.equipment.stream.Stream("feed", fluid);
     feed.setFlowRate(1000.0, "kg/hr");
     feed.setTemperature(25.0, "C");
     feed.setPressure(10.0, "bara");
-    neqsim.process.equipment.valve.ThrottlingValve valve =
-        new neqsim.process.equipment.valve.ThrottlingValve("valve", feed);
+    neqsim.process.equipment.valve.ThrottlingValve valve = new neqsim.process.equipment.valve.ThrottlingValve("valve",
+        feed);
     valve.setOutletPressure(5.0, "bara");
-    neqsim.process.processmodel.ProcessSystem process =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
     process.add(feed);
     process.add(valve);
     process.run();
@@ -104,8 +101,7 @@ public class ControlValveGasSizing_IEC_60534_2_1Test {
 
     assertTrue(calc.getRequiredKv() > 0.0, "Kv should be positive");
     assertTrue(calc.getRequiredCv() > 0.0, "Cv should be positive");
-    assertTrue(calc.getPressureDropRatio() > 0.0,
-        "Pressure drop ratio should be derived from the valve");
+    assertTrue(calc.getPressureDropRatio() > 0.0, "Pressure drop ratio should be derived from the valve");
     assertNotNull(calc.toJson());
   }
 }
