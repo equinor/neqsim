@@ -190,6 +190,41 @@ For consumers that require *unqualified* tag look-ups (such as pyDEXPI), use
 `writeForPyDexpi` / `DexpiDiagramBridge.exportForPyDexpi`, which emit the same content with the
 default `xmlns` omitted (see *pyDEXPI-friendly export* above).
 
+### Schema version selection (Proteus 4.1.1 vs DEXPI 2.0)
+
+By default the writer targets the **Proteus 4.1.1** schema — the serialization that pyDEXPI and the
+broader DEXPI tooling ecosystem currently read. This is the stable, fully supported output and the
+behavior of `write(...)`, `writeForPyDexpi(...)`, and `writeSheets(...)` is unchanged.
+
+The writer also exposes an experimental **DEXPI 2.0** branch. DEXPI 2.0 (release V2.0.0, October
+2025) unifies the P&ID and Process specifications under a new UML-based Information Model and
+introduces a standardized "DEXPI XML" serialization that replaces the Proteus schema. NeqSim's 2.0
+mode currently re-declares the document header (root namespace, `xsi:schemaLocation`, and
+`PlantInformation/@SchemaVersion="2.0"`) over the existing backward-compatible plant-model body. The
+full DEXPI 2.0 Information Model (PFD/BFD constructs, the UML-derived element model) is future work.
+
+```java
+// Default: Proteus 4.1.1 (SchemaVersion="4.1.1")
+DexpiXmlWriter.write(process, new File("plant.xml"));
+
+// Explicit DEXPI 2.0 header (SchemaVersion="2.0")
+DexpiXmlWriter.writeDexpi20(process, new File("plant.dexpi20.xml"));
+
+// Or toggle the thread-local schema version directly
+DexpiXmlWriter.setSchemaVersion(DexpiXmlWriter.DexpiSchemaVersion.DEXPI_2_0);
+try {
+  DexpiXmlWriter.write(process, new File("plant.dexpi20.xml"));
+} finally {
+  DexpiXmlWriter.setSchemaVersion(DexpiXmlWriter.DexpiSchemaVersion.PROTEUS_4_1_1);
+}
+```
+
+The `DexpiSchemaVersion` enum carries each version's `SchemaVersion` attribute, root namespace URI,
+and `schemaLocation`. The `DEXPI_2_0` namespace (`http://www.dexpi.org/dexpi`) and XSD location are
+**placeholders** pending the finalized public DEXPI 2.0 schema; verify them against the official
+release before relying on the 2.0 output for downstream validation. `writeDexpi20(...)` saves and
+restores the previous schema version, so the default 4.1.1 output is never affected.
+
 ### Line data and NORSOK line numbers
 
 Each piping connection carries operating line data and a NORSOK Z-003 line-identification label:

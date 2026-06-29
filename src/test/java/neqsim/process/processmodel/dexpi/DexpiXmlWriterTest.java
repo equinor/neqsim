@@ -567,6 +567,68 @@ public class DexpiXmlWriterTest extends NeqSimTest {
   }
 
   /**
+   * Tests that the DEXPI 2.0 writer re-declares the document header (namespace, schema location and SchemaVersion)
+   * while still emitting the backward-compatible plant-model body, and that the default writer remains Proteus 4.1.1.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testDexpi20SchemaHeader() throws IOException {
+    Stream feed = createFeedStream();
+    Separator sep = new Separator("HP-Sep", feed);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(sep);
+
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    DexpiXmlWriter.writeDexpi20(process, out);
+    String xml = out.toString(StandardCharsets.UTF_8.name());
+
+    assertTrue(xml.contains("SchemaVersion=\"2.0\""), "DEXPI 2.0 export should declare SchemaVersion=2.0");
+    assertTrue(xml.contains("xmlns=\"http://www.dexpi.org/dexpi\""),
+        "DEXPI 2.0 export should declare the DEXPI 2.0 namespace");
+    assertFalse(xml.contains("SchemaVersion=\"4.1.1\""),
+        "DEXPI 2.0 export should not declare the 4.1.1 schema version");
+    // Backward-compatible plant-model body is still present.
+    assertTrue(xml.contains("<PlantModel"), "DEXPI 2.0 export should still emit a PlantModel body");
+    assertTrue(xml.contains("ComponentClass=\"Separator\""), "DEXPI 2.0 export should still emit plant-model content");
+
+    // The convenience writer must restore the default so subsequent writes stay on 4.1.1.
+    ByteArrayOutputStream defaultOut = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, defaultOut);
+    String defaultXml = defaultOut.toString(StandardCharsets.UTF_8.name());
+    assertTrue(defaultXml.contains("SchemaVersion=\"4.1.1\""),
+        "Default export should remain Proteus 4.1.1 after a DEXPI 2.0 write");
+  }
+
+  /**
+   * Tests that {@link DexpiXmlWriter#setSchemaVersion(DexpiXmlWriter.DexpiSchemaVersion)} controls the declared schema
+   * generation and can be reset back to the Proteus default.
+   *
+   * @throws IOException if writing fails
+   */
+  @Test
+  public void testSetSchemaVersionToggle() throws IOException {
+    ProcessSystem process = new ProcessSystem();
+    try {
+      DexpiXmlWriter.setSchemaVersion(DexpiXmlWriter.DexpiSchemaVersion.DEXPI_2_0);
+      ByteArrayOutputStream out = new ByteArrayOutputStream();
+      DexpiXmlWriter.write(process, out);
+      String xml = out.toString(StandardCharsets.UTF_8.name());
+      assertTrue(xml.contains("SchemaVersion=\"2.0\""), "setSchemaVersion(DEXPI_2_0) should declare SchemaVersion=2.0");
+    } finally {
+      DexpiXmlWriter.setSchemaVersion(DexpiXmlWriter.DexpiSchemaVersion.PROTEUS_4_1_1);
+    }
+
+    ByteArrayOutputStream resetOut = new ByteArrayOutputStream();
+    DexpiXmlWriter.write(process, resetOut);
+    String resetXml = resetOut.toString(StandardCharsets.UTF_8.name());
+    assertTrue(resetXml.contains("SchemaVersion=\"4.1.1\""),
+        "Resetting to PROTEUS_4_1_1 should restore the 4.1.1 schema version");
+  }
+
+  /**
    * Counts occurrences of a substring in a string.
    *
    * @param text the text to search

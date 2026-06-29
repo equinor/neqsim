@@ -121,6 +121,109 @@ public final class DexpiXmlWriter {
     AUTO_SYNTHESIZE_INSTRUMENTS.set(Boolean.valueOf(enabled));
   }
 
+  /**
+   * Identifies the DEXPI schema generation that the exported document declares in its root {@code PlantModel} namespace
+   * and {@code PlantInformation/@SchemaVersion} attribute.
+   *
+   * <p>
+   * NeqSim's DEXPI body content (equipment, piping network systems, nozzles, instrumentation, shape catalogue, drawing
+   * furniture) is serialised in the Proteus-compatible structure shared by the DEXPI 1.x P&amp;ID specifications. DEXPI
+   * 2.0 keeps this plant-model content backward compatible while replacing the Proteus schema with the standardised
+   * "DEXPI XML" serialisation. Selecting {@link #DEXPI_2_0} therefore re-declares the document header (namespace,
+   * schema location and {@code SchemaVersion}) to advertise DEXPI 2.0 conformance over the same backward-compatible
+   * plant-model body; full DEXPI-2.0-only constructs (PFD/BFD serialisation, UML information-model classes) remain
+   * future work.
+   * </p>
+   *
+   * @author NeqSim
+   * @version 1.0
+   */
+  public enum DexpiSchemaVersion {
+    /**
+     * Proteus 4.1.1 exchange schema used by the DEXPI 1.3 generation P&amp;ID specification. This is the historical
+     * NeqSim default and is consumed by Proteus readers such as pyDEXPI.
+     */
+    PROTEUS_4_1_1("4.1.1", "http://sandbox.dexpi.org/xml",
+        "http://sandbox.dexpi.org/xml http://sandbox.dexpi.org/xml/dexpi-4.1.1.xsd"),
+
+    /**
+     * DEXPI 2.0 standardised serialisation (published October 2025). The header declares DEXPI 2.0 conformance; the
+     * namespace and schema location follow the DEXPI 2.0 publication and can be re-targeted to the finalised DEXPI XML
+     * schema location used by downstream tooling.
+     */
+    DEXPI_2_0("2.0", "http://www.dexpi.org/dexpi",
+        "http://www.dexpi.org/dexpi http://www.dexpi.org/dexpi/DEXPI-2.0.xsd");
+
+    private final String schemaVersionAttribute;
+    private final String namespaceUri;
+    private final String schemaLocation;
+
+    /**
+     * Creates a schema-version descriptor.
+     *
+     * @param schemaVersionAttribute value written to {@code PlantInformation/@SchemaVersion}
+     * @param namespaceUri default XML namespace declared on the root {@code PlantModel}
+     * @param schemaLocation value written to {@code xsi:schemaLocation}
+     */
+    DexpiSchemaVersion(String schemaVersionAttribute, String namespaceUri, String schemaLocation) {
+      this.schemaVersionAttribute = schemaVersionAttribute;
+      this.namespaceUri = namespaceUri;
+      this.schemaLocation = schemaLocation;
+    }
+
+    /**
+     * Returns the value written to the {@code PlantInformation/@SchemaVersion} attribute.
+     *
+     * @return the schema version attribute value
+     */
+    public String getSchemaVersionAttribute() {
+      return schemaVersionAttribute;
+    }
+
+    /**
+     * Returns the default XML namespace declared on the root {@code PlantModel} element.
+     *
+     * @return the namespace URI
+     */
+    public String getNamespaceUri() {
+      return namespaceUri;
+    }
+
+    /**
+     * Returns the {@code xsi:schemaLocation} value declared on the root {@code PlantModel} element.
+     *
+     * @return the schema location string
+     */
+    public String getSchemaLocation() {
+      return schemaLocation;
+    }
+  }
+
+  /**
+   * Thread-local holding the DEXPI schema generation declared by the exported document. Defaults to
+   * {@link DexpiSchemaVersion#PROTEUS_4_1_1} to preserve backward-compatible output for existing callers.
+   */
+  private static final transient ThreadLocal<DexpiSchemaVersion> SCHEMA_VERSION = ThreadLocal
+      .withInitial(() -> DexpiSchemaVersion.PROTEUS_4_1_1);
+
+  /**
+   * Sets the DEXPI schema generation declared by subsequently written documents on the current thread.
+   *
+   * @param version the schema version to declare (must not be {@code null})
+   */
+  public static void setSchemaVersion(DexpiSchemaVersion version) {
+    SCHEMA_VERSION.set(Objects.requireNonNull(version, "version"));
+  }
+
+  /**
+   * Returns the DEXPI schema generation currently declared by written documents on this thread.
+   *
+   * @return the active schema version (never {@code null})
+   */
+  public static DexpiSchemaVersion getSchemaVersion() {
+    return SCHEMA_VERSION.get();
+  }
+
   private DexpiXmlWriter() {
   }
 
@@ -204,6 +307,54 @@ public final class DexpiXmlWriter {
       write(processSystem, outputStream, null, null);
     } finally {
       OMIT_DEFAULT_NAMESPACE.remove();
+    }
+  }
+
+  /**
+   * Writes the provided {@link ProcessSystem} to a DEXPI XML file whose header declares DEXPI 2.0 conformance.
+   *
+   * <p>
+   * The exported document advertises the DEXPI 2.0 schema generation (namespace, schema location and
+   * {@code PlantInformation/@SchemaVersion = "2.0"}) over the same backward-compatible plant-model body that NeqSim
+   * emits for the Proteus 4.1.1 generation. This is a convenience wrapper equivalent to
+   * {@link #setSchemaVersion(DexpiSchemaVersion)} with {@link DexpiSchemaVersion#DEXPI_2_0} around a standard
+   * {@link #write(ProcessSystem, File)} call.
+   * </p>
+   *
+   * @param processSystem process model to export
+   * @param file output file
+   * @throws IOException if writing fails
+   * @see DexpiSchemaVersion#DEXPI_2_0
+   */
+  public static void writeDexpi20(ProcessSystem processSystem, File file) throws IOException {
+    Objects.requireNonNull(processSystem, "processSystem");
+    Objects.requireNonNull(file, "file");
+    DexpiSchemaVersion previous = SCHEMA_VERSION.get();
+    SCHEMA_VERSION.set(DexpiSchemaVersion.DEXPI_2_0);
+    try {
+      write(processSystem, file, null, null);
+    } finally {
+      SCHEMA_VERSION.set(previous);
+    }
+  }
+
+  /**
+   * Writes the provided {@link ProcessSystem} to a DEXPI XML stream whose header declares DEXPI 2.0 conformance.
+   *
+   * @param processSystem process model to export
+   * @param outputStream destination stream
+   * @throws IOException if writing fails
+   * @see #writeDexpi20(ProcessSystem, File)
+   */
+  public static void writeDexpi20(ProcessSystem processSystem, OutputStream outputStream) throws IOException {
+    Objects.requireNonNull(processSystem, "processSystem");
+    Objects.requireNonNull(outputStream, "outputStream");
+    DexpiSchemaVersion previous = SCHEMA_VERSION.get();
+    SCHEMA_VERSION.set(DexpiSchemaVersion.DEXPI_2_0);
+    try {
+      write(processSystem, outputStream, null, null);
+    } finally {
+      SCHEMA_VERSION.set(previous);
     }
   }
 
@@ -394,10 +545,10 @@ public final class DexpiXmlWriter {
     Document document = createDocument();
     Element root = document.createElement("PlantModel");
     if (!Boolean.TRUE.equals(OMIT_DEFAULT_NAMESPACE.get())) {
-      root.setAttribute("xmlns", "http://sandbox.dexpi.org/xml");
+      DexpiSchemaVersion schema = SCHEMA_VERSION.get();
+      root.setAttribute("xmlns", schema.getNamespaceUri());
       root.setAttribute("xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-      root.setAttribute("xsi:schemaLocation",
-          "http://sandbox.dexpi.org/xml http://sandbox.dexpi.org/xml/dexpi-4.1.1.xsd");
+      root.setAttribute("xsi:schemaLocation", schema.getSchemaLocation());
     }
     document.appendChild(root);
 
@@ -601,7 +752,7 @@ public final class DexpiXmlWriter {
     plantInformation.setAttribute("Time", time.format(DateTimeFormatter.ISO_LOCAL_TIME));
     plantInformation.setAttribute("Discipline", "Process");
     plantInformation.setAttribute("Is3D", "no");
-    plantInformation.setAttribute("SchemaVersion", "4.1.1");
+    plantInformation.setAttribute("SchemaVersion", SCHEMA_VERSION.get().getSchemaVersionAttribute());
     plantInformation.setAttribute("Units", "mm");
 
     Element unitsOfMeasure = document.createElement("UnitsOfMeasure");
