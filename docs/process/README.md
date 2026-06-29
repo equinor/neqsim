@@ -55,6 +55,7 @@ This documentation is organized into the following sections:
 | [exergy-analysis.md](exergy-analysis) | **Exergy analysis** — plant-wide destruction hotspots for ProcessSystem and ProcessModel |
 | [production-allocation.md](production-allocation) | **Production allocation** — back-allocate metered production to wells/sources via a linear recovery-factor proxy network (handles recycle/reflux) |
 | [k-value-fast-simulation.md](k-value-fast-simulation) | **Cached K-value fast simulation** — run one rigorous base-case process, freeze separator K-values and fallback splits, then execute fast source-rate scenarios without repeated EOS flashes |
+| [screening_calculators.md](screening_calculators) | **Screening and sizing calculators** — flare radiation (API 521), line sizing/erosion LOF (API RP 14E), flow-induced vibration (AVIFF), pump NPSH, control-valve sizing/noise (IEC 60534), thermowell strength (ASME PTC 19.3), pipeline overpressure protection, orifice metering (GPSA), and crude desalting; with optional process-object bridges |
 
 ### Process Design Guide
 

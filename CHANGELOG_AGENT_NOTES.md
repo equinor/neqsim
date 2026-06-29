@@ -9,6 +9,68 @@
 
 ---
 
+## 2026-07-?? — 13 standalone screening & sizing calculators + process bridges + docs
+
+### Summary
+Thirteen new self-contained, `Serializable` screening-level calculators across
+flare, pipeline, pump, thermowell, valve, overpressure, gas-quality, and
+oil-quality packages. Each has scalar setters, a single `calc…()` method,
+individual output getters, and `toJson()`. Five expose an optional
+`from…(processObject)` **bridge** that populates inputs from a running NeqSim
+process object (scalar setters remain unchanged / backward-compatible). All
+additive; backed by passing JUnit regression and integration tests.
+
+### What's new (all additive)
+- `neqsim.process.equipment.flare.FlareFrustumRadiationCalculator` — API 521
+  solid-flame (frustum) flare radiation. `calcRadiation()`; bridge `fromFlare(Flare)`.
+- `neqsim.process.equipment.flare.RelevantWindCalculator` — design wind speed via
+  power-law profile + wind-rose scan. `calc()`. Inner class `WindSector`.
+- `neqsim.process.mechanicaldesign.pipeline.LineSizingLofCalculator` — API RP 14E
+  erosional velocity + kinetic-energy likelihood-of-failure band. `calcScreening()`;
+  bridge `fromStream(StreamInterface, double pipeInternalDiameterM)`.
+- `neqsim.process.mechanicaldesign.pipeline.AviffScreeningCalculator` — Energy
+  Institute AVIFF flow-induced-vibration LOF. `calcScreening()`. enum `SupportArrangement`.
+- `neqsim.process.mechanicaldesign.pump.PumpHydraulicsNpshCalculator` — hydraulic/
+  brake power + NPSH margin / cavitation screening. `calcHydraulics()`; bridge `fromPump(Pump)`.
+- `neqsim.process.mechanicaldesign.thermowell.ThermowellDesignCalculator` — ASME
+  PTC 19.3 TW-2016 (TW-1974 fallback) wake-frequency + strength. `calcAll()`.
+- `neqsim.process.mechanicaldesign.valve.ControlValveGasSizing_IEC_60534_2_1` —
+  compressible Kv/Cv sizing. `setFlowConditions(...)` + `setValveCoefficients(gamma, xT, Fp)`;
+  `calcSizing()`; bridge `fromValve(ThrottlingValve)`.
+- `neqsim.process.mechanicaldesign.valve.ControlValveNoise_IEC_60534_8_3` —
+  aerodynamic valve noise (A-weighted SPL 1 m downstream). `calcNoise()`.
+- `neqsim.process.safety.overpressure.PipelinePressureProtectionCalculator` —
+  two-barrier overpressure screening; `setPressureBasis(...)` + `setBarriers(...)`;
+  `calcProtection()`.
+- `neqsim.standards.gasquality.GpsaOrificeCalculator` — liquid/steam DP orifice
+  metering (GPSA / ISO 5167 / API 14.3). `calcFlow()`. enum `FluidService`.
+- `neqsim.standards.gasquality.CriticalFlowOrifice` — choked (sonic) discharge
+  through a restriction. `calcCriticalFlow()`.
+- `neqsim.standards.gasquality.OrificeWellTester` — gas-well rate via GPSA
+  critical-flow prover. `calcRate()`.
+- `neqsim.standards.oilquality.CrudeDesalterCalculator` — electrostatic desalter
+  residual-salt screening (ASTM D3230 companion). `setFeedConditions(...)` +
+  `setStageConfiguration(...)`; `calcPerformance()`;
+  bridge `fromStreams(StreamInterface crude, StreamInterface washWater, double inletSalt)`.
+
+### Migration / usage notes
+- These are **screening tools**, not code-compliant detailed design. Scalar
+  setters are unchanged — the `from…()` bridges are purely additive convenience.
+- Process objects passed to a bridge must already be run/flashed.
+- `ControlValveGasSizing` splits flow conditions (`setFlowConditions`) from gas/
+  valve coefficients (`setValveCoefficients(gamma, xT, Fp)`).
+- `PipelinePressureProtectionCalculator` source/design setter is `setPressureBasis`.
+
+### Docs / agents
+- New page `docs/process/screening_calculators.md` (wired into
+  `docs/process/README.md` Documentation Structure and `docs/REFERENCE_MANUAL_INDEX.md`).
+- Existing screening agents/skills (debottlenecking, piping-integrity,
+  process-safety, flow-induced-vibration, line-velocity, PSV/flare,
+  pump/control-valve sizing) already cover these domains; no new agent required —
+  point them at the new calculators when a process object is available.
+
+---
+
 ## 2026-07-?? — Kent-Eisenberg amine CO2 solubility (screening) + docs + demo notebook
 
 ### Summary
