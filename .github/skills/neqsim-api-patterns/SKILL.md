@@ -17,7 +17,7 @@ Copy-paste reference for common NeqSim operations. All Java code must be Java 8 
 | **Matched to commercial simulator PR-LK** | **`SystemPrLeeKeslerEos`** | `"classic"` |
 | Water, MEG, methanol, polar | `SystemSrkCPAstatoil` | `10` (numeric) |
 | Custody transfer, fiscal metering | `SystemGERG2008Eos` | (none needed) |
-| Electrolyte systems | `SystemElectrolyteCPAstatoil` | `10` |
+| Electrolyte systems, **hydrate with salt brine** | `SystemElectrolyteCPAstatoil` | `10` |
 | Volume-corrected SRK | `SystemSrkEosvolcor` | `"classic"` |
 
 **PR-LK vs PR78**: `SystemPrLeeKeslerEos` uses PR76 alpha for ALL ω:

@@ -41,6 +41,19 @@ the broader operating-envelope and mitigation context.
 
 ## 1. Hydrate Analysis
 
+### EOS Selection for Hydrate Calculations
+
+| Aqueous phase | NeqSim Class | Mixing Rule |
+|---------------|-------------|-------------|
+| Pure water / fresh water | `SystemSrkCPAstatoil` | `10` |
+| Water + MEG / methanol / ethanol | `SystemSrkCPAstatoil` | `10` |
+| **Salt brine / formation water (NaCl, CaCl2, ...)** | `SystemElectrolyteCPAstatoil` | `10` |
+
+CPA is required for water–hydrocarbon hydrate modeling. **When dissolved salts /
+electrolytes are present, use `SystemElectrolyteCPAstatoil`** so the salt
+thermodynamic (hydrate-suppression) effect is captured — plain
+`SystemSrkCPAstatoil` ignores ion activity and underestimates subcooling margin.
+
 ### Hydrate Formation Temperature
 
 ```java
@@ -92,6 +105,25 @@ ThermodynamicOperations ops = new ThermodynamicOperations(inhibitedFluid);
 ops.hydrateFormationTemperature();
 double inhibitedHydrateT = inhibitedFluid.getTemperature() - 273.15;
 // Compare with uninhibited to get subcooling margin
+```
+
+### Salt-Inhibited Hydrate (Formation Water / Brine)
+
+```java
+// Dissolved salts depress the hydrate temperature — use the electrolyte CPA model
+SystemInterface brineGas = new SystemElectrolyteCPAstatoil(273.15 + 4, 100.0);
+brineGas.addComponent("methane", 0.80);
+brineGas.addComponent("water", 0.18);
+brineGas.addComponent("Na+", 0.01);   // dissociated NaCl
+brineGas.addComponent("Cl-", 0.01);
+brineGas.setMixingRule(10);
+brineGas.setMultiPhaseCheck(true);
+brineGas.setHydrateCheck(true);
+
+ThermodynamicOperations ops = new ThermodynamicOperations(brineGas);
+ops.hydrateFormationTemperature();
+double brineHydrateT = brineGas.getTemperature() - 273.15;
+// SystemSrkCPAstatoil would miss the salt suppression — always use electrolyte CPA with ions
 ```
 
 ### MEG Concentration Sweep
