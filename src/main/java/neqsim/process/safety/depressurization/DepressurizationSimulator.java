@@ -3,6 +3,8 @@ package neqsim.process.safety.depressurization;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import neqsim.process.util.fire.FireHeatLoadCalculator;
+import neqsim.process.util.fire.FirePreset;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -48,6 +50,11 @@ public class DepressurizationSimulator implements Serializable {
   private double wallHeatTransferCoeff = 50.0; // W/(m2.K) inside film
   private double wallArea = 0.0; // m2 (internal heat transfer area)
   private boolean fireHeatInputToWall = false; // true = external fire heats wall first
+  private boolean temperatureDependentFire = false; // true = compute q_fire(T_surface) each step
+  private double fireEmissivity = 0.9; // effective flame emissivity [-]
+  private double fireFlameTempK = 1100.0; // effective radiating flame temperature [K]
+  private double fireConvCoeff = 30.0; // flame-to-surface convective film coefficient [W/(m2.K)]
+  private double fireExposedArea = 0.0; // fire-exposed surface area [m2]
   private double timeStep = 1.0; // s
   private double maxTime = 900.0; // s (15 min default)
   private double minPressure = 1.5e5; // Pa absolute - stop when reached
@@ -101,6 +108,64 @@ public class DepressurizationSimulator implements Serializable {
    */
   public DepressurizationSimulator setFireHeatInputToWall(boolean fireHeatInputToWall) {
     this.fireHeatInputToWall = fireHeatInputToWall;
+    return this;
+  }
+
+  /**
+   * Configure a temperature-dependent fire boundary condition using a screening preset.
+   *
+   * <p>
+   * Unlike {@link #setFireHeatInput(double)}, which applies a constant heat duty, this method recomputes the absorbed
+   * fire heat each timestep from the flame radiation, convection and surface re-radiation. The absorbed flux therefore
+   * decreases as the exposed surface (wall metal, or the fluid when no wall is modelled) heats up, which is the
+   * physically correct behaviour for a fire boundary condition. The total fire duty is the absorbed flux multiplied by
+   * the fire-exposed area.
+   *
+   * @param preset fire exposure preset (pool/jet, peak/background)
+   * @param exposedAreaM2 fire-exposed surface area in m²; must be positive
+   * @return this simulator for chaining
+   * @throws IllegalArgumentException if {@code preset} is null or {@code exposedAreaM2} is not positive
+   */
+  public DepressurizationSimulator setFireExposure(FirePreset preset, double exposedAreaM2) {
+    if (preset == null) {
+      throw new IllegalArgumentException("preset must not be null");
+    }
+    if (exposedAreaM2 <= 0.0) {
+      throw new IllegalArgumentException("exposedAreaM2 must be positive");
+    }
+    return setFireExposure(preset.getFlameEmissivity(), preset.getFlameTemperatureK(),
+        preset.getConvectiveCoefficient(), exposedAreaM2);
+  }
+
+  /**
+   * Configure a temperature-dependent fire boundary condition with explicit flame parameters.
+   *
+   * <p>
+   * The absorbed heat flux toward an exposed surface at temperature {@code T_s} is
+   * {@code q = epsilon_f * sigma * (T_rf^4 - T_s^4) + h_f * (T_rf - T_s)} and the fire duty is {@code q * exposedArea}.
+   * The surface temperature is the lumped wall metal temperature when a wall model is configured, otherwise the fluid
+   * temperature.
+   *
+   * @param emissivity effective flame emissivity from 0 to 1
+   * @param flameTempK effective radiating flame temperature in K; must be positive
+   * @param convCoeff flame-to-surface convective film coefficient in W/(m²·K)
+   * @param exposedAreaM2 fire-exposed surface area in m²; must be positive
+   * @return this simulator for chaining
+   * @throws IllegalArgumentException if {@code flameTempK} or {@code exposedAreaM2} is not positive
+   */
+  public DepressurizationSimulator setFireExposure(double emissivity, double flameTempK, double convCoeff,
+      double exposedAreaM2) {
+    if (flameTempK <= 0.0) {
+      throw new IllegalArgumentException("flameTempK must be positive");
+    }
+    if (exposedAreaM2 <= 0.0) {
+      throw new IllegalArgumentException("exposedAreaM2 must be positive");
+    }
+    this.temperatureDependentFire = true;
+    this.fireEmissivity = emissivity;
+    this.fireFlameTempK = flameTempK;
+    this.fireConvCoeff = convCoeff;
+    this.fireExposedArea = exposedAreaM2;
     return this;
   }
 
@@ -250,14 +315,31 @@ public class DepressurizationSimulator implements Serializable {
       // Energy balance: dU = -h*dm + Q_fire*dt + Q_wall*dt. External fire normally heats the
       // wall first when a wall model is configured; direct fluid heating remains the fallback.
       boolean fireThroughWall = fireHeatInputToWall && wallMass > 0.0 && wallArea > 0.0;
-      double directFireHeat = fireThroughWall ? 0.0 : fireHeatInput;
+      // Effective fire duty. With a temperature-dependent fire boundary condition the absorbed
+      // flux is recomputed from flame radiation + convection minus surface re-radiation, so the
+      // duty falls as the exposed surface heats up. Otherwise the constant fireHeatInput is used.
+      double effectiveFireHeat;
+      if (temperatureDependentFire && fireExposedArea > 0.0) {
+        double surfaceT = fireThroughWall ? wallTemp : tempK;
+        double qRad = FireHeatLoadCalculator.generalizedStefanBoltzmannHeatFlux(fireEmissivity, 1.0, fireFlameTempK,
+            surfaceT);
+        double qConv = fireConvCoeff * (fireFlameTempK - surfaceT);
+        double flux = qRad + qConv;
+        if (flux < 0.0) {
+          flux = 0.0;
+        }
+        effectiveFireHeat = flux * fireExposedArea;
+      } else {
+        effectiveFireHeat = fireHeatInput;
+      }
+      double directFireHeat = fireThroughWall ? 0.0 : effectiveFireHeat;
       double qWall = wallMass > 0.0 ? wallHeatTransferCoeff * wallArea * (wallTemp - tempK) : 0.0;
       double dU = (-hSpec * dm) + (directFireHeat * timeStep) + (qWall * timeStep);
 
       // Update wall temperature (if modelled)
       if (wallMass > 0.0) {
         // Simple lumped-wall: external fire heat minus heat transferred from wall to fluid
-        double externalWallHeat = fireThroughWall ? fireHeatInput : 0.0;
+        double externalWallHeat = fireThroughWall ? effectiveFireHeat : 0.0;
         double dWallTemp = (externalWallHeat - qWall) * timeStep / (wallMass * wallCp);
         wallTemp += dWallTemp;
       }
