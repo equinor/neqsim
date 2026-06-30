@@ -77,6 +77,12 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   private static final int MAX_ENVELOPE_ITERATIONS = 9980;
   /** Maximum points per quality line. */
   private static final int MAX_QUALITY_LINE_POINTS = 5000;
+  /**
+   * Multiple of the maximum continuation step ({@code dTmax}/{@code dPmax}) above which two consecutive points are
+   * treated as belonging to disjoint branch segments. A NaN break is inserted between them so plotters do not draw a
+   * spurious straight chord across a discontinuity (e.g. between a near-critical sub-branch and the low-pressure tail).
+   */
+  private static final double JUMP_BREAK_FACTOR = 3.0;
 
   // --- Configuration ---
   private double maxPressure = 1000.0;
@@ -918,7 +924,82 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
     bubDensityArray = toDoubleArray(bubblePointDensities);
     bubEntropyArray = toDoubleArray(bubblePointEntropies);
 
+    // Re-break each branch wherever consecutive points jump much further than a single
+    // continuation step can travel. The tracer already inserts NaN sentinels at
+    // critical-point crossings and restart passes, but a disjoint sub-branch (e.g. a
+    // near-critical segment separated from the low-pressure tail) can still leave two far
+    // apart points adjacent in the same list; without a break a plotter draws a straight
+    // chord across the gap. Inserting NaN here makes get()/getSegments() robust regardless
+    // of how the caller renders the curve.
+    insertJumpBreaks();
+
     segments = buildSegments();
+  }
+
+  /**
+   * Insert NaN break sentinels into both branches wherever consecutive non-NaN points are separated by more than
+   * {@link #JUMP_BREAK_FACTOR} times the maximum continuation step. This guarantees that disjoint sub-branches are
+   * rendered as separate polylines even when the tracer stored them adjacently in the same list.
+   */
+  private void insertJumpBreaks() {
+    double dTbreak = JUMP_BREAK_FACTOR * dTmax;
+    double dPbreak = JUMP_BREAK_FACTOR * dPmax;
+
+    double[][] dew = insertJumpBreaks(dTbreak, dPbreak, dewTempArray, dewPresArray, dewEnthalpyArray, dewDensityArray,
+        dewEntropyArray);
+    dewTempArray = dew[0];
+    dewPresArray = dew[1];
+    dewEnthalpyArray = dew[2];
+    dewDensityArray = dew[3];
+    dewEntropyArray = dew[4];
+
+    double[][] bub = insertJumpBreaks(dTbreak, dPbreak, bubTempArray, bubPresArray, bubEnthalpyArray, bubDensityArray,
+        bubEntropyArray);
+    bubTempArray = bub[0];
+    bubPresArray = bub[1];
+    bubEnthalpyArray = bub[2];
+    bubDensityArray = bub[3];
+    bubEntropyArray = bub[4];
+  }
+
+  /**
+   * Copy a single branch's parallel arrays, inserting a NaN sentinel into every array at the same index wherever the
+   * temperature or pressure step between two consecutive non-NaN points exceeds the supplied thresholds.
+   *
+   * @param dTbreak temperature jump (K) above which a break is inserted
+   * @param dPbreak pressure jump (bara) above which a break is inserted
+   * @param T temperatures (may already contain NaN sentinels)
+   * @param P pressures, same length as T
+   * @param H mass enthalpies, same length as T
+   * @param D mass densities, same length as T
+   * @param S mass entropies, same length as T
+   * @return five new arrays {T, P, H, D, S} with NaN breaks inserted at large discontinuities
+   */
+  private double[][] insertJumpBreaks(double dTbreak, double dPbreak, double[] T, double[] P, double[] H, double[] D,
+      double[] S) {
+    int n = T.length;
+    ArrayList<Double> oT = new ArrayList<Double>(n);
+    ArrayList<Double> oP = new ArrayList<Double>(n);
+    ArrayList<Double> oH = new ArrayList<Double>(n);
+    ArrayList<Double> oD = new ArrayList<Double>(n);
+    ArrayList<Double> oS = new ArrayList<Double>(n);
+    for (int i = 0; i < n; i++) {
+      if (i > 0 && !Double.isNaN(T[i]) && !Double.isNaN(T[i - 1])
+          && (Math.abs(T[i] - T[i - 1]) > dTbreak || Math.abs(P[i] - P[i - 1]) > dPbreak)) {
+        oT.add(Double.NaN);
+        oP.add(Double.NaN);
+        oH.add(Double.NaN);
+        oD.add(Double.NaN);
+        oS.add(Double.NaN);
+      }
+      oT.add(T[i]);
+      oP.add(P[i]);
+      oH.add(H[i]);
+      oD.add(D[i]);
+      oS.add(S[i]);
+    }
+    return new double[][] { toDoubleArray(oT), toDoubleArray(oP), toDoubleArray(oH), toDoubleArray(oD),
+        toDoubleArray(oS) };
   }
 
   /**
