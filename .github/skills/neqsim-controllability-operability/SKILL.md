@@ -103,6 +103,29 @@ boolean choked     = dpRatio > cv.getFL() * cv.getFL() * (1 - cv.getFf() * cv.ge
 
 If turndown ratio > rangeability, you need a **split-range** or two valves in parallel.
 
+### Seat Leakage Tightness (screening)
+
+To rank candidate valve tightness requirements (isolation/ESDV block valves vs throttling control
+valves), use the `ValveSeatLeakageClass` enum (`neqsim.process.equipment.valve`). It covers EN
+12266-1 Rates A–G (isolation valves) and ANSI/FCI 70-2 Classes II–VI (control valves); Class IV
+(0.01% of rated capacity) is the typical control-valve default, Class VI is the soft-seat
+essentially-zero-leakage class:
+
+```java
+import neqsim.process.equipment.valve.ValveSeatLeakageClass;
+
+ValveSeatLeakageClass ctrl = ValveSeatLeakageClass.FCI_70_2_CLASS_IV;
+boolean tight = ctrl.isEssentiallyZeroLeakage();   // false for Class IV, true for Class VI
+
+// ANSI/FCI 70-2 Class V closed-form liquid leak-rate screening estimate (test medium water)
+double leakRateMlPerMin =
+    ValveSeatLeakageClass.estimateFciClassVLeakRate(50.0e5 /* Pa */, 0.10 /* m port */);
+```
+
+This is screening-level only and not a substitute for a manufacturer seat-leakage test certificate.
+See [docs/process/ValveMechanicalDesign.md](../../../docs/process/ValveMechanicalDesign.md) for the
+full reference.
+
 ## Pattern 3 — Recycle Stability
 
 A process with strong recycles can have multiple steady states or be unstable:

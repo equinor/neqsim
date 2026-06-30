@@ -213,6 +213,32 @@ Readiness semantics:
 - `DESIGN_GRADE`: controlled source drawing, piping-specification, material, fire, and depressurization evidence
   has been reviewed and the package is ready for formal engineering review.
 
+## Quick Screening: Blocked-In Liquid Thermal Expansion (No Fire)
+
+Before committing to a full fire-exposure rupture study, `BlockedInLiquidExpansionAnalysis`
+(`neqsim.process.util.fire`) provides a fast, fire-independent check of pure thermal-expansion
+overpressure for a blocked-in liquid segment, per API 521 §4.4.12:
+
+```java
+SystemInterface oil = new SystemSrkEos(298.15, 10.0);
+oil.addComponent("n-heptane", 100.0);
+oil.setMixingRule("classic");
+
+double[] temperaturesK = {298.15, 308.15, 318.15, 328.15, 333.15};
+double[] pressuresPa =
+    BlockedInLiquidExpansionAnalysis.computeIsochoricPressureProfile(oil, temperaturesK);
+
+// Fast cross-check using the simplified API 521 beta/kappa relation
+double beta = BlockedInLiquidExpansionAnalysis.estimateThermalExpansionCoefficient(oil, 1.0);
+double kappa = BlockedInLiquidExpansionAnalysis.estimateIsothermalCompressibility(oil, 1.0e5);
+double deltaPPa = BlockedInLiquidExpansionAnalysis.simplifiedPressureRise(beta, kappa, 35.0);
+```
+
+Use this when the task only needs a thermal-expansion magnitude (e.g. deciding whether a thermal
+relief valve is needed) without a fire scenario, material derating, or flange/pipe-stress checks.
+See [docs/safety/blocked_in_liquid_thermal_expansion.md](../../../docs/safety/blocked_in_liquid_thermal_expansion.md)
+for the full reference.
+
 ## Java Calculation Pattern
 
 ```java

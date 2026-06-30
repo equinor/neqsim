@@ -536,3 +536,49 @@ When AIV is identified as a concern:
 3. **Install acoustic dampeners** - Reduces transmitted energy
 4. **Multi-stage pressure reduction** - Reduces ΔP per stage
 5. **Increase pipe diameter** - Reduces velocity and acoustic intensity
+
+---
+
+## Seat Leakage Tightness Classification
+
+For ranking candidate valve tightness requirements during a safety study (for example, comparing
+isolation/ESDV block valves against throttling control valves), the
+`ValveSeatLeakageClass` enum (`neqsim.process.equipment.valve`) classifies seat-leakage tightness
+across two standards:
+
+- **EN 12266-1 Rates A–G** — used widely for on/off and isolation valves (e.g. ESDV/HIPPS block
+  valves). The constants carry only a qualitative description; the exact numeric acceptance criteria
+  vary with valve size and test medium and must be taken from EN 12266-1 itself.
+- **ANSI/FCI 70-2 Classes II–VI** — used for throttling control valves. Class IV (0.01% of rated
+  capacity) is the typical default for general control-valve duty; Class VI is the resilient
+  (soft-seat) class with essentially zero liquid leakage.
+
+| Constant | Standard | Notes |
+|----------|----------|-------|
+| `EN_12266_RATE_A` … `EN_12266_RATE_G` | EN 12266-1 | Rate A least stringent, Rate G essentially bubble-tight metal seat |
+| `FCI_70_2_CLASS_II` | ANSI/FCI 70-2 | 0.5% of rated capacity |
+| `FCI_70_2_CLASS_III` | ANSI/FCI 70-2 | 0.1% of rated capacity |
+| `FCI_70_2_CLASS_IV` | ANSI/FCI 70-2 | 0.01% of rated capacity — typical control-valve default |
+| `FCI_70_2_CLASS_V` | ANSI/FCI 70-2 | Leak rate scales with port diameter and differential pressure |
+| `FCI_70_2_CLASS_VI` | ANSI/FCI 70-2 | Resilient (soft) seat, essentially zero liquid leakage |
+
+```java
+import neqsim.process.equipment.valve.ValveSeatLeakageClass;
+
+ValveSeatLeakageClass esdvClass = ValveSeatLeakageClass.EN_12266_RATE_F;
+String designation = esdvClass.getStandardDesignation();      // "EN 12266-1 Rate F"
+String description = esdvClass.getDescription();              // qualitative description
+boolean tight = esdvClass.isEssentiallyZeroLeakage();         // false for EN 12266-1 rates
+
+// ANSI/FCI 70-2 Class V provides a closed-form liquid leak-rate screening estimate
+double diffPressurePa = 50.0e5;   // 50 bar across the closed seat
+double portDiameterM = 0.10;      // 100 mm port
+double leakRateMlPerMin =
+    ValveSeatLeakageClass.estimateFciClassVLeakRate(diffPressurePa, portDiameterM);
+```
+
+`estimateFciClassVLeakRate(diffPressurePa, portDiameterM)` implements the standard correlation
+$Q\,[\text{mL/min}] = 5\times10^{-4} \cdot d\,[\text{inch}] \cdot \Delta P\,[\text{psi}]$ (test medium
+water). It is valid near the valve's rated test differential pressure and is intended for screening
+and comparison only — not as a certified leakage guarantee. This classification is not a substitute
+for a manufacturer seat-leakage test certificate.
