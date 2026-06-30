@@ -1,7 +1,7 @@
 """
 Comprehensive MCP Server Tests for NeqSim
 ==========================================
-Tests all 67 MCP tools through the real JSON-RPC protocol, verifying
+Tests all 68 MCP tools through the real JSON-RPC protocol, verifying
 correctness against known values from the NeqSim JUnit test suite.
 
 Tier 1 — Trusted Core (22 tools):
@@ -257,7 +257,7 @@ def test_protocol():
     r = recv()
     tools = r.get("result", {}).get("tools", [])
     tool_names = sorted([t["name"] for t in tools])
-    check("67 tools registered", len(tools) == 67, f"got {len(tools)}: {tool_names}")
+    check("68 tools registered", len(tools) == 68, f"got {len(tools)}: {tool_names}")
 
     # Tier 1 — Trusted Core (22 tools)
     tier1 = ["runFlash", "runProcess", "validateInput", "searchComponents",
@@ -270,7 +270,7 @@ def test_protocol():
     for name in tier1:
         check(f"tier1 tool '{name}'", name in tool_names)
 
-    # Tier 2 — Engineering Advanced (31 tools)
+    # Tier 2 — Engineering Advanced (32 tools)
     tier2 = ["crossValidateModels", "runParametricStudy", "runPVT",
              "runFlowAssurance", "calculateStandard", "runPipeline",
              "runChemistry", "runMaterialsReview", "runOpenDrainReview",
@@ -279,7 +279,7 @@ def test_protocol():
              "runReservoir", "runFieldEconomics", "runDynamic", "runBioprocess",
              "sizeEquipment", "compareProcesses", "validateResults",
              "runRelief", "runLOPA", "runSIL", "runRiskMatrix",
-             "runFlareNetwork", "runHAZOP", "runBarrierRegister",
+             "runFlareNetwork", "runHAZOP", "runHazopScenario", "runBarrierRegister",
              "runSafetySystemPerformance", "runOperationalStudy",
              "runRootCauseAnalysis", "runProcessLoop", "designUtilities"]
     for name in tier2:
