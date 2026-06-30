@@ -3,6 +3,7 @@ package neqsim.process.util.heattransfer;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -76,5 +77,58 @@ public class BoilOffCalculatorTest {
     assertThrows(IllegalArgumentException.class, () -> new BoilOffCalculator().setLatentHeat(0.0));
     assertThrows(IllegalArgumentException.class, () -> new BoilOffCalculator().setSurfaceArea(-1.0));
     assertThrows(IllegalArgumentException.class, () -> new BoilOffCalculator().effectiveHeatTransferCoefficient(-0.01));
+  }
+
+  /**
+   * Reproduces the cryogenic boil-off application result of Andreasen (2026), J. Loss Prev. Process Ind. 103, 106088,
+   * &sect;4.3 (liquid CO2 storage). The relief boil-off load is governed by the insulation-dominated series thermal
+   * resistance, matching the BoilFAST trade-off the paper validates against.
+   */
+  @Nested
+  public class Co2StorageBoilOff {
+    /**
+     * Builds a large horizontal CO2 storage vessel with polyurethane-foam insulation, stored semi-refrigerated at about
+     * -20 C.
+     *
+     * @return a configured boil-off calculator for the CO2 application case
+     */
+    private BoilOffCalculator co2Vessel() {
+      return new BoilOffCalculator().setSurfaceArea(150.0).setOuterFilmCoefficient(10.0)
+          .setInsulationConductivity(0.025).setAmbientTemperatureK(288.15).setFluidTemperatureK(253.15)
+          .setLatentHeat(320000.0);
+    }
+
+    /**
+     * The boil-off relief load must be a positive, screening-plausible kg/h rate for the insulated CO2 vessel.
+     */
+    @Test
+    public void boilOffLoadIsPhysical() {
+      BoilOffCalculator calc = co2Vessel();
+      double rate = calc.boilOffRateKgPerH(0.10);
+      assertTrue(rate > 0.0, "boil-off must be positive");
+      assertTrue(rate < 5000.0, "boil-off must stay screening-plausible, got " + rate + " kg/h");
+    }
+
+    /**
+     * Six-fold thicker insulation must more than halve the boil-off load (insulation-resistance dominated).
+     */
+    @Test
+    public void thickerInsulationStronglyReducesBoilOff() {
+      BoilOffCalculator calc = co2Vessel();
+      double thin = calc.boilOffRateKgPerH(0.05);
+      double thick = calc.boilOffRateKgPerH(0.30);
+      assertTrue(thick < 0.5 * thin, "thicker insulation must more than halve boil-off, " + thin + " -> " + thick);
+    }
+
+    /**
+     * At large thickness the effective coefficient must collapse to the insulation conductance k/t.
+     */
+    @Test
+    public void insulationControlsHeatLeak() {
+      BoilOffCalculator calc = co2Vessel();
+      double hEff = calc.effectiveHeatTransferCoefficient(0.30);
+      double insulationOnly = 0.025 / 0.30;
+      assertEquals(insulationOnly, hEff, insulationOnly * 0.05, "thick insulation must dominate the series resistance");
+    }
   }
 }
