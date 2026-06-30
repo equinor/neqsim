@@ -16,7 +16,7 @@ Tier 1 — Trusted Core (22 tools):
   - Automation API (units, variables, state save/compare, diagnostics)
   - Industrial profile, benchmark trust, tool access
 
-Tier 2 — Engineering Advanced (31 tools):
+Tier 2 — Engineering Advanced (32 tools):
   - PVT laboratory experiments
   - Flow assurance (hydrate, corrosion, wax)
   - Standards calculations (ISO 6976, AGA)

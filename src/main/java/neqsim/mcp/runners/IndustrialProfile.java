@@ -160,7 +160,7 @@ public final class IndustrialProfile {
           "runChemistry", "crossValidateModels", "runParametricStudy", "runBatch", "sizeEquipment", "compareProcesses",
           "generateReport", "generateVisualization", "queryDataCatalog", "setSimulationVariable", "saveSimulationState",
           "runMaterialsReview", "runOpenDrainReview", "runNorsokS001Clause10Review", "runOperationalStudy", "runRelief",
-          "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork", "runHAZOP", "runBarrierRegister",
+          "runLOPA", "runSIL", "runRiskMatrix", "runFlareNetwork", "runHAZOP", "runHazopScenario", "runBarrierRegister",
           "runSafetySystemPerformance", "runAgenticEngineering", "runProcessLoop", "designUtilities")));
 
   /**
@@ -236,6 +236,7 @@ public final class IndustrialProfile {
     map.put("runRiskMatrix", ToolCategory.CALCULATION);
     map.put("runFlareNetwork", ToolCategory.CALCULATION);
     map.put("runHAZOP", ToolCategory.CALCULATION);
+    map.put("runHazopScenario", ToolCategory.CALCULATION);
     map.put("runBarrierRegister", ToolCategory.CALCULATION);
     map.put("runSafetySystemPerformance", ToolCategory.CALCULATION);
 
