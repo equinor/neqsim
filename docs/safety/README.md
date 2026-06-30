@@ -52,7 +52,7 @@ This folder contains guides for implementing safety systems in process simulatio
 | [ISO 17776 MAH Bow-Tie and EI AVIFF FIV Screening](mah_bowtie_fiv_screening.md) | Major-accident-hazard bow-tie from the ISO 17776 catalogue and Energy Institute AVIFF flow-induced-vibration screening |
 | [Flare Flame, Hazardous Area and PFP Demand](flare_flame_hazardous_area_pfp.md) | API 537 flare flame/radiation/noise, IEC 60079-10-1 hazardous-area zoning, and API 521 passive-fire-protection demand |
 | [Automated HAZOP from STID and Simulation](automated_hazop_from_stid.md) | End-to-end STID/P&ID, plant data, NeqSim simulation, HAZOP, barrier, and report workflow |
-| [AI-HAZOP Input Data Format (Wisting Pipeline)](ai_hazop_input_format.md) | Required input-data format for a P&ID Safety Analyser / AI-HAZOP front-end: process model JSON, per-deviation `runHazopScenario` request, DEXPI design-conditions, limit-basis policy, and blocked-outlet overpressure screening |
+| [AI-HAZOP Input Data Format](ai_hazop_input_format.md) | Required input-data format for a P&ID Safety Analyser / AI-HAZOP front-end: process model JSON, per-deviation `runHazopScenario` request, DEXPI design-conditions, limit-basis policy, and blocked-outlet overpressure screening |
 | [Open Drain Review with NeqSim Evidence](open_drain_review.md) | NORSOK S-001 Clause 9 review using NeqSim-calculated liquid leak rate, firewater load, density, pressure, and drain capacity plus STID/tagreader evidence |
 
 | [Barrier Management and SCE Traceability](barrier_management.md) | Evidence-linked PSFs, SCEs, performance standards, and safety-analysis handoffs |
@@ -63,6 +63,7 @@ This folder contains guides for implementing safety systems in process simulatio
 |----------|-------------|
 | [fire_blowdown_capabilities.md](fire_blowdown_capabilities) | Fire case blowdown simulation |
 | [fire_heat_transfer_enhancements.md](fire_heat_transfer_enhancements) | Fire heat transfer modeling |
+| [Vessel Thermomechanical Safety](vessel_thermomechanical_safety.md) | Transient non-equilibrium blowdown, fast filling, cryogenic boil-off, composite-wall conduction, and fire/blowdown wall rupture |
 | [Trapped Liquid Fire Rupture](trapped_liquid_fire_rupture.md) | Blocked-in liquid segment fire rupture screening with material, flange, PFP, and source-term handoff |
 
 ### Relief Systems
@@ -72,6 +73,7 @@ This folder contains guides for implementing safety systems in process simulatio
 | [Trapped Inventory Calculator](trapped_inventory_calculator.md) | Evidence-linked trapped inventory for isolation, blowdown, flare-load, and MDMT screening |
 | [Trapped Liquid Fire Rupture](trapped_liquid_fire_rupture.md) | Fire exposure, thermal expansion, pipe/flange failure screening, PFP demand, and source-term handoff |
 | [psv_dynamic_sizing_example.md](psv_dynamic_sizing_example) | Pressure Safety Valve dynamic sizing |
+| [Vessel Thermomechanical Safety](vessel_thermomechanical_safety.md) | Dynamic PSV sizing vs steady-state API 521 conservatism, plus blowdown, filling, boil-off, and rupture models |
 | [rupture_disk_dynamic_behavior.md](rupture_disk_dynamic_behavior) | Rupture disk dynamic behavior |
 
 ### Alarms

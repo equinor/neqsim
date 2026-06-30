@@ -9,7 +9,7 @@
 
 ---
 
-## 2026-07-?? — AI-HAZOP (Wisting) pipeline: per-deviation quantification, DEXPI design conditions, blocked-outlet overpressure, limit-basis provenance
+## 2026-07-?? — AI-HAZOP pipeline: per-deviation quantification, DEXPI design conditions, blocked-outlet overpressure, limit-basis provenance
 
 ### Summary
 

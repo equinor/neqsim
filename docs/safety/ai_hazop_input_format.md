@@ -1,9 +1,9 @@
 ---
-title: "AI-HAZOP Input Data Format (Wisting Pipeline)"
+title: "AI-HAZOP Input Data Format"
 description: "Required input-data format for connecting a browser P&ID Safety Analyser / AI-HAZOP tool to NeqSim for quantified consequence simulation of HAZOP deviations, DEXPI design-conditions export, blocked-outlet overpressure screening, and per-deviation MCP scenario quantification."
 ---
 
-# AI-HAZOP Input Data Format (Wisting Pipeline)
+# AI-HAZOP Input Data Format
 
 This page documents the data a P&ID Safety Analyser / AI-HAZOP front-end (for
 example a browser tool, v3.2+) must provide so NeqSim can **quantify** each HAZOP
