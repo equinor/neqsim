@@ -38,7 +38,7 @@ try:
     from docx.shared import Inches, Pt, RGBColor
     from docx.enum.text import WD_ALIGN_PARAGRAPH
     from docx.enum.table import WD_TABLE_ALIGNMENT
-    from docx.oxml.ns import nsdecls
+    from docx.oxml.ns import nsdecls, qn
     from docx.oxml import parse_xml
 except ImportError:
     print("ERROR: python-docx not installed. Run: pip install python-docx")
@@ -2134,7 +2134,22 @@ def _add_word_toc(doc):
         '<w:fldChar {} w:fldCharType="end"/>'.format(nsdecls("w"))
     )
     run5._r.append(fldChar3)
+    # Tell Word to update all fields (incl. this TOC) when the document is opened
+    _set_update_fields_on_open(doc)
     doc.add_page_break()
+
+
+def _set_update_fields_on_open(doc):
+    """Flag the document so Word refreshes all fields (TOC, page numbers) on open."""
+    settings = doc.settings.element
+    update = settings.find(qn("w:updateFields"))
+    if update is None:
+        update = parse_xml(
+            '<w:updateFields {} w:val="true"/>'.format(nsdecls("w"))
+        )
+        settings.append(update)
+    else:
+        update.set(qn("w:val"), "true")
 
 
 def build_word_report(sections, results=None):
