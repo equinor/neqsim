@@ -16,6 +16,11 @@ The NeqSim workflow is generic and industry-standard based. It does not encode o
 5. Review event times for relief demand, vapor-pocket indication, pipe rupture, and flange failure.
 6. Convert the result to a passive fire protection demand or a release source term when consequence analysis is needed.
 
+For a fast, fire-independent check of pure thermal-expansion overpressure in a blocked-in liquid
+segment (e.g. before deciding whether a fire-exposure rupture study is warranted at all), see
+[Blocked-In Liquid Thermal Expansion Screening](blocked_in_liquid_thermal_expansion.md)
+(`BlockedInLiquidExpansionAnalysis`, in `neqsim.process.util.fire`).
+
 ## Java Example
 
 ```java

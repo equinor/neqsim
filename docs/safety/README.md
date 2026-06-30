@@ -65,6 +65,7 @@ This folder contains guides for implementing safety systems in process simulatio
 | [fire_heat_transfer_enhancements.md](fire_heat_transfer_enhancements) | Fire heat transfer modeling |
 | [Vessel Thermomechanical Safety](vessel_thermomechanical_safety.md) | Transient non-equilibrium blowdown, fast filling, cryogenic boil-off, composite-wall conduction, and fire/blowdown wall rupture |
 | [Trapped Liquid Fire Rupture](trapped_liquid_fire_rupture.md) | Blocked-in liquid segment fire rupture screening with material, flange, PFP, and source-term handoff |
+| [Blocked-In Liquid Thermal Expansion](blocked_in_liquid_thermal_expansion.md) | Isochoric pressure-rise screening (API 521 §4.4.12) for blocked-in liquid segments, independent of fire exposure |
 
 ### Relief Systems
 
@@ -72,6 +73,7 @@ This folder contains guides for implementing safety systems in process simulatio
 |----------|-------------|
 | [Trapped Inventory Calculator](trapped_inventory_calculator.md) | Evidence-linked trapped inventory for isolation, blowdown, flare-load, and MDMT screening |
 | [Trapped Liquid Fire Rupture](trapped_liquid_fire_rupture.md) | Fire exposure, thermal expansion, pipe/flange failure screening, PFP demand, and source-term handoff |
+| [Blocked-In Liquid Thermal Expansion](blocked_in_liquid_thermal_expansion.md) | Isochoric pressure-rise screening and simplified beta/kappa relation for blocked-in liquid thermal relief screening |
 | [psv_dynamic_sizing_example.md](psv_dynamic_sizing_example) | Pressure Safety Valve dynamic sizing |
 | [Vessel Thermomechanical Safety](vessel_thermomechanical_safety.md) | Dynamic PSV sizing vs steady-state API 521 conservatism, plus blowdown, filling, boil-off, and rupture models |
 | [rupture_disk_dynamic_behavior.md](rupture_disk_dynamic_behavior) | Rupture disk dynamic behavior |
