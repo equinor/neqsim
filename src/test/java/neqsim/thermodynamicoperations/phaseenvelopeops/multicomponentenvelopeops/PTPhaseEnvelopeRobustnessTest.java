@@ -1251,4 +1251,78 @@ public class PTPhaseEnvelopeRobustnessTest {
     assertEquals(0.0, crit3[0], 1e-10, "criticalPoint3 T should be 0");
     assertEquals(0.0, crit3[1], 1e-10, "criticalPoint3 P should be 0");
   }
+
+  // ========================== JUMP-BREAK (NO SPURIOUS CHORDS) ==========================
+
+  /**
+   * Asserts that consecutive non-NaN points within a single saturation branch are never separated by more than the
+   * jump-break threshold (3x the maximum continuation step in both T and P). The phase-envelope tracer returns
+   * saturation branches as disjoint sub-branches whose order is run-dependent; without a scale-aware jump break two
+   * far-apart points can become adjacent in the output arrays and a naive plotter draws a spurious straight diagonal
+   * chord across the envelope. {@code insertJumpBreaks()} inserts NaN sentinels at such discontinuities so that each
+   * contiguous non-NaN run is a genuine continuation segment. This is the source-side equivalent of the notebook-level
+   * jump-break workaround.
+   *
+   * @param T branch temperature array (K), NaN entries are sentinels
+   * @param P branch pressure array (bara), parallel to {@code T}
+   * @param name human-readable branch name for assertion messages
+   */
+  private void assertNoSpuriousChords(double[] T, double[] P, String name) {
+    // 3x the max continuation step (dTmax=dPmax=10) => 30 K / 30 bara, matching JUMP_BREAK_FACTOR.
+    final double dTbreak = 30.0;
+    final double dPbreak = 30.0;
+    for (int i = 1; i < T.length; i++) {
+      if (Double.isNaN(T[i]) || Double.isNaN(T[i - 1])) {
+        continue;
+      }
+      double dT = Math.abs(T[i] - T[i - 1]);
+      double dP = Math.abs(P[i] - P[i - 1]);
+      assertTrue(dT <= dTbreak && dP <= dPbreak, name + " has a spurious chord between index " + (i - 1) + " and " + i
+          + ": dT=" + dT + " K, dP=" + dP + " bara (limit dT=" + dTbreak + ", dP=" + dPbreak + ")");
+    }
+  }
+
+  /**
+   * Regression test for the source-side jump-break fix in {@link PTPhaseEnvelopeMichelsen}. A lean natural gas envelope
+   * must contain no spurious straight diagonal chord: every pair of consecutive non-NaN points on both the dew and
+   * bubble branches must be within the jump-break threshold. The cricondentherm and cricondenbar (tracked live during
+   * the trace, independent of the output arrays) must remain physically consistent and are unaffected by sentinel
+   * insertion.
+   */
+  @Test
+  void testNoSpuriousChordsLeanGas() {
+    SystemInterface fluid = new SystemSrkEos(273.15, 50.0);
+    fluid.addComponent("nitrogen", 0.01);
+    fluid.addComponent("CO2", 0.02);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.06);
+    fluid.addComponent("propane", 0.03);
+    fluid.addComponent("i-butane", 0.01);
+    fluid.addComponent("n-butane", 0.015);
+    fluid.addComponent("i-pentane", 0.005);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+    ops.calcPTphaseEnvelope();
+
+    double[] dewT = ops.get("dewT");
+    double[] dewP = ops.get("dewP");
+    double[] bubT = ops.get("bubT");
+    double[] bubP = ops.get("bubP");
+
+    assertNotNull(dewT, "Should have dew curve");
+    assertNotNull(bubT, "Should have bubble curve");
+    assertEquals(dewT.length, dewP.length, "dewT and dewP must be equal length");
+    assertEquals(bubT.length, bubP.length, "bubT and bubP must be equal length");
+
+    assertNoSpuriousChords(dewT, dewP, "Dew curve");
+    assertNoSpuriousChords(bubT, bubP, "Bubble curve");
+
+    // Cricondentherm/cricondenbar are tracked live during the trace, so NaN sentinel
+    // insertion in the output arrays must not move them.
+    double[] cct = ops.get("cricondentherm");
+    double[] ccb = ops.get("cricondenbar");
+    assertTrue(cct[0] > 220.0 && cct[0] < 280.0, "Cricondentherm T should be physically reasonable, got " + cct[0]);
+    assertTrue(ccb[1] > 50.0 && ccb[1] < 120.0, "Cricondenbar P should be physically reasonable, got " + ccb[1]);
+  }
 }
