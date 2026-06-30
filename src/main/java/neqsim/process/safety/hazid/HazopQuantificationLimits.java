@@ -35,7 +35,9 @@ public final class HazopQuantificationLimits implements Serializable {
   /** Default maximum discharge temperature in degrees Celsius (API 617 screening value). */
   public static final double DEFAULT_MAX_DISCHARGE_TEMPERATURE_C = 150.0;
 
-  /** Default minimum design metal temperature in degrees Celsius (ASME UCS-66 low-temperature carbon steel). */
+  /**
+   * Default minimum design metal temperature in degrees Celsius (ASME UCS-66 low-temperature carbon steel).
+   */
   public static final double DEFAULT_MIN_DESIGN_METAL_TEMPERATURE_C = -46.0;
 
   private double maxDischargeTemperatureC = DEFAULT_MAX_DISCHARGE_TEMPERATURE_C;
@@ -120,5 +122,52 @@ public final class HazopQuantificationLimits implements Serializable {
   public double minDesignMetalTemperatureC(String unitName) {
     Double override = unitName == null ? null : minDesignMetalTemperatureByUnit.get(unitName);
     return override != null ? override.doubleValue() : minDesignMetalTemperatureC;
+  }
+
+  /**
+   * Produces an auditable basis string explaining the maximum discharge temperature limit applied to a unit, stating
+   * the value, whether it is a per-unit override or the screening default, and the governing standard.
+   *
+   * @param unitName the unit operation name
+   * @return a human-readable provenance string for the maximum discharge temperature limit
+   */
+  public String basisForMaxDischargeTemperature(String unitName) {
+    boolean hasOverride = unitName != null && maxDischargeTemperatureByUnit.containsKey(unitName);
+    double value = maxDischargeTemperatureC(unitName);
+    if (hasOverride) {
+      return String.format(java.util.Locale.ROOT,
+          "Max discharge temperature %.1f C (per-unit override for '%s'; basis: equipment data sheet / API 617)", value,
+          unitName);
+    }
+    return String.format(java.util.Locale.ROOT,
+        "Max discharge temperature %.1f C (screening default; basis: API 617 / API 521)", value);
+  }
+
+  /**
+   * Produces an auditable basis string explaining the minimum design metal temperature (MDMT) limit applied to a unit,
+   * stating the value, whether it is a per-unit override or the screening default, and the governing standard.
+   *
+   * @param unitName the unit operation name
+   * @return a human-readable provenance string for the minimum design metal temperature limit
+   */
+  public String basisForMinDesignMetalTemperature(String unitName) {
+    boolean hasOverride = unitName != null && minDesignMetalTemperatureByUnit.containsKey(unitName);
+    double value = minDesignMetalTemperatureC(unitName);
+    if (hasOverride) {
+      return String.format(java.util.Locale.ROOT,
+          "MDMT %.1f C (per-unit override for '%s'; basis: material certificate / ASME UCS-66)", value, unitName);
+    }
+    return String.format(java.util.Locale.ROOT,
+        "MDMT %.1f C (screening default; basis: ASME UCS-66 low-temperature carbon steel / API 521)", value);
+  }
+
+  /**
+   * Serialise the effective limits and any per-unit overrides to a pretty-printed JSON object so the policy used for a
+   * HAZOP screening run is auditable.
+   *
+   * @return JSON representation of the limits holder
+   */
+  public String toJson() {
+    return new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(this);
   }
 }

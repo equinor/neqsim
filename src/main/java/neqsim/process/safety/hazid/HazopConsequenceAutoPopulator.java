@@ -353,13 +353,14 @@ public final class HazopConsequenceAutoPopulator implements Serializable {
           "Discharge temperature could not be read; ensure the flowsheet has been run.");
     }
     double limit = limits.maxDischargeTemperatureC(name);
+    String basis = limits.basisForMaxDischargeTemperature(name);
     boolean exceeds = outletC.doubleValue() > limit;
     HazopConsequenceFinding.Verdict verdict = exceeds ? HazopConsequenceFinding.Verdict.EXCEEDS
         : HazopConsequenceFinding.Verdict.PASS;
     String message = String.format(Locale.ROOT, "Discharge temperature %.1f C %s maximum allowable %.1f C.",
         outletC.doubleValue(), exceeds ? "EXCEEDS" : "within", limit);
     return new HazopConsequenceFinding(nodeId, name, GuideWord.MORE, Parameter.TEMPERATURE, outletC.doubleValue(),
-        limit, "C", verdict, calculator, standard, message);
+        limit, "C", verdict, calculator, standard, message, basis);
   }
 
   /**
@@ -382,6 +383,7 @@ public final class HazopConsequenceAutoPopulator implements Serializable {
           "Outlet temperature could not be read; ensure the flowsheet has been run.");
     }
     double limit = limits.minDesignMetalTemperatureC(name);
+    String basis = limits.basisForMinDesignMetalTemperature(name);
     boolean exceeds = outletC.doubleValue() < limit;
     HazopConsequenceFinding.Verdict verdict = exceeds ? HazopConsequenceFinding.Verdict.EXCEEDS
         : HazopConsequenceFinding.Verdict.PASS;
@@ -389,7 +391,7 @@ public final class HazopConsequenceAutoPopulator implements Serializable {
         "Auto-refrigeration outlet temperature %.1f C %s minimum design metal temperature %.1f C.",
         outletC.doubleValue(), exceeds ? "is BELOW" : "stays at or above", limit);
     return new HazopConsequenceFinding(nodeId, name, GuideWord.LESS, Parameter.TEMPERATURE, outletC.doubleValue(),
-        limit, "C", verdict, calculator, standard, message);
+        limit, "C", verdict, calculator, standard, message, basis);
   }
 
   /**

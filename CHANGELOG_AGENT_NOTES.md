@@ -9,6 +9,53 @@
 
 ---
 
+## 2026-07-?? — AI-HAZOP (Wisting) pipeline: per-deviation quantification, DEXPI design conditions, blocked-outlet overpressure, limit-basis provenance
+
+### Summary
+
+Closes the loop between a qualitative HAZOP grid (browser P&ID Safety Analyser /
+AI-HAZOP front-end) and simulation-backed verdicts. Five additive gaps, no
+breaking change.
+
+### What's new (all additive)
+
+- **Per-deviation MCP scenario quantification** — `runHazopScenario` MCP tool
+  backed by `neqsim.mcp.runners.HazopScenarioRunner`. Accepts a process model +
+  optional `guideWord`/`parameter`/`nodeTag`/`limits` and returns a stable
+  `schemaVersion="1.0"` response with per-finding `computedValue`,
+  `designLimit`, `verdict`, `calculator`, `standardReference`, and `limitBasis`.
+  Example registered as `safetyHazopScenario()` in `ExampleCatalog` (key
+  `hazop-scenario`).
+- **DEXPI design-conditions export** — `neqsim.process.mechanicaldesign.DesignConditions`
+  (design pressure, max/min design temperature, relief set pressure, corrosion
+  allowance, construction material, failure action). Attached per equipment via
+  `ProcessEquipmentInterface.getDesignConditions()` (lazy-created) and exported
+  by `dexpi/DexpiXmlWriter` as a `GenericAttributes Set="DesignConditions"`
+  group.
+- **Blocked-outlet overpressure screening** —
+  `neqsim.process.safety.depressurization.BlockedOutletOverpressureAnalyzer`
+  wraps `VesselFillingSimulator` for MORE PRESSURE / blocked-outlet deviations
+  per API 521 §4.4 (time-to-relief-set, relief demand, max pressure).
+- **Limit-basis provenance** — `HazopConsequenceFinding` carries an auditable
+  `limitBasis` (12-arg constructor; 11-arg defaults to `"not specified"`).
+  `HazopQuantificationLimits` holds screening defaults (max discharge temp
+  150 °C / API 617; MDMT −46 °C / ASME UCS-66) with per-unit overrides and
+  basis strings; `HazopConsequenceAutoPopulator.quantify(process, limits)`
+  attaches the basis to each finding.
+
+### Tests
+
+- `DexpiDesignConditionsExportTest` (2), `BlockedOutletOverpressureAnalyzerTest`
+  (3), `HazopScenarioRunnerTest` (4), `HazopConsequenceProvenanceTest` (4) — all
+  pass.
+
+### Docs
+
+- New: `docs/safety/ai_hazop_input_format.md` (input-data format reference);
+  linked from `docs/safety/README.md` and `docs/safety/HAZOP.md`.
+
+---
+
 ## 2026-07-?? — 13 standalone screening & sizing calculators + process bridges + docs
 
 ### Summary

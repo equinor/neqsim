@@ -148,4 +148,45 @@ public final class VesselHeatTransferCorrelations {
     }
     return nusselt * thermalConductivity / characteristicLengthM;
   }
+
+  /**
+   * Rohsenow nucleate pool-boiling heat flux at a wetted, fire-heated wall.
+   *
+   * <p>
+   * {@code q'' = mu_l * h_fg * sqrt(g * (rho_l - rho_v) / sigma) * [ cp_l * dTe / (Csf * h_fg * Pr_l^s) ]^3 } where
+   * {@code dTe = T_wall - T_sat} is the wall superheat. A wall superheat of zero or below returns zero flux. The
+   * Prandtl exponent {@code s} is 1.0 for water and 1.7 for other fluids per Rohsenow's original recommendation.
+   * </p>
+   *
+   * @param liquidDynamicViscosity liquid dynamic viscosity in Pa·s; must be positive
+   * @param latentHeat latent heat of vaporization in J/kg; must be positive
+   * @param liquidDensity saturated-liquid density in kg/m³; must be positive
+   * @param vaporDensity saturated-vapor density in kg/m³; must be non-negative and below the liquid density
+   * @param surfaceTension liquid-vapor surface tension in N/m; must be positive
+   * @param liquidSpecificHeat liquid specific heat at constant pressure in J/(kg·K); must be positive
+   * @param wallSuperheatK wall superheat {@code T_wall - T_sat} in K
+   * @param prandtlLiquid liquid Prandtl number; must be positive
+   * @param surfaceFluidConstant Rohsenow surface-fluid constant Csf (typically 0.006 to 0.013); must be positive
+   * @param prandtlExponent Prandtl exponent s (1.0 for water, 1.7 otherwise); must be positive
+   * @return nucleate boiling heat flux in W/m²
+   * @throws IllegalArgumentException if any argument is out of range
+   */
+  public static double rohsenowNucleateBoilingHeatFlux(double liquidDynamicViscosity, double latentHeat,
+      double liquidDensity, double vaporDensity, double surfaceTension, double liquidSpecificHeat,
+      double wallSuperheatK, double prandtlLiquid, double surfaceFluidConstant, double prandtlExponent) {
+    if (liquidDynamicViscosity <= 0.0 || latentHeat <= 0.0 || liquidDensity <= 0.0 || surfaceTension <= 0.0
+        || liquidSpecificHeat <= 0.0 || prandtlLiquid <= 0.0 || surfaceFluidConstant <= 0.0 || prandtlExponent <= 0.0) {
+      throw new IllegalArgumentException("Rohsenow inputs must be positive");
+    }
+    if (vaporDensity < 0.0 || vaporDensity >= liquidDensity) {
+      throw new IllegalArgumentException("vaporDensity must be non-negative and below liquidDensity");
+    }
+    if (wallSuperheatK <= 0.0) {
+      return 0.0;
+    }
+    double buoyancy = Math.sqrt(GRAVITY * (liquidDensity - vaporDensity) / surfaceTension);
+    double bracket = liquidSpecificHeat * wallSuperheatK
+        / (surfaceFluidConstant * latentHeat * Math.pow(prandtlLiquid, prandtlExponent));
+    return liquidDynamicViscosity * latentHeat * buoyancy * Math.pow(bracket, 3.0);
+  }
 }

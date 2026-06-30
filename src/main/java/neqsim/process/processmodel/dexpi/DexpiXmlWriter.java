@@ -891,6 +891,10 @@ public final class DexpiXmlWriter {
     // Export mechanical design attributes
     appendMechanicalDesignAttributes(document, element, unit);
 
+    // Export declared nameplate design conditions (design P/T, relief set pressure, fail-safe
+    // action)
+    appendDesignConditionsAttributes(document, element, unit);
+
     parent.appendChild(element);
   }
 
@@ -997,9 +1001,9 @@ public final class DexpiXmlWriter {
       appendNumericAttribute(document, attrs, "MaxDesignPressure", md.getMaxDesignPressure(), "bara");
     }
     if (md.getMaxOperationTemperature() > 0) {
-      // Design temperature is typically 1.1x max operating temperature
-      double designTemp = md.getMaxOperationTemperature();
-      appendNumericAttribute(document, attrs, "DesignTemperature", designTemp, "K");
+      // MechanicalDesign stores the maximum operating/design temperature in degrees Celsius.
+      appendNumericAttribute(document, attrs, "DesignTemperature", md.getMaxOperationTemperature(),
+          DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
     }
     if (md.getWeightTotal() > 0) {
       appendNumericAttribute(document, attrs, "WeightTotal", md.getWeightTotal(), "kg");
@@ -1009,6 +1013,56 @@ public final class DexpiXmlWriter {
     }
     if (md.getDuty() > 0) {
       appendNumericAttribute(document, attrs, "DesignDuty", md.getDuty(), "kW");
+    }
+
+    if (attrs.hasChildNodes()) {
+      parent.appendChild(attrs);
+    }
+  }
+
+  /**
+   * Appends a GenericAttributes set with the declared nameplate design conditions for the equipment. Only attributes
+   * that have been explicitly supplied via {@link ProcessEquipmentInterface#getDesignConditions()} are exported, so the
+   * design data survives a P&amp;ID round-trip independently of whether a mechanical sizing run was performed.
+   *
+   * @param document the XML document
+   * @param parent the equipment element
+   * @param unit the process equipment
+   */
+  private static void appendDesignConditionsAttributes(Document document, Element parent,
+      ProcessEquipmentInterface unit) {
+    neqsim.process.mechanicaldesign.DesignConditions dc = unit.getDesignConditions();
+    if (dc == null || dc.isEmpty()) {
+      return;
+    }
+
+    Element attrs = document.createElement("GenericAttributes");
+    attrs.setAttribute("Set", "DesignConditions");
+
+    if (dc.isDesignPressureSet()) {
+      appendNumericAttribute(document, attrs, DexpiMetadata.DESIGN_PRESSURE, dc.getDesignPressure(),
+          DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+    }
+    if (dc.isMaxDesignTemperatureSet()) {
+      appendNumericAttribute(document, attrs, DexpiMetadata.DESIGN_TEMPERATURE, dc.getMaxDesignTemperature(),
+          DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+    }
+    if (dc.isMinDesignTemperatureSet()) {
+      appendNumericAttribute(document, attrs, DexpiMetadata.MINIMUM_DESIGN_TEMPERATURE, dc.getMinDesignTemperature(),
+          DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+    }
+    if (dc.isReliefSetPressureSet()) {
+      appendNumericAttribute(document, attrs, DexpiMetadata.RELIEF_SET_PRESSURE, dc.getReliefSetPressure(),
+          DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+    }
+    if (dc.isCorrosionAllowanceSet()) {
+      appendNumericAttribute(document, attrs, DexpiMetadata.CORROSION_ALLOWANCE, dc.getCorrosionAllowance(), "mm");
+    }
+    if (dc.isConstructionMaterialSet()) {
+      appendGenericAttribute(document, attrs, DexpiMetadata.CONSTRUCTION_MATERIAL, dc.getConstructionMaterial());
+    }
+    if (dc.isFailureActionSet()) {
+      appendGenericAttribute(document, attrs, DexpiMetadata.FAILURE_ACTION, dc.getFailureAction().name());
     }
 
     if (attrs.hasChildNodes()) {

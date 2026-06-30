@@ -83,6 +83,21 @@ public final class DexpiMetadata {
   /** Generic attribute for equipment design temperature (C). */
   public static final String DESIGN_TEMPERATURE = "DesignTemperature";
 
+  /** Generic attribute for equipment minimum design temperature (C). */
+  public static final String MINIMUM_DESIGN_TEMPERATURE = "MinimumDesignTemperature";
+
+  /** Generic attribute for relief device set pressure (bara). */
+  public static final String RELIEF_SET_PRESSURE = "ReliefSetPressure";
+
+  /** Generic attribute for equipment corrosion allowance (mm). */
+  public static final String CORROSION_ALLOWANCE = "CorrosionAllowance";
+
+  /** Generic attribute for equipment construction material. */
+  public static final String CONSTRUCTION_MATERIAL = "ConstructionMaterial";
+
+  /** Generic attribute for equipment failure action. */
+  public static final String FAILURE_ACTION = "FailureAction";
+
   /** Generic attribute for vessel orientation (Horizontal or Vertical). */
   public static final String ORIENTATION = "Orientation";
 
