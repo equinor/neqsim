@@ -11,8 +11,8 @@
     <description>Model Context Protocol (MCP) server exposing NeqSim thermodynamic calculations and process simulation to LLMs</description>
 
     <properties>
-        <quarkus.version>3.33.2</quarkus.version>
-        <mcp-server.version>1.12.1</mcp-server.version>
+        <quarkus.version>3.37.0</quarkus.version>
+        <mcp-server.version>1.13.0</mcp-server.version>
         <!-- Keep in sync with ../pom.xml <revision> property until a parent/module build is used. -->
         <revision>3.14.0</revision>
         <neqsim.version>${revision}</neqsim.version>
