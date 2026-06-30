@@ -10,43 +10,50 @@ public abstract class BaseUnit implements Unit, neqsim.thermo.ThermodynamicConst
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  /** Process value in SI units */
-  protected double SIvalue = 0.0;
-
   /** Process value in given unit */
-  protected double invalue = 0.0;
+  protected double invalue;
   /** Unit of process value */
-  protected String inunit = null;
-
-  /** Conversion factor */
-  protected double factor = 1.0;
+  protected String inunit;
 
   /**
    * Constructor for BaseUnit.
    *
    * @param value a double
-   * @param name a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
-  public BaseUnit(double value, String name) {
+  public BaseUnit(double value, String unit) {
+    Unit.validateUnitInput(unit, "unit");
     this.invalue = value;
-    this.inunit = name;
+    this.inunit = unit;
   }
 
-  /** {@inheritDoc} */
   @Override
   public double getSIvalue() {
-    return SIvalue;
+    throw new UnsupportedOperationException("Unimplemented method 'getSIvalue'");
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getValue(double val, String fromunit, String tounit) {
+  public double getValue(String toUnit) {
     throw new UnsupportedOperationException("Unimplemented method 'getValue'");
   }
 
-  /** {@inheritDoc} */
+  /**
+   * <p>
+   * Convert value from a specified unit to a specified unit.
+   * </p>
+   *
+   * @param value a double
+   * @param unit a {@link java.lang.String} object
+   * @param toUnit a {@link java.lang.String} object
+   * @return a double
+   * @deprecated Use the static convert method on the concrete unit class instead (e.g., TemperatureUnit.convert,
+   * LengthUnit.convert). This method delegates to the Unit interface's default getValue(double, String, String) which
+   * uses reflection.
+   */
+  @Deprecated
   @Override
-  public double getValue(String fromunit) {
-    throw new UnsupportedOperationException("Unimplemented method 'getValue'");
+  public double getValue(double value, String unit, String toUnit) {
+    return Unit.super.getValue(value, unit, toUnit);
   }
 }

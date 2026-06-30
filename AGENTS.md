@@ -1199,5 +1199,7 @@ This policy applies to ALL agents that produce Jupyter notebooks.
 
 All classes and methods need complete JavaDoc (class description, `@param`,
 `@return`, `@throws`). HTML5-compatible: use `<caption>` in tables, no
-`summary` attribute, no `@see` with plain text. Run `./mvnw javadoc:javadoc`
+`summary` attribute, no `@see` with plain text, and note that `<ul>`/`<ol>`
+implicitly close the current paragraph so a trailing `</p>` after a list breaks
+JavaDoc HTML. Run `./mvnw javadoc:javadoc`
 to verify.
