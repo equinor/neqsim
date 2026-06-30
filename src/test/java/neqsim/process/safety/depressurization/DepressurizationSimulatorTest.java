@@ -136,4 +136,37 @@ public class DepressurizationSimulatorTest {
 
     assertEquals(8.333333333, result.timeToHalfPressure, 1.0e-6);
   }
+
+  /**
+   * A temperature-dependent fire preset routed directly to the fluid must add heat and keep the fluid hotter than the
+   * equivalent cold (no-fire) blowdown, while the absorbed flux self-limits via surface re-radiation.
+   */
+  @Test
+  public void temperatureDependentFireAddsHeatVersusColdBlowdown() {
+    double vesselVolumeM3 = 30.0;
+    double orificeM = 0.030;
+    double backPressurePa = 2.0e5;
+
+    DepressurizationSimulator cold = new DepressurizationSimulator(buildGas(90.0, 40.0), vesselVolumeM3, orificeM, 0.85,
+        backPressurePa);
+    cold.setFireHeatInput(0.0);
+    cold.setTimeStep(1.0);
+    cold.setMaxTime(300.0);
+    cold.setStopPressure(1.5e5);
+    DepressurizationSimulator.DepressurizationResult coldRes = cold.run();
+
+    DepressurizationSimulator fire = new DepressurizationSimulator(buildGas(90.0, 40.0), vesselVolumeM3, orificeM, 0.85,
+        backPressurePa);
+    fire.setFireExposure(neqsim.process.util.fire.FirePreset.JET_FIRE_PEAK, 25.0);
+    fire.setTimeStep(1.0);
+    fire.setMaxTime(300.0);
+    fire.setStopPressure(1.5e5);
+    DepressurizationSimulator.DepressurizationResult fireRes = fire.run();
+
+    double coldFinalT = coldRes.temperatureK.get(coldRes.temperatureK.size() - 1);
+    double fireFinalT = fireRes.temperatureK.get(fireRes.temperatureK.size() - 1);
+    assertTrue(fireFinalT > coldFinalT,
+        "fire-exposed fluid must end hotter than cold blowdown, " + fireFinalT + " vs " + coldFinalT + " K");
+    assertTrue(Double.isFinite(fireRes.maxFluidTemperatureK), "fire-case temperature must remain finite");
+  }
 }
