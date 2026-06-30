@@ -274,6 +274,67 @@ boolean ok    = esd.isWithinBudget();
 This is a budgeting tool — it does not replace certified SIS proof testing or
 FAT/SAT. Pair with `neqsim-process-safety` for the SIL determination of the SIF.
 
+## Method 7 — Vessel Thermomechanical Safety Models
+
+When a single-temperature lumped model is not enough — gas/liquid temperature
+bifurcation in a fire, transient PSV sizing conservatism, fast filling, cryogenic
+boil-off, through-wall thermal lag, or wall rupture — use the dedicated
+thermomechanical classes. They reproduce the application cases of Andreasen
+(2026), *J. Loss Prev. Process Ind.* 103, 106088, and are covered by committed
+regression tests. See `docs/safety/vessel_thermomechanical_safety.md` for the
+full guide.
+
+```java
+// Two-temperature (non-equilibrium) fire blowdown — gas superheats, liquid stays cold
+import neqsim.process.safety.depressurization.NonEquilibriumBlowdownModel;
+import neqsim.process.safety.depressurization.NonEquilibriumBlowdownModel.NemResult;
+NonEquilibriumBlowdownModel nem =
+    new NonEquilibriumBlowdownModel(fluid, 10.0, 0.025, 0.72, 1.0e5);
+nem.setFireExposure(0.9, 1100.0, 30.0, 25.0).setWall(8000.0, 470.0);
+nem.setTimeStep(1.0).setMaxTime(600.0).setStopPressure(1.5e5);
+NemResult bd = nem.run();
+double bifurcationK = bd.maxTemperatureBifurcationK;
+
+// Dynamic PSV sizing — quantify API 521 steady-state oversizing (§4.1)
+import neqsim.process.safety.depressurization.DynamicPsvSizingStudy;
+DynamicPsvSizingStudy.SizingComparison cmp =
+    new DynamicPsvSizingStudy(gas, 1.0, 150000.0, 11.0e5, 0.21, 1.0e5)
+        .setBlowdownFraction(0.1).setDischargeCoefficient(0.975).run();
+double oversizing = cmp.oversizingRatio; // > 1 => steady-state conservative
+
+// Fast filling of a Type IV hydrogen cylinder — liner temperature limits (§4.2)
+import neqsim.process.safety.depressurization.VesselFillingSimulator;
+VesselFillingSimulator.VesselFillingResult fill =
+    new VesselFillingSimulator(h2, 0.06)
+        .setInletConditions(283.15, 360.0, 0.015)
+        .setTargetPressure(351.0)
+        .setLinerTemperatureLimits(233.15, 338.15)
+        .setTimeStep(1.0).setMaxTime(4000.0).run();
+boolean linerOk = fill.linerLimitsMet;
+
+// Cryogenic boil-off vs insulation thickness (§4.3)
+import neqsim.process.util.heattransfer.BoilOffCalculator;
+double boilOff = new BoilOffCalculator()
+    .setSurfaceArea(150.0).setOuterFilmCoefficient(10.0)
+    .setInsulationConductivity(0.025).setAmbientTemperatureK(288.15)
+    .setFluidTemperatureK(253.15).setLatentHeat(320000.0)
+    .boilOffRateKgPerH(0.30);
+
+// Fire/blowdown wall rupture vs temperature-derated strength (§4.4)
+import neqsim.process.safety.rupture.VesselRuptureAnalyzer;
+import neqsim.process.safety.rupture.MaterialStrengthCurve;
+MaterialStrengthCurve steel = MaterialStrengthCurve.carbonSteel("CS", 245.0e6, 415.0e6);
+VesselRuptureAnalyzer.VesselRuptureResult rup =
+    new VesselRuptureAnalyzer(0.5, 0.012, steel).analyze(timeS, pressurePa, metalTempK);
+boolean ruptured = rup.ruptured; // bare LPG vessel ruptures in minutes; PFP prevents it
+```
+
+Supporting classes: `CompositeWallConduction` (1D transient multi-layer wall,
+Crank-Nicolson; use the static `biotNumber(...)` helper — lumped is fine for
+`Bi < 0.1`), `VesselHeatTransferCorrelations` (Woodfield filling Nusselt,
+Rohsenow nucleate boiling), and `BlockedOutletOverpressureAnalyzer` (blocked-in
+charging overpressure with relief-demand flag).
+
 ## Common Pitfalls
 
 - **Adiabatic vs fire case** — running adiabatic blowdown gives the *coldest*
@@ -297,6 +358,7 @@ FAT/SAT. Pair with `neqsim-process-safety` for the SIL determination of the SIF.
 
 ```bash
 ./mvnw test -Dtest=DepressurizationSimulatorTest,MDMTCalculatorTest,MultiVesselBlowdownStudyTest,EsdResponseTimeSimulatorTest
+./mvnw test -Dtest=DynamicPsvSizingStudyTest,VesselFillingSimulatorTest,VesselRuptureAnalyzerTest,BoilOffCalculatorTest
 ```
 
 ## See Also

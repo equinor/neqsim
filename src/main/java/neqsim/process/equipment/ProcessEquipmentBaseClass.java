@@ -88,6 +88,12 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   private ReferenceDesignation referenceDesignation = new ReferenceDesignation();
 
   /**
+   * Declared nameplate design conditions (design pressure, design temperatures, relief set pressure, construction
+   * material, fail-safe action) for this equipment. Lazily created on first access.
+   */
+  private neqsim.process.mechanicaldesign.DesignConditions designConditions = null;
+
+  /**
    * Capacity constraints for this equipment, keyed by constraint name. Marked transient because
    * {@link CapacityConstraint} instances may hold non-serializable lambda value suppliers. After deserialization,
    * subclasses should call {@link #initializeDefaultConstraints()} to rebuild.
@@ -211,6 +217,21 @@ public abstract class ProcessEquipmentBaseClass extends SimulationBaseClass impl
   @Override
   public MechanicalDesign getMechanicalDesign() {
     return new MechanicalDesign(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public neqsim.process.mechanicaldesign.DesignConditions getDesignConditions() {
+    if (designConditions == null) {
+      designConditions = new neqsim.process.mechanicaldesign.DesignConditions();
+    }
+    return designConditions;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDesignConditions(neqsim.process.mechanicaldesign.DesignConditions designConditions) {
+    this.designConditions = designConditions;
   }
 
   /** {@inheritDoc} */

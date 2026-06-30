@@ -66,6 +66,15 @@ It accepts a standard `runProcess` JSON definition plus extracted nodes,
 safeguards, evidence references, failure modes, and an optional barrier register.
 It returns HAZOP rows with scenario-simulation evidence and report markdown.
 
+To quantify a single deviation from a P&ID Safety Analyser / AI-HAZOP front-end,
+use MCP `runHazopScenario` (`neqsim.mcp.runners.HazopScenarioRunner`). The
+deviation→calculation auto-population is driven by
+`neqsim.process.safety.hazid.HazopConsequenceAutoPopulator.quantify(...)`, and
+each `HazopConsequenceFinding` records a `verdict`, a `standardReference`, and a
+`limitBasis` provenance string (default screening limit vs per-unit data-sheet
+override from `HazopQuantificationLimits`). See
+`docs/safety/ai_hazop_input_format.md`.
+
 ## Method 2 — FMEA / FMECA
 
 ```java

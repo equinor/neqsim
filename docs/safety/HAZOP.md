@@ -73,6 +73,8 @@ simulation, use the MCP `runHAZOP` runner documented in
 
 ## See also
 
+- [AI-HAZOP Input Data Format](ai_hazop_input_format.md)
+- [Automated HAZOP from STID and Simulation](automated_hazop_from_stid.md)
 - [FMEA Worksheet](FMEA.md)
 - [Event and Fault Trees](event_fault_trees.md)
 - [Dispersion and Consequence Analysis](dispersion_and_consequence.md)

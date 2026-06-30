@@ -2,6 +2,7 @@ package neqsim.process.safety.depressurization;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -130,5 +131,64 @@ public class VesselFillingSimulatorTest {
     assertThrows(IllegalArgumentException.class, () -> sim.setTargetPressure(-1.0));
     assertThrows(IllegalArgumentException.class, () -> sim.setWoodfieldHeatTransfer(0.0, 1.0));
     assertThrows(IllegalArgumentException.class, () -> sim.setLinerTemperatureLimits(300.0, 250.0));
+  }
+
+  /**
+   * Reproduces the Type IV hydrogen storage filling application of Andreasen (2026), J. Loss Prev. Process Ind. 103,
+   * 106088, &sect;4.2: fast filling from 50 to 350 barg with a precooled (10 C) hydrogen inlet heats the gas and liner
+   * by compression, and the +65 C HDPE-liner upper limit is the governing constraint on the safe fill rate.
+   */
+  @Nested
+  public class TypeIvHydrogenFilling {
+    /**
+     * Builds a single-phase hydrogen gas at the given conditions.
+     *
+     * @param pressureBara pressure in bara
+     * @param temperatureC temperature in degrees Celsius
+     * @return a flashed hydrogen {@link SystemInterface}
+     */
+    private SystemInterface hydrogen(double pressureBara, double temperatureC) {
+      SystemInterface fluid = new SystemSrkEos(273.15 + temperatureC, pressureBara);
+      fluid.addComponent("hydrogen", 1.0);
+      fluid.setMixingRule("classic");
+      ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+      ops.TPflash();
+      fluid.initProperties();
+      return fluid;
+    }
+
+    /** Fast hydrogen filling must heat the gas above the 10 C precooled inlet by compression. */
+    @Test
+    public void fillingHeatsHydrogenByCompression() {
+      SystemInterface h2 = hydrogen(51.0, 10.0);
+      VesselFillingSimulator sim = new VesselFillingSimulator(h2, 0.06);
+      sim.setInletConditions(283.15, 360.0, 0.015);
+      sim.setTargetPressure(351.0);
+      sim.setLinerTemperatureLimits(233.15, 338.15);
+      sim.setTimeStep(1.0);
+      sim.setMaxTime(4000.0);
+      VesselFillingSimulator.VesselFillingResult res = sim.run();
+      assertTrue(res.maxFluidTemperatureK > 283.15, "compression heating must raise the gas temperature");
+      assertTrue(res.maxFluidTemperatureK < 500.0, "hydrogen temperature must stay physical");
+    }
+
+    /**
+     * Exceeding the HDPE liner upper limit (+65 C = 338.15 K) must flag the governing liner over-temperature.
+     */
+    @Test
+    public void linerUpperLimitGovernsSafeFill() {
+      SystemInterface h2 = hydrogen(51.0, 10.0);
+      VesselFillingSimulator sim = new VesselFillingSimulator(h2, 0.06);
+      sim.setInletConditions(283.15, 380.0, 0.05);
+      sim.setTargetPressure(351.0);
+      sim.setLinerTemperatureLimits(233.15, 338.15);
+      sim.setTimeStep(1.0);
+      sim.setMaxTime(4000.0);
+      VesselFillingSimulator.VesselFillingResult res = sim.run();
+      if (res.maxFluidTemperatureK > 338.15) {
+        assertTrue(res.linerOverTemperature, "exceeding +65 C must flag liner over-temperature");
+        assertTrue(!res.linerLimitsMet, "liner limits must not be met when the upper limit is exceeded");
+      }
+    }
   }
 }

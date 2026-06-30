@@ -902,6 +902,25 @@ public final class ExampleCatalog {
         + "      }\n" + "    ]\n" + "  }\n" + "}";
   }
 
+  /**
+   * Returns a single-deviation HAZOP scenario example for HazopScenarioRunner.run().
+   *
+   * @return JSON string for HazopScenarioRunner.run()
+   */
+  public static String safetyHazopScenario() {
+    return "{\n" + "  \"nodeTag\": \"2nd Stage\",\n" + "  \"guideWord\": \"MORE\",\n"
+        + "  \"parameter\": \"TEMPERATURE\",\n" + "  \"limits\": {\n" + "    \"maxDischargeTemperatureC\": 150.0,\n"
+        + "    \"maxDischargeTemperatureByUnit\": {\"2nd Stage\": 170.0}\n" + "  },\n" + "  \"process\": {\n"
+        + "    \"fluid\": {\n" + "      \"model\": \"SRK\",\n" + "      \"temperature\": 298.15,\n"
+        + "      \"pressure\": 10.0,\n" + "      \"mixingRule\": \"classic\",\n" + "      \"components\": {\n"
+        + "        \"methane\": 0.90,\n" + "        \"ethane\": 0.07,\n" + "        \"propane\": 0.03\n" + "      }\n"
+        + "    },\n" + "    \"process\": [\n" + "      {\n" + "        \"type\": \"Stream\",\n"
+        + "        \"name\": \"feed\",\n" + "        \"properties\": {\"flowRate\": [5000.0, \"kg/hr\"]}\n"
+        + "      },\n" + "      {\n" + "        \"type\": \"Compressor\",\n" + "        \"name\": \"2nd Stage\",\n"
+        + "        \"inlet\": \"feed\",\n" + "        \"properties\": {\"outletPressure\": [80.0, \"bara\"]}\n"
+        + "      }\n" + "    ]\n" + "  }\n" + "}";
+  }
+
   // ========== Catalog Metadata ==========
 
   /**
@@ -968,7 +987,7 @@ public final class ExampleCatalog {
     } else if ("comparison".equals(category)) {
       return Arrays.asList("two-cases");
     } else if ("safety".equals(category)) {
-      return Arrays.asList("barrier-register", "safety-system-performance", "hazop-study");
+      return Arrays.asList("barrier-register", "safety-system-performance", "hazop-study", "hazop-scenario");
     } else if ("tool".equals(category)) {
       return SchemaCatalog.getToolNames();
     }
@@ -1207,6 +1226,9 @@ public final class ExampleCatalog {
       if ("hazop-study".equals(name)) {
         return safetyHazopStudy();
       }
+      if ("hazop-scenario".equals(name)) {
+        return safetyHazopScenario();
+      }
     } else if ("tool".equals(category)) {
       return getToolExample(name);
     }
@@ -1363,6 +1385,7 @@ public final class ExampleCatalog {
         "Safety-system barrier performance analysis from STID and SIF data");
     safetyExamples.put("hazop-study",
         "Simulation-backed IEC 61882 HAZOP worksheet from process scenarios and STID evidence");
+    safetyExamples.put("hazop-scenario", "Single-deviation HAZOP consequence quantification for one P&ID node");
     catalog.put("safety", safetyExamples);
 
     // Tool-name aliases for agents that start from SchemaCatalog/CapabilitiesRunner.

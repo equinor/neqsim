@@ -92,4 +92,41 @@ public class VesselHeatTransferCorrelationsTest {
     assertThrows(IllegalArgumentException.class,
         () -> VesselHeatTransferCorrelations.heatTransferCoefficient(100.0, 0.0, 1.0));
   }
+
+  /** Rohsenow nucleate-boiling flux must rise monotonically with wall superheat. */
+  @Test
+  public void rohsenowMonotonicWithSuperheat() {
+    double muL = 2.8e-4;
+    double hfg = 510000.0;
+    double rhoL = 425.0;
+    double rhoV = 1.8;
+    double sigma = 0.013;
+    double cpL = 3450.0;
+    double prL = 2.0;
+    double csf = 0.011;
+    double prExp = 1.7;
+    double low = VesselHeatTransferCorrelations.rohsenowNucleateBoilingHeatFlux(muL, hfg, rhoL, rhoV, sigma, cpL, 5.0,
+        prL, csf, prExp);
+    double high = VesselHeatTransferCorrelations.rohsenowNucleateBoilingHeatFlux(muL, hfg, rhoL, rhoV, sigma, cpL, 15.0,
+        prL, csf, prExp);
+    assertTrue(low > 0.0);
+    assertTrue(high > low);
+  }
+
+  /** Rohsenow flux must be zero for non-positive wall superheat. */
+  @Test
+  public void rohsenowZeroAtNonPositiveSuperheat() {
+    double flux = VesselHeatTransferCorrelations.rohsenowNucleateBoilingHeatFlux(2.8e-4, 510000.0, 425.0, 1.8, 0.013,
+        3450.0, 0.0, 2.0, 0.011, 1.7);
+    assertEquals(0.0, flux, 0.0);
+  }
+
+  /** Rohsenow correlation must reject non-physical inputs. */
+  @Test
+  public void rohsenowRejectsInvalidInputs() {
+    assertThrows(IllegalArgumentException.class, () -> VesselHeatTransferCorrelations
+        .rohsenowNucleateBoilingHeatFlux(0.0, 510000.0, 425.0, 1.8, 0.013, 3450.0, 10.0, 2.0, 0.011, 1.7));
+    assertThrows(IllegalArgumentException.class, () -> VesselHeatTransferCorrelations
+        .rohsenowNucleateBoilingHeatFlux(2.8e-4, 510000.0, 425.0, 425.0, 0.013, 3450.0, 10.0, 2.0, 0.011, 1.7));
+  }
 }

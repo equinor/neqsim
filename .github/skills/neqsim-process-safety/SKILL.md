@@ -100,6 +100,21 @@ on copied `ProcessSystem` models and returns IEC 61882 rows, simulation evidence
 quality gates, barrier-register handoff, and report markdown. See
 `docs/safety/automated_hazop_from_stid.md`.
 
+For a P&ID Safety Analyser / AI-HAZOP front-end that quantifies one deviation at
+a time, use MCP `runHazopScenario` (backed by
+`neqsim.mcp.runners.HazopScenarioRunner`). It accepts a `runProcess` JSON model
+plus an optional `guideWord` / `parameter` / `nodeTag` filter and a `limits`
+policy, and returns a stable `schemaVersion "1.0"` response where every finding
+carries a `computedValue`, `designLimit`, `verdict` (PASS / EXCEEDS /
+NOT_EVALUATED), `standardReference`, and a `limitBasis` provenance string
+(`HazopConsequenceFinding#getLimitBasis()`) so a reviewer can see whether the
+limit is a data-sheet value or a screening default. Equipment design limits
+(`neqsim.process.mechanicaldesign.DesignConditions`) round-trip into DEXPI as a
+`GenericAttributes Set="DesignConditions"` group, and blocked-outlet MORE
+PRESSURE deviations can be screened with
+`neqsim.process.safety.depressurization.BlockedOutletOverpressureAnalyzer`. See
+`docs/safety/ai_hazop_input_format.md` for the full input-data format.
+
 ## Method 2 — LOPA Worksheet
 
 Use [`LOPAResult`](../../../src/main/java/neqsim/process/safety/risk/sis/LOPAResult.java) to compute residual frequency:

@@ -52,9 +52,13 @@ public final class HazopConsequenceFinding implements Serializable {
   private final String calculator;
   private final String standardReference;
   private final String message;
+  private final String limitBasis;
 
   /**
-   * Construct a quantified HAZOP consequence finding.
+   * Construct a quantified HAZOP consequence finding without an explicit limit basis. The limit basis defaults to
+   * {@code "not specified"}; prefer the
+   * {@linkplain #HazopConsequenceFinding(String, String, GuideWord, Parameter, double, double, String, Verdict, String, String, String, String)
+   * twelve-argument constructor} so the verdict carries an auditable explanation of which policy threshold was applied.
    *
    * @param nodeId the HAZOP node identifier, in the same format as {@link HAZOPTemplate#fromProcessSystem}
    * @param unitName the name of the unit operation the finding relates to
@@ -71,6 +75,30 @@ public final class HazopConsequenceFinding implements Serializable {
   public HazopConsequenceFinding(String nodeId, String unitName, GuideWord guideWord, Parameter parameter,
       double computedValue, double designLimit, String valueUnit, Verdict verdict, String calculator,
       String standardReference, String message) {
+    this(nodeId, unitName, guideWord, parameter, computedValue, designLimit, valueUnit, verdict, calculator,
+        standardReference, message, "not specified");
+  }
+
+  /**
+   * Construct a quantified HAZOP consequence finding with an explicit limit basis.
+   *
+   * @param nodeId the HAZOP node identifier, in the same format as {@link HAZOPTemplate#fromProcessSystem}
+   * @param unitName the name of the unit operation the finding relates to
+   * @param guideWord the HAZOP guide-word of the deviation
+   * @param parameter the HAZOP parameter of the deviation
+   * @param computedValue the consequence value computed from the flowsheet state; NaN when not evaluated
+   * @param designLimit the design limit the consequence was compared against; NaN when not evaluated
+   * @param valueUnit the unit of both the computed value and the design limit, for example "C"
+   * @param verdict the deterministic verdict
+   * @param calculator a short description of the NeqSim calculation that produced the value
+   * @param standardReference the governing standard reference, for example "API 617 / API 521"
+   * @param message a human-readable explanation of the finding
+   * @param limitBasis an auditable explanation of where the design limit came from (default value, per-unit override,
+   * equipment data sheet, governing standard), so the green/red verdict is traceable
+   */
+  public HazopConsequenceFinding(String nodeId, String unitName, GuideWord guideWord, Parameter parameter,
+      double computedValue, double designLimit, String valueUnit, Verdict verdict, String calculator,
+      String standardReference, String message, String limitBasis) {
     this.nodeId = nodeId;
     this.unitName = unitName;
     this.guideWord = guideWord;
@@ -82,6 +110,7 @@ public final class HazopConsequenceFinding implements Serializable {
     this.calculator = calculator;
     this.standardReference = standardReference;
     this.message = message;
+    this.limitBasis = limitBasis;
   }
 
   /**
@@ -190,6 +219,15 @@ public final class HazopConsequenceFinding implements Serializable {
    */
   public String getMessage() {
     return message;
+  }
+
+  /**
+   * Gets the auditable basis for the design limit used in this finding.
+   *
+   * @return an explanation of where the design limit came from (default, per-unit override, data sheet, standard)
+   */
+  public String getLimitBasis() {
+    return limitBasis;
   }
 
   /**

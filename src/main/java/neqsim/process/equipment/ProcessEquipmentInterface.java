@@ -14,6 +14,7 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.iec81346.ReferenceDesignation;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.instrumentdesign.InstrumentDesign;
+import neqsim.process.mechanicaldesign.DesignConditions;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -45,6 +46,31 @@ public interface ProcessEquipmentInterface extends ProcessElementInterface, Simu
    * @return a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
    */
   public MechanicalDesign getMechanicalDesign();
+
+  /**
+   * Get the declared nameplate design conditions (design pressure, design temperatures, relief set pressure,
+   * construction material, fail-safe action) for the equipment, or null if none have been declared.
+   *
+   * <p>
+   * Unlike {@link #getMechanicalDesign()}, this holder carries declared engineering-data-sheet values that are
+   * available without running a sizing calculation. The default implementation returns null; equipment backed by
+   * {@link neqsim.process.equipment.ProcessEquipmentBaseClass} stores and returns a persistent holder.
+   * </p>
+   *
+   * @return the design conditions, or null if not available
+   */
+  default neqsim.process.mechanicaldesign.DesignConditions getDesignConditions() {
+    return null;
+  }
+
+  /**
+   * Set the declared nameplate design conditions for the equipment. The default implementation is a no-op; equipment
+   * backed by {@link neqsim.process.equipment.ProcessEquipmentBaseClass} stores the holder.
+   *
+   * @param designConditions the design conditions to store; may be null to clear
+   */
+  default void setDesignConditions(DesignConditions designConditions) {
+  }
 
   /**
    * Initialize an <code>electricalDesign</code> for the equipment.
