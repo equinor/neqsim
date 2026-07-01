@@ -13,6 +13,12 @@ import neqsim.process.equipment.compressor.AdvancedAntiSurgeControlSystem.Instru
 import neqsim.process.equipment.compressor.AdvancedAntiSurgeControlSystem.RecycleSizingResult;
 import neqsim.process.equipment.compressor.AdvancedAntiSurgeControlSystem.SensorFault;
 import neqsim.process.equipment.compressor.AdvancedAntiSurgeControlSystem.VotingMode;
+import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Commercial-style compressor anti-surge application design and simulation layer.
@@ -150,6 +156,9 @@ public class CompressorAntiSurgeApplication implements Serializable {
   /** Startup permissive timeout in seconds. */
   private double permissiveTimeout = 60.0;
 
+  /** Automatically write scan results to bound NeqSim topology objects. */
+  private boolean autoApplyTopologyCommands = true;
+
   /**
    * Create an anti-surge application.
    *
@@ -248,6 +257,24 @@ public class CompressorAntiSurgeApplication implements Serializable {
     lastScanResult = new ScanResult(name, operatingMode, sequenceState, status, elapsedTime, stageDecisions,
         headerDecisions, diagnostics, getCertificationStatus());
     return lastScanResult;
+  }
+
+  /**
+   * Execute one scan, apply commands to bound topology objects, and run all bound process systems one transient step.
+   *
+   * @param scanInput optional scan input values keyed by stage name; null uses bound compressor measurements or design
+   * defaults
+   * @param dt scan and dynamic timestep in seconds
+   * @return scan result before the process transient step is advanced
+   */
+  public ScanResult runDynamicStep(ScanInput scanInput, double dt) {
+    ScanResult result = scan(scanInput, dt);
+    List<ProcessSystem> systems = getBoundProcessSystems();
+    for (ProcessSystem process : systems) {
+      process.setTimeStep(dt > 0.0 && Double.isFinite(dt) ? dt : DEFAULT_SCAN_TIME);
+      process.runTransient();
+    }
+    return result;
   }
 
   /**
@@ -423,6 +450,25 @@ public class CompressorAntiSurgeApplication implements Serializable {
   }
 
   /**
+   * Enable or disable automatic command writeback to bound NeqSim topology objects during
+   * {@link #scan(ScanInput, double)}.
+   *
+   * @param autoApplyTopologyCommands true to write valve and speed commands during scan
+   */
+  public void setAutoApplyTopologyCommands(boolean autoApplyTopologyCommands) {
+    this.autoApplyTopologyCommands = autoApplyTopologyCommands;
+  }
+
+  /**
+   * Check whether scan results are written to bound NeqSim topology objects.
+   *
+   * @return true if topology command writeback is enabled
+   */
+  public boolean isAutoApplyTopologyCommands() {
+    return autoApplyTopologyCommands;
+  }
+
+  /**
    * Get a stage by name.
    *
    * @param stageName stage name
@@ -451,10 +497,14 @@ public class CompressorAntiSurgeApplication implements Serializable {
   private StageDecision evaluateStage(StageApplication stage, StageScanInput input, double dt) {
     List<OperatorDiagnostic> diagnostics = new ArrayList<OperatorDiagnostic>();
     if (input == null) {
-      input = StageScanInput.fromStage(stage);
-      diagnostics.add(new OperatorDiagnostic("MISSING_STAGE_INPUT", ApplicationStatus.DEGRADED,
-          "No scan input supplied for " + stage.getName() + "; using stage defaults",
-          "Bind online measurements or provide simulated scan input"));
+      if (stage.getTopologyBinding() != null) {
+        input = StageScanInput.fromTopology(stage, stage.getTopologyBinding());
+      } else {
+        input = StageScanInput.fromStage(stage);
+        diagnostics.add(new OperatorDiagnostic("MISSING_STAGE_INPUT", ApplicationStatus.DEGRADED,
+            "No scan input supplied for " + stage.getName() + "; using stage defaults",
+            "Bind online measurements or provide simulated scan input"));
+      }
     }
     stage.updateSignals(input.getMargin(), dt);
     FaultTolerantDecision faultDecision = supervisor.evaluateFaultTolerant(stage.getMarginSignals(),
@@ -489,8 +539,28 @@ public class CompressorAntiSurgeApplication implements Serializable {
     }
     stage.setLastHotValveOpening(split.getHotValveOpening());
     stage.setLastColdValveOpening(split.getColdValveOpening());
-    return new StageDecision(stage.getName(), status, input.getMargin(), faultDecision.getVotedMargin(), totalDemand,
-        split, sizing, diagnostics);
+    StageDecision decision = new StageDecision(stage.getName(), status, input.getMargin(),
+        faultDecision.getVotedMargin(), totalDemand, split, sizing, diagnostics);
+    if (autoApplyTopologyCommands && stage.getTopologyBinding() != null) {
+      stage.getTopologyBinding().applyDecision(decision, input, dt);
+    }
+    return decision;
+  }
+
+  /**
+   * Get unique process systems bound to stages.
+   *
+   * @return process systems in stage order
+   */
+  private List<ProcessSystem> getBoundProcessSystems() {
+    List<ProcessSystem> systems = new ArrayList<ProcessSystem>();
+    for (StageApplication stage : stages) {
+      if (stage.getTopologyBinding() != null && stage.getTopologyBinding().getProcess() != null
+          && !systems.contains(stage.getTopologyBinding().getProcess())) {
+        systems.add(stage.getTopologyBinding().getProcess());
+      }
+    }
+    return systems;
   }
 
   /**
@@ -720,6 +790,8 @@ public class CompressorAntiSurgeApplication implements Serializable {
     private double lastHotValveOpening = 0.0;
     /** Last cold valve opening. */
     private double lastColdValveOpening = 0.0;
+    /** Optional real NeqSim topology binding. */
+    private TopologyBinding topologyBinding = null;
 
     /**
      * Create stage configuration.
@@ -779,6 +851,55 @@ public class CompressorAntiSurgeApplication implements Serializable {
      */
     public void setCompressor(Compressor compressor) {
       this.compressor = compressor;
+    }
+
+    /**
+     * Bind this stage to a real NeqSim topology.
+     *
+     * @param process process system containing the topology; may be null when command writeback only is needed
+     * @param compressor compressor unit to read margin and write speed commands
+     * @param hotRecycleValve fast hot recycle valve; may be null
+     * @param coldRecycleValve normal cold recycle valve; may be null
+     * @return topology binding for further configuration
+     */
+    public TopologyBinding bindTopology(ProcessSystem process, Compressor compressor, ThrottlingValve hotRecycleValve,
+        ThrottlingValve coldRecycleValve) {
+      this.compressor = compressor;
+      this.topologyBinding = new TopologyBinding(process, compressor, hotRecycleValve, coldRecycleValve);
+      return topologyBinding;
+    }
+
+    /**
+     * Bind this stage to a complete real NeqSim recycle topology.
+     *
+     * @param process process system containing the topology; may be null when command writeback only is needed
+     * @param compressor compressor unit to read margin and write speed commands
+     * @param hotRecycleValve fast hot recycle valve; may be null
+     * @param coldRecycleValve normal cold recycle valve; may be null
+     * @param aftercooler recycle/discharge cooler; may be null
+     * @param suctionMixer suction mixer receiving recycle flow; may be null
+     * @param hotRecycle hot recycle tear block; may be null
+     * @param coldRecycle cold recycle tear block; may be null
+     * @return topology binding for further configuration
+     */
+    public TopologyBinding bindTopology(ProcessSystem process, Compressor compressor, ThrottlingValve hotRecycleValve,
+        ThrottlingValve coldRecycleValve, Cooler aftercooler, Mixer suctionMixer, Recycle hotRecycle,
+        Recycle coldRecycle) {
+      TopologyBinding binding = bindTopology(process, compressor, hotRecycleValve, coldRecycleValve);
+      binding.setAftercooler(aftercooler);
+      binding.setSuctionMixer(suctionMixer);
+      binding.setHotRecycle(hotRecycle);
+      binding.setColdRecycle(coldRecycle);
+      return binding;
+    }
+
+    /**
+     * Get topology binding.
+     *
+     * @return topology binding, or null if the stage is data-driven only
+     */
+    public TopologyBinding getTopologyBinding() {
+      return topologyBinding;
     }
 
     /**
@@ -984,6 +1105,242 @@ public class CompressorAntiSurgeApplication implements Serializable {
     }
   }
 
+  /** Real NeqSim topology binding for one compressor anti-surge stage. */
+  public static class TopologyBinding implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000L;
+    /** Process system containing the topology. */
+    private final transient ProcessSystem process;
+    /** Compressor controlled by the application. */
+    private final Compressor compressor;
+    /** Fast hot recycle valve. */
+    private final ThrottlingValve hotRecycleValve;
+    /** Normal cold recycle valve. */
+    private final ThrottlingValve coldRecycleValve;
+    /** Optional aftercooler in the topology. */
+    private Cooler aftercooler;
+    /** Optional suction mixer receiving recycle. */
+    private Mixer suctionMixer;
+    /** Optional hot recycle tear block. */
+    private Recycle hotRecycle;
+    /** Optional cold recycle tear block. */
+    private Recycle coldRecycle;
+    /** Speed control enabled flag. */
+    private boolean speedControlEnabled = false;
+    /** Discharge pressure set point in bara. */
+    private double dischargePressureSetPoint = Double.NaN;
+    /** Speed controller gain in rpm per bar per second. */
+    private double speedGain = 50.0;
+    /** Minimum compressor speed in rpm. */
+    private double minimumSpeed = 0.0;
+    /** Maximum compressor speed in rpm. */
+    private double maximumSpeed = 30000.0;
+    /** Speed runback during recycle action in rpm per second. */
+    private double recycleRunbackRate = 100.0;
+
+    /**
+     * Create a topology binding.
+     *
+     * @param process process system containing the topology; may be null
+     * @param compressor compressor controlled by the application
+     * @param hotRecycleValve fast hot recycle valve; may be null
+     * @param coldRecycleValve normal cold recycle valve; may be null
+     */
+    public TopologyBinding(ProcessSystem process, Compressor compressor, ThrottlingValve hotRecycleValve,
+        ThrottlingValve coldRecycleValve) {
+      this.process = process;
+      this.compressor = compressor;
+      this.hotRecycleValve = hotRecycleValve;
+      this.coldRecycleValve = coldRecycleValve;
+      if (compressor != null) {
+        this.minimumSpeed = Math.max(0.0, compressor.getSpeed() * 0.5);
+        this.maximumSpeed = Math.max(compressor.getSpeed() * 1.5, this.minimumSpeed + 1.0);
+      }
+    }
+
+    /**
+     * Apply a stage decision to the bound real topology.
+     *
+     * @param decision stage decision
+     * @param input scan input used for the decision
+     * @param dt scan period in seconds
+     */
+    private void applyDecision(StageDecision decision, StageScanInput input, double dt) {
+      if (hotRecycleValve != null) {
+        hotRecycleValve.setPercentValveOpening(decision.getValveCommand().getHotValveOpening());
+      }
+      if (coldRecycleValve != null) {
+        coldRecycleValve.setPercentValveOpening(decision.getValveCommand().getColdValveOpening());
+      }
+      applySpeedControl(decision, input, dt);
+    }
+
+    /**
+     * Apply a simple pressure-speed controller with anti-surge runback override.
+     *
+     * @param decision stage decision
+     * @param input scan input
+     * @param dt scan period in seconds
+     */
+    private void applySpeedControl(StageDecision decision, StageScanInput input, double dt) {
+      if (!speedControlEnabled || compressor == null || !Double.isFinite(dischargePressureSetPoint)) {
+        return;
+      }
+      double currentSpeed = compressor.getSpeed();
+      double pressureError = 0.0;
+      StreamInterface outletStream = compressor.getOutletStream();
+      if (outletStream != null) {
+        pressureError = dischargePressureSetPoint - outletStream.getPressure("bara");
+      }
+      double speedCommand = currentSpeed + speedGain * pressureError * Math.max(dt, 0.0);
+      if (decision.getTotalRecycleDemand() > 1.0 || input.getMargin() <= 0.05) {
+        speedCommand -= recycleRunbackRate * Math.max(dt, 0.0);
+      }
+      compressor.setSpeed(clamp(speedCommand, minimumSpeed, maximumSpeed));
+    }
+
+    /**
+     * Enable simple discharge-pressure speed control.
+     *
+     * @param dischargePressureSetPoint discharge pressure set point in bara
+     * @param speedGain speed gain in rpm per bar per second
+     * @param minimumSpeed minimum speed in rpm
+     * @param maximumSpeed maximum speed in rpm
+     * @param recycleRunbackRate speed runback during recycle action in rpm per second
+     */
+    public void enableSpeedControl(double dischargePressureSetPoint, double speedGain, double minimumSpeed,
+        double maximumSpeed, double recycleRunbackRate) {
+      this.speedControlEnabled = true;
+      this.dischargePressureSetPoint = dischargePressureSetPoint;
+      this.speedGain = speedGain;
+      this.minimumSpeed = minimumSpeed;
+      this.maximumSpeed = Math.max(maximumSpeed, minimumSpeed);
+      this.recycleRunbackRate = Math.max(recycleRunbackRate, 0.0);
+    }
+
+    /** Disable speed-control writeback. */
+    public void disableSpeedControl() {
+      this.speedControlEnabled = false;
+    }
+
+    /**
+     * Get process system.
+     *
+     * @return process system, or null
+     */
+    public ProcessSystem getProcess() {
+      return process;
+    }
+
+    /**
+     * Get compressor.
+     *
+     * @return compressor
+     */
+    public Compressor getCompressor() {
+      return compressor;
+    }
+
+    /**
+     * Get hot recycle valve.
+     *
+     * @return hot recycle valve, or null
+     */
+    public ThrottlingValve getHotRecycleValve() {
+      return hotRecycleValve;
+    }
+
+    /**
+     * Get cold recycle valve.
+     *
+     * @return cold recycle valve, or null
+     */
+    public ThrottlingValve getColdRecycleValve() {
+      return coldRecycleValve;
+    }
+
+    /**
+     * Set aftercooler reference.
+     *
+     * @param aftercooler aftercooler unit
+     */
+    public void setAftercooler(Cooler aftercooler) {
+      this.aftercooler = aftercooler;
+    }
+
+    /**
+     * Get aftercooler reference.
+     *
+     * @return aftercooler, or null
+     */
+    public Cooler getAftercooler() {
+      return aftercooler;
+    }
+
+    /**
+     * Set suction mixer reference.
+     *
+     * @param suctionMixer suction mixer
+     */
+    public void setSuctionMixer(Mixer suctionMixer) {
+      this.suctionMixer = suctionMixer;
+    }
+
+    /**
+     * Get suction mixer reference.
+     *
+     * @return suction mixer, or null
+     */
+    public Mixer getSuctionMixer() {
+      return suctionMixer;
+    }
+
+    /**
+     * Set hot recycle tear block.
+     *
+     * @param hotRecycle hot recycle tear block
+     */
+    public void setHotRecycle(Recycle hotRecycle) {
+      this.hotRecycle = hotRecycle;
+    }
+
+    /**
+     * Get hot recycle tear block.
+     *
+     * @return hot recycle tear block, or null
+     */
+    public Recycle getHotRecycle() {
+      return hotRecycle;
+    }
+
+    /**
+     * Set cold recycle tear block.
+     *
+     * @param coldRecycle cold recycle tear block
+     */
+    public void setColdRecycle(Recycle coldRecycle) {
+      this.coldRecycle = coldRecycle;
+    }
+
+    /**
+     * Get cold recycle tear block.
+     *
+     * @return cold recycle tear block, or null
+     */
+    public Recycle getColdRecycle() {
+      return coldRecycle;
+    }
+
+    /**
+     * Check if speed control is enabled.
+     *
+     * @return true if speed control is enabled
+     */
+    public boolean isSpeedControlEnabled() {
+      return speedControlEnabled;
+    }
+  }
+
   /** Shared header anti-surge coordination configuration. */
   public static class HeaderApplication implements Serializable {
     /** Serialization version UID. */
@@ -1124,6 +1481,44 @@ public class CompressorAntiSurgeApplication implements Serializable {
       double margin = stage.getDesignInletFlow() / Math.max(stage.getDesignSurgeFlow(), 1.0e-9) - 1.0;
       return new StageScanInput(margin, 0.0, stage.getDesignInletFlow(), stage.getDesignSurgeFlow(),
           stage.getDesignSuctionDensity());
+    }
+
+    /**
+     * Create scan input from a bound real NeqSim topology.
+     *
+     * @param stage stage configuration containing design fallbacks
+     * @param topology topology binding
+     * @return scan input from compressor measurements and design fallbacks
+     */
+    public static StageScanInput fromTopology(StageApplication stage, TopologyBinding topology) {
+      StageScanInput fallback = fromStage(stage);
+      Compressor compressor = topology == null ? null : topology.getCompressor();
+      if (compressor == null || compressor.getInletStream() == null) {
+        return fallback;
+      }
+      double margin = fallback.getMargin();
+      try {
+        double measuredMargin = compressor.getDistanceToSurge();
+        if (Double.isFinite(measuredMargin)) {
+          margin = measuredMargin;
+        }
+      } catch (RuntimeException ex) {
+        margin = fallback.getMargin();
+      }
+      double inletFlow = fallback.getInletFlow();
+      try {
+        double measuredFlow = compressor.getInletStream().getFlowRate("m3/hr");
+        if (Double.isFinite(measuredFlow) && measuredFlow >= 0.0) {
+          inletFlow = measuredFlow;
+        }
+      } catch (RuntimeException ex) {
+        inletFlow = fallback.getInletFlow();
+      }
+      double surgeFlow = inletFlow / Math.max(1.0 + margin, 1.0e-9);
+      if (!Double.isFinite(surgeFlow) || surgeFlow <= 0.0) {
+        surgeFlow = fallback.getSurgeFlow();
+      }
+      return new StageScanInput(margin, 0.0, inletFlow, surgeFlow, fallback.getSuctionDensity());
     }
 
     /**

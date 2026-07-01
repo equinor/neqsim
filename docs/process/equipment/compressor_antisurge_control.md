@@ -134,7 +134,7 @@ The advanced class remains a simulation and screening layer. `getCertificationSt
 
 `CompressorAntiSurgeApplication` wraps the lower-level anti-surge functions into an application-style simulation object. Use it when the study needs more than a single controller block: multiple compressor stages, shared suction or discharge headers, hot and cold recycle paths, startup and shutdown sequencing, commissioning checks, scan-cycle execution, and operator-facing diagnostics.
 
-The class is intentionally deterministic and data-driven. It can be used with measured or simulated scan inputs, and stages may optionally reference real `Compressor` objects from a process model. The scan result reports stage decisions, header decisions, recycle-valve commands, diagnostics, recommendations, sequence state, and certification status.
+The class is intentionally deterministic and data-driven. It can be used with measured or simulated scan inputs, and stages can also bind directly to real NeqSim topology objects: compressor, hot recycle valve, cold recycle valve, aftercooler, suction mixer, recycle blocks, and the owning `ProcessSystem`. The scan result reports stage decisions, header decisions, recycle-valve commands, diagnostics, recommendations, sequence state, and certification status.
 
 Key concepts:
 
@@ -147,6 +147,7 @@ Key concepts:
 | Shutdown and trip behavior | `startShutdownSequence()` and `forceTripMode()` | Conservative recycle opening during shutdown or trip/coastdown simulation. |
 | Commissioning checks | `runCommissioningChecks()` | Stage configuration, recycle response, valve stroke, transmitter redundancy, header coordination, and non-certified boundary statement. |
 | Real-time/advisory scan | `scan(ScanInput, dt)` | One deterministic application scan cycle for digital twin, operator-training, or dynamic simulation studies. |
+| Direct topology writeback | `StageApplication.bindTopology(...)` and `runDynamicStep(...)` | Writes hot/cold recycle openings and optional speed commands to real NeqSim units, then advances the bound process one transient step. |
 | Diagnostics | `ScanResult.getDiagnostics()` | Alarm/degraded/trip-demand codes with operator recommendations. |
 
 Example application scan:
@@ -173,7 +174,30 @@ double hotRecycleOpening = hpDecision.getValveCommand().getHotValveOpening();
 double coldRecycleOpening = hpDecision.getValveCommand().getColdValveOpening();
 ```
 
-The application layer does not replace `AntiSurgeController` in a transient process model. A practical pattern is to use `CompressorAntiSurgeApplication.scan(...)` as the supervisory scan and then write the returned valve command to the actual recycle valve model. For simple dynamic examples, `AntiSurgeController` can still be attached directly to the recycle valve. For studies that need stage coordination, startup states, hot/cold recycle split, diagnostics, or commissioning evidence, the application layer provides the extra supervisory context.
+Direct topology binding for an executable dynamic model:
+
+```java
+CompressorAntiSurgeApplication application = new CompressorAntiSurgeApplication("export compression");
+CompressorAntiSurgeApplication.StageApplication stage = application.addStage("K-101");
+
+CompressorAntiSurgeApplication.TopologyBinding binding = stage.bindTopology(
+	process,
+	compressor,
+	hotRecycleValve,
+	coldRecycleValve,
+	recycleCooler,
+	suctionMixer,
+	hotRecycle,
+	coldRecycle);
+binding.enableSpeedControl(95.0, 25.0, 8500.0, 12500.0, 150.0);
+
+application.setRunningMode();
+application.runDynamicStep(null, 0.25);
+```
+
+When `scanInput` is `null`, the stage reads the bound compressor margin and inlet flow where available, falls back to the stage design basis where needed, writes the hot/cold recycle valve openings, applies the optional compressor speed command, and then `runDynamicStep(...)` advances the bound process with `process.runTransient()`. Keep algebraic `Recycle` blocks as recycle convergence helpers; the valve, compressor, cooler, mixer, and any volume-capable equipment carry the dynamic response.
+
+The application layer does not replace `AntiSurgeController` in every transient process model. For simple dynamic examples, `AntiSurgeController` can still be attached directly to the recycle valve. For studies that need stage coordination, startup states, hot/cold recycle split, diagnostics, speed runback, direct topology writeback, or commissioning evidence, the application layer provides the extra supervisory context.
 
 Certification remains outside the open simulation model. `CompressorAntiSurgeApplication.getCertificationStatus()` returns `NOT_CERTIFIED_FOR_PROTECTION`; `runCommissioningChecks()` creates evidence useful for review and testing, but it does not certify the logic as a safety instrumented function or machinery protection package.
 
