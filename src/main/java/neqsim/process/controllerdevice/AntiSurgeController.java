@@ -66,6 +66,36 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
   /** Last measured surge margin. */
   private double lastMargin = Double.NaN;
 
+  /** Enables rate-aware predictive supervision when true. */
+  private boolean predictiveActionEnabled = false;
+
+  /** Prediction horizon in seconds for margin-rate supervision. */
+  private double predictionHorizon = 0.0;
+
+  /** Time constant in seconds for filtering the measured margin rate. */
+  private double marginRateFilterTime = 5.0;
+
+  /** Filtered margin approach rate in distance-to-surge units per second. */
+  private double filteredMarginRate = 0.0;
+
+  /** Predicted distance to surge at the configured prediction horizon. */
+  private double predictedMargin = Double.NaN;
+
+  /** Candidate valve opening before actuator rate/lag handling. */
+  private double targetValveOpening = 0.0;
+
+  /** Maximum valve movement in percent opening per second. Infinite disables the limiter. */
+  private double valveRateLimit = Double.POSITIVE_INFINITY;
+
+  /** First-order actuator time constant in seconds. Zero disables actuator lag. */
+  private double actuatorTimeConstant = 0.0;
+
+  /** Emergency margin below which a minimum emergency opening is forced. */
+  private double emergencyMargin = 0.0;
+
+  /** Minimum valve opening in percent when the emergency margin is crossed. */
+  private double emergencyOpening = 100.0;
+
   /**
    * Default constructor.
    */
@@ -115,8 +145,8 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
       calcIdentifier = id;
       return;
     }
+    double previousMargin = lastMargin;
     double margin = compressor.getDistanceToSurge();
-    lastMargin = margin;
     if (!Double.isFinite(margin)) {
       // No surge data: hold the valve closed
       valveOpening = clamp(minOpening);
@@ -125,14 +155,22 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
       return;
     }
 
+    updatePredictedMargin(previousMargin, margin, dt);
+    lastMargin = margin;
+
     // Reverse acting: error is positive when the margin is below the set point.
-    double error = surgeMarginSetPoint - margin;
+    double controlMargin = predictiveActionEnabled ? Math.min(margin, predictedMargin) : margin;
+    double error = surgeMarginSetPoint - controlMargin;
 
     double proportional = proportionalGain * error;
     if (integralTime > 0.0) {
       integralState += proportionalGain / integralTime * error * dt;
     }
     double output = proportional + integralState;
+
+    if (margin <= emergencyMargin) {
+      output = Math.max(output, emergencyOpening);
+    }
 
     // Anti-windup clamping.
     if (output > maxOpening) {
@@ -147,9 +185,59 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
       }
     }
 
-    valveOpening = clamp(output);
+    targetValveOpening = clamp(output);
+    valveOpening = applyActuatorDynamics(targetValveOpening, dt);
     applyToValve();
     calcIdentifier = id;
+  }
+
+  /**
+   * Updates the filtered margin rate and predicted distance to surge.
+   *
+   * @param previousMargin the previous measured distance to surge
+   * @param margin the current measured distance to surge
+   * @param dt the transient time step in seconds
+   */
+  private void updatePredictedMargin(double previousMargin, double margin, double dt) {
+    if (!predictiveActionEnabled || predictionHorizon <= 0.0 || dt <= 0.0 || !Double.isFinite(previousMargin)) {
+      predictedMargin = margin;
+      return;
+    }
+
+    double rawRate = (margin - previousMargin) / dt;
+    if (marginRateFilterTime > 0.0) {
+      double alpha = dt / (marginRateFilterTime + dt);
+      filteredMarginRate += alpha * (rawRate - filteredMarginRate);
+    } else {
+      filteredMarginRate = rawRate;
+    }
+    predictedMargin = margin + filteredMarginRate * predictionHorizon;
+  }
+
+  /**
+   * Applies optional valve rate limiting and first-order actuator lag.
+   *
+   * @param requestedOpening requested valve opening in percent
+   * @param dt the transient time step in seconds
+   * @return the actuator-limited valve opening in percent
+   */
+  private double applyActuatorDynamics(double requestedOpening, double dt) {
+    double limitedOpening = requestedOpening;
+    if (Double.isFinite(valveRateLimit) && valveRateLimit >= 0.0 && dt > 0.0) {
+      double maximumChange = valveRateLimit * dt;
+      double requestedChange = requestedOpening - valveOpening;
+      if (requestedChange > maximumChange) {
+        limitedOpening = valveOpening + maximumChange;
+      } else if (requestedChange < -maximumChange) {
+        limitedOpening = valveOpening - maximumChange;
+      }
+    }
+
+    if (actuatorTimeConstant > 0.0 && dt > 0.0) {
+      double alpha = Math.min(dt / actuatorTimeConstant, 1.0);
+      return clamp(valveOpening + alpha * (limitedOpening - valveOpening));
+    }
+    return clamp(limitedOpening);
   }
 
   /**
@@ -196,6 +284,33 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
    */
   public double getValveOpening() {
     return valveOpening;
+  }
+
+  /**
+   * Get the current target valve opening before actuator rate and lag limits.
+   *
+   * @return the target valve opening in percent
+   */
+  public double getTargetValveOpening() {
+    return targetValveOpening;
+  }
+
+  /**
+   * Get the filtered distance-to-surge rate used by predictive supervision.
+   *
+   * @return the filtered margin rate in distance-to-surge units per second
+   */
+  public double getFilteredMarginRate() {
+    return filteredMarginRate;
+  }
+
+  /**
+   * Get the predicted distance to surge at the configured prediction horizon.
+   *
+   * @return the predicted distance to surge, or {@code NaN} before a finite margin has been read
+   */
+  public double getPredictedMargin() {
+    return predictedMargin;
   }
 
   /**
@@ -301,11 +416,81 @@ public class AntiSurgeController extends ControllerDeviceBaseClass {
   }
 
   /**
+   * Enable or disable rate-aware predictive anti-surge supervision.
+   *
+   * @param predictiveActionEnabled true to use predicted distance to surge in the PI error
+   */
+  public void setPredictiveActionEnabled(boolean predictiveActionEnabled) {
+    this.predictiveActionEnabled = predictiveActionEnabled;
+  }
+
+  /**
+   * Checks whether predictive anti-surge supervision is enabled.
+   *
+   * @return true if predictive supervision is enabled
+   */
+  public boolean isPredictiveActionEnabled() {
+    return predictiveActionEnabled;
+  }
+
+  /**
+   * Set the prediction horizon for rate-aware anti-surge supervision.
+   *
+   * @param predictionHorizon the prediction horizon in seconds; values less than or equal to zero disable prediction
+   */
+  public void setPredictionHorizon(double predictionHorizon) {
+    this.predictionHorizon = predictionHorizon;
+  }
+
+  /**
+   * Get the prediction horizon.
+   *
+   * @return the prediction horizon in seconds
+   */
+  public double getPredictionHorizon() {
+    return predictionHorizon;
+  }
+
+  /**
+   * Set the margin-rate filter time constant.
+   *
+   * @param marginRateFilterTime the filter time constant in seconds; zero uses the raw finite-difference rate
+   */
+  public void setMarginRateFilterTime(double marginRateFilterTime) {
+    this.marginRateFilterTime = marginRateFilterTime;
+  }
+
+  /**
+   * Set actuator dynamics for the recycle valve command.
+   *
+   * @param valveRateLimit the maximum valve movement in percent opening per second
+   * @param actuatorTimeConstant the first-order actuator time constant in seconds; zero disables lag
+   */
+  public void setActuatorDynamics(double valveRateLimit, double actuatorTimeConstant) {
+    this.valveRateLimit = valveRateLimit;
+    this.actuatorTimeConstant = actuatorTimeConstant;
+  }
+
+  /**
+   * Set the emergency fallback opening applied when the measured margin is very low.
+   *
+   * @param emergencyMargin the measured distance to surge that triggers emergency action
+   * @param emergencyOpening the minimum valve opening in percent during emergency action
+   */
+  public void setEmergencyAction(double emergencyMargin, double emergencyOpening) {
+    this.emergencyMargin = emergencyMargin;
+    this.emergencyOpening = emergencyOpening;
+  }
+
+  /**
    * Reset the controller integral state and output to fully closed.
    */
   public void reset() {
     this.integralState = 0.0;
     this.valveOpening = minOpening;
+    this.targetValveOpening = minOpening;
     this.lastMargin = Double.NaN;
+    this.filteredMarginRate = 0.0;
+    this.predictedMargin = Double.NaN;
   }
 }

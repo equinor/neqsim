@@ -23,6 +23,10 @@ Documentation for compression equipment in NeqSim process simulation.
 > including multi-speed vs single-speed handling, surge curves, and stone wall curves,
 > see [Compressor Curves and Performance Maps](compressor_curves).
 
+> **📖 Dynamic Anti-Surge and Coordinated Control:** For pressure-speed-recycle control
+> philosophy, predictive anti-surge supervision, and the dynamic compressor map notebook,
+> see [Compressor Anti-Surge and Coordinated Control](compressor_antisurge_control).
+
 ---
 
 ## Overview

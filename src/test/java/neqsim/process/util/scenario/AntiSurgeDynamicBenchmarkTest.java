@@ -54,4 +54,34 @@ public class AntiSurgeDynamicBenchmarkTest {
     assertTrue(marginTrace != null && marginTrace.length == 61, "margin trace length");
     assertTrue(valveTrace != null && valveTrace.length == 61, "valve trace length");
   }
+
+  /**
+   * With finite valve stroke speed and actuator lag, rate-aware prediction should create earlier recycle action and a
+   * higher minimum surge margin than current-margin PI alone.
+   */
+  @Test
+  void testPredictiveControllerImprovesRateLimitedTransient() {
+    AntiSurgeDynamicBenchmark piBenchmark = new AntiSurgeDynamicBenchmark();
+    piBenchmark.getController().setActuatorDynamics(10.0, 3.0);
+    piBenchmark.run(true);
+
+    AntiSurgeDynamicBenchmark predictiveBenchmark = new AntiSurgeDynamicBenchmark();
+    AntiSurgeController predictiveController = predictiveBenchmark.getController();
+    predictiveController.setActuatorDynamics(10.0, 3.0);
+    predictiveController.setPredictiveActionEnabled(true);
+    predictiveController.setPredictionHorizon(8.0);
+    predictiveController.setMarginRateFilterTime(5.0);
+    predictiveBenchmark.run(true);
+
+    assertTrue(piBenchmark.getMinimumSurgeMargin() < 0.0,
+        "rate-limited current-margin PI should briefly cross surge; min margin = "
+            + piBenchmark.getMinimumSurgeMargin());
+    assertTrue(predictiveBenchmark.getMinimumSurgeMargin() > 0.0,
+        "predictive supervision should keep positive surge margin; min margin = "
+            + predictiveBenchmark.getMinimumSurgeMargin());
+    assertTrue(predictiveBenchmark.getMinimumSurgeMargin() > piBenchmark.getMinimumSurgeMargin(),
+        "predictive supervision should improve the minimum margin");
+    assertTrue(predictiveBenchmark.getPredictedSurgeMarginTrace() != null,
+        "predictive margin trace should be recorded");
+  }
 }

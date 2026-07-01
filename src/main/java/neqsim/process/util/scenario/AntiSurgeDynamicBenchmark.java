@@ -74,6 +74,12 @@ public class AntiSurgeDynamicBenchmark {
   /** Recorded valve-opening history in percent. */
   private double[] valveOpeningTrace = null;
 
+  /** Recorded target valve-opening history before actuator limits in percent. */
+  private double[] targetValveOpeningTrace = null;
+
+  /** Recorded predicted distance-to-surge history. */
+  private double[] predictedSurgeMarginTrace = null;
+
   /** Minimum distance to surge observed during the last run. */
   private double minimumSurgeMargin = Double.NaN;
 
@@ -119,8 +125,12 @@ public class AntiSurgeDynamicBenchmark {
 
     surgeMarginTrace = new double[numberOfSteps + 1];
     valveOpeningTrace = new double[numberOfSteps + 1];
+    targetValveOpeningTrace = new double[numberOfSteps + 1];
+    predictedSurgeMarginTrace = new double[numberOfSteps + 1];
     surgeMarginTrace[0] = initialMargin;
     valveOpeningTrace[0] = 0.0;
+    targetValveOpeningTrace[0] = 0.0;
+    predictedSurgeMarginTrace[0] = initialMargin;
     minimumSurgeMargin = initialMargin;
     maximumValveOpening = 0.0;
 
@@ -138,6 +148,8 @@ public class AntiSurgeDynamicBenchmark {
       double appliedOpening = controllerActive ? recycleValve.getPercentValveOpening() : 0.0;
       surgeMarginTrace[k] = margin;
       valveOpeningTrace[k] = appliedOpening;
+      targetValveOpeningTrace[k] = controllerActive ? controller.getTargetValveOpening() : 0.0;
+      predictedSurgeMarginTrace[k] = controllerActive ? controller.getPredictedMargin() : Double.NaN;
       if (margin < minimumSurgeMargin) {
         minimumSurgeMargin = margin;
       }
@@ -192,6 +204,26 @@ public class AntiSurgeDynamicBenchmark {
    */
   public double[] getValveOpeningTrace() {
     return valveOpeningTrace == null ? null : java.util.Arrays.copyOf(valveOpeningTrace, valveOpeningTrace.length);
+  }
+
+  /**
+   * Gets the requested valve-opening history before actuator limits.
+   *
+   * @return a copy of the target valve-opening trace in percent, or {@code null} if no run has executed
+   */
+  public double[] getTargetValveOpeningTrace() {
+    return targetValveOpeningTrace == null ? null
+        : java.util.Arrays.copyOf(targetValveOpeningTrace, targetValveOpeningTrace.length);
+  }
+
+  /**
+   * Gets the predicted distance-to-surge history of the last run.
+   *
+   * @return a copy of the predicted surge-margin trace, or {@code null} if no run has executed
+   */
+  public double[] getPredictedSurgeMarginTrace() {
+    return predictedSurgeMarginTrace == null ? null
+        : java.util.Arrays.copyOf(predictedSurgeMarginTrace, predictedSurgeMarginTrace.length);
   }
 
   /**
