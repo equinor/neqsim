@@ -65,7 +65,7 @@ See [neqsim-python](https://github.com/equinor/neqsim-python) for more details.
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.12.0</version>
+  <version>3.15.0</version>
 </dependency>
 ```
 
@@ -264,7 +264,7 @@ The agent creates a task folder, runs NeqSim simulations, validates results, and
 <dependency>
   <groupId>com.equinor.neqsim</groupId>
   <artifactId>neqsim</artifactId>
-  <version>3.12.0</version>
+  <version>3.15.0</version>
 </dependency>
 ```
 
