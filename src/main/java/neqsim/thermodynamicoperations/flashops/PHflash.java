@@ -107,7 +107,23 @@ public class PHflash extends Flash {
       } else if (system.getTemperature() < minTemperature) {
         system.setTemperature(minTemperature + 0.1);
       }
-      tpFlash.run();
+      // A trial temperature can land in a region where the cubic EOS has no valid root
+      // (NaN compressibility). Instead of aborting the whole PH flash, back the temperature
+      // off toward the previous (successful) value until the inner TP flash converges.
+      int flashBackoff = 0;
+      while (true) {
+        try {
+          tpFlash.run();
+          break;
+        } catch (RuntimeException ex) {
+          flashBackoff++;
+          if (flashBackoff > 15) {
+            throw ex;
+          }
+          nyTemp = 0.5 * (nyTemp + oldTemp);
+          system.setTemperature(1.0 / nyTemp);
+        }
+      }
       system.init(2);
       errorOld = error;
       error = calcdQdT();
