@@ -68,8 +68,19 @@ public class PressureDrop extends ThrottlingValve {
     thermoSystem.init(3);
     double enthalpy = thermoSystem.getEnthalpy();
 
-    thermoSystem.setPressure(thermoSystem.getPressure() - pressureDrop);
-    thermoOps.PHflash(enthalpy);
+    // A zero (or negligible) pressure drop leaves the fluid state unchanged, so the
+    // constant-enthalpy flash is unnecessary and is skipped.
+    if (Math.abs(pressureDrop) > 1e-10) {
+      double outletPressure = thermoSystem.getPressure() - pressureDrop;
+      if (outletPressure <= 0.0) {
+        throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "run", "pressureDrop",
+            "results in a non-physical outlet pressure (" + outletPressure
+                + " bara). The pressure drop must be smaller than the inlet pressure (" + thermoSystem.getPressure()
+                + " bara)."));
+      }
+      thermoSystem.setPressure(outletPressure);
+      thermoOps.PHflash(enthalpy);
+    }
 
     outStream.setFluid(thermoSystem);
   }
