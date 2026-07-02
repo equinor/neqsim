@@ -9,7 +9,57 @@
 
 ---
 
-## 2026-07-?? — AI-HAZOP pipeline: per-deviation quantification, DEXPI design conditions, blocked-outlet overpressure, limit-basis provenance
+## 2026-07-02 — NeqSimDataBase: clearer failures for replaceTable/useExtendedComponentDatabase
+
+### Summary
+
+Fixes two related database-management bugs found while exercising
+`NeqSimDataBase.replaceTable()` and `useExtendedComponentDatabase()`
+repeatedly from a Python/Jupyter notebook (custom component database
+tutorial). Both are additive robustness fixes — no API signature changes.
+
+### What changed
+
+- **`useExtendedComponentDatabase(boolean)`** now verifies the COMP table
+  actually loaded (has rows) after switching between `COMP.csv`/`COMP_EXT.csv`.
+  Previously, if the underlying `DROP TABLE` + `CREATE TABLE ... CSVREAD(...)`
+  step failed for any reason, the COMP table was silently left missing, and
+  the failure only surfaced later as an unrelated, confusing
+  `NotInitializedException: Table "COMP" not found` on the next component
+  lookup. It now throws a clear `InvalidInputException` immediately, naming
+  the failed mode (`extended=true/false`).
+- **`replaceTable(String, String)`** previously discarded the real underlying
+  exception and always threw a generic `"- Resource <path> not found"`
+  message — misleading when the file existed but the SQL/CSV read itself
+  failed for another reason. It now preserves the original exception as the
+  `cause` and includes its message in the thrown `InvalidInputException`,
+  while still falling back to reloading the default bundled table so the
+  database is not left in a missing-table state.
+
+### Repro that found this
+
+Adding a custom component to a NeqSim fluid database from a pandas
+DataFrame/CSV (as shown in the NeqSim-Colab `parameter_database.ipynb`
+tutorial) and then toggling `useExtendedComponentDatabase(true)` /
+`replaceTable(...)` several times in the same long-lived kernel session could
+leave the COMP table missing with no actionable error message.
+
+### Tests
+
+- `neqsim.util.database.NeqSimDataBaseTest#testReplaceTable` updated to check
+  the new message format and that the cause chain is preserved, plus that the
+  COMP table is left usable (not missing) after a failed `replaceTable` call.
+- `testComponentOnlyInExtendedDatabase` / `testFlashWithExtendedDatabaseComponent`
+  continue to pass unchanged (success path is unaffected).
+
+### Migration
+
+None required — both changes only affect the failure path (a previously
+silent/confusing failure now throws promptly with a clear message).
+
+---
+
+
 
 ### Summary
 
