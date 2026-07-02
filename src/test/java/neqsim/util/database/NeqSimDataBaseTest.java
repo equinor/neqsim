@@ -111,9 +111,17 @@ public class NeqSimDataBaseTest extends NeqSimTest {
     neqsim.util.database.NeqSimDataBase.replaceTable("COMP", "src/main/resources/data/COMP.csv");
     RuntimeException thrown = Assertions.assertThrows(RuntimeException.class,
         () -> neqsim.util.database.NeqSimDataBase.replaceTable("COMP", "file_does_not_exist.csv"));
-    Assertions.assertEquals(
-        "neqsim.util.exception.InvalidInputException: NeqSimDataBase:replaceTable - Input path - Resource file_does_not_exist.csv not found",
-        thrown.getMessage());
+    assertTrue(
+        thrown.getMessage()
+            .startsWith("neqsim.util.exception.InvalidInputException: NeqSimDataBase:replaceTable "
+                + "- Input path - failed to load table COMP from file_does_not_exist.csv"),
+        "Unexpected exception message: " + thrown.getMessage());
+    Assertions.assertNotNull(thrown.getCause().getCause(),
+        "The original database/IO exception should be preserved as the cause");
+    // The COMP table must still be usable after a failed replaceTable call (falls back to the
+    // bundled default), not left missing.
+    assertTrue(neqsim.util.database.NeqSimDataBase.hasComponent("methane"),
+        "COMP table should have been restored to a usable state after the failed replaceTable call");
   }
 
   @Test

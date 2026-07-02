@@ -413,13 +413,43 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
   /**
    * Use extended component database.
    *
+   * <p>
+   * Switching the COMP table drops and recreates it, so if the underlying CSVREAD/CREATE TABLE step fails for any
+   * reason (e.g. a corrupted resource stream or a JVM/H2 classloading issue), the COMP table can be left missing
+   * entirely. That failure previously surfaced only later, as a confusing, unrelated "Table COMP not found" error the
+   * next time any component was looked up. This method now verifies the table actually loaded before returning.
+   * </p>
+   *
    * @param useExtendedDatabase the use extended database
    */
   public static void useExtendedComponentDatabase(boolean useExtendedDatabase) {
-    if (useExtendedDatabase)
+    if (useExtendedDatabase) {
       updateTable("COMP", "data/COMP_EXT.csv");
-    else
+    } else {
       updateTable("COMP", "data/COMP.csv");
+    }
+    if (!tableIsUsable("COMP")) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("NeqSimDataBase",
+          "useExtendedComponentDatabase", "useExtendedDatabase",
+          "- failed to (re)load the COMP table (extended=" + useExtendedDatabase + "). The component "
+              + "database is now unusable until useExtendedComponentDatabase or replaceTable('COMP', ...) "
+              + "is called again successfully."));
+    }
+  }
+
+  /**
+   * Checks whether a table exists and contains at least one row.
+   *
+   * @param tableName Name of table to check.
+   * @return true if the table exists and is readable, false otherwise.
+   */
+  private static boolean tableIsUsable(String tableName) {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT COUNT(*) FROM " + tableName)) {
+      return dataSet.next() && dataSet.getInt(1) > 0;
+    } catch (Exception ex) {
+      return false;
+    }
   }
 
   /**
@@ -456,10 +486,16 @@ public class NeqSimDataBase implements neqsim.util.util.FileSystemSettings, java
       String sqlString = "CREATE TABLE " + tableName + " AS SELECT * FROM CSVREAD('" + path + "')";
       database.execute(sqlString);
     } catch (Exception ex) {
+      logger.error("Failed updating table " + tableName + " from " + path, ex);
+      // Restore a usable table (falling back to the bundled default CSV) so the database is not
+      // left in a broken, table-missing state; the original failure is preserved as the cause
+      // below instead of being replaced by a generic, potentially misleading message.
       updateTable(tableName);
-      logger.error("Failed updating table " + tableName, ex);
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("NeqSimDataBase", "replaceTable",
-          "path", "- Resource " + path + " not found"));
+      neqsim.util.exception.InvalidInputException invalidInputException = new neqsim.util.exception.InvalidInputException(
+          "NeqSimDataBase", "replaceTable", "path",
+          "- failed to load table " + tableName + " from " + path + ": " + ex.getMessage());
+      invalidInputException.initCause(ex);
+      throw new RuntimeException(invalidInputException);
     }
   }
 
