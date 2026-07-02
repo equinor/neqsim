@@ -432,6 +432,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param measurementDevice a {@link neqsim.process.measurementdevice.MeasurementDeviceInterface} object
    */
   public synchronized void add(MeasurementDeviceInterface measurementDevice) {
+    if (measurementDevices == null) {
+      measurementDevices = new ArrayList<MeasurementDeviceInterface>(0);
+    }
     measurementDevices.add(measurementDevice);
     alarmManager.register(measurementDevice);
   }
@@ -443,6 +446,9 @@ public class ProcessSystem extends SimulationBaseClass {
    * @param controllerDevice a {@link neqsim.process.controllerdevice.ControllerDeviceInterface} object
    */
   public synchronized void add(ControllerDeviceInterface controllerDevice) {
+    if (controllerDevices == null) {
+      controllerDevices = new ArrayList<ControllerDeviceInterface>(0);
+    }
     controllerDevices.add(controllerDevice);
   }
 
@@ -453,6 +459,12 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return list of all {@link neqsim.process.ProcessElementInterface} objects
    */
   public List<ProcessElementInterface> getAllElements() {
+    if (measurementDevices == null) {
+      measurementDevices = new ArrayList<MeasurementDeviceInterface>(0);
+    }
+    if (controllerDevices == null) {
+      controllerDevices = new ArrayList<ControllerDeviceInterface>(0);
+    }
     List<ProcessElementInterface> all = new ArrayList<ProcessElementInterface>(
         unitOperations.size() + measurementDevices.size() + controllerDevices.size());
     all.addAll(unitOperations);
@@ -467,6 +479,12 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return list of {@link MeasurementDeviceInterface} objects
    */
   public List<MeasurementDeviceInterface> getMeasurementDevices() {
+    // Objects reconstructed via reflection-based deserialization (e.g. XStream)
+    // bypass field initializers, so this list can be null for a process system
+    // that had no measurement devices at save time.
+    if (measurementDevices == null) {
+      measurementDevices = new ArrayList<MeasurementDeviceInterface>(0);
+    }
     return Collections.unmodifiableList(measurementDevices);
   }
 
@@ -476,6 +494,12 @@ public class ProcessSystem extends SimulationBaseClass {
    * @return list of {@link ControllerDeviceInterface} objects
    */
   public List<ControllerDeviceInterface> getControllerDevices() {
+    // Objects reconstructed via reflection-based deserialization (e.g. XStream)
+    // bypass field initializers, so this list can be null for a process system
+    // that had no controller devices at save time.
+    if (controllerDevices == null) {
+      controllerDevices = new ArrayList<ControllerDeviceInterface>(0);
+    }
     return Collections.unmodifiableList(controllerDevices);
   }
 
