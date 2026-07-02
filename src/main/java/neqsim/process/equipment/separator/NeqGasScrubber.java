@@ -55,8 +55,33 @@ public class NeqGasScrubber extends Separator {
 
   /** {@inheritDoc} */
   @Override
+  public void initMechanicalDesign() {
+    // Preserve existing geometry when re-initializing
+    double prevDiameter = getInternalDiameter();
+    double prevLength = getSeparatorLength();
+    separatorMechanicalDesign = new GasScrubberMechanicalDesign(this);
+    if (prevDiameter > 0) {
+      separatorMechanicalDesign.setInnerDiameter(prevDiameter);
+    }
+    if (prevLength > 0) {
+      separatorMechanicalDesign.setTantanLength(prevLength);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public GasScrubberMechanicalDesign getMechanicalDesign() {
-    return new GasScrubberMechanicalDesign(this);
+    // Deserialized or otherwise externally-constructed instances can end up with a
+    // separatorMechanicalDesign field typed as the base SeparatorMechanicalDesign
+    // (e.g. XStream restores the field using the type recorded at save time, which
+    // may predate a conversion to NeqGasScrubber). Re-initialize rather than
+    // throwing a ClassCastException; initMechanicalDesign() preserves the current
+    // diameter and length (read from this equipment, not from the stale design
+    // object).
+    if (!(separatorMechanicalDesign instanceof GasScrubberMechanicalDesign)) {
+      initMechanicalDesign();
+    }
+    return (GasScrubberMechanicalDesign) separatorMechanicalDesign;
   }
 
   /**

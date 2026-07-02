@@ -98,6 +98,15 @@ public class GasScrubber extends Separator {
   /** {@inheritDoc} */
   @Override
   public GasScrubberMechanicalDesign getMechanicalDesign() {
+    // Deserialized or otherwise externally-constructed instances can end up with a
+    // separatorMechanicalDesign field typed as the base SeparatorMechanicalDesign
+    // (e.g. XStream restores the field using the type recorded at save time, which
+    // may predate a conversion to GasScrubber). Re-initialize rather than throwing a
+    // ClassCastException; initMechanicalDesign() preserves the current diameter and
+    // length (read from this equipment, not from the stale design object).
+    if (!(separatorMechanicalDesign instanceof GasScrubberMechanicalDesign)) {
+      initMechanicalDesign();
+    }
     return (GasScrubberMechanicalDesign) separatorMechanicalDesign;
   }
 }
