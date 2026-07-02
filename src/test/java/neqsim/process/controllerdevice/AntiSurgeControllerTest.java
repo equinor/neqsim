@@ -98,4 +98,35 @@ public class AntiSurgeControllerTest {
     // deeply in surge: output saturates at the configured maximum
     Assertions.assertEquals(60.0, controller.getValveOpening(), 1e-6);
   }
+
+  @Test
+  void testPredictiveActionOpensBeforeCurrentMarginCrossesSetpoint() {
+    Stream feed = gasStream();
+    final double[] marginHolder = new double[] { 0.30 };
+    Compressor comp = new Compressor("comp", feed) {
+      private static final long serialVersionUID = 1L;
+
+      @Override
+      public double getDistanceToSurge() {
+        return marginHolder[0];
+      }
+    };
+    ThrottlingValve recycle = new ThrottlingValve("recycle", feed);
+    AntiSurgeController controller = new AntiSurgeController("ASC", comp, recycle);
+    controller.setSurgeMarginSetPoint(0.10);
+    controller.setProportionalGain(300.0);
+    controller.setIntegralTime(0.0);
+    controller.setPredictiveActionEnabled(true);
+    controller.setPredictionHorizon(5.0);
+    controller.setMarginRateFilterTime(0.0);
+
+    controller.runTransient(0.0, 1.0);
+    marginHolder[0] = 0.25;
+    controller.runTransient(0.0, 1.0);
+
+    Assertions.assertTrue(controller.getPredictedMargin() < controller.getMeasuredValue(),
+        "falling margin should produce a lower predicted margin");
+    Assertions.assertTrue(controller.getValveOpening() > 0.0,
+        "predictive action should open the valve before current margin crosses the set point");
+  }
 }

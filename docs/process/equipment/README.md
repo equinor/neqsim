@@ -37,6 +37,7 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Compressors | [compressors.md](compressors) | Gas compression, mechanical losses, seal gas |
+| Compressor Anti-Surge Control | [compressor_antisurge_control.md](compressor_antisurge_control) | Dynamic anti-surge recycle, speed/load control, and coordinated pressure-speed-recycle control philosophy |
 | Pumps | [pumps.md](pumps) | Liquid pumping |
 | Expanders | [expanders.md](expanders) | Power recovery, turboexpanders |
 

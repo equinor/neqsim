@@ -174,6 +174,7 @@ This documentation is organized into the following sections:
 | Separators | [separators.md](equipment/separators) | Separator, ThreePhaseSeparator, GasScrubber |
 | Heat Exchangers | [heat_exchangers.md](equipment/heat_exchangers) | Heater, Cooler, HeatExchanger |
 | Compressors | [compressors.md](equipment/compressors) | Compressor, CompressorChart, CompressorWashing |
+| Compressor Anti-Surge Control | [compressor_antisurge_control.md](equipment/compressor_antisurge_control) | AntiSurgeController, CompressorMonitor, ThrottlingValve, Recycle |
 | Pumps | [pumps.md](equipment/pumps) | Pump, PumpChart |
 | Expanders | [expanders.md](equipment/expanders) | Expander, TurboExpanderCompressor |
 | Valves | [valves.md](equipment/valves) | ThrottlingValve, SafetyValve, BlowdownValve |

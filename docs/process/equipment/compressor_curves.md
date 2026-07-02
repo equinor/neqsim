@@ -96,7 +96,7 @@ Compressor performance maps are generated at specific **reference conditions**:
 
 When the **actual operating fluid** differs from the reference:
 - Flow capacity changes
-- Head capacity changes  
+- Head capacity changes
 - Surge and stone wall limits shift
 
 ### Solution: CompressorChartKhader2015
@@ -563,25 +563,25 @@ chart.setAutoGenerateStoneWallCurves(true);
 double[] speeds = {10000, 11000, 12000};  // Multiple speeds (RPM)
 
 // Map at MW = 18 g/mol
-double[][] flow18 = {{3000, 3500, 4000, 4500, 5000}, 
+double[][] flow18 = {{3000, 3500, 4000, 4500, 5000},
                      {3300, 3800, 4300, 4800, 5300},
                      {3600, 4100, 4600, 5100, 5600}};
-double[][] head18 = {{120, 115, 108, 98, 85}, 
+double[][] head18 = {{120, 115, 108, 98, 85},
                      {138, 132, 124, 113, 98},
                      {158, 151, 142, 130, 113}};
-double[][] eff18 = {{75, 78, 80, 78, 73}, 
+double[][] eff18 = {{75, 78, 80, 78, 73},
                     {74, 77, 79, 77, 72},
                     {73, 76, 78, 76, 71}};
 chart.addMapAtMW(18.0, speeds, flow18, head18, eff18);  // No chartConditions needed!
 
 // Map at MW = 22 g/mol
-double[][] flow22 = {{2800, 3300, 3800, 4300, 4800}, 
+double[][] flow22 = {{2800, 3300, 3800, 4300, 4800},
                      {3100, 3600, 4100, 4600, 5100},
                      {3400, 3900, 4400, 4900, 5400}};
-double[][] head22 = {{100, 96, 90, 82, 71}, 
+double[][] head22 = {{100, 96, 90, 82, 71},
                      {115, 110, 103, 94, 82},
                      {132, 126, 118, 108, 94}};
-double[][] eff22 = {{73, 76, 78, 76, 71}, 
+double[][] eff22 = {{73, 76, 78, 76, 71},
                     {72, 75, 77, 75, 70},
                     {71, 74, 76, 74, 69}};
 chart.addMapAtMW(22.0, speeds, flow22, head22, eff22);
@@ -1192,6 +1192,11 @@ if comp.isHigherThanMaxSpeed():
 
 ## Anti-Surge Control
 
+For a dynamic example that combines explicit compressor maps, pressure-driven speed control,
+anti-surge recycle, predictive margin supervision, and coordinated pressure-speed-recycle
+override behavior, see [Compressor Anti-Surge and Coordinated Control](compressor_antisurge_control)
+and the [dynamic compressor good maps notebook](../../../examples/notebooks/process/dynamic_compressor_good_maps.ipynb).
+
 ### Surge Control Factor
 
 The anti-surge system adds a safety margin to the surge limit:
@@ -1751,14 +1756,14 @@ compressor.setSpeed(10250)
 
 # Set single-point surge and stone wall
 compressor.getCompressorChart().getSurgeCurve().setCurve(
-    chartConditions, 
+    chartConditions,
     [5607.45],   # Single surge flow point
     [150.0]      # Single surge head point
 )
 
 compressor.getCompressorChart().getStoneWallCurve().setCurve(
     chartConditions,
-    [9758.49],   # Single stone wall flow point  
+    [9758.49],   # Single stone wall flow point
     [112.65]     # Single stone wall head point
 )
 
@@ -2152,13 +2157,13 @@ public class CompressorCurveGenerationExample {
         gas.addComponent("ethane", 0.10);
         gas.addComponent("propane", 0.05);
         gas.setMixingRule("classic");
-        
+
         Stream inlet = new Stream("inlet", gas);
         inlet.setFlowRate(15000.0, "kg/hr");
         inlet.setTemperature(25.0, "C");
         inlet.setPressure(40.0, "bara");
         inlet.run();
-        
+
         // 2. Create compressor at design point
         Compressor comp = new Compressor("K-100", inlet);
         comp.setOutletPressure(120.0, "bara");
@@ -2166,40 +2171,40 @@ public class CompressorCurveGenerationExample {
         comp.setPolytropicEfficiency(0.78);
         comp.setSpeed(9500);
         comp.run();
-        
+
         System.out.println("=== Design Point ===");
         System.out.println("Flow: " + String.format("%.1f", inlet.getFlowRate("m3/hr")) + " m³/hr");
         System.out.println("Head: " + String.format("%.1f", comp.getPolytropicFluidHead()) + " kJ/kg");
         System.out.println("Power: " + String.format("%.1f", comp.getPower("kW")) + " kW");
-        
+
         // 3. Generate curves using EXPORT template (offshore gas export)
         CompressorChartGenerator generator = new CompressorChartGenerator(comp);
         generator.setChartType("interpolate and extrapolate");
         generator.enableAdvancedCorrections(6);  // 6-stage compressor
-        
+
         CompressorChartInterface chart = generator.generateFromTemplate("EXPORT", 5);
-        
+
         // 4. Apply chart and verify
         comp.setCompressorChart(chart);
         comp.run();
-        
+
         System.out.println("\n=== With Generated Chart ===");
         System.out.println("Speeds available: " + chart.getSpeeds().length);
-        System.out.println("Efficiency from chart: " + 
+        System.out.println("Efficiency from chart: " +
             String.format("%.1f", comp.getPolytropicEfficiency() * 100) + "%");
-        System.out.println("Distance to surge: " + 
+        System.out.println("Distance to surge: " +
             String.format("%.1f", comp.getDistanceToSurge() * 100) + "%");
-        
+
         // 5. Test at different operating point
         inlet.setFlowRate(12000.0, "kg/hr");
         inlet.run();
         comp.run();
-        
+
         System.out.println("\n=== Turndown Operation ===");
         System.out.println("Flow: " + String.format("%.1f", inlet.getFlowRate("m3/hr")) + " m³/hr");
-        System.out.println("Efficiency: " + 
+        System.out.println("Efficiency: " +
             String.format("%.1f", comp.getPolytropicEfficiency() * 100) + "%");
-        System.out.println("Distance to surge: " + 
+        System.out.println("Distance to surge: " +
             String.format("%.1f", comp.getDistanceToSurge() * 100) + "%");
     }
 }
@@ -2575,20 +2580,20 @@ comp.startCompressor(10000);
 while (simTime < 600.0) {  // 10 minute simulation
     // Update inlet conditions (from upstream process)
     inletStream.run();
-    
+
     // Run compressor
     comp.run();
-    
+
     // Update dynamic state (handles startup/shutdown, checks limits)
     comp.updateDynamicState(dt);
-    
+
     // Update anti-surge controller
     double surgeMargin = comp.getDistanceToSurge();
     comp.getAntiSurge().updateController(surgeMargin, dt);
-    
+
     // Record to history
     comp.recordOperatingPoint(simTime);
-    
+
     simTime += dt;
 }
 
@@ -2705,13 +2710,13 @@ while sim_time < 300.0:
     inlet_stream.run()
     comp.run()
     comp.updateDynamicState(dt)
-    
+
     # Print state periodically
     if int(sim_time) % 10 == 0 and sim_time == int(sim_time):
         print(f"t={sim_time:.0f}s: State={comp.getOperatingState()}, "
               f"Speed={comp.getSpeed():.0f} RPM, "
               f"Surge margin={comp.getDistanceToSurge()*100:.1f}%")
-    
+
     sim_time += dt
 
 # Export results

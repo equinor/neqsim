@@ -202,6 +202,24 @@ boolean safe = bench.isSurgeAvoided();
   `AntiSurgeDynamicBenchmark` (or a transparent gas-path surrogate) over a full
   recycle flowsheet that can stick in deep surge.
 
+For coordinated compressor-train studies, use
+`CompressorAntiSurgeApplication` (`neqsim.process.equipment.compressor`) as the
+supervisory scan layer. Each `StageApplication` can bind directly to real NeqSim
+topology objects with `bindTopology(process, compressor, hotRecycleValve,
+coldRecycleValve, recycleCooler, suctionMixer, hotRecycle, coldRecycle)`. A scan
+then writes hot/cold recycle valve openings and optional compressor speed
+runback to the real units, and `runDynamicStep(scanInput, dt)` advances the
+bound `ProcessSystem` with `runTransient()`.
+
+Use this application layer when the study needs stage coordination,
+startup/shutdown or trip states, hot/cold recycle split, operator diagnostics,
+commissioning checks, or speed runback in one executable dynamic model. Keep
+`Recycle` blocks algebraic unless they have explicit transient inventory
+support; valve, compressor, cooler, mixer, and volume-capable equipment should
+carry the dynamic response. The application layer reports
+`NOT_CERTIFIED_FOR_PROTECTION` and is for simulation/advisory studies, not a
+certified machinery-protection package.
+
 ## Running Dynamic Simulation
 
 ```java
