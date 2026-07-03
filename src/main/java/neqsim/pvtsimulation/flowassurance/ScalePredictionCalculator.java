@@ -644,9 +644,8 @@ public class ScalePredictionCalculator implements Serializable {
    * @return Ksp in (mol/L)^2
    */
   private double celestiteKsp(double TK) {
-    // Monnin (1999): log10(Ksp) = 155.889 - 7862.38/T - 56.625*log10(T)
-    double logKsp = 155.889 - 7862.38 / TK - 56.625 * Math.log10(TK);
-    return applyPressureCorrection(Math.pow(10, logKsp), TK, -47.0);
+    double lnKsp = -10452.9 / TK + 19.790;
+    return applyPressureCorrection(Math.exp(lnKsp), TK, -47.0);
   }
 
   /**
@@ -656,9 +655,8 @@ public class ScalePredictionCalculator implements Serializable {
    * @return Ksp in (mol/L)^2
    */
   private double anhydriteKsp(double TK) {
-    // Blount & Dickson (1973): log10(Ksp) = 85.685 - 4279.82/T - 30.219*log10(T)
-    double logKsp = 85.685 - 4279.82 / TK - 30.219 * Math.log10(TK);
-    return applyPressureCorrection(Math.pow(10, logKsp), TK, -52.4);
+    double lnKsp = -19966.8 / TK + 454.860 + Math.log(TK) * -69.840;
+    return applyPressureCorrection(Math.exp(lnKsp), TK, -52.4);
   }
 
   /**

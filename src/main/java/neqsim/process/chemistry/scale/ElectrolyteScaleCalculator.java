@@ -277,25 +277,38 @@ public class ElectrolyteScaleCalculator implements Serializable {
     return Math.log10(iap) + pKsp;
   }
 
-  // pKsp values (at 25 C) with simple T correction (van't Hoff style)
+  private double applyPressureCorrection(double ksp0, double tK, double vDelta) {
+    if (pressureBara <= 1.013 || Math.abs(vDelta) < 1.0e-10) {
+      return ksp0;
+    }
+    double gasConstantCm3Bar = 83.1446;
+    double deltaPbar = pressureBara - 1.01325;
+    double lnCorrection = -vDelta * deltaPbar / (gasConstantCm3Bar * tK);
+    return ksp0 * Math.exp(lnCorrection);
+  }
+
+  private double pKsp(double ksp0, double tK, double vDelta) {
+    return -Math.log10(applyPressureCorrection(ksp0, tK, vDelta));
+  }
+
   private double ksPCaCO3(double tK) {
-    // calcite pKsp at 25C = 8.48 (Plummer-Busenberg)
-    return 8.48 - 0.018 * (tK - 298.15);
+    double log10Ksp = -171.9065 - 0.077993 * tK + 2839.319 / tK + 71.595 * Math.log10(tK);
+    return pKsp(Math.pow(10.0, log10Ksp), tK, -58.4);
   }
 
   private double ksPBaSO4(double tK) {
-    // pKsp at 25C = 9.97 (Templeton)
-    return 9.97 - 0.012 * (tK - 298.15);
+    double lnKsp = 37588.0 / tK - 747.610 + Math.log(tK) * 119.280 - tK * 0.162830 - 2880000.0 / (tK * tK);
+    return pKsp(Math.exp(lnKsp), tK, -46.4);
   }
 
   private double ksPCaSO4(double tK) {
-    // gypsum pKsp at 25C = 4.58
-    return 4.58 - 0.005 * (tK - 298.15);
+    double lnKsp = -26309.9 / tK + 815.978 + Math.log(tK) * -138.361 + tK * 0.167863 + 18.6143 / (tK * tK);
+    return pKsp(Math.exp(lnKsp), tK, -33.0);
   }
 
   private double ksPSrSO4(double tK) {
-    // celestite pKsp at 25C = 6.62
-    return 6.62 - 0.010 * (tK - 298.15);
+    double lnKsp = -10452.9 / tK + 19.790;
+    return pKsp(Math.exp(lnKsp), tK, -47.0);
   }
 
   // ─── Getters ────────────────────────────────────────────

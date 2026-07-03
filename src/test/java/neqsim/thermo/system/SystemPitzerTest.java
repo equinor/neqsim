@@ -116,6 +116,72 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertEquals(1, system.getNumberOfPhases());
   }
 
+  /**
+   * Verify that salt saturation can add ions to an initially pure-water Pitzer system and converge to unit saturation
+   * ratio.
+   */
+  @Test
+  public void testCalcSaltSaturationNaClFromPureWater() {
+    SystemInterface system = new SystemPitzer(298.15, 1.01325);
+    system.addComponent("water", 55.508);
+    system.setMixingRule("classic");
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    assertDoesNotThrow(() -> ops.calcSaltSaturation("NaCl"));
+
+    int aqueousPhaseNumber = system.getPhaseNumberOfPhase("aqueous");
+    if (aqueousPhaseNumber < 0) {
+      for (int i = 0; i < system.getNumberOfPhases(); i++) {
+        if (system.getPhase(i).hasComponent("water")) {
+          aqueousPhaseNumber = i;
+          break;
+        }
+      }
+    }
+    assertTrue(aqueousPhaseNumber >= 0, "Saturated Pitzer system should contain a water-rich phase");
+
+    PhaseInterface phase = system.getPhase(aqueousPhaseNumber);
+    double waterKg = phase.getComponent("water").getNumberOfMolesInPhase() * phase.getComponent("water").getMolarMass();
+    double naMolality = phase.getComponent("Na+").getNumberOfMolesInPhase() / waterKg;
+    double clMolality = phase.getComponent("Cl-").getNumberOfMolesInPhase() / waterKg;
+    int waterComponentNumber = phase.getComponent("water").getComponentNumber();
+    double gammaNa = phase.getActivityCoefficient(phase.getComponent("Na+").getComponentNumber(), waterComponentNumber);
+    double gammaCl = phase.getActivityCoefficient(phase.getComponent("Cl-").getComponentNumber(), waterComponentNumber);
+    double naclKsp = 92.78 - 0.407 * 298.15 + 0.000747 * 298.15 * 298.15;
+
+    assertEquals(1.0, gammaNa * naMolality * gammaCl * clMolality / naclKsp, 1.0e-3);
+  }
+
+  /**
+   * Verify NaCl mean ionic activity and osmotic coefficients against standard Pitzer literature values at 25 C.
+   */
+  @Test
+  public void testNaClActivityAndOsmoticCoefficientAgainstLiterature() {
+    double[] molalities = { 0.1, 0.5, 1.0, 2.0, 3.0 };
+    double[] meanActivityCoefficients = { 0.778, 0.681, 0.657, 0.668, 0.714 };
+    double[] osmoticCoefficients = { 0.932, 0.921, 0.936, 1.002, 1.085 };
+
+    for (int i = 0; i < molalities.length; i++) {
+      SystemInterface system = new SystemPitzer(298.15, 1.01325);
+      system.addComponent("water", 55.508);
+      system.addComponent("Na+", molalities[i]);
+      system.addComponent("Cl-", molalities[i]);
+      system.setMixingRule("classic");
+      system.init(0);
+      system.init(1);
+
+      PhaseInterface phase = system.getPhase(1);
+      int sodiumComponentNumber = phase.getComponent("Na+").getComponentNumber();
+      int chlorideComponentNumber = phase.getComponent("Cl-").getComponentNumber();
+
+      assertEquals(meanActivityCoefficients[i],
+          phase.getMeanIonicActivity(sodiumComponentNumber, chlorideComponentNumber),
+          0.08 * meanActivityCoefficients[i]);
+      assertEquals(osmoticCoefficients[i], phase.getOsmoticCoefficientOfWater(), 0.04 * osmoticCoefficients[i]);
+      assertEquals(phase.getOsmoticCoefficientOfWater(), phase.getOsmoticCoefficientOfWaterMolality(), 1.0e-12);
+    }
+  }
+
   @Test
   public void testHenryAndVaporPressure() {
     SystemInterface system = new SystemPitzer(298.15, 1.0);
@@ -364,11 +430,14 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     system.setMixingRule("classic");
     system.init(0);
     system.init(1);
+    system.initPhysicalProperties();
 
     double density = system.getPhase(1).getDensity();
-    // ~1 molal NaCl brine at 25°C should be ~1020-1050 kg/m³
-    assertTrue(density > 990.0, "Brine density should be > 990: " + density);
-    assertTrue(density < 1100.0, "Brine density should be < 1100: " + density);
+    double physicalPropertyDensity = system.getPhase(1).getPhysicalProperties().getDensity();
+    // ~1 molal NaCl brine at 25°C should be about 1035 kg/m³.
+    assertEquals(1036.0, density, 8.0, "Brine density should match NaCl brine data");
+    assertEquals(physicalPropertyDensity, density, 1.0e-10,
+        "Pitzer thermodynamic density should use the salt-water physical-property density");
     // Should be higher than pure water (~997 at 25°C)
     assertTrue(density > 997.0, "Brine should be denser than pure water: " + density);
   }
@@ -416,8 +485,10 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     SystemInterface system = new SystemPitzer(298.15, 1.0);
     system.addComponent("water", 55.5);
     system.addComponent("Na+", 0.5);
+    system.addComponent("K+", 0.1);
     system.addComponent("Ca++", 0.1);
-    system.addComponent("Cl-", 0.7);
+    system.addComponent("Mg++", 0.05);
+    system.addComponent("Cl-", 0.8);
     system.addComponent("SO4--", 0.05);
     system.setMixingRule("classic");
 
@@ -433,10 +504,27 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
           "Activity coefficient for " + system.getPhase(1).getComponent(i).getName() + " must be finite: " + gamma);
     }
 
-    // Verify parameters were loaded (check that Pitzer params are nonzero for NaCl)
+    // Verify parameters were loaded for common chloride salts.
     assertTrue(liq.isParametersLoaded(), "Pitzer parameters should be loaded from database");
-    int na = liq.getComponent("Na+").getComponentNumber();
-    int cl = liq.getComponent("Cl-").getComponentNumber();
-    assertTrue(Math.abs(liq.getBeta0ij(na, cl)) > 0.01, "NaCl beta0 should be loaded from database");
+    assertLoadedBinaryParameters(liq, "Na+", "Cl-");
+    assertLoadedBinaryParameters(liq, "K+", "Cl-");
+    assertLoadedBinaryParameters(liq, "Ca++", "Cl-");
+    assertLoadedBinaryParameters(liq, "Mg++", "Cl-");
+  }
+
+  /**
+   * Verifies that a binary Pitzer parameter row was loaded for an ion pair.
+   *
+   * @param phase Pitzer phase with loaded database parameters
+   * @param ion1 first ion component name
+   * @param ion2 second ion component name
+   */
+  private static void assertLoadedBinaryParameters(PhasePitzer phase, String ion1, String ion2) {
+    int ion1Number = phase.getComponent(ion1).getComponentNumber();
+    int ion2Number = phase.getComponent(ion2).getComponentNumber();
+    assertTrue(Math.abs(phase.getBeta0ij(ion1Number, ion2Number)) > 0.01,
+        ion1 + "/" + ion2 + " beta0 should be loaded from database");
+    assertTrue(Math.abs(phase.getBeta1ij(ion1Number, ion2Number)) > 0.01,
+        ion1 + "/" + ion2 + " beta1 should be loaded from database");
   }
 }

@@ -1582,7 +1582,7 @@ public abstract class Phase implements PhaseInterface {
   /** {@inheritDoc} */
   @Override
   public double getLogInfiniteDiluteFugacity(int k, int p) {
-    if (refPhase == null) {
+    if (refPhase == null || refPhase.length <= k || refPhase[k] == null || refPhase[k].getNumberOfComponents() < 2) {
       initRefPhases(false, getComponent(p).getName());
     }
     refPhase[k].setTemperature(temperature);
