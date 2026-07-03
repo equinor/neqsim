@@ -42,6 +42,34 @@ major equipment (pumps, heat exchangers, tanks, control valves, reactors, compre
 analysers) and imports piping segments as runnable `DexpiStream` units tagged with the source line
 number.
 
+### P&ID and SCD handoffs from STID or PDF sources
+
+DEXPI XML is the preferred direct import path because it preserves equipment, nozzles, piping
+segments, instruments, and signal-line structure in a machine-readable form. When the source is STID
+metadata, a scanned P&ID, a PDF drawing, or a System Control Diagram (SCD), first normalize the
+evidence outside the DEXPI reader instead of treating the drawing as a runnable model.
+
+Use this separation of responsibility:
+
+| Source evidence | Normalize to | NeqSim target |
+|-----------------|--------------|---------------|
+| STID tag and document metadata | equipment, document, instrument, relief, and control-loop candidates | `StidHazopDataSource`, `OperationalTagMap`, task evidence packs |
+| P&ID drawing content | process nodes, material edges, valves, nozzles, drains, vents, and line numbers | `ProcessSystem`, `ProcessConnection`, `DexpiSimulationBuilder` input, or manual flowsheet setup |
+| SCD / cause-and-effect content | initiators, logic, final elements, trips, permissives, and setpoints | measurement devices, controllers, `ProcessConnection.ConnectionType.SIGNAL`, operational scenarios |
+| Historian or plant-data tag map | public logical tags bound to private historian tags and automation addresses | `OperationalTagMap` and `ProcessAutomation` |
+
+The current NeqSim scope is therefore not CAD recognition. It is deterministic use of normalized
+P&ID/SCD evidence once a document reader, OCR step, DEXPI converter, or STID connector has extracted
+the relevant structure. This keeps engineering evidence traceable: unreviewed metadata can seed a
+model scaffold, while controlled drawing content is required before line routing, interlocks,
+setpoints, or safeguard credit are used in a calculation.
+
+For SCD-like workflows, model the control content as live simulation objects rather than as a drawing
+file: transmitters, controller devices, signal connections, alarm/trip schedules, and operational
+scenarios. This matches the existing dynamic-simulation and operations APIs and allows the same
+logical tag map to support field-data comparison, HAZOP preparation, and what-if valve or trip
+studies.
+
 ```java
 Path xmlFile = Paths.get("/path/to/dexpi.xml");
 SystemSrkEos exampleFluid = new SystemSrkEos(298.15, 50.0);
