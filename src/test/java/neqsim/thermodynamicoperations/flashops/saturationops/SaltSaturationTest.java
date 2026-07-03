@@ -18,6 +18,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 class SaltSaturationTest {
   private static final double SATURATION_RATIO_TOLERANCE = 1.0e-3;
+  private static final double PLUMMER_BUSENBERG_CALCITE_KSP_TOLERANCE = 1.0e-8;
 
   /**
    * Verifies that scale-potential calculations report activity-based saturation ratios for the mixed chloride brine
@@ -47,6 +48,58 @@ class SaltSaturationTest {
         "CaCl2 should be reported with a finite activity-based saturation ratio");
     assertTrue(mgcl2SaturationRatio > 0.0 && Double.isFinite(mgcl2SaturationRatio),
         "MgCl2 should be reported with a finite activity-based saturation ratio");
+  }
+
+  /**
+   * Verifies that the convenience accessor returns the same activity-based saturation ratio as the result table.
+   *
+   * @throws Exception if the thermodynamic operation fails
+   */
+  @Test
+  void getRelativeScalePotentialReturnsSingleSaltRatio() throws Exception {
+    SystemInterface system = createMixedChlorideBrine();
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+    system.initProperties();
+
+    operations.checkScalePotential(system.getPhaseNumberOfPhase("aqueous"));
+    double expectedNaClRatio = getSaltSaturationRatio(operations.getResultTable(), "NaCl");
+    double directNaClRatio = operations.getRelativeScalePotential("NaCl");
+
+    assertEquals(expectedNaClRatio, directNaClRatio, 1.0e-12);
+  }
+
+  /**
+   * Verifies that CaCO3 scale potential can be evaluated in a gas-aqueous CO2 system with carbonate reactions and that
+   * the implied calcite solubility product matches Plummer and Busenberg, Geochimica et Cosmochimica Acta 46, 1011-1040
+   * (1982).
+   *
+   * @throws Exception if the thermodynamic operation fails
+   */
+  @Test
+  void getRelativeScalePotentialHandlesCaCO3WithCo2GasReactions() throws Exception {
+    SystemInterface system = createCalciumCarbonateCo2GasAqueousSystem();
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+    system.initProperties();
+
+    assertTrue(system.hasPhaseType("gas"), "CO2-bearing feed should retain a gas phase");
+    assertTrue(system.hasPhaseType("aqueous"), "CO2-bearing feed should retain an aqueous phase");
+
+    double bicarbonateMoles = getAqueousComponentMoles(system, "HCO3-");
+    double carbonateMoles = getAqueousComponentMoles(system, "CO3--");
+    assertTrue(bicarbonateMoles > 0.0 || carbonateMoles > 0.0,
+        "CO2 reactions should form bicarbonate or carbonate species in the aqueous phase");
+
+    double caco3ScalePotential = operations.getRelativeScalePotential("CaCO3");
+    assertTrue(Double.isFinite(caco3ScalePotential), "CaCO3 scale potential should be finite");
+    assertTrue(caco3ScalePotential > 0.0, "CaCO3 scale potential should be positive for Ksp comparison");
+
+    double recoveredCalciteKsp = getRecoveredCalciteKsp(system, caco3ScalePotential);
+    double literatureCalciteKsp = calciteKspPlummerBusenberg1982(system.getTemperature());
+    assertEquals(literatureCalciteKsp, recoveredCalciteKsp,
+        literatureCalciteKsp * PLUMMER_BUSENBERG_CALCITE_KSP_TOLERANCE,
+        "Recovered CaCO3 Ksp should match the Plummer-Busenberg calcite correlation");
   }
 
   /**
@@ -91,6 +144,12 @@ class SaltSaturationTest {
    */
   @Test
   void calcSaltSaturationIsAccurateAcrossAqueousAndHydrocarbonPhaseSystems() throws Exception {
+    assertSaltSaturatesToUnitScalePotential("CaCO3", createCalciumCarbonateCo2GasAqueousSystem(),
+        Arrays.asList("gas", "aqueous"));
+    assertSaltSaturatesToUnitScalePotential("CaCO3", createHighPressureCalciumCarbonateCo2GasAqueousSystem(),
+        Arrays.asList("gas", "aqueous"));
+    assertSaltSaturatesToUnitScalePotential("FeCO3", createWaterSystem(), Arrays.asList());
+
     assertSaltSaturatesToUnitScalePotential("CaCl2", createWaterSystem(), Arrays.asList("aqueous"));
     assertSaltSaturatesToUnitScalePotential("CaCl2", createGasAqueousSystem(), Arrays.asList("gas", "aqueous"));
     assertSaltSaturatesToUnitScalePotential("CaCl2", createGasOilAqueousSystem(),
@@ -160,6 +219,35 @@ class SaltSaturationTest {
   }
 
   /**
+   * Creates a calcium-bearing gas-aqueous electrolyte CPA system with CO2 and alkalinity.
+   *
+   * @return initialized electrolyte CPA system
+   * @throws Exception if chemical-reaction initialization fails
+   */
+  private SystemInterface createCalciumCarbonateCo2GasAqueousSystem() throws Exception {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
+    system.addComponent("methane", 5.0);
+    system.addComponent("CO2", 0.01);
+    system.addComponent("water", 55.5);
+    system.addComponent("Ca++", 1.0e-4);
+    system.addComponent("Cl-", 2.0e-4);
+    system.addComponent("OH-", 1.0e-3);
+    return initializeElectrolyteSystem(system);
+  }
+
+  /**
+   * Creates a calcium-carbonate CO2 gas-aqueous electrolyte CPA system at elevated pressure.
+   *
+   * @return initialized electrolyte CPA system
+   * @throws Exception if chemical-reaction initialization fails
+   */
+  private SystemInterface createHighPressureCalciumCarbonateCo2GasAqueousSystem() throws Exception {
+    SystemInterface system = createCalciumCarbonateCo2GasAqueousSystem();
+    system.setPressure(100.0);
+    return system;
+  }
+
+  /**
    * Initializes an electrolyte CPA system after all feed components have been added.
    *
    * @param system system to initialize
@@ -193,10 +281,29 @@ class SaltSaturationTest {
       assertTrue(system.hasPhaseType(phaseType), "Expected " + phaseType + " phase for " + saltName);
     }
 
-    operations.checkScalePotential(system.getPhaseNumberOfPhase("aqueous"));
+    operations.checkScalePotential(getAqueousOrWaterPhaseNumber(system));
     double saturationRatio = getSaltSaturationRatio(operations.getResultTable(), saltName);
     assertEquals(1.0, saturationRatio, SATURATION_RATIO_TOLERANCE,
         saltName + " saturation ratio should be unity after calcSaltSaturation");
+  }
+
+  /**
+   * Finds the aqueous phase, falling back to the water-containing phase used by single-phase brines.
+   *
+   * @param system thermodynamic system to inspect
+   * @return phase number for the aqueous or water-containing phase
+   */
+  private int getAqueousOrWaterPhaseNumber(SystemInterface system) {
+    int aqueousPhaseNumber = system.getPhaseNumberOfPhase("aqueous");
+    if (aqueousPhaseNumber >= 0) {
+      return aqueousPhaseNumber;
+    }
+    for (int phaseNumber = 0; phaseNumber < system.getNumberOfPhases(); phaseNumber++) {
+      if (system.getPhase(phaseNumber).hasComponent("water")) {
+        return phaseNumber;
+      }
+    }
+    throw new IllegalStateException("No aqueous or water-containing phase found");
   }
 
   /**
@@ -213,5 +320,54 @@ class SaltSaturationTest {
       }
     }
     throw new IllegalArgumentException("Missing salt in scale-potential table: " + saltName);
+  }
+
+  /**
+   * Reads moles for a named component in the aqueous phase.
+   *
+   * @param system thermodynamic system containing an aqueous phase
+   * @param componentName component name to read
+   * @return component moles in the aqueous phase
+   */
+  private double getAqueousComponentMoles(SystemInterface system, String componentName) {
+    return system.getPhase("aqueous").getComponent(componentName).getNumberOfMolesInPhase();
+  }
+
+  /**
+   * Recovers the calcite solubility product from the activity product and saturation ratio returned by scale-potential
+   * screening.
+   *
+   * @param system thermodynamic system containing an aqueous phase
+   * @param caco3ScalePotential CaCO3 saturation ratio from {@link ThermodynamicOperations#getRelativeScalePotential}
+   * @return apparent calcite solubility product used by the saturation-ratio calculation
+   */
+  private double getRecoveredCalciteKsp(SystemInterface system, double caco3ScalePotential) {
+    neqsim.thermo.phase.PhaseInterface aqueousPhase = system.getPhase("aqueous");
+    int waterComponentNumber = aqueousPhase.getComponent("water").getComponentNumber();
+    int calciumComponentNumber = aqueousPhase.getComponent("Ca++").getComponentNumber();
+    int carbonateComponentNumber = aqueousPhase.getComponent("CO3--").getComponentNumber();
+
+    double waterDenominator = aqueousPhase.getComponent("water").getx()
+        * aqueousPhase.getComponent("water").getMolarMass();
+    double calciumMolality = aqueousPhase.getComponent("Ca++").getx() / waterDenominator;
+    double carbonateMolality = aqueousPhase.getComponent("CO3--").getx() / waterDenominator;
+    double calciumActivityCoefficient = aqueousPhase.getActivityCoefficient(calciumComponentNumber,
+        waterComponentNumber);
+    double carbonateActivityCoefficient = aqueousPhase.getActivityCoefficient(carbonateComponentNumber,
+        waterComponentNumber);
+    double ionActivityProduct = calciumActivityCoefficient * calciumMolality * carbonateActivityCoefficient
+        * carbonateMolality;
+    return ionActivityProduct / caco3ScalePotential;
+  }
+
+  /**
+   * Calculates the Plummer-Busenberg calcite solubility product correlation used for CaCO3 scale potential.
+   *
+   * @param temperatureK temperature in Kelvin
+   * @return calcite solubility product
+   */
+  private double calciteKspPlummerBusenberg1982(double temperatureK) {
+    double log10Ksp = -171.9065 - 0.077993 * temperatureK + 2839.319 / temperatureK + 71.595 * Math.log10(temperatureK);
+    return Math.pow(10.0, log10Ksp);
   }
 }

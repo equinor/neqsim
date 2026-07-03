@@ -260,11 +260,22 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
    * @return solubility product
    */
   private double calculateKsp(SaltData saltData, double temperatureK, double pressureBara) {
+    double ksp;
     if (saltName.equals("NaCl")) {
-      return 92.78 - 0.407 * temperatureK + 0.000747 * temperatureK * temperatureK;
+      ksp = 92.78 - 0.407 * temperatureK + 0.000747 * temperatureK * temperatureK;
+    } else if (saltName.equals("CaCO3")) {
+      double log10Ksp = -171.9065 - 0.077993 * temperatureK + 2839.319 / temperatureK
+          + 71.595 * Math.log10(temperatureK);
+      ksp = Math.pow(10.0, log10Ksp);
+    } else if (saltName.equals("FeCO3")) {
+      double log10Ksp = -59.3498 - 0.041377 * temperatureK + 2.1963 / temperatureK + 24.5724 * Math.log10(temperatureK)
+          + 2.518e-5 * temperatureK * temperatureK;
+      ksp = Math.pow(10.0, log10Ksp);
+    } else {
+      double lnKsp = saltData.kspwater / temperatureK + saltData.kspwater2 + Math.log(temperatureK) * saltData.kspwater3
+          + temperatureK * saltData.kspwater4 + saltData.kspwater5 / (temperatureK * temperatureK);
+      ksp = Math.exp(lnKsp);
     }
-    double lnKsp = saltData.kspwater / temperatureK + saltData.kspwater2 + Math.log(temperatureK) * saltData.kspwater3
-        + temperatureK * saltData.kspwater4 + saltData.kspwater5 / (temperatureK * temperatureK);
     if (Math.abs(saltData.vdelta) > 1.0e-10 && pressureBara > 1.013) {
       double gasConstantCm3Bar = 83.1446;
       double deltaPbar = pressureBara - 1.01325;
@@ -274,9 +285,9 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
       } else if (lnCorrection < -50.0) {
         lnCorrection = -50.0;
       }
-      lnKsp += lnCorrection;
+      ksp *= Math.exp(lnCorrection);
     }
-    return Math.exp(lnKsp);
+    return ksp;
   }
 
   /**

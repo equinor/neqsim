@@ -1259,6 +1259,55 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
+   * Calculates and returns the relative scale potential for a salt in the aqueous phase.
+   *
+   * @param saltName salt name as listed in the COMPSALT database, for example {@code "NaCl"}
+   * @return relative scale potential, where values below 1.0 are undersaturated and values above 1.0 are supersaturated
+   * @throws neqsim.util.exception.IsNaNException if the scale-potential calculation fails
+   * @throws IllegalArgumentException if no aqueous phase is available or the salt is not reported
+   */
+  public double getRelativeScalePotential(String saltName) throws IsNaNException {
+    int phaseNumber = system.getPhaseNumberOfPhase("aqueous");
+    if (phaseNumber < 0) {
+      throw new IllegalArgumentException("No aqueous phase found for scale-potential calculation");
+    }
+    return getRelativeScalePotential(phaseNumber, saltName);
+  }
+
+  /**
+   * Calculates and returns the relative scale potential for a salt in the specified phase.
+   *
+   * @param phaseNumber phase number to evaluate
+   * @param saltName salt name as listed in the COMPSALT database, for example {@code "NaCl"}
+   * @return relative scale potential, where values below 1.0 are undersaturated and values above 1.0 are supersaturated
+   * @throws neqsim.util.exception.IsNaNException if the scale-potential calculation fails
+   * @throws IllegalArgumentException if the salt is not reported in the result table
+   */
+  public double getRelativeScalePotential(int phaseNumber, String saltName) throws IsNaNException {
+    checkScalePotential(phaseNumber);
+    return getRelativeScalePotentialFromTable(saltName);
+  }
+
+  /**
+   * Reads one salt's relative scale potential from the latest scale-potential result table.
+   *
+   * @param saltName salt name to read from the result table
+   * @return relative scale potential for the salt
+   * @throws IllegalArgumentException if no result table exists or the salt is not reported
+   */
+  private double getRelativeScalePotentialFromTable(String saltName) {
+    if (resultTable == null) {
+      throw new IllegalArgumentException("No scale-potential result table is available");
+    }
+    for (int i = 1; i < resultTable.length; i++) {
+      if (saltName.equals(resultTable[i][0])) {
+        return Double.parseDouble(resultTable[i][1]);
+      }
+    }
+    throw new IllegalArgumentException("Missing salt in scale-potential table: " + saltName);
+  }
+
+  /**
    * addIonToScaleSaturation.
    *
    * @param phaseNumber a int
