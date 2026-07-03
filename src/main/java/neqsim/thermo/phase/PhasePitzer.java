@@ -592,9 +592,8 @@ public class PhasePitzer extends PhaseGE {
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the excess heat capacity via finite-difference temperature derivatives of the activity coefficients. In
-   * the current implementation the Pitzer binary parameters are temperature independent, so the residual contribution
-   * evaluates to zero.
+   * Calculates the excess heat capacity via finite-difference temperature derivatives of the Pitzer excess Gibbs
+   * energy, including temperature-dependent Debye-Huckel and binary interaction parameters when available.
    * </p>
    */
   @Override
@@ -715,9 +714,24 @@ public class PhasePitzer extends PhaseGE {
    * @return Debye-Huckel A-phi coefficient
    */
   private double getDebyeHuckelAphi(double temperatureKelvin) {
-    double dielectricConstantWater = 78.303;
-    double densityWater = 0.9970479;
-    return 1.4006e6 * Math.sqrt(densityWater) / Math.pow(dielectricConstantWater * temperatureKelvin, 1.5);
+    double temperatureCelsius = temperatureKelvin - 273.15;
+    double densityWater = 999.83 + 5.0948e-2 * temperatureCelsius - 7.5722e-3 * temperatureCelsius * temperatureCelsius
+        + 3.8907e-5 * Math.pow(temperatureCelsius, 3.0) - 1.2e-7 * Math.pow(temperatureCelsius, 4.0);
+    if (temperatureCelsius > 100.0) {
+      double deltaTemperature = temperatureCelsius - 100.0;
+      densityWater = 958.0 - 1.08 * deltaTemperature - 0.0028 * deltaTemperature * deltaTemperature;
+    }
+    if (densityWater < 700.0) {
+      densityWater = 700.0;
+    }
+
+    double dielectricConstantWater = 87.740 - 0.40008 * temperatureCelsius
+        + 9.398e-4 * temperatureCelsius * temperatureCelsius - 1.410e-6 * Math.pow(temperatureCelsius, 3.0);
+    if (dielectricConstantWater < 20.0) {
+      dielectricConstantWater = 20.0;
+    }
+
+    return 1.4006e6 * Math.sqrt(densityWater / 1000.0) / Math.pow(dielectricConstantWater * temperatureKelvin, 1.5);
   }
 
   /**
