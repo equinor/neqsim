@@ -1,6 +1,9 @@
 package neqsim.process.processmodel.diagram;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -645,8 +648,104 @@ public class PFDLayoutPolicy implements Serializable {
       }
     }
 
-    // Fall back to name-based and phase-based classification
-    return classifySeparatorOutletByNameAndPhase(outletStream);
+    // Generic separation equipment (scrubbers, absorbers, columns, tanks, membranes):
+    // apply gravity convention by phase, then density-order multiple liquid outlets.
+    return classifySeparationOutletByPhaseAndDensity(separator, outletStream);
+  }
+
+  /**
+   * Classifies a generic separation-equipment outlet using phase and liquid density.
+   *
+   * <p>
+   * This covers separators, scrubbers, absorbers, distillation columns, strippers, regenerators, tanks, and similar
+   * equipment where the model exposes outlet streams but does not provide type-specific gas/oil/water getters. Standard
+   * PFD convention is gravity-based: vapour leaves from the top, while liquids leave lower on the equipment. When
+   * several liquid outlets are present, the lighter liquid is drawn from the side/middle and the densest liquid is
+   * drawn from the bottom.
+   * </p>
+   *
+   * @param equipment the separation equipment
+   * @param outletStream the outlet stream to classify
+   * @return outlet type for Graphviz port positioning
+   */
+  private SeparatorOutlet classifySeparationOutletByPhaseAndDensity(ProcessEquipmentInterface equipment,
+      StreamInterface outletStream) {
+    StreamPhase phase = classifyStreamPhase(outletStream);
+    if (phase == StreamPhase.GAS) {
+      return SeparatorOutlet.GAS_TOP;
+    }
+    if (phase == StreamPhase.AQUEOUS) {
+      return SeparatorOutlet.WATER_BOTTOM;
+    }
+
+    List<StreamInterface> liquidOutlets = getLiquidOutletStreams(equipment);
+    if (liquidOutlets.size() <= 1) {
+      return classifySeparatorOutletByNameAndPhase(outletStream);
+    }
+
+    List<StreamInterface> densityOrderedLiquids = new ArrayList<StreamInterface>(liquidOutlets);
+    Collections.sort(densityOrderedLiquids, new Comparator<StreamInterface>() {
+      @Override
+      public int compare(StreamInterface stream1, StreamInterface stream2) {
+        return Double.compare(getStreamDensity(stream1), getStreamDensity(stream2));
+      }
+    });
+
+    if (outletStream == densityOrderedLiquids.get(densityOrderedLiquids.size() - 1)) {
+      return SeparatorOutlet.WATER_BOTTOM;
+    }
+    if (outletStream == densityOrderedLiquids.get(0)) {
+      return SeparatorOutlet.OIL_MIDDLE;
+    }
+    return SeparatorOutlet.LIQUID_BOTTOM;
+  }
+
+  /**
+   * Gets liquid outlet streams from equipment.
+   *
+   * @param equipment the equipment to inspect
+   * @return liquid outlet streams, excluding gas and unknown outlets
+   */
+  private List<StreamInterface> getLiquidOutletStreams(ProcessEquipmentInterface equipment) {
+    List<StreamInterface> liquids = new ArrayList<StreamInterface>();
+    if (equipment == null) {
+      return liquids;
+    }
+    try {
+      List<StreamInterface> outlets = equipment.getOutletStreams();
+      if (outlets == null) {
+        return liquids;
+      }
+      for (StreamInterface outlet : outlets) {
+        if (outlet == null) {
+          continue;
+        }
+        StreamPhase phase = classifyStreamPhase(outlet);
+        if (phase == StreamPhase.OIL || phase == StreamPhase.AQUEOUS || phase == StreamPhase.LIQUID) {
+          liquids.add(outlet);
+        }
+      }
+    } catch (Exception ex) {
+      // Partially configured equipment may not report outlets yet.
+    }
+    return liquids;
+  }
+
+  /**
+   * Gets stream density for ordering liquid draw-offs.
+   *
+   * @param stream the stream to inspect
+   * @return density in kg/m3, or positive infinity when unavailable
+   */
+  private double getStreamDensity(StreamInterface stream) {
+    if (stream == null || stream.getFluid() == null) {
+      return Double.POSITIVE_INFINITY;
+    }
+    try {
+      return stream.getFluid().getDensity("kg/m3");
+    } catch (Exception ex) {
+      return Double.POSITIVE_INFINITY;
+    }
   }
 
   /**
