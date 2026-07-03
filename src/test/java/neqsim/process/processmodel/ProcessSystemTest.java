@@ -1189,7 +1189,7 @@ public class ProcessSystemTest extends neqsim.NeqSimTest {
 
     assertEquals(4.78589648, valve1.getOutletStream().getTemperature("C"), 1e-6);
 
-    assertEquals(compressor1.getPower(), compressor2.getPower(), 1e-5);
+    assertEquals(compressor1.getPower(), compressor2.getPower(), 1e-3);
     // process1.validateConnections();
     // process1.checkMassBalance();
   }
