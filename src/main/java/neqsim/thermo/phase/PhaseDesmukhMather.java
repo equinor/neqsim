@@ -44,7 +44,7 @@ public class PhaseDesmukhMather extends PhaseGE {
     if (initType != 0) {
       setType(pt);
     }
-    setMolarVolume(0.980e-3 * getMolarMass() * 1e5);
+    setMolarVolume(getMass() / getDensity() / numberOfMolesInPhase * 1e5);
     Z = pressure * getMolarVolume() / (R * temperature);
   }
 
@@ -117,7 +117,7 @@ public class PhaseDesmukhMather extends PhaseGE {
    */
   public void setAij(double[][] alpha) {
     for (int i = 0; i < alpha.length; i++) {
-      System.arraycopy(aij[i], 0, this.aij[i], 0, alpha[0].length);
+      System.arraycopy(alpha[i], 0, this.aij[i], 0, alpha[0].length);
     }
   }
 
@@ -128,7 +128,7 @@ public class PhaseDesmukhMather extends PhaseGE {
    */
   public void setBij(double[][] Bij) {
     for (int i = 0; i < Bij.length; i++) {
-      System.arraycopy(bij[i], 0, this.bij[i], 0, Bij[0].length);
+      System.arraycopy(Bij[i], 0, this.bij[i], 0, Bij[0].length);
     }
   }
 
@@ -239,7 +239,20 @@ public class PhaseDesmukhMather extends PhaseGE {
    * @return a double
    */
   public double getSolventDensity() {
-    return 1020.0;
+    double solventMass = 0.0;
+    double solventVolume = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (getComponent(i).getReferenceStateType().equals("solvent")) {
+        double mass = getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+        double density = getComponent(i).getNormalLiquidDensity();
+        if (!Double.isFinite(density) || density < 500.0) {
+          density = getComponent(i).getComponentName().equals("water") ? 997.0 : 1020.0;
+        }
+        solventMass += mass;
+        solventVolume += mass / density;
+      }
+    }
+    return solventVolume > 0.0 ? solventMass / solventVolume : 1020.0;
   }
 
   /**
@@ -253,16 +266,37 @@ public class PhaseDesmukhMather extends PhaseGE {
     for (int i = 0; i < numberOfComponents; i++) {
       if (getComponent(i).getReferenceStateType().equals("solvent")) {
         molesMass += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
-        moles = getComponent(i).getNumberOfMolesInPhase();
+        moles += getComponent(i).getNumberOfMolesInPhase();
       }
     }
-    return molesMass / moles;
+    return moles > 0.0 ? molesMass / moles : getMolarMass();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getDensity() {
+    double mass = getMass();
+    double volume = 0.0;
+    double solventDensity = getSolventDensity();
+    for (int i = 0; i < numberOfComponents; i++) {
+      double componentMass = getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+      if (getComponent(i).isIsIon()) {
+        volume += componentMass / solventDensity;
+      } else {
+        double density = getComponent(i).getNormalLiquidDensity();
+        if (!Double.isFinite(density) || density < 500.0) {
+          density = getComponent(i).getReferenceStateType().equals("solvent") ? solventDensity : 1000.0;
+        }
+        volume += componentMass / density;
+      }
+    }
+    return volume > 0.0 ? mass / volume : solventDensity;
   }
 
   /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws IsNaNException, TooManyIterationsException {
-    throw new UnsupportedOperationException("Unimplemented method 'molarVolume'");
+    return getMass() / getDensity() / numberOfMolesInPhase;
   }
 }

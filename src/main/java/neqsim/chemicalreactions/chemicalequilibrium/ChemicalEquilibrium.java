@@ -5,6 +5,8 @@ import org.apache.logging.log4j.Logger;
 import Jama.Matrix;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
+import neqsim.thermo.phase.PhaseDesmukhMather;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -264,9 +266,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     // System.out.println("number of rows in A "+A_Jama_matrix.getRowDimension());
     // if(A_Jama_matrix.rank()<A_Jama_matrix.getRowDimension())
     // System.out.println("Rank of Matrix A low: Numerical errors may occur ");
-    double logactivity = 0.0;
     for (int i = 0; i < NSPEC; i++) {
-      logactivity = logactivityVec[i];
       // system.getPhase(phasenumb).getActivityCoefficient(components[i].getComponentNumber(),
       // components[waterNumb].getComponentNumber());
 
@@ -274,7 +274,7 @@ public class ChemicalEquilibrium implements java.io.Serializable {
       // Protect against log(0) by ensuring minimum moles
       double molesInPhase = Math.max(MIN_MOLES,
           system.getPhase(phasenumb).getComponents()[components[i].getComponentNumber()].getNumberOfMolesInPhase());
-      chem_pot[i] = chem_ref[i] + Math.log(molesInPhase) - Math.log(n_t) + logactivity;
+      chem_pot[i] = chem_ref[i] + getLogReactionActivity(i, molesInPhase);
       // System.out.println("chem ref pot " + chem_pot[i]);
     }
 
@@ -377,6 +377,65 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     }
     dn_matrix = M_inv_rhs.plus(new Matrix(n_mol, 1).transpose().times(x_solve.get(NELE, 0)));
     d_n = dn_matrix.transpose().getArray()[0];
+  }
+
+  /**
+   * Calculates the logarithm of the activity term used by the chemical-equilibrium solver.
+   *
+   * <p>
+   * The generic historical solver uses a mole-fraction standard state. Deshmukh-Mather amine reaction constants are
+   * apparent aqueous constants and must instead use a molality/concentration-like standard state for non-water reactive
+   * species.
+   * </p>
+   *
+   * @param componentIndex index in the reactive component array
+   * @param molesInPhase component moles in the reactive phase, lower bounded by {@link #MIN_MOLES}
+   * @return logarithm of the activity contribution
+   */
+  private double getLogReactionActivity(int componentIndex, double molesInPhase) {
+    PhaseInterface reactivePhase = system.getPhase(phasenumb);
+    ComponentInterface component = components[componentIndex];
+    if (reactivePhase instanceof PhaseDesmukhMather) {
+      return getLogDesmukhMatherReactionActivity((PhaseDesmukhMather) reactivePhase, component);
+    }
+    return Math.log(molesInPhase) - Math.log(n_t) + logactivityVec[componentIndex];
+  }
+
+  /**
+   * Calculates the Deshmukh-Mather aqueous reaction activity on a molality basis.
+   *
+   * @param phase Deshmukh-Mather aqueous phase
+   * @param component reactive component
+   * @return logarithm of the molality-basis activity term
+   */
+  private double getLogDesmukhMatherReactionActivity(PhaseDesmukhMather phase, ComponentInterface component) {
+    int componentNumber = component.getComponentNumber();
+    if ("water".equals(component.getComponentName())) {
+      double waterActivity = Math.max(MIN_MOLES, component.getx() * phase.getActivityCoefficient(componentNumber));
+      return Math.log(waterActivity);
+    }
+
+    double molality = Math.max(MIN_MOLES, component.getMolality(phase));
+    double gammaMolality = getDesmukhMatherMolalityActivityCoefficient(phase, component, molality);
+    return Math.log(molality) + Math.log(gammaMolality);
+  }
+
+  /**
+   * Converts the Deshmukh-Mather stored mole-fraction activity coefficient back to the molality scale used by the
+   * original correlation.
+   *
+   * @param phase Deshmukh-Mather aqueous phase
+   * @param component reactive component
+   * @param molality component molality in mol/kg solvent
+   * @return molality-scale activity coefficient, lower bounded by {@link #MIN_MOLES}
+   */
+  private double getDesmukhMatherMolalityActivityCoefficient(PhaseDesmukhMather phase, ComponentInterface component,
+      double molality) {
+    double gammaMoleFraction = Math.max(MIN_MOLES, phase.getActivityCoefficient(component.getComponentNumber()));
+    double moleFraction = Math.max(MIN_MOLES, component.getx());
+    double solventMolarMass = Math.max(MIN_MOLES, phase.getSolventMolarMass());
+    double gammaMolality = gammaMoleFraction * moleFraction / (molality * solventMolarMass);
+    return Math.max(MIN_MOLES, gammaMolality);
   }
 
   /**
