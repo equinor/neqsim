@@ -6852,6 +6852,22 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Renders the process diagram to an SVG string.
+   *
+   * <p>
+   * This convenience method is intended for notebooks and web applications that want to display a professional process
+   * flow diagram inline. Graphviz (dot) must be installed and available in PATH.
+   * </p>
+   *
+   * @return rendered SVG document as a UTF-8 string
+   * @throws java.io.IOException if Graphviz is unavailable or rendering fails
+   * @see neqsim.process.processmodel.diagram.ProcessDiagramExporter#toSVG()
+   */
+  public String toSVG() throws java.io.IOException {
+    return new neqsim.process.processmodel.diagram.ProcessDiagramExporter(this).toSVG();
+  }
+
+  /**
    * Creates a diagram exporter for this process with full configuration options.
    *
    * <p>

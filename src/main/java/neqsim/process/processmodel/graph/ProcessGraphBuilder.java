@@ -25,6 +25,7 @@ import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.reactor.FurnaceBurner;
 import neqsim.process.equipment.splitter.SplitterInterface;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.processmodel.ProcessSystem;
 
@@ -514,11 +515,10 @@ public final class ProcessGraphBuilder {
       }
     }
 
-    // Third pass: add signal edges for Calculator units.
-    // Calculator reads from inputVariable equipment and writes to outputVariable
-    // equipment via signal connections (not physical streams). Without these edges
-    // the graph partitioner cannot order Calculator correctly, causing stale inputs
-    // and recycle non-convergence.
+    // Third pass: add signal edges for Calculator and Adjuster units.
+    // These units represent calculation/control dependencies, not physical
+    // material streams. Signal edges keep calculation order correct and allow
+    // diagram exporters to render dashed signal lines instead of solid piping.
     for (ProcessEquipmentInterface unit : units) {
       if (unit instanceof Calculator) {
         Calculator calc = (Calculator) unit;
@@ -529,43 +529,20 @@ public final class ProcessGraphBuilder {
 
         // Signal edges: each input variable equipment -> Calculator
         for (ProcessEquipmentInterface inputEquip : calc.getInputVariable()) {
-          if (inputEquip == null) {
-            continue;
-          }
-          ProcessNode inputNode = graph.getNode(inputEquip);
-          if (inputNode != null && inputNode != calcNode) {
-            boolean edgeExists = false;
-            for (ProcessEdge edge : inputNode.getOutgoingEdges()) {
-              if (edge.getTarget() == calcNode) {
-                edgeExists = true;
-                break;
-              }
-            }
-            if (!edgeExists) {
-              graph.addSignalEdge(inputNode, calcNode, "signal:" + inputEquip.getName() + "->" + calc.getName(),
-                  ProcessEdge.EdgeType.SIGNAL);
-            }
-          }
+          addSignalEdgeIfAbsent(graph, inputEquip, calc, "signal:" + safeName(inputEquip) + "->" + calc.getName());
         }
 
         // Signal edge: Calculator -> output variable equipment
         ProcessEquipmentInterface outputEquip = calc.getOutputVariable();
-        if (outputEquip != null) {
-          ProcessNode outputNode = graph.getNode(outputEquip);
-          if (outputNode != null && outputNode != calcNode) {
-            boolean edgeExists = false;
-            for (ProcessEdge edge : calcNode.getOutgoingEdges()) {
-              if (edge.getTarget() == outputNode) {
-                edgeExists = true;
-                break;
-              }
-            }
-            if (!edgeExists) {
-              graph.addSignalEdge(calcNode, outputNode, "signal:" + calc.getName() + "->" + outputEquip.getName(),
-                  ProcessEdge.EdgeType.SIGNAL);
-            }
-          }
-        }
+        addSignalEdgeIfAbsent(graph, calc, outputEquip, "signal:" + calc.getName() + "->" + safeName(outputEquip));
+      }
+
+      if (unit instanceof Adjuster) {
+        Adjuster adjuster = (Adjuster) unit;
+        addSignalEdgeIfAbsent(graph, adjuster.getTargetEquipment(), adjuster,
+            "signal:" + safeName(adjuster.getTargetEquipment()) + "->" + adjuster.getName());
+        addSignalEdgeIfAbsent(graph, adjuster, adjuster.getAdjustedEquipment(),
+            "signal:" + adjuster.getName() + "->" + safeName(adjuster.getAdjustedEquipment()));
       }
     }
 
@@ -1003,6 +980,42 @@ public final class ProcessGraphBuilder {
         }
       }
     }
+  }
+
+  /**
+   * Adds a signal edge between two equipment units when it does not already exist.
+   *
+   * @param graph the process graph
+   * @param sourceEquipment source equipment for the signal
+   * @param targetEquipment target equipment for the signal
+   * @param name descriptive signal edge name
+   */
+  private static void addSignalEdgeIfAbsent(ProcessGraph graph, ProcessEquipmentInterface sourceEquipment,
+      ProcessEquipmentInterface targetEquipment, String name) {
+    if (sourceEquipment == null || targetEquipment == null || sourceEquipment == targetEquipment) {
+      return;
+    }
+    ProcessNode sourceNode = graph.getNode(sourceEquipment);
+    ProcessNode targetNode = graph.getNode(targetEquipment);
+    if (sourceNode == null || targetNode == null) {
+      return;
+    }
+    for (ProcessEdge edge : sourceNode.getOutgoingEdges()) {
+      if (edge.getTarget() == targetNode && edge.getEdgeType() == ProcessEdge.EdgeType.SIGNAL) {
+        return;
+      }
+    }
+    graph.addSignalEdge(sourceNode, targetNode, name, ProcessEdge.EdgeType.SIGNAL);
+  }
+
+  /**
+   * Gets a safe equipment name for signal edge labels.
+   *
+   * @param equipment the equipment to name
+   * @return the equipment name, or "null" for missing equipment
+   */
+  private static String safeName(ProcessEquipmentInterface equipment) {
+    return equipment == null ? "null" : equipment.getName();
   }
 
   /**

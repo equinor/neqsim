@@ -7,16 +7,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import neqsim.process.equipment.EquipmentEnum;
+import neqsim.process.equipment.absorber.SimpleTEGAbsorber;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.Cooler;
+import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.dexpi.DexpiProcessUnit;
@@ -479,6 +484,26 @@ class ProcessDiagramExporterTest {
   }
 
   @Test
+  void testInlineSvgRenderingWhenGraphvizAvailable() throws IOException {
+    Assumptions.assumeTrue(ProcessDiagramExporter.isGraphvizAvailable(), "Graphviz dot is not available");
+
+    Stream feed = new Stream("Feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    process.add(feed);
+
+    Separator separator = new Separator("Separator", feed);
+    process.add(separator);
+
+    process.run();
+
+    String svg = new ProcessDiagramExporter(process).setDetailLevel(DiagramDetailLevel.ENGINEERING).toSVG();
+
+    assertNotNull(svg);
+    assertTrue(svg.contains("<svg"), "Rendered output should be an SVG document");
+    assertTrue(svg.contains("Separator"), "SVG should include equipment labels");
+  }
+
+  @Test
   void testThreePhaseSeparatorOutletClassification() {
     PFDLayoutPolicy policy = new PFDLayoutPolicy();
 
@@ -573,6 +598,48 @@ class ProcessDiagramExporterTest {
 
     // Verify edges exist from separator to downstream equipment
     assertTrue(dot.contains("->"), "Should contain edge connections");
+    assertTrue(dot.contains("\"Production Separator\" -> \"Gas Compressor\""),
+        "Gas product edge should leave the separator");
+    assertTrue(dot.contains("tailport=n"), "Gas product should leave separator/column tops");
+    assertTrue(dot.contains("headport=s"),
+        "Gas product should enter downstream gas equipment from below/top-zone routing");
+    assertTrue(dot.contains("\"Production Separator\" -> \"Oil Pump\""), "Oil product edge should leave the separator");
+    assertTrue(dot.contains("tailport=e"), "Oil or lighter liquid should leave from the side/middle outlet");
+    assertTrue(dot.contains("\"Production Separator\" -> \"Water Pump\""),
+        "Water product edge should leave the separator");
+    assertTrue(dot.contains("tailport=s"), "Water or heaviest liquid should leave from the lower outlet");
+  }
+
+  @Test
+  void testColumnOutletClassificationUsesTopAndBottomProducts() {
+    PFDLayoutPolicy policy = new PFDLayoutPolicy();
+    DistillationColumn column = new DistillationColumn("Test Column", 2, true, true);
+
+    assertEquals(PFDLayoutPolicy.SeparatorOutlet.GAS_TOP,
+        policy.classifySeparatorOutlet(column, column.getGasOutStream()),
+        "Column overhead vapour product should leave from the top");
+    assertEquals(PFDLayoutPolicy.SeparatorOutlet.LIQUID_BOTTOM,
+        policy.classifySeparatorOutlet(column, column.getLiquidOutStream()),
+        "Column bottoms liquid product should leave from the lower outlet");
+  }
+
+  @Test
+  void testAbsorberOutletClassificationUsesGasTopAndLiquidBottom() {
+    PFDLayoutPolicy policy = new PFDLayoutPolicy();
+    SimpleTEGAbsorber absorber = new SimpleTEGAbsorber("TEG absorber");
+    absorber.addGasInStream(new Stream("wet gas", fluid.clone()));
+
+    SystemInterface solvent = new SystemSrkEos(298.15, 50.0);
+    solvent.addComponent("water", 1.0);
+    solvent.setMixingRule("classic");
+    absorber.addSolventInStream(new Stream("lean solvent", solvent));
+
+    assertEquals(PFDLayoutPolicy.SeparatorOutlet.GAS_TOP,
+        policy.classifySeparatorOutlet(absorber, absorber.getGasOutStream()),
+        "Absorber dry-gas product should leave from the top");
+    assertEquals(PFDLayoutPolicy.SeparatorOutlet.LIQUID_BOTTOM,
+        policy.classifySeparatorOutlet(absorber, absorber.getLiquidOutStream()),
+        "Absorber rich-solvent product should leave from the lower outlet");
   }
 
   @Test
@@ -621,6 +688,76 @@ class ProcessDiagramExporterTest {
 
     // Verify legend includes recycle stream
     assertTrue(dot.contains("Recycle Stream"), "Legend should contain recycle stream");
+  }
+
+  @Test
+  void testMultiStreamHeatExchangerUsesGraphvizPorts() {
+    ProcessSystem hxProcess = new ProcessSystem("Ported Heat Exchanger Test");
+
+    Stream coldFeed = new Stream("Cold feed", fluid.clone());
+    coldFeed.setFlowRate(1000.0, "kg/hr");
+    coldFeed.setTemperature(25.0, "C");
+    coldFeed.setPressure(50.0, "bara");
+    hxProcess.add(coldFeed);
+
+    Stream hotFeed = new Stream("Hot feed", fluid.clone());
+    hotFeed.setFlowRate(1000.0, "kg/hr");
+    hotFeed.setTemperature(120.0, "C");
+    hotFeed.setPressure(50.0, "bara");
+    hxProcess.add(hotFeed);
+
+    HeatExchanger exchanger = new HeatExchanger("Lean/rich heat exchanger", coldFeed, hotFeed);
+    exchanger.setUAvalue(500.0);
+    hxProcess.add(exchanger);
+
+    Stream coldProduct = new Stream("Cold product", exchanger.getOutStream(0));
+    hxProcess.add(coldProduct);
+
+    Stream hotProduct = new Stream("Hot product", exchanger.getOutStream(1));
+    hxProcess.add(hotProduct);
+
+    String dot = new ProcessDiagramExporter(hxProcess).setShowControlEquipment(true).toDOT();
+
+    assertTrue(dot.contains("PORT=\"in0\""), "First heat-exchanger inlet should have a Graphviz port");
+    assertTrue(dot.contains("PORT=\"in1\""), "Second heat-exchanger inlet should have a Graphviz port");
+    assertTrue(dot.contains("PORT=\"out0\""), "First heat-exchanger outlet should have a Graphviz port");
+    assertTrue(dot.contains("PORT=\"out1\""), "Second heat-exchanger outlet should have a Graphviz port");
+    assertTrue(dot.contains("\"Cold feed\" -> \"Lean/rich heat exchanger\":in0"),
+        "Cold feed should enter side 0 of the exchanger");
+    assertTrue(dot.contains("\"Hot feed\" -> \"Lean/rich heat exchanger\":in1"),
+        "Hot feed should enter side 1 of the exchanger");
+    assertTrue(dot.contains("\"Lean/rich heat exchanger\":out0 -> \"Cold product\""),
+        "Side 0 outlet should leave through out0");
+    assertTrue(dot.contains("\"Lean/rich heat exchanger\":out1 -> \"Hot product\""),
+        "Side 1 outlet should leave through out1");
+  }
+
+  @Test
+  void testCalculatorSignalLinksAreDashedNotMaterialStreams() {
+    ProcessSystem signalProcess = new ProcessSystem("Calculator Signal Test");
+
+    Stream feed = new Stream("Feed", fluid);
+    signalProcess.add(feed);
+
+    Stream makeup = new Stream("Makeup", fluid.clone());
+    signalProcess.add(makeup);
+
+    Calculator calculator = new Calculator("anti surge calculator");
+    calculator.addInputVariable(feed);
+    calculator.setOutputVariable(makeup);
+    signalProcess.add(calculator);
+
+    String dot = new ProcessDiagramExporter(signalProcess).setShowControlEquipment(true).setShowStreamValues(true)
+        .toDOT();
+
+    assertTrue(dot.contains("anti surge calculator"), "Calculator should be visible when control equipment is shown");
+    assertTrue(dot.contains("style=\"dashed,rounded,filled\""), "Calculator node should use calculation styling");
+    assertTrue(dot.contains("\"Feed\" -> \"anti surge calculator\" [color=\"#666666\", style=dashed"),
+        "Calculator input should be a dashed signal edge");
+    assertTrue(dot.contains("\"anti surge calculator\" -> \"Makeup\" [color=\"#666666\", style=dashed"),
+        "Calculator output should be a dashed signal edge");
+    assertTrue(dot.contains("constraint=false"), "Signal edges should not constrain physical process layout");
+    assertTrue(dot.contains("arrowhead=open"), "Signal edges should use an open arrowhead");
   }
 
   @Test

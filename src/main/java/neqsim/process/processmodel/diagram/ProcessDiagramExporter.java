@@ -686,6 +686,11 @@ public class ProcessDiagramExporter implements Serializable {
     String type = node.getEquipmentType();
     String lowerType = type.toLowerCase();
 
+    if (isCalculationEngine(equipment)) {
+      appendCalculationEngineNode(sb, name, type);
+      return;
+    }
+
     // Check for special equipment types that need HTML rendering
     if (lowerType.contains("heater") || lowerType.contains("reboiler") || lowerType.contains("cooler")
         || lowerType.contains("condenser") || lowerType.contains("heatexchanger")) {
@@ -764,6 +769,25 @@ public class ProcessDiagramExporter implements Serializable {
   }
 
   /**
+   * Appends a calculation/control engine node.
+   *
+   * @param sb the string builder
+   * @param name the equipment name
+   * @param type the equipment type
+   */
+  private void appendCalculationEngineNode(StringBuilder sb, String name, String type) {
+    sb.append("  \"").append(escapeString(name)).append("\" [\n");
+    sb.append("    label=\"").append(escapeString(name + "\\n(" + type + ")")).append("\",\n");
+    sb.append("    shape=box,\n");
+    sb.append("    style=\"dashed,rounded,filled\",\n");
+    sb.append("    fillcolor=\"#F5F5F5\",\n");
+    sb.append("    color=\"#666666\",\n");
+    sb.append("    fontcolor=\"#444444\",\n");
+    sb.append("    fontsize=8\n");
+    sb.append("  ];\n");
+  }
+
+  /**
    * Appends a valve node with bowtie symbol like HYSYS. Classic PFD valve symbol with two triangles tip-to-tip.
    *
    * @param sb the string builder
@@ -807,6 +831,11 @@ public class ProcessDiagramExporter implements Serializable {
    * @param lowerType the lowercase equipment type
    */
   private void appendHeatExchangerNode(StringBuilder sb, ProcessNode node, String name, String type, String lowerType) {
+    if (isPortedHeatExchanger(node.getEquipment())) {
+      appendPortedHeatExchangerNode(sb, node, name, type);
+      return;
+    }
+
     // Use diagram style colors
     String borderColor = diagramStyle.getEquipmentOutlineColor();
 
@@ -822,6 +851,60 @@ public class ProcessDiagramExporter implements Serializable {
     sb.append("    width=0.4,\n");
     sb.append("    height=0.4,\n");
     sb.append("    fontsize=8\n");
+    sb.append("  ];\n");
+  }
+
+  /**
+   * Checks if equipment should be rendered as a ported heat exchanger.
+   *
+   * @param equipment the equipment to inspect
+   * @return true if the equipment has multiple inlet and outlet streams
+   */
+  private boolean isPortedHeatExchanger(ProcessEquipmentInterface equipment) {
+    if (equipment == null) {
+      return false;
+    }
+    String typeName = equipment.getClass().getSimpleName().toLowerCase();
+    if (!typeName.contains("heatexchanger")) {
+      return false;
+    }
+    return getReportedStreams(equipment, true).size() > 1 && getReportedStreams(equipment, false).size() > 1;
+  }
+
+  /**
+   * Appends a multi-stream heat exchanger node with explicit Graphviz ports.
+   *
+   * @param sb the string builder
+   * @param node the process node
+   * @param name the equipment name
+   * @param type the equipment type
+   */
+  private void appendPortedHeatExchangerNode(StringBuilder sb, ProcessNode node, String name, String type) {
+    String borderColor = diagramStyle.getEquipmentOutlineColor();
+    int sideCount = Math.max(getReportedStreams(node.getEquipment(), true).size(),
+        getReportedStreams(node.getEquipment(), false).size());
+
+    sb.append("  \"").append(escapeString(name)).append("\" [\n");
+    sb.append("    label=<\n");
+    sb.append("      <TABLE BORDER=\"1\" CELLBORDER=\"1\" CELLSPACING=\"0\" CELLPADDING=\"4\" ");
+    sb.append("COLOR=\"").append(borderColor).append("\" BGCOLOR=\"#FFFFFF\">\n");
+    for (int i = 0; i < sideCount; i++) {
+      sb.append("        <TR>");
+      sb.append("<TD PORT=\"in").append(i).append("\" BGCOLOR=\"#F7FAFF\"><FONT POINT-SIZE=\"8\">in ").append(i + 1)
+          .append("</FONT></TD>");
+      if (i == 0) {
+        sb.append("<TD ROWSPAN=\"").append(sideCount).append("\" BGCOLOR=\"#FFF8E6\" ALIGN=\"CENTER\">");
+        sb.append("<B>").append(escapeHtml(name)).append("</B><BR/><FONT POINT-SIZE=\"8\">");
+        sb.append(escapeHtml(type)).append("</FONT></TD>");
+      }
+      sb.append("<TD PORT=\"out").append(i).append("\" BGCOLOR=\"#F7FAFF\"><FONT POINT-SIZE=\"8\">out ").append(i + 1)
+          .append("</FONT></TD>");
+      sb.append("</TR>\n");
+    }
+    sb.append("      </TABLE>\n");
+    sb.append("    >,\n");
+    sb.append("    shape=plain,\n");
+    sb.append("    margin=\"0,0\"\n");
     sb.append("  ];\n");
   }
 
@@ -1047,6 +1130,12 @@ public class ProcessDiagramExporter implements Serializable {
   private void appendEdge(StringBuilder sb, ProcessEdge edge) {
     String sourceName = edge.getSource().getName();
     String targetName = edge.getTarget().getName();
+    String sourceEndpoint = buildEdgeEndpoint(sourceName,
+        getHeatExchangerPort(edge.getSource().getEquipment(), edge.getStream(), false));
+    String targetEndpoint = buildEdgeEndpoint(targetName,
+        getHeatExchangerPort(edge.getTarget().getEquipment(), edge.getStream(), true));
+    boolean isSignal = edge.getEdgeType() == ProcessEdge.EdgeType.SIGNAL
+        || isCalculationEngine(edge.getSource().getEquipment()) || isCalculationEngine(edge.getTarget().getEquipment());
 
     // Check if source or target is a valve (for seamless inline connection)
     boolean sourceIsValve = isValve(edge.getSource().getEquipment());
@@ -1055,15 +1144,17 @@ public class ProcessDiagramExporter implements Serializable {
     // Get phase-based styling
     PFDLayoutPolicy.StreamPhase phase = layoutPolicy.classifyEdgePhase(edge);
 
-    sb.append("  \"").append(escapeString(sourceName)).append("\" -> \"");
-    sb.append(escapeString(targetName)).append("\" ");
+    sb.append("  ").append(sourceEndpoint).append(" -> ");
+    sb.append(targetEndpoint).append(" ");
     sb.append("[");
 
     // Check if this is a recycle stream
     boolean isRecycle = edge.isBackEdge() || edge.isRecycle();
 
     // Edge color based on phase (or special for recycle)
-    if (isRecycle && highlightRecycles) {
+    if (isSignal) {
+      sb.append("color=\"#666666\"");
+    } else if (isRecycle && highlightRecycles) {
       sb.append("color=\"").append(diagramStyle.getRecycleColor()).append("\"");
     } else if (diagramStyle != DiagramStyle.NEQSIM) {
       // Use diagram style's stream color
@@ -1074,7 +1165,10 @@ public class ProcessDiagramExporter implements Serializable {
     }
 
     // Edge style based on phase or recycle
-    if (isRecycle && highlightRecycles) {
+    if (isSignal) {
+      sb.append(", style=dashed, penwidth=1.0, constraint=false");
+      sb.append(", arrowhead=open");
+    } else if (isRecycle && highlightRecycles) {
       sb.append(", style=\"dashed,bold\", penwidth=").append(diagramStyle.getStreamWidth() + 0.5);
       sb.append(", constraint=false"); // Allow recycles to go backwards
     } else if ("dashed".equals(phase.getLineStyle())) {
@@ -1084,7 +1178,7 @@ public class ProcessDiagramExporter implements Serializable {
     }
 
     // Stream value label
-    if (showStreamValues && edge.getStream() != null) {
+    if (!isSignal && showStreamValues && edge.getStream() != null) {
       String label = buildStreamLabel(edge.getStream(), isRecycle);
       if (!label.isEmpty()) {
         if (useStreamTables) {
@@ -1096,7 +1190,7 @@ public class ProcessDiagramExporter implements Serializable {
     }
 
     // Port positioning for separator outlets - routes gas up, oil right, water down
-    if (isSeparator(edge.getSource().getEquipment()) && edge.getStream() != null) {
+    if (!isSignal && isSeparator(edge.getSource().getEquipment()) && edge.getStream() != null) {
       PFDLayoutPolicy.SeparatorOutlet outlet = layoutPolicy.classifySeparatorOutlet(edge.getSource().getEquipment(),
           edge.getStream());
       sb.append(", tailport=").append(outlet.getPort());
@@ -1119,14 +1213,78 @@ public class ProcessDiagramExporter implements Serializable {
     }
 
     // For valve connections: use ports at center of triangle sides
-    if (targetIsValve) {
+    if (!isSignal && targetIsValve) {
       sb.append(", arrowhead=none, headport=\"in:w\"");
     }
-    if (sourceIsValve) {
+    if (!isSignal && sourceIsValve) {
       sb.append(", arrowtail=none, tailport=\"out:e\"");
     }
 
     sb.append("];\n");
+  }
+
+  /**
+   * Builds a DOT edge endpoint with an optional port suffix.
+   *
+   * @param nodeName the graph node name
+   * @param portName the optional Graphviz port name
+   * @return the escaped endpoint reference
+   */
+  private String buildEdgeEndpoint(String nodeName, String portName) {
+    StringBuilder endpoint = new StringBuilder();
+    endpoint.append("\"").append(escapeString(nodeName)).append("\"");
+    if (portName != null && !portName.trim().isEmpty()) {
+      endpoint.append(":").append(portName);
+    }
+    return endpoint.toString();
+  }
+
+  /**
+   * Gets the Graphviz port for a heat exchanger stream edge.
+   *
+   * @param equipment the source or target equipment
+   * @param stream the edge stream
+   * @param inlet true to match inlet streams, false to match outlet streams
+   * @return the port name, or null when the stream is not a multi-stream exchanger side
+   */
+  private String getHeatExchangerPort(ProcessEquipmentInterface equipment, StreamInterface stream, boolean inlet) {
+    if (stream == null || !isPortedHeatExchanger(equipment)) {
+      return null;
+    }
+    List<StreamInterface> streams = getReportedStreams(equipment, inlet);
+    for (int i = 0; i < streams.size(); i++) {
+      if (streams.get(i) == stream) {
+        return (inlet ? "in" : "out") + i;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Gets inlet or outlet streams from equipment without exposing equipment-specific casts.
+   *
+   * @param equipment the equipment to inspect
+   * @param inlet true for inlet streams, false for outlet streams
+   * @return non-null stream list, empty if the equipment does not report streams
+   */
+  private List<StreamInterface> getReportedStreams(ProcessEquipmentInterface equipment, boolean inlet) {
+    List<StreamInterface> streams = new ArrayList<StreamInterface>();
+    if (equipment == null) {
+      return streams;
+    }
+    try {
+      List<StreamInterface> reportedStreams = inlet ? equipment.getInletStreams() : equipment.getOutletStreams();
+      if (reportedStreams != null) {
+        for (StreamInterface stream : reportedStreams) {
+          if (stream != null) {
+            streams.add(stream);
+          }
+        }
+      }
+    } catch (Exception ex) {
+      // Some equipment may be partially configured; keep generic rendering.
+    }
+    return streams;
   }
 
   /**
@@ -1263,6 +1421,21 @@ public class ProcessDiagramExporter implements Serializable {
   }
 
   /**
+   * Checks if equipment is a calculation or control engine rather than process equipment.
+   *
+   * @param equipment the equipment to inspect
+   * @return true if the equipment should be shown with signal-style links
+   */
+  private boolean isCalculationEngine(ProcessEquipmentInterface equipment) {
+    if (equipment == null) {
+      return false;
+    }
+    String typeName = equipment.getClass().getSimpleName().toLowerCase();
+    return typeName.contains("calculator") || typeName.contains("adjuster") || typeName.contains("controller")
+        || typeName.contains("setpoint");
+  }
+
+  /**
    * Appends a legend to the diagram.
    *
    * @param sb the string builder
@@ -1355,6 +1528,27 @@ public class ProcessDiagramExporter implements Serializable {
    */
   public void exportSVG(Path path) throws IOException {
     exportWithGraphviz(path, "svg");
+  }
+
+  /**
+   * Renders the diagram to an SVG string using Graphviz.
+   *
+   * <p>
+   * This is convenient for Jupyter notebooks and web applications that need to display the diagram inline without
+   * managing an output file. Graphviz (dot) must be installed and available in PATH.
+   * </p>
+   *
+   * @return the rendered SVG document as a UTF-8 string
+   * @throws IOException if Graphviz is unavailable or rendering fails
+   */
+  public String toSVG() throws IOException {
+    Path tempSvg = Files.createTempFile("neqsim_pfd_", ".svg");
+    try {
+      exportSVG(tempSvg);
+      return new String(Files.readAllBytes(tempSvg), StandardCharsets.UTF_8);
+    } finally {
+      Files.deleteIfExists(tempSvg);
+    }
   }
 
   /**
