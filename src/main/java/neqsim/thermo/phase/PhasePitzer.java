@@ -448,6 +448,24 @@ public class PhasePitzer extends PhaseGE {
     return ((ComponentGEInterface) getComponent(k)).getGamma();
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double getOsmoticCoefficientOfWater() {
+    return getPitzerOsmoticCoefficient();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getOsmoticCoefficientOfWaterMolality() {
+    return getPitzerOsmoticCoefficient();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getOsmoticCoefficient(int waterComponentNumber) {
+    return getPitzerOsmoticCoefficient();
+  }
+
   /**
    * {@inheritDoc}
    *
@@ -459,6 +477,18 @@ public class PhasePitzer extends PhaseGE {
    */
   @Override
   public double getDensity() {
+    double physicalPropertyDensity = 0.0;
+    try {
+      physicalPropertyDensity = new neqsim.physicalproperties.methods.liquidphysicalproperties.density.Water(
+          getPhysicalProperties()).calcDensity();
+    } catch (Exception ex) {
+      logger.debug("Could not calculate Pitzer salt-water physical-property density", ex);
+    }
+    if (physicalPropertyDensity > 0.0 && !Double.isNaN(physicalPropertyDensity)
+        && !Double.isInfinite(physicalPropertyDensity)) {
+      return physicalPropertyDensity;
+    }
+
     double TC = temperature - 273.15;
     if (TC < 0.0) {
       TC = 0.0;
@@ -527,7 +557,7 @@ public class PhasePitzer extends PhaseGE {
   /** {@inheritDoc} */
   @Override
   public double getHresTP() {
-    return 0.0;
+    return getGresTP() + temperature * getSresTP();
   }
 
   /** {@inheritDoc} */
@@ -539,47 +569,42 @@ public class PhasePitzer extends PhaseGE {
   /** {@inheritDoc} */
   @Override
   public double getSresTV() {
-    return 0.0;
+    return getSresTP();
   }
 
   /** {@inheritDoc} */
   @Override
   public double getSresTP() {
-    return 0.0;
+    double temperatureStep = getTemperatureDerivativeStep();
+    double gPlus = getExcessGibbsEnergyAtTemperature(temperature + temperatureStep);
+    double gMinus = getExcessGibbsEnergyAtTemperature(temperature - temperatureStep);
+    restoreActivityCoefficientsAtCurrentTemperature();
+    return -(gPlus - gMinus) / (2.0 * temperatureStep);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getGresTP() {
+    return getExcessGibbsEnergyAtTemperature(temperature);
   }
 
   /**
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the excess heat capacity via finite-difference temperature derivatives of the activity coefficients. In
-   * the current implementation the Pitzer binary parameters are temperature independent, so the residual contribution
-   * evaluates to zero.
+   * Calculates the excess heat capacity via finite-difference temperature derivatives of the Pitzer excess Gibbs
+   * energy, including temperature-dependent Debye-Huckel and binary interaction parameters when available.
    * </p>
    */
   @Override
   public double getCpres() {
-    double T = temperature;
-    double P = pressure;
-    int n = numberOfComponents;
-    double dT = 1e-2;
-    double sum1 = 0.0;
-    double sum2 = 0.0;
-
-    for (int i = 0; i < n; i++) {
-      ComponentGePitzer comp = (ComponentGePitzer) componentArray[i];
-      double ln0 = Math.log(comp.getGamma(this, n, T, P, getType()));
-      double lnPlus = Math.log(comp.getGamma(this, n, T + dT, P, getType()));
-      double lnMinus = Math.log(comp.getGamma(this, n, T - dT, P, getType()));
-      double d1 = (lnPlus - lnMinus) / (2.0 * dT);
-      double d2 = (lnPlus - 2.0 * ln0 + lnMinus) / (dT * dT);
-      sum1 += comp.getx() * d1;
-      sum2 += comp.getx() * d2;
-      comp.getGamma(this, n, T, P, getType());
-    }
-
-    double cpex = -R * (T * T * sum2 + 2.0 * T * sum1);
-    return cpex * numberOfMolesInPhase;
+    double temperatureStep = getTemperatureDerivativeStep();
+    double gPlus = getExcessGibbsEnergyAtTemperature(temperature + temperatureStep);
+    double g0 = getExcessGibbsEnergyAtTemperature(temperature);
+    double gMinus = getExcessGibbsEnergyAtTemperature(temperature - temperatureStep);
+    restoreActivityCoefficientsAtCurrentTemperature();
+    double secondDerivative = (gPlus - 2.0 * g0 + gMinus) / (temperatureStep * temperatureStep);
+    return -temperature * secondDerivative;
   }
 
   /** {@inheritDoc} */
@@ -604,7 +629,210 @@ public class PhasePitzer extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
+  public double getEnthalpy() {
+    return getHID() * numberOfMolesInPhase + getHresTP();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getEntropy() {
+    double idealEntropy = 0.0;
+    double idealMixingEntropy = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      idealEntropy += componentArray[i].getx() * componentArray[i].getIdEntropy(temperature);
+      if (componentArray[i].getx() > 1e-100) {
+        idealMixingEntropy += -R * componentArray[i].getx() * Math.log(componentArray[i].getx());
+      }
+    }
+    return idealEntropy * numberOfMolesInPhase + idealMixingEntropy * numberOfMolesInPhase + getSresTP();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getCv() {
     return getCp();
+  }
+
+  /**
+   * Calculates the Pitzer osmotic coefficient for the aqueous phase.
+   *
+   * @return osmotic coefficient of water on the molality scale
+   */
+  private double getPitzerOsmoticCoefficient() {
+    if (!parametersLoaded) {
+      loadParametersFromDatabase();
+    }
+
+    double ionicStrength = getIonicStrength();
+    double sqrtIonicStrength = Math.sqrt(ionicStrength);
+    double aPhi = getDebyeHuckelAphi(temperature);
+    double b = 1.2;
+
+    double sumMolalities = 0.0;
+    double zSum = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double charge = getComponent(i).getIonicCharge();
+      if (Math.abs(charge) > 0.5) {
+        double molality = getComponent(i).getMolality(this);
+        sumMolalities += molality;
+        zSum += Math.abs(charge) * molality;
+      }
+    }
+
+    if (sumMolalities < 1.0e-12) {
+      return 1.0;
+    }
+
+    double fPhi = -aPhi * Math.pow(ionicStrength, 1.5) / (1.0 + b * sqrtIonicStrength);
+    double binarySum = 0.0;
+    for (int cation = 0; cation < numberOfComponents; cation++) {
+      double cationCharge = getComponent(cation).getIonicCharge();
+      if (cationCharge <= 0.0) {
+        continue;
+      }
+      double cationMolality = getComponent(cation).getMolality(this);
+      for (int anion = 0; anion < numberOfComponents; anion++) {
+        double anionCharge = getComponent(anion).getIonicCharge();
+        if (anionCharge >= 0.0) {
+          continue;
+        }
+        double anionMolality = getComponent(anion).getMolality(this);
+        double bPhi = getBphi(cation, anion, ionicStrength);
+        double c = getCphiij(cation, anion, temperature) / (2.0 * Math.sqrt(Math.abs(cationCharge * anionCharge)));
+        binarySum += cationMolality * anionMolality * (bPhi + zSum * c);
+      }
+    }
+
+    double thetaPsiSum = getThetaPsiOsmoticContribution();
+    return 1.0 + (2.0 / sumMolalities) * (fPhi + binarySum + thetaPsiSum);
+  }
+
+  /**
+   * Calculates the Pitzer Debye-Huckel A-phi coefficient.
+   *
+   * @param temperatureKelvin temperature in K
+   * @return Debye-Huckel A-phi coefficient
+   */
+  private double getDebyeHuckelAphi(double temperatureKelvin) {
+    double temperatureCelsius = temperatureKelvin - 273.15;
+    double densityWater = 999.83 + 5.0948e-2 * temperatureCelsius - 7.5722e-3 * temperatureCelsius * temperatureCelsius
+        + 3.8907e-5 * Math.pow(temperatureCelsius, 3.0) - 1.2e-7 * Math.pow(temperatureCelsius, 4.0);
+    if (temperatureCelsius > 100.0) {
+      double deltaTemperature = temperatureCelsius - 100.0;
+      densityWater = 958.0 - 1.08 * deltaTemperature - 0.0028 * deltaTemperature * deltaTemperature;
+    }
+    if (densityWater < 700.0) {
+      densityWater = 700.0;
+    }
+
+    double dielectricConstantWater = 87.740 - 0.40008 * temperatureCelsius
+        + 9.398e-4 * temperatureCelsius * temperatureCelsius - 1.410e-6 * Math.pow(temperatureCelsius, 3.0);
+    if (dielectricConstantWater < 20.0) {
+      dielectricConstantWater = 20.0;
+    }
+
+    return 1.4006e6 * Math.sqrt(densityWater / 1000.0) / Math.pow(dielectricConstantWater * temperatureKelvin, 1.5);
+  }
+
+  /**
+   * Calculates the Pitzer B-phi interaction function for an ion pair.
+   *
+   * @param cation cation component index
+   * @param anion anion component index
+   * @param ionicStrength ionic strength in mol/kg
+   * @return B-phi interaction function
+   */
+  private double getBphi(int cation, int anion, double ionicStrength) {
+    double cationCharge = getComponent(cation).getIonicCharge();
+    double anionCharge = getComponent(anion).getIonicCharge();
+    boolean is22 = Math.abs(cationCharge) >= 1.5 && Math.abs(anionCharge) >= 1.5;
+    double sqrtIonicStrength = Math.sqrt(ionicStrength);
+    double bPhi = getBeta0ij(cation, anion, temperature)
+        + getBeta1ij(cation, anion, temperature) * Math.exp((is22 ? -1.4 : -2.0) * sqrtIonicStrength);
+    if (is22) {
+      bPhi += getBeta2ij(cation, anion) * Math.exp(-12.0 * sqrtIonicStrength);
+    }
+    return bPhi;
+  }
+
+  /**
+   * Calculates theta and psi contributions to the osmotic coefficient.
+   *
+   * @return theta and psi contribution to the Pitzer osmotic-coefficient sum
+   */
+  private double getThetaPsiOsmoticContribution() {
+    double thetaPsiSum = 0.0;
+    for (int cation1 = 0; cation1 < numberOfComponents; cation1++) {
+      if (getComponent(cation1).getIonicCharge() <= 0.0) {
+        continue;
+      }
+      double molalityCation1 = getComponent(cation1).getMolality(this);
+      for (int cation2 = cation1 + 1; cation2 < numberOfComponents; cation2++) {
+        if (getComponent(cation2).getIonicCharge() <= 0.0) {
+          continue;
+        }
+        double molalityCation2 = getComponent(cation2).getMolality(this);
+        thetaPsiSum += molalityCation1 * molalityCation2 * getThetaij(cation1, cation2);
+        for (int anion = 0; anion < numberOfComponents; anion++) {
+          if (getComponent(anion).getIonicCharge() >= 0.0) {
+            continue;
+          }
+          thetaPsiSum += molalityCation1 * molalityCation2 * getComponent(anion).getMolality(this)
+              * getPsiijk(cation1, cation2, anion);
+        }
+      }
+    }
+
+    for (int anion1 = 0; anion1 < numberOfComponents; anion1++) {
+      if (getComponent(anion1).getIonicCharge() >= 0.0) {
+        continue;
+      }
+      double molalityAnion1 = getComponent(anion1).getMolality(this);
+      for (int anion2 = anion1 + 1; anion2 < numberOfComponents; anion2++) {
+        if (getComponent(anion2).getIonicCharge() >= 0.0) {
+          continue;
+        }
+        double molalityAnion2 = getComponent(anion2).getMolality(this);
+        thetaPsiSum += molalityAnion1 * molalityAnion2 * getThetaij(anion1, anion2);
+        for (int cation = 0; cation < numberOfComponents; cation++) {
+          if (getComponent(cation).getIonicCharge() <= 0.0) {
+            continue;
+          }
+          thetaPsiSum += molalityAnion1 * molalityAnion2 * getComponent(cation).getMolality(this)
+              * getPsiijk(anion1, anion2, cation);
+        }
+      }
+    }
+    return thetaPsiSum;
+  }
+
+  /**
+   * Calculates total excess Gibbs energy at a trial temperature without changing phase composition.
+   *
+   * @param trialTemperature temperature in K for the derivative evaluation
+   * @return total excess Gibbs energy in J for this phase
+   */
+  private double getExcessGibbsEnergyAtTemperature(double trialTemperature) {
+    return getExcessGibbsEnergy(this, numberOfComponents, trialTemperature, pressure, getType());
+  }
+
+  /**
+   * Restores component activity coefficients at the current phase temperature after derivative calls.
+   */
+  private void restoreActivityCoefficientsAtCurrentTemperature() {
+    getExcessGibbsEnergyAtTemperature(temperature);
+  }
+
+  /**
+   * Gets the centered finite-difference step used for temperature derivatives.
+   *
+   * @return temperature derivative step in K
+   */
+  private double getTemperatureDerivativeStep() {
+    double step = Math.max(1.0e-3, Math.min(0.05, temperature * 1.0e-4));
+    if (temperature - step <= 1.0) {
+      step = Math.max(1.0e-6, 0.5 * (temperature - 1.0));
+    }
+    return step;
   }
 }

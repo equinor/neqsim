@@ -48,46 +48,109 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
       return;
     }
 
-    double currentAddition = 0.0;
     double lowerAddition = 0.0;
     double upperAddition = 1.0e-6;
     double upperSaturationRatio = saturationRatio;
     int bracketIterations = 0;
 
-    while (upperSaturationRatio < 1.0 && bracketIterations < 80) {
-      lowerAddition = currentAddition;
-      addSaltAmount(saltData, upperAddition - currentAddition);
-      currentAddition = upperAddition;
-      initialiseSystem();
-      aqueousPhaseNumber = getAqueousPhaseNumber();
-      upperSaturationRatio = calculateSaturationRatio(saltData, aqueousPhaseNumber);
-      upperAddition *= 2.0;
-      bracketIterations++;
-    }
+    if (system instanceof neqsim.thermo.system.SystemPitzer) {
+      SystemInterface baseSystem = system.clone();
 
-    if (upperSaturationRatio < 1.0) {
-      throw new IllegalStateException("Could not bracket salt saturation for " + saltName);
-    }
-
-    for (int i = 0; i < 80; i++) {
-      double trialAddition = 0.5 * (lowerAddition + upperAddition);
-      addSaltAmount(saltData, trialAddition - currentAddition);
-      currentAddition = trialAddition;
-      initialiseSystem();
-      aqueousPhaseNumber = getAqueousPhaseNumber();
-      saturationRatio = calculateSaturationRatio(saltData, aqueousPhaseNumber);
-
-      if (Math.abs(saturationRatio - 1.0) < 1.0e-6) {
-        break;
+      while (upperSaturationRatio < 1.0 && bracketIterations < 80) {
+        upperSaturationRatio = calculateSaturationRatioForAddition(baseSystem, saltData, upperAddition);
+        if (upperSaturationRatio < 1.0) {
+          lowerAddition = upperAddition;
+          upperAddition *= 2.0;
+        }
+        bracketIterations++;
       }
-      if (saturationRatio < 1.0) {
-        lowerAddition = trialAddition;
-      } else {
-        upperAddition = trialAddition;
+
+      if (upperSaturationRatio < 1.0) {
+        throw new IllegalStateException("Could not bracket salt saturation for " + saltName);
+      }
+
+      for (int i = 0; i < 80; i++) {
+        double trialAddition = 0.5 * (lowerAddition + upperAddition);
+        saturationRatio = calculateSaturationRatioForAddition(baseSystem, saltData, trialAddition);
+
+        if (Math.abs(saturationRatio - 1.0) < 1.0e-6) {
+          lowerAddition = trialAddition;
+          upperAddition = trialAddition;
+          break;
+        }
+        if (saturationRatio < 1.0) {
+          lowerAddition = trialAddition;
+        } else {
+          upperAddition = trialAddition;
+        }
+      }
+
+      double finalAddition = 0.5 * (lowerAddition + upperAddition);
+      addSaltAmount(saltData, finalAddition);
+      initialiseSystem();
+    } else {
+      double currentAddition = 0.0;
+
+      while (upperSaturationRatio < 1.0 && bracketIterations < 80) {
+        lowerAddition = currentAddition;
+        addSaltAmount(saltData, upperAddition - currentAddition);
+        currentAddition = upperAddition;
+        initialiseSystem();
+        aqueousPhaseNumber = getAqueousPhaseNumber();
+        upperSaturationRatio = calculateSaturationRatio(saltData, aqueousPhaseNumber);
+        if (upperSaturationRatio < 1.0) {
+          upperAddition *= 2.0;
+        }
+        bracketIterations++;
+      }
+
+      if (upperSaturationRatio < 1.0) {
+        throw new IllegalStateException("Could not bracket salt saturation for " + saltName);
+      }
+
+      for (int i = 0; i < 80; i++) {
+        double trialAddition = 0.5 * (lowerAddition + upperAddition);
+        addSaltAmount(saltData, trialAddition - currentAddition);
+        currentAddition = trialAddition;
+        initialiseSystem();
+        aqueousPhaseNumber = getAqueousPhaseNumber();
+        saturationRatio = calculateSaturationRatio(saltData, aqueousPhaseNumber);
+
+        if (Math.abs(saturationRatio - 1.0) < 1.0e-6) {
+          break;
+        }
+        if (saturationRatio < 1.0) {
+          lowerAddition = trialAddition;
+        } else {
+          upperAddition = trialAddition;
+        }
       }
     }
+
+    aqueousPhaseNumber = getAqueousPhaseNumber();
+    saturationRatio = calculateSaturationRatio(saltData, aqueousPhaseNumber);
 
     logger.info("solution found for {} in calcSaltSatauration(), SR={}", saltName, saturationRatio);
+  }
+
+  /**
+   * Calculates the saturation ratio after adding a trial salt amount to a fresh clone of a base system.
+   *
+   * @param baseSystem initialized system before the trial salt addition
+   * @param saltData salt data from COMPSALT
+   * @param saltAmount amount of salt formula units to add in moles
+   * @return saturation ratio for the trial state
+   */
+  private double calculateSaturationRatioForAddition(SystemInterface baseSystem, SaltData saltData, double saltAmount) {
+    SystemInterface originalSystem = system;
+    try {
+      system = baseSystem.clone();
+      addSaltAmount(saltData, saltAmount);
+      initialiseSystem();
+      return calculateSaturationRatio(saltData, getAqueousPhaseNumber());
+    } finally {
+      system = originalSystem;
+    }
   }
 
   /**
@@ -143,7 +206,11 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
         throw new IllegalStateException("Failed initializing chemical reactions for " + saltName, ex);
       }
       system.createDatabase(true);
-      system.setMixingRule(10);
+      if (system instanceof neqsim.thermo.system.SystemPitzer) {
+        system.setMixingRule("classic");
+      } else {
+        system.setMixingRule(10);
+      }
     }
   }
 
@@ -166,6 +233,12 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
    * Initialises thermodynamic and physical properties for the current system state.
    */
   private void initialiseSystem() {
+    if (system instanceof neqsim.thermo.system.SystemPitzer) {
+      system.init(0);
+      system.init(1);
+      system.initPhysicalProperties();
+      return;
+    }
     try {
       new TPflash(system).run();
     } catch (Exception ex) {

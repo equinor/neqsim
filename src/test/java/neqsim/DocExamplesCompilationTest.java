@@ -50,9 +50,17 @@ import neqsim.process.util.optimizer.MonteCarloSimulator;
 import neqsim.process.util.optimizer.SensitivityAnalysis;
 import neqsim.process.util.report.HeatMaterialBalance;
 import neqsim.process.util.report.ProcessValidator;
+import neqsim.pvtsimulation.flowassurance.BariteCelestiteSolidSolution;
+import neqsim.pvtsimulation.flowassurance.FlowlineScaleProfile;
 import neqsim.pvtsimulation.flowassurance.HydrateRiskMapper;
+import neqsim.pvtsimulation.flowassurance.ScaleMassCalculator;
+import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
+import neqsim.pvtsimulation.flowassurance.WaterCompatibilityScreener;
 import neqsim.thermo.system.FluidBuilder;
+import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPitzer;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Verifies that every code example shown in the engineering utilities documentation actually compiles and runs without
@@ -388,6 +396,108 @@ public class DocExamplesCompilationTest {
     assertNotNull(profile.toJson());
     assertNotNull(profile.getOverallRisk());
     assertTrue(profile.getCriticalPointCount() >= 0);
+  }
+
+  /**
+   * Scale prediction API examples from docs/pvtsimulation/scale_prediction_api.md.
+   *
+   * @throws Exception if the EOS scale-potential calculation fails
+   */
+  @Test
+  public void testScalePredictionApiDocExamples() throws Exception {
+    ScalePredictionCalculator calc = new ScalePredictionCalculator();
+    calc.setCalciumConcentration(400.0);
+    calc.setBariumConcentration(10.0);
+    calc.setStrontiumConcentration(5.0);
+    calc.setIronConcentration(2.0);
+    calc.setMagnesiumConcentration(1300.0);
+    calc.setSodiumConcentration(11000.0);
+    calc.setBicarbonateConcentration(150.0);
+    calc.setSulphateConcentration(10.0);
+    calc.setTotalDissolvedSolids(35000.0);
+    calc.setTemperatureCelsius(80.0);
+    calc.setPressureBara(100.0);
+    calc.setCO2PartialPressure(2.0);
+    calc.enableAutoPH();
+    calc.calculate();
+
+    double siCaCO3 = calc.getCaCO3SaturationIndex();
+    double siBaSO4 = calc.getBaSO4SaturationIndex();
+    boolean risk = calc.hasScalingRisk();
+    String calculatorJson = calc.toJson();
+    assertTrue(Double.isFinite(siCaCO3));
+    assertTrue(Double.isFinite(siBaSO4));
+    assertNotNull(calculatorJson);
+
+    SystemInterface brine = new SystemElectrolyteCPAstatoil(273.15 + 80.0, 100.0);
+    brine.addComponent("CO2", 0.01);
+    brine.addComponent("water", 0.90);
+    brine.addComponent("Na+", 0.03);
+    brine.addComponent("Cl-", 0.035);
+    brine.addComponent("Ca++", 0.005);
+    brine.addComponent("Ba++", 0.001);
+    brine.addComponent("SO4--", 0.002);
+    brine.addComponent("HCO3-", 0.005);
+    brine.chemicalReactionInit();
+    brine.createDatabase(true);
+    brine.setMixingRule(10);
+    brine.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(brine);
+    ops.TPflash();
+    brine.initProperties();
+    int aqPhase = brine.getPhaseNumberOfPhase("aqueous");
+    ops.checkScalePotential(aqPhase);
+    String[][] table = ops.getResultTable();
+    assertTrue(table.length > 1);
+
+    SystemInterface pitzer = new SystemPitzer(273.15 + 80.0, 100.0);
+    pitzer.addComponent("water", 0.90);
+    pitzer.addComponent("Na+", 0.03);
+    pitzer.addComponent("Cl-", 0.035);
+    pitzer.addComponent("Ca++", 0.005);
+    pitzer.addComponent("SO4--", 0.002);
+    pitzer.setMixingRule("classic");
+    ThermodynamicOperations pitzerOps = new ThermodynamicOperations(pitzer);
+    pitzerOps.TPflash();
+    pitzer.initProperties();
+    assertTrue(pitzer.getNumberOfPhases() >= 1);
+
+    WaterCompatibilityScreener screener = new WaterCompatibilityScreener();
+    screener.setFormationWater(400, 200, 50, 2, 150, 10, 50000, 90, 200, 3.0, 6.2);
+    screener.setInjectionWater(400, 0, 5, 0, 140, 2700, 35000, 15, 200, 0.3, 8.1);
+    screener.setMixingRatios(new double[] { 0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100 });
+    screener.calculate();
+    assertNotNull(screener.getWorstCaseScale());
+    assertTrue(Double.isFinite(screener.getWorstCaseRatio()));
+    assertTrue(Double.isFinite(screener.getWorstCaseSI()));
+
+    FlowlineScaleProfile profile = new FlowlineScaleProfile();
+    profile.setWaterChemistry(400, 10, 5, 0, 150, 10, 40000, 2.0, 6.5);
+    profile.setInletConditions(90.0, 250.0);
+    profile.setOutletConditions(15.0, 50.0);
+    profile.setNumberOfSegments(50);
+    profile.calculate();
+    assertTrue(Double.isFinite(profile.getMaxSI("CaCO3")));
+    assertTrue(Double.isFinite(profile.getMaxSI("BaSO4")));
+    assertNotNull(profile.toJson());
+
+    ScaleMassCalculator massCal = new ScaleMassCalculator(calc);
+    massCal.setWaterVolume(1000.0);
+    double caMolL = 400.0 / 40078.0;
+    double co3MolL = 150.0 / 61017.0;
+    double mass = massCal.calcCaCO3Mass(caMolL, co3MolL, calc.getCaCO3SaturationIndex());
+    assertTrue(mass >= 0.0);
+
+    BariteCelestiteSolidSolution solidSolution = new BariteCelestiteSolidSolution();
+    solidSolution.setAqueousActivities(0.001, 0.005, 0.01);
+    solidSolution.setEndMemberKsp(1.08e-10, 3.44e-7);
+    solidSolution.setMargules(2.3);
+    solidSolution.calculate();
+    assertTrue(solidSolution.getBaSO4MoleFraction() >= 0.0);
+    assertTrue(solidSolution.getBaSO4MoleFraction() <= 1.0);
+    assertTrue(Double.isFinite(solidSolution.getTotalSaturationIndex()));
+    assertNotNull(solidSolution.toJson());
   }
 
   /**

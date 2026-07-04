@@ -149,6 +149,8 @@ brine.addComponent("Ca++", 0.005);
 brine.addComponent("Ba++", 0.001);
 brine.addComponent("SO4--", 0.002);
 brine.addComponent("HCO3-", 0.005);
+brine.chemicalReactionInit();
+brine.createDatabase(true);
 brine.setMixingRule(10);
 brine.setMultiPhaseCheck(true);
 
@@ -183,6 +185,8 @@ brine.addComponent("Cl-", 0.035)
 brine.addComponent("Ca++", 0.005)
 brine.addComponent("SO4--", 0.002)
 brine.addComponent("HCO3-", 0.005)
+brine.chemicalReactionInit()
+brine.createDatabase(True)
 brine.setMixingRule(10)
 brine.setMultiPhaseCheck(True)
 
@@ -226,9 +230,9 @@ Where $\rho_w$ uses Kell (1975) water density and $\varepsilon$ uses Archer & Wa
 
 Parameters follow the form:
 
-$$\beta(T) = \beta_{25} + T_1 \left(\frac{1}{T} - \frac{1}{298.15}\right) + T_2 (T - 298.15)$$
+$$\beta(T) = \beta_{25} + T_1 \left(\frac{1}{T} - \frac{1}{298.15}\right) + T_2 \ln\left(\frac{T}{298.15}\right)$$
 
-21 ion pairs are included in the Pitzer parameter database (`PitzerParameters.csv`) covering Na, K, Ca, Mg, Ba, Sr, Fe with Cl, SO4, HCO3, CO3, and OH.
+The Pitzer parameter database (`PitzerParameters.csv`) currently contains 30 cation-anion rows. Of these, 23 non-estimated rows have populated binary parameters and are covered by regression tests for database loading plus finite mean ionic activity and osmotic coefficients. The covered ions include Na, K, Ca, Mg, Ba, Sr, Fe and H with Cl, SO4, HCO3, CO3 and OH. NaCl is additionally benchmarked against Robinson & Stokes / Pitzer 25 C mean ionic activity and osmotic-coefficient data.
 
 ### Using the Pitzer Model
 
@@ -239,6 +243,7 @@ pitzer.addComponent("Na+", 0.03);
 pitzer.addComponent("Cl-", 0.035);
 pitzer.addComponent("Ca++", 0.005);
 pitzer.addComponent("SO4--", 0.002);
+pitzer.setMixingRule("classic");
 
 ThermodynamicOperations ops = new ThermodynamicOperations(pitzer);
 ops.TPflash();

@@ -81,7 +81,9 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
     double rhoWater = 1000.0; // fallback if water not found
 
     double phaseMolarMass = liquidPhase.getPhase().getMolarMass();
+    double totalMass = liquidPhase.getPhase().getNumberOfMolesInPhase() * phaseMolarMass;
     int numComps = liquidPhase.getPhase().getNumberOfComponents();
+    double[] pairedMoles = new double[numComps];
 
     // First pass: find water, store wH2O, get pure water density
     for (int i = 0; i < numComps; i++) {
@@ -114,7 +116,12 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
 
     boolean hasComponentContribution = sumPartialVolumes > 0.0;
 
-    // 3) Now compute partial volumes of salts and other solutes
+    sumPartialVolumes += calcIonPairSaltPartialVolumes(pairedMoles, totalMass, tempC);
+    if (sumPartialVolumes > 0.0) {
+      hasComponentContribution = true;
+    }
+
+    // 3) Now compute partial volumes of molecular salts and other unpaired solutes
     for (int i = 0; i < numComps; i++) {
       ComponentInterface comp = liquidPhase.getPhase().getComponent(i);
       String compName = comp.getName();
@@ -123,9 +130,14 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
         continue;
       }
 
-      // is it one of our salts?
+      double unpairedMoles = comp.getNumberOfMolesInPhase() - pairedMoles[i];
+      if (unpairedMoles <= 1.0e-30) {
+        continue;
+      }
+
+      // is it one of our molecular salts?
       double[] params = saltParameters.get(compName.toLowerCase());
-      double wComponent = comp.getx() * comp.getMolarMass() / phaseMolarMass;
+      double wComponent = unpairedMoles * comp.getMolarMass() / totalMass;
       if (params != null) {
         double vSalt = calcPartialVolumeSalt(params, tempC, wComponent);
         // partial volume contribution = mass fraction * vSalt
@@ -148,6 +160,92 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
 
     // 4) Density is inverse of sum of partial volumes
     return 1.0 / sumPartialVolumes; // [kg/m^3]
+  }
+
+  /**
+   * Calculates partial-volume contributions from neutral salts reconstructed from explicit ions.
+   *
+   * @param pairedMoles mutable array receiving the number of moles consumed for each ion component
+   * @param totalMass total phase mass in kg
+   * @param temperatureC phase temperature in degrees Celsius
+   * @return sum of salt partial-volume contributions in m<sup>3</sup>/kg mixture
+   */
+  private double calcIonPairSaltPartialVolumes(double[] pairedMoles, double totalMass, double temperatureC) {
+    if (totalMass <= 0.0) {
+      return 0.0;
+    }
+
+    double partialVolume = 0.0;
+    partialVolume += calcIonPairSaltPartialVolume("cacl2", "Ca++", "Cl-", 1.0, 2.0, pairedMoles, totalMass,
+        temperatureC);
+    partialVolume += calcIonPairSaltPartialVolume("nacl", "Na+", "Cl-", 1.0, 1.0, pairedMoles, totalMass, temperatureC);
+    partialVolume += calcIonPairSaltPartialVolume("kcl", "K+", "Cl-", 1.0, 1.0, pairedMoles, totalMass, temperatureC);
+    partialVolume += calcIonPairSaltPartialVolume("nabr", "Na+", "Br-", 1.0, 1.0, pairedMoles, totalMass, temperatureC);
+    partialVolume += calcIonPairSaltPartialVolume("kbr", "K+", "Br-", 1.0, 1.0, pairedMoles, totalMass, temperatureC);
+    return partialVolume;
+  }
+
+  /**
+   * Adds one reconstructed ion-pair salt contribution to the mixture partial volume.
+   *
+   * @param saltKey key in the salt density-parameter map
+   * @param cationName cation component name
+   * @param anionName anion component name
+   * @param cationStoic cation stoichiometric coefficient in the neutral salt formula
+   * @param anionStoic anion stoichiometric coefficient in the neutral salt formula
+   * @param pairedMoles mutable array receiving consumed component moles
+   * @param totalMass total phase mass in kg
+   * @param temperatureC phase temperature in degrees Celsius
+   * @return salt partial-volume contribution in m<sup>3</sup>/kg mixture
+   */
+  private double calcIonPairSaltPartialVolume(String saltKey, String cationName, String anionName, double cationStoic,
+      double anionStoic, double[] pairedMoles, double totalMass, double temperatureC) {
+    double[] params = saltParameters.get(saltKey);
+    if (params == null) {
+      return 0.0;
+    }
+
+    int cationIndex = findComponentIndex(cationName);
+    int anionIndex = findComponentIndex(anionName);
+    if (cationIndex < 0 || anionIndex < 0) {
+      return 0.0;
+    }
+
+    ComponentInterface cation = liquidPhase.getPhase().getComponent(cationIndex);
+    ComponentInterface anion = liquidPhase.getPhase().getComponent(anionIndex);
+    double cationMoles = cation.getNumberOfMolesInPhase() - pairedMoles[cationIndex];
+    double anionMoles = anion.getNumberOfMolesInPhase() - pairedMoles[anionIndex];
+    double formulaMoles = Math.min(cationMoles / cationStoic, anionMoles / anionStoic);
+    if (formulaMoles <= 1.0e-30) {
+      return 0.0;
+    }
+
+    pairedMoles[cationIndex] += cationStoic * formulaMoles;
+    pairedMoles[anionIndex] += anionStoic * formulaMoles;
+
+    double saltMass = formulaMoles * (cationStoic * cation.getMolarMass() + anionStoic * anion.getMolarMass());
+    double wSalt = saltMass / totalMass;
+    if (wSalt <= 0.0) {
+      return 0.0;
+    }
+    return wSalt * calcPartialVolumeSalt(params, temperatureC, wSalt);
+  }
+
+  /**
+   * Finds a component by NeqSim component name.
+   *
+   * @param componentName component name to find
+   * @return component index, or {@code -1} if absent
+   */
+  private int findComponentIndex(String componentName) {
+    int numComps = liquidPhase.getPhase().getNumberOfComponents();
+    for (int i = 0; i < numComps; i++) {
+      String name = liquidPhase.getPhase().getComponent(i).getComponentName();
+      if (name != null && name.equals(componentName)) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   /**

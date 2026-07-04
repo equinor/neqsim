@@ -34,6 +34,94 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertEquals(neqsim.thermo.phase.PhaseType.GAS, system.getPhase(0).getType());
   }
 
+  /**
+   * Run a TP flash with chemical equilibrium for a methane/CO2 gas over NaCl brine and verify that the gas split,
+   * carbonate reactions, and aqueous Pitzer properties are physically reasonable.
+   */
+  @Test
+  public void testCO2MethaneNaClReactiveTPflashReasonableResults() {
+    SystemInterface system = new SystemPitzer(298.15, 10.0);
+    system.addComponent("methane", 4.5);
+    system.addComponent("CO2", 0.5);
+    system.addComponent("water", 55.508);
+    system.addComponent("Na+", 1.0);
+    system.addComponent("Cl-", 1.0);
+    system.chemicalReactionInit();
+    system.createDatabase(true);
+    system.setMixingRule("classic");
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    assertDoesNotThrow(() -> ops.TPflash());
+    system.initPhysicalProperties();
+
+    PhaseInterface gasPhase = null;
+    PhaseInterface aqueousPhase = null;
+    for (int phaseNumber = 0; phaseNumber < system.getNumberOfPhases(); phaseNumber++) {
+      if (system.getPhase(phaseNumber).getType() == neqsim.thermo.phase.PhaseType.GAS) {
+        gasPhase = system.getPhase(phaseNumber);
+      }
+      if (system.getPhase(phaseNumber).getType() == neqsim.thermo.phase.PhaseType.AQUEOUS) {
+        aqueousPhase = system.getPhase(phaseNumber);
+      }
+    }
+
+    assertTrue(gasPhase != null, "Methane-brine flash should form a gas phase");
+    assertTrue(aqueousPhase != null, "Methane-brine flash should form an aqueous phase");
+    assertTrue(system.isChemicalSystem(), "CO2-brine system should have aqueous chemical reactions");
+    assertTrue(system.getChemicalReactionOperations().hasReactions(),
+        "CO2-brine system should load chemical reactions");
+    assertEquals(2, system.getNumberOfPhases(), "Expected gas plus reactive aqueous brine at 25 C and 10 bara");
+
+    double gasMethaneMoles = gasPhase.getComponent("methane").getNumberOfMolesInPhase();
+    double aqueousMethaneMoles = aqueousPhase.getComponent("methane").getNumberOfMolesInPhase();
+    double totalMethaneMoles = gasMethaneMoles + aqueousMethaneMoles;
+    assertTrue(gasMethaneMoles / totalMethaneMoles > 0.95,
+        "Most methane should stay in the gas phase at 25 C and 10 bara");
+    assertTrue(gasPhase.getComponent("methane").getx() > 0.80,
+        "Gas phase should be methane-rich even with CO2 present");
+    assertTrue(gasPhase.getComponent("CO2").getx() > 0.02, "Gas phase should retain a measurable CO2 content");
+    assertTrue(aqueousPhase.getComponent("water").getx() > 0.94, "Aqueous phase should remain water-rich brine");
+    double aqueousSodiumMoles = aqueousPhase.getComponent("Na+").getNumberOfMolesInPhase();
+    double aqueousChlorideMoles = aqueousPhase.getComponent("Cl-").getNumberOfMolesInPhase();
+    assertTrue(aqueousSodiumMoles > 0.99, "Sodium should remain in the aqueous phase, moles=" + aqueousSodiumMoles);
+    assertTrue(aqueousChlorideMoles > 0.99,
+        "Chloride should remain in the aqueous phase, moles=" + aqueousChlorideMoles);
+
+    double density = aqueousPhase.getDensity();
+    double physicalPropertyDensity = aqueousPhase.getPhysicalProperties().getDensity();
+    assertEquals(physicalPropertyDensity, density, 1.0e-10);
+    assertTrue(density > 1020.0 && density < 1060.0,
+        "1 molal NaCl brine density at 25 C should be near 1035 kg/m3: " + density);
+
+    assertTrue(aqueousPhase.hasComponent("HCO3-"), "Chemical equilibrium should add bicarbonate");
+    assertTrue(aqueousPhase.hasComponent("H3O+"), "Chemical equilibrium should add hydronium");
+    double aqueousCarbonMoles = aqueousPhase.getComponent("CO2").getNumberOfMolesInPhase()
+        + aqueousPhase.getComponent("HCO3-").getNumberOfMolesInPhase();
+    if (aqueousPhase.hasComponent("CO3--")) {
+      aqueousCarbonMoles += aqueousPhase.getComponent("CO3--").getNumberOfMolesInPhase();
+    }
+    assertTrue(aqueousCarbonMoles > 1.0e-8,
+        "Aqueous phase should contain dissolved/reacted CO2 species: " + aqueousCarbonMoles);
+    assertTrue(aqueousPhase.getComponent("HCO3-").getNumberOfMolesInPhase() > 0.0,
+        "CO2-water chemical equilibrium should produce bicarbonate");
+
+    int sodiumNumber = aqueousPhase.getComponent("Na+").getComponentNumber();
+    int chlorideNumber = aqueousPhase.getComponent("Cl-").getComponentNumber();
+    double meanIonicActivity = aqueousPhase.getMeanIonicActivity(sodiumNumber, chlorideNumber);
+    double osmoticCoefficient = aqueousPhase.getOsmoticCoefficientOfWater();
+    double waterActivity = aqueousPhase.getActivityCoefficient(aqueousPhase.getComponent("water").getComponentNumber(),
+        aqueousPhase.getComponent("water").getComponentNumber()) * aqueousPhase.getComponent("water").getx();
+
+    assertTrue(meanIonicActivity > 0.55 && meanIonicActivity < 0.85,
+        "1 molal NaCl mean ionic activity should be in the literature range: " + meanIonicActivity);
+    assertTrue(osmoticCoefficient > 0.88 && osmoticCoefficient < 1.05,
+        "Reactive NaCl/CO2 brine osmotic coefficient should remain reasonable: " + osmoticCoefficient);
+    assertTrue(waterActivity > 0.95 && waterActivity < 0.99,
+        "1 molal NaCl water activity should be slightly below pure water: " + waterActivity);
+    assertTrue(aqueousPhase.getCp() > 0.0 && Double.isFinite(aqueousPhase.getCp()));
+    assertTrue(Double.isFinite(aqueousPhase.getEnthalpy()));
+  }
+
   @Test
   public void testTPflashWithMEG() {
     SystemInterface system = new SystemPitzer(298.15, 10.0);
@@ -116,6 +204,72 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertEquals(1, system.getNumberOfPhases());
   }
 
+  /**
+   * Verify that salt saturation can add ions to an initially pure-water Pitzer system and converge to unit saturation
+   * ratio.
+   */
+  @Test
+  public void testCalcSaltSaturationNaClFromPureWater() {
+    SystemInterface system = new SystemPitzer(298.15, 1.01325);
+    system.addComponent("water", 55.508);
+    system.setMixingRule("classic");
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    assertDoesNotThrow(() -> ops.calcSaltSaturation("NaCl"));
+
+    int aqueousPhaseNumber = system.getPhaseNumberOfPhase("aqueous");
+    if (aqueousPhaseNumber < 0) {
+      for (int i = 0; i < system.getNumberOfPhases(); i++) {
+        if (system.getPhase(i).hasComponent("water")) {
+          aqueousPhaseNumber = i;
+          break;
+        }
+      }
+    }
+    assertTrue(aqueousPhaseNumber >= 0, "Saturated Pitzer system should contain a water-rich phase");
+
+    PhaseInterface phase = system.getPhase(aqueousPhaseNumber);
+    double waterKg = phase.getComponent("water").getNumberOfMolesInPhase() * phase.getComponent("water").getMolarMass();
+    double naMolality = phase.getComponent("Na+").getNumberOfMolesInPhase() / waterKg;
+    double clMolality = phase.getComponent("Cl-").getNumberOfMolesInPhase() / waterKg;
+    int waterComponentNumber = phase.getComponent("water").getComponentNumber();
+    double gammaNa = phase.getActivityCoefficient(phase.getComponent("Na+").getComponentNumber(), waterComponentNumber);
+    double gammaCl = phase.getActivityCoefficient(phase.getComponent("Cl-").getComponentNumber(), waterComponentNumber);
+    double naclKsp = 92.78 - 0.407 * 298.15 + 0.000747 * 298.15 * 298.15;
+
+    assertEquals(1.0, gammaNa * naMolality * gammaCl * clMolality / naclKsp, 1.0e-3);
+  }
+
+  /**
+   * Verify NaCl mean ionic activity and osmotic coefficients against standard Pitzer literature values at 25 C.
+   */
+  @Test
+  public void testNaClActivityAndOsmoticCoefficientAgainstLiterature() {
+    double[] molalities = { 0.1, 0.5, 1.0, 2.0, 3.0 };
+    double[] meanActivityCoefficients = { 0.778, 0.681, 0.657, 0.668, 0.714 };
+    double[] osmoticCoefficients = { 0.932, 0.921, 0.936, 1.002, 1.085 };
+
+    for (int i = 0; i < molalities.length; i++) {
+      SystemInterface system = new SystemPitzer(298.15, 1.01325);
+      system.addComponent("water", 55.508);
+      system.addComponent("Na+", molalities[i]);
+      system.addComponent("Cl-", molalities[i]);
+      system.setMixingRule("classic");
+      system.init(0);
+      system.init(1);
+
+      PhaseInterface phase = system.getPhase(1);
+      int sodiumComponentNumber = phase.getComponent("Na+").getComponentNumber();
+      int chlorideComponentNumber = phase.getComponent("Cl-").getComponentNumber();
+
+      assertEquals(meanActivityCoefficients[i],
+          phase.getMeanIonicActivity(sodiumComponentNumber, chlorideComponentNumber),
+          0.08 * meanActivityCoefficients[i]);
+      assertEquals(osmoticCoefficients[i], phase.getOsmoticCoefficientOfWater(), 0.04 * osmoticCoefficients[i]);
+      assertEquals(phase.getOsmoticCoefficientOfWater(), phase.getOsmoticCoefficientOfWaterMolality(), 1.0e-12);
+    }
+  }
+
   @Test
   public void testHenryAndVaporPressure() {
     SystemInterface system = new SystemPitzer(298.15, 1.0);
@@ -189,6 +343,71 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     assertEquals(h, u + phase.getPressure() * v * n, Math.abs(h) * 1e-9);
     assertEquals(g, h - system.getTemperature() * s, Math.abs(g) * 1e-9);
     assertTrue(cp >= cv);
+  }
+
+  /**
+   * Verify that the Pitzer aqueous phase exposes a self-consistent commercial-simulator style property package across
+   * ordinary and elevated-temperature brine conditions.
+   */
+  @Test
+  public void testAqueousPhasePropertyPackageConsistency() {
+    double[] temperatures = { 298.15, 373.15, 423.15 };
+    double[] pressures = { 1.01325, 50.0, 100.0 };
+
+    for (int i = 0; i < temperatures.length; i++) {
+      SystemInterface system = new SystemPitzer(temperatures[i], pressures[i]);
+      system.addComponent("water", 55.508);
+      system.addComponent("Na+", 1.0);
+      system.addComponent("Cl-", 1.0);
+      system.setMixingRule("classic");
+      system.init(0);
+      system.init(1);
+      system.initPhysicalProperties();
+
+      PhaseInterface phase = system.getPhase(1);
+      int waterNumber = phase.getComponent("water").getComponentNumber();
+      int sodiumNumber = phase.getComponent("Na+").getComponentNumber();
+      int chlorideNumber = phase.getComponent("Cl-").getComponentNumber();
+
+      double waterActivityCoefficient = phase.getActivityCoefficient(waterNumber, waterNumber);
+      double waterActivity = waterActivityCoefficient * phase.getComponent("water").getx();
+      double ionMolalitySum = phase.getComponent("Na+").getMolality(phase)
+          + phase.getComponent("Cl-").getMolality(phase);
+      double osmoticCoefficientFromWaterActivity = -1000.0 * Math.log(waterActivity) / (18.015 * ionMolalitySum);
+
+      assertEquals(osmoticCoefficientFromWaterActivity, phase.getOsmoticCoefficientOfWater(), 2.0e-10,
+          "Water activity and osmotic coefficient should be thermodynamically consistent");
+      assertEquals(phase.getOsmoticCoefficientOfWater(), phase.getOsmoticCoefficient(waterNumber), 1.0e-12);
+      assertEquals(phase.getOsmoticCoefficientOfWater(), phase.getOsmoticCoefficientOfWaterMolality(), 1.0e-12);
+      assertTrue(phase.getMeanIonicActivity(sodiumNumber, chlorideNumber) > 0.0);
+      assertTrue(Double.isFinite(phase.getMeanIonicActivity(sodiumNumber, chlorideNumber)));
+
+      double density = phase.getDensity();
+      double physicalPropertyDensity = phase.getPhysicalProperties().getDensity();
+      double molarVolume = phase.getMolarVolume();
+      double numberOfMoles = phase.getNumberOfMolesInPhase();
+      double enthalpy = phase.getEnthalpy();
+      double entropy = phase.getEntropy();
+      double internalEnergy = phase.getInternalEnergy();
+      double gibbsEnergy = phase.getGibbsEnergy();
+      double helmholtzEnergy = phase.getHelmholtzEnergy();
+      double cp = phase.getCp();
+      double cv = phase.getCv();
+
+      assertTrue(Double.isFinite(density) && density > 950.0);
+      assertEquals(physicalPropertyDensity, density, 1.0e-10);
+      assertEquals(phase.getMolarMass() / density * 1.0e5, molarVolume, Math.abs(molarVolume) * 1.0e-10);
+      assertEquals(enthalpy, internalEnergy + phase.getPressure() * molarVolume * numberOfMoles,
+          Math.max(1.0, Math.abs(enthalpy)) * 1.0e-9);
+      assertEquals(gibbsEnergy, enthalpy - system.getTemperature() * entropy,
+          Math.max(1.0, Math.abs(gibbsEnergy)) * 1.0e-9);
+      assertEquals(helmholtzEnergy, internalEnergy - system.getTemperature() * entropy,
+          Math.max(1.0, Math.abs(helmholtzEnergy)) * 1.0e-9);
+      assertTrue(cp > 0.0 && Double.isFinite(cp));
+      assertTrue(cv > 0.0 && Double.isFinite(cv));
+      assertEquals(cp / numberOfMoles, phase.getCp("J/molK"), 1.0e-12);
+      assertEquals(cv / numberOfMoles, phase.getCv("J/molK"), 1.0e-12);
+    }
   }
 
   @Test
@@ -325,6 +544,77 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Verify combined gas-oil-water Pitzer flash with CO2-driven aqueous chemical equilibrium.
+   */
+  @Test
+  public void testReactiveVLLEFlashGasOilWaterWithCO2() {
+    SystemInterface system = new SystemPitzer(313.15, 30.0); // 40°C, 30 bara
+    system.addComponent("methane", 5.0);
+    system.addComponent("CO2", 0.5);
+    system.addComponent("nC10", 3.0);
+    system.addComponent("water", 55.508);
+    system.addComponent("Na+", 1.0);
+    system.addComponent("Cl-", 1.0);
+    system.chemicalReactionInit();
+    system.createDatabase(true);
+    system.setMixingRule("classic");
+    system.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    assertDoesNotThrow(() -> ops.TPflash());
+    system.initPhysicalProperties();
+
+    PhaseInterface gasPhase = null;
+    PhaseInterface hydrocarbonLiquidPhase = null;
+    PhaseInterface aqueousPhase = null;
+    for (int phaseNumber = 0; phaseNumber < system.getNumberOfPhases(); phaseNumber++) {
+      PhaseInterface phase = system.getPhase(phaseNumber);
+      if (phase.getType() == neqsim.thermo.phase.PhaseType.GAS) {
+        gasPhase = phase;
+      } else if (phase.getType() == neqsim.thermo.phase.PhaseType.AQUEOUS) {
+        aqueousPhase = phase;
+      } else if (phase.hasComponent("nC10") && phase.getComponent("nC10").getx() > 0.50) {
+        hydrocarbonLiquidPhase = phase;
+      }
+    }
+
+    assertEquals(3, system.getNumberOfPhases(), "Expected gas, hydrocarbon liquid, and aqueous phases");
+    assertTrue(gasPhase != null, "Reactive VLLE should form a gas phase");
+    assertTrue(hydrocarbonLiquidPhase != null, "Reactive VLLE should form a hydrocarbon liquid phase");
+    assertTrue(aqueousPhase != null, "Reactive VLLE should form an aqueous Pitzer phase");
+    assertTrue(system.isChemicalSystem(), "CO2-brine VLLE should have aqueous chemical reactions");
+    assertTrue(system.getChemicalReactionOperations().hasReactions(), "CO2-brine VLLE should load reactions");
+
+    assertTrue(gasPhase.getComponent("methane").getx() > 0.60, "Gas phase should be methane-rich");
+    assertTrue(gasPhase.getComponent("CO2").getx() > 0.01, "Gas phase should retain measurable CO2");
+    assertTrue(hydrocarbonLiquidPhase.getComponent("nC10").getx() > 0.70,
+        "Hydrocarbon liquid phase should be nC10-rich");
+    assertTrue(aqueousPhase.getComponent("water").getx() > 0.94, "Aqueous phase should remain water-rich");
+    double sodiumMolality = aqueousPhase.getComponent("Na+").getMolality(aqueousPhase);
+    double chlorideMolality = aqueousPhase.getComponent("Cl-").getMolality(aqueousPhase);
+    assertTrue(sodiumMolality > 0.95 && sodiumMolality < 1.05,
+        "Aqueous sodium molality should remain near the 1 molal brine basis: " + sodiumMolality);
+    assertTrue(chlorideMolality > 0.95 && chlorideMolality < 1.05,
+        "Aqueous chloride molality should remain near the 1 molal brine basis: " + chlorideMolality);
+
+    assertTrue(aqueousPhase.hasComponent("HCO3-"), "Chemical equilibrium should add bicarbonate");
+    assertTrue(aqueousPhase.hasComponent("H3O+"), "Chemical equilibrium should add hydronium");
+    assertTrue(aqueousPhase.getComponent("HCO3-").getNumberOfMolesInPhase() > 0.0,
+        "Dissolved CO2 chemistry should produce bicarbonate");
+
+    int sodiumNumber = aqueousPhase.getComponent("Na+").getComponentNumber();
+    int chlorideNumber = aqueousPhase.getComponent("Cl-").getComponentNumber();
+    double meanIonicActivity = aqueousPhase.getMeanIonicActivity(sodiumNumber, chlorideNumber);
+    double osmoticCoefficient = aqueousPhase.getOsmoticCoefficientOfWater();
+    assertTrue(meanIonicActivity > 0.55 && meanIonicActivity < 0.85,
+        "Reactive VLLE NaCl mean ionic activity should remain reasonable: " + meanIonicActivity);
+    assertTrue(osmoticCoefficient > 0.88 && osmoticCoefficient < 1.05,
+        "Reactive VLLE NaCl osmotic coefficient should remain reasonable: " + osmoticCoefficient);
+    assertTrue(aqueousPhase.getDensity() > 1020.0 && aqueousPhase.getDensity() < 1060.0,
+        "Reactive VLLE aqueous brine density should remain near 1 molal NaCl density");
+  }
+
+  /**
    * Verify that beta2 parameters work for 2-2 electrolytes (CaSO4).
    */
   @Test
@@ -364,11 +654,14 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     system.setMixingRule("classic");
     system.init(0);
     system.init(1);
+    system.initPhysicalProperties();
 
     double density = system.getPhase(1).getDensity();
-    // ~1 molal NaCl brine at 25°C should be ~1020-1050 kg/m³
-    assertTrue(density > 990.0, "Brine density should be > 990: " + density);
-    assertTrue(density < 1100.0, "Brine density should be < 1100: " + density);
+    double physicalPropertyDensity = system.getPhase(1).getPhysicalProperties().getDensity();
+    // ~1 molal NaCl brine at 25°C should be about 1035 kg/m³.
+    assertEquals(1036.0, density, 8.0, "Brine density should match NaCl brine data");
+    assertEquals(physicalPropertyDensity, density, 1.0e-10,
+        "Pitzer thermodynamic density should use the salt-water physical-property density");
     // Should be higher than pure water (~997 at 25°C)
     assertTrue(density > 997.0, "Brine should be denser than pure water: " + density);
   }
@@ -416,8 +709,10 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
     SystemInterface system = new SystemPitzer(298.15, 1.0);
     system.addComponent("water", 55.5);
     system.addComponent("Na+", 0.5);
+    system.addComponent("K+", 0.1);
     system.addComponent("Ca++", 0.1);
-    system.addComponent("Cl-", 0.7);
+    system.addComponent("Mg++", 0.05);
+    system.addComponent("Cl-", 0.8);
     system.addComponent("SO4--", 0.05);
     system.setMixingRule("classic");
 
@@ -433,10 +728,153 @@ public class SystemPitzerTest extends neqsim.NeqSimTest {
           "Activity coefficient for " + system.getPhase(1).getComponent(i).getName() + " must be finite: " + gamma);
     }
 
-    // Verify parameters were loaded (check that Pitzer params are nonzero for NaCl)
+    // Verify parameters were loaded for common salt pairs.
     assertTrue(liq.isParametersLoaded(), "Pitzer parameters should be loaded from database");
-    int na = liq.getComponent("Na+").getComponentNumber();
-    int cl = liq.getComponent("Cl-").getComponentNumber();
-    assertTrue(Math.abs(liq.getBeta0ij(na, cl)) > 0.01, "NaCl beta0 should be loaded from database");
+    assertLoadedBinaryParameters(liq, "Na+", "Cl-", true, true, false);
+    assertLoadedBinaryParameters(liq, "K+", "Cl-", true, true, false);
+    assertLoadedBinaryParameters(liq, "Ca++", "Cl-", true, true, false);
+    assertLoadedBinaryParameters(liq, "Mg++", "Cl-", true, true, false);
+  }
+
+  /**
+   * Verify all currently populated cation-anion Pitzer database rows can be loaded and used for finite activity and
+   * osmotic coefficients.
+   */
+  @Test
+  public void testDatabaseLoadAllPopulatedPitzerPairs() {
+    String[][] ionPairs = { { "Na+", "Cl-", "true", "true", "false" }, { "Na+", "SO4--", "true", "true", "false" },
+        { "K+", "Cl-", "true", "true", "false" }, { "K+", "SO4--", "true", "true", "false" },
+        { "Ca++", "Cl-", "true", "true", "false" }, { "Ca++", "SO4--", "true", "true", "true" },
+        { "Mg++", "Cl-", "true", "true", "false" }, { "Mg++", "SO4--", "true", "true", "true" },
+        { "Ba++", "Cl-", "true", "true", "false" }, { "Sr++", "Cl-", "true", "true", "false" },
+        { "Sr++", "SO4--", "true", "true", "true" }, { "Fe++", "Cl-", "true", "true", "false" },
+        { "Fe++", "SO4--", "true", "true", "true" }, { "Na+", "HCO3-", "true", "true", "false" },
+        { "Na+", "CO3--", "true", "true", "false" }, { "Ca++", "HCO3-", "true", "true", "false" },
+        { "Mg++", "HCO3-", "true", "true", "false" }, { "Na+", "OH-", "true", "true", "false" },
+        { "K+", "HCO3-", "true", "true", "false" }, { "K+", "CO3--", "true", "true", "false" },
+        { "H+", "Cl-", "true", "true", "false" }, { "H+", "SO4--", "true", "true", "false" },
+        { "Ba++", "HCO3-", "true", "true", "false" } };
+
+    for (int i = 0; i < ionPairs.length; i++) {
+      assertPopulatedPitzerPairCanBeUsed(ionPairs[i][0], ionPairs[i][1], Boolean.parseBoolean(ionPairs[i][2]),
+          Boolean.parseBoolean(ionPairs[i][3]), Boolean.parseBoolean(ionPairs[i][4]));
+    }
+  }
+
+  /**
+   * Verifies that a binary Pitzer parameter row was loaded for an ion pair.
+   *
+   * @param phase Pitzer phase with loaded database parameters
+   * @param ion1 first ion component name
+   * @param ion2 second ion component name
+   * @param expectBeta0 true if beta0 should be populated
+   * @param expectBeta1 true if beta1 should be populated
+   * @param expectBeta2 true if beta2 should be populated
+   */
+  private static void assertLoadedBinaryParameters(PhasePitzer phase, String ion1, String ion2, boolean expectBeta0,
+      boolean expectBeta1, boolean expectBeta2) {
+    int ion1Number = phase.getComponent(ion1).getComponentNumber();
+    int ion2Number = phase.getComponent(ion2).getComponentNumber();
+    if (expectBeta0) {
+      assertTrue(Math.abs(phase.getBeta0ij(ion1Number, ion2Number)) > 0.0,
+          ion1 + "/" + ion2 + " beta0 should be loaded from database");
+    }
+    if (expectBeta1) {
+      assertTrue(Math.abs(phase.getBeta1ij(ion1Number, ion2Number)) > 0.0,
+          ion1 + "/" + ion2 + " beta1 should be loaded from database");
+    }
+    if (expectBeta2) {
+      assertTrue(Math.abs(phase.getBeta2ij(ion1Number, ion2Number)) > 0.0,
+          ion1 + "/" + ion2 + " beta2 should be loaded from database");
+    }
+  }
+
+  /**
+   * Builds a simple binary electrolyte solution and checks that the database parameters produce usable thermodynamic
+   * coefficients and aqueous phase properties.
+   *
+   * @param cation cation component name
+   * @param anion anion component name
+   * @param expectBeta0 true if beta0 should be populated
+   * @param expectBeta1 true if beta1 should be populated
+   * @param expectBeta2 true if beta2 should be populated
+   */
+  private static void assertPopulatedPitzerPairCanBeUsed(String cation, String anion, boolean expectBeta0,
+      boolean expectBeta1, boolean expectBeta2) {
+    SystemInterface system = new SystemPitzer(298.15, 1.01325);
+    system.addComponent("water", 55.508);
+    system.addComponent(cation, 0.1 * getAbsoluteChargeFromIonName(anion));
+    system.addComponent(anion, 0.1 * getAbsoluteChargeFromIonName(cation));
+    system.setMixingRule("classic");
+    system.init(0);
+    system.init(1);
+    system.initPhysicalProperties();
+
+    PhasePitzer phase = (PhasePitzer) system.getPhase(1);
+    phase.loadParametersFromDatabase();
+    assertLoadedBinaryParameters(phase, cation, anion, expectBeta0, expectBeta1, expectBeta2);
+
+    int cationNumber = phase.getComponent(cation).getComponentNumber();
+    int anionNumber = phase.getComponent(anion).getComponentNumber();
+    int waterNumber = phase.getComponent("water").getComponentNumber();
+    double cationGamma = phase.getActivityCoefficient(cationNumber, waterNumber);
+    double anionGamma = phase.getActivityCoefficient(anionNumber, waterNumber);
+    double meanIonicActivity = phase.getMeanIonicActivity(cationNumber, anionNumber);
+    double osmoticCoefficient = phase.getOsmoticCoefficientOfWater();
+
+    assertTrue(Double.isFinite(cationGamma) && cationGamma > 0.0,
+        cation + "/" + anion + " cation activity coefficient should be positive and finite");
+    assertTrue(Double.isFinite(anionGamma) && anionGamma > 0.0,
+        cation + "/" + anion + " anion activity coefficient should be positive and finite");
+    assertTrue(Double.isFinite(meanIonicActivity) && meanIonicActivity > 0.0,
+        cation + "/" + anion + " mean ionic activity coefficient should be positive and finite");
+    assertTrue(Double.isFinite(osmoticCoefficient) && osmoticCoefficient > 0.0,
+        cation + "/" + anion + " osmotic coefficient should be positive and finite");
+
+    double density = phase.getDensity();
+    double molarVolume = phase.getMolarVolume();
+    double enthalpy = phase.getEnthalpy();
+    double entropy = phase.getEntropy();
+    double internalEnergy = phase.getInternalEnergy();
+    double gibbsEnergy = phase.getGibbsEnergy();
+    double helmholtzEnergy = phase.getHelmholtzEnergy();
+    double cp = phase.getCp();
+    double cv = phase.getCv();
+
+    assertTrue(Double.isFinite(density) && density > 0.0,
+        cation + "/" + anion + " density should be positive and finite");
+    assertTrue(Double.isFinite(molarVolume) && molarVolume > 0.0,
+        cation + "/" + anion + " molar volume should be positive and finite");
+    assertTrue(Double.isFinite(enthalpy), cation + "/" + anion + " enthalpy should be finite");
+    assertTrue(Double.isFinite(entropy), cation + "/" + anion + " entropy should be finite");
+    assertTrue(Double.isFinite(internalEnergy), cation + "/" + anion + " internal energy should be finite");
+    assertTrue(Double.isFinite(gibbsEnergy), cation + "/" + anion + " Gibbs energy should be finite");
+    assertTrue(Double.isFinite(helmholtzEnergy), cation + "/" + anion + " Helmholtz energy should be finite");
+    assertTrue(Double.isFinite(cp) && cp > 0.0, cation + "/" + anion + " Cp should be positive and finite");
+    assertTrue(Double.isFinite(cv) && cv > 0.0, cation + "/" + anion + " Cv should be positive and finite");
+    assertEquals(enthalpy, internalEnergy + phase.getPressure() * molarVolume * phase.getNumberOfMolesInPhase(),
+        Math.max(1.0, Math.abs(enthalpy)) * 1.0e-9,
+        cation + "/" + anion + " enthalpy/internal-energy identity should hold");
+    assertEquals(gibbsEnergy, enthalpy - phase.getTemperature() * entropy,
+        Math.max(1.0, Math.abs(gibbsEnergy)) * 1.0e-9, cation + "/" + anion + " Gibbs-energy identity should hold");
+    assertEquals(helmholtzEnergy, internalEnergy - phase.getTemperature() * entropy,
+        Math.max(1.0, Math.abs(helmholtzEnergy)) * 1.0e-9,
+        cation + "/" + anion + " Helmholtz-energy identity should hold");
+  }
+
+  /**
+   * Gets the absolute ionic charge from a NeqSim ion component name.
+   *
+   * @param ionName ion component name
+   * @return absolute ionic charge
+   */
+  private static int getAbsoluteChargeFromIonName(String ionName) {
+    int charge = 0;
+    for (int i = 0; i < ionName.length(); i++) {
+      if (ionName.charAt(i) == '+' || ionName.charAt(i) == '-') {
+        charge++;
+      }
+    }
+    return Math.max(charge, 1);
   }
 }
