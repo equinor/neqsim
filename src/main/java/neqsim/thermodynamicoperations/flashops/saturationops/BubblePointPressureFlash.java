@@ -77,7 +77,7 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
         system.getPhases()[0].getComponent(i).setx(1e-40);
       } else {
         system.getPhases()[0].getComponent(i)
-            .setx(system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getz());
+            .setx(system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getx());
       }
     }
 
@@ -119,7 +119,7 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
             }
             system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
             system.getPhases()[0].getComponent(i)
-                .setx(system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getz());
+                .setx(system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getx());
             // logger.info("y err " +
             // Math.abs(system.getPhases()[0].getComponent(i).getx()-yold));
             kIter++;
@@ -129,7 +129,7 @@ public class BubblePointPressureFlash extends ConstantDutyPressureFlash {
         for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
           if (!Double.isNaN(system.getPhases()[0].getComponent(i).getK())) {
             system.getPhases()[0].getComponent(i)
-                .setx(system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getz());
+                .setx(system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getx());
           } else {
             system.init(0);
             logger.error("k err. : nan");

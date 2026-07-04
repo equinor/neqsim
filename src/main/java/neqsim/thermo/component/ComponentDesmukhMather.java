@@ -3,6 +3,7 @@ package neqsim.thermo.component;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseDesmukhMather;
+import neqsim.thermo.phase.PhaseGE;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
@@ -74,7 +75,7 @@ public class ComponentDesmukhMather extends ComponentGE {
     double A = 1.174;
 
     double B = 3.32384e9;
-    double Iion = ((PhaseDesmukhMather) phase).getIonicStrength();
+    double Iion = Math.max(0.0, ((PhaseDesmukhMather) phase).getIonicStrength());
     double temp = 0.0;
 
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
@@ -91,9 +92,13 @@ public class ComponentDesmukhMather extends ComponentGE {
     // else lngamma = 0.0;
     // System.out.println("temp2 "+
     // -2.303*A*Math.pow(getIonicCharge(),2.0)*Math.sqrt(Iion)/(1.0+B*Math.sqrt(Iion)));
-    gamma = getMolality(phase) * ((PhaseDesmukhMather) phase).getSolventMolarMass() * Math.exp(lngamma) / getx();
+    double moleFraction = Math.max(getx(), 1.0e-30);
+    double molality = Math.max(getMolality(phase), 0.0);
+    gamma = molality * ((PhaseDesmukhMather) phase).getSolventMolarMass() * Math.exp(lngamma) / moleFraction;
+    if (!Double.isFinite(gamma) || gamma <= 0.0) {
+      gamma = Math.exp(lngamma);
+    }
     lngamma = Math.log(gamma);
-    logger.info("gamma " + componentName + " " + gamma);
     return gamma;
   }
 
@@ -111,8 +116,15 @@ public class ComponentDesmukhMather extends ComponentGE {
     } else if (ionicCharge == 0 && referenceStateType.equals("solvent")) {
       fugacityCoefficient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
     } else if (ionicCharge == 0 && referenceStateType.equals("solute")) {
-      // TODO: sjekk denne
-      fugacityCoefficient = gamma * getHenryCoef(phase.getTemperature()) / phase.getPressure();
+      double activinf = gamma;
+      if (phase.hasComponent("water")) {
+        int waterNumber = phase.getComponent("water").getComponentNumber();
+        activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDilWater(componentNumber, waterNumber);
+      } else {
+        activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
+      }
+      fugacityCoefficient = activinf * getHenryCoef(phase.getTemperature()) / phase.getPressure();
+      gammaRefCor = activinf;
     } else {
       fugacityCoefficient = 1e-15;
       // System.out.println("fug " + fugacityCoefficient);
@@ -124,6 +136,7 @@ public class ComponentDesmukhMather extends ComponentGE {
   /** {@inheritDoc} */
   @Override
   public double getMolality(PhaseInterface phase) {
-    return getNumberOfMolesInPhase() / ((PhaseDesmukhMather) phase).getSolventWeight();
+    double solventWeight = ((PhaseDesmukhMather) phase).getSolventWeight();
+    return solventWeight > 0.0 ? getNumberOfMolesInPhase() / solventWeight : 0.0;
   }
 }
