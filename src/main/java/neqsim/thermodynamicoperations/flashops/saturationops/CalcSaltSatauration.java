@@ -53,9 +53,9 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
     double upperSaturationRatio = saturationRatio;
     int bracketIterations = 0;
 
-    if (system instanceof neqsim.thermo.system.SystemPitzer) {
-      SystemInterface baseSystem = system.clone();
+    SystemInterface baseSystem = system.clone();
 
+    if (system instanceof neqsim.thermo.system.SystemPitzer || "FeCO3".equals(saltName)) {
       while (upperSaturationRatio < 1.0 && bracketIterations < 80) {
         upperSaturationRatio = calculateSaturationRatioForAddition(baseSystem, saltData, upperAddition);
         if (upperSaturationRatio < 1.0) {
@@ -144,7 +144,7 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
   private double calculateSaturationRatioForAddition(SystemInterface baseSystem, SaltData saltData, double saltAmount) {
     SystemInterface originalSystem = system;
     try {
-      system = baseSystem.clone();
+      system = createTrialSystem(baseSystem);
       addSaltAmount(saltData, saltAmount);
       initialiseSystem();
       return calculateSaturationRatio(saltData, getAqueousPhaseNumber());
@@ -227,6 +227,31 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
       }
     }
     return false;
+  }
+
+  /**
+   * Creates a trial clone with chemical reactions bound to the clone itself.
+   *
+   * @param baseSystem initialized system before the trial salt addition
+   * @return cloned trial system ready for flash calculations
+   */
+  private SystemInterface createTrialSystem(SystemInterface baseSystem) {
+    SystemInterface trialSystem = baseSystem.clone();
+    if (trialSystem.isChemicalSystem() || trialSystem.getChemicalReactionOperations() != null) {
+      try {
+        trialSystem.chemicalReactionInit();
+      } catch (Exception ex) {
+        throw new IllegalStateException("Failed initializing chemical reactions for trial saturation of " + saltName,
+            ex);
+      }
+      trialSystem.createDatabase(true);
+      if (trialSystem instanceof neqsim.thermo.system.SystemPitzer) {
+        trialSystem.setMixingRule("classic");
+      } else {
+        trialSystem.setMixingRule(10);
+      }
+    }
+    return trialSystem;
   }
 
   /**
