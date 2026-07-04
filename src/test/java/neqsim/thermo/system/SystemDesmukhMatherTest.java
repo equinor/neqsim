@@ -47,7 +47,9 @@ class SystemDesmukhMatherTest {
     PhaseInterface gasPhase = null;
     for (int phaseNumber = 0; phaseNumber < system.getNumberOfPhases(); phaseNumber++) {
       PhaseInterface phase = system.getPhase(phaseNumber);
-      if (phase instanceof PhaseDesmukhMather && phase.hasComponent("water") && phase.hasComponent("MDEA")) {
+      if (phase.getType() != PhaseType.GAS && phase instanceof PhaseDesmukhMather && phase.hasComponent("water")
+          && phase.hasComponent("MDEA")
+          && (aqueousPhase == null || componentMoles(phase, "water") > componentMoles(aqueousPhase, "water"))) {
         aqueousPhase = phase;
       } else if (phase.getType() == PhaseType.GAS) {
         gasPhase = phase;
@@ -120,7 +122,9 @@ class SystemDesmukhMatherTest {
     PhaseInterface gasPhase = null;
     for (int phaseNumber = 0; phaseNumber < system.getNumberOfPhases(); phaseNumber++) {
       PhaseInterface phase = system.getPhase(phaseNumber);
-      if (phase instanceof PhaseDesmukhMather && phase.hasComponent("water") && phase.hasComponent("MDEA")) {
+      if (phase.getType() != PhaseType.GAS && phase instanceof PhaseDesmukhMather && phase.hasComponent("water")
+          && phase.hasComponent("MDEA")
+          && (aqueousPhase == null || componentMoles(phase, "water") > componentMoles(aqueousPhase, "water"))) {
         aqueousPhase = phase;
       } else if (phase.getType() == PhaseType.GAS) {
         gasPhase = phase;

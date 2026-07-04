@@ -1,5 +1,6 @@
 package neqsim.thermo.system;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
@@ -10,7 +11,10 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
+import neqsim.thermo.util.amines.AmineKentEisenberg;
+import neqsim.thermo.util.amines.AmineKentEisenberg.AmineType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -22,6 +26,17 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  */
 public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
   private static final Logger logger = LogManager.getLogger(SystemElectrolyteCPATest.class);
+
+  /** Molar mass of MDEA in g/mol. */
+  private static final double MDEA_MOLAR_MASS = 119.1632;
+  /** Molar mass of water in g/mol. */
+  private static final double WATER_MOLAR_MASS = 18.01528;
+  /** Engineering factor used for CO2-water-MDEA bubble-point pressure checks. */
+  private static final double MDEA_BUBBLE_POINT_FACTOR = 3.1;
+  /** Screening factor used for methane TPflash checks at high equilibrated loading. */
+  private static final double MDEA_TPFLASH_FACTOR = 40.0;
+  /** Upper density sanity bound for loaded aqueous MDEA in methane TPflash checks. */
+  private static final double MDEA_TPFLASH_DENSITY_MAX_KG_PER_M3 = 1350.0;
 
   static SystemInterface thermoSystem;
   static ThermodynamicOperations testOps;
@@ -402,6 +417,90 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
         "N2 should show salting-out in natural gas mixture. Without salt: " + n2NoSalt + ", With salt: " + n2WithSalt);
   }
 
+  /**
+   * Tests CO2-water-MDEA reactive TPflash with methane using Electrolyte CPA Statoil.
+   */
+  @Test
+  @DisplayName("test CO2-water-MDEA TPflash with methane")
+  public void testMdeaWaterCo2ReactiveTPflashWithMethane() {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(313.15, 5.0);
+    system.addComponent("methane", 5.0);
+    system.addComponent("CO2", 0.2);
+    system.addComponent("MDEA", 1.0);
+    system.addComponent("water", 9.0);
+    system.chemicalReactionInit();
+    system.createDatabase(true);
+    system.setMixingRule(10);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    assertDoesNotThrow(() -> ops.TPflash());
+    system.init(3);
+
+    PhaseInterface aqueousPhase = getAqueousMdeaPhase(system);
+    PhaseInterface gasPhase = getGasPhase(system);
+    assertTrue(system.isChemicalSystem(), "MDEA-water-CO2 should load aqueous reactions");
+    assertTrue(system.getChemicalReactionOperations().hasReactions(), "MDEA-water-CO2 should have reactions");
+    assertTrue(aqueousPhase != null, "Reactive TPflash should retain an aqueous MDEA phase");
+    assertTrue(gasPhase != null, "Reactive TPflash should retain a gas phase");
+    assertTrue(componentMoles(aqueousPhase, "MDEA+") > 0.1, "TPflash should form protonated MDEA");
+    assertTrue(componentMoles(aqueousPhase, "HCO3-") > 0.1, "TPflash should form bicarbonate");
+
+    double totalMdea = componentMoles(aqueousPhase, "MDEA") + componentMoles(aqueousPhase, "MDEA+");
+    double totalCo2 = componentMoles(aqueousPhase, "CO2") + componentMoles(aqueousPhase, "HCO3-")
+        + componentMoles(aqueousPhase, "CO3--");
+    double mdeaMolarity = AmineKentEisenberg
+        .amineMolarity(mdeaMassFraction(totalMdea, componentMoles(aqueousPhase, "water")), MDEA_MOLAR_MASS);
+    double loading = totalCo2 / totalMdea;
+    double referencePco2 = AmineKentEisenberg.partialPressureCO2Bara(AmineType.MDEA, 313.15, mdeaMolarity, loading);
+    double pco2 = gasPhase.getComponent("CO2").getx() * gasPhase.getPressure("bara");
+    assertTrue(pco2 > referencePco2 / MDEA_TPFLASH_FACTOR && pco2 < MDEA_TPFLASH_FACTOR * referencePco2,
+        "Electrolyte CPA Statoil TPflash pCO2 should stay within an engineering factor of the "
+            + "Kent-Eisenberg/Jou-Mather-Otto reference, pCO2=" + pco2 + " bara reference=" + referencePco2
+            + " bara loading=" + loading);
+    assertTrue(aqueousPhase.getDensity() > 900.0 && aqueousPhase.getDensity() < MDEA_TPFLASH_DENSITY_MAX_KG_PER_M3,
+        "Aqueous MDEA density should be physically plausible, density=" + aqueousPhase.getDensity());
+    assertTrue(aqueousPhase.getMolarVolume() > 0.0, "Aqueous MDEA molar volume should be finite");
+  }
+
+  /**
+   * Tests CO2-water-MDEA bubble-point pressure using Electrolyte CPA Statoil.
+   */
+  @Test
+  @DisplayName("test CO2-water-MDEA bubble-point pressure")
+  public void testMdeaWaterCo2BubblePointPressureFlash() {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(313.15, 1.0);
+    system.addComponent("CO2", 0.2);
+    system.addComponent("MDEA", 1.0);
+    system.addComponent("water", 9.0);
+    system.chemicalReactionInit();
+    system.createDatabase(true);
+    system.setMixingRule(10);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    assertDoesNotThrow(() -> ops.bubblePointPressureFlash(false));
+    system.init(3);
+
+    PhaseInterface aqueousPhase = getAqueousMdeaPhase(system);
+    PhaseInterface gasPhase = getGasPhase(system);
+    assertTrue(aqueousPhase != null, "Bubble-point flash should retain an aqueous MDEA phase");
+    assertTrue(gasPhase != null, "Bubble-point flash should create an incipient gas phase");
+    assertTrue(componentMoles(aqueousPhase, "MDEA+") > 0.1, "Bubble-point flash should form protonated MDEA");
+    assertTrue(componentMoles(aqueousPhase, "HCO3-") > 0.1, "Bubble-point flash should form bicarbonate");
+
+    double mdeaMolarity = AmineKentEisenberg.amineMolarity(mdeaMassFraction(1.0, 9.0), MDEA_MOLAR_MASS);
+    double referencePco2 = AmineKentEisenberg.partialPressureCO2Bara(AmineType.MDEA, 313.15, mdeaMolarity, 0.2);
+    double bubblePointPressure = system.getPressure("bara");
+    double pco2 = bubblePointPressure * gasPhase.getComponent("CO2").getx();
+    double pco2Ratio = pco2 / referencePco2;
+    assertTrue(pco2Ratio > 1.0 / MDEA_BUBBLE_POINT_FACTOR && pco2Ratio < MDEA_BUBBLE_POINT_FACTOR,
+        "Electrolyte CPA Statoil bubble-point pCO2 should remain in the screening range of the "
+            + "Kent-Eisenberg/Jou-Mather-Otto reference, pCO2=" + pco2 + " bara bubblePointPressure="
+            + bubblePointPressure + " bara reference=" + referencePco2 + " bara ratio=" + pco2Ratio);
+    assertTrue(aqueousPhase.getDensity() > 900.0 && aqueousPhase.getDensity() < 1300.0,
+        "Bubble-point aqueous MDEA density should be physically plausible");
+    assertTrue(aqueousPhase.getMolarVolume() > 0.0, "Bubble-point aqueous MDEA molar volume should be finite");
+  }
+
   // ============================================================================
   // HYDRATE EQUILIBRIUM TESTS WITH ELECTROLYTE CPA
   // ============================================================================
@@ -572,7 +671,7 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     logger.info("Hydrate temp without methanol: " + hydrateTempNoMeOH + "°C");
     logger.info("Hydrate temp with methanol: " + hydrateTempWithMeOH + "°C");
-    System.out.println("Methanol inhibition effect: " + (hydrateTempNoMeOH - hydrateTempWithMeOH) + "°C");
+    logger.info("Methanol inhibition effect: " + (hydrateTempNoMeOH - hydrateTempWithMeOH) + "°C");
   }
 
   /**
@@ -1020,5 +1119,63 @@ public class SystemElectrolyteCPATest extends neqsim.NeqSimTest {
 
     // The ln(aw) should be more negative for combined system (more inhibition)
     assertTrue(lnAwBoth < lnAwSalt && lnAwBoth < lnAwMEG, "Combined system should have more negative ln(a_w)");
+  }
+
+  /**
+   * Finds the aqueous phase containing MDEA.
+   *
+   * @param system the thermodynamic system to inspect
+   * @return the aqueous MDEA phase, or null if no such phase exists
+   */
+  private PhaseInterface getAqueousMdeaPhase(SystemInterface system) {
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      PhaseInterface phase = system.getPhase(phaseIndex);
+      if (phase.getType() == PhaseType.AQUEOUS && phase.hasComponent("water") && phase.hasComponent("MDEA")) {
+        return phase;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Finds the gas phase in a thermodynamic system.
+   *
+   * @param system the thermodynamic system to inspect
+   * @return the gas phase, or null if no gas phase exists
+   */
+  private PhaseInterface getGasPhase(SystemInterface system) {
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      PhaseInterface phase = system.getPhase(phaseIndex);
+      if (phase.getType() == PhaseType.GAS) {
+        return phase;
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Gets the number of moles of a component in a phase.
+   *
+   * @param phase the phase to inspect
+   * @param componentName the component name
+   * @return component moles in the phase, or zero when the component is absent
+   */
+  private double componentMoles(PhaseInterface phase, String componentName) {
+    if (phase == null || !phase.hasComponent(componentName)) {
+      return 0.0;
+    }
+    return phase.getComponent(componentName).getNumberOfMolesInPhase();
+  }
+
+  /**
+   * Calculates the MDEA mass fraction on an MDEA-water basis.
+   *
+   * @param mdeaMoles total MDEA moles
+   * @param waterMoles water moles
+   * @return MDEA mass fraction
+   */
+  private double mdeaMassFraction(double mdeaMoles, double waterMoles) {
+    double mdeaMass = mdeaMoles * MDEA_MOLAR_MASS;
+    return mdeaMass / (mdeaMass + waterMoles * WATER_MOLAR_MASS);
   }
 }
