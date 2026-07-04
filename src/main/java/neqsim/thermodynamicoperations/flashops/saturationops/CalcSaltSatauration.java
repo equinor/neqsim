@@ -53,9 +53,9 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
     double upperSaturationRatio = saturationRatio;
     int bracketIterations = 0;
 
-    if (system instanceof neqsim.thermo.system.SystemPitzer) {
-      SystemInterface baseSystem = system.clone();
+    SystemInterface baseSystem = system.clone();
 
+    if (system instanceof neqsim.thermo.system.SystemPitzer || "FeCO3".equals(saltName)) {
       while (upperSaturationRatio < 1.0 && bracketIterations < 80) {
         upperSaturationRatio = calculateSaturationRatioForAddition(baseSystem, saltData, upperAddition);
         if (upperSaturationRatio < 1.0) {
