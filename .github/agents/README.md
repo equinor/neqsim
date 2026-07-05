@@ -19,6 +19,7 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 | Agent | Command | Purpose |
 |-------|---------|----------|
 | **neqsim.help** | `@neqsim.help <description>` | **Routes requests** to the right specialist agent. Use when unsure which agent to pick. |
+| **paperlab** | `@paperlab <description>` | **Single PaperLab gateway** for papers, books, journal packages, figures, benchmarks, reproducibility, and reviewer responses. |
 | **capability.scout** | `@capability.scout <description>` | **Assesses capabilities** needed for a task, checks NeqSim coverage, identifies gaps, plans implementations, recommends skills. |
 | **literature.scout** | `@literature.scout <topic>` | **Pulls papers, standards, and internal docs** into `step1_scope_and_research/references/`, writes a manifest, summarises into `notes.md`. |
 | **review** | `@review <task folder>` | **Pre-PR quality gate** — runs schema validator, consistency checker, capability/figure-traceability/repo-memory audits. Read-only. |
@@ -26,6 +27,7 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 **Examples:**
 ```
 @neqsim.help I need to size a pipeline and check for hydrates
+@paperlab Create a journal paper from the TPflash benchmark results
 @capability.scout Can NeqSim handle acid gas injection with H2S corrosion and well design?
 @literature.scout wax inhibitor injection for subsea tieback
 @review task_solve/2026-04-26_co2_pipeline_sizing/
@@ -45,6 +47,24 @@ In VS Code Copilot Chat, type `@<agent-name>` followed by your request:
 @solve.task JT cooling for rich gas at 100 bara
 @solve.task field development NPV per NORSOK Z-013
 @solve.process TEG dehydration for 50 MMSCFD wet gas
+```
+
+### PaperLab Writing & Publishing
+
+| Agent | Command | Purpose |
+|-------|---------|---------|
+| **paperlab** | `@paperlab <description>` | Create, revise, verify, render, and package NeqSim scientific papers and books through the PaperLab CLI, skills, and internal `*.paperlab.md` role documents. |
+
+PaperLab keeps many specialized role documents under `neqsim-paperlab/agents/*.paperlab.md`.
+Those files are intentionally not exposed as individual VS Code Chat agents; use `@paperlab`
+as the clean entry point.
+
+**Examples:**
+```
+@paperlab Create a new paper from the Gibbs reactor benchmark
+@paperlab Build the CPA book as HTML and check the release gate
+@paperlab Format this manuscript for Fluid Phase Equilibria
+@paperlab Verify figures, references, notebooks, and claims for this paper
 ```
 
 ---

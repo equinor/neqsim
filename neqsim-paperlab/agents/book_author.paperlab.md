@@ -433,7 +433,7 @@ fees. Use `--dry-run` to see the plan without spending tokens.
 
 The `tools/book_writer.py` orchestrator does not literally invoke the
 `section-writer` subagent — it inlines the same prompt directly into
-each LLM call for efficiency. The `agents/section_writer.agent.md` file
+each LLM call for efficiency. The `agents/section_writer.paperlab.md` file
 is provided for **interactive** use (Copilot / Claude Code agent mode)
 when a human wants to draft or rewrite a single section.
 

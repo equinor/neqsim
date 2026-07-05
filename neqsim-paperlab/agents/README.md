@@ -16,150 +16,150 @@ For the core philosophy ("papers improve NeqSim"), see
 What do you want to do?
 |
 +-- Find a paper opportunity in the NeqSim codebase
-|       -> research-scout                 (research_scout.agent.md)
+|       -> research-scout                 (research_scout.paperlab.md)
 |
 +-- Mine code, books, and papers for a ranked publication roadmap
-|       -> paper-opportunity-miner        (paper_opportunity_miner.agent.md)
+|       -> paper-opportunity-miner        (paper_opportunity_miner.paperlab.md)
 |
 +-- Plan a new paper / set up papers/<slug>/
-|       -> paper-planner                  (planner.agent.md)
+|       -> paper-planner                  (planner.paperlab.md)
 |
 +-- Turn research questions into falsifiable benchmark matrices
-|       -> hypothesis-benchmark-compiler  (hypothesis_benchmark_compiler.agent.md)
+|       -> hypothesis-benchmark-compiler  (hypothesis_benchmark_compiler.paperlab.md)
 |
 +-- Survey prior art for a paper / produce literature_map.md
-|       -> literature-reviewer            (literature_reviewer.agent.md)
+|       -> literature-reviewer            (literature_reviewer.paperlab.md)
 |
 +-- Curate validation datasets and reference data
-|       -> dataset-and-reference-curator  (dataset_and_reference_curator.agent.md)
+|       -> dataset-and-reference-curator  (dataset_and_reference_curator.paperlab.md)
 |
 +-- Propose Java code changes in NeqSim that a paper will need
-|       -> algorithm-engineer             (algorithm_engineer.agent.md)
+|       -> algorithm-engineer             (algorithm_engineer.paperlab.md)
 |
 +-- Verify equations and derivations in papers or books
 |       -> mathematical-derivation-verifier
-|                                          (mathematical_derivation_verifier.agent.md)
+|                                          (mathematical_derivation_verifier.paperlab.md)
 |
 +-- Run experiments / produce results.json
-|       -> benchmark-runner               (benchmark.agent.md)
+|       -> benchmark-runner               (benchmark.paperlab.md)
 |
 +-- Decide whether claimed improvements are statistically real
-|       -> validation-agent               (validation.agent.md)
+|       -> validation-agent               (validation.paperlab.md)
 |
 +-- Generate publication-quality figures
-|       -> figure-generator               (figure_generator.agent.md)
+|       -> figure-generator               (figure_generator.paperlab.md)
 |
 +-- Draft a full paper.md from plan + results + approved claims
-|       -> scientific-writer              (scientific_writer.agent.md)
+|       -> scientific-writer              (scientific_writer.paperlab.md)
 |
 +-- Draft one section inside a long-form orchestration
-|       -> section-writer                 (section_writer.agent.md)
+|       -> section-writer                 (section_writer.paperlab.md)
 |
 +-- Frame abstract / intro / discussion as a story
-|       -> narrative-framer               (narrative_framer.agent.md)
+|       -> narrative-framer               (narrative_framer.paperlab.md)
 |
 +-- Internal hostile review of a complete paper draft
-|       -> adversarial-reviewer           (adversarial_reviewer.agent.md)
+|       -> adversarial-reviewer           (adversarial_reviewer.paperlab.md)
 |
 +-- Adapt a finished paper to a journal format / cover letter
-|       -> journal-formatter              (journal_formatter.agent.md)
+|       -> journal-formatter              (journal_formatter.paperlab.md)
 |
 +-- Select and position a paper for the best target journal
-|       -> journal-fit-strategist         (journal_fit_strategist.agent.md)
+|       -> journal-fit-strategist         (journal_fit_strategist.paperlab.md)
 |
 +-- Respond to peer-review comments
-|       -> reviewer-response              (reviewer_response.agent.md)
+|       -> reviewer-response              (reviewer_response.paperlab.md)
 |
 +-- Simulate a multi-reviewer panel before submission
-|       -> reviewer-simulator-panel       (reviewer_simulator_panel.agent.md)
+|       -> reviewer-simulator-panel       (reviewer_simulator_panel.paperlab.md)
 |
 +-- Build a reviewer-ready reproducibility package
-|       -> replication-package-engineer   (replication_package_engineer.agent.md)
+|       -> replication-package-engineer   (replication_package_engineer.paperlab.md)
 |
 +-- Track calls for papers, conferences, and special issues
-|       -> grant-and-special-issue-scout  (grant_and_special_issue_scout.agent.md)
+|       -> grant-and-special-issue-scout  (grant_and_special_issue_scout.paperlab.md)
 |
 +-- Create, write, build, or render a book
-|       -> book-author                    (book_author.agent.md)
+|       -> book-author                    (book_author.paperlab.md)
 |
 +-- Convert a finished paper into a book chapter or teaching section
-|       -> paper-to-book-synthesizer      (paper_to_book_synthesizer.agent.md)
+|       -> paper-to-book-synthesizer      (paper_to_book_synthesizer.paperlab.md)
 |
 +-- Find paper candidates inside mature books
-|       -> book-to-paper-miner            (book_to_paper_miner.agent.md)
+|       -> book-to-paper-miner            (book_to_paper_miner.paperlab.md)
 |
 +-- Review a book before release
-|       -> book-adversarial-reviewer      (book_adversarial_reviewer.agent.md)
+|       -> book-adversarial-reviewer      (book_adversarial_reviewer.paperlab.md)
 |
 +-- Reduce repetition in a large book
-|       -> book-conciseness-editor        (book_conciseness_editor.agent.md)
+|       -> book-conciseness-editor        (book_conciseness_editor.paperlab.md)
 |
 +-- Improve chapter flow and figure discussions
-|       -> chapter-synthesis-editor       (chapter_synthesis_editor.agent.md)
+|       -> chapter-synthesis-editor       (chapter_synthesis_editor.paperlab.md)
 |
 +-- Strengthen figure context
-|       -> figure-context-editor          (figure_context_editor.agent.md)
+|       -> figure-context-editor          (figure_context_editor.paperlab.md)
 |
 +-- Map lectures, exercises, and source material to chapters
-|       -> lecture-coverage-scout         (lecture_coverage_scout.agent.md)
+|       -> lecture-coverage-scout         (lecture_coverage_scout.paperlab.md)
 |
 +-- Align book material with exams and assessments
-|       -> exam-alignment-reviewer        (exam_alignment_reviewer.agent.md)
+|       -> exam-alignment-reviewer        (exam_alignment_reviewer.paperlab.md)
 |
 +-- Verify notebooks, generated figures, and result manifests
-|       -> notebook-verifier              (notebook_verifier.agent.md)
+|       -> notebook-verifier              (notebook_verifier.paperlab.md)
 |
 +-- Maintain sources and citations
-|       -> source-librarian               (source_librarian.agent.md)
+|       -> source-librarian               (source_librarian.paperlab.md)
 |
 +-- Read and describe technical figures
-|       -> technical-figure-reader        (technical_figure_reader.agent.md)
+|       -> technical-figure-reader        (technical_figure_reader.paperlab.md)
 |
 +-- Design whole-book curriculum flow
-|       -> curriculum-architect           (curriculum_architect.agent.md)
+|       -> curriculum-architect           (curriculum_architect.paperlab.md)
 |
 +-- Verify learning-objective achievement
-|       -> learning-objective-verifier    (learning_objective_verifier.agent.md)
+|       -> learning-objective-verifier    (learning_objective_verifier.paperlab.md)
 |
 +-- Audit equations, units, and notation
-|       -> equation-consistency-auditor   (equation_consistency_auditor.agent.md)
+|       -> equation-consistency-auditor   (equation_consistency_auditor.paperlab.md)
 |
 +-- Verify NeqSim API references in books
-|       -> neqsim-api-verifier            (neqsim_api_verifier.agent.md)
+|       -> neqsim-api-verifier            (neqsim_api_verifier.paperlab.md)
 |
 +-- Monitor notebook regression baselines
-|       -> notebook-regression-monitor    (notebook_regression_monitor.agent.md)
+|       -> notebook-regression-monitor    (notebook_regression_monitor.paperlab.md)
 |
 +-- Improve exercise difficulty progression
-|       -> exercise-progression-builder   (exercise_progression_builder.agent.md)
+|       -> exercise-progression-builder   (exercise_progression_builder.paperlab.md)
 |
 +-- Improve cross-chapter concept recurrence and deepening
-|       -> concept-spiral-editor          (concept_spiral_editor.agent.md)
+|       -> concept-spiral-editor          (concept_spiral_editor.paperlab.md)
 |
 +-- Generate polished worked examples from equations and notebooks
-|       -> worked-example-factory         (worked_example_factory.agent.md)
+|       -> worked-example-factory         (worked_example_factory.paperlab.md)
 |
 +-- Curate standards traceability
-|       -> standards-traceability-curator (standards_traceability_curator.agent.md)
+|       -> standards-traceability-curator (standards_traceability_curator.paperlab.md)
 |
 +-- Keep recurring case threads consistent
-|       -> case-thread-continuity-editor  (case_thread_continuity_editor.agent.md)
+|       -> case-thread-continuity-editor  (case_thread_continuity_editor.paperlab.md)
 |
 +-- Audit figure accessibility and style
 |       -> figure-accessibility-and-style-reviewer
-|                                          (figure_accessibility_and_style_reviewer.agent.md)
+|                                          (figure_accessibility_and_style_reviewer.paperlab.md)
 |
 +-- Turn notebooks into interactive HTML labs
-|       -> interactive-lab-designer       (interactive_lab_designer.agent.md)
+|       -> interactive-lab-designer       (interactive_lab_designer.paperlab.md)
 |
 +-- Score chapter readiness across audits
-|       -> chapter-readiness-scorer       (chapter_readiness_scorer.agent.md)
+|       -> chapter-readiness-scorer       (chapter_readiness_scorer.paperlab.md)
 |
 +-- Build instructor resources from a PaperLab book
-|       -> instructor-resource-builder    (instructor_resource_builder.agent.md)
+|       -> instructor-resource-builder    (instructor_resource_builder.paperlab.md)
 |
 `-- Run the full book release gate
-        -> book-release-orchestrator      (book_release_orchestrator.agent.md)
+        -> book-release-orchestrator      (book_release_orchestrator.paperlab.md)
 ```
 
 ---
@@ -316,53 +316,53 @@ the final quality gates and render workflow for a release candidate.
 ## Files in This Directory
 
 ```text
-adversarial_reviewer.agent.md                 - hostile paper critique
-algorithm_engineer.agent.md                   - propose Java-level changes
-benchmark.agent.md                            - run experiments and produce results.json
-book_to_paper_miner.agent.md                  - extract paper candidates from books
-book_adversarial_reviewer.agent.md            - release-readiness critique for books
-book_author.agent.md                          - full book lifecycle
-book_conciseness_editor.agent.md              - repetition and merge-candidate review
-book_release_orchestrator.agent.md            - full book release gate
-case_thread_continuity_editor.agent.md        - recurring case consistency
-chapter_readiness_scorer.agent.md             - chapter health dashboard
-chapter_synthesis_editor.agent.md             - chapter narrative and discussion synthesis
-concept_spiral_editor.agent.md                - cross-chapter concept deepening
-curriculum_architect.agent.md                 - prerequisite graph and curriculum flow
-dataset_and_reference_curator.agent.md        - validation dataset and source curation
-equation_consistency_auditor.agent.md         - equations, units, and notation audit
-exam_alignment_reviewer.agent.md              - course/exam alignment
-exercise_progression_builder.agent.md         - exercise ramp and capstone proposals
-figure_accessibility_and_style_reviewer.agent.md - figure readability and accessibility
-figure_context_editor.agent.md                - figure context and discussion quality
-figure_generator.agent.md                     - publication figures
-grant_and_special_issue_scout.agent.md        - publication calendar and call matching
-hypothesis_benchmark_compiler.agent.md        - falsifiable benchmark matrices
-instructor_resource_builder.agent.md          - teaching resource packs
-interactive_lab_designer.agent.md             - interactive HTML lab planning
-journal_formatter.agent.md                    - journal submission package
-journal_fit_strategist.agent.md               - journal choice and positioning
-learning_objective_verifier.agent.md          - objective achievement matrix
-lecture_coverage_scout.agent.md               - source material coverage mapping
-literature_reviewer.agent.md                  - prior-art review
-narrative_framer.agent.md                     - abstract, intro, and discussion framing
-neqsim_api_verifier.agent.md                  - NeqSim API accuracy in books
-notebook_regression_monitor.agent.md          - notebook baseline and drift monitoring
-notebook_verifier.agent.md                    - notebook and figure verification
-paper_opportunity_miner.agent.md              - publication opportunity roadmap
-paper_to_book_synthesizer.agent.md            - convert papers into book chapters
-planner.agent.md                              - research planning
-replication_package_engineer.agent.md         - reproducibility capsules
-research_scout.agent.md                       - research topic discovery
-reviewer_response.agent.md                    - peer-review response
-reviewer_simulator_panel.agent.md             - simulated multi-reviewer critique
-scientific_writer.agent.md                    - full manuscript drafting
-section_writer.agent.md                       - single-section drafting
-source_librarian.agent.md                     - source and citation hygiene
-standards_traceability_curator.agent.md       - standards evidence mapping
-technical_figure_reader.agent.md              - technical figure interpretation
-validation.agent.md                           - statistical claim gating
-worked_example_factory.agent.md               - worked examples from equations and notebooks
+adversarial_reviewer.paperlab.md                 - hostile paper critique
+algorithm_engineer.paperlab.md                   - propose Java-level changes
+benchmark.paperlab.md                            - run experiments and produce results.json
+book_to_paper_miner.paperlab.md                  - extract paper candidates from books
+book_adversarial_reviewer.paperlab.md            - release-readiness critique for books
+book_author.paperlab.md                          - full book lifecycle
+book_conciseness_editor.paperlab.md              - repetition and merge-candidate review
+book_release_orchestrator.paperlab.md            - full book release gate
+case_thread_continuity_editor.paperlab.md        - recurring case consistency
+chapter_readiness_scorer.paperlab.md             - chapter health dashboard
+chapter_synthesis_editor.paperlab.md             - chapter narrative and discussion synthesis
+concept_spiral_editor.paperlab.md                - cross-chapter concept deepening
+curriculum_architect.paperlab.md                 - prerequisite graph and curriculum flow
+dataset_and_reference_curator.paperlab.md        - validation dataset and source curation
+equation_consistency_auditor.paperlab.md         - equations, units, and notation audit
+exam_alignment_reviewer.paperlab.md              - course/exam alignment
+exercise_progression_builder.paperlab.md         - exercise ramp and capstone proposals
+figure_accessibility_and_style_reviewer.paperlab.md - figure readability and accessibility
+figure_context_editor.paperlab.md                - figure context and discussion quality
+figure_generator.paperlab.md                     - publication figures
+grant_and_special_issue_scout.paperlab.md        - publication calendar and call matching
+hypothesis_benchmark_compiler.paperlab.md        - falsifiable benchmark matrices
+instructor_resource_builder.paperlab.md          - teaching resource packs
+interactive_lab_designer.paperlab.md             - interactive HTML lab planning
+journal_formatter.paperlab.md                    - journal submission package
+journal_fit_strategist.paperlab.md               - journal choice and positioning
+learning_objective_verifier.paperlab.md          - objective achievement matrix
+lecture_coverage_scout.paperlab.md               - source material coverage mapping
+literature_reviewer.paperlab.md                  - prior-art review
+narrative_framer.paperlab.md                     - abstract, intro, and discussion framing
+neqsim_api_verifier.paperlab.md                  - NeqSim API accuracy in books
+notebook_regression_monitor.paperlab.md          - notebook baseline and drift monitoring
+notebook_verifier.paperlab.md                    - notebook and figure verification
+paper_opportunity_miner.paperlab.md              - publication opportunity roadmap
+paper_to_book_synthesizer.paperlab.md            - convert papers into book chapters
+planner.paperlab.md                              - research planning
+replication_package_engineer.paperlab.md         - reproducibility capsules
+research_scout.paperlab.md                       - research topic discovery
+reviewer_response.paperlab.md                    - peer-review response
+reviewer_simulator_panel.paperlab.md             - simulated multi-reviewer critique
+scientific_writer.paperlab.md                    - full manuscript drafting
+section_writer.paperlab.md                       - single-section drafting
+source_librarian.paperlab.md                     - source and citation hygiene
+standards_traceability_curator.paperlab.md       - standards evidence mapping
+technical_figure_reader.paperlab.md              - technical figure interpretation
+validation.paperlab.md                           - statistical claim gating
+worked_example_factory.paperlab.md               - worked examples from equations and notebooks
 ```
 
 Each file uses standard YAML front matter (`name`, `description`, `tools`)

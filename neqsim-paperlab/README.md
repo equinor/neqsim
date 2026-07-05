@@ -184,7 +184,7 @@ and reuse the same quality infrastructure as papers.
 
 > **For full book creation guidance**, see the `book_creation` skill at
 > `skills/book_creation/SKILL.md` and the `book_author` agent at
-> `agents/book_author.agent.md`.
+> `agents/book_author.paperlab.md`.
 
 ```bash
 # Create a new book project (Springer, Wiley, CRC, or self-published)
@@ -257,18 +257,18 @@ neqsim-paperlab/
 │   ├── aiche.yaml                    # Wiley / custom
 │   └── spe.yaml                      # SPE / custom
 │   # Run `python paperflow.py list-journals` to print the --journal names
-├── agents/                       # Agent definitions (VS Code Copilot)
-│   ├── research_scout.agent.md
-│   ├── planner.agent.md
-│   ├── literature_reviewer.agent.md
-│   ├── algorithm_engineer.agent.md
-│   ├── benchmark.agent.md
-│   ├── validation.agent.md
-│   ├── scientific_writer.agent.md
-│   ├── figure_generator.agent.md
-│   ├── journal_formatter.agent.md
-│   ├── reviewer_response.agent.md
-│   └── book_author.agent.md         # Book creation and management
+├── agents/                       # PaperLab internal role documents (not exposed as individual VS Code Chat agents)
+│   ├── research_scout.paperlab.md
+│   ├── planner.paperlab.md
+│   ├── literature_reviewer.paperlab.md
+│   ├── algorithm_engineer.paperlab.md
+│   ├── benchmark.paperlab.md
+│   ├── validation.paperlab.md
+│   ├── scientific_writer.paperlab.md
+│   ├── figure_generator.paperlab.md
+│   ├── journal_formatter.paperlab.md
+│   ├── reviewer_response.paperlab.md
+│   └── book_author.paperlab.md         # Book creation and management
 ├── skills/                       # Reusable scientific procedures
 │   ├── book_creation/SKILL.md       # Book lifecycle (setup → render)
 │   ├── design_flash_benchmark/SKILL.md
