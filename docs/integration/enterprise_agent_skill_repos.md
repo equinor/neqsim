@@ -110,7 +110,7 @@ The shared fields in `AGENT.md` front matter and `agent.yaml` must match exactly
 
 ## Step 3: Configure Installation and Discovery
 
-In the Engineering Harness workspace, create or update `plugins/sources.yaml` with the company repositories. Use `local_path` for local clones during development, or omit it to read from GitHub using a token.
+In the Engineering Harness workspace, create or update `plugins/sources.yaml` with the company repositories. Use `local_path` for local clones during development. For private GitHub repositories without `local_path`, prefer an authenticated GitHub CLI or Git Credential Manager session created through browser SSO; environment tokens are a CI/non-interactive fallback.
 
 ```yaml
 sources:
@@ -147,14 +147,15 @@ Then point the harness at that source file and synchronize:
 
 ```powershell
 $env:EH_SOURCES_FILE = "C:\path\to\plugins\sources.yaml"
-$env:GITHUB_TOKEN = "<token-with-read-access>"   # only needed for private GitHub reads
+# Optional fallback for CI/non-interactive private GitHub reads:
+# $env:GITHUB_TOKEN = "<token-with-read-access>"
 engineering-harness plugins list
 engineering-harness plugins sync
 engineering-harness list skills
 engineering-harness list agents
 ```
 
-For local development with `local_path`, no GitHub token is required. For private GitHub repositories, use `GITHUB_TOKEN` or `GH_TOKEN` with read access. The token is read at request time and must not be committed to `.env`, docs, examples, or test fixtures.
+For local development with `local_path`, no GitHub token is required. For private GitHub repositories, run the normal browser SSO flow first, for example `gh auth login --web`, or use Git Credential Manager through your standard `git clone` flow. `GITHUB_TOKEN` or `GH_TOKEN` may be used only where interactive SSO is unavailable, such as CI or service contexts. Tokens are read at request time and must not be committed to `.env`, docs, examples, or test fixtures.
 
 ## Step 4: Choose Metadata-Only or Full-Content Install
 

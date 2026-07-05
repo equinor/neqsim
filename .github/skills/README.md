@@ -3,6 +3,12 @@
 Skills are reusable knowledge packages that agents load automatically when relevant.
 Each skill folder contains a `SKILL.md` file with verified patterns, rules, and domain knowledge.
 
+This folder is the **VS Code workspace discovery layer**. Core NeqSim skills live here directly.
+Installed community/private skills are canonical under `~/.neqsim/skills/` and should be copied
+here only through `neqsim skill export --target vscode`. PaperLab keeps its full canonical library
+under `neqsim-paperlab/skills/`; only the `@paperlab` gateway's public skills are exported here by
+default.
+
 > **Full documentation:** See the [Skills and Agents Guide](../../docs/integration/skills_guide.md)
 > for the complete walkthrough — creating core, community, and private skills,
 > installing community/private agents, the SKILL.md and agent.yaml formats,
@@ -34,6 +40,10 @@ Two complementary mechanisms exist:
 CI (`.github/workflows/skills_agents_lint.yml`) verifies that every skill has
 valid YAML front-matter and that every entry in `skill-index.json` points to
 a skill that exists.
+
+For tool-neutral coding agents, use `neqsim skill export <name> --target generic`
+and point the tool at `~/.neqsim/export/generic/manifest.json` or the generated
+`~/.neqsim/export/generic/skills/` folders.
 
 ---
 

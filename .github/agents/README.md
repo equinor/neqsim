@@ -59,6 +59,10 @@ PaperLab keeps many specialized role documents under `neqsim-paperlab/agents/*.p
 Those files are intentionally not exposed as individual VS Code Chat agents; use `@paperlab`
 as the clean entry point.
 
+To refresh the VS Code export, run `neqsim paperlab install --vscode`. Power users who need
+the legacy direct specialist-agent surface can run `neqsim paperlab install --vscode --include-internal`;
+the canonical sources still remain under `neqsim-paperlab/`.
+
 **Examples:**
 ```
 @paperlab Create a new paper from the Gibbs reactor benchmark
