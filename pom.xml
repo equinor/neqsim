@@ -450,7 +450,7 @@
 							<p2Mirrors>
 								<p2Mirror>
 									<prefix>https://download.eclipse.org/eclipse/updates/4.35/</prefix>
-									<url>https://archive.eclipse.org/eclipse/updates/4.35/</url>
+									<url>https://ftp.fau.de/eclipse/eclipse/updates/4.35/</url>
 								</p2Mirror>
 							</p2Mirrors>
 						</eclipse>
