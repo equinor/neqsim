@@ -285,15 +285,18 @@ def _add_catalog_entries(agents, data, source):
 
     for repository in (data.get("repositories") or []):
         try:
-            if isinstance(repository, dict) and repository.get("source") == "git":
-                discovered = _discover_git_repository_agents(repository)
+            repository_entry = dict(repository) if isinstance(repository, dict) else repository
+            if isinstance(repository_entry, dict):
+                repository_entry["_catalog_source"] = source
+            if isinstance(repository_entry, dict) and repository_entry.get("source") == "git":
+                discovered = _discover_git_repository_agents(repository_entry)
             else:
-                discovered = _discover_github_repository_agents(repository)
+                discovered = _discover_github_repository_agents(repository_entry)
             for agent in discovered:
                 _append_agent(agents, agent, source)
         except Exception as exc:
-            repo = repository.get("repo", "?") if isinstance(
-                repository, dict) else "?"
+            repo = repository_entry.get("repo", "?") if isinstance(
+                repository_entry, dict) else "?"
             print("  [!!] Could not discover agents from {repo}: {exc}".format(
                 repo=repo, exc=exc
             ), file=sys.stderr)
@@ -562,6 +565,19 @@ def _agent_globs(repository):
     return _normalize_list(patterns)
 
 
+def _use_local_repository_checkout(repository):
+    """Return true when a catalog entry intentionally opts into local private discovery."""
+    trust_level = str(repository.get("trust_level", "")).strip().lower()
+    tags = set(tag.lower() for tag in _normalize_list(repository.get("tags")))
+    source = str(repository.get("_catalog_source", "")).strip().lower()
+    private_markers = set(["private", "internal", "enterprise"])
+    return (
+        source == "private"
+        or trust_level in set(["private", "internal"])
+        or bool(tags.intersection(private_markers))
+    )
+
+
 def _normalize_discovered_agent(agent, repository, default_branch=None, content=""):
     """Normalize an agent discovered from a repository catalog or scan."""
     normalized = dict(agent)
@@ -700,6 +716,81 @@ def _discover_agents_by_scanning_repo(repository, branch):
     return discovered
 
 
+def _discover_agents_from_local_repository(repository, repo_root):
+    """Discover agents from a checked-out sibling repository."""
+    catalog_path = repository.get("catalog_path", "community-agents.yaml")
+    catalog_candidates = []
+    if catalog_path:
+        catalog_candidates.append(catalog_path)
+
+    for candidate in catalog_candidates:
+        path = repo_root / candidate
+        if not path.is_file():
+            continue
+        data = _load_catalog_file(path)
+        discovered = []
+        for agent in (data.get("agents") or []):
+            if not isinstance(agent, dict) or not agent.get("name"):
+                continue
+            normalized = _normalize_discovered_agent(agent, repository)
+            local_path = repo_root / normalized.get("path", "AGENT.md")
+            normalized["source"] = "local"
+            normalized["path"] = str(local_path)
+            folder = normalized.get("folder")
+            if folder:
+                normalized["folder"] = str(repo_root / folder)
+            discovered.append(normalized)
+        if discovered:
+            return discovered
+
+    paths = [
+        path.relative_to(repo_root).as_posix()
+        for path in repo_root.rglob("*")
+        if path.is_file()
+    ]
+    patterns = _agent_globs(repository)
+    discovered = []
+    for path in sorted(paths):
+        if not any(fnmatch.fnmatch(path, pattern) for pattern in patterns):
+            continue
+        if not (path.endswith(".agent.md") or path.endswith("AGENT.md")):
+            continue
+        file_path = repo_root / path
+        content = file_path.read_text(encoding="utf-8", errors="replace")
+        frontmatter = install_skill._extract_frontmatter(content)
+        yaml_path = _sibling_agent_yaml_path(path, paths)
+        agent_yaml = {}
+        if yaml_path:
+            agent_yaml = _parse_remote_agent_yaml(
+                (repo_root / yaml_path).read_text(encoding="utf-8", errors="replace"))
+        metadata = dict(frontmatter)
+        metadata.update(agent_yaml)
+        agent_id = frontmatter.get("agent_id") or frontmatter.get(
+            "id") or agent_yaml.get("name") or _agent_id_from_path(path)
+        display_name = metadata.get("display_name") or frontmatter.get(
+            "name") or agent_yaml.get("display_name") or agent_yaml.get("name") or agent_id
+        agent = dict(metadata)
+        agent.update({
+            "name": agent_id,
+            "display_name": display_name,
+            "version": metadata.get("version", repository.get("version", "")),
+            "description": metadata.get(
+                "description", "Local agent from {root}/{path}".format(
+                    root=repo_root, path=path)
+            ),
+            "path": str(file_path),
+            "source": "local",
+            "required_skills": _extract_required_skills(content, metadata),
+        })
+        folder = _agent_folder_path(path, paths, yaml_path)
+        if folder:
+            agent["folder"] = str(repo_root / folder)
+        if yaml_path:
+            agent["agent_yaml_path"] = str(repo_root / yaml_path)
+        discovered.append(_normalize_discovered_agent(agent, repository, content=content))
+    return discovered
+
+
 def _discover_github_repository_agents(repository):
     """Discover every agent available from an online GitHub repository."""
     if not isinstance(repository, dict):
@@ -709,6 +800,12 @@ def _discover_github_repository_agents(repository):
     repo = repository.get("repo", "")
     if not repo:
         return []
+    local_root = (install_skill._local_repository_root(repository)
+                  if _use_local_repository_checkout(repository) else None)
+    if local_root is not None:
+        local_agents = _discover_agents_from_local_repository(repository, local_root)
+        if local_agents:
+            return local_agents
     branch = repository.get(
         "branch") or install_skill._get_default_github_branch(
             repo, auth=install_skill._github_entry_auth(repository))
@@ -881,7 +978,9 @@ def export_agent_to_vscode(name, main_file, vscode_dir):
     """Copy an installed agent's main definition into a VS Code agents dir.
 
     VS Code discovers agents from *.agent.md files, so the main definition is
-    copied and renamed to <name>.agent.md.
+    copied, renamed to <name>.agent.md, and given a matching frontmatter name
+    so community and private agents with similar source names do not collide in
+    VS Code's agent picker.
 
     @param name the agent name (used for the destination filename)
     @param main_file the installed agent's main markdown definition
@@ -891,8 +990,39 @@ def export_agent_to_vscode(name, main_file, vscode_dir):
     vscode_dir = Path(vscode_dir)
     vscode_dir.mkdir(parents=True, exist_ok=True)
     dest = vscode_dir / "{name}.agent.md".format(name=name)
-    shutil.copy2(str(main_file), str(dest))
+    content = Path(main_file).read_text(encoding="utf-8")
+    dest.write_text(_with_vscode_agent_name(content, name), encoding="utf-8")
     return dest
+
+
+def _with_vscode_agent_name(content, name):
+    """Return agent markdown with frontmatter name set to the exported name."""
+    if not content.startswith("---"):
+        return "---\nname: {name}\n---\n{content}".format(name=name, content=content)
+    lines = content.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return content
+    end_index = None
+    for index in range(1, len(lines)):
+        if lines[index].strip() == "---":
+            end_index = index
+            break
+    if end_index is None:
+        return content
+    replaced = False
+    frontmatter = []
+    for line in lines[1:end_index]:
+        if line.lstrip().startswith("name:"):
+            indent = line[:len(line) - len(line.lstrip())]
+            frontmatter.append("{indent}name: {name}".format(indent=indent, name=name))
+            replaced = True
+        else:
+            frontmatter.append(line)
+    if not replaced:
+        frontmatter.insert(0, "name: {name}".format(name=name))
+    rewritten = ["---"] + frontmatter + lines[end_index:]
+    trailing_newline = "\n" if content.endswith("\n") else ""
+    return "\n".join(rewritten) + trailing_newline
 
 
 def resolve_generic_agents_dir(explicit_dir=None):

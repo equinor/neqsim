@@ -1003,6 +1003,21 @@ class AgentVsCodeExportTest(unittest.TestCase):
             self.assertTrue(dest.exists())
             self.assertIn("# Demo", dest.read_text(encoding="utf-8"))
 
+    def test_export_agent_to_vscode_rewrites_frontmatter_name(self):
+        """VS Code exports should use the unique catalog name in frontmatter."""
+        with tempfile.TemporaryDirectory() as tmp:
+            main_file = Path(tmp) / "AGENT.md"
+            main_file.write_text(
+                "---\nname: pvt-agent\ndescription: x\n---\n# Demo", encoding="utf-8")
+            vscode_dir = Path(tmp) / "prompts"
+
+            dest = install_agent.export_agent_to_vscode(
+                "enterprise-pvt-agent", main_file, vscode_dir)
+
+            text = dest.read_text(encoding="utf-8")
+            self.assertIn("name: enterprise-pvt-agent", text)
+            self.assertNotIn("name: pvt-agent", text)
+
     def test_cmd_install_with_vscode_exports_and_remove_cleans_up(self):
         """A --vscode install exports the agent and remove deletes the copy."""
         with tempfile.TemporaryDirectory() as tmp:
