@@ -1350,6 +1350,15 @@ def _ensure_required_skill_exports(required_skills, install_args):
             except Exception:
                 resolved_name = ""
         if not resolved_name:
+            available_core = _available_skill_names()
+            resolved_name = _resolve_skill_name(skill_name, available_core)
+            core_skill_file = CORE_SKILLS_DIR / resolved_name / "SKILL.md" if resolved_name else None
+            if core_skill_file is not None and core_skill_file.exists():
+                skill_manifest[resolved_name] = {
+                    "path": str(core_skill_file),
+                    "source": "core",
+                }
+        if not resolved_name:
             unresolved.append(skill_name)
             continue
 
@@ -1787,6 +1796,7 @@ def _install_agent_record(agent, args, manifest):
     @return True if the agent is installed (or already present), False on failure
     """
     name = agent.get("name", "")
+    previous_entry = dict(manifest.get(name, {}))
     if name in manifest and not args.force:
         print("\n  Agent '{name}' already installed at {path}".format(
             name=name, path=manifest[name]["path"]
@@ -1907,6 +1917,9 @@ def _install_agent_record(agent, args, manifest):
             "installed_at": datetime.now(timezone.utc).isoformat(),
             "content_sha256": install_skill._sha256_tree(dest_dir),
         }
+        for key in ("exports", "vscode_path", "generic_path"):
+            if key in previous_entry:
+                manifest[name][key] = previous_entry[key]
         save_manifest(manifest)
 
         print("  [OK] Installed to: {path}".format(path=dest_dir))
