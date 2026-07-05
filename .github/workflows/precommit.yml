@@ -48,6 +48,7 @@ jobs:
             if ! grep -q "Failed to provision P2 dependencies" pre-commit.log || [ "$attempt" -eq 3 ]; then
               exit "$status"
             fi
+            rm -rf ~/.m2/repository/dev/equo/p2-data
             echo "Spotless P2 provisioning failed on attempt $attempt; retrying..."
             sleep $((attempt * 20))
           done
