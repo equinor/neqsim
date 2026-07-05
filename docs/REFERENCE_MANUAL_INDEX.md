@@ -895,6 +895,9 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | **Agentic Workflow Examples** | [docs/integration/ai_workflow_examples.md](integration/ai_workflow_examples) | **NEW: Step-by-step walkthroughs of agent-driven engineering workflows** |
 | **Agentic Java Classes** | [docs/integration/ai_agentic_classes.md](integration/ai_agentic_classes) | **TaskResultValidator, SimulationQualityGate, AgentSession, AgentFeedbackCollector — Java infrastructure for AI-driven simulation QA** |
 | **Skills and Agents Guide** | [docs/integration/skills_guide.md](integration/skills_guide) | **Creating, using, and managing skills and installable agents — core, community, and private extension workflows** |
+| **Agent and Skill Catalog Schema** | [docs/integration/agent_skill_catalog_schema.md](integration/agent_skill_catalog_schema) | **Shared schema, trust namespace, and alias policy for agent and skill catalogs** |
+| **Agent to Skill Map** | [docs/integration/agent_skill_map.md](integration/agent_skill_map) | **Generated cross-catalog map of community and enterprise agents and their required skill dependencies** |
+| **Enterprise Agent and Skill Repositories** | [docs/integration/enterprise_agent_skill_repos.md](integration/enterprise_agent_skill_repos) | **How to set up private company NeqSim enterprise agent and skill repositories and configure Engineering Harness discovery/install** |
 
 ### Chapter 43: Sustainability & Emissions
 

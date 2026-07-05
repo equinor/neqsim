@@ -94,7 +94,12 @@ examples/notebooks/      28+ Jupyter notebooks
 docs/                    350+ markdown files, Jekyll site
 .github/agents/          30+ Copilot Chat agents (router, thermo, process, field development, test, PVT, reaction engineering, control systems, emissions, ...)
 .github/skills/          45+ reusable knowledge packages (API, process-modeling, Java8, notebooks, field-development, field-economics, subsea-and-wells, eos-regression, reaction-engineering, dynamic-simulation, distillation-design, electrolyte-systems, ...)
-community-skills.yaml    Community skill catalog — external skills installable via `neqsim skill install`
+community-skills.yaml    Public community skill catalog — external `neqsim-*` skills installable via `neqsim skill install`
+community-agents.yaml    Public community agent catalog — agent workflows with `required_skills` dependencies
+docs/integration/skills_guide.md
+                         Main guide for where to put core, community, enterprise, and local private skills/agents
+docs/integration/enterprise_agent_skill_repos.md
+                         How a company sets up private enterprise skills/agents repos and Engineering Harness discovery
 devtools/                Unified CLI (`neqsim` command), Jupyter dev setup, task/skill tools, UniSim reader
 ```
 

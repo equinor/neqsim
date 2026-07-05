@@ -14,6 +14,7 @@ description: "Comprehensive guide to skills and agents in NeqSim's agentic engin
 > | **Install a community skill** | `neqsim skill install neqsim-topic` → copy to VS Code prompts → use with `#neqsim-topic` |
 > | **Install a community agent** | `neqsim agent install agent-name` → point your AI tool at `~/.neqsim/agents/agent-name/` |
 > | **Publish my skill to the community** | Host SKILL.md in a GitHub repo → `neqsim skill publish user/repo` → PR gets reviewed |
+> | **Set up company enterprise repos** | Create private enterprise skills + agents repos → publish `enterprise-skills.yaml` and `enterprise-agents.yaml` → configure `EH_SOURCES_FILE` for the Engineering Harness |
 > | **Create a private/local skill** | Write a `.md` file in `%APPDATA%\Code\User\prompts\` → use with `#filename` in Chat |
 > | **Share private skills with my team** | `neqsim skill private-init` → edit `~/.neqsim/private-skills.yaml` → distribute to team |
 >
@@ -26,16 +27,17 @@ handoff pattern, and the skills it expects to load. In professional agent tools
 this separation is common: skills are reusable capabilities; agents are curated
 workflows that combine those capabilities for a specific job.
 
-This guide covers skills, installable agents, how to create each type, and how they work together.
+This guide covers skills, installable agents, how to create each type, and how they work together. For company-private enterprise repositories and installable internal catalogs, see [Enterprise Agent and Skill Repositories](enterprise_agent_skill_repos.md). For the current cross-catalog dependency overview, see [Agent to Skill Map](agent_skill_map.md).
 
-## The Three Types of Skills
+## The Four Types of Skills
 
-NeqSim's skill system is organised into three tiers, each with a different scope, audience, and lifecycle:
+NeqSim's skill system is organised into four tiers, each with a different scope, audience, and lifecycle:
 
 | Type | Location | Scope | Who Creates | Version Controlled |
 |------|----------|-------|-------------|-------------------|
 | **Core Program Skills** | `.github/skills/` in the NeqSim repo | All users, all agents | NeqSim maintainers | Yes (Git, PR review) |
 | **Community Skills** | External repos, listed in `community-skills.yaml` | Anyone who installs them | Domain experts, contributors | Yes (author's repo) |
+| **Enterprise Skills** | Private company repos, listed in `enterprise-skills.yaml` | Company/project runtimes | Company domain owners | Yes (private Git, governed review) |
 | **Local Private Skills** | `~/.neqsim/skills/` on your machine | Only you | You | Optional (your choice) |
 
 ### Core Program Skills
@@ -46,9 +48,17 @@ These are the 28+ skills shipped with NeqSim. They cover NeqSim's own API (`neqs
 
 ### Community Skills
 
-Skills contributed by the community but hosted outside the core repo. They are listed in the machine-readable `community-skills.yaml` catalog and installed via the CLI tool. Community skills cover workflows and domains that don't require deep NeqSim internal knowledge.
+Skills contributed by the community but hosted outside the core repo. They are listed in the machine-readable `community-skills.yaml` catalog and installed via the CLI tool. Community skills cover public workflows and domains that do not require deep NeqSim internal knowledge or company-private policy.
 
-**Examples:** company-specific TEG sizing procedures, regional regulatory workflows, alternative EOS validation approaches
+**Examples:** educational screening checks, public regional regulatory workflows, alternative EOS validation approaches
+
+### Enterprise Skills and Agents
+
+Enterprise skills and agents live in private company repositories. They are listed in `enterprise-skills.yaml` and `enterprise-agents.yaml`, declare `trust: internal`, and are installed by configuring the runtime's plugin sources. Enterprise skills use `enterprise-*` IDs and may extend approved public `neqsim-*` skills. Enterprise agents orchestrate both layers through `required_skills`.
+
+**Examples:** company hydrate-margin policy overlays, governed STID-to-NeqSim study preparation, internal document-reading workflows, plant-data integration wrappers
+
+See [Enterprise Agent and Skill Repositories](enterprise_agent_skill_repos.md) for the repository template, catalog examples, `plugins/sources.yaml` configuration, token handling, and validation commands.
 
 ### Local Private Skills
 

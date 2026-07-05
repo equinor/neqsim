@@ -23,6 +23,7 @@
 
 catalog_version: "1.0"
 last_updated: "2026-05-31"
+trust: community
 
 repositories:
   # Discover all public community skills from the external community repo.
@@ -30,6 +31,7 @@ repositories:
     catalog_path: "community-skills.yaml"
     skill_path_glob: "skills/**/SKILL.md"
     author: "neqsim-community"
+    trust_level: community
     tags: [community]
     min_neqsim_version: "3.7.0"
 

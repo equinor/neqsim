@@ -46,6 +46,7 @@
 
 catalog_version: "1.0"
 last_updated: "2026-05-31"
+trust: community
 
 repositories:
   # Discover all public community agents from the external community repo.
@@ -53,6 +54,7 @@ repositories:
     catalog_path: "community-agents.yaml"
     agent_path_glob: ["agents/**/*.agent.md", "agents/**/AGENT.md"]
     author: "neqsim-community"
+    trust_level: community
     tags: [community]
 
 agents:

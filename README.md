@@ -507,9 +507,11 @@ screening workflows, public validation helpers, open engineering checklists,
 agent guidance around existing NeqSim workflows, and examples with synthetic or
 public data. Keep proprietary methods, plant data, private tag names, internal
 URLs, company standards, and project-specific design bases out of the public
-community repos; use private skill or agent catalogs for those.
+community repos; use private enterprise skill and agent repositories for those.
 
 See the [Skills Guide](docs/integration/skills_guide.md) for the full walkthrough,
+[Enterprise Agent and Skill Repositories](docs/integration/enterprise_agent_skill_repos.md)
+for company-private repository setup and Engineering Harness discovery,
 [community-skills.yaml](community-skills.yaml) and
 [community-agents.yaml](community-agents.yaml) for the catalogs, and
 [.github/skills/README.md](.github/skills/README.md) for the quick contribution guide.
