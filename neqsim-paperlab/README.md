@@ -39,6 +39,24 @@ cd neqsim-paperlab
 pip install -r requirements.txt
 ```
 
+## VS Code Agent Export
+
+PaperLab keeps its canonical agents and skills in this `neqsim-paperlab/` folder.
+VS Code still discovers generated flat exports from `.github/agents` and
+`.github/skills`.
+
+```bash
+# Default: export the single @paperlab gateway agent and its public skills
+neqsim paperlab install --vscode
+
+# Compatibility mode: also export internal specialist agents and skills
+neqsim paperlab install --vscode --include-internal
+```
+
+Use the default gateway for normal VS Code Chat workflows. The internal mode is
+for legacy/direct specialist-agent use and keeps `@paperlab` as the preferred
+entry point.
+
 ## The Core Loop: Code → Paper → Better Code
 
 PaperLab is designed for **iterative refinement** where editing the paper and

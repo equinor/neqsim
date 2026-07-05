@@ -3,6 +3,7 @@
 
 Examples:
     neqsim paperlab install --vscode
+    neqsim paperlab install --vscode --include-internal
     neqsim paperlab install --vscode --agents-only
     neqsim paperlab install --vscode --vscode-scope workspace
 """
@@ -20,6 +21,7 @@ PROJECT_ROOT = DEVTOOLS_DIR.parent
 PAPERLAB_DIR = PROJECT_ROOT / "neqsim-paperlab"
 PAPERLAB_AGENTS_DIR = PAPERLAB_DIR / "agents"
 PAPERLAB_SKILLS_DIR = PAPERLAB_DIR / "skills"
+PAPERLAB_GATEWAY_AGENT = PROJECT_ROOT / ".github" / "agents" / "paperlab.agent.md"
 
 
 def _frontmatter_name(path, fallback):
@@ -43,6 +45,24 @@ def _frontmatter_name(path, fallback):
             value = stripped.split(":", 1)[1].strip()
             return value.strip("\"'") or fallback
     return fallback
+
+
+def _extract_loaded_skills(path):
+    """Extract comma-separated Loaded skills from an agent markdown file.
+
+    @param path the agent markdown file to inspect
+    @return a list of skill names declared by the agent
+    """
+    try:
+        lines = Path(path).read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return []
+    for line in lines:
+        stripped = line.strip()
+        if stripped.lower().startswith("loaded skills:"):
+            value = stripped.split(":", 1)[1]
+            return [item.strip() for item in value.split(",") if item.strip()]
+    return []
 
 
 def _has_frontmatter(text):
@@ -103,31 +123,37 @@ def _ensure_skill_frontmatter(skill_dir, name):
     skill_file.write_text(frontmatter + text, encoding="utf-8")
 
 
-def iter_paperlab_agents():
+def iter_paperlab_agents(include_internal=False):
     """Yield PaperLab agent install names and source files.
 
+    @param include_internal when True, include internal specialist agents from neqsim-paperlab
     @return an iterator of (name, source_file) tuples
     """
-    if not PAPERLAB_AGENTS_DIR.exists():
+    if PAPERLAB_GATEWAY_AGENT.exists():
+        yield _frontmatter_name(PAPERLAB_GATEWAY_AGENT, "paperlab"), PAPERLAB_GATEWAY_AGENT
+    if not include_internal or not PAPERLAB_AGENTS_DIR.exists():
         return
-    for agent_file in sorted(PAPERLAB_AGENTS_DIR.glob("*.agent.md")):
-        fallback = agent_file.stem.replace("_", "-")
-        if fallback.endswith(".agent"):
-            fallback = fallback[:-6]
-        yield _frontmatter_name(agent_file, fallback), agent_file
+    for agent_file in sorted(PAPERLAB_AGENTS_DIR.glob("*.paperlab.md")):
+        name = _frontmatter_name(agent_file, agent_file.name.replace(".paperlab.md", ""))
+        if name != "paperlab":
+            yield name, agent_file
 
 
-def iter_paperlab_skills():
-    """Yield PaperLab skill install names and source directories.
+def iter_paperlab_skills(include_internal=False):
+    """Yield PaperLab skills required by the selected PaperLab export surface.
 
+    @param include_internal when True, include all canonical PaperLab skills
     @return an iterator of (name, source_dir) tuples
     """
     if not PAPERLAB_SKILLS_DIR.exists():
         return
+    required = set(_extract_loaded_skills(PAPERLAB_GATEWAY_AGENT))
     for skill_dir in sorted(PAPERLAB_SKILLS_DIR.iterdir()):
         skill_file = skill_dir / "SKILL.md"
         if skill_dir.is_dir() and skill_file.exists():
-            yield _frontmatter_name(skill_file, skill_dir.name), skill_dir
+            name = _frontmatter_name(skill_file, skill_dir.name)
+            if include_internal or name in required:
+                yield name, skill_dir
 
 
 def _export_agents(args):
@@ -145,7 +171,7 @@ def _export_agents(args):
         return 0
 
     count = 0
-    for name, source_file in iter_paperlab_agents():
+    for name, source_file in iter_paperlab_agents(args.include_internal):
         if args.dry_run:
             print("[DRY] agent {name} -> {target}".format(
                 name=name, target=target_dir / (name + ".agent.md")))
@@ -171,7 +197,7 @@ def _export_skills(args):
         return 0
 
     count = 0
-    for name, source_dir in iter_paperlab_skills():
+    for name, source_dir in iter_paperlab_skills(args.include_internal):
         if args.dry_run:
             print("[DRY] skill {name} -> {target}".format(
                 name=name, target=target_dir / name))
@@ -211,6 +237,8 @@ def cmd_install(args):
     print("  Skills: {count}".format(count=skill_count))
     if not args.dry_run:
         print("Reload VS Code (Developer: Reload Window) to pick up new agents and skills.")
+    if args.include_internal:
+        print("Internal PaperLab agents are opt-in compatibility exports; @paperlab remains the default gateway.")
 
 
 def cmd_list(args):
@@ -219,8 +247,8 @@ def cmd_list(args):
     @param args parsed CLI arguments
     @return None
     """
-    agents = list(iter_paperlab_agents())
-    skills = list(iter_paperlab_skills())
+    agents = list(iter_paperlab_agents(args.include_internal))
+    skills = list(iter_paperlab_skills(args.include_internal))
     print("PaperLab agents ({count}):".format(count=len(agents)))
     for name, _ in agents:
         print("  - {name}".format(name=name))
@@ -247,6 +275,9 @@ def main():
         "--skills-only", action="store_true",
         help="Export only PaperLab skills")
     p_install.add_argument(
+        "--include-internal", action="store_true",
+        help="Also export internal PaperLab specialist agents and skills for legacy/direct use")
+    p_install.add_argument(
         "--vscode-scope", choices=["user", "workspace"], default="user",
         help="Agent export scope: user prompts folder (default) or workspace .github/agents")
     p_install.add_argument(
@@ -259,7 +290,10 @@ def main():
         "--dry-run", action="store_true",
         help="Print export destinations without copying files")
 
-    sub.add_parser("list", help="List PaperLab agents and skills")
+    p_list = sub.add_parser("list", help="List PaperLab agents and skills")
+    p_list.add_argument(
+        "--include-internal", action="store_true",
+        help="Also list internal PaperLab specialist agents and skills")
 
     args = parser.parse_args()
     if not args.command:
