@@ -1213,7 +1213,6 @@ class AgentVsCodeExportTest(unittest.TestCase):
                     "main_file": str(main_file),
                     "source": "private",
                     "required_skills": [],
-                    "required_skills": [],
                 }
             }), encoding="utf-8")
 
