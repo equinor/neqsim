@@ -13,6 +13,7 @@ description: "Comprehensive guide to skills and agents in NeqSim's agentic engin
 > | **Create a new core skill** | `neqsim new-skill "name"` → edit SKILL.md → register in README + copilot-instructions → PR |
 > | **Install a community skill** | `neqsim skill install neqsim-topic` → canonical install in `~/.neqsim/skills` → export with `--target vscode` or `--target generic` |
 > | **Install a community agent** | `neqsim agent install agent-name` → canonical install in `~/.neqsim/agents` → export with `--target vscode` or `--target generic` |
+> | **Check PaperLab commands** | `neqsim paperlab` prints help only; this confirms the command exists but does not install anything |
 > | **Use PaperLab in VS Code** | `neqsim paperlab install --vscode` for the `@paperlab` gateway; add `--include-internal` only for direct specialist-agent compatibility |
 > | **Publish my skill to the community** | Host SKILL.md in a GitHub repo → `neqsim skill publish user/repo` → PR gets reviewed |
 > | **Set up company enterprise repos** | Create private enterprise skills + agents repos → publish `enterprise-skills.yaml` and `enterprise-agents.yaml` → configure `EH_SOURCES_FILE` for the Engineering Harness |
@@ -43,6 +44,8 @@ NeqSim separates source-of-truth content from tool-specific discovery folders:
 | **PaperLab canonical source** | PaperLab's full internal role and skill library | `neqsim-paperlab/agents/`, `neqsim-paperlab/skills/` |
 
 Treat `.github/skills` and `.github/agents` as core workspace discovery surfaces, not the default destination for installed community/private content. Installed content should be managed through `~/.neqsim` and, for VS Code, exported to the user's private prompts folders unless a maintainer explicitly wants a workspace export. PaperLab follows the same principle: `neqsim-paperlab/` is canonical, while the VS Code default is the single `@paperlab` gateway plus its declared public skills.
+
+For the exact PaperLab CLI commands, including the no-subcommand help output, `list`, `--dry-run`, and the actual install command, see [PaperLab CLI and VS Code Chat Install](paperlab_vscode_install.md).
 
 ## The Four Types of Skills
 
