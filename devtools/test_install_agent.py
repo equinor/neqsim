@@ -1,10 +1,12 @@
 """Tests for NeqSim community agent catalog loading and validation."""
 import install_agent
 import argparse
+import io
 import os
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
 
@@ -91,7 +93,7 @@ You are an example NeqSim agent.
 Loaded skills: neqsim-api-patterns, neqsim-flow-assurance
 """
 
-        def fake_fetch_text(_repo, path, branch=None):
+        def fake_fetch_text(_repo, path, branch=None, auth=None):
             if path == "community-agents.yaml":
                 raise RuntimeError("remote catalog missing")
             return agent_md
@@ -155,7 +157,7 @@ description: "Private PVT agent."
 You are a private PVT agent.
 """
 
-        def fake_fetch_text(_repo, path, branch=None):
+        def fake_fetch_text(_repo, path, branch=None, auth=None):
             if path == "community-agents.yaml":
                 raise RuntimeError("remote catalog missing")
             return agent_md
@@ -193,7 +195,7 @@ human_review_required: true
 trust_level: private
 """
 
-        def fake_fetch_text(_repo, path, branch=None):
+        def fake_fetch_text(_repo, path, branch=None, auth=None):
             if path == "community-agents.yaml":
                 raise RuntimeError("remote catalog missing")
             if path == "agents/demo-agent/AGENT.md":
@@ -233,6 +235,42 @@ trust_level: private
                          agents[0]["supported_domains"])
         self.assertTrue(agents[0]["human_review_required"])
         self.assertEqual("private", agents[0]["trust_level"])
+
+    def test_git_repository_discovery_reads_catalog_without_tokens(self):
+        """Git repository discovery should use git credentials, not token plumbing."""
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture_repo = Path(tmp) / "source"
+            fixture_repo.mkdir()
+            (fixture_repo / "enterprise-agents.yaml").write_text(
+                "agents:\n"
+                "  - name: git-agent\n"
+                "    description: Git discovered agent.\n"
+                "    path: agents/git-agent/AGENT.md\n",
+                encoding="utf-8",
+            )
+
+            def fake_clone(_entry, destination):
+                install_agent.shutil.copytree(str(fixture_repo), str(destination))
+                return "main"
+
+            repository = {
+                "source": "git",
+                "auth": "git-credential-manager",
+                "url": "https://git.example.test/neqsim/enterprise-agents.git",
+                "catalog_path": "enterprise-agents.yaml",
+                "name_prefix": "enterprise-",
+            }
+
+            with mock.patch.object(install_agent.install_skill, "_clone_git_repository",
+                                   side_effect=fake_clone):
+                agents = install_agent._discover_git_repository_agents(repository)
+
+        self.assertEqual(1, len(agents))
+        self.assertEqual("enterprise-git-agent", agents[0]["name"])
+        self.assertEqual("git", agents[0]["source"])
+        self.assertEqual("git-credential-manager", agents[0]["auth"])
+        self.assertEqual(
+            "https://git.example.test/neqsim/enterprise-agents.git", agents[0]["url"])
 
     def test_validate_agent_dir_accepts_agent_yaml_package(self):
         """Folder packages may define metadata in agent.yaml."""
@@ -549,6 +587,203 @@ trust_level: private
                     install_agent.cmd_install(catalog, args)
 
             self.assertTrue((source_dir / "AGENT.md").exists())
+
+    def test_cmd_install_supports_git_source(self):
+        """Installing a git-source agent should copy content and record provenance."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            fixture_repo = tmp_path / "source"
+            package_dir = fixture_repo / "agents" / "git-agent"
+            package_dir.mkdir(parents=True)
+            (package_dir / "AGENT.md").write_text(
+                "---\n"
+                "name: Git Agent\n"
+                "description: Git agent used by installer tests.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            install_dir = tmp_path / "installed-agents"
+            manifest_file = install_dir / "installed.json"
+            catalog = [{
+                "name": "git-agent",
+                "description": "Git source agent",
+                "author": "tests",
+                "source": "git",
+                "auth": "git-credential-manager",
+                "url": "https://git.example.test/neqsim/enterprise-agents.git",
+                "path": "agents/git-agent/AGENT.md",
+                "_source": "private",
+                "required_skills": [],
+            }]
+
+            def fake_clone(_entry, destination):
+                install_agent.shutil.copytree(str(fixture_repo), str(destination))
+                return "main"
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(install_agent.install_skill, "_clone_git_repository",
+                                      side_effect=fake_clone):
+                args = argparse.Namespace(
+                    name="git-agent",
+                    force=False,
+                    install_missing_skills=False,
+                )
+                install_agent.cmd_install(catalog, args)
+                manifest = json_load(manifest_file)
+
+        installed = manifest["git-agent"]
+        self.assertEqual("git", installed["source_type"])
+        self.assertEqual("git-credential-manager", installed["auth"])
+        self.assertEqual(
+            "https://git.example.test/neqsim/enterprise-agents.git", installed["url"])
+        self.assertEqual("AGENT.md", Path(installed["main_file"]).name)
+
+    def test_cmd_install_all_exports_every_agent_to_vscode(self):
+        """Bulk install should install all catalog agents and export them to VS Code."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            community = tmp_path / "community.agent.md"
+            private = tmp_path / "private.agent.md"
+            community.write_text(
+                "---\n"
+                "name: Community Agent\n"
+                "description: Community bulk install test agent.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            private.write_text(
+                "---\n"
+                "name: Private Agent\n"
+                "description: Private bulk install test agent.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            install_dir = tmp_path / "installed-agents"
+            manifest_file = install_dir / "installed.json"
+            vscode_dir = tmp_path / "prompts"
+            catalog = [{
+                "name": "community-agent",
+                "description": "Community bulk install test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(community),
+                "_source": "community",
+                "required_skills": [],
+            }, {
+                "name": "private-agent",
+                "description": "Private bulk install test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(private),
+                "_source": "private",
+                "required_skills": [],
+            }]
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name=None,
+                    all=True,
+                    source="all",
+                    force=False,
+                    install_missing_skills=False,
+                    vscode=True,
+                    vscode_scope="user",
+                    vscode_dir=str(vscode_dir),
+                )
+                install_agent.cmd_install(catalog, args)
+                manifest = json_load(manifest_file)
+                community_exported = (vscode_dir / "community-agent.agent.md").exists()
+                private_exported = (vscode_dir / "private-agent.agent.md").exists()
+
+        self.assertIn("community-agent", manifest)
+        self.assertIn("private-agent", manifest)
+        self.assertTrue(community_exported)
+        self.assertTrue(private_exported)
+
+    def test_cmd_install_all_can_filter_private_agents(self):
+        """Bulk install source filter should support enterprise/private-only installs."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            community = tmp_path / "community.agent.md"
+            private = tmp_path / "private.agent.md"
+            community.write_text(
+                "---\n"
+                "name: Community Agent\n"
+                "description: Community bulk filter test agent.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            private.write_text(
+                "---\n"
+                "name: Private Agent\n"
+                "description: Private bulk filter test agent.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            install_dir = tmp_path / "installed-agents"
+            manifest_file = install_dir / "installed.json"
+            catalog = [{
+                "name": "community-agent",
+                "description": "Community bulk filter test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(community),
+                "_source": "community",
+                "required_skills": [],
+            }, {
+                "name": "private-agent",
+                "description": "Private bulk filter test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(private),
+                "_source": "private",
+                "required_skills": [],
+            }]
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name=None,
+                    all=True,
+                    source="private",
+                    force=False,
+                    install_missing_skills=False,
+                    vscode=False,
+                )
+                install_agent.cmd_install(catalog, args)
+                manifest = json_load(manifest_file)
+
+        self.assertNotIn("community-agent", manifest)
+        self.assertIn("private-agent", manifest)
+
+    def test_cmd_doctor_reports_sso_brokers_without_secret_values(self):
+        """Doctor output should describe broker readiness without leaking values."""
+        status = {
+            "github_cli": True,
+            "github_cli_authenticated": True,
+            "git": True,
+            "git_credential_helper": True,
+            "github_token_env": False,
+            "private_catalog": True,
+        }
+        with mock.patch.object(install_agent.install_skill,
+                               "get_enterprise_auth_status", return_value=status), \
+                mock.patch.dict(os.environ, {"PRIVATE_AGENT_TOKEN": "redacted-value"}):
+            output = io.StringIO()
+            with redirect_stdout(output):
+                install_agent.cmd_doctor([], argparse.Namespace())
+
+        text = output.getvalue()
+        self.assertIn("gh auth login --web", text)
+        self.assertIn("git-credential-manager", text)
+        self.assertNotIn("redacted-value", text)
 
 
 def json_load(path):

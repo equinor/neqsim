@@ -20,16 +20,19 @@ discover online. Repository discovery first reads the remote
 community-skills.yaml catalog, then falls back to scanning for SKILL.md files.
 
 Private skills are listed in ~/.neqsim/private-skills.yaml (gitignored,
-never committed). They support local file paths, network shares, and
-private GitHub repos via GITHUB_TOKEN or an authenticated gh CLI session.
-"""""
+never committed). They support local file paths, network shares, private
+GitHub repos via browser/SSO-backed gh CLI, and internal git remotes via
+Git Credential Manager.
+"""
 
 import argparse
 import fnmatch
 import json
 import os
+import shutil
 import subprocess
 import sys
+import tempfile
 import textwrap
 import urllib.error
 import urllib.parse
@@ -68,8 +71,9 @@ PRIVATE_CATALOG_TEMPLATE = """\
 # Skills can be sourced from:
 #   - Local file paths (source: local)
 #   - Network shares (source: local, with UNC path)
-#   - Private GitHub repos (source: github, requires GITHUB_TOKEN or gh auth)
-#   - Internal Git servers (source: url, with direct URL)
+#   - Private GitHub repos (source: github, auth: github-cli)
+#   - Internal Git servers (source: git, auth: git-credential-manager)
+#   - Internal raw URLs (source: url, optional PRIVATE_SKILL_TOKEN fallback)
 #
 # Install with: neqsim skill install <name>
 
@@ -79,15 +83,30 @@ organisation: "your-company"
 
 repositories:
     # -- Private GitHub repository discovery --
-    # Requires either GITHUB_TOKEN in the shell or `gh auth login` with repo access.
+    # Preferred: run `gh auth login --web` once and let GitHub/SSO handle login.
+    # NeqSim does not request, inspect, or store credentials.
     # Use catalog_path: "" when the repo has no community-skills.yaml and should
     # be scanned for SKILL.md files directly.
     # - repo: "your-org/neqsim-enterprise-skills"
     #   source: github
+    #   auth: github-cli
     #   branch: "main"
     #   catalog_path: ""
     #   skill_path_glob: "skills/**/SKILL.md"
     #   name_prefix: "enterprise-"  # optional, avoids public/private name clashes
+    #   tags: [enterprise, private]
+
+    # -- Internal Git repository discovery --
+    # Preferred when your enterprise uses Git Credential Manager / SSO for HTTPS.
+    # Run your normal `git clone` login flow once; NeqSim shells out to git and
+    # never handles secrets itself.
+    # - source: git
+    #   auth: git-credential-manager
+    #   url: "https://git.internal.company.com/neqsim/enterprise-skills.git"
+    #   branch: "main"
+    #   catalog_path: "enterprise-skills.yaml"
+    #   skill_path_glob: "skills/**/SKILL.md"
+    #   name_prefix: "enterprise-"
     #   tags: [enterprise, private]
 
 skills:
@@ -112,9 +131,21 @@ skills:
   #   description: "PI tag mappings for our platforms"
   #   author: "data-team"
   #   source: github
+    #   auth: github-cli
   #   repo: "your-org/neqsim-plant-skills"
   #   path: "skills/neqsim-plant-data-mapping/SKILL.md"
   #   tags: [pi, historian, plant-data]
+
+    # ── Internal Git repo using Git Credential Manager / SSO ──
+    # - name: neqsim-internal-git-skill
+    #   description: "Internal skill fetched through git credentials"
+    #   author: "engineering-team"
+    #   source: git
+    #   auth: git-credential-manager
+    #   url: "https://git.internal.company.com/neqsim/enterprise-skills.git"
+    #   branch: "main"
+    #   path: "skills/neqsim-internal-git-skill/SKILL.md"
+    #   tags: [workflow, internal]
 
   # ── Direct URL (internal Git server, Azure DevOps, etc.) ──
   # - name: neqsim-internal-workflow
@@ -176,7 +207,11 @@ def _add_catalog_entries(skills, data, source):
 
     for repository in (data.get("repositories") or []):
         try:
-            for skill in _discover_github_repository_skills(repository):
+            if isinstance(repository, dict) and repository.get("source") == "git":
+                discovered = _discover_git_repository_skills(repository)
+            else:
+                discovered = _discover_github_repository_skills(repository)
+            for skill in discovered:
                 _append_skill(skills, skill, source)
         except Exception as exc:
             repo = repository.get("repo", "?") if isinstance(repository, dict) else "?"
@@ -238,6 +273,30 @@ def _parse_scalar_value(value):
         items = value[1:-1].split(",")
         return [item.strip().strip('"').strip("'") for item in items if item.strip()]
     return value.strip('"').strip("'")
+
+
+def _normalize_auth_mode(auth):
+    """Normalize a catalog auth mode into a stable lowercase token."""
+    return str(auth or "auto").strip().lower().replace("_", "-")
+
+
+def _prefer_gh_auth(auth=None):
+    """Return true when a GitHub request should prefer gh CLI authentication."""
+    return _normalize_auth_mode(auth) in set([
+        "gh", "github-cli", "sso", "browser-sso", "github-sso"
+    ])
+
+
+def _github_token_present():
+    """Return true when a GitHub token fallback is present in the environment."""
+    return bool(os.environ.get("GITHUB_TOKEN", ""))
+
+
+def _github_entry_auth(entry):
+    """Return the GitHub auth mode requested by a catalog entry."""
+    if not isinstance(entry, dict):
+        return "auto"
+    return entry.get("auth") or entry.get("authentication") or "auto"
 
 
 def _extract_frontmatter(content):
@@ -322,15 +381,23 @@ def _github_access_error(repo, operation, http_error, gh_error):
         return http_error
     return RuntimeError(
         f"Could not {operation} for GitHub repo {repo}. "
-        "Set GITHUB_TOKEN or run `gh auth login` with repo read access. "
+        "Preferred enterprise path: run `gh auth login --web` and complete your browser/SSO login. "
+        "Token fallback: set GITHUB_TOKEN with repo read access. "
         f"HTTP error: {http_error}. gh error: {gh_error}"
     )
 
 
-def _get_default_github_branch(repo):
+def _get_default_github_branch(repo, auth=None):
     """Return the default branch for a GitHub repo, or None if unavailable."""
     encoded_repo = "/".join(urllib.parse.quote(part, safe="") for part in repo.split("/"))
     url = f"https://api.github.com/repos/{encoded_repo}"
+    if _prefer_gh_auth(auth):
+        try:
+            endpoint = _github_api_endpoint(repo)
+            data = json.loads(_gh_api_request(endpoint).decode("utf-8"))
+            return data.get("default_branch")
+        except Exception:
+            pass
     try:
         data = json.loads(_github_request(url).decode("utf-8"))
         return data.get("default_branch")
@@ -358,35 +425,43 @@ def _raw_github_url(repo, path, branch):
     return f"https://raw.githubusercontent.com/{repo}/{branch}/{encoded_path}"
 
 
-def _fetch_github_bytes(repo, path, branch=None):
+def _fetch_github_bytes(repo, path, branch=None, auth=None):
     """Fetch a file from GitHub raw content using branch fallback."""
     last_error = None
     last_gh_error = None
     for candidate in _branch_candidates(branch):
-        raw_url = _raw_github_url(repo, path, candidate)
-        try:
-            content = _github_request(raw_url, accept="text/plain")
-            return content, candidate, raw_url
-        except urllib.error.HTTPError as exc:
-            last_error = exc
+        if _prefer_gh_auth(auth):
             try:
                 content = _fetch_github_contents_with_gh(repo, path, candidate)
                 source = f"gh api {_github_contents_endpoint(repo, path, candidate)}"
                 return content, candidate, source
             except Exception as gh_exc:
                 last_gh_error = gh_exc
+        raw_url = _raw_github_url(repo, path, candidate)
+        try:
+            content = _github_request(raw_url, accept="text/plain")
+            return content, candidate, raw_url
+        except urllib.error.HTTPError as exc:
+            last_error = exc
+            if not _prefer_gh_auth(auth):
+                try:
+                    content = _fetch_github_contents_with_gh(repo, path, candidate)
+                    source = f"gh api {_github_contents_endpoint(repo, path, candidate)}"
+                    return content, candidate, source
+                except Exception as gh_exc:
+                    last_gh_error = gh_exc
     if last_error is not None:
         raise _github_access_error(repo, f"fetch {path}", last_error, last_gh_error)
     raise RuntimeError(f"No branch candidates available for {repo}")
 
 
-def _fetch_github_text(repo, path, branch=None):
+def _fetch_github_text(repo, path, branch=None, auth=None):
     """Fetch a UTF-8 text file from GitHub raw content."""
-    content, _branch, _url = _fetch_github_bytes(repo, path, branch=branch)
+    content, _branch, _url = _fetch_github_bytes(repo, path, branch=branch, auth=auth)
     return content.decode("utf-8", errors="replace")
 
 
-def _list_github_tree_paths(repo, branch=None):
+def _list_github_tree_paths(repo, branch=None, auth=None):
     """List files in a GitHub repository tree using the online GitHub API."""
     last_error = None
     last_gh_error = None
@@ -394,15 +469,7 @@ def _list_github_tree_paths(repo, branch=None):
         encoded_repo = "/".join(urllib.parse.quote(part, safe="") for part in repo.split("/"))
         encoded_branch = urllib.parse.quote(candidate, safe="")
         url = f"https://api.github.com/repos/{encoded_repo}/git/trees/{encoded_branch}?recursive=1"
-        try:
-            data = json.loads(_github_request(url).decode("utf-8"))
-            paths = [item.get("path", "") for item in data.get("tree", [])
-                     if item.get("type") == "blob" and item.get("path")]
-            if data.get("truncated"):
-                print(f"  [!!] GitHub tree for {repo}@{candidate} is truncated.", file=sys.stderr)
-            return candidate, paths
-        except urllib.error.HTTPError as exc:
-            last_error = exc
+        if _prefer_gh_auth(auth):
             try:
                 endpoint = _github_api_endpoint(
                     repo, f"git/trees/{encoded_branch}", "recursive=1")
@@ -414,6 +481,27 @@ def _list_github_tree_paths(repo, branch=None):
                 return candidate, paths
             except Exception as gh_exc:
                 last_gh_error = gh_exc
+        try:
+            data = json.loads(_github_request(url).decode("utf-8"))
+            paths = [item.get("path", "") for item in data.get("tree", [])
+                     if item.get("type") == "blob" and item.get("path")]
+            if data.get("truncated"):
+                print(f"  [!!] GitHub tree for {repo}@{candidate} is truncated.", file=sys.stderr)
+            return candidate, paths
+        except urllib.error.HTTPError as exc:
+            last_error = exc
+            if not _prefer_gh_auth(auth):
+                try:
+                    endpoint = _github_api_endpoint(
+                        repo, f"git/trees/{encoded_branch}", "recursive=1")
+                    data = json.loads(_gh_api_request(endpoint).decode("utf-8"))
+                    paths = [item.get("path", "") for item in data.get("tree", [])
+                             if item.get("type") == "blob" and item.get("path")]
+                    if data.get("truncated"):
+                        print(f"  [!!] GitHub tree for {repo}@{candidate} is truncated.", file=sys.stderr)
+                    return candidate, paths
+                except Exception as gh_exc:
+                    last_gh_error = gh_exc
     if last_error is not None:
         raise _github_access_error(repo, "list tree paths", last_error, last_gh_error)
     raise RuntimeError(f"No branch candidates available for {repo}")
@@ -451,11 +539,15 @@ def _normalize_discovered_skill(skill, repository, default_branch=None, content=
     path = normalized.get("path") or repository.get("default_path", "SKILL.md")
     normalized["repo"] = repo
     normalized["path"] = path
-    normalized["source"] = normalized.get("source", "github")
+    normalized["source"] = normalized.get("source", repository.get("source", "github"))
+    if "auth" not in normalized and repository.get("auth"):
+        normalized["auth"] = repository.get("auth")
+    if "url" not in normalized and repository.get("url"):
+        normalized["url"] = repository.get("url")
     if default_branch and "branch" not in normalized:
         normalized["branch"] = default_branch
     if "author" not in normalized:
-        normalized["author"] = repository.get("author") or repo.split("/", 1)[0]
+        normalized["author"] = repository.get("author") or (repo.split("/", 1)[0] if repo else "private")
     if "min_neqsim_version" not in normalized and repository.get("min_neqsim_version"):
         normalized["min_neqsim_version"] = repository.get("min_neqsim_version")
     inferred_tags = _infer_tags(content, path) if content else []
@@ -470,7 +562,7 @@ def _discover_skills_from_remote_catalog(repository, branch):
     catalog_path = repository.get("catalog_path", "community-skills.yaml")
     if not catalog_path:
         return []
-    text = _fetch_github_text(repo, catalog_path, branch=branch)
+    text = _fetch_github_text(repo, catalog_path, branch=branch, auth=_github_entry_auth(repository))
     data = _parse_catalog_text(text)
     discovered = []
     for skill in (data.get("skills") or []):
@@ -484,14 +576,14 @@ def _discover_skills_by_scanning_repo(repository, branch):
     """Discover skills by scanning an online GitHub repo for SKILL.md files."""
     repo = repository.get("repo", "")
     pattern = repository.get("skill_path_glob") or repository.get("path_glob") or DEFAULT_SKILL_PATH_GLOB
-    used_branch, paths = _list_github_tree_paths(repo, branch=branch)
+    used_branch, paths = _list_github_tree_paths(repo, branch=branch, auth=_github_entry_auth(repository))
     discovered = []
     for path in sorted(paths):
         if not fnmatch.fnmatch(path, pattern):
             continue
         if not path.endswith("SKILL.md"):
             continue
-        content = _fetch_github_text(repo, path, branch=used_branch)
+        content = _fetch_github_text(repo, path, branch=used_branch, auth=_github_entry_auth(repository))
         metadata = _extract_frontmatter(content)
         name = metadata.get("name")
         if not name:
@@ -516,7 +608,8 @@ def _discover_github_repository_skills(repository):
     repo = repository.get("repo", "")
     if not repo:
         return []
-    branch = repository.get("branch") or _get_default_github_branch(repo)
+    branch = repository.get("branch") or _get_default_github_branch(
+        repo, auth=_github_entry_auth(repository))
     try:
         catalog_skills = _discover_skills_from_remote_catalog(repository, branch)
         if catalog_skills:
@@ -524,6 +617,91 @@ def _discover_github_repository_skills(repository):
     except Exception:
         pass
     return _discover_skills_by_scanning_repo(repository, branch)
+
+
+def _git_repository_url(entry):
+    """Return a clone URL for a git-backed catalog entry."""
+    url = entry.get("url", "") if isinstance(entry, dict) else ""
+    if url:
+        return url
+    repo = entry.get("repo", "") if isinstance(entry, dict) else ""
+    if repo:
+        return f"https://github.com/{repo}.git"
+    return ""
+
+
+def _clone_git_repository(entry, destination):
+    """Clone a repository using the user's configured git credential broker."""
+    url = _git_repository_url(entry)
+    if not url:
+        raise RuntimeError("git source requires url or repo")
+    cmd = ["git", "clone", "--depth", "1"]
+    branch = entry.get("branch") if isinstance(entry, dict) else None
+    if branch:
+        cmd.extend(["--branch", str(branch)])
+    cmd.extend([url, str(destination)])
+    subprocess.check_output(cmd, stderr=subprocess.PIPE)
+    try:
+        used_branch = subprocess.check_output(
+            ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+            cwd=str(destination), stderr=subprocess.PIPE,
+        ).decode("utf-8", errors="replace").strip()
+    except Exception:
+        used_branch = branch or ""
+    return used_branch
+
+
+def _read_git_repository_file(entry, path):
+    """Read a file from a git repository through a temporary clone."""
+    with tempfile.TemporaryDirectory() as tmp:
+        repo_dir = Path(tmp) / "repo"
+        used_branch = _clone_git_repository(entry, repo_dir)
+        file_path = repo_dir / path
+        if not file_path.exists() or not file_path.is_file():
+            raise RuntimeError(f"Path not found in git source: {path}")
+        return file_path.read_bytes(), used_branch
+
+
+def _discover_git_repository_skills(repository):
+    """Discover skills from a git repository using git's credential broker."""
+    if not isinstance(repository, dict) or repository.get("source") != "git":
+        return []
+    pattern = repository.get("skill_path_glob") or repository.get("path_glob") or DEFAULT_SKILL_PATH_GLOB
+    with tempfile.TemporaryDirectory() as tmp:
+        repo_dir = Path(tmp) / "repo"
+        used_branch = _clone_git_repository(repository, repo_dir)
+        catalog_path = repository.get("catalog_path", "community-skills.yaml")
+        if catalog_path:
+            catalog_file = repo_dir / catalog_path
+            if catalog_file.exists():
+                data = _parse_catalog_text(catalog_file.read_text(encoding="utf-8"))
+                discovered = []
+                for skill in (data.get("skills") or []):
+                    if isinstance(skill, dict) and skill.get("name"):
+                        discovered.append(_normalize_discovered_skill(
+                            skill, repository, used_branch))
+                if discovered:
+                    return discovered
+        discovered = []
+        for file_path in sorted(repo_dir.rglob("SKILL.md")):
+            rel_path = file_path.relative_to(repo_dir).as_posix()
+            if not fnmatch.fnmatch(rel_path, pattern):
+                continue
+            content = file_path.read_text(encoding="utf-8", errors="replace")
+            metadata = _extract_frontmatter(content)
+            name = metadata.get("name")
+            if not name:
+                folder_name = file_path.parent.name
+                name = folder_name if folder_name.startswith("neqsim-") else f"neqsim-{folder_name}"
+            skill = {
+                "name": name,
+                "version": metadata.get("version", repository.get("version", "")),
+                "description": metadata.get(
+                    "description", f"Private skill from {_git_repository_url(repository)}/{rel_path}"),
+                "path": rel_path,
+            }
+            discovered.append(_normalize_discovered_skill(skill, repository, used_branch, content))
+        return discovered
 
 
 def load_manifest():
@@ -743,8 +921,18 @@ def _install_from_github(skill, dest_file):
         print(f"  [!!] No repo specified for '{skill.get('name')}'.")
         sys.exit(1)
 
-    content, used_branch, raw_url = _fetch_github_bytes(repo, path, branch=branch)
+    content, used_branch, raw_url = _fetch_github_bytes(
+        repo, path, branch=branch, auth=_github_entry_auth(skill))
     print(f"  Downloading: {raw_url}")
+    dest_file.write_bytes(content)
+    skill["branch"] = used_branch
+
+
+def _install_from_git(skill, dest_file):
+    """Install a skill from a git repository using configured git credentials."""
+    path = skill.get("path", "SKILL.md")
+    content, used_branch = _read_git_repository_file(skill, path)
+    print(f"  Downloading via git: {_git_repository_url(skill)}:{path}")
     dest_file.write_bytes(content)
     skill["branch"] = used_branch
 
@@ -776,6 +964,8 @@ def cmd_install(skills, args):
             _install_from_local(skill, dest_file)
         elif source_type == "url":
             _install_from_url(skill, dest_file)
+        elif source_type == "git":
+            _install_from_git(skill, dest_file)
         else:
             _install_from_github(skill, dest_file)
 
@@ -791,6 +981,8 @@ def cmd_install(skills, args):
             "path": str(dest_file),
             "source": skill.get("_source", "community"),
             "source_type": source_type,
+            "auth": skill.get("auth", ""),
+            "url": skill.get("url", ""),
             "repo": skill.get("repo", ""),
             "remote_path": skill.get("path", ""),
             "branch": skill.get("branch", ""),
@@ -825,6 +1017,59 @@ def cmd_installed(skills, args):
     for name, info in sorted(manifest.items()):
         print(f"  {name:<35} {info.get('author', '-'):<20} {info.get('path', '-')}")
     print()
+
+
+def _command_available(name):
+    """Return true when a command is available on PATH."""
+    return shutil.which(name) is not None
+
+
+def _run_status_command(command):
+    """Run a status command without exposing any credential material."""
+    if not _command_available(command[0]):
+        return False, "not installed"
+    try:
+        subprocess.check_output(command, stderr=subprocess.STDOUT)
+        return True, "available"
+    except subprocess.CalledProcessError as exc:
+        output = exc.output.decode("utf-8", errors="replace").strip().splitlines()
+        detail = output[-1] if output else "not authenticated or unavailable"
+        return False, detail
+
+
+def get_enterprise_auth_status():
+    """Return non-secret status for supported enterprise auth brokers."""
+    gh_ok, gh_detail = _run_status_command(["gh", "auth", "status"])
+    git_ok = _command_available("git")
+    return {
+        "github_cli": {"available": gh_ok, "detail": gh_detail},
+        "git": {"available": git_ok, "detail": "available" if git_ok else "not installed"},
+        "github_token_env": {"available": _github_token_present(), "detail": "set" if _github_token_present() else "not set"},
+        "private_skill_token_env": {
+            "available": bool(os.environ.get("PRIVATE_SKILL_TOKEN", "")),
+            "detail": "set" if os.environ.get("PRIVATE_SKILL_TOKEN", "") else "not set",
+        },
+        "private_catalog": {
+            "available": PRIVATE_CATALOG_FILE.exists(),
+            "detail": str(PRIVATE_CATALOG_FILE),
+        },
+    }
+
+
+def cmd_doctor(skills, args):
+    """Show enterprise auth readiness without handling secrets."""
+    status = get_enterprise_auth_status()
+    print("\n  NeqSim Enterprise Auth Doctor\n")
+    print("  NeqSim does not request, inspect, or store credentials.")
+    print("  Preferred GitHub Enterprise login: gh auth login --web\n")
+    for name, item in status.items():
+        marker = "OK" if item["available"] else "--"
+        print(f"  [{marker}] {name:<24} {item['detail']}")
+    print("\n  Supported catalog auth modes:")
+    print("    source: github  auth: github-cli")
+    print("    source: git     auth: git-credential-manager")
+    print("    source: local   auth: none")
+    print("    source: url     PRIVATE_SKILL_TOKEN fallback, if your URL requires it\n")
 
 
 def cmd_remove(skills, args):
@@ -1055,6 +1300,7 @@ def main():
               neqsim skill remove neqsim-example-skill
               neqsim skill publish user/neqsim-my-skill
               neqsim skill private-init
+              neqsim skill doctor
 
             Private skills:
               neqsim skill private-init    # create ~/.neqsim/private-skills.yaml
@@ -1062,8 +1308,9 @@ def main():
               neqsim skill list --private   # verify entries
               neqsim skill install <name>   # install from any catalog
 
-            Private repos require GITHUB_TOKEN or `gh auth login` with repo access.
-            Internal URLs can use PRIVATE_SKILL_TOKEN env var.
+            Preferred private GitHub access uses `gh auth login --web`.
+            Internal git sources use your normal Git Credential Manager / SSO login.
+            Token environment variables remain optional fallbacks.
         """),
     )
     sub = parser.add_subparsers(dest="command")
@@ -1098,6 +1345,7 @@ def main():
     p_publish.add_argument("--yes", "-y", action="store_true", help="Skip confirmation prompt")
 
     sub.add_parser("private-init", help="Create private catalog template at ~/.neqsim/")
+    sub.add_parser("doctor", help="Check enterprise auth broker readiness")
 
     args = parser.parse_args()
     if not args.command:
@@ -1107,6 +1355,9 @@ def main():
     # private-init doesn't need catalog loaded
     if args.command == "private-init":
         cmd_private_init([], args)
+        return
+    if args.command == "doctor":
+        cmd_doctor([], args)
         return
 
     private_only = getattr(args, "private", False)
@@ -1120,6 +1371,7 @@ def main():
         "installed": cmd_installed,
         "remove": cmd_remove,
         "publish": cmd_publish,
+        "doctor": cmd_doctor,
     }
     commands[args.command](skills, args)
 

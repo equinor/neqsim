@@ -32,6 +32,19 @@ class InstallSkillDiscoveryTest(unittest.TestCase):
         self.assertIn("gh api", source)
         self.assertTrue(mocked_gh.called)
 
+    def test_fetch_github_bytes_prefers_gh_cli_when_requested(self):
+        """Catalog entries can request browser/SSO-backed gh before raw HTTP."""
+        with mock.patch.object(install_skill, "_github_request") as mocked_http, \
+                mock.patch.object(install_skill.subprocess, "check_output", return_value=b"skill") as mocked_gh:
+            content, branch, source = install_skill._fetch_github_bytes(
+                "owner/private", "skills/demo/SKILL.md", branch="main", auth="github-cli")
+
+        self.assertEqual(b"skill", content)
+        self.assertEqual("main", branch)
+        self.assertIn("gh api", source)
+        mocked_http.assert_not_called()
+        self.assertTrue(mocked_gh.called)
+
     def test_list_github_tree_paths_falls_back_to_gh_cli_auth(self):
         """Private repo tree scans should work with an active gh login."""
         http_error = install_skill.urllib.error.HTTPError(
@@ -98,7 +111,7 @@ last_verified: "2026-05-31"
 Use this process skill for tests.
 """
 
-        def fake_fetch_text(_repo, path, branch=None):
+        def fake_fetch_text(_repo, path, branch=None, auth=None):
             if path == "community-skills.yaml":
                 raise RuntimeError("remote catalog missing")
             return skill_md
@@ -133,7 +146,7 @@ description: "Hydrate screening skill."
 # Hydrate Screening
 """
 
-        def fake_fetch_text(_repo, path, branch=None):
+        def fake_fetch_text(_repo, path, branch=None, auth=None):
             if path == "community-skills.yaml":
                 raise RuntimeError("remote catalog missing")
             return skill_md
@@ -151,6 +164,45 @@ description: "Hydrate screening skill."
             skills = install_skill._discover_github_repository_skills(repository)
 
         self.assertEqual("enterprise-hydrate-screening", skills[0]["name"])
+
+    def test_git_repository_discovery_reads_catalog_without_tokens(self):
+        """Git sources use git credentials and do not need GitHub tokens."""
+        import shutil
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            fixture_repo = tmp_path / "fixture"
+            fixture_repo.mkdir()
+            (fixture_repo / "enterprise-skills.yaml").write_text(
+                "skills:\n"
+                "  - name: hydrate-screening\n"
+                "    description: Private hydrate screening.\n"
+                "    source: git\n"
+                "    path: skills/hydrate/SKILL.md\n",
+                encoding="utf-8",
+            )
+
+            def fake_clone(_entry, destination):
+                shutil.copytree(str(fixture_repo), str(destination))
+                return "main"
+
+            repository = {
+                "source": "git",
+                "auth": "git-credential-manager",
+                "url": "https://git.internal/skills.git",
+                "catalog_path": "enterprise-skills.yaml",
+                "name_prefix": "enterprise-",
+            }
+            with mock.patch.object(install_skill, "_clone_git_repository", side_effect=fake_clone):
+                skills = install_skill._discover_git_repository_skills(repository)
+
+        self.assertEqual(1, len(skills))
+        self.assertEqual("enterprise-hydrate-screening", skills[0]["name"])
+        self.assertEqual("git", skills[0]["source"])
+        self.assertEqual("git-credential-manager", skills[0]["auth"])
+        self.assertEqual("https://git.internal/skills.git", skills[0]["url"])
 
     def test_fallback_parser_reads_repository_entries(self):
         """The no-PyYAML parser should understand repository sections."""
@@ -271,6 +323,66 @@ class SkillVsCodeExportTest(unittest.TestCase):
                 install_skill.cmd_remove(catalog, remove_args)
                 self.assertFalse(
                     (vscode_dir / "neqsim-demo").exists())
+
+    def test_cmd_install_supports_git_source(self):
+        """A direct source: git skill installs through the git helper."""
+        import argparse
+        import json
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-skills"
+            manifest_file = install_dir / "installed.json"
+            catalog = [{
+                "name": "neqsim-git-demo",
+                "description": "Demo git skill",
+                "author": "tests",
+                "source": "git",
+                "auth": "git-credential-manager",
+                "url": "https://git.internal/skills.git",
+                "path": "skills/demo/SKILL.md",
+                "_source": "private",
+            }]
+            args = argparse.Namespace(
+                name="neqsim-git-demo", force=False, vscode=False, vscode_dir=None)
+            content = (
+                b"---\nname: neqsim-git-demo\ndescription: Demo.\n---\n"
+                b"# Demo skill body with enough content.\n")
+
+            with mock.patch.object(install_skill, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(install_skill, "_read_git_repository_file", return_value=(content, "main")):
+                install_skill.cmd_install(catalog, args)
+
+            manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+            self.assertEqual("git", manifest["neqsim-git-demo"]["source_type"])
+            self.assertEqual("git-credential-manager", manifest["neqsim-git-demo"]["auth"])
+            self.assertEqual("https://git.internal/skills.git", manifest["neqsim-git-demo"]["url"])
+
+    def test_cmd_doctor_reports_sso_brokers_without_secrets(self):
+        """Doctor output should mention brokers, not token values."""
+        import argparse
+        import io
+        from contextlib import redirect_stdout
+
+        status = {
+            "github_cli": {"available": True, "detail": "available"},
+            "git": {"available": True, "detail": "available"},
+            "github_token_env": {"available": True, "detail": "set"},
+            "private_skill_token_env": {"available": False, "detail": "not set"},
+            "private_catalog": {"available": True, "detail": "~/.neqsim/private-skills.yaml"},
+        }
+        stream = io.StringIO()
+        with mock.patch.object(install_skill, "get_enterprise_auth_status", return_value=status), \
+                redirect_stdout(stream):
+            install_skill.cmd_doctor([], argparse.Namespace())
+
+        output = stream.getvalue()
+        self.assertIn("gh auth login --web", output)
+        self.assertIn("git-credential-manager", output)
+        self.assertNotIn("secret", output.lower())
 
 
 if __name__ == "__main__":

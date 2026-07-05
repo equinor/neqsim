@@ -17,8 +17,9 @@ Usage:
 Agents are installed to ~/.neqsim/agents/<name>/ and are never executed during
 installation. An agent package may be a single .agent.md file, a folder with
 AGENT.md, or a folder with AGENT.md plus agent.yaml and supporting resources.
-Private GitHub repositories can be read with GITHUB_TOKEN or an authenticated gh
-CLI session.
+Private GitHub repositories can be read through an authenticated gh CLI session
+or an optional GITHUB_TOKEN fallback. Internal git repositories can be read
+through Git Credential Manager or another configured git credential broker.
 """
 
 import argparse
@@ -116,8 +117,9 @@ PRIVATE_CATALOG_TEMPLATE = """\
 # Agents can be sourced from:
 #   - Local file paths or folders (source: local)
 #   - Network shares (source: local, with UNC path)
-#   - Private GitHub repos (source: github, requires GITHUB_TOKEN or gh auth)
-#   - Internal Git servers (source: url, with direct URL)
+#   - Private GitHub repos (source: github, auth: github-cli)
+#   - Internal Git servers (source: git, auth: git-credential-manager)
+#   - Internal raw URLs (source: url, optional PRIVATE_AGENT_TOKEN fallback)
 #
 # Install with: neqsim agent install <name>
 
@@ -127,15 +129,28 @@ organisation: "your-company"
 
 repositories:
     # -- Private GitHub repository discovery --
-    # Requires either GITHUB_TOKEN in the shell or `gh auth login` with repo access.
+    # Preferred: run `gh auth login --web` once and let GitHub/SSO handle login.
+    # NeqSim does not request, inspect, or store credentials.
     # Use catalog_path: "" when the repo has no community-agents.yaml and should
     # be scanned for AGENT.md / *.agent.md files directly.
     # - repo: "your-org/neqsim-enterprise-agents"
     #   source: github
+    #   auth: github-cli
     #   branch: "main"
     #   catalog_path: ""
     #   agent_path_glob: ["agents/**/AGENT.md", "agents/**/*.agent.md"]
     #   name_prefix: "enterprise-"  # optional, avoids public/private name clashes
+    #   tags: [enterprise, private]
+
+    # -- Internal Git repository discovery --
+    # Preferred when your enterprise uses Git Credential Manager / SSO for HTTPS.
+    # - source: git
+    #   auth: git-credential-manager
+    #   url: "https://git.internal.company.com/neqsim/enterprise-agents.git"
+    #   branch: "main"
+    #   catalog_path: "enterprise-agents.yaml"
+    #   agent_path_glob: ["agents/**/AGENT.md", "agents/**/*.agent.md"]
+    #   name_prefix: "enterprise-"
     #   tags: [enterprise, private]
 
 agents:
@@ -159,10 +174,23 @@ agents:
   #   description: "Internal process-modeling assistant"
   #   author: "your-team"
   #   source: github
+    #   auth: github-cli
   #   repo: "your-org/neqsim-company-agents"
   #   path: "agents/company-process-agent/AGENT.md"
   #   folder: "agents/company-process-agent"
   #   required_skills: [neqsim-api-patterns, neqsim-platform-modeling]
+
+    # -- Internal Git agent package using Git Credential Manager / SSO --
+    # - name: company-git-agent
+    #   description: "Internal agent fetched through git credentials"
+    #   author: "your-team"
+    #   source: git
+    #   auth: git-credential-manager
+    #   url: "https://git.internal.company.com/neqsim/enterprise-agents.git"
+    #   branch: "main"
+    #   path: "agents/company-git-agent/AGENT.md"
+    #   folder: "agents/company-git-agent"
+    #   required_skills: [neqsim-api-patterns]
 
   # -- Direct URL --
   # - name: company-review-agent
@@ -254,7 +282,11 @@ def _add_catalog_entries(agents, data, source):
 
     for repository in (data.get("repositories") or []):
         try:
-            for agent in _discover_github_repository_agents(repository):
+            if isinstance(repository, dict) and repository.get("source") == "git":
+                discovered = _discover_git_repository_agents(repository)
+            else:
+                discovered = _discover_github_repository_agents(repository)
+            for agent in discovered:
                 _append_agent(agents, agent, source)
         except Exception as exc:
             repo = repository.get("repo", "?") if isinstance(
@@ -538,12 +570,16 @@ def _normalize_discovered_agent(agent, repository, default_branch=None, content=
     path = normalized.get("path") or repository.get("default_path", "AGENT.md")
     normalized["repo"] = repo
     normalized["path"] = path
-    normalized["source"] = normalized.get("source", "github")
+    normalized["source"] = normalized.get("source", repository.get("source", "github"))
+    if "auth" not in normalized and repository.get("auth"):
+        normalized["auth"] = repository.get("auth")
+    if "url" not in normalized and repository.get("url"):
+        normalized["url"] = repository.get("url")
     if default_branch and "branch" not in normalized:
         normalized["branch"] = default_branch
     if "author" not in normalized:
         normalized["author"] = repository.get(
-            "author") or repo.split("/", 1)[0]
+            "author") or (repo.split("/", 1)[0] if repo else "private")
     if "display_name" not in normalized and normalized.get("name"):
         normalized["display_name"] = normalized.get(
             "display_name", normalized.get("name"))
@@ -565,7 +601,8 @@ def _discover_agents_from_remote_catalog(repository, branch):
     catalog_path = repository.get("catalog_path", "community-agents.yaml")
     if not catalog_path:
         return []
-    text = install_skill._fetch_github_text(repo, catalog_path, branch=branch)
+    text = install_skill._fetch_github_text(
+        repo, catalog_path, branch=branch, auth=install_skill._github_entry_auth(repository))
     data = _parse_catalog_text(text)
     discovered = []
     for agent in (data.get("agents") or []):
@@ -606,19 +643,20 @@ def _agent_folder_path(path, paths, yaml_path):
     return folder if has_package_files else ""
 
 
-def _fetch_remote_agent_yaml(repo, yaml_path, branch):
+def _fetch_remote_agent_yaml(repo, yaml_path, branch, auth=None):
     """Fetch and parse a remote agent.yaml file."""
     if not yaml_path:
         return {}
-    text = install_skill._fetch_github_text(repo, yaml_path, branch=branch)
+    text = install_skill._fetch_github_text(repo, yaml_path, branch=branch, auth=auth)
     return _parse_remote_agent_yaml(text)
 
 
 def _discover_agents_by_scanning_repo(repository, branch):
     """Discover agents by scanning an online GitHub repo for agent files."""
     repo = repository.get("repo", "")
+    auth = install_skill._github_entry_auth(repository)
     used_branch, paths = install_skill._list_github_tree_paths(
-        repo, branch=branch)
+        repo, branch=branch, auth=auth)
     patterns = _agent_globs(repository)
     discovered = []
     for path in sorted(paths):
@@ -627,10 +665,10 @@ def _discover_agents_by_scanning_repo(repository, branch):
         if not (path.endswith(".agent.md") or path.endswith("AGENT.md")):
             continue
         content = install_skill._fetch_github_text(
-            repo, path, branch=used_branch)
+            repo, path, branch=used_branch, auth=auth)
         frontmatter = install_skill._extract_frontmatter(content)
         yaml_path = _sibling_agent_yaml_path(path, paths)
-        agent_yaml = _fetch_remote_agent_yaml(repo, yaml_path, used_branch)
+        agent_yaml = _fetch_remote_agent_yaml(repo, yaml_path, used_branch, auth=auth)
         metadata = dict(frontmatter)
         metadata.update(agent_yaml)
         agent_id = frontmatter.get("agent_id") or frontmatter.get(
@@ -669,7 +707,8 @@ def _discover_github_repository_agents(repository):
     if not repo:
         return []
     branch = repository.get(
-        "branch") or install_skill._get_default_github_branch(repo)
+        "branch") or install_skill._get_default_github_branch(
+            repo, auth=install_skill._github_entry_auth(repository))
     try:
         catalog_agents = _discover_agents_from_remote_catalog(
             repository, branch)
@@ -678,6 +717,80 @@ def _discover_github_repository_agents(repository):
     except Exception:
         pass
     return _discover_agents_by_scanning_repo(repository, branch)
+
+
+def _discover_agents_from_git_catalog(repository, repo_dir, branch):
+    """Discover agents from an agent catalog in a cloned git repository."""
+    catalog_path = repository.get("catalog_path", "community-agents.yaml")
+    if not catalog_path:
+        return []
+    catalog_file = repo_dir / catalog_path
+    if not catalog_file.exists():
+        return []
+    data = _parse_catalog_text(catalog_file.read_text(encoding="utf-8"))
+    discovered = []
+    for agent in (data.get("agents") or []):
+        if isinstance(agent, dict) and agent.get("name"):
+            discovered.append(_normalize_discovered_agent(agent, repository, branch))
+    return discovered
+
+
+def _discover_agents_by_scanning_git_repo(repository, repo_dir, branch):
+    """Discover agents by scanning a cloned git repository."""
+    paths = [path.relative_to(repo_dir).as_posix() for path in repo_dir.rglob("*") if path.is_file()]
+    patterns = _agent_globs(repository)
+    discovered = []
+    for path in sorted(paths):
+        if not any(fnmatch.fnmatch(path, pattern) for pattern in patterns):
+            continue
+        if not (path.endswith(".agent.md") or path.endswith("AGENT.md")):
+            continue
+        file_path = repo_dir / path
+        content = file_path.read_text(encoding="utf-8", errors="replace")
+        frontmatter = install_skill._extract_frontmatter(content)
+        yaml_path = _sibling_agent_yaml_path(path, paths)
+        agent_yaml = {}
+        if yaml_path:
+            agent_yaml = _parse_remote_agent_yaml(
+                (repo_dir / yaml_path).read_text(encoding="utf-8", errors="replace"))
+        metadata = dict(frontmatter)
+        metadata.update(agent_yaml)
+        agent_id = frontmatter.get("agent_id") or frontmatter.get(
+            "id") or agent_yaml.get("name") or _agent_id_from_path(path)
+        display_name = metadata.get("display_name") or frontmatter.get(
+            "name") or agent_yaml.get("display_name") or agent_yaml.get("name") or agent_id
+        agent = dict(metadata)
+        agent.update({
+            "name": agent_id,
+            "display_name": display_name,
+            "version": metadata.get("version", repository.get("version", "")),
+            "description": metadata.get(
+                "description", "Private agent from {url}/{path}".format(
+                    url=install_skill._git_repository_url(repository), path=path)
+            ),
+            "path": path,
+            "required_skills": _extract_required_skills(content, metadata),
+        })
+        folder = _agent_folder_path(path, paths, yaml_path)
+        if folder:
+            agent["folder"] = folder
+        if yaml_path:
+            agent["agent_yaml_path"] = yaml_path
+        discovered.append(_normalize_discovered_agent(agent, repository, branch, content))
+    return discovered
+
+
+def _discover_git_repository_agents(repository):
+    """Discover every agent available from a git repository."""
+    if not isinstance(repository, dict) or repository.get("source") != "git":
+        return []
+    with install_skill.tempfile.TemporaryDirectory() as tmp:
+        repo_dir = Path(tmp) / "repo"
+        used_branch = install_skill._clone_git_repository(repository, repo_dir)
+        catalog_agents = _discover_agents_from_git_catalog(repository, repo_dir, used_branch)
+        if catalog_agents:
+            return catalog_agents
+        return _discover_agents_by_scanning_git_repo(repository, repo_dir, used_branch)
 
 
 def load_manifest():
@@ -1190,10 +1303,10 @@ def _install_from_url(agent, dest_dir):
     return dest_file
 
 
-def _github_paths_under_folder(repo, folder, branch):
+def _github_paths_under_folder(repo, folder, branch, auth=None):
     """Return GitHub blob paths under a folder."""
     used_branch, paths = install_skill._list_github_tree_paths(
-        repo, branch=branch)
+        repo, branch=branch, auth=auth)
     prefix = folder.rstrip("/") + "/"
     selected = [path for path in paths if path.startswith(prefix)]
     return used_branch, selected
@@ -1204,14 +1317,15 @@ def _install_github_folder(agent, dest_dir):
     repo = agent.get("repo", "")
     folder = agent.get("folder") or agent.get("copy_root")
     branch = agent.get("branch")
-    used_branch, paths = _github_paths_under_folder(repo, folder, branch)
+    auth = install_skill._github_entry_auth(agent)
+    used_branch, paths = _github_paths_under_folder(repo, folder, branch, auth=auth)
     if not paths:
         print(
             "  [!!] No files found under {repo}/{folder}".format(repo=repo, folder=folder))
         sys.exit(1)
     for path in paths:
         content, _branch, _url = install_skill._fetch_github_bytes(
-            repo, path, branch=used_branch)
+            repo, path, branch=used_branch, auth=auth)
         relative = Path(path).relative_to(folder)
         dest_file = dest_dir / relative
         dest_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1237,7 +1351,7 @@ def _install_from_github(agent, dest_dir):
         return _install_github_folder(agent, dest_dir)
 
     content, used_branch, raw_url = install_skill._fetch_github_bytes(
-        repo, path, branch=branch)
+        repo, path, branch=branch, auth=install_skill._github_entry_auth(agent))
     print("  Downloading: {url}".format(url=raw_url))
     dest_name = Path(path).name if Path(
         path).name.endswith(".agent.md") else "AGENT.md"
@@ -1248,11 +1362,48 @@ def _install_from_github(agent, dest_dir):
     yaml_path = agent.get("agent_yaml_path")
     if yaml_path:
         yaml_content, _branch, yaml_url = install_skill._fetch_github_bytes(
-            repo, yaml_path, branch=used_branch
+            repo, yaml_path, branch=used_branch, auth=install_skill._github_entry_auth(agent)
         )
         print("  Downloading: {url}".format(url=yaml_url))
         (dest_dir / "agent.yaml").write_bytes(yaml_content)
     return dest_file
+
+
+def _install_from_git(agent, dest_dir):
+    """Install an agent from a git repository using configured git credentials."""
+    path = agent.get("path", "AGENT.md")
+    folder = agent.get("folder") or agent.get("copy_root")
+    with install_skill.tempfile.TemporaryDirectory() as tmp:
+        repo_dir = Path(tmp) / "repo"
+        used_branch = install_skill._clone_git_repository(agent, repo_dir)
+        if folder:
+            source_dir = repo_dir / folder
+            if not source_dir.exists() or not source_dir.is_dir():
+                print("  [!!] No files found under git folder {folder}".format(folder=folder))
+                sys.exit(1)
+            shutil.copytree(str(source_dir), str(dest_dir), dirs_exist_ok=True)
+            agent["branch"] = used_branch
+            print("  [OK] Downloaded git folder: {url}:{folder}".format(
+                url=install_skill._git_repository_url(agent), folder=folder))
+            return _find_agent_main_file(dest_dir)
+
+        source_file = repo_dir / path
+        if not source_file.exists() or not source_file.is_file():
+            print("  [!!] Path not found in git source: {path}".format(path=path))
+            sys.exit(1)
+        dest_name = Path(path).name if Path(path).name.endswith(".agent.md") else "AGENT.md"
+        dest_file = dest_dir / dest_name
+        shutil.copy2(str(source_file), str(dest_file))
+        agent["branch"] = used_branch
+        print("  Downloading via git: {url}:{path}".format(
+            url=install_skill._git_repository_url(agent), path=path))
+
+        yaml_path = agent.get("agent_yaml_path")
+        if yaml_path:
+            yaml_file = repo_dir / yaml_path
+            if yaml_file.exists():
+                shutil.copy2(str(yaml_file), str(dest_dir / "agent.yaml"))
+        return dest_file
 
 
 def cmd_install(agents, args):
@@ -1280,17 +1431,24 @@ def cmd_install(agents, args):
 
 def _install_all_agents(agents, args):
     """Install every catalog agent, continuing past individual failures."""
+    source_filter = getattr(args, "source", "all")
     seen = set()
     unique = []
     for agent in agents:
         name = agent.get("name", "")
         if not name or name in seen:
             continue
+        if source_filter != "all" and agent.get("_source") != source_filter:
+            continue
         seen.add(name)
         unique.append(agent)
 
     total = len(unique)
-    print("\n  Installing {total} agent(s) from the catalog...\n".format(total=total))
+    if total == 0:
+        print("\n  No agent(s) matched source '{source}'.\n".format(source=source_filter))
+        return
+    print("\n  Installing {total} {source} agent(s) from the catalog...\n".format(
+        total=total, source=source_filter))
     manifest = load_manifest()
     installed = []
     failed = []
@@ -1355,6 +1513,8 @@ def _install_agent_record(agent, args, manifest):
             main_file = _install_from_local(agent, dest_dir)
         elif source_type == "url":
             main_file = _install_from_url(agent, dest_dir)
+        elif source_type == "git":
+            main_file = _install_from_git(agent, dest_dir)
         else:
             main_file = _install_from_github(agent, dest_dir)
 
@@ -1401,6 +1561,8 @@ def _install_agent_record(agent, args, manifest):
             "source": agent.get("_source", "community"),
             "source_type": source_type,
             "repo": agent.get("repo", ""),
+            "auth": agent.get("auth", ""),
+            "url": agent.get("url", ""),
             "remote_path": agent.get("path", ""),
             "branch": agent.get("branch", ""),
             "author": agent.get("author", ""),
@@ -1555,6 +1717,39 @@ def cmd_schema(agents, args):
     print(_manifest_schema_text())
 
 
+def cmd_doctor(agents, args):
+    """Print enterprise auth broker readiness for agent installation."""
+    status = install_skill.get_enterprise_auth_status()
+    status["private_agent_token_env"] = bool(os.environ.get("PRIVATE_AGENT_TOKEN"))
+    print("\n  NeqSim agent enterprise access check\n")
+    print("  NeqSim does not request, inspect, or store credentials, cookies, tokens, or MFA codes.")
+    print("  Preferred GitHub Enterprise login: gh auth login --web")
+    print("  Preferred internal Git login: Git Credential Manager / your configured git SSO broker.\n")
+
+    labels = {
+        "github_cli": "GitHub CLI available",
+        "github_cli_authenticated": "GitHub CLI authenticated",
+        "git": "git available",
+        "git_credential_helper": "git credential helper configured",
+        "github_token_env": "GITHUB_TOKEN fallback configured",
+        "private_agent_token_env": "PRIVATE_AGENT_TOKEN fallback configured",
+        "private_catalog": "Private agent catalog exists",
+    }
+    for key in [
+            "github_cli", "github_cli_authenticated", "git",
+            "git_credential_helper", "github_token_env",
+            "private_agent_token_env", "private_catalog"]:
+        value = status.get(key, False)
+        print("  [{mark}] {label}".format(
+            mark="OK" if value else "--", label=labels[key]))
+
+    print("\n  Supported private source modes:")
+    print("    - source: github, auth: github-cli")
+    print("    - source: git, auth: git-credential-manager")
+    print("    - source: local, auth: none")
+    print("    - source: url, optional PRIVATE_AGENT_TOKEN fallback\n")
+
+
 def main():
     """Run the agent installer CLI."""
     parser = argparse.ArgumentParser(
@@ -1563,20 +1758,24 @@ def main():
         epilog=textwrap.dedent("""\
             Examples:
               neqsim agent list
+                            neqsim agent list --private
               neqsim agent search "tie-in"
               neqsim agent install neqsim-example-agent
                             neqsim agent install neqsim-example-agent --no-install-missing-skills
               neqsim agent install neqsim-example-agent --vscode
-              neqsim agent install --all
+                            neqsim agent install --all --vscode
+                            neqsim agent install --all --source community --vscode
+                            neqsim agent install --all --source private --vscode
               neqsim agent installed
               neqsim agent info neqsim-example-agent
               neqsim agent validate neqsim-example-agent
               neqsim agent schema
+                            neqsim agent doctor
               neqsim agent remove neqsim-example-agent
               neqsim agent private-init
 
-            Private repos require GITHUB_TOKEN or `gh auth login` with repo access.
-            Internal URLs can use PRIVATE_AGENT_TOKEN env var.
+                        Preferred private access uses `gh auth login --web` or Git Credential Manager.
+                        Internal raw URLs can use PRIVATE_AGENT_TOKEN env var as a fallback.
             Install never executes agent code.
         """),
     )
@@ -1599,6 +1798,9 @@ def main():
         "name", nargs="?", help="Agent name from catalog (omit when using --all)")
     p_install.add_argument("--all", action="store_true",
                            help="Install every agent in the catalog")
+    p_install.add_argument(
+        "--source", choices=["all", "community", "private"], default="all",
+        help="When used with --all, install all sources, community only, or private/enterprise only")
     p_install.add_argument("--force", action="store_true",
                            help="Reinstall if exists")
     p_install.set_defaults(install_missing_skills=True)
@@ -1643,6 +1845,8 @@ def main():
     sub.add_parser(
         "schema", help="Show the supported agent.yaml manifest schema")
 
+    sub.add_parser("doctor", help="Check enterprise auth broker readiness")
+
     sub.add_parser(
         "private-init", help="Create private catalog template at ~/.neqsim/")
 
@@ -1654,9 +1858,13 @@ def main():
     if args.command == "private-init":
         cmd_private_init([], args)
         return
-    if args.command in ("validate", "run", "schema"):
+    if args.command in ("validate", "run", "schema", "doctor"):
         commands_without_catalog = {
-            "validate": cmd_validate, "run": cmd_run, "schema": cmd_schema}
+            "validate": cmd_validate,
+            "run": cmd_run,
+            "schema": cmd_schema,
+            "doctor": cmd_doctor,
+        }
         commands_without_catalog[args.command]([], args)
         return
 
