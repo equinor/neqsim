@@ -445,6 +445,7 @@
 				<configuration>
 					<java>
 						<eclipse>
+							<version>4.35</version>
 							<file>.config/neqsim_formatter.xml</file>
 						</eclipse>
 						<includes>
