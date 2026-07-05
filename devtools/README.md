@@ -25,8 +25,8 @@ neqsim doctor            # check your environment is healthy
 neqsim contribute        # guided wizard for your first contribution
 neqsim new-task TITLE    # create a task-solving workspace
 neqsim new-skill NAME    # scaffold a new AI skill
-neqsim skill CMD         # manage community/private skills (list/search/install/remove/publish)
-neqsim agent CMD         # manage community/private agents (list/search/install/remove/validate/schema)
+neqsim skill CMD         # manage community/private skills (list/search/install/export/doctor)
+neqsim agent CMD         # manage community/private agents (list/search/install/export/doctor/validate/schema)
 ```
 
 Run `neqsim --help` for the full list.

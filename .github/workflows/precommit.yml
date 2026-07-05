@@ -27,6 +27,28 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.13"
-      - uses: pre-commit/action@v3.0.1
+      - uses: actions/cache@v4
         with:
-          extra_args: --all-files --hook-stage pre-push
+          path: |
+            ~/.cache/pre-commit
+            ~/.m2/repository/dev/equo/p2-data
+          key: pre-commit-${{ runner.os }}-${{ hashFiles('.pre-commit-config.yaml', 'pom.xml') }}
+          restore-keys: |
+            pre-commit-${{ runner.os }}-
+      - name: Install pre-commit
+        run: python -m pip install pre-commit
+      - name: Run pre-commit checks
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            if pre-commit run --all-files --hook-stage pre-push 2>&1 | tee pre-commit.log; then
+              exit 0
+            fi
+            status=${PIPESTATUS[0]}
+            if ! grep -q "Failed to provision P2 dependencies" pre-commit.log || [ "$attempt" -eq 3 ]; then
+              exit "$status"
+            fi
+            rm -rf ~/.m2/repository/dev/equo/p2-data
+            echo "Spotless P2 provisioning failed on attempt $attempt; retrying..."
+            sleep $((attempt * 20))
+          done

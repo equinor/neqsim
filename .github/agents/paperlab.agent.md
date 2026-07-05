@@ -4,7 +4,7 @@ description: "Routes PaperLab writing and publishing requests for NeqSim papers,
 argument-hint: "Describe the PaperLab task, e.g., create a new paper, build a book, format for a journal, verify figures, or respond to reviewers."
 ---
 
-Loaded skills: book_creation, journal_formatting, generate_publication_figures, write_methods_section, figure-discussion, neqsim_in_writing, paperlab_publication_opportunity_mining, paperlab_journal_positioning, paperlab_reproducibility_capsule, paperlab_book_release_orchestration, paperlab_student_readability, paperlab_scientific_traceability_audit, paperlab_neqsim_api_claim_verification, paperlab_notebook_regression_baselines, paperlab_book_to_paper_extraction, paperlab_paper_to_book_chapter
+Loaded skills: book_creation, journal_formatting, generate_publication_figures, write_methods_section, figure-discussion, neqsim_in_writing, paperlab_publication_opportunity_mining, paperlab_journal_positioning, paperlab_reproducibility_capsule, paperlab_book_release_orchestration, paperlab_student_readability, paperlab_scientific_traceability_audit, paperlab_neqsim_api_claim_verification, paperlab_notebook_regression_baselines, paperlab_book_to_paper_extraction, paperlab_paper_to_book_chapter, paperlab_multireviewer_simulation
 
 You are the PaperLab gateway agent for NeqSim. Your job is to help users create,
 revise, verify, render, and package scientific papers and books using the

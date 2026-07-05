@@ -17,11 +17,13 @@ Usage:
 Agents are installed to ~/.neqsim/agents/<name>/ and are never executed during
 installation. An agent package may be a single .agent.md file, a folder with
 AGENT.md, or a folder with AGENT.md plus agent.yaml and supporting resources.
-Private GitHub repositories can be read with GITHUB_TOKEN or an authenticated gh
-CLI session.
+Private GitHub repositories can be read through an authenticated gh CLI browser
+SSO session. Internal git repositories can be read through Git Credential
+Manager or another configured git credential broker.
 """
 
 import argparse
+from datetime import datetime, timezone
 import fnmatch
 import json
 import os
@@ -48,6 +50,8 @@ INSTALL_DIR = Path.home() / ".neqsim" / "agents"
 MANIFEST_FILE = INSTALL_DIR / "installed.json"
 CORE_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
 INSTALLED_SKILLS_DIR = Path.home() / ".neqsim" / "skills"
+EXPORT_DIR = Path.home() / ".neqsim" / "export"
+EXPORT_PROFILE_FILE = EXPORT_DIR / "export-profile.json"
 
 DEFAULT_AGENT_PATH_GLOBS = ["agents/**/*.agent.md",
                             "agents/**/AGENT.md", "**/*.agent.md"]
@@ -116,8 +120,9 @@ PRIVATE_CATALOG_TEMPLATE = """\
 # Agents can be sourced from:
 #   - Local file paths or folders (source: local)
 #   - Network shares (source: local, with UNC path)
-#   - Private GitHub repos (source: github, requires GITHUB_TOKEN or gh auth)
-#   - Internal Git servers (source: url, with direct URL)
+#   - Private GitHub repos (source: github, auth: github-cli)
+#   - Internal Git servers (source: git, auth: git-credential-manager)
+#   - Internal raw URLs (source: url, optional PRIVATE_AGENT_TOKEN fallback)
 #
 # Install with: neqsim agent install <name>
 
@@ -127,15 +132,28 @@ organisation: "your-company"
 
 repositories:
     # -- Private GitHub repository discovery --
-    # Requires either GITHUB_TOKEN in the shell or `gh auth login` with repo access.
+    # Preferred: run `gh auth login --web` once and let GitHub/SSO handle login.
+    # NeqSim does not request, inspect, or store credentials.
     # Use catalog_path: "" when the repo has no community-agents.yaml and should
     # be scanned for AGENT.md / *.agent.md files directly.
     # - repo: "your-org/neqsim-enterprise-agents"
     #   source: github
+    #   auth: github-cli
     #   branch: "main"
     #   catalog_path: ""
     #   agent_path_glob: ["agents/**/AGENT.md", "agents/**/*.agent.md"]
     #   name_prefix: "enterprise-"  # optional, avoids public/private name clashes
+    #   tags: [enterprise, private]
+
+    # -- Internal Git repository discovery --
+    # Preferred when your enterprise uses Git Credential Manager / SSO for HTTPS.
+    # - source: git
+    #   auth: git-credential-manager
+    #   url: "https://git.internal.company.com/neqsim/enterprise-agents.git"
+    #   branch: "main"
+    #   catalog_path: "enterprise-agents.yaml"
+    #   agent_path_glob: ["agents/**/AGENT.md", "agents/**/*.agent.md"]
+    #   name_prefix: "enterprise-"
     #   tags: [enterprise, private]
 
 agents:
@@ -159,10 +177,23 @@ agents:
   #   description: "Internal process-modeling assistant"
   #   author: "your-team"
   #   source: github
+    #   auth: github-cli
   #   repo: "your-org/neqsim-company-agents"
   #   path: "agents/company-process-agent/AGENT.md"
   #   folder: "agents/company-process-agent"
   #   required_skills: [neqsim-api-patterns, neqsim-platform-modeling]
+
+    # -- Internal Git agent package using Git Credential Manager / SSO --
+    # - name: company-git-agent
+    #   description: "Internal agent fetched through git credentials"
+    #   author: "your-team"
+    #   source: git
+    #   auth: git-credential-manager
+    #   url: "https://git.internal.company.com/neqsim/enterprise-agents.git"
+    #   branch: "main"
+    #   path: "agents/company-git-agent/AGENT.md"
+    #   folder: "agents/company-git-agent"
+    #   required_skills: [neqsim-api-patterns]
 
   # -- Direct URL --
   # - name: company-review-agent
@@ -254,11 +285,18 @@ def _add_catalog_entries(agents, data, source):
 
     for repository in (data.get("repositories") or []):
         try:
-            for agent in _discover_github_repository_agents(repository):
+            repository_entry = dict(repository) if isinstance(repository, dict) else repository
+            if isinstance(repository_entry, dict):
+                repository_entry["_catalog_source"] = source
+            if isinstance(repository_entry, dict) and repository_entry.get("source") == "git":
+                discovered = _discover_git_repository_agents(repository_entry)
+            else:
+                discovered = _discover_github_repository_agents(repository_entry)
+            for agent in discovered:
                 _append_agent(agents, agent, source)
         except Exception as exc:
-            repo = repository.get("repo", "?") if isinstance(
-                repository, dict) else "?"
+            repo = repository_entry.get("repo", "?") if isinstance(
+                repository_entry, dict) else "?"
             print("  [!!] Could not discover agents from {repo}: {exc}".format(
                 repo=repo, exc=exc
             ), file=sys.stderr)
@@ -527,6 +565,19 @@ def _agent_globs(repository):
     return _normalize_list(patterns)
 
 
+def _use_local_repository_checkout(repository):
+    """Return true when a catalog entry intentionally opts into local private discovery."""
+    trust_level = str(repository.get("trust_level", "")).strip().lower()
+    tags = set(tag.lower() for tag in _normalize_list(repository.get("tags")))
+    source = str(repository.get("_catalog_source", "")).strip().lower()
+    private_markers = set(["private", "internal", "enterprise"])
+    return (
+        source == "private"
+        or trust_level in set(["private", "internal"])
+        or bool(tags.intersection(private_markers))
+    )
+
+
 def _normalize_discovered_agent(agent, repository, default_branch=None, content=""):
     """Normalize an agent discovered from a repository catalog or scan."""
     normalized = dict(agent)
@@ -538,12 +589,16 @@ def _normalize_discovered_agent(agent, repository, default_branch=None, content=
     path = normalized.get("path") or repository.get("default_path", "AGENT.md")
     normalized["repo"] = repo
     normalized["path"] = path
-    normalized["source"] = normalized.get("source", "github")
+    normalized["source"] = normalized.get("source", repository.get("source", "github"))
+    if "auth" not in normalized and repository.get("auth"):
+        normalized["auth"] = repository.get("auth")
+    if "url" not in normalized and repository.get("url"):
+        normalized["url"] = repository.get("url")
     if default_branch and "branch" not in normalized:
         normalized["branch"] = default_branch
     if "author" not in normalized:
         normalized["author"] = repository.get(
-            "author") or repo.split("/", 1)[0]
+            "author") or (repo.split("/", 1)[0] if repo else "private")
     if "display_name" not in normalized and normalized.get("name"):
         normalized["display_name"] = normalized.get(
             "display_name", normalized.get("name"))
@@ -565,7 +620,8 @@ def _discover_agents_from_remote_catalog(repository, branch):
     catalog_path = repository.get("catalog_path", "community-agents.yaml")
     if not catalog_path:
         return []
-    text = install_skill._fetch_github_text(repo, catalog_path, branch=branch)
+    text = install_skill._fetch_github_text(
+        repo, catalog_path, branch=branch, auth=install_skill._github_entry_auth(repository))
     data = _parse_catalog_text(text)
     discovered = []
     for agent in (data.get("agents") or []):
@@ -606,19 +662,20 @@ def _agent_folder_path(path, paths, yaml_path):
     return folder if has_package_files else ""
 
 
-def _fetch_remote_agent_yaml(repo, yaml_path, branch):
+def _fetch_remote_agent_yaml(repo, yaml_path, branch, auth=None):
     """Fetch and parse a remote agent.yaml file."""
     if not yaml_path:
         return {}
-    text = install_skill._fetch_github_text(repo, yaml_path, branch=branch)
+    text = install_skill._fetch_github_text(repo, yaml_path, branch=branch, auth=auth)
     return _parse_remote_agent_yaml(text)
 
 
 def _discover_agents_by_scanning_repo(repository, branch):
     """Discover agents by scanning an online GitHub repo for agent files."""
     repo = repository.get("repo", "")
+    auth = install_skill._github_entry_auth(repository)
     used_branch, paths = install_skill._list_github_tree_paths(
-        repo, branch=branch)
+        repo, branch=branch, auth=auth)
     patterns = _agent_globs(repository)
     discovered = []
     for path in sorted(paths):
@@ -627,10 +684,10 @@ def _discover_agents_by_scanning_repo(repository, branch):
         if not (path.endswith(".agent.md") or path.endswith("AGENT.md")):
             continue
         content = install_skill._fetch_github_text(
-            repo, path, branch=used_branch)
+            repo, path, branch=used_branch, auth=auth)
         frontmatter = install_skill._extract_frontmatter(content)
         yaml_path = _sibling_agent_yaml_path(path, paths)
-        agent_yaml = _fetch_remote_agent_yaml(repo, yaml_path, used_branch)
+        agent_yaml = _fetch_remote_agent_yaml(repo, yaml_path, used_branch, auth=auth)
         metadata = dict(frontmatter)
         metadata.update(agent_yaml)
         agent_id = frontmatter.get("agent_id") or frontmatter.get(
@@ -659,6 +716,81 @@ def _discover_agents_by_scanning_repo(repository, branch):
     return discovered
 
 
+def _discover_agents_from_local_repository(repository, repo_root):
+    """Discover agents from a checked-out sibling repository."""
+    catalog_path = repository.get("catalog_path", "community-agents.yaml")
+    catalog_candidates = []
+    if catalog_path:
+        catalog_candidates.append(catalog_path)
+
+    for candidate in catalog_candidates:
+        path = repo_root / candidate
+        if not path.is_file():
+            continue
+        data = _load_catalog_file(path)
+        discovered = []
+        for agent in (data.get("agents") or []):
+            if not isinstance(agent, dict) or not agent.get("name"):
+                continue
+            normalized = _normalize_discovered_agent(agent, repository)
+            local_path = repo_root / normalized.get("path", "AGENT.md")
+            normalized["source"] = "local"
+            normalized["path"] = str(local_path)
+            folder = normalized.get("folder")
+            if folder:
+                normalized["folder"] = str(repo_root / folder)
+            discovered.append(normalized)
+        if discovered:
+            return discovered
+
+    paths = [
+        path.relative_to(repo_root).as_posix()
+        for path in repo_root.rglob("*")
+        if path.is_file()
+    ]
+    patterns = _agent_globs(repository)
+    discovered = []
+    for path in sorted(paths):
+        if not any(fnmatch.fnmatch(path, pattern) for pattern in patterns):
+            continue
+        if not (path.endswith(".agent.md") or path.endswith("AGENT.md")):
+            continue
+        file_path = repo_root / path
+        content = file_path.read_text(encoding="utf-8", errors="replace")
+        frontmatter = install_skill._extract_frontmatter(content)
+        yaml_path = _sibling_agent_yaml_path(path, paths)
+        agent_yaml = {}
+        if yaml_path:
+            agent_yaml = _parse_remote_agent_yaml(
+                (repo_root / yaml_path).read_text(encoding="utf-8", errors="replace"))
+        metadata = dict(frontmatter)
+        metadata.update(agent_yaml)
+        agent_id = frontmatter.get("agent_id") or frontmatter.get(
+            "id") or agent_yaml.get("name") or _agent_id_from_path(path)
+        display_name = metadata.get("display_name") or frontmatter.get(
+            "name") or agent_yaml.get("display_name") or agent_yaml.get("name") or agent_id
+        agent = dict(metadata)
+        agent.update({
+            "name": agent_id,
+            "display_name": display_name,
+            "version": metadata.get("version", repository.get("version", "")),
+            "description": metadata.get(
+                "description", "Local agent from {root}/{path}".format(
+                    root=repo_root, path=path)
+            ),
+            "path": str(file_path),
+            "source": "local",
+            "required_skills": _extract_required_skills(content, metadata),
+        })
+        folder = _agent_folder_path(path, paths, yaml_path)
+        if folder:
+            agent["folder"] = str(repo_root / folder)
+        if yaml_path:
+            agent["agent_yaml_path"] = str(repo_root / yaml_path)
+        discovered.append(_normalize_discovered_agent(agent, repository, content=content))
+    return discovered
+
+
 def _discover_github_repository_agents(repository):
     """Discover every agent available from an online GitHub repository."""
     if not isinstance(repository, dict):
@@ -668,8 +800,15 @@ def _discover_github_repository_agents(repository):
     repo = repository.get("repo", "")
     if not repo:
         return []
+    local_root = (install_skill._local_repository_root(repository)
+                  if _use_local_repository_checkout(repository) else None)
+    if local_root is not None:
+        local_agents = _discover_agents_from_local_repository(repository, local_root)
+        if local_agents:
+            return local_agents
     branch = repository.get(
-        "branch") or install_skill._get_default_github_branch(repo)
+        "branch") or install_skill._get_default_github_branch(
+            repo, auth=install_skill._github_entry_auth(repository))
     try:
         catalog_agents = _discover_agents_from_remote_catalog(
             repository, branch)
@@ -678,6 +817,80 @@ def _discover_github_repository_agents(repository):
     except Exception:
         pass
     return _discover_agents_by_scanning_repo(repository, branch)
+
+
+def _discover_agents_from_git_catalog(repository, repo_dir, branch):
+    """Discover agents from an agent catalog in a cloned git repository."""
+    catalog_path = repository.get("catalog_path", "community-agents.yaml")
+    if not catalog_path:
+        return []
+    catalog_file = repo_dir / catalog_path
+    if not catalog_file.exists():
+        return []
+    data = _parse_catalog_text(catalog_file.read_text(encoding="utf-8"))
+    discovered = []
+    for agent in (data.get("agents") or []):
+        if isinstance(agent, dict) and agent.get("name"):
+            discovered.append(_normalize_discovered_agent(agent, repository, branch))
+    return discovered
+
+
+def _discover_agents_by_scanning_git_repo(repository, repo_dir, branch):
+    """Discover agents by scanning a cloned git repository."""
+    paths = [path.relative_to(repo_dir).as_posix() for path in repo_dir.rglob("*") if path.is_file()]
+    patterns = _agent_globs(repository)
+    discovered = []
+    for path in sorted(paths):
+        if not any(fnmatch.fnmatch(path, pattern) for pattern in patterns):
+            continue
+        if not (path.endswith(".agent.md") or path.endswith("AGENT.md")):
+            continue
+        file_path = repo_dir / path
+        content = file_path.read_text(encoding="utf-8", errors="replace")
+        frontmatter = install_skill._extract_frontmatter(content)
+        yaml_path = _sibling_agent_yaml_path(path, paths)
+        agent_yaml = {}
+        if yaml_path:
+            agent_yaml = _parse_remote_agent_yaml(
+                (repo_dir / yaml_path).read_text(encoding="utf-8", errors="replace"))
+        metadata = dict(frontmatter)
+        metadata.update(agent_yaml)
+        agent_id = frontmatter.get("agent_id") or frontmatter.get(
+            "id") or agent_yaml.get("name") or _agent_id_from_path(path)
+        display_name = metadata.get("display_name") or frontmatter.get(
+            "name") or agent_yaml.get("display_name") or agent_yaml.get("name") or agent_id
+        agent = dict(metadata)
+        agent.update({
+            "name": agent_id,
+            "display_name": display_name,
+            "version": metadata.get("version", repository.get("version", "")),
+            "description": metadata.get(
+                "description", "Private agent from {url}/{path}".format(
+                    url=install_skill._git_repository_url(repository), path=path)
+            ),
+            "path": path,
+            "required_skills": _extract_required_skills(content, metadata),
+        })
+        folder = _agent_folder_path(path, paths, yaml_path)
+        if folder:
+            agent["folder"] = folder
+        if yaml_path:
+            agent["agent_yaml_path"] = yaml_path
+        discovered.append(_normalize_discovered_agent(agent, repository, branch, content))
+    return discovered
+
+
+def _discover_git_repository_agents(repository):
+    """Discover every agent available from a git repository."""
+    if not isinstance(repository, dict) or repository.get("source") != "git":
+        return []
+    with install_skill.tempfile.TemporaryDirectory() as tmp:
+        repo_dir = Path(tmp) / "repo"
+        used_branch = install_skill._clone_git_repository(repository, repo_dir)
+        catalog_agents = _discover_agents_from_git_catalog(repository, repo_dir, used_branch)
+        if catalog_agents:
+            return catalog_agents
+        return _discover_agents_by_scanning_git_repo(repository, repo_dir, used_branch)
 
 
 def load_manifest():
@@ -693,7 +906,35 @@ def save_manifest(manifest):
     MANIFEST_FILE.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
 
-# ── VS Code export ─────────────────────────────────────────────────────
+# ── Export targets ─────────────────────────────────────────────────────
+SUPPORTED_EXPORT_TARGETS = ("vscode", "generic")
+
+
+def _requested_agent_export_targets(args):
+    """Return requested export targets from parsed CLI arguments.
+
+    @param args parsed CLI arguments
+    @return list of requested target names
+    """
+    targets = list(getattr(args, "target", []) or [])
+    if getattr(args, "vscode", False) and "vscode" not in targets:
+        targets.append("vscode")
+    return targets
+
+
+def _path_is_under(path, root):
+    """Return true when path is the root itself or inside root.
+
+    @param path path to test
+    @param root expected parent/root path
+    @return true if path resolves under root, otherwise false
+    """
+    try:
+        resolved_path = Path(path).expanduser().resolve()
+        resolved_root = Path(root).expanduser().resolve()
+    except Exception:
+        return False
+    return resolved_path == resolved_root or resolved_root in resolved_path.parents
 
 def _vscode_user_dir():
     """Return the VS Code stable User config directory for this platform.
@@ -737,7 +978,9 @@ def export_agent_to_vscode(name, main_file, vscode_dir):
     """Copy an installed agent's main definition into a VS Code agents dir.
 
     VS Code discovers agents from *.agent.md files, so the main definition is
-    copied and renamed to <name>.agent.md.
+    copied, renamed to <name>.agent.md, and given a matching frontmatter name
+    so community and private agents with similar source names do not collide in
+    VS Code's agent picker.
 
     @param name the agent name (used for the destination filename)
     @param main_file the installed agent's main markdown definition
@@ -747,7 +990,135 @@ def export_agent_to_vscode(name, main_file, vscode_dir):
     vscode_dir = Path(vscode_dir)
     vscode_dir.mkdir(parents=True, exist_ok=True)
     dest = vscode_dir / "{name}.agent.md".format(name=name)
-    shutil.copy2(str(main_file), str(dest))
+    content = Path(main_file).read_text(encoding="utf-8")
+    dest.write_text(_with_vscode_agent_name(content, name), encoding="utf-8")
+    return dest
+
+
+def _with_vscode_agent_name(content, name):
+    """Return agent markdown with frontmatter name set to the exported name."""
+    if not content.startswith("---"):
+        return "---\nname: {name}\n---\n{content}".format(name=name, content=content)
+    lines = content.splitlines()
+    if not lines or lines[0].strip() != "---":
+        return content
+    end_index = None
+    for index in range(1, len(lines)):
+        if lines[index].strip() == "---":
+            end_index = index
+            break
+    if end_index is None:
+        return content
+    replaced = False
+    frontmatter = []
+    for line in lines[1:end_index]:
+        if line.lstrip().startswith("name:"):
+            indent = line[:len(line) - len(line.lstrip())]
+            frontmatter.append("{indent}name: {name}".format(indent=indent, name=name))
+            replaced = True
+        else:
+            frontmatter.append(line)
+    if not replaced:
+        frontmatter.insert(0, "name: {name}".format(name=name))
+    rewritten = ["---"] + frontmatter + lines[end_index:]
+    trailing_newline = "\n" if content.endswith("\n") else ""
+    return "\n".join(rewritten) + trailing_newline
+
+
+def resolve_generic_agents_dir(explicit_dir=None):
+    """Resolve the generic, tool-neutral agents export directory.
+
+    @param explicit_dir an explicit export root directory (overrides default)
+    @return the directory where generic agent folders should be written
+    """
+    if explicit_dir:
+        return Path(explicit_dir).expanduser().resolve() / "agents"
+    return EXPORT_DIR / "generic" / "agents"
+
+
+def export_agent_to_generic(name, source_dir, generic_agents_dir):
+    """Copy an installed agent package into the generic export layout.
+
+    @param name the agent name (used as the destination subfolder)
+    @param source_dir the installed agent folder under ~/.neqsim/agents/<name>
+    @param generic_agents_dir the generic agents export directory
+    @return the destination agent folder Path
+    """
+    dest = Path(generic_agents_dir) / name
+    if dest.exists():
+        shutil.rmtree(str(dest))
+    shutil.copytree(str(source_dir), str(dest))
+    main_file = _find_agent_main_file(dest)
+    if main_file:
+        canonical = dest / "AGENT.md"
+        if main_file.resolve() != canonical.resolve():
+            shutil.copy2(str(main_file), str(canonical))
+    return dest
+
+
+def _record_export(manifest, name, target, dest):
+    """Record an exported copy in the installed-agents manifest.
+
+    @param manifest the installed-agents manifest to update
+    @param name the installed agent name
+    @param target the export target name
+    @param dest the generated export path
+    @return None
+    """
+    manifest[name].setdefault("exports", {})[target] = str(dest)
+    if target == "vscode":
+        manifest[name]["vscode_path"] = str(dest)
+    elif target == "generic":
+        manifest[name]["generic_path"] = str(dest)
+
+
+def _write_generic_manifest(kind, root_dir, manifest):
+    """Write a lightweight manifest for tool-neutral exports.
+
+    @param kind the exported content kind, for example "agents"
+    @param root_dir the target-specific export root directory
+    @param manifest the installed manifest to summarize
+    @return the generated manifest path
+    """
+    root = Path(root_dir)
+    root.mkdir(parents=True, exist_ok=True)
+    exports = {}
+    for name, info in sorted(manifest.items()):
+        generic_path = info.get("exports", {}).get("generic") or info.get("generic_path", "")
+        if generic_path:
+            exports[name] = {
+                "path": generic_path,
+                "installed_path": info.get("path", ""),
+                "main_file": str(Path(generic_path) / "AGENT.md"),
+                "source": info.get("source", ""),
+                "source_type": info.get("source_type", ""),
+                "version": info.get("version", ""),
+                "display_name": info.get("display_name", ""),
+                "description": info.get("description", ""),
+                "tags": info.get("tags", []),
+                "author": info.get("author", ""),
+                "required_skills": info.get("required_skills", []),
+                "supported_domains": info.get("supported_domains", []),
+                "requires_mcp_tools": info.get("requires_mcp_tools", []),
+                "human_review_required": info.get("human_review_required", ""),
+                "trust_level": info.get("trust_level", ""),
+                "installed_at": info.get("installed_at", ""),
+                "content_sha256": info.get("content_sha256", ""),
+            }
+    dest = root / "manifest.json"
+    payload = {}
+    if dest.exists():
+        try:
+            payload = json.loads(dest.read_text(encoding="utf-8"))
+        except Exception:
+            payload = {}
+    payload.update({
+        "schema_version": "1.0",
+        "target": "generic",
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+    })
+    payload[kind] = exports
+    dest.write_text(json.dumps(payload, indent=2), encoding="utf-8")
     return dest
 
 
@@ -758,11 +1129,11 @@ def _export_installed_agent_to_vscode(name, main_file, args, manifest):
     @param main_file the installed agent's main markdown definition path
     @param args parsed CLI arguments (reads vscode_scope, vscode_dir)
     @param manifest the installed-agents manifest, updated with vscode_path
-    @return None
+    @return true if export succeeds, otherwise false
     """
     if not main_file or not Path(main_file).exists():
         print("  [!!] VS Code export skipped: agent main file not found.")
-        return
+        return False
     scope = getattr(args, "vscode_scope", "user")
     vscode_dir = resolve_vscode_agents_dir(
         scope, getattr(args, "vscode_dir", None))
@@ -770,17 +1141,63 @@ def _export_installed_agent_to_vscode(name, main_file, args, manifest):
         print("  [!!] Could not locate a VS Code workspace for --vscode export.")
         print("       Use --vscode-scope user (default), run inside a workspace,")
         print("       set NEQSIM_VSCODE_AGENTS_DIR, or pass --vscode-dir <path>.")
-        return
+        return False
     try:
         dest = export_agent_to_vscode(name, main_file, vscode_dir)
     except Exception as exc:
         print("  [!!] VS Code export failed: {exc}".format(exc=exc))
-        return
-    manifest[name]["vscode_path"] = str(dest)
+        return False
+    _record_export(manifest, name, "vscode", dest)
     save_manifest(manifest)
     print("  [OK] Exported to VS Code agents ({scope}): {dest}".format(
         scope=scope, dest=dest))
     print("       Reload VS Code (Developer: Reload Window) to pick it up.")
+    return True
+
+
+def _export_installed_agent_to_generic(name, source_dir, args, manifest):
+    """Export a freshly installed agent into the generic target layout.
+
+    @param name the installed agent name
+    @param source_dir the installed agent folder under ~/.neqsim/agents/<name>
+    @param args parsed CLI arguments (reads export_dir)
+    @param manifest the installed-agents manifest, updated with generic export path
+    @return true if export succeeds, otherwise false
+    """
+    if not source_dir or not Path(source_dir).exists():
+        print("  [!!] Generic export skipped: agent package not found.")
+        return False
+    generic_agents_dir = resolve_generic_agents_dir(getattr(args, "export_dir", None))
+    try:
+        dest = export_agent_to_generic(name, source_dir, generic_agents_dir)
+        _record_export(manifest, name, "generic", dest)
+        _write_generic_manifest("agents", generic_agents_dir.parent, manifest)
+    except Exception as exc:
+        print("  [!!] Generic export failed: {exc}".format(exc=exc))
+        return False
+    save_manifest(manifest)
+    print("  [OK] Exported to generic agents: {dest}".format(dest=dest))
+    return True
+
+
+def _export_installed_agent(name, source_dir, main_file, args, manifest):
+    """Export an installed agent to the requested compatibility target.
+
+    @param name the installed agent name
+    @param source_dir the installed agent folder under ~/.neqsim/agents/<name>
+    @param main_file the installed agent's main markdown definition path
+    @param args parsed CLI arguments
+    @param manifest the installed-agents manifest
+    @return true when every requested export succeeds, otherwise false
+    """
+    targets = _requested_agent_export_targets(args)
+    success = True
+    for target in targets:
+        if target == "vscode":
+            success = _export_installed_agent_to_vscode(name, main_file, args, manifest) and success
+        elif target == "generic":
+            success = _export_installed_agent_to_generic(name, source_dir, args, manifest) and success
+    return success
 
 
 def _validate_safe_name(name):
@@ -964,7 +1381,136 @@ def _find_missing_required_skills(required_skills):
     ]
 
 
-def _print_required_skill_guidance(required_skills, install_missing=False):
+def _requested_skill_export_targets(install_args):
+    """Return compatibility targets requested for required skill exports."""
+    if install_args is None:
+        return []
+    targets = list(getattr(install_args, "target", []) or [])
+    if getattr(install_args, "vscode", False) and "vscode" not in targets:
+        targets.append("vscode")
+    return targets
+
+
+def _skill_install_args(skill_name, install_args):
+    """Build skill installer args that preserve agent export target options."""
+    return argparse.Namespace(
+        name=skill_name,
+        force=False,
+        vscode=getattr(install_args, "vscode", False),
+        target=list(getattr(install_args, "target", []) or []),
+        vscode_scope=getattr(install_args, "vscode_scope", "user"),
+        vscode_dir=getattr(install_args, "vscode_skills_dir", None),
+        export_dir=getattr(install_args, "export_dir", None),
+    )
+
+
+def _required_skill_export_path(skill_name, skill_info, target, args=None, agent_export_path=None):
+    """Return the expected required-skill export path for a target.
+
+    @param skill_name the resolved skill name
+    @param skill_info the installed skill manifest entry
+    @param target the export target to check
+    @param args optional parsed CLI arguments
+    @param agent_export_path optional exported agent path used to infer VS Code sibling paths
+    @return the expected export path string, or an empty string when unknown
+    """
+    source_path = Path(skill_info.get("path", "")) if skill_info.get("path") else None
+    if target == "vscode" and source_path is not None and _path_is_under(source_path, CORE_SKILLS_DIR):
+        return str(source_path.parent if source_path.name == "SKILL.md" else source_path)
+
+    if target != "vscode":
+        return _manifest_export_path(skill_info, target)
+
+    if agent_export_path:
+        agent_path = Path(agent_export_path)
+        agent_dir = agent_path.parent if agent_path.suffix else agent_path
+        if agent_dir.name == "agents" and agent_dir.parent.name == ".github":
+            return str(agent_dir.parent / "skills" / skill_name)
+        return str(agent_dir / "skills" / skill_name)
+
+    skills_dir = install_skill.resolve_vscode_skills_dir(
+        getattr(args, "vscode_skills_dir", None), getattr(args, "vscode_scope", "user"))
+    if skills_dir is None:
+        return ""
+    return str(Path(skills_dir) / skill_name)
+
+
+def _required_skill_exports_missing(skill_name, skill_info, targets, install_args=None):
+    """Return requested targets with missing or stale required-skill exports."""
+    missing = []
+    for target in targets:
+        export_path = _required_skill_export_path(skill_name, skill_info, target, install_args)
+        if not export_path or not Path(export_path).exists():
+            missing.append(target)
+    return missing
+
+
+def _ensure_required_skill_exports(required_skills, install_args):
+    """Export installed required skills to the agent's requested targets."""
+    targets = _requested_skill_export_targets(install_args)
+    if not targets:
+        return []
+
+    try:
+        skill_manifest = install_skill.load_manifest()
+    except Exception:
+        skill_manifest = {}
+
+    unresolved = []
+    catalog_by_name = None
+    for skill_name in required_skills:
+        resolved_name = _resolve_skill_name(skill_name, set(skill_manifest.keys()))
+        if not resolved_name:
+            try:
+                if catalog_by_name is None:
+                    skill_catalog = install_skill.load_catalog()
+                    catalog_by_name = {
+                        str(skill.get("name", "")).strip(): skill for skill in skill_catalog
+                        if str(skill.get("name", "")).strip()
+                    }
+                resolved_name = _resolve_skill_name(skill_name, set(catalog_by_name.keys()))
+                if resolved_name:
+                    print("  Installing required skill for export: {name}".format(
+                        name=resolved_name))
+                    install_skill.cmd_install(
+                        list(catalog_by_name.values()),
+                        _skill_install_args(resolved_name, install_args))
+                    skill_manifest = install_skill.load_manifest()
+            except SystemExit:
+                resolved_name = ""
+            except Exception:
+                resolved_name = ""
+        if not resolved_name:
+            available_core = _available_skill_names()
+            resolved_name = _resolve_skill_name(skill_name, available_core)
+            core_skill_file = CORE_SKILLS_DIR / resolved_name / "SKILL.md" if resolved_name else None
+            if core_skill_file is not None and core_skill_file.exists():
+                skill_manifest[resolved_name] = {
+                    "path": str(core_skill_file),
+                    "source": "core",
+                }
+        if not resolved_name:
+            unresolved.append(skill_name)
+            continue
+
+        skill_info = skill_manifest.get(resolved_name, {})
+        if not _required_skill_exports_missing(resolved_name, skill_info, targets, install_args):
+            continue
+        source_path = Path(skill_info.get("path", ""))
+        source_dir = source_path.parent if source_path else Path("")
+        if not source_dir.exists():
+            unresolved.append(skill_name)
+            continue
+        print("  Exporting required skill: {name}".format(name=resolved_name))
+        if not install_skill._export_installed_skill(
+                resolved_name, source_dir, _skill_install_args(resolved_name, install_args), skill_manifest):
+            unresolved.append(skill_name)
+            continue
+        skill_manifest = install_skill.load_manifest()
+    return unresolved
+
+
+def _print_required_skill_guidance(required_skills, install_missing=False, install_args=None):
     """Print required skill status and optionally install missing catalog skills."""
     if not required_skills:
         return []
@@ -973,7 +1519,11 @@ def _print_required_skill_guidance(required_skills, install_missing=False):
         print("  [OK] Required skills available: {skills}".format(
             skills=", ".join(required_skills)
         ))
-        return []
+        unresolved_exports = _ensure_required_skill_exports(required_skills, install_args)
+        if unresolved_exports:
+            print("  [!!] Could not export required skills: {skills}".format(
+                skills=", ".join(unresolved_exports)))
+        return unresolved_exports
 
     print("  [!!] Missing required skills: {skills}".format(
         skills=", ".join(missing)))
@@ -992,6 +1542,7 @@ def _print_required_skill_guidance(required_skills, install_missing=False):
     }
 
     unresolved = []
+    installed_now = []
     for skill_name in missing:
         resolved_name = _resolve_skill_name(
             skill_name, set(catalog_by_name.keys()))
@@ -999,10 +1550,16 @@ def _print_required_skill_guidance(required_skills, install_missing=False):
             unresolved.append(skill_name)
             continue
         print("  Installing missing skill: {name}".format(name=resolved_name))
-        args = argparse.Namespace(name=resolved_name, force=False)
+        args = _skill_install_args(resolved_name, install_args)
         try:
             install_skill.cmd_install(skill_catalog, args)
+            installed_now.append(skill_name)
         except SystemExit:
+            unresolved.append(skill_name)
+    export_check_skills = [skill for skill in required_skills if skill not in installed_now]
+    unresolved_exports = _ensure_required_skill_exports(export_check_skills, install_args)
+    for skill_name in unresolved_exports:
+        if skill_name not in unresolved:
             unresolved.append(skill_name)
     if unresolved:
         print("  [!!] Could not install: {skills}".format(
@@ -1190,10 +1747,10 @@ def _install_from_url(agent, dest_dir):
     return dest_file
 
 
-def _github_paths_under_folder(repo, folder, branch):
+def _github_paths_under_folder(repo, folder, branch, auth=None):
     """Return GitHub blob paths under a folder."""
     used_branch, paths = install_skill._list_github_tree_paths(
-        repo, branch=branch)
+        repo, branch=branch, auth=auth)
     prefix = folder.rstrip("/") + "/"
     selected = [path for path in paths if path.startswith(prefix)]
     return used_branch, selected
@@ -1204,14 +1761,15 @@ def _install_github_folder(agent, dest_dir):
     repo = agent.get("repo", "")
     folder = agent.get("folder") or agent.get("copy_root")
     branch = agent.get("branch")
-    used_branch, paths = _github_paths_under_folder(repo, folder, branch)
+    auth = install_skill._github_entry_auth(agent)
+    used_branch, paths = _github_paths_under_folder(repo, folder, branch, auth=auth)
     if not paths:
         print(
             "  [!!] No files found under {repo}/{folder}".format(repo=repo, folder=folder))
         sys.exit(1)
     for path in paths:
         content, _branch, _url = install_skill._fetch_github_bytes(
-            repo, path, branch=used_branch)
+            repo, path, branch=used_branch, auth=auth)
         relative = Path(path).relative_to(folder)
         dest_file = dest_dir / relative
         dest_file.parent.mkdir(parents=True, exist_ok=True)
@@ -1237,7 +1795,7 @@ def _install_from_github(agent, dest_dir):
         return _install_github_folder(agent, dest_dir)
 
     content, used_branch, raw_url = install_skill._fetch_github_bytes(
-        repo, path, branch=branch)
+        repo, path, branch=branch, auth=install_skill._github_entry_auth(agent))
     print("  Downloading: {url}".format(url=raw_url))
     dest_name = Path(path).name if Path(
         path).name.endswith(".agent.md") else "AGENT.md"
@@ -1248,11 +1806,48 @@ def _install_from_github(agent, dest_dir):
     yaml_path = agent.get("agent_yaml_path")
     if yaml_path:
         yaml_content, _branch, yaml_url = install_skill._fetch_github_bytes(
-            repo, yaml_path, branch=used_branch
+            repo, yaml_path, branch=used_branch, auth=install_skill._github_entry_auth(agent)
         )
         print("  Downloading: {url}".format(url=yaml_url))
         (dest_dir / "agent.yaml").write_bytes(yaml_content)
     return dest_file
+
+
+def _install_from_git(agent, dest_dir):
+    """Install an agent from a git repository using configured git credentials."""
+    path = agent.get("path", "AGENT.md")
+    folder = agent.get("folder") or agent.get("copy_root")
+    with install_skill.tempfile.TemporaryDirectory() as tmp:
+        repo_dir = Path(tmp) / "repo"
+        used_branch = install_skill._clone_git_repository(agent, repo_dir)
+        if folder:
+            source_dir = repo_dir / folder
+            if not source_dir.exists() or not source_dir.is_dir():
+                print("  [!!] No files found under git folder {folder}".format(folder=folder))
+                sys.exit(1)
+            shutil.copytree(str(source_dir), str(dest_dir), dirs_exist_ok=True)
+            agent["branch"] = used_branch
+            print("  [OK] Downloaded git folder: {url}:{folder}".format(
+                url=install_skill._git_repository_url(agent), folder=folder))
+            return _find_agent_main_file(dest_dir)
+
+        source_file = repo_dir / path
+        if not source_file.exists() or not source_file.is_file():
+            print("  [!!] Path not found in git source: {path}".format(path=path))
+            sys.exit(1)
+        dest_name = Path(path).name if Path(path).name.endswith(".agent.md") else "AGENT.md"
+        dest_file = dest_dir / dest_name
+        shutil.copy2(str(source_file), str(dest_file))
+        agent["branch"] = used_branch
+        print("  Downloading via git: {url}:{path}".format(
+            url=install_skill._git_repository_url(agent), path=path))
+
+        yaml_path = agent.get("agent_yaml_path")
+        if yaml_path:
+            yaml_file = repo_dir / yaml_path
+            if yaml_file.exists():
+                shutil.copy2(str(yaml_file), str(dest_dir / "agent.yaml"))
+        return dest_file
 
 
 def cmd_install(agents, args):
@@ -1280,17 +1875,24 @@ def cmd_install(agents, args):
 
 def _install_all_agents(agents, args):
     """Install every catalog agent, continuing past individual failures."""
+    source_filter = getattr(args, "source", "all")
     seen = set()
     unique = []
     for agent in agents:
         name = agent.get("name", "")
         if not name or name in seen:
             continue
+        if source_filter != "all" and agent.get("_source") != source_filter:
+            continue
         seen.add(name)
         unique.append(agent)
 
     total = len(unique)
-    print("\n  Installing {total} agent(s) from the catalog...\n".format(total=total))
+    if total == 0:
+        print("\n  No agent(s) matched source '{source}'.\n".format(source=source_filter))
+        return
+    print("\n  Installing {total} {source} agent(s) from the catalog...\n".format(
+        total=total, source=source_filter))
     manifest = load_manifest()
     installed = []
     failed = []
@@ -1325,11 +1927,30 @@ def _install_agent_record(agent, args, manifest):
     @return True if the agent is installed (or already present), False on failure
     """
     name = agent.get("name", "")
+    previous_entry = dict(manifest.get(name, {}))
     if name in manifest and not args.force:
         print("\n  Agent '{name}' already installed at {path}".format(
             name=name, path=manifest[name]["path"]
         ))
-        print("  Use --force to reinstall.\n")
+        print("  Use --force to reinstall.")
+        success = True
+        if _requested_agent_export_targets(args):
+            source_dir = Path(manifest[name].get("path", ""))
+            main_file = manifest[name].get("main_file", "")
+            if not source_dir.exists():
+                print("  [!!] Installed agent folder is missing: {path}\n".format(
+                    path=source_dir))
+                return False
+            unresolved = _ensure_required_skill_exports(
+                manifest[name].get("required_skills", []), args)
+            if unresolved:
+                print("  [!!] Could not export required skills: {skills}".format(
+                    skills=", ".join(unresolved)))
+                success = False
+            success = _export_installed_agent(
+                name, source_dir, main_file, args, manifest) and success
+        print()
+        return success
         return True
 
     source_type = agent.get("source", "github")
@@ -1355,6 +1976,8 @@ def _install_agent_record(agent, args, manifest):
             main_file = _install_from_local(agent, dest_dir)
         elif source_type == "url":
             main_file = _install_from_url(agent, dest_dir)
+        elif source_type == "git":
+            main_file = _install_from_git(agent, dest_dir)
         else:
             main_file = _install_from_github(agent, dest_dir)
 
@@ -1384,7 +2007,7 @@ def _install_agent_record(agent, args, manifest):
         )
         install_missing_skills = getattr(args, "install_missing_skills", True)
         unresolved = _print_required_skill_guidance(
-            required_skills, install_missing=install_missing_skills
+            required_skills, install_missing=install_missing_skills, install_args=args
         )
         for warning in report["warnings"]:
             if not warning.startswith("Missing required skills"):
@@ -1401,8 +2024,16 @@ def _install_agent_record(agent, args, manifest):
             "source": agent.get("_source", "community"),
             "source_type": source_type,
             "repo": agent.get("repo", ""),
+            "auth": agent.get("auth", ""),
+            "url": agent.get("url", ""),
             "remote_path": agent.get("path", ""),
             "branch": agent.get("branch", ""),
+            "version": merged_metadata.get("version", agent.get("version", "")),
+            "display_name": merged_metadata.get(
+                "display_name", agent.get("display_name", "")),
+            "description": merged_metadata.get(
+                "description", agent.get("description", "")),
+            "tags": merged_metadata.get("tags", agent.get("tags", [])),
             "author": agent.get("author", ""),
             "required_skills": required_skills,
             "supported_domains": merged_metadata.get("supported_domains", []),
@@ -1414,17 +2045,22 @@ def _install_agent_record(agent, args, manifest):
             "inputs": merged_metadata.get("inputs", []),
             "outputs": merged_metadata.get("outputs", []),
             "missing_required_skills": unresolved,
+            "installed_at": datetime.now(timezone.utc).isoformat(),
+            "content_sha256": install_skill._sha256_tree(dest_dir),
         }
+        for key in ("exports", "vscode_path", "generic_path"):
+            if key in previous_entry:
+                manifest[name][key] = previous_entry[key]
         save_manifest(manifest)
 
         print("  [OK] Installed to: {path}".format(path=dest_dir))
         print("\n  Agent tools can read the installed package from: {path}\n".format(
             path=dest_dir
         ))
-        if getattr(args, "vscode", False):
-            _export_installed_agent_to_vscode(
-                name, manifest[name].get("main_file", ""), args, manifest)
-        return True
+        if not _export_installed_agent(
+                name, dest_dir, manifest[name].get("main_file", ""), args, manifest):
+            return False
+        return not unresolved
     except Exception as exc:
         shutil.rmtree(str(dest_dir), ignore_errors=True)
         print("  [!!] Download failed: {exc}".format(exc=exc))
@@ -1458,6 +2094,25 @@ def cmd_installed(agents, args):
     print()
 
 
+def cmd_export(agents, args):
+    """Export an already-installed agent to one or more compatibility targets."""
+    manifest = load_manifest()
+    name = args.name
+    if name not in manifest:
+        print("\n  Agent '{name}' is not installed.".format(name=name))
+        print("  Install it first with: neqsim agent install {name}\n".format(
+            name=name))
+        sys.exit(1)
+    source_dir = Path(manifest[name].get("path", ""))
+    main_file = manifest[name].get("main_file", "")
+    if not source_dir.exists():
+        print("\n  Installed agent folder is missing: {path}\n".format(
+            path=source_dir))
+        sys.exit(1)
+    if not _export_installed_agent(name, source_dir, main_file, args, manifest):
+        sys.exit(1)
+
+
 def cmd_remove(agents, args):
     """Remove an installed agent."""
     name = args.name
@@ -1480,7 +2135,22 @@ def cmd_remove(agents, args):
                 vp.unlink()
             print("  [OK] Removed VS Code copy: {path}".format(path=vp))
 
+    generic_export_root = None
+    for target, export_path in manifest.get(name, {}).get("exports", {}).items():
+        ep = Path(export_path)
+        if ep.exists():
+            if ep.is_dir():
+                shutil.rmtree(str(ep), ignore_errors=True)
+            else:
+                ep.unlink()
+            print("  [OK] Removed {target} export: {path}".format(
+                target=target, path=ep))
+        if target == "generic":
+            generic_export_root = ep.parent.parent
+
     del manifest[name]
+    if generic_export_root:
+        _write_generic_manifest("agents", generic_export_root, manifest)
     save_manifest(manifest)
     print("\n  [OK] Removed agent '{name}'.\n".format(name=name))
 
@@ -1515,6 +2185,160 @@ def cmd_validate(agents, args):
         sys.exit(1)
     if getattr(args, "strict", False) and report["warnings"]:
         sys.exit(1)
+
+
+def _manifest_export_path(info, target):
+    """Return the recorded export path for a manifest entry and target."""
+    return info.get("exports", {}).get(target) or info.get("{target}_path".format(
+        target=target), "")
+
+
+def _read_json_file(path):
+    """Read a JSON file and return an object, or None if unreadable."""
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _load_export_profile(args=None):
+    """Load an optional export expectation profile.
+
+    @param args optional parsed CLI arguments with profile
+    @return decoded export profile mapping, or None when no profile exists
+    """
+    profile_path = Path(getattr(args, "profile", "") or EXPORT_PROFILE_FILE)
+    if not profile_path.exists():
+        return None
+    return _read_json_file(profile_path) or {}
+
+
+def _expected_exports(profile, kind, target):
+    """Return expected export names for a kind/target from a profile.
+
+    @param profile decoded export profile mapping or None
+    @param kind agents or skills
+    @param target export target name
+    @return set of expected names, or None when the profile does not constrain it
+    """
+    if not profile:
+        return None
+    target_names = profile.get(kind, {}).get(target)
+    if target_names is None:
+        return None
+    return set(target_names)
+
+
+def _check_generic_manifest_fresh(kind, root_dir, installed_manifest, failures):
+    """Append failures when a generic manifest is missing or stale."""
+    manifest_path = Path(root_dir) / "manifest.json"
+    payload = _read_json_file(manifest_path)
+    if payload is None:
+        failures.append("Generic {kind} manifest is missing or unreadable: {path}".format(
+            kind=kind, path=manifest_path))
+        return
+    exported = payload.get(kind, {})
+    expected = {}
+    checked_root = Path(root_dir).expanduser().resolve()
+    for name, info in installed_manifest.items():
+        export_path = _manifest_export_path(info, "generic")
+        if export_path and _path_is_under(export_path, checked_root):
+            expected[name] = info
+    exported = {
+        name: info for name, info in exported.items()
+        if isinstance(info, dict) and (not info.get("path") or _path_is_under(info.get("path", ""), checked_root))
+    }
+    missing = sorted(name for name in expected if name not in exported)
+    extra = sorted(name for name in exported if name not in expected)
+    if missing:
+        failures.append("Generic {kind} manifest is missing: {names}".format(
+            kind=kind, names=", ".join(missing)))
+    if extra:
+        failures.append("Generic {kind} manifest has stale entries: {names}".format(
+            kind=kind, names=", ".join(extra)))
+
+
+def _check_export_target(target, args):
+    """Check installed agent exports and required skill exports for a target."""
+    agent_manifest = load_manifest()
+    try:
+        skill_manifest = install_skill.load_manifest()
+    except Exception:
+        skill_manifest = {}
+
+    failures = []
+    warnings = []
+    checked_agents = []
+    available_skill_names = _available_skill_names()
+    profile = _load_export_profile(args)
+    expected_agents = _expected_exports(profile, "agents", target)
+
+    for name, info in sorted(agent_manifest.items()):
+        export_path = _manifest_export_path(info, target)
+        if not export_path:
+            if expected_agents is None:
+                warnings.append("Agent is installed but not exported to {target}: {name}".format(
+                    target=target, name=name))
+            elif name in expected_agents:
+                failures.append("Expected agent is not exported to {target}: {name}".format(
+                    target=target, name=name))
+            continue
+        if expected_agents is not None and name not in expected_agents:
+            warnings.append("Agent is exported to {target} but not listed in profile: {name}".format(
+                target=target, name=name))
+        checked_agents.append(name)
+        path = Path(export_path)
+        if not path.exists():
+            failures.append("Agent export is missing: {name} -> {path}".format(
+                name=name, path=path))
+        if target == "generic" and not (path / "AGENT.md").exists():
+            failures.append("Generic agent export lacks AGENT.md: {name} -> {path}".format(
+                name=name, path=path))
+
+        for required in info.get("required_skills", []):
+            resolved = _resolve_skill_name(required, available_skill_names)
+            if not resolved:
+                failures.append(
+                    "Agent {agent} requires skill not installed: {skill}".format(
+                        agent=name, skill=required))
+                continue
+            skill_info = skill_manifest.get(resolved, {})
+            if not skill_info and (CORE_SKILLS_DIR / resolved).is_dir():
+                skill_info = {"path": str(CORE_SKILLS_DIR / resolved / "SKILL.md")}
+            skill_export = _required_skill_export_path(
+                resolved, skill_info, target, args, export_path)
+            if not skill_export:
+                failures.append(
+                    "Agent {agent} requires skill not exported to {target}: {skill}".format(
+                        agent=name, target=target, skill=resolved))
+                continue
+            if not Path(skill_export).exists():
+                failures.append(
+                    "Required skill export is missing: {skill} -> {path}".format(
+                        skill=resolved, path=skill_export))
+
+    if target == "generic":
+        generic_root = resolve_generic_agents_dir(getattr(args, "export_dir", None)).parent
+        _check_generic_manifest_fresh("agents", generic_root, agent_manifest, failures)
+        skill_generic_root = install_skill.resolve_generic_skills_dir(
+            getattr(args, "export_dir", None)).parent
+        _check_generic_manifest_fresh("skills", skill_generic_root, skill_manifest, failures)
+
+    print("\n  NeqSim agent export doctor ({target})\n".format(target=target))
+    print("  Checked exported agents: {count}".format(count=len(checked_agents)))
+    if checked_agents:
+        print("  Agents: {names}".format(names=", ".join(checked_agents)))
+    if profile:
+        print("  Export profile: {path}".format(
+            path=Path(getattr(args, "profile", "") or EXPORT_PROFILE_FILE)))
+    for warning in warnings:
+        print("  WARN: {warning}".format(warning=warning))
+    for failure in failures:
+        print("  ERROR: {failure}".format(failure=failure))
+    if failures:
+        print("\n  Result: FAIL\n")
+        sys.exit(1)
+    print("\n  Result: PASS\n")
 
 
 def cmd_run(agents, args):
@@ -1555,30 +2379,84 @@ def cmd_schema(agents, args):
     print(_manifest_schema_text())
 
 
+def cmd_doctor(agents, args):
+    """Print enterprise auth broker readiness for agent installation."""
+    target = getattr(args, "target", None)
+    if target:
+        _check_export_target(target, args)
+        return
+
+    status = install_skill.get_enterprise_auth_status()
+    private_agent_token_available = bool(os.environ.get("PRIVATE_AGENT_TOKEN"))
+    print("\n  NeqSim agent enterprise access check\n")
+    print("  NeqSim does not request, inspect, or store credentials, cookies, tokens, or MFA codes.")
+    print("  Preferred GitHub Enterprise login: gh auth login --web")
+    print("  Preferred internal Git login: Git Credential Manager / your configured git SSO broker.\n")
+
+    checks = [
+        ("github_cli", "GitHub CLI / browser SSO available"),
+        ("git", "git available for Git Credential Manager / SSO"),
+        ("private_agent_catalog", "Private agent catalog exists"),
+    ]
+    for key, label in checks:
+        if key == "private_agent_catalog":
+            item = {"available": PRIVATE_CATALOG_FILE.exists(), "detail": str(PRIVATE_CATALOG_FILE)}
+        else:
+            item = status.get(key, {})
+        if isinstance(item, dict):
+            available = bool(item.get("available", False))
+            detail = item.get("detail", "")
+        else:
+            available = bool(item)
+            detail = ""
+        suffix = " ({detail})".format(detail=detail) if detail else ""
+        print("  [{mark}] {label}{suffix}".format(
+            mark="OK" if available else "--", label=label, suffix=suffix))
+
+    print("\n  Optional non-interactive fallback status:")
+    print("  [{mark}] PRIVATE_AGENT_TOKEN set".format(
+        mark="OK" if private_agent_token_available else "--"))
+
+    print("\n  Supported private source modes:")
+    print("    - source: github, auth: github-cli (browser SSO)")
+    print("    - source: git, auth: git-credential-manager")
+    print("    - source: local, auth: none")
+    print("    - source: url, optional PRIVATE_AGENT_TOKEN fallback for non-interactive endpoints\n")
+
+
 def main():
     """Run the agent installer CLI."""
+    examples = "\n".join([
+        "Examples:",
+        "  neqsim agent list",
+        "  neqsim agent list --private",
+        "  neqsim agent search \"tie-in\"",
+        "  neqsim agent install neqsim-example-agent",
+        "  neqsim agent install neqsim-example-agent --no-install-missing-skills",
+        "  neqsim agent install neqsim-example-agent --target vscode",
+        "  neqsim agent install neqsim-example-agent --target generic",
+        "  neqsim agent export neqsim-example-agent --target vscode",
+        "  neqsim agent export neqsim-example-agent --target generic",
+        "  neqsim agent install --all --target vscode",
+        "  neqsim agent install --all --source community --target vscode",
+        "  neqsim agent install --all --source private --target vscode",
+        "  neqsim agent installed",
+        "  neqsim agent info neqsim-example-agent",
+        "  neqsim agent validate neqsim-example-agent",
+        "  neqsim agent schema",
+        "  neqsim agent doctor",
+        "  neqsim agent doctor --target vscode",
+        "  neqsim agent remove neqsim-example-agent",
+        "  neqsim agent private-init",
+        "",
+        "Preferred private access uses `gh auth login --web` or Git Credential Manager.",
+        "Internal raw URLs can use PRIVATE_AGENT_TOKEN env var as a non-interactive fallback.",
+        "Install never executes agent code.",
+    ])
     parser = argparse.ArgumentParser(
         description="Install community and private agents from NeqSim agent catalogs.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=textwrap.dedent("""\
-            Examples:
-              neqsim agent list
-              neqsim agent search "tie-in"
-              neqsim agent install neqsim-example-agent
-                            neqsim agent install neqsim-example-agent --no-install-missing-skills
-              neqsim agent install neqsim-example-agent --vscode
-              neqsim agent install --all
-              neqsim agent installed
-              neqsim agent info neqsim-example-agent
-              neqsim agent validate neqsim-example-agent
-              neqsim agent schema
-              neqsim agent remove neqsim-example-agent
-              neqsim agent private-init
-
-            Private repos require GITHUB_TOKEN or `gh auth login` with repo access.
-            Internal URLs can use PRIVATE_AGENT_TOKEN env var.
-            Install never executes agent code.
-        """),
+        epilog=examples,
     )
     sub = parser.add_subparsers(dest="command")
 
@@ -1599,6 +2477,9 @@ def main():
         "name", nargs="?", help="Agent name from catalog (omit when using --all)")
     p_install.add_argument("--all", action="store_true",
                            help="Install every agent in the catalog")
+    p_install.add_argument(
+        "--source", choices=["all", "community", "private"], default="all",
+        help="When used with --all, install all sources, community only, or private/enterprise only")
     p_install.add_argument("--force", action="store_true",
                            help="Reinstall if exists")
     p_install.set_defaults(install_missing_skills=True)
@@ -1618,13 +2499,40 @@ def main():
         "--vscode", action="store_true",
         help="Also export the agent to a VS Code agents location")
     p_install.add_argument(
+        "--target", action="append", choices=SUPPORTED_EXPORT_TARGETS,
+        help="Also export to a compatibility target (repeatable): vscode or generic")
+    p_install.add_argument(
         "--vscode-scope", choices=["user", "workspace"], default="user",
         help="VS Code export scope: 'user' (all workspaces, default) or 'workspace'")
     p_install.add_argument(
         "--vscode-dir", default=None,
         help="Explicit VS Code agents directory for --vscode export")
+    p_install.add_argument(
+        "--vscode-skills-dir", default=None,
+        help="Explicit VS Code skills directory for required skill exports")
+    p_install.add_argument(
+        "--export-dir", default=None,
+        help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
 
     sub.add_parser("installed", help="Show installed agents")
+
+    p_export = sub.add_parser("export", help="Export an installed agent to an AI-tool target")
+    p_export.add_argument("name", help="Installed agent name")
+    p_export.add_argument(
+        "--target", action="append", choices=SUPPORTED_EXPORT_TARGETS, required=True,
+        help="Export target (repeatable): vscode or generic")
+    p_export.add_argument(
+        "--vscode-scope", choices=["user", "workspace"], default="user",
+        help="VS Code export scope for --target vscode")
+    p_export.add_argument(
+        "--vscode-dir", default=None,
+        help="Explicit VS Code agents directory for --target vscode")
+    p_export.add_argument(
+        "--vscode-skills-dir", default=None,
+        help="Explicit VS Code skills directory for required skill exports")
+    p_export.add_argument(
+        "--export-dir", default=None,
+        help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
 
     p_remove = sub.add_parser("remove", help="Remove an installed agent")
     p_remove.add_argument("name", help="Agent name to remove")
@@ -1643,6 +2551,18 @@ def main():
     sub.add_parser(
         "schema", help="Show the supported agent.yaml manifest schema")
 
+    p_doctor = sub.add_parser(
+        "doctor", help="Check enterprise auth broker readiness or export target health")
+    p_doctor.add_argument(
+        "--target", choices=SUPPORTED_EXPORT_TARGETS,
+        help="Check installed agent exports and required skill exports for this target")
+    p_doctor.add_argument(
+        "--export-dir", default=None,
+        help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
+    p_doctor.add_argument(
+        "--profile", default=None,
+        help="Optional export profile JSON (default: ~/.neqsim/export/export-profile.json if present)")
+
     sub.add_parser(
         "private-init", help="Create private catalog template at ~/.neqsim/")
 
@@ -1654,9 +2574,13 @@ def main():
     if args.command == "private-init":
         cmd_private_init([], args)
         return
-    if args.command in ("validate", "run", "schema"):
+    if args.command in ("validate", "run", "schema", "doctor"):
         commands_without_catalog = {
-            "validate": cmd_validate, "run": cmd_run, "schema": cmd_schema}
+            "validate": cmd_validate,
+            "run": cmd_run,
+            "schema": cmd_schema,
+            "doctor": cmd_doctor,
+        }
         commands_without_catalog[args.command]([], args)
         return
 
@@ -1668,6 +2592,7 @@ def main():
         "info": cmd_info,
         "inspect": cmd_info,
         "install": cmd_install,
+        "export": cmd_export,
         "installed": cmd_installed,
         "remove": cmd_remove,
     }

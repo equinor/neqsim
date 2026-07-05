@@ -445,7 +445,14 @@
 				<configuration>
 					<java>
 						<eclipse>
+							<version>4.35</version>
 							<file>.config/neqsim_formatter.xml</file>
+							<p2Mirrors>
+								<p2Mirror>
+									<prefix>https://download.eclipse.org/eclipse/updates/4.35/</prefix>
+									<url>https://ftp.fau.de/eclipse/eclipse/updates/4.35/</url>
+								</p2Mirror>
+							</p2Mirrors>
 						</eclipse>
 						<includes>
 							<include>src/main/java/**/*.java</include>

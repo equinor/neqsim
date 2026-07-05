@@ -3,6 +3,13 @@
 Skills are reusable knowledge packages that agents load automatically when relevant.
 Each skill folder contains a `SKILL.md` file with verified patterns, rules, and domain knowledge.
 
+This folder is the **core NeqSim workspace discovery layer**. Core NeqSim skills live here directly.
+Installed community/private skills are canonical under `~/.neqsim/skills/` and should not be
+committed here. For VS Code, `neqsim skill export <name> --target vscode` defaults to the user's private
+prompts skills folder; use `--vscode-scope workspace` only when a maintainer intentionally wants a
+generated workspace copy. PaperLab keeps its full canonical library under `neqsim-paperlab/skills/`;
+only the `@paperlab` gateway's public skills are exported for VS Code by default.
+
 > **Full documentation:** See the [Skills and Agents Guide](../../docs/integration/skills_guide.md)
 > for the complete walkthrough — creating core, community, and private skills,
 > installing community/private agents, the SKILL.md and agent.yaml formats,
@@ -34,6 +41,10 @@ Two complementary mechanisms exist:
 CI (`.github/workflows/skills_agents_lint.yml`) verifies that every skill has
 valid YAML front-matter and that every entry in `skill-index.json` points to
 a skill that exists.
+
+For tool-neutral coding agents, use `neqsim skill export <name> --target generic`
+and point the tool at `~/.neqsim/export/generic/manifest.json` or the generated
+`~/.neqsim/export/generic/skills/` folders.
 
 ---
 
@@ -229,11 +240,15 @@ repositories:
 | `tags` | `[enterprise, private]` |
 | `name_prefix` | Optional, for example `enterprise-`, to avoid public/private name clashes |
 
-Private GitHub repositories require either a `GITHUB_TOKEN` in the local shell or
-an authenticated GitHub CLI session from `gh auth login`. Do not store tokens in
-catalog files, prompt files, or this repository. Use `catalog_path: ""` when the
-private repository has no `community-skills.yaml` or `community-agents.yaml` and
-should be scanned directly for `SKILL.md`, `AGENT.md`, or `*.agent.md` files.
+Private GitHub repositories should use a normal browser SSO session first, for
+example `gh auth login --web`, or Git Credential Manager through your standard
+enterprise `git clone` flow. `GITHUB_TOKEN`/`GH_TOKEN` and
+`PRIVATE_SKILL_TOKEN`/`PRIVATE_AGENT_TOKEN` are non-interactive fallbacks for CI,
+service contexts, or internal URL endpoints that cannot use the normal browser or
+git credential flow. Do not store tokens in catalog files, prompt files, or this
+repository. Use `catalog_path: ""` when the private repository has no
+`community-skills.yaml` or `community-agents.yaml` and should be scanned directly
+for `SKILL.md`, `AGENT.md`, or `*.agent.md` files.
 After adding the catalog entries, install and verify locally:
 
 ```powershell
@@ -248,18 +263,24 @@ neqsim agent validate <agent-name>
 
 Installed private skills are copied to
 `%USERPROFILE%\.neqsim\skills\<skill-name>\SKILL.md`. VS Code Copilot does not
-automatically discover that folder, so copy the skill to the VS Code user prompts
-folder when you want to invoke it with `#<skill-name>`:
+automatically discover that canonical folder, so export a generated copy to the
+VS Code user prompts skills folder when you want VS Code to discover it:
 
 ```powershell
-New-Item -ItemType Directory -Path "$env:APPDATA\Code\User\prompts" -Force
-Copy-Item "$env:USERPROFILE\.neqsim\skills\<skill-name>\SKILL.md" `
-   "$env:APPDATA\Code\User\prompts\<skill-name>.prompt.md" -Force
+neqsim skill export <skill-name> --target vscode
+neqsim skill doctor
 ```
 
-Private agents install to `%USERPROFILE%\.neqsim\agents\<agent-name>\`. Point the
-AI tool at that folder, or copy the main `.agent.md` definition into the VS Code
-user prompts/customizations folder supported by your VS Code version.
+Private agents install to `%USERPROFILE%\.neqsim\agents\<agent-name>\`. Export
+them to the VS Code user prompts folder or the generic manifest layout for the AI
+tool you use:
+
+```powershell
+neqsim agent export <agent-name> --target vscode
+neqsim agent doctor --target vscode
+neqsim agent export <agent-name> --target generic
+neqsim agent doctor --target generic
+```
 
 ### List existing skills
 

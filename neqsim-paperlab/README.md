@@ -39,6 +39,33 @@ cd neqsim-paperlab
 pip install -r requirements.txt
 ```
 
+## VS Code Agent Export
+
+PaperLab keeps its canonical agents and skills in this `neqsim-paperlab/` folder.
+VS Code still discovers generated flat exports from `.github/agents` and
+`.github/skills`.
+
+The default export is intentionally small: it installs the single `@paperlab`
+gateway agent and only the public skills declared by that gateway. The full
+specialist library remains in `neqsim-paperlab/agents` and `neqsim-paperlab/skills`.
+
+```bash
+# Default: export the single @paperlab gateway agent and its public skills
+neqsim paperlab install --vscode
+
+# Compatibility mode: also export internal specialist agents and skills
+neqsim paperlab install --vscode --include-internal
+```
+
+Use the default gateway for normal VS Code Chat workflows. The internal mode is
+for legacy/direct specialist-agent use and keeps `@paperlab` as the preferred
+entry point.
+
+The internal mode does not create new canonical sources; it only generates extra
+VS Code compatibility copies. If generated `.github/skills/paperlab_*` folders
+are removed from a PR, the underlying skills are not lost as long as they remain
+under `neqsim-paperlab/skills/`.
+
 ## The Core Loop: Code → Paper → Better Code
 
 PaperLab is designed for **iterative refinement** where editing the paper and
@@ -257,7 +284,7 @@ neqsim-paperlab/
 │   ├── aiche.yaml                    # Wiley / custom
 │   └── spe.yaml                      # SPE / custom
 │   # Run `python paperflow.py list-journals` to print the --journal names
-├── agents/                       # PaperLab internal role documents (not exposed as individual VS Code Chat agents)
+├── agents/                       # Canonical PaperLab internal role documents
 │   ├── research_scout.paperlab.md
 │   ├── planner.paperlab.md
 │   ├── literature_reviewer.paperlab.md
@@ -269,7 +296,7 @@ neqsim-paperlab/
 │   ├── journal_formatter.paperlab.md
 │   ├── reviewer_response.paperlab.md
 │   └── book_author.paperlab.md         # Book creation and management
-├── skills/                       # Reusable scientific procedures
+├── skills/                       # Canonical reusable scientific procedures
 │   ├── book_creation/SKILL.md       # Book lifecycle (setup → render)
 │   ├── design_flash_benchmark/SKILL.md
 │   ├── design_reactor_benchmark/SKILL.md

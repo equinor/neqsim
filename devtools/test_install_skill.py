@@ -32,6 +32,19 @@ class InstallSkillDiscoveryTest(unittest.TestCase):
         self.assertIn("gh api", source)
         self.assertTrue(mocked_gh.called)
 
+    def test_fetch_github_bytes_prefers_gh_cli_when_requested(self):
+        """Catalog entries can request browser/SSO-backed gh before raw HTTP."""
+        with mock.patch.object(install_skill, "_github_request") as mocked_http, \
+                mock.patch.object(install_skill.subprocess, "check_output", return_value=b"skill") as mocked_gh:
+            content, branch, source = install_skill._fetch_github_bytes(
+                "owner/private", "skills/demo/SKILL.md", branch="main", auth="github-cli")
+
+        self.assertEqual(b"skill", content)
+        self.assertEqual("main", branch)
+        self.assertIn("gh api", source)
+        mocked_http.assert_not_called()
+        self.assertTrue(mocked_gh.called)
+
     def test_list_github_tree_paths_falls_back_to_gh_cli_auth(self):
         """Private repo tree scans should work with an active gh login."""
         http_error = install_skill.urllib.error.HTTPError(
@@ -72,6 +85,7 @@ skills:
         }
 
         with mock.patch.object(install_skill, "_get_default_github_branch", return_value="main"), \
+            mock.patch.object(install_skill, "_local_repository_root", return_value=None), \
                 mock.patch.object(install_skill, "_fetch_github_text", return_value=remote_catalog):
             skills = install_skill._discover_github_repository_skills(repository)
 
@@ -98,7 +112,7 @@ last_verified: "2026-05-31"
 Use this process skill for tests.
 """
 
-        def fake_fetch_text(_repo, path, branch=None):
+        def fake_fetch_text(_repo, path, branch=None, auth=None):
             if path == "community-skills.yaml":
                 raise RuntimeError("remote catalog missing")
             return skill_md
@@ -110,6 +124,7 @@ Use this process skill for tests.
         }
 
         with mock.patch.object(install_skill, "_get_default_github_branch", return_value="main"), \
+            mock.patch.object(install_skill, "_local_repository_root", return_value=None), \
                 mock.patch.object(install_skill, "_list_github_tree_paths",
                                   return_value=("main", ["skills/demo/SKILL.md", "README.md"])), \
                 mock.patch.object(install_skill, "_fetch_github_text", side_effect=fake_fetch_text):
@@ -133,7 +148,7 @@ description: "Hydrate screening skill."
 # Hydrate Screening
 """
 
-        def fake_fetch_text(_repo, path, branch=None):
+        def fake_fetch_text(_repo, path, branch=None, auth=None):
             if path == "community-skills.yaml":
                 raise RuntimeError("remote catalog missing")
             return skill_md
@@ -145,12 +160,93 @@ description: "Hydrate screening skill."
         }
 
         with mock.patch.object(install_skill, "_get_default_github_branch", return_value="main"), \
+            mock.patch.object(install_skill, "_local_repository_root", return_value=None), \
                 mock.patch.object(install_skill, "_list_github_tree_paths",
                                   return_value=("main", ["skills/demo/SKILL.md"])), \
                 mock.patch.object(install_skill, "_fetch_github_text", side_effect=fake_fetch_text):
             skills = install_skill._discover_github_repository_skills(repository)
 
         self.assertEqual("enterprise-hydrate-screening", skills[0]["name"])
+
+    def test_git_repository_discovery_reads_catalog_without_tokens(self):
+        """Git sources use git credentials and do not need GitHub tokens."""
+        import shutil
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            fixture_repo = tmp_path / "fixture"
+            fixture_repo.mkdir()
+            (fixture_repo / "enterprise-skills.yaml").write_text(
+                "skills:\n"
+                "  - name: hydrate-screening\n"
+                "    description: Private hydrate screening.\n"
+                "    source: git\n"
+                "    path: skills/hydrate/SKILL.md\n",
+                encoding="utf-8",
+            )
+
+            def fake_clone(_entry, destination):
+                shutil.copytree(str(fixture_repo), str(destination))
+                return "main"
+
+            repository = {
+                "source": "git",
+                "auth": "git-credential-manager",
+                "url": "https://git.internal/skills.git",
+                "catalog_path": "enterprise-skills.yaml",
+                "name_prefix": "enterprise-",
+            }
+            with mock.patch.object(install_skill, "_clone_git_repository", side_effect=fake_clone):
+                skills = install_skill._discover_git_repository_skills(repository)
+
+        self.assertEqual(1, len(skills))
+        self.assertEqual("enterprise-hydrate-screening", skills[0]["name"])
+        self.assertEqual("git", skills[0]["source"])
+        self.assertEqual("git-credential-manager", skills[0]["auth"])
+        self.assertEqual("https://git.internal/skills.git", skills[0]["url"])
+
+    def test_github_repository_discovery_prefers_local_sibling_catalog(self):
+        """GitHub catalog entries should use a checked-out sibling repo when present."""
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            neqsim_root = tmp_path / "neqsim"
+            sibling = tmp_path / "neqsim-enterprise-skills"
+            neqsim_root.mkdir()
+            sibling.mkdir()
+            (sibling / "README.md").write_text("Enterprise skills.\n", encoding="utf-8")
+            skill_file = sibling / "skills" / "engineering-data" / "enterprise-stid-live-lookup" / "SKILL.md"
+            skill_file.parent.mkdir(parents=True)
+            skill_file.write_text(
+                "---\nname: enterprise-stid-live-lookup\ndescription: STID lookup.\n---\nBody.\n",
+                encoding="utf-8",
+            )
+            (sibling / "enterprise-skills.yaml").write_text(
+                "skills:\n"
+                "  - name: enterprise-stid-live-lookup\n"
+                "    description: STID lookup.\n"
+                "    path: skills/engineering-data/enterprise-stid-live-lookup/SKILL.md\n",
+                encoding="utf-8",
+            )
+            repository = {
+                "repo": "equinor/neqsim-enterprise-skills",
+                "catalog_path": "",
+                "skill_path_glob": "skills/**/SKILL.md",
+            }
+
+            with mock.patch.object(install_skill, "REPO_ROOT", neqsim_root), \
+                    mock.patch.object(install_skill, "_get_default_github_branch") as mocked_branch:
+                skills = install_skill._discover_github_repository_skills(repository)
+
+        self.assertEqual(1, len(skills))
+        self.assertEqual("enterprise-stid-live-lookup", skills[0]["name"])
+        self.assertEqual("local", skills[0]["source"])
+        self.assertEqual(str(skill_file), skills[0]["path"])
+        mocked_branch.assert_not_called()
 
     def test_fallback_parser_reads_repository_entries(self):
         """The no-PyYAML parser should understand repository sections."""
@@ -203,6 +299,26 @@ class SkillVsCodeExportTest(unittest.TestCase):
         with mock.patch.dict(os.environ, {"NEQSIM_VSCODE_SKILLS_DIR": "env/skills"}):
             result = install_skill.resolve_vscode_skills_dir()
         self.assertEqual(Path("env/skills").expanduser().resolve(), result)
+
+    def test_resolve_vscode_skills_dir_user_scope(self):
+        """User scope targets a private prompts skills folder."""
+        from pathlib import Path
+
+        with mock.patch.object(install_skill, "_vscode_user_dir", return_value=Path("user-root")):
+            result = install_skill.resolve_vscode_skills_dir(scope="user")
+        self.assertEqual(Path("user-root") / "prompts" / "skills", result)
+
+    def test_resolve_vscode_skills_dir_workspace_scope_is_explicit(self):
+        """Workspace scope targets <workspace>/.github/skills only when requested."""
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".github").mkdir()
+            with mock.patch.object(install_skill, "find_workspace_root", return_value=root):
+                result = install_skill.resolve_vscode_skills_dir(scope="workspace")
+            self.assertEqual((root / ".github" / "skills").resolve(), result.resolve())
 
     def test_export_skill_to_vscode_copies_folder(self):
         """Exporting copies the whole skill folder into <vscode_dir>/<name>."""
@@ -271,6 +387,216 @@ class SkillVsCodeExportTest(unittest.TestCase):
                 install_skill.cmd_remove(catalog, remove_args)
                 self.assertFalse(
                     (vscode_dir / "neqsim-demo").exists())
+
+    def test_cmd_install_with_generic_target_exports_and_remove_cleans_up(self):
+        """A generic target install exports to a tool-neutral ~/.neqsim layout."""
+        import argparse
+        import json
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "SKILL.md"
+            source.write_text(
+                "---\nname: neqsim-demo\ndescription: Demo skill.\n---\n"
+                "# Demo skill body with enough content.\n",
+                encoding="utf-8")
+            install_dir = tmp_path / "installed-skills"
+            manifest_file = install_dir / "installed.json"
+            export_root = tmp_path / "generic-export"
+            catalog = [{
+                "name": "neqsim-demo",
+                "description": "Demo skill",
+                "author": "tests",
+                "source": "local",
+                "path": str(source),
+                "_source": "private",
+            }]
+
+            with mock.patch.object(install_skill, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="neqsim-demo",
+                    force=False,
+                    vscode=False,
+                    vscode_dir=None,
+                    target=["generic"],
+                    export_dir=str(export_root),
+                )
+                install_skill.cmd_install(catalog, args)
+                manifest = json.loads(
+                    manifest_file.read_text(encoding="utf-8"))
+                exported = export_root / "skills" / "neqsim-demo" / "SKILL.md"
+                generic_manifest = export_root / "manifest.json"
+                self.assertTrue(exported.exists())
+                self.assertTrue(generic_manifest.exists())
+                self.assertEqual(
+                    str(export_root / "skills" / "neqsim-demo"),
+                    manifest["neqsim-demo"]["exports"]["generic"])
+
+                remove_args = argparse.Namespace(name="neqsim-demo")
+                install_skill.cmd_remove(catalog, remove_args)
+                self.assertFalse(
+                    (export_root / "skills" / "neqsim-demo").exists())
+
+    def test_cmd_export_installed_skill_to_generic(self):
+        """An installed skill can be exported later without reinstalling."""
+        import argparse
+        import json
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-skills"
+            source_dir = install_dir / "neqsim-demo"
+            source_dir.mkdir(parents=True)
+            skill_file = source_dir / "SKILL.md"
+            skill_file.write_text("# Demo skill body with enough content.\n", encoding="utf-8")
+            manifest_file = install_dir / "installed.json"
+            manifest_file.write_text(json.dumps({
+                "neqsim-demo": {"path": str(skill_file), "source": "private"}
+            }), encoding="utf-8")
+            export_root = tmp_path / "generic-export"
+
+            with mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="neqsim-demo",
+                    target=["generic"],
+                    vscode=False,
+                    vscode_dir=None,
+                    export_dir=str(export_root),
+                )
+                install_skill.cmd_export([], args)
+                exported = export_root / "skills" / "neqsim-demo" / "SKILL.md"
+                self.assertTrue(exported.exists())
+
+    def test_cmd_install_existing_skill_reconciles_requested_export(self):
+        """Installing an existing skill with a target restores the export."""
+        import argparse
+        import json
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-skills"
+            source_dir = install_dir / "neqsim-demo"
+            source_dir.mkdir(parents=True)
+            skill_file = source_dir / "SKILL.md"
+            skill_file.write_text("# Demo skill body.\n", encoding="utf-8")
+            manifest_file = install_dir / "installed.json"
+            manifest_file.write_text(json.dumps({
+                "neqsim-demo": {"path": str(skill_file), "source": "private"}
+            }), encoding="utf-8")
+            export_root = tmp_path / "generic-export"
+            catalog = [{"name": "neqsim-demo", "source": "local", "path": str(skill_file)}]
+
+            with mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="neqsim-demo",
+                    force=False,
+                    vscode=False,
+                    vscode_dir=None,
+                    target=["generic"],
+                    export_dir=str(export_root),
+                )
+                install_skill.cmd_install(catalog, args)
+                self.assertTrue((export_root / "skills" / "neqsim-demo" / "SKILL.md").exists())
+
+    def test_cmd_export_exits_when_requested_export_fails(self):
+        """Explicit export failures should return a non-zero command result."""
+        import argparse
+        import json
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-skills"
+            source_dir = install_dir / "neqsim-demo"
+            source_dir.mkdir(parents=True)
+            skill_file = source_dir / "SKILL.md"
+            skill_file.write_text("# Demo skill body.\n", encoding="utf-8")
+            manifest_file = install_dir / "installed.json"
+            manifest_file.write_text(json.dumps({
+                "neqsim-demo": {"path": str(skill_file), "source": "private"}
+            }), encoding="utf-8")
+
+            with mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(install_skill, "export_skill_to_generic", side_effect=OSError("boom")):
+                args = argparse.Namespace(
+                    name="neqsim-demo",
+                    target=["generic"],
+                    vscode=False,
+                    vscode_dir=None,
+                    export_dir=str(tmp_path / "generic-export"),
+                )
+                with self.assertRaises(SystemExit):
+                    install_skill.cmd_export([], args)
+
+    def test_cmd_install_supports_git_source(self):
+        """A direct source: git skill installs through the git helper."""
+        import argparse
+        import json
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-skills"
+            manifest_file = install_dir / "installed.json"
+            catalog = [{
+                "name": "neqsim-git-demo",
+                "description": "Demo git skill",
+                "author": "tests",
+                "source": "git",
+                "auth": "git-credential-manager",
+                "url": "https://git.internal/skills.git",
+                "path": "skills/demo/SKILL.md",
+                "_source": "private",
+            }]
+            args = argparse.Namespace(
+                name="neqsim-git-demo", force=False, vscode=False, vscode_dir=None)
+            content = (
+                b"---\nname: neqsim-git-demo\ndescription: Demo.\n---\n"
+                b"# Demo skill body with enough content.\n")
+
+            with mock.patch.object(install_skill, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(install_skill, "_read_git_repository_file", return_value=(content, "main")):
+                install_skill.cmd_install(catalog, args)
+
+            manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+            self.assertEqual("git", manifest["neqsim-git-demo"]["source_type"])
+            self.assertEqual("git-credential-manager", manifest["neqsim-git-demo"]["auth"])
+            self.assertEqual("https://git.internal/skills.git", manifest["neqsim-git-demo"]["url"])
+
+    def test_cmd_doctor_reports_sso_brokers_without_secrets(self):
+        """Doctor output should mention brokers, not token values."""
+        import argparse
+        import io
+        from contextlib import redirect_stdout
+
+        status = {
+            "github_cli": {"available": True, "detail": "available"},
+            "git": {"available": True, "detail": "available"},
+            "github_token_env": {"available": True, "detail": "set"},
+            "private_skill_token_env": {"available": False, "detail": "not set"},
+            "private_catalog": {"available": True, "detail": "~/.neqsim/private-skills.yaml"},
+        }
+        stream = io.StringIO()
+        with mock.patch.object(install_skill, "get_enterprise_auth_status", return_value=status), \
+                redirect_stdout(stream):
+            install_skill.cmd_doctor([], argparse.Namespace())
+
+        output = stream.getvalue()
+        self.assertIn("gh auth login --web", output)
+        self.assertIn("git-credential-manager", output)
+        self.assertIn("GitHub CLI / browser SSO available", output)
+        self.assertNotIn("GITHUB_TOKEN", output)
+        self.assertNotIn("secret", output.lower())
 
 
 if __name__ == "__main__":

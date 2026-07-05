@@ -1,10 +1,14 @@
 """Tests for NeqSim community agent catalog loading and validation."""
 import install_agent
 import argparse
+import io
+import json
 import os
+import shutil
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
 
@@ -91,7 +95,7 @@ You are an example NeqSim agent.
 Loaded skills: neqsim-api-patterns, neqsim-flow-assurance
 """
 
-        def fake_fetch_text(_repo, path, branch=None):
+        def fake_fetch_text(_repo, path, branch=None, auth=None):
             if path == "community-agents.yaml":
                 raise RuntimeError("remote catalog missing")
             return agent_md
@@ -155,7 +159,7 @@ description: "Private PVT agent."
 You are a private PVT agent.
 """
 
-        def fake_fetch_text(_repo, path, branch=None):
+        def fake_fetch_text(_repo, path, branch=None, auth=None):
             if path == "community-agents.yaml":
                 raise RuntimeError("remote catalog missing")
             return agent_md
@@ -193,7 +197,7 @@ human_review_required: true
 trust_level: private
 """
 
-        def fake_fetch_text(_repo, path, branch=None):
+        def fake_fetch_text(_repo, path, branch=None, auth=None):
             if path == "community-agents.yaml":
                 raise RuntimeError("remote catalog missing")
             if path == "agents/demo-agent/AGENT.md":
@@ -233,6 +237,42 @@ trust_level: private
                          agents[0]["supported_domains"])
         self.assertTrue(agents[0]["human_review_required"])
         self.assertEqual("private", agents[0]["trust_level"])
+
+    def test_git_repository_discovery_reads_catalog_without_tokens(self):
+        """Git repository discovery should use git credentials, not token plumbing."""
+        with tempfile.TemporaryDirectory() as tmp:
+            fixture_repo = Path(tmp) / "source"
+            fixture_repo.mkdir()
+            (fixture_repo / "enterprise-agents.yaml").write_text(
+                "agents:\n"
+                "  - name: git-agent\n"
+                "    description: Git discovered agent.\n"
+                "    path: agents/git-agent/AGENT.md\n",
+                encoding="utf-8",
+            )
+
+            def fake_clone(_entry, destination):
+                install_agent.shutil.copytree(str(fixture_repo), str(destination))
+                return "main"
+
+            repository = {
+                "source": "git",
+                "auth": "git-credential-manager",
+                "url": "https://git.example.test/neqsim/enterprise-agents.git",
+                "catalog_path": "enterprise-agents.yaml",
+                "name_prefix": "enterprise-",
+            }
+
+            with mock.patch.object(install_agent.install_skill, "_clone_git_repository",
+                                   side_effect=fake_clone):
+                agents = install_agent._discover_git_repository_agents(repository)
+
+        self.assertEqual(1, len(agents))
+        self.assertEqual("enterprise-git-agent", agents[0]["name"])
+        self.assertEqual("git", agents[0]["source"])
+        self.assertEqual("git-credential-manager", agents[0]["auth"])
+        self.assertEqual(
+            "https://git.example.test/neqsim/enterprise-agents.git", agents[0]["url"])
 
     def test_validate_agent_dir_accepts_agent_yaml_package(self):
         """Folder packages may define metadata in agent.yaml."""
@@ -330,15 +370,101 @@ trust_level: private
                 mock.patch.object(install_agent.install_skill, "load_catalog",
                                   return_value=catalog), \
                 mock.patch.object(install_agent.install_skill, "cmd_install") as mocked_install:
+            install_args = argparse.Namespace(
+                vscode=True,
+                target=["generic"],
+                vscode_dir="/tmp/vscode-agents",
+                vscode_skills_dir="/tmp/vscode-skills",
+                export_dir="/tmp/generic-export",
+            )
             unresolved = install_agent._print_required_skill_guidance(
                 required,
                 install_missing=True,
+                install_args=install_args,
             )
 
         self.assertEqual([], unresolved)
         mocked_install.assert_called_once()
         args_obj = mocked_install.call_args[0][1]
         self.assertEqual("neqsim-fluid-quality-check", args_obj.name)
+        self.assertTrue(args_obj.vscode)
+        self.assertEqual(["generic"], args_obj.target)
+        self.assertEqual("/tmp/vscode-skills", args_obj.vscode_dir)
+        self.assertEqual("/tmp/generic-export", args_obj.export_dir)
+
+    def test_required_skill_export_runs_for_already_installed_skill(self):
+        """Agent target exports should include already-installed required skills."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            skill_dir = tmp_path / "installed-skills" / "neqsim-demo"
+            skill_dir.mkdir(parents=True)
+            skill_file = skill_dir / "SKILL.md"
+            skill_file.write_text("# Demo skill body.\n", encoding="utf-8")
+            required = ["neqsim-demo"]
+            skill_manifest = {
+                "neqsim-demo": {
+                    "path": str(skill_file),
+                    "source": "community",
+                }
+            }
+            install_args = argparse.Namespace(
+                vscode=False,
+                target=["generic"],
+                vscode_dir=None,
+                export_dir=str(tmp_path / "generic-export"),
+            )
+
+            with mock.patch.object(install_agent, "_find_missing_required_skills",
+                                   return_value=[]), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest",
+                                      return_value=skill_manifest), \
+                    mock.patch.object(install_agent.install_skill,
+                                      "_export_installed_skill") as mocked_export:
+                unresolved = install_agent._print_required_skill_guidance(
+                    required,
+                    install_missing=True,
+                    install_args=install_args,
+                )
+
+        self.assertEqual([], unresolved)
+        mocked_export.assert_called_once()
+        self.assertEqual("neqsim-demo", mocked_export.call_args[0][0])
+        self.assertEqual(skill_dir, mocked_export.call_args[0][1])
+
+    def test_required_skill_export_runs_for_core_workspace_skill(self):
+        """Agent target exports should include required core workspace skills."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            core_skills_dir = tmp_path / ".github" / "skills"
+            skill_dir = core_skills_dir / "neqsim-core-demo"
+            skill_dir.mkdir(parents=True)
+            skill_file = skill_dir / "SKILL.md"
+            skill_file.write_text("# Core skill body.\n", encoding="utf-8")
+            install_args = argparse.Namespace(
+                vscode=False,
+                target=["generic"],
+                vscode_dir=None,
+                export_dir=str(tmp_path / "generic-export"),
+            )
+
+            with mock.patch.object(install_agent, "CORE_SKILLS_DIR", core_skills_dir), \
+                    mock.patch.object(install_agent, "_find_missing_required_skills",
+                                      return_value=[]), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest",
+                                      return_value={}), \
+                    mock.patch.object(install_agent.install_skill,
+                                      "_export_installed_skill") as mocked_export:
+                unresolved = install_agent._print_required_skill_guidance(
+                    ["neqsim-core-demo"],
+                    install_missing=True,
+                    install_args=install_args,
+                )
+
+        self.assertEqual([], unresolved)
+        mocked_export.assert_called_once()
+        self.assertEqual("neqsim-core-demo", mocked_export.call_args[0][0])
+        self.assertEqual(skill_dir, mocked_export.call_args[0][1])
+        self.assertEqual(str(skill_file), mocked_export.call_args[0][3]["neqsim-core-demo"]["path"])
 
     def test_local_file_install_writes_manifest(self):
         """Installing a local .agent.md file should copy it and register metadata."""
@@ -433,6 +559,67 @@ trust_level: private
         self.assertEqual(["runProcess"], installed["requires_mcp_tools"])
         self.assertTrue(installed["human_review_required"])
         self.assertEqual("community", installed["trust_level"])
+
+    def test_reinstall_preserves_existing_export_metadata(self):
+        """Refreshing one target should not drop another target's export metadata."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "export-preserve.agent.md"
+            source.write_text(
+                "---\n"
+                "name: Export Preserve Agent\n"
+                "description: Agent to test export manifest preservation.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            install_dir = tmp_path / "installed-agents"
+            manifest_file = install_dir / "installed.json"
+            existing_generic = tmp_path / "generic" / "agents" / "export-preserve-agent"
+            existing_vscode = tmp_path / "prompts" / "export-preserve-agent.agent.md"
+            manifest_file.parent.mkdir(parents=True)
+            manifest_file.write_text(json.dumps({
+                "export-preserve-agent": {
+                    "path": str(install_dir / "export-preserve-agent"),
+                    "exports": {
+                        "generic": str(existing_generic),
+                        "vscode": str(existing_vscode),
+                    },
+                    "generic_path": str(existing_generic),
+                    "vscode_path": str(existing_vscode),
+                }
+            }), encoding="utf-8")
+            catalog = [{
+                "name": "export-preserve-agent",
+                "description": "Export preservation test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(source),
+                "_source": "community",
+                "required_skills": [],
+            }]
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(install_agent, "_print_required_skill_guidance",
+                                      return_value=[]), \
+                    mock.patch.object(install_agent, "_export_installed_agent",
+                                      return_value=True):
+                args = argparse.Namespace(
+                    name="export-preserve-agent",
+                    force=True,
+                    install_missing_skills=False,
+                    target=["vscode"],
+                    vscode=False,
+                )
+                install_agent.cmd_install(catalog, args)
+                manifest = json_load(manifest_file)
+
+        installed = manifest["export-preserve-agent"]
+        self.assertEqual(str(existing_generic), installed["exports"]["generic"])
+        self.assertEqual(str(existing_vscode), installed["exports"]["vscode"])
+        self.assertEqual(str(existing_generic), installed["generic_path"])
+        self.assertEqual(str(existing_vscode), installed["vscode_path"])
 
     def test_install_defaults_to_auto_install_missing_skills(self):
         """Agent install should auto-install required skills when flag is omitted."""
@@ -550,6 +737,211 @@ trust_level: private
 
             self.assertTrue((source_dir / "AGENT.md").exists())
 
+    def test_cmd_install_supports_git_source(self):
+        """Installing a git-source agent should copy content and record provenance."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            fixture_repo = tmp_path / "source"
+            package_dir = fixture_repo / "agents" / "git-agent"
+            package_dir.mkdir(parents=True)
+            (package_dir / "AGENT.md").write_text(
+                "---\n"
+                "name: Git Agent\n"
+                "description: Git agent used by installer tests.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            install_dir = tmp_path / "installed-agents"
+            manifest_file = install_dir / "installed.json"
+            catalog = [{
+                "name": "git-agent",
+                "description": "Git source agent",
+                "author": "tests",
+                "source": "git",
+                "auth": "git-credential-manager",
+                "url": "https://git.example.test/neqsim/enterprise-agents.git",
+                "path": "agents/git-agent/AGENT.md",
+                "_source": "private",
+                "required_skills": [],
+            }]
+
+            def fake_clone(_entry, destination):
+                install_agent.shutil.copytree(str(fixture_repo), str(destination))
+                return "main"
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(install_agent.install_skill, "_clone_git_repository",
+                                      side_effect=fake_clone):
+                args = argparse.Namespace(
+                    name="git-agent",
+                    force=False,
+                    install_missing_skills=False,
+                )
+                install_agent.cmd_install(catalog, args)
+                manifest = json_load(manifest_file)
+
+        installed = manifest["git-agent"]
+        self.assertEqual("git", installed["source_type"])
+        self.assertEqual("git-credential-manager", installed["auth"])
+        self.assertEqual(
+            "https://git.example.test/neqsim/enterprise-agents.git", installed["url"])
+        self.assertEqual("AGENT.md", Path(installed["main_file"]).name)
+
+    def test_cmd_install_all_exports_every_agent_to_vscode(self):
+        """Bulk install should install all catalog agents and export them to VS Code."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            community = tmp_path / "community.agent.md"
+            private = tmp_path / "private.agent.md"
+            community.write_text(
+                "---\n"
+                "name: Community Agent\n"
+                "description: Community bulk install test agent.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            private.write_text(
+                "---\n"
+                "name: Private Agent\n"
+                "description: Private bulk install test agent.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            install_dir = tmp_path / "installed-agents"
+            manifest_file = install_dir / "installed.json"
+            vscode_dir = tmp_path / "prompts"
+            catalog = [{
+                "name": "community-agent",
+                "description": "Community bulk install test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(community),
+                "_source": "community",
+                "required_skills": [],
+            }, {
+                "name": "private-agent",
+                "description": "Private bulk install test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(private),
+                "_source": "private",
+                "required_skills": [],
+            }]
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name=None,
+                    all=True,
+                    source="all",
+                    force=False,
+                    install_missing_skills=False,
+                    vscode=True,
+                    vscode_scope="user",
+                    vscode_dir=str(vscode_dir),
+                )
+                install_agent.cmd_install(catalog, args)
+                manifest = json_load(manifest_file)
+                community_exported = (vscode_dir / "community-agent.agent.md").exists()
+                private_exported = (vscode_dir / "private-agent.agent.md").exists()
+
+        self.assertIn("community-agent", manifest)
+        self.assertIn("private-agent", manifest)
+        self.assertTrue(community_exported)
+        self.assertTrue(private_exported)
+
+    def test_cmd_install_all_can_filter_private_agents(self):
+        """Bulk install source filter should support enterprise/private-only installs."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            community = tmp_path / "community.agent.md"
+            private = tmp_path / "private.agent.md"
+            community.write_text(
+                "---\n"
+                "name: Community Agent\n"
+                "description: Community bulk filter test agent.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            private.write_text(
+                "---\n"
+                "name: Private Agent\n"
+                "description: Private bulk filter test agent.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            install_dir = tmp_path / "installed-agents"
+            manifest_file = install_dir / "installed.json"
+            catalog = [{
+                "name": "community-agent",
+                "description": "Community bulk filter test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(community),
+                "_source": "community",
+                "required_skills": [],
+            }, {
+                "name": "private-agent",
+                "description": "Private bulk filter test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(private),
+                "_source": "private",
+                "required_skills": [],
+            }]
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name=None,
+                    all=True,
+                    source="private",
+                    force=False,
+                    install_missing_skills=False,
+                    vscode=False,
+                )
+                install_agent.cmd_install(catalog, args)
+                manifest = json_load(manifest_file)
+
+        self.assertNotIn("community-agent", manifest)
+        self.assertIn("private-agent", manifest)
+
+    def test_cmd_doctor_reports_sso_brokers_without_secret_values(self):
+        """Doctor output should describe broker readiness without leaking values."""
+        temp_dir = Path(tempfile.mkdtemp(prefix="agent-doctor-"))
+        self.addCleanup(shutil.rmtree, temp_dir, ignore_errors=True)
+        agent_catalog = temp_dir / "private-agents.yaml"
+        agent_catalog.write_text("repositories: []\n", encoding="utf-8")
+        status = {
+            "github_cli": {"available": True, "detail": "available"},
+            "git": {"available": True, "detail": "available"},
+            "github_token_env": {"available": False, "detail": "not set"},
+            "private_skill_token_env": {"available": False, "detail": "not set"},
+            "private_catalog": {"available": True, "detail": "~/.neqsim/private-skills.yaml"},
+        }
+        with mock.patch.object(install_agent.install_skill,
+                               "get_enterprise_auth_status", return_value=status), \
+                mock.patch.object(install_agent, "PRIVATE_CATALOG_FILE", agent_catalog), \
+                mock.patch.dict(os.environ, {"PRIVATE_AGENT_TOKEN": "redacted-value"}):
+            output = io.StringIO()
+            with redirect_stdout(output):
+                install_agent.cmd_doctor([], argparse.Namespace())
+
+        text = output.getvalue()
+        self.assertIn("gh auth login --web", text)
+        self.assertIn("git-credential-manager", text)
+        self.assertIn("GitHub CLI / browser SSO available", text)
+        self.assertIn("private-agents.yaml", text)
+        self.assertNotIn("private-skills.yaml", text)
+        self.assertNotIn("GITHUB_TOKEN", text)
+        self.assertNotIn("redacted-value", text)
+
 
 def json_load(path):
     """Load JSON from a path."""
@@ -611,6 +1003,21 @@ class AgentVsCodeExportTest(unittest.TestCase):
             self.assertTrue(dest.exists())
             self.assertIn("# Demo", dest.read_text(encoding="utf-8"))
 
+    def test_export_agent_to_vscode_rewrites_frontmatter_name(self):
+        """VS Code exports should use the unique catalog name in frontmatter."""
+        with tempfile.TemporaryDirectory() as tmp:
+            main_file = Path(tmp) / "AGENT.md"
+            main_file.write_text(
+                "---\nname: pvt-agent\ndescription: x\n---\n# Demo", encoding="utf-8")
+            vscode_dir = Path(tmp) / "prompts"
+
+            dest = install_agent.export_agent_to_vscode(
+                "enterprise-pvt-agent", main_file, vscode_dir)
+
+            text = dest.read_text(encoding="utf-8")
+            self.assertIn("name: enterprise-pvt-agent", text)
+            self.assertNotIn("name: pvt-agent", text)
+
     def test_cmd_install_with_vscode_exports_and_remove_cleans_up(self):
         """A --vscode install exports the agent and remove deletes the copy."""
         with tempfile.TemporaryDirectory() as tmp:
@@ -658,6 +1065,320 @@ class AgentVsCodeExportTest(unittest.TestCase):
                 remove_args = argparse.Namespace(name="local-test-agent")
                 install_agent.cmd_remove(catalog, remove_args)
                 self.assertFalse(exported.exists())
+
+    def test_cmd_install_with_generic_target_exports_and_remove_cleans_up(self):
+        """A generic target install exports a tool-neutral agent package."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "local.agent.md"
+            source.write_text(
+                "---\n"
+                "name: Local Test Agent\n"
+                "description: Local agent used by the installer tests.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            install_dir = tmp_path / "installed-agents"
+            manifest_file = install_dir / "installed.json"
+            export_root = tmp_path / "generic-export"
+            catalog = [{
+                "name": "local-test-agent",
+                "description": "Local test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(source),
+                "_source": "private",
+                "required_skills": [],
+            }]
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="local-test-agent",
+                    force=False,
+                    install_missing_skills=False,
+                    vscode=False,
+                    vscode_scope="user",
+                    vscode_dir=None,
+                    target=["generic"],
+                    export_dir=str(export_root),
+                )
+                install_agent.cmd_install(catalog, args)
+                manifest = json_load(manifest_file)
+                exported = export_root / "agents" / "local-test-agent"
+                self.assertTrue((exported / "AGENT.md").exists())
+                self.assertTrue((export_root / "manifest.json").exists())
+                self.assertEqual(
+                    str(exported),
+                    manifest["local-test-agent"]["exports"]["generic"])
+
+                remove_args = argparse.Namespace(name="local-test-agent")
+                install_agent.cmd_remove(catalog, remove_args)
+                self.assertFalse(exported.exists())
+
+    def test_cmd_export_installed_agent_to_generic(self):
+        """An installed agent can be exported later without reinstalling."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-agents"
+            source_dir = install_dir / "local-test-agent"
+            source_dir.mkdir(parents=True)
+            main_file = source_dir / "local.agent.md"
+            main_file.write_text(
+                "---\n"
+                "name: Local Test Agent\n"
+                "description: Local agent used by export tests.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            manifest_file = install_dir / "installed.json"
+            manifest_file.write_text(json.dumps({
+                "local-test-agent": {
+                    "path": str(source_dir),
+                    "main_file": str(main_file),
+                    "source": "private",
+                    "required_skills": [],
+                }
+            }), encoding="utf-8")
+            export_root = tmp_path / "generic-export"
+
+            with mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="local-test-agent",
+                    target=["generic"],
+                    vscode=False,
+                    vscode_scope="user",
+                    vscode_dir=None,
+                    export_dir=str(export_root),
+                )
+                install_agent.cmd_export([], args)
+                exported = export_root / "agents" / "local-test-agent" / "AGENT.md"
+                self.assertTrue(exported.exists())
+
+    def test_cmd_install_existing_agent_reconciles_requested_export(self):
+        """Installing an existing agent with a target restores the export."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-agents"
+            source_dir = install_dir / "local-test-agent"
+            source_dir.mkdir(parents=True)
+            main_file = source_dir / "local.agent.md"
+            main_file.write_text(
+                "---\n"
+                "name: Local Test Agent\n"
+                "description: Local agent used by export tests.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            manifest_file = install_dir / "installed.json"
+            manifest_file.write_text(json.dumps({
+                "local-test-agent": {
+                    "path": str(source_dir),
+                    "main_file": str(main_file),
+                    "source": "private",
+                    "required_skills": [],
+                }
+            }), encoding="utf-8")
+            export_root = tmp_path / "generic-export"
+            catalog = [{
+                "name": "local-test-agent",
+                "source": "local",
+                "path": str(main_file),
+                "required_skills": [],
+            }]
+
+            with mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="local-test-agent",
+                    force=False,
+                    install_missing_skills=False,
+                    vscode=False,
+                    vscode_scope="user",
+                    vscode_dir=None,
+                    target=["generic"],
+                    export_dir=str(export_root),
+                )
+                install_agent.cmd_install(catalog, args)
+                exported = export_root / "agents" / "local-test-agent" / "AGENT.md"
+                self.assertTrue(exported.exists())
+
+    def test_cmd_export_exits_when_requested_export_fails(self):
+        """Explicit export failures should return a non-zero command result."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-agents"
+            source_dir = install_dir / "local-test-agent"
+            source_dir.mkdir(parents=True)
+            main_file = source_dir / "local.agent.md"
+            main_file.write_text(
+                "---\n"
+                "name: Local Test Agent\n"
+                "description: Local agent used by export tests.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            manifest_file = install_dir / "installed.json"
+            manifest_file.write_text(json.dumps({
+                "local-test-agent": {
+                    "path": str(source_dir),
+                    "main_file": str(main_file),
+                    "source": "private",
+                    "required_skills": [],
+                }
+            }), encoding="utf-8")
+
+            with mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(install_agent, "export_agent_to_generic", side_effect=OSError("boom")):
+                args = argparse.Namespace(
+                    name="local-test-agent",
+                    target=["generic"],
+                    vscode=False,
+                    vscode_scope="user",
+                    vscode_dir=None,
+                    export_dir=str(tmp_path / "generic-export"),
+                )
+                with self.assertRaises(SystemExit):
+                    install_agent.cmd_export([], args)
+
+    def test_cmd_doctor_generic_passes_when_agent_and_required_skill_exported(self):
+        """Generic doctor should pass when exported agents can see required skills."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            export_root = tmp_path / "generic-export"
+            agent_export = export_root / "agents" / "local-test-agent"
+            skill_export = export_root / "skills" / "neqsim-demo"
+            agent_export.mkdir(parents=True)
+            skill_export.mkdir(parents=True)
+            (agent_export / "AGENT.md").write_text("Agent body.\n", encoding="utf-8")
+            (skill_export / "SKILL.md").write_text("# Skill body.\n", encoding="utf-8")
+            (export_root / "manifest.json").write_text(
+                '{"agents":{"local-test-agent":{}},"skills":{"neqsim-demo":{}}}',
+                encoding="utf-8")
+
+            agent_manifest = {
+                "local-test-agent": {
+                    "path": str(tmp_path / "installed-agents" / "local-test-agent"),
+                    "exports": {"generic": str(agent_export)},
+                    "required_skills": ["neqsim-demo"],
+                }
+            }
+            skill_manifest = {
+                "neqsim-demo": {
+                    "path": str(tmp_path / "installed-skills" / "neqsim-demo" / "SKILL.md"),
+                    "exports": {"generic": str(skill_export)},
+                }
+            }
+            args = argparse.Namespace(target="generic", export_dir=str(export_root))
+
+            with mock.patch.object(install_agent, "load_manifest", return_value=agent_manifest), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest",
+                                      return_value=skill_manifest):
+                with redirect_stdout(io.StringIO()) as output:
+                    install_agent.cmd_doctor([], args)
+
+            self.assertIn("Result: PASS", output.getvalue())
+
+    def test_cmd_doctor_vscode_uses_current_user_skill_folder_not_stale_manifest(self):
+        """VS Code doctor should ignore stale workspace skill export paths."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            prompts_dir = tmp_path / "prompts"
+            agent_export = prompts_dir / "local-test-agent.agent.md"
+            skill_export = prompts_dir / "skills" / "neqsim-demo"
+            agent_export.parent.mkdir(parents=True)
+            skill_export.mkdir(parents=True)
+            agent_export.write_text("Agent body.\n", encoding="utf-8")
+            (skill_export / "SKILL.md").write_text("# Skill body.\n", encoding="utf-8")
+
+            agent_manifest = {
+                "local-test-agent": {
+                    "exports": {"vscode": str(agent_export)},
+                    "required_skills": ["neqsim-demo"],
+                }
+            }
+            stale_workspace_export = tmp_path / ".github" / "skills" / "neqsim-demo"
+            skill_manifest = {
+                "neqsim-demo": {
+                    "path": str(tmp_path / "installed-skills" / "neqsim-demo" / "SKILL.md"),
+                    "exports": {"vscode": str(stale_workspace_export)},
+                }
+            }
+            args = argparse.Namespace(target="vscode", export_dir=None)
+
+            with mock.patch.object(install_agent, "load_manifest", return_value=agent_manifest), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest",
+                                      return_value=skill_manifest):
+                with redirect_stdout(io.StringIO()) as output:
+                    install_agent.cmd_doctor([], args)
+
+            text = output.getvalue()
+            self.assertIn("Result: PASS", text)
+            self.assertNotIn(str(stale_workspace_export), text)
+
+    def test_cmd_doctor_vscode_accepts_core_workspace_skill(self):
+        """VS Code doctor should accept skills discoverable from core .github/skills."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            prompts_dir = tmp_path / "prompts"
+            agent_export = prompts_dir / "local-test-agent.agent.md"
+            core_skills_dir = tmp_path / ".github" / "skills"
+            core_skill = core_skills_dir / "neqsim-core-demo"
+            agent_export.parent.mkdir(parents=True)
+            core_skill.mkdir(parents=True)
+            agent_export.write_text("Agent body.\n", encoding="utf-8")
+            (core_skill / "SKILL.md").write_text("# Core skill body.\n", encoding="utf-8")
+
+            agent_manifest = {
+                "local-test-agent": {
+                    "exports": {"vscode": str(agent_export)},
+                    "required_skills": ["neqsim-core-demo"],
+                }
+            }
+            args = argparse.Namespace(target="vscode", export_dir=None)
+
+            with mock.patch.object(install_agent, "CORE_SKILLS_DIR", core_skills_dir), \
+                    mock.patch.object(install_agent, "load_manifest", return_value=agent_manifest), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest", return_value={}):
+                with redirect_stdout(io.StringIO()) as output:
+                    install_agent.cmd_doctor([], args)
+
+            self.assertIn("Result: PASS", output.getvalue())
+
+    def test_cmd_doctor_generic_fails_when_required_skill_not_exported(self):
+        """Generic doctor should fail if an exported agent's skill is not exported."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            export_root = tmp_path / "generic-export"
+            agent_export = export_root / "agents" / "local-test-agent"
+            agent_export.mkdir(parents=True)
+            (agent_export / "AGENT.md").write_text("Agent body.\n", encoding="utf-8")
+            (export_root / "manifest.json").write_text(
+                '{"agents":{"local-test-agent":{}}}', encoding="utf-8")
+
+            agent_manifest = {
+                "local-test-agent": {
+                    "exports": {"generic": str(agent_export)},
+                    "required_skills": ["neqsim-demo"],
+                }
+            }
+            skill_manifest = {
+                "neqsim-demo": {
+                    "path": str(tmp_path / "installed-skills" / "neqsim-demo" / "SKILL.md"),
+                }
+            }
+            args = argparse.Namespace(target="generic", export_dir=str(export_root))
+
+            with mock.patch.object(install_agent, "load_manifest", return_value=agent_manifest), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest",
+                                      return_value=skill_manifest):
+                with self.assertRaises(SystemExit), redirect_stdout(io.StringIO()) as output:
+                    install_agent.cmd_doctor([], args)
+
+            self.assertIn("requires skill not exported", output.getvalue())
 
 
 if __name__ == "__main__":

@@ -37,14 +37,30 @@ def parse_front_matter(text: str) -> Dict[str, str]:
     if not match:
         return {}
     out: Dict[str, str] = {}
-    for line in match.group(1).splitlines():
+    lines = match.group(1).splitlines()
+    index = 0
+    while index < len(lines):
+        line = lines[index]
         if ":" not in line or line.lstrip().startswith("#"):
+            index += 1
             continue
         key, _, value = line.partition(":")
         key = key.strip()
         value = value.strip().strip('"').strip("'")
+        if value in {"|", ">"}:
+            block_lines: List[str] = []
+            index += 1
+            while index < len(lines):
+                block_line = lines[index]
+                if block_line and not block_line.startswith((" ", "\t")):
+                    index -= 1
+                    break
+                block_lines.append(block_line.strip())
+                index += 1
+            value = " ".join(part for part in block_lines if part)
         if key and value:
             out[key] = value
+        index += 1
     return out
 
 
