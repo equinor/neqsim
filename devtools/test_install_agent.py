@@ -372,7 +372,8 @@ trust_level: private
             install_args = argparse.Namespace(
                 vscode=True,
                 target=["generic"],
-                vscode_dir="/tmp/vscode-skills",
+                vscode_dir="/tmp/vscode-agents",
+                vscode_skills_dir="/tmp/vscode-skills",
                 export_dir="/tmp/generic-export",
             )
             unresolved = install_agent._print_required_skill_guidance(
@@ -1167,6 +1168,72 @@ class AgentVsCodeExportTest(unittest.TestCase):
             with mock.patch.object(install_agent, "load_manifest", return_value=agent_manifest), \
                     mock.patch.object(install_agent.install_skill, "load_manifest",
                                       return_value=skill_manifest):
+                with redirect_stdout(io.StringIO()) as output:
+                    install_agent.cmd_doctor([], args)
+
+            self.assertIn("Result: PASS", output.getvalue())
+
+    def test_cmd_doctor_vscode_uses_current_user_skill_folder_not_stale_manifest(self):
+        """VS Code doctor should ignore stale workspace skill export paths."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            prompts_dir = tmp_path / "prompts"
+            agent_export = prompts_dir / "local-test-agent.agent.md"
+            skill_export = prompts_dir / "skills" / "neqsim-demo"
+            agent_export.parent.mkdir(parents=True)
+            skill_export.mkdir(parents=True)
+            agent_export.write_text("Agent body.\n", encoding="utf-8")
+            (skill_export / "SKILL.md").write_text("# Skill body.\n", encoding="utf-8")
+
+            agent_manifest = {
+                "local-test-agent": {
+                    "exports": {"vscode": str(agent_export)},
+                    "required_skills": ["neqsim-demo"],
+                }
+            }
+            stale_workspace_export = tmp_path / ".github" / "skills" / "neqsim-demo"
+            skill_manifest = {
+                "neqsim-demo": {
+                    "path": str(tmp_path / "installed-skills" / "neqsim-demo" / "SKILL.md"),
+                    "exports": {"vscode": str(stale_workspace_export)},
+                }
+            }
+            args = argparse.Namespace(target="vscode", export_dir=None)
+
+            with mock.patch.object(install_agent, "load_manifest", return_value=agent_manifest), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest",
+                                      return_value=skill_manifest):
+                with redirect_stdout(io.StringIO()) as output:
+                    install_agent.cmd_doctor([], args)
+
+            text = output.getvalue()
+            self.assertIn("Result: PASS", text)
+            self.assertNotIn(str(stale_workspace_export), text)
+
+    def test_cmd_doctor_vscode_accepts_core_workspace_skill(self):
+        """VS Code doctor should accept skills discoverable from core .github/skills."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            prompts_dir = tmp_path / "prompts"
+            agent_export = prompts_dir / "local-test-agent.agent.md"
+            core_skills_dir = tmp_path / ".github" / "skills"
+            core_skill = core_skills_dir / "neqsim-core-demo"
+            agent_export.parent.mkdir(parents=True)
+            core_skill.mkdir(parents=True)
+            agent_export.write_text("Agent body.\n", encoding="utf-8")
+            (core_skill / "SKILL.md").write_text("# Core skill body.\n", encoding="utf-8")
+
+            agent_manifest = {
+                "local-test-agent": {
+                    "exports": {"vscode": str(agent_export)},
+                    "required_skills": ["neqsim-core-demo"],
+                }
+            }
+            args = argparse.Namespace(target="vscode", export_dir=None)
+
+            with mock.patch.object(install_agent, "CORE_SKILLS_DIR", core_skills_dir), \
+                    mock.patch.object(install_agent, "load_manifest", return_value=agent_manifest), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest", return_value={}):
                 with redirect_stdout(io.StringIO()) as output:
                     install_agent.cmd_doctor([], args)
 

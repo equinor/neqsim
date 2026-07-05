@@ -1267,16 +1267,48 @@ def _skill_install_args(skill_name, install_args):
         force=False,
         vscode=getattr(install_args, "vscode", False),
         target=list(getattr(install_args, "target", []) or []),
-        vscode_dir=getattr(install_args, "vscode_dir", None),
+        vscode_scope=getattr(install_args, "vscode_scope", "user"),
+        vscode_dir=getattr(install_args, "vscode_skills_dir", None),
         export_dir=getattr(install_args, "export_dir", None),
     )
 
 
-def _required_skill_exports_missing(skill_info, targets):
+def _required_skill_export_path(skill_name, skill_info, target, args=None, agent_export_path=None):
+    """Return the expected required-skill export path for a target.
+
+    @param skill_name the resolved skill name
+    @param skill_info the installed skill manifest entry
+    @param target the export target to check
+    @param args optional parsed CLI arguments
+    @param agent_export_path optional exported agent path used to infer VS Code sibling paths
+    @return the expected export path string, or an empty string when unknown
+    """
+    source_path = Path(skill_info.get("path", "")) if skill_info.get("path") else None
+    if target == "vscode" and source_path is not None and _path_is_under(source_path, CORE_SKILLS_DIR):
+        return str(source_path.parent if source_path.name == "SKILL.md" else source_path)
+
+    if target != "vscode":
+        return _manifest_export_path(skill_info, target)
+
+    if agent_export_path:
+        agent_path = Path(agent_export_path)
+        agent_dir = agent_path.parent if agent_path.suffix else agent_path
+        if agent_dir.name == "agents" and agent_dir.parent.name == ".github":
+            return str(agent_dir.parent / "skills" / skill_name)
+        return str(agent_dir / "skills" / skill_name)
+
+    skills_dir = install_skill.resolve_vscode_skills_dir(
+        getattr(args, "vscode_skills_dir", None), getattr(args, "vscode_scope", "user"))
+    if skills_dir is None:
+        return ""
+    return str(Path(skills_dir) / skill_name)
+
+
+def _required_skill_exports_missing(skill_name, skill_info, targets, install_args=None):
     """Return requested targets with missing or stale required-skill exports."""
     missing = []
     for target in targets:
-        export_path = _manifest_export_path(skill_info, target)
+        export_path = _required_skill_export_path(skill_name, skill_info, target, install_args)
         if not export_path or not Path(export_path).exists():
             missing.append(target)
     return missing
@@ -1322,7 +1354,7 @@ def _ensure_required_skill_exports(required_skills, install_args):
             continue
 
         skill_info = skill_manifest.get(resolved_name, {})
-        if not _required_skill_exports_missing(skill_info, targets):
+        if not _required_skill_exports_missing(resolved_name, skill_info, targets, install_args):
             continue
         source_path = Path(skill_info.get("path", ""))
         source_dir = source_path.parent if source_path else Path("")
@@ -2065,7 +2097,7 @@ def _check_export_target(target, args):
     failures = []
     warnings = []
     checked_agents = []
-    available_skill_names = set(skill_manifest.keys())
+    available_skill_names = _available_skill_names()
 
     for name, info in sorted(agent_manifest.items()):
         export_path = _manifest_export_path(info, target)
@@ -2090,7 +2122,10 @@ def _check_export_target(target, args):
                         agent=name, skill=required))
                 continue
             skill_info = skill_manifest.get(resolved, {})
-            skill_export = _manifest_export_path(skill_info, target)
+            if not skill_info and (CORE_SKILLS_DIR / resolved).is_dir():
+                skill_info = {"path": str(CORE_SKILLS_DIR / resolved / "SKILL.md")}
+            skill_export = _required_skill_export_path(
+                resolved, skill_info, target, args, export_path)
             if not skill_export:
                 failures.append(
                     "Agent {agent} requires skill not exported to {target}: {skill}".format(
@@ -2286,6 +2321,9 @@ def main():
         "--vscode-dir", default=None,
         help="Explicit VS Code agents directory for --vscode export")
     p_install.add_argument(
+        "--vscode-skills-dir", default=None,
+        help="Explicit VS Code skills directory for required skill exports")
+    p_install.add_argument(
         "--export-dir", default=None,
         help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
 
@@ -2302,6 +2340,9 @@ def main():
     p_export.add_argument(
         "--vscode-dir", default=None,
         help="Explicit VS Code agents directory for --target vscode")
+    p_export.add_argument(
+        "--vscode-skills-dir", default=None,
+        help="Explicit VS Code skills directory for required skill exports")
     p_export.add_argument(
         "--export-dir", default=None,
         help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")

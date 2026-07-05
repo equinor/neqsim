@@ -446,14 +446,14 @@ Installed community skills are stored at `~/.neqsim/skills/<name>/SKILL.md`.
 Installed community skills at `~/.neqsim/skills/` are the local source of truth. Agent tools discover different folders, so use export targets to create generated copies for a specific tool:
 
 ```bash
-# Export an already-installed skill to VS Code's workspace .github/skills folder
+# Export an already-installed skill to VS Code's user prompts skills folder
 neqsim skill export neqsim-my-topic --target vscode
 
 # Export an already-installed skill to ~/.neqsim/export/generic/skills/
 neqsim skill export neqsim-my-topic --target generic
 ```
 
-The generic export writes `~/.neqsim/export/generic/skills/<name>/SKILL.md` plus `~/.neqsim/export/generic/manifest.json`. The same manifest also records generic agent exports when both agents and skills are exported. Use this target for coding agents that can be configured with arbitrary local instruction folders. Use the VS Code target when you want Copilot/VS Code to discover the skill from the current workspace.
+The generic export writes `~/.neqsim/export/generic/skills/<name>/SKILL.md` plus `~/.neqsim/export/generic/manifest.json`. The same manifest also records generic agent exports when both agents and skills are exported. Use this target for coding agents that can be configured with arbitrary local instruction folders. Use the VS Code target when you want Copilot/VS Code to discover the skill from the user's private prompts folder. Maintainers can choose workspace export explicitly with `--vscode-scope workspace` when a generated `.github/skills` copy is intentional.
 
 Prefer the export commands over manual copying. If a tool cannot read the VS Code
 or generic export layouts, point that tool at the installed source folder
@@ -646,7 +646,7 @@ There are several ways to make local skills available. They are listed from most
 
 | Method | Auto-loads | Works across workspaces | Setup effort |
 |--------|-----------|------------------------|-------------|
-| **NeqSim install + export targets** (recommended) | Yes, when the target tool reads the export | Yes for generic/user exports; workspace-scoped for VS Code skill exports | Low |
+| **NeqSim install + export targets** (recommended) | Yes, when the target tool reads the export | Yes for generic and default VS Code user exports; workspace-scoped only with explicit `--vscode-scope workspace` | Low |
 | **VS Code User Prompt Files** | Yes, when referenced with `#` | Yes | Low |
 | **Workspace `.github/copilot-instructions.md`** | Yes, always in context | No, per-workspace only | Medium |
 | **Manual prompt reference** | No, must ask each time | Yes | None |
@@ -661,7 +661,7 @@ Use this method for reusable skills that should behave like installed community 
 # Install from a public, private, local, GitHub, git, or URL catalog entry
 neqsim skill install neqsim-company-stid
 
-# Make the installed skill visible to VS Code in the current workspace
+# Make the installed skill visible to VS Code from the user prompts skills folder
 neqsim skill export neqsim-company-stid --target vscode
 
 # Make it visible to tool-neutral coding agents
