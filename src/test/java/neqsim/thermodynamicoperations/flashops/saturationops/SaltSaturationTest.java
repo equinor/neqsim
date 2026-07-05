@@ -103,6 +103,68 @@ class SaltSaturationTest {
   }
 
   /**
+   * Verifies that non-reactive produced-water/seawater mixing reports supersaturated sulfate scales for the expected
+   * barium-, strontium-, and calcium-sulfate ion pairs.
+   *
+   * @throws Exception if the thermodynamic operation fails
+   */
+  @Test
+  void getRelativeScalePotentialHandlesProducedWaterSulfateScalesWithoutReactions() throws Exception {
+    SystemInterface system = createProducedWaterSeawaterSulfateMix();
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+    system.initProperties();
+
+    int aqueousPhaseNumber = getAqueousOrWaterPhaseNumber(system);
+    operations.checkScalePotential(aqueousPhaseNumber);
+
+    double baso4ScalePotential = operations.getRelativeScalePotential(aqueousPhaseNumber, "BaSO4");
+    double srso4ScalePotential = operations.getRelativeScalePotential(aqueousPhaseNumber, "SrSO4");
+    double gypsumScalePotential = operations.getRelativeScalePotential(aqueousPhaseNumber, "CaSO4_G");
+    double anhydriteScalePotential = operations.getRelativeScalePotential(aqueousPhaseNumber, "CaSO4_A");
+
+    assertTrue(Double.isFinite(baso4ScalePotential) && baso4ScalePotential > 1.0,
+        "BaSO4 should be supersaturated when barium-rich produced water meets sulfate-rich seawater");
+    assertTrue(Double.isFinite(srso4ScalePotential) && srso4ScalePotential > 1.0,
+        "SrSO4 should be supersaturated for the mixed produced-water benchmark");
+    assertTrue(Double.isFinite(gypsumScalePotential) && gypsumScalePotential > 1.0,
+        "Gypsum should be supersaturated for the calcium/sulfate-rich benchmark");
+    assertTrue(Double.isFinite(anhydriteScalePotential) && anhydriteScalePotential > 1.0,
+        "Anhydrite should be supersaturated for the calcium/sulfate-rich benchmark");
+    assertTrue(baso4ScalePotential > srso4ScalePotential,
+        "Barite should be the strongest sulfate-scale driver in the high-barium benchmark");
+  }
+
+  /**
+   * Verifies that a sour, iron-bearing brine with H2S reactions forms bisulfide and reports finite FeS scale potential.
+   *
+   * @throws Exception if the thermodynamic operation fails
+   */
+  @Test
+  void getRelativeScalePotentialHandlesFeSWithH2SReactions() throws Exception {
+    SystemInterface system = createSourIronBrineWithH2S();
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+    system.initProperties();
+
+    int aqueousPhaseNumber = getAqueousOrWaterPhaseNumber(system);
+    assertTrue(system.getPhase(aqueousPhaseNumber).hasComponent("HS-"),
+        "H2S reactions should add bisulfide to the aqueous phase");
+    assertTrue(system.getPhase(aqueousPhaseNumber).hasComponent("H3O+"),
+        "H2S reactions should add hydronium for FeS scale-potential correction");
+    assertTrue(getComponentMoles(system, aqueousPhaseNumber, "HS-") > 0.0,
+        "Sour-brine equilibrium should form a finite amount of bisulfide");
+    assertTrue(Double.isFinite(system.getPhase(aqueousPhaseNumber).getpH()),
+        "Sour-brine aqueous phase should have a finite pH");
+
+    operations.checkScalePotential(aqueousPhaseNumber);
+    double fesScalePotential = operations.getRelativeScalePotential(aqueousPhaseNumber, "FeS");
+
+    assertTrue(Double.isFinite(fesScalePotential), "FeS scale potential should be finite");
+    assertTrue(fesScalePotential > 0.0, "FeS scale potential should be positive when Fe++ and HS- are present");
+  }
+
+  /**
    * Verifies that salt saturation calculations complete for supported chloride salts.
    */
   @Test
@@ -248,6 +310,41 @@ class SaltSaturationTest {
   }
 
   /**
+   * Creates a non-reactive barium/strontium/calcium-rich produced-water and sulfate-rich seawater blend.
+   *
+   * @return initialized electrolyte CPA system
+   */
+  private SystemInterface createProducedWaterSeawaterSulfateMix() {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(353.15, 50.0);
+    system.addComponent("water", 55.5);
+    system.addComponent("Na+", 0.80);
+    system.addComponent("Cl-", 1.59);
+    system.addComponent("Ca++", 0.06);
+    system.addComponent("Ba++", 0.012);
+    system.addComponent("Sr++", 0.010);
+    system.addComponent("SO4--", 0.045);
+    system.createDatabase(true);
+    system.setMixingRule(10);
+    system.setMultiPhaseCheck(true);
+    return system;
+  }
+
+  /**
+   * Creates an iron-bearing sour brine where H2S dissociation supplies bisulfide for FeS scale screening.
+   *
+   * @return initialized electrolyte CPA system
+   * @throws Exception if chemical-reaction initialization fails
+   */
+  private SystemInterface createSourIronBrineWithH2S() throws Exception {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(323.15, 10.0);
+    system.addComponent("H2S", 0.02);
+    system.addComponent("water", 55.5);
+    system.addComponent("Fe++", 1.0e-4);
+    system.addComponent("Cl-", 2.0e-4);
+    return initializeElectrolyteSystem(system);
+  }
+
+  /**
    * Initializes an electrolyte CPA system after all feed components have been added.
    *
    * @param system system to initialize
@@ -331,6 +428,18 @@ class SaltSaturationTest {
    */
   private double getAqueousComponentMoles(SystemInterface system, String componentName) {
     return system.getPhase("aqueous").getComponent(componentName).getNumberOfMolesInPhase();
+  }
+
+  /**
+   * Reads moles for a named component in a phase.
+   *
+   * @param system thermodynamic system containing the phase
+   * @param phaseNumber phase number to inspect
+   * @param componentName component name to read
+   * @return component moles in the phase
+   */
+  private double getComponentMoles(SystemInterface system, int phaseNumber, String componentName) {
+    return system.getPhase(phaseNumber).getComponent(componentName).getNumberOfMolesInPhase();
   }
 
   /**
