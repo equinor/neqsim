@@ -1036,6 +1036,95 @@ class AgentVsCodeExportTest(unittest.TestCase):
                 exported = export_root / "agents" / "local-test-agent" / "AGENT.md"
                 self.assertTrue(exported.exists())
 
+    def test_cmd_install_existing_agent_reconciles_requested_export(self):
+        """Installing an existing agent with a target restores the export."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-agents"
+            source_dir = install_dir / "local-test-agent"
+            source_dir.mkdir(parents=True)
+            main_file = source_dir / "local.agent.md"
+            main_file.write_text(
+                "---\n"
+                "name: Local Test Agent\n"
+                "description: Local agent used by export tests.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            import json
+            manifest_file = install_dir / "installed.json"
+            manifest_file.write_text(json.dumps({
+                "local-test-agent": {
+                    "path": str(source_dir),
+                    "main_file": str(main_file),
+                    "source": "private",
+                    "required_skills": [],
+                }
+            }), encoding="utf-8")
+            export_root = tmp_path / "generic-export"
+            catalog = [{
+                "name": "local-test-agent",
+                "source": "local",
+                "path": str(main_file),
+                "required_skills": [],
+            }]
+
+            with mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="local-test-agent",
+                    force=False,
+                    install_missing_skills=False,
+                    vscode=False,
+                    vscode_scope="user",
+                    vscode_dir=None,
+                    target=["generic"],
+                    export_dir=str(export_root),
+                )
+                install_agent.cmd_install(catalog, args)
+                exported = export_root / "agents" / "local-test-agent" / "AGENT.md"
+                self.assertTrue(exported.exists())
+
+    def test_cmd_export_exits_when_requested_export_fails(self):
+        """Explicit export failures should return a non-zero command result."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-agents"
+            source_dir = install_dir / "local-test-agent"
+            source_dir.mkdir(parents=True)
+            main_file = source_dir / "local.agent.md"
+            main_file.write_text(
+                "---\n"
+                "name: Local Test Agent\n"
+                "description: Local agent used by export tests.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            import json
+            manifest_file = install_dir / "installed.json"
+            manifest_file.write_text(json.dumps({
+                "local-test-agent": {
+                    "path": str(source_dir),
+                    "main_file": str(main_file),
+                    "source": "private",
+                    "required_skills": [],
+                }
+            }), encoding="utf-8")
+
+            with mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(install_agent, "export_agent_to_generic", side_effect=OSError("boom")):
+                args = argparse.Namespace(
+                    name="local-test-agent",
+                    target=["generic"],
+                    vscode=False,
+                    vscode_scope="user",
+                    vscode_dir=None,
+                    export_dir=str(tmp_path / "generic-export"),
+                )
+                with self.assertRaises(SystemExit):
+                    install_agent.cmd_export([], args)
+
     def test_cmd_doctor_generic_passes_when_agent_and_required_skill_exported(self):
         """Generic doctor should pass when exported agents can see required skills."""
         with tempfile.TemporaryDirectory() as tmp:

@@ -549,9 +549,11 @@ neqsim agent install company-tie-in-screening-agent
 ```
 
 Agent catalog entries support local folders, private GitHub repositories,
-network shares, and direct internal URLs. Private GitHub repositories use the
-`GITHUB_TOKEN` environment variable; direct internal URLs can use
-`PRIVATE_AGENT_TOKEN`.
+network shares, and direct internal URLs. For private GitHub repositories,
+prefer browser SSO through `gh auth login --web` or Git Credential Manager;
+`GITHUB_TOKEN` remains a non-interactive fallback for CI or service contexts.
+Direct internal URLs can use `PRIVATE_AGENT_TOKEN` when the URL endpoint cannot
+use the normal corporate browser or git credential flow.
 
 ### Making Installed Agents Visible to Tools
 
@@ -841,7 +843,8 @@ skills:
     path: "//fileserver/shared/neqsim-skills/company-standards/SKILL.md"
     tags: [standards, tr, internal]
 
-  # Private GitHub repo (requires GITHUB_TOKEN or gh auth with repo access)
+  # Private GitHub repo (prefer gh auth login --web or Git Credential Manager;
+  # GITHUB_TOKEN is a CI/non-interactive fallback)
   - name: neqsim-plant-data-mapping
     description: "PI tag mappings for our platforms"
     author: "data-team"
@@ -864,8 +867,9 @@ skills:
 | Source | Auth mechanism | How to set |
 |--------|---------------|-----------|
 | `local` | File system permissions | No token needed |
-| `github` (private repo) | `GITHUB_TOKEN` env var | `$env:GITHUB_TOKEN = "ghp_..."` |
-| `url` | `PRIVATE_SKILL_TOKEN` env var | `$env:PRIVATE_SKILL_TOKEN = "Bearer ..."` |
+| `github` (private repo) | Preferred: browser SSO via GitHub CLI or Git Credential Manager. Fallback: `GITHUB_TOKEN` for CI/non-interactive runs | `gh auth login --web`, or configure Git Credential Manager; fallback `$env:GITHUB_TOKEN = "..."` |
+| `git` | Git Credential Manager or another configured git SSO broker | Run the normal enterprise git login once; NeqSim reuses git credentials |
+| `url` | Preferred: normal corporate browser/session or network access. Fallback: `PRIVATE_SKILL_TOKEN`/`PRIVATE_AGENT_TOKEN` | Use the internal URL directly when accessible; fallback `$env:PRIVATE_SKILL_TOKEN = "Bearer ..."` |
 
 ### Distributing the Catalog to Your Team
 

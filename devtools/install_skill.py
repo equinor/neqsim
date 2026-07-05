@@ -28,6 +28,7 @@ Git Credential Manager.
 import argparse
 from datetime import datetime, timezone
 import fnmatch
+import hashlib
 import json
 import os
 import shutil
@@ -724,6 +725,50 @@ VSCODE_WORKSPACE_MARKERS = (".github", ".git", "pom.xml", "package.json")
 SUPPORTED_EXPORT_TARGETS = ("vscode", "generic")
 
 
+def _requested_export_targets(args):
+    """Return requested export targets from parsed CLI arguments.
+
+    @param args parsed CLI arguments
+    @return list of requested target names
+    """
+    targets = list(getattr(args, "target", []) or [])
+    if getattr(args, "vscode", False) and "vscode" not in targets:
+        targets.append("vscode")
+    return targets
+
+
+def _sha256_file(path):
+    """Return the SHA-256 digest for a file.
+
+    @param path file path to hash
+    @return hexadecimal SHA-256 digest
+    """
+    digest = hashlib.sha256()
+    with Path(path).open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _sha256_tree(root_dir):
+    """Return a deterministic SHA-256 digest for all files in a directory.
+
+    @param root_dir directory path to hash recursively
+    @return hexadecimal SHA-256 digest for file names and contents
+    """
+    root = Path(root_dir)
+    digest = hashlib.sha256()
+    for file_path in sorted(path for path in root.rglob("*") if path.is_file()):
+        rel_path = file_path.relative_to(root).as_posix().encode("utf-8")
+        digest.update(rel_path)
+        digest.update(b"\0")
+        with file_path.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def find_workspace_root(start=None):
     """Find the nearest workspace root by scanning upward for markers.
 
@@ -873,16 +918,17 @@ def _export_installed_skill_to_vscode(name, source_dir, args, manifest):
         print("  [!!] Could not locate a VS Code workspace for --vscode export.")
         print("       Run from inside a workspace, set NEQSIM_VSCODE_SKILLS_DIR,")
         print("       or pass --vscode-dir <path-to/.github/skills>.")
-        return
+        return False
     try:
         dest = export_skill_to_vscode(name, source_dir, vscode_dir)
     except Exception as exc:
         print("  [!!] VS Code export failed: {exc}".format(exc=exc))
-        return
+        return False
     _record_export(manifest, name, "vscode", dest)
     save_manifest(manifest)
     print("  [OK] Exported to VS Code skills: {dest}".format(dest=dest))
     print("       Reload VS Code (Developer: Reload Window) to pick it up.")
+    return True
 
 
 def _export_installed_skill_to_generic(name, source_dir, args, manifest):
@@ -901,9 +947,10 @@ def _export_installed_skill_to_generic(name, source_dir, args, manifest):
         _write_generic_manifest("skills", generic_skills_dir.parent, manifest)
     except Exception as exc:
         print("  [!!] Generic export failed: {exc}".format(exc=exc))
-        return
+        return False
     save_manifest(manifest)
     print("  [OK] Exported to generic skills: {dest}".format(dest=dest))
+    return True
 
 
 def _export_installed_skill(name, source_dir, args, manifest):
@@ -915,14 +962,14 @@ def _export_installed_skill(name, source_dir, args, manifest):
     @param manifest the installed-skills manifest
     @return None
     """
-    targets = list(getattr(args, "target", []) or [])
-    if getattr(args, "vscode", False) and "vscode" not in targets:
-        targets.append("vscode")
+    targets = _requested_export_targets(args)
+    success = True
     for target in targets:
         if target == "vscode":
-            _export_installed_skill_to_vscode(name, source_dir, args, manifest)
+            success = _export_installed_skill_to_vscode(name, source_dir, args, manifest) and success
         elif target == "generic":
-            _export_installed_skill_to_generic(name, source_dir, args, manifest)
+            success = _export_installed_skill_to_generic(name, source_dir, args, manifest) and success
+    return success
 
 
 # ── Commands ───────────────────────────────────────────────────────────
@@ -1072,7 +1119,15 @@ def cmd_install(skills, args):
     manifest = load_manifest()
     if name in manifest and not args.force:
         print(f"\n  Skill '{name}' already installed at {manifest[name]['path']}")
-        print(f"  Use --force to reinstall.\n")
+        print(f"  Use --force to reinstall.")
+        if _requested_export_targets(args):
+            source_dir = Path(manifest[name].get("path", "")).parent
+            if not source_dir.exists():
+                print(f"  [!!] Installed skill folder is missing: {source_dir}\n")
+                sys.exit(1)
+            if not _export_installed_skill(name, source_dir, args, manifest):
+                sys.exit(1)
+        print()
         return
 
     dest_dir = INSTALL_DIR / name
@@ -1114,13 +1169,16 @@ def cmd_install(skills, args):
             "tags": skill.get("tags", []),
             "author": skill.get("author", ""),
             "min_neqsim_version": skill.get("min_neqsim_version", ""),
+            "installed_at": datetime.now(timezone.utc).isoformat(),
+            "content_sha256": _sha256_file(dest_file),
         }
         save_manifest(manifest)
 
         print(f"  [OK] Installed to: {dest_file}")
         print(f"\n  To use in your AI tool, point it at: {dest_dir}\n")
 
-        _export_installed_skill(name, dest_dir, args, manifest)
+        if not _export_installed_skill(name, dest_dir, args, manifest):
+            sys.exit(1)
 
     except Exception as e:
         print(f"  [!!] Download failed: {e}")
@@ -1157,7 +1215,8 @@ def cmd_export(skills, args):
     if not source_dir.exists():
         print(f"\n  Installed skill folder is missing: {source_dir}\n")
         sys.exit(1)
-    _export_installed_skill(name, source_dir, args, manifest)
+    if not _export_installed_skill(name, source_dir, args, manifest):
+        sys.exit(1)
 
 
 def _command_available(name):

@@ -811,6 +811,33 @@ def save_manifest(manifest):
 # ── Export targets ─────────────────────────────────────────────────────
 SUPPORTED_EXPORT_TARGETS = ("vscode", "generic")
 
+
+def _requested_agent_export_targets(args):
+    """Return requested export targets from parsed CLI arguments.
+
+    @param args parsed CLI arguments
+    @return list of requested target names
+    """
+    targets = list(getattr(args, "target", []) or [])
+    if getattr(args, "vscode", False) and "vscode" not in targets:
+        targets.append("vscode")
+    return targets
+
+
+def _path_is_under(path, root):
+    """Return true when path is the root itself or inside root.
+
+    @param path path to test
+    @param root expected parent/root path
+    @return true if path resolves under root, otherwise false
+    """
+    try:
+        resolved_path = Path(path).expanduser().resolve()
+        resolved_root = Path(root).expanduser().resolve()
+    except Exception:
+        return False
+    return resolved_path == resolved_root or resolved_root in resolved_path.parents
+
 def _vscode_user_dir():
     """Return the VS Code stable User config directory for this platform.
 
@@ -944,6 +971,8 @@ def _write_generic_manifest(kind, root_dir, manifest):
                 "requires_mcp_tools": info.get("requires_mcp_tools", []),
                 "human_review_required": info.get("human_review_required", ""),
                 "trust_level": info.get("trust_level", ""),
+                "installed_at": info.get("installed_at", ""),
+                "content_sha256": info.get("content_sha256", ""),
             }
     dest = root / "manifest.json"
     payload = {}
@@ -969,11 +998,11 @@ def _export_installed_agent_to_vscode(name, main_file, args, manifest):
     @param main_file the installed agent's main markdown definition path
     @param args parsed CLI arguments (reads vscode_scope, vscode_dir)
     @param manifest the installed-agents manifest, updated with vscode_path
-    @return None
+    @return true if export succeeds, otherwise false
     """
     if not main_file or not Path(main_file).exists():
         print("  [!!] VS Code export skipped: agent main file not found.")
-        return
+        return False
     scope = getattr(args, "vscode_scope", "user")
     vscode_dir = resolve_vscode_agents_dir(
         scope, getattr(args, "vscode_dir", None))
@@ -981,17 +1010,18 @@ def _export_installed_agent_to_vscode(name, main_file, args, manifest):
         print("  [!!] Could not locate a VS Code workspace for --vscode export.")
         print("       Use --vscode-scope user (default), run inside a workspace,")
         print("       set NEQSIM_VSCODE_AGENTS_DIR, or pass --vscode-dir <path>.")
-        return
+        return False
     try:
         dest = export_agent_to_vscode(name, main_file, vscode_dir)
     except Exception as exc:
         print("  [!!] VS Code export failed: {exc}".format(exc=exc))
-        return
+        return False
     _record_export(manifest, name, "vscode", dest)
     save_manifest(manifest)
     print("  [OK] Exported to VS Code agents ({scope}): {dest}".format(
         scope=scope, dest=dest))
     print("       Reload VS Code (Developer: Reload Window) to pick it up.")
+    return True
 
 
 def _export_installed_agent_to_generic(name, source_dir, args, manifest):
@@ -1001,11 +1031,11 @@ def _export_installed_agent_to_generic(name, source_dir, args, manifest):
     @param source_dir the installed agent folder under ~/.neqsim/agents/<name>
     @param args parsed CLI arguments (reads export_dir)
     @param manifest the installed-agents manifest, updated with generic export path
-    @return None
+    @return true if export succeeds, otherwise false
     """
     if not source_dir or not Path(source_dir).exists():
         print("  [!!] Generic export skipped: agent package not found.")
-        return
+        return False
     generic_agents_dir = resolve_generic_agents_dir(getattr(args, "export_dir", None))
     try:
         dest = export_agent_to_generic(name, source_dir, generic_agents_dir)
@@ -1013,9 +1043,10 @@ def _export_installed_agent_to_generic(name, source_dir, args, manifest):
         _write_generic_manifest("agents", generic_agents_dir.parent, manifest)
     except Exception as exc:
         print("  [!!] Generic export failed: {exc}".format(exc=exc))
-        return
+        return False
     save_manifest(manifest)
     print("  [OK] Exported to generic agents: {dest}".format(dest=dest))
+    return True
 
 
 def _export_installed_agent(name, source_dir, main_file, args, manifest):
@@ -1026,16 +1057,16 @@ def _export_installed_agent(name, source_dir, main_file, args, manifest):
     @param main_file the installed agent's main markdown definition path
     @param args parsed CLI arguments
     @param manifest the installed-agents manifest
-    @return None
+    @return true when every requested export succeeds, otherwise false
     """
-    targets = list(getattr(args, "target", []) or [])
-    if getattr(args, "vscode", False) and "vscode" not in targets:
-        targets.append("vscode")
+    targets = _requested_agent_export_targets(args)
+    success = True
     for target in targets:
         if target == "vscode":
-            _export_installed_agent_to_vscode(name, main_file, args, manifest)
+            success = _export_installed_agent_to_vscode(name, main_file, args, manifest) and success
         elif target == "generic":
-            _export_installed_agent_to_generic(name, source_dir, args, manifest)
+            success = _export_installed_agent_to_generic(name, source_dir, args, manifest) and success
+    return success
 
 
 def _validate_safe_name(name):
@@ -1299,8 +1330,10 @@ def _ensure_required_skill_exports(required_skills, install_args):
             unresolved.append(skill_name)
             continue
         print("  Exporting required skill: {name}".format(name=resolved_name))
-        install_skill._export_installed_skill(
-            resolved_name, source_dir, _skill_install_args(resolved_name, install_args), skill_manifest)
+        if not install_skill._export_installed_skill(
+                resolved_name, source_dir, _skill_install_args(resolved_name, install_args), skill_manifest):
+            unresolved.append(skill_name)
+            continue
         skill_manifest = install_skill.load_manifest()
     return unresolved
 
@@ -1337,6 +1370,7 @@ def _print_required_skill_guidance(required_skills, install_missing=False, insta
     }
 
     unresolved = []
+    installed_now = []
     for skill_name in missing:
         resolved_name = _resolve_skill_name(
             skill_name, set(catalog_by_name.keys()))
@@ -1347,9 +1381,11 @@ def _print_required_skill_guidance(required_skills, install_missing=False, insta
         args = _skill_install_args(resolved_name, install_args)
         try:
             install_skill.cmd_install(skill_catalog, args)
+            installed_now.append(skill_name)
         except SystemExit:
             unresolved.append(skill_name)
-    unresolved_exports = _ensure_required_skill_exports(required_skills, install_args)
+    export_check_skills = [skill for skill in required_skills if skill not in installed_now]
+    unresolved_exports = _ensure_required_skill_exports(export_check_skills, install_args)
     for skill_name in unresolved_exports:
         if skill_name not in unresolved:
             unresolved.append(skill_name)
@@ -1723,7 +1759,25 @@ def _install_agent_record(agent, args, manifest):
         print("\n  Agent '{name}' already installed at {path}".format(
             name=name, path=manifest[name]["path"]
         ))
-        print("  Use --force to reinstall.\n")
+        print("  Use --force to reinstall.")
+        success = True
+        if _requested_agent_export_targets(args):
+            source_dir = Path(manifest[name].get("path", ""))
+            main_file = manifest[name].get("main_file", "")
+            if not source_dir.exists():
+                print("  [!!] Installed agent folder is missing: {path}\n".format(
+                    path=source_dir))
+                return False
+            unresolved = _ensure_required_skill_exports(
+                manifest[name].get("required_skills", []), args)
+            if unresolved:
+                print("  [!!] Could not export required skills: {skills}".format(
+                    skills=", ".join(unresolved)))
+                success = False
+            success = _export_installed_agent(
+                name, source_dir, main_file, args, manifest) and success
+        print()
+        return success
         return True
 
     source_type = agent.get("source", "github")
@@ -1818,6 +1872,8 @@ def _install_agent_record(agent, args, manifest):
             "inputs": merged_metadata.get("inputs", []),
             "outputs": merged_metadata.get("outputs", []),
             "missing_required_skills": unresolved,
+            "installed_at": datetime.now(timezone.utc).isoformat(),
+            "content_sha256": install_skill._sha256_tree(dest_dir),
         }
         save_manifest(manifest)
 
@@ -1825,9 +1881,10 @@ def _install_agent_record(agent, args, manifest):
         print("\n  Agent tools can read the installed package from: {path}\n".format(
             path=dest_dir
         ))
-        _export_installed_agent(
-            name, dest_dir, manifest[name].get("main_file", ""), args, manifest)
-        return True
+        if not _export_installed_agent(
+                name, dest_dir, manifest[name].get("main_file", ""), args, manifest):
+            return False
+        return not unresolved
     except Exception as exc:
         shutil.rmtree(str(dest_dir), ignore_errors=True)
         print("  [!!] Download failed: {exc}".format(exc=exc))
@@ -1876,7 +1933,8 @@ def cmd_export(agents, args):
         print("\n  Installed agent folder is missing: {path}\n".format(
             path=source_dir))
         sys.exit(1)
-    _export_installed_agent(name, source_dir, main_file, args, manifest)
+    if not _export_installed_agent(name, source_dir, main_file, args, manifest):
+        sys.exit(1)
 
 
 def cmd_remove(agents, args):
@@ -1976,9 +2034,15 @@ def _check_generic_manifest_fresh(kind, root_dir, installed_manifest, failures):
             kind=kind, path=manifest_path))
         return
     exported = payload.get(kind, {})
-    expected = {
-        name: info for name, info in installed_manifest.items()
-        if _manifest_export_path(info, "generic")
+    expected = {}
+    checked_root = Path(root_dir).expanduser().resolve()
+    for name, info in installed_manifest.items():
+        export_path = _manifest_export_path(info, "generic")
+        if export_path and _path_is_under(export_path, checked_root):
+            expected[name] = info
+    exported = {
+        name: info for name, info in exported.items()
+        if isinstance(info, dict) and (not info.get("path") or _path_is_under(info.get("path", ""), checked_root))
     }
     missing = sorted(name for name in expected if name not in exported)
     extra = sorted(name for name in exported if name not in expected)

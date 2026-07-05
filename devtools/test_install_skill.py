@@ -408,6 +408,70 @@ class SkillVsCodeExportTest(unittest.TestCase):
                 exported = export_root / "skills" / "neqsim-demo" / "SKILL.md"
                 self.assertTrue(exported.exists())
 
+    def test_cmd_install_existing_skill_reconciles_requested_export(self):
+        """Installing an existing skill with a target restores the export."""
+        import argparse
+        import json
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-skills"
+            source_dir = install_dir / "neqsim-demo"
+            source_dir.mkdir(parents=True)
+            skill_file = source_dir / "SKILL.md"
+            skill_file.write_text("# Demo skill body.\n", encoding="utf-8")
+            manifest_file = install_dir / "installed.json"
+            manifest_file.write_text(json.dumps({
+                "neqsim-demo": {"path": str(skill_file), "source": "private"}
+            }), encoding="utf-8")
+            export_root = tmp_path / "generic-export"
+            catalog = [{"name": "neqsim-demo", "source": "local", "path": str(skill_file)}]
+
+            with mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="neqsim-demo",
+                    force=False,
+                    vscode=False,
+                    vscode_dir=None,
+                    target=["generic"],
+                    export_dir=str(export_root),
+                )
+                install_skill.cmd_install(catalog, args)
+                self.assertTrue((export_root / "skills" / "neqsim-demo" / "SKILL.md").exists())
+
+    def test_cmd_export_exits_when_requested_export_fails(self):
+        """Explicit export failures should return a non-zero command result."""
+        import argparse
+        import json
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-skills"
+            source_dir = install_dir / "neqsim-demo"
+            source_dir.mkdir(parents=True)
+            skill_file = source_dir / "SKILL.md"
+            skill_file.write_text("# Demo skill body.\n", encoding="utf-8")
+            manifest_file = install_dir / "installed.json"
+            manifest_file.write_text(json.dumps({
+                "neqsim-demo": {"path": str(skill_file), "source": "private"}
+            }), encoding="utf-8")
+
+            with mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file), \
+                    mock.patch.object(install_skill, "export_skill_to_generic", side_effect=OSError("boom")):
+                args = argparse.Namespace(
+                    name="neqsim-demo",
+                    target=["generic"],
+                    vscode=False,
+                    vscode_dir=None,
+                    export_dir=str(tmp_path / "generic-export"),
+                )
+                with self.assertRaises(SystemExit):
+                    install_skill.cmd_export([], args)
+
     def test_cmd_install_supports_git_source(self):
         """A direct source: git skill installs through the git helper."""
         import argparse
