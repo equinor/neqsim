@@ -27,6 +27,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = REPO_ROOT / ".github" / "agents"
 SKILLS_DIR = REPO_ROOT / ".github" / "skills"
 OUTPUT_PATH = REPO_ROOT / "docs" / "development" / "AGENT_SKILL_MAP.md"
+KNOWN_SKILLS = {p.name for p in SKILLS_DIR.iterdir() if p.is_dir()}
 
 INLINE_LOADED_RE = re.compile(
     r"^\s*(?:[-*]\s*)?(?:\*\*)?loaded skills(?:\*\*)?\s*[:\-]\s*(.+?)$",
@@ -38,13 +39,15 @@ BLOCK_LOADED_HEADER_RE = re.compile(
 )
 MARKDOWN_HEADING_RE = re.compile(r"^\s{0,3}#{1,6}\s+\S")
 NAME_RE = re.compile(r"^name:\s*(.+?)\s*$", re.MULTILINE | re.IGNORECASE)
-SKILL_REF_RE = re.compile(r"\b@?(neqsim-[a-z0-9][a-z0-9-]*)\b", re.IGNORECASE)
+SKILL_REF_RE = re.compile(r"(?<![a-z0-9_-])@?([a-z0-9][a-z0-9_-]*)(?![a-z0-9_-])", re.IGNORECASE)
 
 
 def append_skill_refs(skills: List[str], text: str) -> None:
     """Append NeqSim skill references found in text to skills."""
     for match in SKILL_REF_RE.finditer(text):
-        skills.append(match.group(1).lower())
+        candidate = match.group(1).lower()
+        if candidate in KNOWN_SKILLS:
+            skills.append(candidate)
 
 
 def extract_loaded_skills(text: str) -> List[str]:
@@ -64,7 +67,8 @@ def extract_loaded_skills(text: str) -> List[str]:
                 break
             if not next_line.strip() and block_lines:
                 break
-            block_lines.append(next_line)
+            if re.match(r"^\s*[-*]\s+", next_line):
+                block_lines.append(next_line)
         append_skill_refs(skills, "\n".join(block_lines))
 
     seen = set()
@@ -80,13 +84,12 @@ def parse_agent(path: Path) -> Dict[str, object]:
 
 
 def main() -> int:
-    skills_on_disk = {p.name for p in SKILLS_DIR.iterdir() if p.is_dir()}
     rows: List[Dict[str, object]] = []
     unknown: List[str] = []
     for agent in sorted(AGENTS_DIR.glob("*.agent.md")):
         info = parse_agent(agent)
         for s in info["skills"]:  # type: ignore[union-attr]
-            if s not in skills_on_disk:
+            if s not in KNOWN_SKILLS:
                 unknown.append(f"{agent.name}: references unknown skill '{s}'")
         rows.append(info)
 
