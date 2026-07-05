@@ -17,6 +17,7 @@ class TestPaperLabInstall(unittest.TestCase):
 
         self.assertEqual({"paperlab"}, agent_names)
         self.assertIn("paperlab_publication_opportunity_mining", skill_names)
+        self.assertIn("paperlab_multireviewer_simulation", skill_names)
         self.assertNotIn("paperlab_hypothesis_to_benchmark_matrix", skill_names)
 
     def test_iter_paperlab_assets_include_internal_when_requested(self):
@@ -56,6 +57,8 @@ class TestPaperLabInstall(unittest.TestCase):
             self.assertTrue((agents_dir / "paperlab.agent.md").exists())
             self.assertTrue(
                 (skills_dir / "paperlab_publication_opportunity_mining" / "SKILL.md").exists())
+            self.assertTrue(
+                (skills_dir / "paperlab_multireviewer_simulation" / "SKILL.md").exists())
             self.assertFalse(
                 (skills_dir / "paperlab_hypothesis_to_benchmark_matrix" / "SKILL.md").exists())
 

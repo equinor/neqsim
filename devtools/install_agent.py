@@ -51,6 +51,7 @@ MANIFEST_FILE = INSTALL_DIR / "installed.json"
 CORE_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
 INSTALLED_SKILLS_DIR = Path.home() / ".neqsim" / "skills"
 EXPORT_DIR = Path.home() / ".neqsim" / "export"
+EXPORT_PROFILE_FILE = EXPORT_DIR / "export-profile.json"
 
 DEFAULT_AGENT_PATH_GLOBS = ["agents/**/*.agent.md",
                             "agents/**/AGENT.md", "**/*.agent.md"]
@@ -2070,6 +2071,34 @@ def _read_json_file(path):
         return None
 
 
+def _load_export_profile(args=None):
+    """Load an optional export expectation profile.
+
+    @param args optional parsed CLI arguments with profile
+    @return decoded export profile mapping, or None when no profile exists
+    """
+    profile_path = Path(getattr(args, "profile", "") or EXPORT_PROFILE_FILE)
+    if not profile_path.exists():
+        return None
+    return _read_json_file(profile_path) or {}
+
+
+def _expected_exports(profile, kind, target):
+    """Return expected export names for a kind/target from a profile.
+
+    @param profile decoded export profile mapping or None
+    @param kind agents or skills
+    @param target export target name
+    @return set of expected names, or None when the profile does not constrain it
+    """
+    if not profile:
+        return None
+    target_names = profile.get(kind, {}).get(target)
+    if target_names is None:
+        return None
+    return set(target_names)
+
+
 def _check_generic_manifest_fresh(kind, root_dir, installed_manifest, failures):
     """Append failures when a generic manifest is missing or stale."""
     manifest_path = Path(root_dir) / "manifest.json"
@@ -2111,13 +2140,22 @@ def _check_export_target(target, args):
     warnings = []
     checked_agents = []
     available_skill_names = _available_skill_names()
+    profile = _load_export_profile(args)
+    expected_agents = _expected_exports(profile, "agents", target)
 
     for name, info in sorted(agent_manifest.items()):
         export_path = _manifest_export_path(info, target)
         if not export_path:
-            warnings.append("Agent is installed but not exported to {target}: {name}".format(
-                target=target, name=name))
+            if expected_agents is None:
+                warnings.append("Agent is installed but not exported to {target}: {name}".format(
+                    target=target, name=name))
+            elif name in expected_agents:
+                failures.append("Expected agent is not exported to {target}: {name}".format(
+                    target=target, name=name))
             continue
+        if expected_agents is not None and name not in expected_agents:
+            warnings.append("Agent is exported to {target} but not listed in profile: {name}".format(
+                target=target, name=name))
         checked_agents.append(name)
         path = Path(export_path)
         if not path.exists():
@@ -2160,6 +2198,9 @@ def _check_export_target(target, args):
     print("  Checked exported agents: {count}".format(count=len(checked_agents)))
     if checked_agents:
         print("  Agents: {names}".format(names=", ".join(checked_agents)))
+    if profile:
+        print("  Export profile: {path}".format(
+            path=Path(getattr(args, "profile", "") or EXPORT_PROFILE_FILE)))
     for warning in warnings:
         print("  WARN: {warning}".format(warning=warning))
     for failure in failures:
@@ -2388,6 +2429,9 @@ def main():
     p_doctor.add_argument(
         "--export-dir", default=None,
         help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
+    p_doctor.add_argument(
+        "--profile", default=None,
+        help="Optional export profile JSON (default: ~/.neqsim/export/export-profile.json if present)")
 
     sub.add_parser(
         "private-init", help="Create private catalog template at ~/.neqsim/")

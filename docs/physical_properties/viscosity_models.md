@@ -14,6 +14,7 @@ This guide documents the viscosity calculation methods available in NeqSim for g
   - [Friction Theory](#friction-theory)
   - [PFCT (Pedersen)](#pfct-pedersen)
   - [Chung Method](#chung-method)
+  - [Lee-Gonzalez-Eakin Gas Method](#lee-gonzalez-eakin-gas-method)
   - [Polynomial Correlation](#polynomial-correlation)
   - [Reference Fluid Methods](#reference-fluid-methods)
 - [Model Selection Guide](#model-selection-guide)
@@ -191,6 +192,38 @@ fluid.getPhase("gas").getPhysicalProperties().setViscosityModel("Chung");
 
 ---
 
+### Lee-Gonzalez-Eakin Gas Method
+
+The Lee-Gonzalez-Eakin method (1966) is an empirical natural-gas viscosity correlation using mixture molecular weight,
+temperature, and gas density. It is intended for quick natural-gas estimates where a simple petroleum-engineering
+correlation is preferred over corresponding-states or friction-theory models.
+
+**Class:** `LeeViscosityMethod`
+
+**Selection names:** `Lee`, `Lee-Gonzalez-Eakin`, `LGE`
+
+**Equation:**
+$$
+\mu = K \exp(X \rho^Y)
+$$
+
+where:
+- $K = (9.4 + 0.02M)T^{1.5}/(209 + 19M + T)$
+- $X = 3.5 + 986/T + 0.01M$
+- $Y = 2.4 - 0.2X$
+- $M$ is mixture molecular weight in g/mol
+- $T$ is temperature in Rankine
+- $\rho$ is gas density in g/cm3
+
+**Applicable phases:** Gas phase
+
+**Best for:**
+- Natural gas mixtures
+- Quick first-order gas viscosity checks
+- Cases with known gas density and molecular weight
+
+---
+
 ### Polynomial Correlation
 
 Uses component-specific polynomial coefficients from the database.
@@ -255,6 +288,7 @@ fluid.getPhase("gas").getPhysicalProperties().setViscosityModel("Muzny");
 | Heavy oils | PFCT-Heavy-Oil | Extended for high MW |
 | Characterized crudes | PFCT | Works with pseudo-components |
 | Gas processing | Chung | Good for gases |
+| Quick natural-gas checks | Lee | Simple density and molecular-weight correlation |
 | Pure CO₂ | CO2Model | High accuracy |
 | Pure H₂ | Muzny | Reference accuracy |
 | Aqueous systems | Salt Water | Water correlation |
@@ -406,3 +440,4 @@ $$\eta_{mix} = \frac{\sum_i x_i \sqrt{M_i} \eta_i}{\sum_i x_i \sqrt{M_i}}$$
 2. Quiñones-Cisneros, S.E., Firoozabadi, A. (2000). One Parameter Friction Theory. AIChE J.
 3. Pedersen, K.S., et al. (1987). Viscosity of Crude Oils. Chem. Eng. Sci.
 4. Chung, T.H., et al. (1988). Generalized Multiparameter Correlation for Nonpolar and Polar Fluid Transport Properties. I&EC Res.
+5. Lee, A.L., Gonzalez, M.H., Eakin, B.E. (1966). The Viscosity of Natural Gases. Journal of Petroleum Technology.

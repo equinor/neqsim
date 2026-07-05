@@ -53,6 +53,7 @@ PRIVATE_CATALOG_FILE = Path.home() / ".neqsim" / "private-skills.yaml"
 INSTALL_DIR = Path.home() / ".neqsim" / "skills"
 MANIFEST_FILE = INSTALL_DIR / "installed.json"
 EXPORT_DIR = Path.home() / ".neqsim" / "export"
+EXPORT_PROFILE_FILE = EXPORT_DIR / "export-profile.json"
 GITHUB_TIMEOUT_SECONDS = 20
 DEFAULT_SKILL_PATH_GLOB = "**/SKILL.md"
 
@@ -952,6 +953,104 @@ def _record_export(manifest, name, target, dest):
         manifest[name]["generic_path"] = str(dest)
 
 
+def _manifest_export_path(info, target):
+    """Return the recorded export path for a manifest entry and target.
+
+    @param info installed manifest entry
+    @param target export target name
+    @return recorded export path, or an empty string when not exported
+    """
+    return info.get("exports", {}).get(target) or info.get(f"{target}_path", "")
+
+
+def _path_is_under(path, root):
+    """Return true when path is the root itself or inside root.
+
+    @param path path to test
+    @param root expected parent/root path
+    @return true if path resolves under root, otherwise false
+    """
+    try:
+        resolved_path = Path(path).expanduser().resolve()
+        resolved_root = Path(root).expanduser().resolve()
+    except Exception:
+        return False
+    return resolved_path == resolved_root or resolved_root in resolved_path.parents
+
+
+def _read_json_file(path):
+    """Read a JSON file and return an object, or None if unreadable.
+
+    @param path JSON file path
+    @return decoded object, or None on read/parse failure
+    """
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _load_export_profile(args=None):
+    """Load an optional export expectation profile.
+
+    @param args optional parsed CLI arguments with profile
+    @return decoded export profile mapping, or None when no profile exists
+    """
+    profile_path = Path(getattr(args, "profile", "") or EXPORT_PROFILE_FILE)
+    if not profile_path.exists():
+        return None
+    return _read_json_file(profile_path) or {}
+
+
+def _expected_exports(profile, kind, target):
+    """Return expected export names for a kind/target from a profile.
+
+    @param profile decoded export profile mapping or None
+    @param kind agents or skills
+    @param target export target name
+    @return set of expected names, or None when the profile does not constrain it
+    """
+    if not profile:
+        return None
+    target_names = profile.get(kind, {}).get(target)
+    if target_names is None:
+        return None
+    return set(target_names)
+
+
+def _check_generic_manifest_fresh(kind, root_dir, installed_manifest, failures):
+    """Append failures when a generic manifest is missing or stale.
+
+    @param kind exported content kind, for example skills
+    @param root_dir generic export root directory
+    @param installed_manifest installed skills manifest
+    @param failures list receiving failure messages
+    """
+    manifest_path = Path(root_dir) / "manifest.json"
+    payload = _read_json_file(manifest_path)
+    if payload is None:
+        failures.append(f"Generic {kind} manifest is missing or unreadable: {manifest_path}")
+        return
+    exported = payload.get(kind, {})
+    expected = {}
+    checked_root = Path(root_dir).expanduser().resolve()
+    for name, info in installed_manifest.items():
+        export_path = _manifest_export_path(info, "generic")
+        if export_path and _path_is_under(export_path, checked_root):
+            expected[name] = info
+    exported = {
+        name: info for name, info in exported.items()
+        if isinstance(info, dict)
+        and (not info.get("path") or _path_is_under(info.get("path", ""), checked_root))
+    }
+    missing = sorted(name for name in expected if name not in exported)
+    extra = sorted(name for name in exported if name not in expected)
+    if missing:
+        failures.append(f"Generic {kind} manifest is missing: {', '.join(missing)}")
+    if extra:
+        failures.append(f"Generic {kind} manifest has stale entries: {', '.join(extra)}")
+
+
 def _write_generic_manifest(kind, root_dir, manifest):
     """Write a lightweight manifest for tool-neutral exports.
 
@@ -1349,7 +1448,12 @@ def get_enterprise_auth_status():
 
 
 def cmd_doctor(skills, args):
-    """Show enterprise auth readiness without handling secrets."""
+    """Show enterprise auth readiness or export target health without handling secrets."""
+    target = getattr(args, "target", None)
+    if target:
+        _check_export_target(target, args)
+        return
+
     status = get_enterprise_auth_status()
     print("\n  NeqSim Enterprise Auth Doctor\n")
     print("  NeqSim does not request, inspect, or store credentials.")
@@ -1374,6 +1478,57 @@ def cmd_doctor(skills, args):
     print("    source: git     auth: git-credential-manager")
     print("    source: local   auth: none")
     print("    source: url     optional PRIVATE_SKILL_TOKEN fallback for non-interactive endpoints\n")
+
+
+def _check_export_target(target, args):
+    """Check installed skill exports for a target.
+
+    @param target export target name, either vscode or generic
+    @param args parsed CLI arguments
+    """
+    manifest = load_manifest()
+    failures = []
+    warnings = []
+    checked_skills = []
+    profile = _load_export_profile(args)
+    expected_skills = _expected_exports(profile, "skills", target)
+
+    for name, info in sorted(manifest.items()):
+        export_path = _manifest_export_path(info, target)
+        if not export_path:
+            if expected_skills is None:
+                warnings.append(f"Skill is installed but not exported to {target}: {name}")
+            elif name in expected_skills:
+                failures.append(f"Expected skill is not exported to {target}: {name}")
+            continue
+        if expected_skills is not None and name not in expected_skills:
+            warnings.append(f"Skill is exported to {target} but not listed in profile: {name}")
+        checked_skills.append(name)
+        path = Path(export_path)
+        if not path.exists():
+            failures.append(f"Skill export is missing: {name} -> {path}")
+            continue
+        if not (path / "SKILL.md").exists():
+            failures.append(f"Skill export lacks SKILL.md: {name} -> {path}")
+
+    if target == "generic":
+        generic_root = resolve_generic_skills_dir(getattr(args, "export_dir", None)).parent
+        _check_generic_manifest_fresh("skills", generic_root, manifest, failures)
+
+    print(f"\n  NeqSim skill export doctor ({target})\n")
+    print(f"  Checked exported skills: {len(checked_skills)}")
+    if checked_skills:
+        print(f"  Skills: {', '.join(checked_skills)}")
+    if profile:
+        print(f"  Export profile: {Path(getattr(args, 'profile', '') or EXPORT_PROFILE_FILE)}")
+    for warning in warnings:
+        print(f"  WARN: {warning}")
+    for failure in failures:
+        print(f"  ERROR: {failure}")
+    if failures:
+        print("\n  Result: FAIL\n")
+        sys.exit(1)
+    print("\n  Result: PASS\n")
 
 
 def cmd_remove(skills, args):
@@ -1620,6 +1775,8 @@ def main():
         "  neqsim skill publish user/neqsim-my-skill",
         "  neqsim skill private-init",
         "  neqsim skill doctor",
+        "  neqsim skill doctor --target vscode",
+        "  neqsim skill doctor --target generic",
         "",
         "Private skills:",
         "  neqsim skill private-init    # create ~/.neqsim/private-skills.yaml",
@@ -1692,7 +1849,17 @@ def main():
     p_publish.add_argument("--yes", "-y", action="store_true", help="Skip confirmation prompt")
 
     sub.add_parser("private-init", help="Create private catalog template at ~/.neqsim/")
-    sub.add_parser("doctor", help="Check enterprise auth broker readiness")
+    p_doctor = sub.add_parser(
+        "doctor", help="Check enterprise auth broker readiness or export target health")
+    p_doctor.add_argument(
+        "--target", choices=SUPPORTED_EXPORT_TARGETS,
+        help="Check installed skill exports for this target")
+    p_doctor.add_argument(
+        "--export-dir", default=None,
+        help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
+    p_doctor.add_argument(
+        "--profile", default=None,
+        help="Optional export profile JSON (default: ~/.neqsim/export/export-profile.json if present)")
 
     args = parser.parse_args()
     if not args.command:

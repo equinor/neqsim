@@ -471,6 +471,7 @@ neqsim skill list                    # browse the catalog and discovered reposit
 neqsim skill install <name>          # install a skill
 neqsim skill install <name> --target vscode   # also export to your VS Code user prompts folder
 neqsim skill doctor                  # check private-catalog authentication readiness
+neqsim skill doctor --target vscode  # verify VS Code skill exports
 neqsim skill publish user/repo-name  # publish yours (creates a draft PR)
 ```
 
@@ -486,6 +487,11 @@ neqsim agent doctor --target vscode  # verify VS Code exports and required skill
 neqsim agent validate <name-or-path> # validate an installed or local agent package
 neqsim agent schema                  # show the supported agent.yaml fields
 ```
+
+Both `neqsim agent doctor --target ...` and `neqsim skill doctor --target ...`
+accept `--profile path/to/export-profile.json` to check a declared export set.
+Without a profile, missing exports are warnings; with a profile, expected-but-missing
+exports are errors and extra exports are warnings.
 
 By default, installed community and private content is kept out of the Git-tracked
 workspace: skills install to `~/.neqsim/skills/`, agents install to
