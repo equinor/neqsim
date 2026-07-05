@@ -420,7 +420,7 @@ neqsim skill search "dehydration"
 # Install a skill (downloads to ~/.neqsim/skills/)
 neqsim skill install neqsim-my-topic
 
-# Install and export for VS Code workspace discovery
+# Install and export for VS Code user prompts discovery
 neqsim skill install neqsim-my-topic --target vscode
 
 # Install and export for tool-neutral discovery
@@ -573,9 +573,22 @@ use the normal corporate browser or git credential flow.
 ### Making Installed Agents Visible to Tools
 
 Installed agents are not automatically run by NeqSim. Point your AI tool at the
-installed folder, or copy the main definition into that tool's agent directory.
-For VS Code Copilot custom agents, copy a `.agent.md` definition into the
-workspace or user customizations location supported by your VS Code version.
+installed folder, or export a generated copy to the tool-specific layout. For VS
+Code Copilot custom agents, the default NeqSim export target is the user's
+private prompts folder, not the Git-tracked workspace:
+
+```bash
+neqsim agent export neqsim-example-agent --target vscode
+neqsim agent doctor --target vscode
+```
+
+For tool-neutral agents, use the generic target and point the tool at the
+generated manifest:
+
+```bash
+neqsim agent export neqsim-example-agent --target generic
+neqsim agent doctor --target generic
+```
 
 This keeps the trust boundary explicit:
 
@@ -638,7 +651,7 @@ When you update your skill in your repo (e.g., bump `version` to `1.1.0`):
 
 Local skills encode knowledge that is specific to your organisation and should **never** be committed to a public repository. This is the most important skill type for production engineering workflows because it connects the generic NeqSim capabilities to your specific plant, your specific data systems, and your specific corporate standards.
 
-> **Important: local skills are not auto-discovered by every tool.** Install shared local, community, and private skills into `~/.neqsim/skills/`, then export generated copies with `neqsim skill export --target vscode` or `--target generic` for the tool you want to use. VS Code user prompt files remain useful for one-off personal prompts, but they are no longer the preferred NeqSim skill install location.
+> **Important: local skills are not auto-discovered by every tool.** Install shared local, community, and private skills into `~/.neqsim/skills/`, then export generated copies with `neqsim skill export <name> --target vscode` or `neqsim skill export <name> --target generic` for the tool you want to use. VS Code user prompt files remain useful for one-off personal prompts, but they are no longer the preferred NeqSim skill install location.
 
 ### How Local Skills Become Visible to Agents
 
@@ -1265,7 +1278,7 @@ Skills can be promoted through the tiers:
 | **Visibility** | All users | Catalog browsers | You or your team | Catalog browsers, you, or your team |
 | **Creation** | `neqsim new-skill` + PR | Your repo + catalog entry | YAML entry or local file | Agent markdown/folder + `community-agents.yaml` or private catalog |
 | **Installation** | Automatic (in repo) | `neqsim skill install` to `~/.neqsim/skills` | `neqsim skill install` to `~/.neqsim/skills` | `neqsim agent install` to `~/.neqsim/agents` |
-| **Tool export** | Already workspace-visible; some folders may be generated compatibility exports | `neqsim skill export --target vscode/generic` | `neqsim skill export --target vscode/generic` | `neqsim agent export --target vscode/generic` |
+| **Tool export** | Already workspace-visible; some folders may be generated compatibility exports | `neqsim skill export <name> --target vscode/generic` | `neqsim skill export <name> --target vscode/generic` | `neqsim agent export <name> --target vscode/generic` |
 | **Source types** | Git repo | Public GitHub | Local / network / private GitHub / URL | Local / network / GitHub / URL |
 | **Contains private data** | Never | Never | Yes (company-internal) | Yes only in private catalogs |
 | **Review process** | PR review by maintainers | Self-published | Team-managed | PR review for public catalog; team-managed for private |

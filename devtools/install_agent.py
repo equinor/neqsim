@@ -2242,34 +2242,37 @@ def cmd_doctor(agents, args):
 
 def main():
     """Run the agent installer CLI."""
+    examples = "\n".join([
+        "Examples:",
+        "  neqsim agent list",
+        "  neqsim agent list --private",
+        "  neqsim agent search \"tie-in\"",
+        "  neqsim agent install neqsim-example-agent",
+        "  neqsim agent install neqsim-example-agent --no-install-missing-skills",
+        "  neqsim agent install neqsim-example-agent --target vscode",
+        "  neqsim agent install neqsim-example-agent --target generic",
+        "  neqsim agent export neqsim-example-agent --target vscode",
+        "  neqsim agent export neqsim-example-agent --target generic",
+        "  neqsim agent install --all --target vscode",
+        "  neqsim agent install --all --source community --target vscode",
+        "  neqsim agent install --all --source private --target vscode",
+        "  neqsim agent installed",
+        "  neqsim agent info neqsim-example-agent",
+        "  neqsim agent validate neqsim-example-agent",
+        "  neqsim agent schema",
+        "  neqsim agent doctor",
+        "  neqsim agent doctor --target vscode",
+        "  neqsim agent remove neqsim-example-agent",
+        "  neqsim agent private-init",
+        "",
+        "Preferred private access uses `gh auth login --web` or Git Credential Manager.",
+        "Internal raw URLs can use PRIVATE_AGENT_TOKEN env var as a non-interactive fallback.",
+        "Install never executes agent code.",
+    ])
     parser = argparse.ArgumentParser(
         description="Install community and private agents from NeqSim agent catalogs.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=textwrap.dedent("""\
-            Examples:
-              neqsim agent list
-                            neqsim agent list --private
-              neqsim agent search "tie-in"
-              neqsim agent install neqsim-example-agent
-                            neqsim agent install neqsim-example-agent --no-install-missing-skills
-              neqsim agent install neqsim-example-agent --vscode
-                            neqsim agent install neqsim-example-agent --target generic
-                            neqsim agent export neqsim-example-agent --target generic
-                            neqsim agent install --all --vscode
-                            neqsim agent install --all --source community --vscode
-                            neqsim agent install --all --source private --vscode
-              neqsim agent installed
-              neqsim agent info neqsim-example-agent
-              neqsim agent validate neqsim-example-agent
-              neqsim agent schema
-                            neqsim agent doctor
-              neqsim agent remove neqsim-example-agent
-              neqsim agent private-init
-
-                        Preferred private access uses `gh auth login --web` or Git Credential Manager.
-                        Internal raw URLs can use PRIVATE_AGENT_TOKEN env var as a fallback.
-            Install never executes agent code.
-        """),
+        epilog=examples,
     )
     sub = parser.add_subparsers(dest="command")
 

@@ -85,6 +85,7 @@ skills:
         }
 
         with mock.patch.object(install_skill, "_get_default_github_branch", return_value="main"), \
+            mock.patch.object(install_skill, "_local_repository_root", return_value=None), \
                 mock.patch.object(install_skill, "_fetch_github_text", return_value=remote_catalog):
             skills = install_skill._discover_github_repository_skills(repository)
 
@@ -123,6 +124,7 @@ Use this process skill for tests.
         }
 
         with mock.patch.object(install_skill, "_get_default_github_branch", return_value="main"), \
+            mock.patch.object(install_skill, "_local_repository_root", return_value=None), \
                 mock.patch.object(install_skill, "_list_github_tree_paths",
                                   return_value=("main", ["skills/demo/SKILL.md", "README.md"])), \
                 mock.patch.object(install_skill, "_fetch_github_text", side_effect=fake_fetch_text):
@@ -158,6 +160,7 @@ description: "Hydrate screening skill."
         }
 
         with mock.patch.object(install_skill, "_get_default_github_branch", return_value="main"), \
+            mock.patch.object(install_skill, "_local_repository_root", return_value=None), \
                 mock.patch.object(install_skill, "_list_github_tree_paths",
                                   return_value=("main", ["skills/demo/SKILL.md"])), \
                 mock.patch.object(install_skill, "_fetch_github_text", side_effect=fake_fetch_text):
@@ -203,6 +206,47 @@ description: "Hydrate screening skill."
         self.assertEqual("git", skills[0]["source"])
         self.assertEqual("git-credential-manager", skills[0]["auth"])
         self.assertEqual("https://git.internal/skills.git", skills[0]["url"])
+
+    def test_github_repository_discovery_prefers_local_sibling_catalog(self):
+        """GitHub catalog entries should use a checked-out sibling repo when present."""
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            neqsim_root = tmp_path / "neqsim"
+            sibling = tmp_path / "neqsim-enterprise-skills"
+            neqsim_root.mkdir()
+            sibling.mkdir()
+            (sibling / "README.md").write_text("Enterprise skills.\n", encoding="utf-8")
+            skill_file = sibling / "skills" / "engineering-data" / "enterprise-stid-live-lookup" / "SKILL.md"
+            skill_file.parent.mkdir(parents=True)
+            skill_file.write_text(
+                "---\nname: enterprise-stid-live-lookup\ndescription: STID lookup.\n---\nBody.\n",
+                encoding="utf-8",
+            )
+            (sibling / "enterprise-skills.yaml").write_text(
+                "skills:\n"
+                "  - name: enterprise-stid-live-lookup\n"
+                "    description: STID lookup.\n"
+                "    path: skills/engineering-data/enterprise-stid-live-lookup/SKILL.md\n",
+                encoding="utf-8",
+            )
+            repository = {
+                "repo": "equinor/neqsim-enterprise-skills",
+                "catalog_path": "",
+                "skill_path_glob": "skills/**/SKILL.md",
+            }
+
+            with mock.patch.object(install_skill, "REPO_ROOT", neqsim_root), \
+                    mock.patch.object(install_skill, "_get_default_github_branch") as mocked_branch:
+                skills = install_skill._discover_github_repository_skills(repository)
+
+        self.assertEqual(1, len(skills))
+        self.assertEqual("enterprise-stid-live-lookup", skills[0]["name"])
+        self.assertEqual("local", skills[0]["source"])
+        self.assertEqual(str(skill_file), skills[0]["path"])
+        mocked_branch.assert_not_called()
 
     def test_fallback_parser_reads_repository_entries(self):
         """The no-PyYAML parser should understand repository sections."""

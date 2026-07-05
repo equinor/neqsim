@@ -559,6 +559,72 @@ def _normalize_discovered_skill(skill, repository, default_branch=None, content=
     return normalized
 
 
+def _local_repository_root(repository):
+    """Return a local sibling repository path for a GitHub catalog entry if present."""
+    if not isinstance(repository, dict):
+        return None
+    repo = repository.get("repo", "")
+    if not repo or "/" not in repo:
+        return None
+    repo_name = repo.rsplit("/", 1)[1]
+    candidates = [
+        REPO_ROOT.parent / repo_name,
+        REPO_ROOT.parent.parent / repo_name,
+        Path.cwd() / repo_name,
+    ]
+    for candidate in candidates:
+        if (candidate / ".git").exists() or (candidate / "README.md").exists():
+            return candidate.resolve()
+    return None
+
+
+def _discover_skills_from_local_repository(repository, repo_root):
+    """Discover skills from a checked-out sibling repository."""
+    catalog_path = repository.get("catalog_path", "community-skills.yaml")
+    catalog_candidates = []
+    if catalog_path:
+        catalog_candidates.append(catalog_path)
+    catalog_candidates.extend(["community-skills.yaml", "enterprise-skills.yaml"])
+
+    for candidate in catalog_candidates:
+        path = repo_root / candidate
+        if not path.is_file():
+            continue
+        data = _load_catalog_file(path)
+        discovered = []
+        for skill in (data.get("skills") or []):
+            if not isinstance(skill, dict) or not skill.get("name"):
+                continue
+            normalized = _normalize_discovered_skill(skill, repository)
+            local_path = repo_root / normalized.get("path", "SKILL.md")
+            normalized["source"] = "local"
+            normalized["path"] = str(local_path)
+            discovered.append(normalized)
+        if discovered:
+            return discovered
+
+    pattern = repository.get("skill_path_glob") or repository.get("path_glob") or DEFAULT_SKILL_PATH_GLOB
+    discovered = []
+    for path in sorted(repo_root.glob(pattern)):
+        if not path.is_file() or path.name != "SKILL.md":
+            continue
+        content = path.read_text(encoding="utf-8", errors="replace")
+        metadata = _extract_frontmatter(content)
+        name = metadata.get("name")
+        if not name:
+            folder_name = path.parent.name
+            name = folder_name if folder_name.startswith("neqsim-") else f"neqsim-{folder_name}"
+        skill = {
+            "name": name,
+            "version": metadata.get("version", repository.get("version", "")),
+            "description": metadata.get("description", f"Local skill from {repo_root}/{path}"),
+            "path": str(path),
+            "source": "local",
+        }
+        discovered.append(_normalize_discovered_skill(skill, repository, content=content))
+    return discovered
+
+
 def _discover_skills_from_remote_catalog(repository, branch):
     """Discover skills from a remote community-skills.yaml file."""
     repo = repository.get("repo", "")
@@ -611,6 +677,11 @@ def _discover_github_repository_skills(repository):
     repo = repository.get("repo", "")
     if not repo:
         return []
+    local_root = _local_repository_root(repository)
+    if local_root is not None:
+        local_skills = _discover_skills_from_local_repository(repository, local_root)
+        if local_skills:
+            return local_skills
     branch = repository.get("branch") or _get_default_github_branch(
         repo, auth=_github_entry_auth(repository))
     try:
@@ -1534,34 +1605,36 @@ def cmd_private_init(skills, args):
 # ── Main ───────────────────────────────────────────────────────────────
 
 def main():
+    examples = "\n".join([
+        "Examples:",
+        "  neqsim skill list",
+        "  neqsim skill list --private",
+        "  neqsim skill search \"flow assurance\"",
+        "  neqsim skill install neqsim-example-skill",
+        "  neqsim skill install neqsim-example-skill --target vscode",
+        "  neqsim skill install neqsim-example-skill --target generic",
+        "  neqsim skill export neqsim-example-skill --target vscode",
+        "  neqsim skill export neqsim-example-skill --target generic",
+        "  neqsim skill installed",
+        "  neqsim skill remove neqsim-example-skill",
+        "  neqsim skill publish user/neqsim-my-skill",
+        "  neqsim skill private-init",
+        "  neqsim skill doctor",
+        "",
+        "Private skills:",
+        "  neqsim skill private-init    # create ~/.neqsim/private-skills.yaml",
+        "  # Edit the file to add your private skills, then:",
+        "  neqsim skill list --private   # verify entries",
+        "  neqsim skill install <name> --target vscode   # install and export privately for VS Code",
+        "",
+        "Preferred private GitHub access uses `gh auth login --web`.",
+        "Internal git sources use your normal Git Credential Manager / SSO login.",
+        "Token environment variables remain optional non-interactive fallbacks.",
+    ])
     parser = argparse.ArgumentParser(
         description="Install community and private skills from NeqSim skill catalogs.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog=textwrap.dedent("""\
-            Examples:
-              neqsim skill list
-              neqsim skill list --private
-              neqsim skill search "flow assurance"
-              neqsim skill install neqsim-example-skill
-              neqsim skill install neqsim-example-skill --vscode
-              neqsim skill install neqsim-example-skill --target generic
-              neqsim skill export neqsim-example-skill --target generic
-              neqsim skill installed
-              neqsim skill remove neqsim-example-skill
-              neqsim skill publish user/neqsim-my-skill
-              neqsim skill private-init
-              neqsim skill doctor
-
-            Private skills:
-              neqsim skill private-init    # create ~/.neqsim/private-skills.yaml
-              # Edit the file to add your private skills, then:
-              neqsim skill list --private   # verify entries
-              neqsim skill install <name>   # install from any catalog
-
-            Preferred private GitHub access uses `gh auth login --web`.
-            Internal git sources use your normal Git Credential Manager / SSO login.
-            Token environment variables remain optional fallbacks.
-        """),
+        epilog=examples,
     )
     sub = parser.add_subparsers(dest="command")
 

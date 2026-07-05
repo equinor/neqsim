@@ -469,6 +469,8 @@ Browse and install community-contributed skills, or publish your own:
 ```bash
 neqsim skill list                    # browse the catalog and discovered repositories
 neqsim skill install <name>          # install a skill
+neqsim skill install <name> --target vscode   # also export to your VS Code user prompts folder
+neqsim skill doctor                  # check private-catalog authentication readiness
 neqsim skill publish user/repo-name  # publish yours (creates a draft PR)
 ```
 
@@ -478,10 +480,18 @@ Browse and install community-contributed agents separately from skills:
 neqsim agent list                    # browse installable agent workflows
 neqsim agent search hydrate          # search by name, tag, description, or required skill
 neqsim agent install <name>          # install an agent definition
+neqsim agent install <name> --target vscode   # also export the agent and required skills for VS Code
 neqsim agent install --all           # install every agent in the catalog
+neqsim agent doctor --target vscode  # verify VS Code exports and required skill visibility
 neqsim agent validate <name-or-path> # validate an installed or local agent package
 neqsim agent schema                  # show the supported agent.yaml fields
 ```
+
+By default, installed community and private content is kept out of the Git-tracked
+workspace: skills install to `~/.neqsim/skills/`, agents install to
+`~/.neqsim/agents/`, and `--target vscode` writes generated copies to the user's
+VS Code prompts folders. Use `--vscode-scope workspace` only when a maintainer
+intentionally wants a generated `.github/skills` or `.github/agents` copy.
 
 The catalog can list individual skills directly and can also point to public
 multi-skill GitHub repositories. When a repository is listed under

@@ -108,13 +108,14 @@ A company that needs private NeqSim agents and skills should publish two interna
 
 Both catalogs must declare `trust: internal`. Enterprise skill names must use `enterprise-*`. Enterprise agents may list public NeqSim dependencies such as `neqsim-fluid-quality-check` and internal dependencies such as `enterprise-fluid-quality-check` in `required_skills`.
 
-The Engineering Harness installs these catalogs by reading a configured `plugins/sources.yaml` file. The source entry names the private repository, catalog file, branch or tag, trust scope, and optional `local_path` for local clones. For GitHub-hosted private repositories, the harness reads `GITHUB_TOKEN` or `GH_TOKEN` at request time and does not store it.
+The Engineering Harness installs these catalogs by reading a configured `plugins/sources.yaml` file. The source entry names the private repository, catalog file, branch or tag, trust scope, and optional `local_path` for local clones. For local development, prefer `local_path` or the normal enterprise Git browser/SSO flow (`gh auth login --web` or Git Credential Manager). `GITHUB_TOKEN` or `GH_TOKEN` is a non-interactive fallback for CI or service contexts and is read at request time rather than stored.
 
 Use metadata-only sync for discovery and validation. Use full-content sync only when the runtime needs copied `AGENT.md`, `SKILL.md`, examples, or Python scripts:
 
 ```powershell
 $env:EH_SOURCES_FILE = "C:\path\to\plugins\sources.yaml"
-$env:GITHUB_TOKEN = "<token-with-read-access>"
+# Prefer local_path, gh auth login --web, or Git Credential Manager for private GitHub repos.
+# CI/service fallback only: $env:GITHUB_TOKEN = "<token-with-read-access>"
 engineering-harness plugins sync
 engineering-harness plugins sync --content
 ```
