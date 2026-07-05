@@ -23,6 +23,7 @@ through Git Credential Manager or another configured git credential broker.
 """
 
 import argparse
+from datetime import datetime, timezone
 import fnmatch
 import json
 import os
@@ -49,6 +50,7 @@ INSTALL_DIR = Path.home() / ".neqsim" / "agents"
 MANIFEST_FILE = INSTALL_DIR / "installed.json"
 CORE_SKILLS_DIR = REPO_ROOT / ".github" / "skills"
 INSTALLED_SKILLS_DIR = Path.home() / ".neqsim" / "skills"
+EXPORT_DIR = Path.home() / ".neqsim" / "export"
 
 DEFAULT_AGENT_PATH_GLOBS = ["agents/**/*.agent.md",
                             "agents/**/AGENT.md", "**/*.agent.md"]
@@ -806,7 +808,8 @@ def save_manifest(manifest):
     MANIFEST_FILE.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
 
-# ── VS Code export ─────────────────────────────────────────────────────
+# ── Export targets ─────────────────────────────────────────────────────
+SUPPORTED_EXPORT_TARGETS = ("vscode", "generic")
 
 def _vscode_user_dir():
     """Return the VS Code stable User config directory for this platform.
@@ -864,6 +867,101 @@ def export_agent_to_vscode(name, main_file, vscode_dir):
     return dest
 
 
+def resolve_generic_agents_dir(explicit_dir=None):
+    """Resolve the generic, tool-neutral agents export directory.
+
+    @param explicit_dir an explicit export root directory (overrides default)
+    @return the directory where generic agent folders should be written
+    """
+    if explicit_dir:
+        return Path(explicit_dir).expanduser().resolve() / "agents"
+    return EXPORT_DIR / "generic" / "agents"
+
+
+def export_agent_to_generic(name, source_dir, generic_agents_dir):
+    """Copy an installed agent package into the generic export layout.
+
+    @param name the agent name (used as the destination subfolder)
+    @param source_dir the installed agent folder under ~/.neqsim/agents/<name>
+    @param generic_agents_dir the generic agents export directory
+    @return the destination agent folder Path
+    """
+    dest = Path(generic_agents_dir) / name
+    if dest.exists():
+        shutil.rmtree(str(dest))
+    shutil.copytree(str(source_dir), str(dest))
+    main_file = _find_agent_main_file(dest)
+    if main_file:
+        canonical = dest / "AGENT.md"
+        if main_file.resolve() != canonical.resolve():
+            shutil.copy2(str(main_file), str(canonical))
+    return dest
+
+
+def _record_export(manifest, name, target, dest):
+    """Record an exported copy in the installed-agents manifest.
+
+    @param manifest the installed-agents manifest to update
+    @param name the installed agent name
+    @param target the export target name
+    @param dest the generated export path
+    @return None
+    """
+    manifest[name].setdefault("exports", {})[target] = str(dest)
+    if target == "vscode":
+        manifest[name]["vscode_path"] = str(dest)
+    elif target == "generic":
+        manifest[name]["generic_path"] = str(dest)
+
+
+def _write_generic_manifest(kind, root_dir, manifest):
+    """Write a lightweight manifest for tool-neutral exports.
+
+    @param kind the exported content kind, for example "agents"
+    @param root_dir the target-specific export root directory
+    @param manifest the installed manifest to summarize
+    @return the generated manifest path
+    """
+    root = Path(root_dir)
+    root.mkdir(parents=True, exist_ok=True)
+    exports = {}
+    for name, info in sorted(manifest.items()):
+        generic_path = info.get("exports", {}).get("generic") or info.get("generic_path", "")
+        if generic_path:
+            exports[name] = {
+                "path": generic_path,
+                "installed_path": info.get("path", ""),
+                "main_file": str(Path(generic_path) / "AGENT.md"),
+                "source": info.get("source", ""),
+                "source_type": info.get("source_type", ""),
+                "version": info.get("version", ""),
+                "display_name": info.get("display_name", ""),
+                "description": info.get("description", ""),
+                "tags": info.get("tags", []),
+                "author": info.get("author", ""),
+                "required_skills": info.get("required_skills", []),
+                "supported_domains": info.get("supported_domains", []),
+                "requires_mcp_tools": info.get("requires_mcp_tools", []),
+                "human_review_required": info.get("human_review_required", ""),
+                "trust_level": info.get("trust_level", ""),
+            }
+    dest = root / "manifest.json"
+    payload = {}
+    if dest.exists():
+        try:
+            payload = json.loads(dest.read_text(encoding="utf-8"))
+        except Exception:
+            payload = {}
+    payload.update({
+        "schema_version": "1.0",
+        "target": "generic",
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+    })
+    payload[kind] = exports
+    dest.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return dest
+
+
 def _export_installed_agent_to_vscode(name, main_file, args, manifest):
     """Export a freshly installed agent into the VS Code agents directory.
 
@@ -889,11 +987,55 @@ def _export_installed_agent_to_vscode(name, main_file, args, manifest):
     except Exception as exc:
         print("  [!!] VS Code export failed: {exc}".format(exc=exc))
         return
-    manifest[name]["vscode_path"] = str(dest)
+    _record_export(manifest, name, "vscode", dest)
     save_manifest(manifest)
     print("  [OK] Exported to VS Code agents ({scope}): {dest}".format(
         scope=scope, dest=dest))
     print("       Reload VS Code (Developer: Reload Window) to pick it up.")
+
+
+def _export_installed_agent_to_generic(name, source_dir, args, manifest):
+    """Export a freshly installed agent into the generic target layout.
+
+    @param name the installed agent name
+    @param source_dir the installed agent folder under ~/.neqsim/agents/<name>
+    @param args parsed CLI arguments (reads export_dir)
+    @param manifest the installed-agents manifest, updated with generic export path
+    @return None
+    """
+    if not source_dir or not Path(source_dir).exists():
+        print("  [!!] Generic export skipped: agent package not found.")
+        return
+    generic_agents_dir = resolve_generic_agents_dir(getattr(args, "export_dir", None))
+    try:
+        dest = export_agent_to_generic(name, source_dir, generic_agents_dir)
+        _record_export(manifest, name, "generic", dest)
+        _write_generic_manifest("agents", generic_agents_dir.parent, manifest)
+    except Exception as exc:
+        print("  [!!] Generic export failed: {exc}".format(exc=exc))
+        return
+    save_manifest(manifest)
+    print("  [OK] Exported to generic agents: {dest}".format(dest=dest))
+
+
+def _export_installed_agent(name, source_dir, main_file, args, manifest):
+    """Export an installed agent to the requested compatibility target.
+
+    @param name the installed agent name
+    @param source_dir the installed agent folder under ~/.neqsim/agents/<name>
+    @param main_file the installed agent's main markdown definition path
+    @param args parsed CLI arguments
+    @param manifest the installed-agents manifest
+    @return None
+    """
+    targets = list(getattr(args, "target", []) or [])
+    if getattr(args, "vscode", False) and "vscode" not in targets:
+        targets.append("vscode")
+    for target in targets:
+        if target == "vscode":
+            _export_installed_agent_to_vscode(name, main_file, args, manifest)
+        elif target == "generic":
+            _export_installed_agent_to_generic(name, source_dir, args, manifest)
 
 
 def _validate_safe_name(name):
@@ -1077,7 +1219,93 @@ def _find_missing_required_skills(required_skills):
     ]
 
 
-def _print_required_skill_guidance(required_skills, install_missing=False):
+def _requested_skill_export_targets(install_args):
+    """Return compatibility targets requested for required skill exports."""
+    if install_args is None:
+        return []
+    targets = list(getattr(install_args, "target", []) or [])
+    if getattr(install_args, "vscode", False) and "vscode" not in targets:
+        targets.append("vscode")
+    return targets
+
+
+def _skill_install_args(skill_name, install_args):
+    """Build skill installer args that preserve agent export target options."""
+    return argparse.Namespace(
+        name=skill_name,
+        force=False,
+        vscode=getattr(install_args, "vscode", False),
+        target=list(getattr(install_args, "target", []) or []),
+        vscode_dir=getattr(install_args, "vscode_dir", None),
+        export_dir=getattr(install_args, "export_dir", None),
+    )
+
+
+def _required_skill_exports_missing(skill_info, targets):
+    """Return requested targets with missing or stale required-skill exports."""
+    missing = []
+    for target in targets:
+        export_path = _manifest_export_path(skill_info, target)
+        if not export_path or not Path(export_path).exists():
+            missing.append(target)
+    return missing
+
+
+def _ensure_required_skill_exports(required_skills, install_args):
+    """Export installed required skills to the agent's requested targets."""
+    targets = _requested_skill_export_targets(install_args)
+    if not targets:
+        return []
+
+    try:
+        skill_manifest = install_skill.load_manifest()
+    except Exception:
+        skill_manifest = {}
+
+    unresolved = []
+    catalog_by_name = None
+    for skill_name in required_skills:
+        resolved_name = _resolve_skill_name(skill_name, set(skill_manifest.keys()))
+        if not resolved_name:
+            try:
+                if catalog_by_name is None:
+                    skill_catalog = install_skill.load_catalog()
+                    catalog_by_name = {
+                        str(skill.get("name", "")).strip(): skill for skill in skill_catalog
+                        if str(skill.get("name", "")).strip()
+                    }
+                resolved_name = _resolve_skill_name(skill_name, set(catalog_by_name.keys()))
+                if resolved_name:
+                    print("  Installing required skill for export: {name}".format(
+                        name=resolved_name))
+                    install_skill.cmd_install(
+                        list(catalog_by_name.values()),
+                        _skill_install_args(resolved_name, install_args))
+                    skill_manifest = install_skill.load_manifest()
+            except SystemExit:
+                resolved_name = ""
+            except Exception:
+                resolved_name = ""
+        if not resolved_name:
+            unresolved.append(skill_name)
+            continue
+
+        skill_info = skill_manifest.get(resolved_name, {})
+        if not _required_skill_exports_missing(skill_info, targets):
+            continue
+        source_path = Path(skill_info.get("path", ""))
+        source_dir = source_path.parent if source_path else Path("")
+        if not source_dir.exists():
+            unresolved.append(skill_name)
+            continue
+        print("  Exporting required skill: {name}".format(name=resolved_name))
+        install_skill._export_installed_skill(
+            resolved_name, source_dir, _skill_install_args(resolved_name, install_args), skill_manifest)
+        skill_manifest = install_skill.load_manifest()
+    return unresolved
+
+
+def _print_required_skill_guidance(required_skills, install_missing=False, install_args=None):
     """Print required skill status and optionally install missing catalog skills."""
     if not required_skills:
         return []
@@ -1086,7 +1314,11 @@ def _print_required_skill_guidance(required_skills, install_missing=False):
         print("  [OK] Required skills available: {skills}".format(
             skills=", ".join(required_skills)
         ))
-        return []
+        unresolved_exports = _ensure_required_skill_exports(required_skills, install_args)
+        if unresolved_exports:
+            print("  [!!] Could not export required skills: {skills}".format(
+                skills=", ".join(unresolved_exports)))
+        return unresolved_exports
 
     print("  [!!] Missing required skills: {skills}".format(
         skills=", ".join(missing)))
@@ -1112,10 +1344,14 @@ def _print_required_skill_guidance(required_skills, install_missing=False):
             unresolved.append(skill_name)
             continue
         print("  Installing missing skill: {name}".format(name=resolved_name))
-        args = argparse.Namespace(name=resolved_name, force=False)
+        args = _skill_install_args(resolved_name, install_args)
         try:
             install_skill.cmd_install(skill_catalog, args)
         except SystemExit:
+            unresolved.append(skill_name)
+    unresolved_exports = _ensure_required_skill_exports(required_skills, install_args)
+    for skill_name in unresolved_exports:
+        if skill_name not in unresolved:
             unresolved.append(skill_name)
     if unresolved:
         print("  [!!] Could not install: {skills}".format(
@@ -1544,7 +1780,7 @@ def _install_agent_record(agent, args, manifest):
         )
         install_missing_skills = getattr(args, "install_missing_skills", True)
         unresolved = _print_required_skill_guidance(
-            required_skills, install_missing=install_missing_skills
+            required_skills, install_missing=install_missing_skills, install_args=args
         )
         for warning in report["warnings"]:
             if not warning.startswith("Missing required skills"):
@@ -1565,6 +1801,12 @@ def _install_agent_record(agent, args, manifest):
             "url": agent.get("url", ""),
             "remote_path": agent.get("path", ""),
             "branch": agent.get("branch", ""),
+            "version": merged_metadata.get("version", agent.get("version", "")),
+            "display_name": merged_metadata.get(
+                "display_name", agent.get("display_name", "")),
+            "description": merged_metadata.get(
+                "description", agent.get("description", "")),
+            "tags": merged_metadata.get("tags", agent.get("tags", [])),
             "author": agent.get("author", ""),
             "required_skills": required_skills,
             "supported_domains": merged_metadata.get("supported_domains", []),
@@ -1583,9 +1825,8 @@ def _install_agent_record(agent, args, manifest):
         print("\n  Agent tools can read the installed package from: {path}\n".format(
             path=dest_dir
         ))
-        if getattr(args, "vscode", False):
-            _export_installed_agent_to_vscode(
-                name, manifest[name].get("main_file", ""), args, manifest)
+        _export_installed_agent(
+            name, dest_dir, manifest[name].get("main_file", ""), args, manifest)
         return True
     except Exception as exc:
         shutil.rmtree(str(dest_dir), ignore_errors=True)
@@ -1620,6 +1861,24 @@ def cmd_installed(agents, args):
     print()
 
 
+def cmd_export(agents, args):
+    """Export an already-installed agent to one or more compatibility targets."""
+    manifest = load_manifest()
+    name = args.name
+    if name not in manifest:
+        print("\n  Agent '{name}' is not installed.".format(name=name))
+        print("  Install it first with: neqsim agent install {name}\n".format(
+            name=name))
+        sys.exit(1)
+    source_dir = Path(manifest[name].get("path", ""))
+    main_file = manifest[name].get("main_file", "")
+    if not source_dir.exists():
+        print("\n  Installed agent folder is missing: {path}\n".format(
+            path=source_dir))
+        sys.exit(1)
+    _export_installed_agent(name, source_dir, main_file, args, manifest)
+
+
 def cmd_remove(agents, args):
     """Remove an installed agent."""
     name = args.name
@@ -1642,7 +1901,22 @@ def cmd_remove(agents, args):
                 vp.unlink()
             print("  [OK] Removed VS Code copy: {path}".format(path=vp))
 
+    generic_export_root = None
+    for target, export_path in manifest.get(name, {}).get("exports", {}).items():
+        ep = Path(export_path)
+        if ep.exists():
+            if ep.is_dir():
+                shutil.rmtree(str(ep), ignore_errors=True)
+            else:
+                ep.unlink()
+            print("  [OK] Removed {target} export: {path}".format(
+                target=target, path=ep))
+        if target == "generic":
+            generic_export_root = ep.parent.parent
+
     del manifest[name]
+    if generic_export_root:
+        _write_generic_manifest("agents", generic_export_root, manifest)
     save_manifest(manifest)
     print("\n  [OK] Removed agent '{name}'.\n".format(name=name))
 
@@ -1677,6 +1951,111 @@ def cmd_validate(agents, args):
         sys.exit(1)
     if getattr(args, "strict", False) and report["warnings"]:
         sys.exit(1)
+
+
+def _manifest_export_path(info, target):
+    """Return the recorded export path for a manifest entry and target."""
+    return info.get("exports", {}).get(target) or info.get("{target}_path".format(
+        target=target), "")
+
+
+def _read_json_file(path):
+    """Read a JSON file and return an object, or None if unreadable."""
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except Exception:
+        return None
+
+
+def _check_generic_manifest_fresh(kind, root_dir, installed_manifest, failures):
+    """Append failures when a generic manifest is missing or stale."""
+    manifest_path = Path(root_dir) / "manifest.json"
+    payload = _read_json_file(manifest_path)
+    if payload is None:
+        failures.append("Generic {kind} manifest is missing or unreadable: {path}".format(
+            kind=kind, path=manifest_path))
+        return
+    exported = payload.get(kind, {})
+    expected = {
+        name: info for name, info in installed_manifest.items()
+        if _manifest_export_path(info, "generic")
+    }
+    missing = sorted(name for name in expected if name not in exported)
+    extra = sorted(name for name in exported if name not in expected)
+    if missing:
+        failures.append("Generic {kind} manifest is missing: {names}".format(
+            kind=kind, names=", ".join(missing)))
+    if extra:
+        failures.append("Generic {kind} manifest has stale entries: {names}".format(
+            kind=kind, names=", ".join(extra)))
+
+
+def _check_export_target(target, args):
+    """Check installed agent exports and required skill exports for a target."""
+    agent_manifest = load_manifest()
+    try:
+        skill_manifest = install_skill.load_manifest()
+    except Exception:
+        skill_manifest = {}
+
+    failures = []
+    warnings = []
+    checked_agents = []
+    available_skill_names = set(skill_manifest.keys())
+
+    for name, info in sorted(agent_manifest.items()):
+        export_path = _manifest_export_path(info, target)
+        if not export_path:
+            warnings.append("Agent is installed but not exported to {target}: {name}".format(
+                target=target, name=name))
+            continue
+        checked_agents.append(name)
+        path = Path(export_path)
+        if not path.exists():
+            failures.append("Agent export is missing: {name} -> {path}".format(
+                name=name, path=path))
+        if target == "generic" and not (path / "AGENT.md").exists():
+            failures.append("Generic agent export lacks AGENT.md: {name} -> {path}".format(
+                name=name, path=path))
+
+        for required in info.get("required_skills", []):
+            resolved = _resolve_skill_name(required, available_skill_names)
+            if not resolved:
+                failures.append(
+                    "Agent {agent} requires skill not installed: {skill}".format(
+                        agent=name, skill=required))
+                continue
+            skill_info = skill_manifest.get(resolved, {})
+            skill_export = _manifest_export_path(skill_info, target)
+            if not skill_export:
+                failures.append(
+                    "Agent {agent} requires skill not exported to {target}: {skill}".format(
+                        agent=name, target=target, skill=resolved))
+                continue
+            if not Path(skill_export).exists():
+                failures.append(
+                    "Required skill export is missing: {skill} -> {path}".format(
+                        skill=resolved, path=skill_export))
+
+    if target == "generic":
+        generic_root = resolve_generic_agents_dir(getattr(args, "export_dir", None)).parent
+        _check_generic_manifest_fresh("agents", generic_root, agent_manifest, failures)
+        skill_generic_root = install_skill.resolve_generic_skills_dir(
+            getattr(args, "export_dir", None)).parent
+        _check_generic_manifest_fresh("skills", skill_generic_root, skill_manifest, failures)
+
+    print("\n  NeqSim agent export doctor ({target})\n".format(target=target))
+    print("  Checked exported agents: {count}".format(count=len(checked_agents)))
+    if checked_agents:
+        print("  Agents: {names}".format(names=", ".join(checked_agents)))
+    for warning in warnings:
+        print("  WARN: {warning}".format(warning=warning))
+    for failure in failures:
+        print("  ERROR: {failure}".format(failure=failure))
+    if failures:
+        print("\n  Result: FAIL\n")
+        sys.exit(1)
+    print("\n  Result: PASS\n")
 
 
 def cmd_run(agents, args):
@@ -1719,6 +2098,11 @@ def cmd_schema(agents, args):
 
 def cmd_doctor(agents, args):
     """Print enterprise auth broker readiness for agent installation."""
+    target = getattr(args, "target", None)
+    if target:
+        _check_export_target(target, args)
+        return
+
     status = install_skill.get_enterprise_auth_status()
     status["private_agent_token_env"] = bool(os.environ.get("PRIVATE_AGENT_TOKEN"))
     print("\n  NeqSim agent enterprise access check\n")
@@ -1763,6 +2147,8 @@ def main():
               neqsim agent install neqsim-example-agent
                             neqsim agent install neqsim-example-agent --no-install-missing-skills
               neqsim agent install neqsim-example-agent --vscode
+                            neqsim agent install neqsim-example-agent --target generic
+                            neqsim agent export neqsim-example-agent --target generic
                             neqsim agent install --all --vscode
                             neqsim agent install --all --source community --vscode
                             neqsim agent install --all --source private --vscode
@@ -1820,13 +2206,34 @@ def main():
         "--vscode", action="store_true",
         help="Also export the agent to a VS Code agents location")
     p_install.add_argument(
+        "--target", action="append", choices=SUPPORTED_EXPORT_TARGETS,
+        help="Also export to a compatibility target (repeatable): vscode or generic")
+    p_install.add_argument(
         "--vscode-scope", choices=["user", "workspace"], default="user",
         help="VS Code export scope: 'user' (all workspaces, default) or 'workspace'")
     p_install.add_argument(
         "--vscode-dir", default=None,
         help="Explicit VS Code agents directory for --vscode export")
+    p_install.add_argument(
+        "--export-dir", default=None,
+        help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
 
     sub.add_parser("installed", help="Show installed agents")
+
+    p_export = sub.add_parser("export", help="Export an installed agent to an AI-tool target")
+    p_export.add_argument("name", help="Installed agent name")
+    p_export.add_argument(
+        "--target", action="append", choices=SUPPORTED_EXPORT_TARGETS, required=True,
+        help="Export target (repeatable): vscode or generic")
+    p_export.add_argument(
+        "--vscode-scope", choices=["user", "workspace"], default="user",
+        help="VS Code export scope for --target vscode")
+    p_export.add_argument(
+        "--vscode-dir", default=None,
+        help="Explicit VS Code agents directory for --target vscode")
+    p_export.add_argument(
+        "--export-dir", default=None,
+        help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
 
     p_remove = sub.add_parser("remove", help="Remove an installed agent")
     p_remove.add_argument("name", help="Agent name to remove")
@@ -1845,7 +2252,14 @@ def main():
     sub.add_parser(
         "schema", help="Show the supported agent.yaml manifest schema")
 
-    sub.add_parser("doctor", help="Check enterprise auth broker readiness")
+    p_doctor = sub.add_parser(
+        "doctor", help="Check enterprise auth broker readiness or export target health")
+    p_doctor.add_argument(
+        "--target", choices=SUPPORTED_EXPORT_TARGETS,
+        help="Check installed agent exports and required skill exports for this target")
+    p_doctor.add_argument(
+        "--export-dir", default=None,
+        help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
 
     sub.add_parser(
         "private-init", help="Create private catalog template at ~/.neqsim/")
@@ -1876,6 +2290,7 @@ def main():
         "info": cmd_info,
         "inspect": cmd_info,
         "install": cmd_install,
+        "export": cmd_export,
         "installed": cmd_installed,
         "remove": cmd_remove,
     }

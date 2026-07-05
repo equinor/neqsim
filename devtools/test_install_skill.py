@@ -324,6 +324,90 @@ class SkillVsCodeExportTest(unittest.TestCase):
                 self.assertFalse(
                     (vscode_dir / "neqsim-demo").exists())
 
+    def test_cmd_install_with_generic_target_exports_and_remove_cleans_up(self):
+        """A generic target install exports to a tool-neutral ~/.neqsim layout."""
+        import argparse
+        import json
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "SKILL.md"
+            source.write_text(
+                "---\nname: neqsim-demo\ndescription: Demo skill.\n---\n"
+                "# Demo skill body with enough content.\n",
+                encoding="utf-8")
+            install_dir = tmp_path / "installed-skills"
+            manifest_file = install_dir / "installed.json"
+            export_root = tmp_path / "generic-export"
+            catalog = [{
+                "name": "neqsim-demo",
+                "description": "Demo skill",
+                "author": "tests",
+                "source": "local",
+                "path": str(source),
+                "_source": "private",
+            }]
+
+            with mock.patch.object(install_skill, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="neqsim-demo",
+                    force=False,
+                    vscode=False,
+                    vscode_dir=None,
+                    target=["generic"],
+                    export_dir=str(export_root),
+                )
+                install_skill.cmd_install(catalog, args)
+                manifest = json.loads(
+                    manifest_file.read_text(encoding="utf-8"))
+                exported = export_root / "skills" / "neqsim-demo" / "SKILL.md"
+                generic_manifest = export_root / "manifest.json"
+                self.assertTrue(exported.exists())
+                self.assertTrue(generic_manifest.exists())
+                self.assertEqual(
+                    str(export_root / "skills" / "neqsim-demo"),
+                    manifest["neqsim-demo"]["exports"]["generic"])
+
+                remove_args = argparse.Namespace(name="neqsim-demo")
+                install_skill.cmd_remove(catalog, remove_args)
+                self.assertFalse(
+                    (export_root / "skills" / "neqsim-demo").exists())
+
+    def test_cmd_export_installed_skill_to_generic(self):
+        """An installed skill can be exported later without reinstalling."""
+        import argparse
+        import json
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-skills"
+            source_dir = install_dir / "neqsim-demo"
+            source_dir.mkdir(parents=True)
+            skill_file = source_dir / "SKILL.md"
+            skill_file.write_text("# Demo skill body with enough content.\n", encoding="utf-8")
+            manifest_file = install_dir / "installed.json"
+            manifest_file.write_text(json.dumps({
+                "neqsim-demo": {"path": str(skill_file), "source": "private"}
+            }), encoding="utf-8")
+            export_root = tmp_path / "generic-export"
+
+            with mock.patch.object(install_skill, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="neqsim-demo",
+                    target=["generic"],
+                    vscode=False,
+                    vscode_dir=None,
+                    export_dir=str(export_root),
+                )
+                install_skill.cmd_export([], args)
+                exported = export_root / "skills" / "neqsim-demo" / "SKILL.md"
+                self.assertTrue(exported.exists())
+
     def test_cmd_install_supports_git_source(self):
         """A direct source: git skill installs through the git helper."""
         import argparse

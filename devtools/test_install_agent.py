@@ -368,15 +368,65 @@ trust_level: private
                 mock.patch.object(install_agent.install_skill, "load_catalog",
                                   return_value=catalog), \
                 mock.patch.object(install_agent.install_skill, "cmd_install") as mocked_install:
+            install_args = argparse.Namespace(
+                vscode=True,
+                target=["generic"],
+                vscode_dir="/tmp/vscode-skills",
+                export_dir="/tmp/generic-export",
+            )
             unresolved = install_agent._print_required_skill_guidance(
                 required,
                 install_missing=True,
+                install_args=install_args,
             )
 
         self.assertEqual([], unresolved)
         mocked_install.assert_called_once()
         args_obj = mocked_install.call_args[0][1]
         self.assertEqual("neqsim-fluid-quality-check", args_obj.name)
+        self.assertTrue(args_obj.vscode)
+        self.assertEqual(["generic"], args_obj.target)
+        self.assertEqual("/tmp/vscode-skills", args_obj.vscode_dir)
+        self.assertEqual("/tmp/generic-export", args_obj.export_dir)
+
+    def test_required_skill_export_runs_for_already_installed_skill(self):
+        """Agent target exports should include already-installed required skills."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            skill_dir = tmp_path / "installed-skills" / "neqsim-demo"
+            skill_dir.mkdir(parents=True)
+            skill_file = skill_dir / "SKILL.md"
+            skill_file.write_text("# Demo skill body.\n", encoding="utf-8")
+            required = ["neqsim-demo"]
+            skill_manifest = {
+                "neqsim-demo": {
+                    "path": str(skill_file),
+                    "source": "community",
+                }
+            }
+            install_args = argparse.Namespace(
+                vscode=False,
+                target=["generic"],
+                vscode_dir=None,
+                export_dir=str(tmp_path / "generic-export"),
+            )
+
+            with mock.patch.object(install_agent, "_find_missing_required_skills",
+                                   return_value=[]), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest",
+                                      return_value=skill_manifest), \
+                    mock.patch.object(install_agent.install_skill,
+                                      "_export_installed_skill") as mocked_export:
+                unresolved = install_agent._print_required_skill_guidance(
+                    required,
+                    install_missing=True,
+                    install_args=install_args,
+                )
+
+        self.assertEqual([], unresolved)
+        mocked_export.assert_called_once()
+        self.assertEqual("neqsim-demo", mocked_export.call_args[0][0])
+        self.assertEqual(skill_dir, mocked_export.call_args[0][1])
 
     def test_local_file_install_writes_manifest(self):
         """Installing a local .agent.md file should copy it and register metadata."""
@@ -893,6 +943,168 @@ class AgentVsCodeExportTest(unittest.TestCase):
                 remove_args = argparse.Namespace(name="local-test-agent")
                 install_agent.cmd_remove(catalog, remove_args)
                 self.assertFalse(exported.exists())
+
+    def test_cmd_install_with_generic_target_exports_and_remove_cleans_up(self):
+        """A generic target install exports a tool-neutral agent package."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            source = tmp_path / "local.agent.md"
+            source.write_text(
+                "---\n"
+                "name: Local Test Agent\n"
+                "description: Local agent used by the installer tests.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            install_dir = tmp_path / "installed-agents"
+            manifest_file = install_dir / "installed.json"
+            export_root = tmp_path / "generic-export"
+            catalog = [{
+                "name": "local-test-agent",
+                "description": "Local test agent",
+                "author": "tests",
+                "source": "local",
+                "path": str(source),
+                "_source": "private",
+                "required_skills": [],
+            }]
+
+            with mock.patch.object(install_agent, "INSTALL_DIR", install_dir), \
+                    mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="local-test-agent",
+                    force=False,
+                    install_missing_skills=False,
+                    vscode=False,
+                    vscode_scope="user",
+                    vscode_dir=None,
+                    target=["generic"],
+                    export_dir=str(export_root),
+                )
+                install_agent.cmd_install(catalog, args)
+                manifest = json_load(manifest_file)
+                exported = export_root / "agents" / "local-test-agent"
+                self.assertTrue((exported / "AGENT.md").exists())
+                self.assertTrue((export_root / "manifest.json").exists())
+                self.assertEqual(
+                    str(exported),
+                    manifest["local-test-agent"]["exports"]["generic"])
+
+                remove_args = argparse.Namespace(name="local-test-agent")
+                install_agent.cmd_remove(catalog, remove_args)
+                self.assertFalse(exported.exists())
+
+    def test_cmd_export_installed_agent_to_generic(self):
+        """An installed agent can be exported later without reinstalling."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            install_dir = tmp_path / "installed-agents"
+            source_dir = install_dir / "local-test-agent"
+            source_dir.mkdir(parents=True)
+            main_file = source_dir / "local.agent.md"
+            main_file.write_text(
+                "---\n"
+                "name: Local Test Agent\n"
+                "description: Local agent used by export tests.\n"
+                "---\n"
+                "Body.\n",
+                encoding="utf-8",
+            )
+            import json
+            manifest_file = install_dir / "installed.json"
+            manifest_file.write_text(json.dumps({
+                "local-test-agent": {
+                    "path": str(source_dir),
+                    "main_file": str(main_file),
+                    "source": "private",
+                    "required_skills": [],
+                }
+            }), encoding="utf-8")
+            export_root = tmp_path / "generic-export"
+
+            with mock.patch.object(install_agent, "MANIFEST_FILE", manifest_file):
+                args = argparse.Namespace(
+                    name="local-test-agent",
+                    target=["generic"],
+                    vscode=False,
+                    vscode_scope="user",
+                    vscode_dir=None,
+                    export_dir=str(export_root),
+                )
+                install_agent.cmd_export([], args)
+                exported = export_root / "agents" / "local-test-agent" / "AGENT.md"
+                self.assertTrue(exported.exists())
+
+    def test_cmd_doctor_generic_passes_when_agent_and_required_skill_exported(self):
+        """Generic doctor should pass when exported agents can see required skills."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            export_root = tmp_path / "generic-export"
+            agent_export = export_root / "agents" / "local-test-agent"
+            skill_export = export_root / "skills" / "neqsim-demo"
+            agent_export.mkdir(parents=True)
+            skill_export.mkdir(parents=True)
+            (agent_export / "AGENT.md").write_text("Agent body.\n", encoding="utf-8")
+            (skill_export / "SKILL.md").write_text("# Skill body.\n", encoding="utf-8")
+            (export_root / "manifest.json").write_text(
+                '{"agents":{"local-test-agent":{}},"skills":{"neqsim-demo":{}}}',
+                encoding="utf-8")
+
+            agent_manifest = {
+                "local-test-agent": {
+                    "path": str(tmp_path / "installed-agents" / "local-test-agent"),
+                    "exports": {"generic": str(agent_export)},
+                    "required_skills": ["neqsim-demo"],
+                }
+            }
+            skill_manifest = {
+                "neqsim-demo": {
+                    "path": str(tmp_path / "installed-skills" / "neqsim-demo" / "SKILL.md"),
+                    "exports": {"generic": str(skill_export)},
+                }
+            }
+            args = argparse.Namespace(target="generic", export_dir=str(export_root))
+
+            with mock.patch.object(install_agent, "load_manifest", return_value=agent_manifest), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest",
+                                      return_value=skill_manifest):
+                with redirect_stdout(io.StringIO()) as output:
+                    install_agent.cmd_doctor([], args)
+
+            self.assertIn("Result: PASS", output.getvalue())
+
+    def test_cmd_doctor_generic_fails_when_required_skill_not_exported(self):
+        """Generic doctor should fail if an exported agent's skill is not exported."""
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_path = Path(tmp)
+            export_root = tmp_path / "generic-export"
+            agent_export = export_root / "agents" / "local-test-agent"
+            agent_export.mkdir(parents=True)
+            (agent_export / "AGENT.md").write_text("Agent body.\n", encoding="utf-8")
+            (export_root / "manifest.json").write_text(
+                '{"agents":{"local-test-agent":{}}}', encoding="utf-8")
+
+            agent_manifest = {
+                "local-test-agent": {
+                    "exports": {"generic": str(agent_export)},
+                    "required_skills": ["neqsim-demo"],
+                }
+            }
+            skill_manifest = {
+                "neqsim-demo": {
+                    "path": str(tmp_path / "installed-skills" / "neqsim-demo" / "SKILL.md"),
+                }
+            }
+            args = argparse.Namespace(target="generic", export_dir=str(export_root))
+
+            with mock.patch.object(install_agent, "load_manifest", return_value=agent_manifest), \
+                    mock.patch.object(install_agent.install_skill, "load_manifest",
+                                      return_value=skill_manifest):
+                with self.assertRaises(SystemExit), redirect_stdout(io.StringIO()) as output:
+                    install_agent.cmd_doctor([], args)
+
+            self.assertIn("requires skill not exported", output.getvalue())
 
 
 if __name__ == "__main__":

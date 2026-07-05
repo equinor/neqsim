@@ -26,6 +26,7 @@ Git Credential Manager.
 """
 
 import argparse
+from datetime import datetime, timezone
 import fnmatch
 import json
 import os
@@ -50,6 +51,7 @@ CATALOG_FILE = REPO_ROOT / "community-skills.yaml"
 PRIVATE_CATALOG_FILE = Path.home() / ".neqsim" / "private-skills.yaml"
 INSTALL_DIR = Path.home() / ".neqsim" / "skills"
 MANIFEST_FILE = INSTALL_DIR / "installed.json"
+EXPORT_DIR = Path.home() / ".neqsim" / "export"
 GITHUB_TIMEOUT_SECONDS = 20
 DEFAULT_SKILL_PATH_GLOB = "**/SKILL.md"
 
@@ -717,8 +719,9 @@ def save_manifest(manifest):
     MANIFEST_FILE.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
 
 
-# ── VS Code export ──────────────────────────────────────────
+# ── Export targets ──────────────────────────────────────────
 VSCODE_WORKSPACE_MARKERS = (".github", ".git", "pom.xml", "package.json")
+SUPPORTED_EXPORT_TARGETS = ("vscode", "generic")
 
 
 def find_workspace_root(start=None):
@@ -776,6 +779,86 @@ def export_skill_to_vscode(name, source_dir, vscode_dir):
     return dest
 
 
+def resolve_generic_skills_dir(explicit_dir=None):
+    """Resolve the generic, tool-neutral skills export directory.
+
+    @param explicit_dir an explicit export root directory (overrides default)
+    @return the directory where generic skill folders should be written
+    """
+    if explicit_dir:
+        return Path(explicit_dir).expanduser().resolve() / "skills"
+    return EXPORT_DIR / "generic" / "skills"
+
+
+def export_skill_to_generic(name, source_dir, generic_skills_dir):
+    """Copy an installed skill folder into the generic export layout.
+
+    @param name the skill name (used as the destination subfolder)
+    @param source_dir the installed skill folder containing SKILL.md
+    @param generic_skills_dir the generic skills export directory
+    @return the destination skill folder Path
+    """
+    return export_skill_to_vscode(name, source_dir, generic_skills_dir)
+
+
+def _record_export(manifest, name, target, dest):
+    """Record an exported copy in the installed-skills manifest.
+
+    @param manifest the installed-skills manifest to update
+    @param name the installed skill name
+    @param target the export target name
+    @param dest the generated export path
+    @return None
+    """
+    manifest[name].setdefault("exports", {})[target] = str(dest)
+    if target == "vscode":
+        manifest[name]["vscode_path"] = str(dest)
+    elif target == "generic":
+        manifest[name]["generic_path"] = str(dest)
+
+
+def _write_generic_manifest(kind, root_dir, manifest):
+    """Write a lightweight manifest for tool-neutral exports.
+
+    @param kind the exported content kind, for example "skills"
+    @param root_dir the target-specific export root directory
+    @param manifest the installed manifest to summarize
+    @return the generated manifest path
+    """
+    root = Path(root_dir)
+    root.mkdir(parents=True, exist_ok=True)
+    exports = {}
+    for name, info in sorted(manifest.items()):
+        generic_path = info.get("exports", {}).get("generic") or info.get("generic_path", "")
+        if generic_path:
+            exports[name] = {
+                "path": generic_path,
+                "installed_path": info.get("path", ""),
+                "source": info.get("source", ""),
+                "source_type": info.get("source_type", ""),
+                "version": info.get("version", ""),
+                "description": info.get("description", ""),
+                "tags": info.get("tags", []),
+                "author": info.get("author", ""),
+                "min_neqsim_version": info.get("min_neqsim_version", ""),
+            }
+    dest = root / "manifest.json"
+    payload = {}
+    if dest.exists():
+        try:
+            payload = json.loads(dest.read_text(encoding="utf-8"))
+        except Exception:
+            payload = {}
+    payload.update({
+        "schema_version": "1.0",
+        "target": "generic",
+        "exported_at": datetime.now(timezone.utc).isoformat(),
+    })
+    payload[kind] = exports
+    dest.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+    return dest
+
+
 def _export_installed_skill_to_vscode(name, source_dir, args, manifest):
     """Export a freshly installed skill into the VS Code skills directory.
 
@@ -796,10 +879,50 @@ def _export_installed_skill_to_vscode(name, source_dir, args, manifest):
     except Exception as exc:
         print("  [!!] VS Code export failed: {exc}".format(exc=exc))
         return
-    manifest[name]["vscode_path"] = str(dest)
+    _record_export(manifest, name, "vscode", dest)
     save_manifest(manifest)
     print("  [OK] Exported to VS Code skills: {dest}".format(dest=dest))
     print("       Reload VS Code (Developer: Reload Window) to pick it up.")
+
+
+def _export_installed_skill_to_generic(name, source_dir, args, manifest):
+    """Export a freshly installed skill into the generic target layout.
+
+    @param name the installed skill name
+    @param source_dir the installed skill folder under ~/.neqsim/skills/<name>
+    @param args parsed CLI arguments (reads export_dir)
+    @param manifest the installed-skills manifest, updated with generic export path
+    @return None
+    """
+    generic_skills_dir = resolve_generic_skills_dir(getattr(args, "export_dir", None))
+    try:
+        dest = export_skill_to_generic(name, source_dir, generic_skills_dir)
+        _record_export(manifest, name, "generic", dest)
+        _write_generic_manifest("skills", generic_skills_dir.parent, manifest)
+    except Exception as exc:
+        print("  [!!] Generic export failed: {exc}".format(exc=exc))
+        return
+    save_manifest(manifest)
+    print("  [OK] Exported to generic skills: {dest}".format(dest=dest))
+
+
+def _export_installed_skill(name, source_dir, args, manifest):
+    """Export an installed skill to the requested compatibility target.
+
+    @param name the installed skill name
+    @param source_dir the installed skill folder under ~/.neqsim/skills/<name>
+    @param args parsed CLI arguments
+    @param manifest the installed-skills manifest
+    @return None
+    """
+    targets = list(getattr(args, "target", []) or [])
+    if getattr(args, "vscode", False) and "vscode" not in targets:
+        targets.append("vscode")
+    for target in targets:
+        if target == "vscode":
+            _export_installed_skill_to_vscode(name, source_dir, args, manifest)
+        elif target == "generic":
+            _export_installed_skill_to_generic(name, source_dir, args, manifest)
 
 
 # ── Commands ───────────────────────────────────────────────────────────
@@ -986,15 +1109,18 @@ def cmd_install(skills, args):
             "repo": skill.get("repo", ""),
             "remote_path": skill.get("path", ""),
             "branch": skill.get("branch", ""),
+            "version": skill.get("version", ""),
+            "description": skill.get("description", ""),
+            "tags": skill.get("tags", []),
             "author": skill.get("author", ""),
+            "min_neqsim_version": skill.get("min_neqsim_version", ""),
         }
         save_manifest(manifest)
 
         print(f"  [OK] Installed to: {dest_file}")
         print(f"\n  To use in your AI tool, point it at: {dest_dir}\n")
 
-        if getattr(args, "vscode", False):
-            _export_installed_skill_to_vscode(name, dest_dir, args, manifest)
+        _export_installed_skill(name, dest_dir, args, manifest)
 
     except Exception as e:
         print(f"  [!!] Download failed: {e}")
@@ -1017,6 +1143,21 @@ def cmd_installed(skills, args):
     for name, info in sorted(manifest.items()):
         print(f"  {name:<35} {info.get('author', '-'):<20} {info.get('path', '-')}")
     print()
+
+
+def cmd_export(skills, args):
+    """Export an already-installed skill to one or more compatibility targets."""
+    manifest = load_manifest()
+    name = args.name
+    if name not in manifest:
+        print(f"\n  Skill '{name}' is not installed.")
+        print(f"  Install it first with: neqsim skill install {name}\n")
+        sys.exit(1)
+    source_dir = Path(manifest[name].get("path", "")).parent
+    if not source_dir.exists():
+        print(f"\n  Installed skill folder is missing: {source_dir}\n")
+        sys.exit(1)
+    _export_installed_skill(name, source_dir, args, manifest)
 
 
 def _command_available(name):
@@ -1093,7 +1234,22 @@ def cmd_remove(skills, args):
             shutil.rmtree(str(vp), ignore_errors=True)
             print(f"  [OK] Removed VS Code copy: {vp}")
 
+    generic_export_root = None
+    for target, export_path in manifest.get(name, {}).get("exports", {}).items():
+        ep = Path(export_path)
+        if ep.exists():
+            import shutil
+            if ep.is_dir():
+                shutil.rmtree(str(ep), ignore_errors=True)
+            else:
+                ep.unlink()
+            print(f"  [OK] Removed {target} export: {ep}")
+        if target == "generic":
+            generic_export_root = ep.parent.parent
+
     del manifest[name]
+    if generic_export_root:
+        _write_generic_manifest("skills", generic_export_root, manifest)
     save_manifest(manifest)
     print(f"\n  [OK] Removed skill '{name}'.\n")
 
@@ -1296,6 +1452,8 @@ def main():
               neqsim skill search "flow assurance"
               neqsim skill install neqsim-example-skill
               neqsim skill install neqsim-example-skill --vscode
+              neqsim skill install neqsim-example-skill --target generic
+              neqsim skill export neqsim-example-skill --target generic
               neqsim skill installed
               neqsim skill remove neqsim-example-skill
               neqsim skill publish user/neqsim-my-skill
@@ -1331,10 +1489,28 @@ def main():
         "--vscode", action="store_true",
         help="Also export the skill to a VS Code workspace .github/skills folder")
     p_install.add_argument(
+        "--target", action="append", choices=SUPPORTED_EXPORT_TARGETS,
+        help="Also export to a compatibility target (repeatable): vscode or generic")
+    p_install.add_argument(
         "--vscode-dir", default=None,
         help="Explicit VS Code skills directory for --vscode export")
+    p_install.add_argument(
+        "--export-dir", default=None,
+        help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
 
     sub.add_parser("installed", help="Show installed skills")
+
+    p_export = sub.add_parser("export", help="Export an installed skill to an AI-tool target")
+    p_export.add_argument("name", help="Installed skill name")
+    p_export.add_argument(
+        "--target", action="append", choices=SUPPORTED_EXPORT_TARGETS, required=True,
+        help="Export target (repeatable): vscode or generic")
+    p_export.add_argument(
+        "--vscode-dir", default=None,
+        help="Explicit VS Code skills directory for --target vscode")
+    p_export.add_argument(
+        "--export-dir", default=None,
+        help="Generic export root for --target generic (default: ~/.neqsim/export/generic)")
 
     p_remove = sub.add_parser("remove", help="Remove an installed skill")
     p_remove.add_argument("name", help="Skill name to remove")
@@ -1368,6 +1544,7 @@ def main():
         "search": cmd_search,
         "info": cmd_info,
         "install": cmd_install,
+        "export": cmd_export,
         "installed": cmd_installed,
         "remove": cmd_remove,
         "publish": cmd_publish,

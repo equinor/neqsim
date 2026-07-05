@@ -11,8 +11,8 @@ description: "Comprehensive guide to skills and agents in NeqSim's agentic engin
 > |------------|---------|
 > | **Use an existing core skill** | Nothing — agents load them automatically from `.github/skills/` |
 > | **Create a new core skill** | `neqsim new-skill "name"` → edit SKILL.md → register in README + copilot-instructions → PR |
-> | **Install a community skill** | `neqsim skill install neqsim-topic` → copy to VS Code prompts → use with `#neqsim-topic` |
-> | **Install a community agent** | `neqsim agent install agent-name` → point your AI tool at `~/.neqsim/agents/agent-name/` |
+> | **Install a community skill** | `neqsim skill install neqsim-topic` → export with `--target vscode` or `--target generic` |
+> | **Install a community agent** | `neqsim agent install agent-name` → export with `--target vscode` or point your AI tool at `~/.neqsim/agents/agent-name/` |
 > | **Publish my skill to the community** | Host SKILL.md in a GitHub repo → `neqsim skill publish user/repo` → PR gets reviewed |
 > | **Set up company enterprise repos** | Create private enterprise skills + agents repos → publish `enterprise-skills.yaml` and `enterprise-agents.yaml` → configure `EH_SOURCES_FILE` for the Engineering Harness |
 > | **Create a private/local skill** | Write a `.md` file in `%APPDATA%\Code\User\prompts\` → use with `#filename` in Chat |
@@ -405,6 +405,15 @@ neqsim skill search "dehydration"
 # Install a skill (downloads to ~/.neqsim/skills/)
 neqsim skill install neqsim-my-topic
 
+# Install and export for VS Code workspace discovery
+neqsim skill install neqsim-my-topic --target vscode
+
+# Install and export for tool-neutral discovery
+neqsim skill install neqsim-my-topic --target generic
+
+# Check that exported agents can see their required skills
+neqsim agent doctor --target generic
+
 # Check what's installed
 neqsim skill installed
 
@@ -419,15 +428,22 @@ Installed community skills are stored at `~/.neqsim/skills/<name>/SKILL.md`.
 
 ### Step 5: Make Installed Skills Visible to Agents
 
-Installed community skills at `~/.neqsim/skills/` are **not** auto-discovered by VS Code Copilot. To use them, apply one of the same methods described in the "Creating Local Private Skills" section below:
+Installed community skills at `~/.neqsim/skills/` are the local source of truth. Agent tools discover different folders, so use export targets to create generated copies for a specific tool:
 
-1. **Copy to VS Code user prompts folder** (recommended):
-   ```powershell
-   Copy-Item ~/.neqsim/skills/neqsim-my-topic/SKILL.md "$env:APPDATA\Code\User\prompts\neqsim-my-topic.md"
-   ```
-   Then reference with `#neqsim-my-topic` in Copilot Chat.
+```bash
+# Export an already-installed skill to VS Code's workspace .github/skills folder
+neqsim skill export neqsim-my-topic --target vscode
 
-2. **Add to workspace `copilot-instructions.md`** for automatic loading.
+# Export an already-installed skill to ~/.neqsim/export/generic/skills/
+neqsim skill export neqsim-my-topic --target generic
+```
+
+The generic export writes `~/.neqsim/export/generic/skills/<name>/SKILL.md` plus `~/.neqsim/export/generic/manifest.json`. The same manifest also records generic agent exports when both agents and skills are exported. Use this target for coding agents that can be configured with arbitrary local instruction folders. Use the VS Code target when you want Copilot/VS Code to discover the skill from the current workspace.
+
+Prefer the export commands over manual copying. If a tool cannot read the VS Code
+or generic export layouts, point that tool at the installed source folder
+`~/.neqsim/skills/<name>/` or copy from there into the tool-specific location it
+documents.
 
 ## Installing Community and Private Agents
 
@@ -492,6 +508,18 @@ neqsim agent info neqsim-example-agent
 
 # Install an agent definition to ~/.neqsim/agents/
 neqsim agent install neqsim-example-agent
+
+# Install and export to VS Code's user prompts folder
+neqsim agent install neqsim-example-agent --target vscode
+
+# Install and export to ~/.neqsim/export/generic/agents/
+neqsim agent install neqsim-example-agent --target generic
+
+# Agent install also installs and exports required skills when they exist in skill catalogs
+neqsim agent doctor --target generic
+
+# Export an already-installed agent later
+neqsim agent export neqsim-example-agent --target generic
 
 # Install every agent in the catalog at once
 neqsim agent install --all
@@ -572,10 +600,9 @@ neqsim skill publish your-username/neqsim-teg-dehydration
 # 4. Other users install it:
 neqsim skill install neqsim-teg-dehydration
 
-# 5. Copy to VS Code prompts for agent use:
-# (Windows)
-Copy-Item ~/.neqsim/skills/neqsim-teg-dehydration/SKILL.md `
-    "$env:APPDATA\Code\User\prompts\neqsim-teg-dehydration.md"
+# 5. Export for your AI tool:
+neqsim skill export neqsim-teg-dehydration --target vscode
+neqsim skill export neqsim-teg-dehydration --target generic
 ```
 
 ### Updating a Published Community Skill
@@ -1190,6 +1217,7 @@ Skills can be promoted through the tiers:
 | **Visibility** | All users | Catalog browsers | You or your team | Catalog browsers, you, or your team |
 | **Creation** | `neqsim new-skill` + PR | Your repo + catalog entry | YAML entry or local file | Agent markdown/folder + `community-agents.yaml` or private catalog |
 | **Installation** | Automatic (in repo) | `neqsim skill install` | `neqsim skill install` | `neqsim agent install` |
+| **Tool export** | Already workspace-visible | `neqsim skill export --target vscode/generic` | `neqsim skill export --target vscode/generic` | `neqsim agent export --target vscode/generic` |
 | **Source types** | Git repo | Public GitHub | Local / network / private GitHub / URL | Local / network / GitHub / URL |
 | **Contains private data** | Never | Never | Yes (company-internal) | Yes only in private catalogs |
 | **Review process** | PR review by maintainers | Self-published | Team-managed | PR review for public catalog; team-managed for private |
