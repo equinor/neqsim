@@ -189,11 +189,12 @@ def _export_skills(args):
     @param args parsed CLI arguments
     @return the number of skills exported
     """
-    target_dir = install_skill.resolve_vscode_skills_dir(args.vscode_skills_dir)
+    target_dir = install_skill.resolve_vscode_skills_dir(
+        args.vscode_skills_dir, args.vscode_scope)
     if target_dir is None:
         print("[!!] Could not locate a VS Code skills directory.")
-        print("     Run from inside a workspace, set NEQSIM_VSCODE_SKILLS_DIR,")
-        print("     or pass --vscode-skills-dir <path-to/.github/skills>.")
+        print("     Use --vscode-scope user, --vscode-scope workspace,")
+        print("     NEQSIM_VSCODE_SKILLS_DIR, or --vscode-skills-dir <path>.")
         return 0
 
     count = 0
@@ -279,7 +280,7 @@ def main():
         help="Also export internal PaperLab specialist agents and skills for legacy/direct use")
     p_install.add_argument(
         "--vscode-scope", choices=["user", "workspace"], default="user",
-        help="Agent export scope: user prompts folder (default) or workspace .github/agents")
+        help="VS Code export scope: user prompts folders (default) or explicit workspace .github folders")
     p_install.add_argument(
         "--vscode-agents-dir", default=None,
         help="Explicit VS Code agents/prompts directory")

@@ -783,14 +783,31 @@ def find_workspace_root(start=None):
     return None
 
 
-def resolve_vscode_skills_dir(explicit_dir=None):
+def _vscode_user_dir():
+    """Return the VS Code stable User config directory for this platform.
+
+    @return the platform-specific VS Code User directory Path
+    """
+    if sys.platform.startswith("win"):
+        appdata = os.environ.get("APPDATA", "")
+        base = Path(appdata) if appdata else Path.home() / "AppData" / "Roaming"
+        return base / "Code" / "User"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "Code" / "User"
+    return Path.home() / ".config" / "Code" / "User"
+
+
+def resolve_vscode_skills_dir(explicit_dir=None, scope="user"):
     """Resolve the VS Code skills directory for --vscode export.
 
-    VS Code discovers skills from <workspace>/.github/skills/**/SKILL.md, so the
-    export target is always workspace-scoped. Resolution order: explicit dir,
-    NEQSIM_VSCODE_SKILLS_DIR env var, then the nearest workspace root.
+    Resolution order: explicit dir, NEQSIM_VSCODE_SKILLS_DIR env var, then the
+    scope default. 'user' scope targets the global prompts skills folder so
+    installed community/private skills do not modify a Git-tracked repository;
+    'workspace' scope targets <workspace>/.github/skills for explicit core
+    workspace exports.
 
     @param explicit_dir an explicit target directory (overrides detection)
+    @param scope 'user' (default) for the global prompts skills folder, or 'workspace'
     @return the resolved skills directory Path, or None when none can be found
     """
     if explicit_dir:
@@ -798,6 +815,8 @@ def resolve_vscode_skills_dir(explicit_dir=None):
     env_dir = os.environ.get("NEQSIM_VSCODE_SKILLS_DIR", "")
     if env_dir:
         return Path(env_dir).expanduser().resolve()
+    if scope != "workspace":
+        return _vscode_user_dir() / "prompts" / "skills"
     root = find_workspace_root()
     if root is None:
         return None
@@ -913,11 +932,12 @@ def _export_installed_skill_to_vscode(name, source_dir, args, manifest):
     @param manifest the installed-skills manifest, updated with vscode_path
     @return None
     """
-    vscode_dir = resolve_vscode_skills_dir(getattr(args, "vscode_dir", None))
+    vscode_dir = resolve_vscode_skills_dir(
+        getattr(args, "vscode_dir", None), getattr(args, "vscode_scope", "user"))
     if vscode_dir is None:
         print("  [!!] Could not locate a VS Code workspace for --vscode export.")
-        print("       Run from inside a workspace, set NEQSIM_VSCODE_SKILLS_DIR,")
-        print("       or pass --vscode-dir <path-to/.github/skills>.")
+        print("       Use --vscode-scope user (default), run inside a workspace,")
+        print("       set NEQSIM_VSCODE_SKILLS_DIR, or pass --vscode-dir <path>.")
         return False
     try:
         dest = export_skill_to_vscode(name, source_dir, vscode_dir)
@@ -926,7 +946,8 @@ def _export_installed_skill_to_vscode(name, source_dir, args, manifest):
         return False
     _record_export(manifest, name, "vscode", dest)
     save_manifest(manifest)
-    print("  [OK] Exported to VS Code skills: {dest}".format(dest=dest))
+    print("  [OK] Exported to VS Code skills ({scope}): {dest}".format(
+        scope=getattr(args, "vscode_scope", "user"), dest=dest))
     print("       Reload VS Code (Developer: Reload Window) to pick it up.")
     return True
 
@@ -1261,15 +1282,27 @@ def cmd_doctor(skills, args):
     status = get_enterprise_auth_status()
     print("\n  NeqSim Enterprise Auth Doctor\n")
     print("  NeqSim does not request, inspect, or store credentials.")
-    print("  Preferred GitHub Enterprise login: gh auth login --web\n")
-    for name, item in status.items():
+    print("  Preferred GitHub Enterprise login: gh auth login --web")
+    print("  Preferred internal Git login: Git Credential Manager / your configured git SSO broker.\n")
+    checks = [
+        ("github_cli", "GitHub CLI / browser SSO available"),
+        ("git", "git available for Git Credential Manager / SSO"),
+        ("private_catalog", "Private skill catalog exists"),
+    ]
+    for name, label in checks:
+        item = status.get(name, {"available": False, "detail": "unknown"})
         marker = "OK" if item["available"] else "--"
-        print(f"  [{marker}] {name:<24} {item['detail']}")
+        print(f"  [{marker}] {label:<48} {item['detail']}")
+    private_skill_token = status.get(
+        "private_skill_token_env", {"available": False, "detail": "not set"})
+    marker = "OK" if private_skill_token["available"] else "--"
+    print("\n  Optional non-interactive fallback status:")
+    print(f"  [{marker}] PRIVATE_SKILL_TOKEN set      {private_skill_token['detail']}")
     print("\n  Supported catalog auth modes:")
-    print("    source: github  auth: github-cli")
+    print("    source: github  auth: github-cli (browser SSO)")
     print("    source: git     auth: git-credential-manager")
     print("    source: local   auth: none")
-    print("    source: url     PRIVATE_SKILL_TOKEN fallback, if your URL requires it\n")
+    print("    source: url     optional PRIVATE_SKILL_TOKEN fallback for non-interactive endpoints\n")
 
 
 def cmd_remove(skills, args):
@@ -1546,10 +1579,13 @@ def main():
     p_install.add_argument("--force", action="store_true", help="Reinstall if exists")
     p_install.add_argument(
         "--vscode", action="store_true",
-        help="Also export the skill to a VS Code workspace .github/skills folder")
+        help="Also export the skill to the VS Code user prompts skills folder")
     p_install.add_argument(
         "--target", action="append", choices=SUPPORTED_EXPORT_TARGETS,
         help="Also export to a compatibility target (repeatable): vscode or generic")
+    p_install.add_argument(
+        "--vscode-scope", choices=["user", "workspace"], default="user",
+        help="Skill export scope: user prompts skills folder (default) or explicit workspace .github/skills")
     p_install.add_argument(
         "--vscode-dir", default=None,
         help="Explicit VS Code skills directory for --vscode export")
@@ -1564,6 +1600,9 @@ def main():
     p_export.add_argument(
         "--target", action="append", choices=SUPPORTED_EXPORT_TARGETS, required=True,
         help="Export target (repeatable): vscode or generic")
+    p_export.add_argument(
+        "--vscode-scope", choices=["user", "workspace"], default="user",
+        help="Skill export scope: user prompts skills folder (default) or explicit workspace .github/skills")
     p_export.add_argument(
         "--vscode-dir", default=None,
         help="Explicit VS Code skills directory for --target vscode")

@@ -38,11 +38,11 @@ NeqSim separates source-of-truth content from tool-specific discovery folders:
 |-------|---------|--------------|
 | **Core workspace discovery** | Skills and agents committed with NeqSim and visible to VS Code in this workspace | `.github/skills/`, `.github/agents/` |
 | **User-level canonical install** | Community, private, and enterprise content installed for one user without modifying the repo | `~/.neqsim/skills/`, `~/.neqsim/agents/` |
-| **VS Code export** | Generated compatibility copies for VS Code Copilot discovery | `.github/skills/` for workspace skills, `%APPDATA%\Code\User\prompts` or `.github/agents/` for agents |
+| **VS Code export** | Generated compatibility copies for VS Code Copilot discovery | `%APPDATA%\Code\User\prompts\skills` for installed skills and `%APPDATA%\Code\User\prompts` for installed agents; `.github/skills` and `.github/agents` only for explicit core workspace exports |
 | **Generic export** | Tool-neutral copies and manifest for Codex, Claude, harnesses, or other coding agents | `~/.neqsim/export/generic/` |
 | **PaperLab canonical source** | PaperLab's full internal role and skill library | `neqsim-paperlab/agents/`, `neqsim-paperlab/skills/` |
 
-Treat `.github/skills` and `.github/agents` as discovery/export surfaces. They are the correct place for core workspace-visible assets, but installed community/private content should be managed through `~/.neqsim` and exported rather than hand-copied. PaperLab follows the same principle: `neqsim-paperlab/` is canonical, while the VS Code default is the single `@paperlab` gateway plus its declared public skills.
+Treat `.github/skills` and `.github/agents` as core workspace discovery surfaces, not the default destination for installed community/private content. Installed content should be managed through `~/.neqsim` and, for VS Code, exported to the user's private prompts folders unless a maintainer explicitly wants a workspace export. PaperLab follows the same principle: `neqsim-paperlab/` is canonical, while the VS Code default is the single `@paperlab` gateway plus its declared public skills.
 
 ## The Four Types of Skills
 

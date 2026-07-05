@@ -3,6 +3,7 @@ import install_agent
 import argparse
 import io
 import os
+import shutil
 import sys
 import tempfile
 import unittest
@@ -815,16 +816,20 @@ trust_level: private
 
     def test_cmd_doctor_reports_sso_brokers_without_secret_values(self):
         """Doctor output should describe broker readiness without leaking values."""
+        temp_dir = Path(tempfile.mkdtemp(prefix="agent-doctor-"))
+        self.addCleanup(shutil.rmtree, temp_dir, ignore_errors=True)
+        agent_catalog = temp_dir / "private-agents.yaml"
+        agent_catalog.write_text("repositories: []\n", encoding="utf-8")
         status = {
-            "github_cli": True,
-            "github_cli_authenticated": True,
-            "git": True,
-            "git_credential_helper": True,
-            "github_token_env": False,
-            "private_catalog": True,
+            "github_cli": {"available": True, "detail": "available"},
+            "git": {"available": True, "detail": "available"},
+            "github_token_env": {"available": False, "detail": "not set"},
+            "private_skill_token_env": {"available": False, "detail": "not set"},
+            "private_catalog": {"available": True, "detail": "~/.neqsim/private-skills.yaml"},
         }
         with mock.patch.object(install_agent.install_skill,
                                "get_enterprise_auth_status", return_value=status), \
+                mock.patch.object(install_agent, "PRIVATE_CATALOG_FILE", agent_catalog), \
                 mock.patch.dict(os.environ, {"PRIVATE_AGENT_TOKEN": "redacted-value"}):
             output = io.StringIO()
             with redirect_stdout(output):
@@ -833,6 +838,10 @@ trust_level: private
         text = output.getvalue()
         self.assertIn("gh auth login --web", text)
         self.assertIn("git-credential-manager", text)
+        self.assertIn("GitHub CLI / browser SSO available", text)
+        self.assertIn("private-agents.yaml", text)
+        self.assertNotIn("private-skills.yaml", text)
+        self.assertNotIn("GITHUB_TOKEN", text)
         self.assertNotIn("redacted-value", text)
 
 

@@ -17,9 +17,9 @@ Usage:
 Agents are installed to ~/.neqsim/agents/<name>/ and are never executed during
 installation. An agent package may be a single .agent.md file, a folder with
 AGENT.md, or a folder with AGENT.md plus agent.yaml and supporting resources.
-Private GitHub repositories can be read through an authenticated gh CLI session
-or an optional GITHUB_TOKEN fallback. Internal git repositories can be read
-through Git Credential Manager or another configured git credential broker.
+Private GitHub repositories can be read through an authenticated gh CLI browser
+SSO session. Internal git repositories can be read through Git Credential
+Manager or another configured git credential broker.
 """
 
 import argparse
@@ -2168,34 +2168,41 @@ def cmd_doctor(agents, args):
         return
 
     status = install_skill.get_enterprise_auth_status()
-    status["private_agent_token_env"] = bool(os.environ.get("PRIVATE_AGENT_TOKEN"))
+    private_agent_token_available = bool(os.environ.get("PRIVATE_AGENT_TOKEN"))
     print("\n  NeqSim agent enterprise access check\n")
     print("  NeqSim does not request, inspect, or store credentials, cookies, tokens, or MFA codes.")
     print("  Preferred GitHub Enterprise login: gh auth login --web")
     print("  Preferred internal Git login: Git Credential Manager / your configured git SSO broker.\n")
 
-    labels = {
-        "github_cli": "GitHub CLI available",
-        "github_cli_authenticated": "GitHub CLI authenticated",
-        "git": "git available",
-        "git_credential_helper": "git credential helper configured",
-        "github_token_env": "GITHUB_TOKEN fallback configured",
-        "private_agent_token_env": "PRIVATE_AGENT_TOKEN fallback configured",
-        "private_catalog": "Private agent catalog exists",
-    }
-    for key in [
-            "github_cli", "github_cli_authenticated", "git",
-            "git_credential_helper", "github_token_env",
-            "private_agent_token_env", "private_catalog"]:
-        value = status.get(key, False)
-        print("  [{mark}] {label}".format(
-            mark="OK" if value else "--", label=labels[key]))
+    checks = [
+        ("github_cli", "GitHub CLI / browser SSO available"),
+        ("git", "git available for Git Credential Manager / SSO"),
+        ("private_agent_catalog", "Private agent catalog exists"),
+    ]
+    for key, label in checks:
+        if key == "private_agent_catalog":
+            item = {"available": PRIVATE_CATALOG_FILE.exists(), "detail": str(PRIVATE_CATALOG_FILE)}
+        else:
+            item = status.get(key, {})
+        if isinstance(item, dict):
+            available = bool(item.get("available", False))
+            detail = item.get("detail", "")
+        else:
+            available = bool(item)
+            detail = ""
+        suffix = " ({detail})".format(detail=detail) if detail else ""
+        print("  [{mark}] {label}{suffix}".format(
+            mark="OK" if available else "--", label=label, suffix=suffix))
+
+    print("\n  Optional non-interactive fallback status:")
+    print("  [{mark}] PRIVATE_AGENT_TOKEN set".format(
+        mark="OK" if private_agent_token_available else "--"))
 
     print("\n  Supported private source modes:")
-    print("    - source: github, auth: github-cli")
+    print("    - source: github, auth: github-cli (browser SSO)")
     print("    - source: git, auth: git-credential-manager")
     print("    - source: local, auth: none")
-    print("    - source: url, optional PRIVATE_AGENT_TOKEN fallback\n")
+    print("    - source: url, optional PRIVATE_AGENT_TOKEN fallback for non-interactive endpoints\n")
 
 
 def main():

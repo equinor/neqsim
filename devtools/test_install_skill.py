@@ -256,6 +256,26 @@ class SkillVsCodeExportTest(unittest.TestCase):
             result = install_skill.resolve_vscode_skills_dir()
         self.assertEqual(Path("env/skills").expanduser().resolve(), result)
 
+    def test_resolve_vscode_skills_dir_user_scope(self):
+        """User scope targets a private prompts skills folder."""
+        from pathlib import Path
+
+        with mock.patch.object(install_skill, "_vscode_user_dir", return_value=Path("user-root")):
+            result = install_skill.resolve_vscode_skills_dir(scope="user")
+        self.assertEqual(Path("user-root") / "prompts" / "skills", result)
+
+    def test_resolve_vscode_skills_dir_workspace_scope_is_explicit(self):
+        """Workspace scope targets <workspace>/.github/skills only when requested."""
+        import tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".github").mkdir()
+            with mock.patch.object(install_skill, "find_workspace_root", return_value=root):
+                result = install_skill.resolve_vscode_skills_dir(scope="workspace")
+            self.assertEqual((root / ".github" / "skills").resolve(), result.resolve())
+
     def test_export_skill_to_vscode_copies_folder(self):
         """Exporting copies the whole skill folder into <vscode_dir>/<name>."""
         import tempfile
@@ -530,6 +550,8 @@ class SkillVsCodeExportTest(unittest.TestCase):
         output = stream.getvalue()
         self.assertIn("gh auth login --web", output)
         self.assertIn("git-credential-manager", output)
+        self.assertIn("GitHub CLI / browser SSO available", output)
+        self.assertNotIn("GITHUB_TOKEN", output)
         self.assertNotIn("secret", output.lower())
 
 
