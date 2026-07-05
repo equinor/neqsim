@@ -1158,7 +1158,6 @@ class AgentVsCodeExportTest(unittest.TestCase):
                 "Body.\n",
                 encoding="utf-8",
             )
-            import json
             manifest_file = install_dir / "installed.json"
             manifest_file.write_text(json.dumps({
                 "local-test-agent": {
