@@ -58,33 +58,147 @@ def _warn(name, message, fix_hint=None):
 # Checks
 # ══════════════════════════════════════════════════════════
 
-def check_java():
-    """Check Java is installed and report version."""
-    print("\n--- Java ---")
-    java_cmd = "java"
-    try:
-        result = subprocess.run(
-            [java_cmd, "-version"],
-            capture_output=True, text=True, timeout=10
-        )
-        # Java outputs version to stderr
-        output = result.stderr if result.stderr else result.stdout
-        version_line = output.strip().split("\n")[0] if output else ""
-        _check("Java installed", True, version_line)
+def _portable_jdk_hint():
+    """Return a no-admin, portable-JDK remediation hint for this platform.
 
-        # Check if source/target 8 will work (Maven handles this via pom.xml)
-        _check(
-            "Java 8 target",
-            True,
-            "Build targets Java 8 via Maven compiler plugin (pom.xml)",
+    Installing a JDK system-wide often requires administrator rights. A portable
+    (unpacked archive) JDK placed inside the user profile works without admin,
+    which is the common situation on locked-down corporate PCs.
+
+    @return a multi-line remediation string tailored to the current platform
+    """
+    if sys.platform.startswith("win"):
+        return (
+            "No admin? Use a portable JDK (no installer needed):\n"
+            "         1. Download a Temurin JDK 21 .zip from "
+            "https://adoptium.net/temurin/releases/?package=jdk\n"
+            "         2. Extract into your profile, e.g. C:\\Users\\<id>\\jdk-21\n"
+            "         3. Set user-scope env vars (no admin, new terminal to apply):\n"
+            "            [Environment]::SetEnvironmentVariable('JAVA_HOME','C:\\Users\\<id>\\jdk-21','User')\n"
+            "            [Environment]::SetEnvironmentVariable('PATH',"
+            "$env:PATH+';C:\\Users\\<id>\\jdk-21\\bin','User')\n"
+            "         mvnw.cmd needs java on PATH or a valid JAVA_HOME to build."
         )
-    except FileNotFoundError:
+    return (
+        "No admin? Use a portable JDK (no installer needed):\n"
+        "         1. Download a Temurin JDK 21 .tar.gz from "
+        "https://adoptium.net/temurin/releases/?package=jdk\n"
+        "         2. Extract into your home dir, e.g. $HOME/jdk-21\n"
+        "         3. Add to your shell rc file:\n"
+        "            export JAVA_HOME=$HOME/jdk-21\n"
+        "            export PATH=$JAVA_HOME/bin:$PATH\n"
+        "         ./mvnw needs java on PATH or a valid JAVA_HOME to build."
+    )
+
+
+def _parse_java_major(version_output):
+    """Parse the Java major version from `java -version` output.
+
+    Handles both legacy ("1.8.0_392") and modern ("21.0.2") version strings.
+
+    @param version_output the combined stdout/stderr text from `java -version`
+    @return the integer major version, or None when it cannot be determined
+    """
+    match = re.search(r'version "([^"]+)"', version_output or "")
+    if not match:
+        return None
+    raw = match.group(1)
+    parts = raw.split(".")
+    try:
+        if parts[0] == "1" and len(parts) > 1:
+            return int(parts[1])  # 1.8.0_x -> 8
+        return int(re.split(r"[^0-9]", parts[0])[0])  # 21.0.2 -> 21
+    except (ValueError, IndexError):
+        return None
+
+
+def _java_home_is_valid():
+    """Return whether JAVA_HOME points at a usable JDK.
+
+    @return a (is_valid, java_home) tuple; java_home is "" when unset
+    """
+    java_home = os.environ.get("JAVA_HOME", "").strip()
+    if not java_home:
+        return False, ""
+    java_bin = "java.exe" if sys.platform.startswith("win") else "java"
+    return os.path.isfile(os.path.join(java_home, "bin", java_bin)), java_home
+
+
+def check_java():
+    """Check Java is installed, discoverable, and a supported version.
+
+    Validates two independent discovery paths the Maven wrapper relies on:
+    `java` on PATH and a valid `JAVA_HOME`. Emits a no-admin portable-JDK
+    remedy when neither is usable — the most common failure on locked-down
+    corporate machines where installing a JDK system-wide needs admin rights.
+    """
+    print("\n--- Java ---")
+    java_on_path = shutil.which("java") is not None
+    java_home_valid, java_home = _java_home_is_valid()
+
+    version_output = ""
+    major = None
+    if java_on_path:
+        try:
+            result = subprocess.run(
+                ["java", "-version"],
+                capture_output=True, text=True, timeout=10
+            )
+            # Java writes its version banner to stderr.
+            version_output = result.stderr or result.stdout or ""
+            version_line = version_output.strip().split("\n")[0]
+            major = _parse_java_major(version_output)
+            _check("Java installed", True, version_line)
+        except Exception as e:  # noqa: BLE001 - report any launch failure
+            _check(
+                "Java installed", False,
+                "java on PATH but failed to run: {e}".format(e=e),
+                fix_hint=_portable_jdk_hint()
+            )
+    elif java_home_valid:
         _check(
-            "Java installed", False, "Java not found on PATH",
-            fix_hint="Install JDK 8+ and add to PATH"
+            "Java installed", True,
+            "Not on PATH, but JAVA_HOME is set ({p})".format(p=java_home)
         )
-    except Exception as e:
-        _check("Java installed", False, str(e))
+        _warn(
+            "Java on PATH",
+            "java is not on PATH; mvnw uses JAVA_HOME but other tools may not",
+            fix_hint="Add {p}{sep}bin to PATH (user-scope, no admin)".format(
+                p=java_home, sep=os.sep)
+        )
+    else:
+        _check(
+            "Java installed", False,
+            "No java on PATH and JAVA_HOME is not set/valid",
+            fix_hint=_portable_jdk_hint()
+        )
+
+    # JAVA_HOME status (mvnw prefers it; a stale value silently breaks builds).
+    if os.environ.get("JAVA_HOME", "").strip():
+        _check(
+            "JAVA_HOME",
+            java_home_valid,
+            "Valid: {p}".format(p=java_home) if java_home_valid
+            else "Set but invalid (no bin/java): {p}".format(p=java_home),
+            fix_hint=None if java_home_valid
+            else "Point JAVA_HOME at a real JDK home. " + _portable_jdk_hint()
+        )
+    elif java_on_path:
+        _warn(
+            "JAVA_HOME",
+            "Not set (java found on PATH, so mvnw still works)",
+            fix_hint="Optional: set JAVA_HOME so all Java tooling agrees on one JDK"
+        )
+
+    # Version guard: NeqSim must compile/run on Java 8+.
+    if major is not None:
+        _check(
+            "Java version >= 8",
+            major >= 8,
+            "Detected Java {major}".format(major=major),
+            fix_hint=None if major >= 8
+            else "NeqSim requires JDK 8 or newer. " + _portable_jdk_hint()
+        )
 
 
 def check_maven():

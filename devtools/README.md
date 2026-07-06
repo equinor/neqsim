@@ -85,6 +85,52 @@ uv pip install -e devtools/
 > [Troubleshooting](#troubleshooting-neqsim-not-found) below, or use
 > `python -m neqsim_cli` as a fallback.
 
+## Recommended no-admin runbook for the user
+
+On a locked-down / corporate PC (e.g. no administrator rights), everything
+below installs into your **user profile** and needs **no elevation**.
+Prerequisites — Git, Python 3.8+, a JDK, and VS Code — must already be
+provisioned per-user (via your software portal or `winget --scope user`).
+
+```powershell
+# 0. One-time Git setting (user-scope, no admin) — avoids >260-char path errors
+git config --global core.longpaths true
+
+# 1. Clone into your user profile (not C:\Program Files, not a short drive root)
+cd $HOME\Documents\GitHub
+git clone https://github.com/equinor/neqsim.git
+cd neqsim
+
+# 2. Python devtools in a venv (keeps the 'neqsim' command on PATH)
+py -3 -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned   # per-process, no admin
+.\.venv\Scripts\Activate.ps1
+.\install.ps1
+neqsim doctor          # verifies Python, Java/JDK, Maven wrapper, agents
+
+# 3. Java build — needs a JDK. No admin? Let the installer fetch a PORTABLE JDK:
+.\install.ps1 -InstallJdk       # downloads Temurin into ~/.neqsim\jdk, sets user env vars
+# (or install a JDK manually and set JAVA_HOME yourself), then in a NEW terminal:
+.\mvnw.cmd install -DskipTests
+
+# 4. Install AI agents/skills into the VS Code USER prompts folder (no admin)
+neqsim agent install --all --vscode
+neqsim skill install --all
+```
+
+**Behind a corporate proxy?** Set it for the current session (user-scope, no
+admin) so `git`, `pip`, and agent-catalog downloads work:
+
+```powershell
+$env:HTTPS_PROXY = "http://proxy.example.com:8080"
+$env:HTTP_PROXY  = $env:HTTPS_PROXY
+```
+
+**VS Code Insiders?** The `--vscode` export auto-detects Insiders; force the
+target with `NEQSIM_VSCODE_FLAVOR=insiders` or point `NEQSIM_VSCODE_AGENTS_DIR`
+at the exact folder. macOS/Linux users run the same steps with `./install.sh`
+and forward slashes.
+
 ## One-time setup
 
 **Recommended (works even when `pip`/`python` are not on PATH).** Run the

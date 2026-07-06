@@ -937,17 +937,44 @@ def _path_is_under(path, root):
     return resolved_path == resolved_root or resolved_root in resolved_path.parents
 
 def _vscode_user_dir():
-    """Return the VS Code stable User config directory for this platform.
+    """Return the VS Code User config directory, auto-detecting the flavor.
+
+    Both stable ("Code") and Insiders ("Code - Insiders") are supported. The
+    flavor can be forced with the NEQSIM_VSCODE_FLAVOR env var ("stable" or
+    "insiders"); otherwise the first existing User directory is used, preferring
+    stable. This prevents a --vscode export from silently landing in the wrong
+    (or a non-existent) folder when the user only runs Insiders.
 
     @return the platform-specific VS Code User directory Path
     """
     if sys.platform.startswith("win"):
         appdata = os.environ.get("APPDATA", "")
         base = Path(appdata) if appdata else Path.home() / "AppData" / "Roaming"
-        return base / "Code" / "User"
-    if sys.platform == "darwin":
-        return Path.home() / "Library" / "Application Support" / "Code" / "User"
-    return Path.home() / ".config" / "Code" / "User"
+    elif sys.platform == "darwin":
+        base = Path.home() / "Library" / "Application Support"
+    else:
+        base = Path.home() / ".config"
+
+    stable = base / "Code" / "User"
+    insiders = base / "Code - Insiders" / "User"
+
+    flavor = os.environ.get("NEQSIM_VSCODE_FLAVOR", "").strip().lower()
+    if flavor == "insiders":
+        return insiders
+    if flavor == "stable":
+        return stable
+
+    # Auto-detect: prefer stable, fall back to Insiders when only it exists.
+    if stable.exists():
+        return stable
+    if insiders.exists():
+        print("  [??] VS Code stable User dir not found; using Insiders: "
+              "{p}".format(p=insiders))
+        print("       Set NEQSIM_VSCODE_FLAVOR=stable (or NEQSIM_VSCODE_AGENTS_DIR) "
+              "to override.")
+        return insiders
+    return stable
+
 
 
 def resolve_vscode_agents_dir(scope="user", explicit_dir=None):
