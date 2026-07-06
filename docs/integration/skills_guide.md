@@ -37,7 +37,7 @@ This guide covers skills, installable agents, how to create each type, and how t
 |---------|---------|----------|
 | **Community agents** | Public AI agent workflows (thermodynamics, process, flow assurance, energy, field development) | [equinor/neqsim-community-agents](https://github.com/equinor/neqsim-community-agents) |
 | **Community skills** | Public reusable engineering skills for agentic workflows | [equinor/neqsim-community-skills](https://github.com/equinor/neqsim-community-skills) |
-| **Enterprise agents / skills** | **Internal, company-private** agents and skills — governed in private repos and consumed by the internal Engineering Harness; never committed to public NeqSim repos | Private company repos (`enterprise-agents.yaml` / `enterprise-skills.yaml`) |
+| **Enterprise agents / skills** | **Internal, company-private** agents and skills — governed in private repos; never committed to public NeqSim repos | Private company repos (`enterprise-agents.yaml` / `enterprise-skills.yaml`) |
 
 Browse and install with `neqsim agent list` / `neqsim skill list`, then
 `neqsim agent install <name>` / `neqsim skill install <name>`.

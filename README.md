@@ -269,7 +269,7 @@ Content comes from four tiers — **core** (shipped in this repo under `.github/
 |---------|---------------|-------|
 | **Community agents** | Public AI agents for thermodynamics, process, flow assurance, energy & field development | [equinor/neqsim-community-agents](https://github.com/equinor/neqsim-community-agents) |
 | **Community skills** | Public reusable engineering skills for agentic workflows | [equinor/neqsim-community-skills](https://github.com/equinor/neqsim-community-skills) |
-| **Enterprise agents / skills** | **Internal, company-private** agents & skills governed in private repos (`enterprise-agents.yaml` / `enterprise-skills.yaml`) — kept separate from public content and consumed by the Engineering Harness | Private company repos (see the enterprise guide) |
+| **Enterprise agents / skills** | **Internal, company-private** agents & skills governed in private repos (`enterprise-agents.yaml` / `enterprise-skills.yaml`) — kept separate from public content | Private company repos (see the enterprise guide) |
 
 **Ecosystem at a glance** — how the pieces relate:
 
@@ -281,7 +281,6 @@ graph TD
     CSK["Community skills<br/>public knowledge"]
     EAG["Enterprise agents / skills<br/>internal, company-private"]
     PRIV["Local private<br/>~/.neqsim (just you)"]
-    HARNESS["Engineering Harness<br/>internal runtime"]
     VSC["VS Code Copilot / Claude / Cursor / Codex"]
 
     CORE --> MCP
@@ -292,7 +291,6 @@ graph TD
     EAG --> CORE
     PRIV --> CORE
     CORE -->|neqsim agent/skill install| VSC
-    EAG --> HARNESS
     MCP --> VSC
 ```
 
@@ -307,7 +305,7 @@ neqsim skill install --all        # install community skills
 neqsim agent private-init         # scaffold a private/enterprise catalog
 ```
 
-- **How internal (enterprise) content works:** a company publishes private `enterprise-agents.yaml` / `enterprise-skills.yaml` in governed internal repos. These are **never committed to the public NeqSim repos**; they are discovered per-user (via `~/.neqsim/private-*.yaml` and gh-CLI / Git Credential Manager auth) and by the internal Engineering Harness. See [Enterprise Agent & Skill Repositories](docs/integration/enterprise_agent_skill_repos.md).
+- **How internal (enterprise) content works:** a company publishes private `enterprise-agents.yaml` / `enterprise-skills.yaml` in governed internal repos. These are **never committed to the public NeqSim repos**; they are discovered per-user (via `~/.neqsim/private-*.yaml` and gh-CLI / Git Credential Manager auth). See [Enterprise Agent & Skill Repositories](docs/integration/enterprise_agent_skill_repos.md).
 - **Full details:** the [Skills & Agents Guide](docs/integration/skills_guide.md) explains the four tiers, packaging, canonical installs vs tool exports, and how to author your own.
 
 ---
