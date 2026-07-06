@@ -155,6 +155,27 @@
   "asphaltene stability": [
     "neqsim-flow-assurance"
   ],
+  "wax calculations": [
+    "neqsim-wax-calculations",
+    "neqsim-flow-assurance"
+  ],
+  "wax appearance temperature": [
+    "neqsim-wax-calculations",
+    "neqsim-wax-margin-check",
+    "neqsim-flow-assurance"
+  ],
+  "wat": [
+    "neqsim-wax-calculations",
+    "neqsim-flow-assurance"
+  ],
+  "wax fraction": [
+    "neqsim-wax-calculations",
+    "neqsim-flow-assurance"
+  ],
+  "wax deposition": [
+    "neqsim-wax-calculations",
+    "neqsim-flow-assurance"
+  ],
   "assessing gaps for engineering tasks": [
     "neqsim-capability-map"
   ],
