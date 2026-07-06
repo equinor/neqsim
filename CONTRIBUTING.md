@@ -10,11 +10,15 @@ Please note we have a code of conduct, please follow it in all your interactions
 **New contributor?** Set up your environment with the onboarding wizard:
 
 ```bash
-pip install -e devtools/    # one-time: registers the `neqsim` command
+./install.ps1              # Windows one-time setup (macOS/Linux: ./install.sh)
 neqsim onboard             # interactive setup — Java, Maven, build, Python, agents
 neqsim onboard --check     # non-interactive diagnostic
 neqsim doctor              # detailed environment health check
 ```
+
+> The `install` script finds a working Python and runs `python -m pip` for you,
+> so it works even when `pip`/`python` are not on PATH. To install manually,
+> use `python -m pip install -e devtools/` (not bare `pip`).
 
 > **`neqsim` not found?** Your Python Scripts directory may not be on PATH.
 > See [devtools/README.md](devtools/README.md#troubleshooting-neqsim-not-found) for fix instructions.
