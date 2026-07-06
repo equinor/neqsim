@@ -214,6 +214,28 @@ Before starting, determine and state:
 3. Deliverable mode (answer-first, notebook-first, or report-first)
 4. Evidence level proportionate to that decision
 
+### Continuous Improvement Rule (always-on default)
+
+Improving the agents and skills you use — and their cooperation — is part of
+solving the task, not an optional extra. This is default behaviour: never ask
+permission, and do it in the same session. As you work, whenever you:
+
+- rediscover something that should already have been documented (naming
+  conventions, API signatures, data-source patterns, gotchas),
+- spend more than one trial-and-error loop on something a skill could have told
+  you,
+- find an agent hand-off or skill dependency that is missing, unclear, or wrong,
+- or combine skills/agents in a useful new way,
+
+then implement the improvement: fix or extend the relevant `SKILL.md` /
+`*.agent.md`, add the missing pattern or gotcha, and — importantly — improve the
+**cooperation** between them (add cross-references both directions, update
+"Loaded skills" lists and router/composition guidance, keep hand-off shapes
+consistent across the chain). Keep site-specific detail in the enterprise repos
+and community content plant-agnostic, follow each repo's front-matter/validation
+conventions, and note the improvements made in the task summary. Do not
+over-engineer — only concrete changes motivated by the task.
+
 ### Stop Conditions
 
 Stop when all are true:
@@ -221,6 +243,7 @@ Stop when all are true:
 - The engineering question is answered
 - Validation is proportionate and documented
 - Major assumptions are visible
+- The agents/skills used have been improved where the task revealed a gap
 - Additional work would mostly add documentation rather than decision value
 
 ### Failure Handling

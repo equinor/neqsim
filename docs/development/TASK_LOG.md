@@ -602,6 +602,14 @@ requirement`, or `confidential compressor route`.
 
 ---
 
+### 2026-07-06 — Gas-export piping route: inlet separator → export (STID + TR2000 → pipe ID → NeqSim ΔP)
+**Type:** B (Process)
+**Keywords:** STID line tag decode, TR2000 PCS pipe-size, internal diameter, PipeBeggsAndBrills, gas export pressure drop, line sizing, route tracing
+**Solution:** private task folder (redacted) — reusable method in `enterprise-stid-live-lookup` + `enterprise-tr2000-api` skills
+**Notes:** STID line tag encodes NPS (size field = inches × 100) + TR2000 PCS name; resolve PCS `get_pcs_pipe_sizes` → internal Ø = OuterDiam − 2·WallThickness. Line lengths are NOT in STID/TR2000 — take off from isometrics (`doc_type WM`) or plot plan (`doc_type XF`). NeqSim `PipeBeggsAndBrills` (PR EOS) for single-phase gas ΔP per segment. Added "line tag → PCS → internal diameter" recipe to both skills. Model validated vs last-week historian data via tagreader: Equinor PI tag naming `<PLANT>.<STID_TAG>[/Y/PRIM]` (piwebapi source from STID plant `ims` field); resolve historian tag by `*STID_TAG*` search + prefer `/PRIM` channel; check `get_units` (barg vs bara, FT tag may be mbar orifice dP); validate against process PT/TT not densitometer-cabinet slipstream tags. Model reproduced measured compressor discharge T at a plausible polytropic efficiency. Added the historian-tag-resolution recipe to enterprise-plant-data skill.
+
+---
+
 <!--
 TEMPLATE — copy this block for each new entry:
 

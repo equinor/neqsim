@@ -44,6 +44,20 @@ hooks being installed:
 - NEVER bypass the gate with `git commit --no-verify`.
 - Run `spotless:apply`, then `git add` the reformatted files, then commit.
 
+## Continuous Improvement of Agents & Skills (always-on default)
+
+Improving the agents and skills you use — and their **cooperation** — is part of
+every task, not an optional extra. Default behaviour, no need to ask: when a task
+reveals that a `SKILL.md` or `*.agent.md` is missing a pattern, naming
+convention, API signature, gotcha, or a needed agent↔skill hand-off, fix it in
+the same session. Improve cooperation too: add cross-references in both
+directions between related skills, keep hand-off shapes consistent along the
+chain, and update agent "Loaded skills" lists and router/composition guidance
+when a useful multi-skill/multi-agent pipeline is found. Keep site-specific
+detail in the enterprise repos and community content plant-agnostic; follow each
+repo's front-matter/validation conventions; note the improvements in the task
+summary; do not over-engineer.
+
 ## Build & Test
 
 ```bash
