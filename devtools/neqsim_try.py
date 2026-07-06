@@ -18,26 +18,23 @@ from pathlib import Path
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
-# Preamble for pip-installed neqsim package.
-# Must start JVM with the flag before 'import neqsim' which eagerly starts it.
+# Preamble for the pip-installed neqsim package.
+# Do NOT hand-build a JAR classpath here: the neqsim package resolves its own
+# classpath (jpype.addClassPath("lib/*")) when the JVM autostarts on import.
+# We only inject the Java 22+ native-access flag, which the package reads from
+# the NEQSIM_JVM_ARGS environment variable before it starts the JVM.
 _PIP_JVM_PREAMBLE = textwrap.dedent("""\
-    import jpype, os, importlib.util
-    if not jpype.isJVMStarted():
-        _spec = importlib.util.find_spec("neqsim")
-        _neqsim_dir = os.path.dirname(_spec.origin) if _spec else ""
-        _jar_dir = os.path.join(_neqsim_dir, "lib", "java11", "*")
-        if not os.path.isdir(os.path.join(_neqsim_dir, "lib", "java11")):
-            _jar_dir = os.path.join(_neqsim_dir, "lib", "java8", "*")
-        import subprocess as _sp, re as _re
-        _jvm_args = []
-        try:
-            _ver = _sp.check_output(["java", "-version"], stderr=_sp.STDOUT, text=True)
-            _m = _re.search(r'"(\\d+)', _ver)
-            if _m and int(_m.group(1)) >= 22:
-                _jvm_args.append("--enable-native-access=ALL-UNNAMED")
-        except Exception:
-            pass
-        jpype.startJVM(*_jvm_args, classpath=[_jar_dir], convertStrings=False)
+    import os, subprocess as _sp, re as _re
+    try:
+        _ver = _sp.check_output(["java", "-version"], stderr=_sp.STDOUT, text=True)
+        _m = _re.search(r'"(\\d+)', _ver)
+        if _m and int(_m.group(1)) >= 22:
+            _flag = "--enable-native-access=ALL-UNNAMED"
+            _existing = os.environ.get("NEQSIM_JVM_ARGS", "")
+            if _flag not in _existing:
+                os.environ["NEQSIM_JVM_ARGS"] = (_existing + " " + _flag).strip()
+    except Exception:
+        pass
 """)
 
 

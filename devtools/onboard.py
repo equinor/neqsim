@@ -241,18 +241,22 @@ def step_python_neqsim(check_only=False):
         path = stdout.strip()
         _ok("neqsim package installed: {p}".format(p=path[:80]))
 
-        # Check JAR in Python package
-        lib_dir = os.path.join(os.path.dirname(path), "lib", "java11")
-        if os.path.isdir(lib_dir):
-            jars = glob.glob(os.path.join(lib_dir, "neqsim-*.jar"))
-            if jars:
-                _ok("JAR deployed to Python package: {n}".format(
-                    n=os.path.basename(jars[0])
-                ))
-            else:
-                _fail("No neqsim JAR in Python package lib/java11/")
-                _info("Copy the built JAR:")
-                _info("  Copy-Item target/neqsim-*.jar {d}".format(d=lib_dir))
+        # Verify the runtime classpath by loading a NeqSim class rather than
+        # scanning for a JAR file on disk: the neqsim package resolves its own
+        # classpath via jpype.addClassPath("lib/*") on JVM start.
+        cls_ok, cls_stdout, cls_stderr = _run_cmd(
+            [sys.executable, "-c",
+             "from neqsim import jneqsim;"
+             "f = jneqsim.thermo.system.SystemSrkEos(298.15, 10.0);"
+             "f.addComponent('methane', 1.0);"
+             "print('CLASSPATH_OK', f.getNumberOfComponents())"],
+            timeout=90,
+        )
+        if cls_ok and "CLASSPATH_OK" in cls_stdout:
+            _ok("NeqSim classes load correctly (classpath OK)")
+        else:
+            _fail("Could not load NeqSim classes")
+            _info("Reinstall: pip install --force-reinstall neqsim")
         return True
     else:
         # Fallback: local repository runtime via devtools/neqsim_dev_setup.py

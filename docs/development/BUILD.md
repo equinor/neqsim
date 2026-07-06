@@ -243,16 +243,16 @@ After building, copy the JAR to the Python neqsim package:
 ```powershell
 # Windows
 .\mvnw.cmd package -DskipTests
-Copy-Item target\neqsim-3.5.0.jar $env:APPDATA\Python\Python312\site-packages\neqsim\lib\java11\ -Force
+Copy-Item target\neqsim-3.5.0.jar $env:APPDATA\Python\Python312\site-packages\neqsim\lib\ -Force
 ```
 
 ```bash
 # Linux/Mac
 ./mvnw package -DskipTests
-cp target/neqsim-3.5.0.jar ~/.local/lib/python3.12/site-packages/neqsim/lib/java11/
+cp target/neqsim-3.5.0.jar ~/.local/lib/python3.12/site-packages/neqsim/lib/
 ```
 
-**Note**: Adjust Python version and path as needed.
+**Note**: Adjust Python version and path as needed. The runtime loads `lib/*` (flat), so copy the JAR directly into `neqsim/lib/`, not a `java11`/`java8` subfolder.
 
 ---
 
