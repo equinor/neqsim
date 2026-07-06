@@ -26,10 +26,17 @@ The `neqsim_dev_setup` module (in `devtools/`) provides three functions:
 
 ## One-time setup
 
-From the project root with your venv active:
+From the project root, run the bootstrap installer (finds a working Python and
+runs `python -m pip` for you, even when `pip`/`python` are not on PATH):
+
+```powershell
+.\install.ps1     # Windows (macOS/Linux: ./install.sh)
+```
+
+Manual alternative (with your venv active) — use `python -m pip`, not bare `pip`:
 
 ```bash
-pip install -e devtools/
+python -m pip install -e devtools/
 ```
 
 This installs `neqsim_dev_setup` as an **editable** package — the module
@@ -238,7 +245,7 @@ ns = neqsim_init(project_root="/path/to/other/neqsim")
 | Problem | Cause | Fix |
 |---------|-------|-----|
 | `ImportError: cannot import name 'neqsim_classes'` | Stale `__pycache__` or old module cached | Restart kernel; delete `__pycache__` dirs |
-| `ModuleNotFoundError: No module named 'neqsim_dev_setup'` | Package not installed | Run `pip install -e devtools/` |
+| `ModuleNotFoundError: No module named 'neqsim_dev_setup'` | Package not installed | Run `.\install.ps1` (or `python -m pip install -e devtools/`) |
 | `FileNotFoundError: No NeqSim JAR found` | Never built the full project | Run `mvnw.cmd package -DskipTests` |
 | `RuntimeError: Maven compile failed` | Java compilation error | Check the error output; fix the Java code |
 | Kernel shows "crashed" after re-run | Expected — `do_shutdown(restart=True)` triggers this | Normal behavior; kernel restarts and re-runs |

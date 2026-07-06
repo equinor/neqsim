@@ -62,14 +62,15 @@ cd neqsim
 ./mvnw install          # Linux/Mac
 mvnw.cmd install        # Windows
 
-# Install Python helpers
-pip install -e devtools/              # NeqSim dev setup (boots JVM from your local build)
-pip install python-docx matplotlib    # For reports and plots
+# Install Python helpers (finds Python + uses `python -m pip` for you)
+./install.ps1                         # Windows (macOS/Linux: ./install.sh)
+python -m pip install python-docx matplotlib    # For reports and plots
 ```
 
-> **Important:** Use `pip install -e devtools/` — this ensures your notebooks
+> **Important:** Installing `devtools/` (editable) ensures your notebooks
 > run against your local Java build, not the released package. When you add a
-> new method and rebuild, it's immediately available.
+> new method and rebuild, it's immediately available. Use `python -m pip`
+> (not bare `pip`) if you install manually.
 
 ---
 
@@ -647,7 +648,7 @@ heater.getDuty()                     # Watts
 
 | Problem | Cause | Solution |
 |---------|-------|----------|
-| `ModuleNotFoundError: neqsim` | Not installed | Run `pip install -e devtools/` |
+| `ModuleNotFoundError: neqsim` | Not installed | Run `.\install.ps1` (or `python -m pip install -e devtools/`) |
 | JVM won't start | Java not found | Install JDK 8+ and set `JAVA_HOME` |
 | Flash doesn't converge | Wrong EOS or bad composition | Check mole fractions sum to 1.0, try different EOS |
 | Report generator fails | Missing python-docx | Run `pip install python-docx matplotlib` |

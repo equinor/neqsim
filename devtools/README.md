@@ -6,10 +6,32 @@ compile, and immediately test from Python without rebuilding a JAR.
 
 ## One-time setup
 
+**Recommended (works even when `pip`/`python` are not on PATH).** Run the
+bootstrap installer from the **project root** — it finds a working Python
+interpreter for you and runs `python -m pip` under the hood:
+
+```powershell
+# Windows (PowerShell):
+.\install.ps1
+```
+
+```bash
+# macOS / Linux:
+./install.sh
+```
+
+**Manual alternative.** If you prefer to install by hand, always use
+`python -m pip` (not bare `pip`) so it targets the interpreter you are running:
+
 ```bash
 # From the project root (with your venv active):
-pip install -e devtools/
+python -m pip install -e devtools/
 ```
+
+> Do **not** use bare `pip install -e devtools/`. If `pip` is not on PATH it
+> fails with "pip not available"; `python -m pip` avoids that. On Windows, if
+> `python` opens the Microsoft Store, use the `py` launcher (`py -m pip ...`)
+> or run `.\install.ps1`, which handles this automatically.
 
 This installs `neqsim_dev_setup` as an editable package and registers the **`neqsim` CLI**
 so every notebook in the venv can import it — no `sys.path` hacks needed.

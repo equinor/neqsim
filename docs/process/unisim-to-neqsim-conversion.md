@@ -37,7 +37,7 @@ For local development with the NeqSim repository:
 
 ```bash
 # From the neqsim repo root
-pip install -e devtools/
+python -m pip install -e devtools/
 ```
 
 ---
