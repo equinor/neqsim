@@ -4,11 +4,93 @@ This directory contains a small pip-installable Python package that makes it
 easy to use **Jupyter notebooks** for NeqSim Java development — edit Java code,
 compile, and immediately test from Python without rebuilding a JAR.
 
+## Setting up a Python environment (recommended)
+
+A **virtual environment (venv)** is an isolated, per-project Python. It keeps
+NeqSim's dependencies separate from other projects and — importantly — puts the
+`neqsim` command on your PATH automatically, avoiding the most common install
+problems. Use one whenever you can.
+
+**1. Create the environment (once per clone).** Run from the project root:
+
+```powershell
+# Windows (PowerShell)
+py -3 -m venv .venv        # or: python -m venv .venv
+```
+
+```bash
+# macOS / Linux
+python3 -m venv .venv
+```
+
+This creates a `.venv/` folder containing a private copy of Python + pip.
+
+**2. Activate it (every new terminal session).** Activation points `python`,
+`pip`, and `neqsim` at the venv for the current shell:
+
+```powershell
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+```
+
+```bat
+:: Windows Command Prompt (cmd.exe)
+.\.venv\Scripts\activate.bat
+```
+
+```bash
+# macOS / Linux (bash / zsh)
+source .venv/bin/activate
+```
+
+Your prompt now shows `(.venv)`. Confirm the right Python is active:
+
+```powershell
+python -c "import sys; print(sys.executable)"   # should print a path inside .venv
+```
+
+> **PowerShell blocks the activation script?** If you see
+> *"running scripts is disabled on this system"*, allow local scripts for the
+> current session and try again:
+> ```powershell
+> Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned
+> ```
+
+**3. Install NeqSim devtools into the active venv:**
+
+```powershell
+.\install.ps1            # Windows  (uses the active venv automatically)
+./install.sh             # macOS / Linux
+```
+
+**4. Deactivate when you're done** (or just close the terminal):
+
+```bash
+deactivate
+```
+
+**Using [uv](https://docs.astral.sh/uv/)?** uv can create and manage the venv
+for you (and is much faster):
+
+```bash
+uv venv                        # create .venv
+# activate as in step 2 above, then:
+.\install.ps1 -Uv              # Windows   (or: ./install.sh --uv)
+# ...or install directly with uv into the active venv:
+uv pip install -e devtools/
+```
+
+> **No venv?** The installer still works — it falls back to your system/user
+> Python. But then the `neqsim` command may not be on PATH; see
+> [Troubleshooting](#troubleshooting-neqsim-not-found) below, or use
+> `python -m neqsim_cli` as a fallback.
+
 ## One-time setup
 
 **Recommended (works even when `pip`/`python` are not on PATH).** Run the
 bootstrap installer from the **project root** — it finds a working Python
-interpreter for you and runs `python -m pip` under the hood:
+interpreter for you (preferring an active venv) and runs `python -m pip` under
+the hood:
 
 ```powershell
 # Windows (PowerShell):
@@ -20,12 +102,23 @@ interpreter for you and runs `python -m pip` under the hood:
 ./install.sh
 ```
 
+**Using [uv](https://docs.astral.sh/uv/)?** Pass the `uv` flag to install with
+the fast `uv` package manager instead of pip:
+
+```powershell
+.\install.ps1 -Uv        # Windows
+./install.sh --uv        # macOS / Linux
+```
+
 **Manual alternative.** If you prefer to install by hand, always use
 `python -m pip` (not bare `pip`) so it targets the interpreter you are running:
 
 ```bash
 # From the project root (with your venv active):
 python -m pip install -e devtools/
+
+# ...or with uv:
+uv pip install -e devtools/
 ```
 
 > Do **not** use bare `pip install -e devtools/`. If `pip` is not on PATH it
