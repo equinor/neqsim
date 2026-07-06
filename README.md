@@ -256,6 +256,60 @@ Every response includes provenance metadata (EOS model, convergence, assumptions
 
 The agent creates a task folder, runs NeqSim simulations, validates results, and generates a Word + HTML report with no coding required. See the [tutorial](docs/tutorials/solve-engineering-task.md) or [workflow reference](docs/development/TASK_SOLVING_GUIDE.md).
 
+### Agents & skills — the extension ecosystem
+
+Agentic NeqSim is built from two layers you can mix and extend:
+
+- **Skills = the knowledge layer.** Structured markdown that encodes domain expertise (API patterns, decision rules, reference data). Agents *read* skills to know how to do something correctly.
+- **Agents = the workflow layer.** A role + objective + the skills it loads. Agents *drive* NeqSim to complete a job (e.g. `@solve.task`, `@field.development`).
+
+Content comes from four tiers — **core** (shipped in this repo under `.github/skills` and `.github/agents`, auto-loaded), **community** (public, installable), **enterprise** (company-private/internal), and **local private** (just you):
+
+| Catalog | What it holds | Where |
+|---------|---------------|-------|
+| **Community agents** | Public AI agents for thermodynamics, process, flow assurance, energy & field development | [equinor/neqsim-community-agents](https://github.com/equinor/neqsim-community-agents) |
+| **Community skills** | Public reusable engineering skills for agentic workflows | [equinor/neqsim-community-skills](https://github.com/equinor/neqsim-community-skills) |
+| **Enterprise agents / skills** | **Internal, company-private** agents & skills governed in private repos (`enterprise-agents.yaml` / `enterprise-skills.yaml`) — kept separate from public content and consumed by the Engineering Harness | Private company repos (see the enterprise guide) |
+
+**Ecosystem at a glance** — how the pieces relate:
+
+```mermaid
+graph TD
+    CORE["NeqSim core<br/>Java engine + .github/skills + .github/agents<br/>(auto-loaded)"]
+    MCP["MCP Server<br/>rigorous calculations for any LLM"]
+    CAG["Community agents<br/>public workflows"]
+    CSK["Community skills<br/>public knowledge"]
+    EAG["Enterprise agents / skills<br/>internal, company-private"]
+    PRIV["Local private<br/>~/.neqsim (just you)"]
+    HARNESS["Engineering Harness<br/>internal runtime"]
+    VSC["VS Code Copilot / Claude / Cursor / Codex"]
+
+    CORE --> MCP
+    CAG --> CSK
+    EAG --> CSK
+    CSK --> CORE
+    CAG --> CORE
+    EAG --> CORE
+    PRIV --> CORE
+    CORE -->|neqsim agent/skill install| VSC
+    EAG --> HARNESS
+    MCP --> VSC
+```
+
+Install and use them with the `neqsim` CLI (all user-scope, no admin — see the [no-admin runbook](devtools/README.md#recommended-no-admin-runbook-for-the-user)):
+
+```bash
+neqsim agent list                 # browse the community catalog
+neqsim agent search hydrate       # find an agent by keyword
+neqsim agent install --all --vscode   # install into the VS Code prompts folder
+neqsim skill install --all        # install community skills
+
+neqsim agent private-init         # scaffold a private/enterprise catalog
+```
+
+- **How internal (enterprise) content works:** a company publishes private `enterprise-agents.yaml` / `enterprise-skills.yaml` in governed internal repos. These are **never committed to the public NeqSim repos**; they are discovered per-user (via `~/.neqsim/private-*.yaml` and gh-CLI / Git Credential Manager auth) and by the internal Engineering Harness. See [Enterprise Agent & Skill Repositories](docs/integration/enterprise_agent_skill_repos.md).
+- **Full details:** the [Skills & Agents Guide](docs/integration/skills_guide.md) explains the four tiers, packaging, canonical installs vs tool exports, and how to author your own.
+
 ---
 
 ## Use NeqSim in Java
@@ -313,6 +367,51 @@ git clone https://github.com/equinor/neqsim.git
 cd neqsim
 ./mvnw install        # Linux/macOS
 mvnw.cmd install      # Windows
+```
+
+> **Windows: enable long paths before cloning.** Maven's `target/` directory can
+> produce paths longer than the legacy 260-character limit, causing checkout or
+> build errors. Enable long-path support once (user-scope, **no admin required**):
+>
+> ```powershell
+> git config --global core.longpaths true
+> ```
+>
+> Also prefer cloning **inside your user profile** (e.g.
+> `C:\Users\<id>\Documents\GitHub\neqsim`) rather than a short drive root, and
+> avoid `C:\Program Files` (which needs elevated rights to write).
+
+### Restricted / corporate PC (no admin rights)
+
+Everything below installs into your **user profile** and needs **no
+administrator rights** — the common situation on locked-down corporate PCs.
+Prerequisites (Git, Python, a JDK, VS Code) must already be provisioned per-user
+(e.g. via your software portal or `winget --scope user`).
+
+```powershell
+# 0. One-time Git setting (user-scope, no admin)
+git config --global core.longpaths true
+
+# 1. Clone into your user profile
+cd $HOME\Documents\GitHub
+git clone https://github.com/equinor/neqsim.git
+cd neqsim
+
+# 2. Python devtools in a venv (keeps the 'neqsim' command on PATH)
+py -3 -m venv .venv
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned   # per-process, no admin
+.\.venv\Scripts\Activate.ps1
+.\install.ps1
+neqsim doctor          # verifies Python, Java/JDK, Maven wrapper, agents
+
+# 3. Java build — needs a JDK. No admin? Let the installer fetch a PORTABLE JDK:
+.\install.ps1 -InstallJdk       # downloads Temurin into ~/.neqsim\jdk, sets user env vars
+# (or install a JDK manually and set JAVA_HOME yourself), then in a NEW terminal:
+.\mvnw.cmd install -DskipTests
+
+# 4. Install AI agents into the VS Code USER prompts folder (no admin)
+neqsim agent install --all --vscode
+neqsim skill install --all
 ```
 
 ### Run tests

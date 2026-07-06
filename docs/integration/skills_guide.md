@@ -31,6 +31,34 @@ workflows that combine those capabilities for a specific job.
 
 This guide covers skills, installable agents, how to create each type, and how they work together. For company-private enterprise repositories and installable internal catalogs, see [Enterprise Agent and Skill Repositories](enterprise_agent_skill_repos.md). For the current cross-catalog dependency overview, see [Agent to Skill Map](agent_skill_map.md).
 
+### Where the catalogs live
+
+| Catalog | Purpose | Location |
+|---------|---------|----------|
+| **Community agents** | Public AI agent workflows (thermodynamics, process, flow assurance, energy, field development) | [equinor/neqsim-community-agents](https://github.com/equinor/neqsim-community-agents) |
+| **Community skills** | Public reusable engineering skills for agentic workflows | [equinor/neqsim-community-skills](https://github.com/equinor/neqsim-community-skills) |
+| **Enterprise agents / skills** | **Internal, company-private** agents and skills — governed in private repos and consumed by the internal Engineering Harness; never committed to public NeqSim repos | Private company repos (`enterprise-agents.yaml` / `enterprise-skills.yaml`) |
+
+Browse and install with `neqsim agent list` / `neqsim skill list`, then
+`neqsim agent install <name>` / `neqsim skill install <name>`.
+
+### Version compatibility across repos
+
+The catalogs are versioned independently of the core NeqSim library. To keep a
+professional setup reproducible:
+
+| Layer | Versioning | Compatibility rule |
+|-------|-----------|--------------------|
+| **NeqSim core** | Semantic version (e.g. `3.15.0`), Maven Central | The baseline everything targets. |
+| **Community / enterprise skills** | Per-skill `version` in `SKILL.md` frontmatter | A skill states the **minimum NeqSim version** it was verified against; skills avoid depending on unreleased APIs. |
+| **Community / enterprise agents** | Per-agent `version` + declared `required_skills` | An agent works when its `required_skills` are installed at a compatible version and the target NeqSim core meets each skill's minimum. |
+
+Guidance for reproducible environments:
+
+- **Pin the core** (Maven / `pip install neqsim==<version>`) and record it in your task or project.
+- **Install matching catalog content** for that core; `neqsim doctor` reports the installed core, and `neqsim agent info <name>` / `neqsim skill info <name>` show declared versions and dependencies.
+- **When upgrading the core**, re-run the agent/skill installs and re-validate — the quality gates (benchmark validation, regression baselines) catch drift.
+
 ## Canonical Installs and Tool Exports
 
 NeqSim separates source-of-truth content from tool-specific discovery folders:
