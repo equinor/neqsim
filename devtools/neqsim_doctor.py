@@ -171,26 +171,28 @@ def check_python_neqsim():
                 p=path[:80]
             ))
 
-            # Check if JAR is deployed to Python package
-            # Common location pattern
-            lib_dir = os.path.join(os.path.dirname(path), "lib", "java11")
-            if os.path.isdir(lib_dir):
-                jars = glob.glob(os.path.join(lib_dir, "neqsim-*.jar"))
-                if jars:
-                    jar = jars[0]
-                    mod_time = datetime.fromtimestamp(os.path.getmtime(jar))
-                    age_hours = (datetime.now() -
-                                 mod_time).total_seconds() / 3600
-                    age_str = "{:.1f}h ago".format(age_hours)
-                    _check("Python JAR", True, "{name} ({age})".format(
-                        name=os.path.basename(jar), age=age_str
-                    ))
-                else:
-                    _check("Python JAR", False, "No neqsim JAR in {d}".format(d=lib_dir),
-                           fix_hint="Copy built JAR to Python package lib/java11/")
+            # Verify the runtime classpath by loading a NeqSim class rather
+            # than scanning for a JAR file on disk: the neqsim package resolves
+            # its own classpath via jpype.addClassPath("lib/*") on JVM start.
+            cls_check = subprocess.run(
+                [sys.executable, "-c",
+                 "from neqsim import jneqsim;"
+                 "f = jneqsim.thermo.system.SystemSrkEos(298.15, 10.0);"
+                 "f.addComponent('methane', 1.0);"
+                 "print('CLASSPATH_OK', f.getNumberOfComponents())"],
+                capture_output=True, text=True, timeout=90,
+            )
+            if cls_check.returncode == 0 and "CLASSPATH_OK" in cls_check.stdout:
+                _check("NeqSim classpath", True,
+                       "NeqSim classes load correctly")
             else:
-                _warn("Python JAR dir",
-                      "Could not find lib/java11/ in Python package")
+                _check(
+                    "NeqSim classpath", False,
+                    "Could not load NeqSim classes: {err}".format(
+                        err=(cls_check.stderr.strip()
+                             or cls_check.stdout.strip())[:120]),
+                    fix_hint="Reinstall: pip install --force-reinstall neqsim"
+                )
         else:
             # Fallback: local repository runtime via devtools/neqsim_dev_setup.py
             dev_setup = os.path.join(

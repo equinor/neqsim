@@ -127,7 +127,7 @@ devtools/                Unified CLI (`neqsim` command), Jupyter dev setup, task
 
 # Package JAR + copy to Python
 .\mvnw.cmd package -DskipTests
-Copy-Item target\neqsim-3.15.0.jar C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\java11\ -Force
+Copy-Item target\neqsim-3.15.0.jar C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\ -Force
 ```
 
 ## Code Patterns — Copy-Paste Starters

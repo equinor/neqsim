@@ -199,7 +199,7 @@ self-contained and portable.
 Task notebooks and runner workflows must use `neqsim_dev_setup.py` so Java
 classes come from the workspace (`target/classes`) instead of the installed
 Python `neqsim` package. This makes new Java classes available without copying
-a packaged JAR into `site-packages/neqsim/lib/java11/`.
+a packaged JAR into `site-packages/neqsim/lib/`.
 
 ```python
 import os

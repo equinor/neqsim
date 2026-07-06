@@ -87,9 +87,9 @@ git add <the reformatted files>
 - **Package and Update Python**: When the user says "package and update python" or similar, run these commands:
   ```powershell
   .\mvnw.cmd package -DskipTests
-   Copy-Item -Path "C:\Users\ESOL\Documents\GitHub\neqsim\target\neqsim-3.15.0.jar" -Destination "C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\java11\" -Force
+   Copy-Item -Path "C:\Users\ESOL\Documents\GitHub\neqsim\target\neqsim-3.15.0.jar" -Destination "C:\Users\ESOL\AppData\Roaming\Python\Python312\site-packages\neqsim\lib\" -Force
   ```
-  This builds the NeqSim JAR and copies it to the Python neqsim package for immediate use.
+  This builds the NeqSim JAR and copies it to the Python neqsim package for immediate use. Note: the runtime loads `lib/*` (flat), so copy the JAR directly into `neqsim\lib\`, not a `java11`/`java8` subfolder.
 
 ---
 

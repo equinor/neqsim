@@ -539,7 +539,7 @@ NeqSim uses Maven Wrapper (`mvnw`/`mvnw.cmd`) for consistent builds across envir
 **JAR not updating in Python**:
 ```powershell
 .\mvnw.cmd package -DskipTests
-Copy-Item target\neqsim-3.5.0.jar $env:APPDATA\Python\Python312\site-packages\neqsim\lib\java11\ -Force
+Copy-Item target\neqsim-3.5.0.jar $env:APPDATA\Python\Python312\site-packages\neqsim\lib\ -Force
 ```
 
 See [CONTRIBUTING.md](../../CONTRIBUTING.md) for code style and formatting setup.
