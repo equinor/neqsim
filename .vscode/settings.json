@@ -38,8 +38,9 @@
   "github.copilot.chat.confirmEditGeneration": false,
   "chat.agent.maxRequests": 2500,
   // ─── Python / Jupyter ───
-  // python.defaultInterpreterPath is set in .devcontainer/devcontainer.json for Codespaces;
-  // locally, the Python extension auto-discovers .venv or system Python.
+  // Default Python environment for this workspace (notebooks + terminals).
+  "python.defaultInterpreterPath": "C:\\appl\\neqsim-venv\\Scripts\\python.exe",
+  "python.terminal.activateEnvironment": true,
   "jupyter.notebookFileRoot": "${workspaceFolder}",
   // ─── Search Exclusions ───
   "search.exclude": {

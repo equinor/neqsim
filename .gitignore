@@ -140,3 +140,4 @@ neqsim_profile.jfr
 .release-run-jobs.json
 .release-run-status.json
 benchmark_results.txt
+.vscode/settings.json
