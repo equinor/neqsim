@@ -245,14 +245,16 @@ public class ProductionRateFitter extends TwoPortEquipment {
 
     // 3. Match the produced-water rate.
     if (fitWater) {
-      double targetWaterSm3PerSec = toSm3PerSec(waterRate, waterRateUnit);
-      double targetWaterMolPerSec = targetWaterSm3PerSec * waterDensity / WATER_MOLAR_MASS;
-      double currWaterMol = 0.0;
       if (tempFluid.getPhase(0).hasComponent("water")) {
-        currWaterMol = tempFluid.getPhase(0).getComponent("water").getNumberOfmoles();
+        double targetWaterSm3PerSec = toSm3PerSec(waterRate, waterRateUnit);
+        double targetWaterMolPerSec = targetWaterSm3PerSec * waterDensity / WATER_MOLAR_MASS;
+        double currWaterMol = tempFluid.getPhase(0).getComponent("water").getNumberOfmoles();
+        double delta = targetWaterMolPerSec - currWaterMol;
+        tempFluid.addComponent("water", delta);
+      } else {
+        logger.warn("Feed has no water component; add water to the feed fluid to fit produced water. "
+            + "Skipping water-rate fit.");
       }
-      double delta = targetWaterMolPerSec - currWaterMol;
-      tempFluid.addComponent("water", delta);
     }
 
     tempFluid.setPressure(inletP);
