@@ -9,6 +9,28 @@
 
 ---
 
+## 2026-07-07 — New: ProductionRateFitter (match measured gas rate + GOR + water)
+
+### Summary
+
+Added `neqsim.process.equipment.util.ProductionRateFitter` (extends
+`TwoPortEquipment`). It reconciles a stream to measured production in one unit:
+(1) optional GOR fit at standard conditions, (2) scales total flow so the
+**gas-phase** standard volumetric rate equals a target, (3) sets the aqueous flow
+to a target produced-water rate. Complements `GORfitter` (GOR only). The feed
+fluid must contain a `water` component for the water fit. Test:
+`ProductionRateFitterTest`. Related skill: `enterprise-rigga-production`.
+
+```java
+ProductionRateFitter prf = new ProductionRateFitter("fit", stream);
+prf.setReferenceConditions("standard");
+prf.setGOR(3085.0);
+prf.setGasRate(3.32, "MSm3/day");
+prf.setWaterRate(234.0, "Sm3/day");
+```
+
+---
+
 ## 2026-07-02 — NeqSimDataBase: clearer failures for replaceTable/useExtendedComponentDatabase
 
 ### Summary

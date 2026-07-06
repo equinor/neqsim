@@ -308,6 +308,19 @@ neqsim agent private-init         # scaffold a private/enterprise catalog
 - **How internal (enterprise) content works:** a company publishes private `enterprise-agents.yaml` / `enterprise-skills.yaml` in governed internal repos. These are **never committed to the public NeqSim repos**; they are discovered per-user (via `~/.neqsim/private-*.yaml` and gh-CLI / Git Credential Manager auth). See [Enterprise Agent & Skill Repositories](docs/integration/enterprise_agent_skill_repos.md).
 - **Full details:** the [Skills & Agents Guide](docs/integration/skills_guide.md) explains the four tiers, packaging, canonical installs vs tool exports, and how to author your own.
 
+### Where does a new skill or agent go? (recommendation for how to work)
+
+Decide by **coupling and confidentiality**, not by "coding vs using":
+
+| If it… | It belongs in | Why |
+|--------|---------------|-----|
+| Extends the engine, or is tied to specific NeqSim Java classes/signatures and must ship in the same PR as the code | **this repo** (`.github/skills`, `.github/agents`) | versions in lockstep with the API; testable against real classes |
+| Solves tasks with NeqSim but is engine-agnostic, screening-level, or just orchestrates existing capabilities (releases on its own cadence) | **community** ([skills](https://github.com/equinor/neqsim-community-skills) / [agents](https://github.com/equinor/neqsim-community-agents)) | public, reusable, no NeqSim internals |
+| Uses internal knowledge, internal tools, company policy, or confidential thresholds | **enterprise** (private repos) | never committed to public repos |
+
+One-line test: **validated & API-coupled → this repo · educational screening → community · company policy or confidential → enterprise/private.**
+See [VISION_AGENTS.md](VISION_AGENTS.md) and the [Where Does This Go? guide](https://github.com/equinor/neqsim-community-skills/blob/main/docs/where-does-this-go.md) for the full decision tree.
+
 ---
 
 ## Use NeqSim in Java
@@ -554,6 +567,8 @@ neqsim doctor              # quick diagnostic if something isn't working
 
 **Skills** are markdown files containing engineering knowledge (code patterns, design rules, troubleshooting tips) that AI agents load automatically when solving related tasks. Contributing a skill is the easiest way to make the agentic system smarter, with no Java required.
 
+> Public, reusable skills and agents live in their own community repos — [equinor/neqsim-community-skills](https://github.com/equinor/neqsim-community-skills) and [equinor/neqsim-community-agents](https://github.com/equinor/neqsim-community-agents) — while company-private ones go in internal enterprise repos (see below).
+
 | # | First Contribution | Difficulty | What to do |
 |---|---|---|---|
 | 1 | **Contribute a skill** | Easy | Write a SKILL.md with domain knowledge - `neqsim new-skill "name"` ([guide](.github/skills/README.md#how-to-contribute-a-skill), [example skill](.github/skills/neqsim-input-validation/SKILL.md)) |
@@ -628,7 +643,7 @@ community repos; use private enterprise skill and agent repositories for those.
 
 See the [Skills Guide](docs/integration/skills_guide.md) for the full walkthrough,
 [Enterprise Agent and Skill Repositories](docs/integration/enterprise_agent_skill_repos.md)
-for company-private repository setup and Engineering Harness discovery,
+for company-private repository setup,
 [community-skills.yaml](community-skills.yaml) and
 [community-agents.yaml](community-agents.yaml) for the catalogs, and
 [.github/skills/README.md](.github/skills/README.md) for the quick contribution guide.

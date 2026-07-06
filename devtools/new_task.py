@@ -3468,15 +3468,32 @@ if __name__ == "__main__":
 # Functions
 # ══════════════════════════════════════════════════════════
 
-def slugify(title):
-    """Convert a title to a folder-safe slug."""
+def slugify(title, max_length=60):
+    """Convert a title to a folder-safe slug.
+
+    The slug is capped at ``max_length`` characters (cut at a word boundary
+    where possible) so the resulting task folder path stays well under the
+    Windows 260-character limit once nested step folders are added.
+
+    @param title the human-readable task title
+    @param max_length the maximum slug length in characters
+    @return a lowercase underscore-separated slug, truncated if needed
+    """
     slug = title.lower().strip()
     for ch in ",:;!?()[]{}'\"/\\.":
         slug = slug.replace(ch, "")
     slug = slug.replace(" ", "_").replace("-", "_")
     while "__" in slug:
         slug = slug.replace("__", "_")
-    return slug.strip("_")
+    slug = slug.strip("_")
+    if len(slug) > max_length:
+        cut = slug[:max_length]
+        # Prefer to break at the last whole word to keep the slug readable.
+        last_us = cut.rfind("_")
+        if last_us >= max_length // 2:
+            cut = cut[:last_us]
+        slug = cut.strip("_")
+    return slug
 
 
 def _write_file(path, content):
