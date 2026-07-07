@@ -13,6 +13,21 @@
 #     .\install.ps1 -InstallJdk  # also download a portable Temurin JDK (no admin)
 #
 # No need to activate a venv first, and no need to have `pip` on PATH.
+#
+# "File is not digitally signed" / execution-policy error?
+# This is a Windows restriction on running scripts, not a problem with the
+# file. Pick ONE of these (no admin rights needed):
+#
+#   1. Use the wrapper (simplest - bypasses the policy for one run only):
+#          .\install.cmd
+#
+#   2. Run this script with a one-time bypass (no permanent change):
+#          powershell -ExecutionPolicy Bypass -File .\install.ps1
+#
+#   3. Allow local scripts for your user account, then run normally:
+#          Set-ExecutionPolicy -Scope CurrentUser -ExecutionPolicy RemoteSigned
+#          Unblock-File -Path .\install.ps1   # clears the "downloaded" mark
+#          .\install.ps1
 
 param(
     [string]$Extras = "",
