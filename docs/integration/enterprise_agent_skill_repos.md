@@ -32,7 +32,9 @@ recreate them. Only the private enterprise repos are created here.
 **Prerequisites** (install once, per-user — via your software portal / `winget`, no admin needed):
 Python 3.8+, Git, and — only if you will use `--login` for GitHub SSO — the
 [GitHub CLI](https://cli.github.com/) (`gh`). A JDK is only needed for Java builds,
-not for the agents/skills CLI.
+not for the agents/skills CLI. **Behind a corporate proxy or internal PyPI mirror?**
+Set `HTTPS_PROXY`/`HTTP_PROXY` (or configure your PyPI index) for the session first —
+see [devtools/README.md](../../devtools/README.md#recommended-no-admin-runbook-for-the-user).
 
 1. **Get the NeqSim code and open a terminal in it:**
    ```powershell
@@ -64,6 +66,13 @@ not for the agents/skills CLI.
    If your org already signs you in through Git Credential Manager, you can omit
    `--login`. Each command prints the catalog file it wrote
    (`~/.neqsim/private-agents.yaml` / `~/.neqsim/private-skills.yaml`).
+
+   > **SAML SSO organizations (e.g. GitHub Enterprise / an org that enforces SSO):**
+   > after `gh auth login --web` you must **authorize the token for the organization**
+   > that owns the private repo, or reads fail with 403/404. The browser prompts you
+   > during login; if you logged in earlier, run `gh auth refresh -h github.com` and
+   > approve the org, or open the token's *Configure SSO* menu on GitHub. Verify access
+   > with `gh repo view <org>/<repo>` before running `neqsim ... list --private`.
 5. **Install the enterprise agents & skills:**
    ```powershell
    neqsim agent list --private        # verify discovery
