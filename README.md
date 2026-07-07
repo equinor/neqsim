@@ -543,6 +543,11 @@ neqsim onboard             # interactive setup (Java, Maven, build, Python, agen
 > The `install` script finds a working Python for you and runs `python -m pip`
 > under the hood, so it works even when `pip`/`python` are not on PATH. To
 > install manually, use `python -m pip install -e devtools/` (not bare `pip`).
+>
+> **Windows: "install.ps1 is not digitally signed" error?** This is PowerShell's
+> execution policy, not a problem with the file. Run `.\install.cmd` (a wrapper
+> that bypasses the policy for one run), or use
+> `powershell -ExecutionPolicy Bypass -File .\install.ps1`.
 
 > **Tip:** Using a virtual environment (`python -m venv .venv` then activate it) avoids
 > PATH issues on all platforms. See [devtools/README.md](devtools/README.md#troubleshooting-neqsim-not-found)

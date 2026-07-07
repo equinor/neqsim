@@ -143,12 +143,18 @@ the hood:
 .\install.ps1
 ```
 
-```bash
-# macOS / Linux:
-./install.sh
-```
-
-**Using [uv](https://docs.astral.sh/uv/)?** Pass the `uv` flag to install with
+> **"install.ps1 is not digitally signed" error?** That is PowerShell's
+> execution policy blocking scripts, not a problem with the file. Easiest fix —
+> run the wrapper, which bypasses the policy for a single run without changing
+> any system settings:
+>
+> ```powershell
+> .\install.cmd
+> ```
+>
+> Or run the script directly with a one-time bypass:
+> `powershell -ExecutionPolicy Bypass -File .\install.ps1`. The wrapper forwards
+> all arguments, so `.\install.cmd -InstallJdk` and `.\install.cmd -Uv` work too.
 the fast `uv` package manager instead of pip:
 
 ```powershell
