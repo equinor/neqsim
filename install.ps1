@@ -163,9 +163,14 @@ if ($Uv) {
 }
 
 Write-Host ""
+Write-Host "Ensuring the 'neqsim' command is on your PATH..." -ForegroundColor Cyan
+& $python[0] @pyArgs (Join-Path $Devtools "ensure_on_path.py")
+
+Write-Host ""
 Write-Host "Done. Verify with:" -ForegroundColor Green
 Write-Host "  $pythonDisplay -m neqsim_cli --help"
-Write-Host "If the 'neqsim' command is not found, see devtools/README.md > Troubleshooting."
+Write-Host "If 'neqsim' is not found in this window, open a NEW terminal (PATH changes"
+Write-Host "only apply to newly opened terminals), or use the line above."
 
 # ── JDK advisory (non-fatal) ─────────────────────────────────────────────
 # The Python devtools do not need Java, but building the NeqSim JAR

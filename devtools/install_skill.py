@@ -10,7 +10,10 @@ Usage:
     neqsim skill remove <name>     # remove an installed skill
     neqsim skill info <name>       # show skill details
     neqsim skill publish <repo>    # publish your skill to catalog
-    neqsim skill private-init      # create private catalog template
+    neqsim skill private-init      # create private catalog (optionally register
+                                   #   a repo + browser SSO in one step, e.g.
+                                   #   --repo org/repo --login); prints file path
+    neqsim skill add-repo --repo O/R [--login]  # add a private skill repo later
 
 Skills are installed to ~/.neqsim/skills/<name>/SKILL.md so they don't
 pollute the core repo. AI tools can be configured to read from that path.
@@ -1766,25 +1769,284 @@ def cmd_publish(skills, args):
         print(f"  The catalog entry was saved. Create the branch/PR manually.")
 
 
-def cmd_private_init(skills, args):
-    """Create the private skill catalog template at ~/.neqsim/private-skills.yaml."""
-    if PRIVATE_CATALOG_FILE.exists():
-        print(f"\n  Private catalog already exists: {PRIVATE_CATALOG_FILE}")
-        print(f"  Edit it to add your private skills.\n")
-        return
+def ensure_private_catalog(catalog_file, template):
+    """Create the private catalog file from a template if it does not exist.
 
+    @param catalog_file the ``Path`` to the private catalog YAML file
+    @param template the template string with a ``{today}`` placeholder
+    @return ``True`` if the file was created, ``False`` if it already existed
+    """
+    if catalog_file.exists():
+        return False
     from datetime import date
-    content = PRIVATE_CATALOG_TEMPLATE.format(today=date.today().isoformat())
-    PRIVATE_CATALOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-    PRIVATE_CATALOG_FILE.write_text(content, encoding="utf-8")
-    print(f"\n  [OK] Created private catalog: {PRIVATE_CATALOG_FILE}")
-    print(f"  Edit it to add your internal/company skills.")
-    print(f"  Then: neqsim skill list --private\n")
 
-    print()
+    catalog_file.parent.mkdir(parents=True, exist_ok=True)
+    catalog_file.write_text(template.format(today=date.today().isoformat()), encoding="utf-8")
+    return True
+
+
+def _repo_entry_yaml(entry, key_order):
+    """Serialize a repository dict into a 2-space-indented YAML list item.
+
+    @param entry the repository mapping (string/list values only)
+    @param key_order preferred key ordering; unknown keys are appended after
+    @return the YAML block text (no trailing newline)
+    """
+    keys = [k for k in key_order if k in entry]
+    keys += [k for k in entry if k not in keys]
+    lines = []
+    for index, key in enumerate(keys):
+        value = entry[key]
+        if isinstance(value, (list, tuple)):
+            # Quote string items so globs with YAML-special leading characters
+            # (e.g. "*.agent.md", which YAML would read as an alias) stay valid.
+            items = []
+            for item in value:
+                if isinstance(item, str):
+                    items.append('"{}"'.format(item))
+                else:
+                    items.append(str(item))
+            rendered = "[" + ", ".join(items) + "]"
+        elif isinstance(value, bool):
+            rendered = "true" if value else "false"
+        elif isinstance(value, str):
+            rendered = '"{}"'.format(value)
+        else:
+            rendered = str(value)
+        if index == 0:
+            lines.append("  - {}: {}".format(key, rendered))
+        else:
+            lines.append("    {}: {}".format(key, rendered))
+    return "\n".join(lines)
+
+
+def _repository_already_registered(text, identifier):
+    """Return True only if ``identifier`` is an ACTIVE (non-commented) repo entry.
+
+    Parses the catalog and compares against real ``repo``/``url``/``path`` values
+    so commented-out template examples never cause a false "already registered".
+
+    @param text the raw catalog YAML text
+    @param identifier the repo/url/path identifier to look for
+    @return ``True`` if an active repository entry already uses the identifier
+    """
+    try:
+        data = _parse_catalog_text(text) or {}
+        for repo in data.get("repositories") or []:
+            if not isinstance(repo, dict):
+                continue
+            if identifier in (repo.get("repo"), repo.get("url"), repo.get("path")):
+                return True
+        return False
+    except Exception:  # noqa: BLE001 - fall back to a conservative text check
+        return identifier in text
+
+
+def append_repository_entry(catalog_file, entry, key_order):
+    """Append a repository entry under the catalog's ``repositories:`` key.
+
+    Idempotent: if the repo/url/path identifier already appears as an ACTIVE
+    (non-commented) entry the catalog is left unchanged. Preserves existing
+    comments by inserting text rather than re-serializing the whole document.
+
+    @param catalog_file the ``Path`` to the private catalog YAML file
+    @param entry the repository mapping to add
+    @param key_order preferred key ordering for the serialized entry
+    @return ``"appended"`` if added, ``"exists"`` if already present
+    """
+    text = catalog_file.read_text(encoding="utf-8")
+    identifier = entry.get("repo") or entry.get("url") or entry.get("path") or ""
+    if identifier and _repository_already_registered(text, identifier):
+        return "exists"
+
+    block = _repo_entry_yaml(entry, key_order)
+    out_lines = []
+    inserted = False
+    for line in text.splitlines():
+        out_lines.append(line)
+        if not inserted and line.rstrip() == "repositories:":
+            out_lines.append(block)
+            inserted = True
+    if not inserted:
+        out_lines.append("repositories:")
+        out_lines.append(block)
+    catalog_file.write_text("\n".join(out_lines) + "\n", encoding="utf-8")
+    return "appended"
+
+
+def run_provider_login(source, auth=None):
+    """Launch the provider's browser-based SSO sign-in for a private repo.
+
+    NeqSim never requests, inspects, or stores credentials: it shells out to the
+    vendor CLI, which opens a normal browser sign-in. For internal Git it just
+    prints guidance because Git Credential Manager / SSO handles login on the
+    first clone.
+
+    @param source the repository source ("github", "git", or other)
+    @param auth optional auth-broker hint (unused beyond messaging)
+    @return ``True`` if a browser sign-in flow was launched, else ``False``
+    """
+    import shutil as _shutil
+    import subprocess
+
+    src = (source or "").lower()
+    if src == "github":
+        gh = _shutil.which("gh")
+        if not gh:
+            print("  [!!] GitHub CLI 'gh' not found. Install from https://cli.github.com/,")
+            print("       then run:  gh auth login --web")
+            return False
+        print("  Launching GitHub sign-in in your browser:  gh auth login --web")
+        try:
+            subprocess.run([gh, "auth", "login", "--web"], check=False)
+        except OSError as exc:
+            print("  [!!] Could not launch gh: {}".format(exc))
+            return False
+        return True
+    if src == "git":
+        print("  Internal Git uses your OS Git Credential Manager / SSO.")
+        print("  Sign-in happens in a browser on the first clone - no extra step needed.")
+        print("  Verify access with:  git ls-remote <your-repo-url>")
+        return False
+    print("  No SSO step is needed for source '{}'.".format(source or "local"))
+    return False
+
+
+def _register_repo_from_args(args):
+    """Append a repository entry to the private skill catalog from parsed args.
+
+    Shared by ``private-init`` and ``add-repo`` so both stay in sync.
+
+    @param args parsed namespace with repo/url/source/auth/branch/etc.
+    @return ``True`` if a ``--repo``/``--url`` was provided and processed
+    """
+    repo = getattr(args, "repo", None)
+    url = getattr(args, "url", None)
+    if not (repo or url):
+        return False
+
+    source = getattr(args, "source", None) or ("github" if repo else "git")
+    auth = getattr(args, "auth", None) or (
+        "github-cli" if source == "github" else "git-credential-manager")
+    entry = {}
+    if repo:
+        entry["repo"] = repo
+    if url:
+        entry["url"] = url
+    entry["source"] = source
+    if source in ("github", "git"):
+        entry["auth"] = auth
+    entry["branch"] = getattr(args, "branch", None) or "main"
+    entry["catalog_path"] = getattr(args, "catalog_path", None) or ""
+    entry["skill_path_glob"] = getattr(args, "skill_path_glob", None) or "skills/**/SKILL.md"
+    prefix = getattr(args, "name_prefix", None)
+    if prefix:
+        entry["name_prefix"] = prefix
+    entry["tags"] = ["enterprise", "private"]
+    order = ["repo", "url", "source", "auth", "branch", "catalog_path",
+             "skill_path_glob", "name_prefix", "tags"]
+    result = append_repository_entry(PRIVATE_CATALOG_FILE, entry, order)
+    if result == "appended":
+        print("  [OK] Registered private repository: {}".format(repo or url))
+    else:
+        print("  Repository already registered: {}".format(repo or url))
+
+    if getattr(args, "login", False):
+        print("\n  Setting up sign-in (SSO)...")
+        run_provider_login(source, auth)
+    return True
+
+
+def _print_private_catalog_footer():
+    """Print the private catalog path and the verify/install hints."""
+    print("\n  Private catalog file (edit to add or adjust entries):")
+    print("    {}".format(PRIVATE_CATALOG_FILE))
+    print("  Verify:  neqsim skill list --private")
+    print("  Install: neqsim skill install <name> --target vscode\n")
+
+
+def cmd_add_repo(skills, args):
+    """Register a private skill repository in ~/.neqsim/private-skills.yaml.
+
+    Creates the catalog from the template if it does not exist yet, appends the
+    repository entry, optionally launches browser SSO, and prints the file path.
+
+    @param skills unused (kept for the command dispatch signature)
+    @param args parsed namespace; ``--repo`` or ``--url`` is required
+    @return ``None``
+    """
+    if not (getattr(args, "repo", None) or getattr(args, "url", None)):
+        print("\n  [!!] Provide a repository to add: --repo OWNER/REPO or --url GIT_URL")
+        print("  Example: neqsim skill add-repo --repo my-org/neqsim-enterprise-skills --login\n")
+        sys.exit(1)
+    created = ensure_private_catalog(PRIVATE_CATALOG_FILE, PRIVATE_CATALOG_TEMPLATE)
+    if created:
+        print("\n  [OK] Created private catalog: {}".format(PRIVATE_CATALOG_FILE))
+    _register_repo_from_args(args)
+    _print_private_catalog_footer()
+
+
+def cmd_private_init(skills, args):
+    """Create the private skill catalog template at ~/.neqsim/private-skills.yaml.
+
+    Optionally registers a private repository (``--repo`` / ``--url``) directly
+    into the catalog and launches browser SSO sign-in (``--login``) in one step,
+    then always prints the catalog file location so it can be edited afterwards.
+
+    @param skills unused (kept for the command dispatch signature)
+    @param args parsed argparse namespace with optional repo/url/login options
+    @return ``None``
+    """
+    created = ensure_private_catalog(PRIVATE_CATALOG_FILE, PRIVATE_CATALOG_TEMPLATE)
+    if created:
+        print("\n  [OK] Created private catalog: {}".format(PRIVATE_CATALOG_FILE))
+    else:
+        print("\n  Private catalog already exists: {}".format(PRIVATE_CATALOG_FILE))
+
+    _register_repo_from_args(args)
+    _print_private_catalog_footer()
+
 
 
 # ── Main ───────────────────────────────────────────────────────────────
+
+def _add_repo_options(parser, kind):
+    """Add the shared private-repo registration options to an argparse parser.
+
+    Used by both the ``private-init`` and ``add-repo`` subcommands so their
+    options stay identical.
+
+    @param parser the argparse subparser to extend
+    @param kind ``"skill"`` or ``"agent"`` (selects the path-glob option name)
+    @return ``None``
+    """
+    parser.add_argument("--repo", help="Private GitHub repo (owner/repo) to register")
+    parser.add_argument("--url", help="Internal Git repo URL to register")
+    parser.add_argument(
+        "--source", choices=["github", "git", "local"],
+        help="Repository source (default: github when --repo, git when --url)")
+    parser.add_argument(
+        "--auth", choices=["github-cli", "git-credential-manager"],
+        help="Auth broker (default matches the source)")
+    parser.add_argument("--branch", default=None, help="Branch to use (default: main)")
+    parser.add_argument(
+        "--catalog-path", dest="catalog_path", default=None,
+        help="Path to the catalog file in the repo, or empty to scan")
+    if kind == "agent":
+        parser.add_argument(
+            "--agent-path-glob", dest="agent_path_glob", default=None,
+            help="Glob for agent discovery (default: agents/**/AGENT.md + *.agent.md)")
+    else:
+        parser.add_argument(
+            "--skill-path-glob", dest="skill_path_glob", default=None,
+            help="Glob for SKILL.md discovery (default: skills/**/SKILL.md)")
+    parser.add_argument(
+        "--name-prefix", dest="name_prefix", default=None,
+        help="Optional name prefix to avoid public/private clashes (e.g. enterprise-)")
+    parser.add_argument(
+        "--login", action="store_true",
+        help="Launch browser SSO sign-in (gh auth login --web) after registering")
+
 
 def main():
     examples = "\n".join([
@@ -1807,7 +2069,9 @@ def main():
         "",
         "Private skills:",
         "  neqsim skill private-init    # create ~/.neqsim/private-skills.yaml",
-        "  # Edit the file to add your private skills, then:",
+        "  neqsim skill private-init --repo my-org/neqsim-enterprise-skills --login  # register a repo + SSO",
+        "  neqsim skill add-repo --repo my-org/neqsim-enterprise-skills --login      # add a repo later",
+        "  # ...or edit the file by hand to add private skills, then:",
         "  neqsim skill list --private   # verify entries",
         "  neqsim skill install <name> --target vscode   # install and export privately for VS Code",
         "",
@@ -1875,7 +2139,14 @@ def main():
     p_publish.add_argument("--path", default="SKILL.md", help="Path to SKILL.md in the repo")
     p_publish.add_argument("--yes", "-y", action="store_true", help="Skip confirmation prompt")
 
-    sub.add_parser("private-init", help="Create private catalog template at ~/.neqsim/")
+    p_priv = sub.add_parser(
+        "private-init",
+        help="Create/extend private catalog at ~/.neqsim/ (optionally register a repo + SSO)")
+    _add_repo_options(p_priv, "skill")
+    p_addrepo = sub.add_parser(
+        "add-repo",
+        help="Add a private skill repository to ~/.neqsim/private-skills.yaml (+ optional SSO)")
+    _add_repo_options(p_addrepo, "skill")
     p_doctor = sub.add_parser(
         "doctor", help="Check enterprise auth broker readiness or export target health")
     p_doctor.add_argument(
@@ -1893,9 +2164,12 @@ def main():
         parser.print_help()
         sys.exit(0)
 
-    # private-init doesn't need catalog loaded
+    # private-init / add-repo don't need the catalog loaded
     if args.command == "private-init":
         cmd_private_init([], args)
+        return
+    if args.command == "add-repo":
+        cmd_add_repo([], args)
         return
     if args.command == "doctor":
         cmd_doctor([], args)

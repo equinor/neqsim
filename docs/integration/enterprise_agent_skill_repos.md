@@ -9,6 +9,78 @@ This guide explains how a company can set up private NeqSim enterprise repositor
 
 Use this pattern when the content is useful to a company or project but should not be published in the community repositories because it contains company policy, internal integration wiring, governed workflow requirements, or private validation expectations.
 
+## Onboarding: recommended order
+
+There are two distinct roles. The **company/org admin** creates the private repositories once; **each engineer** then installs NeqSim and connects to them. Follow the steps in this order.
+
+### A. One-time company setup (admin, once per organization)
+
+1. **Create the two private repositories** from the NeqSim templates:
+   `<company>-neqsim-enterprise-agents` (catalog `enterprise-agents.yaml`) and
+   `<company>-neqsim-enterprise-skills` (catalog `enterprise-skills.yaml`). See
+   [Step 1](#step-1-create-the-enterprise-skills-repository) and
+   [Step 2](#step-2-create-the-enterprise-agents-repository) below.
+2. **Grant engineers read access** through your normal GitHub org / SSO groups.
+3. **Share the two repo names** (and any internal Git URLs) with engineers.
+
+The public **community** catalogs (`neqsim-community-agents`,
+`neqsim-community-skills`) are bundled with NeqSim and need no setup — do not
+recreate them. Only the private enterprise repos are created here.
+
+### B. Per-engineer onboarding (each user, in this order)
+
+**Prerequisites** (install once, per-user — via your software portal / `winget`, no admin needed):
+Python 3.8+, Git, and — only if you will use `--login` for GitHub SSO — the
+[GitHub CLI](https://cli.github.com/) (`gh`). A JDK is only needed for Java builds,
+not for the agents/skills CLI.
+
+1. **Get the NeqSim code and open a terminal in it:**
+   ```powershell
+   git clone https://github.com/equinor/neqsim.git
+   cd neqsim
+   ```
+2. **Install NeqSim.** On a locked-down/no-admin Windows PC use the GPO-proof
+   batch installer (no PowerShell, no admin):
+   ```powershell
+   .\install.cmd            # or: py -m pip install -e devtools/
+   ```
+   macOS/Linux: `./install.sh`. This also puts the `neqsim` command on PATH
+   (open a new terminal afterwards; or use `py -m neqsim_cli`).
+3. **Install community agents & skills — no auth needed.** These are the default
+   catalog and work immediately:
+   ```powershell
+   neqsim agent install --all --vscode
+   neqsim skill install --all
+   ```
+4. **Connect the enterprise repos AND sign in, in one step.** `private-init --login`
+   registers the private repo in your per-user catalog **and** launches browser
+   SSO (`gh auth login --web`) — so SSO and repo registration happen together:
+   ```powershell
+   neqsim agent private-init --repo <company>/<company>-neqsim-enterprise-agents --login
+   neqsim skill private-init --repo <company>/<company>-neqsim-enterprise-skills --login
+   # add more private repos later with the same options:
+   neqsim agent add-repo --url https://git.internal.company.com/neqsim/enterprise-agents.git
+   ```
+   If your org already signs you in through Git Credential Manager, you can omit
+   `--login`. Each command prints the catalog file it wrote
+   (`~/.neqsim/private-agents.yaml` / `~/.neqsim/private-skills.yaml`).
+5. **Install the enterprise agents & skills:**
+   ```powershell
+   neqsim agent list --private        # verify discovery
+   neqsim skill install <name> --target vscode
+   neqsim agent install <name> --vscode
+   ```
+
+> **Why this order?** Community content needs no authentication, so it is installed
+> first and always works. SSO is only required to *read the private repos*, and
+> `private-init --login` performs the sign-in as part of registering them — so you
+> never do a separate "register SSO" step. Creating the repos (Part A) is a
+> one-time admin task, not something each engineer repeats.
+
+Runtime integrators using the **Engineering Harness** instead of the `neqsim`
+CLI follow [Step 3](#step-3-configure-installation-and-discovery) onward, which
+uses `plugins/sources.yaml` for the same repositories.
+
 ## Repository Model
 
 Create two private repositories per company or organization:

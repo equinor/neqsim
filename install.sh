@@ -103,9 +103,14 @@ else
 fi
 
 echo ""
+echo "Ensuring the 'neqsim' command is on your PATH..."
+"$PYTHON" "$DEVTOOLS/ensure_on_path.py" || true
+
+echo ""
 echo "Done. Verify with:"
 echo "  $PYTHON -m neqsim_cli --help"
-echo "If the 'neqsim' command is not found, see devtools/README.md > Troubleshooting."
+echo "If 'neqsim' is not found in this shell, open a NEW terminal (or 'source'"
+echo "your shell rc file), or use the line above."
 
 # ── JDK advisory (non-fatal) ─────────────────────────────────────────────
 # The Python devtools do not need Java, but building the NeqSim JAR
