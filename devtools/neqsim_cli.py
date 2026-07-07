@@ -9,8 +9,8 @@ Usage:
     neqsim contribute        Guided wizard for your first contribution
     neqsim new-task TITLE    Create a task-solving workspace
     neqsim new-skill NAME    Scaffold a new AI skill
-    neqsim skill CMD         Manage skills (list/search/install/remove/private-init)
-    neqsim agent CMD         Manage agents (list/search/install/remove/validate/private-init)
+    neqsim skill CMD         Manage skills (list/search/install/remove/private-init/add-repo)
+    neqsim agent CMD         Manage agents (list/search/install/remove/validate/private-init/add-repo)
     neqsim paperlab CMD      Manage PaperLab VS Code agents and skills
 
 Run `neqsim <command> --help` for per-command options.
@@ -50,11 +50,11 @@ COMMANDS = {
     },
     "skill": {
         "module": "install_skill",
-        "desc": "Manage skills (list/search/install/remove/private-init)",
+        "desc": "Manage skills (list/search/install/remove/private-init/add-repo)",
     },
     "agent": {
         "module": "install_agent",
-        "desc": "Manage agents (list/search/install/remove/validate/private-init)",
+        "desc": "Manage agents (list/search/install/remove/validate/private-init/add-repo)",
     },
     "paperlab": {
         "module": "paperlab_install",

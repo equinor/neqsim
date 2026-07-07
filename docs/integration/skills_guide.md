@@ -894,6 +894,51 @@ This works exactly like `community-skills.yaml` but:
 
 ### Setup
 
+The quickest path registers a private repository **and** signs in with browser
+SSO in one command — no hand-editing of YAML required:
+
+```bash
+# One step: create the catalog, register a private GitHub repo, and sign in
+neqsim skill private-init --repo my-org/neqsim-enterprise-skills --login
+
+# Internal Git server instead of GitHub:
+neqsim skill private-init --url https://git.internal.company.com/neqsim/enterprise-skills.git
+
+# Add more private repos later (same options; creates the catalog if missing):
+neqsim skill add-repo --repo my-org/another-skills-repo --login
+```
+
+`private-init` prints the exact catalog file location at the end so you can edit
+it afterwards. Use `private-init` for first-time setup and `add-repo` to register
+additional repos later — they accept the same options. Then:
+
+```bash
+neqsim skill list --private                 # verify discovered skills
+neqsim skill install <name> --target vscode # install + export for VS Code
+```
+
+Options for `private-init` and `add-repo` (both `neqsim skill` and `neqsim agent`):
+
+| Option | Meaning | Default |
+|--------|---------|---------|
+| `--repo OWNER/REPO` | Register a private GitHub repo | — |
+| `--url GIT_URL` | Register an internal Git repo | — |
+| `--source github\|git\|local` | Repository source | `github` with `--repo`, `git` with `--url` |
+| `--auth github-cli\|git-credential-manager` | Auth broker | matches source |
+| `--branch NAME` | Branch to read | `main` |
+| `--catalog-path PATH` | Catalog file in the repo, or empty to scan | `""` (scan) |
+| `--skill-path-glob` / `--agent-path-glob` | Discovery glob | `skills/**/SKILL.md` / agent globs |
+| `--name-prefix PREFIX` | Prefix to avoid public/private name clashes | — |
+| `--login` | Launch browser SSO (`gh auth login --web`) after registering | off |
+
+> **Which YAML file, and where?** `private-init` writes to
+> `~/.neqsim/private-skills.yaml` (skills) and `~/.neqsim/private-agents.yaml`
+> (agents) — on Windows that is `%USERPROFILE%\.neqsim\`. These files are
+> per-user and must **never** be committed to a public repo. The command prints
+> the full path when it finishes; open that file to add or adjust entries by hand.
+
+**Manual alternative** (edit the YAML yourself):
+
 ```bash
 # 1. Create the catalog template
 neqsim skill private-init
@@ -904,6 +949,14 @@ neqsim skill list --private
 
 # 4. Install a private skill (same command as community skills)
 neqsim skill install neqsim-company-stid
+```
+
+The identical flow exists for agents — swap `skill` for `agent`:
+
+```bash
+neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login
+neqsim agent list --private
+neqsim agent install <name> --vscode
 ```
 
 ### Catalog Format

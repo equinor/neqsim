@@ -303,9 +303,12 @@ neqsim agent install --all --vscode   # install into the VS Code prompts folder
 neqsim skill install --all        # install community skills
 
 neqsim agent private-init         # scaffold a private/enterprise catalog
+# ...or register a private repo AND sign in with browser SSO in one step:
+neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login
+neqsim skill private-init --repo my-org/neqsim-enterprise-skills --login
 ```
 
-- **How internal (enterprise) content works:** a company publishes private `enterprise-agents.yaml` / `enterprise-skills.yaml` in governed internal repos. These are **never committed to the public NeqSim repos**; they are discovered per-user (via `~/.neqsim/private-*.yaml` and gh-CLI / Git Credential Manager auth). See [Enterprise Agent & Skill Repositories](docs/integration/enterprise_agent_skill_repos.md).
+- **How internal (enterprise) content works:** a company publishes private `enterprise-agents.yaml` / `enterprise-skills.yaml` in governed internal repos. These are **never committed to the public NeqSim repos**; they are discovered per-user (via `~/.neqsim/private-*.yaml` and gh-CLI / Git Credential Manager auth). `private-init` writes and then prints the path to those per-user files (`~/.neqsim/private-agents.yaml` / `private-skills.yaml`) so you can edit them afterwards. See [Enterprise Agent & Skill Repositories](docs/integration/enterprise_agent_skill_repos.md).
 - **Full details:** the [Skills & Agents Guide](docs/integration/skills_guide.md) explains the four tiers, packaging, canonical installs vs tool exports, and how to author your own.
 
 ### Where does a new skill or agent go? (recommendation for how to work)
@@ -545,9 +548,9 @@ neqsim onboard             # interactive setup (Java, Maven, build, Python, agen
 > install manually, use `python -m pip install -e devtools/` (not bare `pip`).
 >
 > **Windows: "install.ps1 is not digitally signed" error?** This is PowerShell's
-> execution policy, not a problem with the file. Run `.\install.cmd` (a wrapper
-> that bypasses the policy for one run), or use
-> `powershell -ExecutionPolicy Bypass -File .\install.ps1`.
+> execution policy, not a problem with the file. Run the pure-batch installer
+> `.\install.cmd` (calls Python/pip directly, works even when the policy is
+> locked by Group Policy), or just run `py -m pip install -e devtools/`.
 
 > **Tip:** Using a virtual environment (`python -m venv .venv` then activate it) avoids
 > PATH issues on all platforms. See [devtools/README.md](devtools/README.md#troubleshooting-neqsim-not-found)

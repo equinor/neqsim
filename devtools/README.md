@@ -131,6 +131,51 @@ target with `NEQSIM_VSCODE_FLAVOR=insiders` or point `NEQSIM_VSCODE_AGENTS_DIR`
 at the exact folder. macOS/Linux users run the same steps with `./install.sh`
 and forward slashes.
 
+## Set up private / enterprise agents & skills
+
+Public community agents/skills install with `neqsim agent install` /
+`neqsim skill install`. To also use **company-private** agents and skills, register
+your internal repository with `private-init`. It can register the repo **and**
+sign you in with browser SSO in a single command:
+
+```powershell
+# GitHub (registers the repo and runs `gh auth login --web`):
+neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login
+neqsim skill private-init --repo my-org/neqsim-enterprise-skills --login
+
+# Internal Git server instead of GitHub:
+neqsim agent private-init --url https://git.internal.company.com/neqsim/enterprise-agents.git
+
+# Add more private repos later (same options; auto-creates the catalog if needed):
+neqsim agent add-repo --repo my-org/another-agents-repo --login
+neqsim skill add-repo --repo my-org/another-skills-repo --login
+
+# Then discover + install as usual:
+neqsim agent list --private
+neqsim agent install <name> --vscode
+neqsim skill install <name> --target vscode
+```
+
+> `private-init` and `add-repo` accept the same repo options — use `private-init`
+> for first-time setup and `add-repo` to register additional repos later. Both
+> print the catalog file path when they finish.
+
+**Which file gets edited, and where?** `private-init` writes a per-user catalog:
+
+| Content | File | Windows path |
+|---------|------|--------------|
+| Private skills | `~/.neqsim/private-skills.yaml` | `%USERPROFILE%\.neqsim\private-skills.yaml` |
+| Private agents | `~/.neqsim/private-agents.yaml` | `%USERPROFILE%\.neqsim\private-agents.yaml` |
+
+The command **prints the full path when it finishes** so you can open the file to
+add or adjust entries by hand. These files are per-user and must never be committed
+to a public repo. Useful options: `--source`, `--auth`, `--branch`,
+`--catalog-path`, `--name-prefix`, and `--skill-path-glob` / `--agent-path-glob`
+(run `neqsim agent private-init --help`). Authentication uses the GitHub CLI or Git
+Credential Manager via browser SSO — NeqSim never requests, inspects, or stores
+credentials. Full guide: [Enterprise Agent & Skill Repositories](../docs/integration/enterprise_agent_skill_repos.md)
+and the [Skills & Agents Guide](../docs/integration/skills_guide.md#private-skill-catalog).
+
 ## One-time setup
 
 **Recommended (works even when `pip`/`python` are not on PATH).** Run the
@@ -143,18 +188,31 @@ the hood:
 .\install.ps1
 ```
 
-> **"install.ps1 is not digitally signed" error?** That is PowerShell's
-> execution policy blocking scripts, not a problem with the file. Easiest fix —
-> run the wrapper, which bypasses the policy for a single run without changing
-> any system settings:
+```bash
+# macOS / Linux:
+./install.sh
+```
+
+> **"install.ps1 is not digitally signed" / execution-policy error on Windows?**
+> That is PowerShell blocking scripts, not a problem with the file. Use the
+> pure-batch installer instead — it calls Python/pip directly and never touches
+> PowerShell, so it works even on locked-down machines where the execution
+> policy is enforced by **Group Policy** (where even
+> `powershell -ExecutionPolicy Bypass` is ignored):
 >
-> ```powershell
-> .\install.cmd
+> ```bat
+> install.cmd            :: install neqsim-dev-setup (editable)
+> install.cmd pdf        :: also install the optional [pdf] extras
+> install.cmd ocr        :: also install the optional [ocr] extras
+> install.cmd uv         :: install with the fast 'uv' package manager
 > ```
 >
-> Or run the script directly with a one-time bypass:
-> `powershell -ExecutionPolicy Bypass -File .\install.ps1`. The wrapper forwards
-> all arguments, so `.\install.cmd -InstallJdk` and `.\install.cmd -Uv` work too.
+> Equivalent one-liner (no script at all): `py -m pip install -e devtools/`.
+> The `-InstallJdk` option is `install.ps1`-only; on a GPO-locked machine
+> install a JDK separately. After install, if the `neqsim` command is not on
+> PATH, use `py -m neqsim_cli --help`.
+
+**Using [uv](https://docs.astral.sh/uv/)?** Pass the `uv` flag to install with
 the fast `uv` package manager instead of pip:
 
 ```powershell

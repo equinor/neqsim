@@ -12,7 +12,10 @@ Usage:
     neqsim agent info <name>
     neqsim agent validate <name-or-path>
     neqsim agent schema
-    neqsim agent private-init
+    neqsim agent private-init      # create private catalog (optionally register
+                                   #   a repo + browser SSO in one step, e.g.
+                                   #   --repo org/repo --login); prints file path
+    neqsim agent add-repo --repo O/R [--login]  # add a private agent repo later
 
 Agents are installed to ~/.neqsim/agents/<name>/ and are never executed during
 installation. An agent package may be a single .agent.md file, a folder with
@@ -2383,22 +2386,105 @@ def cmd_run(agents, args):
     print("  Open this definition in your AI agent tool and run it explicitly there.\n")
 
 
-def cmd_private_init(agents, args):
-    """Create the private agent catalog template at ~/.neqsim/private-agents.yaml."""
-    if PRIVATE_CATALOG_FILE.exists():
-        print("\n  Private catalog already exists: {path}".format(
-            path=PRIVATE_CATALOG_FILE))
-        print("  Edit it to add your private agents.\n")
-        return
+def _register_repo_from_args(args):
+    """Append a repository entry to the private agent catalog from parsed args.
 
-    from datetime import date
-    content = PRIVATE_CATALOG_TEMPLATE.format(today=date.today().isoformat())
-    PRIVATE_CATALOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-    PRIVATE_CATALOG_FILE.write_text(content, encoding="utf-8")
-    print("\n  [OK] Created private catalog: {path}".format(
-        path=PRIVATE_CATALOG_FILE))
-    print("  Edit it to add your internal/company agents.")
-    print("  Then: neqsim agent list --private\n")
+    Shared by ``private-init`` and ``add-repo`` so both stay in sync.
+
+    @param args parsed namespace with repo/url/source/auth/branch/etc.
+    @return ``True`` if a ``--repo``/``--url`` was provided and processed
+    """
+    repo = getattr(args, "repo", None)
+    url = getattr(args, "url", None)
+    if not (repo or url):
+        return False
+
+    source = getattr(args, "source", None) or ("github" if repo else "git")
+    auth = getattr(args, "auth", None) or (
+        "github-cli" if source == "github" else "git-credential-manager")
+    entry = {}
+    if repo:
+        entry["repo"] = repo
+    if url:
+        entry["url"] = url
+    entry["source"] = source
+    if source in ("github", "git"):
+        entry["auth"] = auth
+    entry["branch"] = getattr(args, "branch", None) or "main"
+    entry["catalog_path"] = getattr(args, "catalog_path", None) or ""
+    glob = getattr(args, "agent_path_glob", None)
+    entry["agent_path_glob"] = (
+        [glob] if glob else ["agents/**/AGENT.md", "agents/**/*.agent.md"])
+    prefix = getattr(args, "name_prefix", None)
+    if prefix:
+        entry["name_prefix"] = prefix
+    entry["tags"] = ["enterprise", "private"]
+    order = ["repo", "url", "source", "auth", "branch", "catalog_path",
+             "agent_path_glob", "name_prefix", "tags"]
+    result = install_skill.append_repository_entry(PRIVATE_CATALOG_FILE, entry, order)
+    if result == "appended":
+        print("  [OK] Registered private repository: {id}".format(id=repo or url))
+    else:
+        print("  Repository already registered: {id}".format(id=repo or url))
+
+    if getattr(args, "login", False):
+        print("\n  Setting up sign-in (SSO)...")
+        install_skill.run_provider_login(source, auth)
+    return True
+
+
+def _print_private_catalog_footer():
+    """Print the private agent catalog path and the verify/install hints."""
+    print("\n  Private catalog file (edit to add or adjust entries):")
+    print("    {path}".format(path=PRIVATE_CATALOG_FILE))
+    print("  Verify:  neqsim agent list --private")
+    print("  Install: neqsim agent install <name> --vscode\n")
+
+
+def cmd_add_repo(agents, args):
+    """Register a private agent repository in ~/.neqsim/private-agents.yaml.
+
+    Creates the catalog from the template if it does not exist yet, appends the
+    repository entry, optionally launches browser SSO, and prints the file path.
+
+    @param agents unused (kept for the command dispatch signature)
+    @param args parsed namespace; ``--repo`` or ``--url`` is required
+    @return ``None``
+    """
+    if not (getattr(args, "repo", None) or getattr(args, "url", None)):
+        print("\n  [!!] Provide a repository to add: --repo OWNER/REPO or --url GIT_URL")
+        print("  Example: neqsim agent add-repo --repo my-org/neqsim-enterprise-agents --login\n")
+        sys.exit(1)
+    created = install_skill.ensure_private_catalog(
+        PRIVATE_CATALOG_FILE, PRIVATE_CATALOG_TEMPLATE)
+    if created:
+        print("\n  [OK] Created private catalog: {path}".format(path=PRIVATE_CATALOG_FILE))
+    _register_repo_from_args(args)
+    _print_private_catalog_footer()
+
+
+def cmd_private_init(agents, args):
+    """Create/extend the private agent catalog at ~/.neqsim/private-agents.yaml.
+
+    Optionally registers a private repository (``--repo`` / ``--url``) directly
+    into the catalog and launches browser SSO sign-in (``--login``) in one step,
+    then always prints the catalog file location so it can be edited afterwards.
+
+    @param agents unused (kept for the command dispatch signature)
+    @param args parsed argparse namespace with optional repo/url/login options
+    @return ``None``
+    """
+    created = install_skill.ensure_private_catalog(
+        PRIVATE_CATALOG_FILE, PRIVATE_CATALOG_TEMPLATE)
+    if created:
+        print("\n  [OK] Created private catalog: {path}".format(path=PRIVATE_CATALOG_FILE))
+    else:
+        print("\n  Private catalog already exists: {path}".format(path=PRIVATE_CATALOG_FILE))
+
+    _register_repo_from_args(args)
+    _print_private_catalog_footer()
+
+
 
 
 def cmd_schema(agents, args):
@@ -2475,6 +2561,8 @@ def main():
         "  neqsim agent doctor --target vscode",
         "  neqsim agent remove neqsim-example-agent",
         "  neqsim agent private-init",
+        "  neqsim agent private-init --repo my-org/neqsim-enterprise-agents --login  # register a repo + SSO",
+        "  neqsim agent add-repo --repo my-org/neqsim-enterprise-agents --login      # add a repo later",
         "",
         "Preferred private access uses `gh auth login --web` or Git Credential Manager.",
         "Internal raw URLs can use PRIVATE_AGENT_TOKEN env var as a non-interactive fallback.",
@@ -2590,8 +2678,14 @@ def main():
         "--profile", default=None,
         help="Optional export profile JSON (default: ~/.neqsim/export/export-profile.json if present)")
 
-    sub.add_parser(
-        "private-init", help="Create private catalog template at ~/.neqsim/")
+    p_priv = sub.add_parser(
+        "private-init",
+        help="Create/extend private catalog at ~/.neqsim/ (optionally register a repo + SSO)")
+    install_skill._add_repo_options(p_priv, "agent")
+    p_addrepo = sub.add_parser(
+        "add-repo",
+        help="Add a private agent repository to ~/.neqsim/private-agents.yaml (+ optional SSO)")
+    install_skill._add_repo_options(p_addrepo, "agent")
 
     args = parser.parse_args()
     if not args.command:
@@ -2600,6 +2694,9 @@ def main():
 
     if args.command == "private-init":
         cmd_private_init([], args)
+        return
+    if args.command == "add-repo":
+        cmd_add_repo([], args)
         return
     if args.command in ("validate", "run", "schema", "doctor"):
         commands_without_catalog = {
