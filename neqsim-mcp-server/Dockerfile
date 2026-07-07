@@ -11,7 +11,7 @@
 #   cd .. && ./mvnw install -DskipTests -Dmaven.javadoc.skip=true
 #   cd neqsim-mcp-server && ../mvnw package -DskipTests -Dmaven.javadoc.skip=true
 
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 LABEL org.opencontainers.image.source="https://github.com/equinor/neqsim"
 LABEL org.opencontainers.image.description="NeqSim MCP Server — rigorous thermodynamics for LLMs"
