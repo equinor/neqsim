@@ -25,18 +25,31 @@
 		}
 	},
 	// Run after container creation: compile Java, install dev tools and dependencies
-	"postCreateCommand": "export PATH=\"$HOME/.local/bin:$PATH\" && chmod +x ./mvnw && ./mvnw compile && pip install --user matplotlib pandas numpy python-docx || true && pip install --user -e devtools/ || true && echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.bashrc",
+	"postCreateCommand": "export PATH=\"$HOME/.local/bin:$PATH\" && chmod +x ./mvnw && ./mvnw compile && pip install --user matplotlib pandas numpy python-docx || true && pip install --user -e devtools/ || true && (pip install --user pre-commit && pre-commit install) || true && echo 'export PATH=\"$HOME/.local/bin:$PATH\"' >> ~/.bashrc",
 	"customizations": {
 		"vscode": {
 			"settings": {
 				// Java settings
 				"java.configuration.updateBuildConfiguration": "automatic",
 				"java.compile.nullAnalysis.mode": "automatic",
-				"java.format.settings.url": "neqsim_formatter.xml",
+				"java.format.settings.url": "${workspaceFolder}/.config/neqsim_formatter.xml",
+				"java.format.settings.profile": "neqsim_formatter",
 				"java.checkstyle.configuration": "${workspaceFolder}/.config/checkstyle_neqsim.xml",
 				"java.test.defaultConfig": "default",
 				// Editor settings
 				"editor.formatOnSave": true,
+				// Java formatting is owned by Spotless (Eclipse 4.35, .config/neqsim_formatter.xml),
+				// enforced by the spotless-apply pre-commit hook and the spotless:check CI gate. The
+				// Red Hat Java extension bundles a different Eclipse JDT engine that diverges from
+				// Spotless even with the same profile, so format-on-save is disabled for Java to avoid
+				// spurious working-tree diffs. Organize-imports on save is kept (Spotless does not
+				// manage imports). Mirrors .vscode/settings.json so behaviour matches in Codespaces.
+				"[java]": {
+					"editor.formatOnSave": false,
+					"editor.codeActionsOnSave": {
+						"source.organizeImports": "explicit"
+					}
+				},
 				"editor.rulers": [
 					120
 				],

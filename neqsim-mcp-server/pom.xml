@@ -85,6 +85,14 @@
             <artifactId>quarkus-oidc</artifactId>
         </dependency>
 
+        <!-- SmallRye Health — Kubernetes-style liveness/readiness endpoints
+             (/q/health, /q/health/live, /q/health/ready) for hosted deployments
+             (e.g. Equinor Radix probes). Zero effect on STDIO / desktop use. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-health</artifactId>
+        </dependency>
+
         <!-- Test dependencies -->
         <dependency>
             <groupId>io.quarkus</groupId>
