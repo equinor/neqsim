@@ -576,13 +576,11 @@ public class DocExamplesCompilationTest {
     column.getReboiler().setOutTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
-    column.setMaxNumberOfIterations(400);
     column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
     column.run();
 
-    System.out.println("EXP doc MESH iterations=" + column.getLastIterationCount() + " solved=" + column.solved()
-        + " tempRes=" + column.getLastTemperatureResidual());
     assertTrue(column.solved());
+    assertNotNull(column.getGasOutStream());
     assertNotNull(column.getLiquidOutStream());
     assertTrue(column.getTrays().size() > 0);
     assertTrue(Double.isFinite(column.getTray(0).getTemperature()));
