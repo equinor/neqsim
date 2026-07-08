@@ -960,9 +960,9 @@ class AgentVsCodeExportTest(unittest.TestCase):
         self.assertEqual("Code", result.parent.name)
 
     def test_resolve_vscode_agents_dir_user_scope(self):
-        """User scope targets the global prompts folder."""
+        """User scope targets the personal ~/.copilot/agents folder."""
         result = install_agent.resolve_vscode_agents_dir(scope="user")
-        self.assertEqual("prompts", result.name)
+        self.assertEqual(Path.home() / ".copilot" / "agents", result)
 
     def test_resolve_vscode_agents_dir_prefers_explicit(self):
         """An explicit directory overrides scope/env detection."""

@@ -113,7 +113,7 @@ neqsim doctor          # verifies Python, Java/JDK, Maven wrapper, agents
 # (or install a JDK manually and set JAVA_HOME yourself), then in a NEW terminal:
 .\mvnw.cmd install -DskipTests
 
-# 4. Install AI agents/skills into the VS Code USER prompts folder (no admin)
+# 4. Install AI agents/skills into ~/.copilot for VS Code Copilot (no admin)
 neqsim agent install --all --vscode
 neqsim skill install --all
 ```

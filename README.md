@@ -299,7 +299,7 @@ Install and use them with the `neqsim` CLI (all user-scope, no admin — see the
 ```bash
 neqsim agent list                 # browse the community catalog
 neqsim agent search hydrate       # find an agent by keyword
-neqsim agent install --all --vscode   # install into the VS Code prompts folder
+neqsim agent install --all --vscode   # export agents+skills to ~/.copilot for VS Code Copilot
 neqsim skill install --all        # install community skills
 
 neqsim agent private-init         # scaffold a private/enterprise catalog
@@ -423,7 +423,7 @@ neqsim doctor          # verifies Python, Java/JDK, Maven wrapper, agents
 # (or install a JDK manually and set JAVA_HOME yourself), then in a NEW terminal:
 .\mvnw.cmd install -DskipTests
 
-# 4. Install AI agents into the VS Code USER prompts folder (no admin)
+# 4. Install AI agents into ~/.copilot for VS Code Copilot (no admin)
 neqsim agent install --all --vscode
 neqsim skill install --all
 ```
@@ -535,14 +535,31 @@ For details see [docs/modules.md](docs/modules.md).
 We welcome contributions of all kinds: bug fixes, new models, examples, documentation, and notebook recipes.
 **AI-assisted PRs are first-class contributions**; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-**New here?** Three commands to get started:
+**New here?** Get started (Windows, PowerShell):
+
+```powershell
+git clone https://github.com/equinor/neqsim.git
+cd neqsim
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1   # activate the venv FIRST so 'neqsim' lands on PATH
+.\install.cmd                  # or .\install.ps1  (append 'uv' for the fast installer)
+neqsim onboard                 # interactive setup (Java, Maven, build, Python, agents)
+```
+
+macOS/Linux:
 
 ```bash
 git clone https://github.com/equinor/neqsim.git && cd neqsim
-./install.ps1              # Windows one-time setup (macOS/Linux: ./install.sh)
-neqsim onboard             # interactive setup (Java, Maven, build, Python, agents)
+python3 -m venv .venv && source .venv/bin/activate
+./install.sh
+neqsim onboard
 ```
 
+> **Activate the venv before running `install`.** The installer does not create
+> or activate a venv — it only detects an already-active one. Activating first
+> means the package and the `neqsim` command install into the venv and stay on
+> PATH; skip it and you may hit "`neqsim` is not recognized".
+>
 > The `install` script finds a working Python for you and runs `python -m pip`
 > under the hood, so it works even when `pip`/`python` are not on PATH. To
 > install manually, use `python -m pip install -e devtools/` (not bare `pip`).
@@ -593,7 +610,7 @@ Browse and install community-contributed skills, or publish your own:
 ```bash
 neqsim skill list                    # browse the catalog and discovered repositories
 neqsim skill install <name>          # install a skill
-neqsim skill install <name> --target vscode   # also export to your VS Code user prompts folder
+neqsim skill install <name> --target vscode   # also export to your ~/.copilot/skills folder
 neqsim skill doctor                  # check private-catalog authentication readiness
 neqsim skill doctor --target vscode  # verify VS Code skill exports
 neqsim skill publish user/repo-name  # publish yours (creates a draft PR)
@@ -619,9 +636,10 @@ exports are errors and extra exports are warnings.
 
 By default, installed community and private content is kept out of the Git-tracked
 workspace: skills install to `~/.neqsim/skills/`, agents install to
-`~/.neqsim/agents/`, and `--target vscode` writes generated copies to the user's
-VS Code prompts folders. Use `--vscode-scope workspace` only when a maintainer
-intentionally wants a generated `.github/skills` or `.github/agents` copy.
+`~/.neqsim/agents/`, and `--target vscode` writes generated copies to the personal
+`~/.copilot/skills` and `~/.copilot/agents` folders (which VS Code and the GitHub
+Copilot CLI scan in every workspace). Use `--vscode-scope workspace` only when a
+maintainer intentionally wants a generated `.github/skills` or `.github/agents` copy.
 
 The catalog can list individual skills directly and can also point to public
 multi-skill GitHub repositories. When a repository is listed under

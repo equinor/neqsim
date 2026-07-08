@@ -80,12 +80,20 @@ see [devtools/README.md](../../devtools/README.md#recommended-no-admin-runbook-f
    > during login; if you logged in earlier, run `gh auth refresh -h github.com` and
    > approve the org, or open the token's *Configure SSO* menu on GitHub. Verify access
    > with `gh repo view <org>/<repo>` before running `neqsim ... list --private`.
-5. **Install the enterprise agents & skills:**
+5. **Install the enterprise agents & skills.** Now that the private repos are
+   registered, `--all` spans community **and** enterprise together — re-run it to
+   pick up the enterprise content that step 3 could not see yet:
    ```powershell
-   neqsim agent list --private        # verify discovery
-   neqsim skill install <name> --target vscode
+   neqsim agent list --private                 # verify discovery
+   neqsim agent install --all --vscode --force # every community + enterprise agent + required skills
+   neqsim skill install --all --vscode --force # every community + enterprise catalog skill
+   # ...or install a single item by name:
+   neqsim skill install <name> --vscode
    neqsim agent install <name> --vscode
    ```
+   Both `--vscode` and `--target vscode` export to your personal `~/.copilot/agents`
+   and `~/.copilot/skills` folders — the locations VS Code and the GitHub Copilot CLI
+   scan in every workspace. Reload/restart VS Code afterwards to pick them up.
 
 > **Why this order?** Community content needs no authentication, so it is installed
 > first and always works. SSO is only required to *read the private repos*, and

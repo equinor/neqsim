@@ -61,18 +61,18 @@ Before copying files, preview the export destinations:
 neqsim paperlab install --vscode --dry-run
 ```
 
-On Windows with the default user scope, the dry run should show destinations under:
+On Windows with the default user scope, the dry run should show destinations under your personal Copilot folders:
 
 ```text
-%APPDATA%\Code\User\prompts
-%APPDATA%\Code\User\prompts\skills
+%USERPROFILE%\.copilot\agents
+%USERPROFILE%\.copilot\skills
 ```
 
 For example:
 
 ```text
-C:\Users\<user>\AppData\Roaming\Code\User\prompts\paperlab.agent.md
-C:\Users\<user>\AppData\Roaming\Code\User\prompts\skills\paperlab_publication_opportunity_mining\SKILL.md
+C:\Users\<user>\.copilot\agents\paperlab.agent.md
+C:\Users\<user>\.copilot\skills\paperlab_publication_opportunity_mining\SKILL.md
 ```
 
 ## Install for VS Code Chat
@@ -103,8 +103,8 @@ If `neqsim paperlab` prints this usage text, the command is available but no ins
 usage: neqsim paperlab [-h] {install,list} ...
 ```
 
-Run `neqsim paperlab install --vscode` to install. If the installer cannot find a VS Code prompts folder, specify the destination explicitly:
+Run `neqsim paperlab install --vscode` to install. If the installer cannot find your `~/.copilot` folder, specify the destination explicitly:
 
 ```powershell
-neqsim paperlab install --vscode --vscode-agents-dir "%APPDATA%\Code\User\prompts" --vscode-skills-dir "%APPDATA%\Code\User\prompts\skills"
+neqsim paperlab install --vscode --vscode-agents-dir "%USERPROFILE%\.copilot\agents" --vscode-skills-dir "%USERPROFILE%\.copilot\skills"
 ```

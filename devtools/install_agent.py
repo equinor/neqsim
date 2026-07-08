@@ -984,10 +984,15 @@ def resolve_vscode_agents_dir(scope="user", explicit_dir=None):
     """Resolve the VS Code agents directory for --vscode export.
 
     Resolution order: explicit dir, NEQSIM_VSCODE_AGENTS_DIR env var, then the
-    scope default. 'user' scope targets the global prompts folder (available in
-    every workspace); 'workspace' scope targets <workspace>/.github/agents.
+    scope default. 'user' scope targets the personal ~/.copilot/agents folder,
+    which VS Code (and the GitHub Copilot CLI) scan for user-global agents in
+    every workspace; 'workspace' scope targets <workspace>/.github/agents.
 
-    @param scope 'user' (default) for the global prompts folder, or 'workspace'
+    Using ~/.copilot/agents keeps agents and skills side by side under a single
+    ~/.copilot root, is independent of the VS Code flavor (stable vs Insiders),
+    and matches the personal skills location (~/.copilot/skills).
+
+    @param scope 'user' (default) for the personal ~/.copilot/agents folder, or 'workspace'
     @param explicit_dir an explicit target directory (overrides detection)
     @return the resolved agents directory Path, or None when none can be found
     """
@@ -1001,7 +1006,7 @@ def resolve_vscode_agents_dir(scope="user", explicit_dir=None):
         if root is None:
             return None
         return root / ".github" / "agents"
-    return _vscode_user_dir() / "prompts"
+    return Path.home() / ".copilot" / "agents"
 
 
 def export_agent_to_vscode(name, main_file, vscode_dir):

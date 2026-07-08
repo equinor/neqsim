@@ -903,13 +903,19 @@ def resolve_vscode_skills_dir(explicit_dir=None, scope="user"):
     """Resolve the VS Code skills directory for --vscode export.
 
     Resolution order: explicit dir, NEQSIM_VSCODE_SKILLS_DIR env var, then the
-    scope default. 'user' scope targets the global prompts skills folder so
-    installed community/private skills do not modify a Git-tracked repository;
-    'workspace' scope targets <workspace>/.github/skills for explicit core
-    workspace exports.
+    scope default. 'user' scope targets the personal ~/.copilot/skills folder,
+    which VS Code (and the GitHub Copilot CLI) scan for user-global skills in
+    every workspace; 'workspace' scope targets <workspace>/.github/skills for
+    explicit core workspace exports.
+
+    Note: VS Code does NOT discover skills from its User "prompts" folder. The
+    prompts folder is scanned only for agents, instructions, and prompt files;
+    skills must live in ~/.copilot/skills (personal) or a workspace
+    .github/skills folder, so this resolver targets ~/.copilot/skills for the
+    user scope.
 
     @param explicit_dir an explicit target directory (overrides detection)
-    @param scope 'user' (default) for the global prompts skills folder, or 'workspace'
+    @param scope 'user' (default) for the personal ~/.copilot/skills folder, or 'workspace'
     @return the resolved skills directory Path, or None when none can be found
     """
     if explicit_dir:
@@ -918,7 +924,7 @@ def resolve_vscode_skills_dir(explicit_dir=None, scope="user"):
     if env_dir:
         return Path(env_dir).expanduser().resolve()
     if scope != "workspace":
-        return _vscode_user_dir() / "prompts" / "skills"
+        return Path.home() / ".copilot" / "skills"
     root = find_workspace_root()
     if root is None:
         return None
@@ -2170,13 +2176,13 @@ def main():
     p_install.add_argument("--force", action="store_true", help="Reinstall if exists")
     p_install.add_argument(
         "--vscode", action="store_true",
-        help="Also export the skill to the VS Code user prompts skills folder")
+        help="Also export the skill to the personal ~/.copilot/skills folder (VS Code + Copilot CLI)")
     p_install.add_argument(
         "--target", action="append", choices=SUPPORTED_EXPORT_TARGETS,
         help="Also export to a compatibility target (repeatable): vscode or generic")
     p_install.add_argument(
         "--vscode-scope", choices=["user", "workspace"], default="user",
-        help="Skill export scope: user prompts skills folder (default) or explicit workspace .github/skills")
+        help="Skill export scope: personal ~/.copilot/skills (default) or explicit workspace .github/skills")
     p_install.add_argument(
         "--vscode-dir", default=None,
         help="Explicit VS Code skills directory for --vscode export")

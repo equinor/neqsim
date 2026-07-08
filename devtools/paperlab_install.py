@@ -280,7 +280,7 @@ def main():
         help="Also export internal PaperLab specialist agents and skills for legacy/direct use")
     p_install.add_argument(
         "--vscode-scope", choices=["user", "workspace"], default="user",
-        help="VS Code export scope: user prompts folders (default) or explicit workspace .github folders")
+        help="VS Code export scope: personal ~/.copilot folders (default) or explicit workspace .github folders")
     p_install.add_argument(
         "--vscode-agents-dir", default=None,
         help="Explicit VS Code agents/prompts directory")

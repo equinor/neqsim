@@ -67,11 +67,11 @@ NeqSim separates source-of-truth content from tool-specific discovery folders:
 |-------|---------|--------------|
 | **Core workspace discovery** | Skills and agents committed with NeqSim and visible to VS Code in this workspace | `.github/skills/`, `.github/agents/` |
 | **User-level canonical install** | Community, private, and enterprise content installed for one user without modifying the repo | `~/.neqsim/skills/`, `~/.neqsim/agents/` |
-| **VS Code export** | Generated compatibility copies for VS Code Copilot discovery | `%APPDATA%\Code\User\prompts\skills` for installed skills and `%APPDATA%\Code\User\prompts` for installed agents; `.github/skills` and `.github/agents` only for explicit core workspace exports |
+| **VS Code export** | Generated compatibility copies for VS Code Copilot discovery | `~/.copilot/skills` for installed skills and `~/.copilot/agents` for installed agents (the personal folders VS Code and the GitHub Copilot CLI scan in every workspace); `.github/skills` and `.github/agents` only for explicit `--vscode-scope workspace` exports |
 | **Generic export** | Tool-neutral copies and manifest for Codex, Claude, harnesses, or other coding agents | `~/.neqsim/export/generic/` |
 | **PaperLab canonical source** | PaperLab's full internal role and skill library | `neqsim-paperlab/agents/`, `neqsim-paperlab/skills/` |
 
-Treat `.github/skills` and `.github/agents` as core workspace discovery surfaces, not the default destination for installed community/private content. Installed content should be managed through `~/.neqsim` and, for VS Code, exported to the user's private prompts folders unless a maintainer explicitly wants a workspace export. PaperLab follows the same principle: `neqsim-paperlab/` is canonical, while the VS Code default is the single `@paperlab` gateway plus its declared public skills.
+Treat `.github/skills` and `.github/agents` as core workspace discovery surfaces, not the default destination for installed community/private content. Installed content should be managed through `~/.neqsim` and, for VS Code, exported to the personal `~/.copilot/skills` and `~/.copilot/agents` folders unless a maintainer explicitly wants a workspace export. (VS Code does **not** discover skills from its User `prompts` folder — that folder feeds prompt/instruction/agent files only, so `--vscode` skill export targets `~/.copilot/skills`.) PaperLab follows the same principle: `neqsim-paperlab/` is canonical, while the VS Code default is the single `@paperlab` gateway plus its declared public skills.
 
 For the exact PaperLab CLI commands, including the no-subcommand help output, `list`, `--dry-run`, and the actual install command, see [PaperLab CLI and VS Code Chat Install](paperlab_vscode_install.md).
 
@@ -484,7 +484,7 @@ neqsim skill export neqsim-my-topic --target vscode
 neqsim skill export neqsim-my-topic --target generic
 ```
 
-The generic export writes `~/.neqsim/export/generic/skills/<name>/SKILL.md` plus `~/.neqsim/export/generic/manifest.json`. The same manifest also records generic agent exports when both agents and skills are exported. Use this target for coding agents that can be configured with arbitrary local instruction folders. Use the VS Code target when you want Copilot/VS Code to discover the skill from the user's private prompts folder. Maintainers can choose workspace export explicitly with `--vscode-scope workspace` when a generated `.github/skills` copy is intentional.
+The generic export writes `~/.neqsim/export/generic/skills/<name>/SKILL.md` plus `~/.neqsim/export/generic/manifest.json`. The same manifest also records generic agent exports when both agents and skills are exported. Use this target for coding agents that can be configured with arbitrary local instruction folders. Use the VS Code target when you want Copilot/VS Code to discover the skill from the personal `~/.copilot/skills` folder. Maintainers can choose workspace export explicitly with `--vscode-scope workspace` when a generated `.github/skills` copy is intentional.
 
 Prefer the export commands over manual copying. If a tool cannot read the VS Code
 or generic export layouts, point that tool at the installed source folder
@@ -555,7 +555,7 @@ neqsim agent info neqsim-example-agent
 # Install an agent definition to ~/.neqsim/agents/
 neqsim agent install neqsim-example-agent
 
-# Install and export to VS Code's user prompts folder
+# Install and export to the personal ~/.copilot/agents folder
 neqsim agent install neqsim-example-agent --target vscode
 
 # Install and export to ~/.neqsim/export/generic/agents/
@@ -605,8 +605,8 @@ use the normal corporate browser or git credential flow.
 
 Installed agents are not automatically run by NeqSim. Point your AI tool at the
 installed folder, or export a generated copy to the tool-specific layout. For VS
-Code Copilot custom agents, the default NeqSim export target is the user's
-private prompts folder, not the Git-tracked workspace:
+Code Copilot custom agents, the default NeqSim export target is the personal
+`~/.copilot/agents` folder, not the Git-tracked workspace:
 
 ```bash
 neqsim agent export neqsim-example-agent --target vscode

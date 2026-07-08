@@ -301,12 +301,11 @@ class SkillVsCodeExportTest(unittest.TestCase):
         self.assertEqual(Path("env/skills").expanduser().resolve(), result)
 
     def test_resolve_vscode_skills_dir_user_scope(self):
-        """User scope targets a private prompts skills folder."""
+        """User scope targets the personal ~/.copilot/skills folder."""
         from pathlib import Path
 
-        with mock.patch.object(install_skill, "_vscode_user_dir", return_value=Path("user-root")):
-            result = install_skill.resolve_vscode_skills_dir(scope="user")
-        self.assertEqual(Path("user-root") / "prompts" / "skills", result)
+        result = install_skill.resolve_vscode_skills_dir(scope="user")
+        self.assertEqual(Path.home() / ".copilot" / "skills", result)
 
     def test_resolve_vscode_skills_dir_workspace_scope_is_explicit(self):
         """Workspace scope targets <workspace>/.github/skills only when requested."""
