@@ -32,6 +32,15 @@ public class Calculator extends ProcessEquipmentBaseClass {
   private static final double ANTI_SURGE_STUCK_THRESHOLD = 0.98;
 
   /**
+   * Anti-surge: absolute upper bound on the recycle flow expressed as a multiple of the compressor surge flow. Holding
+   * a compressor on its surge line never requires recycling more than the surge flow itself (recycle = surgeFlow -
+   * freshFeed, and freshFeed &ge; 0), so this generous multiple caps the recycle setpoint. It breaks the pathological
+   * runaway where the per-iteration percentage step compounds geometrically and inflates the recycle to physically
+   * impossible values, which otherwise prevents the outer recycle loop from ever converging.
+   */
+  private static final double ANTI_SURGE_MAX_RECYCLE_FACTOR = 2.0;
+
+  /**
    * Constructor for Calculator.
    *
    * @param name a {@link java.lang.String} object
@@ -124,6 +133,17 @@ public class Calculator extends ProcessEquipmentBaseClass {
     double maxStep = 0.25 * Math.max(currentRecycle, Math.max(inletFlow, surgeFlow));
     double cappedStep = Math.max(-maxStep, Math.min(maxStep, rawStep));
     double flowAntiSurge = Math.max(currentRecycle + cappedStep, inletFlow / 1.0e6);
+
+    // Absolute upper bound on the recycle setpoint. The recycle required to hold
+    // the compressor on the surge line can never exceed the surge flow itself, so
+    // capping at a generous multiple of the surge flow leaves normal operation
+    // untouched while breaking the geometric runaway that otherwise inflates the
+    // recycle without bound (e.g. an injection-compressor recycle growing to tens
+    // of millions of m3/hr) and stops the outer recycle loop from converging.
+    double maxRecycle = ANTI_SURGE_MAX_RECYCLE_FACTOR * surgeFlow;
+    if (flowAntiSurge > maxRecycle) {
+      flowAntiSurge = maxRecycle;
+    }
 
     antiSurgeSplitter.setFlowRates(new double[] { -1, flowAntiSurge }, "m3/hr");
     antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "m3/hr");
