@@ -48,12 +48,19 @@ see [devtools/README.md](../../devtools/README.md#recommended-no-admin-runbook-f
    ```
    macOS/Linux: `./install.sh`. This also puts the `neqsim` command on PATH
    (open a new terminal afterwards; or use `py -m neqsim_cli`).
+   > **In VS Code:** if running `neqsim` shows *"The term 'neqsim' is not
+   > recognized"*, a new integrated terminal is **not** enough — VS Code captures
+   > PATH at launch, so fully quit and reopen VS Code. (Installing into an
+   > activated virtualenv avoids this entirely.)
 3. **Install community agents & skills — no auth needed.** These are the default
    catalog and work immediately:
    ```powershell
-   neqsim agent install --all --vscode
-   neqsim skill install --all
+   neqsim agent install --all --vscode    # every agent + each agent's required skills
+   neqsim skill install --all --vscode    # every catalog skill (incl. standalone ones)
    ```
+   Each command prints a per-item progress list (`[1/N] <name>`) and an install
+   summary. `--vscode` also exports them to VS Code (reload/restart VS Code to
+   pick them up). To install just one: `neqsim skill install <name> --vscode`.
 4. **Connect the enterprise repos AND sign in, in one step.** `private-init --login`
    registers the private repo in your per-user catalog **and** launches browser
    SSO (`gh auth login --web`) — so SSO and repo registration happen together:

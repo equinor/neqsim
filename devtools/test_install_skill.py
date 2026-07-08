@@ -599,5 +599,76 @@ class SkillVsCodeExportTest(unittest.TestCase):
         self.assertNotIn("secret", output.lower())
 
 
+class InstallAllSkillsTest(unittest.TestCase):
+    """Regression tests for `neqsim skill install --all` and source filtering."""
+
+    @staticmethod
+    def _args(**overrides):
+        import argparse
+        base = dict(
+            name=None, all=False, source="all", force=False,
+            vscode=False, target=None, vscode_scope="user",
+            vscode_dir=None, export_dir=None,
+        )
+        base.update(overrides)
+        return argparse.Namespace(**base)
+
+    def test_all_installs_every_catalog_skill(self):
+        """--all iterates the whole catalog and installs each skill once."""
+        skills = [
+            {"name": "alpha", "_source": "community"},
+            {"name": "beta", "_source": "community"},
+        ]
+        with mock.patch.object(install_skill, "load_manifest", return_value={}), \
+                mock.patch.object(install_skill, "_install_skill_record", return_value=True) as record:
+            install_skill.cmd_install(skills, self._args(all=True))
+        installed = [call.args[0]["name"] for call in record.call_args_list]
+        self.assertEqual(["alpha", "beta"], installed)
+
+    def test_all_source_filter_limits_to_matching_source(self):
+        """--source private installs only private-sourced skills."""
+        skills = [
+            {"name": "alpha", "_source": "community"},
+            {"name": "priv", "_source": "private"},
+        ]
+        with mock.patch.object(install_skill, "load_manifest", return_value={}), \
+                mock.patch.object(install_skill, "_install_skill_record", return_value=True) as record:
+            install_skill.cmd_install(skills, self._args(all=True, source="private"))
+        installed = [call.args[0]["name"] for call in record.call_args_list]
+        self.assertEqual(["priv"], installed)
+
+    def test_all_deduplicates_repeated_names(self):
+        """A skill appearing twice in the catalog is installed only once."""
+        skills = [
+            {"name": "alpha", "_source": "community"},
+            {"name": "alpha", "_source": "community"},
+        ]
+        with mock.patch.object(install_skill, "load_manifest", return_value={}), \
+                mock.patch.object(install_skill, "_install_skill_record", return_value=True) as record:
+            install_skill.cmd_install(skills, self._args(all=True))
+        self.assertEqual(1, record.call_count)
+
+    def test_all_nonzero_exit_when_a_skill_fails(self):
+        """A failing skill makes the bulk install exit non-zero."""
+        skills = [{"name": "alpha", "_source": "community"}]
+        with mock.patch.object(install_skill, "load_manifest", return_value={}), \
+                mock.patch.object(install_skill, "_install_skill_record", return_value=False):
+            with self.assertRaises(SystemExit) as ctx:
+                install_skill.cmd_install(skills, self._args(all=True))
+        self.assertEqual(1, ctx.exception.code)
+
+    def test_missing_name_without_all_errors_with_guidance(self):
+        """Omitting the name without --all fails with a helpful message."""
+        import io
+        from contextlib import redirect_stdout
+
+        stream = io.StringIO()
+        with redirect_stdout(stream):
+            with self.assertRaises(SystemExit) as ctx:
+                install_skill.cmd_install([], self._args())
+        self.assertEqual(1, ctx.exception.code)
+        self.assertIn("--all", stream.getvalue())
+
+
 if __name__ == "__main__":
     unittest.main()
