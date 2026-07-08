@@ -97,6 +97,38 @@ def _already_on_path():
     return shutil.which(SCRIPT_NAME)
 
 
+def _same_dir(a, b):
+    """Return whether two paths refer to the same directory.
+
+    Comparison is case- and separator-insensitive (``normcase`` + ``normpath``)
+    so it behaves correctly on Windows.
+
+    @param a first path
+    @param b second path
+    @return ``True`` if both normalize to the same directory
+    """
+    return os.path.normcase(os.path.normpath(a)) == os.path.normcase(
+        os.path.normpath(b)
+    )
+
+
+def _dir_on_path(directory):
+    """Return whether ``directory`` is already on the current process PATH.
+
+    Uses the live ``PATH`` (which reflects machine + user + session entries), so
+    a directory placed on PATH by a global / all-users install is detected and
+    not duplicated into the per-user PATH.
+
+    @param directory the directory to test
+    @return ``True`` if the directory is present on PATH
+    """
+    target = os.path.normcase(os.path.normpath(directory))
+    for entry in os.environ.get("PATH", "").split(os.pathsep):
+        if entry and os.path.normcase(os.path.normpath(entry)) == target:
+            return True
+    return False
+
+
 def _add_to_windows_user_path(new_dir):
     """Append ``new_dir`` to the Windows per-user PATH via the registry.
 
@@ -234,22 +266,52 @@ def _add_to_posix_path(new_dir):
 def main():
     """Entry point: ensure the console-script directory is on PATH.
 
+    Locates the directory where *this* install placed the console script and
+    ensures that specific directory is on PATH -- rather than stopping as soon
+    as any ``neqsim`` resolves. That distinction matters on machines where an
+    elevated / all-users install already put ``neqsim`` on the system PATH: a
+    later non-elevated (per-user) install puts the script in a *different*
+    directory that would otherwise never be added.
+
     Always exits 0 so it never fails an install; prints a manual fallback if it
     cannot update PATH automatically.
 
     @return ``None``
     """
-    resolved = _already_on_path()
-    if resolved:
-        print("'{}' is already on PATH ({}).".format(SCRIPT_NAME, resolved))
-        return
-
     script_dir = find_script_dir()
+
+    # If the script lives in the active virtualenv, it is already on PATH for
+    # that environment; do not persist an ephemeral venv location to the user
+    # PATH.
+    venv = os.environ.get("VIRTUAL_ENV")
+    if venv and script_dir:
+        venv_scripts = os.path.join(venv, "Scripts" if os.name == "nt" else "bin")
+        if _same_dir(script_dir, venv_scripts):
+            print(
+                "'{}' is installed in the active virtualenv and already on "
+                "PATH:\n  {}".format(SCRIPT_NAME, script_dir)
+            )
+            return
+
     if not script_dir:
-        # Install may have used a different layout; module form always works.
+        # We could not find the script where an install would place it. If it
+        # nonetheless resolves from a prior / global install, that is fine;
+        # otherwise tell the user how to run the CLI via the module form.
+        resolved = _already_on_path()
+        if resolved:
+            print("'{}' is already on PATH ({}).".format(SCRIPT_NAME, resolved))
+            return
         print(
             "Could not locate the '{}' script directory. "
             "Use 'py -m neqsim_cli --help' to run the CLI.".format(SCRIPT_NAME)
+        )
+        return
+
+    if _dir_on_path(script_dir):
+        print(
+            "'{}' script directory is already on PATH:\n  {}".format(
+                SCRIPT_NAME, script_dir
+            )
         )
         return
 
@@ -276,6 +338,12 @@ def main():
                 "'{}' directory is already in the user PATH:\n  {}\n"
                 "Open a new terminal to pick it up.".format(SCRIPT_NAME, script_dir)
             )
+        print(
+            "If running '{0}' later shows \"The term '{0}' is not recognized\" "
+            "in a VS Code terminal, fully quit and reopen VS Code -- a new "
+            "integrated terminal is NOT enough (VS Code captures PATH at "
+            "launch). A virtualenv avoids this.".format(SCRIPT_NAME)
+        )
     else:
         # macOS/Linux: append to the shell rc file so a new shell picks it up.
         updated = _add_to_posix_path(script_dir)

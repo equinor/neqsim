@@ -171,6 +171,9 @@ Write-Host "Done. Verify with:" -ForegroundColor Green
 Write-Host "  $pythonDisplay -m neqsim_cli --help"
 Write-Host "If 'neqsim' is not found in this window, open a NEW terminal (PATH changes"
 Write-Host "only apply to newly opened terminals), or use the line above."
+Write-Host "If running 'neqsim' shows `"The term 'neqsim' is not recognized`" in a VS Code"
+Write-Host "terminal, fully quit and reopen VS Code - a new integrated terminal is NOT"
+Write-Host "enough (VS Code captures PATH at launch). A virtualenv avoids this."
 
 # ── JDK advisory (non-fatal) ─────────────────────────────────────────────
 # The Python devtools do not need Java, but building the NeqSim JAR

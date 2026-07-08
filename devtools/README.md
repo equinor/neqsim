@@ -279,6 +279,9 @@ python -c "import sysconfig; print(sysconfig.get_path('scripts'))"
 $scripts = [System.IO.Path]::Combine($env:APPDATA, 'Python', 'Python312', 'Scripts')
 [Environment]::SetEnvironmentVariable("PATH", $env:PATH + ";$scripts", "User")
 # Restart your terminal for the change to take effect.
+# If running neqsim later shows "The term 'neqsim' is not recognized" in a VS Code
+# terminal, fully quit and reopen VS Code (a new integrated terminal is not enough
+# — VS Code captures PATH at launch). A virtualenv avoids this.
 ```
 
 **Linux / macOS — without venv:**
