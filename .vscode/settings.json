@@ -3,11 +3,20 @@
   "java.configuration.updateBuildConfiguration": "automatic",
   "java.compile.nullAnalysis.mode": "automatic",
   "[java]": {
+    // Organize imports on save (Spotless does NOT manage imports, and checkstyle flags unused ones).
     "editor.codeActionsOnSave": {
       "source.organizeImports": "explicit"
     },
+    // Formatting authority for Java in this repo is Spotless (Eclipse formatter 4.35,
+    // .config/neqsim_formatter.xml), enforced by the Maven `spotless:check` CI gate and the
+    // `spotless-apply` pre-commit hook. The Red Hat Java extension bundles a DIFFERENT Eclipse JDT
+    // engine that, even with the same profile, formats some constructs differently (e.g. collapses
+    // empty method bodies to `{}`). Leaving formatOnSave on therefore rewrites files into a state
+    // Spotless rejects, producing spurious working-tree diffs. It is disabled here so Spotless is
+    // the single source of truth — run `./mvnw spotless:apply` (or just commit; the pre-commit hook
+    // applies it automatically).
+    "editor.formatOnSave": false,
     "editor.defaultFormatter": "redhat.java",
-    "editor.formatOnSave": true,
     "editor.tabSize": 2,
     "editor.insertSpaces": true,
     "editor.detectIndentation": false
