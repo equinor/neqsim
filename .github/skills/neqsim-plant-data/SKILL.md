@@ -98,6 +98,15 @@ results = c.search(tag="BA:*", desc="*Temperature*")
 results = c.search("*COMP*", timeout=30)
 ```
 
+> **Gotcha — historian point names rarely equal the P&ID/STID tag number.** A PI
+> point is often prefixed and suffixed (e.g. STID `20PIT1111` → historian
+> `KRI.20PIT1111/Y/PRIM`, and a valve position as `.../OutPosition/PRIM`). Search
+> with **both-side wildcards** `*<tag>*` (a trailing-only `<tag>*` will miss the
+> prefix and resolve nothing), then map STID tag → resolved point and **verify the
+> resolved count** before `read()`. Also check the per-tag `::status`/quality
+> column — a value with bad quality (e.g. status 2) must not be trusted as a
+> current-operation input.
+
 Returns a list of tuples: `[(tag_name, description), ...]`
 
 ### Reading Data
