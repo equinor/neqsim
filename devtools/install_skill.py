@@ -1329,8 +1329,16 @@ def _install_from_git(skill, dest_file):
 
 
 def cmd_install(skills, args):
-    """Install a skill from the catalog (community or private)."""
+    """Install a skill (or every skill with --all) from the catalog."""
+    if getattr(args, "all", False) or args.name == "*":
+        _install_all_skills(skills, args)
+        return
+
     name = args.name
+    if not name:
+        print("\n  Specify a skill name, or use --all to install every skill.")
+        print("  Run: neqsim skill list\n")
+        sys.exit(1)
     skill = next((s for s in skills if s.get("name") == name), None)
     if not skill:
         print(f"\n  Skill '{name}' not found in catalog.")
@@ -1338,6 +1346,58 @@ def cmd_install(skills, args):
         sys.exit(1)
 
     manifest = load_manifest()
+    if not _install_skill_record(skill, args, manifest):
+        sys.exit(1)
+
+
+def _install_all_skills(skills, args):
+    """Install every catalog skill, continuing past individual failures."""
+    source_filter = getattr(args, "source", "all")
+    seen = set()
+    unique = []
+    for skill in skills:
+        name = skill.get("name", "")
+        if not name or name in seen:
+            continue
+        if source_filter != "all" and skill.get("_source") != source_filter:
+            continue
+        seen.add(name)
+        unique.append(skill)
+
+    total = len(unique)
+    if total == 0:
+        print("\n  No skill(s) matched source '{source}'.\n".format(source=source_filter))
+        return
+    print("\n  Installing {total} {source} skill(s) from the catalog...\n".format(
+        total=total, source=source_filter))
+    manifest = load_manifest()
+    installed = []
+    failed = []
+    for index, skill in enumerate(unique, start=1):
+        name = skill.get("name", "")
+        print("  [{index}/{total}] {name}".format(index=index, total=total, name=name))
+        if _install_skill_record(skill, args, manifest):
+            installed.append(name)
+        else:
+            failed.append(name)
+
+    print("\n  ==== Install summary ====")
+    print("  Installed/OK: {count}".format(count=len(installed)))
+    print("  Failed: {count}".format(count=len(failed)))
+    if failed:
+        print("  Failed skills: {names}".format(names=", ".join(failed)))
+        sys.exit(1)
+
+
+def _install_skill_record(skill, args, manifest):
+    """Install a single resolved skill record.
+
+    @param skill the resolved catalog skill mapping to install
+    @param args the parsed CLI arguments (force + export target options)
+    @param manifest the loaded install manifest (mutated and saved on success)
+    @return True on success, False on failure (never calls sys.exit)
+    """
+    name = skill.get("name")
     if name in manifest and not args.force:
         print(f"\n  Skill '{name}' already installed at {manifest[name]['path']}")
         print(f"  Use --force to reinstall.")
@@ -1345,11 +1405,11 @@ def cmd_install(skills, args):
             source_dir = Path(manifest[name].get("path", "")).parent
             if not source_dir.exists():
                 print(f"  [!!] Installed skill folder is missing: {source_dir}\n")
-                sys.exit(1)
+                return False
             if not _export_installed_skill(name, source_dir, args, manifest):
-                sys.exit(1)
+                return False
         print()
-        return
+        return True
 
     dest_dir = INSTALL_DIR / name
     dest_dir.mkdir(parents=True, exist_ok=True)
@@ -1374,7 +1434,7 @@ def cmd_install(skills, args):
             dest_file.unlink()
             dest_dir.rmdir()
             print(f"  [!!] Downloaded content doesn't look like a SKILL.md file.")
-            sys.exit(1)
+            return False
 
         manifest[name] = {
             "path": str(dest_file),
@@ -1399,12 +1459,13 @@ def cmd_install(skills, args):
         print(f"\n  To use in your AI tool, point it at: {dest_dir}\n")
 
         if not _export_installed_skill(name, dest_dir, args, manifest):
-            sys.exit(1)
+            return False
+        return True
 
     except Exception as e:
         print(f"  [!!] Download failed: {e}")
         print(f"  You can manually download from: https://github.com/{skill.get('repo', '')}\n")
-        sys.exit(1)
+        return False
 
 
 def cmd_installed(skills, args):
@@ -2057,6 +2118,8 @@ def main():
         "  neqsim skill install neqsim-example-skill",
         "  neqsim skill install neqsim-example-skill --target vscode",
         "  neqsim skill install neqsim-example-skill --target generic",
+        "  neqsim skill install --all --target vscode",
+        "  neqsim skill install --all --source community --target vscode",
         "  neqsim skill export neqsim-example-skill --target vscode",
         "  neqsim skill export neqsim-example-skill --target generic",
         "  neqsim skill installed",
@@ -2095,8 +2158,15 @@ def main():
     p_info = sub.add_parser("info", help="Show details for a skill")
     p_info.add_argument("name", help="Skill name")
 
-    p_install = sub.add_parser("install", help="Install a skill")
-    p_install.add_argument("name", help="Skill name from catalog")
+    p_install = sub.add_parser("install", help="Install a skill (or every skill with --all)")
+    p_install.add_argument(
+        "name", nargs="?",
+        help="Skill name from catalog (omit when using --all)")
+    p_install.add_argument(
+        "--all", action="store_true", help="Install every skill in the catalog")
+    p_install.add_argument(
+        "--source", choices=["all", "community", "private"], default="all",
+        help="When used with --all, install all sources, community only, or private/enterprise only")
     p_install.add_argument("--force", action="store_true", help="Reinstall if exists")
     p_install.add_argument(
         "--vscode", action="store_true",

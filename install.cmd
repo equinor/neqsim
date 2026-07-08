@@ -7,9 +7,10 @@ REM with a "file is not digitally signed" / execution-policy error -- including
 REM locked-down machines where the execution policy is enforced by Group Policy
 REM (so even "powershell -ExecutionPolicy Bypass" is ignored).
 REM
-REM It finds a working Python (py launcher, python, or python3, skipping the
-REM Microsoft Store stub), bootstraps pip if needed, and installs the devtools
-REM package in editable mode -- exactly what install.ps1 does at its core.
+REM It finds a working Python (preferring an active virtualenv via python /
+REM python3, falling back to the py launcher, and skipping the Microsoft Store
+REM stub), bootstraps pip if needed, and installs the devtools package in
+REM editable mode -- exactly what install.ps1 does at its core.
 REM
 REM Usage (from the repo root, in cmd.exe or by double-clicking):
 REM     install.cmd                 :: install neqsim-dev-setup (editable)
@@ -41,12 +42,19 @@ echo NeqSim devtools installer (batch)
 echo Locating a working Python interpreter...
 
 REM ---- Find a Python that actually prints a version (skips the Store stub) ----
+REM Order matters: prefer interpreters that RESPECT an active virtualenv.
+REM `python` / `python3` resolve to the venv's python when a venv is activated
+REM (its Scripts dir is prepended to PATH), so the package -- and the `neqsim`
+REM console script -- install where the user expects. `py -3` is LAST because
+REM the py launcher IGNORES an active venv and would install into the system
+REM Python instead, putting the script in a per-user Scripts dir that the venv's
+REM PATH does not include. (install.ps1 uses the same ordering.)
 set "PY="
-call :try_python "py" "-3"
-if defined PY goto :found
 call :try_python "python" ""
 if defined PY goto :found
 call :try_python "python3" ""
+if defined PY goto :found
+call :try_python "py" "-3"
 if defined PY goto :found
 
 echo.
@@ -94,6 +102,9 @@ echo Done. Verify with:
 echo   %PY% -m neqsim_cli --help
 echo If the 'neqsim' command is not found in this window, open a NEW terminal
 echo (PATH changes only apply to newly opened terminals), or use the line above.
+echo If running 'neqsim' shows "The term 'neqsim' is not recognized" in a VS Code
+echo terminal, fully quit and reopen VS Code -- a new integrated terminal is NOT
+echo enough (VS Code captures PATH at launch). A virtualenv avoids this.
 exit /b 0
 
 :err_pip_boot
