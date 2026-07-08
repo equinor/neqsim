@@ -101,6 +101,32 @@ public class Calculator extends ProcessEquipmentBaseClass {
     double surgeFlow = compressor.getSurgeFlowRate();
     double currentRecycle = antiSurgeSplitter.getSplitStream(1).getFlowRate("m3/hr");
 
+    // Guard against a surge flow extrapolated far beyond the surge curve data.
+    // The surge curve interpolates flow from the operating head; when the head
+    // falls outside the curve's fitted range (e.g. a surge curve assigned to a
+    // duty it was not measured for) the extrapolation can return a physically
+    // impossible surge flow orders of magnitude above the curve, which makes the
+    // proportional step below chase an unreachable target and the recycle grow
+    // without bound. Clamp the surge flow to the maximum flow that defines the
+    // surge curve so the anti-surge control stays inside the measured envelope.
+    try {
+      double[] curveFlow = antiSurgeSplitter == null ? null
+          : compressor.getCompressorChart().getSurgeCurve().getSortedFlow();
+      if (curveFlow != null && curveFlow.length > 0) {
+        double maxCurveFlow = curveFlow[0];
+        for (int i = 1; i < curveFlow.length; i++) {
+          if (curveFlow[i] > maxCurveFlow) {
+            maxCurveFlow = curveFlow[i];
+          }
+        }
+        if (Double.isFinite(maxCurveFlow) && maxCurveFlow > 0.0 && surgeFlow > maxCurveFlow) {
+          surgeFlow = maxCurveFlow;
+        }
+      }
+    } catch (Exception ex) {
+      logger.debug("Anti-surge: could not read surge curve flow range for clamping", ex);
+    }
+
     // Guard against non-finite state coming from a failed compressor run or an
     // inactive surge curve. Without this the proportional update below can
     // propagate NaN into the splitter setpoint and deadlock the recycle loop.
