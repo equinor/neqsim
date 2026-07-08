@@ -43,6 +43,12 @@ public class TPflash extends Flash {
    * result to a single phase. Avoids false triggers from numerical noise.
    */
   private static final double SPURIOUS_MULTIPHASE_GIBBS_DROP_THRESHOLD_J = 1.0;
+  /**
+   * Maximum per-component mole-fraction difference below which two converged phases are treated as identical, i.e. a
+   * trivial (non-physical) split of the feed into two copies of itself. Genuine two-phase splits differ by far more
+   * than this even when the incipient phase fraction is tiny.
+   */
+  private static final double TRIVIAL_SPLIT_COMPOSITION_TOLERANCE = 1.0e-6;
   /** Guard preventing recursive rescue attempts while the local seed flash is running. */
   private static final ThreadLocal<Boolean> MULTIPHASE_RESCUE_ACTIVE = new ThreadLocal<Boolean>() {
     @Override
@@ -536,6 +542,12 @@ public class TPflash extends Flash {
           }
           system.init(1);
         }
+        // The multiphase flash above is run precisely because the single-phase stability test may
+        // miss a genuine second phase, so a real split found here must be preserved. Only remove a
+        // trivial split (two phases with essentially identical composition) — a non-physical
+        // solution of the flash equations. The Gibbs-based spurious rescue is intentionally NOT
+        // applied on this path, as it can discard a genuine split the stability test overlooked.
+        collapseTrivialMultiphaseSplit();
         return;
       }
     }
@@ -716,6 +728,7 @@ public class TPflash extends Flash {
     }
     rescueSinglePhaseMultiphaseEndpoint();
     rescueSpuriousMultiphaseEndpoint();
+    collapseTrivialMultiphaseSplit();
     normalizeActivePhaseFractions();
 
     // Final chemical equilibrium call after all phase reordering
@@ -1004,7 +1017,50 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Collapses the active phase set to the cached single-phase reference root.
+   * Collapses a converged two-phase result to a single phase when the two phases are essentially identical, i.e. a
+   * trivial solution of the flash equations.
+   *
+   * <p>
+   * Near the critical point and along the dew line a TP flash can converge to a trivial split in which both phases
+   * carry the overall feed composition (all K-values approximately unity, equal densities). Such a split has the same
+   * Gibbs energy as the single-phase feed, so {@link #rescueSpuriousMultiphaseEndpoint()} — which only collapses
+   * results whose Gibbs energy is strictly higher than the single-phase reference — does not catch it. Splitting a
+   * fluid into two identical copies is physically meaningless (it is a single phase), so this guard removes the
+   * artifact and keeps the reported phase boundary consistent with the phase-envelope saturation solver. Only the
+   * two-phase case is handled; genuine two-phase splits have compositionally distinct phases (even when the incipient
+   * phase fraction is tiny) and are left untouched. Skipped for chemical / electrolyte systems.
+   * </p>
+   */
+  private void collapseTrivialMultiphaseSplit() {
+    if (system.getNumberOfPhases() != 2 || !system.doMultiPhaseCheck() || referenceSinglePhaseType == null
+        || system.isChemicalSystem() || system.hasIons()) {
+      return;
+    }
+    neqsim.thermo.phase.PhaseInterface phaseA = system.getPhase(0);
+    neqsim.thermo.phase.PhaseInterface phaseB = system.getPhase(1);
+    int numberOfComponents = phaseA.getNumberOfComponents();
+    if (numberOfComponents <= 1) {
+      return;
+    }
+    double maxCompositionDifference = 0.0;
+    for (int componentIndex = 0; componentIndex < numberOfComponents; componentIndex++) {
+      double difference = Math
+          .abs(phaseA.getComponent(componentIndex).getx() - phaseB.getComponent(componentIndex).getx());
+      if (difference > maxCompositionDifference) {
+        maxCompositionDifference = difference;
+      }
+    }
+    if (maxCompositionDifference >= TRIVIAL_SPLIT_COMPOSITION_TOLERANCE) {
+      return;
+    }
+    if (logger.isDebugEnabled()) {
+      logger.debug("Collapsing trivial two-phase split: max composition difference {} < {}", maxCompositionDifference,
+          TRIVIAL_SPLIT_COMPOSITION_TOLERANCE);
+    }
+    collapseToReferenceSinglePhase();
+  }
+
+  /**
    *
    * <p>
    * The collapse must not call {@code system.init(0)} because that method resets a
