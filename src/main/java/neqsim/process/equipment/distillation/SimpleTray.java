@@ -34,6 +34,15 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
    */
   private boolean useReactiveFlash = false;
 
+  /**
+   * When {@code true}, only thermodynamic properties (init level 2: enthalpy, K-values, densities needed for the
+   * balances) are initialized after each tray flash and the expensive physical/transport properties (viscosity, thermal
+   * conductivity, surface tension) are skipped. The sequential column solver sets this during iteration and calls
+   * {@link #finalizeTrayProperties()} once on the converged state. Default {@code false} preserves standard
+   * standalone-tray behavior.
+   */
+  private boolean skipPhysicalPropertiesDuringSolve = false;
+
   /** Cached gas out stream, invalidated when run() is called. */
   private transient StreamInterface cachedGasOutStream = null;
   /** Cached liquid out stream, invalidated when run() is called. */
@@ -224,7 +233,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       } else {
         testOps.TPflash();
       }
-      mixedStream.getThermoSystem().initProperties();
+      initTrayProperties();
     } else {
       try {
         if (useReactiveFlash) {
@@ -232,7 +241,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
         } else {
           testOps.PHflash(enthalpy, 0);
         }
-        mixedStream.getThermoSystem().initProperties();
+        initTrayProperties();
       } catch (Exception ex) {
         try {
           if (!Double.isNaN(getOutTemperature())) {
@@ -243,7 +252,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
           } else {
             testOps.TPflash();
           }
-          mixedStream.getThermoSystem().initProperties();
+          initTrayProperties();
         } catch (Exception ex2) {
           logger.warn("TPflash failed in SimpleTray: " + getName(), ex2);
         }
@@ -266,6 +275,52 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
 
     if (changeTo2Phase) {
       thermoSystem2.setMultiPhaseCheck(true);
+    }
+  }
+
+  /**
+   * Enable or disable skipping of physical/transport property initialization after each tray flash. Used by the
+   * sequential column solver to avoid computing viscosity/thermal-conductivity/surface-tension on every inner
+   * iteration; call {@link #finalizeTrayProperties()} once on the converged state to restore full properties.
+   *
+   * @param skip {@code true} to skip physical-property initialization during the solve
+   */
+  public void setSkipPhysicalPropertiesDuringSolve(boolean skip) {
+    this.skipPhysicalPropertiesDuringSolve = skip;
+  }
+
+  /**
+   * Whether physical-property initialization is currently skipped after each tray flash.
+   *
+   * @return {@code true} if physical properties are skipped during the solve
+   */
+  public boolean isSkipPhysicalPropertiesDuringSolve() {
+    return skipPhysicalPropertiesDuringSolve;
+  }
+
+  /**
+   * Initialize tray outlet properties after a flash. Computes full properties (thermodynamic + physical) unless
+   * {@link #skipPhysicalPropertiesDuringSolve} is set, in which case only thermodynamic properties (init level 2, which
+   * the mass/energy balances rely on) are computed.
+   */
+  private void initTrayProperties() {
+    if (skipPhysicalPropertiesDuringSolve) {
+      mixedStream.getThermoSystem().init(2);
+    } else {
+      mixedStream.getThermoSystem().initProperties();
+    }
+  }
+
+  /**
+   * Finalize full physical/transport properties on the converged tray state and re-enable them for subsequent
+   * standalone runs. Called by the sequential column solver after convergence when physical-property initialization was
+   * skipped during iteration, so that product streams cloned from this tray carry complete properties.
+   */
+  public void finalizeTrayProperties() {
+    this.skipPhysicalPropertiesDuringSolve = false;
+    if (mixedStream != null && mixedStream.getThermoSystem() != null) {
+      mixedStream.getThermoSystem().initProperties();
+      invalidateOutStreamCache();
     }
   }
 
