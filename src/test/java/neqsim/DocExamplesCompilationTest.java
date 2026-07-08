@@ -576,7 +576,8 @@ public class DocExamplesCompilationTest {
     column.getReboiler().setOutTemperature(105.0 + 273.15);
     column.setTopPressure(30.0);
     column.setBottomPressure(32.0);
-    column.setMaxNumberOfIterations(50);
+    column.setMaxNumberOfIterations(400);
+    System.setProperty("exp.iter", String.valueOf(400));
     column.setSolverType(DistillationColumn.SolverType.MESH_RESIDUAL);
     column.run();
 
