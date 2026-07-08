@@ -299,7 +299,7 @@ Install and use them with the `neqsim` CLI (all user-scope, no admin — see the
 ```bash
 neqsim agent list                 # browse the community catalog
 neqsim agent search hydrate       # find an agent by keyword
-neqsim agent install --all --vscode   # install into the VS Code prompts folder
+neqsim agent install --all --vscode   # export agents+skills to ~/.copilot for VS Code Copilot
 neqsim skill install --all        # install community skills
 
 neqsim agent private-init         # scaffold a private/enterprise catalog
@@ -423,7 +423,7 @@ neqsim doctor          # verifies Python, Java/JDK, Maven wrapper, agents
 # (or install a JDK manually and set JAVA_HOME yourself), then in a NEW terminal:
 .\mvnw.cmd install -DskipTests
 
-# 4. Install AI agents into the VS Code USER prompts folder (no admin)
+# 4. Install AI agents into ~/.copilot for VS Code Copilot (no admin)
 neqsim agent install --all --vscode
 neqsim skill install --all
 ```
@@ -610,7 +610,7 @@ Browse and install community-contributed skills, or publish your own:
 ```bash
 neqsim skill list                    # browse the catalog and discovered repositories
 neqsim skill install <name>          # install a skill
-neqsim skill install <name> --target vscode   # also export to your VS Code user prompts folder
+neqsim skill install <name> --target vscode   # also export to your ~/.copilot/skills folder
 neqsim skill doctor                  # check private-catalog authentication readiness
 neqsim skill doctor --target vscode  # verify VS Code skill exports
 neqsim skill publish user/repo-name  # publish yours (creates a draft PR)
@@ -636,9 +636,10 @@ exports are errors and extra exports are warnings.
 
 By default, installed community and private content is kept out of the Git-tracked
 workspace: skills install to `~/.neqsim/skills/`, agents install to
-`~/.neqsim/agents/`, and `--target vscode` writes generated copies to the user's
-VS Code prompts folders. Use `--vscode-scope workspace` only when a maintainer
-intentionally wants a generated `.github/skills` or `.github/agents` copy.
+`~/.neqsim/agents/`, and `--target vscode` writes generated copies to the personal
+`~/.copilot/skills` and `~/.copilot/agents` folders (which VS Code and the GitHub
+Copilot CLI scan in every workspace). Use `--vscode-scope workspace` only when a
+maintainer intentionally wants a generated `.github/skills` or `.github/agents` copy.
 
 The catalog can list individual skills directly and can also point to public
 multi-skill GitHub repositories. When a repository is listed under
