@@ -119,6 +119,32 @@ class SplitterTest {
   }
 
   @Test
+  void testFixedFlowExceedingInletIsClamped() {
+    // A fixed split flow larger than the inlet (e.g. an anti-surge recycle in deep
+    // turndown) must not produce a negative remainder ("-1") stream. The fixed flow
+    // is clamped to the inlet and the remainder stream gets zero flow, so the split
+    // still conserves mass.
+    double inletKgHr = inletStream.getThermoSystem().getFlowRate("kg/hr");
+
+    Splitter splitter = new Splitter("splitter", inletStream, 2);
+    // element 0 is the remainder ("-1"), element 1 demands 3x the inlet mass flow.
+    splitter.setFlowRates(new double[] { -1.0, 3.0 * inletKgHr }, "kg/hr");
+    splitter.run();
+
+    // Remainder stream should be (near) zero and the fixed stream should take the
+    // whole inlet — no negative split factors.
+    assertTrue(splitter.getSplitFactor(0) >= -1e-9, "remainder split factor must not be negative");
+    assertEquals(0.0, splitter.getSplitFactor(0), 1e-6);
+    assertEquals(1.0, splitter.getSplitFactor(1), 1e-6);
+
+    double out0 = splitter.getSplitStream(0).getThermoSystem().getFlowRate("kg/hr");
+    double out1 = splitter.getSplitStream(1).getThermoSystem().getFlowRate("kg/hr");
+    assertEquals(inletKgHr, out0 + out1, inletKgHr * 1e-4);
+    assertEquals(0.0, out0, inletKgHr * 1e-4);
+    assertEquals(inletKgHr, out1, inletKgHr * 1e-4);
+  }
+
+  @Test
   void testGetSplitNumber() {
     Splitter splitter = new Splitter("splitter", inletStream, 4);
     assertEquals(4, splitter.getSplitNumber());
