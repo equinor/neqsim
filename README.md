@@ -535,14 +535,31 @@ For details see [docs/modules.md](docs/modules.md).
 We welcome contributions of all kinds: bug fixes, new models, examples, documentation, and notebook recipes.
 **AI-assisted PRs are first-class contributions**; see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-**New here?** Three commands to get started:
+**New here?** Get started (Windows, PowerShell):
+
+```powershell
+git clone https://github.com/equinor/neqsim.git
+cd neqsim
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1   # activate the venv FIRST so 'neqsim' lands on PATH
+.\install.cmd                  # or .\install.ps1  (append 'uv' for the fast installer)
+neqsim onboard                 # interactive setup (Java, Maven, build, Python, agents)
+```
+
+macOS/Linux:
 
 ```bash
 git clone https://github.com/equinor/neqsim.git && cd neqsim
-./install.ps1              # Windows one-time setup (macOS/Linux: ./install.sh)
-neqsim onboard             # interactive setup (Java, Maven, build, Python, agents)
+python3 -m venv .venv && source .venv/bin/activate
+./install.sh
+neqsim onboard
 ```
 
+> **Activate the venv before running `install`.** The installer does not create
+> or activate a venv — it only detects an already-active one. Activating first
+> means the package and the `neqsim` command install into the venv and stay on
+> PATH; skip it and you may hit "`neqsim` is not recognized".
+>
 > The `install` script finds a working Python for you and runs `python -m pip`
 > under the hood, so it works even when `pip`/`python` are not on PATH. To
 > install manually, use `python -m pip install -e devtools/` (not bare `pip`).
