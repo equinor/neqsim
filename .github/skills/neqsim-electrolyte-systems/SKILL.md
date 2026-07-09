@@ -102,6 +102,21 @@ prodWater.initProperties();
 
 ## Scale Risk Assessment
 
+### Higher-level scale helpers (prefer for screening)
+
+Before hand-rolling the flash, note these ready-made helpers (see the
+`neqsim-flow-assurance` skill for full patterns):
+
+- `ElectrolyteScaleCalculator` — activity-corrected SI for CaCO3, BaSO4, CaSO4,
+  SrSO4 from ion mg/L (Davies + Ksp(T)).
+- `ScaleKinetics` — induction time and reaction-vs-transport growth regime on top
+  of an SI (SI says *if*, kinetics says *how fast*).
+- `BrineMixingScaleEvaluator` — seawater/formation-water mixing sweep; finds the
+  worst mixing fraction and mineral (sulphate scale often peaks mid-mix).
+- `ScaleDepositionAccumulator` / `PipeSegmentIntegrity` — deposition and coupled
+  corrosion+scale along a `PipeBeggsAndBrills` profile.
+- Rigorous in-situ SI: `system.checkScalePotential(phase)` on `ThermodynamicOperations`.
+
 ### CaCO3 (Calcite) Scaling
 
 Scale forms when the product of ion activities exceeds the solubility product:

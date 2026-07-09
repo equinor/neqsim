@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -125,6 +126,9 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
   /** Bicarbonate concentration extracted from aqueous speciation, in mg/L. */
   private double bicarbonateMgL = 0.0;
 
+  /** FeCO3 supersaturation ratio (IAP/Ksp) extracted from aqueous speciation, or -1 if not available. */
+  private double feCO3SaturationRatio = -1.0;
+
   /** Whether a free aqueous (water) phase was found in the flashed fluid. */
   private boolean freeWaterPresent = false;
 
@@ -225,9 +229,11 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
     if (freeWaterPresent) {
       inSituPH = work.getPhase(PhaseType.AQUEOUS).getpH();
       bicarbonateMgL = extractBicarbonateMgL(work);
+      feCO3SaturationRatio = computeFeCO3SaturationRatio(work);
     } else {
       inSituPH = Double.NaN;
       bicarbonateMgL = 0.0;
+      feCO3SaturationRatio = -1.0;
     }
 
     model = new NorsokM506CorrosionRate();
@@ -240,6 +246,11 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
     model.setInhibitorEfficiency(inhibitorEfficiency);
     model.setGlycolWeightFraction(glycolWeightFraction);
     model.setBicarbonateConcentrationMgL(bicarbonateMgL);
+
+    // Close the corrosion-scaling loop: a supersaturated aqueous phase forms a protective FeCO3 film.
+    if (feCO3SaturationRatio > 1.0) {
+      model.setFeCO3SaturationRatio(feCO3SaturationRatio);
+    }
 
     if (freeWaterPresent && !Double.isNaN(inSituPH) && inSituPH > 0.0) {
       // Rigorous in-situ pH overrides the model's own correlation.
@@ -306,6 +317,65 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
   }
 
   /**
+   * Computes the FeCO3 (siderite) supersaturation ratio SR = IAP / Ksp from the aqueous Fe2+ and CO3-- molalities.
+   *
+   * <p>
+   * The temperature-dependent siderite solubility product uses the Sun, Nesic and Woollam (2009) correlation on the
+   * molal scale, with Davies-style ionic-strength terms:
+   * </p>
+   *
+   * <pre>
+   * {@code
+   * log10(Ksp) = -59.3498 - 0.041377 * T - 2.1963 / T + 24.5724 * log10(T) + 2.518 * sqrt(I) - 0.657 * I
+   * }
+   * </pre>
+   *
+   * <p>
+   * where T is in Kelvin and I is the ionic strength in mol/kg. The ion activity product is taken as the product of the
+   * Fe2+ and CO3-- molalities. Returns -1 when the aqueous phase or either ion is absent, so the caller leaves the
+   * FeCO3 film feedback disabled.
+   * </p>
+   *
+   * @param system the flashed fluid
+   * @return the FeCO3 supersaturation ratio, or -1 if it cannot be computed
+   */
+  private double computeFeCO3SaturationRatio(SystemInterface system) {
+    if (!system.hasPhaseType(PhaseType.AQUEOUS)) {
+      return -1.0;
+    }
+    PhaseInterface aq = system.getPhase(PhaseType.AQUEOUS);
+    if (!aq.hasComponent("Fe++") || !aq.hasComponent("CO3--")) {
+      return -1.0;
+    }
+    double mFe = aq.getComponent("Fe++").getMolality(aq);
+    double mCO3 = aq.getComponent("CO3--").getMolality(aq);
+    if (mFe <= 0.0 || mCO3 <= 0.0) {
+      return -1.0;
+    }
+
+    // Ionic strength I = 0.5 * sum(m_i * z_i^2) over aqueous ionic components.
+    double ionicStrength = 0.0;
+    for (int i = 0; i < aq.getNumberOfComponents(); i++) {
+      double z = aq.getComponent(i).getIonicCharge();
+      if (z != 0.0) {
+        double m = aq.getComponent(i).getMolality(aq);
+        if (m > 0.0) {
+          ionicStrength += 0.5 * m * z * z;
+        }
+      }
+    }
+
+    double tempK = system.getTemperature();
+    double log10Ksp = -59.3498 - 0.041377 * tempK - 2.1963 / tempK + 24.5724 * Math.log10(tempK)
+        + 2.518 * Math.sqrt(ionicStrength) - 0.657 * ionicStrength;
+    double ksp = Math.pow(10.0, log10Ksp);
+    if (ksp <= 0.0) {
+      return -1.0;
+    }
+    return (mFe * mCO3) / ksp;
+  }
+
+  /**
    * Gets the configured and calculated corrosion model.
    *
    * @return the {@link NorsokM506CorrosionRate} instance (null until {@link #run()} is called)
@@ -351,6 +421,15 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
   }
 
   /**
+   * Gets the FeCO3 (siderite) supersaturation ratio extracted from the aqueous speciation.
+   *
+   * @return FeCO3 supersaturation ratio (IAP/Ksp), or -1 if it could not be computed
+   */
+  public double getFeCO3SaturationRatio() {
+    return feCO3SaturationRatio;
+  }
+
+  /**
    * Indicates whether a free aqueous (water) phase was present in the flashed fluid.
    *
    * @return true if free water was present, false otherwise
@@ -384,6 +463,7 @@ public class NorsokM506ElectrolyteBridge implements Serializable {
     map.put("h2sMoleFraction", h2sMoleFraction);
     map.put("inSituPH", inSituPH);
     map.put("bicarbonateMgL", bicarbonateMgL);
+    map.put("feCO3SaturationRatio", feCO3SaturationRatio);
     if (model != null) {
       map.put("correctedCorrosionRateMmYr", model.getCorrectedCorrosionRate());
     }

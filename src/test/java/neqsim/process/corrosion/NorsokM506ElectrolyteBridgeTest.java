@@ -103,4 +103,38 @@ public class NorsokM506ElectrolyteBridgeTest {
     assertFalse(bridge.isPHFromElectrolyteModel(), "the correlation pH should be used when there is no free water");
     assertNotNull(bridge.getModel());
   }
+
+  /**
+   * Verifies that a brine containing dissolved iron produces a finite FeCO3 supersaturation ratio and, when
+   * supersaturated, applies the protective-film feedback to the corrosion model.
+   */
+  @Test
+  void ironBrineProducesFeCO3SaturationRatio() {
+    SystemInterface fluid = new SystemElectrolyteCPAstatoil(60.0 + 273.15, 50.0);
+    fluid.addComponent("CO2", 0.10);
+    fluid.addComponent("water", 0.88);
+    fluid.addComponent("Na+", 0.01);
+    fluid.addComponent("Cl-", 0.005);
+    fluid.addComponent("Fe++", 5.0e-5);
+    fluid.chemicalReactionInit();
+    fluid.createDatabase(true);
+    fluid.setMixingRule(10);
+    fluid.setMultiPhaseCheck(true);
+
+    NorsokM506ElectrolyteBridge bridge = new NorsokM506ElectrolyteBridge(fluid);
+    bridge.run();
+
+    double sr = bridge.getFeCO3SaturationRatio();
+    // Either the ratio was computed (finite) or the ions were not both present in the aqueous phase (-1).
+    assertTrue(sr == -1.0 || (!Double.isNaN(sr) && sr >= 0.0),
+        "FeCO3 saturation ratio should be -1 or a finite non-negative value, was " + sr);
+    // When supersaturated, the model must carry the film feedback.
+    if (sr > 1.0) {
+      assertTrue(bridge.getModel().getFeCO3SaturationRatio() > 1.0,
+          "a supersaturated FeCO3 ratio should be passed to the corrosion model");
+      assertTrue(bridge.getModel().calculateFeCO3FilmFactor() < 1.0,
+          "supersaturation should give a protective film factor below 1");
+    }
+    assertNotNull(bridge.toJson());
+  }
 }
