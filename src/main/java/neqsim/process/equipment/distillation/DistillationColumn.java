@@ -69,17 +69,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Multiplier governing how much the solver can extend beyond the nominal iteration budget.
    */
   private static final int ITERATION_OVERFLOW_MULTIPLIER = 12;
-  /**
-   * Number of consecutive sequential-solve iterations without meaningful residual improvement that marks the solve as
-   * stalled. When the mass balance is already satisfied, a stalled solve is stopped early with the best-so-far state
-   * instead of grinding to the iteration-overflow ceiling.
-   */
-  private static final int NO_PROGRESS_ITERATION_WINDOW = 10;
-  /**
-   * Minimum relative improvement in the combined residual required for a sequential-solve iteration to count as
-   * progress (1.0e-3 = 0.1%). Iterations improving by less than this are treated as non-progress for stall detection.
-   */
-  private static final double STALL_IMPROVEMENT_FRACTION = 1.0e-3;
   /** Recommended base temperature tolerance for adaptive defaults. */
   private static final double DEFAULT_TEMPERATURE_TOLERANCE = 2.0e-2;
   /** Recommended base mass balance tolerance for adaptive defaults. */
@@ -630,11 +619,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   int numberOfTrays = 1;
   int maxNumberOfIterations = 50;
   /**
-   * Whether {@link #maxNumberOfIterations} was set explicitly by the caller. When {@code true} it is treated as a HARD
-   * iteration cap: the adaptive tray-based iteration floor and the iteration-overflow expansion are both disabled. When
-   * {@code false} (default) the solver uses its adaptive iteration budget.
+   * Whether {@link #maxNumberOfIterations} must be honored as a HARD iteration cap. When {@code true} the adaptive
+   * tray-based iteration floor, the iteration-overflow expansion, and the polish extension are all disabled, so the
+   * solver never runs more than {@link #maxNumberOfIterations} iterations. When {@code false} (default)
+   * {@link #maxNumberOfIterations} is only a lower bound and the solver uses its adaptive iteration budget. This is
+   * opt-in via {@link #setHardIterationCap(boolean)} or {@link #setMaxNumberOfIterations(int, boolean)} so that
+   * existing callers of {@link #setMaxNumberOfIterations(int)} keep the historical soft-floor behavior.
    */
-  private boolean maxIterationsCustomized = false;
+  private boolean hardIterationCap = false;
   /**
    * Optional per-stage initial temperature guesses for simultaneous residual solvers.
    */
@@ -4949,13 +4941,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
     }
 
-    // Stall detection state: stop early when the mass balance is satisfied but the
-    // combined residual stops improving, instead of grinding to the
-    // iteration-overflow ceiling on a column that cannot converge.
-    double bestCombinedResidual = Double.POSITIVE_INFINITY;
-    int noProgressIterations = 0;
-    int noProgressWindow = Math.max(NO_PROGRESS_ITERATION_WINDOW, 3 * numberOfTrays);
-
     int baseIterationLimit = computeIterationLimit();
     int iterationLimit = baseIterationLimit;
     int polishIterationLimit = baseIterationLimit
@@ -4966,7 +4951,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
     // Honor an explicitly user-set maximum as a HARD cap: no overflow expansion and
     // no polish extension beyond the requested iteration count.
-    if (maxIterationsCustomized) {
+    if (hardIterationCap) {
       iterationLimit = maxNumberOfIterations;
       polishIterationLimit = maxNumberOfIterations;
       maxIterationLimit = maxNumberOfIterations;
@@ -5066,29 +5051,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       previousCombinedResidual = combinedResidual;
-
-      // No-progress (stall) detection. When the mass balance is already within
-      // tolerance but the combined residual stops improving, further sequential
-      // sweeps only waste time (the temperature profile is oscillating around a
-      // limit it cannot cross). Stop early with the best-so-far state instead of
-      // expanding the iteration budget to the overflow ceiling. Improving
-      // iterations reset the counter, so genuinely (even slowly) converging
-      // columns are never cut short.
-      if (Double.isFinite(combinedResidual)
-          && combinedResidual < bestCombinedResidual * (1.0 - STALL_IMPROVEMENT_FRACTION)) {
-        bestCombinedResidual = combinedResidual;
-        noProgressIterations = 0;
-      } else {
-        noProgressIterations++;
-      }
-      if (massErr <= baseMassTolerance && iter >= maxNumberOfIterations && noProgressIterations >= noProgressWindow) {
-        logger.debug(
-            "Column {} sequential solve stalled: no residual improvement for {} iterations "
-                + "(combinedResidual={}, tempErr={}, massErr={}). Stopping early at iteration {}.",
-            getName(), Integer.valueOf(noProgressIterations), Double.valueOf(combinedResidual), Double.valueOf(err),
-            Double.valueOf(massErr), Integer.valueOf(iter));
-        break;
-      }
 
       // Divergence recovery: if flows have grown far beyond the total feed,
       // the sequential iteration is unstable. Restore previous-stream arrays
@@ -5230,7 +5192,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private int computeIterationLimit() {
     // An explicitly user-set maximum is a HARD cap: skip the adaptive tray-based floor.
-    if (maxIterationsCustomized) {
+    if (hardIterationCap) {
       return Math.max(1, maxNumberOfIterations);
     }
     int trayBasedLimit = (int) Math.ceil(Math.max(5.0, numberOfTrays * TRAY_ITERATION_FACTOR));
@@ -5502,7 +5464,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
     // Honor an explicitly user-set maximum as a HARD cap: no overflow expansion and
     // no polish extension beyond the requested iteration count.
-    if (maxIterationsCustomized) {
+    if (hardIterationCap) {
       iterationLimit = maxNumberOfIterations;
       polishIterationLimit = maxNumberOfIterations;
       maxIterationLimit = maxNumberOfIterations;
@@ -5516,12 +5478,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean polishing = false;
     boolean massEnergyEvaluated = false;
     int balanceCheckStride = Math.max(3, numberOfTrays / 2);
-
-    // Stall detection state (same rationale as solveSequential): stop early when the
-    // mass balance is satisfied but the combined residual stops improving.
-    double bestCombinedResidual = Double.POSITIVE_INFINITY;
-    int noProgressIterations = 0;
-    int noProgressWindow = Math.max(NO_PROGRESS_ITERATION_WINDOW, 3 * numberOfTrays);
 
     while (iter < iterationLimit) {
       iter++;
@@ -5668,24 +5624,6 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       previousCombinedResidual = combinedResidual;
-
-      // No-progress (stall) detection (same rationale as solveSequential). Improving
-      // iterations reset the counter, so genuinely converging columns are never cut.
-      if (Double.isFinite(combinedResidual)
-          && combinedResidual < bestCombinedResidual * (1.0 - STALL_IMPROVEMENT_FRACTION)) {
-        bestCombinedResidual = combinedResidual;
-        noProgressIterations = 0;
-      } else {
-        noProgressIterations++;
-      }
-      if (massErr <= baseMassTolerance && iter >= maxNumberOfIterations && noProgressIterations >= noProgressWindow) {
-        logger.debug(
-            "Column {} inside-out solve stalled: no residual improvement for {} iterations "
-                + "(combinedResidual={}, tempErr={}, massErr={}). Stopping early at iteration {}.",
-            getName(), Integer.valueOf(noProgressIterations), Double.valueOf(combinedResidual), Double.valueOf(err),
-            Double.valueOf(massErr), Integer.valueOf(iter));
-        break;
-      }
 
       // Divergence recovery (same logic as solveSequential).
       if (!divergenceRecoveryAppliedIO && iter <= 10) {
@@ -6393,7 +6331,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int maxIterationLimit = Math.max(iterationLimit, maxNumberOfIterations)
         + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
     // Honor an explicitly user-set maximum as a HARD cap: no overflow expansion.
-    if (maxIterationsCustomized) {
+    if (hardIterationCap) {
       iterationLimit = maxNumberOfIterations;
       maxIterationLimit = maxNumberOfIterations;
     }
@@ -8318,11 +8256,48 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   /**
    * Setter for the field <code>maxNumberOfIterations</code>.
    *
+   * <p>
+   * This sets a lower bound on the solver iteration budget only; the solver may still expand beyond it via the adaptive
+   * tray-based floor and the iteration-overflow expansion. To treat the value as a HARD maximum, use
+   * {@link #setMaxNumberOfIterations(int, boolean)} with {@code hardCap = true} or call
+   * {@link #setHardIterationCap(boolean)}.
+   * </p>
+   *
    * @param maxIter a int
    */
   public void setMaxNumberOfIterations(int maxIter) {
     this.maxNumberOfIterations = Math.max(1, maxIter);
-    this.maxIterationsCustomized = true;
+  }
+
+  /**
+   * Set the maximum number of solver iterations and optionally treat it as a hard cap.
+   *
+   * @param maxIter the maximum number of iterations (clamped to at least 1)
+   * @param hardCap when {@code true} the value is honored as a HARD cap (adaptive floor, overflow expansion, and polish
+   * extension disabled); when {@code false} it is only a lower bound (historical behavior)
+   */
+  public void setMaxNumberOfIterations(int maxIter, boolean hardCap) {
+    this.maxNumberOfIterations = Math.max(1, maxIter);
+    this.hardIterationCap = hardCap;
+  }
+
+  /**
+   * Enable or disable treating {@link #maxNumberOfIterations} as a hard iteration cap. When enabled, the adaptive
+   * tray-based iteration floor, the iteration-overflow expansion, and the polish extension are all disabled.
+   *
+   * @param hardCap {@code true} to honor {@link #maxNumberOfIterations} as a hard maximum
+   */
+  public void setHardIterationCap(boolean hardCap) {
+    this.hardIterationCap = hardCap;
+  }
+
+  /**
+   * Whether {@link #maxNumberOfIterations} is currently honored as a hard iteration cap.
+   *
+   * @return {@code true} if the hard iteration cap is enabled
+   */
+  public boolean isHardIterationCap() {
+    return hardIterationCap;
   }
 
   /**
