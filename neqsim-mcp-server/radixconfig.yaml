@@ -42,8 +42,10 @@ spec:
         # ── Entra OIDC (resource server; %enterprise profile) ──
         QUARKUS_PROFILE: "enterprise"                # turns on OIDC + OTel
         QUARKUS_OIDC_AUTH_SERVER_URL: "https://login.microsoftonline.com/3aa4a235-b6e2-48d5-9195-7fcf05b459b0/v2.0"
-        QUARKUS_OIDC_CLIENT_ID: "api://35fda377-148b-4b6b-a5be-d52203160690"   # App ID URI = expected audience
-        QUARKUS_OIDC_TOKEN_AUDIENCE: "api://35fda377-148b-4b6b-a5be-d52203160690"
+        # v2 access tokens (requestedAccessTokenVersion=2) carry aud = bare appId
+        # GUID, not the api:// App ID URI; accept both forms.
+        QUARKUS_OIDC_CLIENT_ID: "35fda377-148b-4b6b-a5be-d52203160690"
+        QUARKUS_OIDC_TOKEN_AUDIENCE: "35fda377-148b-4b6b-a5be-d52203160690,api://35fda377-148b-4b6b-a5be-d52203160690"
         # OTel has no collector yet -> keep the SDK off even under enterprise
         QUARKUS_OTEL_SDK_DISABLED: "true"
       environmentConfig:
