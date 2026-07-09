@@ -119,6 +119,42 @@ class SplitterTest {
   }
 
   @Test
+  void testFlowRatesWithFeasibleRemainder() {
+    // inlet = 10 MSm3/day; outlet 0 fixed at 6, outlet 1 (= -1) gets the 4 remainder.
+    Splitter splitter = new Splitter("splitter", inletStream, 2);
+    splitter.setFlowRates(new double[] { 6.0, -1.0 }, "MSm3/day");
+    splitter.run();
+
+    double inletMoles = inletStream.getThermoSystem().getTotalNumberOfMoles();
+    double split0Moles = splitter.getSplitStream(0).getThermoSystem().getTotalNumberOfMoles();
+    double split1Moles = splitter.getSplitStream(1).getThermoSystem().getTotalNumberOfMoles();
+
+    assertEquals(0.6, splitter.getSplitFactor(0), 1e-6);
+    assertEquals(0.4, splitter.getSplitFactor(1), 1e-6);
+    // Mass must be conserved.
+    assertEquals(inletMoles, split0Moles + split1Moles, inletMoles * 1e-4);
+  }
+
+  @Test
+  void testFlowRatesOverRequestMassBalanceFails() {
+    // inlet = 10 MSm3/day; requesting 12 out of outlet 0 with a remainder outlet is
+    // unphysical (remainder would be negative). Mass must be conserved (outlets should
+    // sum to the inlet flow rate) regardless of the requested split, but this
+    // over-requested configuration does not add up. This test documents the current
+    // mass-balance failure for this input and is expected to fail.
+    Splitter splitter = new Splitter("splitter", inletStream, 2);
+    splitter.setFlowRates(new double[] { 12.0, -1.0 }, "MSm3/day");
+    splitter.run();
+
+    double inletMoles = inletStream.getThermoSystem().getTotalNumberOfMoles();
+    double split0Moles = splitter.getSplitStream(0).getThermoSystem().getTotalNumberOfMoles();
+    double split1Moles = splitter.getSplitStream(1).getThermoSystem().getTotalNumberOfMoles();
+
+    assertEquals(inletMoles, split0Moles + split1Moles, inletMoles * 1e-4,
+        "Mass balance does not hold when requested outlet flow rate exceeds inlet flow rate");
+  }
+
+  @Test
   void testGetSplitNumber() {
     Splitter splitter = new Splitter("splitter", inletStream, 4);
     assertEquals(4, splitter.getSplitNumber());
