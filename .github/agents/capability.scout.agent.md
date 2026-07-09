@@ -177,6 +177,37 @@ Based on the task requirements, recommend which existing skills should be loaded
 | `neqsim-capability-map` | When checking what NeqSim can do |
 | `neqsim-process-safety` | When the task includes hazard ID, LOPA, SIL, or risk evaluation |
 
+Run the semantic skill retriever to catch task-specific skills not in this list:
+
+```bash
+python devtools/skill_search.py "<task title>" --top 5
+```
+
+### Step 6b: Discover Agents and Plan the Workflow (MANDATORY)
+
+Do not rely only on the static routing table in `router.agent.md`. Rank the best
+specialist agents across all repos (neqsim + community + enterprise) with the
+semantic agent retriever, which also lists the skills each agent loads:
+
+```bash
+python devtools/agent_search.py "<task title>" --top 8 \
+    --json --out step1_scope_and_research/agent_plan.json
+```
+
+Then decide the composition so *all relevant functionality is utilized*:
+
+- **Single agent** — one specialist covers the task end-to-end.
+- **Composition pattern** — a known 2–3 agent sequence from `router.agent.md`
+  (e.g. `@process.model` → `@mechanical.design`).
+- **Declarative workflow** — when the task spans ≥3 disciplines or is a
+  repeatable program, compose a workflow via MCP `composeWorkflow` /
+  `composeMultiServerWorkflow`, or run an `engineering-harness` study.
+
+**Prefer delegating to a specialist agent over re-loading its skills manually** —
+that reuses the agent's governance (auth, read-only enterprise access) and its
+internal workflow. Record the selection in `capability_assessment.md` §4b/§4c and
+mirror it into `results.json` `agent_workflow_plan` so it feeds the final report.
+
 ### Step 7: Produce the Structured Output
 
 Deliver a **Capability Assessment Report** with these sections:
@@ -220,7 +251,25 @@ Deliver a **Capability Assessment Report** with these sections:
 - **Current TRL for this task:** [1-9 based on gaps]
 - **After implementing Critical NIPs:** [updated TRL]
 - **Recommendation:** [proceed / implement first / seek external tool]
+
+## 9. Capability Readiness Verdict (MANDATORY — last line)
+capability_readiness: READY | READY_WITH_WORKAROUNDS | NEEDS_NIP | BLOCKED
 ```
+
+The `capability_readiness` line is a **machine-readable verdict** the downstream
+`solve.task` workflow and the `@review` gate act on (see `neqsim-capability-map`
+§L):
+
+- **READY** — every Critical capability is ✅ Available.
+- **READY_WITH_WORKAROUNDS** — Critical capabilities ✅/🔧; workarounds documented.
+- **NEEDS_NIP** — a Critical/Important capability is ❌ Missing; a NIP is written in
+  `neqsim_improvements.md` and the extend-vs-defer decision is recorded.
+- **BLOCKED** — a Critical capability is ❌ Missing with no workaround or NIP path.
+
+**Before flagging any capability ❌ Missing, confirm with a source search**
+(`grep_search` / `file_search`). If confirmed missing, add it to the
+`neqsim-capability-map` §J Known-Gaps table so the next scout does not repeat the
+search; if it actually exists, add a Quick-Lookup row instead.
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: neqsim-dynamic-equipment-implementation
-description: "Implement and test NeqSim process-equipment runTransient support. Use when adding dynamic simulation behavior to any ProcessEquipmentInterface class, including inventory volume, pressure/level/temperature state, controller response, and JUnit regression tests for transient timesteps."
+description: "Implement and test NeqSim process-equipment runTransient support. USE WHEN: adding dynamic simulation behavior to any ProcessEquipmentInterface class, including inventory volume, pressure/level/temperature state, controller response, and JUnit regression tests for transient timesteps."
 last_verified: "2026-06-25"
 ---
 

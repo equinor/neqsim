@@ -1,7 +1,7 @@
 ---
 name: neqsim-capability-map
 description: "Structured inventory of NeqSim's capabilities by engineering discipline. USE WHEN: checking what NeqSim can do, planning implementations, assessing gaps for engineering tasks, or routing work to the right agent. Covers thermodynamics, process equipment, PVT, standards, mechanical design, flow assurance, safety, and economics."
-last_verified: "2026-07-04"
+last_verified: "2026-07-09"
 ---
 
 # NeqSim Capability Map
@@ -9,7 +9,7 @@ last_verified: "2026-07-04"
 Structured reference of what NeqSim can do, organized by engineering discipline.
 Use this to quickly check if a capability exists before searching the source code.
 
-**Last updated:** 2026-03-23
+**Last updated:** 2026-07-09
 
 ---
 
@@ -512,6 +512,7 @@ transport properties (viscosity, thermal conductivity, density).
 | **BWRS EOS** | Only CH4 + C2H6 parameterized | Use SRK/PR instead |
 | **NACE MR0175 material selection** | No systematic material logic | Manual standard lookup |
 | **Detailed flare modeling** | No radiation / noise model | Source term only |
+| **API 2000 tank venting** | No in-/out-breathing tank vent sizing (thermal + pump-in/out) | Use general relief methods manually; flag as gap in `capability_assessment.md` |
 | **Full pipeline network** | LoopedPipeNetwork: NR-GGA solver, 120+ wells, IPR (PI/Vogel/Fetkovich), chokes, tubing VLP, Beggs-Brill multiphase, compressors, regulators, artificial lift (gas lift/ESP/jet/rod pump), water handling, sand erosion (DNV RP O501), corrosion (de Waard-Milliams/NORSOK M-506), GHG emissions tracking | Full-featured production network |
 
 ### EOS Limitations
@@ -572,6 +573,9 @@ transport properties (viscosity, thermal conductivity, density).
 | Sulfur deposition? | ✅ | `SulfurDepositionAnalyser` |
 | JT cooling? | ✅ | `ThrottlingValve` |
 | Depressurization? | ✅ | `ProcessSystem.runTransient()` |
+| PSV sizing (gas / liquid, fire case)? | ✅ | `ReliefValveSizing` (`neqsim.process.util.fire`) |
+| Two-phase PSV (API 520 omega / HEM)? | ✅ | `ReliefValveSizing.calculateTwoPhaseReliefArea(...)` (Leung omega method) |
+| Tank venting (API 2000)? | ❌ | Not available — genuine gap; write a NIP |
 | Monte Carlo? | ✅ | `MonteCarloSimulator` |
 | Heat integration? | ✅ | `PinchAnalyzer` |
 | Amine sweetening? | ⚠️ Basic | Kent-Eisenberg model |
@@ -599,3 +603,48 @@ transport properties (viscosity, thermal conductivity, density).
 | VFD selection? | ✅ | `VariableFrequencyDrive` |
 | Cable sizing? | ✅ | `ElectricalCable` |
 | Hazardous area classification? | ✅ | `HazardousAreaClassification` |
+
+---
+
+## L. Gap-Detection Protocol (for the Capability Scout — run in Step 1)
+
+Use this map together with `CHANGELOG_AGENT_NOTES.md` **before** a task reaches
+Step 2 (notebook analysis), so missing capability is discovered while the plan
+is still cheap to change — not mid-simulation.
+
+### Classify every required capability
+
+For each capability the task needs, classify against sections A–K and the
+Known-Gaps table (section J):
+
+| Verdict | Meaning | Action in Step 1 |
+|---------|---------|------------------|
+| ✅ **Available** | Class/method exists (found in this map or the source) | Cite the class; proceed |
+| ⚠️ **Partial** | Exists but limited (see section J / EOS limitations) | Note the limitation; plan a workaround |
+| 🔧 **Workaround** | Achievable by composing existing API | Document the recipe |
+| ❌ **Missing** | Not in NeqSim (confirmed by source search) | Write a NIP in `neqsim_improvements.md`; decide extend-vs-defer NOW |
+
+### Emit a machine-readable readiness verdict (MANDATORY)
+
+The Capability Scout MUST close `capability_assessment.md` with a single verdict
+line so downstream agents (and the `@review` gate) can act on it:
+
+```
+capability_readiness: READY | READY_WITH_WORKAROUNDS | NEEDS_NIP | BLOCKED
+```
+
+- **READY** — every Critical capability is ✅ Available.
+- **READY_WITH_WORKAROUNDS** — Critical capabilities are ✅/🔧; workarounds documented.
+- **NEEDS_NIP** — a Critical/Important capability is ❌ Missing; NIP written, extend planned.
+- **BLOCKED** — a Critical capability is ❌ Missing with no viable workaround or NIP path.
+
+### Verify before flagging (avoid false gaps)
+
+**Always confirm a suspected gap with a source search** (`grep_search` /
+`file_search`) before writing a NIP. This map is corrected as capabilities land —
+e.g. two-phase PSV sizing (`ReliefValveSizing.calculateTwoPhaseReliefArea`,
+API 520 omega method) is **already present** and must not be re-flagged as
+missing. Confirmed live gaps (e.g. **API 2000 tank venting**) are recorded in
+section J; add newly confirmed gaps there so the next scout does not repeat the
+search.
+

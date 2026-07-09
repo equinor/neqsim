@@ -627,6 +627,8 @@ def _required_section_available(section, results, task_spec):
         return bool(results and results.get("benchmark_validation"))
     if normalized in ("uncertainty", "uncertainty_analysis"):
         return bool(results and results.get("uncertainty"))
+    if normalized in ("solution_workflow", "workflow", "agent_workflow"):
+        return bool(results and results.get("agent_workflow_plan"))
     if normalized in ("risk", "risk_assessment", "risk_evaluation"):
         return bool(results and (results.get("risk_evaluation") or results.get("risks")))
     if normalized in ("conclusion", "conclusions", "conclusions_and_recommendations"):
@@ -1265,6 +1267,104 @@ def format_risk_html(results):
     return h
 
 
+def format_workflow_html(results):
+    """Format agent_workflow_plan from results.json as a Solution Workflow block.
+
+    Documents *how* the task was solved: the discovered/used specialist agents,
+    the workflow composition, and the rationale. Reuses the existing risk-card
+    and risk-table CSS classes so no stylesheet changes are needed.
+    """
+    plan = results.get("agent_workflow_plan", {})
+    if not plan:
+        return ""
+    h = '<div class="risk-summary-card">\n'
+    wtype = plan.get("workflow_type", "")
+    workflow = plan.get("workflow", "")
+    if wtype:
+        h += '<p>Workflow type: <strong>{}</strong></p>\n'.format(wtype)
+    if workflow:
+        h += '<p>Composition: <code>{}</code></p>\n'.format(workflow)
+    disc = plan.get("discovery", {})
+    if isinstance(disc, dict) and (disc.get("skill_search") or disc.get("agent_search")):
+        bits = []
+        if disc.get("skill_search"):
+            bits.append("skill_search")
+        if disc.get("agent_search"):
+            bits.append("agent_search &rarr; {}".format(disc.get("agent_search")))
+        h += '<p>Discovery: {}</p>\n'.format(", ".join(bits))
+    h += '</div>\n'
+
+    agents = plan.get("agents_used", [])
+    if agents:
+        h += '<table class="risk-table"><thead><tr>'
+        h += '<th>Agent</th><th>Repo</th><th>Role</th><th>Loads skills</th>'
+        h += '</tr></thead><tbody>\n'
+        for a in agents:
+            handle = a.get("handle") or a.get("name", "")
+            skills = a.get("loads_skills", [])
+            skills_txt = ", ".join(skills) if isinstance(skills, list) else str(skills)
+            h += '<tr>'
+            h += '<td><strong>{}</strong></td>'.format(handle)
+            h += '<td>{}</td>'.format(a.get("repo", ""))
+            h += '<td>{}</td>'.format(a.get("role", ""))
+            h += '<td>{}</td>'.format(skills_txt)
+            h += '</tr>\n'
+        h += '</tbody></table>\n'
+
+    rationale = plan.get("rationale", "")
+    if rationale:
+        h += '<p><em>{}</em></p>\n'.format(rationale)
+    return h
+
+
+def add_workflow_word_section(doc, results):
+    """Add the Solution Workflow (agent_workflow_plan) as text plus a Word table."""
+    plan = results.get("agent_workflow_plan", {})
+    if not plan:
+        return
+    wtype = plan.get("workflow_type", "")
+    workflow = plan.get("workflow", "")
+    if wtype:
+        p = doc.add_paragraph()
+        p.add_run("Workflow type: ").font.size = Pt(10)
+        run = p.add_run(str(wtype))
+        run.bold = True
+        run.font.size = Pt(10)
+    if workflow:
+        p = doc.add_paragraph()
+        p.add_run("Composition: ").font.size = Pt(10)
+        p.add_run(str(workflow)).font.size = Pt(10)
+    disc = plan.get("discovery", {})
+    if isinstance(disc, dict) and (disc.get("skill_search") or disc.get("agent_search")):
+        bits = []
+        if disc.get("skill_search"):
+            bits.append("skill_search")
+        if disc.get("agent_search"):
+            bits.append("agent_search: {}".format(disc.get("agent_search")))
+        p = doc.add_paragraph()
+        p.add_run("Discovery: {}".format(", ".join(bits))).font.size = Pt(10)
+
+    agents = plan.get("agents_used", [])
+    if agents:
+        headers = ["Agent", "Repo", "Role", "Loads skills"]
+        data_rows = []
+        for a in agents:
+            handle = a.get("handle") or a.get("name", "")
+            skills = a.get("loads_skills", [])
+            skills_txt = ", ".join(skills) if isinstance(skills, list) else str(skills)
+            data_rows.append([
+                str(handle), str(a.get("repo", "")), str(a.get("role", "")), skills_txt
+            ])
+        add_word_table(doc, headers, data_rows)
+
+    rationale = plan.get("rationale", "")
+    if rationale:
+        p = doc.add_paragraph()
+        run = p.add_run(str(rationale))
+        run.italic = True
+        run.font.size = Pt(10)
+
+
 def format_uncertainty_html(results):
     """Format uncertainty analysis from results.json as styled HTML tables.
 
@@ -1883,6 +1983,15 @@ def build_sections(results, task_spec, study_config_warnings=None):
     })
     next_section_num += 1
 
+    # Solution Workflow (how the task was solved — discovered agents + workflow)
+    if results and results.get("agent_workflow_plan"):
+        sections.append({
+            "heading": "{}. Solution Workflow".format(next_section_num),
+            "content": "",
+            "has_workflow": True,
+        })
+        next_section_num += 1
+
     # Results (auto-populated from results.json)
     if results and results.get("key_results"):
         results_text = format_results_table(results)
@@ -2192,6 +2301,9 @@ def build_word_report(sections, results=None):
         elif section.get("has_risk") and results:
             # Risk Assessment section: styled table with color-coded levels
             add_risk_word_table(doc, results)
+        elif section.get("has_workflow") and results:
+            # Solution Workflow section: agents + workflow composition
+            add_workflow_word_section(doc, results)
         elif section.get("has_discussion") and results:
             # Discussion section: figure-by-figure interpretation
             add_discussion_word(doc, results)
@@ -2386,6 +2498,9 @@ def build_html_report(sections, results=None):
 
         if section.get("has_risk") and results:
             content = format_risk_html(results)
+
+        if section.get("has_workflow") and results:
+            content = format_workflow_html(results)
 
         if section.get("has_discussion") and results:
             content = format_discussion_html(results)

@@ -9,6 +9,190 @@
 
 ---
 
+## 2026-07-09 — Agent/skill hygiene: accurate orphan detection + skill-declaration parser
+
+### Summary
+
+Reduced `verify_agent_skill_refs.py` noise from **227 → 1 warning** by fixing
+measurement blind spots (not by hiding real issues) — the single remaining
+warning is a genuine data gap (the enterprise `maintenance-agent` requires
+`enterprise-plant-maintenance-records`, whose folder has no `SKILL.md`). No
+NeqSim physics change.
+
+### Fixes
+
+- **Orphan check now uses the combined cross-repo agent index.** `check #4`
+  previously compared neqsim's 183 mirrored skills only against neqsim's own 34
+  agents, falsely flagging 137 "orphans". New `combined_referenced_skills()`
+  (via agent_search) counts a skill as referenced if ANY agent in ANY repo loads
+  it. True orphans: **5** (flash/gibbs research-benchmark skills that are
+  intentionally direct-use, not agent-loaded).
+- **`agent_search._extract_loaded_skills_body` now recognises a third
+  convention: the `## Loaded skills` heading** (agents used inline
+  `Loaded skills:`, `## Skills to Load`, AND `## Loaded skills`). Bullet parsing
+  also accepts underscores (`paperlab_*`). This fixed the false orphaning of
+  `neqsim-consequence-analysis` and `neqsim-hazid-fmea-eta-fta` (both loaded by
+  `consequence.analysis.agent`) and improves discovery accuracy generally.
+- **NO SKILLS check** now recognises the `Loaded skills:` line / skills headings
+  (was `neqsim-*`-backtick only), clearing two false positives
+  (`dynamic.equipment.agent`, `paperlab.agent`).
+- **Wired two genuinely-orphaned skills**: `neqsim-wax-calculations` →
+  `flow.assurance.agent`, `neqsim_standard_requirement_extraction` →
+  `standards.review.agent`.
+- **`USE WHEN:` trigger check is now case-insensitive** (`Use when:` was missed),
+  clearing 65 false NO-TRIGGER warnings. Fixed the one native skill missing a
+  trigger (`neqsim-dynamic-equipment-implementation`).
+- **Paperlab-managed skills** (mirrored from `neqsim-paperlab/skills/`) are exempt
+  from the orphan and USE-WHEN checks — they use a narrative convention and are
+  invoked by the paperlab router / research notebooks, not the agent
+  loaded-skills graph. This cleared the remaining paperlab/research false
+  positives.
+
+Tests: `test_agent_search.py` gains `LoadedSkillsBodyTest` (3 cases);
+`test_verify_agent_skill_refs.py` gains `UseWhenTriggerTest` (3 cases).
+
+---
+
+## 2026-07-09 — Report "Solution Workflow" section, combined-index ref linting, devtools CI
+
+### Summary
+
+Three follow-ups to the agent/skill discovery work. No NeqSim physics change.
+
+### Report rendering — first-class `agent_workflow_plan`
+
+- `devtools/task_template/step3_report/generate_report.py` now renders a
+  **"Solution Workflow"** section (after Approach) from `results.json`
+  `agent_workflow_plan`: `format_workflow_html` + `add_workflow_word_section`
+  (Word), a `has_workflow` section in `build_sections`, and a
+  `_required_section_available` entry. It documents *how* the task was solved
+  (discovered/used agents, workflow composition, rationale) instead of the plan
+  only riding inside the `approach` text. Reuses existing risk-card/table CSS.
+- This canonical template is the authoritative one (overlaid over the embedded
+  `GENERATE_REPORT` string in `new_task.py`), so it propagates to new tasks.
+
+### Combined-index broken-ref linting
+
+- `devtools/verify_agent_skill_refs.py` gains `check_combined_skill_refs`, which
+  reuses `agent_search` + `skill_search` to validate every agent's
+  `required_skills` against the **combined cross-repo skill index**. It
+  distinguishes legitimate cross-repo loads (skill in a sibling *-skills repo /
+  neqsim-paperlab, reported as a count) from **genuinely broken** refs (skill in
+  no repo, reported as a warning; error under `--strict`). Inert in the
+  neqsim-only CI checkout. Surfaced a real data gap: the enterprise
+  `maintenance-agent` requires `enterprise-plant-maintenance-records`, whose
+  folder has no `SKILL.md`.
+
+### Devtools CI coverage
+
+- New `.github/workflows/devtools_tests.yml` runs the hermetic pytest suites
+  (`test_agent_search`, `test_skill_search`, `test_verify_agent_skill_refs`,
+  `test_report_workflow`, `test_unisim_outputs`) plus the `test_report_gen.py`
+  integration script (installs `python-docx` + `matplotlib`) on `devtools/**`
+  changes — previously no CI ran the devtools Python tests.
+- New tests: `test_report_workflow.py` (5), `test_verify_agent_skill_refs.py` (2).
+
+---
+
+## 2026-07-09 — Agent discovery: `agent_search.py` + mandatory agent/workflow plan in task solving
+
+### Summary
+
+The task solver now **discovers the best agents (not just skills)** at the start
+of a task and records a workflow plan, so all functionality across the neqsim +
+community + enterprise agent/skill repos gets utilized. No NeqSim physics change.
+
+### New tool: `devtools/agent_search.py`
+
+- Semantic (TF-IDF + cosine, sklearn with pure-python Jaccard fallback) ranking
+  of agents across `neqsim/.github/agents/*.agent.md`,
+  `neqsim-community-agents/agents/*/AGENT.md`, and
+  `neqsim-enterprise-agents/agents/*/AGENT.md`. Mirrors `skill_search.py`.
+- Output lists, per agent, the **skills it loads** and the **`@handle`** used to
+  invoke it (for neqsim agents the front-matter `name` is a prose title, so the
+  handle is derived from the `<handle>.agent.md` file stem; for community/
+  enterprise it is the `agents/<handle>/` directory). `--json` and `--out <file>`
+  persist the ranking to `step1_scope_and_research/agent_plan.json` (audit trail).
+- Dedup keys on **(repo, name)** so a community screening agent and its
+  enterprise policy-gated counterpart with the same name are BOTH indexed
+  (name-only dedup previously dropped one — e.g. the enterprise
+  `asset-economics-agent`). Covered by `devtools/test_agent_search.py`.
+- Auto-detects sibling repos from the workspace root; `--agents-root` adds more.
+
+### Workflow wiring (results stored underway + report basis)
+
+- `capability_assessment.md` template gains **§4b Agents to Delegate To** and
+  **§4c Workflow Plan** (single agent / router composition pattern / declarative
+  `composeWorkflow` / `engineering-harness` study).
+- `solve.task` Step 1 and `capability.scout` Step 6b now mandate running
+  `skill_search.py` + `agent_search.py`, filling §4/§4b/§4c, checkpointing the
+  plan in `progress.json`, and mirroring it into `results.json`
+  `agent_workflow_plan` (added to the professional-reporting master schema and
+  the AGENTS.md example) so the generated report documents *how* the task was
+  solved.
+- `router.agent.md` notes that its table is a fast path and to fall back to
+  `agent_search.py` + declarative workflows for cross-repo / multi-discipline work.
+- `validate_task_results.py` warns when §4b/§4c is empty and no `agent_plan.json`
+  exists.
+
+### Agents/skills to update
+
+- `solve.task.agent.md`, `capability.scout.agent.md`, `router.agent.md`,
+  `neqsim-professional-reporting` — updated in this change.
+
+---
+
+## 2026-07-09 — Task-solving gates hardened: sweep-aware consistency, results.json sub-schema validation, task-dir walker
+
+### Summary
+
+Workflow-wide task-solving reliability improvements (no NeqSim physics change).
+Chains across the three task steps: capability scouting (Step 1), notebook
+execution + consistency (Step 2), and results.json validation for reporting
+(Step 3). Tests: `TaskResultValidatorTest` (23, +5). All Java 8.
+
+### `TaskResultValidator` (Java) + `validate_task_results.py` (Python CI mirror)
+
+- **`benchmark_validation`** is now a recognised (recommended) key and is
+  structurally validated: object or array of entries, each expected to identify
+  what was compared, a reference, and a comparison; a `status` other than
+  `PASS`/`FAIL`/`WARN`/`INFO` is rejected. A malformed benchmark block now fails
+  the gate instead of crashing the report generator.
+- **`uncertainty` percentiles** `p10`/`p50`/`p90` must be numeric and
+  monotonically ordered (`p10 ≤ p50 ≤ p90`) — out-of-order or non-numeric is now
+  a hard error.
+
+### `devtools/consistency_checker.py`
+
+- Now **sweep-aware**: values in a parametric/sensitivity/Monte-Carlo/table
+  context (keyword-tagged, `results.json` sweep sections, or ≥3 distinct
+  non-swept values for one concept) are no longer cross-checked, eliminating the
+  documented false-positive CRITICAL findings on deliberately-varied series.
+  Genuine two-value contradictions are still flagged.
+
+### `devtools/neqsim_dev_setup.py`
+
+- New **`find_task_dir(start=None)`** — canonical upward walker that resolves the
+  `task_solve/<slug>/` root from the runner's subprocess cwd (honours
+  `NEQSIM_TASK_DIR`). Replaces the fragile `NOTEBOOK_DIR.parent` heuristic that
+  overshot the task folder when `__vsc_ipynb_file__` was unset.
+
+### Agents/skills updated
+
+- `neqsim-capability-map` — added §L gap-detection protocol + `capability_readiness`
+  verdict; recorded that two-phase PSV (omega method) **exists**
+  (`ReliefValveSizing.calculateTwoPhaseReliefArea`) and API 2000 tank venting is a
+  genuine gap.
+- `capability.scout` agent — emits a `capability_readiness:` verdict line.
+- `neqsim-notebook-patterns` — runner robustness (find_task_dir, runner-output
+  cleanup, system-Python fallback) + sub-schema keys.
+- `neqsim-professional-reporting` — documents the `benchmark_validation` and
+  `uncertainty` sub-schemas now enforced by the gate.
+- `review` agent — checks the `capability_readiness` verdict and the hardened
+  schema results.
+
+---
+
 ## 2026-07-09 — New: anti-surge control line, recycle energy penalty, chart calibrator; fix: getMolarMass invariance
 
 ### Summary

@@ -6,7 +6,7 @@ argument-hint: Describe the process system, task folder, standard, or document s
 
 You are a technical standards review engineer for NeqSim.
 
-Loaded skills: neqsim-standards-lookup, neqsim-process-safety, neqsim-technical-document-reading, neqsim-stid-retriever, neqsim-professional-reporting
+Loaded skills: neqsim-standards-lookup, neqsim_standard_requirement_extraction, neqsim-process-safety, neqsim-technical-document-reading, neqsim-stid-retriever, neqsim-professional-reporting
 
 ## Primary Objective
 

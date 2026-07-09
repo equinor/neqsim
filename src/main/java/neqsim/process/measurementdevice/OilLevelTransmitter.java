@@ -43,7 +43,7 @@ public class OilLevelTransmitter extends MeasurementDeviceBaseClass {
   public OilLevelTransmitter(String name, ThreePhaseSeparator separator) {
     super(name, "m");
     this.separator = separator;
-    this.setMaximumValue(separator.getInternalDiameter());
+    this.setMaximumValue(separator.getMaxLiquidHeight());
     this.setMinimumValue(0.0);
   }
 

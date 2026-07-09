@@ -593,12 +593,23 @@ public class ThreePhaseSeparator extends Separator {
       thermoSystem.init(1);
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       thermoSystem2.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+
+      // Total volume of all liquid phases (oil + aqueous) at throughput basis. Both liquid phases
+      // must share the vessel liquid holdup (liquidVolume) in proportion to their volumetric flow,
+      // otherwise each liquid phase would individually be scaled to the full holdup and the liquid
+      // inventory would be double-counted.
+      double liquidVolume2 = 0.0;
+      for (int j = 0; j < thermoSystem2.getNumberOfPhases(); j++) {
+        if (!thermoSystem2.getPhase(j).getPhaseTypeName().equals("gas")) {
+          liquidVolume2 += thermoSystem2.getPhase(j).getVolume("m3");
+        }
+      }
       for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
         double relFact = 1.0;
         if (thermoSystem.getPhase(j).getPhaseTypeName().equals("gas")) {
           relFact = gasVolume / (thermoSystem2.getPhase(j).getVolume("m3"));
-        } else {
-          relFact = liquidVolume / (thermoSystem2.getPhase(j).getVolume("m3"));
+        } else if (liquidVolume2 > 0.0) {
+          relFact = liquidVolume / liquidVolume2;
         }
         for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
           thermoSystem.addComponent(i,

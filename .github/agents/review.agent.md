@@ -37,7 +37,12 @@ fix it.
 3. **Capability assessment.** Confirm
    `step1_scope_and_research/capability_assessment.md` exists, has
    sections 2 and 3 populated (not template placeholders), and
-   references at least one skill.
+   references at least one skill. Also confirm it ends with a
+   `capability_readiness:` verdict line (`READY` /
+   `READY_WITH_WORKAROUNDS` / `NEEDS_NIP` / `BLOCKED`, see
+   `neqsim-capability-map` §L). WARN if the verdict is missing;
+   if the verdict is `NEEDS_NIP` or `BLOCKED`, confirm a matching
+   `neqsim_improvements.md` NIP exists — FAIL if it does not.
 
 4. **Notebook execution.** For each `.ipynb` in `step2_analysis/`:
    - Verify cells have `execution_count` set (i.e. were actually run)
@@ -51,7 +56,10 @@ fix it.
 
 6. **Standards & uncertainty (Standard/Comprehensive only).** Confirm
    `standards_applied`, `uncertainty`, and `risk_evaluation` sections
-   are populated.
+   are populated. The schema check in step 1 already enforces that
+   `uncertainty` percentiles are numeric and ordered
+   (`p10 ≤ p50 ≤ p90`) and that any `benchmark_validation` block is
+   well-formed — treat those as FAIL if step 1 reported them.
 
 7. **Repo-memory check.** List any `/memories/repo/*.md` files whose
    filename contains keywords from the task title — flag if none of

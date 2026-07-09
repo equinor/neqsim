@@ -48,6 +48,7 @@ import neqsim.process.equipment.reservoir.ReservoirTPsim;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.separator.GasScrubber;
 import neqsim.process.equipment.separator.Separator;
+import neqsim.process.equipment.separator.ThreePhaseGasScrubber;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.splitter.ComponentCaptureUnit;
 import neqsim.process.equipment.splitter.ComponentSplitter;
@@ -125,6 +126,11 @@ public final class EquipmentFactory {
     case "gas_scrubber":
     case "scrubber":
       return createEquipment(name, EquipmentEnum.GasScrubber);
+    case "threephasegasscrubber":
+    case "threephasescrubber":
+    case "threephase_scrubber":
+    case "gasscrubber_3phase":
+      return createEquipment(name, EquipmentEnum.ThreePhaseGasScrubber);
     case "co₂electrolyzer":
     case "co2electrolyser":
     case "co2electrolyzer":
@@ -285,6 +291,8 @@ public final class EquipmentFactory {
       return new Recycle(name);
     case ThreePhaseSeparator:
       return new ThreePhaseSeparator(name);
+    case ThreePhaseGasScrubber:
+      return new ThreePhaseGasScrubber(name);
     case Ejector:
       throw new IllegalArgumentException("Ejector requires motive and suction streams. Use createEjector instead.");
     case GORfitter:

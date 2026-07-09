@@ -166,6 +166,21 @@ Some requests need multiple agents in sequence. Detect these patterns:
 5. **Unknown domain** — if the request doesn't match any agent, say so and suggest
    the closest match or recommend `@solve.task` as the catch-all
 
+> **This table is a fast path, not the whole picture.** It lists only the core
+> neqsim-repo agents. Dozens more specialist agents live in the community and
+> enterprise agent repos. When the table has no obvious match, or before
+> committing to a multi-agent pipeline, run the semantic agent retriever to rank
+> agents across **all** repos (it also shows the skills each agent loads):
+>
+> ```bash
+> python devtools/agent_search.py "<user request>" --top 8
+> ```
+>
+> For a task that spans ≥3 disciplines or is a repeatable program, prefer a
+> **declarative workflow** (MCP `composeWorkflow` / `composeMultiServerWorkflow`,
+> or an `engineering-harness` study) over a hand-chained sequence, so the
+> composition is auditable and every relevant capability is used.
+
 ## Input Pre-Validation
 
 Before routing, check for obviously invalid inputs (see `neqsim-input-validation` skill):

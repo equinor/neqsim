@@ -1,0 +1,187 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.15.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.15:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] argLine set to -javaagent:C:\\Users\\ESOL\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.15\\org.jacoco.agent-0.8.15-runtime.jar=destfile=C:\\Users\\ESOL\\Documents\\GitHub\\neqsim\\target\\jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ neqsim ---
+[INFO] Copying 88 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- flatten:1.7.3:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.15.0...
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 66 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 1379 source files with javac [debug release 17] to target\test-classes
+[INFO] /C:/Users/ESOL/Documents/GitHub/neqsim/src/test/java/neqsim/DocExamplesCompilationTest.java: Some input files use or override a deprecated API.
+[INFO] /C:/Users/ESOL/Documents/GitHub/neqsim/src/test/java/neqsim/DocExamplesCompilationTest.java: Recompile with -Xlint:deprecation for details.
+[INFO] /C:/Users/ESOL/Documents/GitHub/neqsim/src/test/java/neqsim/process/safety/risk/condition/ConditionBasedReliabilityTest.java: C:\Users\ESOL\Documents\GitHub\neqsim\src\test\java\neqsim\process\safety\risk\condition\ConditionBasedReliabilityTest.java uses unchecked or unsafe operations.
+[INFO] /C:/Users/ESOL/Documents/GitHub/neqsim/src/test/java/neqsim/process/safety/risk/condition/ConditionBasedReliabilityTest.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ neqsim ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running neqsim.process.controllerdevice.DynamicImprovementsPhase2Test
+[INFO] Tests run: 27, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.737 s -- in neqsim.process.controllerdevice.DynamicImprovementsPhase2Test
+[INFO] Running neqsim.process.controllerdevice.DynamicImprovementsTest
+[INFO] Tests run: 17, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.039 s -- in neqsim.process.controllerdevice.DynamicImprovementsTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 44, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] --- jacoco:0.8.15:report (report) @ neqsim ---
+[INFO] Loading execution data file C:\Users\ESOL\Documents\GitHub\neqsim\target\jacoco.exec
+[INFO] Analyzed bundle 'NeqSim' with 3884 classes
+[WARNING] Classes in bundle 'NeqSim' do not match with execution data. For report generation the same class files must be used as at runtime.
+[WARNING] Execution data for class neqsim/thermo/component/ComponentElectrolyteCPA does not match.
+[WARNING] Execution data for class neqsim/process/costestimation/compressor/CompressorCostEstimate does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/ColumnSpecification$SpecificationType does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/ShortcutDistillationColumn does not match.
+[WARNING] Execution data for class neqsim/thermo/util/constants/FurstElectrolyteConstants does not match.
+[WARNING] Execution data for class neqsim/process/equipment/mixer/MixerInterface does not match.
+[WARNING] Execution data for class neqsim/util/exception/TooManyIterationsException does not match.
+[WARNING] Execution data for class neqsim/process/equipment/util/ConvergenceDiagnostics does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/CompressorChartGenerator does not match.
+[WARNING] Execution data for class neqsim/process/mechanicaldesign/compressor/CompressorMechanicalDesign does not match.
+[WARNING] Execution data for class neqsim/process/equipment/pipeline/PipeBeggsAndBrills$HeatTransferMode does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/SurgeCurve does not match.
+[WARNING] Execution data for class neqsim/process/util/monitor/BaseResponse does not match.
+[WARNING] Execution data for class neqsim/thermo/component/ComponentModifiedFurstElectrolyteEos does not match.
+[WARNING] Execution data for class neqsim/process/chemistry/scale/BrineMixingScaleEvaluator$MixPoint does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/internals/PackingHydraulicsCalculator does not match.
+[WARNING] Execution data for class neqsim/process/equipment/util/ConvergenceDiagnostics$RecycleStatus does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/BoundaryCurve does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/CompressorState does not match.
+[WARNING] Execution data for class neqsim/process/corrosion/RobustAqueousPH does not match.
+[WARNING] Execution data for class neqsim/chemicalreactions/chemicalequilibrium/LinearProgrammingChemicalEquilibrium does not match.
+[WARNING] Execution data for class neqsim/util/NeqSimThreadPool does not match.
+[WARNING] Execution data for class neqsim/process/equipment/pipeline/PipeBeggsAndBrills does not match.
+[WARNING] Execution data for class neqsim/chemicalreactions/chemicalreaction/ChemicalReaction does not match.
+[WARNING] Execution data for class neqsim/process/util/monitor/SplitterResponse does not match.
+[WARNING] Execution data for class neqsim/standards/gasquality/Standard_ISO6976 does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/CompressorChart does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/SafeSplineStoneWallCurve does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/RateBasedPackedColumn does not match.
+[WARNING] Execution data for class neqsim/process/electricaldesign/pump/PumpElectricalDesign does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/CompressorChartAlternativeMapLookupExtrapolate does not match.
+[WARNING] Execution data for class neqsim/process/chemistry/scale/BrineMixingScaleEvaluator does not match.
+[WARNING] Execution data for class neqsim/process/chemistry/scale/ElectrolyteScaleCalculator does not match.
+[WARNING] Execution data for class neqsim/process/mechanicaldesign/compressor/CompressorMechanicalDesign$CasingType does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/DistillationColumn$EconomicTrayOptimizationResult does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/ColumnSpecification does not match.
+[WARNING] Execution data for class neqsim/thermo/phase/PhaseModifiedFurstElectrolyteEos$DielectricMixingRule does not match.
+[WARNING] Execution data for class neqsim/process/instrumentdesign/compressor/CompressorInstrumentDesign does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/RateBasedPackedColumn$InterfaceEquilibrium does not match.
+[WARNING] Execution data for class neqsim/thermo/phase/PhaseElectrolyteCPA does not match.
+[WARNING] Execution data for class neqsim/util/unit/Units does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/DistillationColumn$ShortcutInitializationResult does not match.
+[WARNING] Execution data for class neqsim/process/equipment/pump/Pump does not match.
+[WARNING] Execution data for class neqsim/process/mechanicaldesign/pump/PumpMechanicalDesign$SealType does not match.
+[WARNING] Execution data for class neqsim/process/util/monitor/Value does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/RateBasedPackedColumn$ColumnReport does not match.
+[WARNING] Execution data for class neqsim/process/corrosion/RobustAqueousPH$Result does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/CompressorChartCalibrator does not match.
+[WARNING] Execution data for class neqsim/process/equipment/util/BroydenAccelerator does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/RateBasedPackedColumn$SegmentSolver does not match.
+[WARNING] Execution data for class neqsim/thermo/mixingrule/EosMixingRuleHandler$ClassicSRKT2x does not match.
+[WARNING] Execution data for class neqsim/process/mechanicaldesign/pump/PumpMechanicalDesign does not match.
+[WARNING] Execution data for class neqsim/thermodynamicoperations/flashops/PSFlash does not match.
+[WARNING] Execution data for class neqsim/process/equipment/util/AccelerationMethod does not match.
+[WARNING] Execution data for class neqsim/thermo/phase/PhaseElectrolyteCPAstatoil does not match.
+[WARNING] Execution data for class neqsim/process/mechanicaldesign/pump/PumpMechanicalDesign$PumpType does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/DistillationColumn$TrayOptimizationResult does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/CompressorCurve does not match.
+[WARNING] Execution data for class neqsim/process/equipment/util/Recycle does not match.
+[WARNING] Execution data for class neqsim/process/processmodel/graph/ProcessGraph$SensitivityAnalysisResult does not match.
+[WARNING] Execution data for class neqsim/thermo/system/SystemElectrolyteCPAstatoil does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/DistillationColumn$EconomicTrayOptimizationMetrics does not match.
+[WARNING] Execution data for class neqsim/process/equipment/EquipmentFactory does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/SafeSplineSurgeCurve does not match.
+[WARNING] Execution data for class neqsim/thermo/system/SystemFurstElectrolyteEos does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/CompressorCurveTemplate does not match.
+[WARNING] Execution data for class neqsim/process/electricaldesign/compressor/CompressorElectricalDesign does not match.
+[WARNING] Execution data for class neqsim/thermodynamicoperations/flashops/TVflash does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/CompressorCurveCorrections does not match.
+[WARNING] Execution data for class neqsim/process/equipment/pipeline/Fittings does not match.
+[WARNING] Execution data for class neqsim/process/equipment/absorber/SimpleAmineAbsorber does not match.
+[WARNING] Execution data for class neqsim/process/equipment/pipeline/PipeBeggsAndBrills$FlowRegime does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/Compressor does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/RateBasedPackedColumn$FilmModel does not match.
+[WARNING] Execution data for class neqsim/util/NamedInterface does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/AntiSurge$ControlStrategy does not match.
+[WARNING] Execution data for class neqsim/process/equipment/heatexchanger/Cooler does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/AntiSurge does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/RateBasedPackedColumn$CounterCurrentSolution does not match.
+[WARNING] Execution data for class neqsim/process/chemistry/scale/ScaleKinetics does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/RateBasedPackedColumn$SegmentComputation does not match.
+[WARNING] Execution data for class neqsim/process/equipment/pipeline/Pipeline does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/RateBasedPackedColumn$SegmentResult does not match.
+[WARNING] Execution data for class neqsim/process/costestimation/pump/PumpCostEstimate does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/internals/PackingSpecificationLibrary does not match.
+[WARNING] Execution data for class neqsim/thermo/phase/PhaseModifiedFurstElectrolyteEos does not match.
+[WARNING] Execution data for class neqsim/process/equipment/pump/PumpChart does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/StoneWallCurve does not match.
+[WARNING] Execution data for class neqsim/chemicalreactions/ChemicalReactionOperations does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/RateBasedPackedColumn$HeatTransferModel does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/CompressorChartInterface does not match.
+[WARNING] Execution data for class neqsim/process/corrosion/NorsokM506CorrosionRate does not match.
+[WARNING] Execution data for class neqsim/process/processmodel/graph/ProcessGraph$SCCResult does not match.
+[WARNING] Execution data for class neqsim/process/equipment/absorber/SimpleAmineRegenerator does not match.
+[WARNING] Execution data for class neqsim/process/equipment/absorber/SimpleAbsorber does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/RateBasedPackedColumn$MassTransferCorrelation does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/DistillationColumn$Builder does not match.
+[WARNING] Execution data for class neqsim/thermo/characterization/PedersenPlusModelSolver does not match.
+[WARNING] Execution data for class neqsim/thermo/component/attractiveeosterm/AttractiveTermSchwartzentruber does not match.
+[WARNING] Execution data for class neqsim/process/equipment/reservoir/Well does not match.
+[WARNING] Execution data for class neqsim/standards/salescontract/BaseContract does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/CompressorInterface does not match.
+[WARNING] Execution data for class neqsim/process/equipment/util/ConvergenceDiagnostics$DiagnosticReport does not match.
+[WARNING] Execution data for class neqsim/process/equipment/pipeline/PipeBeggsAndBrills$CalculationMode does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/CompressorPropertyProfile does not match.
+[WARNING] Execution data for class neqsim/thermo/mixingrule/EosMixingRuleHandler$ElectrolyteMixRule does not match.
+[WARNING] Execution data for class neqsim/process/processmodel/graph/ProcessGraph$TearStreamResult does not match.
+[WARNING] Execution data for class neqsim/process/chemistry/scale/BrineMixingScaleEvaluator$BrineComposition does not match.
+[WARNING] Execution data for class neqsim/thermo/util/amines/AmineHeatOfAbsorption$AmineType does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/RateBasedPackedColumn$ColumnSolver does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/DistillationColumn$ColumnOptimizationState does not match.
+[WARNING] Execution data for class neqsim/thermo/util/amines/AmineHeatOfAbsorption does not match.
+[WARNING] Execution data for class neqsim/chemicalreactions/chemicalreaction/ChemicalReactionList does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/DistillationColumn$SimplifiedKvalueModel does not match.
+[WARNING] Execution data for class neqsim/process/equipment/reservoir/SimpleReservoir does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/internals/TrayHydraulicsCalculator does not match.
+[WARNING] Execution data for class neqsim/process/measurementdevice/VolumeFlowTransmitter does not match.
+[WARNING] Execution data for class neqsim/process/equipment/compressor/CompressorChartAlternativeMapLookup does not match.
+[WARNING] Execution data for class neqsim/util/unit/Units$UnitDescription does not match.
+[WARNING] Execution data for class neqsim/process/equipment/TwoPortInterface does not match.
+[WARNING] Execution data for class neqsim/standards/Standard does not match.
+[WARNING] Execution data for class neqsim/thermodynamicoperations/flashops/QfuncFlash does not match.
+[WARNING] Execution data for class neqsim/chemicalreactions/chemicalequilibrium/ChemicalEquilibrium does not match.
+[WARNING] Execution data for class neqsim/thermo/component/ComponentElectrolyteCPAstatoil does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/RateBasedPackedColumn$TransportSnapshot does not match.
+[WARNING] Execution data for class neqsim/chemicalreactions/kinetics/Kinetics does not match.
+[WARNING] Execution data for class neqsim/process/equipment/distillation/internals/PackingSpecification does not match.
+[WARNING] Execution data for class neqsim/process/equipment/splitter/ComponentSplitter does not match.
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  40.998 s
+[INFO] Finished at: 2026-07-09T22:39:58+02:00
+[INFO] ------------------------------------------------------------------------

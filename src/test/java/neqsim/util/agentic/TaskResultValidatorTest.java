@@ -311,4 +311,95 @@ class TaskResultValidatorTest {
     }
     assertTrue(foundError, "Non-array standards_applied should produce an error");
   }
+
+  @Test
+  @DisplayName("Out-of-order uncertainty percentiles produce errors")
+  void testUncertaintyPercentileOrdering() {
+    String json = "{\n" + "  \"key_results\": {\"a\": 1},\n"
+        + "  \"validation\": {\"acceptance_criteria_met\": true},\n" + "  \"approach\": \"test\",\n"
+        + "  \"conclusions\": \"test\",\n"
+        + "  \"uncertainty\": {\"method\": \"MC\", \"n_simulations\": 500, \"p10\": 100, \"p50\": 50, \"p90\": 10}\n"
+        + "}";
+
+    TaskResultValidator.ValidationReport report = TaskResultValidator.validate(json);
+    assertFalse(report.isValid());
+    boolean foundP10 = false;
+    boolean foundP50 = false;
+    for (TaskResultValidator.ValidationReport.Issue e : report.getErrors()) {
+      if (e.field.equals("uncertainty.p10")) {
+        foundP10 = true;
+      }
+      if (e.field.equals("uncertainty.p50")) {
+        foundP50 = true;
+      }
+    }
+    assertTrue(foundP10 && foundP50, "Out-of-order p10/p50/p90 should produce ordering errors");
+  }
+
+  @Test
+  @DisplayName("Non-numeric uncertainty percentile produces error")
+  void testUncertaintyPercentileNonNumeric() {
+    String json = "{\n" + "  \"key_results\": {\"a\": 1},\n"
+        + "  \"validation\": {\"acceptance_criteria_met\": true},\n" + "  \"approach\": \"test\",\n"
+        + "  \"conclusions\": \"test\",\n" + "  \"uncertainty\": {\"p10\": \"low\", \"p50\": 50, \"p90\": 100}\n" + "}";
+
+    TaskResultValidator.ValidationReport report = TaskResultValidator.validate(json);
+    assertFalse(report.isValid());
+    boolean found = false;
+    for (TaskResultValidator.ValidationReport.Issue e : report.getErrors()) {
+      if (e.field.equals("uncertainty.p10") && e.message.contains("must be a number")) {
+        found = true;
+      }
+    }
+    assertTrue(found, "Non-numeric p10 should produce an error");
+  }
+
+  @Test
+  @DisplayName("Valid benchmark_validation array passes")
+  void testValidBenchmarkValidation() {
+    String json = "{\n" + "  \"key_results\": {\"a\": 1},\n"
+        + "  \"validation\": {\"acceptance_criteria_met\": true},\n" + "  \"approach\": \"test\",\n"
+        + "  \"conclusions\": \"test\",\n"
+        + "  \"benchmark_validation\": [{\"what\": \"PSV area\", \"reference\": \"API 520 Ex 5\", "
+        + "\"delta_pct\": 1.2, \"status\": \"PASS\"}]\n" + "}";
+
+    TaskResultValidator.ValidationReport report = TaskResultValidator.validate(json);
+    assertTrue(report.isValid(), "Well-formed benchmark_validation should not error");
+  }
+
+  @Test
+  @DisplayName("Non object/array benchmark_validation produces error")
+  void testBenchmarkValidationWrongType() {
+    String json = "{\n" + "  \"key_results\": {\"a\": 1},\n"
+        + "  \"validation\": {\"acceptance_criteria_met\": true},\n" + "  \"approach\": \"test\",\n"
+        + "  \"conclusions\": \"test\",\n" + "  \"benchmark_validation\": \"done\"\n" + "}";
+
+    TaskResultValidator.ValidationReport report = TaskResultValidator.validate(json);
+    assertFalse(report.isValid());
+    boolean found = false;
+    for (TaskResultValidator.ValidationReport.Issue e : report.getErrors()) {
+      if (e.field.equals("benchmark_validation")) {
+        found = true;
+      }
+    }
+    assertTrue(found, "String benchmark_validation should produce an error");
+  }
+
+  @Test
+  @DisplayName("Unexpected benchmark status is warned")
+  void testBenchmarkValidationBadStatus() {
+    String json = "{\n" + "  \"key_results\": {\"a\": 1},\n"
+        + "  \"validation\": {\"acceptance_criteria_met\": true},\n" + "  \"approach\": \"test\",\n"
+        + "  \"conclusions\": \"test\",\n"
+        + "  \"benchmark_validation\": [{\"what\": \"x\", \"reference\": \"r\", \"status\": \"MAYBE\"}]\n" + "}";
+
+    TaskResultValidator.ValidationReport report = TaskResultValidator.validate(json);
+    boolean found = false;
+    for (TaskResultValidator.ValidationReport.Issue w : report.getWarnings()) {
+      if (w.field.contains("benchmark_validation") && w.message.contains("MAYBE")) {
+        found = true;
+      }
+    }
+    assertTrue(found, "Unexpected benchmark status should warn");
+  }
 }

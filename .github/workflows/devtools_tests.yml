@@ -1,0 +1,45 @@
+name: Devtools tests
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - "devtools/**"
+      - ".github/workflows/devtools_tests.yml"
+  push:
+    branches: [master]
+    paths:
+      - "devtools/**"
+
+jobs:
+  devtools-tests:
+    name: Run devtools Python tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          # pytest for the hermetic suites; python-docx + matplotlib for the
+          # report-generator tests; scikit-learn so discovery uses the TF-IDF
+          # path (it also has a pure-python fallback).
+          python -m pip install pytest python-docx matplotlib scikit-learn
+
+      - name: Run hermetic pytest suites
+        run: |
+          python -m pytest -q \
+            devtools/test_agent_search.py \
+            devtools/test_skill_search.py \
+            devtools/test_verify_agent_skill_refs.py \
+            devtools/test_report_workflow.py \
+            devtools/test_unisim_outputs.py
+
+      - name: Run report generator integration test (script)
+        run: python devtools/test_report_gen.py

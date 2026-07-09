@@ -65,6 +65,67 @@ def _find_project_root():
 _PROJECT_ROOT = _find_project_root() or Path(__file__).resolve().parent.parent
 
 
+def find_task_dir(start=None):
+    """Return the ``task_solve/<date>_<slug>`` folder that owns the caller.
+
+    Robust replacement for the fragile ``NOTEBOOK_DIR.parent`` heuristic. The
+    NeqSim Runner executes notebooks from a subprocess whose cwd is the notebook
+    folder (e.g. ``step2_analysis/``) and does NOT set ``__vsc_ipynb_file__``, so
+    ``Path.cwd()`` / ``NOTEBOOK_DIR.parent`` frequently overshoots or lands in a
+    ``runner_output/job-*/`` scratch folder. This walker instead searches upward
+    for the real task root, identified by any of its canonical markers.
+
+    Search order:
+      1. ``NEQSIM_TASK_DIR`` environment variable (set it to pin the folder).
+      2. Walk upward from ``start`` (default: the ``__vsc_ipynb_file__`` notebook
+         path if set, else the current working directory) looking for a folder
+         that is under ``task_solve/`` and contains a task marker
+         (``task_spec.md``, ``README.md``, ``study_config.yaml``,
+         ``step1_scope_and_research/`` or ``results.json``).
+      3. Fall back to the first ancestor literally named like a task slug under a
+         ``task_solve`` parent, else the start directory itself.
+
+    :param start: optional path to start the walk from (file or directory).
+    :returns: :class:`pathlib.Path` to the resolved task directory.
+    """
+    env_dir = os.environ.get("NEQSIM_TASK_DIR")
+    if env_dir:
+        p = Path(env_dir).resolve()
+        if p.exists():
+            return p
+
+    if start is None:
+        # Prefer the VS Code notebook path when available; else cwd.
+        start = os.environ.get("NEQSIM_NOTEBOOK_FILE") or Path.cwd()
+    start_path = Path(start).resolve()
+    if start_path.is_file():
+        start_path = start_path.parent
+
+    markers = (
+        "task_spec.md",
+        "study_config.yaml",
+        "results.json",
+        "step1_scope_and_research",
+        "step2_analysis",
+    )
+
+    candidates = [start_path] + list(start_path.parents)
+    # First pass: a folder under a ``task_solve`` parent that carries a marker.
+    for c in candidates:
+        if c.parent.name == "task_solve" and any((c / m).exists() for m in markers):
+            return c
+    # Second pass: any folder carrying a strong task marker (task_spec/config).
+    for c in candidates:
+        if (c / "task_spec.md").exists() or (c / "study_config.yaml").exists():
+            return c
+    # Third pass: any folder that is a direct child of ``task_solve``.
+    for c in candidates:
+        if c.parent.name == "task_solve":
+            return c
+    # Give up gracefully — return the starting directory.
+    return start_path
+
+
 def _run_compile(root):
     """Run mvnw compile and raise on failure."""
     print("Compiling... ", end="", flush=True)

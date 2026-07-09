@@ -93,9 +93,9 @@ def extract_skill_metadata(skill_md_path):
             if m:
                 metadata[key] = m.group(1).strip().strip('"')
 
-    # Extract USE WHEN clause
+    # Extract USE WHEN clause (case-insensitive: skills use "USE WHEN:" and "Use when:")
     desc = metadata.get("description", "")
-    use_when_match = re.search(r"USE WHEN:\s*(.+?)(?:\.|$)", desc)
+    use_when_match = re.search(r"use when:\s*(.+?)(?:\.|$)", desc, re.IGNORECASE)
     if use_when_match:
         metadata["use_when"] = use_when_match.group(1).strip()
 
@@ -118,16 +118,30 @@ def extract_skill_metadata(skill_md_path):
 
 
 def check_agents_reference_skills(agents_dir, root):
-    """Check that each agent file (except meta files) references at least one skill."""
+    """Check that each agent file (except meta files) references at least one skill.
+
+    Recognises all skill-declaration conventions (backticked ``neqsim-*`` refs,
+    an inline ``Loaded skills:`` line, and ``## Skills to Load`` / ``## Loaded
+    skills`` bullet headings) so agents that only use the canonical loaded-skills
+    line are not falsely flagged.
+    """
     issues = []
     meta_files = {"README.md", "router.agent.md"}
     if not agents_dir.is_dir():
         return issues
 
+    agent_search, _ = _load_discovery_modules()
     for agent_file in sorted(agents_dir.glob("*.md")):
         if agent_file.name in meta_files:
             continue
         refs = extract_skill_refs_from_file(agent_file)
+        if not refs and agent_search is not None:
+            try:
+                text = agent_file.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                text = ""
+            if agent_search._extract_loaded_skills_body(text):
+                continue
         if not refs:
             issues.append(
                 "NO SKILLS: Agent '{}' does not reference any skills. "
@@ -136,6 +150,87 @@ def check_agents_reference_skills(agents_dir, root):
                 )
             )
     return issues
+
+
+def _load_discovery_modules():
+    """Import agent_search + skill_search from the same devtools dir (or None)."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    try:
+        import agent_search  # noqa: E402
+        import skill_search  # noqa: E402
+        return agent_search, skill_search
+    except ImportError:
+        return None, None
+
+
+def check_combined_skill_refs(root, skill_folders):
+    """Validate agent required_skills against the COMBINED cross-repo skill index.
+
+    Uses agent_search (all agent repos) and skill_search (now spans the sibling
+    *-skills repos) to classify each agent's declared skills:
+
+    - present in a sibling *-skills repo but not in neqsim/.github/skills
+      -> cross-repo (expected; reported as a count only), and
+    - present in NO repo -> genuinely broken (reported as a warning, or an error
+      under --strict).
+
+    In the neqsim-only CI checkout there are no sibling repos, so agent_search
+    finds only neqsim agents and this check adds nothing new. In the multi-repo
+    workspace it catches real broken references without false-flagging the many
+    legitimate cross-repo skill loads.
+
+    Returns (errors, warnings, cross_repo_count).
+    """
+    agent_search, skill_search = _load_discovery_modules()
+    if agent_search is None or skill_search is None:
+        return [], [], 0
+    skills_dir = root / ".github" / "skills"
+    combined = set(name.lower() for name, _, _ in skill_search._load_skills(skills_dir))
+    combined |= set(folder.lower() for folder in skill_folders)
+    # Also recognise skills bundled in the neqsim-paperlab subsystem, which lives
+    # in its own skills/ tree outside .github/skills and the *-skills repos.
+    paperlab_skills = root / "neqsim-paperlab" / "skills"
+    if paperlab_skills.is_dir():
+        for entry in paperlab_skills.iterdir():
+            if entry.is_dir() and (entry / "SKILL.md").is_file():
+                combined.add(entry.name.lower())
+    local = set(folder.lower() for folder in skill_folders)
+
+    errors = []
+    warnings = []
+    cross_repo = 0
+    for rec in agent_search._load_agents(root):
+        handle = rec[5]
+        repo = rec[4]
+        for skill in rec[3]:
+            key = str(skill).lower()
+            if key in combined:
+                if key not in local:
+                    cross_repo += 1
+            else:
+                warnings.append(
+                    "BROKEN REF (combined index): agent '{}' [{}] requires skill "
+                    "'{}' not found in any repo".format(handle, repo, skill)
+                )
+    return errors, warnings, cross_repo
+
+
+def combined_referenced_skills(root, md_refs):
+    """Return the lowercase set of skills referenced by ANY agent across all repos.
+
+    Combines the markdown refs gathered from neqsim agent/instruction files with
+    the ``required_skills`` declared by every agent in every agent repo (via
+    agent_search). This makes the orphan check aware of the multi-repo reality: a
+    neqsim-mirrored skill consumed only by a sibling-repo agent is NOT an orphan.
+    Degrades to just the markdown refs if agent_search cannot be imported.
+    """
+    referenced = set(str(r).lower() for r in md_refs)
+    agent_search, _ = _load_discovery_modules()
+    if agent_search is not None:
+        for rec in agent_search._load_agents(root):
+            for skill in rec[3]:
+                referenced.add(str(skill).lower())
+    return referenced
 
 
 def generate_skill_index(skills_dir):
@@ -204,16 +299,37 @@ def main():
                 "in .github/skills/".format(ref, ", ".join(sources))
             )
 
-    # 4. Check: orphaned skill folders (exist but never referenced)
-    orphaned = skill_folders - all_refs
+    # Skills mirrored from the neqsim-paperlab subsystem follow their own
+    # conventions (narrative descriptions, invoked by the paperlab router or
+    # directly in research notebooks rather than via the agent loaded-skills
+    # graph), so they are exempt from the discovery-oriented orphan and
+    # USE-WHEN checks.
+    paperlab_skills_dir = root / "neqsim-paperlab" / "skills"
+    paperlab_managed = set()
+    if paperlab_skills_dir.is_dir():
+        paperlab_managed = {
+            entry.name for entry in paperlab_skills_dir.iterdir()
+            if entry.is_dir() and (entry / "SKILL.md").is_file()
+        }
+
+    # 4. Check: orphaned skill folders (exist but never referenced by ANY agent).
+    # Use the combined cross-repo reference set so neqsim-mirrored skills consumed
+    # only by a community/enterprise agent are not falsely reported as orphans.
+    combined_refs = combined_referenced_skills(root, all_refs)
+    orphaned = {
+        name for name in skill_folders
+        if name.lower() not in combined_refs and name not in paperlab_managed
+    }
     for name in sorted(orphaned):
         warnings.append(
             "ORPHANED: Skill folder '{}' exists but is not referenced "
-            "by any agent or instruction file".format(name)
+            "by any agent (in any repo) or instruction file".format(name)
         )
 
-    # 5. Check: every skill has a USE WHEN clause
+    # 5. Check: every skill has a USE WHEN clause (paperlab-managed skills exempt).
     for skill_name in sorted(skill_folders):
+        if skill_name in paperlab_managed:
+            continue
         skill_md = skills_dir / skill_name / "SKILL.md"
         meta = extract_skill_metadata(skill_md)
         if "use_when" not in meta:
@@ -228,6 +344,17 @@ def main():
         errors.extend(agent_issues)
     else:
         warnings.extend(agent_issues)
+
+    # 6b. Combined cross-repo index check: distinguish genuinely-broken agent
+    # required_skills from legitimate cross-repo loads (sibling *-skills repos).
+    combined_errors, combined_warnings, cross_repo_count = check_combined_skill_refs(
+        root, skill_folders)
+    if strict:
+        errors.extend(combined_warnings)
+        errors.extend(combined_errors)
+    else:
+        warnings.extend(combined_warnings)
+        warnings.extend(combined_errors)
 
     # 7. Generate skill keyword index if requested
     if gen_index:
@@ -248,6 +375,9 @@ def main():
     print("Skill folders found: {}".format(len(skill_folders)))
     print("Skill references found: {}".format(len(all_refs)))
     print("Agent files scanned: {}".format(len(md_files)))
+    if cross_repo_count:
+        print("Cross-repo skill loads (sibling *-skills repos): {}".format(
+            cross_repo_count))
     print()
 
     if errors:

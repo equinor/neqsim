@@ -1,0 +1,40 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] ---------------------< com.equinor.neqsim:neqsim >----------------------
+[INFO] Building NeqSim 3.15.0
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- enforcer:3.6.3:enforce (enforce-maven) @ neqsim ---
+[INFO] Rule 0: org.apache.maven.enforcer.rules.version.RequireMavenVersion passed
+[INFO] 
+[INFO] --- jacoco:0.8.15:prepare-agent (prepare-agent) @ neqsim ---
+[INFO] argLine set to -javaagent:C:\\Users\\ESOL\\.m2\\repository\\org\\jacoco\\org.jacoco.agent\\0.8.15\\org.jacoco.agent-0.8.15-runtime.jar=destfile=C:\\Users\\ESOL\\Documents\\GitHub\\neqsim\\target\\jacoco.exec,excludes=neqsim/physicalproperties/util/parameterfitting/**/*:neqsim/statistics/util/parameterfitting/**/*:neqsim/pvtsimulation/util/parameterfitting/**/*
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ neqsim ---
+[INFO] Copying 88 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- flatten:1.7.3:flatten (flatten) @ neqsim ---
+[INFO] Generating flattened POM of project com.equinor.neqsim:neqsim:jar:3.15.0...
+[INFO] 
+[INFO] --- compiler:3.15.0:compile (default-compile) @ neqsim ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ neqsim ---
+[INFO] Copying 66 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.15.0:testCompile (default-testCompile) @ neqsim ---
+[INFO] Recompiling the module because of changed source code.
+[INFO] Compiling 1379 source files with javac [debug release 17] to target\test-classes
+[INFO] /C:/Users/ESOL/Documents/GitHub/neqsim/src/test/java/neqsim/DocExamplesCompilationTest.java: Some input files use or override a deprecated API.
+[INFO] /C:/Users/ESOL/Documents/GitHub/neqsim/src/test/java/neqsim/DocExamplesCompilationTest.java: Recompile with -Xlint:deprecation for details.
+[INFO] /C:/Users/ESOL/Documents/GitHub/neqsim/src/test/java/neqsim/process/safety/risk/condition/ConditionBasedReliabilityTest.java: C:\Users\ESOL\Documents\GitHub\neqsim\src\test\java\neqsim\process\safety\risk\condition\ConditionBasedReliabilityTest.java uses unchecked or unsafe operations.
+[INFO] /C:/Users/ESOL/Documents/GitHub/neqsim/src/test/java/neqsim/process/safety/risk/condition/ConditionBasedReliabilityTest.java: Recompile with -Xlint:unchecked for details.
+[INFO] 
+[INFO] --- surefire:3.5.6:test (default-test) @ neqsim ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running neqsim.process.equipment.separator.ThreePhaseGasScrubberTest
