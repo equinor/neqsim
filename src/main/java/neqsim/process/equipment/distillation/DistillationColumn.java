@@ -5442,6 +5442,16 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     double relaxation = Math.max(minInsideOutRelaxation, Math.min(maxAdaptiveRelaxation, 0.8));
     double ioRelaxationIncreaseFactor = 1.3; // faster ramp than sequential (1.2)
 
+    // Skip expensive physical/transport property initialization on every tray flash
+    // during the iterative solve (same optimization as solveSequential). The
+    // inside-out sweeps and mass/energy balances only need thermodynamic
+    // properties (enthalpy, K-values, densities); viscosity/thermal-conductivity/
+    // surface-tension are computed once on the converged state via
+    // finalizeTrayProperties() below (and before any handoff to the Newton solver).
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setSkipPhysicalPropertiesDuringSolve(true);
+    }
+
     if (!hasBeenSolvedBefore) {
       trays.get(firstFeedTrayNumber).run(id);
     }
@@ -5759,6 +5769,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
       if (shouldSwitchInsideOutToNewton(iter, err, baseTempTolerance, kValueResidual)) {
         storeInsideOutTelemetry(totalFlashSweeps, totalInnerLoopIterations, kValueResidual, latestSurrogateResidual);
+        // Restore full tray properties and clear the skip flag before handing off to
+        // the Newton solver, so it runs and finalizes products with complete
+        // physical/transport properties.
+        for (int i = 0; i < numberOfTrays; i++) {
+          trays.get(i).finalizeTrayProperties();
+        }
         hasBeenSolvedBefore = false;
         setDoInitializion(true);
         solveNewton(id);
@@ -5772,6 +5788,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     }
 
     storeInsideOutTelemetry(totalFlashSweeps, totalInnerLoopIterations, kValueResidual, latestSurrogateResidual);
+    // Compute full physical/transport properties once on the converged tray states
+    // (skipped during iteration for speed) so product streams cloned in
+    // finalizeSolve carry complete properties.
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).finalizeTrayProperties();
+    }
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
   }
 
