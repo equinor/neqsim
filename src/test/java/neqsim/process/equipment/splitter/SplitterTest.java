@@ -136,12 +136,11 @@ class SplitterTest {
   }
 
   @Test
-  void testFlowRatesOverRequestMassBalanceFails() {
+  void testFlowRatesOverRequestScalesDownAndConservesMass() {
     // inlet = 10 MSm3/day; requesting 12 out of outlet 0 with a remainder outlet is
-    // unphysical (remainder would be negative). Mass must be conserved (outlets should
-    // sum to the inlet flow rate) regardless of the requested split, but this
-    // over-requested configuration does not add up. This test documents the current
-    // mass-balance failure for this input and is expected to fail.
+    // unphysical on its own (the remainder would be negative). Rather than throwing or
+    // silently zeroing outlets, the fixed outlet rate is scaled down proportionally
+    // (12 -> 10) so the remainder outlet gets 0 and total mass is still conserved.
     Splitter splitter = new Splitter("splitter", inletStream, 2);
     splitter.setFlowRates(new double[] { 12.0, -1.0 }, "MSm3/day");
     splitter.run();
@@ -150,8 +149,12 @@ class SplitterTest {
     double split0Moles = splitter.getSplitStream(0).getThermoSystem().getTotalNumberOfMoles();
     double split1Moles = splitter.getSplitStream(1).getThermoSystem().getTotalNumberOfMoles();
 
+    // The over-requested outlet is capped at the full inlet flow; the remainder gets nothing.
+    assertEquals(1.0, splitter.getSplitFactor(0), 1e-6);
+    assertEquals(0.0, splitter.getSplitFactor(1), 1e-6);
+    // Mass must still be conserved.
     assertEquals(inletMoles, split0Moles + split1Moles, inletMoles * 1e-4,
-        "Mass balance does not hold when requested outlet flow rate exceeds inlet flow rate");
+        "Mass balance must hold even when the requested outlet flow rate exceeds the inlet flow rate");
   }
 
   @Test
