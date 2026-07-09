@@ -1,0 +1,58 @@
+# Radix deployment for the NeqSim MCP server — Playground POC (Phase 2).
+# Deploys the prebuilt public image; Entra-gated from first public exposure
+# (QUARKUS_PROFILE=enterprise). See specs/2026-07-09-radix-deploy in the
+# planning repo. Config branch: deploy/mcp-radix-poc.
+apiVersion: radix.equinor.com/v1
+kind: RadixApplication
+metadata:
+  name: neqsim-mcp-server
+spec:
+  environments:
+    - name: poc
+      build:
+        from: deploy/mcp-radix-poc
+  components:
+    - name: mcp
+      # Prebuilt public image (fixed by #2398, health added by #2403). Public
+      # package -> no imagePullSecret. Re-deploy to pick up a new :latest.
+      image: ghcr.io/equinor/neqsim-mcp-server:latest
+      ports:
+        - name: http
+          port: 8080
+      publicPort: http
+      healthChecks:
+        readinessProbe:
+          httpGet:
+            port: 8080
+            path: /q/health/ready
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            port: 8080
+            path: /q/health/live
+          initialDelaySeconds: 30
+          periodSeconds: 15
+      variables:
+        # ── Hosted hardening (Phase 1 findings) ──
+        QUARKUS_HTTP_HOST: "0.0.0.0"                 # dev default is localhost
+        QUARKUS_HTTP_CORS_ENABLED: "false"           # no browser talks to /mcp directly
+        QUARKUS_MCP_SERVER_STDIO_ENABLED: "false"    # pod has no stdin -> would exit on EOF
+        NEQSIM_MCP_PROFILE: "STUDY_TEAM"             # governance tier (Tier 1+2 callable)
+        # ── Entra OIDC (resource server; %enterprise profile) ──
+        QUARKUS_PROFILE: "enterprise"                # turns on OIDC + OTel
+        QUARKUS_OIDC_AUTH_SERVER_URL: "https://login.microsoftonline.com/3aa4a235-b6e2-48d5-9195-7fcf05b459b0/v2.0"
+        QUARKUS_OIDC_CLIENT_ID: "api://35fda377-148b-4b6b-a5be-d52203160690"   # App ID URI = expected audience
+        QUARKUS_OIDC_TOKEN_AUDIENCE: "api://35fda377-148b-4b6b-a5be-d52203160690"
+        # OTel has no collector yet -> keep the SDK off even under enterprise
+        QUARKUS_OTEL_SDK_DISABLED: "true"
+      environmentConfig:
+        - environment: poc
+          replicas: 1                                # MANDATORY: in-JVM session state
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "3Gi"
