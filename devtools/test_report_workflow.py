@@ -10,7 +10,6 @@ python-docx is not installed the module calls sys.exit at import, so these tests
 skip cleanly when the dependency is absent.
 """
 import importlib.util
-import os
 import sys
 import unittest
 from pathlib import Path
