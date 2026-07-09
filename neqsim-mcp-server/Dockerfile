@@ -21,5 +21,9 @@ WORKDIR /app
 
 COPY target/neqsim-mcp-server-*-runner.jar /app/server.jar
 
+# Kubernetes platforms (e.g. Equinor Radix) enforce runAsNonRoot and need a
+# numeric UID to verify it — a root image is refused admission.
+USER 1001:1001
+
 # STDIO transport — stdin/stdout for JSON-RPC, stderr for logs
 ENTRYPOINT ["java", "-jar", "/app/server.jar"]
