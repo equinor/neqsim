@@ -107,8 +107,13 @@ public class Calculator extends ProcessEquipmentBaseClass {
     // duty it was not measured for) the extrapolation can return a physically
     // impossible surge flow orders of magnitude above the curve, which makes the
     // proportional step below chase an unreachable target and the recycle grow
-    // without bound. Clamp the surge flow to the maximum flow that defines the
-    // surge curve so the anti-surge control stays inside the measured envelope.
+    // without bound. Only a *gross* extrapolation is pathological: a modest
+    // extrapolation just below the lowest fitted head point is a legitimate
+    // anti-surge target and must be honoured (otherwise the compressor is held
+    // in surge). Clamp the surge flow to the surge curve's maximum defined flow
+    // only when it exceeds that maximum by more than ANTI_SURGE_MAX_RECYCLE_FACTOR,
+    // which keeps normal operation and reasonable extrapolation untouched while
+    // still breaking the runaway from a wildly off-range surge curve.
     try {
       double[] curveFlow = antiSurgeSplitter == null ? null
           : compressor.getCompressorChart().getSurgeCurve().getSortedFlow();
@@ -119,7 +124,8 @@ public class Calculator extends ProcessEquipmentBaseClass {
             maxCurveFlow = curveFlow[i];
           }
         }
-        if (Double.isFinite(maxCurveFlow) && maxCurveFlow > 0.0 && surgeFlow > maxCurveFlow) {
+        if (Double.isFinite(maxCurveFlow) && maxCurveFlow > 0.0
+            && surgeFlow > ANTI_SURGE_MAX_RECYCLE_FACTOR * maxCurveFlow) {
           surgeFlow = maxCurveFlow;
         }
       }
