@@ -9,6 +9,59 @@
 
 ---
 
+## 2026-07-09 — New: anti-surge control line, recycle energy penalty, chart calibrator; fix: getMolarMass invariance
+
+### Summary
+
+Compressor anti-surge / surge-control-line additions motivated by an
+energy-efficiency task (verify whether a control line can be moved so the ASV
+can be closed), plus a molar-mass correctness fix. All Java 8, no API breaks.
+Related skill: `neqsim-compressor-antisurge-recycle` (updated). Tests:
+`CompressorAntiSurgeControlLineTest` (8), `SystemThermoMolarMassTest` (2).
+
+### New methods on `neqsim.process.equipment.compressor.Compressor`
+
+- **`setSurgeControlMargin(double frac)` / `getSurgeControlMargin()`** — anti-surge
+  control-line flow margin as a fraction of surge flow (e.g. 0.10 = control line
+  10 % right of surge). 0 disables. Negative rejected.
+- **`getControlLineFlow()`** — control-line inlet volumetric flow (m3/hr) =
+  `getSurgeFlowRate() * (1 + margin)` at the current head.
+- **`getDistanceToControlLine()`** — `inletFlow / controlLineFlow - 1` (mirrors
+  `getDistanceToSurge()`); positive ⇒ right of the control line (ASV can close).
+- **`getRequiredRecycleFractionToControlLine()`** — recycle fraction of total
+  suction flow needed to hold the operating point on the control line (0 if the
+  natural point is already right of it).
+- **`getAntiSurgeRecyclePower(double recycleFraction, String unit)`** — wasted
+  shaft power from recycling ≈ `getPower(unit) * recycleFraction`.
+- **`getAntiSurgeRecycleHeatDuty(double recycleFraction, String unit)`** — recycle
+  cooler heat duty (equals wasted shaft work at screening level).
+- `getOperatingPoint()` / `getOperatingPointJson()` schema bumped **1.0 → 1.1**;
+  adds `surgeControlMargin`, `controlLineFlow_m3hr`, `distanceToControlLine`.
+
+### New class
+
+- **`neqsim.process.equipment.compressor.CompressorChartCalibrator`** — calibrate a
+  chart from field data: `fitSurgeCurve(double[] flow, double[] head)` (installs a
+  `SafeSplineSurgeCurve` from surge-test points), static
+  `molarMassHeadCorrectionFactor(mwRef, mwActual)` (= mwRef/mwActual, head ∝ 1/MW),
+  and `recommendControlMargin(baseMargin, double[] measuredSurgeFlow)` (widens the
+  margin by the surge-point coefficient of variation).
+
+### Fixed (backward-compatible)
+
+- **`SystemThermo.getMolarMass()`** now normalises by the sum of overall mole
+  fractions, so molar mass (an intensive property) is invariant to
+  `setTotalNumberOfMoles()`. Previously, calling `setTotalNumberOfMoles(1.0)` on a
+  fluid whose components were added as mol% left `getMolarMass()` ~100x too high.
+  No change for normally-flashed fluids (Σz = 1).
+
+### Agents/skills to update
+
+- `neqsim-compressor-antisurge-recycle` skill — documents the new control-line and
+  recycle-energy methods and `CompressorChartCalibrator` (done).
+
+---
+
 ## 2026-07-09 — New: rigorous corrosion/scaling coupling (NORSOK M-506, scale kinetics, brine mixing)
 
 ### Summary

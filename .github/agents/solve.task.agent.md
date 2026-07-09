@@ -370,6 +370,33 @@ checks before writing Step 1 content:
    - Record in `notes.md` which NeqSim classes/methods will be used, and note
      any missing capability as a gap to be closed (NIP + Java implementation
      per Section 0 principle 2 and the Continuous Improvement Rule).
+3b. **Data-acquisition screening (ALWAYS — before assuming stand-in data).**
+   List the input data the task needs (equipment curves, geometry, fluid
+   composition, operating point, etc.) and, for **each** input, screen for a
+   retrieval tool/agent that can obtain the *real* value before falling back to
+   a representative assumption. Do NOT proceed with stand-in data for an input
+   that an available data-source agent could supply. Map each need to its
+   source using this table (community names shown; use the `enterprise-` twin
+   when on an enterprise task):
+
+   | Data need | Retrieve with | Notes |
+   |-----------|---------------|-------|
+   | Compressor/pump curves, vendor performance maps, datasheets, P&IDs, mechanical drawings, line lists, material certs | `@stid.reader` / `stid-reader-agent` + `neqsim-stid-retriever` (STID doc download → PDF/OCR → `neqsim-technical-document-reading`) | Vendor "map"/curve docs live in STID; download then extract the map digitally |
+   | Piping class, pipe internal diameter, wall thickness, valve (VDS/MDS) data, flange rating | `@tr2000` / `tr2000-agent` + `enterprise-tr2000-api` | Resolve line tag → PCS → internal Ø |
+   | Live instrument data / operating point (P, T, flow, speed, valve %, current recycle) | `@plant.data` / `plant-data-agent` + `neqsim-plant-data` (tagreader PI/IP.21) or `@seeq.connect` / `enterprise-seeq-connect` | Resolve historian tag from STID tag; prefer `/PRIM` channel; check units |
+   | Measured production volumes (well/field) | `rigga-production-agent` + `enterprise-rigga-production` | Measured production as feed / validation basis |
+   | Equipment / maintenance / failure history | `@maintenance` / `maintenance-agent` + `enterprise-maintenance-api` | Read-only work orders, notifications |
+   | Fluid composition / gas-sample molweight | STID/lab report via `@stid.reader`; else record as an explicit gap | A wrong MW mis-places compressor maps — always try to obtain it |
+   | Public literature / standards | `@literature.scout` | See step 6 |
+
+   Record in `notes.md`, for every required input: the source agent/skill you
+   will use, or an explicit statement that the value is a documented **stand-in
+   assumption** because no retrieval path is available (and why). "The data is a
+   field unknown" is only acceptable **after** the relevant retrieval agent has
+   been screened (and, where feasible, attempted). For governed enterprise
+   sources (STID, TR2000, tagreader, Seeq, Rigga, Maintenance, PEPR), prefer the
+   corresponding coordinator agent so authentication and read-only governance
+   are handled correctly.
 4. **Repo memory scan.** List `/memories/repo/*.md` via the `memory` tool.
    Read any whose filename contains a keyword from the task title — this
    surfaces prior solved tasks and known gotchas before you reinvent them.

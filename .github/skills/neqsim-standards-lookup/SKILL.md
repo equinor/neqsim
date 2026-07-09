@@ -37,6 +37,8 @@ The index file `standards_index.csv` maps equipment types to applicable standard
 | Subsea equipment | NORSOK U-001, DNV-ST-F101 | `norsok_standards.csv`, `subsea_standards.csv` |
 | Well casing/tubing | API 5CT, API TR 5C3, NORSOK D-010 | `api_standards.csv`, `norsok_standards.csv` |
 | Flange | ASME B16.5 | `asme_standards.csv` |
+| CO2 corrosion / materials selection | NORSOK M-506, ISO 15156 / NACE MR0175, NORSOK M-001 | `norsok_standards.csv` — see `NorsokM506CorrosionRate` / `NorsokM506ElectrolyteBridge` (`process.corrosion`) |
+| Mineral scale / produced water | (industry practice; Davies + Ksp(T)) | `ElectrolyteScaleCalculator` / `ScaleKinetics` / `BrineMixingScaleEvaluator` (`process.chemistry.scale`) |
 
 ## TR/NORSOK Integration Classes
 

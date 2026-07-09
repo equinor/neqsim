@@ -622,13 +622,10 @@ requirement`, or `confidential compressor route`.
 
 ---
 
-<!--
-TEMPLATE — copy this block for each new entry:
+### 2026-07-09 — PEPR action: verify anti-surge control line on an injection compressor (EE)
+**Type:** B (Process)
+**Keywords:** PEPR action solve, anti-surge control line, surge margin, compressor chart, distance to surge, recycle power penalty, energy efficiency, compressor operating window, surge test, gas sample molweight
+**Solution:** private task folder (redacted) — reusable method in `neqsim-compressor-antisurge-recycle` + `neqsim-compressor-operating-window-check` skills
+**Notes:** PEPR action (read-only via pepr-client, Entra ID SSO on MAIN thread) described injection/recompression compressors run *on* the anti-surge control line (continuous ASV recycle) with the machine far right of the theoretical control line — an EE opportunity to move the control line and close the ASV. NeqSim method: `Compressor` + `CompressorChartGenerator.generateCompressorChart("normal curves", n)` (stand-in for the vendor map), `getSurgeFlowRate()`/`getDistanceToSurge()`, `getPolytropicFluidHead()`, `getPower("kW")`, `getOperatingPoint()`. Control line = surge flow ×(1+margin). Recycle power penalty = P_shaft·recycle_frac. Turndown sweep gives the throughput where recycle becomes genuinely necessary (op point reaches control line). MW sweep on a fixed chart shows why a gas sample is needed (head ∝ 1/MW). GOTCHAS: (1) `c:\appl\neqsim-venv` does NOT have `pepr-client` — use system `C:\Program Files\Python312\python.exe` to fetch PEPR, and the neqsim-venv for nbconvert. (2) Under `nbconvert`, `__vsc_ipynb_file__` is undefined and cwd = repo root, so a `os.getcwd()`-based TASK_DIR resolves to the repo root — derive TASK_DIR from `PROJECT_ROOT / "task_solve" / "<slug>"` instead. (3) `neqsim.thermodynamicoperations` package is lowercase. (4) Build task .ipynb with `nbformat` raw-string cells (preserves LaTeX backslashes); hand-written .ipynb JSON with string `source` got its sources wiped on execute. Screening-level; requires field surge test + API 617/692 review.
 
-### YYYY-MM-DD — Title
-**Type:**
-**Keywords:**
-**Solution:**
-**Notes:**
-
--->
+---
