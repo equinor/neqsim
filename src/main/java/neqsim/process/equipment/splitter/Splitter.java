@@ -201,19 +201,44 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       }
     }
 
+    double inletFlow = inletStream.getFlowRate(flowUnit);
+
+    // Guard against fixed positive split flows exceeding the available inlet flow.
+    // Without this, the remainder ("-1") stream would receive a negative flow and
+    // the split would not conserve mass. Scale the fixed flows down proportionally
+    // so their sum does not exceed the inlet and the remainder stream(s) get zero
+    // flow. This makes, for example, a deep-turndown anti-surge recycle (recycle
+    // demand larger than the compressor throughput) converge to a mass-consistent
+    // full-recycle state instead of producing an oscillating mass imbalance.
+    double scale = 1.0;
+    if (sum > inletFlow && sum > 0.0) {
+      scale = inletFlow / sum;
+    }
+
+    double effectiveSum = 0.0;
+    for (int i = 0; i < flowRates.length; i++) {
+      if (flowRates[i] > 0.0) {
+        effectiveSum += flowRates[i] * scale;
+      }
+    }
+
     double missingFlowRate = 0.0;
     for (int i = 0; i < flowRates.length; i++) {
       if (flowRates[i] < -0.1) {
-        missingFlowRate = inletStream.getFlowRate(flowUnit) - sum;
-        sum += missingFlowRate;
+        missingFlowRate = inletFlow - effectiveSum;
+        if (missingFlowRate < 0.0) {
+          missingFlowRate = 0.0;
+        }
+        effectiveSum += missingFlowRate;
       }
     }
 
     splitFactor = new double[flowRates.length];
     for (int i = 0; i < flowRates.length; i++) {
-      splitFactor[i] = flowRates[i] / sum;
       if (flowRates[i] < -0.1) {
-        splitFactor[i] = missingFlowRate / sum;
+        splitFactor[i] = effectiveSum > 0.0 ? missingFlowRate / effectiveSum : 0.0;
+      } else {
+        splitFactor[i] = effectiveSum > 0.0 ? (flowRates[i] * scale) / effectiveSum : 0.0;
       }
     }
   }

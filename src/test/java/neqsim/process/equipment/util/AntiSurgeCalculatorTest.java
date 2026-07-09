@@ -107,4 +107,85 @@ public class AntiSurgeCalculatorTest {
     assertEquals(0.0, resyclestream.getFlowRate("kg/hr"), 1.0);
     assertEquals(39985.43, firstStageCompressor.getInletStream().getFlowRate("kg/hr"), 5.0);
   }
+
+  /**
+   * The dedicated {@link AntiSurgeCalculator} must behave identically to the name-based
+   * {@code Calculator("anti surge calculator")} when the compressor operating head falls far outside the surge curve's
+   * fitted range. In that case the surge curve extrapolates to a physically impossible surge flow; both calculators
+   * must clamp it to the surge curve's maximum defined flow and produce the same bounded recycle setpoint (rather than
+   * a runaway recycle).
+   */
+  @Test
+  public void testAntiSurgeCalculatorMatchesNameBasedUnderSurgeCurveExtrapolation() {
+    double maxCurveFlow = 3634.83;
+    double[] recycleNameBased = new double[1];
+    double surgeNameBased = runOffCurveAntiSurge(true, recycleNameBased);
+    double[] recycleDedicated = new double[1];
+    double surgeDedicated = runOffCurveAntiSurge(false, recycleDedicated);
+
+    // Scenario really is off-curve: the raw surge flow extrapolates above the curve's max flow.
+    assertTrue(surgeNameBased > maxCurveFlow,
+        "test scenario must extrapolate the surge flow beyond the curve (was " + surgeNameBased + ")");
+    assertEquals(surgeNameBased, surgeDedicated, 1e-9, "both calculators see the same compressor surge flow");
+
+    // Both calculators must produce the identical recycle setpoint (they share runAntiSurgeCalc).
+    assertEquals(recycleNameBased[0], recycleDedicated[0], 1e-6,
+        "AntiSurgeCalculator must match the name-based Calculator exactly");
+
+    // The recycle setpoint must stay bounded (the surge-flow clamp prevents the extrapolation runaway).
+    assertTrue(Double.isFinite(recycleDedicated[0]) && recycleDedicated[0] <= 2.0 * maxCurveFlow,
+        "recycle setpoint must be clamped to the surge curve envelope (was " + recycleDedicated[0] + ")");
+  }
+
+  /**
+   * Builds a minimal compressor + anti-surge splitter whose surge curve is defined for a low head range while the
+   * compressor is driven to a much higher head (so the surge flow extrapolates). Runs a single anti-surge calculation
+   * using either the name-based {@link Calculator} or the dedicated {@link AntiSurgeCalculator} and returns the raw
+   * compressor surge flow while writing the resulting recycle setpoint into {@code recycleOut[0]}.
+   *
+   * @param nameBased use the legacy name-based Calculator when true, otherwise the dedicated AntiSurgeCalculator
+   * @param recycleOut one-element array receiving the resulting recycle branch flow in m3/hr
+   * @return the raw (unclamped) compressor surge flow in m3/hr
+   */
+  private double runOffCurveAntiSurge(boolean nameBased, double[] recycleOut) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 6.0);
+    fluid.addComponent("methane", 80.0);
+    fluid.addComponent("ethane", 12.0);
+    fluid.addComponent("propane", 8.0);
+    fluid.setMixingRule(2);
+    fluid.setTemperature(25.0, "C");
+    fluid.setPressure(6.0, "bara");
+    fluid.setTotalFlowRate(3000.0, "kg/hr");
+
+    ProcessSystem process = new ProcessSystem("off-curve anti-surge");
+    Stream feed = process.addUnit("feed", "stream");
+    feed.setFluid(fluid);
+    feed.run();
+
+    Compressor compressor = new Compressor("compressor", feed);
+    compressor.setUsePolytropicCalc(true);
+    compressor.setPolytropicEfficiency(0.75);
+    compressor.setOutletPressure(200.0, "bara");
+    compressor.getCompressorChart().setHeadUnit("kJ/kg");
+    // DX3-style surge curve with a LOW head range (41-93) vs the actual high head at 6 -> 200 bara.
+    double[] curveFlow = { 2061.8, 2356.74, 2848.3, 3398.8, 3634.83 };
+    double[] curveHead = { 41.4, 51.52, 63.6, 84.2, 92.6 };
+    compressor.getCompressorChart().getSurgeCurve().setCurve(null, curveFlow, curveHead);
+    compressor.run();
+    process.add(compressor);
+
+    Splitter splitter = process.addUnit("anti surge splitter", "splitter");
+    splitter.setInletStream(compressor.getOutletStream());
+    splitter.setFlowRates(new double[] { -1, 1.0 }, "m3/hr");
+    splitter.run();
+
+    Calculator calc = nameBased ? new Calculator("anti surge calculator off-curve")
+        : new AntiSurgeCalculator("AS-off-curve");
+    calc.addInputVariable(compressor);
+    calc.setOutputVariable(splitter);
+    calc.run();
+
+    recycleOut[0] = splitter.getSplitStream(1).getFlowRate("m3/hr");
+    return compressor.getSurgeFlowRate();
+  }
 }
