@@ -1011,5 +1011,338 @@
   "paperlab scientific traceability audit": ["paperlab_scientific_traceability_audit"],
   "paperlab student readability": ["paperlab_student_readability"],
   "flash experiments": ["run_flash_experiments"],
-  "methods section writing": ["write_methods_section"]
+  "methods section writing": ["write_methods_section"],
+  "enterprise adura production technology requirements": [
+    "enterprise-adura-production-technology-requirements"
+  ],
+  "enterprise alarm events": [
+    "enterprise-alarm-events"
+  ],
+  "enterprise api portal": [
+    "enterprise-api-portal"
+  ],
+  "enterprise asset economics": [
+    "enterprise-asset-economics"
+  ],
+  "enterprise automation safety review": [
+    "enterprise-automation-safety-review"
+  ],
+  "enterprise barrier register": [
+    "enterprise-barrier-register"
+  ],
+  "enterprise compressor package review": [
+    "enterprise-compressor-package-review"
+  ],
+  "enterprise cost estimate": [
+    "enterprise-cost-estimate"
+  ],
+  "enterprise drawing tracer": [
+    "enterprise-drawing-tracer"
+  ],
+  "enterprise dry gas seal review": [
+    "enterprise-dry-gas-seal-review"
+  ],
+  "enterprise ecalc compressor performance": [
+    "enterprise-ecalc-compressor-performance"
+  ],
+  "enterprise economy basis": [
+    "enterprise-economy-basis"
+  ],
+  "enterprise energy emissions": [
+    "enterprise-energy-emissions"
+  ],
+  "enterprise engineering numbering review": [
+    "enterprise-engineering-numbering-review"
+  ],
+  "enterprise field development decision gate": [
+    "enterprise-field-development-decision-gate"
+  ],
+  "enterprise hazop preparation": [
+    "enterprise-hazop-preparation"
+  ],
+  "enterprise html to pdf": [
+    "enterprise-html-to-pdf"
+  ],
+  "enterprise hydrate margin check": [
+    "enterprise-hydrate-margin-check"
+  ],
+  "enterprise interactive artifact": [
+    "enterprise-interactive-artifact"
+  ],
+  "enterprise investment decision gate": [
+    "enterprise-investment-decision-gate"
+  ],
+  "enterprise lci toolkit": [
+    "enterprise-lci-toolkit"
+  ],
+  "enterprise literature research": [
+    "enterprise-literature-research"
+  ],
+  "enterprise lopa sil screening": [
+    "enterprise-lopa-sil-screening"
+  ],
+  "enterprise maintenance api": [
+    "enterprise-maintenance-api"
+  ],
+  "enterprise material selection review": [
+    "enterprise-material-selection-review"
+  ],
+  "enterprise norsok s001 clause10": [
+    "enterprise-norsok-s001-clause10"
+  ],
+  "enterprise pdf ocr": [
+    "enterprise-pdf-ocr"
+  ],
+  "enterprise pdf to html": [
+    "enterprise-pdf-to-html"
+  ],
+  "enterprise pid annotation": [
+    "enterprise-pid-annotation"
+  ],
+  "enterprise pid completeness": [
+    "enterprise-pid-completeness"
+  ],
+  "enterprise pid process operations": [
+    "enterprise-pid-process-operations"
+  ],
+  "enterprise pid tag extraction": [
+    "enterprise-pid-tag-extraction"
+  ],
+  "enterprise pid topology": [
+    "enterprise-pid-topology"
+  ],
+  "enterprise piping engineering review": [
+    "enterprise-piping-engineering-review"
+  ],
+  "enterprise piping valve compliance": [
+    "enterprise-piping-valve-compliance"
+  ],
+  "enterprise plant data": [
+    "enterprise-plant-data"
+  ],
+  "enterprise pptx presentation": [
+    "enterprise-pptx-presentation"
+  ],
+  "enterprise process design compliance": [
+    "enterprise-process-design-compliance"
+  ],
+  "enterprise process model build verify": [
+    "enterprise-process-model-build-verify"
+  ],
+  "enterprise process safety indicators": [
+    "enterprise-process-safety-indicators"
+  ],
+  "enterprise ram availability": [
+    "enterprise-ram-availability"
+  ],
+  "enterprise sand erosion": [
+    "enterprise-sand-erosion"
+  ],
+  "enterprise seeq connect": [
+    "enterprise-seeq-connect"
+  ],
+  "enterprise sharepoint navigator": [
+    "enterprise-sharepoint-navigator"
+  ],
+  "enterprise standard requirements": [
+    "enterprise-standard-requirements"
+  ],
+  "enterprise standards compliance screening": [
+    "enterprise-standards-compliance-screening"
+  ],
+  "enterprise stid document retrieval": [
+    "enterprise-stid-document-retrieval"
+  ],
+  "enterprise stid evidence": [
+    "enterprise-stid-evidence"
+  ],
+  "enterprise stid live lookup": [
+    "enterprise-stid-live-lookup"
+  ],
+  "enterprise stid neqsim operational study": [
+    "enterprise-stid-neqsim-operational-study"
+  ],
+  "enterprise stid safety evidence": [
+    "enterprise-stid-safety-evidence"
+  ],
+  "enterprise surf cooldown": [
+    "enterprise-surf-cooldown"
+  ],
+  "enterprise technical document reading": [
+    "enterprise-technical-document-reading"
+  ],
+  "enterprise tr2000 api": [
+    "enterprise-tr2000-api"
+  ],
+  "enterprise trapped liquid fire rupture": [
+    "enterprise-trapped-liquid-fire-rupture"
+  ],
+  "enterprise utility systems review": [
+    "enterprise-utility-systems-review"
+  ],
+  "enterprise water hammer": [
+    "enterprise-water-hammer"
+  ],
+  "enterprise well barrier evidence": [
+    "enterprise-well-barrier-evidence"
+  ],
+  "enterprise well barrier verification": [
+    "enterprise-well-barrier-verification"
+  ],
+  "enterprise well integrity screening": [
+    "enterprise-well-integrity-screening"
+  ],
+  "enterprise well intervention risk": [
+    "enterprise-well-intervention-risk"
+  ],
+  "enterprise well operating envelope": [
+    "enterprise-well-operating-envelope"
+  ],
+  "enterprise well production routing": [
+    "enterprise-well-production-routing"
+  ],
+  "neqsim acoustic induced vibration screening": [
+    "neqsim-acoustic-induced-vibration-screening"
+  ],
+  "neqsim artificial lift screening": [
+    "neqsim-artificial-lift-screening"
+  ],
+  "neqsim asset value npv screening": [
+    "neqsim-asset-value-npv-screening"
+  ],
+  "neqsim bathymetry profile screening": [
+    "neqsim-bathymetry-profile-screening"
+  ],
+  "neqsim capex opex screening": [
+    "neqsim-capex-opex-screening"
+  ],
+  "neqsim compressor antisurge recycle": [
+    "neqsim-compressor-antisurge-recycle"
+  ],
+  "neqsim compressor operating window check": [
+    "neqsim-compressor-operating-window-check"
+  ],
+  "neqsim compressor power screening": [
+    "neqsim-compressor-power-screening"
+  ],
+  "neqsim depressurization screening": [
+    "neqsim-depressurization-screening"
+  ],
+  "neqsim dry gas seal screening": [
+    "neqsim-dry-gas-seal-screening"
+  ],
+  "neqsim dynamic instrument controller setup": [
+    "neqsim-dynamic-instrument-controller-setup"
+  ],
+  "neqsim dynamic process preparation": [
+    "neqsim-dynamic-process-preparation"
+  ],
+  "neqsim e300 fluid io": [
+    "neqsim-e300-fluid-io"
+  ],
+  "neqsim economy basis screening": [
+    "neqsim-economy-basis-screening"
+  ],
+  "neqsim energy emissions screening": [
+    "neqsim-energy-emissions-screening"
+  ],
+  "neqsim field layout import": [
+    "neqsim-field-layout-import"
+  ],
+  "neqsim fired heater duty screening": [
+    "neqsim-fired-heater-duty-screening"
+  ],
+  "neqsim flare radiation screening": [
+    "neqsim-flare-radiation-screening"
+  ],
+  "neqsim flow induced vibration screening": [
+    "neqsim-flow-induced-vibration-screening"
+  ],
+  "neqsim fluid quality check": [
+    "neqsim-fluid-quality-check"
+  ],
+  "neqsim gas turbine performance screening": [
+    "neqsim-gas-turbine-performance-screening"
+  ],
+  "neqsim hydrate margin check": [
+    "neqsim-hydrate-margin-check"
+  ],
+  "neqsim hydrate screening": [
+    "neqsim-hydrate-screening"
+  ],
+  "neqsim line velocity check": [
+    "neqsim-line-velocity-check"
+  ],
+  "neqsim pipe route profile": [
+    "neqsim-pipe-route-profile"
+  ],
+  "neqsim pipe wall thickness screening": [
+    "neqsim-pipe-wall-thickness-screening"
+  ],
+  "neqsim piping flexibility screening": [
+    "neqsim-piping-flexibility-screening"
+  ],
+  "neqsim pressure drop screening": [
+    "neqsim-pressure-drop-screening"
+  ],
+  "neqsim produced water scale screening": [
+    "neqsim-produced-water-scale-screening"
+  ],
+  "neqsim production network routing": [
+    "neqsim-production-network-routing"
+  ],
+  "neqsim psv orifice screening": [
+    "neqsim-psv-orifice-screening"
+  ],
+  "neqsim reciprocating compressor screening": [
+    "neqsim-reciprocating-compressor-screening"
+  ],
+  "neqsim reliability data screening": [
+    "neqsim-reliability-data-screening"
+  ],
+  "neqsim relief load screening": [
+    "neqsim-relief-load-screening"
+  ],
+  "neqsim reservoir depletion screening": [
+    "neqsim-reservoir-depletion-screening"
+  ],
+  "neqsim resource classification screening": [
+    "neqsim-resource-classification-screening"
+  ],
+  "neqsim safety function coverage screening": [
+    "neqsim-safety-function-coverage-screening"
+  ],
+  "neqsim sand erosion screening": [
+    "neqsim-sand-erosion-screening"
+  ],
+  "neqsim separator modelling": [
+    "neqsim-separator-modelling"
+  ],
+  "neqsim step out screening": [
+    "neqsim-step-out-screening"
+  ],
+  "neqsim subsea layout geometry": [
+    "neqsim-subsea-layout-geometry"
+  ],
+  "neqsim surf cooldown screening": [
+    "neqsim-surf-cooldown-screening"
+  ],
+  "neqsim teg dehydration modeling": [
+    "neqsim-teg-dehydration-modeling"
+  ],
+  "neqsim utility balance screening": [
+    "neqsim-utility-balance-screening"
+  ],
+  "neqsim vacuum collapse screening": [
+    "neqsim-vacuum-collapse-screening"
+  ],
+  "neqsim water dewpoint dehydration screening": [
+    "neqsim-water-dewpoint-dehydration-screening"
+  ],
+  "neqsim wax calculations": [
+    "neqsim-wax-calculations"
+  ],
+  "neqsim wax margin check": [
+    "neqsim-wax-margin-check"
+  ]
 }
