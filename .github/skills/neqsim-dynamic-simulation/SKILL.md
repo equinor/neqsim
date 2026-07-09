@@ -136,6 +136,29 @@ gasValve.addController("PC-100", PC100);
 | Flow | 0.3-1.0 | 5-30 | 0 |
 | Temperature | 0.5-2.0 | 60-600 | 10-60 |
 
+### Controller Deadband (SP-PV)
+
+`ControllerDeviceBaseClass` supports a native SP-PV deadband via
+`setDeadBand(double)` / `getDeadBand()`. While the absolute control error stays
+inside the band the controller output is **frozen** (holds the last valve
+position) and the integral term does **not** accumulate; default 0 disables it.
+The deadband is in the controller error unit (percent in the default percent
+mode, else the configured engineering unit). This is the standard DCS averaging-
+level deadband used to stop valve cycling.
+
+```java
+levelController.setDeadBand(0.5);   // hold the valve while |PV - SP| <= 0.5 %
+```
+
+**Beware the deadband limit cycle.** On an integrating (level) process a
+deadband delays correction until the level reaches the band edge; the delayed
+correction then overshoots and the cycle repeats, giving a square-wave valve
+trace. Removing (or shrinking) the deadband is the usual fix. If the installed
+pip `neqsim` predates `setDeadBand`, emulate it by toggling controller mode
+each step: `setMode(ControllerMode.MANUAL)` while `|PV%-SP%| <= deadband` (holds
+output) and `setMode(ControllerMode.AUTO)` otherwise (bumpless resume) - this is
+numerically identical to the native deadband.
+
 ### Anti-Surge Control (dynamic)
 
 `AntiSurgeController` (`neqsim.process.controllerdevice.AntiSurgeController`) is a
@@ -335,6 +358,7 @@ TransferFunctionBlock leadLag = new TransferFunctionBlock();
 4. **Controller windup**: Large setpoint changes can cause integral windup
 5. **Separator dimensions**: Must set `setInternalDiameter()` and `setSeparatorLength()` for meaningful level dynamics. For dynamic simulation, set directly on the separator; for design purposes, configure via `SeparatorMechanicalDesign` (see neqsim-api-patterns skill)
 6. **Measurement range**: Set min/max on transmitters to match process range
+7. **Enable dynamic (inventory) mode for level loops**: after `process.run()` (steady), call `setCalculateSteadyState(false)` on the separator AND every valve, then `separator.setLiquidLevel(startFraction)`, before `runTransient`. If steady-state mode is left on, the separator liquid level stays pinned at its default (0.5) and the level controller never acts. The valve `Cv` is auto-derived from the steady solve. A **liquid-outlet** level valve is `setReverseActing(false)` (level up -> valve opens); put a pressure controller on the gas-outlet valve so the vessel pressure is held and the level loop is isolated.
 
 
 ## Pluggable Integrator Strategies

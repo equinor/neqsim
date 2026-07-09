@@ -293,7 +293,21 @@ transport properties (viscosity, thermal conductivity, density).
 
 | Class | Assessment | Package |
 |-------|-----------|---------|
-| `DeWaardMilliamsCorrosion` | CO2/H2S corrosion rate | `pvtsimulation.flowassurance` |
+| `DeWaardMilliamsCorrosion` | CO2/H2S corrosion rate (screening) | `pvtsimulation.flowassurance` |
+
+### Corrosion & Scale (process module)
+
+| Class | Assessment | Package |
+|-------|-----------|---------|
+| `NorsokM506CorrosionRate` | NORSOK M-506 CO2 corrosion (fugacity, in-situ pH, FeCO3 film, shear, glycol/inhibitor) | `process.corrosion` |
+| `NorsokM506ElectrolyteBridge` | Drives NORSOK M-506 from a `SystemElectrolyteCPAstatoil` brine (rigorous pH + FeCO3 supersaturation) | `process.corrosion` |
+| `CO2CorrosionAnalyzer` | de Waard-Milliams from an electrolyte fluid | `pvtsimulation.flowassurance` |
+| `PipeSegmentIntegrity` | Per-segment CO2 corrosion + CaCO3 scale profile along a line (`fromPipe`) | `process.corrosion` |
+| `RobustAqueousPH` | Always-finite in-situ pH (rigorous else CO2-water correlation) | `process.corrosion` |
+| `ElectrolyteScaleCalculator` | Activity-corrected SI for CaCO3/BaSO4/CaSO4/SrSO4 (Davies + Ksp(T)) | `process.chemistry.scale` |
+| `ScaleKinetics` | Induction time + reaction-vs-transport growth regime on top of an SI | `process.chemistry.scale` |
+| `BrineMixingScaleEvaluator` | Seawater/formation-water mixing incompatibility sweep | `process.chemistry.scale` |
+| `ScaleDepositionAccumulator` | Scale deposition along a `PipeBeggsAndBrills` profile | `process.chemistry.scale` |
 
 ### Regression / Tuning
 
@@ -488,7 +502,6 @@ transport properties (viscosity, thermal conductivity, density).
 |-----|-------------|------------|
 | **Rate-based distillation** | No mass-transfer-rate column model | Use equilibrium stages with efficiency |
 | **Asphaltene modeling** | Limited asphaltene precipitation | Use PC-SAFT with tuned parameters |
-| **Scale prediction** | No mineral scale model | External tool (ScaleChem) |
 | **Erosion modeling** | No erosion rate calculation | API RP 14E velocity check only |
 | **Detailed heat exchanger design** | TEMA-level design with Bell-Delaware, vibration, ASME VIII | Full thermal-hydraulic + mechanical via `ShellAndTubeDesignCalculator` |
 | **Dynamic simulation** | Limited transient capability | `runTransient()` on ProcessSystem |
@@ -547,8 +560,9 @@ transport properties (viscosity, thermal conductivity, density).
 | Phase envelope? | ✅ | `ops.calcPTphaseEnvelope()` |
 | Hydrate temperature? | ✅ | `ops.hydrateEquilibriumTemperature()` |
 | Wax appearance? | ✅ | `ops.calcWAT()` |
-| CO2 corrosion rate? | ✅ | `DeWaardMilliamsCorrosion` |
+| CO2 corrosion rate? | ✅ | `DeWaardMilliamsCorrosion` (screening); `NorsokM506CorrosionRate` / `NorsokM506ElectrolyteBridge` (rigorous, brine-driven) |
 | H2S sour classification? | ✅ | `DeWaardMilliamsCorrosion.isSourService()` |
+| Per-segment corrosion+scale profile? | ✅ | `PipeSegmentIntegrity.fromPipe(...)` |
 | ISO 6976 calorific value? | ✅ | `Standard_ISO6976` |
 | Pipeline sizing? | ✅ | `PipeBeggsAndBrills` + `PipelineMechanicalDesign` |
 | Compressor power? | ✅ | `Compressor.getPower("kW")` |
@@ -569,7 +583,7 @@ transport properties (viscosity, thermal conductivity, density).
 | Biogas-to-grid module? | ✅ | `BiogasToGridModule` |
 | Waste-to-energy CHP? | ✅ | `WasteToEnergyCHPModule` |
 | Rate-based column? | ❌ | Not available |
-| Scale prediction? | ❌ | Not available |
+| Scale prediction? | ✅ | `ElectrolyteScaleCalculator` (SI), `ScaleKinetics` (rate), `BrineMixingScaleEvaluator` (mixing), `system.checkScalePotential(phase)` |
 | Detailed HX design? | ❌ | Use duty + LMTD |
 | Full reservoir sim? | ❌ | `SimpleReservoir` only |
 | CO2 injection well analysis? | ✅ | `CO2InjectionWellAnalyzer` |

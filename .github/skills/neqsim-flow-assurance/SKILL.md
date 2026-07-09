@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
-description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion, pipeline hydraulics, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
-last_verified: "2026-07-04"
+description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
+last_verified: "2026-07-09"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -321,6 +321,66 @@ List<String> violations = net.getCorrosionViolations();
 Models: de Waard-Milliams (log10(Vcorr) = 5.8 - 1710/T + 0.67*log10(pCO2))
 and NORSOK M-506 (Vcorr = Kt * fCO2^0.62 * (S/19)^0.146).
 
+### Rigorous NORSOK M-506 from a brine (electrolyte pH + FeCO3 film)
+
+`NorsokM506CorrosionRate` (`neqsim.process.corrosion`) is the standalone NORSOK
+M-506 model (fugacity, in-situ pH, FeCO3 scaling temperature, wall shear, glycol,
+inhibitor). By default it estimates pH from a CO2-water correlation. To drive it
+from **rigorous electrolyte thermodynamics** instead, use `NorsokM506ElectrolyteBridge`
+— the M-506 analogue of `CO2CorrosionAnalyzer`:
+
+```java
+// fluid = SystemElectrolyteCPAstatoil with CO2, water, ions (+ optional Fe++)
+NorsokM506ElectrolyteBridge bridge = new NorsokM506ElectrolyteBridge(fluid);
+bridge.setFlowVelocityMs(3.0);
+bridge.setPipeDiameterM(0.254);
+bridge.run();                       // clones + flashes; does not mutate `fluid`
+double rate = bridge.getModel().getCorrectedCorrosionRate();  // mm/yr
+double pH   = bridge.getInSituPH();          // rigorous aqueous pH (getpH())
+double sr   = bridge.getFeCO3SaturationRatio();  // IAP/Ksp, or -1 if no Fe++/CO3--
+```
+
+**FeCO3 film feedback (closes the corrosion↔scaling loop):** when the aqueous phase
+is supersaturated in siderite (SR>1), a protective film suppresses corrosion even
+below the scaling temperature. Supply the ratio directly on the model, or let the
+bridge compute it from aqueous Fe++/CO3-- molalities (Sun & Nesic 2009 Ksp):
+
+```java
+model.setFeCO3SaturationRatio(sr);   // >1 = protective; -1 = disabled (default)
+double film = model.calculateFeCO3FilmFactor();  // 1.0 = no credit, <1 = protective
+```
+
+**Gotchas (verified):** `SystemInterface.clone()` drops the chemical-reaction setup
+— re-run `chemicalReactionInit()` on the clone before flashing or the CO2-brine pH
+comes out unphysically basic (~10). `setActualPH()` is read back via `getEffectivePH()`,
+NOT `getCalculatedPH()`. Proven converging brine: CO2 0.10 / water 0.88 / Na+ 0.01 /
+Cl- 0.01, `setMixingRule(10)`.
+
+### Robust in-situ pH for investigations
+
+Electrolyte `getpH()` is not robust at all P/T (can return NaN at low pressure).
+Use `RobustAqueousPH.estimate(fluid, pCO2Bar)` to always get a finite, bounded pH:
+it uses the rigorous value when valid, else a CO2-water correlation, and records
+which source was used (`getSource()`, `isFellBack()`).
+
+### Per-segment corrosion + scale along a line (PipeSegmentIntegrity)
+
+`PipeSegmentIntegrity` (`neqsim.process.corrosion`) walks a temperature/pressure/
+velocity profile and reports, per segment, the NORSOK M-506 corrosion rate AND the
+CaCO3 scale saturation, then ranks the worst corrosion and worst scale segments —
+so mitigation can be located along the line. Feed it a run `PipeBeggsAndBrills`:
+
+```java
+PipeSegmentIntegrity integrity = new PipeSegmentIntegrity();
+integrity.fromPipe(pipe)                       // extracts T, P, mixture velocity, diameter
+    .setPipeAndGas(0.2, 0.05)                  // diameter [m], CO2 mole fraction
+    .setBrineChemistry(1500, 400, 0, 0, 12000, 35000); // Ca,HCO3,SO4,Ba,Na,Cl [mg/L]
+integrity.evaluate();
+int worstCorr = integrity.getWorstCorrosionIndex();
+int worstScale = integrity.getWorstScaleIndex();
+// or supply an explicit profile: integrity.setProfile(tC[], pBara[], vMs[])
+```
+
 ### Network-Level Sand Erosion (DNV RP O501)
 
 ```java
@@ -336,6 +396,46 @@ List<String> violations = net.getSandViolations();
 
 Erosion per DNV RP O501: E = K * Csand * v^2.6 * dp^0.2.
 Deposition flagged when v < 1 m/s.
+
+### Mineral Scale (thermodynamics + kinetics + brine mixing)
+
+Thermodynamic saturation index (activity-corrected, Davies + Ksp(T)) for the
+common scales:
+
+```java
+ElectrolyteScaleCalculator scale = new ElectrolyteScaleCalculator();
+scale.setTemperatureCelsius(60).setPressureBara(100).setPH(6.0);
+scale.setCations(caMgL, baMgL, srMgL, mgMgL, naMgL, kMgL, feMgL);
+scale.setAnions(clMgL, so4MgL, hco3MgL, co3MgL);
+scale.calculate();
+double siCaCO3 = scale.getCaCO3SaturationIndex();  // also BaSO4, CaSO4, SrSO4
+```
+
+Rigorous in-situ SI from an electrolyte fluid: `system.checkScalePotential(phase)`
+(see `ThermodynamicOperations`) or `ScalePotentialCheckStream`.
+
+**Kinetics** — SI says *if*, not *how fast*. `ScaleKinetics` adds induction time
+and growth regime on top of the SI:
+
+```java
+ScaleKinetics k = new ScaleKinetics().setSaturationIndex(si).evaluate();
+double tInd = k.getInductionTimeHours();      // classical nucleation
+String regime = k.getLimitingRegime();        // REACTION / TRANSPORT / NONE
+double growth = k.getEffectiveGrowthRateMmYr();
+```
+
+**Brine mixing (seawater + formation water incompatibility)** — sulphate scale
+often peaks at an *intermediate* mixing ratio, not either end member:
+
+```java
+BrineMixingScaleEvaluator mix = new BrineMixingScaleEvaluator(formationWater, seawater);
+mix.setConditions(60, 100).setPH(6.0).setSteps(21).evaluate();
+double worstFrac = mix.getWorstFractionA();    // fraction of formation water
+String worst = mix.getWorstMineral();          // e.g. BaSO4
+```
+
+Deposition along a line: `ScaleDepositionAccumulator` (walks a `PipeBeggsAndBrills`),
+or the coupled corrosion+scale `PipeSegmentIntegrity` above.
 
 ## 6. Thermal Analysis
 

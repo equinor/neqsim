@@ -70,6 +70,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double lastTimeOutsideBand = 0.0;
   private double settlingTolerance = 0.02;
   private double setpointWeight = 1.0;
+  private double deadBand = 0.0;
   private neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation = new neqsim.process.equipment.iec81346.ReferenceDesignation();
 
   /**
@@ -184,11 +185,16 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       double setPointPercent = (controllerSetPoint - transmitter.getMinimumValue())
           / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100.0;
       error = measurementPercent - setPointPercent;
-      if (Ti != 0) {
-        TintValue = Kp / Ti * error;
+      if (deadBand > 0.0 && Math.abs(error) <= deadBand) {
+        // Within deadband: freeze controller output (hold last valve position).
+        response = initResponse;
+      } else {
+        if (Ti != 0) {
+          TintValue = Kp / Ti * error;
+        }
+        double TderivValue = Kp * Td * ((error - 2 * oldError + oldoldError) / (dt * dt));
+        response = initResponse + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
       }
-      double TderivValue = Kp * Td * ((error - 2 * oldError + oldoldError) / (dt * dt));
-      response = initResponse + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
     } else {
       error = measurement - controllerSetPoint;
       // 2-DOF PID: proportional error uses setpoint weight b
@@ -200,38 +206,43 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       if (Math.abs(error) > band) {
         lastTimeOutsideBand = totalTime;
       }
-      TintIncrement = 0.0;
-      if (Ti > 0) {
-        TintIncrement = Kp / Ti * error * dt;
-        TintValue += TintIncrement;
+      if (deadBand > 0.0 && Math.abs(error) <= deadBand) {
+        // Within deadband: freeze controller output and integral (hold last valve position).
+        response = initResponse;
       } else {
-        TintValue = 0.0;
-      }
-
-      derivative = (error - oldError) / dt;
-      if (Td > 0) {
-        if (derivativeFilterTime > 0) {
-          derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
+        TintIncrement = 0.0;
+        if (Ti > 0) {
+          TintIncrement = Kp / Ti * error * dt;
+          TintValue += TintIncrement;
         } else {
-          derivativeState = derivative;
+          TintValue = 0.0;
         }
-      } else {
-        derivativeState = 0.0;
-      }
 
-      delta = Kp * (propError - oldPropError) + TintValue + Kp * Td * derivativeState;
-
-      response = initResponse + propConstant * delta;
-
-      if (response > maxResponse) {
-        response = maxResponse;
-        if (Ti > 0) {
-          TintValue -= TintIncrement;
+        derivative = (error - oldError) / dt;
+        if (Td > 0) {
+          if (derivativeFilterTime > 0) {
+            derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
+          } else {
+            derivativeState = derivative;
+          }
+        } else {
+          derivativeState = 0.0;
         }
-      } else if (response < minResponse) {
-        response = minResponse;
-        if (Ti > 0) {
-          TintValue -= TintIncrement;
+
+        delta = Kp * (propError - oldPropError) + TintValue + Kp * Td * derivativeState;
+
+        response = initResponse + propConstant * delta;
+
+        if (response > maxResponse) {
+          response = maxResponse;
+          if (Ti > 0) {
+            TintValue -= TintIncrement;
+          }
+        } else if (response < minResponse) {
+          response = minResponse;
+          if (Ti > 0) {
+            TintValue -= TintIncrement;
+          }
         }
       }
     }
@@ -687,6 +698,18 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   @Override
   public double getSetpointWeight() {
     return setpointWeight;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDeadBand(double deadBand) {
+    this.deadBand = Math.max(0.0, deadBand);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getDeadBand() {
+    return deadBand;
   }
 
   /**

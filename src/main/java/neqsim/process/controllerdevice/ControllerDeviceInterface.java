@@ -217,6 +217,28 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
   }
 
   /**
+   * Set the controller deadband. While the absolute control error (measurement minus setpoint) stays within this
+   * deadband the controller output is frozen (the last valve position is held) and the integral term does not
+   * accumulate. This reproduces the DCS deadband (SP-PV) that is often used on averaging level loops to avoid valve
+   * cycling. Set to 0.0 (default) to disable. The deadband is expressed in the controller error unit: percent when the
+   * controller runs in the default percent mode, or the configured engineering unit otherwise.
+   *
+   * @param deadBand the deadband half-width in the controller error unit (0.0 disables, negative values are clamped to
+   * 0.0)
+   */
+  public default void setDeadBand(double deadBand) {
+  }
+
+  /**
+   * Get the controller deadband half-width.
+   *
+   * @return the deadband in the controller error unit (0.0 when disabled)
+   */
+  public default double getDeadBand() {
+    return 0.0;
+  }
+
+  /**
    * Get the manual output value used when the controller is in MANUAL mode.
    *
    * @return the manual output value in engineering units

@@ -9,6 +9,103 @@
 
 ---
 
+## 2026-07-09 — New: anti-surge control line, recycle energy penalty, chart calibrator; fix: getMolarMass invariance
+
+### Summary
+
+Compressor anti-surge / surge-control-line additions motivated by an
+energy-efficiency task (verify whether a control line can be moved so the ASV
+can be closed), plus a molar-mass correctness fix. All Java 8, no API breaks.
+Related skill: `neqsim-compressor-antisurge-recycle` (updated). Tests:
+`CompressorAntiSurgeControlLineTest` (8), `SystemThermoMolarMassTest` (2).
+
+### New methods on `neqsim.process.equipment.compressor.Compressor`
+
+- **`setSurgeControlMargin(double frac)` / `getSurgeControlMargin()`** — anti-surge
+  control-line flow margin as a fraction of surge flow (e.g. 0.10 = control line
+  10 % right of surge). 0 disables. Negative rejected.
+- **`getControlLineFlow()`** — control-line inlet volumetric flow (m3/hr) =
+  `getSurgeFlowRate() * (1 + margin)` at the current head.
+- **`getDistanceToControlLine()`** — `inletFlow / controlLineFlow - 1` (mirrors
+  `getDistanceToSurge()`); positive ⇒ right of the control line (ASV can close).
+- **`getRequiredRecycleFractionToControlLine()`** — recycle fraction of total
+  suction flow needed to hold the operating point on the control line (0 if the
+  natural point is already right of it).
+- **`getAntiSurgeRecyclePower(double recycleFraction, String unit)`** — wasted
+  shaft power from recycling ≈ `getPower(unit) * recycleFraction`.
+- **`getAntiSurgeRecycleHeatDuty(double recycleFraction, String unit)`** — recycle
+  cooler heat duty (equals wasted shaft work at screening level).
+- `getOperatingPoint()` / `getOperatingPointJson()` schema bumped **1.0 → 1.1**;
+  adds `surgeControlMargin`, `controlLineFlow_m3hr`, `distanceToControlLine`.
+
+### New class
+
+- **`neqsim.process.equipment.compressor.CompressorChartCalibrator`** — calibrate a
+  chart from field data: `fitSurgeCurve(double[] flow, double[] head)` (installs a
+  `SafeSplineSurgeCurve` from surge-test points), static
+  `molarMassHeadCorrectionFactor(mwRef, mwActual)` (= mwRef/mwActual, head ∝ 1/MW),
+  and `recommendControlMargin(baseMargin, double[] measuredSurgeFlow)` (widens the
+  margin by the surge-point coefficient of variation).
+
+### Fixed (backward-compatible)
+
+- **`SystemThermo.getMolarMass()`** now normalises by the sum of overall mole
+  fractions, so molar mass (an intensive property) is invariant to
+  `setTotalNumberOfMoles()`. Previously, calling `setTotalNumberOfMoles(1.0)` on a
+  fluid whose components were added as mol% left `getMolarMass()` ~100x too high.
+  No change for normally-flashed fluids (Σz = 1).
+
+### Agents/skills to update
+
+- `neqsim-compressor-antisurge-recycle` skill — documents the new control-line and
+  recycle-energy methods and `CompressorChartCalibrator` (done).
+
+---
+
+## 2026-07-09 — New: rigorous corrosion/scaling coupling (NORSOK M-506, scale kinetics, brine mixing)
+
+### Summary
+
+Additive corrosion/scaling classes that let an investigation go from a brine +
+gas composition to an EOS-consistent corrosion rate and a per-segment
+corrosion+scale profile. All Java 8, no API breaks. Related skill:
+`neqsim-flow-assurance` (updated). Tests: `NorsokM506ElectrolyteBridgeTest`,
+`NorsokM506FeCO3FilmTest`, `NorsokM506ValidationTest`, `PipeSegmentIntegrityTest`,
+`ScaleKineticsTest`, `BrineMixingScaleEvaluatorTest`, `RobustAqueousPHTest`.
+
+### New classes
+
+- **`neqsim.process.corrosion.NorsokM506ElectrolyteBridge`** — drives the standard
+  `NorsokM506CorrosionRate` from a `SystemElectrolyteCPAstatoil` fluid: extracts the
+  rigorous in-situ pH (`getpH()`), CO2/H2S fractions, and FeCO3 supersaturation from
+  aqueous Fe++/CO3-- (Sun & Nesic 2009 Ksp). Flashes a clone (input not mutated).
+- **`neqsim.process.corrosion.PipeSegmentIntegrity`** — walks a T/P/velocity profile
+  (arrays or `fromPipe(PipeBeggsAndBrills)`) and reports per-segment CO2 corrosion
+  rate + CaCO3 scale SI, ranking worst corrosion and worst scale segments.
+- **`neqsim.process.corrosion.RobustAqueousPH`** — always-finite in-situ pH: rigorous
+  electrolyte value when valid, else a CO2-water correlation; records the source.
+- **`neqsim.process.chemistry.scale.ScaleKinetics`** — induction time + surface-reaction
+  vs mass-transport growth regime on top of a thermodynamic SI.
+- **`neqsim.process.chemistry.scale.BrineMixingScaleEvaluator`** — two-brine mixing
+  sweep (seawater + formation water), reports worst mixing fraction and mineral.
+
+### Changed (backward-compatible)
+
+- **`NorsokM506CorrosionRate`** — new `setFeCO3SaturationRatio(SR)` /
+  `getFeCO3SaturationRatio()` / `calculateFeCO3FilmFactor()`. When SR>1 a protective
+  siderite film strengthens the scale correction (closes corrosion↔scaling loop).
+  Unset (-1) leaves behaviour identical to before.
+
+### Gotchas for agents
+
+- `SystemInterface.clone()` drops the chemical-reaction setup — re-run
+  `chemicalReactionInit()` on the clone before flashing, or CO2-brine pH comes out
+  unphysically basic (~10).
+- `NorsokM506CorrosionRate.setActualPH()` is read back via `getEffectivePH()`, NOT
+  `getCalculatedPH()` (which always returns the model's own correlation pH).
+
+---
+
 ## 2026-07-07 — New: ProductionRateFitter (match measured gas rate + GOR + water)
 
 ### Summary

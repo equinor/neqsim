@@ -2851,8 +2851,17 @@ public abstract class SystemThermo implements SystemInterface {
   @Override
   public double getMolarMass() {
     double tempVar = 0;
+    double sumz = 0;
     for (int i = 0; i < phaseArray[0].getNumberOfComponents(); i++) {
-      tempVar += phaseArray[0].getComponent(i).getz() * phaseArray[0].getComponent(i).getMolarMass();
+      double zi = phaseArray[0].getComponent(i).getz();
+      tempVar += zi * phaseArray[0].getComponent(i).getMolarMass();
+      sumz += zi;
+    }
+    // Normalise by the sum of overall mole fractions so the (intensive) molar mass is
+    // invariant to any scaling of the mole bookkeeping (e.g. after
+    // setTotalNumberOfMoles). When z already sums to 1 this is a no-op.
+    if (sumz > 0) {
+      return tempVar / sumz;
     }
     return tempVar;
   }
