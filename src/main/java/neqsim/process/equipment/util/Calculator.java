@@ -32,6 +32,15 @@ public class Calculator extends ProcessEquipmentBaseClass {
   private static final double ANTI_SURGE_STUCK_THRESHOLD = 0.98;
 
   /**
+   * Anti-surge: absolute upper bound on the recycle flow expressed as a multiple of the compressor surge flow. Holding
+   * a compressor on its surge line never requires recycling more than the surge flow itself (recycle = surgeFlow -
+   * freshFeed, and freshFeed &ge; 0), so this generous multiple caps the recycle setpoint. It breaks the pathological
+   * runaway where the per-iteration percentage step compounds geometrically and inflates the recycle to physically
+   * impossible values, which otherwise prevents the outer recycle loop from ever converging.
+   */
+  private static final double ANTI_SURGE_MAX_RECYCLE_FACTOR = 2.0;
+
+  /**
    * Constructor for Calculator.
    *
    * @param name a {@link java.lang.String} object
@@ -92,6 +101,38 @@ public class Calculator extends ProcessEquipmentBaseClass {
     double surgeFlow = compressor.getSurgeFlowRate();
     double currentRecycle = antiSurgeSplitter.getSplitStream(1).getFlowRate("m3/hr");
 
+    // Guard against a surge flow extrapolated far beyond the surge curve data.
+    // The surge curve interpolates flow from the operating head; when the head
+    // falls outside the curve's fitted range (e.g. a surge curve assigned to a
+    // duty it was not measured for) the extrapolation can return a physically
+    // impossible surge flow orders of magnitude above the curve, which makes the
+    // proportional step below chase an unreachable target and the recycle grow
+    // without bound. Only a *gross* extrapolation is pathological: a modest
+    // extrapolation just below the lowest fitted head point is a legitimate
+    // anti-surge target and must be honoured (otherwise the compressor is held
+    // in surge). Clamp the surge flow to the surge curve's maximum defined flow
+    // only when it exceeds that maximum by more than ANTI_SURGE_MAX_RECYCLE_FACTOR,
+    // which keeps normal operation and reasonable extrapolation untouched while
+    // still breaking the runaway from a wildly off-range surge curve.
+    try {
+      double[] curveFlow = antiSurgeSplitter == null ? null
+          : compressor.getCompressorChart().getSurgeCurve().getSortedFlow();
+      if (curveFlow != null && curveFlow.length > 0) {
+        double maxCurveFlow = curveFlow[0];
+        for (int i = 1; i < curveFlow.length; i++) {
+          if (curveFlow[i] > maxCurveFlow) {
+            maxCurveFlow = curveFlow[i];
+          }
+        }
+        if (Double.isFinite(maxCurveFlow) && maxCurveFlow > 0.0
+            && surgeFlow > ANTI_SURGE_MAX_RECYCLE_FACTOR * maxCurveFlow) {
+          surgeFlow = maxCurveFlow;
+        }
+      }
+    } catch (Exception ex) {
+      logger.debug("Anti-surge: could not read surge curve flow range for clamping", ex);
+    }
+
     // Guard against non-finite state coming from a failed compressor run or an
     // inactive surge curve. Without this the proportional update below can
     // propagate NaN into the splitter setpoint and deadlock the recycle loop.
@@ -124,6 +165,17 @@ public class Calculator extends ProcessEquipmentBaseClass {
     double maxStep = 0.25 * Math.max(currentRecycle, Math.max(inletFlow, surgeFlow));
     double cappedStep = Math.max(-maxStep, Math.min(maxStep, rawStep));
     double flowAntiSurge = Math.max(currentRecycle + cappedStep, inletFlow / 1.0e6);
+
+    // Absolute upper bound on the recycle setpoint. The recycle required to hold
+    // the compressor on the surge line can never exceed the surge flow itself, so
+    // capping at a generous multiple of the surge flow leaves normal operation
+    // untouched while breaking the geometric runaway that otherwise inflates the
+    // recycle without bound (e.g. an injection-compressor recycle growing to tens
+    // of millions of m3/hr) and stops the outer recycle loop from converging.
+    double maxRecycle = ANTI_SURGE_MAX_RECYCLE_FACTOR * surgeFlow;
+    if (flowAntiSurge > maxRecycle) {
+      flowAntiSurge = maxRecycle;
+    }
 
     antiSurgeSplitter.setFlowRates(new double[] { -1, flowAntiSurge }, "m3/hr");
     antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "m3/hr");

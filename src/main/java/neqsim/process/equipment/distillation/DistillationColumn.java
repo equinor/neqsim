@@ -69,6 +69,17 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * Multiplier governing how much the solver can extend beyond the nominal iteration budget.
    */
   private static final int ITERATION_OVERFLOW_MULTIPLIER = 12;
+  /**
+   * Number of consecutive sequential-solve iterations without meaningful residual improvement that marks the solve as
+   * stalled. When the mass balance is already satisfied, a stalled solve is stopped early with the best-so-far state
+   * instead of grinding to the iteration-overflow ceiling.
+   */
+  private static final int NO_PROGRESS_ITERATION_WINDOW = 10;
+  /**
+   * Minimum relative improvement in the combined residual required for a sequential-solve iteration to count as
+   * progress (1.0e-3 = 0.1%). Iterations improving by less than this are treated as non-progress for stall detection.
+   */
+  private static final double STALL_IMPROVEMENT_FRACTION = 1.0e-3;
   /** Recommended base temperature tolerance for adaptive defaults. */
   private static final double DEFAULT_TEMPERATURE_TOLERANCE = 2.0e-2;
   /** Recommended base mass balance tolerance for adaptive defaults. */
@@ -618,6 +629,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
   double bottomTrayPressure = -1.0;
   int numberOfTrays = 1;
   int maxNumberOfIterations = 50;
+  /**
+   * Whether {@link #maxNumberOfIterations} was set explicitly by the caller. When {@code true} it is treated as a HARD
+   * iteration cap: the adaptive tray-based iteration floor and the iteration-overflow expansion are both disabled. When
+   * {@code false} (default) the solver uses its adaptive iteration budget.
+   */
+  private boolean maxIterationsCustomized = false;
   /**
    * Optional per-stage initial temperature guesses for simultaneous residual solvers.
    */
@@ -4889,6 +4906,14 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
 
     double relaxation = Math.max(minSequentialRelaxation, Math.min(maxAdaptiveRelaxation, initialRelaxation));
 
+    // Skip expensive physical/transport property initialization on every tray flash
+    // during the iterative solve. The sequential loop only needs thermodynamic
+    // properties (enthalpy, K-values); viscosity/thermal-conductivity/surface-tension
+    // are computed once on the converged state via finalizeTrayProperties() below.
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).setSkipPhysicalPropertiesDuringSolve(true);
+    }
+
     // Run the feed tray to establish initial conditions.
     // On re-runs this is skipped because the tray already holds a valid state
     // from the previous solve; running it unrelaxed would perturb the state
@@ -4924,6 +4949,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
     }
 
+    // Stall detection state: stop early when the mass balance is satisfied but the
+    // combined residual stops improving, instead of grinding to the
+    // iteration-overflow ceiling on a column that cannot converge.
+    double bestCombinedResidual = Double.POSITIVE_INFINITY;
+    int noProgressIterations = 0;
+    int noProgressWindow = Math.max(NO_PROGRESS_ITERATION_WINDOW, 3 * numberOfTrays);
+
     int baseIterationLimit = computeIterationLimit();
     int iterationLimit = baseIterationLimit;
     int polishIterationLimit = baseIterationLimit
@@ -4932,6 +4964,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int overflowBand = Math.max(overflowIncrement, numberOfTrays);
     int maxIterationLimit = Math.max(iterationLimit, maxNumberOfIterations)
         + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
+    // Honor an explicitly user-set maximum as a HARD cap: no overflow expansion and
+    // no polish extension beyond the requested iteration count.
+    if (maxIterationsCustomized) {
+      iterationLimit = maxNumberOfIterations;
+      polishIterationLimit = maxNumberOfIterations;
+      maxIterationLimit = maxNumberOfIterations;
+    }
     double baseTempTolerance = getEffectiveTemperatureTolerance();
     double baseMassTolerance = getEffectiveMassBalanceTolerance();
     double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
@@ -5027,6 +5066,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       previousCombinedResidual = combinedResidual;
+
+      // No-progress (stall) detection. When the mass balance is already within
+      // tolerance but the combined residual stops improving, further sequential
+      // sweeps only waste time (the temperature profile is oscillating around a
+      // limit it cannot cross). Stop early with the best-so-far state instead of
+      // expanding the iteration budget to the overflow ceiling. Improving
+      // iterations reset the counter, so genuinely (even slowly) converging
+      // columns are never cut short.
+      if (Double.isFinite(combinedResidual)
+          && combinedResidual < bestCombinedResidual * (1.0 - STALL_IMPROVEMENT_FRACTION)) {
+        bestCombinedResidual = combinedResidual;
+        noProgressIterations = 0;
+      } else {
+        noProgressIterations++;
+      }
+      if (massErr <= baseMassTolerance && iter >= maxNumberOfIterations && noProgressIterations >= noProgressWindow) {
+        logger.debug(
+            "Column {} sequential solve stalled: no residual improvement for {} iterations "
+                + "(combinedResidual={}, tempErr={}, massErr={}). Stopping early at iteration {}.",
+            getName(), Integer.valueOf(noProgressIterations), Double.valueOf(combinedResidual), Double.valueOf(err),
+            Double.valueOf(massErr), Integer.valueOf(iter));
+        break;
+      }
 
       // Divergence recovery: if flows have grown far beyond the total feed,
       // the sequential iteration is unstable. Restore previous-stream arrays
@@ -5137,6 +5199,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     hasBeenSolvedBefore = true;
     lastTotalFeedFlow = totalFeedFlow;
 
+    // Compute full physical/transport properties once on the converged tray states
+    // (skipped during iteration for speed) so that product streams cloned in
+    // finalizeSolve carry complete properties.
+    for (int i = 0; i < numberOfTrays; i++) {
+      trays.get(i).finalizeTrayProperties();
+    }
+
     finalizeSolve(id, iter, err, massErr, energyErr, startTime);
   }
 
@@ -5160,6 +5229,10 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    * @return maximum number of solver iterations allowed
    */
   private int computeIterationLimit() {
+    // An explicitly user-set maximum is a HARD cap: skip the adaptive tray-based floor.
+    if (maxIterationsCustomized) {
+      return Math.max(1, maxNumberOfIterations);
+    }
     int trayBasedLimit = (int) Math.ceil(Math.max(5.0, numberOfTrays * TRAY_ITERATION_FACTOR));
     return Math.max(Math.max(1, maxNumberOfIterations), trayBasedLimit);
   }
@@ -5417,6 +5490,13 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int overflowBand = Math.max(overflowIncrement, numberOfTrays);
     int maxIterationLimit = Math.max(iterationLimit, maxNumberOfIterations)
         + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
+    // Honor an explicitly user-set maximum as a HARD cap: no overflow expansion and
+    // no polish extension beyond the requested iteration count.
+    if (maxIterationsCustomized) {
+      iterationLimit = maxNumberOfIterations;
+      polishIterationLimit = maxNumberOfIterations;
+      maxIterationLimit = maxNumberOfIterations;
+    }
     double baseTempTolerance = getEffectiveTemperatureTolerance();
     double baseMassTolerance = getEffectiveMassBalanceTolerance();
     double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
@@ -5426,6 +5506,12 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     boolean polishing = false;
     boolean massEnergyEvaluated = false;
     int balanceCheckStride = Math.max(3, numberOfTrays / 2);
+
+    // Stall detection state (same rationale as solveSequential): stop early when the
+    // mass balance is satisfied but the combined residual stops improving.
+    double bestCombinedResidual = Double.POSITIVE_INFINITY;
+    int noProgressIterations = 0;
+    int noProgressWindow = Math.max(NO_PROGRESS_ITERATION_WINDOW, 3 * numberOfTrays);
 
     while (iter < iterationLimit) {
       iter++;
@@ -5572,6 +5658,24 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       }
 
       previousCombinedResidual = combinedResidual;
+
+      // No-progress (stall) detection (same rationale as solveSequential). Improving
+      // iterations reset the counter, so genuinely converging columns are never cut.
+      if (Double.isFinite(combinedResidual)
+          && combinedResidual < bestCombinedResidual * (1.0 - STALL_IMPROVEMENT_FRACTION)) {
+        bestCombinedResidual = combinedResidual;
+        noProgressIterations = 0;
+      } else {
+        noProgressIterations++;
+      }
+      if (massErr <= baseMassTolerance && iter >= maxNumberOfIterations && noProgressIterations >= noProgressWindow) {
+        logger.debug(
+            "Column {} inside-out solve stalled: no residual improvement for {} iterations "
+                + "(combinedResidual={}, tempErr={}, massErr={}). Stopping early at iteration {}.",
+            getName(), Integer.valueOf(noProgressIterations), Double.valueOf(combinedResidual), Double.valueOf(err),
+            Double.valueOf(massErr), Integer.valueOf(iter));
+        break;
+      }
 
       // Divergence recovery (same logic as solveSequential).
       if (!divergenceRecoveryAppliedIO && iter <= 10) {
@@ -6266,6 +6370,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
     int overflowBand = Math.max(overflowIncrement, numberOfTrays);
     int maxIterationLimit = Math.max(iterationLimit, maxNumberOfIterations)
         + overflowBand * ITERATION_OVERFLOW_MULTIPLIER;
+    // Honor an explicitly user-set maximum as a HARD cap: no overflow expansion.
+    if (maxIterationsCustomized) {
+      iterationLimit = maxNumberOfIterations;
+      maxIterationLimit = maxNumberOfIterations;
+    }
     double baseTempTolerance = getEffectiveTemperatureTolerance();
     double baseMassTolerance = getEffectiveMassBalanceTolerance();
     double baseEnergyTolerance = getEffectiveEnthalpyBalanceTolerance();
@@ -8191,6 +8300,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   public void setMaxNumberOfIterations(int maxIter) {
     this.maxNumberOfIterations = Math.max(1, maxIter);
+    this.maxIterationsCustomized = true;
   }
 
   /**

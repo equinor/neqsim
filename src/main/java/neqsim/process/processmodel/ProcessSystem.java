@@ -111,6 +111,13 @@ public class ProcessSystem extends SimulationBaseClass {
   private double previousTotalMass = 0.0;
   private double massBalanceError = 0.0;
 
+  /** Consecutive non-improving recycle iterations that mark a stalled recycle solve. */
+  private static final int RECYCLE_NO_PROGRESS_WINDOW = 15;
+  /** Minimum recycle-loop iterations before the stagnation guard may trigger. */
+  private static final int RECYCLE_MIN_STALL_ITERATIONS = 8;
+  /** Minimum relative improvement in the worst recycle error to count as progress. */
+  private static final double RECYCLE_STALL_IMPROVEMENT_FRACTION = 1.0e-3;
+
   // ============ Advanced Transient Simulation Settings ============
   /**
    * Available integration methods for transient simulation.
@@ -1666,6 +1673,8 @@ public class ProcessSystem extends SimulationBaseClass {
       // Iterate until convergence
       boolean isConverged = true;
       int iter = 0;
+      double bestRecycleError = Double.POSITIVE_INFINITY;
+      int recycleNoProgress = 0;
       do {
         iter++;
         isConverged = true;
@@ -1708,19 +1717,49 @@ public class ProcessSystem extends SimulationBaseClass {
           recycleController.resetPriorityLevel();
         }
 
+        boolean adjustersConverged = true;
         for (ProcessEquipmentInterface unit : plan.iterativeSection) {
           if (unit instanceof Adjuster) {
             if (!((Adjuster) unit).solved()) {
               isConverged = false;
+              adjustersConverged = false;
               break;
             }
           }
           if (unit instanceof MultiVariableAdjuster) {
             if (!((MultiVariableAdjuster) unit).solved()) {
               isConverged = false;
+              adjustersConverged = false;
               break;
             }
           }
+        }
+
+        // Stagnation guard: when the adjusters are converged but the recycle set is
+        // not, and its worst tolerance-normalized error stops improving over a window
+        // of iterations, stop early instead of grinding to the 100-iteration cap.
+        // Improving iterations reset the counter, so genuinely (even slowly)
+        // converging systems are unaffected. This bounds oscillating low-flow recycles
+        // that never satisfy their (absolute) flow tolerance.
+        if (!isConverged && adjustersConverged) {
+          double worstRecycleError = recycleController.getMaxNormalizedError();
+          if (Double.isFinite(worstRecycleError)
+              && worstRecycleError < bestRecycleError * (1.0 - RECYCLE_STALL_IMPROVEMENT_FRACTION)) {
+            bestRecycleError = worstRecycleError;
+            recycleNoProgress = 0;
+          } else {
+            recycleNoProgress++;
+          }
+          if (recycleNoProgress >= RECYCLE_NO_PROGRESS_WINDOW && iter >= RECYCLE_MIN_STALL_ITERATIONS) {
+            logger.debug(
+                "Recycle solve stalled in {}: worst normalized error {} not improving for {} iterations; "
+                    + "stopping at iteration {} of 100.",
+                getName(), Double.valueOf(worstRecycleError), Integer.valueOf(recycleNoProgress),
+                Integer.valueOf(iter));
+            break;
+          }
+        } else {
+          recycleNoProgress = 0;
         }
       } while ((!isConverged || (iter < 2)) && iter < 100 && !Thread.currentThread().isInterrupted());
     }

@@ -347,7 +347,6 @@ public class DistillationSolverBenchmarkTest {
     column.getReboiler().setRefluxRatio(2.0);
     column.setTopPressure(10.0);
     column.setBottomPressure(10.0);
-    column.setMaxNumberOfIterations(5);
     column.setTemperatureTolerance(1.0e-1);
     column.setMassBalanceTolerance(1.0e-1);
     column.setSolverType(DistillationColumn.SolverType.MATRIX_INSIDE_OUT);

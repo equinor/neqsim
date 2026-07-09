@@ -181,6 +181,38 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
+   * Compute the maximum tolerance-normalized error across all registered recycles. Each recycle contributes the largest
+   * of its flow, composition, temperature and pressure errors divided by the corresponding tolerance. A value below 1.0
+   * means every recycle is within its tolerances. Used by the process solver to detect a stalled (non-improving)
+   * recycle set so it can stop early instead of iterating to the cap.
+   *
+   * @return the maximum normalized recycle error, or 0.0 when there are no recycles
+   */
+  public double getMaxNormalizedError() {
+    double maxNorm = 0.0;
+    for (Recycle recyc : recycleArray) {
+      maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorFlow(), recyc.getFlowTolerance()));
+      maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorComposition(), recyc.getCompositionTolerance()));
+      maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorTemperature(), recyc.getTemperatureTolerance()));
+      maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorPressure(), recyc.getPressureTolerance()));
+    }
+    return maxNorm;
+  }
+
+  /**
+   * Normalize an absolute error by its tolerance, guarding against a non-positive tolerance.
+   *
+   * @param error the absolute error value
+   * @param tolerance the convergence tolerance
+   * @return the tolerance-normalized error magnitude
+   */
+  private static double normalizedError(double error, double tolerance) {
+    double t = tolerance > 0.0 ? tolerance : 1.0e-12;
+    double e = Math.abs(error);
+    return Double.isFinite(e) ? e / t : Double.POSITIVE_INFINITY;
+  }
+
+  /**
    * clear.
    */
   public void clear() {
