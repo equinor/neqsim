@@ -76,6 +76,45 @@ class DynamicImprovementsPhase2Test {
     Assertions.assertNotEquals(resp1, resp2, 0.001, "Setpoint weight should affect proportional response");
   }
 
+  @Test
+  void testSetpointWeightVelocityFormMagnitudes() {
+    // Verifies the corrected 2-DOF velocity form: on a pure setpoint step (measurement held
+    // constant) b=1 gives the full proportional kick -Kp*dSP while b=0 gives only the integral
+    // increment. Kp=2, Ti=300, dt=1, dSP=+10, error=-10 -> integral step = Kp/Ti*error*dt.
+    ControllerDeviceBaseClass pid1 = new ControllerDeviceBaseClass("PID-vel-b1");
+    ControllerDeviceBaseClass pid2 = new ControllerDeviceBaseClass("PID-vel-b0");
+
+    DynamicImprovementsTest.StubTransmitter tx1 = new DynamicImprovementsTest.StubTransmitter("Tv1");
+    DynamicImprovementsTest.StubTransmitter tx2 = new DynamicImprovementsTest.StubTransmitter("Tv2");
+    tx1.setValue(50.0);
+    tx2.setValue(50.0);
+
+    pid1.setTransmitter(tx1);
+    pid2.setTransmitter(tx2);
+    pid1.setControllerSetPoint(50.0, "C");
+    pid2.setControllerSetPoint(50.0, "C");
+    pid1.setControllerParameters(2.0, 300.0, 0.0);
+    pid2.setControllerParameters(2.0, 300.0, 0.0);
+    pid1.setSetpointWeight(1.0);
+    pid2.setSetpointWeight(0.0);
+
+    pid1.runTransient(50.0, 1.0);
+    pid2.runTransient(50.0, 1.0);
+
+    pid1.setControllerSetPoint(60.0, "C");
+    pid2.setControllerSetPoint(60.0, "C");
+    pid1.runTransient(50.0, 1.0);
+    pid2.runTransient(50.0, 1.0);
+
+    double integralStep = 2.0 / 300.0 * (-10.0) * 1.0; // Kp/Ti * error * dt
+    // b=1: full P kick (-Kp*dSP = -20) plus the integral step.
+    Assertions.assertEquals(50.0 + (-20.0 + integralStep), pid1.getResponse(), 1e-6,
+        "b=1 must give the full proportional setpoint kick");
+    // b=0: no proportional kick, only the integral increment moves the output.
+    Assertions.assertEquals(50.0 + integralStep, pid2.getResponse(), 1e-6,
+        "b=0 must remove the proportional kick, leaving only integral action");
+  }
+
   // ─── Valve stick-slip/hysteresis ───
 
   @Test

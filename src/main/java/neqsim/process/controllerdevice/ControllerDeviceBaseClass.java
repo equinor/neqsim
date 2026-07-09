@@ -56,6 +56,10 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   // Internal state of integration contribution
   private double TintValue = 0.0;
   private double derivativeState = 0.0;
+  // Previous measurement and setpoint, used by the engineering-unit 2-DOF velocity form so a
+  // setpoint step produces only the weighted (b) proportional kick. NaN until the first step.
+  private double oldMeasurement = Double.NaN;
+  private double oldControllerSetPoint = Double.NaN;
   private double derivativeFilterTime = 0.0;
   private double minResponse = Double.NEGATIVE_INFINITY;
   private double maxResponse = Double.POSITIVE_INFINITY;
@@ -147,6 +151,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       oldoldError = oldError;
       oldError = error;
       error = measurement - controllerSetPoint;
+      // Track measurement/setpoint in MANUAL so the return to AUTO is bumpless in the velocity form.
+      oldMeasurement = measurement;
+      oldControllerSetPoint = controllerSetPoint;
       eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
       calcIdentifier = id;
       return;
@@ -158,7 +165,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     }
     double measurement = getMeasuredValue(unit);
     applyGainSchedule(measurement);
-    oldoldError = error;
+    oldoldError = oldError;
     oldError = error;
 
     // Perform bumpless transfer back-calculation when switching from MANUAL to AUTO
@@ -197,10 +204,15 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       }
     } else {
       error = measurement - controllerSetPoint;
-      // 2-DOF PID: proportional error uses setpoint weight b
-      // propError = measurement - b * setpoint, integral uses full error
-      double propError = measurement - setpointWeight * controllerSetPoint;
-      double oldPropError = oldError - (1.0 - setpointWeight) * controllerSetPoint;
+      // 2-DOF velocity-form PID: the proportional term acts on the increment of
+      // (measurement - b * setpoint) while the integral acts on the full error. Storing the
+      // previous measurement and setpoint means a pure setpoint step contributes only
+      // -b * Kp * dSetpoint to the proportional kick (b = 0 removes the kick entirely).
+      if (Double.isNaN(oldMeasurement)) {
+        oldMeasurement = measurement;
+        oldControllerSetPoint = controllerSetPoint;
+      }
+      double propStep = (measurement - oldMeasurement) - setpointWeight * (controllerSetPoint - oldControllerSetPoint);
       integralAbsoluteError += Math.abs(error) * dt;
       band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
       if (Math.abs(error) > band) {
@@ -229,7 +241,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
           derivativeState = 0.0;
         }
 
-        delta = Kp * (propError - oldPropError) + TintValue + Kp * Td * derivativeState;
+        delta = Kp * propStep + TintValue + Kp * Td * derivativeState;
 
         response = initResponse + propConstant * delta;
 
@@ -245,6 +257,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
           }
         }
       }
+      // Advance the velocity-form history for the next step (also after a frozen deadband step).
+      oldMeasurement = measurement;
+      oldControllerSetPoint = controllerSetPoint;
     }
 
     eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));

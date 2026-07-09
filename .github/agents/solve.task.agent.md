@@ -400,11 +400,38 @@ checks before writing Step 1 content:
 4. **Repo memory scan.** List `/memories/repo/*.md` via the `memory` tool.
    Read any whose filename contains a keyword from the task title — this
    surfaces prior solved tasks and known gotchas before you reinvent them.
-5. **Capability assessment.** For Standard/Comprehensive tasks, invoke
-  `@capability.scout` and write the result to
-  `step1_scope_and_research/capability_assessment.md`. For Quick tasks,
-  write a short manual capability note in `notes.md` unless a capability gap
-  is suspected.
+5. **Capability assessment + agent/workflow discovery.** For
+  Standard/Comprehensive tasks, invoke `@capability.scout` and write the result
+  to `step1_scope_and_research/capability_assessment.md`. As part of this step
+  you MUST run BOTH discovery tools and record their output — never rely only on
+  the static routing table in `router.agent.md`:
+
+   ```bash
+   python devtools/skill_search.py "<task title>" --top 5
+   python devtools/agent_search.py "<task title>" --top 8 \
+       --json --out step1_scope_and_research/agent_plan.json
+   ```
+
+   Then, in `capability_assessment.md`:
+   - fill **§4 Skills to Load** from `skill_search.py`,
+   - fill **§4b Agents to Delegate To** from `agent_search.py` (agent, repo, the
+     skills it loads, and why it was picked),
+   - fill **§4c Workflow Plan** — choose single-agent, a `router.agent.md`
+     composition pattern, or a declarative workflow (MCP `composeWorkflow` /
+     `composeMultiServerWorkflow`, or an `engineering-harness` study) when the
+     task spans ≥3 disciplines. Prefer delegating to a specialist agent over
+     re-loading its skills manually, so its governance and internal workflow are
+     reused (this is how "all functionality gets utilized").
+
+   Persist the plan so it survives context loss and feeds the report:
+   - keep `step1_scope_and_research/agent_plan.json` (raw ranking, audit trail),
+   - checkpoint it via `progress.store_context("agent_workflow_plan", {...})`,
+   - add an `agent_workflow_plan` object to `results.json` (see schema) and
+     mention the agents/workflow used in the `approach` / `method_summary` text
+     so the generated report documents *how* the task was solved.
+
+   For Quick tasks, write a short manual capability + agent note in `notes.md`
+   unless a capability gap is suspected.
 6. **Literature scout** (Standard/Comprehensive only). Invoke
    `@literature.scout` to populate `step1_scope_and_research/references/`
    and the `## Literature & Reference Documents` section of `notes.md`.

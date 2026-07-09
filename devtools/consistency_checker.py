@@ -36,6 +36,67 @@ class ExtractedValue:
     source_file: str
     source_location: str
     confidence: float = 1.0
+    swept: bool = False
+
+
+# Context words that signal a value is a deliberately-varied point in a
+# parametric sweep, sensitivity study, Monte Carlo, or results table — NOT a
+# single reported answer. Values in such a context must not be cross-checked
+# against each other for "consistency". This eliminates the class of
+# false-positive CRITICAL findings documented in TASK_LOG.md (swept dew points,
+# TEG rates, reboiler temperatures, etc.).
+SWEEP_CONTEXT_KEYWORDS = (
+    "sweep",
+    "parametric",
+    "sensitivity",
+    "scenario",
+    "case ",
+    "case:",
+    "case-",
+    "vary",
+    "varying",
+    "varied",
+    "range of",
+    "tornado",
+    "p10",
+    "p50",
+    "p90",
+    "percentile",
+    "low/base/high",
+    "low-base-high",
+    "monte carlo",
+    "iteration",
+    " vs ",
+    " versus ",
+    " at ",
+    "sweep_",
+    "sensitivity_",
+)
+
+# results.json parent keys whose descendant numeric values are intended series
+# (uncertainty distributions, sensitivity/tornado sweeps, scenario cases).
+SWEEP_JSON_KEY_HINTS = (
+    "sweep",
+    "parametric",
+    "sensitivity",
+    "tornado",
+    "scenario",
+    "cases",
+    "uncertainty",
+    "monte_carlo",
+    "montecarlo",
+    "series",
+    "profile",
+    "sweep_results",
+)
+
+
+def _is_swept_context(text: str) -> bool:
+    """Return True if the surrounding text marks the value as a swept/series point."""
+    if not text:
+        return False
+    lowered = text.lower()
+    return any(kw in lowered for kw in SWEEP_CONTEXT_KEYWORDS)
 
 
 @dataclass
@@ -199,13 +260,23 @@ class ConsistencyChecker:
                 if isinstance(value, (int, float)):
                     unit = self._parse_unit_from_key(key)
                     concept = self._normalize_concept(key)
+                    key_lower = key.lower()
+                    swept = any(hint in key_lower for hint in SWEEP_JSON_KEY_HINTS)
                     self.extracted_values[concept].append(ExtractedValue(
                         value=float(value),
                         unit=unit,
                         context=key,
                         source_file='results.json',
-                        source_location=f'key_results.{key}'
+                        source_location=f'key_results.{key}',
+                        swept=swept,
                     ))
+
+            # Values nested under sweep-like top-level sections (uncertainty,
+            # sensitivity, tornado, scenarios, ...) are intended series, not
+            # single answers — mark them swept so they are never cross-checked.
+            for section_key in self.results:
+                if any(hint in section_key.lower() for hint in SWEEP_JSON_KEY_HINTS):
+                    self._mark_section_swept(self.results.get(section_key), section_key)
 
             # Extract from gas_composition_analysis
             gca = self.results.get('gas_composition_analysis', {})
@@ -225,6 +296,32 @@ class ConsistencyChecker:
 
         except Exception as e:
             print(f"  Warning: Could not parse results.json: {e}")
+
+    def _mark_section_swept(self, section: Any, path: str):
+        """Register numeric leaves of a sweep-like section as swept values.
+
+        Values under sections such as ``uncertainty``, ``sensitivity``,
+        ``tornado``, or ``scenarios`` are intended series (distributions, sweeps,
+        cases). Recording them as swept keeps them available for reporting while
+        guaranteeing they are never cross-checked for consistency.
+        """
+        if isinstance(section, dict):
+            for key, val in section.items():
+                self._mark_section_swept(val, f"{path}.{key}")
+        elif isinstance(section, list):
+            for idx, val in enumerate(section):
+                self._mark_section_swept(val, f"{path}[{idx}]")
+        elif isinstance(section, (int, float)) and not isinstance(section, bool):
+            leaf = path.rsplit('.', 1)[-1]
+            concept = self._normalize_concept(leaf)
+            self.extracted_values[concept].append(ExtractedValue(
+                value=float(section),
+                unit=self._parse_unit_from_key(leaf),
+                context=path,
+                source_file='results.json',
+                source_location=path,
+                swept=True,
+            ))
 
     def _check_gudrun_vs_calculations(self):
         """Specifically check Gudrun study values against notebook calculations."""
@@ -350,7 +447,8 @@ class ConsistencyChecker:
                         unit=unit,
                         context=context,
                         source_file=source_file,
-                        source_location=source_loc
+                        source_location=source_loc,
+                        swept=_is_swept_context(context),
                     ))
                 except ValueError:
                     pass
@@ -371,24 +469,39 @@ class ConsistencyChecker:
                 if len(unit_values) < 2:
                     continue
 
-                nums = [v.value for v in unit_values]
+                # Ignore values that come from an explicit parametric/sweep,
+                # sensitivity, Monte Carlo, or results-table context. Only
+                # genuine single-answer values should be cross-checked.
+                non_swept = [v for v in unit_values if not v.swept]
+                if len(non_swept) < 2:
+                    continue
+
+                # Three or more DISTINCT non-swept values for the same concept is
+                # almost always an intended series (a table or profile the
+                # extractor did not tag) rather than a contradiction between
+                # single answers. Skip to avoid false-positive CRITICAL findings.
+                distinct = sorted({round(v.value, 6) for v in non_swept})
+                if len(distinct) >= 3:
+                    continue
+
+                nums = [v.value for v in non_swept]
                 avg = sum(nums) / len(nums)
 
-                for v in unit_values:
+                for v in non_swept:
                     if avg != 0:
                         deviation = abs(v.value - avg) / abs(avg) * 100
                     else:
                         deviation = abs(v.value) * 100
 
                     if deviation > 10:
-                        sources = [f"{v.source_file}:{v.source_location}" for v in unit_values]
+                        sources = [f"{v.source_file}:{v.source_location}" for v in non_swept]
                         self.inconsistencies.append(Inconsistency(
                             type="numerical_mismatch",
                             severity="warning" if deviation < 25 else "critical",
                             description=f"'{concept}' has inconsistent values ({deviation:.1f}% deviation)",
                             sources=sources,
-                            values=[v.value for v in unit_values],
-                            recommendation=f"Review values: {', '.join(f'{v.value} {unit}' for v in unit_values)}"
+                            values=[v.value for v in non_swept],
+                            recommendation=f"Review values: {', '.join(f'{v.value} {unit}' for v in non_swept)}"
                         ))
                         break
 

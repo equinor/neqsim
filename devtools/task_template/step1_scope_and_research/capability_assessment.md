@@ -58,6 +58,42 @@ then prune).
 - `neqsim-...`
 - `neqsim-...`
 
+## 4b. Agents to Delegate To
+
+Run `python devtools/agent_search.py "<task title>" --top 8` to rank the best
+specialist agents across all repos (neqsim + community + enterprise), then
+prune. Record the chosen agents and *why*. The skills each agent loads are shown
+in the search output — prefer delegating to an agent over re-loading its skills
+manually, so authentication/governance and its internal workflow are handled.
+
+| Rank | Agent | Repo | Loads skills | Why selected / role in this task |
+|---|---|---|---|---|
+| 1 |  |  |  |  |
+| 2 |  |  |  |  |
+| 3 |  |  |  |  |
+
+> Store the raw ranking: `python devtools/agent_search.py "<task>" --json --out
+> step1_scope_and_research/agent_plan.json` — this file is part of the audit
+> trail and feeds `results.json` `agent_workflow_plan`.
+
+## 4c. Workflow Plan
+
+Decide how the selected agents/skills are composed. Pick ONE:
+
+- **Single agent** — one specialist covers the whole task.
+- **Composition pattern** — a known 2–3 agent sequence from `router.agent.md`
+  (e.g. `@process.model` → `@mechanical.design`). List the stages.
+- **Declarative workflow** — for ≥3 disciplines or repeatable programs, use MCP
+  `composeWorkflow` / `composeMultiServerWorkflow`, or an `engineering-harness`
+  study. Note the workflow name/id.
+
+| Stage | Agent / tool | Input (from) | Output (to) | Notes |
+|---|---|---|---|---|
+| 1 |  | task inputs |  |  |
+| 2 |  | stage 1 output |  |  |
+
+**Rationale for the composition choice:** _(1–2 sentences)_
+
 ## 5. External References
 
 Public literature, standards documents, and internal database queries needed.
