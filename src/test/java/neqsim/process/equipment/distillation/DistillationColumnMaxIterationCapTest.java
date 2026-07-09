@@ -12,7 +12,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * <p>
  * Historically {@code setMaxNumberOfIterations} was only a lower bound: the solver applied an adaptive tray-based floor
  * ({@code trays * 5}) and an overflow expansion, so a non-converging column could run far more iterations than the
- * caller requested. When the caller sets the value explicitly it must now be honored as a hard maximum.
+ * caller requested. When the caller opts in via {@code setMaxNumberOfIterations(int, true)} (or
+ * {@code setHardIterationCap(true)}) it must be honored as a hard maximum.
  * </p>
  *
  * @author esol
@@ -49,7 +50,7 @@ public class DistillationColumnMaxIterationCapTest {
     // Impossibly tight temperature tolerance so the column cannot converge.
     column.setTemperatureTolerance(1.0e-12);
     int cap = 6;
-    column.setMaxNumberOfIterations(cap);
+    column.setMaxNumberOfIterations(cap, true);
     column.run();
 
     assertTrue(column.getLastIterationCount() <= cap, "explicit maxNumberOfIterations must be a hard cap, but ran "
