@@ -2583,6 +2583,25 @@ public class ProcessModel implements Runnable, Serializable {
   }
 
   /**
+   * Sets the minimum tear-stream flow on every {@link neqsim.process.equipment.util.Recycle} unit across all
+   * process-area {@link ProcessSystem}s of this model.
+   *
+   * @param minimumFlowKgPerHr the minimum recycle flow rate in kg/hr; must be non-negative
+   * @return the total number of recycle units updated across all areas
+   * @throws IllegalArgumentException if {@code minimumFlowKgPerHr} is negative
+   */
+  public int setRecycleMinimumFlow(double minimumFlowKgPerHr) {
+    if (minimumFlowKgPerHr < 0.0) {
+      throw new IllegalArgumentException("minimumFlowKgPerHr cannot be negative");
+    }
+    int total = 0;
+    for (ProcessSystem area : processes.values()) {
+      total += area.setRecycleMinimumFlow(minimumFlowKgPerHr);
+    }
+    return total;
+  }
+
+  /**
    * Creates a Graphviz exporter for common plant-wide and per-area DOT diagrams.
    *
    * @return a new {@link ProcessModelGraphvizExporter} for this model
