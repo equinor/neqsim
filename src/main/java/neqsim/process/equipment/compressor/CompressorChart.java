@@ -551,6 +551,58 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
     this.refZ = refZ;
   }
 
+  /**
+   * Build a degraded copy of this compressor chart by scaling the head and polytropic-efficiency curves.
+   *
+   * <p>
+   * This is the chart-based counterpart of compressor deposit/fouling degradation: a {@link CompressorDeposit} yields a
+   * head multiplier and an efficiency multiplier from the accumulated deposit (for example after 500 operating hours),
+   * and this method produces the corresponding degraded performance map. The surge and stone-wall curves are
+   * regenerated from the scaled curves. Reference conditions, head unit and real-kappa flag are preserved.
+   * </p>
+   *
+   * @param headMultiplier factor applied to every head value (0-1, 1 = clean)
+   * @param efficiencyMultiplier factor applied to every polytropic efficiency value (0-1, 1 = clean)
+   * @return a new degraded {@link CompressorChart}
+   */
+  public CompressorChart getDegradedChart(double headMultiplier, double efficiencyMultiplier) {
+    int n = chartValues.size();
+    double[] scaledSpeed = new double[n];
+    double[][] scaledFlow = new double[n][];
+    double[][] scaledHead = new double[n][];
+    double[][] scaledFlowEff = new double[n][];
+    double[][] scaledEff = new double[n][];
+    for (int i = 0; i < n; i++) {
+      CompressorCurve curve = chartValues.get(i);
+      scaledSpeed[i] = curve.speed;
+      scaledFlow[i] = curve.flow.clone();
+      scaledFlowEff[i] = curve.flowPolytropicEfficiency.clone();
+      scaledHead[i] = new double[curve.head.length];
+      for (int j = 0; j < curve.head.length; j++) {
+        scaledHead[i][j] = curve.head[j] * headMultiplier;
+      }
+      scaledEff[i] = new double[curve.polytropicEfficiency.length];
+      for (int j = 0; j < curve.polytropicEfficiency.length; j++) {
+        scaledEff[i][j] = curve.polytropicEfficiency[j] * efficiencyMultiplier;
+      }
+    }
+    CompressorChart degraded = new CompressorChart();
+    degraded.setHeadUnit(getHeadUnit());
+    degraded.setUseRealKappa(useRealKappa());
+    degraded.setReferenceConditions(refMW, refTemperature, refPressure, refZ);
+    double[] conditions = getChartConditions();
+    degraded.setCurves(conditions == null ? new double[] { refMW, refTemperature, refPressure, refZ } : conditions,
+        scaledSpeed, scaledFlow, scaledHead, scaledFlowEff, scaledEff);
+    degraded.setUseCompressorChart(true);
+    // Regenerate surge/stone-wall curves only when there are enough speed lines for the spline fit
+    // (>= 3 points); small charts keep no surge/stone-wall curve.
+    if (n >= 3) {
+      degraded.generateSurgeCurve();
+      degraded.generateStoneWallCurve();
+    }
+    return degraded;
+  }
+
   /** {@inheritDoc} */
   @Override
   public SafeSplineSurgeCurve getSurgeCurve() {

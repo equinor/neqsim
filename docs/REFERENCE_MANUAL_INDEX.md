@@ -313,6 +313,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Compressor Anti-Surge Control | [docs/process/equipment/compressor_antisurge_control.md](process/equipment/compressor_antisurge_control) | Dynamic anti-surge recycle, pressure-speed control, predictive supervision, coordinated override philosophy, and application-design scan logic |
 | Compressor Design | [docs/process/CompressorMechanicalDesign.md](process/CompressorMechanicalDesign)               | Compressor mechanical design                      |
 | Compressor Feasibility | [docs/process/compressor_design_feasibility.md](process/compressor_design_feasibility) | Feasibility report: mechanical, cost, suppliers, curves |
+| Compressor Deposit / Degradation | [docs/process/compressor_deposit_degradation.md](process/compressor_deposit_degradation) | Mass-based fouling (S8, salt, scale, wax) → head/efficiency loss, degraded chart, per-impeller deposit location |
 | Pumps             | [docs/process/equipment/pumps.md](process/equipment/pumps)                                     | Pump models                                       |
 | Pump Guide        | [docs/wiki/pump_usage_guide.md](wiki/pump_usage_guide)                                         | Pump usage guide                                  |
 | Pump Theory       | [docs/wiki/pump_theory_and_implementation.md](wiki/pump_theory_and_implementation)             | Pump theory                                       |
