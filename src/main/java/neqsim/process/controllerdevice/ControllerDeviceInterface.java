@@ -353,6 +353,16 @@ public interface ControllerDeviceInterface extends ProcessElementInterface {
   }
 
   /**
+   * Compute loop-tuning key performance indicators (IAE, ISE, ITAE, process-value variability, valve travel and
+   * reversals, settling time) from the recorded controller event log.
+   *
+   * @return computed performance metrics; empty metrics if the event log is empty
+   */
+  public default ControllerPerformanceMetrics getPerformanceMetrics() {
+    return ControllerPerformanceMetrics.fromEventLog(getEventLog());
+  }
+
+  /**
    * Get the integral of absolute error accumulated during the simulation.
    *
    * @return integral of absolute error
