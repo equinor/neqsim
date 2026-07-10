@@ -4,9 +4,12 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import com.google.gson.GsonBuilder;
+
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.mixer.Mixer;
@@ -32,6 +35,12 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Splitter.class);
+
+  /**
+   * Sentinel value for {@link #setFlowRates(double[], String)} marking an outlet that receives the remaining
+   * (undetermined) inlet flow after the fixed outlets are met.
+   */
+  public static final double REMAINDER = -1.0;
 
   /** Mechanical design for the splitter. */
   private SplitterMechanicalDesign mechanicalDesign;
@@ -191,13 +200,45 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   }
 
   /**
+   * Checks whether a configured outlet flow rate is the {@link #REMAINDER} sentinel.
+   *
+   * @param flowRate the configured outlet flow rate to test
+   * @return {@code true} if the value marks a remainder outlet, {@code false} otherwise
+   */
+  private static boolean isRemainderMarker(double flowRate) {
+    return Math.abs(flowRate - REMAINDER) < 1e-6;
+  }
+
+  /**
    * calcSplitFactors.
    */
   public void calcSplitFactors() {
-    double sum = 0.0;
+    // Sanitize the configured flow rates before deriving split factors. Only the
+    // REMAINDER sentinel (-1) marks an outlet as taking the remaining (undetermined)
+    // flow. Any other negative value is physically invalid - for example a faulty
+    // sensor reading fed through as a fixed setpoint - and is clamped to zero. Without
+    // this, a negative fixed flow collided with the remainder detection and was itself
+    // treated as a remainder stream, silently driving the real remainder outlet to zero
+    // and producing a split that did not conserve mass.
+    double[] fixedFlowRates = new double[flowRates.length];
     for (int i = 0; i < flowRates.length; i++) {
-      if (flowRates[i] > 0.0) {
-        sum += flowRates[i];
+      if (isRemainderMarker(flowRates[i])) {
+        fixedFlowRates[i] = REMAINDER;
+      } else if (flowRates[i] < 0.0) {
+        logger.warn(
+            "Splitter {} received a negative fixed outlet flow {} on outlet {}; clamping to "
+                + "zero. Use {} to mark an outlet as taking the remaining flow.",
+            getName(), flowRates[i], i, REMAINDER);
+        fixedFlowRates[i] = 0.0;
+      } else {
+        fixedFlowRates[i] = flowRates[i];
+      }
+    }
+
+    double sum = 0.0;
+    for (int i = 0; i < fixedFlowRates.length; i++) {
+      if (fixedFlowRates[i] > 0.0) {
+        sum += fixedFlowRates[i];
       }
     }
 
@@ -216,29 +257,43 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
     }
 
     double effectiveSum = 0.0;
-    for (int i = 0; i < flowRates.length; i++) {
-      if (flowRates[i] > 0.0) {
-        effectiveSum += flowRates[i] * scale;
+    for (int i = 0; i < fixedFlowRates.length; i++) {
+      if (fixedFlowRates[i] > 0.0) {
+        effectiveSum += fixedFlowRates[i] * scale;
+      }
+    }
+
+    // Count the remainder outlets so the leftover inlet flow can be shared among all of
+    // them. Computing the leftover once (rather than per marker) is essential: when more
+    // than one outlet is set to REMAINDER, recomputing inletFlow - effectiveSum inside the
+    // loop drove every remainder outlet after the first to zero flow, breaking mass
+    // conservation and silently forcing outlet 0 to absorb the mismatch in run().
+    int remainderCount = 0;
+    for (int i = 0; i < fixedFlowRates.length; i++) {
+      if (isRemainderMarker(fixedFlowRates[i])) {
+        remainderCount++;
       }
     }
 
     double missingFlowRate = 0.0;
-    for (int i = 0; i < flowRates.length; i++) {
-      if (flowRates[i] < -0.1) {
-        missingFlowRate = inletFlow - effectiveSum;
-        if (missingFlowRate < 0.0) {
-          missingFlowRate = 0.0;
-        }
-        effectiveSum += missingFlowRate;
+    if (remainderCount > 0) {
+      missingFlowRate = inletFlow - effectiveSum;
+      if (missingFlowRate < 0.0) {
+        missingFlowRate = 0.0;
       }
+      effectiveSum += missingFlowRate;
     }
 
-    splitFactor = new double[flowRates.length];
-    for (int i = 0; i < flowRates.length; i++) {
-      if (flowRates[i] < -0.1) {
-        splitFactor[i] = effectiveSum > 0.0 ? missingFlowRate / effectiveSum : 0.0;
+    // Distribute the leftover flow equally among all remainder outlets so multiple
+    // REMAINDER markers each receive a deterministic, mass-conserving share.
+    double perRemainderFlow = remainderCount > 0 ? missingFlowRate / remainderCount : 0.0;
+
+    splitFactor = new double[fixedFlowRates.length];
+    for (int i = 0; i < fixedFlowRates.length; i++) {
+      if (isRemainderMarker(fixedFlowRates[i])) {
+        splitFactor[i] = effectiveSum > 0.0 ? perRemainderFlow / effectiveSum : 0.0;
       } else {
-        splitFactor[i] = effectiveSum > 0.0 ? (flowRates[i] * scale) / effectiveSum : 0.0;
+        splitFactor[i] = effectiveSum > 0.0 ? (fixedFlowRates[i] * scale) / effectiveSum : 0.0;
       }
     }
   }

@@ -4,8 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
@@ -142,6 +144,78 @@ class SplitterTest {
     assertEquals(inletKgHr, out0 + out1, inletKgHr * 1e-4);
     assertEquals(0.0, out0, inletKgHr * 1e-4);
     assertEquals(inletKgHr, out1, inletKgHr * 1e-4);
+  }
+
+  @Test
+  void testNegativeFixedFlowClampedToZero() {
+    // A negative fixed outlet flow (e.g. a faulty sensor reading passed through as a
+    // setpoint) must NOT be mistaken for the "-1" remainder marker. Historically any
+    // value < -0.1 was treated as remainder, so a negative fixed flow on outlet 0
+    // collided with the remainder marker on outlet 1 and silently drove the real
+    // remainder outlet (outlet 1) to zero. It must instead be clamped to zero, leaving
+    // the remainder outlet to take the whole inlet.
+    double inletKgHr = inletStream.getThermoSystem().getFlowRate("kg/hr");
+
+    Splitter splitter = new Splitter("splitter", inletStream, 2);
+    // outlet 0: invalid negative fixed flow; outlet 1: remainder ("-1").
+    splitter.setFlowRates(new double[] { -3.0 * inletKgHr, -1.0 }, "kg/hr");
+    splitter.run();
+
+    assertEquals(0.0, splitter.getSplitFactor(0), 1e-6);
+    assertEquals(1.0, splitter.getSplitFactor(1), 1e-6);
+
+    double out0 = splitter.getSplitStream(0).getThermoSystem().getFlowRate("kg/hr");
+    double out1 = splitter.getSplitStream(1).getThermoSystem().getFlowRate("kg/hr");
+    assertEquals(inletKgHr, out0 + out1, inletKgHr * 1e-4);
+    assertEquals(0.0, out0, inletKgHr * 1e-4);
+    assertEquals(inletKgHr, out1, inletKgHr * 1e-4);
+  }
+
+  @Test
+  void testRemainderMarkerFirstWithFixedSecond() {
+    // The "-1" remainder marker on outlet 0 must still take the flow left over after
+    // the fixed flow on outlet 1 (regression guard for the sentinel handling).
+    double inletKgHr = inletStream.getThermoSystem().getFlowRate("kg/hr");
+
+    Splitter splitter = new Splitter("splitter", inletStream, 2);
+    splitter.setFlowRates(new double[] { -1.0, 0.25 * inletKgHr }, "kg/hr");
+    splitter.run();
+
+    assertEquals(0.75, splitter.getSplitFactor(0), 1e-4);
+    assertEquals(0.25, splitter.getSplitFactor(1), 1e-4);
+
+    double out0 = splitter.getSplitStream(0).getThermoSystem().getFlowRate("kg/hr");
+    double out1 = splitter.getSplitStream(1).getThermoSystem().getFlowRate("kg/hr");
+    assertEquals(inletKgHr, out0 + out1, inletKgHr * 1e-4);
+    assertEquals(0.75 * inletKgHr, out0, inletKgHr * 1e-4);
+    assertEquals(0.25 * inletKgHr, out1, inletKgHr * 1e-4);
+  }
+
+  @Test
+  void testMultipleRemainderOutletsShareLeftoverEqually() {
+    // Two outlets marked as remainder ("-1") must share the leftover inlet flow equally
+    // rather than the last marker absorbing everything and the others getting zero.
+    // Previously missingFlowRate was overwritten per marker, driving every remainder
+    // outlet to a zero split factor and breaking mass conservation.
+    double inletKgHr = inletStream.getThermoSystem().getFlowRate("kg/hr");
+
+    Splitter splitter = new Splitter("splitter", inletStream, 3);
+    // outlet 0: fixed 40% of inlet; outlets 1 and 2: remainder ("-1").
+    splitter.setFlowRates(new double[] { 0.4 * inletKgHr, -1.0, -1.0 }, "kg/hr");
+    splitter.run();
+
+    // Leftover 60% is shared equally: 30% each.
+    assertEquals(0.4, splitter.getSplitFactor(0), 1e-4);
+    assertEquals(0.3, splitter.getSplitFactor(1), 1e-4);
+    assertEquals(0.3, splitter.getSplitFactor(2), 1e-4);
+
+    double out0 = splitter.getSplitStream(0).getThermoSystem().getFlowRate("kg/hr");
+    double out1 = splitter.getSplitStream(1).getThermoSystem().getFlowRate("kg/hr");
+    double out2 = splitter.getSplitStream(2).getThermoSystem().getFlowRate("kg/hr");
+    assertEquals(inletKgHr, out0 + out1 + out2, inletKgHr * 1e-4);
+    assertEquals(0.4 * inletKgHr, out0, inletKgHr * 1e-4);
+    assertEquals(0.3 * inletKgHr, out1, inletKgHr * 1e-4);
+    assertEquals(0.3 * inletKgHr, out2, inletKgHr * 1e-4);
   }
 
   @Test
