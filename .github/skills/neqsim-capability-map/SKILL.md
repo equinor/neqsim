@@ -1,7 +1,7 @@
 ---
 name: neqsim-capability-map
 description: "Structured inventory of NeqSim's capabilities by engineering discipline. USE WHEN: checking what NeqSim can do, planning implementations, assessing gaps for engineering tasks, or routing work to the right agent. Covers thermodynamics, process equipment, PVT, standards, mechanical design, flow assurance, safety, and economics."
-last_verified: "2026-07-09"
+last_verified: "2026-07-10"
 ---
 
 # NeqSim Capability Map
@@ -347,8 +347,10 @@ transport properties (viscosity, thermal conductivity, density).
 | Class | Equipment | Package |
 |-------|----------|---------|
 | `MechanicalDesign` | Base class | `process.mechanicaldesign` |
-| `SeparatorMechanicalDesign` | Separator vessel sizing, K-factor, demister config, nozzle sizing, liquid levels (HHLL/HLL/NLL/LLL/LLLL), inlet device, foam allowance, retention time, entrainment performance, design validation. **Gateway for all separator physical configuration.** Bridge methods: entrainment (`setInletPipeDiameter`, `setInletDeviceType`, `addSeparatorSection`, `setGasLiquidSurfaceTension`) and dynamic internals (`setWeirHeightAbsolute`, `setWeirLength`, `setBootVolume`, `setMistEliminatorDpCoeff`, `setMistEliminatorThickness`, `applyDemistingInternal`). | `process.mechanicaldesign.separator` |
-| `DemistingInternal` | Demisting internal sizing — Souders-Brown max gas velocity, Eu-number pressure drop, carry-over model. Types: wire mesh, vane pack, cyclone. | `process.mechanicaldesign.separator.internals` |
+| `SeparatorMechanicalDesign` | Separator vessel sizing, K-factor, demister config, nozzle sizing, liquid levels (HHLL/HLL/NLL/LLL/LLLL), inlet device, foam allowance, retention time, entrainment performance, design validation. **Gateway for all separator physical configuration.** Bridge methods: entrainment (`setInletPipeDiameter`, `setInletDeviceType`, `addSeparatorSection`, `setGasLiquidSurfaceTension`) and dynamic internals (`setWeirHeightAbsolute`, `setWeirLength`, `setBootVolume`, `setMistEliminatorDpCoeff`, `setMistEliminatorThickness`, `applyDemistingInternal`). **Separation-efficiency report** (`calculateSeparationEfficiency()` → `SeparatorEfficiencyReport`, two- and three-phase; `setEfficiencyModelEnabled(bool)` toggle; `setDemisterType`/`setDemisterSubType`). | `process.mechanicaldesign.separator` |
+| `SeparatorEfficiencyReport` | Whole-separator/scrubber separation-efficiency report — per-internal K-factor operating windows, overall gas-liquid efficiency, gas/oil/water entrainment + carry-under fractions, verdict (`GOOD_PERFORMANCE`/`BELOW_TURNDOWN`/`FLOODING_RISK`/`MARGINAL_EFFICIENCY`), `toJson()`. | `process.mechanicaldesign.separator` |
+| `InternalOperatingWindow` | K-factor operating window for a demisting internal — classifies operating Souders-Brown K vs `[Kmin, Kmax]` as `BELOW_MIN_TURNDOWN`/`IN_RANGE`/`ABOVE_MAX_FLOODING`, with utilization and turndown ratio. | `process.mechanicaldesign.separator.internals` |
+| `DemistingInternal` | Demisting internal sizing — Souders-Brown max gas velocity, Eu-number pressure drop, carry-over model, database K-factor window (`fromDatabase(type, subType)`, `getOperatingWindow(opK)`). Types: wire mesh, vane pack, cyclone. | `process.mechanicaldesign.separator.internals` |
 | `DemistingInternalWithDrainage` | Demisting internal with drainage section — reduces carry-over by drainage efficiency factor. | `process.mechanicaldesign.separator.internals` |
 | `PrimarySeparation` | Inlet device base — inlet momentum (rho*v^2), momentum limit checking, liquid carry-over with degradation. | `process.mechanicaldesign.separator.primaryseparation` |
 | `InletVane` | Inlet vane device (6000 Pa max momentum, 85% bulk efficiency). | `process.mechanicaldesign.separator.primaryseparation` |

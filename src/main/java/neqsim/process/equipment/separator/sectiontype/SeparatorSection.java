@@ -44,6 +44,15 @@ public class SeparatorSection extends NamedBaseClass {
   }
 
   /**
+   * Gets the section type identifier (e.g. "mesh", "vane", "manway", "valve", "nozzle").
+   *
+   * @return the section type
+   */
+  public String getType() {
+    return type;
+  }
+
+  /**
    * Getter for the field <code>efficiency</code>.
    *
    * @return the efficiency

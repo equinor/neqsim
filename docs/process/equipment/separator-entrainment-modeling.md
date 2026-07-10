@@ -992,6 +992,17 @@ the mechanical design output. This means `calcDesign()` and `toJson()` include
 entrainment fractions, efficiency metrics, calibration factors, and the full performance
 calculator JSON — all in a single design report.
 
+> **Whole-separator efficiency report:** For a consolidated, on-demand assessment
+> that also classifies each internal against its K-factor operating window (below
+> turndown / in range / flooding), use
+> `SeparatorMechanicalDesign.calculateSeparationEfficiency()` which returns a
+> `SeparatorEfficiencyReport`. It is read-only and works for two-phase and
+> three-phase separators (and gas scrubbers). The run-time application of the
+> physics model is controlled with `setEfficiencyModelEnabled(true/false)`, and
+> the default keeps the legacy no-entrainment / manual `setEntrainment(...)`
+> behaviour. See
+> [Separation Efficiency Report (K-Factor Operating Windows)](separators.md#separation-efficiency-report-k-factor-operating-windows).
+
 ### How It Works
 
 1. Enable detailed entrainment on the separator: `separator.setDetailedEntrainmentCalculation(true)`

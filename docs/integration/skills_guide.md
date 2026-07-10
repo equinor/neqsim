@@ -49,7 +49,7 @@ professional setup reproducible:
 
 | Layer | Versioning | Compatibility rule |
 |-------|-----------|--------------------|
-| **NeqSim core** | Semantic version (e.g. `3.15.0`), Maven Central | The baseline everything targets. |
+| **NeqSim core** | Semantic version (e.g. `3.16.0`), Maven Central | The baseline everything targets. |
 | **Community / enterprise skills** | Per-skill `version` in `SKILL.md` frontmatter | A skill states the **minimum NeqSim version** it was verified against; skills avoid depending on unreleased APIs. |
 | **Community / enterprise agents** | Per-agent `version` + declared `required_skills` | An agent works when its `required_skills` are installed at a compatible version and the target NeqSim core meets each skill's minimum. |
 

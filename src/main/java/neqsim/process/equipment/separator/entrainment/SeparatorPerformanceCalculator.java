@@ -1050,6 +1050,15 @@ public class SeparatorPerformanceCalculator implements Serializable {
   }
 
   /**
+   * Gets the inlet droplet size distribution for oil-in-water droplets.
+   *
+   * @return droplet size distribution or null if not set
+   */
+  public DropletSizeDistribution getOilInWaterDSD() {
+    return oilInWaterDSD;
+  }
+
+  /**
    * Sets the inlet droplet size distribution for water-in-oil droplets.
    *
    * @param dsd droplet size distribution
@@ -1059,12 +1068,30 @@ public class SeparatorPerformanceCalculator implements Serializable {
   }
 
   /**
+   * Gets the inlet droplet size distribution for water-in-oil droplets.
+   *
+   * @return droplet size distribution or null if not set
+   */
+  public DropletSizeDistribution getWaterInOilDSD() {
+    return waterInOilDSD;
+  }
+
+  /**
    * Sets the inlet droplet size distribution for gas bubbles entrained in liquid.
    *
    * @param dsd bubble size distribution
    */
   public void setGasBubbleDSD(DropletSizeDistribution dsd) {
     this.gasBubbleDSD = dsd;
+  }
+
+  /**
+   * Gets the inlet droplet size distribution for gas bubbles entrained in liquid.
+   *
+   * @return bubble size distribution or null if not set
+   */
+  public DropletSizeDistribution getGasBubbleDSD() {
+    return gasBubbleDSD;
   }
 
   /**

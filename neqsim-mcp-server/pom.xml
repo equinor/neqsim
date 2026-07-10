@@ -14,7 +14,7 @@
         <quarkus.version>3.37.0</quarkus.version>
         <mcp-server.version>1.13.0</mcp-server.version>
         <!-- Keep in sync with ../pom.xml <revision> property until a parent/module build is used. -->
-        <revision>3.15.0</revision>
+        <revision>3.16.0</revision>
         <neqsim.version>${revision}</neqsim.version>
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>

@@ -1092,6 +1092,125 @@ section for full details.
 
 ---
 
+## Separation Efficiency Report (K-Factor Operating Windows)
+
+`SeparatorMechanicalDesign.calculateSeparationEfficiency()` produces a
+`SeparatorEfficiencyReport` that assesses the **complete** separator or scrubber
+based on how its internals are configured. It combines the physics-based
+entrainment and carry-under fractions (from the
+[enhanced entrainment model](separator-entrainment-modeling.md)) with a
+per-internal Souders-Brown **K-factor operating-window** check. It works for both
+two-phase (gas-liquid) and three-phase (gas-oil-water) separators, and
+`GasScrubberMechanicalDesign` inherits it.
+
+Each demisting internal (mist mat, vane pack, cyclone deck) has a recommended
+operating band expressed as a K-factor window $[K_{min}, K_{max}]$ where
+
+$$
+K = v_{gas}\sqrt{\frac{\rho_G}{\rho_L - \rho_G}}
+$$
+
+The limits are sourced from the internals database
+(`resources/designdata/SeparatorInternals.csv`, columns `MinKFactor_m_s` /
+`MaxKFactor_m_s`, based on open literature: Brunazzi & Paglianti 1998, Phillips &
+Listak 1996, Hoffmann & Stein 2008, GPSA Engineering Data Book).
+
+| Region | Status | Physical meaning |
+| ------ | ------ | ---------------- |
+| $K < K_{min}$ | `BELOW_MIN_TURNDOWN` | Below the effective turndown limit — too little inertial capture / poor film drainage, small droplets slip through |
+| $K_{min} \le K \le K_{max}$ | `IN_RANGE` | Good performance band — internal operates at its rated grade efficiency |
+| $K > K_{max}$ | `ABOVE_MAX_FLOODING` | Above capacity — flooding and re-entrainment off the element face |
+
+### Read-only assessment and the run-time toggle
+
+The report is **read-only**: it never changes what `run()` does. Whether the
+physics entrainment / carry-under model is *applied* during `run()` is a separate,
+opt-in switch. The default behaviour is unchanged — no entrainment, or the
+fractions you set manually via `setEntrainment(...)`.
+
+| Method | Effect |
+| ------ | ------ |
+| `calculateSeparationEfficiency()` | Read-only report; does not alter `run()` |
+| `setEfficiencyModelEnabled(true)` | Apply physics entrainment/carry-under during `run()` (delegates to `setDetailedEntrainmentCalculation(true)`) |
+| `setEfficiencyModelEnabled(false)` | Back to no-entrainment / manual `setEntrainment(...)` (default) |
+| `setDemisterType(String)` | `"wire_mesh"`, `"vane_pack"`, `"cyclone"` |
+| `setDemisterSubType(String)` | Database sub-type, e.g. `"High Efficiency"` |
+
+### Example — two-phase separator
+
+```java
+Separator sep = new Separator("scrubber", feed);
+sep.run();
+
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) sep.getMechanicalDesign();
+design.calcDesign();
+design.setDesign();                            // push sized diameter to the separator
+
+design.setDemisterType("wire_mesh");
+design.setDemisterSubType("High Efficiency");
+
+SeparatorEfficiencyReport report = design.calculateSeparationEfficiency();
+System.out.println("Operating K:       " + report.getOperatingKFactor() + " m/s");
+System.out.println("Gas-liquid eff.:   " + report.getOverallGasLiquidEfficiency());
+System.out.println("Verdict:           " + report.getVerdict());
+
+for (InternalOperatingWindow w : report.getWindows()) {
+  System.out.printf("  %-16s %s  (K %.3f in [%.3f, %.3f], util %.2f)%n",
+      w.getName(), w.getStatus(), w.getOperatingKFactor(),
+      w.getMinKFactor(), w.getMaxKFactor(), w.getUtilization());
+}
+
+System.out.println(report.toJson());
+```
+
+### Example — three-phase separator with the model applied at run time
+
+```java
+ThreePhaseSeparator sep = new ThreePhaseSeparator("1st stage", feed);
+sep.run();
+
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) sep.getMechanicalDesign();
+design.calcDesign();
+design.setDesign();
+
+// Turn ON the physics entrainment/carry-under model so run() applies it
+design.setEfficiencyModelEnabled(true);
+sep.run();   // gas/oil/water outlets now reflect the computed carry-over
+
+SeparatorEfficiencyReport report = design.calculateSeparationEfficiency();
+// Three-phase report also carries liquid-liquid fractions:
+double waterInOil = report.getWaterInOilFraction();  // BS&W in oil
+double oilInWater = report.getOilInWaterFraction();  // oil in produced water
+```
+
+### Report contents
+
+The `SeparatorEfficiencyReport` (and its `toJson()`) exposes:
+
+- `operatingKFactor` and `designKFactor` [m/s]
+- `overallGasLiquidEfficiency` [0-1]
+- entrainment / carry-under fractions: oil-in-gas, water-in-gas, gas-in-oil,
+  gas-in-water, and (three-phase) oil-in-water, water-in-oil
+- `mistEliminatorFlooded` flag
+- a per-internal `InternalOperatingWindow` list (min/max/operating K,
+  utilization, turndown ratio, status, rated efficiency, literature reference)
+- `verdict`: `GOOD_PERFORMANCE`, `BELOW_TURNDOWN`, `FLOODING_RISK`,
+  `MARGINAL_EFFICIENCY`, or `UNKNOWN`
+
+> **Note:** Run and size the separator (`calcDesign()` / `setDesign()`) before
+> calling `calculateSeparationEfficiency()` so a representative operating K-factor
+> is available; otherwise the operating K is reported as zero with an explanatory
+> note.
+
+See the worked notebook
+[SeparatorEfficiency_GasScrubber_ThreePhase.ipynb](../../examples/SeparatorEfficiency_GasScrubber_ThreePhase.ipynb)
+for a full two-phase gas-scrubber and three-phase separator walkthrough with
+figures.
+
+---
+
 ## Gas Scrubber Mechanical Design and Conformity Checking
 
 A `GasScrubber` has a dedicated `GasScrubberMechanicalDesign` that exposes the
