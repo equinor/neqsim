@@ -263,21 +263,35 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
       }
     }
 
-    double missingFlowRate = 0.0;
+    // Count the remainder outlets so the leftover inlet flow can be shared among all of
+    // them. Computing the leftover once (rather than per marker) is essential: when more
+    // than one outlet is set to REMAINDER, recomputing inletFlow - effectiveSum inside the
+    // loop drove every remainder outlet after the first to zero flow, breaking mass
+    // conservation and silently forcing outlet 0 to absorb the mismatch in run().
+    int remainderCount = 0;
     for (int i = 0; i < fixedFlowRates.length; i++) {
       if (isRemainderMarker(fixedFlowRates[i])) {
-        missingFlowRate = inletFlow - effectiveSum;
-        if (missingFlowRate < 0.0) {
-          missingFlowRate = 0.0;
-        }
-        effectiveSum += missingFlowRate;
+        remainderCount++;
       }
     }
+
+    double missingFlowRate = 0.0;
+    if (remainderCount > 0) {
+      missingFlowRate = inletFlow - effectiveSum;
+      if (missingFlowRate < 0.0) {
+        missingFlowRate = 0.0;
+      }
+      effectiveSum += missingFlowRate;
+    }
+
+    // Distribute the leftover flow equally among all remainder outlets so multiple
+    // REMAINDER markers each receive a deterministic, mass-conserving share.
+    double perRemainderFlow = remainderCount > 0 ? missingFlowRate / remainderCount : 0.0;
 
     splitFactor = new double[fixedFlowRates.length];
     for (int i = 0; i < fixedFlowRates.length; i++) {
       if (isRemainderMarker(fixedFlowRates[i])) {
-        splitFactor[i] = effectiveSum > 0.0 ? missingFlowRate / effectiveSum : 0.0;
+        splitFactor[i] = effectiveSum > 0.0 ? perRemainderFlow / effectiveSum : 0.0;
       } else {
         splitFactor[i] = effectiveSum > 0.0 ? (fixedFlowRates[i] * scale) / effectiveSum : 0.0;
       }

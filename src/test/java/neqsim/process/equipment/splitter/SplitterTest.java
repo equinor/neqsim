@@ -192,6 +192,33 @@ class SplitterTest {
   }
 
   @Test
+  void testMultipleRemainderOutletsShareLeftoverEqually() {
+    // Two outlets marked as remainder ("-1") must share the leftover inlet flow equally
+    // rather than the last marker absorbing everything and the others getting zero.
+    // Previously missingFlowRate was overwritten per marker, driving every remainder
+    // outlet to a zero split factor and breaking mass conservation.
+    double inletKgHr = inletStream.getThermoSystem().getFlowRate("kg/hr");
+
+    Splitter splitter = new Splitter("splitter", inletStream, 3);
+    // outlet 0: fixed 40% of inlet; outlets 1 and 2: remainder ("-1").
+    splitter.setFlowRates(new double[] { 0.4 * inletKgHr, -1.0, -1.0 }, "kg/hr");
+    splitter.run();
+
+    // Leftover 60% is shared equally: 30% each.
+    assertEquals(0.4, splitter.getSplitFactor(0), 1e-4);
+    assertEquals(0.3, splitter.getSplitFactor(1), 1e-4);
+    assertEquals(0.3, splitter.getSplitFactor(2), 1e-4);
+
+    double out0 = splitter.getSplitStream(0).getThermoSystem().getFlowRate("kg/hr");
+    double out1 = splitter.getSplitStream(1).getThermoSystem().getFlowRate("kg/hr");
+    double out2 = splitter.getSplitStream(2).getThermoSystem().getFlowRate("kg/hr");
+    assertEquals(inletKgHr, out0 + out1 + out2, inletKgHr * 1e-4);
+    assertEquals(0.4 * inletKgHr, out0, inletKgHr * 1e-4);
+    assertEquals(0.3 * inletKgHr, out1, inletKgHr * 1e-4);
+    assertEquals(0.3 * inletKgHr, out2, inletKgHr * 1e-4);
+  }
+
+  @Test
   void testGetSplitNumber() {
     Splitter splitter = new Splitter("splitter", inletStream, 4);
     assertEquals(4, splitter.getSplitNumber());
