@@ -963,7 +963,7 @@ class ThreePhaseSeparatorTest {
       // Calculate errors
       double waterLevelError = waterLevelSP - waterLevel;
       double oilLevelError = oilLevelSP - oilLevel;
-      double pressureError = pressureSP - pressure;
+      double pressureError = pressure - pressureSP;
 
       // Update integrals
       waterLevelIntegral += waterLevelError * timeStep;
