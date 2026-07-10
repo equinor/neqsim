@@ -37,8 +37,8 @@ public class Splitter extends ProcessEquipmentBaseClass implements SplitterInter
   static Logger logger = LogManager.getLogger(Splitter.class);
 
   /**
-   * Sentinel value for {@link #setFlowRates(double[], String)} marking an outlet that
-   * receives the remaining (undetermined) inlet flow after the fixed outlets are met.
+   * Sentinel value for {@link #setFlowRates(double[], String)} marking an outlet that receives the remaining
+   * (undetermined) inlet flow after the fixed outlets are met.
    */
   public static final double REMAINDER = -1.0;
 
