@@ -1,7 +1,7 @@
 ---
 name: neqsim-notebook-patterns
 description: "Jupyter notebook patterns for NeqSim. USE WHEN: creating or reviewing Jupyter notebooks that use NeqSim for process simulation, thermodynamics, or PVT analysis. Covers devtools workspace setup, class imports, notebook structure, visualization requirements, and results.json schema."
-last_verified: "2026-07-04"
+last_verified: "2026-07-09"
 ---
 
 # Jupyter Notebook Patterns for NeqSim
@@ -168,6 +168,56 @@ bridge.merge_results_to_task(job_ids)
 Use interactive notebook cells only for quick debugging or tiny Screening tasks
 where `study_config.yaml` explicitly sets `notebooks.execution_engine:
 interactive`.
+
+### Runner Robustness & Task-Dir Resolution (avoid the common failures)
+
+Three failure modes recur when running task notebooks. Handle all three up front:
+
+**1. Resolve the task folder with `find_task_dir()`, not `NOTEBOOK_DIR.parent`.**
+The NeqSim Runner runs a notebook from a subprocess whose cwd is the notebook
+folder (e.g. `step2_analysis/`) and does **not** set `__vsc_ipynb_file__`, so
+`Path.cwd()` and `NOTEBOOK_DIR.parent` frequently overshoot the task root or land
+in a `runner_output/job-*/` scratch folder. Use the canonical walker instead:
+
+```python
+from neqsim_dev_setup import find_task_dir   # already on sys.path after setup cell
+
+TASK_DIR = find_task_dir()          # walks up to the real task_solve/<slug>/ root
+FIGURES_DIR = TASK_DIR / "figures"
+FIGURES_DIR.mkdir(exist_ok=True)
+```
+
+`find_task_dir()` searches upward for canonical task markers (`task_spec.md`,
+`study_config.yaml`, `step1_scope_and_research/`, `results.json`) and honours the
+`NEQSIM_TASK_DIR` env var if you need to pin it. This replaces the ad-hoc
+`_find_task_dir()` walkers that individual tasks used to re-invent.
+
+**2. Delete stale runner outputs before the consistency check.** The runner
+regenerates `runner_output/job-*/output/` on every run; leftover copies of a
+previous run produce duplicate values and false "inconsistency" findings. Clean
+them before running the checker:
+
+```powershell
+Remove-Item -Recurse -Force task_solve\<slug>\runner_output -ErrorAction SilentlyContinue
+python devtools/consistency_checker.py task_solve/<slug>/
+```
+
+The consistency checker is now **sweep-aware** (it ignores deliberately-varied
+parametric/sensitivity/Monte-Carlo series and multi-point tables), so genuine
+parametric studies no longer trip a false CRITICAL. Keep intentionally-varied
+values inside `results.json` sweep sections (`uncertainty`, `sensitivity`,
+`tornado`, `scenarios`) or label them with a sweep/case/vs context in prose so
+the checker classifies them correctly. `TaskResultValidator` remains the
+authoritative schema gate.
+
+**3. Fall back to system Python if the venv is corrupted.** A corrupted virtual
+environment shows up as `numpy ... int32` `AttributeError` or a jpype
+initialization failure. Run the runner / notebooks with the system interpreter
+instead:
+
+```powershell
+py -3.12 -m devtools.neqsim_runner go step2_analysis/01_main_analysis.ipynb
+```
 
 ### Colab Badge
 
@@ -434,10 +484,16 @@ assert report.isValid(), "results.json failed validation — fix errors above"
 
 The validator checks:
 - **Required keys**: `key_results`, `validation`, `approach`, `conclusions`
-- **Recommended keys**: `figure_captions`, `figure_discussion`, `equations`, `tables`, `references`, `uncertainty`, `risk_evaluation`, `standards_applied`
-- **Uncertainty section**: Monte Carlo N ≥ 200, P10/P50/P90 present
+- **Recommended keys**: `figure_captions`, `figure_discussion`, `equations`, `tables`, `references`, `uncertainty`, `risk_evaluation`, `standards_applied`, `benchmark_validation`
+- **Uncertainty section**: Monte Carlo N ≥ 200; `p10`/`p50`/`p90` must be numeric and ordered `p10 ≤ p50 ≤ p90` (out-of-order or non-numeric is a hard error)
 - **Risk evaluation**: Risk register with id, description, risk_level
 - **Standards applied**: Array entries with code, scope, status (PASS/FAIL/INFO/N/A)
+- **Benchmark validation**: object/array of entries identifying what was compared, a reference, and a comparison; `status` (if present) must be PASS/FAIL/WARN/INFO
+
+The same rules run in CI without the JVM via
+`python devtools/validate_task_results.py task_solve/<slug>`. See
+[`neqsim-professional-reporting`](../neqsim-professional-reporting/SKILL.md) for
+the full `results.json` master schema and reporting rules.
 
 ## Type Conversion Tips
 

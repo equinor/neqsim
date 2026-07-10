@@ -932,6 +932,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | Document        | Path                                                                                                   | Description           |
 | --------------- | ------------------------------------------------------------------------------------------------------ | --------------------- |
 | Real-Time Guide | [docs/integration/REAL_TIME_INTEGRATION_GUIDE.md](integration/REAL_TIME_INTEGRATION_GUIDE)             | Real-time integration |
+| Seeq Data Lab   | [docs/integration/seeq_datalab.md](integration/seeq_datalab)                                           | NeqSim in Seeq Data Lab (JDK setup, SPy pull/push) |
 | MPC Integration | [docs/integration/mpc_integration.md](integration/mpc_integration)                                     | MPC integration       |
 | Industrial MPC  | [docs/integration/neqsim_industrial_mpc_integration.md](integration/neqsim_industrial_mpc_integration) | Industrial MPC        |
 

@@ -2212,7 +2212,15 @@ public class Separator extends ProcessEquipmentBaseClass
     }
   }
 
-  private double getMaxLiquidHeight() {
+  /**
+   * Returns the maximum liquid height [m] that the vessel can hold, i.e. the full extent of the liquid space in the
+   * direction the level is measured. For a horizontal separator this is the internal diameter; for a vertical
+   * separator/scrubber it is the tan-tan length (falling back to the internal diameter when the length has not been
+   * set). This is the physical upper bound for water/oil level readings and level-transmitter ranges.
+   *
+   * @return maximum liquid height in metres
+   */
+  public double getMaxLiquidHeight() {
     if ("vertical".equalsIgnoreCase(orientation)) {
       return getSeparatorLength() > 0.0 ? getSeparatorLength() : getInternalDiameter();
     }

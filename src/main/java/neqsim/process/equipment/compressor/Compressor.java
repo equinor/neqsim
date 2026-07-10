@@ -87,6 +87,11 @@ public class Compressor extends TwoPortEquipment
   public boolean calcPressureOut = false;
   private CompressorChartInterface compressorChart = new CompressorChart();
   private AntiSurge antiSurge = new AntiSurge();
+  /**
+   * Anti-surge control-line flow margin as a fraction of the surge flow (e.g. 0.10 for a control line 10 % to the right
+   * of the surge line). A value of 0 disables the control-line concept.
+   */
+  private double surgeControlMargin = 0.0;
   private double polytropicHead = 0;
   private double polytropicFluidHead = 0;
   private double polytropicHeadMeter = 0.0;
@@ -2260,6 +2265,127 @@ public class Compressor extends TwoPortEquipment
         * 288.15 / getInletTemperature() * 1.0 / getInletStream().getFluid().getZvolcorr();
   }
 
+  /**
+   * Set the anti-surge control-line flow margin.
+   *
+   * <p>
+   * The anti-surge control line sits a fixed flow margin to the right of the surge line; it is the line the anti-surge
+   * controller acts on. A margin of {@code 0.10} places the control line 10 % above the surge flow. A value of 0
+   * disables the control-line concept.
+   * </p>
+   *
+   * @param fraction control-line flow margin as a fraction of surge flow (must be &gt;= 0)
+   */
+  public void setSurgeControlMargin(double fraction) {
+    if (fraction < 0) {
+      throw new IllegalArgumentException("surgeControlMargin can not be less than 0");
+    }
+    this.surgeControlMargin = fraction;
+  }
+
+  /**
+   * Get the anti-surge control-line flow margin (fraction of surge flow).
+   *
+   * @return the control-line flow margin as a fraction of surge flow
+   */
+  public double getSurgeControlMargin() {
+    return surgeControlMargin;
+  }
+
+  /**
+   * Get the anti-surge control-line flow at the current operating head.
+   *
+   * <p>
+   * Computed as {@code surgeFlow * (1 + surgeControlMargin)} where the surge flow is taken at the current polytropic
+   * head from the compressor chart surge curve.
+   * </p>
+   *
+   * @return the control-line inlet volumetric flow (m3/hr)
+   */
+  public double getControlLineFlow() {
+    return getSurgeFlowRate() * (1.0 + surgeControlMargin);
+  }
+
+  /**
+   * Get the distance from the current operating point to the anti-surge control line.
+   *
+   * <p>
+   * Defined analogously to {@link #getDistanceToSurge()} as {@code inletFlow / controlLineFlow - 1}. A positive value
+   * means the operating point is to the right of the control line (the anti-surge valve can be closed); a negative
+   * value means the control line is encroached and recycle is required.
+   * </p>
+   *
+   * @return the fractional distance to the control line (dimensionless)
+   */
+  public double getDistanceToControlLine() {
+    double controlFlow = getControlLineFlow();
+    if (!(controlFlow > 0)) {
+      return Double.POSITIVE_INFINITY;
+    }
+    return getInletStream().getFlowRate("m3/hr") / controlFlow - 1.0;
+  }
+
+  /**
+   * Screening estimate of the recycle mass fraction required to hold the operating point on the anti-surge control
+   * line.
+   *
+   * <p>
+   * If the natural operating point already sits to the right of the control line, no recycle is needed and this returns
+   * 0. Otherwise it returns {@code (controlFlow - inletFlow) / controlFlow}, i.e. the fraction of the total suction
+   * flow that must be recycled (volumetric fraction, used here as a screening proxy for the mass fraction).
+   * </p>
+   *
+   * @return the required recycle fraction of total suction flow (0 to 1)
+   */
+  public double getRequiredRecycleFractionToControlLine() {
+    double controlFlow = getControlLineFlow();
+    if (!(controlFlow > 0)) {
+      return 0.0;
+    }
+    double inletFlow = getInletStream().getFlowRate("m3/hr");
+    if (inletFlow >= controlFlow) {
+      return 0.0;
+    }
+    return (controlFlow - inletFlow) / controlFlow;
+  }
+
+  /**
+   * Screening estimate of the shaft power wasted by anti-surge recycle.
+   *
+   * <p>
+   * When the anti-surge valve recycles, the compressor pumps the process throughput plus the recycle mass; the recycle
+   * mass is compressed and then throttled back to suction, so its compression work is lost. At fixed head and
+   * efficiency the wasted power scales with the recycle fraction of the total suction flow:
+   * {@code P_wasted = P_shaft * recycleFraction}.
+   * </p>
+   *
+   * @param recycleFraction recycle flow as a fraction of the total suction flow (0 to 1)
+   * @param unit power unit understood by {@link #getPower(String)} (e.g. "kW", "MW")
+   * @return the wasted shaft power in the requested unit
+   */
+  public double getAntiSurgeRecyclePower(double recycleFraction, String unit) {
+    if (recycleFraction < 0) {
+      recycleFraction = 0.0;
+    }
+    return getPower(unit) * recycleFraction;
+  }
+
+  /**
+   * Screening estimate of the heat duty the recycle cooler must reject due to anti-surge recycle.
+   *
+   * <p>
+   * The heat rejected by the recycle cooler equals the enthalpy rise of the recycled gas across the compressor, which
+   * at the screening level equals the wasted shaft work ({@link #getAntiSurgeRecyclePower(double, String)}).
+   * </p>
+   *
+   * @param recycleFraction recycle flow as a fraction of the total suction flow (0 to 1)
+   * @param unit power/duty unit understood by {@link #getPower(String)} (e.g. "kW", "MW")
+   * @return the recycle cooler heat duty in the requested unit
+   */
+  public double getAntiSurgeRecycleHeatDuty(double recycleFraction, String unit) {
+    return getAntiSurgeRecyclePower(recycleFraction, unit);
+  }
+
   @Override
   public boolean isStoneWall() {
     StoneWallCurve stoneWallCurve = getCompressorChart().getStoneWallCurve();
@@ -2439,7 +2565,7 @@ public class Compressor extends TwoPortEquipment
    */
   public Map<String, Object> getOperatingPoint() {
     Map<String, Object> point = new LinkedHashMap<String, Object>();
-    point.put("schemaVersion", "1.0");
+    point.put("schemaVersion", "1.1");
     point.put("name", getName());
 
     final StreamInterface in = getInletStream();
@@ -2462,6 +2588,10 @@ public class Compressor extends TwoPortEquipment
     point.put("distanceToStoneWall", distanceToStoneWall);
     point.put("surgeFlowRate_m3hr", safeDouble(this::getSurgeFlowRate));
     point.put("surgeFlowRateMargin_m3hr", safeDouble(this::getSurgeFlowRateMargin));
+
+    point.put("surgeControlMargin", surgeControlMargin);
+    point.put("controlLineFlow_m3hr", safeDouble(this::getControlLineFlow));
+    point.put("distanceToControlLine", safeDouble(this::getDistanceToControlLine));
 
     if (!chartActive) {
       point.put("withinChart", true);

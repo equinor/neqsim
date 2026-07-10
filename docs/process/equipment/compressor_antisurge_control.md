@@ -31,6 +31,54 @@ The compressor map defines:
 
 NeqSim reports distance-to-surge with `Compressor.getDistanceToSurge()`. Positive distance means the point is to the safe side of the surge curve; negative distance means the point has crossed into the surge region for the configured map.
 
+### Anti-surge control line and recycle energy penalty
+
+The anti-surge **control line** sits a fixed flow margin to the right of the surge
+line — it is the line the controller actually acts on. NeqSim exposes it as a
+first-class concept on `Compressor` (operating-point schema `1.1`):
+
+| Method | Returns |
+|--------|---------|
+| `setSurgeControlMargin(double frac)` / `getSurgeControlMargin()` | control-line flow margin as a fraction of surge flow (e.g. `0.10`; `0` disables) |
+| `getControlLineFlow()` | control-line inlet volumetric flow (m³/hr) = `getSurgeFlowRate() * (1 + margin)` at the current head |
+| `getDistanceToControlLine()` | `inletFlow / controlLineFlow − 1`; positive ⇒ right of the control line, so the anti-surge valve (ASV) can be closed |
+| `getRequiredRecycleFractionToControlLine()` | recycle fraction of total suction flow needed to hold the point on the control line (`0` if already right of it) |
+| `getAntiSurgeRecyclePower(recycleFraction, unit)` | shaft power wasted by recycling ≈ `getPower(unit) · recycleFraction` |
+| `getAntiSurgeRecycleHeatDuty(recycleFraction, unit)` | recycle-cooler heat duty (equals the wasted shaft work at screening level) |
+
+This supports the energy-efficiency question *"can the control line be moved so
+the ASV closes?"* — recycled gas is compressed then throttled back to suction,
+so its compression work is pure waste:
+
+$$
+P_\mathrm{wasted} \approx P_\mathrm{shaft}\,\frac{\dot m_\mathrm{recycle}}{\dot m_\mathrm{process}+\dot m_\mathrm{recycle}}
+$$
+
+```java
+compressor.setSurgeControlMargin(0.10);          // control line 10 % right of surge
+double controlFlow = compressor.getControlLineFlow();       // m3/hr at current head
+double distCtrl = compressor.getDistanceToControlLine();    // > 0 => ASV can be closed
+double wastedKW = compressor.getAntiSurgeRecyclePower(0.10, "kW"); // at 10 % recycle
+```
+
+### Calibrating a screening chart from a field surge test
+
+A generated chart is a stand-in for the vendor map. Once a field surge test
+(measured surge points) and a gas sample (actual molecular weight) are
+available, `CompressorChartCalibrator` brings the chart closer to reality:
+
+```java
+CompressorChartCalibrator cal = new CompressorChartCalibrator(compressor);
+cal.fitSurgeCurve(flowPoints, headPoints);   // installs a SafeSplineSurgeCurve
+double f = CompressorChartCalibrator.molarMassHeadCorrectionFactor(mwRef, mwActual); // = mwRef/mwActual
+double margin = cal.recommendControlMargin(0.10, measuredSurgeFlow); // widens with scatter
+```
+
+Polytropic head scales as `~1/MW` at fixed volumetric flow and speed, so a wrong
+assumed molecular weight mis-places the whole map. Results remain
+screening-level pending a qualified rotating-equipment (API 617 / API 692)
+review.
+
 For dynamic studies, the important trend is not only the instantaneous distance, but also how fast the operating point is moving toward the surge line. The newer anti-surge controller includes a predictive option that uses a filtered margin rate and a short look-ahead horizon:
 
 $$

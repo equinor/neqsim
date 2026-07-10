@@ -1,6 +1,6 @@
 ---
 name: neqsim-dynamic-equipment-implementation
-description: "Implement and test NeqSim process-equipment runTransient support. Use when adding dynamic simulation behavior to any ProcessEquipmentInterface class, including inventory volume, pressure/level/temperature state, controller response, and JUnit regression tests for transient timesteps."
+description: "Implement and test NeqSim process-equipment runTransient support. USE WHEN: adding dynamic simulation behavior to any ProcessEquipmentInterface class, including inventory volume, pressure/level/temperature state, controller response, and JUnit regression tests for transient timesteps."
 last_verified: "2026-06-25"
 ---
 
@@ -115,6 +115,9 @@ python devtools/verify_skills_agents.py
 - Adding a dynamic branch that calls `run(id)` internally every timestep and erases the inventory state.
 - Reading viscosity, density, or thermal conductivity after a flash without physical-property initialization.
 - Updating outlet streams but not the internal inventory, or updating inventory but leaving outlet streams stale.
+- Re-flashing every outlet stream after an inventory flash. For phase-separating equipment, rebuild outlets from the
+   freshly flashed inventory phases, preserve configured valve-capacity flow rates, and initialize properties without
+   another equilibrium flash. This keeps outlets current and avoids multiplying expensive CPA flashes per timestep.
 - Introducing Java 9+ syntax such as `var`, `List.of`, `Map.of`, text blocks, or `String.repeat`.
 - Adding `System.out.println` in tests or examples; use assertions or Log4j2 logger output.
 - Adding non-serializable fields to equipment without `transient`.

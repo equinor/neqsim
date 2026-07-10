@@ -60,7 +60,7 @@ public class CompressorOperatingPointTest {
     Map<String, Object> point = compressor.getOperatingPoint();
 
     assertNotNull(point, "Operating point map should not be null");
-    assertEquals("1.0", point.get("schemaVersion"));
+    assertEquals("1.1", point.get("schemaVersion"));
     assertEquals("test compressor", point.get("name"));
     assertEquals(Boolean.FALSE, point.get("chartActive"), "No chart was set");
     assertEquals(Boolean.TRUE, point.get("withinChart"), "Without a chart there is no map limit to violate");

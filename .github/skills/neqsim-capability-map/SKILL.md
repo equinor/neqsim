@@ -1,7 +1,7 @@
 ---
 name: neqsim-capability-map
 description: "Structured inventory of NeqSim's capabilities by engineering discipline. USE WHEN: checking what NeqSim can do, planning implementations, assessing gaps for engineering tasks, or routing work to the right agent. Covers thermodynamics, process equipment, PVT, standards, mechanical design, flow assurance, safety, and economics."
-last_verified: "2026-07-04"
+last_verified: "2026-07-09"
 ---
 
 # NeqSim Capability Map
@@ -9,7 +9,7 @@ last_verified: "2026-07-04"
 Structured reference of what NeqSim can do, organized by engineering discipline.
 Use this to quickly check if a capability exists before searching the source code.
 
-**Last updated:** 2026-03-23
+**Last updated:** 2026-07-09
 
 ---
 
@@ -293,7 +293,21 @@ transport properties (viscosity, thermal conductivity, density).
 
 | Class | Assessment | Package |
 |-------|-----------|---------|
-| `DeWaardMilliamsCorrosion` | CO2/H2S corrosion rate | `pvtsimulation.flowassurance` |
+| `DeWaardMilliamsCorrosion` | CO2/H2S corrosion rate (screening) | `pvtsimulation.flowassurance` |
+
+### Corrosion & Scale (process module)
+
+| Class | Assessment | Package |
+|-------|-----------|---------|
+| `NorsokM506CorrosionRate` | NORSOK M-506 CO2 corrosion (fugacity, in-situ pH, FeCO3 film, shear, glycol/inhibitor) | `process.corrosion` |
+| `NorsokM506ElectrolyteBridge` | Drives NORSOK M-506 from a `SystemElectrolyteCPAstatoil` brine (rigorous pH + FeCO3 supersaturation) | `process.corrosion` |
+| `CO2CorrosionAnalyzer` | de Waard-Milliams from an electrolyte fluid | `pvtsimulation.flowassurance` |
+| `PipeSegmentIntegrity` | Per-segment CO2 corrosion + CaCO3 scale profile along a line (`fromPipe`) | `process.corrosion` |
+| `RobustAqueousPH` | Always-finite in-situ pH (rigorous else CO2-water correlation) | `process.corrosion` |
+| `ElectrolyteScaleCalculator` | Activity-corrected SI for CaCO3/BaSO4/CaSO4/SrSO4 (Davies + Ksp(T)) | `process.chemistry.scale` |
+| `ScaleKinetics` | Induction time + reaction-vs-transport growth regime on top of an SI | `process.chemistry.scale` |
+| `BrineMixingScaleEvaluator` | Seawater/formation-water mixing incompatibility sweep | `process.chemistry.scale` |
+| `ScaleDepositionAccumulator` | Scale deposition along a `PipeBeggsAndBrills` profile | `process.chemistry.scale` |
 
 ### Regression / Tuning
 
@@ -488,7 +502,6 @@ transport properties (viscosity, thermal conductivity, density).
 |-----|-------------|------------|
 | **Rate-based distillation** | No mass-transfer-rate column model | Use equilibrium stages with efficiency |
 | **Asphaltene modeling** | Limited asphaltene precipitation | Use PC-SAFT with tuned parameters |
-| **Scale prediction** | No mineral scale model | External tool (ScaleChem) |
 | **Erosion modeling** | No erosion rate calculation | API RP 14E velocity check only |
 | **Detailed heat exchanger design** | TEMA-level design with Bell-Delaware, vibration, ASME VIII | Full thermal-hydraulic + mechanical via `ShellAndTubeDesignCalculator` |
 | **Dynamic simulation** | Limited transient capability | `runTransient()` on ProcessSystem |
@@ -499,6 +512,7 @@ transport properties (viscosity, thermal conductivity, density).
 | **BWRS EOS** | Only CH4 + C2H6 parameterized | Use SRK/PR instead |
 | **NACE MR0175 material selection** | No systematic material logic | Manual standard lookup |
 | **Detailed flare modeling** | No radiation / noise model | Source term only |
+| **API 2000 tank venting** | No in-/out-breathing tank vent sizing (thermal + pump-in/out) | Use general relief methods manually; flag as gap in `capability_assessment.md` |
 | **Full pipeline network** | LoopedPipeNetwork: NR-GGA solver, 120+ wells, IPR (PI/Vogel/Fetkovich), chokes, tubing VLP, Beggs-Brill multiphase, compressors, regulators, artificial lift (gas lift/ESP/jet/rod pump), water handling, sand erosion (DNV RP O501), corrosion (de Waard-Milliams/NORSOK M-506), GHG emissions tracking | Full-featured production network |
 
 ### EOS Limitations
@@ -547,8 +561,9 @@ transport properties (viscosity, thermal conductivity, density).
 | Phase envelope? | ✅ | `ops.calcPTphaseEnvelope()` |
 | Hydrate temperature? | ✅ | `ops.hydrateEquilibriumTemperature()` |
 | Wax appearance? | ✅ | `ops.calcWAT()` |
-| CO2 corrosion rate? | ✅ | `DeWaardMilliamsCorrosion` |
+| CO2 corrosion rate? | ✅ | `DeWaardMilliamsCorrosion` (screening); `NorsokM506CorrosionRate` / `NorsokM506ElectrolyteBridge` (rigorous, brine-driven) |
 | H2S sour classification? | ✅ | `DeWaardMilliamsCorrosion.isSourService()` |
+| Per-segment corrosion+scale profile? | ✅ | `PipeSegmentIntegrity.fromPipe(...)` |
 | ISO 6976 calorific value? | ✅ | `Standard_ISO6976` |
 | Pipeline sizing? | ✅ | `PipeBeggsAndBrills` + `PipelineMechanicalDesign` |
 | Compressor power? | ✅ | `Compressor.getPower("kW")` |
@@ -558,6 +573,9 @@ transport properties (viscosity, thermal conductivity, density).
 | Sulfur deposition? | ✅ | `SulfurDepositionAnalyser` |
 | JT cooling? | ✅ | `ThrottlingValve` |
 | Depressurization? | ✅ | `ProcessSystem.runTransient()` |
+| PSV sizing (gas / liquid, fire case)? | ✅ | `ReliefValveSizing` (`neqsim.process.util.fire`) |
+| Two-phase PSV (API 520 omega / HEM)? | ✅ | `ReliefValveSizing.calculateTwoPhaseReliefArea(...)` (Leung omega method) |
+| Tank venting (API 2000)? | ❌ | Not available — genuine gap; write a NIP |
 | Monte Carlo? | ✅ | `MonteCarloSimulator` |
 | Heat integration? | ✅ | `PinchAnalyzer` |
 | Amine sweetening? | ⚠️ Basic | Kent-Eisenberg model |
@@ -569,7 +587,7 @@ transport properties (viscosity, thermal conductivity, density).
 | Biogas-to-grid module? | ✅ | `BiogasToGridModule` |
 | Waste-to-energy CHP? | ✅ | `WasteToEnergyCHPModule` |
 | Rate-based column? | ❌ | Not available |
-| Scale prediction? | ❌ | Not available |
+| Scale prediction? | ✅ | `ElectrolyteScaleCalculator` (SI), `ScaleKinetics` (rate), `BrineMixingScaleEvaluator` (mixing), `system.checkScalePotential(phase)` |
 | Detailed HX design? | ❌ | Use duty + LMTD |
 | Full reservoir sim? | ❌ | `SimpleReservoir` only |
 | CO2 injection well analysis? | ✅ | `CO2InjectionWellAnalyzer` |
@@ -585,3 +603,48 @@ transport properties (viscosity, thermal conductivity, density).
 | VFD selection? | ✅ | `VariableFrequencyDrive` |
 | Cable sizing? | ✅ | `ElectricalCable` |
 | Hazardous area classification? | ✅ | `HazardousAreaClassification` |
+
+---
+
+## L. Gap-Detection Protocol (for the Capability Scout — run in Step 1)
+
+Use this map together with `CHANGELOG_AGENT_NOTES.md` **before** a task reaches
+Step 2 (notebook analysis), so missing capability is discovered while the plan
+is still cheap to change — not mid-simulation.
+
+### Classify every required capability
+
+For each capability the task needs, classify against sections A–K and the
+Known-Gaps table (section J):
+
+| Verdict | Meaning | Action in Step 1 |
+|---------|---------|------------------|
+| ✅ **Available** | Class/method exists (found in this map or the source) | Cite the class; proceed |
+| ⚠️ **Partial** | Exists but limited (see section J / EOS limitations) | Note the limitation; plan a workaround |
+| 🔧 **Workaround** | Achievable by composing existing API | Document the recipe |
+| ❌ **Missing** | Not in NeqSim (confirmed by source search) | Write a NIP in `neqsim_improvements.md`; decide extend-vs-defer NOW |
+
+### Emit a machine-readable readiness verdict (MANDATORY)
+
+The Capability Scout MUST close `capability_assessment.md` with a single verdict
+line so downstream agents (and the `@review` gate) can act on it:
+
+```
+capability_readiness: READY | READY_WITH_WORKAROUNDS | NEEDS_NIP | BLOCKED
+```
+
+- **READY** — every Critical capability is ✅ Available.
+- **READY_WITH_WORKAROUNDS** — Critical capabilities are ✅/🔧; workarounds documented.
+- **NEEDS_NIP** — a Critical/Important capability is ❌ Missing; NIP written, extend planned.
+- **BLOCKED** — a Critical capability is ❌ Missing with no viable workaround or NIP path.
+
+### Verify before flagging (avoid false gaps)
+
+**Always confirm a suspected gap with a source search** (`grep_search` /
+`file_search`) before writing a NIP. This map is corrected as capabilities land —
+e.g. two-phase PSV sizing (`ReliefValveSizing.calculateTwoPhaseReliefArea`,
+API 520 omega method) is **already present** and must not be re-flagged as
+missing. Confirmed live gaps (e.g. **API 2000 tank venting**) are recorded in
+section J; add newly confirmed gaps there so the next scout does not repeat the
+search.
+

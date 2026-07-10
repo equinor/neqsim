@@ -65,7 +65,8 @@ public final class TaskResultValidator implements Serializable {
       "conclusions");
 
   private static final List<String> RECOMMENDED_KEYS = Arrays.asList("figure_captions", "figure_discussion",
-      "equations", "tables", "references", "uncertainty", "risk_evaluation", "standards_applied");
+      "equations", "tables", "references", "uncertainty", "risk_evaluation", "standards_applied",
+      "benchmark_validation");
 
   private TaskResultValidator() {
     // Utility class
@@ -172,6 +173,11 @@ public final class TaskResultValidator implements Serializable {
       validateStandardsApplied(root.get("standards_applied"), report);
     }
 
+    // Validate benchmark_validation if present
+    if (root.has("benchmark_validation")) {
+      validateBenchmarkValidation(root.get("benchmark_validation"), report);
+    }
+
     return report;
   }
 
@@ -233,6 +239,104 @@ public final class TaskResultValidator implements Serializable {
       if (nSim < 100) {
         report.addWarning("uncertainty.n_simulations",
             "n_simulations=" + nSim + " is low — recommend at least 200 for NeqSim simulations");
+      }
+    }
+    // Percentiles must be numeric and monotonically ordered p10 <= p50 <= p90.
+    Double p10 = numericOrNull(unc, "p10", report);
+    Double p50 = numericOrNull(unc, "p50", report);
+    Double p90 = numericOrNull(unc, "p90", report);
+    if (p10 != null && p50 != null && p10 > p50) {
+      report.addError("uncertainty.p10", "p10 (" + p10 + ") must be <= p50 (" + p50 + ")");
+    }
+    if (p50 != null && p90 != null && p50 > p90) {
+      report.addError("uncertainty.p50", "p50 (" + p50 + ") must be <= p90 (" + p90 + ")");
+    }
+  }
+
+  /**
+   * Read a numeric field from an object, emitting an error if present but non-numeric.
+   *
+   * @param obj the JSON object to read from
+   * @param key the field name
+   * @param report validation report to append to
+   * @return the numeric value, or null if the field is missing or not a number
+   */
+  private static Double numericOrNull(JsonObject obj, String key, ValidationReport report) {
+    if (!obj.has(key)) {
+      return null;
+    }
+    JsonElement el = obj.get(key);
+    if (el.isJsonPrimitive() && el.getAsJsonPrimitive().isNumber()) {
+      return el.getAsDouble();
+    }
+    report.addError("uncertainty." + key, "'" + key + "' must be a number");
+    return null;
+  }
+
+  /**
+   * Validate the benchmark_validation section.
+   *
+   * <p>
+   * Accepts either a JSON object (single benchmark or summary with a nested {@code benchmarks}/{@code cases} array) or
+   * a JSON array of benchmark entries. Each entry should identify what was compared, the reference source, and a
+   * deviation or PASS/FAIL status so the report generator can render a benchmark table.
+   * </p>
+   *
+   * @param benchElem the benchmark_validation element
+   * @param report validation report to append to
+   */
+  private static void validateBenchmarkValidation(JsonElement benchElem, ValidationReport report) {
+    JsonArray entries;
+    if (benchElem.isJsonArray()) {
+      entries = benchElem.getAsJsonArray();
+    } else if (benchElem.isJsonObject()) {
+      JsonObject obj = benchElem.getAsJsonObject();
+      if (obj.has("benchmarks") && obj.get("benchmarks").isJsonArray()) {
+        entries = obj.get("benchmarks").getAsJsonArray();
+      } else if (obj.has("cases") && obj.get("cases").isJsonArray()) {
+        entries = obj.get("cases").getAsJsonArray();
+      } else {
+        // Treat the object itself as a single benchmark entry.
+        entries = new JsonArray();
+        entries.add(obj);
+      }
+    } else {
+      report.addError("benchmark_validation", "benchmark_validation must be a JSON object or array");
+      return;
+    }
+    if (entries.size() == 0) {
+      report.addWarning("benchmark_validation", "benchmark_validation has no benchmark entries");
+      return;
+    }
+    for (int i = 0; i < entries.size(); i++) {
+      if (!entries.get(i).isJsonObject()) {
+        report.addWarning("benchmark_validation[" + i + "]", "benchmark entry should be a JSON object");
+        continue;
+      }
+      JsonObject item = entries.get(i).getAsJsonObject();
+      boolean hasWhat = item.has("what") || item.has("name") || item.has("output") || item.has("parameter");
+      boolean hasReference = item.has("reference") || item.has("benchmark") || item.has("source")
+          || item.has("reference_value");
+      boolean hasComparison = item.has("delta_pct") || item.has("deviation_pct") || item.has("deviation")
+          || item.has("status") || item.has("pass") || item.has("neqsim_value");
+      if (!hasWhat) {
+        report.addWarning("benchmark_validation[" + i + "]",
+            "benchmark entry should identify what was compared (what/name/output/parameter)");
+      }
+      if (!hasReference) {
+        report.addWarning("benchmark_validation[" + i + "]",
+            "benchmark entry should cite a reference (reference/source/benchmark/reference_value)");
+      }
+      if (!hasComparison) {
+        report.addWarning("benchmark_validation[" + i + "]",
+            "benchmark entry should report a comparison (delta_pct/deviation_pct/status/neqsim_value)");
+      }
+      if (item.has("status") && item.get("status").isJsonPrimitive()) {
+        String status = item.get("status").getAsString().toUpperCase();
+        if (!"PASS".equals(status) && !"FAIL".equals(status) && !"INFO".equals(status) && !"WARN".equals(status)) {
+          report.addWarning("benchmark_validation[" + i + "].status",
+              "Unexpected status '" + status + "' — expected PASS, FAIL, WARN, or INFO");
+        }
       }
     }
   }

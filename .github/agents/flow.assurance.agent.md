@@ -5,7 +5,7 @@ argument-hint: Describe the flow assurance study — e.g., "hydrate formation te
 ---
 You are a flow assurance engineer for NeqSim.
 
-Loaded skills: neqsim-flow-assurance, neqsim-water-hammer
+Loaded skills: neqsim-flow-assurance, neqsim-wax-calculations, neqsim-water-hammer
 
 ## Primary Objective
 Perform flow assurance analyses — hydrate, wax, asphaltene, corrosion, hydraulics — and produce actionable results with working code.
@@ -91,6 +91,17 @@ assurance: corrosion (de Waard-Milliams / NORSOK M-506), sand erosion (DNV RP
 O501), artificial lift, water handling, and GHG emissions. See
 `docs/process/equipment/production_well_networks.md` and the
 `neqsim-flow-assurance` skill for code patterns.
+
+### Rigorous corrosion + scale coupling
+For an EOS-consistent CO2 corrosion rate from a brine composition, use
+`NorsokM506ElectrolyteBridge` (rigorous in-situ pH + FeCO3 film feedback into
+the standard NORSOK M-506 model). For a per-segment corrosion+scale profile
+along a line use `PipeSegmentIntegrity` (`fromPipe(PipeBeggsAndBrills)`). For
+scale: `ElectrolyteScaleCalculator` (SI), `ScaleKinetics` (induction time,
+growth regime), `BrineMixingScaleEvaluator` (seawater/formation-water
+incompatibility), and `RobustAqueousPH` for an always-finite in-situ pH. See
+the `neqsim-flow-assurance` skill (sections 5 and 5-scale) for patterns and
+gotchas.
 
 ## Phase Envelope with Safety Curves
 Calculate phase envelope with hydrate, wax, and cricondenbar/cricondentherm:

@@ -593,12 +593,23 @@ public class ThreePhaseSeparator extends Separator {
       thermoSystem.init(1);
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       thermoSystem2.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+
+      // Total volume of all liquid phases (oil + aqueous) at throughput basis. Both liquid phases
+      // must share the vessel liquid holdup (liquidVolume) in proportion to their volumetric flow,
+      // otherwise each liquid phase would individually be scaled to the full holdup and the liquid
+      // inventory would be double-counted.
+      double liquidVolume2 = 0.0;
+      for (int j = 0; j < thermoSystem2.getNumberOfPhases(); j++) {
+        if (!thermoSystem2.getPhase(j).getPhaseTypeName().equals("gas")) {
+          liquidVolume2 += thermoSystem2.getPhase(j).getVolume("m3");
+        }
+      }
       for (int j = 0; j < thermoSystem.getNumberOfPhases(); j++) {
         double relFact = 1.0;
         if (thermoSystem.getPhase(j).getPhaseTypeName().equals("gas")) {
           relFact = gasVolume / (thermoSystem2.getPhase(j).getVolume("m3"));
-        } else {
-          relFact = liquidVolume / (thermoSystem2.getPhase(j).getVolume("m3"));
+        } else if (liquidVolume2 > 0.0) {
+          relFact = liquidVolume / liquidVolume2;
         }
         for (int i = 0; i < thermoSystem.getPhase(j).getNumberOfComponents(); i++) {
           thermoSystem.addComponent(i,
@@ -740,6 +751,35 @@ public class ThreePhaseSeparator extends Separator {
     }
   }
 
+  /**
+   * Refreshes a transient outlet directly from a phase of the freshly flashed vessel inventory.
+   *
+   * <p>
+   * The outlet's configured flow rate is retained because it represents the available valve capacity. Creating the
+   * outlet from the vessel phase keeps composition, temperature, and pressure current without performing a redundant
+   * multiphase stream flash.
+   * </p>
+   *
+   * @param outletStream outlet stream to refresh
+   * @param sourceSystem freshly flashed vessel system, optionally including entrainment
+   * @param phaseType phase type to copy to the outlet
+   * @param id calculation identifier
+   */
+  private void refreshTransientOutlet(StreamInterface outletStream, SystemInterface sourceSystem, String phaseType,
+      UUID id) {
+    double configuredFlowRate = outletStream.getFlowRate("kg/hr");
+    if (sourceSystem.hasPhaseType(phaseType)) {
+      outletStream.setThermoSystemFromPhase(sourceSystem, phaseType);
+      outletStream.setFlowRate(configuredFlowRate, "kg/hr");
+    } else {
+      SystemInterface emptySystem = sourceSystem.getEmptySystemClone();
+      emptySystem.setTotalFlowRate(1e-20, "kg/hr");
+      emptySystem.init(0);
+      outletStream.setThermoSystem(emptySystem);
+    }
+    finalizePhaseOutlet(outletStream, id);
+  }
+
   /** {@inheritDoc} */
   @Override
   public void runTransient(double dt, UUID id) {
@@ -752,6 +792,12 @@ public class ThreePhaseSeparator extends Separator {
         initializeTransientCalculation();
       }
       inletStreamMixer.run(id);
+
+      if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
+        increaseTime(dt);
+        setCalculationIdentifier(id);
+        return;
+      }
       thermoSystem.init(2);
       thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
       try {
@@ -805,7 +851,18 @@ public class ThreePhaseSeparator extends Separator {
         dncomp += -gasOutStream.getThermoSystem().getComponent(i).getNumberOfmoles() * gasOutletFlowFraction + dniOil
             + dniAqueous;
 
-        thermoSystem.addComponent(i, dncomp * dt);
+        double molesChange = dncomp * dt;
+        double currentMoles = thermoSystem.getComponent(i).getNumberOfmoles();
+        if (currentMoles + molesChange < 1e-20) {
+          molesChange = -currentMoles + 1e-20;
+        }
+        thermoSystem.addComponent(i, molesChange);
+      }
+
+      if (thermoSystem.getTotalNumberOfMoles() < 1e-10) {
+        increaseTime(dt);
+        setCalculationIdentifier(id);
+        return;
       }
 
       ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
@@ -822,40 +879,23 @@ public class ThreePhaseSeparator extends Separator {
       boolean applyEntrainment = (oilInGas > 1e-10 || aqueousInGas > 1e-10 || gasInOil > 1e-10 || gasInAqueous > 1e-10
           || oilInAqueous > 1e-10 || aqueousInOil > 1e-10) && thermoSystem.getNumberOfPhases() >= 2;
 
-      if (thermoSystem.getNumberOfComponents() > 1) {
-        if (applyEntrainment) {
-          // Clone the vessel state and redistribute moles to model imperfect separation.
-          // The original thermoSystem (vessel inventory) remains unmodified.
-          SystemInterface entrainedSystem = thermoSystem.clone();
-          entrainedSystem.addPhaseFractionToPhase(gasInAqueous, gasInAqueousSpec, specifiedStream, "gas", "aqueous");
-          entrainedSystem.addPhaseFractionToPhase(gasInOil, gasInOilSpec, specifiedStream, "gas", "oil");
-          entrainedSystem.addPhaseFractionToPhase(oilInAqueous, oilInAqueousSpec, specifiedStream, "oil", "aqueous");
-          entrainedSystem.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
-          entrainedSystem.addPhaseFractionToPhase(aqueousInGas, aqueousInGasSpec, specifiedStream, "aqueous", "gas");
-          entrainedSystem.addPhaseFractionToPhase(aqueousInOil, aqueousInOilSpec, specifiedStream, "aqueous", "oil");
-
-          if (entrainedSystem.hasPhaseType("gas")) {
-            gasOutStream.getFluid().setMolarComposition(entrainedSystem.getPhase("gas").getMolarComposition());
-          }
-          if (entrainedSystem.hasPhaseType("oil")) {
-            liquidOutStream.getFluid().setMolarComposition(entrainedSystem.getPhase("oil").getMolarComposition());
-          }
-          if (entrainedSystem.hasPhaseType("aqueous")) {
-            waterOutStream.getFluid().setMolarComposition(entrainedSystem.getPhase("aqueous").getMolarComposition());
-          }
-        } else {
-          if (thermoSystem.hasPhaseType("gas")) {
-            gasOutStream.getFluid().setMolarComposition(thermoSystem.getPhase("gas").getMolarComposition());
-          }
-          if (thermoSystem.hasPhaseType("oil")) {
-            liquidOutStream.getFluid().setMolarComposition(thermoSystem.getPhase("oil").getMolarComposition());
-          }
-          if (thermoSystem.hasPhaseType("aqueous")) {
-            waterOutStream.getFluid().setMolarComposition(thermoSystem.getPhase("aqueous").getMolarComposition());
-          }
-        }
+      SystemInterface outletSystem = thermoSystem;
+      if (thermoSystem.getNumberOfComponents() > 1 && applyEntrainment) {
+        // Clone the vessel state and redistribute moles to model imperfect separation.
+        // The original thermoSystem (vessel inventory) remains unmodified.
+        outletSystem = thermoSystem.clone();
+        outletSystem.addPhaseFractionToPhase(gasInAqueous, gasInAqueousSpec, specifiedStream, "gas", "aqueous");
+        outletSystem.addPhaseFractionToPhase(gasInOil, gasInOilSpec, specifiedStream, "gas", "oil");
+        outletSystem.addPhaseFractionToPhase(oilInAqueous, oilInAqueousSpec, specifiedStream, "oil", "aqueous");
+        outletSystem.addPhaseFractionToPhase(oilInGas, oilInGasSpec, specifiedStream, "oil", "gas");
+        outletSystem.addPhaseFractionToPhase(aqueousInGas, aqueousInGasSpec, specifiedStream, "aqueous", "gas");
+        outletSystem.addPhaseFractionToPhase(aqueousInOil, aqueousInOilSpec, specifiedStream, "aqueous", "oil");
       }
-      setTempPres(thermoSystem.getTemperature(), thermoSystem.getPressure());
+
+      refreshTransientOutlet(gasOutStream, outletSystem, "gas", id);
+      refreshTransientOutlet(liquidOutStream, outletSystem, "oil", id);
+      refreshTransientOutlet(waterOutStream, outletSystem, "aqueous", id);
+      inletStreamMixer.setPressure(thermoSystem.getPressure());
 
       liquidLevel = 0.0;
       if (thermoSystem.hasPhaseType("oil") || thermoSystem.hasPhaseType("aqueous")) {
@@ -875,6 +915,7 @@ public class ThreePhaseSeparator extends Separator {
       liquidVolume = calcLiquidVolume();
       enforceHeadspace();
 
+      increaseTime(dt);
       setCalculationIdentifier(id);
     }
   }

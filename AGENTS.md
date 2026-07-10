@@ -111,6 +111,17 @@ self-contained and portable.
      python devtools/skill_search.py "<your task title>" --top 5
      ```
      Load the top-3 skills before starting analysis.
+   - **Discover the best agents** across all repos (neqsim + community +
+     enterprise) and plan the workflow — do not rely only on `router.agent.md`:
+     ```bash
+     python devtools/agent_search.py "<your task title>" --top 8 \
+         --json --out step1_scope_and_research/agent_plan.json
+     ```
+     Record the chosen agents in `capability_assessment.md` §4b and the
+     composition (single agent / router pattern / declarative `composeWorkflow`
+     or `engineering-harness` study) in §4c. Prefer delegating to a specialist
+     agent over re-loading its skills so its governance/workflow is reused, and
+     copy the plan into `results.json` `agent_workflow_plan` for the report.
    - **Pull literature and internal docs** via `@literature.scout`. PDFs land in `step1_scope_and_research/references/`; manifest in `references/manifest.json`; summaries appended to `notes.md`.
    - Write **substantive** research notes to `step1_scope_and_research/notes.md` (no empty template sections)
    - Place literature papers, standards PDFs, and lab reports in `step1_scope_and_research/references/`
@@ -292,6 +303,15 @@ results = {
     "validation": {"mass_balance_error_pct": 0.01, "acceptance_criteria_met": True},
     "approach": "Used SRK EOS with classic mixing rule...",
     "conclusions": "The analysis shows...",
+    "agent_workflow_plan": {
+        # How the task was solved — record the discovered/used agents & workflow
+        # (from devtools/skill_search.py + devtools/agent_search.py). Feeds the report.
+        # "agents_used": [{"name": "process.model", "repo": "neqsim", "role": "build flowsheet",
+        #                  "loads_skills": ["neqsim-process-modeling"]}],
+        # "workflow_type": "composition_pattern",
+        # "workflow": "process.model -> mechanical.design",
+        # "rationale": "..."
+    },
     "figure_captions": {
         # "plot.png": "Description of the figure"
     },
@@ -1140,7 +1160,7 @@ Skills are reusable knowledge packages loaded automatically by agents:
 | `neqsim-dynamic-simulation`                        | Dynamic simulation — runTransient, PID controllers, transmitters, tuning, depressurization                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `neqsim-distillation-design`                       | Distillation column design — solver selection, feed tray rules, convergence, internals sizing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | `neqsim-electrolyte-systems`                       | Electrolyte/brine chemistry — SystemElectrolyteCPAstatoil, ions, scale risk, MEG injection                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| `neqsim-flow-assurance`                            | Flow assurance — hydrate, wax, asphaltene, corrosion, pipeline hydraulics, inhibitor dosing                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `neqsim-flow-assurance`                            | Flow assurance — hydrate, wax, asphaltene, CO2/H2S corrosion (NORSOK M-506 + electrolyte pH + FeCO3 film, de Waard-Milliams), mineral scale (SI, kinetics, brine mixing), per-segment corrosion+scale profiles, pipeline hydraulics, inhibitor dosing                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | `neqsim-water-hammer`                              | Water/liquid hammer screening — `WaterHammerPipe`, `WaterHammerStudy`, MCP `runWaterHammer`, STID route geometry, tagreader event windows, valve closure, pump trip, pressure envelopes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | `neqsim-ccs-hydrogen`                              | CCS and hydrogen — CO2 phase behavior with impurities, dense phase transport, injection wells, H2 blending                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `neqsim-power-generation`                          | Power generation — gas turbines, steam turbines, HRSG, combined cycle, heat integration                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |

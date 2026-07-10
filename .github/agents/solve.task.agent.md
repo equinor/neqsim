@@ -216,25 +216,36 @@ Before starting, determine and state:
 
 ### Continuous Improvement Rule (always-on default)
 
-Improving the agents and skills you use — and their cooperation — is part of
-solving the task, not an optional extra. This is default behaviour: never ask
-permission, and do it in the same session. As you work, whenever you:
+Improving the agents and skills you use — their cooperation — **and the NeqSim
+codebase** is part of solving the task, not an optional extra. This is default
+behaviour: never ask permission, and do it in the same session. As you work,
+whenever you:
 
 - rediscover something that should already have been documented (naming
   conventions, API signatures, data-source patterns, gotchas),
 - spend more than one trial-and-error loop on something a skill could have told
   you,
 - find an agent hand-off or skill dependency that is missing, unclear, or wrong,
-- or combine skills/agents in a useful new way,
+- combine skills/agents in a useful new way,
+- or find that NeqSim is missing a class, method, correlation, or standard the
+  task needs (or an existing one is wrong/awkward),
 
-then implement the improvement: fix or extend the relevant `SKILL.md` /
-`*.agent.md`, add the missing pattern or gotcha, and — importantly — improve the
-**cooperation** between them (add cross-references both directions, update
-"Loaded skills" lists and router/composition guidance, keep hand-off shapes
-consistent across the chain). Keep site-specific detail in the enterprise repos
-and community content plant-agnostic, follow each repo's front-matter/validation
-conventions, and note the improvements made in the task summary. Do not
-over-engineer — only concrete changes motivated by the task.
+then implement the improvement:
+
+- **Agents/skills:** fix or extend the relevant `SKILL.md` / `*.agent.md`, add
+  the missing pattern or gotcha, and — importantly — improve the **cooperation**
+  between them (add cross-references both directions, update "Loaded skills"
+  lists and router/composition guidance, keep hand-off shapes consistent across
+  the chain). Keep site-specific detail in the enterprise repos and community
+  content plant-agnostic, and follow each repo's front-matter/validation
+  conventions.
+- **NeqSim code:** implement the missing/fixed Java class or method with full
+  JavaDoc and JUnit tests (Java 8, Spotless, Log4j2 per repo rules), record a
+  NIP in `neqsim_improvements.md`, and — when feasible — prepare it for a PR back
+  to NeqSim so the next task has a better API.
+
+Note the improvements made (agents, skills, and NeqSim code) in the task summary.
+Do not over-engineer — only concrete changes motivated by the task.
 
 ### Stop Conditions
 
@@ -244,6 +255,8 @@ Stop when all are true:
 - Validation is proportionate and documented
 - Major assumptions are visible
 - The agents/skills used have been improved where the task revealed a gap
+- NeqSim code has been improved (or a NIP recorded) where the task revealed a
+  missing or awkward capability
 - Additional work would mostly add documentation rather than decision value
 
 ### Failure Handling
@@ -335,18 +348,91 @@ checks before writing Step 1 content:
 1. **Route check.** If the task spans multiple disciplines (e.g. process +
    economics + safety), invoke `@router` first to confirm which specialist
    agents to compose. For single-discipline tasks, skip.
-2. **Skill discovery.** Run
-   `python devtools/skill_search.py "<task title>" --top 5` and load the
-   top-3 SKILL.md files with `read_file`.
-3. **Repo memory scan.** List `/memories/repo/*.md` via the `memory` tool.
+2. **Agent & skill review (ALWAYS — thorough).** Before writing any analysis,
+   do a deliberate review of the available **agents and skills** to find what
+   can help solve this task instead of solving from scratch:
+   - Run `python devtools/skill_search.py "<task title>" --top 5` and load the
+     top-3 SKILL.md files with `read_file`.
+   - Scan the agent list (community + enterprise, e.g. `.github/agents/`,
+     `neqsim-community-agents/`, `neqsim-enterprise-agents/`) for discipline
+     specialists whose description matches the engineering question.
+   - Record the shortlist in `step1_scope_and_research/notes.md`: which
+     agents/skills you will use and why, and note explicitly where **no**
+     suitable agent/skill exists (that gap is a candidate improvement in the
+     Continuous Improvement Rule).
+3. **NeqSim codebase review (ALWAYS).** Before writing custom code, review the
+   NeqSim codebase to find existing functionality that solves the task:
+   - Consult `neqsim-capability-map` and `CHANGELOG_AGENT_NOTES.md`, then use
+     `semantic_search` / `grep_search` / `file_search` over
+     `src/main/java/neqsim/` for the relevant classes (equipment, EOS,
+     standards, mechanical design).
+   - Prefer an existing NeqSim class over a simplified Python correlation.
+   - Record in `notes.md` which NeqSim classes/methods will be used, and note
+     any missing capability as a gap to be closed (NIP + Java implementation
+     per Section 0 principle 2 and the Continuous Improvement Rule).
+3b. **Data-acquisition screening (ALWAYS — before assuming stand-in data).**
+   List the input data the task needs (equipment curves, geometry, fluid
+   composition, operating point, etc.) and, for **each** input, screen for a
+   retrieval tool/agent that can obtain the *real* value before falling back to
+   a representative assumption. Do NOT proceed with stand-in data for an input
+   that an available data-source agent could supply. Map each need to its
+   source using this table (community names shown; use the `enterprise-` twin
+   when on an enterprise task):
+
+   | Data need | Retrieve with | Notes |
+   |-----------|---------------|-------|
+   | Compressor/pump curves, vendor performance maps, datasheets, P&IDs, mechanical drawings, line lists, material certs | `@stid.reader` / `stid-reader-agent` + `neqsim-stid-retriever` (STID doc download → PDF/OCR → `neqsim-technical-document-reading`) | Vendor "map"/curve docs live in STID; download then extract the map digitally |
+   | Piping class, pipe internal diameter, wall thickness, valve (VDS/MDS) data, flange rating | `@tr2000` / `tr2000-agent` + `enterprise-tr2000-api` | Resolve line tag → PCS → internal Ø |
+   | Live instrument data / operating point (P, T, flow, speed, valve %, current recycle) | `@plant.data` / `plant-data-agent` + `neqsim-plant-data` (tagreader PI/IP.21) or `@seeq.connect` / `enterprise-seeq-connect` | Resolve historian tag from STID tag; prefer `/PRIM` channel; check units |
+   | Measured production volumes (well/field) | `rigga-production-agent` + `enterprise-rigga-production` | Measured production as feed / validation basis |
+   | Equipment / maintenance / failure history | `@maintenance` / `maintenance-agent` + `enterprise-maintenance-api` | Read-only work orders, notifications |
+   | Fluid composition / gas-sample molweight | STID/lab report via `@stid.reader`; else record as an explicit gap | A wrong MW mis-places compressor maps — always try to obtain it |
+   | Public literature / standards | `@literature.scout` | See step 6 |
+
+   Record in `notes.md`, for every required input: the source agent/skill you
+   will use, or an explicit statement that the value is a documented **stand-in
+   assumption** because no retrieval path is available (and why). "The data is a
+   field unknown" is only acceptable **after** the relevant retrieval agent has
+   been screened (and, where feasible, attempted). For governed enterprise
+   sources (STID, TR2000, tagreader, Seeq, Rigga, Maintenance, PEPR), prefer the
+   corresponding coordinator agent so authentication and read-only governance
+   are handled correctly.
+4. **Repo memory scan.** List `/memories/repo/*.md` via the `memory` tool.
    Read any whose filename contains a keyword from the task title — this
    surfaces prior solved tasks and known gotchas before you reinvent them.
-4. **Capability assessment.** For Standard/Comprehensive tasks, invoke
-  `@capability.scout` and write the result to
-  `step1_scope_and_research/capability_assessment.md`. For Quick tasks,
-  write a short manual capability note in `notes.md` unless a capability gap
-  is suspected.
-5. **Literature scout** (Standard/Comprehensive only). Invoke
+5. **Capability assessment + agent/workflow discovery.** For
+  Standard/Comprehensive tasks, invoke `@capability.scout` and write the result
+  to `step1_scope_and_research/capability_assessment.md`. As part of this step
+  you MUST run BOTH discovery tools and record their output — never rely only on
+  the static routing table in `router.agent.md`:
+
+   ```bash
+   python devtools/skill_search.py "<task title>" --top 5
+   python devtools/agent_search.py "<task title>" --top 8 \
+       --json --out step1_scope_and_research/agent_plan.json
+   ```
+
+   Then, in `capability_assessment.md`:
+   - fill **§4 Skills to Load** from `skill_search.py`,
+   - fill **§4b Agents to Delegate To** from `agent_search.py` (agent, repo, the
+     skills it loads, and why it was picked),
+   - fill **§4c Workflow Plan** — choose single-agent, a `router.agent.md`
+     composition pattern, or a declarative workflow (MCP `composeWorkflow` /
+     `composeMultiServerWorkflow`, or an `engineering-harness` study) when the
+     task spans ≥3 disciplines. Prefer delegating to a specialist agent over
+     re-loading its skills manually, so its governance and internal workflow are
+     reused (this is how "all functionality gets utilized").
+
+   Persist the plan so it survives context loss and feeds the report:
+   - keep `step1_scope_and_research/agent_plan.json` (raw ranking, audit trail),
+   - checkpoint it via `progress.store_context("agent_workflow_plan", {...})`,
+   - add an `agent_workflow_plan` object to `results.json` (see schema) and
+     mention the agents/workflow used in the `approach` / `method_summary` text
+     so the generated report documents *how* the task was solved.
+
+   For Quick tasks, write a short manual capability + agent note in `notes.md`
+   unless a capability gap is suspected.
+6. **Literature scout** (Standard/Comprehensive only). Invoke
    `@literature.scout` to populate `step1_scope_and_research/references/`
    and the `## Literature & Reference Documents` section of `notes.md`.
 

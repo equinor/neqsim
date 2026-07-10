@@ -124,6 +124,18 @@ public class NorsokM506CorrosionRate implements Serializable {
   /** Glycol (MEG/DEG) weight fraction in aqueous phase (0 to 1). */
   private double glycolWeightFraction = 0.0;
 
+  /**
+   * FeCO3 supersaturation ratio SR = IAP / Ksp of the aqueous phase (unset = -1).
+   *
+   * <p>
+   * When supplied and greater than 1, the aqueous phase is supersaturated in FeCO3 and a protective siderite film can
+   * form even below the NORSOK scaling temperature. This closes the corrosion-scaling feedback loop: iron released by
+   * corrosion raises the FeCO3 saturation, which in turn suppresses further corrosion. When unset (-1) the model uses
+   * the temperature-only scale correction and behaviour is identical to the standard NORSOK M-506 model.
+   * </p>
+   */
+  private double feCO3SaturationRatio = -1.0;
+
   /** Whether to apply pH correction factor. */
   private boolean usePHCorrection = true;
 
@@ -324,6 +336,31 @@ public class NorsokM506CorrosionRate implements Serializable {
   public void setInhibitorEfficiency(double efficiency) {
     this.inhibitorEfficiency = Math.max(0.0, Math.min(1.0, efficiency));
     this.hasBeenCalculated = false;
+  }
+
+  /**
+   * Sets the FeCO3 supersaturation ratio of the aqueous phase.
+   *
+   * <p>
+   * The ratio {@code SR = IAP / Ksp} quantifies how supersaturated the aqueous phase is in siderite (FeCO3). Values
+   * above 1 indicate a protective film can form and suppress corrosion (see {@link #calculateFeCO3FilmFactor()}). Set
+   * to -1 (the default) to disable the FeCO3 film feedback and use the temperature-only scale correction.
+   * </p>
+   *
+   * @param saturationRatio FeCO3 supersaturation ratio (IAP/Ksp), or -1 to disable
+   */
+  public void setFeCO3SaturationRatio(double saturationRatio) {
+    this.feCO3SaturationRatio = saturationRatio;
+    this.hasBeenCalculated = false;
+  }
+
+  /**
+   * Gets the FeCO3 supersaturation ratio used for the protective-film feedback.
+   *
+   * @return FeCO3 supersaturation ratio (IAP/Ksp), or -1 if disabled
+   */
+  public double getFeCO3SaturationRatio() {
+    return feCO3SaturationRatio;
   }
 
   /**
@@ -651,19 +688,54 @@ public class NorsokM506CorrosionRate implements Serializable {
   public double calculateScaleCorrectionFactor() {
     double tScale = (scalingTemperatureC > 0) ? scalingTemperatureC : calculateScalingTemperature();
 
+    double temperatureFactor;
     if (temperatureC < tScale) {
-      return 1.0; // no protective scale
+      temperatureFactor = 1.0; // no protective scale from temperature alone
+    } else {
+      // Above scaling temperature: protective FeCO3 reduces rate
+      // The reduction increases with temperature above Tscale
+      double excessTemp = temperatureC - tScale;
+      double tScaleK = tScale + 273.15;
+      // Exponential reduction per NORSOK M-506 approach
+      double scaleFactor = Math.exp(-0.04 * excessTemp * excessTemp / (tScaleK * 0.1));
+      temperatureFactor = Math.max(0.01, Math.min(scaleFactor, 1.0));
     }
 
-    // Above scaling temperature: protective FeCO3 reduces rate
-    // The reduction increases with temperature above Tscale
-    double excessTemp = temperatureC - tScale;
-    double tScaleK = tScale + 273.15;
+    // FeCO3 supersaturation feedback: a supersaturated aqueous phase (SR > 1) forms a protective
+    // siderite film independent of the scaling temperature. The film factor decreases with the log
+    // of the supersaturation ratio. Unset (-1) or SR <= 1 leaves the temperature-only behaviour.
+    double filmFactor = calculateFeCO3FilmFactor();
 
-    // Exponential reduction per NORSOK M-506 approach
-    double scaleFactor = Math.exp(-0.04 * excessTemp * excessTemp / (tScaleK * 0.1));
+    // The more protective (smaller) of the two mechanisms governs.
+    return Math.max(0.01, Math.min(temperatureFactor, filmFactor));
+  }
 
-    return Math.max(0.01, Math.min(scaleFactor, 1.0));
+  /**
+   * Calculates the protective-film factor from the FeCO3 supersaturation ratio.
+   *
+   * <p>
+   * When the FeCO3 supersaturation ratio {@code SR = IAP / Ksp} exceeds unity, a protective siderite film forms and
+   * suppresses corrosion. The suppression grows with the logarithm of the supersaturation:
+   * </p>
+   *
+   * <pre>
+   * {@code
+   * Ffilm = 1 / (1 + k * log10(SR))   for SR > 1, with k = 2.0
+   * }
+   * </pre>
+   *
+   * <p>
+   * When the ratio is unset (-1) or at or below saturation (SR &lt;= 1) the factor is 1.0 (no film credit).
+   * </p>
+   *
+   * @return FeCO3 film factor (0.01 to 1.0)
+   */
+  public double calculateFeCO3FilmFactor() {
+    if (feCO3SaturationRatio <= 1.0) {
+      return 1.0;
+    }
+    double filmFactor = 1.0 / (1.0 + 2.0 * Math.log10(feCO3SaturationRatio));
+    return Math.max(0.01, Math.min(filmFactor, 1.0));
   }
 
   /**

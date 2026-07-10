@@ -10,6 +10,10 @@ on:
       - ".github/agents/**"
       - "devtools/verify_skills_agents.py"
       - "devtools/generate_agent_skill_map.py"
+      - "devtools/agent_search.py"
+      - "devtools/skill_search.py"
+      - "devtools/test_agent_search.py"
+      - "devtools/test_skill_search.py"
       - ".github/workflows/skills_agents_lint.yml"
   push:
     branches: [master]
@@ -30,6 +34,11 @@ jobs:
 
       - name: Verify front-matter and skill-index references
         run: python devtools/verify_skills_agents.py
+
+      - name: Test agent/skill discovery tools
+        run: |
+          python -m pip install --quiet pytest
+          python -m pytest devtools/test_agent_search.py devtools/test_skill_search.py -q
 
       - name: Regenerate agent → skill map
         run: python devtools/generate_agent_skill_map.py

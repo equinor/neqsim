@@ -56,6 +56,10 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   // Internal state of integration contribution
   private double TintValue = 0.0;
   private double derivativeState = 0.0;
+  // Previous measurement and setpoint, used by the engineering-unit 2-DOF velocity form so a
+  // setpoint step produces only the weighted (b) proportional kick. NaN until the first step.
+  private double oldMeasurement = Double.NaN;
+  private double oldControllerSetPoint = Double.NaN;
   private double derivativeFilterTime = 0.0;
   private double minResponse = Double.NEGATIVE_INFINITY;
   private double maxResponse = Double.POSITIVE_INFINITY;
@@ -70,6 +74,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   private double lastTimeOutsideBand = 0.0;
   private double settlingTolerance = 0.02;
   private double setpointWeight = 1.0;
+  private double deadBand = 0.0;
   private neqsim.process.equipment.iec81346.ReferenceDesignation referenceDesignation = new neqsim.process.equipment.iec81346.ReferenceDesignation();
 
   /**
@@ -146,6 +151,9 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       oldoldError = oldError;
       oldError = error;
       error = measurement - controllerSetPoint;
+      // Track measurement/setpoint in MANUAL so the return to AUTO is bumpless in the velocity form.
+      oldMeasurement = measurement;
+      oldControllerSetPoint = controllerSetPoint;
       eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
       calcIdentifier = id;
       return;
@@ -157,7 +165,7 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
     }
     double measurement = getMeasuredValue(unit);
     applyGainSchedule(measurement);
-    oldoldError = error;
+    oldoldError = oldError;
     oldError = error;
 
     // Perform bumpless transfer back-calculation when switching from MANUAL to AUTO
@@ -184,56 +192,74 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
       double setPointPercent = (controllerSetPoint - transmitter.getMinimumValue())
           / (transmitter.getMaximumValue() - transmitter.getMinimumValue()) * 100.0;
       error = measurementPercent - setPointPercent;
-      if (Ti != 0) {
-        TintValue = Kp / Ti * error;
+      if (deadBand > 0.0 && Math.abs(error) <= deadBand) {
+        // Within deadband: freeze controller output (hold last valve position).
+        response = initResponse;
+      } else {
+        if (Ti != 0) {
+          TintValue = Kp / Ti * error;
+        }
+        double TderivValue = Kp * Td * ((error - 2 * oldError + oldoldError) / (dt * dt));
+        response = initResponse + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
       }
-      double TderivValue = Kp * Td * ((error - 2 * oldError + oldoldError) / (dt * dt));
-      response = initResponse + propConstant * ((Kp * (error - oldError) / dt) + TintValue + TderivValue) * dt;
     } else {
       error = measurement - controllerSetPoint;
-      // 2-DOF PID: proportional error uses setpoint weight b
-      // propError = measurement - b * setpoint, integral uses full error
-      double propError = measurement - setpointWeight * controllerSetPoint;
-      double oldPropError = oldError - (1.0 - setpointWeight) * controllerSetPoint;
+      // 2-DOF velocity-form PID: the proportional term acts on the increment of
+      // (measurement - b * setpoint) while the integral acts on the full error. Storing the
+      // previous measurement and setpoint means a pure setpoint step contributes only
+      // -b * Kp * dSetpoint to the proportional kick (b = 0 removes the kick entirely).
+      if (Double.isNaN(oldMeasurement)) {
+        oldMeasurement = measurement;
+        oldControllerSetPoint = controllerSetPoint;
+      }
+      double propStep = (measurement - oldMeasurement) - setpointWeight * (controllerSetPoint - oldControllerSetPoint);
       integralAbsoluteError += Math.abs(error) * dt;
       band = settlingTolerance * Math.max(Math.abs(controllerSetPoint), 1.0);
       if (Math.abs(error) > band) {
         lastTimeOutsideBand = totalTime;
       }
-      TintIncrement = 0.0;
-      if (Ti > 0) {
-        TintIncrement = Kp / Ti * error * dt;
-        TintValue += TintIncrement;
+      if (deadBand > 0.0 && Math.abs(error) <= deadBand) {
+        // Within deadband: freeze controller output and integral (hold last valve position).
+        response = initResponse;
       } else {
-        TintValue = 0.0;
-      }
-
-      derivative = (error - oldError) / dt;
-      if (Td > 0) {
-        if (derivativeFilterTime > 0) {
-          derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
+        TintIncrement = 0.0;
+        if (Ti > 0) {
+          TintIncrement = Kp / Ti * error * dt;
+          TintValue += TintIncrement;
         } else {
-          derivativeState = derivative;
+          TintValue = 0.0;
         }
-      } else {
-        derivativeState = 0.0;
+
+        derivative = (error - oldError) / dt;
+        if (Td > 0) {
+          if (derivativeFilterTime > 0) {
+            derivativeState += dt / (derivativeFilterTime + dt) * (derivative - derivativeState);
+          } else {
+            derivativeState = derivative;
+          }
+        } else {
+          derivativeState = 0.0;
+        }
+
+        delta = Kp * propStep + TintValue + Kp * Td * derivativeState;
+
+        response = initResponse + propConstant * delta;
+
+        if (response > maxResponse) {
+          response = maxResponse;
+          if (Ti > 0) {
+            TintValue -= TintIncrement;
+          }
+        } else if (response < minResponse) {
+          response = minResponse;
+          if (Ti > 0) {
+            TintValue -= TintIncrement;
+          }
+        }
       }
-
-      delta = Kp * (propError - oldPropError) + TintValue + Kp * Td * derivativeState;
-
-      response = initResponse + propConstant * delta;
-
-      if (response > maxResponse) {
-        response = maxResponse;
-        if (Ti > 0) {
-          TintValue -= TintIncrement;
-        }
-      } else if (response < minResponse) {
-        response = minResponse;
-        if (Ti > 0) {
-          TintValue -= TintIncrement;
-        }
-      }
+      // Advance the velocity-form history for the next step (also after a frozen deadband step).
+      oldMeasurement = measurement;
+      oldControllerSetPoint = controllerSetPoint;
     }
 
     eventLog.add(new ControllerEvent(totalTime, measurement, controllerSetPoint, error, response));
@@ -687,6 +713,18 @@ public class ControllerDeviceBaseClass extends NamedBaseClass implements Control
   @Override
   public double getSetpointWeight() {
     return setpointWeight;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDeadBand(double deadBand) {
+    this.deadBand = Math.max(0.0, deadBand);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getDeadBand() {
+    return deadBand;
   }
 
   /**

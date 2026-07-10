@@ -1,7 +1,7 @@
 ---
 name: neqsim-dynamic-simulation
 description: "Dynamic simulation guidance for NeqSim. USE WHEN: running transient simulations, modeling startup/shutdown, tuning PID controllers, analyzing pressure/level dynamics, performing blowdown/depressurization, or setting up measurement devices and control loops. Covers runTransient, DynamicProcessHelper, controller tuning, and dynamic equipment configuration."
-last_verified: "2026-07-04"
+last_verified: "2026-07-10"
 ---
 
 # Dynamic Simulation Guidance
@@ -106,11 +106,13 @@ process.add(FT100);
 ### PID Controller
 
 ```java
-// Level controller on liquid valve
+// Level controller on liquid OUTLET valve — DIRECT acting (reverseActing = false):
+// level up (error > 0) -> output up -> outlet valve opens -> level falls. Setting
+// reverseActing(true) here inverts the sign and makes the loop unstable (runaway).
 ControllerDeviceInterface LC100 = new ControllerDeviceBaseClass();
 LC100.setControllerSetPoint(1.0);          // Target level = 1.0 m
 LC100.setTransmitter(LT100);              // Controlled variable
-LC100.setReverseActing(true);             // Level up -> valve opens
+LC100.setReverseActing(false);            // liquid-outlet level valve is direct acting
 LC100.setControllerParameters(0.5, 100.0, 10.0); // Kp, Ti (s), Td (s)
 
 // Attach controller to valve
@@ -135,6 +137,127 @@ gasValve.addController("PC-100", PC100);
 | Pressure (gas) | 0.5-2.0 | 20-100 | 0-5 |
 | Flow | 0.3-1.0 | 5-30 | 0 |
 | Temperature | 0.5-2.0 | 60-600 | 10-60 |
+
+### Controller Deadband (SP-PV)
+
+`ControllerDeviceBaseClass` supports a native SP-PV deadband via
+`setDeadBand(double)` / `getDeadBand()`. While the absolute control error stays
+inside the band the controller output is **frozen** (holds the last valve
+position) and the integral term does **not** accumulate; default 0 disables it.
+The deadband is in the controller error unit (percent in the default percent
+mode, else the configured engineering unit). This is the standard DCS averaging-
+level deadband used to stop valve cycling.
+
+```java
+levelController.setDeadBand(0.5);   // hold the valve while |PV - SP| <= 0.5 %
+```
+
+**Beware the deadband limit cycle.** On an integrating (level) process a
+deadband delays correction until the level reaches the band edge; the delayed
+correction then overshoots and the cycle repeats, giving a square-wave valve
+trace. Removing (or shrinking) the deadband is the usual fix. If the installed
+pip `neqsim` predates `setDeadBand`, emulate it by toggling controller mode
+each step: `setMode(ControllerMode.MANUAL)` while `|PV%-SP%| <= deadband` (holds
+output) and `setMode(ControllerMode.AUTO)` otherwise (bumpless resume) - this is
+numerically identical to the native deadband.
+
+### Dynamic level-loop recipe (get the sequence right)
+
+A dynamic separator level loop only responds if the vessel is switched out of
+steady-state mode **and** the liquid outlet valve is direct acting. The exact,
+easy-to-get-wrong sequence is:
+
+```java
+// 1. Build and solve the steady state first (sets inventory, flows, holdup).
+process.run();
+
+// 2. Switch the vessel (and its outlet valve) to dynamic mode. If this is left
+//    on, the separator recomputes steady state every step and the level is
+//    pinned at its default (0.5 fraction) no matter what the controller does.
+sep.setCalculateSteadyState(false);
+liqValve.setCalculateSteadyState(false);
+
+// 3. Set the physical geometry and the starting liquid level (as a 0..1 fraction
+//    of the vessel). Do this AFTER run() so it is not overwritten by steady state.
+sep.setInternalDiameter(2.0);   // m — drives holdup volume / level dynamics
+sep.setSeparatorLength(6.0);    // m
+sep.setLiquidLevel(0.30);       // start at 30 %
+
+// 4. Direct-acting level controller on the liquid OUTLET valve (see above).
+LevelTransmitter LT100 = new LevelTransmitter("LT-100", sep);
+LT100.setUnit("m");
+ControllerDeviceInterface LC100 = new ControllerDeviceBaseClass();
+LC100.setTransmitter(LT100);
+LC100.setControllerSetPoint(0.30 * sep.getInternalDiameter()); // SP in the LT unit
+LC100.setReverseActing(false);                 // liquid-outlet level valve = direct acting
+LC100.setControllerParameters(1.0, 300.0, 0.0); // averaging level: loose Kp, long Ti, no Td
+liqValve.addController("LC-100", LC100);
+
+// 5. Advance the transient with a fixed time step.
+java.util.UUID id = java.util.UUID.randomUUID();
+for (int i = 0; i < 600; i++) {
+  process.runTransient(1.0, id);   // dt = 1 s
+}
+```
+
+**Gotchas:**
+- **Level pinned at 0.5** — the vessel is still in steady-state mode; call
+  `setCalculateSteadyState(false)` on the separator (and its outlet valve).
+- **Level runs away** — the liquid-outlet level controller is reverse acting; it
+  must be `setReverseActing(false)` (direct acting). A gas-outlet pressure valve
+  is also direct acting (`false`); reverse acting is for cases where more output
+  reduces the measured value (e.g. a controller manipulating an inlet/feed valve).
+- **Set `setLiquidLevel` after `run()`** — a steady-state solve resets the level,
+  so set the starting level and geometry after the first `run()`.
+- For an averaging level loop, use a loose `Kp` and long `Ti` (see the tuning
+  table) and consider an SP-PV deadband only with care (see the limit-cycle note
+  above).
+
+After the run, use `ControllerPerformanceMetrics.fromEventLog(LC100.getEventLog())`
+(or `LC100.getPerformanceMetrics()`) to score the tuning (IAE/ISE/ITAE, PV
+variability, valve travel and reversals, settling time) — see the KPI section below.
+
+### Loop-tuning KPIs (ControllerPerformanceMetrics)
+
+`ControllerPerformanceMetrics`
+(`neqsim.process.controllerdevice.ControllerPerformanceMetrics`) computes the
+standard loop-tuning KPIs from a controller event log (or from raw time / PV / SP
+/ output arrays) so tuning studies report consistent numbers without
+re-implementing the definitions. It is the preferred way to compare two PID
+tunings on the same disturbance.
+
+Metrics: `getIntegralAbsoluteError()` (IAE), `getIntegralSquaredError()` (ISE),
+`getIntegralTimeAbsoluteError()` (ITAE, time referenced to the first sample),
+`getProcessValueStandardDeviation()` (PV variability), `getPeakAbsoluteError()`,
+`getControllerOutputTravel()` (total valve travel), `getControllerOutputReversals()`
+(valve direction reversals), and `getSettlingTime()` (time of the last sample
+outside the settling band, default 2 % of max(|SP|, 1)).
+
+```java
+// After a runTransient loop with a logging controller:
+ControllerPerformanceMetrics kpi = LC100.getPerformanceMetrics();          // from getEventLog()
+// or, explicitly / with a custom settling band:
+ControllerPerformanceMetrics kpi2 =
+    ControllerPerformanceMetrics.fromEventLog(LC100.getEventLog(), 0.05);   // 5 % band
+
+double iae = kpi.getIntegralAbsoluteError();
+double valveTravel = kpi.getControllerOutputTravel();
+int reversals = kpi.getControllerOutputReversals();
+double settlingTime = kpi.getSettlingTime();
+logger.info("IAE={} travel={} reversals={} settle={} s", iae, valveTravel, reversals, settlingTime);
+
+// Or build directly from arrays (e.g. PV/OP pulled from a historian):
+ControllerPerformanceMetrics kpi3 =
+    ControllerPerformanceMetrics.fromArrays(time, pv, sp, op);
+```
+
+- Integral criteria use trapezoidal integration over the sample intervals, so
+  irregular time steps are handled correctly.
+- A **lower** IAE/ISE/ITAE means tighter regulation; **lower** valve travel and
+  reversals means gentler actuator duty. Tuning trade-offs usually pit the two
+  against each other (tighter control costs more valve movement).
+- `resetEventLog()` on the controller before the disturbance so the KPIs cover
+  only the window of interest.
 
 ### Anti-Surge Control (dynamic)
 
@@ -335,6 +458,7 @@ TransferFunctionBlock leadLag = new TransferFunctionBlock();
 4. **Controller windup**: Large setpoint changes can cause integral windup
 5. **Separator dimensions**: Must set `setInternalDiameter()` and `setSeparatorLength()` for meaningful level dynamics. For dynamic simulation, set directly on the separator; for design purposes, configure via `SeparatorMechanicalDesign` (see neqsim-api-patterns skill)
 6. **Measurement range**: Set min/max on transmitters to match process range
+7. **Enable dynamic (inventory) mode for level loops**: after `process.run()` (steady), call `setCalculateSteadyState(false)` on the separator AND every valve, then `separator.setLiquidLevel(startFraction)`, before `runTransient`. If steady-state mode is left on, the separator liquid level stays pinned at its default (0.5) and the level controller never acts. The valve `Cv` is auto-derived from the steady solve. A **liquid-outlet** level valve is `setReverseActing(false)` (level up -> valve opens); put a pressure controller on the gas-outlet valve so the vessel pressure is held and the level loop is isolated.
 
 
 ## Pluggable Integrator Strategies

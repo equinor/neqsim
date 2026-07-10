@@ -39,7 +39,47 @@ RECOMMENDED_KEYS = [
     "uncertainty",
     "risk_evaluation",
     "standards_applied",
+    "benchmark_validation",
 ]
+
+
+def _validate_benchmark(bench) -> List[str]:
+    """Validate the benchmark_validation block. Returns a list of error strings.
+
+    Accepts a list of benchmark entries, or a dict that either is a single
+    benchmark entry or wraps the entries under a ``benchmarks``/``cases`` key.
+    Per-entry field checks are emitted as warnings by returning nothing here;
+    only structural (type) problems are treated as errors so a screening task
+    with a lightweight benchmark is not blocked.
+    """
+    errors: List[str] = []
+    if isinstance(bench, list):
+        entries = bench
+    elif isinstance(bench, dict):
+        if isinstance(bench.get("benchmarks"), list):
+            entries = bench["benchmarks"]
+        elif isinstance(bench.get("cases"), list):
+            entries = bench["cases"]
+        else:
+            entries = [bench]
+    else:
+        errors.append("benchmark_validation: must be a JSON object or array")
+        return errors
+    for i, item in enumerate(entries):
+        if not isinstance(item, dict):
+            errors.append(f"benchmark_validation[{i}]: entry must be an object")
+            continue
+        status = item.get("status")
+        if isinstance(status, str) and status.upper() not in (
+            "PASS",
+            "FAIL",
+            "WARN",
+            "INFO",
+        ):
+            errors.append(
+                f"benchmark_validation[{i}].status: unexpected '{status}' — expected PASS, FAIL, WARN, or INFO"
+            )
+    return errors
 
 
 def validate(results: dict) -> Tuple[List[str], List[str]]:
@@ -102,11 +142,33 @@ def validate(results: dict) -> Tuple[List[str], List[str]]:
             for need in ("p10", "p50", "p90"):
                 if need not in unc:
                     warnings.append(f"uncertainty.{need}: missing percentile")
+            # Percentiles must be numeric and ordered p10 <= p50 <= p90.
+            pcts = {}
+            for need in ("p10", "p50", "p90"):
+                val = unc.get(need)
+                if val is not None:
+                    if isinstance(val, bool) or not isinstance(val, (int, float)):
+                        errors.append(f"uncertainty.{need}: must be a number")
+                    else:
+                        pcts[need] = float(val)
+            if "p10" in pcts and "p50" in pcts and pcts["p10"] > pcts["p50"]:
+                errors.append(
+                    f"uncertainty.p10: p10 ({pcts['p10']}) must be <= p50 ({pcts['p50']})"
+                )
+            if "p50" in pcts and "p90" in pcts and pcts["p50"] > pcts["p90"]:
+                errors.append(
+                    f"uncertainty.p50: p50 ({pcts['p50']}) must be <= p90 ({pcts['p90']})"
+                )
 
     # risk_evaluation
     risk = results.get("risk_evaluation")
     if risk is not None and not isinstance(risk, dict):
         errors.append("risk_evaluation: must be a JSON object")
+
+    # benchmark_validation (independent-reference comparison)
+    bench = results.get("benchmark_validation")
+    if bench is not None:
+        errors.extend(_validate_benchmark(bench))
 
     # figure_discussion entries
     fd = results.get("figure_discussion")
@@ -153,6 +215,19 @@ def check_capability_assessment(task_folder: Path) -> List[str]:
         if all(s in stripped for s in ["| 1 |  |", "| 2 |  |"]):
             warnings.append(
                 f"{task_folder.name}: capability_assessment.md is the unfilled template — populate sections 2 and 3"
+            )
+
+    # Agent / workflow discovery must be recorded (run devtools/agent_search.py).
+    # Accept either a filled §4b agent table row or a persisted agent_plan.json.
+    if "Agents to Delegate To" in stripped:
+        agent_plan = cap.parent / "agent_plan.json"
+        empty_agent_table = "| 1 |  |  |  |  |" in stripped
+        if empty_agent_table and not agent_plan.exists():
+            warnings.append(
+                f"{task_folder.name}: capability_assessment.md §4b/§4c agent + workflow "
+                f"plan is empty — run `python devtools/agent_search.py \"<task>\" "
+                f"--json --out step1_scope_and_research/agent_plan.json` and record "
+                f"the selected agents/workflow"
             )
     return warnings
 

@@ -45,6 +45,12 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 | [REAL_TIME_INTEGRATION_GUIDE.md](REAL_TIME_INTEGRATION_GUIDE) | Real-time systems integration |
 | [QRA_INTEGRATION_GUIDE.md](QRA_INTEGRATION_GUIDE) | Quantitative Risk Assessment integration |
 
+### Data Historians and Analytics Platforms
+
+| Document | Description |
+|----------|-------------|
+| [seeq_datalab.md](seeq_datalab) | **Using NeqSim in Seeq Data Lab — JDK setup, NeqSim install, pulling signals with SPy, running calculations on plant data, and pushing results back** |
+
 ### Web API and Online Simulation
 
 | Document | Description |

@@ -2,7 +2,7 @@
 name: neqsim-professional-reporting
 version: "1.0.0"
 description: "Engineering deliverable quality — results.json schema, figure→discussion→linked_results traceability, evidence matrices, assumptions/gaps registers, citation conventions, KaTeX math formatting, units consistency, executive-summary structure, AACE class declaration. USE WHEN: producing a task report, building a notebook deliverable, or finalizing any engineering output that needs to look like it came from a senior engineer. Consolidates the rules scattered across AGENTS.md and copilot-instructions.md."
-last_verified: "2026-04-26"
+last_verified: "2026-07-09"
 ---
 
 # NeqSim Professional Reporting Skill
@@ -136,6 +136,12 @@ Standard / Comprehensive task reports MUST include:
 
 Quick tasks may skip MC but still must state qualitative uncertainty.
 
+**`uncertainty` sub-schema (validated by the gate).** `p10`, `p50`, `p90` must be
+**numeric** and **monotonically ordered** (`p10 ≤ p50 ≤ p90`); a non-numeric or
+out-of-order percentile is a hard error in both `TaskResultValidator` and
+`devtools/validate_task_results.py`. Include `method` and `n_simulations`
+(≥ 200 when the Monte Carlo loop runs full NeqSim simulations).
+
 ## Principle 8 — Risk Section
 
 Standard / Comprehensive reports include a **risk register** scored on a 5×5 matrix
@@ -155,6 +161,20 @@ Every numerical result must be benchmarked against an independent reference:
 | NPV                     | Two methods: DCF and (NPV/CAPEX) ratio                  |
 
 State the benchmark in the report. **No benchmark = result is provisional.**
+
+**`benchmark_validation` sub-schema (validated by the gate).** Emit it as a JSON
+array (or an object wrapping `benchmarks`/`cases`). Each entry must carry:
+
+| Field | Purpose |
+|-------|---------|
+| `what` / `name` / `output` / `parameter` | what was compared |
+| `reference` / `source` / `benchmark` / `reference_value` | the independent reference |
+| `delta_pct` / `deviation_pct` / `status` / `neqsim_value` | the comparison result |
+| `status` (optional) | one of `PASS`, `FAIL`, `WARN`, `INFO` (any other value is rejected) |
+
+Both `TaskResultValidator` (Java) and `devtools/validate_task_results.py` (the CI
+gate) now check this structure, so a malformed benchmark block fails the gate
+instead of crashing the report generator.
 
 ## Principle 9b — Evidence Matrix for Safety Studies
 
@@ -201,6 +221,13 @@ workflow gaps were found.
   "scale": "standard",
   "objective": "...",
   "method_summary": "...",
+  "agent_workflow_plan": {
+    "discovery": {"skill_search": "devtools/skill_search.py", "agent_search": "step1_scope_and_research/agent_plan.json"},
+    "agents_used": [ {"name": "...", "repo": "neqsim|community|enterprise", "role": "...", "loads_skills": ["..."]} ],
+    "workflow_type": "single_agent | composition_pattern | declarative_workflow",
+    "workflow": "e.g. process.model -> mechanical.design, or composeWorkflow id / harness study name",
+    "rationale": "why this composition utilizes the needed functionality"
+  },
   "key_results": {
     "primary_metric": {"value": 1.23, "unit": "MW", "uncertainty": "±10%"},
     "...": {}
