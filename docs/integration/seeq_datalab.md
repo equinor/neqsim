@@ -2,6 +2,7 @@
 title: "Using NeqSim in Seeq Data Lab"
 description: "Tutorial for running NeqSim thermodynamic and process calculations inside Seeq Data Lab: installing a JDK, installing NeqSim, pulling signals with SPy, running NeqSim calculations on plant data, and pushing results back to a Seeq Workbook."
 ---
+
 # Using NeqSim in Seeq Data Lab
 
 This tutorial shows how to run [NeqSim](https://equinor.github.io/neqsim/) inside
@@ -29,59 +30,77 @@ Python-managed download rather than a system package.
 
 ---
 
-## Step 1 — Install the Python packages
+## Step 1 — Repair the JDK (must be the FIRST cell)
 
-Run this in a notebook cell:
+Seeq Data Lab ships a JVM that is often a **broken/partial cached JDK** under
+`/home/datalab/.jdk/` (for example `jdk-23.0.2+7`). NeqSim runs on the JVM via
+`jpype`, so this must be fixed **before the first NeqSim import** or any
+`jpype.startJVM` / `from neqsim import jneqsim`.
 
-```python
-# Install NeqSim and the JDK helper
-!pip install -q install-jdk neqsim
-```
-
-Then **restart the kernel**. Restarting after a `pip install` is required in Data
-Lab so the new packages are picked up (see Seeq's *Installing Python Modules and
-Packages* guidance).
-
----
-
-## Step 2 — Install a JDK inside the project
-
-After the kernel restart, install a JDK and point `JAVA_HOME` at it. NeqSim
-needs a JVM shared library (`libjvm.so`) that `jpype` can load.
+**Copy this exact block into the first cell of your Seeq notebook** (it is a
+no-op when you run the same notebook locally, so it is safe to keep):
 
 ```python
 import os
-import shutil
-import jdk
 
-# Remove a broken/partial cached JDK if one exists (optional cleanup).
-# A "Permission denied .../classes.jsa" or JdkError usually means the cached
-# install is corrupted — deleting it and reinstalling fixes it.
-for broken in [
-    "/home/datalab/.jdk/jdk-23.0.2+7",
-]:
-    if os.path.exists(broken):
-        shutil.rmtree(broken, ignore_errors=True)
+IN_DATALAB = os.path.isdir("/home/datalab")
 
-# Install a JDK. Use "21" or "17" if "23" gives trouble in your project.
-java_path = jdk.install("21")
+if IN_DATALAB:
+    # Step 1: install the Python helper package if needed
+    %pip install -q install-jdk
 
-# Set Java environment variables for this session (before importing neqsim).
-os.environ["JAVA_HOME"] = java_path
-os.environ["PATH"] = f"{java_path}/bin:" + os.environ["PATH"]
+    # Step 2: remove the broken cached JDK install (folder name may vary)
+    import shutil
 
-# Verify the JVM shared library exists.
-libjvm = os.path.join(java_path, "lib", "server", "libjvm.so")
-print("JAVA_HOME    =", os.environ["JAVA_HOME"])
-print("libjvm path  =", libjvm)
-print("libjvm found =", os.path.exists(libjvm))
+    broken_jdk = "/home/datalab/.jdk/jdk-23.0.2+7"
+    if os.path.exists(broken_jdk):
+        shutil.rmtree(broken_jdk, ignore_errors=True)
+
+    # Step 3: install JDK again
+    import jdk
+
+    java_path = jdk.install("23")
+
+    # Step 4: set JAVA_HOME and PATH
+    os.environ["JAVA_HOME"] = java_path
+    os.environ["PATH"] = f"{java_path}/bin:" + os.environ["PATH"]
+    print("JAVA_HOME =", os.environ["JAVA_HOME"])
+
+    # Step 5: verify the JVM shared library exists
+    libjvm = os.path.join(java_path, "lib", "server", "libjvm.so")
+    print("libjvm exists:", os.path.exists(libjvm))
+    print("libjvm path:", libjvm)
+else:
+    print("Not in Seeq Data Lab — skipping JDK repair (assuming a working local JVM).")
 ```
 
-If `libjvm found` prints `True`, the JVM is ready.
+If `libjvm exists:` prints `True`, the JVM is ready.
 
-> **Set `JAVA_HOME` before the first NeqSim import.** `jpype` starts the JVM the
-> first time NeqSim is imported. If you already imported NeqSim in this kernel
-> before setting `JAVA_HOME`, restart the kernel and run Step 2 again first.
+> **This must be the first cell — before any NeqSim import.** `jpype` starts the
+> JVM the first time NeqSim is imported. If you already imported NeqSim in this
+> kernel before running the block above, restart the kernel and run this cell
+> first.
+
+Notes:
+
+- The broken-folder name can vary between projects — recheck the printed
+  `java_path` if the JDK 23 folder name differs from `jdk-23.0.2+7`.
+- Use `jdk.install("21")` or `jdk.install("17")` only if `"23"` gives trouble in
+  your project; keep the rest of the block unchanged.
+- On Linux (Data Lab) the JVM library is at `lib/server/libjvm.so`.
+
+---
+
+## Step 2 — Install NeqSim
+
+Install NeqSim (the JDK is already handled by Step 1):
+
+```python
+%pip install -q neqsim
+```
+
+If the kernel had already imported an older NeqSim in this session, **restart the
+kernel**, then re-run Step 1 (the JDK repair cell) before continuing.
 
 ---
 
@@ -109,7 +128,7 @@ from seeq import spy
 
 # Find the signal.
 search_results = spy.search(
-    {"Name": "XXX-TIC-23-0221X.PV", "Type": "Signal"},
+    {"Name": "GRA-TIC-23-0221X.PV", "Type": "Signal"},
     old_asset_format=False,
 )
 display(search_results)
@@ -236,15 +255,15 @@ spy.push(
 
 ## Troubleshooting
 
-| Symptom                                                | Likely cause                                               | Fix                                                                                 |
-| ------------------------------------------------------ | ---------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| `JVMNotFoundException`                               | Java not installed, or`JAVA_HOME` points at a bad folder | Re-run Step 2; confirm`libjvm.so` exists; restart kernel                          |
-| `Permission denied: .../classes.jsa` or `JdkError` | Cached JDK install is partial/corrupted                    | `shutil.rmtree` the cached `~/.jdk/...` folder, then `jdk.install(...)` again |
-| `apt-get` / `yum` fails                            | System package installs are not allowed in Data Lab        | Use`pip` only; the JDK is installed via `install-jdk`, not apt                  |
-| Package installed but`import` still fails            | Kernel not restarted after`pip install`                  | Restart the kernel, then re-run the imports                                         |
-| NeqSim imported but JVM uses wrong Java                | `JAVA_HOME` set after the first NeqSim import            | Restart the kernel, set`JAVA_HOME` (Step 2) **before** importing NeqSim     |
-| Density/viscosity return`0`                          | Transport properties not initialized                       | Call`fluid.initProperties()` after the flash                                      |
-| JDK 23 install unstable                                | Version-specific packaging issue                           | Use`jdk.install("21")` or `jdk.install("17")`                                   |
+| Symptom | Likely cause | Fix |
+|---------|--------------|-----|
+| `JVMNotFoundException` | Java not installed, or `JAVA_HOME` points at a bad folder | Re-run Step 2; confirm `libjvm.so` exists; restart kernel |
+| `Permission denied: .../classes.jsa` or `JdkError` | Cached JDK install is partial/corrupted | `shutil.rmtree` the cached `~/.jdk/...` folder, then `jdk.install(...)` again |
+| `apt-get` / `yum` fails | System package installs are not allowed in Data Lab | Use `pip` only; the JDK is installed via `install-jdk`, not apt |
+| Package installed but `import` still fails | Kernel not restarted after `pip install` | Restart the kernel, then re-run the imports |
+| NeqSim imported but JVM uses wrong Java | `JAVA_HOME` set after the first NeqSim import | Restart the kernel, set `JAVA_HOME` (Step 2) **before** importing NeqSim |
+| Density/viscosity return `0` | Transport properties not initialized | Call `fluid.initProperties()` after the flash |
+| JDK 23 install unstable | Version-specific packaging issue | Use `jdk.install("21")` or `jdk.install("17")` |
 
 ---
 
@@ -254,4 +273,4 @@ spy.push(
 - [Google Colab Quickstart](../quickstart/colab-quickstart) — a similar zero-install cloud workflow
 - [Real-Time Integration Guide](REAL_TIME_INTEGRATION_GUIDE) — connecting NeqSim to live data systems
 - [Plant Data Integration](ml_integration) — machine learning and data workflows
-- NeqSim project site: [https://equinor.github.io/neqsim/](https://equinor.github.io/neqsim/)
+- NeqSim project site: <https://equinor.github.io/neqsim/>

@@ -9,6 +9,37 @@
 
 ---
 
+## 2026-07-10 — New: ControllerPerformanceMetrics loop-tuning KPI helper + level-loop recipe
+
+### Summary
+
+Added a reusable KPI helper for PID loop-tuning studies and documented the
+dynamic separator level-loop setup (from PEPR 80300477 NIP-2 / NIP-3). No physics
+change to existing controllers.
+
+### New capability
+
+- **`neqsim.process.controllerdevice.ControllerPerformanceMetrics`** — immutable
+  KPI object with static factories `fromEventLog(List<ControllerEvent>[, tol])`
+  and `fromArrays(time, pv, sp, op[, tol])`. Computes IAE, ISE, ITAE (trapezoidal,
+  irregular-dt safe), PV mean/std dev (variability), peak absolute error, total
+  controller-output (valve) travel, output reversals, and settling time.
+- **`ControllerDeviceInterface.getPerformanceMetrics()`** default method returns
+  `ControllerPerformanceMetrics.fromEventLog(getEventLog())`.
+
+### Fix
+
+- Corrected the `neqsim-dynamic-simulation` skill's PID example: the liquid-outlet
+  level controller was `setReverseActing(true)` (sign-inverted / unstable);
+  changed to `false` (direct acting), matching the canonical transient tests.
+
+### Agents/skills updated
+
+- `neqsim-dynamic-simulation`: new "Dynamic level-loop recipe" and "Loop-tuning
+  KPIs (ControllerPerformanceMetrics)" sections; `last_verified` bumped.
+
+---
+
 ## 2026-07-09 — Agent/skill hygiene: accurate orphan detection + skill-declaration parser
 
 ### Summary
