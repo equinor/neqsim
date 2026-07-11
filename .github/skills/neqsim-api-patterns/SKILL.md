@@ -1,7 +1,7 @@
 ---
 name: neqsim-api-patterns
 description: "NeqSim API patterns and code recipes. USE WHEN: writing Java or Python code that uses NeqSim for thermodynamic calculations, process simulation, or property retrieval. Covers EOS selection, fluid creation, flash calculations, property access, equipment patterns, and unit conventions."
-last_verified: "2026-07-04"
+last_verified: "2026-07-10"
 ---
 
 # NeqSim API Patterns
@@ -268,6 +268,53 @@ model and `SeparatorMechanicalDesign`):
 | Gas carry-under (gas → liquid) | 0.1 – 2 % | mole, feed | Higher with foaming / short retention |
 | Water-in-oil (BS&W, aqueous → oil) | 0.5 – 5 vol% | volume, product | Export crude spec often ≤ 0.5 vol%; inter-stage higher |
 | Oil-in-water (oil → aqueous) | 100 – 1000 ppm | mass, product | Produced-water inlet; overboard discharge typically ≤ 30 ppm (OSPAR) |
+
+### Separation Efficiency Report (K-Factor Operating Windows)
+
+`SeparatorMechanicalDesign.calculateSeparationEfficiency()` returns a
+`SeparatorEfficiencyReport` that combines the physics-based entrainment /
+carry-under fractions with a per-internal Souders-Brown **K-factor operating
+window** check (from the internals database `MinKFactor`/`MaxKFactor`). It answers
+"is this mist mat / vane pack / cyclone inside its good performance band, below
+turndown, or into flooding?" and works for two-phase AND three-phase separators
+and gas scrubbers (`GasScrubberMechanicalDesign` inherits it).
+
+It is **read-only** — it does not change what `run()` does. Whether the physics
+entrainment model is *applied* at run time is a separate opt-in toggle
+(`setEfficiencyModelEnabled`). Default behaviour (no entrainment, or manual
+`setEntrainment(...)`) is unchanged.
+
+```java
+sep.run();                                    // flash
+SeparatorMechanicalDesign design =
+    (SeparatorMechanicalDesign) sep.getMechanicalDesign();
+design.calcDesign();
+design.setDesign();                           // push sized diameter to the separator
+
+// Optional: pick a specific database sub-type for the mist mat
+design.setDemisterType("wire_mesh");          // "wire_mesh" | "vane_pack" | "cyclone"
+design.setDemisterSubType("High Efficiency"); // sub-type from SeparatorInternals.csv
+
+// Read-only assessment (2-phase or 3-phase, auto-detected)
+SeparatorEfficiencyReport report = design.calculateSeparationEfficiency();
+double opK      = report.getOperatingKFactor();           // m/s
+double effGL    = report.getOverallGasLiquidEfficiency(); // 0-1
+String verdict  = report.getVerdict();  // GOOD_PERFORMANCE | BELOW_TURNDOWN | FLOODING_RISK | MARGINAL_EFFICIENCY
+for (InternalOperatingWindow w : report.getWindows()) {
+  // w.getStatus(): BELOW_MIN_TURNDOWN | IN_RANGE | ABOVE_MAX_FLOODING
+  // w.getMinKFactor(), w.getMaxKFactor(), w.getUtilization(), w.getTurndownRatio()
+}
+String json = report.toJson();  // full report incl. per-internal windows
+
+// Apply the physics entrainment/carry-under model during run() (opt-in):
+design.setEfficiencyModelEnabled(true);   // delegates to setDetailedEntrainmentCalculation(true)
+sep.run();                                // gas/liquid outlets now reflect computed carry-over
+design.setEfficiencyModelEnabled(false);  // back to no-entrainment / manual setEntrainment
+```
+
+**K-factor window meaning** (limits from `SeparatorInternals.csv`):
+`K < Kmin` → below turndown (poor coalescence, droplets slip through);
+`Kmin ≤ K ≤ Kmax` → good performance band; `K > Kmax` → flooding / re-entrainment.
 
 ### Compressor
 

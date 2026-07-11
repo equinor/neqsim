@@ -26,7 +26,7 @@ runs the full workflow including PR creation.
 
 Java library for thermodynamic fluid properties and process simulation.
 Developed at NTNU, maintained by Equinor. Apache-2.0 license.
-`com.equinor.neqsim:neqsim` version 3.15.0 — **must compile with Java 8**.
+`com.equinor.neqsim:neqsim` version 3.16.0 — **must compile with Java 8**.
 
 ## Repo Map
 

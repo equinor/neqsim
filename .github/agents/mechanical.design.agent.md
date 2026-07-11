@@ -44,6 +44,35 @@ sepDesign.calcDesign();
 String report = sepDesign.toJson();
 ```
 
+### Separation-efficiency report (separators & gas scrubbers)
+
+After running and sizing a separator or gas scrubber, assess how well its
+configured internals separate — for both two-phase and three-phase vessels —
+with `calculateSeparationEfficiency()`:
+
+```java
+sepDesign.calcDesign();
+sepDesign.setDesign();                        // push sized diameter to the separator
+sepDesign.setDemisterType("wire_mesh");      // "wire_mesh" | "vane_pack" | "cyclone"
+sepDesign.setDemisterSubType("High Efficiency"); // sub-type from SeparatorInternals.csv
+
+// Read-only assessment (does NOT change run() behaviour)
+SeparatorEfficiencyReport eff = sepDesign.calculateSeparationEfficiency();
+eff.getOperatingKFactor();            // m/s
+eff.getOverallGasLiquidEfficiency();  // 0-1
+eff.getVerdict();                     // GOOD_PERFORMANCE | BELOW_TURNDOWN | FLOODING_RISK | MARGINAL_EFFICIENCY
+eff.getWindows();                     // per-internal InternalOperatingWindow (K vs [Kmin,Kmax])
+eff.toJson();
+
+// Opt-in: apply the physics entrainment/carry-under model during run()
+sepDesign.setEfficiencyModelEnabled(true);    // default false → no-entrainment / manual setEntrainment kept
+```
+
+The per-internal **K-factor operating window** flags whether a mist mat / vane
+pack / cyclone is below turndown, in its good range, or flooding. Limits come
+from the internals database (`SeparatorInternals.csv`). See
+`docs/process/equipment/separators.md` (Separation Efficiency Report).
+
 ## Equipment-Specific Design Classes
 Located in `neqsim.process.mechanicaldesign.<equipment>/`:
 - `separator/SeparatorMechanicalDesign`

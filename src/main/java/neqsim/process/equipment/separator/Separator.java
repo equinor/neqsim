@@ -548,12 +548,24 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
-   * Updates the entrainment fractions from the detailed performance calculator. Called during {@code run()} when
-   * detailed entrainment calculation is enabled. Extracts fluid properties from the flashed thermodynamic system and
-   * runs the performance calculator.
+   * Runs the detailed performance calculator against the current flashed thermodynamic system and vessel geometry
+   * <b>without</b> mutating the separator entrainment fractions. This provides a read-only physics evaluation used by
+   * the mechanical-design efficiency report; the entrainment applied during {@link #run()} is unaffected.
+   *
+   * <p>
+   * The most recently flashed system ({@code thermoSystem2}) is used when available, otherwise the vessel inventory
+   * system is used. When no thermodynamic system is available the calculator is returned unchanged.
+   * </p>
+   *
+   * @return the performance calculator populated with the latest results
    */
-  protected void updateEntrainmentFromPerformanceCalculator() {
-    thermoSystem2.initPhysicalProperties();
+  public SeparatorPerformanceCalculator computeSeparationPerformance() {
+    SeparatorPerformanceCalculator calc = getPerformanceCalculator();
+    SystemInterface sys = (thermoSystem2 != null) ? thermoSystem2 : thermoSystem;
+    if (sys == null) {
+      return calc;
+    }
+    sys.initPhysicalProperties();
 
     double gasDensity = 0.0;
     double gasViscosity = 0.0;
@@ -562,17 +574,17 @@ public class Separator extends ProcessEquipmentBaseClass
     double waterDensity = 0.0;
     double waterViscosity = 0.0;
 
-    if (thermoSystem2.hasPhaseType("gas")) {
-      gasDensity = thermoSystem2.getPhase("gas").getPhysicalProperties().getDensity();
-      gasViscosity = thermoSystem2.getPhase("gas").getPhysicalProperties().getViscosity();
+    if (sys.hasPhaseType("gas")) {
+      gasDensity = sys.getPhase("gas").getPhysicalProperties().getDensity();
+      gasViscosity = sys.getPhase("gas").getPhysicalProperties().getViscosity();
     }
-    if (thermoSystem2.hasPhaseType("oil")) {
-      oilDensity = thermoSystem2.getPhase("oil").getPhysicalProperties().getDensity();
-      oilViscosity = thermoSystem2.getPhase("oil").getPhysicalProperties().getViscosity();
+    if (sys.hasPhaseType("oil")) {
+      oilDensity = sys.getPhase("oil").getPhysicalProperties().getDensity();
+      oilViscosity = sys.getPhase("oil").getPhysicalProperties().getViscosity();
     }
-    if (thermoSystem2.hasPhaseType("aqueous")) {
-      waterDensity = thermoSystem2.getPhase("aqueous").getPhysicalProperties().getDensity();
-      waterViscosity = thermoSystem2.getPhase("aqueous").getPhysicalProperties().getViscosity();
+    if (sys.hasPhaseType("aqueous")) {
+      waterDensity = sys.getPhase("aqueous").getPhysicalProperties().getDensity();
+      waterViscosity = sys.getPhase("aqueous").getPhysicalProperties().getViscosity();
     }
 
     double gasVelocity = 0.0;
@@ -593,23 +605,31 @@ public class Separator extends ProcessEquipmentBaseClass
     // even when oil and water densities differ significantly.
     double oilVolFlow = 0.0;
     double waterVolFlow = 0.0;
-    if (thermoSystem2.hasPhaseType("oil")) {
-      int oilPhaseIdx = thermoSystem2.getPhaseIndex("oil");
-      oilVolFlow = thermoSystem2.getPhase(oilPhaseIdx).getNumberOfMolesInPhase()
-          * thermoSystem2.getPhase(oilPhaseIdx).getMolarVolume();
+    if (sys.hasPhaseType("oil")) {
+      int oilPhaseIdx = sys.getPhaseIndex("oil");
+      oilVolFlow = sys.getPhase(oilPhaseIdx).getNumberOfMolesInPhase() * sys.getPhase(oilPhaseIdx).getMolarVolume();
     }
-    if (thermoSystem2.hasPhaseType("aqueous")) {
-      int aqPhaseIdx = thermoSystem2.getPhaseIndex("aqueous");
-      waterVolFlow = thermoSystem2.getPhase(aqPhaseIdx).getNumberOfMolesInPhase()
-          * thermoSystem2.getPhase(aqPhaseIdx).getMolarVolume();
+    if (sys.hasPhaseType("aqueous")) {
+      int aqPhaseIdx = sys.getPhaseIndex("aqueous");
+      waterVolFlow = sys.getPhase(aqPhaseIdx).getNumberOfMolesInPhase() * sys.getPhase(aqPhaseIdx).getMolarVolume();
     }
     double totalLiqVol = oilVolFlow + waterVolFlow;
     if (totalLiqVol > 1e-30) {
-      performanceCalculator.setOilVolumeFraction(oilVolFlow / totalLiqVol);
+      calc.setOilVolumeFraction(oilVolFlow / totalLiqVol);
     }
 
-    performanceCalculator.calculate(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity, waterViscosity,
-        gasVelocity, getInternalDiameter(), getSeparatorLength(), orientation, liquidLevelFrac);
+    calc.calculate(gasDensity, oilDensity, waterDensity, gasViscosity, oilViscosity, waterViscosity, gasVelocity,
+        getInternalDiameter(), getSeparatorLength(), orientation, liquidLevelFrac);
+    return calc;
+  }
+
+  /**
+   * Updates the entrainment fractions from the detailed performance calculator. Called during {@code run()} when
+   * detailed entrainment calculation is enabled. Extracts fluid properties from the flashed thermodynamic system and
+   * runs the performance calculator.
+   */
+  protected void updateEntrainmentFromPerformanceCalculator() {
+    computeSeparationPerformance();
 
     // Update entrainment fractions — use "volume" spec type for physics-based
     // results

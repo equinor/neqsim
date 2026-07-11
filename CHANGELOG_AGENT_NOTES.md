@@ -9,6 +9,62 @@
 
 ---
 
+## 2026-07-10 — New: separator/scrubber separation-efficiency report (K-factor operating windows)
+
+### Summary
+
+Added an on-demand separation-efficiency assessment for two-phase and three-phase
+separators and gas scrubbers that ties the mechanical-design internals
+configuration (PR #2098 architecture) to the existing droplet-physics entrainment
+engine and the internals database. Fully additive and opt-in — default behaviour
+(no entrainment, or manually specified `setEntrainment(...)`) is unchanged.
+
+### New capability
+
+- **`SeparatorMechanicalDesign.calculateSeparationEfficiency()`** returns a
+  `SeparatorEfficiencyReport` (read-only; does not change `run()` behaviour). Works
+  for two-phase and three-phase (inherited by `GasScrubberMechanicalDesign`).
+- **`SeparatorMechanicalDesign.setEfficiencyModelEnabled(boolean)` /
+  `isEfficiencyModelEnabled()`** — toggle whether the physics entrainment/
+  carry-under model is applied during `run()`. Delegates to
+  `Separator.setDetailedEntrainmentCalculation(...)` and configures the
+  performance calculator from the configured internals + database.
+- **`SeparatorMechanicalDesign.setDemisterSubType(String)`** — selects a specific
+  internals-database sub-type (e.g. "High Efficiency") for K-factor window and
+  grade-efficiency lookup.
+- **`neqsim.process.mechanicaldesign.separator.SeparatorEfficiencyReport`** — per
+  -internal K-factor windows, overall gas-liquid efficiency, gas/oil/water
+  entrainment + carry-under fractions, verdict (`GOOD_PERFORMANCE`,
+  `BELOW_TURNDOWN`, `FLOODING_RISK`, `MARGINAL_EFFICIENCY`), and `toJson()`.
+- **`neqsim.process.mechanicaldesign.separator.internals.InternalOperatingWindow`**
+  — classifies an operating Souders-Brown K vs a `[Kmin, Kmax]` window as
+  `BELOW_MIN_TURNDOWN` / `IN_RANGE` / `ABOVE_MAX_FLOODING`, with utilization and
+  turndown ratio.
+- **`DemistingInternal`** gains `subType`, `minKFactor`, `maxKFactor`, `d50Um`,
+  `sharpness`, `maxEfficiency`, `reference`, `applyDatabaseRecord(record)`, static
+  `fromDatabase(type, subType)`, and `getOperatingWindow(operatingK)`.
+- **`Separator.computeSeparationPerformance()`** — runs the performance calculator
+  against the last flashed system without mutating entrainment fractions (used by
+  the report). `SeparatorPerformanceCalculator` gains DSD getters
+  (`getOilInWaterDSD`, `getWaterInOilDSD`, `getGasBubbleDSD`);
+  `SeparatorSection.getType()` added.
+
+### Notes
+
+- Operating K-factor for the report comes from `Separator.getGasLoadFactor()`
+  (robust; independent of the enhanced-calculator flag). Run and size the
+  separator (`calcDesign()`/`setDesign()`) before calling for a meaningful K.
+- K-factor windows are sourced from `resources/designdata/SeparatorInternals.csv`
+  (`MinKFactor_m_s`/`MaxKFactor_m_s` columns) via `SeparatorInternalsDatabase`.
+
+### Agents/skills to update
+
+- `neqsim-separator-modelling` / separator design skills: document
+  `calculateSeparationEfficiency()`, the K-factor operating-window concept, and
+  the enable/disable toggle.
+
+---
+
 ## 2026-07-10 — New: ControllerPerformanceMetrics loop-tuning KPI helper + level-loop recipe
 
 ### Summary

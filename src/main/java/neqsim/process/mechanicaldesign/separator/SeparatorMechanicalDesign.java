@@ -11,6 +11,9 @@ import neqsim.process.costestimation.separator.SeparatorCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.SeparatorInterface;
+import neqsim.process.equipment.separator.ThreePhaseSeparator;
+import neqsim.process.equipment.separator.entrainment.DropletSizeDistribution;
+import neqsim.process.equipment.separator.entrainment.GradeEfficiencyCurve;
 import neqsim.process.equipment.separator.entrainment.InletDeviceModel;
 import neqsim.process.equipment.separator.entrainment.SeparatorPerformanceCalculator;
 import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
@@ -18,6 +21,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.MaterialPlateDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.PressureVesselDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
+import neqsim.process.mechanicaldesign.separator.internals.DemistingInternal;
+import neqsim.thermo.system.SystemInterface;
 
 /**
  * SeparatorMechanicalDesign class.
@@ -100,6 +105,16 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
 
   /** Demister type: "wire_mesh", "vane_pack", "cyclone". */
   private String demisterType = "wire_mesh";
+
+  /** Demister database sub-type description (e.g. "High Efficiency"). Empty selects the first record of the type. */
+  private String demisterSubType = "";
+
+  /**
+   * Whether the physics-based separation-efficiency model (entrainment + carry-under from droplet physics and the
+   * internals database) is applied during {@code run()}. Default false preserves the legacy behaviour of no entrainment
+   * / manually specified entrainment.
+   */
+  private boolean efficiencyModelEnabled = false;
 
   // ============================================================================
   // Liquid level design parameters (as fraction of internal diameter for
@@ -2073,6 +2088,232 @@ public class SeparatorMechanicalDesign extends MechanicalDesign {
     setMistEliminatorDpCoeff(demistingInternal.getEuNumber());
     setMistEliminatorThickness(demistingInternal.getThickness());
     this.demisterType = demistingInternal.getType();
+  }
+
+  // ============================================================================
+  // Separation efficiency model (physics + internals database)
+  // ============================================================================
+
+  /**
+   * Gets the demister database sub-type description used for K-factor window and grade-efficiency lookup.
+   *
+   * @return the demister sub-type (empty selects the first record of the demister type)
+   */
+  public String getDemisterSubType() {
+    return demisterSubType;
+  }
+
+  /**
+   * Sets the demister database sub-type description (e.g. "High Efficiency", "Standard Knitted").
+   *
+   * @param demisterSubType the demister sub-type; empty selects the first record of the demister type
+   */
+  public void setDemisterSubType(String demisterSubType) {
+    this.demisterSubType = (demisterSubType == null) ? "" : demisterSubType;
+  }
+
+  /**
+   * Returns whether the physics-based separation-efficiency model is applied during {@code run()}.
+   *
+   * @return true if the efficiency model is enabled
+   */
+  public boolean isEfficiencyModelEnabled() {
+    return efficiencyModelEnabled;
+  }
+
+  /**
+   * Enables or disables the physics-based separation-efficiency model (entrainment and carry-under computed from
+   * droplet physics and the internals database) during {@code run()}.
+   *
+   * <p>
+   * When disabled (default), the separator keeps its existing behaviour: no entrainment, or the entrainment fractions
+   * supplied manually via {@code setEntrainment(...)}. When enabled, the underlying separator's detailed entrainment
+   * calculation is switched on and its performance calculator is configured from the currently configured internals.
+   * </p>
+   *
+   * @param enabled true to apply the physics efficiency model during {@code run()}, false to keep manual/no entrainment
+   */
+  public void setEfficiencyModelEnabled(boolean enabled) {
+    this.efficiencyModelEnabled = enabled;
+    if (getProcessEquipment() instanceof Separator) {
+      Separator sep = (Separator) getProcessEquipment();
+      sep.setDetailedEntrainmentCalculation(enabled);
+      if (enabled) {
+        configurePerformanceCalculatorFromInternals();
+      }
+    }
+  }
+
+  /**
+   * Builds a mist-eliminator grade-efficiency curve from the configured demister type and sub-type using the internals
+   * database.
+   *
+   * @return a grade-efficiency curve for the configured demister
+   */
+  private GradeEfficiencyCurve buildMistEliminatorCurve() {
+    DemistingInternal demister = DemistingInternal.fromDatabase(demisterType, demisterSubType);
+    double d50m = demister.getD50Um() * 1e-6;
+    String demType = demister.getType();
+    if ("vane_pack".equalsIgnoreCase(demType)) {
+      return GradeEfficiencyCurve.vanePack(d50m, demister.getSharpness(), demister.getMaxEfficiency());
+    } else if ("cyclone".equalsIgnoreCase(demType)) {
+      return GradeEfficiencyCurve.axialCyclone(d50m, demister.getSharpness(), demister.getMaxEfficiency());
+    }
+    return GradeEfficiencyCurve.wireMesh(d50m, demister.getSharpness(), demister.getMaxEfficiency());
+  }
+
+  /**
+   * Configures the underlying separator's performance calculator from the configured internals and the internals
+   * database. Installs the mist-eliminator grade-efficiency curve and, where not already set by the user, default inlet
+   * and (for three-phase systems) liquid-liquid and gas-bubble droplet size distributions.
+   *
+   * <p>
+   * Existing user-configured droplet size distributions and curves are preserved; only unset (null) distributions are
+   * populated with defaults so a bare configuration still produces a physics result.
+   * </p>
+   */
+  public void configurePerformanceCalculatorFromInternals() {
+    if (!(getProcessEquipment() instanceof Separator)) {
+      return;
+    }
+    Separator sep = (Separator) getProcessEquipment();
+    SeparatorPerformanceCalculator calc = sep.getPerformanceCalculator();
+
+    calc.setMistEliminatorCurve(buildMistEliminatorCurve());
+
+    if (calc.getGasLiquidDSD() == null) {
+      calc.setGasLiquidDSD(DropletSizeDistribution.rosinRammler(100e-6, 2.6));
+    }
+    if (calc.getGasBubbleDSD() == null) {
+      calc.setGasBubbleDSD(DropletSizeDistribution.rosinRammler(500e-6, 2.0));
+    }
+
+    if (isThreePhaseSystem(sep)) {
+      if (calc.getWaterInOilDSD() == null) {
+        calc.setWaterInOilDSD(DropletSizeDistribution.rosinRammler(250e-6, 2.2));
+      }
+      if (calc.getOilInWaterDSD() == null) {
+        calc.setOilInWaterDSD(DropletSizeDistribution.rosinRammler(250e-6, 2.2));
+      }
+    }
+  }
+
+  /**
+   * Calculates the complete separation-efficiency report for the separator or scrubber based on how its internals are
+   * configured. Works for both two-phase (gas-liquid) and three-phase (gas-oil-water) separators.
+   *
+   * <p>
+   * The report combines the physics-based entrainment and carry-under fractions (from the performance calculator) with
+   * a per-internal Souders-Brown K-factor operating-window assessment (from the internals database min/max K-factors).
+   * It is a read-only analysis: it does not change the entrainment applied during {@code run()}. Use
+   * {@link #setEfficiencyModelEnabled(boolean)} to control whether the physics model is applied at run time.
+   * </p>
+   *
+   * <p>
+   * The separator should have been run and sized (via {@code calcDesign()} / {@code setDesign()}) so that a
+   * representative operating K-factor is available; otherwise the operating K-factor is reported as zero with an
+   * explanatory note.
+   * </p>
+   *
+   * @return the separation-efficiency report
+   */
+  public SeparatorEfficiencyReport calculateSeparationEfficiency() {
+    SeparatorEfficiencyReport report = new SeparatorEfficiencyReport();
+    report.setDesignKFactor(gasLoadFactor);
+    if (!(getProcessEquipment() instanceof Separator)) {
+      report.addNote("Process equipment is not a Separator; efficiency report unavailable.");
+      report.computeVerdict();
+      return report;
+    }
+    Separator sep = (Separator) getProcessEquipment();
+    report.setSeparatorName(sep.getName());
+    report.setOrientation(sep.getOrientation());
+    report.setEfficiencyModelEnabled(efficiencyModelEnabled);
+
+    configurePerformanceCalculatorFromInternals();
+    SeparatorPerformanceCalculator calc = sep.computeSeparationPerformance();
+
+    // Operating Souders-Brown K-factor from the separator geometry and fluid densities. This is
+    // independent of the (optional) enhanced calculator path, which may leave calc.getKFactor() unset.
+    double operatingK = sep.getGasLoadFactor();
+    if (Double.isNaN(operatingK) || Double.isInfinite(operatingK) || operatingK <= 0.0) {
+      operatingK = calc.getKFactor();
+    }
+    report.setOperatingKFactor(operatingK);
+    report.setOverallGasLiquidEfficiency(calc.getOverallGasLiquidEfficiency());
+    report.setOilInGasFraction(calc.getOilInGasFraction());
+    report.setWaterInGasFraction(calc.getWaterInGasFraction());
+    report.setGasInOilFraction(calc.getGasInOilFraction());
+    report.setGasInWaterFraction(calc.getGasInWaterFraction());
+    report.setOilInWaterFraction(calc.getOilInWaterFraction());
+    report.setWaterInOilFraction(calc.getWaterInOilFraction());
+    report.setMistEliminatorFlooded(calc.isMistEliminatorFlooded());
+
+    boolean threePhase = isThreePhaseSystem(sep);
+    report.setThreePhase(threePhase);
+
+    // Primary mist eliminator window
+    DemistingInternal demister = DemistingInternal.fromDatabase(demisterType, demisterSubType);
+    demister.setName("mist eliminator");
+    report.addWindow(demister.getOperatingWindow(operatingK));
+
+    // Additional demisting sections configured on the separator
+    for (SeparatorSection section : sep.getSeparatorSections()) {
+      String demType = mapSectionTypeToDemister(section.getType());
+      if (demType != null) {
+        DemistingInternal sectionInternal = DemistingInternal.fromDatabase(demType, "");
+        sectionInternal.setName(section.getName());
+        report.addWindow(sectionInternal.getOperatingWindow(operatingK));
+      }
+    }
+
+    if (operatingK <= 0.0) {
+      report.addNote(
+          "Operating K-factor is zero — run and size the separator (calcDesign/setDesign) before assessing efficiency.");
+    }
+    if (!efficiencyModelEnabled) {
+      report.addNote("Physics efficiency model is not applied during run(); this is a read-only assessment. "
+          + "Enable with setEfficiencyModelEnabled(true) to apply entrainment/carry-under at run time.");
+    }
+    report.computeVerdict();
+    return report;
+  }
+
+  /**
+   * Maps a separator section type to a demister type for database lookup.
+   *
+   * @param sectionType the section type (e.g. "meshpad", "vane", "cyclone")
+   * @return the demister type ("wire_mesh", "vane_pack", "cyclone"), or null if the section is not a demisting device
+   */
+  private String mapSectionTypeToDemister(String sectionType) {
+    if (sectionType == null) {
+      return null;
+    }
+    String t = sectionType.toLowerCase();
+    if (t.contains("mesh")) {
+      return "wire_mesh";
+    }
+    if (t.contains("vane")) {
+      return "vane_pack";
+    }
+    if (t.contains("cyclone")) {
+      return "cyclone";
+    }
+    return null;
+  }
+
+  /**
+   * Determines whether the separator is operating on a three-phase (gas-oil-water) system.
+   *
+   * @param sep the separator
+   * @return true if the separator is a three-phase separator or its fluid contains both oil and aqueous phases
+   */
+  private boolean isThreePhaseSystem(Separator sep) {
+    if (sep instanceof ThreePhaseSeparator) {
+      return true;
+    }
+    SystemInterface sys = sep.getThermoSystem();
+    return sys != null && sys.hasPhaseType("oil") && sys.hasPhaseType("aqueous");
   }
 
   // ============================================================================

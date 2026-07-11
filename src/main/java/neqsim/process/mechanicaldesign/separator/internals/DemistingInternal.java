@@ -75,6 +75,27 @@ public class DemistingInternal implements Serializable {
   /** Demister type: "wire_mesh", "vane_pack", or "cyclone". */
   private String type = "wire_mesh";
 
+  /** Database sub-type description (e.g. "Standard Knitted", "High Efficiency"). */
+  private String subType = "";
+
+  /** Minimum recommended Souders-Brown K-factor [m/s] (low-load / turndown limit). */
+  private double minKFactor = 0.02;
+
+  /** Maximum recommended Souders-Brown K-factor [m/s] (flooding limit). */
+  private double maxKFactor = 0.107;
+
+  /** d50 cut diameter [um] of the grade-efficiency curve. */
+  private double d50Um = 8.0;
+
+  /** Sharpness parameter of the grade-efficiency curve [-]. */
+  private double sharpness = 2.5;
+
+  /** Maximum (rated) grade efficiency [0-1]. */
+  private double maxEfficiency = 0.998;
+
+  /** Literature reference for the internal performance data. */
+  private String reference = "";
+
   /**
    * Constructs a DemistingInternal with default parameters.
    */
@@ -114,19 +135,137 @@ public class DemistingInternal implements Serializable {
       this.thickness = 0.15;
       this.wireDiameter = 0.00028;
       this.euNumber = 150.0;
+      this.minKFactor = 0.02;
+      this.maxKFactor = 0.107;
+      this.d50Um = 8.0;
+      this.sharpness = 2.5;
+      this.maxEfficiency = 0.998;
     } else if ("vane_pack".equalsIgnoreCase(demisterType)) {
       this.kFactor = 0.15;
       this.voidFraction = 0.90;
       this.thickness = 0.30;
       this.wireDiameter = 0.0;
       this.euNumber = 40.0;
+      this.minKFactor = 0.02;
+      this.maxKFactor = 0.15;
+      this.d50Um = 10.0;
+      this.sharpness = 2.3;
+      this.maxEfficiency = 0.995;
     } else if ("cyclone".equalsIgnoreCase(demisterType)) {
       this.kFactor = 0.20;
       this.voidFraction = 0.85;
       this.thickness = 0.50;
       this.wireDiameter = 0.0;
       this.euNumber = 60.0;
+      this.minKFactor = 0.05;
+      this.maxKFactor = 0.30;
+      this.d50Um = 3.0;
+      this.sharpness = 4.0;
+      this.maxEfficiency = 0.998;
     }
+  }
+
+  /**
+   * Maps a mechanical-design demister type to the internals-database type code.
+   *
+   * @param demisterType demister type ("wire_mesh", "vane_pack", "cyclone")
+   * @return database type code ("WIRE_MESH", "VANE_PACK", "AXIAL_CYCLONE")
+   */
+  public static String toDatabaseType(String demisterType) {
+    if ("vane_pack".equalsIgnoreCase(demisterType)) {
+      return "VANE_PACK";
+    } else if ("cyclone".equalsIgnoreCase(demisterType) || "axial_cyclone".equalsIgnoreCase(demisterType)) {
+      return "AXIAL_CYCLONE";
+    }
+    return "WIRE_MESH";
+  }
+
+  /**
+   * Maps an internals-database type code to a mechanical-design demister type.
+   *
+   * @param databaseType database type code ("WIRE_MESH", "VANE_PACK", "AXIAL_CYCLONE")
+   * @return demister type ("wire_mesh", "vane_pack", "cyclone")
+   */
+  public static String fromDatabaseType(String databaseType) {
+    if ("VANE_PACK".equalsIgnoreCase(databaseType)) {
+      return "vane_pack";
+    } else if ("AXIAL_CYCLONE".equalsIgnoreCase(databaseType) || "CYCLONE".equalsIgnoreCase(databaseType)) {
+      return "cyclone";
+    }
+    return "wire_mesh";
+  }
+
+  /**
+   * Applies performance data from a {@code SeparatorInternalsDatabase} record. Sets the design K-factor to the maximum
+   * allowable K-factor and populates the K-factor window, grade-efficiency parameters, and reference.
+   *
+   * @param record the internals database record to apply (ignored if null)
+   */
+  public void applyDatabaseRecord(
+      neqsim.process.equipment.separator.entrainment.SeparatorInternalsDatabase.InternalsRecord record) {
+    if (record == null) {
+      return;
+    }
+    this.type = fromDatabaseType(record.internalsType);
+    this.subType = record.subType;
+    if (record.maxKFactor > 0.0) {
+      this.kFactor = record.maxKFactor;
+      this.maxKFactor = record.maxKFactor;
+    }
+    if (record.minKFactor > 0.0) {
+      this.minKFactor = record.minKFactor;
+    }
+    if (record.d50_um > 0.0) {
+      this.d50Um = record.d50_um;
+    }
+    if (record.sharpness > 0.0) {
+      this.sharpness = record.sharpness;
+    }
+    if (record.maxEfficiency > 0.0) {
+      this.maxEfficiency = record.maxEfficiency;
+    }
+    this.reference = record.reference;
+  }
+
+  /**
+   * Builds a DemistingInternal configured from the internals database for the given type and sub-type. When the
+   * sub-type is null or not found, the first record of the type is used; when the type has no records, type-based
+   * defaults are applied.
+   *
+   * @param demisterType demister type ("wire_mesh", "vane_pack", "cyclone")
+   * @param subType database sub-type description, or null for the first record of the type
+   * @return a configured DemistingInternal
+   */
+  public static DemistingInternal fromDatabase(String demisterType, String subType) {
+    DemistingInternal internal = new DemistingInternal(demisterType, demisterType);
+    neqsim.process.equipment.separator.entrainment.SeparatorInternalsDatabase db = neqsim.process.equipment.separator.entrainment.SeparatorInternalsDatabase
+        .getInstance();
+    String dbType = toDatabaseType(demisterType);
+    neqsim.process.equipment.separator.entrainment.SeparatorInternalsDatabase.InternalsRecord rec = null;
+    if (subType != null && !subType.trim().isEmpty()) {
+      rec = db.findByTypeAndSubType(dbType, subType);
+    }
+    if (rec == null) {
+      java.util.List<neqsim.process.equipment.separator.entrainment.SeparatorInternalsDatabase.InternalsRecord> recs = db
+          .findByType(dbType);
+      if (!recs.isEmpty()) {
+        rec = recs.get(0);
+      }
+    }
+    internal.applyDatabaseRecord(rec);
+    return internal;
+  }
+
+  /**
+   * Builds an {@link InternalOperatingWindow} describing where the supplied operating K-factor sits within this
+   * internal's recommended K-factor window.
+   *
+   * @param operatingKFactor operating Souders-Brown K-factor [m/s]
+   * @return the operating window classification for this internal
+   */
+  public InternalOperatingWindow getOperatingWindow(double operatingKFactor) {
+    return new InternalOperatingWindow(name, type, subType, minKFactor, maxKFactor, operatingKFactor, maxEfficiency,
+        reference);
   }
 
   /**
@@ -333,5 +472,131 @@ public class DemistingInternal implements Serializable {
   public void setType(String type) {
     this.type = type;
     applyTypeDefaults(type);
+  }
+
+  /**
+   * Gets the database sub-type description.
+   *
+   * @return the sub-type
+   */
+  public String getSubType() {
+    return subType;
+  }
+
+  /**
+   * Sets the database sub-type description.
+   *
+   * @param subType the sub-type to set
+   */
+  public void setSubType(String subType) {
+    this.subType = subType;
+  }
+
+  /**
+   * Gets the minimum recommended Souders-Brown K-factor (low-load / turndown limit).
+   *
+   * @return minimum K-factor [m/s]
+   */
+  public double getMinKFactor() {
+    return minKFactor;
+  }
+
+  /**
+   * Sets the minimum recommended Souders-Brown K-factor.
+   *
+   * @param minKFactor minimum K-factor [m/s]
+   */
+  public void setMinKFactor(double minKFactor) {
+    this.minKFactor = minKFactor;
+  }
+
+  /**
+   * Gets the maximum recommended Souders-Brown K-factor (flooding limit).
+   *
+   * @return maximum K-factor [m/s]
+   */
+  public double getMaxKFactor() {
+    return maxKFactor;
+  }
+
+  /**
+   * Sets the maximum recommended Souders-Brown K-factor.
+   *
+   * @param maxKFactor maximum K-factor [m/s]
+   */
+  public void setMaxKFactor(double maxKFactor) {
+    this.maxKFactor = maxKFactor;
+  }
+
+  /**
+   * Gets the d50 cut diameter of the grade-efficiency curve.
+   *
+   * @return d50 [um]
+   */
+  public double getD50Um() {
+    return d50Um;
+  }
+
+  /**
+   * Sets the d50 cut diameter of the grade-efficiency curve.
+   *
+   * @param d50Um d50 [um]
+   */
+  public void setD50Um(double d50Um) {
+    this.d50Um = d50Um;
+  }
+
+  /**
+   * Gets the sharpness parameter of the grade-efficiency curve.
+   *
+   * @return sharpness [-]
+   */
+  public double getSharpness() {
+    return sharpness;
+  }
+
+  /**
+   * Sets the sharpness parameter of the grade-efficiency curve.
+   *
+   * @param sharpness sharpness [-]
+   */
+  public void setSharpness(double sharpness) {
+    this.sharpness = sharpness;
+  }
+
+  /**
+   * Gets the maximum (rated) grade efficiency.
+   *
+   * @return maximum efficiency [0-1]
+   */
+  public double getMaxEfficiency() {
+    return maxEfficiency;
+  }
+
+  /**
+   * Sets the maximum (rated) grade efficiency.
+   *
+   * @param maxEfficiency maximum efficiency [0-1]
+   */
+  public void setMaxEfficiency(double maxEfficiency) {
+    this.maxEfficiency = maxEfficiency;
+  }
+
+  /**
+   * Gets the literature reference for the internal performance data.
+   *
+   * @return the reference
+   */
+  public String getReference() {
+    return reference;
+  }
+
+  /**
+   * Sets the literature reference for the internal performance data.
+   *
+   * @param reference the reference to set
+   */
+  public void setReference(String reference) {
+    this.reference = reference;
   }
 }
