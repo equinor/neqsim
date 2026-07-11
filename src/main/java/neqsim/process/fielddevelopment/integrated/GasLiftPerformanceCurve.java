@@ -2,6 +2,7 @@ package neqsim.process.fielddevelopment.integrated;
 
 import java.io.Serializable;
 import java.util.Arrays;
+import neqsim.process.equipment.reservoir.WellSystem;
 
 /**
  * Gas-lift performance curve (GLPC) relating injected lift-gas rate to produced oil rate.
@@ -74,6 +75,66 @@ public class GasLiftPerformanceCurve implements Serializable {
     this.liftRates = Arrays.copyOf(liftRatesSm3PerDay, liftRatesSm3PerDay.length);
     this.oilRates = Arrays.copyOf(oilRatesSm3PerDay, oilRatesSm3PerDay.length);
     this.maxLiftRate = liftRatesSm3PerDay[liftRatesSm3PerDay.length - 1];
+  }
+
+  /**
+   * Builds a gas-lift performance curve anchored on a rigorous {@link WellSystem} nodal solution (NIP-1 bridge).
+   *
+   * <p>
+   * The well is solved for its natural (zero-lift) IPR&ndash;VLP operating point, and the resulting oil rate is used as
+   * the rigorous base rate {@code q_base}. The lift response is then fitted to the standard parametric shape
+   * {@code q_oil(q_lift) = q_base + a&radic;q_lift - b&middot;q_lift} so that it passes through {@code (0, q_base)} and
+   * has its unique maximum {@code peakOilRate} at {@code optimumLiftRate}. This mirrors the existing
+   * {@link WellDeliverabilityCurve#fromWellSystem} pattern and removes the need to hand-fit a curve for every well when
+   * building a large gas-lifted fleet.
+   * </p>
+   *
+   * <p>
+   * The exact fit is {@code b = (peakOilRate - q_base) / optimumLiftRate} and {@code a = 2 b &radic;optimumLiftRate}.
+   * If the anchors imply no benefit (peak not above base, or non-positive optimum lift) a flat curve at {@code q_base}
+   * is returned so downstream allocators simply inject no gas into the well.
+   * </p>
+   *
+   * @param well a configured well system (must be runnable); it is run by this method
+   * @param optimumLiftRateSm3PerDay lift-gas rate in Sm3/day at which oil peaks (from a well test)
+   * @param peakOilRateSm3PerDay peak oil rate in Sm3/day at the optimum lift
+   * @param maxLiftRateSm3PerDay maximum lift-gas rate the well can accept in Sm3/day
+   * @return a gas-lift performance curve with a NeqSim-rigorous base rate and a calibrated lift response
+   */
+  public static GasLiftPerformanceCurve fromWellSystem(neqsim.process.equipment.reservoir.WellSystem well,
+      double optimumLiftRateSm3PerDay, double peakOilRateSm3PerDay, double maxLiftRateSm3PerDay) {
+    well.run();
+    double qBase = Math.max(0.0, well.getOperatingFlowRate("Sm3/day"));
+    double maxLift = Math.max(1.0, maxLiftRateSm3PerDay);
+    if (optimumLiftRateSm3PerDay <= 0.0 || peakOilRateSm3PerDay <= qBase) {
+      return new GasLiftPerformanceCurve(qBase, 0.0, 0.0, maxLift);
+    }
+    double b = (peakOilRateSm3PerDay - qBase) / optimumLiftRateSm3PerDay;
+    double a = 2.0 * b * Math.sqrt(optimumLiftRateSm3PerDay);
+    return new GasLiftPerformanceCurve(qBase, a, b, maxLift);
+  }
+
+  /**
+   * Builds a gas-lift performance curve from a {@link WellSystem} using a fractional-uplift calibration (NIP-1 bridge).
+   *
+   * <p>
+   * Convenience form of {@link #fromWellSystem} for the common case where a well test gives the fractional oil uplift
+   * at the optimum lift rate rather than an absolute peak rate. The peak oil rate is taken as
+   * {@code q_base &middot; (1 + upliftFraction)}.
+   * </p>
+   *
+   * @param well a configured well system (must be runnable); it is run by this method
+   * @param upliftFraction fractional oil uplift at the optimum lift (e.g. 0.25 for +25%); must be &ge; 0
+   * @param optimumLiftRateSm3PerDay lift-gas rate in Sm3/day at which oil peaks
+   * @param maxLiftRateSm3PerDay maximum lift-gas rate the well can accept in Sm3/day
+   * @return a gas-lift performance curve with a NeqSim-rigorous base rate and a calibrated lift response
+   */
+  public static GasLiftPerformanceCurve fromWellSystemUplift(neqsim.process.equipment.reservoir.WellSystem well,
+      double upliftFraction, double optimumLiftRateSm3PerDay, double maxLiftRateSm3PerDay) {
+    well.run();
+    double qBase = Math.max(0.0, well.getOperatingFlowRate("Sm3/day"));
+    double peak = qBase * (1.0 + Math.max(0.0, upliftFraction));
+    return fromWellSystem(well, optimumLiftRateSm3PerDay, peak, maxLiftRateSm3PerDay);
   }
 
   /**

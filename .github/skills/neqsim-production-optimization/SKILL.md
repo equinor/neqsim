@@ -336,6 +336,51 @@ Map<String, Double> allocation = optimizer.optimize();
 double totalOilGain = optimizer.getTotalOilGain();
 ```
 
+### Choke + Lift-Gas Co-Optimization with Facility Constraints (strupe/øke lists)
+
+When the decision is *which wells to choke back or open up* under **several** shared
+facility ceilings at once (gas handling, produced-water/PWRI, and the lift-gas budget) —
+the classic offshore "strupe/øke liste" — use the choke-and-gas-lift allocation stack in
+`neqsim.process.fielddevelopment.integrated`. It co-optimizes choke opening **and**
+lift-gas per well, honours discrete on/off locks (sand, lost comms, life extension) and
+per-well gas ceilings, and emits an operator-ranked action list.
+
+```java
+// NIP-1: build a per-well GLPC anchored on a rigorous WellSystem nodal solve.
+//        base oil rate comes from NeqSim IPR-VLP; the lift response is fitted to a
+//        well-test peak (optimumLift, peakOil) or a fractional uplift.
+GasLiftPerformanceCurve curve =
+    GasLiftPerformanceCurve.fromWellSystem(wellSystem, 60000.0, peakOil, 150000.0);
+// or: GasLiftPerformanceCurve.fromWellSystemUplift(wellSystem, 0.25, 50000.0, 150000.0);
+
+// NIP-2: a chokeable, gas-lifted well with bounds and operational locks.
+ChokeableGasLiftWell w = new ChokeableGasLiftWell("S-24", curve)
+    .setMaxChokeFraction(0.60)          // "0-60%"
+    .setCurrentChokeFraction(0.0)       // current strupe setting
+    .setGor(750.0).setWaterCut(0.35)    // for facility roll-up
+    .setGasHandlingLimit(750_000.0);    // per-well "mye gass" ceiling
+// .setForcedShut(true, "sand production");  // hard lock
+
+// NIP-3: co-optimize choke + lift under multiple facility constraints (never throws).
+ChokeAndGasLiftAllocationOptimizer opt = new ChokeAndGasLiftAllocationOptimizer()
+    .addWell(w) /* ...add all wells... */
+    .setLiftGasBudget(totalLiftGasSm3d)
+    .setGasHandlingLimit(maxGasSm3d)     // shared compressor limit
+    .setWaterHandlingLimit(maxWaterSm3d) // shared produced-water/PWRI limit
+    .setObjective(ChokeAndGasLiftAllocationOptimizer.Objective.OIL);
+ChokeAndGasLiftAllocationOptimizer.AllocationResult r = opt.optimize();
+String json = r.toJson();                // schema-versioned
+
+// NIP-4: turn the optimum into the ranked strupe/øke recommendation list.
+StrupeOkeReport report = StrupeOkeReport.build(Arrays.asList(w /* ... */), r);
+System.out.println(report.toTable());    // per well: OPEN / CHOKE_BACK / SHUT / NO_CHANGE + uplift
+```
+
+Screening-grade: choke is a linear deliverability scale, the facility relief is a greedy
+"choke back the least valuable barrels first" search. Use `LoopedPipeNetwork` for a
+rigorous coupled network solve. Distinct from `GasLiftOptimizer` (lift gas + compression
+only) and `ReservoirToMarketOptimizer` (choke + one throughput cap only).
+
 ---
 
 ## Scenario Analysis
@@ -452,6 +497,7 @@ Map<String, Double> consumers = efficiency.getPowerBreakdown();
 | Infill drilling | New `WellSystem` + network rebalance | Marginal well economics |
 | Water shut-off | Adjust `WellSystem` water cut | Intervention cost vs benefit |
 | Gas lift optimization | `GasLiftOptimizer` | Declining reservoir pressure |
+| Choke + lift under gas/water/lift limits (strupe/øke list) | `ChokeAndGasLiftAllocationOptimizer` + `StrupeOkeReport` | Multi-constraint fleet, on/off locks |
 | Tie-back satellite | `TiebackAnalyzer` | Host capacity utilization |
 | EOR (CO2, polymer) | `InjectionStrategy` + EOS | Fluid compatibility |
 | Cessation of production | `DecommissioningEstimator` | Regulatory requirements |

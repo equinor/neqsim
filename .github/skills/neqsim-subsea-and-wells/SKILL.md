@@ -413,6 +413,13 @@ optimizer.setTotalGasAvailable(500000.0);  // Sm3/d
 Map<String, Double> allocation = optimizer.optimize();
 ```
 
+> For a *choke-back / open-up* decision across a well fleet under **multiple** shared
+> facility ceilings (gas handling + produced-water/PWRI + lift-gas budget) with discrete
+> on/off locks, use `ChokeAndGasLiftAllocationOptimizer` + `StrupeOkeReport`
+> (`neqsim.process.fielddevelopment.integrated`). Build each well's response with
+> `GasLiftPerformanceCurve.fromWellSystem(...)`. See the `neqsim-production-optimization`
+> skill for the full pattern.
+
 ---
 
 ## Design Standards Reference
