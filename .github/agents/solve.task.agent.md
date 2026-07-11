@@ -37,6 +37,7 @@ task_solve/YYYY-MM-DD_task_slug/
 │   ├── notes.md                       ← Research notes
 │   ├── analysis.md                    ← Deep analysis (Design/Development)
 │   ├── neqsim_improvements.md         ← NIPs for gaps found
+│   ├── document_evidence_manifest.json ← Per-file extraction coverage + evidence packages
 │   └── references/                    ← Reference documents (STID, PDFs, datasheets)
 ├── step2_analysis/
 │   ├── *.ipynb                        ← Jupyter notebooks (main analysis)
@@ -90,6 +91,44 @@ python devtools/pdf_to_figures.py task_solve/YYYY-MM-DD_slug/step1_scope_and_res
 
 This ensures every task is self-contained and portable — zip the task folder
 and everything needed is inside it.
+
+### ⚠️ MANDATORY: Extract every downloaded or supplied document before solving
+
+The `references/` folder is not passive storage. Before any document-derived
+value, topology, limit, requirement, or recommendation enters Step 2, route
+**every file** through `technical-document-intelligence-agent` using
+`neqsim-document-intelligence-extraction`, then through the applicable
+document-type/domain reader.
+
+For each file:
+
+1. Preserve the original and record its hash, actual format, revision/date, and
+  extraction-tool versions.
+2. Run native text and structured-table extraction first. For spreadsheets,
+  retain sheets, formulas, merged ranges, hidden rows/columns, headers, and units.
+3. Render and assess every page that contains visual or spatial information.
+  Use OCR for scans and multimodal vision for drawings, P&IDs, charts, maps,
+  photographs, annotations, symbols, topology, and table layout. OCR alone is
+  not sufficient for visual engineering content.
+4. Extract comprehensively: body text, tables, title blocks, notes, legends,
+  appendices, footnotes, figures, plots, revision clouds, and unexpected
+  engineering constraints. Do not stop after finding the fields anticipated by
+  the initial task description.
+5. Package facts with original text/value/unit, page/cell/bounding-box locator,
+  method, confidence, normalized value/unit, and review status. Reconcile
+  native/OCR/vision outputs without silently resolving conflicts.
+6. Record unsupported content, missing expected fields, conflicts, ambiguous
+  facts, and safety-critical or confidence-below-0.85 facts as explicit gaps or
+  `needs_review` items.
+
+Write `step1_scope_and_research/document_evidence_manifest.json` with one entry
+for every file under `references/`, its extraction operations and status, links
+to its evidence package(s), and counts of facts/conflicts/gaps/review items.
+Summarize the evidence in `notes.md` and preserve fact identifiers in downstream
+inputs/results. The number of manifest source entries MUST equal the recursive
+file inventory count, excluding generated evidence packages and the manifest
+itself. Do not begin Step 2 while any source is `not_started` or silently
+unprocessed; record a blocked/manual-review status when extraction cannot run.
 
 ---
 
@@ -400,17 +439,27 @@ checks before writing Step 1 content:
 4. **Repo memory scan.** List `/memories/repo/*.md` via the `memory` tool.
    Read any whose filename contains a keyword from the task title — this
    surfaces prior solved tasks and known gotchas before you reinvent them.
-5. **Capability assessment + agent/workflow discovery.** For
+5. **Capability assessment + agent/workflow and code discovery.** For
   Standard/Comprehensive tasks, invoke `@capability.scout` and write the result
   to `step1_scope_and_research/capability_assessment.md`. As part of this step
-  you MUST run BOTH discovery tools and record their output — never rely only on
-  the static routing table in `router.agent.md`:
+  you MUST run BOTH discovery tools and inspect the actual NeqSim implementation
+  before selecting a method. Never rely only on the static routing table,
+  capability-map prose, or mirrored task sources:
 
    ```bash
    python devtools/skill_search.py "<task title>" --top 5
    python devtools/agent_search.py "<task title>" --top 8 \
        --json --out step1_scope_and_research/agent_plan.json
    ```
+
+     Then search `CHANGELOG_AGENT_NOTES.md`, `src/main/java/neqsim/`, neighboring
+     JUnit tests, and the locally resolved NeqSim dependency/JAR for the required
+     equipment, thermodynamics, standards, safety, mechanical-design, and utility
+     functionality. Verify constructors, method signatures, units, limitations,
+     and existing tests from source before writing analysis code. When local
+     source may be stale, also check current upstream `equinor/neqsim`; do not
+     classify a capability as missing from a skill description or mirrored tree
+     alone.
 
    Then, in `capability_assessment.md`:
    - fill **§4 Skills to Load** from `skill_search.py`,
@@ -422,6 +471,10 @@ checks before writing Step 1 content:
      task spans ≥3 disciplines. Prefer delegating to a specialist agent over
      re-loading its skills manually, so its governance and internal workflow are
      reused (this is how "all functionality gets utilized").
+   - add a **NeqSim Code Functionality Reviewed** table containing each required
+     capability, exact class and method signatures, source/test/JAR evidence,
+     availability (`Available`/`Partial`/`Missing`), units/constraints, and how
+     the task will use it.
 
    Persist the plan so it survives context loss and feeds the report:
    - keep `step1_scope_and_research/agent_plan.json` (raw ranking, audit trail),
@@ -436,7 +489,7 @@ checks before writing Step 1 content:
    `@literature.scout` to populate `step1_scope_and_research/references/`
    and the `## Literature & Reference Documents` section of `notes.md`.
 
-Loaded skills: neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map, neqsim-platform-modeling, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer
+Loaded skills: neqsim-document-intelligence-extraction, neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map, neqsim-platform-modeling, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer
 
 For operational plant tasks involving P&ID symbols, valve actions, live plant
 data, active train state, isolation, evacuation, or dynamic response, load

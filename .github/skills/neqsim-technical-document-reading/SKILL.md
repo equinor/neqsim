@@ -9,6 +9,13 @@ last_verified: "2026-07-04"
 Extract structured engineering data from technical documents and convert it into
 formats usable by process simulation, mechanical design, and engineering analysis.
 
+Use the public community skill `neqsim-document-intelligence-extraction` before this skill when
+the task receives files. It owns source inventory, native/OCR/vision routing, provenance,
+confidence, review gates, and cross-document conflicts. This skill consumes that evidence package
+and adds document-type schemas, engineering normalization, physical validation, and NeqSim
+handoffs. Keeping this boundary explicit prevents OCR or multimodal output from being mistaken for
+verified engineering data.
+
 ## Core Principle
 
 > **Classify → Extract → Normalize → Validate → Output**

@@ -19,16 +19,22 @@ mechanical design, and engineering analysis tools.
 
 ## MANDATORY: Load Skill First
 
-Loaded skills: neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer
+Loaded skills: neqsim-document-intelligence-extraction, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer
 
-Before doing ANY document reading work, load the technical document reading skill:
+Before doing ANY document reading work, use the community
+`neqsim-document-intelligence-extraction` skill as the source-intake contract, then load the
+technical document reading skill for document-specific engineering interpretation:
 
 ```
+community skill: neqsim-document-intelligence-extraction
 read_file: .github/skills/neqsim-technical-document-reading/SKILL.md
 ```
 
-This skill contains extraction patterns for every document type, unit conversion
-functions, component name mapping, validation rules, and output schemas.
+The community skill selects native parsing, OCR, page rendering, and vision operations and
+requires original text plus page/cell/bounding-box provenance for every fact. If the community
+skill is not installed, apply its evidence contract directly and record that limitation. The
+local technical-reading skill contains extraction patterns by document type, unit conversion,
+component name mapping, physical validation rules, and downstream output schemas.
 
 When the document is a P&ID or the downstream task asks for valve actions,
 active train state, isolation, or operational changes, also load
@@ -55,7 +61,10 @@ skill before returning results.
 
 ### Step 1: Receive and Classify the Document
 
-1. **Determine the file format**: PDF, Word (.docx), Excel (.xlsx), CSV, or plain text
+1. **Inventory and plan intake** with `neqsim-document-intelligence-extraction`: preserve the
+   original, record a content hash, determine the actual format, and choose native text/table,
+   OCR, rendering, and vision operations. Unsupported, corrupt, encrypted, or unexpectedly
+   executable content stops at manual triage.
 2. **Classify the document type** using the auto-detection heuristics from the skill:
    - Equipment Data Sheet
    - Technical Requirement (TR)
