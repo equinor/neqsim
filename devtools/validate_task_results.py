@@ -232,6 +232,64 @@ def check_capability_assessment(task_folder: Path) -> List[str]:
     return warnings
 
 
+def check_document_evidence(task_folder: Path) -> List[str]:
+    """Return warnings when reference documents lack extraction evidence."""
+    warnings: List[str] = []
+    step1 = task_folder / "step1_scope_and_research"
+    references = step1 / "references"
+    if not references.exists():
+        return warnings
+
+    source_files = [path for path in references.rglob("*") if path.is_file()]
+    if not source_files:
+        return warnings
+
+    manifest = step1 / "document_evidence_manifest.json"
+    if not manifest.exists():
+        warnings.append(
+            f"{task_folder.name}: {len(source_files)} reference file(s) exist but "
+            "document_evidence_manifest.json is missing — route every file through "
+            "technical-document-intelligence-agent before solving"
+        )
+        return warnings
+
+    try:
+        payload = json.loads(manifest.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError) as exc:
+        warnings.append(
+            f"{task_folder.name}: document_evidence_manifest.json is unreadable: {exc}"
+        )
+        return warnings
+
+    entries = payload.get("sources") if isinstance(payload, dict) else None
+    if not isinstance(entries, list):
+        warnings.append(
+            f"{task_folder.name}: document_evidence_manifest.json must contain a sources array"
+        )
+        return warnings
+
+    if len(entries) != len(source_files):
+        warnings.append(
+            f"{task_folder.name}: document evidence covers {len(entries)} of "
+            f"{len(source_files)} reference file(s)"
+        )
+
+    incomplete: List[str] = []
+    for entry in entries:
+        if not isinstance(entry, dict):
+            incomplete.append("<invalid entry>")
+            continue
+        status = str(entry.get("status", "not_started")).lower()
+        if status in ("not_started", "pending", "unprocessed", ""):
+            incomplete.append(str(entry.get("path", "<unknown>")))
+    if incomplete:
+        warnings.append(
+            f"{task_folder.name}: {len(incomplete)} document source(s) remain unprocessed: "
+            + ", ".join(incomplete[:5])
+        )
+    return warnings
+
+
 def find_results_files(roots: List[Path]) -> List[Path]:
     out: List[Path] = []
     for root in roots:
@@ -323,11 +381,12 @@ def main() -> int:
     for f in files:
         rel = f.relative_to(repo_root) if f.is_absolute() else f
         errors, warnings = validate_file(f)
-        # Add capability_assessment check (once per task folder)
+        # Add Step 1 evidence checks (once per task folder)
         task_folder = f.parent
         if str(task_folder) not in capability_warnings_seen:
             capability_warnings_seen.add(str(task_folder))
             warnings.extend(check_capability_assessment(task_folder))
+            warnings.extend(check_document_evidence(task_folder))
         total_errors += len(errors)
         total_warnings += len(warnings)
         if errors or warnings:
