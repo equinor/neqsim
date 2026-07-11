@@ -173,6 +173,8 @@ transport properties (viscosity, thermal conductivity, density).
 |-------|------|---------|
 | `AdiabaticPipe` | Adiabatic pipe flow | `process.equipment.pipeline` |
 | `PipeBeggsAndBrills` | Beggs & Brill correlation (+ formation temperature gradient) | `process.equipment.pipeline` |
+| `PipeGray` | Gray (1974) multiphase vertical flow for gas / gas-condensate wells (Woldesemayat-Ghajar holdup option) | `process.equipment.pipeline` |
+| `VoidFractionCorrelations` | Two-phase void-fraction / gas-holdup correlations (Woldesemayat-Ghajar 2007) | `process.equipment.pipeline` |
 | `TwoFluidPipe` | Transient two-fluid multiphase model (OLGA-like) with 7 conservation equations, AUSM+, boundary conditions | `process.equipment.pipeline` |
 | `CO2InjectionWellAnalyzer` | CO2 injection well safety analysis | `process.equipment.pipeline` |
 | `TransientWellbore` | Shutdown cooling / depressurization transient | `process.equipment.pipeline` |
@@ -288,6 +290,15 @@ transport properties (viscosity, thermal conductivity, density).
 | `SlimTube` | Slim tube / MMP | `pvtsimulation.simulation` |
 | `ViscositySimulation` | Viscosity vs P | `pvtsimulation.simulation` |
 | `GOR` | Gas-oil ratio vs P | `pvtsimulation.simulation` |
+
+### Reservoir Material Balance & Surveillance (inverse)
+
+| Class | Assessment | Package |
+|-------|-----------|---------|
+| `DeclineCurveAnalysis` | Arps + Duong (2011) decline; forward rate/EUR and least-squares history matching (`fitArps`, `fitDuong`) | `pvtsimulation.util` |
+| `GasMaterialBalance` | Gas P/Z straight line (OGIP), Cole plot aquifer diagnostic, Havlena-Odeh | `pvtsimulation.reservoirproperties.materialbalance` |
+| `OilMaterialBalance` | Havlena-Odeh oil balance (OOIP, gas-cap ratio m, water drive, Pirson drive indices) | `pvtsimulation.reservoirproperties.materialbalance` |
+| `VanEverdingenHurstAquifer` | Radial aquifer influence functions, Carter-Tracy cumulative influx, ECLIPSE AQUTAB export | `pvtsimulation.reservoirproperties.materialbalance` |
 
 ### Flow Assurance (PVT module)
 

@@ -357,10 +357,13 @@ Use this taxonomy to systematically identify needs. Check each category:
 - [ ] Equipment costing
 
 ### J. Reservoir & Production
-- [ ] Simple reservoir model
+- [ ] Simple reservoir model (forward tank, `SimpleReservoir`)
+- [ ] Inverse material balance / reserves surveillance (`GasMaterialBalance`, `OilMaterialBalance` — OGIP/OOIP, drive indices)
+- [ ] Aquifer influx (`VanEverdingenHurstAquifer` — Van Everdingen-Hurst / Carter-Tracy, AQUTAB)
 - [ ] IPR curves
 - [ ] VFP tables
-- [ ] Production decline
+- [ ] Production decline & history matching (`DeclineCurveAnalysis` — Arps + Duong `fitArps`/`fitDuong`)
+- [ ] Gas / gas-condensate vertical-well flow (`PipeGray` — Gray 1974)
 - [ ] Water cut estimation
 
 ---

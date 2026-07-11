@@ -25,7 +25,9 @@ You are an expert in these field development disciplines:
 
 ### 1. Reservoir & Resource Assessment
 - Volumetric estimation (GIIP/STOIIP) with uncertainty ranges (P10/P50/P90)
-- Material balance modeling (`SimpleReservoir`)
+- Material balance modeling — forward tank model (`SimpleReservoir`)
+- Inverse material balance / reserves surveillance from measured pressure-vs-production history (`GasMaterialBalance` P/Z line & OGIP, Cole plot; `OilMaterialBalance` OOIP, gas-cap ratio & Pirson drive indices)
+- Aquifer support (`VanEverdingenHurstAquifer` — Van Everdingen-Hurst / Carter-Tracy influx, ECLIPSE AQUTAB export)
 - Recovery factor estimation by drive mechanism and development concept
 - Depletion strategy (natural depletion, water injection, gas injection, WAG)
 - Reservoir fluid characterization via PVT lab simulation
@@ -75,6 +77,7 @@ You are an expert in these field development disciplines:
 
 ### 7. Production Optimization
 - Decline curve modeling (exponential, hyperbolic, harmonic)
+- Decline-curve history matching to production data (`DeclineCurveAnalysis.fitArps` / `fitDuong` / `eurFromFit`; Duong 2011 for tight/shale wells)
 - Production profile generation with build-up/plateau/decline
 - Multi-well drill schedule with facility constraints
 - Gas lift optimization (single-well and multi-well allocation)

@@ -299,6 +299,36 @@ for (double qgMSm3d : gasRates) {
 > `INTERMITTENT` (plug/slug), `DISTRIBUTED` (bubble/mist). "Gravity-dominated /
 > liquid loading" = SEGREGATED (+ low-velocity TRANSITION).
 
+### Gray (1974) Correlation — Gas / Gas-Condensate Vertical Wells
+
+`PipeGray` implements the Gray (1974) correlation, the industry standard for
+**gas-dominated vertical wells** producing condensate and/or water (API 14B
+program). Prefer it over Beggs & Brill for vertical/near-vertical gas-condensate
+tubing where the superficial gas velocity is high (> ~4.6 m/s), the tubing is
+small (< ~3.5 in), and condensate loading is low (< ~50 bbl/MMscf). It predicts
+in-situ liquid holdup and a condensate-film effective roughness.
+
+```java
+PipeGray well = new PipeGray("Gray well", inletStream);   // gas-condensate wellstream
+well.setDiameter(0.0889);        // 3.5 inch tubing
+well.setLength(3000.0);
+well.setElevation(3000.0);       // vertical well (upward flow)
+well.setNumberOfIncrements(10);
+// Optional: swap the holdup closure to Woldesemayat-Ghajar (2007)
+well.setHoldupMethod(PipeGray.HoldupMethod.WOLDESEMAYAT_GHAJAR);
+well.run();
+
+double dP       = well.getTotalPressureDrop();          // bar
+double holdup   = well.getLiquidHoldup();               // fraction (0-1)
+double vsg      = well.getSuperficialGasVelocity();     // m/s
+double ke       = well.getEffectiveRoughness();         // m (Gray condensate-film roughness)
+```
+
+Single-phase gas and single-phase liquid segments fall back to a Haaland
+friction-factor Darcy-Weisbach drop, so the same model spans wet-gas wells that
+drop out condensate along the tubing. The void-fraction closures are exposed
+directly via `VoidFractionCorrelations.woldesemayatGhajar(...)`.
+
 ### Pipeline with Formation Temperature Gradient (Wells / Risers)
 
 ```java

@@ -1,7 +1,7 @@
 ---
 name: neqsim-production-optimization
-description: "Production optimization, bottleneck analysis, decline modeling, and IOR/EOR screening with NeqSim. USE WHEN: optimizing production rates, identifying facility bottlenecks, forecasting production profiles, analyzing gas lift allocation, evaluating IOR/EOR options, or running multi-scenario production comparisons."
-last_verified: "2026-07-04"
+description: "Production optimization, bottleneck analysis, decline modeling, decline-curve history matching (Arps + Duong), reservoir material balance surveillance (OGIP/OOIP, drive indices, aquifer influx), and IOR/EOR screening with NeqSim. USE WHEN: optimizing production rates, identifying facility bottlenecks, forecasting production profiles, fitting decline curves to production history, estimating reserves from pressure/production data, analyzing gas lift allocation, evaluating IOR/EOR options, or running multi-scenario production comparisons."
+last_verified: "2026-07-11"
 ---
 
 # NeqSim Production Optimization Skill
@@ -63,6 +63,125 @@ scheduler.setFacilityCapacity(28000.0);// boe/d plateau constraint
 double[][] schedule = scheduler.generateSchedule(25);
 // schedule[year][0] = oil rate, [1] = gas rate, [2] = water rate
 ```
+
+---
+
+## Decline Curve Fitting & History Matching (`DeclineCurveAnalysis`)
+
+`neqsim.pvtsimulation.util.DeclineCurveAnalysis` is a static, unit-agnostic
+Arps **+ Duong** decline toolkit. Besides the forward `rate(...)`,
+`cumulativeProduction(...)`, `eur(...)` and `forecast(...)` methods it now
+**least-squares fits** decline parameters to a measured rate-time history — the
+inverse (surveillance) direction used to estimate remaining reserves and EUR
+directly from production data. Times are in days; rates keep whatever consistent
+unit you supply.
+
+```java
+import java.util.Map;
+import neqsim.pvtsimulation.util.DeclineCurveAnalysis;
+
+// t[] in days, q[] in bbl/d (or Sm3/d, MMscf/d — unit-agnostic)
+Map<String, Double> fit = DeclineCurveAnalysis.fitArps(t, q);
+double qi = fit.get("qi");        // initial rate
+double di = fit.get("di");        // nominal decline (1/day)
+double b = fit.get("b");          // Arps exponent (grid-searched 0..1)
+double r2 = fit.get("rSquared");  // goodness of fit
+
+// EUR to an economic-limit rate straight from the fit
+double eur = DeclineCurveAnalysis.eurFromFit(fit, 50.0);   // rate-unit * days
+
+// Windowed fit — exclude early transient / cleanup points (indices 0..2 here)
+Map<String, Double> fitW = DeclineCurveAnalysis.fitArps(t, q, 3, t.length - 1);
+```
+
+The `fitArps` overloads grid-search the exponent `b` over `[0, 1]` (coarse then
+fine), analytically solving `qi` and `di` for each candidate by linearising in
+rate space (`ln q` vs `t` for `b≈0`; `q^-b` vs `t` otherwise). Use the windowed
+overload to fit only the established boundary-dominated decline.
+
+### Duong (2011) — tight / unconventional wells
+
+For fracture-dominated tight-gas and shale wells the Arps model over-estimates
+reserves. The **Duong (2011)** model is included:
+
+```java
+// Forward
+double q = DeclineCurveAnalysis.rateDuong(q1, a, m, t);        // rate at time t
+double gp = DeclineCurveAnalysis.cumulativeDuong(q1, a, m, t); // cumulative
+
+// Fit q1, a, m to a rate history (log-log q/Gp vs t straight line)
+Map<String, Double> duong = DeclineCurveAnalysis.fitDuong(t, q);
+// keys: "q1", "a", "m", "rSquared"
+```
+
+**Model selection:** fit both `fitArps` and `fitDuong`, compare `rSquared`, and
+prefer Duong when the well is in transient linear (fracture-dominated) flow.
+
+---
+
+## Reservoir Material Balance & Surveillance (inverse tank models)
+
+`neqsim.pvtsimulation.reservoirproperties.materialbalance` regresses original
+hydrocarbon in place, drive mechanism and aquifer support **directly from a
+measured pressure-vs-cumulative-production history**. These "inverse" tank models
+complement the forward depletion model (`SimpleReservoir`) — use them for
+reserves surveillance and drive diagnosis. Pressures are in bara, temperatures in
+Kelvin; cumulative volumes keep any consistent surface unit and the returned
+in-place volume is in the same unit.
+
+### Gas — P/Z line, Cole plot, Havlena-Odeh (`GasMaterialBalance`)
+
+```java
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.GasMaterialBalance;
+
+// P/Z straight line → OGIP (supply Z, or let it compute Z from Sutton + Hall-Yarborough)
+GasMaterialBalance.Result r = GasMaterialBalance.fitVolumetric(pressure, z, gp);
+double ogip = r.getOgip();          // x-intercept where p/Z = 0
+double piZi = r.getPiOverZi();      // initial p/Z intercept (bara)
+double r2 = r.getRSquared();
+
+// Compute Z internally (Sutton pseudo-criticals + Hall-Yarborough)
+GasMaterialBalance.Result r2fit = GasMaterialBalance.fitVolumetric(pressure, gp, tempK, gasGravity);
+
+// Cole plot — aquifer diagnostic (flat = volumetric depletion, rising = water influx)
+double[][] cole = GasMaterialBalance.colePlot(pressure, z, gp, tempK); // [0]=Gp, [1]=F/Eg
+
+// Havlena-Odeh with a supplied cumulative water influx We
+GasMaterialBalance.Result rHO = GasMaterialBalance.fitHavlenaOdeh(pressure, z, gp, we, tempK);
+```
+
+### Oil — Havlena-Odeh, gas-cap ratio, drive indices (`OilMaterialBalance`)
+
+```java
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.OilMaterialBalance;
+
+// Build the F / Eo / Eg / Efw terms from black-oil PVT, then regress:
+OilMaterialBalance.Result dep = OilMaterialBalance.fitDepletionDrive(f, eo);        // OOIP (no gas cap / aquifer)
+OilMaterialBalance.Result gc = OilMaterialBalance.fitGasCapDrive(f, eo, eg);        // OOIP + gas-cap ratio m
+OilMaterialBalance.Result wd = OilMaterialBalance.fitWaterDrive(f, eo, we, bw);     // OOIP with known We
+
+// Pirson fractional drive indices {DDI, SDI, WDI, EDI} (sum ≈ 1)
+double[] di = OilMaterialBalance.driveIndices(n, m, eoTerm, egTerm, efwTerm, we, bw, fTerm);
+```
+
+### Aquifer influx — Van Everdingen-Hurst / Carter-Tracy (`VanEverdingenHurstAquifer`)
+
+```java
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquifer;
+
+double u = VanEverdingenHurstAquifer.aquiferConstant(porosity, ct, thickness, radius, angleDeg);
+double[] we = VanEverdingenHurstAquifer.cumulativeInfluxCarterTracy(tD, deltaP, u, reD); // reservoir m3
+String aqutab = VanEverdingenHurstAquifer.exportAqutab(tD, reD);  // ECLIPSE AQUTAB include table
+```
+
+The `We` array feeds the aquifer term of `GasMaterialBalance.fitHavlenaOdeh` /
+`OilMaterialBalance.fitWaterDrive`. Use `reD = Double.POSITIVE_INFINITY` for an
+infinite-acting aquifer or a finite `reD` for a bounded one.
+
+**Workflow:** (1) diagnose drive with the Cole plot / drive indices, (2) if
+water drive, build `We` with Carter-Tracy, (3) regress OGIP/OOIP with the
+matching `fit*` method, (4) cross-check reserves against the `DeclineCurveAnalysis`
+EUR.
 
 ---
 
