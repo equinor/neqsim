@@ -152,6 +152,52 @@ public class PTPhaseEnvelopeMichelsenTest {
   }
 
   /**
+   * Test that a zero-mole-fraction component does not make the continuation Jacobian singular and that phase-envelope
+   * tracing does not modify the caller's system.
+   */
+  @Test
+  void testWithZeroMoleFractionComponent() {
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(298.0, 50.0);
+    testSystem.addComponent("nitrogen", 0.01);
+    testSystem.addComponent("CO2", 0.01);
+    testSystem.addComponent("methane", 0.98);
+    testSystem.addComponent("water", 0.0);
+    testSystem.setMixingRule("classic");
+    int originalComponentCount = testSystem.getNumberOfComponents();
+
+    ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
+    assertDoesNotThrow(() -> testOps.calcPTphaseEnvelope());
+
+    double[] dewT = testOps.get("dewT");
+    double[] bubT = testOps.get("bubT");
+    assertTrue(dewT.length > 10, "Should trace more than 10 dew points, got: " + dewT.length);
+    assertTrue(bubT.length > 5, "Should trace more than 5 bubble points, got: " + bubT.length);
+    assertContainsFinitePointsAndNoInfinities(dewT);
+    assertContainsFinitePointsAndNoInfinities(bubT);
+    assertEquals(originalComponentCount - 1, testOps.getOperation().getThermoSystem().getNumberOfComponents(),
+        "The operation's private working system should exclude the zero-fraction component");
+    assertEquals(originalComponentCount, testSystem.getNumberOfComponents(),
+        "Phase-envelope tracing must not remove components from the caller's system");
+  }
+
+  /**
+   * Assert that an array contains finite physical points and no infinities. NaN values are allowed as branch-break
+   * sentinels.
+   *
+   * @param values values to check
+   */
+  private static void assertContainsFinitePointsAndNoInfinities(double[] values) {
+    int finiteCount = 0;
+    for (double value : values) {
+      assertTrue(!Double.isInfinite(value), "Envelope output must not contain infinite values");
+      if (Double.isFinite(value)) {
+        finiteCount++;
+      }
+    }
+    assertTrue(finiteCount > 0, "Envelope output should contain finite physical points");
+  }
+
+  /**
    * Test with TBP fractions. This tests the algorithm with heavy pseudo-components.
    */
   @Test
