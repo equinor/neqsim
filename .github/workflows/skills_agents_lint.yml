@@ -10,6 +10,7 @@ on:
       - ".github/agents/**"
       - "devtools/verify_skills_agents.py"
       - "devtools/generate_agent_skill_map.py"
+      - "devtools/verify_skill_mirror.py"
       - "devtools/agent_search.py"
       - "devtools/skill_search.py"
       - "devtools/test_agent_search.py"
@@ -42,6 +43,9 @@ jobs:
 
       - name: Regenerate agent → skill map
         run: python devtools/generate_agent_skill_map.py
+
+      - name: Report core skill-mirror drift (informational)
+        run: python devtools/verify_skill_mirror.py
 
       - name: Fail if AGENT_SKILL_MAP.md is stale
         shell: bash

@@ -221,6 +221,26 @@ class ExampleCatalogTest {
   }
 
   @Test
+  void testRootCauseAutonomous_infersSymptomAndFindings() {
+    // Reuse the compressor example's process, but run in autonomous mode (symptom = AUTO) with a longer historian.
+    String example = ExampleCatalog.getExample("root-cause", "compressor-high-vibration");
+    JsonObject input = JsonParser.parseString(example).getAsJsonObject();
+    input.addProperty("symptom", "AUTO");
+    input.addProperty("simulationEnabled", false);
+    input.addProperty("historianCsv", "time,vibration,bearingTemperature\n0,2.1,68.0\n10,2.4,69.0\n20,2.9,71.0\n"
+        + "30,3.5,73.0\n40,4.2,76.0\n50,5.0,79.0\n60,6.1,82.0");
+
+    String result = RootCauseRunner.run(input.toString());
+    JsonObject output = JsonParser.parseString(result).getAsJsonObject();
+    assertEquals("success", output.get("status").getAsString());
+    assertEquals("autonomous", output.get("mode").getAsString());
+    assertEquals("HIGH_VIBRATION", output.get("inferredSymptom").getAsString());
+    assertTrue(output.has("anomalies"));
+    assertTrue(output.getAsJsonArray("anomalies").size() > 0);
+    assertTrue(output.has("relationships"));
+  }
+
+  @Test
   void testRootCauseSeparatorLiquidCarryover_runsSuccessfully() {
     String example = ExampleCatalog.getExample("root-cause", "separator-liquid-carryover");
     assertNotNull(example);

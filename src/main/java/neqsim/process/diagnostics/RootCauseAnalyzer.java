@@ -76,6 +76,15 @@ public class RootCauseAnalyzer implements Serializable {
   /** Hypothesis generator (can be customized). */
   private HypothesisGenerator generator;
 
+  /** Anomalies detected by the most recent autonomous analysis. */
+  private List<AnomalyScanner.Anomaly> lastAnomalies = new ArrayList<>();
+
+  /** Relationships discovered by the most recent autonomous analysis. */
+  private List<RelationshipGraph.Relationship> lastRelationships = new ArrayList<>();
+
+  /** Topology-classified causal edges from the most recent autonomous analysis. */
+  private List<CausalTopologyModel.CausalEdge> lastCausalEdges = new ArrayList<>();
+
   /**
    * Creates a root cause analyzer.
    *
@@ -159,6 +168,158 @@ public class RootCauseAnalyzer implements Serializable {
    */
   public void setHypothesisGenerator(HypothesisGenerator generator) {
     this.generator = generator;
+  }
+
+  /**
+   * Runs an autonomous root cause analysis that discovers the symptom and relationships on its own.
+   *
+   * <p>
+   * Unlike {@link #analyze()}, this method does not require a symptom to be set. It first scans the historian data with
+   * {@link AnomalyScanner} to find abnormal tags and propose a candidate symptom, then discovers cross-tag lead-lag
+   * relationships with {@link RelationshipGraph}, and finally runs the Bayesian hypothesis analysis with the
+   * auto-detected symptom. If a symptom was set explicitly it is kept and used instead of the scanned one. The detected
+   * anomalies and relationships are retained and are available via {@link #getLastAnomalies()} and
+   * {@link #getLastRelationships()}. The tag-to-equipment map for topology classification is auto-derived, so
+   * {@link #getLastCausalEdges()} is populated turnkey.
+   * </p>
+   *
+   * @return root cause analysis report with ranked hypotheses
+   * @throws IllegalStateException if no symptom was set and none could be inferred from the data
+   */
+  public RootCauseReport analyzeAutonomous() {
+    return analyzeAutonomous(null);
+  }
+
+  /**
+   * Runs an autonomous root cause analysis and promotes discovered relationships to causal candidates using the process
+   * topology.
+   *
+   * @param tagToEquipment map of tag name to owning equipment name; when {@code null} the map is auto-derived from the
+   * historian tag names and the process equipment (see {@link #inferTagToEquipment()}), so the topology classification
+   * runs turnkey without a caller-supplied map. The classified relationships are available via
+   * {@link #getLastCausalEdges()}
+   * @return root cause analysis report with ranked hypotheses
+   * @throws IllegalStateException if no symptom was set and none could be inferred from the data
+   */
+  public RootCauseReport analyzeAutonomous(Map<String, String> tagToEquipment) {
+    // Step A: scan for anomalies and propose a symptom when none was set.
+    AnomalyScanner scanner = new AnomalyScanner();
+    for (Map.Entry<String, double[]> entry : designLimits.entrySet()) {
+      scanner.setDesignLimit(entry.getKey(), entry.getValue()[0], entry.getValue()[1]);
+    }
+    this.lastAnomalies = scanner.scan(historianData);
+
+    if (symptom == null) {
+      Symptom suggested = scanner.suggestSymptom(lastAnomalies);
+      if (suggested == null) {
+        throw new IllegalStateException(
+            "Autonomous analysis found no symptom-mapping anomaly; set a symptom explicitly "
+                + "or supply design limits and named tags (e.g. containing 'vibration', 'temperature', 'pressure').");
+      }
+      logger.info("AnomalyScanner inferred symptom {} for '{}'", suggested.name(), equipmentName);
+      this.symptom = suggested;
+    }
+
+    // Step B: discover lead-lag relationships across all tags.
+    RelationshipGraph graph = new RelationshipGraph();
+    graph.setTimestamps(timestamps);
+    this.lastRelationships = graph.analyze(historianData);
+
+    // Step C: promote relationships to causal candidates using topology. Auto-derive the tag-to-equipment map when the
+    // caller did not supply one, so the topology verdict comes for free.
+    Map<String, String> resolvedTagMap = tagToEquipment != null ? tagToEquipment : inferTagToEquipment();
+    if (resolvedTagMap != null && !resolvedTagMap.isEmpty() && !lastRelationships.isEmpty()) {
+      Map<String, java.util.Set<String>> adjacency = CausalTopologyModel.buildDownstreamAdjacency(processSystem);
+      CausalTopologyModel topology = new CausalTopologyModel(adjacency, resolvedTagMap);
+      this.lastCausalEdges = topology.classify(lastRelationships);
+    } else {
+      this.lastCausalEdges = new ArrayList<>();
+    }
+
+    // Step D: run the standard Bayesian analysis with the (now set) symptom.
+    return analyze();
+  }
+
+  /**
+   * Infers a tag-to-equipment map by matching each historian tag name against the process equipment names.
+   *
+   * <p>
+   * A tag is assigned to the equipment whose name it starts with (before a dot/underscore separator) or, failing that,
+   * the longest equipment name it contains (case-insensitive). Tags that match no equipment are left unmapped and are
+   * simply skipped by the topology classifier.
+   * </p>
+   *
+   * @return a map of tag name to owning equipment name; may be empty when no tags match any equipment
+   */
+  private Map<String, String> inferTagToEquipment() {
+    Map<String, String> map = new HashMap<String, String>();
+    if (historianData == null || historianData.isEmpty()) {
+      return map;
+    }
+    List<String> equipmentNames = new ArrayList<String>();
+    for (ProcessEquipmentInterface eq : processSystem.getUnitOperations()) {
+      if (eq.getName() != null && !eq.getName().trim().isEmpty()) {
+        equipmentNames.add(eq.getName());
+      }
+    }
+    for (String tag : historianData.keySet()) {
+      if (tag == null) {
+        continue;
+      }
+      String prefix = tag;
+      int sep = tag.indexOf('.');
+      if (sep < 0) {
+        sep = tag.indexOf('_');
+      }
+      if (sep > 0) {
+        prefix = tag.substring(0, sep);
+      }
+      String best = null;
+      for (String name : equipmentNames) {
+        // Prefer an exact prefix match; otherwise the longest contained equipment name.
+        boolean prefixMatch = prefix.equalsIgnoreCase(name);
+        boolean containsMatch = tag.toLowerCase(java.util.Locale.ROOT)
+            .contains(name.toLowerCase(java.util.Locale.ROOT));
+        if (prefixMatch) {
+          best = name;
+          break;
+        }
+        if (containsMatch && (best == null || name.length() > best.length())) {
+          best = name;
+        }
+      }
+      if (best != null) {
+        map.put(tag, best);
+      }
+    }
+    return map;
+  }
+
+  /**
+   * Returns the anomalies detected by the most recent autonomous analysis.
+   *
+   * @return list of anomalies, empty when none were detected or autonomous analysis has not been run
+   */
+  public List<AnomalyScanner.Anomaly> getLastAnomalies() {
+    return lastAnomalies;
+  }
+
+  /**
+   * Returns the lead-lag relationships discovered by the most recent autonomous analysis.
+   *
+   * @return list of relationships, empty when none were discovered or autonomous analysis has not been run
+   */
+  public List<RelationshipGraph.Relationship> getLastRelationships() {
+    return lastRelationships;
+  }
+
+  /**
+   * Returns the topology-classified causal edges from the most recent autonomous analysis.
+   *
+   * @return list of causal edges, empty when no tag-to-equipment mapping was supplied
+   */
+  public List<CausalTopologyModel.CausalEdge> getLastCausalEdges() {
+    return lastCausalEdges;
   }
 
   /**

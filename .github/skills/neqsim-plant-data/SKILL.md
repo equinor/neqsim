@@ -786,6 +786,14 @@ Tagreader data feeds directly into the `neqsim.process.diagnostics.RootCauseAnal
 for automated equipment diagnosis. See `neqsim-root-cause-analysis` skill for
 the full framework.
 
+**When the symptom / cause is unknown**, do not stop at reading tags — chain
+`neqsim-plant-data → neqsim-autonomous-investigation → neqsim-root-cause-analysis`.
+Pull *all* relevant tags (not just the one named), hand the whole tag map to
+`RootCauseAnalyzer.analyzeAutonomous()` (or the MCP `runRootCauseAnalysis` with
+`symptom` omitted / `"AUTO"`), and let it detect anomalies, discover lead-lag
+relationships, and rank causes on its own. See the `neqsim-autonomous-investigation`
+skill for the observe -> hypothesize -> test loop.
+
 ### Tagreader to RCA Workflow
 
 ```python

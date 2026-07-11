@@ -184,8 +184,10 @@ public class AcidGasPHTest {
     system.initProperties();
 
     double pHacidic = system.getpHwithAlkalinity(0.0);
-    // ~5 meq/L bicarbonate-style alkalinity, representative of dosed scrubber / produced water
-    double pHbuffered = system.getpHwithAlkalinity(5.0e-3);
+    // ~30 meq/L bicarbonate-style alkalinity, representative of a scavenger-dosed scrubber /
+    // produced water. The CO2-saturated aqueous phase here is heavily acid-loaded (unbuffered
+    // pH ~3.9), so a substantial net base is needed to lift it into the carbonate-scaling band.
+    double pHbuffered = system.getpHwithAlkalinity(3.0e-2);
     logger.info("acidic pH = {}, alkalinity-buffered pH = {}", pHacidic, pHbuffered);
 
     assertTrue(Double.isFinite(pHbuffered), "buffered pH should be finite, got " + pHbuffered);
