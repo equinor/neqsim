@@ -89,9 +89,24 @@
     "neqsim-troubleshooting"
   ],
   "root cause analysis": [
+    "neqsim-autonomous-investigation",
+    "neqsim-root-cause-analysis"
+  ],
+  "autonomous investigation": [
+    "neqsim-autonomous-investigation"
+  ],
+  "discover relationships between tags": [
+    "neqsim-autonomous-investigation"
+  ],
+  "lead lag correlation discovery": [
+    "neqsim-autonomous-investigation"
+  ],
+  "unknown symptom anomaly investigation": [
+    "neqsim-autonomous-investigation",
     "neqsim-root-cause-analysis"
   ],
   "equipment anomaly diagnosis": [
+    "neqsim-autonomous-investigation",
     "neqsim-root-cause-analysis"
   ],
   "compressor high vibration": [

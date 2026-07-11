@@ -489,7 +489,29 @@ checks before writing Step 1 content:
    `@literature.scout` to populate `step1_scope_and_research/references/`
    and the `## Literature & Reference Documents` section of `notes.md`.
 
-Loaded skills: neqsim-document-intelligence-extraction, neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map, neqsim-platform-modeling, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer
+Loaded skills: neqsim-document-intelligence-extraction, neqsim-api-patterns, neqsim-notebook-patterns, neqsim-professional-reporting, neqsim-troubleshooting, neqsim-input-validation, neqsim-capability-map, neqsim-platform-modeling, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-trapped-liquid-fire-rupture, neqsim-pid-process-operations, neqsim-water-hammer, neqsim-autonomous-investigation, neqsim-root-cause-analysis
+
+### Autonomous investigation (when the symptom / cause is NOT given)
+
+For root-cause, deviation, under-performance, trip, or "why is this happening?"
+tasks where the user has **not** told you what to look for, do not ask them.
+Run the investigation loop from `neqsim-autonomous-investigation` BEFORE fixing a
+scope, and use **all** available data and tools, not just the one tag/unit named:
+
+1. **Gather all data** — pull the full historian tag map (`@plant.data` /
+   `neqsim-plant-data` / `@seeq.connect`), plus alarms/events, maintenance
+   history, and STID design limits when available. Save snapshots to the task
+   folder.
+2. **Observe** — hand the whole tag map (no symptom) to
+   `RootCauseAnalyzer.analyzeAutonomous(tagToEquipment)` (or MCP
+   `runRootCauseAnalysis` with `symptom` omitted / `"AUTO"`). It auto-detects
+   abnormal tags (`AnomalyScanner`), discovers lead-lag relationships
+   (`RelationshipGraph`), and classifies them against the flowsheet topology
+   (`CausalTopologyModel`).
+3. **Hypothesize / test / discriminate** — form ≥3 competing hypotheses
+   (including "data/instrument artifact"), verify with the NeqSim simulation, and
+   report the **discovered relationships and the discriminating test**, not just a
+   single conclusion. Treat any supplied classification as a hint to challenge.
 
 For operational plant tasks involving P&ID symbols, valve actions, live plant
 data, active train state, isolation, evacuation, or dynamic response, load

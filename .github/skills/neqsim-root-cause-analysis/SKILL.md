@@ -237,12 +237,22 @@ The score (0-1) is based on direction matching:
 
 | Skill | Integration |
 |-------|------------|
+| `neqsim-autonomous-investigation` | **Upstream** — when the symptom/driver is NOT given, run the observe→hypothesize→test loop and discover lead-lag relationships (`RelationshipGraph`) first, then feed the discovered candidate causes into RCA instead of a fixed symptom |
 | `neqsim-plant-data` | Read historian data via tagreader API |
 | `neqsim-stid-retriever` | Retrieve STID design documents |
 | `neqsim-technical-document-reading` | Extract design values from datasheets |
 | `neqsim-troubleshooting` | Recovery strategies after diagnosis |
 | `neqsim-process-safety` | Link RCA findings to barrier management |
 | `neqsim-pid-process-operations` | P&ID context for equipment relationships |
+
+**When the symptom is unknown**, do not ask the user "what should I look for?".
+Chain `neqsim-plant-data → neqsim-autonomous-investigation → this skill`: the
+investigation skill scans all tags for anomalies and lead-lag relationships, and
+hands the candidate causes here for Bayesian scoring + simulation verification.
+The one-call path is `RootCauseAnalyzer.analyzeAutonomous()` (or
+`analyzeAutonomous(tagToEquipment)` to also classify relationships against the
+flowsheet topology) — it infers the symptom with `AnomalyScanner`, discovers
+relationships with `RelationshipGraph`, then runs the standard analysis.
 
 ## MCP Tool
 

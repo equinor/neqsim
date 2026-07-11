@@ -12,6 +12,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.process.diagnostics.AnomalyScanner;
+import neqsim.process.diagnostics.CausalTopologyModel;
+import neqsim.process.diagnostics.RelationshipGraph;
 import neqsim.process.diagnostics.RootCauseAnalyzer;
 import neqsim.process.diagnostics.RootCauseReport;
 import neqsim.process.diagnostics.Symptom;
@@ -67,14 +70,24 @@ public final class RootCauseRunner {
 
       // Required fields
       String equipmentName = getRequiredString(input, "equipmentName");
-      String symptomStr = getRequiredString(input, "symptom");
 
-      Symptom symptom = parseSymptom(symptomStr);
-      if (symptom == null) {
-        return errorJson(
-            "Unknown symptom: " + symptomStr + ". Supported: TRIP, HIGH_VIBRATION, SEAL_FAILURE, HIGH_TEMPERATURE, "
-                + "LOW_EFFICIENCY, PRESSURE_DEVIATION, FLOW_DEVIATION, HIGH_POWER, "
-                + "SURGE_EVENT, FOULING, ABNORMAL_NOISE, LIQUID_CARRYOVER");
+      // Symptom is optional: when absent (or "AUTO"/"AUTONOMOUS"), the analyzer infers the symptom
+      // from the historian data and discovers relationships on its own (autonomous investigation).
+      boolean autonomous = true;
+      Symptom symptom = null;
+      if (input.has("symptom") && !input.get("symptom").isJsonNull()) {
+        String symptomStr = input.get("symptom").getAsString().trim();
+        if (!symptomStr.isEmpty() && !symptomStr.equalsIgnoreCase("AUTO")
+            && !symptomStr.equalsIgnoreCase("AUTONOMOUS")) {
+          symptom = parseSymptom(symptomStr);
+          if (symptom == null) {
+            return errorJson("Unknown symptom: " + symptomStr + ". Supported: TRIP, HIGH_VIBRATION, "
+                + "SEAL_FAILURE, HIGH_TEMPERATURE, LOW_EFFICIENCY, PRESSURE_DEVIATION, FLOW_DEVIATION, "
+                + "HIGH_POWER, SURGE_EVENT, FOULING, ABNORMAL_NOISE, LIQUID_CARRYOVER, "
+                + "or omit / use AUTO for autonomous mode");
+          }
+          autonomous = false;
+        }
       }
 
       // Build process from JSON
@@ -87,7 +100,9 @@ public final class RootCauseRunner {
 
       // Create analyzer
       RootCauseAnalyzer rca = new RootCauseAnalyzer(process, equipmentName);
-      rca.setSymptom(symptom);
+      if (symptom != null) {
+        rca.setSymptom(symptom);
+      }
 
       // Optional: simulation enabled
       if (input.has("simulationEnabled")) {
@@ -123,13 +138,28 @@ public final class RootCauseRunner {
         rca.setStidData(stidMap);
       }
 
-      // Run analysis
-      RootCauseReport report = rca.analyze();
+      // Optional: tag-to-equipment map (enables topology-classified causal edges in autonomous mode)
+      Map<String, String> tagToEquipment = null;
+      if (input.has("tagToEquipment") && input.get("tagToEquipment").isJsonObject()) {
+        tagToEquipment = new HashMap<String, String>();
+        JsonObject t2e = input.getAsJsonObject("tagToEquipment");
+        for (Map.Entry<String, JsonElement> entry : t2e.entrySet()) {
+          tagToEquipment.put(entry.getKey(), entry.getValue().getAsString());
+        }
+      }
 
-      // Return JSON report
+      // Run analysis (autonomous when no explicit symptom was supplied)
+      RootCauseReport report = autonomous ? rca.analyzeAutonomous(tagToEquipment) : rca.analyze();
+
+      // Return JSON report, enriched with autonomous-investigation findings
       String reportJson = report.toJson();
       JsonObject result = JsonParser.parseString(reportJson).getAsJsonObject();
       result.addProperty("status", "success");
+      result.addProperty("mode", autonomous ? "autonomous" : "symptom");
+      result.addProperty("inferredSymptom", report.getSymptom() != null ? report.getSymptom().name() : "");
+      result.add("anomalies", anomaliesToJson(rca));
+      result.add("relationships", relationshipsToJson(rca));
+      result.add("causalEdges", causalEdgesToJson(rca));
       return GSON.toJson(result);
 
     } catch (IllegalArgumentException e) {
@@ -227,6 +257,69 @@ public final class RootCauseRunner {
       throw new IllegalArgumentException("Empty required field: " + field);
     }
     return value;
+  }
+
+  /**
+   * Builds a JSON array of the anomalies detected by an autonomous analysis.
+   *
+   * @param rca the analyzer after an autonomous run
+   * @return JSON array of anomalies (empty when none were detected)
+   */
+  private static JsonArray anomaliesToJson(RootCauseAnalyzer rca) {
+    JsonArray arr = new JsonArray();
+    for (AnomalyScanner.Anomaly a : rca.getLastAnomalies()) {
+      JsonObject o = new JsonObject();
+      o.addProperty("tag", a.getTag());
+      o.addProperty("kind", a.getKind().name());
+      o.addProperty("severity", a.getSeverity());
+      o.addProperty("latestValue", a.getLatestValue());
+      o.addProperty("description", a.getDescription());
+      arr.add(o);
+    }
+    return arr;
+  }
+
+  /**
+   * Builds a JSON array of the lead-lag relationships discovered by an autonomous analysis.
+   *
+   * @param rca the analyzer after an autonomous run
+   * @return JSON array of relationships (empty when none were discovered)
+   */
+  private static JsonArray relationshipsToJson(RootCauseAnalyzer rca) {
+    JsonArray arr = new JsonArray();
+    for (RelationshipGraph.Relationship r : rca.getLastRelationships()) {
+      JsonObject o = new JsonObject();
+      o.addProperty("source", r.getSource());
+      o.addProperty("target", r.getTarget());
+      o.addProperty("direction", r.getDirection().name());
+      o.addProperty("lagSamples", r.getLagSamples());
+      o.addProperty("lagSeconds", r.getLagSeconds());
+      o.addProperty("correlation", r.getCorrelation());
+      arr.add(o);
+    }
+    return arr;
+  }
+
+  /**
+   * Builds a JSON array of the topology-classified causal edges from an autonomous analysis.
+   *
+   * @param rca the analyzer after an autonomous run
+   * @return JSON array of causal edges (empty when no tag-to-equipment map was supplied)
+   */
+  private static JsonArray causalEdgesToJson(RootCauseAnalyzer rca) {
+    JsonArray arr = new JsonArray();
+    for (CausalTopologyModel.CausalEdge e : rca.getLastCausalEdges()) {
+      JsonObject o = new JsonObject();
+      o.addProperty("source", e.getRelationship().getSource());
+      o.addProperty("target", e.getRelationship().getTarget());
+      o.addProperty("verdict", e.getVerdict().name());
+      o.addProperty("leaderEquipment", e.getLeaderEquipment());
+      o.addProperty("followerEquipment", e.getFollowerEquipment());
+      o.addProperty("correlation", e.getRelationship().getCorrelation());
+      o.addProperty("rationale", e.getRationale());
+      arr.add(o);
+    }
+    return arr;
   }
 
   /**
