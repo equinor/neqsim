@@ -54,7 +54,7 @@ public class ValveScaleDrift implements Serializable {
 
   private static final long serialVersionUID = 1000L;
 
-  /** Seconds per year, used to convert growth rate and time steps. */
+  /** Days per year, used to convert growth rate (mm/yr) and time steps (days). */
   private static final double DAYS_PER_YEAR = 365.25;
 
   /** The valve whose effective flow coefficient is driven by the deposit. */
