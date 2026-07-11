@@ -706,9 +706,9 @@ public class ScalePredictionCalculator implements Serializable {
    * @return Ksp in (mol/L)^2
    */
   private double sideriteKsp(double TK) {
-    // Greenberg & Tomson (1992):
-    // log10(Ksp) = -59.3498 - 0.041377*T + 2.1963/T + 24.5724*log10(T) + 2.518e-5*T^2
-    double logKsp = -59.3498 - 0.041377 * TK + 2.1963 / TK + 24.5724 * Math.log10(TK) + 2.518e-5 * TK * TK;
+    // Greenberg & Tomson (1992): log10(Ksp) = -59.3498 - 0.041377*T - 2.1963/T + 24.5724*log10(T)
+    // (gives log10 Ksp = -10.89 at 25 C, matching published siderite solubility).
+    double logKsp = -59.3498 - 0.041377 * TK - 2.1963 / TK + 24.5724 * Math.log10(TK);
     return applyPressureCorrection(Math.pow(10, logKsp), TK, -52.9, -7.5e-3);
   }
 

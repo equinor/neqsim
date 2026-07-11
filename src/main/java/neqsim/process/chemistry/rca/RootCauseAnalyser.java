@@ -49,6 +49,7 @@ public class RootCauseAnalyser implements Serializable {
   private final List<Symptom> symptoms = new ArrayList<Symptom>();
   private final List<ProductionChemical> chemicals = new ArrayList<ProductionChemical>();
   private ChemicalCompatibilityAssessor compatibilityAssessor;
+  private transient neqsim.process.chemistry.scale.ScaleRemediationAdvisor remediationAdvisor;
   private double temperatureC = 60.0;
   private double pressureBara = 50.0;
   private double pH = 6.5;
@@ -396,6 +397,7 @@ public class RootCauseAnalyser implements Serializable {
       double score = 0.55 + 0.25 * (calciumMgL > 1000.0 ? 1.0 : calciumMgL / 1000.0);
       String evidence = "Deposit symptom + Ca = " + calciumMgL + " mg/L; verify with XRD";
       String action = "Run ScalePredictionCalculator; raise scale inhibitor dose; verify SI > 0";
+      String remediationTarget = "CaCO3";
 
       // If ion chemistry is available, quantify the scale with the coupled multi-mineral equilibrium
       // so the candidate carries the dominant mineral and its predicted amount, not just a flag.
@@ -420,6 +422,9 @@ public class RootCauseAnalyser implements Serializable {
             total, dominant, best, calciumMgL, bariumMgL, strontiumMgL, sulphateMgL, bicarbonateMgL);
         action = "Confirm mineralogy (XRD); target inhibitor at " + dominant
             + "; review shared-ion sources (e.g. seawater sulphate breakthrough for barite/celestite)";
+        if (!"none".equals(dominant)) {
+          remediationTarget = dominant;
+        }
       } else if (eq != null && haveAnionData) {
         // Enough anion data to be confident the brine is thermodynamically undersaturated.
         score = Math.max(0.15, score - 0.25);
@@ -429,17 +434,17 @@ public class RootCauseAnalyser implements Serializable {
         action = "Re-examine deposit type (XRD/SEM); scale thermodynamically unlikely at these conditions";
       }
       candidates.add(new RootCauseCandidate("MINERAL_SCALE", "Mineral scale precipitation (carbonate / sulphate)",
-          Math.min(0.95, score), evidence, action));
+          Math.min(0.95, score), evidence, action + remediationHint(remediationTarget)));
     }
     if (desc.contains("wax") || desc.contains("paraffin")) {
       candidates.add(new RootCauseCandidate("WAX_DEPOSITION", "Paraffin wax deposition below WAT", 0.75,
           "Deposit symptom matches wax morphology; check vs. WAT",
-          "Run WaxPrecipitationModel; apply wax inhibitor or insulation"));
+          "Run WaxPrecipitationModel; apply wax inhibitor or insulation" + remediationHint("Wax")));
     }
     if (desc.contains("asphalt") || desc.contains("black") || desc.contains("tar")) {
       candidates.add(new RootCauseCandidate("ASPHALTENE", "Asphaltene precipitation near onset pressure", 0.70,
           "Deposit symptom matches asphaltene appearance",
-          "Run asphaltene stability check; apply dispersant; manage pressure"));
+          "Run asphaltene stability check; apply dispersant; manage pressure" + remediationHint("Asphaltene")));
     }
     if (desc.contains("hydrate") || desc.contains("ice") || desc.contains("plug")) {
       candidates.add(new RootCauseCandidate("HYDRATE_PLUG", "Hydrate formation", temperatureC < 25.0 ? 0.80 : 0.45,
@@ -449,8 +454,31 @@ public class RootCauseAnalyser implements Serializable {
     if (desc.contains("fes") || desc.contains("iron sulph") || desc.contains("black powder")) {
       candidates.add(new RootCauseCandidate("FES_DEPOSITION", "Iron sulphide deposition (sour service)",
           h2sPartialPressureBar > 0.1 ? 0.85 : 0.40, "Deposit symptom + H2S pp = " + h2sPartialPressureBar + " bar",
-          "Check H2S scavenger performance; apply FeS dispersant; review material"));
+          "Check H2S scavenger performance; apply FeS dispersant; review material" + remediationHint("FeS")));
     }
+  }
+
+  /**
+   * Returns a concise cleaning/dissolver hint for a scaled or precipitated deposit, drawn from the
+   * {@link neqsim.process.chemistry.scale.ScaleRemediationAdvisor} knowledge base. Appended to a candidate's
+   * recommendation so the RCA proposed solution names a concrete solvent to clean the already-fouled equipment (as
+   * distinct from a prevention/inhibitor action).
+   *
+   * @param scaleType canonical deposit key or alias (e.g. CaCO3, barite, dithiazine)
+   * @return a hint string beginning with "; to clean fouled equipment: ", or an empty string if no remedy is known
+   */
+  private String remediationHint(String scaleType) {
+    if (remediationAdvisor == null) {
+      remediationAdvisor = new neqsim.process.chemistry.scale.ScaleRemediationAdvisor();
+    }
+    List<neqsim.process.chemistry.scale.ScaleRemediationAdvisor.RemediationOption> opts = remediationAdvisor
+        .recommendFor(scaleType);
+    if (opts.isEmpty()) {
+      return "";
+    }
+    neqsim.process.chemistry.scale.ScaleRemediationAdvisor.RemediationOption best = opts.get(0);
+    return "; to clean fouled equipment: " + best.getDissolver() + " (" + best.getConcentration() + ", "
+        + best.getMethod() + ") — " + best.getCautions();
   }
 
   /**

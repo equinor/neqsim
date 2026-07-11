@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
-description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
-last_verified: "2026-07-10"
+description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
+last_verified: "2026-07-11"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -604,6 +604,38 @@ check on a process `Stream`.
   For high-pressure brines, enable the second-order (compressibility) Ksp term on
   the predictor first: `predictionCalc.setSecondOrderPressureCorrection(true)`.
 
+- *In a process flowsheet (scaling mass RATE):* `StreamScaleAnalyzer` extracts the
+  aqueous ion chemistry + produced-water throughput from a run `Stream` and turns
+  the coupled equilibrium into a **kg/day** scaling rate — the number that matters
+  for operations and deposition:
+  ```java
+  StreamScaleAnalyzer a = StreamScaleAnalyzer.fromStream(producedWaterStream);
+  a.analyze();
+  double bariteKgPerDay = a.getScaleRateKgPerDay("BaSO4");
+  double totalKgPerDay  = a.getTotalScaleRateKgPerDay();
+  String dominant       = a.getDominantScale();
+  ```
+  (Needs an electrolyte-CPA fluid with an aqueous ion phase; a non-electrolyte
+  stream carries no ions and reports no scale.)
+
+- *Root cause analysis:* `RootCauseAnalyser.setWaterChemistryFromStream(stream)`
+  (or the ion setters) makes a scale-deposit symptom self-quantifying — the
+  `MINERAL_SCALE` candidate then carries the coupled dominant mineral and its
+  predicted mg/L, and is *down-weighted* when the brine is thermodynamically
+  undersaturated (deposit is more likely wax/asphaltene/corrosion product).
+
+- *Agentic (MCP):* the `runChemistry` tool exposes `analysis:"multiMineralScale"`
+  (ions in mg/L + T/P + optional `waterFlow_LPerDay`, `activityModel:"BDOT"`,
+  `secondOrderPressure`) returning per-mineral amounts and a kg/day rate.
+
+> **Model validation:** the Ksp correlations are pinned to published log10(Ksp)
+> at 25 °C in `ScaleKspLiteratureBenchmarkTest` — calcite −8.48, barite −9.97,
+> celestite −6.63, anhydrite −4.36, siderite −10.89 (Greenberg & Tomson 1992).
+> Keep the siderite form `-59.3498 - 0.041377*T - 2.1963/T + 24.5724*log10(T)`
+> consistent across `ScalePredictionCalculator`, `CheckScalePotential` and
+> `CalcSaltSatauration` (no `T^2` term).
+
+
 **Kinetics** — SI says *if*, not *how fast*. `ScaleKinetics` adds induction time
 and growth regime on top of the SI:
 
@@ -626,6 +658,65 @@ String worst = mix.getWorstMineral();          // e.g. BaSO4
 
 Deposition along a line: `ScaleDepositionAccumulator` (walks a `PipeBeggsAndBrills`),
 or the coupled corrosion+scale `PipeSegmentIntegrity` above.
+
+### Valve scale drift (plugging → Cv loss → opening drift → RCA)
+
+Scale/solids on a control-valve trim do not fail the valve suddenly: the deposit
+shrinks the open flow area, the effective `Kv/Cv` drops, and the level/pressure
+controller opens the valve further to hold setpoint — an observable upward
+**drift** of the opening until it pins at 100% and control is lost. This is the
+classic level-valve-plugging signature. `ThrottlingValve` now carries a fouling
+term and `ValveScaleDrift` turns a deposit growth rate into that drift:
+
+```java
+valve.setFoulingFraction(0.5);        // effectiveKv = Kv*(1-f); 0=clean
+double effCv = valve.getEffectiveCv();
+
+ValveScaleDrift drift = new ValveScaleDrift(valve)
+    .setPortDiameter(0.05)            // trim port diameter [m]
+    .setKinetics(scaleKinetics);      // or setGrowthRateMmPerYear(20.0)
+for (int day = 0; day < 60; day++) {
+  drift.advance(1.0);                 // grow deposit, update valve foulingFraction
+  process.run();                      // controller compensates -> opening drifts up
+}
+double daysToPin = drift.predictTimeToPinDays(cleanOpeningPercent); // loss of control
+double tPlug     = drift.getTimeToPlugDays();                       // full closure
+```
+
+Uniform radial deposit model: `foulingFraction = 1 - ((d0 - 2t)/d0)^2`; the
+opening required to hold flow rises as `cleanOpening / (1 - fouling)`. Use it in
+an RCA to reproduce the "both LVs → 100% open, level still rising, no inflow
+surge" trend and to bound time-to-plug.
+
+### Scale / precipitation remediation (dissolvers & washing for RCA solutions)
+
+Once a deposit is identified, `ScaleRemediationAdvisor` recommends the dissolver /
+solvent / wash to clean the **already-fouled** equipment (valves, trim, bridles,
+lines, exchangers) — the proposed-solution counterpart to inhibitor prevention.
+It is backed by a knowledge-base CSV (`/data/scale_remediation.csv`) and maps
+common mineral names to canonical formulae:
+
+```java
+ScaleRemediationAdvisor advisor = new ScaleRemediationAdvisor();
+List<ScaleRemediationAdvisor.RemediationOption> opts = advisor.recommendFor("calcite");
+ScaleRemediationAdvisor.RemediationOption best = opts.get(0); // ordered by effectiveness
+best.getDissolver();   // e.g. "Hydrochloric acid (HCl) with corrosion inhibitor ..."
+best.getMethod();      // "Acid soak or circulation, then neutralise and flush"
+best.getCautions();    // safety/operational cautions
+String json = advisor.toJson("BaSO4");
+```
+
+Coverage & the key gotcha it encodes: **acid dissolves carbonate/sulfide scale
+(CaCO3, FeCO3, FeS) but NOT sulfate scale** — barite/celestite (BaSO4, SrSO4)
+need a high-pH chelant (DTPA/EDTA); dithiazine (H2S-scavenger solids) needs a
+proprietary dissolver **plus restoring water pH control** to prevent recurrence;
+asphaltene/wax/naphthenate use aromatic solvent / hot oil. Unknown deposits
+return a "sample-and-identify first (XRD/SEM-EDX)" guard.
+
+`RootCauseAnalyser` uses this automatically: every deposit candidate
+(`MINERAL_SCALE`, `WAX_DEPOSITION`, `ASPHALTENE`, `FES_DEPOSITION`) now appends a
+concrete "to clean fouled equipment: <dissolver> …" hint to its recommendation,
+targeting the coupled dominant mineral when ion chemistry is available.
 
 ### Deposits on compressors (fouling → performance loss → washing)
 

@@ -366,8 +366,7 @@ public class CalcSaltSatauration extends ConstantDutyTemperatureFlash {
           + 71.595 * Math.log10(temperatureK);
       ksp = Math.pow(10.0, log10Ksp);
     } else if (saltName.equals("FeCO3")) {
-      double log10Ksp = -59.3498 - 0.041377 * temperatureK + 2.1963 / temperatureK + 24.5724 * Math.log10(temperatureK)
-          + 2.518e-5 * temperatureK * temperatureK;
+      double log10Ksp = -59.3498 - 0.041377 * temperatureK - 2.1963 / temperatureK + 24.5724 * Math.log10(temperatureK);
       ksp = Math.pow(10.0, log10Ksp);
     } else {
       double lnKsp = saltData.kspwater / temperatureK + saltData.kspwater2 + Math.log(temperatureK) * saltData.kspwater3
