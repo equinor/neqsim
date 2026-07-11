@@ -27,6 +27,9 @@ import neqsim.util.unit.PressureUnit;
 public class SimpleReservoir extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
+      .getLogger(SimpleReservoir.class);
 
   SystemInterface thermoSystem;
 
@@ -49,6 +52,22 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   // StreamInterface oilOutStream;
   double reservoirVolume = 0.0;
   double lowPressureLimit = 50.0;
+
+  /** Cumulative water produced at surface conditions (Sm3). */
+  double waterProductionTotal = 0.0;
+
+  /** Flag enabling recording of the pressure/production surveillance history during transient runs. */
+  private boolean recordProductionHistory = true;
+  /** Reservoir time at each recorded history point (s). */
+  private final ArrayList<Double> timeHistory = new ArrayList<Double>();
+  /** Average reservoir pressure at each recorded history point (bara). */
+  private final ArrayList<Double> pressureHistory = new ArrayList<Double>();
+  /** Cumulative gas produced at each recorded history point (Sm3). */
+  private final ArrayList<Double> gasProductionHistory = new ArrayList<Double>();
+  /** Cumulative oil produced at each recorded history point (Sm3). */
+  private final ArrayList<Double> oilProductionHistory = new ArrayList<Double>();
+  /** Cumulative water produced at each recorded history point (Sm3). */
+  private final ArrayList<Double> waterProductionHistory = new ArrayList<Double>();
 
   /**
    * Constructor for SimpleReservoir.
@@ -316,6 +335,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     OOIP = getOilInPlace("Sm3");
     OGIP = getGasInPlace("Sm3");
     lowPressureLimit = 50.0;
+    clearProductionHistory();
+    recordProductionHistoryPoint();
   }
 
   /** {@inheritDoc} */
@@ -439,12 +460,13 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   public void runTransient(double dt, UUID id) {
     increaseTime(dt);
     if (thermoSystem.getPressure("bara") < lowPressureLimit) {
-      System.out.println("low pressure reservoir limit reached");
+      logger.info("low pressure reservoir limit reached");
       setCalculationIdentifier(id);
       return;
     }
     gasProductionTotal += getGasProdution("Sm3/sec") * dt;
     oilProductionTotal += getOilProdution("Sm3/sec") * dt;
+    waterProductionTotal += getWaterProdution("Sm3/sec") * dt;
     thermoSystem.init(0);
     for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
       // thermoSystem.addComponent(i, -10000000000.001);
@@ -543,6 +565,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     for (int k = 0; k < gasInjector.size(); k++) {
       gasInjector.get(k).getStream().setPressure(thermoSystem.getPressure());
     }
+    recordProductionHistoryPoint();
     setCalculationIdentifier(id);
   }
 
@@ -776,5 +799,156 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   public double getLowPressureLimit(String unit) {
     PressureUnit conver = new PressureUnit(lowPressureLimit, "bara");
     return conver.getValue(unit);
+  }
+
+  // ============================================================
+  // Production-history surveillance support
+  // ============================================================
+
+  /**
+   * Enable or disable recording of the pressure/production surveillance history during transient runs.
+   *
+   * @param record {@code true} to record the history (default), {@code false} to disable
+   */
+  public void setRecordProductionHistory(boolean record) {
+    this.recordProductionHistory = record;
+  }
+
+  /**
+   * Clear the recorded pressure/production surveillance history.
+   */
+  public void clearProductionHistory() {
+    timeHistory.clear();
+    pressureHistory.clear();
+    gasProductionHistory.clear();
+    oilProductionHistory.clear();
+    waterProductionHistory.clear();
+  }
+
+  /**
+   * Record the current time, average reservoir pressure and cumulative production to the surveillance history.
+   *
+   * <p>
+   * Called automatically at initialization and after each transient step when recording is enabled.
+   * </p>
+   */
+  public void recordProductionHistoryPoint() {
+    if (!recordProductionHistory || thermoSystem == null) {
+      return;
+    }
+    timeHistory.add(getTime());
+    pressureHistory.add(thermoSystem.getPressure("bara"));
+    gasProductionHistory.add(gasProductionTotal);
+    oilProductionHistory.add(oilProductionTotal);
+    waterProductionHistory.add(waterProductionTotal);
+  }
+
+  /**
+   * Get the recorded reservoir-time history.
+   *
+   * @return array of times (s) at each recorded point
+   */
+  public double[] getTimeHistory() {
+    return toArray(timeHistory);
+  }
+
+  /**
+   * Get the recorded average-reservoir-pressure history.
+   *
+   * @return array of pressures (bara) at each recorded point
+   */
+  public double[] getPressureHistory() {
+    return toArray(pressureHistory);
+  }
+
+  /**
+   * Get the recorded cumulative gas-production history.
+   *
+   * @return array of cumulative gas produced (Sm3) at each recorded point
+   */
+  public double[] getGasProductionHistory() {
+    return toArray(gasProductionHistory);
+  }
+
+  /**
+   * Get the recorded cumulative oil-production history.
+   *
+   * @return array of cumulative oil produced (Sm3) at each recorded point
+   */
+  public double[] getOilProductionHistory() {
+    return toArray(oilProductionHistory);
+  }
+
+  /**
+   * Get the recorded cumulative water-production history.
+   *
+   * @return array of cumulative water produced (Sm3) at each recorded point
+   */
+  public double[] getWaterProductionHistory() {
+    return toArray(waterProductionHistory);
+  }
+
+  /**
+   * Get the cumulative water produced at surface conditions.
+   *
+   * @param unit "Sm3" or "MSm3"
+   * @return cumulative water production
+   */
+  public double getWaterProductionTotal(String unit) {
+    if (unit.equals("MSm3")) {
+      return waterProductionTotal / 1.0e6;
+    }
+    return waterProductionTotal;
+  }
+
+  /**
+   * Reservoir temperature of the current fluid.
+   *
+   * @param unit "K" or "C"
+   * @return reservoir temperature
+   */
+  public double getReservoirTemperature(String unit) {
+    return thermoSystem.getTemperature(unit);
+  }
+
+  /**
+   * Gas specific gravity (air = 1.0) of the reservoir gas phase, or of the total fluid when no gas phase is present.
+   *
+   * @return gas specific gravity (dimensionless)
+   */
+  public double getGasGravity() {
+    double airMolarMass = 28.9647;
+    if (thermoSystem.hasPhaseType("gas")) {
+      return thermoSystem.getPhase("gas").getMolarMass("gr/mol") / airMolarMass;
+    }
+    return thermoSystem.getMolarMass("gr/mol") / airMolarMass;
+  }
+
+  /**
+   * Create a reservoir-surveillance analyser bound to this reservoir.
+   *
+   * <p>
+   * The returned {@link ReservoirSurveillance} runs analytical (inverse) material balance, decline-curve fitting and
+   * aquifer-influx calculations on the recorded pressure/production history.
+   * </p>
+   *
+   * @return a {@link ReservoirSurveillance} bound to this reservoir
+   */
+  public ReservoirSurveillance getSurveillance() {
+    return new ReservoirSurveillance(this);
+  }
+
+  /**
+   * Convert a list of doubles to a primitive array.
+   *
+   * @param list the list to convert
+   * @return primitive double array
+   */
+  private static double[] toArray(ArrayList<Double> list) {
+    double[] out = new double[list.size()];
+    for (int i = 0; i < list.size(); i++) {
+      out[i] = list.get(i);
+    }
+    return out;
   }
 }

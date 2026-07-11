@@ -9,7 +9,59 @@
 
 ---
 
-## 2026-07-10 — New: separator/scrubber separation-efficiency report (K-factor operating windows)
+## 2026-07-11 — New: reservoir & production engineering (material balance, decline fitting, Gray well flow)
+
+### Summary
+
+Additive reservoir-surveillance and production-engineering toolkit. Regress
+reserves and drive mechanism directly from measured pressure/production history,
+fit decline curves to production data, and model gas-condensate vertical-well
+hydraulics with the Gray (1974) correlation. All new classes are static/utility
+or standard `Pipeline` equipment — no changes to existing behaviour.
+
+### New capability
+
+- **`neqsim.pvtsimulation.reservoirproperties.materialbalance.GasMaterialBalance`**
+  — gas P/Z straight line (OGIP), Cole plot aquifer diagnostic, Havlena-Odeh gas
+  balance. `fitVolumetric(...)` can compute Z internally (Sutton + Hall-Yarborough).
+- **`...materialbalance.OilMaterialBalance`** — Havlena-Odeh oil balance:
+  `fitDepletionDrive`, `fitGasCapDrive` (OOIP + gas-cap ratio m), `fitWaterDrive`,
+  and Pirson `driveIndices` (DDI/SDI/WDI/EDI).
+- **`...materialbalance.VanEverdingenHurstAquifer`** — radial aquifer influence
+  functions (Edwardson approximation), Carter-Tracy `cumulativeInfluxCarterTracy`,
+  and ECLIPSE `exportAqutab` include-table export. Feeds the `We` term of the
+  material-balance regressions.
+- **`neqsim.pvtsimulation.util.DeclineCurveAnalysis`** (extended) — least-squares
+  history matching `fitArps(t, q[, startIndex, endIndex])` (grid-searched b) and
+  `eurFromFit`; new Duong (2011) model `rateDuong` / `cumulativeDuong` / `fitDuong`
+  for tight / unconventional wells.
+- **`neqsim.process.equipment.pipeline.PipeGray`** — Gray (1974) multiphase
+  vertical-flow correlation for gas / gas-condensate wells, with a
+  Woldesemayat-Ghajar holdup option via `setHoldupMethod(...)`; readers for
+  holdup, superficial velocities, and effective (condensate-film) roughness.
+- **`...pipeline.VoidFractionCorrelations`** — static Woldesemayat-Ghajar (2007)
+  void-fraction correlation.
+
+### Units
+
+- Material balance: pressures in bara, temperatures in Kelvin, cumulative volumes
+  in any consistent surface unit (returned in-place volume matches). Aquifer
+  functions are SI (m², s, Pa·s, 1/Pa) except `aquiferConstant`/`deltaP` in 1/bar
+  and bar.
+- `DeclineCurveAnalysis` is unit-agnostic; times in days.
+
+### Agents / skills updated
+
+- `neqsim-production-optimization` — added decline-curve history matching and
+  reservoir material-balance / surveillance sections.
+- `neqsim-field-development` — added inverse material balance and Arps/Duong
+  history-matching snippets.
+- `neqsim-capability-map` — added the new pipeline and reservoir/PVT classes.
+- `neqsim-flow-assurance` — added the Gray correlation for gas-condensate wells.
+- Docs: `docs/pvtsimulation/reservoir_material_balance.md` (new).
+
+---
+
 
 ### Summary
 

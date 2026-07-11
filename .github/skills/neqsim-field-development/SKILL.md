@@ -137,6 +137,32 @@ for (int year = 0; year < 20; year++) {
 }
 ```
 
+### Inverse Material Balance / Reserves Surveillance
+
+Regress OGIP/OOIP, drive mechanism and aquifer support directly from a measured
+pressure-vs-cumulative-production history (the "inverse" of the forward
+`SimpleReservoir` model). Package
+`neqsim.pvtsimulation.reservoirproperties.materialbalance`:
+
+```java
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.GasMaterialBalance;
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.OilMaterialBalance;
+import neqsim.pvtsimulation.reservoirproperties.materialbalance.VanEverdingenHurstAquifer;
+
+// Gas: P/Z straight line → OGIP (+ Cole plot aquifer diagnostic)
+GasMaterialBalance.Result g = GasMaterialBalance.fitVolumetric(pressure, z, gp);
+double ogip = g.getOgip();
+
+// Oil: Havlena-Odeh depletion / gas-cap / water drive + Pirson drive indices
+OilMaterialBalance.Result o = OilMaterialBalance.fitGasCapDrive(f, eo, eg);
+
+// Aquifer: Van Everdingen-Hurst / Carter-Tracy cumulative influx + ECLIPSE AQUTAB
+double u = VanEverdingenHurstAquifer.aquiferConstant(phi, ct, h, re, angleDeg);
+double[] we = VanEverdingenHurstAquifer.cumulativeInfluxCarterTracy(tD, deltaP, u, reD);
+```
+
+See the `neqsim-production-optimization` skill for the full surveillance workflow.
+
 ### Injection Strategy (Voidage Replacement)
 
 ```java
@@ -189,6 +215,19 @@ profile.setDeclineRate(0.15);          // 15% per year
 profile.setPlateauDuration(3);         // years
 profile.setProjectLife(25);            // years
 double[] annualRates = profile.generateProfile();
+```
+
+### Decline-Curve History Matching (Arps + Duong)
+
+Fit decline parameters to a measured rate-time history and estimate EUR with
+`neqsim.pvtsimulation.util.DeclineCurveAnalysis` (static, unit-agnostic):
+
+```java
+import neqsim.pvtsimulation.util.DeclineCurveAnalysis;
+
+Map<String, Double> arps = DeclineCurveAnalysis.fitArps(t, q);       // qi, di, b, rSquared
+double eur = DeclineCurveAnalysis.eurFromFit(arps, qEconLimit);
+Map<String, Double> duong = DeclineCurveAnalysis.fitDuong(t, q);     // q1, a, m for tight/shale wells
 ```
 
 ### Production Scheduling

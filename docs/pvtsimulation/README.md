@@ -64,6 +64,10 @@ pvtsimulation/
 │
 ├── reservoirproperties/             # Reservoir calculations
 │   ├── ReservoirProperties.java
+│   ├── materialbalance/             # Inverse material balance & aquifer influx
+│   │   ├── GasMaterialBalance.java      # P/Z line (OGIP), Cole plot, Havlena-Odeh
+│   │   ├── OilMaterialBalance.java      # Havlena-Odeh (OOIP, gas cap, drive indices)
+│   │   └── VanEverdingenHurstAquifer.java # Aquifer influx, Carter-Tracy, AQUTAB
 │   └── relpermeability/             # Relative permeability tables
 │       ├── RelativePermeabilityGenerator.java
 │       ├── RelPermModelFamily.java  # Corey / LET
@@ -73,6 +77,7 @@ pvtsimulation/
 │   ├── parameterfitting/            # Parameter fitting utilities
 │   │   ├── AsphalteneOnsetFunction.java
 │   │   └── AsphalteneOnsetFitting.java
+│   ├── DeclineCurveAnalysis.java    # Arps + Duong decline; forward + history matching
 │   ├── GasPseudoPressure.java       # Real gas pseudopressure integral
 │   ├── GasPseudoCriticalProperties.java # Pseudocritical Tpc/Ppc correlations
 │   └── PVTUtil.java
@@ -88,6 +93,7 @@ pvtsimulation/
 | Package                               | Documentation                                                                | Description                                                                                                          |
 | ------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | `flowassurance`                       | [flowassurance/](flowassurance/)                                             | Asphaltene stability, De Boer screening, CPA onset calculations                                                      |
+| `reservoirproperties.materialbalance` | [reservoir_material_balance.md](reservoir_material_balance.md)               | Gas/oil material balance (OGIP/OOIP, drive indices), Van Everdingen-Hurst / Carter-Tracy aquifer influx, decline history matching |
 | `reservoirproperties.relpermeability` | [relative_permeability.md](relative_permeability.md)                         | Corey and LET relative permeability curve generation, Eclipse table export                                           |
 | `util`                                | [gas_pseudopressure_pseudocritical.md](gas_pseudopressure_pseudocritical.md) | Gas pseudopressure integral, pseudocritical correlations (Standing, Sutton, Piper), Wichert-Aziz acid gas correction |
 
