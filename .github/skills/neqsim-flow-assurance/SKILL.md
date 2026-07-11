@@ -497,6 +497,28 @@ String worst = mix.getWorstMineral();          // e.g. BaSO4
 Deposition along a line: `ScaleDepositionAccumulator` (walks a `PipeBeggsAndBrills`),
 or the coupled corrosion+scale `PipeSegmentIntegrity` above.
 
+### Deposits on compressors (fouling → performance loss → washing)
+
+When deposit-forming species (elemental sulfur S8, salt from entrained produced
+water, mineral scale, wax) reach a compressor, they foul the impeller and reduce
+head/efficiency. The `neqsim.process.equipment.compressor` deposit model bridges
+these flow-assurance calculations to compressor performance and washing:
+
+```java
+CompressorDeposit dep = CompressorDeposit.fromCompressor(comp);
+dep.accumulate(new SolidFlashDepositSource(feed, "S8", DepositMechanism.SULFUR_S8, 0.3), 500.0);
+dep.accumulate(new EntrainedSaltDepositSource(10.0, 0.05), 500.0); // entrained brine -> salt
+comp.setDepositModel(dep);            // run() degrades efficiency/power
+CompressorChart chart500 = comp.buildDegradedChart();               // map after 500 h
+WashFluid wash = CompressorDepositWash.recommend(dep);              // salt->WATER, S8->XYLENE
+comp.washOnline(wash, 300.0, 3.0);    // online wash removes matching deposits
+```
+
+Per-impeller deposit location: `CompressorDepositProfile.compute(...)` /
+`computeFromPropertyProfile(...)`. Full API in the `neqsim-api-patterns` skill and the
+`compressor_deposit_degradation` doc. Use this to plan sulfur/salt washing of fouled
+compressors and to recommend a wash fluid.
+
 ## 6. Thermal Analysis
 
 ### Cooldown Calculation

@@ -12,6 +12,14 @@ Perform flow assurance analyses — hydrate, wax, asphaltene, corrosion, hydraul
 For fast liquid-line hydraulic surge, pump-trip, or valve-closure cases, load
 `neqsim-water-hammer` and use `WaterHammerStudy` / MCP `runWaterHammer` to screen
 pressure envelopes before recommending detailed surge analysis.
+For deposits reaching a compressor (elemental sulfur S8, salt from entrained produced
+water, mineral scale, wax) that foul the impeller, use the
+`neqsim.process.equipment.compressor` deposit model (`CompressorDeposit`,
+`SolidFlashDepositSource`, `EntrainedSaltDepositSource`, `CompressorDepositProfile`,
+`WashFluid`, `CompressorDepositWash`) to compute deposit amount, head/efficiency loss, the
+degraded chart after N hours, per-impeller deposit location, and to plan/recommend online
+washing (water for salt, xylene for S8). Full API in the `neqsim-api-patterns` skill and the
+`compressor_deposit_degradation` doc.
 
 ## Applicable Standards (MANDATORY)
 
