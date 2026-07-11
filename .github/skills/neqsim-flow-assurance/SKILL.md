@@ -449,10 +449,26 @@ Cl- 0.01, `setMixingRule(10)`.
 
 ### Robust in-situ pH for investigations
 
-Electrolyte `getpH()` is not robust at all P/T (can return NaN at low pressure).
-Use `RobustAqueousPH.estimate(fluid, pCO2Bar)` to always get a finite, bounded pH:
-it uses the rigorous value when valid, else a CO2-water correlation, and records
-which source was used (`getSource()`, `isFellBack()`).
+`getpH()` on the aqueous phase (or `SystemInterface.getpH()`) returns the in-situ
+pH. It now has a **built-in acid-gas dissociation fallback**: when the aqueous
+phase has water + dissolved CO2/H2S but no explicit `H3O+` species (i.e.
+`chemicalReactionInit()` was not run) or the electrolyte solver is unstable and
+returns NaN at low pressure, `getpH()` estimates pH from the carbonic/sulfide
+acid first-dissociation equilibria — `[H+]=sqrt(K1_CO2·C_CO2 + K1_H2S·C_H2S + Kw)`
+— instead of the old silent, unphysical `7.0`. CO2-saturated water → pH ≈ 3.9.
+Force it explicitly with `getpH("acidgas")`. This is a **screening** estimate
+(ignores bicarbonate buffering and salt-ion alkalinity); for a rigorous speciated
+pH in a buffered brine still run `chemicalReactionInit()`.
+
+For corrosion/scale investigations that must always return a finite, bounded,
+**source-tagged** value with an explicit pCO2 basis, use
+`RobustAqueousPH.estimate(fluid, pCO2Bar)`: it takes the rigorous `getpH()` when
+valid, else a CO2-water correlation, and records which source was used
+(`getSource()`, `isFellBack()`).
+
+Regression test for the fallback: `neqsim.chemicalreactions.AcidGasPHTest`
+(CO2-saturated water pH ≈ 3.9, neutral water ≈ 7, CO2+H2S acidic — all without
+`chemicalReactionInit()`).
 
 ### Per-segment corrosion + scale along a line (PipeSegmentIntegrity)
 
@@ -490,8 +506,12 @@ Deposition flagged when v < 1 m/s.
 
 ### Mineral Scale (thermodynamics + kinetics + brine mixing)
 
-Thermodynamic saturation index (activity-corrected, Davies + Ksp(T)) for the
-common scales:
+NeqSim offers **two routes** to mineral scale. Pick by how much you know about
+the brine and whether you need a rigorous precipitated amount.
+
+**(A) Screening SI from an ion analysis (fast, no flash).** Activity-corrected
+saturation index (Davies + Ksp(T)) for the common scales directly from a
+produced-water ion table in mg/L:
 
 ```java
 ElectrolyteScaleCalculator scale = new ElectrolyteScaleCalculator();
@@ -500,10 +520,65 @@ scale.setCations(caMgL, baMgL, srMgL, mgMgL, naMgL, kMgL, feMgL);
 scale.setAnions(clMgL, so4MgL, hco3MgL, co3MgL);
 scale.calculate();
 double siCaCO3 = scale.getCaCO3SaturationIndex();  // also BaSO4, CaSO4, SrSO4
+// SI = log10(IAP/Ksp): >0 supersaturated (scale risk), 0 at equilibrium, <0 undersaturated
 ```
 
-Rigorous in-situ SI from an electrolyte fluid: `system.checkScalePotential(phase)`
-(see `ThermodynamicOperations`) or `ScalePotentialCheckStream`.
+**(B) Rigorous scale potential from a speciated electrolyte fluid — REQUIRES
+chemical reactions + speciation.** The rigorous saturation ratio needs the *in
+situ* ion molalities (Ca²⁺, HCO₃⁻, CO₃²⁻, Ba²⁺, SO₄²⁻, …), which only exist
+after the aqueous speciation equilibria have been solved. So you MUST call
+`chemicalReactionInit()` before `createDatabase(true)` / `setMixingRule(10)`, and
+you should get the in-situ pH from the same speciated flash (see the in-situ pH
+section above). Then `checkScalePotential(phaseNumber)` returns, per salt, the
+**saturation ratio SR = IAP/Ksp** ("relative solubility"): SR > 1 means
+supersaturated and at scale risk.
+
+```java
+SystemInterface brine = new SystemElectrolyteCPAstatoil(273.15 + 60.0, 100.0);
+brine.addComponent("CO2", 0.02);
+brine.addComponent("water", 55.5);
+brine.addComponent("Na+", 1.0);
+brine.addComponent("Cl-", 1.0);
+brine.addComponent("Ca++", 0.02);
+brine.addComponent("HCO3-", 0.04);
+brine.chemicalReactionInit();     // MANDATORY: builds carbonate/bicarbonate speciation
+brine.createDatabase(true);
+brine.setMixingRule(10);          // numeric CPA rule (required)
+brine.setMultiPhaseCheck(true);   // allow gas + aqueous (+ solid) phases
+
+ThermodynamicOperations ops = new ThermodynamicOperations(brine);
+ops.TPflash();                    // solves speciation in the aqueous phase
+brine.initProperties();
+
+int aq = brine.getPhaseNumberOfPhase("aqueous");
+ops.checkScalePotential(aq);      // uses speciated ion molalities in phase `aq`
+String[][] sr = ops.getResultTable();   // rows: {saltName, SR (=IAP/Ksp), ""}
+// Read SR per salt; SR > 1.0 => supersaturated => scale precipitation likely.
+double pH = brine.getpH();        // rigorous speciated in-situ pH from the same flash
+```
+
+Convenience equipment wrapper: `ScalePotentialCheckStream` runs the same SR
+check on a process `Stream`.
+
+**Precipitation amount (how much solid forms).** Two options:
+
+- *Rigorous (solid phase flash):* with `setMultiPhaseCheck(true)`, a
+  supersaturated brine drops a solid phase during `TPflash()`. Read the
+  precipitated mineral directly:
+  ```java
+  if (brine.hasPhaseType("solid")) {
+    double solidMoles = brine.getPhase("solid").getNumberOfMolesInPhase();
+    double solidMassKg = solidMoles * brine.getPhase("solid").getMolarMass();
+  }
+  ```
+- *Screening (from SI):* `ScaleMassCalculator` estimates the mg/L precipitated to
+  reach equilibrium from ion concentrations and SI (per mineral):
+  ```java
+  ScaleMassCalculator mass = new ScaleMassCalculator(predictionCalc);
+  mass.setWaterVolume(1.0); // litres
+  double caco3MgL = mass.calcCaCO3Mass(cCaMolL, cCO3MolL, siCaCO3);  // mg/L
+  // also calcBaSO4Mass, calcCaSO4Mass, calcSrSO4Mass, calcFeCO3Mass
+  ```
 
 **Kinetics** — SI says *if*, not *how fast*. `ScaleKinetics` adds induction time
 and growth regime on top of the SI:
