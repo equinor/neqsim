@@ -2151,6 +2151,9 @@ public abstract class Phase implements PhaseInterface {
       logger.debug("getpH called on non-aqueous phase ({}), returning NaN", getPhaseTypeName());
       return Double.NaN;
     }
+    if (method.equalsIgnoreCase("acidgas")) {
+      return getpH_acidGasDissociation();
+    }
     if (method.equalsIgnoreCase("molarity")) {
       return getpH_molarity();
     }
@@ -2193,8 +2196,9 @@ public abstract class Phase implements PhaseInterface {
         return pH;
       }
     }
-    logger.info("no H3Oplus");
-    return 7.0;
+    logger.debug("no H3O+ species present; attempting acid-gas dissociation fallback");
+    double fallback = tryAcidGasFallback();
+    return Double.isFinite(fallback) ? fallback : 7.0;
   }
 
   /**
@@ -2234,8 +2238,9 @@ public abstract class Phase implements PhaseInterface {
         return pH;
       }
     }
-    logger.info("no H3Oplus");
-    return 7.0;
+    logger.debug("no H3O+ species present; attempting acid-gas dissociation fallback");
+    double fallback = tryAcidGasFallback();
+    return Double.isFinite(fallback) ? fallback : 7.0;
   }
 
   /**
@@ -2254,22 +2259,149 @@ public abstract class Phase implements PhaseInterface {
         double gamma = watNumb >= 0 ? getActivityCoefficient(i, watNumb) : getActivityCoefficient(i);
 
         double activity = componentArray[i].getx() * gamma;
-        // Check for numerically invalid activity (essentially zero or numerical noise)
+        // Check for numerically invalid activity (essentially zero or numerical noise).
+        // When the electrolyte reaction solver is unstable (e.g. at low pressure it can
+        // yield near-zero or NaN H3O+), fall back to the acid-gas dissociation estimate
+        // if dissolved CO2/H2S is present, rather than returning NaN.
         if (activity <= 1e-20) {
           logger.debug("H3O+ activity {} is too small for meaningful pH", activity);
-          return Double.NaN;
+          double fb = tryAcidGasFallback();
+          return Double.isFinite(fb) ? fb : Double.NaN;
         }
         double pH = -Math.log10(activity);
         // Clamp to physically realistic range
         if (pH < -2.0 || pH > 16.0) {
           logger.debug("Calculated pH {} is outside realistic range [-2, 16]", pH);
-          return Double.NaN;
+          double fb = tryAcidGasFallback();
+          return Double.isFinite(fb) ? fb : Double.NaN;
         }
         return pH;
       }
     }
-    logger.info("no H3Oplus");
-    return 7.0;
+    logger.debug("no H3O+ species present; attempting acid-gas dissociation fallback");
+    double fallback = tryAcidGasFallback();
+    return Double.isFinite(fallback) ? fallback : 7.0;
+  }
+
+  /**
+   * Attempt an acid-gas (carbonic / hydrosulfuric acid) pH estimate.
+   *
+   * <p>
+   * Returns a finite pH only for an aqueous phase that contains water together with dissolved CO2 and/or H2S. In all
+   * other cases {@link Double#NaN} is returned so callers preserve their existing behaviour (neutral 7.0 or NaN).
+   * </p>
+   *
+   * @return acid-gas dissociation pH, or {@link Double#NaN} if not applicable
+   */
+  private double tryAcidGasFallback() {
+    boolean acidGasPresent = getPhaseTypeName().equals("aqueous") && hasComponent("water")
+        && ((hasComponent("CO2") && getComponent("CO2").getx() > 0.0)
+            || (hasComponent("H2S") && getComponent("H2S").getx() > 0.0));
+    if (!acidGasPresent) {
+      return Double.NaN;
+    }
+    return getpH_acidGasDissociation();
+  }
+
+  /**
+   * Estimate the in-situ pH of an acid-gas-loaded aqueous phase from dissolved CO2 and H2S.
+   *
+   * <p>
+   * This is a screening-level electroneutrality estimate for the case where the rigorous electrolyte chemical-reaction
+   * equilibrium has not produced explicit H3O+ species (for example an electrolyte-CPA fluid flashed without
+   * {@code chemicalReactionInit()}, or a case where the reaction solver is numerically unstable). It uses the
+   * first-dissociation equilibria of carbonic and hydrosulfuric acid:
+   * </p>
+   *
+   * <p>
+   * CO2(aq) + H2O &#8596; H+ + HCO3-, with constant K1(CO2); and H2S(aq) &#8596; H+ + HS-, with constant K1(H2S).
+   * </p>
+   *
+   * <p>
+   * Neglecting the second dissociation steps and assuming charge balance dominated by the bicarbonate/bisulfide
+   * conjugate bases, the proton concentration follows [H+] = sqrt(K1(CO2)&middot;C_CO2 + K1(H2S)&middot;C_H2S + Kw),
+   * where C are aqueous molar concentrations (mol/L). For CO2-saturated water at ambient conditions this reproduces the
+   * textbook value of pH &#8776; 3.9. The estimate ignores alkalinity from other ions (bicarbonate buffering, dissolved
+   * salts) and is intended for acid-gas corrosion screening, not buffered-brine speciation.
+   * </p>
+   *
+   * @return estimated pH, or {@link Double#NaN} if it cannot be evaluated
+   */
+  private double getpH_acidGasDissociation() {
+    if (!hasComponent("water")) {
+      return Double.NaN;
+    }
+    double temperature = getTemperature();
+    double kw = waterIonProduct(temperature);
+    double co2x = (hasComponent("CO2") && getComponent("CO2").getx() > 0.0) ? getComponent("CO2").getx() : 0.0;
+    double h2sx = (hasComponent("H2S") && getComponent("H2S").getx() > 0.0) ? getComponent("H2S").getx() : 0.0;
+    if (co2x <= 0.0 && h2sx <= 0.0) {
+      // Neutral water: pH from the water ion product only.
+      return -Math.log10(Math.sqrt(kw));
+    }
+    initPhysicalProperties();
+    double density = getPhysicalProperties().getDensity(); // kg/m3
+    double molarMass = getMolarMass(); // kg/mol
+    if (!(density > 0.0) || !(molarMass > 0.0)) {
+      logger.debug("acid-gas pH fallback: invalid aqueous density {} or molar mass {}", density, molarMass);
+      return Double.NaN;
+    }
+    double totalMolarity = density / molarMass / 1000.0; // mol/L of aqueous solution
+    double cCO2 = co2x * totalMolarity;
+    double cH2S = h2sx * totalMolarity;
+    double ka1CO2 = firstDissociationConstantCO2(temperature);
+    double ka1H2S = firstDissociationConstantH2S(temperature);
+    double hPlus = Math.sqrt(ka1CO2 * cCO2 + ka1H2S * cH2S + kw);
+    if (!(hPlus > 0.0)) {
+      return Double.NaN;
+    }
+    double pH = -Math.log10(hPlus);
+    if (pH < -2.0 || pH > 16.0) {
+      logger.debug("acid-gas pH fallback {} is outside realistic range [-2, 16]", pH);
+      return Double.NaN;
+    }
+    return pH;
+  }
+
+  /**
+   * First apparent dissociation constant of carbonic acid, K1 for CO2(aq) + H2O &#8596; H+ + HCO3- (molarity scale,
+   * mol/L), from the Plummer &amp; Busenberg (1982) correlation valid 0-90 &deg;C.
+   *
+   * @param temperatureK temperature in Kelvin
+   * @return K1(CO2) on the molarity scale (dimensionless relative to 1 mol/L)
+   */
+  private double firstDissociationConstantCO2(double temperatureK) {
+    double t = temperatureK;
+    double log10K = -356.3094 - 0.06091964 * t + 21834.37 / t + 126.8339 * Math.log10(t) - 1684915.0 / (t * t);
+    return Math.pow(10.0, log10K);
+  }
+
+  /**
+   * First dissociation constant of hydrosulfuric acid, K1 for H2S(aq) &#8596; H+ + HS- (molarity scale, mol/L),
+   * anchored at pK1 = 7.05 at 25 &deg;C with a van't Hoff temperature correction (&Delta;H&deg; &#8776; 22 kJ/mol).
+   *
+   * @param temperatureK temperature in Kelvin
+   * @return K1(H2S) on the molarity scale (dimensionless relative to 1 mol/L)
+   */
+  private double firstDissociationConstantH2S(double temperatureK) {
+    double k25 = Math.pow(10.0, -7.05);
+    double dHr = 22000.0; // J/mol
+    double r = 8.3145; // J/(mol K)
+    return k25 * Math.exp(-dHr / r * (1.0 / temperatureK - 1.0 / 298.15));
+  }
+
+  /**
+   * Ion product of water, Kw, anchored at 1.0e-14 at 25 &deg;C with a van't Hoff temperature correction (&Delta;H&deg;
+   * &#8776; 55.8 kJ/mol).
+   *
+   * @param temperatureK temperature in Kelvin
+   * @return Kw on the molarity scale
+   */
+  private double waterIonProduct(double temperatureK) {
+    double kw25 = 1.0e-14;
+    double dHr = 55810.0; // J/mol
+    double r = 8.3145; // J/(mol K)
+    return kw25 * Math.exp(-dHr / r * (1.0 / temperatureK - 1.0 / 298.15));
   }
 
   /** {@inheritDoc} */

@@ -746,9 +746,12 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * constants</li>
    * <li><b>molality</b> (IUPAC standard): pH = -log10(gamma_m * m_H3O+) - correct for all concentrations</li>
    * <li><b>molarity</b>: pH = -log10([H3O+]) where [H3O+] is in mol/L - ignores activity coefficient</li>
+   * <li><b>acidgas</b>: screening in-situ pH of an acid-gas-loaded aqueous phase from dissolved CO2/H2S via the
+   * carbonic/hydrosulfuric acid first-dissociation equilibria (used automatically as a fallback when no explicit H3O+
+   * species is present)</li>
    * </ul>
    *
-   * @param method The calculation method: "activity" (default), "molality", or "molarity"
+   * @param method The calculation method: "activity" (default), "molality", "molarity", or "acidgas"
    * @return pH value
    */
   public double getpH(String method);

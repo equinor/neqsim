@@ -112,7 +112,7 @@ Where:
 The electrostatic contribution follows the Fürst model, which combines:
 
 1. **Mean Spherical Approximation (MSA)** for ion-ion interactions
-2. **Born solvation term** for ion-solvent interactions  
+2. **Born solvation term** for ion-solvent interactions
 3. **Short-range Wij terms** for specific ion interactions
 
 $$A^{elec} = A^{MSA} + A^{Born} + A^{SR}$$
@@ -460,6 +460,65 @@ int aq = system.getPhaseNumberOfPhase("aqueous");
 double pH = -Math.log10(system.getPhase(aq).getComponent("H3O+").getx() * 55.5);
 ```
 
+### In-situ pH — `getpH()` and the acid-gas fallback
+
+The recommended way to read the aqueous pH is `getpH()` on the aqueous phase (or
+`SystemInterface.getpH()`, which delegates to it). It supports several scales:
+
+| Method | Definition | Notes |
+|--------|-----------|-------|
+| `getpH()` / `getpH("activity")` | `-log10(γ_x · x_H3O+)` | default; mole-fraction activity, consistent with NeqSim's reaction K's |
+| `getpH("molality")` | `-log10(γ_m · m_H3O+)` | IUPAC standard (mol H₃O⁺ / kg water) |
+| `getpH("molarity")` | `-log10([H3O+])` | mol/L, ignores activity coefficient |
+| `getpH("acidgas")` | carbonic/hydrosulfuric acid dissociation estimate | screening in-situ pH from dissolved CO₂/H₂S |
+
+**Acid-gas fallback (no `chemicalReactionInit()` required).** The rigorous
+`activity`/`molality`/`molarity` scales need explicit `H3O+` species, which only
+exist after `chemicalReactionInit()` has solved the water/carbonic dissociation
+equilibria. If those reactions were **not** initialised (or the electrolyte
+solver is numerically unstable and yields no/NaN `H3O+`, e.g. at low pressure),
+`getpH()` now falls back to an acid-gas dissociation estimate whenever the
+aqueous phase contains water together with dissolved CO₂ and/or H₂S — instead of
+silently returning a flat, unphysical `7.0`.
+
+The fallback uses the first-dissociation equilibria of carbonic and
+hydrosulfuric acid and an electroneutrality balance dominated by the conjugate
+bases (HCO₃⁻, HS⁻):
+
+$$[\mathrm{H}^+] = \sqrt{K_1^{\mathrm{CO_2}}\,C_{\mathrm{CO_2}} + K_1^{\mathrm{H_2S}}\,C_{\mathrm{H_2S}} + K_w}, \qquad \mathrm{pH} = -\log_{10}[\mathrm{H}^+]$$
+
+where $C_i$ are aqueous molar concentrations (mol/L) obtained from the aqueous
+phase density and molar mass. The constants are temperature-dependent:
+$K_1^{\mathrm{CO_2}}$ from Plummer &amp; Busenberg (1982), $K_1^{\mathrm{H_2S}}$
+from a van't Hoff fit anchored at pK₁ = 7.05 (25 °C), and $K_w$ from a van't Hoff
+fit anchored at 1.0×10⁻¹⁴ (25 °C). For CO₂-saturated water at ambient conditions
+this reproduces the textbook value **pH ≈ 3.9**; acid-gas-free water returns
+≈ 7.0.
+
+```java
+// Plain electrolyte fluid — NO chemicalReactionInit(), excess CO2 over water
+SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
+system.addComponent("CO2", 5.0);
+system.addComponent("water", 10.0);
+system.createDatabase(true);
+system.setMixingRule(10);
+system.setMultiPhaseCheck(true);
+
+ThermodynamicOperations ops = new ThermodynamicOperations(system);
+ops.TPflash();
+system.initProperties();
+
+double pH = system.getpH();   // ≈ 3.9 for CO2-saturated water (acidic)
+```
+
+> **Screening scope.** The acid-gas fallback ignores alkalinity from other ions
+> (bicarbonate buffering, dissolved salts) and the second dissociation steps. It
+> is intended for acid-gas corrosion screening (e.g. NORSOK M-506), not for
+> buffered-brine speciation. For a fully rigorous speciated pH in a buffered
+> brine, run `chemicalReactionInit()` so explicit `H3O+`/`HCO3-`/`OH-` species
+> are solved. For corrosion work that must always return a finite, source-tagged
+> value, see `neqsim.process.corrosion.RobustAqueousPH`.
+
 ### Gas-Liquid Equilibrium with Electrolytes
 
 ```java
@@ -507,6 +566,7 @@ for (int i = 0; i < system.getNumberOfPhases(); i++) {
 | Dec 2024 | Updated chemical equilibrium solver | Improved pH accuracy |
 | Dec 2024 | Added gas-ion parameters for C2-C5+, N₂, H₂S, H₂ | Correct salting-out for all gases |
 | Feb 2026 | Added OI-ion parameters for Hu-Lee-Sum compliance | Additive hydrate inhibition with combined inhibitors |
+| Jul 2026 | `getpH()` acid-gas dissociation fallback | Acidic in-situ pH for CO₂/H₂S water without `chemicalReactionInit()`; no more silent 7.0 |
 
 ## Source Code References
 
@@ -515,7 +575,7 @@ for (int i = 0; i < system.getNumberOfPhases(); i++) {
 - `SystemElectrolyteCPA.java` - Generic electrolyte CPA system
 - `SystemSrkCPAstatoil.java` - Non-electrolyte CPA (for comparison)
 
-### Phase Classes  
+### Phase Classes
 - `PhaseElectrolyteCPAstatoil.java` - Phase calculations (Statoil g-function)
 - `PhaseElectrolyteCPA.java` - Base electrolyte CPA phase
 - `PhaseModifiedFurstElectrolyteEos.java` - Fürst electrostatic contributions
