@@ -1,6 +1,6 @@
 ---
 name: neqsim-flow-assurance
-description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
+description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
 last_verified: "2026-07-10"
 ---
 
@@ -17,6 +17,7 @@ NeqSim code patterns.
 - Wax appearance temperature (WAT) and wax deposition risk
 - Asphaltene stability screening (de Boer, CII)
 - CO2 and H2S corrosion rate estimation
+- Elemental sulfur (S8) deposition risk at pressure/temperature letdown (compressor inlets, control/letdown valves, dry-gas seals, filters)
 - Pipeline pressure drop and temperature profile
 - Water hammer/liquid hammer screening for fast valve closure, pump trip, or check-valve slam
 - Multiphase flow pattern prediction (slug, annular, stratified)
@@ -553,6 +554,7 @@ compressors and to recommend a wash fluid.
 | Corrosion (CO2) | CO2 partial pressure | Standard flash | CRA, inhibitor, pH stabilization |
 | Slugging | Beggs & Brill flow regime | `PipeBeggsAndBrills` | Slug catcher, topside choking |
 | Scale | Ion activity product | Electrolyte-CPA | Scale inhibitor, pH control |
+| Elemental sulfur (S8) | S8 solid drop-out at P/T letdown | `setSolidPhaseCheck("S8")` + `TPSolidflash()` | Remove O2 source, heat gas before letdown, reduce dP, `SulfurFilter` |
 
 ## 8. CO2 Injection Well Analysis
 
@@ -579,7 +581,86 @@ double enrichment = monitor.getEnrichmentFactor("hydrogen");
 boolean exceeds = monitor.exceedsLimit("hydrogen");
 ```
 
-## 9. Common Pitfalls
+## 9. Elemental Sulfur (S8) Deposition
+
+Elemental sulfur (cyclo-octasulfur, `S8`) drops out of natural gas as a yellow/grey
+solid at points of pressure and/or temperature letdown — compressor inlets, control
+and letdown valves, dry-gas seals, pressure regulators, and filters. The gas dissolves
+a small amount of S8 (solubility rises with pressure and with H2S/CO2 content, and is
+high in condensate, MEG, methanol and TEG); when pressure or temperature drops, the
+gas becomes supersaturated and S8 deposits. The **root cause is almost always an
+oxygen source** oxidising H2S: `8 H2S + 4 O2 -> S8 + 8 H2O` (O2 typically enters via
+preservation fluids, platform-nitrogen purge/seal gas, or injected chemicals).
+
+**Screening workflow:** assume the gas is S8-saturated at a baseline (e.g. scrubber /
+separator conditions such as 100 bara, 45 C), then check whether S8 drops to a solid
+as the stream follows the compressor / valve pressure-temperature path. `S8` is a
+database component (`fluid.addComponent("S8", ...)`), and deposition is detected with a
+solid flash.
+
+### S8 solid-drop-out (solubility) check
+
+```java
+// Gas saturated with a trace of S8 at baseline, then evaluate a P/T letdown point
+SystemInterface fluid = new SystemSrkEos(273.15 + 45.0, 100.0);
+fluid.addComponent("methane", 0.90);
+fluid.addComponent("CO2", 0.02);
+fluid.addComponent("H2S", 0.001);
+fluid.addComponent("S8", 1.0e-6);   // trace S8 (mole basis)
+fluid.setMixingRule("classic");
+fluid.setMultiPhaseCheck(true);
+fluid.setSolidPhaseCheck("S8");      // enable S8 solid-phase modelling
+
+// Evaluate at the letdown condition (e.g. valve / compressor-inlet P and T)
+fluid.setPressure(60.0, "bara");
+fluid.setTemperature(30.0, "C");
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPSolidflash();                 // NOT TPflash — needed to form the solid S8 phase
+fluid.initProperties();
+
+boolean s8Deposits = fluid.hasPhaseType(PhaseType.SOLID);
+if (s8Deposits) {
+  double solidMass = fluid.getPhaseOfType("solid").getMass("kg");  // S8 solid inventory
+}
+```
+
+> Rule of thumb: deposition risk exists wherever a saturated (or nearly saturated)
+> stream sees a pressure or temperature drop. Heating the gas *before* letdown or
+> reducing the dP moves the point back into the single-phase (dissolved) region.
+
+### SulfurFilter equipment (solid S8 removal + change interval)
+
+`SulfurFilter` runs a `TPSolidflash` internally, removes the solid S8, and tracks the
+kg/hr loading for element sizing and change-out interval:
+
+```java
+SulfurFilter filter = new SulfurFilter("S8 Filter", valveOutletStream);
+filter.setRemovalEfficiency(0.99);       // 99% solid removal
+filter.setFilterElementCapacity(50.0);   // kg S8 per element set
+filter.setDeltaP(0.5);                    // clean pressure drop [bar]
+filter.run();
+
+boolean s8Present = filter.isSolidS8Detected();
+double s8Rate = filter.getSolidSulfurRemovalRate();  // kg/hr captured
+double interval = filter.getChangeIntervalHours();   // hours until element change
+```
+
+### Particle nucleation (optional, for particle-size / filter rating)
+
+```java
+ClassicalNucleationTheory cnt = ClassicalNucleationTheory.sulfurS8();
+// pair with PopulationBalanceModel for particle-size distribution across the letdown
+```
+
+**Mitigations (in order of effectiveness):** eliminate the O2 source (nitrogen/
+preservation-fluid quality and routing); heat the gas upstream of pressure reduction;
+reduce the dP / minimum landing pressure; install a `SulfurFilter` (watch the dP);
+keep dry-gas-seal gas warm and well above its S8 saturation point.
+
+**Related:** `SourServiceAssessment` (`setElementalSulfurPresent(true)`) for materials
+impact; `neqsim-electrolyte-systems` for the aqueous-phase corrosivity of wet sulfur.
+
+## 10. Common Pitfalls
 
 | Pitfall | Solution |
 |---------|----------|
@@ -589,3 +670,5 @@ boolean exceeds = monitor.exceedsLimit("hydrogen");
 | Zero viscosity from pipeline calculation | Call `fluid.initProperties()` after flash |
 | Wax prediction fails (no heavy fractions) | Add C7+ TBP fractions with wax model enabled |
 | MEG not reducing hydrate T | Check MEG is partitioning to aqueous phase |
+| No solid S8 phase forms | Use `TPSolidflash()` (not `TPflash()`) and call `setSolidPhaseCheck("S8")` first |
+| S8 deposition risk missed | Saturate the gas at a realistic baseline (scrubber/separator P,T) before checking the letdown point |
