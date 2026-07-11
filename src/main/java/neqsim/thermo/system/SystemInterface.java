@@ -1645,6 +1645,30 @@ public interface SystemInterface extends Cloneable, java.io.Serializable {
   }
 
   /**
+   * Convenience method to get the alkalinity-buffered pH of the aqueous phase.
+   *
+   * <p>
+   * Returns the screening in-situ pH of the aqueous phase for a supplied net alkalinity, for carbonate/sulfide
+   * (buffered brine) water such as produced water with bicarbonate hardness or scrubber water dosed with an alkaline
+   * H2S scavenger. Returns {@link Double#NaN} if no aqueous phase is present. Delegates to
+   * {@link PhaseInterface#getpHwithAlkalinity(double)}.
+   * </p>
+   *
+   * @param alkalinityEqPerLitre net alkalinity of the aqueous phase [equivalents per litre]; positive for a net base
+   * (raises pH), negative for a net strong acid (lowers pH), zero for the unbuffered acid-gas case
+   * @return alkalinity-buffered pH of the aqueous phase, or NaN if no aqueous phase exists
+   */
+  public default double getpHwithAlkalinity(double alkalinityEqPerLitre) {
+    if (hasPhaseType("aqueous")) {
+      PhaseInterface aq = getPhaseOfType("aqueous");
+      if (aq != null) {
+        return aq.getpHwithAlkalinity(alkalinityEqPerLitre);
+      }
+    }
+    return Double.NaN;
+  }
+
+  /**
    * method to calculate thermodynamic properties of the fluid. The temperature, pressure, number of phases and
    * composition of the phases will be used as basis for calculation.
    *

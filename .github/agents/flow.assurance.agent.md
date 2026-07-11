@@ -107,9 +107,15 @@ the standard NORSOK M-506 model). For a per-segment corrosion+scale profile
 along a line use `PipeSegmentIntegrity` (`fromPipe(PipeBeggsAndBrills)`). For
 scale: `ElectrolyteScaleCalculator` (SI), `ScaleKinetics` (induction time,
 growth regime), `BrineMixingScaleEvaluator` (seawater/formation-water
-incompatibility), and `RobustAqueousPH` for an always-finite in-situ pH. See
-the `neqsim-flow-assurance` skill (sections 5 and 5-scale) for patterns and
-gotchas.
+incompatibility), and `RobustAqueousPH` for an always-finite in-situ pH. For
+scale/solids **valve plugging** (effective Cv loss → opening drift → time-to-plug)
+use `ThrottlingValve.setFoulingFraction()` + `ValveScaleDrift`. For the
+proposed-solution step, `ScaleRemediationAdvisor` recommends the dissolver /
+solvent / wash to clean already-fouled equipment (acid for carbonate/sulfide,
+chelant for sulfate scale, proprietary dissolver + pH-control restore for
+dithiazine scavenger solids); `RootCauseAnalyser` appends this cleaning hint to
+every deposit candidate automatically. See the `neqsim-flow-assurance` skill
+(sections 5 and 5-scale) for patterns and gotchas.
 
 ## Phase Envelope with Safety Curves
 Calculate phase envelope with hydrate, wax, and cricondenbar/cricondentherm:

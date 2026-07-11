@@ -1,0 +1,21 @@
+# Scale / precipitation remediation knowledge base (screening level).
+# Maps a deposit type to candidate dissolver/solvent treatments for cleaning fouled or plugged equipment
+# (valves, trim, bridles, lines, exchangers). Used by neqsim.process.chemistry.scale.ScaleRemediationAdvisor
+# for root-cause-analysis proposed-solution generation. NOT a substitute for a vendor/field treatment program.
+# Pipe-delimited so free text may contain commas. Effectiveness: HIGH|MEDIUM|LOW. Standards are informational.
+# scaleType|category|dissolver|concentration|method|effectiveness|minTempC|maxTempC|cautions|standard
+CaCO3|MINERAL_SCALE|Hydrochloric acid (HCl) with corrosion inhibitor and iron-control agent|5-15 wt%|Acid soak or circulation, then neutralise and flush|HIGH|20|80|Corrosive; CO2 evolution can pressurise; mandatory corrosion inhibitor and spent-acid neutralisation; verify metallurgy|NACE SP0296
+CaCO3|MINERAL_SCALE|Chelant (EDTA/HEDTA) buffered near-neutral|10-20 wt%|Extended soak (slower, low corrosion)|MEDIUM|40|90|Slower than acid but far less corrosive; check chelant biodegradability and disposal|NACE TM0374
+FeCO3|MINERAL_SCALE|HCl with iron-control (reducing) agent or DTPA chelant|5-15 wt%|Acid soak with iron control|MEDIUM|20|70|Iron control prevents Fe(OH)3/Fe2O3 re-precipitation of spent fluid|NACE SP0775
+FeS|MINERAL_SCALE|HCl with H2S control and iron stabiliser|5-15 wt%|Acid soak under H2S management|MEDIUM|20|60|Releases toxic H2S - H2S control and gas detection mandatory; pyrophoric residue risk|NACE SP0775
+FeS|MINERAL_SCALE|THPS-based iron-sulfide dissolver|20-40 wt%|Circulate/soak|MEDIUM|20|70|Lower H2S release than acid; biocide handling and disposal controls|NACE TM0374
+BaSO4|MINERAL_SCALE|High-pH chelant (DTPA/EDTA at pH~12) with synergist|20-40 wt%|Hot soak, long contact, multiple stages|LOW|60|120|Acid-insoluble; slow dissolution; milling/mechanical removal often required|NACE TM0374
+SrSO4|MINERAL_SCALE|High-pH chelant (DTPA) with synergist|20-40 wt%|Hot soak, long contact|LOW|60|120|Acid-insoluble; slow; often co-precipitated with BaSO4|NACE TM0374
+CaSO4|MINERAL_SCALE|Carbonate/hydroxide converter followed by HCl, or EDTA chelant|converter + 5-10 wt% HCl|Two-step convert-then-acidise, or chelant soak|MEDIUM|40|90|Anhydrite dissolves slowly; conversion boosts acid solubility|NACE TM0374
+NaCl|MINERAL_SCALE|Fresh or low-salinity water|dilution|Water wash / dilution|HIGH|20|80|Simplest remedy; manage brine disposal and avoid re-scaling on cooling|NACE TM0374
+Dithiazine|SCAVENGER_SOLIDS|Proprietary dithiazine dissolver (glycolic-acid or oxidiser based) with surfactant|10-30 wt%|Hot circulation with surfactant|MEDIUM|40|80|Amorphous triazine-scavenger reaction product; RESTORE water pH control (7.5-9.5) and review scavenger dose to prevent recurrence|NACE TM0374
+Dithiazine|SCAVENGER_SOLIDS|Aromatic solvent (xylene) plus hot water/surfactant|neat solvent|Solvent soak|LOW|40|80|Only partial; mechanical trim/bridle cleaning usually still needed|NACE TM0374
+Asphaltene|ORGANIC_DEPOSIT|Aromatic solvent (xylene/toluene) with asphaltene dispersant|neat solvent|Solvent soak/circulation|HIGH|20|80|Flammable aromatic - ventilation and hot-work controls; dispersant limits re-deposition|NACE TM0374
+Wax|ORGANIC_DEPOSIT|Hot oil or aromatic solvent|neat|Hot-oil circulation above wax appearance temperature|HIGH|40|120|Thermal + solvent; monitor for re-deposition on cooling downstream|NACE TM0374
+Naphthenate|ORGANIC_DEPOSIT|Low-dose acid (acetic) plus solvent|5-10 wt%|Acid + solvent soak|MEDIUM|40|80|Calcium-naphthenate soap; upstream low-pH/demulsifier control reduces formation|NACE TM0374
+UNKNOWN|UNSPECIFIED|Sample and identify deposit (XRD/SEM-EDX) before selecting solvent|n/a|Deposit sampling and lab identification|HIGH|0|200|Do not select a dissolver blindly - acid dissolves carbonate/sulfide but not sulfate scale; identify first|NACE TM0374

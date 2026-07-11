@@ -314,8 +314,11 @@ transport properties (viscosity, thermal conductivity, density).
 | `NorsokM506ElectrolyteBridge` | Drives NORSOK M-506 from a `SystemElectrolyteCPAstatoil` brine (rigorous pH + FeCO3 supersaturation) | `process.corrosion` |
 | `CO2CorrosionAnalyzer` | de Waard-Milliams from an electrolyte fluid | `pvtsimulation.flowassurance` |
 | `PipeSegmentIntegrity` | Per-segment CO2 corrosion + CaCO3 scale profile along a line (`fromPipe`) | `process.corrosion` |
-| `RobustAqueousPH` | Always-finite in-situ pH (rigorous else CO2-water correlation) | `process.corrosion` |
-| `ElectrolyteScaleCalculator` | Activity-corrected SI for CaCO3/BaSO4/CaSO4/SrSO4 (Davies + Ksp(T)) | `process.chemistry.scale` |
+| `RobustAqueousPH` | Always-finite, source-tagged in-situ pH with explicit pCO2 basis (rigorous else CO2-water correlation) | `process.corrosion` |
+| `Phase.getpH()` | Aqueous in-situ pH; built-in acid-gas fallback (`getpH("acidgas")`) gives CO2/H2S pH without `chemicalReactionInit()` | `thermo.phase` |
+| `ElectrolyteScaleCalculator` | Activity-corrected SI for CaCO3/BaSO4/CaSO4/SrSO4 (Davies + Ksp(T)) from ion mg/L | `process.chemistry.scale` |
+| `ThermodynamicOperations.checkScalePotential(phase)` | Rigorous saturation ratio SR=IAP/Ksp per salt from a speciated brine (needs `chemicalReactionInit()`); read `getResultTable()` | `thermodynamicoperations` |
+| `ScaleMassCalculator` | Precipitated scale mass (mg/L) per mineral from SI + ion conc.; rigorous amount via solid-phase flash (`hasPhaseType("solid")`) | `pvtsimulation.flowassurance` |
 | `ScaleKinetics` | Induction time + reaction-vs-transport growth regime on top of an SI | `process.chemistry.scale` |
 | `BrineMixingScaleEvaluator` | Seawater/formation-water mixing incompatibility sweep | `process.chemistry.scale` |
 | `ScaleDepositionAccumulator` | Scale deposition along a `PipeBeggsAndBrills` profile | `process.chemistry.scale` |

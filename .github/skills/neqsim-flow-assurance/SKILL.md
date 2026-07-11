@@ -1,7 +1,7 @@
 ---
 name: neqsim-flow-assurance
-description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
-last_verified: "2026-07-10"
+description: "Flow assurance analysis patterns for NeqSim. USE WHEN: predicting hydrate formation, wax appearance, asphaltene stability, CO2/H2S corrosion (NORSOK M-506, de Waard-Milliams, FeCO3 film), mineral scale (saturation index, scale kinetics, brine mixing / seawater incompatibility), scale/solids valve plugging & Cv/opening drift (ValveScaleDrift), scale/deposit remediation & dissolver/solvent/wash selection for cleaning fouled equipment (ScaleRemediationAdvisor), elemental sulfur (S8) deposition from oxygen ingress / H2S oxidation at pressure or temperature letdown (compressor inlets, valves, dry-gas seals, letdown stations), per-segment pipeline corrosion+scale profiles, pipeline hydraulics, water/liquid hammer screening, slug flow, thermal analysis, or chemical inhibitor dosing. Covers all flow assurance threats with NeqSim code patterns and industry standards."
+last_verified: "2026-07-11"
 ---
 
 # Flow Assurance Analysis with NeqSim
@@ -449,10 +449,26 @@ Cl- 0.01, `setMixingRule(10)`.
 
 ### Robust in-situ pH for investigations
 
-Electrolyte `getpH()` is not robust at all P/T (can return NaN at low pressure).
-Use `RobustAqueousPH.estimate(fluid, pCO2Bar)` to always get a finite, bounded pH:
-it uses the rigorous value when valid, else a CO2-water correlation, and records
-which source was used (`getSource()`, `isFellBack()`).
+`getpH()` on the aqueous phase (or `SystemInterface.getpH()`) returns the in-situ
+pH. It now has a **built-in acid-gas dissociation fallback**: when the aqueous
+phase has water + dissolved CO2/H2S but no explicit `H3O+` species (i.e.
+`chemicalReactionInit()` was not run) or the electrolyte solver is unstable and
+returns NaN at low pressure, `getpH()` estimates pH from the carbonic/sulfide
+acid first-dissociation equilibria — `[H+]=sqrt(K1_CO2·C_CO2 + K1_H2S·C_H2S + Kw)`
+— instead of the old silent, unphysical `7.0`. CO2-saturated water → pH ≈ 3.9.
+Force it explicitly with `getpH("acidgas")`. This is a **screening** estimate
+(ignores bicarbonate buffering and salt-ion alkalinity); for a rigorous speciated
+pH in a buffered brine still run `chemicalReactionInit()`.
+
+For corrosion/scale investigations that must always return a finite, bounded,
+**source-tagged** value with an explicit pCO2 basis, use
+`RobustAqueousPH.estimate(fluid, pCO2Bar)`: it takes the rigorous `getpH()` when
+valid, else a CO2-water correlation, and records which source was used
+(`getSource()`, `isFellBack()`).
+
+Regression test for the fallback: `neqsim.chemicalreactions.AcidGasPHTest`
+(CO2-saturated water pH ≈ 3.9, neutral water ≈ 7, CO2+H2S acidic — all without
+`chemicalReactionInit()`).
 
 ### Per-segment corrosion + scale along a line (PipeSegmentIntegrity)
 
@@ -490,8 +506,12 @@ Deposition flagged when v < 1 m/s.
 
 ### Mineral Scale (thermodynamics + kinetics + brine mixing)
 
-Thermodynamic saturation index (activity-corrected, Davies + Ksp(T)) for the
-common scales:
+NeqSim offers **two routes** to mineral scale. Pick by how much you know about
+the brine and whether you need a rigorous precipitated amount.
+
+**(A) Screening SI from an ion analysis (fast, no flash).** Activity-corrected
+saturation index (Davies + Ksp(T)) for the common scales directly from a
+produced-water ion table in mg/L:
 
 ```java
 ElectrolyteScaleCalculator scale = new ElectrolyteScaleCalculator();
@@ -500,10 +520,121 @@ scale.setCations(caMgL, baMgL, srMgL, mgMgL, naMgL, kMgL, feMgL);
 scale.setAnions(clMgL, so4MgL, hco3MgL, co3MgL);
 scale.calculate();
 double siCaCO3 = scale.getCaCO3SaturationIndex();  // also BaSO4, CaSO4, SrSO4
+// SI = log10(IAP/Ksp): >0 supersaturated (scale risk), 0 at equilibrium, <0 undersaturated
 ```
 
-Rigorous in-situ SI from an electrolyte fluid: `system.checkScalePotential(phase)`
-(see `ThermodynamicOperations`) or `ScalePotentialCheckStream`.
+**(B) Rigorous scale potential from a speciated electrolyte fluid — REQUIRES
+chemical reactions + speciation.** The rigorous saturation ratio needs the *in
+situ* ion molalities (Ca²⁺, HCO₃⁻, CO₃²⁻, Ba²⁺, SO₄²⁻, …), which only exist
+after the aqueous speciation equilibria have been solved. So you MUST call
+`chemicalReactionInit()` before `createDatabase(true)` / `setMixingRule(10)`, and
+you should get the in-situ pH from the same speciated flash (see the in-situ pH
+section above). Then `checkScalePotential(phaseNumber)` returns, per salt, the
+**saturation ratio SR = IAP/Ksp** ("relative solubility"): SR > 1 means
+supersaturated and at scale risk.
+
+```java
+SystemInterface brine = new SystemElectrolyteCPAstatoil(273.15 + 60.0, 100.0);
+brine.addComponent("CO2", 0.02);
+brine.addComponent("water", 55.5);
+brine.addComponent("Na+", 1.0);
+brine.addComponent("Cl-", 1.0);
+brine.addComponent("Ca++", 0.02);
+brine.addComponent("HCO3-", 0.04);
+brine.chemicalReactionInit();     // MANDATORY: builds carbonate/bicarbonate speciation
+brine.createDatabase(true);
+brine.setMixingRule(10);          // numeric CPA rule (required)
+brine.setMultiPhaseCheck(true);   // allow gas + aqueous (+ solid) phases
+
+ThermodynamicOperations ops = new ThermodynamicOperations(brine);
+ops.TPflash();                    // solves speciation in the aqueous phase
+brine.initProperties();
+
+int aq = brine.getPhaseNumberOfPhase("aqueous");
+ops.checkScalePotential(aq);      // uses speciated ion molalities in phase `aq`
+String[][] sr = ops.getResultTable();   // rows: {saltName, SR (=IAP/Ksp), ""}
+// Read SR per salt; SR > 1.0 => supersaturated => scale precipitation likely.
+double pH = brine.getpH();        // rigorous speciated in-situ pH from the same flash
+```
+
+Convenience equipment wrapper: `ScalePotentialCheckStream` runs the same SR
+check on a process `Stream`.
+
+**Precipitation amount (how much solid forms).** Two options:
+
+- *Rigorous (solid phase flash):* with `setMultiPhaseCheck(true)`, a
+  supersaturated brine drops a solid phase during `TPflash()`. Read the
+  precipitated mineral directly:
+  ```java
+  if (brine.hasPhaseType("solid")) {
+    double solidMoles = brine.getPhase("solid").getNumberOfMolesInPhase();
+    double solidMassKg = solidMoles * brine.getPhase("solid").getMolarMass();
+  }
+  ```
+- *Screening (from SI):* `ScaleMassCalculator` estimates the mg/L precipitated to
+  reach equilibrium from ion concentrations and SI (per mineral):
+  ```java
+  ScaleMassCalculator mass = new ScaleMassCalculator(predictionCalc);
+  mass.setWaterVolume(1.0); // litres
+  double caco3MgL = mass.calcCaCO3Mass(cCaMolL, cCO3MolL, siCaCO3);  // mg/L
+  // also calcBaSO4Mass, calcCaSO4Mass, calcSrSO4Mass, calcFeCO3Mass
+  ```
+  ⚠️ `ScaleMassCalculator` is **decoupled** — each mineral is treated
+  independently, so it *overpredicts* competing minerals (e.g. it reports
+  celestite scaling even when barite has already consumed the shared sulphate).
+
+- *Coupled screening (recommended for shared-ion brines):*
+  `MultiMineralScaleEquilibrium` drops all supersaturated minerals
+  *simultaneously* and re-equilibrates the shared ion pools (sulphate: BaSO4 /
+  SrSO4 / CaSO4; carbonate: CaCO3 / FeCO3; calcium shared by anhydrite and
+  calcite), giving OLI/ScaleChem-style precipitated **amounts** plus the residual
+  brine. It reuses the same Ksp/ion-pairing/activity chemistry as
+  `ScalePredictionCalculator`, and can upgrade the activity model from Davies
+  (I ≤ 0.5 m) to an extended B-dot (Helgeson) model for high-salinity brines:
+  ```java
+  MultiMineralScaleEquilibrium eq = new MultiMineralScaleEquilibrium(predictionCalc)
+      .setActivityModel(MultiMineralScaleEquilibrium.ActivityModel.BDOT) // high-I option
+      .setWaterVolume(1.0);
+  eq.solve();
+  double baso4MgL = eq.getPrecipitatedMassMgPerL("BaSO4");
+  double totalMgL = eq.getTotalScaleMassMgPerL();
+  double srResid  = eq.getResidualFreeIonMolPerL("SO4--");
+  // each precipitated mineral ends at SI≈0; suppressed minerals stay SI≤0
+  ```
+  For high-pressure brines, enable the second-order (compressibility) Ksp term on
+  the predictor first: `predictionCalc.setSecondOrderPressureCorrection(true)`.
+
+- *In a process flowsheet (scaling mass RATE):* `StreamScaleAnalyzer` extracts the
+  aqueous ion chemistry + produced-water throughput from a run `Stream` and turns
+  the coupled equilibrium into a **kg/day** scaling rate — the number that matters
+  for operations and deposition:
+  ```java
+  StreamScaleAnalyzer a = StreamScaleAnalyzer.fromStream(producedWaterStream);
+  a.analyze();
+  double bariteKgPerDay = a.getScaleRateKgPerDay("BaSO4");
+  double totalKgPerDay  = a.getTotalScaleRateKgPerDay();
+  String dominant       = a.getDominantScale();
+  ```
+  (Needs an electrolyte-CPA fluid with an aqueous ion phase; a non-electrolyte
+  stream carries no ions and reports no scale.)
+
+- *Root cause analysis:* `RootCauseAnalyser.setWaterChemistryFromStream(stream)`
+  (or the ion setters) makes a scale-deposit symptom self-quantifying — the
+  `MINERAL_SCALE` candidate then carries the coupled dominant mineral and its
+  predicted mg/L, and is *down-weighted* when the brine is thermodynamically
+  undersaturated (deposit is more likely wax/asphaltene/corrosion product).
+
+- *Agentic (MCP):* the `runChemistry` tool exposes `analysis:"multiMineralScale"`
+  (ions in mg/L + T/P + optional `waterFlow_LPerDay`, `activityModel:"BDOT"`,
+  `secondOrderPressure`) returning per-mineral amounts and a kg/day rate.
+
+> **Model validation:** the Ksp correlations are pinned to published log10(Ksp)
+> at 25 °C in `ScaleKspLiteratureBenchmarkTest` — calcite −8.48, barite −9.97,
+> celestite −6.63, anhydrite −4.36, siderite −10.89 (Greenberg & Tomson 1992).
+> Keep the siderite form `-59.3498 - 0.041377*T - 2.1963/T + 24.5724*log10(T)`
+> consistent across `ScalePredictionCalculator`, `CheckScalePotential` and
+> `CalcSaltSatauration` (no `T^2` term).
+
 
 **Kinetics** — SI says *if*, not *how fast*. `ScaleKinetics` adds induction time
 and growth regime on top of the SI:
@@ -527,6 +658,65 @@ String worst = mix.getWorstMineral();          // e.g. BaSO4
 
 Deposition along a line: `ScaleDepositionAccumulator` (walks a `PipeBeggsAndBrills`),
 or the coupled corrosion+scale `PipeSegmentIntegrity` above.
+
+### Valve scale drift (plugging → Cv loss → opening drift → RCA)
+
+Scale/solids on a control-valve trim do not fail the valve suddenly: the deposit
+shrinks the open flow area, the effective `Kv/Cv` drops, and the level/pressure
+controller opens the valve further to hold setpoint — an observable upward
+**drift** of the opening until it pins at 100% and control is lost. This is the
+classic level-valve-plugging signature. `ThrottlingValve` now carries a fouling
+term and `ValveScaleDrift` turns a deposit growth rate into that drift:
+
+```java
+valve.setFoulingFraction(0.5);        // effectiveKv = Kv*(1-f); 0=clean
+double effCv = valve.getEffectiveCv();
+
+ValveScaleDrift drift = new ValveScaleDrift(valve)
+    .setPortDiameter(0.05)            // trim port diameter [m]
+    .setKinetics(scaleKinetics);      // or setGrowthRateMmPerYear(20.0)
+for (int day = 0; day < 60; day++) {
+  drift.advance(1.0);                 // grow deposit, update valve foulingFraction
+  process.run();                      // controller compensates -> opening drifts up
+}
+double daysToPin = drift.predictTimeToPinDays(cleanOpeningPercent); // loss of control
+double tPlug     = drift.getTimeToPlugDays();                       // full closure
+```
+
+Uniform radial deposit model: `foulingFraction = 1 - ((d0 - 2t)/d0)^2`; the
+opening required to hold flow rises as `cleanOpening / (1 - fouling)`. Use it in
+an RCA to reproduce the "both LVs → 100% open, level still rising, no inflow
+surge" trend and to bound time-to-plug.
+
+### Scale / precipitation remediation (dissolvers & washing for RCA solutions)
+
+Once a deposit is identified, `ScaleRemediationAdvisor` recommends the dissolver /
+solvent / wash to clean the **already-fouled** equipment (valves, trim, bridles,
+lines, exchangers) — the proposed-solution counterpart to inhibitor prevention.
+It is backed by a knowledge-base CSV (`/data/scale_remediation.csv`) and maps
+common mineral names to canonical formulae:
+
+```java
+ScaleRemediationAdvisor advisor = new ScaleRemediationAdvisor();
+List<ScaleRemediationAdvisor.RemediationOption> opts = advisor.recommendFor("calcite");
+ScaleRemediationAdvisor.RemediationOption best = opts.get(0); // ordered by effectiveness
+best.getDissolver();   // e.g. "Hydrochloric acid (HCl) with corrosion inhibitor ..."
+best.getMethod();      // "Acid soak or circulation, then neutralise and flush"
+best.getCautions();    // safety/operational cautions
+String json = advisor.toJson("BaSO4");
+```
+
+Coverage & the key gotcha it encodes: **acid dissolves carbonate/sulfide scale
+(CaCO3, FeCO3, FeS) but NOT sulfate scale** — barite/celestite (BaSO4, SrSO4)
+need a high-pH chelant (DTPA/EDTA); dithiazine (H2S-scavenger solids) needs a
+proprietary dissolver **plus restoring water pH control** to prevent recurrence;
+asphaltene/wax/naphthenate use aromatic solvent / hot oil. Unknown deposits
+return a "sample-and-identify first (XRD/SEM-EDX)" guard.
+
+`RootCauseAnalyser` uses this automatically: every deposit candidate
+(`MINERAL_SCALE`, `WAX_DEPOSITION`, `ASPHALTENE`, `FES_DEPOSITION`) now appends a
+concrete "to clean fouled equipment: <dissolver> …" hint to its recommendation,
+targeting the coupled dominant mineral when ion chemistry is available.
 
 ### Deposits on compressors (fouling → performance loss → washing)
 

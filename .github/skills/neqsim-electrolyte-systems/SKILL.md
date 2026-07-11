@@ -115,7 +115,12 @@ Before hand-rolling the flash, note these ready-made helpers (see the
   worst mixing fraction and mineral (sulphate scale often peaks mid-mix).
 - `ScaleDepositionAccumulator` / `PipeSegmentIntegrity` — deposition and coupled
   corrosion+scale along a `PipeBeggsAndBrills` profile.
-- Rigorous in-situ SI: `system.checkScalePotential(phase)` on `ThermodynamicOperations`.
+- Rigorous scale potential (saturation ratio SR = IAP/Ksp per salt):
+  `ops.checkScalePotential(phaseNumber)` then `ops.getResultTable()`. This uses
+  in-situ ion molalities, so it **needs chemical reactions + speciation** — call
+  `system.chemicalReactionInit()` before `createDatabase(true)`/`setMixingRule(10)`
+  and flash first (otherwise carbonate/bicarbonate/pH speciation is missing and
+  the SR is wrong).
 
 ### CaCO3 (Calcite) Scaling
 
@@ -128,19 +133,28 @@ $$
 Where $SI > 0$ indicates supersaturation (scaling risk).
 
 ```java
-// Check for scale tendency by mixing formation water with seawater
+// Rigorous route: mix formation water + seawater, solve speciation, check scale
 SystemInterface mixed = new SystemElectrolyteCPAstatoil(273.15 + 80.0, 50.0);
-// Add components from both waters...
+// Add components from both waters (water, Na+, Cl-, Ca++, Ba++, SO4--, HCO3-, CO2 ...)
+mixed.chemicalReactionInit();   // MANDATORY for pH + carbonate speciation + SR
+mixed.createDatabase(true);
 mixed.setMixingRule(10);
 mixed.setMultiPhaseCheck(true);
 
 ThermodynamicOperations ops = new ThermodynamicOperations(mixed);
-ops.TPflash();
+ops.TPflash();                  // solves aqueous speciation
+mixed.initProperties();
 
-// Check for solid phase (scale)
+// (1) Scale potential per salt: saturation ratio SR = IAP/Ksp (>1 => scaling)
+int aq = mixed.getPhaseNumberOfPhase("aqueous");
+ops.checkScalePotential(aq);
+String[][] sr = ops.getResultTable();     // rows: {saltName, SR, ""}
+double pH = mixed.getpH();                // speciated in-situ pH from same flash
+
+// (2) Precipitation amount: a supersaturated brine drops a solid phase
 if (mixed.hasPhaseType("solid")) {
-    // Scale predicted
-    double solidAmount = mixed.getPhase("solid").getNumberOfMolesInPhase();
+    double solidMoles = mixed.getPhase("solid").getNumberOfMolesInPhase();
+    double solidMassKg = solidMoles * mixed.getPhase("solid").getMolarMass();
 }
 ```
 
@@ -207,7 +221,19 @@ co2Brine.initProperties();
 
 // CO2 in aqueous phase
 double co2InWater = co2Brine.getPhase("aqueous").getComponent("CO2").getx();
+
+// In-situ pH — getpH() has a built-in acid-gas fallback, so a CO2/H2S brine
+// returns an acidic pH even WITHOUT chemicalReactionInit() (no more silent 7.0).
+double pH = co2Brine.getpH();               // ~3.9 for CO2-saturated water
+// double pH = co2Brine.getPhase("aqueous").getpH("acidgas"); // force the estimate
 ```
+
+> For a rigorous speciated pH in a buffered brine (explicit `H3O+`/`HCO3-`/`OH-`),
+> run `system.chemicalReactionInit()` before `createDatabase(true)` /
+> `setMixingRule(10)`. The `getpH("acidgas")` fallback is a screening estimate that
+> ignores bicarbonate buffering and salt-ion alkalinity — see the electrolyte-CPA
+> model docs and the flow-assurance skill for corrosion use.
+
 
 ## Key Units and Conversions
 

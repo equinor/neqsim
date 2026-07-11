@@ -69,6 +69,12 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   boolean isCalcPressure = false;
   private boolean gasValve = true;
   private double Fp = 1.0;
+  /**
+   * Fouling fraction in the range [0, 1) representing the loss of effective flow coefficient caused by scale/solids
+   * deposition on the valve trim. An effective Kv of {@code Kv * (1 - foulingFraction)} is used in all flow and
+   * pressure calculations. 0.0 means a clean valve; 0.9 means 90% of the trim capacity is lost.
+   */
+  private double foulingFraction = 0.0;
   private double deltaPressure = 0.0;
   private boolean allowChoked = false;
   private boolean allowLaminar = true;
@@ -83,6 +89,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
   private double lastRequestedValveOpening = Double.NaN;
   private double lastDeltaPressure = Double.NaN;
   private double lastFp = Double.NaN;
+  private double lastFoulingFraction = Double.NaN;
   private double lastXt = Double.NaN;
   private String lastPressureUnit = null;
   private String lastSpecification = null;
@@ -235,9 +242,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     if (inThermo.getTemperature() != lastInletTemperature || inThermo.getPressure() != lastInletPressure
         || pressure != lastOutletPressure || Kv != lastKv || percentValveOpening != lastPercentValveOpening
         || requestedValveOpening != lastRequestedValveOpening || deltaPressure != lastDeltaPressure || Fp != lastFp
-        || xt != lastXt || valveKvSet != lastValveKvSet || isoThermal != lastIsoThermal
-        || acceptNegativeDP != lastAcceptNegativeDP || isCalcPressure != lastIsCalcPressure
-        || allowChoked != lastAllowChoked || allowLaminar != lastAllowLaminar
+        || foulingFraction != lastFoulingFraction || xt != lastXt || valveKvSet != lastValveKvSet
+        || isoThermal != lastIsoThermal || acceptNegativeDP != lastAcceptNegativeDP
+        || isCalcPressure != lastIsCalcPressure || allowChoked != lastAllowChoked || allowLaminar != lastAllowLaminar
         || !java.util.Objects.equals(pressureUnit, lastPressureUnit)
         || !java.util.Objects.equals(getSpecification(), lastSpecification)) {
       return true;
@@ -275,6 +282,7 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
     lastRequestedValveOpening = requestedValveOpening;
     lastDeltaPressure = deltaPressure;
     lastFp = Fp;
+    lastFoulingFraction = foulingFraction;
     lastXt = xt;
     lastPressureUnit = pressureUnit;
     lastSpecification = getSpecification();
@@ -330,7 +338,9 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
    * @return Adjusted flow coefficient (Kv)
    */
   private double adjustKv(double Kv, double percentValveOpening) {
-    return getMechanicalDesign().getValveCharacterizationMethod().getActualKv(Kv, percentValveOpening);
+    double characterizedKv = getMechanicalDesign().getValveCharacterizationMethod().getActualKv(Kv,
+        percentValveOpening);
+    return characterizedKv * (1.0 - foulingFraction);
   }
 
   /** {@inheritDoc} */
@@ -852,6 +862,50 @@ public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
       this.Kv = cv;
     }
     valveKvSet = true;
+  }
+
+  /**
+   * Returns the fouling fraction representing loss of effective flow coefficient from scale/solids deposition.
+   *
+   * @return fouling fraction in the range [0, 1); 0.0 means a clean valve
+   */
+  public double getFoulingFraction() {
+    return foulingFraction;
+  }
+
+  /**
+   * Sets the fouling fraction representing the loss of effective flow coefficient caused by scale/solids deposition on
+   * the valve trim. The effective flow coefficient used in all flow and pressure calculations becomes
+   * {@code Kv * (1 - foulingFraction)}.
+   *
+   * @param foulingFraction fouling fraction in the range [0, 1); values are clamped to this range
+   */
+  public void setFoulingFraction(double foulingFraction) {
+    if (foulingFraction < 0.0) {
+      this.foulingFraction = 0.0;
+    } else if (foulingFraction >= 1.0) {
+      this.foulingFraction = 0.999999;
+    } else {
+      this.foulingFraction = foulingFraction;
+    }
+  }
+
+  /**
+   * Returns the effective (fouled) flow coefficient in SI units, i.e. {@code Kv * (1 - foulingFraction)}.
+   *
+   * @return effective flow coefficient Kv (SI)
+   */
+  public double getEffectiveKv() {
+    return Kv * (1.0 - foulingFraction);
+  }
+
+  /**
+   * Returns the effective (fouled) flow coefficient in US units, i.e. {@code Cv * (1 - foulingFraction)}.
+   *
+   * @return effective flow coefficient Cv (US)
+   */
+  public double getEffectiveCv() {
+    return getCv("US") * (1.0 - foulingFraction);
   }
 
   /** {@inheritDoc} */

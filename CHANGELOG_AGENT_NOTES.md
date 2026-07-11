@@ -9,6 +9,47 @@
 
 ---
 
+## 2026-07-11 — New: valve scale-drift plugging + scale/deposit remediation advisor
+
+### Summary
+
+Additive flow-assurance/integrity capability for analysing scale/solids fouling
+of control valves (Cv loss → opening drift → time-to-plug) and for recommending
+dissolver/solvent cleaning of already-fouled equipment. No changes to existing
+behaviour; a clean valve keeps `foulingFraction = 0`.
+
+### New capability
+
+- **`neqsim.process.equipment.valve.ThrottlingValve`** — new fouling coupling:
+  `setFoulingFraction(f)` / `getFoulingFraction()`, `getEffectiveKv()` /
+  `getEffectiveCv()`. Effective flow coefficient is `Kv*(1-f)`, applied inside
+  all flow/pressure calculations; `f` is clamped to `[0, 1)`.
+- **`neqsim.process.chemistry.scale.ValveScaleDrift`** — turns a deposit growth
+  rate (mm/yr, directly or from `ScaleKinetics`) into the valve fouling fraction
+  via a uniform radial-deposit trim model (`foulingFraction = 1-((d0-2t)/d0)^2`).
+  `advance(days)`, `getTimeToPlugDays()`, `predictOpeningPercent(clean)`,
+  `predictTimeToPinDays(clean)`, `toJson()`. Drive it inside a `runTransient`
+  loop to reproduce the "both LVs → 100% open, level rising, no surge" signature.
+- **`neqsim.process.chemistry.scale.ScaleRemediationAdvisor`** — deposit → dissolver
+  recommendation backed by `/data/scale_remediation.csv`. `recommendFor(type)`
+  (aliases: calcite/barite/gypsum/mackinawite/halite/…), `recommendForMinerals`,
+  `toJson`. Encodes the key gotcha: acid dissolves carbonate/sulfide (CaCO3, FeCO3,
+  FeS) but NOT sulfate scale (BaSO4/SrSO4 → high-pH chelant); dithiazine scavenger
+  solids → proprietary dissolver + restore water pH control.
+- **`neqsim.process.chemistry.rca.RootCauseAnalyser`** — every deposit candidate
+  (`MINERAL_SCALE`, `WAX_DEPOSITION`, `ASPHALTENE`, `FES_DEPOSITION`) now appends a
+  concrete "to clean fouled equipment: <dissolver> …" cleaning hint, targeting the
+  coupled dominant mineral when ion chemistry is available.
+
+### Agents / skills updated
+
+- `neqsim-flow-assurance` skill — new "Valve scale drift" and "Scale / precipitation
+  remediation" subsections (section 5-scale) + description keywords.
+- `@flow.assurance` agent — corrosion+scale section references the valve-plugging
+  and remediation-advisor classes.
+
+---
+
 ## 2026-07-11 — New: reservoir & production engineering (material balance, decline fitting, Gray well flow)
 
 ### Summary

@@ -107,8 +107,8 @@ public class CheckScalePotential extends ConstantDutyTemperatureFlash {
         }
         if (saltName.equals("FeCO3")) {
           // FeCO3 (siderite) Ksp correlation from Greenberg & Tomson (1992)
-          double log10Ksp = -59.3498 - 0.041377 * temperatureK + 2.1963 / temperatureK
-              + 24.5724 * Math.log10(temperatureK) + 2.518e-5 * temperatureK * temperatureK;
+          double log10Ksp = -59.3498 - 0.041377 * temperatureK - 2.1963 / temperatureK
+              + 24.5724 * Math.log10(temperatureK);
           ksp = Math.pow(10.0, log10Ksp);
         }
         if (saltName.equals("FeS")) {

@@ -746,12 +746,34 @@ public interface PhaseInterface extends ThermodynamicConstantsInterface, Cloneab
    * constants</li>
    * <li><b>molality</b> (IUPAC standard): pH = -log10(gamma_m * m_H3O+) - correct for all concentrations</li>
    * <li><b>molarity</b>: pH = -log10([H3O+]) where [H3O+] is in mol/L - ignores activity coefficient</li>
+   * <li><b>acidgas</b>: screening in-situ pH of an acid-gas-loaded aqueous phase from dissolved CO2/H2S via the
+   * carbonic/hydrosulfuric acid first-dissociation equilibria (used automatically as a fallback when no explicit H3O+
+   * species is present)</li>
    * </ul>
    *
-   * @param method The calculation method: "activity" (default), "molality", or "molarity"
+   * @param method The calculation method: "activity" (default), "molality", "molarity", or "acidgas"
    * @return pH value
    */
   public double getpH(String method);
+
+  /**
+   * Screening in-situ pH of a carbonate/sulfide aqueous phase that carries a net alkalinity (buffered brine).
+   *
+   * <p>
+   * Extends the unbuffered acid-gas estimate to water that also carries a net alkalinity - produced water with
+   * bicarbonate hardness, or scrubber water dosed with an alkaline H2S scavenger (a triazine/amine base) that raises
+   * the pH into the neutral-to-alkaline band where carbonate (CaCO3) scaling occurs. Uses the carbonic/hydrosulfuric
+   * acid charge balance Alk = S/[H+] - [H+] with S = K1(CO2)&middot;C_CO2 + K1(H2S)&middot;C_H2S + Kw, so [H+] = (-Alk
+   * + sqrt(Alk^2 + 4&middot;S))/2. At {@code alkalinity = 0} this reduces exactly to the "acidgas" estimate; a positive
+   * alkalinity (net base) raises the pH and a negative alkalinity (net strong acid, e.g. an acidifying pH regulator
+   * such as formic acid) lowers it. Screening level - not rigorous buffered-brine speciation.
+   * </p>
+   *
+   * @param alkalinityEqPerLitre net alkalinity of the aqueous phase [equivalents per litre]; positive for a net base
+   * (raises pH), negative for a net strong acid (lowers pH), zero for the unbuffered acid-gas case
+   * @return estimated buffered pH, or {@link Double#NaN} if it cannot be evaluated
+   */
+  public double getpHwithAlkalinity(double alkalinityEqPerLitre);
 
   /**
    * Normalize property <code>x</code>.
