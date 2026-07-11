@@ -2363,6 +2363,81 @@ public abstract class Phase implements PhaseInterface {
     return pH;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public double getpHwithAlkalinity(double alkalinityEqPerLitre) {
+    if (!getPhaseTypeName().equals("aqueous")) {
+      logger.debug("getpHwithAlkalinity called on non-aqueous phase ({}), returning NaN", getPhaseTypeName());
+      return Double.NaN;
+    }
+    return getpH_carbonateBuffered(alkalinityEqPerLitre);
+  }
+
+  /**
+   * Estimate the in-situ pH of a carbonate/sulfide aqueous phase that carries a net alkalinity (buffered brine).
+   *
+   * <p>
+   * This extends {@link #getpH_acidGasDissociation()} from the unbuffered acid-gas case to a water that also carries a
+   * net alkalinity - for example produced water with bicarbonate hardness, or scrubber water dosed with an alkaline H2S
+   * scavenger (a triazine/amine base). Such a base raises the water pH from the acidic acid-gas value into the neutral
+   * to alkaline band where carbonate (CaCO3) scaling occurs, which the pure acid-gas estimate cannot reproduce.
+   * </p>
+   *
+   * <p>
+   * Charge balance for the carbonic/hydrosulfuric acid system, with alkalinity defined as the net proton-acceptor
+   * excess Alk = [HCO3-] + [HS-] + [OH-] - [H+] and the conjugate bases from the first dissociation equilibria, gives
+   * Alk = S/[H+] - [H+] with S = K1(CO2)&middot;C_CO2 + K1(H2S)&middot;C_H2S + Kw. Solving the resulting quadratic:
+   * [H+] = (-Alk + sqrt(Alk^2 + 4&middot;S))/2. At {@code alkalinity = 0} this reduces exactly to the unbuffered
+   * acid-gas estimate [H+] = sqrt(S); a positive alkalinity (net base, e.g. scavenger dosing) raises the pH, and a
+   * negative alkalinity (net strong acid, e.g. an acidifying pH regulator such as formic acid) lowers it.
+   * </p>
+   *
+   * <p>
+   * This is a screening-level estimate: it uses the flashed CO2/H2S mole fractions as the free-acid concentrations,
+   * neglects the second dissociation steps (CO3--, S--) and ion-pairing, and treats alkalinity as an externally
+   * supplied equivalent concentration rather than resolving explicit base speciation. Intended for scale/corrosion
+   * screening, not rigorous buffered-brine speciation.
+   * </p>
+   *
+   * @param alkalinityEqPerLitre net alkalinity of the aqueous phase [equivalents per litre]; positive for a net base
+   * (raises pH), negative for a net strong acid (lowers pH), zero for the unbuffered acid-gas case
+   * @return estimated buffered pH, or {@link Double#NaN} if it cannot be evaluated
+   */
+  private double getpH_carbonateBuffered(double alkalinityEqPerLitre) {
+    if (!hasComponent("water")) {
+      return Double.NaN;
+    }
+    double temperature = getTemperature();
+    double kw = waterIonProduct(temperature);
+    double co2x = (hasComponent("CO2") && getComponent("CO2").getx() > 0.0) ? getComponent("CO2").getx() : 0.0;
+    double h2sx = (hasComponent("H2S") && getComponent("H2S").getx() > 0.0) ? getComponent("H2S").getx() : 0.0;
+    initPhysicalProperties();
+    double density = getPhysicalProperties().getDensity(); // kg/m3
+    double molarMass = getMolarMass(); // kg/mol
+    if (!(density > 0.0) || !(molarMass > 0.0)) {
+      logger.debug("carbonate-buffered pH: invalid aqueous density {} or molar mass {}", density, molarMass);
+      return Double.NaN;
+    }
+    double totalMolarity = density / molarMass / 1000.0; // mol/L of aqueous solution
+    double cCO2 = co2x * totalMolarity;
+    double cH2S = h2sx * totalMolarity;
+    double ka1CO2 = firstDissociationConstantCO2(temperature);
+    double ka1H2S = firstDissociationConstantH2S(temperature);
+    double s = ka1CO2 * cCO2 + ka1H2S * cH2S + kw; // acid-gas proton source term
+    double alk = alkalinityEqPerLitre;
+    // Charge balance Alk = S/[H+] - [H+] -> [H+]^2 + Alk*[H+] - S = 0
+    double hPlus = 0.5 * (-alk + Math.sqrt(alk * alk + 4.0 * s));
+    if (!(hPlus > 0.0)) {
+      return Double.NaN;
+    }
+    double pH = -Math.log10(hPlus);
+    if (pH < -2.0 || pH > 16.0) {
+      logger.debug("carbonate-buffered pH {} is outside realistic range [-2, 16]", pH);
+      return Double.NaN;
+    }
+    return pH;
+  }
+
   /**
    * First apparent dissociation constant of carbonic acid, K1 for CO2(aq) + H2O &#8596; H+ + HCO3- (molarity scale,
    * mol/L), from the Plummer &amp; Busenberg (1982) correlation valid 0-90 &deg;C.

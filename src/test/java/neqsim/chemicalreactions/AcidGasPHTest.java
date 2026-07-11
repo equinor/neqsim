@@ -130,4 +130,94 @@ public class AcidGasPHTest {
     assertTrue(pH < 7.0, "CO2 + H2S water should be acidic (pH < 7), got " + pH);
     assertTrue(pH > 2.5, "pH should stay in a realistic acidic band, got " + pH);
   }
+
+  /**
+   * With zero net alkalinity the buffered estimate must reduce exactly to the unbuffered acid-gas estimate.
+   */
+  @Test
+  public void testZeroAlkalinityMatchesAcidGas() {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
+    system.addComponent("CO2", 5.0);
+    system.addComponent("water", 10.0);
+    system.createDatabase(true);
+    system.setMixingRule(10);
+    system.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    ops.TPflash();
+    system.initProperties();
+
+    double pHacidgas = system.getpHwithAlkalinity(0.0);
+    double pHreference = system.getpHwithAlkalinity(0.0);
+    // acid-gas method obtained via the phase for an apples-to-apples comparison
+    int aqueous = -1;
+    for (int p = 0; p < system.getNumberOfPhases(); p++) {
+      if (system.getPhase(p).getPhaseTypeName().equalsIgnoreCase("aqueous")) {
+        aqueous = p;
+      }
+    }
+    assertTrue(aqueous >= 0, "an aqueous phase should be present");
+    double pHphaseAcidgas = system.getPhase(aqueous).getpH("acidgas");
+    logger.info("zero-alkalinity pH = {}, acidgas pH = {}", pHacidgas, pHphaseAcidgas);
+
+    assertTrue(Double.isFinite(pHacidgas), "zero-alkalinity pH should be finite, got " + pHacidgas);
+    assertEquals(pHreference, pHacidgas, 1e-9, "repeated calls must be deterministic");
+    assertEquals(pHphaseAcidgas, pHacidgas, 0.05,
+        "zero-alkalinity buffered pH must equal the acid-gas estimate, got " + pHacidgas + " vs " + pHphaseAcidgas);
+  }
+
+  /**
+   * A net base alkalinity (e.g. an alkaline H2S scavenger) must raise the pH from the acidic acid-gas value into the
+   * neutral-to-alkaline carbonate-scaling band - the corrected mechanism for scavenger-dosed scrubber water.
+   */
+  @Test
+  public void testAlkalinityRaisesPHIntoScalingBand() {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
+    system.addComponent("CO2", 5.0);
+    system.addComponent("water", 10.0);
+    system.createDatabase(true);
+    system.setMixingRule(10);
+    system.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    ops.TPflash();
+    system.initProperties();
+
+    double pHacidic = system.getpHwithAlkalinity(0.0);
+    // ~5 meq/L bicarbonate-style alkalinity, representative of dosed scrubber / produced water
+    double pHbuffered = system.getpHwithAlkalinity(5.0e-3);
+    logger.info("acidic pH = {}, alkalinity-buffered pH = {}", pHacidic, pHbuffered);
+
+    assertTrue(Double.isFinite(pHbuffered), "buffered pH should be finite, got " + pHbuffered);
+    assertTrue(pHbuffered > pHacidic,
+        "net base alkalinity must raise pH above the acidic value, got " + pHbuffered + " vs " + pHacidic);
+    assertTrue(pHbuffered > 6.0 && pHbuffered < 11.0,
+        "buffered pH should sit in the neutral-to-alkaline carbonate-scaling band, got " + pHbuffered);
+  }
+
+  /**
+   * A net strong-acid alkalinity (a negative value, e.g. an acidifying formic-acid pH regulator) must lower the pH
+   * below the unbuffered acid-gas value.
+   */
+  @Test
+  public void testNegativeAlkalinityLowersPH() {
+    SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
+    system.addComponent("CO2", 5.0);
+    system.addComponent("water", 10.0);
+    system.createDatabase(true);
+    system.setMixingRule(10);
+    system.setMultiPhaseCheck(true);
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    ops.TPflash();
+    system.initProperties();
+
+    double pHacidic = system.getpHwithAlkalinity(0.0);
+    double pHacidified = system.getpHwithAlkalinity(-1.0e-3);
+    logger.info("acid-gas pH = {}, acidified pH = {}", pHacidic, pHacidified);
+
+    assertTrue(Double.isFinite(pHacidified), "acidified pH should be finite, got " + pHacidified);
+    assertTrue(pHacidified < pHacidic,
+        "net strong-acid (negative alkalinity) must lower pH, got " + pHacidified + " vs " + pHacidic);
+  }
 }
