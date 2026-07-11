@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
-"""Guard the shared agent-manifest schema against cross-repo drift.
+"""Guard the shared agent- and skill-manifest schemas against cross-repo drift.
 
-The canonical agent-manifest JSON Schema lives in this core repo at
-``docs/integration/schemas/agent-manifest.schema.json``. The community and
-enterprise agent repositories vendor a byte-identical copy under their own
-``schemas/`` folder so they can validate standalone. This check compares the
-vendored copies against the canonical one whenever those sibling repos are
-checked out next to this repo (the normal multi-root workspace / CI layout).
+The canonical JSON Schemas live in this core repo at
+``docs/integration/schemas/agent-manifest.schema.json`` and
+``docs/integration/schemas/skill-manifest.schema.json``. The community and
+enterprise agent/skill repositories vendor a copy under their own ``schemas/``
+folder so they can validate standalone. This check compares each vendored copy
+against the canonical one whenever those sibling repos are checked out next to
+this repo (the normal multi-root workspace / CI layout).
 
 It is intentionally non-fatal when a sibling repo is absent: those repos run
 their own copy of the check in their own CI. Run it from the core repo to catch
@@ -36,9 +37,14 @@ def repo_root():
     return Path(__file__).resolve().parent.parent
 
 
-CANONICAL_REL = Path("docs/integration/schemas/agent-manifest.schema.json")
-VENDORED_REL = Path("schemas/agent-manifest.schema.json")
-SIBLINGS = ["neqsim-community-agents", "neqsim-enterprise-agents"]
+CANONICAL_DIR = Path("docs/integration/schemas")
+VENDORED_REL = Path("schemas")
+
+# Each canonical schema and the sibling repos that vendor a copy of it.
+SCHEMA_TARGETS = {
+    "agent-manifest.schema.json": ["neqsim-community-agents", "neqsim-enterprise-agents"],
+    "skill-manifest.schema.json": ["neqsim-community-skills", "neqsim-enterprise-skills"],
+}
 
 
 def load_json(path):
@@ -55,30 +61,35 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     root = repo_root()
-    canonical_path = root / CANONICAL_REL
-    if not canonical_path.exists():
-        print("ERROR: canonical schema not found at {}".format(canonical_path))
-        return 1
-    canonical = load_json(canonical_path)
-
     errors = []
     checked = 0
-    for sibling in SIBLINGS:
-        vendored_path = root.parent / sibling / VENDORED_REL
-        if not vendored_path.exists():
-            message = "{}: vendored schema not found at {}".format(sibling, vendored_path)
-            if args.strict:
-                errors.append(message)
+
+    for schema_name, siblings in SCHEMA_TARGETS.items():
+        canonical_path = root / CANONICAL_DIR / schema_name
+        if not canonical_path.exists():
+            print("ERROR: canonical schema not found at {}".format(canonical_path))
+            return 1
+        canonical = load_json(canonical_path)
+        for sibling in siblings:
+            vendored_path = root.parent / sibling / VENDORED_REL / schema_name
+            if not vendored_path.exists():
+                message = "{}: vendored {} not found at {}".format(
+                    sibling, schema_name, vendored_path
+                )
+                if args.strict:
+                    errors.append(message)
+                else:
+                    print("SKIP: {} ({} sibling not checked out)".format(sibling, schema_name))
+                continue
+            checked += 1
+            if load_json(vendored_path) != canonical:
+                errors.append(
+                    "{}: vendored {} differs from canonical {}".format(
+                        sibling, schema_name, canonical_path
+                    )
+                )
             else:
-                print("SKIP: {} (sibling not checked out)".format(sibling))
-            continue
-        checked += 1
-        if load_json(vendored_path) != canonical:
-            errors.append(
-                "{}: vendored schema differs from canonical {}".format(sibling, canonical_path)
-            )
-        else:
-            print("OK: {} vendored schema matches canonical".format(sibling))
+                print("OK: {} vendored {} matches canonical".format(sibling, schema_name))
 
     for error in errors:
         print("ERROR: {}".format(error))

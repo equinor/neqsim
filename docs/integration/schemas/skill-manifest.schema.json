@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/equinor/neqsim/master/docs/integration/schemas/skill-manifest.schema.json",
+  "title": "NeqSim Skill Manifest",
+  "description": "Canonical schema for the YAML frontmatter of a SKILL.md across the NeqSim community and enterprise skill catalogs. This is the single source of truth; the community and enterprise skill repositories vendor a byte-identical copy under their own schemas/ folder and validate against it in CI. Keep the vendored copies byte-for-byte identical to this file (checked by devtools/verify_agent_schema_sync.py in the core repo). The description must additionally contain a 'USE WHEN:' trigger clause (enforced by the validator, case-insensitive).",
+  "type": "object",
+  "required": ["name", "version", "description"],
+  "additionalProperties": true,
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^(neqsim|enterprise)-[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Canonical skill id. Community/core skills use the neqsim- namespace; internal skills use the enterprise- namespace."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10,
+      "description": "Short description that MUST contain a 'USE WHEN:' clause so agents can decide when to load the skill."
+    },
+    "last_verified": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "ISO date the skill was last verified. Required by the community skill standard; enterprise skills may omit it."
+    },
+    "required_skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(neqsim|enterprise)-[a-z0-9]+(-[a-z0-9]+)*$"
+      },
+      "description": "Skills this skill builds on (e.g. an enterprise overlay extending a community neqsim- skill)."
+    },
+    "required_packages": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "requires": {
+      "type": "object",
+      "description": "Runtime requirements bundle used by community skills (informational; sub-fields such as python_packages/java_packages/env/network are not type-constrained because some skills use a boolean flag).",
+      "additionalProperties": true
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "min_neqsim_version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "trust_level": {
+      "type": "string",
+      "enum": ["core", "community", "internal", "private", "experimental"]
+    },
+    "requires_mcp_tools": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}
