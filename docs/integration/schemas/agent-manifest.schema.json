@@ -47,6 +47,15 @@
       },
       "description": "Optional, as-relevant skills the agent may load depending on the task, in addition to required_skills. Declaring them here \u2014 rather than only naming them in AGENT.md prose \u2014 keeps the agent<->skill linkage machine-checkable: validators existence-check them, the agent<->skill map includes them, and an AGENT.md cross-check can verify that every skill named in the prose is declared in required_skills or context_skills. Not inherited through extends."
     },
+    "coordinated_agents": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+        "description": "Agent id (kebab-case) of a specialist agent this agent delegates to."
+      },
+      "description": "The other agents this agent delegates to (horizontal composition / orchestration edges), as opposed to `extends` which is a vertical policy overlay of a single base agent. Declaring delegation here \u2014 rather than only naming agents in AGENT.md prose or an @mention table \u2014 makes the orchestration graph machine-checkable: validators existence-check each id against the catalogs, the orchestration map is generated from it, and an agent whose `agent_type` is a coordinator/orchestrator is expected to declare a non-empty list. Front-door routers and multi-agent coordinators SHOULD populate this."
+    },
     "supported_domains": {
       "type": "array",
       "items": { "type": "string" },
