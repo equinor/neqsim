@@ -3,6 +3,7 @@ package neqsim.mcp.runners;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -13,6 +14,8 @@ import neqsim.process.chemistry.corrosion.LangmuirInhibitorIsotherm;
 import neqsim.process.chemistry.corrosion.MechanisticCorrosionModel;
 import neqsim.process.chemistry.scale.ElectrolyteScaleCalculator;
 import neqsim.process.chemistry.scavenger.PackedBedScavengerReactor;
+import neqsim.pvtsimulation.flowassurance.MultiMineralScaleEquilibrium;
+import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
 
 /**
  * Stateless chemistry-and-integrity runner for MCP integration.
@@ -35,8 +38,8 @@ public class ChemistryRunner {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeNulls()
       .serializeSpecialFloatingPointValues().create();
 
-  private static final List<String> SUPPORTED_ANALYSES = Collections.unmodifiableList(
-      Arrays.asList("electrolyteScale", "mechanisticCorrosion", "langmuirInhibitor", "packedBedScavenger"));
+  private static final List<String> SUPPORTED_ANALYSES = Collections.unmodifiableList(Arrays.asList("electrolyteScale",
+      "multiMineralScale", "mechanisticCorrosion", "langmuirInhibitor", "packedBedScavenger"));
 
   /**
    * Private constructor — static utility class.
@@ -87,6 +90,9 @@ public class ChemistryRunner {
       case "electrolyteScale":
         data = runElectrolyteScale(input);
         break;
+      case "multiMineralScale":
+        data = runMultiMineralScale(input);
+        break;
       case "mechanisticCorrosion":
         data = runMechanisticCorrosion(input);
         break;
@@ -124,6 +130,62 @@ public class ChemistryRunner {
             d(input, "co3_mgL", 0.0))
         .calculate();
     return JsonParser.parseString(calc.toJson()).getAsJsonObject();
+  }
+
+  /**
+   * Runs the coupled multi-mineral scale equilibrium: precipitates barite, celestite, anhydrite, calcite and siderite
+   * simultaneously with shared-ion competition, returning per-mineral precipitated amounts and (optionally) a kg/day
+   * scaling rate when a produced-water flow is supplied.
+   *
+   * @param input JSON input object
+   * @return JSON result object
+   */
+  private static JsonObject runMultiMineralScale(JsonObject input) {
+    ScalePredictionCalculator p = new ScalePredictionCalculator();
+    p.setTemperatureCelsius(d(input, "temperature_C", 60.0));
+    p.setPressureBara(d(input, "pressure_bara", 50.0));
+    p.setCalciumConcentration(d(input, "ca_mgL", 0.0));
+    p.setBariumConcentration(d(input, "ba_mgL", 0.0));
+    p.setStrontiumConcentration(d(input, "sr_mgL", 0.0));
+    p.setIronConcentration(d(input, "fe_mgL", 0.0));
+    p.setMagnesiumConcentration(d(input, "mg_mgL", 0.0));
+    p.setSodiumConcentration(d(input, "na_mgL", 0.0));
+    p.setBicarbonateConcentration(d(input, "hco3_mgL", 0.0));
+    p.setSulphateConcentration(d(input, "so4_mgL", 0.0));
+    double tds = d(input, "tds_mgL", 0.0);
+    if (tds > 0.0) {
+      p.setTotalDissolvedSolids(tds);
+    }
+    p.setCO2PartialPressure(d(input, "pCO2_bar", 0.0));
+    if (input.has("pH")) {
+      p.setPH(d(input, "pH", 6.5));
+    } else {
+      p.enableAutoPH();
+    }
+    if (bool(input, "secondOrderPressure", false)) {
+      p.setSecondOrderPressureCorrection(true);
+    }
+
+    MultiMineralScaleEquilibrium eq = new MultiMineralScaleEquilibrium(p);
+    String model = input.has("activityModel") ? input.get("activityModel").getAsString() : "DAVIES";
+    if ("BDOT".equalsIgnoreCase(model)) {
+      eq.setActivityModel(MultiMineralScaleEquilibrium.ActivityModel.BDOT);
+    }
+    eq.solve();
+
+    JsonObject data = JsonParser.parseString(eq.toJson()).getAsJsonObject();
+
+    double waterFlow = d(input, "waterFlow_LPerDay", 0.0);
+    if (waterFlow > 0.0) {
+      JsonObject rates = new JsonObject();
+      for (Map.Entry<String, MultiMineralScaleEquilibrium.MineralResult> e : eq.getResults().entrySet()) {
+        rates.addProperty(e.getKey(), e.getValue().getPrecipitatedMassMgPerL() * waterFlow / 1.0e6);
+      }
+      rates.addProperty("total", eq.getTotalScaleMassMgPerL() * waterFlow / 1.0e6);
+      data.addProperty("waterFlow_LPerDay", waterFlow);
+      data.add("scaleRates_kgPerDay", rates);
+    }
+    return data;
   }
 
   private static JsonObject runMechanisticCorrosion(JsonObject input) {
@@ -185,6 +247,10 @@ public class ChemistryRunner {
 
   private static int i(JsonObject o, String key, int def) {
     return (o.has(key) && !o.get(key).isJsonNull()) ? o.get(key).getAsInt() : def;
+  }
+
+  private static boolean bool(JsonObject o, String key, boolean def) {
+    return (o.has(key) && !o.get(key).isJsonNull()) ? o.get(key).getAsBoolean() : def;
   }
 
   private static String errorJson(String code, String message, String remediation) {

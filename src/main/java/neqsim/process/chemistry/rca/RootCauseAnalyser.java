@@ -54,6 +54,13 @@ public class RootCauseAnalyser implements Serializable {
   private double pH = 6.5;
   private double calciumMgL = 0.0;
   private double ironMgL = 0.0;
+  private double bariumMgL = 0.0;
+  private double strontiumMgL = 0.0;
+  private double magnesiumMgL = 0.0;
+  private double sulphateMgL = 0.0;
+  private double bicarbonateMgL = 0.0;
+  private double sodiumMgL = 0.0;
+  private double tdsMgL = 0.0;
   private double oxygenPpb = 0.0;
   private double h2sPartialPressureBar = 0.0;
   private double co2PartialPressureBar = 0.0;
@@ -170,6 +177,95 @@ public class RootCauseAnalyser implements Serializable {
    */
   public void setCO2PartialPressureBar(double bar) {
     this.co2PartialPressureBar = bar;
+  }
+
+  /**
+   * Sets barium concentration.
+   *
+   * @param mgL Ba in mg/L
+   */
+  public void setBariumMgL(double mgL) {
+    this.bariumMgL = mgL;
+  }
+
+  /**
+   * Sets strontium concentration.
+   *
+   * @param mgL Sr in mg/L
+   */
+  public void setStrontiumMgL(double mgL) {
+    this.strontiumMgL = mgL;
+  }
+
+  /**
+   * Sets magnesium concentration.
+   *
+   * @param mgL Mg in mg/L
+   */
+  public void setMagnesiumMgL(double mgL) {
+    this.magnesiumMgL = mgL;
+  }
+
+  /**
+   * Sets sulphate concentration.
+   *
+   * @param mgL SO4 in mg/L
+   */
+  public void setSulphateMgL(double mgL) {
+    this.sulphateMgL = mgL;
+  }
+
+  /**
+   * Sets bicarbonate concentration.
+   *
+   * @param mgL HCO3 in mg/L
+   */
+  public void setBicarbonateMgL(double mgL) {
+    this.bicarbonateMgL = mgL;
+  }
+
+  /**
+   * Sets sodium concentration.
+   *
+   * @param mgL Na in mg/L
+   */
+  public void setSodiumMgL(double mgL) {
+    this.sodiumMgL = mgL;
+  }
+
+  /**
+   * Sets total dissolved solids.
+   *
+   * @param mgL TDS in mg/L
+   */
+  public void setTotalDissolvedSolidsMgL(double mgL) {
+    this.tdsMgL = mgL;
+  }
+
+  /**
+   * Populates the water-chemistry and operating-condition context directly from a flowsheet stream, so a root cause
+   * analysis can be run against a live process model (ideally an electrolyte-CPA fluid with an aqueous phase).
+   *
+   * @param stream a flowsheet stream that has been run
+   * @return this for chaining
+   */
+  public RootCauseAnalyser setWaterChemistryFromStream(neqsim.process.equipment.stream.StreamInterface stream) {
+    neqsim.process.chemistry.util.StreamChemistryAdapter ad = new neqsim.process.chemistry.util.StreamChemistryAdapter(
+        stream);
+    this.temperatureC = ad.getTemperatureCelsius();
+    this.pressureBara = ad.getPressureBara();
+    this.calciumMgL = ad.getCalciumMgL();
+    this.ironMgL = ad.getIronMgL();
+    this.bariumMgL = ad.getBariumMgL();
+    this.strontiumMgL = ad.getStrontiumMgL();
+    this.magnesiumMgL = ad.getMagnesiumMgL();
+    this.sulphateMgL = ad.getSulphateMgL();
+    this.bicarbonateMgL = ad.getBicarbonateMgL();
+    this.sodiumMgL = ad.getSodiumMgL();
+    this.tdsMgL = ad.getTdsMgL();
+    this.co2PartialPressureBar = ad.getPartialPressureBara("CO2");
+    this.h2sPartialPressureBar = ad.getPartialPressureBara("H2S");
+    return this;
   }
 
   /**
@@ -298,9 +394,42 @@ public class RootCauseAnalyser implements Serializable {
     if (desc.contains("scale") || desc.contains("carbonate") || desc.contains("calcite") || desc.contains("barite")
         || desc.contains("white") || desc.contains("crystal")) {
       double score = 0.55 + 0.25 * (calciumMgL > 1000.0 ? 1.0 : calciumMgL / 1000.0);
+      String evidence = "Deposit symptom + Ca = " + calciumMgL + " mg/L; verify with XRD";
+      String action = "Run ScalePredictionCalculator; raise scale inhibitor dose; verify SI > 0";
+
+      // If ion chemistry is available, quantify the scale with the coupled multi-mineral equilibrium
+      // so the candidate carries the dominant mineral and its predicted amount, not just a flag.
+      neqsim.pvtsimulation.flowassurance.MultiMineralScaleEquilibrium eq = computeScaleEquilibrium();
+      boolean haveAnionData = sulphateMgL > 0.0 || bicarbonateMgL > 0.0;
+      if (eq != null && eq.getTotalScaleMassMgPerL() > 0.0) {
+        double total = eq.getTotalScaleMassMgPerL();
+        String dominant = "none";
+        double best = 0.0;
+        for (Map.Entry<String, neqsim.pvtsimulation.flowassurance.MultiMineralScaleEquilibrium.MineralResult> e : eq
+            .getResults().entrySet()) {
+          double m = e.getValue().getPrecipitatedMassMgPerL();
+          if (m > best) {
+            best = m;
+            dominant = e.getKey();
+          }
+        }
+        score = Math.min(0.95, score + 0.2);
+        evidence = String.format(
+            "Coupled scale equilibrium predicts %.1f mg/L total precipitate; dominant = %s (%.1f mg/L); "
+                + "Ca = %.0f, Ba = %.1f, Sr = %.1f, SO4 = %.0f, HCO3 = %.0f mg/L",
+            total, dominant, best, calciumMgL, bariumMgL, strontiumMgL, sulphateMgL, bicarbonateMgL);
+        action = "Confirm mineralogy (XRD); target inhibitor at " + dominant
+            + "; review shared-ion sources (e.g. seawater sulphate breakthrough for barite/celestite)";
+      } else if (eq != null && haveAnionData) {
+        // Enough anion data to be confident the brine is thermodynamically undersaturated.
+        score = Math.max(0.15, score - 0.25);
+        evidence = "Deposit symptom present but coupled scale equilibrium is undersaturated for all minerals "
+            + "(Ca = " + calciumMgL + ", Ba = " + bariumMgL + ", SO4 = " + sulphateMgL + " mg/L) — deposit may be "
+            + "wax, asphaltene, corrosion product or FeS rather than mineral scale";
+        action = "Re-examine deposit type (XRD/SEM); scale thermodynamically unlikely at these conditions";
+      }
       candidates.add(new RootCauseCandidate("MINERAL_SCALE", "Mineral scale precipitation (carbonate / sulphate)",
-          Math.min(0.95, score), "Deposit symptom + Ca = " + calciumMgL + " mg/L; verify with XRD",
-          "Run ScalePredictionCalculator; raise scale inhibitor dose; verify SI > 0"));
+          Math.min(0.95, score), evidence, action));
     }
     if (desc.contains("wax") || desc.contains("paraffin")) {
       candidates.add(new RootCauseCandidate("WAX_DEPOSITION", "Paraffin wax deposition below WAT", 0.75,
@@ -322,6 +451,39 @@ public class RootCauseAnalyser implements Serializable {
           h2sPartialPressureBar > 0.1 ? 0.85 : 0.40, "Deposit symptom + H2S pp = " + h2sPartialPressureBar + " bar",
           "Check H2S scavenger performance; apply FeS dispersant; review material"));
     }
+  }
+
+  /**
+   * Builds and solves a coupled multi-mineral scale equilibrium from the analyser's water-chemistry context.
+   *
+   * @return a solved equilibrium, or {@code null} if there is not enough water chemistry to evaluate scale
+   */
+  private neqsim.pvtsimulation.flowassurance.MultiMineralScaleEquilibrium computeScaleEquilibrium() {
+    if (calciumMgL <= 0.0 && bariumMgL <= 0.0 && strontiumMgL <= 0.0 && ironMgL <= 0.0) {
+      return null;
+    }
+    neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator p = new neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator();
+    p.setTemperatureCelsius(temperatureC);
+    p.setPressureBara(pressureBara);
+    p.setCalciumConcentration(calciumMgL);
+    p.setBariumConcentration(bariumMgL);
+    p.setStrontiumConcentration(strontiumMgL);
+    p.setIronConcentration(ironMgL);
+    p.setMagnesiumConcentration(magnesiumMgL);
+    p.setSodiumConcentration(sodiumMgL);
+    p.setBicarbonateConcentration(bicarbonateMgL);
+    p.setSulphateConcentration(sulphateMgL);
+    p.setTotalDissolvedSolids(tdsMgL > 0.0 ? tdsMgL : (calciumMgL + sodiumMgL + sulphateMgL + bicarbonateMgL));
+    p.setCO2PartialPressure(co2PartialPressureBar);
+    if (co2PartialPressureBar > 0.0 && bicarbonateMgL > 0.0) {
+      p.enableAutoPH();
+    } else {
+      p.setPH(pH);
+    }
+    neqsim.pvtsimulation.flowassurance.MultiMineralScaleEquilibrium eq = new neqsim.pvtsimulation.flowassurance.MultiMineralScaleEquilibrium(
+        p);
+    eq.solve();
+    return eq;
   }
 
   /**

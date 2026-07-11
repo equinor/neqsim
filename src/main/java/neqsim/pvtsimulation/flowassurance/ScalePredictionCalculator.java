@@ -128,6 +128,18 @@ public class ScalePredictionCalculator implements Serializable {
   /** FeCO3 saturation index. */
   private double siFeCO3 = Double.NaN;
 
+  /** Free (ion-pairing corrected) calcium concentration in mol/L, set by {@link #calculate()}. */
+  private double freeCaMolL = Double.NaN;
+
+  /** Free (ion-pairing corrected) sulphate concentration in mol/L, set by {@link #calculate()}. */
+  private double freeSO4MolL = Double.NaN;
+
+  /** Free (ion-pairing corrected) carbonate concentration in mol/L, set by {@link #calculate()}. */
+  private double freeCO3MolL = Double.NaN;
+
+  /** Whether to include the second-order (compressibility) term in the Ksp pressure correction. */
+  private boolean secondOrderPressure = false;
+
   /** Has been calculated. */
   private boolean calculated = false;
 
@@ -355,6 +367,11 @@ public class ScalePredictionCalculator implements Serializable {
     } else {
       siFeCO3 = Double.NaN;
     }
+
+    // Store free ion concentrations for the multi-mineral equilibrium solver.
+    freeCaMolL = cCa;
+    freeSO4MolL = cSO4;
+    freeCO3MolL = cCO3;
 
     calculated = true;
   }
@@ -597,12 +614,35 @@ public class ScalePredictionCalculator implements Serializable {
    * @return pressure-corrected Ksp
    */
   private double applyPressureCorrection(double ksp0, double TK, double vDelta) {
+    return applyPressureCorrection(ksp0, TK, vDelta, 0.0);
+  }
+
+  /**
+   * Applies a pressure correction to a solubility product including an optional second-order (compressibility) term.
+   *
+   * <p>
+   * ln(Ksp(P)/Ksp(P0)) = -ΔV°(P-P0)/(R*T) + 0.5*Δκ°*(P-P0)²/(R*T), where ΔV° is the molar volume change (cm³/mol) and
+   * Δκ° is the compressibility change (cm³/(mol·bar)). The second-order term is only included when
+   * {@link #setSecondOrderPressureCorrection(boolean)} is enabled; this extends the validity of the correction to
+   * several hundred bar where the partial molar volume of reaction is no longer pressure-independent.
+   * </p>
+   *
+   * @param ksp0 solubility product at 1 atm
+   * @param TK temperature in Kelvin
+   * @param vDelta molar volume change in cm³/mol
+   * @param dKappa compressibility change in cm³/(mol·bar); ignored when the second-order term is off
+   * @return pressure-corrected Ksp
+   */
+  private double applyPressureCorrection(double ksp0, double TK, double vDelta, double dKappa) {
     if (pressureBara <= 1.013 || Math.abs(vDelta) < 1e-10) {
       return ksp0;
     }
     double R_cm3bar = 83.1446;
     double deltaP = pressureBara - 1.01325;
     double lnCorr = -vDelta * deltaP / (R_cm3bar * TK);
+    if (secondOrderPressure && Math.abs(dKappa) > 1e-12) {
+      lnCorr += 0.5 * dKappa * deltaP * deltaP / (R_cm3bar * TK);
+    }
     return ksp0 * Math.exp(lnCorr);
   }
 
@@ -618,7 +658,7 @@ public class ScalePredictionCalculator implements Serializable {
    */
   private double calciteKsp(double TK) {
     double logKsp = -171.9065 - 0.077993 * TK + 2839.319 / TK + 71.595 * Math.log10(TK);
-    return applyPressureCorrection(Math.pow(10, logKsp), TK, -58.4);
+    return applyPressureCorrection(Math.pow(10, logKsp), TK, -58.4, -8.0e-3);
   }
 
   /**
@@ -634,7 +674,7 @@ public class ScalePredictionCalculator implements Serializable {
   private double bariteKsp(double TK) {
     // Monnin (1999): log10(Ksp) = 136.035 - 7680.41/T - 48.595*log10(T)
     double logKsp = 136.035 - 7680.41 / TK - 48.595 * Math.log10(TK);
-    return applyPressureCorrection(Math.pow(10, logKsp), TK, -46.4);
+    return applyPressureCorrection(Math.pow(10, logKsp), TK, -46.4, -6.0e-3);
   }
 
   /**
@@ -645,7 +685,7 @@ public class ScalePredictionCalculator implements Serializable {
    */
   private double celestiteKsp(double TK) {
     double lnKsp = -10452.9 / TK + 19.790;
-    return applyPressureCorrection(Math.exp(lnKsp), TK, -47.0);
+    return applyPressureCorrection(Math.exp(lnKsp), TK, -47.0, -6.5e-3);
   }
 
   /**
@@ -656,7 +696,7 @@ public class ScalePredictionCalculator implements Serializable {
    */
   private double anhydriteKsp(double TK) {
     double lnKsp = -19966.8 / TK + 454.860 + Math.log(TK) * -69.840;
-    return applyPressureCorrection(Math.exp(lnKsp), TK, -52.4);
+    return applyPressureCorrection(Math.exp(lnKsp), TK, -52.4, -7.0e-3);
   }
 
   /**
@@ -669,7 +709,7 @@ public class ScalePredictionCalculator implements Serializable {
     // Greenberg & Tomson (1992):
     // log10(Ksp) = -59.3498 - 0.041377*T + 2.1963/T + 24.5724*log10(T) + 2.518e-5*T^2
     double logKsp = -59.3498 - 0.041377 * TK + 2.1963 / TK + 24.5724 * Math.log10(TK) + 2.518e-5 * TK * TK;
-    return applyPressureCorrection(Math.pow(10, logKsp), TK, -52.9);
+    return applyPressureCorrection(Math.pow(10, logKsp), TK, -52.9, -7.5e-3);
   }
 
   // --- Carbonate Equilibrium Constants ---
@@ -707,6 +747,162 @@ public class ScalePredictionCalculator implements Serializable {
     // Simplified: KH decreases with temperature
     double logKH = -6.8346 + 1684.88 / TK + 21.6215 * Math.log10(TK) - 0.012174 * TK;
     return Math.pow(10, logKH);
+  }
+
+  // --- Accessors for the multi-mineral scale equilibrium solver ---
+
+  /**
+   * Enables or disables the second-order (compressibility) term in the Ksp pressure correction.
+   *
+   * @param enabled true to include the compressibility term (better at several hundred bar)
+   */
+  public void setSecondOrderPressureCorrection(boolean enabled) {
+    this.secondOrderPressure = enabled;
+    this.calculated = false;
+  }
+
+  /**
+   * Returns the temperature in Kelvin.
+   *
+   * @return temperature in Kelvin
+   */
+  public double getTemperatureKelvin() {
+    return temperatureC + 273.15;
+  }
+
+  /**
+   * Returns the pressure/temperature-corrected calcite (CaCO3) solubility product.
+   *
+   * @return Ksp in (mol/L)^2
+   */
+  public double getKspCalcite() {
+    return calciteKsp(getTemperatureKelvin());
+  }
+
+  /**
+   * Returns the pressure/temperature-corrected barite (BaSO4) solubility product.
+   *
+   * @return Ksp in (mol/L)^2
+   */
+  public double getKspBarite() {
+    return bariteKsp(getTemperatureKelvin());
+  }
+
+  /**
+   * Returns the pressure/temperature-corrected celestite (SrSO4) solubility product.
+   *
+   * @return Ksp in (mol/L)^2
+   */
+  public double getKspCelestite() {
+    return celestiteKsp(getTemperatureKelvin());
+  }
+
+  /**
+   * Returns the pressure/temperature-corrected anhydrite (CaSO4) solubility product.
+   *
+   * @return Ksp in (mol/L)^2
+   */
+  public double getKspAnhydrite() {
+    return anhydriteKsp(getTemperatureKelvin());
+  }
+
+  /**
+   * Returns the pressure/temperature-corrected siderite (FeCO3) solubility product.
+   *
+   * @return Ksp in (mol/L)^2
+   */
+  public double getKspSiderite() {
+    return sideriteKsp(getTemperatureKelvin());
+  }
+
+  /**
+   * Returns the divalent-ion activity coefficient from the Davies equation at the current conditions.
+   *
+   * @return activity coefficient of a divalent ion
+   */
+  public double getDivalentActivityCoefficient() {
+    return calculateActivityCoefficient(2, estimateIonicStrength());
+  }
+
+  /**
+   * Returns the ionic strength estimated from total dissolved solids.
+   *
+   * @return ionic strength in mol/L
+   */
+  public double getIonicStrengthMolPerL() {
+    return estimateIonicStrength();
+  }
+
+  /**
+   * Returns the Debye-Hückel A parameter (log10 units) at the current temperature.
+   *
+   * @return Debye-Hückel A parameter
+   */
+  public double getDebyeHuckelAParameter() {
+    return debyeHuckelA(getTemperatureKelvin());
+  }
+
+  /**
+   * Returns the free (ion-pairing corrected) calcium concentration in mol/L.
+   *
+   * @return free calcium concentration in mol/L
+   */
+  public double getFreeCalciumMolPerL() {
+    if (!calculated) {
+      calculate();
+    }
+    return freeCaMolL;
+  }
+
+  /**
+   * Returns the free (ion-pairing corrected) sulphate concentration in mol/L.
+   *
+   * @return free sulphate concentration in mol/L
+   */
+  public double getFreeSulphateMolPerL() {
+    if (!calculated) {
+      calculate();
+    }
+    return freeSO4MolL;
+  }
+
+  /**
+   * Returns the free (ion-pairing corrected) carbonate concentration in mol/L.
+   *
+   * @return free carbonate concentration in mol/L
+   */
+  public double getFreeCarbonateMolPerL() {
+    if (!calculated) {
+      calculate();
+    }
+    return freeCO3MolL;
+  }
+
+  /**
+   * Returns the total barium concentration in mol/L.
+   *
+   * @return total barium concentration in mol/L
+   */
+  public double getTotalBariumMolPerL() {
+    return bariumMgL / 137327.0;
+  }
+
+  /**
+   * Returns the total strontium concentration in mol/L.
+   *
+   * @return total strontium concentration in mol/L
+   */
+  public double getTotalStrontiumMolPerL() {
+    return strontiumMgL / 87620.0;
+  }
+
+  /**
+   * Returns the total iron (Fe2+) concentration in mol/L.
+   *
+   * @return total iron concentration in mol/L
+   */
+  public double getTotalIronMolPerL() {
+    return ironMgL / 55845.0;
   }
 
   // --- Getters ---

@@ -579,6 +579,30 @@ check on a process `Stream`.
   double caco3MgL = mass.calcCaCO3Mass(cCaMolL, cCO3MolL, siCaCO3);  // mg/L
   // also calcBaSO4Mass, calcCaSO4Mass, calcSrSO4Mass, calcFeCO3Mass
   ```
+  ⚠️ `ScaleMassCalculator` is **decoupled** — each mineral is treated
+  independently, so it *overpredicts* competing minerals (e.g. it reports
+  celestite scaling even when barite has already consumed the shared sulphate).
+
+- *Coupled screening (recommended for shared-ion brines):*
+  `MultiMineralScaleEquilibrium` drops all supersaturated minerals
+  *simultaneously* and re-equilibrates the shared ion pools (sulphate: BaSO4 /
+  SrSO4 / CaSO4; carbonate: CaCO3 / FeCO3; calcium shared by anhydrite and
+  calcite), giving OLI/ScaleChem-style precipitated **amounts** plus the residual
+  brine. It reuses the same Ksp/ion-pairing/activity chemistry as
+  `ScalePredictionCalculator`, and can upgrade the activity model from Davies
+  (I ≤ 0.5 m) to an extended B-dot (Helgeson) model for high-salinity brines:
+  ```java
+  MultiMineralScaleEquilibrium eq = new MultiMineralScaleEquilibrium(predictionCalc)
+      .setActivityModel(MultiMineralScaleEquilibrium.ActivityModel.BDOT) // high-I option
+      .setWaterVolume(1.0);
+  eq.solve();
+  double baso4MgL = eq.getPrecipitatedMassMgPerL("BaSO4");
+  double totalMgL = eq.getTotalScaleMassMgPerL();
+  double srResid  = eq.getResidualFreeIonMolPerL("SO4--");
+  // each precipitated mineral ends at SI≈0; suppressed minerals stay SI≤0
+  ```
+  For high-pressure brines, enable the second-order (compressibility) Ksp term on
+  the predictor first: `predictionCalc.setSecondOrderPressureCorrection(true)`.
 
 **Kinetics** — SI says *if*, not *how fast*. `ScaleKinetics` adds induction time
 and growth regime on top of the SI:

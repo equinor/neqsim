@@ -193,6 +193,24 @@ public class StreamChemistryAdapter implements Serializable {
   }
 
   /**
+   * Returns the strontium concentration of the aqueous phase in mg/L.
+   *
+   * @return Sr++ concentration in mg/L
+   */
+  public double getStrontiumMgL() {
+    return getAqueousConcentrationMgL("Sr++", 87.62);
+  }
+
+  /**
+   * Returns the magnesium concentration of the aqueous phase in mg/L.
+   *
+   * @return Mg++ concentration in mg/L
+   */
+  public double getMagnesiumMgL() {
+    return getAqueousConcentrationMgL("Mg++", 24.305);
+  }
+
+  /**
    * Returns the H2S concentration in the gas phase in ppm (mole/mole).
    *
    * @return H2S in ppm or 0 if no gas phase
@@ -225,13 +243,53 @@ public class StreamChemistryAdapter implements Serializable {
   }
 
   /**
+   * Returns the volumetric flow of the aqueous (produced-water) phase in litres per day.
+   *
+   * <p>
+   * Used to convert a scale precipitation concentration (mg per litre of water) into an absolute scaling mass rate
+   * (kg/day) for a flowsheet stream. Assumes an aqueous-phase density of 1000 kg/m3 (1 L = 1 kg water). Returns 0 if
+   * there is no stream, no aqueous phase, or the flow rate cannot be read.
+   * </p>
+   *
+   * @return aqueous water flow in litres per day
+   */
+  public double getAqueousWaterFlowLitrePerDay() {
+    if (system == null || stream == null || !system.hasPhaseType("aqueous")) {
+      return 0.0;
+    }
+    PhaseInterface aq = system.getPhase("aqueous");
+    if (!aq.hasComponent("water")) {
+      return 0.0;
+    }
+    double totalMoles = system.getTotalNumberOfMoles();
+    double systemMolarMass = system.getMolarMass();
+    if (totalMoles <= 0.0 || systemMolarMass <= 0.0) {
+      return 0.0;
+    }
+    double aqWaterMassRelative = aq.getComponent("water").getNumberOfMolesInPhase() * 18.015e-3;
+    double totalMassRelative = totalMoles * systemMolarMass;
+    if (totalMassRelative <= 0.0) {
+      return 0.0;
+    }
+    double waterMassFraction = aqWaterMassRelative / totalMassRelative;
+    double totalKgPerSec;
+    try {
+      totalKgPerSec = stream.getFluid().getFlowRate("kg/sec");
+    } catch (Exception ex) {
+      return 0.0;
+    }
+    double waterKgPerSec = totalKgPerSec * waterMassFraction;
+    return waterKgPerSec * 86400.0; // 1 L water ~ 1 kg
+  }
+
+  /**
    * Returns the total dissolved solids (TDS) of the aqueous phase as a rough sum of major ions.
    *
    * @return TDS in mg/L
    */
   public double getTdsMgL() {
     return getSodiumMgL() + getCalciumMgL() + getChlorideMgL() + getSulphateMgL() + getBicarbonateMgL() + getBariumMgL()
-        + getIronMgL();
+        + getStrontiumMgL() + getMagnesiumMgL() + getIronMgL();
   }
 
   /**
@@ -267,11 +325,14 @@ public class StreamChemistryAdapter implements Serializable {
     map.put("sodiumMgL", getSodiumMgL());
     map.put("sulphateMgL", getSulphateMgL());
     map.put("bariumMgL", getBariumMgL());
+    map.put("strontiumMgL", getStrontiumMgL());
+    map.put("magnesiumMgL", getMagnesiumMgL());
     map.put("tdsMgL", getTdsMgL());
     map.put("co2PartialPressureBar", getPartialPressureBara("CO2"));
     map.put("h2sPartialPressureBar", getPartialPressureBara("H2S"));
     map.put("h2sInGasPpm", getH2SInGasPpm());
     map.put("gasFlowSm3PerDay", getGasFlowSm3PerDay());
+    map.put("aqueousWaterFlowLitrePerDay", getAqueousWaterFlowLitrePerDay());
     return map;
   }
 }
