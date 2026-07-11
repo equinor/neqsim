@@ -47,6 +47,15 @@ Map the user's description to a `Symptom` enum value:
 | "noise", "rattling" | `Symptom.ABNORMAL_NOISE` |
 | "liquid in gas", "carryover" | `Symptom.LIQUID_CARRYOVER` |
 
+> **Compressor fouling / efficiency loss:** when the root cause is deposits (elemental
+> sulfur S8, salt from entrained produced water, mineral scale, wax) fouling a compressor,
+> quantify it with the `neqsim.process.equipment.compressor` deposit model:
+> `CompressorDeposit` (deposit mass → head/efficiency loss), `SolidFlashDepositSource` /
+> `EntrainedSaltDepositSource` (deposit amount from the process), `CompressorDepositProfile`
+> (which impeller), `comp.buildDegradedChart()` (map after N hours), and
+> `CompressorDepositWash` (recommend a wash fluid and plan online washing to confirm
+> recovery). See the `neqsim-flow-assurance` / `neqsim-api-patterns` skills.
+
 ### Step 2: Gather Data
 
 1. **Historian data**: Use `neqsim-plant-data` skill to read time-series from PI/IP.21

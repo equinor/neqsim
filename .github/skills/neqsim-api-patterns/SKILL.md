@@ -326,6 +326,56 @@ Stream out = comp.getOutletStream();
 // After run: comp.getPower("kW")
 ```
 
+### Compressor deposit / fouling degradation and washing
+
+Model deposit (fouling) mass from process thermodynamics, its effect on
+performance, where it lands per impeller, the degraded chart after N hours, and
+online washing. Package `neqsim.process.equipment.compressor`. See the
+[Compressor Deposit and Performance Degradation](../../docs/process/compressor_deposit_degradation.md)
+doc.
+
+```java
+// 1) Deposit mass -> performance effect (combine several mechanisms)
+CompressorDeposit dep = CompressorDeposit.fromCompressor(comp); // sizes foulable geometry
+dep.addDeposit(DepositMechanism.SULFUR_S8, 1.2);   // kg (S8 study)
+dep.addDeposit(DepositMechanism.SALT_NACL, 0.4);   // kg (salt study)
+comp.setDepositModel(dep);                          // run() now degrades efficiency/power
+comp.run();
+double effLoss = 1.0 - dep.getEfficiencyMultiplier();
+
+// 2) Deposit mass FROM the process (precipitation bridge)
+SolidFlashDepositSource s8 =
+    new SolidFlashDepositSource(feed, "S8", DepositMechanism.SULFUR_S8, 0.3); // TPSolidflash
+EntrainedSaltDepositSource salt =
+    new EntrainedSaltDepositSource(10.0, 0.05);     // 10 kg/hr entrained water, 5 wt% salt
+dep.accumulate(s8, 500.0);                          // deposit after 500 operating hours
+dep.accumulate(salt, 500.0);
+
+// 3) Degraded performance chart after N hours (chart-based machines)
+CompressorChart chart500 = comp.buildDegradedChart();
+
+// 4) Where deposits form (per impeller). Rigorous = real per-step flashed states:
+comp.setPolytropicMethod("detailed");
+comp.getPropertyProfile().setActive(true);
+comp.run();
+List<CompressorDepositProfile.StageDeposit> profile =
+    CompressorDepositProfile.computeFromPropertyProfile(comp, 5, "S8");
+int worst = CompressorDepositProfile.worstStage(profile); // 1 = cold first impeller
+
+// 5) Online washing: recommend fluid, plan rate, simulate removal
+WashFluid fluid = CompressorDepositWash.recommend(dep);   // salt->WATER, S8->XYLENE
+CompressorDepositWash washer = new CompressorDepositWash();
+washer.setContactEfficiency(0.7);
+double rateKgHr = washer.requiredFluidRateKgHr(dep, fluid, 2.0, 3.0); // remove 2 kg in 3 h
+CompressorDepositWash.WashResult r = comp.washOnline(fluid, rateKgHr, 3.0);
+comp.run();                                               // performance recovers
+```
+
+Wash-fluid → deposit matching (screening solubilities): water dissolves salt/scale;
+xylene/toluene dissolve S8 and wax; condensate dissolves wax; methanol moderate salt.
+`recommend()` returns the fluid that removes the most mass — for mixed salt+S8 fouling,
+wash in sequence (water, then xylene).
+
 ### Cooler / Heater
 
 ```java

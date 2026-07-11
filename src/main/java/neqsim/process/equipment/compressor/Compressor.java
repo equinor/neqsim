@@ -148,6 +148,10 @@ public class Compressor extends TwoPortEquipment
   private double degradationFactor = 1.0; // 1.0 = new, <1.0 = degraded
   private double foulingFactor = 0.0; // Head reduction due to fouling (0-1)
   private double operatingHours = 0.0; // Total operating hours
+  /** Optional deposit (fouling) model driving degradation from deposit mass. */
+  private CompressorDeposit depositModel = null;
+  /** Clean (design) polytropic efficiency baseline used when a deposit model is active. */
+  private double designPolytropicEfficiency = Double.NaN;
 
   // Efficiency solving tolerance (Kelvin)
   private double efficiencySolveTolerance = 0.01;
@@ -848,6 +852,10 @@ public class Compressor extends TwoPortEquipment
       double flow = getThermoSystem().getFlowRate("m3/hr");
       polytropicEfficiency = getCompressorChart().getPolytropicEfficiency(flow, getSpeed()) / 100.0;
     }
+
+    // Apply deposit/fouling degradation (if a deposit model is attached) before the polytropic
+    // efficiency is consumed by the head/power calculation below.
+    applyDepositDegradation();
 
     if (useGERG2008 && inStream.getThermoSystem().getNumberOfPhases() == 1) {
       double[] gergProps;
@@ -1895,6 +1903,9 @@ public class Compressor extends TwoPortEquipment
   @Override
   public void setPolytropicEfficiency(double polytropicEfficiency) {
     this.polytropicEfficiency = polytropicEfficiency;
+    // Record the clean (design) baseline so an attached deposit model degrades from a fixed
+    // reference each run (non-compounding across repeated run() calls).
+    this.designPolytropicEfficiency = polytropicEfficiency;
   }
 
   /**
@@ -4025,6 +4036,112 @@ public class Compressor extends TwoPortEquipment
    */
   public void setFoulingFactor(double factor) {
     this.foulingFactor = Math.max(0.0, factor);
+  }
+
+  /**
+   * Get the attached deposit (fouling) model, if any.
+   *
+   * @return the deposit model, or null if none is attached
+   */
+  public CompressorDeposit getDepositModel() {
+    return depositModel;
+  }
+
+  /**
+   * Attach a deposit (fouling) model. When set, {@link #run(java.util.UUID)} reduces the effective polytropic
+   * efficiency according to the accumulated deposit, so the simulated power and discharge temperature reflect the
+   * degraded machine. Passing {@code null} removes degradation.
+   *
+   * @param depositModel deposit model to attach, or null to remove
+   */
+  public void setDepositModel(CompressorDeposit depositModel) {
+    this.depositModel = depositModel;
+    if (depositModel != null && Double.isNaN(designPolytropicEfficiency)) {
+      designPolytropicEfficiency = polytropicEfficiency;
+    }
+    if (depositModel == null) {
+      degradationFactor = 1.0;
+      foulingFactor = 0.0;
+    }
+  }
+
+  /**
+   * Apply deposit-driven degradation to the polytropic efficiency for the current run.
+   *
+   * <p>
+   * The efficiency is degraded from a fixed clean baseline (the design efficiency for a fixed setpoint, or the
+   * compressor-chart value for the current operating point) so repeated {@link #run(java.util.UUID)} calls do not
+   * compound the degradation. The {@link #getDegradationFactor()} and {@link #getFoulingFactor()} reporting fields are
+   * updated from the deposit model.
+   * </p>
+   */
+  private void applyDepositDegradation() {
+    if (depositModel == null) {
+      return;
+    }
+    double effMultiplier = depositModel.getEfficiencyMultiplier();
+    degradationFactor = effMultiplier;
+    foulingFactor = 1.0 - depositModel.getHeadMultiplier();
+    // When a performance chart is in use, degradation must be applied through a degraded chart (see
+    // buildDegradedChart), which reduces both delivered head and efficiency. Do not additionally
+    // mutate the efficiency here, otherwise the efficiency loss would be double-counted.
+    if (getCompressorChart() != null && getCompressorChart().isUseCompressorChart()) {
+      return;
+    }
+    double cleanEfficiency;
+    if (useEnergyEfficiencyChart()) {
+      // Chart already set the clean efficiency for this operating point.
+      cleanEfficiency = polytropicEfficiency;
+    } else {
+      if (Double.isNaN(designPolytropicEfficiency)) {
+        designPolytropicEfficiency = polytropicEfficiency;
+      }
+      cleanEfficiency = designPolytropicEfficiency;
+    }
+    polytropicEfficiency = cleanEfficiency * effMultiplier;
+  }
+
+  /**
+   * Build a degraded performance chart from the current (clean) compressor chart and the attached
+   * {@link CompressorDeposit} model.
+   *
+   * <p>
+   * This produces the compressor map after the accumulated deposit (for example after 500 operating hours): the head
+   * and polytropic-efficiency curves are scaled by the deposit head and efficiency multipliers, and the surge and
+   * stone-wall curves are regenerated. The returned chart can be inspected/plotted, or installed on the compressor with
+   * {@code getCompressorChart-style replacement} to simulate the degraded machine.
+   * </p>
+   *
+   * @return the degraded chart, or {@code null} if no chart or no deposit model is available
+   */
+  public CompressorChart buildDegradedChart() {
+    if (depositModel == null || !(compressorChart instanceof CompressorChart)) {
+      return null;
+    }
+    return ((CompressorChart) compressorChart).getDegradedChart(depositModel.getHeadMultiplier(),
+        depositModel.getEfficiencyMultiplier());
+  }
+
+  /**
+   * Perform an online (live) wash of the attached {@link CompressorDeposit} model with a wash fluid.
+   *
+   * <p>
+   * Dissolves deposit the fluid can remove (for example water for salt, xylene for elemental sulfur), updating the
+   * deposit model in place so a subsequent {@link #run(java.util.UUID)} reflects the recovered performance. Use
+   * {@link CompressorDepositWash#recommend(CompressorDeposit)} to choose a fluid and {@link CompressorDepositWash}
+   * planning methods to size the rate/duration.
+   * </p>
+   *
+   * @param fluid wash fluid
+   * @param fluidRateKgHr wash fluid mass rate in kg/hr
+   * @param durationHours wash duration in hours
+   * @return the wash result, or {@code null} if no deposit model is attached
+   */
+  public CompressorDepositWash.WashResult washOnline(WashFluid fluid, double fluidRateKgHr, double durationHours) {
+    if (depositModel == null) {
+      return null;
+    }
+    return new CompressorDepositWash().wash(depositModel, fluid, fluidRateKgHr, durationHours);
   }
 
   /**
