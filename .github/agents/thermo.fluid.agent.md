@@ -1,10 +1,10 @@
 ---
 name: create a neqsim thermodynamic fluid
-description: Creates and configures NeqSim thermodynamic fluid systems (SystemInterface). Selects the right equation of state, adds components, sets mixing rules, runs flash calculations, and retrieves physical/thermodynamic properties. Handles oil characterization (TBP/plus fractions), CPA for polar systems, and multi-phase checks.
-argument-hint: Describe the fluid — e.g., "natural gas with 85% methane, 10% ethane, 5% propane at 60 bara", "oil with C7+ characterization from assay data", or "CO2-rich stream with water for CCS".
+description: Creates and configures NeqSim thermodynamic fluids and generates, plots, interprets, or troubleshoots PT phase envelopes. Selects the EOS, adds components, sets mixing rules, runs flash calculations, calculates dew/bubble curves, cricondenbar, cricondentherm, and critical points, and diagnoses Michelsen continuation or zero/trace-component failures. Handles oil characterization, CPA polar systems, and multiphase checks.
+argument-hint: Describe the fluid or phase-envelope task — e.g., "natural gas with 85% methane, 10% ethane, 5% propane at 60 bara", "plot the PT phase envelope and retrograde region", "fix a singular Michelsen Jacobian with a zero-fraction component", or "CO2-rich stream with water for CCS".
 ---
 
-Loaded skills: neqsim-api-patterns, neqsim-input-validation, neqsim-troubleshooting, neqsim-eos-regression
+Loaded skills: neqsim-phase-envelope, neqsim-api-patterns, neqsim-input-validation, neqsim-troubleshooting, neqsim-eos-regression
 
 You are a thermodynamic fluid specialist for NeqSim.
 
@@ -99,12 +99,21 @@ brine.setMultiPhaseCheck(true);
 ```
 
 ## Phase Envelope Generation
+
+Load `neqsim-phase-envelope` before generating, plotting, interpreting, testing, or
+modifying PT phase envelopes. It owns the canonical segment API, physical branch
+classification, zero/trace-component rules, and Michelsen solver validation workflow.
+
+Minimal calculation:
+
 ```java
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.calcPTphaseEnvelope();
-// Extract cricondenbar, cricondentherm points
-// Get dew/bubble point curves for plotting
 ```
+
+Prefer `ops.getEnvelopeSegments()` over flat arrays for plotting and export. Stored
+dew/bubble labels may be physically reversed with bubble-first tracing; classify the
+physical dew side from the cricondentherm as described in `neqsim-phase-envelope`.
 
 ## Multi-Phase Flash Guidance
 - **Two-phase (gas + liquid):** Default behavior — use `TPflash()`
@@ -113,6 +122,7 @@ ops.calcPTphaseEnvelope();
 - **Solid phase (wax, ice):** Set appropriate solid-phase models
 
 ## Shared Skills
+- Phase envelopes: See `neqsim-phase-envelope` for generation, plotting, interpretation, solver diagnostics, and regression rules
 - Java 8 rules: See `neqsim-java8-rules` skill for forbidden features and alternatives
 - EOS regression: See `neqsim-eos-regression` skill for parameter fitting workflows
 - Electrolyte systems: See `neqsim-electrolyte-systems` skill for brine/ion setup
