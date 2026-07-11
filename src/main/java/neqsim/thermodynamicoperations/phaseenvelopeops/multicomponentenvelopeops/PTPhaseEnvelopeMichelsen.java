@@ -67,6 +67,8 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
 
   /** Constant in the Wilson K-value correlation (5.373). */
   private static final double WILSON_CONST = 5.373;
+  /** Overall mole fractions below this value are excluded from phase-envelope tracing. */
+  private static final double ZERO_FRACTION_THRESHOLD = 1.0e-12;
   /** Maximum Newton iterations for Wilson temperature estimate. */
   private static final int MAX_WILSON_ITERATIONS = 1000;
   /** Maximum number of attempts when estimating the first point. */
@@ -191,6 +193,34 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
   }
 
   /**
+   * Remove components with negligible overall mole fractions from a private clone of the working system. These
+   * components make the continuation Jacobian singular because its equations contain terms divided by the overall mole
+   * fraction.
+   *
+   * @return {@code true} if one or more components were removed
+   */
+  private boolean filterZeroFractionComponents() {
+    List<String> componentNames = new ArrayList<String>();
+    for (int i = 0; i < system.getNumberOfComponents(); i++) {
+      if (system.getComponent(i).getz() < ZERO_FRACTION_THRESHOLD) {
+        componentNames.add(system.getComponent(i).getComponentName());
+      }
+    }
+    if (componentNames.isEmpty()) {
+      return false;
+    }
+
+    logger.warn("Phase envelope: removing {} component(s) with z < {}: {}", componentNames.size(),
+        ZERO_FRACTION_THRESHOLD, componentNames);
+    SystemInterface filteredSystem = system.clone();
+    for (String componentName : componentNames) {
+      filteredSystem.removeComponent(componentName);
+    }
+    system = filteredSystem;
+    return true;
+  }
+
+  /**
    * {@inheritDoc}
    *
    * <p>
@@ -254,6 +284,9 @@ public class PTPhaseEnvelopeMichelsen extends BaseOperation {
       // === Standard initialization ===
       speceq = 0;
       system.init(0);
+      if (pass == 0 && filterZeroFractionComponents()) {
+        system.init(0);
+      }
 
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
         if (system.getComponent(i).getz() < 1e-10) {

@@ -1084,6 +1084,10 @@ Tag numbering convention: PT-100+, TT-200+, LT-300+, FT-400+ (ISA-5.1).
 
 ## Phase Envelope Calculation and Interpretation
 
+For phase-envelope generation, plotting, physical branch classification, zero/trace-component
+handling, or Michelsen solver changes, load `neqsim-phase-envelope`. This section is the compact
+API reference; the dedicated skill owns the end-to-end workflow and regression rules.
+
 ### Calculating a PT Phase Envelope
 
 ```java
