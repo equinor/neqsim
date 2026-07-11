@@ -62,6 +62,30 @@
     "neqsim-api-patterns",
     "neqsim-notebook-patterns"
   ],
+  "phase envelope": [
+    "neqsim-phase-envelope",
+    "neqsim-api-patterns"
+  ],
+  "pt phase envelope": [
+    "neqsim-phase-envelope"
+  ],
+  "dew and bubble curves": [
+    "neqsim-phase-envelope"
+  ],
+  "cricondenbar cricondentherm": [
+    "neqsim-phase-envelope"
+  ],
+  "michelsen continuation": [
+    "neqsim-phase-envelope",
+    "neqsim-troubleshooting"
+  ],
+  "singular phase envelope jacobian": [
+    "neqsim-phase-envelope",
+    "neqsim-troubleshooting"
+  ],
+  "zero fraction phase envelope component": [
+    "neqsim-phase-envelope"
+  ],
   "build a process model": [
     "neqsim-process-modeling",
     "neqsim-api-patterns",

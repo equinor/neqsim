@@ -4,7 +4,7 @@ description: Creates and runs PVT laboratory simulations using NeqSim — consta
 argument-hint: Describe the PVT experiment — e.g., "CME test at 100°C with pressures from 400 to 50 bara", "CVD for reservoir fluid with C7+ characterization", or "fit EOS to match experimental saturation pressure of 250 bara".
 ---
 
-Loaded skills: neqsim-api-patterns, neqsim-eos-regression, neqsim-input-validation, neqsim-notebook-patterns, neqsim-professional-reporting
+Loaded skills: neqsim-phase-envelope, neqsim-api-patterns, neqsim-eos-regression, neqsim-input-validation, neqsim-notebook-patterns, neqsim-professional-reporting
 
 You are a PVT simulation specialist for NeqSim.
 
