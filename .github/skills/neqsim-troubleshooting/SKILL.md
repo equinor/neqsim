@@ -203,6 +203,10 @@ T_jt = float(valve.getOutletStream().getTemperature('C'))  # Correct JT temperat
 
 ## Phase Envelope Branch Labels Swapped
 
+Load `neqsim-phase-envelope` for the canonical structured segment API, physical dew/bubble
+classification, numerical-zero component behavior, and solver-change test protocol. Use this
+section for symptom-driven recovery after following that workflow.
+
 **Symptom**: When plotting a phase envelope calculated with `calcPTphaseEnvelope(true, 1.0)`,
 the bubble and dew curves appear swapped — the "bubble" array has higher temperatures
 (cricondentherm) which is physically the dew side, and vice versa.
