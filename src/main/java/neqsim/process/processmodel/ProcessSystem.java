@@ -831,6 +831,32 @@ public class ProcessSystem extends SimulationBaseClass {
   }
 
   /**
+   * Sets the minimum tear-stream flow on every {@link Recycle} unit in this process system.
+   *
+   * <p>
+   * The minimum flow acts as a lower bound on the recycle tear-stream flow rate and helps stabilize recycle loops that
+   * would otherwise collapse to a near-zero flow.
+   * </p>
+   *
+   * @param minimumFlowKgPerHr the minimum recycle flow rate in kg/hr; must be non-negative
+   * @return the number of {@link Recycle} units updated
+   * @throws IllegalArgumentException if {@code minimumFlowKgPerHr} is negative
+   */
+  public int setRecycleMinimumFlow(double minimumFlowKgPerHr) {
+    if (minimumFlowKgPerHr < 0.0) {
+      throw new IllegalArgumentException("minimumFlowKgPerHr cannot be negative");
+    }
+    int count = 0;
+    for (ProcessEquipmentInterface unit : unitOperations) {
+      if (unit instanceof Recycle) {
+        ((Recycle) unit).setMinimumFlow(minimumFlowKgPerHr);
+        count++;
+      }
+    }
+    return count;
+  }
+
+  /**
    * Validates the process system setup before execution.
    *
    * <p>
