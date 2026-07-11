@@ -18,7 +18,7 @@
     "name": {
       "type": "string",
       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
-      "description": "Stable agent id, kebab-case. Matches the package folder name and the catalog entry name."
+      "description": "Stable agent id, kebab-case. Matches the package folder name and the catalog entry name. An enterprise overlay of a community/core agent should either reuse the base id and declare `extends`, or use a distinct `enterprise-`-prefixed id; it must not silently duplicate a base agent's id without `extends`."
     },
     "description": {
       "type": "string",
@@ -37,6 +37,15 @@
         "description": "Canonical skill id. Community/core skills use the neqsim- namespace; internal skills use the enterprise- namespace."
       },
       "description": "The overlay's own declared skills. For an agent that declares `extends`, the effective skill set is the union of the base agent's required_skills and this list; this list MUST be a superset of the base's required_skills."
+    },
+    "context_skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(neqsim|enterprise)-[a-z0-9]+(-[a-z0-9]+)*$",
+        "description": "Canonical skill id. Community/core skills use the neqsim- namespace; internal skills use the enterprise- namespace."
+      },
+      "description": "Optional, as-relevant skills the agent may load depending on the task, in addition to required_skills. Declaring them here \u2014 rather than only naming them in AGENT.md prose \u2014 keeps the agent<->skill linkage machine-checkable: validators existence-check them, the agent<->skill map includes them, and an AGENT.md cross-check can verify that every skill named in the prose is declared in required_skills or context_skills. Not inherited through extends."
     },
     "supported_domains": {
       "type": "array",
