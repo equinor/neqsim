@@ -343,6 +343,50 @@ assert "runUntilConverged" in dir(jneqsim.process.processmodel.ProcessModel)
 
 ---
 
+## 8.5 Unified equipment-utilization roll-up + inlet-pressure lower-limit search
+
+To "maximize production within utilization limits" you need a single view that puts
+compressors, gas-turbine drivers, and separators/scrubbers on the same 0-1 scale, plus
+a way to push an operating variable (e.g. inlet pressure) until the first constraint
+binds. Two complementary approaches:
+
+**A. NeqSim-native (preferred).** Activate every unit's `CapacityConstraint`, then read
+one side-effect-free snapshot:
+- Compressors: attach a chart (surge/stonewall/speed constraints) or, if chartless,
+  `comp.getMechanicalDesign().setMaxDesignPower(driverSiteRatedKW)` so the `power`
+  constraint has a basis.
+- Separators/scrubbers: `sep.initMechanicalDesign()` ->
+  `SeparatorMechanicalDesign.setGasLoadFactor(K)` -> `setRetentionTime(t)` ->
+  `readDesignSpecifications()` -> `calcDesign()`.
+- Then `json.loads(str(process.getUtilizationSnapshotJson()))` gives per-unit
+  `maxUtilization`, `limitingConstraint`, `feasible`, `power_kW`, and a plant
+  `bottleneck` + `anyOverloaded`. Drive the search with `ProcessAutomation.evaluate()`
+  or `AgenticProcessOptimizer`.
+
+**B. Transparent Python roll-up (API-risk-free, good when the separator capacity path
+is not yet wired).** Merge three families into `equipment_utilization(tags, sizes)`:
+- compressor util = shaft power / driver site-rated kW (+ anti-surge OK flag from the
+  chart operating point);
+- turbine util = load_pct/100 vs ISO-derated site-rated power
+  (`GasTurbineVendorPerformance`);
+- separator/scrubber util = Souders-Brown gas load vs a size fixed once at base with a
+  ~1.15 margin (see `neqsim-separator-modelling`), recomputing `vg_max` at the current
+  density.
+- Return per-unit util, `limiting_unit`, `max_utilization`, `all_antisurge_ok`, and a
+  single `feasible` flag.
+
+**Inlet-pressure lower-limit search.** Parametrize the flowsheet by process/inlet
+pressure (cleanest trick in a builder: add `PROC_P = proc_p` as a **local** at the top
+of `build_model(proc_p=PROC_P)` so every internal reference picks up the argument with
+one edit). Size separators once at the base (highest) pressure, then rebuild+run at each
+lower pressure, evaluate `equipment_utilization`, and return the lowest feasible
+pressure. Physics: lowering inlet pressure raises the export compression ratio and the
+actual gas volume, so a scrubber gas-load or a compressor surge/power constraint becomes
+the binding limit. The rebuild-per-point sweep is slow — gate it behind an env flag and
+do NOT re-read live plant data inside the loop.
+
+---
+
 ## 9. Reporting (defer to neqsim-professional-reporting)
 
 Persist a trace of every trial and the optimum to `results.json`:
