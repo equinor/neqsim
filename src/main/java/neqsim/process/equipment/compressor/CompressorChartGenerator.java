@@ -368,18 +368,83 @@ public class CompressorChartGenerator {
     if (speeds == null || speeds.length == 0) {
       speeds = new double[] { compressor.getSpeed() };
     }
+    return generateChartCore(generationOption, speeds, compressor.getSpeed(),
+        compressor.getInletStream().getFlowRate("m3/hr"), compressor.getPolytropicFluidHead(),
+        compressor.getPolytropicEfficiency());
+  }
 
+  /**
+   * Generate a compressor chart anchored to an EXPLICIT design point (e.g. read from a vendor datasheet or performance
+   * map) instead of the compressor's current converged operating point.
+   *
+   * <p>
+   * The compressor's inlet stream still supplies the reference gas properties (molar mass, temperature, density,
+   * compressibility), so the inlet stream must have been run; but the compressor itself does not need to have been run
+   * at the design point. This makes it possible to build a realistic chart directly from vendor rated data.
+   * </p>
+   *
+   * @param designSpeed design shaft speed in RPM (the 100% speed line)
+   * @param designFlowM3hr design actual inlet volumetric flow in m3/hr
+   * @param designHeadKJkg design polytropic head in kJ/kg
+   * @param designPolyEff design polytropic efficiency as a fraction between 0 and 1
+   * @param generationOption the generation option ("normal curves" or "mid range")
+   * @param numberOfSpeeds the number of speed lines to generate (must be at least 1)
+   * @return the generated {@link neqsim.process.equipment.compressor.CompressorChartInterface} anchored at the design
+   * point
+   */
+  public CompressorChartInterface generateChartFromDesignPoint(double designSpeed, double designFlowM3hr,
+      double designHeadKJkg, double designPolyEff, String generationOption, int numberOfSpeeds) {
+    if (numberOfSpeeds < 1) {
+      numberOfSpeeds = 1;
+    }
+    boolean isNormalCurvesLocal = generationOption.toLowerCase().contains("normal");
+    double minSpeedRatio = isNormalCurvesLocal ? 0.75 : 0.50;
+    double maxSpeedRatio = isNormalCurvesLocal ? 1.05 : 2.00;
+    double[] speeds = new double[numberOfSpeeds];
+    if (numberOfSpeeds == 1) {
+      speeds[0] = designSpeed;
+    } else {
+      for (int i = 0; i < numberOfSpeeds; i++) {
+        double ratio = minSpeedRatio + (maxSpeedRatio - minSpeedRatio) * i / (numberOfSpeeds - 1);
+        speeds[i] = designSpeed * ratio;
+      }
+      // Ensure the design speed is one of the generated speed lines so the chart
+      // reproduces the design head/efficiency exactly at the design point (otherwise
+      // the lookup interpolates between neighbouring speed lines and undershoots).
+      int nearest = 0;
+      double bestDiff = Double.MAX_VALUE;
+      for (int i = 0; i < numberOfSpeeds; i++) {
+        double diff = Math.abs(speeds[i] - designSpeed);
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          nearest = i;
+        }
+      }
+      speeds[nearest] = designSpeed;
+    }
+    return generateChartCore(generationOption, speeds, designSpeed, designFlowM3hr, designHeadKJkg, designPolyEff);
+  }
+
+  /**
+   * Core chart builder shared by the operating-point and explicit design-point generators. Uses the supplied reference
+   * speed, flow, head and efficiency for the fan-law curve shape, while reading gas properties from the compressor
+   * inlet stream for the chart reference conditions.
+   *
+   * @param generationOption the generation option ("normal curves" or other)
+   * @param speeds the target speed lines in RPM
+   * @param refSpeed the reference (design) speed in RPM
+   * @param refFlow the reference (design) actual inlet flow in m3/hr
+   * @param refHead the reference (design) polytropic head in kJ/kg
+   * @param refEfficiency the reference (design) polytropic efficiency as a fraction between 0 and 1
+   * @return the generated compressor chart
+   */
+  private CompressorChartInterface generateChartCore(String generationOption, double[] speeds, double refSpeed,
+      double refFlow, double refHead, double refEfficiency) {
     CompressorChartInterface compChart = createChart();
     boolean isNormalCurves = generationOption.toLowerCase().contains("normal");
 
     // Initialize chart conditions
-    double[] chartConditions = { compressor.getOutletStream().getFluid().getMolarMass("kg/mol") };
-
-    // Reference values at current operating point
-    double refSpeed = compressor.getSpeed();
-    double refFlow = compressor.getInletStream().getFlowRate("m3/hr");
-    double refHead = compressor.getPolytropicFluidHead();
-    double refEfficiency = compressor.getPolytropicEfficiency();
+    double[] chartConditions = { compressor.getInletStream().getFluid().getMolarMass("kg/mol") };
 
     // Get gas properties for corrections
     double molarMass = compressor.getInletStream().getFluid().getMolarMass("kg/mol") * 1000.0; // kg/kmol

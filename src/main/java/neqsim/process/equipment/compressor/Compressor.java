@@ -3464,6 +3464,37 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
+   * Generates and attaches a compressor chart anchored to an EXPLICIT design point (e.g. read from a vendor datasheet
+   * or performance map) rather than the compressor's current converged operating point.
+   *
+   * <p>
+   * The inlet stream supplies the reference gas properties, so run the inlet stream first; the compressor itself does
+   * not need to have been run at the design point. Useful for building a realistic chart directly from vendor rated
+   * data so that at the design speed and design flow the compressor reproduces the rated head.
+   * </p>
+   *
+   * <pre>
+   * // Vendor rated point: 7551 rpm, 7540 m3/hr, 97 kJ/kg polytropic head, 78% efficiency
+   * compressor.generateCompressorChartFromDesignPoint(7551.0, 7540.0, 97.0, 0.78, 5);
+   * </pre>
+   *
+   * @param designSpeed design shaft speed in RPM (the 100% speed line)
+   * @param designFlowM3hr design actual inlet volumetric flow in m3/hr
+   * @param designHeadKJkg design polytropic head in kJ/kg
+   * @param designPolyEff design polytropic efficiency as a fraction between 0 and 1
+   * @param numberOfSpeeds the number of speed lines to generate (must be at least 1)
+   */
+  public void generateCompressorChartFromDesignPoint(double designSpeed, double designFlowM3hr, double designHeadKJkg,
+      double designPolyEff, int numberOfSpeeds) {
+    CompressorChartGenerator generator = new CompressorChartGenerator(this);
+    generator.setChartType(getCompressorChartType());
+    CompressorChartInterface newChart = generator.generateChartFromDesignPoint(designSpeed, designFlowM3hr,
+        designHeadKJkg, designPolyEff, "normal curves", numberOfSpeeds);
+    this.compressorChart = newChart;
+    setSpeed((int) Math.round(designSpeed));
+  }
+
+  /**
    * Generates a compressor chart from a predefined template.
    *
    * <p>
