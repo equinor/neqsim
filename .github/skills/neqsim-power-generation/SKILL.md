@@ -25,11 +25,53 @@ heat recovery steam generators (HRSG), and combined cycle systems.
 | Class | Package | Purpose |
 |-------|---------|---------|
 | `GasTurbine` | `process.equipment.powergeneration` | Gas turbine with compressor, combustor, expander |
+| `GasTurbineVendorPerformance` | `process.equipment.powergeneration` | Vendor ISO-rated GT driver — fuel + CO2 matched to a shaft/electric load demand |
 | `SteamTurbine` | `process.equipment.powergeneration` | Steam expansion turbine |
 | `HRSG` | `process.equipment.powergeneration` | Heat recovery steam generator |
 | `CombinedCycleSystem` | `process.equipment.powergeneration` | GT + HRSG + ST integrated system |
 | `PinchAnalysis` | `process.equipment.heatexchanger.heatintegration` | Pinch analysis for heat integration |
 | `HeatStream` | `process.equipment.heatexchanger.heatintegration` | Hot/cold stream for pinch analysis |
+
+## Vendor-performance GT driver — matched fuel & power (PREFERRED for drivers)
+
+For a real mechanical-drive or generator gas turbine (e.g. a GE LM2500 driving a
+compressor or an AC generator), the built-in simple-cycle `GasTurbine` is a rough
+model and is unreliable for net power / efficiency. Use
+`GasTurbineVendorPerformance` instead: it takes a **load demand** and returns the
+fuel rate and CO2 **matched to that load** using the fuel gas's rigorous ISO 6976
+LCV and stoichiometric carbon.
+
+```java
+GasTurbineVendorPerformance gt = new GasTurbineVendorPerformance("GT driver", fuelStream);
+gt.setVendorRating(22.4, "MW", 0.37);        // ISO base power, base LHV efficiency
+gt.setAmbientDerating(15.0, 0.007);          // design ambient C, power lapse /degC
+gt.setSiteAmbientTemperature(15.0);
+gt.setPartLoadHeatRateCoefficient(0.15);     // heat-rate rise at part load
+gt.setLoadDemand(compressor.getPower("kW"), "kW");  // <-- the process power need
+gt.run(UUID.randomUUID());
+double fuel = gt.getFuelFlowRate("kg/hr");
+double co2  = gt.getCO2EmissionRate("tonne/day");
+double loadFrac = gt.getLoadFraction();      // vs site-rated MAX (bottleneck basis)
+double spareKW  = gt.getSiteRatedPower("kW") - compressor.getPower("kW");
+```
+
+**Matching rule (do this, never hardcode fuel/power):**
+- **Mechanical-drive GT** load demand = the *simulated* compressor shaft power
+  (`compressor.getPower("kW")`), so fuel and CO2 track the process automatically.
+- **Fuel gas** is a slip-stream of the real process gas (e.g. treated export gas).
+  For a closed mass balance, physically tap it with a `Splitter`
+  (`setFlowRates([-1.0, fuelKgHr], "kg/hr")`) so sales gas = gas − fuel.
+- **Platform electric LOAD** is an *operational* quantity — resolve it by source
+  priority, do NOT hardcode: (1) measured historian tag (tagreader/Seeq
+  main-switchboard active power) — the correct primary source; (2) STID
+  generator installed rating × documented load factor *if* STID exposes a
+  structured rating; (3) a clearly-flagged fallback. STID's structured
+  `rating`/`load` fields are frequently empty (they live in the datasheet PDF),
+  so the historian is the right source for the actual load — record the chosen
+  `source` in `results.json` so the value is never an unsourced magic number.
+- **Max limits / bottlenecks** for production optimization: report per-GT
+  `getSiteRatedPower`, `getLoadFraction`, spare power, and N+1 firm capacity for
+  the generators; the highest-loaded unit is the power bottleneck.
 
 ## 1. Gas Turbine
 
