@@ -316,9 +316,20 @@ tp_setter.setOutTemperature(process_input.lp_temperature, "C")
 tp_setter.setOutPressure(process_input.lp_pressure)
 operations.add(tp_setter)
 
-scrubber = Separator("LP Scrubber", tp_setter.getOutletStream())
+# Use a *GasScrubber class (vertical by default) for scrubbers, NOT Separator
+# (horizontal by default). A horizontal vessel derates the gas area by the design
+# liquid level (~80%), over-reading getGasLoadFactor() by ~5x for a vertical scrubber.
+scrubber = GasScrubber("LP Scrubber", tp_setter.getOutletStream())   # vertical
+# (or, if you keep Separator/ThreePhaseSeparator: scrubber.setOrientation("vertical"))
 operations.add(scrubber)
 ```
+
+> **Separator class ↔ orientation:** `Separator` / `ThreePhaseSeparator` default to
+> **horizontal**; `GasScrubber` / `GasScrubberSimple` / `NeqGasScrubber` (2-phase)
+> and `ThreePhaseGasScrubber` (3-phase) default to **vertical**. Pick the class to
+> match the datasheet (VA-tag horizontal, VG-tag vertical) or override with
+> `setOrientation(...)`. Wrong orientation only affects gas-capacity / `getGasLoadFactor()`,
+> not the flash split, but it silently skews utilisation studies.
 
 ---
 

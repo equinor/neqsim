@@ -172,6 +172,21 @@ Stream gasOut = sep.getGasOutStream();
 Stream liqOut = sep.getLiquidOutStream();
 ```
 
+**Separator class ↔ orientation (affects gas-capacity results):**
+
+| Class | Default orientation | Use for |
+|-------|--------------------|---------|
+| `Separator`, `ThreePhaseSeparator` | **horizontal** | horizontal separators (VA-tag) |
+| `GasScrubber`, `GasScrubberSimple`, `NeqGasScrubber` (2-phase) | **vertical** | vertical scrubbers (VG-tag) |
+| `ThreePhaseGasScrubber` (3-phase) | **vertical** | vertical 3-phase scrubbers |
+
+A horizontal vessel derates the gas area by the design liquid level (default 80% →
+gas area `(1−0.8)=0.2×`), so using a horizontal `Separator`/`ThreePhaseSeparator`
+for a physically **vertical** scrubber over-reads `getGasLoadFactor()` /
+`getGasSuperficialVelocity()` by ~5×. Prefer the `*GasScrubber` classes for vertical
+scrubbers, or override with `sep.setOrientation("vertical")`. `setInternalDiameter()`
+propagates correctly through `run()` — the trap is orientation, not diameter.
+
 ### Separator Mechanical Design (Physical Configuration)
 
 Physical dimensions, internals, and design parameters are configured through

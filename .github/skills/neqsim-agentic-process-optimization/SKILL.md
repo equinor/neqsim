@@ -68,6 +68,20 @@ for p in params["parameters"]:
 > a year selector), map each one explicitly to a NeqSim address or a rebuild
 > argument — the registry will not invent them for you.
 
+> **Prerequisite — the model must already carry the optimization data basis.**
+> `getAdjustableParameters()` only surfaces knobs the *model* has, and capacity
+> constraints only fire if the equipment has design limits. Before optimizing,
+> confirm the model was built with: line sizes (ID, length, roughness, elevation)
+> and manifold/header sizes for hydraulics; valve/choke **Cv** (and choke
+> Cv-vs-opening); compressor/pump **performance maps + speeds**; separator
+> dimensions + design **K**; equipment **design limits** (rated power, surge
+> margin, NPSH, erosional velocity, design P/T, MAWP, valve max Cv); manipulable
+> setpoints with **physical bounds**; and the **objective + economic/spec basis**.
+> Use `enterprise-process-model-build-verify` with
+> `target_fidelity="optimization_ready"` (its `OPTIMIZATION_DATA_BASIS` /
+> `optimization_data_basis` output) to gather and gate this basis, and
+> `neqsim-process-modeling` for the community build checklist.
+
 ---
 
 ## 3. Robust single-trial evaluation (the core helper)
@@ -193,7 +207,45 @@ def compressor_metrics(plant):
 `withinChart`, `limitingConstraint` (`none`/`surge`/`stonewall`/`no_chart`).
 Uncomputable margins are `NaN` — always test `x == x` before using them.
 
+### Compressor control mode: solve-speed vs predictive (choose per objective)
+
+A charted compressor can run two ways, and **the mode decides what is an input vs
+an output** in your optimization — pick it deliberately:
+
+| Mode | Setup | Fixed (input) | Computed (output) | Use for |
+|------|-------|---------------|-------------------|---------|
+| **Solve-speed** (default for most plants) | `setOutletPressure(P)` + `setUseCompressorChart(True)` + `setSolveSpeed(True)` | discharge pressure | **speed, power, surge margin** | spec/capacity/max-throughput studies where the network has fixed pressure boundaries |
+| **Predictive** | `setUseCompressorChart(True)` + `setSpeed(rpm)` + `setSolveSpeed(False)` (do **not** pin outlet P) | **shaft speed** | **discharge pressure, head, power, surge margin** | speed-as-decision-variable optimization, surge/turndown and dynamic studies |
+
+Rules of thumb:
+
+- If the discharge feeds a **fixed pressure boundary** (export pipeline pressure,
+  a process level held by a downstream scrubber/level controller, an import
+  header), **solve-speed is the physically correct steady-state control mode** —
+  the machine trims speed to hold that pressure, and *speed / power / surge
+  margin are the outputs* you optimize against. This is the right mode for
+  "max production while meeting RVP / dew-point / cricondenbar", because product
+  specs are set by separation temperatures/pressures, not by throughput, so the
+  binding limit is compressor power/surge or separator gas load — all of which
+  fall out of a solve-speed run.
+- If you want **speed itself as a decision variable** ("what speed gives the
+  lowest power while still delivering P_export?"), use predictive mode: fix the
+  speed, let the chart compute discharge pressure and power. Sweeping speed then
+  traces the head/power curve directly (e.g. 90 %→95 %→100 %→105 % speed maps to a
+  monotonically rising discharge pressure and head).
+- **Making a *whole* recycle flowsheet predictive** requires letting the internal
+  pressure nodes float (e.g. a recompressor whose discharge mixes back into an
+  upstream stage): fix all speeds, drop the interior `setOutletPressure` calls,
+  and let a pressure-node/recycle pass settle the mixer pressures. Do this behind
+  a `PREDICTIVE_PRESSURE` toggle so the default solve-speed model (used for spec
+  and capacity studies) stays intact. Mixing the two modes on the same recycle
+  loop without a pressure-node pass will diverge.
+- Either way keep anti-surge active (`getAntiSurge().setActive(True)`,
+  `setSurgeControlFactor(...)`) so a turned-down point recycles onto the control
+  line instead of falling outside the map and returning `NaN` margins.
+
 ### Export-oil RVP (certified spec) — use RvpResult
+
 
 ```python
 D6377 = jneqsim.standards.oilquality.Standard_ASTM_D6377
