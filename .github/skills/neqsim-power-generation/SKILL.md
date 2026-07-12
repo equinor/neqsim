@@ -295,6 +295,129 @@ System.out.println("Payback (yr):     " + res.simplePaybackYear);
 | You model the GT thermodynamically (compressor + combustor + expander) and care about exhaust composition into an HRSG | You are doing **right-sizing, dispatch, retrofit, or fleet-level CO2/NPV** studies and want vendor rating points, part-load + ambient correction, degradation, and N+1 |
 | Combined-cycle integration where exhaust gas feeds an `HRSG` | Late-life turndown, replacing oversized turbines, CO2-tax sensitivity |
 
+## Flue-gas composition, NOx, SO2 and adiabatic flame temperature — `CombustionCalculator`
+
+For the **exhaust (flue-gas) composition and pollutant rates** of any turbine, burner, or fired
+heater, use `neqsim.process.util.combustion.CombustionCalculator`. It deliberately splits the two
+physically different families of exhaust species — **do not use a single Gibbs reactor for the whole
+problem:**
+
+- **Major species (N2, O2, CO2, H2O, Ar) and SO2 — stoichiometric.** These are combustion-complete
+  (not equilibrium-limited at the exhaust), so an exact element balance of full combustion with
+  excess air is used: all fuel C -> CO2, all fuel H -> H2O, all fuel S (e.g. H2S) -> SO2.
+- **NOx and CO — kinetically frozen.** Thermal (Zeldovich) NO and CO quench in the exhaust. A Gibbs
+  reactor **over-predicts NO at flame temperature and returns ~0 at stack temperature**, so it is the
+  wrong tool. They come from public EMEP/EEA-style **emission factors** (g per GJ fuel LHV), which
+  the caller replaces with a vendor guarantee or CEMS value.
+- **Adiabatic flame temperature** is a rigorous NeqSim energy balance (bisection on the product
+  mixture enthalpy so the released LHV heats the products from 298 K) — excess air lowers it via
+  inert dilution.
+
+```java
+SystemInterface fuel = new SystemSrkEos(288.15, 20.0);
+fuel.addComponent("methane", 0.95);
+fuel.addComponent("ethane", 0.03);
+fuel.addComponent("H2S", 0.0002);
+fuel.setMixingRule("classic");
+
+CombustionCalculator.CombustionResult r = new CombustionCalculator(fuel)
+    .setFuelFlowRate(7896.0)         // kg/hr (total combusted fuel)
+    .setExcessAirRatio(3.2)          // GT ~3-3.5 -> ~14-15 vol% exhaust O2; burner ~1.05-1.2
+    .setBurnerType(CombustionCalculator.BurnerType.GAS_TURBINE_DLE) // sets typical NOx/CO for the technology
+    .setNoxFactorGPerGJ(130.0)       // optional: override with a vendor/CEMS value AFTER setBurnerType
+    .setCoFactorGPerGJ(30.0)
+    .setAssumedFuelH2sPpmv(5.0)      // used only if the fuel carries no sulphur
+    .calculate();
+
+r.getFlueMoleFraction("CO2");         // exhaust CO2 mole fraction
+r.exhaustO2VolPercent;                // ~14 vol% for a GT
+r.pollutantPpmv.get("NOx");           // NOx ppmv (emission-factor basis)
+r.getMassRateKgPerHr("SO2");          // SO2 kg/hr (fuel-sulphur stoichiometric)
+r.adiabaticFlameTemperatureK;         // rigorous NeqSim energy balance
+String json = r.toJson();
+```
+
+**Burner technology (`BurnerType`)** — NOx and CO are combustion-technology-dependent, so the
+calculator ships a small burner database that sets typical factors: `CONVENTIONAL` (130/30 g/GJ),
+`LOW_NOX` (60/40), `ULTRA_LOW_NOX` (30/50), `GAS_TURBINE_CONVENTIONAL` (300/40),
+`GAS_TURBINE_DLE` (90/30), `GAS_TURBINE_WET` (130/60). A low-NOx technology trades lower NOx for
+somewhat higher CO. These are screening defaults on a natural-gas basis — always override with a
+vendor guarantee or CEMS value when available. Accuracy also depends on fuel composition (H2 raises
+flame temperature and NOx), excess air / O2, combustion-air preheat, load, humidity / water-steam
+injection and the reference-O2 reporting basis (3% for heaters, 15% for GT); the stoichiometric
+majors and SO2 are exact, only the emission-factor NOx/CO carry this technology sensitivity.
+
+`stoichAirFuelMassRatio` / `airFuelMassRatio`, `fuelLhvKJperKg`, `fuelEnergyGJperHr` and the full
+`massRateKgPerHr` map (NOx key is `NOx_as_NO2`) are also returned. This pairs with
+`GasTurbineVendorPerformance` / `GasTurbine` (which give the fuel rate) and with the CO2 accounting
+above. The same `setBurnerType(...)` / emission-factor NOx/CO is available on the `FurnaceBurner`
+unit operation via `setUseEmissionFactorPollutants(true)` or `setBurnerType(...)`.
+
+### Stack-emission reporting (dry basis, reference O2, mg/Nm3, Nm3/hr, t/yr)
+
+For a **regulatory stack-emission report** (EU IED / EN 14792 NOx, EN 15058 CO, EN 14791 SO2) the
+concentration must be **dry, at a reference O2, in mg/Nm3** — not wet ppmv. The calculator does this
+chain correctly:
+
+- `setReferenceO2VolPercent(3.0)` for fired heaters/boilers, `15.0` for gas turbines. The result
+  then carries `pollutantPpmvAtReferenceO2` and `pollutantMgPerNm3AtReferenceO2` (the value directly
+  comparable with a permit limit). The reference-O2 correction `C_ref = C*(20.9-O2ref)/(20.9-O2meas)`
+  is applied on the **dry** concentration at the **dry** exhaust O2 (`exhaustO2VolPercentDry`) — the
+  20.9 % basis is dry air, so mixing wet ppmv with it (a common mistake) is wrong.
+- `setNormalTemperatureC(0.0)` (EU "Normal", 273.15 K; use 15/25 for other bases) drives the mg/Nm3
+  conversion and the normalized flue-gas flow `flueGasNm3PerHrWet` / `flueGasNm3PerHrDry`. Sanity
+  check: **1 ppmv NOx-as-NO2 ~ 2.05 mg/Nm3, CO ~ 1.25, SO2 ~ 2.86** at 0 degC.
+- `setAnnualOperatingHours(8000)` rolls the mass rates up to `massRateTonnesPerYear` (permit / annual
+  report). `pollutantPpmv` is wet, `pollutantPpmvDry` is dry — always compare limits on the dry / ref-O2
+  outputs.
+
+### SO3 / acid dew point, other pollutants, NOx routes, actual stack conditions
+
+The extended stack-emission physics (all optional, 0 / off by default so clean-gas results are unchanged):
+
+- **SO3 & acid dew point** — `setSo3FractionOfSox(0.03)` splits fuel-sulphur oxides into SO2 and SO3
+  (typically 1–5 %). The result then reports `SO3`, the `acidDewPointC` (Verhoff-Banchero sulfuric-acid dew
+  point) and always the `waterDewPointC`. The acid dew point (often 120–150 °C) is well above the water dew
+  point and sets the cold-end / stack minimum metal temperature to avoid corrosion.
+- **Other pollutants** — `setPmFactorGPerGJ`, `setCh4SlipFactorGPerGJ`, `setVocFactorGPerGJ`,
+  `setN2oFactorGPerGJ` add particulates, methane slip, non-methane VOC and N2O (relevant for liquid/dual-fuel,
+  lean-premix GT, and reciprocating gas engines). Each appears in `massRateKgPerHr`, `massRateTonnesPerYear`,
+  and (for the gaseous species) the ppmv / mg/Nm3 maps.
+- **NOx route breakdown** — the base NOx factor is the thermal (Zeldovich) route; add the additive
+  `setPromptNoxFactorGPerGJ` (Fenimore) and `setFuelNoxFactorGPerGJ` (fuel-bound N). The result carries
+  `noxThermalKgPerHr` / `noxPromptKgPerHr` / `noxFuelKgPerHr` and the total in `massRateKgPerHr["NOx_as_NO2"]`.
+- **Actual stack conditions (dispersion/plume)** — `setStackGasTemperatureC(150.0)` (the measured or
+  heat-recovery-outlet temperature, NOT the adiabatic flame temperature) gives the actual volumetric flow
+  `stackActualM3PerHr` (Am³/hr); adding `setStackDiameterM(1.5)` gives the stack-exit `stackVelocityMPerS`.
+  `setStackPressureBara` sets the basis for the actual flow and the dew-point partial pressures.
+
+### Field calibration and fuel-composition / turndown studies
+
+- **Field-calibrate** the emission factor to a CEMS/stack test point:
+  `calibrateNoxFromMeasuredPpmv(measuredPpmv, measuredExhaustO2VolPercent)` (and the CO analogue)
+  set a multiplicative factor so the model reproduces the measurement and scales to other loads on a
+  fuel-energy basis. This anchors magnitude before predicting other conditions.
+- **Fuel-composition effect** (e.g. ethane/propane ratio) is captured rigorously through stoichiometry,
+  AFR, LHV and flame temperature. Optional `enableThermalNoxScaling(refFlameTempK)` scales NOx with the
+  Zeldovich temperature dependence (Ta ~ 38000 K) — **directionally correct** (hotter flame -> more NOx).
+- **Fixed-air / minimum-fuel turndown**: `setAirFlowRate(kgPerHr)` puts the calculator in **air-driven
+  mode** — lambda floats from the fixed air, the fuel rate and the fuel composition, so you can lower the
+  fuel rate and watch lambda rise (leaner), exhaust O2 rise and NOx fall. The result flags `airDriven`
+  and `subStoichiometric` (lambda < 1, air-starved — outside the valid screening range). **Caveat:**
+  `enableThermalCoScaling(...)` must **not** be used to predict CO over an excess-air (lambda) sweep — CO
+  vs lambda is U-shaped (O2-driven), and the flame-T scaling predicts the wrong sign there; field-calibrate
+  CO against measured CO-vs-O2 for load/turndown studies.
+
+**Physics basis / limits (state-of-the-art alignment):** stoichiometry + excess air (Turns; GPSA;
+API 560/537), Zeldovich thermal NOx (Ta ~ 38000 K; Lefebvre), EMEP/EEA + EPA AP-42 emission factors,
+EPA Method 19 / EN 14792 reference-O2 correction, Verhoff-Banchero acid dew point. Prompt/fuel-N NOx and
+N2O/PM/CH4/VOC are available as optional emission factors; the SO3 split and acid/water dew points and the
+actual stack conditions are modelled. The **one** remaining physics limit is high-temperature dissociation in
+the adiabatic flame temperature (like a no-dissociation H&MB simulator it slightly over-predicts near
+stoichiometric). For rigorous flame chemistry use Cantera/CHEMKIN with a validated mechanism (GRI-Mech 3.0) —
+this class is the fast, auditable engineering-screening model consistent with how process simulators estimate
+emissions.
+
 ### Combined-cycle retrofit (HRSG + SteamTurbine on top of the fleet)
 
 To evaluate a bottoming cycle on top of a `GasTurbineUnit` retrofit fleet, feed

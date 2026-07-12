@@ -9,6 +9,88 @@
 
 ---
 
+## 2026-07-12 — New: combustion / flue-gas calculator (turbines, burners, fired heaters)
+
+### Summary
+
+New state-of-the-art combustion calculator for the exhaust (flue-gas) composition,
+pollutant rates, air/fuel ratio, and adiabatic flame temperature of any gas turbine,
+burner, or fired heater. Purely additive; no change to existing behaviour.
+
+### New capability
+
+- **`neqsim.process.util.combustion.CombustionCalculator`** — from a fuel
+  `SystemInterface` + fuel mass flow + excess-air ratio, computes the full flue gas.
+  It deliberately splits the exhaust into two physically different families:
+  - **Major species (N2, O2, CO2, H2O, Ar) and SO2 — stoichiometric.** Exact element
+    balance of full combustion with excess air (all fuel C→CO2, H→H2O, S→SO2). Robust.
+  - **NOx and CO — kinetically frozen.** These are NOT equilibrium — a Gibbs reactor
+    over-predicts NO at flame temperature and gives ~0 at stack temperature, so it is
+    the WRONG tool. They come from EMEP/EEA-style **emission factors** (g per GJ fuel
+    LHV), which the caller replaces with a vendor guarantee or CEMS value.
+  - **Adiabatic flame temperature** by a rigorous NeqSim energy balance (bisection on
+    product-mixture enthalpy so the released LHV heats the products from 298 K).
+- Fluent setters: `setFuelFlowRate(kgPerHr)`, `setExcessAirRatio(lambda)` (GT ~3-3.5
+  → ~14-15 vol% O2; burner ~1.05-1.2), `setNoxFactorGPerGJ`, `setCoFactorGPerGJ`,
+  `setAssumedFuelH2sPpmv`. `calculate()` returns a `CombustionResult` with
+  `flueMoleFraction`, `pollutantPpmv` (SO2/NOx/CO), `massRateKgPerHr`,
+  `exhaustO2VolPercent`, `airFuelMassRatio`/`stoichAirFuelMassRatio`,
+  `fuelLhvKJperKg`, `fuelEnergyGJperHr`, `adiabaticFlameTemperatureK`, and `toJson()`.
+
+### Why not the existing classes
+
+- `CombustionEmissionsCalculator` (measurement device) is CO2-only with hardcoded
+  per-component factors — no flue composition, no SO2/NOx, no stoichiometry.
+- `GasTurbine` / `GasTurbineVendorPerformance` give the fuel rate and CO2; pair them
+  with `CombustionCalculator` for the full exhaust composition and pollutants.
+
+### Agents / skills updated
+
+- Skill `neqsim-power-generation` — new section documenting `CombustionCalculator`.
+- Agents that compute exhaust / emissions (emissions & environmental, power
+  generation, reaction engineering) should use this class for NOx/SO2/flue gas.
+
+### 2026-07-13 update — stack-emission reporting + closed physics gaps
+
+Purely additive (every new field defaults to 0 / NaN / off, so all existing tests and
+callers are unchanged). `CombustionCalculator` is now a regulatory-grade stack-emission
+model:
+
+- **Dry basis + reference O2 + mg/Nm3 + Nm3/hr + t/yr.** New setters
+  `setReferenceO2VolPercent` (3 % heaters, 15 % GT), `setNormalTemperatureC`,
+  `setAnnualOperatingHours`. New result fields `exhaustO2VolPercentDry`,
+  `pollutantPpmvDry`, `pollutantPpmvAtReferenceO2`, `pollutantMgPerNm3Dry`,
+  `pollutantMgPerNm3AtReferenceO2`, `flueGasNm3PerHrWet/Dry`, `massRateTonnesPerYear`.
+  Correction `C_ref = C*(20.9-O2ref)/(20.9-O2meas)` applied on the DRY value at the DRY
+  exhaust O2 (EPA Method 19 / EN 14792). Static `correctToReferenceO2(v, o2meas, o2ref)`.
+- **Air-driven turndown.** `setAirFlowRate(kgPerHr)` floats lambda from a fixed air rate +
+  fuel rate/composition; result flags `airDriven` and `subStoichiometric`.
+- **Field calibration.** `calibrateNoxFromMeasuredPpmv(ppmv, o2pct)` /
+  `calibrateCoFromMeasuredPpmv(...)` anchor factors to a CEMS/stack-test point.
+- **Optional thermal scaling.** `enableThermalNoxScaling(refFlameTempK)` (Zeldovich,
+  Ta≈38000 K). `enableThermalCoScaling(...)` exists but has a documented WARNING — it
+  gives the wrong sign on an excess-air sweep; field-calibrate CO instead.
+- **SO3 & dew points.** `setSo3FractionOfSox` → `SO3` in the flue, plus `acidDewPointC`
+  (Verhoff-Banchero sulfuric-acid dew point) and always `waterDewPointC` (Antoine).
+- **Other pollutants.** `setPmFactorGPerGJ`, `setCh4SlipFactorGPerGJ`,
+  `setVocFactorGPerGJ`, `setN2oFactorGPerGJ` — added to the mass-rate / mg-Nm3 maps.
+- **NOx route breakdown.** `setPromptNoxFactorGPerGJ` (Fenimore) +
+  `setFuelNoxFactorGPerGJ` (fuel-bound N) add to the base thermal route; result carries
+  `noxThermalKgPerHr` / `noxPromptKgPerHr` / `noxFuelKgPerHr`.
+- **Actual stack conditions.** `setStackGasTemperatureC` (measured/stack T, NOT the flame
+  T) → `stackActualM3PerHr`; add `setStackDiameterM` → `stackVelocityMPerS`;
+  `setStackPressureBara` sets the basis for actual flow and dew-point partial pressures.
+
+Key quirk for callers: `pollutantPpmv` uses key `"NOx"`, but `massRateKgPerHr` /
+`massRateTonnesPerYear` use `"NOx_as_NO2"`. The only remaining true physics limit is
+high-temperature dissociation in the adiabatic flame temperature.
+
+Docs updated: skill `neqsim-power-generation` (stack-emission + extended-physics
+subsections), agent `emissions.environmental` (regulatory report + extended setters),
+and the `CombustionCalculator` class JavaDoc physics-basis block.
+
+---
+
 ## 2026-07-11 — New: valve scale-drift plugging + scale/deposit remediation advisor
 
 ### Summary
