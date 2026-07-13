@@ -415,6 +415,71 @@ one side-effect-free snapshot:
   `bottleneck` + `anyOverloaded`. Drive the search with `ProcessAutomation.evaluate()`
   or `AgenticProcessOptimizer`.
 
+**Native max-throughput-at-capacity (one call, both ProcessSystem and ProcessModel).**
+`ProcessAutomation.findMaxThroughputJson(feedAddresses, minRate, maxRate, rateUnit,
+utilizationLimit)` enables the separator capacity constraints, then bisects the *total*
+feed rate (all feeds scaled proportionally to their base rate) until the first unit's
+`maxUtilization` reaches `utilizationLimit` (a 0-1 fraction). It leaves the model at the
+feasible maximum and returns `{maxRate, rateUnit, feasibleAtMin, bindingUnit,
+bindingConstraint, bindingUtilizationPercent}`. This is the string-addressable,
+never-throwing replacement for a hand-rolled inlet/feed bisection loop. Pair with
+`enableCapacityConstraints()` / `prepareForCapacityStudyJson()` /
+`validateForOptimizationJson()` / `getBottleneckRankingJson(topN)` for the setup and
+diagnostics.
+
+**Product-quality observables (spec constraints).** `getProductQualityJson(address)`
+(optionally with a reference temperature) returns, for a resolved stream (area-qualified
+`Area::Unit`, `unit.port`, or a bare unit -> its first outlet), the export-oil RVP/TVP
+(`rvp_bara`, `tvp_bara` via `Standard_ASTM_D6377`) and the gas `cricondenbar_bara` /
+`cricondentherm_K` (via `calcPTphaseEnvelope`), each computed on a cloned fluid so the
+live flowsheet is untouched. It never throws — a metric that cannot be computed is
+reported as `rvpError` / `envelopeError`. Use these as the spec side of a
+maximise-throughput-subject-to-RVP/cricondenbar optimisation.
+
+**Capacity for ALL equipment types (not just separators).**
+`ProcessAutomation.enableCapacityConstraints()` now enables the capacity constraints on
+*every* `CapacityConstrainedEquipment` in the flowsheet (pumps, valves, pipelines,
+heaters/coolers, heat exchangers, manifolds, ...), not only separators — so any of them
+can become the binding bottleneck in `getUtilizationSnapshot()` /
+`getBottleneckRankingJson()` / `findMaxThroughputJson()`. It deliberately preserves the
+chartless-compressor gating (surge/speed stay disabled so utilisation stays smooth and
+power-driven) by calling `reinitializeCapacityConstraints()` on compressors instead of a
+blind `enableAllConstraints()`, and still adds the separator Souders-Brown gas-load
+constraint. Set the design basis for each type first (compressor `setMaxDesignPower`,
+pump/valve/pipe design limits, separator `setGasLoadFactor`) so the utilisation has a
+meaningful denominator.
+
+**Routing / feed-scale as decision variables (#7).** Feed streams already expose
+`flowRate` as a writable INPUT (feed-scale). Splitters now also expose one bounded
+`splitFactor_i` (0-1) INPUT per outlet in `getAdjustableParameters()` — the routing
+decision variables. Reading `<Splitter>.splitFactor_i` returns the current fraction;
+writing it sets that branch's relative weight and the splitter renormalises the factors
+to sum to 1. Because they carry `[0,1]` bounds, `AgenticProcessOptimizer.useAdjustableParameters()`
+picks them up automatically, so the optimizer can redistribute flow between trains/branches
+as part of a maximise-production search. (Give feed `flowRate` explicit bounds if you want
+the optimizer to treat feed-scale as a decision variable too.)
+
+**Parallel batch evaluation for ML / DoE (#6).**
+`ProcessAutomation.evaluateBatchJson(candidates, unit, readbacks, maxParallel)` (and the
+full overload with `readbackUnit, maxIterations, tolerance`) scores a *list* of setpoint
+maps in one call. For a `ProcessSystem` with `maxParallel > 1` it evaluates each candidate
+on an independent `ProcessSystem.copy()` on its own thread, so the batch is genuinely
+parallel and the **live model is left untouched** — ideal for SciPy/BoTorch/GA/agent
+populations. For a `ProcessModel` (no `copy()`), or `maxParallel == 1`, it runs
+sequentially on the live facade. Each result carries the full `evaluate` payload
+(`converged`, `iterations`, `maxError`, `failedUnitName`, `failedUnitError`) plus its
+`index`; the root reports `parallel`, `feasibleCount`, and `firstFeasibleIndex`.
+
+**Maximise production *and* manage emissions.** Combine the pieces: (1) decision space =
+`getAdjustableParameters()` (bounded setpoints + splitter routing; bound feed `flowRate`
+for feed-scale); (2) feasibility = `enableCapacityConstraints()` + the capacity snapshot
+across all equipment; (3) objective = an `AgenticProcessOptimizer.setObjectiveFunction`
+reward such as `production − λ·(total compressor power)` (compression shaft power is a
+direct CO2 proxy for turbine-driven trains), or a `ProductionOptimizer.optimizePareto`
+with `[MAXIMIZE production, MINIMIZE Σ compressor power]` to get the production-vs-emissions
+trade-off front. `evaluateBatchJson` read-backs of each compressor's `power` give the
+emissions term per candidate for an external Python optimizer.
+
 **B. Transparent Python roll-up (API-risk-free, good when the separator capacity path
 is not yet wired).** Merge three families into `equipment_utilization(tags, sizes)`:
 - compressor util = shaft power / driver site-rated kW (+ anti-surge OK flag from the

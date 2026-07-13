@@ -9,6 +9,73 @@
 
 ---
 
+---
+
+## 2026-07-13 — New: agentic optimization helpers on `ProcessAutomation` (all equipment types, routing, parallel batch)
+
+### Summary
+
+Additive expansion of the string-addressable, never-throwing, schema-versioned JSON
+agentic-optimization surface on `neqsim.process.automation.ProcessAutomation`. All new
+methods work for **both** a `ProcessSystem` and a multi-area `ProcessModel`, and integrate
+directly with `AgenticProcessOptimizer`, `ProductionOptimizer`, and external Python/ML
+optimizers. No change to existing behaviour.
+
+### New capability
+
+- **`enableCapacityConstraints()` — capacity for ALL equipment types.** Now enables the
+  capacity constraints on every `CapacityConstrainedEquipment` (separators, pumps, valves,
+  pipelines, heaters/coolers, heat exchangers, manifolds), not just separators, so any type
+  can bind as the bottleneck. It preserves the chartless-compressor gating by calling
+  `Compressor.reinitializeCapacityConstraints()` (surge/speed stay disabled, power stays
+  enabled) instead of the blind `enableAllConstraints()` (which would re-pin chartless
+  machines at a degenerate 100 %). Still adds the separator Souders-Brown gas-load
+  constraint; return value stays the separator count.
+- **`getProductQualityJson(address[, refTempC])`** — export-oil RVP/TVP
+  (`Standard_ASTM_D6377`) and gas `cricondenbar_bara` / `cricondentherm_K`
+  (`calcPTphaseEnvelope`) for a resolved stream, on a cloned fluid (live model untouched);
+  never throws (`rvpError` / `envelopeError` on failure).
+- **`findMaxThroughputJson(feedAddresses, min, max, rateUnit, utilizationLimit)`** — enables
+  the capacity constraints then bisects the total feed rate (feeds scaled proportionally)
+  until the first unit reaches the utilisation limit; returns
+  `{maxRate, feasibleAtMin, bindingUnit, bindingConstraint, bindingUtilizationPercent}`.
+- **Routing / feed-scale decision variables** — feed `flowRate` is a writable INPUT;
+  splitters now expose one bounded `splitFactor_i` (0–1) INPUT per outlet in
+  `getAdjustableParameters()` (read = current fraction; write = branch weight, renormalised
+  to sum 1), so `AgenticProcessOptimizer.useAdjustableParameters()` picks them up.
+- **`evaluateBatchJson(candidates, unit, readbacks, maxParallel[, readbackUnit, maxIter,
+  tol])`** — scores a list of setpoint maps in one call; for a `ProcessSystem` with
+  `maxParallel > 1` each candidate runs on an independent `ProcessSystem.copy()` on its own
+  thread (parallel, **live model untouched**); `ProcessModel` / `maxParallel == 1` run
+  sequentially. Each result carries the full `evaluate` payload (incl. `converged`,
+  `iterations`, `maxError`, `failedUnitName`, `failedUnitError`) + `index`; root reports
+  `parallel`, `feasibleCount`, `firstFeasibleIndex`.
+
+### Production + emissions pattern (no new code)
+
+Compose decision space (`getAdjustableParameters()` bounded setpoints + splitter routing;
+bound feed `flowRate` for feed-scale) + feasibility (`enableCapacityConstraints()` +
+snapshot) + a reward `production − λ·Σ(compressor power)` via
+`AgenticProcessOptimizer.setObjectiveFunction`, or `ProductionOptimizer.optimizePareto`
+`[MAXIMIZE production, MINIMIZE Σ compressor power]`. Compression shaft power is a CO2 proxy
+for turbine-driven trains.
+
+### Agents / skills to update
+
+- `neqsim-agentic-process-optimization` SKILL (updated), `AGENTS.md` +
+  `.github/copilot-instructions.md` ProcessAutomation sections (updated). Tests:
+  `ProcessAutomationTest` (101), full regression 134 tests, BUILD SUCCESS. Branch
+  `separator-opt-fix` (PR #2433).
+
+### Deferred (follow-up PR)
+
+- Whole-flowsheet **predictive** compressor mode (pressure-node solver so compressors
+  predict discharge P from speed+flow across the flowsheet without a fixed
+  `outletPressure`) and a rigorous CO2/emissions accessor (currently use compressor power
+  as the proxy).
+
+---
+
 ## 2026-07-12 — New: combustion / flue-gas calculator (turbines, burners, fired heaters)
 
 ### Summary

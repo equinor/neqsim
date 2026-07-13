@@ -29,14 +29,23 @@ ALWAYS read these skills before proceeding:
    limits** (rated power, surge margin, NPSH, erosional velocity, design P/T, MAWP).
    Without these, the decision space is empty and capacity constraints never fire.
    Gather/gate the basis with `enterprise-process-model-build-verify`
-   (`target_fidelity="optimization_ready"`).
+   (`target_fidelity="optimization_ready"`). Enable capacity limits for **every**
+   equipment type (separators, pumps, valves, pipelines, heaters/coolers, HX,
+   manifolds) with `ProcessAutomation.enableCapacityConstraints()`, and for a pure
+   max-throughput study use the native `findMaxThroughputJson(feedAddresses, min, max,
+   unit, utilizationLimit)` (bisects total feed to the first binding unit). Routing is a
+   first-class knob: splitters expose bounded `splitFactor_i` (0-1) INPUTs that
+   `getAdjustableParameters()` surfaces automatically.
 3. **Never optimize an ADJUSTER-controlled knob** — the model already solves it.
 4. **Gate every trial.** Use `runUntilConverged` + `getRunStatus().success` +
    `getConvergenceReportJson()`. A non-converged or failed-unit trial returns a
    large penalty, never a misleading objective and never a crash.
 5. **Score from real equipment.** Compression power and surge margins come from
    `Compressor.getOperatingPoint()`; RVP comes from `Standard_ASTM_D6377` `RvpResult`.
-   Test compressor margins for `NaN` before comparing. Pick the **compressor control
+   For a one-call product-quality observable use
+   `ProcessAutomation.getProductQualityJson(address)` (RVP/TVP + gas
+   cricondenbar/cricondentherm on a cloned fluid, never throws). Test compressor margins
+   for `NaN` before comparing. Pick the **compressor control
    mode** deliberately: solve-speed (fixed discharge P, speed/power are outputs) for
    spec/capacity/max-throughput studies against fixed pressure boundaries; predictive
    (fixed speed → computed discharge P) when shaft speed is a decision variable
@@ -46,7 +55,11 @@ ALWAYS read these skills before proceeding:
 7. **Rebuild per year.** Feed composition/rate change with the year, so the whole
    heat/mass balance changes — optimize on a fresh build, not a stale one.
 8. **Parallel only with deep copies.** Use `ProcessSystem.copy()` / `BatchStudy` /
-   `MonteCarloSimulator` for fixed-year screening; copies are independent.
+   `MonteCarloSimulator` for fixed-year screening; copies are independent. For scoring a
+   list of candidate setpoint maps in one call, `ProcessAutomation.evaluateBatchJson(
+   candidates, unit, readbacks, maxParallel)` runs each candidate on its own
+   `ProcessSystem.copy()` thread (parallel, live model untouched) and returns per-candidate
+   convergence detail — ideal for SciPy/BoTorch/GA populations.
 9. **Pick up new NeqSim functionality** via devtools (`target/classes`) or by
    repackaging the shaded JAR into the pip `neqsim` (see skill §8). Verify the new
    methods are callable before relying on them.

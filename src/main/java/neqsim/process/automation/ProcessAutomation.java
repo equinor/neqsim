@@ -8,6 +8,7 @@ import java.util.Map;
 import neqsim.process.automation.SimulationVariable.VariableType;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorTrain;
 import neqsim.process.equipment.distillation.DistillationColumn;
@@ -341,6 +342,69 @@ public class ProcessAutomation {
       }
     }
     return Collections.unmodifiableList(filtered);
+  }
+
+  /**
+   * Convenience: returns only the settable {@link VariableType#INPUT INPUT} variables for a unit. These are the
+   * addresses that can be driven with {@link #setVariableValue(String, double, String)} (e.g. a cooler set-point is
+   * {@code "<Cooler>.outletTemperature"}, an INPUT — not {@code "<Cooler>.outletStream.temperature"}, a computed
+   * OUTPUT).
+   *
+   * @param unitName the unit name, optionally area-qualified
+   * @return the INPUT-type variables for the unit
+   * @throws IllegalArgumentException if the unit is not found
+   */
+  public List<SimulationVariable> getInputVariables(String unitName) {
+    return getVariableList(unitName, VariableType.INPUT);
+  }
+
+  /**
+   * Convenience: returns only the read-only {@link VariableType#OUTPUT OUTPUT} variables for a unit. Useful as
+   * benchmark / read-back addresses for model-vs-plant comparison.
+   *
+   * @param unitName the unit name, optionally area-qualified
+   * @return the OUTPUT-type variables for the unit
+   * @throws IllegalArgumentException if the unit is not found
+   */
+  public List<SimulationVariable> getOutputVariables(String unitName) {
+    return getVariableList(unitName, VariableType.OUTPUT);
+  }
+
+  /**
+   * Pre-flight check (never throws) for whether an address is a settable {@link VariableType#INPUT INPUT} variable.
+   * Writing to a computed OUTPUT address (for example {@code "<Cooler>.outletStream.temperature"}) is silently
+   * overwritten by the next {@code run()}; use this to catch that before it happens.
+   *
+   * @param address the dot-notation address, optionally area-qualified
+   * @return true when the address resolves to a known INPUT variable, false otherwise (unknown or OUTPUT)
+   */
+  public boolean isWritableAddress(String address) {
+    if (address == null || address.trim().isEmpty()) {
+      return false;
+    }
+    String unitName = address;
+    int areaSepIdx = address.indexOf(AREA_SEPARATOR);
+    String prefix = "";
+    String local = address;
+    if (areaSepIdx >= 0) {
+      prefix = address.substring(0, areaSepIdx + AREA_SEPARATOR.length());
+      local = address.substring(areaSepIdx + AREA_SEPARATOR.length());
+    }
+    int dotIdx = local.indexOf('.');
+    if (dotIdx < 0) {
+      return false;
+    }
+    unitName = prefix + local.substring(0, dotIdx);
+    try {
+      for (SimulationVariable v : getVariableList(unitName, VariableType.INPUT)) {
+        if (address.equals(v.getAddress())) {
+          return true;
+        }
+      }
+    } catch (RuntimeException ex) {
+      return false;
+    }
+    return false;
   }
 
   // ------------------------- Adjustable parameters -------------------------
@@ -1001,10 +1065,15 @@ public class ProcessAutomation {
       handledOutlets = true;
     }
 
-    // Splitter — output only (not ComponentSplitter)
+    // Splitter — routing split factors are settable INPUTs (bounded 0-1); outlet streams
+    // are outputs. The split factors are the routing decision variables an optimizer can
+    // adjust to redistribute flow between branches.
     if (unit instanceof Splitter && !(unit instanceof ComponentSplitter)) {
       List<StreamInterface> splitStreams = unit.getOutletStreams();
       for (int i = 0; i < splitStreams.size(); i++) {
+        vars.add(new SimulationVariable(unitName + ".splitFactor_" + i, "splitFactor_" + i, VariableType.INPUT, "",
+            "Fraction of feed routed to outlet " + i + " (0-1, renormalised across outlets)")
+            .withBounds(Double.valueOf(0.0), Double.valueOf(1.0)));
         addStreamOutputVariables(vars, unitName + ".splitStream_" + i, splitStreams.get(i));
       }
       handledOutlets = true;
@@ -1168,6 +1237,15 @@ public class ProcessAutomation {
    */
   private double getEquipmentProperty(ProcessEquipmentInterface unit, String property, String uom) {
     boolean hasUnit = uom != null && !uom.trim().isEmpty();
+
+    if (property.startsWith("splitFactor_") && unit instanceof Splitter) {
+      int idx = parseIndexSuffix(property, "splitFactor_");
+      double[] sf = ((Splitter) unit).getSplitFactors();
+      if (idx >= 0 && idx < sf.length) {
+        return sf[idx];
+      }
+      throw new IllegalArgumentException("Split factor index out of range for " + unit.getName() + ": " + property);
+    }
 
     switch (property) {
     case "temperature":
@@ -1423,6 +1501,20 @@ public class ProcessAutomation {
    */
   private void setEquipmentProperty(ProcessEquipmentInterface unit, String property, double value, String uom) {
     boolean hasUnit = uom != null && !uom.trim().isEmpty();
+
+    if (property.startsWith("splitFactor_") && unit instanceof Splitter) {
+      Splitter sp = (Splitter) unit;
+      int idx = parseIndexSuffix(property, "splitFactor_");
+      double[] sf = sp.getSplitFactors();
+      if (idx < 0 || idx >= sf.length) {
+        throw new IllegalArgumentException("Split factor index out of range for " + unit.getName() + ": " + property);
+      }
+      double[] updated = sf.clone();
+      updated[idx] = value;
+      // Splitter renormalises the factors so they sum to 1.
+      sp.setSplitFactors(updated);
+      return;
+    }
 
     switch (property) {
     case "outletPressure":
@@ -2299,6 +2391,144 @@ public class ProcessAutomation {
   }
 
   /**
+   * Evaluates a batch of candidate setpoint sets and returns one schema-versioned JSON object per candidate. This is
+   * the parallel, ML/DoE-oriented counterpart of {@link #evaluate(Map, String, java.util.List)}: an external optimizer
+   * (SciPy, BoTorch, a genetic algorithm, an agent) can score many candidates in one call.
+   *
+   * <p>
+   * For a {@link ProcessSystem} with {@code maxParallel &gt; 1} and more than one candidate, each candidate is applied
+   * to an independent {@link ProcessSystem#copy() copy} evaluated on its own thread, so the batch is genuinely parallel
+   * and the live model is <b>left untouched</b>. For a multi-area {@link ProcessModel} (which has no {@code copy()}),
+   * or when {@code maxParallel == 1}, candidates are evaluated sequentially on the live facade (the last candidate
+   * remains applied). Each per-candidate result carries the full {@link #evaluate} payload &mdash; including the
+   * {@code converged}, {@code iterations}, {@code maxError}, {@code failedUnitName} and {@code failedUnitError}
+   * convergence-failure detail &mdash; plus its {@code index}.
+   * </p>
+   *
+   * @param candidates the list of decision-variable maps to evaluate; must not be null
+   * @param setpointUnit unit applied to all setpoints, or null for each variable's default unit
+   * @param readbacks objective / constraint addresses read after each run; may be null or empty
+   * @param readbackUnit unit applied to all read-backs, or null for default units
+   * @param maxParallel maximum worker threads (only used for a {@link ProcessSystem}); values &lt; 1 are treated as 1
+   * @param maxIterations convergence iteration cap per candidate; must be at least 1
+   * @param tolerance convergence tolerance per candidate; must be finite and positive
+   * @return JSON {@code {schemaVersion, count, parallel, feasibleCount, firstFeasibleIndex, results:[{index, ...}]}}
+   */
+  public String evaluateBatchJson(List<Map<String, Double>> candidates, String setpointUnit, List<String> readbacks,
+      String readbackUnit, int maxParallel, int maxIterations, double tolerance) {
+    if (candidates == null) {
+      throw new IllegalArgumentException("candidates must not be null");
+    }
+    if (maxIterations < 1) {
+      throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
+    }
+    if (Double.isNaN(tolerance) || Double.isInfinite(tolerance) || tolerance <= 0.0) {
+      throw new IllegalArgumentException("tolerance must be a finite positive number, was " + tolerance);
+    }
+
+    int n = candidates.size();
+    com.google.gson.JsonObject[] out = new com.google.gson.JsonObject[n];
+    boolean parallel = processSystem != null && maxParallel > 1 && n > 1;
+
+    if (parallel) {
+      int threads = Math.min(maxParallel, n);
+      java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(threads);
+      try {
+        List<java.util.concurrent.Future<com.google.gson.JsonObject>> futures = new ArrayList<java.util.concurrent.Future<com.google.gson.JsonObject>>();
+        for (int i = 0; i < n; i++) {
+          final int index = i;
+          final Map<String, Double> candidate = candidates.get(i);
+          futures.add(pool.submit(new java.util.concurrent.Callable<com.google.gson.JsonObject>() {
+            @Override
+            public com.google.gson.JsonObject call() {
+              ProcessSystem copy = processSystem.copy();
+              ProcessAutomation copyAuto = new ProcessAutomation(copy);
+              String json = copyAuto.evaluate(candidate, setpointUnit, readbacks, readbackUnit, maxIterations,
+                  tolerance);
+              com.google.gson.JsonObject obj = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+              obj.addProperty("index", index);
+              return obj;
+            }
+          }));
+        }
+        for (int i = 0; i < n; i++) {
+          try {
+            out[i] = futures.get(i).get();
+          } catch (Exception ex) {
+            com.google.gson.JsonObject err = new com.google.gson.JsonObject();
+            err.addProperty("schemaVersion", SCHEMA_VERSION);
+            err.addProperty("index", i);
+            err.addProperty("feasible", false);
+            err.addProperty("evaluationError", ex.getMessage() == null ? ex.toString() : ex.getMessage());
+            out[i] = err;
+          }
+        }
+      } finally {
+        pool.shutdownNow();
+      }
+    } else {
+      for (int i = 0; i < n; i++) {
+        String json = evaluate(candidates.get(i), setpointUnit, readbacks, readbackUnit, maxIterations, tolerance);
+        com.google.gson.JsonObject obj = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+        obj.addProperty("index", i);
+        out[i] = obj;
+      }
+    }
+
+    com.google.gson.JsonArray results = new com.google.gson.JsonArray();
+    int feasibleCount = 0;
+    int firstFeasibleIndex = -1;
+    for (int i = 0; i < n; i++) {
+      results.add(out[i]);
+      if (out[i].has("feasible") && out[i].get("feasible").getAsBoolean()) {
+        feasibleCount++;
+        if (firstFeasibleIndex < 0) {
+          firstFeasibleIndex = i;
+        }
+      }
+    }
+
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    root.addProperty("count", n);
+    root.addProperty("parallel", parallel);
+    root.addProperty("feasibleCount", feasibleCount);
+    root.addProperty("firstFeasibleIndex", firstFeasibleIndex);
+    root.add("results", results);
+    return root.toString();
+  }
+
+  /**
+   * Convenience overload of {@link #evaluateBatchJson(List, String, List, String, int, int, double)} using default
+   * convergence settings (30 iterations, tolerance 5e-3) and the same unit for setpoints and read-backs.
+   *
+   * @param candidates the list of decision-variable maps to evaluate; must not be null
+   * @param unitOfMeasure unit applied to setpoints and read-backs, or null for default units
+   * @param readbacks objective / constraint addresses read after each run; may be null or empty
+   * @param maxParallel maximum worker threads (only used for a {@link ProcessSystem})
+   * @return schema-versioned JSON batch result
+   */
+  public String evaluateBatchJson(List<Map<String, Double>> candidates, String unitOfMeasure, List<String> readbacks,
+      int maxParallel) {
+    return evaluateBatchJson(candidates, unitOfMeasure, readbacks, unitOfMeasure, maxParallel, 30, 5.0e-3);
+  }
+
+  /**
+   * Parses the trailing integer index of an indexed property such as {@code splitFactor_2}.
+   *
+   * @param property the full property name
+   * @param prefix the prefix preceding the index
+   * @return the parsed index, or -1 if it cannot be parsed
+   */
+  private static int parseIndexSuffix(String property, String prefix) {
+    try {
+      return Integer.parseInt(property.substring(prefix.length()));
+    } catch (NumberFormatException | IndexOutOfBoundsException ex) {
+      return -1;
+    }
+  }
+
+  /**
    * Merges the most recent {@link neqsim.process.processmodel.RunStatus RunStatus} fields ({@code success},
    * {@code failedUnitName}, {@code failedUnitError}) into the supplied JSON object. Used by
    * {@link #runUntilConvergedJson(int, double)} and {@link #evaluate(Map, String, List, String, int, double)}.
@@ -2721,6 +2951,529 @@ public class ProcessAutomation {
       return processModel.getUtilizationSnapshotJson();
     }
     return processSystem.getUtilizationSnapshotJson();
+  }
+
+  // ---------------- Agentic optimization: prepare / validate / rank / quality ----------------
+
+  /**
+   * Enables the gas-load capacity constraint on every separator (these are disabled by default for backward
+   * compatibility) so that {@link #getUtilizationSnapshot()} reports separator gas-load utilisation. Works for both a
+   * {@link ProcessSystem} and a multi-area {@link ProcessModel}.
+   *
+   * @return the number of separators whose gas-load capacity constraint was enabled
+   */
+  public int enableCapacityConstraints() {
+    int separators = 0;
+    for (String addr : getUnitList()) {
+      ProcessEquipmentInterface u;
+      try {
+        u = resolveUnit(addr).unit;
+      } catch (RuntimeException ex) {
+        continue;
+      }
+      try {
+        if (u instanceof Separator) {
+          // Creates + enables the Souders-Brown gas-load constraint, which is not part of
+          // the generic default constraint set.
+          ((Separator) u).useGasCapacityConstraints();
+          separators++;
+        } else if (u instanceof Compressor) {
+          // Recreate constraints so surge/speed constraints stay DISABLED for chartless
+          // compressors (they would otherwise pin utilisation at a degenerate 100 %), while
+          // the power constraint stays enabled when a driver / design power is set.
+          ((Compressor) u).reinitializeCapacityConstraints();
+          ((CapacityConstrainedEquipment) u).setCapacityAnalysisEnabled(true);
+        } else if (u instanceof CapacityConstrainedEquipment) {
+          // Pumps, valves, pipelines, heaters/coolers, heat exchangers, manifolds, ... have
+          // their constraints disabled by default for backward compatibility. Enable them so
+          // every equipment type can bind in a capacity / optimization study.
+          CapacityConstrainedEquipment eq = (CapacityConstrainedEquipment) u;
+          eq.setCapacityAnalysisEnabled(true);
+          eq.enableAllConstraints();
+        }
+      } catch (RuntimeException ex) {
+        // skip units that cannot be configured
+      }
+    }
+    return separators;
+  }
+
+  /**
+   * Enables capacity constraints and returns a readiness report for a capacity / optimization study. Works for both a
+   * {@link ProcessSystem} and a {@link ProcessModel}.
+   *
+   * @return JSON {@code {schemaVersion, separatorsEnabled, ready, issueCount, issues:[{unit,type,issue,severity,
+   * remedy}]}}
+   */
+  public String prepareForCapacityStudyJson() {
+    int enabled = enableCapacityConstraints();
+    com.google.gson.JsonArray issues = collectOptimizationIssues();
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    root.addProperty("separatorsEnabled", enabled);
+    root.addProperty("issueCount", issues.size());
+    root.addProperty("ready", issues.size() == 0);
+    root.add("issues", issues);
+    return root.toString();
+  }
+
+  /**
+   * Validates the model for an agentic optimization loop <b>without changing it</b>. Flags conditions that make an
+   * optimizer misbehave: separators without geometry (capacity cannot be evaluated), compressors without a performance
+   * chart (surge / power constraints undefined), and adjustable parameters with unbounded limits. Works for both a
+   * {@link ProcessSystem} and a {@link ProcessModel}.
+   *
+   * @return JSON {@code {schemaVersion, ok, issueCount, issues:[{unit,type,issue,severity,remedy}]}}
+   */
+  public String validateForOptimizationJson() {
+    com.google.gson.JsonArray issues = collectOptimizationIssues();
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    root.addProperty("issueCount", issues.size());
+    root.addProperty("ok", issues.size() == 0);
+    root.add("issues", issues);
+    return root.toString();
+  }
+
+  /**
+   * Collects optimization-readiness issues across all units (both process types).
+   *
+   * @return a JSON array of issue objects
+   */
+  private com.google.gson.JsonArray collectOptimizationIssues() {
+    com.google.gson.JsonArray issues = new com.google.gson.JsonArray();
+    for (String addr : getUnitList()) {
+      ProcessEquipmentInterface u;
+      try {
+        u = resolveUnit(addr).unit;
+      } catch (RuntimeException ex) {
+        continue;
+      }
+      if (u instanceof Separator) {
+        boolean hasGeom;
+        try {
+          hasGeom = ((Separator) u).hasGeometry();
+        } catch (RuntimeException ex) {
+          hasGeom = true;
+        }
+        if (!hasGeom) {
+          addIssue(issues, addr, "Separator", "No internal diameter set; gas-load capacity cannot be evaluated.",
+              "warning", "Call setInternalDiameter(...) (and setOrientation for scrubbers).");
+        }
+      } else if (u instanceof Compressor) {
+        boolean hasChart;
+        try {
+          hasChart = ((Compressor) u).getCompressorChart() != null
+              && ((Compressor) u).getCompressorChart().isUseCompressorChart();
+        } catch (RuntimeException ex) {
+          hasChart = false;
+        }
+        if (!hasChart) {
+          addIssue(issues, addr, "Compressor", "No performance chart in use; surge / speed constraints are undefined.",
+              "info", "Attach a chart or set getMechanicalDesign().setMaxDesignPower(kW) for a power constraint.");
+        }
+      }
+    }
+    // Unbounded adjustable parameters.
+    for (AdjustableParameter p : getAdjustableParameters()) {
+      Double lo = p.getLowerBound();
+      Double hi = p.getUpperBound();
+      boolean unbounded = lo == null || hi == null || Math.abs(lo) >= UNBOUNDED_THRESHOLD
+          || Math.abs(hi) >= UNBOUNDED_THRESHOLD;
+      if (unbounded) {
+        addIssue(issues, p.getName(), "AdjustableParameter",
+            "Decision variable has unbounded limits; supply physically meaningful bounds before optimizing.", "warning",
+            "Set a finite [lower, upper] for " + p.getAddress() + ".");
+      }
+    }
+    return issues;
+  }
+
+  /**
+   * Appends an issue object to the issues array.
+   *
+   * @param issues the array to append to
+   * @param unit the unit or parameter name/address
+   * @param type the equipment or parameter type
+   * @param issue the human-readable issue description
+   * @param severity {@code "warning"} or {@code "info"}
+   * @param remedy the suggested remedy
+   */
+  private void addIssue(com.google.gson.JsonArray issues, String unit, String type, String issue, String severity,
+      String remedy) {
+    com.google.gson.JsonObject o = new com.google.gson.JsonObject();
+    o.addProperty("unit", unit);
+    o.addProperty("type", type);
+    o.addProperty("issue", issue);
+    o.addProperty("severity", severity);
+    o.addProperty("remedy", remedy);
+    issues.add(o);
+  }
+
+  /**
+   * Returns the top-{@code n} units ranked by capacity utilisation, i.e. a debottlenecking order, parsed from
+   * {@link #getUtilizationSnapshot()}. Works for both a {@link ProcessSystem} and a {@link ProcessModel}.
+   *
+   * @param topN the maximum number of units to return (values &lt; 1 default to 1)
+   * @return JSON {@code {schemaVersion, count, ranking:[{rank,name,area,type,utilizationPercent,limitingConstraint,
+   * feasible}]}}
+   */
+  public String getBottleneckRankingJson(int topN) {
+    int limit = topN < 1 ? 1 : topN;
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    com.google.gson.JsonArray ranking = new com.google.gson.JsonArray();
+    try {
+      com.google.gson.JsonObject snap = com.google.gson.JsonParser.parseString(getUtilizationSnapshot())
+          .getAsJsonObject();
+      List<com.google.gson.JsonObject> units = new ArrayList<com.google.gson.JsonObject>();
+      if (snap.has("units") && snap.get("units").isJsonArray()) {
+        for (com.google.gson.JsonElement el : snap.getAsJsonArray("units")) {
+          if (el.isJsonObject() && el.getAsJsonObject().has("maxUtilizationPercent")) {
+            units.add(el.getAsJsonObject());
+          }
+        }
+      }
+      units.sort(
+          (a, b) -> Double.compare(readDouble(b, "maxUtilizationPercent"), readDouble(a, "maxUtilizationPercent")));
+      int rank = 1;
+      for (com.google.gson.JsonObject uo : units) {
+        if (rank > limit) {
+          break;
+        }
+        com.google.gson.JsonObject r = new com.google.gson.JsonObject();
+        r.addProperty("rank", rank);
+        r.addProperty("name", uo.has("name") ? uo.get("name").getAsString() : "");
+        if (uo.has("area")) {
+          r.addProperty("area", uo.get("area").getAsString());
+        }
+        if (uo.has("type")) {
+          r.addProperty("type", uo.get("type").getAsString());
+        }
+        r.addProperty("utilizationPercent", readDouble(uo, "maxUtilizationPercent"));
+        if (uo.has("limitingConstraint") && !uo.get("limitingConstraint").isJsonNull()) {
+          r.addProperty("limitingConstraint", uo.get("limitingConstraint").getAsString());
+        }
+        if (uo.has("feasible")) {
+          r.addProperty("feasible", uo.get("feasible").getAsBoolean());
+        }
+        ranking.add(r);
+        rank++;
+      }
+    } catch (RuntimeException ex) {
+      root.addProperty("error", ex.getMessage());
+    }
+    root.addProperty("count", ranking.size());
+    root.add("ranking", ranking);
+    return root.toString();
+  }
+
+  /**
+   * Reads a numeric property from a JSON object, returning 0.0 when absent or non-numeric.
+   *
+   * @param obj JSON object
+   * @param key property key
+   * @return the value, or 0.0
+   */
+  private static double readDouble(com.google.gson.JsonObject obj, String key) {
+    try {
+      return obj.has(key) && !obj.get(key).isJsonNull() ? obj.get(key).getAsDouble() : 0.0;
+    } catch (RuntimeException ex) {
+      return 0.0;
+    }
+  }
+
+  /**
+   * Resolves a stream from an address: a stream unit name, an area-qualified stream name, or a {@code unit.port}
+   * reference; a bare unit name falls back to that unit's first outlet stream.
+   *
+   * @param address the stream or unit address
+   * @return the resolved stream
+   * @throws IllegalArgumentException if the address cannot be resolved to a stream
+   */
+  private StreamInterface resolveStreamFromAddress(String address) {
+    if (address == null || address.trim().isEmpty()) {
+      throw new IllegalArgumentException("address must not be null or empty");
+    }
+    String areaPrefix = "";
+    String local = address;
+    int areaIdx = address.indexOf(AREA_SEPARATOR);
+    if (areaIdx >= 0) {
+      areaPrefix = address.substring(0, areaIdx + AREA_SEPARATOR.length());
+      local = address.substring(areaIdx + AREA_SEPARATOR.length());
+    }
+    int dot = local.indexOf('.');
+    if (dot < 0) {
+      ProcessEquipmentInterface u = resolveUnit(address).unit;
+      if (u instanceof StreamInterface) {
+        return (StreamInterface) u;
+      }
+      List<StreamInterface> outs = u.getOutletStreams();
+      if (outs != null && !outs.isEmpty()) {
+        return outs.get(0);
+      }
+      throw new IllegalArgumentException("No outlet stream available for unit: " + address);
+    }
+    ProcessEquipmentInterface u = resolveUnit(areaPrefix + local.substring(0, dot)).unit;
+    StreamInterface s = resolveStreamPort(u, local.substring(dot + 1));
+    if (s == null) {
+      throw new IllegalArgumentException("Stream port not found: " + local.substring(dot + 1));
+    }
+    return s;
+  }
+
+  /**
+   * Computes product-quality specs for the fluid at a stream address, at the default ASTM reference temperature of 37.8
+   * degC. See {@link #getProductQualityJson(String, double)}.
+   *
+   * @param address a stream address (stream unit name, area-qualified name, or {@code unit.port})
+   * @return JSON with RVP, TVP, cricondenbar and cricondentherm
+   */
+  public String getProductQualityJson(String address) {
+    return getProductQualityJson(address, 37.8);
+  }
+
+  /**
+   * Computes string-addressable product-quality observables for the fluid at a stream address: Reid vapour pressure
+   * (ASTM D6377), true vapour pressure, and the phase-envelope cricondenbar / cricondentherm. Failures in any one
+   * metric are reported as an {@code *Error} field rather than throwing, so an agent can use the result as a constraint
+   * read. Works for both a {@link ProcessSystem} and a {@link ProcessModel}.
+   *
+   * @param address a stream address (stream unit name, area-qualified name, or {@code unit.port})
+   * @param referenceTemperatureC the ASTM reference temperature in degrees Celsius (typically 37.8)
+   * @return JSON {@code {schemaVersion, address, rvp_bara, tvp_bara, referenceTemperatureC, cricondenbar_bara,
+   * cricondentherm_K}}
+   */
+  public String getProductQualityJson(String address, double referenceTemperatureC) {
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    root.addProperty("address", address);
+    neqsim.thermo.system.SystemInterface fluid;
+    try {
+      fluid = resolveStreamFromAddress(address).getThermoSystem();
+    } catch (RuntimeException ex) {
+      root.addProperty("error", ex.getMessage());
+      return root.toString();
+    }
+    // RVP + TVP (ASTM D6377). calculate() mutates the system, so clone first.
+    try {
+      neqsim.thermo.system.SystemInterface f1 = fluid.clone();
+      neqsim.standards.oilquality.Standard_ASTM_D6377 std = new neqsim.standards.oilquality.Standard_ASTM_D6377(f1);
+      std.setReferenceTemperature(referenceTemperatureC, "C");
+      std.setMethodRVP("RVP_ASTM_D6377");
+      std.calculate();
+      root.addProperty("rvp_bara", std.getValue("RVP", "bara"));
+      root.addProperty("tvp_bara", std.getValue("TVP", "bara"));
+      root.addProperty("referenceTemperatureC", referenceTemperatureC);
+    } catch (Exception ex) {
+      root.addProperty("rvpError", ex.getMessage());
+    }
+    // Cricondenbar / cricondentherm from the PT phase envelope (water removed).
+    try {
+      neqsim.thermo.system.SystemInterface g = fluid.clone();
+      if (g.hasComponent("water")) {
+        g.removeComponent("water");
+      }
+      g.setMixingRule("classic");
+      g.setMultiPhaseCheck(false);
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+          g);
+      ops.calcPTphaseEnvelope();
+      double[] ccb = ops.getOperation().get("cricondenbar");
+      double[] cct = ops.getOperation().get("cricondentherm");
+      if (ccb != null && ccb.length > 1) {
+        root.addProperty("cricondenbar_bara", ccb[1]);
+      }
+      if (cct != null && cct.length > 0) {
+        root.addProperty("cricondentherm_K", cct[0]);
+      }
+    } catch (Exception ex) {
+      root.addProperty("envelopeError", ex.getMessage());
+    }
+    return root.toString();
+  }
+
+  /**
+   * Finds the maximum total feed throughput at which no unit exceeds its capacity limit, by scaling the named feed
+   * streams proportionally to their base rates and reading the capacity {@link #getUtilizationSnapshot() snapshot}.
+   * This is the native, both-process-type form of a max-throughput debottlenecking study. Capacity constraints are
+   * enabled first via {@link #enableCapacityConstraints()}. The search is a bisection assuming utilisation rises with
+   * throughput. Works for both a {@link ProcessSystem} and a {@link ProcessModel}.
+   *
+   * @param feedAddresses feed stream addresses (stream unit names or area-qualified names) to scale together
+   * @param minRate lower bound of the TOTAL feed rate search, in {@code rateUnit}
+   * @param maxRate upper bound of the TOTAL feed rate search, in {@code rateUnit}
+   * @param rateUnit the flow-rate unit (e.g. {@code "kg/hr"}); null or empty defaults to {@code "kg/hr"}
+   * @param utilizationLimit the maximum allowed unit utilisation as a fraction (e.g. 1.0 for 100 %); values &le; 0
+   * default to 1.0
+   * @return JSON {@code {schemaVersion, maxRate, rateUnit, feasibleAtMin, bindingUnit, bindingConstraint,
+   * bindingUtilizationPercent}}; the model is left scaled to the returned maxRate
+   */
+  public String findMaxThroughputJson(List<String> feedAddresses, double minRate, double maxRate, String rateUnit,
+      double utilizationLimit) {
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    if (feedAddresses == null || feedAddresses.isEmpty()) {
+      throw new IllegalArgumentException("At least one feed address is required");
+    }
+    if (maxRate <= minRate) {
+      throw new IllegalArgumentException("maxRate must be greater than minRate");
+    }
+    final String unit = rateUnit == null || rateUnit.trim().isEmpty() ? "kg/hr" : rateUnit;
+    final double limit = utilizationLimit <= 0.0 ? 1.0 : utilizationLimit;
+
+    final List<StreamInterface> feeds = new ArrayList<StreamInterface>();
+    for (String a : feedAddresses) {
+      ProcessEquipmentInterface u = resolveUnit(a).unit;
+      if (!(u instanceof StreamInterface)) {
+        throw new IllegalArgumentException("Not a feed stream: " + a);
+      }
+      feeds.add((StreamInterface) u);
+    }
+    final double[] baseRates = new double[feeds.size()];
+    double baseTotalTmp = 0.0;
+    for (int i = 0; i < feeds.size(); i++) {
+      baseRates[i] = feeds.get(i).getFlowRate(unit);
+      baseTotalTmp += baseRates[i];
+    }
+    final double baseTotal = baseTotalTmp;
+    if (baseTotal <= 0.0) {
+      throw new IllegalArgumentException("Total base feed rate must be positive to scale feeds proportionally");
+    }
+
+    enableCapacityConstraints();
+
+    // Bisection: find the highest total rate with max utilisation <= limit.
+    double lo = minRate;
+    double hi = maxRate;
+    boolean feasibleAtMin = evaluateThroughputFeasible(feeds, baseRates, baseTotal, unit, minRate, limit);
+    if (!feasibleAtMin) {
+      // Already over capacity even at the minimum rate.
+      applyTotalRate(feeds, baseRates, baseTotal, unit, minRate);
+      run();
+      com.google.gson.JsonObject b = bottleneckFromSnapshot();
+      root.addProperty("maxRate", minRate);
+      root.addProperty("rateUnit", unit);
+      root.addProperty("feasibleAtMin", false);
+      mergeBottleneck(root, b);
+      return root.toString();
+    }
+    if (evaluateThroughputFeasible(feeds, baseRates, baseTotal, unit, maxRate, limit)) {
+      lo = maxRate; // whole range feasible
+    } else {
+      for (int iter = 0; iter < 20 && (hi - lo) / Math.max(baseTotal, 1.0) > 1.0e-3; iter++) {
+        double mid = 0.5 * (lo + hi);
+        if (evaluateThroughputFeasible(feeds, baseRates, baseTotal, unit, mid, limit)) {
+          lo = mid;
+        } else {
+          hi = mid;
+        }
+      }
+    }
+    // Leave the model scaled to the feasible maximum and report the binding unit there.
+    applyTotalRate(feeds, baseRates, baseTotal, unit, lo);
+    run();
+    com.google.gson.JsonObject b = bottleneckFromSnapshot();
+    root.addProperty("maxRate", lo);
+    root.addProperty("rateUnit", unit);
+    root.addProperty("feasibleAtMin", true);
+    mergeBottleneck(root, b);
+    return root.toString();
+  }
+
+  /**
+   * Scales all feeds to a target total rate and returns whether the converged model stays within the utilisation limit.
+   *
+   * @param feeds the feed streams
+   * @param baseRates each feed's base rate
+   * @param baseTotal the base total rate
+   * @param unit the flow-rate unit
+   * @param targetTotal the target total rate
+   * @param limit the utilisation limit (fraction)
+   * @return true when the run converged and the maximum unit utilisation is within the limit
+   */
+  private boolean evaluateThroughputFeasible(List<StreamInterface> feeds, double[] baseRates, double baseTotal,
+      String unit, double targetTotal, double limit) {
+    applyTotalRate(feeds, baseRates, baseTotal, unit, targetTotal);
+    try {
+      run();
+    } catch (RuntimeException ex) {
+      return false;
+    }
+    try {
+      com.google.gson.JsonObject snap = com.google.gson.JsonParser.parseString(getUtilizationSnapshot())
+          .getAsJsonObject();
+      double maxUtil = 0.0;
+      if (snap.has("units") && snap.get("units").isJsonArray()) {
+        for (com.google.gson.JsonElement el : snap.getAsJsonArray("units")) {
+          if (el.isJsonObject()) {
+            double u = readDouble(el.getAsJsonObject(), "maxUtilization");
+            if (u > maxUtil) {
+              maxUtil = u;
+            }
+          }
+        }
+      }
+      return maxUtil <= limit;
+    } catch (RuntimeException ex) {
+      return false;
+    }
+  }
+
+  /**
+   * Sets each feed to its base rate scaled by {@code targetTotal / baseTotal}.
+   *
+   * @param feeds the feed streams
+   * @param baseRates each feed's base rate
+   * @param baseTotal the base total rate
+   * @param unit the flow-rate unit
+   * @param targetTotal the target total rate
+   */
+  private void applyTotalRate(List<StreamInterface> feeds, double[] baseRates, double baseTotal, String unit,
+      double targetTotal) {
+    double factor = targetTotal / baseTotal;
+    for (int i = 0; i < feeds.size(); i++) {
+      feeds.get(i).setFlowRate(baseRates[i] * factor, unit);
+    }
+  }
+
+  /**
+   * Extracts the bottleneck unit object from the current utilisation snapshot.
+   *
+   * @return the bottleneck JSON object, or null when none
+   */
+  private com.google.gson.JsonObject bottleneckFromSnapshot() {
+    try {
+      com.google.gson.JsonObject snap = com.google.gson.JsonParser.parseString(getUtilizationSnapshot())
+          .getAsJsonObject();
+      if (snap.has("bottleneck") && snap.get("bottleneck").isJsonObject()) {
+        return snap.getAsJsonObject("bottleneck");
+      }
+    } catch (RuntimeException ex) {
+      // ignore
+    }
+    return null;
+  }
+
+  /**
+   * Copies bottleneck name / constraint / utilisation from a bottleneck object into the result root.
+   *
+   * @param root the result object to populate
+   * @param bottleneck the bottleneck object, or null
+   */
+  private void mergeBottleneck(com.google.gson.JsonObject root, com.google.gson.JsonObject bottleneck) {
+    if (bottleneck == null) {
+      return;
+    }
+    if (bottleneck.has("name")) {
+      root.addProperty("bindingUnit", bottleneck.get("name").getAsString());
+    }
+    if (bottleneck.has("limitingConstraint") && !bottleneck.get("limitingConstraint").isJsonNull()) {
+      root.addProperty("bindingConstraint", bottleneck.get("limitingConstraint").getAsString());
+    }
+    if (bottleneck.has("utilizationPercent")) {
+      root.addProperty("bindingUtilizationPercent", readDouble(bottleneck, "utilizationPercent"));
+    }
   }
 
   /**

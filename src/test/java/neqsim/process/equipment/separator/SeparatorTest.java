@@ -386,4 +386,80 @@ class SeparatorTest extends neqsim.NeqSimTest {
     Assertions.assertFalse(Double.isNaN(utilization), "Dry gas utilization should not be NaN");
     Assertions.assertTrue(utilization > 0.0, "Dry gas utilization should be > 0, got: " + utilization);
   }
+
+  /**
+   * Regression: a near-dry / gas-like second phase must not blow up getGasLoadFactor. A high-pressure gas with a trace
+   * of heavy ends can produce a second phase whose density is close to the gas density; without a guard the
+   * Souders-Brown denominator collapses and K explodes. The guard falls back to a default liquid density so K stays
+   * bounded and finite.
+   */
+  @Test
+  void testGasLoadFactorBoundedForNearDryScrubber() {
+    neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 90.0);
+    fluid.addComponent("methane", 96.0);
+    fluid.addComponent("ethane", 3.0);
+    fluid.addComponent("n-heptane", 0.05);
+    fluid.setMixingRule(2);
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(90.0, "bara");
+    feed.setFlowRate(400000.0, "kg/hr");
+
+    GasScrubber scrubber = new GasScrubber("near-dry scrubber", feed);
+    scrubber.setInternalDiameter(3.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feed);
+    process.add(scrubber);
+    process.run();
+
+    double kFactor = scrubber.getGasLoadFactor();
+    Assertions.assertFalse(Double.isNaN(kFactor), "Gas load factor should not be NaN");
+    Assertions.assertFalse(Double.isInfinite(kFactor), "Gas load factor should not be infinite");
+    Assertions.assertTrue(kFactor > 0.0 && kFactor < 1.0,
+        "Near-dry gas load factor should be bounded (0 < K < 1 m/s), got: " + kFactor);
+  }
+
+  /**
+   * A horizontal separator derates the gas area by the design liquid level, so for the same vessel and flow its gas
+   * load factor is higher than the vertical (full-area) value. Verifies orientation drives getGasLoadFactor.
+   */
+  @Test
+  void testGasLoadFactorOrientation() {
+    neqsim.thermo.system.SystemSrkEos fluid = new neqsim.thermo.system.SystemSrkEos(273.15 + 25.0, 80.0);
+    fluid.addComponent("methane", 90.0);
+    fluid.addComponent("ethane", 6.0);
+    fluid.addComponent("n-heptane", 4.0);
+    fluid.setMixingRule(2);
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(80.0, "bara");
+    feed.setFlowRate(300000.0, "kg/hr");
+
+    Separator sepVert = new Separator("vertical sep", feed);
+    sepVert.setInternalDiameter(3.0);
+    sepVert.setOrientation("vertical");
+    ProcessSystem p1 = new ProcessSystem();
+    p1.add(feed);
+    p1.add(sepVert);
+    p1.run();
+    double kVertical = sepVert.getGasLoadFactor();
+
+    Separator sepHoriz = new Separator("horizontal sep", feed);
+    sepHoriz.setInternalDiameter(3.0);
+    sepHoriz.setOrientation("horizontal");
+    ProcessSystem p2 = new ProcessSystem();
+    p2.add(feed);
+    p2.add(sepHoriz);
+    p2.run();
+    double kHorizontal = sepHoriz.getGasLoadFactor();
+
+    Assertions.assertTrue(kVertical > 0.0 && kHorizontal > 0.0, "Both K-factors should be positive");
+    Assertions.assertTrue(kHorizontal > kVertical, "Horizontal K (" + kHorizontal + ") should exceed vertical K ("
+        + kVertical + ") because the gas area is derated by the design liquid level");
+  }
 }
