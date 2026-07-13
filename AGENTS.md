@@ -803,6 +803,56 @@ String json = opt.optimizeToJson(); // schema-versioned JSON incl. trajectory
 - **Tuning**: `setMaxEvaluations(int)` (evaluation budget), `setInnerConvergence(maxIter, tol)`
   (per-trial `evaluate()` gating), `setConvergenceTolerance(double)` (simplex stop), `setSeed(long)`.
 
+### Capacity / throughput / quality / batch helpers on `ProcessAutomation`
+
+These string-addressable, never-throwing, schema-versioned JSON helpers close the loop for
+maximise-production studies and work for **both** a `ProcessSystem` and a `ProcessModel`:
+
+- **`enableCapacityConstraints()` — capacity for ALL equipment types.** Enables the capacity
+  constraints on every `CapacityConstrainedEquipment` in the flowsheet (separators, pumps, valves,
+  pipelines, heaters/coolers, heat exchangers, manifolds, …) so any of them can bind as the
+  bottleneck in `getUtilizationSnapshot()` / `getBottleneckRankingJson()` / `findMaxThroughputJson()`.
+  It deliberately does **not** call the blind `enableAllConstraints()` (that would re-enable the
+  degenerate surge/speed constraints on chartless compressors); instead it recreates compressor
+  constraints via `reinitializeCapacityConstraints()` (surge/speed stay disabled when chartless,
+  power stays enabled) and adds the separator Souders-Brown gas-load constraint. Set each type's
+  design basis first (`comp.getMechanicalDesign().setMaxDesignPower(kW)`, pump/valve/pipe limits,
+  `sep…setGasLoadFactor(K)`). Returns the separator count.
+- **`findMaxThroughputJson(feedAddresses, minRate, maxRate, rateUnit, utilizationLimit)` — native
+  max-throughput-at-capacity.** Enables the capacity constraints, then bisects the *total* feed rate
+  (all feeds scaled proportionally to their base rate) until the first unit's `maxUtilization`
+  reaches `utilizationLimit` (a 0–1 fraction), leaving the model at the feasible maximum. Returns
+  `{maxRate, rateUnit, feasibleAtMin, bindingUnit, bindingConstraint, bindingUtilizationPercent}`.
+- **`getProductQualityJson(address[, refTempC])` — product-quality observables.** For a resolved
+  stream (area-qualified `Area::Unit`, `unit.port`, or a bare unit → its first outlet), returns the
+  export-oil RVP/TVP (`rvp_bara`, `tvp_bara` via `Standard_ASTM_D6377`) and gas `cricondenbar_bara` /
+  `cricondentherm_K` (via `calcPTphaseEnvelope`), each on a cloned fluid so the live model is
+  untouched. Never throws — an uncomputable metric is reported as `rvpError` / `envelopeError`. Use
+  these as the spec side of a maximise-throughput-subject-to-RVP/cricondenbar optimisation.
+- **Routing / feed-scale decision variables.** Feed streams expose `flowRate` as a writable INPUT
+  (feed-scale). Splitters expose one bounded `splitFactor_i` (0–1) INPUT per outlet in
+  `getAdjustableParameters()` — the routing decision variables. Reading `<Splitter>.splitFactor_i`
+  returns the current fraction; writing it sets that branch's relative weight and the splitter
+  renormalises the factors to sum to 1. Because they carry `[0,1]` bounds,
+  `AgenticProcessOptimizer.useAdjustableParameters()` picks them up automatically. (Give a feed
+  `flowRate` explicit bounds to make feed-scale a decision variable too.)
+- **`evaluateBatchJson(candidates, unit, readbacks, maxParallel)` — parallel batch for ML / DoE.**
+  Scores a *list* of setpoint maps in one call. For a `ProcessSystem` with `maxParallel > 1` it
+  evaluates each candidate on an independent `ProcessSystem.copy()` on its own thread, so the batch
+  is genuinely parallel and the **live model is left untouched** (ideal for SciPy/BoTorch/GA/agent
+  populations). For a `ProcessModel` (no `copy()`) or `maxParallel == 1` it runs sequentially on the
+  live facade. Each result carries the full `evaluate` payload — including the
+  `converged` / `iterations` / `maxError` / `failedUnitName` / `failedUnitError` convergence-failure
+  detail — plus its `index`; the root reports `parallel`, `feasibleCount`, `firstFeasibleIndex`.
+- **Maximise production *and* manage emissions (composition pattern).** Decision space =
+  `getAdjustableParameters()` (bounded setpoints + splitter routing; bound feed `flowRate` for
+  feed-scale); feasibility = `enableCapacityConstraints()` + the capacity snapshot; objective = an
+  `AgenticProcessOptimizer.setObjectiveFunction` reward such as `production − λ·Σ(compressor power)`
+  (compression shaft power is a direct CO2 proxy for turbine-driven trains), or
+  `ProductionOptimizer.optimizePareto` with `[MAXIMIZE production, MINIMIZE Σ compressor power]` for
+  the production-vs-emissions trade-off front. `evaluateBatchJson` read-backs of each compressor's
+  `power` give the emissions term per candidate for an external Python optimizer.
+
 ### Self-healing automation (PREFERRED for agents)
 
 The automation API includes self-diagnosis and auto-correction. When an address
