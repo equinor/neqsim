@@ -1,4 +1,24 @@
 {
+  "literature search": [
+    "neqsim-literature-search",
+    "neqsim-stid-retriever",
+    "neqsim-standards-lookup"
+  ],
+  "find papers": [
+    "neqsim-literature-search",
+    "neqsim-technical-document-reading"
+  ],
+  "web research": [
+    "neqsim-literature-search"
+  ],
+  "reference data": [
+    "neqsim-literature-search",
+    "neqsim-standards-lookup"
+  ],
+  "benchmark data source": [
+    "neqsim-literature-search",
+    "neqsim-regression-baselines"
+  ],
   "pid symbols": [
     "neqsim-pid-process-operations",
     "neqsim-technical-document-reading"

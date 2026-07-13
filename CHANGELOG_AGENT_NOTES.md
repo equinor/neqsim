@@ -11,7 +11,36 @@
 
 ---
 
-## 2026-07-13 — New: agentic optimization helpers on `ProcessAutomation` (all equipment types, routing, parallel batch)
+## 2026-07-13 — New: multi-source decision-support helpers in `neqsim.util.agentic`
+
+### Summary
+
+Two additive, deterministic, schema-versioned helper classes that let an agentic solver
+combine knowledge from many sources into a ranked, defensible conclusion and solution.
+No change to existing behaviour.
+
+### New capability
+
+- **`neqsim.util.agentic.EvidenceSynthesis`** — multi-source weight-of-evidence ranking of
+  competing hypotheses. Register hypotheses (`addHypothesis(id, desc)`) and attach evidence
+  facts (`addEvidence(hypId, sourceType, supporting, strength[0..1], note)`) from distinct
+  source types (historian, maintenance, stid, tr2000, literature, reliability_prior,
+  simulation). `rank()` returns hypotheses ordered by net score then by number of **distinct**
+  supporting source types; `toJson()` emits the ranked list plus a `singleSourceWarning` flag
+  (top hypothesis backed by only one source type). Confidence labels: UNSUPPORTED / DISPUTED /
+  WEAK / MODERATE / STRONG. Use for root-cause triangulation.
+- **`neqsim.util.agentic.SolutionRanker`** — weighted multi-criteria ranking of candidate
+  solutions. `addCriterion(name, weight, benefit)` (benefit=false for cost/risk/lead-time),
+  `addSolution(id, desc)`, `setScore(id, criterion, rawScore)`; `rank()` / `toJson()` min-max
+  normalize per criterion, apply direction, weight-average to an overall [0,1] score, and emit
+  a ranked decision matrix with `recommendedSolutionId` and per-solution `missingCriteria`.
+
+### Who uses it
+
+- The `pepr-solve-task-agent` (evidence synthesis step + solution option-ranking step). Any
+  RCA / diagnostic / option-selection workflow that must combine multi-source evidence.
+
+---
 
 ### Summary
 

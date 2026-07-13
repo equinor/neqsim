@@ -65,16 +65,37 @@ This means the workflow works for **everyone**:
 
 ## Option A: User Provides Documents (Works for Everyone)
 
-Place documents in the task's references folder:
+Place documents in the task's references folder, filed into **per-source
+subfolders** so the collection is self-contained and easy to distribute:
 
 ```
 task_solve/YYYY-MM-DD_task_slug/
 └── step1_scope_and_research/
     └── references/
-        ├── compressor_curves.pdf
-        ├── mechanical_drawing.pdf
-        └── equipment_datasheet.pdf
+        ├── SOURCES.md               # human-readable summary (auto-generated)
+        ├── collection_manifest.json # machine-readable record (auto-generated)
+        ├── vendor/
+        │   └── compressor_curves.pdf
+        ├── stid/
+        │   ├── mechanical_drawing.pdf
+        │   └── equipment_datasheet.pdf
+        └── manual/                  # user-provided docs
 ```
+
+Source subfolders: `stid/`, `pepr/`, `tr2000/`, `maintenance/`, `servicenow/`,
+`tagreader/`, `seeq/`, `rigga/`, `vendor/`, `lab/`, `literature/`, `manual/`,
+`other/`. After placing documents (or when new ones arrive), run the
+dependency-free generator to file any loose files and (re)build the
+distributable summary + manifest:
+
+```bash
+python devtools/generate_sources_md.py task_solve/YYYY-MM-DD_task_slug --organize
+```
+
+`SOURCES.md` lists, per source, each file with its origin (document number /
+tag / action ID / historian tag), retrieval date, classification, relevance,
+review status, and a one-line summary — so the whole task folder can be handed
+to others and the collected documents reused.
 
 Or point to an existing directory when creating the task:
 
@@ -84,12 +105,13 @@ neqsim new-task "compressor analysis" --type B \
 ```
 
 The task solver will automatically:
-1. Detect documents in `references/`
+1. Detect documents in `references/` (including per-source subfolders)
 2. Convert PDFs to PNG images (`devtools/pdf_to_figures.py`)
 3. Classify each document (curves, drawings, datasheets, etc.)
 4. Extract relevant data using `view_image`
 5. Filter out irrelevant documents based on task type
 6. Feed relevant data into analysis notebooks
+7. (Re)build `references/SOURCES.md` so the collection stays distributable
 
 ## Option B: Auto-Retrieval (Requires Backend Config — Not Public)
 

@@ -635,7 +635,7 @@ See `AGENTS.md` "Jupyter Notebook Creation Guidelines" section for common class 
 **Key rules (always apply):**
 1. **Create task folder FIRST:** `neqsim new-task "title" --type X --author "Name"`
 2. **All output goes to** `task_solve/YYYY-MM-DD_slug/` — never to `examples/`, `docs/`, or workspace root
-3. **All downloaded documents** go inside the task folder at `step1_scope_and_research/references/`
+3. **All downloaded documents** go inside the task folder at `step1_scope_and_research/references/`, filed into **per-source subfolders** (`stid/`, `pepr/`, `tr2000/`, `maintenance/`, `servicenow/`, `tagreader/`, `seeq/`, `rigga/`, `vendor/`, `lab/`, `literature/`, `web/`, `manual/`). Run `python devtools/generate_sources_md.py task_solve/YYYY-MM-DD_slug --organize` to file loose docs and (re)build the distributable `references/SOURCES.md` + `references/collection_manifest.json` so the whole task folder can be handed to others.
 4. Follow the 3-step workflow: **Scope & Research** → **Analysis & Evaluation** → **Report**
 5. **Benchmark validation (MANDATORY):** Compare NeqSim results against independent reference data
 6. **Uncertainty analysis:** Monte Carlo with P10/P50/P90 + tornado diagram (MANDATORY for Standard/Comprehensive tasks with economics or reserves; optional for Quick tasks)
