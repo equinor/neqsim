@@ -415,6 +415,27 @@ one side-effect-free snapshot:
   `bottleneck` + `anyOverloaded`. Drive the search with `ProcessAutomation.evaluate()`
   or `AgenticProcessOptimizer`.
 
+**Native max-throughput-at-capacity (one call, both ProcessSystem and ProcessModel).**
+`ProcessAutomation.findMaxThroughputJson(feedAddresses, minRate, maxRate, rateUnit,
+utilizationLimit)` enables the separator capacity constraints, then bisects the *total*
+feed rate (all feeds scaled proportionally to their base rate) until the first unit's
+`maxUtilization` reaches `utilizationLimit` (a 0-1 fraction). It leaves the model at the
+feasible maximum and returns `{maxRate, rateUnit, feasibleAtMin, bindingUnit,
+bindingConstraint, bindingUtilizationPercent}`. This is the string-addressable,
+never-throwing replacement for a hand-rolled inlet/feed bisection loop. Pair with
+`enableCapacityConstraints()` / `prepareForCapacityStudyJson()` /
+`validateForOptimizationJson()` / `getBottleneckRankingJson(topN)` for the setup and
+diagnostics.
+
+**Product-quality observables (spec constraints).** `getProductQualityJson(address)`
+(optionally with a reference temperature) returns, for a resolved stream (area-qualified
+`Area::Unit`, `unit.port`, or a bare unit -> its first outlet), the export-oil RVP/TVP
+(`rvp_bara`, `tvp_bara` via `Standard_ASTM_D6377`) and the gas `cricondenbar_bara` /
+`cricondentherm_K` (via `calcPTphaseEnvelope`), each computed on a cloned fluid so the
+live flowsheet is untouched. It never throws — a metric that cannot be computed is
+reported as `rvpError` / `envelopeError`. Use these as the spec side of a
+maximise-throughput-subject-to-RVP/cricondenbar optimisation.
+
 **B. Transparent Python roll-up (API-risk-free, good when the separator capacity path
 is not yet wired).** Merge three families into `equipment_utilization(tags, sizes)`:
 - compressor util = shaft power / driver site-rated kW (+ anti-surge OK flag from the
