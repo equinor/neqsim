@@ -72,6 +72,77 @@ co2_emission_kghr = fuel_mass_flow_kghr * co2_mass_ratio
 co2_emission_tpa = co2_emission_kghr * 8760 / 1000  # tonnes/year
 ```
 
+### Full flue-gas composition + NOx / SO2 (use `CombustionCalculator`)
+
+For the **exhaust composition, NOx, SO2, CO, air/fuel ratio and adiabatic flame
+temperature** of any turbine, burner, or fired heater, use
+`neqsim.process.util.combustion.CombustionCalculator` instead of hand-rolling
+stoichiometry. It splits the exhaust into the two physically different families and
+gets each with the correct method:
+
+- **Major species (N2, O2, CO2, H2O, Ar) and SO2** — exact stoichiometric combustion
+  with excess air (all fuel C→CO2, H→H2O, S→SO2).
+- **NOx and CO** — kinetically frozen, so a Gibbs reactor is the WRONG tool. They come
+  from EMEP/EEA-style emission factors (g per GJ fuel LHV); replace with vendor/CEMS.
+
+```python
+CombustionCalculator = jneqsim.process.util.combustion.CombustionCalculator
+r = (CombustionCalculator(fuel_fluid)
+     .setFuelFlowRate(fuel_mass_flow_kghr)     # kg/hr
+     .setExcessAirRatio(3.2)                   # GT ~3-3.5; burner ~1.05-1.2
+     .setNoxFactorGPerGJ(130.0)                # EMEP/EEA default; replace with vendor/CEMS
+     .setCoFactorGPerGJ(30.0)
+     .setAssumedFuelH2sPpmv(5.0)               # only used if fuel carries no sulphur
+     .calculate())
+r.exhaustO2VolPercent            # ~14 vol% for a GT
+r.getFlueMoleFraction("CO2")     # exhaust CO2 mole fraction
+r.pollutantPpmv.get("NOx")       # NOx ppmv (emission-factor basis, as NO2)
+r.getMassRateKgPerHr("SO2")      # SO2 kg/hr (fuel-sulphur stoichiometric)
+r.adiabaticFlameTemperatureK     # rigorous NeqSim energy balance
+```
+
+**Regulatory stack-emission report (dry, reference O2, mg/Nm3, Nm3/hr, t/yr).** For a
+permit-comparable value (EU IED / EN 14792 NOx, EN 15058 CO, EN 14791 SO2) report the
+concentration **dry, at a reference O2, in mg/Nm3** — not wet ppmv:
+
+```python
+r = (CombustionCalculator(fuel_fluid)
+     .setFuelFlowRate(fuel_mass_flow_kghr)
+     .setExcessAirRatio(3.2)
+     .setReferenceO2VolPercent(15.0)          # 3% fired heater/boiler, 15% gas turbine
+     .setNormalTemperatureC(0.0)              # EU "Normal" 273.15 K basis
+     .setAnnualOperatingHours(8000.0)
+     .calculate())
+r.pollutantMgPerNm3AtReferenceO2.get("NOx")   # permit-comparable NOx (mg/Nm3 @ ref O2, dry)
+r.pollutantPpmvDry.get("CO")                  # dry CO ppmv
+r.flueGasNm3PerHrDry                          # normalized dry flue-gas flow
+r.massRateTonnesPerYear.get("NOx_as_NO2")     # annual mass for the permit report
+```
+
+The reference-O2 correction `C_ref = C*(20.9-O2ref)/(20.9-O2meas)` is applied on the **dry**
+concentration at the **dry** exhaust O2 (`r.exhaustO2VolPercentDry`) — 20.9 % is dry air, so never
+mix wet ppmv with it. Sanity: **1 ppmv → NOx-as-NO2 ~2.05, CO ~1.25, SO2 ~2.86 mg/Nm3** at 0 °C.
+
+**Extended physics (all optional — 0/off by default so clean-gas results are unchanged):**
+
+- **SO3 & acid dew point** — `setSo3FractionOfSox(0.03)` splits SOx into SO2/SO3; result gives
+  `acidDewPointC` (Verhoff-Banchero) and `waterDewPointC` for cold-end/stack corrosion limits.
+- **Other pollutants** — `setPmFactorGPerGJ`, `setCh4SlipFactorGPerGJ`, `setVocFactorGPerGJ`,
+  `setN2oFactorGPerGJ` (liquid/dual-fuel, lean-premix GT, gas engines); each appears in
+  `massRateKgPerHr` / `massRateTonnesPerYear`.
+- **NOx route breakdown** — add `setPromptNoxFactorGPerGJ` (Fenimore) and `setFuelNoxFactorGPerGJ`
+  (fuel-bound N); result carries `noxThermalKgPerHr` / `noxPromptKgPerHr` / `noxFuelKgPerHr`.
+- **Actual stack conditions (dispersion)** — `setStackGasTemperatureC(150.0)` (measured/stack
+  temperature, NOT the flame temperature) → `stackActualM3PerHr`; add `setStackDiameterM(1.5)` →
+  `stackVelocityMPerS`. `setStackPressureBara` sets the basis.
+- **Fixed-air turndown** — `setAirFlowRate(kgPerHr)` switches to air-driven mode (lambda floats from
+  the fixed air + fuel rate/composition); the result flags `airDriven` and `subStoichiometric`.
+- **Field calibration** — `calibrateNoxFromMeasuredPpmv(ppmv, o2pct)` / `calibrateCoFromMeasuredPpmv`
+  anchor the factors to a CEMS/stack-test point before predicting other loads.
+
+Note the key quirk: `pollutantPpmv` uses key `"NOx"`, but `massRateKgPerHr` / `massRateTonnesPerYear`
+use `"NOx_as_NO2"`. Use `r.toJson()` for the full auditable result.
+
 ### Standard Emission Factors
 
 | Fuel | CO2 Factor (kg CO2/GJ) | CH4 Factor (kg CH4/GJ) |

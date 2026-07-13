@@ -351,6 +351,28 @@ String bottleneck      = ev.evaluate().getBottleneckEquipment();
 | Forgetting `process.run()` before optimizer | NPE or stale state | Always run base case first |
 | Pareto with > 5 objectives | Front becomes meaningless | Group / aggregate to ≤ 4 objectives |
 
+## Compressor control mode (choose before optimizing a charted machine)
+
+The compressor mode decides whether **speed** or **discharge pressure** is a
+decision variable — get this wrong and the optimizer optimizes the wrong thing:
+
+- **Solve-speed** (`setOutletPressure(P)` + `setUseCompressorChart(True)` +
+  `setSolveSpeed(True)`): discharge pressure is fixed, NeqSim back-solves the
+  **speed**; power and surge margin are outputs. Use when the discharge feeds a
+  fixed pressure boundary (export pipeline, level-controlled process pressure) —
+  e.g. max-throughput / RVP / dew-point studies. Optimize over feed rate,
+  temperatures, routing; read power/surge/gas-load as constraints.
+- **Predictive** (`setSpeed(rpm)` + `setUseCompressorChart(True)` +
+  `setSolveSpeed(False)`, no pinned outlet P): shaft **speed is the input**, the
+  chart computes discharge pressure, head and power. Use when speed is your
+  decision variable (min-power at a required export pressure) or for surge /
+  turndown sweeps. Making a *whole recycle flowsheet* predictive needs the
+  interior `setOutletPressure` calls dropped and a pressure-node/recycle pass to
+  settle mixer pressures — gate it behind a `PREDICTIVE_PRESSURE` toggle.
+
+See `neqsim-agentic-process-optimization` (§5) and
+`neqsim-compressor-antisurge-recycle` for the full pattern.
+
 ## Validation Checklist
 
 Before declaring an optimization study complete:

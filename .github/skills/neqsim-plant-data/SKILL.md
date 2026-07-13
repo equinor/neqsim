@@ -408,6 +408,118 @@ def generate_mock_plant_data(tag_map, start="2025-06-01 06:00",
 
 ## Connecting Plant Data to NeqSim Models
 
+### Recommended: bind tags once with `OperationalTagMap` (history + live)
+
+Instead of hand-wiring `setPressure`/`setTemperature` per unit (Patterns 1–4 below,
+still fine for quick one-offs), bind every instrument **once** to the model and let
+NeqSim apply field data for you. This is the pattern that scales to a full plant and
+makes history and live data identical to work with.
+
+**One tag map = the single source of truth.** Each binding links four things:
+
+| Field | Purpose | Example |
+|-------|---------|---------|
+| `logical_tag` | stable, public name used in code/reports | `27PT1001` |
+| `historian_tag` | private PI/IP.21 tag (task-local / enterprise only) | `27PT1001.PV` |
+| `automation_address` | NeqSim `ProcessAutomation` address it drives/reads | `27-KA001 export compressor.outletStream.pressure` |
+| `role` | `INPUT` (drive the model), `BENCHMARK` (compare), `VIRTUAL` (derived) | `BENCHMARK` |
+| `unit`, `pid_reference`, `description` | UOM + traceability | `bara`, `C074-…`, `Export discharge P` |
+
+Store it as a task-local `tag_map.json` (keep historian tag names out of community repos):
+
+```json
+{
+  "source": {"ims": "aspenone", "server": "KRISTIN_IP21"},
+  "bindings": [
+    {"logical_tag": "20FT0001", "historian_tag": "20FT0001.PV",
+     "automation_address": "feed.flowRate", "unit": "kg/hr", "role": "INPUT",
+     "pid_reference": "C074-…", "description": "Total feed rate"},
+    {"logical_tag": "27PT1001", "historian_tag": "27PT1001.PV",
+     "automation_address": "27-KA001 export compressor.outletStream.pressure",
+     "unit": "bara", "role": "BENCHMARK", "description": "Export discharge P"},
+    {"logical_tag": "27JT1001", "historian_tag": "27JT1001.PV",
+     "automation_address": "27-KA001 export compressor.power",
+     "unit": "MW", "role": "BENCHMARK", "description": "Export compressor shaft power"}
+  ]
+}
+```
+
+Load it into a NeqSim `OperationalTagMap` and apply a row of field data in one call:
+
+```python
+OperationalTagMap = jneqsim.process.operations.OperationalTagMap
+OperationalTagBinding = jneqsim.process.operations.OperationalTagBinding
+InstrumentTagRole = jneqsim.process.measurementdevice.InstrumentTagRole  # NOTE: measurementdevice pkg, not operations
+import json
+
+with open("tag_map.json") as f:
+    spec = json.load(f)
+
+tagmap = OperationalTagMap()
+for b in spec["bindings"]:
+    binding = (OperationalTagBinding.builder(b["logical_tag"])
+               .historianTag(b.get("historian_tag", ""))
+               .automationAddress(b.get("automation_address", ""))
+               .unit(b.get("unit", ""))
+               .role(getattr(InstrumentTagRole, b.get("role", "VIRTUAL")))
+               .pidReference(b.get("pid_reference", ""))
+               .description(b.get("description", ""))
+               .build())
+    tagmap.addBinding(binding)
+
+# --- one call drives all INPUT tags into the model, stores BENCHMARK values ---
+def apply_row(row):
+    field = {b["logical_tag"]: float(row[b["historian_tag"]])
+             for b in spec["bindings"] if b["historian_tag"] in row
+             and row[b["historian_tag"]] == row[b["historian_tag"]]}  # drop NaN
+    tagmap.applyFieldData(process, field)   # INPUT → automation addresses
+    process.run()
+```
+
+`applyFieldData` writes every `INPUT` binding through
+`ProcessAutomation.setVariableValue(address, value, unit)` and stores `BENCHMARK`
+values on the matching measurement device — so the *only* difference between
+**history** and **live** is which tagreader read fills `row`:
+
+```python
+# HISTORY: one read of a period, then step through rows
+df = c.read(hist_tags, start, end, 60, read_type=tagreader.ReaderType.AVG)
+for _, row in df.iterrows():
+    apply_row(row); record_benchmark_deltas(process, tagmap)
+
+# LIVE: poll the latest snapshot on a timer (same apply_row, same model)
+while running:
+    row = c.read(hist_tags, "*-1m", "*", 60).iloc[-1]
+    apply_row(row); publish(process)   # e.g. push back to Seeq / dashboard
+```
+
+**Why this is best to work with:** the model carries stable automation addresses, the
+tag map is the only place historian tags live, roles make "which tags drive vs
+validate" explicit, and one `applyFieldData` call replaces dozens of per-unit setters.
+Build the map skeleton from the STID instrument index (logical tag + P&ID + automation
+address) during model build; the plant-data agent fills in the historian tags.
+
+**Gotchas (verified against a full multi-area model):**
+- `InstrumentTagRole` is in `neqsim.process.measurementdevice`, **not**
+  `neqsim.process.operations`. `OperationalTagMap` / `OperationalTagBinding` are in
+  `neqsim.process.operations`.
+- An `INPUT` binding must target a **settable INPUT-type** automation variable, or
+  `run()` overwrites it. Discover the real input address with
+  `auto.getVariableList(unitName)` and keep only variables whose `getType()` is
+  `INPUT`. Example: a cooler set-point is `"<Cooler>.outletTemperature"` (settable
+  INPUT) — **not** `"<Cooler>.outletStream.temperature"` (that is the computed OUTPUT,
+  good only as a `BENCHMARK` read).
+- A standalone product stream (arrival, export gas, condensate) is usually the
+  outlet of a unit, not a registered unit itself — address it through its parent as
+  `"<ParentUnit>.outletStream.<property>"`.
+- Validate every address up front with `auto.validateAddress(addr)` (returns `null`
+  when OK) so a bad tag is a warning, not a crash. `SimulationVariable` exposes
+  `getAddress()`, `getType()`, `getDescription()` (no `getUnit()`).
+
+A runnable generator + round-trip verifier for a real plant (auto-discovers the
+addresses, writes `tag_map.json`, proves `applyFieldData` drives the model) is in the
+Kristin task: `generate_tag_map.py` + `verify_tag_map.py`.
+
 ### Pattern 1: Update Model with Period-Average Plant Data
 
 ```python

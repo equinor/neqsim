@@ -46,6 +46,38 @@ specialists such as mechanical design, safety, plant data, and reporting.
 | Turndown or control valve operability | Load `neqsim-controllability-operability` |
 | Platform-scale separation/recompression | Load `neqsim-platform-modeling` |
 
+## Data Basis for an Optimization-Ready Model
+
+A model built only to *run* has fixed operating points. A model built to
+**optimize** additionally needs a bounded decision space, equipment constraints,
+and an objective. Gather this basis up front (and record every assumed value):
+
+- **Fluid & feed** — composition(s) + PVT/assay (C7+); feed rate, T, P, water
+  cut/GOR per feed; EOS + mixing rule.
+- **Geometry & hydraulics** — **line sizes** (ID, schedule/wall, length, elevation,
+  roughness, insulation), **manifold/header sizes**, separator/scrubber dimensions
+  (ID, T/T length, orientation, nozzle sizes), heat-exchanger area/UA.
+- **Valves & chokes** — **control-valve Cv/Kv, rated travel, characteristic,
+  opening**; **choke Cv-vs-opening (bean/trim)** for wells and let-down; ESD sizes.
+- **Rotating equipment** — compressor maps (head/eff vs flow at several speeds) +
+  design/max speed; pump curves (+ NPSHr); driver rating (GT/motor); anti-surge
+  config (surge line, control-line margin, recycle-valve Cv).
+- **Design limits → constraints** — separator design gas-load K + residence time;
+  compressor rated power, surge/stonewall margins, max discharge T; pump power +
+  NPSHa; line erosional-velocity limit; design P/T; valve max Cv; MAWP; PSV set P.
+- **Decision space & control** — manipulable setpoints with **physical bounds**
+  (stage pressures, temperatures, compressor discharge P or speed, split/routing);
+  **compressor control mode** (solve-speed vs predictive — see
+  `neqsim-agentic-process-optimization`); pre-wired adjusters (do not also optimize).
+- **Objective & economics** — objective (max throughput / min power / max value /
+  min emissions); product specs as constraints (RVP, dew point, cricondenbar,
+  Wobbe); prices / power & fuel cost / CO2 price for value objectives.
+
+Source geometry and Cv from the line list, valve/choke datasheets, and instrument
+index; maps from vendor curve sheets; limits from datasheets + piping class. For
+the governed enterprise checklist and readiness gates use
+`enterprise-process-model-build-verify` (`target_fidelity="optimization_ready"`).
+
 ## Required Checks
 
 - Temperatures and pressures use explicit units in setters.
@@ -53,6 +85,19 @@ specialists such as mechanical design, safety, plant data, and reporting.
 - Branching streams use cloned fluids or well-defined equipment outlet streams.
 - Every equipment item has a unique name inside the process.
 - Recycles and adjusters are added after their connected equipment.
+- **Pick the separator class by orientation, or set it explicitly.** Gas-capacity
+  results depend on orientation because a horizontal vessel derates the gas area by
+  the design liquid level (default 80% → gas area `(1−0.8)=0.2×`, a **5× over-read**
+  of gas velocity / `getGasLoadFactor()` if used for a vertical vessel):
+  - `Separator` and `ThreePhaseSeparator` default to **horizontal** — use for the
+    horizontal 1st/2nd/3rd-stage separators (VA-tag).
+  - `GasScrubber`, `GasScrubberSimple`, `NeqGasScrubber` (2-phase) and
+    `ThreePhaseGasScrubber` (3-phase) default to **vertical** — prefer these for
+    vertical scrubbers (VG-tag); their constructor calls `setOrientation("vertical")`.
+  - Either way you can override with `separator.setOrientation("vertical"|"horizontal")`.
+  Verified: with the correct orientation, `getGasLoadFactor()` matches a hand
+  Souders-Brown `v·sqrt(ρg/(ρl−ρg))`. `setInternalDiameter()` itself propagates
+  correctly through `run()` — the trap is orientation, not diameter.
 - Every suction/export scrubber in a recompression/export-compression train has its
   liquid knock-out (`scrubber.getLiquidOutStream()`) closed back to the separator
   operating at the matching pressure — never leave it unconnected (it is silently

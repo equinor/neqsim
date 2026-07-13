@@ -609,4 +609,52 @@ public class CompressorChartGeneratorTest {
           "Discharge temperature should follow polytropic relation at speed " + i);
     }
   }
+
+  /**
+   * Test that a chart generated from an EXPLICIT design point reproduces that design point: at the design speed and
+   * design flow the chart returns the design head and efficiency, independent of the compressor's own run state.
+   */
+  @Test
+  public void testGenerateChartFromDesignPoint() {
+    double designSpeed = 7551.0;
+    double designFlow = 7540.0; // m3/hr
+    double designHead = 97.0; // kJ/kg
+    double designEff = 0.80; // fraction
+
+    CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
+    generator.setChartType("interpolate and extrapolate");
+    CompressorChartInterface chart = generator.generateChartFromDesignPoint(designSpeed, designFlow, designHead,
+        designEff, "normal curves", 5);
+
+    assertNotNull(chart, "Design-point chart should not be null");
+    // At the design speed and design flow the chart must return the design head (kJ/kg).
+    double headAtDesign = chart.getPolytropicHead(designFlow, designSpeed);
+    assertEquals(designHead, headAtDesign, designHead * 0.02,
+        "Chart head at design point should match the design head");
+    // And the design polytropic efficiency (percent).
+    double effAtDesign = chart.getPolytropicEfficiency(designFlow, designSpeed);
+    assertEquals(designEff * 100.0, effAtDesign, 1.0,
+        "Chart efficiency at design point should match the design efficiency");
+  }
+
+  /**
+   * Test the Compressor convenience wrapper: after attaching a design-point chart and running at the design speed, the
+   * compressor reproduces the design head.
+   */
+  @Test
+  public void testCompressorGenerateChartFromDesignPoint() {
+    double designSpeed = 7551.0;
+    double designFlow = compressor.getInletStream().getFlowRate("m3/hr");
+    double designHead = compressor.getPolytropicFluidHead();
+    double designEff = compressor.getPolytropicEfficiency();
+
+    compressor.generateCompressorChartFromDesignPoint(designSpeed, designFlow, designHead, designEff, 5);
+
+    assertNotNull(compressor.getCompressorChart(), "Compressor should have a chart");
+    assertTrue(compressor.getCompressorChart().isUseCompressorChart(), "Compressor chart should be active");
+    assertEquals(designSpeed, compressor.getSpeed(), 1.0, "Compressor speed should be set to the design speed");
+    double headAtDesign = compressor.getCompressorChart().getPolytropicHead(designFlow, designSpeed);
+    assertEquals(designHead, headAtDesign, Math.abs(designHead) * 0.02,
+        "Chart head at design point should match the design head");
+  }
 }

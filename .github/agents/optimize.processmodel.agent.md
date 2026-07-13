@@ -23,13 +23,24 @@ ALWAYS read these skills before proceeding:
    named `ProcessSystem` areas and recycles. Read it, do not rebuild it from scratch.
 2. **Read the decision space first.** `ProcessAutomation.getAdjustableParameters()`
    gives bounded knobs. Supply real `[lo, hi]` for any `UNBOUNDED_THRESHOLD` (1e9) bound.
+   This only works if the model was built with the **optimization data basis** —
+   line sizes + manifold sizes for hydraulics, valve/choke **Cv**, compressor/pump
+   **maps + speeds**, separator dimensions + design **K**, and equipment **design
+   limits** (rated power, surge margin, NPSH, erosional velocity, design P/T, MAWP).
+   Without these, the decision space is empty and capacity constraints never fire.
+   Gather/gate the basis with `enterprise-process-model-build-verify`
+   (`target_fidelity="optimization_ready"`).
 3. **Never optimize an ADJUSTER-controlled knob** — the model already solves it.
 4. **Gate every trial.** Use `runUntilConverged` + `getRunStatus().success` +
    `getConvergenceReportJson()`. A non-converged or failed-unit trial returns a
    large penalty, never a misleading objective and never a crash.
 5. **Score from real equipment.** Compression power and surge margins come from
    `Compressor.getOperatingPoint()`; RVP comes from `Standard_ASTM_D6377` `RvpResult`.
-   Test compressor margins for `NaN` before comparing.
+   Test compressor margins for `NaN` before comparing. Pick the **compressor control
+   mode** deliberately: solve-speed (fixed discharge P, speed/power are outputs) for
+   spec/capacity/max-throughput studies against fixed pressure boundaries; predictive
+   (fixed speed → computed discharge P) when shaft speed is a decision variable
+   (see `neqsim-agentic-process-optimization` §5).
 6. **Soft constraints.** Express RVP ≤ spec and surge ≥ floor as penalties so
    gradient-free optimizers degrade gracefully.
 7. **Rebuild per year.** Feed composition/rate change with the year, so the whole

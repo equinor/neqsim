@@ -68,6 +68,20 @@ for p in params["parameters"]:
 > a year selector), map each one explicitly to a NeqSim address or a rebuild
 > argument — the registry will not invent them for you.
 
+> **Prerequisite — the model must already carry the optimization data basis.**
+> `getAdjustableParameters()` only surfaces knobs the *model* has, and capacity
+> constraints only fire if the equipment has design limits. Before optimizing,
+> confirm the model was built with: line sizes (ID, length, roughness, elevation)
+> and manifold/header sizes for hydraulics; valve/choke **Cv** (and choke
+> Cv-vs-opening); compressor/pump **performance maps + speeds**; separator
+> dimensions + design **K**; equipment **design limits** (rated power, surge
+> margin, NPSH, erosional velocity, design P/T, MAWP, valve max Cv); manipulable
+> setpoints with **physical bounds**; and the **objective + economic/spec basis**.
+> Use `enterprise-process-model-build-verify` with
+> `target_fidelity="optimization_ready"` (its `OPTIMIZATION_DATA_BASIS` /
+> `optimization_data_basis` output) to gather and gate this basis, and
+> `neqsim-process-modeling` for the community build checklist.
+
 ---
 
 ## 3. Robust single-trial evaluation (the core helper)
@@ -193,7 +207,45 @@ def compressor_metrics(plant):
 `withinChart`, `limitingConstraint` (`none`/`surge`/`stonewall`/`no_chart`).
 Uncomputable margins are `NaN` — always test `x == x` before using them.
 
+### Compressor control mode: solve-speed vs predictive (choose per objective)
+
+A charted compressor can run two ways, and **the mode decides what is an input vs
+an output** in your optimization — pick it deliberately:
+
+| Mode | Setup | Fixed (input) | Computed (output) | Use for |
+|------|-------|---------------|-------------------|---------|
+| **Solve-speed** (default for most plants) | `setOutletPressure(P)` + `setUseCompressorChart(True)` + `setSolveSpeed(True)` | discharge pressure | **speed, power, surge margin** | spec/capacity/max-throughput studies where the network has fixed pressure boundaries |
+| **Predictive** | `setUseCompressorChart(True)` + `setSpeed(rpm)` + `setSolveSpeed(False)` (do **not** pin outlet P) | **shaft speed** | **discharge pressure, head, power, surge margin** | speed-as-decision-variable optimization, surge/turndown and dynamic studies |
+
+Rules of thumb:
+
+- If the discharge feeds a **fixed pressure boundary** (export pipeline pressure,
+  a process level held by a downstream scrubber/level controller, an import
+  header), **solve-speed is the physically correct steady-state control mode** —
+  the machine trims speed to hold that pressure, and *speed / power / surge
+  margin are the outputs* you optimize against. This is the right mode for
+  "max production while meeting RVP / dew-point / cricondenbar", because product
+  specs are set by separation temperatures/pressures, not by throughput, so the
+  binding limit is compressor power/surge or separator gas load — all of which
+  fall out of a solve-speed run.
+- If you want **speed itself as a decision variable** ("what speed gives the
+  lowest power while still delivering P_export?"), use predictive mode: fix the
+  speed, let the chart compute discharge pressure and power. Sweeping speed then
+  traces the head/power curve directly (e.g. 90 %→95 %→100 %→105 % speed maps to a
+  monotonically rising discharge pressure and head).
+- **Making a *whole* recycle flowsheet predictive** requires letting the internal
+  pressure nodes float (e.g. a recompressor whose discharge mixes back into an
+  upstream stage): fix all speeds, drop the interior `setOutletPressure` calls,
+  and let a pressure-node/recycle pass settle the mixer pressures. Do this behind
+  a `PREDICTIVE_PRESSURE` toggle so the default solve-speed model (used for spec
+  and capacity studies) stays intact. Mixing the two modes on the same recycle
+  loop without a pressure-node pass will diverge.
+- Either way keep anti-surge active (`getAntiSurge().setActive(True)`,
+  `setSurgeControlFactor(...)`) so a turned-down point recycles onto the control
+  line instead of falling outside the map and returning `NaN` margins.
+
 ### Export-oil RVP (certified spec) — use RvpResult
+
 
 ```python
 D6377 = jneqsim.standards.oilquality.Standard_ASTM_D6377
@@ -340,6 +392,50 @@ c = jneqsim.process.equipment.compressor.Compressor("c")
 assert hasattr(c, "getOperatingPointJson")
 assert "runUntilConverged" in dir(jneqsim.process.processmodel.ProcessModel)
 ```
+
+---
+
+## 8.5 Unified equipment-utilization roll-up + inlet-pressure lower-limit search
+
+To "maximize production within utilization limits" you need a single view that puts
+compressors, gas-turbine drivers, and separators/scrubbers on the same 0-1 scale, plus
+a way to push an operating variable (e.g. inlet pressure) until the first constraint
+binds. Two complementary approaches:
+
+**A. NeqSim-native (preferred).** Activate every unit's `CapacityConstraint`, then read
+one side-effect-free snapshot:
+- Compressors: attach a chart (surge/stonewall/speed constraints) or, if chartless,
+  `comp.getMechanicalDesign().setMaxDesignPower(driverSiteRatedKW)` so the `power`
+  constraint has a basis.
+- Separators/scrubbers: `sep.initMechanicalDesign()` ->
+  `SeparatorMechanicalDesign.setGasLoadFactor(K)` -> `setRetentionTime(t)` ->
+  `readDesignSpecifications()` -> `calcDesign()`.
+- Then `json.loads(str(process.getUtilizationSnapshotJson()))` gives per-unit
+  `maxUtilization`, `limitingConstraint`, `feasible`, `power_kW`, and a plant
+  `bottleneck` + `anyOverloaded`. Drive the search with `ProcessAutomation.evaluate()`
+  or `AgenticProcessOptimizer`.
+
+**B. Transparent Python roll-up (API-risk-free, good when the separator capacity path
+is not yet wired).** Merge three families into `equipment_utilization(tags, sizes)`:
+- compressor util = shaft power / driver site-rated kW (+ anti-surge OK flag from the
+  chart operating point);
+- turbine util = load_pct/100 vs ISO-derated site-rated power
+  (`GasTurbineVendorPerformance`);
+- separator/scrubber util = Souders-Brown gas load vs a size fixed once at base with a
+  ~1.15 margin (see `neqsim-separator-modelling`), recomputing `vg_max` at the current
+  density.
+- Return per-unit util, `limiting_unit`, `max_utilization`, `all_antisurge_ok`, and a
+  single `feasible` flag.
+
+**Inlet-pressure lower-limit search.** Parametrize the flowsheet by process/inlet
+pressure (cleanest trick in a builder: add `PROC_P = proc_p` as a **local** at the top
+of `build_model(proc_p=PROC_P)` so every internal reference picks up the argument with
+one edit). Size separators once at the base (highest) pressure, then rebuild+run at each
+lower pressure, evaluate `equipment_utilization`, and return the lowest feasible
+pressure. Physics: lowering inlet pressure raises the export compression ratio and the
+actual gas volume, so a scrubber gas-load or a compressor surge/power constraint becomes
+the binding limit. The rebuild-per-point sweep is slow — gate it behind an env flag and
+do NOT re-read live plant data inside the loop.
 
 ---
 
