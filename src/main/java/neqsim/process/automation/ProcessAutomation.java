@@ -2499,7 +2499,7 @@ public class ProcessAutomation {
   }
 
   /**
-   * Convenience overload of {@link #evaluateBatchJson(List, String, List, String, int, double)} using default
+   * Convenience overload of {@link #evaluateBatchJson(List, String, List, String, int, int, double)} using default
    * convergence settings (30 iterations, tolerance 5e-3) and the same unit for setpoints and read-backs.
    *
    * @param candidates the list of decision-variable maps to evaluate; must not be null
