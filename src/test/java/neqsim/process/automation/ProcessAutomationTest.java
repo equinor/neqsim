@@ -1643,4 +1643,152 @@ class ProcessAutomationTest {
     assertTrue(o.get("feasibleAtMin").getAsBoolean(), "minimum rate should be feasible");
     assertTrue(maxRate >= 5000.0 && maxRate < 40000.0, "max throughput should be capacity-limited, got " + maxRate);
   }
+
+  @Test
+  void testSplitterRoutingKnobs() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 30.0, 60.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("rfeed", fluid);
+    feed.setFlowRate(10000.0, "kg/hr");
+    feed.setTemperature(30.0, "C");
+    feed.setPressure(60.0, "bara");
+
+    Splitter split = new Splitter("Router", feed);
+    split.setSplitFactors(new double[] { 0.5, 0.5 });
+
+    ProcessSystem p = new ProcessSystem();
+    p.add(feed);
+    p.add(split);
+    p.run();
+
+    ProcessAutomation auto = new ProcessAutomation(p);
+
+    // Routing split factors surface as bounded adjustable parameters.
+    String pj = auto.getAdjustableParametersJson();
+    com.google.gson.JsonObject pjo = com.google.gson.JsonParser.parseString(pj).getAsJsonObject();
+    boolean found0 = false;
+    for (com.google.gson.JsonElement el : pjo.getAsJsonArray("parameters")) {
+      com.google.gson.JsonObject o = el.getAsJsonObject();
+      if ("Router.splitFactor_0".equals(o.get("address").getAsString())) {
+        found0 = true;
+        assertEquals(0.0, o.get("lowerBound").getAsDouble(), 1e-9);
+        assertEquals(1.0, o.get("upperBound").getAsDouble(), 1e-9);
+      }
+    }
+    assertTrue(found0, "splitFactor_0 should be a bounded adjustable routing parameter");
+
+    // Read the current routing fraction.
+    assertEquals(0.5, auto.getVariableValue("Router.splitFactor_0", null), 1e-6);
+
+    // Write a new routing fraction; the splitter renormalises so the factors sum to 1.
+    auto.setVariableValue("Router.splitFactor_0", 0.9, null);
+    p.run();
+    double f0 = auto.getVariableValue("Router.splitFactor_0", null);
+    double f1 = auto.getVariableValue("Router.splitFactor_1", null);
+    assertEquals(1.0, f0 + f1, 1e-6, "split factors must sum to 1");
+    assertTrue(f0 > 0.5, "branch 0 weight should have increased, got " + f0);
+  }
+
+  @Test
+  void testEnableCapacityConstraintsAllEquipmentTypes() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 20.0, 10.0);
+    fluid.addComponent("propane", 0.50);
+    fluid.addComponent("n-butane", 0.50);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("lfeed", fluid);
+    feed.setFlowRate(20000.0, "kg/hr");
+    feed.setTemperature(20.0, "C");
+    feed.setPressure(10.0, "bara");
+
+    Pump pump = new Pump("P-1", feed);
+    pump.setOutletPressure(50.0);
+
+    ProcessSystem p = new ProcessSystem();
+    p.add(feed);
+    p.add(pump);
+    p.run();
+
+    ProcessAutomation auto = new ProcessAutomation(p);
+    auto.enableCapacityConstraints();
+
+    // A non-separator, non-compressor unit (pump) must be included in capacity analysis.
+    com.google.gson.JsonObject snap = com.google.gson.JsonParser.parseString(auto.getUtilizationSnapshot())
+        .getAsJsonObject();
+    boolean pumpEnabled = false;
+    for (com.google.gson.JsonElement el : snap.getAsJsonArray("units")) {
+      com.google.gson.JsonObject o = el.getAsJsonObject();
+      if ("P-1".equals(o.get("name").getAsString())) {
+        pumpEnabled = o.has("capacityAnalysisEnabled") && o.get("capacityAnalysisEnabled").getAsBoolean();
+      }
+    }
+    assertTrue(pumpEnabled, "pump should be capacity-analysis enabled for an all-equipment capacity study");
+  }
+
+  @Test
+  void testEvaluateBatchParallelProcessSystem() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 30.0, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("bfeed", fluid);
+    feed.setFlowRate(10000.0, "kg/hr");
+    feed.setTemperature(30.0, "C");
+    feed.setPressure(50.0, "bara");
+
+    Compressor comp = new Compressor("bcomp", feed);
+    comp.setOutletPressure(100.0);
+
+    ProcessSystem p = new ProcessSystem();
+    p.add(feed);
+    p.add(comp);
+    p.run();
+
+    ProcessAutomation auto = new ProcessAutomation(p);
+    java.util.List<java.util.Map<String, Double>> candidates = new java.util.ArrayList<java.util.Map<String, Double>>();
+    for (double r : new double[] { 8000.0, 12000.0, 16000.0 }) {
+      java.util.Map<String, Double> c = new java.util.LinkedHashMap<String, Double>();
+      c.put("bfeed.flowRate", r);
+      candidates.add(c);
+    }
+
+    String bj = auto.evaluateBatchJson(candidates, "kg/hr", java.util.Arrays.asList("bcomp.power"), 2);
+    com.google.gson.JsonObject o = com.google.gson.JsonParser.parseString(bj).getAsJsonObject();
+    assertEquals("1.0", o.get("schemaVersion").getAsString());
+    assertEquals(3, o.get("count").getAsInt());
+    assertTrue(o.get("parallel").getAsBoolean(), "ProcessSystem batch with maxParallel>1 should run in parallel");
+    assertEquals(3, o.getAsJsonArray("results").size());
+    for (com.google.gson.JsonElement el : o.getAsJsonArray("results")) {
+      com.google.gson.JsonObject r = el.getAsJsonObject();
+      assertTrue(r.has("index"), "each result carries its index");
+      assertTrue(r.has("feasible"), "each result carries a feasibility flag");
+    }
+    // The parallel copy-based batch must leave the live model untouched.
+    assertEquals(10000.0, feed.getFlowRate("kg/hr"), 1.0,
+        "live model feed rate must be unchanged after parallel batch");
+  }
+
+  @Test
+  void testEvaluateBatchSequentialProcessModel() {
+    ProcessModel model = buildTwoAreaModel();
+    ProcessAutomation auto = new ProcessAutomation(model);
+
+    java.util.List<java.util.Map<String, Double>> candidates = new java.util.ArrayList<java.util.Map<String, Double>>();
+    for (double pOut : new double[] { 110.0, 130.0 }) {
+      java.util.Map<String, Double> c = new java.util.LinkedHashMap<String, Double>();
+      c.put("Compression::Export Compressor.outletPressure", pOut);
+      candidates.add(c);
+    }
+
+    String bj = auto.evaluateBatchJson(candidates, "bara",
+        java.util.Arrays.asList("Compression::Export Compressor.power"), 4);
+    com.google.gson.JsonObject o = com.google.gson.JsonParser.parseString(bj).getAsJsonObject();
+    assertEquals(2, o.get("count").getAsInt());
+    assertFalse(o.get("parallel").getAsBoolean(), "ProcessModel batch has no copy(), so it must run sequentially");
+    assertEquals(2, o.getAsJsonArray("results").size());
+  }
 }

@@ -8,6 +8,7 @@ import java.util.Map;
 import neqsim.process.automation.SimulationVariable.VariableType;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorTrain;
 import neqsim.process.equipment.distillation.DistillationColumn;
@@ -1064,10 +1065,15 @@ public class ProcessAutomation {
       handledOutlets = true;
     }
 
-    // Splitter — output only (not ComponentSplitter)
+    // Splitter — routing split factors are settable INPUTs (bounded 0-1); outlet streams
+    // are outputs. The split factors are the routing decision variables an optimizer can
+    // adjust to redistribute flow between branches.
     if (unit instanceof Splitter && !(unit instanceof ComponentSplitter)) {
       List<StreamInterface> splitStreams = unit.getOutletStreams();
       for (int i = 0; i < splitStreams.size(); i++) {
+        vars.add(new SimulationVariable(unitName + ".splitFactor_" + i, "splitFactor_" + i, VariableType.INPUT, "",
+            "Fraction of feed routed to outlet " + i + " (0-1, renormalised across outlets)")
+            .withBounds(Double.valueOf(0.0), Double.valueOf(1.0)));
         addStreamOutputVariables(vars, unitName + ".splitStream_" + i, splitStreams.get(i));
       }
       handledOutlets = true;
@@ -1231,6 +1237,15 @@ public class ProcessAutomation {
    */
   private double getEquipmentProperty(ProcessEquipmentInterface unit, String property, String uom) {
     boolean hasUnit = uom != null && !uom.trim().isEmpty();
+
+    if (property.startsWith("splitFactor_") && unit instanceof Splitter) {
+      int idx = parseIndexSuffix(property, "splitFactor_");
+      double[] sf = ((Splitter) unit).getSplitFactors();
+      if (idx >= 0 && idx < sf.length) {
+        return sf[idx];
+      }
+      throw new IllegalArgumentException("Split factor index out of range for " + unit.getName() + ": " + property);
+    }
 
     switch (property) {
     case "temperature":
@@ -1486,6 +1501,20 @@ public class ProcessAutomation {
    */
   private void setEquipmentProperty(ProcessEquipmentInterface unit, String property, double value, String uom) {
     boolean hasUnit = uom != null && !uom.trim().isEmpty();
+
+    if (property.startsWith("splitFactor_") && unit instanceof Splitter) {
+      Splitter sp = (Splitter) unit;
+      int idx = parseIndexSuffix(property, "splitFactor_");
+      double[] sf = sp.getSplitFactors();
+      if (idx < 0 || idx >= sf.length) {
+        throw new IllegalArgumentException("Split factor index out of range for " + unit.getName() + ": " + property);
+      }
+      double[] updated = sf.clone();
+      updated[idx] = value;
+      // Splitter renormalises the factors so they sum to 1.
+      sp.setSplitFactors(updated);
+      return;
+    }
 
     switch (property) {
     case "outletPressure":
@@ -2362,6 +2391,144 @@ public class ProcessAutomation {
   }
 
   /**
+   * Evaluates a batch of candidate setpoint sets and returns one schema-versioned JSON object per candidate. This is
+   * the parallel, ML/DoE-oriented counterpart of {@link #evaluate(Map, String, java.util.List)}: an external optimizer
+   * (SciPy, BoTorch, a genetic algorithm, an agent) can score many candidates in one call.
+   *
+   * <p>
+   * For a {@link ProcessSystem} with {@code maxParallel &gt; 1} and more than one candidate, each candidate is applied
+   * to an independent {@link ProcessSystem#copy() copy} evaluated on its own thread, so the batch is genuinely parallel
+   * and the live model is <b>left untouched</b>. For a multi-area {@link ProcessModel} (which has no {@code copy()}),
+   * or when {@code maxParallel == 1}, candidates are evaluated sequentially on the live facade (the last candidate
+   * remains applied). Each per-candidate result carries the full {@link #evaluate} payload &mdash; including the
+   * {@code converged}, {@code iterations}, {@code maxError}, {@code failedUnitName} and {@code failedUnitError}
+   * convergence-failure detail &mdash; plus its {@code index}.
+   * </p>
+   *
+   * @param candidates the list of decision-variable maps to evaluate; must not be null
+   * @param setpointUnit unit applied to all setpoints, or null for each variable's default unit
+   * @param readbacks objective / constraint addresses read after each run; may be null or empty
+   * @param readbackUnit unit applied to all read-backs, or null for default units
+   * @param maxParallel maximum worker threads (only used for a {@link ProcessSystem}); values &lt; 1 are treated as 1
+   * @param maxIterations convergence iteration cap per candidate; must be at least 1
+   * @param tolerance convergence tolerance per candidate; must be finite and positive
+   * @return JSON {@code {schemaVersion, count, parallel, feasibleCount, firstFeasibleIndex, results:[{index, ...}]}}
+   */
+  public String evaluateBatchJson(List<Map<String, Double>> candidates, String setpointUnit, List<String> readbacks,
+      String readbackUnit, int maxParallel, int maxIterations, double tolerance) {
+    if (candidates == null) {
+      throw new IllegalArgumentException("candidates must not be null");
+    }
+    if (maxIterations < 1) {
+      throw new IllegalArgumentException("maxIterations must be at least 1, was " + maxIterations);
+    }
+    if (Double.isNaN(tolerance) || Double.isInfinite(tolerance) || tolerance <= 0.0) {
+      throw new IllegalArgumentException("tolerance must be a finite positive number, was " + tolerance);
+    }
+
+    int n = candidates.size();
+    com.google.gson.JsonObject[] out = new com.google.gson.JsonObject[n];
+    boolean parallel = processSystem != null && maxParallel > 1 && n > 1;
+
+    if (parallel) {
+      int threads = Math.min(maxParallel, n);
+      java.util.concurrent.ExecutorService pool = java.util.concurrent.Executors.newFixedThreadPool(threads);
+      try {
+        List<java.util.concurrent.Future<com.google.gson.JsonObject>> futures = new ArrayList<java.util.concurrent.Future<com.google.gson.JsonObject>>();
+        for (int i = 0; i < n; i++) {
+          final int index = i;
+          final Map<String, Double> candidate = candidates.get(i);
+          futures.add(pool.submit(new java.util.concurrent.Callable<com.google.gson.JsonObject>() {
+            @Override
+            public com.google.gson.JsonObject call() {
+              ProcessSystem copy = processSystem.copy();
+              ProcessAutomation copyAuto = new ProcessAutomation(copy);
+              String json = copyAuto.evaluate(candidate, setpointUnit, readbacks, readbackUnit, maxIterations,
+                  tolerance);
+              com.google.gson.JsonObject obj = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+              obj.addProperty("index", index);
+              return obj;
+            }
+          }));
+        }
+        for (int i = 0; i < n; i++) {
+          try {
+            out[i] = futures.get(i).get();
+          } catch (Exception ex) {
+            com.google.gson.JsonObject err = new com.google.gson.JsonObject();
+            err.addProperty("schemaVersion", SCHEMA_VERSION);
+            err.addProperty("index", i);
+            err.addProperty("feasible", false);
+            err.addProperty("evaluationError", ex.getMessage() == null ? ex.toString() : ex.getMessage());
+            out[i] = err;
+          }
+        }
+      } finally {
+        pool.shutdownNow();
+      }
+    } else {
+      for (int i = 0; i < n; i++) {
+        String json = evaluate(candidates.get(i), setpointUnit, readbacks, readbackUnit, maxIterations, tolerance);
+        com.google.gson.JsonObject obj = com.google.gson.JsonParser.parseString(json).getAsJsonObject();
+        obj.addProperty("index", i);
+        out[i] = obj;
+      }
+    }
+
+    com.google.gson.JsonArray results = new com.google.gson.JsonArray();
+    int feasibleCount = 0;
+    int firstFeasibleIndex = -1;
+    for (int i = 0; i < n; i++) {
+      results.add(out[i]);
+      if (out[i].has("feasible") && out[i].get("feasible").getAsBoolean()) {
+        feasibleCount++;
+        if (firstFeasibleIndex < 0) {
+          firstFeasibleIndex = i;
+        }
+      }
+    }
+
+    com.google.gson.JsonObject root = new com.google.gson.JsonObject();
+    root.addProperty("schemaVersion", SCHEMA_VERSION);
+    root.addProperty("count", n);
+    root.addProperty("parallel", parallel);
+    root.addProperty("feasibleCount", feasibleCount);
+    root.addProperty("firstFeasibleIndex", firstFeasibleIndex);
+    root.add("results", results);
+    return root.toString();
+  }
+
+  /**
+   * Convenience overload of {@link #evaluateBatchJson(List, String, List, String, int, double)} using default
+   * convergence settings (30 iterations, tolerance 5e-3) and the same unit for setpoints and read-backs.
+   *
+   * @param candidates the list of decision-variable maps to evaluate; must not be null
+   * @param unitOfMeasure unit applied to setpoints and read-backs, or null for default units
+   * @param readbacks objective / constraint addresses read after each run; may be null or empty
+   * @param maxParallel maximum worker threads (only used for a {@link ProcessSystem})
+   * @return schema-versioned JSON batch result
+   */
+  public String evaluateBatchJson(List<Map<String, Double>> candidates, String unitOfMeasure, List<String> readbacks,
+      int maxParallel) {
+    return evaluateBatchJson(candidates, unitOfMeasure, readbacks, unitOfMeasure, maxParallel, 30, 5.0e-3);
+  }
+
+  /**
+   * Parses the trailing integer index of an indexed property such as {@code splitFactor_2}.
+   *
+   * @param property the full property name
+   * @param prefix the prefix preceding the index
+   * @return the parsed index, or -1 if it cannot be parsed
+   */
+  private static int parseIndexSuffix(String property, String prefix) {
+    try {
+      return Integer.parseInt(property.substring(prefix.length()));
+    } catch (NumberFormatException | IndexOutOfBoundsException ex) {
+      return -1;
+    }
+  }
+
+  /**
    * Merges the most recent {@link neqsim.process.processmodel.RunStatus RunStatus} fields ({@code success},
    * {@code failedUnitName}, {@code failedUnitError}) into the supplied JSON object. Used by
    * {@link #runUntilConvergedJson(int, double)} and {@link #evaluate(Map, String, List, String, int, double)}.
@@ -2796,19 +2963,39 @@ public class ProcessAutomation {
    * @return the number of separators whose gas-load capacity constraint was enabled
    */
   public int enableCapacityConstraints() {
-    int enabled = 0;
+    int separators = 0;
     for (String addr : getUnitList()) {
+      ProcessEquipmentInterface u;
       try {
-        ProcessEquipmentInterface u = resolveUnit(addr).unit;
+        u = resolveUnit(addr).unit;
+      } catch (RuntimeException ex) {
+        continue;
+      }
+      try {
         if (u instanceof Separator) {
+          // Creates + enables the Souders-Brown gas-load constraint, which is not part of
+          // the generic default constraint set.
           ((Separator) u).useGasCapacityConstraints();
-          enabled++;
+          separators++;
+        } else if (u instanceof Compressor) {
+          // Recreate constraints so surge/speed constraints stay DISABLED for chartless
+          // compressors (they would otherwise pin utilisation at a degenerate 100 %), while
+          // the power constraint stays enabled when a driver / design power is set.
+          ((Compressor) u).reinitializeCapacityConstraints();
+          ((CapacityConstrainedEquipment) u).setCapacityAnalysisEnabled(true);
+        } else if (u instanceof CapacityConstrainedEquipment) {
+          // Pumps, valves, pipelines, heaters/coolers, heat exchangers, manifolds, ... have
+          // their constraints disabled by default for backward compatibility. Enable them so
+          // every equipment type can bind in a capacity / optimization study.
+          CapacityConstrainedEquipment eq = (CapacityConstrainedEquipment) u;
+          eq.setCapacityAnalysisEnabled(true);
+          eq.enableAllConstraints();
         }
       } catch (RuntimeException ex) {
-        // skip units that cannot be resolved or configured
+        // skip units that cannot be configured
       }
     }
-    return enabled;
+    return separators;
   }
 
   /**
