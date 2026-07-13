@@ -259,10 +259,25 @@ public class Separator extends ProcessEquipmentBaseClass
    * Default design gas load factor (K-factor) [m/s]. Used to detect user overrides.
    */
   private static final double DEFAULT_DESIGN_GAS_LOAD_FACTOR = 0.11;
+  /**
+   * Default liquid density [kg/m3] used for the Souders-Brown gas-load factor when the vessel is dry (single phase) or
+   * when the second phase is gas-like and would otherwise collapse the denominator.
+   */
+  private static final double DEFAULT_LIQUID_DENSITY = 1000.0;
+  /**
+   * Minimum liquid-minus-gas density difference [kg/m3] required for a meaningful Souders-Brown gas-load factor. Below
+   * this the second phase is treated as gas-like (near-dry) and {@link #DEFAULT_LIQUID_DENSITY} is used to avoid a
+   * divide-by-near-zero that returns a nonsensically large K.
+   */
+  private static final double MIN_LIQUID_GAS_DENSITY_DIFFERENCE = 10.0;
   /** Design gas load factor (K-factor) from mechanical design [m/s]. */
   private double designGasLoadFactor = DEFAULT_DESIGN_GAS_LOAD_FACTOR;
   /** Liquid level fraction (Fg) from mechanical design. */
   private double designLiquidLevelFraction = 0.8;
+  /** True once {@link #setOrientation(String)} has been called explicitly by the user. */
+  private boolean orientationExplicitlySet = false;
+  /** One-shot guard so the horizontal-orientation gas-load warning is logged at most once per instance. */
+  private transient boolean gasLoadOrientationWarned = false;
   /** Maximum gas volumetric flow rate from design [m3/s]. */
   private double maxDesignGasFlowRate = Double.MAX_VALUE;
 
@@ -1425,20 +1440,45 @@ public class Separator extends ProcessEquipmentBaseClass
   }
 
   /**
+   * Logs a one-time warning when the gas-load factor is requested on a vessel that is still using the default
+   * horizontal orientation with a high design liquid level. Such a vessel derates the gas area by the design liquid
+   * level, which over-reads the gas-load factor for a vessel that is physically a vertical scrubber. Use a
+   * {@code *GasScrubber} class or call {@link #setOrientation(String)} to silence this.
+   */
+  private void warnIfHorizontalOrientationNotSet() {
+    if (!gasLoadOrientationWarned && !orientationExplicitlySet && "horizontal".equals(orientation)
+        && designLiquidLevelFraction >= 0.5) {
+      gasLoadOrientationWarned = true;
+      logger.warn(
+          "getGasLoadFactor() on '{}' uses the default HORIZONTAL orientation with a {} design liquid level, "
+              + "so the gas area is derated to {}x. If this is a vertical scrubber, use a GasScrubber/"
+              + "ThreePhaseGasScrubber class or call setOrientation(\"vertical\").",
+          getName(), designLiquidLevelFraction, 1.0 - designLiquidLevelFraction);
+    }
+  }
+
+  /**
    * getGasLoadFactor.
    *
    * @return a double
    */
   public double getGasLoadFactor() {
+    warnIfHorizontalOrientationNotSet();
     thermoSystem.initPhysicalProperties();
     double gasDensity = thermoSystem.getPhase(0).getPhysicalProperties().getDensity();
     double liquidDensity;
     // For dry gas (single phase), use default liquid density of 1000 kg/m3
     if (thermoSystem.getNumberOfPhases() < 2
         || !thermoSystem.hasPhaseType("oil") && !thermoSystem.hasPhaseType("aqueous")) {
-      liquidDensity = 1000.0; // Default liquid density for dry separators/scrubbers
+      liquidDensity = DEFAULT_LIQUID_DENSITY; // Default liquid density for dry separators/scrubbers
     } else {
       liquidDensity = thermoSystem.getPhase(1).getPhysicalProperties().getDensity();
+    }
+    // Guard: a near-dry or gas-like second phase (liquidDensity approximately equal to
+    // gasDensity) would collapse the Souders-Brown denominator and return a
+    // nonsensically large K. Fall back to the default liquid density in that case.
+    if (liquidDensity - gasDensity < MIN_LIQUID_GAS_DENSITY_DIFFERENCE) {
+      liquidDensity = DEFAULT_LIQUID_DENSITY;
     }
     double term1 = (liquidDensity - gasDensity) / gasDensity;
     return getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
@@ -1460,9 +1500,13 @@ public class Separator extends ProcessEquipmentBaseClass
     double liquidDensity;
     // For dry gas (single phase), use default liquid density of 1000 kg/m3
     if (thermoSystem.getNumberOfPhases() < 2 || phaseNumber >= thermoSystem.getNumberOfPhases()) {
-      liquidDensity = 1000.0; // Default liquid density for dry separators/scrubbers
+      liquidDensity = DEFAULT_LIQUID_DENSITY; // Default liquid density for dry separators/scrubbers
     } else {
       liquidDensity = thermoSystem.getPhase(phaseNumber).getPhysicalProperties().getDensity();
+    }
+    // Guard against a gas-like second phase collapsing the Souders-Brown denominator.
+    if (liquidDensity - gasDensity < MIN_LIQUID_GAS_DENSITY_DIFFERENCE) {
+      liquidDensity = DEFAULT_LIQUID_DENSITY;
     }
     double term1 = 1.0 / gasAreaFraction * (liquidDensity - gasDensity) / gasDensity;
     return getGasSuperficialVelocity() * Math.sqrt(1.0 / term1);
@@ -2130,6 +2174,7 @@ public class Separator extends ProcessEquipmentBaseClass
     double levelFraction = getLiquidLevel();
     if (orientation != null) {
       this.orientation = orientation;
+      this.orientationExplicitlySet = true;
     }
     this.liquidLevel = clampLiquidHeight(levelFraction * getMaxLiquidHeight());
     updateHoldupVolumes();

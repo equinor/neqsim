@@ -1497,4 +1497,32 @@ class ProcessAutomationTest {
     assertTrue(root.has("iterations"), "Multi-area evaluate should report iteration count");
     assertEquals(1, root.getAsJsonObject("setpointsApplied").size());
   }
+
+  @Test
+  void testGetInputVariablesAndWritableGuard() {
+    // The cooler set-point is an INPUT; the outlet-stream temperature is a computed OUTPUT.
+    List<SimulationVariable> inputs = automation.getInputVariables("Cooler");
+    assertFalse(inputs.isEmpty(), "Cooler should expose INPUT variables");
+    boolean hasSetpoint = false;
+    for (SimulationVariable v : inputs) {
+      assertEquals(VariableType.INPUT, v.getType());
+      if (v.getAddress().equals("Cooler.outletTemperature")) {
+        hasSetpoint = true;
+      }
+    }
+    assertTrue(hasSetpoint, "Cooler.outletTemperature should be an INPUT variable");
+
+    // Pre-flight guard: settable INPUT is writable; a computed OUTPUT is not.
+    assertTrue(automation.isWritableAddress("Cooler.outletTemperature"), "Cooler set-point should be writable");
+    assertFalse(automation.isWritableAddress("Cooler.outletStream.temperature"),
+        "A computed outlet-stream temperature must not be reported as writable");
+    assertFalse(automation.isWritableAddress("Cooler.nonexistentProperty"));
+    assertFalse(automation.isWritableAddress(""));
+
+    // OUTPUT convenience returns read-only variables.
+    List<SimulationVariable> outputs = automation.getOutputVariables("Cooler");
+    for (SimulationVariable v : outputs) {
+      assertEquals(VariableType.OUTPUT, v.getType());
+    }
+  }
 }

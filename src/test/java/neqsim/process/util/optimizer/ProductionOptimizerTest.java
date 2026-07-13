@@ -955,4 +955,53 @@ public class ProductionOptimizerTest {
 
     logger.info("\n=== TEST PASSED ===");
   }
+
+  @Test
+  public void testMultiFeedThroughputScaling() {
+    SystemSrkEos fluid = new SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 1000.0);
+    fluid.addComponent("ethane", 100.0);
+
+    Stream feedA = new Stream("feedA", fluid.clone());
+    feedA.setFlowRate(300.0, "kg/hr");
+    Stream feedB = new Stream("feedB", fluid.clone());
+    feedB.setFlowRate(100.0, "kg/hr");
+
+    neqsim.process.equipment.mixer.Mixer mixer = new neqsim.process.equipment.mixer.Mixer("mixer");
+    mixer.addStream(feedA);
+    mixer.addStream(feedB);
+
+    Compressor comp = new Compressor("comp", mixer.getOutletStream());
+    comp.setOutletPressure(50.0);
+    comp.getMechanicalDesign().setMaxDesignPower(1_000_000.0);
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(feedA);
+    process.add(feedB);
+    process.add(mixer);
+    process.add(comp);
+    process.run();
+
+    ProductionOptimizer optimizer = new ProductionOptimizer();
+    OptimizationConfig config = new OptimizationConfig(200.0, 800.0).rateUnit("kg/hr")
+        .searchMode(ProductionOptimizer.SearchMode.GOLDEN_SECTION_SCORE).tolerance(5.0).defaultUtilizationLimit(50.0);
+
+    OptimizationObjective maximizeRate = new OptimizationObjective("throughput",
+        proc -> feedA.getFlowRate("kg/hr") + feedB.getFlowRate("kg/hr"), 1.0);
+
+    OptimizationResult result = optimizer.optimizeMultiFeed(process,
+        Arrays.asList((StreamInterface) feedA, (StreamInterface) feedB), config,
+        Collections.singletonList(maximizeRate), Collections.emptyList());
+
+    Assertions.assertNotNull(result, "Multi-feed optimization should return a result");
+    // Feeds must remain in their base 3:1 ratio after proportional scaling.
+    double ratio = feedA.getFlowRate("kg/hr") / feedB.getFlowRate("kg/hr");
+    Assertions.assertEquals(3.0, ratio, 0.05, "Feeds should stay in their base 3:1 ratio");
+    double total = feedA.getFlowRate("kg/hr") + feedB.getFlowRate("kg/hr");
+    Assertions.assertTrue(total >= 200.0 - 1.0 && total <= 800.0 + 1.0, "Total feed within bounds: " + total);
+
+    // Empty feed list must be rejected.
+    Assertions.assertThrows(IllegalArgumentException.class, () -> optimizer.optimizeMultiFeed(process,
+        Collections.emptyList(), config, Collections.emptyList(), Collections.emptyList()));
+  }
 }

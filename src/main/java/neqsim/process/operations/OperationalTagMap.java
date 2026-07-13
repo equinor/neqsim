@@ -1,6 +1,10 @@
 package neqsim.process.operations;
 
+import java.io.IOException;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -9,6 +13,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import neqsim.process.automation.ProcessAutomation;
 import neqsim.process.automation.SimulationVariable;
 import neqsim.process.automation.SimulationVariable.VariableType;
@@ -288,5 +297,148 @@ public class OperationalTagMap implements Serializable {
       return "";
     }
     return address.substring(0, dotIndex);
+  }
+
+  /**
+   * Serialises this tag map to a JSON string with a {@code bindings} array. Each binding carries logical_tag,
+   * historian_tag, automation_address, unit, role, pid_reference and description.
+   *
+   * @return pretty-printed JSON representation of the tag map
+   */
+  public String toJson() {
+    JsonObject root = new JsonObject();
+    JsonArray arr = new JsonArray();
+    for (OperationalTagBinding binding : bindings.values()) {
+      JsonObject b = new JsonObject();
+      b.addProperty("logical_tag", binding.getLogicalTag());
+      b.addProperty("historian_tag", binding.getHistorianTag());
+      b.addProperty("automation_address", binding.getAutomationAddress());
+      b.addProperty("unit", binding.getUnit());
+      b.addProperty("role", binding.getRole().name());
+      b.addProperty("pid_reference", binding.getPidReference());
+      b.addProperty("description", binding.getDescription());
+      arr.add(b);
+    }
+    root.add("bindings", arr);
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    return gson.toJson(root);
+  }
+
+  /**
+   * Builds an {@link OperationalTagMap} from a JSON string containing a {@code bindings} array. Accepts both snake_case
+   * keys (logical_tag) and their camelCase equivalents (logicalTag).
+   *
+   * @param json JSON string with a bindings array
+   * @return a new OperationalTagMap
+   * @throws IllegalArgumentException if the JSON is null, empty, or lacks a bindings array
+   */
+  public static OperationalTagMap fromJson(String json) {
+    if (json == null || json.trim().isEmpty()) {
+      throw new IllegalArgumentException("json must not be null or empty");
+    }
+    JsonObject root = new Gson().fromJson(json, JsonObject.class);
+    if (root == null || !root.has("bindings") || !root.get("bindings").isJsonArray()) {
+      throw new IllegalArgumentException("json must contain a 'bindings' array");
+    }
+    OperationalTagMap map = new OperationalTagMap();
+    for (JsonElement el : root.getAsJsonArray("bindings")) {
+      JsonObject b = el.getAsJsonObject();
+      String logical = readString(b, "logical_tag", "logicalTag");
+      OperationalTagBinding.Builder builder = OperationalTagBinding.builder(logical)
+          .historianTag(readString(b, "historian_tag", "historianTag"))
+          .automationAddress(readString(b, "automation_address", "automationAddress"))
+          .unit(readString(b, "unit", "unit")).pidReference(readString(b, "pid_reference", "pidReference"))
+          .description(readString(b, "description", "description"));
+      String role = readString(b, "role", "role");
+      if (!role.isEmpty()) {
+        builder.role(InstrumentTagRole.valueOf(role.trim().toUpperCase()));
+      }
+      map.addBinding(builder.build());
+    }
+    return map;
+  }
+
+  /**
+   * Loads an {@link OperationalTagMap} from a JSON file.
+   *
+   * @param path path to a JSON file with a bindings array
+   * @return a new OperationalTagMap
+   * @throws IOException if the file cannot be read
+   */
+  public static OperationalTagMap fromJsonFile(String path) throws IOException {
+    if (path == null || path.trim().isEmpty()) {
+      throw new IllegalArgumentException("path must not be null or empty");
+    }
+    byte[] bytes = Files.readAllBytes(Paths.get(path));
+    return fromJson(new String(bytes, StandardCharsets.UTF_8));
+  }
+
+  /**
+   * Compares the simulated model values against measured field data for every {@code BENCHMARK} binding. For each
+   * benchmark tag the result carries measured, simulated, delta (simulated - measured), and deltaPercent.
+   *
+   * @param process process system to read simulated values from
+   * @param fieldData measured values keyed by logical tag or historian tag
+   * @return JSON string with a {@code comparisons} array and count of benchmark tags compared
+   */
+  public String compareBenchmarks(ProcessSystem process, Map<String, Double> fieldData) {
+    if (process == null) {
+      throw new IllegalArgumentException("process must not be null");
+    }
+    if (fieldData == null) {
+      throw new IllegalArgumentException("fieldData must not be null");
+    }
+    ProcessAutomation automation = process.getAutomation();
+    JsonObject root = new JsonObject();
+    JsonArray arr = new JsonArray();
+    int count = 0;
+    for (OperationalTagBinding binding : bindings.values()) {
+      if (binding.getRole() != InstrumentTagRole.BENCHMARK) {
+        continue;
+      }
+      Double measured = findValue(binding, fieldData);
+      if (measured == null || !binding.hasAutomationAddress()) {
+        continue;
+      }
+      double simulated;
+      try {
+        simulated = automation.getVariableValue(binding.getAutomationAddress(), binding.getUnit());
+      } catch (RuntimeException ex) {
+        continue;
+      }
+      double delta = simulated - measured;
+      double deltaPercent = Math.abs(measured) > 1.0e-12 ? 100.0 * delta / Math.abs(measured) : Double.NaN;
+      JsonObject c = new JsonObject();
+      c.addProperty("logical_tag", binding.getLogicalTag());
+      c.addProperty("unit", binding.getUnit());
+      c.addProperty("measured", measured);
+      c.addProperty("simulated", simulated);
+      c.addProperty("delta", delta);
+      c.addProperty("deltaPercent", deltaPercent);
+      arr.add(c);
+      count++;
+    }
+    root.addProperty("count", count);
+    root.add("comparisons", arr);
+    Gson gson = new GsonBuilder().setPrettyPrinting().create();
+    return gson.toJson(root);
+  }
+
+  /**
+   * Reads a string property trying a primary and a fallback key.
+   *
+   * @param obj JSON object
+   * @param primary primary key (snake_case)
+   * @param fallback fallback key (camelCase)
+   * @return the string value, or an empty string when absent
+   */
+  private static String readString(JsonObject obj, String primary, String fallback) {
+    if (obj.has(primary) && !obj.get(primary).isJsonNull()) {
+      return obj.get(primary).getAsString();
+    }
+    if (obj.has(fallback) && !obj.get(fallback).isJsonNull()) {
+      return obj.get(fallback).getAsString();
+    }
+    return "";
   }
 }

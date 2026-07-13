@@ -2229,6 +2229,58 @@ public class ProductionOptimizer {
   }
 
   /**
+   * Maximise throughput for a plant with MULTIPLE feed streams (e.g. many wells) by scaling all feeds proportionally
+   * with a single decision variable — the target TOTAL feed rate. Each feed's current flow is captured as its base
+   * rate; at a candidate total {@code T} every feed is set to {@code baseRate_i * (T / baseTotal)}. This gives
+   * multi-feed models the same max-throughput capability as the single-feed {@link #optimize} without requiring one
+   * synthetic feed stream.
+   *
+   * @param process the process model to evaluate (must not be null)
+   * @param feedStreams the feed streams to scale together (must not be null or empty)
+   * @param config optimizer configuration; {@code lowerBound}/{@code upperBound} are the TOTAL rate range in
+   * {@code rateUnit} (must not be null)
+   * @param objectives list of objectives to compute weighted scores (may be null or empty)
+   * @param constraints list of constraints with optional penalties (may be null or empty)
+   * @return optimization result whose optimal rate is the total throughput
+   * @throws NullPointerException if process, feedStreams, or config is null
+   * @throws IllegalArgumentException if feedStreams is empty, config is invalid, or the base total rate is not positive
+   */
+  public OptimizationResult optimizeMultiFeed(ProcessSystem process, List<StreamInterface> feedStreams,
+      OptimizationConfig config, List<OptimizationObjective> objectives, List<OptimizationConstraint> constraints) {
+    Objects.requireNonNull(process, "ProcessSystem is required");
+    Objects.requireNonNull(feedStreams, "Feed streams are required");
+    if (feedStreams.isEmpty()) {
+      throw new IllegalArgumentException("At least one feed stream is required");
+    }
+    Objects.requireNonNull(config, "OptimizationConfig is required");
+    config.validate();
+
+    final String rateUnit = config.rateUnit;
+    final List<StreamInterface> feeds = new ArrayList<StreamInterface>(feedStreams);
+    final double[] baseRates = new double[feeds.size()];
+    double baseTotalTmp = 0.0;
+    for (int i = 0; i < feeds.size(); i++) {
+      baseRates[i] = feeds.get(i).getFlowRate(rateUnit);
+      baseTotalTmp += baseRates[i];
+    }
+    final double baseTotal = baseTotalTmp;
+    if (baseTotal <= 0.0) {
+      throw new IllegalArgumentException(
+          "Total base feed rate must be positive to scale multiple feeds proportionally");
+    }
+
+    ManipulatedVariable totalVar = new ManipulatedVariable("totalFeedRate", config.lowerBound, config.upperBound,
+        rateUnit, (proc, targetTotal) -> {
+          double factor = targetTotal / baseTotal;
+          for (int i = 0; i < feeds.size(); i++) {
+            feeds.get(i).setFlowRate(baseRates[i] * factor, rateUnit);
+          }
+        });
+
+    return optimize(process, Collections.singletonList(totalVar), config, objectives, constraints);
+  }
+
+  /**
    * Optimize multiple manipulated variables using multi-dimensional search strategies.
    *
    * <p>

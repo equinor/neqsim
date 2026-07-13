@@ -343,6 +343,69 @@ public class ProcessAutomation {
     return Collections.unmodifiableList(filtered);
   }
 
+  /**
+   * Convenience: returns only the settable {@link VariableType#INPUT INPUT} variables for a unit. These are the
+   * addresses that can be driven with {@link #setVariableValue(String, double, String)} (e.g. a cooler set-point is
+   * {@code "<Cooler>.outletTemperature"}, an INPUT — not {@code "<Cooler>.outletStream.temperature"}, a computed
+   * OUTPUT).
+   *
+   * @param unitName the unit name, optionally area-qualified
+   * @return the INPUT-type variables for the unit
+   * @throws IllegalArgumentException if the unit is not found
+   */
+  public List<SimulationVariable> getInputVariables(String unitName) {
+    return getVariableList(unitName, VariableType.INPUT);
+  }
+
+  /**
+   * Convenience: returns only the read-only {@link VariableType#OUTPUT OUTPUT} variables for a unit. Useful as
+   * benchmark / read-back addresses for model-vs-plant comparison.
+   *
+   * @param unitName the unit name, optionally area-qualified
+   * @return the OUTPUT-type variables for the unit
+   * @throws IllegalArgumentException if the unit is not found
+   */
+  public List<SimulationVariable> getOutputVariables(String unitName) {
+    return getVariableList(unitName, VariableType.OUTPUT);
+  }
+
+  /**
+   * Pre-flight check (never throws) for whether an address is a settable {@link VariableType#INPUT INPUT} variable.
+   * Writing to a computed OUTPUT address (for example {@code "<Cooler>.outletStream.temperature"}) is silently
+   * overwritten by the next {@code run()}; use this to catch that before it happens.
+   *
+   * @param address the dot-notation address, optionally area-qualified
+   * @return true when the address resolves to a known INPUT variable, false otherwise (unknown or OUTPUT)
+   */
+  public boolean isWritableAddress(String address) {
+    if (address == null || address.trim().isEmpty()) {
+      return false;
+    }
+    String unitName = address;
+    int areaSepIdx = address.indexOf(AREA_SEPARATOR);
+    String prefix = "";
+    String local = address;
+    if (areaSepIdx >= 0) {
+      prefix = address.substring(0, areaSepIdx + AREA_SEPARATOR.length());
+      local = address.substring(areaSepIdx + AREA_SEPARATOR.length());
+    }
+    int dotIdx = local.indexOf('.');
+    if (dotIdx < 0) {
+      return false;
+    }
+    unitName = prefix + local.substring(0, dotIdx);
+    try {
+      for (SimulationVariable v : getVariableList(unitName, VariableType.INPUT)) {
+        if (address.equals(v.getAddress())) {
+          return true;
+        }
+      }
+    } catch (RuntimeException ex) {
+      return false;
+    }
+    return false;
+  }
+
   // ------------------------- Adjustable parameters -------------------------
 
   /**
