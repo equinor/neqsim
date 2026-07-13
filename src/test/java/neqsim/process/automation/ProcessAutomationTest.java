@@ -1525,4 +1525,122 @@ class ProcessAutomationTest {
       assertEquals(VariableType.OUTPUT, v.getType());
     }
   }
+
+  @Test
+  void testAgenticOptimizationHelpersProcessSystem() {
+    // enable + prepare
+    int enabled = automation.enableCapacityConstraints();
+    assertTrue(enabled >= 1, "At least the HP Sep separator should be enabled, got " + enabled);
+
+    String prep = automation.prepareForCapacityStudyJson();
+    com.google.gson.JsonObject prepObj = com.google.gson.JsonParser.parseString(prep).getAsJsonObject();
+    assertEquals("1.0", prepObj.get("schemaVersion").getAsString());
+    assertTrue(prepObj.has("issues"));
+    assertTrue(prepObj.has("ready"));
+
+    // validate does not throw and returns a structured result
+    String validate = automation.validateForOptimizationJson();
+    com.google.gson.JsonObject valObj = com.google.gson.JsonParser.parseString(validate).getAsJsonObject();
+    assertTrue(valObj.has("ok"));
+    assertTrue(valObj.has("issues"));
+
+    // ranking parses the utilization snapshot
+    String ranking = automation.getBottleneckRankingJson(3);
+    com.google.gson.JsonObject rankObj = com.google.gson.JsonParser.parseString(ranking).getAsJsonObject();
+    assertTrue(rankObj.has("ranking"));
+    assertTrue(rankObj.getAsJsonArray("ranking").size() <= 3, "ranking must respect topN");
+  }
+
+  @Test
+  void testAgenticOptimizationHelpersProcessModel() {
+    ProcessModel model = buildTwoAreaModel();
+    ProcessAutomation auto = new ProcessAutomation(model);
+
+    int enabled = auto.enableCapacityConstraints();
+    assertTrue(enabled >= 1, "HP Sep in the Separation area should be enabled, got " + enabled);
+
+    // chartless Export Compressor should be flagged as an info issue
+    String prep = auto.prepareForCapacityStudyJson();
+    com.google.gson.JsonObject prepObj = com.google.gson.JsonParser.parseString(prep).getAsJsonObject();
+    assertTrue(prepObj.has("issues"));
+    boolean compressorFlagged = false;
+    for (com.google.gson.JsonElement el : prepObj.getAsJsonArray("issues")) {
+      if ("Compressor".equals(el.getAsJsonObject().get("type").getAsString())) {
+        compressorFlagged = true;
+      }
+    }
+    assertTrue(compressorFlagged, "chartless Export Compressor should be flagged");
+
+    // validate + ranking work across areas
+    String validate = auto.validateForOptimizationJson();
+    assertTrue(com.google.gson.JsonParser.parseString(validate).getAsJsonObject().has("issues"));
+
+    String ranking = auto.getBottleneckRankingJson(5);
+    com.google.gson.JsonObject rankObj = com.google.gson.JsonParser.parseString(ranking).getAsJsonObject();
+    assertTrue(rankObj.has("ranking"));
+  }
+
+  @Test
+  void testProductQualityObservable() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 25.0, 60.0);
+    fluid.addComponent("methane", 0.70);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.10);
+    fluid.addComponent("n-pentane", 0.10);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("qfeed", fluid);
+    feed.setFlowRate(10000.0, "kg/hr");
+    feed.setTemperature(25.0, "C");
+    feed.setPressure(60.0, "bara");
+
+    ProcessSystem p = new ProcessSystem();
+    p.add(feed);
+    p.run();
+
+    ProcessAutomation auto = new ProcessAutomation(p);
+    String q = auto.getProductQualityJson("qfeed");
+    com.google.gson.JsonObject o = com.google.gson.JsonParser.parseString(q).getAsJsonObject();
+    assertEquals("1.0", o.get("schemaVersion").getAsString());
+    assertEquals("qfeed", o.get("address").getAsString());
+    // Should carry at least one quality metric or a structured diagnostic.
+    assertTrue(o.has("rvp_bara") || o.has("cricondenbar_bara") || o.has("rvpError") || o.has("envelopeError"),
+        "quality JSON should carry a metric or diagnostic: " + q);
+  }
+
+  @Test
+  void testFindMaxThroughputAtCapacity() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 30.0, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
+
+    Stream feed = new Stream("mfeed", fluid);
+    feed.setFlowRate(10000.0, "kg/hr");
+    feed.setTemperature(30.0, "C");
+    feed.setPressure(50.0, "bara");
+
+    Compressor comp = new Compressor("mcomp", feed);
+    comp.setOutletPressure(100.0);
+
+    ProcessSystem p = new ProcessSystem();
+    p.add(feed);
+    p.add(comp);
+    p.run();
+
+    // Rated power = 1.5x the base-case power, so scaling the feed drives power
+    // utilisation to 100 % well inside the search range (power ~ linear in flow).
+    double basePower = comp.getPower("kW");
+    comp.getMechanicalDesign().setMaxDesignPower(basePower * 1.5);
+
+    ProcessAutomation auto = new ProcessAutomation(p);
+    String r = auto.findMaxThroughputJson(java.util.Arrays.asList("mfeed"), 5000.0, 40000.0, "kg/hr", 1.0);
+    com.google.gson.JsonObject o = com.google.gson.JsonParser.parseString(r).getAsJsonObject();
+
+    assertEquals("1.0", o.get("schemaVersion").getAsString());
+    assertTrue(o.has("maxRate"), "result should carry maxRate");
+    double maxRate = o.get("maxRate").getAsDouble();
+    assertTrue(o.get("feasibleAtMin").getAsBoolean(), "minimum rate should be feasible");
+    assertTrue(maxRate >= 5000.0 && maxRate < 40000.0, "max throughput should be capacity-limited, got " + maxRate);
+  }
 }
