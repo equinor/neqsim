@@ -53,6 +53,14 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   double compressorPower = 0.0;
   private double heat = 0.0;
 
+  /**
+   * Optional simple-cycle thermal efficiency (net shaft power / fuel lower heating value). When set to a value in (0,
+   * 1], {@link #run(UUID)} reports {@link #getPower()} directly from the fuel LHV, giving a realistic driver power for
+   * screening studies independent of the detailed air-compressor / expander pressure-ratio assumptions. The default of
+   * 0 keeps the detailed Brayton-cycle power balance.
+   */
+  private double thermalEfficiency = 0.0;
+
   public double power = 0.0;
 
   /** Rated (maximum) power output in Watts. Used for capacity constraint calculations. */
@@ -202,6 +210,15 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     // (-expanderPower) - compressorPower.
     power = -expanderPower - compressorPower;
     this.heat = cooler1.getDuty();
+
+    // Simple-cycle override: when a thermal efficiency (or heat rate) is set, report the net shaft
+    // power directly from the fuel lower heating value and treat the remainder as exhaust heat. This
+    // gives a realistic driver power out of the box for screening studies, independent of the
+    // detailed air-compressor / expander pressure-ratio assumptions of the Brayton cycle above.
+    if (thermalEfficiency > 0.0) {
+      power = thermalEfficiency * heatOfCombustion;
+      this.heat = heatOfCombustion - power;
+    }
     setCalculationIdentifier(id);
   }
 
@@ -314,6 +331,51 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
    */
   public void setExcessAirFactor(double excessAirFactor) {
     this.excessAirFactor = excessAirFactor;
+  }
+
+  /**
+   * Get the simple-cycle thermal efficiency used to report net shaft power.
+   *
+   * @return thermal efficiency (0 = disabled, detailed Brayton-cycle balance used)
+   */
+  public double getThermalEfficiency() {
+    return thermalEfficiency;
+  }
+
+  /**
+   * Set a simple-cycle thermal efficiency so {@link #getPower()} is reported directly from the fuel lower heating
+   * value. Typical simple-cycle gas turbines are 0.30-0.42 (aeroderivative up to ~0.42). Set to 0 to restore the
+   * detailed Brayton-cycle power balance.
+   *
+   * @param thermalEfficiency net shaft power divided by fuel lower heating value, in the range [0, 1]
+   */
+  public void setThermalEfficiency(double thermalEfficiency) {
+    if (thermalEfficiency < 0.0 || thermalEfficiency > 1.0) {
+      throw new IllegalArgumentException("thermal efficiency must be between 0 and 1");
+    }
+    this.thermalEfficiency = thermalEfficiency;
+  }
+
+  /**
+   * Get the heat rate implied by the current simple-cycle thermal efficiency.
+   *
+   * @return heat rate in kJ of fuel (LHV) per kWh of net shaft power, or {@link Double#NaN} when no efficiency is set
+   */
+  public double getHeatRate() {
+    return thermalEfficiency > 0.0 ? 3600.0 / thermalEfficiency : Double.NaN;
+  }
+
+  /**
+   * Set the simple-cycle heat rate. This is an alternative to {@link #setThermalEfficiency(double)}; the two are
+   * related by efficiency = 3600 / heatRate. For example 10286 kJ/kWh corresponds to 35 % efficiency.
+   *
+   * @param heatRateKJperKWh heat rate in kJ of fuel (LHV) per kWh of net shaft power (must be positive)
+   */
+  public void setHeatRate(double heatRateKJperKWh) {
+    if (heatRateKJperKWh <= 0.0) {
+      throw new IllegalArgumentException("heat rate must be positive");
+    }
+    this.thermalEfficiency = 3600.0 / heatRateKJperKWh;
   }
 
   /**

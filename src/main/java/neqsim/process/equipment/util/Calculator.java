@@ -41,12 +41,42 @@ public class Calculator extends ProcessEquipmentBaseClass {
   private static final double ANTI_SURGE_MAX_RECYCLE_FACTOR = 2.0;
 
   /**
+   * Anti-surge: proportional (relaxation) gain applied to the surge-inlet flow gap when stepping the recycle setpoint.
+   * The default of 0.5 reproduces the legacy behaviour. Lowering it (e.g. 0.2-0.3) damps the recycle response and
+   * suppresses run-to-run oscillation at deep turndown at the cost of slower convergence.
+   */
+  private double antiSurgeProportionalGain = 0.5;
+
+  /**
    * Constructor for Calculator.
    *
    * @param name a {@link java.lang.String} object
    */
   public Calculator(String name) {
     super(name);
+  }
+
+  /**
+   * Get the anti-surge proportional (relaxation) gain applied to the surge-inlet flow gap.
+   *
+   * @return the proportional gain (default 0.5)
+   */
+  public double getAntiSurgeProportionalGain() {
+    return antiSurgeProportionalGain;
+  }
+
+  /**
+   * Set the anti-surge proportional (relaxation) gain applied to the surge-inlet flow gap when stepping the recycle
+   * setpoint. Values in (0, 1]; the default 0.5 reproduces the legacy response, lower values damp run-to-run
+   * oscillation at deep turndown.
+   *
+   * @param antiSurgeProportionalGain the proportional gain, must be greater than 0 and not greater than 1
+   */
+  public void setAntiSurgeProportionalGain(double antiSurgeProportionalGain) {
+    if (antiSurgeProportionalGain <= 0.0 || antiSurgeProportionalGain > 1.0) {
+      throw new IllegalArgumentException("anti-surge proportional gain must be in the range (0, 1]");
+    }
+    this.antiSurgeProportionalGain = antiSurgeProportionalGain;
   }
 
   /**
@@ -161,7 +191,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
     // the fixed point is inletFlow == surgeFlow regardless of the recycle
     // path topology. This matches the legacy formula exactly while adding a
     // 25%-of-max-flow per-iteration cap to prevent single-step overshoot.
-    double rawStep = 0.5 * (surgeFlow - inletFlow);
+    double rawStep = antiSurgeProportionalGain * (surgeFlow - inletFlow);
     double maxStep = 0.25 * Math.max(currentRecycle, Math.max(inletFlow, surgeFlow));
     double cappedStep = Math.max(-maxStep, Math.min(maxStep, rawStep));
     double flowAntiSurge = Math.max(currentRecycle + cappedStep, inletFlow / 1.0e6);
