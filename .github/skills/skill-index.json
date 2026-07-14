@@ -1070,5 +1070,22 @@
   "paperlab scientific traceability audit": ["paperlab_scientific_traceability_audit"],
   "paperlab student readability": ["paperlab_student_readability"],
   "flash experiments": ["run_flash_experiments"],
-  "methods section writing": ["write_methods_section"]
+  "methods section writing": ["write_methods_section"],
+  "wax appearance temperature": ["neqsim-wax-calculations", "neqsim-flow-assurance"],
+  "wat": ["neqsim-wax-calculations"],
+  "wax calculation": ["neqsim-wax-calculations"],
+  "wax precipitation": ["neqsim-wax-calculations"],
+  "wax fraction": ["neqsim-wax-calculations"],
+  "waxy oil viscosity": ["neqsim-wax-calculations"],
+  "wax model tuning": ["neqsim-wax-calculations"],
+  "wax inhibitor screening": ["neqsim-wax-calculations", "neqsim-flow-assurance"],
+  "document classification": ["neqsim-document-intelligence-extraction"],
+  "document intelligence": ["neqsim-document-intelligence-extraction"],
+  "document extraction": ["neqsim-document-intelligence-extraction", "neqsim-technical-document-reading"],
+  "mixed engineering documents": ["neqsim-document-intelligence-extraction"],
+  "ocr routing": ["neqsim-document-intelligence-extraction", "neqsim-pdf-ocr"],
+  "vision extraction": ["neqsim-document-intelligence-extraction"],
+  "evidence package": ["neqsim-document-intelligence-extraction"],
+  "source traceability extraction": ["neqsim-document-intelligence-extraction"],
+  "conflicting sources": ["neqsim-document-intelligence-extraction"]
 }
