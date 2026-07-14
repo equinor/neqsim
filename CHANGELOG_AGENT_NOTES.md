@@ -42,6 +42,8 @@ No change to existing behaviour.
 
 ---
 
+## 2026-07-13 — New: agentic optimization helpers on `ProcessAutomation` (all equipment types, routing, parallel batch)
+
 ### Summary
 
 Additive expansion of the string-addressable, never-throwing, schema-versioned JSON
