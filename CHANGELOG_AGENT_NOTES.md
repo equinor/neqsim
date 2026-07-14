@@ -11,6 +11,34 @@
 
 ---
 
+## 2026-07-14 — New: `CoolantBoilingMargin` coolant boiling-margin helper (heatexchanger)
+
+### Summary
+
+Additive utility for liquid-cooled gas coolers / heat exchangers: a one-call screen of the
+coolant-side boiling constraint (coolant must stay sub-cooled relative to the hot process-side
+temperature). Motivated by a Gullfaks A export-cooler (27-HX01A/B) study where the safety limit
+was the coolant boiling pressure at the 140 C gas inlet. No change to existing behaviour.
+
+### New capability
+
+- **`neqsim.process.equipment.heatexchanger.CoolantBoilingMargin`** — static
+  `evaluate(SystemInterface coolant, double coolantPressureBara, double hotSideTemperatureC)`
+  and `evaluate(..., double minimumMarginC)`. Clones the coolant fluid (caller not modified),
+  runs a `bubblePointTemperatureFlash` at the coolant pressure, and returns an immutable
+  `Result` with `getSaturationTemperatureC()`, `getSubcoolingMarginC()` (= Tsat - hotSideT),
+  `isBoiling()` (margin <= 0), and `isWithinMargin()` (margin >= minimumMargin). Saturation
+  temperature is `NaN` (not an exception) if the bubble-point flash does not converge.
+- Tests: `CoolantBoilingMarginTest` (5, all pass): water margin monotonic in pressure, ~0 at
+  the operator 2.5 barg floor at 140 C gas, Tsat ~140 C at the floor, min-margin logic,
+  caller-fluid-not-modified, invalid-input guards. Spotless clean.
+
+### Migration
+
+None (purely additive). Java 8 compatible; log4j2 logging; no `System.out`.
+
+---
+
 ## 2026-07-13 — New: multi-source decision-support helpers in `neqsim.util.agentic`
 
 ### Summary
