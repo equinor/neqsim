@@ -24,14 +24,25 @@ with summaries that the solver agent can use without re-reading the originals.
 
 ## Outputs (all written into the task folder)
 
-1. **`step1_scope_and_research/references/`** — every retrieved PDF, named
-   with a stable, human-readable filename (e.g.
-   `Smith2019_CO2_dense_phase.pdf`, `NORSOK_M-001_2017.pdf`).
+1. **`step1_scope_and_research/references/literature/`** — every retrieved PDF,
+   filed in the per-source subfolder and named with a stable, human-readable
+   filename (e.g. `literature/Smith2019_CO2_dense_phase.pdf`,
+   `literature/NORSOK_M-001_2017.pdf`). Internal/STID docs pulled via
+   `@stid.retriever` go under their own source subfolder (`stid/`, `vendor/`,
+   `manual/` ...). This keeps the collection distributable per source.
 2. **`step1_scope_and_research/notes.md`** — appended/updated section
    `## Literature & Reference Documents`, one bullet per source with:
    citation, two-sentence summary of contribution, page/section pointers
    to the most relevant content, and the relative path to the PDF.
-3. **`step1_scope_and_research/references/manifest.json`** — machine-readable
+3. **`step1_scope_and_research/references/web/`** — saved web pages as
+   Markdown extracts (title, URL, retrieval date, source type, relevance, and
+   the relevant text/tables), e.g. `web/nist_webbook_CO2_density.md`. Never a
+   raw HTML dump; never an invented URL.
+4. **`step1_scope_and_research/references/literature_findings.md`** — the
+   structured findings from `neqsim-literature-search`: research questions, one
+   entry per source (citation, path, specific claim/data with page/URL pointer,
+   relevance), grouped by question, plus pruned candidates with reasons.
+5. **`step1_scope_and_research/references/manifest.json`** — machine-readable
    manifest:
    ```json
    {
@@ -51,13 +62,16 @@ with summaries that the solver agent can use without re-reading the originals.
      ]
    }
    ```
-4. **`results.json` references[]** — once the solver agent finalizes, it
+6. **`results.json` references[]** — once the solver agent finalizes, it
    should pull entries from this manifest into `results.json.references[]`.
 
 ## Skills to Load
 
-Loaded skills: neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pdf-ocr, neqsim-standards-lookup, neqsim-trapped-liquid-fire-rupture
+Loaded skills: neqsim-literature-search, neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-pdf-ocr, neqsim-standards-lookup, neqsim-trapped-liquid-fire-rupture
 
+- `neqsim-literature-search` — the paper + web research workflow: research
+  questions, web-page extracts saved to `references/web/`, papers to
+  `references/literature/`, and a structured `literature_findings.md`.
 - `neqsim-stid-retriever` — for internal document corpora (vendor docs,
   STID drawings, mechanical arrangements).
 - `neqsim-technical-document-reading` — to extract structured data from
@@ -95,21 +109,35 @@ Loaded skills: neqsim-stid-retriever, neqsim-technical-document-reading, neqsim-
 
 ```
 1. Parse topic and task folder path.
+1b. Frame 3–8 specific research questions (neqsim-literature-search) and record
+    them at the top of references/literature_findings.md.
 2. Identify applicable standards via neqsim-standards-lookup.
 3. Query internal corpus (if doc_retrieval_config.yaml configured)
    via @stid.retriever. For trapped-liquid fire rupture tasks, use the evidence
    checklist from `neqsim-trapped-liquid-fire-rupture` and retrieve P&IDs/STIDs,
    line lists, piping specs, material certificates, flange/gasket/bolt data,
    fire/PFP documents, relief basis, and design criteria before calculation.
-4. Query public sources (DOI/arXiv/Google Scholar via configured backend
-   if available; otherwise list candidates and ask the user to confirm
-   downloads — do not invent URLs).
+4. Query public sources:
+   - Web: use the `fetch_webpage` tool (query = a research question). For each
+     useful page, save a Markdown extract (title, URL, retrieval date, source
+     type, relevance, and the relevant text/tables) to
+     `references/web/`. Never invent URLs; note paywalls honestly.
+   - Papers: DOI/arXiv/publisher via configured backend if available; otherwise
+     list candidates and ask the user to confirm downloads.
 5. For each retrieved file:
-   - Save to step1_scope_and_research/references/ with stable filename.
+   - Save to the matching per-source subfolder under
+     `step1_scope_and_research/references/` (`literature/` for papers/standards,
+     `web/` for web extracts, `stid/`, `vendor/`, `manual/` ...) with a stable
+     filename.
    - If scanned, OCR via neqsim-pdf-ocr.
    - Extract key facts via neqsim-technical-document-reading.
-6. Write/append the "Literature & Reference Documents" section in notes.md.
-7. Write/update references/manifest.json.
+6. Write references/literature_findings.md (findings grouped by research
+   question, with pruned candidates + reasons), and append the "Literature &
+   Reference Documents" section in notes.md.
+7. Write/update references/manifest.json, then run
+   `python devtools/generate_sources_md.py task_solve/<slug> --organize` to
+   (re)build the distributable `references/SOURCES.md` +
+   `references/collection_manifest.json`.
 8. Report a 1-paragraph summary plus the manifest path back to the caller.
 ```
 

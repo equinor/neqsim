@@ -91,6 +91,31 @@ task-related files to workspace-level directories like `output/` or `figures/`.
 Converted PNGs go to the task's `figures/` directory. This ensures tasks are
 self-contained and portable.
 
+**File them into per-source subfolders + generate a distributable `SOURCES.md`
+(MANDATORY).** So the collected set can be handed to others and reused, place
+each document under `references/` in a **per-source subfolder** and keep a
+human-readable index:
+
+```
+references/
+├── SOURCES.md              # human-readable summary of everything collected
+├── collection_manifest.json    # machine-readable record (auto-generated)
+├── stid/  pepr/  tr2000/  maintenance/  servicenow/
+├── tagreader/  seeq/  rigga/  vendor/  lab/  literature/  web/  manual/
+```
+
+Run the dependency-free generator to organize loose files into source folders
+and (re)build `collection_manifest.json` + `SOURCES.md`:
+
+```bash
+python devtools/generate_sources_md.py task_solve/YYYY-MM-DD_slug --organize
+```
+
+`SOURCES.md` lists, per source, each file with its origin (document number /
+tag / action ID / RITM / historian tag), retrieval date, classification,
+relevance, review status, and a one-line summary, plus a data-gaps section.
+Regenerate it whenever documents are added and before finalizing the task.
+
 ### Step-by-step
 
 1. **Create the task folder (DO THIS FIRST — non-negotiable):**
@@ -122,9 +147,10 @@ self-contained and portable.
      or `engineering-harness` study) in §4c. Prefer delegating to a specialist
      agent over re-loading its skills so its governance/workflow is reused, and
      copy the plan into `results.json` `agent_workflow_plan` for the report.
-   - **Pull literature and internal docs** via `@literature.scout`. PDFs land in `step1_scope_and_research/references/`; manifest in `references/manifest.json`; summaries appended to `notes.md`.
+   - **Pull literature and internal docs** via `@literature.scout`. PDFs land in `step1_scope_and_research/references/` (in per-source subfolders, e.g. `literature/`, `stid/`); manifest in `references/collection_manifest.json`; summaries appended to `notes.md`.
    - Write **substantive** research notes to `step1_scope_and_research/notes.md` (no empty template sections)
-   - Place literature papers, standards PDFs, and lab reports in `step1_scope_and_research/references/`
+   - Place literature papers, standards PDFs, and lab reports in `step1_scope_and_research/references/` under the matching source subfolder (`literature/`, `lab/`, `stid/`, `vendor/`, `manual/` ...)
+   - **Organize + summarize the collection** by running `python devtools/generate_sources_md.py task_solve/YYYY-MM-DD_slug --organize` — it files loose docs into per-source folders and writes the distributable `references/SOURCES.md` + `references/collection_manifest.json`. Rerun whenever new documents are added.
    - **Extract figures from PDFs** using `devtools/pdf_to_figures.py`:
      ```bash
      python devtools/pdf_to_figures.py step1_scope_and_research/references/ --outdir figures/

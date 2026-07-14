@@ -25,7 +25,7 @@ loaded with `read_file` at the start of an agent invocation.
 | `field.development.agent.md` | develop oil and gas field | `neqsim-field-development`, `neqsim-field-economics`, `neqsim-subsea-and-wells`, `neqsim-production-optimization`, `neqsim-flow-assurance`, `neqsim-professional-reporting` |
 | `flow.assurance.agent.md` | run neqsim flow assurance analysis | `neqsim-phase-envelope`, `neqsim-flow-assurance`, `neqsim-wax-calculations`, `neqsim-water-hammer` |
 | `gas.quality.agent.md` | calculate gas quality and standards | `neqsim-api-patterns`, `neqsim-standards-lookup`, `neqsim-input-validation`, `neqsim-professional-reporting` |
-| `literature.scout.agent.md` | scout literature and databases | `neqsim-stid-retriever`, `neqsim-technical-document-reading`, `neqsim-pdf-ocr`, `neqsim-standards-lookup`, `neqsim-trapped-liquid-fire-rupture` |
+| `literature.scout.agent.md` | scout literature and databases | `neqsim-literature-search`, `neqsim-stid-retriever`, `neqsim-technical-document-reading`, `neqsim-pdf-ocr`, `neqsim-standards-lookup`, `neqsim-trapped-liquid-fire-rupture` |
 | `mechanical.design.agent.md` | run neqsim mechanical design | `neqsim-api-patterns`, `neqsim-standards-lookup`, `neqsim-subsea-and-wells`, `neqsim-equipment-cost-estimation`, `neqsim-process-modeling`, `neqsim-java8-rules` |
 | `neqsim.test.agent.md` | write neqsim unit tests | `neqsim-java8-rules`, `neqsim-api-patterns`, `neqsim-process-modeling`, `neqsim-regression-baselines`, `neqsim-troubleshooting` |
 | `notebook.example.agent.md` | create a neqsim jupyter notebook | `neqsim-notebook-patterns`, `neqsim-api-patterns`, `neqsim-process-modeling`, `neqsim-input-validation`, `neqsim-professional-reporting`, `neqsim-troubleshooting` |
