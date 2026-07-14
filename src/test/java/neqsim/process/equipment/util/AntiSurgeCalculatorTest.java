@@ -188,4 +188,22 @@ public class AntiSurgeCalculatorTest {
     recycleOut[0] = splitter.getSplitStream(1).getFlowRate("m3/hr");
     return compressor.getSurgeFlowRate();
   }
+
+  /**
+   * The anti-surge proportional (relaxation) gain defaults to 0.5 (legacy behaviour) and can be tuned in (0, 1] to damp
+   * run-to-run oscillation at deep turndown. Out-of-range values are rejected.
+   */
+  @Test
+  public void testAntiSurgeProportionalGain() {
+    AntiSurgeCalculator calc = new AntiSurgeCalculator("AS-gain");
+    assertEquals(0.5, calc.getAntiSurgeProportionalGain(), 1e-12);
+
+    calc.setAntiSurgeProportionalGain(0.25);
+    assertEquals(0.25, calc.getAntiSurgeProportionalGain(), 1e-12);
+
+    org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+        () -> calc.setAntiSurgeProportionalGain(0.0));
+    org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+        () -> calc.setAntiSurgeProportionalGain(1.5));
+  }
 }

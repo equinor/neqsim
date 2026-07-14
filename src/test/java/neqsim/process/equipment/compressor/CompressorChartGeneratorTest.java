@@ -114,6 +114,31 @@ public class CompressorChartGeneratorTest {
   }
 
   /**
+   * Test that the compressor chart JSON exposes the surge curve flow/head arrays so consumers do not have to
+   * reconstruct the surge line from the lowest-flow point of each speed curve.
+   */
+  @Test
+  public void testCompressorChartJsonIncludesSurgeCurveArrays() {
+    CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
+    CompressorChartInterface chart = generator.generateCompressorChart("normal curves", 5);
+    compressor.setCompressorChart(chart);
+    compressor.getCompressorChart().setUseCompressorChart(true);
+
+    double[] surgeFlow = { 5000.0, 6000.0, 7000.0 };
+    double[] surgeHead = { 90.0, 100.0, 110.0 };
+    compressor.getCompressorChart().getSurgeCurve().setCurve(null, surgeFlow, surgeHead);
+
+    String json = compressor.getCompressorChartAsJson();
+
+    int surgeIdx = json.indexOf("\"surgeCurve\"");
+    assertTrue(surgeIdx >= 0, "JSON should contain a surgeCurve object");
+    String surgeSection = json.substring(surgeIdx, json.indexOf("}", surgeIdx));
+    assertTrue(surgeSection.contains("\"flow_m3h\""), "surge curve section should expose a flow array");
+    assertTrue(surgeSection.contains("\"head_kJkg\""), "surge curve section should expose a head array");
+    assertTrue(surgeSection.contains("5000.00"), "surge curve flow array should contain the fitted flow values");
+  }
+
+  /**
    * Test that template-based chart generation works with "interpolate and extrapolate".
    */
   @Test

@@ -2210,15 +2210,55 @@ public class Compressor extends TwoPortEquipment
     }
     json.append("  ],\n");
 
-    // Surge and stonewall info
-    json.append("  \"surgeCurve\": { \"active\": ").append(compressorChart.getSurgeCurve() != null).append(" },\n");
-    json.append("  \"stonewallCurve\": { \"active\": ")
-        .append(compressorChart.getStoneWallCurve() != null && compressorChart.getStoneWallCurve().isActive())
-        .append(" }\n");
+    // Surge curve (flow/head arrays included when available, so consumers do not have to
+    // reconstruct the surge line from the lowest-flow point of each speed curve).
+    SafeSplineSurgeCurve surge = compressorChart.getSurgeCurve();
+    json.append("  \"surgeCurve\": { \"active\": ").append(surge != null);
+    if (surge != null && surge.getSortedFlow() != null && surge.getSortedHead() != null
+        && surge.getSortedFlow().length > 0) {
+      json.append(", \"flow_m3h\": ");
+      appendDoubleArray(json, surge.getSortedFlow());
+      json.append(", \"head_kJkg\": ");
+      appendDoubleArray(json, surge.getSortedHead());
+    }
+    json.append(" },\n");
+
+    // Stonewall (choke) curve (flow/head arrays included when a spline stonewall curve is present).
+    StoneWallCurve stone = compressorChart.getStoneWallCurve();
+    json.append("  \"stonewallCurve\": { \"active\": ").append(stone != null && stone.isActive());
+    if (stone instanceof SafeSplineStoneWallCurve) {
+      SafeSplineStoneWallCurve splineStone = (SafeSplineStoneWallCurve) stone;
+      if (splineStone.getSortedFlow() != null && splineStone.getSortedHead() != null
+          && splineStone.getSortedFlow().length > 0) {
+        json.append(", \"flow_m3h\": ");
+        appendDoubleArray(json, splineStone.getSortedFlow());
+        json.append(", \"head_kJkg\": ");
+        appendDoubleArray(json, splineStone.getSortedHead());
+      }
+    }
+    json.append(" }\n");
 
     json.append("}");
 
     return json.toString();
+  }
+
+  /**
+   * Append a double array to a JSON string builder as a bracketed, comma-separated list with two-decimal US-locale
+   * formatting.
+   *
+   * @param json the string builder to append to
+   * @param values the values to append
+   */
+  private static void appendDoubleArray(StringBuilder json, double[] values) {
+    json.append("[");
+    for (int i = 0; i < values.length; i++) {
+      json.append(String.format(java.util.Locale.US, "%.2f", values[i]));
+      if (i < values.length - 1) {
+        json.append(", ");
+      }
+    }
+    json.append("]");
   }
 
   /** {@inheritDoc} */
