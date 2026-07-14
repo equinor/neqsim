@@ -215,9 +215,12 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
     // power directly from the fuel lower heating value and treat the remainder as exhaust heat. This
     // gives a realistic driver power out of the box for screening studies, independent of the
     // detailed air-compressor / expander pressure-ratio assumptions of the Brayton cycle above.
+    // Stream.LCV() is a volumetric heating value (J/Sm3), so it must be multiplied by the volumetric
+    // standard flow (Sm3/s) to obtain the combustion heat in watts.
     if (thermalEfficiency > 0.0) {
-      power = thermalEfficiency * heatOfCombustion;
-      this.heat = heatOfCombustion - power;
+      double fuelHeat = inStream.LCV() * inStream.getFlowRate("Sm3/sec");
+      power = thermalEfficiency * fuelHeat;
+      this.heat = fuelHeat - power;
     }
     setCalculationIdentifier(id);
   }

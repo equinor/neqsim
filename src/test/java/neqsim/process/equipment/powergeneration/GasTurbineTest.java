@@ -102,7 +102,7 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     fuelStream.setPressure(20.0, "bara");
     fuelStream.run();
 
-    double fuelHeat = fuelStream.LCV() * fuelStream.getFlowRate("mole/sec");
+    double fuelHeat = fuelStream.LCV() * fuelStream.getFlowRate("Sm3/sec");
 
     GasTurbine gasturb = new GasTurbine("turbine", fuelStream);
     gasturb.setThermalEfficiency(0.35);
