@@ -211,6 +211,7 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff) {
+    this.chartConditions = chartConditions;
     this.speed = speed;
     this.head = head;
     this.polytropicEfficiency = polyEff;

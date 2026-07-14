@@ -86,6 +86,7 @@ public class Compressor extends TwoPortEquipment
   public boolean powerSet = false;
   public boolean calcPressureOut = false;
   private CompressorChartInterface compressorChart = new CompressorChart();
+  private CompressorChartLibrary chartLibrary = null;
   private AntiSurge antiSurge = new AntiSurge();
   /**
    * Anti-surge control-line flow margin as a fraction of the surge flow (e.g. 0.10 for a control line 10 % to the right
@@ -1950,6 +1951,88 @@ public class Compressor extends TwoPortEquipment
    */
   public void setCompressorChart(CompressorChartInterface compressorChart) {
     this.compressorChart = compressorChart;
+  }
+
+  /**
+   * Get the compressor chart library (bundle) for this compressor, creating an empty one on first access. The library
+   * lets the compressor hold several named performance charts (e.g. vendor expected, as-tested, field-fitted) and
+   * switch between them with {@link #selectChart(String)}.
+   *
+   * @return the chart library (never null)
+   */
+  public CompressorChartLibrary getChartLibrary() {
+    if (chartLibrary == null) {
+      chartLibrary = new CompressorChartLibrary(getName() + " chart library");
+    }
+    return chartLibrary;
+  }
+
+  /**
+   * Set the compressor chart library (bundle) for this compressor.
+   *
+   * @param library the chart library
+   */
+  public void setChartLibrary(CompressorChartLibrary library) {
+    this.chartLibrary = library;
+  }
+
+  /**
+   * Add a named chart to this compressor's library.
+   *
+   * @param name the unique chart name
+   * @param chart the chart to store
+   * @return this compressor for chaining
+   */
+  public Compressor addChart(String name, CompressorChartInterface chart) {
+    getChartLibrary().add(name, chart);
+    return this;
+  }
+
+  /**
+   * Add a named chart with descriptive metadata to this compressor's library.
+   *
+   * @param name the unique chart name
+   * @param chart the chart to store
+   * @param metadata descriptive metadata (may be null)
+   * @return this compressor for chaining
+   */
+  public Compressor addChart(String name, CompressorChartInterface chart, CompressorChartMetadata metadata) {
+    getChartLibrary().add(name, chart, metadata);
+    return this;
+  }
+
+  /**
+   * Select (switch to) a chart from this compressor's library by name and make it the active performance chart. This is
+   * the professional, one-call way to switch between vendor curve bundles.
+   *
+   * @param name the chart name in the library
+   * @return the selected chart
+   * @throws IllegalArgumentException if no chart with that name exists in the library
+   */
+  public CompressorChartInterface selectChart(String name) {
+    CompressorChartInterface chart = getChartLibrary().select(name);
+    setCompressorChart(chart);
+    chart.setUseCompressorChart(true);
+    setUsePolytropicCalc(true);
+    return chart;
+  }
+
+  /**
+   * Get the names of the charts available in this compressor's library.
+   *
+   * @return a list of chart names (empty if no library has been created)
+   */
+  public java.util.List<String> getAvailableCharts() {
+    return chartLibrary == null ? new java.util.ArrayList<String>() : chartLibrary.getNames();
+  }
+
+  /**
+   * Get the name of the currently selected library chart.
+   *
+   * @return the selected chart name, or null if no library has been created
+   */
+  public String getSelectedChartName() {
+    return chartLibrary == null ? null : chartLibrary.getSelectedName();
   }
 
   /**
