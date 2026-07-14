@@ -24,6 +24,10 @@ Detailed documentation for compressor performance curves in NeqSim, including mu
   - [Loading from CSV Files](#loading-from-csv-files)
   - [CompressorChartJsonReader Class](#compressorchartjsonreader-class)
   - [Best Practices for File-Based Curves](#best-practices-for-file-based-curves)
+- [**Compressor Chart Library (Multiple Named Charts)**](#compressor-chart-library-multiple-named-charts) ⭐ NEW
+  - [Selecting Between Charts](#selecting-between-charts)
+  - [Chart Metadata](#chart-metadata)
+  - [Saving and Loading a Chart Database](#saving-and-loading-a-chart-database)
 - [API Reference](#api-reference)
 - [Python Examples](#python-examples)
 - [**Automatic Curve Generation**](#automatic-curve-generation) ⭐ NEW
@@ -60,6 +64,8 @@ NeqSim supports comprehensive compressor performance modeling through compressor
 | `SafeSplineStoneWallCurve` | Spline-based stone wall (choke) curve |
 | `CompressorCurve` | Individual speed curve (flow, head, efficiency) |
 | `CompressorMechanicalLosses` | **Seal gas and bearing loss calculations** (API 692/617) |
+| `CompressorChartLibrary` | **Named bundle/database of several charts** for one compressor (select by name, JSON round-trip) |
+| `CompressorChartMetadata` | **Self-describing metadata** for a chart (casing/model, service, tag, document, curve type, reference conditions) |
 
 ### Compressor Operating Envelope
 
@@ -1558,6 +1564,94 @@ reader.setCurvesToCompressor(compressor);
 
 ---
 
+## Compressor Chart Library (Multiple Named Charts)
+
+A single `Compressor` can hold **several performance maps at once** through a
+`CompressorChartLibrary` (a named "bundle" or database of charts). This is the
+professional way to keep, for example, the *vendor expected* curve, the
+*as-tested* (shop test) curve, and a *field-fitted* curve side by side and
+switch the active chart with one call — instead of rebuilding the chart every
+time or juggling separate `CompressorChart` objects.
+
+Each chart is stored under a unique name together with optional descriptive
+`CompressorChartMetadata`, and the whole library can be serialized to and from
+JSON so a shared database of vendor curves can be maintained and reused.
+
+### Selecting Between Charts
+
+```java
+Compressor compressor = new Compressor("K-100", inletStream);
+
+// Add several named charts to this compressor's library (fluent, chainable).
+compressor.addChart("BCL405B-export-design", expectedChart);
+compressor.addChart("BCL405B-export-tested", asTestedChart);
+compressor.addChart("BCL405B-export-fieldfit", fieldFittedChart);
+
+// Switch the active performance chart with a single call.
+// selectChart() sets the chart, enables it, and turns on polytropic calc.
+compressor.selectChart("BCL405B-export-tested");
+
+List<String> names = compressor.getAvailableCharts();   // all chart names
+String active = compressor.getSelectedChartName();       // "BCL405B-export-tested"
+
+compressor.run();
+```
+
+> `selectChart(name)` is equivalent to calling `setCompressorChart(chart)`,
+> `chart.setUseCompressorChart(true)` and `setUsePolytropicCalc(true)` in one
+> step. It throws `IllegalArgumentException` if the name is not in the library.
+
+### Chart Metadata
+
+Attach `CompressorChartMetadata` so a chart is self-describing — which
+casing/model it belongs to, the service and tag it was issued for, the source
+document, whether it is an expected / as-tested / generated / field-fitted
+curve, and the reference (basis) conditions it was measured at:
+
+```java
+CompressorChartMetadata meta = new CompressorChartMetadata(
+    "BCL 405/B",              // casing / model
+    "pipeline gas export",     // service
+    "27-KA01",                 // equipment tag
+    "8300199-CA-001 sheet 14", // source document reference
+    CompressorChartMetadata.CurveType.AS_TESTED);
+meta.setReferenceConditions(18.5, 288.15, 60.0, 0.90); // MW, T[K], P[bara], Z
+meta.setDescription("Shop test curve, 2024 acceptance test");
+
+compressor.addChart("BCL405B-export-tested", asTestedChart, meta);
+```
+
+`CurveType` values: `EXPECTED` (vendor design), `AS_TESTED` (shop test),
+`GENERATED` (NeqSim-generated, anchored to a rated point), `FIELD_FITTED`
+(fitted to historian data), and `UNSPECIFIED`.
+
+### Saving and Loading a Chart Database
+
+The library serializes to JSON — a compact catalog for browsing/selection UIs
+(`describe()`, names + metadata only) or a full round-trippable form
+(`toJson()` / `fromJson()`, including all curves and surge lines):
+
+```java
+CompressorChartLibrary lib = compressor.getChartLibrary();
+
+// Browse catalog (names + metadata + selected flag; no curve data):
+String catalog = lib.describe();
+
+// Persist / reload the full library (all curves + metadata):
+lib.saveToFile("BCL405B_charts.json");
+CompressorChartLibrary loaded = CompressorChartLibrary.loadFromFile("BCL405B_charts.json");
+compressor.setChartLibrary(loaded);
+compressor.selectChart(loaded.getSelectedName());
+```
+
+**When to use the library:** vendor curve databases shared across studies,
+comparing design vs as-tested vs field-fitted performance for the same machine,
+CO₂/revamp what-if studies that swap impellers/curves, and digital-twin
+workflows that keep both the datasheet curve and a historian-fitted curve on the
+same compressor.
+
+---
+
 ## API Reference
 
 ### CompressorChartInterface Methods
@@ -1682,6 +1776,43 @@ reader.setCurvesToCompressor(compressor);
 | `getRatioToMaxSpeed(speed)` | Get ratio of given speed to max speed |
 | `getRatioToMinSpeed()` | Get ratio of current speed to min speed |
 | `getRatioToMinSpeed(speed)` | Get ratio of given speed to min speed |
+
+### Compressor Chart Library Methods
+
+| Method | Description |
+|--------|-------------|
+| `getChartLibrary()` | Get the compressor's `CompressorChartLibrary` (created empty on first access, never null) |
+| `setChartLibrary(library)` | Attach an existing chart library to the compressor |
+| `addChart(name, chart)` | Add a named chart to the library (fluent, returns the compressor) |
+| `addChart(name, chart, metadata)` | Add a named chart with descriptive metadata |
+| `selectChart(name)` | Switch the active chart: sets it, enables it, turns on polytropic calc |
+| `getAvailableCharts()` | List the names of all charts in the library |
+| `getSelectedChartName()` | Get the name of the currently active library chart |
+
+### CompressorChartLibrary Methods
+
+| Method | Description |
+|--------|-------------|
+| `add(name, chart)` / `add(name, chart, metadata)` | Store a chart under a unique name (first added becomes selected) |
+| `get(name)` / `getMetadata(name)` | Retrieve a chart or its metadata by name |
+| `contains(name)` / `size()` / `getNames()` | Membership, count, and ordered name list |
+| `select(name)` | Select a chart by name (throws if not present) |
+| `getSelected()` / `getSelectedName()` | Current active chart / its name |
+| `remove(name)` | Remove a chart (re-selects another if the active one is removed) |
+| `describe()` | Compact JSON catalog (names + metadata + selected flag; no curve data) |
+| `toJson()` / `fromJson(json)` | Full round-trippable serialization (all curves + surge lines + metadata) |
+| `saveToFile(path)` / `loadFromFile(path)` | Persist / reload the full library as a JSON file |
+
+### CompressorChartMetadata Methods
+
+| Method | Description |
+|--------|-------------|
+| `CompressorChartMetadata(casingModel, service, tag, docRef, curveType)` | Convenience constructor for the common descriptive fields |
+| `setReferenceConditions(MW, T_K, P_bara, Z)` | Set the reference (basis) conditions the curve was measured at |
+| `getCasingModel()` / `getService()` / `getTag()` / `getDocumentReference()` | Descriptive accessors |
+| `getCurveType()` / `setCurveType(type)` | Curve origin: `EXPECTED`, `AS_TESTED`, `GENERATED`, `FIELD_FITTED`, `UNSPECIFIED` |
+| `getMolecularWeight()` / `getReferenceTemperature()` / `getReferencePressure()` / `getCompressibilityZ()` | Reference-condition accessors |
+| `getDescription()` / `setDescription(text)` | Free-text description |
 
 ---
 

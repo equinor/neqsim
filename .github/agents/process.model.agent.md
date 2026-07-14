@@ -61,6 +61,7 @@ documenting which standards were checked and their compliance status.
 - Recompression default: when building a recompression/export-compression train, ALWAYS close each suction/export scrubber's `getLiquidOutStream()` back to the separator at the matching pressure (HP scrubber→stage-1, MP scrubber→stage-2, LP scrubber→stage-3) via a seed stream + TP-setter `Heater` + `Recycle`. Never leave scrubber liquid unconnected — it is silently dropped and under-counts condensate recovery. See `neqsim-platform-modeling` Section 4.
 - Adjusters: `Adjuster("name")` → `setAdjustedVariable(equipment, "methodName")` → `setTargetVariable(stream, "methodName", targetValue)`
 - Distillation: `DistillationColumn("name", numTrays, hasReboiler, hasCondenser)` → `addFeedStream(stream, trayNumber)`
+- Multiple compressor charts: a `Compressor` can hold several named performance maps in a `CompressorChartLibrary` and switch the active one with `compressor.selectChart("name")` (after `addChart(name, chart[, metadata])`). Use for vendor-expected vs as-tested vs field-fitted curves, revamp what-ifs, and digital twins. See `neqsim-api-patterns` and `docs/process/equipment/compressor_curves.md`.
 - Always call `process.run()` ONCE after adding all equipment
 - Clone fluids with `system.clone()` before branching to avoid shared-state bugs
 
@@ -103,6 +104,18 @@ hrsg.run();
 SteamTurbine st = new SteamTurbine("ST", hrsg.getSteamOutStream());
 st.setOutletPressure(0.1);  // condenser pressure in bara
 st.run();
+```
+
+**GasTurbine power-demand (inverse) mode:** to size fuel-gas (and CO₂) to a
+known driven load, set a required power instead of a fuel flow — the turbine
+sizes the fuel from the fuel LCV and its thermal efficiency:
+
+```java
+GasTurbine driver = new GasTurbine("GT driver", fuelGasStream);
+driver.setThermalEfficiency(0.36);      // required (> 0)
+driver.setRequiredPower(18.0, "MW");    // unit: "W", "kW" or "MW"
+driver.run();
+double fuel = driver.getFuelFlowRate("kg/hr");   // fuel consumption sized to the load
 ```
 
 ## Heat Integration (Pinch Analysis)

@@ -11,6 +11,50 @@
 
 ---
 
+## 2026-07-15 — New: `CompressorChartLibrary` (multiple named/selectable compressor charts) + `GasTurbine` power-demand mode
+
+### Summary
+
+Two additive features on the `process.equipment` compressor and power-generation classes. No
+change to existing behaviour.
+
+### New capability — compressor chart library
+
+- **`neqsim.process.equipment.compressor.CompressorChartLibrary`** — a named bundle/database of
+  several performance charts for one compressor (e.g. vendor expected, as-tested, field-fitted).
+  Store charts under unique names with optional metadata, select the active chart by name, and
+  round-trip the whole library to/from JSON (`describe()` for a catalog, `toJson()`/`fromJson()`
+  and `saveToFile()`/`loadFromFile()` for full curve+surge serialization).
+- **`neqsim.process.equipment.compressor.CompressorChartMetadata`** — self-describing metadata for
+  a chart: casing/model, service, tag, document reference, `CurveType`
+  (`EXPECTED`/`AS_TESTED`/`GENERATED`/`FIELD_FITTED`/`UNSPECIFIED`), and reference (basis)
+  conditions (MW, T, P, Z).
+- **`Compressor`** new methods: `getChartLibrary()` (lazy, never null), `setChartLibrary(lib)`,
+  `addChart(name, chart[, metadata])` (fluent), `selectChart(name)` (sets + enables the chart and
+  turns on polytropic calc in one call), `getAvailableCharts()`, `getSelectedChartName()`.
+- Tests: `CompressorChartLibraryTest` (all pass). Spotless clean, Java 8, log4j2.
+
+### New capability — GasTurbine inverse (power-demand) mode
+
+- **`neqsim.process.equipment.powergeneration.GasTurbine`** can now run in inverse (power-demand)
+  mode: `setRequiredPower(value, "W"|"kW"|"MW")` sizes the fuel-gas flow so the turbine delivers
+  the required net power from the fuel LCV and `thermalEfficiency`, so fuel consumption always
+  matches the driven load as the process solves. Set required power to 0 to return to normal
+  fuel-to-power mode. New: `getRequiredPower()` (W), `isPowerDemandMode()`, and
+  `getFuelFlowRate(unit)` (fuel-gas consumption in any flow unit). Requires a positive
+  `thermalEfficiency`.
+- Tests: `GasTurbineTest` (added cases pass).
+
+### Migration
+
+None (purely additive). Docs updated: `docs/process/equipment/compressor_curves.md` (new
+"Compressor Chart Library" section + API reference). Skills updated: `neqsim-power-generation`
+(GasTurbine power-demand mode), `neqsim-platform-modeling` and `neqsim-api-patterns` (chart
+library). Agents: `@compressor.model.builder` / compressor agents can use `selectChart(name)` to
+switch between vendor/as-tested/field-fitted curves.
+
+---
+
 ## 2026-07-14 — New: `CoolantBoilingMargin` coolant boiling-margin helper (heatexchanger)
 
 ### Summary

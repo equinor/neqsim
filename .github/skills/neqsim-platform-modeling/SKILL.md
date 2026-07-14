@@ -620,6 +620,19 @@ comp_curves.getAntiSurge().setActive(True)
 comp_curves.getAntiSurge().setSurgeControlFactor(1.05)  # 5% safety margin
 ```
 
+**Optional: Multiple named charts per compressor** (vendor vs as-tested vs
+field-fitted). A `Compressor` can carry several charts in a
+`CompressorChartLibrary` and switch the active one with a single call — useful
+for revamp/what-if studies and digital twins that keep both the datasheet curve
+and a historian-fitted curve on the same machine:
+```python
+comp_curves.addChart("R1-design", design_chart)
+comp_curves.addChart("R1-fieldfit", fieldfit_chart)
+comp_curves.selectChart("R1-fieldfit")   # sets + enables it, turns on polytropic calc
+# comp_curves.getAvailableCharts(); comp_curves.getSelectedChartName()
+# comp_curves.getChartLibrary().saveToFile("R1_charts.json")  # shared vendor-curve DB
+```
+
 ### 5.3 Anti-Surge Valve Flow Calculation (Cv-based)
 
 Compute anti-surge valve mass flow from Cv and valve opening:

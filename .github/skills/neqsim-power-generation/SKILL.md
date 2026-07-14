@@ -103,6 +103,31 @@ double idealAFR = gt.calcIdealAirFuelRatio(); // stoichiometric air/fuel mass ra
 > vendor-rated power, part-load + ambient correction, degradation, emissions,
 > and dispatch use `GasTurbineUnit` + `GasTurbineCatalog` (see section 7).
 
+### Inverse (power-demand) mode — size fuel to a load
+
+`GasTurbine` can also run **inverse**: instead of fuel-in → power-out, give it a
+required net power and it sizes the fuel-gas flow so the turbine delivers that
+load from the fuel lower heating value (LCV) and its `thermalEfficiency`. Use
+this when a compressor/generator load is known and you want the matching fuel
+(and CO₂) consumption as the process solves.
+
+```java
+GasTurbine gt = new GasTurbine("GT-driver", fuelStream);
+gt.setThermalEfficiency(0.36);          // REQUIRED (> 0) for power-demand mode
+gt.setRequiredPower(18.0, "MW");        // driven load; unit: "W", "kW" or "MW"
+gt.run();
+
+double fuel_kghr = gt.getFuelFlowRate("kg/hr");  // fuel-gas consumption sized to the load
+double fuel_Sm3d = gt.getFuelFlowRate("Sm3/day");
+boolean inverse  = gt.isPowerDemandMode();       // true
+double reqW      = gt.getRequiredPower();         // required power in Watts
+```
+
+> `setRequiredPower(0.0, ...)` returns the turbine to the normal fuel-to-power
+> mode. Power-demand mode throws if `thermalEfficiency <= 0`. For vendor-accurate
+> fuel/CO₂ vs a load demand, prefer `GasTurbineVendorPerformance` (top of this
+> skill) or the catalog-driven `GasTurbineUnit` (section 7).
+
 ## 2. Steam Turbine
 
 ```java

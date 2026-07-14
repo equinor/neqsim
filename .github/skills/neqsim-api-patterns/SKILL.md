@@ -341,6 +341,30 @@ Stream out = comp.getOutletStream();
 // After run: comp.getPower("kW")
 ```
 
+### Compressor chart library (multiple named/selectable charts)
+
+A `Compressor` can hold several performance maps at once via a
+`CompressorChartLibrary` and switch the active chart by name — the professional
+way to keep vendor-expected, as-tested and field-fitted curves for the same
+machine side by side (revamp studies, digital twins, design-vs-tested checks).
+See the [Compressor Chart Library](../../docs/process/equipment/compressor_curves.md#compressor-chart-library-multiple-named-charts) doc.
+
+```java
+comp.addChart("BCL405B-design", expectedChart);
+comp.addChart("BCL405B-tested", asTestedChart,
+    new CompressorChartMetadata("BCL 405/B", "gas export", "27-KA01",
+        "8300199-CA-001", CompressorChartMetadata.CurveType.AS_TESTED));
+comp.selectChart("BCL405B-tested");   // sets + enables the chart, turns on polytropic calc
+comp.run();
+
+List<String> charts = comp.getAvailableCharts();      // ["BCL405B-design", "BCL405B-tested"]
+String active = comp.getSelectedChartName();          // "BCL405B-tested"
+
+// Persist / reload a shared vendor-curve database (all curves + metadata):
+comp.getChartLibrary().saveToFile("BCL405B_charts.json");
+comp.setChartLibrary(CompressorChartLibrary.loadFromFile("BCL405B_charts.json"));
+```
+
 ### Compressor deposit / fouling degradation and washing
 
 Model deposit (fouling) mass from process thermodynamics, its effect on
