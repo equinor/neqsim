@@ -63,6 +63,16 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
 
   public double power = 0.0;
 
+  /**
+   * Required net shaft/electric power in Watts for the inverse (power-demand) mode. When {@link #powerDemandMode} is
+   * {@code true}, {@link #run(UUID)} sizes the fuel flow to deliver this power from the fuel lower heating value and
+   * {@link #thermalEfficiency}, so the fuel-gas consumption always matches the driven load as the process solves.
+   */
+  private double requiredPower = 0.0;
+
+  /** When {@code true} the turbine runs in inverse (power-demand) mode; see {@link #requiredPower}. */
+  private boolean powerDemandMode = false;
+
   /** Rated (maximum) power output in Watts. Used for capacity constraint calculations. */
   private double ratedPowerW = 0.0;
 
@@ -160,6 +170,10 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (powerDemandMode) {
+      runPowerDemand(id);
+      return;
+    }
     thermoSystem = inStream.getThermoSystem().clone();
 
     // Size the combustion-air flow from the fuel's stoichiometric oxygen demand plus excess air so
@@ -223,6 +237,91 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
       this.heat = fuelHeat - power;
     }
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Inverse (power-demand) run: size the fuel flow so the turbine delivers {@link #requiredPower}.
+   *
+   * <p>
+   * The fuel volumetric flow is computed from the fuel lower heating value (LCV, J/Sm3) and the simple-cycle
+   * {@link #thermalEfficiency}: fuelHeat = requiredPower / efficiency and fuelFlow[Sm3/s] = fuelHeat / LCV. The inlet
+   * fuel stream flow is set to this value, so the fuel consumption always matches the required load. The remaining fuel
+   * heat is reported as exhaust heat.
+   * </p>
+   *
+   * @param id the calculation identifier
+   */
+  private void runPowerDemand(UUID id) {
+    if (thermalEfficiency <= 0.0) {
+      throw new RuntimeException("GasTurbine " + getName()
+          + ": power-demand mode requires a positive thermalEfficiency; call setThermalEfficiency.");
+    }
+    if (inStream.getFlowRate("mole/sec") <= 0.0) {
+      inStream.setFlowRate(1.0, "mole/sec");
+    }
+    inStream.run(id);
+    double lcvVolumetric = inStream.LCV(); // J/Sm3
+    double fuelHeat = requiredPower / thermalEfficiency; // W
+    double reqStdFlow = lcvVolumetric > 0.0 ? fuelHeat / lcvVolumetric : 0.0; // Sm3/s
+    inStream.setFlowRate(reqStdFlow, "Sm3/sec");
+    inStream.run(id);
+    thermoSystem = inStream.getThermoSystem().clone();
+    power = requiredPower;
+    heat = fuelHeat - requiredPower;
+    outStream.setThermoSystem(thermoSystem.clone());
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Put the turbine in inverse (power-demand) mode and set the required net power. Requires a positive
+   * {@link #setThermalEfficiency(double) thermal efficiency}. Set to zero to return to the normal fuel-to-power mode.
+   *
+   * @param requiredPowerValue required net shaft/electric power (must be &gt;= 0)
+   * @param unit power unit: "W", "kW" or "MW"
+   */
+  public void setRequiredPower(double requiredPowerValue, String unit) {
+    double factor;
+    if ("W".equals(unit)) {
+      factor = 1.0;
+    } else if ("kW".equals(unit)) {
+      factor = 1.0e3;
+    } else if ("MW".equals(unit)) {
+      factor = 1.0e6;
+    } else {
+      throw new RuntimeException(
+          "GasTurbine " + getName() + ": unsupported power unit '" + unit + "' (use W, kW or MW).");
+    }
+    this.requiredPower = requiredPowerValue * factor;
+    this.powerDemandMode = requiredPowerValue > 0.0;
+  }
+
+  /**
+   * Get the required net power used in inverse (power-demand) mode.
+   *
+   * @return required net power in Watts
+   */
+  public double getRequiredPower() {
+    return requiredPower;
+  }
+
+  /**
+   * Check whether the turbine is running in inverse (power-demand) mode.
+   *
+   * @return {@code true} if in power-demand mode
+   */
+  public boolean isPowerDemandMode() {
+    return powerDemandMode;
+  }
+
+  /**
+   * Get the fuel-gas consumption computed by the turbine (the inlet fuel stream flow).
+   *
+   * @param unit flow-rate unit (e.g. "Sm3/sec", "Sm3/day", "kg/sec", "mole/sec")
+   * @return fuel-gas flow rate in the requested unit
+   */
+  public double getFuelFlowRate(String unit) {
+    return inStream.getFlowRate(unit);
   }
 
   /**

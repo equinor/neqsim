@@ -166,9 +166,18 @@ constraints, and BDV/PSV/vent valves become relief or blowdown paths.
 
 | Natural Language Synonyms | NeqSim `type` |
 |---------------------------|---------------|
-| mixer, mixing tee, junction, merge, combine, commingling manifold | `Mixer` |
+| mixer, mixing tee, junction, merge, combine | `Mixer` |
 | splitter, tee, flow divider, bypass tee | `Splitter` |
-| manifold, production manifold, subsea manifold | `Manifold` |
+| manifold, production manifold, gathering manifold, commingling manifold, subsea manifold, inlet/export header | `Manifold` |
+
+**Always model a manifold as `Manifold`, not `Mixer`/`Splitter`.** Add all inlet
+streams with `addStream(...)`, then **route downstream from a split stream, not
+`getMixedStream()`.** A single-destination gathering manifold sets one split
+(`setSplitFactors([1.0])`) and routes `getSplitStream(0)`; a distributing
+manifold sets `setSplitFactors([...])` (fractions summing to 1) and reads each
+outlet with `getSplitStream(i)`. `getMixedStream()` is the internal commingled
+stream (before the split) — for inspection only. The `Manifold` also carries
+header / branch diameters for hydraulics and mechanical design.
 
 ### Streams
 

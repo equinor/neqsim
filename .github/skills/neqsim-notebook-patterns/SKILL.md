@@ -290,9 +290,17 @@ def create_well_feed_model(inp):
     feed = Stream("feed", fluid)
     feed.setFlowRate(inp.flow_rate, "kg/hr")
     well_process.add(feed)
-    manifold = Splitter("manifold", feed)
+    # A manifold is modelled with the Manifold class (not a Splitter): add the
+    # routed inlet streams with addStream, then ALWAYS route downstream from a
+    # split stream. Single destination -> setSplitFactors([1.0]) + getSplitStream(0);
+    # several trains -> setSplitFactors([...]) + getSplitStream(i). getMixedStream()
+    # is the internal commingled stream (before the split), for inspection only.
+    Manifold = ns.JClass("neqsim.process.equipment.manifold.Manifold")
+    manifold = Manifold("well manifold")
+    manifold.addStream(feed)
     manifold.setSplitFactors([0.5, 0.5])
     well_process.add(manifold)
+    # e.g. train A = manifold.getSplitStream(0), train B = manifold.getSplitStream(1)
     return well_process
 
 def create_separation_process(inp, feed_stream):

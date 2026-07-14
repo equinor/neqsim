@@ -264,7 +264,7 @@ transport properties (viscosity, thermal conductivity, density).
 | `Ejector` | Ejector / eductor | `process.equipment.ejector` |
 | `Electrolyzer` | Water electrolysis | `process.equipment.electrolyzer` |
 | `Tank` | Storage tank | `process.equipment.tank` |
-| `Manifold` | Subsea manifold | `process.equipment.manifold` |
+| `Manifold` | Production / gathering / commingling / export / subsea manifold & headers — use for ALL manifolds, not `Mixer`/`Splitter`. Always route downstream from a split stream: single destination → `setSplitFactors([1.0])` + `getSplitStream(0)`; multiple → `setSplitFactors([...])` + `getSplitStream(i)`. `getMixedStream()` = internal commingled stream (before split), inspection only | `process.equipment.manifold` |
 | `SimpleReservoir` | Simple reservoir model | `process.equipment.reservoir` |
 
 ### Process System

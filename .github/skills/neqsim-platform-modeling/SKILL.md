@@ -210,10 +210,18 @@ upstream equipment creates its outlet stream).
 ```python
 operations = ProcessSystem()
 
-# Pre-create all mixers FIRST (no streams yet)
+# Pre-create all mixers/manifolds FIRST (no streams yet)
 inlet_oil_mixer = jneqsim.process.equipment.mixer.StaticMixer("Inlet oil mixer")
 recomp_gas_mixer = jneqsim.process.equipment.mixer.StaticMixer("Recomp gas mixer")
-export_manifold = jneqsim.process.equipment.mixer.StaticMixer("Export manifold")
+# A production/gathering/export MANIFOLD is modelled with the Manifold class,
+# NOT a Mixer/StaticMixer: it carries header/branch diameters and ALWAYS routes
+# downstream through a split stream. For a single destination give it one split
+# (setSplitFactors([1.0])) and route getSplitStream(0); for several destinations
+# set setSplitFactors([...]) and read getSplitStream(i). getMixedStream() is the
+# internal commingled stream (before the split) - for inspection only.
+export_manifold = jneqsim.process.equipment.manifold.Manifold("Export manifold")
+export_manifold.setHeaderInnerDiameter(0.9)
+export_manifold.setSplitFactors([1.0])
 recycle_oil_mixer = jneqsim.process.equipment.mixer.StaticMixer("Recycle from export")
 
 # Build upstream equipment...
@@ -669,7 +677,8 @@ Gas from the recompression train goes to export and/or injection via a splitter:
 export_manifold.addStream(r3_output)  # All sources to manifold
 operations.add(export_manifold)
 
-production_split = Splitter("Prod split", export_manifold.getOutletStream())
+# Manifold commingled outlet is getMixedStream() (not getOutletStream()).
+production_split = Splitter("Prod split", export_manifold.getSplitStream(0))
 production_split.setSplitFactors([split_export, split_injection])
 operations.add(production_split)
 ```

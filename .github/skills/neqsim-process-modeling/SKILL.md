@@ -40,11 +40,25 @@ specialists such as mechanical design, safety, plant data, and reporting.
 |-----------|---------------------|
 | Single train, linear or branched flowsheet | One `ProcessSystem` |
 | Multiple areas with cross-area streams | Multiple `ProcessSystem` objects in a `ProcessModel` |
+| Production / gathering / commingling / export **manifold** or inlet header | `Manifold` (`process.equipment.manifold.Manifold`) — NOT `Mixer`/`Splitter` |
 | PFD/P&ID or unstructured text input | Use `neqsim-process-extraction` first |
 | Distillation or fractionation | Load `neqsim-distillation-design` |
 | Startup, shutdown, controllers, inventory dynamics | Load `neqsim-dynamic-simulation` |
 | Turndown or control valve operability | Load `neqsim-controllability-operability` |
 | Platform-scale separation/recompression | Load `neqsim-platform-modeling` |
+
+**Manifolds:** always model a well/production/gathering/commingling/export
+manifold (or an inlet/outlet header) with the `Manifold` class, not a plain
+`Mixer` or `Splitter`. Add the routed inlet streams with `addStream(...)`. **A
+manifold ALWAYS has split outlets — route downstream from a split stream, never
+from `getMixedStream()`.** If the manifold feeds a single destination, give it
+one split (`setSplitFactors([1.0])`) and route its `getSplitStream(0)`. For a
+distributing manifold set `setSplitFactors([f0, f1, ...])` (fractions summing to
+1) and read each branch with `getSplitStream(i)`. `getMixedStream()` returns only
+the internal commingled stream (all inlets combined, before the split) — use it
+for inspection, not for wiring downstream. The `Manifold` also carries
+header/branch inner diameters (`setHeaderInnerDiameter`, `setBranchInnerDiameter`)
+for hydraulics and mechanical design.
 
 ## Data Basis for an Optimization-Ready Model
 

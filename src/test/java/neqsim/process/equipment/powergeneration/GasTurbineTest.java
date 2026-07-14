@@ -130,4 +130,54 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     Assertions.assertThrows(IllegalArgumentException.class, () -> gasturb.setThermalEfficiency(-0.1));
     Assertions.assertThrows(IllegalArgumentException.class, () -> gasturb.setHeatRate(0.0));
   }
+
+  @Test
+  void testPowerDemandModeSizesFuel() {
+    SystemSrkEos fuel = new SystemSrkEos(298.15, 20.0);
+    fuel.addComponent("methane", 0.9);
+    fuel.addComponent("ethane", 0.1);
+    fuel.setMixingRule("classic");
+    Stream fuelStream = new Stream("fuel", fuel);
+    fuelStream.setFlowRate(1000.0, "kg/hr");
+    fuelStream.setTemperature(25.0, "C");
+    fuelStream.setPressure(20.0, "bara");
+    fuelStream.run();
+
+    double efficiency = 0.34;
+    double requiredPowerW = 30.0e6; // 30 MW
+    GasTurbine gasturb = new GasTurbine("turbine", fuelStream);
+    gasturb.setThermalEfficiency(efficiency);
+    gasturb.setRequiredPower(30.0, "MW");
+    Assertions.assertTrue(gasturb.isPowerDemandMode(), "turbine must be in power-demand mode");
+    gasturb.run();
+
+    // The turbine must deliver exactly the required power.
+    assertEquals(requiredPowerW, gasturb.getPower(), requiredPowerW * 1e-6);
+    // The sized fuel flow must close the energy balance: power = efficiency x fuel LHV.
+    double fuelHeat = fuelStream.LCV() * gasturb.getFuelFlowRate("Sm3/sec");
+    assertEquals(requiredPowerW, efficiency * fuelHeat, requiredPowerW * 1e-4);
+    // Fuel flow must be positive and finite.
+    Assertions.assertTrue(gasturb.getFuelFlowRate("mole/sec") > 0.0, "fuel flow must be positive");
+    Assertions.assertTrue(Double.isFinite(gasturb.getFuelFlowRate("Sm3/day")), "fuel flow finite");
+
+    // Doubling the required power must roughly double the fuel demand.
+    double fuelAt30 = gasturb.getFuelFlowRate("Sm3/sec");
+    gasturb.setRequiredPower(60.0, "MW");
+    gasturb.run();
+    assertEquals(2.0 * fuelAt30, gasturb.getFuelFlowRate("Sm3/sec"), 2.0 * fuelAt30 * 1e-3);
+  }
+
+  @Test
+  void testPowerDemandModeRequiresEfficiency() {
+    SystemSrkEos fuel = new SystemSrkEos(298.15, 20.0);
+    fuel.addComponent("methane", 1.0);
+    fuel.setMixingRule("classic");
+    Stream fuelStream = new Stream("fuel", fuel);
+    fuelStream.setFlowRate(1000.0, "kg/hr");
+    fuelStream.run();
+
+    GasTurbine gasturb = new GasTurbine("turbine", fuelStream);
+    gasturb.setRequiredPower(10.0, "MW"); // no thermal efficiency set
+    Assertions.assertThrows(RuntimeException.class, () -> gasturb.run());
+  }
 }
