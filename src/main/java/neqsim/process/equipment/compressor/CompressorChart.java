@@ -824,6 +824,66 @@ public class CompressorChart implements CompressorChartInterface, java.io.Serial
   }
 
   /**
+   * Get the stonewall / overload flow (maximum flow) of the curve closest to a specific speed.
+   *
+   * @param speed The compressor speed in RPM
+   * @return The maximum flow at the specified speed in m3/hr, or Double.NaN if no curves exist
+   */
+  @Override
+  public double getStonewallFlowAtSpeed(double speed) {
+    if (chartValues.isEmpty()) {
+      return Double.NaN;
+    }
+    CompressorCurve closestCurve = chartValues.get(0);
+    double minSpeedDiff = Math.abs(closestCurve.speed - speed);
+    for (CompressorCurve curve : chartValues) {
+      double speedDiff = Math.abs(curve.speed - speed);
+      if (speedDiff < minSpeedDiff) {
+        minSpeedDiff = speedDiff;
+        closestCurve = curve;
+      }
+    }
+    double maxFlow = closestCurve.flow[0];
+    for (double flow : closestCurve.flow) {
+      if (flow > maxFlow) {
+        maxFlow = flow;
+      }
+    }
+    return maxFlow;
+  }
+
+  /**
+   * Classify an operating flow against the digitized flow range of the curve closest to the given speed. This lets a
+   * caller detect when a vendor performance curve is being used outside its validity (extrapolated), which otherwise
+   * happens silently.
+   *
+   * @param flow the actual inlet volumetric flow in m3/hr
+   * @param speed the compressor speed in RPM
+   * @return one of {@code "IN_RANGE"}, {@code "EXTRAPOLATED_LOW_FLOW"} (below the surge/minimum flow),
+   * {@code "EXTRAPOLATED_HIGH_FLOW"} (beyond the stonewall/maximum flow) or {@code "NO_CHART"} when no curves are
+   * defined
+   */
+  @Override
+  public String getFlowRangeStatus(double flow, double speed) {
+    if (chartValues.isEmpty()) {
+      return "NO_CHART";
+    }
+    double lo = getSurgeFlowAtSpeed(speed);
+    double hi = getStonewallFlowAtSpeed(speed);
+    if (Double.isNaN(lo) || Double.isNaN(hi)) {
+      return "NO_CHART";
+    }
+    double tol = 1.0e-6 * Math.max(1.0, hi);
+    if (flow < lo - tol) {
+      return "EXTRAPOLATED_LOW_FLOW";
+    }
+    if (flow > hi + tol) {
+      return "EXTRAPOLATED_HIGH_FLOW";
+    }
+    return "IN_RANGE";
+  }
+
+  /**
    * Get the surge head (polytropic head at minimum flow) at a specific speed.
    * <p>
    * This method finds the compressor curve closest to the specified speed and returns the polytropic head at the

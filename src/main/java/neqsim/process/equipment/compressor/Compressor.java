@@ -1945,6 +1945,31 @@ public class Compressor extends TwoPortEquipment
   }
 
   /**
+   * Classify the current operating flow against the compressor chart's valid flow range, to detect off-design
+   * (extrapolated) operation that otherwise happens silently. Evaluated at the current inlet volumetric flow and speed.
+   *
+   * @return one of {@code "IN_RANGE"}, {@code "EXTRAPOLATED_LOW_FLOW"}, {@code "EXTRAPOLATED_HIGH_FLOW"} or
+   * {@code "NO_CHART"} (when no chart is in use or no fluid is available)
+   */
+  public String getChartFlowStatus() {
+    if (compressorChart == null || !compressorChart.isUseCompressorChart() || getThermoSystem() == null) {
+      return "NO_CHART";
+    }
+    double actualFlow = getThermoSystem().getFlowRate("m3/hr");
+    return compressorChart.getFlowRangeStatus(actualFlow, getSpeed());
+  }
+
+  /**
+   * Check whether the compressor is operating outside the valid range of its performance chart (extrapolated).
+   *
+   * @return {@code true} if the chart flow status is an extrapolation, {@code false} otherwise
+   */
+  public boolean isChartExtrapolated() {
+    String status = getChartFlowStatus();
+    return status.startsWith("EXTRAPOLATED");
+  }
+
+  /**
    * Setter for the field <code>compressorChart</code>.
    *
    * @param compressorChart a {@link neqsim.process.equipment.compressor.CompressorChartInterface} object

@@ -73,6 +73,16 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   /** When {@code true} the turbine runs in inverse (power-demand) mode; see {@link #requiredPower}. */
   private boolean powerDemandMode = false;
 
+  /**
+   * Shaft loads (compressors) driven by this turbine. In power-demand mode their {@link Compressor#getPower()} is
+   * summed with {@link #auxiliaryPowerW} to size the required power, so the fuel gas automatically tracks the driven
+   * duty as the process solves. The loads must be run before this turbine.
+   */
+  private final List<Compressor> drivenLoads = new ArrayList<Compressor>();
+
+  /** Fixed auxiliary (generator / utility / pump) load in Watts added to the driven-load sum. */
+  private double auxiliaryPowerW = 0.0;
+
   /** Rated (maximum) power output in Watts. Used for capacity constraint calculations. */
   private double ratedPowerW = 0.0;
 
@@ -170,7 +180,7 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    if (powerDemandMode) {
+    if (powerDemandMode || !drivenLoads.isEmpty() || auxiliaryPowerW > 0.0) {
       runPowerDemand(id);
       return;
     }
@@ -256,6 +266,11 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
       throw new RuntimeException("GasTurbine " + getName()
           + ": power-demand mode requires a positive thermalEfficiency; call setThermalEfficiency.");
     }
+    // When shaft loads are attached, the required power is the sum of their shaft power plus the
+    // fixed auxiliary load, so the fuel gas automatically tracks the driven duty each solve.
+    if (!drivenLoads.isEmpty() || auxiliaryPowerW > 0.0) {
+      this.requiredPower = getAggregatedLoadPowerW();
+    }
     if (inStream.getFlowRate("mole/sec") <= 0.0) {
       inStream.setFlowRate(1.0, "mole/sec");
     }
@@ -322,6 +337,74 @@ public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedE
    */
   public double getFuelFlowRate(String unit) {
     return inStream.getFlowRate(unit);
+  }
+
+  /**
+   * Attach a shaft load (compressor) driven by this turbine. In power-demand mode the sum of all driven-load shaft
+   * powers plus the auxiliary load sizes the fuel gas, so it automatically tracks the driven duty. The loads must be
+   * run before this turbine each solve.
+   *
+   * @param load the driven compressor to add (must not be {@code null})
+   */
+  public void addDrivenLoad(Compressor load) {
+    if (load == null) {
+      throw new IllegalArgumentException("GasTurbine " + getName() + ": driven load must not be null.");
+    }
+    drivenLoads.add(load);
+    powerDemandMode = true;
+  }
+
+  /**
+   * Get the shaft loads driven by this turbine.
+   *
+   * @return the list of driven compressors (never {@code null})
+   */
+  public List<Compressor> getDrivenLoads() {
+    return drivenLoads;
+  }
+
+  /**
+   * Set a fixed auxiliary (generator / utility / pump) load added to the driven-load sum in power-demand mode.
+   *
+   * @param auxiliaryLoad the auxiliary load value (must be &gt;= 0)
+   * @param unit power unit: "W", "kW" or "MW"
+   */
+  public void setAuxiliaryLoad(double auxiliaryLoad, String unit) {
+    double factor;
+    if ("W".equals(unit)) {
+      factor = 1.0;
+    } else if ("kW".equals(unit)) {
+      factor = 1.0e3;
+    } else if ("MW".equals(unit)) {
+      factor = 1.0e6;
+    } else {
+      throw new RuntimeException(
+          "GasTurbine " + getName() + ": unsupported power unit '" + unit + "' (use W, kW or MW).");
+    }
+    this.auxiliaryPowerW = auxiliaryLoad * factor;
+    powerDemandMode = true;
+  }
+
+  /**
+   * Get the fixed auxiliary load in Watts.
+   *
+   * @return auxiliary load in watts (W)
+   */
+  public double getAuxiliaryLoad() {
+    return auxiliaryPowerW;
+  }
+
+  /**
+   * Get the aggregated driven power: the sum of all driven-load shaft powers plus the auxiliary load.
+   *
+   * @return aggregated driven power in watts (W)
+   */
+  public double getAggregatedLoadPowerW() {
+    double sum = auxiliaryPowerW;
+    for (Compressor load : drivenLoads) {
+      sum += load.getPower();
+    }
+    return sum;
   }
 
   /**

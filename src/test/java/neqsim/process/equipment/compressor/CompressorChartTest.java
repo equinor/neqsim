@@ -157,6 +157,30 @@ public class CompressorChartTest {
   }
 
   @Test
+  void testChartFlowRangeStatus() {
+    CompressorChartInterface chart = comp1.getCompressorChart();
+    // Curve closest to speed 11683 spans flow ~2415 .. 5139 m3/hr.
+    double speed = 11683.0;
+    double surge = chart.getSurgeFlowAtSpeed(speed);
+    double stonewall = chart.getStonewallFlowAtSpeed(speed);
+    assertTrue(stonewall > surge, "stonewall flow must exceed surge flow");
+
+    Assertions.assertEquals("IN_RANGE", chart.getFlowRangeStatus(0.5 * (surge + stonewall), speed));
+    Assertions.assertEquals("EXTRAPOLATED_LOW_FLOW", chart.getFlowRangeStatus(surge - 500.0, speed));
+    Assertions.assertEquals("EXTRAPOLATED_HIGH_FLOW", chart.getFlowRangeStatus(stonewall + 500.0, speed));
+
+    // Via the compressor, once the chart is active.
+    chart.setUseCompressorChart(true);
+    comp1.setSpeed((int) speed);
+    Stream stream_1 = (Stream) comp1.getInletStream();
+    stream_1.run();
+    comp1.run();
+    String status = comp1.getChartFlowStatus();
+    Assertions.assertTrue(status.equals("IN_RANGE") || status.startsWith("EXTRAPOLATED"), "status: " + status);
+    Assertions.assertEquals(status.startsWith("EXTRAPOLATED"), comp1.isChartExtrapolated());
+  }
+
+  @Test
   void testSetHeadUnit() {
     CompressorChart cc = new CompressorChart();
     String origUnit = cc.getHeadUnit();

@@ -180,4 +180,51 @@ public class GasTurbineTest extends neqsim.NeqSimTest {
     gasturb.setRequiredPower(10.0, "MW"); // no thermal efficiency set
     Assertions.assertThrows(RuntimeException.class, () -> gasturb.run());
   }
+
+  @Test
+  void testDrivenLoadAutoSizesFuel() {
+    // A compressor as the driven shaft load.
+    SystemSrkEos process = new SystemSrkEos(298.15, 20.0);
+    process.addComponent("methane", 0.9);
+    process.addComponent("ethane", 0.1);
+    process.setMixingRule("classic");
+    Stream procStream = new Stream("process gas", process);
+    procStream.setFlowRate(50000.0, "kg/hr");
+    procStream.setTemperature(30.0, "C");
+    procStream.setPressure(20.0, "bara");
+    procStream.run();
+    neqsim.process.equipment.compressor.Compressor comp = new neqsim.process.equipment.compressor.Compressor(
+        "load compressor", procStream);
+    comp.setOutletPressure(60.0, "bara");
+    comp.run();
+    double loadPowerW = comp.getPower();
+    Assertions.assertTrue(loadPowerW > 0.0, "load compressor power must be positive");
+
+    // Fuel gas for the turbine.
+    SystemSrkEos fuel = new SystemSrkEos(298.15, 20.0);
+    fuel.addComponent("methane", 0.9);
+    fuel.addComponent("ethane", 0.1);
+    fuel.setMixingRule("classic");
+    Stream fuelStream = new Stream("fuel", fuel);
+    fuelStream.setFlowRate(1000.0, "kg/hr");
+    fuelStream.run();
+
+    double efficiency = 0.34;
+    double auxMW = 5.0;
+    GasTurbine gasturb = new GasTurbine("turbine", fuelStream);
+    gasturb.setThermalEfficiency(efficiency);
+    gasturb.addDrivenLoad(comp);
+    gasturb.setAuxiliaryLoad(auxMW, "MW");
+    Assertions.assertTrue(gasturb.isPowerDemandMode(), "turbine must be in power-demand mode");
+    gasturb.run();
+
+    double expectedPower = loadPowerW + auxMW * 1.0e6;
+    assertEquals(expectedPower, gasturb.getAggregatedLoadPowerW(), expectedPower * 1e-6);
+    // The turbine delivers exactly the aggregated driven power.
+    assertEquals(expectedPower, gasturb.getPower(), expectedPower * 1e-6);
+    // The fuel flow closes the energy balance: aggregated power = efficiency x fuel LHV.
+    double fuelHeat = fuelStream.LCV() * gasturb.getFuelFlowRate("Sm3/sec");
+    assertEquals(expectedPower, efficiency * fuelHeat, expectedPower * 1e-4);
+    Assertions.assertEquals(1, gasturb.getDrivenLoads().size());
+  }
 }

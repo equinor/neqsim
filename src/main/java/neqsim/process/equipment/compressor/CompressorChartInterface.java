@@ -324,6 +324,29 @@ public interface CompressorChartInterface extends Cloneable {
   public double getSurgeFlowAtSpeed(double speed);
 
   /**
+   * Get the stonewall / overload flow (maximum flow) of the curve closest to a specific speed.
+   *
+   * @param speed The compressor speed in RPM
+   * @return The maximum flow at the specified speed in m3/hr, or Double.NaN if not available
+   */
+  public default double getStonewallFlowAtSpeed(double speed) {
+    return Double.NaN;
+  }
+
+  /**
+   * Classify an operating flow against the digitized flow range of the curve closest to the given speed, to detect
+   * off-design (extrapolated) operation that otherwise happens silently.
+   *
+   * @param flow the actual inlet volumetric flow in m3/hr
+   * @param speed the compressor speed in RPM
+   * @return one of {@code "IN_RANGE"}, {@code "EXTRAPOLATED_LOW_FLOW"}, {@code "EXTRAPOLATED_HIGH_FLOW"} or
+   * {@code "NO_CHART"}
+   */
+  public default String getFlowRangeStatus(double flow, double speed) {
+    return "NO_CHART";
+  }
+
+  /**
    * Get the surge head (polytropic head at minimum flow) at a specific speed.
    *
    * @param speed The compressor speed in RPM
