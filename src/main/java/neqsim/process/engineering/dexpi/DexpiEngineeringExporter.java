@@ -23,8 +23,11 @@ import org.w3c.dom.NodeList;
 import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.engineering.EngineeringRequirement;
 import neqsim.process.engineering.EngineeringStandard;
+import neqsim.process.engineering.SimulationEngineeringDesignReport;
+import neqsim.process.engineering.SimulationEngineeringDesignRunner;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.mechanicaldesign.DesignConditions;
 import neqsim.process.processmodel.dexpi.DexpiXmlWriter;
 
 /**
@@ -44,12 +47,15 @@ public final class DexpiEngineeringExporter {
   public static final class ExportResult {
     private final Path dexpiFile;
     private final Path manifestFile;
+    private final Path calculationsFile;
     private final Path causeAndEffectFile;
     private final Map<String, Path> compressorMapFiles;
 
-    ExportResult(Path dexpiFile, Path manifestFile, Path causeAndEffectFile, Map<String, Path> compressorMapFiles) {
+    ExportResult(Path dexpiFile, Path manifestFile, Path calculationsFile, Path causeAndEffectFile,
+        Map<String, Path> compressorMapFiles) {
       this.dexpiFile = dexpiFile;
       this.manifestFile = manifestFile;
+      this.calculationsFile = calculationsFile;
       this.causeAndEffectFile = causeAndEffectFile;
       this.compressorMapFiles = new LinkedHashMap<String, Path>(compressorMapFiles);
     }
@@ -62,6 +68,11 @@ public final class DexpiEngineeringExporter {
     /** @return generated engineering manifest */
     public Path getManifestFile() {
       return manifestFile;
+    }
+
+    /** @return simulation-backed equipment, PSV, blowdown, flare and materials calculation handoff */
+    public Path getCalculationsFile() {
+      return calculationsFile;
     }
 
     /** @return proposed cause-and-effect matrix requiring HAZOP/LOPA and discipline review */
@@ -105,9 +116,12 @@ public final class DexpiEngineeringExporter {
 
     Path manifest = outputDirectory.resolve("engineering-manifest.json");
     Files.write(manifest, project.toJson().getBytes(StandardCharsets.UTF_8));
+    SimulationEngineeringDesignReport calculationReport = SimulationEngineeringDesignRunner.run(project);
+    Path calculations = outputDirectory.resolve("engineering-calculations.json");
+    Files.write(calculations, calculationReport.toJson().getBytes(StandardCharsets.UTF_8));
     Path causeAndEffect = outputDirectory.resolve("cause-and-effect.json");
     Files.write(causeAndEffect, materialization.toCauseAndEffectJson(project).getBytes(StandardCharsets.UTF_8));
-    return new ExportResult(dexpiFile, manifest, causeAndEffect, maps);
+    return new ExportResult(dexpiFile, manifest, calculations, causeAndEffect, maps);
   }
 
   private static Map<String, Path> writeCompressorMaps(EngineeringProject project, Path datasets) throws IOException {
@@ -151,6 +165,7 @@ public final class DexpiEngineeringExporter {
         appendAttribute(document, attributes, "FacilityType", project.getDesignBasis().getFacilityType());
         appendAttribute(document, attributes, "ProjectPhase", project.getDesignBasis().getProjectPhase());
         appendAttribute(document, attributes, "EngineeringManifestDocument", "engineering-manifest.json");
+        appendAttribute(document, attributes, "EngineeringCalculationsDocument", "engineering-calculations.json");
         appendAttribute(document, attributes, "CauseAndEffectDocument", "cause-and-effect.json");
         appendAttribute(document, attributes, "EngineeringApprovalState", "REVIEW_REQUIRED");
         appendAttribute(document, attributes, "Standards", joinStandards(project.getDesignBasis().getStandards()));
@@ -180,6 +195,7 @@ public final class DexpiEngineeringExporter {
               "datasets/" + map.getFileName().toString());
           appendAttribute(document, attributes, "CompressorMapDataOrigin", "SIMULATION_OR_VENDOR_INPUT");
         }
+        appendSimulationAndDesignConditions(document, attributes, project.getProcessSystem().getUnit(tag));
         equipment.appendChild(attributes);
       }
 
@@ -225,6 +241,55 @@ public final class DexpiEngineeringExporter {
     attribute.setAttribute("Name", name);
     attribute.setAttribute("Value", value);
     parent.appendChild(attribute);
+  }
+
+  private static void appendSimulationAndDesignConditions(Document document, Element attributes,
+      ProcessEquipmentInterface equipment) {
+    if (equipment == null) {
+      return;
+    }
+    try {
+      appendAttribute(document, attributes, "SimulationOperatingPressureBara",
+          Double.toString(equipment.getPressure("bara")));
+    } catch (Exception ex) {
+      // Operating pressure is optional for non-thermodynamic equipment.
+    }
+    try {
+      appendAttribute(document, attributes, "SimulationOperatingTemperatureC",
+          Double.toString(equipment.getTemperature("C")));
+    } catch (Exception ex) {
+      // Operating temperature is optional for non-thermodynamic equipment.
+    }
+    DesignConditions design = equipment.getDesignConditions();
+    if (design == null) {
+      return;
+    }
+    if (design.isDesignPressureSet()) {
+      appendAttribute(document, attributes, "DeclaredDesignPressureBara", Double.toString(design.getDesignPressure()));
+    }
+    if (design.isMaxDesignTemperatureSet()) {
+      appendAttribute(document, attributes, "DeclaredMaximumDesignTemperatureC",
+          Double.toString(design.getMaxDesignTemperature()));
+    }
+    if (design.isMinDesignTemperatureSet()) {
+      appendAttribute(document, attributes, "DeclaredMinimumDesignTemperatureC",
+          Double.toString(design.getMinDesignTemperature()));
+    }
+    if (design.isReliefSetPressureSet()) {
+      appendAttribute(document, attributes, "DeclaredReliefSetPressureBara",
+          Double.toString(design.getReliefSetPressure()));
+    }
+    if (design.isCorrosionAllowanceSet()) {
+      appendAttribute(document, attributes, "DeclaredCorrosionAllowanceMm",
+          Double.toString(design.getCorrosionAllowance()));
+    }
+    if (design.isConstructionMaterialSet()) {
+      appendAttribute(document, attributes, "DeclaredConstructionMaterial", design.getConstructionMaterial());
+    }
+    if (design.isFailureActionSet()) {
+      appendAttribute(document, attributes, "DeclaredValveFailureAction", design.getFailureAction().name());
+    }
+    appendAttribute(document, attributes, "CalculatedEngineeringDataStatus", "REVIEW_REQUIRED");
   }
 
   private static String joinStandards(List<EngineeringStandard> standards) {

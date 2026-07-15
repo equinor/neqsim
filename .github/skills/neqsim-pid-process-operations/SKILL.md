@@ -1,7 +1,7 @@
 ---
 name: neqsim-pid-process-operations
-version: "1.1.0"
-description: "P&ID-to-NeqSim operational workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim process simulations, linking equipment and instrument tags to plant historian data via tagreader, evaluating steady-state and dynamic valve/equipment changes, or preparing water-hammer valve-closure handoffs."
+version: "1.2.0"
+description: "Bidirectional P&ID/NeqSim workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim simulations, generating governed DEXPI engineering packages from ProcessSystem or ProcessModel, linking tags to historian data, evaluating valve/equipment changes, or preparing water-hammer and blowdown/flare handoffs."
 last_verified: "2026-07-15"
 requires:
   python_packages: [pandas]
@@ -35,6 +35,9 @@ private prompt file or local private skill.
   measurement devices, or dedicated blowdown/depressurization models.
 - Preparing `WaterHammerStudy` or MCP `runWaterHammer` inputs for fast liquid-line
   valve closure, pump trip, or check-valve slam.
+- Generating governed DEXPI engineering packages from a simulated `ProcessSystem`
+  or multi-area `ProcessModel`, including available mechanical, piping, PSV,
+  blowdown/flare and materials calculations.
 
 ## Required Skill Stack
 
@@ -192,8 +195,27 @@ DexpiEngineeringExporter.ExportResult files =
 The generated `plant.dexpi.xml` contains requirement-linked instrumentation
 functions, logic functions, information flows, control/protective valves, and
 equipment associations. It references `engineering-manifest.json`, the proposed
-`cause-and-effect.json`, and any `datasets/<tag>-compressor-map.json` sidecars.
+`cause-and-effect.json`, simulation-backed `engineering-calculations.json`, and
+any `datasets/<tag>-compressor-map.json` sidecars.
 Do not flatten large vendor maps into P&ID attributes.
+
+The calculation handoff automatically runs available equipment mechanical-design
+and materials-screening models. It can run API 520/521 PSV sizing from attached
+credible relief scenarios, and readiness-gated dynamic blowdown, flare load,
+radiation, capacity, and header checks from a
+`DynamicBlowdownFlareStudyDataSource`. A blocked-outlet PSV screen may be
+generated from simulated full inflow only when declared design and relief-set
+pressures exist. Treat missing-input statuses as data gaps; never fill them with
+generic values merely to obtain a size.
+
+For multi-area models, call
+`NorsokOffshoreEngineeringBuilder.fromProcessModel(...)` and export each returned
+`EngineeringProject` to its own area directory. Use
+`examples/notebooks/dexpi_engineering_full_processsystem.ipynb` and
+`examples/notebooks/dexpi_engineering_processmodel.ipynb` as the executable
+reference patterns. Never bypass the governed exporter with `DexpiXmlWriter`
+when the requested output includes safety, instrumentation, sizing or standards
+traceability.
 
 Safety governance is mandatory: rule-generated trips use `SIL_UNASSIGNED` and
 `REVIEW_REQUIRED`; generated controller tuning, trip set points, and voting

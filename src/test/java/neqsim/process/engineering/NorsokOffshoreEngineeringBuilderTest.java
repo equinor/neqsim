@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import neqsim.NeqSimTest;
@@ -14,6 +15,8 @@ import neqsim.process.engineering.dexpi.DexpiEngineeringExporter.ExportResult;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mechanicaldesign.DesignConditions;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -34,8 +37,12 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     Stream feed = new Stream("Feed", fluid);
     feed.setFlowRate(1.0, "MSm3/day");
     Separator scrubber = new Separator("20-VG-001", feed);
+    scrubber.setDesignConditions(
+        new DesignConditions().setDesignPressure(70.0).setReliefSetPressure(68.0).setMaxDesignTemperature(80.0)
+            .setMinDesignTemperature(-46.0).setConstructionMaterial("Carbon steel").setCorrosionAllowance(3.0));
     Compressor compressor = new Compressor("20-KA-001", scrubber.getGasOutStream());
     compressor.setOutletPressure(100.0, "bara");
+    compressor.setDesignConditions(new DesignConditions().setDesignPressure(120.0).setMaxDesignTemperature(150.0));
 
     ProcessSystem process = new ProcessSystem();
     process.setName("Gas compression train");
@@ -70,6 +77,7 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     ExportResult result = DexpiEngineeringExporter.export(project, temporaryDirectory.resolve("package"));
     assertTrue(Files.exists(result.getDexpiFile()));
     assertTrue(Files.exists(result.getManifestFile()));
+    assertTrue(Files.exists(result.getCalculationsFile()));
     assertTrue(Files.exists(result.getCauseAndEffectFile()));
     assertTrue(result.getCompressorMapFiles().containsKey("20-KA-001"));
 
@@ -77,6 +85,9 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(xml.contains("NeqSimEngineeringProject"));
     assertTrue(xml.contains("EngineeringRequirementIds"));
     assertTrue(xml.contains("CompressorPerformanceMapDocument"));
+    assertTrue(xml.contains("EngineeringCalculationsDocument"));
+    assertTrue(xml.contains("DeclaredDesignPressureBara"));
+    assertTrue(xml.contains("SimulationOperatingPressureBara"));
     assertTrue(xml.contains("datasets/20-KA-001-compressor-map.json"));
     assertTrue(xml.contains("ProcessInstrumentationFunction"));
     assertTrue(xml.contains("SpringLoadedGlobeSafetyValve"));
@@ -93,10 +104,28 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(manifest.contains("SIL_UNASSIGNED"));
     assertTrue(manifest.contains("REVIEW_REQUIRED"));
 
+    String calculations = new String(Files.readAllBytes(result.getCalculationsFile()), StandardCharsets.UTF_8);
+    assertTrue(calculations.contains("neqsim_engineering_calculations.v1"));
+    assertTrue(calculations.contains("equipmentMechanicalDesign"));
+    assertTrue(calculations.contains("AUTO_SCREENING_FULL_SIMULATED_INFLOW"));
+    assertTrue(calculations.contains("CALCULATED_PSV_SIZE_REVIEW_REQUIRED"));
+    assertTrue(calculations.contains("tripSettingEnvelopes"));
+    assertTrue(calculations.contains("CALCULATED_FEASIBLE_RANGE_REVIEW_REQUIRED"));
+    assertTrue(calculations.contains("materialsAndCorrosionScreening"));
+    assertTrue(calculations.contains("BLOWDOWN_FLARE_INPUT"));
+    assertTrue(calculations.contains("fitnessForConstruction"));
+
     String causeAndEffect = new String(Files.readAllBytes(result.getCauseAndEffectFile()), StandardCharsets.UTF_8);
     assertTrue(causeAndEffect.contains("PROPOSED_FOR_HAZOP_LOPA_AND_DISCIPLINE_REVIEW"));
     assertTrue(causeAndEffect.contains("High-high pressure"));
     assertTrue(causeAndEffect.contains("Trip compressor driver"));
     assertTrue(causeAndEffect.contains("votingArchitecture"));
+
+    ProcessModel processModel = new ProcessModel();
+    processModel.add("compression-area", process);
+    List<EngineeringProject> areaProjects = NorsokOffshoreEngineeringBuilder.fromProcessModel("Integrated model",
+        processModel, false);
+    assertEquals(1, areaProjects.size());
+    assertEquals("compression-area", areaProjects.get(0).getProcessSystem().getName());
   }
 }

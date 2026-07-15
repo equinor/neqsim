@@ -14,7 +14,10 @@ import neqsim.process.engineering.EngineeringValidationReport.Severity;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.materials.MaterialsReviewInput;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
+import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
 
 /**
  * Governed engineering representation associated with a runnable NeqSim process.
@@ -31,6 +34,9 @@ public final class EngineeringProject implements Serializable {
   private final ProcessSystem processSystem;
   private final EngineeringDesignBasis designBasis;
   private final List<EngineeringRequirement> requirements = new ArrayList<EngineeringRequirement>();
+  private final List<OverpressureProtectionStudy> overpressureStudies = new ArrayList<OverpressureProtectionStudy>();
+  private final List<DynamicBlowdownFlareStudyDataSource> blowdownFlareStudies = new ArrayList<DynamicBlowdownFlareStudyDataSource>();
+  private MaterialsReviewInput materialsReviewInput;
 
   EngineeringProject(String name, ProcessSystem processSystem, EngineeringDesignBasis designBasis) {
     if (name == null || name.trim().isEmpty()) {
@@ -82,6 +88,61 @@ public final class EngineeringProject implements Serializable {
   /** @return immutable generated-requirement list */
   public List<EngineeringRequirement> getRequirements() {
     return Collections.unmodifiableList(requirements);
+  }
+
+  /**
+   * Adds a project-specific overpressure study. The supplied scenarios remain engineering inputs and the calculated PSV
+   * size remains a review-required design result.
+   *
+   * @param study governed overpressure study
+   * @return this project
+   */
+  public EngineeringProject addOverpressureStudy(OverpressureProtectionStudy study) {
+    if (study == null) {
+      throw new IllegalArgumentException("study must not be null");
+    }
+    overpressureStudies.add(study);
+    return this;
+  }
+
+  /** @return immutable project-specific overpressure studies */
+  public List<OverpressureProtectionStudy> getOverpressureStudies() {
+    return Collections.unmodifiableList(overpressureStudies);
+  }
+
+  /**
+   * Adds a readiness-gated transient blowdown and flare study data source.
+   *
+   * @param study governed study inputs and evidence
+   * @return this project
+   */
+  public EngineeringProject addBlowdownFlareStudy(DynamicBlowdownFlareStudyDataSource study) {
+    if (study == null) {
+      throw new IllegalArgumentException("study must not be null");
+    }
+    blowdownFlareStudies.add(study);
+    return this;
+  }
+
+  /** @return immutable transient blowdown and flare study inputs */
+  public List<DynamicBlowdownFlareStudyDataSource> getBlowdownFlareStudies() {
+    return Collections.unmodifiableList(blowdownFlareStudies);
+  }
+
+  /**
+   * Sets project material-register and service data to overlay on simulation-derived conditions.
+   *
+   * @param input optional project materials input
+   * @return this project
+   */
+  public EngineeringProject setMaterialsReviewInput(MaterialsReviewInput input) {
+    this.materialsReviewInput = input;
+    return this;
+  }
+
+  /** @return optional project material-register and service input */
+  public MaterialsReviewInput getMaterialsReviewInput() {
+    return materialsReviewInput;
   }
 
   /** Returns requirements associated with one equipment tag. */

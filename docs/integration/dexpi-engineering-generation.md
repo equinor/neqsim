@@ -33,12 +33,40 @@ DexpiEngineeringExporter.ExportResult result =
     DexpiEngineeringExporter.export(project, Paths.get("build/engineering-package"));
 ```
 
+For a multi-area `ProcessModel`, build and export one DEXPI engineering project per area:
+
+```java
+List<EngineeringProject> areaProjects = NorsokOffshoreEngineeringBuilder
+    .fromProcessModel("Integrated facility", processModel, true);
+
+for (EngineeringProject areaProject : areaProjects) {
+  DexpiEngineeringExporter.export(areaProject,
+      Paths.get("build/engineering-package", areaProject.getProcessSystem().getName()));
+}
+```
+
+This preserves the area-document boundary used by DEXPI while retaining shared inter-area stream tags for model-level
+reconciliation.
+
+## Executable notebooks
+
+- [Full ProcessSystem engineering package](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/dexpi_engineering_full_processsystem.ipynb)
+  demonstrates equipment and piping design, compressor maps, trip envelopes, explicit PSV sizing, transient
+  blowdown/flare calculations, materials screening, DEXPI materialization, cause/effect and all sidecars.
+- [Multi-area ProcessModel engineering packages](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/dexpi_engineering_processmodel.ipynb)
+  demonstrates one governed project/package per process area, shared-stream topology and area-level comparison of
+  requirements, calculated design coverage and unresolved inputs.
+
+Both notebooks use workspace Java classes, execute end to end, save their generated package under
+`build/notebook-output/`, and retain the `REVIEW_REQUIRED` / not-fit-for-construction governance boundary.
+
 The package contains:
 
 ```text
 engineering-package/
 ├── plant.dexpi.xml
 ├── cause-and-effect.json
+├── engineering-calculations.json
 ├── engineering-manifest.json
 └── datasets/
     └── <compressor-tag>-compressor-map.json
@@ -48,6 +76,14 @@ The DEXPI model contains explicit, graphically positioned process-instrumentatio
 functions, instrumentation loops, information-flow relationships, control valves, shutdown valves, check valves,
 pressure-safety valves, and blowdown valves. Every generated object is associated with its protected equipment and
 source requirement. The manifest retains standards, rationale, provenance, review state, and validation findings.
+
+`engineering-calculations.json` runs the existing NeqSim engineering engines and keeps their results in one governed
+handoff. It includes equipment mechanical design, simulation operating points, feasible trip-setting envelopes when
+declared design limits exist, overpressure/PSV calculations, readiness-gated dynamic blowdown and flare calculations,
+and NORSOK materials/corrosion screening. Each section records whether it was calculated, proposed, blocked by missing
+input, or requires review. The DEXPI equipment objects reference this file and carry simulated operating conditions and
+declared design pressure, temperature, material, corrosion allowance, relief set pressure, and valve failure action
+where those values have been supplied.
 
 The materialized compressor template includes antisurge flow/differential-pressure measurement, an antisurge
 controller and recycle valve, suction and discharge shutdown isolation, reverse-flow prevention, blowdown, suction
@@ -59,6 +95,43 @@ objects are generated as governed P&amp;ID proposals.
 `cause-and-effect.json` is a traceable proposal generated from the same requirements. It intentionally leaves final
 set points and voting architectures unassigned and identifies proposed effects that must be resolved through
 HAZOP/LOPA, the shutdown philosophy, and the safety requirements specification.
+
+## Add sizing studies
+
+Equipment mechanical design and process-derived materials screening run automatically during export. A conservative
+blocked-outlet PSV screen is also run when an equipment item has declared design pressure and relief set pressure, a
+simulated inlet flow, and a usable fluid:
+
+```java
+separator.setDesignConditions(new DesignConditions()
+    .setDesignPressure(70.0)
+    .setReliefSetPressure(68.0)
+    .setMaxDesignTemperature(80.0)
+    .setMinDesignTemperature(-46.0));
+```
+
+Add explicit API 521 scenarios when the project has established credible causes and rates:
+
+```java
+ProtectedItem protectedSeparator = new ProtectedItem("20-VG-001", 70.0)
+    .setReliefSetPressureBara(68.0)
+    .setBackPressureBara(2.0);
+
+ReliefScenario blockedOutlet = new BlockedOutletRelief()
+    .setInflowRateKgPerS(maximumCredibleInflowKgPerS)
+    .setReliefPressureBara(68.0)
+    .setFluid(relievingFluid)
+    .calculate();
+
+project.addOverpressureStudy(
+    new OverpressureProtectionStudy(protectedSeparator).addScenario(blockedOutlet));
+```
+
+Use `addBlowdownFlareStudy(...)` with a reviewed `DynamicBlowdownFlareStudyDataSource` to run transient vessel
+depressurization, concurrent-source aggregation, BDV/orifice checks, PSV sizing, flare load/capacity, radiation and
+header Mach checks. The runner will return readiness blockers instead of calculating when required inventory, valve,
+fire, header, flare or evidence inputs are absent. Use `setMaterialsReviewInput(...)` to overlay project material
+register, aqueous chemistry, inspection, coating and design-life data on the process-derived service conditions.
 
 ## Safety governance
 
@@ -87,10 +160,13 @@ protection, machinery protection, isolation, reverse-flow prevention, settle-out
 performance-map sidecars.
 
 This output is suitable as a machine-readable concept/pre-FEED starting point, not as an issued-for-construction
-P&amp;ID or an approved safety design. Project engineering must complete line/nozzle and piping specifications,
-relief-scenario sizing, flare and blowdown hydraulics, fire-and-gas mapping, package/vendor interfaces, alarm
-rationalization, SIL determination and verification, tag allocation, maintainability reviews, and native DEXPI 2.0
-schema/tool validation before controlled issue.
+P&amp;ID or an approved safety design. NeqSim can calculate equipment and piping design results supported by its
+mechanical-design models, API 520/521 relief sizes supported by credible scenarios, dynamic blowdown/flare results
+supported by reviewed inventories and network data, and screening-level material recommendations. Project engineering
+must still complete and approve the scenario basis, detailed piping/nozzle/stress design, fire-and-gas mapping,
+package/vendor interfaces, alarm rationalization, SIL determination and verification, final voting and trip settings,
+shutdown actions, tag allocation, maintainability reviews, and native DEXPI 2.0 schema/tool validation before
+controlled issue.
 
 Company or project rules can implement `EngineeringRule` and be registered with `addRule(...)`. Keep
 operator-specific alarm philosophy, trip thresholds, voting, proprietary design requirements, and

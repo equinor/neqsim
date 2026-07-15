@@ -12,6 +12,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.mechanicaldesign.InstrumentScheduleGenerator;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -39,6 +40,36 @@ public final class NorsokOffshoreEngineeringBuilder {
   /** Creates a builder for a process and engineering-project name. */
   public static NorsokOffshoreEngineeringBuilder from(String name, ProcessSystem processSystem) {
     return new NorsokOffshoreEngineeringBuilder(name, processSystem);
+  }
+
+  /**
+   * Builds one governed engineering project per area in a multi-area process model.
+   *
+   * <p>
+   * DEXPI packages are area documents, so a {@link ProcessModel} is intentionally split into its constituent
+   * {@link ProcessSystem} objects. Shared inter-area streams remain present in each area's process topology and can be
+   * reconciled by their model tags in a document-management layer.
+   * </p>
+   *
+   * @param name common engineering project name
+   * @param processModel simulated multi-area model
+   * @param registerProposedInstruments true to add generated instruments to areas without measurement devices
+   * @return engineering projects in process-model insertion order
+   */
+  public static List<EngineeringProject> fromProcessModel(String name, ProcessModel processModel,
+      boolean registerProposedInstruments) {
+    if (processModel == null) {
+      throw new IllegalArgumentException("processModel must not be null");
+    }
+    List<EngineeringProject> projects = new ArrayList<EngineeringProject>();
+    for (String areaName : processModel.getProcessSystemNames()) {
+      ProcessSystem area = processModel.get(areaName);
+      if (area != null) {
+        projects
+            .add(from(name + " - " + areaName, area).registerProposedInstruments(registerProposedInstruments).build());
+      }
+    }
+    return projects;
   }
 
   /**
@@ -129,12 +160,23 @@ public final class NorsokOffshoreEngineeringBuilder {
             "Analysis and design of surface process safeguarding"))
         .addStandard(new EngineeringStandard("API 521", "7th ed. 2020", "Pressure-relieving and depressurizing systems",
             "Relief and depressurization assessments"))
+        .addStandard(new EngineeringStandard("API 520 Part I", "10th ed.",
+            "Sizing and selection of pressure-relieving devices", "Pressure safety valve orifice sizing"))
+        .addStandard(new EngineeringStandard("ASME B31.3", "Project applicable edition", "Process piping",
+            "Topside piping pressure design and screening"))
         .addStandard(new EngineeringStandard("API 617", "9th ed. 2022", "Axial and centrifugal compressors",
             "Compressor train and performance-map requirements"))
         .addStandard(new EngineeringStandard("API 670", "5th ed. 2014", "Machinery protection systems",
             "Vibration, axial position, speed and machinery protection"))
         .addStandard(new EngineeringStandard("NORSOK P-002", "2023+AC:2024", "Process system design",
             "Offshore process and utility-system requirements"))
+        .addStandard(new EngineeringStandard("NORSOK M-001", "Project applicable edition", "Materials selection",
+            "Materials and corrosion screening for hydrocarbon facilities"))
+        .addStandard(new EngineeringStandard("NORSOK M-506", "2017", "CO2 corrosion rate calculation model",
+            "Screening calculation for CO2 corrosion in production and process systems"))
+        .addStandard(new EngineeringStandard("ISO 15156", "2020 series",
+            "Materials for use in H2S-containing oil and gas production environments",
+            "Sour-service material screening"))
         .addStandard(new EngineeringStandard("NORSOK I-001", "2025+AC:2026", "Field instrumentation",
             "Field instrument design and installation"))
         .addStandard(new EngineeringStandard("NORSOK I-002", "2021", "Industrial automation and control systems",
