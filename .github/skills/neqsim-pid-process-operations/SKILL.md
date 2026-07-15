@@ -1,8 +1,8 @@
 ---
 name: neqsim-pid-process-operations
-version: "1.0.0"
-description: "P&ID-to-NeqSim operational workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim process simulations, linking equipment and instrument tags to plant historian data via tagreader, evaluating steady-state and dynamic valve/equipment changes, or preparing water-hammer valve-closure handoffs."
-last_verified: "2026-05-10"
+version: "1.3.0"
+description: "Bidirectional P&ID/NeqSim workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim simulations, generating governed DEXPI engineering packages from ProcessSystem or ProcessModel, linking tags to historian data, evaluating valve/equipment changes, or preparing water-hammer and blowdown/flare handoffs."
+last_verified: "2026-07-15"
 requires:
   python_packages: [pandas]
 ---
@@ -35,6 +35,9 @@ private prompt file or local private skill.
   measurement devices, or dedicated blowdown/depressurization models.
 - Preparing `WaterHammerStudy` or MCP `runWaterHammer` inputs for fast liquid-line
   valve closure, pump trip, or check-valve slam.
+- Generating governed DEXPI engineering packages from a simulated `ProcessSystem`
+  or multi-area `ProcessModel`, including available mechanical, piping, PSV,
+  blowdown/flare and materials calculations.
 
 ## Required Skill Stack
 
@@ -170,6 +173,74 @@ status, speed, power, or trip status. Save raw historian data as CSV inside the
 task folder before running calculations.
 
 ## Converting to NeqSim
+
+### Generating a governed DEXPI engineering package
+
+When the direction is NeqSim-to-P&ID, use the engineering project layer rather
+than calling `DexpiXmlWriter` alone. It adds a versioned design basis,
+standards traceability, deterministic control/safeguarding proposals, approval
+state, validation findings, and referenced compressor-map datasets:
+
+```java
+EngineeringProject project = NorsokOffshoreEngineeringBuilder
+    .from("Gas compression engineering model", process)
+    .registerProposedInstruments(true)
+    .build();
+
+EngineeringValidationReport validation = project.validate();
+DexpiEngineeringExporter.ExportResult files =
+    DexpiEngineeringExporter.export(project, Paths.get("engineering-package"));
+```
+
+The generated `plant.dexpi.xml` contains requirement-linked instrumentation
+functions, logic functions, information flows, control/protective valves, and
+equipment associations. It references `engineering-manifest.json`, the proposed
+`cause-and-effect.json`, simulation-backed `engineering-calculations.json`, and
+any `datasets/<tag>-compressor-map.json` sidecars.
+Do not flatten large vendor maps into P&ID attributes.
+
+The calculation handoff automatically runs available equipment mechanical-design
+and materials-screening models. It can run API 520/521 PSV sizing from attached
+credible relief scenarios, and readiness-gated dynamic blowdown, flare load,
+radiation, capacity, and header checks from a
+`DynamicBlowdownFlareStudyDataSource`. A blocked-outlet PSV screen may be
+generated from simulated full inflow only when declared design and relief-set
+pressures exist. Treat missing-input statuses as data gaps; never fill them with
+generic values merely to obtain a size.
+
+For an engineering-readiness package, attach the governed project inputs that
+correspond to the source documents:
+
+- `LineDesignInput` for line-list dimensions, schedule, wall, material, piping
+  class, corrosion allowance, design conditions and evidence reference;
+- `ReliefScenarioBasis` for hazard-review-required API 521 causes, with matching
+  scenarios in `OverpressureProtectionStudy`;
+- `SafetyFunctionDesign` for LOPA/SRS-backed target SIL, sensor/logic/final-element
+  failure data, MooN voting, proof-test interval, diagnostic coverage and beta factor;
+- `ShutdownSequence` for cause/effect actions, safe positions, timing budget,
+  HAZOP/SRS references and reset/restart definition.
+
+Inspect `engineeringReadiness` in `engineering-calculations.json`. It reports
+coverage percentage, missing-input count, severity, responsible discipline and
+approval state. Never interpret 100% calculation/evidence coverage as engineering
+approval or fitness for construction.
+
+For multi-area models, call
+`NorsokOffshoreEngineeringBuilder.fromProcessModel(...)` and export each returned
+`EngineeringProject` to its own area directory. Use
+`examples/notebooks/dexpi_engineering_full_processsystem.ipynb` and
+`examples/notebooks/dexpi_engineering_processmodel.ipynb` as the executable
+reference patterns. Never bypass the governed exporter with `DexpiXmlWriter`
+when the requested output includes safety, instrumentation, sizing or standards
+traceability.
+
+Safety governance is mandatory: rule-generated trips use `SIL_UNASSIGNED` and
+`REVIEW_REQUIRED`; generated controller tuning, trip set points, and voting
+architectures remain `NOT_ASSIGNED` unless a controlled `SafetyFunctionDesign`
+supplies them. Never derive SIL from equipment type, a generic tag template, or
+normal operating conditions. Set a SIL target only from an identified
+HAZOP/LOPA/QRA record and approve it through the project SRS workflow per IEC
+61511. See `neqsim-process-safety` for the risk-analysis handoff.
 
 ### Steady-State Model
 

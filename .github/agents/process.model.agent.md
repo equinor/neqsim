@@ -22,6 +22,25 @@ Represent reusable Java action sequences with `OperationalScenario` and
 `OperationalScenarioRunner`; for MCP clients, route the same study through
 `runOperationalStudy`.
 
+For NeqSim-to-P&ID or "complete DEXPI engineering model" requests, use the
+governed engineering path from `neqsim-pid-process-operations`:
+
+1. Run the `ProcessSystem` or all areas of the `ProcessModel`.
+2. Declare known `DesignConditions` and compressor maps on modeled equipment.
+3. Build with `NorsokOffshoreEngineeringBuilder`; use `fromProcessModel(...)`
+   for one project per area.
+4. Attach project-defined `OverpressureProtectionStudy` and
+   `DynamicBlowdownFlareStudyDataSource` inputs when their evidence is available.
+5. Attach controlled `LineDesignInput`, `ReliefScenarioBasis`,
+   `SafetyFunctionDesign`, and `ShutdownSequence` inputs when line-list,
+   HAZOP/LOPA/SRS and cause/effect evidence exists.
+6. Export only with `DexpiEngineeringExporter`, and inspect
+   `engineering-calculations.json` plus unresolved data gaps.
+
+Do not assign SIL, voting, final set points, failure actions, materials or final
+shutdown actions from generic equipment rules. Preserve `REVIEW_REQUIRED` until
+controlled HAZOP/LOPA, SRS, vendor and discipline approval records are supplied.
+
 ## Applicable Standards (MANDATORY)
 
 After building any process simulation, identify and check applicable design standards.
