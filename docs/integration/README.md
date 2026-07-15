@@ -21,6 +21,7 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 
 | Document | Description |
 |----------|-------------|
+| [agents_and_skills_setup.md](agents_and_skills_setup) | **Start here — install the `neqsim` CLI and agents/skills into VS Code; link to private enterprise setup** |
 | [ai_validation_framework.md](ai_validation_framework) | **AI-friendly validation framework with structured error handling** |
 | [ai_platform_integration.md](ai_platform_integration) | AI platform integration guide |
 | [ml_integration.md](ml_integration) | Machine learning integration |
