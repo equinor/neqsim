@@ -172,6 +172,15 @@ public final class NorsokOffshoreEngineeringBuilder {
         "Independent low-low level protective function",
         "Detect and mitigate gas blow-by to a lower-pressure liquid system; final architecture requires HAZOP/LOPA.",
         "ISO 10418:2019", "IEC 61511:2016");
+    add(project, separator, "PRESSURE-HH-TRIP", EngineeringRequirement.Type.TRIP,
+        "Independent high-high pressure protective function",
+        "Detect abnormal high pressure and isolate the credible pressure source; final set point, voting and actions "
+            + "require HAZOP/LOPA and the safety requirements specification.",
+        "ISO 10418:2019", "IEC 61511:2016");
+    add(project, separator, "PRESSURE-LL-TRIP", EngineeringRequirement.Type.TRIP,
+        "Independent low-low pressure protective function",
+        "Detect abnormal loss of pressure and mitigate gas blow-by, leakage or downstream equipment consequences.",
+        "ISO 10418:2019", "IEC 61511:2016");
     add(project, separator, "RELIEF", EngineeringRequirement.Type.RELIEF,
         "Pressure-relief and depressurization assessment",
         "Assess blocked outlet, control failure, gas blow-by, fire, thermal expansion and connected-system scenarios.",

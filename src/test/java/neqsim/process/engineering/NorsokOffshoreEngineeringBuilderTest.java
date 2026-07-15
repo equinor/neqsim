@@ -70,6 +70,7 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     ExportResult result = DexpiEngineeringExporter.export(project, temporaryDirectory.resolve("package"));
     assertTrue(Files.exists(result.getDexpiFile()));
     assertTrue(Files.exists(result.getManifestFile()));
+    assertTrue(Files.exists(result.getCauseAndEffectFile()));
     assertTrue(result.getCompressorMapFiles().containsKey("20-KA-001"));
 
     String xml = new String(Files.readAllBytes(result.getDexpiFile()), StandardCharsets.UTF_8);
@@ -77,10 +78,26 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(xml.contains("EngineeringRequirementIds"));
     assertTrue(xml.contains("CompressorPerformanceMapDocument"));
     assertTrue(xml.contains("datasets/20-KA-001-compressor-map.json"));
+    assertTrue(xml.contains("ProcessInstrumentationFunction"));
+    assertTrue(xml.contains("SpringLoadedGlobeSafetyValve"));
+    assertTrue(xml.contains("ASCV-20KA001"));
+    assertTrue(xml.contains("ESDV-SUC-20KA001"));
+    assertTrue(xml.contains("ESDV-DIS-20KA001"));
+    assertTrue(xml.contains("NRV-20KA001"));
+    assertTrue(xml.contains("EngineeringGovernance"));
+    assertTrue(xml.contains("VotingArchitecture"));
+    assertTrue(xml.contains("NOT_ASSIGNED"));
 
     String manifest = new String(Files.readAllBytes(result.getManifestFile()), StandardCharsets.UTF_8);
     assertTrue(manifest.contains("NORSOK P-002"));
     assertTrue(manifest.contains("SIL_UNASSIGNED"));
     assertTrue(manifest.contains("REVIEW_REQUIRED"));
+
+    String causeAndEffect =
+        new String(Files.readAllBytes(result.getCauseAndEffectFile()), StandardCharsets.UTF_8);
+    assertTrue(causeAndEffect.contains("PROPOSED_FOR_HAZOP_LOPA_AND_DISCIPLINE_REVIEW"));
+    assertTrue(causeAndEffect.contains("High-high pressure"));
+    assertTrue(causeAndEffect.contains("Trip compressor driver"));
+    assertTrue(causeAndEffect.contains("votingArchitecture"));
   }
 }

@@ -44,11 +44,14 @@ public final class DexpiEngineeringExporter {
   public static final class ExportResult {
     private final Path dexpiFile;
     private final Path manifestFile;
+    private final Path causeAndEffectFile;
     private final Map<String, Path> compressorMapFiles;
 
-    ExportResult(Path dexpiFile, Path manifestFile, Map<String, Path> compressorMapFiles) {
+    ExportResult(Path dexpiFile, Path manifestFile, Path causeAndEffectFile,
+        Map<String, Path> compressorMapFiles) {
       this.dexpiFile = dexpiFile;
       this.manifestFile = manifestFile;
+      this.causeAndEffectFile = causeAndEffectFile;
       this.compressorMapFiles = new LinkedHashMap<String, Path>(compressorMapFiles);
     }
 
@@ -60,6 +63,11 @@ public final class DexpiEngineeringExporter {
     /** @return generated engineering manifest */
     public Path getManifestFile() {
       return manifestFile;
+    }
+
+    /** @return proposed cause-and-effect matrix requiring HAZOP/LOPA and discipline review */
+    public Path getCauseAndEffectFile() {
+      return causeAndEffectFile;
     }
 
     /** @return immutable equipment-tag to compressor-map path mapping */
@@ -94,11 +102,15 @@ public final class DexpiEngineeringExporter {
     DexpiXmlWriter.writeDexpi20(project.getProcessSystem(), dexpiFile.toFile());
 
     Map<String, Path> maps = writeCompressorMaps(project, datasets);
-    enrichDexpi(project, dexpiFile, maps);
+    DexpiEngineeringMaterializer.MaterializationResult materialization =
+        enrichDexpi(project, dexpiFile, maps);
 
     Path manifest = outputDirectory.resolve("engineering-manifest.json");
     Files.write(manifest, project.toJson().getBytes(StandardCharsets.UTF_8));
-    return new ExportResult(dexpiFile, manifest, maps);
+    Path causeAndEffect = outputDirectory.resolve("cause-and-effect.json");
+    Files.write(causeAndEffect,
+        materialization.toCauseAndEffectJson(project).getBytes(StandardCharsets.UTF_8));
+    return new ExportResult(dexpiFile, manifest, causeAndEffect, maps);
   }
 
   private static Map<String, Path> writeCompressorMaps(EngineeringProject project, Path datasets) throws IOException {
@@ -119,8 +131,8 @@ public final class DexpiEngineeringExporter {
     return result;
   }
 
-  private static void enrichDexpi(EngineeringProject project, Path dexpiFile, Map<String, Path> maps)
-      throws IOException {
+  private static DexpiEngineeringMaterializer.MaterializationResult enrichDexpi(
+      EngineeringProject project, Path dexpiFile, Map<String, Path> maps) throws IOException {
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setNamespaceAware(false);
@@ -142,6 +154,7 @@ public final class DexpiEngineeringExporter {
         appendAttribute(document, attributes, "FacilityType", project.getDesignBasis().getFacilityType());
         appendAttribute(document, attributes, "ProjectPhase", project.getDesignBasis().getProjectPhase());
         appendAttribute(document, attributes, "EngineeringManifestDocument", "engineering-manifest.json");
+        appendAttribute(document, attributes, "CauseAndEffectDocument", "cause-and-effect.json");
         appendAttribute(document, attributes, "EngineeringApprovalState", "REVIEW_REQUIRED");
         appendAttribute(document, attributes, "Standards", joinStandards(project.getDesignBasis().getStandards()));
         plantInformation.appendChild(attributes);
@@ -173,12 +186,16 @@ public final class DexpiEngineeringExporter {
         equipment.appendChild(attributes);
       }
 
+      DexpiEngineeringMaterializer.MaterializationResult materialization =
+          DexpiEngineeringMaterializer.materialize(project, document);
+
       TransformerFactory transformerFactory = TransformerFactory.newInstance();
       transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
       Transformer transformer = transformerFactory.newTransformer();
       transformer.setOutputProperty(OutputKeys.INDENT, "yes");
       transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
       transformer.transform(new DOMSource(document), new StreamResult(dexpiFile.toFile()));
+      return materialization;
     } catch (Exception ex) {
       throw new IOException("Could not enrich DEXPI engineering package", ex);
     }

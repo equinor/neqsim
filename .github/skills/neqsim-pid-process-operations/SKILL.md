@@ -189,15 +189,19 @@ DexpiEngineeringExporter.ExportResult files =
     DexpiEngineeringExporter.export(project, Paths.get("engineering-package"));
 ```
 
-The generated `plant.dexpi.xml` references `engineering-manifest.json` and any
-`datasets/<tag>-compressor-map.json` sidecars. Do not flatten large vendor maps
-into P&ID attributes.
+The generated `plant.dexpi.xml` contains requirement-linked instrumentation
+functions, logic functions, information flows, control/protective valves, and
+equipment associations. It references `engineering-manifest.json`, the proposed
+`cause-and-effect.json`, and any `datasets/<tag>-compressor-map.json` sidecars.
+Do not flatten large vendor maps into P&ID attributes.
 
 Safety governance is mandatory: rule-generated trips use `SIL_UNASSIGNED` and
-`REVIEW_REQUIRED`. Never derive SIL from equipment type, a generic tag template,
-or normal operating conditions. Set a SIL target only from an identified
-HAZOP/LOPA/QRA record and approve it through the project SRS workflow per IEC
-61511. See `neqsim-process-safety` for the risk-analysis handoff.
+`REVIEW_REQUIRED`; generated controller tuning, trip set points, and voting
+architectures remain `NOT_ASSIGNED`. Never derive SIL from equipment type, a
+generic tag template, or normal operating conditions. Set a SIL target only
+from an identified HAZOP/LOPA/QRA record and approve it through the project SRS
+workflow per IEC 61511. See `neqsim-process-safety` for the risk-analysis
+handoff.
 
 ### Steady-State Model
 
