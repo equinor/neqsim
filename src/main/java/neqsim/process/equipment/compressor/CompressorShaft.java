@@ -70,6 +70,182 @@ public class CompressorShaft implements Serializable {
   /** Convergence tolerance on the reference outlet pressure in bar. */
   private double pressureToleranceBar = 1.0e-3;
 
+  /** Pressure-control action applied when the target is below the minimum-speed capability. */
+  private PressureControl pressureControl = PressureControl.NONE;
+
+  /** Result of the most recent {@link #solveSpeed} call ({@code null} until it is called). */
+  private SolveResult lastResult = null;
+
+  /**
+   * Feasibility status of a shaft speed solve. Mirrors how professional tools (e.g. eCalc) classify a compressor-train
+   * operating point: reachable, reachable only with pressure control, or infeasible with a reason.
+   */
+  public enum SolveStatus {
+    /** Target reached within tolerance by adjusting the common speed. */
+    FEASIBLE,
+    /** Target was below the minimum-speed capability and met by a pressure-control action (choke / recycle). */
+    PRESSURE_CONTROLLED,
+    /** Target above the head the string makes at its maximum-speed curve (genuinely infeasible). */
+    PRESSURE_ABOVE_MAX_SPEED,
+    /** Target below the head the string makes at its minimum-speed curve and no pressure control was configured. */
+    PRESSURE_BELOW_MIN_SPEED,
+    /** A body exceeded its installed driver power at the solved speed. */
+    OVER_POWER,
+    /** A body ran past its stonewall (maximum-flow) limit at the solved speed. */
+    STONEWALL,
+    /** A body ran below its surge (minimum-flow) limit at the solved speed. */
+    SURGE,
+    /** No compressors / no reference body configured. */
+    NOT_CONFIGURED
+  }
+
+  /**
+   * Pressure-control action for the "target below the minimum-speed capability" case, i.e. when the string makes more
+   * head than requested even at minimum speed. Mirrors eCalc's pressure-control options. At this screening level all
+   * non-{@code NONE} options net to delivering the requested pressure at minimum-speed power (the surplus head is
+   * shed).
+   */
+  public enum PressureControl {
+    /**
+     * No pressure control: the too-low case is reported as infeasible ({@link SolveStatus#PRESSURE_BELOW_MIN_SPEED}).
+     */
+    NONE,
+    /** A choke valve downstream of the string drops the surplus discharge to the requested pressure. */
+    DOWNSTREAM_CHOKE,
+    /** A choke valve upstream of the string lowers the suction so the discharge drops to the requested pressure. */
+    UPSTREAM_CHOKE,
+    /** Anti-surge recycle is opened to consume the surplus head. */
+    ASV_RECYCLE
+  }
+
+  /**
+   * Immutable outcome of a {@link #solveSpeed} call: whether the duty is feasible, why, the target / achieved / min- /
+   * max-achievable discharge pressures, and the solved common speed. Never thrown — an infeasible duty is reported here
+   * so a caller can gate on it instead of silently proceeding on a saturated speed.
+   */
+  public static class SolveResult implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1L;
+
+    private final boolean feasible;
+    private final SolveStatus status;
+    private final double targetPressure;
+    private final double achievedPressure;
+    private final double minAchievablePressure;
+    private final double maxAchievablePressure;
+    private final double speed;
+    private final String pressureUnit;
+    private final String message;
+
+    /**
+     * Constructor.
+     *
+     * @param feasible whether the duty is feasible (or feasible with pressure control)
+     * @param status the status / reason code
+     * @param targetPressure the requested reference outlet pressure
+     * @param achievedPressure the reference outlet pressure actually delivered
+     * @param minAchievablePressure the reference outlet pressure at the minimum-speed bound
+     * @param maxAchievablePressure the reference outlet pressure at the maximum-speed bound
+     * @param speed the solved common shaft speed in rpm
+     * @param pressureUnit the pressure unit for all pressures
+     * @param message a human-readable summary
+     */
+    public SolveResult(boolean feasible, SolveStatus status, double targetPressure, double achievedPressure,
+        double minAchievablePressure, double maxAchievablePressure, double speed, String pressureUnit, String message) {
+      this.feasible = feasible;
+      this.status = status;
+      this.targetPressure = targetPressure;
+      this.achievedPressure = achievedPressure;
+      this.minAchievablePressure = minAchievablePressure;
+      this.maxAchievablePressure = maxAchievablePressure;
+      this.speed = speed;
+      this.pressureUnit = pressureUnit;
+      this.message = message;
+    }
+
+    /**
+     * @return {@code true} if the target is reachable (possibly with pressure control)
+     */
+    public boolean isFeasible() {
+      return feasible;
+    }
+
+    /**
+     * @return the status / reason code
+     */
+    public SolveStatus getStatus() {
+      return status;
+    }
+
+    /**
+     * @return the requested reference outlet pressure
+     */
+    public double getTargetPressure() {
+      return targetPressure;
+    }
+
+    /**
+     * @return the reference outlet pressure actually delivered
+     */
+    public double getAchievedPressure() {
+      return achievedPressure;
+    }
+
+    /**
+     * @return the reference outlet pressure at the minimum-speed bound
+     */
+    public double getMinAchievablePressure() {
+      return minAchievablePressure;
+    }
+
+    /**
+     * @return the reference outlet pressure at the maximum-speed bound
+     */
+    public double getMaxAchievablePressure() {
+      return maxAchievablePressure;
+    }
+
+    /**
+     * @return the solved common shaft speed in rpm
+     */
+    public double getSpeed() {
+      return speed;
+    }
+
+    /**
+     * @return the pressure unit for all pressures in this result
+     */
+    public String getPressureUnit() {
+      return pressureUnit;
+    }
+
+    /**
+     * @return a human-readable summary of the solve outcome
+     */
+    public String getMessage() {
+      return message;
+    }
+
+    /**
+     * Serialize the result to a compact JSON object.
+     *
+     * @return a JSON string
+     */
+    public String toJson() {
+      StringBuilder sb = new StringBuilder();
+      sb.append("{\"feasible\":").append(feasible);
+      sb.append(",\"status\":\"").append(status).append("\"");
+      sb.append(",\"targetPressure\":").append(targetPressure);
+      sb.append(",\"achievedPressure\":").append(achievedPressure);
+      sb.append(",\"minAchievablePressure\":").append(minAchievablePressure);
+      sb.append(",\"maxAchievablePressure\":").append(maxAchievablePressure);
+      sb.append(",\"speed\":").append(speed);
+      sb.append(",\"pressureUnit\":\"").append(pressureUnit).append("\"");
+      sb.append(",\"message\":\"").append(message == null ? "" : message.replace("\"", "'")).append("\"}");
+      return sb.toString();
+    }
+  }
+
   /**
    * Constructor.
    *
@@ -77,6 +253,44 @@ public class CompressorShaft implements Serializable {
    */
   public CompressorShaft(String name) {
     this.name = name;
+  }
+
+  /**
+   * Get the pressure-control action used for a target below the minimum-speed capability.
+   *
+   * @return the configured pressure-control action
+   */
+  public PressureControl getPressureControl() {
+    return pressureControl;
+  }
+
+  /**
+   * Set the pressure-control action used when the requested pressure is below what the string makes at minimum speed.
+   *
+   * @param control the pressure-control action (must not be {@code null})
+   */
+  public void setPressureControl(PressureControl control) {
+    if (control != null) {
+      this.pressureControl = control;
+    }
+  }
+
+  /**
+   * Get the result of the most recent {@link #solveSpeed} call.
+   *
+   * @return the last solve result, or {@code null} if {@link #solveSpeed} has not been called
+   */
+  public SolveResult getLastSolveResult() {
+    return lastResult;
+  }
+
+  /**
+   * Whether the most recent {@link #solveSpeed} call reached a feasible operating point.
+   *
+   * @return {@code true} if no solve has run yet or the last solve was feasible; {@code false} otherwise
+   */
+  public boolean isFeasible() {
+    return lastResult == null || lastResult.isFeasible();
   }
 
   /**
@@ -184,24 +398,50 @@ public class CompressorShaft implements Serializable {
     }
     // Bracket the root at the speed bounds. Discharge pressure rises monotonically with speed,
     // so we expect fa < 0 < fb; then converge with a false-position (Illinois) secant, which is
-    // superlinear on this smooth map and needs far fewer flowsheet solves than bisection.
+    // superlinear on this smooth map and needs far fewer flowsheet solves than bisection. The
+    // two bracket evaluations also give the min- and max-achievable discharge pressure for free.
     double a = minSpeed;
     double b = maxSpeed;
     double fa = evalOutletError(a, reference, targetOutletPressure, unit, processRun);
+    double minAch = fa + targetOutletPressure;
     if (Math.abs(fa) < pressureToleranceBar) {
-      return finalizeSpeed(a, processRun);
+      double solved = finalizeSpeed(a, processRun);
+      return record(SolveStatus.FEASIBLE, true, targetOutletPressure, reference.getOutletStream().getPressure(unit),
+          minAch, Double.NaN, solved, unit, "target reached at the minimum-speed bound");
     }
     double fb = evalOutletError(b, reference, targetOutletPressure, unit, processRun);
+    double maxAch = fb + targetOutletPressure;
     if (Math.abs(fb) < pressureToleranceBar) {
-      return finalizeSpeed(b, processRun);
+      double solved = finalizeSpeed(b, processRun);
+      return record(SolveStatus.FEASIBLE, true, targetOutletPressure, reference.getOutletStream().getPressure(unit),
+          minAch, maxAch, solved, unit, "target reached at the maximum-speed bound");
     }
     if (fa * fb > 0.0) {
-      // Target not reachable within the speed bounds; use the closer bound.
-      double bound = Math.abs(fa) <= Math.abs(fb) ? a : b;
-      logger.warn(
-          "CompressorShaft {}: target {} {} not bracketed within speed bounds [{}, {}] rpm; " + "using nearest bound.",
-          name, targetOutletPressure, unit, a, b);
-      return finalizeSpeed(bound, processRun);
+      if (fa > 0.0) {
+        // Target below the minimum-speed capability: the string overshoots even at min speed.
+        double solved = finalizeSpeed(a, processRun);
+        if (pressureControl != PressureControl.NONE) {
+          applyPressureControl(reference, targetOutletPressure, unit, processRun);
+          logger.info(
+              "CompressorShaft {}: target {} {} below min-speed capability ({} {}); met by {} (pressure control)", name,
+              targetOutletPressure, unit, minAch, unit, pressureControl);
+          return record(SolveStatus.PRESSURE_CONTROLLED, true, targetOutletPressure,
+              reference.getOutletStream().getPressure(unit), minAch, maxAch, solved, unit,
+              "surplus head shed by " + pressureControl);
+        }
+        logger.warn(
+            "CompressorShaft {}: target {} {} is BELOW the minimum-speed discharge ({} {}); "
+                + "saturating at min speed. Set a PressureControl to shed the surplus head.",
+            name, targetOutletPressure, unit, minAch, unit);
+        return record(SolveStatus.PRESSURE_BELOW_MIN_SPEED, false, targetOutletPressure, minAch, minAch, maxAch, solved,
+            unit, "target below minimum-speed capability; no pressure control");
+      }
+      // Target above the maximum-speed capability: genuinely infeasible.
+      double solved = finalizeSpeed(b, processRun);
+      logger.warn("CompressorShaft {}: target {} {} is ABOVE the maximum-speed discharge ({} {}); "
+          + "saturating at max speed. Duty is infeasible.", name, targetOutletPressure, unit, maxAch, unit);
+      return record(SolveStatus.PRESSURE_ABOVE_MAX_SPEED, false, targetOutletPressure, maxAch, minAch, maxAch, solved,
+          unit, "target above maximum-speed capability");
     }
     double best = 0.5 * (a + b);
     for (int i = 0; i < maxIterations; i++) {
@@ -228,7 +468,91 @@ public class CompressorShaft implements Serializable {
         fb *= 0.5;
       }
     }
-    return finalizeSpeed(best, processRun);
+    double solved = finalizeSpeed(best, processRun);
+    double achieved = reference.getOutletStream().getPressure(unit);
+    // The target is bracketed and reached; still flag if a body ended up over power / past a chart edge.
+    SolveStatus limit = checkBodyLimits();
+    boolean feasible = limit == SolveStatus.FEASIBLE;
+    return record(limit, feasible, targetOutletPressure, achieved, minAch, maxAch, solved, unit,
+        feasible ? "target reached by adjusting the common speed"
+            : "target reached but a body hit a " + limit + " limit");
+  }
+
+  /**
+   * Store the solve result and return the solved speed.
+   *
+   * @param status the status / reason code
+   * @param feasible whether the duty is feasible
+   * @param target the requested reference outlet pressure
+   * @param achieved the reference outlet pressure actually delivered
+   * @param minAch the reference outlet pressure at the minimum-speed bound
+   * @param maxAch the reference outlet pressure at the maximum-speed bound
+   * @param solvedSpeed the solved common shaft speed in rpm
+   * @param unit the pressure unit
+   * @param message a human-readable summary
+   * @return the solved common shaft speed in rpm
+   */
+  private double record(SolveStatus status, boolean feasible, double target, double achieved, double minAch,
+      double maxAch, double solvedSpeed, String unit, String message) {
+    this.lastResult = new SolveResult(feasible, status, target, achieved, minAch, maxAch, solvedSpeed, unit, message);
+    return solvedSpeed;
+  }
+
+  /**
+   * Apply the configured pressure-control action to deliver the requested pressure when the string overshoots at
+   * minimum speed. Screening representation: the reference discharge is set to the target (the surplus head is shed);
+   * the compressor power stays at its minimum-speed value.
+   *
+   * @param reference the reference body
+   * @param targetOutletPressure the requested outlet pressure
+   * @param unit the pressure unit
+   * @param processRun the flowsheet re-run callback, or {@code null}
+   */
+  private void applyPressureControl(Compressor reference, double targetOutletPressure, String unit,
+      Runnable processRun) {
+    try {
+      reference.getOutletStream().setPressure(targetOutletPressure, unit);
+      reference.getOutletStream().run();
+    } catch (RuntimeException ex) {
+      logger.warn("CompressorShaft {}: pressure control could not set the reference outlet: {}", name, ex.getMessage());
+    }
+  }
+
+  /**
+   * Check every charted body for a surge / stonewall / over-power condition at the solved speed.
+   *
+   * @return the first limit hit, or {@link SolveStatus#FEASIBLE} if all bodies are within limits
+   */
+  private SolveStatus checkBodyLimits() {
+    for (Compressor compressor : compressors) {
+      if (compressor.getCompressorChart() == null) {
+        continue;
+      }
+      try {
+        if (compressor.isSurge()) {
+          return SolveStatus.SURGE;
+        }
+      } catch (RuntimeException ex) {
+        // chart edge / undefined surge distance — treat as no surge flag
+      }
+      try {
+        if (compressor.isStoneWall()) {
+          return SolveStatus.STONEWALL;
+        }
+      } catch (RuntimeException ex) {
+        // chart edge — treat as no stonewall flag
+      }
+      try {
+        double maxPower = (compressor.getMechanicalDesign() != null) ? compressor.getMechanicalDesign().maxDesignPower
+            : 0.0;
+        if (maxPower > 0.0 && compressor.getPower("kW") > maxPower) {
+          return SolveStatus.OVER_POWER;
+        }
+      } catch (RuntimeException ex) {
+        // power/mechanical design unavailable — skip the power check
+      }
+    }
+    return SolveStatus.FEASIBLE;
   }
 
   /**

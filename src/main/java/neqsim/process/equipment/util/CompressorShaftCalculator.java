@@ -69,6 +69,15 @@ public class CompressorShaftCalculator extends Calculator {
   /** Previous outlet-pressure error (for the secant step). */
   private double prevError = Double.NaN;
 
+  /** Tolerance (in the pressure unit) used to classify the solve as feasible / saturated. */
+  private double pressureTolerance = 0.05;
+
+  /** Pressure-control action for a target below the minimum-speed capability. */
+  private CompressorShaft.PressureControl pressureControl = CompressorShaft.PressureControl.NONE;
+
+  /** Feasibility result of the most recent {@link #run(UUID)} pass ({@code null} until first run). */
+  private CompressorShaft.SolveResult lastResult = null;
+
   /**
    * Constructor for CompressorShaftCalculator.
    *
@@ -135,6 +144,56 @@ public class CompressorShaftCalculator extends Calculator {
   }
 
   /**
+   * Set the pressure-control action used when the requested pressure is below what the string makes at minimum speed.
+   *
+   * @param control the pressure-control action (must not be {@code null})
+   */
+  public void setPressureControl(CompressorShaft.PressureControl control) {
+    if (control != null) {
+      this.pressureControl = control;
+    }
+  }
+
+  /**
+   * Get the pressure-control action used for a target below the minimum-speed capability.
+   *
+   * @return the configured pressure-control action
+   */
+  public CompressorShaft.PressureControl getPressureControl() {
+    return pressureControl;
+  }
+
+  /**
+   * Set the tolerance (in the pressure unit) used to classify the solve as feasible / saturated.
+   *
+   * @param tolerance the tolerance (must be positive)
+   */
+  public void setPressureTolerance(double tolerance) {
+    if (tolerance > 0.0) {
+      this.pressureTolerance = tolerance;
+    }
+  }
+
+  /**
+   * Get the feasibility result of the most recent {@link #run(UUID)} pass.
+   *
+   * @return the last solve result, or {@code null} if the calculator has not run yet
+   */
+  public CompressorShaft.SolveResult getLastSolveResult() {
+    return lastResult;
+  }
+
+  /**
+   * Whether the most recent pass reached (or is converging to) a feasible operating point.
+   *
+   * @return {@code true} if no pass has run yet or the last pass was feasible; {@code false} if the target is saturated
+   * above the maximum speed (or below the minimum speed with no pressure control)
+   */
+  public boolean isFeasible() {
+    return lastResult == null || lastResult.isFeasible();
+  }
+
+  /**
    * Put every body into fixed-speed, chart-forward mode at the current common speed.
    */
   private void applySpeed() {
@@ -185,6 +244,44 @@ public class CompressorShaftCalculator extends Calculator {
     prevError = error;
     speed = newSpeed;
     applySpeed();
+    updateFeasibility();
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Classify the current pass as feasible / pressure-controlled / infeasible and store the result. The target is
+   * saturated when the common speed is pinned at a bound and the reference discharge still misses the target: above the
+   * maximum-speed capability (infeasible) or below the minimum-speed capability (infeasible unless a
+   * {@link CompressorShaft.PressureControl} sheds the surplus head).
+   */
+  private void updateFeasibility() {
+    double pout = reference.getOutletStream().getPressure(pressureUnit);
+    double error = pout - targetPressure;
+    boolean atMax = speed >= maxSpeed - 1.0e-6;
+    boolean atMin = speed <= minSpeed + 1.0e-6;
+    if (atMax && error < -pressureTolerance) {
+      lastResult = new CompressorShaft.SolveResult(false, CompressorShaft.SolveStatus.PRESSURE_ABOVE_MAX_SPEED,
+          targetPressure, pout, Double.NaN, pout, speed, pressureUnit, "target above maximum-speed capability");
+    } else if (atMin && error > pressureTolerance) {
+      if (pressureControl != CompressorShaft.PressureControl.NONE) {
+        try {
+          reference.getOutletStream().setPressure(targetPressure, pressureUnit);
+          reference.getOutletStream().run();
+        } catch (RuntimeException ex) {
+          // best-effort screening choke; leave the discharge as produced if it cannot be set
+        }
+        lastResult = new CompressorShaft.SolveResult(true, CompressorShaft.SolveStatus.PRESSURE_CONTROLLED,
+            targetPressure, targetPressure, pout, Double.NaN, speed, pressureUnit,
+            "surplus head shed by " + pressureControl);
+      } else {
+        lastResult = new CompressorShaft.SolveResult(false, CompressorShaft.SolveStatus.PRESSURE_BELOW_MIN_SPEED,
+            targetPressure, pout, pout, Double.NaN, speed, pressureUnit,
+            "target below minimum-speed capability; no pressure control");
+      }
+    } else {
+      boolean reached = Math.abs(error) < pressureTolerance;
+      lastResult = new CompressorShaft.SolveResult(true, CompressorShaft.SolveStatus.FEASIBLE, targetPressure, pout,
+          Double.NaN, Double.NaN, speed, pressureUnit, reached ? "target reached" : "converging toward target");
+    }
   }
 }

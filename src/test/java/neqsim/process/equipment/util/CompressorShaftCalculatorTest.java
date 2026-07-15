@@ -1,6 +1,7 @@
 package neqsim.process.equipment.util;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
@@ -73,5 +74,46 @@ public class CompressorShaftCalculatorTest {
     c1.run();
 
     assertEquals(target, c1.getOutletStream().getPressure("bara"), 0.4);
+  }
+
+  /**
+   * When the target sits far above the maximum-speed capability, the calculator saturates at the max speed and reports
+   * an infeasible PRESSURE_ABOVE_MAX_SPEED result instead of silently accepting the saturated speed.
+   */
+  @Test
+  void testInfeasibleAboveMaxSpeedIsFlagged() {
+    Stream f1 = feed(10.0);
+    Compressor c1 = new Compressor("body1", f1);
+    c1.setOutletPressure(20.0);
+    c1.setUsePolytropicCalc(true);
+    c1.setPolytropicEfficiency(0.75);
+    c1.run();
+    c1.generateCompressorChart("normal curves", 5);
+    c1.getCompressorChart().setUseCompressorChart(true);
+    double design = c1.getSpeed();
+
+    // Discharge the machine can make at the max speed bound.
+    c1.setSolveSpeed(false);
+    c1.setSpeed(design * 1.3);
+    c1.run();
+    double pMax = c1.getOutletStream().getPressure("bara");
+
+    CompressorShaft shaft = new CompressorShaft("shaft");
+    shaft.addCompressor(c1);
+    shaft.setSpeed(design);
+
+    // Ask for far more than the max speed can deliver.
+    CompressorShaftCalculator calc = new CompressorShaftCalculator("shaft calc", shaft, c1, pMax + 20.0, "bara");
+    calc.setSpeedBounds(design * 0.7, design * 1.3);
+
+    UUID id = UUID.randomUUID();
+    for (int i = 0; i < 40; i++) {
+      c1.run();
+      calc.run(id);
+    }
+
+    assertFalse(calc.isFeasible());
+    assertEquals(CompressorShaft.SolveStatus.PRESSURE_ABOVE_MAX_SPEED, calc.getLastSolveResult().getStatus());
+    assertEquals(design * 1.3, calc.getSpeed(), design * 1.3 * 1e-3);
   }
 }

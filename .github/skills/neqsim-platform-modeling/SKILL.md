@@ -751,6 +751,15 @@ Real platforms rarely have one machine per duty. Match the P&ID / STID exactly:
   a common 2nd stage (`26-KA02`) to the reservoir pressure, with an interstage pressure.
 - **Dehydration (TEG)** — a cooler + scrubber (`24-VG03`) before export knocks out free
   water; a full TEG contactor with glycol recycle is a further step.
+- **Shared-shaft feasibility.** For a shared-shaft recompression string, converge the one
+  common speed with `CompressorShaftCalculator` (process-integrated, added after the
+  bodies) or `CompressorShaft.solveSpeed`. Both report a feasibility result —
+  `shaft.isFeasible()` / `getLastSolveResult()` gives the status
+  (`PRESSURE_ABOVE_MAX_SPEED` / `PRESSURE_BELOW_MIN_SPEED` / `OVER_POWER` / …) and the
+  min-/max-achievable discharge — so a maximise-throughput sweep can gate on it. A
+  below-min-speed target is handled by `setPressureControl(DOWNSTREAM_CHOKE)`; the
+  downstream `Mixer.isPressureMismatch()` flag shows where an unmet pressure collapses a
+  commingling node to the lowest inlet.
 
 ```python
 # Parallel A/B export bodies -> commingle

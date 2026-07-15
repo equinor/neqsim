@@ -164,36 +164,61 @@ max power marks that timestep **invalid** with a reason and the run reports whic
 points failed. Reserve a hard exception for *misconfiguration* (no chart, no
 bodies, inverted bounds) — not for a well-posed but impossible pressure.
 
-### Current NeqSim behaviour and how to detect it
+### NeqSim solve result and pressure control
 
-Both solvers **saturate** rather than crash: `CompressorShaft.solveSpeed`, when
-the target is not bracketed within `[minSpeed, maxSpeed]`, logs a warning and
-returns the nearest speed bound; `CompressorShaftCalculator` clamps each internal
-step to the same bounds. Because the *return value* alone does not tell you the
-duty was impossible, check feasibility explicitly after the solve:
+Both solvers implement exactly this pattern. They **saturate** to the nearest
+speed bound rather than crash, and — like eCalc — expose a **feasibility result**
+so a caller never silently proceeds on an impossible duty.
+
+`CompressorShaft.solveSpeed(...)` builds a `CompressorShaft.SolveResult` (read it
+with `getLastSolveResult()`, or the shortcut `isFeasible()`); the two bracket
+evaluations it already does at the speed bounds give the **min- and
+max-achievable** discharge pressures for free:
 
 ```java
-double rpm = shaftCalc.getSpeed();
+shaft.solveSpeed(hpBody, 49.0, "bara", () -> process.run());
 
-for (Compressor body : shaft.getCompressors()) {
-  double maxSpeedCurve = body.getCompressorChart().getMaxSpeedCurve();
-  boolean pinnedAtCeiling = rpm >= maxSpeedCurve - 1.0e-6;   // pressure-too-high symptom
-  boolean overStonewall = body.isStoneWall();                // ran past max flow
-  boolean inSurge = body.isSurge();                          // ran below min flow
-  // Compare body.getPower() against the driver rating for the over-power case.
+CompressorShaft.SolveResult r = shaft.getLastSolveResult();
+if (!r.isFeasible()) {
+  // r.getStatus() is one of PRESSURE_ABOVE_MAX_SPEED, PRESSURE_BELOW_MIN_SPEED,
+  // OVER_POWER, STONEWALL, SURGE, NOT_CONFIGURED.
+  double ceiling = r.getMaxAchievablePressure();   // most the string can make
+  double floor = r.getMinAchievablePressure();      // least the string can make
+  String json = r.toJson();                         // schema-friendly for logs/agents
 }
-
-double poutAchieved = reference.getOutletStream().getPressure("bara");
-boolean pressureMet = Math.abs(poutAchieved - target) < tolerance;
-// pressureMet == false while rpm is pinned at the max-speed curve  ==>  target infeasible.
 ```
 
-`Compressor` also exposes `getDistanceToSurge()`, `getDistanceToStoneWall()`, and
-`getOperatingPoint()` (a JSON feasibility picture), and a multi-area plant surfaces
-`feasible` / `hardLimitExceeded` through its capacity `getUtilizationSnapshot()`.
-Gate an optimizer or `evaluate()` trial on *both* speed saturation **and** the
-residual discharge-pressure error, so an impossible duty is rejected as infeasible
-instead of accepted at the saturated speed.
+`SolveStatus` values: `FEASIBLE`, `PRESSURE_CONTROLLED`, `PRESSURE_ABOVE_MAX_SPEED`,
+`PRESSURE_BELOW_MIN_SPEED`, `OVER_POWER`, `STONEWALL`, `SURGE`, `NOT_CONFIGURED`.
+The result also carries `getTargetPressure()`, `getAchievedPressure()`,
+`getSpeed()`, and `getMessage()`.
+
+**Pressure control (the "too low" case).** When the target is below what the
+string makes even at minimum speed, set a `PressureControl` so the surplus head is
+shed and the point stays feasible (`PRESSURE_CONTROLLED`), exactly like eCalc:
+
+```java
+shaft.setPressureControl(CompressorShaft.PressureControl.DOWNSTREAM_CHOKE);
+shaft.solveSpeed(hpBody, target, "bara", () -> process.run());
+// -> status PRESSURE_CONTROLLED, feasible, reference discharge delivered at target
+```
+
+`PressureControl` values: `NONE` (default — the too-low case is reported
+infeasible), `DOWNSTREAM_CHOKE`, `UPSTREAM_CHOKE`, `ASV_RECYCLE`. At this
+screening level all non-`NONE` options net to delivering the requested pressure at
+minimum-speed power (the surplus head is shed).
+
+`CompressorShaftCalculator` carries the same API — `getLastSolveResult()`,
+`isFeasible()`, `setPressureControl(...)`, `setPressureTolerance(...)` — updated on
+every internal pass, so an optimizer / `evaluate()` loop can gate on
+`shaftCalc.isFeasible()` directly instead of re-deriving saturation. For finer
+diagnostics, `Compressor` still exposes `getDistanceToSurge()`,
+`getDistanceToStoneWall()`, and `getOperatingPoint()`, and a multi-area plant
+surfaces `feasible` / `hardLimitExceeded` through its capacity
+`getUtilizationSnapshot()`.
+
+Reserve a hard exception for *misconfiguration* (no bodies) — never for a
+well-posed but impossible pressure.
 
 ## Shared Pressure Nodes
 
@@ -250,6 +275,12 @@ The discharge floats off the chart at the locked speed, and any pressure spec is
 met by anti-surge recycle, suction throttling, or inlet guide vanes — never by
 moving speed.
 
+Inlet guide vanes are a **first-class** fixed-speed control on `Compressor`:
+`setInletGuideVaneOpening(f)` (`f = 1` fully open) — or `setGuideVaneAngle(deg)` —
+closes the vanes to reduce head and efficiency **and** lower the surge flow (via a
+configurable `InletGuideVaneModel`), so `getDistanceToSurge()` reflects the shifted
+surge line. This is distinct from moving speed (the shaft speed stays fixed).
+
 ## Single-Body Shafts
 
 A `CompressorShaft` with one compressor is valid and useful: `solveSpeed` just
@@ -277,6 +308,8 @@ and [Compressor Performance Curves](compressor_curves.md).
 <tr><td><code>setSpeed(rpm)</code> / <code>getSpeed()</code></td><td>Apply / read the common shaft speed.</td></tr>
 <tr><td><code>setSpeedBounds(min, max)</code></td><td>Speed search bounds for <code>solveSpeed</code>.</td></tr>
 <tr><td><code>setMaxIterations(n)</code> / <code>setPressureTolerance(bar)</code></td><td>Root-finder budget and convergence tolerance.</td></tr>
+<tr><td><code>getLastSolveResult()</code> / <code>isFeasible()</code></td><td>Feasibility result of the last <code>solveSpeed</code> (status, achieved / min- / max-achievable pressure, speed).</td></tr>
+<tr><td><code>setPressureControl(PressureControl)</code> / <code>getPressureControl()</code></td><td>Shed surplus head for a target below min-speed capability (NONE / DOWNSTREAM_CHOKE / UPSTREAM_CHOKE / ASV_RECYCLE).</td></tr>
 <tr><td><code>getTotalPower()</code></td><td>Sum of the body shaft powers (W).</td></tr>
 <tr><td><code>getCompressors()</code> / <code>getName()</code></td><td>Members / shaft name.</td></tr>
 </table>
@@ -288,6 +321,8 @@ and [Compressor Performance Curves](compressor_curves.md).
 <tr><td><code>setSpeedBounds(min, max)</code></td><td>Clamp the common-speed search (rpm).</td></tr>
 <tr><td><code>setMaxStepFraction(fraction)</code></td><td>Max fractional speed change per internal pass (damping, e.g. 0.10).</td></tr>
 <tr><td><code>getSpeed()</code></td><td>Read the converged common shaft speed (rpm).</td></tr>
+<tr><td><code>getLastSolveResult()</code> / <code>isFeasible()</code></td><td>Feasibility result of the last pass (same <code>SolveResult</code> type as <code>CompressorShaft</code>).</td></tr>
+<tr><td><code>setPressureControl(...)</code> / <code>setPressureTolerance(bar)</code></td><td>Pressure-control action and the tolerance used to classify feasible / saturated.</td></tr>
 <tr><td><code>process.add(shaftCalc)</code></td><td>Register so it steps the speed on every <code>run()</code> pass (add after the bodies/anti-surge).</td></tr>
 </table>
 
@@ -296,3 +331,6 @@ and [Compressor Performance Curves](compressor_curves.md).
 - [Compressors](compressors.md)
 - [Compressor Performance Curves](compressor_curves.md)
 - [Compressor Anti-Surge and Coordinated Control](compressor_antisurge_control.md)
+- Worked notebook: `examples/notebooks/CompressorShaft_ThreeStageSeparation.ipynb`
+  (three-stage separation + shared-shaft recompression + speed control, feasibility,
+  and pressure-control demo)
