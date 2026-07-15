@@ -17,6 +17,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.engineering.EngineeringRequirement;
+import neqsim.process.engineering.SafetyFunctionDesign;
 
 /** Materializes governed engineering requirements as DEXPI P&amp;ID objects. */
 public final class DexpiEngineeringMaterializer {
@@ -57,14 +58,25 @@ public final class DexpiEngineeringMaterializer {
       root.addProperty("projectName", project.getName());
       root.addProperty("documentStatus", "PROPOSED_FOR_HAZOP_LOPA_AND_DISCIPLINE_REVIEW");
       root.addProperty("setPoints", "NOT_ASSIGNED");
-      root.addProperty("votingArchitectures", "NOT_ASSIGNED");
+      root.addProperty("votingArchitectures",
+          project.getSafetyFunctionDesigns().isEmpty() ? "NOT_ASSIGNED" : "PROJECT_DEFINED_REVIEW_REQUIRED");
       root.addProperty("note",
           "Generated actions are design proposals, not an approved safety requirements specification.");
       JsonArray entries = new JsonArray();
       for (CauseAndEffectEntry entry : causeAndEffectEntries) {
-        entries.add(entry.toJson());
+        entries.add(entry.toJson(project));
       }
       root.add("entries", entries);
+      JsonArray safetyFunctions = new JsonArray();
+      for (SafetyFunctionDesign design : project.getSafetyFunctionDesigns()) {
+        safetyFunctions.add(new GsonBuilder().create().toJsonTree(design.toMap()));
+      }
+      root.add("safetyFunctionDesigns", safetyFunctions);
+      JsonArray shutdownSequences = new JsonArray();
+      for (neqsim.process.engineering.ShutdownSequence sequence : project.getShutdownSequences()) {
+        shutdownSequences.add(new GsonBuilder().create().toJsonTree(sequence.toMap()));
+      }
+      root.add("shutdownSequences", shutdownSequences);
       return new GsonBuilder().setPrettyPrinting().create().toJson(root);
     }
   }
@@ -125,7 +137,7 @@ public final class DexpiEngineeringMaterializer {
       return Collections.unmodifiableList(standardReferences);
     }
 
-    JsonObject toJson() {
+    JsonObject toJson(EngineeringProject project) {
       JsonObject object = new JsonObject();
       object.addProperty("requirementId", requirementId);
       object.addProperty("equipmentTag", equipmentTag);
@@ -139,7 +151,7 @@ public final class DexpiEngineeringMaterializer {
       object.addProperty("silTarget", silTarget);
       object.addProperty("approvalStatus", "REVIEW_REQUIRED");
       object.addProperty("setPoint", "NOT_ASSIGNED");
-      object.addProperty("votingArchitecture", "NOT_ASSIGNED");
+      object.addProperty("votingArchitecture", votingFor(project, requirementId));
       JsonArray standards = new JsonArray();
       for (String reference : standardReferences) {
         standards.add(reference);
@@ -147,6 +159,19 @@ public final class DexpiEngineeringMaterializer {
       object.add("standardReferences", standards);
       return object;
     }
+  }
+
+  private static String votingFor(EngineeringProject project, String requirementId) {
+    for (SafetyFunctionDesign design : project.getSafetyFunctionDesigns()) {
+      if (requirementId.equals(design.getRequirementId())) {
+        List<String> architectures = new ArrayList<String>();
+        for (SafetyFunctionDesign.Subsystem subsystem : design.getSubsystems()) {
+          architectures.add(subsystem.getType().name() + ":" + subsystem.getVotingArchitecture());
+        }
+        return architectures.isEmpty() ? "NOT_ASSIGNED" : join(architectures);
+      }
+    }
+    return "NOT_ASSIGNED";
   }
 
   private static final class EquipmentReference {
@@ -253,7 +278,7 @@ public final class DexpiEngineeringMaterializer {
         if (i > 0) {
           tag += "-" + (i + 1);
         }
-        String id = appendInstrumentFunction(document, root, usedIds, requirement, protectedEquipment, tag,
+        String id = appendInstrumentFunction(document, root, usedIds, project, requirement, protectedEquipment, tag,
             definition.controlSystem, "SENSOR_OR_SWITCH", baseX + i * 4.0, baseY);
         loopMembers.add(id);
         functionCount++;
@@ -264,10 +289,10 @@ public final class DexpiEngineeringMaterializer {
 
       if (definition.controller != null) {
         String tag = definition.controller + "-" + number;
-        String id = appendInstrumentFunction(document, root, usedIds, requirement, protectedEquipment, tag,
+        String id = appendInstrumentFunction(document, root, usedIds, project, requirement, protectedEquipment, tag,
             definition.controlSystem, "CONTROLLER_OR_LOGIC_SOLVER", baseX + 8.0, baseY);
         for (String sensorId : loopMembers) {
-          appendInformationFlow(document, root, usedIds, requirement, sensorId, id, definition.controlSystem,
+          appendInformationFlow(document, root, usedIds, project, requirement, sensorId, id, definition.controlSystem,
               "SignalConveyingFunction");
         }
         loopMembers.add(id);
@@ -277,19 +302,19 @@ public final class DexpiEngineeringMaterializer {
       String actuatingSourceId = last(loopMembers);
       for (DeviceDefinition device : definition.finalElements) {
         String tag = device.tagPrefix + "-" + number;
-        String id = appendPipingComponent(document, protectionSystem, usedIds, requirement, protectedEquipment, tag,
-            device.componentClass, definition.controlSystem, baseX + 12.0 + deviceCount % 4 * 3.0,
+        String id = appendPipingComponent(document, protectionSystem, usedIds, project, requirement, protectedEquipment,
+            tag, device.componentClass, definition.controlSystem, baseX + 12.0 + deviceCount % 4 * 3.0,
             protectedEquipment.y);
         if (actuatingSourceId != null && !"SwingCheckValve".equals(device.componentClass)
             && !"SpringLoadedGlobeSafetyValve".equals(device.componentClass)) {
-          appendInformationFlow(document, root, usedIds, requirement, actuatingSourceId, id, definition.controlSystem,
-              "ActuatingSystemFunction");
+          appendInformationFlow(document, root, usedIds, project, requirement, actuatingSourceId, id,
+              definition.controlSystem, "ActuatingSystemFunction");
         }
         loopMembers.add(id);
         deviceCount++;
       }
 
-      appendInstrumentationLoop(document, root, usedIds, requirement, loopMembers);
+      appendInstrumentationLoop(document, root, usedIds, project, requirement, loopMembers);
       if (definition.cause != null) {
         if (initiatingTag.isEmpty()) {
           initiatingTag = "INITIATING_CONDITION_TO_BE_CONFIRMED";
@@ -379,8 +404,8 @@ public final class DexpiEngineeringMaterializer {
   }
 
   private static String appendInstrumentFunction(Document document, Element root, Set<String> usedIds,
-      EngineeringRequirement requirement, EquipmentReference equipment, String tag, String controlSystem, String role,
-      double x, double y) {
+      EngineeringProject project, EngineeringRequirement requirement, EquipmentReference equipment, String tag,
+      String controlSystem, String role, double x, double y) {
     String id = uniqueId("ProcessInstrumentationFunction-" + safe(tag), usedIds);
     Element function = document.createElement("ProcessInstrumentationFunction");
     function.setAttribute("ID", id);
@@ -398,7 +423,7 @@ public final class DexpiEngineeringMaterializer {
         parts.length > 1 ? parts[1] : tag);
     appendAttribute(document, dexpi, "TagNameAssignmentClass", tag);
     function.appendChild(dexpi);
-    appendGovernance(document, function, requirement, controlSystem, role);
+    appendGovernance(document, function, project, requirement, controlSystem, role);
     if ("CONTROLLER_OR_LOGIC_SOLVER".equals(role)) {
       Element controllerDesign = document.createElement("GenericAttributes");
       controllerDesign.setAttribute("Set", "ControllerDesign");
@@ -431,8 +456,8 @@ public final class DexpiEngineeringMaterializer {
   }
 
   private static String appendPipingComponent(Document document, Element protectionSystem, Set<String> usedIds,
-      EngineeringRequirement requirement, EquipmentReference equipment, String tag, String componentClass,
-      String controlSystem, double x, double y) {
+      EngineeringProject project, EngineeringRequirement requirement, EquipmentReference equipment, String tag,
+      String componentClass, String controlSystem, double x, double y) {
     Element segment = document.createElement("PipingNetworkSegment");
     segment.setAttribute("ID", uniqueId("PipingNetworkSegment-" + safe(tag), usedIds));
     segment.setAttribute("ComponentClass", "PipingNetworkSegment");
@@ -457,7 +482,7 @@ public final class DexpiEngineeringMaterializer {
     dexpi.setAttribute("Set", "DexpiAttributes");
     appendAttribute(document, dexpi, "TagNameAssignmentClass", tag);
     component.appendChild(dexpi);
-    appendGovernance(document, component, requirement, controlSystem, "FINAL_ELEMENT_OR_PROTECTIVE_DEVICE");
+    appendGovernance(document, component, project, requirement, controlSystem, "FINAL_ELEMENT_OR_PROTECTIVE_DEVICE");
     Element association = document.createElement("Association");
     association.setAttribute("Type", "protects");
     association.setAttribute("ItemID", equipment.id);
@@ -475,7 +500,8 @@ public final class DexpiEngineeringMaterializer {
   }
 
   private static void appendInformationFlow(Document document, Element root, Set<String> usedIds,
-      EngineeringRequirement requirement, String startId, String endId, String controlSystem, String componentClass) {
+      EngineeringProject project, EngineeringRequirement requirement, String startId, String endId,
+      String controlSystem, String componentClass) {
     if (startId == null || endId == null) {
       return;
     }
@@ -490,12 +516,12 @@ public final class DexpiEngineeringMaterializer {
     end.setAttribute("Type", "has logical end");
     end.setAttribute("ItemID", endId);
     flow.appendChild(end);
-    appendGovernance(document, flow, requirement, controlSystem, "INFORMATION_FLOW");
+    appendGovernance(document, flow, project, requirement, controlSystem, "INFORMATION_FLOW");
     insertBeforeCatalogue(root, flow);
   }
 
   private static void appendInstrumentationLoop(Document document, Element root, Set<String> usedIds,
-      EngineeringRequirement requirement, List<String> members) {
+      EngineeringProject project, EngineeringRequirement requirement, List<String> members) {
     if (members.isEmpty()) {
       return;
     }
@@ -508,12 +534,12 @@ public final class DexpiEngineeringMaterializer {
       association.setAttribute("ItemID", member);
       loop.appendChild(association);
     }
-    appendGovernance(document, loop, requirement, systemFor(requirement), "ENGINEERING_FUNCTION_LOOP");
+    appendGovernance(document, loop, project, requirement, systemFor(requirement), "ENGINEERING_FUNCTION_LOOP");
     insertBeforeCatalogue(root, loop);
   }
 
-  private static void appendGovernance(Document document, Element parent, EngineeringRequirement requirement,
-      String controlSystem, String role) {
+  private static void appendGovernance(Document document, Element parent, EngineeringProject project,
+      EngineeringRequirement requirement, String controlSystem, String role) {
     Element attributes = document.createElement("GenericAttributes");
     attributes.setAttribute("Set", "EngineeringGovernance");
     appendAttribute(document, attributes, "EngineeringRequirementId", requirement.getId());
@@ -524,10 +550,14 @@ public final class DexpiEngineeringMaterializer {
     appendAttribute(document, attributes, "ApprovalStatus", requirement.getApprovalStatus().name());
     appendAttribute(document, attributes, "SILTarget", requirement.getSilTarget());
     appendAttribute(document, attributes, "SetPoint", "NOT_ASSIGNED");
-    appendAttribute(document, attributes, "VotingArchitecture", "NOT_ASSIGNED");
+    appendAttribute(document, attributes, "VotingArchitecture", votingFor(project, requirement));
     appendAttribute(document, attributes, "TagStatus", "PROVISIONAL_PROJECT_TAG");
     appendAttribute(document, attributes, "StandardReferences", join(requirement.getStandardReferences()));
     parent.appendChild(attributes);
+  }
+
+  private static String votingFor(EngineeringProject project, EngineeringRequirement requirement) {
+    return votingFor(project, requirement.getId());
   }
 
   private static String systemFor(EngineeringRequirement requirement) {

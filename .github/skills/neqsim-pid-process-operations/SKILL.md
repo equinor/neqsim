@@ -1,6 +1,6 @@
 ---
 name: neqsim-pid-process-operations
-version: "1.2.0"
+version: "1.3.0"
 description: "Bidirectional P&ID/NeqSim workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim simulations, generating governed DEXPI engineering packages from ProcessSystem or ProcessModel, linking tags to historian data, evaluating valve/equipment changes, or preparing water-hammer and blowdown/flare handoffs."
 last_verified: "2026-07-15"
 requires:
@@ -208,6 +208,23 @@ generated from simulated full inflow only when declared design and relief-set
 pressures exist. Treat missing-input statuses as data gaps; never fill them with
 generic values merely to obtain a size.
 
+For an engineering-readiness package, attach the governed project inputs that
+correspond to the source documents:
+
+- `LineDesignInput` for line-list dimensions, schedule, wall, material, piping
+  class, corrosion allowance, design conditions and evidence reference;
+- `ReliefScenarioBasis` for hazard-review-required API 521 causes, with matching
+  scenarios in `OverpressureProtectionStudy`;
+- `SafetyFunctionDesign` for LOPA/SRS-backed target SIL, sensor/logic/final-element
+  failure data, MooN voting, proof-test interval, diagnostic coverage and beta factor;
+- `ShutdownSequence` for cause/effect actions, safe positions, timing budget,
+  HAZOP/SRS references and reset/restart definition.
+
+Inspect `engineeringReadiness` in `engineering-calculations.json`. It reports
+coverage percentage, missing-input count, severity, responsible discipline and
+approval state. Never interpret 100% calculation/evidence coverage as engineering
+approval or fitness for construction.
+
 For multi-area models, call
 `NorsokOffshoreEngineeringBuilder.fromProcessModel(...)` and export each returned
 `EngineeringProject` to its own area directory. Use
@@ -219,11 +236,11 @@ traceability.
 
 Safety governance is mandatory: rule-generated trips use `SIL_UNASSIGNED` and
 `REVIEW_REQUIRED`; generated controller tuning, trip set points, and voting
-architectures remain `NOT_ASSIGNED`. Never derive SIL from equipment type, a
-generic tag template, or normal operating conditions. Set a SIL target only
-from an identified HAZOP/LOPA/QRA record and approve it through the project SRS
-workflow per IEC 61511. See `neqsim-process-safety` for the risk-analysis
-handoff.
+architectures remain `NOT_ASSIGNED` unless a controlled `SafetyFunctionDesign`
+supplies them. Never derive SIL from equipment type, a generic tag template, or
+normal operating conditions. Set a SIL target only from an identified
+HAZOP/LOPA/QRA record and approve it through the project SRS workflow per IEC
+61511. See `neqsim-process-safety` for the risk-analysis handoff.
 
 ### Steady-State Model
 

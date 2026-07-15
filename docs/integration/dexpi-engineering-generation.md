@@ -85,6 +85,12 @@ input, or requires review. The DEXPI equipment objects reference this file and c
 declared design pressure, temperature, material, corrosion allowance, relief set pressure, and valve failure action
 where those values have been supplied.
 
+Version 2 of the calculation handoff also contains a controlled line list and ASME B31.3/NORSOK P-002 screening,
+API 521 relief-scenario coverage, low-demand SIF PFD/voting verification, timed shutdown-sequence checks, and an
+engineering-readiness matrix. Readiness is reported as completed/required items, missing-input count, completeness
+percentage, severity, responsible discipline, and approval state. A 100% completeness score means that the configured
+calculation/evidence set is present; it never means that the design is approved or fit for construction.
+
 The materialized compressor template includes antisurge flow/differential-pressure measurement, an antisurge
 controller and recycle valve, suction and discharge shutdown isolation, reverse-flow prevention, blowdown, suction
 low-pressure, discharge high-pressure/high-temperature, and machinery-protection functions. Separator templates
@@ -93,8 +99,10 @@ proposals. Only equipment already present in the process model is created as pro
 objects are generated as governed P&amp;ID proposals.
 
 `cause-and-effect.json` is a traceable proposal generated from the same requirements. It intentionally leaves final
-set points and voting architectures unassigned and identifies proposed effects that must be resolved through
-HAZOP/LOPA, the shutdown philosophy, and the safety requirements specification.
+set points unassigned. Voting remains unassigned for rule-only requirements; when a controlled
+`SafetyFunctionDesign` is attached, its subsystem MooN architectures are written into DEXPI governance attributes and
+the cause/effect proposal. Proposed effects still require resolution through HAZOP/LOPA, the shutdown philosophy, and
+the safety requirements specification.
 
 ## Add sizing studies
 
@@ -132,6 +140,98 @@ depressurization, concurrent-source aggregation, BDV/orifice checks, PSV sizing,
 header Mach checks. The runner will return readiness blockers instead of calculating when required inventory, valve,
 fire, header, flare or evidence inputs are absent. Use `setMaterialsReviewInput(...)` to overlay project material
 register, aqueous chemistry, inspection, coating and design-life data on the process-derived service conditions.
+
+## Controlled line list and piping design
+
+Hydraulic length, inner diameter, roughness and elevation remain properties of explicit `PipeLineInterface` equipment.
+Overlay the controlled mechanical line-list row before export:
+
+```java
+project.addLineDesignInput(new LineDesignInput("20-PL-001-A", "20-PL-001")
+    .setNominalPipeSize("8")
+    .setSchedule("80")
+    .setMaterialGrade("X65")
+    .setPipingClass("HC-600")
+    .setOuterDiameter(219.1, "mm")
+    .setNominalWallThickness(12.7, "mm")
+    .setCorrosionAllowance(3.0, "mm")
+    .setDesignPressureBara(120.0)
+    .setDesignTemperatureC(150.0)
+    .setEquivalentFittingsLengthM(18.0)
+    .setProposedSupportSpacingM(5.0)
+    .addEvidenceReference("CONTROLLED-LINE-LIST-REV-A"));
+```
+
+The exporter reports simulated pressure drop and velocity, NORSOK P-002 hydraulic checks, minimum wall thickness,
+MAOP, stress/velocity screening and support-spacing results from the existing topside piping calculator. Detailed
+flexibility, nozzle-load, support, fabrication, flange and stress analysis remain piping-discipline deliverables.
+
+## Relief-scenario coverage
+
+An `OverpressureProtectionStudy` calculates the scenarios it contains. A separate `ReliefScenarioBasis` records which
+causes the hazard review determined to be credible, so the exporter can report coverage rather than treating one sized
+case as a complete API 521 assessment:
+
+```java
+project.addReliefScenarioBasis(new ReliefScenarioBasis("20-VG-001")
+    .require(ReliefCause.BLOCKED_OUTLET)
+    .require(ReliefCause.CONTROL_VALVE_FAILURE)
+    .require(ReliefCause.FIRE)
+    .require(ReliefCause.THERMAL_EXPANSION)
+    .setHazardReviewReference("HAZOP-20-001")
+    .addEvidenceReference("RELIEF-SCENARIO-REGISTER-REV-B"));
+```
+
+Use the existing `BlockedOutletRelief`, `ControlValveFailureRelief`, `FireCaseRelief`, `TubeRuptureRelief`,
+`CheckValveLeakRelief` and custom `ReliefScenario` APIs to populate the study. Missing credible causes remain explicit.
+
+## SIL/PFD and voting verification
+
+Only add a `SafetyFunctionDesign` after the SIL target and architecture have a controlled LOPA/SRS basis. The
+low-demand screening combines sensor, logic-solver and final-element PFD contributions, MooN voting, diagnostic
+coverage, repair time, proof-test interval and beta-factor common-cause contribution:
+
+```java
+SafetyFunctionDesign sif = new SafetyFunctionDesign(
+    "SIF-20-001", "20-KA-001-DISCHARGE-P-HH", 2)
+    .setLopaReference("LOPA-20-001")
+    .setSrsReference("SRS-20-001")
+    .setSafeState("Compressor stopped and isolated")
+    .addSubsystem(new SafetyFunctionDesign.Subsystem("Pressure transmitters",
+        SafetyFunctionDesign.SubsystemType.SENSOR, 2, 3,
+        1.0e-6, 0.60, 8760.0, 8.0, 0.05))
+    .addSubsystem(new SafetyFunctionDesign.Subsystem("Safety logic solver",
+        SafetyFunctionDesign.SubsystemType.LOGIC_SOLVER, 1, 1,
+        1.0e-7, 0.90, 8760.0, 8.0, 0.0))
+    .addSubsystem(new SafetyFunctionDesign.Subsystem("Trip and isolation",
+        SafetyFunctionDesign.SubsystemType.FINAL_ELEMENT, 1, 1,
+        2.0e-6, 0.50, 8760.0, 8.0, 0.0));
+project.addSafetyFunctionDesign(sif);
+```
+
+The calculation is a transparent verification screen, not a SIL determination. Certified failure data, systematic
+capability, independence, proof-test coverage, bypass management and the complete IEC 61511 lifecycle remain required.
+Project-defined voting is written into the DEXPI governance attributes and cause/effect sidecar.
+
+## Shutdown sequencing and readiness
+
+Use `ShutdownSequence` to record the cause, protected equipment, safe state, actions, fail positions, delays, execution
+times, response-time budget, HAZOP/SRS references and reset/restart definition. The exporter checks sequence completeness
+and timing margin. Use the existing `EmergencyShutdownTestRunner` for dynamic process-response validation.
+
+```java
+project.addShutdownSequence(new ShutdownSequence("ESD-20-001", "High-high discharge pressure")
+    .setProtectedEquipmentTag("20-KA-001")
+    .setSafeState("Compressor stopped and isolated")
+    .setHazopReference("HAZOP-20-001")
+    .setSrsReference("SRS-20-001")
+    .setResponseTimeBudgetSeconds(12.0)
+    .setResetAndRestartDefined(true)
+    .addAction(new ShutdownSequence.Action(
+        "20-KA-001", "Trip driver", "STOPPED", 0.5, 1.0))
+    .addAction(new ShutdownSequence.Action(
+        "ESDV-20-001", "Close isolation", "CLOSED", 1.0, 6.0)));
+```
 
 ## Safety governance
 

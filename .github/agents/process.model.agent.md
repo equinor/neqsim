@@ -31,7 +31,10 @@ governed engineering path from `neqsim-pid-process-operations`:
    for one project per area.
 4. Attach project-defined `OverpressureProtectionStudy` and
    `DynamicBlowdownFlareStudyDataSource` inputs when their evidence is available.
-5. Export only with `DexpiEngineeringExporter`, and inspect
+5. Attach controlled `LineDesignInput`, `ReliefScenarioBasis`,
+   `SafetyFunctionDesign`, and `ShutdownSequence` inputs when line-list,
+   HAZOP/LOPA/SRS and cause/effect evidence exists.
+6. Export only with `DexpiEngineeringExporter`, and inspect
    `engineering-calculations.json` plus unresolved data gaps.
 
 Do not assign SIL, voting, final set points, failure actions, materials or final

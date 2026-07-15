@@ -36,6 +36,10 @@ public final class EngineeringProject implements Serializable {
   private final List<EngineeringRequirement> requirements = new ArrayList<EngineeringRequirement>();
   private final List<OverpressureProtectionStudy> overpressureStudies = new ArrayList<OverpressureProtectionStudy>();
   private final List<DynamicBlowdownFlareStudyDataSource> blowdownFlareStudies = new ArrayList<DynamicBlowdownFlareStudyDataSource>();
+  private final List<LineDesignInput> lineDesignInputs = new ArrayList<LineDesignInput>();
+  private final List<ReliefScenarioBasis> reliefScenarioBases = new ArrayList<ReliefScenarioBasis>();
+  private final List<SafetyFunctionDesign> safetyFunctionDesigns = new ArrayList<SafetyFunctionDesign>();
+  private final List<ShutdownSequence> shutdownSequences = new ArrayList<ShutdownSequence>();
   private MaterialsReviewInput materialsReviewInput;
 
   EngineeringProject(String name, ProcessSystem processSystem, EngineeringDesignBasis designBasis) {
@@ -127,6 +131,62 @@ public final class EngineeringProject implements Serializable {
   /** @return immutable transient blowdown and flare study inputs */
   public List<DynamicBlowdownFlareStudyDataSource> getBlowdownFlareStudies() {
     return Collections.unmodifiableList(blowdownFlareStudies);
+  }
+
+  /** Adds a controlled line-list row associated with pipeline equipment. */
+  public EngineeringProject addLineDesignInput(LineDesignInput input) {
+    if (input == null) {
+      throw new IllegalArgumentException("input must not be null");
+    }
+    lineDesignInputs.add(input);
+    return this;
+  }
+
+  /** @return immutable line-list inputs */
+  public List<LineDesignInput> getLineDesignInputs() {
+    return Collections.unmodifiableList(lineDesignInputs);
+  }
+
+  /** Adds the hazard-review basis defining credible relief causes for one protected item. */
+  public EngineeringProject addReliefScenarioBasis(ReliefScenarioBasis basis) {
+    if (basis == null) {
+      throw new IllegalArgumentException("basis must not be null");
+    }
+    reliefScenarioBases.add(basis);
+    return this;
+  }
+
+  /** @return immutable relief-scenario bases */
+  public List<ReliefScenarioBasis> getReliefScenarioBases() {
+    return Collections.unmodifiableList(reliefScenarioBases);
+  }
+
+  /** Adds externally justified SIF architecture and reliability data for PFD screening. */
+  public EngineeringProject addSafetyFunctionDesign(SafetyFunctionDesign design) {
+    if (design == null) {
+      throw new IllegalArgumentException("design must not be null");
+    }
+    safetyFunctionDesigns.add(design);
+    return this;
+  }
+
+  /** @return immutable safety-function designs */
+  public List<SafetyFunctionDesign> getSafetyFunctionDesigns() {
+    return Collections.unmodifiableList(safetyFunctionDesigns);
+  }
+
+  /** Adds a review-governed shutdown cause-and-effect sequence. */
+  public EngineeringProject addShutdownSequence(ShutdownSequence sequence) {
+    if (sequence == null) {
+      throw new IllegalArgumentException("sequence must not be null");
+    }
+    shutdownSequences.add(sequence);
+    return this;
+  }
+
+  /** @return immutable shutdown sequences */
+  public List<ShutdownSequence> getShutdownSequences() {
+    return Collections.unmodifiableList(shutdownSequences);
   }
 
   /**
@@ -234,6 +294,10 @@ public final class EngineeringProject implements Serializable {
     root.add("designBasis", basis);
 
     root.add("requirements", new GsonBuilder().create().toJsonTree(requirements));
+    root.add("lineList", new GsonBuilder().create().toJsonTree(lineDesignInputs));
+    root.add("reliefScenarioBases", new GsonBuilder().create().toJsonTree(reliefScenarioBases));
+    root.add("safetyFunctionDesigns", new GsonBuilder().create().toJsonTree(safetyFunctionDesigns));
+    root.add("shutdownSequences", new GsonBuilder().create().toJsonTree(shutdownSequences));
     root.add("validation", new GsonBuilder().create().toJsonTree(validate().getFindings()));
     return new GsonBuilder().setPrettyPrinting().create().toJson(root);
   }
