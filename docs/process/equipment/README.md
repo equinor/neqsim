@@ -52,6 +52,7 @@ This folder contains detailed documentation for all process equipment in NeqSim.
 | Equipment | File | Description |
 |-----------|------|-------------|
 | Reactors (Overview) | [reactors.md](reactors) | All reactor types: PFR, CSTR, Gibbs, stoichiometric, ammonia, sulfur, bio-processing |
+| Iron-Sulfide Wall Source | [iron_sulfide_wall_source.md](iron_sulfide_wall_source) | Stateful FeS/FeCO3 scale, oxygen ingress, S8 generation, and compressor deposition coupling |
 | Plug Flow Reactor | [plug_flow_reactor.md](plug_flow_reactor) | Kinetic PFR with power-law/LHHW/reversible kinetics, catalyst bed, Ergun ΔP, energy modes |
 | Electrolyzers | [electrolyzers.md](electrolyzers) | Water and CO₂ electrolysis |
 
@@ -226,4 +227,3 @@ ProcessEquipmentInterface
 - [ProcessModule](../processmodel/process_module) - Modular process units
 - [Controllers](../controllers) - Control equipment
 - [Safety Systems](../safety/) - Safety equipment
-

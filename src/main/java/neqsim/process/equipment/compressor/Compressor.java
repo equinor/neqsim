@@ -198,6 +198,9 @@ public class Compressor extends TwoPortEquipment
   /** Mechanical losses model for seal gas and bearing calculations. */
   private CompressorMechanicalLosses mechanicalLosses = null;
 
+  /** Optional lumped thermal network for local metal, bearing, seal and casing temperatures. */
+  private CompressorThermalModel thermalModel = null;
+
   private String pressureUnit = "bara";
   private String polytropicMethod = "schultz";
 
@@ -296,6 +299,57 @@ public class Compressor extends TwoPortEquipment
    */
   public void setMechanicalLosses(CompressorMechanicalLosses mechanicalLosses) {
     this.mechanicalLosses = mechanicalLosses;
+  }
+
+  /**
+   * Get the optional compressor thermal network.
+   *
+   * @return thermal model, or null when not configured
+   */
+  public CompressorThermalModel getThermalModel() {
+    return thermalModel;
+  }
+
+  /**
+   * Attach a compressor thermal network.
+   *
+   * @param thermalModel thermal model, or null to remove it
+   */
+  public void setThermalModel(CompressorThermalModel thermalModel) {
+    this.thermalModel = thermalModel;
+  }
+
+  /**
+   * Apply a named definition from a compressor catalog.
+   *
+   * @param catalog compressor catalog
+   * @param entryId catalog entry identifier
+   */
+  public void applyCatalogEntry(CompressorCatalog catalog, String entryId) {
+    if (catalog == null) {
+      throw new IllegalArgumentException("compressor catalog must not be null");
+    }
+    catalog.apply(entryId, this);
+  }
+
+  /** Solve the attached thermal network at steady state. */
+  public void solveThermalModel() {
+    if (thermalModel == null) {
+      throw new IllegalStateException("no thermal model is attached to compressor '" + getName() + "'");
+    }
+    thermalModel.solveSteadyState(this);
+  }
+
+  /**
+   * Advance the attached thermal network by one implicit transient step.
+   *
+   * @param timeStepSeconds time step in seconds
+   */
+  public void solveThermalModelTransient(double timeStepSeconds) {
+    if (thermalModel == null) {
+      throw new IllegalStateException("no thermal model is attached to compressor '" + getName() + "'");
+    }
+    thermalModel.solveTransient(this, timeStepSeconds);
   }
 
   /**
@@ -476,6 +530,12 @@ public class Compressor extends TwoPortEquipment
           ProcessEquipmentInterface.createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
     }
     state.put("power", ProcessEquipmentInterface.createStateEntry(getPower("kW"), "kW"));
+    if (thermalModel != null) {
+      for (Map.Entry<String, Double> temperature : thermalModel.getTemperatureProfile(temperatureUnit).entrySet()) {
+        state.put("thermal_" + temperature.getKey(),
+            ProcessEquipmentInterface.createStateEntry(temperature.getValue(), temperatureUnit));
+      }
+    }
     return state;
   }
 
@@ -633,6 +693,9 @@ public class Compressor extends TwoPortEquipment
 
   private void finishRun(UUID id) {
     updateRecalculationState();
+    if (thermalModel != null && thermalModel.isAutoSolve()) {
+      thermalModel.solveSteadyState(this);
+    }
     if (outStream != null) {
       outStream.setCalculationIdentifier(id);
     }
@@ -5053,7 +5116,7 @@ public class Compressor extends TwoPortEquipment
               // min
               // constraint
               .setMinValue(minSpeedLimit).setWarningThreshold(0.95) // Warning when within 5%
-                                                                    // of minimum
+              // of minimum
               .setValueSupplier(() -> this.speed).setEnabled(chartActive));
     }
 

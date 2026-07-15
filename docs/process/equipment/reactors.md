@@ -19,6 +19,7 @@ stoichiometric conversion, catalytic reactions, and bio-processing. All reactors
 - [Stoichiometric Reactor](#stoichiometric-reactor)
 - [Ammonia Synthesis Reactor](#ammonia-synthesis-reactor)
 - [Sulfur Oxidation Reactor](#sulfur-oxidation-reactor)
+- [Iron-Sulfide Wall Source](#iron-sulfide-wall-source)
 - [Sulfur Deposition Analyser](#sulfur-deposition-analyser)
 - [Furnace Burner](#furnace-burner)
 - [Hydrogen Production Reactors](#hydrogen-production-reactors)
@@ -43,6 +44,8 @@ stoichiometric conversion, catalytic reactions, and bio-processing. All reactors
 | `StoichiometricReaction` | Fixed-conversion stoichiometric reactor |
 | `AmmoniaSynthesisReactor` | Specialized reactor for ammonia synthesis |
 | `SulfurOxidationReactor` | Partial oxidation of H2S and oxygen to elemental sulfur (`S8`) and water |
+| `IronSulfideWallInventory` | Stateful FeS, FeCO3, and iron-oxide wall inventory with exposure history |
+| `IronSulfideOxidationSource` | FeS formation/oxidation source coupled to an `S8` outlet and uncertainty bounds |
 | `SulfurDepositionAnalyser` | Sulfur solubility, deposition onset, corrosion assessment |
 | `FurnaceBurner` | Fired heater / furnace burner |
 | `CatalyticTubeReformer` | Tube-side SMR equilibrium model with duty and tube-wall screening |
@@ -70,6 +73,7 @@ stoichiometric conversion, catalytic reactions, and bio-processing. All reactors
 | `PartialOxidationReactor` | POX syngas route studies with quench and refractory-temperature screening |
 | `AmmoniaSynthesisReactor` | Haber-Bosch ammonia synthesis modeling |
 | `SulfurOxidationReactor` | Sour gas with oxygen ingress or controlled oxidation where generated `S8` should feed a downstream sulfur filter |
+| `IronSulfideOxidationSource` | Historical wet/sour carbon-steel service followed by oxygen ingress, purge, shutdown, or restart |
 | `SulfurDepositionAnalyser` | Sulfur precipitation, H2S reactions, corrosion assessment |
 
 ---
@@ -276,6 +280,24 @@ filter.runTransient(3600.0, UUID.randomUUID());
 ```
 
 These examples are covered by `SulfurOxidationReactorTest` and `FilterTest`.
+
+---
+
+## Iron-Sulfide Wall Source
+
+`IronSulfideWallInventory` retains FeS, FeCO3, and iron-oxide-equivalent scale formed during earlier
+wet or sour service. `IronSulfideOxidationSource` calculates user-configured formation and oxidation
+rates, applies H2S/O2 availability limits, and introduces the elemental-sulfur fraction as `S8` into
+its outlet stream. Uncalibrated cases report low/base/high sulfur rates.
+
+This model is appropriate when a fluid-only H2S oxidation calculation cannot explain the observed
+inventory or timing—for example, oxygen-containing nitrogen reaching old FeS scale during a purge or
+restart. The generated `S8` can be connected to `SolidFlashDepositSource`; that source can evaluate a
+warmer compressor shaft thermal node and report local condensate evaporation.
+
+> **Full documentation:** See the
+> [Iron-Sulfide Wall Source Guide](iron_sulfide_wall_source.md) for reaction bookkeeping, history,
+> uncertainty, condensate carry-over, and warm-shaft coupling.
 
 ---
 

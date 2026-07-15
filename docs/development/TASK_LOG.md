@@ -36,6 +36,12 @@ requirement`, or `confidential compressor route`.
 
 <!-- Add new entries at the top. Most recent first. -->
 
+### 2026-07-16 — Historical FeS wall inventory to elemental-sulfur compressor deposition
+**Type:** E (Feature) / B (Process)
+**Keywords:** iron sulfide, FeS, mackinawite, pyrrhotite, siderite, FeCO3, carbon steel, seawater, oxygen ingress, nitrogen purge, elemental sulfur, S8, wall inventory, compressor deposit, entrained condensate, warm shaft
+**Solution:** `IronSulfideWallInventory` retains FeS/FeCO3/iron-oxide-equivalent mass, geometry, mineral reactivity category, and auditable exposure history. `IronSulfideOxidationSource` models user-configured FeS formation from bare steel/dissolved Fe2+/FeCO3/iron oxide, oxygen-transfer-limited oxidation, S0-yield uncertainty, heat, and an `S8` outlet. `SolidFlashDepositSource` can now flash at explicit local P-T or a compressor thermal node and reports inlet-liquid evaporation. Includes focused Java tests, documentation, and `examples/notebooks/IronSulfideWallSulfurDeposition.ipynb`.
+**Notes:** All kinetic defaults are deliberately zero because FeS polymorph, ageing, porosity, wetting and oxygen transfer are plant-specific. `run()` reports a non-mutating source rate; `runTransient`/`runExposure` mutate the historical inventory. The screening case (1 MSm3/d gas, 20 ppm H2S, 10 kg/h nitrogen with 2 mol% O2) contains about 0.228 kg/h O2, giving a default FeS-to-Fe2O3 route ceiling near 0.30 kg/h S0 before yield/transfer losses. The FeS inventory is a cumulative ceiling, not an hourly source. Generated S0 is passed as existing `S8`, allowing the established solid flash/filter/deposit route to handle condensate transport and warm-shaft evaporation.
+
 ### 2026-07-10 — PEPR action: subsea gas-condensate tieback flowline liquid-accumulation / gravity-dominated screening
 **Type:** B (Process)
 **Keywords:** flow assurance, liquid loading, gravity-dominated, liquid holdup, liquid content vs gas rate, water cut sensitivity, Beggs and Brill, PipeBeggsAndBrills, flow regime segregated stratified intermittent slug, gas-condensate flowline, subsea tieback, deliverability limit, PEPR action, screening, SystemSrkCPAstatoil
