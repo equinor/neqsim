@@ -11,6 +11,59 @@
 
 ---
 
+## 2026-07-15 — New: `CompressorShaft` (multiple compressor bodies on one shaft, single common speed)
+
+### Summary
+
+Additive class for modelling a multi-body compressor string driven by ONE shaft (a single gas
+turbine or motor), so all bodies turn at the same speed. No change to existing behaviour.
+
+### New capability
+
+- **`neqsim.process.equipment.compressor.CompressorShaft`** — groups several `Compressor` bodies on
+  one shaft at a single common speed. A shared shaft has exactly one mechanical DOF (the common
+  speed) and one controlled target (the string's final discharge pressure); intermediate inter-body
+  pressures **float** off the charts.
+  - `addCompressor(c)` — add bodies in flow order.
+  - `solveSpeed(reference, targetPressure, unit, runnable)` — bisect the ONE common speed until the
+    reference (usually last) body's outlet pressure hits the target, re-running the flowsheet via the
+    `Runnable` callback between guesses (so inter-body streams/scrubbers/mixers update). Intermediate
+    pressures float. This is the correct shared-shaft solve.
+  - `runAtFixedSpeed(rpm, runnable)` — for constant-speed drivers (no VSD): lock the speed, discharge
+    floats off the chart; meet any pressure spec by recycle/throttle/IGV, not by moving speed.
+  - `setSpeed`, `setSpeedBounds`, `setMaxIterations`, `setPressureTolerance`, `getSpeed`,
+    `getTotalPower`, `getCompressors`, `applySpeed` (puts every body in fixed-speed chart-forward mode).
+
+### Usage
+
+```java
+CompressorShaft shaft = new CompressorShaft("recompression shaft (single GT)");
+shaft.addCompressor(rc1); // LP body
+shaft.addCompressor(rc2);
+shaft.addCompressor(rc3); // HP body = reference
+shaft.setSpeedBounds(8000.0, 16000.0);
+shaft.solveSpeed(rc3, 49.0, "bara", () -> process.run());
+double rpm = shaft.getSpeed();
+```
+
+From Python (jpype), wrap the flowsheet re-run as a Runnable proxy:
+`jpype.JProxy("java.lang.Runnable", dict(run=lambda: process.run()))`.
+
+### DOF rule (do not violate)
+
+Do NOT fix every stage outlet pressure AND set a common speed — that is over-constrained and
+non-physical. Set the ONE common speed (or iterate it to the final discharge) and let intermediate
+pressures float. Model a unit that ties into an interstage (e.g. a 2nd-stage separator gas) as a
+pressure **equality** (a setter or small valve), not as a second pressure spec.
+
+### Agents/skills to update
+
+- `neqsim-compressor-antisurge-recycle` skill — has a "Multi-Body Compressor Trains on One Shaft"
+  section documenting this pattern. Anti-surge loops coexist (they set recycle flow; the shaft sets
+  speed) — apply the shaft solve after charts + anti-surge are active.
+
+---
+
 ## 2026-07-15 — New: `CompressorChartLibrary` (multiple named/selectable compressor charts) + `GasTurbine` power-demand mode
 
 ### Summary
