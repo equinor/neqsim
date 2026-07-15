@@ -1,8 +1,8 @@
 ---
 name: neqsim-pid-process-operations
-version: "1.0.0"
+version: "1.1.0"
 description: "P&ID-to-NeqSim operational workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim process simulations, linking equipment and instrument tags to plant historian data via tagreader, evaluating steady-state and dynamic valve/equipment changes, or preparing water-hammer valve-closure handoffs."
-last_verified: "2026-05-10"
+last_verified: "2026-07-15"
 requires:
   python_packages: [pandas]
 ---
@@ -170,6 +170,34 @@ status, speed, power, or trip status. Save raw historian data as CSV inside the
 task folder before running calculations.
 
 ## Converting to NeqSim
+
+### Generating a governed DEXPI engineering package
+
+When the direction is NeqSim-to-P&ID, use the engineering project layer rather
+than calling `DexpiXmlWriter` alone. It adds a versioned design basis,
+standards traceability, deterministic control/safeguarding proposals, approval
+state, validation findings, and referenced compressor-map datasets:
+
+```java
+EngineeringProject project = NorsokOffshoreEngineeringBuilder
+    .from("Gas compression engineering model", process)
+    .registerProposedInstruments(true)
+    .build();
+
+EngineeringValidationReport validation = project.validate();
+DexpiEngineeringExporter.ExportResult files =
+    DexpiEngineeringExporter.export(project, Paths.get("engineering-package"));
+```
+
+The generated `plant.dexpi.xml` references `engineering-manifest.json` and any
+`datasets/<tag>-compressor-map.json` sidecars. Do not flatten large vendor maps
+into P&ID attributes.
+
+Safety governance is mandatory: rule-generated trips use `SIL_UNASSIGNED` and
+`REVIEW_REQUIRED`. Never derive SIL from equipment type, a generic tag template,
+or normal operating conditions. Set a SIL target only from an identified
+HAZOP/LOPA/QRA record and approve it through the project SRS workflow per IEC
+61511. See `neqsim-process-safety` for the risk-analysis handoff.
 
 ### Steady-State Model
 
