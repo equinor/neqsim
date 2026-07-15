@@ -5116,7 +5116,7 @@ public class Compressor extends TwoPortEquipment
               // min
               // constraint
               .setMinValue(minSpeedLimit).setWarningThreshold(0.95) // Warning when within 5%
-                                                                    // of minimum
+              // of minimum
               .setValueSupplier(() -> this.speed).setEnabled(chartActive));
     }
 

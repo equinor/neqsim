@@ -12,18 +12,16 @@ import com.google.gson.GsonBuilder;
  * Lumped-parameter thermal network for a compressor.
  *
  * <p>
- * Each non-boundary node obeys {@code C dT/dt = Q + sum(G * (Tneighbour - T))}. The
- * steady-state and implicit-Euler transient solvers use the same network. Conductances and heat
- * capacities are deliberately explicit calibration parameters: local metal temperatures depend on
- * machine geometry, material, oil flow, seal flow and operating history and cannot be inferred from
- * the process-gas outlet temperature alone.
+ * Each non-boundary node obeys {@code C dT/dt = Q + sum(G * (Tneighbour - T))}. The steady-state and implicit-Euler
+ * transient solvers use the same network. Conductances and heat capacities are deliberately explicit calibration
+ * parameters: local metal temperatures depend on machine geometry, material, oil flow, seal flow and operating history
+ * and cannot be inferred from the process-gas outlet temperature alone.
  * </p>
  *
  * <p>
- * API 617 and API 692 define the relevant compressor, bearing and dry-gas-seal system scope. They
- * do not provide a universal rotor thermal network. Template values supplied by
- * {@link CompressorCatalog} are therefore screening values and should be replaced with OEM data or
- * fitted plant measurements before integrity decisions are made.
+ * API 617 and API 692 define the relevant compressor, bearing and dry-gas-seal system scope. They do not provide a
+ * universal rotor thermal network. Template values supplied by {@link CompressorCatalog} are therefore screening values
+ * and should be replaced with OEM data or fitted plant measurements before integrity decisions are made.
  * </p>
  */
 public class CompressorThermalModel implements Serializable {
@@ -53,15 +51,15 @@ public class CompressorThermalModel implements Serializable {
   public static final String AMBIENT = "ambient";
 
   private String name = "compressor thermal model";
-  private final Map<String, CompressorThermalNode> nodes =
-      new LinkedHashMap<String, CompressorThermalNode>();
+  private final Map<String, CompressorThermalNode> nodes = new LinkedHashMap<String, CompressorThermalNode>();
   private final List<CompressorThermalLink> links = new ArrayList<CompressorThermalLink>();
   private boolean autoSolve = true;
   private boolean useMechanicalLossHeatSources = true;
   private double compressionHeatFractionToImpeller = 0.0;
 
   /** Create an empty thermal network. */
-  public CompressorThermalModel() {}
+  public CompressorThermalModel() {
+  }
 
   /** @param name descriptive model name */
   public CompressorThermalModel(String name) {
@@ -184,15 +182,13 @@ public class CompressorThermalModel implements Serializable {
     if (compressor.getInletStream() != null) {
       setBoundaryIfPresent(SUCTION_GAS, compressor.getInletStream().getTemperature("K"));
     }
-    if (compressor.getOutletStream() != null
-        && compressor.getOutletStream().getThermoSystem() != null) {
+    if (compressor.getOutletStream() != null && compressor.getOutletStream().getThermoSystem() != null) {
       setBoundaryIfPresent(DISCHARGE_GAS, compressor.getOutletStream().getTemperature("K"));
     }
     CompressorMechanicalLosses losses = compressor.getMechanicalLosses();
     if (losses != null) {
       setBoundaryIfPresent(SEAL_GAS, losses.getSealGasSupplyTemperature() + 273.15);
-      double oilTemperatureK =
-          0.5 * (losses.getLubeOilInletTemp() + losses.getLubeOilOutletTemp()) + 273.15;
+      double oilTemperatureK = 0.5 * (losses.getLubeOilInletTemp() + losses.getLubeOilOutletTemp()) + 273.15;
       setBoundaryIfPresent(LUBE_OIL, oilTemperatureK);
     }
   }
@@ -251,8 +247,7 @@ public class CompressorThermalModel implements Serializable {
         hasBoundary = true;
       } else {
         if (transientStep && node.getHeatCapacityJPerK() <= 0.0) {
-          throw new IllegalStateException("transient node '" + node.getId()
-              + "' must have positive heat capacity");
+          throw new IllegalStateException("transient node '" + node.getId() + "' must have positive heat capacity");
         }
         unknownIndex.put(node.getId(), unknowns.size());
         unknowns.add(node);
@@ -278,10 +273,10 @@ public class CompressorThermalModel implements Serializable {
     }
 
     for (CompressorThermalLink link : links) {
-      addLinkToEquations(link.getFromNodeId(), link.getToNodeId(), link.getConductanceWPerK(),
-          unknownIndex, coefficients, rightHandSide);
-      addLinkToEquations(link.getToNodeId(), link.getFromNodeId(), link.getConductanceWPerK(),
-          unknownIndex, coefficients, rightHandSide);
+      addLinkToEquations(link.getFromNodeId(), link.getToNodeId(), link.getConductanceWPerK(), unknownIndex,
+          coefficients, rightHandSide);
+      addLinkToEquations(link.getToNodeId(), link.getFromNodeId(), link.getConductanceWPerK(), unknownIndex,
+          coefficients, rightHandSide);
     }
     double[] solution = solveLinearSystem(coefficients, rightHandSide);
     for (int i = 0; i < unknowns.size(); i++) {
@@ -410,8 +405,7 @@ public class CompressorThermalModel implements Serializable {
 
   /** @return pretty-printed, round-trippable JSON */
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create()
-        .toJson(this);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create().toJson(this);
   }
 
   /**

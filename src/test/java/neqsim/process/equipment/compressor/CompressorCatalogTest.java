@@ -37,8 +37,7 @@ public class CompressorCatalogTest {
 
     assertNotSame(first.getThermalModel(), second.getThermalModel());
     first.getThermalModel().getNode(CompressorThermalModel.AMBIENT).setTemperatureK(315.0);
-    assertEquals(298.15,
-        second.getThermalModel().getTemperature(CompressorThermalModel.AMBIENT, "K"), 1.0e-12);
+    assertEquals(298.15, second.getThermalModel().getTemperature(CompressorThermalModel.AMBIENT, "K"), 1.0e-12);
     assertThrows(IllegalArgumentException.class, () -> restored.apply("unknown", first));
   }
 
@@ -56,14 +55,12 @@ public class CompressorCatalogTest {
     compressor.setOutletPressure(100.0, "bara");
     compressor.setIsentropicEfficiency(0.78);
     compressor.initMechanicalLosses(120.0);
-    compressor.applyCatalogEntry(CompressorCatalog.createDefaultCatalog(),
-        "generic-centrifugal-single-stage");
+    compressor.applyCatalogEntry(CompressorCatalog.createDefaultCatalog(), "generic-centrifugal-single-stage");
 
     compressor.run();
 
     CompressorThermalModel model = compressor.getThermalModel();
-    assertEquals(inlet.getTemperature("K"),
-        model.getTemperature(CompressorThermalModel.SUCTION_GAS, "K"), 1.0e-10);
+    assertEquals(inlet.getTemperature("K"), model.getTemperature(CompressorThermalModel.SUCTION_GAS, "K"), 1.0e-10);
     assertEquals(compressor.getOutletStream().getTemperature("K"),
         model.getTemperature(CompressorThermalModel.DISCHARGE_GAS, "K"), 1.0e-10);
     assertTrue(model.getTemperature(CompressorThermalModel.INLET_SHAFT, "K") > 250.0);
