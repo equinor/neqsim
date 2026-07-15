@@ -125,4 +125,49 @@ public class CompressorInletGuideVaneTest {
     comp.setGuideVaneAngle(60.0); // fully closed (default closed angle)
     assertEquals(0.0, comp.getInletGuideVaneOpening(), 1e-9);
   }
+
+  /**
+   * A vendor IGV-position chart family interpolates between positions and, when attached, drives the compressor chart
+   * per opening (parametric model bypassed). Closing the vanes lowers the fixed-speed discharge.
+   */
+  @Test
+  void testGuideVaneChartFamily() {
+    // Two vendor positions: fully open (1.0) makes more head than half open (0.5), on the same speed lines.
+    double[] chartConditions = new double[] { 30.0, 20.0 };
+    double[] speed = new double[] { 8000.0, 10000.0, 12000.0 };
+    double[][] flow = new double[][] { { 1000.0, 1500.0, 2000.0 }, { 1300.0, 1800.0, 2300.0 },
+        { 1600.0, 2100.0, 2600.0 } };
+    double[][] headOpen = new double[][] { { 60.0, 55.0, 46.0 }, { 90.0, 83.0, 70.0 }, { 125.0, 115.0, 98.0 } };
+    double[][] headHalf = new double[][] { { 42.0, 38.0, 32.0 }, { 63.0, 58.0, 49.0 }, { 88.0, 80.0, 69.0 } };
+    double[][] eff = new double[][] { { 0.74, 0.80, 0.75 }, { 0.75, 0.81, 0.76 }, { 0.74, 0.80, 0.75 } };
+
+    CompressorChartIGV family = new CompressorChartIGV();
+    family.setHeadUnit("kJ/kg");
+    family.addPosition(1.0, chartConditions, speed, flow, headOpen, eff);
+    family.addPosition(0.5, chartConditions, speed, flow, headHalf, eff);
+    assertEquals(2, family.getNumberOfPositions());
+
+    // Interpolation: at opening 0.75 the head is between the half- and fully-open head.
+    CompressorChart mid = family.getChartAtOpening(0.75);
+    double hMid = mid.getPolytropicHead(1500.0, 10000.0);
+    double hOpen = family.getChartAtOpening(1.0).getPolytropicHead(1500.0, 10000.0);
+    double hHalf = family.getChartAtOpening(0.5).getPolytropicHead(1500.0, 10000.0);
+    assertTrue(hHalf < hMid && hMid < hOpen, "0.75 opening head should sit between 0.5 and 1.0");
+
+    // Attaching the family to a compressor swaps its ACTIVE performance chart per IGV opening:
+    // closing the vanes lowers the head the machine's chart produces at a fixed speed.
+    Compressor comp = new Compressor("igv chart compressor", feed(20.0));
+    comp.setUsePolytropicCalc(true);
+    comp.setInletGuideVaneChart(family);
+
+    comp.setInletGuideVaneOpening(1.0);
+    double hChartOpen = comp.getCompressorChart().getPolytropicHead(1500.0, 10000.0);
+    comp.setInletGuideVaneOpening(0.5);
+    double hChartHalf = comp.getCompressorChart().getPolytropicHead(1500.0, 10000.0);
+
+    assertTrue(hChartHalf < hChartOpen, "closing IGV via the chart family should lower the active chart head ("
+        + hChartHalf + " vs " + hChartOpen + ")");
+    assertEquals(0.5, comp.getInletGuideVaneOpening(), 1e-9);
+    assertTrue(comp.getInletGuideVaneChart() != null);
+  }
 }

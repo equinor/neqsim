@@ -73,6 +73,8 @@ public class Compressor extends TwoPortEquipment
   private double inletGuideVaneOpening = 1.0;
   /** Parametric inlet-guide-vane model (head / efficiency / surge-flow corrections vs opening). */
   private InletGuideVaneModel inletGuideVaneModel = new InletGuideVaneModel();
+  /** Optional vendor IGV-position chart family; when set, it supplies the chart per opening (bypasses the model). */
+  private CompressorChartIGV guideVaneChart = null;
   /** Maximum discharge temperature in Kelvin for capacity constraint. */
   private double maxDischargeTemperature = 473.15; // 200°C default
   private boolean isSetMaxDischargeTemperature = false;
@@ -2439,6 +2441,34 @@ public class Compressor extends TwoPortEquipment
    */
   public void setInletGuideVaneOpening(double opening) {
     this.inletGuideVaneOpening = Math.max(0.0, Math.min(1.0, opening));
+    if (guideVaneChart != null && guideVaneChart.getNumberOfPositions() > 0) {
+      // A vendor IGV-position chart family is attached: rebuild the active chart at this opening.
+      // The parametric model is bypassed (the chart already encodes the IGV effect).
+      setCompressorChart(guideVaneChart.getChartAtOpening(this.inletGuideVaneOpening));
+    }
+  }
+
+  /**
+   * Attach a vendor IGV-position chart family. When set, the compressor chart is rebuilt from the family at the current
+   * opening (and on every {@link #setInletGuideVaneOpening(double)}), and the parametric {@link InletGuideVaneModel}
+   * corrections are bypassed so the IGV effect is not double-counted.
+   *
+   * @param chartFamily the IGV chart family, or {@code null} to detach it
+   */
+  public void setInletGuideVaneChart(CompressorChartIGV chartFamily) {
+    this.guideVaneChart = chartFamily;
+    if (chartFamily != null && chartFamily.getNumberOfPositions() > 0) {
+      setCompressorChart(chartFamily.getChartAtOpening(this.inletGuideVaneOpening));
+    }
+  }
+
+  /**
+   * Get the attached vendor IGV-position chart family.
+   *
+   * @return the IGV chart family, or {@code null} if none is attached
+   */
+  public CompressorChartIGV getInletGuideVaneChart() {
+    return guideVaneChart;
   }
 
   /**
@@ -2497,7 +2527,7 @@ public class Compressor extends TwoPortEquipment
    * @return the IGV-corrected head
    */
   private double applyInletGuideVaneHead(double head) {
-    if (inletGuideVaneOpening >= 1.0 || inletGuideVaneModel == null) {
+    if (guideVaneChart != null || inletGuideVaneOpening >= 1.0 || inletGuideVaneModel == null) {
       return head;
     }
     return head * inletGuideVaneModel.headMultiplier(inletGuideVaneOpening);
@@ -2510,7 +2540,7 @@ public class Compressor extends TwoPortEquipment
    * @return the IGV-corrected efficiency in percent (clamped to a small positive value)
    */
   private double applyInletGuideVaneEfficiency(double efficiencyPercent) {
-    if (inletGuideVaneOpening >= 1.0 || inletGuideVaneModel == null) {
+    if (guideVaneChart != null || inletGuideVaneOpening >= 1.0 || inletGuideVaneModel == null) {
       return efficiencyPercent;
     }
     double corrected = efficiencyPercent + 100.0 * inletGuideVaneModel.efficiencyDelta(inletGuideVaneOpening);
@@ -2524,7 +2554,7 @@ public class Compressor extends TwoPortEquipment
    * @return the IGV-corrected surge flow
    */
   private double applyInletGuideVaneSurgeFlow(double surgeFlow) {
-    if (inletGuideVaneOpening >= 1.0 || inletGuideVaneModel == null) {
+    if (guideVaneChart != null || inletGuideVaneOpening >= 1.0 || inletGuideVaneModel == null) {
       return surgeFlow;
     }
     return surgeFlow * inletGuideVaneModel.surgeFlowMultiplier(inletGuideVaneOpening);

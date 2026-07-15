@@ -11,6 +11,53 @@
 
 ---
 
+## 2026-07-15 — New: `CompressorChartIGV` (vendor IGV-position chart family, Phase 2)
+
+### Summary
+
+Rigorous IGV path complementing the parametric `InletGuideVaneModel`: a vendor performance map per
+IGV position, interpolated into a standard `CompressorChart` at any opening (mirrors the expander
+IGV-position families in `TurboMachineryChartLibrary`).
+
+### New capability
+
+- **`neqsim.process.equipment.compressor.CompressorChartIGV`** (serializable) —
+  `addPosition(opening, chartConditions, speed[], flow[][], head[][], polyEff[][])` (positions in any
+  order), `setHeadUnit`, `setReferenceConditions`, `getNumberOfPositions`, and
+  `getChartAtOpening(f)` which linearly interpolates the flow/head/efficiency curves between the two
+  bracketing positions (clamps outside the supplied range), regenerates the surge curve, and returns
+  a ready `CompressorChart`. Positions must share the same speed lines / array shapes.
+- **`Compressor`**: `setInletGuideVaneChart(CompressorChartIGV)` / `getInletGuideVaneChart()` — attach
+  a vendor family; the active compressor chart is rebuilt from it at the current opening and on every
+  `setInletGuideVaneOpening(f)`. While a family is attached the parametric `InletGuideVaneModel`
+  corrections are bypassed (the chart already encodes the IGV effect).
+
+### Usage
+
+```java
+CompressorChartIGV family = new CompressorChartIGV();
+family.setHeadUnit("kJ/kg");
+family.addPosition(1.0, cc, speed, flow, headOpen, eff);   // fully open
+family.addPosition(0.5, cc, speed, flow, headHalf, eff);   // half open
+comp.setInletGuideVaneChart(family);
+comp.setInletGuideVaneOpening(0.75);   // active chart = interpolated map at 75% open
+```
+
+### Scope note
+
+The family selects the compressor's active performance chart per opening (verified at the chart
+level). For fixed-speed *discharge* control the parametric `InletGuideVaneModel` (Phase 1) remains the
+validated end-to-end path; driving fixed-speed discharge purely from an externally-set chart has a
+pre-existing quirk unrelated to IGV. Use the family to supply vendor maps and the parametric model
+for fixed-speed head/efficiency/surge control.
+
+### Tests
+
+`CompressorInletGuideVaneTest` (5) — includes interpolation monotonicity and the active-chart swap
+per opening. Full compressor/shaft/mixer suite (49) green.
+
+---
+
 ## 2026-07-15 — New: first-class inlet-guide-vane (IGV) control on `Compressor`
 
 ### Summary

@@ -760,6 +760,11 @@ Real platforms rarely have one machine per duty. Match the P&ID / STID exactly:
   below-min-speed target is handled by `setPressureControl(DOWNSTREAM_CHOKE)`; the
   downstream `Mixer.isPressureMismatch()` flag shows where an unmet pressure collapses a
   commingling node to the lowest inlet.
+- **Fixed-speed IGV control.** For a constant-speed (motor-driven) machine, control
+  pressure/capacity with inlet guide vanes: `comp.setInletGuideVaneOpening(f)` /
+  `setGuideVaneAngle(deg)` applies a parametric `InletGuideVaneModel` (lowers head,
+  efficiency and surge flow at fixed speed); attach vendor per-vane maps with
+  `comp.setInletGuideVaneChart(CompressorChartIGV)` for interpolated IGV-position charts.
 
 ```python
 # Parallel A/B export bodies -> commingle
