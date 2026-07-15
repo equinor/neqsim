@@ -62,6 +62,62 @@ class MixerTest {
   }
 
   /**
+   * Active inlets arriving at materially different pressures must raise the pressure-mismatch flag; the outlet still
+   * takes the lowest inlet pressure.
+   */
+  @Test
+  void testPressureMismatchFlag() {
+    Stream lowP = new Stream("low pressure", testSystem.clone());
+    lowP.setFlowRate(1.0, "MSm3/day");
+    lowP.setTemperature(40.0, "C");
+    lowP.setPressure(20.0, "bara");
+    lowP.run();
+
+    Stream highP = new Stream("high pressure", testSystem.clone());
+    highP.setFlowRate(1.0, "MSm3/day");
+    highP.setTemperature(40.0, "C");
+    highP.setPressure(50.0, "bara"); // e.g. a compressor discharge that did reach spec
+    highP.run();
+
+    Mixer mismatchMixer = new Mixer("mismatch mixer");
+    mismatchMixer.addStream(lowP);
+    mismatchMixer.addStream(highP);
+    mismatchMixer.run();
+
+    assertTrue(mismatchMixer.isPressureMismatch(),
+        "mixer should flag that inlets at 20 and 50 bara were collapsed to the lowest");
+    assertEquals(30.0, mismatchMixer.getInletPressureSpread(), 1e-6);
+    assertEquals(20.0, mismatchMixer.getOutletStream().getPressure("bara"), 1e-6);
+    assertEquals(50.0, mismatchMixer.getMaxInletPressure(), 1e-6);
+  }
+
+  /**
+   * Inlets at (essentially) the same pressure must NOT raise the pressure-mismatch flag.
+   */
+  @Test
+  void testNoPressureMismatchWhenPressuresMatch() {
+    Stream a = new Stream("stream a", testSystem.clone());
+    a.setFlowRate(1.0, "MSm3/day");
+    a.setTemperature(40.0, "C");
+    a.setPressure(30.0, "bara");
+    a.run();
+
+    Stream b = new Stream("stream b", testSystem.clone());
+    b.setFlowRate(1.0, "MSm3/day");
+    b.setTemperature(40.0, "C");
+    b.setPressure(30.0, "bara");
+    b.run();
+
+    Mixer matchedMixer = new Mixer("matched mixer");
+    matchedMixer.addStream(a);
+    matchedMixer.addStream(b);
+    matchedMixer.run();
+
+    assertFalse(matchedMixer.isPressureMismatch(), "equal inlet pressures must not raise the mismatch flag");
+    assertEquals(0.0, matchedMixer.getInletPressureSpread(), 1e-6);
+  }
+
+  /**
    * Test method for {@link neqsim.process.equipment.mixer.Mixer#run()}.
    */
   @Test

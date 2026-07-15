@@ -64,6 +64,20 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
   private double outTemperature = Double.NaN;
   double lowestPressure = Double.NEGATIVE_INFINITY;
 
+  /** Highest active inlet pressure seen in the last mix, in the thermo-system pressure unit (bara). */
+  private double highestInletPressure = Double.NaN;
+
+  /**
+   * Flag raised when the active inlet streams arrived at materially different pressures so the outlet had to collapse
+   * to the lowest. Mixing at the lowest inlet pressure is correct physics, but a higher inlet being throttled down is
+   * often the symptom of an upstream unit (e.g. a compressor that could not reach its target discharge) not meeting its
+   * spec, so the condition is flagged for the caller.
+   */
+  private boolean pressureMismatch = false;
+
+  /** Tolerance on the active inlet pressure spread before {@link #pressureMismatch} is raised, in bar. */
+  private double pressureMismatchToleranceBar = 0.5;
+
   private boolean doMultiPhaseCheck = true;
   private double[] lastInletTemperatures = null;
   private double[] lastInletPressures = null;
@@ -172,6 +186,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
     // Streams with negligible flow (bypassed / deactivated) must not influence the mixer
     // pressure — their stale pressure would otherwise drive the outlet to a wrong value.
     lowestPressure = Double.POSITIVE_INFINITY;
+    highestInletPressure = Double.NEGATIVE_INFINITY;
     boolean hasAddedNewComponent = false;
     for (int k = 0; k < streams.size(); k++) {
       if (streams.get(k).getFlowRate("kg/hr") <= getMinimumFlow()) {
@@ -181,10 +196,31 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
       if (p < lowestPressure) {
         lowestPressure = p;
       }
+      if (p > highestInletPressure) {
+        highestInletPressure = p;
+      }
     }
     if (Double.isInfinite(lowestPressure)) {
       // All inlets are inactive — fall back to the template stream's pressure.
       lowestPressure = mixedStream.getThermoSystem().getPhase(0).getPressure();
+      highestInletPressure = lowestPressure;
+    }
+
+    // Raise a flag when active inlets arrive at materially different pressures. The mixer outlet
+    // (correctly) collapses to the lowest inlet pressure, so any higher inlet is being throttled
+    // down to it — frequently the signature of an upstream unit (e.g. a compressor that could not
+    // reach its target discharge on a single common shaft speed) not meeting its spec. The
+    // behaviour is left unchanged; only a flag + warning are added so the caller is not left
+    // silently losing pressure downstream.
+    pressureMismatch = false;
+    if (!Double.isInfinite(highestInletPressure) && !Double.isNaN(highestInletPressure)) {
+      double spread = highestInletPressure - lowestPressure;
+      if (spread > pressureMismatchToleranceBar) {
+        pressureMismatch = true;
+        logger.warn("Mixer {}: active inlet pressures differ by {} bar (lowest {} bara, highest {} bara); "
+            + "outlet set to the lowest inlet pressure. Check for an upstream unit not reaching its target pressure.",
+            getName(), spread, lowestPressure, highestInletPressure);
+      }
     }
 
     // Process ALL streams starting from k=1 (k=0 is already cloned into mixedStream)
@@ -258,6 +294,65 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
     if (hasAddedNewComponent) {
       mixedStream.getThermoSystem().setMixingRule(mixedStream.getThermoSystem().getMixingRule());
     }
+  }
+
+  /**
+   * Whether the last mix collapsed active inlets of materially different pressure to the lowest one. Correct physics,
+   * but usually a sign that an upstream unit (e.g. a compressor) did not reach its target discharge pressure.
+   *
+   * @return {@code true} if the active inlet pressure spread exceeded {@link #getPressureMismatchTolerance()}
+   */
+  public boolean isPressureMismatch() {
+    return pressureMismatch;
+  }
+
+  /**
+   * Difference between the highest and lowest active inlet pressure seen in the last mix.
+   *
+   * @return the inlet pressure spread in bar, or {@code 0.0} if it could not be determined
+   */
+  public double getInletPressureSpread() {
+    if (Double.isNaN(highestInletPressure) || Double.isInfinite(highestInletPressure)
+        || Double.isInfinite(lowestPressure)) {
+      return 0.0;
+    }
+    return highestInletPressure - lowestPressure;
+  }
+
+  /**
+   * Highest active inlet pressure seen in the last mix.
+   *
+   * @return the highest active inlet pressure in bara, or {@link Double#NaN} if unknown
+   */
+  public double getMaxInletPressure() {
+    return highestInletPressure;
+  }
+
+  /**
+   * Lowest active inlet pressure seen in the last mix (equal to the outlet pressure).
+   *
+   * @return the lowest active inlet pressure in bara
+   */
+  public double getMinInletPressure() {
+    return lowestPressure;
+  }
+
+  /**
+   * Set the tolerance on the active inlet pressure spread before {@link #isPressureMismatch()} is raised.
+   *
+   * @param toleranceBar the tolerance in bar (must be non-negative)
+   */
+  public void setPressureMismatchTolerance(double toleranceBar) {
+    this.pressureMismatchToleranceBar = Math.max(0.0, toleranceBar);
+  }
+
+  /**
+   * Get the tolerance on the active inlet pressure spread before {@link #isPressureMismatch()} is raised.
+   *
+   * @return the tolerance in bar
+   */
+  public double getPressureMismatchTolerance() {
+    return pressureMismatchToleranceBar;
   }
 
   /**
