@@ -19,7 +19,8 @@ public class CompressorCatalogEntry implements Serializable {
   private final Map<String, String> references = new LinkedHashMap<String, String>();
 
   /** No-argument constructor for JSON deserialization. */
-  public CompressorCatalogEntry() {}
+  public CompressorCatalogEntry() {
+  }
 
   /**
    * Create a catalog entry.

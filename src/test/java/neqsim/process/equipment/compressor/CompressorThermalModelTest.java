@@ -42,8 +42,7 @@ public class CompressorThermalModelTest {
 
   @Test
   void detectsInvalidAndSingularNetworks() {
-    assertThrows(IllegalArgumentException.class,
-        () -> new CompressorThermalLink("a", "b", 0.0));
+    assertThrows(IllegalArgumentException.class, () -> new CompressorThermalLink("a", "b", 0.0));
 
     CompressorThermalModel noBoundary = new CompressorThermalModel();
     noBoundary.addNode(new CompressorThermalNode("metal", NodeType.SHAFT, 300.0, 1000.0, false));
@@ -57,8 +56,8 @@ public class CompressorThermalModelTest {
 
   @Test
   void jsonRoundTripCreatesIndependentNetwork() {
-    CompressorThermalModel original = CompressorCatalog.createDefaultCatalog()
-        .get("generic-centrifugal-single-stage").getThermalModel();
+    CompressorThermalModel original = CompressorCatalog.createDefaultCatalog().get("generic-centrifugal-single-stage")
+        .getThermalModel();
     CompressorThermalModel restored = CompressorThermalModel.fromJson(original.toJson());
 
     restored.getNode(CompressorThermalModel.AMBIENT).setTemperatureK(310.0);

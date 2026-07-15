@@ -35,7 +35,8 @@ public class CompressorThermalNode implements Serializable {
   private boolean fixedTemperature;
 
   /** No-argument constructor for JSON deserialization. */
-  public CompressorThermalNode() {}
+  public CompressorThermalNode() {
+  }
 
   /**
    * Create a thermal node.
@@ -46,8 +47,8 @@ public class CompressorThermalNode implements Serializable {
    * @param heatCapacityJPerK lumped heat capacity in J/K
    * @param fixedTemperature whether the node is an imposed boundary temperature
    */
-  public CompressorThermalNode(String id, NodeType type, double temperatureK,
-      double heatCapacityJPerK, boolean fixedTemperature) {
+  public CompressorThermalNode(String id, NodeType type, double temperatureK, double heatCapacityJPerK,
+      boolean fixedTemperature) {
     setId(id);
     setType(type);
     setTemperatureK(temperatureK);

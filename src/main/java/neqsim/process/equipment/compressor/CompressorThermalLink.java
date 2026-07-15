@@ -22,7 +22,8 @@ public class CompressorThermalLink implements Serializable {
   private Mechanism mechanism = Mechanism.EFFECTIVE;
 
   /** No-argument constructor for JSON deserialization. */
-  public CompressorThermalLink() {}
+  public CompressorThermalLink() {
+  }
 
   /**
    * Create a thermal link.
@@ -43,8 +44,7 @@ public class CompressorThermalLink implements Serializable {
    * @param conductanceWPerK effective conductance in W/K
    * @param mechanism heat-transfer mechanism
    */
-  public CompressorThermalLink(String fromNodeId, String toNodeId, double conductanceWPerK,
-      Mechanism mechanism) {
+  public CompressorThermalLink(String fromNodeId, String toNodeId, double conductanceWPerK, Mechanism mechanism) {
     setFromNodeId(fromNodeId);
     setToNodeId(toNodeId);
     setConductanceWPerK(conductanceWPerK);
