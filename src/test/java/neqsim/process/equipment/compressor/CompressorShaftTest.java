@@ -130,4 +130,36 @@ public class CompressorShaftTest {
     shaft.setSpeed(9000.0);
     assertEquals(9000.0, c1.getSpeed(), 1e-6);
   }
+
+  /**
+   * solveSpeed iterates the common speed to hit a target discharge pressure on a charted machine.
+   */
+  @Test
+  void testSolveSpeedHitsTargetDischarge() {
+    Stream f1 = feed(10.0);
+    Compressor c1 = new Compressor("body1", f1);
+    c1.setOutletPressure(20.0);
+    c1.setUsePolytropicCalc(true);
+    c1.setPolytropicEfficiency(0.75);
+    c1.run();
+    c1.generateCompressorChart("normal curves", 5);
+    c1.getCompressorChart().setUseCompressorChart(true);
+    double design = c1.getSpeed();
+
+    CompressorShaft shaft = new CompressorShaft("solve shaft");
+    shaft.addCompressor(c1);
+    shaft.setSpeedBounds(design * 0.7, design * 1.4);
+    shaft.setPressureTolerance(0.2);
+    shaft.setMaxIterations(40);
+
+    // Reference discharge at the design speed, then ask for a slightly higher target that a
+    // small speed increase can reach (guaranteed bracketed within the bounds).
+    shaft.runAtFixedSpeed(design, null);
+    double p0 = c1.getOutletStream().getPressure("bara");
+    double target = p0 + 0.5;
+
+    shaft.solveSpeed(c1, target, "bara", null);
+    assertEquals(target, c1.getOutletStream().getPressure("bara"), 0.4);
+    assertTrue(shaft.getSpeed() > design * 0.7 && shaft.getSpeed() < design * 1.4);
+  }
 }

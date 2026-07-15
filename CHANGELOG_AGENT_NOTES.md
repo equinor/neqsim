@@ -25,10 +25,12 @@ turbine or motor), so all bodies turn at the same speed. No change to existing b
   speed) and one controlled target (the string's final discharge pressure); intermediate inter-body
   pressures **float** off the charts.
   - `addCompressor(c)` — add bodies in flow order.
-  - `solveSpeed(reference, targetPressure, unit, runnable)` — bisect the ONE common speed until the
+  - `solveSpeed(reference, targetPressure, unit, runnable)` — solve the ONE common speed until the
     reference (usually last) body's outlet pressure hits the target, re-running the flowsheet via the
     `Runnable` callback between guesses (so inter-body streams/scrubbers/mixers update). Intermediate
-    pressures float. This is the correct shared-shaft solve.
+    pressures float. Uses a bracketed **false-position (Illinois) secant** (superlinear on the smooth,
+    monotonic speed↔discharge map) — far fewer flowsheet solves than bisection. This is the correct
+    shared-shaft solve.
   - `runAtFixedSpeed(rpm, runnable)` — for constant-speed drivers (no VSD): lock the speed, discharge
     floats off the chart; meet any pressure spec by recycle/throttle/IGV, not by moving speed.
   - `setSpeed`, `setSpeedBounds`, `setMaxIterations`, `setPressureTolerance`, `getSpeed`,
@@ -61,6 +63,22 @@ pressure **equality** (a setter or small valve), not as a second pressure spec.
 - `neqsim-compressor-antisurge-recycle` skill — has a "Multi-Body Compressor Trains on One Shaft"
   section documenting this pattern. Anti-surge loops coexist (they set recycle flow; the shaft sets
   speed) — apply the shaft solve after charts + anti-surge are active.
+- `neqsim-platform-modeling` skill — §6.4 documents multiple parallel trains, 2-stage machines,
+  dehydration, shared shafts, fuel-from-power, and vessel utilization.
+
+### Suggested follow-up NIPs (not yet implemented)
+
+- **Process-recycle-integrated shaft speed.** Today `CompressorShaft.solveSpeed` re-runs the whole
+  flowsheet N times via an external `Runnable` (a jpype `JProxy` from Python). A shaft-speed node that
+  participates in the normal `ProcessSystem.run()` recycle/adjuster iteration would converge the common
+  speed *inside one* solve — removing the N re-runs and the callback, and letting the shared shaft be
+  the default rather than opt-in. Highest-leverage next step.
+- **Multi-body `CompressorTrain` unit.** The existing `CompressorTrain` is single-body. A class owning
+  N bodies + interstage coolers/scrubbers on one shaft (aggregate power/surge, one speed) would make a
+  recompression train one object instead of N `antisurge_stage` calls + a manual `CompressorShaft`.
+- **First-class separator gas-load utilization.** A `SeparatorMechanicalDesign.getGasLoadUtilization()`
+  (Souders-Brown K / K_design from the vessel ID) would replace hand-rolled Python and align with the
+  capacity-constraint framework.
 
 ---
 

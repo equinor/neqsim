@@ -32,11 +32,11 @@ has freedoms, which is not physical.
 
 ## Iterating the Common Speed
 
-`solveSpeed` puts every body into fixed-speed, chart-forward mode and does a
-one-variable bisection on the common speed until the reference (usually last)
-body's discharge matches the target. The surrounding flowsheet is re-solved
-between speed guesses through a caller-supplied `Runnable`, so inter-body
-streams, suction scrubbers and mixers update each iteration.
+`solveSpeed` puts every body into fixed-speed, chart-forward mode and solves the
+common speed with a bracketed **false-position (Illinois) secant** until the
+reference (usually last) body's discharge matches the target. The surrounding
+flowsheet is re-solved between speed guesses through a caller-supplied `Runnable`,
+so inter-body streams, suction scrubbers and mixers update each iteration.
 
 ```java
 CompressorShaft shaft = new CompressorShaft("23-KA recompression shaft (single GT)");
@@ -59,10 +59,13 @@ double rpm = shaft.getSpeed();
 double shaftPowerW = shaft.getTotalPower();
 ```
 
-Discharge pressure rises monotonically with speed on a centrifugal map, so
-bisection is robust. If flowsheet re-runs are expensive, keep the iteration
-budget modest (`setMaxIterations`) and the tolerance loose
-(`setPressureTolerance`); a secant/Newton step on speed converges faster.
+Discharge pressure rises monotonically with speed on a centrifugal map, so the
+solver brackets the root at the speed bounds and then converges superlinearly.
+Each iteration re-solves the whole flowsheet, so it is the dominant cost: keep
+the iteration budget modest (`setMaxIterations`) and the tolerance loose
+(`setPressureTolerance`). For a large multi-area plant, run the shaft solve as an
+**opt-in** step (each shaft costs several full-field solves), and solve each
+train's shaft in turn.
 
 ### Fixed common speed (no iteration)
 
@@ -128,7 +131,7 @@ and [Compressor Performance Curves](compressor_curves.md).
 <tr><td><code>runAtFixedSpeed(rpm, runnable)</code></td><td>Constant-speed driver: lock the speed, discharge floats off the chart.</td></tr>
 <tr><td><code>setSpeed(rpm)</code> / <code>getSpeed()</code></td><td>Apply / read the common shaft speed.</td></tr>
 <tr><td><code>setSpeedBounds(min, max)</code></td><td>Speed search bounds for <code>solveSpeed</code>.</td></tr>
-<tr><td><code>setMaxIterations(n)</code> / <code>setPressureTolerance(bar)</code></td><td>Bisection budget and convergence tolerance.</td></tr>
+<tr><td><code>setMaxIterations(n)</code> / <code>setPressureTolerance(bar)</code></td><td>Root-finder budget and convergence tolerance.</td></tr>
 <tr><td><code>getTotalPower()</code></td><td>Sum of the body shaft powers (W).</td></tr>
 <tr><td><code>getCompressors()</code> / <code>getName()</code></td><td>Members / shaft name.</td></tr>
 </table>

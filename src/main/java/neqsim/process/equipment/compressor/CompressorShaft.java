@@ -21,9 +21,9 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * This class enforces that constraint. All member compressors are put in fixed-speed, chart-based mode
  * ({@code setSolveSpeed(false)} + a common {@code setSpeed}) so each produces its discharge pressure from its chart at
- * the shared speed. {@link #solveSpeed} then does a one-variable bisection on the common speed until the reference
- * (last) body's outlet pressure matches the target, re-solving the surrounding flowsheet between guesses via a
- * caller-supplied callback.
+ * the shared speed. {@link #solveSpeed} then does a one-variable false-position (Illinois) secant on the common speed
+ * until the reference (last) body's outlet pressure matches the target, re-solving the surrounding flowsheet between
+ * guesses via a caller-supplied callback.
  * </p>
  *
  * <h2>Usage</h2>
@@ -64,7 +64,7 @@ public class CompressorShaft implements Serializable {
   /** Upper speed bound in rpm. */
   private double maxSpeed = 25000.0;
 
-  /** Maximum bisection iterations. */
+  /** Maximum root-finding iterations. */
   private int maxIterations = 60;
 
   /** Convergence tolerance on the reference outlet pressure in bar. */
@@ -131,7 +131,7 @@ public class CompressorShaft implements Serializable {
   }
 
   /**
-   * Set the maximum number of bisection iterations for {@link #solveSpeed}.
+   * Set the maximum number of root-finding iterations for {@link #solveSpeed}.
    *
    * @param iterations the maximum number of iterations
    */
@@ -165,8 +165,8 @@ public class CompressorShaft implements Serializable {
 
   /**
    * Solve the single common shaft speed so that, after re-running the flowsheet, the reference body's outlet pressure
-   * equals the target. Uses bisection on speed; higher speed gives higher head and therefore higher discharge pressure.
-   * Intermediate inter-body pressures float.
+   * equals the target. Uses a bracketed false-position (Illinois) secant on speed; higher speed gives higher head and
+   * therefore higher discharge pressure. Intermediate inter-body pressures float.
    *
    * @param reference the body whose outlet pressure is the controlled target (usually the last)
    * @param targetOutletPressure the required outlet pressure of the reference body
@@ -182,31 +182,86 @@ public class CompressorShaft implements Serializable {
     if (reference == null) {
       reference = compressors.get(compressors.size() - 1);
     }
-    double lo = minSpeed;
-    double hi = maxSpeed;
-    double best = speed;
+    // Bracket the root at the speed bounds. Discharge pressure rises monotonically with speed,
+    // so we expect fa < 0 < fb; then converge with a false-position (Illinois) secant, which is
+    // superlinear on this smooth map and needs far fewer flowsheet solves than bisection.
+    double a = minSpeed;
+    double b = maxSpeed;
+    double fa = evalOutletError(a, reference, targetOutletPressure, unit, processRun);
+    if (Math.abs(fa) < pressureToleranceBar) {
+      return finalizeSpeed(a, processRun);
+    }
+    double fb = evalOutletError(b, reference, targetOutletPressure, unit, processRun);
+    if (Math.abs(fb) < pressureToleranceBar) {
+      return finalizeSpeed(b, processRun);
+    }
+    if (fa * fb > 0.0) {
+      // Target not reachable within the speed bounds; use the closer bound.
+      double bound = Math.abs(fa) <= Math.abs(fb) ? a : b;
+      logger.warn(
+          "CompressorShaft {}: target {} {} not bracketed within speed bounds [{}, {}] rpm; " + "using nearest bound.",
+          name, targetOutletPressure, unit, a, b);
+      return finalizeSpeed(bound, processRun);
+    }
+    double best = 0.5 * (a + b);
     for (int i = 0; i < maxIterations; i++) {
-      double mid = 0.5 * (lo + hi);
-      this.speed = mid;
-      applySpeed();
-      runOnce(processRun);
-      double pout = reference.getOutletStream().getPressure(unit);
-      best = mid;
-      if (Math.abs(pout - targetOutletPressure) < pressureToleranceBar) {
+      // False-position (secant within the current bracket).
+      double x = b - fb * (b - a) / (fb - fa);
+      double xlo = Math.min(a, b);
+      double xhi = Math.max(a, b);
+      if (!(x > xlo && x < xhi)) {
+        x = 0.5 * (a + b); // guard: fall back to bisection if the secant leaves the bracket
+      }
+      double fx = evalOutletError(x, reference, targetOutletPressure, unit, processRun);
+      best = x;
+      if (Math.abs(fx) < pressureToleranceBar) {
         break;
       }
-      // Higher speed -> higher discharge pressure (monotonic on a centrifugal map).
-      if (pout < targetOutletPressure) {
-        lo = mid;
+      // Update the bracket; halve the retained endpoint's value (Illinois) to avoid stalling.
+      if (fx * fa < 0.0) {
+        b = x;
+        fb = fx;
+        fa *= 0.5;
       } else {
-        hi = mid;
+        a = x;
+        fa = fx;
+        fb *= 0.5;
       }
     }
-    this.speed = best;
+    return finalizeSpeed(best, processRun);
+  }
+
+  /**
+   * Apply a trial common speed, re-solve, and return the reference body's outlet-pressure error (actual minus target).
+   *
+   * @param trialSpeed the trial common shaft speed in rpm
+   * @param reference the reference body
+   * @param targetOutletPressure the target outlet pressure
+   * @param unit the pressure unit
+   * @param processRun the flowsheet re-run callback, or {@code null}
+   * @return the outlet-pressure error in the given unit
+   */
+  private double evalOutletError(double trialSpeed, Compressor reference, double targetOutletPressure, String unit,
+      Runnable processRun) {
+    this.speed = trialSpeed;
     applySpeed();
     runOnce(processRun);
-    logger.info("CompressorShaft {} solved common speed {} rpm", name, best);
-    return best;
+    return reference.getOutletStream().getPressure(unit) - targetOutletPressure;
+  }
+
+  /**
+   * Set the solved common speed, re-solve once, and return it.
+   *
+   * @param solvedSpeed the solved common shaft speed in rpm
+   * @param processRun the flowsheet re-run callback, or {@code null}
+   * @return the solved common shaft speed in rpm
+   */
+  private double finalizeSpeed(double solvedSpeed, Runnable processRun) {
+    this.speed = solvedSpeed;
+    applySpeed();
+    runOnce(processRun);
+    logger.info("CompressorShaft {} solved common speed {} rpm", name, solvedSpeed);
+    return solvedSpeed;
   }
 
   /**
