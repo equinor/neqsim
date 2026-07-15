@@ -23,6 +23,7 @@ These capabilities are relevant for both **offshore** (subsea pipelines, subsea 
 | 3 H₂S + SO₂ → 4 S + 2 H₂O    | Claus tail gas reaction           | GibbsReactor             |
 | S₈(gas) → S₈(solid)          | Desublimation / precipitation     | TPSolidflash             |
 | Fe + H₂S → FeS + H₂          | Iron sulfide corrosion            | SulfurDepositionAnalyser |
+| FeS(wall) + O₂ → Fe oxide + S⁰ | Oxidation of historical wall scale | IronSulfideOxidationSource |
 
 ## Components and Tools
 
@@ -143,6 +144,17 @@ String jsonReport = analyser.getResultsAsJson();
 | `getCorrosionAssessment()`              | Map of corrosion assessment data |
 | `getResultsAsJson()`                    | Comprehensive JSON report        |
 
+### 4. Historical FeS Wall Inventory
+
+`SulfurDepositionAnalyser` assesses the current fluid and uses FeS indicators for corrosion risk, but
+it does not retain kilograms of corrosion product from an earlier operating period. Use
+`IronSulfideWallInventory` with `IronSulfideOxidationSource` when the proposed route is historical
+water/seawater or FeCO3 scale → FeS → later O2 ingress → elemental sulfur.
+
+The source is explicitly mass-transfer and inventory limited, produces low/base/high S0 scenarios when
+kinetics are uncalibrated, and writes S0 to the outlet as `S8`. See the
+[Iron-Sulfide Wall Source Guide](../process/equipment/iron_sulfide_wall_source.md).
+
 ## Application Scenarios
 
 ### Offshore Subsea Pipeline
@@ -243,6 +255,8 @@ The notebook covers:
 | File                                                        | Description                        |
 | ----------------------------------------------------------- | ---------------------------------- |
 | `neqsim.process.equipment.reactor.SulfurDepositionAnalyser` | Integrated analyser unit operation |
+| `neqsim.process.equipment.reactor.IronSulfideWallInventory` | Stateful wall-scale inventory and exposure history |
+| `neqsim.process.equipment.reactor.IronSulfideOxidationSource` | Wall formation/oxidation source with S8 outlet |
 | `neqsim.process.equipment.reactor.GibbsReactor`             | Gibbs energy minimisation reactor  |
 | `neqsim.process.equipment.reactor.GibbsReactorCO2`          | Specialised CO₂/acid gas reactor   |
 | `neqsim.thermodynamicoperations.flashops.SolidFlash1`       | TP-solid flash implementation      |

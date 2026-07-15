@@ -172,6 +172,34 @@ public class CompressorDepositTest {
   }
 
   @Test
+  public void testSolidFlashUsesWarmShaftTemperatureAndTracksCondensateEvaporation() {
+    SystemInterface fluid = new SystemSrkEos(273.15 + 5.0, 40.0);
+    fluid.addComponent("methane", 0.70);
+    fluid.addComponent("n-heptane", 0.299);
+    fluid.addComponent("S8", 0.001);
+    fluid.setMixingRule(2);
+    fluid.setMultiPhaseCheck(true);
+    Stream feed = new Stream("entrained condensate and sulfur", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    feed.run();
+
+    Compressor compressor = new Compressor("warm shaft compressor", feed);
+    CompressorThermalModel thermalModel = new CompressorThermalModel("measured local temperatures");
+    thermalModel.addNode(new CompressorThermalNode(CompressorThermalModel.INLET_SHAFT,
+        CompressorThermalNode.NodeType.SHAFT, 373.15, 0.0, true));
+    compressor.setThermalModel(thermalModel);
+
+    SolidFlashDepositSource source = new SolidFlashDepositSource(feed, "S8", DepositMechanism.SULFUR_S8, 1.0);
+    source.setThermalNode(compressor, CompressorThermalModel.INLET_SHAFT);
+    source.getPrecipitationRate("kg/hr");
+
+    assertEquals(100.0, source.getLastEvaluationTemperatureC(), 1.0e-10);
+    assertEquals(40.0, source.getLastEvaluationPressureBara(), 1.0e-10);
+    assertTrue(source.getLastLiquidEvaporatedFraction() > 0.0,
+        "warmer shaft conditions should evaporate some of the inlet condensate");
+  }
+
+  @Test
   public void testDepositLocationAcrossImpellers() {
     SystemInterface gas = new SystemSrkEos(273.15 + 30.0, 40.0);
     gas.addComponent("methane", 0.95);
