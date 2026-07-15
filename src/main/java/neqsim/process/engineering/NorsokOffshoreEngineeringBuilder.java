@@ -124,10 +124,10 @@ public final class NorsokOffshoreEngineeringBuilder {
         addSeparatorRequirements(project, (Separator) unit);
       } else if (unit instanceof Compressor) {
         addCompressorRequirements(project, (Compressor) unit);
-      } else if (unit instanceof Heater) {
-        addHeaterRequirements(project, (Heater) unit);
       } else if (unit instanceof Cooler) {
         addCoolerRequirements(project, (Cooler) unit);
+      } else if (unit instanceof Heater) {
+        addHeaterRequirements(project, (Heater) unit);
       } else if (unit instanceof Pump) {
         addPumpRequirements(project, (Pump) unit);
       } else if (unit instanceof ThrottlingValve) {
