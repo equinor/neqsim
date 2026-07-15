@@ -667,7 +667,9 @@ public data. Keep proprietary methods, plant data, private tag names, internal
 URLs, company standards, and project-specific design bases out of the public
 community repos; use private enterprise skill and agent repositories for those.
 
-See the [Skills Guide](docs/integration/skills_guide.md) for the full walkthrough,
+See [Setting up Agents and Skills](docs/integration/agents_and_skills_setup.md)
+for the start-here install walkthrough,
+the [Skills Guide](docs/integration/skills_guide.md) for the full walkthrough,
 [Enterprise Agent and Skill Repositories](docs/integration/enterprise_agent_skill_repos.md)
 for company-private repository setup,
 [community-skills.yaml](community-skills.yaml) and
@@ -682,6 +684,7 @@ All tests and `./mvnw checkstyle:check` must pass before a PR is merged.
 
 | Resource | Link |
 |----------|------|
+| **Set up agents & skills** | [docs/integration/agents_and_skills_setup.md](docs/integration/agents_and_skills_setup.md) - start-here install for VS Code + enterprise setup |
 | **User documentation** | [equinor.github.io/neqsim](https://equinor.github.io/neqsim/) |
 | **Benchmark gallery** | [docs/benchmarks/](docs/benchmarks/index.md) - validation against NIST, published data |
 | **Reference manual index** | [REFERENCE_MANUAL_INDEX.md](docs/REFERENCE_MANUAL_INDEX.md) (350+ pages) |

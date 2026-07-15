@@ -731,6 +731,70 @@ else:
     export_manifold.addStream(hp_gas)
 ```
 
+### 6.4 Multiple parallel trains, 2-stage machines, dehydration, shared shafts
+
+Real platforms rarely have one machine per duty. Match the P&ID / STID exactly:
+
+- **Two full separation trains (A/B).** Many platforms run two parallel 1st/2nd/3rd
+  stage trains (e.g. `20-VA01/02/03 A` and `B`), not two 1st-stage separators feeding
+  a shared 2nd/3rd stage. Build a `sep_train(train, feed)` helper and commingle the
+  final-stage oil from both trains before the crude cooler.
+- **Two recompression trains (A/B)** — one 3-body cascade each. **Route each train's
+  HP discharge back to the gas header**, then split the header to export/fuel/
+  injection/lift. Do NOT commingle a recompressor interstage straight into the export
+  suction (a common wiring bug — the recompressed gas must rejoin the header first).
+- **Parallel export / injection machines.** Split the feed 50/50 into parallel bodies
+  (`27-KA01A/B`), each its own anti-surge, then a `Mixer` to commingle. Splitting one
+  large machine into two halves the per-machine gas load — e.g. a suction scrubber
+  that reads ~168 % of design on one body drops to ~80 % on two.
+- **Multi-stage injection** — parallel 1st-stage bodies (`26-KA01A/B`) → commingle →
+  a common 2nd stage (`26-KA02`) to the reservoir pressure, with an interstage pressure.
+- **Dehydration (TEG)** — a cooler + scrubber (`24-VG03`) before export knocks out free
+  water; a full TEG contactor with glycol recycle is a further step.
+- **Shared-shaft feasibility.** For a shared-shaft recompression string, converge the one
+  common speed with `CompressorShaftCalculator` (process-integrated, added after the
+  bodies) or `CompressorShaft.solveSpeed`. Both report a feasibility result —
+  `shaft.isFeasible()` / `getLastSolveResult()` gives the status
+  (`PRESSURE_ABOVE_MAX_SPEED` / `PRESSURE_BELOW_MIN_SPEED` / `OVER_POWER` / …) and the
+  min-/max-achievable discharge — so a maximise-throughput sweep can gate on it. A
+  below-min-speed target is handled by `setPressureControl(DOWNSTREAM_CHOKE)`; the
+  downstream `Mixer.isPressureMismatch()` flag shows where an unmet pressure collapses a
+  commingling node to the lowest inlet.
+- **Fixed-speed IGV control.** For a constant-speed (motor-driven) machine, control
+  pressure/capacity with inlet guide vanes: `comp.setInletGuideVaneOpening(f)` /
+  `setGuideVaneAngle(deg)` applies a parametric `InletGuideVaneModel` (lowers head,
+  efficiency and surge flow at fixed speed); attach vendor per-vane maps with
+  `comp.setInletGuideVaneChart(CompressorChartIGV)` for interpolated IGV-position charts.
+
+```python
+# Parallel A/B export bodies -> commingle
+exp_split = Splitter("export split A/B", dry_gas, 2)
+exp_split.setSplitFactors([0.5, 0.5]); p.add(exp_split)
+exp_mix = Mixer("gas export commingle")
+for i, tr in enumerate(("A", "B")):
+    st = antisurge_stage(p, f"export compressor 27-KA01{tr}", exp_split.getSplitStream(i),
+                         EXPORT_P, SUCTION_P, 0.78, RATED_KW, feed_fluid)
+    exp_mix.addStream(st["fwd"])
+p.add(exp_mix)
+```
+
+**Shared driver shaft (common speed).** Bodies on one gas-turbine shaft must turn at
+one speed. Group them with `neqsim.process.equipment.compressor.CompressorShaft` and
+`solveSpeed(reference, targetP, unit, runnable)` to iterate the single common speed to
+the final discharge (intermediates float). See the `neqsim-compressor-antisurge-recycle`
+skill and `docs/process/equipment/compressor_shaft.md`. Each shaft solve costs several
+full-field solves, so on a big multi-train plant make it an **opt-in** step and solve
+each train's shaft in turn.
+
+**Fuel gas from power demand.** Size the fuel-gas offtake from the actual compression
+shaft power with a `GasTurbine` in power-demand mode: sum every compressor's `getPower()`
+plus a lumped utility load, then `gt.setRequiredPower(W)` + `gt.getFuelFlowRate(...)`.
+Iterate 2–3 times so the small fuel offtake and the compressor power are consistent.
+
+**Vessel utilization (Souders-Brown).** Report separator/scrubber gas load
+`K = v_gas·sqrt(rho_g/(rho_l-rho_g))` vs a design `K` (~0.107 m/s) using the vessel
+internal diameter, so over-loaded vessels (a real bottleneck) are flagged.
+
 ---
 
 ## 7. Measurement Devices

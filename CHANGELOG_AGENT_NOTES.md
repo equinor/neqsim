@@ -11,6 +11,233 @@
 
 ---
 
+## 2026-07-15 — New: `CompressorChartIGV` (vendor IGV-position chart family, Phase 2)
+
+### Summary
+
+Rigorous IGV path complementing the parametric `InletGuideVaneModel`: a vendor performance map per
+IGV position, interpolated into a standard `CompressorChart` at any opening (mirrors the expander
+IGV-position families in `TurboMachineryChartLibrary`).
+
+### New capability
+
+- **`neqsim.process.equipment.compressor.CompressorChartIGV`** (serializable) —
+  `addPosition(opening, chartConditions, speed[], flow[][], head[][], polyEff[][])` (positions in any
+  order), `setHeadUnit`, `setReferenceConditions`, `getNumberOfPositions`, and
+  `getChartAtOpening(f)` which linearly interpolates the flow/head/efficiency curves between the two
+  bracketing positions (clamps outside the supplied range), regenerates the surge curve, and returns
+  a ready `CompressorChart`. Positions must share the same speed lines / array shapes.
+- **`Compressor`**: `setInletGuideVaneChart(CompressorChartIGV)` / `getInletGuideVaneChart()` — attach
+  a vendor family; the active compressor chart is rebuilt from it at the current opening and on every
+  `setInletGuideVaneOpening(f)`. While a family is attached the parametric `InletGuideVaneModel`
+  corrections are bypassed (the chart already encodes the IGV effect).
+
+### Usage
+
+```java
+CompressorChartIGV family = new CompressorChartIGV();
+family.setHeadUnit("kJ/kg");
+family.addPosition(1.0, cc, speed, flow, headOpen, eff);   // fully open
+family.addPosition(0.5, cc, speed, flow, headHalf, eff);   // half open
+comp.setInletGuideVaneChart(family);
+comp.setInletGuideVaneOpening(0.75);   // active chart = interpolated map at 75% open
+```
+
+### Scope note
+
+The family selects the compressor's active performance chart per opening (verified at the chart
+level). For fixed-speed *discharge* control the parametric `InletGuideVaneModel` (Phase 1) remains the
+validated end-to-end path; driving fixed-speed discharge purely from an externally-set chart has a
+pre-existing quirk unrelated to IGV. Use the family to supply vendor maps and the parametric model
+for fixed-speed head/efficiency/surge control.
+
+### Tests
+
+`CompressorInletGuideVaneTest` (5) — includes interpolation monotonicity and the active-chart swap
+per opening. Full compressor/shaft/mixer suite (49) green.
+
+---
+
+## 2026-07-15 — New: first-class inlet-guide-vane (IGV) control on `Compressor`
+
+### Summary
+
+`Compressor` now models inlet guide vanes as a first-class fixed-speed control (replacing the
+"effective chart speed" screening proxy). Closing the vanes reduces head and efficiency AND lowers
+the surge flow (shifts the surge line left), so anti-surge sees the correct margin. Additive and
+backward-compatible: the default opening is 1.0 (fully open = no correction).
+
+### New capability
+
+- **`neqsim.process.equipment.compressor.InletGuideVaneModel`** (serializable) — parametric IGV
+  physics as functions of an opening fraction `f` in `[0, 1]` (`f = 1` fully open):
+  `headMultiplier(f)`, `efficiencyDelta(f)` (fraction), `surgeFlowMultiplier(f)`, plus
+  angle↔opening conversion and configurable sensitivities (`setHeadDrop`, `setEfficiencyDrop`,
+  `setSurgeFlowDrop`, `setReferenceAngles`). Defaults are generic screening-level linear
+  sensitivities (`value = 1 - k*(1 - f)`), NOT vendor-certified.
+- **`Compressor`**: `setInletGuideVaneOpening(f)` / `getInletGuideVaneOpening()`,
+  `setGuideVaneAngle(deg)` / `getGuideVaneAngle()`, `getInletGuideVaneModel()` /
+  `setInletGuideVaneModel(model)`. The corrections are applied on the chart-based (fixed-speed)
+  operating point: head and efficiency in `run()`, and surge flow through `getSurgeFlowRate()`,
+  `getSurgeFlowRateMargin()`, and `getDistanceToSurge()`.
+
+### Usage
+
+```java
+comp.setSolveSpeed(false);            // fixed speed
+comp.setInletGuideVaneOpening(0.8);   // close IGV to 80% -> lower head/eff, lower surge flow
+comp.run();
+// discharge, getPolytropicEfficiency(), getSurgeFlowRate(), getDistanceToSurge() all reflect IGV
+```
+
+### Tests
+
+`CompressorInletGuideVaneTest` (4) — model monotonicity, fixed-speed discharge drop, surge-flow
+drop / distance-to-surge increase, angle mapping. All pass; existing compressor/shaft tests (35)
+unchanged.
+
+### Follow-up (not implemented)
+
+- Rigorous IGV-position **chart family** (2-D interpolation over speed × IGV position), mirroring
+  the expander `ExpanderChartKhader` IGV handling in `TurboMachineryChartLibrary`, for vendor IGV maps.
+
+### Agents/skills to update
+
+- `compressor_shaft.md` fixed-speed section + notebook `CompressorShaft_ThreeStageSeparation.ipynb`
+  Section 9 now use the real IGV API (was a screening proxy).
+
+---
+
+## 2026-07-15 — New: `CompressorShaft` feasibility result + pressure control (eCalc-aligned)
+
+### Summary
+
+`CompressorShaft` and `CompressorShaftCalculator` no longer just saturate-and-warn when a target
+discharge is unreachable — they now return a **feasibility result** and support a **pressure-control**
+action, matching how eCalc classifies a compressor-train operating point. Additive; existing behaviour
+(saturate to nearest bound) is unchanged for the default `PressureControl.NONE`.
+
+### New capability
+
+- **`CompressorShaft.SolveResult`** (nested, serializable) — `isFeasible()`, `getStatus()`,
+  `getTargetPressure()`, `getAchievedPressure()`, `getMinAchievablePressure()`,
+  `getMaxAchievablePressure()`, `getSpeed()`, `getMessage()`, `toJson()`. The min/max achievable
+  pressures come for free from the two speed-bound bracket evaluations `solveSpeed` already does.
+- **`CompressorShaft.SolveStatus`** enum — `FEASIBLE`, `PRESSURE_CONTROLLED`,
+  `PRESSURE_ABOVE_MAX_SPEED`, `PRESSURE_BELOW_MIN_SPEED`, `OVER_POWER`, `STONEWALL`, `SURGE`,
+  `NOT_CONFIGURED`.
+- **`CompressorShaft.PressureControl`** enum — `NONE` (default), `DOWNSTREAM_CHOKE`, `UPSTREAM_CHOKE`,
+  `ASV_RECYCLE`. For a target below the minimum-speed capability, a non-`NONE` control sheds the
+  surplus head so the point is feasible (`PRESSURE_CONTROLLED`).
+- **`CompressorShaft`**: `getLastSolveResult()`, `isFeasible()`, `setPressureControl(...)`,
+  `getPressureControl()`. `solveSpeed` now classifies the outcome (above/below capability, over-power,
+  stonewall, surge) instead of only logging a warning.
+- **`CompressorShaftCalculator`**: same `getLastSolveResult()`, `isFeasible()`,
+  `setPressureControl(...)`, `setPressureTolerance(...)` — updated every internal pass so an optimizer /
+  `evaluate()` loop can gate on `shaftCalc.isFeasible()` directly.
+
+### Usage
+
+```java
+shaft.solveSpeed(hpBody, 49.0, "bara", () -> process.run());
+if (!shaft.isFeasible()) {
+  CompressorShaft.SolveResult r = shaft.getLastSolveResult();
+  // r.getStatus(), r.getMaxAchievablePressure(), r.toJson()
+}
+// too-low target: shed surplus head instead of flagging infeasible
+shaft.setPressureControl(CompressorShaft.PressureControl.DOWNSTREAM_CHOKE);
+```
+
+### Tests
+
+`CompressorShaftTest` (8) + `CompressorShaftCalculatorTest` (2) — added feasible / above-max-speed /
+below-min-speed+pressure-control cases; all pass, spotless, BUILD SUCCESS.
+
+### Agents/skills to update
+
+- `compressor_shaft.md` doc — "When the Target Pressure Is Not Reachable" now documents the
+  `SolveResult` / `PressureControl` API (was a manual-detection recipe).
+
+### Related
+
+- Companion **`Mixer` pressure-mismatch flag** (`isPressureMismatch()`, `getInletPressureSpread()`,
+  `getMaxInletPressure()`, `getMinInletPressure()`, `setPressureMismatchTolerance()`): raised when
+  active mixer inlets arrive at materially different pressures (the join collapses to the lowest) —
+  the downstream signal that an upstream machine did not reach its target.
+
+---
+
+## 2026-07-15 — New: `CompressorShaft` (multiple compressor bodies on one shaft, single common speed)
+
+### Summary
+
+Additive class for modelling a multi-body compressor string driven by ONE shaft (a single gas
+turbine or motor), so all bodies turn at the same speed. No change to existing behaviour.
+
+### New capability
+
+- **`neqsim.process.equipment.compressor.CompressorShaft`** — groups several `Compressor` bodies on
+  one shaft at a single common speed. A shared shaft has exactly one mechanical DOF (the common
+  speed) and one controlled target (the string's final discharge pressure); intermediate inter-body
+  pressures **float** off the charts.
+  - `addCompressor(c)` — add bodies in flow order.
+  - `solveSpeed(reference, targetPressure, unit, runnable)` — solve the ONE common speed until the
+    reference (usually last) body's outlet pressure hits the target, re-running the flowsheet via the
+    `Runnable` callback between guesses (so inter-body streams/scrubbers/mixers update). Intermediate
+    pressures float. Uses a bracketed **false-position (Illinois) secant** (superlinear on the smooth,
+    monotonic speed↔discharge map) — far fewer flowsheet solves than bisection. This is the correct
+    shared-shaft solve.
+  - `runAtFixedSpeed(rpm, runnable)` — for constant-speed drivers (no VSD): lock the speed, discharge
+    floats off the chart; meet any pressure spec by recycle/throttle/IGV, not by moving speed.
+  - `setSpeed`, `setSpeedBounds`, `setMaxIterations`, `setPressureTolerance`, `getSpeed`,
+    `getTotalPower`, `getCompressors`, `applySpeed` (puts every body in fixed-speed chart-forward mode).
+
+### Usage
+
+```java
+CompressorShaft shaft = new CompressorShaft("recompression shaft (single GT)");
+shaft.addCompressor(rc1); // LP body
+shaft.addCompressor(rc2);
+shaft.addCompressor(rc3); // HP body = reference
+shaft.setSpeedBounds(8000.0, 16000.0);
+shaft.solveSpeed(rc3, 49.0, "bara", () -> process.run());
+double rpm = shaft.getSpeed();
+```
+
+From Python (jpype), wrap the flowsheet re-run as a Runnable proxy:
+`jpype.JProxy("java.lang.Runnable", dict(run=lambda: process.run()))`.
+
+### DOF rule (do not violate)
+
+Do NOT fix every stage outlet pressure AND set a common speed — that is over-constrained and
+non-physical. Set the ONE common speed (or iterate it to the final discharge) and let intermediate
+pressures float. Model a unit that ties into an interstage (e.g. a 2nd-stage separator gas) as a
+pressure **equality** (a setter or small valve), not as a second pressure spec.
+
+### Agents/skills to update
+
+- `neqsim-compressor-antisurge-recycle` skill — has a "Multi-Body Compressor Trains on One Shaft"
+  section documenting this pattern. Anti-surge loops coexist (they set recycle flow; the shaft sets
+  speed) — apply the shaft solve after charts + anti-surge are active.
+- `neqsim-platform-modeling` skill — §6.4 documents multiple parallel trains, 2-stage machines,
+  dehydration, shared shafts, fuel-from-power, and vessel utilization.
+
+### Suggested follow-up NIPs (not yet implemented)
+
+- **Process-recycle-integrated shaft speed.** Today `CompressorShaft.solveSpeed` re-runs the whole
+  flowsheet N times via an external `Runnable` (a jpype `JProxy` from Python). A shaft-speed node that
+  participates in the normal `ProcessSystem.run()` recycle/adjuster iteration would converge the common
+  speed *inside one* solve — removing the N re-runs and the callback, and letting the shared shaft be
+  the default rather than opt-in. Highest-leverage next step.
+- **Multi-body `CompressorTrain` unit.** The existing `CompressorTrain` is single-body. A class owning
+  N bodies + interstage coolers/scrubbers on one shaft (aggregate power/surge, one speed) would make a
+  recompression train one object instead of N `antisurge_stage` calls + a manual `CompressorShaft`.
+- **First-class separator gas-load utilization.** A `SeparatorMechanicalDesign.getGasLoadUtilization()`
+  (Souders-Brown K / K_design from the vessel ID) would replace hand-rolled Python and align with the
+  capacity-constraint framework.
+
+---
+
 ## 2026-07-15 — New: `CompressorChartLibrary` (multiple named/selectable compressor charts) + `GasTurbine` power-demand mode
 
 ### Summary

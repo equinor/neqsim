@@ -1,0 +1,307 @@
+package neqsim.process.equipment.compressor;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.thermo.system.SystemSrkEos;
+
+/**
+ * Tests for {@link CompressorShaft} — multiple compressor bodies on one shaft at a single common speed.
+ *
+ * @author NeqSim Development Team
+ * @version 1.0
+ */
+public class CompressorShaftTest {
+
+  /**
+   * Build a simple run gas stream.
+   *
+   * @param pressure inlet pressure in bara
+   * @return a run {@link Stream}
+   */
+  private Stream feed(double pressure) {
+    SystemSrkEos gas = new SystemSrkEos(273.15 + 30.0, pressure);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.10);
+    gas.setMixingRule("classic");
+    Stream stream = new Stream("feed", gas);
+    stream.setFlowRate(6000.0, "kg/hr");
+    stream.setTemperature(30.0, "C");
+    stream.setPressure(pressure, "bara");
+    stream.run();
+    return stream;
+  }
+
+  /**
+   * A two-body shaft applies ONE common speed to every body.
+   */
+  @Test
+  void testCommonSpeedAppliedToAllBodies() {
+    Stream f1 = feed(10.0);
+    Compressor c1 = new Compressor("body1", f1);
+    c1.setOutletPressure(20.0);
+    c1.setUsePolytropicCalc(true);
+    c1.setPolytropicEfficiency(0.75);
+    c1.run();
+
+    Compressor c2 = new Compressor("body2", c1.getOutletStream());
+    c2.setOutletPressure(40.0);
+    c2.setUsePolytropicCalc(true);
+    c2.setPolytropicEfficiency(0.75);
+    c2.run();
+
+    CompressorShaft shaft = new CompressorShaft("test shaft");
+    shaft.addCompressor(c1);
+    shaft.addCompressor(c2);
+    assertEquals(2, shaft.getCompressors().size());
+
+    shaft.setSpeed(11000.0);
+    assertEquals(11000.0, shaft.getSpeed(), 1e-6);
+    assertEquals(11000.0, c1.getSpeed(), 1e-6);
+    assertEquals(11000.0, c2.getSpeed(), 1e-6);
+  }
+
+  /**
+   * Total shaft power equals the sum of the body powers.
+   */
+  @Test
+  void testTotalPowerSumsBodies() {
+    Stream f1 = feed(10.0);
+    Compressor c1 = new Compressor("body1", f1);
+    c1.setOutletPressure(20.0);
+    c1.setUsePolytropicCalc(true);
+    c1.setPolytropicEfficiency(0.75);
+    c1.run();
+
+    Compressor c2 = new Compressor("body2", c1.getOutletStream());
+    c2.setOutletPressure(40.0);
+    c2.setUsePolytropicCalc(true);
+    c2.setPolytropicEfficiency(0.75);
+    c2.run();
+
+    CompressorShaft shaft = new CompressorShaft("test shaft");
+    shaft.addCompressor(c1);
+    shaft.addCompressor(c2);
+
+    double expected = c1.getPower() + c2.getPower();
+    assertEquals(expected, shaft.getTotalPower(), Math.max(1.0, Math.abs(expected) * 1e-6));
+    assertTrue(shaft.getTotalPower() > 0.0);
+  }
+
+  /**
+   * Three single-speed compressor bodies on ONE shaft all receive the SAME common speed, and the shaft power is the sum
+   * of the three body powers.
+   */
+  @Test
+  void testThreeBodyShaftSharesOneCommonSpeed() {
+    Stream f1 = feed(5.0);
+    Compressor c1 = new Compressor("body1", f1);
+    c1.setOutletPressure(12.0);
+    c1.setUsePolytropicCalc(true);
+    c1.setPolytropicEfficiency(0.75);
+    c1.run();
+
+    Compressor c2 = new Compressor("body2", c1.getOutletStream());
+    c2.setOutletPressure(28.0);
+    c2.setUsePolytropicCalc(true);
+    c2.setPolytropicEfficiency(0.75);
+    c2.run();
+
+    Compressor c3 = new Compressor("body3", c2.getOutletStream());
+    c3.setOutletPressure(55.0);
+    c3.setUsePolytropicCalc(true);
+    c3.setPolytropicEfficiency(0.75);
+    c3.run();
+
+    CompressorShaft shaft = new CompressorShaft("3-body shaft (single GT)");
+    shaft.addCompressor(c1);
+    shaft.addCompressor(c2);
+    shaft.addCompressor(c3);
+    assertEquals(3, shaft.getCompressors().size());
+
+    shaft.setSpeed(10500.0);
+    assertEquals(10500.0, c1.getSpeed(), 1e-6);
+    assertEquals(10500.0, c2.getSpeed(), 1e-6);
+    assertEquals(10500.0, c3.getSpeed(), 1e-6);
+
+    double expected = c1.getPower() + c2.getPower() + c3.getPower();
+    assertEquals(expected, shaft.getTotalPower(), Math.max(1.0, Math.abs(expected) * 1e-6));
+    assertTrue(shaft.getTotalPower() > 0.0);
+  }
+
+  /**
+   * With performance charts, runAtFixedSpeed locks the same speed on every body and the bodies run.
+   */
+  @Test
+  void testWithChartRunAtFixedSpeed() {
+    Stream f1 = feed(10.0);
+    Compressor c1 = new Compressor("body1", f1);
+    c1.setOutletPressure(20.0);
+    c1.setUsePolytropicCalc(true);
+    c1.setPolytropicEfficiency(0.75);
+    c1.run();
+    c1.generateCompressorChart("normal curves", 5);
+    c1.getCompressorChart().setUseCompressorChart(true);
+
+    double designSpeed = c1.getSpeed();
+    CompressorShaft shaft = new CompressorShaft("charted shaft");
+    shaft.addCompressor(c1);
+    shaft.runAtFixedSpeed(designSpeed, null);
+
+    assertEquals(designSpeed, c1.getSpeed(), 1e-6);
+    assertTrue(shaft.getTotalPower() > 0.0);
+  }
+
+  /**
+   * A single-body shaft is valid and applies its speed.
+   */
+  @Test
+  void testSingleBodyShaft() {
+    Stream f1 = feed(10.0);
+    Compressor c1 = new Compressor("only body", f1);
+    c1.setOutletPressure(25.0);
+    c1.setUsePolytropicCalc(true);
+    c1.setPolytropicEfficiency(0.78);
+    c1.run();
+
+    CompressorShaft shaft = new CompressorShaft("single-body shaft");
+    shaft.addCompressor(c1);
+    assertEquals(1, shaft.getCompressors().size());
+    shaft.setSpeed(9000.0);
+    assertEquals(9000.0, c1.getSpeed(), 1e-6);
+  }
+
+  /**
+   * solveSpeed iterates the common speed to hit a target discharge pressure on a charted machine.
+   */
+  @Test
+  void testSolveSpeedHitsTargetDischarge() {
+    Stream f1 = feed(10.0);
+    Compressor c1 = new Compressor("body1", f1);
+    c1.setOutletPressure(20.0);
+    c1.setUsePolytropicCalc(true);
+    c1.setPolytropicEfficiency(0.75);
+    c1.run();
+    c1.generateCompressorChart("normal curves", 5);
+    c1.getCompressorChart().setUseCompressorChart(true);
+    double design = c1.getSpeed();
+
+    CompressorShaft shaft = new CompressorShaft("solve shaft");
+    shaft.addCompressor(c1);
+    shaft.setSpeedBounds(design * 0.7, design * 1.4);
+    shaft.setPressureTolerance(0.2);
+    shaft.setMaxIterations(40);
+
+    // Reference discharge at the design speed, then ask for a slightly higher target that a
+    // small speed increase can reach (guaranteed bracketed within the bounds).
+    shaft.runAtFixedSpeed(design, null);
+    double p0 = c1.getOutletStream().getPressure("bara");
+    double target = p0 + 0.5;
+
+    shaft.solveSpeed(c1, target, "bara", null);
+    assertEquals(target, c1.getOutletStream().getPressure("bara"), 0.4);
+    assertTrue(shaft.getSpeed() > design * 0.7 && shaft.getSpeed() < design * 1.4);
+  }
+
+  /**
+   * A reachable target produces a FEASIBLE {@link CompressorShaft.SolveResult}.
+   */
+  @Test
+  void testSolveResultFeasible() {
+    Stream f1 = feed(10.0);
+    Compressor c1 = new Compressor("body1", f1);
+    c1.setOutletPressure(20.0);
+    c1.setUsePolytropicCalc(true);
+    c1.setPolytropicEfficiency(0.75);
+    c1.run();
+    c1.generateCompressorChart("normal curves", 5);
+    c1.getCompressorChart().setUseCompressorChart(true);
+    double design = c1.getSpeed();
+
+    CompressorShaft shaft = new CompressorShaft("feasible shaft");
+    shaft.addCompressor(c1);
+    shaft.setSpeedBounds(design * 0.7, design * 1.4);
+    shaft.setPressureTolerance(0.2);
+    shaft.runAtFixedSpeed(design, null);
+    double target = c1.getOutletStream().getPressure("bara") + 0.5;
+
+    shaft.solveSpeed(c1, target, "bara", null);
+    CompressorShaft.SolveResult r = shaft.getLastSolveResult();
+    assertTrue(r.isFeasible());
+    assertTrue(shaft.isFeasible());
+    assertEquals(CompressorShaft.SolveStatus.FEASIBLE, r.getStatus());
+    assertEquals(target, r.getAchievedPressure(), 0.4);
+  }
+
+  /**
+   * A target above the maximum-speed capability is flagged infeasible (PRESSURE_ABOVE_MAX_SPEED), saturates at the
+   * maximum speed, and reports the max achievable pressure.
+   */
+  @Test
+  void testSolveResultAboveMaxSpeedInfeasible() {
+    Stream f1 = feed(10.0);
+    Compressor c1 = new Compressor("body1", f1);
+    c1.setOutletPressure(20.0);
+    c1.setUsePolytropicCalc(true);
+    c1.setPolytropicEfficiency(0.75);
+    c1.run();
+    c1.generateCompressorChart("normal curves", 5);
+    c1.getCompressorChart().setUseCompressorChart(true);
+    double design = c1.getSpeed();
+
+    CompressorShaft shaft = new CompressorShaft("infeasible-high shaft");
+    shaft.addCompressor(c1);
+    shaft.setSpeedBounds(design * 0.7, design * 1.3);
+    shaft.runAtFixedSpeed(design * 1.3, null);
+    double pMax = c1.getOutletStream().getPressure("bara");
+
+    shaft.solveSpeed(c1, pMax + 20.0, "bara", null); // ask for far more than max speed can make
+    CompressorShaft.SolveResult r = shaft.getLastSolveResult();
+    assertFalse(r.isFeasible());
+    assertFalse(shaft.isFeasible());
+    assertEquals(CompressorShaft.SolveStatus.PRESSURE_ABOVE_MAX_SPEED, r.getStatus());
+    assertEquals(pMax, r.getMaxAchievablePressure(), 0.5);
+    assertEquals(design * 1.3, shaft.getSpeed(), design * 1.3 * 1e-3);
+  }
+
+  /**
+   * A target below the minimum-speed capability is infeasible without pressure control, but feasible
+   * (PRESSURE_CONTROLLED) with a downstream choke that sheds the surplus head to the requested pressure.
+   */
+  @Test
+  void testSolveResultBelowMinSpeedAndPressureControl() {
+    Stream f1 = feed(10.0);
+    Compressor c1 = new Compressor("body1", f1);
+    c1.setOutletPressure(20.0);
+    c1.setUsePolytropicCalc(true);
+    c1.setPolytropicEfficiency(0.75);
+    c1.run();
+    c1.generateCompressorChart("normal curves", 5);
+    c1.getCompressorChart().setUseCompressorChart(true);
+    double design = c1.getSpeed();
+
+    CompressorShaft shaft = new CompressorShaft("infeasible-low shaft");
+    shaft.addCompressor(c1);
+    shaft.setSpeedBounds(design * 0.7, design * 1.3);
+    shaft.runAtFixedSpeed(design * 0.7, null);
+    double pMin = c1.getOutletStream().getPressure("bara");
+    double target = pMin - 2.0; // below what even the minimum speed makes
+
+    // No pressure control -> infeasible, saturated at min speed.
+    shaft.solveSpeed(c1, target, "bara", null);
+    CompressorShaft.SolveResult r = shaft.getLastSolveResult();
+    assertFalse(r.isFeasible());
+    assertEquals(CompressorShaft.SolveStatus.PRESSURE_BELOW_MIN_SPEED, r.getStatus());
+    assertEquals(pMin, r.getMinAchievablePressure(), 0.5);
+
+    // Downstream choke -> feasible, delivers the requested pressure.
+    shaft.setPressureControl(CompressorShaft.PressureControl.DOWNSTREAM_CHOKE);
+    shaft.solveSpeed(c1, target, "bara", null);
+    CompressorShaft.SolveResult r2 = shaft.getLastSolveResult();
+    assertTrue(r2.isFeasible());
+    assertEquals(CompressorShaft.SolveStatus.PRESSURE_CONTROLLED, r2.getStatus());
+    assertEquals(target, c1.getOutletStream().getPressure("bara"), 0.3);
+  }
+}

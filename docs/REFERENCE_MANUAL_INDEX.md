@@ -311,6 +311,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | Compressors       | [docs/process/equipment/compressors.md](process/equipment/compressors)                         | Compressor models, drivers, speed-dependent power |
 | Compressor Curves | [docs/process/equipment/compressor_curves.md](process/equipment/compressor_curves)             | Compressor performance curves                     |
 | Compressor Anti-Surge Control | [docs/process/equipment/compressor_antisurge_control.md](process/equipment/compressor_antisurge_control) | Dynamic anti-surge recycle, pressure-speed control, predictive supervision, coordinated override philosophy, and application-design scan logic |
+| Compressor Shaft (shared drive) | [docs/process/equipment/compressor_shaft.md](process/equipment/compressor_shaft) | Multiple compressor bodies on one shaft at a single common speed; iterate the common speed to the final discharge with floating intermediates |
 | Compressor Design | [docs/process/CompressorMechanicalDesign.md](process/CompressorMechanicalDesign)               | Compressor mechanical design                      |
 | Compressor Feasibility | [docs/process/compressor_design_feasibility.md](process/compressor_design_feasibility) | Feasibility report: mechanical, cost, suppliers, curves |
 | Compressor Deposit / Degradation | [docs/process/compressor_deposit_degradation.md](process/compressor_deposit_degradation) | Mass-based fouling (S8, salt, scale, wax) → head/efficiency loss, degraded chart, per-impeller deposit location |

@@ -19,6 +19,7 @@ Detailed documentation for compressor performance curves in NeqSim, including mu
 - [Distance to Operating Limits](#distance-to-operating-limits)
 - [**Speed Calculation from Operating Point**](#speed-calculation-from-operating-point) ⭐ NEW
 - [Anti-Surge Control](#anti-surge-control)
+- [**Inlet Guide Vane (IGV) Control**](#inlet-guide-vane-igv-control) ⭐ NEW
 - [**Loading Compressor Curves from Files**](#loading-compressor-curves-from-files) ⭐ NEW
   - [Loading from JSON Files](#loading-from-json-files)
   - [Loading from CSV Files](#loading-from-csv-files)
@@ -2857,7 +2858,88 @@ print(str(comp.getOperatingHistory().generateSummary()))
 
 ---
 
+## Inlet Guide Vane (IGV) Control
+
+Inlet guide vanes (IGV) are a capacity-control device on centrifugal compressors, common on
+**fixed-speed** (constant-speed motor) machines. Closing the vanes adds pre-swirl to the flow
+entering the impeller, which at a fixed speed **reduces the developed head and polytropic
+efficiency and lowers the surge flow** (shifting the surge line left, which extends turndown).
+NeqSim supports IGV in two ways.
+
+### 1. Parametric IGV model (`InletGuideVaneModel`)
+
+A generic, screening-level model that applies IGV corrections on top of the machine's existing
+fully-open chart. Use it when you do **not** have per-vane-position vendor maps. It is the
+validated end-to-end fixed-speed control (head, efficiency, and surge flow all respond).
+
+```java
+compressor.setSolveSpeed(false);              // fixed speed
+compressor.setInletGuideVaneOpening(0.8);     // close IGV to 80% (1.0 = fully open, no effect)
+// or, equivalently, by vane angle:
+compressor.setGuideVaneAngle(20.0);           // deg (mapped to an opening by the model)
+compressor.run();
+// discharge, getPolytropicEfficiency(), getSurgeFlowRate() and getDistanceToSurge()
+// all reflect the IGV setting.
+```
+
+Tune the sensitivities (or supply site-specific values) on the model:
+
+```java
+InletGuideVaneModel igv = compressor.getInletGuideVaneModel();
+igv.setHeadDrop(0.60);        // head multiplier = 1 - 0.60*(1 - opening)
+igv.setEfficiencyDrop(0.08);  // efficiency delta = -0.08*(1 - opening)  [fraction]
+igv.setSurgeFlowDrop(0.50);   // surge-flow multiplier = 1 - 0.50*(1 - opening)
+igv.setReferenceAngles(0.0, 60.0);  // fully-open / fully-closed vane angles (deg)
+```
+
+**Effect at a fixed speed** (illustrative, defaults): as the vanes close the discharge and
+efficiency fall while the surge flow drops, so the distance to surge *increases* (more turndown
+headroom):
+
+<table>
+<caption>Parametric IGV at fixed speed (illustrative)</caption>
+<tr><th>IGV opening</th><th>Discharge</th><th>Polytropic eff.</th><th>Surge flow</th><th>Distance to surge</th></tr>
+<tr><td>100 %</td><td>highest</td><td>highest</td><td>highest</td><td>lowest</td></tr>
+<tr><td>70 %</td><td>lower</td><td>lower</td><td>lower (line moves left)</td><td>higher</td></tr>
+</table>
+
+The defaults are generic linear sensitivities of the form `value = 1 - k*(1 - opening)` and are
+**not** vendor-certified — supply site data for design work.
+
+### 2. Vendor IGV-position chart family (`CompressorChartIGV`)
+
+When you have a **vendor performance map per IGV position** (each a full set of speed lines with
+flow, head and efficiency), use `CompressorChartIGV`. It interpolates the positions into a standard
+`CompressorChart` at any opening and regenerates the surge curve.
+
+```java
+CompressorChartIGV family = new CompressorChartIGV();
+family.setHeadUnit("kJ/kg");
+family.setReferenceConditions(mw, refTK, refPbara, refZ);
+// each position: opening, chartConditions, speed[], flow[][], head[][], polyEff[][]
+family.addPosition(1.0, chartConditions, speed, flow, headFullyOpen, eff);
+family.addPosition(0.5, chartConditions, speed, flow, headHalfOpen, eff);
+
+CompressorChart at75 = family.getChartAtOpening(0.75);  // interpolated map at 75% open
+
+// or attach to a compressor: the active chart is rebuilt from the family at each opening
+compressor.setInletGuideVaneChart(family);
+compressor.setInletGuideVaneOpening(0.75);  // active chart = interpolated map at 75% open
+```
+
+All positions must share the same speed lines and array shapes; openings outside the supplied
+range clamp to the nearest position. While a family is attached, the parametric `InletGuideVaneModel`
+corrections are bypassed (the chart already encodes the IGV effect).
+
+> **When to use which:** use `InletGuideVaneModel` for screening / when only a fully-open chart is
+> available (validated fixed-speed discharge control); use `CompressorChartIGV` to supply and
+> interpolate real vendor per-position maps.
+
+---
+
 ## Related Documentation
 
 - [Compressor Equipment](compressors) - Basic compressor usage
+- [Compressor Anti-Surge and Coordinated Control](compressor_antisurge_control)
+- [CompressorShaft (multiple bodies on one shaft)](compressor_shaft)
 - [Process Simulation](../../simulation/) - Process simulation overview
