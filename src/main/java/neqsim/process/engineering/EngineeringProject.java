@@ -122,12 +122,10 @@ public final class EngineeringProject implements Serializable {
       if (unit instanceof Compressor) {
         Compressor compressor = (Compressor) unit;
         if (compressor.getCompressorChart() == null || !compressor.getCompressorChart().isUseCompressorChart()) {
-          report.add(Severity.WARNING, "ENG-COMP-001", tag,
-              "No active vendor or design compressor map is available");
+          report.add(Severity.WARNING, "ENG-COMP-001", tag, "No active vendor or design compressor map is available");
         }
         if (compressor.getAntiSurge() == null || !compressor.getAntiSurge().isActive()) {
-          report.add(Severity.REVIEW, "ENG-COMP-002", tag,
-              "Antisurge protection is not active in the process model");
+          report.add(Severity.REVIEW, "ENG-COMP-002", tag, "Antisurge protection is not active in the process model");
         }
       }
     }

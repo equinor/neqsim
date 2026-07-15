@@ -11,10 +11,7 @@ public final class EngineeringValidationReport implements Serializable {
 
   /** Finding severity. */
   public enum Severity {
-    ERROR,
-    WARNING,
-    REVIEW,
-    INFORMATION
+    ERROR, WARNING, REVIEW, INFORMATION
   }
 
   /** One validation finding. */

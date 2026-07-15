@@ -12,14 +12,7 @@ public final class EngineeringRequirement implements Serializable {
 
   /** Requirement discipline. */
   public enum Type {
-    CONTROL,
-    INSTRUMENT,
-    ALARM,
-    TRIP,
-    RELIEF,
-    MECHANICAL_PROTECTION,
-    FIRE_AND_GAS,
-    ENGINEERING_ASSESSMENT
+    CONTROL, INSTRUMENT, ALARM, TRIP, RELIEF, MECHANICAL_PROTECTION, FIRE_AND_GAS, ENGINEERING_ASSESSMENT
   }
 
   private final String id;

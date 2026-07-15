@@ -93,8 +93,7 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(manifest.contains("SIL_UNASSIGNED"));
     assertTrue(manifest.contains("REVIEW_REQUIRED"));
 
-    String causeAndEffect =
-        new String(Files.readAllBytes(result.getCauseAndEffectFile()), StandardCharsets.UTF_8);
+    String causeAndEffect = new String(Files.readAllBytes(result.getCauseAndEffectFile()), StandardCharsets.UTF_8);
     assertTrue(causeAndEffect.contains("PROPOSED_FOR_HAZOP_LOPA_AND_DISCIPLINE_REVIEW"));
     assertTrue(causeAndEffect.contains("High-high pressure"));
     assertTrue(causeAndEffect.contains("Trip compressor driver"));

@@ -47,8 +47,7 @@ public final class DexpiEngineeringExporter {
     private final Path causeAndEffectFile;
     private final Map<String, Path> compressorMapFiles;
 
-    ExportResult(Path dexpiFile, Path manifestFile, Path causeAndEffectFile,
-        Map<String, Path> compressorMapFiles) {
+    ExportResult(Path dexpiFile, Path manifestFile, Path causeAndEffectFile, Map<String, Path> compressorMapFiles) {
       this.dexpiFile = dexpiFile;
       this.manifestFile = manifestFile;
       this.causeAndEffectFile = causeAndEffectFile;
@@ -102,14 +101,12 @@ public final class DexpiEngineeringExporter {
     DexpiXmlWriter.writeDexpi20(project.getProcessSystem(), dexpiFile.toFile());
 
     Map<String, Path> maps = writeCompressorMaps(project, datasets);
-    DexpiEngineeringMaterializer.MaterializationResult materialization =
-        enrichDexpi(project, dexpiFile, maps);
+    DexpiEngineeringMaterializer.MaterializationResult materialization = enrichDexpi(project, dexpiFile, maps);
 
     Path manifest = outputDirectory.resolve("engineering-manifest.json");
     Files.write(manifest, project.toJson().getBytes(StandardCharsets.UTF_8));
     Path causeAndEffect = outputDirectory.resolve("cause-and-effect.json");
-    Files.write(causeAndEffect,
-        materialization.toCauseAndEffectJson(project).getBytes(StandardCharsets.UTF_8));
+    Files.write(causeAndEffect, materialization.toCauseAndEffectJson(project).getBytes(StandardCharsets.UTF_8));
     return new ExportResult(dexpiFile, manifest, causeAndEffect, maps);
   }
 
@@ -131,8 +128,8 @@ public final class DexpiEngineeringExporter {
     return result;
   }
 
-  private static DexpiEngineeringMaterializer.MaterializationResult enrichDexpi(
-      EngineeringProject project, Path dexpiFile, Map<String, Path> maps) throws IOException {
+  private static DexpiEngineeringMaterializer.MaterializationResult enrichDexpi(EngineeringProject project,
+      Path dexpiFile, Map<String, Path> maps) throws IOException {
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setNamespaceAware(false);
@@ -186,8 +183,8 @@ public final class DexpiEngineeringExporter {
         equipment.appendChild(attributes);
       }
 
-      DexpiEngineeringMaterializer.MaterializationResult materialization =
-          DexpiEngineeringMaterializer.materialize(project, document);
+      DexpiEngineeringMaterializer.MaterializationResult materialization = DexpiEngineeringMaterializer
+          .materialize(project, document);
 
       TransformerFactory transformerFactory = TransformerFactory.newInstance();
       transformerFactory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);

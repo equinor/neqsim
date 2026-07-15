@@ -127,8 +127,8 @@ public final class NorsokOffshoreEngineeringBuilder {
             "SIS lifecycle, SRS, SIL determination and verification"))
         .addStandard(new EngineeringStandard("ISO 10418", "2019", "Offshore process safety systems",
             "Analysis and design of surface process safeguarding"))
-        .addStandard(new EngineeringStandard("API 521", "7th ed. 2020",
-            "Pressure-relieving and depressurizing systems", "Relief and depressurization assessments"))
+        .addStandard(new EngineeringStandard("API 521", "7th ed. 2020", "Pressure-relieving and depressurizing systems",
+            "Relief and depressurization assessments"))
         .addStandard(new EngineeringStandard("API 617", "9th ed. 2022", "Axial and centrifugal compressors",
             "Compressor train and performance-map requirements"))
         .addStandard(new EngineeringStandard("API 670", "5th ed. 2014", "Machinery protection systems",
@@ -141,8 +141,7 @@ public final class NorsokOffshoreEngineeringBuilder {
             "Control, alarm, shutdown and automation functions"))
         .addStandard(new EngineeringStandard("NORSOK S-001", "2020+AC:2021", "Technical safety",
             "Technical-safety systems and barriers"))
-        .addStandard(new EngineeringStandard("NORSOK Z-003", "Rev. 2, 1998",
-            "Technical information flow requirements",
+        .addStandard(new EngineeringStandard("NORSOK Z-003", "Rev. 2, 1998", "Technical information flow requirements",
             "P&amp;ID symbols, tagging and drawing information"))
         .addStandard(new EngineeringStandard("NORSOK Z-013", "2024", "Risk and emergency preparedness assessment",
             "Risk assessment and verification basis"));
@@ -157,9 +156,8 @@ public final class NorsokOffshoreEngineeringBuilder {
   }
 
   private static void addSeparatorRequirements(EngineeringProject project, Separator separator) {
-    add(project, separator, "PRESSURE-CONTROL", EngineeringRequirement.Type.CONTROL,
-        "Separator pressure control", "Maintain pressure within the approved operating envelope.",
-        "NORSOK I-002:2021", "IEC 62424:2016");
+    add(project, separator, "PRESSURE-CONTROL", EngineeringRequirement.Type.CONTROL, "Separator pressure control",
+        "Maintain pressure within the approved operating envelope.", "NORSOK I-002:2021", "IEC 62424:2016");
     add(project, separator, "LEVEL-CONTROL", EngineeringRequirement.Type.CONTROL, "Separator liquid-level control",
         "Prevent gas blow-by and liquid carry-over under normal and transient conditions.", "NORSOK P-002:2023+AC:2024",
         "NORSOK I-002:2021");

@@ -29,8 +29,7 @@ public final class DexpiEngineeringMaterializer {
     private final int instrumentFunctionCount;
     private final int protectiveDeviceCount;
 
-    MaterializationResult(List<CauseAndEffectEntry> entries, int instrumentFunctionCount,
-        int protectiveDeviceCount) {
+    MaterializationResult(List<CauseAndEffectEntry> entries, int instrumentFunctionCount, int protectiveDeviceCount) {
       this.causeAndEffectEntries = new ArrayList<CauseAndEffectEntry>(entries);
       this.instrumentFunctionCount = instrumentFunctionCount;
       this.protectiveDeviceCount = protectiveDeviceCount;
@@ -278,13 +277,13 @@ public final class DexpiEngineeringMaterializer {
       String actuatingSourceId = last(loopMembers);
       for (DeviceDefinition device : definition.finalElements) {
         String tag = device.tagPrefix + "-" + number;
-        String id = appendPipingComponent(document, protectionSystem, usedIds, requirement, protectedEquipment,
-            tag, device.componentClass, definition.controlSystem, baseX + 12.0 + deviceCount % 4 * 3.0,
+        String id = appendPipingComponent(document, protectionSystem, usedIds, requirement, protectedEquipment, tag,
+            device.componentClass, definition.controlSystem, baseX + 12.0 + deviceCount % 4 * 3.0,
             protectedEquipment.y);
         if (actuatingSourceId != null && !"SwingCheckValve".equals(device.componentClass)
             && !"SpringLoadedGlobeSafetyValve".equals(device.componentClass)) {
-          appendInformationFlow(document, root, usedIds, requirement, actuatingSourceId, id,
-              definition.controlSystem, "ActuatingSystemFunction");
+          appendInformationFlow(document, root, usedIds, requirement, actuatingSourceId, id, definition.controlSystem,
+              "ActuatingSystemFunction");
         }
         loopMembers.add(id);
         deviceCount++;
@@ -315,55 +314,50 @@ public final class DexpiEngineeringMaterializer {
       return new FunctionDefinition().sensor("LT").controller("LIC").finalElement("LCV", "GlobeValve");
     }
     if (id.endsWith("ANTI-SURGE")) {
-      return new FunctionDefinition().sensor("FT").sensor("PDT").controller("UIC-AS")
-          .finalElement("ASCV", "GlobeValve");
+      return new FunctionDefinition().sensor("FT").sensor("PDT").controller("UIC-AS").finalElement("ASCV",
+          "GlobeValve");
     }
     if (id.endsWith("LEVEL-HH-TRIP")) {
-      return new FunctionDefinition().sensor("LSHH").controller("UY-ESD")
-          .safety("High-high liquid level",
-              "Isolate incoming feed or pressure source after approved shutdown-sequence review",
-              "Trip protected downstream gas equipment where confirmed by HAZOP/LOPA");
+      return new FunctionDefinition().sensor("LSHH").controller("UY-ESD").safety("High-high liquid level",
+          "Isolate incoming feed or pressure source after approved shutdown-sequence review",
+          "Trip protected downstream gas equipment where confirmed by HAZOP/LOPA");
     }
     if (id.endsWith("LEVEL-LL-TRIP")) {
-      return new FunctionDefinition().sensor("LSLL").controller("UY-ESD")
-          .safety("Low-low liquid level",
-              "Close liquid outlet isolation or control final element to prevent gas blow-by");
+      return new FunctionDefinition().sensor("LSLL").controller("UY-ESD").safety("Low-low liquid level",
+          "Close liquid outlet isolation or control final element to prevent gas blow-by");
     }
     if (id.endsWith("PRESSURE-HH-TRIP") || id.endsWith("DISCHARGE-P-HH")) {
-      return new FunctionDefinition().sensor("PSHH").controller("UY-ESD")
-          .safety("High-high pressure", "Isolate pressure source", "Trip associated rotating equipment");
+      return new FunctionDefinition().sensor("PSHH").controller("UY-ESD").safety("High-high pressure",
+          "Isolate pressure source", "Trip associated rotating equipment");
     }
     if (id.endsWith("PRESSURE-LL-TRIP") || id.endsWith("SUCTION-P-LL") || id.endsWith("LOW-SUCTION")) {
-      return new FunctionDefinition().sensor("PSLL").controller("UY-ESD")
-          .safety("Low-low pressure", "Trip associated rotating equipment");
+      return new FunctionDefinition().sensor("PSLL").controller("UY-ESD").safety("Low-low pressure",
+          "Trip associated rotating equipment");
     }
     if (id.endsWith("DISCHARGE-T-HH") || id.endsWith("OUTLET-T-HH")) {
-      return new FunctionDefinition().sensor("TSHH").controller("UY-ESD")
-          .safety("High-high temperature", "Remove heat or compression source", "Trip associated equipment");
+      return new FunctionDefinition().sensor("TSHH").controller("UY-ESD").safety("High-high temperature",
+          "Remove heat or compression source", "Trip associated equipment");
     }
     if (id.endsWith("LOW-FLOW")) {
-      return new FunctionDefinition().sensor("FSLL").controller("UY-ESD")
-          .safety("Low-low process flow", "Remove heat source");
+      return new FunctionDefinition().sensor("FSLL").controller("UY-ESD").safety("Low-low process flow",
+          "Remove heat source");
     }
     if (id.endsWith("MACHINERY-PROTECTION")) {
-      return new FunctionDefinition().sensor("VSHH").sensor("ZSHH").sensor("TSHH").sensor("SSH")
-          .controller("UY-MPS").machinery("Machinery protection limit exceeded",
-              "Trip compressor driver", "Latch machinery shutdown for investigation");
+      return new FunctionDefinition().sensor("VSHH").sensor("ZSHH").sensor("TSHH").sensor("SSH").controller("UY-MPS")
+          .machinery("Machinery protection limit exceeded", "Trip compressor driver",
+              "Latch machinery shutdown for investigation");
     }
     if (id.endsWith("RELIEF")) {
       return new FunctionDefinition().finalElement("PSV", "SpringLoadedGlobeSafetyValve")
-          .finalElement("BDV", "BallValve")
-          .safety("Pressure exceeds approved relief set pressure",
+          .finalElement("BDV", "BallValve").safety("Pressure exceeds approved relief set pressure",
               "Open pressure safety valve to the approved disposal system",
               "Initiate depressurization only where confirmed by the approved blowdown philosophy");
     }
     if (id.endsWith("ISOLATION-BLOWDOWN")) {
       return new FunctionDefinition().controller("UY-ESD").finalElement("ESDV-SUC", "BallValve")
-          .finalElement("ESDV-DIS", "BallValve").finalElement("NRV", "SwingCheckValve")
-          .finalElement("BDV", "BallValve")
-          .safety("Confirmed emergency shutdown or depressurization demand",
-              "Close suction and discharge isolation", "Prevent reverse flow",
-              "Depressurize to the approved flare or disposal system");
+          .finalElement("ESDV-DIS", "BallValve").finalElement("NRV", "SwingCheckValve").finalElement("BDV", "BallValve")
+          .safety("Confirmed emergency shutdown or depressurization demand", "Close suction and discharge isolation",
+              "Prevent reverse flow", "Depressurize to the approved flare or disposal system");
     }
     if (id.endsWith("OUTLET-T-HIGH")) {
       return new FunctionDefinition().sensor("TAH").controller("TI");
@@ -385,8 +379,8 @@ public final class DexpiEngineeringMaterializer {
   }
 
   private static String appendInstrumentFunction(Document document, Element root, Set<String> usedIds,
-      EngineeringRequirement requirement, EquipmentReference equipment, String tag, String controlSystem,
-      String role, double x, double y) {
+      EngineeringRequirement requirement, EquipmentReference equipment, String tag, String controlSystem, String role,
+      double x, double y) {
     String id = uniqueId("ProcessInstrumentationFunction-" + safe(tag), usedIds);
     Element function = document.createElement("ProcessInstrumentationFunction");
     function.setAttribute("ID", id);
@@ -481,14 +475,12 @@ public final class DexpiEngineeringMaterializer {
   }
 
   private static void appendInformationFlow(Document document, Element root, Set<String> usedIds,
-      EngineeringRequirement requirement, String startId, String endId, String controlSystem,
-      String componentClass) {
+      EngineeringRequirement requirement, String startId, String endId, String controlSystem, String componentClass) {
     if (startId == null || endId == null) {
       return;
     }
     Element flow = document.createElement("InformationFlow");
-    flow.setAttribute("ID", uniqueId("InformationFlow-" + safe(requirement.getId()) + "-" + componentClass,
-        usedIds));
+    flow.setAttribute("ID", uniqueId("InformationFlow-" + safe(requirement.getId()) + "-" + componentClass, usedIds));
     flow.setAttribute("ComponentClass", componentClass);
     Element start = document.createElement("Association");
     start.setAttribute("Type", "has logical start");
@@ -639,8 +631,7 @@ public final class DexpiEngineeringMaterializer {
     parent.appendChild(scale);
   }
 
-  private static void appendLabel(Document document, Element parent, String parentId, String tag, double x,
-      double y) {
+  private static void appendLabel(Document document, Element parent, String parentId, String tag, double x, double y) {
     Element label = document.createElement("Label");
     label.setAttribute("ID", parentId + "-Label");
     label.setAttribute("ComponentClass", "TagNameLabel");
@@ -700,8 +691,7 @@ public final class DexpiEngineeringMaterializer {
   }
 
   private static String safe(String value) {
-    return value == null ? "UNASSIGNED"
-        : value.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9_-]", "-");
+    return value == null ? "UNASSIGNED" : value.toUpperCase(Locale.ROOT).replaceAll("[^A-Z0-9_-]", "-");
   }
 
   private static String last(List<String> values) {
