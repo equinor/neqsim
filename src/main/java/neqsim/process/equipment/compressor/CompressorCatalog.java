@@ -18,8 +18,8 @@ import neqsim.process.equipment.compressor.CompressorThermalNode.NodeType;
  * JSON-backed catalog of selectable compressor definitions.
  *
  * <p>
- * Built-in entries are generic screening templates, not vendor performance guarantees. Users can
- * add private OEM definitions, serialize the catalog and select an entry by stable identifier.
+ * Built-in entries are generic screening templates, not vendor performance guarantees. Users can add private OEM
+ * definitions, serialize the catalog and select an entry by stable identifier.
  * </p>
  */
 public class CompressorCatalog implements Serializable {

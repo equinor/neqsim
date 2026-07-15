@@ -12,18 +12,16 @@ import com.google.gson.GsonBuilder;
  * Lumped-parameter thermal network for a compressor.
  *
  * <p>
- * Each non-boundary node obeys {@code C dT/dt = Q + sum(G * (Tneighbour - T))}. The
- * steady-state and implicit-Euler transient solvers use the same network. Conductances and heat
- * capacities are deliberately explicit calibration parameters: local metal temperatures depend on
- * machine geometry, material, oil flow, seal flow and operating history and cannot be inferred from
- * the process-gas outlet temperature alone.
+ * Each non-boundary node obeys {@code C dT/dt = Q + sum(G * (Tneighbour - T))}. The steady-state and implicit-Euler
+ * transient solvers use the same network. Conductances and heat capacities are deliberately explicit calibration
+ * parameters: local metal temperatures depend on machine geometry, material, oil flow, seal flow and operating history
+ * and cannot be inferred from the process-gas outlet temperature alone.
  * </p>
  *
  * <p>
- * API 617 and API 692 define the relevant compressor, bearing and dry-gas-seal system scope. They
- * do not provide a universal rotor thermal network. Template values supplied by
- * {@link CompressorCatalog} are therefore screening values and should be replaced with OEM data or
- * fitted plant measurements before integrity decisions are made.
+ * API 617 and API 692 define the relevant compressor, bearing and dry-gas-seal system scope. They do not provide a
+ * universal rotor thermal network. Template values supplied by {@link CompressorCatalog} are therefore screening values
+ * and should be replaced with OEM data or fitted plant measurements before integrity decisions are made.
  * </p>
  */
 public class CompressorThermalModel implements Serializable {
