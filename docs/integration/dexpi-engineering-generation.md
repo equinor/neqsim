@@ -75,6 +75,7 @@ The compiler adds these coordinated artifacts:
 | `engineering-connectivity.json` | Physical ports/nozzles, pipe/signal/energy segments, directed flows, line membership and instrument taps |
 | `engineering-calculation-dag.json` | Standards-aware calculation dependencies, deterministic execution order and readiness states |
 | `engineering-design-case-matrix.json` | Required/optional case coverage, per-metric execution status, limits and governing values |
+| `engineering-discipline-package.json` | Process, mechanical, piping, instrumentation and safeguarding handoff with controlled data gaps |
 | `design-case-envelope.json` | Per-case results and governing pressure, temperature, flow or custom metrics |
 | `equipment-register.json` | Equipment identity, design-condition status and governing design values |
 | `line-register.json` | Controlled line-list inputs, evidence and completeness status |
@@ -192,6 +193,18 @@ Cases execute by priority on isolated process copies. A metric failure no longer
 metrics from the same case; it produces `CALCULATED_WITH_METRIC_FAILURES`. Disabled cases remain `SKIPPED`, and limit
 violations are retained without being mistaken for solver failures. `engineering-design-case-matrix.json` reports the
 full case-by-metric coverage, required-case gaps, metric failures and acceptance-limit violations.
+
+## Compile discipline-ready handoffs
+
+`engineering-discipline-package.json` organizes canonical project data for process, mechanical, piping,
+instrumentation/automation and process-safety review. It includes equipment datasheets with simulated operating and
+governing design values, controlled line-list rows, instrument/control requirements, and safeguarding requirements.
+Each item carries its canonical graph identity, approval status, missing fields and readiness state.
+
+The discipline summary distinguishes `REVIEW_REQUIRED`, `INCOMPLETE`, and `NOT_CONFIGURED`. These statuses make data
+gaps machine-actionable without claiming that generated documents are approved or fit for construction. Existing
+`equipment-register.json`, `line-register.json`, and `instrument-register.json` remain the exchange-facing registers;
+the discipline package provides the coordinated review index and detailed cross-discipline context.
 
 For a multi-area `ProcessModel`, build and export one DEXPI engineering project per area:
 

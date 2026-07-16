@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-discipline-package:v1",
+  "title": "NeqSim engineering discipline package",
+  "type": "object",
+  "required": ["schemaVersion", "projectId", "revision", "graphFingerprint", "deliverables", "equipmentDatasheets", "lineDatasheets", "instrumentAndSafeguardingRequirements", "disciplineSummary", "governance"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_discipline_package.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:engineering-discipline-package:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "graphFingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "deliverables": {"type": "array", "items": {"type": "object"}},
+    "equipmentDatasheets": {"type": "array", "items": {"type": "object"}},
+    "lineDatasheets": {"type": "array", "items": {"type": "object"}},
+    "instrumentAndSafeguardingRequirements": {"type": "array", "items": {"type": "object"}},
+    "disciplineSummary": {
+      "type": "object",
+      "required": ["deliverableCount", "incompleteDeliverableCount", "notConfiguredDeliverableCount", "missingInputCount", "overallStatus"],
+      "properties": {
+        "deliverableCount": {"type": "integer", "minimum": 0},
+        "incompleteDeliverableCount": {"type": "integer", "minimum": 0},
+        "notConfiguredDeliverableCount": {"type": "integer", "minimum": 0},
+        "missingInputCount": {"type": "integer", "minimum": 0},
+        "overallStatus": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "governance": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

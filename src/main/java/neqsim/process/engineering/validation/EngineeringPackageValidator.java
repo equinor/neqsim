@@ -141,6 +141,16 @@ public final class EngineeringPackageValidator {
       requireArray(root, "executions", artifactName, report);
       requireArray(root, "governingValues", artifactName, report);
       requireObject(root, "summary", artifactName, report);
+    } else if ("engineering-discipline-package.json".equals(artifactName)) {
+      requireString(root, "projectId", artifactName, report);
+      requireString(root, "revision", artifactName, report);
+      requireString(root, "graphFingerprint", artifactName, report);
+      requireArray(root, "deliverables", artifactName, report);
+      requireArray(root, "equipmentDatasheets", artifactName, report);
+      requireArray(root, "lineDatasheets", artifactName, report);
+      requireArray(root, "instrumentAndSafeguardingRequirements", artifactName, report);
+      requireObject(root, "disciplineSummary", artifactName, report);
+      requireString(root, "governance", artifactName, report);
     } else if (artifactName.endsWith("-register.json")) {
       validateRegisterStructure(root, artifactName, report);
     } else if ("design-case-envelope.json".equals(artifactName)) {
@@ -211,6 +221,7 @@ public final class EngineeringPackageValidator {
     validateConnectivity(packageDirectory, graph, report);
     validateCalculationDag(packageDirectory, graph, report);
     validateDesignCaseMatrix(packageDirectory, graph, report);
+    validateDisciplinePackage(packageDirectory, graph, report);
     validateManifest(packageDirectory, graph, report);
     validateSchemaFiles(packageDirectory, report);
     return report;
@@ -557,6 +568,57 @@ public final class EngineeringPackageValidator {
         report.addWarning("ENG-DESIGN-CASE-009", artifact, "/summary/limitViolationCount",
             limitViolations + " design-case metric acceptance-limit violation(s) require review");
       }
+    }
+  }
+
+  private static void validateDisciplinePackage(Path directory, EngineeringGraph graph,
+      EngineeringPackageValidationReport report) throws IOException {
+    String artifact = "engineering-discipline-package.json";
+    Path file = directory.resolve(artifact);
+    if (!Files.isRegularFile(file)) {
+      return;
+    }
+    JsonObject root = parseObject(artifact, read(file), report);
+    if (root == null) {
+      return;
+    }
+    if (!graph.getProjectId().equals(stringValue(root, "projectId"))) {
+      report.addError("ENG-DISCIPLINE-001", artifact, "/projectId", "Discipline package and graph project ids differ");
+    }
+    if (!graph.getRevision().equals(stringValue(root, "revision"))) {
+      report.addError("ENG-DISCIPLINE-002", artifact, "/revision", "Discipline package and graph revisions differ");
+    }
+    String fingerprint = String.valueOf(graph.toMap().get("fingerprint"));
+    if (!fingerprint.equals(stringValue(root, "graphFingerprint"))) {
+      report.addError("ENG-DISCIPLINE-003", artifact, "/graphFingerprint",
+          "Discipline package fingerprint does not match engineering-model.json");
+    }
+    validateDisciplineReferences(root, "equipmentDatasheets", EngineeringNode.Kind.EQUIPMENT, graph, artifact, report);
+    validateDisciplineReferences(root, "lineDatasheets", EngineeringNode.Kind.LINE, graph, artifact, report);
+    validateDisciplineReferences(root, "instrumentAndSafeguardingRequirements", EngineeringNode.Kind.REQUIREMENT, graph,
+        artifact, report);
+    if (root.has("disciplineSummary") && root.get("disciplineSummary").isJsonObject()) {
+      JsonObject summary = root.getAsJsonObject("disciplineSummary");
+      if ("INCOMPLETE".equals(stringValue(summary, "overallStatus"))) {
+        report.addWarning("ENG-DISCIPLINE-005", artifact, "/disciplineSummary/overallStatus",
+            "One or more discipline deliverables have controlled data gaps");
+      }
+    }
+  }
+
+  private static void validateDisciplineReferences(JsonObject root, String arrayName, EngineeringNode.Kind expectedKind,
+      EngineeringGraph graph, String artifact, EngineeringPackageValidationReport report) {
+    if (!root.has(arrayName) || !root.get(arrayName).isJsonArray()) {
+      return;
+    }
+    JsonArray values = root.getAsJsonArray(arrayName);
+    for (int i = 0; i < values.size(); i++) {
+      if (!values.get(i).isJsonObject()) {
+        report.addError("ENG-DISCIPLINE-004", artifact, "/" + arrayName + "/" + i, "Discipline item must be an object");
+        continue;
+      }
+      JsonObject item = values.get(i).getAsJsonObject();
+      validateGraphReference(item, "graphNodeId", expectedKind, artifact, "/" + arrayName + "/" + i, graph, report);
     }
   }
 

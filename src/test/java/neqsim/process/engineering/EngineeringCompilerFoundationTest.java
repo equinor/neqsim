@@ -63,6 +63,7 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(Files.isRegularFile(result.getEngineeringConnectivityFile()));
     assertTrue(Files.isRegularFile(result.getEngineeringCalculationDagFile()));
     assertTrue(Files.isRegularFile(result.getEngineeringDesignCaseMatrixFile()));
+    assertTrue(Files.isRegularFile(result.getEngineeringDisciplinePackageFile()));
     assertTrue(Files.isRegularFile(result.getDesignEnvelopeFile()));
     assertTrue(Files.isRegularFile(result.getEquipmentRegisterFile()));
     assertTrue(Files.isRegularFile(result.getLineRegisterFile()));
@@ -80,6 +81,8 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(read(result.getEngineeringCalculationDagFile()).contains("API 521"));
     assertTrue(read(result.getEngineeringDesignCaseMatrixFile()).contains("limitViolationCount"));
     assertTrue(read(result.getEngineeringDesignCaseMatrixFile()).contains("ABOVE_UPPER_LIMIT"));
+    assertTrue(read(result.getEngineeringDisciplinePackageFile()).contains("PROCESS_SAFETY"));
+    assertTrue(read(result.getEngineeringDisciplinePackageFile()).contains("MECHANICAL-EQUIPMENT-DATASHEETS"));
     assertTrue(result.getValidationReport().isValid());
     assertTrue(EngineeringPackageValidator.validatePackage(temporaryDirectory).isValid());
     assertNotNull(result.getEngineeringGraph().getNode("calculation:envelope-20-vg-001-pressure"));
