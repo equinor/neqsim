@@ -658,14 +658,30 @@ All four output methods (`to_json()`, `build_and_run()`, `to_python()`,
    cause of a "runs but nothing matches" result. The skipped column is reported
    in `converter.warnings`; reconnect its feed manually to include it.
 
-> **Verification vehicle — use `to_python()`, not the JSON path, when recycles
-> matter.** `build_and_run()` (the JSON path) emits recycles with only an
-> `inlet` and does **not** wire the tear back to a downstream consumer, so the
-> recycle loops are not closed and the recompression/anti-surge streams cannot
-> converge. The **generated Python** (`to_python()`) wires recycles via
-> forward-reference placeholders + auto-`Recycle`, so it is the path that can
-> reproduce a recycle-heavy plant. Compare with `UniSimComparator(model,
-> process)` after `exec()`-ing the generated script.
+> **Verification vehicle — `to_python()` is still the most faithful path, but
+> the JSON/MCP path now iterates recycles.** The JSON path (`build_and_run()` /
+> `ProcessSystem.fromJsonAndRun` / MCP `runProcess`) emits recycles with only an
+> `inlet` and relies on `JsonProcessBuilder`'s Pass-2 iterative wiring to close
+> forward-referenced tears. Since the multi-pass auto-run fix, when the built
+> process `hasRecycles()` the builder loops `process.run()` up to
+> `MAX_AUTORUN_PASSES` (15), **guarding each pass** (a unit throwing on an early
+> pass no longer aborts the whole auto-run) and stopping early on
+> `process.solved()` — so nested/forward-referenced recycle loops seeded at ~0
+> flow now get the outer passes they need to converge on the JSON/MCP path too.
+> The **generated Python** (`to_python()`) additionally seeds forward-reference
+> placeholders + auto-`Recycle`, so it remains the most robust vehicle for a
+> recycle-heavy plant; compare with `UniSimComparator(model, process)` after
+> `exec()`-ing the generated script.
+>
+> **Residual JSON-path failures are model-specific topology gaps, not recycle
+> convergence.** If the full plant still stops (e.g. a pipe `Failed to run … —
+> Total mass cannot be zero`), trace the dead branch: the cause is usually a
+> genuinely external UniSim stream with no producer (a `Valve leak`-type feed),
+> or a zero-feed pipe/riser fed by a scrubber whose own inlet mixer is only
+> partially wired (`Mixer … wired with N of M inlets`). These need the missing
+> inlet wired manually — no number of recycle passes fixes a stream that no unit
+> produces. `ProcessSystem.run()` still aborts a pass at the first throwing
+> unit, so a single unfeedable unit blocks everything downstream in that pass.
 
 To disable full mode and get only the main flowsheet operations:
 

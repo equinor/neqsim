@@ -318,28 +318,40 @@ public class JsonProcessBuilder {
     // Step 4: Optionally run
     boolean autoRun = root.has("autoRun") && root.get("autoRun").getAsBoolean();
     if (autoRun) {
-      try {
-        // A single process.run() iterates the internal recycle controller once.
-        // For flowsheets whose recycle tear streams are forward references
-        // (a recycle inlet produced by a downstream unit, wired in Pass 2),
-        // nested loops seeded at ~zero flow need several outer passes before
-        // they propagate real flow and converge — the same reason the reference
-        // notebooks loop run() when composing multi-area plants. Iterate a
-        // bounded number of outer passes and stop as soon as the process
-        // reports solved(). Extra passes on an already-solved process are
-        // effectively no-ops, so this is safe for recycle-free flowsheets too.
-        if (process.hasRecycles()) {
-          for (int pass = 0; pass < MAX_AUTORUN_PASSES; pass++) {
+      // A single process.run() iterates the internal recycle controller once.
+      // For flowsheets whose recycle tear streams are forward references
+      // (a recycle inlet produced by a downstream unit, wired in Pass 2),
+      // nested loops seeded at ~zero flow need several outer passes before
+      // they propagate real flow and converge — the same reason the reference
+      // notebooks loop run() when composing multi-area plants. Iterate a
+      // bounded number of outer passes and stop as soon as the process
+      // reports solved(). Each pass is guarded independently: a single unit
+      // that throws on an early pass (e.g. a loop-fed branch still seeded at
+      // zero flow) must not abort the whole run, otherwise later passes never
+      // get the chance to propagate flow into that branch and converge.
+      if (process.hasRecycles()) {
+        String lastRunError = null;
+        for (int pass = 0; pass < MAX_AUTORUN_PASSES; pass++) {
+          try {
             process.run();
-            if (process.solved()) {
-              break;
-            }
+            lastRunError = null;
+          } catch (Exception e) {
+            lastRunError = e.getMessage();
           }
-        } else {
-          process.run();
+          if (process.solved()) {
+            break;
+          }
         }
-      } catch (Exception e) {
-        warnings.add("process.run() threw: " + e.getMessage() + " — partial results may still be available");
+        if (lastRunError != null) {
+          warnings.add(
+              "process.run() threw on the final pass: " + lastRunError + " — partial results may still be available");
+        }
+      } else {
+        try {
+          process.run();
+        } catch (Exception e) {
+          warnings.add("process.run() threw: " + e.getMessage() + " — partial results may still be available");
+        }
       }
       // Report generation can also fail if some units have corrupted state
       String report = null;
