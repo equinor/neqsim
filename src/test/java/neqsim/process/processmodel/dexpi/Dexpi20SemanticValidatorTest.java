@@ -43,7 +43,8 @@ class Dexpi20SemanticValidatorTest {
     Dexpi20XmlWriter.write(process, output.toFile());
     Path goldenPath = Paths.get(getClass().getResource("/dexpi/2.0/golden/branching-process.dexpi.xml").toURI());
     String goldenXml = new String(Files.readAllBytes(goldenPath), StandardCharsets.UTF_8);
-    assertEquals(goldenXml, new String(Files.readAllBytes(output), StandardCharsets.UTF_8));
+    String generatedXml = new String(Files.readAllBytes(output), StandardCharsets.UTF_8);
+    assertEquals(normalizeLineEndings(goldenXml), normalizeLineEndings(generatedXml));
     Dexpi20XmlValidator.validate(output);
     assertTrue(Dexpi20SemanticValidator.validate(output).isValid());
 
@@ -79,5 +80,9 @@ class Dexpi20SemanticValidatorTest {
     assertTrue(report.getErrors().toString().contains("Duplicate object id"));
     assertTrue(report.getErrors().toString().contains("Dangling object reference"));
     assertTrue(report.getErrors().toString().contains("outside the supported NeqSim DEXPI 2.0 profile"));
+  }
+
+  private static String normalizeLineEndings(String value) {
+    return value.replace("\r\n", "\n").replace('\r', '\n');
   }
 }
