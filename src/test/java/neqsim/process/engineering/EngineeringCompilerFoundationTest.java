@@ -35,7 +35,8 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /** Verifies the canonical graph, design envelope and coordinated deliverable compiler. */
 class EngineeringCompilerFoundationTest extends NeqSimTest {
-  @TempDir Path temporaryDirectory;
+  @TempDir
+  Path temporaryDirectory;
 
   @Test
   void executesCasesSelectsEnvelopeAndCompilesCoordinatedPackage() throws Exception {
@@ -76,9 +77,8 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     EngineeringDeliverableCompiler.CompilationResult result = EngineeringDeliverableCompiler.compile(project,
         temporaryDirectory);
     String graphJson = read(result.getEngineeringGraphFile());
-    assertThrows(IllegalArgumentException.class,
-        () -> EngineeringGraph.fromJson(graphJson.replace("neqsim_engineering_graph.v1",
-            "neqsim_engineering_graph.v2")));
+    assertThrows(IllegalArgumentException.class, () -> EngineeringGraph
+        .fromJson(graphJson.replace("neqsim_engineering_graph.v1", "neqsim_engineering_graph.v2")));
     assertThrows(IllegalArgumentException.class,
         () -> EngineeringGraph.fromJson(graphJson.replace("\"revision\": \"A\"", "\"revision\": \"B\"")));
 
@@ -102,11 +102,12 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
 
     project.setRevision("B");
     String equipmentNode = EngineeringIds.nodeId(EngineeringNode.Kind.EQUIPMENT, "20-VG-001");
-    project.addCalculation(new EngineeringCalculation("20-VG-001-DESIGN-P", equipmentNode,
-        "Maximum design-case pressure plus project margin").setStatus(EngineeringCalculation.Status.REVIEW_REQUIRED)
-            .setResult(82.5, "bara").setDesignCaseId("CASE-MAX")
-            .addInput(new EngineeringCalculation.Input("maximum case pressure", equipmentNode, 75.0, "bara",
-                "DESIGN-CASE-REGISTER-REV-B"))
+    project
+        .addCalculation(new EngineeringCalculation("20-VG-001-DESIGN-P", equipmentNode,
+            "Maximum design-case pressure plus project margin")
+            .setStatus(EngineeringCalculation.Status.REVIEW_REQUIRED).setResult(82.5, "bara")
+            .setDesignCaseId("CASE-MAX").addInput(new EngineeringCalculation.Input("maximum case pressure",
+                equipmentNode, 75.0, "bara", "DESIGN-CASE-REGISTER-REV-B"))
             .addEvidenceReference("PROCESS-DESIGN-BASIS-REV-B"));
     EngineeringGraph revisionB = EngineeringGraphBuilder.fromProject(project);
     EngineeringGraphDiff diff = reloaded.compareTo(revisionB);
@@ -130,9 +131,8 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     process.add(separator);
     process.run();
 
-    EngineeringProject project = NorsokOffshoreEngineeringBuilder
-        .from("Engineering compiler test", process).projectId("TEST-ENGINEERING-PROJECT")
-        .registerProposedInstruments(false).build().setRevision("A");
+    EngineeringProject project = NorsokOffshoreEngineeringBuilder.from("Engineering compiler test", process)
+        .projectId("TEST-ENGINEERING-PROJECT").registerProposedInstruments(false).build().setRevision("A");
     project.addDesignCase(caseAtPressure("CASE-NORMAL", "Normal operation", 55.0));
     project.addDesignCase(caseAtPressure("CASE-MAX", "Maximum production", 75.0));
     project.addDesignCase(new EngineeringDesignCase("CASE-INVALID", "Invalid controlled case",
@@ -160,8 +160,7 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
             Stream feed = (Stream) process.getUnit("20-FEED-001");
             feed.setPressure(pressureBara, "bara");
           }
-        }).addInput(new EngineeringDesignCase.Input("feed pressure", pressureBara, "bara",
-            "PROCESS-DESIGN-BASIS"));
+        }).addInput(new EngineeringDesignCase.Input("feed pressure", pressureBara, "bara", "PROCESS-DESIGN-BASIS"));
   }
 
   private static String read(Path path) throws Exception {

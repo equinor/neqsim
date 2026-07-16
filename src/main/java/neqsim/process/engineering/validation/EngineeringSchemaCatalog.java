@@ -73,16 +73,13 @@ public final class EngineeringSchemaCatalog {
   static {
     List<Definition> values = new ArrayList<Definition>();
     values.add(definition("engineering-model.json", GRAPH, "engineering-model.schema.json"));
-    values.add(definition("design-case-envelope.json", DESIGN_CASE_ENVELOPE,
-        "design-case-envelope.schema.json"));
+    values.add(definition("design-case-envelope.json", DESIGN_CASE_ENVELOPE, "design-case-envelope.schema.json"));
     values.add(definition("equipment-register.json", EQUIPMENT_REGISTER, "equipment-register.schema.json"));
     values.add(definition("line-register.json", LINE_REGISTER, "line-register.schema.json"));
     values.add(definition("instrument-register.json", INSTRUMENT_REGISTER, "instrument-register.schema.json"));
-    values.add(definition("engineering-compiler-manifest.json", COMPILER_MANIFEST,
-        "compiler-manifest.schema.json"));
+    values.add(definition("engineering-compiler-manifest.json", COMPILER_MANIFEST, "compiler-manifest.schema.json"));
     values.add(definition("engineering-revision-diff.json", REVISION_DIFF, "revision-diff.schema.json"));
-    values.add(definition("engineering-validation-report.json", VALIDATION_REPORT,
-        "validation-report.schema.json"));
+    values.add(definition("engineering-validation-report.json", VALIDATION_REPORT, "validation-report.schema.json"));
     DEFINITIONS = Collections.unmodifiableList(values);
     Map<String, Definition> artifacts = new LinkedHashMap<String, Definition>();
     Map<String, Definition> versions = new LinkedHashMap<String, Definition>();

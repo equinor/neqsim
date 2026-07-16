@@ -21,10 +21,9 @@ import neqsim.process.engineering.model.EngineeringNode;
 
 /** Structural, referential and cross-artifact validation for compiled engineering packages. */
 public final class EngineeringPackageValidator {
-  private static final Set<String> CONTROLLED_UNITS = new HashSet<String>(Arrays.asList("1", "%", "bara",
-      "barg", "bar", "pa", "kpa", "mpa", "c", "k", "f", "kg/hr", "kg/s", "kg/day", "mol/s",
-      "kmol/hr", "sm3/day", "msm3/day", "nm3/hr", "m3/hr", "m3/s", "w", "kw", "mw", "j/kg",
-      "kj/kg", "m", "mm", "cm", "in", "inch", "s", "min", "hr"));
+  private static final Set<String> CONTROLLED_UNITS = new HashSet<String>(Arrays.asList("1", "%", "bara", "barg", "bar",
+      "pa", "kpa", "mpa", "c", "k", "f", "kg/hr", "kg/s", "kg/day", "mol/s", "kmol/hr", "sm3/day", "msm3/day", "nm3/hr",
+      "m3/hr", "m3/s", "w", "kw", "mw", "j/kg", "kj/kg", "m", "mm", "cm", "in", "inch", "s", "min", "hr"));
 
   private EngineeringPackageValidator() {
   }
@@ -47,8 +46,7 @@ public final class EngineeringPackageValidator {
       }
       String expectedId = EngineeringIds.nodeId(node.getKind(), node.getExternalKey());
       if (!expectedId.equals(node.getId())) {
-        report.addError("ENG-GRAPH-003", artifact, path + "/id",
-            "Node id is not canonical; expected " + expectedId);
+        report.addError("ENG-GRAPH-003", artifact, path + "/id", "Node id is not canonical; expected " + expectedId);
       }
       String identity = node.getKind().name() + ":" + EngineeringIds.canonical(node.getExternalKey());
       if (!identities.add(identity)) {
@@ -58,8 +56,7 @@ public final class EngineeringPackageValidator {
       if (node.getKind() == EngineeringNode.Kind.PROJECT) {
         projectNodes++;
         if (!graph.getProjectId().equals(node.getExternalKey())) {
-          report.addError("ENG-GRAPH-005", artifact, path,
-              "Project node external key does not match graph projectId");
+          report.addError("ENG-GRAPH-005", artifact, path, "Project node external key does not match graph projectId");
         }
       }
       validateCalculationUnit(node, report, artifact, path);
@@ -82,11 +79,9 @@ public final class EngineeringPackageValidator {
         report.addError("ENG-GRAPH-009", artifact, path + "/targetId",
             "Edge target does not exist: " + edge.getTargetId());
       }
-      String expectedId = EngineeringIds.edgeId(edge.getKind(), edge.getSourceId(), edge.getTargetId(),
-          edge.getRole());
+      String expectedId = EngineeringIds.edgeId(edge.getKind(), edge.getSourceId(), edge.getTargetId(), edge.getRole());
       if (!expectedId.equals(edge.getId())) {
-        report.addError("ENG-GRAPH-010", artifact, path + "/id",
-            "Edge id is not canonical; expected " + expectedId);
+        report.addError("ENG-GRAPH-010", artifact, path + "/id", "Edge id is not canonical; expected " + expectedId);
       }
     }
     return report;
@@ -108,16 +103,14 @@ public final class EngineeringPackageValidator {
     if (root.has("schemaVersion") && root.get("schemaVersion").isJsonPrimitive()
         && !definition.getSchemaVersion().equals(root.get("schemaVersion").getAsString())) {
       report.addError("ENG-SCHEMA-002", artifactName, "/schemaVersion",
-          "Expected " + definition.getSchemaVersion() + " but found "
-              + root.get("schemaVersion").getAsString());
+          "Expected " + definition.getSchemaVersion() + " but found " + root.get("schemaVersion").getAsString());
     }
     if (!root.has("schemaUri")) {
       report.addWarning("ENG-SCHEMA-003", artifactName, "/schemaUri",
           "Schema URI is missing; readers must resolve the version through the package catalog");
     } else if (!root.get("schemaUri").isJsonPrimitive()
         || !definition.getSchemaUri().equals(root.get("schemaUri").getAsString())) {
-      report.addError("ENG-SCHEMA-004", artifactName, "/schemaUri",
-          "Schema URI does not match the registered schema");
+      report.addError("ENG-SCHEMA-004", artifactName, "/schemaUri", "Schema URI does not match the registered schema");
     }
     if ("engineering-model.json".equals(artifactName)) {
       requireString(root, "projectId", artifactName, report);
@@ -160,8 +153,7 @@ public final class EngineeringPackageValidator {
   public static EngineeringPackageValidationReport validatePackage(Path packageDirectory) throws IOException {
     EngineeringPackageValidationReport report = new EngineeringPackageValidationReport();
     if (packageDirectory == null || !Files.isDirectory(packageDirectory)) {
-      report.addError("ENG-PACKAGE-001", "engineering-package", "",
-          "Engineering package directory does not exist");
+      report.addError("ENG-PACKAGE-001", "engineering-package", "", "Engineering package directory does not exist");
       return report;
     }
     for (EngineeringSchemaCatalog.Definition definition : EngineeringSchemaCatalog.getDefinitions()) {
@@ -188,8 +180,8 @@ public final class EngineeringPackageValidator {
           "Canonical graph cannot be reconstructed: " + ex.getMessage());
       return report;
     }
-    validateRegister(packageDirectory, "equipment-register.json", "equipmentTag", EngineeringNode.Kind.EQUIPMENT,
-        graph, report);
+    validateRegister(packageDirectory, "equipment-register.json", "equipmentTag", EngineeringNode.Kind.EQUIPMENT, graph,
+        report);
     validateRegister(packageDirectory, "line-register.json", "lineTag", EngineeringNode.Kind.LINE, graph, report);
     validateInstrumentRegister(packageDirectory, graph, report);
     validateEnvelope(packageDirectory, graph, report);
@@ -233,11 +225,9 @@ public final class EngineeringPackageValidator {
       JsonObject row = rows.get(i).getAsJsonObject();
       String tag = stringValue(row, tagField);
       if (tag.isEmpty()) {
-        report.addError("ENG-REGISTER-002", artifact, "/rows/" + i + "/" + tagField,
-            "Controlled tag is missing");
+        report.addError("ENG-REGISTER-002", artifact, "/rows/" + i + "/" + tagField, "Controlled tag is missing");
       } else if (!tags.add(EngineeringIds.canonical(tag))) {
-        report.addError("ENG-REGISTER-003", artifact, "/rows/" + i + "/" + tagField,
-            "Duplicate canonical tag " + tag);
+        report.addError("ENG-REGISTER-003", artifact, "/rows/" + i + "/" + tagField, "Duplicate canonical tag " + tag);
       }
       validateGraphReference(row, "graphNodeId", expectedKind, artifact, "/rows/" + i, graph, report);
     }
@@ -268,11 +258,11 @@ public final class EngineeringPackageValidator {
             tag.isEmpty() ? "Instrument tag is missing" : "Duplicate canonical instrument tag " + tag);
       }
       if (row.has("graphNodeId")) {
-        validateGraphReference(row, "graphNodeId", EngineeringNode.Kind.INSTRUMENT, artifact, "/rows/" + i,
-            graph, report);
+        validateGraphReference(row, "graphNodeId", EngineeringNode.Kind.INSTRUMENT, artifact, "/rows/" + i, graph,
+            report);
       } else {
-        validateGraphReference(row, "requirementGraphNodeId", EngineeringNode.Kind.REQUIREMENT, artifact,
-            "/rows/" + i, graph, report);
+        validateGraphReference(row, "requirementGraphNodeId", EngineeringNode.Kind.REQUIREMENT, artifact, "/rows/" + i,
+            graph, report);
       }
     }
   }
@@ -305,8 +295,7 @@ public final class EngineeringPackageValidator {
     JsonArray cases = root.getAsJsonArray("caseResults");
     for (int i = 0; i < cases.size(); i++) {
       if (!cases.get(i).isJsonObject()) {
-        report.addError("ENG-ENVELOPE-004", artifact, "/caseResults/" + i,
-            "Design-case result must be an object");
+        report.addError("ENG-ENVELOPE-004", artifact, "/caseResults/" + i, "Design-case result must be an object");
         continue;
       }
       JsonObject item = cases.get(i).getAsJsonObject();
@@ -321,8 +310,7 @@ public final class EngineeringPackageValidator {
     JsonArray governing = root.getAsJsonArray("governingValues");
     for (int i = 0; i < governing.size(); i++) {
       if (!governing.get(i).isJsonObject()) {
-        report.addError("ENG-ENVELOPE-005", artifact, "/governingValues/" + i,
-            "Governing value must be an object");
+        report.addError("ENG-ENVELOPE-005", artifact, "/governingValues/" + i, "Governing value must be an object");
         continue;
       }
       JsonObject value = governing.get(i).getAsJsonObject();
@@ -331,8 +319,8 @@ public final class EngineeringPackageValidator {
         report.addError("ENG-ENVELOPE-002", artifact, "/governingValues/" + i + "/designCaseId",
             "Governing value references an unknown design case " + caseId);
       }
-      JsonObject metric = value.has("metric") && value.get("metric").isJsonObject()
-          ? value.getAsJsonObject("metric") : null;
+      JsonObject metric = value.has("metric") && value.get("metric").isJsonObject() ? value.getAsJsonObject("metric")
+          : null;
       String subjectTag = metric == null ? "" : stringValue(metric, "subjectTag");
       String equipmentId = subjectTag.isEmpty() ? ""
           : EngineeringIds.nodeId(EngineeringNode.Kind.EQUIPMENT, subjectTag);
@@ -430,8 +418,7 @@ public final class EngineeringPackageValidator {
     }
   }
 
-  private static JsonObject parseObject(String artifact, String json,
-      EngineeringPackageValidationReport report) {
+  private static JsonObject parseObject(String artifact, String json, EngineeringPackageValidationReport report) {
     if (json == null || json.trim().isEmpty()) {
       report.addError("ENG-SCHEMA-007", artifact, "", "JSON document is empty");
       return null;

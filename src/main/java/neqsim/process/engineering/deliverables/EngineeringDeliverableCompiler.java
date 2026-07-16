@@ -197,12 +197,11 @@ public final class EngineeringDeliverableCompiler {
 
   private static void addDocumentNodes(EngineeringGraph graph, EngineeringProject project) {
     String projectNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.PROJECT, project.getProjectId());
-    String[] documents = new String[] {"plant.dexpi.xml", "plant-proteus.xml", "plant-pydexpi.xml",
+    String[] documents = new String[] { "plant.dexpi.xml", "plant-proteus.xml", "plant-pydexpi.xml",
         "engineering-manifest.json", "engineering-calculations.json", "cause-and-effect.json",
         "interoperability-report.json", "engineering-model.json", "design-case-envelope.json",
         "equipment-register.json", "line-register.json", "instrument-register.json",
-        "engineering-compiler-manifest.json", "engineering-schema-catalog.json",
-        "engineering-validation-report.json"};
+        "engineering-compiler-manifest.json", "engineering-schema-catalog.json", "engineering-validation-report.json" };
     for (String document : documents) {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, document);
       graph.addNode(new EngineeringNode(nodeId, EngineeringNode.Kind.DOCUMENT, document, document)
@@ -227,9 +226,10 @@ public final class EngineeringDeliverableCompiler {
       document.put("caseResults", Collections.emptyList());
       document.put("governingValues", Collections.emptyList());
     } else {
-      document.put("status", envelope.getGoverningValues().isEmpty() ? "NOT_CALCULATED_ALL_CASES_FAILED"
-          : envelope.hasCaseFailures() ? "CALCULATED_WITH_CASE_FAILURES_REVIEW_REQUIRED"
-              : "CALCULATED_REVIEW_REQUIRED");
+      document.put("status",
+          envelope.getGoverningValues().isEmpty() ? "NOT_CALCULATED_ALL_CASES_FAILED"
+              : envelope.hasCaseFailures() ? "CALCULATED_WITH_CASE_FAILURES_REVIEW_REQUIRED"
+                  : "CALCULATED_REVIEW_REQUIRED");
       document.putAll(envelope.toMap());
     }
     return GSON.toJson(document);
@@ -307,8 +307,7 @@ public final class EngineeringDeliverableCompiler {
       row.put("equipmentTag", requirement.getEquipmentTag());
       row.put("functionType", requirement.getType().name());
       row.put("source", "ENGINEERING_REQUIREMENT");
-      row.put("requirementGraphNodeId",
-          EngineeringIds.nodeId(EngineeringNode.Kind.REQUIREMENT, requirement.getId()));
+      row.put("requirementGraphNodeId", EngineeringIds.nodeId(EngineeringNode.Kind.REQUIREMENT, requirement.getId()));
       row.put("silTarget", requirement.getSilTarget());
       row.put("approvalStatus", requirement.getApprovalStatus().name());
       rows.put(requirement.getId(), row);
@@ -342,10 +341,11 @@ public final class EngineeringDeliverableCompiler {
     document.put("projectName", project.getName());
     document.put("revision", project.getRevision());
     document.put("graphFingerprint", graph.toMap().get("fingerprint"));
-    document.put("designEnvelopeStatus", envelope == null ? "NOT_CONFIGURED"
-        : envelope.getGoverningValues().isEmpty() ? "NOT_CALCULATED_ALL_CASES_FAILED"
-            : envelope.hasCaseFailures() ? "CALCULATED_WITH_CASE_FAILURES_REVIEW_REQUIRED"
-                : "CALCULATED_REVIEW_REQUIRED");
+    document.put("designEnvelopeStatus",
+        envelope == null ? "NOT_CONFIGURED"
+            : envelope.getGoverningValues().isEmpty() ? "NOT_CALCULATED_ALL_CASES_FAILED"
+                : envelope.hasCaseFailures() ? "CALCULATED_WITH_CASE_FAILURES_REVIEW_REQUIRED"
+                    : "CALCULATED_REVIEW_REQUIRED");
     document.put("revisionDiffStatus", diff == null ? "NOT_REQUESTED" : diff.isEmpty() ? "NO_CHANGES" : "CHANGES");
     List<String> artifacts = new ArrayList<String>();
     artifacts.add("engineering-model.json");

@@ -23,8 +23,7 @@ public final class DesignCaseEngine {
       throw new IllegalArgumentException("At least one engineering metric is required");
     }
     List<DesignCaseResult> results = new ArrayList<DesignCaseResult>();
-    Map<String, EngineeringDesignEnvelope.GoverningValue> governing =
-        new LinkedHashMap<String, EngineeringDesignEnvelope.GoverningValue>();
+    Map<String, EngineeringDesignEnvelope.GoverningValue> governing = new LinkedHashMap<String, EngineeringDesignEnvelope.GoverningValue>();
     for (EngineeringDesignCase designCase : designCases) {
       DesignCaseResult result = new DesignCaseResult(designCase);
       try {

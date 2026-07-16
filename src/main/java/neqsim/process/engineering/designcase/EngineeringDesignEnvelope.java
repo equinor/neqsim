@@ -87,10 +87,9 @@ public final class EngineeringDesignEnvelope implements Serializable {
       String subjectNodeId = "equipment:" + canonical(governing.getMetric().getSubjectTag());
       EngineeringCalculation calculation = new EngineeringCalculation(
           "envelope:" + canonical(governing.getMetric().getId()), subjectNodeId, "DesignCaseEngine governing envelope")
-              .setStatus(EngineeringCalculation.Status.CALCULATED)
-              .setResult(governing.getValue(), governing.getMetric().getUnit())
-              .setDesignCaseId(governing.getDesignCaseId())
-              .setMessage("Selected by " + governing.getMetric().getGoverningDirection().name());
+          .setStatus(EngineeringCalculation.Status.CALCULATED)
+          .setResult(governing.getValue(), governing.getMetric().getUnit()).setDesignCaseId(governing.getDesignCaseId())
+          .setMessage("Selected by " + governing.getMetric().getGoverningDirection().name());
       result.add(calculation);
     }
     return result;

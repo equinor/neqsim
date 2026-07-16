@@ -132,11 +132,10 @@ public final class EngineeringGraph implements Serializable {
       JsonArray provenance = item.getAsJsonArray("provenance");
       for (JsonElement provenanceElement : provenance) {
         JsonObject provenanceItem = provenanceElement.getAsJsonObject();
-        EngineeringProvenance record = new EngineeringProvenance(
-            provenanceItem.get("sourceType").getAsString(), provenanceItem.get("sourceReference").getAsString())
-                .setMethod(provenanceItem.get("method").getAsString())
-                .setDesignCaseId(provenanceItem.get("designCaseId").getAsString())
-                .setApprovalStatus(provenanceItem.get("approvalStatus").getAsString());
+        EngineeringProvenance record = new EngineeringProvenance(provenanceItem.get("sourceType").getAsString(),
+            provenanceItem.get("sourceReference").getAsString()).setMethod(provenanceItem.get("method").getAsString())
+            .setDesignCaseId(provenanceItem.get("designCaseId").getAsString())
+            .setApprovalStatus(provenanceItem.get("approvalStatus").getAsString());
         for (JsonElement evidence : provenanceItem.getAsJsonArray("evidenceReferences")) {
           record.addEvidenceReference(evidence.getAsString());
         }

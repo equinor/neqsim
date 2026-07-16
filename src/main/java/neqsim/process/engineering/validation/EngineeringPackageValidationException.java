@@ -11,8 +11,8 @@ public final class EngineeringPackageValidationException extends IOException {
 
   public EngineeringPackageValidationException(Path validationReportFile,
       EngineeringPackageValidationReport validationReport) {
-    super("Engineering package validation failed with " + validationReport.getErrorCount()
-        + " error(s); see " + validationReportFile);
+    super("Engineering package validation failed with " + validationReport.getErrorCount() + " error(s); see "
+        + validationReportFile);
     this.validationReportFile = validationReportFile;
     this.validationReport = validationReport;
   }

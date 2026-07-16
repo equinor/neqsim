@@ -89,8 +89,7 @@ public final class EngineeringGraphDiff implements Serializable {
     while (changed) {
       changed = false;
       for (EngineeringEdge edge : newer.getEdges().values()) {
-        if ((edge.getKind() == EngineeringEdge.Kind.DEPENDS_ON
-            || edge.getKind() == EngineeringEdge.Kind.GENERATED_FROM)
+        if ((edge.getKind() == EngineeringEdge.Kind.DEPENDS_ON || edge.getKind() == EngineeringEdge.Kind.GENERATED_FROM)
             && impactedNodeIds.contains(edge.getTargetId()) && impactedNodeIds.add(edge.getSourceId())) {
           changed = true;
         }

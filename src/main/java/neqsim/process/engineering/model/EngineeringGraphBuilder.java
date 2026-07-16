@@ -37,12 +37,11 @@ public final class EngineeringGraphBuilder {
     String projectNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.PROJECT, project.getProjectId());
     EngineeringNode projectNode = new EngineeringNode(projectNodeId, EngineeringNode.Kind.PROJECT,
         project.getProjectId(), project.getName()).putProperty("revision", project.getRevision())
-            .putProperty("processName", project.getProcessSystem().getName())
-            .putProperty("jurisdiction", project.getDesignBasis().getJurisdiction())
-            .putProperty("facilityType", project.getDesignBasis().getFacilityType())
-            .putProperty("projectPhase", project.getDesignBasis().getProjectPhase())
-            .addProvenance(new EngineeringProvenance("PROJECT", project.getProjectId()).setApprovalStatus(
-                "REVIEW_REQUIRED"));
+        .putProperty("processName", project.getProcessSystem().getName())
+        .putProperty("jurisdiction", project.getDesignBasis().getJurisdiction())
+        .putProperty("facilityType", project.getDesignBasis().getFacilityType())
+        .putProperty("projectPhase", project.getDesignBasis().getProjectPhase()).addProvenance(
+            new EngineeringProvenance("PROJECT", project.getProjectId()).setApprovalStatus("REVIEW_REQUIRED"));
     graph.addNode(projectNode);
 
     Map<String, String> processElementIds = addProcessElements(project, graph, projectNodeId);
@@ -106,12 +105,12 @@ public final class EngineeringGraphBuilder {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.LINE, line.getLineTag());
       EngineeringNode node = new EngineeringNode(nodeId, EngineeringNode.Kind.LINE, line.getLineTag(),
           line.getLineTag()).putProperty("equipmentTag", line.getEquipmentTag())
-              .putProperty("nominalPipeSize", line.getNominalPipeSize()).putProperty("schedule", line.getSchedule())
-              .putProperty("materialGrade", line.getMaterialGrade()).putProperty("pipingClass", line.getPipingClass())
-              .putProperty("designPressureBara", line.getDesignPressureBara())
-              .putProperty("designTemperatureC", line.getDesignTemperatureC())
-              .addProvenance(new EngineeringProvenance("CONTROLLED_LINE_LIST", line.getLineTag())
-                  .setApprovalStatus(line.getMissingFields().isEmpty() ? "REVIEW_REQUIRED" : "INCOMPLETE"));
+          .putProperty("nominalPipeSize", line.getNominalPipeSize()).putProperty("schedule", line.getSchedule())
+          .putProperty("materialGrade", line.getMaterialGrade()).putProperty("pipingClass", line.getPipingClass())
+          .putProperty("designPressureBara", line.getDesignPressureBara())
+          .putProperty("designTemperatureC", line.getDesignTemperatureC())
+          .addProvenance(new EngineeringProvenance("CONTROLLED_LINE_LIST", line.getLineTag())
+              .setApprovalStatus(line.getMissingFields().isEmpty() ? "REVIEW_REQUIRED" : "INCOMPLETE"));
       for (String evidence : line.getEvidenceReferences()) {
         node.addProvenance(new EngineeringProvenance("EVIDENCE", evidence));
       }
@@ -158,13 +157,12 @@ public final class EngineeringGraphBuilder {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.REQUIREMENT, requirement.getId());
       EngineeringNode node = new EngineeringNode(nodeId, EngineeringNode.Kind.REQUIREMENT, requirement.getId(),
           requirement.getTitle()).putProperty("type", requirement.getType().name())
-              .putProperty("equipmentTag", requirement.getEquipmentTag())
-              .putProperty("rationale", requirement.getRationale())
-              .putProperty("silTarget", requirement.getSilTarget())
-              .putProperty("approvalStatus", requirement.getApprovalStatus().name())
-              .addProvenance(new EngineeringProvenance(requirement.getOrigin().name(), requirement.getId())
-                  .setApprovalStatus(requirement.getApprovalStatus().name())
-                  .addEvidenceReference(requirement.getReviewRecord()));
+          .putProperty("equipmentTag", requirement.getEquipmentTag())
+          .putProperty("rationale", requirement.getRationale()).putProperty("silTarget", requirement.getSilTarget())
+          .putProperty("approvalStatus", requirement.getApprovalStatus().name())
+          .addProvenance(new EngineeringProvenance(requirement.getOrigin().name(), requirement.getId())
+              .setApprovalStatus(requirement.getApprovalStatus().name())
+              .addEvidenceReference(requirement.getReviewRecord()));
       graph.addNode(node);
       addEdge(graph, EngineeringEdge.Kind.CONTAINS, projectNodeId, nodeId, "requirement");
       String equipmentId = processElementIds.get(requirement.getEquipmentTag());
@@ -180,12 +178,11 @@ public final class EngineeringGraphBuilder {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.BOUNDARY, boundary.getId());
       EngineeringNode node = new EngineeringNode(nodeId, EngineeringNode.Kind.BOUNDARY, boundary.getId(),
           boundary.getId()).putProperty("type", boundary.getType().name())
-              .putProperty("equipmentTag", boundary.getEquipmentTag())
-              .putProperty("resolved", boundary.isResolved())
-              .putProperty("connectedDocumentReference", boundary.getConnectedDocumentReference())
-              .addProvenance(new EngineeringProvenance("BOUNDARY_REGISTER", boundary.getId())
-                  .setApprovalStatus(boundary.isResolved() ? "REVIEW_REQUIRED" : "INCOMPLETE")
-                  .addEvidenceReference(boundary.getEvidenceReference()));
+          .putProperty("equipmentTag", boundary.getEquipmentTag()).putProperty("resolved", boundary.isResolved())
+          .putProperty("connectedDocumentReference", boundary.getConnectedDocumentReference())
+          .addProvenance(new EngineeringProvenance("BOUNDARY_REGISTER", boundary.getId())
+              .setApprovalStatus(boundary.isResolved() ? "REVIEW_REQUIRED" : "INCOMPLETE")
+              .addEvidenceReference(boundary.getEvidenceReference()));
       graph.addNode(node);
       addEdge(graph, EngineeringEdge.Kind.CONTAINS, projectNodeId, nodeId, "boundary");
       String equipmentId = processElementIds.get(boundary.getEquipmentTag());
@@ -200,10 +197,10 @@ public final class EngineeringGraphBuilder {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DESIGN_CASE, designCase.getId());
       EngineeringNode node = new EngineeringNode(nodeId, EngineeringNode.Kind.DESIGN_CASE, designCase.getId(),
           designCase.getName()).putProperty("type", designCase.getType().name())
-              .putProperty("description", designCase.getDescription())
-              .putProperty("approvalStatus", designCase.getApprovalStatus())
-              .addProvenance(new EngineeringProvenance("DESIGN_CASE_REGISTER", designCase.getId())
-                  .setApprovalStatus(designCase.getApprovalStatus()));
+          .putProperty("description", designCase.getDescription())
+          .putProperty("approvalStatus", designCase.getApprovalStatus())
+          .addProvenance(new EngineeringProvenance("DESIGN_CASE_REGISTER", designCase.getId())
+              .setApprovalStatus(designCase.getApprovalStatus()));
       for (String evidence : designCase.getEvidenceReferences()) {
         node.addProvenance(new EngineeringProvenance("EVIDENCE", evidence));
       }
@@ -229,16 +226,15 @@ public final class EngineeringGraphBuilder {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.CALCULATION, calculation.getId());
       EngineeringNode node = new EngineeringNode(nodeId, EngineeringNode.Kind.CALCULATION, calculation.getId(),
           calculation.getId()).putProperty("method", calculation.getMethod())
-              .putProperty("status", calculation.getStatus().name())
-              .putProperty("resultValue", calculation.getResultValue())
-              .putProperty("resultUnit", calculation.getResultUnit())
-              .putProperty("designCaseId", calculation.getDesignCaseId())
-              .putProperty("standardReference", calculation.getStandardReference())
-              .putProperty("message", calculation.getMessage())
-              .putProperty("inputs", calculation.toMap().get("inputs"))
-              .addProvenance(new EngineeringProvenance("CALCULATION", calculation.getId())
-                  .setMethod(calculation.getMethod()).setDesignCaseId(calculation.getDesignCaseId())
-                  .setApprovalStatus(calculation.getStatus().name()));
+          .putProperty("status", calculation.getStatus().name())
+          .putProperty("resultValue", calculation.getResultValue())
+          .putProperty("resultUnit", calculation.getResultUnit())
+          .putProperty("designCaseId", calculation.getDesignCaseId())
+          .putProperty("standardReference", calculation.getStandardReference())
+          .putProperty("message", calculation.getMessage()).putProperty("inputs", calculation.toMap().get("inputs"))
+          .addProvenance(
+              new EngineeringProvenance("CALCULATION", calculation.getId()).setMethod(calculation.getMethod())
+                  .setDesignCaseId(calculation.getDesignCaseId()).setApprovalStatus(calculation.getStatus().name()));
       for (String evidence : calculation.getEvidenceReferences()) {
         node.addProvenance(new EngineeringProvenance("EVIDENCE", evidence));
       }
@@ -261,7 +257,7 @@ public final class EngineeringGraphBuilder {
 
   private static void addEdge(EngineeringGraph graph, EngineeringEdge.Kind kind, String sourceId, String targetId,
       String role) {
-    graph.addEdge(new EngineeringEdge(EngineeringIds.edgeId(kind, sourceId, targetId, role), sourceId, targetId, kind,
-        role));
+    graph.addEdge(
+        new EngineeringEdge(EngineeringIds.edgeId(kind, sourceId, targetId, role), sourceId, targetId, kind, role));
   }
 }
