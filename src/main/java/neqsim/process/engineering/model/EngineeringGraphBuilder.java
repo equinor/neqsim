@@ -268,7 +268,8 @@ public final class EngineeringGraphBuilder {
 
   private static void addCalculations(List<EngineeringCalculation> calculations, EngineeringGraph graph,
       String projectNodeId) {
-    for (EngineeringCalculation calculation : calculations) {
+    EngineeringCalculationDag dag = EngineeringCalculationDag.from(calculations);
+    for (EngineeringCalculation calculation : dag.getCalculationsInExecutionOrder()) {
       if (graph.getNode(calculation.getSubjectNodeId()) == null) {
         throw new IllegalArgumentException(
             "Calculation " + calculation.getId() + " references unknown subject " + calculation.getSubjectNodeId());
@@ -281,6 +282,11 @@ public final class EngineeringGraphBuilder {
           .putProperty("resultUnit", calculation.getResultUnit())
           .putProperty("designCaseId", calculation.getDesignCaseId())
           .putProperty("standardReference", calculation.getStandardReference())
+          .putProperty("standardReferences", calculation.toMap().get("standardReferences"))
+          .putProperty("standardsRequired", Boolean.valueOf(calculation.isStandardsRequired()))
+          .putProperty("standardsReady",
+              Boolean.valueOf(!calculation.isStandardsRequired() || calculation.hasStandardsBasis()))
+          .putProperty("executionReadiness", dag.getReadiness(calculation.getId()).name())
           .putProperty("message", calculation.getMessage()).putProperty("inputs", calculation.toMap().get("inputs"))
           .addProvenance(
               new EngineeringProvenance("CALCULATION", calculation.getId()).setMethod(calculation.getMethod())
@@ -290,7 +296,14 @@ public final class EngineeringGraphBuilder {
       }
       graph.addNode(node);
       addEdge(graph, EngineeringEdge.Kind.CONTAINS, projectNodeId, nodeId, "calculation");
+    }
+    for (EngineeringCalculation calculation : dag.getCalculationsInExecutionOrder()) {
+      String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.CALCULATION, calculation.getId());
       addEdge(graph, EngineeringEdge.Kind.GOVERNS, nodeId, calculation.getSubjectNodeId(), "result");
+      for (String prerequisiteId : calculation.getPrerequisiteCalculationIds()) {
+        String prerequisiteNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.CALCULATION, prerequisiteId);
+        addEdge(graph, EngineeringEdge.Kind.DEPENDS_ON, nodeId, prerequisiteNodeId, "prerequisiteCalculation");
+      }
       for (EngineeringCalculation.Input input : calculation.getInputs()) {
         if (!input.getSourceNodeId().isEmpty() && graph.getNode(input.getSourceNodeId()) != null) {
           addEdge(graph, EngineeringEdge.Kind.DEPENDS_ON, nodeId, input.getSourceNodeId(), "input");

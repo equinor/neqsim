@@ -20,6 +20,7 @@ import neqsim.process.engineering.designcase.EngineeringDesignCase;
 import neqsim.process.engineering.designcase.EngineeringDesignEnvelope;
 import neqsim.process.engineering.designcase.EngineeringMetric;
 import neqsim.process.engineering.model.EngineeringCalculation;
+import neqsim.process.engineering.model.EngineeringCalculationDag;
 import neqsim.process.engineering.model.EngineeringEdge;
 import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringGraphBuilder;
@@ -60,6 +61,7 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
         temporaryDirectory);
     assertTrue(Files.isRegularFile(result.getEngineeringGraphFile()));
     assertTrue(Files.isRegularFile(result.getEngineeringConnectivityFile()));
+    assertTrue(Files.isRegularFile(result.getEngineeringCalculationDagFile()));
     assertTrue(Files.isRegularFile(result.getDesignEnvelopeFile()));
     assertTrue(Files.isRegularFile(result.getEquipmentRegisterFile()));
     assertTrue(Files.isRegularFile(result.getLineRegisterFile()));
@@ -73,6 +75,8 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(read(result.getDesignEnvelopeFile()).contains("CASE-MAX"));
     assertTrue(read(result.getEngineeringConnectivityFile()).contains("PROCESS_FLOW"));
     assertTrue(read(result.getEngineeringConnectivityFile()).contains("SIGNAL_FLOW"));
+    assertTrue(read(result.getEngineeringCalculationDagFile()).contains("topologicalOrder"));
+    assertTrue(read(result.getEngineeringCalculationDagFile()).contains("API 521"));
     assertTrue(result.getValidationReport().isValid());
     assertTrue(EngineeringPackageValidator.validatePackage(temporaryDirectory).isValid());
     assertNotNull(result.getEngineeringGraph().getNode("calculation:envelope-20-vg-001-pressure"));
@@ -90,6 +94,26 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
         .getNode(EngineeringIds.nodeId(EngineeringNode.Kind.PROCESS_TAP, "20-PT-001.processTap")));
     assertNotNull(result.getEngineeringGraph()
         .getNode(EngineeringIds.nodeId(EngineeringNode.Kind.PIPE_SEGMENT, "BOUNDARY:20-FLARE-001")));
+    assertTrue(hasEdge(result.getEngineeringGraph(), EngineeringEdge.Kind.DEPENDS_ON));
+  }
+
+  @Test
+  void buildsStandardsAwareCalculationDagAndRejectsCycles() {
+    EngineeringCalculation prerequisite = new EngineeringCalculation("CALC-A", "equipment:test", "Prerequisite")
+        .setStatus(EngineeringCalculation.Status.CALCULATED).setResult(10.0, "bara").setStandardsRequired(true)
+        .addStandardReference(
+            new EngineeringCalculation.StandardReference("API 521", "2020", "4.4", "Relief design basis"));
+    EngineeringCalculation dependent = new EngineeringCalculation("CALC-B", "equipment:test", "Dependent")
+        .dependsOnCalculation("CALC-A");
+
+    EngineeringCalculationDag dag = EngineeringCalculationDag.from(java.util.Arrays.asList(dependent, prerequisite));
+
+    assertEquals("CALC-A", dag.getTopologicalOrder().get(0));
+    assertEquals("CALC-B", dag.getTopologicalOrder().get(1));
+    assertEquals(EngineeringCalculationDag.Readiness.READY, dag.getReadiness("CALC-B"));
+    prerequisite.dependsOnCalculation("CALC-B");
+    assertThrows(IllegalArgumentException.class,
+        () -> EngineeringCalculationDag.from(java.util.Arrays.asList(prerequisite, dependent)));
   }
 
   @Test
@@ -193,6 +217,18 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     project.addEngineeringMetric(EngineeringMetric.equipmentPressure("20-VG-001"));
     project.addEngineeringMetric(EngineeringMetric.equipmentTemperature("20-VG-001"));
     project.addEngineeringMetric(EngineeringMetric.equipmentInletMassFlow("20-VG-001"));
+    String separatorNode = EngineeringIds.nodeId(EngineeringNode.Kind.EQUIPMENT, "20-VG-001");
+    project
+        .addCalculation(new EngineeringCalculation("20-VG-001-RELIEF-BASIS", separatorNode,
+            "Establish maximum credible relief pressure basis").setStatus(EngineeringCalculation.Status.CALCULATED)
+            .setResult(75.0, "bara").setStandardsRequired(true)
+            .addStandardReference(new EngineeringCalculation.StandardReference("API 521", "2020", "4.4",
+                "Credible overpressure scenario and design pressure basis"))
+            .addEvidenceReference("PROCESS-DESIGN-BASIS"));
+    project.addCalculation(new EngineeringCalculation("20-VG-001-RELIEF-REVIEW", separatorNode,
+        "Review relief protection against the controlled pressure basis").dependsOnCalculation("20-VG-001-RELIEF-BASIS")
+        .setStandardsRequired(true).addStandardReference(new EngineeringCalculation.StandardReference("API 520 Part I",
+            "2020", "5", "Pressure-relieving device sizing and selection")));
     return project;
   }
 

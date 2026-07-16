@@ -73,6 +73,7 @@ The compiler adds these coordinated artifacts:
 |---|---|
 | `engineering-model.json` | Canonical nodes, semantic relationships, provenance, calculation dependencies and fingerprint |
 | `engineering-connectivity.json` | Physical ports/nozzles, pipe/signal/energy segments, directed flows, line membership and instrument taps |
+| `engineering-calculation-dag.json` | Standards-aware calculation dependencies, deterministic execution order and readiness states |
 | `design-case-envelope.json` | Per-case results and governing pressure, temperature, flow or custom metrics |
 | `equipment-register.json` | Equipment identity, design-condition status and governing design values |
 | `line-register.json` | Controlled line-list inputs, evidence and completeness status |
@@ -139,6 +140,34 @@ direction conflicts, and invalid line or measurement relationships. Dangling por
 and controlled lines without a mapped pipe segment remain explicit review warnings. The filtered
 `engineering-connectivity.json` view is fingerprint-linked to `engineering-model.json`, so CAD, DEXPI, and data-platform
 consumers can read physical topology without treating it as a second source of truth.
+
+## Build a standards-aware calculation DAG
+
+Engineering calculations can declare prerequisite calculations and structured standards references. The compiler
+validates the dependency graph, rejects unknown prerequisites and cycles, and emits a deterministic topological order:
+
+```java
+EngineeringCalculation reliefBasis = new EngineeringCalculation(
+    "20-VG-001-RELIEF-BASIS", separatorNodeId, "Maximum credible relief pressure basis")
+    .setStatus(EngineeringCalculation.Status.CALCULATED)
+    .setResult(75.0, "bara")
+    .setStandardsRequired(true)
+    .addStandardReference(new EngineeringCalculation.StandardReference(
+        "API 521", "2020", "4.4", "Credible overpressure scenario"));
+
+EngineeringCalculation reliefReview = new EngineeringCalculation(
+    "20-VG-001-RELIEF-REVIEW", separatorNodeId, "Relief protection review")
+    .dependsOnCalculation("20-VG-001-RELIEF-BASIS")
+    .setStandardsRequired(true)
+    .addStandardReference(new EngineeringCalculation.StandardReference(
+        "API 520 Part I", "2020", "5", "Device sizing and selection"));
+
+project.addCalculation(reliefBasis).addCalculation(reliefReview);
+```
+
+Readiness distinguishes complete, ready, dependency-blocked, standards-blocked, explicitly blocked and failed
+calculations. A completed calculation that declares standards as required but has no controlled standards basis is a
+package validation error. The DAG and canonical graph use the same calculation identities and `DEPENDS_ON` edges.
 
 For a multi-area `ProcessModel`, build and export one DEXPI engineering project per area:
 

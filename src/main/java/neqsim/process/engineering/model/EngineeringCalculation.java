@@ -15,6 +15,35 @@ public final class EngineeringCalculation implements Serializable {
     CALCULATED, BLOCKED, FAILED, REVIEW_REQUIRED, APPROVED
   }
 
+  /** A controlled standards basis for a calculation method or acceptance criterion. */
+  public static final class StandardReference implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String standard;
+    private final String edition;
+    private final String clause;
+    private final String applicability;
+
+    public StandardReference(String standard, String edition, String clause, String applicability) {
+      this.standard = requireText(standard, "standard");
+      this.edition = textOrEmpty(edition);
+      this.clause = textOrEmpty(clause);
+      this.applicability = textOrEmpty(applicability);
+    }
+
+    public String getStandard() {
+      return standard;
+    }
+
+    public Map<String, Object> toMap() {
+      Map<String, Object> result = new LinkedHashMap<String, Object>();
+      result.put("standard", standard);
+      result.put("edition", edition);
+      result.put("clause", clause);
+      result.put("applicability", applicability);
+      return result;
+    }
+  }
+
   /** A named value or graph-node dependency used by a calculation. */
   public static final class Input implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -57,8 +86,11 @@ public final class EngineeringCalculation implements Serializable {
   private String resultUnit = "";
   private String designCaseId = "";
   private String standardReference = "";
+  private boolean standardsRequired;
   private String message = "";
   private final List<Input> inputs = new ArrayList<Input>();
+  private final List<String> prerequisiteCalculationIds = new ArrayList<String>();
+  private final List<StandardReference> standardReferences = new ArrayList<StandardReference>();
   private final List<String> evidenceReferences = new ArrayList<String>();
 
   public EngineeringCalculation(String id, String subjectNodeId, String method) {
@@ -91,6 +123,30 @@ public final class EngineeringCalculation implements Serializable {
 
   public EngineeringCalculation setStandardReference(String value) {
     standardReference = textOrEmpty(value);
+    return this;
+  }
+
+  public EngineeringCalculation setStandardsRequired(boolean value) {
+    standardsRequired = value;
+    return this;
+  }
+
+  public EngineeringCalculation addStandardReference(StandardReference value) {
+    if (value == null) {
+      throw new IllegalArgumentException("standard reference must not be null");
+    }
+    standardReferences.add(value);
+    return this;
+  }
+
+  public EngineeringCalculation dependsOnCalculation(String calculationId) {
+    String normalized = requireText(calculationId, "calculationId");
+    if (id.equals(normalized)) {
+      throw new IllegalArgumentException("Calculation must not depend on itself: " + id);
+    }
+    if (!prerequisiteCalculationIds.contains(normalized)) {
+      prerequisiteCalculationIds.add(normalized);
+    }
     return this;
   }
 
@@ -147,12 +203,28 @@ public final class EngineeringCalculation implements Serializable {
     return standardReference;
   }
 
+  public boolean isStandardsRequired() {
+    return standardsRequired;
+  }
+
+  public boolean hasStandardsBasis() {
+    return !standardReference.isEmpty() || !standardReferences.isEmpty();
+  }
+
   public String getMessage() {
     return message;
   }
 
   public List<Input> getInputs() {
     return Collections.unmodifiableList(inputs);
+  }
+
+  public List<String> getPrerequisiteCalculationIds() {
+    return Collections.unmodifiableList(prerequisiteCalculationIds);
+  }
+
+  public List<StandardReference> getStandardReferences() {
+    return Collections.unmodifiableList(standardReferences);
   }
 
   public List<String> getEvidenceReferences() {
@@ -171,12 +243,20 @@ public final class EngineeringCalculation implements Serializable {
     }
     result.put("designCaseId", designCaseId);
     result.put("standardReference", standardReference);
+    result.put("standardsRequired", Boolean.valueOf(standardsRequired));
+    result.put("standardsReady", Boolean.valueOf(!standardsRequired || hasStandardsBasis()));
     result.put("message", message);
     List<Map<String, Object>> inputMaps = new ArrayList<Map<String, Object>>();
     for (Input input : inputs) {
       inputMaps.add(input.toMap());
     }
     result.put("inputs", inputMaps);
+    result.put("prerequisiteCalculationIds", new ArrayList<String>(prerequisiteCalculationIds));
+    List<Map<String, Object>> standards = new ArrayList<Map<String, Object>>();
+    for (StandardReference reference : standardReferences) {
+      standards.add(reference.toMap());
+    }
+    result.put("standardReferences", standards);
     result.put("evidenceReferences", new ArrayList<String>(evidenceReferences));
     return result;
   }

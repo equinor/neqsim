@@ -18,6 +18,7 @@ import neqsim.process.engineering.designcase.DesignCaseEngine;
 import neqsim.process.engineering.designcase.EngineeringDesignEnvelope;
 import neqsim.process.engineering.dexpi.DexpiEngineeringExporter;
 import neqsim.process.engineering.model.EngineeringCalculation;
+import neqsim.process.engineering.model.EngineeringCalculationDag;
 import neqsim.process.engineering.model.EngineeringEdge;
 import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringGraphBuilder;
@@ -45,6 +46,7 @@ public final class EngineeringDeliverableCompiler {
     private final Path outputDirectory;
     private final Path engineeringGraphFile;
     private final Path engineeringConnectivityFile;
+    private final Path engineeringCalculationDagFile;
     private final Path designEnvelopeFile;
     private final Path equipmentRegisterFile;
     private final Path lineRegisterFile;
@@ -58,13 +60,14 @@ public final class EngineeringDeliverableCompiler {
     private final EngineeringPackageValidationReport validationReport;
 
     CompilationResult(Path outputDirectory, Path engineeringGraphFile, Path engineeringConnectivityFile,
-        Path designEnvelopeFile, Path equipmentRegisterFile, Path lineRegisterFile, Path instrumentRegisterFile,
-        Path compilerManifestFile, Path validationReportFile, Path revisionDiffFile, EngineeringGraph engineeringGraph,
-        EngineeringDesignEnvelope designEnvelope, DexpiEngineeringExporter.ExportResult dexpiResult,
-        EngineeringPackageValidationReport validationReport) {
+        Path engineeringCalculationDagFile, Path designEnvelopeFile, Path equipmentRegisterFile, Path lineRegisterFile,
+        Path instrumentRegisterFile, Path compilerManifestFile, Path validationReportFile, Path revisionDiffFile,
+        EngineeringGraph engineeringGraph, EngineeringDesignEnvelope designEnvelope,
+        DexpiEngineeringExporter.ExportResult dexpiResult, EngineeringPackageValidationReport validationReport) {
       this.outputDirectory = outputDirectory;
       this.engineeringGraphFile = engineeringGraphFile;
       this.engineeringConnectivityFile = engineeringConnectivityFile;
+      this.engineeringCalculationDagFile = engineeringCalculationDagFile;
       this.designEnvelopeFile = designEnvelopeFile;
       this.equipmentRegisterFile = equipmentRegisterFile;
       this.lineRegisterFile = lineRegisterFile;
@@ -88,6 +91,10 @@ public final class EngineeringDeliverableCompiler {
 
     public Path getEngineeringConnectivityFile() {
       return engineeringConnectivityFile;
+    }
+
+    public Path getEngineeringCalculationDagFile() {
+      return engineeringCalculationDagFile;
     }
 
     public Path getDesignEnvelopeFile() {
@@ -166,6 +173,9 @@ public final class EngineeringDeliverableCompiler {
           project.getEngineeringMetrics());
       envelopeCalculations.addAll(envelope.toCalculations());
     }
+    List<EngineeringCalculation> dagCalculations = new ArrayList<EngineeringCalculation>(project.getCalculations());
+    dagCalculations.addAll(envelopeCalculations);
+    EngineeringCalculationDag calculationDag = EngineeringCalculationDag.from(dagCalculations);
     EngineeringGraph graph = EngineeringGraphBuilder.fromProject(project, envelopeCalculations);
     addDocumentNodes(graph, project);
 
@@ -174,6 +184,8 @@ public final class EngineeringDeliverableCompiler {
     write(graphFile, graph.toJson());
     Path connectivityFile = outputDirectory.resolve("engineering-connectivity.json");
     write(connectivityFile, connectivityJson(graph));
+    Path calculationDagFile = outputDirectory.resolve("engineering-calculation-dag.json");
+    write(calculationDagFile, GSON.toJson(calculationDag.toMap(project.getProjectId(), project.getRevision())));
     Path envelopeFile = outputDirectory.resolve("design-case-envelope.json");
     write(envelopeFile, envelopeJson(project, envelope));
     Path equipmentFile = outputDirectory.resolve("equipment-register.json");
@@ -199,8 +211,9 @@ public final class EngineeringDeliverableCompiler {
     if (!validation.isValid()) {
       throw new EngineeringPackageValidationException(validationFile, validation);
     }
-    return new CompilationResult(outputDirectory, graphFile, connectivityFile, envelopeFile, equipmentFile, lineFile,
-        instrumentFile, compilerManifest, validationFile, diffFile, graph, envelope, dexpiResult, validation);
+    return new CompilationResult(outputDirectory, graphFile, connectivityFile, calculationDagFile, envelopeFile,
+        equipmentFile, lineFile, instrumentFile, compilerManifest, validationFile, diffFile, graph, envelope,
+        dexpiResult, validation);
   }
 
   private static void addDocumentNodes(EngineeringGraph graph, EngineeringProject project) {
@@ -208,8 +221,9 @@ public final class EngineeringDeliverableCompiler {
     String[] documents = new String[] { "plant.dexpi.xml", "plant-proteus.xml", "plant-pydexpi.xml",
         "engineering-manifest.json", "engineering-calculations.json", "cause-and-effect.json",
         "interoperability-report.json", "engineering-model.json", "engineering-connectivity.json",
-        "design-case-envelope.json", "equipment-register.json", "line-register.json", "instrument-register.json",
-        "engineering-compiler-manifest.json", "engineering-schema-catalog.json", "engineering-validation-report.json" };
+        "engineering-calculation-dag.json", "design-case-envelope.json", "equipment-register.json",
+        "line-register.json", "instrument-register.json", "engineering-compiler-manifest.json",
+        "engineering-schema-catalog.json", "engineering-validation-report.json" };
     for (String document : documents) {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, document);
       graph.addNode(new EngineeringNode(nodeId, EngineeringNode.Kind.DOCUMENT, document, document)
@@ -408,6 +422,7 @@ public final class EngineeringDeliverableCompiler {
     List<String> artifacts = new ArrayList<String>();
     artifacts.add("engineering-model.json");
     artifacts.add("engineering-connectivity.json");
+    artifacts.add("engineering-calculation-dag.json");
     artifacts.add("design-case-envelope.json");
     artifacts.add("equipment-register.json");
     artifacts.add("line-register.json");

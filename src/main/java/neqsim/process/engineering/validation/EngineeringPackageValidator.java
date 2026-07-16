@@ -126,6 +126,13 @@ public final class EngineeringPackageValidator {
       requireObject(root, "summary", artifactName, report);
       requireArray(root, "nodes", artifactName, report);
       requireArray(root, "edges", artifactName, report);
+    } else if ("engineering-calculation-dag.json".equals(artifactName)) {
+      requireString(root, "projectId", artifactName, report);
+      requireString(root, "revision", artifactName, report);
+      requireArray(root, "topologicalOrder", artifactName, report);
+      requireArray(root, "nodes", artifactName, report);
+      requireArray(root, "edges", artifactName, report);
+      requireObject(root, "summary", artifactName, report);
     } else if (artifactName.endsWith("-register.json")) {
       validateRegisterStructure(root, artifactName, report);
     } else if ("design-case-envelope.json".equals(artifactName)) {
@@ -194,6 +201,7 @@ public final class EngineeringPackageValidator {
     validateInstrumentRegister(packageDirectory, graph, report);
     validateEnvelope(packageDirectory, graph, report);
     validateConnectivity(packageDirectory, graph, report);
+    validateCalculationDag(packageDirectory, graph, report);
     validateManifest(packageDirectory, graph, report);
     validateSchemaFiles(packageDirectory, report);
     return report;
@@ -383,6 +391,92 @@ public final class EngineeringPackageValidator {
       if (!graphValues.containsKey(id)) {
         report.addError("ENG-CONNECTIVITY-005", artifact, "/" + arrayName + "/" + i + "/id",
             "Connectivity entry does not exist in the canonical graph: " + id);
+      }
+    }
+  }
+
+  private static void validateCalculationDag(Path directory, EngineeringGraph graph,
+      EngineeringPackageValidationReport report) throws IOException {
+    String artifact = "engineering-calculation-dag.json";
+    Path file = directory.resolve(artifact);
+    if (!Files.isRegularFile(file)) {
+      return;
+    }
+    JsonObject root = parseObject(artifact, read(file), report);
+    if (root == null) {
+      return;
+    }
+    if (!graph.getProjectId().equals(stringValue(root, "projectId"))) {
+      report.addError("ENG-CALCULATION-001", artifact, "/projectId", "Calculation DAG and graph project ids differ");
+    }
+    if (!graph.getRevision().equals(stringValue(root, "revision"))) {
+      report.addError("ENG-CALCULATION-002", artifact, "/revision", "Calculation DAG and graph revisions differ");
+    }
+    if (!root.has("nodes") || !root.get("nodes").isJsonArray() || !root.has("topologicalOrder")
+        || !root.get("topologicalOrder").isJsonArray()) {
+      return;
+    }
+    Map<String, Integer> positions = new java.util.LinkedHashMap<String, Integer>();
+    JsonArray order = root.getAsJsonArray("topologicalOrder");
+    for (int i = 0; i < order.size(); i++) {
+      String id = order.get(i).isJsonPrimitive() ? order.get(i).getAsString() : "";
+      if (id.isEmpty() || positions.put(id, Integer.valueOf(i)) != null) {
+        report.addError("ENG-CALCULATION-003", artifact, "/topologicalOrder/" + i,
+            id.isEmpty() ? "Calculation id is missing" : "Duplicate calculation in topological order: " + id);
+      }
+    }
+    Set<String> nodeIds = new LinkedHashSet<String>();
+    JsonArray nodes = root.getAsJsonArray("nodes");
+    for (int i = 0; i < nodes.size(); i++) {
+      if (!nodes.get(i).isJsonObject()) {
+        report.addError("ENG-CALCULATION-004", artifact, "/nodes/" + i, "Calculation node must be an object");
+        continue;
+      }
+      JsonObject node = nodes.get(i).getAsJsonObject();
+      String id = stringValue(node, "id");
+      if (!nodeIds.add(id) || !positions.containsKey(id)) {
+        report.addError("ENG-CALCULATION-005", artifact, "/nodes/" + i + "/id",
+            positions.containsKey(id) ? "Duplicate calculation node " + id
+                : "Calculation node is missing from topological order: " + id);
+      }
+      String graphNodeId = id.isEmpty() ? "" : EngineeringIds.nodeId(EngineeringNode.Kind.CALCULATION, id);
+      if (graph.getNode(graphNodeId) == null) {
+        report.addError("ENG-CALCULATION-006", artifact, "/nodes/" + i + "/id",
+            "Calculation is missing from the canonical graph: " + id);
+      }
+      if (node.has("standardsRequired") && node.get("standardsRequired").getAsBoolean() && node.has("standardsReady")
+          && !node.get("standardsReady").getAsBoolean()) {
+        String status = stringValue(node, "status");
+        if ("CALCULATED".equals(status) || "APPROVED".equals(status)) {
+          report.addError("ENG-CALCULATION-007", artifact, "/nodes/" + i + "/standardReferences",
+              "Completed calculation is missing its required standards basis: " + id);
+        } else {
+          report.addWarning("ENG-CALCULATION-008", artifact, "/nodes/" + i + "/standardReferences",
+              "Calculation cannot become ready until its standards basis is declared: " + id);
+        }
+      }
+    }
+    if (nodeIds.size() != positions.size()) {
+      report.addError("ENG-CALCULATION-009", artifact, "/topologicalOrder",
+          "Topological order and calculation node inventory differ");
+    }
+    if (root.has("edges") && root.get("edges").isJsonArray()) {
+      JsonArray edges = root.getAsJsonArray("edges");
+      for (int i = 0; i < edges.size(); i++) {
+        if (!edges.get(i).isJsonObject()) {
+          report.addError("ENG-CALCULATION-010", artifact, "/edges/" + i, "Dependency edge must be an object");
+          continue;
+        }
+        JsonObject edge = edges.get(i).getAsJsonObject();
+        String source = stringValue(edge, "sourceCalculationId");
+        String target = stringValue(edge, "targetCalculationId");
+        if (!positions.containsKey(source) || !positions.containsKey(target)) {
+          report.addError("ENG-CALCULATION-011", artifact, "/edges/" + i,
+              "Dependency edge references an unknown calculation");
+        } else if (positions.get(target).intValue() >= positions.get(source).intValue()) {
+          report.addError("ENG-CALCULATION-012", artifact, "/edges/" + i,
+              "Prerequisite must precede the dependent calculation in topological order");
+        }
       }
     }
   }
