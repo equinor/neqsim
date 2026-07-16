@@ -1,8 +1,10 @@
 package neqsim.process.engineering;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -30,6 +32,7 @@ import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
 import neqsim.process.safety.overpressure.OverpressureStudyResult;
 import neqsim.process.safety.overpressure.ProtectedItem;
 import neqsim.process.safety.overpressure.ReliefCause;
+import neqsim.process.safety.overpressure.ReliefPhase;
 import neqsim.process.safety.overpressure.ReliefScenario;
 import neqsim.thermo.system.SystemInterface;
 
@@ -84,24 +87,45 @@ public final class SimulationEngineeringDesignRunner {
 
     JsonArray reliefResults = new JsonArray();
     Set<String> explicitlyStudiedTags = new HashSet<String>();
+    Map<String, Set<ReliefCause>> successfullyEvaluatedReliefCauses =
+        new LinkedHashMap<String, Set<ReliefCause>>();
     for (OverpressureProtectionStudy study : project.getOverpressureStudies()) {
       explicitlyStudiedTags.add(study.getItem().getName());
       try {
-        addReliefResult(reliefResults, study.evaluate(), "PROJECT_DEFINED_SCENARIOS");
+        OverpressureStudyResult studyResult = study.evaluate();
+        addReliefResult(reliefResults, studyResult, "PROJECT_DEFINED_SCENARIOS");
+        if (!Double.isFinite(studyResult.getRequiredAreaM2())) {
+          continue;
+        }
+        Set<ReliefCause> causes = successfullyEvaluatedReliefCauses.get(study.getItem().getName());
+        if (causes == null) {
+          causes = new LinkedHashSet<ReliefCause>();
+          successfullyEvaluatedReliefCauses.put(study.getItem().getName(), causes);
+        }
+        for (ReliefScenario scenario : study.getScenarios()) {
+          if (hasCompleteReliefScenarioCalculationBasis(scenario)) {
+            causes.add(scenario.getCause());
+          }
+        }
       } catch (Exception ex) {
         reliefResults.add(calculationFailure(study.getItem().getName(), "RELIEF_STUDY", ex));
       }
     }
-    addAutomaticBlockedOutletScreening(project, explicitlyStudiedTags, reliefResults);
+    addAutomaticBlockedOutletScreening(project, explicitlyStudiedTags, reliefResults,
+        successfullyEvaluatedReliefCauses);
     root.add("overpressureAndPsvSizing", reliefResults);
-    JsonArray reliefCoverage = calculateReliefCoverage(project);
+    JsonArray reliefCoverage = calculateReliefCoverage(project, successfullyEvaluatedReliefCauses);
     root.add("reliefScenarioCoverage", reliefCoverage);
 
     JsonArray blowdownResults = new JsonArray();
     for (DynamicBlowdownFlareStudyDataSource input : project.getBlowdownFlareStudies()) {
       try {
         DynamicBlowdownFlareStudyHandoff handoff = DynamicBlowdownFlareStudyRunner.builder().build().run(input);
-        blowdownResults.add(GSON.toJsonTree(handoff.toMap()));
+        JsonObject result = GSON.toJsonTree(handoff.toMap()).getAsJsonObject();
+        boolean calculated = handoff.getCalculationReadiness() != null
+            && handoff.getCalculationReadiness().isReadyForCalculation() && handoff.getResult() != null;
+        result.addProperty("status", calculated ? "CALCULATED_REVIEW_REQUIRED" : "NOT_CALCULATED_NOT_READY");
+        blowdownResults.add(result);
       } catch (Exception ex) {
         blowdownResults.add(calculationFailure(input.getStudyId(), "DYNAMIC_BLOWDOWN_FLARE_STUDY", ex));
       }
@@ -123,6 +147,23 @@ public final class SimulationEngineeringDesignRunner {
     root.add("governance", governance());
     return new SimulationEngineeringDesignReport(root, calculatedEquipmentCount, reliefResults.size(),
         blowdownResults.size());
+  }
+
+  private static boolean hasCompleteReliefScenarioCalculationBasis(ReliefScenario scenario) {
+    if (scenario == null || !scenario.isCredible() || scenario.getCause() == null
+        || !(scenario.getReliefRateKgPerS() > 0.0)) {
+      return false;
+    }
+    if (scenario.getPhase() == ReliefPhase.VAPOUR) {
+      return scenario.getReliefTemperatureK() > 0.0 && scenario.getMolarMassKgPerMol() > 0.0
+          && scenario.getCompressibility() > 0.0 && scenario.getSpecificHeatRatio() > 1.0;
+    }
+    if (scenario.getPhase() == ReliefPhase.TWO_PHASE) {
+      return scenario.getGasMassFraction() >= 0.0 && scenario.getGasMassFraction() <= 1.0
+          && scenario.getGasDensityKgPerM3() > 0.0 && scenario.getLiquidDensityKgPerM3() > 0.0
+          && scenario.getLatentHeatJPerKg() > 0.0 && scenario.getLiquidHeatCapacityJPerKgK() > 0.0;
+    }
+    return scenario.getDensityKgPerM3() > 0.0 || scenario.getLiquidDensityKgPerM3() > 0.0;
   }
 
   private static int calculateMechanicalDesigns(EngineeringProject project, JsonArray results) {
@@ -305,20 +346,14 @@ public final class SimulationEngineeringDesignRunner {
     return results;
   }
 
-  private static JsonArray calculateReliefCoverage(EngineeringProject project) {
+  private static JsonArray calculateReliefCoverage(EngineeringProject project,
+      Map<String, Set<ReliefCause>> successfullyEvaluatedReliefCauses) {
     JsonArray results = new JsonArray();
     for (ReliefScenarioBasis basis : project.getReliefScenarioBases()) {
       Set<ReliefCause> evaluated = new LinkedHashSet<ReliefCause>();
-      for (OverpressureProtectionStudy study : project.getOverpressureStudies()) {
-        if (!study.getItem().getName().equals(basis.getEquipmentTag())) {
-          continue;
-        }
-        for (ReliefScenario scenario : study.getScenarios()) {
-          evaluated.add(scenario.getCause());
-        }
-      }
-      if (hasAutomaticBlockedOutletBasis(project, basis.getEquipmentTag())) {
-        evaluated.add(ReliefCause.BLOCKED_OUTLET);
+      Set<ReliefCause> successful = successfullyEvaluatedReliefCauses.get(basis.getEquipmentTag());
+      if (successful != null) {
+        evaluated.addAll(successful);
       }
       Set<ReliefCause> missingCauses = new LinkedHashSet<ReliefCause>(basis.getRequiredCauses());
       missingCauses.removeAll(evaluated);
@@ -341,16 +376,6 @@ public final class SimulationEngineeringDesignRunner {
       results.add(item);
     }
     return results;
-  }
-
-  private static boolean hasAutomaticBlockedOutletBasis(EngineeringProject project, String equipmentTag) {
-    ProcessEquipmentInterface unit = project.getProcessSystem().getUnit(equipmentTag);
-    if (unit == null) {
-      return false;
-    }
-    DesignConditions design = unit.getDesignConditions();
-    return design != null && design.isDesignPressureSet() && design.isReliefSetPressureSet()
-        && inletMassFlow(unit.getInletStreams()) > 0.0 && firstFluid(unit.getInletStreams()) != null;
   }
 
   private static JsonArray calculateSettingEnvelopes(EngineeringProject project) {
@@ -440,7 +465,7 @@ public final class SimulationEngineeringDesignRunner {
   }
 
   private static void addAutomaticBlockedOutletScreening(EngineeringProject project, Set<String> excludedTags,
-      JsonArray results) {
+      JsonArray results, Map<String, Set<ReliefCause>> successfullyEvaluatedReliefCauses) {
     for (ProcessEquipmentInterface unit : project.getProcessSystem().getUnitOperations()) {
       if (unit == null || unit instanceof Stream || excludedTags.contains(unit.getName())) {
         continue;
@@ -473,6 +498,14 @@ public final class SimulationEngineeringDesignRunner {
         OverpressureStudyResult result = new OverpressureProtectionStudy(item).addScenario(blockedOutlet.calculate())
             .evaluate();
         addReliefResult(results, result, "AUTO_SCREENING_FULL_SIMULATED_INFLOW");
+        if (Double.isFinite(result.getRequiredAreaM2())) {
+          Set<ReliefCause> causes = successfullyEvaluatedReliefCauses.get(unit.getName());
+          if (causes == null) {
+            causes = new LinkedHashSet<ReliefCause>();
+            successfullyEvaluatedReliefCauses.put(unit.getName(), causes);
+          }
+          causes.add(ReliefCause.BLOCKED_OUTLET);
+        }
       } catch (Exception ex) {
         JsonObject failure = equipmentIdentity(unit);
         failure.addProperty("status", "NOT_CALCULATED_BLOCKED_OUTLET_MODEL_ERROR");
@@ -563,7 +596,7 @@ public final class SimulationEngineeringDesignRunner {
         readinessTopic("FINAL_SHUTDOWN_ACTIONS", completeShutdown, Math.max(1, project.getShutdownSequences().size()),
             "CRITICAL", "Process / automation / technical safety", "REVIEW_REQUIRED"));
 
-    readiness.add(readinessTopic("BLOWDOWN_FLARE_INPUT", blowdownResults.size() > 0 ? blowdownResults.size() : 0,
+    readiness.add(readinessTopic("BLOWDOWN_FLARE_INPUT", countStatus(blowdownResults, "CALCULATED_REVIEW_REQUIRED"),
         Math.max(1, project.getBlowdownFlareStudies().size()), "CRITICAL", "Process safety / flare",
         "REVIEW_REQUIRED"));
 

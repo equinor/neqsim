@@ -192,12 +192,21 @@ DexpiEngineeringExporter.ExportResult files =
     DexpiEngineeringExporter.export(project, Paths.get("engineering-package"));
 ```
 
-The generated `plant.dexpi.xml` contains requirement-linked instrumentation
-functions, logic functions, information flows, control/protective valves, and
-equipment associations. It references `engineering-manifest.json`, the proposed
+The generated `plant.dexpi.xml` is a native DEXPI 2.0 semantic process model and
+is validated against the bundled official DEXPI XML schema during export.
+`plant-proteus.xml` is the backward-compatible graphical P&ID containing
+requirement-linked instrumentation functions, logic functions, information
+flows, control/protective valves, and equipment associations. It references
+`engineering-manifest.json`, the proposed
 `cause-and-effect.json`, simulation-backed `engineering-calculations.json`, and
 any `datasets/<tag>-compressor-map.json` sidecars.
 Do not flatten large vendor maps into P&ID attributes.
+
+Do not call the Proteus graphical file DEXPI 2.0. Antisurge recycle topology is
+connected discharge-to-suction; PSV/BDV proposals use dedicated equipment
+nozzles and a separate relief/blowdown network. Treat every
+`UnresolvedBoundary=YES` as a required line, flare-header, vent, drain or utility
+tie-in before engineering completion.
 
 The calculation handoff automatically runs available equipment mechanical-design
 and materials-screening models. It can run API 520/521 PSV sizing from attached
@@ -223,7 +232,8 @@ correspond to the source documents:
 Inspect `engineeringReadiness` in `engineering-calculations.json`. It reports
 coverage percentage, missing-input count, severity, responsible discipline and
 approval state. Never interpret 100% calculation/evidence coverage as engineering
-approval or fitness for construction.
+approval or fitness for construction. Failed or blocked calculation objects must
+not be counted as completed merely because they are present in the handoff.
 
 For multi-area models, call
 `NorsokOffshoreEngineeringBuilder.fromProcessModel(...)` and export each returned

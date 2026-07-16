@@ -35,7 +35,10 @@ governed engineering path from `neqsim-pid-process-operations`:
    `SafetyFunctionDesign`, and `ShutdownSequence` inputs when line-list,
    HAZOP/LOPA/SRS and cause/effect evidence exists.
 6. Export only with `DexpiEngineeringExporter`, and inspect
-   `engineering-calculations.json` plus unresolved data gaps.
+   `engineering-calculations.json` plus unresolved data gaps. Treat
+   `plant.dexpi.xml` as the schema-validated native DEXPI 2.0 semantic model and
+   `plant-proteus.xml` as the backward-compatible graphical P&ID; do not conflate
+   the two serializations.
 
 Do not assign SIL, voting, final set points, failure actions, materials or final
 shutdown actions from generic equipment rules. Preserve `REVIEW_REQUIRED` until

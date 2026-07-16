@@ -7,6 +7,9 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import neqsim.NeqSimTest;
@@ -19,6 +22,8 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.mechanicaldesign.DesignConditions;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.processmodel.dexpi.Dexpi20XmlValidator;
+import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
 import neqsim.process.safety.overpressure.BlockedOutletRelief;
 import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
 import neqsim.process.safety.overpressure.ProtectedItem;
@@ -114,6 +119,8 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     project.addOverpressureStudy(reliefStudy).addReliefScenarioBasis(
         new ReliefScenarioBasis("20-VG-001").require(ReliefCause.BLOCKED_OUTLET).require(ReliefCause.FIRE)
             .setHazardReviewReference("HAZOP-20-001").addEvidenceReference("RELIEF-REGISTER-20-REV-A"));
+    project.addBlowdownFlareStudy(DynamicBlowdownFlareStudyDataSource.builder("incomplete-blowdown-study")
+        .addGap("Protected equipment inventory is not available.").build());
 
     assertFalse(project.getRequirementsForEquipment("20-KA-001").isEmpty());
     assertFalse(process.getMeasurementDevices().isEmpty());
@@ -129,6 +136,8 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
 
     ExportResult result = DexpiEngineeringExporter.export(project, temporaryDirectory.resolve("package"));
     assertTrue(Files.exists(result.getDexpiFile()));
+    assertTrue(Files.exists(result.getDexpi20File()));
+    Dexpi20XmlValidator.validate(result.getDexpi20File());
     assertTrue(Files.exists(result.getManifestFile()));
     assertTrue(Files.exists(result.getCalculationsFile()));
     assertTrue(Files.exists(result.getCauseAndEffectFile()));
@@ -153,11 +162,25 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(xml.contains("SENSOR:2oo3"));
     assertTrue(xml.contains("LOGIC_SOLVER:1oo1"));
     assertTrue(xml.contains("NOT_ASSIGNED"));
+    assertTrue(xml.contains("CONNECTED_RECYCLE_TOPOLOGY_REVIEW_REQUIRED"));
+    assertTrue(xml.contains("CONNECTED_TO_DEDICATED_EQUIPMENT_NOZZLE_DESTINATION_TIE_IN_REQUIRED"));
+    assertTrue(xml.contains("UnresolvedBoundary"));
+    assertTrue(xml.contains("FLARE_RELIEF_AND_BLOWDOWN"));
+    assertTrue(xml.contains("PROCESS_CONTROL_ISOLATION_AND_RECYCLE"));
+
+    String dexpi20 = new String(Files.readAllBytes(result.getDexpi20File()), StandardCharsets.UTF_8);
+    assertTrue(dexpi20.contains("<Model"));
+    assertTrue(dexpi20.contains("Core/EngineeringModel"));
+    assertTrue(dexpi20.contains("Plant/PlantModel"));
+    assertTrue(dexpi20.contains("Plant/ProcessEquipment.CentrifugalCompressor"));
+    assertTrue(dexpi20.contains("Plant/Piping.Pipe"));
 
     String manifest = new String(Files.readAllBytes(result.getManifestFile()), StandardCharsets.UTF_8);
     assertTrue(manifest.contains("NORSOK P-002"));
     assertTrue(manifest.contains("SIL_UNASSIGNED"));
     assertTrue(manifest.contains("REVIEW_REQUIRED"));
+    assertTrue(manifest.contains("DEXPI_XML_2_0_NATIVE"));
+    assertTrue(manifest.contains("PROTEUS_4_1_1_COMPATIBLE"));
 
     String calculations = new String(Files.readAllBytes(result.getCalculationsFile()), StandardCharsets.UTF_8);
     assertTrue(calculations.contains("neqsim_engineering_calculations.v2"));
@@ -179,6 +202,13 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(calculations.contains("completenessPercent"));
     assertTrue(calculations.contains("BLOWDOWN_FLARE_INPUT"));
     assertTrue(calculations.contains("fitnessForConstruction"));
+    JsonObject calculationJson = JsonParser.parseString(calculations).getAsJsonObject();
+    JsonArray blowdown = calculationJson.getAsJsonArray("dynamicBlowdownAndFlareSizing");
+    assertEquals("NOT_CALCULATED_NOT_READY", blowdown.get(0).getAsJsonObject().get("status").getAsString());
+    JsonArray readiness = calculationJson.getAsJsonArray("engineeringReadiness");
+    JsonObject blowdownReadiness = findReadinessTopic(readiness, "BLOWDOWN_FLARE_INPUT");
+    assertEquals(0, blowdownReadiness.get("completedItemCount").getAsInt());
+    assertEquals("NOT_READY", blowdownReadiness.get("status").getAsString());
 
     String causeAndEffect = new String(Files.readAllBytes(result.getCauseAndEffectFile()), StandardCharsets.UTF_8);
     assertTrue(causeAndEffect.contains("PROPOSED_FOR_HAZOP_LOPA_AND_DISCIPLINE_REVIEW"));
@@ -195,5 +225,15 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
         processModel, false);
     assertEquals(1, areaProjects.size());
     assertEquals("compression-area", areaProjects.get(0).getProcessSystem().getName());
+  }
+
+  private static JsonObject findReadinessTopic(JsonArray readiness, String topic) {
+    for (int i = 0; i < readiness.size(); i++) {
+      JsonObject item = readiness.get(i).getAsJsonObject();
+      if (topic.equals(item.get("topic").getAsString())) {
+        return item;
+      }
+    }
+    throw new AssertionError("Readiness topic not found: " + topic);
   }
 }

@@ -130,9 +130,9 @@ public final class DexpiXmlWriter {
    * furniture) is serialised in the Proteus-compatible structure shared by the DEXPI 1.x P&amp;ID specifications. DEXPI
    * 2.0 keeps this plant-model content backward compatible while replacing the Proteus schema with the standardised
    * "DEXPI XML" serialisation. Selecting {@link #DEXPI_2_0} therefore re-declares the document header (namespace,
-   * schema location and {@code SchemaVersion}) to advertise DEXPI 2.0 conformance over the same backward-compatible
-   * plant-model body; full DEXPI-2.0-only constructs (PFD/BFD serialisation, UML information-model classes) remain
-   * future work.
+   * schema location and {@code SchemaVersion}) on the same Proteus plant-model body. That output is not native DEXPI
+   * XML 2.0 and must not be used as evidence of DEXPI 2.0 conformance. Use {@link Dexpi20XmlWriter} for native,
+   * schema-validated DEXPI XML.
    * </p>
    *
    * @author NeqSim
@@ -147,10 +147,11 @@ public final class DexpiXmlWriter {
         "http://sandbox.dexpi.org/xml http://sandbox.dexpi.org/xml/dexpi-4.1.1.xsd"),
 
     /**
-     * DEXPI 2.0 standardised serialisation (published October 2025). The header declares DEXPI 2.0 conformance; the
-     * namespace and schema location follow the DEXPI 2.0 publication and can be re-targeted to the finalised DEXPI XML
-     * schema location used by downstream tooling.
+     * Legacy experimental header override. This does not change the Proteus document body into native DEXPI XML 2.0.
+     *
+     * @deprecated use {@link Dexpi20XmlWriter}
      */
+    @Deprecated
     DEXPI_2_0("2.0", "http://www.dexpi.org/dexpi",
         "http://www.dexpi.org/dexpi http://www.dexpi.org/dexpi/DEXPI-2.0.xsd");
 
@@ -311,7 +312,7 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Writes the provided {@link ProcessSystem} to a DEXPI XML file whose header declares DEXPI 2.0 conformance.
+   * Writes a Proteus document with the historical experimental DEXPI 2.0 header override.
    *
    * <p>
    * The exported document advertises the DEXPI 2.0 schema generation (namespace, schema location and
@@ -324,8 +325,9 @@ public final class DexpiXmlWriter {
    * @param processSystem process model to export
    * @param file output file
    * @throws IOException if writing fails
-   * @see DexpiSchemaVersion#DEXPI_2_0
+   * @deprecated use {@link Dexpi20XmlWriter#write(ProcessSystem, File)}
    */
+  @Deprecated
   public static void writeDexpi20(ProcessSystem processSystem, File file) throws IOException {
     Objects.requireNonNull(processSystem, "processSystem");
     Objects.requireNonNull(file, "file");
@@ -339,13 +341,14 @@ public final class DexpiXmlWriter {
   }
 
   /**
-   * Writes the provided {@link ProcessSystem} to a DEXPI XML stream whose header declares DEXPI 2.0 conformance.
+   * Writes a Proteus document with the historical experimental DEXPI 2.0 header override.
    *
    * @param processSystem process model to export
    * @param outputStream destination stream
    * @throws IOException if writing fails
-   * @see #writeDexpi20(ProcessSystem, File)
+   * @deprecated use {@link Dexpi20XmlWriter#write(ProcessSystem, OutputStream)}
    */
+  @Deprecated
   public static void writeDexpi20(ProcessSystem processSystem, OutputStream outputStream) throws IOException {
     Objects.requireNonNull(processSystem, "processSystem");
     Objects.requireNonNull(outputStream, "outputStream");

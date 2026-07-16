@@ -65,6 +65,7 @@ The package contains:
 ```text
 engineering-package/
 ├── plant.dexpi.xml
+├── plant-proteus.xml
 ├── cause-and-effect.json
 ├── engineering-calculations.json
 ├── engineering-manifest.json
@@ -72,10 +73,21 @@ engineering-package/
     └── <compressor-tag>-compressor-map.json
 ```
 
+`plant.dexpi.xml` uses the native object/property/reference serialization introduced by DEXPI 2.0. Every export is
+validated against the official `DEXPI_XML_Schema.xsd` bundled from the DEXPI Specification 2.0 release. It currently
+carries the semantic process-equipment, nozzle, piping-node and process-connection model.
+
+`plant-proteus.xml` is the backward-compatible graphical P&amp;ID handoff. It uses the Proteus 4.1.1 structure and
+contains the generated graphical instrumentation, safeguard proposals and NeqSim engineering attributes described
+below. It is deliberately not labelled as native DEXPI 2.0. Keeping both artifacts avoids disguising a Proteus body
+with a DEXPI 2.0 header while native graphical DEXPI 2.0 coverage is expanded.
+
 The DEXPI model contains explicit, graphically positioned process-instrumentation functions, signal-generating
 functions, instrumentation loops, information-flow relationships, control valves, shutdown valves, check valves,
 pressure-safety valves, and blowdown valves. Every generated object is associated with its protected equipment and
 source requirement. The manifest retains standards, rationale, provenance, review state, and validation findings.
+These graphical functions are currently carried by `plant-proteus.xml`; `plant.dexpi.xml` is the schema-validated
+native DEXPI 2.0 semantic topology handoff.
 
 `engineering-calculations.json` runs the existing NeqSim engineering engines and keeps their results in one governed
 handoff. It includes equipment mechanical design, simulation operating points, feasible trip-setting envelopes when
@@ -91,12 +103,22 @@ engineering-readiness matrix. Readiness is reported as completed/required items,
 percentage, severity, responsible discipline, and approval state. A 100% completeness score means that the configured
 calculation/evidence set is present; it never means that the design is approved or fit for construction.
 
+Readiness counts only successful calculation statuses. A blocked or failed blowdown/flare handoff remains
+`NOT_CALCULATED_NOT_READY`, and a relief cause is counted as covered only when its associated study evaluates
+successfully. Merely attaching an input object or scenario does not increase completeness.
+
 The materialized compressor template includes antisurge flow/differential-pressure measurement, an antisurge
 controller and recycle valve, suction and discharge shutdown isolation, reverse-flow prevention, blowdown, suction
 low-pressure, discharge high-pressure/high-temperature, and machinery-protection functions. Separator templates
 include pressure and level control, independent high-high/low-low level and pressure functions, relief, and blowdown
 proposals. Only equipment already present in the process model is created as process equipment; auxiliary protection
 objects are generated as governed P&amp;ID proposals.
+
+Generated antisurge recycle valves are connected from compressor discharge to suction in the graphical topology.
+PSV and BDV proposals are connected to dedicated protected-equipment nozzles and placed in a distinct relief/blowdown
+network. Suction/discharge ESDVs and non-return valves are connected on the protected-equipment side. Connections that
+still require an upstream line, flare-header or disposal-system tie-in carry an explicit `UnresolvedBoundary=YES` and
+remain incomplete engineering.
 
 `cause-and-effect.json` is a traceable proposal generated from the same requirements. It intentionally leaves final
 set points unassigned. Voting remains unassigned for rule-only requirements; when a controlled
@@ -265,8 +287,9 @@ mechanical-design models, API 520/521 relief sizes supported by credible scenari
 supported by reviewed inventories and network data, and screening-level material recommendations. Project engineering
 must still complete and approve the scenario basis, detailed piping/nozzle/stress design, fire-and-gas mapping,
 package/vendor interfaces, alarm rationalization, SIL determination and verification, final voting and trip settings,
-shutdown actions, tag allocation, maintainability reviews, and native DEXPI 2.0 schema/tool validation before
-controlled issue.
+shutdown actions, tag allocation and maintainability reviews before controlled issue. Native DEXPI XML schema
+validation is automatic; semantic profile validation against the imported DEXPI Core/Plant models and round-trip
+qualification in commercial CAE tools remain controlled interoperability work.
 
 Company or project rules can implement `EngineeringRule` and be registered with `addRule(...)`. Keep
 operator-specific alarm philosophy, trip thresholds, voting, proprietary design requirements, and

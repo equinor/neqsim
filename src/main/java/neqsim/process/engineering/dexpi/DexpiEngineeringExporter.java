@@ -9,6 +9,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.OutputKeys;
@@ -29,6 +32,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.mechanicaldesign.DesignConditions;
 import neqsim.process.processmodel.dexpi.DexpiXmlWriter;
+import neqsim.process.processmodel.dexpi.Dexpi20XmlWriter;
 
 /**
  * Exports a governed engineering project as DEXPI XML plus lossless engineering sidecars.
@@ -46,14 +50,16 @@ public final class DexpiEngineeringExporter {
   /** Result of an engineering package export. */
   public static final class ExportResult {
     private final Path dexpiFile;
+    private final Path dexpi20File;
     private final Path manifestFile;
     private final Path calculationsFile;
     private final Path causeAndEffectFile;
     private final Map<String, Path> compressorMapFiles;
 
-    ExportResult(Path dexpiFile, Path manifestFile, Path calculationsFile, Path causeAndEffectFile,
+    ExportResult(Path dexpiFile, Path dexpi20File, Path manifestFile, Path calculationsFile, Path causeAndEffectFile,
         Map<String, Path> compressorMapFiles) {
       this.dexpiFile = dexpiFile;
+      this.dexpi20File = dexpi20File;
       this.manifestFile = manifestFile;
       this.calculationsFile = calculationsFile;
       this.causeAndEffectFile = causeAndEffectFile;
@@ -63,6 +69,11 @@ public final class DexpiEngineeringExporter {
     /** @return generated DEXPI XML file */
     public Path getDexpiFile() {
       return dexpiFile;
+    }
+
+    /** @return native, schema-validated DEXPI 2.0 semantic model */
+    public Path getDexpi20File() {
+      return dexpi20File;
     }
 
     /** @return generated engineering manifest */
@@ -108,20 +119,42 @@ public final class DexpiEngineeringExporter {
     Path datasets = outputDirectory.resolve("datasets");
     Files.createDirectories(datasets);
 
-    Path dexpiFile = outputDirectory.resolve("plant.dexpi.xml");
-    DexpiXmlWriter.writeDexpi20(project.getProcessSystem(), dexpiFile.toFile());
+    Path dexpi20File = outputDirectory.resolve("plant.dexpi.xml");
+    Dexpi20XmlWriter.write(project.getProcessSystem(), dexpi20File.toFile());
+
+    Path dexpiFile = outputDirectory.resolve("plant-proteus.xml");
+    DexpiXmlWriter.write(project.getProcessSystem(), dexpiFile.toFile());
 
     Map<String, Path> maps = writeCompressorMaps(project, datasets);
     DexpiEngineeringMaterializer.MaterializationResult materialization = enrichDexpi(project, dexpiFile, maps);
 
     Path manifest = outputDirectory.resolve("engineering-manifest.json");
-    Files.write(manifest, project.toJson().getBytes(StandardCharsets.UTF_8));
+    Files.write(manifest, packageManifest(project).getBytes(StandardCharsets.UTF_8));
     SimulationEngineeringDesignReport calculationReport = SimulationEngineeringDesignRunner.run(project);
     Path calculations = outputDirectory.resolve("engineering-calculations.json");
     Files.write(calculations, calculationReport.toJson().getBytes(StandardCharsets.UTF_8));
     Path causeAndEffect = outputDirectory.resolve("cause-and-effect.json");
     Files.write(causeAndEffect, materialization.toCauseAndEffectJson(project).getBytes(StandardCharsets.UTF_8));
-    return new ExportResult(dexpiFile, manifest, calculations, causeAndEffect, maps);
+    return new ExportResult(dexpiFile, dexpi20File, manifest, calculations, causeAndEffect, maps);
+  }
+
+  private static String packageManifest(EngineeringProject project) {
+    JsonObject manifest = JsonParser.parseString(project.toJson()).getAsJsonObject();
+    JsonObject artifacts = new JsonObject();
+    JsonObject nativeDexpi = new JsonObject();
+    nativeDexpi.addProperty("file", "plant.dexpi.xml");
+    nativeDexpi.addProperty("serialization", "DEXPI_XML_2_0_NATIVE");
+    nativeDexpi.addProperty("schemaValidation", "PASSED_DURING_EXPORT");
+    nativeDexpi.addProperty("content", "PROCESS_TOPOLOGY_AND_SEMANTIC_EQUIPMENT_MODEL");
+    artifacts.add("nativeDexpi20", nativeDexpi);
+    JsonObject proteus = new JsonObject();
+    proteus.addProperty("file", "plant-proteus.xml");
+    proteus.addProperty("serialization", "PROTEUS_4_1_1_COMPATIBLE");
+    proteus.addProperty("content", "GRAPHICAL_PID_AND_ENGINEERING_PROPOSALS");
+    proteus.addProperty("nativeDexpi20Conformance", false);
+    artifacts.add("proteusPid", proteus);
+    manifest.add("exchangeArtifacts", artifacts);
+    return new GsonBuilder().setPrettyPrinting().create().toJson(manifest);
   }
 
   private static Map<String, Path> writeCompressorMaps(EngineeringProject project, Path datasets) throws IOException {
