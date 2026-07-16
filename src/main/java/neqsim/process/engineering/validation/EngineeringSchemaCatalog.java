@@ -17,6 +17,7 @@ import com.google.gson.GsonBuilder;
 public final class EngineeringSchemaCatalog {
   public static final String CATALOG_VERSION = "neqsim_engineering_schema_catalog.v1";
   public static final String GRAPH = "neqsim_engineering_graph.v1";
+  public static final String CONNECTIVITY = "neqsim_engineering_connectivity.v1";
   public static final String DESIGN_CASE_ENVELOPE = "neqsim_design_case_envelope.v1";
   public static final String EQUIPMENT_REGISTER = "neqsim_equipment_register.v1";
   public static final String LINE_REGISTER = "neqsim_line_register.v1";
@@ -73,6 +74,7 @@ public final class EngineeringSchemaCatalog {
   static {
     List<Definition> values = new ArrayList<Definition>();
     values.add(definition("engineering-model.json", GRAPH, "engineering-model.schema.json"));
+    values.add(definition("engineering-connectivity.json", CONNECTIVITY, "engineering-connectivity.schema.json"));
     values.add(definition("design-case-envelope.json", DESIGN_CASE_ENVELOPE, "design-case-envelope.schema.json"));
     values.add(definition("equipment-register.json", EQUIPMENT_REGISTER, "equipment-register.schema.json"));
     values.add(definition("line-register.json", LINE_REGISTER, "line-register.schema.json"));

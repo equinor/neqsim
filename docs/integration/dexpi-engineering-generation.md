@@ -72,6 +72,7 @@ The compiler adds these coordinated artifacts:
 | Artifact | Purpose |
 |---|---|
 | `engineering-model.json` | Canonical nodes, semantic relationships, provenance, calculation dependencies and fingerprint |
+| `engineering-connectivity.json` | Physical ports/nozzles, pipe/signal/energy segments, directed flows, line membership and instrument taps |
 | `design-case-envelope.json` | Per-case results and governing pressure, temperature, flow or custom metrics |
 | `equipment-register.json` | Equipment identity, design-condition status and governing design values |
 | `line-register.json` | Controlled line-list inputs, evidence and completeness status |
@@ -114,6 +115,30 @@ EngineeringDeliverableCompiler.compile(
 
 The diff reports added, removed and modified nodes and connections. It also propagates impact through `DEPENDS_ON` and
 `GENERATED_FROM` relationships so affected calculations and documents can be identified for rerun and reapproval.
+
+## Declare canonical physical connectivity
+
+Use explicit `ProcessSystem.connect(...)` metadata when the engineering package must carry named ports and flow
+direction independently of Java stream wiring:
+
+```java
+process.connect("20-FEED-001", "outlet", "20-VG-001", "inlet",
+    ProcessConnection.ConnectionType.MATERIAL);
+process.connect("20-VG-001", "levelSignal", "20-LCV-001", "command",
+    ProcessConnection.ConnectionType.SIGNAL);
+```
+
+The canonical graph retains the existing equipment-level `CONNECTS_TO` relationship and adds `PORT`, `NOZZLE`,
+`PIPE_SEGMENT`, `SIGNAL_CONNECTION`, `ENERGY_CONNECTION`, and `PROCESS_TAP` nodes. Directed `PROCESS_FLOW`,
+`SIGNAL_FLOW`, and `ENERGY_FLOW` edges pass through the connection node; `HAS_PORT`, `PART_OF_LINE`, and `MEASURES`
+edges preserve ownership and engineering context. Valves and fittings remain compatible `EQUIPMENT` nodes and carry a
+`physicalCategory` property for downstream engineering tools.
+
+Package validation rejects malformed segment cardinality, invalid port ownership, flow/connection type mismatches,
+direction conflicts, and invalid line or measurement relationships. Dangling ports, unresolved document boundaries,
+and controlled lines without a mapped pipe segment remain explicit review warnings. The filtered
+`engineering-connectivity.json` view is fingerprint-linked to `engineering-model.json`, so CAD, DEXPI, and data-platform
+consumers can read physical topology without treating it as a second source of truth.
 
 For a multi-area `ProcessModel`, build and export one DEXPI engineering project per area:
 

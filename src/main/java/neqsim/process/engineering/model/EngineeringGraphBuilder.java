@@ -13,6 +13,7 @@ import neqsim.process.engineering.designcase.EngineeringMetric;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.measurementdevice.StreamMeasurementDeviceBaseClass;
 import neqsim.process.processmodel.ProcessConnection;
 
 /** Materializes an {@link EngineeringProject} as the canonical engineering graph. */
@@ -45,8 +46,8 @@ public final class EngineeringGraphBuilder {
     graph.addNode(projectNode);
 
     Map<String, String> processElementIds = addProcessElements(project, graph, projectNodeId);
-    addConnections(project, graph, processElementIds);
     addLines(project, graph, projectNodeId, processElementIds);
+    addConnections(project, graph, projectNodeId, processElementIds);
     addInstruments(project, graph, projectNodeId);
     addRequirements(project, graph, projectNodeId, processElementIds);
     addBoundaries(project, graph, projectNodeId, processElementIds);
@@ -67,7 +68,8 @@ public final class EngineeringGraphBuilder {
       EngineeringNode.Kind kind = unit instanceof Stream ? EngineeringNode.Kind.LINE : EngineeringNode.Kind.EQUIPMENT;
       String nodeId = EngineeringIds.nodeId(kind, unit.getName());
       EngineeringNode node = new EngineeringNode(nodeId, kind, unit.getName(), unit.getName())
-          .putProperty("javaClass", unit.getClass().getName()).putProperty("source", "PROCESS_SYSTEM")
+          .putProperty("javaClass", unit.getClass().getName()).putProperty("physicalCategory", physicalCategory(unit))
+          .putProperty("source", "PROCESS_SYSTEM")
           .addProvenance(new EngineeringProvenance("SIMULATION_MODEL", project.getProcessSystem().getName())
               .setMethod("ProcessSystem topology"));
       try {
@@ -87,7 +89,7 @@ public final class EngineeringGraphBuilder {
     return ids;
   }
 
-  private static void addConnections(EngineeringProject project, EngineeringGraph graph,
+  private static void addConnections(EngineeringProject project, EngineeringGraph graph, String projectNodeId,
       Map<String, String> processElementIds) {
     for (ProcessConnection connection : project.getProcessSystem().getConnections()) {
       String sourceId = processElementIds.get(connection.getSourceEquipment());
@@ -95,6 +97,36 @@ public final class EngineeringGraphBuilder {
       if (sourceId != null && targetId != null) {
         addEdge(graph, EngineeringEdge.Kind.CONNECTS_TO, sourceId, targetId,
             connection.getType().name() + ":" + connection.getSourcePort() + ":" + connection.getTargetPort());
+        EngineeringNode sourceOwner = graph.getNode(sourceId);
+        EngineeringNode targetOwner = graph.getNode(targetId);
+        EngineeringNode.Kind sourcePortKind = endpointKind(connection.getType(), sourceOwner);
+        EngineeringNode.Kind targetPortKind = endpointKind(connection.getType(), targetOwner);
+        String sourcePortId = ensureEndpoint(graph, sourceId, sourcePortKind,
+            connection.getSourceEquipment() + "." + connection.getSourcePort(), connection.getSourceEquipment(),
+            connection.getSourcePort(), "OUTLET", connection.getType().name(),
+            connection.getSourceReferenceDesignation());
+        String targetPortId = ensureEndpoint(graph, targetId, targetPortKind,
+            connection.getTargetEquipment() + "." + connection.getTargetPort(), connection.getTargetEquipment(),
+            connection.getTargetPort(), "INLET", connection.getType().name(),
+            connection.getTargetReferenceDesignation());
+        String connectionKey = connection.getType().name() + ":" + connection.getSourceEquipment() + "."
+            + connection.getSourcePort() + "->" + connection.getTargetEquipment() + "." + connection.getTargetPort();
+        EngineeringNode.Kind connectionKind = connectionNodeKind(connection.getType());
+        String connectionId = EngineeringIds.nodeId(connectionKind, connectionKey);
+        if (graph.getNode(connectionId) == null) {
+          graph.addNode(new EngineeringNode(connectionId, connectionKind, connectionKey, connection.toString())
+              .putProperty("connectionType", connection.getType().name()).putProperty("sourceEndpointId", sourcePortId)
+              .putProperty("targetEndpointId", targetPortId)
+              .addProvenance(new EngineeringProvenance("PROCESS_CONNECTION", connection.toString())
+                  .setMethod("ProcessSystem explicit connection metadata")));
+          addEdge(graph, EngineeringEdge.Kind.CONTAINS, projectNodeId, connectionId, "physicalConnection");
+        }
+        EngineeringEdge.Kind flowKind = flowEdgeKind(connection.getType());
+        addEdgeIfAbsent(graph, flowKind, sourcePortId, connectionId, "source");
+        addEdgeIfAbsent(graph, flowKind, connectionId, targetPortId, "target");
+        if (connection.getType() == ProcessConnection.ConnectionType.MATERIAL) {
+          associateWithControlledLines(project, graph, connection, connectionId);
+        }
       }
     }
   }
@@ -148,6 +180,23 @@ public final class EngineeringGraphBuilder {
           .addProvenance(new EngineeringProvenance("PROCESS_INSTRUMENT", instrument.getName()));
       graph.addNode(node);
       addEdge(graph, EngineeringEdge.Kind.CONTAINS, projectNodeId, nodeId, "instrument");
+      if (instrument instanceof StreamMeasurementDeviceBaseClass) {
+        StreamMeasurementDeviceBaseClass streamInstrument = (StreamMeasurementDeviceBaseClass) instrument;
+        if (streamInstrument.getStream() != null && streamInstrument.getStream().getName() != null) {
+          String streamId = EngineeringIds.nodeId(EngineeringNode.Kind.LINE, streamInstrument.getStream().getName());
+          if (graph.getNode(streamId) != null) {
+            String tapKey = tag + ".processTap";
+            String tapId = EngineeringIds.nodeId(EngineeringNode.Kind.PROCESS_TAP, tapKey);
+            graph.addNode(new EngineeringNode(tapId, EngineeringNode.Kind.PROCESS_TAP, tapKey, tag + " process tap")
+                .putProperty("instrumentTag", tag).putProperty("streamTag", streamInstrument.getStream().getName())
+                .putProperty("direction", "SENSE")
+                .addProvenance(new EngineeringProvenance("PROCESS_INSTRUMENT", instrument.getName())
+                    .setMethod("StreamMeasurementDeviceBaseClass measured stream")));
+            addEdge(graph, EngineeringEdge.Kind.HAS_PORT, nodeId, tapId, "processTap");
+            addEdge(graph, EngineeringEdge.Kind.MEASURES, tapId, streamId, "processMeasurement");
+          }
+        }
+      }
     }
   }
 
@@ -188,6 +237,7 @@ public final class EngineeringGraphBuilder {
       String equipmentId = processElementIds.get(boundary.getEquipmentTag());
       if (equipmentId != null) {
         addEdge(graph, EngineeringEdge.Kind.CONNECTS_TO, equipmentId, nodeId, boundary.getType().name());
+        addBoundaryTopology(graph, projectNodeId, boundary, nodeId, equipmentId);
       }
     }
   }
@@ -259,5 +309,118 @@ public final class EngineeringGraphBuilder {
       String role) {
     graph.addEdge(
         new EngineeringEdge(EngineeringIds.edgeId(kind, sourceId, targetId, role), sourceId, targetId, kind, role));
+  }
+
+  private static void addEdgeIfAbsent(EngineeringGraph graph, EngineeringEdge.Kind kind, String sourceId,
+      String targetId, String role) {
+    String edgeId = EngineeringIds.edgeId(kind, sourceId, targetId, role);
+    if (!graph.getEdges().containsKey(edgeId)) {
+      graph.addEdge(new EngineeringEdge(edgeId, sourceId, targetId, kind, role));
+    }
+  }
+
+  private static String ensureEndpoint(EngineeringGraph graph, String ownerId, EngineeringNode.Kind kind,
+      String externalKey, String equipmentTag, String portName, String direction, String connectionType,
+      String referenceDesignation) {
+    String endpointId = EngineeringIds.nodeId(kind, externalKey);
+    EngineeringNode endpoint = graph.getNode(endpointId);
+    if (endpoint == null) {
+      endpoint = new EngineeringNode(endpointId, kind, externalKey, externalKey).putProperty("ownerNodeId", ownerId)
+          .putProperty("equipmentTag", equipmentTag).putProperty("portName", portName)
+          .putProperty("direction", direction).putProperty("connectionType", connectionType)
+          .putProperty("referenceDesignation", referenceDesignation)
+          .addProvenance(new EngineeringProvenance("PROCESS_CONNECTION", externalKey)
+              .setMethod("Explicit equipment port metadata"));
+      graph.addNode(endpoint);
+    } else if (!direction.equals(endpoint.getProperties().get("direction"))) {
+      endpoint.putProperty("direction", "BIDIRECTIONAL").putProperty("directionConflict", Boolean.TRUE);
+    }
+    addEdgeIfAbsent(graph, EngineeringEdge.Kind.HAS_PORT, ownerId, endpointId, portName);
+    return endpointId;
+  }
+
+  private static EngineeringNode.Kind endpointKind(ProcessConnection.ConnectionType type, EngineeringNode owner) {
+    if (type == ProcessConnection.ConnectionType.MATERIAL && owner != null
+        && owner.getKind() == EngineeringNode.Kind.EQUIPMENT) {
+      return EngineeringNode.Kind.NOZZLE;
+    }
+    return EngineeringNode.Kind.PORT;
+  }
+
+  private static EngineeringNode.Kind connectionNodeKind(ProcessConnection.ConnectionType type) {
+    if (type == ProcessConnection.ConnectionType.SIGNAL) {
+      return EngineeringNode.Kind.SIGNAL_CONNECTION;
+    }
+    if (type == ProcessConnection.ConnectionType.ENERGY) {
+      return EngineeringNode.Kind.ENERGY_CONNECTION;
+    }
+    return EngineeringNode.Kind.PIPE_SEGMENT;
+  }
+
+  private static EngineeringEdge.Kind flowEdgeKind(ProcessConnection.ConnectionType type) {
+    if (type == ProcessConnection.ConnectionType.SIGNAL) {
+      return EngineeringEdge.Kind.SIGNAL_FLOW;
+    }
+    if (type == ProcessConnection.ConnectionType.ENERGY) {
+      return EngineeringEdge.Kind.ENERGY_FLOW;
+    }
+    return EngineeringEdge.Kind.PROCESS_FLOW;
+  }
+
+  private static void associateWithControlledLines(EngineeringProject project, EngineeringGraph graph,
+      ProcessConnection connection, String connectionId) {
+    for (LineDesignInput line : project.getLineDesignInputs()) {
+      if (line.getEquipmentTag().equals(connection.getSourceEquipment())
+          || line.getEquipmentTag().equals(connection.getTargetEquipment())
+          || line.getLineTag().equals(connection.getSourceEquipment())
+          || line.getLineTag().equals(connection.getTargetEquipment())) {
+        String lineId = EngineeringIds.nodeId(EngineeringNode.Kind.LINE, line.getLineTag());
+        if (graph.getNode(lineId) != null) {
+          addEdgeIfAbsent(graph, EngineeringEdge.Kind.PART_OF_LINE, connectionId, lineId, "controlledLine");
+        }
+      }
+    }
+  }
+
+  private static void addBoundaryTopology(EngineeringGraph graph, String projectNodeId, EngineeringBoundary boundary,
+      String boundaryId, String equipmentId) {
+    boolean inbound = boundary.getType() == EngineeringBoundary.Type.PROCESS_INLET
+        || boundary.getType() == EngineeringBoundary.Type.UTILITY_INLET;
+    boolean bidirectional = boundary.getType() == EngineeringBoundary.Type.RECYCLE_TIE_IN;
+    String boundaryDirection = bidirectional ? "BIDIRECTIONAL" : inbound ? "OUTLET" : "INLET";
+    String equipmentDirection = bidirectional ? "BIDIRECTIONAL" : inbound ? "INLET" : "OUTLET";
+    String boundaryPortId = ensureEndpoint(graph, boundaryId, EngineeringNode.Kind.PORT, boundary.getId() + ".tieIn",
+        boundary.getId(), "tieIn", boundaryDirection, "MATERIAL", null);
+    String equipmentPortId = ensureEndpoint(graph, equipmentId, EngineeringNode.Kind.NOZZLE,
+        boundary.getEquipmentTag() + "." + boundary.getId(), boundary.getEquipmentTag(), boundary.getId(),
+        equipmentDirection, "MATERIAL", null);
+    String segmentKey = "BOUNDARY:" + boundary.getId();
+    String segmentId = EngineeringIds.nodeId(EngineeringNode.Kind.PIPE_SEGMENT, segmentKey);
+    graph.addNode(new EngineeringNode(segmentId, EngineeringNode.Kind.PIPE_SEGMENT, segmentKey,
+        boundary.getId() + " boundary connection").putProperty("connectionType", "MATERIAL")
+        .putProperty("boundaryId", boundary.getId()).putProperty("boundaryType", boundary.getType().name())
+        .putProperty("sourceEndpointId", inbound ? boundaryPortId : equipmentPortId)
+        .putProperty("targetEndpointId", inbound ? equipmentPortId : boundaryPortId)
+        .addProvenance(new EngineeringProvenance("BOUNDARY_REGISTER", boundary.getId())
+            .setMethod("Controlled document boundary topology")));
+    addEdge(graph, EngineeringEdge.Kind.CONTAINS, projectNodeId, segmentId, "boundaryConnection");
+    String sourcePortId = inbound ? boundaryPortId : equipmentPortId;
+    String targetPortId = inbound ? equipmentPortId : boundaryPortId;
+    addEdge(graph, EngineeringEdge.Kind.PROCESS_FLOW, sourcePortId, segmentId, "source");
+    addEdge(graph, EngineeringEdge.Kind.PROCESS_FLOW, segmentId, targetPortId, "target");
+  }
+
+  private static String physicalCategory(ProcessEquipmentInterface unit) {
+    if (unit instanceof Stream) {
+      return "LINE";
+    }
+    String name = unit.getClass().getSimpleName().toLowerCase();
+    if (name.contains("valve")) {
+      return "VALVE";
+    }
+    if (name.contains("mixer") || name.contains("splitter") || name.contains("tee") || name.contains("reducer")) {
+      return "FITTING";
+    }
+    return "EQUIPMENT";
   }
 }

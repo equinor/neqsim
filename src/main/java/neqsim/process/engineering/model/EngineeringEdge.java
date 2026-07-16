@@ -9,7 +9,8 @@ public final class EngineeringEdge implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   public enum Kind {
-    CONTAINS, CONNECTS_TO, PROTECTS, APPLIES_TO, DEPENDS_ON, GENERATED_FROM, GOVERNS, REFERENCES
+    CONTAINS, CONNECTS_TO, PROTECTS, APPLIES_TO, DEPENDS_ON, GENERATED_FROM, GOVERNS, REFERENCES, HAS_PORT,
+    PROCESS_FLOW, SIGNAL_FLOW, ENERGY_FLOW, PART_OF_LINE, MEASURES
   }
 
   private final String id;

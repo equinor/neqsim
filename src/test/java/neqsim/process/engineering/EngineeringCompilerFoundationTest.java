@@ -20,6 +20,7 @@ import neqsim.process.engineering.designcase.EngineeringDesignCase;
 import neqsim.process.engineering.designcase.EngineeringDesignEnvelope;
 import neqsim.process.engineering.designcase.EngineeringMetric;
 import neqsim.process.engineering.model.EngineeringCalculation;
+import neqsim.process.engineering.model.EngineeringEdge;
 import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringGraphBuilder;
 import neqsim.process.engineering.model.EngineeringGraphDiff;
@@ -27,8 +28,11 @@ import neqsim.process.engineering.model.EngineeringIds;
 import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.engineering.validation.EngineeringPackageValidationReport;
 import neqsim.process.engineering.validation.EngineeringPackageValidator;
+import neqsim.process.engineering.validation.EngineeringTopologyValidator;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.measurementdevice.PressureTransmitter;
+import neqsim.process.processmodel.ProcessConnection;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -55,6 +59,7 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     EngineeringDeliverableCompiler.CompilationResult result = EngineeringDeliverableCompiler.compile(project,
         temporaryDirectory);
     assertTrue(Files.isRegularFile(result.getEngineeringGraphFile()));
+    assertTrue(Files.isRegularFile(result.getEngineeringConnectivityFile()));
     assertTrue(Files.isRegularFile(result.getDesignEnvelopeFile()));
     assertTrue(Files.isRegularFile(result.getEquipmentRegisterFile()));
     assertTrue(Files.isRegularFile(result.getLineRegisterFile()));
@@ -66,9 +71,43 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(read(result.getEquipmentRegisterFile()).contains("20-VG-001"));
     assertTrue(read(result.getInstrumentRegisterFile()).contains("ENGINEERING_REQUIREMENT"));
     assertTrue(read(result.getDesignEnvelopeFile()).contains("CASE-MAX"));
+    assertTrue(read(result.getEngineeringConnectivityFile()).contains("PROCESS_FLOW"));
+    assertTrue(read(result.getEngineeringConnectivityFile()).contains("SIGNAL_FLOW"));
     assertTrue(result.getValidationReport().isValid());
     assertTrue(EngineeringPackageValidator.validatePackage(temporaryDirectory).isValid());
     assertNotNull(result.getEngineeringGraph().getNode("calculation:envelope-20-vg-001-pressure"));
+    assertNotNull(
+        result.getEngineeringGraph().getNode(EngineeringIds.nodeId(EngineeringNode.Kind.PORT, "20-FEED-001.outlet")));
+    assertNotNull(
+        result.getEngineeringGraph().getNode(EngineeringIds.nodeId(EngineeringNode.Kind.NOZZLE, "20-VG-001.inlet")));
+    assertNotNull(result.getEngineeringGraph().getNode(
+        EngineeringIds.nodeId(EngineeringNode.Kind.PIPE_SEGMENT, "MATERIAL:20-FEED-001.outlet->20-VG-001.inlet")));
+    assertTrue(hasEdge(result.getEngineeringGraph(), EngineeringEdge.Kind.HAS_PORT));
+    assertTrue(hasEdge(result.getEngineeringGraph(), EngineeringEdge.Kind.PROCESS_FLOW));
+    assertTrue(hasEdge(result.getEngineeringGraph(), EngineeringEdge.Kind.SIGNAL_FLOW));
+    assertTrue(hasEdge(result.getEngineeringGraph(), EngineeringEdge.Kind.MEASURES));
+    assertNotNull(result.getEngineeringGraph()
+        .getNode(EngineeringIds.nodeId(EngineeringNode.Kind.PROCESS_TAP, "20-PT-001.processTap")));
+    assertNotNull(result.getEngineeringGraph()
+        .getNode(EngineeringIds.nodeId(EngineeringNode.Kind.PIPE_SEGMENT, "BOUNDARY:20-FLARE-001")));
+  }
+
+  @Test
+  void reportsIncompleteCanonicalPhysicalTopology() {
+    EngineeringGraph graph = new EngineeringGraph("TOPOLOGY-TEST", "A");
+    String projectId = EngineeringIds.nodeId(EngineeringNode.Kind.PROJECT, "TOPOLOGY-TEST");
+    String segmentId = EngineeringIds.nodeId(EngineeringNode.Kind.PIPE_SEGMENT, "orphan-segment");
+    graph.addNode(new EngineeringNode(projectId, EngineeringNode.Kind.PROJECT, "TOPOLOGY-TEST", "Topology test"));
+    graph
+        .addNode(new EngineeringNode(segmentId, EngineeringNode.Kind.PIPE_SEGMENT, "orphan-segment", "Orphan segment"));
+    graph.addEdge(new EngineeringEdge(
+        EngineeringIds.edgeId(EngineeringEdge.Kind.CONTAINS, projectId, segmentId, "physicalConnection"), projectId,
+        segmentId, EngineeringEdge.Kind.CONTAINS, "physicalConnection"));
+
+    EngineeringPackageValidationReport validation = EngineeringTopologyValidator.validate(graph);
+
+    assertFalse(validation.isValid());
+    assertTrue(hasFinding(validation, "ENG-TOPOLOGY-004"));
   }
 
   @Test
@@ -129,10 +168,17 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     ProcessSystem process = new ProcessSystem("Engineering compiler test process");
     process.add(feed);
     process.add(separator);
+    PressureTransmitter pressureTransmitter = new PressureTransmitter("20-PT-001", feed);
+    pressureTransmitter.setTag("20-PT-001");
+    process.add(pressureTransmitter);
+    process.connect("20-FEED-001", "outlet", "20-VG-001", "inlet", ProcessConnection.ConnectionType.MATERIAL);
+    process.connect("20-VG-001", "pressureSignal", "20-FEED-001", "flowSetpoint",
+        ProcessConnection.ConnectionType.SIGNAL);
     process.run();
 
     EngineeringProject project = NorsokOffshoreEngineeringBuilder.from("Engineering compiler test", process)
         .projectId("TEST-ENGINEERING-PROJECT").registerProposedInstruments(false).build().setRevision("A");
+    project.addBoundary(new EngineeringBoundary("20-FLARE-001", "20-VG-001", EngineeringBoundary.Type.FLARE_HEADER));
     project.addDesignCase(caseAtPressure("CASE-NORMAL", "Normal operation", 55.0));
     project.addDesignCase(caseAtPressure("CASE-MAX", "Maximum production", 75.0));
     project.addDesignCase(new EngineeringDesignCase("CASE-INVALID", "Invalid controlled case",
@@ -170,6 +216,15 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
   private static boolean hasFinding(EngineeringPackageValidationReport report, String code) {
     for (EngineeringPackageValidationReport.Finding finding : report.getFindings()) {
       if (code.equals(finding.getCode())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean hasEdge(EngineeringGraph graph, EngineeringEdge.Kind kind) {
+    for (EngineeringEdge edge : graph.getEdges().values()) {
+      if (edge.getKind() == kind) {
         return true;
       }
     }

@@ -44,6 +44,7 @@ public final class EngineeringDeliverableCompiler {
   public static final class CompilationResult {
     private final Path outputDirectory;
     private final Path engineeringGraphFile;
+    private final Path engineeringConnectivityFile;
     private final Path designEnvelopeFile;
     private final Path equipmentRegisterFile;
     private final Path lineRegisterFile;
@@ -56,13 +57,14 @@ public final class EngineeringDeliverableCompiler {
     private final DexpiEngineeringExporter.ExportResult dexpiResult;
     private final EngineeringPackageValidationReport validationReport;
 
-    CompilationResult(Path outputDirectory, Path engineeringGraphFile, Path designEnvelopeFile,
-        Path equipmentRegisterFile, Path lineRegisterFile, Path instrumentRegisterFile, Path compilerManifestFile,
-        Path validationReportFile, Path revisionDiffFile, EngineeringGraph engineeringGraph,
+    CompilationResult(Path outputDirectory, Path engineeringGraphFile, Path engineeringConnectivityFile,
+        Path designEnvelopeFile, Path equipmentRegisterFile, Path lineRegisterFile, Path instrumentRegisterFile,
+        Path compilerManifestFile, Path validationReportFile, Path revisionDiffFile, EngineeringGraph engineeringGraph,
         EngineeringDesignEnvelope designEnvelope, DexpiEngineeringExporter.ExportResult dexpiResult,
         EngineeringPackageValidationReport validationReport) {
       this.outputDirectory = outputDirectory;
       this.engineeringGraphFile = engineeringGraphFile;
+      this.engineeringConnectivityFile = engineeringConnectivityFile;
       this.designEnvelopeFile = designEnvelopeFile;
       this.equipmentRegisterFile = equipmentRegisterFile;
       this.lineRegisterFile = lineRegisterFile;
@@ -82,6 +84,10 @@ public final class EngineeringDeliverableCompiler {
 
     public Path getEngineeringGraphFile() {
       return engineeringGraphFile;
+    }
+
+    public Path getEngineeringConnectivityFile() {
+      return engineeringConnectivityFile;
     }
 
     public Path getDesignEnvelopeFile() {
@@ -166,6 +172,8 @@ public final class EngineeringDeliverableCompiler {
     DexpiEngineeringExporter.ExportResult dexpiResult = DexpiEngineeringExporter.export(project, outputDirectory);
     Path graphFile = outputDirectory.resolve("engineering-model.json");
     write(graphFile, graph.toJson());
+    Path connectivityFile = outputDirectory.resolve("engineering-connectivity.json");
+    write(connectivityFile, connectivityJson(graph));
     Path envelopeFile = outputDirectory.resolve("design-case-envelope.json");
     write(envelopeFile, envelopeJson(project, envelope));
     Path equipmentFile = outputDirectory.resolve("equipment-register.json");
@@ -191,16 +199,16 @@ public final class EngineeringDeliverableCompiler {
     if (!validation.isValid()) {
       throw new EngineeringPackageValidationException(validationFile, validation);
     }
-    return new CompilationResult(outputDirectory, graphFile, envelopeFile, equipmentFile, lineFile, instrumentFile,
-        compilerManifest, validationFile, diffFile, graph, envelope, dexpiResult, validation);
+    return new CompilationResult(outputDirectory, graphFile, connectivityFile, envelopeFile, equipmentFile, lineFile,
+        instrumentFile, compilerManifest, validationFile, diffFile, graph, envelope, dexpiResult, validation);
   }
 
   private static void addDocumentNodes(EngineeringGraph graph, EngineeringProject project) {
     String projectNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.PROJECT, project.getProjectId());
     String[] documents = new String[] { "plant.dexpi.xml", "plant-proteus.xml", "plant-pydexpi.xml",
         "engineering-manifest.json", "engineering-calculations.json", "cause-and-effect.json",
-        "interoperability-report.json", "engineering-model.json", "design-case-envelope.json",
-        "equipment-register.json", "line-register.json", "instrument-register.json",
+        "interoperability-report.json", "engineering-model.json", "engineering-connectivity.json",
+        "design-case-envelope.json", "equipment-register.json", "line-register.json", "instrument-register.json",
         "engineering-compiler-manifest.json", "engineering-schema-catalog.json", "engineering-validation-report.json" };
     for (String document : documents) {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, document);
@@ -233,6 +241,56 @@ public final class EngineeringDeliverableCompiler {
       document.putAll(envelope.toMap());
     }
     return GSON.toJson(document);
+  }
+
+  private static String connectivityJson(EngineeringGraph graph) {
+    Map<String, Boolean> includedNodeIds = new LinkedHashMap<String, Boolean>();
+    List<Map<String, Object>> edges = new ArrayList<Map<String, Object>>();
+    for (EngineeringEdge edge : graph.getEdges().values()) {
+      if (isPhysicalEdge(edge.getKind())) {
+        edges.add(edge.toMap());
+        includedNodeIds.put(edge.getSourceId(), Boolean.TRUE);
+        includedNodeIds.put(edge.getTargetId(), Boolean.TRUE);
+      }
+    }
+    List<Map<String, Object>> nodes = new ArrayList<Map<String, Object>>();
+    int connectionCount = 0;
+    int unresolvedBoundaryCount = 0;
+    for (EngineeringNode node : graph.getNodes().values()) {
+      if (includedNodeIds.containsKey(node.getId())) {
+        nodes.add(node.toMap());
+        if (node.getKind() == EngineeringNode.Kind.PIPE_SEGMENT
+            || node.getKind() == EngineeringNode.Kind.SIGNAL_CONNECTION
+            || node.getKind() == EngineeringNode.Kind.ENERGY_CONNECTION) {
+          connectionCount++;
+        }
+      }
+      if (node.getKind() == EngineeringNode.Kind.BOUNDARY
+          && Boolean.FALSE.equals(node.getProperties().get("resolved"))) {
+        unresolvedBoundaryCount++;
+      }
+    }
+    Map<String, Object> summary = new LinkedHashMap<String, Object>();
+    summary.put("nodeCount", Integer.valueOf(nodes.size()));
+    summary.put("edgeCount", Integer.valueOf(edges.size()));
+    summary.put("connectionCount", Integer.valueOf(connectionCount));
+    summary.put("unresolvedBoundaryCount", Integer.valueOf(unresolvedBoundaryCount));
+    Map<String, Object> document = new LinkedHashMap<String, Object>();
+    document.put("schemaVersion", EngineeringSchemaCatalog.CONNECTIVITY);
+    document.put("schemaUri", EngineeringSchemaCatalog.schemaUri(EngineeringSchemaCatalog.CONNECTIVITY));
+    document.put("projectId", graph.getProjectId());
+    document.put("revision", graph.getRevision());
+    document.put("graphFingerprint", graph.toMap().get("fingerprint"));
+    document.put("summary", summary);
+    document.put("nodes", nodes);
+    document.put("edges", edges);
+    return GSON.toJson(document);
+  }
+
+  private static boolean isPhysicalEdge(EngineeringEdge.Kind kind) {
+    return kind == EngineeringEdge.Kind.HAS_PORT || kind == EngineeringEdge.Kind.PROCESS_FLOW
+        || kind == EngineeringEdge.Kind.SIGNAL_FLOW || kind == EngineeringEdge.Kind.ENERGY_FLOW
+        || kind == EngineeringEdge.Kind.PART_OF_LINE || kind == EngineeringEdge.Kind.MEASURES;
   }
 
   private static List<Map<String, Object>> equipmentRegister(EngineeringProject project,
@@ -349,6 +407,7 @@ public final class EngineeringDeliverableCompiler {
     document.put("revisionDiffStatus", diff == null ? "NOT_REQUESTED" : diff.isEmpty() ? "NO_CHANGES" : "CHANGES");
     List<String> artifacts = new ArrayList<String>();
     artifacts.add("engineering-model.json");
+    artifacts.add("engineering-connectivity.json");
     artifacts.add("design-case-envelope.json");
     artifacts.add("equipment-register.json");
     artifacts.add("line-register.json");

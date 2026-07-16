@@ -84,6 +84,7 @@ public final class EngineeringPackageValidator {
         report.addError("ENG-GRAPH-010", artifact, path + "/id", "Edge id is not canonical; expected " + expectedId);
       }
     }
+    report.addAll(EngineeringTopologyValidator.validate(graph));
     return report;
   }
 
@@ -118,6 +119,13 @@ public final class EngineeringPackageValidator {
       requireArray(root, "nodes", artifactName, report);
       requireArray(root, "edges", artifactName, report);
       requireString(root, "fingerprint", artifactName, report);
+    } else if ("engineering-connectivity.json".equals(artifactName)) {
+      requireString(root, "projectId", artifactName, report);
+      requireString(root, "revision", artifactName, report);
+      requireString(root, "graphFingerprint", artifactName, report);
+      requireObject(root, "summary", artifactName, report);
+      requireArray(root, "nodes", artifactName, report);
+      requireArray(root, "edges", artifactName, report);
     } else if (artifactName.endsWith("-register.json")) {
       validateRegisterStructure(root, artifactName, report);
     } else if ("design-case-envelope.json".equals(artifactName)) {
@@ -185,6 +193,7 @@ public final class EngineeringPackageValidator {
     validateRegister(packageDirectory, "line-register.json", "lineTag", EngineeringNode.Kind.LINE, graph, report);
     validateInstrumentRegister(packageDirectory, graph, report);
     validateEnvelope(packageDirectory, graph, report);
+    validateConnectivity(packageDirectory, graph, report);
     validateManifest(packageDirectory, graph, report);
     validateSchemaFiles(packageDirectory, report);
     return report;
@@ -332,6 +341,52 @@ public final class EngineeringPackageValidator {
     }
   }
 
+  private static void validateConnectivity(Path directory, EngineeringGraph graph,
+      EngineeringPackageValidationReport report) throws IOException {
+    String artifact = "engineering-connectivity.json";
+    Path file = directory.resolve(artifact);
+    if (!Files.isRegularFile(file)) {
+      return;
+    }
+    JsonObject root = parseObject(artifact, read(file), report);
+    if (root == null) {
+      return;
+    }
+    if (!graph.getProjectId().equals(stringValue(root, "projectId"))) {
+      report.addError("ENG-CONNECTIVITY-001", artifact, "/projectId", "Connectivity and graph project ids differ");
+    }
+    if (!graph.getRevision().equals(stringValue(root, "revision"))) {
+      report.addError("ENG-CONNECTIVITY-002", artifact, "/revision", "Connectivity and graph revisions differ");
+    }
+    String fingerprint = String.valueOf(graph.toMap().get("fingerprint"));
+    if (!fingerprint.equals(stringValue(root, "graphFingerprint"))) {
+      report.addError("ENG-CONNECTIVITY-003", artifact, "/graphFingerprint",
+          "Connectivity fingerprint does not match engineering-model.json");
+    }
+    validateConnectivityReferences(root, "nodes", graph.getNodes(), artifact, report);
+    validateConnectivityReferences(root, "edges", graph.getEdges(), artifact, report);
+  }
+
+  private static void validateConnectivityReferences(JsonObject root, String arrayName, Map<String, ?> graphValues,
+      String artifact, EngineeringPackageValidationReport report) {
+    if (!root.has(arrayName) || !root.get(arrayName).isJsonArray()) {
+      return;
+    }
+    JsonArray values = root.getAsJsonArray(arrayName);
+    for (int i = 0; i < values.size(); i++) {
+      if (!values.get(i).isJsonObject()) {
+        report.addError("ENG-CONNECTIVITY-004", artifact, "/" + arrayName + "/" + i,
+            "Connectivity entry must be an object");
+        continue;
+      }
+      String id = stringValue(values.get(i).getAsJsonObject(), "id");
+      if (!graphValues.containsKey(id)) {
+        report.addError("ENG-CONNECTIVITY-005", artifact, "/" + arrayName + "/" + i + "/id",
+            "Connectivity entry does not exist in the canonical graph: " + id);
+      }
+    }
+  }
+
   private static void validateManifest(Path directory, EngineeringGraph graph,
       EngineeringPackageValidationReport report) throws IOException {
     String artifact = "engineering-compiler-manifest.json";
@@ -448,6 +503,13 @@ public final class EngineeringPackageValidator {
       EngineeringPackageValidationReport report) {
     if (!root.has(name) || !root.get(name).isJsonArray()) {
       report.addError("ENG-SCHEMA-012", artifact, "/" + name, "Required array property is missing");
+    }
+  }
+
+  private static void requireObject(JsonObject root, String name, String artifact,
+      EngineeringPackageValidationReport report) {
+    if (!root.has(name) || !root.get(name).isJsonObject()) {
+      report.addError("ENG-SCHEMA-013", artifact, "/" + name, "Required object property is missing");
     }
   }
 
