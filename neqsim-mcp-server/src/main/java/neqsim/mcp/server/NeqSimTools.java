@@ -170,9 +170,10 @@ public class NeqSimTools {
       + "top-level 'areas' for multi-area plants. "
       + "Use getExample with category 'process' for templates.")
   public String runProcess(
-      @ToolArg(description = "Complete process definition as JSON string. Must include "
-          + "either 'fluid' with components and model plus a 'process' array, or "
-          + "top-level 'areas' containing named process-area JSON objects. "
+      @ToolArg(description = "Complete process definition as JSON string, OR an absolute path to a "
+          + "readable UTF-8 .json file (name ending in .json, <= 25 MB) containing that JSON. "
+          + "The JSON must include either 'fluid' with components and model plus a 'process' array, "
+          + "or top-level 'areas' containing named process-area JSON objects. "
           + "Use getExample(category='process', name='simple-separation') for a template.") String processJson) {
     String policyBlocked = enforceToolAccess("runProcess");
     if (policyBlocked != null) {
