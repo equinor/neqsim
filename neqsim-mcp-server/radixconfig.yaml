@@ -46,6 +46,11 @@ spec:
         # GUID, not the api:// App ID URI; accept both forms.
         QUARKUS_OIDC_CLIENT_ID: "35fda377-148b-4b6b-a5be-d52203160690"
         QUARKUS_OIDC_TOKEN_AUDIENCE: "35fda377-148b-4b6b-a5be-d52203160690,api://35fda377-148b-4b6b-a5be-d52203160690"
+        # ── MCP OAuth discovery (Phase 3): emit RFC 9728 protected-resource
+        # metadata so spec-compliant clients (VS Code) auto-find Entra. Quarkus
+        # 3.25+ feature (we run 3.37); runtime env, verified on the published image.
+        QUARKUS_OIDC_RESOURCE_METADATA_ENABLED: "true"
+        QUARKUS_OIDC_RESOURCE_METADATA_FORCE_HTTPS_SCHEME: "true"  # TLS ends at the gateway; emit https URLs
         # OTel has no collector yet -> keep the SDK off even under enterprise
         QUARKUS_OTEL_SDK_DISABLED: "true"
       environmentConfig:
