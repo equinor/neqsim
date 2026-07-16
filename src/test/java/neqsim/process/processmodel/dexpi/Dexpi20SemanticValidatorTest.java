@@ -48,8 +48,9 @@ class Dexpi20SemanticValidatorTest {
     assertTrue(Dexpi20SemanticValidator.validate(output).isValid());
 
     Dexpi20ModelInspector.ModelSummary summary = Dexpi20ModelInspector.inspect(output);
-    JsonObject expected = JsonParser.parseReader(new java.io.InputStreamReader(
-        getClass().getResourceAsStream("/dexpi/2.0/golden/neqsim-native-summary.json"), StandardCharsets.UTF_8))
+    JsonObject expected = JsonParser
+        .parseReader(new java.io.InputStreamReader(
+            getClass().getResourceAsStream("/dexpi/2.0/golden/neqsim-native-summary.json"), StandardCharsets.UTF_8))
         .getAsJsonObject();
     assertEquals(expected.getAsJsonObject("equipmentTypes").size(), summary.getEquipmentTypes().size());
     for (String tag : expected.getAsJsonObject("equipmentTypes").keySet()) {
@@ -57,8 +58,7 @@ class Dexpi20SemanticValidatorTest {
           summary.getEquipmentTypes().get(tag));
     }
     assertEquals(expected.get("pipingConnectionCount").getAsInt(), summary.getPipingConnectionCount());
-    assertEquals(expected.get("instrumentationFunctionCount").getAsInt(),
-        summary.getInstrumentationFunctionCount());
+    assertEquals(expected.get("instrumentationFunctionCount").getAsInt(), summary.getInstrumentationFunctionCount());
     assertEquals(expected.get("offPageConnectorCount").getAsInt(), summary.getOffPageConnectorCount());
     assertEquals(expected.get("representationGroupCount").getAsInt(), summary.getRepresentationGroupCount());
   }

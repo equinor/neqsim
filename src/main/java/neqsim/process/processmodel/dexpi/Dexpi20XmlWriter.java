@@ -191,8 +191,7 @@ public final class Dexpi20XmlWriter {
     parent.appendChild(data);
   }
 
-  private static void appendNozzle(Document document, Element nozzles, String nozzleId, String nodeId,
-      String subTag) {
+  private static void appendNozzle(Document document, Element nozzles, String nozzleId, String nodeId, String subTag) {
     Element nozzle = object(document, nozzleId, "Plant/ProcessEquipment.Nozzle");
     Element nodes = components(document, nozzle, "Nodes");
     nodes.appendChild(object(document, nodeId, "Plant/Piping.PipingNode"));

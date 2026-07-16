@@ -130,10 +130,10 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     project.addBoundary(new EngineeringBoundary("20-CD-001", "20-VG-001", EngineeringBoundary.Type.CLOSED_DRAIN));
     OverpressureProtectionStudy incompleteStudy = new OverpressureProtectionStudy(
         new ProtectedItem("20-KA-001", 120.0).setReliefSetPressureBara(110.0))
-            .addScenario(new ReliefScenario.Builder("Incomplete check-valve leakage", ReliefCause.CHECK_VALVE_LEAKAGE)
-                .phase(ReliefPhase.VAPOUR).reliefRateKgPerS(1.0).build());
-    project.addOverpressureStudy(incompleteStudy).addReliefScenarioBasis(
-        new ReliefScenarioBasis("20-KA-001").require(ReliefCause.CHECK_VALVE_LEAKAGE)
+        .addScenario(new ReliefScenario.Builder("Incomplete check-valve leakage", ReliefCause.CHECK_VALVE_LEAKAGE)
+            .phase(ReliefPhase.VAPOUR).reliefRateKgPerS(1.0).build());
+    project.addOverpressureStudy(incompleteStudy)
+        .addReliefScenarioBasis(new ReliefScenarioBasis("20-KA-001").require(ReliefCause.CHECK_VALVE_LEAKAGE)
             .setHazardReviewReference("HAZOP-20-002").addEvidenceReference("RELIEF-REGISTER-20-REV-A"));
 
     assertFalse(project.getRequirementsForEquipment("20-KA-001").isEmpty());
