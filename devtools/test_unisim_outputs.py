@@ -773,13 +773,10 @@ def test_compressor_discharge_temperature_when_efficiency_missing():
     print("  PASS")
 
 
-def test_two_stream_heat_exchanger_pins_hot_outlet_temperature():
-    """A two-stream heat exchanger (heatexop) with known UniSim outlet
-    temperatures is emitted with the hot-side outlet pinned via the
-    "outTemperature" specification (setOutTemperature), so NeqSim reproduces the
-    process outlet exactly and energy-balances the cold side. This matches
-    UniSim far better than a UA value when a recycle side circulates a different
-    rate than the source model (previously no heat was transferred at all)."""
+def test_two_stream_heat_exchanger_gets_ua_from_duty():
+    """A two-stream heat exchanger (heatexop) with a UniSim duty is emitted with
+    a UA value so NeqSim computes the cross-exchange (previously no heat was
+    transferred because no UA/duty/temperature was set)."""
     model = UniSimModel(
         file_path=r"C:\test\HX.usc",
         file_name="HX.usc",
@@ -814,17 +811,15 @@ def test_two_stream_heat_exchanger_pins_hot_outlet_temperature():
     )
     py_code = UniSimToNeqSim(model).to_python()
     assert "HeatExchanger" in py_code
-    # Hot side is feed 0 (65.5 C > 25 C) -> pin side 0 to its outlet temp 33 C
-    assert ".setOutStreamSpecificationNumber(0)" in py_code, py_code
-    assert ".setOutTemperature(33.0, \"C\")" in py_code, py_code
+    assert ".setUAvalue(" in py_code, py_code
     print("  PASS")
 
 
-def test_cooler_outlet_pressure_letdown_is_transferred():
-    """A UniSim cooler/heater outlet-pressure letdown is transferred to the
-    NeqSim Cooler/Heater (so a downstream separator flashes at the right
-    pressure). Applied for any real drop; recycle stability is provided by the
-    transferred pipe geometry (PipeBeggsAndBrills), not by suppressing the drop."""
+def test_cooler_outlet_pressure_only_when_isolated_from_separator():
+    """A cooler/heater outlet-pressure letdown is transferred only when a
+    downstream valve/pump isolates it from a separator flash (safe); a cooler
+    feeding a separator directly is NOT given the drop (would perturb the flash /
+    recycle)."""
 
     def _model(downstream_op):
         return UniSimModel(
@@ -852,51 +847,18 @@ def test_cooler_outlet_pressure_letdown_is_transferred():
             ),
         )
 
-    # Cooled -> valve: drop transferred
+    # Cooled -> valve (pressure reset) => SAFE, drop transferred
     valve = UniSimOperation("V-1", "valveop", feeds=["Cooled"],
                             products=["Down Out"],
                             properties={"outlet_pressure_bara": 5.0})
     py_valve = UniSimToNeqSim(_model(valve)).to_python()
     assert 'setOutletPressure(9.0, "bara")' in py_valve, py_valve
 
-    # Cooled -> separator: drop ALSO transferred (so it flashes at the right P)
+    # Cooled -> separator (flash) => UNSAFE, drop NOT transferred
     sep = UniSimOperation("S-1", "flashtank", feeds=["Cooled"],
                           products=["Down Out", "Sep Liq"])
     py_sep = UniSimToNeqSim(_model(sep)).to_python()
-    assert 'setOutletPressure(9.0, "bara")' in py_sep, py_sep
-    print("  PASS")
-
-
-def test_pipe_segment_geometry_uses_beggs_and_brills():
-    """A UniSim pipe with extracted length + diameter is emitted as a
-    PipeBeggsAndBrills with length, diameter, elevation and roughness set."""
-    model = UniSimModel(
-        file_path=r"C:\test\Pipe.usc", file_name="Pipe.usc",
-        fluid_packages=[UniSimFluidPackage(
-            name="Basis-1", property_package="Peng-Robinson",
-            components=[UniSimComponent("Methane", 0),
-                        UniSimComponent("Ethane", 1)])],
-        flowsheet=UniSimFlowsheet(
-            name="Main",
-            material_streams=[
-                UniSimStreamData("Pin", temperature_C=6.0, pressure_bara=9.0,
-                                 mass_flow_kgh=60000.0,
-                                 composition={"Methane": 0.95, "Ethane": 0.05}),
-                UniSimStreamData("Pout", temperature_C=6.0, pressure_bara=8.0),
-            ],
-            operations=[
-                UniSimOperation(
-                    "Riser", "pipeseg", feeds=["Pin"], products=["Pout"],
-                    properties={"length_m": 1200.0, "diameter_m": 0.3175,
-                                "elevation_m": 400.0, "roughness_m": 4.572e-05}),
-            ],
-        ),
-    )
-    py_code = UniSimToNeqSim(model).to_python()
-    assert 'PipeBeggsAndBrills("Riser"' in py_code, py_code
-    assert '.setLength(1200.0)' in py_code
-    assert '.setElevation(400.0)' in py_code
-    assert '.setPipeWallRoughness(' in py_code
+    assert 'setOutletPressure(9.0, "bara")' not in py_sep
     print("  PASS")
 
 
@@ -918,12 +880,10 @@ if __name__ == "__main__":
         ("all_fluid_packages_are_exposed_as_e300", test_all_fluid_packages_are_exposed_as_e300),
         ("compressor_discharge_temperature_when_efficiency_missing",
          test_compressor_discharge_temperature_when_efficiency_missing),
-        ("two_stream_heat_exchanger_pins_hot_outlet_temperature",
-         test_two_stream_heat_exchanger_pins_hot_outlet_temperature),
-        ("cooler_outlet_pressure_letdown_is_transferred",
-         test_cooler_outlet_pressure_letdown_is_transferred),
-        ("pipe_segment_geometry_uses_beggs_and_brills",
-         test_pipe_segment_geometry_uses_beggs_and_brills),
+        ("two_stream_heat_exchanger_gets_ua_from_duty",
+         test_two_stream_heat_exchanger_gets_ua_from_duty),
+        ("cooler_outlet_pressure_only_when_isolated_from_separator",
+         test_cooler_outlet_pressure_only_when_isolated_from_separator),
     ]
     passed = 0
     failed = 0

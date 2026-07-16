@@ -6291,6 +6291,51 @@ class UniSimToNeqSim:
 
         return self._wrap_notebook(cells)
 
+    def _pressure_isolated_from_separator(self, op, flowsheet, max_hops=6):
+        """Return True if op's pressure change is isolated from any separator.
+
+        Walks downstream from op; returns False if any path reaches a separator
+        (Separator/GasScrubber/ThreePhaseSeparator) BEFORE a pressure-resetting
+        unit (ThrottlingValve/Pump/Compressor/Expander). Used to decide whether a
+        UniSim cooler/heater outlet-pressure letdown is safe to transfer: applying
+        it upstream of a separator changes that separator's flash and, if the
+        separator sits in a recycle loop, destabilises the tears (see E-100 ->
+        Subsea Scrubber). A downstream valve/pump/compressor resets the pressure
+        and contains the change, so those cases are safe.
+
+        @param op the cooler/heater operation whose downstream is walked
+        @param flowsheet the flowsheet whose operations are scanned
+        @param max_hops maximum downstream depth to search
+        @return True if safe (pressure reset before any separator on every path)
+        """
+        reset_types = ('ThrottlingValve', 'Pump', 'Compressor', 'Expander')
+        sep_types = ('Separator', 'GasScrubber', 'ThreePhaseSeparator')
+        consumers = {}
+        for other in flowsheet.operations:
+            for feed in (other.feeds or []):
+                consumers.setdefault(feed, []).append(other)
+
+        def walk(node, hops, seen):
+            if hops > max_hops or node.name in seen:
+                return True
+            seen = seen | {node.name}
+            nt = self.resolve_neqsim_type(node)
+            if nt in sep_types:
+                return False
+            if nt in reset_types:
+                return True
+            for prod in (node.products or []):
+                for cons in consumers.get(prod, []):
+                    if not walk(cons, hops + 1, seen):
+                        return False
+            return True
+
+        for prod in (op.products or []):
+            for cons in consumers.get(prod, []):
+                if not walk(cons, 1, set()):
+                    return False
+        return True
+
     def _gen_properties(self, lines: list, var: str, neqsim_type: str,
                         op, flowsheet) -> None:
         """Append property-setting lines for an equipment unit."""
@@ -6355,37 +6400,31 @@ class UniSimToNeqSim:
                     t_out = out_s.temperature_C
             if t_out is not None:
                 lines.append(f'{var}.setOutTemperature({t_out + 273.15})')
-            # Transfer the UniSim cooler/heater outlet-pressure letdown. This is
-            # applied unconditionally for any real drop: NeqSim Cooler/Heater keep
-            # inlet pressure otherwise, so a downstream separator would flash at
-            # the wrong pressure. (Earlier this destabilised recycle loops only
-            # because geometry-less pipes NaN'd at the corrected pressure; with
-            # pipe geometry now transferred and PipeBeggsAndBrills used, the loops
-            # converge — see the Gas riser / Subsea Scrubber case.)
+            # Transfer the UniSim cooler/heater outlet-pressure letdown, but ONLY
+            # when a downstream valve/pump/compressor isolates the pressure change
+            # from any separator flash. Applying it upstream of a separator changes
+            # that separator's flash and, if the separator is in a recycle loop,
+            # destabilises the tears (verified: E-100 -> Subsea Scrubber). Feed-
+            # forward units whose pressure is reset by a downstream valve/pump
+            # (e.g. 44HB001 -> 44PA001) are safe.
             p_out = op.properties.get('outlet_pressure_bara')
             in_s = (self._find_stream_by_name(flowsheet, op.feeds[0])
                     if op.feeds else None)
             p_in = in_s.pressure_bara if in_s else None
-            if p_out and p_in and p_out < 0.98 * p_in:
+            if (p_out and p_in and p_out < 0.98 * p_in
+                    and self._pressure_isolated_from_separator(op, flowsheet)):
                 lines.append(f'{var}.setOutletPressure({p_out}, "bara")')
 
         elif neqsim_type == 'HeatExchanger':
             # Two-stream (process-to-process) heat exchanger. The converter set
             # no UA/duty/temperature, so NeqSim transferred no heat (both outlets
-            # stayed at the hot inlet temperature). Reproduce the UniSim result by
-            # pinning the HOT-side outlet to its known UniSim outlet temperature
-            # via the "outTemperature" specification; NeqSim then energy-balances
-            # the cold side. This reproduces the process (hot) outlet exactly and
-            # drives the cold outlet to the correct duty, which matches UniSim far
-            # better than a UA value when the two flows differ from the source
-            # model (e.g. a recycle side that circulates a different rate). The
-            # pin tracks the live inlet pressure each iteration, so no spurious
-            # pressure drop is introduced. Falls back to a UA value (UA = duty /
-            # LMTD) only if the outlet temperatures are unavailable.
+            # stayed at the hot inlet temperature). Transfer the UniSim duty as a
+            # UA value (UA = duty / LMTD) so NeqSim computes the cross-exchange;
+            # the exchanger's two feed flows already match the source model.
             duty = op.properties.get('duty_kW')
             feeds = op.feeds or []
             prods = op.products or []
-            if len(feeds) >= 2 and len(prods) >= 2:
+            if duty and len(feeds) >= 2 and len(prods) >= 2:
                 h_in = self._find_stream_by_name(flowsheet, feeds[0])
                 c_in = self._find_stream_by_name(flowsheet, feeds[1])
                 h_out = self._find_stream_by_name(flowsheet, prods[0])
@@ -6395,33 +6434,15 @@ class UniSimToNeqSim:
                        for s in streams):
                     th_in, tc_in = h_in.temperature_C, c_in.temperature_C
                     th_out, tc_out = h_out.temperature_C, c_out.temperature_C
-                    # Pin the outlet on the hot side (the stream being cooled).
-                    if th_in >= tc_in:
-                        spec_side, spec_out_t = 0, th_out
+                    dt1 = th_in - tc_out
+                    dt2 = th_out - tc_in
+                    if dt1 > 1e-6 and dt2 > 1e-6 and abs(dt1 - dt2) > 1e-6:
+                        lmtd = (dt1 - dt2) / math.log(dt1 / dt2)
                     else:
-                        spec_side, spec_out_t = 1, tc_out
-                    lines.append(
-                        f'{var}.setOutStreamSpecificationNumber({spec_side})')
-                    lines.append(
-                        f'{var}.setOutTemperature({spec_out_t}, "C")')
-                elif duty:
-                    # Fallback: UA from duty and LMTD (needs all four temps for
-                    # LMTD, so only reached if some outlet temp is missing).
-                    valid = [s for s in streams
-                             if s is not None and s.temperature_C is not None]
-                    if len(valid) == 4:
-                        th_in, tc_in = h_in.temperature_C, c_in.temperature_C
-                        th_out, tc_out = h_out.temperature_C, c_out.temperature_C
-                        dt1 = th_in - tc_out
-                        dt2 = th_out - tc_in
-                        if dt1 > 1e-6 and dt2 > 1e-6 and abs(dt1 - dt2) > 1e-6:
-                            lmtd = (dt1 - dt2) / math.log(dt1 / dt2)
-                        else:
-                            lmtd = max((dt1 + dt2) / 2.0, 1.0)
-                        ua_w_per_k = abs(duty) * 1000.0 / lmtd  # kW -> W
-                        lines.append(
-                            f'{var}.setGuessOutTemperature({th_out + 273.15})')
-                        lines.append(f'{var}.setUAvalue({ua_w_per_k:.1f})')
+                        lmtd = max((dt1 + dt2) / 2.0, 1.0)
+                    ua_w_per_k = abs(duty) * 1000.0 / lmtd  # kW -> W
+                    lines.append(f'{var}.setGuessOutTemperature({th_out + 273.15})')
+                    lines.append(f'{var}.setUAvalue({ua_w_per_k:.1f})')
 
         elif neqsim_type == 'Pump':
             p_out = op.properties.get('outlet_pressure_bara')
