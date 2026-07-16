@@ -51,6 +51,12 @@ spec:
         # 3.25+ feature (we run 3.37); runtime env, verified on the published image.
         QUARKUS_OIDC_RESOURCE_METADATA_ENABLED: "true"
         QUARKUS_OIDC_RESOURCE_METADATA_FORCE_HTTPS_SCHEME: "true"  # TLS ends at the gateway; emit https URLs
+        # RFC 9728 exact-match (VS Code validates strictly): serve the doc at
+        # /.well-known/oauth-protected-resource/mcp with resource = https://<host>/mcp,
+        # and advertise the Entra scope so clients request the right audience
+        # (without it, VS Code acquires a wrong-audience token -> server 401).
+        QUARKUS_OIDC_RESOURCE_METADATA_RESOURCE: "/mcp"
+        QUARKUS_OIDC_RESOURCE_METADATA_SCOPES: "api://35fda377-148b-4b6b-a5be-d52203160690/mcp.access"
         # OTel has no collector yet -> keep the SDK off even under enterprise
         QUARKUS_OTEL_SDK_DISABLED: "true"
       environmentConfig:
