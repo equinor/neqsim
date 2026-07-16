@@ -64,6 +64,30 @@ public final class EngineeringAutomationStudy implements Serializable {
       return graphNodeId;
     }
 
+    public String getProcessAddress() {
+      return processAddress;
+    }
+
+    public double getLowerBound() {
+      return lowerBound;
+    }
+
+    public double getUpperBound() {
+      return upperBound;
+    }
+
+    public double getInitialValue() {
+      return initialValue;
+    }
+
+    public String getUnit() {
+      return unit;
+    }
+
+    public int getScreeningLevels() {
+      return screeningLevels;
+    }
+
     public Map<String, Object> toMap() {
       Map<String, Object> result = new LinkedHashMap<String, Object>();
       result.put("id", id);
@@ -102,6 +126,14 @@ public final class EngineeringAutomationStudy implements Serializable {
 
     public String getMetricKey() {
       return metricKey;
+    }
+
+    public ObjectiveSense getSense() {
+      return sense;
+    }
+
+    public double getWeight() {
+      return weight;
     }
 
     public Map<String, Object> toMap() {
@@ -165,6 +197,14 @@ public final class EngineeringAutomationStudy implements Serializable {
 
     public ConstraintSeverity getSeverity() {
       return severity;
+    }
+
+    public String getUnit() {
+      return unit;
+    }
+
+    public String getStandardsReference() {
+      return standardsReference;
     }
 
     public Map<String, Object> toMap() {

@@ -269,9 +269,15 @@ reconciliation.
 - [Multi-area ProcessModel engineering packages](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/dexpi_engineering_processmodel.ipynb)
   demonstrates one governed project/package per process area, shared-stream topology and area-level comparison of
   requirements, calculated design coverage and unresolved inputs.
+- [DEXPI P&ID visualization](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/dexpi_pid_visualization.ipynb)
+  reads native DEXPI 2.0 or Proteus 4.1.1 without pyDEXPI, creates deterministic PNG/SVG structural previews and
+  explains the boundary between documentation figures and target-CAE qualification.
 
-Both notebooks use workspace Java classes, execute end to end, save their generated package under
-`build/notebook-output/`, and retain the `REVIEW_REQUIRED` / not-fit-for-construction governance boundary.
+The engineering notebooks use workspace Java classes and save generated packages under `build/notebook-output/`. The
+visualization notebook can consume one of those packages or its committed golden fixture. All three are executed and
+retain the `REVIEW_REQUIRED` / not-fit-for-construction governance boundary. For a task-oriented walkthrough of the
+compiler, every artifact and the review workflow, see
+[Process model to governed engineering package](process-to-engineering-workflow).
 
 The package contains:
 
