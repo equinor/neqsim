@@ -11,6 +11,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import neqsim.process.engineering.EngineeringValidationReport.Severity;
+import neqsim.process.engineering.automation.EngineeringAutomationStudy;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.Stream;
@@ -49,6 +50,7 @@ public final class EngineeringProject implements Serializable {
   private final List<EngineeringMetric> engineeringMetrics = new ArrayList<EngineeringMetric>();
   private final List<EngineeringCalculation> calculations = new ArrayList<EngineeringCalculation>();
   private final List<EngineeringApprovalRecord> approvalRecords = new ArrayList<EngineeringApprovalRecord>();
+  private final List<EngineeringAutomationStudy> automationStudies = new ArrayList<EngineeringAutomationStudy>();
   private MaterialsReviewInput materialsReviewInput;
 
   EngineeringProject(String name, ProcessSystem processSystem, EngineeringDesignBasis designBasis) {
@@ -308,6 +310,25 @@ public final class EngineeringProject implements Serializable {
   /** @return immutable accountable approval decision history */
   public List<EngineeringApprovalRecord> getApprovalRecords() {
     return Collections.unmodifiableList(approvalRecords);
+  }
+
+  /** Adds a governed bounded-screening or optimization study definition. */
+  public EngineeringProject addAutomationStudy(EngineeringAutomationStudy study) {
+    if (study == null) {
+      throw new IllegalArgumentException("automation study must not be null");
+    }
+    for (EngineeringAutomationStudy existing : automationStudies) {
+      if (existing.getId().equals(study.getId())) {
+        throw new IllegalArgumentException("Duplicate engineering automation study " + study.getId());
+      }
+    }
+    automationStudies.add(study);
+    return this;
+  }
+
+  /** @return immutable governed automation study definitions */
+  public List<EngineeringAutomationStudy> getAutomationStudies() {
+    return Collections.unmodifiableList(automationStudies);
   }
 
   /**

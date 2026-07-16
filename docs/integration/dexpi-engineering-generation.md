@@ -78,6 +78,7 @@ The compiler adds these coordinated artifacts:
 | `engineering-discipline-package.json` | Process, mechanical, piping, instrumentation and safeguarding handoff with controlled data gaps |
 | `engineering-approval-ledger.json` | Accountable approval history, effective decisions and revision-triggered revalidation state |
 | `engineering-dexpi-roundtrip-report.json` | Internal export/reimport identity and reference qualification for all three DEXPI representations |
+| `engineering-automation-plan.json` | Governed variables, objectives, constraints, baseline feasibility and safe execution boundary |
 | `design-case-envelope.json` | Per-case results and governing pressure, temperature, flow or custom metrics |
 | `equipment-register.json` | Equipment identity, design-condition status and governing design values |
 | `line-register.json` | Controlled line-list inputs, evidence and completeness status |
@@ -231,6 +232,19 @@ This proves NeqSim's internal structural export/reimport contract; it does not p
 The report therefore retains `commercialCaeStatus: QUALIFICATION_REQUIRED` even after an internal pass. Commercial
 qualification still requires a named product/version, successful import, vendor-exported round-trip file and an
 accountably reviewed difference report.
+
+## Prepare governed optimization and automation
+
+`EngineeringAutomationStudy` registers bounded decision variables against canonical graph nodes and supported process
+addresses, then relates weighted objectives and hard/advisory constraints to design-case metrics. The compiler evaluates
+the controlled design envelope as the baseline and writes study readiness, current constraint violations and the
+available NeqSim optimization engines to `engineering-automation-plan.json`.
+
+The automation contract is deliberately advisory. Candidate evaluations must use isolated `ProcessSystem.copy()`
+instances, standards and safety limits remain controlled engineering inputs, and results require review before design
+adoption. The plan never authorizes an optimizer to change the source simulation or plant automatically. This boundary
+allows bounded screening, Pareto ranking, sensitivity and uncertainty workflows to scale without bypassing engineering
+governance.
 
 For a multi-area `ProcessModel`, build and export one DEXPI engineering project per area:
 

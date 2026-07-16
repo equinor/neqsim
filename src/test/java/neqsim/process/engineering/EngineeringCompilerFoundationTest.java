@@ -16,6 +16,9 @@ import org.junit.jupiter.api.io.TempDir;
 import neqsim.NeqSimTest;
 import neqsim.process.engineering.deliverables.EngineeringApprovalLedger;
 import neqsim.process.engineering.deliverables.EngineeringDeliverableCompiler;
+import neqsim.process.engineering.automation.EngineeringAutomationStudy;
+import neqsim.process.engineering.automation.EngineeringAutomationStudy.ConstraintSeverity;
+import neqsim.process.engineering.automation.EngineeringAutomationStudy.ObjectiveSense;
 import neqsim.process.engineering.designcase.DesignCaseEngine;
 import neqsim.process.engineering.designcase.EngineeringDesignCase;
 import neqsim.process.engineering.designcase.EngineeringDesignEnvelope;
@@ -67,6 +70,7 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(Files.isRegularFile(result.getEngineeringDisciplinePackageFile()));
     assertTrue(Files.isRegularFile(result.getEngineeringApprovalLedgerFile()));
     assertTrue(Files.isRegularFile(result.getEngineeringDexpiRoundTripReportFile()));
+    assertTrue(Files.isRegularFile(result.getEngineeringAutomationPlanFile()));
     assertTrue(Files.isRegularFile(result.getDesignEnvelopeFile()));
     assertTrue(Files.isRegularFile(result.getEquipmentRegisterFile()));
     assertTrue(Files.isRegularFile(result.getLineRegisterFile()));
@@ -89,6 +93,8 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(read(result.getEngineeringApprovalLedgerFile()).contains("APPROVED"));
     assertTrue(read(result.getEngineeringDexpiRoundTripReportFile()).contains("INTERNAL_STRUCTURAL_ROUNDTRIP_PASSED"));
     assertTrue(read(result.getEngineeringDexpiRoundTripReportFile()).contains("QUALIFICATION_REQUIRED"));
+    assertTrue(read(result.getEngineeringAutomationPlanFile()).contains("READY_FOR_ISOLATED_SCREENING"));
+    assertTrue(read(result.getEngineeringAutomationPlanFile()).contains("REQUIRED_PROCESS_SYSTEM_COPY"));
     assertTrue(result.getValidationReport().isValid());
     assertTrue(EngineeringPackageValidator.validatePackage(temporaryDirectory).isValid());
     assertNotNull(result.getEngineeringGraph().getNode("calculation:envelope-20-vg-001-pressure"));
@@ -258,6 +264,15 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
         EngineeringMetric.equipmentPressure("20-VG-001").setAcceptanceRange(null, Double.valueOf(70.0)));
     project.addEngineeringMetric(EngineeringMetric.equipmentTemperature("20-VG-001"));
     project.addEngineeringMetric(EngineeringMetric.equipmentInletMassFlow("20-VG-001"));
+    String feedNode = EngineeringIds.nodeId(EngineeringNode.Kind.LINE, "20-FEED-001");
+    project.addAutomationStudy(
+        new EngineeringAutomationStudy("STUDY-PRODUCTION-ENVELOPE", "Bounded production-envelope screening")
+            .addDecisionVariable(new EngineeringAutomationStudy.DecisionVariable("FEED-PRESSURE", feedNode,
+                "20-FEED-001.pressure", 45.0, 75.0, 55.0, "bara").setScreeningLevels(7))
+            .addObjective(new EngineeringAutomationStudy.Objective("MAXIMIZE-INLET-FLOW", "20-VG-001.inletMassFlow",
+                ObjectiveSense.MAXIMIZE, 1.0))
+            .addConstraint(new EngineeringAutomationStudy.Constraint("SEPARATOR-PRESSURE-LIMIT", "20-VG-001.pressure",
+                null, Double.valueOf(70.0), "bara", ConstraintSeverity.HARD, "PROCESS-DESIGN-BASIS")));
     String separatorNode = EngineeringIds.nodeId(EngineeringNode.Kind.EQUIPMENT, "20-VG-001");
     project
         .addCalculation(new EngineeringCalculation("20-VG-001-RELIEF-BASIS", separatorNode,

@@ -23,6 +23,7 @@ public final class EngineeringSchemaCatalog {
   public static final String DISCIPLINE_PACKAGE = "neqsim_engineering_discipline_package.v1";
   public static final String APPROVAL_LEDGER = "neqsim_engineering_approval_ledger.v1";
   public static final String DEXPI_ROUNDTRIP_REPORT = "neqsim_engineering_dexpi_roundtrip_report.v1";
+  public static final String AUTOMATION_PLAN = "neqsim_engineering_automation_plan.v1";
   public static final String DESIGN_CASE_ENVELOPE = "neqsim_design_case_envelope.v1";
   public static final String EQUIPMENT_REGISTER = "neqsim_equipment_register.v1";
   public static final String LINE_REGISTER = "neqsim_line_register.v1";
@@ -90,6 +91,8 @@ public final class EngineeringSchemaCatalog {
         definition("engineering-approval-ledger.json", APPROVAL_LEDGER, "engineering-approval-ledger.schema.json"));
     values.add(definition("engineering-dexpi-roundtrip-report.json", DEXPI_ROUNDTRIP_REPORT,
         "engineering-dexpi-roundtrip-report.schema.json"));
+    values.add(
+        definition("engineering-automation-plan.json", AUTOMATION_PLAN, "engineering-automation-plan.schema.json"));
     values.add(definition("design-case-envelope.json", DESIGN_CASE_ENVELOPE, "design-case-envelope.schema.json"));
     values.add(definition("equipment-register.json", EQUIPMENT_REGISTER, "equipment-register.schema.json"));
     values.add(definition("line-register.json", LINE_REGISTER, "line-register.schema.json"));

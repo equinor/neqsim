@@ -169,6 +169,14 @@ public final class EngineeringPackageValidator {
       requireArray(root, "formats", artifactName, report);
       requireString(root, "commercialCaeStatus", artifactName, report);
       requireString(root, "commercialCaeEvidenceRequired", artifactName, report);
+    } else if ("engineering-automation-plan.json".equals(artifactName)) {
+      requireString(root, "projectId", artifactName, report);
+      requireString(root, "revision", artifactName, report);
+      requireString(root, "graphFingerprint", artifactName, report);
+      requireArray(root, "studies", artifactName, report);
+      requireArray(root, "availableEngines", artifactName, report);
+      requireObject(root, "executionBoundary", artifactName, report);
+      requireObject(root, "summary", artifactName, report);
     } else if (artifactName.endsWith("-register.json")) {
       validateRegisterStructure(root, artifactName, report);
     } else if ("design-case-envelope.json".equals(artifactName)) {
@@ -242,6 +250,7 @@ public final class EngineeringPackageValidator {
     validateDisciplinePackage(packageDirectory, graph, report);
     validateApprovalLedger(packageDirectory, graph, report);
     validateDexpiRoundTrip(packageDirectory, graph, report);
+    validateAutomationPlan(packageDirectory, graph, report);
     validateManifest(packageDirectory, graph, report);
     validateSchemaFiles(packageDirectory, report);
     return report;
@@ -772,6 +781,78 @@ public final class EngineeringPackageValidator {
       if (profiles.size() != 3) {
         report.addError("ENG-DEXPI-ROUNDTRIP-009", artifact, "/formats",
             "Expected native DEXPI, Proteus and pyDEXPI qualification results");
+      }
+    }
+  }
+
+  private static void validateAutomationPlan(Path directory, EngineeringGraph graph,
+      EngineeringPackageValidationReport report) throws IOException {
+    String artifact = "engineering-automation-plan.json";
+    Path file = directory.resolve(artifact);
+    if (!Files.isRegularFile(file)) {
+      return;
+    }
+    JsonObject root = parseObject(artifact, read(file), report);
+    if (root == null) {
+      return;
+    }
+    if (!graph.getProjectId().equals(stringValue(root, "projectId"))) {
+      report.addError("ENG-AUTOMATION-001", artifact, "/projectId", "Automation plan and graph project ids differ");
+    }
+    if (!graph.getRevision().equals(stringValue(root, "revision"))) {
+      report.addError("ENG-AUTOMATION-002", artifact, "/revision", "Automation plan and graph revisions differ");
+    }
+    String fingerprint = String.valueOf(graph.toMap().get("fingerprint"));
+    if (!fingerprint.equals(stringValue(root, "graphFingerprint"))) {
+      report.addError("ENG-AUTOMATION-003", artifact, "/graphFingerprint",
+          "Automation plan fingerprint does not match engineering-model.json");
+    }
+    if (root.has("executionBoundary") && root.get("executionBoundary").isJsonObject()) {
+      JsonObject boundary = root.getAsJsonObject("executionBoundary");
+      if (!boundary.has("automaticPlantChange") || !boundary.get("automaticPlantChange").isJsonPrimitive()
+          || boundary.get("automaticPlantChange").getAsBoolean()) {
+        report.addError("ENG-AUTOMATION-004", artifact, "/executionBoundary/automaticPlantChange",
+            "Engineering automation must remain advisory and must not authorize automatic plant changes");
+      }
+    }
+    Set<String> studyIds = new LinkedHashSet<String>();
+    if (root.has("studies") && root.get("studies").isJsonArray()) {
+      JsonArray studies = root.getAsJsonArray("studies");
+      for (int i = 0; i < studies.size(); i++) {
+        if (!studies.get(i).isJsonObject()) {
+          report.addError("ENG-AUTOMATION-005", artifact, "/studies/" + i, "Automation study must be an object");
+          continue;
+        }
+        JsonObject study = studies.get(i).getAsJsonObject();
+        String studyId = stringValue(study, "id");
+        if (studyId.isEmpty() || !studyIds.add(studyId)) {
+          report.addError("ENG-AUTOMATION-006", artifact, "/studies/" + i + "/id",
+              "Automation study id is missing or duplicated");
+        }
+        if (!study.has("decisionVariables") || !study.get("decisionVariables").isJsonArray()) {
+          continue;
+        }
+        JsonArray variables = study.getAsJsonArray("decisionVariables");
+        Set<String> variableIds = new LinkedHashSet<String>();
+        for (int j = 0; j < variables.size(); j++) {
+          if (!variables.get(j).isJsonObject()) {
+            report.addError("ENG-AUTOMATION-007", artifact, "/studies/" + i + "/decisionVariables/" + j,
+                "Decision variable must be an object");
+            continue;
+          }
+          JsonObject variable = variables.get(j).getAsJsonObject();
+          String variableId = stringValue(variable, "id");
+          if (variableId.isEmpty() || !variableIds.add(variableId)) {
+            report.addError("ENG-AUTOMATION-008", artifact, "/studies/" + i + "/decisionVariables/" + j + "/id",
+                "Decision-variable id is missing or duplicated within the study");
+          }
+          String graphNodeId = stringValue(variable, "graphNodeId");
+          if (graph.getNode(graphNodeId) == null) {
+            report.addError("ENG-AUTOMATION-009", artifact,
+                "/studies/" + i + "/decisionVariables/" + j + "/graphNodeId",
+                "Decision variable references unknown graph node " + graphNodeId);
+          }
+        }
       }
     }
   }
