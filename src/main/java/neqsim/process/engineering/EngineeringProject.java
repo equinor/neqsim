@@ -14,6 +14,9 @@ import neqsim.process.engineering.EngineeringValidationReport.Severity;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.engineering.designcase.EngineeringDesignCase;
+import neqsim.process.engineering.designcase.EngineeringMetric;
+import neqsim.process.engineering.model.EngineeringCalculation;
 import neqsim.process.materials.MaterialsReviewInput;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
@@ -29,8 +32,9 @@ import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
  */
 public final class EngineeringProject implements Serializable {
   private static final long serialVersionUID = 1000L;
-  private final String projectId = UUID.randomUUID().toString();
+  private final String projectId;
   private final String name;
+  private String revision = "working";
   private final ProcessSystem processSystem;
   private final EngineeringDesignBasis designBasis;
   private final List<EngineeringRequirement> requirements = new ArrayList<EngineeringRequirement>();
@@ -41,9 +45,19 @@ public final class EngineeringProject implements Serializable {
   private final List<SafetyFunctionDesign> safetyFunctionDesigns = new ArrayList<SafetyFunctionDesign>();
   private final List<ShutdownSequence> shutdownSequences = new ArrayList<ShutdownSequence>();
   private final List<EngineeringBoundary> boundaries = new ArrayList<EngineeringBoundary>();
+  private final List<EngineeringDesignCase> executableDesignCases = new ArrayList<EngineeringDesignCase>();
+  private final List<EngineeringMetric> engineeringMetrics = new ArrayList<EngineeringMetric>();
+  private final List<EngineeringCalculation> calculations = new ArrayList<EngineeringCalculation>();
   private MaterialsReviewInput materialsReviewInput;
 
   EngineeringProject(String name, ProcessSystem processSystem, EngineeringDesignBasis designBasis) {
+    this(UUID.randomUUID().toString(), name, processSystem, designBasis);
+  }
+
+  EngineeringProject(String projectId, String name, ProcessSystem processSystem, EngineeringDesignBasis designBasis) {
+    if (projectId == null || projectId.trim().isEmpty()) {
+      throw new IllegalArgumentException("projectId must not be blank");
+    }
     if (name == null || name.trim().isEmpty()) {
       throw new IllegalArgumentException("name must not be blank");
     }
@@ -53,6 +67,7 @@ public final class EngineeringProject implements Serializable {
     if (designBasis == null) {
       throw new IllegalArgumentException("designBasis must not be null");
     }
+    this.projectId = projectId.trim();
     this.name = name;
     this.processSystem = processSystem;
     this.designBasis = designBasis;
@@ -78,6 +93,20 @@ public final class EngineeringProject implements Serializable {
   /** @return engineering project name */
   public String getName() {
     return name;
+  }
+
+  /** Sets the controlled project revision used by graph snapshots and change comparison. */
+  public EngineeringProject setRevision(String value) {
+    if (value == null || value.trim().isEmpty()) {
+      throw new IllegalArgumentException("revision must not be blank");
+    }
+    revision = value.trim();
+    return this;
+  }
+
+  /** @return controlled project revision or {@code working} */
+  public String getRevision() {
+    return revision;
   }
 
   /** @return associated runnable process system */
@@ -204,6 +233,63 @@ public final class EngineeringProject implements Serializable {
     return Collections.unmodifiableList(boundaries);
   }
 
+  /** Adds an executable design case evaluated on an isolated process copy. */
+  public EngineeringProject addDesignCase(EngineeringDesignCase designCase) {
+    if (designCase == null) {
+      throw new IllegalArgumentException("designCase must not be null");
+    }
+    for (EngineeringDesignCase existing : executableDesignCases) {
+      if (existing.getId().equals(designCase.getId())) {
+        throw new IllegalArgumentException("Duplicate design case " + designCase.getId());
+      }
+    }
+    executableDesignCases.add(designCase);
+    return this;
+  }
+
+  /** @return immutable executable design-case list */
+  public List<EngineeringDesignCase> getExecutableDesignCases() {
+    return Collections.unmodifiableList(executableDesignCases);
+  }
+
+  /** Adds a quantity that will be enveloped across executable design cases. */
+  public EngineeringProject addEngineeringMetric(EngineeringMetric metric) {
+    if (metric == null) {
+      throw new IllegalArgumentException("metric must not be null");
+    }
+    for (EngineeringMetric existing : engineeringMetrics) {
+      if (existing.getId().equals(metric.getId())) {
+        throw new IllegalArgumentException("Duplicate engineering metric " + metric.getId());
+      }
+    }
+    engineeringMetrics.add(metric);
+    return this;
+  }
+
+  /** @return immutable design-envelope metric list */
+  public List<EngineeringMetric> getEngineeringMetrics() {
+    return Collections.unmodifiableList(engineeringMetrics);
+  }
+
+  /** Adds a traceable calculation node and its dependencies to the engineering model. */
+  public EngineeringProject addCalculation(EngineeringCalculation calculation) {
+    if (calculation == null) {
+      throw new IllegalArgumentException("calculation must not be null");
+    }
+    for (EngineeringCalculation existing : calculations) {
+      if (existing.getId().equals(calculation.getId())) {
+        throw new IllegalArgumentException("Duplicate engineering calculation " + calculation.getId());
+      }
+    }
+    calculations.add(calculation);
+    return this;
+  }
+
+  /** @return immutable auditable calculation list */
+  public List<EngineeringCalculation> getCalculations() {
+    return Collections.unmodifiableList(calculations);
+  }
+
   /**
    * Sets project material-register and service data to overlay on simulation-derived conditions.
    *
@@ -277,6 +363,20 @@ public final class EngineeringProject implements Serializable {
             requirement.getId() + " has no SIL target; determine through HAZOP/LOPA and the SRS");
       }
     }
+    if (!executableDesignCases.isEmpty() && engineeringMetrics.isEmpty()) {
+      report.add(Severity.REVIEW, "ENG-CASE-001", name,
+          "Executable design cases exist but no engineering envelope metrics are configured");
+    }
+    if (executableDesignCases.isEmpty() && !engineeringMetrics.isEmpty()) {
+      report.add(Severity.REVIEW, "ENG-CASE-002", name,
+          "Engineering envelope metrics exist but no executable design cases are configured");
+    }
+    for (EngineeringMetric metric : engineeringMetrics) {
+      if (processSystem.getUnit(metric.getSubjectTag()) == null) {
+        report.add(Severity.ERROR, "ENG-CASE-003", metric.getSubjectTag(),
+            "Engineering metric references unknown equipment: " + metric.getId());
+      }
+    }
     Set<String> boundaryIds = new HashSet<String>();
     for (EngineeringBoundary boundary : boundaries) {
       if (!boundaryIds.add(boundary.getId())) {
@@ -299,6 +399,7 @@ public final class EngineeringProject implements Serializable {
     JsonObject root = new JsonObject();
     root.addProperty("projectId", projectId);
     root.addProperty("name", name);
+    root.addProperty("revision", revision);
     root.addProperty("processName", processSystem.getName());
 
     JsonObject basis = new JsonObject();
@@ -332,6 +433,21 @@ public final class EngineeringProject implements Serializable {
     root.add("safetyFunctionDesigns", new GsonBuilder().create().toJsonTree(safetyFunctionDesigns));
     root.add("shutdownSequences", new GsonBuilder().create().toJsonTree(shutdownSequences));
     root.add("boundaries", new GsonBuilder().create().toJsonTree(boundaries));
+    JsonArray executableCases = new JsonArray();
+    for (EngineeringDesignCase designCase : executableDesignCases) {
+      executableCases.add(new GsonBuilder().create().toJsonTree(designCase.toMap()));
+    }
+    root.add("executableDesignCases", executableCases);
+    JsonArray metrics = new JsonArray();
+    for (EngineeringMetric metric : engineeringMetrics) {
+      metrics.add(new GsonBuilder().create().toJsonTree(metric.toMap()));
+    }
+    root.add("engineeringMetrics", metrics);
+    JsonArray calculationNodes = new JsonArray();
+    for (EngineeringCalculation calculation : calculations) {
+      calculationNodes.add(new GsonBuilder().create().toJsonTree(calculation.toMap()));
+    }
+    root.add("calculationProvenance", calculationNodes);
     root.add("validation", new GsonBuilder().create().toJsonTree(validate().getFindings()));
     return new GsonBuilder().setPrettyPrinting().create().toJson(root);
   }

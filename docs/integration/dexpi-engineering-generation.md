@@ -33,6 +33,66 @@ DexpiEngineeringExporter.ExportResult result =
     DexpiEngineeringExporter.export(project, Paths.get("build/engineering-package"));
 ```
 
+## Compile a coordinated engineering package
+
+`EngineeringDeliverableCompiler` is the higher-level entry point when the package must include the canonical
+engineering graph, executable design-case envelope and consistent equipment, line and instrument registers in addition
+to the DEXPI artifacts. Assign a persistent project id and controlled revision so snapshots remain comparable across
+sessions:
+
+```java
+EngineeringProject project = NorsokOffshoreEngineeringBuilder
+    .from("Gas compression engineering model", process)
+    .projectId("GAS-COMPRESSION-PROJECT")
+    .registerProposedInstruments(true)
+    .build()
+    .setRevision("A");
+
+project.addDesignCase(new EngineeringDesignCase(
+    "CASE-MAX", "Maximum production", EngineeringDesignCase.Type.MAXIMUM_PRODUCTION,
+    scenario -> ((Stream) scenario.getUnit("20-FEED-001")).setFlowRate(1.15e6, "kg/hr"))
+    .addInput(new EngineeringDesignCase.Input(
+        "feed rate", 1.15e6, "kg/hr", "PROCESS-DESIGN-BASIS-REV-A")));
+
+project.addEngineeringMetric(EngineeringMetric.equipmentPressure("20-VG-001"));
+project.addEngineeringMetric(EngineeringMetric.equipmentTemperature("20-VG-001"));
+project.addEngineeringMetric(EngineeringMetric.equipmentInletMassFlow("20-VG-001"));
+
+EngineeringDeliverableCompiler.CompilationResult compiled =
+    EngineeringDeliverableCompiler.compile(
+        project, Paths.get("build/engineering-package"));
+```
+
+Every case runs on `ProcessSystem.copy()`, so scenario configuration and simulation results cannot alter the base
+process. A failed or incomplete case remains explicit and is excluded from governing-value selection. Each governing
+value records its metric, unit and source case and is materialized as an auditable calculation node.
+
+The compiler adds these coordinated artifacts:
+
+| Artifact | Purpose |
+|---|---|
+| `engineering-model.json` | Canonical nodes, semantic relationships, provenance, calculation dependencies and fingerprint |
+| `design-case-envelope.json` | Per-case results and governing pressure, temperature, flow or custom metrics |
+| `equipment-register.json` | Equipment identity, design-condition status and governing design values |
+| `line-register.json` | Controlled line-list inputs, evidence and completeness status |
+| `instrument-register.json` | Registered simulation instruments and proposed instrument/control/safety requirements |
+| `engineering-compiler-manifest.json` | Revision, graph fingerprint, artifact inventory and governance status |
+
+Persist a graph and supply it as the baseline for the next compilation to generate
+`engineering-revision-diff.json`:
+
+```java
+EngineeringGraph baseline = EngineeringGraph.read(
+    Paths.get("controlled/revision-a/engineering-model.json"));
+project.setRevision("B");
+
+EngineeringDeliverableCompiler.compile(
+    project, Paths.get("build/revision-b"), baseline);
+```
+
+The diff reports added, removed and modified nodes and connections. It also propagates impact through `DEPENDS_ON` and
+`GENERATED_FROM` relationships so affected calculations and documents can be identified for rerun and reapproval.
+
 For a multi-area `ProcessModel`, build and export one DEXPI engineering project per area:
 
 ```java
@@ -314,8 +374,8 @@ mechanical-design models, API 520/521 relief sizes supported by credible scenari
 supported by reviewed inventories and network data, and screening-level material recommendations. Project engineering
 must still complete and approve the scenario basis, detailed piping/nozzle/stress design, fire-and-gas mapping,
 package/vendor interfaces, alarm rationalization, SIL determination and verification, final voting and trip settings,
-shutdown actions, tag allocation and maintainability reviews before controlled issue. Native DEXPI XML schema
-and native drawing-representation completion before controlled issue. Native schema and supported-profile semantic
+shutdown actions, tag allocation and maintainability reviews before controlled issue. Native DEXPI XML schema and
+native drawing-representation completion are also required before controlled issue. Native schema and supported-profile semantic
 validation are automatic. pyDEXPI import is exercised by the interoperability tool. Round-trip qualification in a
 named commercial CAE product remains controlled external evidence and is never reported as passed without its test
 record. The committed golden regression pair is under `src/test/resources/dexpi/2.0/golden/`.
