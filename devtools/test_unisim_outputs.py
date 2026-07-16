@@ -307,6 +307,44 @@ def test_to_python():
     return py_code
 
 
+def test_feed_composition_emitted():
+    """Feed streams must carry their OWN composition, not a shared clone.
+
+    Regression guard for the converter fix: without this, every feed is
+    ``fluid.clone()`` (one default composition) so downstream separators all
+    flash an identical fluid and report the same RVP/GOR regardless of feed.
+    """
+    model = _build_test_model()
+    converter = UniSimToNeqSim(model)
+    py_code = converter.to_python()
+    # The runtime helper is emitted exactly once.
+    assert "def _set_feed_composition(" in py_code
+    assert py_code.count("def _set_feed_composition(") == 1
+    # The external feed that has a composition gets a per-feed call.
+    assert "_set_feed_composition(" in py_code
+    # Feed Gas composition values are carried through onto the feed stream.
+    assert '"Methane": 0.8' in py_code
+    assert '"CO2": 0.03' in py_code
+    print("  PASS")
+    return py_code
+
+
+def test_feed_composition_in_json():
+    """to_json() must carry each feed's composition under its properties."""
+    model = _build_test_model()
+    converter = UniSimToNeqSim(model)
+    js = converter.to_json()
+    feeds = [u for u in js["process"]
+             if u.get("type") == "Stream" and u.get("name") == "Feed Gas"]
+    assert feeds, "Feed Gas stream missing from JSON process"
+    comp = feeds[0].get("properties", {}).get("composition")
+    assert comp is not None, "Feed Gas has no composition in JSON"
+    assert abs(comp.get("Methane", 0.0) - 0.80) < 1e-9
+    assert abs(comp.get("CO2", 0.0) - 0.03) < 1e-9
+    print("  PASS")
+    return js
+
+
 def test_to_notebook():
     model = _build_test_model()
     converter = UniSimToNeqSim(model)
