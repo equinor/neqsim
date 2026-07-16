@@ -6291,51 +6291,6 @@ class UniSimToNeqSim:
 
         return self._wrap_notebook(cells)
 
-    def _pressure_isolated_from_separator(self, op, flowsheet, max_hops=6):
-        """Return True if op's pressure change is isolated from any separator.
-
-        Walks downstream from op; returns False if any path reaches a separator
-        (Separator/GasScrubber/ThreePhaseSeparator) BEFORE a pressure-resetting
-        unit (ThrottlingValve/Pump/Compressor/Expander). Used to decide whether a
-        UniSim cooler/heater outlet-pressure letdown is safe to transfer: applying
-        it upstream of a separator changes that separator's flash and, if the
-        separator sits in a recycle loop, destabilises the tears (see E-100 ->
-        Subsea Scrubber). A downstream valve/pump/compressor resets the pressure
-        and contains the change, so those cases are safe.
-
-        @param op the cooler/heater operation whose downstream is walked
-        @param flowsheet the flowsheet whose operations are scanned
-        @param max_hops maximum downstream depth to search
-        @return True if safe (pressure reset before any separator on every path)
-        """
-        reset_types = ('ThrottlingValve', 'Pump', 'Compressor', 'Expander')
-        sep_types = ('Separator', 'GasScrubber', 'ThreePhaseSeparator')
-        consumers = {}
-        for other in flowsheet.operations:
-            for feed in (other.feeds or []):
-                consumers.setdefault(feed, []).append(other)
-
-        def walk(node, hops, seen):
-            if hops > max_hops or node.name in seen:
-                return True
-            seen = seen | {node.name}
-            nt = self.resolve_neqsim_type(node)
-            if nt in sep_types:
-                return False
-            if nt in reset_types:
-                return True
-            for prod in (node.products or []):
-                for cons in consumers.get(prod, []):
-                    if not walk(cons, hops + 1, seen):
-                        return False
-            return True
-
-        for prod in (op.products or []):
-            for cons in consumers.get(prod, []):
-                if not walk(cons, 1, set()):
-                    return False
-        return True
-
     def _gen_properties(self, lines: list, var: str, neqsim_type: str,
                         op, flowsheet) -> None:
         """Append property-setting lines for an equipment unit."""
@@ -6400,19 +6355,18 @@ class UniSimToNeqSim:
                     t_out = out_s.temperature_C
             if t_out is not None:
                 lines.append(f'{var}.setOutTemperature({t_out + 273.15})')
-            # Transfer the UniSim cooler/heater outlet-pressure letdown, but ONLY
-            # when a downstream valve/pump/compressor isolates the pressure change
-            # from any separator flash. Applying it upstream of a separator changes
-            # that separator's flash and, if the separator is in a recycle loop,
-            # destabilises the tears (verified: E-100 -> Subsea Scrubber). Feed-
-            # forward units whose pressure is reset by a downstream valve/pump
-            # (e.g. 44HB001 -> 44PA001) are safe.
+            # Transfer the UniSim cooler/heater outlet-pressure letdown. This is
+            # applied unconditionally for any real drop: NeqSim Cooler/Heater keep
+            # inlet pressure otherwise, so a downstream separator would flash at
+            # the wrong pressure. (Earlier this destabilised recycle loops only
+            # because geometry-less pipes NaN'd at the corrected pressure; with
+            # pipe geometry now transferred and PipeBeggsAndBrills used, the loops
+            # converge — see the Gas riser / Subsea Scrubber case.)
             p_out = op.properties.get('outlet_pressure_bara')
             in_s = (self._find_stream_by_name(flowsheet, op.feeds[0])
                     if op.feeds else None)
             p_in = in_s.pressure_bara if in_s else None
-            if (p_out and p_in and p_out < 0.98 * p_in
-                    and self._pressure_isolated_from_separator(op, flowsheet)):
+            if p_out and p_in and p_out < 0.98 * p_in:
                 lines.append(f'{var}.setOutletPressure({p_out}, "bara")')
 
         elif neqsim_type == 'HeatExchanger':
