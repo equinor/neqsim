@@ -151,6 +151,15 @@ public final class EngineeringPackageValidator {
       requireArray(root, "instrumentAndSafeguardingRequirements", artifactName, report);
       requireObject(root, "disciplineSummary", artifactName, report);
       requireString(root, "governance", artifactName, report);
+    } else if ("engineering-approval-ledger.json".equals(artifactName)) {
+      requireString(root, "projectId", artifactName, report);
+      requireString(root, "revision", artifactName, report);
+      requireString(root, "graphFingerprint", artifactName, report);
+      requireString(root, "baselineRevision", artifactName, report);
+      requireArray(root, "records", artifactName, report);
+      requireArray(root, "effectiveStates", artifactName, report);
+      requireArray(root, "revisionImpactedNodeIds", artifactName, report);
+      requireObject(root, "summary", artifactName, report);
     } else if (artifactName.endsWith("-register.json")) {
       validateRegisterStructure(root, artifactName, report);
     } else if ("design-case-envelope.json".equals(artifactName)) {
@@ -222,6 +231,7 @@ public final class EngineeringPackageValidator {
     validateCalculationDag(packageDirectory, graph, report);
     validateDesignCaseMatrix(packageDirectory, graph, report);
     validateDisciplinePackage(packageDirectory, graph, report);
+    validateApprovalLedger(packageDirectory, graph, report);
     validateManifest(packageDirectory, graph, report);
     validateSchemaFiles(packageDirectory, report);
     return report;
@@ -619,6 +629,81 @@ public final class EngineeringPackageValidator {
       }
       JsonObject item = values.get(i).getAsJsonObject();
       validateGraphReference(item, "graphNodeId", expectedKind, artifact, "/" + arrayName + "/" + i, graph, report);
+    }
+  }
+
+  private static void validateApprovalLedger(Path directory, EngineeringGraph graph,
+      EngineeringPackageValidationReport report) throws IOException {
+    String artifact = "engineering-approval-ledger.json";
+    Path file = directory.resolve(artifact);
+    if (!Files.isRegularFile(file)) {
+      return;
+    }
+    JsonObject root = parseObject(artifact, read(file), report);
+    if (root == null) {
+      return;
+    }
+    if (!graph.getProjectId().equals(stringValue(root, "projectId"))) {
+      report.addError("ENG-APPROVAL-001", artifact, "/projectId", "Approval ledger and graph project ids differ");
+    }
+    if (!graph.getRevision().equals(stringValue(root, "revision"))) {
+      report.addError("ENG-APPROVAL-002", artifact, "/revision", "Approval ledger and graph revisions differ");
+    }
+    String fingerprint = String.valueOf(graph.toMap().get("fingerprint"));
+    if (!fingerprint.equals(stringValue(root, "graphFingerprint"))) {
+      report.addError("ENG-APPROVAL-003", artifact, "/graphFingerprint",
+          "Approval ledger fingerprint does not match engineering-model.json");
+    }
+    Set<String> recordIds = new LinkedHashSet<String>();
+    if (root.has("records") && root.get("records").isJsonArray()) {
+      JsonArray records = root.getAsJsonArray("records");
+      for (int i = 0; i < records.size(); i++) {
+        String path = "/records/" + i;
+        if (!records.get(i).isJsonObject()) {
+          report.addError("ENG-APPROVAL-004", artifact, path, "Approval record must be an object");
+          continue;
+        }
+        JsonObject record = records.get(i).getAsJsonObject();
+        String recordId = stringValue(record, "id");
+        String subjectNodeId = stringValue(record, "subjectNodeId");
+        if (recordId.isEmpty() || !recordIds.add(recordId)) {
+          report.addError("ENG-APPROVAL-005", artifact, path + "/id", "Approval record id is missing or duplicated");
+        }
+        if (graph.getNode(subjectNodeId) == null) {
+          report.addError("ENG-APPROVAL-006", artifact, path + "/subjectNodeId",
+              "Approval subject does not exist in the engineering graph: " + subjectNodeId);
+        }
+        String supersedes = stringValue(record, "supersedesRecordId");
+        if (!supersedes.isEmpty() && !recordIds.contains(supersedes)) {
+          report.addError("ENG-APPROVAL-007", artifact, path + "/supersedesRecordId",
+              "Superseded record must exist earlier in the ledger: " + supersedes);
+        }
+      }
+    }
+    if (root.has("effectiveStates") && root.get("effectiveStates").isJsonArray()) {
+      JsonArray states = root.getAsJsonArray("effectiveStates");
+      for (int i = 0; i < states.size(); i++) {
+        if (!states.get(i).isJsonObject()) {
+          report.addError("ENG-APPROVAL-008", artifact, "/effectiveStates/" + i,
+              "Effective approval state must be an object");
+          continue;
+        }
+        JsonObject state = states.get(i).getAsJsonObject();
+        String subjectNodeId = stringValue(state, "subjectNodeId");
+        if (graph.getNode(subjectNodeId) == null) {
+          report.addError("ENG-APPROVAL-009", artifact, "/effectiveStates/" + i + "/subjectNodeId",
+              "Effective approval subject does not exist: " + subjectNodeId);
+        }
+        String effectiveRecordId = stringValue(state, "effectiveRecordId");
+        if (!recordIds.contains(effectiveRecordId)) {
+          report.addError("ENG-APPROVAL-010", artifact, "/effectiveStates/" + i + "/effectiveRecordId",
+              "Effective approval record does not exist: " + effectiveRecordId);
+        }
+        if ("REVALIDATION_REQUIRED".equals(stringValue(state, "status"))) {
+          report.addWarning("ENG-APPROVAL-011", artifact, "/effectiveStates/" + i + "/status",
+              "An approved engineering object changed since the baseline and requires revalidation");
+        }
+      }
     }
   }
 

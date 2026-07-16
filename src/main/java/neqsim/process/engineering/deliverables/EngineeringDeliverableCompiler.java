@@ -50,6 +50,7 @@ public final class EngineeringDeliverableCompiler {
     private final Path engineeringCalculationDagFile;
     private final Path engineeringDesignCaseMatrixFile;
     private final Path engineeringDisciplinePackageFile;
+    private final Path engineeringApprovalLedgerFile;
     private final Path designEnvelopeFile;
     private final Path equipmentRegisterFile;
     private final Path lineRegisterFile;
@@ -64,16 +65,17 @@ public final class EngineeringDeliverableCompiler {
 
     CompilationResult(Path outputDirectory, Path engineeringGraphFile, Path engineeringConnectivityFile,
         Path engineeringCalculationDagFile, Path engineeringDesignCaseMatrixFile, Path engineeringDisciplinePackageFile,
-        Path designEnvelopeFile, Path equipmentRegisterFile, Path lineRegisterFile, Path instrumentRegisterFile,
-        Path compilerManifestFile, Path validationReportFile, Path revisionDiffFile, EngineeringGraph engineeringGraph,
-        EngineeringDesignEnvelope designEnvelope, DexpiEngineeringExporter.ExportResult dexpiResult,
-        EngineeringPackageValidationReport validationReport) {
+        Path engineeringApprovalLedgerFile, Path designEnvelopeFile, Path equipmentRegisterFile, Path lineRegisterFile,
+        Path instrumentRegisterFile, Path compilerManifestFile, Path validationReportFile, Path revisionDiffFile,
+        EngineeringGraph engineeringGraph, EngineeringDesignEnvelope designEnvelope,
+        DexpiEngineeringExporter.ExportResult dexpiResult, EngineeringPackageValidationReport validationReport) {
       this.outputDirectory = outputDirectory;
       this.engineeringGraphFile = engineeringGraphFile;
       this.engineeringConnectivityFile = engineeringConnectivityFile;
       this.engineeringCalculationDagFile = engineeringCalculationDagFile;
       this.engineeringDesignCaseMatrixFile = engineeringDesignCaseMatrixFile;
       this.engineeringDisciplinePackageFile = engineeringDisciplinePackageFile;
+      this.engineeringApprovalLedgerFile = engineeringApprovalLedgerFile;
       this.designEnvelopeFile = designEnvelopeFile;
       this.equipmentRegisterFile = equipmentRegisterFile;
       this.lineRegisterFile = lineRegisterFile;
@@ -109,6 +111,10 @@ public final class EngineeringDeliverableCompiler {
 
     public Path getEngineeringDisciplinePackageFile() {
       return engineeringDisciplinePackageFile;
+    }
+
+    public Path getEngineeringApprovalLedgerFile() {
+      return engineeringApprovalLedgerFile;
     }
 
     public Path getDesignEnvelopeFile() {
@@ -222,6 +228,8 @@ public final class EngineeringDeliverableCompiler {
       diffFile = outputDirectory.resolve("engineering-revision-diff.json");
       write(diffFile, diff.toJson());
     }
+    Path approvalLedgerFile = outputDirectory.resolve("engineering-approval-ledger.json");
+    write(approvalLedgerFile, GSON.toJson(EngineeringApprovalLedger.build(project, graph, diff)));
     Path compilerManifest = outputDirectory.resolve("engineering-compiler-manifest.json");
     write(compilerManifest, compilerManifest(project, graph, envelope, diff, schemaArtifacts));
     Path validationFile = outputDirectory.resolve("engineering-validation-report.json");
@@ -232,8 +240,8 @@ public final class EngineeringDeliverableCompiler {
       throw new EngineeringPackageValidationException(validationFile, validation);
     }
     return new CompilationResult(outputDirectory, graphFile, connectivityFile, calculationDagFile, designCaseMatrixFile,
-        disciplinePackageFile, envelopeFile, equipmentFile, lineFile, instrumentFile, compilerManifest, validationFile,
-        diffFile, graph, envelope, dexpiResult, validation);
+        disciplinePackageFile, approvalLedgerFile, envelopeFile, equipmentFile, lineFile, instrumentFile,
+        compilerManifest, validationFile, diffFile, graph, envelope, dexpiResult, validation);
   }
 
   private static void addDocumentNodes(EngineeringGraph graph, EngineeringProject project) {
@@ -242,9 +250,9 @@ public final class EngineeringDeliverableCompiler {
         "engineering-manifest.json", "engineering-calculations.json", "cause-and-effect.json",
         "interoperability-report.json", "engineering-model.json", "engineering-connectivity.json",
         "engineering-calculation-dag.json", "engineering-design-case-matrix.json",
-        "engineering-discipline-package.json", "design-case-envelope.json", "equipment-register.json",
-        "line-register.json", "instrument-register.json", "engineering-compiler-manifest.json",
-        "engineering-schema-catalog.json", "engineering-validation-report.json" };
+        "engineering-discipline-package.json", "engineering-approval-ledger.json", "design-case-envelope.json",
+        "equipment-register.json", "line-register.json", "instrument-register.json",
+        "engineering-compiler-manifest.json", "engineering-schema-catalog.json", "engineering-validation-report.json" };
     for (String document : documents) {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, document);
       graph.addNode(new EngineeringNode(nodeId, EngineeringNode.Kind.DOCUMENT, document, document)
@@ -446,6 +454,7 @@ public final class EngineeringDeliverableCompiler {
     artifacts.add("engineering-calculation-dag.json");
     artifacts.add("engineering-design-case-matrix.json");
     artifacts.add("engineering-discipline-package.json");
+    artifacts.add("engineering-approval-ledger.json");
     artifacts.add("design-case-envelope.json");
     artifacts.add("equipment-register.json");
     artifacts.add("line-register.json");

@@ -48,6 +48,7 @@ public final class EngineeringProject implements Serializable {
   private final List<EngineeringDesignCase> executableDesignCases = new ArrayList<EngineeringDesignCase>();
   private final List<EngineeringMetric> engineeringMetrics = new ArrayList<EngineeringMetric>();
   private final List<EngineeringCalculation> calculations = new ArrayList<EngineeringCalculation>();
+  private final List<EngineeringApprovalRecord> approvalRecords = new ArrayList<EngineeringApprovalRecord>();
   private MaterialsReviewInput materialsReviewInput;
 
   EngineeringProject(String name, ProcessSystem processSystem, EngineeringDesignBasis designBasis) {
@@ -288,6 +289,25 @@ public final class EngineeringProject implements Serializable {
   /** @return immutable auditable calculation list */
   public List<EngineeringCalculation> getCalculations() {
     return Collections.unmodifiableList(calculations);
+  }
+
+  /** Adds an accountable approval decision for a canonical engineering graph object. */
+  public EngineeringProject addApprovalRecord(EngineeringApprovalRecord record) {
+    if (record == null) {
+      throw new IllegalArgumentException("approval record must not be null");
+    }
+    for (EngineeringApprovalRecord existing : approvalRecords) {
+      if (existing.getId().equals(record.getId())) {
+        throw new IllegalArgumentException("Duplicate engineering approval record " + record.getId());
+      }
+    }
+    approvalRecords.add(record);
+    return this;
+  }
+
+  /** @return immutable accountable approval decision history */
+  public List<EngineeringApprovalRecord> getApprovalRecords() {
+    return Collections.unmodifiableList(approvalRecords);
   }
 
   /**

@@ -17,7 +17,7 @@ public final class EngineeringNode implements Serializable {
   /** Engineering object categories independent of any exchange format. */
   public enum Kind {
     PROJECT, EQUIPMENT, LINE, INSTRUMENT, REQUIREMENT, BOUNDARY, DESIGN_CASE, CALCULATION, DOCUMENT, PORT, NOZZLE,
-    PIPE_SEGMENT, SIGNAL_CONNECTION, ENERGY_CONNECTION, PROCESS_TAP
+    PIPE_SEGMENT, SIGNAL_CONNECTION, ENERGY_CONNECTION, PROCESS_TAP, APPROVAL
   }
 
   private final String id;

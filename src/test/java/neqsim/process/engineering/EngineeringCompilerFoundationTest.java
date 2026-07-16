@@ -14,6 +14,7 @@ import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import neqsim.NeqSimTest;
+import neqsim.process.engineering.deliverables.EngineeringApprovalLedger;
 import neqsim.process.engineering.deliverables.EngineeringDeliverableCompiler;
 import neqsim.process.engineering.designcase.DesignCaseEngine;
 import neqsim.process.engineering.designcase.EngineeringDesignCase;
@@ -64,6 +65,7 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(Files.isRegularFile(result.getEngineeringCalculationDagFile()));
     assertTrue(Files.isRegularFile(result.getEngineeringDesignCaseMatrixFile()));
     assertTrue(Files.isRegularFile(result.getEngineeringDisciplinePackageFile()));
+    assertTrue(Files.isRegularFile(result.getEngineeringApprovalLedgerFile()));
     assertTrue(Files.isRegularFile(result.getDesignEnvelopeFile()));
     assertTrue(Files.isRegularFile(result.getEquipmentRegisterFile()));
     assertTrue(Files.isRegularFile(result.getLineRegisterFile()));
@@ -83,6 +85,7 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(read(result.getEngineeringDesignCaseMatrixFile()).contains("ABOVE_UPPER_LIMIT"));
     assertTrue(read(result.getEngineeringDisciplinePackageFile()).contains("PROCESS_SAFETY"));
     assertTrue(read(result.getEngineeringDisciplinePackageFile()).contains("MECHANICAL-EQUIPMENT-DATASHEETS"));
+    assertTrue(read(result.getEngineeringApprovalLedgerFile()).contains("APPROVED"));
     assertTrue(result.getValidationReport().isValid());
     assertTrue(EngineeringPackageValidator.validatePackage(temporaryDirectory).isValid());
     assertNotNull(result.getEngineeringGraph().getNode("calculation:envelope-20-vg-001-pressure"));
@@ -101,6 +104,9 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertNotNull(result.getEngineeringGraph()
         .getNode(EngineeringIds.nodeId(EngineeringNode.Kind.PIPE_SEGMENT, "BOUNDARY:20-FLARE-001")));
     assertTrue(hasEdge(result.getEngineeringGraph(), EngineeringEdge.Kind.DEPENDS_ON));
+    assertTrue(hasEdge(result.getEngineeringGraph(), EngineeringEdge.Kind.APPROVES));
+    assertNotNull(result.getEngineeringGraph()
+        .getNode(EngineeringIds.nodeId(EngineeringNode.Kind.APPROVAL, "APPROVAL-20-VG-001-PROCESS")));
   }
 
   @Test
@@ -206,6 +212,9 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertFalse(diff.isEmpty());
     assertTrue(diff.getAddedNodeIds().contains("calculation:20-vg-001-design-p"));
     assertTrue(diff.getImpactedNodeIds().contains(equipmentNode));
+    String approvalLedger = new GsonBuilder().create()
+        .toJson(EngineeringApprovalLedger.build(project, revisionB, diff));
+    assertTrue(approvalLedger.contains("REVALIDATION_REQUIRED"));
   }
 
   private static EngineeringProject createProject() {
@@ -258,6 +267,9 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
         "Review relief protection against the controlled pressure basis").dependsOnCalculation("20-VG-001-RELIEF-BASIS")
         .setStandardsRequired(true).addStandardReference(new EngineeringCalculation.StandardReference("API 520 Part I",
             "2020", "5", "Pressure-relieving device sizing and selection")));
+    project.addApprovalRecord(new EngineeringApprovalRecord("APPROVAL-20-VG-001-PROCESS", separatorNode, "PROCESS",
+        EngineeringApprovalRecord.Status.APPROVED, "Accountable Process Engineer", "PROCESS-DESIGN-REVIEW-001",
+        "2026-07-16"));
     return project;
   }
 

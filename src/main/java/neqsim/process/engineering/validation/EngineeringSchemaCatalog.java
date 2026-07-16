@@ -21,6 +21,7 @@ public final class EngineeringSchemaCatalog {
   public static final String CALCULATION_DAG = "neqsim_engineering_calculation_dag.v1";
   public static final String DESIGN_CASE_MATRIX = "neqsim_engineering_design_case_matrix.v1";
   public static final String DISCIPLINE_PACKAGE = "neqsim_engineering_discipline_package.v1";
+  public static final String APPROVAL_LEDGER = "neqsim_engineering_approval_ledger.v1";
   public static final String DESIGN_CASE_ENVELOPE = "neqsim_design_case_envelope.v1";
   public static final String EQUIPMENT_REGISTER = "neqsim_equipment_register.v1";
   public static final String LINE_REGISTER = "neqsim_line_register.v1";
@@ -84,6 +85,8 @@ public final class EngineeringSchemaCatalog {
         "engineering-design-case-matrix.schema.json"));
     values.add(definition("engineering-discipline-package.json", DISCIPLINE_PACKAGE,
         "engineering-discipline-package.schema.json"));
+    values.add(
+        definition("engineering-approval-ledger.json", APPROVAL_LEDGER, "engineering-approval-ledger.schema.json"));
     values.add(definition("design-case-envelope.json", DESIGN_CASE_ENVELOPE, "design-case-envelope.schema.json"));
     values.add(definition("equipment-register.json", EQUIPMENT_REGISTER, "equipment-register.schema.json"));
     values.add(definition("line-register.json", LINE_REGISTER, "line-register.schema.json"));

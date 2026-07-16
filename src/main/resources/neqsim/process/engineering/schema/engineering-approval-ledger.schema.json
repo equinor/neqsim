@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-approval-ledger:v1",
+  "title": "NeqSim engineering approval ledger",
+  "type": "object",
+  "required": ["schemaVersion", "projectId", "revision", "graphFingerprint", "baselineRevision", "records", "effectiveStates", "revisionImpactedNodeIds", "summary"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_approval_ledger.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:engineering-approval-ledger:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "graphFingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "baselineRevision": {"type": "string", "minLength": 1},
+    "records": {"type": "array", "items": {"type": "object"}},
+    "effectiveStates": {"type": "array", "items": {"type": "object"}},
+    "revisionImpactedNodeIds": {"type": "array", "items": {"type": "string"}},
+    "summary": {
+      "type": "object",
+      "required": ["recordCount", "approvedCount", "rejectedCount", "reviewRequiredCount", "revalidationRequiredCount"],
+      "properties": {
+        "recordCount": {"type": "integer", "minimum": 0},
+        "approvedCount": {"type": "integer", "minimum": 0},
+        "rejectedCount": {"type": "integer", "minimum": 0},
+        "reviewRequiredCount": {"type": "integer", "minimum": 0},
+        "revalidationRequiredCount": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

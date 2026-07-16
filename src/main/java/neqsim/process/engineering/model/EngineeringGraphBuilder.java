@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import neqsim.process.engineering.EngineeringBoundary;
+import neqsim.process.engineering.EngineeringApprovalRecord;
 import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.engineering.EngineeringRequirement;
 import neqsim.process.engineering.LineDesignInput;
@@ -55,7 +56,27 @@ public final class EngineeringGraphBuilder {
     List<EngineeringCalculation> allCalculations = new ArrayList<EngineeringCalculation>(project.getCalculations());
     allCalculations.addAll(additionalCalculations);
     addCalculations(allCalculations, graph, projectNodeId);
+    addApprovals(project, graph, projectNodeId);
     return graph;
+  }
+
+  private static void addApprovals(EngineeringProject project, EngineeringGraph graph, String projectNodeId) {
+    for (EngineeringApprovalRecord approval : project.getApprovalRecords()) {
+      String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.APPROVAL, approval.getId());
+      EngineeringNode node = new EngineeringNode(nodeId, EngineeringNode.Kind.APPROVAL, approval.getId(),
+          approval.getDiscipline() + " approval for " + approval.getSubjectNodeId())
+          .putProperty("discipline", approval.getDiscipline()).putProperty("status", approval.getStatus().name())
+          .putProperty("reviewer", approval.getReviewer()).putProperty("reviewReference", approval.getReviewReference())
+          .putProperty("effectiveDate", approval.getEffectiveDate())
+          .putProperty("supersedesRecordId", approval.getSupersedesRecordId());
+      graph.addNode(node);
+      addEdge(graph, EngineeringEdge.Kind.CONTAINS, projectNodeId, nodeId, "approvalRecord");
+      addEdge(graph, EngineeringEdge.Kind.APPROVES, nodeId, approval.getSubjectNodeId(), approval.getDiscipline());
+      if (!approval.getSupersedesRecordId().isEmpty()) {
+        String previousId = EngineeringIds.nodeId(EngineeringNode.Kind.APPROVAL, approval.getSupersedesRecordId());
+        addEdge(graph, EngineeringEdge.Kind.SUPERSEDES, nodeId, previousId, "approvalHistory");
+      }
+    }
   }
 
   private static Map<String, String> addProcessElements(EngineeringProject project, EngineeringGraph graph,
