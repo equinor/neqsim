@@ -237,7 +237,7 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     JsonObject pipingReadiness = findReadinessTopic(readiness, "PIPING_GEOMETRY");
     assertEquals(1, pipingReadiness.get("completedItemCount").getAsInt());
     assertEquals(2, pipingReadiness.get("requiredItemCount").getAsInt());
-    assertEquals("NOT_READY", pipingReadiness.get("status").getAsString());
+    assertEquals("PARTIALLY_COMPLETE", pipingReadiness.get("status").getAsString());
     JsonObject incompleteRelief = findReliefCoverage(calculationJson.getAsJsonArray("reliefScenarioCoverage"),
         "20-KA-001");
     assertEquals("SCENARIO_SET_INCOMPLETE", incompleteRelief.get("status").getAsString());
