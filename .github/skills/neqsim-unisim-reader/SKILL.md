@@ -635,8 +635,37 @@ All four output methods (`to_json()`, `build_and_run()`, `to_python()`,
 3. **E300 fluid loading**: When the `UniSimReader.read(export_e300=True)`
    option was used (default), the converter uses `EclipseFluidReadWrite.read()`
    to load the fluid with exact Tc, Pc, ω, MW, and BIPs from UniSim.
-4. **Recycle tolerance**: All auto-generated Recycle objects have
-   `setTolerance(1e6)` to prevent convergence blocking during initial runs.
+4. **Recycle convergence**: Auto-generated `Recycle` objects (in `to_python()` /
+   `to_notebook()`) get a **real tolerance (`recycle_tolerance`, default `1e-2`)
+   plus Wegstein acceleration (`recycle_acceleration`, default `"WEGSTEIN"`)**,
+   and the generated run tail **iterates** (`setRunStep(True)` loop, then a final
+   run) so the tear streams actually converge. A very large tolerance (the old
+   `1e6`) accepted the seeded tear on the first pass, so recycle-fed streams
+   never updated and deviated strongly from UniSim. Tune via:
+
+   ```python
+   converter = UniSimToNeqSim(model)
+   converter.recycle_tolerance = 1e-3        # tighter tear
+   converter.recycle_acceleration = "WEGSTEIN"  # or None to disable
+   python_code = converter.to_python()
+   ```
+5. **Unfed columns/absorbers are skipped**: A `DistillationColumn`/`Absorber`
+   whose feed stream could not be extracted from UniSim (UniSim `fractop`/
+   `absorber` COM connectivity is not always resolvable) is **omitted** rather
+   than emitted as a bare, feed-less column. A feed-less column **throws on
+   `run()` and aborts the whole `process.run()`**, so every downstream unit
+   stops executing and stays at its seed value — this was the single biggest
+   cause of a "runs but nothing matches" result. The skipped column is reported
+   in `converter.warnings`; reconnect its feed manually to include it.
+
+> **Verification vehicle — use `to_python()`, not the JSON path, when recycles
+> matter.** `build_and_run()` (the JSON path) emits recycles with only an
+> `inlet` and does **not** wire the tear back to a downstream consumer, so the
+> recycle loops are not closed and the recompression/anti-surge streams cannot
+> converge. The **generated Python** (`to_python()`) wires recycles via
+> forward-reference placeholders + auto-`Recycle`, so it is the path that can
+> reproduce a recycle-heavy plant. Compare with `UniSimComparator(model,
+> process)` after `exec()`-ing the generated script.
 
 To disable full mode and get only the main flowsheet operations:
 

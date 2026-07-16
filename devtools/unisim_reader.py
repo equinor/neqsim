@@ -1963,6 +1963,14 @@ class UniSimToNeqSim:
         self.model = model
         self._warnings = []
         self._assumptions = []
+        # Recycle convergence settings for generated models. A real tolerance
+        # plus Wegstein acceleration lets the auto-generated recycle tear
+        # streams actually converge (the previous 1e6 tolerance accepted the
+        # seeded tear on the first pass, so recycle-fed streams never updated
+        # and deviated strongly from UniSim). Override before to_python()/
+        # to_json() if a looser/tighter tear is needed.
+        self.recycle_tolerance = 1e-2
+        self.recycle_acceleration = "WEGSTEIN"  # or None to disable
 
     @property
     def warnings(self) -> List[str]:
@@ -2561,6 +2569,18 @@ class UniSimToNeqSim:
         if neqsim_type in self.SKIPPED_NEQSIM_TYPES or neqsim_type in ('PIDController', 'LogicalOp'):
             self._warnings.append(
                 f"Skipped non-physical operation '{op.name}' ({neqsim_type})")
+            return None
+
+        # Columns/absorbers with no extracted feed cannot run and abort the
+        # whole process.run() (a bare DistillationColumn with 0 feeds throws),
+        # which stops every downstream unit from executing. Skip them so the
+        # rest of the flowsheet still runs and can be compared; the feed must
+        # be reconnected manually to include the column.
+        if neqsim_type in ('DistillationColumn', 'Absorber') and not op.feeds:
+            self._warnings.append(
+                f"Skipped column '{op.name}' ({neqsim_type}) - no feed stream "
+                f"extracted from UniSim; reconnect its feed manually to "
+                f"include it (kept out so process.run() completes).")
             return None
 
         entry = {
@@ -3344,6 +3364,7 @@ class UniSimToNeqSim:
         'Pump = jneqsim.process.equipment.pump.Pump',
         'Expander = jneqsim.process.equipment.expander.Expander',
         'Recycle = jneqsim.process.equipment.util.Recycle',
+        'AccelerationMethod = jneqsim.process.equipment.util.AccelerationMethod',
         'Adjuster = jneqsim.process.equipment.util.Adjuster',
         'SetPoint = jneqsim.process.equipment.util.SetPoint',
         'StreamSaturatorUtil = jneqsim.process.equipment.util.StreamSaturatorUtil',
@@ -3464,6 +3485,17 @@ class UniSimToNeqSim:
             lines.append(f'{v} = Splitter("{op.name}", {ref_expr}, {n_splits})')
 
         elif neqsim_type == 'DistillationColumn':
+            # A DistillationColumn with no feed stream throws on run() and
+            # aborts the whole process. Skip it (do not add to the process) so
+            # the rest of the flowsheet still runs; the feed must be
+            # reconnected manually to include the column.
+            if not inlet_refs:
+                self._warnings.append(
+                    f"Skipped column '{op.name}' - no feed stream extracted "
+                    f"from UniSim; reconnect its feed manually.")
+                return [f'# SKIPPED (unfed column): "{op.name}" - no feed '
+                        f'stream extracted; reconnect manually. '
+                        f'feeds={op.feeds}']
             # Detect column internals from sub-flowsheet to determine
             # whether it has a condenser and/or reboiler
             has_condenser, has_reboiler, n_trays = self._detect_column_config(
@@ -3472,16 +3504,11 @@ class UniSimToNeqSim:
             lines.append(
                 f'{v} = DistillationColumn("{op.name}", {n_trays}, '
                 f'{has_reboiler}, {has_condenser})')
-            if inlet_refs:
-                feed_tray = max(1, n_trays // 2)
-                lines.append(
-                    f'{v}.addFeedStream({_ref(inlet_refs[0])}, {feed_tray})')
-                for extra in inlet_refs[1:]:
-                    lines.append(f'{v}.addFeedStream({_ref(extra)}, 1)')
-            else:
-                lines.append(
-                    f'# TODO: connect feed stream(s) to {op.name} — '
-                    f'feeds: {op.feeds}')
+            feed_tray = max(1, n_trays // 2)
+            lines.append(
+                f'{v}.addFeedStream({_ref(inlet_refs[0])}, {feed_tray})')
+            for extra in inlet_refs[1:]:
+                lines.append(f'{v}.addFeedStream({_ref(extra)}, 1)')
 
         elif neqsim_type == 'Absorber':
             # Detect glycol/TEG contactor by name — use ComponentSplitter
@@ -3522,14 +3549,14 @@ class UniSimToNeqSim:
                     f'# TODO: absorber needs a second feed stream '
                     f'(solvent) — feeds: {op.feeds}')
             else:
-                n_stages = op.properties.get('numberOfStages',
-                                             op.properties.get('numberOfTrays', 5))
-                lines.append(
-                    f'{v} = DistillationColumn("{op.name}", {n_stages}, '
-                    f'False, False)')
-                lines.append(
-                    f'# TODO: connect feed streams to absorber — '
-                    f'feeds: {op.feeds}')
+                # Absorber with no feed cannot run; skip it so the rest of the
+                # flowsheet still executes (reconnect feeds manually to keep).
+                self._warnings.append(
+                    f"Skipped absorber '{op.name}' - no feed stream extracted "
+                    f"from UniSim; reconnect its feeds manually.")
+                return [f'# SKIPPED (unfed absorber): "{op.name}" - no feed '
+                        f'stream extracted; reconnect manually. '
+                        f'feeds={op.feeds}']
 
         elif neqsim_type == 'GibbsReactor':
             ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
@@ -3671,9 +3698,15 @@ class UniSimToNeqSim:
                 lines.append(
                     f'{v}.setOutletStream('
                     f'{inlet_ref}.clone("{op.name} outlet"))')
-            # Set very large tolerance so recycle "converges" in 2 iterations
-            # (essentially a single-pass with UniSim-initialised tear streams)
-            lines.append(f'{v}.setTolerance(1e6)')
+            # Real tolerance + Wegstein acceleration so the tear stream
+            # actually converges (a very large tolerance would accept the
+            # seeded tear on the first pass, leaving recycle-fed streams at
+            # their initial values).
+            lines.append(f'{v}.setTolerance({self.recycle_tolerance})')
+            if self.recycle_acceleration:
+                lines.append(
+                    f'{v}.setAccelerationMethod('
+                    f'AccelerationMethod.{self.recycle_acceleration})')
             # Wire outlet to the forward-reference placeholder if one exists
             fwd_ref_vars_map = topo.get('fwd_ref_vars', {})
             if op.name in fwd_ref_vars_map:
@@ -3866,7 +3899,12 @@ class UniSimToNeqSim:
                         f'{rcy_var}.addStream({v}.{port_method})')
                     lines.append(
                         f'{rcy_var}.setOutletStream({port_pv})')
-                    lines.append(f'{rcy_var}.setTolerance(1e6)')
+                    lines.append(
+                        f'{rcy_var}.setTolerance({self.recycle_tolerance})')
+                    if self.recycle_acceleration:
+                        lines.append(
+                            f'{rcy_var}.setAccelerationMethod('
+                            f'AccelerationMethod.{self.recycle_acceleration})')
                     lines.append(f'process.add({rcy_var})')
 
         return lines
@@ -4726,7 +4764,19 @@ class UniSimToNeqSim:
             _a('        except Exception:')
             _a('            pass')
         else:
-            _a('process.run()')
+            _a('# Iterate so the recycle tear streams converge, then a final')
+            _a('# full run. Guarded so a single failing unit does not abort.')
+            _a('process.setRunStep(True)')
+            _a('for _it in range(int(20)):')
+            _a('    try:')
+            _a('        process.run()')
+            _a('    except Exception as _exc:')
+            _a('        print(f"  run-step {_it} warning: {_exc}")')
+            _a('process.setRunStep(False)')
+            _a('try:')
+            _a('    process.run()')
+            _a('except Exception as _exc:')
+            _a('    print(f"  final run warning: {_exc}")')
             _a('')
             _a('# Print key stream results')
             _a('for i in range(int(process.getUnitOperations().size())):')

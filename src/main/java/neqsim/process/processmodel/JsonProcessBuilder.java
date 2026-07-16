@@ -69,6 +69,13 @@ public class JsonProcessBuilder {
   /** Logger object for class. */
   private static final Logger logger = LogManager.getLogger(JsonProcessBuilder.class);
 
+  /**
+   * Maximum number of outer {@code process.run()} passes performed when a JSON-built flowsheet with recycles is
+   * auto-run. Nested / forward-referenced recycle loops seeded at near-zero flow need a few outer passes to propagate
+   * real flow and converge; the loop stops early as soon as {@code solved()}.
+   */
+  private static final int MAX_AUTORUN_PASSES = 15;
+
   /** Registry of named fluids created during build. */
   private final Map<String, SystemInterface> namedFluids = new LinkedHashMap<>();
 
@@ -312,7 +319,25 @@ public class JsonProcessBuilder {
     boolean autoRun = root.has("autoRun") && root.get("autoRun").getAsBoolean();
     if (autoRun) {
       try {
-        process.run();
+        // A single process.run() iterates the internal recycle controller once.
+        // For flowsheets whose recycle tear streams are forward references
+        // (a recycle inlet produced by a downstream unit, wired in Pass 2),
+        // nested loops seeded at ~zero flow need several outer passes before
+        // they propagate real flow and converge — the same reason the reference
+        // notebooks loop run() when composing multi-area plants. Iterate a
+        // bounded number of outer passes and stop as soon as the process
+        // reports solved(). Extra passes on an already-solved process are
+        // effectively no-ops, so this is safe for recycle-free flowsheets too.
+        if (process.hasRecycles()) {
+          for (int pass = 0; pass < MAX_AUTORUN_PASSES; pass++) {
+            process.run();
+            if (process.solved()) {
+              break;
+            }
+          }
+        } else {
+          process.run();
+        }
       } catch (Exception e) {
         warnings.add("process.run() threw: " + e.getMessage() + " — partial results may still be available");
       }
