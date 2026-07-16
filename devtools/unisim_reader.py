@@ -2537,6 +2537,16 @@ class UniSimToNeqSim:
                     props['temperature'] = stream_data.temperature_C + 273.15
                 if stream_data.pressure_bara is not None:
                     props['pressure'] = stream_data.pressure_bara
+                # Per-stream composition so each feed carries its own fluid
+                # (applied by JsonProcessBuilder via setMolarComposition, matched
+                # to the fluid components case-insensitively) instead of sharing
+                # the single default fluid passed to fromJsonAndRun.
+                comp = getattr(stream_data, 'composition', None)
+                if comp:
+                    comp_nz = {k: float(v) for k, v in comp.items()
+                               if v is not None and float(v) > 1e-9}
+                    if comp_nz:
+                        props['composition'] = comp_nz
                 if props:
                     entry['properties'] = props
             process.append(entry)
@@ -3224,6 +3234,19 @@ class UniSimToNeqSim:
                         fwd_ref_placeholders.add(producer_name)
             defined_ops.add(op.name)
 
+        # --- mark forward-ref producers whose loop is ALREADY closed by a
+        # UniSim recycle (RCY) op. A forward-ref placeholder is the converter's
+        # loop tear point and is seeded with the UniSim stream value. If that
+        # producer lies on a cycle that also contains a UniSim recycle op, the
+        # loop is already closed on its back-edge by that RCY; adding a second
+        # (forward) closing Recycle over-constrains the loop and — because the
+        # anti-surge/recompression control is not reproduced — inflates the
+        # circulating flow (observed ~2x). For those placeholders we leave the
+        # seeded tear OPEN. Only forward-refs on a cycle with NO recycle op get
+        # a closing tear (see to_python).
+        fwd_ref_recycle_closed = self._recycle_closed_placeholders(
+            _all_ops_flat, stream_producer, fwd_ref_placeholders)
+
         return dict(
             fluid=fluid, eos_class=eos_class, flowsheet=flowsheet,
             all_ops=all_operations, all_streams=all_streams,
@@ -3231,10 +3254,113 @@ class UniSimToNeqSim:
             stream_by_name=stream_by_name, sorted_ops=sorted_ops,
             var_names={}, used_vars=set(),
             fwd_ref_placeholders=fwd_ref_placeholders,
+            fwd_ref_recycle_closed=fwd_ref_recycle_closed,
             fwd_ref_vars={},
             sf_mapping=None,  # populated lazily by _build_sf_mapping
             included_sf_names=include_names,  # which sub-flowsheets pass filter
         )
+
+    def _recycle_closed_placeholders(self, all_ops_flat, stream_producer,
+                                     fwd_ref_placeholders):
+        """Return the subset of *fwd_ref_placeholders* whose op lies on a cycle
+        that already contains a UniSim recycle (RCY) op.
+
+        Builds the material-stream op dependency graph (producer op -> consumer
+        op), then for each recycle op R computes the set of nodes on a cycle
+        through R as ``reachable_from(R) & can_reach(R)``. A forward-ref
+        producer in that set already has its loop closed by R, so it must NOT
+        receive an additional closing tear recycle.
+
+        Args:
+            all_ops_flat: all operations (main + sub-flowsheet).
+            stream_producer: dict mapping stream -> (producer_op_name, port).
+            fwd_ref_placeholders: set of forward-reference producer names.
+
+        Returns:
+            Set of producer names whose loop is already recycle-closed.
+        """
+        op_by_name = {}
+        for op in all_ops_flat:
+            op_type = getattr(op, 'type_name', '') or ''
+            if UniSimReader.is_material_stream_operation(op_type):
+                op_by_name[op.name] = op
+        # forward adjacency: producer op -> consumer op
+        adj = {name: set() for name in op_by_name}
+        radj = {name: set() for name in op_by_name}
+        for op in op_by_name.values():
+            for s in (op.feeds or []):
+                prod = stream_producer.get(s)
+                if prod and prod[0] in op_by_name and prod[0] != op.name:
+                    adj[prod[0]].add(op.name)
+                    radj[op.name].add(prod[0])
+
+        def _reach(start, graph):
+            seen = set([start])
+            stack = [start]
+            while stack:
+                u = stack.pop()
+                for v in graph.get(u, ()):
+                    if v not in seen:
+                        seen.add(v)
+                        stack.append(v)
+            return seen
+
+        recycle_ops = set()
+        for name, op in op_by_name.items():
+            if self.resolve_neqsim_type(op) == 'Recycle':
+                recycle_ops.add(name)
+
+        recycle_loop_members = set()
+        for r in recycle_ops:
+            fwd = _reach(r, adj)
+            bwd = _reach(r, radj)
+            recycle_loop_members |= (fwd & bwd)
+
+        return set(p for p in fwd_ref_placeholders
+                   if p in recycle_loop_members)
+
+    @staticmethod
+    def _split_factors_from_flows(op, topo):
+        """Compute NeqSim Splitter split factors from UniSim product mass flows.
+
+        Returns a list of fractions (summing to 1, in ``op.products`` order) so
+        the tee reproduces the converged UniSim split, or ``None`` when the
+        split cannot be determined (fewer than 2 products, or no positive
+        product flow is known — in which case the caller leaves the splitter at
+        its default equal division).
+
+        Zero / unknown branches are clamped to a tiny epsilon so no split
+        stream is exactly empty (which can upset a downstream flash), then the
+        vector is renormalised to sum to 1.
+
+        Args:
+            op: the UniSim splitter (teeop) operation.
+            topo: the topology dict (provides ``stream_by_name``).
+
+        Returns:
+            List[float] of split factors, or None.
+        """
+        products = op.products or []
+        if len(products) < 2:
+            return None
+        stream_by_name = topo.get('stream_by_name', {})
+        flows = []
+        for pname in products:
+            sd = stream_by_name.get(pname)
+            f = sd.mass_flow_kgh if sd is not None else None
+            flows.append(f)
+        known_total = sum(f for f in flows if f is not None and f > 0.0)
+        if known_total <= 0.0:
+            return None  # nothing to base a split on -> keep equal division
+        eps = 1e-6
+        facs = []
+        for f in flows:
+            if f is None or f <= 0.0:
+                facs.append(eps)
+            else:
+                facs.append(f / known_total)
+        total = sum(facs)
+        return [x / total for x in facs]
 
     # ---- variable-name helpers (static, used by all code-gen paths) ----
 
@@ -3406,6 +3532,13 @@ class UniSimToNeqSim:
                 lines.append(
                     f'fluid_packages["{fluid_ref}"].setPressure('
                     f'{section.get("pressure", 1.0)}, "bara")')
+                # Enable the aqueous/multiphase flash so ThreePhaseSeparators
+                # can drop out free water. Verified: with multiphase check the
+                # E300 water (NeqSim normalises H2O -> water) forms a genuine
+                # aqueous phase, so produced water is modelled physically
+                # instead of staying dissolved in the oil.
+                lines.append(
+                    f'fluid_packages["{fluid_ref}"].setMultiPhaseCheck(True)')
                 pkg_name = section.get('fluidPackageName', fluid_ref)
                 n_comp = section.get('componentCount', '?')
                 lines.append(
@@ -3425,16 +3558,39 @@ class UniSimToNeqSim:
         return lines
 
     def _gen_feed_lines(self, topo: dict) -> List[str]:
-        """Return code lines that create external feed streams."""
+        """Return code lines that create external feed streams.
+
+        Each feed stream is given its OWN molar composition extracted from the
+        UniSim snapshot (mapped onto the fluid component order by name,
+        case-insensitively) instead of a single shared ``fluid.clone()``
+        default.  Without this every feed carries the same default composition,
+        so downstream separators all flash an identical fluid and report the
+        same RVP/GOR regardless of which stream feeds them.
+        """
         lines = []
         var_names = topo['var_names']
         used_vars = topo['used_vars']
         stream_by_name = topo['stream_by_name']
+        # Emit the composition helper once, before the feed streams.
+        lines.extend(self._composition_helper_lines())
         for feed_name in sorted(topo['external_feeds']):
             sd = stream_by_name.get(feed_name)
             v = self._unique_var(feed_name, var_names, used_vars)
             lines.append(f'{v} = Stream("{feed_name}", fluid.clone())')
             if sd:
+                # UniSim models produced/injected water as a heavy-HC pseudo
+                # and the COM read mislabels it (a water stream comes back as
+                # ~100% WC13-C14* yet its molecular weight is ~18 g/mol). The
+                # E300 fluid has a real H2O component, so recompose such feeds
+                # as pure H2O; the aqueous phase then separates in the 3-phase
+                # separators (physically correct) instead of the phantom heavy
+                # oil flooding the downstream water/recycle trains.
+                if self._is_water_feed(feed_name, sd):
+                    comp_literal = '{"H2O": 1.0}'
+                else:
+                    comp_literal = self._composition_literal(sd)
+                if comp_literal:
+                    lines.append(f'_set_feed_composition({v}, {comp_literal})')
                 if sd.mass_flow_kgh is not None and sd.mass_flow_kgh > 0:
                     lines.append(f'{v}.setFlowRate({sd.mass_flow_kgh}, "kg/hr")')
                 if sd.temperature_C is not None:
@@ -3444,6 +3600,105 @@ class UniSimToNeqSim:
             lines.append(f'process.add({v})')
             lines.append('')
         return lines
+
+    @staticmethod
+    def _composition_helper_lines() -> List[str]:
+        """Lines defining the runtime feed-composition helper (emitted once).
+
+        The helper maps a UniSim ``{componentName: moleFraction}`` dict onto the
+        NeqSim fluid's component order by a case-insensitive name match (the
+        only difference between the two naming schemes is capitalisation, e.g.
+        ``Nitrogen`` vs ``nitrogen``; pseudo names such as ``WC6*`` and
+        ``22-Mpropane`` are identical), then applies it with
+        ``setMolarComposition``.  Unmatched names are skipped, and the vector is
+        left un-normalised for NeqSim to normalise internally.
+        """
+        return [
+            '# Feed composition helper: give each feed stream its own composition',
+            '# (mapped by name, case-insensitively) instead of one shared default.',
+            'def _set_feed_composition(stream, comp):',
+            '    import jpype',
+            '    sysf = stream.getFluid()',
+            '    n = int(sysf.getNumberOfComponents())',
+            '    names = [str(sysf.getComponent(i).getName()) for i in range(n)]',
+            '    idx = {nm.lower(): i for i, nm in enumerate(names)}',
+            '    z = [0.0] * n',
+            '    total = 0.0',
+            '    for key, val in comp.items():',
+            '        if val is None:',
+            '            continue',
+            '        j = idx.get(str(key).lower())',
+            '        if j is None:',
+            '            continue',
+            '        z[j] += float(val)',
+            '        total += float(val)',
+            '    if total <= 0.0:',
+            '        return',
+            '    sysf.setMolarComposition(jpype.JArray(jpype.JDouble)(z))',
+            '',
+        ]
+
+    #: Light real components that can dominate a ~18 g/mol stream legitimately
+    #: (methane-rich gas averages to ~17-18 g/mol). Used to distinguish a real
+    #: light-gas feed from a mislabeled produced-water stream, whose dominant
+    #: "component" is a heavy pseudo (real MW ~180) inconsistent with MW ~18.
+    _NON_WATER_DOMINANT = frozenset((
+        'methane', 'ethane', 'propane', 'i-butane', 'n-butane', 'isobutane',
+        'i-pentane', 'n-pentane', '22-mpropane', 'nitrogen', 'co2',
+        'carbon dioxide', 'hydrogen', 'h2s', 'oxygen', 'argon', 'helium'))
+
+    @staticmethod
+    def _is_water_feed(feed_name, sd=None):
+        """Return True when a feed stream is (produced/injected) water.
+
+        UniSim models water in this fluid as a heavy-HC pseudo, and the COM
+        composition read mislabels the water fraction (e.g. a stream comes back
+        as ~100% ``WC13-C14*`` yet its stream molecular weight is ~18 g/mol,
+        inconsistent with that pseudo's real ~180 g/mol). A stream is treated
+        as water when its name contains ``water`` OR its molecular weight is
+        ~18 g/mol, one component dominates (>90%), and that dominant component
+        is NOT a light real gas/NGL (which is how a genuine methane-rich gas
+        stream — also ~17-18 g/mol — is excluded).
+
+        @param feed_name the UniSim stream name
+        @param sd optional stream data (for the molecular-weight test)
+        @return True if the stream should be composed as pure H2O
+        """
+        if 'water' in (feed_name or '').lower():
+            return True
+        if sd is None:
+            return False
+        mw = getattr(sd, 'molecular_weight', None)
+        if mw is None or not (16.5 < float(mw) < 19.5):
+            return False
+        comp = getattr(sd, 'composition', None) or {}
+        items = [(k, float(v)) for k, v in comp.items() if v is not None]
+        if not items:
+            return False
+        dom_name, dom_frac = max(items, key=lambda kv: kv[1])
+        if dom_frac <= 0.9:
+            return False
+        # A MW~18 stream dominated by a light real component is genuine gas/NGL;
+        # only a heavy-pseudo (or water) dominant at MW~18 is mislabeled water.
+        return str(dom_name).lower() not in UniSimToNeqSim._NON_WATER_DOMINANT
+
+    @staticmethod
+    def _composition_literal(sd: 'UniSimStreamData') -> Optional[str]:
+        """Return a Python dict literal of the stream's non-zero composition.
+
+        @param sd the stream data whose ``composition`` dict is serialised
+        @return a ``{"name": frac, ...}`` literal, or ``None`` when no usable
+                composition is available
+        """
+        comp = getattr(sd, 'composition', None)
+        if not comp:
+            return None
+        items = [(k, float(v)) for k, v in comp.items()
+                 if v is not None and float(v) > 1e-9]
+        if not items:
+            return None
+        inner = ', '.join('"%s": %r' % (k, v) for k, v in items)
+        return '{' + inner + '}'
 
     def _gen_equipment_lines(self, op: 'UniSimOperation', topo: dict) -> Optional[List[str]]:
         """Return code lines for one equipment unit, or None if skipped."""
@@ -3483,6 +3738,17 @@ class UniSimToNeqSim:
             ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
             n_splits = len(op.products) if op.products else 2
             lines.append(f'{v} = Splitter("{op.name}", {ref_expr}, {n_splits})')
+            # Set split factors from the UniSim product mass flows so the tee
+            # reproduces the UniSim split instead of an equal (1/N) division.
+            # Split index == position in op.products (see _resolve_inlet_ref),
+            # so factors are emitted in op.products order. Zero/unknown
+            # branches are clamped to a tiny epsilon (kept non-zero so a
+            # downstream flash never sees an exactly-empty stream) and the
+            # vector is renormalised to sum to 1.
+            split_facs = self._split_factors_from_flows(op, topo)
+            if split_facs is not None:
+                fac_str = ', '.join(f'{x:.10g}' for x in split_facs)
+                lines.append(f'{v}.setSplitFactors([{fac_str}])')
 
         elif neqsim_type == 'DistillationColumn':
             # A DistillationColumn with no feed stream throws on run() and
@@ -4726,6 +4992,66 @@ class UniSimToNeqSim:
             if neqsim_type == 'SubFlowsheet':
                 v = topo['var_names'].get(op.name, self._to_pyvar(op.name))
                 sub_flowsheet_vars.append((op.name, v))
+
+        # --- close remaining forward-reference tears with recycles ---
+        # Every consumed ``_fwd_<producer>`` placeholder for a single-outlet
+        # producing unit (mixer, valve, cooler, heater, pump, compressor,
+        # splitter/tee) is tied back to the real producer outlet via a
+        # closing Recycle so fluid propagates along the same path as in
+        # UniSim (instead of the placeholder holding a static seed).
+        # Separators / heat exchangers close their PORT placeholders inside
+        # _gen_equipment_lines; recycle ops close their own placeholder;
+        # both are skipped here to avoid double-closing.
+        fwd_ref_vars_map = topo.get('fwd_ref_vars', {})
+        var_names_map = topo['var_names']
+        op_by_name_tear = {op.name: op for op in topo['sorted_ops']}
+        recycle_closed = topo.get('fwd_ref_recycle_closed', set())
+        _skip_tear_types = (
+            'Separator', 'GasScrubber', 'ThreePhaseSeparator',
+            'HeatExchanger', 'Recycle', 'SubFlowsheet',
+            'PIDController', 'LogicalOp')
+        tear_lines = []
+        for prod_name in sorted(topo.get('fwd_ref_placeholders', set())):
+            whole_pv = fwd_ref_vars_map.get(prod_name)
+            if not whole_pv:
+                continue
+            # Skip placeholders whose loop is ALREADY closed by a UniSim
+            # recycle (RCY) op — the seeded forward-ref tear must stay open,
+            # otherwise the loop is over-constrained and the (uncontrolled)
+            # recompression/anti-surge recycle inflates the circulating flow.
+            if prod_name in recycle_closed:
+                continue
+            prod_op = op_by_name_tear.get(prod_name)
+            if prod_op is None:
+                continue
+            prod_type = self.resolve_neqsim_type(prod_op)
+            if prod_type is None or prod_type in _skip_tear_types:
+                continue
+            prod_var = var_names_map.get(prod_name)
+            if not prod_var:
+                continue
+            outlet_method = (
+                'getSplitStream(int(0))'
+                if prod_type == 'Splitter'
+                else 'getOutletStream()')
+            rcy_var = f'_rcy_tear_{whole_pv}'
+            tear_lines.append(
+                f'# Close forward-reference tear: wire {prod_name} outlet '
+                f'back to its placeholder')
+            tear_lines.append(f'{rcy_var} = Recycle("{prod_name}_tear")')
+            tear_lines.append(f'{rcy_var}.addStream({prod_var}.{outlet_method})')
+            tear_lines.append(f'{rcy_var}.setOutletStream({whole_pv})')
+            tear_lines.append(f'{rcy_var}.setTolerance({self.recycle_tolerance})')
+            if self.recycle_acceleration:
+                tear_lines.append(
+                    f'{rcy_var}.setAccelerationMethod('
+                    f'AccelerationMethod.{self.recycle_acceleration})')
+            tear_lines.append(f'process.add({rcy_var})')
+        if tear_lines:
+            _a('# --- Close remaining forward-reference tears (recycles) ---')
+            for _tl in tear_lines:
+                _a(_tl)
+            _a('')
 
         # --- compose with ProcessModel if sub-flowsheets exist ---
         has_sub_flowsheets = bool(sub_flowsheet_vars)

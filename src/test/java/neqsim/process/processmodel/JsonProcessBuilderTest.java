@@ -44,6 +44,39 @@ class JsonProcessBuilderTest {
   }
 
   @Test
+  void testPerStreamComposition() {
+    // Two streams share the same default fluid but override composition per
+    // stream (one under properties, one at top level). They must end up with
+    // distinct compositions/molar masses instead of the shared default.
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 0.5, \"ethane\": 0.3, \"propane\": 0.2}" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"gasy\","
+        + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"],"
+        + "     \"composition\": {\"Methane\": 0.95, \"Ethane\": 0.05}}},"
+        + "  {\"type\": \"Stream\", \"name\": \"heavy\"," + "   \"composition\": {\"propane\": 0.9, \"ethane\": 0.1},"
+        + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"]}}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    ProcessSystem process = result.getProcessSystem();
+
+    StreamInterface gasy = (StreamInterface) process.getUnit("gasy");
+    StreamInterface heavy = (StreamInterface) process.getUnit("heavy");
+    assertNotNull(gasy);
+    assertNotNull(heavy);
+
+    // Case-insensitive names ("Methane") applied to the SRK fluid.
+    assertEquals(0.95, gasy.getFluid().getComponent("methane").getz(), 1e-9);
+    assertEquals(0.9, heavy.getFluid().getComponent("propane").getz(), 1e-9);
+
+    // Distinct compositions => distinct molar masses (were identical before fix).
+    double mwGasy = gasy.getFluid().getMolarMass();
+    double mwHeavy = heavy.getFluid().getMolarMass();
+    assertTrue(mwHeavy > mwGasy + 0.01,
+        "Heavy stream should have a higher molar mass: gasy=" + mwGasy + " heavy=" + mwHeavy);
+  }
+
+  @Test
   void testBuildStreamAndSeparator() {
     String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
         + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}" + "},"

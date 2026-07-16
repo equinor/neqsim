@@ -1436,9 +1436,81 @@ public class JsonProcessBuilder {
 
     // Clone fluid so each stream gets its own instance
     SystemInterface streamFluid = fluid.clone();
+
+    // Apply a per-stream molar composition when provided so each feed can carry
+    // its own composition instead of sharing the default fluid's composition.
+    // Accepts either a top-level "composition" object or one nested under
+    // "properties", e.g. { "composition": { "methane": 0.8, "ethane": 0.2 } }.
+    JsonObject compositionObj = null;
+    if (unitDef.has("composition") && unitDef.get("composition").isJsonObject()) {
+      compositionObj = unitDef.getAsJsonObject("composition");
+    } else if (unitDef.has("properties") && unitDef.get("properties").isJsonObject()) {
+      JsonObject props = unitDef.getAsJsonObject("properties");
+      if (props.has("composition") && props.get("composition").isJsonObject()) {
+        compositionObj = props.getAsJsonObject("composition");
+      }
+    }
+    if (compositionObj != null) {
+      applyStreamComposition(streamFluid, compositionObj, name);
+    }
+
     Stream stream = new Stream(name, streamFluid);
 
     return stream;
+  }
+
+  /**
+   * Applies a per-stream molar composition to a stream fluid.
+   *
+   * <p>
+   * Component names in the JSON composition object are matched to the fluid's components case-insensitively (the only
+   * difference between common naming schemes is capitalisation, e.g. {@code "Methane"} vs {@code "methane"};
+   * pseudo-component names such as {@code "WC6*"} match exactly). Unmatched names and non-positive values are ignored
+   * (a warning is recorded). The resulting mole-fraction vector is applied with
+   * {@link neqsim.thermo.system.SystemInterface#setMolarComposition(double[])}, which normalises internally, so the
+   * values need not sum to 1.
+   * </p>
+   *
+   * @param streamFluid the cloned stream fluid to update (not null)
+   * @param compositionObj the JSON object mapping component name to mole fraction (not null)
+   * @param streamName the stream name, used only for warning messages
+   */
+  private void applyStreamComposition(SystemInterface streamFluid, JsonObject compositionObj, String streamName) {
+    int n = streamFluid.getNumberOfComponents();
+    Map<String, Integer> index = new HashMap<>();
+    for (int i = 0; i < n; i++) {
+      index.put(streamFluid.getComponent(i).getName().toLowerCase(java.util.Locale.ROOT), i);
+    }
+    double[] z = new double[n];
+    double total = 0.0;
+    List<String> unmatched = new ArrayList<>();
+    for (Map.Entry<String, JsonElement> entry : compositionObj.entrySet()) {
+      String key = entry.getKey();
+      double val;
+      try {
+        val = entry.getValue().getAsDouble();
+      } catch (RuntimeException ex) {
+        continue;
+      }
+      if (val <= 0.0) {
+        continue;
+      }
+      Integer idx = index.get(key.toLowerCase(java.util.Locale.ROOT));
+      if (idx == null) {
+        unmatched.add(key);
+        continue;
+      }
+      z[idx] += val;
+      total += val;
+    }
+    if (total <= 0.0) {
+      warnings.add("Stream '" + streamName + "' composition ignored — no components matched the fluid");
+      return;
+    }
+    streamFluid.setMolarComposition(z);
+    if (!unmatched.isEmpty()) {
+      warnings.add("Stream '" + streamName + "' composition: unmatched components ignored: " + unmatched);
+    }
   }
 
   /**
