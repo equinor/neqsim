@@ -74,6 +74,7 @@ The compiler adds these coordinated artifacts:
 | `engineering-model.json` | Canonical nodes, semantic relationships, provenance, calculation dependencies and fingerprint |
 | `engineering-connectivity.json` | Physical ports/nozzles, pipe/signal/energy segments, directed flows, line membership and instrument taps |
 | `engineering-calculation-dag.json` | Standards-aware calculation dependencies, deterministic execution order and readiness states |
+| `engineering-design-case-matrix.json` | Required/optional case coverage, per-metric execution status, limits and governing values |
 | `design-case-envelope.json` | Per-case results and governing pressure, temperature, flow or custom metrics |
 | `equipment-register.json` | Equipment identity, design-condition status and governing design values |
 | `line-register.json` | Controlled line-list inputs, evidence and completeness status |
@@ -168,6 +169,29 @@ project.addCalculation(reliefBasis).addCalculation(reliefReview);
 Readiness distinguishes complete, ready, dependency-blocked, standards-blocked, explicitly blocked and failed
 calculations. A completed calculation that declares standards as required but has no controlled standards basis is a
 package validation error. The DAG and canonical graph use the same calculation identities and `DEPENDS_ON` edges.
+
+## Manage design-case coverage and acceptance limits
+
+Design cases can be grouped, prioritized, marked required or optional, and temporarily disabled without deleting their
+controlled definition. Metrics can carry lower and upper acceptance limits:
+
+```java
+EngineeringDesignCase optionalStudy = new EngineeringDesignCase(
+    "CASE-FUTURE", "Future compression study", EngineeringDesignCase.Type.CUSTOM,
+    scenario -> configureFutureCompression(scenario))
+    .setCaseGroup("FUTURE-STUDIES")
+    .setRequired(false)
+    .setEnabled(false)
+    .setPriority(500);
+
+EngineeringMetric pressure = EngineeringMetric.equipmentPressure("20-VG-001")
+    .setAcceptanceRange(null, 70.0);
+```
+
+Cases execute by priority on isolated process copies. A metric failure no longer discards other successfully evaluated
+metrics from the same case; it produces `CALCULATED_WITH_METRIC_FAILURES`. Disabled cases remain `SKIPPED`, and limit
+violations are retained without being mistaken for solver failures. `engineering-design-case-matrix.json` reports the
+full case-by-metric coverage, required-case gaps, metric failures and acceptance-limit violations.
 
 For a multi-area `ProcessModel`, build and export one DEXPI engineering project per area:
 

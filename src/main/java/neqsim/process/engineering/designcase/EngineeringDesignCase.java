@@ -56,6 +56,10 @@ public final class EngineeringDesignCase implements Serializable {
   private final Configurator configurator;
   private String description = "";
   private String approvalStatus = "REVIEW_REQUIRED";
+  private String caseGroup = "GENERAL";
+  private boolean required = true;
+  private boolean enabled = true;
+  private int priority = 100;
   private final List<Input> inputs = new ArrayList<Input>();
   private final List<String> evidenceReferences = new ArrayList<String>();
 
@@ -79,6 +83,29 @@ public final class EngineeringDesignCase implements Serializable {
 
   public EngineeringDesignCase setApprovalStatus(String value) {
     approvalStatus = requireText(value, "approvalStatus");
+    return this;
+  }
+
+  public EngineeringDesignCase setCaseGroup(String value) {
+    caseGroup = requireText(value, "caseGroup");
+    return this;
+  }
+
+  public EngineeringDesignCase setRequired(boolean value) {
+    required = value;
+    return this;
+  }
+
+  public EngineeringDesignCase setEnabled(boolean value) {
+    enabled = value;
+    return this;
+  }
+
+  public EngineeringDesignCase setPriority(int value) {
+    if (value < 0) {
+      throw new IllegalArgumentException("priority must be non-negative");
+    }
+    priority = value;
     return this;
   }
 
@@ -122,6 +149,22 @@ public final class EngineeringDesignCase implements Serializable {
     return approvalStatus;
   }
 
+  public String getCaseGroup() {
+    return caseGroup;
+  }
+
+  public boolean isRequired() {
+    return required;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public int getPriority() {
+    return priority;
+  }
+
   public List<Input> getInputs() {
     return Collections.unmodifiableList(inputs);
   }
@@ -137,6 +180,10 @@ public final class EngineeringDesignCase implements Serializable {
     result.put("type", type.name());
     result.put("description", description);
     result.put("approvalStatus", approvalStatus);
+    result.put("caseGroup", caseGroup);
+    result.put("required", Boolean.valueOf(required));
+    result.put("enabled", Boolean.valueOf(enabled));
+    result.put("priority", Integer.valueOf(priority));
     List<Map<String, Object>> inputMaps = new ArrayList<Map<String, Object>>();
     for (Input input : inputs) {
       inputMaps.add(input.toMap());

@@ -62,6 +62,7 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(Files.isRegularFile(result.getEngineeringGraphFile()));
     assertTrue(Files.isRegularFile(result.getEngineeringConnectivityFile()));
     assertTrue(Files.isRegularFile(result.getEngineeringCalculationDagFile()));
+    assertTrue(Files.isRegularFile(result.getEngineeringDesignCaseMatrixFile()));
     assertTrue(Files.isRegularFile(result.getDesignEnvelopeFile()));
     assertTrue(Files.isRegularFile(result.getEquipmentRegisterFile()));
     assertTrue(Files.isRegularFile(result.getLineRegisterFile()));
@@ -77,6 +78,8 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(read(result.getEngineeringConnectivityFile()).contains("SIGNAL_FLOW"));
     assertTrue(read(result.getEngineeringCalculationDagFile()).contains("topologicalOrder"));
     assertTrue(read(result.getEngineeringCalculationDagFile()).contains("API 521"));
+    assertTrue(read(result.getEngineeringDesignCaseMatrixFile()).contains("limitViolationCount"));
+    assertTrue(read(result.getEngineeringDesignCaseMatrixFile()).contains("ABOVE_UPPER_LIMIT"));
     assertTrue(result.getValidationReport().isValid());
     assertTrue(EngineeringPackageValidator.validatePackage(temporaryDirectory).isValid());
     assertNotNull(result.getEngineeringGraph().getNode("calculation:envelope-20-vg-001-pressure"));
@@ -114,6 +117,28 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     prerequisite.dependsOnCalculation("CALC-B");
     assertThrows(IllegalArgumentException.class,
         () -> EngineeringCalculationDag.from(java.util.Arrays.asList(prerequisite, dependent)));
+  }
+
+  @Test
+  void managesOptionalCasesAndIsolatesMetricFailures() {
+    EngineeringProject project = createProject();
+    project.addDesignCase(new EngineeringDesignCase("CASE-OPTIONAL-DISABLED", "Disabled optional study",
+        EngineeringDesignCase.Type.CUSTOM, new EngineeringDesignCase.Configurator() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public void configure(ProcessSystem process) {
+          }
+        }).setRequired(false).setEnabled(false).setCaseGroup("OPTIONAL-STUDIES").setPriority(1000));
+    project.addEngineeringMetric(EngineeringMetric.equipmentPressure("UNKNOWN-EQUIPMENT"));
+
+    EngineeringDesignEnvelope envelope = DesignCaseEngine.run(project.getProcessSystem(),
+        project.getExecutableDesignCases(), project.getEngineeringMetrics());
+
+    assertEquals(2, envelope.getPartialCaseCount());
+    assertEquals(1, envelope.getFailedCaseCount());
+    assertEquals(1, envelope.getSkippedCaseCount());
+    assertTrue(envelope.getLimitViolationCount() > 0);
   }
 
   @Test
@@ -214,7 +239,8 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
             throw new IllegalStateException("Missing controlled feed composition");
           }
         }));
-    project.addEngineeringMetric(EngineeringMetric.equipmentPressure("20-VG-001"));
+    project.addEngineeringMetric(
+        EngineeringMetric.equipmentPressure("20-VG-001").setAcceptanceRange(null, Double.valueOf(70.0)));
     project.addEngineeringMetric(EngineeringMetric.equipmentTemperature("20-VG-001"));
     project.addEngineeringMetric(EngineeringMetric.equipmentInletMassFlow("20-VG-001"));
     String separatorNode = EngineeringIds.nodeId(EngineeringNode.Kind.EQUIPMENT, "20-VG-001");

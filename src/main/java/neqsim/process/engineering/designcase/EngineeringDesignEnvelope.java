@@ -47,6 +47,17 @@ public final class EngineeringDesignEnvelope implements Serializable {
       result.put("designCaseName", designCaseName);
       result.put("value", value);
       result.put("unit", metric.getUnit());
+      result.put("limitStatus", metric.assess(value));
+      if (metric.getLowerAcceptanceLimit() != null || metric.getUpperAcceptanceLimit() != null) {
+        double margin = Double.POSITIVE_INFINITY;
+        if (metric.getLowerAcceptanceLimit() != null) {
+          margin = Math.min(margin, value - metric.getLowerAcceptanceLimit().doubleValue());
+        }
+        if (metric.getUpperAcceptanceLimit() != null) {
+          margin = Math.min(margin, metric.getUpperAcceptanceLimit().doubleValue() - value);
+        }
+        result.put("acceptanceMargin", Double.valueOf(margin));
+      }
       return result;
     }
   }
@@ -77,8 +88,33 @@ public final class EngineeringDesignEnvelope implements Serializable {
     return count;
   }
 
+  public int getPartialCaseCount() {
+    return countCases("CALCULATED_WITH_METRIC_FAILURES");
+  }
+
+  public int getFailedCaseCount() {
+    return countCases("FAILED");
+  }
+
+  public int getSkippedCaseCount() {
+    return countCases("SKIPPED");
+  }
+
+  public int getLimitViolationCount() {
+    int count = 0;
+    for (DesignCaseResult result : caseResults) {
+      for (DesignCaseResult.MetricResult metric : result.getMetricResults().values()) {
+        if ("BELOW_LOWER_LIMIT".equals(metric.getLimitStatus())
+            || "ABOVE_UPPER_LIMIT".equals(metric.getLimitStatus())) {
+          count++;
+        }
+      }
+    }
+    return count;
+  }
+
   public boolean hasCaseFailures() {
-    return getSuccessfulCaseCount() < caseResults.size();
+    return getPartialCaseCount() > 0 || getFailedCaseCount() > 0;
   }
 
   public List<EngineeringCalculation> toCalculations() {
@@ -107,6 +143,14 @@ public final class EngineeringDesignEnvelope implements Serializable {
       governing.add(value.toMap());
     }
     result.put("governingValues", governing);
+    Map<String, Object> summary = new LinkedHashMap<String, Object>();
+    summary.put("configuredCaseCount", Integer.valueOf(caseResults.size()));
+    summary.put("successfulCaseCount", Integer.valueOf(getSuccessfulCaseCount()));
+    summary.put("partialCaseCount", Integer.valueOf(getPartialCaseCount()));
+    summary.put("failedCaseCount", Integer.valueOf(getFailedCaseCount()));
+    summary.put("skippedCaseCount", Integer.valueOf(getSkippedCaseCount()));
+    summary.put("limitViolationCount", Integer.valueOf(getLimitViolationCount()));
+    result.put("summary", summary);
     return result;
   }
 
@@ -116,5 +160,15 @@ public final class EngineeringDesignEnvelope implements Serializable {
 
   private static String canonical(String value) {
     return value.trim().toLowerCase().replaceAll("[^a-z0-9]+", "-").replaceAll("(^-|-$)", "");
+  }
+
+  private int countCases(String status) {
+    int count = 0;
+    for (DesignCaseResult result : caseResults) {
+      if (status.equals(result.getStatus())) {
+        count++;
+      }
+    }
+    return count;
   }
 }

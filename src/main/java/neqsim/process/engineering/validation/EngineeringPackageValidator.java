@@ -133,6 +133,14 @@ public final class EngineeringPackageValidator {
       requireArray(root, "nodes", artifactName, report);
       requireArray(root, "edges", artifactName, report);
       requireObject(root, "summary", artifactName, report);
+    } else if ("engineering-design-case-matrix.json".equals(artifactName)) {
+      requireString(root, "projectId", artifactName, report);
+      requireString(root, "revision", artifactName, report);
+      requireArray(root, "cases", artifactName, report);
+      requireArray(root, "metrics", artifactName, report);
+      requireArray(root, "executions", artifactName, report);
+      requireArray(root, "governingValues", artifactName, report);
+      requireObject(root, "summary", artifactName, report);
     } else if (artifactName.endsWith("-register.json")) {
       validateRegisterStructure(root, artifactName, report);
     } else if ("design-case-envelope.json".equals(artifactName)) {
@@ -202,6 +210,7 @@ public final class EngineeringPackageValidator {
     validateEnvelope(packageDirectory, graph, report);
     validateConnectivity(packageDirectory, graph, report);
     validateCalculationDag(packageDirectory, graph, report);
+    validateDesignCaseMatrix(packageDirectory, graph, report);
     validateManifest(packageDirectory, graph, report);
     validateSchemaFiles(packageDirectory, report);
     return report;
@@ -481,6 +490,76 @@ public final class EngineeringPackageValidator {
     }
   }
 
+  private static void validateDesignCaseMatrix(Path directory, EngineeringGraph graph,
+      EngineeringPackageValidationReport report) throws IOException {
+    String artifact = "engineering-design-case-matrix.json";
+    Path file = directory.resolve(artifact);
+    if (!Files.isRegularFile(file)) {
+      return;
+    }
+    JsonObject root = parseObject(artifact, read(file), report);
+    if (root == null) {
+      return;
+    }
+    if (!graph.getProjectId().equals(stringValue(root, "projectId"))) {
+      report.addError("ENG-DESIGN-CASE-001", artifact, "/projectId", "Design-case matrix and graph project ids differ");
+    }
+    if (!graph.getRevision().equals(stringValue(root, "revision"))) {
+      report.addError("ENG-DESIGN-CASE-002", artifact, "/revision", "Design-case matrix and graph revisions differ");
+    }
+    Set<String> caseIds = new LinkedHashSet<String>();
+    if (root.has("cases") && root.get("cases").isJsonArray()) {
+      JsonArray cases = root.getAsJsonArray("cases");
+      for (int i = 0; i < cases.size(); i++) {
+        if (!cases.get(i).isJsonObject()) {
+          report.addError("ENG-DESIGN-CASE-003", artifact, "/cases/" + i, "Design case must be an object");
+          continue;
+        }
+        String id = stringValue(cases.get(i).getAsJsonObject(), "id");
+        if (!caseIds.add(id)) {
+          report.addError("ENG-DESIGN-CASE-004", artifact, "/cases/" + i + "/id", "Duplicate design-case id " + id);
+        }
+        String graphNodeId = id.isEmpty() ? "" : EngineeringIds.nodeId(EngineeringNode.Kind.DESIGN_CASE, id);
+        if (graph.getNode(graphNodeId) == null) {
+          report.addError("ENG-DESIGN-CASE-005", artifact, "/cases/" + i + "/id",
+              "Design case is missing from the canonical graph: " + id);
+        }
+      }
+    }
+    if (root.has("executions") && root.get("executions").isJsonArray()) {
+      JsonArray executions = root.getAsJsonArray("executions");
+      for (int i = 0; i < executions.size(); i++) {
+        if (!executions.get(i).isJsonObject()) {
+          report.addError("ENG-DESIGN-CASE-006", artifact, "/executions/" + i,
+              "Design-case execution must be an object");
+          continue;
+        }
+        JsonObject execution = executions.get(i).getAsJsonObject();
+        JsonObject designCase = execution.has("case") && execution.get("case").isJsonObject()
+            ? execution.getAsJsonObject("case")
+            : null;
+        String id = stringValue(designCase, "id");
+        if (!caseIds.contains(id)) {
+          report.addError("ENG-DESIGN-CASE-007", artifact, "/executions/" + i + "/case/id",
+              "Execution references an unknown design case " + id);
+        }
+      }
+    }
+    if (root.has("summary") && root.get("summary").isJsonObject()) {
+      JsonObject summary = root.getAsJsonObject("summary");
+      int requiredFailures = intValue(summary, "requiredCaseFailureCount");
+      int limitViolations = intValue(summary, "limitViolationCount");
+      if (requiredFailures > 0) {
+        report.addWarning("ENG-DESIGN-CASE-008", artifact, "/summary/requiredCaseFailureCount",
+            requiredFailures + " required design case(s) did not complete successfully");
+      }
+      if (limitViolations > 0) {
+        report.addWarning("ENG-DESIGN-CASE-009", artifact, "/summary/limitViolationCount",
+            limitViolations + " design-case metric acceptance-limit violation(s) require review");
+      }
+    }
+  }
+
   private static void validateManifest(Path directory, EngineeringGraph graph,
       EngineeringPackageValidationReport report) throws IOException {
     String artifact = "engineering-compiler-manifest.json";
@@ -612,6 +691,14 @@ public final class EngineeringPackageValidator {
       return "";
     }
     return value.get(name).getAsString();
+  }
+
+  private static int intValue(JsonObject value, String name) {
+    if (value == null || !value.has(name) || !value.get(name).isJsonPrimitive()
+        || !value.get(name).getAsJsonPrimitive().isNumber()) {
+      return 0;
+    }
+    return value.get(name).getAsInt();
   }
 
   private static String read(Path file) throws IOException {

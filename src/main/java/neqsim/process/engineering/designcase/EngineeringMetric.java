@@ -26,6 +26,8 @@ public final class EngineeringMetric implements Serializable {
   private final String unit;
   private final GoverningDirection governingDirection;
   private final Extractor extractor;
+  private Double lowerAcceptanceLimit;
+  private Double upperAcceptanceLimit;
 
   public EngineeringMetric(String id, String subjectTag, String name, String unit,
       GoverningDirection governingDirection, Extractor extractor) {
@@ -89,6 +91,22 @@ public final class EngineeringMetric implements Serializable {
         });
   }
 
+  /** Adds optional lower and upper acceptance limits used by the design-case matrix. */
+  public EngineeringMetric setAcceptanceRange(Double lowerLimit, Double upperLimit) {
+    if (lowerLimit != null && !Double.isFinite(lowerLimit.doubleValue())) {
+      throw new IllegalArgumentException("lowerLimit must be finite");
+    }
+    if (upperLimit != null && !Double.isFinite(upperLimit.doubleValue())) {
+      throw new IllegalArgumentException("upperLimit must be finite");
+    }
+    if (lowerLimit != null && upperLimit != null && lowerLimit.doubleValue() > upperLimit.doubleValue()) {
+      throw new IllegalArgumentException("lowerLimit must not exceed upperLimit");
+    }
+    lowerAcceptanceLimit = lowerLimit;
+    upperAcceptanceLimit = upperLimit;
+    return this;
+  }
+
   double extract(ProcessSystem process) {
     double result = extractor.extract(process);
     if (!Double.isFinite(result)) {
@@ -117,6 +135,24 @@ public final class EngineeringMetric implements Serializable {
     return governingDirection;
   }
 
+  public Double getLowerAcceptanceLimit() {
+    return lowerAcceptanceLimit;
+  }
+
+  public Double getUpperAcceptanceLimit() {
+    return upperAcceptanceLimit;
+  }
+
+  public String assess(double value) {
+    if (lowerAcceptanceLimit != null && value < lowerAcceptanceLimit.doubleValue()) {
+      return "BELOW_LOWER_LIMIT";
+    }
+    if (upperAcceptanceLimit != null && value > upperAcceptanceLimit.doubleValue()) {
+      return "ABOVE_UPPER_LIMIT";
+    }
+    return lowerAcceptanceLimit == null && upperAcceptanceLimit == null ? "NOT_CONFIGURED" : "WITHIN_LIMITS";
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("id", id);
@@ -124,6 +160,12 @@ public final class EngineeringMetric implements Serializable {
     result.put("name", name);
     result.put("unit", unit);
     result.put("governingDirection", governingDirection.name());
+    if (lowerAcceptanceLimit != null) {
+      result.put("lowerAcceptanceLimit", lowerAcceptanceLimit);
+    }
+    if (upperAcceptanceLimit != null) {
+      result.put("upperAcceptanceLimit", upperAcceptanceLimit);
+    }
     return result;
   }
 

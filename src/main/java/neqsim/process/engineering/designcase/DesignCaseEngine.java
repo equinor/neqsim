@@ -1,6 +1,8 @@
 package neqsim.process.engineering.designcase;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,33 +26,48 @@ public final class DesignCaseEngine {
     }
     List<DesignCaseResult> results = new ArrayList<DesignCaseResult>();
     Map<String, EngineeringDesignEnvelope.GoverningValue> governing = new LinkedHashMap<String, EngineeringDesignEnvelope.GoverningValue>();
-    for (EngineeringDesignCase designCase : designCases) {
+    List<EngineeringDesignCase> orderedCases = new ArrayList<EngineeringDesignCase>(designCases);
+    Collections.sort(orderedCases, new Comparator<EngineeringDesignCase>() {
+      @Override
+      public int compare(EngineeringDesignCase first, EngineeringDesignCase second) {
+        return Integer.compare(first.getPriority(), second.getPriority());
+      }
+    });
+    for (EngineeringDesignCase designCase : orderedCases) {
       DesignCaseResult result = new DesignCaseResult(designCase);
+      if (!designCase.isEnabled()) {
+        result.skip("Design case is disabled");
+        results.add(result);
+        continue;
+      }
       try {
         ProcessSystem working = baseProcess.copy();
         designCase.configure(working);
         working.run();
-        Map<EngineeringMetric, Double> evaluated = new LinkedHashMap<EngineeringMetric, Double>();
         for (EngineeringMetric metric : metrics) {
-          double value = metric.extract(working);
-          evaluated.put(metric, Double.valueOf(value));
-        }
-        for (Map.Entry<EngineeringMetric, Double> entry : evaluated.entrySet()) {
-          EngineeringMetric metric = entry.getKey();
-          double value = entry.getValue().doubleValue();
-          result.addValue(metric.getId(), value);
-          EngineeringDesignEnvelope.GoverningValue current = governing.get(metric.getId());
-          if (current == null || governs(metric.getGoverningDirection(), value, current.getValue())) {
-            governing.put(metric.getId(),
-                new EngineeringDesignEnvelope.GoverningValue(metric, designCase.getId(), designCase.getName(), value));
+          try {
+            double value = metric.extract(working);
+            result.addValue(metric, value);
+            EngineeringDesignEnvelope.GoverningValue current = governing.get(metric.getId());
+            if (current == null || governs(metric.getGoverningDirection(), value, current.getValue())) {
+              governing.put(metric.getId(), new EngineeringDesignEnvelope.GoverningValue(metric, designCase.getId(),
+                  designCase.getName(), value));
+            }
+          } catch (Exception ex) {
+            result.failMetric(metric, failureMessage(ex));
           }
         }
+        result.finish();
       } catch (Exception ex) {
-        result.fail(ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage());
+        result.fail(failureMessage(ex));
       }
       results.add(result);
     }
     return new EngineeringDesignEnvelope(results, governing);
+  }
+
+  private static String failureMessage(Exception ex) {
+    return ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
   }
 
   private static boolean governs(EngineeringMetric.GoverningDirection direction, double candidate, double current) {

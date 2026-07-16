@@ -249,6 +249,10 @@ public final class EngineeringGraphBuilder {
           designCase.getName()).putProperty("type", designCase.getType().name())
           .putProperty("description", designCase.getDescription())
           .putProperty("approvalStatus", designCase.getApprovalStatus())
+          .putProperty("caseGroup", designCase.getCaseGroup())
+          .putProperty("required", Boolean.valueOf(designCase.isRequired()))
+          .putProperty("enabled", Boolean.valueOf(designCase.isEnabled()))
+          .putProperty("priority", String.valueOf(designCase.getPriority()))
           .addProvenance(new EngineeringProvenance("DESIGN_CASE_REGISTER", designCase.getId())
               .setApprovalStatus(designCase.getApprovalStatus()));
       for (String evidence : designCase.getEvidenceReferences()) {
