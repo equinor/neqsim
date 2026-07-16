@@ -773,10 +773,13 @@ def test_compressor_discharge_temperature_when_efficiency_missing():
     print("  PASS")
 
 
-def test_two_stream_heat_exchanger_gets_ua_from_duty():
-    """A two-stream heat exchanger (heatexop) with a UniSim duty is emitted with
-    a UA value so NeqSim computes the cross-exchange (previously no heat was
-    transferred because no UA/duty/temperature was set)."""
+def test_two_stream_heat_exchanger_pins_hot_outlet_temperature():
+    """A two-stream heat exchanger (heatexop) with known UniSim outlet
+    temperatures is emitted with the hot-side outlet pinned via the
+    "outTemperature" specification (setOutTemperature), so NeqSim reproduces the
+    process outlet exactly and energy-balances the cold side. This matches
+    UniSim far better than a UA value when a recycle side circulates a different
+    rate than the source model (previously no heat was transferred at all)."""
     model = UniSimModel(
         file_path=r"C:\test\HX.usc",
         file_name="HX.usc",
@@ -811,7 +814,9 @@ def test_two_stream_heat_exchanger_gets_ua_from_duty():
     )
     py_code = UniSimToNeqSim(model).to_python()
     assert "HeatExchanger" in py_code
-    assert ".setUAvalue(" in py_code, py_code
+    # Hot side is feed 0 (65.5 C > 25 C) -> pin side 0 to its outlet temp 33 C
+    assert ".setOutStreamSpecificationNumber(0)" in py_code, py_code
+    assert ".setOutTemperature(33.0, \"C\")" in py_code, py_code
     print("  PASS")
 
 
@@ -913,8 +918,8 @@ if __name__ == "__main__":
         ("all_fluid_packages_are_exposed_as_e300", test_all_fluid_packages_are_exposed_as_e300),
         ("compressor_discharge_temperature_when_efficiency_missing",
          test_compressor_discharge_temperature_when_efficiency_missing),
-        ("two_stream_heat_exchanger_gets_ua_from_duty",
-         test_two_stream_heat_exchanger_gets_ua_from_duty),
+        ("two_stream_heat_exchanger_pins_hot_outlet_temperature",
+         test_two_stream_heat_exchanger_pins_hot_outlet_temperature),
         ("cooler_outlet_pressure_letdown_is_transferred",
          test_cooler_outlet_pressure_letdown_is_transferred),
         ("pipe_segment_geometry_uses_beggs_and_brills",
