@@ -6372,13 +6372,20 @@ class UniSimToNeqSim:
         elif neqsim_type == 'HeatExchanger':
             # Two-stream (process-to-process) heat exchanger. The converter set
             # no UA/duty/temperature, so NeqSim transferred no heat (both outlets
-            # stayed at the hot inlet temperature). Transfer the UniSim duty as a
-            # UA value (UA = duty / LMTD) so NeqSim computes the cross-exchange;
-            # the exchanger's two feed flows already match the source model.
+            # stayed at the hot inlet temperature). Reproduce the UniSim result by
+            # pinning the HOT-side outlet to its known UniSim outlet temperature
+            # via the "outTemperature" specification; NeqSim then energy-balances
+            # the cold side. This reproduces the process (hot) outlet exactly and
+            # drives the cold outlet to the correct duty, which matches UniSim far
+            # better than a UA value when the two flows differ from the source
+            # model (e.g. a recycle side that circulates a different rate). The
+            # pin tracks the live inlet pressure each iteration, so no spurious
+            # pressure drop is introduced. Falls back to a UA value (UA = duty /
+            # LMTD) only if the outlet temperatures are unavailable.
             duty = op.properties.get('duty_kW')
             feeds = op.feeds or []
             prods = op.products or []
-            if duty and len(feeds) >= 2 and len(prods) >= 2:
+            if len(feeds) >= 2 and len(prods) >= 2:
                 h_in = self._find_stream_by_name(flowsheet, feeds[0])
                 c_in = self._find_stream_by_name(flowsheet, feeds[1])
                 h_out = self._find_stream_by_name(flowsheet, prods[0])
@@ -6388,15 +6395,33 @@ class UniSimToNeqSim:
                        for s in streams):
                     th_in, tc_in = h_in.temperature_C, c_in.temperature_C
                     th_out, tc_out = h_out.temperature_C, c_out.temperature_C
-                    dt1 = th_in - tc_out
-                    dt2 = th_out - tc_in
-                    if dt1 > 1e-6 and dt2 > 1e-6 and abs(dt1 - dt2) > 1e-6:
-                        lmtd = (dt1 - dt2) / math.log(dt1 / dt2)
+                    # Pin the outlet on the hot side (the stream being cooled).
+                    if th_in >= tc_in:
+                        spec_side, spec_out_t = 0, th_out
                     else:
-                        lmtd = max((dt1 + dt2) / 2.0, 1.0)
-                    ua_w_per_k = abs(duty) * 1000.0 / lmtd  # kW -> W
-                    lines.append(f'{var}.setGuessOutTemperature({th_out + 273.15})')
-                    lines.append(f'{var}.setUAvalue({ua_w_per_k:.1f})')
+                        spec_side, spec_out_t = 1, tc_out
+                    lines.append(
+                        f'{var}.setOutStreamSpecificationNumber({spec_side})')
+                    lines.append(
+                        f'{var}.setOutTemperature({spec_out_t}, "C")')
+                elif duty:
+                    # Fallback: UA from duty and LMTD (needs all four temps for
+                    # LMTD, so only reached if some outlet temp is missing).
+                    valid = [s for s in streams
+                             if s is not None and s.temperature_C is not None]
+                    if len(valid) == 4:
+                        th_in, tc_in = h_in.temperature_C, c_in.temperature_C
+                        th_out, tc_out = h_out.temperature_C, c_out.temperature_C
+                        dt1 = th_in - tc_out
+                        dt2 = th_out - tc_in
+                        if dt1 > 1e-6 and dt2 > 1e-6 and abs(dt1 - dt2) > 1e-6:
+                            lmtd = (dt1 - dt2) / math.log(dt1 / dt2)
+                        else:
+                            lmtd = max((dt1 + dt2) / 2.0, 1.0)
+                        ua_w_per_k = abs(duty) * 1000.0 / lmtd  # kW -> W
+                        lines.append(
+                            f'{var}.setGuessOutTemperature({th_out + 273.15})')
+                        lines.append(f'{var}.setUAvalue({ua_w_per_k:.1f})')
 
         elif neqsim_type == 'Pump':
             p_out = op.properties.get('outlet_pressure_bara')
