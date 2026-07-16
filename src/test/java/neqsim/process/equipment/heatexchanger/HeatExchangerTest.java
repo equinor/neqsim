@@ -166,4 +166,65 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
     assertEquals("E-101", hx.getName());
     // DeltaT mode sets minimum approach temperature
   }
+
+  /**
+   * Test the effectiveness-NTU fouling / UA-degradation screening helper: the cold-outlet temperature must fall
+   * monotonically as UA is lost, the clean point must match the exchanger's own run, and the call must not mutate the
+   * exchanger state.
+   */
+  @Test
+  void testFoulingScreening() {
+    Stream stream_Hot = new Stream("Hot", testSystem);
+    stream_Hot.setTemperature(90.0, "C");
+    stream_Hot.setFlowRate(5000.0, "kg/hr");
+    stream_Hot.run();
+
+    neqsim.thermo.system.SystemInterface coldSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 10.0), 20.00);
+    coldSystem.addComponent("water", 1000.0);
+    coldSystem.setMixingRule(2);
+    Stream stream_Cold = new Stream("Cold", coldSystem);
+    stream_Cold.setTemperature(10.0, "C");
+    stream_Cold.setFlowRate(20000.0, "kg/hr");
+    stream_Cold.run();
+
+    HeatExchanger hx = new HeatExchanger("E-CM", stream_Hot, stream_Cold);
+    hx.setUAvalue(5000.0);
+    hx.setGuessOutTemperature(40.0, "C");
+    hx.run();
+    double cleanColdOutRun = hx.getOutStream(1).getTemperature("C");
+    double uaAfterRun = hx.getUAvalue();
+
+    double[] fractions = new double[] { 1.0, 0.75, 0.5, 0.25, 0.0 };
+    HeatExchanger.FoulingScreeningResult result = hx.foulingScreening(5000.0, fractions, "C");
+
+    assertEquals("C", result.getTemperatureUnit());
+    double[] coldOut = result.getColdOutletTemperature();
+    double[] eff = result.getEffectiveness();
+    assertEquals(fractions.length, coldOut.length);
+
+    // Cold-outlet temperature and effectiveness fall monotonically as UA is lost.
+    for (int i = 1; i < coldOut.length; i++) {
+      org.junit.jupiter.api.Assertions.assertTrue(coldOut[i] <= coldOut[i - 1] + 1e-6,
+          "cold outlet must not rise as UA is lost");
+      org.junit.jupiter.api.Assertions.assertTrue(eff[i] <= eff[i - 1] + 1e-9,
+          "effectiveness must not rise as UA is lost");
+    }
+
+    // Zero UA -> no heat transfer: cold outlet equals cold inlet, effectiveness 0.
+    assertEquals(10.0, coldOut[coldOut.length - 1], 1e-6);
+    assertEquals(0.0, eff[eff.length - 1], 1e-9);
+
+    // Clean point (fraction 1.0) matches the exchanger's own solved cold outlet.
+    assertEquals(cleanColdOutRun, coldOut[0], 0.5);
+
+    // Screening is side-effect-free: UA value is unchanged.
+    assertEquals(uaAfterRun, hx.getUAvalue(), 1e-9);
+
+    // Convenience sweep overload builds an evenly spaced set of fractions.
+    HeatExchanger.FoulingScreeningResult sweep = hx.foulingScreening(5000.0, 6, 0.5, 1.0, "C");
+    assertEquals(6, sweep.getUaFraction().length);
+    assertEquals(0.5, sweep.getUaFraction()[0], 1e-9);
+    assertEquals(1.0, sweep.getUaFraction()[5], 1e-9);
+    org.junit.jupiter.api.Assertions.assertNotNull(sweep.toJson());
+  }
 }
