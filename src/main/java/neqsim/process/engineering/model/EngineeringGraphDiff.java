@@ -10,11 +10,13 @@ import java.util.Map;
 import java.util.Set;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import neqsim.process.engineering.validation.EngineeringSchemaCatalog;
 
 /** Added, removed and modified engineering objects between two graph revisions. */
 public final class EngineeringGraphDiff implements Serializable {
   private static final long serialVersionUID = 1000L;
   private static final Gson GSON = new Gson();
+  private final String projectId;
   private final String fromRevision;
   private final String toRevision;
   private final List<String> addedNodeIds = new ArrayList<String>();
@@ -24,7 +26,8 @@ public final class EngineeringGraphDiff implements Serializable {
   private final List<String> removedEdgeIds = new ArrayList<String>();
   private final Set<String> impactedNodeIds = new LinkedHashSet<String>();
 
-  private EngineeringGraphDiff(String fromRevision, String toRevision) {
+  private EngineeringGraphDiff(String projectId, String fromRevision, String toRevision) {
+    this.projectId = projectId;
     this.fromRevision = fromRevision;
     this.toRevision = toRevision;
   }
@@ -36,7 +39,8 @@ public final class EngineeringGraphDiff implements Serializable {
     if (!older.getProjectId().equals(newer.getProjectId())) {
       throw new IllegalArgumentException("Engineering graphs belong to different projects");
     }
-    EngineeringGraphDiff result = new EngineeringGraphDiff(older.getRevision(), newer.getRevision());
+    EngineeringGraphDiff result = new EngineeringGraphDiff(older.getProjectId(), older.getRevision(),
+        newer.getRevision());
     compareNodes(older, newer, result);
     compareEdges(older, newer, result);
     result.expandDownstreamImpact(newer);
@@ -117,7 +121,9 @@ public final class EngineeringGraphDiff implements Serializable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
-    result.put("schemaVersion", "neqsim_engineering_graph_diff.v1");
+    result.put("schemaVersion", EngineeringSchemaCatalog.REVISION_DIFF);
+    result.put("schemaUri", EngineeringSchemaCatalog.schemaUri(EngineeringSchemaCatalog.REVISION_DIFF));
+    result.put("projectId", projectId);
     result.put("fromRevision", fromRevision);
     result.put("toRevision", toRevision);
     result.put("addedNodeIds", new ArrayList<String>(addedNodeIds));

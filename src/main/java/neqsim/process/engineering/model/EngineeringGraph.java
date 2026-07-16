@@ -18,11 +18,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.process.engineering.validation.EngineeringSchemaCatalog;
 
 /** Canonical, exchange-format-independent engineering model with stable node identities. */
 public final class EngineeringGraph implements Serializable {
   private static final long serialVersionUID = 1000L;
   private static final Gson GSON = new Gson();
+  public static final String SCHEMA_VERSION = EngineeringSchemaCatalog.GRAPH;
   private final String projectId;
   private final String revision;
   private final Map<String, EngineeringNode> nodes = new LinkedHashMap<String, EngineeringNode>();
@@ -80,7 +82,8 @@ public final class EngineeringGraph implements Serializable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
-    result.put("schemaVersion", "neqsim_engineering_graph.v1");
+    result.put("schemaVersion", SCHEMA_VERSION);
+    result.put("schemaUri", EngineeringSchemaCatalog.schemaUri(SCHEMA_VERSION));
     result.put("projectId", projectId);
     result.put("revision", revision);
     List<Map<String, Object>> nodeMaps = new ArrayList<Map<String, Object>>();
@@ -106,7 +109,14 @@ public final class EngineeringGraph implements Serializable {
     if (json == null || json.trim().isEmpty()) {
       throw new IllegalArgumentException("json must not be blank");
     }
-    JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+    JsonElement parsed = JsonParser.parseString(json);
+    if (!parsed.isJsonObject()) {
+      throw new IllegalArgumentException("Engineering graph JSON root must be an object");
+    }
+    JsonObject root = parsed.getAsJsonObject();
+    if (!root.has("schemaVersion") || !SCHEMA_VERSION.equals(root.get("schemaVersion").getAsString())) {
+      throw new IllegalArgumentException("Unsupported engineering graph schema version");
+    }
     EngineeringGraph graph = new EngineeringGraph(root.get("projectId").getAsString(),
         root.get("revision").getAsString());
     JsonArray nodeArray = root.getAsJsonArray("nodes");
@@ -140,6 +150,12 @@ public final class EngineeringGraph implements Serializable {
       graph.addEdge(new EngineeringEdge(item.get("id").getAsString(), item.get("sourceId").getAsString(),
           item.get("targetId").getAsString(), EngineeringEdge.Kind.valueOf(item.get("kind").getAsString()),
           item.get("role").getAsString()));
+    }
+    if (root.has("fingerprint")) {
+      String expected = String.valueOf(graph.toMap().get("fingerprint"));
+      if (!expected.equals(root.get("fingerprint").getAsString())) {
+        throw new IllegalArgumentException("Engineering graph fingerprint does not match its content");
+      }
     }
     return graph;
   }

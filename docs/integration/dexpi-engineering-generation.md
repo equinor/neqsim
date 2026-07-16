@@ -77,6 +77,28 @@ The compiler adds these coordinated artifacts:
 | `line-register.json` | Controlled line-list inputs, evidence and completeness status |
 | `instrument-register.json` | Registered simulation instruments and proposed instrument/control/safety requirements |
 | `engineering-compiler-manifest.json` | Revision, graph fingerprint, artifact inventory and governance status |
+| `engineering-schema-catalog.json` and `schemas/*.schema.json` | Versioned Draft 2020-12 contracts shipped with the package |
+| `engineering-validation-report.json` | Structural, referential, unit-vocabulary and cross-artifact validation findings |
+
+Every JSON artifact declares both a stable `schemaVersion` and a `schemaUri`. The compiler copies the matching JSON
+Schemas into the package, checks canonical node and edge identities, verifies graph references from all registers,
+detects duplicate controlled tags, checks governing-case references and units, and reconciles the manifest fingerprint
+and artifact inventory. Structural or semantic errors produce `engineering-validation-report.json` and stop compilation
+with `EngineeringPackageValidationException`; warnings remain visible without blocking package generation:
+
+```java
+EngineeringPackageValidationReport validation = compiled.getValidationReport();
+if (validation.getWarningCount() > 0) {
+  // Route the package to discipline review before controlled issue.
+}
+
+EngineeringPackageValidationReport independentlyChecked =
+    EngineeringPackageValidator.validatePackage(compiled.getOutputDirectory());
+```
+
+Readers must reject unknown major schema versions instead of silently interpreting them as the current contract.
+Additive evolution within a supported version is represented by optional properties; incompatible changes require a
+new schema version and an explicit migration reader.
 
 Persist a graph and supply it as the baseline for the next compilation to generate
 `engineering-revision-diff.json`:

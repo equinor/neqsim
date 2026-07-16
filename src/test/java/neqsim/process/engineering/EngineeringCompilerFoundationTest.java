@@ -3,10 +3,14 @@ package neqsim.process.engineering;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import neqsim.NeqSimTest;
@@ -21,6 +25,8 @@ import neqsim.process.engineering.model.EngineeringGraphBuilder;
 import neqsim.process.engineering.model.EngineeringGraphDiff;
 import neqsim.process.engineering.model.EngineeringIds;
 import neqsim.process.engineering.model.EngineeringNode;
+import neqsim.process.engineering.validation.EngineeringPackageValidationReport;
+import neqsim.process.engineering.validation.EngineeringPackageValidator;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
@@ -52,11 +58,37 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(Files.isRegularFile(result.getEquipmentRegisterFile()));
     assertTrue(Files.isRegularFile(result.getLineRegisterFile()));
     assertTrue(Files.isRegularFile(result.getInstrumentRegisterFile()));
+    assertTrue(Files.isRegularFile(result.getValidationReportFile()));
+    assertTrue(Files.isRegularFile(temporaryDirectory.resolve("engineering-schema-catalog.json")));
+    assertTrue(Files.isRegularFile(temporaryDirectory.resolve("schemas/engineering-model.schema.json")));
     assertTrue(Files.isRegularFile(result.getDexpiResult().getDexpi20File()));
     assertTrue(read(result.getEquipmentRegisterFile()).contains("20-VG-001"));
     assertTrue(read(result.getInstrumentRegisterFile()).contains("ENGINEERING_REQUIREMENT"));
     assertTrue(read(result.getDesignEnvelopeFile()).contains("CASE-MAX"));
+    assertTrue(result.getValidationReport().isValid());
+    assertTrue(EngineeringPackageValidator.validatePackage(temporaryDirectory).isValid());
     assertNotNull(result.getEngineeringGraph().getNode("calculation:envelope-20-vg-001-pressure"));
+  }
+
+  @Test
+  void rejectsUnknownGraphVersionsAndReportsCrossArtifactErrors() throws Exception {
+    EngineeringProject project = createProject();
+    EngineeringDeliverableCompiler.CompilationResult result = EngineeringDeliverableCompiler.compile(project,
+        temporaryDirectory);
+    String graphJson = read(result.getEngineeringGraphFile());
+    assertThrows(IllegalArgumentException.class,
+        () -> EngineeringGraph.fromJson(graphJson.replace("neqsim_engineering_graph.v1",
+            "neqsim_engineering_graph.v2")));
+    assertThrows(IllegalArgumentException.class,
+        () -> EngineeringGraph.fromJson(graphJson.replace("\"revision\": \"A\"", "\"revision\": \"B\"")));
+
+    JsonObject equipment = JsonParser.parseString(read(result.getEquipmentRegisterFile())).getAsJsonObject();
+    equipment.addProperty("rowCount", equipment.get("rowCount").getAsInt() + 1);
+    Files.write(result.getEquipmentRegisterFile(),
+        new GsonBuilder().setPrettyPrinting().create().toJson(equipment).getBytes(StandardCharsets.UTF_8));
+    EngineeringPackageValidationReport validation = EngineeringPackageValidator.validatePackage(temporaryDirectory);
+    assertFalse(validation.isValid());
+    assertTrue(hasFinding(validation, "ENG-SCHEMA-006"));
   }
 
   @Test
@@ -134,5 +166,14 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
 
   private static String read(Path path) throws Exception {
     return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+  }
+
+  private static boolean hasFinding(EngineeringPackageValidationReport report, String code) {
+    for (EngineeringPackageValidationReport.Finding finding : report.getFindings()) {
+      if (code.equals(finding.getCode())) {
+        return true;
+      }
+    }
+    return false;
   }
 }

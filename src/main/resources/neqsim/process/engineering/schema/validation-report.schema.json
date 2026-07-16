@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:validation-report:v1",
+  "title": "NeqSim engineering package validation report",
+  "type": "object",
+  "required": ["schemaVersion", "valid", "errorCount", "warningCount", "findings"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_validation_report.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:validation-report:v1"},
+    "valid": {"type": "boolean"},
+    "errorCount": {"type": "integer", "minimum": 0},
+    "warningCount": {"type": "integer", "minimum": 0},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "code", "artifact", "path", "message"],
+        "properties": {
+          "severity": {"enum": ["ERROR", "WARNING"]},
+          "code": {"type": "string", "minLength": 1},
+          "artifact": {"type": "string", "minLength": 1},
+          "path": {"type": "string"},
+          "message": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

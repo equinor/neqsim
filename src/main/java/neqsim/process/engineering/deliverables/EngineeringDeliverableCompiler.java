@@ -25,6 +25,10 @@ import neqsim.process.engineering.model.EngineeringGraphDiff;
 import neqsim.process.engineering.model.EngineeringIds;
 import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.engineering.model.EngineeringProvenance;
+import neqsim.process.engineering.validation.EngineeringPackageValidationException;
+import neqsim.process.engineering.validation.EngineeringPackageValidationReport;
+import neqsim.process.engineering.validation.EngineeringPackageValidator;
+import neqsim.process.engineering.validation.EngineeringSchemaCatalog;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
@@ -45,15 +49,18 @@ public final class EngineeringDeliverableCompiler {
     private final Path lineRegisterFile;
     private final Path instrumentRegisterFile;
     private final Path compilerManifestFile;
+    private final Path validationReportFile;
     private final Path revisionDiffFile;
     private final EngineeringGraph engineeringGraph;
     private final EngineeringDesignEnvelope designEnvelope;
     private final DexpiEngineeringExporter.ExportResult dexpiResult;
+    private final EngineeringPackageValidationReport validationReport;
 
     CompilationResult(Path outputDirectory, Path engineeringGraphFile, Path designEnvelopeFile,
         Path equipmentRegisterFile, Path lineRegisterFile, Path instrumentRegisterFile, Path compilerManifestFile,
-        Path revisionDiffFile, EngineeringGraph engineeringGraph, EngineeringDesignEnvelope designEnvelope,
-        DexpiEngineeringExporter.ExportResult dexpiResult) {
+        Path validationReportFile, Path revisionDiffFile, EngineeringGraph engineeringGraph,
+        EngineeringDesignEnvelope designEnvelope, DexpiEngineeringExporter.ExportResult dexpiResult,
+        EngineeringPackageValidationReport validationReport) {
       this.outputDirectory = outputDirectory;
       this.engineeringGraphFile = engineeringGraphFile;
       this.designEnvelopeFile = designEnvelopeFile;
@@ -61,10 +68,12 @@ public final class EngineeringDeliverableCompiler {
       this.lineRegisterFile = lineRegisterFile;
       this.instrumentRegisterFile = instrumentRegisterFile;
       this.compilerManifestFile = compilerManifestFile;
+      this.validationReportFile = validationReportFile;
       this.revisionDiffFile = revisionDiffFile;
       this.engineeringGraph = engineeringGraph;
       this.designEnvelope = designEnvelope;
       this.dexpiResult = dexpiResult;
+      this.validationReport = validationReport;
     }
 
     public Path getOutputDirectory() {
@@ -95,6 +104,10 @@ public final class EngineeringDeliverableCompiler {
       return compilerManifestFile;
     }
 
+    public Path getValidationReportFile() {
+      return validationReportFile;
+    }
+
     public Path getRevisionDiffFile() {
       return revisionDiffFile;
     }
@@ -109,6 +122,10 @@ public final class EngineeringDeliverableCompiler {
 
     public DexpiEngineeringExporter.ExportResult getDexpiResult() {
       return dexpiResult;
+    }
+
+    public EngineeringPackageValidationReport getValidationReport() {
+      return validationReport;
     }
   }
 
@@ -134,6 +151,7 @@ public final class EngineeringDeliverableCompiler {
       throw new IllegalArgumentException("outputDirectory must not be null");
     }
     Files.createDirectories(outputDirectory);
+    List<String> schemaArtifacts = EngineeringSchemaCatalog.writeSchemas(outputDirectory);
 
     EngineeringDesignEnvelope envelope = null;
     List<EngineeringCalculation> envelopeCalculations = new ArrayList<EngineeringCalculation>();
@@ -165,9 +183,16 @@ public final class EngineeringDeliverableCompiler {
       write(diffFile, diff.toJson());
     }
     Path compilerManifest = outputDirectory.resolve("engineering-compiler-manifest.json");
-    write(compilerManifest, compilerManifest(project, graph, envelope, diff));
+    write(compilerManifest, compilerManifest(project, graph, envelope, diff, schemaArtifacts));
+    Path validationFile = outputDirectory.resolve("engineering-validation-report.json");
+    write(validationFile, new EngineeringPackageValidationReport().toJson());
+    EngineeringPackageValidationReport validation = EngineeringPackageValidator.validatePackage(outputDirectory);
+    write(validationFile, validation.toJson());
+    if (!validation.isValid()) {
+      throw new EngineeringPackageValidationException(validationFile, validation);
+    }
     return new CompilationResult(outputDirectory, graphFile, envelopeFile, equipmentFile, lineFile, instrumentFile,
-        compilerManifest, diffFile, graph, envelope, dexpiResult);
+        compilerManifest, validationFile, diffFile, graph, envelope, dexpiResult, validation);
   }
 
   private static void addDocumentNodes(EngineeringGraph graph, EngineeringProject project) {
@@ -176,7 +201,8 @@ public final class EngineeringDeliverableCompiler {
         "engineering-manifest.json", "engineering-calculations.json", "cause-and-effect.json",
         "interoperability-report.json", "engineering-model.json", "design-case-envelope.json",
         "equipment-register.json", "line-register.json", "instrument-register.json",
-        "engineering-compiler-manifest.json"};
+        "engineering-compiler-manifest.json", "engineering-schema-catalog.json",
+        "engineering-validation-report.json"};
     for (String document : documents) {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, document);
       graph.addNode(new EngineeringNode(nodeId, EngineeringNode.Kind.DOCUMENT, document, document)
@@ -191,7 +217,8 @@ public final class EngineeringDeliverableCompiler {
 
   private static String envelopeJson(EngineeringProject project, EngineeringDesignEnvelope envelope) {
     Map<String, Object> document = new LinkedHashMap<String, Object>();
-    document.put("schemaVersion", "neqsim_design_case_envelope.v1");
+    document.put("schemaVersion", EngineeringSchemaCatalog.DESIGN_CASE_ENVELOPE);
+    document.put("schemaUri", EngineeringSchemaCatalog.schemaUri(EngineeringSchemaCatalog.DESIGN_CASE_ENVELOPE));
     document.put("projectId", project.getProjectId());
     document.put("revision", project.getRevision());
     if (envelope == null) {
@@ -300,15 +327,17 @@ public final class EngineeringDeliverableCompiler {
   private static String registerJson(String schemaVersion, List<Map<String, Object>> rows) {
     Map<String, Object> document = new LinkedHashMap<String, Object>();
     document.put("schemaVersion", schemaVersion);
+    document.put("schemaUri", EngineeringSchemaCatalog.schemaUri(schemaVersion));
     document.put("rowCount", rows.size());
     document.put("rows", rows);
     return GSON.toJson(document);
   }
 
   private static String compilerManifest(EngineeringProject project, EngineeringGraph graph,
-      EngineeringDesignEnvelope envelope, EngineeringGraphDiff diff) {
+      EngineeringDesignEnvelope envelope, EngineeringGraphDiff diff, List<String> schemaArtifacts) {
     Map<String, Object> document = new LinkedHashMap<String, Object>();
-    document.put("schemaVersion", "neqsim_engineering_compiler_manifest.v1");
+    document.put("schemaVersion", EngineeringSchemaCatalog.COMPILER_MANIFEST);
+    document.put("schemaUri", EngineeringSchemaCatalog.schemaUri(EngineeringSchemaCatalog.COMPILER_MANIFEST));
     document.put("projectId", project.getProjectId());
     document.put("projectName", project.getName());
     document.put("revision", project.getRevision());
@@ -324,6 +353,8 @@ public final class EngineeringDeliverableCompiler {
     artifacts.add("equipment-register.json");
     artifacts.add("line-register.json");
     artifacts.add("instrument-register.json");
+    artifacts.add("engineering-schema-catalog.json");
+    artifacts.add("engineering-validation-report.json");
     artifacts.add("plant.dexpi.xml");
     artifacts.add("plant-proteus.xml");
     artifacts.add("plant-pydexpi.xml");
@@ -334,7 +365,13 @@ public final class EngineeringDeliverableCompiler {
     if (diff != null) {
       artifacts.add("engineering-revision-diff.json");
     }
+    for (String schemaArtifact : schemaArtifacts) {
+      if (!artifacts.contains(schemaArtifact)) {
+        artifacts.add(schemaArtifact);
+      }
+    }
     document.put("artifacts", artifacts);
+    document.put("schemas", EngineeringSchemaCatalog.manifestEntries());
     document.put("governance", "Generated values and documents remain review-required until discipline approval");
     return GSON.toJson(document);
   }
