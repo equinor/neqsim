@@ -23,6 +23,8 @@ import neqsim.process.mechanicaldesign.DesignConditions;
 import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.processmodel.dexpi.Dexpi20XmlValidator;
+import neqsim.process.processmodel.dexpi.Dexpi20ModelInspector;
+import neqsim.process.processmodel.dexpi.Dexpi20SemanticValidator;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
 import neqsim.process.safety.overpressure.BlockedOutletRelief;
 import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
@@ -86,6 +88,10 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
         .setOuterDiameter(219.1, "mm").setNominalWallThickness(12.7, "mm").setCorrosionAllowance(3.0, "mm")
         .setDesignPressureBara(120.0).setDesignTemperatureC(150.0).setEquivalentFittingsLengthM(18.0)
         .setProposedSupportSpacingM(5.0).addEvidenceReference("LINE-LIST-20-REV-A"));
+    project.addLineDesignInput(new LineDesignInput("20-PL-MISSING", "NO-SUCH-PIPE").setNominalPipeSize("8")
+        .setSchedule("80").setMaterialGrade("X65").setPipingClass("HC-600").setInsulationType("Mineral wool")
+        .setOuterDiameter(219.1, "mm").setNominalWallThickness(12.7, "mm").setCorrosionAllowance(3.0, "mm")
+        .setDesignPressureBara(120.0).setDesignTemperatureC(150.0).addEvidenceReference("NEGATIVE-TEST"));
 
     String pressureSifRequirement = "20-KA-001-DISCHARGE-P-HH";
     for (EngineeringRequirement requirement : project.getRequirements()) {
@@ -121,6 +127,14 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
             .setHazardReviewReference("HAZOP-20-001").addEvidenceReference("RELIEF-REGISTER-20-REV-A"));
     project.addBlowdownFlareStudy(DynamicBlowdownFlareStudyDataSource.builder("incomplete-blowdown-study")
         .addGap("Protected equipment inventory is not available.").build());
+    project.addBoundary(new EngineeringBoundary("20-CD-001", "20-VG-001", EngineeringBoundary.Type.CLOSED_DRAIN));
+    OverpressureProtectionStudy incompleteStudy = new OverpressureProtectionStudy(
+        new ProtectedItem("20-KA-001", 120.0).setReliefSetPressureBara(110.0))
+            .addScenario(new ReliefScenario.Builder("Incomplete check-valve leakage", ReliefCause.CHECK_VALVE_LEAKAGE)
+                .phase(ReliefPhase.VAPOUR).reliefRateKgPerS(1.0).build());
+    project.addOverpressureStudy(incompleteStudy).addReliefScenarioBasis(
+        new ReliefScenarioBasis("20-KA-001").require(ReliefCause.CHECK_VALVE_LEAKAGE)
+            .setHazardReviewReference("HAZOP-20-002").addEvidenceReference("RELIEF-REGISTER-20-REV-A"));
 
     assertFalse(project.getRequirementsForEquipment("20-KA-001").isEmpty());
     assertFalse(process.getMeasurementDevices().isEmpty());
@@ -138,9 +152,17 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(Files.exists(result.getDexpiFile()));
     assertTrue(Files.exists(result.getDexpi20File()));
     Dexpi20XmlValidator.validate(result.getDexpi20File());
+    assertTrue(Dexpi20SemanticValidator.validate(result.getDexpi20File()).isValid());
+    Dexpi20ModelInspector.ModelSummary nativeSummary = Dexpi20ModelInspector.inspect(result.getDexpi20File());
+    assertTrue(nativeSummary.getEquipmentTags().contains("20-KA-001"));
+    assertTrue(nativeSummary.getPipingConnectionCount() > 0);
+    assertTrue(nativeSummary.getInstrumentationFunctionCount() > 0);
+    assertTrue(nativeSummary.getOffPageConnectorCount() > 0);
+    assertTrue(nativeSummary.getRepresentationGroupCount() > 0);
     assertTrue(Files.exists(result.getManifestFile()));
     assertTrue(Files.exists(result.getCalculationsFile()));
     assertTrue(Files.exists(result.getCauseAndEffectFile()));
+    assertTrue(Files.exists(result.getInteroperabilityReportFile()));
     assertTrue(result.getCompressorMapFiles().containsKey("20-KA-001"));
 
     String xml = new String(Files.readAllBytes(result.getDexpiFile()), StandardCharsets.UTF_8);
@@ -174,6 +196,9 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(dexpi20.contains("Plant/PlantModel"));
     assertTrue(dexpi20.contains("Plant/ProcessEquipment.CentrifugalCompressor"));
     assertTrue(dexpi20.contains("Plant/Piping.Pipe"));
+    assertTrue(dexpi20.contains("Plant/Instrumentation.ProcessInstrumentationFunction"));
+    assertTrue(dexpi20.contains("Plant/Piping.FlowOutPipeOffPageConnector"));
+    assertTrue(dexpi20.contains("20_CD_001"));
 
     String manifest = new String(Files.readAllBytes(result.getManifestFile()), StandardCharsets.UTF_8);
     assertTrue(manifest.contains("NORSOK P-002"));
@@ -209,6 +234,19 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     JsonObject blowdownReadiness = findReadinessTopic(readiness, "BLOWDOWN_FLARE_INPUT");
     assertEquals(0, blowdownReadiness.get("completedItemCount").getAsInt());
     assertEquals("NOT_READY", blowdownReadiness.get("status").getAsString());
+    JsonObject pipingReadiness = findReadinessTopic(readiness, "LINE_LIST_AND_PIPING_DESIGN");
+    assertEquals(1, pipingReadiness.get("completedItemCount").getAsInt());
+    assertEquals(2, pipingReadiness.get("requiredItemCount").getAsInt());
+    assertEquals("NOT_READY", pipingReadiness.get("status").getAsString());
+    JsonObject incompleteRelief = findReliefCoverage(calculationJson.getAsJsonArray("reliefScenarioCoverage"),
+        "20-KA-001");
+    assertEquals("SCENARIO_SET_INCOMPLETE", incompleteRelief.get("status").getAsString());
+    assertEquals(0, incompleteRelief.get("evaluatedScenarioCount").getAsInt());
+
+    String interoperability = new String(Files.readAllBytes(result.getInteroperabilityReportFile()),
+        StandardCharsets.UTF_8);
+    assertTrue(interoperability.contains("semanticProfileValidation"));
+    assertTrue(interoperability.contains("QUALIFICATION_REQUIRED"));
 
     String causeAndEffect = new String(Files.readAllBytes(result.getCauseAndEffectFile()), StandardCharsets.UTF_8);
     assertTrue(causeAndEffect.contains("PROPOSED_FOR_HAZOP_LOPA_AND_DISCIPLINE_REVIEW"));
@@ -235,5 +273,15 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
       }
     }
     throw new AssertionError("Readiness topic not found: " + topic);
+  }
+
+  private static JsonObject findReliefCoverage(JsonArray coverage, String equipmentTag) {
+    for (int i = 0; i < coverage.size(); i++) {
+      JsonObject item = coverage.get(i).getAsJsonObject();
+      if (equipmentTag.equals(item.get("equipmentTag").getAsString())) {
+        return item;
+      }
+    }
+    throw new AssertionError("Relief coverage not found for: " + equipmentTag);
   }
 }

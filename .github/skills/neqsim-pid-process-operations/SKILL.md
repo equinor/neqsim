@@ -200,6 +200,9 @@ flows, control/protective valves, and equipment associations. It references
 `engineering-manifest.json`, the proposed
 `cause-and-effect.json`, simulation-backed `engineering-calculations.json`, and
 any `datasets/<tag>-compressor-map.json` sidecars.
+Use `plant-pydexpi.xml` for pyDEXPI import and inspect
+`interoperability-report.json`; native schema validity, semantic-profile
+validity, pyDEXPI import and commercial-CAE round-trip are distinct gates.
 Do not flatten large vendor maps into P&ID attributes.
 
 Do not call the Proteus graphical file DEXPI 2.0. Antisurge recycle topology is
@@ -207,6 +210,9 @@ connected discharge-to-suction; PSV/BDV proposals use dedicated equipment
 nozzles and a separate relief/blowdown network. Treat every
 `UnresolvedBoundary=YES` as a required line, flare-header, vent, drain or utility
 tie-in before engineering completion.
+Represent controlled tie-ins with `EngineeringBoundary` so process inlet/outlet,
+flare, vent, closed-drain, utility and recycle connections become directional
+off-page connectors in native DEXPI rather than free-text assumptions.
 
 The calculation handoff automatically runs available equipment mechanical-design
 and materials-screening models. It can run API 520/521 PSV sizing from attached

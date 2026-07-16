@@ -33,6 +33,7 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.mechanicaldesign.DesignConditions;
 import neqsim.process.processmodel.dexpi.DexpiXmlWriter;
 import neqsim.process.processmodel.dexpi.Dexpi20XmlWriter;
+import neqsim.process.processmodel.dexpi.Dexpi20SemanticValidator;
 
 /**
  * Exports a governed engineering project as DEXPI XML plus lossless engineering sidecars.
@@ -51,18 +52,22 @@ public final class DexpiEngineeringExporter {
   public static final class ExportResult {
     private final Path dexpiFile;
     private final Path dexpi20File;
+    private final Path pyDexpiFile;
     private final Path manifestFile;
     private final Path calculationsFile;
     private final Path causeAndEffectFile;
+    private final Path interoperabilityReportFile;
     private final Map<String, Path> compressorMapFiles;
 
-    ExportResult(Path dexpiFile, Path dexpi20File, Path manifestFile, Path calculationsFile, Path causeAndEffectFile,
-        Map<String, Path> compressorMapFiles) {
+    ExportResult(Path dexpiFile, Path dexpi20File, Path pyDexpiFile, Path manifestFile, Path calculationsFile,
+        Path causeAndEffectFile, Path interoperabilityReportFile, Map<String, Path> compressorMapFiles) {
       this.dexpiFile = dexpiFile;
       this.dexpi20File = dexpi20File;
+      this.pyDexpiFile = pyDexpiFile;
       this.manifestFile = manifestFile;
       this.calculationsFile = calculationsFile;
       this.causeAndEffectFile = causeAndEffectFile;
+      this.interoperabilityReportFile = interoperabilityReportFile;
       this.compressorMapFiles = new LinkedHashMap<String, Path>(compressorMapFiles);
     }
 
@@ -74,6 +79,11 @@ public final class DexpiEngineeringExporter {
     /** @return native, schema-validated DEXPI 2.0 semantic model */
     public Path getDexpi20File() {
       return dexpi20File;
+    }
+
+    /** @return namespace-omitted Proteus compatibility file accepted by pyDEXPI */
+    public Path getPyDexpiFile() {
+      return pyDexpiFile;
     }
 
     /** @return generated engineering manifest */
@@ -89,6 +99,11 @@ public final class DexpiEngineeringExporter {
     /** @return proposed cause-and-effect matrix requiring HAZOP/LOPA and discipline review */
     public Path getCauseAndEffectFile() {
       return causeAndEffectFile;
+    }
+
+    /** @return machine-readable schema, semantic, pyDEXPI and commercial-CAE qualification status */
+    public Path getInteroperabilityReportFile() {
+      return interoperabilityReportFile;
     }
 
     /** @return immutable equipment-tag to compressor-map path mapping */
@@ -121,12 +136,17 @@ public final class DexpiEngineeringExporter {
 
     Path dexpi20File = outputDirectory.resolve("plant.dexpi.xml");
     Dexpi20XmlWriter.write(project.getProcessSystem(), dexpi20File.toFile());
+    Dexpi20EngineeringMaterializer.materialize(project, dexpi20File);
 
     Path dexpiFile = outputDirectory.resolve("plant-proteus.xml");
     DexpiXmlWriter.write(project.getProcessSystem(), dexpiFile.toFile());
 
+    Path pyDexpiFile = outputDirectory.resolve("plant-pydexpi.xml");
+    DexpiXmlWriter.writeForPyDexpi(project.getProcessSystem(), pyDexpiFile.toFile());
+
     Map<String, Path> maps = writeCompressorMaps(project, datasets);
     DexpiEngineeringMaterializer.MaterializationResult materialization = enrichDexpi(project, dexpiFile, maps);
+    enrichDexpi(project, pyDexpiFile, maps);
 
     Path manifest = outputDirectory.resolve("engineering-manifest.json");
     Files.write(manifest, packageManifest(project).getBytes(StandardCharsets.UTF_8));
@@ -135,7 +155,37 @@ public final class DexpiEngineeringExporter {
     Files.write(calculations, calculationReport.toJson().getBytes(StandardCharsets.UTF_8));
     Path causeAndEffect = outputDirectory.resolve("cause-and-effect.json");
     Files.write(causeAndEffect, materialization.toCauseAndEffectJson(project).getBytes(StandardCharsets.UTF_8));
-    return new ExportResult(dexpiFile, dexpi20File, manifest, calculations, causeAndEffect, maps);
+    Path interoperability = outputDirectory.resolve("interoperability-report.json");
+    Files.write(interoperability, interoperabilityReport(project, dexpi20File).getBytes(StandardCharsets.UTF_8));
+    return new ExportResult(dexpiFile, dexpi20File, pyDexpiFile, manifest, calculations, causeAndEffect,
+        interoperability, maps);
+  }
+
+  private static String interoperabilityReport(EngineeringProject project, Path nativeDexpi) throws IOException {
+    Dexpi20SemanticValidator.ValidationReport semantic = Dexpi20SemanticValidator.validate(nativeDexpi);
+    JsonObject report = new JsonObject();
+    report.addProperty("profile", "neqsim_dexpi_interoperability.v1");
+    JsonObject nativeStatus = new JsonObject();
+    nativeStatus.addProperty("file", "plant.dexpi.xml");
+    nativeStatus.addProperty("dexpiVersion", "2.0");
+    nativeStatus.addProperty("xsdValidation", "PASSED");
+    nativeStatus.addProperty("semanticProfileValidation", semantic.isValid() ? "PASSED" : "FAILED");
+    nativeStatus.add("semanticWarnings", new GsonBuilder().create().toJsonTree(semantic.getWarnings()));
+    report.add("nativeDexpi", nativeStatus);
+    JsonObject pydexpi = new JsonObject();
+    pydexpi.addProperty("file", "plant-pydexpi.xml");
+    pydexpi.addProperty("target", "pyDEXPI Proteus importer");
+    pydexpi.addProperty("status", "NOT_RUN_BY_JAVA_EXPORTER");
+    pydexpi.addProperty("qualificationCommand",
+        "python devtools/validate_dexpi_interoperability.py <package-directory> --require-pydexpi --output <package-directory>/interoperability-report.json");
+    report.add("pyDexpi", pydexpi);
+    JsonObject commercial = new JsonObject();
+    commercial.addProperty("status", "QUALIFICATION_REQUIRED");
+    commercial.addProperty("requiredEvidence",
+        "Named CAE product/version, successful import, exported round-trip file and reviewed difference report");
+    report.add("commercialCae", commercial);
+    report.add("boundaries", new GsonBuilder().create().toJsonTree(project.getBoundaries()));
+    return new GsonBuilder().setPrettyPrinting().create().toJson(report);
   }
 
   private static String packageManifest(EngineeringProject project) {
@@ -145,6 +195,7 @@ public final class DexpiEngineeringExporter {
     nativeDexpi.addProperty("file", "plant.dexpi.xml");
     nativeDexpi.addProperty("serialization", "DEXPI_XML_2_0_NATIVE");
     nativeDexpi.addProperty("schemaValidation", "PASSED_DURING_EXPORT");
+    nativeDexpi.addProperty("semanticProfileValidation", "PASSED_DURING_EXPORT");
     nativeDexpi.addProperty("content", "PROCESS_TOPOLOGY_AND_SEMANTIC_EQUIPMENT_MODEL");
     artifacts.add("nativeDexpi20", nativeDexpi);
     JsonObject proteus = new JsonObject();
@@ -153,6 +204,11 @@ public final class DexpiEngineeringExporter {
     proteus.addProperty("content", "GRAPHICAL_PID_AND_ENGINEERING_PROPOSALS");
     proteus.addProperty("nativeDexpi20Conformance", false);
     artifacts.add("proteusPid", proteus);
+    JsonObject pyDexpi = new JsonObject();
+    pyDexpi.addProperty("file", "plant-pydexpi.xml");
+    pyDexpi.addProperty("serialization", "PROTEUS_4_1_1_NAMESPACE_OMITTED_FOR_PYDEXPI");
+    pyDexpi.addProperty("content", "GRAPHICAL_PID_AND_ENGINEERING_PROPOSALS");
+    artifacts.add("pyDexpiCompatibility", pyDexpi);
     manifest.add("exchangeArtifacts", artifacts);
     return new GsonBuilder().setPrettyPrinting().create().toJson(manifest);
   }

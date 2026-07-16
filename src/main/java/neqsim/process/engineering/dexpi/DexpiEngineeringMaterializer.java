@@ -260,8 +260,7 @@ public final class DexpiEngineeringMaterializer {
     Map<String, EquipmentReference> equipment = collectEquipmentReferences(document);
     Element protectionSystem = createNetworkSystem(document, usedIds, "EngineeringSafeguards",
         "PROCESS_CONTROL_ISOLATION_AND_RECYCLE");
-    Element reliefSystem =
-        createNetworkSystem(document, usedIds, "ReliefAndBlowdown", "FLARE_RELIEF_AND_BLOWDOWN");
+    Element reliefSystem = createNetworkSystem(document, usedIds, "ReliefAndBlowdown", "FLARE_RELIEF_AND_BLOWDOWN");
     int functionCount = 0;
     int deviceCount = 0;
     int offset = 0;
@@ -312,8 +311,8 @@ public final class DexpiEngineeringMaterializer {
       for (DeviceDefinition device : definition.finalElements) {
         String tag = device.tagPrefix + "-" + number;
         Element targetSystem = isReliefOrBlowdownTag(tag) ? reliefSystem : protectionSystem;
-        String id = appendPipingComponent(document, targetSystem, usedIds, project, requirement, protectedEquipment, tag,
-            device.componentClass, definition.controlSystem, baseX + 12.0 + deviceCount % 4 * 3.0,
+        String id = appendPipingComponent(document, targetSystem, usedIds, project, requirement, protectedEquipment,
+            tag, device.componentClass, definition.controlSystem, baseX + 12.0 + deviceCount % 4 * 3.0,
             protectedEquipment.y);
         if (actuatingSourceId != null && !"SwingCheckValve".equals(device.componentClass)
             && !"SpringLoadedGlobeSafetyValve".equals(device.componentClass)) {
@@ -652,9 +651,8 @@ public final class DexpiEngineeringMaterializer {
       String inletNozzle = nozzles.getLength() == 0 ? null : ((Element) nozzles.item(0)).getAttribute("ID");
       String outletNozzle = nozzles.getLength() == 0 ? null
           : ((Element) nozzles.item(nozzles.getLength() - 1)).getAttribute("ID");
-      result.put(tag,
-          new EquipmentReference(equipment, equipment.getAttribute("ID"), inletNozzle, outletNozzle, position[0],
-              position[1]));
+      result.put(tag, new EquipmentReference(equipment, equipment.getAttribute("ID"), inletNozzle, outletNozzle,
+          position[0], position[1]));
     }
     return result;
   }

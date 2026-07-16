@@ -15,7 +15,8 @@ import org.xml.sax.SAXException;
 public final class Dexpi20XmlValidator {
   private static final String SCHEMA_RESOURCE = "/dexpi/2.0/DEXPI_XML_Schema.xsd";
 
-  private Dexpi20XmlValidator() {}
+  private Dexpi20XmlValidator() {
+  }
 
   /**
    * Validates a DEXPI XML document.

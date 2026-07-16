@@ -40,6 +40,7 @@ public final class EngineeringProject implements Serializable {
   private final List<ReliefScenarioBasis> reliefScenarioBases = new ArrayList<ReliefScenarioBasis>();
   private final List<SafetyFunctionDesign> safetyFunctionDesigns = new ArrayList<SafetyFunctionDesign>();
   private final List<ShutdownSequence> shutdownSequences = new ArrayList<ShutdownSequence>();
+  private final List<EngineeringBoundary> boundaries = new ArrayList<EngineeringBoundary>();
   private MaterialsReviewInput materialsReviewInput;
 
   EngineeringProject(String name, ProcessSystem processSystem, EngineeringDesignBasis designBasis) {
@@ -189,6 +190,20 @@ public final class EngineeringProject implements Serializable {
     return Collections.unmodifiableList(shutdownSequences);
   }
 
+  /** Adds an explicit off-page process, flare, vent, drain, utility or recycle boundary. */
+  public EngineeringProject addBoundary(EngineeringBoundary boundary) {
+    if (boundary == null) {
+      throw new IllegalArgumentException("boundary must not be null");
+    }
+    boundaries.add(boundary);
+    return this;
+  }
+
+  /** @return immutable controlled document boundaries */
+  public List<EngineeringBoundary> getBoundaries() {
+    return Collections.unmodifiableList(boundaries);
+  }
+
   /**
    * Sets project material-register and service data to overlay on simulation-derived conditions.
    *
@@ -262,6 +277,20 @@ public final class EngineeringProject implements Serializable {
             requirement.getId() + " has no SIL target; determine through HAZOP/LOPA and the SRS");
       }
     }
+    Set<String> boundaryIds = new HashSet<String>();
+    for (EngineeringBoundary boundary : boundaries) {
+      if (!boundaryIds.add(boundary.getId())) {
+        report.add(Severity.ERROR, "ENG-BOUNDARY-001", boundary.getEquipmentTag(),
+            "Engineering boundary id is not unique: " + boundary.getId());
+      }
+      if (processSystem.getUnit(boundary.getEquipmentTag()) == null) {
+        report.add(Severity.ERROR, "ENG-BOUNDARY-002", boundary.getEquipmentTag(),
+            "Engineering boundary references unknown equipment");
+      } else if (!boundary.isResolved()) {
+        report.add(Severity.REVIEW, "ENG-BOUNDARY-003", boundary.getEquipmentTag(),
+            boundary.getId() + " requires an external document tie-in");
+      }
+    }
     return report;
   }
 
@@ -294,10 +323,15 @@ public final class EngineeringProject implements Serializable {
     root.add("designBasis", basis);
 
     root.add("requirements", new GsonBuilder().create().toJsonTree(requirements));
-    root.add("lineList", new GsonBuilder().create().toJsonTree(lineDesignInputs));
+    JsonArray lineList = new JsonArray();
+    for (LineDesignInput input : lineDesignInputs) {
+      lineList.add(new GsonBuilder().create().toJsonTree(input.toMap()));
+    }
+    root.add("lineList", lineList);
     root.add("reliefScenarioBases", new GsonBuilder().create().toJsonTree(reliefScenarioBases));
     root.add("safetyFunctionDesigns", new GsonBuilder().create().toJsonTree(safetyFunctionDesigns));
     root.add("shutdownSequences", new GsonBuilder().create().toJsonTree(shutdownSequences));
+    root.add("boundaries", new GsonBuilder().create().toJsonTree(boundaries));
     root.add("validation", new GsonBuilder().create().toJsonTree(validate().getFindings()));
     return new GsonBuilder().setPrettyPrinting().create().toJson(root);
   }

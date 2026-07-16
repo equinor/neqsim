@@ -87,8 +87,7 @@ public final class SimulationEngineeringDesignRunner {
 
     JsonArray reliefResults = new JsonArray();
     Set<String> explicitlyStudiedTags = new HashSet<String>();
-    Map<String, Set<ReliefCause>> successfullyEvaluatedReliefCauses =
-        new LinkedHashMap<String, Set<ReliefCause>>();
+    Map<String, Set<ReliefCause>> successfullyEvaluatedReliefCauses = new LinkedHashMap<String, Set<ReliefCause>>();
     for (OverpressureProtectionStudy study : project.getOverpressureStudies()) {
       explicitlyStudiedTags.add(study.getItem().getName());
       try {
@@ -242,7 +241,7 @@ public final class SimulationEngineeringDesignRunner {
   private static JsonArray calculateLineDesigns(EngineeringProject project) {
     JsonArray results = new JsonArray();
     for (LineDesignInput input : project.getLineDesignInputs()) {
-      JsonObject item = GSON.toJsonTree(input).getAsJsonObject();
+      JsonObject item = GSON.toJsonTree(input.toMap()).getAsJsonObject();
       JsonArray missing = GSON.toJsonTree(input.getMissingFields()).getAsJsonArray();
       item.add("missingFields", missing);
       ProcessEquipmentInterface unit = project.getProcessSystem().getUnit(input.getEquipmentTag());

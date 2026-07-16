@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * Project line-list data used to complement simulation geometry with mechanical-design inputs.
@@ -251,5 +253,34 @@ public final class LineDesignInput implements Serializable {
 
   public List<String> getEvidenceReferences() {
     return Collections.unmodifiableList(evidenceReferences);
+  }
+
+  /** @return JSON-safe controlled line-list representation with unavailable numeric fields omitted */
+  public Map<String, Object> toMap() {
+    Map<String, Object> result = new LinkedHashMap<String, Object>();
+    result.put("lineTag", lineTag);
+    result.put("equipmentTag", equipmentTag);
+    result.put("nominalPipeSize", nominalPipeSize);
+    result.put("schedule", schedule);
+    result.put("materialGrade", materialGrade);
+    result.put("pipingClass", pipingClass);
+    result.put("insulationType", insulationType);
+    putFinite(result, "outerDiameterM", outerDiameterM);
+    putFinite(result, "nominalWallThicknessM", nominalWallThicknessM);
+    putFinite(result, "corrosionAllowanceM", corrosionAllowanceM);
+    putFinite(result, "designPressureBara", designPressureBara);
+    putFinite(result, "designTemperatureC", designTemperatureC);
+    putFinite(result, "installationTemperatureC", installationTemperatureC);
+    putFinite(result, "equivalentFittingsLengthM", equivalentFittingsLengthM);
+    putFinite(result, "proposedSupportSpacingM", proposedSupportSpacingM);
+    result.put("evidenceReferences", evidenceReferences);
+    result.put("missingFields", getMissingFields());
+    return result;
+  }
+
+  private static void putFinite(Map<String, Object> result, String name, double value) {
+    if (Double.isFinite(value)) {
+      result.put(name, value);
+    }
   }
 }

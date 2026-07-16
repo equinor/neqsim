@@ -37,7 +37,8 @@ public final class Dexpi20XmlWriter {
   private static final String CORE_MODEL = "https://data.dexpi.org/models/2.0.0/Core.xml";
   private static final String PLANT_MODEL = "https://data.dexpi.org/models/2.0.0/Plant.xml";
 
-  private Dexpi20XmlWriter() {}
+  private Dexpi20XmlWriter() {
+  }
 
   /** Writes and validates a native DEXPI 2.0 model. */
   public static void write(ProcessSystem processSystem, File file) throws IOException {
@@ -52,6 +53,7 @@ public final class Dexpi20XmlWriter {
     }
     try {
       Dexpi20XmlValidator.validate(file.toPath());
+      Dexpi20SemanticValidator.validateOrThrow(file.toPath());
     } catch (org.xml.sax.SAXException ex) {
       throw new IOException("Generated DEXPI 2.0 XML failed schema validation", ex);
     }

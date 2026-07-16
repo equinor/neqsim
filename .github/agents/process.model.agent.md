@@ -39,6 +39,9 @@ governed engineering path from `neqsim-pid-process-operations`:
    `plant.dexpi.xml` as the schema-validated native DEXPI 2.0 semantic model and
    `plant-proteus.xml` as the backward-compatible graphical P&ID; do not conflate
    the two serializations.
+   Use `plant-pydexpi.xml` for pyDEXPI compatibility and keep
+   `interoperability-report.json` at `QUALIFICATION_REQUIRED` until a named CAE
+   product/version has passed import and reviewed round-trip comparison.
 
 Do not assign SIL, voting, final set points, failure actions, materials or final
 shutdown actions from generic equipment rules. Preserve `REVIEW_REQUIRED` until

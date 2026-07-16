@@ -66,28 +66,42 @@ The package contains:
 engineering-package/
 ├── plant.dexpi.xml
 ├── plant-proteus.xml
+├── plant-pydexpi.xml
 ├── cause-and-effect.json
 ├── engineering-calculations.json
 ├── engineering-manifest.json
+├── interoperability-report.json
 └── datasets/
     └── <compressor-tag>-compressor-map.json
 ```
 
 `plant.dexpi.xml` uses the native object/property/reference serialization introduced by DEXPI 2.0. Every export is
-validated against the official `DEXPI_XML_Schema.xsd` bundled from the DEXPI Specification 2.0 release. It currently
-carries the semantic process-equipment, nozzle, piping-node and process-connection model.
+validated against the official `DEXPI_XML_Schema.xsd` bundled from the DEXPI Specification 2.0 release and then checked
+for imported Core/Plant model declarations, unique identities and tags, resolved references, equipment/nozzle integrity,
+and piping-node reference types. It carries process equipment, instrumentation functions, safeguard final elements,
+off-page connectors, nozzles, piping nodes and process connections.
 
 `plant-proteus.xml` is the backward-compatible graphical P&amp;ID handoff. It uses the Proteus 4.1.1 structure and
 contains the generated graphical instrumentation, safeguard proposals and NeqSim engineering attributes described
 below. It is deliberately not labelled as native DEXPI 2.0. Keeping both artifacts avoids disguising a Proteus body
 with a DEXPI 2.0 header while native graphical DEXPI 2.0 coverage is expanded.
 
+`plant-pydexpi.xml` contains the same governed graphical model with the namespace omitted for compatibility with the
+pyDEXPI Proteus importer. Run
+`python devtools/validate_dexpi_interoperability.py engineering-package --require-pydexpi --output
+engineering-package/interoperability-report.json` to qualify that import. The
+generated `interoperability-report.json` keeps native schema/semantic status separate from pyDEXPI and commercial-CAE
+qualification. Commercial import and round-trip evidence must follow
+`docs/integration/dexpi-commercial-cae-evidence-template.json`; a missing vendor test remains
+`QUALIFICATION_REQUIRED` rather than being inferred from schema validity.
+
 The DEXPI model contains explicit, graphically positioned process-instrumentation functions, signal-generating
 functions, instrumentation loops, information-flow relationships, control valves, shutdown valves, check valves,
 pressure-safety valves, and blowdown valves. Every generated object is associated with its protected equipment and
 source requirement. The manifest retains standards, rationale, provenance, review state, and validation findings.
-These graphical functions are currently carried by `plant-proteus.xml`; `plant.dexpi.xml` is the schema-validated
-native DEXPI 2.0 semantic topology handoff.
+The Proteus file remains the most complete graphical view. Native DEXPI 2.0 now carries the corresponding semantic
+instrumentation and safeguard topology; native drawing representations are expanded incrementally and must be checked
+in the target CAE tool before controlled issue.
 
 `engineering-calculations.json` runs the existing NeqSim engineering engines and keeps their results in one governed
 handoff. It includes equipment mechanical design, simulation operating points, feasible trip-setting envelopes when
@@ -119,6 +133,19 @@ PSV and BDV proposals are connected to dedicated protected-equipment nozzles and
 network. Suction/discharge ESDVs and non-return valves are connected on the protected-equipment side. Connections that
 still require an upstream line, flare-header or disposal-system tie-in carry an explicit `UnresolvedBoundary=YES` and
 remain incomplete engineering.
+
+Declare known document boundaries explicitly instead of encoding them only in free text:
+
+```java
+project.addBoundary(new EngineeringBoundary("20-FLARE-001", "20-VG-001",
+    EngineeringBoundary.Type.FLARE_HEADER));
+project.addBoundary(new EngineeringBoundary("20-CD-001", "20-VG-001",
+    EngineeringBoundary.Type.CLOSED_DRAIN)
+    .resolve("P&ID-20-DR-001", "LINE-LIST-20-REV-B"));
+```
+
+Supported types cover process inlet/outlet, flare, vent, closed drain, utility inlet/outlet and recycle tie-ins. Each
+is serialized as a directional DEXPI off-page connector. Unresolved boundaries remain review findings in the manifest.
 
 `cause-and-effect.json` is a traceable proposal generated from the same requirements. It intentionally leaves final
 set points unassigned. Voting remains unassigned for rule-only requirements; when a controlled
@@ -288,8 +315,10 @@ supported by reviewed inventories and network data, and screening-level material
 must still complete and approve the scenario basis, detailed piping/nozzle/stress design, fire-and-gas mapping,
 package/vendor interfaces, alarm rationalization, SIL determination and verification, final voting and trip settings,
 shutdown actions, tag allocation and maintainability reviews before controlled issue. Native DEXPI XML schema
-validation is automatic; semantic profile validation against the imported DEXPI Core/Plant models and round-trip
-qualification in commercial CAE tools remain controlled interoperability work.
+and native drawing-representation completion before controlled issue. Native schema and supported-profile semantic
+validation are automatic. pyDEXPI import is exercised by the interoperability tool. Round-trip qualification in a
+named commercial CAE product remains controlled external evidence and is never reported as passed without its test
+record. The committed golden regression pair is under `src/test/resources/dexpi/2.0/golden/`.
 
 Company or project rules can implement `EngineeringRule` and be registered with `addRule(...)`. Keep
 operator-specific alarm philosophy, trip thresholds, voting, proprietary design requirements, and
