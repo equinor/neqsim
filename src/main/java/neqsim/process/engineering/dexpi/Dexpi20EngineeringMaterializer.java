@@ -191,8 +191,7 @@ final class Dexpi20EngineeringMaterializer {
     items.appendChild(valve);
     appendRepresentation(document, diagramGroups, valveId, finalElementTag(requirement), representationNumber);
 
-    Element boundary = object(document, boundaryId,
-        "Plant/Piping." + boundaryDirection(requirement));
+    Element boundary = object(document, boundaryId, "Plant/Piping." + boundaryDirection(requirement));
     data(document, boundary, "PositionNumber", boundaryService(requirement) + "_BOUNDARY");
     Element boundaryNodes = components(document, boundary, "Nodes");
     boundaryNodes.appendChild(object(document, boundaryNode, "Plant/Piping.PipingNode"));
@@ -252,8 +251,7 @@ final class Dexpi20EngineeringMaterializer {
     connections.appendChild(pipe);
   }
 
-  private static String appendDedicatedNozzle(Document document, Element equipment, Set<String> usedIds,
-      String base) {
+  private static String appendDedicatedNozzle(Document document, Element equipment, Set<String> usedIds, String base) {
     Element nozzles = directComponents(document, equipment, "Nozzles");
     String nozzleId = uniqueId(equipment.getAttribute("id") + "_SafeguardNozzle_" + base, usedIds);
     String nodeId = uniqueId(nozzleId + "_Node", usedIds);

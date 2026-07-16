@@ -22,18 +22,18 @@ import org.xml.sax.SAXException;
 public final class Dexpi20SemanticValidator {
   private static final String CORE_MODEL = "https://data.dexpi.org/models/2.0.0/Core.xml";
   private static final String PLANT_MODEL = "https://data.dexpi.org/models/2.0.0/Plant.xml";
-  private static final Set<String> SUPPORTED_TYPES = Collections.unmodifiableSet(new LinkedHashSet<String>(Arrays.asList(
-      "Core/EngineeringModel", "Core/Diagram.Diagram", "Core/Diagram.RepresentationGroup", "Core/Diagram.Text",
-      "Core/Diagram.Point", "Plant/PlantModel", "Plant/ProcessEquipment.ProcessEquipment",
-      "Plant/ProcessEquipment.CentrifugalCompressor", "Plant/ProcessEquipment.CentrifugalPump",
-      "Plant/ProcessEquipment.Separator", "Plant/ProcessEquipment.AirCoolingSystem",
-      "Plant/ProcessEquipment.TubularHeatExchanger", "Plant/ProcessEquipment.FiredHeater",
-      "Plant/ProcessEquipment.Tank", "Plant/ProcessEquipment.Nozzle", "Plant/Piping.PipingNetworkSystem",
-      "Plant/Piping.PipingNetworkSegment", "Plant/Piping.PipingNode", "Plant/Piping.Pipe",
-      "Plant/Piping.GlobeValve", "Plant/Piping.SpringLoadedGlobeSafetyValve", "Plant/Piping.SwingCheckValve",
-      "Plant/Piping.FlowInPipeOffPageConnector", "Plant/Piping.FlowOutPipeOffPageConnector",
-      "Plant/Instrumentation.ProcessInstrumentationFunction",
-      "Plant/Instrumentation.ProcessSignalGeneratingFunction", "Plant/Instrumentation.MeasuringLineFunction")));
+  private static final Set<String> SUPPORTED_TYPES = Collections
+      .unmodifiableSet(new LinkedHashSet<String>(Arrays.asList("Core/EngineeringModel", "Core/Diagram.Diagram",
+          "Core/Diagram.RepresentationGroup", "Core/Diagram.Text", "Core/Diagram.Point", "Plant/PlantModel",
+          "Plant/ProcessEquipment.ProcessEquipment", "Plant/ProcessEquipment.CentrifugalCompressor",
+          "Plant/ProcessEquipment.CentrifugalPump", "Plant/ProcessEquipment.Separator",
+          "Plant/ProcessEquipment.AirCoolingSystem", "Plant/ProcessEquipment.TubularHeatExchanger",
+          "Plant/ProcessEquipment.FiredHeater", "Plant/ProcessEquipment.Tank", "Plant/ProcessEquipment.Nozzle",
+          "Plant/Piping.PipingNetworkSystem", "Plant/Piping.PipingNetworkSegment", "Plant/Piping.PipingNode",
+          "Plant/Piping.Pipe", "Plant/Piping.GlobeValve", "Plant/Piping.SpringLoadedGlobeSafetyValve",
+          "Plant/Piping.SwingCheckValve", "Plant/Piping.FlowInPipeOffPageConnector",
+          "Plant/Piping.FlowOutPipeOffPageConnector", "Plant/Instrumentation.ProcessInstrumentationFunction",
+          "Plant/Instrumentation.ProcessSignalGeneratingFunction", "Plant/Instrumentation.MeasuringLineFunction")));
 
   private Dexpi20SemanticValidator() {
   }
