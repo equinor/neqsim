@@ -390,10 +390,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       outStream[outStreamSpecificationNumber]
           .setFlowRate(getInStream(outStreamSpecificationNumber).getFlowRate("kg/sec"), "kg/sec");
       outStream[outStreamSpecificationNumber].setThermoSystem(specifiedOut);
-      // Do NOT overwrite temperatureOut here: it is the user-specified pin, held
-      // constant every iteration. Reading specifiedOut.getTemperature() returns
-      // Kelvin and would corrupt the "C"-based pin, escalating on each recycle
-      // pass.
+      temperatureOut = specifiedOut.getTemperature();
     }
 
     double deltaEnthalpy = outStream[outStreamSpecificationNumber].getFluid().getEnthalpy()
