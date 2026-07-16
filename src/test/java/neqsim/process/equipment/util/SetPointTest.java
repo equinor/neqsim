@@ -90,4 +90,55 @@ public class SetPointTest {
 
     assertEquals(30.0, targetStream.getPressure("bara"), 0.01);
   }
+
+  @Test
+  public void testMultiplierAndOffset() {
+    testFluid = neqsim.thermo.FluidCreator.create("dry gas");
+
+    Stream sourceStream = new Stream("Source Stream", testFluid);
+    sourceStream.setPressure(60.0, "bara");
+    sourceStream.setTemperature(20.0, "C");
+    sourceStream.run();
+
+    // UniSim SET-style pressure link with an offset: target = source - 0.30 bara
+    // (mirrors a UniSim SET with a -30 kPa offset).
+    Stream targetStream = new Stream("Target Stream", testFluid.clone());
+    targetStream.setPressure(10.0, "bara");
+    targetStream.run();
+
+    SetPoint offsetSet = new SetPoint("Offset Set");
+    offsetSet.setSourceVariable(sourceStream, "pressure");
+    offsetSet.setTargetVariable(targetStream, "pressure");
+    offsetSet.setOffset(-0.30);
+    assertEquals(1.0, offsetSet.getMultiplier(), 1e-12);
+    assertEquals(-0.30, offsetSet.getOffset(), 1e-12);
+    offsetSet.run();
+    targetStream.run();
+    assertEquals(59.70, targetStream.getPressure("bara"), 0.01);
+
+    // Multiplier link: target = 0.5 * source
+    Stream targetStream2 = new Stream("Target Stream 2", testFluid.clone());
+    targetStream2.setPressure(10.0, "bara");
+    targetStream2.run();
+
+    SetPoint multSet = new SetPoint("Mult Set");
+    multSet.setSourceVariable(sourceStream, "pressure");
+    multSet.setTargetVariable(targetStream2, "pressure");
+    multSet.setMultiplier(0.5);
+    multSet.run();
+    targetStream2.run();
+    assertEquals(30.0, targetStream2.getPressure("bara"), 0.01);
+
+    // Default (no multiplier/offset) is unchanged: target = source
+    Stream targetStream3 = new Stream("Target Stream 3", testFluid.clone());
+    targetStream3.setPressure(10.0, "bara");
+    targetStream3.run();
+
+    SetPoint plainSet = new SetPoint("Plain Set");
+    plainSet.setSourceVariable(sourceStream, "pressure");
+    plainSet.setTargetVariable(targetStream3, "pressure");
+    plainSet.run();
+    targetStream3.run();
+    assertEquals(60.0, targetStream3.getPressure("bara"), 0.01);
+  }
 }

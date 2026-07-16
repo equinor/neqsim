@@ -361,7 +361,6 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(systemOut0);
     testOps.PHflash(enthalpyOutRef);
-    System.out.println("out temperature " + systemOut0.getTemperature("C"));
     outStream[nonOutStreamSpecifiedStreamNumber].setFluid(systemOut0);
   }
 
