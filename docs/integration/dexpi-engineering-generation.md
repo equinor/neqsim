@@ -77,6 +77,7 @@ The compiler adds these coordinated artifacts:
 | `engineering-design-case-matrix.json` | Required/optional case coverage, per-metric execution status, limits and governing values |
 | `engineering-discipline-package.json` | Process, mechanical, piping, instrumentation and safeguarding handoff with controlled data gaps |
 | `engineering-approval-ledger.json` | Accountable approval history, effective decisions and revision-triggered revalidation state |
+| `engineering-dexpi-roundtrip-report.json` | Internal export/reimport identity and reference qualification for all three DEXPI representations |
 | `design-case-envelope.json` | Per-case results and governing pressure, temperature, flow or custom metrics |
 | `equipment-register.json` | Equipment identity, design-condition status and governing design values |
 | `line-register.json` | Controlled line-list inputs, evidence and completeness status |
@@ -218,6 +219,18 @@ When compilation includes a baseline graph, an approval whose subject is affecte
 `REVALIDATION_REQUIRED`. This is a controlled warning: the package remains structurally valid, but the prior approval
 cannot be treated as current until an accountable reviewer records a new decision. Approval nodes and `APPROVES` /
 `SUPERSEDES` relationships are also included in the canonical engineering graph.
+
+## Qualify DEXPI structural round trips
+
+The compiler securely reparses `plant.dexpi.xml`, `plant-proteus.xml`, and `plant-pydexpi.xml` after export. It compares
+reimported equipment tags with canonical graph identities, detects duplicate object identities, and verifies that XML
+references resolve inside each document. A mismatch is a blocking package-validation error and is recorded in
+`engineering-dexpi-roundtrip-report.json`.
+
+This proves NeqSim's internal structural export/reimport contract; it does not prove fidelity in a third-party tool.
+The report therefore retains `commercialCaeStatus: QUALIFICATION_REQUIRED` even after an internal pass. Commercial
+qualification still requires a named product/version, successful import, vendor-exported round-trip file and an
+accountably reviewed difference report.
 
 For a multi-area `ProcessModel`, build and export one DEXPI engineering project per area:
 

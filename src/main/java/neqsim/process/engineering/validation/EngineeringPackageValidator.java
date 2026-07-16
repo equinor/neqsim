@@ -160,6 +160,15 @@ public final class EngineeringPackageValidator {
       requireArray(root, "effectiveStates", artifactName, report);
       requireArray(root, "revisionImpactedNodeIds", artifactName, report);
       requireObject(root, "summary", artifactName, report);
+    } else if ("engineering-dexpi-roundtrip-report.json".equals(artifactName)) {
+      requireString(root, "projectId", artifactName, report);
+      requireString(root, "revision", artifactName, report);
+      requireString(root, "graphFingerprint", artifactName, report);
+      requireString(root, "qualificationScope", artifactName, report);
+      requireString(root, "status", artifactName, report);
+      requireArray(root, "formats", artifactName, report);
+      requireString(root, "commercialCaeStatus", artifactName, report);
+      requireString(root, "commercialCaeEvidenceRequired", artifactName, report);
     } else if (artifactName.endsWith("-register.json")) {
       validateRegisterStructure(root, artifactName, report);
     } else if ("design-case-envelope.json".equals(artifactName)) {
@@ -232,6 +241,7 @@ public final class EngineeringPackageValidator {
     validateDesignCaseMatrix(packageDirectory, graph, report);
     validateDisciplinePackage(packageDirectory, graph, report);
     validateApprovalLedger(packageDirectory, graph, report);
+    validateDexpiRoundTrip(packageDirectory, graph, report);
     validateManifest(packageDirectory, graph, report);
     validateSchemaFiles(packageDirectory, report);
     return report;
@@ -703,6 +713,65 @@ public final class EngineeringPackageValidator {
           report.addWarning("ENG-APPROVAL-011", artifact, "/effectiveStates/" + i + "/status",
               "An approved engineering object changed since the baseline and requires revalidation");
         }
+      }
+    }
+  }
+
+  private static void validateDexpiRoundTrip(Path directory, EngineeringGraph graph,
+      EngineeringPackageValidationReport report) throws IOException {
+    String artifact = "engineering-dexpi-roundtrip-report.json";
+    Path file = directory.resolve(artifact);
+    if (!Files.isRegularFile(file)) {
+      return;
+    }
+    JsonObject root = parseObject(artifact, read(file), report);
+    if (root == null) {
+      return;
+    }
+    if (!graph.getProjectId().equals(stringValue(root, "projectId"))) {
+      report.addError("ENG-DEXPI-ROUNDTRIP-001", artifact, "/projectId",
+          "DEXPI round-trip report and graph project ids differ");
+    }
+    if (!graph.getRevision().equals(stringValue(root, "revision"))) {
+      report.addError("ENG-DEXPI-ROUNDTRIP-002", artifact, "/revision",
+          "DEXPI round-trip report and graph revisions differ");
+    }
+    String fingerprint = String.valueOf(graph.toMap().get("fingerprint"));
+    if (!fingerprint.equals(stringValue(root, "graphFingerprint"))) {
+      report.addError("ENG-DEXPI-ROUNDTRIP-003", artifact, "/graphFingerprint",
+          "DEXPI round-trip report fingerprint does not match engineering-model.json");
+    }
+    if (!"INTERNAL_STRUCTURAL_ROUNDTRIP_PASSED".equals(stringValue(root, "status"))) {
+      report.addError("ENG-DEXPI-ROUNDTRIP-004", artifact, "/status",
+          "One or more DEXPI representations failed internal structural export/reimport qualification");
+    }
+    if (!"QUALIFICATION_REQUIRED".equals(stringValue(root, "commercialCaeStatus"))) {
+      report.addError("ENG-DEXPI-ROUNDTRIP-005", artifact, "/commercialCaeStatus",
+          "Internal round-trip evidence must not be presented as commercial CAE qualification");
+    }
+    if (root.has("formats") && root.get("formats").isJsonArray()) {
+      JsonArray formats = root.getAsJsonArray("formats");
+      Set<String> profiles = new LinkedHashSet<String>();
+      for (int i = 0; i < formats.size(); i++) {
+        if (!formats.get(i).isJsonObject()) {
+          report.addError("ENG-DEXPI-ROUNDTRIP-006", artifact, "/formats/" + i,
+              "Format qualification must be an object");
+          continue;
+        }
+        JsonObject format = formats.get(i).getAsJsonObject();
+        String profile = stringValue(format, "profile");
+        if (!profiles.add(profile)) {
+          report.addError("ENG-DEXPI-ROUNDTRIP-007", artifact, "/formats/" + i + "/profile",
+              "DEXPI format qualification profile is duplicated: " + profile);
+        }
+        if (!"PASSED".equals(stringValue(format, "status"))) {
+          report.addError("ENG-DEXPI-ROUNDTRIP-008", artifact, "/formats/" + i + "/status",
+              "DEXPI format did not preserve required identities and references: " + profile);
+        }
+      }
+      if (profiles.size() != 3) {
+        report.addError("ENG-DEXPI-ROUNDTRIP-009", artifact, "/formats",
+            "Expected native DEXPI, Proteus and pyDEXPI qualification results");
       }
     }
   }

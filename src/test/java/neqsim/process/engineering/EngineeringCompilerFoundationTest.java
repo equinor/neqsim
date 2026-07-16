@@ -66,6 +66,7 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(Files.isRegularFile(result.getEngineeringDesignCaseMatrixFile()));
     assertTrue(Files.isRegularFile(result.getEngineeringDisciplinePackageFile()));
     assertTrue(Files.isRegularFile(result.getEngineeringApprovalLedgerFile()));
+    assertTrue(Files.isRegularFile(result.getEngineeringDexpiRoundTripReportFile()));
     assertTrue(Files.isRegularFile(result.getDesignEnvelopeFile()));
     assertTrue(Files.isRegularFile(result.getEquipmentRegisterFile()));
     assertTrue(Files.isRegularFile(result.getLineRegisterFile()));
@@ -86,6 +87,8 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(read(result.getEngineeringDisciplinePackageFile()).contains("PROCESS_SAFETY"));
     assertTrue(read(result.getEngineeringDisciplinePackageFile()).contains("MECHANICAL-EQUIPMENT-DATASHEETS"));
     assertTrue(read(result.getEngineeringApprovalLedgerFile()).contains("APPROVED"));
+    assertTrue(read(result.getEngineeringDexpiRoundTripReportFile()).contains("INTERNAL_STRUCTURAL_ROUNDTRIP_PASSED"));
+    assertTrue(read(result.getEngineeringDexpiRoundTripReportFile()).contains("QUALIFICATION_REQUIRED"));
     assertTrue(result.getValidationReport().isValid());
     assertTrue(EngineeringPackageValidator.validatePackage(temporaryDirectory).isValid());
     assertNotNull(result.getEngineeringGraph().getNode("calculation:envelope-20-vg-001-pressure"));
