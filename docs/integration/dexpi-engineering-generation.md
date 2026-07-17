@@ -66,10 +66,22 @@ The package contains:
 engineering-package/
 ├── plant.dexpi.xml
 ├── cause-and-effect.json
+├── dexpi-validation.json
 ├── engineering-calculations.json
 ├── engineering-manifest.json
-└── datasets/
-    └── <compressor-tag>-compressor-map.json
+├── package-manifest.json
+├── datasets/
+│   └── <compressor-tag>-compressor-map.json
+└── registers/
+    ├── equipment-register.csv
+    ├── line-list.csv
+    ├── instrument-index.csv
+    ├── valve-list.csv
+    ├── sif-register.csv
+    ├── shutdown-register.csv
+    ├── relief-register.csv
+    ├── evidence-register.csv
+    └── control-and-safeguarding-narratives.json
 ```
 
 The DEXPI model contains explicit, graphically positioned process-instrumentation functions, signal-generating
@@ -85,11 +97,19 @@ input, or requires review. The DEXPI equipment objects reference this file and c
 declared design pressure, temperature, material, corrosion allowance, relief set pressure, and valve failure action
 where those values have been supplied.
 
-Version 2 of the calculation handoff also contains a controlled line list and ASME B31.3/NORSOK P-002 screening,
-API 521 relief-scenario coverage, low-demand SIF PFD/voting verification, timed shutdown-sequence checks, and an
-engineering-readiness matrix. Readiness is reported as completed/required items, missing-input count, completeness
-percentage, severity, responsible discipline, and approval state. A 100% completeness score means that the configured
-calculation/evidence set is present; it never means that the design is approved or fit for construction.
+Version 3 of the calculation handoff also contains a controlled line list and ASME B31.3/NORSOK P-002 screening,
+API 520/521 relief-scenario and installed-device checks, concurrent disposal loads, enhanced SIF PFD/PFH and
+architecture screening, timed and dynamically verified shutdown sequences, revision-controlled evidence, a
+per-equipment/per-requirement coverage matrix, and an engineering-readiness matrix. Readiness is reported as
+completed/required items, missing-input count, completeness percentage, severity, responsible discipline, and
+approval state. A 100% completeness score means that the configured calculation/evidence set is present; it never
+means that the design is approved or fit for construction.
+
+`dexpi-validation.json` checks XML well-formedness, IDs and references, required sidecars, object counts and NeqSim
+round-trip readability. `DexpiEngineeringValidator.validate(dexpiFile, controlledXsd)` can additionally apply the
+project's controlled DEXPI XSD. The default exporter does not download or silently select a schema edition.
+`package-manifest.json` records the path, byte count and SHA-256 hash of every other package file. Structural, XSD and
+integrity checks are exchange-quality gates; validation in the selected DEXPI authoring tool remains required.
 
 The materialized compressor template includes antisurge flow/differential-pressure measurement, an antisurge
 controller and recycle valve, suction and discharge shutdown isolation, reverse-flow prevention, blowdown, suction
@@ -185,6 +205,28 @@ project.addReliefScenarioBasis(new ReliefScenarioBasis("20-VG-001")
 Use the existing `BlockedOutletRelief`, `ControlValveFailureRelief`, `FireCaseRelief`, `TubeRuptureRelief`,
 `CheckValveLeakRelief` and custom `ReliefScenario` APIs to populate the study. Missing credible causes remain explicit.
 
+After a governing case is available, add the selected device and relief-line basis:
+
+```java
+project.addReliefDeviceDesignInput(
+    new ReliefDeviceDesignInput("20-PSV-001", "20-VG-001")
+        .setSelectedOrificeAreaIn2(10.0)
+        .setInletPiping(0.10, 2.0, 2.0)
+        .setOutletPiping(0.20, 20.0, 5.0)
+        .setAllowableInletLossPercent(3.0)
+        .setAllowableBuiltUpBackPressurePercent(10.0)
+        .setConcurrencyGroup("FIRE-ZONE-A")
+        .setFireZone("A")
+        .setTwoPhaseMethod("API_520_OMEGA_WHEN_APPLICABLE")
+        .setEvidenceReference("PSV-DATASHEET-20-001-REV-A"));
+```
+
+The installed-device result checks selected area and estimates inlet loss and built-up backpressure using a transparent
+steady Darcy-Weisbach screen. It is deliberately not a final compressible or two-phase relief-line calculation. Confirm
+reaction forces, acoustics, tailpipe/header hydraulics, superimposed backpressure and flare/vent capacity in the
+approved relief-system design. `concurrencyGroup` aggregates governing loads that the hazard review says can occur
+simultaneously; it does not infer fire zones or common-cause combinations.
+
 ## SIL/PFD and voting verification
 
 Only add a `SafetyFunctionDesign` after the SIL target and architecture have a controlled LOPA/SRS basis. The
@@ -199,19 +241,35 @@ SafetyFunctionDesign sif = new SafetyFunctionDesign(
     .setSafeState("Compressor stopped and isolated")
     .addSubsystem(new SafetyFunctionDesign.Subsystem("Pressure transmitters",
         SafetyFunctionDesign.SubsystemType.SENSOR, 2, 3,
-        1.0e-6, 0.60, 8760.0, 8.0, 0.05))
+        1.0e-6, 0.60, 8760.0, 8.0, 0.05)
+        .setProofTestCoverage(0.95)
+        .setMissionTimeHours(87600.0)
+        .setCommonCauseGroup("PT-20-001")
+        .setArchitecturalConstraints(2, 1)
+        .setCertifiedDataReference("SIL-CERT-PT-001"))
     .addSubsystem(new SafetyFunctionDesign.Subsystem("Safety logic solver",
         SafetyFunctionDesign.SubsystemType.LOGIC_SOLVER, 1, 1,
-        1.0e-7, 0.90, 8760.0, 8.0, 0.0))
+        1.0e-7, 0.90, 8760.0, 8.0, 0.0)
+        .setProofTestCoverage(0.99)
+        .setMissionTimeHours(87600.0)
+        .setArchitecturalConstraints(3, 0)
+        .setCertifiedDataReference("SIL-CERT-LS-001"))
     .addSubsystem(new SafetyFunctionDesign.Subsystem("Trip and isolation",
         SafetyFunctionDesign.SubsystemType.FINAL_ELEMENT, 1, 1,
-        2.0e-6, 0.50, 8760.0, 8.0, 0.0));
+        2.0e-6, 0.50, 8760.0, 8.0, 0.0)
+        .setProofTestCoverage(0.90)
+        .setPartialStrokeTesting(2160.0, 0.60)
+        .setMissionTimeHours(87600.0)
+        .setArchitecturalConstraints(2, 0)
+        .setCertifiedDataReference("SIL-CERT-FE-001"));
 project.addSafetyFunctionDesign(sif);
 ```
 
-The calculation is a transparent verification screen, not a SIL determination. Certified failure data, systematic
-capability, independence, proof-test coverage, bypass management and the complete IEC 61511 lifecycle remain required.
-Project-defined voting is written into the DEXPI governance attributes and cause/effect sidecar.
+The calculation is a transparent verification screen, not a SIL determination or certified tool result. It reports
+PFDavg, a conservative PFH screen, proof-test and partial-stroke effects, bypass contribution, systematic capability,
+hardware fault tolerance and common-cause evidence gaps. Independence, failure-mode distributions, route-specific
+architectural constraints, device suitability and the complete IEC 61511 lifecycle remain subject to functional-safety
+verification. Project-defined voting is written into DEXPI governance attributes and the cause/effect sidecar.
 
 ## Shutdown sequencing and readiness
 
@@ -227,11 +285,42 @@ project.addShutdownSequence(new ShutdownSequence("ESD-20-001", "High-high discha
     .setSrsReference("SRS-20-001")
     .setResponseTimeBudgetSeconds(12.0)
     .setResetAndRestartDefined(true)
+    .addRequirementId("20-KA-001-DISCHARGE-P-HH")
     .addAction(new ShutdownSequence.Action(
         "20-KA-001", "Trip driver", "STOPPED", 0.5, 1.0))
     .addAction(new ShutdownSequence.Action(
         "ESDV-20-001", "Close isolation", "CLOSED", 1.0, 6.0)));
 ```
+
+Run an `EmergencyShutdownTestPlan` against process logic and link the result to the same controlled sequence:
+
+```java
+EmergencyShutdownTestResult dynamicResult =
+    EmergencyShutdownTestRunner.run(process, testPlan, esdLogic);
+project.addShutdownVerificationResult("ESD-20-001", dynamicResult);
+```
+
+The readiness matrix counts each trip/fire-and-gas requirement, so one sequence or SIF cannot make unrelated
+requirements appear complete. An over-budget sequence is reported separately from an incomplete sequence, and a
+dynamic `FAIL` verdict remains a critical gap.
+
+## Evidence and coverage
+
+Index controlled HAZOP, LOPA, SRS, line-list, vendor and calculation records and link them to the affected objects:
+
+```java
+project.addEvidenceRecord(new EngineeringEvidenceRecord("HAZOP-20-001", "HAZOP", "A")
+    .setTitle("Compression train HAZOP")
+    .setSourceOrganization("Project technical safety")
+    .setChecksum("controlled-document-sha256")
+    .linkEquipment("20-VG-001")
+    .linkEquipment("20-KA-001")
+    .linkRequirement("20-KA-001-DISCHARGE-P-HH"));
+```
+
+`engineeringCoverageMatrix` reports applicable and covered items for every equipment tag and connects requirements to
+SIFs, shutdown sequences and evidence records. `EngineeringProject.validate()` rejects links to unknown equipment or
+requirement IDs. A document can remain `REVIEW_REQUIRED`; indexing it is traceability, not approval.
 
 ## Safety governance
 
@@ -267,6 +356,11 @@ must still complete and approve the scenario basis, detailed piping/nozzle/stres
 package/vendor interfaces, alarm rationalization, SIL determination and verification, final voting and trip settings,
 shutdown actions, tag allocation, maintainability reviews, and native DEXPI 2.0 schema/tool validation before
 controlled issue.
+
+Accordingly, the generated package can be used to begin and continuously reconcile a real engineering P&amp;ID, and it
+can carry significantly more design evidence than a topology-only export. It must not be labelled issued for design,
+HAZOP, construction or operation solely because generation and validation succeeded. A project-specific maturity gate
+must define the required cases, documents, checks, approvals and authoring-tool acceptance for each issue purpose.
 
 Company or project rules can implement `EngineeringRule` and be registered with `addRule(...)`. Keep
 operator-specific alarm philosophy, trip thresholds, voting, proprietary design requirements, and

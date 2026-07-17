@@ -32,10 +32,14 @@ governed engineering path from `neqsim-pid-process-operations`:
 4. Attach project-defined `OverpressureProtectionStudy` and
    `DynamicBlowdownFlareStudyDataSource` inputs when their evidence is available.
 5. Attach controlled `LineDesignInput`, `ReliefScenarioBasis`,
-   `SafetyFunctionDesign`, and `ShutdownSequence` inputs when line-list,
-   HAZOP/LOPA/SRS and cause/effect evidence exists.
-6. Export only with `DexpiEngineeringExporter`, and inspect
-   `engineering-calculations.json` plus unresolved data gaps.
+   `ReliefDeviceDesignInput`, `SafetyFunctionDesign`, `ShutdownSequence`, and
+   `EngineeringEvidenceRecord` inputs when line-list, relief, HAZOP/LOPA/SRS,
+   vendor and cause/effect evidence exists.
+6. Run `EmergencyShutdownTestRunner` where dynamic isolation or depressurization
+   response matters, then link the result to its sequence.
+7. Export only with `DexpiEngineeringExporter`; inspect the calculations,
+   per-object coverage matrix, registers, DEXPI validation, SHA-256 package
+   manifest and every unresolved data gap.
 
 Do not assign SIL, voting, final set points, failure actions, materials or final
 shutdown actions from generic equipment rules. Preserve `REVIEW_REQUIRED` until

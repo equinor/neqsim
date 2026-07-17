@@ -4,9 +4,12 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -17,6 +20,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.materials.MaterialsReviewInput;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
+import neqsim.process.safety.esd.EmergencyShutdownTestResult;
 import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
 
 /**
@@ -40,6 +44,9 @@ public final class EngineeringProject implements Serializable {
   private final List<ReliefScenarioBasis> reliefScenarioBases = new ArrayList<ReliefScenarioBasis>();
   private final List<SafetyFunctionDesign> safetyFunctionDesigns = new ArrayList<SafetyFunctionDesign>();
   private final List<ShutdownSequence> shutdownSequences = new ArrayList<ShutdownSequence>();
+  private final List<ReliefDeviceDesignInput> reliefDeviceDesignInputs = new ArrayList<ReliefDeviceDesignInput>();
+  private final List<EngineeringEvidenceRecord> evidenceRecords = new ArrayList<EngineeringEvidenceRecord>();
+  private final Map<String, EmergencyShutdownTestResult> shutdownVerificationResults = new LinkedHashMap<String, EmergencyShutdownTestResult>();
   private MaterialsReviewInput materialsReviewInput;
 
   EngineeringProject(String name, ProcessSystem processSystem, EngineeringDesignBasis designBasis) {
@@ -189,6 +196,54 @@ public final class EngineeringProject implements Serializable {
     return Collections.unmodifiableList(shutdownSequences);
   }
 
+  /** Adds installed relief-device and inlet/outlet piping design data. */
+  public EngineeringProject addReliefDeviceDesignInput(ReliefDeviceDesignInput input) {
+    if (input == null) {
+      throw new IllegalArgumentException("input must not be null");
+    }
+    reliefDeviceDesignInputs.add(input);
+    return this;
+  }
+
+  /** @return immutable installed relief-device design inputs */
+  public List<ReliefDeviceDesignInput> getReliefDeviceDesignInputs() {
+    return Collections.unmodifiableList(reliefDeviceDesignInputs);
+  }
+
+  /** Adds a revision-controlled evidence record. */
+  public EngineeringProject addEvidenceRecord(EngineeringEvidenceRecord record) {
+    if (record == null) {
+      throw new IllegalArgumentException("record must not be null");
+    }
+    evidenceRecords.add(record);
+    return this;
+  }
+
+  /** @return immutable engineering-evidence records */
+  public List<EngineeringEvidenceRecord> getEvidenceRecords() {
+    return Collections.unmodifiableList(evidenceRecords);
+  }
+
+  /**
+   * Attaches a dynamic ESD verification result to its controlled shutdown sequence.
+   *
+   * @param sequenceId shutdown-sequence identifier
+   * @param result dynamic ESD result
+   * @return this project
+   */
+  public EngineeringProject addShutdownVerificationResult(String sequenceId, EmergencyShutdownTestResult result) {
+    if (sequenceId == null || sequenceId.trim().isEmpty() || result == null) {
+      throw new IllegalArgumentException("sequenceId and result are required");
+    }
+    shutdownVerificationResults.put(sequenceId.trim(), result);
+    return this;
+  }
+
+  /** @return immutable shutdown-sequence to dynamic-verification result mapping */
+  public Map<String, EmergencyShutdownTestResult> getShutdownVerificationResults() {
+    return Collections.unmodifiableMap(shutdownVerificationResults);
+  }
+
   /**
    * Sets project material-register and service data to overlay on simulation-derived conditions.
    *
@@ -262,11 +317,107 @@ public final class EngineeringProject implements Serializable {
             requirement.getId() + " has no SIL target; determine through HAZOP/LOPA and the SRS");
       }
     }
+    Set<String> requirementIds = new HashSet<String>();
+    for (EngineeringRequirement requirement : requirements) {
+      if (!requirementIds.add(requirement.getId())) {
+        report.add(Severity.ERROR, "ENG-REQ-001", requirement.getId(), "Requirement ID is not unique");
+      }
+    }
+    Set<String> sifTags = new HashSet<String>();
+    for (SafetyFunctionDesign design : safetyFunctionDesigns) {
+      if (!sifTags.add(design.getSifTag())) {
+        report.add(Severity.ERROR, "ENG-SIF-004", design.getSifTag(), "Safety-function tag is not unique");
+      }
+      if (!requirementIds.contains(design.getRequirementId())) {
+        report.add(Severity.ERROR, "ENG-SIF-001", design.getSifTag(),
+            "Safety-function requirement ID does not exist in the project");
+      }
+      if (!design.areArchitecturalConstraintsMet()) {
+        report.add(Severity.REVIEW, "ENG-SIF-002", design.getSifTag(),
+            "Systematic capability or hardware-fault-tolerance evidence is incomplete");
+      }
+      if (!design.getMissingFields().isEmpty()) {
+        report.add(Severity.REVIEW, "ENG-SIF-003", design.getSifTag(),
+            "Safety-function basis is incomplete: " + design.getMissingFields());
+      }
+    }
+    Set<String> sequenceIds = new HashSet<String>();
+    for (ShutdownSequence sequence : shutdownSequences) {
+      if (!sequenceIds.add(sequence.getSequenceId())) {
+        report.add(Severity.ERROR, "ENG-ESD-007", sequence.getSequenceId(), "Shutdown-sequence ID is not unique");
+      }
+      if (!sequence.getProtectedEquipmentTag().isEmpty()
+          && processSystem.getUnit(sequence.getProtectedEquipmentTag()) == null) {
+        report.add(Severity.ERROR, "ENG-ESD-003", sequence.getSequenceId(),
+            "Protected equipment does not exist: " + sequence.getProtectedEquipmentTag());
+      }
+      for (String requirementId : sequence.getRequirementIds()) {
+        if (!requirementIds.contains(requirementId)) {
+          report.add(Severity.ERROR, "ENG-ESD-001", sequence.getSequenceId(),
+              "Shutdown-sequence requirement ID does not exist: " + requirementId);
+        }
+      }
+      if (!sequence.isWithinResponseTimeBudget()) {
+        report.add(Severity.REVIEW, "ENG-ESD-002", sequence.getSequenceId(),
+            "Shutdown sequence exceeds or lacks its response-time budget");
+      }
+      if (!sequence.getMissingFields().isEmpty()) {
+        report.add(Severity.REVIEW, "ENG-ESD-004", sequence.getSequenceId(),
+            "Shutdown-sequence basis is incomplete: " + sequence.getMissingFields());
+      }
+    }
+    Set<String> reliefDeviceTags = new HashSet<String>();
+    for (ReliefDeviceDesignInput input : reliefDeviceDesignInputs) {
+      if (!reliefDeviceTags.add(input.getDeviceTag())) {
+        report.add(Severity.ERROR, "ENG-PSV-002", input.getDeviceTag(), "Relief-device tag is not unique");
+      }
+      if (processSystem.getUnit(input.getEquipmentTag()) == null) {
+        report.add(Severity.ERROR, "ENG-PSV-001", input.getDeviceTag(),
+            "Protected equipment does not exist: " + input.getEquipmentTag());
+      }
+      if (!input.getMissingFields().isEmpty()) {
+        report.add(Severity.REVIEW, "ENG-PSV-003", input.getDeviceTag(),
+            "Installed relief-device basis is incomplete: " + input.getMissingFields());
+      }
+    }
+    Set<String> evidenceKeys = new HashSet<String>();
+    for (EngineeringEvidenceRecord evidence : evidenceRecords) {
+      String evidenceKey = evidence.getDocumentId() + "@" + evidence.getRevision();
+      if (!evidenceKeys.add(evidenceKey)) {
+        report.add(Severity.ERROR, "ENG-EVIDENCE-003", evidence.getDocumentId(),
+            "Evidence document ID and revision are not unique");
+      }
+      for (String requirementId : evidence.getRequirementIds()) {
+        if (!requirementIds.contains(requirementId)) {
+          report.add(Severity.ERROR, "ENG-EVIDENCE-001", evidence.getDocumentId(),
+              "Evidence references unknown requirement: " + requirementId);
+        }
+      }
+      for (String equipmentTag : evidence.getEquipmentTags()) {
+        if (processSystem.getUnit(equipmentTag) == null) {
+          report.add(Severity.ERROR, "ENG-EVIDENCE-002", evidence.getDocumentId(),
+              "Evidence references unknown equipment: " + equipmentTag);
+        }
+      }
+      if (!evidence.getMissingFields().isEmpty()) {
+        report.add(Severity.REVIEW, "ENG-EVIDENCE-004", evidence.getDocumentId(),
+            "Engineering-evidence record is incomplete: " + evidence.getMissingFields());
+      }
+    }
+    for (Map.Entry<String, EmergencyShutdownTestResult> result : shutdownVerificationResults.entrySet()) {
+      if (!sequenceIds.contains(result.getKey())) {
+        report.add(Severity.ERROR, "ENG-ESD-005", result.getKey(),
+            "Dynamic shutdown result references an unknown sequence");
+      } else if (result.getValue().getVerdict() == EmergencyShutdownTestResult.Verdict.FAIL) {
+        report.add(Severity.REVIEW, "ENG-ESD-006", result.getKey(), "Dynamic shutdown verification failed");
+      }
+    }
     return report;
   }
 
   /** Serializes the governed engineering manifest without serializing the complete process object graph. */
   public String toJson() {
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
     JsonObject root = new JsonObject();
     root.addProperty("projectId", projectId);
     root.addProperty("name", name);
@@ -293,12 +444,15 @@ public final class EngineeringProject implements Serializable {
     basis.add("standards", standards);
     root.add("designBasis", basis);
 
-    root.add("requirements", new GsonBuilder().create().toJsonTree(requirements));
-    root.add("lineList", new GsonBuilder().create().toJsonTree(lineDesignInputs));
-    root.add("reliefScenarioBases", new GsonBuilder().create().toJsonTree(reliefScenarioBases));
-    root.add("safetyFunctionDesigns", new GsonBuilder().create().toJsonTree(safetyFunctionDesigns));
-    root.add("shutdownSequences", new GsonBuilder().create().toJsonTree(shutdownSequences));
-    root.add("validation", new GsonBuilder().create().toJsonTree(validate().getFindings()));
-    return new GsonBuilder().setPrettyPrinting().create().toJson(root);
+    root.add("requirements", gson.toJsonTree(requirements));
+    root.add("lineList", gson.toJsonTree(lineDesignInputs));
+    root.add("reliefScenarioBases", gson.toJsonTree(reliefScenarioBases));
+    root.add("safetyFunctionDesigns", gson.toJsonTree(safetyFunctionDesigns));
+    root.add("shutdownSequences", gson.toJsonTree(shutdownSequences));
+    root.add("reliefDeviceDesignInputs", gson.toJsonTree(reliefDeviceDesignInputs));
+    root.add("evidenceRecords", gson.toJsonTree(evidenceRecords));
+    root.add("shutdownVerificationResults", gson.toJsonTree(shutdownVerificationResults));
+    root.add("validation", gson.toJsonTree(validate().getFindings()));
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(root);
   }
 }

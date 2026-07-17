@@ -72,7 +72,7 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 | Document | Description |
 |----------|-------------|
 | [dexpi-reader.md](dexpi-reader) | **DEXPI P&ID import/export with ISO 10628 shapes, auto-layout, instruments, mechanical design data, configurable visualization, and round-trip support** |
-| [dexpi-engineering-generation.md](dexpi-engineering-generation) | **Standards-based DEXPI engineering packages with controlled line lists, relief coverage, SIL/PFD/voting, shutdown sequences, readiness metrics, simulation-backed sizing, ProcessModel support, and executed notebooks** |
+| [dexpi-engineering-generation.md](dexpi-engineering-generation) | **Standards-based DEXPI engineering packages with controlled line lists, installed relief and disposal screening, enhanced SIF/PFD/PFH, timed and dynamic shutdown verification, evidence/coverage matrices, registers, validation, integrity hashes, ProcessModel support, and executed notebooks** |
 
 ---
 

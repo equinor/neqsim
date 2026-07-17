@@ -15,11 +15,36 @@ engineering study documents appropriate for the study class.
 > use in design decisions, safety-critical applications, or regulatory
 > submissions.
 
+For P&amp;ID/DEXPI requests, also load `neqsim-pid-process-operations` and use the
+governed `EngineeringProject` workflow described below. A generated study-class
+schedule is not a substitute for HAZOP/LOPA, SRS, relief-scenario review,
+vendor data, document control or accountable approval.
+
 ---
 
 ## Core Functionality
 
-You generate engineering deliverables using three key classes:
+You generate engineering deliverables using three key classes and the governed
+DEXPI path where applicable:
+
+### Governed DEXPI engineering package
+
+When the requested deliverable is a P&amp;ID, DEXPI file, cause/effect matrix,
+instrument/valve/line/SIF/relief register, or safety-design handoff:
+
+1. Build `EngineeringProject` with `NorsokOffshoreEngineeringBuilder`.
+2. Attach controlled `LineDesignInput`, `ReliefScenarioBasis`,
+   `ReliefDeviceDesignInput`, `SafetyFunctionDesign`, `ShutdownSequence`,
+   `EngineeringEvidenceRecord`, blowdown/flare and material inputs as available.
+3. Link dynamic `EmergencyShutdownTestResult` evidence to each tested sequence.
+4. Export with `DexpiEngineeringExporter`.
+5. Review `engineeringCoverageMatrix`, `engineeringReadiness`, unresolved gaps,
+   engineering registers, `dexpi-validation.json` and `package-manifest.json`.
+
+Never promote generated `REVIEW_REQUIRED` data to approved/IFC status. Never
+infer SIL, final voting, trip set points, valve fail action, credible relief
+causes or shutdown effects solely from equipment class or a normal operating
+point.
 
 ### 1. StudyClass Enum
 Controls which deliverables are produced:
@@ -107,7 +132,8 @@ String report = orchestrator.generateDesignReport(); // Includes deliverables su
 - Tag numbering: PT-100+, TT-200+, LT-300+, FT-400+
 - Creates real `MeasurementDeviceInterface` objects (PressureTransmitter, TemperatureTransmitter, LevelTransmitter, VolumeFlowTransmitter)
 - Configures `AlarmConfig` with HH/H/L/LL thresholds derived from process conditions
-- Assigns SIL ratings per IEC 61511 (SIL_1 for critical, NONE for standard)
+- Emits preliminary schedule classifications only; any SIL-like field must be
+  treated as unverified until replaced by a controlled HAZOP/LOPA/SRS decision
 - `setRegisterOnProcess(true)` registers live devices on the ProcessSystem for dynamic simulation
 - Bridges the gap between engineering deliverables and process simulation
 

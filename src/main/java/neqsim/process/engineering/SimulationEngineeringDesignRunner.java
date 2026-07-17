@@ -1,8 +1,10 @@
 package neqsim.process.engineering;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -59,7 +61,7 @@ public final class SimulationEngineeringDesignRunner {
       throw new IllegalArgumentException("project must not be null");
     }
     JsonObject root = new JsonObject();
-    root.addProperty("schemaVersion", "neqsim_engineering_calculations.v2");
+    root.addProperty("schemaVersion", "neqsim_engineering_calculations.v3");
     root.addProperty("projectId", project.getProjectId());
     root.addProperty("projectName", project.getName());
     root.addProperty("documentStatus", "CALCULATED_AND_PROPOSED_REVIEW_REQUIRED");
@@ -96,6 +98,9 @@ public final class SimulationEngineeringDesignRunner {
     root.add("overpressureAndPsvSizing", reliefResults);
     JsonArray reliefCoverage = calculateReliefCoverage(project);
     root.add("reliefScenarioCoverage", reliefCoverage);
+    JsonArray reliefDeviceResults = calculateInstalledReliefDevices(project);
+    root.add("installedReliefDeviceVerification", reliefDeviceResults);
+    root.add("reliefDisposalNetworkLoads", calculateReliefDisposalLoads(project));
 
     JsonArray blowdownResults = new JsonArray();
     for (DynamicBlowdownFlareStudyDataSource input : project.getBlowdownFlareStudies()) {
@@ -116,9 +121,11 @@ public final class SimulationEngineeringDesignRunner {
       root.add("materialsAndCorrosionScreening", calculationFailure(project.getName(), "MATERIALS_REVIEW", ex));
     }
     JsonArray readiness = calculateReadiness(project, lineResults, reliefCoverage, safetyFunctionResults,
-        shutdownResults, blowdownResults);
+        blowdownResults);
     root.add("engineeringReadiness", readiness);
     root.add("readinessSummary", readinessSummary(readiness));
+    root.add("engineeringCoverageMatrix", GSON.toJsonTree(EngineeringCoverageMatrix.evaluate(project)));
+    root.add("engineeringEvidenceStatus", calculateEvidenceStatus(project));
     root.add("unresolvedEngineering", unresolvedEngineering(project, reliefCoverage, blowdownResults));
     root.add("governance", governance());
     return new SimulationEngineeringDesignReport(root, calculatedEquipmentCount, reliefResults.size(),
@@ -281,11 +288,18 @@ public final class SimulationEngineeringDesignRunner {
       }
       item.addProperty("requirementFound", requirementFound);
       boolean targetMet = design.getAchievedSil() >= design.getTargetSil();
+      boolean architectureMet = design.areArchitecturalConstraintsMet();
       item.addProperty("targetMet", targetMet);
-      item.addProperty("status",
-          requirementFound && design.getMissingFields().isEmpty() && targetMet ? "CALCULATED_PFD_REVIEW_REQUIRED"
-              : requirementFound && design.getMissingFields().isEmpty() ? "CALCULATED_TARGET_NOT_MET_REVIEW_REQUIRED"
-                  : "CALCULATED_WITH_INCOMPLETE_SIF_BASIS");
+      item.addProperty("architecturalConstraintsMet", architectureMet);
+      String status = "CALCULATED_WITH_INCOMPLETE_SIF_BASIS";
+      if (!requirementFound) {
+        status = "NOT_CALCULATED_REQUIREMENT_NOT_FOUND";
+      } else if (design.getMissingFields().isEmpty()) {
+        status = targetMet && architectureMet ? "CALCULATED_PFD_AND_ARCHITECTURE_REVIEW_REQUIRED"
+            : !targetMet ? "CALCULATED_PFD_TARGET_NOT_MET_REVIEW_REQUIRED"
+                : "CALCULATED_ARCHITECTURAL_CONSTRAINT_NOT_MET_REVIEW_REQUIRED";
+      }
+      item.addProperty("status", status);
       item.addProperty("governanceNote", "SIL target must originate from approved risk assessment; component data, "
           + "systematic capability and independence require IEC 61511 verification.");
       results.add(item);
@@ -298,8 +312,153 @@ public final class SimulationEngineeringDesignRunner {
     for (ShutdownSequence sequence : project.getShutdownSequences()) {
       JsonObject item = GSON.toJsonTree(sequence.toMap()).getAsJsonObject();
       item.addProperty("status",
-          sequence.getMissingFields().isEmpty() ? "SEQUENCE_COMPLETE_REVIEW_REQUIRED" : "SEQUENCE_INCOMPLETE");
-      item.addProperty("dynamicValidationStatus", "USE_EMERGENCY_SHUTDOWN_TEST_RUNNER_FOR_PROCESS_RESPONSE");
+          !sequence.getMissingFields().isEmpty() ? "SEQUENCE_INCOMPLETE"
+              : sequence.isWithinResponseTimeBudget() ? "SEQUENCE_COMPLETE_REVIEW_REQUIRED"
+                  : "SEQUENCE_EXCEEDS_RESPONSE_TIME_BUDGET");
+      if (project.getShutdownVerificationResults().containsKey(sequence.getSequenceId())) {
+        item.add("dynamicVerification",
+            GSON.toJsonTree(project.getShutdownVerificationResults().get(sequence.getSequenceId()).toMap()));
+        item.addProperty("dynamicValidationStatus",
+            project.getShutdownVerificationResults().get(sequence.getSequenceId()).getVerdict().name());
+      } else {
+        item.addProperty("dynamicValidationStatus", "NOT_RUN_USE_EMERGENCY_SHUTDOWN_TEST_RUNNER");
+      }
+      results.add(item);
+    }
+    return results;
+  }
+
+  private static JsonArray calculateInstalledReliefDevices(EngineeringProject project) {
+    JsonArray results = new JsonArray();
+    for (ReliefDeviceDesignInput input : project.getReliefDeviceDesignInputs()) {
+      JsonObject item = GSON.toJsonTree(input.toMap()).getAsJsonObject();
+      OverpressureStudyResult studyResult = findReliefStudyResult(project, input.getEquipmentTag());
+      if (studyResult == null || studyResult.getGoverningScenario() == null) {
+        item.addProperty("status", "NOT_CALCULATED_MATCHING_RELIEF_STUDY_REQUIRED");
+        results.add(item);
+        continue;
+      }
+      ReliefScenario scenario = studyResult.getGoverningScenario();
+      item.addProperty("governingScenario", scenario.getName());
+      item.addProperty("relievingPhase", scenario.getPhase().name());
+      if (scenario.getPhase() == neqsim.process.safety.overpressure.ReliefPhase.TWO_PHASE
+          && "NOT_APPLICABLE_OR_NOT_DEFINED".equals(input.getTwoPhaseMethod())) {
+        item.addProperty("status", "NOT_CALCULATED_TWO_PHASE_METHOD_REQUIRED");
+        results.add(item);
+        continue;
+      }
+      double density = relievingDensity(scenario, studyResult.getItem().getReliefSetPressureBara());
+      if (!Double.isFinite(density) || density <= 0.0 || !input.getMissingFields().isEmpty()) {
+        item.addProperty("status", "NOT_CALCULATED_INCOMPLETE_INSTALLED_BASIS");
+        item.addProperty("relievingDensityKgPerM3", density);
+        results.add(item);
+        continue;
+      }
+      double inletLossBara = pipingPressureLossBara(scenario.getReliefRateKgPerS(), density, input.getInletDiameterM(),
+          input.getInletLengthM(), input.getInletResistanceCoefficient());
+      double outletLossBara = pipingPressureLossBara(scenario.getReliefRateKgPerS(), density,
+          input.getOutletDiameterM(), input.getOutletLengthM(), input.getOutletResistanceCoefficient());
+      double setPressure = studyResult.getItem().getReliefSetPressureBara();
+      double inletPercent = setPressure > 0.0 ? 100.0 * inletLossBara / setPressure : Double.NaN;
+      double outletPercent = setPressure > 0.0 ? 100.0 * outletLossBara / setPressure : Double.NaN;
+      boolean areaAdequate = input.getSelectedOrificeAreaIn2() >= studyResult.getRequiredAreaIn2();
+      boolean inletAdequate = inletPercent <= input.getAllowableInletLossPercent();
+      boolean outletAdequate = outletPercent <= input.getAllowableBuiltUpBackPressurePercent();
+      item.addProperty("requiredAreaIn2", studyResult.getRequiredAreaIn2());
+      item.addProperty("selectedAreaAdequate", areaAdequate);
+      item.addProperty("relievingDensityKgPerM3", density);
+      item.addProperty("estimatedInletLossBara", inletLossBara);
+      item.addProperty("estimatedInletLossPercentSetPressure", inletPercent);
+      item.addProperty("inletLossAcceptable", inletAdequate);
+      item.addProperty("estimatedBuiltUpBackPressureBara", outletLossBara);
+      item.addProperty("estimatedBuiltUpBackPressurePercentSetPressure", outletPercent);
+      item.addProperty("builtUpBackPressureAcceptable", outletAdequate);
+      item.addProperty("status",
+          areaAdequate && inletAdequate && outletAdequate ? "INSTALLED_RELIEF_SCREEN_ACCEPTED_REVIEW_REQUIRED"
+              : "INSTALLED_RELIEF_SCREEN_NOT_ACCEPTED");
+      item.addProperty("method", "STEADY_DARCY_WEISBACH_SCREEN_FRICTION_FACTOR_0_02");
+      item.addProperty("applicabilityNote",
+          "Screening estimate only. Confirm compressible/two-phase pressure drop, "
+              + "reaction forces, acoustic effects, allowable backpressure and disposal-header hydraulics in the "
+              + "approved relief-system design.");
+      results.add(item);
+    }
+    return results;
+  }
+
+  private static OverpressureStudyResult findReliefStudyResult(EngineeringProject project, String equipmentTag) {
+    for (OverpressureProtectionStudy study : project.getOverpressureStudies()) {
+      if (equipmentTag.equals(study.getItem().getName())) {
+        try {
+          return study.evaluate();
+        } catch (Exception ex) {
+          return null;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static double relievingDensity(ReliefScenario scenario, double pressureBara) {
+    if (Double.isFinite(scenario.getDensityKgPerM3()) && scenario.getDensityKgPerM3() > 0.0) {
+      return scenario.getDensityKgPerM3();
+    }
+    if (Double.isFinite(scenario.getGasDensityKgPerM3()) && scenario.getGasDensityKgPerM3() > 0.0) {
+      return scenario.getGasDensityKgPerM3();
+    }
+    if (Double.isFinite(scenario.getMolarMassKgPerMol()) && scenario.getMolarMassKgPerMol() > 0.0
+        && Double.isFinite(scenario.getReliefTemperatureK()) && scenario.getReliefTemperatureK() > 0.0
+        && Double.isFinite(scenario.getCompressibility()) && scenario.getCompressibility() > 0.0) {
+      return pressureBara * 1.0e5 * scenario.getMolarMassKgPerMol()
+          / (scenario.getCompressibility() * 8.314462618 * scenario.getReliefTemperatureK());
+    }
+    return Double.NaN;
+  }
+
+  private static double pipingPressureLossBara(double massFlowKgPerS, double densityKgPerM3, double diameterM,
+      double lengthM, double resistanceCoefficient) {
+    double area = Math.PI * diameterM * diameterM / 4.0;
+    double velocity = massFlowKgPerS / (densityKgPerM3 * area);
+    double lossCoefficient = 0.02 * lengthM / diameterM + resistanceCoefficient;
+    return lossCoefficient * densityKgPerM3 * velocity * velocity / 2.0 / 1.0e5;
+  }
+
+  private static JsonArray calculateReliefDisposalLoads(EngineeringProject project) {
+    Map<String, Double> groupLoads = new LinkedHashMap<String, Double>();
+    Map<String, List<String>> groupContributors = new LinkedHashMap<String, List<String>>();
+    for (ReliefDeviceDesignInput input : project.getReliefDeviceDesignInputs()) {
+      OverpressureStudyResult studyResult = findReliefStudyResult(project, input.getEquipmentTag());
+      if (studyResult == null || studyResult.getGoverningScenario() == null || input.getConcurrencyGroup().isEmpty()) {
+        continue;
+      }
+      Double load = groupLoads.get(input.getConcurrencyGroup());
+      groupLoads.put(input.getConcurrencyGroup(), Double.valueOf(
+          (load == null ? 0.0 : load.doubleValue()) + studyResult.getGoverningScenario().getReliefRateKgPerS()));
+      List<String> contributors = groupContributors.get(input.getConcurrencyGroup());
+      if (contributors == null) {
+        contributors = new java.util.ArrayList<String>();
+        groupContributors.put(input.getConcurrencyGroup(), contributors);
+      }
+      contributors.add(input.getEquipmentTag());
+    }
+    JsonArray results = new JsonArray();
+    for (Map.Entry<String, Double> entry : groupLoads.entrySet()) {
+      JsonObject item = new JsonObject();
+      item.addProperty("concurrencyGroup", entry.getKey());
+      item.addProperty("simultaneousMassFlowKgPerS", entry.getValue().doubleValue());
+      item.add("contributors", GSON.toJsonTree(groupContributors.get(entry.getKey())));
+      item.addProperty("status", "CALCULATED_LOAD_REVIEW_NETWORK_HYDRAULICS_REQUIRED");
+      results.add(item);
+    }
+    return results;
+  }
+
+  private static JsonArray calculateEvidenceStatus(EngineeringProject project) {
+    JsonArray results = new JsonArray();
+    for (EngineeringEvidenceRecord evidence : project.getEvidenceRecords()) {
+      JsonObject item = GSON.toJsonTree(evidence.toMap()).getAsJsonObject();
+      item.addProperty("status",
+          evidence.getMissingFields().isEmpty() ? "EVIDENCE_INDEXED_REVIEW_REQUIRED" : "EVIDENCE_RECORD_INCOMPLETE");
       results.add(item);
     }
     return results;
@@ -535,12 +694,13 @@ public final class SimulationEngineeringDesignRunner {
   }
 
   private static JsonArray calculateReadiness(EngineeringProject project, JsonArray lineResults,
-      JsonArray reliefCoverage, JsonArray safetyFunctionResults, JsonArray shutdownResults, JsonArray blowdownResults) {
+      JsonArray reliefCoverage, JsonArray safetyFunctionResults, JsonArray blowdownResults) {
     JsonArray readiness = new JsonArray();
 
     int completeLines = countStatus(lineResults, "CALCULATED_REVIEW_REQUIRED");
-    readiness.add(readinessTopic("PIPING_GEOMETRY", completeLines, Math.max(1, project.getLineDesignInputs().size()),
-        "HIGH", "Piping / process", "REVIEW_REQUIRED"));
+    int requiredLines = Math.max(countPipelineEquipment(project), project.getLineDesignInputs().size());
+    readiness.add(readinessTopic("PIPING_GEOMETRY", completeLines, Math.max(1, requiredLines), "HIGH",
+        "Piping / process", "REVIEW_REQUIRED"));
 
     int requiredRelief = sumInt(reliefCoverage, "requiredScenarioCount");
     int evaluatedRelief = sumInt(reliefCoverage, "evaluatedScenarioCount");
@@ -554,21 +714,34 @@ public final class SimulationEngineeringDesignRunner {
         tripRequirements++;
       }
     }
-    int completeSifs = countStatus(safetyFunctionResults, "CALCULATED_PFD_REVIEW_REQUIRED");
+    int completeSifs = countStatus(safetyFunctionResults, "CALCULATED_PFD_AND_ARCHITECTURE_REVIEW_REQUIRED");
     readiness.add(readinessTopic("SIL_AND_VOTING", completeSifs, Math.max(1, tripRequirements), "CRITICAL",
         "Functional safety", "REVIEW_REQUIRED"));
 
-    int completeShutdown = countStatus(shutdownResults, "SEQUENCE_COMPLETE_REVIEW_REQUIRED");
-    readiness.add(
-        readinessTopic("FINAL_SHUTDOWN_ACTIONS", completeShutdown, Math.max(1, project.getShutdownSequences().size()),
-            "CRITICAL", "Process / automation / technical safety", "REVIEW_REQUIRED"));
+    int completeShutdown = countShutdownRequirements(project, false);
+    readiness.add(readinessTopic("FINAL_SHUTDOWN_ACTIONS", completeShutdown, Math.max(1, tripRequirements), "CRITICAL",
+        "Process / automation / technical safety", "REVIEW_REQUIRED"));
+
+    int dynamicShutdown = countShutdownRequirements(project, true);
+    readiness.add(readinessTopic("DYNAMIC_SAFEGUARD_VERIFICATION", dynamicShutdown, Math.max(1, tripRequirements),
+        "CRITICAL", "Process / automation", "REVIEW_REQUIRED"));
+
+    int completeEvidence = 0;
+    for (EngineeringEvidenceRecord evidence : project.getEvidenceRecords()) {
+      if (evidence.getMissingFields().isEmpty()) {
+        completeEvidence++;
+      }
+    }
+    readiness
+        .add(readinessTopic("ENGINEERING_EVIDENCE", completeEvidence, Math.max(1, project.getEvidenceRecords().size()),
+            "HIGH", "Document control / all disciplines", "REVIEW_REQUIRED"));
 
     readiness.add(readinessTopic("BLOWDOWN_FLARE_INPUT", blowdownResults.size() > 0 ? blowdownResults.size() : 0,
         Math.max(1, project.getBlowdownFlareStudies().size()), "CRITICAL", "Process safety / flare",
         "REVIEW_REQUIRED"));
 
     int approvalTotal = project.getRequirements().size() + project.getSafetyFunctionDesigns().size()
-        + project.getShutdownSequences().size();
+        + project.getShutdownSequences().size() + project.getEvidenceRecords().size();
     int approved = 0;
     for (EngineeringRequirement requirement : project.getRequirements()) {
       if (requirement.getApprovalStatus() == EngineeringApprovalStatus.APPROVED) {
@@ -585,10 +758,56 @@ public final class SimulationEngineeringDesignRunner {
         approved++;
       }
     }
+    for (EngineeringEvidenceRecord evidence : project.getEvidenceRecords()) {
+      if (evidence.getApprovalStatus() == EngineeringApprovalStatus.APPROVED) {
+        approved++;
+      }
+    }
     readiness.add(readinessTopic("FINAL_ENGINEERING_APPROVAL", approved, Math.max(1, approvalTotal), "MANDATORY",
         "Accountable engineering disciplines",
         approved >= Math.max(1, approvalTotal) ? "APPROVED" : "REVIEW_REQUIRED"));
     return readiness;
+  }
+
+  private static int countShutdownRequirements(EngineeringProject project, boolean requireDynamicResult) {
+    int completed = 0;
+    for (EngineeringRequirement requirement : project.getRequirements()) {
+      if (requirement.getType() != EngineeringRequirement.Type.TRIP
+          && requirement.getType() != EngineeringRequirement.Type.FIRE_AND_GAS) {
+        continue;
+      }
+      boolean covered = false;
+      for (ShutdownSequence sequence : project.getShutdownSequences()) {
+        if (!sequence.getRequirementIds().contains(requirement.getId()) || !sequence.getMissingFields().isEmpty()
+            || !sequence.isWithinResponseTimeBudget()) {
+          continue;
+        }
+        if (!requireDynamicResult) {
+          covered = true;
+          break;
+        }
+        if (project.getShutdownVerificationResults().containsKey(sequence.getSequenceId())
+            && project.getShutdownVerificationResults().get(sequence.getSequenceId())
+                .getVerdict() != neqsim.process.safety.esd.EmergencyShutdownTestResult.Verdict.FAIL) {
+          covered = true;
+          break;
+        }
+      }
+      if (covered) {
+        completed++;
+      }
+    }
+    return completed;
+  }
+
+  private static int countPipelineEquipment(EngineeringProject project) {
+    int count = 0;
+    for (ProcessEquipmentInterface unit : project.getProcessSystem().getUnitOperations()) {
+      if (unit instanceof PipeLineInterface) {
+        count++;
+      }
+    }
+    return count;
   }
 
   private static JsonObject readinessTopic(String topic, int completed, int total, String severity, String discipline,
@@ -661,6 +880,11 @@ public final class SimulationEngineeringDesignRunner {
               + " hazard-review-required relief scenarios have calculation coverage.",
           "Complete the credible API 521 cause register and evaluate every required scenario."));
     }
+    if (!hasCompleteInstalledReliefDesigns(project)) {
+      gaps.add(
+          gap("INSTALLED_RELIEF_SYSTEM", "No installed PSV or relief-device inlet/outlet piping design was attached.",
+              "Add selected orifice, inlet/outlet geometry, concurrency group and controlled design evidence."));
+    }
     if (blowdown.size() == 0) {
       gaps.add(gap("BLOWDOWN_FLARE_INPUT", "No readiness-gated dynamic blowdown/flare study was attached.",
           "Add vessel inventory, fluid, BDV/orifice, header, fire and flare evidence."));
@@ -689,9 +913,22 @@ public final class SimulationEngineeringDesignRunner {
           "Shutdown sequences lack actions, safe state, timing budget, reset/restart logic or HAZOP/SRS traceability.",
           "Complete the cause-and-effect sequence and validate process response with the dynamic ESD test runner."));
     }
+    int safetyRequirementCount = countSafetyRequirements(project);
+    int dynamicRequirementCount = countShutdownRequirements(project, true);
+    if (safetyRequirementCount > 0 && dynamicRequirementCount < safetyRequirementCount) {
+      gaps.add(gap("DYNAMIC_SAFEGUARD_VERIFICATION",
+          dynamicRequirementCount + " of " + safetyRequirementCount
+              + " trip/fire-and-gas requirements have acceptable linked dynamic verification.",
+          "Run EmergencyShutdownTestRunner and attach a non-failing result to every applicable shutdown sequence."));
+    }
+    if (!hasCompleteEvidenceRecords(project)) {
+      gaps.add(gap("ENGINEERING_EVIDENCE", "No revision-controlled engineering evidence records were attached.",
+          "Index HAZOP, LOPA, SRS, vendor, line-list and calculation documents with object links and revisions."));
+    }
     if (!allEngineeringApproved(project)) {
       gaps.add(gap("FINAL_ENGINEERING_APPROVAL",
-          "Calculated sizes, material recommendations, trip ranges, valve actions and shutdown effects are not fully approved.",
+          "Calculated sizes, material recommendations, trip ranges, valve actions and shutdown effects are not "
+              + "fully approved.",
           "Complete discipline checking, vendor verification, HAZOP/LOPA and accountable approval."));
     }
     return gaps;
@@ -728,6 +965,41 @@ public final class SimulationEngineeringDesignRunner {
     return true;
   }
 
+  private static boolean hasCompleteInstalledReliefDesigns(EngineeringProject project) {
+    if (project.getReliefDeviceDesignInputs().isEmpty()) {
+      return false;
+    }
+    for (ReliefDeviceDesignInput input : project.getReliefDeviceDesignInputs()) {
+      if (!input.getMissingFields().isEmpty() || findReliefStudyResult(project, input.getEquipmentTag()) == null) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static int countSafetyRequirements(EngineeringProject project) {
+    int count = 0;
+    for (EngineeringRequirement requirement : project.getRequirements()) {
+      if (requirement.getType() == EngineeringRequirement.Type.TRIP
+          || requirement.getType() == EngineeringRequirement.Type.FIRE_AND_GAS) {
+        count++;
+      }
+    }
+    return count;
+  }
+
+  private static boolean hasCompleteEvidenceRecords(EngineeringProject project) {
+    if (project.getEvidenceRecords().isEmpty()) {
+      return false;
+    }
+    for (EngineeringEvidenceRecord evidence : project.getEvidenceRecords()) {
+      if (!evidence.getMissingFields().isEmpty()) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private static boolean hasCompleteSafetyFunctionDesigns(EngineeringProject project) {
     int required = 0;
     for (EngineeringRequirement requirement : project.getRequirements()) {
@@ -739,7 +1011,7 @@ public final class SimulationEngineeringDesignRunner {
       boolean found = false;
       for (SafetyFunctionDesign design : project.getSafetyFunctionDesigns()) {
         found = found || (requirement.getId().equals(design.getRequirementId()) && design.getMissingFields().isEmpty()
-            && design.getAchievedSil() >= design.getTargetSil());
+            && design.getAchievedSil() >= design.getTargetSil() && design.areArchitecturalConstraintsMet());
       }
       if (!found) {
         return false;
@@ -749,15 +1021,23 @@ public final class SimulationEngineeringDesignRunner {
   }
 
   private static boolean hasCompleteShutdownSequences(EngineeringProject project) {
-    if (project.getShutdownSequences().isEmpty()) {
-      return false;
-    }
-    for (ShutdownSequence sequence : project.getShutdownSequences()) {
-      if (!sequence.getMissingFields().isEmpty()) {
+    int required = 0;
+    for (EngineeringRequirement requirement : project.getRequirements()) {
+      if (requirement.getType() != EngineeringRequirement.Type.TRIP
+          && requirement.getType() != EngineeringRequirement.Type.FIRE_AND_GAS) {
+        continue;
+      }
+      required++;
+      boolean covered = false;
+      for (ShutdownSequence sequence : project.getShutdownSequences()) {
+        covered = covered || (sequence.getRequirementIds().contains(requirement.getId())
+            && sequence.getMissingFields().isEmpty() && sequence.isWithinResponseTimeBudget());
+      }
+      if (!covered) {
         return false;
       }
     }
-    return true;
+    return required > 0;
   }
 
   private static boolean allEngineeringApproved(EngineeringProject project) {
@@ -776,6 +1056,11 @@ public final class SimulationEngineeringDesignRunner {
     }
     for (ShutdownSequence sequence : project.getShutdownSequences()) {
       if (sequence.getApprovalStatus() != EngineeringApprovalStatus.APPROVED) {
+        return false;
+      }
+    }
+    for (EngineeringEvidenceRecord evidence : project.getEvidenceRecords()) {
+      if (evidence.getApprovalStatus() != EngineeringApprovalStatus.APPROVED) {
         return false;
       }
     }

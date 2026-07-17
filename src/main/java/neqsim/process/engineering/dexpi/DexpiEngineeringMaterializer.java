@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -53,6 +54,7 @@ public final class DexpiEngineeringMaterializer {
 
     /** Serializes the proposed cause-and-effect matrix with its engineering governance. */
     public String toCauseAndEffectJson(EngineeringProject project) {
+      Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
       JsonObject root = new JsonObject();
       root.addProperty("projectId", project.getProjectId());
       root.addProperty("projectName", project.getName());
@@ -69,15 +71,18 @@ public final class DexpiEngineeringMaterializer {
       root.add("entries", entries);
       JsonArray safetyFunctions = new JsonArray();
       for (SafetyFunctionDesign design : project.getSafetyFunctionDesigns()) {
-        safetyFunctions.add(new GsonBuilder().create().toJsonTree(design.toMap()));
+        safetyFunctions.add(gson.toJsonTree(design.toMap()));
       }
       root.add("safetyFunctionDesigns", safetyFunctions);
       JsonArray shutdownSequences = new JsonArray();
       for (neqsim.process.engineering.ShutdownSequence sequence : project.getShutdownSequences()) {
-        shutdownSequences.add(new GsonBuilder().create().toJsonTree(sequence.toMap()));
+        shutdownSequences.add(gson.toJsonTree(sequence.toMap()));
       }
       root.add("shutdownSequences", shutdownSequences);
-      return new GsonBuilder().setPrettyPrinting().create().toJson(root);
+      root.add("shutdownDynamicVerification", gson.toJsonTree(project.getShutdownVerificationResults()));
+      root.add("engineeringEvidence", gson.toJsonTree(project.getEvidenceRecords()));
+      root.add("installedReliefDeviceDesigns", gson.toJsonTree(project.getReliefDeviceDesignInputs()));
+      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(root);
     }
   }
 

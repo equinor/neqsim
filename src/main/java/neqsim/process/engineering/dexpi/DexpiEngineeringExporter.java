@@ -49,15 +49,21 @@ public final class DexpiEngineeringExporter {
     private final Path manifestFile;
     private final Path calculationsFile;
     private final Path causeAndEffectFile;
+    private final Path validationFile;
+    private final Path packageManifestFile;
     private final Map<String, Path> compressorMapFiles;
+    private final Map<String, Path> registerFiles;
 
-    ExportResult(Path dexpiFile, Path manifestFile, Path calculationsFile, Path causeAndEffectFile,
-        Map<String, Path> compressorMapFiles) {
+    ExportResult(Path dexpiFile, Path manifestFile, Path calculationsFile, Path causeAndEffectFile, Path validationFile,
+        Path packageManifestFile, Map<String, Path> compressorMapFiles, Map<String, Path> registerFiles) {
       this.dexpiFile = dexpiFile;
       this.manifestFile = manifestFile;
       this.calculationsFile = calculationsFile;
       this.causeAndEffectFile = causeAndEffectFile;
+      this.validationFile = validationFile;
+      this.packageManifestFile = packageManifestFile;
       this.compressorMapFiles = new LinkedHashMap<String, Path>(compressorMapFiles);
+      this.registerFiles = new LinkedHashMap<String, Path>(registerFiles);
     }
 
     /** @return generated DEXPI XML file */
@@ -80,9 +86,24 @@ public final class DexpiEngineeringExporter {
       return causeAndEffectFile;
     }
 
+    /** @return structural/reference/round-trip DEXPI validation report */
+    public Path getValidationFile() {
+      return validationFile;
+    }
+
+    /** @return SHA-256 inventory of every other generated package file */
+    public Path getPackageManifestFile() {
+      return packageManifestFile;
+    }
+
     /** @return immutable equipment-tag to compressor-map path mapping */
     public Map<String, Path> getCompressorMapFiles() {
       return Collections.unmodifiableMap(compressorMapFiles);
+    }
+
+    /** @return immutable engineering-register name to path mapping */
+    public Map<String, Path> getRegisterFiles() {
+      return Collections.unmodifiableMap(registerFiles);
     }
   }
 
@@ -121,7 +142,14 @@ public final class DexpiEngineeringExporter {
     Files.write(calculations, calculationReport.toJson().getBytes(StandardCharsets.UTF_8));
     Path causeAndEffect = outputDirectory.resolve("cause-and-effect.json");
     Files.write(causeAndEffect, materialization.toCauseAndEffectJson(project).getBytes(StandardCharsets.UTF_8));
-    return new ExportResult(dexpiFile, manifest, calculations, causeAndEffect, maps);
+    Map<String, Path> registers = EngineeringRegisterExporter.export(project, outputDirectory.resolve("registers"));
+    Path packageManifest = outputDirectory.resolve("package-manifest.json");
+    EngineeringPackageManifest.write(outputDirectory, packageManifest);
+    Path validation = outputDirectory.resolve("dexpi-validation.json");
+    DexpiEngineeringValidator.write(DexpiEngineeringValidator.validate(dexpiFile), validation);
+    EngineeringPackageManifest.write(outputDirectory, packageManifest);
+    return new ExportResult(dexpiFile, manifest, calculations, causeAndEffect, validation, packageManifest, maps,
+        registers);
   }
 
   private static Map<String, Path> writeCompressorMaps(EngineeringProject project, Path datasets) throws IOException {
@@ -167,6 +195,14 @@ public final class DexpiEngineeringExporter {
         appendAttribute(document, attributes, "EngineeringManifestDocument", "engineering-manifest.json");
         appendAttribute(document, attributes, "EngineeringCalculationsDocument", "engineering-calculations.json");
         appendAttribute(document, attributes, "CauseAndEffectDocument", "cause-and-effect.json");
+        appendAttribute(document, attributes, "DexpiValidationDocument", "dexpi-validation.json");
+        appendAttribute(document, attributes, "PackageManifestDocument", "package-manifest.json");
+        appendAttribute(document, attributes, "EquipmentRegisterDocument", "registers/equipment-register.csv");
+        appendAttribute(document, attributes, "LineListDocument", "registers/line-list.csv");
+        appendAttribute(document, attributes, "InstrumentIndexDocument", "registers/instrument-index.csv");
+        appendAttribute(document, attributes, "SifRegisterDocument", "registers/sif-register.csv");
+        appendAttribute(document, attributes, "ShutdownRegisterDocument", "registers/shutdown-register.csv");
+        appendAttribute(document, attributes, "ReliefRegisterDocument", "registers/relief-register.csv");
         appendAttribute(document, attributes, "EngineeringApprovalState", "REVIEW_REQUIRED");
         appendAttribute(document, attributes, "Standards", joinStandards(project.getDesignBasis().getStandards()));
         plantInformation.appendChild(attributes);
