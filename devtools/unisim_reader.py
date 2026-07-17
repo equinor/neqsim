@@ -3325,10 +3325,29 @@ class UniSimToNeqSim:
                     if in_degree[name] == 0:
                         queue.append(name)
 
-        # Add any remaining (cycles — recycles)
-        for op in operations:
-            if op.name not in sorted_names:
-                sorted_names.append(op.name)
+        # Remaining nodes form dependency cycles (recycle loops). Order them
+        # greedily so that, wherever possible, a producer still precedes its
+        # consumer: repeatedly emit the remaining node with the fewest
+        # still-unemitted in-graph dependencies (0 when its producers are
+        # already sorted), breaking ties by original operation order. This keeps
+        # a newly-inserted in-loop unit (e.g. a ComponentSplitter feeding a
+        # downstream tee) ahead of its consumer, so the first recycle pass does
+        # not starve the consumer with a stale/empty stream.
+        emitted = set(sorted_names)
+        remaining = [op.name for op in operations if op.name not in emitted]
+        while remaining:
+            best = None
+            best_unmet = None
+            for name in remaining:
+                unmet = sum(1 for d in graph[name] if d not in emitted)
+                if best is None or unmet < best_unmet:
+                    best = name
+                    best_unmet = unmet
+                    if unmet == 0:
+                        break
+            remaining.remove(best)
+            sorted_names.append(best)
+            emitted.add(best)
 
         return [op_by_name[n] for n in sorted_names if n in op_by_name]
 
@@ -3463,6 +3482,16 @@ class UniSimToNeqSim:
         if not facs:
             return None, None
         names = op.properties.get('split_component_names')
+        if not names:
+            # The OverheadSplits are in the splitter's own fluid-package order.
+            # In a multi-package model the feed stream's stored composition can
+            # be in a different package's order (and may be mislabelled), so
+            # identify the splitter package by matching its component COUNT to
+            # a model fluid package and use that package's component names.
+            for fp in self.model.fluid_packages:
+                if len(fp.components) == len(facs):
+                    names = [c.name for c in fp.components]
+                    break
         if not names:
             feed_stream = (self._find_stream_by_name(flowsheet, op.feeds[0])
                            if op.feeds else None)
