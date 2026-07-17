@@ -39,8 +39,9 @@ instrument/valve/line/SIF/relief register, or safety-design handoff:
 3. Link dynamic `EmergencyShutdownTestResult` evidence to each tested sequence.
 4. Export with `DexpiEngineeringExporter`.
 5. Compile with `EngineeringDeliverableCompiler` and review
-   `engineering-production-readiness.json`, unresolved gaps, engineering
-   registers, `dexpi-validation.json` and `package-manifest.json`.
+   `engineering-production-readiness.json`, `engineering-qualification-plan.json`,
+   unresolved gaps, engineering registers, `dexpi-validation.json` and
+   `package-manifest.json`.
 
 Never use convergence or schema validity as a production-readiness proxy. A
 `QUALIFIED_FEED_SUPPORT` assessment requires the evidence gates defined by
@@ -51,6 +52,22 @@ Never promote generated `REVIEW_REQUIRED` data to approved/IFC status. Never
 infer SIL, final voting, trip set points, valve fail action, credible relief
 causes or shutdown effects solely from equipment class or a normal operating
 point.
+
+For qualification work, use the open actions in
+`engineering-qualification-plan.json`. Execute exact-version reference cases
+through `EngineeringBenchmarkDataset`, named-product semantic round trips
+through `DexpiToolQualificationRunner`, controlled project comparisons through
+`EngineeringPilotQualificationRunner`, and measured release checks through
+`EngineeringReleaseQualificationRunner`. Do not manufacture independent-review,
+commercial-tool, pilot-acceptance, HAZOP/LOPA/SRS, or release-authority records.
+
+Set `productionQualification=true` on typed calculation contexts only when
+controlled standards and evidence are attached. The stricter mode blocks hidden
+equipment defaults, simplified piping scaling, unresolved valve failure actions,
+unapproved instrument installation, missing corrosion/design-code records, and
+unreferenced two-phase relief methods. A calculated PSV orifice remains
+review-required until certified device data and inlet, outlet, header, stability,
+flare and depressurization checks are complete.
 
 ### 1. StudyClass Enum
 Controls which deliverables are produced:

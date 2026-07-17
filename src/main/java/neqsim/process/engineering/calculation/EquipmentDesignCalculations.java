@@ -144,7 +144,7 @@ public final class EquipmentDesignCalculations {
 
     @Override
     public String getMethodVersion() {
-      return "1.0";
+      return "2.0";
     }
 
     @Override
@@ -158,6 +158,20 @@ public final class EquipmentDesignCalculations {
         if (!input.values.containsKey(required)) {
           readiness.addBlocker("EQUIPMENT_INPUT_" + required.toUpperCase(), "Missing required input " + required,
               "Supply the value from a converged process/design case");
+        }
+      }
+      if (productionQualification(context)) {
+        for (String required : productionRequiredInputs()) {
+          if (!input.values.containsKey(required)) {
+            readiness.addBlocker("PRODUCTION_INPUT_" + required.toUpperCase(),
+                "Production qualification requires explicit input " + required,
+                "Supply a governed project value; screening defaults cannot qualify this method");
+          }
+        }
+        if (context.getEvidenceReferences().isEmpty() || context.getStandardReferences().isEmpty()) {
+          readiness.addBlocker("PRODUCTION_METHOD_EVIDENCE",
+              "Production qualification requires standard and evidence references",
+              "Attach the controlled calculation basis and independent evidence");
         }
       }
       return readiness.build();
@@ -185,6 +199,10 @@ public final class EquipmentDesignCalculations {
     abstract Result evaluate(Input input);
 
     abstract double uncertaintyBasis(Result result);
+
+    String[] productionRequiredInputs() {
+      return new String[0];
+    }
   }
 
   /** Separator/scrubber capacity, retention, level-volume and response-time calculation. */
@@ -220,6 +238,12 @@ public final class EquipmentDesignCalculations {
     double uncertaintyBasis(Result result) {
       return result.requireValue("insideDiameterM");
     }
+
+    @Override
+    String[] productionRequiredInputs() {
+      return new String[] { "gasLoadFactorMPerS", "retentionTimeS", "highHighResponseTimeS",
+          "availableTripResponseTimeS" };
+    }
   }
 
   /** Compressor map-envelope, recycle, settle-out and driver screening. */
@@ -252,6 +276,12 @@ public final class EquipmentDesignCalculations {
     double uncertaintyBasis(Result result) {
       return result.requireValue("driverRequiredPowerKw");
     }
+
+    @Override
+    String[] productionRequiredInputs() {
+      return new String[] { "driverMarginFraction", "minimumSurgeMarginFraction", "recycleDifferentialPressureBar",
+          "settleOutPressureBara", "mapExtrapolationFraction", "maxMapExtrapolationFraction", "startupPowerKw" };
+    }
   }
 
   /** Pump system-curve, NPSH, recycle and driver screening. */
@@ -278,6 +308,12 @@ public final class EquipmentDesignCalculations {
     @Override
     double uncertaintyBasis(Result result) {
       return result.requireValue("driverRequiredPowerKw");
+    }
+
+    @Override
+    String[] productionRequiredInputs() {
+      return new String[] { "minimumContinuousFlowM3s", "turndownFlowM3s", "minimumNpshMarginM",
+          "driverMarginFraction" };
     }
   }
 
@@ -308,6 +344,13 @@ public final class EquipmentDesignCalculations {
     double uncertaintyBasis(Result result) {
       return result.requireValue("preliminaryAreaM2");
     }
+
+    @Override
+    String[] productionRequiredInputs() {
+      return new String[] { "areaMarginFraction", "utilitySpecificDutyKJPerKg", "processPressureDropBar",
+          "maximumPressureDropBar", "availableUtilityFlowKgPerS", "highPressureSideBara", "lowPressureSideDesignBara",
+          "maximumDutyKw", "minimumDutyKw" };
+    }
   }
 
   /** Column/absorber flooding, turndown and preliminary diameter screening. */
@@ -334,6 +377,12 @@ public final class EquipmentDesignCalculations {
     @Override
     double uncertaintyBasis(Result result) {
       return result.requireValue("preliminaryDiameterM");
+    }
+
+    @Override
+    String[] productionRequiredInputs() {
+      return new String[] { "targetFloodingFraction", "minimumVaporLoadM3s", "minimumTurndownFraction",
+          "maximumCondenserDutyKw", "maximumReboilerDutyKw" };
     }
   }
 
@@ -365,6 +414,12 @@ public final class EquipmentDesignCalculations {
     double uncertaintyBasis(Result result) {
       return result.requireValue("preliminaryTotalVolumeM3");
     }
+
+    @Override
+    String[] productionRequiredInputs() {
+      return new String[] { "emergencyInflowM3s", "usableVolumeFraction", "normalVentRateM3s",
+          "installedVentCapacityM3s", "blanketingRateM3s" };
+    }
   }
 
   private static Map<String, Double> values(Object... pairs) {
@@ -373,6 +428,10 @@ public final class EquipmentDesignCalculations {
       result.put((String) pairs[i], Double.valueOf(((Number) pairs[i + 1]).doubleValue()));
     }
     return result;
+  }
+
+  private static boolean productionQualification(EngineeringCalculationContext context) {
+    return context != null && "true".equalsIgnoreCase(context.getAttributes().get("productionQualification"));
   }
 
   private static Map<String, Boolean> constraints(Object... pairs) {

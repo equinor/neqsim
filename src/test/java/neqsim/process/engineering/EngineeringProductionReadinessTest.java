@@ -95,7 +95,7 @@ class EngineeringProductionReadinessTest {
         .releaseQualityEvidence(new EngineeringReleaseQualityEvidence("release-candidate-1").fullCiPassed(true)
             .supportedJavaMatrixPassed(true).deterministicConvergencePassed(true).performanceAcceptancePassed(true)
             .apiCompatibilityPassed(true).serializationMigrationPassed(true).securityReviewPassed(true)
-            .evidenceReference("RELEASE-EVIDENCE-001"));
+            .evidenceReference("RELEASE-EVIDENCE-001").accountableReviewer("Release authority / RA-001"));
     project.addEvidenceRecord(new EngineeringEvidenceRecord("HAZOP-001", "HAZOP", "A").setTitle("Test hazard review")
         .setSourceOrganization("Independent engineering team").linkEquipment("FEED")
         .approve("Hazop chair / HAZOP-001-A"));

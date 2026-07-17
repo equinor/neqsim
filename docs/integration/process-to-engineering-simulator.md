@@ -119,7 +119,7 @@ calculations:
 - `EquipmentDesignCalculations.Separator`, `.Compressor`, `.Pump`, `.HeatExchanger`, `.Column` and `.Tank`;
 - `PipingNetworkDesignCalculation` with a versioned `PipingRulePack`;
 - `ValveInstrumentDesignCalculations.Valve` and `.Instrument`;
-- `SafetyScenarioEngineCalculation`; and
+- `SafetyScenarioEngineCalculation` and `ReliefSizingCalculation`; and
 - `MaterialsMechanicalDesignCalculations.MaterialSelection` and `.PreliminaryMechanical`.
 
 Every typed result carries a method identifier/version, input snapshot, design-case context, readiness findings,
@@ -186,6 +186,7 @@ In addition to DEXPI XML, registers, the case matrix, governing envelope and cal
 - `utility-summary.json`;
 - `materials-selection-report.json`;
 - `engineering-diagram-layout.json`;
+- `engineering-qualification-plan.json`;
 - `unresolved-engineering-actions.json`; and
 - `revision-impact-report.json`.
 
@@ -257,6 +258,70 @@ for one revision from silently qualifying another.
 The current built-in calculation modules remain preliminary screening methods until their exact method versions have
 been benchmarked and project-qualified for the stated service. The readiness framework exposes that gap instead of
 silently promoting the results.
+
+### Execute the qualification workflows
+
+The production-readiness gates are backed by executable, serializable workflows. They derive evidence from supplied
+measurements and fail closed when an output, review, tool result or acceptance record is missing:
+
+- `EngineeringBenchmarkDataset` executes versioned scalar reference cases with units and absolute/relative
+  tolerances. A qualifying source must be published, independently calculated or vendor/CAE evidence and must have an
+  independent review record. Every case registered for a method version must qualify; one passing case cannot mask a
+  failed, regression-only or unreviewed case for the same method.
+- `DexpiToolQualificationRunner` compares persistent objects, properties and relationships after import and after
+  export/reimport in a named product/version. Any semantic difference prevents qualification.
+- `EngineeringPilotQualificationRunner` compares simulator values with an independently reviewed project package.
+  An out-of-tolerance material comparison prevents acceptance.
+- `EngineeringReleaseQualificationRunner` derives release evidence from CI state, the supported Java matrix,
+  repeated deterministic fingerprints, measured runtime, API fingerprints, serialization migration and security
+  findings. It also requires an accountable reviewer.
+
+For example, a controlled benchmark case is run against actual calculation outputs rather than copying the expected
+value into the evidence object:
+
+```java
+EngineeringBenchmarkDataset dataset = new EngineeringBenchmarkDataset("separator-reference", "A")
+    .add(new EngineeringBenchmarkDataset.Case(
+        "SEP-CASE-1", "separator-scrubber-preliminary-design", "2.0",
+        EngineeringValidationBenchmark.SourceClass.INDEPENDENT_CALCULATION,
+        "CALC-SEP-001", "A", "Independent checker / CALC-SEP-001-A")
+        .expect("insideDiameterM", 2.0, "m", 0.02, 0.01));
+
+Map<String, Map<String, Double>> actualOutputs = runControlledCases();
+EngineeringBenchmarkDataset.RunResult benchmarkRun = dataset.run(actualOutputs);
+```
+
+Compilation also writes `engineering-qualification-plan.json`. It is an executable backlog keyed to the exact methods
+used in the final loop. It identifies missing independent benchmarks, project qualifications, automatic configuration,
+named-tool DEXPI evidence, pilot scopes, release evidence and safety-lifecycle evidence. It never fabricates external
+acceptance and always reports `fitnessForConstruction=false`.
+
+### Fail-closed production calculation mode
+
+Set `productionQualification=true` in an `EngineeringCalculationContext` when a typed calculation is being exercised
+for qualification:
+
+```java
+EngineeringCalculationContext context = EngineeringCalculationContext.builder()
+    .designCaseId("maximum")
+    .simulationFingerprint("controlled-run-sha256")
+    .addStandardReference("PROJECT-CALCULATION-BASIS-A")
+    .addEvidenceReference("INDEPENDENT-CHECK-001")
+    .attribute("productionQualification", "true")
+    .build();
+```
+
+In this mode the equipment modules reject screening defaults, piping rejects reference-diameter pressure-drop scaling,
+unresolved valve failure position becomes a blocker, and standards/evidence references are mandatory. Instrument,
+materials and mechanical modules additionally require controlled installation, corrosion-assessment and design-code
+records. Two-phase relief cannot be inferred from a normal operating point: supply a controlled specialist mass-flux
+method and reference. The built-in relief calculation selects from the project device table for gas, steam and liquid
+cases, but certified coefficients, stability, inlet/outlet losses and disposal-network interaction remain separate
+review gates.
+
+See `examples/notebooks/engineering_production_qualification_workflow.ipynb` for benchmark, DEXPI, pilot, release and
+relief workflow examples. The notebook uses synthetic references only to demonstrate the API; replace every such value
+and reviewer string with controlled project evidence before assessing readiness.
 
 See the executable
 [production-readiness notebook](../../examples/notebooks/engineering_production_readiness.ipynb) for explicit

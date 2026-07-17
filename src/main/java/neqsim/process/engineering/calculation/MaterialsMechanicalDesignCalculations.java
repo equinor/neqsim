@@ -74,7 +74,7 @@ public final class MaterialsMechanicalDesignCalculations {
 
     @Override
     public String getMethodVersion() {
-      return "1.0";
+      return "2.0";
     }
 
     @Override
@@ -83,6 +83,16 @@ public final class MaterialsMechanicalDesignCalculations {
       if (input == null) {
         result.addBlocker("MATERIAL_INPUT", "Materials-selection input is required",
             "Supply composition, phases, environment and design conditions");
+      }
+      if (productionQualification(context)) {
+        if (context.getEvidenceReferences().isEmpty() || context.getStandardReferences().isEmpty()) {
+          result.addBlocker("MATERIAL_PRODUCTION_EVIDENCE", "Materials qualification evidence is incomplete",
+              "Attach the corrosion assessment, process composition and applicable standards");
+        }
+        if (!"approved".equalsIgnoreCase(context.getAttributes().get("corrosionAssessment"))) {
+          result.addBlocker("MATERIAL_CORROSION_ASSESSMENT", "Corrosion assessment is not approved",
+              "Complete degradation-mechanism and corrosion-loop review");
+        }
       }
       return result.build();
     }
@@ -200,7 +210,7 @@ public final class MaterialsMechanicalDesignCalculations {
 
     @Override
     public String getMethodVersion() {
-      return "1.0";
+      return "2.0";
     }
 
     @Override
@@ -209,6 +219,16 @@ public final class MaterialsMechanicalDesignCalculations {
       if (input == null) {
         result.addBlocker("MECHANICAL_INPUT", "Mechanical-design input is required",
             "Supply governed pressure, temperature and geometry");
+      }
+      if (productionQualification(context)) {
+        if (context.getEvidenceReferences().isEmpty() || context.getStandardReferences().isEmpty()) {
+          result.addBlocker("MECHANICAL_PRODUCTION_EVIDENCE", "Mechanical qualification evidence is incomplete",
+              "Attach design-code, allowable-stress, load and geometry evidence");
+        }
+        if (!"approved".equalsIgnoreCase(context.getAttributes().get("designCodeBasis"))) {
+          result.addBlocker("MECHANICAL_DESIGN_CODE", "Design-code basis is not approved",
+              "Approve the applicable pressure-equipment code and load cases");
+        }
       }
       return result.build();
     }
@@ -264,6 +284,10 @@ public final class MaterialsMechanicalDesignCalculations {
       throw new IllegalArgumentException(field + " must not be blank");
     }
     return value.trim();
+  }
+
+  private static boolean productionQualification(EngineeringCalculationContext context) {
+    return context != null && "true".equalsIgnoreCase(context.getAttributes().get("productionQualification"));
   }
 
   private static double positive(double value, String field) {
