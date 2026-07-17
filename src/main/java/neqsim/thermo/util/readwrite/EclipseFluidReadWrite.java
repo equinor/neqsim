@@ -616,6 +616,20 @@ public class EclipseFluidReadWrite {
         }
         // fluid.addComponent(name, ZI.get(counter));
         for (int i = 0; i < fluid.getMaxNumberOfPhases(); i++) {
+          // Keep NeqSim's database parameters for water when the source file
+          // provides no meaningful Peneloux volume shift for it (SSHIFT ~ 0). The
+          // generic E300 water entry (hydrocarbon Racket-Z estimate, zero shift)
+          // otherwise overrides the tuned database values and drops the
+          // volume-corrected liquid-water density to ~850 kg/m3; the database
+          // water gives the physical ~1000 kg/m3. When the file DOES carry a real
+          // water shift (e.g. a PVTsim characterization), honour the file values.
+          if ("water".equals(name)) {
+            double waterShift = SSHIFTS.size() > counter ? SSHIFTS.get(counter)
+                : (SSHIFT.size() > counter ? SSHIFT.get(counter) : 0.0);
+            if (Math.abs(waterShift) < 1.0e-10) {
+              continue;
+            }
+          }
           fluid.getPhase(i).getComponent(name).setTC(TC.get(counter));
           fluid.getPhase(i).getComponent(name).setPC(PC.get(counter));
           fluid.getPhase(i).getComponent(name).setAcentricFactor(ACF.get(counter));
@@ -1130,6 +1144,18 @@ public class EclipseFluidReadWrite {
           }
           // fluid.addComponent(name, ZI.get(counter));
           for (int i = 0; i < fluid.getMaxNumberOfPhases(); i++) {
+            // Keep NeqSim's database parameters for water when the file provides no
+            // meaningful volume shift (see main read loop): the generic E300 water
+            // entry drops the volume-corrected density to ~850 kg/m3 while the
+            // database water gives the physical ~1000 kg/m3. Honour a real file
+            // water shift when present.
+            if ("water".equals(name)) {
+              double waterShift = SSHIFTS.size() > 0 ? SSHIFTS.get(counter)
+                  : (SSHIFT.size() > counter ? SSHIFT.get(counter) : 0.0);
+              if (Math.abs(waterShift) < 1.0e-10) {
+                continue;
+              }
+            }
             fluid.getPhase(i).getComponent(name).setTC(TC.get(counter));
             fluid.getPhase(i).getComponent(name).setPC(PC.get(counter));
             fluid.getPhase(i).getComponent(name).setAcentricFactor(ACF.get(counter));
