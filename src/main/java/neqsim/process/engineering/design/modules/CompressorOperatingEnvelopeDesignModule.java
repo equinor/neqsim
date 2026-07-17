@@ -154,7 +154,19 @@ public final class CompressorOperatingEnvelopeDesignModule implements Engineerin
       result.add(point);
     }
     if (result.isEmpty()) {
-      throw new IllegalStateException("No calculated compressor operating points are available");
+      List<String> caseDiagnostics = new ArrayList<String>();
+      for (DesignCaseResult designCase : report.getEnvelope().getCaseResults()) {
+        List<Map<String, Object>> metricFailures = new ArrayList<Map<String, Object>>();
+        for (DesignCaseResult.MetricResult metric : designCase.getMetricResults().values()) {
+          if ("FAILED".equals(metric.getStatus())) {
+            metricFailures.add(metric.toMap());
+          }
+        }
+        caseDiagnostics.add(designCase.getDesignCase().getId() + '=' + designCase.getStatus() + ':'
+            + designCase.getMessage() + ":metricFailures=" + metricFailures);
+      }
+      throw new IllegalStateException(
+          "No calculated compressor operating points are available; cases=" + caseDiagnostics);
     }
     return result;
   }

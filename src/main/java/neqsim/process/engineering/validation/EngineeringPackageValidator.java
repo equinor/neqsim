@@ -237,6 +237,19 @@ public final class EngineeringPackageValidator {
       requireArray(root, "failedGates", artifactName, report);
       requireFalse(root, "fitnessForConstruction", artifactName, report);
       requireFalse(root, "finalEngineeringApprovalGranted", artifactName, report);
+    } else if ("engineering-vertical-slice-execution-manifest.json".equals(artifactName)) {
+      requireString(root, "projectId", artifactName, report);
+      requireString(root, "projectRevision", artifactName, report);
+      requireString(root, "designPolicyId", artifactName, report);
+      requireString(root, "designPolicyRevision", artifactName, report);
+      requireString(root, "designPolicyFingerprint", artifactName, report);
+      requireString(root, "qualificationPolicyId", artifactName, report);
+      requireString(root, "qualificationPolicyRevision", artifactName, report);
+      requireString(root, "qualificationPolicyFingerprint", artifactName, report);
+      requireString(root, "inputFingerprint", artifactName, report);
+      requireString(root, "status", artifactName, report);
+      requireArray(root, "preflightBlockers", artifactName, report);
+      requireFalse(root, "fitnessForConstruction", artifactName, report);
     }
     return report;
   }

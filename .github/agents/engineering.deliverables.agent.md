@@ -54,7 +54,8 @@ causes or shutdown effects solely from equipment class or a normal operating
 point.
 
 For the inlet-separation/compression/export production slice, run
-`ProductionVerticalSliceSimulator` with separate revision-controlled
+`ProductionVerticalSlicePreflight` before numerical execution, then use
+`ProductionVerticalSliceSimulator.runStrictAndCompile` with separate revision-controlled
 `EngineeringAutoConfigurationPolicy` and `InletCompressionExportSlicePolicy`
 objects. Require all nine gates in `engineering-vertical-slice-qualification.json`
 to pass before describing the result as a controlled pilot. A passing gate set
@@ -62,6 +63,13 @@ is still not FEED-qualified, fit for construction, or finally approved. Configur
 the compressor map envelope explicitly with `addCompressorOperatingEnvelope`;
 missing surge/stonewall curves, case evidence, dynamic ESD response, or coupled
 relief/blowdown/flare results must remain blockers.
+Retain `engineering-vertical-slice-execution-manifest.json`; its controlled-input
+fingerprint is the recalculation and revision-impact key, not an approval record.
+Use `InletCompressionExportReferenceFacility` as the regression fixture for this
+workflow. Its synthetic evidence is suitable only for software acceptance. Verify
+that the main process, recycle, LCV, PSV, BDV and flare paths are stream-connected,
+then require the strict end-to-end test to produce a converged design state, passing
+dynamic/coupled-safety gates, DEXPI 2.0 and a schema-valid coordinated package.
 
 When automatic discipline configuration is requested, require an explicit
 `EngineeringAutoConfigurationPolicy` for every recognized equipment item and

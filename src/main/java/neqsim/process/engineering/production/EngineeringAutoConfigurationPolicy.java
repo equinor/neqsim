@@ -1,6 +1,9 @@
 package neqsim.process.engineering.production;
 
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -294,6 +297,21 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
 
   public String getRevision() {
     return revision;
+  }
+
+  /** @return deterministic fingerprint of every configured rule and candidate set in this policy */
+  public String getPolicyFingerprint() {
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      byte[] bytes = digest.digest(fingerprintMaterial().getBytes(StandardCharsets.UTF_8));
+      StringBuilder result = new StringBuilder();
+      for (byte item : bytes) {
+        result.append(String.format("%02x", Integer.valueOf(item & 0xff)));
+      }
+      return result.toString();
+    } catch (NoSuchAlgorithmException exception) {
+      throw new IllegalStateException("SHA-256 is unavailable", exception);
+    }
   }
 
   List<SliceRule> getSlices() {

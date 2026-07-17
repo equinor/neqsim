@@ -22,6 +22,39 @@ workflow.
 
 ## Configure the run
 
+### Start from the executable reference facility
+
+`InletCompressionExportReferenceFacility` is the regression-quality vertical slice used to prove that the complete
+workflow can run. It builds an actually connected process graph, rather than a collection of required tags:
+
+- separator liquid outlet to LCV;
+- separator gas outlet through suction ESDV and recycle mixer to the compressor;
+- compressor discharge through the aftercooler, discharge ESDV, PCV and export line;
+- aftercooler discharge through the ASV, recycle cooler and recycle tear stream to compressor suction; and
+- aftercooler discharge through the PSV and BDV to a common flare connection.
+
+It also supplies ten evidence-linked cases, an active compressor map, a dynamic anti-surge/ESD/blowdown response,
+an API-style blocked-outlet PSV metric, a coupled relief/blowdown/flare study, a shutdown sequence, piping rules and
+installed relief-device data.
+
+```java
+InletCompressionExportReferenceFacility.Definition reference =
+    InletCompressionExportReferenceFacility.build();
+
+ProductionVerticalSliceSimulator.Result result =
+    ProductionVerticalSliceSimulator.runStrictAndCompile(
+        reference.getProject(),
+        reference.getAutoConfigurationPolicy(),
+        reference.getQualificationPolicy(),
+        1,
+        outputDirectory,
+        null);
+```
+
+The embedded values and evidence are explicitly labelled synthetic. Copy the object structure, but replace every
+case, map, scenario, material, line, valve, PSV and flare input with controlled project evidence. The reference can
+qualify for a controlled software pilot; it can never grant construction approval.
+
 Declare the numerical design policy separately from the qualification policy. This keeps calculation limits,
 required process objects and external evidence independently revision-controlled.
 
@@ -50,7 +83,7 @@ InletCompressionExportSlicePolicy qualificationPolicy =
         .addEvidenceReference("HAZOP-20-REV-A")
         .build();
 
-ProductionVerticalSliceSimulator.Result result = ProductionVerticalSliceSimulator.runAndCompile(
+ProductionVerticalSliceSimulator.Result result = ProductionVerticalSliceSimulator.runStrictAndCompile(
     project, designPolicy, qualificationPolicy, 4, outputDirectory, baselineGraph);
 ```
 
@@ -63,6 +96,36 @@ blocked-outlet, fire and blowdown cases to the project before running. Each case
 and evidence references. Add the required executable dynamic scenario with
 `VerticalSliceDynamicScenarioFactory.emergencyShutdown(...)`, and attach the coupled relief/blowdown/flare studies
 selected by the approved hazard review.
+
+For Python/JPype clients, `VerticalSliceCaseMatrixFactory` creates serializable Java configurators from explicit feed
+flow, feed pressure, feed temperature and compressor discharge-pressure inputs. `applyTo(project, policy)` refuses an
+incomplete required-type matrix. The factory changes only steady boundary conditions; start-up, trip, fire, blocked
+outlet and blowdown event actions and credibility must still be represented by controlled scenario definitions.
+
+## Preflight before simulation
+
+Use `ProductionVerticalSlicePreflight.assess(project, qualificationPolicy)` while assembling a project. It checks the
+controlled definitions without running thermodynamics or the engineering loop:
+
+- complete typed process, control and safety topology;
+- directed stream connectivity for the main process, recycle, liquid-control and relief/blowdown paths;
+- one enabled definition for every required case type, with scalar inputs and resolvable evidence;
+- active compressor map, surge curve and stonewall curve;
+- executable dynamic scenarios with logic, criteria and evidence;
+- reviewed relief concurrency coupled to calculation-ready blowdown and flare inputs;
+- controlled project editions of every required standard; and
+- complete, revision-controlled evidence records linked to engineering objects.
+
+Warnings retain review-required or unapproved lifecycle status. Blockers mean the numerical run must not start.
+`runStrict(...)` and `runStrictAndCompile(...)` throw before automatic module configuration when blockers exist.
+The existing `run(...)` method remains available for exploratory gap analysis and returns the preflight result together
+with the eventual qualification findings.
+
+Every attempted vertical-slice execution also creates a SHA-256 input fingerprint over the project revision, both
+policy revisions, case definitions and scalar inputs, dynamic scenarios, coupled safety studies, standards and
+evidence. The coordinated package writes this as
+`engineering-vertical-slice-execution-manifest.json`. Changing any controlled input invalidates the fingerprint and
+provides a deterministic trigger for recalculation and revision-impact review.
 
 ## Compressor map evidence
 
@@ -93,9 +156,10 @@ Missing data fails the relevant gate. The artifact is emitted even when the vert
 configured, so downstream systems have an explicit `NOT_CONFIGURED` result instead of inferring success from an
 absent file.
 
-The design loop also detects an exact two-state oscillation in discrete candidates (for example alternate pipe sizes
-on successive iterations) and terminates with `DISCRETE_DESIGN_OSCILLATION_DETECTED` rather than exhausting the
-iteration count without a useful diagnosis.
+When multiple modules propose the same physical variable, the later discipline module in deterministic execution
+order owns the applied update. This allows a network-level piping module to supersede a preliminary single-line
+screen without producing an artificial two-state oscillation. The loop still detects a genuine exact two-state
+oscillation in discrete candidates and terminates with `DISCRETE_DESIGN_OSCILLATION_DETECTED`.
 
 ## Status boundary
 

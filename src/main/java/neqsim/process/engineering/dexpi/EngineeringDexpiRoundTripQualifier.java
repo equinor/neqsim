@@ -99,7 +99,8 @@ public final class EngineeringDexpiRoundTripQualifier {
     for (int i = 0; i < objects.getLength(); i++) {
       Element object = (Element) objects.item(i);
       String type = object.getAttribute("type");
-      if (type.startsWith("Plant/ProcessEquipment.") && !type.endsWith(".Nozzle")) {
+      if ((type.startsWith("Plant/ProcessEquipment.") || type.startsWith("Plant/Piping."))
+          && !type.endsWith(".Nozzle")) {
         String tag = directDataValue(object, "TagName");
         if (!tag.isEmpty()) {
           result.equipmentTags.add(tag);
@@ -130,6 +131,17 @@ public final class EngineeringDexpiRoundTripQualifier {
       }
       if (tag.isEmpty() && item.getAttribute("ID").startsWith("ID-")) {
         tag = item.getAttribute("ID").substring(3);
+      }
+      if (!tag.isEmpty()) {
+        result.equipmentTags.add(tag);
+      }
+    }
+    NodeList pipingComponents = document.getElementsByTagName("PipingComponent");
+    for (int i = 0; i < pipingComponents.getLength(); i++) {
+      Element item = (Element) pipingComponents.item(i);
+      String tag = genericAttributeValue(item, "TagName");
+      if (tag.isEmpty()) {
+        tag = genericAttributeValue(item, "TagNameAssignmentClass");
       }
       if (!tag.isEmpty()) {
         result.equipmentTags.add(tag);

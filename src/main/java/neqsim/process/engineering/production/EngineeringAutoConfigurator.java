@@ -103,11 +103,7 @@ public final class EngineeringAutoConfigurator {
       configuredTags.add(rule.deviceTag);
     }
     for (EngineeringAutoConfigurationPolicy.NetworkRule rule : policy.getNetworks()) {
-      boolean missing = false;
-      for (neqsim.process.engineering.design.modules.PipingNetworkDesignModule.SegmentDefinition segment : rule.segments) {
-        missing |= !configuredTags.contains(segment.getLineTag());
-      }
-      if (missing) {
+      if (!hasModule(project, "21-piping-network-design-" + rule.id)) {
         builder.addPipingNetworkDesign(rule.id, rule.rulePack, rule.segments);
       }
       for (neqsim.process.engineering.design.modules.PipingNetworkDesignModule.SegmentDefinition segment : rule.segments) {
