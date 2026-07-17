@@ -3,7 +3,9 @@ name: Validate engineering reference fixture
 on:
   pull_request:
     paths:
+      - "src/main/java/neqsim/process/equipment/pipeline/AdiabaticPipe.java"
       - "src/main/java/neqsim/process/engineering/**"
+      - "src/test/java/neqsim/process/equipment/pipeline/AdiabaticPipeTest.java"
       - "src/test/java/neqsim/process/engineering/QualifiedEngineeringReferenceFacilityTest.java"
       - ".github/workflows/validate-engineering-reference.yml"
 
@@ -31,9 +33,14 @@ jobs:
           name: engineering-reference-test-reports
           path: |
             target/surefire-reports/
+            src/main/java/neqsim/process/equipment/pipeline/AdiabaticPipe.java
             src/main/java/neqsim/process/engineering/design/modules/CompressorOperatingEnvelopeDesignModule.java
+            src/main/java/neqsim/process/engineering/deliverables/EngineeringDeliverableCompiler.java
+            src/main/java/neqsim/process/engineering/dexpi/EngineeringDexpiRoundTripQualifier.java
+            src/main/java/neqsim/process/engineering/verticalslice/InletCompressionExportReferenceFacility.java
             src/main/java/neqsim/process/engineering/verticalslice/ProductionVerticalSliceExecutionManifest.java
             src/main/java/neqsim/process/engineering/verticalslice/ProductionVerticalSlicePreflight.java
+            src/test/java/neqsim/process/equipment/pipeline/AdiabaticPipeTest.java
             src/test/java/neqsim/process/engineering/QualifiedEngineeringReferenceFacilityTest.java
             src/test/java/neqsim/process/engineering/EngineeringVerticalSliceProductionTest.java
           if-no-files-found: ignore

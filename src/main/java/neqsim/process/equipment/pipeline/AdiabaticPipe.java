@@ -375,6 +375,25 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
     setCalculationIdentifier(id);
   }
 
+  /**
+   * Executes a quasi-steady transient step.
+   *
+   * <p>
+   * {@code AdiabaticPipe} is a lightweight algebraic pressure-drop model and does not create the distributed
+   * {@link FlowSystemInterface} used by {@link Pipeline#runTransient(double, UUID)}. Re-evaluating the pipe at the
+   * current inlet conditions lets it participate safely in a dynamic {@code ProcessSystem}; line-pack and wave
+   * propagation require a dedicated transient pipeline model.
+   * </p>
+   *
+   * @param dt time step in seconds
+   * @param id calculation identifier
+   */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    run(id);
+    increaseTime(dt);
+  }
+
   /** {@inheritDoc} */
   @Override
   public FlowSystemInterface getPipe() {

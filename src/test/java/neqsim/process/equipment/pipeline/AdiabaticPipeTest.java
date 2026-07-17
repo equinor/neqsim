@@ -3,6 +3,7 @@ package neqsim.process.equipment.pipeline;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -187,5 +188,19 @@ class AdiabaticPipeTest {
 
     double outletP = pipe.getOutletStream().getPressure("bara");
     assertEquals(80.0, outletP, 0.5);
+  }
+
+  @Test
+  void testTransientRunUsesQuasiSteadyCalculation() {
+    AdiabaticPipe pipe = new AdiabaticPipe("pipeline", inletStream);
+    pipe.setLength(50000.0);
+    pipe.setDiameter(0.5);
+
+    UUID calculationId = UUID.randomUUID();
+    pipe.runTransient(1.0, calculationId);
+
+    assertEquals(calculationId, pipe.getCalculationIdentifier());
+    assertTrue(pipe.getOutletStream().getPressure("bara") > 0.0);
+    assertTrue(pipe.getOutletStream().getPressure("bara") < inletStream.getPressure("bara"));
   }
 }
