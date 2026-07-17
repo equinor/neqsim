@@ -10,11 +10,14 @@ import neqsim.process.engineering.design.modules.InventoryEquipmentDesignModule;
 import neqsim.process.engineering.design.modules.LineHydraulicDesignModule;
 import neqsim.process.engineering.design.modules.MaterialSelectionDesignModule;
 import neqsim.process.engineering.design.modules.PressureEquipmentMechanicalDesignModule;
+import neqsim.process.engineering.design.modules.PipingNetworkDesignModule;
 import neqsim.process.engineering.design.modules.ProcessSafetyDesignModule;
+import neqsim.process.engineering.design.modules.ReliefDeviceDesignModule;
 import neqsim.process.engineering.design.modules.PumpPackageDesignModule;
 import neqsim.process.engineering.design.modules.RatedCapacityDesignModule;
 import neqsim.process.engineering.design.modules.SeparatorProcessDesignModule;
 import neqsim.process.engineering.designcase.EngineeringMetric;
+import neqsim.process.engineering.piping.PipingRulePack;
 import neqsim.process.processmodel.ProcessModel;
 
 /** Configures repeatable process-to-engineering design workflows on governed projects. */
@@ -167,6 +170,38 @@ public final class ProcessToEngineeringDesignBuilder {
     addMetricIfMissing(metric);
     project.addEngineeringDesignModule(
         new RatedCapacityDesignModule(equipmentTag, metric.getId(), capacityName, unit, marginFraction, candidates));
+    return this;
+  }
+
+  /** Adds discrete PSV-orifice selection to the converged physical design state. */
+  public ProcessToEngineeringDesignBuilder addReliefDeviceDesign(String deviceTag, String protectedEquipmentTag,
+      EngineeringMetric requiredAreaMetric, double... apiOrificeCandidatesIn2) {
+    if (!hasText(deviceTag)) {
+      throw new IllegalArgumentException("deviceTag must not be blank");
+    }
+    requireUnit(protectedEquipmentTag);
+    addMetricIfMissing(requiredAreaMetric);
+    project.addEngineeringDesignModule(new ReliefDeviceDesignModule(deviceTag, protectedEquipmentTag,
+        requiredAreaMetric.getId(), apiOrificeCandidatesIn2));
+    return this;
+  }
+
+  /** Adds network-level line sizing and applies every selected diameter within the common design loop. */
+  public ProcessToEngineeringDesignBuilder addPipingNetworkDesign(String networkId, PipingRulePack rulePack,
+      PipingNetworkDesignModule.SegmentDefinition... segments) {
+    if (!hasText(networkId) || rulePack == null || segments == null || segments.length == 0) {
+      throw new IllegalArgumentException("networkId, rulePack and at least one segment are required");
+    }
+    for (PipingNetworkDesignModule.SegmentDefinition segment : segments) {
+      if (segment == null) {
+        throw new IllegalArgumentException("network segment must not be null");
+      }
+      requireUnit(segment.getLineTag());
+      addMetricIfMissing(EngineeringMetric.equipmentInletVolumeFlow(segment.getLineTag()));
+      addMetricIfMissing(EngineeringMetric.equipmentPressureDrop(segment.getLineTag()));
+    }
+    project.addEngineeringDesignModule(
+        new PipingNetworkDesignModule(networkId, rulePack, java.util.Arrays.asList(segments)));
     return this;
   }
 

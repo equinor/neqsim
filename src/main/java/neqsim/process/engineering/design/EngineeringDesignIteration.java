@@ -17,10 +17,13 @@ public final class EngineeringDesignIteration implements Serializable {
   private final List<EngineeringConstraintResult> constraintResults;
   private final int appliedUpdateCount;
   private final double maximumRelativeChange;
+  private final List<EngineeringDesignVariable> designVariables;
+  private final EngineeringConvergenceReport convergenceReport;
 
   EngineeringDesignIteration(int number, EngineeringCaseRunReport caseReport,
       List<EngineeringDesignModuleResult> moduleResults, List<EngineeringConstraintResult> constraintResults,
-      int appliedUpdateCount, double maximumRelativeChange) {
+      int appliedUpdateCount, double maximumRelativeChange, List<EngineeringDesignVariable> designVariables,
+      EngineeringConvergenceReport convergenceReport) {
     this.number = number;
     this.caseReport = caseReport;
     this.moduleResults = Collections.unmodifiableList(new ArrayList<EngineeringDesignModuleResult>(moduleResults));
@@ -28,6 +31,8 @@ public final class EngineeringDesignIteration implements Serializable {
         .unmodifiableList(new ArrayList<EngineeringConstraintResult>(constraintResults));
     this.appliedUpdateCount = appliedUpdateCount;
     this.maximumRelativeChange = maximumRelativeChange;
+    this.designVariables = Collections.unmodifiableList(new ArrayList<EngineeringDesignVariable>(designVariables));
+    this.convergenceReport = convergenceReport;
   }
 
   public int getNumber() {
@@ -44,6 +49,22 @@ public final class EngineeringDesignIteration implements Serializable {
 
   public double getMaximumRelativeChange() {
     return maximumRelativeChange;
+  }
+
+  public List<EngineeringDesignModuleResult> getModuleResults() {
+    return moduleResults;
+  }
+
+  public List<EngineeringConstraintResult> getConstraintResults() {
+    return constraintResults;
+  }
+
+  public List<EngineeringDesignVariable> getDesignVariables() {
+    return designVariables;
+  }
+
+  public EngineeringConvergenceReport getConvergenceReport() {
+    return convergenceReport;
   }
 
   public boolean areAllConstraintsSatisfied() {
@@ -72,6 +93,12 @@ public final class EngineeringDesignIteration implements Serializable {
     result.put("allConstraintsSatisfied", Boolean.valueOf(areAllConstraintsSatisfied()));
     result.put("appliedUpdateCount", Integer.valueOf(appliedUpdateCount));
     result.put("maximumRelativeChange", Double.valueOf(maximumRelativeChange));
+    List<Map<String, Object>> variables = new ArrayList<Map<String, Object>>();
+    for (EngineeringDesignVariable variable : designVariables) {
+      variables.add(variable.toMap());
+    }
+    result.put("designVariables", variables);
+    result.put("convergence", convergenceReport.toMap());
     return result;
   }
 }

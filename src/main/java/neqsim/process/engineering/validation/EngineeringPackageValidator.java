@@ -24,7 +24,7 @@ public final class EngineeringPackageValidator {
   private static final Set<String> CONTROLLED_UNITS = new HashSet<String>(Arrays.asList("1", "%", "bara", "barg", "bar",
       "pa", "kpa", "mpa", "c", "k", "f", "kg/hr", "kg/s", "kg/day", "mol/s", "kmol/hr", "sm3/day", "msm3/day", "nm3/hr",
       "m3/hr", "m3/s", "kg/m3", "m/s", "bar/km", "w", "kw", "mw", "j/kg", "kj/kg", "m", "m2", "m3", "mm", "cm", "in",
-      "inch", "s", "min", "hr", "year", "fraction", "cv"));
+      "inch", "in2", "s", "min", "hr", "year", "fraction", "cv"));
 
   private EngineeringPackageValidator() {
   }

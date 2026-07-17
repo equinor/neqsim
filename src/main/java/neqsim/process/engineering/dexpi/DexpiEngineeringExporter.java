@@ -49,6 +49,14 @@ public final class DexpiEngineeringExporter {
   private DexpiEngineeringExporter() {
   }
 
+  /** Rebuilds the deterministic integrity inventory after a coordinating compiler adds more artifacts. */
+  public static Path refreshPackageManifest(Path packageDirectory) throws IOException {
+    if (packageDirectory == null) {
+      throw new IllegalArgumentException("packageDirectory must not be null");
+    }
+    return EngineeringPackageManifest.write(packageDirectory, packageDirectory.resolve("package-manifest.json"));
+  }
+
   /** Result of an engineering package export. */
   public static final class ExportResult {
     private final Path dexpiFile;
@@ -181,9 +189,13 @@ public final class DexpiEngineeringExporter {
     Path interoperability = outputDirectory.resolve("interoperability-report.json");
     Files.write(interoperability, interoperabilityReport(project, dexpi20File).getBytes(StandardCharsets.UTF_8));
     Map<String, Path> registers = EngineeringRegisterExporter.export(project, outputDirectory.resolve("registers"));
+    Path integrityManifest = outputDirectory.resolve("package-manifest.json");
+    // Materialized DEXPI documents reference the integrity manifest, so it must exist before
+    // sidecar validation. Rewrite it after the validation report is created to capture the final
+    // package inventory and hashes.
+    EngineeringPackageManifest.write(outputDirectory, integrityManifest);
     Path validation = outputDirectory.resolve("dexpi-validation.json");
     DexpiEngineeringValidator.write(DexpiEngineeringValidator.validate(dexpiFile), validation);
-    Path integrityManifest = outputDirectory.resolve("package-manifest.json");
     EngineeringPackageManifest.write(outputDirectory, integrityManifest);
     return new ExportResult(dexpiFile, dexpi20File, pyDexpiFile, manifest, calculations, causeAndEffect,
         interoperability, validation, integrityManifest, maps, registers);

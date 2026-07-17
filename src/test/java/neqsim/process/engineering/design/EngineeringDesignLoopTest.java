@@ -2,6 +2,7 @@ package neqsim.process.engineering.design;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
 import neqsim.process.engineering.calculation.EngineeringCalculationContext;
@@ -36,11 +37,25 @@ class EngineeringDesignLoopTest {
         EngineeringDesignLoopOptions.builder().maximumIterations(4).build());
 
     assertTrue(result.isConverged());
-    assertEquals(2, result.getIterations().size());
+    assertEquals(3, result.getIterations().size());
+    assertTrue(result.getIterations().get(2).getConvergenceReport().isConverged());
     assertEquals(60.0, result.getState().requireValue("FEED.designPressure"), 1.0e-10);
     assertEquals(60.0, ((Stream) result.getDesignedProcess().getUnit("FEED")).getPressure("bara"), 1.0e-10);
     assertEquals(50.0, ((Stream) base.getUnit("FEED")).getPressure("bara"), 1.0e-10);
     assertFalse(result.toJson().contains("fitnessForConstruction\": true"));
+  }
+
+  @Test
+  void selectsTraceablePhysicalDesignCandidate() {
+    EngineeringDesignUpdate update = EngineeringDesignUpdate.builder("L-1.insideDiameter", 0.15, "m")
+        .candidates(new DesignCandidate("NPS-4-SCH40", 0.10, "m"), new DesignCandidate("NPS-8-SCH40", 0.20, "m"))
+        .build();
+
+    assertEquals(0.20, update.selectedValue(), 1.0e-12);
+    assertEquals("NPS-8-SCH40", update.selectedCandidateId());
+    assertEquals(2, update.getCandidates().length);
+    assertThrows(IllegalArgumentException.class, () -> EngineeringDesignUpdate.builder("L-1.insideDiameter", 0.15, "m")
+        .candidates(new DesignCandidate("NPS-8-SCH40", 0.20, "in")).build());
   }
 
   private ProcessSystem process() {

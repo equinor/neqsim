@@ -181,7 +181,13 @@ public final class NorsokOffshoreEngineeringBuilder {
             "Vibration, axial position, speed and machinery protection"))
         .addStandard(new EngineeringStandard("NORSOK P-002", "2023+AC:2024", "Process system design",
             "Offshore process and utility-system requirements"))
-        .addStandard(new EngineeringStandard("NORSOK M-001", "Project applicable edition", "Materials selection",
+        .addStandard(new EngineeringStandard("ANSI/ISA-5.1", "2024", "Instrumentation symbols and identification",
+            "Instrument identification and P&ID graphical representation"))
+        .addStandard(new EngineeringStandard("NORSOK I-001", "2025+AC:2026", "Field instrumentation",
+            "Offshore field instrumentation engineering requirements"))
+        .addStandard(new EngineeringStandard("NORSOK I-002", "2021", "Safety and automation systems",
+            "Offshore safety and automation system requirements"))
+        .addStandard(new EngineeringStandard("NORSOK M-001", "2025", "Materials selection",
             "Materials and corrosion screening for hydrocarbon facilities"))
         .addStandard(new EngineeringStandard("NORSOK M-506", "2017", "CO2 corrosion rate calculation model",
             "Screening calculation for CO2 corrosion in production and process systems"))
