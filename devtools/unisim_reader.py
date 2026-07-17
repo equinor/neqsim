@@ -1395,12 +1395,20 @@ class UniSimReader:
             name=self._safe_get(fs, 'name', 'Main'),
         )
 
+        # Component order for THIS flowsheet's own fluid package. Sub-flowsheets
+        # (e.g. a produced-water template) can carry a different component order
+        # than the main package, and a stream's ComponentMolarFraction.Values are
+        # ordered by the stream's own package. Zipping them against another
+        # package's names silently mislabels fractions (e.g. water's 1.0 landing
+        # on 'WC13-C14'). Derive the local order and fall back to the parent's.
+        local_comp_names = self._owner_component_names(fs, comp_names)
+
         # Material streams
         if extract_streams:
             try:
                 for i in range(fs.MaterialStreams.Count):
                     ms = fs.MaterialStreams.Item(i)
-                    sd = self._extract_stream(ms, comp_names)
+                    sd = self._extract_stream(ms, local_comp_names)
                     flowsheet.material_streams.append(sd)
             except Exception as e:
                 logger.warning(f"Error reading streams in '{flowsheet.name}': {e}")
@@ -1434,12 +1442,64 @@ class UniSimReader:
             if hasattr(fs, 'Flowsheets') and fs.Flowsheets.Count > 0:
                 for i in range(fs.Flowsheets.Count):
                     sub = fs.Flowsheets.Item(i)
-                    sub_fs = self._extract_flowsheet(sub, comp_names, extract_streams)
+                    sub_fs = self._extract_flowsheet(sub, local_comp_names, extract_streams)
                     flowsheet.sub_flowsheets.append(sub_fs)
         except Exception:
             pass
 
         return flowsheet
+
+    def _owner_component_names(self, owner, fallback: List[str]) -> List[str]:
+        """Return the component names of an object's own fluid package.
+
+        Works for any UniSim COM object exposing a ``FluidPackage`` (a flowsheet
+        or a material stream). A stream's ``ComponentMolarFraction.Values`` are
+        ordered by that stream's fluid package, so reading names from the same
+        package keeps composition labels aligned even when the enumerated
+        package order differs (e.g. a produced-water stream whose 1.0 water
+        fraction would otherwise be mislabeled as 'WC13-C14'). Results are cached
+        by package name to avoid repeated COM enumeration.
+
+        Args:
+            owner: UniSim flowsheet or material-stream COM object.
+            fallback: Component-name order to use when the fluid package cannot
+                be read.
+
+        Returns:
+            List of component names for the owner's fluid package, or
+            ``fallback`` when unavailable.
+        """
+        if not hasattr(self, '_comp_name_cache'):
+            self._comp_name_cache = {}
+        try:
+            fp = self._safe_get(owner, 'FluidPackage', None)
+            if fp is None:
+                return fallback
+            key = str(self._safe_get(fp, 'name',
+                                     self._safe_get(fp, 'Name', '')))
+            if key and key in self._comp_name_cache:
+                return self._comp_name_cache[key]
+            collection = fp.Components
+            names = []
+            for component_index in range(collection.Count):
+                try:
+                    comp = collection.Item(component_index)
+                except Exception:
+                    try:
+                        comp = collection.Item(component_index + 1)
+                    except Exception:
+                        continue
+                name = self._safe_get(comp, 'name',
+                                      self._safe_get(comp, 'Name', None))
+                if name is not None:
+                    names.append(str(name))
+            if not names:
+                return fallback
+            if key:
+                self._comp_name_cache[key] = names
+            return names
+        except Exception:
+            return fallback
 
     def _extract_stream(self, ms, comp_names: List[str]) -> UniSimStreamData:
         """Extract all available data from a material stream."""
@@ -1471,9 +1531,15 @@ class UniSimReader:
         # Composition
         try:
             fracs = ms.ComponentMolarFraction.Values
-            if fracs and comp_names:
+            # Prefer the component order of the stream's OWN fluid package; the
+            # fractions are ordered by that package. Fall back to the flowsheet
+            # order passed in. This prevents mislabeling when the enumerated
+            # package order differs from the stream's (e.g. a produced-water
+            # stream whose 1.0 water fraction would otherwise land on 'WC13-C14').
+            names = self._owner_component_names(ms, comp_names)
+            if fracs and names:
                 sd.composition = {}
-                for k, name in enumerate(comp_names):
+                for k, name in enumerate(names):
                     if k < len(fracs) and fracs[k] is not None:
                         val = float(fracs[k])
                         if val > 1e-10:
