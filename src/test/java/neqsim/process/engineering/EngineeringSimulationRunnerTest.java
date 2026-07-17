@@ -20,8 +20,8 @@ class EngineeringSimulationRunnerTest {
     ProcessSystem process = process();
     EngineeringProject project = new EngineeringProject("project-1", "Integration test", process,
         new EngineeringDesignBasis().setJurisdiction("Norway").setProjectPhase("Concept study"));
-    project.addDesignCase(new EngineeringDesignCase("maximum", "Maximum pressure",
-        EngineeringDesignCase.Type.CUSTOM, new EngineeringDesignCase.Configurator() {
+    project.addDesignCase(new EngineeringDesignCase("maximum", "Maximum pressure", EngineeringDesignCase.Type.CUSTOM,
+        new EngineeringDesignCase.Configurator() {
           private static final long serialVersionUID = 1000L;
 
           @Override
@@ -36,8 +36,8 @@ class EngineeringSimulationRunnerTest {
 
     assertNotNull(result.getCaseRunReport());
     assertEquals(1, result.getCaseRunReport().getEnvelope().getSuccessfulCaseCount());
-    assertEquals(80.0,
-        result.getCaseRunReport().getEnvelope().getGoverningValues().get("FEED.pressure").getValue(), 1.0e-10);
+    assertEquals(80.0, result.getCaseRunReport().getEnvelope().getGoverningValues().get("FEED.pressure").getValue(),
+        1.0e-10);
     assertTrue(result.getCoupledSafetyResults().isEmpty());
     assertTrue(result.getDynamicScenarioResults().isEmpty());
     assertTrue(result.toJson().contains("engineeringApprovalRequired"));
