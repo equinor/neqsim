@@ -110,6 +110,7 @@ public final class InletCompressionExportReferenceFacility {
     ESDValve suctionEsd = new ESDValve(SUCTION_ESD, separator.getGasOutStream());
     suctionEsd.setCv(1200.0);
     suctionEsd.setStrokeTime(8.0);
+    suctionEsd.setOutletPressure(44.0, "bara");
 
     Stream recycleReturn = new Stream("ASV-RETURN", fluid.clone());
     recycleReturn.setFlowRate(1.0, "kg/hr");
@@ -134,7 +135,7 @@ public final class InletCompressionExportReferenceFacility {
     ThrottlingValve pressureControl = new ThrottlingValve(PCV, dischargeEsd.getOutletStream());
     pressureControl.setCv(800.0);
     pressureControl.setPercentValveOpening(70.0);
-    pressureControl.setOutletPressure(75.0, "bara");
+    pressureControl.setOutletPressure(40.0, "bara");
     AdiabaticPipe exportLine = new AdiabaticPipe(EXPORT_LINE, pressureControl.getOutletStream());
     exportLine.setLength(2000.0);
     exportLine.setDiameter(0.2027);
