@@ -140,6 +140,33 @@ public final class ProductionVerticalSlicePreflight {
     return false;
   }
 
+  /** Returns a deterministic node-and-edge representation of the process topology. */
+  static List<String> directedProcessTopology(ProcessSystem process) {
+    List<String> topology = new ArrayList<String>();
+    if (process == null) {
+      return topology;
+    }
+    List<ProcessEquipmentInterface> units = new ArrayList<ProcessEquipmentInterface>(process.getUnitOperations());
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit != null && unit.getName() != null) {
+        topology.add("NODE|" + unit.getName() + '|' + unit.getClass().getName());
+      }
+    }
+    for (ProcessEquipmentInterface upstream : units) {
+      if (upstream == null || upstream.getName() == null) {
+        continue;
+      }
+      for (ProcessEquipmentInterface downstream : units) {
+        if (downstream != null && downstream.getName() != null && upstream != downstream
+            && streamsConnect(upstream, downstream)) {
+          topology.add("EDGE|" + upstream.getName() + "->" + downstream.getName());
+        }
+      }
+    }
+    Collections.sort(topology);
+    return topology;
+  }
+
   private static boolean streamsConnect(ProcessEquipmentInterface upstream, ProcessEquipmentInterface downstream) {
     List<StreamInterface> outlets = upstream.getOutletStreams();
     List<StreamInterface> inlets = downstream.getInletStreams();

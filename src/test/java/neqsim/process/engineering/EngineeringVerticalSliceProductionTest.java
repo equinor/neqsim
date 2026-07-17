@@ -95,6 +95,7 @@ class EngineeringVerticalSliceProductionTest {
         StandardCharsets.UTF_8);
     assertTrue(manifest.contains(result.getManifest().getInputFingerprint()));
     assertTrue(manifest.contains("BLOCKED"));
+    assertTrue(manifest.contains("processTopology"));
 
     project.addEvidenceRecord(
         new EngineeringEvidenceRecord("LATE-EVIDENCE", "CALCULATION", "A").setTitle("Late controlled calculation")

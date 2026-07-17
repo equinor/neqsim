@@ -30,6 +30,7 @@ public final class ProductionVerticalSliceExecutionManifest implements Serializa
   private final String qualificationPolicyRevision;
   private final String qualificationPolicyFingerprint;
   private final String inputFingerprint;
+  private final List<String> processTopology;
   private final List<String> caseDefinitions;
   private final List<String> dynamicScenarios;
   private final List<String> coupledStudies;
@@ -49,6 +50,8 @@ public final class ProductionVerticalSliceExecutionManifest implements Serializa
     qualificationPolicyId = qualificationPolicy.getPolicyId();
     qualificationPolicyRevision = qualificationPolicy.getRevision();
     qualificationPolicyFingerprint = sha256(qualificationPolicy.toMap().toString());
+    processTopology = immutableSorted(
+        ProductionVerticalSlicePreflight.directedProcessTopology(project.getEngineeringProcessSystem()));
     caseDefinitions = immutableSorted(caseDefinitions(project));
     dynamicScenarios = immutableSorted(dynamicScenarios(project));
     coupledStudies = immutableSorted(coupledStudies(project));
@@ -91,6 +94,7 @@ public final class ProductionVerticalSliceExecutionManifest implements Serializa
     result.put("qualificationPolicyRevision", qualificationPolicyRevision);
     result.put("qualificationPolicyFingerprint", qualificationPolicyFingerprint);
     result.put("inputFingerprint", inputFingerprint);
+    result.put("processTopology", processTopology);
     result.put("caseDefinitions", caseDefinitions);
     result.put("dynamicScenarios", dynamicScenarios);
     result.put("coupledStudies", coupledStudies);
@@ -106,8 +110,8 @@ public final class ProductionVerticalSliceExecutionManifest implements Serializa
   private String fingerprintMaterial() {
     return projectId + '|' + projectRevision + '|' + designPolicyId + '|' + designPolicyRevision + '|'
         + designPolicyFingerprint + '|' + qualificationPolicyId + '|' + qualificationPolicyRevision + '|'
-        + qualificationPolicyFingerprint + '|' + caseDefinitions + '|' + dynamicScenarios + '|' + coupledStudies + '|'
-        + standards + '|' + evidence;
+        + qualificationPolicyFingerprint + '|' + processTopology + '|' + caseDefinitions + '|' + dynamicScenarios + '|'
+        + coupledStudies + '|' + standards + '|' + evidence;
   }
 
   private static List<String> caseDefinitions(EngineeringProject project) {

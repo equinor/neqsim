@@ -21,11 +21,18 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
+      - name: Apply repository Java formatting
+        run: ./mvnw spotless:apply
       - name: Run targeted reference-facility acceptance tests
         run: ./mvnw -Dtest=QualifiedEngineeringReferenceFacilityTest test
       - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: engineering-reference-test-reports
-          path: target/surefire-reports/
+          path: |
+            target/surefire-reports/
+            src/main/java/neqsim/process/engineering/design/modules/CompressorOperatingEnvelopeDesignModule.java
+            src/main/java/neqsim/process/engineering/verticalslice/ProductionVerticalSliceExecutionManifest.java
+            src/main/java/neqsim/process/engineering/verticalslice/ProductionVerticalSlicePreflight.java
+            src/test/java/neqsim/process/engineering/EngineeringVerticalSliceProductionTest.java
           if-no-files-found: ignore
