@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import neqsim.process.engineering.production.EngineeringAutoConfigurator;
+import neqsim.process.engineering.validation.EngineeringPackageValidationException;
 import neqsim.process.engineering.verticalslice.InletCompressionExportReferenceFacility;
 import neqsim.process.engineering.verticalslice.InletCompressionExportReferenceFacility.Definition;
 import neqsim.process.engineering.verticalslice.ProductionVerticalSlicePreflight;
@@ -35,9 +36,13 @@ class QualifiedEngineeringReferenceFacilityTest {
   void runsStrictClosedLoopSafetyQualificationAndPackageCompilation() throws Exception {
     Definition definition = InletCompressionExportReferenceFacility.build();
 
-    ProductionVerticalSliceSimulator.Result result = ProductionVerticalSliceSimulator.runStrictAndCompile(
-        definition.getProject(), definition.getAutoConfigurationPolicy(), definition.getQualificationPolicy(), 1,
-        outputDirectory, null);
+    ProductionVerticalSliceSimulator.Result result;
+    try {
+      result = ProductionVerticalSliceSimulator.runStrictAndCompile(definition.getProject(),
+          definition.getAutoConfigurationPolicy(), definition.getQualificationPolicy(), 1, outputDirectory, null);
+    } catch (EngineeringPackageValidationException exception) {
+      throw new AssertionError(exception.getValidationReport().toJson(), exception);
+    }
 
     assertTrue(result.getPreflight().isReadyForSimulation());
     assertTrue(result.getSimulation().getEngineeringDesignLoopResult().isConverged(),

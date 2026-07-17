@@ -34,5 +34,6 @@ jobs:
             src/main/java/neqsim/process/engineering/design/modules/CompressorOperatingEnvelopeDesignModule.java
             src/main/java/neqsim/process/engineering/verticalslice/ProductionVerticalSliceExecutionManifest.java
             src/main/java/neqsim/process/engineering/verticalslice/ProductionVerticalSlicePreflight.java
+            src/test/java/neqsim/process/engineering/QualifiedEngineeringReferenceFacilityTest.java
             src/test/java/neqsim/process/engineering/EngineeringVerticalSliceProductionTest.java
           if-no-files-found: ignore
