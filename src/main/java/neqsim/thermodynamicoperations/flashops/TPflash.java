@@ -41,11 +41,16 @@ public class TPflash extends Flash {
   /** Minimum log K spread for liquid endpoint rescue. */
   private static final double MULTIPHASE_RESCUE_LIQUID_LOG_K_SPREAD_LIMIT = 3.0;
   /**
-   * Minimum extensive Gibbs-energy reduction (J) required for the spurious-multiphase rescue to
-   * collapse a two-phase result to a single phase. Avoids false triggers from numerical noise.
+   * Minimum extensive Gibbs-energy reduction (J) required for the
+   * spurious-multiphase rescue to
+   * collapse a two-phase result to a single phase. Avoids false triggers from
+   * numerical noise.
    */
   private static final double SPURIOUS_MULTIPHASE_GIBBS_DROP_THRESHOLD_J = 1.0;
-  /** Guard preventing recursive rescue attempts while the local seed flash is running. */
+  /**
+   * Guard preventing recursive rescue attempts while the local seed flash is
+   * running.
+   */
   private static final ThreadLocal<Boolean> MULTIPHASE_RESCUE_ACTIVE = new ThreadLocal<Boolean>() {
     @Override
     protected Boolean initialValue() {
@@ -57,16 +62,23 @@ public class TPflash extends Flash {
   double presdiff = 1.0;
   private final RachfordRice rachfordRice = new RachfordRice();
   /**
-   * Extensive single-phase Gibbs energy (J) at the overall feed composition, evaluated on the
-   * better cubic root (gas or liquid) at the very beginning of {@link #runInternal()}. Used as a
-   * cheap reference value by {@link #rescueSpuriousMultiphaseEndpoint()} to decide whether the
-   * converged multiphase result is metastable and should be collapsed back to a single phase. NaN
-   * means the reference is not available (e.g. single-component or single-phase systems).
+   * Extensive single-phase Gibbs energy (J) at the overall feed composition,
+   * evaluated on the
+   * better cubic root (gas or liquid) at the very beginning of
+   * {@link #runInternal()}. Used as a
+   * cheap reference value by {@link #rescueSpuriousMultiphaseEndpoint()} to
+   * decide whether the
+   * converged multiphase result is metastable and should be collapsed back to a
+   * single phase. NaN
+   * means the reference is not available (e.g. single-component or single-phase
+   * systems).
    */
   private double referenceSinglePhaseGibbs = Double.NaN;
   /**
-   * Phase type corresponding to {@link #referenceSinglePhaseGibbs} — the densest/most-stable cubic
-   * root identified at the start of {@link #runInternal()}. Used as the collapse target when the
+   * Phase type corresponding to {@link #referenceSinglePhaseGibbs} — the
+   * densest/most-stable cubic
+   * root identified at the start of {@link #runInternal()}. Used as the collapse
+   * target when the
    * spurious-multiphase rescue triggers.
    */
   private PhaseType referenceSinglePhaseType = null;
@@ -76,7 +88,8 @@ public class TPflash extends Flash {
    * Constructor for TPflash.
    * </p>
    */
-  public TPflash() {}
+  public TPflash() {
+  }
 
   /**
    * <p>
@@ -101,7 +114,7 @@ public class TPflash extends Flash {
    * Constructor for TPflash.
    * </p>
    *
-   * @param system a {@link neqsim.thermo.system.SystemInterface} object
+   * @param system         a {@link neqsim.thermo.system.SystemInterface} object
    * @param checkForSolids Set true to do solid phase check and calculations
    */
   public TPflash(SystemInterface system, boolean checkForSolids) {
@@ -129,15 +142,24 @@ public class TPflash extends Flash {
         comp1.setK(comp0.getK());
       } else {
         Kold = comp0.getK();
-        double Knew = comp1.getFugacityCoefficient() / comp0.getFugacityCoefficient() * presdiff;
+        comp0.fugcoef(phase0);
+        comp1.fugcoef(phase1);
+        double targetK = comp1.getFugacityCoefficient() / comp0.getFugacityCoefficient() * presdiff;
+        double Knew = targetK;
+        if (isVanLaarAcidModel() && Kold > 0.0 && targetK > 0.0 && Double.isFinite(Kold)
+            && Double.isFinite(targetK)) {
+          Knew = Math.exp(Math.log(Kold) + 0.25 * Math.log(targetK / Kold));
+        }
         comp0.setK(Knew);
         if (Double.isNaN(Knew)) {
           comp0.setK(Kold);
           system.init(1);
+          comp0.fugcoef(phase0);
+          comp1.fugcoef(phase1);
           Knew = comp0.getK();
         }
         comp1.setK(Knew);
-        deviation += Math.abs(Math.log(Knew / Kold));
+        deviation += Math.abs(Math.log(targetK / Kold));
       }
     }
 
@@ -165,9 +187,12 @@ public class TPflash extends Flash {
 
   /**
    * <p>
-   * accselerateSucsSubs. GDEM with 2-eigenvalue acceleration when sufficient history is available,
-   * falling back to standard DEM (Michelsen 1982b, Risnes et al. 1981). The GDEM formulation
-   * follows Risnes &amp; Dalen (1984) and Michelsen &amp; Mollerup (2007, section 9.5).
+   * accselerateSucsSubs. GDEM with 2-eigenvalue acceleration when sufficient
+   * history is available,
+   * falling back to standard DEM (Michelsen 1982b, Risnes et al. 1981). The GDEM
+   * formulation
+   * follows Risnes &amp; Dalen (1984) and Michelsen &amp; Mollerup (2007, section
+   * 9.5).
    * </p>
    */
   public void accselerateSucsSubs() {
@@ -202,7 +227,8 @@ public class TPflash extends Flash {
     if (Math.abs(det) > 1e-30 * (b11 * b22 + 1e-100)) {
       mu1 = (c1 * b22 - c2 * b12) / det;
       mu2 = (b11 * c2 - b12 * c1) / det;
-      // Use GDEM-2 only when eigenvalue estimates indicate smooth, contractive convergence
+      // Use GDEM-2 only when eigenvalue estimates indicate smooth, contractive
+      // convergence
       useGDEM = mu1 > 0 && mu2 > 0 && mu1 < 1.5 && mu2 < 1.5;
     }
 
@@ -266,6 +292,8 @@ public class TPflash extends Flash {
       lnOldOldOldK[i] = lnOldOldK[i];
       lnOldOldK[i] = lnOldK[i];
       lnOldK[i] = lnK[i];
+      phase0.getComponent(i).fugcoef(phase0);
+      phase1.getComponent(i).fugcoef(phase1);
       lnK[i] = Math.log(phase1.getComponent(i).getFugacityCoefficient()
           / phase0.getComponent(i).getFugacityCoefficient());
 
@@ -343,7 +371,8 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Internal flash body; the public {@link #run()} wraps this with a warm-start guard for systems
+   * Internal flash body; the public {@link #run()} wraps this with a warm-start
+   * guard for systems
    * carrying a stale 3-phase state.
    */
   private void runInternal() {
@@ -364,11 +393,14 @@ public class TPflash extends Flash {
     }
     // logger.debug("minimum gibbs phase " + minGibbsPhase);
     minimumGibbsEnergy = system.getPhase(minGibbsPhase).getGibbsEnergy();
-    // Cache the better single-phase Gibbs and its phase type for the post-convergence
+    // Cache the better single-phase Gibbs and its phase type for the
+    // post-convergence
     // spurious-multiphase acceptance check at the end of runInternal(). This is the
     // extensive Gibbs at the overall feed composition for the densest cubic root,
-    // and is the correct reference for deciding whether the converged multiphase split
-    // is metastable. Capturing it here avoids cloning + re-initialising the system later.
+    // and is the correct reference for deciding whether the converged multiphase
+    // split
+    // is metastable. Capturing it here avoids cloning + re-initialising the system
+    // later.
     referenceSinglePhaseGibbs = minimumGibbsEnergy;
     referenceSinglePhaseType = system.getPhase(minGibbsPhase).getType();
 
@@ -398,8 +430,7 @@ public class TPflash extends Flash {
       if (system.getPhase(minGibbsPhase).getComponent(i).getz() > 1e-50) {
         minGibsPhaseLogZ[i] = Math.log(system.getPhase(minGibbsPhase).getComponent(i).getz());
       }
-      minGibsLogFugCoef[i] =
-          system.getPhase(minGibbsPhase).getComponent(i).getLogFugacityCoefficient();
+      minGibsLogFugCoef[i] = system.getPhase(minGibbsPhase).getComponent(i).getLogFugacityCoefficient();
     }
 
     presdiff = system.getPhase(1).getPressure() / system.getPhase(0).getPressure();
@@ -512,7 +543,8 @@ public class TPflash extends Flash {
       }
     }
 
-    if (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta())) {
+    if (!isVanLaarAcidModel()
+        && (passedTests || (dgonRT > 0 && tpdx > 0 && tpdy > 0) || Double.isNaN(system.getBeta()))) {
       boolean isStable;
       try {
         if (system.checkStability()) {
@@ -620,7 +652,7 @@ public class TPflash extends Flash {
         if (iterations < activeNewtonLimit || system.isChemicalSystem()
             || !system.isImplementedCompositionDeriativesofFugacity()) {
           if (timeFromLastGibbsFail > 6 && (iterations % activeAccelerateInterval) == 0
-              && !(system.isChemicalSystem() || system.doSolidPhaseCheck())) {
+              && !(system.isChemicalSystem() || system.doSolidPhaseCheck() || isVanLaarAcidModel())) {
             accselerateSucsSubs();
           } else {
             sucsSubs();
@@ -654,13 +686,14 @@ public class TPflash extends Flash {
         if (((gibbsEnergy - gibbsEnergyOld) / Math.abs(gibbsEnergyOld) > 1e-8
             || system.getBeta() < phaseFractionMinimumLimit * 1.01
             || system.getBeta() > (1 - phaseFractionMinimumLimit * 1.01))
-            && !system.isChemicalSystem() && timeFromLastGibbsFail > 1) {
+            && !system.isChemicalSystem() && !isVanLaarAcidModel() && timeFromLastGibbsFail > 1) {
           resetK();
           timeFromLastGibbsFail = 0;
         } else {
           timeFromLastGibbsFail++;
           setNewK();
         }
+        printVanLaarKValues(totiter, iterations);
       } while ((deviation > 1e-10) && (iterations < maxNumberOfIterations));
 
       if (system.isChemicalSystem()) {
@@ -678,8 +711,7 @@ public class TPflash extends Flash {
           system.getChemicalReactionOperations().solveChemEq(phaseNum, 1);
 
           for (i = 0; i < system.getPhase(phaseNum).getNumberOfComponents(); i++) {
-            chemdev +=
-                Math.abs(xchem[i] - system.getPhase(phaseNum).getComponent(i).getx()) / xchem[i];
+            chemdev += Math.abs(xchem[i] - system.getPhase(phaseNum).getComponent(i).getx()) / xchem[i];
           }
         }
         diffChem = Math.abs(oldChemDiff - chemdev);
@@ -690,6 +722,16 @@ public class TPflash extends Flash {
         || (system.isChemicalSystem() && totiter < 2));
     if (system.isChemicalSystem()) {
       sucsSubs();
+    }
+    if (isVanLaarAcidModel() && isVanLaarKIterationResultAcceptable()) {
+      acceptVanLaarKIterationResult();
+      return;
+    }
+    if (isVanLaarAcidModel()) {
+      throw new IllegalStateException(
+          "Van Laar TPflash did not converge to a fugacity-consistent phase split. Last deviation="
+              + deviation + ", beta=" + system.getBeta() + ". "
+              + getVanLaarFugacityConsistencyReport());
     }
     if (system.doMultiPhaseCheck()) {
       TPmultiflash operation = new TPmultiflash(system, system.doSolidPhaseCheck());
@@ -766,13 +808,177 @@ public class TPflash extends Flash {
   }
 
   /**
+   * Checks whether the active model is the Van Laar acid gamma-phi model.
+   *
+   * @return true if the active system is the Van Laar acid model
+   */
+  private boolean isVanLaarAcidModel() {
+    String modelName = system.getModelName() == null ? "" : system.getModelName();
+    return modelName.toLowerCase().contains("vanlaar-acid");
+  }
+
+  /**
+   * Prints K-values during TPflash iterations for the Van Laar acid model
+   * diagnostics.
+   *
+   * @param outerIteration outer flash iteration index
+   * @param innerIteration inner successive-substitution/Newton iteration index
+   */
+  private void printVanLaarKValues(int outerIteration, int innerIteration) {
+    if (!isVanLaarAcidModel()) {
+      return;
+    }
+    StringBuilder builder = new StringBuilder();
+    builder.append("TPflash VanLaar K outer=").append(outerIteration).append(" inner=")
+        .append(innerIteration).append(" beta=").append(system.getBeta()).append(" deviation=")
+        .append(deviation).append(": ");
+    for (int componentIndex = 0; componentIndex < system.getPhase(0)
+        .getNumberOfComponents(); componentIndex++) {
+      if (componentIndex > 0) {
+        builder.append(", ");
+      }
+      builder.append(system.getPhase(0).getComponent(componentIndex).getComponentName()).append("=")
+          .append(system.getPhase(0).getComponent(componentIndex).getK());
+    }
+    System.out.println(builder.toString());
+  }
+
+  /**
+   * Accepts the converged Van Laar acid gamma-phi split without generic TPflash
+   * phase stability
+   * post-processing.
+   *
+   * <p>
+   * The Van Laar acid model deliberately uses phase 0 as the CO2-rich SRK phase
+   * and phase 1 as the
+   * aqueous acid phase. Generic stable-screening and spurious-phase cleanup can
+   * collapse that
+   * gamma-phi split back to a one-phase cubic-EOS endpoint even when the Van
+   * Laar K iteration has
+   * converged a material acid-water phase. This method keeps the converged K
+   * iteration result,
+   * orders phases for reporting, and only normalizes the active beta values.
+   * </p>
+   */
+  private void acceptVanLaarKIterationResult() {
+    system.orderByDensity();
+    try {
+      system.init(1);
+    } catch (Exception ex) {
+      logger.warn("Final Van Laar init after orderByDensity failed: " + ex.getMessage());
+    }
+    normalizeActivePhaseFractions();
+  }
+
+  /**
+   * Checks whether the converged Van Laar K-iteration state is finite and usable
+   * as the final
+   * flash result.
+   *
+   * @return true if beta, deviation, K values, and active phase compositions are
+   *         finite
+   */
+  private boolean isVanLaarKIterationResultAcceptable() {
+    if (!Double.isFinite(deviation) || !Double.isFinite(system.getBeta()) || system.getBeta() < 0.0
+        || system.getBeta() > 1.0) {
+      return false;
+    }
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      double beta = system.getBeta(phaseIndex);
+      if (!Double.isFinite(beta) || beta < 0.0 || beta > 1.0) {
+        return false;
+      }
+      for (int componentIndex = 0; componentIndex < system.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
+        double moleFraction = system.getPhase(phaseIndex).getComponent(componentIndex).getx();
+        double kValue = system.getPhase(phaseIndex).getComponent(componentIndex).getK();
+        if (!Double.isFinite(moleFraction) || moleFraction < 0.0 || !Double.isFinite(kValue)
+            || kValue < 0.0) {
+          return false;
+        }
+      }
+    }
+    return hasVanLaarFugacityConsistency();
+  }
+
+  /**
+   * Checks fugacity consistency for material acid-water components in a Van Laar
+   * split.
+   *
+   * @return true if each material acid-water component has matching fugacity in
+   *         the CO2-rich and aqueous phases
+   */
+  private boolean hasVanLaarFugacityConsistency() {
+    return getVanLaarFugacityConsistencyReport() == null;
+  }
+
+  /**
+   * Gets the first Van Laar fugacity inconsistency as a diagnostic string.
+   *
+   * @return null if fugacities are consistent, otherwise the first inconsistency
+   */
+  private String getVanLaarFugacityConsistencyReport() {
+    if (system.getNumberOfPhases() < 2) {
+      return null;
+    }
+    for (int componentIndex = 0; componentIndex < system.getPhase(0)
+        .getNumberOfComponents(); componentIndex++) {
+      String componentName = system.getPhase(0).getComponent(componentIndex).getComponentName();
+      if (!("water".equalsIgnoreCase(componentName) || "nitric acid".equalsIgnoreCase(componentName)
+          || "sulfuric acid".equalsIgnoreCase(componentName))) {
+        continue;
+      }
+      double totalMoles = system.getPhase(0).getComponent(componentIndex).getNumberOfmoles();
+      if (totalMoles <= 1.0e-20) {
+        continue;
+      }
+      double referenceFugacity = Double.NaN;
+      int referencePhase = -1;
+      for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+        if (system.getBeta(phaseIndex) <= 10.0 * phaseFractionMinimumLimit) {
+          continue;
+        }
+        double phaseMoles = system.getPhase(phaseIndex).getComponent(componentIndex)
+            .getNumberOfMolesInPhase();
+        if (phaseMoles <= Math.max(1.0e-16, totalMoles * 1.0e-14)) {
+          continue;
+        }
+        system.getPhase(phaseIndex).getComponent(componentIndex).fugcoef(system.getPhase(phaseIndex));
+        double fugacity = system.getPhase(phaseIndex).getComponent(componentIndex).getx()
+            * system.getPhase(phaseIndex).getComponent(componentIndex).getFugacityCoefficient()
+            * system.getPhase(phaseIndex).getPressure();
+        if (!Double.isFinite(fugacity) || fugacity < 0.0) {
+          return "Non-finite fugacity for " + componentName + " in phase " + phaseIndex
+              + ": " + fugacity;
+        }
+        if (referenceFugacity != referenceFugacity) {
+          referenceFugacity = fugacity;
+          referencePhase = phaseIndex;
+          continue;
+        }
+        double scale = Math.max(1.0e-30, Math.max(Math.abs(referenceFugacity), Math.abs(fugacity)));
+        if (Math.abs(fugacity - referenceFugacity) / scale > 1.0e-3) {
+          return "Fugacity mismatch for " + componentName + ": phase " + referencePhase + " f="
+              + referenceFugacity + " bara, phase " + phaseIndex + " f=" + fugacity
+              + " bara, relative error=" + Math.abs(fugacity - referenceFugacity) / scale;
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
    * Retries a single-phase hydrocarbon endpoint with a nearby multiphase seed.
    *
    * <p>
-   * Near phase boundaries the cold Wilson-seeded TP flash may converge to a local one-phase
-   * endpoint even though a nearby two-phase seed converges to a lower-Gibbs solution at the target
-   * pressure and temperature. This guarded retry is only used when the user has explicitly enabled
-   * multiphase checking and the ordinary TPmultiflash cleanup still leaves one hydrocarbon phase.
+   * Near phase boundaries the cold Wilson-seeded TP flash may converge to a local
+   * one-phase
+   * endpoint even though a nearby two-phase seed converges to a lower-Gibbs
+   * solution at the target
+   * pressure and temperature. This guarded retry is only used when the user has
+   * explicitly enabled
+   * multiphase checking and the ordinary TPmultiflash cleanup still leaves one
+   * hydrocarbon phase.
    * </p>
    */
   private void rescueSinglePhaseMultiphaseEndpoint() {
@@ -789,8 +995,7 @@ public class TPflash extends Flash {
     MULTIPHASE_RESCUE_ACTIVE.set(Boolean.TRUE);
     try {
       neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
-      double seedTemperature =
-          Math.max(1.0, targetTemperature - MULTIPHASE_RESCUE_TEMPERATURE_STEP);
+      double seedTemperature = Math.max(1.0, targetTemperature - MULTIPHASE_RESCUE_TEMPERATURE_STEP);
       candidate.setTemperature(seedTemperature, "K");
       candidate.setPressure(targetPressure, "bara");
       new TPflash(candidate, candidate.doSolidPhaseCheck()).run();
@@ -814,7 +1019,8 @@ public class TPflash extends Flash {
   /**
    * Checks if the endpoint rescue should run for the current flash result.
    *
-   * @return true when the result is a single hydrocarbon phase from an explicit multiphase flash
+   * @return true when the result is a single hydrocarbon phase from an explicit
+   *         multiphase flash
    */
   private boolean shouldRunMultiphaseEndpointRescue() {
     if (!system.doMultiPhaseCheck() || system.getNumberOfPhases() != 1 || system.isChemicalSystem()
@@ -854,10 +1060,12 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Checks whether stored K-values indicate a nearby split worth a local endpoint rescue.
+   * Checks whether stored K-values indicate a nearby split worth a local endpoint
+   * rescue.
    *
    * @param phaseType phase type of the current single-phase endpoint
-   * @return true when the endpoint is close enough to a potential phase split to retry
+   * @return true when the endpoint is close enough to a potential phase split to
+   *         retry
    */
   private boolean hasPotentialMultiphaseEndpoint(PhaseType phaseType) {
     double sumZK = 0.0;
@@ -894,7 +1102,7 @@ public class TPflash extends Flash {
   /**
    * Checks if a candidate should replace the current single-phase endpoint.
    *
-   * @param candidate candidate system produced by the local seed retry
+   * @param candidate            candidate system produced by the local seed retry
    * @param referenceGibbsEnergy Gibbs energy of the original one-phase endpoint
    * @return true when the candidate is multiphase and has a lower Gibbs energy
    */
@@ -931,9 +1139,8 @@ public class TPflash extends Flash {
         for (int componentIndex = 0; componentIndex < candidate.getPhase(0)
             .getNumberOfComponents(); componentIndex++) {
           if (candidate.getPhase(0).getComponent(componentIndex).getz() > 1.0e-50) {
-            l1Difference +=
-                Math.abs(candidate.getPhase(firstPhase).getComponent(componentIndex).getx()
-                    - candidate.getPhase(secondPhase).getComponent(componentIndex).getx());
+            l1Difference += Math.abs(candidate.getPhase(firstPhase).getComponent(componentIndex).getx()
+                - candidate.getPhase(secondPhase).getComponent(componentIndex).getx());
           }
         }
         if (l1Difference < 1.0e-4) {
@@ -947,7 +1154,8 @@ public class TPflash extends Flash {
   /**
    * Copies phase composition, type, and beta state from a lower-Gibbs candidate.
    *
-   * @param source source system whose converged flash state should replace the current state
+   * @param source source system whose converged flash state should replace the
+   *               current state
    */
   private void copyFlashStateFrom(SystemInterface source) {
     system.setNumberOfPhases(source.getNumberOfPhases());
@@ -962,41 +1170,59 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Post-convergence acceptance test that collapses a spurious multiphase result to a single phase
-   * when the converged multiphase Gibbs energy is higher than the reference single-phase Gibbs
+   * Post-convergence acceptance test that collapses a spurious multiphase result
+   * to a single phase
+   * when the converged multiphase Gibbs energy is higher than the reference
+   * single-phase Gibbs
    * captured at the start of {@link #runInternal()}.
    *
    * <p>
-   * This closes a structural gap in TPflash/TPmultiflash: the two-phase Newton/successive-
-   * substitution loop converges to a stationary point of the equilibrium equations that is a local
-   * Gibbs minimum on the multiphase manifold but is not guaranteed to be lower than the homogeneous
-   * single-phase Gibbs at the overall feed composition. Michelsen's stability analysis in
-   * TPmultiflash only decides whether to <em>add</em> a phase; it never tests whether the converged
-   * multiphase state should be <em>collapsed</em>. Near the cubic-EOS critical region (typically
-   * PR/SRK with light + heavy hydrocarbons) this manifests as isolated low-density "spike" cells in
+   * This closes a structural gap in TPflash/TPmultiflash: the two-phase
+   * Newton/successive-
+   * substitution loop converges to a stationary point of the equilibrium
+   * equations that is a local
+   * Gibbs minimum on the multiphase manifold but is not guaranteed to be lower
+   * than the homogeneous
+   * single-phase Gibbs at the overall feed composition. Michelsen's stability
+   * analysis in
+   * TPmultiflash only decides whether to <em>add</em> a phase; it never tests
+   * whether the converged
+   * multiphase state should be <em>collapsed</em>. Near the cubic-EOS critical
+   * region (typically
+   * PR/SRK with light + heavy hydrocarbons) this manifests as isolated
+   * low-density "spike" cells in
    * density / phase maps where the Newton has locked onto a metastable VLE root.
    * </p>
    *
    * <p>
-   * The reference single-phase Gibbs ({@link #referenceSinglePhaseGibbs}) is the better of the two
-   * cubic roots (gas and liquid) evaluated on the feed at the start of the flash, so the comparison
+   * The reference single-phase Gibbs ({@link #referenceSinglePhaseGibbs}) is the
+   * better of the two
+   * cubic roots (gas and liquid) evaluated on the feed at the start of the flash,
+   * so the comparison
    * is exact, requires no cloning, and adds only a single subtraction beyond the
-   * {@code getGibbsEnergy()} call (no extra {@code init} is performed — {@code init(1)} from the
+   * {@code getGibbsEnergy()} call (no extra {@code init} is performed —
+   * {@code init(1)} from the
    * preceding {@code orderByDensity} is sufficient). A threshold of
-   * {@link #SPURIOUS_MULTIPHASE_GIBBS_DROP_THRESHOLD_J} joules avoids triggering on numerical
+   * {@link #SPURIOUS_MULTIPHASE_GIBBS_DROP_THRESHOLD_J} joules avoids triggering
+   * on numerical
    * noise. Skipped for chemical / electrolyte systems.
    * </p>
    *
    * <p>
-   * Hot-path cost when the rescue does not trigger: a handful of field reads plus one
-   * {@link SystemInterface#getGibbsEnergy()} call (which sums per-phase Gibbs). Guards are ordered
-   * cheapest-first so single-phase results — the dominant case after the {@code removePhase}
+   * Hot-path cost when the rescue does not trigger: a handful of field reads plus
+   * one
+   * {@link SystemInterface#getGibbsEnergy()} call (which sums per-phase Gibbs).
+   * Guards are ordered
+   * cheapest-first so single-phase results — the dominant case after the
+   * {@code removePhase}
    * cleanup immediately preceding this call — exit after two field reads.
    * </p>
    */
   private void rescueSpuriousMultiphaseEndpoint() {
-    // Cheapest-first guards combined into a single short-circuit expression. Single-phase
-    // results (the dominant case after the removePhase cleanup just above the call site) bail
+    // Cheapest-first guards combined into a single short-circuit expression.
+    // Single-phase
+    // results (the dominant case after the removePhase cleanup just above the call
+    // site) bail
     // on the first term without touching any property method.
     final int numPhases = system.getNumberOfPhases();
     if (numPhases < 2 || !system.doMultiPhaseCheck() || referenceSinglePhaseType == null
@@ -1004,9 +1230,12 @@ public class TPflash extends Flash {
         || system.getPhase(0).getNumberOfComponents() <= 1) {
       return;
     }
-    // Smallest beta — fast path for the 2-phase case (overwhelmingly common); generic loop
-    // for 3+. Reject if any phase fraction is already negligible: the post-init cleanup will
-    // collapse it and the multiphase Gibbs is essentially equal to the single-phase value.
+    // Smallest beta — fast path for the 2-phase case (overwhelmingly common);
+    // generic loop
+    // for 3+. Reject if any phase fraction is already negligible: the post-init
+    // cleanup will
+    // collapse it and the multiphase Gibbs is essentially equal to the single-phase
+    // value.
     double smallestBeta;
     if (numPhases == 2) {
       final double b0 = system.getBeta(0);
@@ -1028,14 +1257,17 @@ public class TPflash extends Flash {
     if (system.isChemicalSystem() || system.hasIons()) {
       return;
     }
-    // Compare current multiphase Gibbs to the cached single-phase reference at the feed.
-    // Negated > guards against NaN naturally. init(1) (from the preceding orderByDensity) is
+    // Compare current multiphase Gibbs to the cached single-phase reference at the
+    // feed.
+    // Negated > guards against NaN naturally. init(1) (from the preceding
+    // orderByDensity) is
     // sufficient — getGibbsEnergy() is used after init(1) throughout runInternal().
     final double currentGibbs = system.getGibbsEnergy();
     if (!(currentGibbs - referenceSinglePhaseGibbs > SPURIOUS_MULTIPHASE_GIBBS_DROP_THRESHOLD_J)) {
       return;
     }
-    // Spurious multiphase confirmed: single-phase reference is more stable. Collapse.
+    // Spurious multiphase confirmed: single-phase reference is more stable.
+    // Collapse.
     if (logger.isDebugEnabled()) {
       logger.debug(
           "Collapsing spurious multiphase result: G_multiphase={} J, G_reference_single={} J ({}), drop={} J",
@@ -1049,10 +1281,14 @@ public class TPflash extends Flash {
    * Collapses the active phase set to the cached single-phase reference root.
    *
    * <p>
-   * The collapse must not call {@code system.init(0)} because that method resets a
-   * {@link neqsim.thermo.system.SystemThermo} phase list to its default two active phases. Instead
-   * the selected active phase is explicitly reset to the overall feed composition and reinitialized
-   * at level 1 so the chosen cubic root is recalculated without reopening a duplicate phase.
+   * The collapse must not call {@code system.init(0)} because that method resets
+   * a
+   * {@link neqsim.thermo.system.SystemThermo} phase list to its default two
+   * active phases. Instead
+   * the selected active phase is explicitly reset to the overall feed composition
+   * and reinitialized
+   * at level 1 so the chosen cubic root is recalculated without reopening a
+   * duplicate phase.
    * </p>
    */
   private void collapseToReferenceSinglePhase() {
@@ -1068,9 +1304,12 @@ public class TPflash extends Flash {
    * Normalizes active phase fractions before returning the final TPflash state.
    *
    * <p>
-   * Late phase-removal and rescue paths can leave the active beta values slightly below or above
-   * unity even when the remaining phase compositions are valid. Normalizing at the final acceptance
-   * point restores phase-fraction closure and reinitializes level 1 properties for the adjusted
+   * Late phase-removal and rescue paths can leave the active beta values slightly
+   * below or above
+   * unity even when the remaining phase compositions are valid. Normalizing at
+   * the final acceptance
+   * point restores phase-fraction closure and reinitializes level 1 properties
+   * for the adjusted
    * phase amounts.
    * </p>
    */
@@ -1114,7 +1353,8 @@ public class TPflash extends Flash {
   }
 
   /**
-   * Resets phase zero composition to the overall feed composition before a single-phase collapse.
+   * Resets phase zero composition to the overall feed composition before a
+   * single-phase collapse.
    */
   private void resetSinglePhaseCompositionToFeed() {
     neqsim.thermo.phase.PhaseInterface phase = system.getPhase(0);

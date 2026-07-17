@@ -106,7 +106,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Constructor for ThermodynamicOperations.
    * </p>
    */
-  public ThermodynamicOperations() {}
+  public ThermodynamicOperations() {
+  }
 
   /**
    * <p>
@@ -152,11 +153,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Method to perform a flash at given temperature, pressure and specified volume. The number of
+   * Method to perform a flash at given temperature, pressure and specified
+   * volume. The number of
    * moles in the system are changed to match the specified volume.
    *
    * @param volumeSpec is the specified volume
-   * @param unit Supported units are m3
+   * @param unit       Supported units are m3
    */
   public void TPVflash(double volumeSpec, String unit) {
     unit = "m3";
@@ -186,13 +188,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     if (system instanceof neqsim.thermo.system.SystemSAFTVRMie) {
       // SAFT-VR Mie uses a specialized TPflash with separate volume solvers per phase
       // for improved robustness with the non-cubic EOS.
-      // Standard bubble/dew point algorithms use the standard init(1) path which works
+      // Standard bubble/dew point algorithms use the standard init(1) path which
+      // works
       // via the overridden molarVolume() and dFdN/dFdNdT/dFdNdV derivatives.
       operation = new neqsim.thermodynamicoperations.flashops.TPflashSAFT(system,
           system.doSolidPhaseCheck());
     } else {
-      operation =
-          new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+      operation = new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
     }
     if (!isRunAsThread()) {
       getOperation().run();
@@ -222,14 +224,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       system.setTotalNumberOfMoles(1.0);
       system.init(1);
     }
-    operation =
-        new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+    operation = new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
 
     boolean rerun = true;
     int iterationCount = 0;
     while (rerun) {
-      operation =
-          new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
+      operation = new neqsim.thermodynamicoperations.flashops.TPflash(system, system.doSolidPhaseCheck());
       if (!isRunAsThread()) {
         getOperation().run();
       } else {
@@ -272,14 +272,18 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Perform a TP flash with hydrate phase equilibrium calculation.
    *
    * <p>
-   * This method calculates the equilibrium phases at given temperature and pressure, including the
-   * hydrate phase if conditions favor hydrate formation. The hydrate fraction and composition are
+   * This method calculates the equilibrium phases at given temperature and
+   * pressure, including the
+   * hydrate phase if conditions favor hydrate formation. The hydrate fraction and
+   * composition are
    * calculated using the CPA EOS approach (Statoil/Equinor model).
    * </p>
    *
    * <p>
-   * After calling this method, the system will contain the hydrate phase (if formed) with correct
-   * composition based on cavity occupancy calculations. The hydrate phase will appear in
+   * After calling this method, the system will contain the hydrate phase (if
+   * formed) with correct
+   * composition based on cavity occupancy calculations. The hydrate phase will
+   * appear in
    * prettyPrint() output with the header "HYDRATE".
    * </p>
    *
@@ -311,11 +315,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Perform a TP flash with hydrate phase equilibrium calculation.
    *
    * <p>
-   * This method calculates the equilibrium phases at given temperature and pressure, including the
+   * This method calculates the equilibrium phases at given temperature and
+   * pressure, including the
    * hydrate phase if conditions favor hydrate formation.
    * </p>
    *
-   * @param checkForSolids Set true to also check for solid phases (ice, wax, etc.)
+   * @param checkForSolids Set true to also check for solid phases (ice, wax,
+   *                       etc.)
    * @see #hydrateTPflash()
    */
   public void hydrateTPflash(boolean checkForSolids) {
@@ -327,8 +333,10 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Perform a TP flash targeting gas-hydrate equilibrium without aqueous phase.
    *
    * <p>
-   * This method calculates equilibrium between gas and hydrate phases, attempting to eliminate the
-   * aqueous phase when water content is low enough. This is useful for modeling scenarios where
+   * This method calculates equilibrium between gas and hydrate phases, attempting
+   * to eliminate the
+   * aqueous phase when water content is low enough. This is useful for modeling
+   * scenarios where
    * trace water in gas is entirely consumed by hydrate formation.
    * </p>
    *
@@ -351,8 +359,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @see #hydrateTPflash()
    */
   public void gasHydrateTPflash() {
-    neqsim.thermodynamicoperations.flashops.TPHydrateFlash hydrateFlash =
-        new neqsim.thermodynamicoperations.flashops.TPHydrateFlash(system);
+    neqsim.thermodynamicoperations.flashops.TPHydrateFlash hydrateFlash = new neqsim.thermodynamicoperations.flashops.TPHydrateFlash(
+        system);
     hydrateFlash.setGasHydrateOnlyMode(true);
     operation = hydrateFlash;
     getOperation().run();
@@ -363,7 +371,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * TPgradientFlash.
    * </p>
    *
-   * @param height a double
+   * @param height      a double
    * @param temperature a double
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -402,47 +410,55 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    */
   public void chemicalEquilibrium() {
     if (system.isChemicalSystem()) {
-      operation =
-          new neqsim.thermodynamicoperations.chemicalequilibrium.ChemicalEquilibrium(system);
+      operation = new neqsim.thermodynamicoperations.chemicalequilibrium.ChemicalEquilibrium(system);
       getOperation().run();
     }
   }
 
   /**
-   * Solve simultaneous chemical and phase equilibrium at constant T, P using the modified RAND
+   * Solve simultaneous chemical and phase equilibrium at constant T, P using the
+   * modified RAND
    * (non-stoichiometric) method.
    *
    * <p>
-   * The method minimizes total Gibbs energy subject to element balance constraints without
-   * requiring explicit reaction stoichiometry. It automatically determines the number of
-   * independent reactions from the formula matrix (element-component mapping) and handles
-   * single-phase chemical equilibrium, VLE, and VLLE with simultaneous reactions in all phases.
+   * The method minimizes total Gibbs energy subject to element balance
+   * constraints without
+   * requiring explicit reaction stoichiometry. It automatically determines the
+   * number of
+   * independent reactions from the formula matrix (element-component mapping) and
+   * handles
+   * single-phase chemical equilibrium, VLE, and VLLE with simultaneous reactions
+   * in all phases.
    * </p>
    *
    * <p>
-   * If no element data is available for the components (no independent reactions detected), the
+   * If no element data is available for the components (no independent reactions
+   * detected), the
    * method falls back to a standard TP flash.
    * </p>
    */
   public void reactiveTPflash() {
-    operation =
-        new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphaseTPflash(system);
+    operation = new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphaseTPflash(system);
     getOperation().run();
   }
 
   /**
-   * Reactive multiphase PH flash: finds the equilibrium temperature, phase split, and composition
-   * at a given pressure P and total enthalpy H_spec, with simultaneous chemical and phase
+   * Reactive multiphase PH flash: finds the equilibrium temperature, phase split,
+   * and composition
+   * at a given pressure P and total enthalpy H_spec, with simultaneous chemical
+   * and phase
    * equilibrium.
    *
    * <p>
-   * Uses a nested approach: Newton-Raphson on 1/T (outer loop) wraps the Modified RAND reactive TP
-   * flash (inner loop). Suitable for systems with gas-phase reactions (WGS, SMR, NH3 synthesis),
+   * Uses a nested approach: Newton-Raphson on 1/T (outer loop) wraps the Modified
+   * RAND reactive TP
+   * flash (inner loop). Suitable for systems with gas-phase reactions (WGS, SMR,
+   * NH3 synthesis),
    * ionic equilibria, and multiphase reactive systems.
    * </p>
    *
    * @param Hspec specified total enthalpy in J
-   * @param type flash type (0 = standard)
+   * @param type  flash type (0 = standard)
    */
   public void reactivePHflash(double Hspec, int type) {
     operation = new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(
@@ -451,16 +467,18 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Reactive multiphase PS flash: finds the equilibrium temperature, phase split, and composition
-   * at a given pressure P and total entropy S_spec, with simultaneous chemical and phase
+   * Reactive multiphase PS flash: finds the equilibrium temperature, phase split,
+   * and composition
+   * at a given pressure P and total entropy S_spec, with simultaneous chemical
+   * and phase
    * equilibrium.
    *
    * @param Sspec specified total entropy in J/K
    */
   public void reactivePSflash(double Sspec) {
-    neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash phflash =
-        new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(system,
-            0.0, 0);
+    neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash phflash = new neqsim.thermodynamicoperations.flashops.reactiveflash.ReactiveMultiphasePHflash(
+        system,
+        0.0, 0);
     phflash.setEntropySpec(Sspec);
     operation = phflash;
     getOperation().run();
@@ -472,7 +490,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param Hspec a double
-   * @param type a int
+   * @param type  a int
    */
   public void PHflash(double Hspec, int type) {
     if (isPureComponentWithinEnthalpyRange(Hspec)) {
@@ -519,7 +537,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   /**
    * Method to perform a PH flash calculation.
    *
-   * @param Hspec is the enthalpy in the specified unit
+   * @param Hspec        is the enthalpy in the specified unit
    * @param enthalpyUnit Supported units are J, J/mol, J/kg and kJ/kg
    */
   public void PHflash(double Hspec, String enthalpyUnit) {
@@ -599,10 +617,10 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * PUflash.
    * </p>
    *
-   * @param Pspec a double
-   * @param Uspec a double
+   * @param Pspec        a double
+   * @param Uspec        a double
    * @param unitPressure a {@link java.lang.String} object
-   * @param unitEnergy a {@link java.lang.String} object
+   * @param unitEnergy   a {@link java.lang.String} object
    */
   public void PUflash(double Pspec, double Uspec, String unitPressure, String unitEnergy) {
     system.setPressure(Pspec, unitPressure);
@@ -614,7 +632,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * PUflash.
    * </p>
    *
-   * @param Uspec a double
+   * @param Uspec      a double
    * @param unitEnergy a {@link java.lang.String} object
    */
   public void PUflash(double Uspec, String unitEnergy) {
@@ -630,8 +648,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
         break;
       case "kJ/kg":
-        conversionFactorEntr =
-            1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+        conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
         break;
       default:
         break;
@@ -645,7 +662,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param Hspec a double
-   * @param type a int
+   * @param type  a int
    */
   public void PHflash2(double Hspec, int type) {
     operation = new PHflash(system, Hspec, type);
@@ -653,11 +670,13 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Perform a Pressure-Vapor Fraction flash to find the temperature at which the system achieves
+   * Perform a Pressure-Vapor Fraction flash to find the temperature at which the
+   * system achieves
    * the specified molar vapor fraction at the current pressure.
    *
    * <p>
-   * This is commonly used in process design to specify a desired quality. A vapor fraction of 0.0
+   * This is commonly used in process design to specify a desired quality. A vapor
+   * fraction of 0.0
    * is the bubble point and 1.0 is the dew point.
    * </p>
    *
@@ -669,11 +688,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Perform a Pressure-Vapor Fraction flash at a specified pressure with the given vapor fraction.
+   * Perform a Pressure-Vapor Fraction flash at a specified pressure with the
+   * given vapor fraction.
    *
    * @param vaporFraction target molar vapor fraction (0.0 to 1.0)
-   * @param pressure the pressure value
-   * @param pressureUnit the unit of pressure (e.g., "bara", "barg", "Pa", "MPa")
+   * @param pressure      the pressure value
+   * @param pressureUnit  the unit of pressure (e.g., "bara", "barg", "Pa", "MPa")
    */
   public void PVFflash(double vaporFraction, double pressure, String pressureUnit) {
     system.setPressure(pressure, pressureUnit);
@@ -719,10 +739,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Method to perform a PS flash calculation for a specified entropy and pressure.
+   * Method to perform a PS flash calculation for a specified entropy and
+   * pressure.
    *
    * @param Sspec is the entropy in the specified unit
-   * @param unit Supported units are J/K, J/molK, J/kgK and kJ/kgK
+   * @param unit  Supported units are J/K, J/molK, J/kgK and kJ/kgK
    */
   public void PSflash(double Sspec, String unit) {
     double conversionFactor = 1.0;
@@ -757,10 +778,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Method to perform a TS flash calculation for a specified entropy and pressure.
+   * Method to perform a TS flash calculation for a specified entropy and
+   * pressure.
    *
    * @param Sspec is the entropy in the specified unit
-   * @param unit Supported units are J/K, J/molK, J/kgK and kJ/kgK
+   * @param unit  Supported units are J/K, J/molK, J/kgK and kJ/kgK
    */
   public void TSflash(double Sspec, String unit) {
     double conversionFactor = 1.0;
@@ -839,9 +861,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * VSflash.
    * </p>
    *
-   * @param volume a double
-   * @param entropy a double
-   * @param unitVol a {@link java.lang.String} object
+   * @param volume      a double
+   * @param entropy     a double
+   * @param unitVol     a {@link java.lang.String} object
    * @param unitEntropy a {@link java.lang.String} object
    */
   public void VSflash(double volume, double entropy, String unitVol, String unitEntropy) {
@@ -867,8 +889,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
         break;
       case "kJ/kgK":
-        conversionFactorEntr =
-            1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+        conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
         break;
       default:
         break;
@@ -881,7 +902,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * VSflash.
    * </p>
    *
-   * @param volume a double
+   * @param volume  a double
    * @param entropy a double
    */
   public void VSflash(double volume, double entropy) {
@@ -895,7 +916,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param Vspec a double
-   * @param unit a {@link java.lang.String} object
+   * @param unit  a {@link java.lang.String} object
    */
   public void TVflash(double Vspec, String unit) {
     double conversionFactor = 1.0;
@@ -925,7 +946,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Performs a Temperature-Enthalpy (TH) flash calculation.
    *
    * <p>
-   * Given temperature T and enthalpy H, solves for pressure P. Uses Newton iteration with the
+   * Given temperature T and enthalpy H, solves for pressure P. Uses Newton
+   * iteration with the
    * thermodynamic derivative (∂H/∂P)_T.
    * </p>
    *
@@ -937,10 +959,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Performs a Temperature-Enthalpy (TH) flash calculation with unit specification.
+   * Performs a Temperature-Enthalpy (TH) flash calculation with unit
+   * specification.
    *
    * @param Hspec specified enthalpy
-   * @param unit Supported units are J, J/mol, J/kg, kJ/kg
+   * @param unit  Supported units are J, J/mol, J/kg, kJ/kg
    */
   public void THflash(double Hspec, String unit) {
     double conversionFactor = 1.0;
@@ -967,7 +990,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Performs a Temperature-Internal Energy (TU) flash calculation.
    *
    * <p>
-   * Given temperature T and internal energy U, solves for pressure P. Uses Newton iteration with
+   * Given temperature T and internal energy U, solves for pressure P. Uses Newton
+   * iteration with
    * the thermodynamic derivative (∂U/∂P)_T.
    * </p>
    *
@@ -979,10 +1003,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Performs a Temperature-Internal Energy (TU) flash calculation with unit specification.
+   * Performs a Temperature-Internal Energy (TU) flash calculation with unit
+   * specification.
    *
    * @param Uspec specified internal energy
-   * @param unit Supported units are J, J/mol, J/kg, kJ/kg
+   * @param unit  Supported units are J, J/mol, J/kg, kJ/kg
    */
   public void TUflash(double Uspec, String unit) {
     double conversionFactor = 1.0;
@@ -1009,7 +1034,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Performs a Pressure-Volume (PV) flash calculation.
    *
    * <p>
-   * Given pressure P and volume V, solves for temperature T. Uses Newton iteration with the
+   * Given pressure P and volume V, solves for temperature T. Uses Newton
+   * iteration with the
    * thermodynamic derivative (∂V/∂T)_P.
    * </p>
    *
@@ -1024,7 +1050,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Performs a Pressure-Volume (PV) flash calculation with unit specification.
    *
    * @param Vspec specified volume
-   * @param unit Supported units are m3
+   * @param unit  Supported units are m3
    */
   public void PVflash(double Vspec, String unit) {
     double conversionFactor = 1.0;
@@ -1059,7 +1085,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * PVrefluxFlash.
    * </p>
    *
-   * @param refluxspec a double
+   * @param refluxspec  a double
    * @param refluxPhase a int
    */
   public void PVrefluxFlash(double refluxspec, int refluxPhase) {
@@ -1085,9 +1111,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * VHflash.
    * </p>
    *
-   * @param volume a double
-   * @param enthalpy a double
-   * @param unitVol a {@link java.lang.String} object
+   * @param volume       a double
+   * @param enthalpy     a double
+   * @param unitVol      a {@link java.lang.String} object
    * @param unitEnthalpy a {@link java.lang.String} object
    */
   public void VHflash(double volume, double enthalpy, String unitVol, String unitEnthalpy) {
@@ -1113,8 +1139,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
         break;
       case "kJ/kg":
-        conversionFactorEntr =
-            1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+        conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
         break;
       default:
         break;
@@ -1127,9 +1152,9 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * VUflash.
    * </p>
    *
-   * @param volume a double
-   * @param energy a double
-   * @param unitVol a {@link java.lang.String} object
+   * @param volume     a double
+   * @param energy     a double
+   * @param unitVol    a {@link java.lang.String} object
    * @param unitEnergy a {@link java.lang.String} object
    */
   public void VUflash(double volume, double energy, String unitVol, String unitEnergy) {
@@ -1155,8 +1180,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
         conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass();
         break;
       case "kJ/kg":
-        conversionFactorEntr =
-            1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
+        conversionFactorEntr = 1.0 / system.getTotalNumberOfMoles() / system.getMolarMass() / 1000.0;
         break;
       default:
         break;
@@ -1207,10 +1231,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       return false;
     }
     tmpSystem.init(2);
-    double gasU =
-        tmpSystem.getPhase(0).getInternalEnergy("J/mol") * tmpSystem.getTotalNumberOfMoles();
-    double liqU =
-        tmpSystem.getPhase(1).getInternalEnergy("J/mol") * tmpSystem.getTotalNumberOfMoles();
+    double gasU = tmpSystem.getPhase(0).getInternalEnergy("J/mol") * tmpSystem.getTotalNumberOfMoles();
+    double liqU = tmpSystem.getPhase(1).getInternalEnergy("J/mol") * tmpSystem.getTotalNumberOfMoles();
     return Uspec >= liqU && Uspec <= gasU;
   }
 
@@ -1225,7 +1247,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     ConstantDutyFlashInterface operation = new BubblePointTemperatureNoDer(system);
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
-      // throw new neqsim.util.exception.IsNaNException(this, "bubblePointTemperatureFlash",
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "bubblePointTemperatureFlash",
       // "Could not find solution - possible no bubble point exists");
     }
   }
@@ -1370,8 +1393,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * addIonToScaleSaturation.
    * </p>
    *
-   * @param phaseNumber a int
-   * @param scaleSaltName a {@link java.lang.String} object
+   * @param phaseNumber        a int
+   * @param scaleSaltName      a {@link java.lang.String} object
    * @param nameOfIonToBeAdded a {@link java.lang.String} object
    * @throws neqsim.util.exception.IsNaNException if any.
    */
@@ -1503,7 +1526,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param temperature an array of type double
-   * @param pressure an array of type double
+   * @param pressure    an array of type double
    * @return an array of type double
    */
   public double[] calcImobilePhaseHydrateTemperature(double[] temperature, double[] pressure) {
@@ -1517,9 +1540,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       // variable
       /*
        * opsTemp = new ThermodynamicOperations(systemTemp);
-       * systemTemp.setTemperature(temperature[i]); systemTemp.setPressure(pressure[i]);
-       * systemTemp.init(0); systemTemp.display(); try { opsTemp.hydrateFormationTemperature(); }
-       * catch (Exception ex) { logger.error(ex.getMessage(),e); } systemTemp.display(); hydTemps[i]
+       * systemTemp.setTemperature(temperature[i]);
+       * systemTemp.setPressure(pressure[i]);
+       * systemTemp.init(0); systemTemp.display(); try {
+       * opsTemp.hydrateFormationTemperature(); }
+       * catch (Exception ex) { logger.error(ex.getMessage(),e); }
+       * systemTemp.display(); hydTemps[i]
        * = systemTemp.getTemperature();
        */
       opsTemp = new ThermodynamicOperations(systemTemp);
@@ -1571,7 +1597,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * hydrateInhibitorConcentration.
    * </p>
    *
-   * @param inhibitorName a {@link java.lang.String} object
+   * @param inhibitorName    a {@link java.lang.String} object
    * @param hydEqTemperature a double
    */
   public void hydrateInhibitorConcentration(String inhibitorName, double hydEqTemperature) {
@@ -1585,7 +1611,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param inhibitorName a {@link java.lang.String} object
-   * @param wtfrac a double
+   * @param wtfrac        a double
    */
   public void hydrateInhibitorConcentrationSet(String inhibitorName, double wtfrac) {
     operation = new HydrateInhibitorwtFlash(system, inhibitorName, wtfrac);
@@ -1712,7 +1738,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * calcCricoP.
    * </p>
    *
-   * @param cricondenBar an array of type double
+   * @param cricondenBar  an array of type double
    * @param cricondenBarX an array of type double
    * @param cricondenBarY an array of type double
    */
@@ -1730,7 +1756,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * calcCricoT.
    * </p>
    *
-   * @param cricondenTherm an array of type double
+   * @param cricondenTherm  an array of type double
    * @param cricondenThermX an array of type double
    * @param cricondenThermY an array of type double
    */
@@ -1789,7 +1815,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     system.setBeta(0, 1e-10);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      // throw new neqsim.util.exception.IsNaNException(this, "bubblePointPressureFlash",
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "bubblePointPressureFlash",
       // "Could not find solution - possible no dew point exists");
     }
   }
@@ -1815,7 +1842,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
       logger.error(e.getMessage(), e);
     }
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      // throw new neqsim.util.exception.IsNaNException(this, "bubblePointPressureFlash",
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "bubblePointPressureFlash",
       // "Could not find solution - possible no bubble point exists");
     }
   }
@@ -1841,7 +1869,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     system.setBeta(0, fraction);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      // throw new neqsim.util.exception.IsNaNException(this, "constantPhaseFractionPressureFlash",
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "constantPhaseFractionPressureFlash",
       // "Could not find solution - possible no dew point exists");
     }
   }
@@ -1881,7 +1910,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    *
    * @param componentName a {@link java.lang.String} object
    * @param specification a {@link java.lang.String} object
-   * @param spec a double
+   * @param spec          a double
    * @throws neqsim.util.exception.IsNaNException if any.
    */
   public void dewPointMach(String componentName, String specification, double spec)
@@ -1938,11 +1967,12 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws neqsim.util.exception.IsNaNException if any.
    */
   public void dewPointTemperatureFlash() throws IsNaNException {
-    ConstantDutyFlashInterface operation =
-        new neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlash(system);
+    ConstantDutyFlashInterface operation = new neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlash(
+        system);
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
-      // throw new neqsim.util.exception.IsNaNException(this, "dewPointTemperatureFlash",
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "dewPointTemperatureFlash",
       // "Could not find solution - possible no dew point exists");
     }
   }
@@ -1956,14 +1986,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @throws neqsim.util.exception.IsNaNException if any.
    */
   public void dewPointTemperatureFlash(boolean derivatives) throws IsNaNException {
-    ConstantDutyFlashInterface operation =
-        new neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlash(system);
+    ConstantDutyFlashInterface operation = new neqsim.thermodynamicoperations.flashops.saturationops.DewPointTemperatureFlash(
+        system);
     if (derivatives) {
       operation = new DewPointTemperatureFlashDer(system);
     }
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
-      // throw new neqsim.util.exception.IsNaNException(this, "dewPointTemperatureFlash",
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "dewPointTemperatureFlash",
       // "Could not find solution - possible no dew point exists");
     }
   }
@@ -1972,13 +2003,16 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Computes the capillary dew point temperature at the current system pressure.
    *
    * <p>
-   * The capillary dew point accounts for the Young-Laplace pressure difference across the curved
-   * gas-liquid interface in a pore or capillary. This shifts the dew point to a higher temperature
+   * The capillary dew point accounts for the Young-Laplace pressure difference
+   * across the curved
+   * gas-liquid interface in a pore or capillary. This shifts the dew point to a
+   * higher temperature
    * than the bulk (flat-interface) dew point.
    * </p>
    *
    * @param poreRadiusM the effective pore or capillary radius in meters
-   * @throws neqsim.util.exception.IsNaNException if the calculation does not converge
+   * @throws neqsim.util.exception.IsNaNException if the calculation does not
+   *                                              converge
    */
   public void capillaryDewPointTemperatureFlash(double poreRadiusM) throws IsNaNException {
     ConstantDutyFlashInterface operation = new CapillaryDewPointFlash(system, poreRadiusM);
@@ -1993,14 +2027,14 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   /**
    * Computes the capillary dew point temperature with a specified contact angle.
    *
-   * @param poreRadiusM the effective pore or capillary radius in meters
+   * @param poreRadiusM     the effective pore or capillary radius in meters
    * @param contactAngleRad the contact angle in radians (0 = perfect wetting)
-   * @throws neqsim.util.exception.IsNaNException if the calculation does not converge
+   * @throws neqsim.util.exception.IsNaNException if the calculation does not
+   *                                              converge
    */
   public void capillaryDewPointTemperatureFlash(double poreRadiusM, double contactAngleRad)
       throws IsNaNException {
-    ConstantDutyFlashInterface operation =
-        new CapillaryDewPointFlash(system, poreRadiusM, contactAngleRad);
+    ConstantDutyFlashInterface operation = new CapillaryDewPointFlash(system, poreRadiusM, contactAngleRad);
     operation.run();
     if (Double.isNaN(system.getTemperature()) || operation.isSuperCritical()) {
       // throw new neqsim.util.exception.IsNaNException(this,
@@ -2022,7 +2056,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
     ConstantDutyFlashInterface operation = new HCdewPointPressureFlash(system);
     operation.run();
     if (Double.isNaN(system.getPressure()) || operation.isSuperCritical()) {
-      // throw new neqsim.util.exception.IsNaNException(this, "dewPointPressureFlashHC",
+      // throw new neqsim.util.exception.IsNaNException(this,
+      // "dewPointPressureFlashHC",
       // "Could not find solution - possible no dew point exists");
     }
     // }
@@ -2079,7 +2114,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param bubfirst a boolean
-   * @param lowPres a double
+   * @param lowPres  a double
    */
   public void calcPTphaseEnvelope(boolean bubfirst, double lowPres) {
     double phasefraction = 1.0 - 1e-10;
@@ -2131,7 +2166,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * calcPTphaseEnvelope.
    * </p>
    *
-   * @param lowPres a double
+   * @param lowPres       a double
    * @param phasefraction a double
    */
   public void calcPTphaseEnvelope(double lowPres, double phasefraction) {
@@ -2142,7 +2177,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   /**
    * Calculates a PT phase envelope.
    *
-   * @deprecated Use {@link #calcPTphaseEnvelope()} instead. This method now delegates to the
+   * @deprecated Use {@link #calcPTphaseEnvelope()} instead. This method now
+   *             delegates to the
    *             standard phase envelope calculation.
    */
   @Deprecated
@@ -2153,7 +2189,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   /**
    * Calculates a PT phase envelope.
    *
-   * @deprecated Use {@link #calcPTphaseEnvelope()} instead. This method now delegates to the
+   * @deprecated Use {@link #calcPTphaseEnvelope()} instead. This method now
+   *             delegates to the
    *             standard phase envelope calculation.
    */
   @Deprecated
@@ -2162,15 +2199,17 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Calculates a phase envelope matrix using PTphaseEnvelopeNew3. This grid-based method evaluates
-   * the phase state at each point in a P-T grid, rather than tracing the boundary.
+   * Calculates a phase envelope matrix using PTphaseEnvelopeNew3. This grid-based
+   * method evaluates
+   * the phase state at each point in a P-T grid, rather than tracing the
+   * boundary.
    *
-   * @param minPressure minimum pressure (bar)
-   * @param maxPressure maximum pressure (bar)
-   * @param minTemp minimum temperature (C)
-   * @param maxTemp maximum temperature (C)
+   * @param minPressure  minimum pressure (bar)
+   * @param maxPressure  maximum pressure (bar)
+   * @param minTemp      minimum temperature (C)
+   * @param maxTemp      maximum temperature (C)
    * @param pressureStep step size for pressure (bar)
-   * @param tempStep step size for temperature (C)
+   * @param tempStep     step size for temperature (C)
    */
   public void calcPTphaseEnvelopeNew3(double minPressure, double maxPressure, double minTemp,
       double maxTemp, double pressureStep, double tempStep) {
@@ -2180,16 +2219,18 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Calculates a PT phase envelope with quality lines. Quality lines are curves of constant molar
-   * vapor fraction inside the two-phase region. At each point on a quality line, the corresponding
+   * Calculates a PT phase envelope with quality lines. Quality lines are curves
+   * of constant molar
+   * vapor fraction inside the two-phase region. At each point on a quality line,
+   * the corresponding
    * volume fraction and mass fraction are also computed.
    *
-   * @param betaValues array of molar vapor fractions to trace (between 0 and 1 exclusive), e.g.
-   *        {0.1, 0.25, 0.5, 0.75, 0.9}
+   * @param betaValues array of molar vapor fractions to trace (between 0 and 1
+   *                   exclusive), e.g.
+   *                   {0.1, 0.25, 0.5, 0.75, 0.9}
    */
   public void calcPTphaseEnvelopeWithQualityLines(double[] betaValues) {
-    PTPhaseEnvelopeMichelsen envOp =
-        new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
+    PTPhaseEnvelopeMichelsen envOp = new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
     envOp.run();
     envOp.calcQualityLines(betaValues);
     operation = envOp;
@@ -2198,40 +2239,45 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   /**
    * Calculates a PT phase envelope with quality lines.
    *
-   * @param bubfirst if true, trace bubble point curve first; otherwise trace dew point first
-   * @param betaValues array of molar vapor fractions to trace (between 0 and 1 exclusive)
+   * @param bubfirst   if true, trace bubble point curve first; otherwise trace
+   *                   dew point first
+   * @param betaValues array of molar vapor fractions to trace (between 0 and 1
+   *                   exclusive)
    */
   public void calcPTphaseEnvelopeWithQualityLines(boolean bubfirst, double[] betaValues) {
     double phasefraction = 1.0 - 1e-10;
     if (bubfirst) {
       phasefraction = 1.0e-10;
     }
-    PTPhaseEnvelopeMichelsen envOp =
-        new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, 1.0, bubfirst);
+    PTPhaseEnvelopeMichelsen envOp = new PTPhaseEnvelopeMichelsen(system, fileName, phasefraction, 1.0, bubfirst);
     envOp.run();
     envOp.calcQualityLines(betaValues);
     operation = envOp;
   }
 
   /**
-   * Calculates a PT phase envelope and performs stability analysis along the envelope to detect
-   * three-phase (VLLE) regions. At sampled points on the traced boundary, a multi-phase TP flash
+   * Calculates a PT phase envelope and performs stability analysis along the
+   * envelope to detect
+   * three-phase (VLLE) regions. At sampled points on the traced boundary, a
+   * multi-phase TP flash
    * checks if the equilibrium produces more than two phases.
    *
    * <p>
-   * Results are accessible via {@code get("threePhaseT")} and {@code get("threePhaseP")} which
-   * return the temperatures and pressures of points where 3+ phases were detected. An empty array
+   * Results are accessible via {@code get("threePhaseT")} and
+   * {@code get("threePhaseP")} which
+   * return the temperatures and pressures of points where 3+ phases were
+   * detected. An empty array
    * means no three-phase regions were found along the envelope.
    * </p>
    *
    * <p>
-   * Reference: Cismondi &amp; Michelsen, "Global calculation of phase equilibrium", Fluid Phase
+   * Reference: Cismondi &amp; Michelsen, "Global calculation of phase
+   * equilibrium", Fluid Phase
    * Equilibria, 259, 228-234 (2007).
    * </p>
    */
   public void calcPTphaseEnvelopeWithStabilityAnalysis() {
-    PTPhaseEnvelopeMichelsen envOp =
-        new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
+    PTPhaseEnvelopeMichelsen envOp = new PTPhaseEnvelopeMichelsen(system, fileName, (1.0 - 1e-10), 1.0, false);
     envOp.run();
     envOp.checkStabilityAlongEnvelope();
     operation = envOp;
@@ -2242,14 +2288,14 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * OLGApropTable.
    * </p>
    *
-   * @param minTemp a double
-   * @param maxTemp a double
+   * @param minTemp          a double
+   * @param maxTemp          a double
    * @param temperatureSteps a int
-   * @param minPres a double
-   * @param maxPres a double
-   * @param pressureSteps a int
-   * @param filename a {@link java.lang.String} object
-   * @param TABtype a int
+   * @param minPres          a double
+   * @param maxPres          a double
+   * @param pressureSteps    a int
+   * @param filename         a {@link java.lang.String} object
+   * @param TABtype          a int
    */
   public void OLGApropTable(double minTemp, double maxTemp, int temperatureSteps, double minPres,
       double maxPres, int pressureSteps, String filename, int TABtype) {
@@ -2279,14 +2325,14 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * OLGApropTablePH.
    * </p>
    *
-   * @param minEnthalpy a double
-   * @param maxEnthalpy a double
+   * @param minEnthalpy   a double
+   * @param maxEnthalpy   a double
    * @param enthalpySteps a int
-   * @param minPres a double
-   * @param maxPres a double
+   * @param minPres       a double
+   * @param maxPres       a double
    * @param pressureSteps a int
-   * @param filename a {@link java.lang.String} object
-   * @param TABtype a int
+   * @param filename      a {@link java.lang.String} object
+   * @param TABtype       a int
    */
   public void OLGApropTablePH(double minEnthalpy, double maxEnthalpy, int enthalpySteps,
       double minPres, double maxPres, int pressureSteps, String filename, int TABtype) {
@@ -2356,8 +2402,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @return an array of {@link java.lang.String} objects
    */
   public String[][] getDataPoints() {
-    String[][] str =
-        new String[getOperation().getPoints(0).length][getOperation().getPoints(0)[0].length];
+    String[][] str = new String[getOperation().getPoints(0).length][getOperation().getPoints(0)[0].length];
     for (int i = 0; i < getOperation().getPoints(0).length; i++) {
       for (int j = 0; j < getOperation().getPoints(0)[0].length; j++) {
         str[i][j] = Double.toString(getOperation().getPoints(0)[i][j]);
@@ -2467,12 +2512,15 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Returns the named result array, or the supplied default if the key is not found or the result
+   * Returns the named result array, or the supplied default if the key is not
+   * found or the result
    * is {@code null}. Convenience for Python/JPype consumers where
-   * {@code ops.get("dewT", emptyArray)} mirrors the Python dict {@code .get(key, default)} idiom.
+   * {@code ops.get("dewT", emptyArray)} mirrors the Python dict
+   * {@code .get(key, default)} idiom.
    *
-   * @param name the result key (e.g. "dewT", "bubP")
-   * @param defaultValue the array to return when the key is absent or maps to {@code null}
+   * @param name         the result key (e.g. "dewT", "bubP")
+   * @param defaultValue the array to return when the key is absent or maps to
+   *                     {@code null}
    * @return the result array, or {@code defaultValue} if not found
    */
   public double[] get(String name, double[] defaultValue) {
@@ -2483,13 +2531,17 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Return the PT phase envelope as a list of contiguous branch segments.
    *
    * <p>
-   * Preferred over the flat {@code get("dewT")} / {@code get("bubT")} arrays for plotting and
-   * machine-readable export. Each segment is a polyline with a uniform phase type (DEW or BUBBLE)
-   * and contains no NaN. Available after a successful call to any {@code calcPTphaseEnvelope(...)}
+   * Preferred over the flat {@code get("dewT")} / {@code get("bubT")} arrays for
+   * plotting and
+   * machine-readable export. Each segment is a polyline with a uniform phase type
+   * (DEW or BUBBLE)
+   * and contains no NaN. Available after a successful call to any
+   * {@code calcPTphaseEnvelope(...)}
    * overload that uses the Michelsen tracer.
    * </p>
    *
-   * @return unmodifiable list of envelope segments, or an empty list if the last-run operation does
+   * @return unmodifiable list of envelope segments, or an empty list if the
+   *         last-run operation does
    *         not produce segment data (e.g. legacy envelope implementations)
    */
   public java.util.List<neqsim.thermodynamicoperations.phaseenvelopeops.multicomponentenvelopeops.EnvelopeSegment> getEnvelopeSegments() {
@@ -2587,8 +2639,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * </p>
    *
    * @param flashType Type of flash.
-   * @param spec1 Value of spec1
-   * @param spec2 Value of spec2
+   * @param spec1     Value of spec1
+   * @param spec2     Value of spec2
    * @param unitSpec1 Unit of spec1
    * @param unitSpec2 Unit of spec2
    */
@@ -2623,16 +2675,19 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
   }
 
   /**
-   * Perform flashes and return System properties per set of Spec1 and Spec2. Possible to specify
+   * Perform flashes and return System properties per set of Spec1 and Spec2.
+   * Possible to specify
    * fractions for each value of Spec1.
    *
-   * @param Spec1 Flash pressure in bar absolute.
-   * @param Spec2 Flash specification. Depends on FlashMode. Temperature in Kelvin, entalphy in
-   *        J/mol or entropy in J/molK.
-   * @param FlashMode 1 - PT 2 - PH 3 - PS
-   * @param components Not yet in use.
-   * @param onlineFractions Specify fractions per sample instance or null to use static composition
-   *        specified in system.
+   * @param Spec1           Flash pressure in bar absolute.
+   * @param Spec2           Flash specification. Depends on FlashMode. Temperature
+   *                        in Kelvin, entalphy in
+   *                        J/mol or entropy in J/molK.
+   * @param FlashMode       1 - PT 2 - PH 3 - PS
+   * @param components      Not yet in use.
+   * @param onlineFractions Specify fractions per sample instance or null to use
+   *                        static composition
+   *                        specified in system.
    * @return Object CalculationResult object
    */
   public CalculationResult propertyFlash(List<Double> Spec1, List<Double> Spec2, int FlashMode,
@@ -2791,7 +2846,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Calculates the asphaltene onset pressure at the current system temperature.
    *
    * <p>
-   * The onset pressure is where asphaltenes begin to precipitate from the oil phase. This typically
+   * The onset pressure is where asphaltenes begin to precipitate from the oil
+   * phase. This typically
    * occurs during pressure depletion near the bubble point.
    * </p>
    *
@@ -2807,8 +2863,7 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * @return onset pressure in bara, or NaN if no onset found
    */
   public double asphalteneOnsetPressure() {
-    AsphalteneOnsetPressureFlash flash =
-        new AsphalteneOnsetPressureFlash(system, system.getPressure(), 1.0);
+    AsphalteneOnsetPressureFlash flash = new AsphalteneOnsetPressureFlash(system, system.getPressure(), 1.0);
     flash.run();
     return flash.getOnsetPressure();
   }
@@ -2817,12 +2872,11 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Calculates the asphaltene onset pressure with specified pressure range.
    *
    * @param startPressure starting pressure for search (bara)
-   * @param minPressure minimum pressure to search to (bara)
+   * @param minPressure   minimum pressure to search to (bara)
    * @return onset pressure in bara, or NaN if no onset found
    */
   public double asphalteneOnsetPressure(double startPressure, double minPressure) {
-    AsphalteneOnsetPressureFlash flash =
-        new AsphalteneOnsetPressureFlash(system, startPressure, minPressure);
+    AsphalteneOnsetPressureFlash flash = new AsphalteneOnsetPressureFlash(system, startPressure, minPressure);
     flash.run();
     return flash.getOnsetPressure();
   }
@@ -2842,8 +2896,8 @@ public class ThermodynamicOperations implements java.io.Serializable, Cloneable 
    * Calculates the asphaltene onset temperature with specified temperature range.
    *
    * @param startTemperature starting temperature for search (K)
-   * @param minTemperature minimum temperature to search to (K)
-   * @param maxTemperature maximum temperature to search to (K)
+   * @param minTemperature   minimum temperature to search to (K)
+   * @param maxTemperature   maximum temperature to search to (K)
    * @return onset temperature in Kelvin, or NaN if no onset found
    */
   public double asphalteneOnsetTemperature(double startTemperature, double minTemperature,
