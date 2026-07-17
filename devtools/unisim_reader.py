@@ -1697,6 +1697,12 @@ class UniSimReader:
                 props['outlet_pressure_bara'] = self._safe_getval(prod_stream.Pressure, 'bar')
             except Exception:
                 pass
+            # A UniSim cooler/heater may be specified by a fixed pressure DROP
+            # instead of a fixed outlet pressure. Capture it so the converter can
+            # emit whichever the unit actually uses (drop vs outlet pressure).
+            props['pressure_drop_kPa'] = (
+                self._safe_getval(op.PressureDrop, 'kPa')
+                if hasattr(op, 'PressureDrop') else None)
 
         elif 'pump' in type_name:
             props['duty_kW'] = self._safe_getval(op.DutyValue, 'kW') if hasattr(op, 'DutyValue') else None
@@ -2966,17 +2972,21 @@ class UniSimToNeqSim:
                 out_s = _get_outlet_stream_data()
                 if out_s and out_s.temperature_C is not None:
                     props['outTemperature'] = out_s.temperature_C + 273.15
-            # Transfer the UniSim cooler/heater pressure DROP. NeqSim Cooler/Heater
-            # keep the inlet pressure otherwise, so a downstream separator/valve
-            # would flash at the wrong (too-high) pressure. Emit pressureDrop in
-            # bara (Heater.pressureUnit defaults to bara) so the drop tracks the
-            # inlet, matching UniSim's exchanger dP.
+            # Transfer the UniSim cooler/heater pressure spec. NeqSim Cooler/
+            # Heater keep the inlet pressure otherwise, so a downstream
+            # separator/valve would flash at the wrong (too-high) pressure.
+            # Emit whichever the UniSim unit actually uses: a fixed pressure
+            # DROP -> pressureDrop (bara, tracks the inlet); otherwise the fixed
+            # outlet pressure -> outletPressure.
+            dp_kpa = op.properties.get('pressure_drop_kPa')
             p_out = op.properties.get('outlet_pressure_bara')
             in_s = (self._find_stream_by_name(flowsheet, op.feeds[0])
                     if op.feeds else None)
             p_in = in_s.pressure_bara if in_s else None
-            if p_out and p_in and (p_in - p_out) > 0.001:
-                props['pressureDrop'] = round(p_in - p_out, 6)
+            if dp_kpa is not None and dp_kpa > 0.0:
+                props['pressureDrop'] = round(dp_kpa / 100.0, 6)
+            elif p_out is not None and p_in and (p_in - p_out) > 0.001:
+                props['outletPressure'] = p_out
 
         elif neqsim_type == 'Pump':
             if op.properties.get('outlet_pressure_bara'):
@@ -3316,6 +3326,25 @@ class UniSimToNeqSim:
         for s in flowsheet.material_streams:
             if s.name == name:
                 return s
+        return None
+
+    def _unit_pressure_drop_bara(self, op: UniSimOperation,
+                                 flowsheet: UniSimFlowsheet) -> Optional[float]:
+        """Inlet -> first-outlet pressure drop (bara) for a unit, or None.
+
+        Used to transfer a UniSim vessel/exchanger pressure drop to NeqSim when
+        the unit is not specified by an explicit outlet pressure. Returns the
+        feed[0] pressure minus the products[0] pressure, or None if either
+        stream or its pressure is unavailable.
+        """
+        if not op.feeds or not op.products:
+            return None
+        in_s = self._find_stream_by_name(flowsheet, op.feeds[0])
+        out_s = self._find_stream_by_name(flowsheet, op.products[0])
+        if (in_s is not None and out_s is not None
+                and in_s.pressure_bara is not None
+                and out_s.pressure_bara is not None):
+            return in_s.pressure_bara - out_s.pressure_bara
         return None
 
     def _map_component_name(self, unisim_name: str) -> Optional[str]:
@@ -6458,18 +6487,21 @@ class UniSimToNeqSim:
                     t_out = out_s.temperature_C
             if t_out is not None:
                 lines.append(f'{var}.setOutTemperature({t_out + 273.15})')
-            # Transfer the UniSim cooler/heater pressure DROP. NeqSim Cooler/
+            # Transfer the UniSim cooler/heater pressure spec. NeqSim Cooler/
             # Heater keep inlet pressure otherwise, so a downstream separator
-            # would flash at the wrong pressure. Use setPressureDrop (bara) so the
-            # drop tracks the live inlet each iteration and matches UniSim's
-            # exchanger dP, capturing small drops an outlet-pressure ratio test
-            # would miss.
+            # would flash at the wrong pressure. Emit whichever the UniSim unit
+            # uses: a fixed pressure DROP -> setPressureDrop (bara, tracks the
+            # live inlet each iteration); otherwise the fixed outlet pressure ->
+            # setOutletPressure.
+            dp_kpa = op.properties.get('pressure_drop_kPa')
             p_out = op.properties.get('outlet_pressure_bara')
             in_s = (self._find_stream_by_name(flowsheet, op.feeds[0])
                     if op.feeds else None)
             p_in = in_s.pressure_bara if in_s else None
-            if p_out and p_in and (p_in - p_out) > 0.001:
-                lines.append(f'{var}.setPressureDrop({round(p_in - p_out, 6)})')
+            if dp_kpa is not None and dp_kpa > 0.0:
+                lines.append(f'{var}.setPressureDrop({round(dp_kpa / 100.0, 6)})')
+            elif p_out and p_in and (p_in - p_out) > 0.001:
+                lines.append(f'{var}.setOutletPressure({p_out}, "bara")')
 
         elif neqsim_type == 'HeatExchanger':
             # Two-stream (process-to-process) heat exchanger. The converter set
