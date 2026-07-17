@@ -57,12 +57,11 @@ class ProcessToEngineeringSimulatorTest {
         new EngineeringAutoConfigurationPolicy("legacy-policy", "A").addInletCompressionExportSlice("INLET-SEP",
             "EXPORT-COMP", "EXPORT-LINE", "", "PIT-100"));
     assertFalse(hiddenDefaultConfiguration.isComplete());
-    assertEquals("CONFIGURATION_CHANGED",
+    assertEquals("CONFIGURATION_CHANGED", hiddenDefaultConfiguration
+        .compareWith(project.getProductionReadinessBasis().getAutoConfigurationResult()).getStatus());
+    assertFalse(
         hiddenDefaultConfiguration.compareWith(project.getProductionReadinessBasis().getAutoConfigurationResult())
-            .getStatus());
-    assertFalse(hiddenDefaultConfiguration
-        .compareWith(project.getProductionReadinessBasis().getAutoConfigurationResult()).getInvalidatedArtifacts()
-        .isEmpty());
+            .getInvalidatedArtifacts().isEmpty());
 
     assertNotNull(result.getEngineeringDesignLoopResult());
     assertTrue(result.getEngineeringDesignLoopResult().isConverged());
@@ -134,10 +133,9 @@ class ProcessToEngineeringSimulatorTest {
     ProcessModel model = new ProcessModel();
     model.add("compression", process());
     EngineeringAutoConfigurationPolicy policy = new EngineeringAutoConfigurationPolicy("offshore-gas", "A")
-        .addInletCompressionExportSlice("INLET-SEP", "EXPORT-COMP", "EXPORT-LINE", "", "PIT-100", 800.0, 0.107,
-            120.0, 25.0, 5.0, 0.10, 500.0, 1000.0, 2000.0, 3000.0, 5000.0, 7500.0, 10000.0);
-    Map<String, ProcessModelEngineeringSimulator.AreaConfiguration> configurations =
-        new LinkedHashMap<String, ProcessModelEngineeringSimulator.AreaConfiguration>();
+        .addInletCompressionExportSlice("INLET-SEP", "EXPORT-COMP", "EXPORT-LINE", "", "PIT-100", 800.0, 0.107, 120.0,
+            25.0, 5.0, 0.10, 500.0, 1000.0, 2000.0, 3000.0, 5000.0, 7500.0, 10000.0);
+    Map<String, ProcessModelEngineeringSimulator.AreaConfiguration> configurations = new LinkedHashMap<String, ProcessModelEngineeringSimulator.AreaConfiguration>();
     configurations.put("compression", new ProcessModelEngineeringSimulator.AreaConfiguration(policy)
         .addDesignCase(flowCase("normal", 8000.0, 10)).addDesignCase(flowCase("maximum", 12000.0, 20)));
     EngineeringSharedSystemPolicy coordination = new EngineeringSharedSystemPolicy("plant-coordination", "A");

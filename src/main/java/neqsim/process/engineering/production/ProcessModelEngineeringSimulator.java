@@ -70,8 +70,8 @@ public final class ProcessModelEngineeringSimulator {
   /** Runs every configured area and records conservative dependencies created by shared stream identities. */
   public static Result run(String projectName, ProcessModel model, Map<String, AreaConfiguration> configurations,
       int caseParallelism) {
-    return runIncremental(projectName, model, configurations,
-        new EngineeringSharedSystemPolicy("topology-only", "1"), null, caseParallelism);
+    return runIncremental(projectName, model, configurations, new EngineeringSharedSystemPolicy("topology-only", "1"),
+        null, caseParallelism);
   }
 
   /** Runs every area with explicit shared-system demand and concurrency inputs. */
@@ -426,8 +426,8 @@ public final class ProcessModelEngineeringSimulator {
       Path schemaDirectory = outputDirectory.resolve("schemas");
       Files.createDirectories(schemaDirectory);
       Path schemaFile = schemaDirectory.resolve("process-model-engineering-manifest.schema.json");
-      InputStream schema = ProcessModelEngineeringSimulator.class.getResourceAsStream(
-          "/neqsim/process/engineering/schema/process-model-engineering-manifest.schema.json");
+      InputStream schema = ProcessModelEngineeringSimulator.class
+          .getResourceAsStream("/neqsim/process/engineering/schema/process-model-engineering-manifest.schema.json");
       if (schema == null) {
         throw new IOException("Bundled process-model engineering manifest schema is missing");
       }
