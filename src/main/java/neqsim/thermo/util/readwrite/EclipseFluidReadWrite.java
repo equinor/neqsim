@@ -616,6 +616,20 @@ public class EclipseFluidReadWrite {
         }
         // fluid.addComponent(name, ZI.get(counter));
         for (int i = 0; i < fluid.getMaxNumberOfPhases(); i++) {
+          // Keep NeqSim's database parameters for water when the source file
+          // provides no meaningful Peneloux volume shift for it (SSHIFT ~ 0). The
+          // generic E300 water entry (hydrocarbon Racket-Z estimate, zero shift)
+          // otherwise overrides the tuned database values and drops the
+          // volume-corrected liquid-water density to ~850 kg/m3; the database
+          // water gives the physical ~1000 kg/m3. When the file DOES carry a real
+          // water shift (e.g. a PVTsim characterization), honour the file values.
+          if ("water".equals(name)) {
+            double waterShift = SSHIFTS.size() > counter ? SSHIFTS.get(counter)
+                : (SSHIFT.size() > counter ? SSHIFT.get(counter) : 0.0);
+            if (Math.abs(waterShift) < 1.0e-10) {
+              continue;
+            }
+          }
           fluid.getPhase(i).getComponent(name).setTC(TC.get(counter));
           fluid.getPhase(i).getComponent(name).setPC(PC.get(counter));
           fluid.getPhase(i).getComponent(name).setAcentricFactor(ACF.get(counter));
@@ -687,6 +701,30 @@ public class EclipseFluidReadWrite {
       } else if (usePedersen) {
         // Apply Pedersen (PFCT) viscosity model if PEDERSEN keyword was found
         applyPFCTViscosityModel(fluid);
+      }
+
+      // Enable the multi-phase (VLLE) flash when the fluid contains water. A
+      // water + hydrocarbon system is liquid-liquid immiscible, and the default
+      // two-phase (vapour-liquid) flash can converge to a spurious higher-Gibbs
+      // solution that places the water-rich phase on the vapour EOS root
+      // (density ~20 kg/m3, Z > 1 at elevated pressure) instead of the correct
+      // aqueous liquid root (density ~1000). Enabling the multi-phase check
+      // triggers the proper stability analysis, so every downstream unit
+      // operation (each of which clones this fluid) performs a correct
+      // three-phase (gas / oil / aqueous) flash. This mirrors the
+      // addWater(...) read path, which already enables it.
+      boolean fluidHasWater = false;
+      String[] componentNames = fluid.getComponentNames();
+      if (componentNames != null) {
+        for (int i = 0; i < componentNames.length; i++) {
+          if ("water".equalsIgnoreCase(componentNames[i])) {
+            fluidHasWater = true;
+            break;
+          }
+        }
+      }
+      if (fluidHasWater) {
+        fluid.setMultiPhaseCheck(true);
       }
     } catch (IOException ex) {
       throw new IllegalArgumentException("Failed to read Eclipse fluid file: " + inputFile + ". " + ex.getMessage(),
@@ -1130,6 +1168,18 @@ public class EclipseFluidReadWrite {
           }
           // fluid.addComponent(name, ZI.get(counter));
           for (int i = 0; i < fluid.getMaxNumberOfPhases(); i++) {
+            // Keep NeqSim's database parameters for water when the file provides no
+            // meaningful volume shift (see main read loop): the generic E300 water
+            // entry drops the volume-corrected density to ~850 kg/m3 while the
+            // database water gives the physical ~1000 kg/m3. Honour a real file
+            // water shift when present.
+            if ("water".equals(name)) {
+              double waterShift = SSHIFTS.size() > 0 ? SSHIFTS.get(counter)
+                  : (SSHIFT.size() > counter ? SSHIFT.get(counter) : 0.0);
+              if (Math.abs(waterShift) < 1.0e-10) {
+                continue;
+              }
+            }
             fluid.getPhase(i).getComponent(name).setTC(TC.get(counter));
             fluid.getPhase(i).getComponent(name).setPC(PC.get(counter));
             fluid.getPhase(i).getComponent(name).setAcentricFactor(ACF.get(counter));

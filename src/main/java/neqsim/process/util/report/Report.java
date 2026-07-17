@@ -105,9 +105,16 @@ public class Report {
 
     if (process != null) {
       for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-        String unitJson = unit.toJson(cfg);
-        if (unitJson != null) {
-          json_reports.put(unit.getName(), unitJson);
+        // Guard per unit: a single unit that fails to serialize (e.g. a
+        // zero-mass stream that cannot be converted to J/kg) must not abort the
+        // whole report. Skip it with a log warning and continue.
+        try {
+          String unitJson = unit.toJson(cfg);
+          if (unitJson != null) {
+            json_reports.put(unit.getName(), unitJson);
+          }
+        } catch (Exception unitEx) {
+          logger.warn("Skipping report for unit '" + unit.getName() + "': " + unitEx.getMessage());
         }
       }
     }

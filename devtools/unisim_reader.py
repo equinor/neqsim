@@ -585,7 +585,7 @@ class UniSimReader:
         'adjust': 'Adjuster',
         'setop': 'SetPoint',
         'pipeseg': 'AdiabaticPipe',
-        'fractop': 'DistillationColumn',
+        'fractop': 'ComponentSplitter',
         'saturateop': 'StreamSaturatorUtil',
         'spreadsheetop': 'SpreadsheetBlock',
         'templateop': 'SubFlowsheet',
@@ -1472,11 +1472,23 @@ class UniSimReader:
         if not hasattr(self, '_comp_name_cache'):
             self._comp_name_cache = {}
         try:
-            fp = self._safe_get(owner, 'FluidPackage', None)
+            # NOTE: do NOT use _safe_get here. A COM FluidPackage Dispatch object
+            # is itself callable, and _safe_get would invoke it (val()) — which
+            # fails — and return the default, silently forcing the fallback
+            # (parent) component order. That mislabels streams whose own fluid
+            # package differs from the parent (e.g. a Basis-1 produced-water
+            # stream getting Basis-2 names, landing water's 1.0 on 'WC13-C14*').
+            # Access the property directly instead.
+            try:
+                fp = getattr(owner, 'FluidPackage', None)
+            except Exception:
+                fp = None
             if fp is None:
                 return fallback
-            key = str(self._safe_get(fp, 'name',
-                                     self._safe_get(fp, 'Name', '')))
+            try:
+                key = str(getattr(fp, 'name', None) or getattr(fp, 'Name', ''))
+            except Exception:
+                key = ''
             if key and key in self._comp_name_cache:
                 return self._comp_name_cache[key]
             collection = fp.Components
@@ -1721,6 +1733,81 @@ class UniSimReader:
                 props['outlet_pressure_bara'] = self._safe_getval(prod_stream.Pressure, 'bar')
             except Exception:
                 pass
+
+        elif 'tee' in type_name:
+            # A UniSim Tee's 'Flow Ratios' ARE the split fractions: the fraction
+            # of the feed sent to each product. A Tee gives every product an
+            # identical composition, so the flow ratio equals the mass-flow
+            # fraction and the mole-flow fraction alike — exactly what a NeqSim
+            # Splitter's split factors represent. Read them directly (in product
+            # order) so the split is reproduced authoritatively, including for
+            # recycle-tear tees whose product flows are only the recycle guess.
+            # The generator falls back to deriving factors from the product mass
+            # flows when this spec is unavailable.
+            try:
+                holder = getattr(op, 'FlowRatios', None)
+                raw = self._safe_get(holder, 'Values', holder) if holder is not None else None
+                vals = [self._clean_scalar_value(v) for v in list(raw)] if raw is not None else []
+                vals = [v for v in vals if v is not None]
+                n_prod = len(op_data.products)
+                if n_prod >= 2 and len(vals) >= n_prod and sum(vals[:n_prod]) > 0.0:
+                    total = sum(vals[:n_prod])
+                    props['split_factors'] = [v / total for v in vals[:n_prod]]
+            except Exception:
+                pass
+
+        elif 'fract' in type_name:
+            # UniSim Component Splitter: connectivity is exposed via
+            # AttachedFeeds / AttachedProducts (NOT the generic Feeds/Products),
+            # and the per-component split is in OverheadSplits (fraction of each
+            # component's feed routed to the FIRST/overhead product). Maps to a
+            # NeqSim ComponentSplitter (split0 = overhead, split1 = bottoms).
+            for coll_attr, mat_list, en_list in (
+                    ('AttachedFeeds', op_data.feeds, op_data.energy_feeds),
+                    ('AttachedProducts', op_data.products, op_data.energy_products)):
+                try:
+                    coll = getattr(op, coll_attr)
+                    for i in range(coll.Count):
+                        item = coll.Item(i)
+                        nm = self._safe_get(item, 'name', None)
+                        if not nm:
+                            continue
+                        tn = str(self._safe_get(item, 'TypeName', '')).lower()
+                        if ('energy' in tn or nm.upper().startswith('Q-')
+                                or nm.upper().startswith('Q ')):
+                            en_list.append(nm)
+                        else:
+                            mat_list.append(nm)
+                except Exception:
+                    pass
+            # Per-component fraction routed to the overhead (first) product.
+            try:
+                raw = op.OverheadSplits.Values
+                facs = []
+                for v in list(raw):
+                    val = v[0] if isinstance(v, (tuple, list)) else v
+                    facs.append(self._clean_scalar_value(val))
+                facs = [f for f in facs if f is not None]
+                if facs:
+                    props['split_factors'] = facs
+            except Exception:
+                pass
+            # Component names in the splitter's own package order (matches the
+            # OverheadSplits order) so the generator can map factors onto the
+            # global component order by name.
+            try:
+                comps = op.FluidPackage.Components
+                names = []
+                for i in range(comps.Count):
+                    names.append(self._safe_get(comps.Item(i), 'name', None))
+                names = [n for n in names if n]
+                if names:
+                    props['split_component_names'] = names
+            except Exception:
+                pass
+            # Split basis (per-component Molar/Mass in UniSim). Molar and mass
+            # give the same per-component mole split, so default molar.
+            props['split_basis'] = 'molar'
 
         elif 'pipeseg' in type_name:
             # Try to get pipe length, diameter
@@ -2181,6 +2268,10 @@ class UniSimToNeqSim:
         # to_json() if a looser/tighter tear is needed.
         self.recycle_tolerance = 1e-2
         self.recycle_acceleration = "WEGSTEIN"  # or None to disable
+        # Component names (E300/NeqSim order) of the global system fluid, set
+        # when the fluid section is built. Used to map per-component data such
+        # as ComponentSplitter split factors onto the global component order.
+        self._global_component_names: List[str] = []
 
     @property
     def warnings(self) -> List[str]:
@@ -2722,6 +2813,9 @@ class UniSimToNeqSim:
             if eos == 'SRK' and 'peng' in fp.property_package.lower():
                 eos = 'PR'
             ref_temp_K, ref_P_bara = self._reference_conditions()
+            e300_component_names = [fp._e300_component_name(c.name) for c in fp.components]
+            if package_index == 0:
+                self._global_component_names = e300_component_names
             return {
                 'model': eos,
                 'temperature': ref_temp_K,
@@ -2729,10 +2823,9 @@ class UniSimToNeqSim:
                 'e300FilePath': fp.e300_file_path,
                 'fluidPackageName': fp.name,
                 'componentCount': len(fp.components),
-                'componentNames': [fp._e300_component_name(c.name) for c in fp.components],
+                'componentNames': e300_component_names,
                 'cpCoeffs': self._build_cp_coeffs_map(fp),
             }
-
         # --- Fallback: manual component mapping ---
         eos = self._map_property_package_to_eos(fp.property_package)
         if eos == 'SRK' and fp.property_package not in ('SRK', 'Soave-Redlich-Kwong'):
@@ -2845,7 +2938,12 @@ class UniSimToNeqSim:
                     comp_nz = {k: float(v) for k, v in comp.items()
                                if v is not None and float(v) > 1e-9}
                     if comp_nz:
-                        props['composition'] = comp_nz
+                        # Remap secondary-package (e.g. Basis-1) heavy pseudo
+                        # components that are absent from the global fluid to
+                        # their nearest-molecular-weight global component, so
+                        # oil mass is preserved and the flowsheet converges.
+                        props['composition'] = \
+                            self._remap_composition_to_global(comp_nz)
                 if props:
                     entry['properties'] = props
             process.append(entry)
@@ -2860,6 +2958,52 @@ class UniSimToNeqSim:
                 process.append(entry)
 
         return process
+
+    def _remap_composition_to_global(self, comp: Dict[str, float]) -> Dict[str, float]:
+        """Remap a stream composition onto the global fluid's component set.
+
+        A UniSim case can carry several thermodynamic bases (fluid packages).
+        The global NeqSim fluid is built from the primary package (index 0),
+        so heavy pseudo-components that only exist in a secondary package
+        (e.g. Basis-1 oil lumps ``C7C9*``, ``C36+H*``) have no matching
+        component in the built fluid and their mass is silently dropped by the
+        builder. To preserve oil mass and keep the flowsheet converging, each
+        such component is re-assigned to the nearest-molecular-weight component
+        of the global package (its fraction accumulated there). Light and water
+        components (shared across packages) and components already present in
+        the global package are passed through unchanged.
+
+        :param comp: mapping of raw UniSim component name to molar fraction
+        :return: mapping with secondary-package heavies remapped to the nearest
+            global component by molecular weight
+        """
+        fps = getattr(self.model, 'fluid_packages', None)
+        if not fps:
+            return dict(comp)
+        global_fp = fps[0]
+        global_names = {c.name for c in global_fp.components}
+        # nearest-MW candidates from the global package (heavy pseudo lumps)
+        global_mw_pairs = [(c.name, c.mw) for c in global_fp.components
+                           if c.mw is not None]
+        # molecular-weight lookup by raw name across every package
+        mw_by_name = {}
+        for fp in fps:
+            for c in fp.components:
+                if c.mw is not None and c.name not in mw_by_name:
+                    mw_by_name[c.name] = c.mw
+
+        out = {}
+        for raw, frac in comp.items():
+            keep = raw
+            # Only pseudo-components (``*`` suffix) that are absent from the
+            # global package need remapping; everything else matches directly.
+            if (raw not in global_names and raw.endswith('*')
+                    and global_mw_pairs and raw in mw_by_name):
+                target_mw = mw_by_name[raw]
+                keep = min(global_mw_pairs,
+                           key=lambda p: abs(p[1] - target_mw))[0]
+            out[keep] = out.get(keep, 0.0) + frac
+        return out
 
     def _convert_operation(self, op: UniSimOperation,
                            stream_producer: Dict,
@@ -3017,11 +3161,32 @@ class UniSimToNeqSim:
                 props['diameter'] = op.properties['diameter_m']
 
         elif neqsim_type == 'Splitter':
-            if op.products:
-                props['splitNumber'] = len(op.products)
+            # Reproduce the UniSim tee split. Prefer explicit split_factors;
+            # otherwise derive them from the UniSim product mass flows so the
+            # splitter matches the converged UniSim division instead of the
+            # builder's equal-division (1/N) default. When factors are known,
+            # emit ONLY splitFactors (it also fixes the outlet count) and drop
+            # splitNumber, because splitNumber would otherwise reset the factors
+            # to [1, 0, ...] via the builder's generic property reflection.
             split_factors = op.properties.get('split_factors')
+            if not split_factors:
+                topo = {'stream_by_name':
+                        {s.name: s for s in flowsheet.material_streams}}
+                split_factors = self._split_factors_from_flows(op, topo)
             if split_factors:
                 props['splitFactors'] = split_factors
+            elif op.products:
+                props['splitNumber'] = len(op.products)
+
+        elif neqsim_type == 'ComponentSplitter':
+            # UniSim Component Splitter -> NeqSim ComponentSplitter. Map the
+            # per-component overhead split fractions onto the global component
+            # order (by name) and pass the split basis (molar/mass).
+            facs, basis = self._component_split_factors_global(op, flowsheet)
+            if facs:
+                props['splitFactors'] = facs
+                if basis:
+                    props['splitBasis'] = basis
 
         elif neqsim_type in ('Separator', 'GasScrubber',
                              'ThreePhaseSeparator'):
@@ -3129,6 +3294,13 @@ class UniSimToNeqSim:
                             idx = op.products.index(stream_name)
                             return f"{producer_name}.split{idx}"
                         return f"{producer_name}.split0"
+                    elif neqsim_type == 'ComponentSplitter':
+                        # ComponentSplitter has two split ports: split0 =
+                        # overhead (first product), split1 = bottoms (second).
+                        if len(op.products) > 0 and stream_name in op.products:
+                            idx = op.products.index(stream_name)
+                            return f"{producer_name}.split{idx}"
+                        return f"{producer_name}.split0"
                     elif neqsim_type == 'DistillationColumn':
                         # Column products: first = overhead/gas, last = bottoms
                         if len(op.products) > 0 and stream_name in op.products:
@@ -3216,10 +3388,29 @@ class UniSimToNeqSim:
                     if in_degree[name] == 0:
                         queue.append(name)
 
-        # Add any remaining (cycles — recycles)
-        for op in operations:
-            if op.name not in sorted_names:
-                sorted_names.append(op.name)
+        # Remaining nodes form dependency cycles (recycle loops). Order them
+        # greedily so that, wherever possible, a producer still precedes its
+        # consumer: repeatedly emit the remaining node with the fewest
+        # still-unemitted in-graph dependencies (0 when its producers are
+        # already sorted), breaking ties by original operation order. This keeps
+        # a newly-inserted in-loop unit (e.g. a ComponentSplitter feeding a
+        # downstream tee) ahead of its consumer, so the first recycle pass does
+        # not starve the consumer with a stale/empty stream.
+        emitted = set(sorted_names)
+        remaining = [op.name for op in operations if op.name not in emitted]
+        while remaining:
+            best = None
+            best_unmet = None
+            for name in remaining:
+                unmet = sum(1 for d in graph[name] if d not in emitted)
+                if best is None or unmet < best_unmet:
+                    best = name
+                    best_unmet = unmet
+                    if unmet == 0:
+                        break
+            remaining.remove(best)
+            sorted_names.append(best)
+            emitted.add(best)
 
         return [op_by_name[n] for n in sorted_names if n in op_by_name]
 
@@ -3327,6 +3518,59 @@ class UniSimToNeqSim:
             if s.name == name:
                 return s
         return None
+
+    def _component_split_factors_global(self, op: UniSimOperation,
+                                        flowsheet: UniSimFlowsheet):
+        """Map a Component Splitter's overhead split factors onto the global order.
+
+        The UniSim OverheadSplits give, per component (in the splitter package's
+        order), the fraction of that component's feed routed to the overhead
+        (first) product. NeqSim's ComponentSplitter indexes its split factors by
+        the global system-fluid component order, so this remaps the factors by
+        (E300-normalised) component name. Components not present in the splitter
+        package default to 1.0 (routed to the overhead); they are zero-flow in
+        this feed, so the value is immaterial. The key transferred behaviour
+        (e.g. water routed to the bottoms) is preserved because shared real
+        components map identically under the E300 name transform.
+
+        Args:
+            op: the Component Splitter operation (neqsim_type 'ComponentSplitter').
+            flowsheet: the flowsheet (used to fall back to the feed composition).
+
+        Returns:
+            (factors_list, basis) aligned to the global component order, or
+            (None, None) when the split cannot be resolved.
+        """
+        facs = op.properties.get('split_factors')
+        if not facs:
+            return None, None
+        names = op.properties.get('split_component_names')
+        if not names:
+            # The OverheadSplits are in the splitter's own fluid-package order.
+            # In a multi-package model the feed stream's stored composition can
+            # be in a different package's order (and may be mislabelled), so
+            # identify the splitter package by matching its component COUNT to
+            # a model fluid package and use that package's component names.
+            for fp in self.model.fluid_packages:
+                if len(fp.components) == len(facs):
+                    names = [c.name for c in fp.components]
+                    break
+        if not names:
+            feed_stream = (self._find_stream_by_name(flowsheet, op.feeds[0])
+                           if op.feeds else None)
+            if feed_stream and getattr(feed_stream, 'composition', None):
+                names = list(feed_stream.composition.keys())
+        if not names or len(names) < len(facs):
+            return None, None
+        global_names = self._global_component_names
+        if not global_names:
+            return None, None
+        name_to_fac = {}
+        for nm, fc in zip(names, facs):
+            name_to_fac[UniSimFluidPackage._e300_component_name(nm)] = fc
+        out = [name_to_fac.get(gn, 1.0) for gn in global_names]
+        basis = op.properties.get('split_basis', 'molar')
+        return out, basis
 
     def _unit_pressure_drop_bara(self, op: UniSimOperation,
                                  flowsheet: UniSimFlowsheet) -> Optional[float]:

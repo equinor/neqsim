@@ -1438,7 +1438,11 @@ public class JsonProcessBuilder {
         for (int i = 0; i < factors.size(); i++) {
           splitFact[i] = factors.get(i).getAsDouble();
         }
-        ((ComponentSplitter) equipment).setSplitFactors(splitFact);
+        if (props.has("splitBasis")) {
+          ((ComponentSplitter) equipment).setSplitFactors(splitFact, props.get("splitBasis").getAsString());
+        } else {
+          ((ComponentSplitter) equipment).setSplitFactors(splitFact);
+        }
       }
       if (equipment instanceof Manifold && props.has("splitFactors")) {
         JsonArray factors = props.getAsJsonArray("splitFactors");
@@ -1629,7 +1633,19 @@ public class JsonProcessBuilder {
     Map<String, Integer> normIndex = new HashMap<>();
     for (int i = 0; i < n; i++) {
       String rawName = streamFluid.getComponent(i).getName();
-      index.put(rawName.toLowerCase(java.util.Locale.ROOT), i);
+      String lower = rawName.toLowerCase(java.util.Locale.ROOT);
+      index.put(lower, i);
+      // Water alias: NeqSim's E300 reader (EclipseFluidReadWrite) maps the CNAMES entry
+      // "H2O"/"WATER" to the canonical component name "water". Exporters (e.g. UniSim) name
+      // water "H2O" in stream compositions, so register the reciprocal alias here to keep a
+      // "H2O" composition entry matching the fluid's "water" component (and vice versa).
+      // Without it the dominant water fraction is silently dropped, collapsing a water stream
+      // to trace light ends (wrong MW/density) and destabilising downstream convergence.
+      if ("water".equals(lower)) {
+        index.put("h2o", i);
+      } else if ("h2o".equals(lower)) {
+        index.put("water", i);
+      }
       String norm = normalizeComponentName(rawName);
       if (normIndex.containsKey(norm)) {
         normIndex.put(norm, -1);

@@ -77,6 +77,30 @@ class JsonProcessBuilderTest {
   }
 
   @Test
+  void testStreamCompositionH2OAliasesWater() {
+    // A stream composition that names water "H2O" (as UniSim and other exporters do) must match
+    // the fluid's canonical "water" component. NeqSim's E300 reader maps CNAMES "H2O" -> "water",
+    // so without the alias the dominant water fraction is silently dropped and the stream collapses
+    // to trace light ends (wrong molar mass / density).
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 0.5, \"water\": 0.5}" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"wet\"," + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"],"
+        + "     \"composition\": {\"Methane\": 0.0002, \"H2O\": 0.9998}}}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    StreamInterface wet = (StreamInterface) result.getProcessSystem().getUnit("wet");
+    assertNotNull(wet);
+
+    // The "H2O" key must have landed on the "water" component (mole fraction ~0.9998), not dropped.
+    assertEquals(0.9998, wet.getFluid().getComponent("water").getz(), 1e-6);
+    // A nearly-pure water stream must have a molar mass close to 18 g/mol (0.018 kg/mol), proving
+    // the water fraction was applied rather than dropped (which would leave ~methane, ~16 g/mol).
+    assertEquals(0.018, wet.getFluid().getMolarMass(), 5e-4,
+        "Nearly-pure H2O stream should have molar mass ~0.018 kg/mol");
+  }
+
+  @Test
   void testBuildStreamAndSeparator() {
     String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
         + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}" + "},"

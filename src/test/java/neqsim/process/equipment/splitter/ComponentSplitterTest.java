@@ -81,6 +81,51 @@ class ComponentSplitterTest {
   }
 
   @Test
+  public void testSplitBasisMolarAndMass() {
+    // A UniSim-style Component Splitter that routes water to the bottoms and
+    // everything else to the overhead. For a per-component "fraction of feed"
+    // split the molar and mass bases give the SAME mole split (a single
+    // component's mass fraction equals its mole fraction), so both bases must
+    // produce identical outlet streams.
+    double[] factors = new double[] { 1.0, 1.0, 0.0 }; // methane, ethane -> overhead; water -> bottoms
+
+    SystemSrkEos sys = new SystemSrkEos(298.0, 10.0);
+    sys.addComponent("methane", 100.0);
+    sys.addComponent("ethane", 10.0);
+    sys.addComponent("water", 5.0);
+    Stream feed = new Stream("feed", sys);
+    feed.setPressure(50.0, "bara");
+    feed.setTemperature(30.0, "C");
+    feed.setFlowRate(1000.0, "kg/hr");
+
+    ComponentSplitter molar = new ComponentSplitter("molar", feed);
+    molar.setSplitFactors(factors, "molar");
+    molar.run();
+
+    ComponentSplitter mass = new ComponentSplitter("mass", feed);
+    mass.setSplitFactors(factors, "mass");
+    mass.run();
+
+    assertEquals("molar", molar.getSplitBasis());
+    assertEquals("mass", mass.getSplitBasis());
+
+    double feedWater = feed.getThermoSystem().getComponent("water").getNumberOfmoles();
+
+    // Overhead (split0): no water.
+    assertEquals(0.0, molar.getSplitStream(0).getFluid().getComponent("water").getNumberOfmoles(), 1e-9);
+    assertEquals(0.0, mass.getSplitStream(0).getFluid().getComponent("water").getNumberOfmoles(), 1e-9);
+    // Bottoms (split1): all the feed water, no methane.
+    assertEquals(feedWater, mass.getSplitStream(1).getFluid().getComponent("water").getNumberOfmoles(), 1e-6);
+    assertEquals(0.0, mass.getSplitStream(1).getFluid().getComponent("methane").getNumberOfmoles(), 1e-9);
+
+    // Molar and mass bases coincide for a per-component feed fraction.
+    assertEquals(molar.getSplitStream(0).getFluid().getComponent("methane").getNumberOfmoles(),
+        mass.getSplitStream(0).getFluid().getComponent("methane").getNumberOfmoles(), 1e-9);
+    assertEquals(molar.getSplitStream(1).getFluid().getComponent("water").getNumberOfmoles(),
+        mass.getSplitStream(1).getFluid().getComponent("water").getNumberOfmoles(), 1e-9);
+  }
+
+  @Test
   public void testRunSplitter() {
     testSystem = new SystemSrkEos(298.0, 10.0);
     testSystem.addComponent("methane", 100.0);
