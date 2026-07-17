@@ -575,7 +575,6 @@ public final class EngineeringDeliverableCompiler {
     artifacts.add("engineering-validation-report.json");
     artifacts.add("engineering-discipline-orchestration.json");
     artifacts.add("engineering-vertical-slice-qualification.json");
-    artifacts.add("engineering-vertical-slice-execution-manifest.json");
     artifacts.add("plant.dexpi.xml");
     artifacts.add("plant-proteus.xml");
     artifacts.add("plant-pydexpi.xml");

@@ -41,7 +41,11 @@ class QualifiedEngineeringReferenceFacilityTest {
       result = ProductionVerticalSliceSimulator.runStrictAndCompile(definition.getProject(),
           definition.getAutoConfigurationPolicy(), definition.getQualificationPolicy(), 1, outputDirectory, null);
     } catch (EngineeringPackageValidationException exception) {
-      throw new AssertionError(exception.getValidationReport().toJson(), exception);
+      Path roundTripReport = outputDirectory.resolve("engineering-dexpi-roundtrip-report.json");
+      String roundTrip = Files.isRegularFile(roundTripReport)
+          ? new String(Files.readAllBytes(roundTripReport), java.nio.charset.StandardCharsets.UTF_8)
+          : "round-trip report not written";
+      throw new AssertionError(exception.getValidationReport().toJson() + '\n' + roundTrip, exception);
     }
 
     assertTrue(result.getPreflight().isReadyForSimulation());
