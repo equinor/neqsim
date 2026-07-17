@@ -3020,6 +3020,13 @@ class UniSimToNeqSim:
                 props['entrainment'] = entrainment_specs
             if op.properties.get('diameter_m'):
                 props['diameter'] = op.properties['diameter_m']
+            # Transfer the UniSim vessel pressure DROP (feed -> vapour outlet).
+            # NeqSim separators keep the feed pressure otherwise, so a downstream
+            # valve/exchanger would see too-high a pressure. Cap at 1 bara to
+            # ignore snapshot stream-mapping artefacts (a real vessel dP is small).
+            dp = self._unit_pressure_drop_bara(op, flowsheet)
+            if dp is not None and 0.001 < dp <= 1.0:
+                props['pressureDrop'] = round(dp, 6)
 
         elif neqsim_type == 'Recycle':
             tol = op.properties.get('tolerance')

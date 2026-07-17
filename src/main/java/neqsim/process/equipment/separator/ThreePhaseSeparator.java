@@ -477,6 +477,12 @@ public class ThreePhaseSeparator extends Separator {
     lastPressure = inletStreamMixer.getOutletStream().getPressure();
     thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
 
+    // Apply the vessel pressure drop before flashing so all three product phases
+    // leave at (inlet pressure - pressureDrop), matching the base Separator.
+    if (Math.abs(getPressureDrop()) > 1e-6) {
+      thermoSystem2.setPressure(thermoSystem2.getPressure() - getPressureDrop());
+    }
+
     if (!thermoSystem2.doMultiPhaseCheck()) {
       useTempMultiPhaseCheck = true;
       thermoSystem2.setMultiPhaseCheck(true);
