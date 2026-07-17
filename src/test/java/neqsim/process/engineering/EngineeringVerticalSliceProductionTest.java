@@ -58,8 +58,8 @@ class EngineeringVerticalSliceProductionTest {
     project.addDesignCase(flowCase("normal", EngineeringDesignCase.Type.NORMAL, 8000.0));
     project.addDesignCase(flowCase("maximum", EngineeringDesignCase.Type.MAXIMUM_PRODUCTION, 10000.0));
     EngineeringAutoConfigurationPolicy autoPolicy = new EngineeringAutoConfigurationPolicy("explicit", "A")
-        .addInletCompressionExportSlice("INLET-SEP", "EXPORT-COMP", "EXPORT-LINE", "", "PIT-100", 800.0, 0.107,
-            120.0, 25.0, 5.0, 0.10, 500.0, 1000.0, 2000.0, 5000.0, 10000.0)
+        .addInletCompressionExportSlice("INLET-SEP", "EXPORT-COMP", "EXPORT-LINE", "", "PIT-100", 800.0, 0.107, 120.0,
+            25.0, 5.0, 0.10, 500.0, 1000.0, 2000.0, 5000.0, 10000.0)
         .addCompressorOperatingEnvelope("EXPORT-COMP", 0.05, 0.05, 160.0, 0.10);
     InletCompressionExportSlicePolicy qualificationPolicy = InletCompressionExportSlicePolicy
         .builder("production-slice", "A").processTags("INLET-SEP", "EXPORT-COMP", "AFTERCOOLER", "EXPORT-LINE")

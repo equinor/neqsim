@@ -61,17 +61,15 @@ class EngineeringDesignLoopTest {
   @Test
   void detectsTwoStateDiscreteCandidateOscillation() {
     ProcessSystem base = process();
-    EngineeringCaseSet cases = new EngineeringCaseSet("oscillation-test")
-        .addCase(new EngineeringDesignCase("normal", "Normal", EngineeringDesignCase.Type.NORMAL,
-            new EngineeringDesignCase.Configurator() {
-              private static final long serialVersionUID = 1000L;
+    EngineeringCaseSet cases = new EngineeringCaseSet("oscillation-test").addCase(new EngineeringDesignCase("normal",
+        "Normal", EngineeringDesignCase.Type.NORMAL, new EngineeringDesignCase.Configurator() {
+          private static final long serialVersionUID = 1000L;
 
-              @Override
-              public void configure(ProcessSystem process) {
-                // The design update supplies the changing physical state.
-              }
-            }))
-        .addMetric(EngineeringMetric.equipmentPressure("FEED"));
+          @Override
+          public void configure(ProcessSystem process) {
+            // The design update supplies the changing physical state.
+          }
+        })).addMetric(EngineeringMetric.equipmentPressure("FEED"));
 
     EngineeringDesignLoopResult result = EngineeringDesignLoop.run(base, cases,
         Arrays.<EngineeringDesignModule>asList(new OscillatingCandidateModule()),
@@ -135,8 +133,8 @@ class EngineeringDesignLoopTest {
       double candidate = !state.contains("FEED.discreteCandidate")
           || state.requireValue("FEED.discreteCandidate") == 2.0 ? 1.0 : 2.0;
       return EngineeringDesignModuleResult.builder(getId(), "Oscillation regression", "1.0")
-          .addUpdate(EngineeringDesignUpdate.builder("FEED.discreteCandidate", candidate, "m")
-              .relativeTolerance(0.0).applier(new EngineeringDesignUpdate.Applier() {
+          .addUpdate(EngineeringDesignUpdate.builder("FEED.discreteCandidate", candidate, "m").relativeTolerance(0.0)
+              .applier(new EngineeringDesignUpdate.Applier() {
                 private static final long serialVersionUID = 1000L;
 
                 @Override
