@@ -2939,12 +2939,25 @@ class UniSimToNeqSim:
                     props['outletTemperature'] = out_s.temperature_C + 273.15
 
         elif neqsim_type == 'ThrottlingValve':
-            if op.properties.get('outlet_pressure_bara'):
-                props['outletPressure'] = op.properties['outlet_pressure_bara']
-            else:
+            # UniSim valves carry either a fixed outlet pressure OR a fixed
+            # pressure DROP (the 'DP*' line-loss valves specify a small dP, e.g.
+            # 5-50 kPa). For a small-dP valve, emit deltaPressure so the neqsim
+            # ThrottlingValve reproduces UniSim's pressure-DROP behaviour
+            # (outlet = inlet - dP) and tracks the inlet pressure, instead of
+            # pinning a fixed outlet that would diverge if the upstream shifts.
+            # Large letdown/control valves keep their outlet-pressure spec.
+            dp_kpa = op.properties.get('pressure_drop_kPa')
+            out_p = op.properties.get('outlet_pressure_bara')
+            if out_p is None:
                 out_s = _get_outlet_stream_data()
                 if out_s and out_s.pressure_bara:
-                    props['outletPressure'] = out_s.pressure_bara
+                    out_p = out_s.pressure_bara
+            if dp_kpa is not None and 0 < dp_kpa <= 100.0:
+                # Emit in bara (kPa/100): ThrottlingValve.setDeltaPressure in kPa
+                # currently mis-scales, whereas bara is applied correctly.
+                props['deltaPressure'] = [dp_kpa / 100.0, 'bara']
+            elif out_p is not None:
+                props['outletPressure'] = out_p
 
         elif neqsim_type in ('Cooler', 'Heater'):
             if op.properties.get('outlet_temperature_C') is not None:
@@ -6405,12 +6418,18 @@ class UniSimToNeqSim:
                                  f'from source model — using 75% default')
 
         elif neqsim_type == 'ThrottlingValve':
+            # Small-dP 'DP*' line-loss valves: reproduce UniSim's fixed pressure
+            # DROP (outlet = inlet - dP) via setDeltaPressure so the pressure
+            # tracks the inlet. Large letdown/control valves keep outlet-pressure.
+            dp_kpa = op.properties.get('pressure_drop_kPa')
             p_out = op.properties.get('outlet_pressure_bara')
             if not p_out:
                 out_s = _get_outlet_stream_data()
                 if out_s and out_s.pressure_bara:
                     p_out = out_s.pressure_bara
-            if p_out:
+            if dp_kpa is not None and 0 < dp_kpa <= 100.0:
+                lines.append(f'{var}.setDeltaPressure({dp_kpa / 100.0}, "bara")')
+            elif p_out:
                 lines.append(f'{var}.setOutletPressure({p_out})')
 
         elif neqsim_type in ('Cooler', 'Heater'):
