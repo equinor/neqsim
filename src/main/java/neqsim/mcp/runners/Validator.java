@@ -323,11 +323,15 @@ public class Validator {
       }
     }
 
+    // A fluid may be defined by an inline components map, characterized
+    // (TBP/plus) pseudo-components, or a reference to an Eclipse E300 fluid
+    // file. JsonProcessBuilder resolves any of these, so accept them all here.
     if (fluidDef.has("components")) {
       validateComponents(fluidDef.getAsJsonObject("components"), issues);
-    } else {
-      issues.add(Issue.error("MISSING_COMPONENTS", "Fluid block has no 'components'",
-          "Add a components map to the fluid definition"));
+    } else if (!fluidDef.has("characterizedComponents") && !fluidDef.has("e300FilePath")) {
+      issues.add(Issue.error("MISSING_COMPONENTS",
+          "Fluid block has no 'components', 'characterizedComponents' or 'e300FilePath'",
+          "Add a components map, characterizedComponents array, or an e300FilePath " + "to the fluid definition"));
     }
   }
 
