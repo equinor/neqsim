@@ -223,6 +223,11 @@ public final class EngineeringPackageValidator {
       requireArray(root, "actions", artifactName, report);
       requireString(root, "readinessLevel", artifactName, report);
       requireFalse(root, "fitnessForConstruction", artifactName, report);
+    } else if ("engineering-discipline-orchestration.json".equals(artifactName)) {
+      requireString(root, "projectId", artifactName, report);
+      requireString(root, "revision", artifactName, report);
+      requireString(root, "status", artifactName, report);
+      requireString(root, "governance", artifactName, report);
     }
     return report;
   }

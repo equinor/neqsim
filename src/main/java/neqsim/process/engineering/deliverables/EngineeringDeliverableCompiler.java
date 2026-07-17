@@ -285,6 +285,25 @@ public final class EngineeringDeliverableCompiler {
     Path productionReadinessFile = outputDirectory.resolve("engineering-production-readiness.json");
     write(productionReadinessFile, GSON.toJson(
         EngineeringProductionReadinessAssessment.assess(project, project.getProductionReadinessBasis()).toMap()));
+    Path orchestrationFile = outputDirectory.resolve("engineering-discipline-orchestration.json");
+    Map<String, Object> orchestration = new LinkedHashMap<String, Object>();
+    orchestration.put("schemaVersion", EngineeringSchemaCatalog.DISCIPLINE_ORCHESTRATION);
+    orchestration.put("schemaUri",
+        EngineeringSchemaCatalog.schemaUri(EngineeringSchemaCatalog.DISCIPLINE_ORCHESTRATION));
+    orchestration.put("projectId", project.getProjectId());
+    orchestration.put("revision", project.getRevision());
+    orchestration.put("configuration",
+        project.getProductionReadinessBasis() == null
+            || project.getProductionReadinessBasis().getAutoConfigurationResult() == null ? null
+                : project.getProductionReadinessBasis().getAutoConfigurationResult().toMap());
+    orchestration.put("status",
+        project.getProductionReadinessBasis() != null
+            && project.getProductionReadinessBasis().getAutoConfigurationResult() != null
+            && project.getProductionReadinessBasis().getAutoConfigurationResult().isExecutionReady()
+                ? "EXECUTED_REVIEW_REQUIRED" : "NOT_EXECUTION_READY");
+    orchestration.put("governance",
+        "Dependency completion does not replace HAZOP/LOPA, vendor validation or accountable approval");
+    write(orchestrationFile, GSON.toJson(orchestration));
     Path qualificationPlanFile = outputDirectory.resolve("engineering-qualification-plan.json");
     write(qualificationPlanFile,
         GSON.toJson(EngineeringQualificationPlan.build(project, project.getProductionReadinessBasis())));
@@ -319,7 +338,8 @@ public final class EngineeringDeliverableCompiler {
         "process-design-basis.json", "equipment-datasheets.json", "valve-list.json", "io-list.json",
         "alarm-trip-schedule.json", "shutdown-narratives.json", "psv-datasheets.json", "flare-blowdown-report.json",
         "utility-summary.json", "materials-selection-report.json", "unresolved-engineering-actions.json",
-        "revision-impact-report.json", "engineering-production-readiness.json", "engineering-qualification-plan.json" };
+        "revision-impact-report.json", "engineering-production-readiness.json", "engineering-qualification-plan.json",
+        "engineering-discipline-orchestration.json" };
     for (String document : documents) {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, document);
       graph.addNode(new EngineeringNode(nodeId, EngineeringNode.Kind.DOCUMENT, document, document)
@@ -531,6 +551,7 @@ public final class EngineeringDeliverableCompiler {
     artifacts.add("engineering-diagram-layout.json");
     artifacts.add("engineering-schema-catalog.json");
     artifacts.add("engineering-validation-report.json");
+    artifacts.add("engineering-discipline-orchestration.json");
     artifacts.add("plant.dexpi.xml");
     artifacts.add("plant-proteus.xml");
     artifacts.add("plant-pydexpi.xml");
