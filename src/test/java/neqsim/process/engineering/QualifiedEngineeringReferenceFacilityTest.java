@@ -21,8 +21,8 @@ class QualifiedEngineeringReferenceFacilityTest {
   void buildsConnectedExecutionReadyReferenceFacility() {
     Definition definition = InletCompressionExportReferenceFacility.build();
 
-    ProductionVerticalSlicePreflight.Result preflight = ProductionVerticalSlicePreflight
-        .assess(definition.getProject(), definition.getQualificationPolicy());
+    ProductionVerticalSlicePreflight.Result preflight = ProductionVerticalSlicePreflight.assess(definition.getProject(),
+        definition.getQualificationPolicy());
     EngineeringAutoConfigurator.Result configuration = EngineeringAutoConfigurator.configure(definition.getProject(),
         definition.getAutoConfigurationPolicy());
 

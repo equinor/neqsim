@@ -78,9 +78,9 @@ public final class InletCompressionExportReferenceFacility {
   public static Definition build() {
     ProcessSystem process = process();
     InletCompressionExportSlicePolicy qualificationPolicy = qualificationPolicy();
-    EngineeringProject project = NorsokOffshoreEngineeringBuilder.from("Qualified engineering reference facility",
-        process).projectId("neqsim-qualified-inlet-compression-export-reference").registerProposedInstruments(true)
-        .build();
+    EngineeringProject project = NorsokOffshoreEngineeringBuilder
+        .from("Qualified engineering reference facility", process)
+        .projectId("neqsim-qualified-inlet-compression-export-reference").registerProposedInstruments(true).build();
     addEvidence(project);
     addCases(project, qualificationPolicy);
     project.addDynamicSafetyScenario(VerticalSliceDynamicScenarioFactory.emergencyShutdown(DYNAMIC_SCENARIO,
@@ -88,13 +88,11 @@ public final class InletCompressionExportReferenceFacility {
     addReliefAndFlare(project, process);
     addShutdownSequence(project);
     project.addReliefDeviceDesignInput(new ReliefDeviceDesignInput(PSV, COOLER).setSelectedOrificeAreaIn2(0.785)
-        .setInletPiping(0.1023, 5.0, 3.0).setOutletPiping(0.1541, 35.0, 8.0)
-        .setAllowableInletLossPercent(3.0).setAllowableBuiltUpBackPressurePercent(10.0)
-        .setConcurrencyGroup("FIRE-ZONE-A").setFireZone("FIRE-ZONE-A").setTwoPhaseMethod("API 520 OMEGA SCREEN")
-        .setEvidenceReference(RELIEF_EVIDENCE));
+        .setInletPiping(0.1023, 5.0, 3.0).setOutletPiping(0.1541, 35.0, 8.0).setAllowableInletLossPercent(3.0)
+        .setAllowableBuiltUpBackPressurePercent(10.0).setConcurrencyGroup("FIRE-ZONE-A").setFireZone("FIRE-ZONE-A")
+        .setTwoPhaseMethod("API 520 OMEGA SCREEN").setEvidenceReference(RELIEF_EVIDENCE));
     project.addReliefScenarioBasis(new ReliefScenarioBasis(COOLER).require(ReliefCause.BLOCKED_OUTLET)
-        .require(ReliefCause.FIRE).setHazardReviewReference(HAZOP_EVIDENCE)
-        .addEvidenceReference(RELIEF_EVIDENCE));
+        .require(ReliefCause.FIRE).setHazardReviewReference(HAZOP_EVIDENCE).addEvidenceReference(RELIEF_EVIDENCE));
     return new Definition(project, autoConfigurationPolicy(), qualificationPolicy);
   }
 
@@ -201,11 +199,9 @@ public final class InletCompressionExportReferenceFacility {
     double[][] efficiencies = new double[][] { { 70.0, 79.0, 73.0 }, { 71.0, 80.0, 74.0 } };
     compressor.getCompressorChart().setCurves(conditions, speeds, flows, heads, efficiencies);
     compressor.getCompressorChart()
-        .setSurgeCurve(new SafeSplineSurgeCurve(new double[] { 16.0, 25.0, 38.0 },
-            new double[] { 115.0, 95.0, 70.0 }));
-    compressor.getCompressorChart()
-        .setStoneWallCurve(new SafeSplineStoneWallCurve(new double[] { 160.0, 190.0, 220.0 },
-            new double[] { 115.0, 95.0, 70.0 }));
+        .setSurgeCurve(new SafeSplineSurgeCurve(new double[] { 16.0, 25.0, 38.0 }, new double[] { 115.0, 95.0, 70.0 }));
+    compressor.getCompressorChart().setStoneWallCurve(
+        new SafeSplineStoneWallCurve(new double[] { 160.0, 190.0, 220.0 }, new double[] { 115.0, 95.0, 70.0 }));
     compressor.getCompressorChart().setHeadUnit("kJ/kg");
     compressor.getCompressorChart().setUseCompressorChart(true);
     compressor.getAntiSurge().setActive(true);
@@ -215,18 +211,18 @@ public final class InletCompressionExportReferenceFacility {
   private static InletCompressionExportSlicePolicy qualificationPolicy() {
     return InletCompressionExportSlicePolicy.builder("qualified-reference-facility", "1.0")
         .processTags(SEPARATOR, COMPRESSOR, COOLER, EXPORT_LINE).controlTags(ASV, ASV_RECYCLE, PCV, LCV)
-        .safetyTags(PSV, BDV, SUCTION_ESD, DISCHARGE_ESD, FLARE_CONNECTION)
-        .addRequiredDynamicScenario(DYNAMIC_SCENARIO).addEvidenceReference(DESIGN_BASIS_EVIDENCE)
-        .addEvidenceReference(HAZOP_EVIDENCE).addEvidenceReference(MAP_EVIDENCE).addEvidenceReference(SRS_EVIDENCE)
-        .addEvidenceReference(RELIEF_EVIDENCE).addEvidenceReference(MATERIALS_EVIDENCE).build();
+        .safetyTags(PSV, BDV, SUCTION_ESD, DISCHARGE_ESD, FLARE_CONNECTION).addRequiredDynamicScenario(DYNAMIC_SCENARIO)
+        .addEvidenceReference(DESIGN_BASIS_EVIDENCE).addEvidenceReference(HAZOP_EVIDENCE)
+        .addEvidenceReference(MAP_EVIDENCE).addEvidenceReference(SRS_EVIDENCE).addEvidenceReference(RELIEF_EVIDENCE)
+        .addEvidenceReference(MATERIALS_EVIDENCE).build();
   }
 
   private static void addEvidence(EngineeringProject project) {
-    project.addEvidenceRecord(evidence(DESIGN_BASIS_EVIDENCE, "PROCESS_DESIGN_BASIS", "Synthetic case matrix basis",
-        SEPARATOR));
+    project.addEvidenceRecord(
+        evidence(DESIGN_BASIS_EVIDENCE, "PROCESS_DESIGN_BASIS", "Synthetic case matrix basis", SEPARATOR));
     project.addEvidenceRecord(evidence(HAZOP_EVIDENCE, "HAZOP", "Synthetic scenario credibility record", SEPARATOR));
-    project.addEvidenceRecord(evidence(MAP_EVIDENCE, "VENDOR_MAP", "Synthetic compressor map regression basis",
-        COMPRESSOR));
+    project.addEvidenceRecord(
+        evidence(MAP_EVIDENCE, "VENDOR_MAP", "Synthetic compressor map regression basis", COMPRESSOR));
     project.addEvidenceRecord(evidence(SRS_EVIDENCE, "SRS_CAUSE_AND_EFFECT",
         "Synthetic trip, isolation and depressurization sequence", COMPRESSOR));
     project.addEvidenceRecord(evidence(RELIEF_EVIDENCE, "RELIEF_AND_FLARE_CALCULATION",
@@ -244,10 +240,10 @@ public final class InletCompressionExportReferenceFacility {
     VerticalSliceCaseMatrixFactory.Builder cases = VerticalSliceCaseMatrixFactory.builder(FEED, COMPRESSOR);
     cases.addCase("normal", "Normal operation", EngineeringDesignCase.Type.NORMAL, 8000.0, 50.0, 25.0, 80.0,
         DESIGN_BASIS_EVIDENCE, "REVIEW_REQUIRED");
-    cases.addCase("turndown", "Minimum turndown", EngineeringDesignCase.Type.MINIMUM_TURNDOWN, 5000.0, 48.0, 20.0,
-        76.0, DESIGN_BASIS_EVIDENCE, "REVIEW_REQUIRED");
-    cases.addCase("maximum", "Maximum production", EngineeringDesignCase.Type.MAXIMUM_PRODUCTION, 10000.0, 52.0,
-        30.0, 82.0, DESIGN_BASIS_EVIDENCE, "REVIEW_REQUIRED");
+    cases.addCase("turndown", "Minimum turndown", EngineeringDesignCase.Type.MINIMUM_TURNDOWN, 5000.0, 48.0, 20.0, 76.0,
+        DESIGN_BASIS_EVIDENCE, "REVIEW_REQUIRED");
+    cases.addCase("maximum", "Maximum production", EngineeringDesignCase.Type.MAXIMUM_PRODUCTION, 10000.0, 52.0, 30.0,
+        82.0, DESIGN_BASIS_EVIDENCE, "REVIEW_REQUIRED");
     cases.addCase("startup", "Startup", EngineeringDesignCase.Type.STARTUP, 6000.0, 45.0, 20.0, 70.0,
         DESIGN_BASIS_EVIDENCE, "REVIEW_REQUIRED");
     cases.addCase("shutdown", "Controlled shutdown", EngineeringDesignCase.Type.SHUTDOWN, 3000.0, 45.0, 25.0, 65.0,
@@ -256,10 +252,10 @@ public final class InletCompressionExportReferenceFacility {
         25.0, 75.0, SRS_EVIDENCE, "REVIEW_REQUIRED");
     cases.addCase("settle-out", "Compressor settle-out", EngineeringDesignCase.Type.SETTLE_OUT, 4000.0, 50.0, 30.0,
         70.0, SRS_EVIDENCE, "REVIEW_REQUIRED");
-    cases.addCase("blocked-outlet", "Blocked export outlet", EngineeringDesignCase.Type.BLOCKED_OUTLET, 10000.0,
-        52.0, 30.0, 90.0, RELIEF_EVIDENCE, "REVIEW_REQUIRED");
-    cases.addCase("fire", "Fire exposure", EngineeringDesignCase.Type.FIRE, 8000.0, 50.0, 45.0, 90.0,
-        RELIEF_EVIDENCE, "REVIEW_REQUIRED");
+    cases.addCase("blocked-outlet", "Blocked export outlet", EngineeringDesignCase.Type.BLOCKED_OUTLET, 10000.0, 52.0,
+        30.0, 90.0, RELIEF_EVIDENCE, "REVIEW_REQUIRED");
+    cases.addCase("fire", "Fire exposure", EngineeringDesignCase.Type.FIRE, 8000.0, 50.0, 45.0, 90.0, RELIEF_EVIDENCE,
+        "REVIEW_REQUIRED");
     cases.addCase("blowdown", "Emergency depressurization initial state", EngineeringDesignCase.Type.BLOWDOWN, 5000.0,
         50.0, 25.0, 75.0, RELIEF_EVIDENCE, "REVIEW_REQUIRED");
     cases.applyTo(project, policy);
@@ -267,12 +263,12 @@ public final class InletCompressionExportReferenceFacility {
 
   private static EngineeringAutoConfigurationPolicy autoConfigurationPolicy() {
     EngineeringMetric reliefArea = blockedOutletReliefAreaMetric();
-    PipingRulePack pipingRules = PipingRulePack.builder("reference-norsok-p002-2023-ac2024")
-        .standard("NORSOK P-002").edition("2023+AC:2024").velocityLimits(20.0, 5.0, 0.5)
-        .maximumPressureGradientBarPerKm(5.0).maximumReliefInletLossFraction(0.03).build();
+    PipingRulePack pipingRules = PipingRulePack.builder("reference-norsok-p002-2023-ac2024").standard("NORSOK P-002")
+        .edition("2023+AC:2024").velocityLimits(20.0, 5.0, 0.5).maximumPressureGradientBarPerKm(5.0)
+        .maximumReliefInletLossFraction(0.03).build();
     return new EngineeringAutoConfigurationPolicy("qualified-reference-facility", "1.0")
-        .addInletCompressionExportSlice(SEPARATOR, COMPRESSOR, EXPORT_LINE, PCV, "PIT-100", 750.0, 0.107, 180.0,
-            20.0, 5.0, 0.10, 500.0, 1000.0, 2000.0, 5000.0, 10000.0)
+        .addInletCompressionExportSlice(SEPARATOR, COMPRESSOR, EXPORT_LINE, PCV, "PIT-100", 750.0, 0.107, 180.0, 20.0,
+            5.0, 0.10, 500.0, 1000.0, 2000.0, 5000.0, 10000.0)
         .addCompressorOperatingEnvelope(COMPRESSOR, 0.02, 0.02, 180.0, 0.10)
         .addHeatExchanger(COOLER, 500.0, 25.0, 0.15, 10.0, 25.0, 50.0, 100.0, 200.0)
         .addHeatExchanger("ASV-COOLER", 400.0, 20.0, 0.15, 5.0, 10.0, 25.0, 50.0)
@@ -282,9 +278,8 @@ public final class InletCompressionExportReferenceFacility {
         .addControlValve(BDV, 100.0, 100.0, 50.0, 100.0, 250.0, 500.0)
         .addControlValve(SUCTION_ESD, 100.0, 100.0, 250.0, 500.0, 1000.0, 2000.0)
         .addControlValve(DISCHARGE_ESD, 100.0, 100.0, 250.0, 500.0, 1000.0, 2000.0)
-        .addReliefDevice(PSV, COOLER, reliefArea, ReliefValveSizing.STANDARD_ORIFICE_AREAS_IN2)
-        .addPipingNetwork("export-network", pipingRules,
-            PipingNetworkDesignModule.SegmentDefinition.processLine(EXPORT_LINE, true));
+        .addReliefDevice(PSV, COOLER, reliefArea, ReliefValveSizing.STANDARD_ORIFICE_AREAS_IN2).addPipingNetwork(
+            "export-network", pipingRules, PipingNetworkDesignModule.SegmentDefinition.processLine(EXPORT_LINE, true));
   }
 
   private static EngineeringMetric blockedOutletReliefAreaMetric() {
@@ -314,18 +309,18 @@ public final class InletCompressionExportReferenceFacility {
         .calculate();
     OverpressureProtectionStudy reliefStudy = new OverpressureProtectionStudy(
         new ProtectedItem(COOLER, 90.0).setReliefSetPressureBara(90.0).setBackPressureBara(1.5))
-            .addScenario(blockedOutlet);
+        .addScenario(blockedOutlet);
     DynamicBlowdownFlareStudyDataSource.BlowdownSource source = DynamicBlowdownFlareStudyDataSource.BlowdownSource
         .builder(COOLER, fluid).equipmentTag(COOLER).vesselVolumeM3(5.0).orificeDiameterM(0.025)
         .dischargeCoefficient(0.72).backPressureBara(1.5).stopPressureBara(1.5).api521FireCase(20.0, true, true)
         .psvBasis(90.0, 0.21, false, false).build();
     DynamicBlowdownFlareStudyDataSource dynamic = DynamicBlowdownFlareStudyDataSource.builder("reference-flare-study")
         .addSource(source).flareHeader(0.50, 1.5, 288.15, 0.020, 1.30).maxAllowableHeaderMach(0.50)
-        .flareGeometry(0.60, 40.0, 0.20).flareDesignCapacity(1.0e9, 100.0, 50000.0)
-        .sourceDiagramsReviewed(true).pidTopologyVerified(true).lineEquipmentListsReviewed(true)
-        .pipingSpecificationRowsReviewed(true).vesselInventoryReviewed(true).valveSizingBasisReviewed(true)
-        .psvBasisReviewed(true).flareSystemBasisReviewed(true).fireCaseReviewed(true).standardsReviewed(true)
-        .humanReviewRequired(true).build();
+        .flareGeometry(0.60, 40.0, 0.20).flareDesignCapacity(1.0e9, 100.0, 50000.0).sourceDiagramsReviewed(true)
+        .pidTopologyVerified(true).lineEquipmentListsReviewed(true).pipingSpecificationRowsReviewed(true)
+        .vesselInventoryReviewed(true).valveSizingBasisReviewed(true).psvBasisReviewed(true)
+        .flareSystemBasisReviewed(true).fireCaseReviewed(true).standardsReviewed(true).humanReviewRequired(true)
+        .build();
     project.addOverpressureStudy(reliefStudy).addBlowdownFlareStudy(dynamic)
         .addCoupledReliefBlowdownFlareStudy(CoupledReliefBlowdownFlareInput.builder("reference-coupled-safety")
             .addReliefStudy(reliefStudy, "FIRE-ZONE-A").dynamicStudy(dynamic).scenarioSelectionReviewed(true)
