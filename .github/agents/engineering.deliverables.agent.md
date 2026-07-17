@@ -290,6 +290,22 @@ dynamic protection scenarios. Run them together with
 - Treat failed, blocked, and review-required results as visible deliverable
   gaps; never convert them to approval automatically.
 
+When `EngineeringProject.getEngineeringDesignModules()` is non-empty, use
+`ProcessToEngineeringSimulator` before deliverable compilation. Confirm that
+the loop converged for both process values and physical design variables, every configured constraint passed, and the original
+process was not mutated. The latest designed process is intentionally consumed
+by the canonical graph, DEXPI writer, and equipment registers; calculation
+evidence remains review-required. Use the inlet-separation/compression/export
+slice as the default vertical demonstration, then add explicit pump, exchanger,
+inventory, column, or utility rating modules rather than inventing hidden
+defaults.
+
+Prefer the typed equipment, piping-network, valve/instrument, safety, materials,
+and mechanical calculation modules. Preserve their method versions, governed
+inputs, uncertainty, constraints, and review status. Deliver the coordinated
+step-8 artifacts, including datasheets, I/O, alarm/trip, PSV, utility,
+materials, diagram-layout, unresolved-action, and revision-impact reports.
+
 ## Shared Skills
 - Heat integration: See `neqsim-heat-integration` skill for pinch analysis (drives utility level selection)
 - Utilities specification: See `neqsim-utilities-specification` skill for steam levels, cooling water, instrument air, fuel gas, N₂, demin water, refrigeration

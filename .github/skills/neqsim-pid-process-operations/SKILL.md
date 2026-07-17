@@ -214,6 +214,24 @@ Represent controlled tie-ins with `EngineeringBoundary` so process inlet/outlet,
 flare, vent, closed-drain, utility and recycle connections become directional
 off-page connectors in native DEXPI rather than free-text assumptions.
 
+For a full process-to-engineering run, follow the eight controlled stages in
+`docs/integration/process-to-engineering-simulator.md`. Require convergence of
+both physical design variables and process values. Use typed equipment,
+network-piping, valve/instrument, safety, materials and mechanical calculation
+modules for independent evidence. Compile the final project with
+`EngineeringDeliverableCompiler`; do not assemble datasheets or registers from
+ad-hoc notebook dictionaries when coordinated compiler artifacts are available.
+Use `examples/notebooks/process_to_engineering_simulator.ipynb` for the closed
+loop and coordinated-package pattern, and
+`examples/notebooks/engineering_roadmap_steps_1_to_8.ipynb` for executable typed
+calculation examples across equipment, piping, valve/instrument, safety,
+materials and preliminary mechanics.
+
+Treat `unresolved-engineering-actions.json` as a mandatory review input. A
+calculated DEXPI package is never equivalent to HAZOP/LOPA acceptance, vendor
+certification, code mechanical design, final metallurgy approval or
+construction authorization.
+
 The calculation handoff automatically runs available equipment mechanical-design
 and materials-screening models. It can run API 520/521 PSV sizing from attached
 credible relief scenarios, and readiness-gated dynamic blowdown, flare load,
@@ -415,6 +433,18 @@ engineering-simulator contracts over mutating the live process:
 6. Use `EngineeringSimulationRunner` to execute all configured layers before
    generating the governed DEXPI package.
 
+For process-to-engineering work, configure discipline modules with
+`ProcessToEngineeringDesignBuilder` and execute `ProcessToEngineeringSimulator`.
+The `EngineeringDesignLoop` must converge both case simulations and physical
+design variables. Use `EngineeringDesignUpdate.Applier` only against the
+isolated working process; the source `ProcessSystem` must remain unchanged.
+Prefer discrete pipe, Cv, driver, area, and volume candidates so the result is a
+selectable engineering proposal rather than an unpurchasable continuous size.
+Compile DEXPI only after the loop has run so the canonical graph, equipment
+registers, calculation package, and exchange model use the designed process
+copy. Preserve `fitnessForConstruction=false` until accountable approvals are
+recorded.
+
 Dynamic pass/fail verifies the supplied model and acceptance criteria. It does
 not infer SIL, approve the SRS, establish independence, or authorize a field
 action.
@@ -454,3 +484,5 @@ For each operational change study, report:
 - [ ] Steady-state and dynamic scopes are explicitly separated.
 - [ ] Safety, flare, emissions, and low-temperature effects are checked when material is released.
 - [ ] Private plant details remain outside public repo files.
+- [ ] Process-to-engineering loops rerun all cases after geometry or rating changes.
+- [ ] DEXPI and registers use the designed process copy and retain approval boundaries.

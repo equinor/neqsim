@@ -64,7 +64,15 @@ final class Dexpi20EngineeringMaterializer {
     Set<String> usedIds = collectIds(document);
     Map<String, Element> equipment = collectEquipmentByTag(document);
     Element functions = directComponents(document, plant, "ProcessInstrumentationFunctions");
-    Element diagramGroups = createDiagram(document, engineeringModel, plant.getAttribute("id"));
+    Element diagramGroups = createDiagram(document, engineeringModel, plant.getAttribute("id"), "NeqSim governed P&ID",
+        "PIPING_AND_INSTRUMENTATION_DIAGRAM");
+    Element pfdGroups = createDiagram(document, engineeringModel, plant.getAttribute("id"), "NeqSim governed PFD",
+        "PROCESS_FLOW_DIAGRAM");
+    int pfdRepresentationNumber = 1;
+    for (Map.Entry<String, Element> item : equipment.entrySet()) {
+      appendRepresentation(document, pfdGroups, item.getValue().getAttribute("id"), item.getKey(),
+          pfdRepresentationNumber++);
+    }
     Element systems = directComponents(document, plant, "PipingNetworkSystems");
     Element safeguardSystem = object(document, uniqueId("EngineeringSafeguards", usedIds),
         "Plant/Piping.PipingNetworkSystem");
@@ -210,10 +218,12 @@ final class Dexpi20EngineeringMaterializer {
     segments.appendChild(segment);
   }
 
-  private static Element createDiagram(Document document, Element engineeringModel, String plantId) {
+  private static Element createDiagram(Document document, Element engineeringModel, String plantId, String name,
+      String diagramType) {
     Element diagramProperty = directComponents(document, engineeringModel, "Diagram");
     Element diagram = objectWithoutId(document, "Core/Diagram.Diagram");
-    data(document, diagram, "Name", "NeqSim governed engineering diagram");
+    data(document, diagram, "Name", name);
+    data(document, diagram, "DiagramType", diagramType);
     doubleData(document, diagram, "MinX", 0.0);
     doubleData(document, diagram, "MinY", 0.0);
     doubleData(document, diagram, "MaxX", 420.0);

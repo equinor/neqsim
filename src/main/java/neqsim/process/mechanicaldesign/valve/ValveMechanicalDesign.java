@@ -7,6 +7,8 @@ import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.costestimation.valve.ValveCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -39,6 +41,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class ValveMechanicalDesign extends MechanicalDesign {
+  private static final Logger logger = LogManager.getLogger(ValveMechanicalDesign.class);
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -327,10 +330,10 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     super.readDesignSpecifications();
 
     if (getDesignStandard().containsKey("valve design codes")) {
-      System.out.println("valve code standard: " + getDesignStandard().get("valve design codes").getStandardName());
+      logger.info("valve code standard: {}", getDesignStandard().get("valve design codes").getStandardName());
       valveCvMax = ((ValveDesignStandard) getDesignStandard().get("valve design codes")).getValveCvMax();
     } else {
-      System.out.println("no valve code standard specified......using default");
+      logger.info("no valve code standard specified; using default");
     }
   }
 

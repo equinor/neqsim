@@ -7,6 +7,7 @@ import java.util.Map;
 import neqsim.process.engineering.EngineeringBoundary;
 import neqsim.process.engineering.EngineeringApprovalRecord;
 import neqsim.process.engineering.EngineeringProject;
+import neqsim.process.engineering.design.EngineeringDesignValue;
 import neqsim.process.engineering.EngineeringRequirement;
 import neqsim.process.engineering.LineDesignInput;
 import neqsim.process.engineering.designcase.EngineeringDesignCase;
@@ -39,11 +40,17 @@ public final class EngineeringGraphBuilder {
     String projectNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.PROJECT, project.getProjectId());
     EngineeringNode projectNode = new EngineeringNode(projectNodeId, EngineeringNode.Kind.PROJECT,
         project.getProjectId(), project.getName()).putProperty("revision", project.getRevision())
-        .putProperty("processName", project.getProcessSystem().getName())
+        .putProperty("processName", project.getEngineeringProcessSystem().getName())
         .putProperty("jurisdiction", project.getDesignBasis().getJurisdiction())
         .putProperty("facilityType", project.getDesignBasis().getFacilityType())
         .putProperty("projectPhase", project.getDesignBasis().getProjectPhase()).addProvenance(
             new EngineeringProvenance("PROJECT", project.getProjectId()).setApprovalStatus("REVIEW_REQUIRED"));
+    if (project.getLatestEngineeringDesignLoopResult() != null) {
+      projectNode.putProperty("engineeringDesignLoopConverged",
+          Boolean.valueOf(project.getLatestEngineeringDesignLoopResult().isConverged()));
+      projectNode.putProperty("engineeringDesignIterationCount",
+          Double.valueOf(project.getLatestEngineeringDesignLoopResult().getIterations().size()));
+    }
     graph.addNode(projectNode);
 
     Map<String, String> processElementIds = addProcessElements(project, graph, projectNodeId);
@@ -82,7 +89,7 @@ public final class EngineeringGraphBuilder {
   private static Map<String, String> addProcessElements(EngineeringProject project, EngineeringGraph graph,
       String projectNodeId) {
     Map<String, String> ids = new LinkedHashMap<String, String>();
-    for (ProcessEquipmentInterface unit : project.getProcessSystem().getUnitOperations()) {
+    for (ProcessEquipmentInterface unit : project.getEngineeringProcessSystem().getUnitOperations()) {
       if (unit == null || unit.getName() == null || unit.getName().trim().isEmpty()) {
         continue;
       }
@@ -91,7 +98,7 @@ public final class EngineeringGraphBuilder {
       EngineeringNode node = new EngineeringNode(nodeId, kind, unit.getName(), unit.getName())
           .putProperty("javaClass", unit.getClass().getName()).putProperty("physicalCategory", physicalCategory(unit))
           .putProperty("source", "PROCESS_SYSTEM")
-          .addProvenance(new EngineeringProvenance("SIMULATION_MODEL", project.getProcessSystem().getName())
+          .addProvenance(new EngineeringProvenance("SIMULATION_MODEL", project.getEngineeringProcessSystem().getName())
               .setMethod("ProcessSystem topology"));
       try {
         node.putProperty("pressureBara", unit.getPressure("bara"));
@@ -103,6 +110,7 @@ public final class EngineeringGraphBuilder {
       } catch (Exception ex) {
         node.putProperty("temperatureStatus", "NOT_AVAILABLE");
       }
+      addEngineeringDesignValues(project, unit.getName(), node);
       graph.addNode(node);
       addEdge(graph, EngineeringEdge.Kind.CONTAINS, projectNodeId, nodeId, "processElement");
       ids.put(unit.getName(), nodeId);
@@ -110,9 +118,25 @@ public final class EngineeringGraphBuilder {
     return ids;
   }
 
+  private static void addEngineeringDesignValues(EngineeringProject project, String equipmentTag,
+      EngineeringNode node) {
+    if (project.getLatestEngineeringDesignLoopResult() == null) {
+      return;
+    }
+    String prefix = equipmentTag + ".";
+    for (Map.Entry<String, EngineeringDesignValue> entry : project.getLatestEngineeringDesignLoopResult().getState()
+        .getValues().entrySet()) {
+      if (entry.getKey().startsWith(prefix)) {
+        String property = entry.getKey().substring(prefix.length());
+        node.putProperty("design." + property + ".value", Double.valueOf(entry.getValue().getValue()));
+        node.putProperty("design." + property + ".unit", entry.getValue().getUnit());
+      }
+    }
+  }
+
   private static void addConnections(EngineeringProject project, EngineeringGraph graph, String projectNodeId,
       Map<String, String> processElementIds) {
-    for (ProcessConnection connection : project.getProcessSystem().getConnections()) {
+    for (ProcessConnection connection : project.getEngineeringProcessSystem().getConnections()) {
       String sourceId = processElementIds.get(connection.getSourceEquipment());
       String targetId = processElementIds.get(connection.getTargetEquipment());
       if (sourceId != null && targetId != null) {
@@ -186,7 +210,7 @@ public final class EngineeringGraphBuilder {
   }
 
   private static void addInstruments(EngineeringProject project, EngineeringGraph graph, String projectNodeId) {
-    for (MeasurementDeviceInterface instrument : project.getProcessSystem().getMeasurementDevices()) {
+    for (MeasurementDeviceInterface instrument : project.getEngineeringProcessSystem().getMeasurementDevices()) {
       String tag = instrument.getTag();
       if (tag == null || tag.trim().isEmpty()) {
         tag = instrument.getName();

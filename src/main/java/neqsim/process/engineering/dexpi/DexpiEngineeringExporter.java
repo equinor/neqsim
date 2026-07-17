@@ -28,6 +28,7 @@ import neqsim.process.engineering.EngineeringRequirement;
 import neqsim.process.engineering.EngineeringStandard;
 import neqsim.process.engineering.SimulationEngineeringDesignReport;
 import neqsim.process.engineering.SimulationEngineeringDesignRunner;
+import neqsim.process.engineering.design.EngineeringDesignValue;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.mechanicaldesign.DesignConditions;
@@ -46,6 +47,14 @@ import neqsim.process.processmodel.dexpi.Dexpi20SemanticValidator;
  */
 public final class DexpiEngineeringExporter {
   private DexpiEngineeringExporter() {
+  }
+
+  /** Rebuilds the deterministic integrity inventory after a coordinating compiler adds more artifacts. */
+  public static Path refreshPackageManifest(Path packageDirectory) throws IOException {
+    if (packageDirectory == null) {
+      throw new IllegalArgumentException("packageDirectory must not be null");
+    }
+    return EngineeringPackageManifest.write(packageDirectory, packageDirectory.resolve("package-manifest.json"));
   }
 
   /** Result of an engineering package export. */
@@ -157,14 +166,14 @@ public final class DexpiEngineeringExporter {
     Files.createDirectories(datasets);
 
     Path dexpi20File = outputDirectory.resolve("plant.dexpi.xml");
-    Dexpi20XmlWriter.write(project.getProcessSystem(), dexpi20File.toFile());
+    Dexpi20XmlWriter.write(project.getEngineeringProcessSystem(), dexpi20File.toFile());
     Dexpi20EngineeringMaterializer.materialize(project, dexpi20File);
 
     Path dexpiFile = outputDirectory.resolve("plant-proteus.xml");
-    DexpiXmlWriter.write(project.getProcessSystem(), dexpiFile.toFile());
+    DexpiXmlWriter.write(project.getEngineeringProcessSystem(), dexpiFile.toFile());
 
     Path pyDexpiFile = outputDirectory.resolve("plant-pydexpi.xml");
-    DexpiXmlWriter.writeForPyDexpi(project.getProcessSystem(), pyDexpiFile.toFile());
+    DexpiXmlWriter.writeForPyDexpi(project.getEngineeringProcessSystem(), pyDexpiFile.toFile());
 
     Map<String, Path> maps = writeCompressorMaps(project, datasets);
     DexpiEngineeringMaterializer.MaterializationResult materialization = enrichDexpi(project, dexpiFile, maps);
@@ -180,9 +189,13 @@ public final class DexpiEngineeringExporter {
     Path interoperability = outputDirectory.resolve("interoperability-report.json");
     Files.write(interoperability, interoperabilityReport(project, dexpi20File).getBytes(StandardCharsets.UTF_8));
     Map<String, Path> registers = EngineeringRegisterExporter.export(project, outputDirectory.resolve("registers"));
+    Path integrityManifest = outputDirectory.resolve("package-manifest.json");
+    // Materialized DEXPI documents reference the integrity manifest, so it must exist before
+    // sidecar validation. Rewrite it after the validation report is created to capture the final
+    // package inventory and hashes.
+    EngineeringPackageManifest.write(outputDirectory, integrityManifest);
     Path validation = outputDirectory.resolve("dexpi-validation.json");
     DexpiEngineeringValidator.write(DexpiEngineeringValidator.validate(dexpiFile), validation);
-    Path integrityManifest = outputDirectory.resolve("package-manifest.json");
     EngineeringPackageManifest.write(outputDirectory, integrityManifest);
     return new ExportResult(dexpiFile, dexpi20File, pyDexpiFile, manifest, calculations, causeAndEffect,
         interoperability, validation, integrityManifest, maps, registers);
@@ -242,7 +255,7 @@ public final class DexpiEngineeringExporter {
 
   private static Map<String, Path> writeCompressorMaps(EngineeringProject project, Path datasets) throws IOException {
     Map<String, Path> result = new LinkedHashMap<String, Path>();
-    for (ProcessEquipmentInterface unit : project.getProcessSystem().getUnitOperations()) {
+    for (ProcessEquipmentInterface unit : project.getEngineeringProcessSystem().getUnitOperations()) {
       if (!(unit instanceof Compressor)) {
         continue;
       }
@@ -319,7 +332,8 @@ public final class DexpiEngineeringExporter {
               "datasets/" + map.getFileName().toString());
           appendAttribute(document, attributes, "CompressorMapDataOrigin", "SIMULATION_OR_VENDOR_INPUT");
         }
-        appendSimulationAndDesignConditions(document, attributes, project.getProcessSystem().getUnit(tag));
+        appendSimulationAndDesignConditions(project, document, attributes,
+            project.getEngineeringProcessSystem().getUnit(tag));
         equipment.appendChild(attributes);
       }
 
@@ -367,8 +381,8 @@ public final class DexpiEngineeringExporter {
     parent.appendChild(attribute);
   }
 
-  private static void appendSimulationAndDesignConditions(Document document, Element attributes,
-      ProcessEquipmentInterface equipment) {
+  private static void appendSimulationAndDesignConditions(EngineeringProject project, Document document,
+      Element attributes, ProcessEquipmentInterface equipment) {
     if (equipment == null) {
       return;
     }
@@ -385,33 +399,41 @@ public final class DexpiEngineeringExporter {
       // Operating temperature is optional for non-thermodynamic equipment.
     }
     DesignConditions design = equipment.getDesignConditions();
-    if (design == null) {
-      return;
-    }
-    if (design.isDesignPressureSet()) {
+    if (design != null && design.isDesignPressureSet()) {
       appendAttribute(document, attributes, "DeclaredDesignPressureBara", Double.toString(design.getDesignPressure()));
     }
-    if (design.isMaxDesignTemperatureSet()) {
+    if (design != null && design.isMaxDesignTemperatureSet()) {
       appendAttribute(document, attributes, "DeclaredMaximumDesignTemperatureC",
           Double.toString(design.getMaxDesignTemperature()));
     }
-    if (design.isMinDesignTemperatureSet()) {
+    if (design != null && design.isMinDesignTemperatureSet()) {
       appendAttribute(document, attributes, "DeclaredMinimumDesignTemperatureC",
           Double.toString(design.getMinDesignTemperature()));
     }
-    if (design.isReliefSetPressureSet()) {
+    if (design != null && design.isReliefSetPressureSet()) {
       appendAttribute(document, attributes, "DeclaredReliefSetPressureBara",
           Double.toString(design.getReliefSetPressure()));
     }
-    if (design.isCorrosionAllowanceSet()) {
+    if (design != null && design.isCorrosionAllowanceSet()) {
       appendAttribute(document, attributes, "DeclaredCorrosionAllowanceMm",
           Double.toString(design.getCorrosionAllowance()));
     }
-    if (design.isConstructionMaterialSet()) {
+    if (design != null && design.isConstructionMaterialSet()) {
       appendAttribute(document, attributes, "DeclaredConstructionMaterial", design.getConstructionMaterial());
     }
-    if (design.isFailureActionSet()) {
+    if (design != null && design.isFailureActionSet()) {
       appendAttribute(document, attributes, "DeclaredValveFailureAction", design.getFailureAction().name());
+    }
+    if (project.getLatestEngineeringDesignLoopResult() != null) {
+      String prefix = equipment.getName() + ".";
+      for (Map.Entry<String, EngineeringDesignValue> entry : project.getLatestEngineeringDesignLoopResult().getState()
+          .getValues().entrySet()) {
+        if (entry.getKey().startsWith(prefix)) {
+          String property = entry.getKey().substring(prefix.length()).replaceAll("[^A-Za-z0-9]", "_");
+          appendAttribute(document, attributes, "CalculatedDesign_" + property,
+              entry.getValue().getValue() + " " + entry.getValue().getUnit());
+        }
+      }
     }
     appendAttribute(document, attributes, "CalculatedEngineeringDataStatus", "REVIEW_REQUIRED");
   }

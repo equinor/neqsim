@@ -13,14 +13,17 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.engineering.EngineeringRequirement;
+import neqsim.process.engineering.EngineeringSimulationRunner;
 import neqsim.process.engineering.LineDesignInput;
 import neqsim.process.engineering.designcase.DesignCaseEngine;
+import neqsim.process.engineering.designcase.EngineeringCaseRunOptions;
 import neqsim.process.engineering.designcase.EngineeringDesignEnvelope;
 import neqsim.process.engineering.designcase.EngineeringDesignCaseMatrix;
 import neqsim.process.engineering.dexpi.DexpiEngineeringExporter;
 import neqsim.process.engineering.dexpi.EngineeringDexpiRoundTripQualifier;
 import neqsim.process.engineering.model.EngineeringCalculation;
 import neqsim.process.engineering.model.EngineeringCalculationDag;
+import neqsim.process.engineering.model.EngineeringDiagramLayout;
 import neqsim.process.engineering.model.EngineeringEdge;
 import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringGraphBuilder;
@@ -39,6 +42,10 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 /** Compiles one governed project into a coordinated engineering package and canonical graph snapshot. */
 public final class EngineeringDeliverableCompiler {
   private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final String[] COORDINATED_ARTIFACTS = new String[] { "process-design-basis.json",
+      "equipment-datasheets.json", "valve-list.json", "io-list.json", "alarm-trip-schedule.json",
+      "shutdown-narratives.json", "psv-datasheets.json", "flare-blowdown-report.json", "utility-summary.json",
+      "materials-selection-report.json", "unresolved-engineering-actions.json", "revision-impact-report.json" };
 
   private EngineeringDeliverableCompiler() {
   }
@@ -200,10 +207,15 @@ public final class EngineeringDeliverableCompiler {
     Files.createDirectories(outputDirectory);
     List<String> schemaArtifacts = EngineeringSchemaCatalog.writeSchemas(outputDirectory);
 
+    if (!project.getEngineeringDesignModules().isEmpty()) {
+      EngineeringSimulationRunner.run(project,
+          EngineeringCaseRunOptions.builder().parallelism(1).requireConvergence(true).build());
+    }
+
     EngineeringDesignEnvelope envelope = null;
     List<EngineeringCalculation> envelopeCalculations = new ArrayList<EngineeringCalculation>();
     if (!project.getExecutableDesignCases().isEmpty() && !project.getEngineeringMetrics().isEmpty()) {
-      envelope = DesignCaseEngine.run(project.getProcessSystem(), project.getExecutableDesignCases(),
+      envelope = DesignCaseEngine.run(project.getEngineeringProcessSystem(), project.getExecutableDesignCases(),
           project.getEngineeringMetrics());
       envelopeCalculations.addAll(envelope.toCalculations());
     }
@@ -212,6 +224,9 @@ public final class EngineeringDeliverableCompiler {
     EngineeringCalculationDag calculationDag = EngineeringCalculationDag.from(dagCalculations);
     EngineeringGraph graph = EngineeringGraphBuilder.fromProject(project, envelopeCalculations);
     addDocumentNodes(graph, project);
+
+    Path diagramLayoutFile = outputDirectory.resolve("engineering-diagram-layout.json");
+    write(diagramLayoutFile, GSON.toJson(EngineeringDiagramLayout.build(graph)));
 
     DexpiEngineeringExporter.ExportResult dexpiResult = DexpiEngineeringExporter.export(project, outputDirectory);
     Path dexpiRoundTripReportFile = outputDirectory.resolve("engineering-dexpi-roundtrip-report.json");
@@ -247,6 +262,10 @@ public final class EngineeringDeliverableCompiler {
       diffFile = outputDirectory.resolve("engineering-revision-diff.json");
       write(diffFile, diff.toJson());
     }
+    Map<String, Object> coordinated = EngineeringCoordinatedPackage.build(project, graph, envelope, diff);
+    for (Map.Entry<String, Object> artifact : coordinated.entrySet()) {
+      write(outputDirectory.resolve(artifact.getKey()), GSON.toJson(artifact.getValue()));
+    }
     Path approvalLedgerFile = outputDirectory.resolve("engineering-approval-ledger.json");
     write(approvalLedgerFile, GSON.toJson(EngineeringApprovalLedger.build(project, graph, diff)));
     Path compilerManifest = outputDirectory.resolve("engineering-compiler-manifest.json");
@@ -258,6 +277,7 @@ public final class EngineeringDeliverableCompiler {
     if (!validation.isValid()) {
       throw new EngineeringPackageValidationException(validationFile, validation);
     }
+    DexpiEngineeringExporter.refreshPackageManifest(outputDirectory);
     return new CompilationResult(outputDirectory, graphFile, connectivityFile, calculationDagFile, designCaseMatrixFile,
         disciplinePackageFile, approvalLedgerFile, dexpiRoundTripReportFile, automationPlanFile, envelopeFile,
         equipmentFile, lineFile, instrumentFile, compilerManifest, validationFile, diffFile, graph, envelope,
@@ -272,8 +292,12 @@ public final class EngineeringDeliverableCompiler {
         "engineering-calculation-dag.json", "engineering-design-case-matrix.json",
         "engineering-discipline-package.json", "engineering-approval-ledger.json",
         "engineering-dexpi-roundtrip-report.json", "engineering-automation-plan.json", "design-case-envelope.json",
-        "equipment-register.json", "line-register.json", "instrument-register.json",
-        "engineering-compiler-manifest.json", "engineering-schema-catalog.json", "engineering-validation-report.json" };
+        "equipment-register.json", "line-register.json", "instrument-register.json", "engineering-diagram-layout.json",
+        "engineering-compiler-manifest.json", "engineering-schema-catalog.json", "engineering-validation-report.json",
+        "process-design-basis.json", "equipment-datasheets.json", "valve-list.json", "io-list.json",
+        "alarm-trip-schedule.json", "shutdown-narratives.json", "psv-datasheets.json", "flare-blowdown-report.json",
+        "utility-summary.json", "materials-selection-report.json", "unresolved-engineering-actions.json",
+        "revision-impact-report.json" };
     for (String document : documents) {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, document);
       graph.addNode(new EngineeringNode(nodeId, EngineeringNode.Kind.DOCUMENT, document, document)
@@ -360,7 +384,7 @@ public final class EngineeringDeliverableCompiler {
   private static List<Map<String, Object>> equipmentRegister(EngineeringProject project,
       EngineeringDesignEnvelope envelope) {
     List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
-    for (ProcessEquipmentInterface unit : project.getProcessSystem().getUnitOperations()) {
+    for (ProcessEquipmentInterface unit : project.getEngineeringProcessSystem().getUnitOperations()) {
       if (unit == null || unit instanceof Stream) {
         continue;
       }
@@ -402,7 +426,7 @@ public final class EngineeringDeliverableCompiler {
 
   private static List<Map<String, Object>> instrumentRegister(EngineeringProject project) {
     Map<String, Map<String, Object>> rows = new LinkedHashMap<String, Map<String, Object>>();
-    for (MeasurementDeviceInterface instrument : project.getProcessSystem().getMeasurementDevices()) {
+    for (MeasurementDeviceInterface instrument : project.getEngineeringProcessSystem().getMeasurementDevices()) {
       String tag = instrument.getTag();
       if (tag == null || tag.trim().isEmpty()) {
         tag = instrument.getName();
@@ -482,6 +506,7 @@ public final class EngineeringDeliverableCompiler {
     artifacts.add("equipment-register.json");
     artifacts.add("line-register.json");
     artifacts.add("instrument-register.json");
+    artifacts.add("engineering-diagram-layout.json");
     artifacts.add("engineering-schema-catalog.json");
     artifacts.add("engineering-validation-report.json");
     artifacts.add("plant.dexpi.xml");
@@ -491,6 +516,9 @@ public final class EngineeringDeliverableCompiler {
     artifacts.add("engineering-calculations.json");
     artifacts.add("cause-and-effect.json");
     artifacts.add("interoperability-report.json");
+    for (String artifact : COORDINATED_ARTIFACTS) {
+      artifacts.add(artifact);
+    }
     if (diff != null) {
       artifacts.add("engineering-revision-diff.json");
     }

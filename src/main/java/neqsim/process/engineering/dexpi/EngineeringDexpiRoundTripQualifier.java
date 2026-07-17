@@ -21,7 +21,7 @@ import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.engineering.validation.EngineeringSchemaCatalog;
 
-/** Reimports exported DEXPI representations and compares their stable equipment identities with the canonical graph. */
+/** Reimports DEXPI representations and compares identities, references and semantic inventories with the graph. */
 public final class EngineeringDexpiRoundTripQualifier {
   private EngineeringDexpiRoundTripQualifier() {
   }
@@ -33,15 +33,19 @@ public final class EngineeringDexpiRoundTripQualifier {
       throw new IllegalArgumentException("graph and all DEXPI exchange files are required");
     }
     Set<String> expectedEquipment = new LinkedHashSet<String>();
+    Map<String, Integer> expectedSemantics = new LinkedHashMap<String, Integer>();
     for (EngineeringNode node : graph.getNodes().values()) {
       if (node.getKind() == EngineeringNode.Kind.EQUIPMENT) {
         expectedEquipment.add(node.getExternalKey());
       }
+      String kind = node.getKind().name();
+      Integer count = expectedSemantics.get(kind);
+      expectedSemantics.put(kind, Integer.valueOf(count == null ? 1 : count.intValue() + 1));
     }
     List<Map<String, Object>> formats = new ArrayList<Map<String, Object>>();
-    formats.add(qualifyFormat("DEXPI_2_0_NATIVE", nativeDexpi, expectedEquipment, true));
-    formats.add(qualifyFormat("PROTEUS_4_1_1", proteus, expectedEquipment, false));
-    formats.add(qualifyFormat("PYDEXPI_PROTEUS", pyDexpi, expectedEquipment, false));
+    formats.add(qualifyFormat("DEXPI_2_0_NATIVE", nativeDexpi, expectedEquipment, expectedSemantics, true));
+    formats.add(qualifyFormat("PROTEUS_4_1_1", proteus, expectedEquipment, expectedSemantics, false));
+    formats.add(qualifyFormat("PYDEXPI_PROTEUS", pyDexpi, expectedEquipment, expectedSemantics, false));
     boolean passed = true;
     for (Map<String, Object> format : formats) {
       passed &= "PASSED".equals(format.get("status"));
@@ -52,7 +56,8 @@ public final class EngineeringDexpiRoundTripQualifier {
     result.put("projectId", graph.getProjectId());
     result.put("revision", graph.getRevision());
     result.put("graphFingerprint", graph.toMap().get("fingerprint"));
-    result.put("qualificationScope", "INTERNAL_STRUCTURAL_EXPORT_REIMPORT");
+    result.put("qualificationScope", "INTERNAL_IDENTITY_REFERENCE_AND_SEMANTIC_INVENTORY_EXPORT_REIMPORT");
+    result.put("expectedGraphSemanticInventory", expectedSemantics);
     result.put("status", passed ? "INTERNAL_STRUCTURAL_ROUNDTRIP_PASSED" : "INTERNAL_STRUCTURAL_ROUNDTRIP_FAILED");
     result.put("formats", formats);
     result.put("commercialCaeStatus", "QUALIFICATION_REQUIRED");
@@ -62,7 +67,7 @@ public final class EngineeringDexpiRoundTripQualifier {
   }
 
   private static Map<String, Object> qualifyFormat(String profile, Path file, Set<String> expectedEquipment,
-      boolean nativeFormat) throws IOException {
+      Map<String, Integer> expectedSemantics, boolean nativeFormat) throws IOException {
     Document document = parse(file);
     Extraction extraction = nativeFormat ? extractNative(document) : extractProteus(document);
     List<String> missing = difference(expectedEquipment, extraction.equipmentTags);
@@ -80,6 +85,10 @@ public final class EngineeringDexpiRoundTripQualifier {
     result.put("duplicateIdentityCount", Integer.valueOf(extraction.duplicateIdentityCount));
     result.put("referenceCount", Integer.valueOf(extraction.referenceCount));
     result.put("unresolvedReferences", sorted(extraction.unresolvedReferences));
+    result.put("expectedGraphSemanticInventory", expectedSemantics);
+    result.put("reimportedSemanticInventory", extraction.semanticInventory());
+    result.put("semanticComparisonStatus",
+        passed ? "IDENTITIES_AND_REFERENCES_PRESERVED" : "SEMANTIC_DIFFERENCE_REVIEW_REQUIRED");
     result.put("status", passed ? "PASSED" : "FAILED");
     return result;
   }
@@ -96,6 +105,13 @@ public final class EngineeringDexpiRoundTripQualifier {
           result.equipmentTags.add(tag);
         }
       }
+      if (type.endsWith(".Nozzle")) {
+        result.nozzleCount++;
+      } else if (type.contains("Instrumentation")) {
+        result.instrumentationCount++;
+      } else if (type.equals("Plant/Piping.Pipe")) {
+        result.connectionCount++;
+      }
     }
     return result;
   }
@@ -109,6 +125,9 @@ public final class EngineeringDexpiRoundTripQualifier {
         continue;
       }
       String tag = genericAttributeValue(item, "TagName");
+      if (tag.isEmpty()) {
+        tag = genericAttributeValue(item, "TagNameAssignmentClass");
+      }
       if (tag.isEmpty() && item.getAttribute("ID").startsWith("ID-")) {
         tag = item.getAttribute("ID").substring(3);
       }
@@ -116,6 +135,9 @@ public final class EngineeringDexpiRoundTripQualifier {
         result.equipmentTags.add(tag);
       }
     }
+    result.nozzleCount = document.getElementsByTagName("Nozzle").getLength();
+    result.instrumentationCount = document.getElementsByTagName("ProcessInstrumentationFunction").getLength();
+    result.connectionCount = document.getElementsByTagName("Connection").getLength();
     return result;
   }
 
@@ -215,5 +237,17 @@ public final class EngineeringDexpiRoundTripQualifier {
     private int identityCount;
     private int duplicateIdentityCount;
     private int referenceCount;
+    private int nozzleCount;
+    private int connectionCount;
+    private int instrumentationCount;
+
+    private Map<String, Integer> semanticInventory() {
+      Map<String, Integer> result = new LinkedHashMap<String, Integer>();
+      result.put("EQUIPMENT", Integer.valueOf(equipmentTags.size()));
+      result.put("NOZZLE", Integer.valueOf(nozzleCount));
+      result.put("CONNECTION", Integer.valueOf(connectionCount));
+      result.put("INSTRUMENTATION", Integer.valueOf(instrumentationCount));
+      return result;
+    }
   }
 }
