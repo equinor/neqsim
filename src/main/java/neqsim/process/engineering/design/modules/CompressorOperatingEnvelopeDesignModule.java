@@ -116,15 +116,15 @@ public final class CompressorOperatingEnvelopeDesignModule implements Engineerin
             .governingCaseId(maximumExtrapolation.caseId).build())
         .addUpdate(EngineeringDesignUpdate.builder(speedKey, maximumSpeed.value, "rpm")
             .governingCaseId(maximumSpeed.caseId).build())
-        .addConstraint(new EngineeringDesignConstraint(compressorTag + ".surge-margin",
-            "Minimum distance to surge line", surgeKey, minimumSurgeMarginFraction, "fraction",
-            EngineeringDesignConstraint.Comparison.MINIMUM))
+        .addConstraint(
+            new EngineeringDesignConstraint(compressorTag + ".surge-margin", "Minimum distance to surge line", surgeKey,
+                minimumSurgeMarginFraction, "fraction", EngineeringDesignConstraint.Comparison.MINIMUM))
         .addConstraint(new EngineeringDesignConstraint(compressorTag + ".stonewall-margin",
             "Minimum distance to stonewall/choke", stonewallKey, minimumStonewallMarginFraction, "fraction",
             EngineeringDesignConstraint.Comparison.MINIMUM))
-        .addConstraint(new EngineeringDesignConstraint(compressorTag + ".chart-extrapolation",
-            "No compressor-map extrapolation", extrapolationKey, 0.0, "flag",
-            EngineeringDesignConstraint.Comparison.MAXIMUM))
+        .addConstraint(
+            new EngineeringDesignConstraint(compressorTag + ".chart-extrapolation", "No compressor-map extrapolation",
+                extrapolationKey, 0.0, "flag", EngineeringDesignConstraint.Comparison.MAXIMUM))
         .addConstraint(new EngineeringDesignConstraint(compressorTag + ".discharge-temperature",
             "Maximum compressor discharge temperature", temperatureKey, maximumDischargeTemperatureC, "C",
             EngineeringDesignConstraint.Comparison.MAXIMUM))
@@ -146,8 +146,8 @@ public final class CompressorOperatingEnvelopeDesignModule implements Engineerin
       for (String metricId : metricIds) {
         Double value = designCase.getValues().get(metricId);
         if (value == null || !Double.isFinite(value.doubleValue())) {
-          throw new IllegalStateException("Missing finite compressor metric " + metricId + " for case "
-              + designCase.getDesignCase().getId());
+          throw new IllegalStateException(
+              "Missing finite compressor metric " + metricId + " for case " + designCase.getDesignCase().getId());
         }
         point.put(metricId.substring(metricId.lastIndexOf('.') + 1), value);
       }

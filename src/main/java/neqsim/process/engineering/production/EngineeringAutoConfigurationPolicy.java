@@ -243,8 +243,8 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
 
   /** Adds governed compressor-map and anti-surge envelope limits for every configured design case. */
   public EngineeringAutoConfigurationPolicy addCompressorOperatingEnvelope(String compressorTag,
-      double minimumSurgeMarginFraction, double minimumStonewallMarginFraction,
-      double maximumDischargeTemperatureC, double surgeControlMarginFraction) {
+      double minimumSurgeMarginFraction, double minimumStonewallMarginFraction, double maximumDischargeTemperatureC,
+      double surgeControlMarginFraction) {
     compressorEnvelopes.add(new CompressorEnvelopeRule(compressorTag, minimumSurgeMarginFraction,
         minimumStonewallMarginFraction, maximumDischargeTemperatureC, surgeControlMarginFraction));
     return this;
