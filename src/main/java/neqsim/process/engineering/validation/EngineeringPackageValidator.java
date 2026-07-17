@@ -205,8 +205,27 @@ public final class EngineeringPackageValidator {
       if (!root.has("valid") || !root.get("valid").isJsonPrimitive()) {
         report.addError("ENG-SCHEMA-011", artifactName, "/valid", "Required boolean property is missing");
       }
+    } else if ("engineering-production-readiness.json".equals(artifactName)) {
+      requireString(root, "projectId", artifactName, report);
+      requireString(root, "revision", artifactName, report);
+      requireString(root, "maturityLevel", artifactName, report);
+      requireObject(root, "gates", artifactName, report);
+      requireArray(root, "failedGates", artifactName, report);
+      requireObject(root, "safetyLifecycle", artifactName, report);
+      requireObject(root, "evidenceBasis", artifactName, report);
+      requireFalse(root, "fitnessForConstruction", artifactName, report);
+      requireFalse(root, "finalEngineeringApprovalGranted", artifactName, report);
     }
     return report;
+  }
+
+  private static void requireFalse(JsonObject root, String property, String artifact,
+      EngineeringPackageValidationReport report) {
+    if (!root.has(property) || !root.get(property).isJsonPrimitive()
+        || !root.get(property).getAsJsonPrimitive().isBoolean() || root.get(property).getAsBoolean()) {
+      report.addError("ENG-SCHEMA-012", artifact, "/" + property,
+          "Required governance property must be the boolean value false");
+    }
   }
 
   /** Validates a complete package, including manifest inventory and cross-document references. */

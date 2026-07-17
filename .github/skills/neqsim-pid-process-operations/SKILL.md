@@ -1,8 +1,8 @@
 ---
 name: neqsim-pid-process-operations
-version: "1.4.0"
+version: "1.5.0"
 description: "Bidirectional P&ID/NeqSim workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim simulations, generating governed DEXPI engineering packages from ProcessSystem or ProcessModel, linking tags to historian data, evaluating valve/equipment changes, or preparing water-hammer and blowdown/flare handoffs."
-last_verified: "2026-07-15"
+last_verified: "2026-07-17"
 requires:
   python_packages: [pandas]
 ---
@@ -231,6 +231,15 @@ Treat `unresolved-engineering-actions.json` as a mandatory review input. A
 calculated DEXPI package is never equivalent to HAZOP/LOPA acceptance, vendor
 certification, code mechanical design, final metallurgy approval or
 construction authorization.
+
+Also inspect `engineering-production-readiness.json`. Do not describe a package
+as production-ready merely because the design loop converged or package
+validation passed. `QUALIFIED_FEED_SUPPORT` additionally requires independent
+benchmarks for every executed method version, project method qualifications, an
+explicit no-hidden-default auto-configuration result, named-tool DEXPI
+round-trip evidence, approved safety-lifecycle evidence, three accepted pilots,
+and release-quality evidence. Even that level always retains
+`fitnessForConstruction=false` and does not grant final engineering approval.
 
 The calculation handoff automatically runs available equipment mechanical-design
 and materials-screening models. It can run API 520/521 PSV sizing from attached

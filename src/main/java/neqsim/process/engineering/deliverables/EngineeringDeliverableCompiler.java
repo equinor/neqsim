@@ -31,6 +31,7 @@ import neqsim.process.engineering.model.EngineeringGraphDiff;
 import neqsim.process.engineering.model.EngineeringIds;
 import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.engineering.model.EngineeringProvenance;
+import neqsim.process.engineering.production.EngineeringProductionReadinessAssessment;
 import neqsim.process.engineering.validation.EngineeringPackageValidationException;
 import neqsim.process.engineering.validation.EngineeringPackageValidationReport;
 import neqsim.process.engineering.validation.EngineeringPackageValidator;
@@ -45,7 +46,8 @@ public final class EngineeringDeliverableCompiler {
   private static final String[] COORDINATED_ARTIFACTS = new String[] { "process-design-basis.json",
       "equipment-datasheets.json", "valve-list.json", "io-list.json", "alarm-trip-schedule.json",
       "shutdown-narratives.json", "psv-datasheets.json", "flare-blowdown-report.json", "utility-summary.json",
-      "materials-selection-report.json", "unresolved-engineering-actions.json", "revision-impact-report.json" };
+      "materials-selection-report.json", "unresolved-engineering-actions.json", "revision-impact-report.json",
+      "engineering-production-readiness.json" };
 
   private EngineeringDeliverableCompiler() {
   }
@@ -65,6 +67,7 @@ public final class EngineeringDeliverableCompiler {
     private final Path equipmentRegisterFile;
     private final Path lineRegisterFile;
     private final Path instrumentRegisterFile;
+    private final Path productionReadinessFile;
     private final Path compilerManifestFile;
     private final Path validationReportFile;
     private final Path revisionDiffFile;
@@ -77,8 +80,8 @@ public final class EngineeringDeliverableCompiler {
         Path engineeringCalculationDagFile, Path engineeringDesignCaseMatrixFile, Path engineeringDisciplinePackageFile,
         Path engineeringApprovalLedgerFile, Path engineeringDexpiRoundTripReportFile,
         Path engineeringAutomationPlanFile, Path designEnvelopeFile, Path equipmentRegisterFile, Path lineRegisterFile,
-        Path instrumentRegisterFile, Path compilerManifestFile, Path validationReportFile, Path revisionDiffFile,
-        EngineeringGraph engineeringGraph, EngineeringDesignEnvelope designEnvelope,
+        Path instrumentRegisterFile, Path productionReadinessFile, Path compilerManifestFile, Path validationReportFile,
+        Path revisionDiffFile, EngineeringGraph engineeringGraph, EngineeringDesignEnvelope designEnvelope,
         DexpiEngineeringExporter.ExportResult dexpiResult, EngineeringPackageValidationReport validationReport) {
       this.outputDirectory = outputDirectory;
       this.engineeringGraphFile = engineeringGraphFile;
@@ -93,6 +96,7 @@ public final class EngineeringDeliverableCompiler {
       this.equipmentRegisterFile = equipmentRegisterFile;
       this.lineRegisterFile = lineRegisterFile;
       this.instrumentRegisterFile = instrumentRegisterFile;
+      this.productionReadinessFile = productionReadinessFile;
       this.compilerManifestFile = compilerManifestFile;
       this.validationReportFile = validationReportFile;
       this.revisionDiffFile = revisionDiffFile;
@@ -152,6 +156,10 @@ public final class EngineeringDeliverableCompiler {
 
     public Path getInstrumentRegisterFile() {
       return instrumentRegisterFile;
+    }
+
+    public Path getProductionReadinessFile() {
+      return productionReadinessFile;
     }
 
     public Path getCompilerManifestFile() {
@@ -266,6 +274,9 @@ public final class EngineeringDeliverableCompiler {
     for (Map.Entry<String, Object> artifact : coordinated.entrySet()) {
       write(outputDirectory.resolve(artifact.getKey()), GSON.toJson(artifact.getValue()));
     }
+    Path productionReadinessFile = outputDirectory.resolve("engineering-production-readiness.json");
+    write(productionReadinessFile, GSON.toJson(
+        EngineeringProductionReadinessAssessment.assess(project, project.getProductionReadinessBasis()).toMap()));
     Path approvalLedgerFile = outputDirectory.resolve("engineering-approval-ledger.json");
     write(approvalLedgerFile, GSON.toJson(EngineeringApprovalLedger.build(project, graph, diff)));
     Path compilerManifest = outputDirectory.resolve("engineering-compiler-manifest.json");
@@ -280,8 +291,8 @@ public final class EngineeringDeliverableCompiler {
     DexpiEngineeringExporter.refreshPackageManifest(outputDirectory);
     return new CompilationResult(outputDirectory, graphFile, connectivityFile, calculationDagFile, designCaseMatrixFile,
         disciplinePackageFile, approvalLedgerFile, dexpiRoundTripReportFile, automationPlanFile, envelopeFile,
-        equipmentFile, lineFile, instrumentFile, compilerManifest, validationFile, diffFile, graph, envelope,
-        dexpiResult, validation);
+        equipmentFile, lineFile, instrumentFile, productionReadinessFile, compilerManifest, validationFile, diffFile,
+        graph, envelope, dexpiResult, validation);
   }
 
   private static void addDocumentNodes(EngineeringGraph graph, EngineeringProject project) {
@@ -297,7 +308,7 @@ public final class EngineeringDeliverableCompiler {
         "process-design-basis.json", "equipment-datasheets.json", "valve-list.json", "io-list.json",
         "alarm-trip-schedule.json", "shutdown-narratives.json", "psv-datasheets.json", "flare-blowdown-report.json",
         "utility-summary.json", "materials-selection-report.json", "unresolved-engineering-actions.json",
-        "revision-impact-report.json" };
+        "revision-impact-report.json", "engineering-production-readiness.json" };
     for (String document : documents) {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, document);
       graph.addNode(new EngineeringNode(nodeId, EngineeringNode.Kind.DOCUMENT, document, document)

@@ -36,6 +36,14 @@ public final class EngineeringDesignModuleResult implements Serializable {
     return moduleId;
   }
 
+  public String getMethod() {
+    return method;
+  }
+
+  public String getMethodVersion() {
+    return methodVersion;
+  }
+
   public List<EngineeringDesignUpdate> getUpdates() {
     return updates;
   }
