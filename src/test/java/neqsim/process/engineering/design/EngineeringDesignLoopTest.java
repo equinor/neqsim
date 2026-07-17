@@ -58,6 +58,30 @@ class EngineeringDesignLoopTest {
         .candidates(new DesignCandidate("NPS-8-SCH40", 0.20, "in")).build());
   }
 
+  @Test
+  void detectsTwoStateDiscreteCandidateOscillation() {
+    ProcessSystem base = process();
+    EngineeringCaseSet cases = new EngineeringCaseSet("oscillation-test")
+        .addCase(new EngineeringDesignCase("normal", "Normal", EngineeringDesignCase.Type.NORMAL,
+            new EngineeringDesignCase.Configurator() {
+              private static final long serialVersionUID = 1000L;
+
+              @Override
+              public void configure(ProcessSystem process) {
+                // The design update supplies the changing physical state.
+              }
+            }))
+        .addMetric(EngineeringMetric.equipmentPressure("FEED"));
+
+    EngineeringDesignLoopResult result = EngineeringDesignLoop.run(base, cases,
+        Arrays.<EngineeringDesignModule>asList(new OscillatingCandidateModule()),
+        EngineeringDesignLoopOptions.builder().maximumIterations(6).build());
+
+    assertFalse(result.isConverged());
+    assertEquals("DISCRETE_DESIGN_OSCILLATION_DETECTED", result.getTerminationReason());
+    assertEquals(3, result.getIterations().size());
+  }
+
   private ProcessSystem process() {
     SystemInterface fluid = new SystemSrkEos(300.0, 50.0);
     fluid.addComponent("methane", 1.0);
@@ -93,6 +117,33 @@ class EngineeringDesignLoopTest {
               }).build())
           .addConstraint(new EngineeringDesignConstraint("feed-minimum", "Minimum design pressure",
               "FEED.designPressure", 60.0, "bara", EngineeringDesignConstraint.Comparison.MINIMUM))
+          .build();
+    }
+  }
+
+  private static final class OscillatingCandidateModule implements EngineeringDesignModule {
+    private static final long serialVersionUID = 1000L;
+
+    @Override
+    public String getId() {
+      return "oscillating-candidate";
+    }
+
+    @Override
+    public EngineeringDesignModuleResult evaluate(ProcessSystem process, EngineeringCaseRunReport caseReport,
+        EngineeringDesignState state, EngineeringCalculationContext context) {
+      double candidate = !state.contains("FEED.discreteCandidate")
+          || state.requireValue("FEED.discreteCandidate") == 2.0 ? 1.0 : 2.0;
+      return EngineeringDesignModuleResult.builder(getId(), "Oscillation regression", "1.0")
+          .addUpdate(EngineeringDesignUpdate.builder("FEED.discreteCandidate", candidate, "m")
+              .relativeTolerance(0.0).applier(new EngineeringDesignUpdate.Applier() {
+                private static final long serialVersionUID = 1000L;
+
+                @Override
+                public void apply(ProcessSystem working, double value) {
+                  ((Stream) working.getUnit("FEED")).setPressure(49.0 + value, "bara");
+                }
+              }).build())
           .build();
     }
   }

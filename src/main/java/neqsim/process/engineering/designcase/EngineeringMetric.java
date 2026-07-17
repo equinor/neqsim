@@ -172,6 +172,137 @@ public final class EngineeringMetric implements Serializable {
         });
   }
 
+  /** Creates a maximum compressor polytropic-head metric. */
+  public static EngineeringMetric compressorPolytropicHead(final String equipmentTag) {
+    return new EngineeringMetric(equipmentTag + ".polytropicHead", equipmentTag, "Compressor polytropic head",
+        "kJ/kg", GoverningDirection.MAXIMUM, new Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem process) {
+            return compressor(process, equipmentTag).getPolytropicFluidHead();
+          }
+        });
+  }
+
+  /** Creates a maximum compressor-speed metric. */
+  public static EngineeringMetric compressorSpeed(final String equipmentTag) {
+    return new EngineeringMetric(equipmentTag + ".speed", equipmentTag, "Compressor shaft speed", "rpm",
+        GoverningDirection.MAXIMUM, new Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem process) {
+            return compressor(process, equipmentTag).getSpeed();
+          }
+        });
+  }
+
+  /** Creates a minimum compressor polytropic-efficiency metric. */
+  public static EngineeringMetric compressorPolytropicEfficiency(final String equipmentTag) {
+    return new EngineeringMetric(equipmentTag + ".polytropicEfficiency", equipmentTag,
+        "Compressor polytropic efficiency", "fraction", GoverningDirection.MINIMUM, new Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem process) {
+            return compressor(process, equipmentTag).getPolytropicEfficiency();
+          }
+        });
+  }
+
+  /** Creates a minimum fractional distance to the compressor surge line. */
+  public static EngineeringMetric compressorSurgeMargin(final String equipmentTag) {
+    return new EngineeringMetric(equipmentTag + ".surgeMargin", equipmentTag, "Distance to surge line", "fraction",
+        GoverningDirection.MINIMUM, new Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem process) {
+            return compressor(process, equipmentTag).getDistanceToSurge();
+          }
+        });
+  }
+
+  /** Creates a minimum fractional distance to the compressor stonewall/choke limit. */
+  public static EngineeringMetric compressorStonewallMargin(final String equipmentTag) {
+    return new EngineeringMetric(equipmentTag + ".stonewallMargin", equipmentTag, "Distance to stonewall",
+        "fraction", GoverningDirection.MINIMUM, new Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem process) {
+            return compressor(process, equipmentTag).getDistanceToStoneWall();
+          }
+        });
+  }
+
+  /** Creates a minimum fractional distance to the configured anti-surge control line. */
+  public static EngineeringMetric compressorControlLineMargin(final String equipmentTag) {
+    return new EngineeringMetric(equipmentTag + ".controlLineMargin", equipmentTag,
+        "Distance to anti-surge control line", "fraction", GoverningDirection.MINIMUM, new Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem process) {
+            return compressor(process, equipmentTag).getDistanceToControlLine();
+          }
+        });
+  }
+
+  /** Creates a maximum compressor recycle fraction required to remain on the anti-surge control line. */
+  public static EngineeringMetric compressorRequiredRecycleFraction(final String equipmentTag) {
+    return new EngineeringMetric(equipmentTag + ".requiredRecycleFraction", equipmentTag,
+        "Required anti-surge recycle fraction", "fraction", GoverningDirection.MAXIMUM, new Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem process) {
+            return compressor(process, equipmentTag).getRequiredRecycleFractionToControlLine();
+          }
+        });
+  }
+
+  /** Creates a maximum recycle-cooler duty associated with anti-surge recycle. */
+  public static EngineeringMetric compressorRecycleCoolerDuty(final String equipmentTag) {
+    return new EngineeringMetric(equipmentTag + ".recycleCoolerDuty", equipmentTag,
+        "Anti-surge recycle cooler duty", "kW", GoverningDirection.MAXIMUM, new Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem process) {
+            Compressor compressor = compressor(process, equipmentTag);
+            return compressor.getAntiSurgeRecycleHeatDuty(compressor.getRequiredRecycleFractionToControlLine(), "kW");
+          }
+        });
+  }
+
+  /** Creates a maximum compressor-discharge-temperature metric. */
+  public static EngineeringMetric compressorDischargeTemperature(final String equipmentTag) {
+    return new EngineeringMetric(equipmentTag + ".dischargeTemperature", equipmentTag,
+        "Compressor discharge temperature", "C", GoverningDirection.MAXIMUM, new Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem process) {
+            return compressor(process, equipmentTag).getOutletStream().getTemperature("C");
+          }
+        });
+  }
+
+  /** Creates a numeric flag that is one when a compressor case extrapolates outside its map. */
+  public static EngineeringMetric compressorChartExtrapolationFlag(final String equipmentTag) {
+    return new EngineeringMetric(equipmentTag + ".chartExtrapolated", equipmentTag,
+        "Compressor chart extrapolation flag", "flag", GoverningDirection.MAXIMUM, new Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem process) {
+            return compressor(process, equipmentTag).isChartExtrapolated() ? 1.0 : 0.0;
+          }
+        });
+  }
+
   /** Creates a maximum outlet-volume-flow metric for one equipment outlet. */
   public static EngineeringMetric equipmentOutletVolumeFlow(final String equipmentTag, final int outletIndex,
       String outletName) {
@@ -349,6 +480,14 @@ public final class EngineeringMetric implements Serializable {
       throw new IllegalArgumentException("Unknown equipment " + equipmentTag);
     }
     return unit;
+  }
+
+  private static Compressor compressor(ProcessSystem process, String equipmentTag) {
+    ProcessEquipmentInterface equipment = requireUnit(process, equipmentTag);
+    if (!(equipment instanceof Compressor)) {
+      throw new IllegalArgumentException(equipmentTag + " is not a Compressor");
+    }
+    return (Compressor) equipment;
   }
 
   private static String requireText(String value, String field) {

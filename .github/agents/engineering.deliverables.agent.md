@@ -53,6 +53,16 @@ infer SIL, final voting, trip set points, valve fail action, credible relief
 causes or shutdown effects solely from equipment class or a normal operating
 point.
 
+For the inlet-separation/compression/export production slice, run
+`ProductionVerticalSliceSimulator` with separate revision-controlled
+`EngineeringAutoConfigurationPolicy` and `InletCompressionExportSlicePolicy`
+objects. Require all nine gates in `engineering-vertical-slice-qualification.json`
+to pass before describing the result as a controlled pilot. A passing gate set
+is still not FEED-qualified, fit for construction, or finally approved. Configure
+the compressor map envelope explicitly with `addCompressorOperatingEnvelope`;
+missing surge/stonewall curves, case evidence, dynamic ESD response, or coupled
+relief/blowdown/flare results must remain blockers.
+
 When automatic discipline configuration is requested, require an explicit
 `EngineeringAutoConfigurationPolicy` for every recognized equipment item and
 every `ProcessModel` area. Stop on `isExecutionReady()==false`, report each

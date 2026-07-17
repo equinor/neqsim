@@ -64,6 +64,13 @@ public final class EngineeringAutoConfigurator {
       }
       configuredTags.add(rule.tag);
     }
+    for (EngineeringAutoConfigurationPolicy.CompressorEnvelopeRule rule : policy.getCompressorEnvelopes()) {
+      if (!hasModule(project, "35-compressor-operating-envelope-" + rule.tag)) {
+        builder.addCompressorOperatingEnvelopeDesign(rule.tag, rule.minimumSurgeMargin, rule.minimumStonewallMargin,
+            rule.maximumDischargeTemperatureC, rule.surgeControlMargin);
+      }
+      configuredTags.add(rule.tag);
+    }
     for (EngineeringAutoConfigurationPolicy.HeatExchangerRule rule : policy.getExchangers()) {
       if (!configuredTags.contains(rule.tag)) {
         builder.addHeatExchangerDesign(rule.tag, rule.overallU, rule.lmtd, rule.margin, rule.areas);
@@ -87,6 +94,13 @@ public final class EngineeringAutoConfigurator {
         builder.addRatedCapacity(rule.tag, rule.metric, rule.capacityName, rule.unit, rule.margin, rule.candidates);
       }
       configuredTags.add(rule.tag);
+    }
+    for (EngineeringAutoConfigurationPolicy.ReliefDeviceRule rule : policy.getReliefDevices()) {
+      if (!hasModule(project, "55-relief-device-design-" + rule.deviceTag)) {
+        builder.addReliefDeviceDesign(rule.deviceTag, rule.protectedEquipmentTag, rule.requiredAreaMetric,
+            rule.orificeCandidatesIn2);
+      }
+      configuredTags.add(rule.deviceTag);
     }
     for (EngineeringAutoConfigurationPolicy.NetworkRule rule : policy.getNetworks()) {
       boolean missing = false;
@@ -148,6 +162,15 @@ public final class EngineeringAutoConfigurator {
       }
     }
     return result;
+  }
+
+  private static boolean hasModule(EngineeringProject project, String moduleId) {
+    for (EngineeringDesignModule module : project.getEngineeringDesignModules()) {
+      if (moduleId.equals(module.getId())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static Map<String, List<String>> dependencyGraph(List<EngineeringDesignModule> modules) {
