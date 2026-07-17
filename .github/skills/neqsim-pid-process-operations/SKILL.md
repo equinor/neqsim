@@ -415,6 +415,18 @@ engineering-simulator contracts over mutating the live process:
 6. Use `EngineeringSimulationRunner` to execute all configured layers before
    generating the governed DEXPI package.
 
+For process-to-engineering work, configure discipline modules with
+`ProcessToEngineeringDesignBuilder` and execute `ProcessToEngineeringSimulator`.
+The `EngineeringDesignLoop` must converge both case simulations and physical
+design variables. Use `EngineeringDesignUpdate.Applier` only against the
+isolated working process; the source `ProcessSystem` must remain unchanged.
+Prefer discrete pipe, Cv, driver, area, and volume candidates so the result is a
+selectable engineering proposal rather than an unpurchasable continuous size.
+Compile DEXPI only after the loop has run so the canonical graph, equipment
+registers, calculation package, and exchange model use the designed process
+copy. Preserve `fitnessForConstruction=false` until accountable approvals are
+recorded.
+
 Dynamic pass/fail verifies the supplied model and acceptance criteria. It does
 not infer SIL, approve the SRS, establish independence, or authorize a field
 action.
@@ -454,3 +466,5 @@ For each operational change study, report:
 - [ ] Steady-state and dynamic scopes are explicitly separated.
 - [ ] Safety, flare, emissions, and low-temperature effects are checked when material is released.
 - [ ] Private plant details remain outside public repo files.
+- [ ] Process-to-engineering loops rerun all cases after geometry or rating changes.
+- [ ] DEXPI and registers use the designed process copy and retain approval boundaries.

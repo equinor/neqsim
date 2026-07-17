@@ -136,7 +136,7 @@ public final class SimulationEngineeringDesignRunner {
     root.add("dynamicBlowdownAndFlareSizing", blowdownResults);
 
     if (!project.getExecutableDesignCases().isEmpty() || !project.getCoupledReliefBlowdownFlareStudies().isEmpty()
-        || !project.getDynamicSafetyScenarios().isEmpty()) {
+        || !project.getDynamicSafetyScenarios().isEmpty() || !project.getEngineeringDesignModules().isEmpty()) {
       try {
         root.add("coordinatedEngineeringSimulation",
             GSON.toJsonTree(EngineeringSimulationRunner

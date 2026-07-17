@@ -15,6 +15,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import neqsim.process.engineering.EngineeringValidationReport.Severity;
 import neqsim.process.engineering.automation.EngineeringAutomationStudy;
+import neqsim.process.engineering.design.EngineeringDesignModule;
+import neqsim.process.engineering.design.EngineeringDesignLoopResult;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.Stream;
@@ -61,6 +63,8 @@ public final class EngineeringProject implements Serializable {
   private final List<EngineeringEvidenceRecord> evidenceRecords = new ArrayList<EngineeringEvidenceRecord>();
   private final List<CoupledReliefBlowdownFlareInput> coupledReliefBlowdownFlareStudies = new ArrayList<CoupledReliefBlowdownFlareInput>();
   private final List<DynamicSafetyScenario> dynamicSafetyScenarios = new ArrayList<DynamicSafetyScenario>();
+  private final List<EngineeringDesignModule> engineeringDesignModules = new ArrayList<EngineeringDesignModule>();
+  private transient EngineeringDesignLoopResult latestEngineeringDesignLoopResult;
   private final Map<String, EmergencyShutdownTestResult> shutdownVerificationResults = new LinkedHashMap<String, EmergencyShutdownTestResult>();
   private MaterialsReviewInput materialsReviewInput;
 
@@ -126,6 +130,25 @@ public final class EngineeringProject implements Serializable {
   /** @return associated runnable process system */
   public ProcessSystem getProcessSystem() {
     return processSystem;
+  }
+
+  /**
+   * Returns the latest isolated, iteratively designed process when available, otherwise the original process model. The
+   * original process is never mutated by the design loop.
+   */
+  public ProcessSystem getEngineeringProcessSystem() {
+    return latestEngineeringDesignLoopResult == null ? processSystem
+        : latestEngineeringDesignLoopResult.getDesignedProcess();
+  }
+
+  /** Records the latest design-loop evidence for downstream DEXPI and register compilation. */
+  void recordEngineeringDesignLoopResult(EngineeringDesignLoopResult result) {
+    latestEngineeringDesignLoopResult = result;
+  }
+
+  /** @return latest design-loop result, or null when the loop has not been run */
+  public EngineeringDesignLoopResult getLatestEngineeringDesignLoopResult() {
+    return latestEngineeringDesignLoopResult;
   }
 
   /** @return project design basis */
@@ -203,6 +226,25 @@ public final class EngineeringProject implements Serializable {
   /** @return immutable dynamic control and SIS scenario definitions */
   public List<DynamicSafetyScenario> getDynamicSafetyScenarios() {
     return Collections.unmodifiableList(dynamicSafetyScenarios);
+  }
+
+  /** Adds a discipline module executed by the closed process-to-engineering design loop. */
+  public EngineeringProject addEngineeringDesignModule(EngineeringDesignModule module) {
+    if (module == null) {
+      throw new IllegalArgumentException("module must not be null");
+    }
+    for (EngineeringDesignModule existing : engineeringDesignModules) {
+      if (existing.getId().equals(module.getId())) {
+        throw new IllegalArgumentException("Duplicate engineering design module " + module.getId());
+      }
+    }
+    engineeringDesignModules.add(module);
+    return this;
+  }
+
+  /** @return immutable modules configured for iterative process-to-engineering design */
+  public List<EngineeringDesignModule> getEngineeringDesignModules() {
+    return Collections.unmodifiableList(engineeringDesignModules);
   }
 
   /** Adds a controlled line-list row associated with pipeline equipment. */
@@ -686,6 +728,17 @@ public final class EngineeringProject implements Serializable {
       dynamicScenarios.add(gson.toJsonTree(scenario.toMap()));
     }
     root.add("dynamicSafetyScenarios", dynamicScenarios);
+    JsonArray designModules = new JsonArray();
+    for (EngineeringDesignModule module : engineeringDesignModules) {
+      JsonObject item = new JsonObject();
+      item.addProperty("id", module.getId());
+      item.addProperty("class", module.getClass().getName());
+      designModules.add(item);
+    }
+    root.add("engineeringDesignModules", designModules);
+    if (latestEngineeringDesignLoopResult != null) {
+      root.add("latestEngineeringDesignLoop", gson.toJsonTree(latestEngineeringDesignLoopResult.toMap()));
+    }
     JsonArray calculationNodes = new JsonArray();
     for (EngineeringCalculation calculation : calculations) {
       calculationNodes.add(gson.toJsonTree(calculation.toMap()));

@@ -109,6 +109,9 @@ public final class EngineeringDexpiRoundTripQualifier {
         continue;
       }
       String tag = genericAttributeValue(item, "TagName");
+      if (tag.isEmpty()) {
+        tag = genericAttributeValue(item, "TagNameAssignmentClass");
+      }
       if (tag.isEmpty() && item.getAttribute("ID").startsWith("ID-")) {
         tag = item.getAttribute("ID").substring(3);
       }
