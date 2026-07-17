@@ -16,6 +16,7 @@ import neqsim.process.engineering.designcase.EngineeringDesignEnvelope;
 import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringGraphDiff;
 import neqsim.process.engineering.model.EngineeringNode;
+import neqsim.process.engineering.production.EngineeringProductionReadinessAssessment;
 
 /** Builds coordinated, traceable engineering documents from the canonical project and graph. */
 final class EngineeringCoordinatedPackage {
@@ -261,6 +262,12 @@ final class EngineeringCoordinatedPackage {
           }
         }
       }
+    }
+    EngineeringProductionReadinessAssessment.Result readiness = EngineeringProductionReadinessAssessment.assess(project,
+        project.getProductionReadinessBasis());
+    for (String failedGate : readiness.getFailedGates()) {
+      actions.add(action("PRODUCTION_READINESS", failedGate, "Close production-readiness gate " + failedGate,
+          "ENGINEERING_ASSURANCE"));
     }
     result.put("actions", actions);
     result.put("openActionCount", Integer.valueOf(actions.size()));

@@ -1,0 +1,306 @@
+package neqsim.process.engineering.production;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import neqsim.process.engineering.design.modules.PipingNetworkDesignModule;
+import neqsim.process.engineering.designcase.EngineeringMetric;
+import neqsim.process.engineering.piping.PipingRulePack;
+
+/** Explicit project policy used for automatic module selection without hidden engineering defaults. */
+public final class EngineeringAutoConfigurationPolicy implements Serializable {
+  private static final long serialVersionUID = 1000L;
+
+  static final class SliceRule implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    final String separatorTag;
+    final String compressorTag;
+    final String lineTag;
+    final String valveTag;
+    final String instrumentTag;
+    final double separatorGasResidenceTimeSeconds;
+    final double separatorSoudersBrownCoefficient;
+    final double separatorLiquidRetentionTimeSeconds;
+    final double maximumLineVelocityMPerS;
+    final double maximumPressureGradientBarPerKm;
+    final double compressorDriverMarginFraction;
+    final double[] compressorDriverCandidatesKw;
+    final boolean explicitDesignInputs;
+
+    SliceRule(String separatorTag, String compressorTag, String lineTag, String valveTag, String instrumentTag,
+        double separatorGasResidenceTimeSeconds, double separatorSoudersBrownCoefficient,
+        double separatorLiquidRetentionTimeSeconds, double maximumLineVelocityMPerS,
+        double maximumPressureGradientBarPerKm, double compressorDriverMarginFraction,
+        double[] compressorDriverCandidatesKw, boolean explicitDesignInputs) {
+      this.separatorTag = text(separatorTag, "separatorTag");
+      this.compressorTag = text(compressorTag, "compressorTag");
+      this.lineTag = text(lineTag, "lineTag");
+      this.valveTag = optional(valveTag);
+      this.instrumentTag = optional(instrumentTag);
+      this.separatorGasResidenceTimeSeconds = separatorGasResidenceTimeSeconds;
+      this.separatorSoudersBrownCoefficient = separatorSoudersBrownCoefficient;
+      this.separatorLiquidRetentionTimeSeconds = separatorLiquidRetentionTimeSeconds;
+      this.maximumLineVelocityMPerS = maximumLineVelocityMPerS;
+      this.maximumPressureGradientBarPerKm = maximumPressureGradientBarPerKm;
+      this.compressorDriverMarginFraction = compressorDriverMarginFraction;
+      this.compressorDriverCandidatesKw = compressorDriverCandidatesKw == null ? new double[0]
+          : compressorDriverCandidatesKw.clone();
+      this.explicitDesignInputs = explicitDesignInputs;
+    }
+  }
+
+  static final class PumpRule implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    final String tag;
+    final double margin;
+    final double minimumNpshMarginM;
+    final double[] drivers;
+
+    PumpRule(String tag, double margin, double minimumNpshMarginM, double[] drivers) {
+      this.tag = text(tag, "pumpTag");
+      this.margin = nonNegative(margin, "driverMarginFraction");
+      this.minimumNpshMarginM = nonNegative(minimumNpshMarginM, "minimumNpshMarginM");
+      this.drivers = positiveCandidates(drivers, "driverCandidatesKw");
+    }
+  }
+
+  static final class HeatExchangerRule implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    final String tag;
+    final double overallU;
+    final double lmtd;
+    final double margin;
+    final double[] areas;
+
+    HeatExchangerRule(String tag, double overallU, double lmtd, double margin, double[] areas) {
+      this.tag = text(tag, "equipmentTag");
+      this.overallU = positive(overallU, "overallHeatTransferCoefficientWPerM2K");
+      this.lmtd = positive(lmtd, "correctedLmtdK");
+      this.margin = nonNegative(margin, "marginFraction");
+      this.areas = positiveCandidates(areas, "areaCandidatesM2");
+    }
+  }
+
+  static final class InventoryRule implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    final String tag;
+    final double workingTime;
+    final double usableFraction;
+    final double[] volumes;
+
+    InventoryRule(String tag, double workingTime, double usableFraction, double[] volumes) {
+      this.tag = text(tag, "equipmentTag");
+      this.workingTime = positive(workingTime, "workingTimeSeconds");
+      if (!Double.isFinite(usableFraction) || usableFraction <= 0.0 || usableFraction >= 1.0) {
+        throw new IllegalArgumentException("usableVolumeFraction must be between zero and one");
+      }
+      this.usableFraction = usableFraction;
+      this.volumes = positiveCandidates(volumes, "volumeCandidatesM3");
+    }
+  }
+
+  static final class ControlValveRule implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    final String tag;
+    final double designOpening;
+    final double maximumOpening;
+    final double[] cvCandidates;
+
+    ControlValveRule(String tag, double designOpening, double maximumOpening, double[] cvCandidates) {
+      this.tag = text(tag, "valveTag");
+      this.designOpening = positive(designOpening, "designOpeningPercent");
+      this.maximumOpening = positive(maximumOpening, "maximumOpeningPercent");
+      if (designOpening > maximumOpening || maximumOpening > 100.0) {
+        throw new IllegalArgumentException("Valve openings must satisfy design <= maximum <= 100 percent");
+      }
+      this.cvCandidates = positiveCandidates(cvCandidates, "cvCandidates");
+    }
+  }
+
+  static final class RatedCapacityRule implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    final String tag;
+    final EngineeringMetric metric;
+    final String capacityName;
+    final String unit;
+    final double margin;
+    final double[] candidates;
+
+    RatedCapacityRule(String tag, EngineeringMetric metric, String capacityName, String unit, double margin,
+        double[] candidates) {
+      this.tag = text(tag, "equipmentTag");
+      if (metric == null) {
+        throw new IllegalArgumentException("metric must not be null");
+      }
+      this.metric = metric;
+      this.capacityName = text(capacityName, "capacityName");
+      this.unit = text(unit, "unit");
+      this.margin = nonNegative(margin, "marginFraction");
+      this.candidates = positiveCandidates(candidates, "capacityCandidates");
+    }
+  }
+
+  static final class NetworkRule implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    final String id;
+    final PipingRulePack rulePack;
+    final PipingNetworkDesignModule.SegmentDefinition[] segments;
+
+    NetworkRule(String id, PipingRulePack rulePack, PipingNetworkDesignModule.SegmentDefinition[] segments) {
+      this.id = text(id, "networkId");
+      if (rulePack == null || segments == null || segments.length == 0) {
+        throw new IllegalArgumentException("rulePack and network segments are required");
+      }
+      this.rulePack = rulePack;
+      this.segments = segments.clone();
+    }
+  }
+
+  private final String id;
+  private final String revision;
+  private final List<SliceRule> slices = new ArrayList<SliceRule>();
+  private final List<PumpRule> pumps = new ArrayList<PumpRule>();
+  private final List<HeatExchangerRule> exchangers = new ArrayList<HeatExchangerRule>();
+  private final List<InventoryRule> inventories = new ArrayList<InventoryRule>();
+  private final List<ControlValveRule> controlValves = new ArrayList<ControlValveRule>();
+  private final List<RatedCapacityRule> ratedCapacities = new ArrayList<RatedCapacityRule>();
+  private final List<NetworkRule> networks = new ArrayList<NetworkRule>();
+
+  public EngineeringAutoConfigurationPolicy(String id, String revision) {
+    this.id = text(id, "id");
+    this.revision = text(revision, "revision");
+  }
+
+  public EngineeringAutoConfigurationPolicy addInletCompressionExportSlice(String separatorTag, String compressorTag,
+      String lineTag, String valveTag, String instrumentTag) {
+    slices.add(new SliceRule(separatorTag, compressorTag, lineTag, valveTag, instrumentTag, Double.NaN, Double.NaN,
+        Double.NaN, Double.NaN, Double.NaN, Double.NaN, null, false));
+    return this;
+  }
+
+  /** Adds a slice with all project-specific calculation limits and discrete driver candidates stated explicitly. */
+  public EngineeringAutoConfigurationPolicy addInletCompressionExportSlice(String separatorTag, String compressorTag,
+      String lineTag, String valveTag, String instrumentTag, double separatorGasResidenceTimeSeconds,
+      double separatorSoudersBrownCoefficient, double separatorLiquidRetentionTimeSeconds,
+      double maximumLineVelocityMPerS, double maximumPressureGradientBarPerKm, double compressorDriverMarginFraction,
+      double... compressorDriverCandidatesKw) {
+    slices.add(new SliceRule(separatorTag, compressorTag, lineTag, valveTag, instrumentTag,
+        positive(separatorGasResidenceTimeSeconds, "separatorGasResidenceTimeSeconds"),
+        positive(separatorSoudersBrownCoefficient, "separatorSoudersBrownCoefficient"),
+        positive(separatorLiquidRetentionTimeSeconds, "separatorLiquidRetentionTimeSeconds"),
+        positive(maximumLineVelocityMPerS, "maximumLineVelocityMPerS"),
+        positive(maximumPressureGradientBarPerKm, "maximumPressureGradientBarPerKm"),
+        nonNegative(compressorDriverMarginFraction, "compressorDriverMarginFraction"),
+        positiveCandidates(compressorDriverCandidatesKw, "compressorDriverCandidatesKw"), true));
+    return this;
+  }
+
+  public EngineeringAutoConfigurationPolicy addPump(String tag, double driverMarginFraction, double minimumNpshMarginM,
+      double... driverCandidatesKw) {
+    pumps.add(new PumpRule(tag, driverMarginFraction, minimumNpshMarginM, driverCandidatesKw));
+    return this;
+  }
+
+  public EngineeringAutoConfigurationPolicy addHeatExchanger(String tag, double overallU, double correctedLmtdK,
+      double marginFraction, double... areaCandidatesM2) {
+    exchangers.add(new HeatExchangerRule(tag, overallU, correctedLmtdK, marginFraction, areaCandidatesM2));
+    return this;
+  }
+
+  public EngineeringAutoConfigurationPolicy addInventory(String tag, double workingTimeSeconds,
+      double usableVolumeFraction, double... volumeCandidatesM3) {
+    inventories.add(new InventoryRule(tag, workingTimeSeconds, usableVolumeFraction, volumeCandidatesM3));
+    return this;
+  }
+
+  public EngineeringAutoConfigurationPolicy addControlValve(String tag, double designOpeningPercent,
+      double maximumOpeningPercent, double... cvCandidates) {
+    controlValves.add(new ControlValveRule(tag, designOpeningPercent, maximumOpeningPercent, cvCandidates));
+    return this;
+  }
+
+  public EngineeringAutoConfigurationPolicy addRatedCapacity(String tag, EngineeringMetric metric, String capacityName,
+      String unit, double marginFraction, double... capacityCandidates) {
+    ratedCapacities.add(new RatedCapacityRule(tag, metric, capacityName, unit, marginFraction, capacityCandidates));
+    return this;
+  }
+
+  public EngineeringAutoConfigurationPolicy addPipingNetwork(String networkId, PipingRulePack rulePack,
+      PipingNetworkDesignModule.SegmentDefinition... segments) {
+    networks.add(new NetworkRule(networkId, rulePack, segments));
+    return this;
+  }
+
+  String getId() {
+    return id;
+  }
+
+  String getRevision() {
+    return revision;
+  }
+
+  List<SliceRule> getSlices() {
+    return Collections.unmodifiableList(slices);
+  }
+
+  List<PumpRule> getPumps() {
+    return Collections.unmodifiableList(pumps);
+  }
+
+  List<HeatExchangerRule> getExchangers() {
+    return Collections.unmodifiableList(exchangers);
+  }
+
+  List<InventoryRule> getInventories() {
+    return Collections.unmodifiableList(inventories);
+  }
+
+  List<ControlValveRule> getControlValves() {
+    return Collections.unmodifiableList(controlValves);
+  }
+
+  List<RatedCapacityRule> getRatedCapacities() {
+    return Collections.unmodifiableList(ratedCapacities);
+  }
+
+  List<NetworkRule> getNetworks() {
+    return Collections.unmodifiableList(networks);
+  }
+
+  private static String optional(String value) {
+    return value == null ? "" : value.trim();
+  }
+
+  private static double[] positiveCandidates(double[] values, String field) {
+    if (values == null || values.length == 0) {
+      throw new IllegalArgumentException(field + " must contain at least one candidate");
+    }
+    double[] result = values.clone();
+    for (double value : result) {
+      positive(value, field);
+    }
+    return result;
+  }
+
+  private static double positive(double value, String field) {
+    if (!Double.isFinite(value) || value <= 0.0) {
+      throw new IllegalArgumentException(field + " must be finite and positive");
+    }
+    return value;
+  }
+
+  private static double nonNegative(double value, String field) {
+    if (!Double.isFinite(value) || value < 0.0) {
+      throw new IllegalArgumentException(field + " must be finite and non-negative");
+    }
+    return value;
+  }
+
+  private static String text(String value, String field) {
+    if (value == null || value.trim().isEmpty()) {
+      throw new IllegalArgumentException(field + " must not be blank");
+    }
+    return value.trim();
+  }
+}

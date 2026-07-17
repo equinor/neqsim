@@ -38,8 +38,14 @@ instrument/valve/line/SIF/relief register, or safety-design handoff:
    `EngineeringEvidenceRecord`, blowdown/flare and material inputs as available.
 3. Link dynamic `EmergencyShutdownTestResult` evidence to each tested sequence.
 4. Export with `DexpiEngineeringExporter`.
-5. Review `engineeringCoverageMatrix`, `engineeringReadiness`, unresolved gaps,
-   engineering registers, `dexpi-validation.json` and `package-manifest.json`.
+5. Compile with `EngineeringDeliverableCompiler` and review
+   `engineering-production-readiness.json`, unresolved gaps, engineering
+   registers, `dexpi-validation.json` and `package-manifest.json`.
+
+Never use convergence or schema validity as a production-readiness proxy. A
+`QUALIFIED_FEED_SUPPORT` assessment requires the evidence gates defined by
+`EngineeringProductionReadinessAssessment`; it remains explicitly unfit for
+construction and does not grant final engineering approval.
 
 Never promote generated `REVIEW_REQUIRED` data to approved/IFC status. Never
 infer SIL, final voting, trip set points, valve fail action, credible relief

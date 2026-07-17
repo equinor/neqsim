@@ -209,6 +209,59 @@ The supplied methods are designed to be used with version-controlled project rul
 The edition stored in the project design basis controls traceability. Numerical limits remain project inputs because
 jurisdiction, service, company requirements, standard revisions and project phase can change the applicable rule.
 
+## Production-readiness qualification
+
+Convergence and package validity are necessary, but they are not evidence that a calculation method or project is
+qualified for production engineering. Attach an `EngineeringProductionReadinessBasis` to the project to evaluate the
+additional controlled gates:
+
+- independently reviewed, non-regression benchmark evidence for every method/version executed by the final design
+  iteration;
+- project-qualified method records with standards, applicability limits, evidence and accountable approval;
+- complete automatic configuration from a revision-controlled policy with no hidden numerical defaults;
+- import/export and zero-open-semantic-difference evidence from a named DEXPI-capable product and version;
+- approved HAZOP evidence plus required LOPA/SRS, SIF and shutdown evidence;
+- accepted independent pilots covering separation/compression, pumping/heat exchange and relief/blowdown/flare; and
+- release evidence for the full CI/Java matrix, deterministic convergence, performance, compatibility, migration and
+  security checks.
+
+The explicit automatic-configuration path is:
+
+```java
+EngineeringAutoConfigurationPolicy policy = new EngineeringAutoConfigurationPolicy("offshore-gas", "A")
+    .addInletCompressionExportSlice(
+        "20-VA-001", "20-KA-001", "20-PL-001", "20-PV-001", "20-PIT-001",
+        800.0, 0.107, 120.0, // separator gas time, Souders-Brown K, liquid time
+        20.0, 0.5,           // maximum line velocity and pressure gradient
+        0.10,                // compressor driver margin
+        3000.0, 5000.0, 7500.0, 10000.0);
+
+EngineeringAutoConfigurator.Result configured = EngineeringAutoConfigurator.configure(project, policy);
+project.setProductionReadinessBasis(
+    new EngineeringProductionReadinessBasis().autoConfigurationResult(configured));
+
+// Or configure, record the coverage evidence, and run in one call:
+EngineeringSimulationResult result = ProcessToEngineeringSimulator.run(project, policy, 4);
+```
+
+Compilation always writes the schema-registered `engineering-production-readiness.json` artifact. Its maturity levels
+are `NOT_READY`, `EXPERIMENTAL`, `VALIDATED_PRELIMINARY` and `QUALIFIED_FEED_SUPPORT`. A green result means only that
+the supplied preliminary/FEED-support evidence gates have passed. The artifact deliberately fixes
+`fitnessForConstruction=false` and `finalEngineeringApprovalGranted=false`; neither can be changed through the API.
+
+Do not use internal regression values as independent validation. `EngineeringValidationBenchmark` distinguishes
+regression, published, independent-calculation and vendor/CAE sources, and requires a separate review record before a
+benchmark can qualify a method. Method keys are the exact final-loop `method@version` values, preventing a benchmark
+for one revision from silently qualifying another.
+
+The current built-in calculation modules remain preliminary screening methods until their exact method versions have
+been benchmarked and project-qualified for the stated service. The readiness framework exposes that gap instead of
+silently promoting the results.
+
+See the executable
+[production-readiness notebook](../../examples/notebooks/engineering_production_readiness.ipynb) for explicit
+auto-configuration, executed-method discovery, a regression-evidence rejection, and the compiled gate report.
+
 ## Required engineering review
 
 The simulator produces calculated or proposed engineering suitable for concept and pre-FEED development. It does not

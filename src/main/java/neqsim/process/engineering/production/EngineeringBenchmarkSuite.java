@@ -1,0 +1,105 @@
+package neqsim.process.engineering.production;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+/** Executes acceptance logic over versioned engineering benchmark records. */
+public final class EngineeringBenchmarkSuite implements Serializable {
+  private static final long serialVersionUID = 1000L;
+  private final String id;
+  private final String revision;
+  private final Set<String> requiredMethods = new LinkedHashSet<String>();
+  private final List<EngineeringValidationBenchmark> benchmarks = new ArrayList<EngineeringValidationBenchmark>();
+
+  public EngineeringBenchmarkSuite(String id, String revision) {
+    this.id = text(id, "id");
+    this.revision = text(revision, "revision");
+  }
+
+  public EngineeringBenchmarkSuite requireMethod(String methodId) {
+    requiredMethods.add(text(methodId, "methodId"));
+    return this;
+  }
+
+  public EngineeringBenchmarkSuite add(EngineeringValidationBenchmark benchmark) {
+    if (benchmark == null) {
+      throw new IllegalArgumentException("benchmark must not be null");
+    }
+    benchmarks.add(benchmark);
+    return this;
+  }
+
+  public Report evaluate() {
+    return new Report(id, revision, requiredMethods, benchmarks);
+  }
+
+  /** Immutable suite result used by the production-readiness gate. */
+  public static final class Report implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    private final String id;
+    private final String revision;
+    private final Set<String> requiredMethods;
+    private final List<EngineeringValidationBenchmark> benchmarks;
+    private final Set<String> qualifyingMethods = new LinkedHashSet<String>();
+
+    Report(String id, String revision, Set<String> requiredMethods, List<EngineeringValidationBenchmark> benchmarks) {
+      this.id = id;
+      this.revision = revision;
+      this.requiredMethods = Collections.unmodifiableSet(new LinkedHashSet<String>(requiredMethods));
+      this.benchmarks = Collections.unmodifiableList(new ArrayList<EngineeringValidationBenchmark>(benchmarks));
+      for (EngineeringValidationBenchmark benchmark : benchmarks) {
+        if (benchmark.isPassed() && benchmark.isIndependentSource() && benchmark.isIndependentlyReviewed()) {
+          qualifyingMethods.add(benchmark.getMethodKey());
+        }
+      }
+    }
+
+    public boolean isPassed() {
+      return !requiredMethods.isEmpty() && qualifyingMethods.containsAll(requiredMethods);
+    }
+
+    public Set<String> getMissingQualifyingMethods() {
+      Set<String> missing = new LinkedHashSet<String>(requiredMethods);
+      missing.removeAll(qualifyingMethods);
+      return Collections.unmodifiableSet(missing);
+    }
+
+    public Set<String> getRequiredMethods() {
+      return requiredMethods;
+    }
+
+    public Set<String> getQualifyingMethods() {
+      return Collections.unmodifiableSet(qualifyingMethods);
+    }
+
+    public Map<String, Object> toMap() {
+      Map<String, Object> result = new LinkedHashMap<String, Object>();
+      result.put("suiteId", id);
+      result.put("revision", revision);
+      result.put("requiredMethods", new ArrayList<String>(requiredMethods));
+      result.put("qualifyingMethods", new ArrayList<String>(qualifyingMethods));
+      result.put("missingQualifyingMethods", new ArrayList<String>(getMissingQualifyingMethods()));
+      List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
+      for (EngineeringValidationBenchmark benchmark : benchmarks) {
+        rows.add(benchmark.toMap());
+      }
+      result.put("benchmarks", rows);
+      result.put("passed", Boolean.valueOf(isPassed()));
+      result.put("engineeringApprovalRequired", Boolean.TRUE);
+      return result;
+    }
+  }
+
+  private static String text(String value, String field) {
+    if (value == null || value.trim().isEmpty()) {
+      throw new IllegalArgumentException(field + " must not be blank");
+    }
+    return value.trim();
+  }
+}

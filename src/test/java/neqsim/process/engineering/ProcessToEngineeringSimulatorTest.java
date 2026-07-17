@@ -1,6 +1,7 @@
 package neqsim.process.engineering;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
@@ -8,6 +9,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import neqsim.process.engineering.deliverables.EngineeringDeliverableCompiler;
 import neqsim.process.engineering.designcase.EngineeringDesignCase;
+import neqsim.process.engineering.production.EngineeringAutoConfigurationPolicy;
+import neqsim.process.engineering.production.EngineeringAutoConfigurator;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.separator.Separator;
@@ -32,11 +35,15 @@ class ProcessToEngineeringSimulatorTest {
         .projectId("pte-test").build();
     project.addDesignCase(flowCase("normal", 8000.0, 10));
     project.addDesignCase(flowCase("maximum", 12000.0, 20));
-    ProcessToEngineeringDesignBuilder.on(project).exportLineLimits(25.0, 5.0)
-        .compressorDrivers(0.10, 500.0, 1000.0, 2000.0, 3000.0, 5000.0, 7500.0, 10000.0)
-        .addInletCompressionExportSlice("INLET-SEP", "EXPORT-COMP", "EXPORT-LINE", "", "PIT-100");
-
-    EngineeringSimulationResult result = ProcessToEngineeringSimulator.run(project, 2);
+    EngineeringAutoConfigurationPolicy policy = new EngineeringAutoConfigurationPolicy("offshore-gas", "A")
+        .addInletCompressionExportSlice("INLET-SEP", "EXPORT-COMP", "EXPORT-LINE", "", "PIT-100", 800.0, 0.107, 120.0,
+            25.0, 5.0, 0.10, 500.0, 1000.0, 2000.0, 3000.0, 5000.0, 7500.0, 10000.0);
+    EngineeringSimulationResult result = ProcessToEngineeringSimulator.run(project, policy, 2);
+    assertTrue(project.getProductionReadinessBasis().getAutoConfigurationResult().isComplete());
+    EngineeringAutoConfigurator.Result hiddenDefaultConfiguration = EngineeringAutoConfigurator.configure(project,
+        new EngineeringAutoConfigurationPolicy("legacy-policy", "A").addInletCompressionExportSlice("INLET-SEP",
+            "EXPORT-COMP", "EXPORT-LINE", "", "PIT-100"));
+    assertFalse(hiddenDefaultConfiguration.isComplete());
 
     assertNotNull(result.getEngineeringDesignLoopResult());
     assertTrue(result.getEngineeringDesignLoopResult().isConverged());
@@ -51,11 +58,14 @@ class ProcessToEngineeringSimulatorTest {
     assertTrue(result.toJson().contains("preliminaryMaterialClass"));
     assertEquals(originalLineDiameter, ((AdiabaticPipe) process.getUnit("EXPORT-LINE")).getDiameter(), 1.0e-12);
 
-    EngineeringDeliverableCompiler.compile(project, temporaryDirectory);
+    EngineeringDeliverableCompiler.CompilationResult compilation = EngineeringDeliverableCompiler.compile(project,
+        temporaryDirectory);
+    assertTrue(Files.isRegularFile(compilation.getProductionReadinessFile()));
     String[] coordinatedArtifacts = new String[] { "process-design-basis.json", "equipment-datasheets.json",
         "valve-list.json", "io-list.json", "alarm-trip-schedule.json", "shutdown-narratives.json",
         "psv-datasheets.json", "flare-blowdown-report.json", "utility-summary.json", "materials-selection-report.json",
-        "engineering-diagram-layout.json", "unresolved-engineering-actions.json", "revision-impact-report.json" };
+        "engineering-diagram-layout.json", "unresolved-engineering-actions.json", "revision-impact-report.json",
+        "engineering-production-readiness.json" };
     for (String artifact : coordinatedArtifacts) {
       assertTrue(Files.exists(temporaryDirectory.resolve(artifact)), artifact);
     }
@@ -70,6 +80,10 @@ class ProcessToEngineeringSimulatorTest {
         StandardCharsets.UTF_8);
     assertTrue(packageManifest.contains("equipment-datasheets.json"));
     assertTrue(packageManifest.contains("engineering-validation-report.json"));
+    String productionReadiness = new String(
+        Files.readAllBytes(temporaryDirectory.resolve("engineering-production-readiness.json")),
+        StandardCharsets.UTF_8);
+    assertTrue(productionReadiness.contains("\"fitnessForConstruction\": false"));
   }
 
   private EngineeringDesignCase flowCase(String id, final double flowKgHr, int priority) {

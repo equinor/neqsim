@@ -152,6 +152,17 @@ public final class ProcessToEngineeringDesignBuilder {
     return this;
   }
 
+  /** Adds case-envelope IEC 60534 Cv selection for a standalone control valve. */
+  public ProcessToEngineeringDesignBuilder addControlValveDesign(String valveTag, double designOpeningPercent,
+      double maximumOpeningPercent, double... cvCandidates) {
+    requireUnit(valveTag);
+    EngineeringMetric requiredCv = EngineeringMetric.controlValveRequiredCv(valveTag, designOpeningPercent);
+    addMetricIfMissing(requiredCv);
+    project.addEngineeringDesignModule(new ControlValveDesignModule(valveTag, requiredCv.getId(), designOpeningPercent,
+        maximumOpeningPercent, cvCandidates));
+    return this;
+  }
+
   /** Adds residence/surge inventory sizing for tanks, drums, and column sumps. */
   public ProcessToEngineeringDesignBuilder addInventoryDesign(String equipmentTag, double workingTimeSeconds,
       double usableVolumeFraction, double... volumeCandidatesM3) {

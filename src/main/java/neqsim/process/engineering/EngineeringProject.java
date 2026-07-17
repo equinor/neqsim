@@ -23,6 +23,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.engineering.designcase.EngineeringDesignCase;
 import neqsim.process.engineering.designcase.EngineeringMetric;
 import neqsim.process.engineering.model.EngineeringCalculation;
+import neqsim.process.engineering.production.EngineeringProductionReadinessBasis;
 import neqsim.process.materials.MaterialsReviewInput;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
@@ -67,6 +68,7 @@ public final class EngineeringProject implements Serializable {
   private transient EngineeringDesignLoopResult latestEngineeringDesignLoopResult;
   private final Map<String, EmergencyShutdownTestResult> shutdownVerificationResults = new LinkedHashMap<String, EmergencyShutdownTestResult>();
   private MaterialsReviewInput materialsReviewInput;
+  private EngineeringProductionReadinessBasis productionReadinessBasis;
 
   EngineeringProject(String name, ProcessSystem processSystem, EngineeringDesignBasis designBasis) {
     this(UUID.randomUUID().toString(), name, processSystem, designBasis);
@@ -474,6 +476,17 @@ public final class EngineeringProject implements Serializable {
   /** @return optional project material-register and service input */
   public MaterialsReviewInput getMaterialsReviewInput() {
     return materialsReviewInput;
+  }
+
+  /** Attaches benchmark, method, DEXPI-tool, pilot and release evidence for production-readiness assessment. */
+  public EngineeringProject setProductionReadinessBasis(EngineeringProductionReadinessBasis value) {
+    productionReadinessBasis = value;
+    return this;
+  }
+
+  /** @return optional controlled production-readiness evidence bundle */
+  public EngineeringProductionReadinessBasis getProductionReadinessBasis() {
+    return productionReadinessBasis;
   }
 
   /** Returns requirements associated with one equipment tag. */
