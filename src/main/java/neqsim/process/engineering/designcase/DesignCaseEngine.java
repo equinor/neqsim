@@ -66,6 +66,12 @@ public final class DesignCaseEngine {
     return new EngineeringDesignEnvelope(results, governing);
   }
 
+  /** Executes the enhanced isolated case runner and returns fingerprints and convergence evidence. */
+  public static EngineeringCaseRunReport runDetailed(ProcessSystem baseProcess, EngineeringCaseSet caseSet,
+      EngineeringCaseRunOptions options) {
+    return EngineeringCaseRunner.run(baseProcess, caseSet, options);
+  }
+
   private static String failureMessage(Exception ex) {
     return ex.getMessage() == null ? ex.getClass().getSimpleName() : ex.getMessage();
   }

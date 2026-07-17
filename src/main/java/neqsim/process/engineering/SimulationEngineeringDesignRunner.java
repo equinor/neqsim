@@ -30,6 +30,7 @@ import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyRunner;
 import neqsim.process.safety.overpressure.BlockedOutletRelief;
 import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
 import neqsim.process.safety.overpressure.OverpressureStudyResult;
+import neqsim.process.engineering.designcase.EngineeringCaseRunOptions;
 import neqsim.process.safety.overpressure.ProtectedItem;
 import neqsim.process.safety.overpressure.ReliefCause;
 import neqsim.process.safety.overpressure.ReliefPhase;
@@ -133,6 +134,19 @@ public final class SimulationEngineeringDesignRunner {
       }
     }
     root.add("dynamicBlowdownAndFlareSizing", blowdownResults);
+
+    if (!project.getExecutableDesignCases().isEmpty() || !project.getCoupledReliefBlowdownFlareStudies().isEmpty()
+        || !project.getDynamicSafetyScenarios().isEmpty()) {
+      try {
+        root.add("coordinatedEngineeringSimulation",
+            GSON.toJsonTree(EngineeringSimulationRunner
+                .run(project, EngineeringCaseRunOptions.builder().parallelism(1).requireConvergence(true).build())
+                .toMap()));
+      } catch (RuntimeException ex) {
+        root.add("coordinatedEngineeringSimulation",
+            calculationFailure(project.getProjectId(), "COORDINATED_ENGINEERING_SIMULATION", ex));
+      }
+    }
 
     try {
       MaterialsReviewReport materials = new MaterialsReviewEngine().evaluate(project.getProcessSystem(),
