@@ -24,7 +24,7 @@ public final class EngineeringPackageValidator {
   private static final Set<String> CONTROLLED_UNITS = new HashSet<String>(Arrays.asList("1", "%", "bara", "barg", "bar",
       "pa", "kpa", "mpa", "c", "k", "f", "kg/hr", "kg/s", "kg/day", "mol/s", "kmol/hr", "sm3/day", "msm3/day", "nm3/hr",
       "m3/hr", "m3/s", "kg/m3", "m/s", "bar/km", "w", "kw", "mw", "j/kg", "kj/kg", "m", "m2", "m3", "mm", "cm", "in",
-      "inch", "in2", "s", "min", "hr", "year", "fraction", "cv"));
+      "inch", "in2", "s", "min", "hr", "year", "fraction", "cv", "rpm", "flag"));
 
   private EngineeringPackageValidator() {
   }
@@ -228,6 +228,15 @@ public final class EngineeringPackageValidator {
       requireString(root, "revision", artifactName, report);
       requireString(root, "status", artifactName, report);
       requireString(root, "governance", artifactName, report);
+    } else if ("engineering-vertical-slice-qualification.json".equals(artifactName)) {
+      requireString(root, "projectId", artifactName, report);
+      requireString(root, "projectRevision", artifactName, report);
+      requireString(root, "policyId", artifactName, report);
+      requireString(root, "policyRevision", artifactName, report);
+      requireObject(root, "gates", artifactName, report);
+      requireArray(root, "failedGates", artifactName, report);
+      requireFalse(root, "fitnessForConstruction", artifactName, report);
+      requireFalse(root, "finalEngineeringApprovalGranted", artifactName, report);
     }
     return report;
   }

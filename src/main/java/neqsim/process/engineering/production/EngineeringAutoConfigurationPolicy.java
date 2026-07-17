@@ -65,6 +65,24 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
     }
   }
 
+  static final class CompressorEnvelopeRule implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    final String tag;
+    final double minimumSurgeMargin;
+    final double minimumStonewallMargin;
+    final double maximumDischargeTemperatureC;
+    final double surgeControlMargin;
+
+    CompressorEnvelopeRule(String tag, double minimumSurgeMargin, double minimumStonewallMargin,
+        double maximumDischargeTemperatureC, double surgeControlMargin) {
+      this.tag = text(tag, "compressorTag");
+      this.minimumSurgeMargin = nonNegative(minimumSurgeMargin, "minimumSurgeMarginFraction");
+      this.minimumStonewallMargin = nonNegative(minimumStonewallMargin, "minimumStonewallMarginFraction");
+      this.maximumDischargeTemperatureC = positive(maximumDischargeTemperatureC, "maximumDischargeTemperatureC");
+      this.surgeControlMargin = nonNegative(surgeControlMargin, "surgeControlMarginFraction");
+    }
+  }
+
   static final class HeatExchangerRule implements Serializable {
     private static final long serialVersionUID = 1000L;
     final String tag;
@@ -141,6 +159,25 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
     }
   }
 
+  static final class ReliefDeviceRule implements Serializable {
+    private static final long serialVersionUID = 1000L;
+    final String deviceTag;
+    final String protectedEquipmentTag;
+    final EngineeringMetric requiredAreaMetric;
+    final double[] orificeCandidatesIn2;
+
+    ReliefDeviceRule(String deviceTag, String protectedEquipmentTag, EngineeringMetric requiredAreaMetric,
+        double[] orificeCandidatesIn2) {
+      this.deviceTag = text(deviceTag, "deviceTag");
+      this.protectedEquipmentTag = text(protectedEquipmentTag, "protectedEquipmentTag");
+      if (requiredAreaMetric == null) {
+        throw new IllegalArgumentException("requiredAreaMetric must not be null");
+      }
+      this.requiredAreaMetric = requiredAreaMetric;
+      this.orificeCandidatesIn2 = positiveCandidates(orificeCandidatesIn2, "orificeCandidatesIn2");
+    }
+  }
+
   static final class NetworkRule implements Serializable {
     private static final long serialVersionUID = 1000L;
     final String id;
@@ -160,11 +197,13 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
   private final String id;
   private final String revision;
   private final List<SliceRule> slices = new ArrayList<SliceRule>();
+  private final List<CompressorEnvelopeRule> compressorEnvelopes = new ArrayList<CompressorEnvelopeRule>();
   private final List<PumpRule> pumps = new ArrayList<PumpRule>();
   private final List<HeatExchangerRule> exchangers = new ArrayList<HeatExchangerRule>();
   private final List<InventoryRule> inventories = new ArrayList<InventoryRule>();
   private final List<ControlValveRule> controlValves = new ArrayList<ControlValveRule>();
   private final List<RatedCapacityRule> ratedCapacities = new ArrayList<RatedCapacityRule>();
+  private final List<ReliefDeviceRule> reliefDevices = new ArrayList<ReliefDeviceRule>();
   private final List<NetworkRule> networks = new ArrayList<NetworkRule>();
 
   public EngineeringAutoConfigurationPolicy(String id, String revision) {
@@ -202,6 +241,15 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
     return this;
   }
 
+  /** Adds governed compressor-map and anti-surge envelope limits for every configured design case. */
+  public EngineeringAutoConfigurationPolicy addCompressorOperatingEnvelope(String compressorTag,
+      double minimumSurgeMarginFraction, double minimumStonewallMarginFraction, double maximumDischargeTemperatureC,
+      double surgeControlMarginFraction) {
+    compressorEnvelopes.add(new CompressorEnvelopeRule(compressorTag, minimumSurgeMarginFraction,
+        minimumStonewallMarginFraction, maximumDischargeTemperatureC, surgeControlMarginFraction));
+    return this;
+  }
+
   public EngineeringAutoConfigurationPolicy addHeatExchanger(String tag, double overallU, double correctedLmtdK,
       double marginFraction, double... areaCandidatesM2) {
     exchangers.add(new HeatExchangerRule(tag, overallU, correctedLmtdK, marginFraction, areaCandidatesM2));
@@ -223,6 +271,14 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
   public EngineeringAutoConfigurationPolicy addRatedCapacity(String tag, EngineeringMetric metric, String capacityName,
       String unit, double marginFraction, double... capacityCandidates) {
     ratedCapacities.add(new RatedCapacityRule(tag, metric, capacityName, unit, marginFraction, capacityCandidates));
+    return this;
+  }
+
+  /** Adds governed API-style discrete PSV-orifice selection to the automatic design loop. */
+  public EngineeringAutoConfigurationPolicy addReliefDevice(String deviceTag, String protectedEquipmentTag,
+      EngineeringMetric requiredAreaMetric, double... apiOrificeCandidatesIn2) {
+    reliefDevices
+        .add(new ReliefDeviceRule(deviceTag, protectedEquipmentTag, requiredAreaMetric, apiOrificeCandidatesIn2));
     return this;
   }
 
@@ -248,6 +304,10 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
     return Collections.unmodifiableList(pumps);
   }
 
+  List<CompressorEnvelopeRule> getCompressorEnvelopes() {
+    return Collections.unmodifiableList(compressorEnvelopes);
+  }
+
   List<HeatExchangerRule> getExchangers() {
     return Collections.unmodifiableList(exchangers);
   }
@@ -262,6 +322,10 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
 
   List<RatedCapacityRule> getRatedCapacities() {
     return Collections.unmodifiableList(ratedCapacities);
+  }
+
+  List<ReliefDeviceRule> getReliefDevices() {
+    return Collections.unmodifiableList(reliefDevices);
   }
 
   List<NetworkRule> getNetworks() {
@@ -284,6 +348,11 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
       value.append("|pump:").append(rule.tag).append(':').append(rule.margin).append(':')
           .append(rule.minimumNpshMarginM).append(':').append(java.util.Arrays.toString(rule.drivers));
     }
+    for (CompressorEnvelopeRule rule : compressorEnvelopes) {
+      value.append("|compressor-envelope:").append(rule.tag).append(':').append(rule.minimumSurgeMargin).append(':')
+          .append(rule.minimumStonewallMargin).append(':').append(rule.maximumDischargeTemperatureC).append(':')
+          .append(rule.surgeControlMargin);
+    }
     for (HeatExchangerRule rule : exchangers) {
       value.append("|exchanger:").append(rule.tag).append(':').append(rule.overallU).append(':').append(rule.lmtd)
           .append(':').append(rule.margin).append(':').append(java.util.Arrays.toString(rule.areas));
@@ -300,6 +369,11 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
       value.append("|capacity:").append(rule.tag).append(':').append(rule.metric.getId()).append(':')
           .append(rule.capacityName).append(':').append(rule.unit).append(':').append(rule.margin).append(':')
           .append(java.util.Arrays.toString(rule.candidates));
+    }
+    for (ReliefDeviceRule rule : reliefDevices) {
+      value.append("|relief:").append(rule.deviceTag).append(':').append(rule.protectedEquipmentTag).append(':')
+          .append(rule.requiredAreaMetric.getId()).append(':')
+          .append(java.util.Arrays.toString(rule.orificeCandidatesIn2));
     }
     for (NetworkRule rule : networks) {
       value.append("|network:").append(rule.id).append(':').append(rule.rulePack.toMap()).append(':');

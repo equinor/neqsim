@@ -212,6 +212,11 @@ jurisdiction, service, company requirements, standard revisions and project phas
 
 ## Production-readiness qualification
 
+The first facility-level fail-closed acceptance layer is documented in
+[Controlled-pilot production vertical slice](engineering-production-vertical-slice.md). It qualifies the complete
+separator/compressor/cooler/export topology, case matrix, compressor map, dynamic safe state and coupled flare study
+before allowing `qualifiedForControlledPilot=true`; it never grants FEED, construction or final approval.
+
 Convergence and package validity are necessary, but they are not evidence that a calculation method or project is
 qualified for production engineering. Attach an `EngineeringProductionReadinessBasis` to the project to evaluate the
 additional controlled gates:

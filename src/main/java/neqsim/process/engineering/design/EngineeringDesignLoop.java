@@ -28,6 +28,7 @@ public final class EngineeringDesignLoop {
     ProcessSystem working = baseProcess.copy();
     EngineeringDesignState state = new EngineeringDesignState();
     List<EngineeringDesignIteration> iterations = new ArrayList<EngineeringDesignIteration>();
+    List<Map<String, Double>> designStateHistory = new ArrayList<Map<String, Double>>();
     Map<String, Double> previousProcessValues = null;
 
     for (int number = 1; number <= options.getMaximumIterations(); number++) {
@@ -74,6 +75,14 @@ public final class EngineeringDesignLoop {
       EngineeringDesignIteration iteration = new EngineeringDesignIteration(number, caseReport, moduleResults,
           constraintResults, appliedUpdates, maximumChange, designVariables, convergence);
       iterations.add(iteration);
+      Map<String, Double> currentDesignState = designStateValues(state);
+      if (options.isDiscreteOscillationDetectionEnabled() && appliedUpdates > 0 && designStateHistory.size() >= 2
+          && sameState(currentDesignState, designStateHistory.get(designStateHistory.size() - 2))
+          && !sameState(currentDesignState, designStateHistory.get(designStateHistory.size() - 1))) {
+        return new EngineeringDesignLoopResult(false, "DISCRETE_DESIGN_OSCILLATION_DETECTED", state, iterations,
+            working);
+      }
+      designStateHistory.add(currentDesignState);
       previousProcessValues = processValues;
       boolean constraintSuccess = !options.isAllConstraintsRequired() || iteration.areAllConstraintsSatisfied();
       if (appliedUpdates == 0 && processStable && caseSuccess && constraintSuccess) {
@@ -145,5 +154,26 @@ public final class EngineeringDesignLoop {
       }
     }
     return count;
+  }
+
+  private static Map<String, Double> designStateValues(EngineeringDesignState state) {
+    Map<String, Double> result = new java.util.LinkedHashMap<String, Double>();
+    for (Map.Entry<String, EngineeringDesignValue> entry : state.getValues().entrySet()) {
+      result.put(entry.getKey(), Double.valueOf(entry.getValue().getValue()));
+    }
+    return result;
+  }
+
+  private static boolean sameState(Map<String, Double> first, Map<String, Double> second) {
+    if (!first.keySet().equals(second.keySet())) {
+      return false;
+    }
+    for (Map.Entry<String, Double> entry : first.entrySet()) {
+      if (Double.doubleToLongBits(entry.getValue().doubleValue()) != Double
+          .doubleToLongBits(second.get(entry.getKey()).doubleValue())) {
+        return false;
+      }
+    }
+    return true;
   }
 }

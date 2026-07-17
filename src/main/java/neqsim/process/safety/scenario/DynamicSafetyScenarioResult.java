@@ -81,6 +81,11 @@ public final class DynamicSafetyScenarioResult implements Serializable {
     return true;
   }
 
+  /** @return controlled scenario identifier */
+  public String getScenarioId() {
+    return scenarioId;
+  }
+
   public Map<String, CriterionResult> getCriterionResults() {
     return criterionResults;
   }

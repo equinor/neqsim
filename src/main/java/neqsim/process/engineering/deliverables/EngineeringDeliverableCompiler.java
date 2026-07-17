@@ -69,6 +69,7 @@ public final class EngineeringDeliverableCompiler {
     private final Path lineRegisterFile;
     private final Path instrumentRegisterFile;
     private final Path productionReadinessFile;
+    private final Path verticalSliceQualificationFile;
     private final Path qualificationPlanFile;
     private final Path compilerManifestFile;
     private final Path validationReportFile;
@@ -82,10 +83,10 @@ public final class EngineeringDeliverableCompiler {
         Path engineeringCalculationDagFile, Path engineeringDesignCaseMatrixFile, Path engineeringDisciplinePackageFile,
         Path engineeringApprovalLedgerFile, Path engineeringDexpiRoundTripReportFile,
         Path engineeringAutomationPlanFile, Path designEnvelopeFile, Path equipmentRegisterFile, Path lineRegisterFile,
-        Path instrumentRegisterFile, Path productionReadinessFile, Path qualificationPlanFile,
-        Path compilerManifestFile, Path validationReportFile, Path revisionDiffFile, EngineeringGraph engineeringGraph,
-        EngineeringDesignEnvelope designEnvelope, DexpiEngineeringExporter.ExportResult dexpiResult,
-        EngineeringPackageValidationReport validationReport) {
+        Path instrumentRegisterFile, Path productionReadinessFile, Path verticalSliceQualificationFile,
+        Path qualificationPlanFile, Path compilerManifestFile, Path validationReportFile, Path revisionDiffFile,
+        EngineeringGraph engineeringGraph, EngineeringDesignEnvelope designEnvelope,
+        DexpiEngineeringExporter.ExportResult dexpiResult, EngineeringPackageValidationReport validationReport) {
       this.outputDirectory = outputDirectory;
       this.engineeringGraphFile = engineeringGraphFile;
       this.engineeringConnectivityFile = engineeringConnectivityFile;
@@ -100,6 +101,7 @@ public final class EngineeringDeliverableCompiler {
       this.lineRegisterFile = lineRegisterFile;
       this.instrumentRegisterFile = instrumentRegisterFile;
       this.productionReadinessFile = productionReadinessFile;
+      this.verticalSliceQualificationFile = verticalSliceQualificationFile;
       this.qualificationPlanFile = qualificationPlanFile;
       this.compilerManifestFile = compilerManifestFile;
       this.validationReportFile = validationReportFile;
@@ -164,6 +166,10 @@ public final class EngineeringDeliverableCompiler {
 
     public Path getProductionReadinessFile() {
       return productionReadinessFile;
+    }
+
+    public Path getVerticalSliceQualificationFile() {
+      return verticalSliceQualificationFile;
     }
 
     public Path getQualificationPlanFile() {
@@ -305,6 +311,8 @@ public final class EngineeringDeliverableCompiler {
     orchestration.put("governance",
         "Dependency completion does not replace HAZOP/LOPA, vendor validation or accountable approval");
     write(orchestrationFile, GSON.toJson(orchestration));
+    Path verticalSliceQualificationFile = outputDirectory.resolve("engineering-vertical-slice-qualification.json");
+    write(verticalSliceQualificationFile, GSON.toJson(verticalSliceQualification(project)));
     Path qualificationPlanFile = outputDirectory.resolve("engineering-qualification-plan.json");
     write(qualificationPlanFile,
         GSON.toJson(EngineeringQualificationPlan.build(project, project.getProductionReadinessBasis())));
@@ -322,8 +330,8 @@ public final class EngineeringDeliverableCompiler {
     DexpiEngineeringExporter.refreshPackageManifest(outputDirectory);
     return new CompilationResult(outputDirectory, graphFile, connectivityFile, calculationDagFile, designCaseMatrixFile,
         disciplinePackageFile, approvalLedgerFile, dexpiRoundTripReportFile, automationPlanFile, envelopeFile,
-        equipmentFile, lineFile, instrumentFile, productionReadinessFile, qualificationPlanFile, compilerManifest,
-        validationFile, diffFile, graph, envelope, dexpiResult, validation);
+        equipmentFile, lineFile, instrumentFile, productionReadinessFile, verticalSliceQualificationFile,
+        qualificationPlanFile, compilerManifest, validationFile, diffFile, graph, envelope, dexpiResult, validation);
   }
 
   private static void addDocumentNodes(EngineeringGraph graph, EngineeringProject project) {
@@ -340,7 +348,7 @@ public final class EngineeringDeliverableCompiler {
         "alarm-trip-schedule.json", "shutdown-narratives.json", "psv-datasheets.json", "flare-blowdown-report.json",
         "utility-summary.json", "materials-selection-report.json", "unresolved-engineering-actions.json",
         "revision-impact-report.json", "engineering-production-readiness.json", "engineering-qualification-plan.json",
-        "engineering-discipline-orchestration.json" };
+        "engineering-discipline-orchestration.json", "engineering-vertical-slice-qualification.json" };
     for (String document : documents) {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, document);
       graph.addNode(new EngineeringNode(nodeId, EngineeringNode.Kind.DOCUMENT, document, document)
@@ -553,6 +561,7 @@ public final class EngineeringDeliverableCompiler {
     artifacts.add("engineering-schema-catalog.json");
     artifacts.add("engineering-validation-report.json");
     artifacts.add("engineering-discipline-orchestration.json");
+    artifacts.add("engineering-vertical-slice-qualification.json");
     artifacts.add("plant.dexpi.xml");
     artifacts.add("plant-proteus.xml");
     artifacts.add("plant-pydexpi.xml");
@@ -579,5 +588,31 @@ public final class EngineeringDeliverableCompiler {
 
   private static void write(Path file, String content) throws IOException {
     Files.write(file, content.getBytes(StandardCharsets.UTF_8));
+  }
+
+  private static Map<String, Object> verticalSliceQualification(EngineeringProject project) {
+    if (project.getLatestVerticalSliceQualification() != null) {
+      return project.getLatestVerticalSliceQualification().toMap();
+    }
+    Map<String, Object> result = new LinkedHashMap<String, Object>();
+    result.put("schemaVersion", EngineeringSchemaCatalog.VERTICAL_SLICE_QUALIFICATION);
+    result.put("schemaUri", EngineeringSchemaCatalog.schemaUri(EngineeringSchemaCatalog.VERTICAL_SLICE_QUALIFICATION));
+    result.put("projectId", project.getProjectId());
+    result.put("projectRevision", project.getRevision());
+    result.put("policyId", "NOT_CONFIGURED");
+    result.put("policyRevision", "NOT_CONFIGURED");
+    Map<String, Object> gate = new LinkedHashMap<String, Object>();
+    gate.put("passed", Boolean.FALSE);
+    gate.put("findings", Collections.singletonList("Production vertical-slice qualification was not configured"));
+    gate.put("requiredAction", "Run ProductionVerticalSliceSimulator with a controlled acceptance policy");
+    result.put("gates", Collections.singletonMap("CONFIGURATION", gate));
+    result.put("failedGates", Collections.singletonList("CONFIGURATION"));
+    result.put("qualifiedForControlledPilot", Boolean.FALSE);
+    result.put("qualifiedForFeedSupport", Boolean.FALSE);
+    result.put("fitnessForConstruction", Boolean.FALSE);
+    result.put("finalEngineeringApprovalGranted", Boolean.FALSE);
+    result.put("engineeringApprovalRequired", Boolean.TRUE);
+    result.put("governance", "No vertical-slice qualification has been executed");
+    return result;
   }
 }

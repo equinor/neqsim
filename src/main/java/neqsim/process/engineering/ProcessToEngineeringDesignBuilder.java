@@ -3,6 +3,7 @@ package neqsim.process.engineering;
 import java.util.ArrayList;
 import java.util.List;
 import neqsim.process.engineering.design.modules.CompressorPackageDesignModule;
+import neqsim.process.engineering.design.modules.CompressorOperatingEnvelopeDesignModule;
 import neqsim.process.engineering.design.modules.ControlValveDesignModule;
 import neqsim.process.engineering.design.modules.InstrumentRangeAndResponseDesignModule;
 import neqsim.process.engineering.design.modules.HeatExchangerPreliminaryDesignModule;
@@ -136,6 +137,27 @@ public final class ProcessToEngineeringDesignBuilder {
     addMetricIfMissing(duty);
     project.addEngineeringDesignModule(new HeatExchangerPreliminaryDesignModule(equipmentTag, duty.getId(),
         overallHeatTransferCoefficientWPerM2K, correctedLmtdK, marginFraction, areaCandidatesM2));
+    return this;
+  }
+
+  /** Adds compressor-map, surge, stonewall, anti-surge and discharge-temperature verification across every case. */
+  public ProcessToEngineeringDesignBuilder addCompressorOperatingEnvelopeDesign(String compressorTag,
+      double minimumSurgeMarginFraction, double minimumStonewallMarginFraction, double maximumDischargeTemperatureC,
+      double surgeControlMarginFraction) {
+    requireUnit(compressorTag);
+    addMetricIfMissing(EngineeringMetric.compressorPolytropicHead(compressorTag));
+    addMetricIfMissing(EngineeringMetric.compressorSpeed(compressorTag));
+    addMetricIfMissing(EngineeringMetric.compressorPolytropicEfficiency(compressorTag));
+    addMetricIfMissing(EngineeringMetric.compressorSurgeMargin(compressorTag));
+    addMetricIfMissing(EngineeringMetric.compressorStonewallMargin(compressorTag));
+    addMetricIfMissing(EngineeringMetric.compressorControlLineMargin(compressorTag));
+    addMetricIfMissing(EngineeringMetric.compressorRequiredRecycleFraction(compressorTag));
+    addMetricIfMissing(EngineeringMetric.compressorRecycleCoolerDuty(compressorTag));
+    addMetricIfMissing(EngineeringMetric.compressorDischargeTemperature(compressorTag));
+    addMetricIfMissing(EngineeringMetric.compressorChartExtrapolationFlag(compressorTag));
+    project.addEngineeringDesignModule(
+        new CompressorOperatingEnvelopeDesignModule(compressorTag, minimumSurgeMarginFraction,
+            minimumStonewallMarginFraction, maximumDischargeTemperatureC, surgeControlMarginFraction));
     return this;
   }
 

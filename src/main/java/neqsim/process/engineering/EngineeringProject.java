@@ -24,6 +24,7 @@ import neqsim.process.engineering.designcase.EngineeringDesignCase;
 import neqsim.process.engineering.designcase.EngineeringMetric;
 import neqsim.process.engineering.model.EngineeringCalculation;
 import neqsim.process.engineering.production.EngineeringProductionReadinessBasis;
+import neqsim.process.engineering.verticalslice.InletCompressionExportSliceQualification;
 import neqsim.process.materials.MaterialsReviewInput;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
@@ -69,6 +70,7 @@ public final class EngineeringProject implements Serializable {
   private final Map<String, EmergencyShutdownTestResult> shutdownVerificationResults = new LinkedHashMap<String, EmergencyShutdownTestResult>();
   private MaterialsReviewInput materialsReviewInput;
   private EngineeringProductionReadinessBasis productionReadinessBasis;
+  private transient InletCompressionExportSliceQualification.Result latestVerticalSliceQualification;
 
   EngineeringProject(String name, ProcessSystem processSystem, EngineeringDesignBasis designBasis) {
     this(UUID.randomUUID().toString(), name, processSystem, designBasis);
@@ -151,6 +153,16 @@ public final class EngineeringProject implements Serializable {
   /** @return latest design-loop result, or null when the loop has not been run */
   public EngineeringDesignLoopResult getLatestEngineeringDesignLoopResult() {
     return latestEngineeringDesignLoopResult;
+  }
+
+  /** Records the latest fail-closed inlet/compression/export vertical-slice qualification. */
+  public void recordVerticalSliceQualification(InletCompressionExportSliceQualification.Result result) {
+    latestVerticalSliceQualification = result;
+  }
+
+  /** @return latest vertical-slice qualification, or null when it has not been executed */
+  public InletCompressionExportSliceQualification.Result getLatestVerticalSliceQualification() {
+    return latestVerticalSliceQualification;
   }
 
   /** @return project design basis */
@@ -751,6 +763,9 @@ public final class EngineeringProject implements Serializable {
     root.add("engineeringDesignModules", designModules);
     if (latestEngineeringDesignLoopResult != null) {
       root.add("latestEngineeringDesignLoop", gson.toJsonTree(latestEngineeringDesignLoopResult.toMap()));
+    }
+    if (latestVerticalSliceQualification != null) {
+      root.add("latestVerticalSliceQualification", gson.toJsonTree(latestVerticalSliceQualification.toMap()));
     }
     JsonArray calculationNodes = new JsonArray();
     for (EngineeringCalculation calculation : calculations) {

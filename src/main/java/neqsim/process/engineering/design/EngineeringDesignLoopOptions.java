@@ -10,6 +10,7 @@ public final class EngineeringDesignLoopOptions implements Serializable {
   private final boolean requireAllConstraints;
   private final double processValueRelativeTolerance;
   private final boolean requireStableProcessValues;
+  private final boolean detectDiscreteOscillation;
 
   private EngineeringDesignLoopOptions(Builder builder) {
     if (builder.maximumIterations < 1) {
@@ -26,6 +27,7 @@ public final class EngineeringDesignLoopOptions implements Serializable {
     }
     processValueRelativeTolerance = builder.processValueRelativeTolerance;
     requireStableProcessValues = builder.requireStableProcessValues;
+    detectDiscreteOscillation = builder.detectDiscreteOscillation;
   }
 
   public static Builder builder() {
@@ -52,12 +54,17 @@ public final class EngineeringDesignLoopOptions implements Serializable {
     return requireStableProcessValues;
   }
 
+  public boolean isDiscreteOscillationDetectionEnabled() {
+    return detectDiscreteOscillation;
+  }
+
   public static final class Builder {
     private int maximumIterations = 12;
     private int caseParallelism = 1;
     private boolean requireAllConstraints = true;
     private double processValueRelativeTolerance = 1.0e-4;
     private boolean requireStableProcessValues = true;
+    private boolean detectDiscreteOscillation = true;
 
     public Builder maximumIterations(int value) {
       maximumIterations = value;
@@ -81,6 +88,11 @@ public final class EngineeringDesignLoopOptions implements Serializable {
 
     public Builder requireStableProcessValues(boolean value) {
       requireStableProcessValues = value;
+      return this;
+    }
+
+    public Builder detectDiscreteOscillation(boolean value) {
+      detectDiscreteOscillation = value;
       return this;
     }
 
