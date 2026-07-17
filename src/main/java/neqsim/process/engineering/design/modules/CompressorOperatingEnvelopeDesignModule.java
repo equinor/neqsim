@@ -25,12 +25,10 @@ public final class CompressorOperatingEnvelopeDesignModule implements Engineerin
   private final double surgeControlMarginFraction;
 
   public CompressorOperatingEnvelopeDesignModule(String compressorTag, double minimumSurgeMarginFraction,
-      double minimumStonewallMarginFraction, double maximumDischargeTemperatureC,
-      double surgeControlMarginFraction) {
+      double minimumStonewallMarginFraction, double maximumDischargeTemperatureC, double surgeControlMarginFraction) {
     this.compressorTag = requireText(compressorTag, "compressorTag");
     this.minimumSurgeMarginFraction = nonNegative(minimumSurgeMarginFraction, "minimumSurgeMarginFraction");
-    this.minimumStonewallMarginFraction = nonNegative(minimumStonewallMarginFraction,
-        "minimumStonewallMarginFraction");
+    this.minimumStonewallMarginFraction = nonNegative(minimumStonewallMarginFraction, "minimumStonewallMarginFraction");
     this.maximumDischargeTemperatureC = finite(maximumDischargeTemperatureC, "maximumDischargeTemperatureC");
     this.surgeControlMarginFraction = nonNegative(surgeControlMarginFraction, "surgeControlMarginFraction");
   }

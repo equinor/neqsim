@@ -174,8 +174,8 @@ public final class EngineeringMetric implements Serializable {
 
   /** Creates a maximum compressor polytropic-head metric. */
   public static EngineeringMetric compressorPolytropicHead(final String equipmentTag) {
-    return new EngineeringMetric(equipmentTag + ".polytropicHead", equipmentTag, "Compressor polytropic head",
-        "kJ/kg", GoverningDirection.MAXIMUM, new Extractor() {
+    return new EngineeringMetric(equipmentTag + ".polytropicHead", equipmentTag, "Compressor polytropic head", "kJ/kg",
+        GoverningDirection.MAXIMUM, new Extractor() {
           private static final long serialVersionUID = 1000L;
 
           @Override
@@ -226,8 +226,8 @@ public final class EngineeringMetric implements Serializable {
 
   /** Creates a minimum fractional distance to the compressor stonewall/choke limit. */
   public static EngineeringMetric compressorStonewallMargin(final String equipmentTag) {
-    return new EngineeringMetric(equipmentTag + ".stonewallMargin", equipmentTag, "Distance to stonewall",
-        "fraction", GoverningDirection.MINIMUM, new Extractor() {
+    return new EngineeringMetric(equipmentTag + ".stonewallMargin", equipmentTag, "Distance to stonewall", "fraction",
+        GoverningDirection.MINIMUM, new Extractor() {
           private static final long serialVersionUID = 1000L;
 
           @Override
@@ -265,8 +265,8 @@ public final class EngineeringMetric implements Serializable {
 
   /** Creates a maximum recycle-cooler duty associated with anti-surge recycle. */
   public static EngineeringMetric compressorRecycleCoolerDuty(final String equipmentTag) {
-    return new EngineeringMetric(equipmentTag + ".recycleCoolerDuty", equipmentTag,
-        "Anti-surge recycle cooler duty", "kW", GoverningDirection.MAXIMUM, new Extractor() {
+    return new EngineeringMetric(equipmentTag + ".recycleCoolerDuty", equipmentTag, "Anti-surge recycle cooler duty",
+        "kW", GoverningDirection.MAXIMUM, new Extractor() {
           private static final long serialVersionUID = 1000L;
 
           @Override

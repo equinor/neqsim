@@ -78,8 +78,7 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
       this.tag = text(tag, "compressorTag");
       this.minimumSurgeMargin = nonNegative(minimumSurgeMargin, "minimumSurgeMarginFraction");
       this.minimumStonewallMargin = nonNegative(minimumStonewallMargin, "minimumStonewallMarginFraction");
-      this.maximumDischargeTemperatureC = positive(maximumDischargeTemperatureC,
-          "maximumDischargeTemperatureC");
+      this.maximumDischargeTemperatureC = positive(maximumDischargeTemperatureC, "maximumDischargeTemperatureC");
       this.surgeControlMargin = nonNegative(surgeControlMargin, "surgeControlMarginFraction");
     }
   }

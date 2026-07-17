@@ -142,8 +142,8 @@ public final class ProcessToEngineeringDesignBuilder {
 
   /** Adds compressor-map, surge, stonewall, anti-surge and discharge-temperature verification across every case. */
   public ProcessToEngineeringDesignBuilder addCompressorOperatingEnvelopeDesign(String compressorTag,
-      double minimumSurgeMarginFraction, double minimumStonewallMarginFraction,
-      double maximumDischargeTemperatureC, double surgeControlMarginFraction) {
+      double minimumSurgeMarginFraction, double minimumStonewallMarginFraction, double maximumDischargeTemperatureC,
+      double surgeControlMarginFraction) {
     requireUnit(compressorTag);
     addMetricIfMissing(EngineeringMetric.compressorPolytropicHead(compressorTag));
     addMetricIfMissing(EngineeringMetric.compressorSpeed(compressorTag));
@@ -155,9 +155,9 @@ public final class ProcessToEngineeringDesignBuilder {
     addMetricIfMissing(EngineeringMetric.compressorRecycleCoolerDuty(compressorTag));
     addMetricIfMissing(EngineeringMetric.compressorDischargeTemperature(compressorTag));
     addMetricIfMissing(EngineeringMetric.compressorChartExtrapolationFlag(compressorTag));
-    project.addEngineeringDesignModule(new CompressorOperatingEnvelopeDesignModule(compressorTag,
-        minimumSurgeMarginFraction, minimumStonewallMarginFraction, maximumDischargeTemperatureC,
-        surgeControlMarginFraction));
+    project.addEngineeringDesignModule(
+        new CompressorOperatingEnvelopeDesignModule(compressorTag, minimumSurgeMarginFraction,
+            minimumStonewallMarginFraction, maximumDischargeTemperatureC, surgeControlMarginFraction));
     return this;
   }
 

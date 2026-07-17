@@ -47,8 +47,10 @@ public final class InletCompressionExportSliceQualification {
     ProcessSystem process = loop == null ? project.getEngineeringProcessSystem() : loop.getDesignedProcess();
 
     List<String> topologyFindings = topologyFindings(process, policy);
-    gates.put("COMPLETE_PROCESS_AND_SAFETY_TOPOLOGY", gate(topologyFindings.isEmpty(), topologyFindings,
-        "Add the separator, charted compressor, cooler, export line, recycle, PCV, LCV, PSV, BDV, ESDVs and flare connection"));
+    gates.put("COMPLETE_PROCESS_AND_SAFETY_TOPOLOGY",
+        gate(topologyFindings.isEmpty(), topologyFindings,
+            "Add the separator, charted compressor, cooler, export line, recycle, PCV, LCV, PSV, BDV, ESDVs "
+                + "and flare connection"));
 
     Set<EngineeringDesignCase.Type> presentTypes = EnumSet.noneOf(EngineeringDesignCase.Type.class);
     List<String> failedCases = new ArrayList<String>();
@@ -77,8 +79,10 @@ public final class InletCompressionExportSliceQualification {
         "Converge physical design variables, process values and constraints"));
 
     List<String> missingVariables = missingDesignVariables(loop == null ? null : loop.getState(), policy);
-    gates.put("COUPLED_PHYSICAL_DESIGN", gate(missingVariables.isEmpty(), missingVariables,
-        "Size separator, compressor, cooler, piping, valves, relief, materials and mechanical design in the common loop"));
+    gates.put("COUPLED_PHYSICAL_DESIGN",
+        gate(missingVariables.isEmpty(), missingVariables,
+            "Size separator, compressor, cooler, piping, valves, relief, materials and mechanical design in the "
+                + "common loop"));
 
     List<String> compressorFindings = compressorFindings(process, simulation, policy);
     gates.put("COMPRESSOR_MAP_AND_ANTI_SURGE", gate(compressorFindings.isEmpty(), compressorFindings,
@@ -362,8 +366,8 @@ public final class InletCompressionExportSliceQualification {
       result.put("fitnessForConstruction", Boolean.FALSE);
       result.put("finalEngineeringApprovalGranted", Boolean.FALSE);
       result.put("engineeringApprovalRequired", Boolean.TRUE);
-      result.put("governance",
-          "Passing the simulator gates qualifies a controlled pilot only; accountable engineering approval remains required");
+      result.put("governance", "Passing the simulator gates qualifies a controlled pilot only; accountable "
+          + "engineering approval remains required");
       return result;
     }
   }
