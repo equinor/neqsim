@@ -213,6 +213,33 @@ class ProcessRunnerTest {
     assertEquals(inline, ProcessRunner.resolveJsonInput(inline));
   }
 
+  @Test
+  void testValidateAndRun_pseudoComponentFluidFromFilePath(@TempDir Path tempDir) throws Exception {
+    // A fluid with database light ends plus a characterized (pseudo) heavy component
+    // defined by Tc/Pc/acentricFactor/MW/density, run through the MCP runner by file path.
+    // This locks the characterizedComponents fluid path together with .json file input,
+    // which together let a UniSim/E300-derived pseudo-component fluid run via run_process.
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"PR\"," + "  \"temperature\": 313.15," + "  \"pressure\": 30.0,"
+        + "  \"mixingRule\": \"classic\","
+        + "  \"components\": {\"methane\": 0.6, \"ethane\": 0.05, \"propane\": 0.05, \"n-pentane\": 0.05},"
+        + "  \"characterizedComponents\": [{" + "    \"name\": \"PC1\", \"moleFraction\": 0.25,"
+        + "    \"molarMass\": 0.20, \"density\": 0.78, \"Tc\": 700.0, \"Pc\": 17.0,"
+        + "    \"acentricFactor\": 0.72, \"isPlusFraction\": false}]" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"Well feed\","
+        + "   \"properties\": {\"flowRate\": [100000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"Well feed\"},"
+        + "  {\"type\": \"Compressor\"," + "   \"name\": \"Export compressor\", \"inlet\": \"HP Sep.gasOutStream\","
+        + "   \"properties\": {\"outletPressure\": [120.0, \"bara\"]}}" + "]" + "}";
+    Path file = tempDir.resolve("pseudo_component_process.json");
+    Files.write(file, json.getBytes(StandardCharsets.UTF_8));
+
+    String result = ProcessRunner.validateAndRun(file.toAbsolutePath().toString());
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString());
+    assertTrue(root.has("report"));
+  }
+
   private static String processModelJson() {
     String fluid = "\"fluid\": {" + "\"model\": \"SRK\"," + "\"temperature\": 298.15," + "\"pressure\": 50.0,"
         + "\"components\": {\"methane\": 0.9, \"ethane\": 0.1}" + "}";
