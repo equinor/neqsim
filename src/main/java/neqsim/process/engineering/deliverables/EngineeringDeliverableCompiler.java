@@ -300,7 +300,8 @@ public final class EngineeringDeliverableCompiler {
         project.getProductionReadinessBasis() != null
             && project.getProductionReadinessBasis().getAutoConfigurationResult() != null
             && project.getProductionReadinessBasis().getAutoConfigurationResult().isExecutionReady()
-                ? "EXECUTED_REVIEW_REQUIRED" : "NOT_EXECUTION_READY");
+                ? "EXECUTED_REVIEW_REQUIRED"
+                : "NOT_EXECUTION_READY");
     orchestration.put("governance",
         "Dependency completion does not replace HAZOP/LOPA, vendor validation or accountable approval");
     write(orchestrationFile, GSON.toJson(orchestration));

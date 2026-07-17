@@ -294,8 +294,7 @@ public final class EngineeringAutoConfigurator {
 
     Result(String policyId, String policyRevision, Set<String> configuredTags, List<String> unconfigured,
         List<Map<String, Object>> equipmentInventory, int moduleCount, boolean hiddenDefaultsUsed,
-        Map<String, List<String>> moduleDependencies, List<String> executionBlockers,
-        String configurationFingerprint) {
+        Map<String, List<String>> moduleDependencies, List<String> executionBlockers, String configurationFingerprint) {
       this.policyId = policyId;
       this.policyRevision = policyRevision;
       this.configuredTags = Collections.unmodifiableSet(new LinkedHashSet<String>(configuredTags));

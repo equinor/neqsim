@@ -53,8 +53,8 @@ public final class EngineeringGraphBuilder {
     }
     if (project.getProductionReadinessBasis() != null
         && project.getProductionReadinessBasis().getAutoConfigurationResult() != null) {
-      projectNode.putProperty("engineeringConfigurationFingerprint", project.getProductionReadinessBasis()
-          .getAutoConfigurationResult().getConfigurationFingerprint());
+      projectNode.putProperty("engineeringConfigurationFingerprint",
+          project.getProductionReadinessBasis().getAutoConfigurationResult().getConfigurationFingerprint());
       projectNode.putProperty("engineeringConfigurationExecutionReady",
           Boolean.valueOf(project.getProductionReadinessBasis().getAutoConfigurationResult().isExecutionReady()));
       projectNode.putProperty("engineeringModuleDependencies",

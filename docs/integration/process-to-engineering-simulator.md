@@ -298,6 +298,29 @@ The compiler creates an area package below each area name and a
 cross-area dependencies; a change invalidates all connected areas. Utility demand simultaneity, flare/blowdown group
 concurrency and safety scenario credibility still require explicit project inputs and review.
 
+Declare those shared-system inputs with controlled references rather than deriving concurrency from topology:
+
+```java
+EngineeringSharedSystemPolicy coordination = new EngineeringSharedSystemPolicy("field-a-shared-systems", "A")
+    .add(new EngineeringSharedSystemPolicy.Definition("main-power",
+        EngineeringSharedSystemPolicy.Type.ELECTRICAL_SYSTEM,
+        "ELECTRICAL-LOAD-BASIS-A", "CALC-EL-001-A")
+        .addDemand("inlet", "10-PA-001.driverRatedPower", 1.0)
+        .addDemand("compression", "20-KA-001.driverRatedPower", 1.0));
+
+ProcessModelEngineeringSimulator.Result first =
+    ProcessModelEngineeringSimulator.run("Field A", processModel, areas, coordination, 4);
+ProcessModelEngineeringSimulator.Result next = ProcessModelEngineeringSimulator.runIncremental(
+    "Field A", revisedModel, revisedAreas, coordination, first, 4);
+```
+
+The shared-system result reports each governing design value, its controlled simultaneity factor and the total demand.
+Missing variables, inconsistent units, or fewer than two participating areas block package compilation. Incremental
+execution compares area and coordination fingerprints, reruns every changed area, propagates invalidation through
+shared streams and declared shared systems, and reuses only unaffected baseline results. The root manifest records
+`executedAreas` and `reusedAreas`, is checked by `ProcessModelEngineeringPackageValidator`, and is distributed with its
+versioned JSON schema.
+
 Compilation always writes the schema-registered `engineering-production-readiness.json` artifact. Its maturity levels
 are `NOT_READY`, `EXPERIMENTAL`, `VALIDATED_PRELIMINARY` and `QUALIFIED_FEED_SUPPORT`. A green result means only that
 the supplied preliminary/FEED-support evidence gates have passed. The artifact deliberately fixes
