@@ -27,6 +27,26 @@ ProcessSystem / ProcessModel
   -> engineering graph, DEXPI 2.0, registers and calculation package
 ```
 
+## Eight-step workflow coverage
+
+One run now follows the complete preliminary-engineering chain:
+
+1. `ProcessSystem` or one area from a `ProcessModel` is the physical source model.
+2. `EngineeringDesignCase` defines normal, maximum, turndown, start-up, shutdown and accidental inputs.
+3. `EngineeringCaseRunner` executes isolated copies and creates the governing envelope.
+4. Typed family and design-loop modules size equipment, piping, valves, instruments and PSV orifices.
+5. Selected separator geometry, pipe diameters and valve Cv values are applied to an isolated design copy and the
+   hydraulics are rerun.
+6. Governed safety studies connect control, relief, blowdown, flare and dynamic response verification; missing HAZOP
+   credibility is a calculation blocker.
+7. `EngineeringConvergenceReport` requires stable physical variables, stable process values, converged cases and
+   satisfied constraints. Open actions and accountable reviews remain visible.
+8. The compiler serializes the canonical graph to DEXPI 2.0 and produces coordinated registers, datasheets,
+   calculation evidence and revision/action reports.
+
+The implementation is intentionally preliminary and composable. Detailed company methods can replace a family module
+without changing the iteration, provenance, graph or package contracts.
+
 ## Configure the first complete vertical slice
 
 Build a governed project, declare at least one executable case, and configure the tagged inlet separator, compressor,
@@ -93,6 +113,29 @@ builder.addRatedCapacity("40-DA-001",
 governing case report and current design state, then returns proposed updates, process appliers, constraints, evidence,
 and review warnings. Continuous calculations and discrete vendor or schedule candidates use the same update contract.
 
+Typed `EngineeringCalculationModule` implementations are available for independently executable and benchmarkable
+calculations:
+
+- `EquipmentDesignCalculations.Separator`, `.Compressor`, `.Pump`, `.HeatExchanger`, `.Column` and `.Tank`;
+- `PipingNetworkDesignCalculation` with a versioned `PipingRulePack`;
+- `ValveInstrumentDesignCalculations.Valve` and `.Instrument`;
+- `SafetyScenarioEngineCalculation`; and
+- `MaterialsMechanicalDesignCalculations.MaterialSelection` and `.PreliminaryMechanical`.
+
+Every typed result carries a method identifier/version, input snapshot, design-case context, readiness findings,
+uncertainty where applicable, constraints, warnings and `engineeringApprovalRequired=true`.
+
+### Network-level piping
+
+`PipingNetworkDesignCalculation` selects the smallest nominal-size/schedule candidate satisfying velocity, minimum
+velocity, simulated pressure-gradient, pressure rating and relief-inlet-loss limits across every supplied case. It
+accounts for equivalent fitting length, elevation evidence, multiphase pressure-drop multipliers and simultaneous
+header demand. Use `PipingNetworkDesignModule` when the selected inside diameters must participate in the common
+process/design convergence loop.
+
+The built-in offshore rule pack identifies itself as `NORSOK P-002:2023+AC:2024`; numerical limits are
+project-overridable and the selected project edition remains traceable.
+
 ## Safety and scenario integration
 
 The design loop establishes pressure and response proposals. The existing coupled relief/blowdown/flare calculation
@@ -102,6 +145,13 @@ screening cases for engineering review.
 
 Scenario credibility, simultaneous-event groups, fire zones and final safeguards must be supplied from the project
 hazard review. The simulator does not invent a HAZOP conclusion or SIL target.
+
+`SafetyScenarioEngineCalculation` provides the controlled scenario taxonomy for blocked outlet, control-valve
+failure, utility/cooling failure, compressor trip and settle-out, fire, tube rupture, thermal expansion, gas blow-by,
+abnormal heat input, check-valve failure, simultaneous blowdown and loss of containment. It calculates only scenarios
+marked credible with a hazard-review reference. Outputs include gas/liquid/steam/two-phase method selection, API
+orifice selection, inlet loss, built-up/superimposed backpressure, concurrency-group load, knockout-drum liquid
+hold-up and depressurization minimum-temperature checks.
 
 ## Engineering graph and DEXPI
 
@@ -118,13 +168,40 @@ After the loop runs:
 DEXPI remains the exchange representation. The canonical engineering graph and controlled calculation evidence are
 the source of engineering identity, provenance and revision impact.
 
+`engineering-diagram-layout.json` is generated deterministically from canonical graph identities and flow edges. It
+contains stable PFD/P&ID placements and orthogonal routes; coordinates are serialization data, not the engineering
+database. Internal round-trip qualification compares stable equipment identity, references and semantic inventories
+for native DEXPI 2.0, Proteus and pyDEXPI representations. Named commercial-tool qualification remains a separate
+external gate.
+
+## Coordinated package outputs
+
+In addition to DEXPI XML, registers, the case matrix, governing envelope and calculation graph, compilation writes:
+
+- `process-design-basis.json`;
+- `equipment-datasheets.json`;
+- `valve-list.json` and `io-list.json`;
+- `alarm-trip-schedule.json` and `shutdown-narratives.json`;
+- `psv-datasheets.json` and `flare-blowdown-report.json`;
+- `utility-summary.json`;
+- `materials-selection-report.json`;
+- `engineering-diagram-layout.json`;
+- `unresolved-engineering-actions.json`; and
+- `revision-impact-report.json`.
+
+The existing cause-and-effect matrix, equipment/line/instrument registers, native DEXPI PFD/P&ID representations,
+calculation DAG, approval
+ledger and graph difference complete the package. Each calculated value retains its governing case, method or module,
+unit and graph/evidence relationship.
+
 ## Standards profile
 
 The supplied methods are designed to be used with version-controlled project rule packs, including:
 
 - DEXPI 2.0 for exchange serialization;
 - NORSOK P-002 for offshore process-system and line-design requirements;
-- NORSOK I-001 and IEC 61511 for instrumentation and supplied SIF requirements;
+- ANSI/ISA-5.1:2024, NORSOK I-001:2025+AC:2026, NORSOK I-002:2021 and IEC 61511 for instrumentation and supplied SIF
+  requirements;
 - NORSOK M-001 for materials and degradation review;
 - IEC 60534 for control-valve sizing; and
 - API 520/521 for supplied relief and depressurization cases.
@@ -147,4 +224,6 @@ replace accountable discipline work for:
 
 See the executed
 [process-to-engineering notebook](../../examples/notebooks/process_to_engineering_simulator.ipynb) for the full
-vertical slice and convergence plots.
+vertical slice, process/design convergence plots and coordinated package. The executed
+[engineering-roadmap workbench](../../examples/notebooks/engineering_roadmap_steps_1_to_8.ipynb) demonstrates every
+new typed equipment, piping, valve/instrument, safety, materials and preliminary mechanical calculation family.

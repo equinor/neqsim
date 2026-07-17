@@ -3,6 +3,10 @@ package neqsim.process.engineering;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import neqsim.process.engineering.deliverables.EngineeringDeliverableCompiler;
 import neqsim.process.engineering.designcase.EngineeringDesignCase;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
@@ -12,12 +16,16 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /** End-to-end test of the inlet-separation, compression, and export engineering slice. */
 class ProcessToEngineeringSimulatorTest {
 
+  @TempDir
+  Path temporaryDirectory;
+
   @Test
-  void designsACompleteInletCompressionExportSlice() {
+  void designsACompleteInletCompressionExportSlice() throws Exception {
     ProcessSystem process = process();
     double originalLineDiameter = ((AdiabaticPipe) process.getUnit("EXPORT-LINE")).getDiameter();
     EngineeringProject project = NorsokOffshoreEngineeringBuilder.from("Process-to-engineering test", process)
@@ -42,6 +50,26 @@ class ProcessToEngineeringSimulatorTest {
         1.0e-9);
     assertTrue(result.toJson().contains("preliminaryMaterialClass"));
     assertEquals(originalLineDiameter, ((AdiabaticPipe) process.getUnit("EXPORT-LINE")).getDiameter(), 1.0e-12);
+
+    EngineeringDeliverableCompiler.compile(project, temporaryDirectory);
+    String[] coordinatedArtifacts = new String[] { "process-design-basis.json", "equipment-datasheets.json",
+        "valve-list.json", "io-list.json", "alarm-trip-schedule.json", "shutdown-narratives.json",
+        "psv-datasheets.json", "flare-blowdown-report.json", "utility-summary.json", "materials-selection-report.json",
+        "engineering-diagram-layout.json", "unresolved-engineering-actions.json", "revision-impact-report.json" };
+    for (String artifact : coordinatedArtifacts) {
+      assertTrue(Files.exists(temporaryDirectory.resolve(artifact)), artifact);
+    }
+    String nativeDexpi = new String(Files.readAllBytes(temporaryDirectory.resolve("plant.dexpi.xml")),
+        StandardCharsets.UTF_8);
+    assertTrue(nativeDexpi.contains("NeqSim governed PFD"));
+    assertTrue(nativeDexpi.contains("NeqSim governed P&amp;ID") || nativeDexpi.contains("NeqSim governed P&ID"));
+    String dexpiValidation = new String(Files.readAllBytes(temporaryDirectory.resolve("dexpi-validation.json")),
+        StandardCharsets.UTF_8);
+    assertTrue(dexpiValidation.contains("\"valid\": true"));
+    String packageManifest = new String(Files.readAllBytes(temporaryDirectory.resolve("package-manifest.json")),
+        StandardCharsets.UTF_8);
+    assertTrue(packageManifest.contains("equipment-datasheets.json"));
+    assertTrue(packageManifest.contains("engineering-validation-report.json"));
   }
 
   private EngineeringDesignCase flowCase(String id, final double flowKgHr, int priority) {

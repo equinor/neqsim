@@ -19,6 +19,7 @@ public final class EngineeringDesignUpdate implements Serializable {
   private final String governingCaseId;
   private final double relativeTolerance;
   private final double[] candidates;
+  private final DesignCandidate[] designCandidates;
   private final Applier applier;
 
   private EngineeringDesignUpdate(Builder builder) {
@@ -33,8 +34,22 @@ public final class EngineeringDesignUpdate implements Serializable {
       throw new IllegalArgumentException("relativeTolerance must be finite and non-negative");
     }
     relativeTolerance = builder.relativeTolerance;
-    candidates = builder.candidates == null ? new double[0] : builder.candidates.clone();
-    Arrays.sort(candidates);
+    if (builder.designCandidates == null) {
+      candidates = builder.candidates == null ? new double[0] : builder.candidates.clone();
+      Arrays.sort(candidates);
+      designCandidates = new DesignCandidate[0];
+    } else {
+      designCandidates = builder.designCandidates.clone();
+      Arrays.sort(designCandidates);
+      candidates = new double[designCandidates.length];
+      for (int index = 0; index < designCandidates.length; index++) {
+        if (!unit.equals(designCandidates[index].getUnit())) {
+          throw new IllegalArgumentException("Candidate " + designCandidates[index].getId() + " uses "
+              + designCandidates[index].getUnit() + " but update " + key + " uses " + unit);
+        }
+        candidates[index] = designCandidates[index].getValue();
+      }
+    }
     applier = builder.applier;
   }
 
@@ -54,6 +69,10 @@ public final class EngineeringDesignUpdate implements Serializable {
     return governingCaseId;
   }
 
+  public double getRequiredValue() {
+    return requiredValue;
+  }
+
   public double getRelativeTolerance() {
     return relativeTolerance;
   }
@@ -70,6 +89,32 @@ public final class EngineeringDesignUpdate implements Serializable {
     throw new IllegalStateException("No configured candidate satisfies " + key + " >= " + requiredValue + " " + unit);
   }
 
+  String selectedCandidateId() {
+    if (candidates.length == 0) {
+      return "CONTINUOUS";
+    }
+    double selected = selectedValue();
+    for (DesignCandidate candidate : designCandidates) {
+      if (Double.compare(candidate.getValue(), selected) == 0) {
+        return candidate.getId();
+      }
+    }
+    return key + "@" + Double.toString(selected) + unit;
+  }
+
+  /** Returns the governed candidate records, synthesizing stable records for legacy numeric candidates. */
+  public DesignCandidate[] getCandidates() {
+    if (designCandidates.length > 0) {
+      return designCandidates.clone();
+    }
+    DesignCandidate[] result = new DesignCandidate[candidates.length];
+    for (int index = 0; index < candidates.length; index++) {
+      result[index] = new DesignCandidate(key + "@" + Double.toString(candidates[index]) + unit, candidates[index],
+          unit);
+    }
+    return result;
+  }
+
   void apply(ProcessSystem process, double selectedValue) {
     if (applier != null) {
       applier.apply(process, selectedValue);
@@ -83,6 +128,7 @@ public final class EngineeringDesignUpdate implements Serializable {
     private String governingCaseId = "";
     private double relativeTolerance = 1.0e-3;
     private double[] candidates;
+    private DesignCandidate[] designCandidates;
     private Applier applier;
 
     private Builder(String key, double requiredValue, String unit) {
@@ -103,6 +149,14 @@ public final class EngineeringDesignUpdate implements Serializable {
 
     public Builder candidates(double... values) {
       candidates = values == null ? null : values.clone();
+      designCandidates = null;
+      return this;
+    }
+
+    /** Configures identified physical candidates such as schedule sizes or vendor ratings. */
+    public Builder candidates(DesignCandidate... values) {
+      designCandidates = values == null ? null : values.clone();
+      candidates = null;
       return this;
     }
 

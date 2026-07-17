@@ -8,6 +8,8 @@ public final class EngineeringDesignLoopOptions implements Serializable {
   private final int maximumIterations;
   private final int caseParallelism;
   private final boolean requireAllConstraints;
+  private final double processValueRelativeTolerance;
+  private final boolean requireStableProcessValues;
 
   private EngineeringDesignLoopOptions(Builder builder) {
     if (builder.maximumIterations < 1) {
@@ -19,6 +21,11 @@ public final class EngineeringDesignLoopOptions implements Serializable {
     maximumIterations = builder.maximumIterations;
     caseParallelism = builder.caseParallelism;
     requireAllConstraints = builder.requireAllConstraints;
+    if (!Double.isFinite(builder.processValueRelativeTolerance) || builder.processValueRelativeTolerance < 0.0) {
+      throw new IllegalArgumentException("processValueRelativeTolerance must be finite and non-negative");
+    }
+    processValueRelativeTolerance = builder.processValueRelativeTolerance;
+    requireStableProcessValues = builder.requireStableProcessValues;
   }
 
   public static Builder builder() {
@@ -37,10 +44,20 @@ public final class EngineeringDesignLoopOptions implements Serializable {
     return requireAllConstraints;
   }
 
+  public double getProcessValueRelativeTolerance() {
+    return processValueRelativeTolerance;
+  }
+
+  public boolean isStableProcessValuesRequired() {
+    return requireStableProcessValues;
+  }
+
   public static final class Builder {
     private int maximumIterations = 12;
     private int caseParallelism = 1;
     private boolean requireAllConstraints = true;
+    private double processValueRelativeTolerance = 1.0e-4;
+    private boolean requireStableProcessValues = true;
 
     public Builder maximumIterations(int value) {
       maximumIterations = value;
@@ -54,6 +71,16 @@ public final class EngineeringDesignLoopOptions implements Serializable {
 
     public Builder requireAllConstraints(boolean value) {
       requireAllConstraints = value;
+      return this;
+    }
+
+    public Builder processValueRelativeTolerance(double value) {
+      processValueRelativeTolerance = value;
+      return this;
+    }
+
+    public Builder requireStableProcessValues(boolean value) {
+      requireStableProcessValues = value;
       return this;
     }
 
