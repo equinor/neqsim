@@ -2966,6 +2966,17 @@ class UniSimToNeqSim:
                 out_s = _get_outlet_stream_data()
                 if out_s and out_s.temperature_C is not None:
                     props['outTemperature'] = out_s.temperature_C + 273.15
+            # Transfer the UniSim cooler/heater pressure DROP. NeqSim Cooler/Heater
+            # keep the inlet pressure otherwise, so a downstream separator/valve
+            # would flash at the wrong (too-high) pressure. Emit pressureDrop in
+            # bara (Heater.pressureUnit defaults to bara) so the drop tracks the
+            # inlet, matching UniSim's exchanger dP.
+            p_out = op.properties.get('outlet_pressure_bara')
+            in_s = (self._find_stream_by_name(flowsheet, op.feeds[0])
+                    if op.feeds else None)
+            p_in = in_s.pressure_bara if in_s else None
+            if p_out and p_in and (p_in - p_out) > 0.001:
+                props['pressureDrop'] = round(p_in - p_out, 6)
 
         elif neqsim_type == 'Pump':
             if op.properties.get('outlet_pressure_bara'):
@@ -6440,19 +6451,18 @@ class UniSimToNeqSim:
                     t_out = out_s.temperature_C
             if t_out is not None:
                 lines.append(f'{var}.setOutTemperature({t_out + 273.15})')
-            # Transfer the UniSim cooler/heater outlet-pressure letdown. This is
-            # applied unconditionally for any real drop: NeqSim Cooler/Heater keep
-            # inlet pressure otherwise, so a downstream separator would flash at
-            # the wrong pressure. (Earlier this destabilised recycle loops only
-            # because geometry-less pipes NaN'd at the corrected pressure; with
-            # pipe geometry now transferred and PipeBeggsAndBrills used, the loops
-            # converge — see the Gas riser / Subsea Scrubber case.)
+            # Transfer the UniSim cooler/heater pressure DROP. NeqSim Cooler/
+            # Heater keep inlet pressure otherwise, so a downstream separator
+            # would flash at the wrong pressure. Use setPressureDrop (bara) so the
+            # drop tracks the live inlet each iteration and matches UniSim's
+            # exchanger dP, capturing small drops an outlet-pressure ratio test
+            # would miss.
             p_out = op.properties.get('outlet_pressure_bara')
             in_s = (self._find_stream_by_name(flowsheet, op.feeds[0])
                     if op.feeds else None)
             p_in = in_s.pressure_bara if in_s else None
-            if p_out and p_in and p_out < 0.98 * p_in:
-                lines.append(f'{var}.setOutletPressure({p_out}, "bara")')
+            if p_out and p_in and (p_in - p_out) > 0.001:
+                lines.append(f'{var}.setPressureDrop({round(p_in - p_out, 6)})')
 
         elif neqsim_type == 'HeatExchanger':
             # Two-stream (process-to-process) heat exchanger. The converter set
