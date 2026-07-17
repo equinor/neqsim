@@ -28,9 +28,8 @@ public final class ProductionVerticalSliceSimulator {
 
   /** Runs the complete simulator and emits the coordinated package from the same qualified project state. */
   public static Result runAndCompile(EngineeringProject project,
-      EngineeringAutoConfigurationPolicy autoConfigurationPolicy,
-      InletCompressionExportSlicePolicy qualificationPolicy, int caseParallelism, Path outputDirectory,
-      EngineeringGraph baselineGraph) throws IOException {
+      EngineeringAutoConfigurationPolicy autoConfigurationPolicy, InletCompressionExportSlicePolicy qualificationPolicy,
+      int caseParallelism, Path outputDirectory, EngineeringGraph baselineGraph) throws IOException {
     Result run = run(project, autoConfigurationPolicy, qualificationPolicy, caseParallelism);
     EngineeringDeliverableCompiler.CompilationResult compilation = EngineeringDeliverableCompiler.compile(project,
         outputDirectory, baselineGraph);

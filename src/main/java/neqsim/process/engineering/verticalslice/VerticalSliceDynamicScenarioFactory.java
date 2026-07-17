@@ -50,39 +50,35 @@ public final class VerticalSliceDynamicScenarioFactory {
             logic.addAction(safeState, 0.0);
             return logic;
           }
-        }).addCriterion(DynamicScenarioCriterion
-            .builder("suction-isolated", "Suction ESD valve reaches safe closed position", "%",
-                new DynamicScenarioCriterion.Extractor() {
-                  private static final long serialVersionUID = 1000L;
+        }).addCriterion(DynamicScenarioCriterion.builder("suction-isolated",
+            "Suction ESD valve reaches safe closed position", "%", new DynamicScenarioCriterion.Extractor() {
+              private static final long serialVersionUID = 1000L;
 
-                  @Override
-                  public double extract(ProcessSystem process) {
-                    return require(process, policy.getSuctionEsdValveTag(), ESDValve.class).getPercentValveOpening();
-                  }
-                })
+              @Override
+              public double extract(ProcessSystem process) {
+                return require(process, policy.getSuctionEsdValveTag(), ESDValve.class).getPercentValveOpening();
+              }
+            })
             .acceptanceRange(null, Double.valueOf(1.0)).deadlineSeconds(isolationDeadlineSeconds).build())
-        .addCriterion(DynamicScenarioCriterion
-            .builder("discharge-isolated", "Discharge ESD valve reaches safe closed position", "%",
-                new DynamicScenarioCriterion.Extractor() {
-                  private static final long serialVersionUID = 1000L;
+        .addCriterion(DynamicScenarioCriterion.builder("discharge-isolated",
+            "Discharge ESD valve reaches safe closed position", "%", new DynamicScenarioCriterion.Extractor() {
+              private static final long serialVersionUID = 1000L;
 
-                  @Override
-                  public double extract(ProcessSystem process) {
-                    return require(process, policy.getDischargeEsdValveTag(), ESDValve.class).getPercentValveOpening();
-                  }
-                })
+              @Override
+              public double extract(ProcessSystem process) {
+                return require(process, policy.getDischargeEsdValveTag(), ESDValve.class).getPercentValveOpening();
+              }
+            })
             .acceptanceRange(null, Double.valueOf(1.0)).deadlineSeconds(isolationDeadlineSeconds).build())
-        .addCriterion(DynamicScenarioCriterion
-            .builder("blowdown-open", "Blowdown valve reaches safe open position", "%",
-                new DynamicScenarioCriterion.Extractor() {
-                  private static final long serialVersionUID = 1000L;
+        .addCriterion(DynamicScenarioCriterion.builder("blowdown-open", "Blowdown valve reaches safe open position",
+            "%", new DynamicScenarioCriterion.Extractor() {
+              private static final long serialVersionUID = 1000L;
 
-                  @Override
-                  public double extract(ProcessSystem process) {
-                    return require(process, policy.getBlowdownValveTag(), BlowdownValve.class)
-                        .getPercentValveOpening();
-                  }
-                })
+              @Override
+              public double extract(ProcessSystem process) {
+                return require(process, policy.getBlowdownValveTag(), BlowdownValve.class).getPercentValveOpening();
+              }
+            })
             .acceptanceRange(Double.valueOf(90.0), null).deadlineSeconds(blowdownDeadlineSeconds).build())
         .addEvidenceReference(evidenceReference).build();
   }

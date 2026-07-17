@@ -277,8 +277,8 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
   /** Adds governed API-style discrete PSV-orifice selection to the automatic design loop. */
   public EngineeringAutoConfigurationPolicy addReliefDevice(String deviceTag, String protectedEquipmentTag,
       EngineeringMetric requiredAreaMetric, double... apiOrificeCandidatesIn2) {
-    reliefDevices.add(
-        new ReliefDeviceRule(deviceTag, protectedEquipmentTag, requiredAreaMetric, apiOrificeCandidatesIn2));
+    reliefDevices
+        .add(new ReliefDeviceRule(deviceTag, protectedEquipmentTag, requiredAreaMetric, apiOrificeCandidatesIn2));
     return this;
   }
 
