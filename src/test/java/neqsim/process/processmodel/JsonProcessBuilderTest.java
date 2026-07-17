@@ -803,4 +803,35 @@ class JsonProcessBuilderTest {
     }
   }
 
+  @Test
+  void testPartialMixerForwardInletReattachedByCompletionPass() {
+    // A Mixer whose inlet list includes a FORWARD stream reference ("branch.outlet")
+    // that only resolves after a build-time cycle is broken. The mixer is
+    // force-partial-wired (dropping the not-yet-resolvable forward inlet) to break
+    // the cycle; the completion pass must re-attach that inlet once every unit
+    // exists, so no material stream (and its mass/components) is silently lost.
+    // Regression guard for the over-stabilized-oil bug where a dropped forward
+    // inlet carried all the light ends.
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
+        + "  \"components\": {\"methane\": 0.80, \"ethane\": 0.10, \"propane\": 0.10}" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [50000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Mixer\", \"name\": \"mix\","
+        + "   \"inlets\": [\"feed\", \"rcy.outlet\", \"branch.outlet\"]},"
+        + "  {\"type\": \"Separator\", \"name\": \"flash\"," + "   \"inlet\": \"mix.outlet\"},"
+        + "  {\"type\": \"ThrottlingValve\", \"name\": \"branch\"," + "   \"inlet\": \"flash.gasOut\","
+        + "   \"properties\": {\"outletPressure\": 40.0}}," + "  {\"type\": \"Recycle\", \"name\": \"rcy\","
+        + "   \"inlet\": \"flash.liquidOut\"}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    ProcessSystem process = result.getProcessSystem();
+    neqsim.process.equipment.mixer.Mixer mix = (neqsim.process.equipment.mixer.Mixer) process.getUnit("mix");
+    assertNotNull(mix, "Mixer should exist");
+    // All THREE inlets must be attached (feed + rcy.outlet + branch.outlet) — the
+    // forward 'branch.outlet' inlet must be restored by the completion pass.
+    assertEquals(3, mix.getInletStreams().size(),
+        "Completion pass must re-attach the dropped forward inlet (no stream lost)");
+  }
+
 }
