@@ -264,6 +264,9 @@ public final class Dexpi20XmlWriter {
     factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
     Transformer transformer = factory.newTransformer();
     transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+    // The JDK 8 transformer requires an explicit indentation width, while newer JDKs default
+    // to four spaces. Declare it so golden DEXPI documents are byte-stable across supported JDKs.
+    transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
     transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
     transformer.transform(new DOMSource(document), new StreamResult(outputStream));
   }
