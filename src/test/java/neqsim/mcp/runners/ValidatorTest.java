@@ -212,13 +212,15 @@ class ValidatorTest {
     assertTrue(hasIssueCode(root, "MISSING_COMPONENTS"));
   }
 
-  String json = "{" + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\"}" + "]" + "}";
+  @Test
+  void testProcessMissingFluid() {
+    String json = "{" + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\"}" + "]" + "}";
 
-  String result = Validator.validate(json);
-  JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+    String result = Validator.validate(json);
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
 
-  // Warning, not error
-  assertTrue(root.get("valid").getAsBoolean());
+    // Warning, not error
+    assertTrue(root.get("valid").getAsBoolean());
     assertTrue(hasIssueCode(root, "NO_FLUID"));
   }
 
