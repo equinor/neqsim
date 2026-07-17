@@ -195,14 +195,14 @@ public final class InletCompressionExportReferenceFacility {
   private static void configureCompressorMap(Compressor compressor) {
     double[] conditions = new double[] { 19.0, 300.0, 50.0, 0.90 };
     double[] speeds = new double[] { 9000.0, 11000.0 };
-    double[][] flows = new double[][] { { 20.0, 80.0, 145.0 }, { 28.0, 115.0, 205.0 } };
+    double[][] flows = new double[][] { { 20.0, 120.0, 320.0 }, { 28.0, 160.0, 420.0 } };
     double[][] heads = new double[][] { { 78.0, 68.0, 52.0 }, { 115.0, 98.0, 74.0 } };
     double[][] efficiencies = new double[][] { { 70.0, 79.0, 73.0 }, { 71.0, 80.0, 74.0 } };
     compressor.getCompressorChart().setCurves(conditions, speeds, flows, heads, efficiencies);
     compressor.getCompressorChart()
         .setSurgeCurve(new SafeSplineSurgeCurve(new double[] { 16.0, 25.0, 38.0 }, new double[] { 115.0, 95.0, 70.0 }));
     compressor.getCompressorChart().setStoneWallCurve(
-        new SafeSplineStoneWallCurve(new double[] { 160.0, 190.0, 220.0 }, new double[] { 115.0, 95.0, 70.0 }));
+        new SafeSplineStoneWallCurve(new double[] { 350.0, 400.0, 450.0 }, new double[] { 115.0, 95.0, 70.0 }));
     compressor.getCompressorChart().setHeadUnit("kJ/kg");
     compressor.getCompressorChart().setUseCompressorChart(true);
     compressor.getAntiSurge().setActive(true);
