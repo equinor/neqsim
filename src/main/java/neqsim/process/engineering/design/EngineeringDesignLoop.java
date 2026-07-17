@@ -45,20 +45,26 @@ public final class EngineeringDesignLoop {
       int appliedUpdates = 0;
       double maximumChange = 0.0;
       List<EngineeringDesignVariable> designVariables = new ArrayList<EngineeringDesignVariable>();
+      Map<String, EngineeringDesignUpdate> selectedUpdates = new java.util.LinkedHashMap<String, EngineeringDesignUpdate>();
+      Map<String, String> updateOwners = new java.util.LinkedHashMap<String, String>();
       for (EngineeringDesignModuleResult moduleResult : moduleResults) {
         for (EngineeringDesignUpdate update : moduleResult.getUpdates()) {
-          double selected = update.selectedValue();
-          EngineeringDesignValue previous = state.get(update.getKey());
-          double change = relativeChange(previous, selected);
-          maximumChange = Math.max(maximumChange, change);
-          boolean applied = previous == null || change > update.getRelativeTolerance();
-          designVariables.add(new EngineeringDesignVariable(update, previous, selected, change, applied));
-          if (applied) {
-            update.apply(working, selected);
-            state.put(new EngineeringDesignValue(update.getKey(), selected, update.getUnit(),
-                moduleResult.getModuleId(), update.getGoverningCaseId(), number));
-            appliedUpdates++;
-          }
+          selectedUpdates.put(update.getKey(), update);
+          updateOwners.put(update.getKey(), moduleResult.getModuleId());
+        }
+      }
+      for (EngineeringDesignUpdate update : selectedUpdates.values()) {
+        double selected = update.selectedValue();
+        EngineeringDesignValue previous = state.get(update.getKey());
+        double change = relativeChange(previous, selected);
+        maximumChange = Math.max(maximumChange, change);
+        boolean applied = previous == null || change > update.getRelativeTolerance();
+        designVariables.add(new EngineeringDesignVariable(update, previous, selected, change, applied));
+        if (applied) {
+          update.apply(working, selected);
+          state.put(new EngineeringDesignValue(update.getKey(), selected, update.getUnit(),
+              updateOwners.get(update.getKey()), update.getGoverningCaseId(), number));
+          appliedUpdates++;
         }
       }
 

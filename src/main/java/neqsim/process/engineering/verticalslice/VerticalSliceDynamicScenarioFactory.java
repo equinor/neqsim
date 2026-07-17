@@ -2,8 +2,10 @@ package neqsim.process.engineering.verticalslice;
 
 import neqsim.process.equipment.valve.BlowdownValve;
 import neqsim.process.equipment.valve.ESDValve;
+import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.logic.ProcessLogic;
 import neqsim.process.logic.action.ActivateBlowdownAction;
+import neqsim.process.logic.action.OpenValveAction;
 import neqsim.process.logic.action.ParallelActionGroup;
 import neqsim.process.logic.action.TripValveAction;
 import neqsim.process.logic.esd.ESDLogic;
@@ -42,8 +44,10 @@ public final class VerticalSliceDynamicScenarioFactory {
             ESDValve suction = require(process, policy.getSuctionEsdValveTag(), ESDValve.class);
             ESDValve discharge = require(process, policy.getDischargeEsdValveTag(), ESDValve.class);
             BlowdownValve blowdown = require(process, policy.getBlowdownValveTag(), BlowdownValve.class);
+            ThrottlingValve antiSurge = require(process, policy.getRecycleValveTag(), ThrottlingValve.class);
             ESDLogic logic = new ESDLogic("ESD-" + scenarioId);
             ParallelActionGroup safeState = new ParallelActionGroup("Isolate and depressurize compressor segment");
+            safeState.addAction(new OpenValveAction(antiSurge));
             safeState.addAction(new TripValveAction(suction));
             safeState.addAction(new TripValveAction(discharge));
             safeState.addAction(new ActivateBlowdownAction(blowdown));
@@ -59,6 +63,15 @@ public final class VerticalSliceDynamicScenarioFactory {
                 return require(process, policy.getSuctionEsdValveTag(), ESDValve.class).getPercentValveOpening();
               }
             }).acceptanceRange(null, Double.valueOf(1.0)).deadlineSeconds(isolationDeadlineSeconds).build())
+        .addCriterion(DynamicScenarioCriterion.builder("anti-surge-open",
+            "Anti-surge recycle valve reaches protective open position", "%", new DynamicScenarioCriterion.Extractor() {
+              private static final long serialVersionUID = 1000L;
+
+              @Override
+              public double extract(ProcessSystem process) {
+                return require(process, policy.getRecycleValveTag(), ThrottlingValve.class).getPercentValveOpening();
+              }
+            }).acceptanceRange(Double.valueOf(90.0), null).deadlineSeconds(isolationDeadlineSeconds).build())
         .addCriterion(DynamicScenarioCriterion.builder("discharge-isolated",
             "Discharge ESD valve reaches safe closed position", "%", new DynamicScenarioCriterion.Extractor() {
               private static final long serialVersionUID = 1000L;

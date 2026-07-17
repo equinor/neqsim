@@ -1,6 +1,6 @@
 ---
 name: neqsim-pid-process-operations
-version: "1.7.0"
+version: "1.8.0"
 description: "Bidirectional P&ID/NeqSim workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim simulations, generating governed DEXPI engineering packages from ProcessSystem or ProcessModel, linking tags to historian data, evaluating valve/equipment changes, or preparing water-hammer and blowdown/flare handoffs."
 last_verified: "2026-07-17"
 requires:
@@ -251,7 +251,8 @@ and release-quality evidence. Even that level always retains
 `fitnessForConstruction=false` and does not grant final engineering approval.
 
 For the first complete inlet-separator/compressor/cooler/export facility slice,
-use `ProductionVerticalSliceSimulator` and inspect
+run `ProductionVerticalSlicePreflight.assess` first and use
+`ProductionVerticalSliceSimulator.runStrictAndCompile` for controlled execution. Inspect
 `engineering-vertical-slice-qualification.json`. Require the declared topology,
 ten case types, converged physical design, active compressor surge and
 stonewall curves, zero map extrapolation, executable dynamic safe-state tests,
@@ -260,6 +261,17 @@ map check through the revision-controlled policy with
 `addCompressorOperatingEnvelope`. Passing all vertical-slice gates means only a
 controlled pilot; never translate it to FEED approval or fitness for
 construction.
+
+For JPype workflows, use `VerticalSliceCaseMatrixFactory` to create explicit,
+evidence-linked scalar boundary conditions for every required case type. Do not
+treat those steady boundary changes as substitutes for transient initiating
+events, HAZOP credibility decisions, or shutdown logic.
+
+Retain `engineering-vertical-slice-execution-manifest.json` with the package.
+Its SHA-256 fingerprint binds the project and policy revisions, case inputs,
+dynamic scenarios, coupled safety studies, standards and evidence. A fingerprint
+change requires recalculation and revision-impact review; it never grants
+engineering approval.
 
 Also inspect `engineering-qualification-plan.json`. Use its exact method keys
 and open actions to drive `EngineeringBenchmarkDataset`,
@@ -477,6 +489,12 @@ engineering-simulator contracts over mutating the live process:
 
 For process-to-engineering work, configure discipline modules with
 `ProcessToEngineeringDesignBuilder` and execute `ProcessToEngineeringSimulator`.
+Use `InletCompressionExportReferenceFacility.build()` as the executable acceptance
+fixture when extending the first production vertical slice. Require directed stream
+paths for the main process, anti-surge recycle, separator liquid outlet, PSV and BDV;
+tag/type presence alone is insufficient. Run its strict preflight, common design
+loop, dynamic scenario, coupled flare calculation and package compilation after any
+change to engineering orchestration.
 For revision-controlled automatic configuration, use an explicit
 `EngineeringAutoConfigurationPolicy` and require
 `EngineeringAutoConfigurator.Result.isExecutionReady()` before running or

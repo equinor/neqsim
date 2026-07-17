@@ -35,6 +35,7 @@ public final class EngineeringSchemaCatalog {
   public static final String QUALIFICATION_PLAN = "neqsim_engineering_qualification_plan.v1";
   public static final String DISCIPLINE_ORCHESTRATION = "neqsim_engineering_discipline_orchestration.v1";
   public static final String VERTICAL_SLICE_QUALIFICATION = "neqsim_engineering_vertical_slice_qualification.v1";
+  public static final String VERTICAL_SLICE_EXECUTION_MANIFEST = "neqsim_engineering_vertical_slice_execution_manifest.v1";
 
   /** One immutable schema registration. */
   public static final class Definition {
@@ -112,6 +113,8 @@ public final class EngineeringSchemaCatalog {
         "engineering-discipline-orchestration.schema.json"));
     values.add(definition("engineering-vertical-slice-qualification.json", VERTICAL_SLICE_QUALIFICATION,
         "engineering-vertical-slice-qualification.schema.json"));
+    values.add(definition("engineering-vertical-slice-execution-manifest.json", VERTICAL_SLICE_EXECUTION_MANIFEST,
+        "engineering-vertical-slice-execution-manifest.schema.json"));
     DEFINITIONS = Collections.unmodifiableList(values);
     Map<String, Definition> artifacts = new LinkedHashMap<String, Definition>();
     Map<String, Definition> versions = new LinkedHashMap<String, Definition>();

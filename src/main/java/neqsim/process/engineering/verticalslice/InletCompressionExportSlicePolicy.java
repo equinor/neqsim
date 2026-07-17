@@ -4,8 +4,10 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import neqsim.process.engineering.designcase.EngineeringDesignCase;
 
@@ -139,6 +141,36 @@ public final class InletCompressionExportSlicePolicy implements Serializable {
 
   public boolean isCoupledReliefBlowdownFlareRequired() {
     return coupledReliefBlowdownFlareRequired;
+  }
+
+  /** @return complete controlled policy definition used for execution fingerprinting and audit */
+  public Map<String, Object> toMap() {
+    Map<String, Object> result = new LinkedHashMap<String, Object>();
+    result.put("policyId", policyId);
+    result.put("revision", revision);
+    result.put("separatorTag", separatorTag);
+    result.put("compressorTag", compressorTag);
+    result.put("coolerTag", coolerTag);
+    result.put("exportLineTag", exportLineTag);
+    result.put("recycleValveTag", recycleValveTag);
+    result.put("recycleUnitTag", recycleUnitTag);
+    result.put("pressureControlValveTag", pressureControlValveTag);
+    result.put("levelControlValveTag", levelControlValveTag);
+    result.put("reliefValveTag", reliefValveTag);
+    result.put("blowdownValveTag", blowdownValveTag);
+    result.put("suctionEsdValveTag", suctionEsdValveTag);
+    result.put("dischargeEsdValveTag", dischargeEsdValveTag);
+    result.put("flareConnectionTag", flareConnectionTag);
+    List<String> caseTypes = new ArrayList<String>();
+    for (EngineeringDesignCase.Type type : requiredCaseTypes) {
+      caseTypes.add(type.name());
+    }
+    result.put("requiredCaseTypes", caseTypes);
+    result.put("requiredDynamicScenarioIds", new ArrayList<String>(requiredDynamicScenarioIds));
+    result.put("requiredStandards", new ArrayList<String>(requiredStandards));
+    result.put("evidenceReferences", new ArrayList<String>(evidenceReferences));
+    result.put("coupledReliefBlowdownFlareRequired", Boolean.valueOf(coupledReliefBlowdownFlareRequired));
+    return result;
   }
 
   /** Builder with the complete production vertical-slice case and standards basis enabled by default. */

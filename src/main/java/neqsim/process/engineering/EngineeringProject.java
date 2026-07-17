@@ -25,6 +25,7 @@ import neqsim.process.engineering.designcase.EngineeringMetric;
 import neqsim.process.engineering.model.EngineeringCalculation;
 import neqsim.process.engineering.production.EngineeringProductionReadinessBasis;
 import neqsim.process.engineering.verticalslice.InletCompressionExportSliceQualification;
+import neqsim.process.engineering.verticalslice.ProductionVerticalSliceExecutionManifest;
 import neqsim.process.materials.MaterialsReviewInput;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
@@ -71,6 +72,7 @@ public final class EngineeringProject implements Serializable {
   private MaterialsReviewInput materialsReviewInput;
   private EngineeringProductionReadinessBasis productionReadinessBasis;
   private transient InletCompressionExportSliceQualification.Result latestVerticalSliceQualification;
+  private transient ProductionVerticalSliceExecutionManifest latestVerticalSliceExecutionManifest;
 
   EngineeringProject(String name, ProcessSystem processSystem, EngineeringDesignBasis designBasis) {
     this(UUID.randomUUID().toString(), name, processSystem, designBasis);
@@ -163,6 +165,16 @@ public final class EngineeringProject implements Serializable {
   /** @return latest vertical-slice qualification, or null when it has not been executed */
   public InletCompressionExportSliceQualification.Result getLatestVerticalSliceQualification() {
     return latestVerticalSliceQualification;
+  }
+
+  /** Records the controlled-input fingerprint used for the latest vertical-slice execution attempt. */
+  public void recordVerticalSliceExecutionManifest(ProductionVerticalSliceExecutionManifest manifest) {
+    latestVerticalSliceExecutionManifest = manifest;
+  }
+
+  /** @return latest controlled vertical-slice execution manifest, or null when it has not been prepared */
+  public ProductionVerticalSliceExecutionManifest getLatestVerticalSliceExecutionManifest() {
+    return latestVerticalSliceExecutionManifest;
   }
 
   /** @return project design basis */
@@ -766,6 +778,9 @@ public final class EngineeringProject implements Serializable {
     }
     if (latestVerticalSliceQualification != null) {
       root.add("latestVerticalSliceQualification", gson.toJsonTree(latestVerticalSliceQualification.toMap()));
+    }
+    if (latestVerticalSliceExecutionManifest != null) {
+      root.add("latestVerticalSliceExecutionManifest", gson.toJsonTree(latestVerticalSliceExecutionManifest.toMap()));
     }
     JsonArray calculationNodes = new JsonArray();
     for (EngineeringCalculation calculation : calculations) {

@@ -132,7 +132,27 @@ public final class InletCompressionExportSliceQualification {
     if (process.getUnit(policy.getFlareConnectionTag()) == null) {
       result.add(policy.getFlareConnectionTag() + " flare connection is missing");
     }
+    requirePath(process, policy.getSeparatorTag(), policy.getSuctionEsdValveTag(), result);
+    requirePath(process, policy.getSuctionEsdValveTag(), policy.getCompressorTag(), result);
+    requirePath(process, policy.getCompressorTag(), policy.getCoolerTag(), result);
+    requirePath(process, policy.getCoolerTag(), policy.getDischargeEsdValveTag(), result);
+    requirePath(process, policy.getDischargeEsdValveTag(), policy.getPressureControlValveTag(), result);
+    requirePath(process, policy.getPressureControlValveTag(), policy.getExportLineTag(), result);
+    requirePath(process, policy.getCoolerTag(), policy.getRecycleValveTag(), result);
+    requirePath(process, policy.getRecycleValveTag(), policy.getRecycleUnitTag(), result);
+    requirePath(process, policy.getRecycleUnitTag(), policy.getCompressorTag(), result);
+    requirePath(process, policy.getSeparatorTag(), policy.getLevelControlValveTag(), result);
+    requirePath(process, policy.getCoolerTag(), policy.getReliefValveTag(), result);
+    requirePath(process, policy.getReliefValveTag(), policy.getFlareConnectionTag(), result);
+    requirePath(process, policy.getCoolerTag(), policy.getBlowdownValveTag(), result);
+    requirePath(process, policy.getBlowdownValveTag(), policy.getFlareConnectionTag(), result);
     return result;
+  }
+
+  private static void requirePath(ProcessSystem process, String fromTag, String toTag, List<String> findings) {
+    if (!ProductionVerticalSlicePreflight.hasDirectedProcessPath(process, fromTag, toTag)) {
+      findings.add("No connected process path from " + fromTag + " to " + toTag);
+    }
   }
 
   private static void requireType(ProcessSystem process, String tag, Class<?> type, List<String> findings) {
