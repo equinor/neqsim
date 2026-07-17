@@ -1438,7 +1438,11 @@ public class JsonProcessBuilder {
         for (int i = 0; i < factors.size(); i++) {
           splitFact[i] = factors.get(i).getAsDouble();
         }
-        ((ComponentSplitter) equipment).setSplitFactors(splitFact);
+        if (props.has("splitBasis")) {
+          ((ComponentSplitter) equipment).setSplitFactors(splitFact, props.get("splitBasis").getAsString());
+        } else {
+          ((ComponentSplitter) equipment).setSplitFactors(splitFact);
+        }
       }
       if (equipment instanceof Manifold && props.has("splitFactors")) {
         JsonArray factors = props.getAsJsonArray("splitFactors");

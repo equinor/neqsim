@@ -585,7 +585,7 @@ class UniSimReader:
         'adjust': 'Adjuster',
         'setop': 'SetPoint',
         'pipeseg': 'AdiabaticPipe',
-        'fractop': 'DistillationColumn',
+        'fractop': 'ComponentSplitter',
         'saturateop': 'StreamSaturatorUtil',
         'spreadsheetop': 'SpreadsheetBlock',
         'templateop': 'SubFlowsheet',
@@ -1722,6 +1722,81 @@ class UniSimReader:
             except Exception:
                 pass
 
+        elif 'tee' in type_name:
+            # A UniSim Tee's 'Flow Ratios' ARE the split fractions: the fraction
+            # of the feed sent to each product. A Tee gives every product an
+            # identical composition, so the flow ratio equals the mass-flow
+            # fraction and the mole-flow fraction alike — exactly what a NeqSim
+            # Splitter's split factors represent. Read them directly (in product
+            # order) so the split is reproduced authoritatively, including for
+            # recycle-tear tees whose product flows are only the recycle guess.
+            # The generator falls back to deriving factors from the product mass
+            # flows when this spec is unavailable.
+            try:
+                holder = getattr(op, 'FlowRatios', None)
+                raw = self._safe_get(holder, 'Values', holder) if holder is not None else None
+                vals = [self._clean_scalar_value(v) for v in list(raw)] if raw is not None else []
+                vals = [v for v in vals if v is not None]
+                n_prod = len(op_data.products)
+                if n_prod >= 2 and len(vals) >= n_prod and sum(vals[:n_prod]) > 0.0:
+                    total = sum(vals[:n_prod])
+                    props['split_factors'] = [v / total for v in vals[:n_prod]]
+            except Exception:
+                pass
+
+        elif 'fract' in type_name:
+            # UniSim Component Splitter: connectivity is exposed via
+            # AttachedFeeds / AttachedProducts (NOT the generic Feeds/Products),
+            # and the per-component split is in OverheadSplits (fraction of each
+            # component's feed routed to the FIRST/overhead product). Maps to a
+            # NeqSim ComponentSplitter (split0 = overhead, split1 = bottoms).
+            for coll_attr, mat_list, en_list in (
+                    ('AttachedFeeds', op_data.feeds, op_data.energy_feeds),
+                    ('AttachedProducts', op_data.products, op_data.energy_products)):
+                try:
+                    coll = getattr(op, coll_attr)
+                    for i in range(coll.Count):
+                        item = coll.Item(i)
+                        nm = self._safe_get(item, 'name', None)
+                        if not nm:
+                            continue
+                        tn = str(self._safe_get(item, 'TypeName', '')).lower()
+                        if ('energy' in tn or nm.upper().startswith('Q-')
+                                or nm.upper().startswith('Q ')):
+                            en_list.append(nm)
+                        else:
+                            mat_list.append(nm)
+                except Exception:
+                    pass
+            # Per-component fraction routed to the overhead (first) product.
+            try:
+                raw = op.OverheadSplits.Values
+                facs = []
+                for v in list(raw):
+                    val = v[0] if isinstance(v, (tuple, list)) else v
+                    facs.append(self._clean_scalar_value(val))
+                facs = [f for f in facs if f is not None]
+                if facs:
+                    props['split_factors'] = facs
+            except Exception:
+                pass
+            # Component names in the splitter's own package order (matches the
+            # OverheadSplits order) so the generator can map factors onto the
+            # global component order by name.
+            try:
+                comps = op.FluidPackage.Components
+                names = []
+                for i in range(comps.Count):
+                    names.append(self._safe_get(comps.Item(i), 'name', None))
+                names = [n for n in names if n]
+                if names:
+                    props['split_component_names'] = names
+            except Exception:
+                pass
+            # Split basis (per-component Molar/Mass in UniSim). Molar and mass
+            # give the same per-component mole split, so default molar.
+            props['split_basis'] = 'molar'
+
         elif 'pipeseg' in type_name:
             # Try to get pipe length, diameter
             try:
@@ -2181,6 +2256,10 @@ class UniSimToNeqSim:
         # to_json() if a looser/tighter tear is needed.
         self.recycle_tolerance = 1e-2
         self.recycle_acceleration = "WEGSTEIN"  # or None to disable
+        # Component names (E300/NeqSim order) of the global system fluid, set
+        # when the fluid section is built. Used to map per-component data such
+        # as ComponentSplitter split factors onto the global component order.
+        self._global_component_names: List[str] = []
 
     @property
     def warnings(self) -> List[str]:
@@ -2722,6 +2801,9 @@ class UniSimToNeqSim:
             if eos == 'SRK' and 'peng' in fp.property_package.lower():
                 eos = 'PR'
             ref_temp_K, ref_P_bara = self._reference_conditions()
+            e300_component_names = [fp._e300_component_name(c.name) for c in fp.components]
+            if package_index == 0:
+                self._global_component_names = e300_component_names
             return {
                 'model': eos,
                 'temperature': ref_temp_K,
@@ -2729,10 +2811,9 @@ class UniSimToNeqSim:
                 'e300FilePath': fp.e300_file_path,
                 'fluidPackageName': fp.name,
                 'componentCount': len(fp.components),
-                'componentNames': [fp._e300_component_name(c.name) for c in fp.components],
+                'componentNames': e300_component_names,
                 'cpCoeffs': self._build_cp_coeffs_map(fp),
             }
-
         # --- Fallback: manual component mapping ---
         eos = self._map_property_package_to_eos(fp.property_package)
         if eos == 'SRK' and fp.property_package not in ('SRK', 'Soave-Redlich-Kwong'):
@@ -3017,11 +3098,32 @@ class UniSimToNeqSim:
                 props['diameter'] = op.properties['diameter_m']
 
         elif neqsim_type == 'Splitter':
-            if op.products:
-                props['splitNumber'] = len(op.products)
+            # Reproduce the UniSim tee split. Prefer explicit split_factors;
+            # otherwise derive them from the UniSim product mass flows so the
+            # splitter matches the converged UniSim division instead of the
+            # builder's equal-division (1/N) default. When factors are known,
+            # emit ONLY splitFactors (it also fixes the outlet count) and drop
+            # splitNumber, because splitNumber would otherwise reset the factors
+            # to [1, 0, ...] via the builder's generic property reflection.
             split_factors = op.properties.get('split_factors')
+            if not split_factors:
+                topo = {'stream_by_name':
+                        {s.name: s for s in flowsheet.material_streams}}
+                split_factors = self._split_factors_from_flows(op, topo)
             if split_factors:
                 props['splitFactors'] = split_factors
+            elif op.products:
+                props['splitNumber'] = len(op.products)
+
+        elif neqsim_type == 'ComponentSplitter':
+            # UniSim Component Splitter -> NeqSim ComponentSplitter. Map the
+            # per-component overhead split fractions onto the global component
+            # order (by name) and pass the split basis (molar/mass).
+            facs, basis = self._component_split_factors_global(op, flowsheet)
+            if facs:
+                props['splitFactors'] = facs
+                if basis:
+                    props['splitBasis'] = basis
 
         elif neqsim_type in ('Separator', 'GasScrubber',
                              'ThreePhaseSeparator'):
@@ -3125,6 +3227,13 @@ class UniSimToNeqSim:
                             return f"{producer_name}.{port_name}"
                     elif neqsim_type == 'Splitter':
                         # Splitter uses indexed split ports: split0, split1, ...
+                        if len(op.products) > 0 and stream_name in op.products:
+                            idx = op.products.index(stream_name)
+                            return f"{producer_name}.split{idx}"
+                        return f"{producer_name}.split0"
+                    elif neqsim_type == 'ComponentSplitter':
+                        # ComponentSplitter has two split ports: split0 =
+                        # overhead (first product), split1 = bottoms (second).
                         if len(op.products) > 0 and stream_name in op.products:
                             idx = op.products.index(stream_name)
                             return f"{producer_name}.split{idx}"
@@ -3327,6 +3436,49 @@ class UniSimToNeqSim:
             if s.name == name:
                 return s
         return None
+
+    def _component_split_factors_global(self, op: UniSimOperation,
+                                        flowsheet: UniSimFlowsheet):
+        """Map a Component Splitter's overhead split factors onto the global order.
+
+        The UniSim OverheadSplits give, per component (in the splitter package's
+        order), the fraction of that component's feed routed to the overhead
+        (first) product. NeqSim's ComponentSplitter indexes its split factors by
+        the global system-fluid component order, so this remaps the factors by
+        (E300-normalised) component name. Components not present in the splitter
+        package default to 1.0 (routed to the overhead); they are zero-flow in
+        this feed, so the value is immaterial. The key transferred behaviour
+        (e.g. water routed to the bottoms) is preserved because shared real
+        components map identically under the E300 name transform.
+
+        Args:
+            op: the Component Splitter operation (neqsim_type 'ComponentSplitter').
+            flowsheet: the flowsheet (used to fall back to the feed composition).
+
+        Returns:
+            (factors_list, basis) aligned to the global component order, or
+            (None, None) when the split cannot be resolved.
+        """
+        facs = op.properties.get('split_factors')
+        if not facs:
+            return None, None
+        names = op.properties.get('split_component_names')
+        if not names:
+            feed_stream = (self._find_stream_by_name(flowsheet, op.feeds[0])
+                           if op.feeds else None)
+            if feed_stream and getattr(feed_stream, 'composition', None):
+                names = list(feed_stream.composition.keys())
+        if not names or len(names) < len(facs):
+            return None, None
+        global_names = self._global_component_names
+        if not global_names:
+            return None, None
+        name_to_fac = {}
+        for nm, fc in zip(names, facs):
+            name_to_fac[UniSimFluidPackage._e300_component_name(nm)] = fc
+        out = [name_to_fac.get(gn, 1.0) for gn in global_names]
+        basis = op.properties.get('split_basis', 'molar')
+        return out, basis
 
     def _unit_pressure_drop_bara(self, op: UniSimOperation,
                                  flowsheet: UniSimFlowsheet) -> Optional[float]:
