@@ -124,8 +124,8 @@ class EngineeringVerticalSliceProductionTest {
     double[][] heads = new double[][] { { 75.0, 65.0, 50.0 }, { 110.0, 95.0, 72.0 } };
     double[][] efficiencies = new double[][] { { 70.0, 79.0, 73.0 }, { 71.0, 80.0, 74.0 } };
     compressor.getCompressorChart().setCurves(conditions, speeds, flows, heads, efficiencies);
-    compressor.getCompressorChart().setSurgeCurve(
-        new SafeSplineSurgeCurve(new double[] { 42.0, 55.0, 70.0 }, new double[] { 110.0, 90.0, 65.0 }));
+    compressor.getCompressorChart()
+        .setSurgeCurve(new SafeSplineSurgeCurve(new double[] { 42.0, 55.0, 70.0 }, new double[] { 110.0, 90.0, 65.0 }));
     compressor.getCompressorChart().setStoneWallCurve(
         new SafeSplineStoneWallCurve(new double[] { 170.0, 195.0, 220.0 }, new double[] { 110.0, 90.0, 65.0 }));
     compressor.getCompressorChart().setHeadUnit("kJ/kg");
