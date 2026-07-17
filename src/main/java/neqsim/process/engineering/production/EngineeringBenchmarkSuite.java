@@ -9,7 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** Executes acceptance logic over versioned engineering benchmark records. */
+/** Executes acceptance logic over versioned engineering benchmark records; every case for a method must qualify. */
 public final class EngineeringBenchmarkSuite implements Serializable {
   private static final long serialVersionUID = 1000L;
   private final String id;
@@ -53,9 +53,17 @@ public final class EngineeringBenchmarkSuite implements Serializable {
       this.revision = revision;
       this.requiredMethods = Collections.unmodifiableSet(new LinkedHashSet<String>(requiredMethods));
       this.benchmarks = Collections.unmodifiableList(new ArrayList<EngineeringValidationBenchmark>(benchmarks));
+      Map<String, Boolean> methodStatus = new LinkedHashMap<String, Boolean>();
       for (EngineeringValidationBenchmark benchmark : benchmarks) {
-        if (benchmark.isPassed() && benchmark.isIndependentSource() && benchmark.isIndependentlyReviewed()) {
-          qualifyingMethods.add(benchmark.getMethodKey());
+        String method = benchmark.getMethodKey();
+        boolean caseQualifies = benchmark.isPassed() && benchmark.isIndependentSource()
+            && benchmark.isIndependentlyReviewed();
+        Boolean previous = methodStatus.get(method);
+        methodStatus.put(method, Boolean.valueOf((previous == null || previous.booleanValue()) && caseQualifies));
+      }
+      for (Map.Entry<String, Boolean> method : methodStatus.entrySet()) {
+        if (method.getValue().booleanValue()) {
+          qualifyingMethods.add(method.getKey());
         }
       }
     }

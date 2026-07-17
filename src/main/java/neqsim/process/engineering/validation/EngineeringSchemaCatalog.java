@@ -32,6 +32,7 @@ public final class EngineeringSchemaCatalog {
   public static final String REVISION_DIFF = "neqsim_engineering_revision_diff.v1";
   public static final String VALIDATION_REPORT = "neqsim_engineering_validation_report.v1";
   public static final String PRODUCTION_READINESS = "neqsim_engineering_production_readiness.v1";
+  public static final String QUALIFICATION_PLAN = "neqsim_engineering_qualification_plan.v1";
 
   /** One immutable schema registration. */
   public static final class Definition {
@@ -103,6 +104,8 @@ public final class EngineeringSchemaCatalog {
     values.add(definition("engineering-validation-report.json", VALIDATION_REPORT, "validation-report.schema.json"));
     values.add(definition("engineering-production-readiness.json", PRODUCTION_READINESS,
         "engineering-production-readiness.schema.json"));
+    values.add(definition("engineering-qualification-plan.json", QUALIFICATION_PLAN,
+        "engineering-qualification-plan.schema.json"));
     DEFINITIONS = Collections.unmodifiableList(values);
     Map<String, Definition> artifacts = new LinkedHashMap<String, Definition>();
     Map<String, Definition> versions = new LinkedHashMap<String, Definition>();

@@ -100,7 +100,7 @@ public final class EngineeringProductionReadinessAssessment {
     return new Result(project.getProjectId(), project.getRevision(), level, gates, safety, evidence, all);
   }
 
-  private static Set<String> executedMethods(EngineeringProject project) {
+  public static Set<String> executedMethods(EngineeringProject project) {
     Set<String> result = new LinkedHashSet<String>();
     if (project.getLatestEngineeringDesignLoopResult() == null
         || project.getLatestEngineeringDesignLoopResult().getIterations().isEmpty()) {

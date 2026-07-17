@@ -1,6 +1,6 @@
 ---
 name: neqsim-pid-process-operations
-version: "1.5.0"
+version: "1.6.0"
 description: "Bidirectional P&ID/NeqSim workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim simulations, generating governed DEXPI engineering packages from ProcessSystem or ProcessModel, linking tags to historian data, evaluating valve/equipment changes, or preparing water-hammer and blowdown/flare handoffs."
 last_verified: "2026-07-17"
 requires:
@@ -227,6 +227,15 @@ loop and coordinated-package pattern, and
 calculation examples across equipment, piping, valve/instrument, safety,
 materials and preliminary mechanics.
 
+When qualifying rather than screening a typed calculation, build an
+`EngineeringCalculationContext` with `productionQualification=true`, controlled
+standard references and evidence references. In this mode, do not accept
+equipment screening defaults, reference-diameter piping scaling, an unresolved
+valve failure position, or an unreferenced two-phase relief method. Use
+`ReliefSizingCalculation` for governed gas/liquid/steam orifice selection and
+only for two-phase flow when a specialist mass-flux result and controlled method
+reference have been supplied.
+
 Treat `unresolved-engineering-actions.json` as a mandatory review input. A
 calculated DEXPI package is never equivalent to HAZOP/LOPA acceptance, vendor
 certification, code mechanical design, final metallurgy approval or
@@ -240,6 +249,19 @@ explicit no-hidden-default auto-configuration result, named-tool DEXPI
 round-trip evidence, approved safety-lifecycle evidence, three accepted pilots,
 and release-quality evidence. Even that level always retains
 `fitnessForConstruction=false` and does not grant final engineering approval.
+
+Also inspect `engineering-qualification-plan.json`. Use its exact method keys
+and open actions to drive `EngineeringBenchmarkDataset`,
+`DexpiToolQualificationRunner`, `EngineeringPilotQualificationRunner`, and
+`EngineeringReleaseQualificationRunner`. These runners convert actual
+measurements and named external results into evidence; they do not perform an
+independent review or create an acceptance record. Keep missing external
+evidence open.
+
+Use
+`examples/notebooks/engineering_production_qualification_workflow.ipynb` as the
+API pattern for the executable qualification workflows. Its data are synthetic
+and must never be promoted to project evidence.
 
 The calculation handoff automatically runs available equipment mechanical-design
 and materials-screening models. It can run API 520/521 PSV sizing from attached

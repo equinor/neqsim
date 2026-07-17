@@ -18,6 +18,7 @@ public final class EngineeringReleaseQualityEvidence implements Serializable {
   private boolean serializationMigrationPassed;
   private boolean securityReviewPassed;
   private String evidenceReference = "";
+  private String accountableReviewer = "";
 
   public EngineeringReleaseQualityEvidence(String releaseId) {
     if (releaseId == null || releaseId.trim().isEmpty()) {
@@ -69,10 +70,18 @@ public final class EngineeringReleaseQualityEvidence implements Serializable {
     return this;
   }
 
+  public EngineeringReleaseQualityEvidence accountableReviewer(String value) {
+    if (value == null || value.trim().isEmpty()) {
+      throw new IllegalArgumentException("accountableReviewer must not be blank");
+    }
+    accountableReviewer = value.trim();
+    return this;
+  }
+
   public boolean isPassed() {
     return fullCiPassed && supportedJavaMatrixPassed && deterministicConvergencePassed && performanceAcceptancePassed
         && apiCompatibilityPassed && serializationMigrationPassed && securityReviewPassed
-        && !evidenceReference.isEmpty();
+        && !evidenceReference.isEmpty() && !accountableReviewer.isEmpty();
   }
 
   public List<String> getMissingGates() {
@@ -85,6 +94,7 @@ public final class EngineeringReleaseQualityEvidence implements Serializable {
     addIfFalse(result, serializationMigrationPassed, "SERIALIZATION_MIGRATION");
     addIfFalse(result, securityReviewPassed, "SECURITY_REVIEW");
     addIfFalse(result, !evidenceReference.isEmpty(), "EVIDENCE_REFERENCE");
+    addIfFalse(result, !accountableReviewer.isEmpty(), "ACCOUNTABLE_REVIEWER");
     return result;
   }
 
@@ -99,6 +109,7 @@ public final class EngineeringReleaseQualityEvidence implements Serializable {
     result.put("serializationMigrationPassed", Boolean.valueOf(serializationMigrationPassed));
     result.put("securityReviewPassed", Boolean.valueOf(securityReviewPassed));
     result.put("evidenceReference", evidenceReference);
+    result.put("accountableReviewer", accountableReviewer);
     result.put("missingGates", getMissingGates());
     result.put("passed", Boolean.valueOf(isPassed()));
     return result;

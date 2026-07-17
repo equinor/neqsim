@@ -80,7 +80,7 @@ public final class ValveInstrumentDesignCalculations {
 
     @Override
     public String getMethodVersion() {
-      return "1.0";
+      return "2.0";
     }
 
     @Override
@@ -89,8 +89,18 @@ public final class ValveInstrumentDesignCalculations {
       if (input == null) {
         readiness.addBlocker("VALVE_INPUT", "Valve case-envelope input is required", "Supply IEC 60534 inputs");
       } else if (input.failurePosition == FailurePosition.HAZOP_INPUT_REQUIRED) {
-        readiness.addWarning("VALVE_FAILURE_POSITION", "Failure position has not been selected by HAZOP",
-            "Approve fail-open, fail-closed, or fail-last in the safeguarding review");
+        if (productionQualification(context)) {
+          readiness.addBlocker("VALVE_FAILURE_POSITION", "Failure position has not been selected by HAZOP",
+              "Approve fail-open, fail-closed, or fail-last in the safeguarding review");
+        } else {
+          readiness.addWarning("VALVE_FAILURE_POSITION", "Failure position has not been selected by HAZOP",
+              "Approve fail-open, fail-closed, or fail-last in the safeguarding review");
+        }
+      }
+      if (productionQualification(context)
+          && (context.getEvidenceReferences().isEmpty() || context.getStandardReferences().isEmpty())) {
+        readiness.addBlocker("VALVE_PRODUCTION_EVIDENCE", "Valve qualification evidence is incomplete",
+            "Attach IEC 60534/project standards, vendor sizing and independent benchmark evidence");
       }
       return readiness.build();
     }
@@ -205,7 +215,7 @@ public final class ValveInstrumentDesignCalculations {
 
     @Override
     public String getMethodVersion() {
-      return "1.0";
+      return "2.0";
     }
 
     @Override
@@ -215,6 +225,16 @@ public final class ValveInstrumentDesignCalculations {
         result.addBlocker("INSTRUMENT_INPUT", "Instrument design input is required", "Supply process envelope");
       } else if (input.upperRangeValue <= input.lowerRangeValue) {
         result.addBlocker("INSTRUMENT_RANGE", "Upper range must exceed lower range", "Correct calibrated range");
+      }
+      if (productionQualification(context)) {
+        if (context.getEvidenceReferences().isEmpty() || context.getStandardReferences().isEmpty()) {
+          result.addBlocker("INSTRUMENT_PRODUCTION_EVIDENCE", "Instrument qualification evidence is incomplete",
+              "Attach range, uncertainty, response and vendor evidence");
+        }
+        if (!"approved".equalsIgnoreCase(context.getAttributes().get("instrumentInstallationEvidence"))) {
+          result.addBlocker("INSTRUMENT_INSTALLATION", "Tap, impulse-line or thermowell evidence is not approved",
+              "Attach the applicable installation and mechanical verification record");
+        }
       }
       return result.build();
     }
@@ -262,6 +282,10 @@ public final class ValveInstrumentDesignCalculations {
       throw new IllegalArgumentException(field + " must not be blank");
     }
     return value.trim();
+  }
+
+  private static boolean productionQualification(EngineeringCalculationContext context) {
+    return context != null && "true".equalsIgnoreCase(context.getAttributes().get("productionQualification"));
   }
 
   private static double positive(double value, String field) {

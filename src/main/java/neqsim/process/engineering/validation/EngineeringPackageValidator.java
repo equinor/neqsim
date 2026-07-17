@@ -215,6 +215,14 @@ public final class EngineeringPackageValidator {
       requireObject(root, "evidenceBasis", artifactName, report);
       requireFalse(root, "fitnessForConstruction", artifactName, report);
       requireFalse(root, "finalEngineeringApprovalGranted", artifactName, report);
+    } else if ("engineering-qualification-plan.json".equals(artifactName)) {
+      requireString(root, "projectId", artifactName, report);
+      requireString(root, "revision", artifactName, report);
+      requireArray(root, "executedMethods", artifactName, report);
+      requireArray(root, "methodQualificationMatrix", artifactName, report);
+      requireArray(root, "actions", artifactName, report);
+      requireString(root, "readinessLevel", artifactName, report);
+      requireFalse(root, "fitnessForConstruction", artifactName, report);
     }
     return report;
   }

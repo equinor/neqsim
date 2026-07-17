@@ -139,7 +139,7 @@ public final class SafetyScenarioEngineCalculation implements
 
   @Override
   public String getMethodVersion() {
-    return "1.0";
+    return "2.0";
   }
 
   @Override
@@ -161,6 +161,20 @@ public final class SafetyScenarioEngineCalculation implements
         readiness.addBlocker("SCENARIO_CREDIBILITY_" + scenario.id,
             "Scenario credibility or hazard-review evidence is incomplete for " + scenario.id,
             "Record the controlled HAZOP decision and reference");
+      }
+    }
+    if (productionQualification(context)) {
+      if (context.getEvidenceReferences().isEmpty() || context.getStandardReferences().isEmpty()) {
+        readiness.addBlocker("SAFETY_PRODUCTION_EVIDENCE", "Relief and blowdown evidence is incomplete",
+            "Attach HAZOP, calculation, disposal-network and applicable standards evidence");
+      }
+      for (Scenario scenario : input.scenarios) {
+        if (scenario.fluidModel == FluidModel.TWO_PHASE
+            && !"approved".equalsIgnoreCase(context.getAttributes().get("twoPhaseReliefMethod"))) {
+          readiness.addBlocker("TWO_PHASE_METHOD_" + scenario.id,
+              "Two-phase relief method has not been approved for the service",
+              "Select and approve the project two-phase sizing method");
+        }
       }
     }
     return readiness.build();
@@ -232,6 +246,10 @@ public final class SafetyScenarioEngineCalculation implements
       throw new IllegalArgumentException(field + " must not be blank");
     }
     return value.trim();
+  }
+
+  private static boolean productionQualification(EngineeringCalculationContext context) {
+    return context != null && "true".equalsIgnoreCase(context.getAttributes().get("productionQualification"));
   }
 
   private static double positive(double value, String field) {
