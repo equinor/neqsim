@@ -702,6 +702,30 @@ public class EclipseFluidReadWrite {
         // Apply Pedersen (PFCT) viscosity model if PEDERSEN keyword was found
         applyPFCTViscosityModel(fluid);
       }
+
+      // Enable the multi-phase (VLLE) flash when the fluid contains water. A
+      // water + hydrocarbon system is liquid-liquid immiscible, and the default
+      // two-phase (vapour-liquid) flash can converge to a spurious higher-Gibbs
+      // solution that places the water-rich phase on the vapour EOS root
+      // (density ~20 kg/m3, Z > 1 at elevated pressure) instead of the correct
+      // aqueous liquid root (density ~1000). Enabling the multi-phase check
+      // triggers the proper stability analysis, so every downstream unit
+      // operation (each of which clones this fluid) performs a correct
+      // three-phase (gas / oil / aqueous) flash. This mirrors the
+      // addWater(...) read path, which already enables it.
+      boolean fluidHasWater = false;
+      String[] componentNames = fluid.getComponentNames();
+      if (componentNames != null) {
+        for (int i = 0; i < componentNames.length; i++) {
+          if ("water".equalsIgnoreCase(componentNames[i])) {
+            fluidHasWater = true;
+            break;
+          }
+        }
+      }
+      if (fluidHasWater) {
+        fluid.setMultiPhaseCheck(true);
+      }
     } catch (IOException ex) {
       throw new IllegalArgumentException("Failed to read Eclipse fluid file: " + inputFile + ". " + ex.getMessage(),
           ex);
