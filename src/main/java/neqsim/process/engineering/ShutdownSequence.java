@@ -58,6 +58,7 @@ public final class ShutdownSequence implements Serializable {
   private final String sequenceId;
   private final String initiatingCause;
   private final List<Action> actions = new ArrayList<Action>();
+  private final List<String> requirementIds = new ArrayList<String>();
   private String protectedEquipmentTag = "";
   private String safeState = "";
   private String hazopReference = "";
@@ -119,6 +120,15 @@ public final class ShutdownSequence implements Serializable {
     return this;
   }
 
+  /** Links this sequence to a governed trip or fire-and-gas requirement. */
+  public ShutdownSequence addRequirementId(String value) {
+    String requirementId = requireText(value, "requirementId");
+    if (!requirementIds.contains(requirementId)) {
+      requirementIds.add(requirementId);
+    }
+    return this;
+  }
+
   public ShutdownSequence approve(String record) {
     setSrsReference(record);
     approvalStatus = EngineeringApprovalStatus.APPROVED;
@@ -131,6 +141,11 @@ public final class ShutdownSequence implements Serializable {
       total = Math.max(total, action.getCompletionTimeSeconds());
     }
     return total;
+  }
+
+  /** @return true when a finite budget exists and all commanded actions complete within it */
+  public boolean isWithinResponseTimeBudget() {
+    return Double.isFinite(responseTimeBudgetSeconds) && getTotalResponseTimeSeconds() <= responseTimeBudgetSeconds;
   }
 
   public List<String> getMissingFields() {
@@ -153,6 +168,9 @@ public final class ShutdownSequence implements Serializable {
     if (actions.isEmpty()) {
       missing.add("shutdownActions");
     }
+    if (requirementIds.isEmpty()) {
+      missing.add("requirementIds");
+    }
     if (!resetAndRestartDefined) {
       missing.add("resetAndRestartLogic");
     }
@@ -168,6 +186,7 @@ public final class ShutdownSequence implements Serializable {
     double total = getTotalResponseTimeSeconds();
     map.put("sequenceId", sequenceId);
     map.put("initiatingCause", initiatingCause);
+    map.put("requirementIds", new ArrayList<String>(requirementIds));
     map.put("protectedEquipmentTag", protectedEquipmentTag);
     map.put("safeState", safeState);
     map.put("hazopReference", hazopReference);
@@ -176,8 +195,7 @@ public final class ShutdownSequence implements Serializable {
     map.put("totalResponseTimeSeconds", total);
     map.put("responseTimeMarginSeconds",
         Double.isFinite(responseTimeBudgetSeconds) ? responseTimeBudgetSeconds - total : Double.NaN);
-    map.put("withinResponseTimeBudget",
-        Double.isFinite(responseTimeBudgetSeconds) && total <= responseTimeBudgetSeconds);
+    map.put("withinResponseTimeBudget", isWithinResponseTimeBudget());
     map.put("resetAndRestartDefined", resetAndRestartDefined);
     map.put("approvalStatus", approvalStatus.name());
     map.put("actions", actionMaps);
@@ -189,8 +207,16 @@ public final class ShutdownSequence implements Serializable {
     return sequenceId;
   }
 
+  public String getProtectedEquipmentTag() {
+    return protectedEquipmentTag;
+  }
+
   public List<Action> getActions() {
     return Collections.unmodifiableList(actions);
+  }
+
+  public List<String> getRequirementIds() {
+    return Collections.unmodifiableList(requirementIds);
   }
 
   public EngineeringApprovalStatus getApprovalStatus() {

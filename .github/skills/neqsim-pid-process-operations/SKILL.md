@@ -1,6 +1,6 @@
 ---
 name: neqsim-pid-process-operations
-version: "1.3.0"
+version: "1.4.0"
 description: "Bidirectional P&ID/NeqSim workflow. USE WHEN: understanding P&ID symbols, converting P&ID topology into NeqSim simulations, generating governed DEXPI engineering packages from ProcessSystem or ProcessModel, linking tags to historian data, evaluating valve/equipment changes, or preparing water-hammer and blowdown/flare handoffs."
 last_verified: "2026-07-15"
 requires:
@@ -192,12 +192,27 @@ DexpiEngineeringExporter.ExportResult files =
     DexpiEngineeringExporter.export(project, Paths.get("engineering-package"));
 ```
 
-The generated `plant.dexpi.xml` contains requirement-linked instrumentation
-functions, logic functions, information flows, control/protective valves, and
-equipment associations. It references `engineering-manifest.json`, the proposed
+The generated `plant.dexpi.xml` is a native DEXPI 2.0 semantic process model and
+is validated against the bundled official DEXPI XML schema during export.
+`plant-proteus.xml` is the backward-compatible graphical P&ID containing
+requirement-linked instrumentation functions, logic functions, information
+flows, control/protective valves, and equipment associations. It references
+`engineering-manifest.json`, the proposed
 `cause-and-effect.json`, simulation-backed `engineering-calculations.json`, and
 any `datasets/<tag>-compressor-map.json` sidecars.
+Use `plant-pydexpi.xml` for pyDEXPI import and inspect
+`interoperability-report.json`; native schema validity, semantic-profile
+validity, pyDEXPI import and commercial-CAE round-trip are distinct gates.
 Do not flatten large vendor maps into P&ID attributes.
+
+Do not call the Proteus graphical file DEXPI 2.0. Antisurge recycle topology is
+connected discharge-to-suction; PSV/BDV proposals use dedicated equipment
+nozzles and a separate relief/blowdown network. Treat every
+`UnresolvedBoundary=YES` as a required line, flare-header, vent, drain or utility
+tie-in before engineering completion.
+Represent controlled tie-ins with `EngineeringBoundary` so process inlet/outlet,
+flare, vent, closed-drain, utility and recycle connections become directional
+off-page connectors in native DEXPI rather than free-text assumptions.
 
 The calculation handoff automatically runs available equipment mechanical-design
 and materials-screening models. It can run API 520/521 PSV sizing from attached
@@ -218,12 +233,26 @@ correspond to the source documents:
 - `SafetyFunctionDesign` for LOPA/SRS-backed target SIL, sensor/logic/final-element
   failure data, MooN voting, proof-test interval, diagnostic coverage and beta factor;
 - `ShutdownSequence` for cause/effect actions, safe positions, timing budget,
-  HAZOP/SRS references and reset/restart definition.
+  linked requirement IDs, HAZOP/SRS references and reset/restart definition;
+- `ReliefDeviceDesignInput` for the selected device, inlet/outlet geometry,
+  allowable losses, two-phase method, fire zone, concurrency group and evidence;
+- `EngineeringEvidenceRecord` for revision-controlled HAZOP, LOPA, SRS,
+  line-list, vendor and calculation records linked to equipment and requirements;
+- `EmergencyShutdownTestResult` from `EmergencyShutdownTestRunner`, linked to
+  the applicable sequence with `addShutdownVerificationResult(...)`.
 
 Inspect `engineeringReadiness` in `engineering-calculations.json`. It reports
 coverage percentage, missing-input count, severity, responsible discipline and
 approval state. Never interpret 100% calculation/evidence coverage as engineering
-approval or fitness for construction.
+approval or fitness for construction. Failed or blocked calculation objects must
+not be counted as completed merely because they are present in the handoff.
+
+Also inspect `engineeringCoverageMatrix`, `installedReliefDeviceVerification`,
+`reliefDisposalNetworkLoads`, `engineeringEvidenceStatus`, and the dynamic result
+inside `shutdownSequenceVerification`. Review `dexpi-validation.json`, every CSV/JSON
+under `registers/`, and `package-manifest.json`. If the project provides its
+controlled DEXPI XSD, call `DexpiEngineeringValidator.validate(dexpiFile, xsdFile)`;
+do not silently download or choose a schema edition.
 
 For multi-area models, call
 `NorsokOffshoreEngineeringBuilder.fromProcessModel(...)` and export each returned

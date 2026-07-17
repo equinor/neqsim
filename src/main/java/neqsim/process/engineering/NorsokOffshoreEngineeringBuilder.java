@@ -3,6 +3,7 @@ package neqsim.process.engineering;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -28,6 +29,7 @@ public final class NorsokOffshoreEngineeringBuilder {
   private final String name;
   private final ProcessSystem processSystem;
   private final EngineeringDesignBasis designBasis;
+  private String projectId = UUID.randomUUID().toString();
   private final List<EngineeringRule> additionalRules = new ArrayList<EngineeringRule>();
   private boolean registerProposedInstruments;
 
@@ -84,6 +86,15 @@ public final class NorsokOffshoreEngineeringBuilder {
     return this;
   }
 
+  /** Sets a persistent project identifier so graph snapshots can be compared across sessions and revisions. */
+  public NorsokOffshoreEngineeringBuilder projectId(String value) {
+    if (value == null || value.trim().isEmpty()) {
+      throw new IllegalArgumentException("projectId must not be blank");
+    }
+    projectId = value.trim();
+    return this;
+  }
+
   /** @return mutable design basis populated with the default offshore profile */
   public EngineeringDesignBasis getDesignBasis() {
     return designBasis;
@@ -109,7 +120,7 @@ public final class NorsokOffshoreEngineeringBuilder {
    * @return generated governed engineering project
    */
   public EngineeringProject build() {
-    EngineeringProject project = new EngineeringProject(name, processSystem, designBasis);
+    EngineeringProject project = new EngineeringProject(projectId, name, processSystem, designBasis);
     if (registerProposedInstruments && processSystem.getMeasurementDevices().isEmpty()) {
       InstrumentScheduleGenerator generator = new InstrumentScheduleGenerator(processSystem);
       generator.setRegisterOnProcess(true);

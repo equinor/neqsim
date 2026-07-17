@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:line-register:v1",
+  "title": "NeqSim line register",
+  "type": "object",
+  "required": ["schemaVersion", "rowCount", "rows"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_line_register.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:line-register:v1"},
+    "rowCount": {"type": "integer", "minimum": 0},
+    "rows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["lineTag", "graphNodeId", "approvalStatus"],
+        "properties": {
+          "lineTag": {"type": "string", "minLength": 1},
+          "graphNodeId": {"type": "string", "minLength": 1},
+          "approvalStatus": {"type": "string", "minLength": 1}
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

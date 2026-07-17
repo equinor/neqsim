@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:design-case-envelope:v1",
+  "title": "NeqSim engineering design-case envelope",
+  "type": "object",
+  "required": ["schemaVersion", "projectId", "revision", "status", "caseResults", "governingValues"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_design_case_envelope.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:design-case-envelope:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "status": {"type": "string", "minLength": 1},
+    "message": {"type": "string"},
+    "caseResults": {"type": "array"},
+    "governingValues": {"type": "array"}
+  },
+  "additionalProperties": false
+}

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -53,6 +54,7 @@ public final class DexpiEngineeringMaterializer {
 
     /** Serializes the proposed cause-and-effect matrix with its engineering governance. */
     public String toCauseAndEffectJson(EngineeringProject project) {
+      Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().create();
       JsonObject root = new JsonObject();
       root.addProperty("projectId", project.getProjectId());
       root.addProperty("projectName", project.getName());
@@ -69,15 +71,18 @@ public final class DexpiEngineeringMaterializer {
       root.add("entries", entries);
       JsonArray safetyFunctions = new JsonArray();
       for (SafetyFunctionDesign design : project.getSafetyFunctionDesigns()) {
-        safetyFunctions.add(new GsonBuilder().create().toJsonTree(design.toMap()));
+        safetyFunctions.add(gson.toJsonTree(design.toMap()));
       }
       root.add("safetyFunctionDesigns", safetyFunctions);
       JsonArray shutdownSequences = new JsonArray();
       for (neqsim.process.engineering.ShutdownSequence sequence : project.getShutdownSequences()) {
-        shutdownSequences.add(new GsonBuilder().create().toJsonTree(sequence.toMap()));
+        shutdownSequences.add(gson.toJsonTree(sequence.toMap()));
       }
       root.add("shutdownSequences", shutdownSequences);
-      return new GsonBuilder().setPrettyPrinting().create().toJson(root);
+      root.add("shutdownDynamicVerification", gson.toJsonTree(project.getShutdownVerificationResults()));
+      root.add("engineeringEvidence", gson.toJsonTree(project.getEvidenceRecords()));
+      root.add("installedReliefDeviceDesigns", gson.toJsonTree(project.getReliefDeviceDesignInputs()));
+      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(root);
     }
   }
 
@@ -175,12 +180,18 @@ public final class DexpiEngineeringMaterializer {
   }
 
   private static final class EquipmentReference {
+    private final Element element;
     private final String id;
+    private final String inletNozzleId;
+    private final String outletNozzleId;
     private final double x;
     private final double y;
 
-    EquipmentReference(String id, double x, double y) {
+    EquipmentReference(Element element, String id, String inletNozzleId, String outletNozzleId, double x, double y) {
+      this.element = element;
       this.id = id;
+      this.inletNozzleId = inletNozzleId;
+      this.outletNozzleId = outletNozzleId;
       this.x = x;
       this.y = y;
     }
@@ -252,7 +263,9 @@ public final class DexpiEngineeringMaterializer {
     Element root = document.getDocumentElement();
     Set<String> usedIds = collectIds(document);
     Map<String, EquipmentReference> equipment = collectEquipmentReferences(document);
-    Element protectionSystem = createProtectionSystem(document, usedIds);
+    Element protectionSystem = createNetworkSystem(document, usedIds, "EngineeringSafeguards",
+        "PROCESS_CONTROL_ISOLATION_AND_RECYCLE");
+    Element reliefSystem = createNetworkSystem(document, usedIds, "ReliefAndBlowdown", "FLARE_RELIEF_AND_BLOWDOWN");
     int functionCount = 0;
     int deviceCount = 0;
     int offset = 0;
@@ -302,7 +315,8 @@ public final class DexpiEngineeringMaterializer {
       String actuatingSourceId = last(loopMembers);
       for (DeviceDefinition device : definition.finalElements) {
         String tag = device.tagPrefix + "-" + number;
-        String id = appendPipingComponent(document, protectionSystem, usedIds, project, requirement, protectedEquipment,
+        Element targetSystem = isReliefOrBlowdownTag(tag) ? reliefSystem : protectionSystem;
+        String id = appendPipingComponent(document, targetSystem, usedIds, project, requirement, protectedEquipment,
             tag, device.componentClass, definition.controlSystem, baseX + 12.0 + deviceCount % 4 * 3.0,
             protectedEquipment.y);
         if (actuatingSourceId != null && !"SwingCheckValve".equals(device.componentClass)
@@ -324,8 +338,11 @@ public final class DexpiEngineeringMaterializer {
       offset++;
     }
 
-    if (protectionSystem.hasChildNodes()) {
+    if (hasPipingSegments(protectionSystem)) {
       insertBeforeCatalogue(root, protectionSystem);
+    }
+    if (hasPipingSegments(reliefSystem)) {
+      insertBeforeCatalogue(root, reliefSystem);
     }
     return new MaterializationResult(matrix, functionCount, deviceCount);
   }
@@ -390,17 +407,26 @@ public final class DexpiEngineeringMaterializer {
     return null;
   }
 
-  private static Element createProtectionSystem(Document document, Set<String> usedIds) {
+  private static Element createNetworkSystem(Document document, Set<String> usedIds, String name, String service) {
     Element system = document.createElement("PipingNetworkSystem");
-    system.setAttribute("ID", uniqueId("PipingNetworkSystem-EngineeringSafeguards", usedIds));
+    system.setAttribute("ID", uniqueId("PipingNetworkSystem-" + name, usedIds));
     system.setAttribute("ComponentClass", "PipingNetworkSystem");
     system.setAttribute("ComponentClassURI", "http://sandbox.dexpi.org/rdl/PipingNetworkSystem");
     Element attributes = document.createElement("GenericAttributes");
     attributes.setAttribute("Set", "EngineeringSafeguardingSystem");
     appendAttribute(document, attributes, "DocumentStatus", "REVIEW_REQUIRED");
     appendAttribute(document, attributes, "ConnectivityStatus", "LOGICAL_ASSOCIATION_PENDING_PIPING_DESIGN");
+    appendAttribute(document, attributes, "SystemService", service);
     system.appendChild(attributes);
     return system;
+  }
+
+  private static boolean isReliefOrBlowdownTag(String tag) {
+    return tag.startsWith("PSV-") || tag.startsWith("BDV-");
+  }
+
+  private static boolean hasPipingSegments(Element system) {
+    return system.getElementsByTagName("PipingNetworkSegment").getLength() > 0;
   }
 
   private static String appendInstrumentFunction(Document document, Element root, Set<String> usedIds,
@@ -476,8 +502,10 @@ public final class DexpiEngineeringMaterializer {
     }
     appendPosition(document, component, x, y);
     appendLabel(document, component, id, tag, x, y);
-    appendNozzle(document, component, uniqueId(id + "-INLET", usedIds));
-    appendNozzle(document, component, uniqueId(id + "-OUTLET", usedIds));
+    String inletNozzleId = uniqueId(id + "-INLET", usedIds);
+    String outletNozzleId = uniqueId(id + "-OUTLET", usedIds);
+    appendNozzle(document, component, inletNozzleId);
+    appendNozzle(document, component, outletNozzleId);
     Element dexpi = document.createElement("GenericAttributes");
     dexpi.setAttribute("Set", "DexpiAttributes");
     appendAttribute(document, dexpi, "TagNameAssignmentClass", tag);
@@ -488,8 +516,51 @@ public final class DexpiEngineeringMaterializer {
     association.setAttribute("ItemID", equipment.id);
     component.appendChild(association);
     segment.appendChild(component);
+    appendPhysicalConnections(document, segment, usedIds, equipment, tag, inletNozzleId, outletNozzleId);
     protectionSystem.appendChild(segment);
     return id;
+  }
+
+  private static void appendPhysicalConnections(Document document, Element segment, Set<String> usedIds,
+      EquipmentReference equipment, String tag, String inletNozzleId, String outletNozzleId) {
+    String source = null;
+    String target = null;
+    String status = "LOGICAL_ASSOCIATION_PENDING_PIPING_DESIGN";
+    if (tag.startsWith("ASCV-") && equipment.outletNozzleId != null && equipment.inletNozzleId != null) {
+      appendConnection(document, segment, equipment.outletNozzleId, inletNozzleId);
+      appendConnection(document, segment, outletNozzleId, equipment.inletNozzleId);
+      status = "CONNECTED_RECYCLE_TOPOLOGY_REVIEW_REQUIRED";
+    } else if (tag.startsWith("ESDV-SUC-") && equipment.inletNozzleId != null) {
+      source = outletNozzleId;
+      target = equipment.inletNozzleId;
+      status = "CONNECTED_TO_PROTECTED_EQUIPMENT_UPSTREAM_TIE_IN_REQUIRED";
+    } else if ((tag.startsWith("PSV-") || tag.startsWith("BDV-")) && equipment.element != null) {
+      String protectionNozzleId = uniqueId(equipment.id + "-SAFEGUARD-NOZZLE", usedIds);
+      appendNozzle(document, equipment.element, protectionNozzleId);
+      source = protectionNozzleId;
+      target = inletNozzleId;
+      status = "CONNECTED_TO_DEDICATED_EQUIPMENT_NOZZLE_DESTINATION_TIE_IN_REQUIRED";
+    } else if ((tag.startsWith("ESDV-DIS-") || tag.startsWith("NRV-")) && equipment.outletNozzleId != null) {
+      source = equipment.outletNozzleId;
+      target = inletNozzleId;
+      status = "CONNECTED_TO_PROTECTED_EQUIPMENT_DESTINATION_TIE_IN_REQUIRED";
+    }
+    if (source != null && target != null) {
+      appendConnection(document, segment, source, target);
+    }
+    Element topology = document.createElement("GenericAttributes");
+    topology.setAttribute("Set", "EngineeringTopology");
+    appendAttribute(document, topology, "ConnectivityStatus", status);
+    appendAttribute(document, topology, "UnresolvedBoundary",
+        status.contains("REQUIRED") && !status.startsWith("CONNECTED_RECYCLE") ? "YES" : "NO");
+    segment.appendChild(topology);
+  }
+
+  private static void appendConnection(Document document, Element segment, String fromId, String toId) {
+    Element connection = document.createElement("Connection");
+    connection.setAttribute("FromID", fromId);
+    connection.setAttribute("ToID", toId);
+    segment.appendChild(connection);
   }
 
   private static void appendNozzle(Document document, Element component, String id) {
@@ -581,7 +652,12 @@ public final class DexpiEngineeringMaterializer {
         continue;
       }
       double[] position = findPosition(equipment);
-      result.put(tag, new EquipmentReference(equipment.getAttribute("ID"), position[0], position[1]));
+      NodeList nozzles = equipment.getElementsByTagName("Nozzle");
+      String inletNozzle = nozzles.getLength() == 0 ? null : ((Element) nozzles.item(0)).getAttribute("ID");
+      String outletNozzle = nozzles.getLength() == 0 ? null
+          : ((Element) nozzles.item(nozzles.getLength() - 1)).getAttribute("ID");
+      result.put(tag, new EquipmentReference(equipment, equipment.getAttribute("ID"), inletNozzle, outletNozzle,
+          position[0], position[1]));
     }
     return result;
   }

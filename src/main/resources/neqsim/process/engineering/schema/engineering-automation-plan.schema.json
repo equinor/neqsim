@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-automation-plan:v1",
+  "title": "NeqSim governed engineering automation plan",
+  "type": "object",
+  "required": ["schemaVersion", "schemaUri", "projectId", "revision", "graphFingerprint", "studies", "availableEngines", "executionBoundary", "summary"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_automation_plan.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:engineering-automation-plan:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "graphFingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "studies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "decisionVariables", "objectives", "constraints", "executionMode", "executionStatus", "baselineFeasibility"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "name": {"type": "string", "minLength": 1},
+          "decisionVariables": {"type": "array", "items": {"type": "object"}},
+          "objectives": {"type": "array", "items": {"type": "object"}},
+          "constraints": {"type": "array", "items": {"type": "object"}},
+          "executionMode": {"const": "ADVISORY_BOUNDED_SCREENING"},
+          "executionStatus": {"enum": ["READY_FOR_ISOLATED_SCREENING", "CONFIGURATION_INCOMPLETE"]},
+          "baselineFeasibility": {"enum": ["NO_CONTROLLED_CONSTRAINT_VIOLATIONS", "CONTROLLED_CONSTRAINTS_VIOLATED"]}
+        },
+        "additionalProperties": false
+      }
+    },
+    "availableEngines": {"type": "array", "items": {"type": "string"}},
+    "executionBoundary": {
+      "type": "object",
+      "required": ["candidateIsolation", "automaticPlantChange", "resultGovernance", "standardsAndSafetyConstraints"],
+      "properties": {
+        "candidateIsolation": {"const": "REQUIRED_PROCESS_SYSTEM_COPY"},
+        "automaticPlantChange": {"const": false},
+        "resultGovernance": {"const": "REVIEW_REQUIRED_BEFORE_DESIGN_ADOPTION"},
+        "standardsAndSafetyConstraints": {"const": "CONTROLLED_INPUTS_NOT_OPTIMIZER_ASSUMPTIONS"}
+      },
+      "additionalProperties": false
+    },
+    "summary": {
+      "type": "object",
+      "required": ["studyCount", "readyStudyCount", "decisionVariableCount", "objectiveCount", "constraintCount", "baselineConstraintViolationCount"],
+      "properties": {
+        "studyCount": {"type": "integer", "minimum": 0},
+        "readyStudyCount": {"type": "integer", "minimum": 0},
+        "decisionVariableCount": {"type": "integer", "minimum": 0},
+        "objectiveCount": {"type": "integer", "minimum": 0},
+        "constraintCount": {"type": "integer", "minimum": 0},
+        "baselineConstraintViolationCount": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}
