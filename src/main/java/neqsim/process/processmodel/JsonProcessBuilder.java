@@ -2,6 +2,7 @@ package neqsim.process.processmodel;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -81,6 +82,14 @@ public class JsonProcessBuilder {
 
   /** Registry of named equipment created during build. */
   private final Map<String, ProcessEquipmentInterface> namedEquipment = new LinkedHashMap<>();
+
+  /**
+   * Inlet references that were dropped when a Mixer/Manifold was partial-wired to break a build-time cycle. Keyed by
+   * unit name; the value lists the still-unresolved inlet references. A completion pass at the end of the build
+   * re-attaches any of these that resolve once every unit exists, so a forward material stream (carrying
+   * mass/components) is never silently lost.
+   */
+  private final Map<String, List<String>> partialMixerDroppedInlets = new LinkedHashMap<>();
 
   /** Errors accumulated during build. */
   private final List<SimulationResult.ErrorDetail> errors = new ArrayList<>();
@@ -276,6 +285,35 @@ public class JsonProcessBuilder {
         // Remove the unit from the process so it doesn't crash during run()
         process.removeUnit(name);
         namedEquipment.remove(name);
+      }
+    }
+
+    // Completion pass: re-attach inlets that were dropped when a Mixer/Manifold
+    // was partial-wired to break a build-time cycle. By now every unit exists,
+    // so a forward material inlet (e.g. a valve outlet that was not yet wired
+    // when the mixer was unblocked) now resolves. Re-attaching it prevents the
+    // silent loss of that stream's mass and components (which would otherwise
+    // over-stabilize downstream oil / distort compositions). Any inlet still
+    // unresolved is a genuine gap and is reported as a warning.
+    for (Map.Entry<String, List<String>> entry : partialMixerDroppedInlets.entrySet()) {
+      ProcessEquipmentInterface eq = namedEquipment.get(entry.getKey());
+      if (eq == null) {
+        continue;
+      }
+      Iterator<String> it = entry.getValue().iterator();
+      while (it.hasNext()) {
+        String ref = it.next();
+        StreamInterface stream = resolveStreamReference(ref);
+        if (stream != null) {
+          wireInletStream(eq, stream);
+          it.remove();
+        }
+      }
+    }
+    for (Map.Entry<String, List<String>> entry : partialMixerDroppedInlets.entrySet()) {
+      if (!entry.getValue().isEmpty()) {
+        warnings.add("Mixer/manifold '" + entry.getKey() + "' missing " + entry.getValue().size()
+            + " inlet(s) not found: " + entry.getValue());
       }
     }
 
@@ -1338,11 +1376,21 @@ public class JsonProcessBuilder {
             wireInletStream(equipment, stream);
           }
         } else if (allowPartial && !resolved.isEmpty()) {
-          for (StreamInterface stream : resolved) {
-            wireInletStream(equipment, stream);
+          List<String> dropped = new ArrayList<>();
+          for (JsonElement inletElem : inletsArr) {
+            String ref = inletElem.getAsString();
+            StreamInterface stream = resolveStreamReference(ref);
+            if (stream != null) {
+              wireInletStream(equipment, stream);
+            } else {
+              dropped.add(ref);
+            }
           }
-          warnings.add("Mixer/manifold '" + name + "' wired with " + resolved.size() + " of " + inletsArr.size()
-              + " inlets (some not found)");
+          // Record the dropped references; a completion pass re-attaches any
+          // that resolve once every unit has been created (a dropped forward
+          // material stream would otherwise silently remove its mass and
+          // components from the flowsheet).
+          partialMixerDroppedInlets.put(name, dropped);
         } else {
           return false; // Retry on next iteration (forward/recycle reference)
         }
