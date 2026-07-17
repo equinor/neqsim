@@ -74,9 +74,10 @@ public final class InletCompressionExportSliceQualification {
     gates.put("COMPLETE_CONVERGED_CASE_MATRIX", gate(caseFindings.isEmpty(), caseFindings,
         "Run normal, turndown, maximum, startup, shutdown, trip, settle-out, blocked-outlet, fire and blowdown cases"));
 
-    gates.put("CLOSED_DESIGN_LOOP", gate(loop != null && loop.isConverged(),
-        singleton(loop == null ? "Engineering design loop was not executed" : loop.getTerminationReason()),
-        "Converge physical design variables, process values and constraints"));
+    gates.put("CLOSED_DESIGN_LOOP",
+        gate(loop != null && loop.isConverged(),
+            singleton(loop == null ? "Engineering design loop was not executed" : loop.getTerminationReason()),
+            "Converge physical design variables, process values and constraints"));
 
     List<String> missingVariables = missingDesignVariables(loop == null ? null : loop.getState(), policy);
     gates.put("COUPLED_PHYSICAL_DESIGN",
