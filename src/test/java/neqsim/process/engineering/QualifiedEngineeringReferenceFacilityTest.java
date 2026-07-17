@@ -4,6 +4,10 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import neqsim.process.engineering.design.EngineeringConstraintResult;
+import neqsim.process.engineering.design.EngineeringDesignIteration;
+import neqsim.process.engineering.design.EngineeringDesignLoopResult;
+import neqsim.process.engineering.design.EngineeringDesignVariable;
 import neqsim.process.engineering.production.EngineeringAutoConfigurator;
 import neqsim.process.engineering.validation.EngineeringPackageValidationException;
 import neqsim.process.engineering.verticalslice.InletCompressionExportReferenceFacility;
@@ -50,7 +54,7 @@ class QualifiedEngineeringReferenceFacilityTest {
 
     assertTrue(result.getPreflight().isReadyForSimulation());
     assertTrue(result.getSimulation().getEngineeringDesignLoopResult().isConverged(),
-        result.getSimulation().getEngineeringDesignLoopResult().getTerminationReason());
+        convergenceDiagnostics(result.getSimulation().getEngineeringDesignLoopResult()));
     assertFalse(result.getSimulation().getCaseRunReport().getEnvelope().hasCaseFailures());
     assertTrue(result.getQualification().isQualifiedForControlledPilot(),
         result.getQualification().getFailedGates().toString());
@@ -60,5 +64,25 @@ class QualifiedEngineeringReferenceFacilityTest {
     assertTrue(Files.isRegularFile(result.getCompilation().getCompilerManifestFile()));
     assertTrue(Files.isRegularFile(result.getCompilation().getVerticalSliceExecutionManifestFile()));
     assertTrue(result.toMap().containsKey("fitnessForConstruction"));
+  }
+
+  private static String convergenceDiagnostics(EngineeringDesignLoopResult result) {
+    StringBuilder diagnostic = new StringBuilder(result.getTerminationReason());
+    for (EngineeringDesignIteration iteration : result.getIterations()) {
+      diagnostic.append("\niteration=").append(iteration.getNumber()).append(" applied=")
+          .append(iteration.getAppliedUpdateCount()).append(" convergence=")
+          .append(iteration.getConvergenceReport().toMap());
+      for (EngineeringDesignVariable variable : iteration.getDesignVariables()) {
+        if (variable.isApplied()) {
+          diagnostic.append("\n  variable=").append(variable.toMap());
+        }
+      }
+      for (EngineeringConstraintResult constraint : iteration.getConstraintResults()) {
+        if (!constraint.isSatisfied()) {
+          diagnostic.append("\n  constraint=").append(constraint.toMap());
+        }
+      }
+    }
+    return diagnostic.toString();
   }
 }
