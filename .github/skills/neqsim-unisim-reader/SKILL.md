@@ -635,8 +635,53 @@ All four output methods (`to_json()`, `build_and_run()`, `to_python()`,
 3. **E300 fluid loading**: When the `UniSimReader.read(export_e300=True)`
    option was used (default), the converter uses `EclipseFluidReadWrite.read()`
    to load the fluid with exact Tc, Pc, ω, MW, and BIPs from UniSim.
-4. **Recycle tolerance**: All auto-generated Recycle objects have
-   `setTolerance(1e6)` to prevent convergence blocking during initial runs.
+4. **Recycle convergence**: Auto-generated `Recycle` objects (in `to_python()` /
+   `to_notebook()`) get a **real tolerance (`recycle_tolerance`, default `1e-2`)
+   plus Wegstein acceleration (`recycle_acceleration`, default `"WEGSTEIN"`)**,
+   and the generated run tail **iterates** (`setRunStep(True)` loop, then a final
+   run) so the tear streams actually converge. A very large tolerance (the old
+   `1e6`) accepted the seeded tear on the first pass, so recycle-fed streams
+   never updated and deviated strongly from UniSim. Tune via:
+
+   ```python
+   converter = UniSimToNeqSim(model)
+   converter.recycle_tolerance = 1e-3        # tighter tear
+   converter.recycle_acceleration = "WEGSTEIN"  # or None to disable
+   python_code = converter.to_python()
+   ```
+5. **Unfed columns/absorbers are skipped**: A `DistillationColumn`/`Absorber`
+   whose feed stream could not be extracted from UniSim (UniSim `fractop`/
+   `absorber` COM connectivity is not always resolvable) is **omitted** rather
+   than emitted as a bare, feed-less column. A feed-less column **throws on
+   `run()` and aborts the whole `process.run()`**, so every downstream unit
+   stops executing and stays at its seed value — this was the single biggest
+   cause of a "runs but nothing matches" result. The skipped column is reported
+   in `converter.warnings`; reconnect its feed manually to include it.
+
+> **Verification vehicle — `to_python()` is still the most faithful path, but
+> the JSON/MCP path now iterates recycles.** The JSON path (`build_and_run()` /
+> `ProcessSystem.fromJsonAndRun` / MCP `runProcess`) emits recycles with only an
+> `inlet` and relies on `JsonProcessBuilder`'s Pass-2 iterative wiring to close
+> forward-referenced tears. Since the multi-pass auto-run fix, when the built
+> process `hasRecycles()` the builder loops `process.run()` up to
+> `MAX_AUTORUN_PASSES` (15), **guarding each pass** (a unit throwing on an early
+> pass no longer aborts the whole auto-run) and stopping early on
+> `process.solved()` — so nested/forward-referenced recycle loops seeded at ~0
+> flow now get the outer passes they need to converge on the JSON/MCP path too.
+> The **generated Python** (`to_python()`) additionally seeds forward-reference
+> placeholders + auto-`Recycle`, so it remains the most robust vehicle for a
+> recycle-heavy plant; compare with `UniSimComparator(model, process)` after
+> `exec()`-ing the generated script.
+>
+> **Residual JSON-path failures are model-specific topology gaps, not recycle
+> convergence.** If the full plant still stops (e.g. a pipe `Failed to run … —
+> Total mass cannot be zero`), trace the dead branch: the cause is usually a
+> genuinely external UniSim stream with no producer (a `Valve leak`-type feed),
+> or a zero-feed pipe/riser fed by a scrubber whose own inlet mixer is only
+> partially wired (`Mixer … wired with N of M inlets`). These need the missing
+> inlet wired manually — no number of recycle passes fixes a stream that no unit
+> produces. `ProcessSystem.run()` still aborts a pass at the first throwing
+> unit, so a single unfeedable unit blocks everything downstream in that pass.
 
 To disable full mode and get only the main flowsheet operations:
 
