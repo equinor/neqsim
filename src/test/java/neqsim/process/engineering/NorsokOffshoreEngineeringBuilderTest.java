@@ -102,16 +102,22 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     project.addSafetyFunctionDesign(new SafetyFunctionDesign("SIF-20-001", pressureSifRequirement, 2)
         .setLopaReference("LOPA-20-001").setSrsReference("SRS-20-001").setSafeState("Compressor isolated and stopped")
         .addSubsystem(new SafetyFunctionDesign.Subsystem("2oo3 discharge pressure transmitters",
-            SafetyFunctionDesign.SubsystemType.SENSOR, 2, 3, 1.0e-6, 0.60, 8760.0, 8.0, 0.05))
+            SafetyFunctionDesign.SubsystemType.SENSOR, 2, 3, 1.0e-6, 0.60, 8760.0, 8.0, 0.05).setProofTestCoverage(0.95)
+            .setMissionTimeHours(87600.0).setCommonCauseGroup("PT-20-001").setArchitecturalConstraints(2, 1)
+            .setCertifiedDataReference("SIL-CERT-PT-001"))
         .addSubsystem(new SafetyFunctionDesign.Subsystem("1oo1 safety logic solver",
-            SafetyFunctionDesign.SubsystemType.LOGIC_SOLVER, 1, 1, 1.0e-7, 0.90, 8760.0, 8.0, 0.0))
+            SafetyFunctionDesign.SubsystemType.LOGIC_SOLVER, 1, 1, 1.0e-7, 0.90, 8760.0, 8.0, 0.0)
+            .setProofTestCoverage(0.99).setMissionTimeHours(87600.0).setArchitecturalConstraints(3, 0)
+            .setCertifiedDataReference("SIL-CERT-LS-001"))
         .addSubsystem(new SafetyFunctionDesign.Subsystem("1oo1 compressor trip and isolation",
-            SafetyFunctionDesign.SubsystemType.FINAL_ELEMENT, 1, 1, 2.0e-6, 0.50, 8760.0, 8.0, 0.0)));
+            SafetyFunctionDesign.SubsystemType.FINAL_ELEMENT, 1, 1, 2.0e-6, 0.50, 8760.0, 8.0, 0.0)
+            .setProofTestCoverage(0.90).setPartialStrokeTesting(2160.0, 0.60).setMissionTimeHours(87600.0)
+            .setArchitecturalConstraints(2, 0).setCertifiedDataReference("SIL-CERT-FE-001")));
 
     project.addShutdownSequence(new ShutdownSequence("ESD-20-001", "High-high compressor discharge pressure")
         .setProtectedEquipmentTag("20-KA-001").setSafeState("Compressor stopped and isolated")
         .setHazopReference("HAZOP-20-001").setSrsReference("SRS-20-001").setResponseTimeBudgetSeconds(12.0)
-        .setResetAndRestartDefined(true)
+        .setResetAndRestartDefined(true).addRequirementId(pressureSifRequirement)
         .addAction(new ShutdownSequence.Action("20-KA-001", "Trip compressor driver", "STOPPED", 0.5, 1.0))
         .addAction(new ShutdownSequence.Action("ESDV-20-001", "Close discharge isolation", "CLOSED", 1.0, 6.0)));
 
@@ -135,6 +141,15 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     project.addOverpressureStudy(incompleteStudy)
         .addReliefScenarioBasis(new ReliefScenarioBasis("20-KA-001").require(ReliefCause.CHECK_VALVE_LEAKAGE)
             .setHazardReviewReference("HAZOP-20-002").addEvidenceReference("RELIEF-REGISTER-20-REV-A"));
+    project.addReliefDeviceDesignInput(new ReliefDeviceDesignInput("20-PSV-001", "20-VG-001")
+        .setSelectedOrificeAreaIn2(10.0).setInletPiping(0.10, 2.0, 2.0).setOutletPiping(0.20, 20.0, 5.0)
+        .setConcurrencyGroup("FIRE-ZONE-A").setFireZone("A").setTwoPhaseMethod("API_520_OMEGA_WHEN_APPLICABLE")
+        .setEvidenceReference("PSV-DATASHEET-20-001-REV-A"));
+    project.addEvidenceRecord(new EngineeringEvidenceRecord("HAZOP-20-001", "HAZOP", "A")
+        .setTitle("Compression train HAZOP").setSourceOrganization("Project technical safety")
+        .linkEquipment("20-KA-001").linkEquipment("20-VG-001").linkRequirement(pressureSifRequirement));
+    project.addEvidenceRecord(new EngineeringEvidenceRecord("LINE-LIST-20", "LINE_LIST", "A")
+        .setTitle("Compression line list").setSourceOrganization("Project piping").linkEquipment("20-PL-001"));
 
     assertFalse(project.getRequirementsForEquipment("20-KA-001").isEmpty());
     assertFalse(process.getMeasurementDevices().isEmpty());
@@ -163,6 +178,10 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(Files.exists(result.getCalculationsFile()));
     assertTrue(Files.exists(result.getCauseAndEffectFile()));
     assertTrue(Files.exists(result.getInteroperabilityReportFile()));
+    assertTrue(Files.exists(result.getValidationFile()));
+    assertTrue(Files.exists(result.getPackageManifestFile()));
+    assertTrue(Files.exists(result.getRegisterFiles().get("instrumentIndex")));
+    assertTrue(Files.exists(result.getRegisterFiles().get("reliefRegister")));
     assertTrue(result.getCompressorMapFiles().containsKey("20-KA-001"));
 
     String xml = new String(Files.readAllBytes(result.getDexpiFile()), StandardCharsets.UTF_8);
@@ -170,6 +189,7 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(xml.contains("EngineeringRequirementIds"));
     assertTrue(xml.contains("CompressorPerformanceMapDocument"));
     assertTrue(xml.contains("EngineeringCalculationsDocument"));
+    assertTrue(xml.contains("PackageManifestDocument"));
     assertTrue(xml.contains("DeclaredDesignPressureBara"));
     assertTrue(xml.contains("SimulationOperatingPressureBara"));
     assertTrue(xml.contains("datasets/20-KA-001-compressor-map.json"));
@@ -208,7 +228,7 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(manifest.contains("PROTEUS_4_1_1_COMPATIBLE"));
 
     String calculations = new String(Files.readAllBytes(result.getCalculationsFile()), StandardCharsets.UTF_8);
-    assertTrue(calculations.contains("neqsim_engineering_calculations.v2"));
+    assertTrue(calculations.contains("neqsim_engineering_calculations.v3"));
     assertTrue(calculations.contains("equipmentMechanicalDesign"));
     assertTrue(calculations.contains("PROJECT_DEFINED_SCENARIOS"));
     assertTrue(calculations.contains("CALCULATED_PSV_SIZE_REVIEW_REQUIRED"));
@@ -218,11 +238,17 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
     assertTrue(calculations.contains("pipingLineListAndMechanicalDesign"));
     assertTrue(calculations.contains("asmeB31_3MechanicalScreening"), calculations);
     assertTrue(calculations.contains("silAndVotingVerification"));
-    assertTrue(calculations.contains("CALCULATED_PFD_REVIEW_REQUIRED"));
+    assertTrue(calculations.contains("CALCULATED_PFD_AND_ARCHITECTURE_REVIEW_REQUIRED"));
+    assertTrue(calculations.contains("proofTestCoverage"));
+    assertTrue(calculations.contains("pfhPerHour"));
     assertTrue(calculations.contains("reliefScenarioCoverage"));
     assertTrue(calculations.contains("SCENARIO_SET_COMPLETE_REVIEW_REQUIRED"));
     assertTrue(calculations.contains("shutdownSequenceVerification"));
     assertTrue(calculations.contains("SEQUENCE_COMPLETE_REVIEW_REQUIRED"));
+    assertTrue(calculations.contains("installedReliefDeviceVerification"));
+    assertTrue(calculations.contains("reliefDisposalNetworkLoads"));
+    assertTrue(calculations.contains("engineeringCoverageMatrix"));
+    assertTrue(calculations.contains("engineeringEvidenceStatus"));
     assertTrue(calculations.contains("engineeringReadiness"));
     assertTrue(calculations.contains("completenessPercent"));
     assertTrue(calculations.contains("BLOWDOWN_FLARE_INPUT"));
@@ -247,6 +273,11 @@ class NorsokOffshoreEngineeringBuilderTest extends NeqSimTest {
         StandardCharsets.UTF_8);
     assertTrue(interoperability.contains("semanticProfileValidation"));
     assertTrue(interoperability.contains("QUALIFICATION_REQUIRED"));
+
+    String packageManifest = new String(Files.readAllBytes(result.getPackageManifestFile()), StandardCharsets.UTF_8);
+    assertTrue(packageManifest.contains("neqsim_engineering_package_manifest.v1"));
+    assertTrue(packageManifest.contains("plant.dexpi.xml"));
+    assertTrue(packageManifest.contains("sha256"));
 
     String causeAndEffect = new String(Files.readAllBytes(result.getCauseAndEffectFile()), StandardCharsets.UTF_8);
     assertTrue(causeAndEffect.contains("PROPOSED_FOR_HAZOP_LOPA_AND_DISCIPLINE_REVIEW"));

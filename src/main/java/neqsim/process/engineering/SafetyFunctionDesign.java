@@ -24,6 +24,11 @@ public final class SafetyFunctionDesign implements Serializable {
     SENSOR, LOGIC_SOLVER, FINAL_ELEMENT
   }
 
+  /** IEC 61511 demand-mode classification used by the screening report. */
+  public enum DemandMode {
+    LOW_DEMAND, HIGH_OR_CONTINUOUS_DEMAND
+  }
+
   /** Reliability and voting inputs for one homogeneous subsystem. */
   public static final class Subsystem implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -36,6 +41,15 @@ public final class SafetyFunctionDesign implements Serializable {
     private final double proofTestIntervalHours;
     private final double meanRepairTimeHours;
     private final double betaFactor;
+    private double proofTestCoverage = 1.0;
+    private double partialStrokeCoverage = 0.0;
+    private double partialStrokeTestIntervalHours = Double.NaN;
+    private double missionTimeHours = Double.NaN;
+    private double bypassProbability = 0.0;
+    private int systematicCapability = 0;
+    private int hardwareFaultTolerance = -1;
+    private String commonCauseGroup = "";
+    private String certifiedDataReference = "";
 
     public Subsystem(String name, SubsystemType type, int votesRequired, int channelCount,
         double dangerousFailureRatePerHour, double diagnosticCoverage, double proofTestIntervalHours,
@@ -78,13 +92,72 @@ public final class SafetyFunctionDesign implements Serializable {
     public double calculatePfdAverage() {
       double lambdaDu = dangerousFailureRatePerHour * (1.0 - diagnosticCoverage);
       double lambdaDd = dangerousFailureRatePerHour * diagnosticCoverage;
-      double channelPfd = Math.min(1.0, lambdaDu * proofTestIntervalHours / 2.0 + lambdaDd * meanRepairTimeHours);
+      double mission = Double.isFinite(missionTimeHours) ? missionTimeHours : proofTestIntervalHours;
+      double effectiveUndetectedInterval = proofTestCoverage * proofTestIntervalHours
+          + (1.0 - proofTestCoverage) * mission;
+      if (partialStrokeCoverage > 0.0 && Double.isFinite(partialStrokeTestIntervalHours)) {
+        effectiveUndetectedInterval = partialStrokeCoverage * partialStrokeTestIntervalHours
+            + (1.0 - partialStrokeCoverage) * effectiveUndetectedInterval;
+      }
+      double channelPfd = Math.min(1.0, lambdaDu * effectiveUndetectedInterval / 2.0 + lambdaDd * meanRepairTimeHours);
       double independent = 0.0;
       for (int functioning = 0; functioning < votesRequired; functioning++) {
         independent += combination(channelCount, functioning) * Math.pow(1.0 - channelPfd, functioning)
             * Math.pow(channelPfd, channelCount - functioning);
       }
-      return Math.min(1.0, betaFactor * channelPfd + (1.0 - betaFactor) * independent);
+      double votingPfd = betaFactor * channelPfd + (1.0 - betaFactor) * independent;
+      return Math.min(1.0, votingPfd + (1.0 - votingPfd) * bypassProbability);
+    }
+
+    /** @return conservative dangerous-failure frequency screening value in 1/h */
+    public double calculatePfh() {
+      double lambdaDu = dangerousFailureRatePerHour * (1.0 - diagnosticCoverage);
+      return Math.min(1.0, betaFactor * lambdaDu + (1.0 - betaFactor) * lambdaDu * channelCount);
+    }
+
+    public Subsystem setProofTestCoverage(double value) {
+      requireFraction(value, "proofTestCoverage");
+      proofTestCoverage = value;
+      return this;
+    }
+
+    public Subsystem setPartialStrokeTesting(double intervalHours, double coverage) {
+      requirePositive(intervalHours, "partialStrokeTestIntervalHours");
+      requireFraction(coverage, "partialStrokeCoverage");
+      partialStrokeTestIntervalHours = intervalHours;
+      partialStrokeCoverage = coverage;
+      return this;
+    }
+
+    public Subsystem setMissionTimeHours(double value) {
+      requirePositive(value, "missionTimeHours");
+      missionTimeHours = value;
+      return this;
+    }
+
+    public Subsystem setBypassProbability(double value) {
+      requireFraction(value, "bypassProbability");
+      bypassProbability = value;
+      return this;
+    }
+
+    public Subsystem setArchitecturalConstraints(int capability, int faultTolerance) {
+      if (capability < 1 || capability > 4 || faultTolerance < 0) {
+        throw new IllegalArgumentException("systematic capability must be 1 to 4 and fault tolerance non-negative");
+      }
+      systematicCapability = capability;
+      hardwareFaultTolerance = faultTolerance;
+      return this;
+    }
+
+    public Subsystem setCommonCauseGroup(String value) {
+      commonCauseGroup = requireText(value, "commonCauseGroup");
+      return this;
+    }
+
+    public Subsystem setCertifiedDataReference(String value) {
+      certifiedDataReference = requireText(value, "certifiedDataReference");
+      return this;
     }
 
     private static long combination(int n, int k) {
@@ -107,7 +180,34 @@ public final class SafetyFunctionDesign implements Serializable {
       map.put("meanRepairTimeHours", meanRepairTimeHours);
       map.put("betaFactor", betaFactor);
       map.put("pfdAverage", calculatePfdAverage());
+      map.put("pfhPerHour", calculatePfh());
+      map.put("proofTestCoverage", proofTestCoverage);
+      map.put("partialStrokeCoverage", partialStrokeCoverage);
+      map.put("partialStrokeTestIntervalHours", partialStrokeTestIntervalHours);
+      map.put("missionTimeHours", Double.isFinite(missionTimeHours) ? missionTimeHours : proofTestIntervalHours);
+      map.put("bypassProbability", bypassProbability);
+      map.put("systematicCapability", systematicCapability);
+      map.put("hardwareFaultTolerance", hardwareFaultTolerance);
+      map.put("commonCauseGroup", commonCauseGroup);
+      map.put("certifiedDataReference", certifiedDataReference);
       return map;
+    }
+
+    public List<String> getMissingFields() {
+      List<String> missing = new ArrayList<String>();
+      if (systematicCapability == 0) {
+        missing.add("systematicCapability");
+      }
+      if (hardwareFaultTolerance < 0) {
+        missing.add("hardwareFaultTolerance");
+      }
+      if (channelCount > 1 && commonCauseGroup.isEmpty()) {
+        missing.add("commonCauseGroup");
+      }
+      if (certifiedDataReference.isEmpty()) {
+        missing.add("certifiedDataReference");
+      }
+      return missing;
     }
 
     public SubsystemType getType() {
@@ -126,6 +226,7 @@ public final class SafetyFunctionDesign implements Serializable {
   private String lopaReference = "";
   private String srsReference = "";
   private String safeState = "";
+  private DemandMode demandMode = DemandMode.LOW_DEMAND;
   private EngineeringApprovalStatus approvalStatus = EngineeringApprovalStatus.REVIEW_REQUIRED;
 
   public SafetyFunctionDesign(String sifTag, String requirementId, int targetSil) {
@@ -163,6 +264,14 @@ public final class SafetyFunctionDesign implements Serializable {
     return this;
   }
 
+  public SafetyFunctionDesign setDemandMode(DemandMode value) {
+    if (value == null) {
+      throw new IllegalArgumentException("demandMode must not be null");
+    }
+    demandMode = value;
+    return this;
+  }
+
   public SafetyFunctionDesign approve(String record) {
     setSrsReference(record);
     approvalStatus = EngineeringApprovalStatus.APPROVED;
@@ -185,8 +294,33 @@ public final class SafetyFunctionDesign implements Serializable {
     return 1.0 - success;
   }
 
-  /** @return achieved SIL band from calculated PFDavg, or zero */
+  /** @return conservative total dangerous-failure frequency screening value in 1/h */
+  public double calculatePfh() {
+    double total = 0.0;
+    for (Subsystem subsystem : subsystems) {
+      total += subsystem.calculatePfh();
+    }
+    return total;
+  }
+
+  /** @return achieved SIL band from PFDavg or PFH according to the declared demand mode, or zero */
   public int getAchievedSil() {
+    if (demandMode == DemandMode.HIGH_OR_CONTINUOUS_DEMAND) {
+      double pfh = calculatePfh();
+      if (pfh >= 1.0e-5 || pfh <= 0.0) {
+        return 0;
+      }
+      if (pfh >= 1.0e-6) {
+        return 1;
+      }
+      if (pfh >= 1.0e-7) {
+        return 2;
+      }
+      if (pfh >= 1.0e-8) {
+        return 3;
+      }
+      return pfh >= 1.0e-9 ? 4 : 0;
+    }
     double pfd = calculatePfdAverage();
     if (pfd >= 1.0e-1 || pfd <= 0.0) {
       return 0;
@@ -223,7 +357,25 @@ public final class SafetyFunctionDesign implements Serializable {
         missing.add(type.name().toLowerCase() + "Subsystem");
       }
     }
+    for (Subsystem subsystem : subsystems) {
+      for (String field : subsystem.getMissingFields()) {
+        missing.add(subsystem.name + ":" + field);
+      }
+    }
     return missing;
+  }
+
+  /** @return true when supplied systematic capability is at least the target SIL for every subsystem */
+  public boolean areArchitecturalConstraintsMet() {
+    if (subsystems.isEmpty()) {
+      return false;
+    }
+    for (Subsystem subsystem : subsystems) {
+      if (subsystem.systematicCapability < targetSil || subsystem.hardwareFaultTolerance < 0) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public Map<String, Object> toMap() {
@@ -238,15 +390,21 @@ public final class SafetyFunctionDesign implements Serializable {
     map.put("targetSil", targetSil);
     map.put("achievedSil", getAchievedSil());
     map.put("pfdAverage", pfd);
-    map.put("riskReductionFactor", pfd > 0.0 ? 1.0 / pfd : Double.POSITIVE_INFINITY);
+    map.put("pfhPerHour", calculatePfh());
+    map.put("demandMode", demandMode.name());
+    map.put("verificationMeasure", demandMode == DemandMode.LOW_DEMAND ? "PFD_AVERAGE" : "PFH_PER_HOUR_SCREENING");
+    map.put("riskReductionFactor", demandMode == DemandMode.LOW_DEMAND && pfd > 0.0 ? 1.0 / pfd : Double.NaN);
     map.put("targetMet", getAchievedSil() >= targetSil);
+    map.put("architecturalConstraintsMet", areArchitecturalConstraintsMet());
+    map.put("architecturalAssessmentNote", "The screen confirms declared systematic capability and that HFT was "
+        + "recorded. Complete IEC 61511 route/type/SFF and independence assessment remains required.");
     map.put("lopaReference", lopaReference);
     map.put("srsReference", srsReference);
     map.put("safeState", safeState);
     map.put("approvalStatus", approvalStatus.name());
     map.put("subsystems", subsystemMaps);
     map.put("missingFields", getMissingFields());
-    map.put("method", "IEC_61511_LOW_DEMAND_SCREENING_MOON_BETA_FACTOR");
+    map.put("method", "IEC_61511_SCREENING_MOON_BETA_PROOF_TEST_PST_BYPASS");
     return map;
   }
 
