@@ -1278,4 +1278,36 @@ class ThreePhaseSeparatorTest {
 
     logger.info("\n=== End of Level Transmitters Example ===\n");
   }
+
+  /**
+   * A pressure drop set on a ThreePhaseSeparator must be applied to all three product phases (gas, oil, water leave at
+   * inletPressure - pressureDrop), matching the base Separator.
+   */
+  @Test
+  void testPressureDropAppliedToAllPhases() {
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("methane", 50.0);
+    fluid.addComponent("propane", 15.0);
+    fluid.addComponent("nC10", 20.0);
+    fluid.addComponent("water", 15.0);
+    fluid.setMixingRule("classic");
+    fluid.setMultiPhaseCheck(true);
+
+    Stream feed = new Stream("feed", fluid);
+    feed.setFlowRate(50000.0, "kg/hr");
+    feed.setPressure(10.0, "bara");
+    feed.setTemperature(25.0, "C");
+    feed.run();
+
+    ThreePhaseSeparator sep = new ThreePhaseSeparator("sep", feed);
+    sep.setPressureDrop(0.2);
+    sep.run();
+
+    Assertions.assertEquals(9.8, sep.getGasOutStream().getPressure("bara"), 1e-6,
+        "gas outlet should be inlet - pressureDrop");
+    Assertions.assertEquals(9.8, sep.getOilOutStream().getPressure("bara"), 1e-6,
+        "oil outlet should be inlet - pressureDrop");
+    Assertions.assertEquals(9.8, sep.getWaterOutStream().getPressure("bara"), 1e-6,
+        "water outlet should be inlet - pressureDrop");
+  }
 }
