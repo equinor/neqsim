@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-discipline-orchestration:v1",
+  "title": "NeqSim engineering discipline orchestration evidence",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "schemaUri",
+    "projectId",
+    "revision",
+    "configuration",
+    "status",
+    "governance"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_discipline_orchestration.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:engineering-discipline-orchestration:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "configuration": {"type": ["object", "null"]},
+    "status": {"enum": ["EXECUTED_REVIEW_REQUIRED", "NOT_EXECUTION_READY"]},
+    "governance": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

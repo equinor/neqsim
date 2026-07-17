@@ -19,7 +19,7 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
     final String lineTag;
     final String valveTag;
     final String instrumentTag;
-    final double separatorGasResidenceTimeSeconds;
+    final double separatorLiquidDensityKgM3;
     final double separatorSoudersBrownCoefficient;
     final double separatorLiquidRetentionTimeSeconds;
     final double maximumLineVelocityMPerS;
@@ -29,7 +29,7 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
     final boolean explicitDesignInputs;
 
     SliceRule(String separatorTag, String compressorTag, String lineTag, String valveTag, String instrumentTag,
-        double separatorGasResidenceTimeSeconds, double separatorSoudersBrownCoefficient,
+        double separatorLiquidDensityKgM3, double separatorSoudersBrownCoefficient,
         double separatorLiquidRetentionTimeSeconds, double maximumLineVelocityMPerS,
         double maximumPressureGradientBarPerKm, double compressorDriverMarginFraction,
         double[] compressorDriverCandidatesKw, boolean explicitDesignInputs) {
@@ -38,7 +38,7 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
       this.lineTag = text(lineTag, "lineTag");
       this.valveTag = optional(valveTag);
       this.instrumentTag = optional(instrumentTag);
-      this.separatorGasResidenceTimeSeconds = separatorGasResidenceTimeSeconds;
+      this.separatorLiquidDensityKgM3 = separatorLiquidDensityKgM3;
       this.separatorSoudersBrownCoefficient = separatorSoudersBrownCoefficient;
       this.separatorLiquidRetentionTimeSeconds = separatorLiquidRetentionTimeSeconds;
       this.maximumLineVelocityMPerS = maximumLineVelocityMPerS;
@@ -181,12 +181,12 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
 
   /** Adds a slice with all project-specific calculation limits and discrete driver candidates stated explicitly. */
   public EngineeringAutoConfigurationPolicy addInletCompressionExportSlice(String separatorTag, String compressorTag,
-      String lineTag, String valveTag, String instrumentTag, double separatorGasResidenceTimeSeconds,
+      String lineTag, String valveTag, String instrumentTag, double separatorLiquidDensityKgM3,
       double separatorSoudersBrownCoefficient, double separatorLiquidRetentionTimeSeconds,
       double maximumLineVelocityMPerS, double maximumPressureGradientBarPerKm, double compressorDriverMarginFraction,
       double... compressorDriverCandidatesKw) {
     slices.add(new SliceRule(separatorTag, compressorTag, lineTag, valveTag, instrumentTag,
-        positive(separatorGasResidenceTimeSeconds, "separatorGasResidenceTimeSeconds"),
+        positive(separatorLiquidDensityKgM3, "separatorLiquidDensityKgM3"),
         positive(separatorSoudersBrownCoefficient, "separatorSoudersBrownCoefficient"),
         positive(separatorLiquidRetentionTimeSeconds, "separatorLiquidRetentionTimeSeconds"),
         positive(maximumLineVelocityMPerS, "maximumLineVelocityMPerS"),
@@ -232,11 +232,11 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
     return this;
   }
 
-  String getId() {
+  public String getId() {
     return id;
   }
 
-  String getRevision() {
+  public String getRevision() {
     return revision;
   }
 
@@ -266,6 +266,48 @@ public final class EngineeringAutoConfigurationPolicy implements Serializable {
 
   List<NetworkRule> getNetworks() {
     return Collections.unmodifiableList(networks);
+  }
+
+  String fingerprintMaterial() {
+    StringBuilder value = new StringBuilder(id).append('|').append(revision);
+    for (SliceRule rule : slices) {
+      value.append("|slice:").append(rule.separatorTag).append(':').append(rule.compressorTag).append(':')
+          .append(rule.lineTag).append(':').append(rule.valveTag).append(':').append(rule.instrumentTag).append(':')
+          .append(rule.separatorLiquidDensityKgM3).append(':').append(rule.separatorSoudersBrownCoefficient).append(':')
+          .append(rule.separatorLiquidRetentionTimeSeconds).append(':').append(rule.maximumLineVelocityMPerS)
+          .append(':').append(rule.maximumPressureGradientBarPerKm).append(':')
+          .append(rule.compressorDriverMarginFraction).append(':')
+          .append(java.util.Arrays.toString(rule.compressorDriverCandidatesKw)).append(':')
+          .append(rule.explicitDesignInputs);
+    }
+    for (PumpRule rule : pumps) {
+      value.append("|pump:").append(rule.tag).append(':').append(rule.margin).append(':')
+          .append(rule.minimumNpshMarginM).append(':').append(java.util.Arrays.toString(rule.drivers));
+    }
+    for (HeatExchangerRule rule : exchangers) {
+      value.append("|exchanger:").append(rule.tag).append(':').append(rule.overallU).append(':').append(rule.lmtd)
+          .append(':').append(rule.margin).append(':').append(java.util.Arrays.toString(rule.areas));
+    }
+    for (InventoryRule rule : inventories) {
+      value.append("|inventory:").append(rule.tag).append(':').append(rule.workingTime).append(':')
+          .append(rule.usableFraction).append(':').append(java.util.Arrays.toString(rule.volumes));
+    }
+    for (ControlValveRule rule : controlValves) {
+      value.append("|valve:").append(rule.tag).append(':').append(rule.designOpening).append(':')
+          .append(rule.maximumOpening).append(':').append(java.util.Arrays.toString(rule.cvCandidates));
+    }
+    for (RatedCapacityRule rule : ratedCapacities) {
+      value.append("|capacity:").append(rule.tag).append(':').append(rule.metric.getId()).append(':')
+          .append(rule.capacityName).append(':').append(rule.unit).append(':').append(rule.margin).append(':')
+          .append(java.util.Arrays.toString(rule.candidates));
+    }
+    for (NetworkRule rule : networks) {
+      value.append("|network:").append(rule.id).append(':').append(rule.rulePack.toMap()).append(':');
+      for (PipingNetworkDesignModule.SegmentDefinition segment : rule.segments) {
+        value.append(segment.getLineTag()).append(',');
+      }
+    }
+    return value.toString();
   }
 
   private static String optional(String value) {

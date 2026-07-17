@@ -51,6 +51,15 @@ public final class EngineeringGraphBuilder {
       projectNode.putProperty("engineeringDesignIterationCount",
           Double.valueOf(project.getLatestEngineeringDesignLoopResult().getIterations().size()));
     }
+    if (project.getProductionReadinessBasis() != null
+        && project.getProductionReadinessBasis().getAutoConfigurationResult() != null) {
+      projectNode.putProperty("engineeringConfigurationFingerprint",
+          project.getProductionReadinessBasis().getAutoConfigurationResult().getConfigurationFingerprint());
+      projectNode.putProperty("engineeringConfigurationExecutionReady",
+          Boolean.valueOf(project.getProductionReadinessBasis().getAutoConfigurationResult().isExecutionReady()));
+      projectNode.putProperty("engineeringModuleDependencies",
+          project.getProductionReadinessBasis().getAutoConfigurationResult().getModuleDependencies());
+    }
     graph.addNode(projectNode);
 
     Map<String, String> processElementIds = addProcessElements(project, graph, projectNodeId);

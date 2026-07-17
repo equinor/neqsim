@@ -53,6 +53,21 @@ infer SIL, final voting, trip set points, valve fail action, credible relief
 causes or shutdown effects solely from equipment class or a normal operating
 point.
 
+When automatic discipline configuration is requested, require an explicit
+`EngineeringAutoConfigurationPolicy` for every recognized equipment item and
+every `ProcessModel` area. Stop on `isExecutionReady()==false`, report each
+blocker, retain the configuration fingerprint and dependency graph, and
+regenerate every artifact listed by `compareWith` after a revision. Treat
+shared-stream area dependencies as conservative invalidation links, not as an
+approved utility or relief concurrency basis.
+
+When a controlled concurrency basis exists, encode it with
+`EngineeringSharedSystemPolicy` and link every demand to a converged design
+variable. Treat missing variables, unit mismatches and single-area definitions
+as blockers. For revisions, use dependency-propagated incremental execution and
+report which areas were executed or reused; validate the coordinated root
+manifest before deliverable handoff.
+
 For qualification work, use the open actions in
 `engineering-qualification-plan.json`. Execute exact-version reference cases
 through `EngineeringBenchmarkDataset`, named-product semantic round trips

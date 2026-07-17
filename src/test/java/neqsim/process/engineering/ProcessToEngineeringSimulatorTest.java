@@ -3,18 +3,26 @@ package neqsim.process.engineering;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import neqsim.process.engineering.deliverables.EngineeringDeliverableCompiler;
 import neqsim.process.engineering.designcase.EngineeringDesignCase;
 import neqsim.process.engineering.production.EngineeringAutoConfigurationPolicy;
 import neqsim.process.engineering.production.EngineeringAutoConfigurator;
+import neqsim.process.engineering.production.ProcessModelEngineeringSimulator;
+import neqsim.process.engineering.production.EngineeringSharedSystemPolicy;
+import neqsim.process.engineering.production.ProcessModelEngineeringPackageValidator;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.processmodel.ProcessModel;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -40,10 +48,20 @@ class ProcessToEngineeringSimulatorTest {
             25.0, 5.0, 0.10, 500.0, 1000.0, 2000.0, 3000.0, 5000.0, 7500.0, 10000.0);
     EngineeringSimulationResult result = ProcessToEngineeringSimulator.run(project, policy, 2);
     assertTrue(project.getProductionReadinessBasis().getAutoConfigurationResult().isComplete());
+    assertTrue(project.getProductionReadinessBasis().getAutoConfigurationResult().isExecutionReady());
+    assertFalse(project.getProductionReadinessBasis().getAutoConfigurationResult().getModuleDependencies().isEmpty());
+    assertFalse(project.getProductionReadinessBasis().getAutoConfigurationResult().getEquipmentInventory().isEmpty());
+    assertEquals(64,
+        project.getProductionReadinessBasis().getAutoConfigurationResult().getConfigurationFingerprint().length());
     EngineeringAutoConfigurator.Result hiddenDefaultConfiguration = EngineeringAutoConfigurator.configure(project,
         new EngineeringAutoConfigurationPolicy("legacy-policy", "A").addInletCompressionExportSlice("INLET-SEP",
             "EXPORT-COMP", "EXPORT-LINE", "", "PIT-100"));
     assertFalse(hiddenDefaultConfiguration.isComplete());
+    assertEquals("CONFIGURATION_CHANGED", hiddenDefaultConfiguration
+        .compareWith(project.getProductionReadinessBasis().getAutoConfigurationResult()).getStatus());
+    assertFalse(
+        hiddenDefaultConfiguration.compareWith(project.getProductionReadinessBasis().getAutoConfigurationResult())
+            .getInvalidatedArtifacts().isEmpty());
 
     assertNotNull(result.getEngineeringDesignLoopResult());
     assertTrue(result.getEngineeringDesignLoopResult().isConverged());
@@ -62,6 +80,7 @@ class ProcessToEngineeringSimulatorTest {
         temporaryDirectory);
     assertTrue(Files.isRegularFile(compilation.getProductionReadinessFile()));
     assertTrue(Files.isRegularFile(compilation.getQualificationPlanFile()));
+    assertTrue(Files.isRegularFile(temporaryDirectory.resolve("engineering-discipline-orchestration.json")));
     String[] coordinatedArtifacts = new String[] { "process-design-basis.json", "equipment-datasheets.json",
         "valve-list.json", "io-list.json", "alarm-trip-schedule.json", "shutdown-narratives.json",
         "psv-datasheets.json", "flare-blowdown-report.json", "utility-summary.json", "materials-selection-report.json",
@@ -89,6 +108,53 @@ class ProcessToEngineeringSimulatorTest {
         Files.readAllBytes(temporaryDirectory.resolve("engineering-qualification-plan.json")), StandardCharsets.UTF_8);
     assertTrue(qualificationPlan.contains("\"externalEvidenceMayNotBeGeneratedBySimulator\": true"));
     assertTrue(qualificationPlan.contains("\"METHOD_BENCHMARK\""));
+  }
+
+  @Test
+  void failsClosedForImplicitDefaultsAndMissingAreaPolicies() {
+    EngineeringProject project = NorsokOffshoreEngineeringBuilder.from("Fail closed", process()).build();
+    project.addDesignCase(flowCase("normal", 8000.0, 10));
+    EngineeringAutoConfigurationPolicy implicit = new EngineeringAutoConfigurationPolicy("legacy", "A")
+        .addInletCompressionExportSlice("INLET-SEP", "EXPORT-COMP", "EXPORT-LINE", "", "PIT-100");
+    IllegalStateException exception = assertThrows(IllegalStateException.class,
+        () -> ProcessToEngineeringSimulator.run(project, implicit));
+    assertTrue(exception.getMessage().contains("HIDDEN_SCREENING_DEFAULTS_USED"));
+
+    ProcessModel model = new ProcessModel();
+    model.add("compression", process());
+    ProcessModelEngineeringSimulator.Result result = ProcessModelEngineeringSimulator.run("multi-area", model,
+        Collections.<String, ProcessModelEngineeringSimulator.AreaConfiguration>emptyMap(), 1);
+    assertFalse(result.isComplete());
+    assertTrue(result.getBlockers().contains("MISSING_AREA_CONFIGURATION:compression"));
+  }
+
+  @Test
+  void reusesUnchangedAreaAndValidatesCoordinatedManifest() {
+    ProcessModel model = new ProcessModel();
+    model.add("compression", process());
+    EngineeringAutoConfigurationPolicy policy = new EngineeringAutoConfigurationPolicy("offshore-gas", "A")
+        .addInletCompressionExportSlice("INLET-SEP", "EXPORT-COMP", "EXPORT-LINE", "", "PIT-100", 800.0, 0.107, 120.0,
+            25.0, 5.0, 0.10, 500.0, 1000.0, 2000.0, 3000.0, 5000.0, 7500.0, 10000.0);
+    Map<String, ProcessModelEngineeringSimulator.AreaConfiguration> configurations = new LinkedHashMap<String, ProcessModelEngineeringSimulator.AreaConfiguration>();
+    configurations.put("compression", new ProcessModelEngineeringSimulator.AreaConfiguration(policy)
+        .addDesignCase(flowCase("normal", 8000.0, 10)).addDesignCase(flowCase("maximum", 12000.0, 20)));
+    EngineeringSharedSystemPolicy coordination = new EngineeringSharedSystemPolicy("plant-coordination", "A");
+
+    ProcessModelEngineeringSimulator.Result initial = ProcessModelEngineeringSimulator.run("incremental", model,
+        configurations, coordination, 1);
+    assertTrue(initial.isComplete());
+    assertTrue(initial.getExecutedAreas().contains("compression"));
+    ProcessModelEngineeringSimulator.Result unchanged = ProcessModelEngineeringSimulator.runIncremental("incremental",
+        model, configurations, coordination, initial, 1);
+    assertTrue(unchanged.isComplete());
+    assertTrue(unchanged.getExecutedAreas().isEmpty());
+    assertTrue(unchanged.getReusedAreas().contains("compression"));
+    assertEquals(initial.getFingerprint(), unchanged.getFingerprint());
+
+    Map<String, Object> manifest = new LinkedHashMap<String, Object>(unchanged.toMap());
+    manifest.put("areaPackages",
+        Collections.singletonMap("compression", Collections.singletonMap("directory", "compression")));
+    assertTrue(ProcessModelEngineeringPackageValidator.validate(manifest).isEmpty());
   }
 
   private EngineeringDesignCase flowCase(String id, final double flowKgHr, int priority) {

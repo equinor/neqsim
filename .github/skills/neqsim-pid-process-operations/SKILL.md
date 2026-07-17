@@ -466,6 +466,20 @@ engineering-simulator contracts over mutating the live process:
 
 For process-to-engineering work, configure discipline modules with
 `ProcessToEngineeringDesignBuilder` and execute `ProcessToEngineeringSimulator`.
+For revision-controlled automatic configuration, use an explicit
+`EngineeringAutoConfigurationPolicy` and require
+`EngineeringAutoConfigurator.Result.isExecutionReady()` before running or
+publishing results. Inspect its dependency graph, configuration fingerprint and
+revision impact; never suppress an unconfigured recognized equipment blocker.
+For a `ProcessModel`, use `ProcessModelEngineeringSimulator` with one policy and
+controlled case set per area, then review shared-stream dependencies in
+`process-model-engineering-manifest.json`.
+Represent utility, flare, blowdown, electrical and other common systems with
+`EngineeringSharedSystemPolicy`; require controlled concurrency and evidence
+references. Use `runIncremental` only with a retained baseline result and review
+both `executedAreas` and `reusedAreas`. Never reuse an area invalidated through
+a shared stream or shared-system dependency. Validate the root manifest with
+`ProcessModelEngineeringPackageValidator` before release.
 The `EngineeringDesignLoop` must converge both case simulations and physical
 design variables. Use `EngineeringDesignUpdate.Applier` only against the
 isolated working process; the source `ProcessSystem` must remain unchanged.

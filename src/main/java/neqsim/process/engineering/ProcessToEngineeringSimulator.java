@@ -46,6 +46,10 @@ public final class ProcessToEngineeringSimulator {
       project.setProductionReadinessBasis(basis);
     }
     basis.autoConfigurationResult(configuration);
+    if (!configuration.isExecutionReady()) {
+      throw new IllegalStateException(
+          "Automatic engineering configuration is not execution-ready: " + configuration.getExecutionBlockers());
+    }
     return run(project, caseParallelism);
   }
 }

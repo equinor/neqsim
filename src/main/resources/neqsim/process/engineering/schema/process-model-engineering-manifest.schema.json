@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:process-model-engineering-manifest:v1",
+  "title": "NeqSim coordinated multi-area engineering package manifest",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "schemaUri",
+    "complete",
+    "blockers",
+    "fingerprint",
+    "coordinationPolicyId",
+    "coordinationPolicyRevision",
+    "coordinationFingerprint",
+    "executedAreas",
+    "reusedAreas",
+    "sharedStreamDependencies",
+    "sharedSystemResults",
+    "areas",
+    "areaPackages",
+    "governance"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_process_model_engineering_manifest.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:process-model-engineering-manifest:v1"},
+    "complete": {"const": true},
+    "blockers": {"type": "array", "maxItems": 0},
+    "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "coordinationPolicyId": {"type": "string", "minLength": 1},
+    "coordinationPolicyRevision": {"type": "string", "minLength": 1},
+    "coordinationFingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "executedAreas": {"type": "array", "items": {"type": "string"}},
+    "reusedAreas": {"type": "array", "items": {"type": "string"}},
+    "sharedStreamDependencies": {"type": "array", "items": {"type": "object"}},
+    "sharedSystemResults": {"type": "array", "items": {"type": "object"}},
+    "areas": {"type": "object", "minProperties": 1},
+    "areaPackages": {"type": "object", "minProperties": 1},
+    "governance": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

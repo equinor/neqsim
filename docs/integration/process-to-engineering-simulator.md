@@ -232,7 +232,7 @@ The explicit automatic-configuration path is:
 EngineeringAutoConfigurationPolicy policy = new EngineeringAutoConfigurationPolicy("offshore-gas", "A")
     .addInletCompressionExportSlice(
         "20-VA-001", "20-KA-001", "20-PL-001", "20-PV-001", "20-PIT-001",
-        800.0, 0.107, 120.0, // separator gas time, Souders-Brown K, liquid time
+        800.0, 0.107, 120.0, // liquid density, Souders-Brown K, liquid retention time
         20.0, 0.5,           // maximum line velocity and pressure gradient
         0.10,                // compressor driver margin
         3000.0, 5000.0, 7500.0, 10000.0);
@@ -244,6 +244,82 @@ project.setProductionReadinessBasis(
 // Or configure, record the coverage evidence, and run in one call:
 EngineeringSimulationResult result = ProcessToEngineeringSimulator.run(project, policy, 4);
 ```
+
+### Automatic discipline orchestration and invalidation
+
+`EngineeringAutoConfigurator` discovers recognized equipment in the process, applies only the explicit rules in the
+revision-controlled policy, and records both configured and unconfigured items. It deliberately does not infer design
+limits, relief causes, SIL, valve failure action or shared-system concurrency from topology. The simulator overload
+that accepts a policy now fails before the design loop when any recognized item is unconfigured, a hidden screening
+default was selected, no executable case exists, or no discipline module was created.
+
+The result supplies a deterministic configuration fingerprint, conservative module dependencies and executable
+blockers:
+
+```java
+EngineeringAutoConfigurator.Result orchestration =
+    project.getProductionReadinessBasis().getAutoConfigurationResult();
+
+if (!orchestration.isExecutionReady()) {
+  throw new IllegalStateException(orchestration.getExecutionBlockers().toString());
+}
+
+Map<String, List<String>> dependencyGraph = orchestration.getModuleDependencies();
+EngineeringAutoConfigurator.RevisionImpact impact = orchestration.compareWith(previousOrchestration);
+```
+
+A changed policy, process topology, case set or module graph changes the fingerprint. `compareWith` then invalidates
+the affected discipline chain conservatively and lists the package artifacts that must be regenerated. Compilation
+writes this evidence to `engineering-discipline-orchestration.json`; it also remains embedded in
+`engineering-production-readiness.json`.
+
+### Coordinated multi-area ProcessModel execution
+
+Use `ProcessModelEngineeringSimulator` when the source is a `ProcessModel`. One explicit policy and controlled case
+set is required per area:
+
+```java
+Map<String, ProcessModelEngineeringSimulator.AreaConfiguration> areas = new LinkedHashMap<>();
+areas.put("inlet", new ProcessModelEngineeringSimulator.AreaConfiguration(inletPolicy)
+    .addDesignCase(inletNormal).addDesignCase(inletMaximum));
+areas.put("compression", new ProcessModelEngineeringSimulator.AreaConfiguration(compressionPolicy)
+    .addDesignCase(compressionNormal).addDesignCase(compressionMaximum));
+
+ProcessModelEngineeringSimulator.Result plant =
+    ProcessModelEngineeringSimulator.run("Field A", processModel, areas, 4);
+if (!plant.isComplete()) {
+  throw new IllegalStateException(plant.getBlockers().toString());
+}
+Path manifest = plant.compile(Paths.get("build/field-a-engineering"));
+```
+
+The compiler creates an area package below each area name and a
+`process-model-engineering-manifest.json` at the root. Stream objects shared between area equipment are registered as
+cross-area dependencies; a change invalidates all connected areas. Utility demand simultaneity, flare/blowdown group
+concurrency and safety scenario credibility still require explicit project inputs and review.
+
+Declare those shared-system inputs with controlled references rather than deriving concurrency from topology:
+
+```java
+EngineeringSharedSystemPolicy coordination = new EngineeringSharedSystemPolicy("field-a-shared-systems", "A")
+    .add(new EngineeringSharedSystemPolicy.Definition("main-power",
+        EngineeringSharedSystemPolicy.Type.ELECTRICAL_SYSTEM,
+        "ELECTRICAL-LOAD-BASIS-A", "CALC-EL-001-A")
+        .addDemand("inlet", "10-PA-001.driverRatedPower", 1.0)
+        .addDemand("compression", "20-KA-001.driverRatedPower", 1.0));
+
+ProcessModelEngineeringSimulator.Result first =
+    ProcessModelEngineeringSimulator.run("Field A", processModel, areas, coordination, 4);
+ProcessModelEngineeringSimulator.Result next = ProcessModelEngineeringSimulator.runIncremental(
+    "Field A", revisedModel, revisedAreas, coordination, first, 4);
+```
+
+The shared-system result reports each governing design value, its controlled simultaneity factor and the total demand.
+Missing variables, inconsistent units, or fewer than two participating areas block package compilation. Incremental
+execution compares area and coordination fingerprints, reruns every changed area, propagates invalidation through
+shared streams and declared shared systems, and reuses only unaffected baseline results. The root manifest records
+`executedAreas` and `reusedAreas`, is checked by `ProcessModelEngineeringPackageValidator`, and is distributed with its
+versioned JSON schema.
 
 Compilation always writes the schema-registered `engineering-production-readiness.json` artifact. Its maturity levels
 are `NOT_READY`, `EXPERIMENTAL`, `VALIDATED_PRELIMINARY` and `QUALIFIED_FEED_SUPPORT`. A green result means only that
@@ -326,6 +402,9 @@ and reviewer string with controlled project evidence before assessing readiness.
 See the executable
 [production-readiness notebook](../../examples/notebooks/engineering_production_readiness.ipynb) for explicit
 auto-configuration, executed-method discovery, a regression-evidence rejection, and the compiled gate report.
+The companion
+[discipline-orchestration notebook](../../examples/notebooks/engineering_discipline_orchestration.ipynb) focuses on
+execution blockers, dependency fingerprints, revision invalidation and the multi-area `ProcessModel` API.
 
 ## Required engineering review
 
