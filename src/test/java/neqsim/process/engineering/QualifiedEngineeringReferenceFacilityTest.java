@@ -57,8 +57,10 @@ class QualifiedEngineeringReferenceFacilityTest {
         convergenceDiagnostics(result.getSimulation().getEngineeringDesignLoopResult()));
     assertFalse(result.getSimulation().getCaseRunReport().getEnvelope().hasCaseFailures());
     assertTrue(result.getQualification().isQualifiedForControlledPilot(),
-        result.getQualification().getFailedGates().toString());
-    assertTrue(result.getSimulation().getDynamicScenarioResults().get(0).isPassed());
+        result.getQualification().toMap() + " dynamic="
+            + result.getSimulation().getDynamicScenarioResults().get(0).toMap());
+    assertTrue(result.getSimulation().getDynamicScenarioResults().get(0).isPassed(),
+        result.getSimulation().getDynamicScenarioResults().get(0).toMap().toString());
     assertTrue(result.getSimulation().getCoupledSafetyResults().get(0).getValue().isCapacityAcceptable());
     assertTrue(Files.isRegularFile(result.getCompilation().getDexpiResult().getDexpi20File()));
     assertTrue(Files.isRegularFile(result.getCompilation().getCompilerManifestFile()));
