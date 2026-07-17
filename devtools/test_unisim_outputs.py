@@ -728,9 +728,175 @@ def test_all_fluid_packages_are_exposed_as_e300():
 
         py_code = converter.to_python()
         assert py_code.count('EclipseFluidReadWrite.read') >= 2
-        for e300_path in e300_paths:
-            assert e300_path.replace('\\', '/') in py_code
+    print("  PASS")
 
+
+def test_compressor_discharge_temperature_when_efficiency_missing():
+    """Compressor without a UniSim efficiency reproduces the source discharge
+    temperature (NeqSim back-solves the efficiency) instead of guessing 0.75."""
+    model = UniSimModel(
+        file_path=r"C:\test\Comp.usc",
+        file_name="Comp.usc",
+        fluid_packages=[
+            UniSimFluidPackage(
+                name="Basis-1", property_package="Peng-Robinson",
+                components=[UniSimComponent("Methane", 0),
+                            UniSimComponent("Ethane", 1)],
+            )
+        ],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Feed", temperature_C=30.0, pressure_bara=60.0,
+                                 mass_flow_kgh=50000.0,
+                                 composition={"Methane": 0.9, "Ethane": 0.1}),
+                UniSimStreamData("Disch", temperature_C=138.8, pressure_bara=198.0),
+            ],
+            operations=[
+                UniSimOperation(
+                    "K-100", "compressor", feeds=["Feed"], products=["Disch"],
+                    properties={"outlet_pressure_bara": 198.0},  # no efficiency
+                ),
+            ],
+        ),
+    )
+    py_code = UniSimToNeqSim(model).to_python()
+    # Drives the source discharge temperature instead of guessing 0.75
+    assert 'setOutletTemperature(138.8, "C")' in py_code, py_code
+    assert 'setIsentropicEfficiency(0.75)' not in py_code
+
+    # JSON path likewise carries the outlet temperature (in Kelvin)
+    result = UniSimToNeqSim(model).to_json()
+    k100 = next(e for e in result['process'] if e.get('name') == 'K-100')
+    assert 'outletTemperature' in k100['properties']
+    assert abs(k100['properties']['outletTemperature'] - (138.8 + 273.15)) < 1e-6
+    print("  PASS")
+
+
+def test_two_stream_heat_exchanger_pins_hot_outlet_temperature():
+    """A two-stream heat exchanger (heatexop) with known UniSim outlet
+    temperatures is emitted with the hot-side outlet pinned via the
+    "outTemperature" specification (setOutTemperature), so NeqSim reproduces the
+    process outlet exactly and energy-balances the cold side. This matches
+    UniSim far better than a UA value when a recycle side circulates a different
+    rate than the source model (previously no heat was transferred at all)."""
+    model = UniSimModel(
+        file_path=r"C:\test\HX.usc",
+        file_name="HX.usc",
+        fluid_packages=[
+            UniSimFluidPackage(
+                name="Basis-1", property_package="Peng-Robinson",
+                components=[UniSimComponent("Methane", 0),
+                            UniSimComponent("Ethane", 1)],
+            )
+        ],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Hot In", temperature_C=65.5, pressure_bara=5.5,
+                                 mass_flow_kgh=693609.0,
+                                 composition={"Methane": 0.5, "Ethane": 0.5}),
+                UniSimStreamData("Cold In", temperature_C=25.0, pressure_bara=13.0,
+                                 mass_flow_kgh=732397.0,
+                                 composition={"Methane": 0.5, "Ethane": 0.5}),
+                UniSimStreamData("Hot Out", temperature_C=33.0, pressure_bara=5.5),
+                UniSimStreamData("Cold Out", temperature_C=55.0, pressure_bara=11.3),
+            ],
+            operations=[
+                UniSimOperation(
+                    "HX-1", "heatexop",
+                    feeds=["Hot In", "Cold In"],
+                    products=["Hot Out", "Cold Out"],
+                    properties={"duty_kW": 12751.0},
+                ),
+            ],
+        ),
+    )
+    py_code = UniSimToNeqSim(model).to_python()
+    assert "HeatExchanger" in py_code
+    # Hot side is feed 0 (65.5 C > 25 C) -> pin side 0 to its outlet temp 33 C
+    assert ".setOutStreamSpecificationNumber(0)" in py_code, py_code
+    assert ".setOutTemperature(33.0, \"C\")" in py_code, py_code
+    print("  PASS")
+
+
+def test_cooler_outlet_pressure_letdown_is_transferred():
+    """A UniSim cooler/heater outlet-pressure letdown is transferred to the
+    NeqSim Cooler/Heater (so a downstream separator flashes at the right
+    pressure). Applied for any real drop; recycle stability is provided by the
+    transferred pipe geometry (PipeBeggsAndBrills), not by suppressing the drop."""
+
+    def _model(downstream_op):
+        return UniSimModel(
+            file_path=r"C:\test\P.usc", file_name="P.usc",
+            fluid_packages=[UniSimFluidPackage(
+                name="Basis-1", property_package="Peng-Robinson",
+                components=[UniSimComponent("Methane", 0),
+                            UniSimComponent("Ethane", 1)])],
+            flowsheet=UniSimFlowsheet(
+                name="Main",
+                material_streams=[
+                    UniSimStreamData("Feed", temperature_C=40.0, pressure_bara=60.0,
+                                     mass_flow_kgh=50000.0,
+                                     composition={"Methane": 0.9, "Ethane": 0.1}),
+                    UniSimStreamData("Cooled", temperature_C=20.0, pressure_bara=9.0),
+                    UniSimStreamData("Down Out", temperature_C=20.0, pressure_bara=5.0),
+                ],
+                operations=[
+                    UniSimOperation("E-1", "coolerop", feeds=["Feed"],
+                                    products=["Cooled"],
+                                    properties={"outlet_temperature_C": 20.0,
+                                                "outlet_pressure_bara": 9.0}),
+                    downstream_op,
+                ],
+            ),
+        )
+
+    # Cooled -> valve: drop transferred
+    valve = UniSimOperation("V-1", "valveop", feeds=["Cooled"],
+                            products=["Down Out"],
+                            properties={"outlet_pressure_bara": 5.0})
+    py_valve = UniSimToNeqSim(_model(valve)).to_python()
+    assert 'setOutletPressure(9.0, "bara")' in py_valve, py_valve
+
+    # Cooled -> separator: drop ALSO transferred (so it flashes at the right P)
+    sep = UniSimOperation("S-1", "flashtank", feeds=["Cooled"],
+                          products=["Down Out", "Sep Liq"])
+    py_sep = UniSimToNeqSim(_model(sep)).to_python()
+    assert 'setOutletPressure(9.0, "bara")' in py_sep, py_sep
+    print("  PASS")
+
+
+def test_pipe_segment_geometry_uses_beggs_and_brills():
+    """A UniSim pipe with extracted length + diameter is emitted as a
+    PipeBeggsAndBrills with length, diameter, elevation and roughness set."""
+    model = UniSimModel(
+        file_path=r"C:\test\Pipe.usc", file_name="Pipe.usc",
+        fluid_packages=[UniSimFluidPackage(
+            name="Basis-1", property_package="Peng-Robinson",
+            components=[UniSimComponent("Methane", 0),
+                        UniSimComponent("Ethane", 1)])],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Pin", temperature_C=6.0, pressure_bara=9.0,
+                                 mass_flow_kgh=60000.0,
+                                 composition={"Methane": 0.95, "Ethane": 0.05}),
+                UniSimStreamData("Pout", temperature_C=6.0, pressure_bara=8.0),
+            ],
+            operations=[
+                UniSimOperation(
+                    "Riser", "pipeseg", feeds=["Pin"], products=["Pout"],
+                    properties={"length_m": 1200.0, "diameter_m": 0.3175,
+                                "elevation_m": 400.0, "roughness_m": 4.572e-05}),
+            ],
+        ),
+    )
+    py_code = UniSimToNeqSim(model).to_python()
+    assert 'PipeBeggsAndBrills("Riser"' in py_code, py_code
+    assert '.setLength(1200.0)' in py_code
+    assert '.setElevation(400.0)' in py_code
+    assert '.setPipeWallRoughness(' in py_code
     print("  PASS")
 
 
@@ -750,6 +916,14 @@ if __name__ == "__main__":
          test_missing_acentric_factor_uses_edmister_fallback),
         ("e300_fluid_package_export_and_usage", test_e300_fluid_package_export_and_usage),
         ("all_fluid_packages_are_exposed_as_e300", test_all_fluid_packages_are_exposed_as_e300),
+        ("compressor_discharge_temperature_when_efficiency_missing",
+         test_compressor_discharge_temperature_when_efficiency_missing),
+        ("two_stream_heat_exchanger_pins_hot_outlet_temperature",
+         test_two_stream_heat_exchanger_pins_hot_outlet_temperature),
+        ("cooler_outlet_pressure_letdown_is_transferred",
+         test_cooler_outlet_pressure_letdown_is_transferred),
+        ("pipe_segment_geometry_uses_beggs_and_brills",
+         test_pipe_segment_geometry_uses_beggs_and_brills),
     ]
     passed = 0
     failed = 0

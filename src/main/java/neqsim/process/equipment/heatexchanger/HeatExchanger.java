@@ -57,6 +57,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   SystemInterface system;
   double NTU;
   protected double temperatureOut = 0;
+  protected String temperatureOutUnit = "K";
 
   protected double dT = 0.0;
 
@@ -298,6 +299,31 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
   @Override
   public void setOutTemperature(double temperature) {
     this.temperatureOut = temperature;
+    this.temperatureOutUnit = "K";
+  }
+
+  /**
+   * Set a fixed outlet temperature for one side of the exchanger and use the {@code "outTemperature"} specification.
+   * The specified side (see {@link #setOutStreamSpecificationNumber(int)}, default 0) is pinned to this temperature at
+   * its inlet pressure and the opposite side is energy-balanced against it. This lets a caller reproduce a known
+   * process-side outlet temperature exactly, independent of the flows.
+   *
+   * @param temperature outlet temperature value
+   * @param unit temperature unit (e.g. "K" or "C")
+   */
+  public void setOutTemperature(double temperature, String unit) {
+    this.temperatureOut = temperature;
+    this.temperatureOutUnit = unit;
+    setSpecification("outTemperature");
+  }
+
+  /**
+   * Set which side (0 or 1) is pinned when using the {@code "out stream"} or {@code "outTemperature"} specification.
+   *
+   * @param streamNumber index of the specified outlet side (0 or 1)
+   */
+  public void setOutStreamSpecificationNumber(int streamNumber) {
+    this.outStreamSpecificationNumber = streamNumber;
   }
 
   /**
@@ -353,6 +379,21 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       temperatureOut = outStream[outStreamSpecificationNumber].getTemperature();
       // system =
       // outStream[outStreamSpecificationNumber].getThermoSystem().clone();
+    } else if (getSpecification().equals("outTemperature")) {
+      // Pin the specified side to a fixed outlet temperature at its inlet
+      // pressure, re-evaluated every iteration so the outlet pressure tracks the
+      // live inlet and only the temperature is held constant.
+      SystemInterface specifiedOut = inStream[outStreamSpecificationNumber].getThermoSystem().clone();
+      specifiedOut.setTemperature(temperatureOut, temperatureOutUnit);
+      ThermodynamicOperations specOps = new ThermodynamicOperations(specifiedOut);
+      specOps.TPflash();
+      outStream[outStreamSpecificationNumber]
+          .setFlowRate(getInStream(outStreamSpecificationNumber).getFlowRate("kg/sec"), "kg/sec");
+      outStream[outStreamSpecificationNumber].setThermoSystem(specifiedOut);
+      // Do NOT overwrite temperatureOut here: it is the user-specified pin, held
+      // constant every iteration. Reading specifiedOut.getTemperature() returns
+      // Kelvin and would corrupt the "C"-based pin, escalating on each recycle
+      // pass.
     }
 
     double deltaEnthalpy = outStream[outStreamSpecificationNumber].getFluid().getEnthalpy()
@@ -361,7 +402,6 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(systemOut0);
     testOps.PHflash(enthalpyOutRef);
-    System.out.println("out temperature " + systemOut0.getTemperature("C"));
     outStream[nonOutStreamSpecifiedStreamNumber].setFluid(systemOut0);
   }
 
@@ -371,7 +411,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
    * @param id UUID of run
    */
   public void runDeltaT(UUID id) {
-    if (getSpecification().equals("out stream")) {
+    if (getSpecification().equals("out stream") || getSpecification().equals("outTemperature")) {
       runSpecifiedStream(id);
     } else if (firstTime) {
       firstTime = false;
@@ -527,7 +567,7 @@ public class HeatExchanger extends Heater implements HeatExchangerInterface, Sta
       updateLastState();
       return;
     }
-    if (getSpecification().equals("out stream")) {
+    if (getSpecification().equals("out stream") || getSpecification().equals("outTemperature")) {
       runSpecifiedStream(id);
     } else if (firstTime) {
       firstTime = false;

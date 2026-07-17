@@ -96,6 +96,11 @@ class UniSimComponent:
     zcrit: Optional[float] = None
     # Volume shift at surface conditions (SSHIFTS)
     sshifts: Optional[float] = None
+    # UniSim ideal-gas enthalpy polynomial coefficients (a0..a5), mass basis
+    # kJ/kg, H(T[K]) = sum_i a_i * T**i. Cp0 = dH/dT. Used to transfer the
+    # ideal-gas heat capacity of pseudo/hypothetical components to NeqSim so
+    # enthalpy / Joule-Thomson behaviour matches UniSim (E300 does not carry Cp).
+    ideal_h_coeffs: Optional[tuple] = None
 
 
 @dataclass
@@ -1095,6 +1100,7 @@ class UniSimReader:
             comp, ['Parachor'], [(None, 1.0, 0.0)])
         extracted_component.zcrit = self._extract_quantity(
             comp, ['CriticalZFactor', 'CriticalCompressibility'], [(None, 1.0, 0.0)])
+        extracted_component.ideal_h_coeffs = self._extract_ideal_h_coeffs(comp)
         self._apply_component_property_fallbacks(extracted_component)
 
     def _apply_component_property_fallbacks(self, component: UniSimComponent):
@@ -1126,6 +1132,95 @@ class UniSimReader:
         if not math.isfinite(omega) or omega < -0.5 or omega > 2.0:
             return None
         return omega
+
+    @staticmethod
+    def _extract_ideal_h_coeffs(comp) -> Optional[tuple]:
+        """Read the UniSim ideal-gas enthalpy polynomial coefficients.
+
+        UniSim exposes ``IdealHCoeffsValue`` = (a0, a1, a2, a3, a4, a5, ...)
+        where the ideal-gas enthalpy is H(T) = sum_i a_i * T**i on a **mass
+        basis** (kJ/kg) with T in Kelvin (verified: dH/dT reproduces the
+        component ideal-gas Cp). The trailing sentinel values ``-32767`` mark
+        unused slots and are dropped. Returns the first 6 real coefficients, or
+        ``None`` if the property is absent / all-sentinel.
+
+        :param comp: the UniSim COM component object
+        :return: tuple of up to 6 floats (a0..a5), or None
+        """
+        raw = None
+        for attr in ('IdealHCoeffsValue', 'IdealHCoeffs'):
+            if hasattr(comp, attr):
+                try:
+                    candidate = getattr(comp, attr)
+                    if hasattr(candidate, 'GetValues'):
+                        candidate = candidate.GetValues()
+                    raw = tuple(candidate)
+                    break
+                except Exception:
+                    continue
+        if raw is None:
+            return None
+        coeffs = []
+        for value in raw[:6]:
+            try:
+                number = float(value)
+            except (TypeError, ValueError):
+                return None
+            if number <= -32000.0:  # UniSim sentinel for "unused"
+                break
+            coeffs.append(number)
+        if len(coeffs) < 2:
+            return None
+        return tuple(coeffs)
+
+    @staticmethod
+    def neqsim_cp_coeffs_from_ideal_h(ideal_h_coeffs, mw):
+        """Convert UniSim ideal-gas enthalpy coeffs to NeqSim Cp0 coefficients.
+
+        NeqSim's molar ideal-gas heat capacity is
+        Cp0(T) = CpA + CpB*T + CpC*T**2 + CpD*T**3 + CpE*T**4  [J/(mol*K)].
+        UniSim stores the mass-basis ideal-gas enthalpy H(T) = sum a_i * T**i
+        [kJ/kg]; the mass Cp is dH/dT = a1 + 2 a2 T + 3 a3 T**2 + 4 a4 T**3 +
+        5 a5 T**4 [kJ/(kg*K)] = [J/(g*K)]. Multiplying by MW [g/mol] gives the
+        molar Cp in J/(mol*K), so:
+
+            CpA = MW * a1, CpB = MW * 2 a2, CpC = MW * 3 a3,
+            CpD = MW * 4 a4, CpE = MW * 5 a5
+
+        (a0 is an enthalpy reference offset and does not affect Cp.) Validated
+        against i-Butane -> Cp(300 K) ~ 97.9 J/(mol*K).
+
+        :param ideal_h_coeffs: sequence (a0, a1, ..) from _extract_ideal_h_coeffs
+        :param mw: molecular weight in g/mol (== kg/kmol)
+        :return: 5-tuple (CpA, CpB, CpC, CpD, CpE) or None if inputs invalid
+        """
+        if not ideal_h_coeffs or mw is None:
+            return None
+        try:
+            mw_value = float(mw)
+        except (TypeError, ValueError):
+            return None
+        if not math.isfinite(mw_value) or mw_value <= 0.0:
+            return None
+        a = [0.0] * 6
+        for i, value in enumerate(ideal_h_coeffs[:6]):
+            a[i] = float(value)
+        cp_a = mw_value * a[1]
+        cp_b = mw_value * 2.0 * a[2]
+        cp_c = mw_value * 3.0 * a[3]
+        cp_d = mw_value * 4.0 * a[4]
+        cp_e = mw_value * 5.0 * a[5]
+        coeffs = (cp_a, cp_b, cp_c, cp_d, cp_e)
+        if not all(math.isfinite(v) for v in coeffs):
+            return None
+        # Sanity gate: Cp0 at 300 K should be physically plausible
+        # (a few J/mol/K up to ~ several thousand for very heavy pseudos).
+        temperature = 300.0
+        cp300 = (cp_a + cp_b * temperature + cp_c * temperature ** 2
+                 + cp_d * temperature ** 3 + cp_e * temperature ** 4)
+        if not math.isfinite(cp300) or cp300 <= 0.0 or cp300 > 1.0e5:
+            return None
+        return coeffs
 
     def _populate_property_package_vectors(self, fp, pkg: UniSimFluidPackage):
         """Populate component vectors exposed by the UniSim property package."""
@@ -1562,6 +1657,11 @@ class UniSimReader:
                 props['diameter_m'] = self._safe_getval(op.Diameter, 'm') if hasattr(op, 'Diameter') else None
             except Exception:
                 pass
+            # Detailed multi-segment geometry (length/elevation/diameter/roughness)
+            try:
+                self._extract_pipe_geometry(op, props)
+            except Exception:
+                pass
 
         elif 'flash' in type_name or 'sep' in type_name:
             # ---- Separator / Three-Phase Separator properties ----
@@ -1942,6 +2042,44 @@ class UniSimReader:
             return None
         return cleaned
 
+    @staticmethod
+    def _extract_pipe_geometry(op, props):
+        """Extract UniSim multi-segment pipe geometry and aggregate it.
+
+        UniSim PipeSegment pipes are defined by per-segment arrays (segment
+        length, elevation change, inner diameter, roughness). This reads those
+        arrays, drops empty (-32767) sentinels, and stores an aggregated
+        single-pipe description usable by a NeqSim PipeBeggsAndBrills:
+        total length, net elevation change, representative inner diameter and
+        wall roughness. Values are in SI (m) as stored by UniSim internally.
+
+        @param op the UniSim pipe COM object
+        @param props the property dict to populate
+        """
+        def _arr(name):
+            v = getattr(op, name, None)
+            if v is None:
+                return []
+            try:
+                vals = [float(x) for x in tuple(v)]
+            except Exception:
+                return []
+            return [x for x in vals if x > -30000.0]
+
+        lengths = _arr('SegmentLengthValue')
+        elevations = _arr('SegmentElevationChangeValue')
+        diameters = _arr('SegmentInnerDiamValue')
+        roughnesses = _arr('RoughnessValue')
+        if lengths:
+            props['length_m'] = sum(lengths)
+            props['segment_count'] = len(lengths)
+        if elevations:
+            props['elevation_m'] = sum(elevations)
+        if diameters:
+            props['diameter_m'] = diameters[0]
+        if roughnesses:
+            props['roughness_m'] = roughnesses[0]
+
 
 # ---------------------------------------------------------------------------
 # UniSim → NeqSim Converter
@@ -2158,6 +2296,18 @@ class UniSimToNeqSim:
                     del neqsim_json['fluid']['componentCount']
                 if 'componentNames' in neqsim_json.get('fluid', {}):
                     del neqsim_json['fluid']['componentNames']
+
+                # Apply transferred UniSim pseudo-component ideal-gas Cp to the
+                # loaded fluid (E300 does not carry Cp), then strip from JSON.
+                cp_coeffs = neqsim_json.get('fluid', {}).get('cpCoeffs')
+                if cp_coeffs:
+                    try:
+                        self._apply_cp_coeffs_to_fluid(fluid, cp_coeffs)
+                    except Exception as cp_exc:
+                        logger.warning(
+                            "Could not apply UniSim Cp coefficients: %s", cp_exc)
+                if 'cpCoeffs' in neqsim_json.get('fluid', {}):
+                    del neqsim_json['fluid']['cpCoeffs']
 
                 json_str = json.dumps(neqsim_json, indent=2)
                 result = ProcessSystem.fromJsonAndRun(json_str, fluid)
@@ -2380,6 +2530,82 @@ class UniSimToNeqSim:
             sections.append((fluid_ref, self._build_fluid_section(index)))
         return sections
 
+    def _build_cp_coeffs_map(self, fp) -> Dict[str, list]:
+        """Build a {E300-name: [CpA..CpE]} map for pseudo/hypothetical comps.
+
+        Transfers the UniSim ideal-gas heat capacity of hypothetical (``*``)
+        pseudo-components to NeqSim. The E300 interchange file carries Tc, Pc,
+        omega, MW, volume shift and kij but NOT the ideal-gas Cp, so NeqSim
+        otherwise estimates its own Cp for the pseudos. That estimate diverges
+        from UniSim and shifts enthalpy / Joule-Thomson behaviour (observed as
+        an ~11 C valve-outlet temperature gap in the low-pressure recompression
+        loop, which over-drops liquid and inflates recycle bleeds). Only
+        hypothetical components are overridden; NeqSim's library-component Cp
+        (methane, water, ...) is already accurate and reference-consistent.
+
+        :param fp: a UniSimFluidPackage
+        :return: dict mapping the E300 component name to a 5-list of Cp coeffs
+        """
+        cp_map: Dict[str, list] = {}
+        for component in getattr(fp, 'components', []):
+            if not getattr(component, 'is_hypothetical', False):
+                continue
+            coeffs = UniSimReader.neqsim_cp_coeffs_from_ideal_h(
+                getattr(component, 'ideal_h_coeffs', None),
+                getattr(component, 'mw', None))
+            if coeffs is None:
+                continue
+            e300_name = fp._e300_component_name(component.name)
+            cp_map[e300_name] = [float(v) for v in coeffs]
+        return cp_map
+
+    @staticmethod
+    def _apply_cp_coeffs_to_fluid(fluid, cp_map):
+        """Apply a {name: [CpA..CpE]} map to a live NeqSim fluid (jpype).
+
+        Sets the ideal-gas Cp polynomial coefficients on every phase copy of
+        each matched component so all phase enthalpies use the transferred Cp.
+        Matches names case-insensitively with an H2O/water alias; unmatched
+        names are skipped. Used by the JSON ``build_and_run`` route (the
+        ``to_python`` route emits the equivalent ``_apply_unisim_cp_coeffs``
+        helper into the generated script).
+
+        :param fluid: a NeqSim SystemInterface (Java object via jpype)
+        :param cp_map: dict of component name -> [CpA, CpB, CpC, CpD, CpE]
+        """
+        if not cp_map:
+            return
+        n = int(fluid.getNumberOfComponents())
+        idx = {}
+        for i in range(n):
+            idx[str(fluid.getComponent(i).getName()).lower()] = i
+        alias = {'h2o': 'water', 'water': 'h2o'}
+        try:
+            n_phase = int(fluid.getMaxNumberOfPhases())
+        except Exception:
+            n_phase = 1
+        for name, coeffs in cp_map.items():
+            key = str(name).lower()
+            j = idx.get(key)
+            if j is None:
+                j = idx.get(alias.get(key, ''))
+            if j is None:
+                continue
+            c = list(coeffs) + [0.0, 0.0, 0.0, 0.0, 0.0]
+            for ph in range(n_phase):
+                try:
+                    comp = fluid.getPhase(ph).getComponent(j)
+                except Exception:
+                    continue
+                comp.setCpA(float(c[0]))
+                comp.setCpB(float(c[1]))
+                comp.setCpC(float(c[2]))
+                comp.setCpD(float(c[3]))
+                try:
+                    comp.setCpE(float(c[4]))
+                except Exception:
+                    pass
+
     def _map_property_package_to_eos(self, property_package: str) -> str:
         """Map a UniSim property package name to the closest NeqSim EOS."""
         eos = UniSimReader.PROPERTY_PACKAGE_MAP.get(property_package)
@@ -2432,6 +2658,7 @@ class UniSimToNeqSim:
                 'fluidPackageName': fp.name,
                 'componentCount': len(fp.components),
                 'componentNames': [fp._e300_component_name(c.name) for c in fp.components],
+                'cpCoeffs': self._build_cp_coeffs_map(fp),
             }
 
         # --- Fallback: manual component mapping ---
@@ -2637,6 +2864,13 @@ class UniSimToNeqSim:
             if poly_eff and 0 < poly_eff <= 1:
                 props['polytropicEfficiency'] = poly_eff
                 props['usePolytropicCalc'] = True
+            if not (eff and 0 < eff <= 1) and not (poly_eff and 0 < poly_eff <= 1):
+                # No efficiency available: reproduce the source discharge
+                # temperature so the compressor back-solves its efficiency
+                # (matches to_python path; avoids a guessed fixed efficiency).
+                out_s = _get_outlet_stream_data()
+                if out_s and out_s.temperature_C is not None:
+                    props['outletTemperature'] = out_s.temperature_C + 273.15
 
         elif neqsim_type == 'ThrottlingValve':
             if op.properties.get('outlet_pressure_bara'):
@@ -3497,6 +3731,7 @@ class UniSimToNeqSim:
         'SpreadsheetBlock = jneqsim.process.equipment.util.SpreadsheetBlock',
         'UnisimCalculator = jneqsim.process.equipment.util.UnisimCalculator',
         'AdiabaticPipe = jneqsim.process.equipment.pipeline.AdiabaticPipe',
+        'PipeBeggsAndBrills = jneqsim.process.equipment.pipeline.PipeBeggsAndBrills',
         'DistillationColumn = jneqsim.process.equipment.distillation.DistillationColumn',
         'SimpleAbsorber = jneqsim.process.equipment.absorber.SimpleAbsorber',
         'ComponentSplitter = jneqsim.process.equipment.splitter.ComponentSplitter',
@@ -3520,6 +3755,9 @@ class UniSimToNeqSim:
             ]
             if not e300_sections:
                 e300_sections = [('default', fluid)]
+            # Runtime helper to transfer UniSim pseudo-component ideal-gas Cp.
+            if any(section.get('cpCoeffs') for _ref, section in e300_sections):
+                lines.extend(self._cp_helper_lines())
             lines.append('fluid_packages = {}')
             for fluid_ref, section in e300_sections:
                 escaped_path = section['e300FilePath'].replace('\\', '/')
@@ -3539,6 +3777,19 @@ class UniSimToNeqSim:
                 # instead of staying dissolved in the oil.
                 lines.append(
                     f'fluid_packages["{fluid_ref}"].setMultiPhaseCheck(True)')
+                cp_coeffs = section.get('cpCoeffs') or {}
+                if cp_coeffs:
+                    # Round for a compact, readable literal.
+                    compact = {
+                        name: [round(v, 10) for v in coeffs]
+                        for name, coeffs in cp_coeffs.items()
+                    }
+                    lines.append(
+                        f'_apply_unisim_cp_coeffs('
+                        f'fluid_packages["{fluid_ref}"], {compact!r})')
+                    lines.append(
+                        f'#   ^ transferred UniSim ideal-gas Cp for '
+                        f'{len(compact)} pseudo component(s)')
                 pkg_name = section.get('fluidPackageName', fluid_ref)
                 n_comp = section.get('componentCount', '?')
                 lines.append(
@@ -3644,6 +3895,59 @@ class UniSimToNeqSim:
             '',
         ]
 
+    @staticmethod
+    def _cp_helper_lines() -> List[str]:
+        """Lines defining the runtime pseudo-component Cp override helper.
+
+        Applies a ``{componentName: [CpA, CpB, CpC, CpD, CpE]}`` map onto a
+        NeqSim fluid, matching component names case-insensitively (with an
+        H2O/water alias). These are the ideal-gas heat-capacity coefficients
+        transferred from UniSim for hypothetical pseudo-components, so NeqSim's
+        enthalpy / Joule-Thomson behaviour matches UniSim (the E300 file does
+        not carry Cp). Unknown / non-pseudo names are simply skipped.
+        """
+        return [
+            '# Pseudo-component ideal-gas Cp transfer from UniSim (E300 lacks Cp).',
+            '# NeqSim Cp0(T)=CpA+CpB*T+CpC*T^2+CpD*T^3+CpE*T^4 [J/(mol*K)].',
+            'def _apply_unisim_cp_coeffs(sysf, cp_map):',
+            '    if not cp_map:',
+            '        return',
+            '    n = int(sysf.getNumberOfComponents())',
+            '    idx = {}',
+            '    for i in range(n):',
+            '        nm = str(sysf.getComponent(i).getName()).lower()',
+            '        idx[nm] = i',
+            '    _alias = {"h2o": "water", "water": "h2o"}',
+            '    for name, coeffs in cp_map.items():',
+            '        k = str(name).lower()',
+            '        j = idx.get(k)',
+            '        if j is None:',
+            '            j = idx.get(_alias.get(k, ""))',
+            '        if j is None:',
+            '            continue',
+            '        c = list(coeffs) + [0.0, 0.0, 0.0, 0.0, 0.0]',
+            '        # Apply to every phase copy of the component so all',
+            '        # phase enthalpies use the transferred Cp.',
+            '        try:',
+            '            npha = int(sysf.getMaxNumberOfPhases())',
+            '        except Exception:',
+            '            npha = 1',
+            '        for ph in range(npha):',
+            '            try:',
+            '                comp = sysf.getPhase(ph).getComponent(j)',
+            '            except Exception:',
+            '                continue',
+            '            comp.setCpA(float(c[0]))',
+            '            comp.setCpB(float(c[1]))',
+            '            comp.setCpC(float(c[2]))',
+            '            comp.setCpD(float(c[3]))',
+            '            try:',
+            '                comp.setCpE(float(c[4]))',
+            '            except Exception:',
+            '                pass',
+            '',
+        ]
+
     #: Light real components that can dominate a ~18 g/mol stream legitimately
     #: (methane-rich gas averages to ~17-18 g/mol). Used to distinguish a real
     #: light-gas feed from a mislabeled produced-water stream, whose dominant
@@ -3687,6 +3991,22 @@ class UniSimToNeqSim:
         # A MW~18 stream dominated by a light real component is genuine gas/NGL;
         # only a heavy-pseudo (or water) dominant at MW~18 is mislabeled water.
         return str(dom_name).lower() not in UniSimToNeqSim._NON_WATER_DOMINANT
+
+    @staticmethod
+    def _feed_comp_literal(name, sd):
+        """Composition dict literal for a feed or forward-ref placeholder.
+
+        Returns pure H2O for produced-water streams (see ``_is_water_feed``),
+        otherwise the stream's own non-zero composition, or ``None`` when no
+        usable composition is available.
+
+        @param name the UniSim stream name (for the water-name test)
+        @param sd the stream data
+        @return a ``{"name": frac, ...}`` literal or None
+        """
+        if UniSimToNeqSim._is_water_feed(name, sd):
+            return '{"H2O": 1.0}'
+        return UniSimToNeqSim._composition_literal(sd)
 
     @staticmethod
     def _composition_literal(sd: 'UniSimStreamData') -> Optional[str]:
@@ -4127,6 +4447,18 @@ class UniSimToNeqSim:
             lines.append(
                 f'# LogicalOp "{op.name}" — logic operations are not '
                 f'directly modeled in NeqSim; implement via Python logic')
+
+        elif neqsim_type == 'AdiabaticPipe':
+            ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
+            # When detailed geometry (length + inner diameter, and possibly
+            # elevation change) was extracted from the UniSim pipe segments, use
+            # PipeBeggsAndBrills, which models both friction and hydrostatic
+            # (elevation) pressure drop. Otherwise fall back to AdiabaticPipe.
+            if op.properties.get('length_m') and op.properties.get('diameter_m'):
+                lines.append(
+                    f'{v} = PipeBeggsAndBrills("{op.name}", {ref_expr})')
+            else:
+                lines.append(f'{v} = AdiabaticPipe("{op.name}", {ref_expr})')
 
         else:
             ref_expr = _ref(inlet_refs[0]) if inlet_refs else 'None'
@@ -4944,6 +5276,10 @@ class UniSimToNeqSim:
                            f'"{prod_name}" {port}')
                         _a(f'{port_pv} = Stream("{prod_name} {port} '
                            f'(placeholder)", fluid.clone())')
+                        _pc = self._feed_comp_literal(
+                            sd.name if sd else '', sd)
+                        if _pc:
+                            _a(f'_set_feed_composition({port_pv}, {_pc})')
                         if sd and sd.temperature_C is not None:
                             _a(f'{port_pv}.setTemperature('
                                f'{sd.temperature_C}, "C")')
@@ -4966,6 +5302,9 @@ class UniSimToNeqSim:
                    f'(in a recycle loop)')
                 _a(f'{placeholder_var} = Stream("{prod_name} (placeholder)",'
                    f' fluid.clone())')
+                _pc = self._feed_comp_literal(sd.name if sd else '', sd)
+                if _pc:
+                    _a(f'_set_feed_composition({placeholder_var}, {_pc})')
                 if sd and sd.temperature_C is not None:
                     _a(f'{placeholder_var}.setTemperature('
                        f'{sd.temperature_C}, "C")')
@@ -5981,10 +6320,23 @@ class UniSimToNeqSim:
                 lines.append(f'{var}.setPolytropicEfficiency({poly})')
                 lines.append(f'{var}.setUsePolytropicCalc(True)')
             else:
-                # No efficiency extracted — use engineering default
-                lines.append(f'{var}.setIsentropicEfficiency(0.75)')
-                lines.append(f'# WARNING: compressor efficiency not available '
-                             f'from source model — using 75% default')
+                # No efficiency extracted. If the UniSim discharge temperature is
+                # known, drive NeqSim to reproduce it: Compressor.setOutletTemperature
+                # sets useOutTemperature and back-solves the isentropic efficiency
+                # (solveEfficiency) to hit that outlet T. This matches the source
+                # discharge temperature instead of guessing a fixed efficiency
+                # (verified first-error: 23KA003 was -6.5 C on a matching inlet with
+                # the 0.75 default).
+                out_s = _get_outlet_stream_data()
+                t_out_c = out_s.temperature_C if out_s else None
+                if t_out_c is not None:
+                    lines.append(f'{var}.setOutletTemperature({t_out_c}, "C")')
+                    lines.append(f'# discharge T taken from source model; efficiency '
+                                 f'back-solved (UniSim efficiency unavailable)')
+                else:
+                    lines.append(f'{var}.setIsentropicEfficiency(0.75)')
+                    lines.append(f'# WARNING: compressor efficiency not available '
+                                 f'from source model — using 75% default')
 
         elif neqsim_type == 'ThrottlingValve':
             p_out = op.properties.get('outlet_pressure_bara')
@@ -6003,6 +6355,73 @@ class UniSimToNeqSim:
                     t_out = out_s.temperature_C
             if t_out is not None:
                 lines.append(f'{var}.setOutTemperature({t_out + 273.15})')
+            # Transfer the UniSim cooler/heater outlet-pressure letdown. This is
+            # applied unconditionally for any real drop: NeqSim Cooler/Heater keep
+            # inlet pressure otherwise, so a downstream separator would flash at
+            # the wrong pressure. (Earlier this destabilised recycle loops only
+            # because geometry-less pipes NaN'd at the corrected pressure; with
+            # pipe geometry now transferred and PipeBeggsAndBrills used, the loops
+            # converge — see the Gas riser / Subsea Scrubber case.)
+            p_out = op.properties.get('outlet_pressure_bara')
+            in_s = (self._find_stream_by_name(flowsheet, op.feeds[0])
+                    if op.feeds else None)
+            p_in = in_s.pressure_bara if in_s else None
+            if p_out and p_in and p_out < 0.98 * p_in:
+                lines.append(f'{var}.setOutletPressure({p_out}, "bara")')
+
+        elif neqsim_type == 'HeatExchanger':
+            # Two-stream (process-to-process) heat exchanger. The converter set
+            # no UA/duty/temperature, so NeqSim transferred no heat (both outlets
+            # stayed at the hot inlet temperature). Reproduce the UniSim result by
+            # pinning the HOT-side outlet to its known UniSim outlet temperature
+            # via the "outTemperature" specification; NeqSim then energy-balances
+            # the cold side. This reproduces the process (hot) outlet exactly and
+            # drives the cold outlet to the correct duty, which matches UniSim far
+            # better than a UA value when the two flows differ from the source
+            # model (e.g. a recycle side that circulates a different rate). The
+            # pin tracks the live inlet pressure each iteration, so no spurious
+            # pressure drop is introduced. Falls back to a UA value (UA = duty /
+            # LMTD) only if the outlet temperatures are unavailable.
+            duty = op.properties.get('duty_kW')
+            feeds = op.feeds or []
+            prods = op.products or []
+            if len(feeds) >= 2 and len(prods) >= 2:
+                h_in = self._find_stream_by_name(flowsheet, feeds[0])
+                c_in = self._find_stream_by_name(flowsheet, feeds[1])
+                h_out = self._find_stream_by_name(flowsheet, prods[0])
+                c_out = self._find_stream_by_name(flowsheet, prods[1])
+                streams = [h_in, c_in, h_out, c_out]
+                if all(s is not None and s.temperature_C is not None
+                       for s in streams):
+                    th_in, tc_in = h_in.temperature_C, c_in.temperature_C
+                    th_out, tc_out = h_out.temperature_C, c_out.temperature_C
+                    # Pin the outlet on the hot side (the stream being cooled).
+                    if th_in >= tc_in:
+                        spec_side, spec_out_t = 0, th_out
+                    else:
+                        spec_side, spec_out_t = 1, tc_out
+                    lines.append(
+                        f'{var}.setOutStreamSpecificationNumber({spec_side})')
+                    lines.append(
+                        f'{var}.setOutTemperature({spec_out_t}, "C")')
+                elif duty:
+                    # Fallback: UA from duty and LMTD (needs all four temps for
+                    # LMTD, so only reached if some outlet temp is missing).
+                    valid = [s for s in streams
+                             if s is not None and s.temperature_C is not None]
+                    if len(valid) == 4:
+                        th_in, tc_in = h_in.temperature_C, c_in.temperature_C
+                        th_out, tc_out = h_out.temperature_C, c_out.temperature_C
+                        dt1 = th_in - tc_out
+                        dt2 = th_out - tc_in
+                        if dt1 > 1e-6 and dt2 > 1e-6 and abs(dt1 - dt2) > 1e-6:
+                            lmtd = (dt1 - dt2) / math.log(dt1 / dt2)
+                        else:
+                            lmtd = max((dt1 + dt2) / 2.0, 1.0)
+                        ua_w_per_k = abs(duty) * 1000.0 / lmtd  # kW -> W
+                        lines.append(
+                            f'{var}.setGuessOutTemperature({th_out + 273.15})')
+                        lines.append(f'{var}.setUAvalue({ua_w_per_k:.1f})')
 
         elif neqsim_type == 'Pump':
             p_out = op.properties.get('outlet_pressure_bara')
@@ -6026,10 +6445,24 @@ class UniSimToNeqSim:
                 lines.append(f'{var}.setOutletPressure({p_out})')
 
         elif neqsim_type == 'AdiabaticPipe':
-            if op.properties.get('length_m'):
-                lines.append(f'{var}.setLength({op.properties["length_m"]})')
-            if op.properties.get('diameter_m'):
-                lines.append(f'{var}.setDiameter({op.properties["diameter_m"]})')
+            length = op.properties.get('length_m')
+            diameter = op.properties.get('diameter_m')
+            if length:
+                lines.append(f'{var}.setLength({length})')
+            if diameter:
+                lines.append(f'{var}.setDiameter({diameter})')
+            # Full geometry (elevation, roughness, increments) is only set when
+            # length + diameter are present — i.e. when the unit was emitted as a
+            # PipeBeggsAndBrills (which supports these setters). A bare
+            # AdiabaticPipe (no geometry) receives neither.
+            if length and diameter:
+                elevation = op.properties.get('elevation_m')
+                if elevation is not None:
+                    lines.append(f'{var}.setElevation({elevation})')
+                roughness = op.properties.get('roughness_m')
+                if roughness:
+                    lines.append(f'{var}.setPipeWallRoughness({roughness})')
+                lines.append(f'{var}.setNumberOfIncrements(20)')
 
         elif neqsim_type in ('Separator', 'GasScrubber',
                              'ThreePhaseSeparator'):

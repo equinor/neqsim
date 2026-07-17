@@ -79,8 +79,16 @@ public class ProcessRunner {
           "Provide a valid JSON process definition with 'fluid' and 'process' blocks");
     }
 
+    String resolved = resolveJsonInput(json);
+    String resolvedTrim = resolved == null ? "" : resolved.trim();
+    if (resolvedTrim.isEmpty() || (resolvedTrim.charAt(0) != '{' && resolvedTrim.charAt(0) != '[')) {
+      return errorJson("INPUT_ERROR", "Process input is neither valid JSON nor a readable .json file",
+          "Pass inline process JSON, or an absolute path to an existing UTF-8 .json file "
+              + "(<= 25 MB, name ending in .json) containing the process definition.");
+    }
+
     long startTime = System.currentTimeMillis();
-    String normalizedJson = normalizeProcessJson(json);
+    String normalizedJson = normalizeProcessJson(resolved);
 
     // Pre-validate
     String validationJson = Validator.validate(normalizedJson);
@@ -128,7 +136,7 @@ public class ProcessRunner {
     }
 
     try {
-      String normalizedJson = normalizeProcessJson(json);
+      String normalizedJson = normalizeProcessJson(resolveJsonInput(json));
       if (isProcessModelJson(normalizedJson)) {
         return runTypedProcessModel(normalizedJson);
       }
@@ -492,6 +500,43 @@ public class ProcessRunner {
     } catch (Exception ignored) {
     }
     return 0;
+  }
+
+  /**
+   * Resolves the process-definition input, accepting either inline JSON or a path to a {@code .json} file.
+   *
+   * <p>
+   * If the trimmed input begins with <code>{</code> or <code>[</code> it is treated as inline JSON and returned
+   * unchanged. Otherwise, if it names an existing, readable, regular file whose name ends in {@code .json} (path length
+   * &lt;= 4096, file size &gt; 0 and &lt;= 25 MB), the file contents are read as UTF-8 and returned. In all other cases
+   * the original input is returned unchanged so the caller can report a clear error.
+   * </p>
+   *
+   * @param input inline process JSON or a filesystem path to a {@code .json} file
+   * @return the JSON content to parse, or the original input if it is not a resolvable file
+   */
+  static String resolveJsonInput(String input) {
+    if (input == null) {
+      return null;
+    }
+    String trimmed = input.trim();
+    if (trimmed.isEmpty() || trimmed.charAt(0) == '{' || trimmed.charAt(0) == '[') {
+      return input;
+    }
+    try {
+      if (trimmed.length() <= 4096 && trimmed.toLowerCase(java.util.Locale.ROOT).endsWith(".json")) {
+        java.nio.file.Path path = java.nio.file.Paths.get(trimmed);
+        if (java.nio.file.Files.isRegularFile(path) && java.nio.file.Files.isReadable(path)) {
+          long size = java.nio.file.Files.size(path);
+          if (size > 0 && size <= 25L * 1024L * 1024L) {
+            return new String(java.nio.file.Files.readAllBytes(path), java.nio.charset.StandardCharsets.UTF_8);
+          }
+        }
+      }
+    } catch (Exception ignored) {
+      // Fall through and return the original input; downstream validation reports the error.
+    }
+    return input;
   }
 
   /**

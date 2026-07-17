@@ -180,8 +180,11 @@ public final class SchemaCatalog {
     Map<String, Object> schema = new LinkedHashMap<String, Object>();
     schema.put("$schema", "https://json-schema.org/draft/2020-12/schema");
     schema.put("title", "ProcessInput");
-    schema.put("description", "Input for a process simulation (run_process tool). Accepts either a single "
-        + "ProcessSystem with 'fluid' and 'process', or a multi-area ProcessModel with " + "top-level 'areas'.");
+    schema.put("description",
+        "Input for a process simulation (run_process tool). Accepts either a single "
+            + "ProcessSystem with 'fluid' and 'process', or a multi-area ProcessModel with " + "top-level 'areas'. "
+            + "The tool argument may also be an absolute path to a readable UTF-8 .json file "
+            + "(name ending in .json, <= 25 MB) containing this JSON.");
     schema.put("type", "object");
 
     Map<String, Object> properties = new LinkedHashMap<String, Object>();

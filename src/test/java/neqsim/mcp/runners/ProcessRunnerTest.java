@@ -3,7 +3,11 @@ package neqsim.mcp.runners;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
@@ -159,6 +163,81 @@ class ProcessRunnerTest {
     JsonObject root = JsonParser.parseString(result).getAsJsonObject();
 
     assertEquals("success", root.get("status").getAsString());
+  }
+
+  @Test
+  void testValidateAndRun_fromJsonFilePath(@TempDir Path tempDir) throws Exception {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"components\": {\"methane\": 0.85, \"ethane\": 0.10, \"propane\": 0.05}" + "},"
+        + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [10000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"feed\"}" + "]" + "}";
+    Path file = tempDir.resolve("process_def.json");
+    Files.write(file, json.getBytes(StandardCharsets.UTF_8));
+
+    String result = ProcessRunner.validateAndRun(file.toAbsolutePath().toString());
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString());
+    assertTrue(root.has("report"));
+  }
+
+  @Test
+  void testRun_fromJsonFilePath(@TempDir Path tempDir) throws Exception {
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 20.0," + "  \"components\": {\"methane\": 0.9, \"ethane\": 0.1}" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [5000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Compressor\", \"name\": \"Comp\", \"inlet\": \"feed\","
+        + "   \"properties\": {\"outletPressure\": [60.0, \"bara\"]}}" + "]" + "}";
+    Path file = tempDir.resolve("compression.json");
+    Files.write(file, json.getBytes(StandardCharsets.UTF_8));
+
+    String result = ProcessRunner.run(file.toAbsolutePath().toString());
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString());
+  }
+
+  @Test
+  void testValidateAndRun_missingJsonFilePath() {
+    String result = ProcessRunner.validateAndRun("C:/does/not/exist/process_def.json");
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("error", root.get("status").getAsString());
+    assertEquals("INPUT_ERROR", root.getAsJsonArray("errors").get(0).getAsJsonObject().get("code").getAsString());
+  }
+
+  @Test
+  void testResolveJsonInput_inlineJsonUnchanged() {
+    String inline = "{\"fluid\": {}}";
+    assertEquals(inline, ProcessRunner.resolveJsonInput(inline));
+  }
+
+  @Test
+  void testValidateAndRun_pseudoComponentFluidFromFilePath(@TempDir Path tempDir) throws Exception {
+    // A fluid with database light ends plus a characterized (pseudo) heavy component
+    // defined by Tc/Pc/acentricFactor/MW/density, run through the MCP runner by file path.
+    // This locks the characterizedComponents fluid path together with .json file input,
+    // which together let a UniSim/E300-derived pseudo-component fluid run via run_process.
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"PR\"," + "  \"temperature\": 313.15," + "  \"pressure\": 30.0,"
+        + "  \"mixingRule\": \"classic\","
+        + "  \"components\": {\"methane\": 0.6, \"ethane\": 0.05, \"propane\": 0.05, \"n-pentane\": 0.05},"
+        + "  \"characterizedComponents\": [{" + "    \"name\": \"PC1\", \"moleFraction\": 0.25,"
+        + "    \"molarMass\": 0.20, \"density\": 0.78, \"Tc\": 700.0, \"Pc\": 17.0,"
+        + "    \"acentricFactor\": 0.72, \"isPlusFraction\": false}]" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"Well feed\","
+        + "   \"properties\": {\"flowRate\": [100000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Separator\", \"name\": \"HP Sep\", \"inlet\": \"Well feed\"},"
+        + "  {\"type\": \"Compressor\"," + "   \"name\": \"Export compressor\", \"inlet\": \"HP Sep.gasOutStream\","
+        + "   \"properties\": {\"outletPressure\": [120.0, \"bara\"]}}" + "]" + "}";
+    Path file = tempDir.resolve("pseudo_component_process.json");
+    Files.write(file, json.getBytes(StandardCharsets.UTF_8));
+
+    String result = ProcessRunner.validateAndRun(file.toAbsolutePath().toString());
+    JsonObject root = JsonParser.parseString(result).getAsJsonObject();
+
+    assertEquals("success", root.get("status").getAsString());
+    assertTrue(root.has("report"));
   }
 
   private static String processModelJson() {

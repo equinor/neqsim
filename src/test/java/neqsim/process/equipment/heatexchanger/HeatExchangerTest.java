@@ -109,6 +109,40 @@ public class HeatExchangerTest extends neqsim.NeqSimTest {
   }
 
   /**
+   * Pin one outlet temperature with the "outTemperature" specification and verify the specified side hits the target
+   * exactly while the opposite side is energy-balanced.
+   */
+  @Test
+  void testOutTemperatureSpecification() {
+    Stream stream_Hot = new Stream("Stream1", testSystem);
+    stream_Hot.setTemperature(100.0, "C");
+    stream_Hot.setFlowRate(1000.0, "kg/hr");
+    stream_Hot.run();
+    Stream stream_Cold = new Stream("Stream2", testSystem.clone());
+    stream_Cold.setTemperature(20.0, "C");
+    stream_Cold.setFlowRate(1000.0, "kg/hr");
+    stream_Cold.run();
+
+    HeatExchanger heatEx = new HeatExchanger("heatEx", stream_Hot, stream_Cold);
+    // pin the hot outlet (side 0) to 55 C
+    heatEx.setOutStreamSpecificationNumber(0);
+    heatEx.setOutTemperature(55.0, "C");
+
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
+    operations.add(stream_Hot);
+    operations.add(stream_Cold);
+    operations.add(heatEx);
+    operations.run();
+
+    // hot outlet pinned exactly to target
+    assertEquals(55.0, heatEx.getOutStream(0).getTemperature("C"), 1e-3);
+    // hot outlet pressure follows the hot inlet (no spurious drop/freeze)
+    assertEquals(stream_Hot.getPressure("bara"), heatEx.getOutStream(0).getPressure("bara"), 1e-6);
+    // cold side heated (energy balance): cold outlet above its inlet, hot side cooled
+    assertEquals(true, heatEx.getOutStream(1).getTemperature("C") > 20.0);
+  }
+
+  /**
    * Test the Builder pattern for creating heat exchangers.
    */
   @Test

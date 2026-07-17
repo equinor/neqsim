@@ -773,4 +773,34 @@ class JsonProcessBuilderTest {
     assertEquals(120.0, design.getRetentionTime(), 1e-12);
   }
 
+  @Test
+  void testSplitterSplitNumberDefaultsToEqualSplit() {
+    // A Splitter configured with only a "splitNumber" (no explicit split
+    // factors or per-outlet flow rates) must default to an EQUAL split across
+    // all outlets. Without this, setSplitNumber leaves the factors as
+    // [1, 0, ...], sending 100% of the flow to the first outlet and starving
+    // the other branches (which starves recycle-tear streams and makes
+    // cross-connected loops diverge).
+    String json = "{" + "\"fluid\": {" + "  \"model\": \"SRK\"," + "  \"temperature\": 298.15,"
+        + "  \"pressure\": 50.0," + "  \"mixingRule\": \"classic\","
+        + "  \"components\": {\"methane\": 0.80, \"ethane\": 0.10, \"propane\": 0.10}" + "}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\"," + "   \"properties\": {\"flowRate\": [30000.0, \"kg/hr\"]}},"
+        + "  {\"type\": \"Splitter\", \"name\": \"tee\"," + "   \"inlet\": \"feed\","
+        + "   \"properties\": {\"splitNumber\": 3}}" + "]," + "\"autoRun\": true" + "}";
+
+    SimulationResult result = ProcessSystem.fromJsonAndRun(json);
+    assertFalse(result.isError(), "Build+run should not error: " + result);
+    ProcessSystem process = result.getProcessSystem();
+    neqsim.process.equipment.splitter.Splitter tee = (neqsim.process.equipment.splitter.Splitter) process
+        .getUnit("tee");
+    assertNotNull(tee, "Splitter should exist");
+    // Each of the three outlet streams should carry ~1/3 of the feed flow.
+    double feedFlow = ((Stream) process.getUnit("feed")).getFlowRate("kg/hr");
+    for (int i = 0; i < 3; i++) {
+      StreamInterface branch = tee.getSplitStream(i);
+      assertEquals(feedFlow / 3.0, branch.getFlowRate("kg/hr"), feedFlow * 1e-3,
+          "Outlet " + i + " should carry one third of the feed flow");
+    }
+  }
+
 }
