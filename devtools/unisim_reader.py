@@ -1472,11 +1472,23 @@ class UniSimReader:
         if not hasattr(self, '_comp_name_cache'):
             self._comp_name_cache = {}
         try:
-            fp = self._safe_get(owner, 'FluidPackage', None)
+            # NOTE: do NOT use _safe_get here. A COM FluidPackage Dispatch object
+            # is itself callable, and _safe_get would invoke it (val()) — which
+            # fails — and return the default, silently forcing the fallback
+            # (parent) component order. That mislabels streams whose own fluid
+            # package differs from the parent (e.g. a Basis-1 produced-water
+            # stream getting Basis-2 names, landing water's 1.0 on 'WC13-C14*').
+            # Access the property directly instead.
+            try:
+                fp = getattr(owner, 'FluidPackage', None)
+            except Exception:
+                fp = None
             if fp is None:
                 return fallback
-            key = str(self._safe_get(fp, 'name',
-                                     self._safe_get(fp, 'Name', '')))
+            try:
+                key = str(getattr(fp, 'name', None) or getattr(fp, 'Name', ''))
+            except Exception:
+                key = ''
             if key and key in self._comp_name_cache:
                 return self._comp_name_cache[key]
             collection = fp.Components
@@ -2926,7 +2938,12 @@ class UniSimToNeqSim:
                     comp_nz = {k: float(v) for k, v in comp.items()
                                if v is not None and float(v) > 1e-9}
                     if comp_nz:
-                        props['composition'] = comp_nz
+                        # Remap secondary-package (e.g. Basis-1) heavy pseudo
+                        # components that are absent from the global fluid to
+                        # their nearest-molecular-weight global component, so
+                        # oil mass is preserved and the flowsheet converges.
+                        props['composition'] = \
+                            self._remap_composition_to_global(comp_nz)
                 if props:
                     entry['properties'] = props
             process.append(entry)
@@ -2941,6 +2958,52 @@ class UniSimToNeqSim:
                 process.append(entry)
 
         return process
+
+    def _remap_composition_to_global(self, comp: Dict[str, float]) -> Dict[str, float]:
+        """Remap a stream composition onto the global fluid's component set.
+
+        A UniSim case can carry several thermodynamic bases (fluid packages).
+        The global NeqSim fluid is built from the primary package (index 0),
+        so heavy pseudo-components that only exist in a secondary package
+        (e.g. Basis-1 oil lumps ``C7C9*``, ``C36+H*``) have no matching
+        component in the built fluid and their mass is silently dropped by the
+        builder. To preserve oil mass and keep the flowsheet converging, each
+        such component is re-assigned to the nearest-molecular-weight component
+        of the global package (its fraction accumulated there). Light and water
+        components (shared across packages) and components already present in
+        the global package are passed through unchanged.
+
+        :param comp: mapping of raw UniSim component name to molar fraction
+        :return: mapping with secondary-package heavies remapped to the nearest
+            global component by molecular weight
+        """
+        fps = getattr(self.model, 'fluid_packages', None)
+        if not fps:
+            return dict(comp)
+        global_fp = fps[0]
+        global_names = {c.name for c in global_fp.components}
+        # nearest-MW candidates from the global package (heavy pseudo lumps)
+        global_mw_pairs = [(c.name, c.mw) for c in global_fp.components
+                           if c.mw is not None]
+        # molecular-weight lookup by raw name across every package
+        mw_by_name = {}
+        for fp in fps:
+            for c in fp.components:
+                if c.mw is not None and c.name not in mw_by_name:
+                    mw_by_name[c.name] = c.mw
+
+        out = {}
+        for raw, frac in comp.items():
+            keep = raw
+            # Only pseudo-components (``*`` suffix) that are absent from the
+            # global package need remapping; everything else matches directly.
+            if (raw not in global_names and raw.endswith('*')
+                    and global_mw_pairs and raw in mw_by_name):
+                target_mw = mw_by_name[raw]
+                keep = min(global_mw_pairs,
+                           key=lambda p: abs(p[1] - target_mw))[0]
+            out[keep] = out.get(keep, 0.0) + frac
+        return out
 
     def _convert_operation(self, op: UniSimOperation,
                            stream_producer: Dict,
