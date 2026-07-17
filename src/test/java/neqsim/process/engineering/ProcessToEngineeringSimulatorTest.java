@@ -152,8 +152,8 @@ class ProcessToEngineeringSimulatorTest {
     assertEquals(initial.getFingerprint(), unchanged.getFingerprint());
 
     Map<String, Object> manifest = new LinkedHashMap<String, Object>(unchanged.toMap());
-    manifest.put("areaPackages", Collections.singletonMap("compression", Collections.singletonMap("directory",
-        "compression")));
+    manifest.put("areaPackages",
+        Collections.singletonMap("compression", Collections.singletonMap("directory", "compression")));
     assertTrue(ProcessModelEngineeringPackageValidator.validate(manifest).isEmpty());
   }
 
