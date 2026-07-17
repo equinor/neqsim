@@ -149,14 +149,13 @@ public final class InletCompressionExportSliceQualification {
         policy.getSeparatorTag() + ".tangentLength", policy.getSeparatorTag() + ".liquidRetentionTime",
         policy.getSeparatorTag() + ".designPressure", policy.getSeparatorTag() + ".proposedPsvSetPressure",
         policy.getSeparatorTag() + ".minimumDesignMetalTemperature",
-        policy.getSeparatorTag() + ".preliminaryNominalWallThickness",
-        policy.getCompressorTag() + ".driverRatedPower", policy.getCompressorTag() + ".minimumSurgeMargin",
-        policy.getCompressorTag() + ".minimumStonewallMargin",
+        policy.getSeparatorTag() + ".preliminaryNominalWallThickness", policy.getCompressorTag() + ".driverRatedPower",
+        policy.getCompressorTag() + ".minimumSurgeMargin", policy.getCompressorTag() + ".minimumStonewallMargin",
         policy.getCompressorTag() + ".maximumRequiredRecycleFraction",
-        policy.getCompressorTag() + ".maximumRecycleCoolerDuty",
-        policy.getCoolerTag() + ".preliminaryHeatTransferArea", policy.getExportLineTag() + ".insideDiameter",
-        policy.getRecycleValveTag() + ".selectedCv", policy.getPressureControlValveTag() + ".selectedCv",
-        policy.getLevelControlValveTag() + ".selectedCv", policy.getReliefValveTag() + ".selectedOrificeArea");
+        policy.getCompressorTag() + ".maximumRecycleCoolerDuty", policy.getCoolerTag() + ".preliminaryHeatTransferArea",
+        policy.getExportLineTag() + ".insideDiameter", policy.getRecycleValveTag() + ".selectedCv",
+        policy.getPressureControlValveTag() + ".selectedCv", policy.getLevelControlValveTag() + ".selectedCv",
+        policy.getReliefValveTag() + ".selectedOrificeArea");
     List<String> missing = new ArrayList<String>();
     for (String variable : required) {
       if (state == null || !state.contains(variable)) {
@@ -238,8 +237,7 @@ public final class InletCompressionExportSliceQualification {
     return findings;
   }
 
-  private static List<String> standardsFindings(EngineeringProject project,
-      InletCompressionExportSlicePolicy policy) {
+  private static List<String> standardsFindings(EngineeringProject project, InletCompressionExportSlicePolicy policy) {
     Set<String> present = new LinkedHashSet<String>();
     for (EngineeringStandard standard : project.getDesignBasis().getStandards()) {
       present.add(standard.getCode());
@@ -257,8 +255,7 @@ public final class InletCompressionExportSliceQualification {
     return missing;
   }
 
-  private static List<String> evidenceFindings(EngineeringProject project,
-      InletCompressionExportSlicePolicy policy) {
+  private static List<String> evidenceFindings(EngineeringProject project, InletCompressionExportSlicePolicy policy) {
     List<String> findings = new ArrayList<String>();
     if (policy.getEvidenceReferences().isEmpty()) {
       findings.add("No controlled evidence references were required by the policy");
@@ -324,8 +321,8 @@ public final class InletCompressionExportSliceQualification {
     private final Map<String, Gate> gates;
     private final boolean qualifiedForControlledPilot;
 
-    Result(String projectId, String projectRevision, InletCompressionExportSlicePolicy policy,
-        Map<String, Gate> gates, boolean qualifiedForControlledPilot) {
+    Result(String projectId, String projectRevision, InletCompressionExportSlicePolicy policy, Map<String, Gate> gates,
+        boolean qualifiedForControlledPilot) {
       this.projectId = projectId;
       this.projectRevision = projectRevision;
       this.policy = policy;
