@@ -4,6 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 import neqsim.process.engineering.calculation.EngineeringCalculationContext;
 import neqsim.process.engineering.calculation.EngineeringCalculationResult;
+import neqsim.process.engineering.design.EngineeringDesignLoop;
+import neqsim.process.engineering.design.EngineeringDesignLoopOptions;
+import neqsim.process.engineering.design.EngineeringDesignLoopResult;
 import neqsim.process.engineering.designcase.EngineeringCaseRunOptions;
 import neqsim.process.engineering.designcase.EngineeringCaseRunReport;
 import neqsim.process.engineering.designcase.EngineeringCaseRunner;
@@ -14,6 +17,7 @@ import neqsim.process.safety.depressurization.CoupledReliefBlowdownFlareResult;
 import neqsim.process.safety.scenario.DynamicSafetyScenario;
 import neqsim.process.safety.scenario.DynamicSafetyScenarioResult;
 import neqsim.process.safety.scenario.DynamicSafetyScenarioRunner;
+import neqsim.process.processmodel.ProcessSystem;
 
 /** Runs all four engineering-simulator foundations configured on an {@link EngineeringProject}. */
 public final class EngineeringSimulationRunner {
@@ -24,7 +28,12 @@ public final class EngineeringSimulationRunner {
     if (project == null) {
       throw new IllegalArgumentException("project must not be null");
     }
-    EngineeringCaseRunReport caseReport = runCases(project, options);
+    EngineeringDesignLoopResult designLoopResult = runDesignLoop(project, options);
+    project.recordEngineeringDesignLoopResult(designLoopResult);
+    EngineeringCaseRunReport caseReport = designLoopResult == null ? runCases(project, options)
+        : designLoopResult.getIterations().get(designLoopResult.getIterations().size() - 1).getCaseReport();
+    ProcessSystem designedProcess = designLoopResult == null ? project.getProcessSystem()
+        : designLoopResult.getDesignedProcess();
     EngineeringCalculationContext context = context(project, caseReport);
     CoupledReliefBlowdownFlareCalculation coupledCalculation = new CoupledReliefBlowdownFlareCalculation();
     List<EngineeringCalculationResult<CoupledReliefBlowdownFlareResult>> coupledResults = new ArrayList<EngineeringCalculationResult<CoupledReliefBlowdownFlareResult>>();
@@ -33,16 +42,33 @@ public final class EngineeringSimulationRunner {
     }
     List<DynamicSafetyScenarioResult> dynamicResults = new ArrayList<DynamicSafetyScenarioResult>();
     for (DynamicSafetyScenario scenario : project.getDynamicSafetyScenarios()) {
-      dynamicResults.add(DynamicSafetyScenarioRunner.run(project.getProcessSystem(), scenario));
+      dynamicResults.add(DynamicSafetyScenarioRunner.run(designedProcess, scenario));
     }
-    return new EngineeringSimulationResult(project.getProjectId(), project.getRevision(), caseReport, coupledResults,
-        dynamicResults);
+    return new EngineeringSimulationResult(project.getProjectId(), project.getRevision(), caseReport, designLoopResult,
+        coupledResults, dynamicResults);
+  }
+
+  private static EngineeringDesignLoopResult runDesignLoop(EngineeringProject project,
+      EngineeringCaseRunOptions options) {
+    if (project.getEngineeringDesignModules().isEmpty()) {
+      return null;
+    }
+    EngineeringCaseSet set = caseSet(project);
+    int parallelism = options == null ? 1 : options.getParallelism();
+    return EngineeringDesignLoop.run(project.getProcessSystem(), set, project.getEngineeringDesignModules(),
+        EngineeringDesignLoopOptions.builder().caseParallelism(parallelism).build());
   }
 
   private static EngineeringCaseRunReport runCases(EngineeringProject project, EngineeringCaseRunOptions options) {
     if (project.getExecutableDesignCases().isEmpty() && project.getEngineeringMetrics().isEmpty()) {
       return null;
     }
+    EngineeringCaseSet set = caseSet(project);
+    return EngineeringCaseRunner.run(project.getProcessSystem(), set,
+        options == null ? EngineeringCaseRunOptions.sequential() : options);
+  }
+
+  private static EngineeringCaseSet caseSet(EngineeringProject project) {
     EngineeringCaseSet set = new EngineeringCaseSet(project.getProjectId() + "@" + project.getRevision());
     for (neqsim.process.engineering.designcase.EngineeringDesignCase designCase : project.getExecutableDesignCases()) {
       set.addCase(designCase);
@@ -50,8 +76,7 @@ public final class EngineeringSimulationRunner {
     for (neqsim.process.engineering.designcase.EngineeringMetric metric : project.getEngineeringMetrics()) {
       set.addMetric(metric);
     }
-    return EngineeringCaseRunner.run(project.getProcessSystem(), set,
-        options == null ? EngineeringCaseRunOptions.sequential() : options);
+    return set;
   }
 
   private static EngineeringCalculationContext context(EngineeringProject project,

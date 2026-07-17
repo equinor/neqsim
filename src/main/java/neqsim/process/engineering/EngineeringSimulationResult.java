@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import neqsim.process.engineering.calculation.EngineeringCalculationResult;
+import neqsim.process.engineering.design.EngineeringDesignLoopResult;
 import neqsim.process.engineering.designcase.EngineeringCaseRunReport;
 import neqsim.process.safety.depressurization.CoupledReliefBlowdownFlareResult;
 import neqsim.process.safety.scenario.DynamicSafetyScenarioResult;
@@ -18,15 +19,18 @@ public final class EngineeringSimulationResult implements Serializable {
   private final String projectId;
   private final String revision;
   private final EngineeringCaseRunReport caseRunReport;
+  private final EngineeringDesignLoopResult engineeringDesignLoopResult;
   private final List<EngineeringCalculationResult<CoupledReliefBlowdownFlareResult>> coupledSafetyResults;
   private final List<DynamicSafetyScenarioResult> dynamicScenarioResults;
 
   EngineeringSimulationResult(String projectId, String revision, EngineeringCaseRunReport caseRunReport,
+      EngineeringDesignLoopResult engineeringDesignLoopResult,
       List<EngineeringCalculationResult<CoupledReliefBlowdownFlareResult>> coupledSafetyResults,
       List<DynamicSafetyScenarioResult> dynamicScenarioResults) {
     this.projectId = projectId;
     this.revision = revision;
     this.caseRunReport = caseRunReport;
+    this.engineeringDesignLoopResult = engineeringDesignLoopResult;
     this.coupledSafetyResults = Collections.unmodifiableList(
         new ArrayList<EngineeringCalculationResult<CoupledReliefBlowdownFlareResult>>(coupledSafetyResults));
     this.dynamicScenarioResults = Collections
@@ -35,6 +39,10 @@ public final class EngineeringSimulationResult implements Serializable {
 
   public EngineeringCaseRunReport getCaseRunReport() {
     return caseRunReport;
+  }
+
+  public EngineeringDesignLoopResult getEngineeringDesignLoopResult() {
+    return engineeringDesignLoopResult;
   }
 
   public List<EngineeringCalculationResult<CoupledReliefBlowdownFlareResult>> getCoupledSafetyResults() {
@@ -60,6 +68,8 @@ public final class EngineeringSimulationResult implements Serializable {
     result.put("projectId", projectId);
     result.put("revision", revision);
     result.put("caseRun", caseRunReport == null ? null : caseRunReport.toMap());
+    result.put("engineeringDesignLoop",
+        engineeringDesignLoopResult == null ? null : engineeringDesignLoopResult.toMap());
     List<Map<String, Object>> safety = new ArrayList<Map<String, Object>>();
     for (EngineeringCalculationResult<CoupledReliefBlowdownFlareResult> item : coupledSafetyResults) {
       Map<String, Object> map = item.toMap();

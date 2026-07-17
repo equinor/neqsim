@@ -13,8 +13,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import neqsim.process.engineering.EngineeringProject;
 import neqsim.process.engineering.EngineeringRequirement;
+import neqsim.process.engineering.EngineeringSimulationRunner;
 import neqsim.process.engineering.LineDesignInput;
 import neqsim.process.engineering.designcase.DesignCaseEngine;
+import neqsim.process.engineering.designcase.EngineeringCaseRunOptions;
 import neqsim.process.engineering.designcase.EngineeringDesignEnvelope;
 import neqsim.process.engineering.designcase.EngineeringDesignCaseMatrix;
 import neqsim.process.engineering.dexpi.DexpiEngineeringExporter;
@@ -200,10 +202,15 @@ public final class EngineeringDeliverableCompiler {
     Files.createDirectories(outputDirectory);
     List<String> schemaArtifacts = EngineeringSchemaCatalog.writeSchemas(outputDirectory);
 
+    if (!project.getEngineeringDesignModules().isEmpty()) {
+      EngineeringSimulationRunner.run(project,
+          EngineeringCaseRunOptions.builder().parallelism(1).requireConvergence(true).build());
+    }
+
     EngineeringDesignEnvelope envelope = null;
     List<EngineeringCalculation> envelopeCalculations = new ArrayList<EngineeringCalculation>();
     if (!project.getExecutableDesignCases().isEmpty() && !project.getEngineeringMetrics().isEmpty()) {
-      envelope = DesignCaseEngine.run(project.getProcessSystem(), project.getExecutableDesignCases(),
+      envelope = DesignCaseEngine.run(project.getEngineeringProcessSystem(), project.getExecutableDesignCases(),
           project.getEngineeringMetrics());
       envelopeCalculations.addAll(envelope.toCalculations());
     }
@@ -360,7 +367,7 @@ public final class EngineeringDeliverableCompiler {
   private static List<Map<String, Object>> equipmentRegister(EngineeringProject project,
       EngineeringDesignEnvelope envelope) {
     List<Map<String, Object>> rows = new ArrayList<Map<String, Object>>();
-    for (ProcessEquipmentInterface unit : project.getProcessSystem().getUnitOperations()) {
+    for (ProcessEquipmentInterface unit : project.getEngineeringProcessSystem().getUnitOperations()) {
       if (unit == null || unit instanceof Stream) {
         continue;
       }
@@ -402,7 +409,7 @@ public final class EngineeringDeliverableCompiler {
 
   private static List<Map<String, Object>> instrumentRegister(EngineeringProject project) {
     Map<String, Map<String, Object>> rows = new LinkedHashMap<String, Map<String, Object>>();
-    for (MeasurementDeviceInterface instrument : project.getProcessSystem().getMeasurementDevices()) {
+    for (MeasurementDeviceInterface instrument : project.getEngineeringProcessSystem().getMeasurementDevices()) {
       String tag = instrument.getTag();
       if (tag == null || tag.trim().isEmpty()) {
         tag = instrument.getName();

@@ -65,7 +65,7 @@ final class EngineeringRegisterExporter {
   private static List<List<String>> equipmentRegister(EngineeringProject project) {
     List<List<String>> rows = rows("equipmentTag", "equipmentClass", "operatingPressureBara", "operatingTemperatureC",
         "designPressureBara", "maximumDesignTemperatureC", "material", "approvalStatus");
-    for (ProcessEquipmentInterface unit : project.getProcessSystem().getUnitOperations()) {
+    for (ProcessEquipmentInterface unit : project.getEngineeringProcessSystem().getUnitOperations()) {
       if (unit == null || unit instanceof Stream) {
         continue;
       }
@@ -106,7 +106,7 @@ final class EngineeringRegisterExporter {
 
   private static List<List<String>> valveList(EngineeringProject project) {
     List<List<String>> rows = rows("valveTag", "valveClass", "failureAction", "designPressureBara", "approvalStatus");
-    for (ProcessEquipmentInterface unit : project.getProcessSystem().getUnitOperations()) {
+    for (ProcessEquipmentInterface unit : project.getEngineeringProcessSystem().getUnitOperations()) {
       if (unit == null || !unit.getClass().getSimpleName().contains("Valve")) {
         continue;
       }
