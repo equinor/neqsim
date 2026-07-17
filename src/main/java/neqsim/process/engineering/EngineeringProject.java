@@ -24,8 +24,10 @@ import neqsim.process.engineering.model.EngineeringCalculation;
 import neqsim.process.materials.MaterialsReviewInput;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.depressurization.DynamicBlowdownFlareStudyDataSource;
+import neqsim.process.safety.depressurization.CoupledReliefBlowdownFlareInput;
 import neqsim.process.safety.esd.EmergencyShutdownTestResult;
 import neqsim.process.safety.overpressure.OverpressureProtectionStudy;
+import neqsim.process.safety.scenario.DynamicSafetyScenario;
 
 /**
  * Governed engineering representation associated with a runnable NeqSim process.
@@ -57,6 +59,8 @@ public final class EngineeringProject implements Serializable {
   private final List<EngineeringAutomationStudy> automationStudies = new ArrayList<EngineeringAutomationStudy>();
   private final List<ReliefDeviceDesignInput> reliefDeviceDesignInputs = new ArrayList<ReliefDeviceDesignInput>();
   private final List<EngineeringEvidenceRecord> evidenceRecords = new ArrayList<EngineeringEvidenceRecord>();
+  private final List<CoupledReliefBlowdownFlareInput> coupledReliefBlowdownFlareStudies = new ArrayList<CoupledReliefBlowdownFlareInput>();
+  private final List<DynamicSafetyScenario> dynamicSafetyScenarios = new ArrayList<DynamicSafetyScenario>();
   private final Map<String, EmergencyShutdownTestResult> shutdownVerificationResults = new LinkedHashMap<String, EmergencyShutdownTestResult>();
   private MaterialsReviewInput materialsReviewInput;
 
@@ -171,6 +175,34 @@ public final class EngineeringProject implements Serializable {
   /** @return immutable transient blowdown and flare study inputs */
   public List<DynamicBlowdownFlareStudyDataSource> getBlowdownFlareStudies() {
     return Collections.unmodifiableList(blowdownFlareStudies);
+  }
+
+  /** Adds a calculation that couples relief scenarios, transient blowdown, and the common flare system. */
+  public EngineeringProject addCoupledReliefBlowdownFlareStudy(CoupledReliefBlowdownFlareInput study) {
+    if (study == null) {
+      throw new IllegalArgumentException("study must not be null");
+    }
+    coupledReliefBlowdownFlareStudies.add(study);
+    return this;
+  }
+
+  /** @return immutable coupled relief, blowdown, and flare study definitions */
+  public List<CoupledReliefBlowdownFlareInput> getCoupledReliefBlowdownFlareStudies() {
+    return Collections.unmodifiableList(coupledReliefBlowdownFlareStudies);
+  }
+
+  /** Adds an isolated initiating-event and protection-response simulation. */
+  public EngineeringProject addDynamicSafetyScenario(DynamicSafetyScenario scenario) {
+    if (scenario == null) {
+      throw new IllegalArgumentException("scenario must not be null");
+    }
+    dynamicSafetyScenarios.add(scenario);
+    return this;
+  }
+
+  /** @return immutable dynamic control and SIS scenario definitions */
+  public List<DynamicSafetyScenario> getDynamicSafetyScenarios() {
+    return Collections.unmodifiableList(dynamicSafetyScenarios);
   }
 
   /** Adds a controlled line-list row associated with pipeline equipment. */
@@ -473,6 +505,12 @@ public final class EngineeringProject implements Serializable {
             "Engineering metric references unknown equipment: " + metric.getId());
       }
     }
+    for (DynamicSafetyScenario scenario : dynamicSafetyScenarios) {
+      if (scenario.getEvidenceReferences().isEmpty()) {
+        report.add(Severity.REVIEW, "ENG-DYNAMIC-001", scenario.getId(),
+            "Dynamic protection scenario has no SRS, cause-and-effect, or hazard-review evidence reference");
+      }
+    }
     Set<String> boundaryIds = new HashSet<String>();
     for (EngineeringBoundary boundary : boundaries) {
       if (!boundaryIds.add(boundary.getId())) {
@@ -638,6 +676,16 @@ public final class EngineeringProject implements Serializable {
       metrics.add(gson.toJsonTree(metric.toMap()));
     }
     root.add("engineeringMetrics", metrics);
+    JsonArray coupledStudies = new JsonArray();
+    for (CoupledReliefBlowdownFlareInput study : coupledReliefBlowdownFlareStudies) {
+      coupledStudies.add(gson.toJsonTree(study.toMap()));
+    }
+    root.add("coupledReliefBlowdownFlareStudies", coupledStudies);
+    JsonArray dynamicScenarios = new JsonArray();
+    for (DynamicSafetyScenario scenario : dynamicSafetyScenarios) {
+      dynamicScenarios.add(gson.toJsonTree(scenario.toMap()));
+    }
+    root.add("dynamicSafetyScenarios", dynamicScenarios);
     JsonArray calculationNodes = new JsonArray();
     for (EngineeringCalculation calculation : calculations) {
       calculationNodes.add(gson.toJsonTree(calculation.toMap()));

@@ -394,6 +394,31 @@ Run steady state first. Then use `runTransient(dt)` or a dedicated safety model
 for blowdown. Use timestep sensitivity if the result depends on fast valve
 movement.
 
+### Governed engineering simulation
+
+When the result will feed DEXPI or discipline deliverables, prefer the
+engineering-simulator contracts over mutating the live process:
+
+1. Put normal, maximum, turndown, startup, shutdown, trip, blocked-outlet, fire,
+   and utility-loss configurations in `EngineeringCaseSet`.
+2. Run them with `EngineeringCaseRunner`; require convergence and retain both
+   definition and result fingerprints.
+3. Implement new discipline calculations as
+   `EngineeringCalculationModule<I, O>` so readiness blockers, method version,
+   inputs, evidence, standards, uncertainty, and review state are explicit.
+4. Use `CoupledReliefBlowdownFlareCalculation` when steady relief groups and
+   dynamic blowdown share a disposal system. Never infer credible causes or
+   concurrency groups from topology alone.
+5. Use `DynamicSafetyScenarioRunner` for response-time verification. Build
+   logic through a `LogicFactory` against equipment in the isolated process
+   copy; never retain valve/controller references from the live base model.
+6. Use `EngineeringSimulationRunner` to execute all configured layers before
+   generating the governed DEXPI package.
+
+Dynamic pass/fail verifies the supplied model and acceptance criteria. It does
+not infer SIL, approve the SRS, establish independence, or authorize a field
+action.
+
 ## Reporting Requirements
 
 For each operational change study, report:

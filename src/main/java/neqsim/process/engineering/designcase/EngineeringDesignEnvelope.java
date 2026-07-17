@@ -89,7 +89,7 @@ public final class EngineeringDesignEnvelope implements Serializable {
   }
 
   public int getPartialCaseCount() {
-    return countCases("CALCULATED_WITH_METRIC_FAILURES");
+    return countCases("CALCULATED_WITH_METRIC_FAILURES") + countCases("CALCULATED_NOT_CONVERGED");
   }
 
   public int getFailedCaseCount() {

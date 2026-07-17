@@ -272,6 +272,24 @@ Before using any deliverable class:
 3. **Do NOT assume convenience methods** — check first
 4. **Test with JUnit** if creating documentation examples
 
+## Engineering Simulator Handoff
+
+Before compiling DEXPI or discipline deliverables, check whether the project
+contains executable design cases, coupled relief/blowdown/flare studies, or
+dynamic protection scenarios. Run them together with
+`EngineeringSimulationRunner` and preserve the result under
+`coordinatedEngineeringSimulation`.
+
+- Use `EngineeringCaseRunner` for independent case copies and deterministic
+  governing envelopes.
+- Require typed `EngineeringCalculationResult` provenance for new discipline
+  methods.
+- Keep HAZOP credibility and relief concurrency as externally reviewed inputs.
+- Build ESD/SIS logic against the isolated process copy through
+  `DynamicSafetyScenario.LogicFactory`.
+- Treat failed, blocked, and review-required results as visible deliverable
+  gaps; never convert them to approval automatically.
+
 ## Shared Skills
 - Heat integration: See `neqsim-heat-integration` skill for pinch analysis (drives utility level selection)
 - Utilities specification: See `neqsim-utilities-specification` skill for steam levels, cooling water, instrument air, fuel gas, N₂, demin water, refrigeration

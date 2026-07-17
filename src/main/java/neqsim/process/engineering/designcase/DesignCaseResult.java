@@ -55,6 +55,7 @@ public final class DesignCaseResult implements Serializable {
   private final Map<String, MetricResult> metricResults = new LinkedHashMap<String, MetricResult>();
   private String status = "PENDING";
   private String message = "";
+  private boolean converged;
 
   DesignCaseResult(EngineeringDesignCase designCase) {
     this.designCase = designCase;
@@ -72,13 +73,21 @@ public final class DesignCaseResult implements Serializable {
   }
 
   void finish() {
+    finish(true);
+  }
+
+  void finish(boolean simulationConverged) {
+    converged = simulationConverged;
     int failures = 0;
     for (MetricResult result : metricResults.values()) {
       if ("FAILED".equals(result.getStatus())) {
         failures++;
       }
     }
-    if (failures == 0) {
+    if (!simulationConverged && !values.isEmpty()) {
+      status = "CALCULATED_NOT_CONVERGED";
+      message = "Process simulation did not report convergence";
+    } else if (failures == 0) {
       status = "CALCULATED";
     } else if (values.isEmpty()) {
       status = "FAILED";
@@ -91,6 +100,7 @@ public final class DesignCaseResult implements Serializable {
 
   void fail(String failureMessage) {
     status = "FAILED";
+    converged = false;
     message = failureMessage == null ? "" : failureMessage;
     values.clear();
     metricResults.clear();
@@ -113,6 +123,10 @@ public final class DesignCaseResult implements Serializable {
     return message;
   }
 
+  public boolean isConverged() {
+    return converged;
+  }
+
   public Map<String, Double> getValues() {
     return Collections.unmodifiableMap(values);
   }
@@ -126,6 +140,7 @@ public final class DesignCaseResult implements Serializable {
     result.put("case", designCase.toMap());
     result.put("status", status);
     result.put("message", message);
+    result.put("converged", Boolean.valueOf(converged));
     result.put("values", new LinkedHashMap<String, Double>(values));
     Map<String, Object> metrics = new LinkedHashMap<String, Object>();
     for (Map.Entry<String, MetricResult> entry : metricResults.entrySet()) {
