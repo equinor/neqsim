@@ -54,6 +54,8 @@ public final class PidEngineeringPackageExporter {
     PidCompletenessReport report = PidCompletenessValidator.validate(model);
     Path completenessFile = outputDirectory.resolve("pid-completeness-report.json");
     Files.write(completenessFile, report.toJson().getBytes(StandardCharsets.UTF_8));
+    Path hazopFile = outputDirectory.resolve("pid-hazop-study.json");
+    Files.write(hazopFile, PidHazopStudyRunner.run(project, model).toJson().getBytes(StandardCharsets.UTF_8));
     PidDexpiMaterializer.materialize(model, engineering.getDexpiFile());
     PidDexpiMaterializer.materialize(model, engineering.getPyDexpiFile());
     DexpiEngineeringExporter.refreshPackageManifest(outputDirectory);
