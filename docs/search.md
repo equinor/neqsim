@@ -80,6 +80,7 @@ permalink: /search/
       <div class="sp-tips">
         <h4>Search tips</h4>
         <ul>
+          <li><strong>Complete coverage:</strong> titles, descriptions, keywords, headings, source paths, and full page content are indexed</li>
           <li><strong>Single words</strong> work best: <code>separator</code>, <code>hydrate</code>, <code>compressor</code></li>
           <li><strong>Synonyms are expanded</strong> automatically: searching <em>unisim</em> also finds <em>hysys</em> and <em>converter</em></li>
           <li><strong>Filter by section</strong> using the category buttons that appear above results</li>
