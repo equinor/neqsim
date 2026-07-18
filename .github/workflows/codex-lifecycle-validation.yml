@@ -1,0 +1,31 @@
+name: Codex lifecycle PR validation
+
+on:
+  pull_request:
+    branches:
+      - codex/sif-reliability-degraded
+
+permissions:
+  contents: read
+
+jobs:
+  format-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Apply Spotless and export patch
+        run: |
+          ./mvnw -q spotless:apply
+          git diff --binary > /tmp/spotless.patch
+      - name: Focused tests
+        run: ./mvnw -q -Dtest='HazopLopaSrsWorkflowTest' test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lifecycle-spotless-patch
+          path: /tmp/spotless.patch
+          if-no-files-found: error
