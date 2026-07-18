@@ -64,11 +64,9 @@ public final class TransientPipingQualificationCalculation implements
       if (maximumPressureBara < minimumPressureBara) {
         throw new IllegalArgumentException("maximumPressureBara must not be below minimumPressureBara");
       }
-      this.maximumLiquidHoldupFraction = fraction(maximumLiquidHoldupFraction,
-          "maximumLiquidHoldupFraction");
+      this.maximumLiquidHoldupFraction = fraction(maximumLiquidHoldupFraction, "maximumLiquidHoldupFraction");
       this.maximumVelocityMPerS = nonNegative(maximumVelocityMPerS, "maximumVelocityMPerS");
-      this.maximumEquivalentStressMpa = nonNegative(maximumEquivalentStressMpa,
-          "maximumEquivalentStressMpa");
+      this.maximumEquivalentStressMpa = nonNegative(maximumEquivalentStressMpa, "maximumEquivalentStressMpa");
     }
   }
 
@@ -102,16 +100,13 @@ public final class TransientPipingQualificationCalculation implements
           "maximumTimeStepToTransitFraction");
       maximumLinePackBalanceErrorFraction = nonNegative(builder.maximumLinePackBalanceErrorFraction,
           "maximumLinePackBalanceErrorFraction");
-      maximumAllowablePressureBara = positive(builder.maximumAllowablePressureBara,
-          "maximumAllowablePressureBara");
-      minimumAllowablePressureBara = nonNegative(builder.minimumAllowablePressureBara,
-          "minimumAllowablePressureBara");
+      maximumAllowablePressureBara = positive(builder.maximumAllowablePressureBara, "maximumAllowablePressureBara");
+      minimumAllowablePressureBara = nonNegative(builder.minimumAllowablePressureBara, "minimumAllowablePressureBara");
       maximumSlugVolumeM3 = nonNegative(builder.maximumSlugVolumeM3, "maximumSlugVolumeM3");
       maximumAcousticMach = positive(builder.maximumAcousticMach, "maximumAcousticMach");
       maximumPressurePulsationPercent = nonNegative(builder.maximumPressurePulsationPercent,
           "maximumPressurePulsationPercent");
-      allowableEquivalentStressMpa = positive(builder.allowableEquivalentStressMpa,
-          "allowableEquivalentStressMpa");
+      allowableEquivalentStressMpa = positive(builder.allowableEquivalentStressMpa, "allowableEquivalentStressMpa");
       samples = Collections.unmodifiableList(new ArrayList<Sample>(builder.samples));
     }
 
@@ -150,23 +145,20 @@ public final class TransientPipingQualificationCalculation implements
         return this;
       }
 
-      public Builder resolutionAndBalanceLimits(double timeStepToTransitFraction,
-          double linePackBalanceErrorFraction) {
+      public Builder resolutionAndBalanceLimits(double timeStepToTransitFraction, double linePackBalanceErrorFraction) {
         maximumTimeStepToTransitFraction = timeStepToTransitFraction;
         maximumLinePackBalanceErrorFraction = linePackBalanceErrorFraction;
         return this;
       }
 
-      public Builder pressureLimits(double minimumBara, double maximumBara,
-          double maximumPulsationPercent) {
+      public Builder pressureLimits(double minimumBara, double maximumBara, double maximumPulsationPercent) {
         minimumAllowablePressureBara = minimumBara;
         maximumAllowablePressureBara = maximumBara;
         maximumPressurePulsationPercent = maximumPulsationPercent;
         return this;
       }
 
-      public Builder responseLimits(double slugVolumeM3, double acousticMach,
-          double equivalentStressMpa) {
+      public Builder responseLimits(double slugVolumeM3, double acousticMach, double equivalentStressMpa) {
         maximumSlugVolumeM3 = slugVolumeM3;
         maximumAcousticMach = acousticMach;
         allowableEquivalentStressMpa = equivalentStressMpa;
@@ -288,10 +280,8 @@ public final class TransientPipingQualificationCalculation implements
       Sample sample = input.samples.get(i);
       minimumPressureBara = Math.min(minimumPressureBara, sample.minimumPressureBara);
       maximumPressureBara = Math.max(maximumPressureBara, sample.maximumPressureBara);
-      maximumOfMinimumPressureBara = Math.max(maximumOfMinimumPressureBara,
-          sample.minimumPressureBara);
-      minimumOfMaximumPressureBara = Math.min(minimumOfMaximumPressureBara,
-          sample.maximumPressureBara);
+      maximumOfMinimumPressureBara = Math.max(maximumOfMinimumPressureBara, sample.minimumPressureBara);
+      minimumOfMaximumPressureBara = Math.min(minimumOfMaximumPressureBara, sample.maximumPressureBara);
       maximumHoldup = Math.max(maximumHoldup, sample.maximumLiquidHoldupFraction);
       maximumVelocity = Math.max(maximumVelocity, sample.maximumVelocityMPerS);
       maximumStress = Math.max(maximumStress, sample.maximumEquivalentStressMpa);
@@ -308,8 +298,8 @@ public final class TransientPipingQualificationCalculation implements
         - input.samples.get(0).linePackMassKg;
     double balanceDenominator = Math.max(1.0,
         Math.max(Math.abs(integratedBoundaryImbalanceKg), Math.abs(observedLinePackChangeKg)));
-    double linePackBalanceErrorFraction = Math
-        .abs(integratedBoundaryImbalanceKg - observedLinePackChangeKg) / balanceDenominator;
+    double linePackBalanceErrorFraction = Math.abs(integratedBoundaryImbalanceKg - observedLinePackChangeKg)
+        / balanceDenominator;
     double acousticTransitSeconds = input.hydraulicLengthM / input.waveSpeedMPerS;
     double pressureMean = Math.max(0.5 * (maximumPressureBara + minimumPressureBara), 1.0e-12);
     double pressureExcursionBara = Math.max(maximumOfMinimumPressureBara - minimumPressureBara,
@@ -332,26 +322,22 @@ public final class TransientPipingQualificationCalculation implements
     metrics.put("maximumEquivalentStressMpa", Double.valueOf(maximumStress));
 
     Map<String, Boolean> constraints = new LinkedHashMap<String, Boolean>();
-    constraints.put("TRANSIENT_TIME_RESOLUTION", Boolean
-        .valueOf(maximumTimeStepSeconds <= acousticTransitSeconds * input.maximumTimeStepToTransitFraction));
+    constraints.put("TRANSIENT_TIME_RESOLUTION",
+        Boolean.valueOf(maximumTimeStepSeconds <= acousticTransitSeconds * input.maximumTimeStepToTransitFraction));
     constraints.put("LINE_PACK_MASS_BALANCE",
         Boolean.valueOf(linePackBalanceErrorFraction <= input.maximumLinePackBalanceErrorFraction));
-    constraints.put("MINIMUM_PRESSURE",
-        Boolean.valueOf(minimumPressureBara >= input.minimumAllowablePressureBara));
-    constraints.put("MAXIMUM_PRESSURE",
-        Boolean.valueOf(maximumPressureBara <= input.maximumAllowablePressureBara));
+    constraints.put("MINIMUM_PRESSURE", Boolean.valueOf(minimumPressureBara >= input.minimumAllowablePressureBara));
+    constraints.put("MAXIMUM_PRESSURE", Boolean.valueOf(maximumPressureBara <= input.maximumAllowablePressureBara));
     constraints.put("PRESSURE_PULSATION",
         Boolean.valueOf(pressurePulsationPercent <= input.maximumPressurePulsationPercent));
-    constraints.put("TRANSIENT_SLUG_INVENTORY",
-        Boolean.valueOf(maximumSlugVolumeM3 <= input.maximumSlugVolumeM3));
+    constraints.put("TRANSIENT_SLUG_INVENTORY", Boolean.valueOf(maximumSlugVolumeM3 <= input.maximumSlugVolumeM3));
     constraints.put("ACOUSTIC_VELOCITY", Boolean.valueOf(maximumAcousticMach <= input.maximumAcousticMach));
-    constraints.put("EQUIVALENT_PIPE_STRESS",
-        Boolean.valueOf(maximumStress <= input.allowableEquivalentStressMpa));
+    constraints.put("EQUIVALENT_PIPE_STRESS", Boolean.valueOf(maximumStress <= input.allowableEquivalentStressMpa));
 
     return output.status(EngineeringCalculationResult.Status.CALCULATED_REVIEW_REQUIRED)
         .input("networkId", input.networkId).input("sourceModel", input.sourceModel)
-        .input("sourceModelVersion", input.sourceModelVersion).input("sampleCount", Integer.valueOf(input.samples.size()))
-        .value(new Result(metrics, constraints))
+        .input("sourceModelVersion", input.sourceModelVersion)
+        .input("sampleCount", Integer.valueOf(input.samples.size())).value(new Result(metrics, constraints))
         .warning("Final stress, support, acoustic-induced vibration and fatigue acceptance require discipline review")
         .build();
   }
