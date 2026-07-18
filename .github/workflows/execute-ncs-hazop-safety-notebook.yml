@@ -31,7 +31,7 @@ jobs:
       - name: Build, format and test
         run: |
           ./mvnw -Dmaven.test.skip=true package
-          ./mvnw spotless:check
+          ./mvnw spotless:apply
           ./mvnw -Dtest='PidHazopStudyRunnerTest,NcsSafetyFunctionStudyTest' test
       - name: Install notebook runtime
         run: python -m pip install --upgrade nbconvert nbclient nbformat ipykernel pandas matplotlib numpy jpype1 pydexpi==1.2.0 cairosvg==2.9.0
@@ -72,5 +72,9 @@ jobs:
           path: |
             build/executed-notebooks/ncs_offshore_hazop_esd_hipps_engineering_study.ipynb
             build/complete-offshore-process-engineering-study/revision-b/ncs-hazop-safety-study
+            src/main/java/neqsim/process/engineering/pid
+            src/main/java/neqsim/process/engineering/safety
+            src/test/java/neqsim/process/engineering/pid
+            src/test/java/neqsim/process/engineering/safety
           if-no-files-found: error
           retention-days: 14
