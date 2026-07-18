@@ -22,10 +22,11 @@ import org.xml.sax.SAXException;
 public final class Dexpi20SemanticValidator {
   private static final String CORE_MODEL = "https://data.dexpi.org/models/2.0.0/Core.xml";
   private static final String PLANT_MODEL = "https://data.dexpi.org/models/2.0.0/Plant.xml";
-  private static final Set<String> SUPPORTED_TYPES = Collections
-      .unmodifiableSet(new LinkedHashSet<String>(Arrays.asList("Core/EngineeringModel", "Core/Diagram.Diagram",
-          "Core/Diagram.RepresentationGroup", "Core/Diagram.Text", "Core/Diagram.Point", "Plant/PlantModel",
-          "Plant/ProcessEquipment.ProcessEquipment", "Plant/ProcessEquipment.CentrifugalCompressor",
+  private static final String PROCESS_MODEL = "https://data.dexpi.org/models/2.0.0/Process.xml";
+  private static final Set<String> SUPPORTED_TYPES = Collections.unmodifiableSet(new LinkedHashSet<String>(
+      Arrays.asList("Core/EngineeringModel", "Core/QualifiedValue", "Core/PhysicalQuantities.PhysicalQuantity",
+          "Core/Diagram.Diagram", "Core/Diagram.RepresentationGroup", "Core/Diagram.Text", "Core/Diagram.Point",
+          "Plant/PlantModel", "Plant/ProcessEquipment.ProcessEquipment", "Plant/ProcessEquipment.CentrifugalCompressor",
           "Plant/ProcessEquipment.CentrifugalPump", "Plant/ProcessEquipment.Separator",
           "Plant/ProcessEquipment.AirCoolingSystem", "Plant/ProcessEquipment.TubularHeatExchanger",
           "Plant/ProcessEquipment.FiredHeater", "Plant/ProcessEquipment.Tank", "Plant/ProcessEquipment.Nozzle",
@@ -33,7 +34,13 @@ public final class Dexpi20SemanticValidator {
           "Plant/Piping.Pipe", "Plant/Piping.GlobeValve", "Plant/Piping.SpringLoadedGlobeSafetyValve",
           "Plant/Piping.SwingCheckValve", "Plant/Piping.FlowInPipeOffPageConnector",
           "Plant/Piping.FlowOutPipeOffPageConnector", "Plant/Instrumentation.ProcessInstrumentationFunction",
-          "Plant/Instrumentation.ProcessSignalGeneratingFunction", "Plant/Instrumentation.MeasuringLineFunction")));
+          "Plant/Instrumentation.ProcessSignalGeneratingFunction", "Plant/Instrumentation.MeasuringLineFunction",
+          "Process/ProcessModel", "Process/Process.MaterialPort", "Process/Process.Stream", "Process/Process.Source",
+          "Process/Process.Sink", "Process/Process.TransportingFluids", "Process/Process.Compressing",
+          "Process/Process.Pumping", "Process/Process.Distilling", "Process/Process.SeparatingByGravity",
+          "Process/Process.Cooling", "Process/Process.ExchangingThermalEnergy", "Process/Process.HeatingInFurnace",
+          "Process/Process.StoringFluids", "Process/Process.RegulatingFlow", "Process/Process.MixingSimple",
+          "Process/Process.SplittingMaterial")));
 
   private Dexpi20SemanticValidator() {
   }
@@ -105,7 +112,15 @@ public final class Dexpi20SemanticValidator {
 
     Map<String, String> imports = collectImports(root, errors);
     requireImport(imports, "Core", CORE_MODEL, errors);
-    requireImport(imports, "Plant", PLANT_MODEL, errors);
+    if (!imports.containsKey("Plant") && !imports.containsKey("Process")) {
+      errors.add("A DEXPI 2.0 exchange must import the Plant or Process information model.");
+    }
+    if (imports.containsKey("Plant")) {
+      requireImport(imports, "Plant", PLANT_MODEL, errors);
+    }
+    if (imports.containsKey("Process")) {
+      requireImport(imports, "Process", PROCESS_MODEL, errors);
+    }
 
     Map<String, Element> objectsById = new LinkedHashMap<String, Element>();
     Set<String> tagNames = new LinkedHashSet<String>();
@@ -135,6 +150,7 @@ public final class Dexpi20SemanticValidator {
     validateReferences(root, objectsById, errors);
     validateEquipment(objects, errors, warnings);
     validatePipingReferences(root, objectsById, errors);
+    validateProcessModel(objects, objectsById, errors, warnings);
     return new ValidationReport(errors, warnings);
   }
 
@@ -230,6 +246,94 @@ public final class Dexpi20SemanticValidator {
         }
       }
     }
+  }
+
+  private static void validateProcessModel(NodeList objects, Map<String, Element> objectsById, List<String> errors,
+      List<String> warnings) {
+    int processModelCount = 0;
+    int processStepCount = 0;
+    int streamCount = 0;
+    for (int i = 0; i < objects.getLength(); i++) {
+      Element object = (Element) objects.item(i);
+      String type = object.getAttribute("type");
+      if ("Process/ProcessModel".equals(type)) {
+        processModelCount++;
+      } else if ("Process/Process.MaterialPort".equals(type)) {
+        requireDirectStringData(object, "Identifier", errors);
+        requireDirectDataReference(object, "NominalDirection", errors);
+        validateTypedReference(object, "ConnectorReference", "Process/Process.Stream", objectsById, errors);
+      } else if ("Process/Process.Stream".equals(type)) {
+        streamCount++;
+        requireDirectStringData(object, "Identifier", errors);
+        requireDirectStringData(object, "Label", errors);
+        validateTypedReference(object, "Source", "Process/Process.MaterialPort", objectsById, errors);
+        validateTypedReference(object, "Target", "Process/Process.MaterialPort", objectsById, errors);
+      } else if (type.startsWith("Process/Process.")) {
+        processStepCount++;
+        requireDirectStringData(object, "Identifier", errors);
+        if (!hasDirectComponents(object, "Ports")) {
+          warnings
+              .add("DEXPI Process step has no material, energy, or information ports: " + object.getAttribute("id"));
+        }
+      }
+    }
+    if (processModelCount > 1) {
+      errors.add("A DEXPI engineering model contains more than one ProcessModel conceptual model.");
+    }
+    if (processModelCount == 1 && (processStepCount == 0 || streamCount == 0)) {
+      errors.add("A NeqSim DEXPI Process exchange requires at least one process step and material stream.");
+    }
+  }
+
+  private static void validateTypedReference(Element object, String property, String expectedType,
+      Map<String, Element> objectsById, List<String> errors) {
+    Element reference = directReference(object, property);
+    if (reference == null) {
+      errors.add(
+          object.getAttribute("type") + " has no required " + property + " reference: " + object.getAttribute("id"));
+      return;
+    }
+    String values = reference.getAttribute("objects").trim();
+    if (values.indexOf(' ') >= 0) {
+      errors.add(property + " must contain exactly one object reference: " + values);
+      return;
+    }
+    Element target = values.startsWith("#") ? objectsById.get(values.substring(1)) : null;
+    if (target != null && !expectedType.equals(target.getAttribute("type"))) {
+      errors.add(property + " must reference " + expectedType + ": " + values);
+    }
+  }
+
+  private static void requireDirectStringData(Element object, String property, List<String> errors) {
+    if (directStringData(object, property) == null) {
+      errors
+          .add(object.getAttribute("type") + " has no required " + property + " string: " + object.getAttribute("id"));
+    }
+  }
+
+  private static void requireDirectDataReference(Element object, String property, List<String> errors) {
+    for (Node child = object.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (!(child instanceof Element) || !"Data".equals(((Element) child).getTagName())
+          || !property.equals(((Element) child).getAttribute("property"))) {
+        continue;
+      }
+      NodeList references = ((Element) child).getElementsByTagName("DataReference");
+      if (references.getLength() == 1 && !((Element) references.item(0)).getAttribute("data").isEmpty()) {
+        return;
+      }
+    }
+    errors.add(
+        object.getAttribute("type") + " has no required " + property + " data reference: " + object.getAttribute("id"));
+  }
+
+  private static Element directReference(Element object, String property) {
+    for (Node child = object.getFirstChild(); child != null; child = child.getNextSibling()) {
+      if (child instanceof Element && "References".equals(((Element) child).getTagName())
+          && property.equals(((Element) child).getAttribute("property"))) {
+        return (Element) child;
+      }
+    }
+    return null;
   }
 
   private static boolean hasDirectComponents(Element object, String property) {

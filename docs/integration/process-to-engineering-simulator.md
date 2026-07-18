@@ -9,6 +9,9 @@ See also [Numerical health and engineering closure](numerical-health-and-enginee
 convergence, mass/energy closure, residual, and sensitivity evidence that can be embedded in design-case and
 production-readiness reports.
 
+Native [DEXPI 2.0 Plant and Process exchange](dexpi-20-conformance.md) provides separate P&ID and PFD/BFD information
+models with offline official-schema validation and auditable conformance reports.
+
 The process-to-engineering simulator closes the loop between process physics and preliminary engineering design. It
 runs every controlled process case on isolated copies, sizes configured engineering objects, applies selected design
 variables to a separate working flowsheet, reruns the cases, and stops only when no design variable changes and all
