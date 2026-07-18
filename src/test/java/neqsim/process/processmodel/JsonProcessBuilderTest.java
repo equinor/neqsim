@@ -13,6 +13,7 @@ import com.google.gson.JsonObject;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorDriver;
 import neqsim.process.equipment.compressor.DriverType;
+import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.separator.Separator;
@@ -98,6 +99,30 @@ class JsonProcessBuilderTest {
     // the water fraction was applied rather than dropped (which would leave ~methane, ~16 g/mol).
     assertEquals(0.018, wet.getFluid().getMolarMass(), 5e-4,
         "Nearly-pure H2O stream should have molar mass ~0.018 kg/mol");
+  }
+
+  @Test
+  void testDistillationColumnConfigFromJson() {
+    // A DistillationColumn defined in JSON must pick up its tray count, feed tray, operating
+    // pressures and reflux ratio. The reflux ratio and duties live on the nested condenser/reboiler
+    // trays and cannot be set by the generic reflection-based property applier, so they are applied
+    // explicitly by configureDistillationColumn at construction.
+    String json = "{" + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 300.0, \"pressure\": 10.0,"
+        + "  \"components\": {\"propane\": 0.4, \"n-butane\": 0.35, \"n-pentane\": 0.25}}," + "\"process\": ["
+        + "  {\"type\": \"Stream\", \"name\": \"feed\","
+        + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"], \"temperature\": [60.0, \"C\"],"
+        + "     \"pressure\": [10.0, \"bara\"]}},"
+        + "  {\"type\": \"DistillationColumn\", \"name\": \"deC3\", \"inlet\": \"feed\","
+        + "   \"properties\": {\"numberOfTrays\": 6, \"hasReboiler\": true, \"hasCondenser\": true,"
+        + "     \"feedTray\": 3, \"refluxRatio\": 1.5, \"topPressure\": 10.0, \"bottomPressure\": 10.5}}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    DistillationColumn col = (DistillationColumn) result.getProcessSystem().getUnit("deC3");
+    assertNotNull(col, "DistillationColumn should be built from JSON");
+    // The reflux-ratio spec (nested on the condenser) must have been applied — this is the spec the
+    // generic property applier cannot reach and the new configureDistillationColumn handles.
+    assertEquals(1.5, col.getCondenser().getRefluxRatio(), 1e-9,
+        "Reflux-ratio spec from JSON must be applied to the column condenser");
   }
 
   @Test

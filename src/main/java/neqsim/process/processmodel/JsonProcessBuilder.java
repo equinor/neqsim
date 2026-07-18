@@ -91,6 +91,12 @@ public class JsonProcessBuilder {
    */
   private final Map<String, List<String>> partialMixerDroppedInlets = new LinkedHashMap<>();
 
+  /**
+   * Feed-tray number per DistillationColumn name, captured from the column JSON so the feed can be wired onto the
+   * correct stage (UniSim feed stage) instead of the column's default middle tray.
+   */
+  private final Map<String, Integer> columnFeedTrays = new LinkedHashMap<>();
+
   /** Errors accumulated during build. */
   private final List<SimulationResult.ErrorDetail> errors = new ArrayList<>();
 
@@ -1218,8 +1224,8 @@ public class JsonProcessBuilder {
     boolean hasReboiler = true;
     boolean hasCondenser = true;
 
-    if (unitDef.has("properties")) {
-      JsonObject props = unitDef.getAsJsonObject("properties");
+    JsonObject props = unitDef.has("properties") ? unitDef.getAsJsonObject("properties") : null;
+    if (props != null) {
       if (props.has("numberOfTrays")) {
         numberOfTrays = props.get("numberOfTrays").getAsInt();
       }
@@ -1231,7 +1237,57 @@ public class JsonProcessBuilder {
       }
     }
 
-    return new DistillationColumn(name, numberOfTrays, hasReboiler, hasCondenser);
+    DistillationColumn column = new DistillationColumn(name, numberOfTrays, hasReboiler, hasCondenser);
+    if (props != null) {
+      configureDistillationColumn(column, name, props, hasCondenser, hasReboiler);
+    }
+    return column;
+  }
+
+  /**
+   * Applies column-specific specifications (feed tray, operating pressures, and condenser/reboiler reflux or duty) from
+   * the column JSON. These specs cannot be set by the generic reflection-based {@link #applyProperties} because the
+   * reflux ratio and duties live on the nested condenser/reboiler trays; they are therefore handled explicitly here and
+   * skipped in {@link #applyProperties}.
+   *
+   * @param column the distillation column to configure
+   * @param name the column name (used to store the feed-tray for later wiring)
+   * @param props the column properties JSON object
+   * @param hasCondenser whether the column has a condenser
+   * @param hasReboiler whether the column has a reboiler
+   */
+  private void configureDistillationColumn(DistillationColumn column, String name, JsonObject props,
+      boolean hasCondenser, boolean hasReboiler) {
+    if (props.has("feedTray")) {
+      columnFeedTrays.put(name, props.get("feedTray").getAsInt());
+    }
+    if (props.has("topPressure")) {
+      column.setTopPressure(props.get("topPressure").getAsDouble());
+    }
+    if (props.has("bottomPressure")) {
+      column.setBottomPressure(props.get("bottomPressure").getAsDouble());
+    }
+    if (hasCondenser && props.has("refluxRatio")) {
+      try {
+        column.getCondenser().setRefluxRatio(props.get("refluxRatio").getAsDouble());
+      } catch (RuntimeException ex) {
+        warnings.add("Could not set reflux ratio on column " + name + ": " + ex.getMessage());
+      }
+    }
+    if (hasCondenser && props.has("condenserDuty")) {
+      try {
+        column.getCondenser().setHeatInput(props.get("condenserDuty").getAsDouble());
+      } catch (RuntimeException ex) {
+        warnings.add("Could not set condenser duty on column " + name + ": " + ex.getMessage());
+      }
+    }
+    if (hasReboiler && props.has("reboilerDuty")) {
+      try {
+        column.getReboiler().setHeatInput(props.get("reboilerDuty").getAsDouble());
+      } catch (RuntimeException ex) {
+        warnings.add("Could not set reboiler duty on column " + name + ": " + ex.getMessage());
+      }
+    }
   }
 
   /**
@@ -1851,10 +1907,17 @@ public class JsonProcessBuilder {
    */
   private void wireInletStream(ProcessEquipmentInterface equipment, StreamInterface stream) {
     // Special handling for DistillationColumn — uses addFeedStream, not
-    // setInletStream
+    // setInletStream. Wire the feed onto the captured feed tray when known so
+    // the feed enters the correct stage (UniSim feed stage); otherwise the
+    // column places it on its default middle tray.
     if (equipment instanceof DistillationColumn) {
       DistillationColumn column = (DistillationColumn) equipment;
-      column.addFeedStream(stream);
+      Integer feedTray = columnFeedTrays.get(column.getName());
+      if (feedTray != null) {
+        column.addFeedStream(stream, feedTray);
+      } else {
+        column.addFeedStream(stream);
+      }
       return;
     }
 
@@ -1892,7 +1955,12 @@ public class JsonProcessBuilder {
     java.util.Set<String> handledProps = new java.util.HashSet<>(
         java.util.Arrays.asList("splitFactors", "flowRates", "flowUnit", "adjustedEquipment", "adjustedVariable",
             "targetEquipment", "targetVariable", "targetValue", "stepSize", "compressorChart", "antiSurge", "driver",
-            "calculatorInputs", "calculatorOutput", "calculationType", "accelerationMethod", "downstreamProperty"));
+            "calculatorInputs", "calculatorOutput", "calculationType", "accelerationMethod", "downstreamProperty",
+            // DistillationColumn specs are applied by configureDistillationColumn
+            // at construction (nested condenser/reboiler setters), not by generic
+            // reflection.
+            "numberOfTrays", "hasReboiler", "hasCondenser", "feedTray", "refluxRatio", "condenserDuty", "reboilerDuty",
+            "topPressure", "bottomPressure"));
     if (equipment instanceof Recycle) {
       applyRecycleProperties((Recycle) equipment, properties);
     }
