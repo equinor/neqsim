@@ -1809,6 +1809,14 @@ class UniSimReader:
             # give the same per-component mole split, so default molar.
             props['split_basis'] = 'molar'
 
+        elif ('distillation' in type_name or 'columnop' in type_name
+              or 'reboiledabsorber' in type_name or 'absorber' in type_name):
+            # Distillation / absorber columns: capture the operating
+            # specifications (reflux ratio, top/bottom pressure, number of
+            # stages) from the UniSim column so the NeqSim DistillationColumn
+            # converges to the same solution. Best-effort and fully defensive.
+            self._extract_column_specs(op, props)
+
         elif 'pipeseg' in type_name:
             # Try to get pipe length, diameter
             try:
@@ -2091,6 +2099,63 @@ class UniSimReader:
                 pass
 
         return op_data
+
+    def _extract_column_specs(self, op, props):
+        """Best-effort extraction of UniSim distillation-column specifications.
+
+        Reads the reflux ratio, operating (condenser/reboiler) pressures and the
+        number of stages from a UniSim column operation via its COM
+        ``ColumnFlowsheet`` / ``Specifications``. Every read is fully defensive:
+        a missing or unreadable attribute simply leaves the corresponding NeqSim
+        spec unset, so the column falls back to its default configuration. The
+        emitted keys (``refluxRatio``, ``topPressure``, ``bottomPressure``,
+        ``numberOfTrays``) are consumed by the NeqSim JSON builder's
+        ``configureDistillationColumn``. Requires a live UniSim column case to
+        fully validate the COM attribute names.
+
+        :param op: the UniSim column COM operation object
+        :param props: the operation properties dict to populate
+        """
+        # Number of stages / trays (column flowsheet stage count).
+        try:
+            n = self._safe_get(op, 'NumberOfStages', None)
+            n = self._clean_scalar_value(n)
+            if n and n > 1:
+                props['numberOfTrays'] = int(n)
+        except Exception:
+            pass
+        # Column-flowsheet specifications (reflux ratio and similar).
+        try:
+            cfs = getattr(op, 'ColumnFlowsheet', None)
+            specs = getattr(cfs, 'Specifications', None) if cfs is not None else None
+            if specs is not None:
+                for i in range(specs.Count):
+                    spec = specs.Item(i)
+                    sname = str(self._safe_get(spec, 'name', '') or '').lower()
+                    val = self._clean_scalar_value(
+                        self._safe_get(spec, 'GoalValue',
+                                       self._safe_get(spec, 'Value', None)))
+                    if val is None:
+                        continue
+                    if 'reflux' in sname and 'ratio' in sname:
+                        props['refluxRatio'] = val
+        except Exception:
+            pass
+        # Operating pressures: condenser = top, reboiler = bottom.
+        try:
+            if hasattr(op, 'CondenserPressure'):
+                cond_p = self._safe_getval(op.CondenserPressure, 'bar')
+                if cond_p is not None:
+                    props['topPressure'] = cond_p
+        except Exception:
+            pass
+        try:
+            if hasattr(op, 'ReboilerPressure'):
+                reb_p = self._safe_getval(op.ReboilerPressure, 'bar')
+                if reb_p is not None:
+                    props['bottomPressure'] = reb_p
+        except Exception:
+            pass
 
     def _extract_heatexchanger(self, op, op_data: UniSimOperation):
         """Extract HeatExchanger-specific connections and properties.
@@ -3211,6 +3276,32 @@ class UniSimToNeqSim:
         elif neqsim_type == 'UnisimCalculator':
             props['sourceOperationType'] = op.type_name
             props['calculationMode'] = 'passThrough'
+
+        elif neqsim_type == 'DistillationColumn':
+            # Column configuration for the NeqSim DistillationColumn builder:
+            # number of trays + condenser/reboiler presence from the column's
+            # internal sub-flowsheet, the feed tray, and any operating specs
+            # (reflux ratio, top/bottom pressure, condenser/reboiler duty)
+            # captured from the UniSim column. The builder applies the reflux /
+            # duty specs onto the nested condenser/reboiler; without a spec the
+            # column runs on its default configuration.
+            has_condenser, has_reboiler, n_trays = self._detect_column_config(
+                op, {'flowsheet': self.model.flowsheet})
+            n_trays = int(op.properties.get('numberOfTrays', n_trays) or n_trays)
+            props['numberOfTrays'] = n_trays
+            props['hasReboiler'] = bool(
+                op.properties.get('hasReboiler', has_reboiler))
+            props['hasCondenser'] = bool(
+                op.properties.get('hasCondenser', has_condenser))
+            feed_tray = op.properties.get('feedTray')
+            if feed_tray is None:
+                feed_tray = max(1, n_trays // 2)
+            props['feedTray'] = int(feed_tray)
+            for spec_key in ('refluxRatio', 'topPressure', 'bottomPressure',
+                             'condenserDuty', 'reboilerDuty'):
+                val = op.properties.get(spec_key)
+                if val is not None:
+                    props[spec_key] = val
 
         elif neqsim_type == 'Absorber':
             # Detect glycol/TEG contactor → emit as ComponentSplitter

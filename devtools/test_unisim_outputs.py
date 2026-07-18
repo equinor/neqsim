@@ -900,6 +900,55 @@ def test_pipe_segment_geometry_uses_beggs_and_brills():
     print("  PASS")
 
 
+def test_distillation_column_config_emitted():
+    """A UniSim distillation column is emitted as a NeqSim DistillationColumn
+    with its tray count, condenser/reboiler flags, feed tray and operating specs
+    (reflux ratio, top/bottom pressure) carried into the JSON builder props, so
+    the NeqSim column converges to the same configuration as the source."""
+    model = UniSimModel(
+        file_path=r"C:\test\Col.usc", file_name="Col.usc",
+        fluid_packages=[UniSimFluidPackage(
+            name="Basis-1", property_package="Peng-Robinson",
+            components=[UniSimComponent("Propane", 0),
+                        UniSimComponent("n-Butane", 1),
+                        UniSimComponent("n-Pentane", 2)])],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Col Feed", temperature_C=60.0, pressure_bara=10.0,
+                                 mass_flow_kgh=1000.0,
+                                 composition={"Propane": 0.4, "n-Butane": 0.35,
+                                              "n-Pentane": 0.25}),
+                UniSimStreamData("Ovhd", temperature_C=45.0, pressure_bara=10.0),
+                UniSimStreamData("Btms", temperature_C=90.0, pressure_bara=10.5),
+            ],
+            operations=[
+                UniSimOperation(
+                    "deC3", "columnop",
+                    feeds=["Col Feed"], products=["Ovhd", "Btms"],
+                    properties={"numberOfTrays": 8, "feedTray": 4,
+                                "refluxRatio": 1.8, "hasReboiler": True,
+                                "hasCondenser": True, "topPressure": 10.0,
+                                "bottomPressure": 10.5}),
+            ],
+        ),
+    )
+    result = UniSimToNeqSim(model).to_json()
+    col = next(e for e in result['process'] if e.get('name') == 'deC3')
+    assert col['type'] == 'DistillationColumn', col
+    p = col['properties']
+    assert p['numberOfTrays'] == 8, p
+    assert p['feedTray'] == 4, p
+    assert p['hasReboiler'] is True and p['hasCondenser'] is True, p
+    assert abs(p['refluxRatio'] - 1.8) < 1e-9, p
+    assert abs(p['topPressure'] - 10.0) < 1e-9, p
+    assert abs(p['bottomPressure'] - 10.5) < 1e-9, p
+    # The Python path also builds a configured DistillationColumn.
+    py_code = UniSimToNeqSim(model).to_python()
+    assert 'DistillationColumn("deC3"' in py_code, py_code
+    print("  PASS")
+
+
 if __name__ == "__main__":
     tests = [
         ("to_python", test_to_python),
@@ -924,6 +973,8 @@ if __name__ == "__main__":
          test_cooler_outlet_pressure_letdown_is_transferred),
         ("pipe_segment_geometry_uses_beggs_and_brills",
          test_pipe_segment_geometry_uses_beggs_and_brills),
+        ("distillation_column_config_emitted",
+         test_distillation_column_config_emitted),
     ]
     passed = 0
     failed = 0
