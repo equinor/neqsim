@@ -20,11 +20,9 @@ public final class SafetyFunctionTransientVerification implements Serializable {
     this.requiredClosureTimeSeconds = requiredClosureTimeSeconds;
   }
 
-  public Map<String, Object> verify(double[] timeSeconds, double[] pressureBara,
-      double[] valveOpeningPercent) {
-    if (timeSeconds == null || pressureBara == null || valveOpeningPercent == null
-        || timeSeconds.length == 0 || timeSeconds.length != pressureBara.length
-        || timeSeconds.length != valveOpeningPercent.length) {
+  public Map<String, Object> verify(double[] timeSeconds, double[] pressureBara, double[] valveOpeningPercent) {
+    if (timeSeconds == null || pressureBara == null || valveOpeningPercent == null || timeSeconds.length == 0
+        || timeSeconds.length != pressureBara.length || timeSeconds.length != valveOpeningPercent.length) {
       throw new IllegalArgumentException("time, pressure and valve-opening traces must have equal non-zero length");
     }
     double tripTime = Double.NaN;
@@ -39,8 +37,8 @@ public final class SafetyFunctionTransientVerification implements Serializable {
         closedTime = timeSeconds[i];
       }
     }
-    double responseTime = Double.isNaN(closedTime) || Double.isNaN(tripTime)
-        ? Double.POSITIVE_INFINITY : closedTime - tripTime;
+    double responseTime = Double.isNaN(closedTime) || Double.isNaN(tripTime) ? Double.POSITIVE_INFINITY
+        : closedTime - tripTime;
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("schemaVersion", "neqsim_safety_transient_verification.v1");
     result.put("functionId", functionId);
@@ -52,8 +50,8 @@ public final class SafetyFunctionTransientVerification implements Serializable {
     result.put("tripDetected", Boolean.valueOf(!Double.isNaN(tripTime)));
     result.put("pressureCriterionPassed", Boolean.valueOf(maximumPressure <= maximumAllowablePressureBara));
     result.put("closureCriterionPassed", Boolean.valueOf(responseTime <= requiredClosureTimeSeconds));
-    result.put("passed", Boolean.valueOf(maximumPressure <= maximumAllowablePressureBara
-        && responseTime <= requiredClosureTimeSeconds));
+    result.put("passed",
+        Boolean.valueOf(maximumPressure <= maximumAllowablePressureBara && responseTime <= requiredClosureTimeSeconds));
     result.put("status", "DYNAMIC_MODEL_VERIFICATION_REVIEW_REQUIRED");
     result.put("standardReferences", java.util.Arrays.asList("IEC 61511", "NORSOK S-001", "API 521"));
     return result;
