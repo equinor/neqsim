@@ -235,6 +235,9 @@ public final class MechanicalIntegrityQualificationCalculation implements
     if (!readiness.isReady()) {
       return output.status(EngineeringCalculationResult.Status.BLOCKED).build();
     }
+    if (input == null) {
+      return output.status(EngineeringCalculationResult.Status.BLOCKED).build();
+    }
 
     Map<String, Double> metrics = new LinkedHashMap<String, Double>();
     metrics.put("mawpMarginBar", Double.valueOf(input.calculatedMawpBara - input.designPressureBara));
