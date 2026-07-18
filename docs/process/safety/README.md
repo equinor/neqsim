@@ -14,6 +14,7 @@ Documentation for safety systems modeling in NeqSim.
 - [Closed-loop SIF Verification](closed-loop-sif-verification.md)
 - [SIF Reliability and Degraded Modes](sif-reliability-and-degraded-modes.md)
 - [HAZOP/LOPA to Draft SRS Handoff](hazop-lopa-srs-handoff.md)
+- [Integrated Facility Safety Response](integrated-facility-safety-response.md)
 - [Blowdown Systems](#blowdown-systems)
 - [Pressure Safety Valves](#pressure-safety-valves)
 - [Release and Gas Dispersion Scenarios](release-dispersion-scenarios.md)
@@ -36,6 +37,7 @@ NeqSim provides equipment and logic for modeling process safety systems:
 - NORSOK S-001 Clause 9 open-drain review from NeqSim-calculated liquid and hydraulic evidence
 - Automatic release source terms and gas dispersion screening from process streams
 - Formal CFD source-term JSON handoff cases for OpenFOAM, FLACS, KFX, PHAST, and Safeti workflows
+- Integrated ESD, compressor-trip, relief, blowdown, flare, MDMT, and hydrate-margin review handoff
 
 The release, dispersion, and CFD handoff workflow is intended for screening, case generation,
 and auditable source-term transfer. Final facility layout, regulatory QRA, and CFD conclusions
@@ -230,6 +232,7 @@ EmergencyShutdownTestResult report = EmergencyShutdownTestRunner.run(process, pl
 - [Closed-loop SIF Verification](closed-loop-sif-verification.md) - Sensor-to-vote-to-final-element transient verification with structured evidence
 - [SIF Reliability and Degraded Modes](sif-reliability-and-degraded-modes.md) - Seeded PFD/PFH uncertainty and governed bypass, maintenance, failure, and proof-test assessment
 - [HAZOP/LOPA to Draft SRS Handoff](hazop-lopa-srs-handoff.md) - IPL eligibility, LOPA arithmetic, and traceable unapproved SRS drafting
+- [Integrated Facility Safety Response](integrated-facility-safety-response.md) - Executed ESD, compressor-trip, relief, blowdown, flare, and process-limit evidence in one review package
 - [ESD Blowdown System](../../safety/ESD_BLOWDOWN_SYSTEM) - Detailed ESD guide
 - [HIPPS Summary](../../safety/HIPPS_SUMMARY) - HIPPS overview
 - [PSV Dynamic Sizing](../../safety/psv_dynamic_sizing_example) - PSV sizing example
