@@ -13,6 +13,7 @@ Documentation for safety systems modeling in NeqSim.
 - [Emergency Shutdown (ESD)](#emergency-shutdown-esd)
 - [Closed-loop SIF Verification](closed-loop-sif-verification.md)
 - [SIF Reliability and Degraded Modes](sif-reliability-and-degraded-modes.md)
+- [HAZOP/LOPA to Draft SRS Handoff](hazop-lopa-srs-handoff.md)
 - [Blowdown Systems](#blowdown-systems)
 - [Pressure Safety Valves](#pressure-safety-valves)
 - [Release and Gas Dispersion Scenarios](release-dispersion-scenarios.md)
@@ -228,6 +229,7 @@ EmergencyShutdownTestResult report = EmergencyShutdownTestRunner.run(process, pl
 - [ESD Dynamic Testing Workflow](../../safety/esd_testing_workflow.md) - ESD transient testing with process logic, tagreader evidence, and criteria reports
 - [Closed-loop SIF Verification](closed-loop-sif-verification.md) - Sensor-to-vote-to-final-element transient verification with structured evidence
 - [SIF Reliability and Degraded Modes](sif-reliability-and-degraded-modes.md) - Seeded PFD/PFH uncertainty and governed bypass, maintenance, failure, and proof-test assessment
+- [HAZOP/LOPA to Draft SRS Handoff](hazop-lopa-srs-handoff.md) - IPL eligibility, LOPA arithmetic, and traceable unapproved SRS drafting
 - [ESD Blowdown System](../../safety/ESD_BLOWDOWN_SYSTEM) - Detailed ESD guide
 - [HIPPS Summary](../../safety/HIPPS_SUMMARY) - HIPPS overview
 - [PSV Dynamic Sizing](../../safety/psv_dynamic_sizing_example) - PSV sizing example

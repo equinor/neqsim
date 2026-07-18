@@ -1,6 +1,6 @@
 ---
 name: neqsim-process-safety
-version: "1.2.0"
+version: "1.3.0"
 description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, bow-tie analysis, risk-matrix scoring, TR3001 overpressure-protection studies, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, overpressure relief-cause / governing-case studies, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, and neqsim.process.safety.rupture classes."
 last_verified: "2026-07-18"
 requires:
@@ -143,6 +143,23 @@ System.out.println("Required additional SIL: " + lopa.getRequiredAdditionalSIL()
 - Specific (one task, one mode)
 - Auditable (testable, with proof-test interval)
 - BPCS counts as one IPL only (typically PFD = 0.1)
+
+### Method 2b — Traceable HAZOP/LOPA to draft SRS
+
+Use `LopaScenarioDefinition`, `ProtectionLayerDefinition`, and `HazopLopaSrsWorkflow` when an
+approved HAZOP row and user-supplied risk basis need a machine-readable handoff into SRS drafting.
+The workflow credits a layer only when independence from the initiating event and other layers,
+specificity, auditability, proof-test/inspection interval, and a controlled evidence reference are
+all declared. Ineligible safeguards remain visible but receive no frequency reduction.
+
+If a risk gap remains, the result creates a `SafetyRequirementSpecificationDraft` carrying the
+HAZOP node/deviation, LOPA reference, SIF tag, trip, safe state, response time, voting, proof-test,
+reset, and bypass requirements. The draft is always `REVIEW_REQUIRED` and never fit for construction.
+No draft is created when credited existing layers meet the supplied target.
+
+After accountable HAZOP, LOPA, and SRS approval, hand the approved inputs to
+`SafetyFunctionDesign`, reliability/degraded-mode assessment, and closed-loop transient
+verification. See `docs/process/safety/hazop-lopa-srs-handoff.md`.
 
 ## Method 3 — SIL Determination
 
