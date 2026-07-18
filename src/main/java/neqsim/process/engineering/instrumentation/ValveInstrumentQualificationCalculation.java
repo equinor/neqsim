@@ -77,13 +77,11 @@ public final class ValveInstrumentQualificationCalculation implements
         throw new IllegalArgumentException("process and calibrated ranges must be ordered");
       }
       measurementUncertainty = nonNegative(builder.measurementUncertainty, "measurementUncertainty");
-      maximumAllowableUncertainty = nonNegative(builder.maximumAllowableUncertainty,
-          "maximumAllowableUncertainty");
+      maximumAllowableUncertainty = nonNegative(builder.maximumAllowableUncertainty, "maximumAllowableUncertainty");
       thermowellFrequencyRatio = nonNegative(builder.thermowellFrequencyRatio, "thermowellFrequencyRatio");
       minimumThermowellFrequencyRatio = nonNegative(builder.minimumThermowellFrequencyRatio,
           "minimumThermowellFrequencyRatio");
-      thermowellStressUtilization = nonNegative(builder.thermowellStressUtilization,
-          "thermowellStressUtilization");
+      thermowellStressUtilization = nonNegative(builder.thermowellStressUtilization, "thermowellStressUtilization");
       failureActionApproved = builder.failureActionApproved;
       vendorSizingAccepted = builder.vendorSizingAccepted;
       tapAndImpulseLineApproved = builder.tapAndImpulseLineApproved;
@@ -173,8 +171,8 @@ public final class ValveInstrumentQualificationCalculation implements
         return this;
       }
 
-      public Builder approvals(boolean failureAction, boolean vendorSizing, boolean installation,
-          boolean dynamicTuning, boolean permissiveResetRestart) {
+      public Builder approvals(boolean failureAction, boolean vendorSizing, boolean installation, boolean dynamicTuning,
+          boolean permissiveResetRestart) {
         failureActionApproved = failureAction;
         vendorSizingAccepted = vendorSizing;
         tapAndImpulseLineApproved = installation;
@@ -263,12 +261,10 @@ public final class ValveInstrumentQualificationCalculation implements
     double processSpan = input.processMaximum - input.processMinimum;
 
     Map<String, Double> metrics = new LinkedHashMap<String, Double>();
-    metrics.put("actuatorThrustMarginN",
-        Double.valueOf(input.selectedActuatorThrustN - input.requiredActuatorThrustN));
+    metrics.put("actuatorThrustMarginN", Double.valueOf(input.selectedActuatorThrustN - input.requiredActuatorThrustN));
     metrics.put("shutoffPressureMarginBar",
         Double.valueOf(input.actuatorShutoffRatingBar - input.requiredShutoffDifferentialPressureBar));
-    metrics.put("leakageMarginKgS",
-        Double.valueOf(input.allowableLeakageRateKgS - input.measuredLeakageRateKgS));
+    metrics.put("leakageMarginKgS", Double.valueOf(input.allowableLeakageRateKgS - input.measuredLeakageRateKgS));
     metrics.put("totalSafetyResponseSeconds", Double.valueOf(totalResponseSeconds));
     metrics.put("processSafetyTimeMarginSeconds",
         Double.valueOf(input.processSafetyTimeSeconds - totalResponseSeconds));
@@ -279,15 +275,13 @@ public final class ValveInstrumentQualificationCalculation implements
     metrics.put("thermowellStressUtilization", Double.valueOf(input.thermowellStressUtilization));
 
     Map<String, Boolean> constraints = new LinkedHashMap<String, Boolean>();
-    constraints.put("ACTUATOR_THRUST",
-        Boolean.valueOf(input.selectedActuatorThrustN >= input.requiredActuatorThrustN));
+    constraints.put("ACTUATOR_THRUST", Boolean.valueOf(input.selectedActuatorThrustN >= input.requiredActuatorThrustN));
     constraints.put("SHUTOFF_DIFFERENTIAL_PRESSURE",
         Boolean.valueOf(input.actuatorShutoffRatingBar >= input.requiredShutoffDifferentialPressureBar));
-    constraints.put("LEAKAGE_RATE",
-        Boolean.valueOf(input.measuredLeakageRateKgS <= input.allowableLeakageRateKgS));
+    constraints.put("LEAKAGE_RATE", Boolean.valueOf(input.measuredLeakageRateKgS <= input.allowableLeakageRateKgS));
     constraints.put("PROCESS_SAFETY_TIME", Boolean.valueOf(totalResponseSeconds <= input.processSafetyTimeSeconds));
-    constraints.put("TRANSMITTER_RANGE", Boolean.valueOf(input.calibratedLowerRange <= input.processMinimum
-        && input.calibratedUpperRange >= input.processMaximum));
+    constraints.put("TRANSMITTER_RANGE", Boolean.valueOf(
+        input.calibratedLowerRange <= input.processMinimum && input.calibratedUpperRange >= input.processMaximum));
     constraints.put("MEASUREMENT_UNCERTAINTY",
         Boolean.valueOf(input.measurementUncertainty <= input.maximumAllowableUncertainty));
     constraints.put("THERMOWELL_FREQUENCY_SEPARATION",
@@ -297,12 +291,11 @@ public final class ValveInstrumentQualificationCalculation implements
     constraints.put("VENDOR_SIZING_ACCEPTED", Boolean.valueOf(input.vendorSizingAccepted));
     constraints.put("TAP_AND_IMPULSE_LINE_APPROVED", Boolean.valueOf(input.tapAndImpulseLineApproved));
     constraints.put("DYNAMIC_TUNING_VALIDATED", Boolean.valueOf(input.tuningDynamicallyValidated));
-    constraints.put("PERMISSIVE_RESET_RESTART_APPROVED",
-        Boolean.valueOf(input.permissiveResetRestartApproved));
+    constraints.put("PERMISSIVE_RESET_RESTART_APPROVED", Boolean.valueOf(input.permissiveResetRestartApproved));
 
-    return output.status(EngineeringCalculationResult.Status.CALCULATED_REVIEW_REQUIRED)
-        .input("loopId", input.loopId).input("valveTag", input.valveTag)
-        .input("instrumentTag", input.instrumentTag).value(new Result(metrics, constraints))
+    return output.status(EngineeringCalculationResult.Status.CALCULATED_REVIEW_REQUIRED).input("loopId", input.loopId)
+        .input("valveTag", input.valveTag).input("instrumentTag", input.instrumentTag)
+        .value(new Result(metrics, constraints))
         .warning("Valve leakage class, final actuator selection, installation and loop tuning require approval")
         .build();
   }
