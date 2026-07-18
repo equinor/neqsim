@@ -38,7 +38,8 @@ public final class ProcessTopologyPidRule implements PidDesignRule {
           .element(context, equipment, "OPC", "PROCESS-BOUNDARY", PidElementType.OFF_PAGE_CONNECTOR, RULE_ID,
               "Process boundary for " + equipment.getName(),
               "Represent the unit in topology and require its process connections to be resolved")
-          .attribute("boundaryDirection", "UNRESOLVED").attribute("equipmentType", equipment.getClass().getSimpleName()));
+          .attribute("boundaryDirection", "UNRESOLVED")
+          .attribute("equipmentType", equipment.getClass().getSimpleName()));
     }
     connectFlowPath(result);
     return result;
@@ -56,8 +57,8 @@ public final class ProcessTopologyPidRule implements PidDesignRule {
             .element(context, equipment, "NZ", direction + "-NOZZLE-" + index, PidElementType.NOZZLE, RULE_ID,
                 equipment.getName() + " " + direction.toLowerCase() + " process connection",
                 "Preserve the simulated process topology as an explicit HAZOP node boundary")
-            .line(stream.getName()).attribute("boundaryDirection", direction)
-            .attribute("streamName", stream.getName()).attribute("equipmentType", equipment.getClass().getSimpleName()));
+            .line(stream.getName()).attribute("boundaryDirection", direction).attribute("streamName", stream.getName())
+            .attribute("equipmentType", equipment.getClass().getSimpleName()));
         index++;
       }
     }
