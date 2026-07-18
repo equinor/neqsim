@@ -41,7 +41,7 @@ HAZOP decisions, vendor guarantees, code design, or construction approval.
 | What materials and mechanical work is indicated? | Degradation/material class screening and preliminary pressure-vessel thickness, mass, nozzle and footprint values. |
 | What is delivered? | A coordinated graph, case matrix/envelope, registers, datasheets, calculation DAG, DEXPI 2.0 files, validation report and unresolved-action register. |
 | What happens when the model changes? | Revision A and B packages, an idempotent and replayable change event, and a graph-derived impact register identify every deliverable that must be regenerated, recalculated, revalidated or reapproved. |
-| Can an independent open-source consumer read the drawing? | PyDEXPI imports `plant-pydexpi.xml`, renders the full P&ID inline and records `IMPORT_AND_RENDER_PASSED`; the SVG, compact PNG/SVG overview and import report are integrity-protected revision B artifacts. |
+| Can an independent open-source consumer read the drawing? | PyDEXPI imports `plant-pydexpi.xml`, renders the full P&ID inline and records `IMPORT_AND_RENDER_PASSED`; the full SVG, four readable area-panel SVGs and import report are integrity-protected revision B artifacts. |
 | Is the result approved for construction? | No. Readiness fails closed on missing independent, vendor, safety-lifecycle, detailed mechanical and authority evidence; `fitnessForConstruction=false`. |
 
 ## Published normal-case benchmark
@@ -196,12 +196,14 @@ list of DEXPI files in the analyzer.
 
 Revision B's `plant-pydexpi.xml` is loaded directly with PyDEXPI's `ProteusSerializer`. The notebook requires a real
 model diagram, renders it with `DrawDiagram`, displays the resulting genuine-symbol SVG inline and writes
-`pydexpi-render-report.json` with status `IMPORT_AND_RENDER_PASSED`. A deterministic second view contracts hidden
-connection nodes and produces a review-friendly PNG/SVG overview of the large offshore train.
+`pydexpi-render-report.json` with status `IMPORT_AND_RENDER_PASSED`. Because the complete offshore train is much wider
+than a notebook page, the same PyDEXPI SVG is also presented through four viewBox-only review panels: separation/oil
+stabilization, LP/MP gas recovery, export compression/cooling, and LTS/fuel gas/export. The panel files do not redraw or
+modify content; they retain every PyDEXPI symbol, tag, line and topology object and change only the visible viewport.
 
 The workflow uses PyDEXPI 1.2.0 on Python 3.12 and fails CI if import, rendering, or any expected revision-B artifact is
 missing. It uploads both complete model-package directories as workflow artifacts. The PyDEXPI report, rendered SVG,
-overview PNG/SVG, change event, journal and impact register are written before `NeqSimModelPackage.write(...)` refreshes
+four panel SVGs, change event, journal and impact register are written before `NeqSimModelPackage.write(...)` refreshes
 the manifest. `ModelPackageValidator` therefore verifies their sizes and hashes together with the DEXPI XML and
 engineering registers.
 

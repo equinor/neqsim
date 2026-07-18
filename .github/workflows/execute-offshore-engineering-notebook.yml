@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - "examples/notebooks/complete_offshore_process_engineering_study.ipynb"
-      - "examples/neqsim/render_engineering_pid.py"
       - "devtools/test_complete_offshore_engineering_study.py"
       - "src/main/java/neqsim/process/engineering/**"
       - "src/test/java/neqsim/process/engineering/**"
@@ -85,8 +84,10 @@ jobs:
               "impact-analysis.json",
               "pydexpi-render-report.json",
               "offshore-process-revision-b-pydexpi.svg",
-              "offshore-process-revision-b-overview.svg",
-              "offshore-process-revision-b-overview.png",
+              "offshore-process-revision-b-pydexpi-panel-1.svg",
+              "offshore-process-revision-b-pydexpi-panel-2.svg",
+              "offshore-process-revision-b-pydexpi-panel-3.svg",
+              "offshore-process-revision-b-pydexpi-panel-4.svg",
           ):
               assert (package / name).is_file(), name
           print(f"Verified {len(code_cells)} executed code cells")
