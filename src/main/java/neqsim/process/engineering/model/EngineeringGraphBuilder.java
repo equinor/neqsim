@@ -12,6 +12,8 @@ import neqsim.process.engineering.EngineeringRequirement;
 import neqsim.process.engineering.LineDesignInput;
 import neqsim.process.engineering.designcase.EngineeringDesignCase;
 import neqsim.process.engineering.designcase.EngineeringMetric;
+import neqsim.process.engineering.production.EngineeringExternalEvidenceRecord;
+import neqsim.process.engineering.production.EngineeringExternalEvidenceRegister;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
@@ -77,7 +79,36 @@ public final class EngineeringGraphBuilder {
     }
     addCalculations(allCalculations, graph, projectNodeId);
     addApprovals(project, graph, projectNodeId);
+    addExternalEvidence(project, graph, projectNodeId);
     return graph;
+  }
+
+  private static void addExternalEvidence(EngineeringProject project, EngineeringGraph graph, String projectNodeId) {
+    if (project.getProductionReadinessBasis() == null
+        || project.getProductionReadinessBasis().getExternalEvidenceRegister() == null) {
+      return;
+    }
+    EngineeringExternalEvidenceRegister register = project.getProductionReadinessBasis().getExternalEvidenceRegister();
+    for (EngineeringExternalEvidenceRecord evidence : register.getRecords()) {
+      String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, evidence.getId());
+      EngineeringNode node = new EngineeringNode(nodeId, EngineeringNode.Kind.DOCUMENT, evidence.getId(),
+          evidence.getType().name() + " " + evidence.getDocumentId() + "@" + evidence.getRevision())
+          .putProperty("externalEngineeringEvidence", Boolean.TRUE).putProperty("evidence", evidence.toMap())
+          .addProvenance(
+              new EngineeringProvenance("EXTERNAL_EVIDENCE", evidence.getDocumentId() + "@" + evidence.getRevision())
+                  .setApprovalStatus(evidence.getStatus().name()));
+      graph.addNode(node);
+      addEdge(graph, EngineeringEdge.Kind.CONTAINS, projectNodeId, nodeId, "externalEvidenceReceipt");
+    }
+    for (EngineeringExternalEvidenceRecord evidence : register.getRecords()) {
+      if (!evidence.getSupersedesRecordId().isEmpty()) {
+        String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, evidence.getId());
+        String previousId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, evidence.getSupersedesRecordId());
+        if (graph.getNode(previousId) != null) {
+          addEdge(graph, EngineeringEdge.Kind.SUPERSEDES, nodeId, previousId, "externalEvidenceRevision");
+        }
+      }
+    }
   }
 
   private static void addApprovals(EngineeringProject project, EngineeringGraph graph, String projectNodeId) {
