@@ -15,8 +15,7 @@ public final class PidHazopStudyReport implements Serializable {
   private final List<Map<String, Object>> nodes;
   private final List<PidCompletenessFinding> findings;
 
-  PidHazopStudyReport(String projectId, List<Map<String, Object>> nodes,
-      List<PidCompletenessFinding> findings) {
+  PidHazopStudyReport(String projectId, List<Map<String, Object>> nodes, List<PidCompletenessFinding> findings) {
     this.projectId = projectId;
     this.nodes = new ArrayList<Map<String, Object>>(nodes);
     this.findings = new ArrayList<PidCompletenessFinding>(findings);
