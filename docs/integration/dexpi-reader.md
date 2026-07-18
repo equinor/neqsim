@@ -191,7 +191,7 @@ display(SVG(filename=str(out_dir / "compact.svg")))
 ```
 
 For a standalone, importable end-to-end pipeline (NeqSim build → DEXPI export → pyDEXPI render),
-see [`examples/neqsim/render_neqsim_dexpi_with_pydexpi.py`](../../examples/neqsim/render_neqsim_dexpi_with_pydexpi.py).
+see [`examples/neqsim/render_neqsim_dexpi_with_pydexpi.py`](https://github.com/equinor/neqsim/blob/master/examples/neqsim/render_neqsim_dexpi_with_pydexpi.py).
 Its `build_process`, `export_dexpi`, and `render` functions can be imported directly into a notebook
 or run as a script via `python render_neqsim_dexpi_with_pydexpi.py`. The example uses
 `writeForPyDexpi`, so it no longer needs a separate namespace-stripping compatibility pass.

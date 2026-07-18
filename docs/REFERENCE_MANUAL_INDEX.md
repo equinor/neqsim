@@ -578,6 +578,7 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | --- | --- | --- |
 | **Engineering Hub** | [docs/engineering/index.md](engineering/) | **Dedicated entry point for design cases, closed-loop sizing, discipline verification, safety, handover, and lifecycle evidence** |
 | **Engineering Guide** | [docs/engineering/guide.md](engineering/guide) | **Practical, gated workflow from a validated process model to review-ready deliverables** |
+| **Current Engineering Capabilities** | [docs/engineering/current-capabilities.md](engineering/current-capabilities) | **Implemented entry points, discipline coverage, qualification layers, readiness levels, and accountable-review boundaries** |
 | **Design Cases and Governing Envelopes** | [docs/engineering/design-cases-and-envelopes.md](engineering/design-cases-and-envelopes) | **Controlled cases, metric direction, acceptance limits, isolated execution, and governing-value selection** |
 | **DEXPI Engineering Guide** | [docs/engineering/dexpi-guide.md](engineering/dexpi-guide) | **Choose, generate, validate, and qualify DEXPI Plant, Process, Proteus, and pyDEXPI exchanges** |
 | **Engineering Deliverables and Handover** | [docs/engineering/deliverables-and-handover.md](engineering/deliverables-and-handover) | **Package layers, registers, DEXPI, CFIHOS, issue controls, approvals, and revisions** |

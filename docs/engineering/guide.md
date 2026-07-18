@@ -14,9 +14,12 @@ documentation rather than treating this page as a replacement for discipline met
 
 | Starting point | Recommended route |
 | --- | --- |
+| Confirm what is implemented now | Review [Current Engineering Capabilities](current-capabilities) |
 | Learning or method evaluation | Run the [focused engineering notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process_to_engineering_simulator.ipynb) |
 | One tagged process system | Use the [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator) |
 | Several process areas or shared systems | Use the [Process Model to Engineering Workflow](../integration/process-to-engineering-workflow) |
+| Controlled-pilot facility qualification | Use the [Engineering Production Vertical Slice](../integration/engineering-production-vertical-slice) |
+| Exact method and production-readiness qualification | Use [Industrial Method Qualification](../integration/industrial-method-qualification) and the [production-readiness workflow](../integration/process-to-engineering-simulator#production-readiness-qualification) |
 | Full offshore facility example | Run the [Complete Offshore Engineering Study](../integration/complete-offshore-process-engineering-study) |
 | Open-ended engineering study with research and reporting | Use [Solve an Engineering Task](../tutorials/solve-engineering-task) |
 
@@ -76,7 +79,8 @@ readiness, provenance, and uncertainty contracts.
 
 ## Gate 4: Close the process/design loop
 
-Use explicit discipline modules or an explicit auto-configuration policy to:
+Use `EngineeringDesignLoop` through explicit discipline modules, or use an
+`EngineeringAutoConfigurationPolicy` that is itself controlled and complete, to:
 
 1. calculate candidate sizes and ratings from the governing envelope;
 2. select discrete dimensions, schedules, drivers, ranges, or standard sizes;
@@ -98,7 +102,10 @@ Gate check:
 - the source process model remains unchanged.
 
 See [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator) for configuration patterns,
-extension points, and result contracts.
+extension points, and result contracts. The current implementation includes separator, inventory, compressor, pump,
+heat-exchanger, rated-capacity, line/network, valve, instrument, material, pressure-equipment, process-safety, and
+relief-device modules. See [Current Engineering Capabilities](current-capabilities#discipline-coverage) for the
+design-loop and higher-assurance interfaces.
 
 ## Gate 5: Complete discipline verification
 
@@ -118,6 +125,11 @@ methods, assumptions, and interfaces.
 Record unresolved assumptions as actions. Do not convert a screening correlation into an approved discipline method by
 omitting the warning.
 
+For higher-assurance evidence, the production-readiness layer has independent typed gates for distributed piping
+transients, compressor protection and machinery, valve/instrument response and installation, detailed mechanical
+integrity, and flare radiation/dispersion/noise. A passing numerical constraint remains
+`CALCULATED_REVIEW_REQUIRED` until method, standards, evidence, vendor, and accountable-review requirements are met.
+
 ## Gate 6: Verify control, safety, and abnormal operation
 
 Connect the designed process to the control and safeguarding model. Depending on scope, verify:
@@ -134,7 +146,9 @@ Credible scenarios, simultaneous-event groups, fire zones, safeguards, SIL targe
 from the controlled safety lifecycle. NeqSim can calculate and retain evidence; it cannot approve that evidence.
 
 Start with [Safety Documentation](../safety/) and the
-[safety integration section](../integration/process-to-engineering-simulator#safety-and-scenario-integration).
+[safety integration section](../integration/process-to-engineering-simulator#safety-and-scenario-integration). Use the
+[HAZOP and LOPA to Draft SRS Handoff](../process/safety/hazop-lopa-srs-handoff) for traceable hazard-study flow, and
+the [P&ID Design Synthesis](../pid-design-synthesis) workflow when preparing governed nodes and deviations for review.
 
 ## Gate 7: Compile and review the engineering package
 
@@ -147,8 +161,8 @@ include:
 - equipment and PSV datasheets;
 - utility, materials, flare, and blowdown summaries;
 - DEXPI PFD/P&ID exchange files and validation reports;
-- unresolved-action, evidence, revision-impact, and approval registers; and
-- package manifests and content hashes.
+- unresolved-action, external-evidence, revision-impact, approval, readiness, and qualification-plan registers; and
+- package manifests, schemas, content hashes, and the integrity-protected `NeqSimModelPackage` manifest.
 
 Review package consistency before issue: tags, units, revision, governing cases, calculated values, graph identities,
 and unresolved actions must agree across artifacts. See [DEXPI Engineering Generation](../integration/dexpi-engineering-generation)
@@ -168,6 +182,22 @@ When the process model, design basis, method, or evidence changes:
 
 Use [Model Change Events](../process/model-change-events) and
 [Model Impact Analysis](../process/model-impact-analysis) for the lifecycle workflow.
+For a multi-area `ProcessModel`, `ProcessModelEngineeringSimulator.runIncremental(...)` reuses an area only when its
+model, policy, case, shared-stream, and shared-system fingerprints remain valid.
+
+## Current qualification ladder
+
+| Contract | Implemented meaning |
+| --- | --- |
+| Case result | `CALCULATED`, `CALCULATED_WITH_METRIC_FAILURES`, `CALCULATED_NOT_CONVERGED`, `FAILED`, or `SKIPPED` |
+| Closed design loop | Design variables and process values are stable, cases converged, and declared constraints passed |
+| Controlled vertical slice | Nine preflight/execution gates can establish `qualifiedForControlledPilot=true` |
+| Production readiness | `NOT_READY`, `EXPERIMENTAL`, `VALIDATED_PRELIMINARY`, or `QUALIFIED_FEED_SUPPORT` |
+| Package integrity | Schemas, references, manifests, and SHA-256 artifact hashes passed validation |
+| Accountable approval | Supplied external decision receipts and controlled document hashes passed structural and scope checks |
+
+These contracts are cumulative evidence states, not synonyms. In particular, `QUALIFIED_FEED_SUPPORT` does not grant
+FEED approval, construction release, or operating authorization.
 
 ## Review-ready versus construction-ready
 

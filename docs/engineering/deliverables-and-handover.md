@@ -17,8 +17,11 @@ generated package is review-ready evidence, not automatic approval or fitness fo
 | Quick Proteus-compatible P&ID or pyDEXPI visualization | `DexpiXmlWriter` or `DexpiDiagramBridge` |
 | Native DEXPI 2.0 Plant or Process exchange | `Dexpi20XmlWriter` or `Dexpi20ProcessModelWriter` |
 | DEXPI plus coordinated cases, registers, calculations, and validation | `EngineeringDeliverableCompiler` |
+| Coordinated multi-area packages and root manifest | `ProcessModelEngineeringSimulator.Result.compile(...)` |
 | Review-required generated P&ID proposal | `PidEngineeringPackageExporter` |
 | Project information handover staging | `Cfihos20HandoverExporter` applied to the canonical engineering graph |
+| Integrity-protected portable model revision | `NeqSimModelPackage` and `ModelPackageValidator` |
+| Fail-closed qualification and readiness backlog | `EngineeringProductionReadinessAssessment` and `EngineeringQualificationPlan` |
 
 For DEXPI profile selection and qualification, start with the [DEXPI Engineering Guide](dexpi-guide).
 
@@ -37,6 +40,10 @@ Principal artifacts include:
 - `engineering-calculation-dag.json`; and
 - `engineering-revision-diff.json` or revision-impact reports when a baseline is supplied.
 
+The compiler also writes `neqsim-model-package.json`. `NeqSimModelPackage` records asset/model identity, revision,
+baseline revision, lifecycle state, qualification state, dependencies, software versions, artifact inventory, and
+SHA-256 hashes. `ModelPackageValidator` detects missing or altered files. Integrity is not engineering approval.
+
 ### Cases and calculations
 
 The package retains controlled case definitions, per-case results, governing values, calculation methods, units,
@@ -46,7 +53,8 @@ constraints, warnings, and readiness:
 - `design-case-envelope.json`;
 - `engineering-calculations.json`;
 - `engineering-numerical-health.json`; and
-- discipline calculation and orchestration artifacts.
+- `engineering-discipline-orchestration.json`, `engineering-production-readiness.json`,
+  `engineering-qualification-plan.json`, and other discipline calculation artifacts.
 
 See [Design Cases and Governing Envelopes](design-cases-and-envelopes) for case construction and interpretation.
 
@@ -62,6 +70,8 @@ Coordinated outputs may include:
 - unresolved engineering actions and evidence registers.
 
 Every calculated field should retain its unit, governing case, method or source calculation, and readiness state.
+The package also includes an `engineering-approval-ledger.json` and external-evidence register. These preserve supplied
+decisions and evidence state; they do not manufacture approval.
 
 ### DEXPI exchange
 
@@ -105,6 +115,9 @@ transformation to required exchange templates, named target-system validation, a
 | Calculation consistency | Results point to methods, inputs, subjects, and dependencies |
 | DEXPI | Selected profiles validate; internal references and identities survive structural round trip |
 | Manifest | Artifact inventory, revision, graph fingerprint, and file digests agree |
+| Model package | `neqsim-model-package.json` inventories every governed artifact and all hashes verify |
+| Production readiness | Failed gates and the exact qualification backlog remain visible; no absent gate is inferred as passed |
+| Multi-area package | Every area package, shared dependency, executed/reused-area decision, and root manifest validates |
 | Review state | Warnings, blockers, actions, approvals, and revalidation requirements remain visible |
 
 Readers should reject an unknown major schema version instead of silently treating it as the current contract.
@@ -116,6 +129,8 @@ Readers should reject an unknown major schema version instead of silently treati
 | Calculated | A declared method produced a result |
 | Structurally valid | Schemas, identities, references, units, and manifests are coherent |
 | Internally qualified | Required internal benchmarks and structural round trips passed |
+| Controlled-pilot qualified | The configured facility slice passed its nine explicit topology, case, design, safety, standards, and evidence gates |
+| Qualified for FEED support | Every configured production-readiness gate passed for the declared support purpose |
 | Review-ready | Evidence, assumptions, findings, and actions are organized for accountable review |
 | Approved | An authorized role accepted the controlled subject and evidence for a declared purpose |
 | Accepted into target system | The Principal validated the transformed data in the named system |
@@ -127,11 +142,15 @@ These states are not interchangeable. Successful compilation establishes neither
 
 When a model, case, method, design variable, or evidence item changes:
 
+- create or derive a deterministic `ModelChangeEvent` for the new governed revision;
 - compare the new canonical graph with the controlled baseline;
-- identify added, removed, modified, and downstream-impacted objects;
+- use `GeneralizedImpactAnalyzer` to identify added, removed, modified, and downstream-impacted objects;
 - mark dependent calculations, documents, validations, and approvals for rework;
 - retain unchanged evidence only when its dependencies and applicability remain valid; and
 - issue the impact report and updated manifest with the new revision.
+
+For a multi-area `ProcessModel`, `ProcessModelEngineeringSimulator.runIncremental(...)` reruns changed and connected
+areas and records which unaffected baseline areas were reused.
 
 An approval affected by revision impact becomes `REVALIDATION_REQUIRED`; the earlier decision remains in the ledger
 instead of being silently replaced.

@@ -122,7 +122,7 @@ EngineeringSimulationResult simulation = EngineeringSimulationRunner.run(
 the existing DEXPI exporter, engineering calculations, coverage matrices, evidence registers, and approval workflow to
 carry the simulator evidence in the same governed package.
 
-The executed [four-foundations notebook](../../examples/notebooks/engineering_simulator_four_foundations.ipynb)
+The executed [four-foundations notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/engineering_simulator_four_foundations.ipynb)
 demonstrates all layers and plots the dynamic ESD response.
 
 ## Verification checklist

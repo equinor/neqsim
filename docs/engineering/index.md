@@ -10,14 +10,16 @@ Engineering is a distinct NeqSim topic. Process simulation predicts how a modele
 those results to establish governing cases, select dimensions and ratings, verify constraints, document assumptions,
 and prepare controlled deliverables for review and handover.
 
-NeqSim supports this progression while preserving an important boundary: calculated outputs are preliminary and
+The software workflow for cases, iterative design, discipline calculations, safety evidence, coordinated packages,
+qualification gates, and revision impact is implemented. Individual methods and results remain preliminary or
 review-required unless the required project, vendor, independent-validation, safety-lifecycle, and authority evidence
-has been supplied and approved.
+has been supplied and accepted for the declared purpose.
 
 ## Start here
 
 | Resource | Use it for |
 | --- | --- |
+| [Current Engineering Capabilities](current-capabilities) | The implemented APIs, discipline scope, qualification gates, deliverables, and lifecycle workflow available now |
 | [Engineering Guide](guide) | A practical, gated path from a validated process model to a review-ready package |
 | [Design Cases and Governing Envelopes](design-cases-and-envelopes) | Controlled case definitions, metrics, isolated execution, limits, and governing-value selection |
 | [DEXPI Engineering Guide](dexpi-guide) | Selecting, generating, validating, and qualifying DEXPI Plant, Process, Proteus, and pyDEXPI exchanges |
@@ -46,13 +48,16 @@ basis, governing case, method identity, units, warnings, uncertainty, constraint
 
 | Purpose | Primary API |
 | --- | --- |
-| Governed project and design basis | `EngineeringProject`, `NorsokOffshoreEngineeringBuilder` |
+| Governed project, design basis, standards, evidence, and approvals | `EngineeringProject`, `EngineeringDesignBasis`, `NorsokOffshoreEngineeringBuilder` |
 | Executable cases and envelopes | `EngineeringDesignCase`, `EngineeringCaseRunner`, `EngineeringDesignEnvelope` |
-| Closed process/design loop | `ProcessToEngineeringSimulator`, `ProcessToEngineeringDesignBuilder`, `EngineeringDesignModule` |
+| Closed process/design loop | `EngineeringDesignLoop`, `ProcessToEngineeringSimulator`, `ProcessToEngineeringDesignBuilder`, `EngineeringDesignModule` |
+| Policy-driven discipline configuration | `EngineeringAutoConfigurationPolicy`, `EngineeringAutoConfigurator` |
 | Typed discipline calculations | `EngineeringCalculationModule` and the calculation classes under `neqsim.process.engineering` |
 | Canonical model and deliverables | `EngineeringGraph`, `EngineeringDeliverableCompiler` |
-| Multi-area execution | `ProcessModelEngineeringSimulator` |
-| Revision impact | `GeneralizedImpactAnalyzer` and the engineering change-event API |
+| Multi-area and shared-system execution | `ProcessModelEngineeringSimulator`, `EngineeringSharedSystemPolicy` |
+| Controlled-pilot qualification | `ProductionVerticalSliceSimulator`, `ProductionVerticalSlicePreflight` |
+| Production-readiness assessment | `EngineeringProductionReadinessAssessment`, `EngineeringProductionReadinessBasis` |
+| Portable model package and revision impact | `NeqSimModelPackage`, `ModelChangeEvent`, `GeneralizedImpactAnalyzer` |
 
 ## Documentation by engineering activity
 
@@ -66,6 +71,7 @@ basis, governing case, method identity, units, warnings, uncertainty, constraint
 | Isolated deterministic case execution | [Engineering Simulator Foundations](../integration/engineering-simulator-foundations) |
 | Iterative sizing and process/design convergence | [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator) |
 | Numerical health and engineering closure | [Numerical Health and Engineering Closure](../integration/numerical-health-and-engineering-closure) |
+| Current implementation and workflow selection | [Current Engineering Capabilities](current-capabilities) |
 
 ### Equipment and discipline engineering
 
@@ -91,6 +97,8 @@ remain controlled engineering decisions.
 | Risk, reliability, and SIS integration | [Risk and Reliability](../risk/) |
 | Governed scenario and design-loop integration | [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator#safety-and-scenario-integration) |
 | P&ID control and safeguarding synthesis | [P&ID Design Synthesis](../pid-design-synthesis) |
+| HAZOP, LOPA, and draft SRS traceability | [HAZOP and LOPA to Draft SRS Handoff](../process/safety/hazop-lopa-srs-handoff) |
+| NCS ESD/HIPPS verification | [NOG-070, SIL, and STS-0131 ESD](../safety/nog070_sil_sts0131_esd) |
 
 ### Deliverables, exchange, and handover
 
@@ -101,7 +109,8 @@ remain controlled engineering decisions.
 | Canonical engineering graph and DEXPI | [DEXPI Engineering Generation](../integration/dexpi-engineering-generation) |
 | End-to-end artifact and approval workflow | [Process Model to Engineering Workflow](../integration/process-to-engineering-workflow) |
 | Controlled engineering data handover | [CFIHOS 2.0 Engineering Handover](../integration/cfihos-20-engineering-handover) |
-| Evidence and production readiness | [Operational Evidence Package](../process/operational_evidence_package), [Industrial Method Qualification](../integration/industrial-method-qualification) |
+| Controlled-pilot qualification | [Engineering Production Vertical Slice](../integration/engineering-production-vertical-slice) |
+| Evidence and production readiness | [Process-to-Engineering Production Readiness](../integration/process-to-engineering-simulator#production-readiness-qualification), [Industrial Method Qualification](../integration/industrial-method-qualification) |
 
 ### Change management
 
@@ -113,11 +122,13 @@ approvals that have become stale.
 | --- | --- |
 | Controlled change events | [Model Change Events](../process/model-change-events) |
 | Dependency-derived impact scope | [Model Impact Analysis](../process/model-impact-analysis) |
+| Portable integrity-protected model packages | [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator#coordinated-package-outputs) |
 | Revision-aware package generation | [Process Model to Engineering Workflow](../integration/process-to-engineering-workflow) |
 
 ## Executable learning path
 
-1. Read the [Engineering Guide](guide) to choose the appropriate workflow and gates.
+1. Review [Current Engineering Capabilities](current-capabilities), then use the [Engineering Guide](guide) to choose
+   the appropriate workflow and gates.
 2. Run the focused [`process_to_engineering_simulator.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process_to_engineering_simulator.ipynb)
    example for the closed design loop.
 3. Run the
@@ -125,6 +136,9 @@ approvals that have become stale.
    example to see a multi-discipline facility package.
 4. Use the [Process Model to Engineering Workflow](../integration/process-to-engineering-workflow) when moving from a
    single `ProcessSystem` to governed multi-area delivery.
+5. Run the
+   [`engineering_production_qualification_workflow.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/engineering_production_qualification_workflow.ipynb)
+   before claiming that preliminary results are qualified for a controlled engineering purpose.
 
 ## Engineering status boundary
 
