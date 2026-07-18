@@ -26,8 +26,8 @@ public final class EngineeringMethodQualificationRegistry implements Serializabl
     private final boolean executionPermitted;
     private final List<String> findings;
 
-    Result(String methodKey, EngineeringMethodServiceContext serviceContext, Status status,
-        boolean executionPermitted, List<String> findings) {
+    Result(String methodKey, EngineeringMethodServiceContext serviceContext, Status status, boolean executionPermitted,
+        List<String> findings) {
       this.methodKey = methodKey;
       this.serviceContext = serviceContext;
       this.status = status;
@@ -72,8 +72,7 @@ public final class EngineeringMethodQualificationRegistry implements Serializabl
 
   private final String id;
   private final String revision;
-  private final Map<String, EngineeringMethodQualification> qualifications =
-      new LinkedHashMap<String, EngineeringMethodQualification>();
+  private final Map<String, EngineeringMethodQualification> qualifications = new LinkedHashMap<String, EngineeringMethodQualification>();
 
   public EngineeringMethodQualificationRegistry(String id, String revision) {
     this.id = text(id, "id");
@@ -127,8 +126,8 @@ public final class EngineeringMethodQualificationRegistry implements Serializabl
       return new Result(key, context, Status.INSUFFICIENT_SERVICE_CONTEXT, false, findings);
     }
     if (!applicability.isWithinEnvelope()) {
-      return new Result(key, context, Status.OUTSIDE_QUALIFIED_ENVELOPE,
-          applicability.isExecutionPermitted(), findings);
+      return new Result(key, context, Status.OUTSIDE_QUALIFIED_ENVELOPE, applicability.isExecutionPermitted(),
+          findings);
     }
     findings.add("Exact method version is benchmarked and qualified for the supplied service and intended use");
     return new Result(key, context, Status.QUALIFIED_FOR_SERVICE, true, findings);

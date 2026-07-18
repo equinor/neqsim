@@ -11,8 +11,8 @@ class EngineeringMethodQualificationRegistryTest {
   void qualifiesExactVersionInsideControlledServiceEnvelope() {
     EngineeringMethodQualification qualification = completeQualification();
     EngineeringBenchmarkSuite.Report benchmarks = qualifyingBenchmark();
-    EngineeringMethodQualificationRegistry registry = new EngineeringMethodQualificationRegistry("project-methods",
-        "A").register(qualification);
+    EngineeringMethodQualificationRegistry registry = new EngineeringMethodQualificationRegistry("project-methods", "A")
+        .register(qualification);
 
     EngineeringMethodQualificationRegistry.Result result = registry.assess("gas-method@2.1", feedService(80.0),
         benchmarks);
@@ -26,8 +26,8 @@ class EngineeringMethodQualificationRegistryTest {
 
   @Test
   void blocksProhibitedExtrapolationAndRetainsExplicitVerdict() {
-    EngineeringMethodQualificationRegistry registry = new EngineeringMethodQualificationRegistry("project-methods",
-        "A").register(completeQualification());
+    EngineeringMethodQualificationRegistry registry = new EngineeringMethodQualificationRegistry("project-methods", "A")
+        .register(completeQualification());
 
     EngineeringMethodQualificationRegistry.Result result = registry.assess("gas-method@2.1", feedService(180.0),
         qualifyingBenchmark());
@@ -40,14 +40,13 @@ class EngineeringMethodQualificationRegistryTest {
 
   @Test
   void distinguishesMissingContextUseAndBenchmarkEvidence() {
-    EngineeringMethodQualificationRegistry registry = new EngineeringMethodQualificationRegistry("project-methods",
-        "A").register(completeQualification());
+    EngineeringMethodQualificationRegistry registry = new EngineeringMethodQualificationRegistry("project-methods", "A")
+        .register(completeQualification());
     EngineeringMethodServiceContext missing = new EngineeringMethodServiceContext(
         EngineeringMethodQualification.IntendedUse.FEED_SUPPORT).numericValue("pressure", 80.0, "bara");
     EngineeringMethodServiceContext operations = new EngineeringMethodServiceContext(
         EngineeringMethodQualification.IntendedUse.OPERATIONS_ADVISORY).numericValue("pressure", 80.0, "bara")
-            .numericValue("temperature", 300.0, "K").categoricalValue("phase", "GAS")
-            .suppliedInput("compositionBasis");
+        .numericValue("temperature", 300.0, "K").categoricalValue("phase", "GAS").suppliedInput("compositionBasis");
 
     assertEquals(EngineeringMethodQualificationRegistry.Status.INSUFFICIENT_SERVICE_CONTEXT,
         registry.assess("gas-method@2.1", missing, qualifyingBenchmark()).getStatus());
@@ -60,17 +59,17 @@ class EngineeringMethodQualificationRegistryTest {
   }
 
   private EngineeringMethodQualification completeQualification() {
-    EngineeringMethodApplicabilityEnvelope envelope = new EngineeringMethodApplicabilityEnvelope(
-        "gas-method-envelope", "A").requireInput("compositionBasis").numericRange("pressure", "bara", 1.0, 150.0)
-            .numericRange("temperature", "K", 250.0, 400.0).allowedValues("phase", "GAS")
-            .knownLimitation("Not qualified for two-phase or reacting service")
-            .uncertaintyBasis("INDEPENDENT-CALC-21 uncertainty budget, revision A").prohibitExtrapolation(true);
+    EngineeringMethodApplicabilityEnvelope envelope = new EngineeringMethodApplicabilityEnvelope("gas-method-envelope",
+        "A").requireInput("compositionBasis").numericRange("pressure", "bara", 1.0, 150.0)
+        .numericRange("temperature", "K", 250.0, 400.0).allowedValues("phase", "GAS")
+        .knownLimitation("Not qualified for two-phase or reacting service")
+        .uncertaintyBasis("INDEPENDENT-CALC-21 uncertainty budget, revision A").prohibitExtrapolation(true);
     return new EngineeringMethodQualification("gas-method", "2.1",
         EngineeringMethodQualification.Level.PROJECT_QUALIFIED).addStandardReference("PROJECT-METHOD-BASIS-A")
-            .addApplicabilityLimit("Use the structured envelope gas-method-envelope revision A")
-            .addEvidenceReference("INDEPENDENT-CALC-21").approve("Technical authority / APPROVAL-21")
-            .applicabilityEnvelope(envelope).qualifyFor(EngineeringMethodQualification.IntendedUse.FEED_SUPPORT)
-            .addAcceptanceCriterion("pressureDrop", "bar", 0.05, 0.01);
+        .addApplicabilityLimit("Use the structured envelope gas-method-envelope revision A")
+        .addEvidenceReference("INDEPENDENT-CALC-21").approve("Technical authority / APPROVAL-21")
+        .applicabilityEnvelope(envelope).qualifyFor(EngineeringMethodQualification.IntendedUse.FEED_SUPPORT)
+        .addAcceptanceCriterion("pressureDrop", "bar", 0.05, 0.01);
   }
 
   private EngineeringMethodServiceContext feedService(double pressure) {
@@ -83,8 +82,8 @@ class EngineeringMethodQualificationRegistryTest {
     return new EngineeringBenchmarkSuite("gas-method-suite", "A").requireMethod("gas-method@2.1")
         .add(EngineeringValidationBenchmark.builder("gas-case-1", "gas-method", "2.1")
             .source(EngineeringValidationBenchmark.SourceClass.INDEPENDENT_CALCULATION, "INDEPENDENT-CALC-21", "A")
-            .independentReview("Independent checker / REVIEW-21")
-            .check("pressureDrop", 1.0, 1.005, "bar", 0.05, 0.01).build())
+            .independentReview("Independent checker / REVIEW-21").check("pressureDrop", 1.0, 1.005, "bar", 0.05, 0.01)
+            .build())
         .evaluate();
   }
 }
