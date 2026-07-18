@@ -2028,6 +2028,7 @@ class UniSimReader:
             try:
                 props['offset'] = float(op.Offset.GetValue()) if hasattr(op, 'Offset') else None
             except Exception:
+                # Offset may be unavailable or non-numeric for some COM objects; keep best-effort extraction.
                 pass
 
         elif type_name == 'pidfbcontrolop':
