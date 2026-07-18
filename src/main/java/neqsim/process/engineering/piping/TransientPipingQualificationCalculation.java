@@ -16,11 +16,11 @@ import neqsim.process.engineering.calculation.EngineeringConstraintResult;
  * Qualifies a distributed piping-transient profile for engineering use.
  *
  * <p>
- * The hydraulic transient remains the responsibility of the declared source model, for example
- * {@code TwoFluidPipe}, {@code WaterHammerPipe}, or a project-qualified external solver. This calculation verifies
- * that the exported profile resolves the acoustic time scale, closes the line-pack balance, and satisfies explicit
- * pressure, slug, acoustic, vibration and stress constraints. It does not turn a quasi-steady line calculation into a
- * distributed transient model.
+ * The hydraulic transient remains the responsibility of the declared source model, for example {@code TwoFluidPipe},
+ * {@code WaterHammerPipe}, or a project-qualified external solver. This calculation verifies that the exported profile
+ * resolves the acoustic time scale, closes the line-pack balance, and satisfies explicit pressure, slug, acoustic,
+ * vibration and stress constraints. It does not turn a quasi-steady line calculation into a distributed transient
+ * model.
  * </p>
  */
 public final class TransientPipingQualificationCalculation implements
