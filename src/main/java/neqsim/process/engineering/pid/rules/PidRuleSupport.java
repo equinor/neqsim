@@ -14,20 +14,18 @@ final class PidRuleSupport {
   private PidRuleSupport() {
   }
 
-  static PidElement element(PidDesignContext context, ProcessEquipmentInterface equipment,
-      String functionCode, String purpose, PidElementType type, String ruleId, String description,
-      String rationale) {
+  static PidElement element(PidDesignContext context, ProcessEquipmentInterface equipment, String functionCode,
+      String purpose, PidElementType type, String ruleId, String description, String rationale) {
     String stableKey = equipment.getName() + "-" + purpose;
     String tag = context.getTagAllocator().allocate(functionCode, stableKey);
-    return new PidElement("pid:" + normalize(tag), tag, type).equipment(equipment.getName())
-        .description(description).provenance(ruleId, rationale).standard("ANSI/ISA-5.1:2024")
-        .attribute("proposalPurpose", purpose).attribute("approvalStatus", "REVIEW_REQUIRED");
+    return new PidElement("pid:" + normalize(tag), tag, type).equipment(equipment.getName()).description(description)
+        .provenance(ruleId, rationale).standard("ANSI/ISA-5.1:2024").attribute("proposalPurpose", purpose)
+        .attribute("approvalStatus", "REVIEW_REQUIRED");
   }
 
-  static void trace(PidElement element, PidDesignContext context,
-      ProcessEquipmentInterface equipment, String... tokens) {
-    List<EngineeringRequirement> requirements =
-        context.requirements(equipment.getName(), null);
+  static void trace(PidElement element, PidDesignContext context, ProcessEquipmentInterface equipment,
+      String... tokens) {
+    List<EngineeringRequirement> requirements = context.requirements(equipment.getName(), null);
     for (EngineeringRequirement requirement : requirements) {
       if (matches(requirement, tokens)) {
         element.requirement(requirement.getId());

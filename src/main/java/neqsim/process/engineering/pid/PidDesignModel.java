@@ -88,4 +88,8 @@ public final class PidDesignModel implements Serializable {
   public String getProjectId() {
     return projectId;
   }
+
+  public String getProfileId() {
+    return profileId;
+  }
 }

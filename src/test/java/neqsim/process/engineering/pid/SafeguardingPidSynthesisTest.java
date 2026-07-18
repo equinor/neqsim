@@ -29,8 +29,7 @@ public class SafeguardingPidSynthesisTest extends NeqSimTest {
   void completeProfileAddsTripsIsolationBlowdownAndRelief() {
     EngineeringProject project = createProject();
     PidDesignModel model = PidDesignSynthesizer.synthesize(project,
-        new PidDesignBasis("NORSOK-COMPLETE-PID-PROPOSALS", "20"),
-        NorsokPidRuleCatalog.completeProposals());
+        new PidDesignBasis("NORSOK-COMPLETE-PID-PROPOSALS", "20"), NorsokPidRuleCatalog.completeProposals());
 
     assertEquals(58, model.getElements().size());
     assertEquals(10, model.getElementsByType(PidElementType.TRIP).size());
@@ -88,17 +87,14 @@ public class SafeguardingPidSynthesisTest extends NeqSimTest {
     process.add(pump);
     EngineeringProject project = NorsokOffshoreEngineeringBuilder.from("Complete safeguarding proposal", process)
         .projectId("PID-SAFEGUARD-TEST").build();
-    ProtectedItem protectedSeparator =
-        new ProtectedItem("20-VG-001", 70.0).setReliefSetPressureBara(68.0);
+    ProtectedItem protectedSeparator = new ProtectedItem("20-VG-001", 70.0).setReliefSetPressureBara(68.0);
     ReliefScenario blockedOutlet = new ReliefScenario.Builder("Blocked outlet", ReliefCause.BLOCKED_OUTLET)
-        .phase(ReliefPhase.VAPOUR).reliefRateKgPerS(3.0).reliefTemperatureK(330.0)
-        .molarMassKgPerMol(0.020).compressibility(0.95).specificHeatRatio(1.25).build();
-    project.addOverpressureStudy(
-        new OverpressureProtectionStudy(protectedSeparator).addScenario(blockedOutlet));
+        .phase(ReliefPhase.VAPOUR).reliefRateKgPerS(3.0).reliefTemperatureK(330.0).molarMassKgPerMol(0.020)
+        .compressibility(0.95).specificHeatRatio(1.25).build();
+    project.addOverpressureStudy(new OverpressureProtectionStudy(protectedSeparator).addScenario(blockedOutlet));
     project.addReliefDeviceDesignInput(new ReliefDeviceDesignInput("20-PSV-101", "20-VG-001")
-        .setSelectedOrificeAreaIn2(4.34).setInletPiping(0.08, 2.0, 1.5)
-        .setOutletPiping(0.15, 20.0, 4.0).setConcurrencyGroup("FIRE-ZONE-A")
-        .setEvidenceReference("PRELIMINARY-PSV-DATASHEET"));
+        .setSelectedOrificeAreaIn2(4.34).setInletPiping(0.08, 2.0, 1.5).setOutletPiping(0.15, 20.0, 4.0)
+        .setConcurrencyGroup("FIRE-ZONE-A").setEvidenceReference("PRELIMINARY-PSV-DATASHEET"));
     return project;
   }
 }
