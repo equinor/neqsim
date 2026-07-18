@@ -47,6 +47,7 @@ This documentation is organized into the following sections:
 | [process_json_export_and_e300_fluids.md](process_json_export_and_e300_fluids) | **Process JSON export** — self-contained ProcessSystem/ProcessModel JSON for MCP, including E300-equivalent component properties and volume correction |
 | [simulation-hooks-and-events.md](simulation-hooks-and-events) | **Lifecycle hooks, event bus, auto-validation** for ProcessSystem and ProcessModel |
 | [model-change-events.md](model-change-events) | **Governed model revisions** — versioned change events, idempotent publication, fingerprints, and durable replay |
+| [model-impact-analysis.md](model-impact-analysis) | **Cross-model impact analysis** — configurable propagation rules, recalculation order, cycle detection, and reapproval work |
 | [safety/](safety/) | Safety systems (PSV, ESD, blowdown) |
 | [controllers.md](controllers) | Process controllers and logic |
 | [unisim-to-neqsim-conversion.md](unisim-to-neqsim-conversion) | **UniSim/HYSYS conversion** — convert `.usc` models to NeqSim with E300 full-fluid transfer and export back to UniSim |
