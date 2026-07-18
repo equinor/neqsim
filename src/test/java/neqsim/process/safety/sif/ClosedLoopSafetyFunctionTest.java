@@ -53,16 +53,14 @@ class ClosedLoopSafetyFunctionTest {
                 .logicSolverDelaySeconds(0.5).build();
           }
         }).addCriterion(DynamicScenarioCriterion
-            .builder("esdv-closed", "Inlet ESD valve closed", "%",
-                new DynamicScenarioCriterion.Extractor() {
-                  private static final long serialVersionUID = 1000L;
+            .builder("esdv-closed", "Inlet ESD valve closed", "%", new DynamicScenarioCriterion.Extractor() {
+              private static final long serialVersionUID = 1000L;
 
-                  @Override
-                  public double extract(ProcessSystem process) {
-                    return ((ESDValve) process.getUnit("ESDV-101")).getPercentValveOpening();
-                  }
-                })
-            .acceptanceRange(null, Double.valueOf(5.0)).deadlineSeconds(4.0).build())
+              @Override
+              public double extract(ProcessSystem process) {
+                return ((ESDValve) process.getUnit("ESDV-101")).getPercentValveOpening();
+              }
+            }).acceptanceRange(null, Double.valueOf(5.0)).deadlineSeconds(4.0).build())
         .addEvidenceReference("SRS-SIF-HP-101").build();
 
     DynamicSafetyScenarioResult result = DynamicSafetyScenarioRunner.run(base, scenario);
@@ -86,8 +84,7 @@ class ClosedLoopSafetyFunctionTest {
 
     boolean rejected = false;
     try {
-      ClosedLoopSafetyFunction
-          .builder("SIF-BAD", "invalid SIF", process, VotingPattern.TWO_OUT_OF_THREE, finalElements)
+      ClosedLoopSafetyFunction.builder("SIF-BAD", "invalid SIF", process, VotingPattern.TWO_OUT_OF_THREE, finalElements)
           .addChannel(highPressureChannel("PT-A", SafetyFunctionChannel.FaultMode.HEALTHY)).build();
     } catch (IllegalArgumentException expected) {
       rejected = true;
@@ -96,8 +93,7 @@ class ClosedLoopSafetyFunctionTest {
     assertFalse(finalElements.isActive());
   }
 
-  private static SafetyFunctionChannel highPressureChannel(String tag,
-      SafetyFunctionChannel.FaultMode faultMode) {
+  private static SafetyFunctionChannel highPressureChannel(String tag, SafetyFunctionChannel.FaultMode faultMode) {
     return SafetyFunctionChannel.highTrip(tag, "bara", 60.0, new SafetyFunctionChannel.SignalExtractor() {
       private static final long serialVersionUID = 1000L;
 
