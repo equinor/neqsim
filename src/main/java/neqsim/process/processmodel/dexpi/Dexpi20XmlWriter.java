@@ -59,6 +59,13 @@ public final class Dexpi20XmlWriter {
     }
   }
 
+  /** Writes a Plant exchange and returns its auditable conformance assessment. */
+  public static Dexpi20ConformanceAssessment.Report writeAndAssess(ProcessSystem processSystem, File file)
+      throws IOException {
+    write(processSystem, file);
+    return Dexpi20ConformanceAssessment.assess(file.toPath(), Dexpi20ConformanceAssessment.Profile.PLANT_P_ID);
+  }
+
   /** Writes a native DEXPI 2.0 model to a stream. */
   public static void write(ProcessSystem processSystem, OutputStream outputStream) throws IOException {
     if (processSystem == null || outputStream == null) {

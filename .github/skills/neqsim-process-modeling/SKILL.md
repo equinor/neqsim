@@ -132,6 +132,9 @@ the governed enterprise checklist and readiness gates use
 - Use `EngineeringNumericalHealthAnalyzer` to capture convergence, mass/energy closure, residual, and sensitivity
   evidence for every process state that governs an engineering decision. Required but absent evidence must remain
   `INCOMPLETE`; never replace unavailable closure data with zero.
+- Use `Dexpi20XmlWriter` for native Plant/P&ID exchange and `Dexpi20ProcessModelWriter` for native Process/PFD/BFD
+  exchange. A Proteus document with a changed header is not native DEXPI 2.0. Preserve the conformance report and still
+  require a named-CAE round-trip before project qualification.
 - Compressor, pump, heat exchanger, separator, and pipeline cases identify applicable
   standards through `neqsim-standards-lookup`.
 
