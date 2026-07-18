@@ -49,6 +49,9 @@ conditions. Each case should retain:
 - priority or governing intent; and
 - acceptance criteria for convergence and constraints.
 
+See [Design Cases and Governing Envelopes](design-cases-and-envelopes) for case construction, metric direction,
+acceptance limits, status handling, and coverage review.
+
 Startup, shutdown, compressor trip, settle-out, fire, blocked outlet, and depressurization are not made credible by
 renaming a steady-state case. Represent them with the appropriate dynamic or safety-scenario model and link the
 approved hazard-review basis.
@@ -149,7 +152,8 @@ include:
 
 Review package consistency before issue: tags, units, revision, governing cases, calculated values, graph identities,
 and unresolved actions must agree across artifacts. See [DEXPI Engineering Generation](../integration/dexpi-engineering-generation)
-and [CFIHOS Engineering Handover](../integration/cfihos-20-engineering-handover).
+and [Engineering Deliverables and Handover](deliverables-and-handover). Use the
+[DEXPI Engineering Guide](dexpi-guide) to select and qualify the correct exchange profile.
 
 ## Gate 8: Manage revisions and stale evidence
 

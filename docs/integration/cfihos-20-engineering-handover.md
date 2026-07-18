@@ -5,6 +5,9 @@ description: Deterministic staging files, verified RDL mappings, gap registers, 
 
 # Controlled CFIHOS 2.0 engineering handover
 
+See [Engineering Deliverables and Handover](../engineering/deliverables-and-handover) for how CFIHOS staging fits with
+the canonical engineering graph, DEXPI exchanges, registers, package validation, approvals, and revision control.
+
 CFIHOS 2.0 was published as a major release in November 2025. It provides Core and
 Extended Reference Data Library deliveries, an updated data model and dictionary, implementation
 guides, and supporting templates. The standard separates the information requirements, data model,

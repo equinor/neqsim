@@ -60,7 +60,8 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #ff9800; color: #24292e; font-size: 1.25rem;">🏗️ Engineering</h3>
 <ul style="list-style: none; padding: 0; margin: 0;">
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="engineering/index.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Engineering Hub</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Design cases, discipline calculations, safety, and handover</span></li>
-<li style="padding: 0.5rem 0;"><a href="engineering/guide.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Engineering Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">From a converged process model to review-ready deliverables</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="engineering/guide.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Engineering Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">From a converged process model to review-ready deliverables</span></li>
+<li style="padding: 0.5rem 0;"><a href="engineering/dexpi-guide.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>DEXPI Engineering Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Plant, Process, Proteus, pyDEXPI, validation, and qualification</span></li>
 </ul>
 </div>
 

@@ -6,6 +6,10 @@ keywords: "DEXPI, P&ID, piping and instrumentation diagram, XML import, XML expo
 
 # DEXPI P&ID Import, Export and Visualization
 
+> New to the available exchange profiles? Start with the
+> [DEXPI Engineering Guide](../engineering/dexpi-guide) to choose between Proteus compatibility, pyDEXPI rendering,
+> native DEXPI 2.0 Plant/P&ID, native Process/PFD/BFD, and governed engineering-package workflows.
+
 NeqSim provides a complete [DEXPI](https://dexpi.org/) integration that supports:
 
 - **Import** — parse DEXPI XML P&ID documents into runnable `ProcessSystem` models

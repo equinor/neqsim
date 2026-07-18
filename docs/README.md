@@ -58,6 +58,9 @@ System.out.println("Compressibility: " + gas.getZ());
 |---------|---------------|-------------|
 | Engineering workflows | [engineering/](engineering/) | Design cases, governing envelopes, sizing, discipline verification, deliverables, and lifecycle evidence |
 | Engineering guide | [engineering/guide.md](engineering/guide) | Practical path from a validated process model to a review-ready engineering package |
+| Design cases and envelopes | [engineering/design-cases-and-envelopes.md](engineering/design-cases-and-envelopes) | Controlled case definitions, metrics, limits, isolated execution, and governing values |
+| DEXPI engineering guide | [engineering/dexpi-guide.md](engineering/dexpi-guide) | Select, generate, validate, and qualify DEXPI exchanges |
+| Deliverables and handover | [engineering/deliverables-and-handover.md](engineering/deliverables-and-handover) | Coordinated packages, DEXPI, CFIHOS, approvals, manifests, and revisions |
 
 ### PVT and Reservoir
 
@@ -123,7 +126,10 @@ docs/
 │
 ├── engineering/                   # Engineering workflows and guides
 │   ├── index.md                   # Engineering topic hub
-│   └── guide.md                   # End-to-end engineering guide
+│   ├── guide.md                   # End-to-end engineering guide
+│   ├── design-cases-and-envelopes.md
+│   ├── dexpi-guide.md             # DEXPI selection, validation, and qualification
+│   └── deliverables-and-handover.md
 │
 ├── fluidmechanics/               # Pipe flow
 │   └── README.md

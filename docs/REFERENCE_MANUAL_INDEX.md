@@ -578,6 +578,9 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | --- | --- | --- |
 | **Engineering Hub** | [docs/engineering/index.md](engineering/) | **Dedicated entry point for design cases, closed-loop sizing, discipline verification, safety, handover, and lifecycle evidence** |
 | **Engineering Guide** | [docs/engineering/guide.md](engineering/guide) | **Practical, gated workflow from a validated process model to review-ready deliverables** |
+| **Design Cases and Governing Envelopes** | [docs/engineering/design-cases-and-envelopes.md](engineering/design-cases-and-envelopes) | **Controlled cases, metric direction, acceptance limits, isolated execution, and governing-value selection** |
+| **DEXPI Engineering Guide** | [docs/engineering/dexpi-guide.md](engineering/dexpi-guide) | **Choose, generate, validate, and qualify DEXPI Plant, Process, Proteus, and pyDEXPI exchanges** |
+| **Engineering Deliverables and Handover** | [docs/engineering/deliverables-and-handover.md](engineering/deliverables-and-handover) | **Package layers, registers, DEXPI, CFIHOS, issue controls, approvals, and revisions** |
 | Engineering Simulator Foundations | [docs/integration/engineering-simulator-foundations.md](integration/engineering-simulator-foundations) | Isolated case execution, provenance, readiness, uncertainty, and dynamic verification contracts |
 | Process-to-Engineering Simulator | [docs/integration/process-to-engineering-simulator.md](integration/process-to-engineering-simulator) | Iterative process/design convergence and explicit discipline sizing modules |
 | Process Model to Engineering Workflow | [docs/integration/process-to-engineering-workflow.md](integration/process-to-engineering-workflow) | Governed compilation, artifact contracts, approvals, and revision workflow |

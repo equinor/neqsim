@@ -5,6 +5,10 @@ description: "Generate governed DEXPI packages with instrumentation, safeguardin
 
 # Standards-based DEXPI engineering generation
 
+> For profile selection, validation levels, named-tool qualification, import limitations, and troubleshooting, see the
+> [DEXPI Engineering Guide](../engineering/dexpi-guide). For coordinated issue and handover controls, see
+> [Engineering Deliverables and Handover](../engineering/deliverables-and-handover).
+
 `EngineeringProject` adds a governed engineering layer to a runnable `ProcessSystem`. It records the
 design basis, applicable standards, deterministic control and safeguarding proposals, approval state,
 and validation findings without treating automatically generated safeguards as approved design.

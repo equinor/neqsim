@@ -19,6 +19,9 @@ has been supplied and approved.
 | Resource | Use it for |
 | --- | --- |
 | [Engineering Guide](guide) | A practical, gated path from a validated process model to a review-ready package |
+| [Design Cases and Governing Envelopes](design-cases-and-envelopes) | Controlled case definitions, metrics, isolated execution, limits, and governing-value selection |
+| [DEXPI Engineering Guide](dexpi-guide) | Selecting, generating, validating, and qualifying DEXPI Plant, Process, Proteus, and pyDEXPI exchanges |
+| [Engineering Deliverables and Handover](deliverables-and-handover) | Coordinated packages, registers, DEXPI, CFIHOS, approvals, manifests, and revisions |
 | [Engineering Simulator Foundations](../integration/engineering-simulator-foundations) | Core concepts: isolated cases, provenance, readiness, uncertainty, and verification |
 | [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator) | Closed-loop case execution, sizing, application of selected dimensions, reruns, and convergence |
 | [Complete Offshore Engineering Study](../integration/complete-offshore-process-engineering-study) | A full-facility executed example with discipline calculations and handover artifacts |
@@ -57,6 +60,7 @@ basis, governing case, method identity, units, warnings, uncertainty, constraint
 
 | Topic | Documentation |
 | --- | --- |
+| Controlled case definitions and governing metrics | [Design Cases and Governing Envelopes](design-cases-and-envelopes) |
 | Process design workflow | [Process Design Guide](../process/process_design_guide) |
 | Explicit design framework and constraints | [Design Framework](../process/DESIGN_FRAMEWORK) |
 | Isolated deterministic case execution | [Engineering Simulator Foundations](../integration/engineering-simulator-foundations) |
@@ -92,6 +96,8 @@ remain controlled engineering decisions.
 
 | Topic | Documentation |
 | --- | --- |
+| DEXPI workflow selection and qualification | [DEXPI Engineering Guide](dexpi-guide) |
+| Package layers, issue workflow, and consumer checks | [Engineering Deliverables and Handover](deliverables-and-handover) |
 | Canonical engineering graph and DEXPI | [DEXPI Engineering Generation](../integration/dexpi-engineering-generation) |
 | End-to-end artifact and approval workflow | [Process Model to Engineering Workflow](../integration/process-to-engineering-workflow) |
 | Controlled engineering data handover | [CFIHOS 2.0 Engineering Handover](../integration/cfihos-20-engineering-handover) |

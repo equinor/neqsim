@@ -1,5 +1,8 @@
 # Governed P&ID design synthesis
 
+For the relationship between P&ID proposal synthesis, native DEXPI 2.0 Plant exchange, Proteus/pyDEXPI compatibility,
+validation, and named-tool qualification, see the [DEXPI Engineering Guide](engineering/dexpi-guide).
+
 NeqSim can generate a reviewable P&ID proposal from the same engineering project that owns the
 process simulation, requirements, relief studies and DEXPI export. The generator deliberately does
 not claim that an automatically produced drawing is approved or fit for construction.
