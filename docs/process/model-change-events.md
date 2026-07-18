@@ -1,3 +1,9 @@
+---
+title: "Model Change Events"
+description: "Publish deterministic, versioned engineering-model change events with revision identity, evidence references, idempotency, integrity fingerprints, and durable replay."
+keywords: "ModelChangeEvent, engineering model revision, change event, idempotency, event journal, impact analysis"
+---
+
 # Model change events
 
 NeqSim exposes a versioned, transport-neutral event contract for publishing governed engineering-model revisions.

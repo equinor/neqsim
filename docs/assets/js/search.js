@@ -50,6 +50,16 @@
     'depressuring': ['blowdown', 'safety', 'relief valve'],
     'json': ['api', 'builder', 'fromjson'],
     'dexpi': ['pfd', 'pid', 'topology', 'proteus', 'xml'],
+    'p&id': ['pid', 'piping and instrumentation diagram', 'dexpi', 'hazop'],
+    'pid': ['p&id', 'piping and instrumentation diagram', 'dexpi'],
+    'pfd': ['process flow diagram', 'dexpi', 'flowsheet'],
+    'cfihos': ['handover', 'information handover', 'rdl'],
+    'hazop': ['hazard and operability', 'lopa', 'srs', 'safeguarding'],
+    'lopa': ['layer of protection analysis', 'hazop', 'sil', 'srs'],
+    'srs': ['safety requirements specification', 'sil', 'sif', 'lopa'],
+    'hipps': ['high integrity pressure protection system', 'sil', 'esd'],
+    'feed': ['front end engineering design', 'engineering readiness', 'qualification'],
+    'model package': ['neqsimmodelpackage', 'revision', 'change event', 'impact analysis'],
     'fluid': ['thermo', 'system', 'mixture', 'composition'],
     'mixing rule': ['classic', 'huron vidal', 'mixing'],
     'density': ['specific gravity', 'molar volume', 'costald', 'peneloux', 'rackett', 'volume translation'],
@@ -250,6 +260,7 @@
       this.field('description', { boost: 5 });
       this.field('keywords', { boost: 8 });
       this.field('headings', { boost: 6 });
+      this.field('path', { boost: 4 });
       this.field('content');
 
       this.pipeline.remove(lunr.stemmer);
@@ -289,6 +300,13 @@
   /* -------------------------------------------------- */
   /*  Core search                                       */
   /* -------------------------------------------------- */
+  function normalizeQuery(query) {
+    return query.toLowerCase()
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   function performSearch() {
     var query = searchInput.value.trim();
     if (!query || query.length < 2 || !searchIndex) { hideResults(); return; }
@@ -311,25 +329,28 @@
 
   function runSearch(query) {
     var results = [];
+    var safeQuery = normalizeQuery(query);
 
-    try { results = searchIndex.search(query); } catch (e) { /* syntax error */ }
+    if (!safeQuery) return results;
+
+    try { results = searchIndex.search(safeQuery); } catch (e) { /* syntax error */ }
 
     if (results.length === 0) {
       try {
-        var wq = query.split(/\s+/).map(function (t) { return t + '*'; }).join(' ');
+        var wq = safeQuery.split(/\s+/).map(function (t) { return t + '*'; }).join(' ');
         results = searchIndex.search(wq);
       } catch (e) { /* */ }
     }
 
     if (results.length === 0) {
       try {
-        var fq = query.split(/\s+/).map(function (t) { return t + '~1'; }).join(' ');
+        var fq = safeQuery.split(/\s+/).map(function (t) { return t + '~1'; }).join(' ');
         results = searchIndex.search(fq);
       } catch (e) { /* */ }
     }
 
-    if (results.length === 0 && query.indexOf(' ') !== -1) {
-      results = orSearch(query);
+    if (results.length === 0 && safeQuery.indexOf(' ') !== -1) {
+      results = orSearch(safeQuery);
     }
 
     // Synonym expansion
@@ -340,7 +361,9 @@
 
       synonyms.forEach(function (syn) {
         try {
-          var sr = searchIndex.search(syn + '*');
+          var normalizedSynonym = normalizeQuery(syn);
+          var synonymQuery = normalizedSynonym.split(/\s+/).map(function (t) { return t + '*'; }).join(' ');
+          var sr = searchIndex.search(synonymQuery);
           sr.forEach(function (r) {
             if (!existing[r.ref]) {
               r.score = r.score * 0.6;

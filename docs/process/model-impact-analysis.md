@@ -1,3 +1,9 @@
+---
+title: "Generalized Model Impact Analysis"
+description: "Propagate governed model changes through engineering dependencies to identify recalculation, regeneration, revalidation, and reapproval work."
+keywords: "GeneralizedImpactAnalyzer, model impact analysis, recalculation, revalidation, reapproval, engineering graph"
+---
+
 # Generalized model impact analysis
 
 `GeneralizedImpactAnalyzer` converts a model-change event and the canonical engineering graph into a controlled work

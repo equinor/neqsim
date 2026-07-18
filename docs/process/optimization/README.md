@@ -1,6 +1,6 @@
 ---
 title: Process Optimization Framework
-description: Entry point for NeqSim process optimization documentation: optimizer selection, getting started, and verified code patterns.
+description: "Entry point for NeqSim process optimization documentation: optimizer selection, getting started, and verified code patterns."
 ---
 
 # Process Optimization Framework

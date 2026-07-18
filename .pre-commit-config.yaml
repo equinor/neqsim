@@ -20,3 +20,14 @@ repos:
         pass_filenames: false
         stages: [pre-push]
         verbose: false
+
+  - repo: local
+    hooks:
+      - id: documentation-search-check
+        name: Documentation Search Coverage
+        entry: python devtools/check_documentation_search.py
+        language: system
+        files: ^(docs/|devtools/check_documentation_search\.py|\.github/workflows/documentation-search\.yml|\.pre-commit-config\.yaml)
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true
