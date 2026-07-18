@@ -195,6 +195,11 @@ calculation DAG, approval
 ledger and graph difference complete the package. Each calculated value retains its governing case, method or module,
 unit and graph/evidence relationship.
 
+The compiler also writes `neqsim-model-package.json`, an outer model-lifecycle manifest with stable asset/model/revision
+identity, a canonical-graph reference, software versions, dependency slots, and SHA-256 hashes for every contained
+artifact. The model-package validator fails closed when an inventoried file is missing or changed. Package integrity
+does not grant engineering approval or fitness for construction.
+
 ## Standards profile
 
 The supplied methods are designed to be used with version-controlled project rule packs, including:

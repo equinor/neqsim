@@ -12,7 +12,7 @@ public final class EngineeringPackageValidationException extends IOException {
   public EngineeringPackageValidationException(Path validationReportFile,
       EngineeringPackageValidationReport validationReport) {
     super("Engineering package validation failed with " + validationReport.getErrorCount() + " error(s); see "
-        + validationReportFile);
+        + validationReportFile + summarize(validationReport));
     this.validationReportFile = validationReportFile;
     this.validationReport = validationReport;
   }
@@ -23,5 +23,15 @@ public final class EngineeringPackageValidationException extends IOException {
 
   public EngineeringPackageValidationReport getValidationReport() {
     return validationReport;
+  }
+
+  private static String summarize(EngineeringPackageValidationReport report) {
+    for (EngineeringPackageValidationReport.Finding finding : report.getFindings()) {
+      if (finding.getSeverity() == EngineeringPackageValidationReport.Severity.ERROR) {
+        return "; first error: " + finding.getCode() + " in " + finding.getArtifact() + finding.getPath() + " - "
+            + finding.getMessage();
+      }
+    }
+    return "";
   }
 }
