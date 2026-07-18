@@ -5,6 +5,8 @@ description: This guide shows how to reproduce the `comparesimulations.ipynb` Co
 
 # Comparing process simulations with NeqSim (Java)
 
+For the complete published fluid and flowsheet plus the multi-case equipment, piping, valve, instrument, safety, materials, mechanical, DEXPI and readiness study, use the [complete offshore process engineering study](../integration/complete-offshore-process-engineering-study) and its executable notebook. The abbreviated Java fragment below remains only a translation pattern.
+
 This guide shows how to reproduce the `comparesimulations.ipynb` Colab notebook using
 only the Java API. It walks through building the feed, assembling the flowsheet, running
 the model, and exporting a JSON report so you can align the results with HYSYS/DWSIM or
