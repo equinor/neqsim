@@ -67,6 +67,23 @@ public final class EngineeringProductionReadinessAssessment {
     gates.put("PROJECT_QUALIFIED_METHODS", gate(methods,
         methods ? "All required method versions are project qualified" : missingQualifications.toString()));
 
+    boolean industrialApplicability = true;
+    if (evidence.getMethodQualificationRegistry() != null) {
+      Set<String> serviceQualifiedMethods = new LinkedHashSet<String>();
+      for (EngineeringMethodQualificationRegistry.Result assessment : evidence.getMethodServiceAssessments()) {
+        if (assessment.isQualifiedForService()) {
+          serviceQualifiedMethods.add(assessment.getMethodKey());
+        }
+      }
+      Set<String> missingServiceAssessments = new LinkedHashSet<String>(executedMethods);
+      missingServiceAssessments.removeAll(serviceQualifiedMethods);
+      industrialApplicability = !executedMethods.isEmpty() && missingServiceAssessments.isEmpty();
+      gates.put("INDUSTRIAL_METHOD_APPLICABILITY",
+          gate(industrialApplicability,
+              industrialApplicability ? "Every method is qualified for its supplied service and intended use"
+                  : "Missing qualifying service assessments " + missingServiceAssessments));
+    }
+
     EngineeringAutoConfigurator.Result automation = evidence.getAutoConfigurationResult();
     gates.put("EXPLICIT_AUTOMATIC_CONFIGURATION", gate(automation != null && automation.isComplete(),
         "Attach a complete explicit auto-configuration result with no hidden defaults"));
@@ -135,8 +152,8 @@ public final class EngineeringProductionReadinessAssessment {
         && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.SRS_APPROVAL)
         && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.INDEPENDENT_VALIDATION)
         && documentIntegrity.isPassed();
-    boolean validated = designLoop && benchmarkPassed && methods && automation != null && automation.isComplete()
-        && safety.isPassed() && technicalCompletion && externalValidation;
+    boolean validated = designLoop && benchmarkPassed && methods && industrialApplicability && automation != null
+        && automation.isComplete() && safety.isPassed() && technicalCompletion && externalValidation;
     Level level = all ? Level.QUALIFIED_FEED_SUPPORT
         : validated ? Level.VALIDATED_PRELIMINARY : designLoop ? Level.EXPERIMENTAL : Level.NOT_READY;
     return new Result(project.getProjectId(), project.getRevision(), level, gates, safety, external, documentIntegrity,

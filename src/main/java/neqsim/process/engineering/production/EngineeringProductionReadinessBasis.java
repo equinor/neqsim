@@ -28,6 +28,9 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
   private EngineeringReleaseQualityEvidence releaseQualityEvidence;
   private EngineeringExternalEvidenceRegister externalEvidenceRegister;
   private EngineeringExternalEvidenceDocumentIntegrity externalEvidenceDocumentIntegrity;
+  private EngineeringMethodQualificationRegistry methodQualificationRegistry;
+  private final List<EngineeringMethodQualificationRegistry.Result> methodServiceAssessments =
+      new ArrayList<EngineeringMethodQualificationRegistry.Result>();
   private EngineeringCalculationResult<TransientPipingQualificationCalculation.Result> transientPipingQualification;
   private EngineeringCalculationResult<CompressorProtectionQualificationCalculation.Result> compressorProtectionQualification;
   private EngineeringCalculationResult<ValveInstrumentQualificationCalculation.Result> valveInstrumentQualification;
@@ -92,6 +95,26 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
     return this;
   }
 
+  /** Activates structured method applicability controls for this readiness basis. */
+  public EngineeringProductionReadinessBasis methodQualificationRegistry(
+      EngineeringMethodQualificationRegistry value) {
+    if (value == null) {
+      throw new IllegalArgumentException("methodQualificationRegistry must not be null");
+    }
+    methodQualificationRegistry = value;
+    return this;
+  }
+
+  /** Adds one exact method/service assessment produced by the attached registry. */
+  public EngineeringProductionReadinessBasis addMethodServiceAssessment(
+      EngineeringMethodQualificationRegistry.Result value) {
+    if (value == null) {
+      throw new IllegalArgumentException("methodServiceAssessment must not be null");
+    }
+    methodServiceAssessments.add(value);
+    return this;
+  }
+
   public EngineeringProductionReadinessBasis transientPipingQualification(
       EngineeringCalculationResult<TransientPipingQualificationCalculation.Result> value) {
     transientPipingQualification = require(value, "transientPipingQualification");
@@ -152,6 +175,14 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
 
   public EngineeringExternalEvidenceDocumentIntegrity getExternalEvidenceDocumentIntegrity() {
     return externalEvidenceDocumentIntegrity;
+  }
+
+  public EngineeringMethodQualificationRegistry getMethodQualificationRegistry() {
+    return methodQualificationRegistry;
+  }
+
+  public List<EngineeringMethodQualificationRegistry.Result> getMethodServiceAssessments() {
+    return Collections.unmodifiableList(methodServiceAssessments);
   }
 
   public EngineeringCalculationResult<TransientPipingQualificationCalculation.Result> getTransientPipingQualification() {
@@ -220,6 +251,13 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
     result.put("externalEvidenceRegister", externalEvidenceRegister == null ? null : externalEvidenceRegister.toMap());
     result.put("externalEvidenceDocumentIntegrity",
         externalEvidenceDocumentIntegrity == null ? null : externalEvidenceDocumentIntegrity.toMap());
+    result.put("methodQualificationRegistry",
+        methodQualificationRegistry == null ? null : methodQualificationRegistry.toMap());
+    List<Map<String, Object>> methodAssessments = new ArrayList<Map<String, Object>>();
+    for (EngineeringMethodQualificationRegistry.Result assessment : methodServiceAssessments) {
+      methodAssessments.add(assessment.toMap());
+    }
+    result.put("methodServiceAssessments", methodAssessments);
     result.put("transientPipingQualification", map(transientPipingQualification));
     result.put("compressorProtectionQualification", map(compressorProtectionQualification));
     result.put("valveInstrumentQualification", map(valveInstrumentQualification));
