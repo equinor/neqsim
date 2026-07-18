@@ -1,7 +1,7 @@
 ---
 name: neqsim-process-safety
-version: "1.4.0"
-description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, integrated facility safety response, bow-tie analysis, risk-matrix scoring, TR3001 overpressure-protection studies, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, integrated ESD/compressor-trip/blowdown/relief/flare evidence, overpressure relief-cause / governing-case studies, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, and neqsim.process.safety.rupture classes."
+version: "1.5.0"
+description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, integrated facility safety response, safety change revalidation, independent benchmarks, bow-tie analysis, risk-matrix scoring, TR3001 overpressure-protection studies, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, integrated ESD/compressor-trip/blowdown/relief/flare evidence, safety-study revalidation after change, independent method benchmarks, overpressure relief-cause / governing-case studies, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, and neqsim.process.safety.rupture classes."
 last_verified: "2026-07-18"
 requires:
   java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, neqsim.process.safety.rupture, neqsim.process.safety.risk.sis.nog070, neqsim.process.safety.esd, neqsim.process.safety.api14c, neqsim.process.safety.compliance]
@@ -301,6 +301,30 @@ Treat `isTechnicallyAcceptable()`, `isEvidenceComplete()`, and `isReadyForEngine
 review gates, never approval. Inspect `getFindings()` and embedded engine results, then obtain the
 accountable process-safety, rotating-equipment, flare, piping, and mechanical approvals. See
 `docs/process/safety/integrated-facility-safety-response.md`.
+
+### Method 3g — Safety change impact and revalidation
+
+Use `SafetyStudyRevalidationPlanner` with the canonical `EngineeringGraph` and a controlled
+`ModelChangeEvent`. Tag safety lifecycle nodes with the `safetyStudyType` property and an accepted
+type: `HAZOP`, `LOPA`, `SRS`, `SIF_RELIABILITY`, `SIF_DYNAMIC_VERIFICATION`,
+`RELIEF_BLOWDOWN_FLARE`, or `FACILITY_RESPONSE`. Express dependencies with normal graph edges; do not
+create a separate safety dependency register.
+
+The planner delegates propagation to `GeneralizedImpactAnalyzer`, then adds type-specific work,
+propagation paths, reason edges, stale approvals, unresolved subjects, and cycle findings. Every task
+starts incomplete. Close it and restore approval through project MOC/document control.
+
+### Method 3h — Independent safety verification benchmarks
+
+Use `SafetyVerificationBenchmarkSuite` to qualify the versioned SIF PFDavg, LOPA residual-frequency,
+and dynamic-response methods against externally supplied values. Declare the source class, controlled
+reference, dataset revision, tolerances, and independent-review record. A
+`REGRESSION_BASELINE` is useful but deliberately cannot qualify as independent evidence.
+
+Do not call an expected value independent merely because it was entered by a different user. Verify
+the calculation or published/vendor/CAE source, assumptions, units, method version, and review record
+outside the code. A passing suite qualifies the controlled implementation/case set, not the project
+design or SIL target. See `docs/process/safety/safety-change-revalidation-and-benchmarks.md`.
 
 ## Method 4 — Bow-Tie Analysis
 
