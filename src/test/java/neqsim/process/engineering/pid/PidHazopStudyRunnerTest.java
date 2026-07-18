@@ -69,7 +69,7 @@ public class PidHazopStudyRunnerTest extends NeqSimTest {
     ProcessSystem process = new ProcessSystem();
     process.add(feed);
     process.add(valve);
-    return NorsokOffshoreEngineeringBuilder.from("Topology-complete P&ID", process)
-        .projectId("PID-TOPOLOGY-TEST").build();
+    return NorsokOffshoreEngineeringBuilder.from("Topology-complete P&ID", process).projectId("PID-TOPOLOGY-TEST")
+        .build();
   }
 }
