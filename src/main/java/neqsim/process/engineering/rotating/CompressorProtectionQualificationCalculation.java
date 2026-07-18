@@ -302,6 +302,9 @@ public final class CompressorProtectionQualificationCalculation implements
     if (!readiness.isReady()) {
       return output.status(EngineeringCalculationResult.Status.BLOCKED).build();
     }
+    if (input == null) {
+      return output.status(EngineeringCalculationResult.Status.BLOCKED).build();
+    }
 
     double minimumSurgeMargin = Double.POSITIVE_INFINITY;
     double minimumStonewallMargin = Double.POSITIVE_INFINITY;
