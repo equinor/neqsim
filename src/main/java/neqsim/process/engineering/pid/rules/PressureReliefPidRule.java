@@ -35,8 +35,7 @@ public final class PressureReliefPidRule implements PidDesignRule {
     List<PidElement> result = new ArrayList<PidElement>();
     OverpressureProtectionStudy study = study(context, equipment.getName());
     boolean hasRequirement = !context
-        .requirements(equipment.getName(), neqsim.process.engineering.EngineeringRequirement.Type.RELIEF)
-        .isEmpty();
+        .requirements(equipment.getName(), neqsim.process.engineering.EngineeringRequirement.Type.RELIEF).isEmpty();
     if (study == null && !hasRequirement) {
       return result;
     }
@@ -49,9 +48,8 @@ public final class PressureReliefPidRule implements PidDesignRule {
       context.getTagAllocator().reserve(tag);
     }
     PidElement psv = new PidElement("pid:" + tag.toLowerCase().replaceAll("[^a-z0-9]+", "-"), tag,
-        PidElementType.SAFETY_RELIEF_VALVE).equipment(equipment.getName())
-        .description("Pressure safety valve").provenance(RULE_ID,
-            "Protect pressure-containing equipment against governed credible overpressure scenarios")
+        PidElementType.SAFETY_RELIEF_VALVE).equipment(equipment.getName()).description("Pressure safety valve")
+        .provenance(RULE_ID, "Protect pressure-containing equipment against governed credible overpressure scenarios")
         .standard("API 520").standard("API 521").attribute("approvalStatus", "REVIEW_REQUIRED")
         .attribute("disposalDestination", "FLARE_OR_SAFE_LOCATION_REVIEW_REQUIRED");
     PidRuleSupport.trace(psv, context, equipment, "RELIEF", "ISOLATION-BLOWDOWN");
@@ -60,20 +58,19 @@ public final class PressureReliefPidRule implements PidDesignRule {
       psv.attribute("mawpBara", Double.valueOf(study.getItem().getMaximumAllowableWorkingPressureBara()))
           .attribute("setPressureBara", Double.valueOf(study.getItem().getReliefSetPressureBara()))
           .attribute("scenarioCount", Integer.valueOf(study.getScenarios().size()))
-          .attribute("governingScenario",
-              governing == null ? "NO_CREDIBLE_SCENARIO" : governing.getName())
-          .attribute("governingCause",
-              governing == null ? "NOT_DEFINED" : governing.getCause().name())
-          .attribute("sizingStatus", governing == null ? "SCENARIO_REVIEW_REQUIRED"
-              : "CALCULATION_AND_VENDOR_REVIEW_REQUIRED");
+          .attribute("governingScenario", governing == null ? "NO_CREDIBLE_SCENARIO" : governing.getName())
+          .attribute("governingCause", governing == null ? "NOT_DEFINED" : governing.getCause().name())
+          .attribute("sizingStatus",
+              governing == null ? "SCENARIO_REVIEW_REQUIRED" : "CALCULATION_AND_VENDOR_REVIEW_REQUIRED");
     }
     if (installed != null) {
-      psv.attribute("installedDesignInput", installed.toMap())
-          .attribute("installedInputMissingFields", installed.getMissingFields());
+      psv.attribute("installedDesignInput", installed.toMap()).attribute("installedInputMissingFields",
+          installed.getMissingFields());
     }
-    PidElement flare = PidRuleSupport.element(context, equipment, "FLARE", "RELIEF-DESTINATION",
-        PidElementType.OFF_PAGE_CONNECTOR, RULE_ID, "Relief and blowdown disposal connector",
-        "Connect the device outlet to the qualified disposal-system model")
+    PidElement flare = PidRuleSupport
+        .element(context, equipment, "FLARE", "RELIEF-DESTINATION", PidElementType.OFF_PAGE_CONNECTOR, RULE_ID,
+            "Relief and blowdown disposal connector",
+            "Connect the device outlet to the qualified disposal-system model")
         .attribute("destination", "FLARE_NETWORK_MODEL_REQUIRED");
     psv.connect(flare.getId());
     result.add(psv);

@@ -31,26 +31,25 @@ public final class PumpControlPidRule implements PidDesignRule {
   @Override
   public List<PidElement> propose(PidDesignContext context, ProcessEquipmentInterface equipment) {
     List<PidElement> result = new ArrayList<PidElement>();
-    PidElement suctionPt = PidRuleSupport.onInlet(PidRuleSupport.element(context, equipment, "PT",
-        "SUCTION-PRESSURE", PidElementType.MEASUREMENT, RULE_ID,
-        "Pump suction pressure transmitter", "Monitor NPSH and liquid-supply margin"), equipment)
+    PidElement suctionPt = PidRuleSupport
+        .onInlet(PidRuleSupport.element(context, equipment, "PT", "SUCTION-PRESSURE", PidElementType.MEASUREMENT,
+            RULE_ID, "Pump suction pressure transmitter", "Monitor NPSH and liquid-supply margin"), equipment)
         .attribute("measuredVariable", "PRESSURE").attribute("location", "SUCTION");
-    PidElement dischargePt = PidRuleSupport.onOutlet(PidRuleSupport.element(context, equipment, "PT",
-        "DISCHARGE-PRESSURE", PidElementType.MEASUREMENT, RULE_ID,
-        "Pump discharge pressure transmitter", "Monitor pump head and deadhead pressure"), equipment)
+    PidElement dischargePt = PidRuleSupport
+        .onOutlet(PidRuleSupport.element(context, equipment, "PT", "DISCHARGE-PRESSURE", PidElementType.MEASUREMENT,
+            RULE_ID, "Pump discharge pressure transmitter", "Monitor pump head and deadhead pressure"), equipment)
         .attribute("measuredVariable", "PRESSURE").attribute("location", "DISCHARGE");
-    PidElement ft = PidRuleSupport.onOutlet(PidRuleSupport.element(context, equipment, "FT",
-        "MINIMUM-FLOW", PidElementType.MEASUREMENT, RULE_ID,
-        "Pump discharge flow transmitter", "Measure flow for minimum-flow protection"), equipment)
+    PidElement ft = PidRuleSupport
+        .onOutlet(PidRuleSupport.element(context, equipment, "FT", "MINIMUM-FLOW", PidElementType.MEASUREMENT, RULE_ID,
+            "Pump discharge flow transmitter", "Measure flow for minimum-flow protection"), equipment)
         .attribute("measuredVariable", "FLOW");
     PidElement fic = PidRuleSupport.element(context, equipment, "FIC", "MINIMUM-FLOW-CONTROLLER",
         PidElementType.CONTROLLER, RULE_ID, "Pump minimum-flow controller",
         "Maintain vendor-approved minimum continuous stable flow");
-    PidElement fcv = PidRuleSupport.element(context, equipment, "FCV", "MINIMUM-FLOW-VALVE",
-        PidElementType.CONTROL_VALVE, RULE_ID, "Pump minimum-flow recycle valve",
-        "Recycle liquid to protect the pump at low process flow")
-        .attribute("failurePosition", "FAIL_OPEN_PROPOSAL")
-        .attribute("recycleDestination", "PROJECT_INPUT_REQUIRED");
+    PidElement fcv = PidRuleSupport
+        .element(context, equipment, "FCV", "MINIMUM-FLOW-VALVE", PidElementType.CONTROL_VALVE, RULE_ID,
+            "Pump minimum-flow recycle valve", "Recycle liquid to protect the pump at low process flow")
+        .attribute("failurePosition", "FAIL_OPEN_PROPOSAL").attribute("recycleDestination", "PROJECT_INPUT_REQUIRED");
     ft.connect(fic.getId());
     fic.connect(fcv.getId());
     PidRuleSupport.trace(suctionPt, context, equipment, "LOW-SUCTION");

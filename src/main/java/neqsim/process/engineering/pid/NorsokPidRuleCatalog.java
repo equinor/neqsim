@@ -18,19 +18,19 @@ public final class NorsokPidRuleCatalog {
   /**
    * Returns the control and field-instrumentation proposal profile.
    *
-   * <p>The profile proposes conventional ISA-style loops. Set points, ranges, failure actions,
-   * installation details and control narratives remain review-required project inputs.</p>
+   * <p>
+   * The profile proposes conventional ISA-style loops. Set points, ranges, failure actions, installation details and
+   * control narratives remain review-required project inputs.
+   * </p>
    */
   public static PidRuleCatalog controlAndInstrumentation() {
-    return new PidRuleCatalog().add(new SeparatorControlPidRule())
-        .add(new CompressorControlPidRule()).add(new ThermalControlPidRule())
-        .add(new PumpControlPidRule());
+    return new PidRuleCatalog().add(new SeparatorControlPidRule()).add(new CompressorControlPidRule())
+        .add(new ThermalControlPidRule()).add(new PumpControlPidRule());
   }
 
   /** Returns the complete control, instrumentation, isolation and safeguarding proposal profile. */
   public static PidRuleCatalog completeProposals() {
-    return controlAndInstrumentation().add(new SeparatorSafeguardingPidRule())
-        .add(new CompressorSafeguardingPidRule()).add(new PumpSafeguardingPidRule())
-        .add(new ThermalSafeguardingPidRule()).add(new PressureReliefPidRule());
+    return controlAndInstrumentation().add(new SeparatorSafeguardingPidRule()).add(new CompressorSafeguardingPidRule())
+        .add(new PumpSafeguardingPidRule()).add(new ThermalSafeguardingPidRule()).add(new PressureReliefPidRule());
   }
 }

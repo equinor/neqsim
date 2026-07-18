@@ -51,8 +51,8 @@ public class ControlInstrumentationPidSynthesisTest extends NeqSimTest {
     assertNotNull(separatorPressure);
     assertFalse(separatorPressure.getLineTag().isEmpty());
     assertFalse(separatorPressure.getRequirementIds().isEmpty());
-    assertTrue(separatorPressure.getStandardReferences().stream()
-        .anyMatch(reference -> reference.contains("IEC 62424")));
+    assertTrue(
+        separatorPressure.getStandardReferences().stream().anyMatch(reference -> reference.contains("IEC 62424")));
   }
 
   private static PidElement findByFunction(PidDesignModel model, String function) {
@@ -88,7 +88,7 @@ public class ControlInstrumentationPidSynthesisTest extends NeqSimTest {
     process.add(compressor);
     process.add(cooler);
     process.add(pump);
-    return NorsokOffshoreEngineeringBuilder.from("Complete control proposal", process)
-        .projectId("PID-CONTROL-TEST").build();
+    return NorsokOffshoreEngineeringBuilder.from("Complete control proposal", process).projectId("PID-CONTROL-TEST")
+        .build();
   }
 }

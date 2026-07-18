@@ -45,8 +45,8 @@ public final class CompressorSafeguardingPidRule implements PidDesignRule {
     dischargePt.connect(dischargeTrip.getId());
     PidRuleSupport.onOutlet(dischargePt, equipment);
 
-    PidElement dischargeTt = sensor(context, equipment, "TT", "DISCHARGE-T-HH-SENSOR",
-        "TEMPERATURE", "Independent compressor discharge temperature transmitter", "DISCHARGE-T-HH");
+    PidElement dischargeTt = sensor(context, equipment, "TT", "DISCHARGE-T-HH-SENSOR", "TEMPERATURE",
+        "Independent compressor discharge temperature transmitter", "DISCHARGE-T-HH");
     PidElement temperatureTrip = trip(context, equipment, "TSHH", "DISCHARGE-T-HH-TRIP",
         "High-high compressor discharge temperature trip", "DISCHARGE-T-HH");
     dischargeTt.connect(temperatureTrip.getId());
@@ -55,30 +55,32 @@ public final class CompressorSafeguardingPidRule implements PidDesignRule {
     PidElement vibrationTrip = trip(context, equipment, "VSHH", "MACHINERY-VIBRATION-TRIP",
         "Compressor machinery protection trip", "MACHINERY-PROTECTION")
         .attribute("channels", "VENDOR_API_670_INPUT_REQUIRED");
-    PidElement shutdown = PidRuleSupport.element(context, equipment, "ESD", "UNIT-SHUTDOWN",
-        PidElementType.SAFETY_FUNCTION, RULE_ID, "Compressor shutdown function",
-        "Stop the driver and move final elements to the approved safe state")
+    PidElement shutdown = PidRuleSupport
+        .element(context, equipment, "ESD", "UNIT-SHUTDOWN", PidElementType.SAFETY_FUNCTION, RULE_ID,
+            "Compressor shutdown function", "Stop the driver and move final elements to the approved safe state")
         .attribute("sequence", "SRS_AND_SHUTDOWN_NARRATIVE_REQUIRED");
     suctionTrip.connect(shutdown.getId());
     dischargeTrip.connect(shutdown.getId());
     temperatureTrip.connect(shutdown.getId());
     vibrationTrip.connect(shutdown.getId());
 
-    PidElement suctionEsdv = PidRuleSupport.onInlet(PidRuleSupport.element(context, equipment, "ESDV",
-        "SUCTION-ISOLATION", PidElementType.SHUTDOWN_VALVE, RULE_ID,
-        "Compressor suction ESD valve", "Isolate the compressor suction inventory"), equipment)
+    PidElement suctionEsdv = PidRuleSupport
+        .onInlet(PidRuleSupport.element(context, equipment, "ESDV", "SUCTION-ISOLATION", PidElementType.SHUTDOWN_VALVE,
+            RULE_ID, "Compressor suction ESD valve", "Isolate the compressor suction inventory"), equipment)
         .attribute("failurePosition", "FAIL_CLOSED_PROPOSAL");
-    PidElement dischargeEsdv = PidRuleSupport.onOutlet(PidRuleSupport.element(context, equipment, "ESDV",
-        "DISCHARGE-ISOLATION", PidElementType.SHUTDOWN_VALVE, RULE_ID,
-        "Compressor discharge ESD valve", "Isolate the compressor discharge inventory"), equipment)
+    PidElement dischargeEsdv = PidRuleSupport
+        .onOutlet(
+            PidRuleSupport.element(context, equipment, "ESDV", "DISCHARGE-ISOLATION", PidElementType.SHUTDOWN_VALVE,
+                RULE_ID, "Compressor discharge ESD valve", "Isolate the compressor discharge inventory"),
+            equipment)
         .attribute("failurePosition", "FAIL_CLOSED_PROPOSAL");
-    PidElement nrv = PidRuleSupport.onOutlet(PidRuleSupport.element(context, equipment, "NRV",
-        "DISCHARGE-CHECK-VALVE", PidElementType.CHECK_VALVE, RULE_ID,
-        "Compressor discharge non-return valve", "Limit reverse flow and reverse rotation"), equipment)
+    PidElement nrv = PidRuleSupport
+        .onOutlet(PidRuleSupport.element(context, equipment, "NRV", "DISCHARGE-CHECK-VALVE", PidElementType.CHECK_VALVE,
+            RULE_ID, "Compressor discharge non-return valve", "Limit reverse flow and reverse rotation"), equipment)
         .attribute("leakageCase", "SETTLE_OUT_AND_RELIEF_REVIEW_REQUIRED");
-    PidElement bdv = PidRuleSupport.element(context, equipment, "BDV", "CASE-DEPRESSURISATION",
-        PidElementType.BLOWDOWN_VALVE, RULE_ID, "Compressor settle-out blowdown valve",
-        "Depressurise the isolated compressor circuit when required")
+    PidElement bdv = PidRuleSupport
+        .element(context, equipment, "BDV", "CASE-DEPRESSURISATION", PidElementType.BLOWDOWN_VALVE, RULE_ID,
+            "Compressor settle-out blowdown valve", "Depressurise the isolated compressor circuit when required")
         .attribute("orificeSizing", "DYNAMIC_BLOWDOWN_STUDY_REQUIRED")
         .attribute("flareTieIn", "PROJECT_INPUT_REQUIRED");
     shutdown.connect(suctionEsdv.getId()).connect(dischargeEsdv.getId()).connect(bdv.getId());
@@ -102,23 +104,23 @@ public final class CompressorSafeguardingPidRule implements PidDesignRule {
     return result;
   }
 
-  private static PidElement sensor(PidDesignContext context, ProcessEquipmentInterface equipment,
-      String function, String purpose, String variable, String description, String requirementToken) {
-    PidElement element = PidRuleSupport.element(context, equipment, function, purpose,
-        PidElementType.MEASUREMENT, RULE_ID, description,
-        "Provide an independent initiating element for compressor protection")
+  private static PidElement sensor(PidDesignContext context, ProcessEquipmentInterface equipment, String function,
+      String purpose, String variable, String description, String requirementToken) {
+    PidElement element = PidRuleSupport
+        .element(context, equipment, function, purpose, PidElementType.MEASUREMENT, RULE_ID, description,
+            "Provide an independent initiating element for compressor protection")
         .attribute("measuredVariable", variable).attribute("system", "SIS")
         .attribute("independence", "VERIFICATION_REQUIRED");
     PidRuleSupport.trace(element, context, equipment, requirementToken);
     return element;
   }
 
-  private static PidElement trip(PidDesignContext context, ProcessEquipmentInterface equipment,
-      String function, String purpose, String description, String requirementToken) {
-    PidElement element = PidRuleSupport.element(context, equipment, function, purpose,
-        PidElementType.TRIP, RULE_ID, description, "Move the compressor to the approved safe state")
-        .attribute("system", "SIS_OR_MACHINERY_PROTECTION")
-        .attribute("setPoint", "SRS_OR_VENDOR_INPUT_REQUIRED")
+  private static PidElement trip(PidDesignContext context, ProcessEquipmentInterface equipment, String function,
+      String purpose, String description, String requirementToken) {
+    PidElement element = PidRuleSupport
+        .element(context, equipment, function, purpose, PidElementType.TRIP, RULE_ID, description,
+            "Move the compressor to the approved safe state")
+        .attribute("system", "SIS_OR_MACHINERY_PROTECTION").attribute("setPoint", "SRS_OR_VENDOR_INPUT_REQUIRED")
         .attribute("voting", "SRS_OR_VENDOR_INPUT_REQUIRED");
     PidRuleSupport.trace(element, context, equipment, requirementToken);
     return element;
