@@ -45,8 +45,8 @@ class ClosedLoopSafetyFunctionTest {
             ESDLogic finalElements = new ESDLogic("ESD-101 final elements");
             finalElements.addAction(new TripValveAction(valve), 0.0);
             return ClosedLoopSafetyFunction
-                .builder("SIF-HP-101", "2oo3 high-pressure isolation", process,
-                    VotingPattern.TWO_OUT_OF_THREE, finalElements)
+                .builder("SIF-HP-101", "2oo3 high-pressure isolation", process, VotingPattern.TWO_OUT_OF_THREE,
+                    finalElements)
                 .addChannel(highPressureChannel("PT-101A", SafetyFunctionChannel.FaultMode.HEALTHY))
                 .addChannel(highPressureChannel("PT-101B", SafetyFunctionChannel.FaultMode.HEALTHY))
                 .addChannel(highPressureChannel("PT-101C", SafetyFunctionChannel.FaultMode.BYPASSED))

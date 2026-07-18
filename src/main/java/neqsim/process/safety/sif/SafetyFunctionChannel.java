@@ -34,8 +34,8 @@ public final class SafetyFunctionChannel implements Serializable {
     private final boolean available;
     private final FaultMode faultMode;
 
-    Sample(String tag, double rawValue, double indicatedValue, boolean demand, boolean tripped,
-        boolean available, FaultMode faultMode) {
+    Sample(String tag, double rawValue, double indicatedValue, boolean demand, boolean tripped, boolean available,
+        FaultMode faultMode) {
       this.tag = tag;
       this.rawValue = rawValue;
       this.indicatedValue = indicatedValue;
@@ -168,8 +168,7 @@ public final class SafetyFunctionChannel implements Serializable {
     private FaultMode faultMode = FaultMode.HEALTHY;
     private double bias;
 
-    private Builder(String tag, String unit, double setpoint, TripDirection tripDirection,
-        SignalExtractor extractor) {
+    private Builder(String tag, String unit, double setpoint, TripDirection tripDirection, SignalExtractor extractor) {
       if (extractor == null) {
         throw new IllegalArgumentException("extractor must not be null");
       }

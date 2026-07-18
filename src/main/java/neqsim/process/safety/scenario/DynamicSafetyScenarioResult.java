@@ -67,8 +67,7 @@ public final class DynamicSafetyScenarioResult implements Serializable {
     this.scenarioName = scenarioName;
     this.criterionResults = Collections.unmodifiableMap(new LinkedHashMap<String, CriterionResult>(criterionResults));
     this.finalLogicStates = Collections.unmodifiableMap(new LinkedHashMap<String, String>(finalLogicStates));
-    this.logicEvidence = Collections
-        .unmodifiableMap(new LinkedHashMap<String, Map<String, Object>>(logicEvidence));
+    this.logicEvidence = Collections.unmodifiableMap(new LinkedHashMap<String, Map<String, Object>>(logicEvidence));
     this.errors = Collections.unmodifiableList(new ArrayList<String>(errors));
     this.steadyStateConverged = steadyStateConverged;
   }
