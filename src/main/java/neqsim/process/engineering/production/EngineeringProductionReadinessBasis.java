@@ -27,6 +27,7 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
   private final List<EngineeringPilotProjectEvidence> pilotEvidence = new ArrayList<EngineeringPilotProjectEvidence>();
   private EngineeringReleaseQualityEvidence releaseQualityEvidence;
   private EngineeringExternalEvidenceRegister externalEvidenceRegister;
+  private EngineeringExternalEvidenceDocumentIntegrity externalEvidenceDocumentIntegrity;
   private EngineeringCalculationResult<TransientPipingQualificationCalculation.Result> transientPipingQualification;
   private EngineeringCalculationResult<CompressorProtectionQualificationCalculation.Result> compressorProtectionQualification;
   private EngineeringCalculationResult<ValveInstrumentQualificationCalculation.Result> valveInstrumentQualification;
@@ -78,6 +79,16 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
       throw new IllegalArgumentException("externalEvidenceRegister must not be null");
     }
     externalEvidenceRegister = value;
+    return this;
+  }
+
+  /** Attaches actual document content digests used to verify external evidence receipts. */
+  public EngineeringProductionReadinessBasis externalEvidenceDocumentIntegrity(
+      EngineeringExternalEvidenceDocumentIntegrity value) {
+    if (value == null) {
+      throw new IllegalArgumentException("externalEvidenceDocumentIntegrity must not be null");
+    }
+    externalEvidenceDocumentIntegrity = value;
     return this;
   }
 
@@ -137,6 +148,10 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
 
   public EngineeringExternalEvidenceRegister getExternalEvidenceRegister() {
     return externalEvidenceRegister;
+  }
+
+  public EngineeringExternalEvidenceDocumentIntegrity getExternalEvidenceDocumentIntegrity() {
+    return externalEvidenceDocumentIntegrity;
   }
 
   public EngineeringCalculationResult<TransientPipingQualificationCalculation.Result> getTransientPipingQualification() {
@@ -203,6 +218,8 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
     result.put("pilotProjectEvidence", maps(pilotEvidence));
     result.put("releaseQualityEvidence", releaseQualityEvidence == null ? null : releaseQualityEvidence.toMap());
     result.put("externalEvidenceRegister", externalEvidenceRegister == null ? null : externalEvidenceRegister.toMap());
+    result.put("externalEvidenceDocumentIntegrity",
+        externalEvidenceDocumentIntegrity == null ? null : externalEvidenceDocumentIntegrity.toMap());
     result.put("transientPipingQualification", map(transientPipingQualification));
     result.put("compressorProtectionQualification", map(compressorProtectionQualification));
     result.put("valveInstrumentQualification", map(valveInstrumentQualification));
