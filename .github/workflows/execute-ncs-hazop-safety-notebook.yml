@@ -3,7 +3,6 @@ name: Execute NCS HAZOP and safety engineering notebook
 on:
   pull_request:
     paths:
-      - "examples/notebooks/ncs_offshore_hazop_esd_hipps_engineering_study.ipynb"
       - "examples/notebooks/complete_offshore_process_engineering_study.ipynb"
       - "src/main/java/neqsim/process/engineering/pid/**"
       - "src/main/java/neqsim/process/engineering/safety/**"
