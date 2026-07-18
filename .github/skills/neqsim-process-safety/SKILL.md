@@ -1,7 +1,7 @@
 ---
 name: neqsim-process-safety
-version: "1.3.0"
-description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, bow-tie analysis, risk-matrix scoring, TR3001 overpressure-protection studies, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, overpressure relief-cause / governing-case studies, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, and neqsim.process.safety.rupture classes."
+version: "1.4.0"
+description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, integrated facility safety response, bow-tie analysis, risk-matrix scoring, TR3001 overpressure-protection studies, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, integrated ESD/compressor-trip/blowdown/relief/flare evidence, overpressure relief-cause / governing-case studies, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, and neqsim.process.safety.rupture classes."
 last_verified: "2026-07-18"
 requires:
   java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, neqsim.process.safety.rupture, neqsim.process.safety.risk.sis.nog070, neqsim.process.safety.esd, neqsim.process.safety.api14c, neqsim.process.safety.compliance]
@@ -282,6 +282,25 @@ preserve the SIL claim or continue operation.
 
 Handoff the assessed mode back to the closed-loop scenario workflow to verify the physical safe state.
 See `docs/process/safety/sif-reliability-and-degraded-modes.md`.
+
+### Method 3f — Integrated facility safety response
+
+Use `FacilitySafetyResponseStudy` after the individual engines have executed when one review package
+must join closed-loop ESD/HIPPS evidence, compressor anti-surge trip demand and observed response,
+PSV/concurrency results, transient blowdown/flare results, and controlled process limits such as MDMT
+or hydrate margin. Supply the actual `DynamicSafetyScenarioResult` and
+`CoupledReliefBlowdownFlareResult`; the facility study embeds their maps and must not duplicate their
+physics.
+
+Capture compressor response with `CompressorTripResponse.capture(...)`. `AntiSurge.shouldTrip()` is
+the demand signal; separately record whether the trip was observed, its response time, allowable
+deadline, and evidence reference. Add each minimum or maximum with `ProcessSafetyConstraint` and a
+controlled source reference.
+
+Treat `isTechnicallyAcceptable()`, `isEvidenceComplete()`, and `isReadyForEngineeringReview()` as
+review gates, never approval. Inspect `getFindings()` and embedded engine results, then obtain the
+accountable process-safety, rotating-equipment, flare, piping, and mechanical approvals. See
+`docs/process/safety/integrated-facility-safety-response.md`.
 
 ## Method 4 — Bow-Tie Analysis
 
