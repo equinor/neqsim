@@ -163,8 +163,9 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
   /**
    * Adapts the typed technical qualification results to canonical calculation records.
    *
-   * <p>This keeps the calculation DAG, engineering graph, and production-readiness evidence on the
-   * same identifiers without weakening the typed calculation API.
+   * <p>
+   * This keeps the calculation DAG, engineering graph, and production-readiness evidence on the same identifiers
+   * without weakening the typed calculation API.
    *
    * @param subjectNodeId canonical project node governed by the qualification results
    * @return canonical calculation records in stable discipline order
