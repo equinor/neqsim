@@ -40,8 +40,7 @@ public final class HazopLopaSrsWorkflow {
       tripSetpoint = finite(builder.tripSetpoint, "tripSetpoint");
       tripSetpointUnit = requireText(builder.tripSetpointUnit, "tripSetpointUnit");
       safeState = requireText(builder.safeState, "safeState");
-      maximumResponseTimeSeconds = positive(builder.maximumResponseTimeSeconds,
-          "maximumResponseTimeSeconds");
+      maximumResponseTimeSeconds = positive(builder.maximumResponseTimeSeconds, "maximumResponseTimeSeconds");
       votingArchitecture = requireText(builder.votingArchitecture, "votingArchitecture");
       proofTestIntervalHours = positive(builder.proofTestIntervalHours, "proofTestIntervalHours");
       resetPolicy = requireText(builder.resetPolicy, "resetPolicy");
@@ -182,13 +181,11 @@ public final class HazopLopaSrsWorkflow {
     private final List<String> findings;
     private final SafetyRequirementSpecificationDraft srsDraft;
 
-    private Result(LopaScenarioDefinition scenario, LOPAResult lopaResult,
-        List<Map<String, Object>> layerAssessments, List<String> findings,
-        SafetyRequirementSpecificationDraft srsDraft) {
+    private Result(LopaScenarioDefinition scenario, LOPAResult lopaResult, List<Map<String, Object>> layerAssessments,
+        List<String> findings, SafetyRequirementSpecificationDraft srsDraft) {
       this.scenario = scenario;
       this.lopaResult = lopaResult;
-      this.layerAssessments = Collections
-          .unmodifiableList(new ArrayList<Map<String, Object>>(layerAssessments));
+      this.layerAssessments = Collections.unmodifiableList(new ArrayList<Map<String, Object>>(layerAssessments));
       this.findings = Collections.unmodifiableList(new ArrayList<String>(findings));
       this.srsDraft = srsDraft;
     }

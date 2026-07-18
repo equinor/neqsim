@@ -15,9 +15,8 @@ class HazopLopaSrsWorkflowTest {
 
   @Test
   void creditsOnlyEligibleLayersAndCreatesTraceableDraftSrs() {
-    LopaScenarioDefinition scenario = LopaScenarioDefinition
-        .builder("LOPA-HP-101", "HAZOP-NODE-07", "MORE-PRESSURE-03").equipmentTag("V-101")
-        .initiatingEvent("Inlet control valve fails open", 0.1)
+    LopaScenarioDefinition scenario = LopaScenarioDefinition.builder("LOPA-HP-101", "HAZOP-NODE-07", "MORE-PRESSURE-03")
+        .equipmentTag("V-101").initiatingEvent("Inlet control valve fails open", 0.1)
         .consequence("HP separator rupture and hydrocarbon release").targetFrequencyPerYear(2.0e-6)
         .frequencyBasisReference("QRA-BASIS-2026-R2")
         .addProtectionLayer(eligibleLayer("IPL-BPCS", "Independent pressure control", LayerType.BPCS, 0.1))
@@ -46,9 +45,8 @@ class HazopLopaSrsWorkflowTest {
 
   @Test
   void doesNotCreateSifDraftWhenCreditedLayersMeetTarget() {
-    LopaScenarioDefinition scenario = LopaScenarioDefinition
-        .builder("LOPA-OK-01", "HAZOP-NODE-01", "NO-FLOW-01").equipmentTag("P-101")
-        .initiatingEvent("Pump trip", 1.0e-2).consequence("Production interruption")
+    LopaScenarioDefinition scenario = LopaScenarioDefinition.builder("LOPA-OK-01", "HAZOP-NODE-01", "NO-FLOW-01")
+        .equipmentTag("P-101").initiatingEvent("Pump trip", 1.0e-2).consequence("Production interruption")
         .targetFrequencyPerYear(1.1e-3).frequencyBasisReference("OPS-FREQ-2026")
         .addProtectionLayer(eligibleLayer("IPL-STANDBY", "Automatic standby pump", LayerType.BPCS, 0.1)).build();
 

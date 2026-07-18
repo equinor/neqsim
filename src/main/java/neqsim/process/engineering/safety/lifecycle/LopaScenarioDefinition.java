@@ -32,8 +32,7 @@ public final class LopaScenarioDefinition implements Serializable {
         "initiatingEventFrequencyPerYear");
     targetFrequencyPerYear = positive(builder.targetFrequencyPerYear, "targetFrequencyPerYear");
     frequencyBasisReference = requireText(builder.frequencyBasisReference, "frequencyBasisReference");
-    protectionLayers = Collections
-        .unmodifiableList(new ArrayList<ProtectionLayerDefinition>(builder.protectionLayers));
+    protectionLayers = Collections.unmodifiableList(new ArrayList<ProtectionLayerDefinition>(builder.protectionLayers));
   }
 
   public static Builder builder(String scenarioId, String hazopNodeId, String hazopDeviationId) {
