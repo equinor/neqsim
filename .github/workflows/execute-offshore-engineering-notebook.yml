@@ -38,7 +38,7 @@ jobs:
         run: ./mvnw -Dmaven.test.skip=true package
 
       - name: Install notebook runtime
-        run: python -m pip install --upgrade nbconvert nbclient nbformat ipykernel pandas matplotlib numpy jpype1 pydexpi==1.2.0
+        run: python -m pip install --upgrade nbconvert nbclient nbformat ipykernel pandas matplotlib numpy jpype1 pydexpi==1.2.0 cairosvg==2.9.0
 
       - name: Execute complete engineering study
         env:
@@ -85,9 +85,13 @@ jobs:
               "pydexpi-render-report.json",
               "offshore-process-revision-b-pydexpi.svg",
               "offshore-process-revision-b-pydexpi-panel-1.svg",
+              "offshore-process-revision-b-pydexpi-panel-1.png",
               "offshore-process-revision-b-pydexpi-panel-2.svg",
+              "offshore-process-revision-b-pydexpi-panel-2.png",
               "offshore-process-revision-b-pydexpi-panel-3.svg",
+              "offshore-process-revision-b-pydexpi-panel-3.png",
               "offshore-process-revision-b-pydexpi-panel-4.svg",
+              "offshore-process-revision-b-pydexpi-panel-4.png",
           ):
               assert (package / name).is_file(), name
           print(f"Verified {len(code_cells)} executed code cells")
