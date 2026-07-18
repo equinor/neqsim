@@ -105,8 +105,8 @@ public final class EngineeringMethodQualification implements Serializable {
   }
 
   /** Adds the acceptance tolerance that controlled benchmark cases must demonstrate. */
-  public EngineeringMethodQualification addAcceptanceCriterion(String metric, String unit,
-      double absoluteTolerance, double relativeTolerance) {
+  public EngineeringMethodQualification addAcceptanceCriterion(String metric, String unit, double absoluteTolerance,
+      double relativeTolerance) {
     acceptanceCriteria.add(new AcceptanceCriterion(metric, unit, absoluteTolerance, relativeTolerance));
     return this;
   }

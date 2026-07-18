@@ -109,8 +109,7 @@ public final class EngineeringMethodApplicabilityEnvelope implements Serializabl
     return this;
   }
 
-  public EngineeringMethodApplicabilityEnvelope numericRange(String name, String unit, double minimum,
-      double maximum) {
+  public EngineeringMethodApplicabilityEnvelope numericRange(String name, String unit, double minimum, double maximum) {
     NumericRange range = new NumericRange(name, unit, minimum, maximum);
     numericRanges.put(range.name, range);
     requiredInputs.add(range.name);
@@ -175,8 +174,8 @@ public final class EngineeringMethodApplicabilityEnvelope implements Serializabl
       NumericRange range = item.getValue();
       if (!range.unit.equals(value.getUnit())) {
         complete = false;
-        findings.add("Unit mismatch for " + item.getKey() + ": expected " + range.unit + " but received "
-            + value.getUnit());
+        findings.add(
+            "Unit mismatch for " + item.getKey() + ": expected " + range.unit + " but received " + value.getUnit());
       } else if (!range.contains(value)) {
         within = false;
         findings.add(item.getKey() + "=" + value.getValue() + " " + value.getUnit()

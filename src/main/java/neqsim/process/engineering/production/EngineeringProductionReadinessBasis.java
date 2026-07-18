@@ -29,8 +29,7 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
   private EngineeringExternalEvidenceRegister externalEvidenceRegister;
   private EngineeringExternalEvidenceDocumentIntegrity externalEvidenceDocumentIntegrity;
   private EngineeringMethodQualificationRegistry methodQualificationRegistry;
-  private final List<EngineeringMethodQualificationRegistry.Result> methodServiceAssessments =
-      new ArrayList<EngineeringMethodQualificationRegistry.Result>();
+  private final List<EngineeringMethodQualificationRegistry.Result> methodServiceAssessments = new ArrayList<EngineeringMethodQualificationRegistry.Result>();
   private EngineeringCalculationResult<TransientPipingQualificationCalculation.Result> transientPipingQualification;
   private EngineeringCalculationResult<CompressorProtectionQualificationCalculation.Result> compressorProtectionQualification;
   private EngineeringCalculationResult<ValveInstrumentQualificationCalculation.Result> valveInstrumentQualification;
@@ -96,8 +95,7 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
   }
 
   /** Activates structured method applicability controls for this readiness basis. */
-  public EngineeringProductionReadinessBasis methodQualificationRegistry(
-      EngineeringMethodQualificationRegistry value) {
+  public EngineeringProductionReadinessBasis methodQualificationRegistry(EngineeringMethodQualificationRegistry value) {
     if (value == null) {
       throw new IllegalArgumentException("methodQualificationRegistry must not be null");
     }
