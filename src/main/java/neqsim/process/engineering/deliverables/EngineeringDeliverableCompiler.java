@@ -43,7 +43,8 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 
 /** Compiles one governed project into a coordinated engineering package and canonical graph snapshot. */
 public final class EngineeringDeliverableCompiler {
-  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+  private static final Gson GSON = new GsonBuilder().serializeNulls().setPrettyPrinting()
+      .serializeSpecialFloatingPointValues().create();
   private static final String[] COORDINATED_ARTIFACTS = new String[] { "process-design-basis.json",
       "equipment-datasheets.json", "valve-list.json", "io-list.json", "alarm-trip-schedule.json",
       "shutdown-narratives.json", "psv-datasheets.json", "flare-blowdown-report.json", "utility-summary.json",
