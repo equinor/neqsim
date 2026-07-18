@@ -255,6 +255,11 @@ public final class ValveInstrumentQualificationCalculation implements
     if (!readiness.isReady()) {
       return output.status(EngineeringCalculationResult.Status.BLOCKED).build();
     }
+    if (input == null) {
+      return output.status(EngineeringCalculationResult.Status.BLOCKED)
+          .warning("Calculation input is missing")
+          .build();
+    }
     double totalResponseSeconds = input.valveStrokeSeconds + input.instrumentResponseSeconds
         + input.logicSolverResponseSeconds;
     double rangeSpan = input.calibratedUpperRange - input.calibratedLowerRange;
