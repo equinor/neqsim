@@ -17,6 +17,7 @@ import neqsim.process.engineering.model.EngineeringGraph;
 import neqsim.process.engineering.model.EngineeringGraphDiff;
 import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.engineering.production.EngineeringProductionReadinessAssessment;
+import neqsim.process.engineering.production.EngineeringProductionReadinessBasis;
 
 /** Builds coordinated, traceable engineering documents from the canonical project and graph. */
 final class EngineeringCoordinatedPackage {
@@ -88,6 +89,13 @@ final class EngineeringCoordinatedPackage {
     }
     result.put("datasheets", rows);
     result.put("rowCount", Integer.valueOf(rows.size()));
+    EngineeringProductionReadinessBasis basis = project.getProductionReadinessBasis();
+    result.put("compressorProtectionQualification",
+        basis == null || basis.getCompressorProtectionQualification() == null ? null
+            : basis.getCompressorProtectionQualification().toMap());
+    result.put("mechanicalIntegrityQualification",
+        basis == null || basis.getMechanicalIntegrityQualification() == null ? null
+            : basis.getMechanicalIntegrityQualification().toMap());
     return result;
   }
 
@@ -104,6 +112,10 @@ final class EngineeringCoordinatedPackage {
     }
     result.put("rows", rows);
     result.put("rowCount", Integer.valueOf(rows.size()));
+    EngineeringProductionReadinessBasis basis = project.getProductionReadinessBasis();
+    result.put("valveInstrumentQualification",
+        basis == null || basis.getValveInstrumentQualification() == null ? null
+            : basis.getValveInstrumentQualification().toMap());
     return result;
   }
 
@@ -187,6 +199,13 @@ final class EngineeringCoordinatedPackage {
     result.put("dynamicScenarioCount", Integer.valueOf(project.getDynamicSafetyScenarios().size()));
     result.put("requiredInterfaces", java.util.Arrays.asList("flare network hydraulics", "radiation", "dispersion",
         "noise", "minimum metal temperature"));
+    EngineeringProductionReadinessBasis basis = project.getProductionReadinessBasis();
+    result.put("flareConsequenceQualification",
+        basis == null || basis.getFlareConsequenceQualification() == null ? null
+            : basis.getFlareConsequenceQualification().toMap());
+    result.put("transientPipingQualification",
+        basis == null || basis.getTransientPipingQualification() == null ? null
+            : basis.getTransientPipingQualification().toMap());
     result.put("approvalStatus", "REVIEW_REQUIRED");
     return result;
   }
@@ -221,6 +240,10 @@ final class EngineeringCoordinatedPackage {
       }
     }
     result.put("calculatedValues", values);
+    EngineeringProductionReadinessBasis basis = project.getProductionReadinessBasis();
+    result.put("mechanicalIntegrityQualification",
+        basis == null || basis.getMechanicalIntegrityQualification() == null ? null
+            : basis.getMechanicalIntegrityQualification().toMap());
     result.put("standard", "NORSOK M-001:2025");
     result.put("finalMetallurgyApproved", Boolean.FALSE);
     return result;
