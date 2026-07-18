@@ -22,8 +22,7 @@ public final class NcsSafetyFunctionStudy implements Serializable {
     this.projectId = projectId.trim();
   }
 
-  public NcsSafetyFunctionStudy add(SafetyInstrumentedFunction function,
-      Map<String, Object> transientVerification) {
+  public NcsSafetyFunctionStudy add(SafetyInstrumentedFunction function, Map<String, Object> transientVerification) {
     if (function == null || transientVerification == null) {
       throw new IllegalArgumentException("function and transient verification must not be null");
     }
@@ -42,8 +41,8 @@ public final class NcsSafetyFunctionStudy implements Serializable {
     result.put("schemaVersion", "neqsim_ncs_safety_function_study.v1");
     result.put("projectId", projectId);
     result.put("functions", new ArrayList<Map<String, Object>>(functions));
-    result.put("standards", java.util.Arrays.asList("NORSOK S-001", "NORSOK Z-013",
-        "IEC 61508", "IEC 61511", "ISO 10418", "API 521"));
+    result.put("standards",
+        java.util.Arrays.asList("NORSOK S-001", "NORSOK Z-013", "IEC 61508", "IEC 61511", "ISO 10418", "API 521"));
     result.put("qualificationStatus", "PRELIMINARY_SRS_AND_SIL_VERIFICATION_HANDOFF");
     result.put("fitnessForConstruction", Boolean.FALSE);
     return result;
