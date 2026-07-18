@@ -1,5 +1,6 @@
-"""Contract checks for the complete offshore process engineering-study example."""
+"""Contract and committed-execution checks for the offshore engineering study."""
 
+import ast
 import json
 import unittest
 from pathlib import Path
@@ -14,8 +15,21 @@ class CompleteOffshoreEngineeringStudyTest(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.notebook = json.loads(NOTEBOOK.read_text(encoding="utf-8"))
+        cls.code_cells = [
+            cell for cell in cls.notebook["cells"] if cell.get("cell_type") == "code"
+        ]
         cls.source = "\n".join("".join(cell.get("source", [])) for cell in cls.notebook["cells"])
         cls.guide = GUIDE.read_text(encoding="utf-8")
+
+    def test_committed_notebook_is_syntactically_valid_and_fully_executed(self):
+        self.assertEqual(16, len(self.code_cells))
+        for index, cell in enumerate(self.code_cells, start=1):
+            with self.subTest(code_cell=index):
+                ast.parse("".join(cell.get("source", [])), filename=f"code-cell-{index}")
+                self.assertIsNotNone(cell.get("execution_count"))
+
+        cells_with_outputs = sum(bool(cell.get("outputs")) for cell in self.code_cells)
+        self.assertGreaterEqual(cells_with_outputs, 10)
 
     def test_notebook_covers_the_complete_process_topology(self):
         required_tags = (
