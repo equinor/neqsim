@@ -121,8 +121,7 @@ public final class SafetyFunctionReliabilityStudy {
       double coverage = diagnosticCoverage == null ? subsystem.getDiagnosticCoverage()
           : diagnosticCoverage.sample(random);
       double beta = betaFactor == null ? subsystem.getBetaFactor() : betaFactor.sample(random);
-      double bypass = bypassProbability == null ? subsystem.getBypassProbability()
-          : bypassProbability.sample(random);
+      double bypass = bypassProbability == null ? subsystem.getBypassProbability() : bypassProbability.sample(random);
       return subsystem.copyWithReliabilityInputs(
           subsystem.getDangerousFailureRatePerHour() * failureRateFactor.sample(random), coverage,
           subsystem.getProofTestIntervalHours() * proofTestIntervalFactor.sample(random),
@@ -161,8 +160,8 @@ public final class SafetyFunctionReliabilityStudy {
     private final double targetMetProbability;
     private final List<Map<String, Object>> uncertaintyDefinitions;
 
-    private Result(SafetyFunctionDesign design, int iterations, long seed, double[] pfdSamples,
-        double[] pfhSamples, int targetMetCount, List<Map<String, Object>> uncertaintyDefinitions) {
+    private Result(SafetyFunctionDesign design, int iterations, long seed, double[] pfdSamples, double[] pfhSamples,
+        int targetMetCount, List<Map<String, Object>> uncertaintyDefinitions) {
       sifTag = design.getSifTag();
       demandMode = design.getDemandMode();
       targetSil = design.getTargetSil();
@@ -320,8 +319,8 @@ public final class SafetyFunctionReliabilityStudy {
       return 0;
     }
     double[] limits = demandMode == SafetyFunctionDesign.DemandMode.LOW_DEMAND
-        ? new double[] {1.0e-2, 1.0e-3, 1.0e-4, 1.0e-5}
-        : new double[] {1.0e-6, 1.0e-7, 1.0e-8, 1.0e-9};
+        ? new double[] { 1.0e-2, 1.0e-3, 1.0e-4, 1.0e-5 }
+        : new double[] { 1.0e-6, 1.0e-7, 1.0e-8, 1.0e-9 };
     for (int sil = 1; sil <= limits.length; sil++) {
       if (measure >= limits[sil - 1]) {
         return sil;

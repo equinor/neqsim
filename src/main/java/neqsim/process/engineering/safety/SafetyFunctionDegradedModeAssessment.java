@@ -36,8 +36,8 @@ public final class SafetyFunctionDegradedModeAssessment {
       int available = 0;
       int forced = 0;
       for (int channel = 1; channel <= subsystem.getChannelCount(); channel++) {
-        ChannelState state = states.containsKey(Integer.valueOf(channel))
-            ? states.get(Integer.valueOf(channel)) : ChannelState.AVAILABLE;
+        ChannelState state = states.containsKey(Integer.valueOf(channel)) ? states.get(Integer.valueOf(channel))
+            : ChannelState.AVAILABLE;
         if (state == ChannelState.AVAILABLE) {
           available++;
         } else if (state == ChannelState.FORCED_TRIP) {
@@ -53,8 +53,7 @@ public final class SafetyFunctionDegradedModeAssessment {
       effectiveArchitecture = remainingVotes + "oo" + available;
       Double proofAge = mode.getHoursSinceProofTest(subsystemName);
       proofTestAgeRecorded = proofAge != null;
-      proofTestOverdue = proofAge != null
-          && proofAge.doubleValue() > subsystem.getProofTestIntervalHours() + 1.0e-9;
+      proofTestOverdue = proofAge != null && proofAge.doubleValue() > subsystem.getProofTestIntervalHours() + 1.0e-9;
     }
 
     public String getEffectiveArchitecture() {
@@ -100,8 +99,7 @@ public final class SafetyFunctionDegradedModeAssessment {
         List<SubsystemResult> subsystemResults, List<String> findings) {
       sifTag = design.getSifTag();
       this.mode = mode;
-      this.subsystemResults = Collections
-          .unmodifiableList(new ArrayList<SubsystemResult>(subsystemResults));
+      this.subsystemResults = Collections.unmodifiableList(new ArrayList<SubsystemResult>(subsystemResults));
       this.findings = Collections.unmodifiableList(new ArrayList<String>(findings));
       boolean capable = true;
       boolean tripDemanded = false;

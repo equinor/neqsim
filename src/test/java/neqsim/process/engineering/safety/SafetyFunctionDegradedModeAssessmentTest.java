@@ -28,9 +28,10 @@ class SafetyFunctionDegradedModeAssessmentTest {
 
   @Test
   void twoUnavailableChannelsCannotMeetTwoOutOfThreeDemand() {
-    SafetyFunctionOperatingMode mode = SafetyFunctionOperatingMode.builder("Two channels in repair", ModeType.MAINTENANCE)
-        .authorizationReference("MOC-2026-88").compensatingMeasure("Process shutdown")
-        .duration(1.0, 2.0).channelState("pressure transmitters", 2, ChannelState.UNDER_REPAIR)
+    SafetyFunctionOperatingMode mode = SafetyFunctionOperatingMode
+        .builder("Two channels in repair", ModeType.MAINTENANCE).authorizationReference("MOC-2026-88")
+        .compensatingMeasure("Process shutdown").duration(1.0, 2.0)
+        .channelState("pressure transmitters", 2, ChannelState.UNDER_REPAIR)
         .channelState("pressure transmitters", 3, ChannelState.BYPASSED)
         .hoursSinceProofTest("pressure transmitters", 100.0).build();
 
@@ -55,8 +56,7 @@ class SafetyFunctionDegradedModeAssessmentTest {
   }
 
   private static SafetyFunctionDesign design() {
-    return new SafetyFunctionDesign("SIF-HP-101", "REQ-HP-101", 2)
-        .addSubsystem(new SafetyFunctionDesign.Subsystem("pressure transmitters",
-            SafetyFunctionDesign.SubsystemType.SENSOR, 2, 3, 1.0e-6, 0.6, 8760.0, 8.0, 0.05));
+    return new SafetyFunctionDesign("SIF-HP-101", "REQ-HP-101", 2).addSubsystem(new SafetyFunctionDesign.Subsystem(
+        "pressure transmitters", SafetyFunctionDesign.SubsystemType.SENSOR, 2, 3, 1.0e-6, 0.6, 8760.0, 8.0, 0.05));
   }
 }

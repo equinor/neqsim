@@ -41,8 +41,7 @@ public final class SafetyFunctionOperatingMode implements Serializable {
           Collections.unmodifiableMap(new LinkedHashMap<Integer, ChannelState>(entry.getValue())));
     }
     channelStates = Collections.unmodifiableMap(copiedStates);
-    hoursSinceProofTest = Collections
-        .unmodifiableMap(new LinkedHashMap<String, Double>(builder.hoursSinceProofTest));
+    hoursSinceProofTest = Collections.unmodifiableMap(new LinkedHashMap<String, Double>(builder.hoursSinceProofTest));
   }
 
   public static Builder builder(String name, ModeType type) {

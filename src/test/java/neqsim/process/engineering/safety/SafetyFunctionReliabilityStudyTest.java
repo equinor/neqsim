@@ -26,9 +26,9 @@ class SafetyFunctionReliabilityStudyTest {
   void seededStudyIsRepeatableAndOrdersPfdPercentiles() {
     SafetyFunctionReliabilityStudy.SubsystemUncertainty uncertainty = new SafetyFunctionReliabilityStudy.SubsystemUncertainty(
         "pressure transmitters")
-            .setFailureRateFactor(SafetyFunctionReliabilityStudy.TriangularDistribution.of(0.5, 1.0, 2.0))
-            .setProofTestIntervalFactor(SafetyFunctionReliabilityStudy.TriangularDistribution.of(0.5, 1.0, 2.0))
-            .setDiagnosticCoverage(SafetyFunctionReliabilityStudy.TriangularDistribution.of(0.0, 0.1, 0.2));
+        .setFailureRateFactor(SafetyFunctionReliabilityStudy.TriangularDistribution.of(0.5, 1.0, 2.0))
+        .setProofTestIntervalFactor(SafetyFunctionReliabilityStudy.TriangularDistribution.of(0.5, 1.0, 2.0))
+        .setDiagnosticCoverage(SafetyFunctionReliabilityStudy.TriangularDistribution.of(0.0, 0.1, 0.2));
 
     SafetyFunctionReliabilityStudy.Result first = SafetyFunctionReliabilityStudy.run(design(),
         Collections.singletonList(uncertainty), 2000, 2486L);
@@ -45,8 +45,7 @@ class SafetyFunctionReliabilityStudyTest {
   }
 
   private static SafetyFunctionDesign design() {
-    return new SafetyFunctionDesign("SIF-PT-101", "REQ-PT-101", 2)
-        .addSubsystem(new SafetyFunctionDesign.Subsystem("pressure transmitters",
-            SafetyFunctionDesign.SubsystemType.SENSOR, 1, 1, 1.0e-6, 0.0, 8760.0, 8.0, 0.0));
+    return new SafetyFunctionDesign("SIF-PT-101", "REQ-PT-101", 2).addSubsystem(new SafetyFunctionDesign.Subsystem(
+        "pressure transmitters", SafetyFunctionDesign.SubsystemType.SENSOR, 1, 1, 1.0e-6, 0.0, 8760.0, 8.0, 0.0));
   }
 }
