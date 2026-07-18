@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - codex/sif-reliability-degraded
+  pull_request:
+    branches:
+      - codex/closed-loop-sif-execution
 
 permissions:
   contents: read
