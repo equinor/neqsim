@@ -3,6 +3,7 @@ package neqsim.process.engineering.pid;
 import neqsim.process.engineering.pid.rules.CompressorControlPidRule;
 import neqsim.process.engineering.pid.rules.CompressorSafeguardingPidRule;
 import neqsim.process.engineering.pid.rules.PressureReliefPidRule;
+import neqsim.process.engineering.pid.rules.ProcessTopologyPidRule;
 import neqsim.process.engineering.pid.rules.PumpControlPidRule;
 import neqsim.process.engineering.pid.rules.PumpSafeguardingPidRule;
 import neqsim.process.engineering.pid.rules.SeparatorControlPidRule;
@@ -30,7 +31,7 @@ public final class NorsokPidRuleCatalog {
 
   /** Returns the complete control, instrumentation, isolation and safeguarding proposal profile. */
   public static PidRuleCatalog completeProposals() {
-    return controlAndInstrumentation().add(new SeparatorSafeguardingPidRule()).add(new CompressorSafeguardingPidRule())
+    return controlAndInstrumentation().add(new ProcessTopologyPidRule()).add(new SeparatorSafeguardingPidRule()).add(new CompressorSafeguardingPidRule())
         .add(new PumpSafeguardingPidRule()).add(new ThermalSafeguardingPidRule()).add(new PressureReliefPidRule());
   }
 }
