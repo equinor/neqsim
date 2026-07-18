@@ -37,6 +37,7 @@ import neqsim.process.engineering.validation.EngineeringTopologyValidator;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.measurementdevice.PressureTransmitter;
+import neqsim.process.modelpackage.ModelPackageValidator;
 import neqsim.process.processmodel.ProcessConnection;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -76,6 +77,7 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(Files.isRegularFile(result.getLineRegisterFile()));
     assertTrue(Files.isRegularFile(result.getInstrumentRegisterFile()));
     assertTrue(Files.isRegularFile(result.getValidationReportFile()));
+    assertTrue(Files.isRegularFile(result.getModelPackageFile()));
     assertTrue(Files.isRegularFile(temporaryDirectory.resolve("engineering-schema-catalog.json")));
     assertTrue(Files.isRegularFile(temporaryDirectory.resolve("schemas/engineering-model.schema.json")));
     assertTrue(Files.isRegularFile(result.getDexpiResult().getDexpi20File()));
@@ -97,6 +99,7 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(read(result.getEngineeringAutomationPlanFile()).contains("REQUIRED_PROCESS_SYSTEM_COPY"));
     assertTrue(result.getValidationReport().isValid());
     assertTrue(EngineeringPackageValidator.validatePackage(temporaryDirectory).isValid());
+    assertTrue(ModelPackageValidator.validate(temporaryDirectory).isValid());
     assertNotNull(result.getEngineeringGraph().getNode("calculation:envelope-20-vg-001-pressure"));
     assertNotNull(
         result.getEngineeringGraph().getNode(EngineeringIds.nodeId(EngineeringNode.Kind.PORT, "20-FEED-001.outlet")));
