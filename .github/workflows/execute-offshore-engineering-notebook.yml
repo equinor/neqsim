@@ -32,7 +32,7 @@ jobs:
           cache: pip
 
       - name: Build NeqSim workspace classes
-        run: ./mvnw -DskipTests package
+        run: ./mvnw -Dmaven.test.skip=true package
 
       - name: Install notebook runtime
         run: python -m pip install --upgrade nbconvert nbclient nbformat ipykernel pandas matplotlib numpy jpype1
