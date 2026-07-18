@@ -71,6 +71,10 @@ public final class EngineeringGraphBuilder {
     addDesignCases(project, graph, projectNodeId);
     List<EngineeringCalculation> allCalculations = new ArrayList<EngineeringCalculation>(project.getCalculations());
     allCalculations.addAll(additionalCalculations);
+    if (project.getProductionReadinessBasis() != null) {
+      allCalculations
+          .addAll(project.getProductionReadinessBasis().getTechnicalQualificationCalculations(projectNodeId));
+    }
     addCalculations(allCalculations, graph, projectNodeId);
     addApprovals(project, graph, projectNodeId);
     return graph;

@@ -251,6 +251,15 @@ FlareDispersionSurrogateDTO disp = flare.getDispersionSurrogate();
 // Use to bound H2S / SO2 ground concentration vs. IDLH/ERPG-2
 ```
 
+For a governed production-readiness record, use
+`neqsim.process.engineering.safety.FlareConsequenceCalculation`. It combines explicit
+point-source radiation, neutral Gaussian centerline dispersion, spherical noise spreading,
+and tip-Mach constraints in one typed result with uncertainty and provenance. Set
+`productionQualification=true` only with standards/evidence references and
+`consequenceMethodApplicability=approved`. This is a screening interface, not a substitute
+for validated complex-terrain, stability-class, toxic, combustion, or detailed acoustic
+modeling.
+
 ## Common Mistakes
 
 | Mistake                                                   | Fix                                                                  |

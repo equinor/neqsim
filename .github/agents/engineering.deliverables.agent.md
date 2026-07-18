@@ -102,6 +102,16 @@ unreferenced two-phase relief methods. A calculated PSV orifice remains
 review-required until certified device data and inlet, outlet, header, stability,
 flare and depressurization checks are complete.
 
+For technical completion, execute and attach the exact typed results from
+`TransientPipingQualificationCalculation`, `CompressorProtectionQualificationCalculation`,
+`ValveInstrumentQualificationCalculation`, `MechanicalIntegrityQualificationCalculation`,
+and `FlareConsequenceCalculation` to `EngineeringProductionReadinessBasis`. Use actual
+distributed-solver histories and `distributedTransientModel=approved` for the transient-piping input, and require
+`consequenceMethodApplicability=approved` for production flare screening. Review all five
+independent readiness gates and their exact-version benchmark/method-qualification actions.
+Never reinterpret a passing numerical constraint as vendor, HAZOP, code, CAE-tool, pilot,
+or construction approval.
+
 ### 1. StudyClass Enum
 Controls which deliverables are produced:
 

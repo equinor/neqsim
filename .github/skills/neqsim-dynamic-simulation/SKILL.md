@@ -343,6 +343,16 @@ carry the dynamic response. The application layer reports
 `NOT_CERTIFIED_FOR_PROTECTION` and is for simulation/advisory studies, not a
 certified machinery-protection package.
 
+For production-readiness evidence, pass the actual compressor cases and transient response
+limits to `CompressorProtectionQualificationCalculation`; it checks map margins,
+extrapolation, driver/start-up/rundown, response time, rotor separation, settle-out and
+vendor acceptance without certifying the protection system. For piping, pass ordered
+`TwoFluidPipe`, water-hammer, or externally governed solver samples to
+`TransientPipingQualificationCalculation`. That module checks acoustic resolution and
+line-pack balance before pressure, slug, velocity and stress limits, and deliberately does
+not treat a quasi-steady time series as distributed-transient evidence. Production mode
+requires the controlled context attribute `distributedTransientModel=approved`.
+
 ## Running Dynamic Simulation
 
 ```java

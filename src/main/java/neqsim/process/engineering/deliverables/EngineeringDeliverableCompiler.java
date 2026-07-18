@@ -251,6 +251,11 @@ public final class EngineeringDeliverableCompiler {
     }
     List<EngineeringCalculation> dagCalculations = new ArrayList<EngineeringCalculation>(project.getCalculations());
     dagCalculations.addAll(envelopeCalculations);
+    if (project.getProductionReadinessBasis() != null) {
+      String projectNodeId = EngineeringIds.nodeId(EngineeringNode.Kind.PROJECT, project.getProjectId());
+      dagCalculations
+          .addAll(project.getProductionReadinessBasis().getTechnicalQualificationCalculations(projectNodeId));
+    }
     EngineeringCalculationDag calculationDag = EngineeringCalculationDag.from(dagCalculations);
     EngineeringGraph graph = EngineeringGraphBuilder.fromProject(project, envelopeCalculations);
     addDocumentNodes(graph, project);

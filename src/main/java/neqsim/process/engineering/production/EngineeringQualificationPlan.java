@@ -21,6 +21,7 @@ public final class EngineeringQualificationPlan {
     }
     EngineeringProductionReadinessBasis evidence = basis == null ? new EngineeringProductionReadinessBasis() : basis;
     Set<String> executed = EngineeringProductionReadinessAssessment.executedMethods(project);
+    executed.addAll(evidence.getTechnicalMethodKeys());
     Set<String> benchmarked = evidence.getBenchmarkReport() == null ? new LinkedHashSet<String>()
         : new LinkedHashSet<String>(evidence.getBenchmarkReport().getQualifyingMethods());
     Set<String> qualified = new LinkedHashSet<String>();
@@ -84,6 +85,12 @@ public final class EngineeringQualificationPlan {
     }
     EngineeringProductionReadinessAssessment.Result assessment = EngineeringProductionReadinessAssessment
         .assess(project, evidence);
+    for (String failedGate : assessment.getFailedGates()) {
+      if (isTechnicalCompletionGate(failedGate)) {
+        actions.add(action("TECHNICAL_COMPLETION", failedGate,
+            "Supply a calculated, constraint-satisfying and independently qualified technical result"));
+      }
+    }
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("schemaVersion", EngineeringSchemaCatalog.QUALIFICATION_PLAN);
     result.put("schemaUri", EngineeringSchemaCatalog.schemaUri(EngineeringSchemaCatalog.QUALIFICATION_PLAN));
@@ -107,5 +114,11 @@ public final class EngineeringQualificationPlan {
     result.put("description", description);
     result.put("status", "OPEN");
     return result;
+  }
+
+  private static boolean isTechnicalCompletionGate(String gate) {
+    return "DISTRIBUTED_TRANSIENT_PIPING".equals(gate) || "COMPRESSOR_PROTECTION_AND_MACHINERY".equals(gate)
+        || "VALVE_AND_INSTRUMENT_QUALIFICATION".equals(gate) || "DETAILED_MECHANICAL_INTEGRITY".equals(gate)
+        || "FLARE_RADIATION_DISPERSION_AND_NOISE".equals(gate);
   }
 }

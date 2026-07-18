@@ -135,8 +135,10 @@ cooler duty, discharge temperature and extrapolation flag. The common design loo
 maximum temperature and map extrapolation. Changing these limits changes the automatic-configuration fingerprint and
 therefore invalidates dependent calculations and package artifacts.
 
-The module requires an active map, surge curve and stonewall curve. It does not qualify vendor guarantees, starting
-torque, rotor dynamics or the dynamic anti-surge controller. Those remain controlled vendor and project evidence.
+The module requires an active map, surge curve and stonewall curve. It does not by itself qualify vendor guarantees,
+starting torque, rotor dynamics or the dynamic anti-surge controller. Supply those controlled results to
+`CompressorProtectionQualificationCalculation`; its checks remain review-required and cannot replace vendor or
+accountable machinery approval.
 
 ## Qualification gates
 
@@ -172,8 +174,10 @@ Passing all nine gates means only `qualifiedForControlledPilot=true`. It always 
 
 Production method qualification remains governed by `EngineeringProductionReadinessAssessment`: independent
 benchmarks, named-tool DEXPI qualification, accepted pilots, approved safety-lifecycle evidence and release-quality
-evidence are separate requirements. HAZOP/LOPA/SRS decisions, scenario credibility, SIL, valve failure actions,
-materials approval, vendor selection and final shutdown actions cannot be manufactured by the simulator.
+evidence are separate requirements. The assessment also has independent gates for distributed piping transients,
+compressor protection/machinery, valve/instrument response and installation, detailed mechanical integrity, and flare
+radiation/dispersion/noise. HAZOP/LOPA/SRS decisions, scenario credibility, SIL, valve failure actions, materials
+approval, vendor selection and final shutdown actions cannot be manufactured by the simulator.
 
 See the [controlled-pilot notebook](../../examples/notebooks/engineering_vertical_slice_controlled_pilot.ipynb) for
 the executable API pattern.

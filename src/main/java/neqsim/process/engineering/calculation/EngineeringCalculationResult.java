@@ -81,6 +81,33 @@ public final class EngineeringCalculationResult<T> implements Serializable {
     return calculationId;
   }
 
+  /**
+   * Gets the stable calculation method identifier.
+   *
+   * @return method identifier
+   */
+  public String getMethod() {
+    return method;
+  }
+
+  /**
+   * Gets the calculation method version.
+   *
+   * @return method version
+   */
+  public String getMethodVersion() {
+    return methodVersion;
+  }
+
+  /**
+   * Gets the controlled execution context used by the calculation.
+   *
+   * @return calculation context containing case, standards, evidence, and method attributes
+   */
+  public EngineeringCalculationContext getContext() {
+    return context;
+  }
+
   public Status getStatus() {
     return status;
   }
@@ -91,6 +118,15 @@ public final class EngineeringCalculationResult<T> implements Serializable {
 
   public CalculationReadiness getReadiness() {
     return readiness;
+  }
+
+  /**
+   * Gets the human-readable calculation outcome message.
+   *
+   * @return outcome message, or an empty string when none was supplied
+   */
+  public String getMessage() {
+    return message;
   }
 
   public Map<String, Object> toMap() {
