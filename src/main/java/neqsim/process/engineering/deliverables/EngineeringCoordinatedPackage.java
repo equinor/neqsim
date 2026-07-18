@@ -113,9 +113,8 @@ final class EngineeringCoordinatedPackage {
     result.put("rows", rows);
     result.put("rowCount", Integer.valueOf(rows.size()));
     EngineeringProductionReadinessBasis basis = project.getProductionReadinessBasis();
-    result.put("valveInstrumentQualification",
-        basis == null || basis.getValveInstrumentQualification() == null ? null
-            : basis.getValveInstrumentQualification().toMap());
+    result.put("valveInstrumentQualification", basis == null || basis.getValveInstrumentQualification() == null ? null
+        : basis.getValveInstrumentQualification().toMap());
     return result;
   }
 
@@ -200,12 +199,10 @@ final class EngineeringCoordinatedPackage {
     result.put("requiredInterfaces", java.util.Arrays.asList("flare network hydraulics", "radiation", "dispersion",
         "noise", "minimum metal temperature"));
     EngineeringProductionReadinessBasis basis = project.getProductionReadinessBasis();
-    result.put("flareConsequenceQualification",
-        basis == null || basis.getFlareConsequenceQualification() == null ? null
-            : basis.getFlareConsequenceQualification().toMap());
-    result.put("transientPipingQualification",
-        basis == null || basis.getTransientPipingQualification() == null ? null
-            : basis.getTransientPipingQualification().toMap());
+    result.put("flareConsequenceQualification", basis == null || basis.getFlareConsequenceQualification() == null ? null
+        : basis.getFlareConsequenceQualification().toMap());
+    result.put("transientPipingQualification", basis == null || basis.getTransientPipingQualification() == null ? null
+        : basis.getTransientPipingQualification().toMap());
     result.put("approvalStatus", "REVIEW_REQUIRED");
     return result;
   }
