@@ -75,11 +75,16 @@ public final class DynamicSafetyScenarioRunner {
     }
 
     Map<String, String> finalStates = new LinkedHashMap<String, String>();
+    Map<String, Map<String, Object>> logicEvidence = new LinkedHashMap<String, Map<String, Object>>();
     for (ProcessLogic item : logic) {
       finalStates.put(item.getName(), item.getState().name());
+      if (item instanceof DynamicSafetyScenarioEvidenceProvider) {
+        logicEvidence.put(item.getName(),
+            ((DynamicSafetyScenarioEvidenceProvider) item).getDynamicSafetyScenarioEvidence());
+      }
     }
     DynamicSafetyScenarioResult result = new DynamicSafetyScenarioResult(scenario.getId(), scenario.getName(), criteria,
-        finalStates, errors, converged);
+        finalStates, logicEvidence, errors, converged);
     logger.info("Dynamic safety scenario '{}' completed with verdict {}", scenario.getId(),
         result.isPassed() ? "PASS" : "FAIL");
     return result;

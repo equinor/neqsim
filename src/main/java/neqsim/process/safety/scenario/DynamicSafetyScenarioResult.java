@@ -56,15 +56,19 @@ public final class DynamicSafetyScenarioResult implements Serializable {
   private final String scenarioName;
   private final Map<String, CriterionResult> criterionResults;
   private final Map<String, String> finalLogicStates;
+  private final Map<String, Map<String, Object>> logicEvidence;
   private final List<String> errors;
   private final boolean steadyStateConverged;
 
   DynamicSafetyScenarioResult(String scenarioId, String scenarioName, Map<String, CriterionResult> criterionResults,
-      Map<String, String> finalLogicStates, List<String> errors, boolean steadyStateConverged) {
+      Map<String, String> finalLogicStates, Map<String, Map<String, Object>> logicEvidence, List<String> errors,
+      boolean steadyStateConverged) {
     this.scenarioId = scenarioId;
     this.scenarioName = scenarioName;
     this.criterionResults = Collections.unmodifiableMap(new LinkedHashMap<String, CriterionResult>(criterionResults));
     this.finalLogicStates = Collections.unmodifiableMap(new LinkedHashMap<String, String>(finalLogicStates));
+    this.logicEvidence = Collections
+        .unmodifiableMap(new LinkedHashMap<String, Map<String, Object>>(logicEvidence));
     this.errors = Collections.unmodifiableList(new ArrayList<String>(errors));
     this.steadyStateConverged = steadyStateConverged;
   }
@@ -90,9 +94,14 @@ public final class DynamicSafetyScenarioResult implements Serializable {
     return criterionResults;
   }
 
+  /** @return structured evidence keyed by protection-logic name */
+  public Map<String, Map<String, Object>> getLogicEvidence() {
+    return logicEvidence;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
-    result.put("schemaVersion", "dynamic_safety_scenario_result.v1");
+    result.put("schemaVersion", "dynamic_safety_scenario_result.v2");
     result.put("scenarioId", scenarioId);
     result.put("scenarioName", scenarioName);
     result.put("steadyStateConverged", Boolean.valueOf(steadyStateConverged));
@@ -102,6 +111,7 @@ public final class DynamicSafetyScenarioResult implements Serializable {
     }
     result.put("criteria", criteria);
     result.put("finalLogicStates", new LinkedHashMap<String, String>(finalLogicStates));
+    result.put("logicEvidence", new LinkedHashMap<String, Map<String, Object>>(logicEvidence));
     result.put("errors", new ArrayList<String>(errors));
     result.put("passed", Boolean.valueOf(isPassed()));
     result.put("silTargetInferred", Boolean.FALSE);
