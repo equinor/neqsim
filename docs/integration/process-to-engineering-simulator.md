@@ -400,6 +400,33 @@ method and reference. The built-in relief calculation selects from the project d
 cases, but certified coefficients, stability, inlet/outlet losses and disposal-network interaction remain separate
 review gates.
 
+### Technical production-completion evidence
+
+Five typed qualification modules close the remaining numerical evidence interfaces without claiming external
+engineering authority:
+
+- `TransientPipingQualificationCalculation` consumes ordered output from a distributed transient solver and checks
+  acoustic time resolution, line-pack mass balance, pressure limits and pulsation, liquid inventory, velocity and
+  equivalent pipe stress. Production mode also requires `distributedTransientModel=approved`; a quasi-steady line
+  calculation is not accepted as distributed-transient evidence.
+- `CompressorProtectionQualificationCalculation` checks surge/stonewall margins, map extrapolation, temperature,
+  driver and start-up limits, rundown, anti-surge response, rotor separation, settle-out pressure and vendor
+  guarantee acceptance.
+- `ValveInstrumentQualificationCalculation` independently checks actuator and shutoff capability, leakage, total
+  response time, transmitter range/uncertainty, thermowell screening, failure action, installation, tuning and
+  permissive/reset/restart evidence.
+- `MechanicalIntegrityQualificationCalculation` checks internal/external pressure, wall thickness, buckling,
+  fatigue, external loads, nozzle reinforcement, MDMT, corrosion allowance and controlled code/material/fabrication/
+  NDE records.
+- `FlareConsequenceCalculation` provides explicit point-source radiation, neutral Gaussian centerline dispersion,
+  spherical noise-spreading and tip-Mach screening. Production use requires an approved method-applicability record;
+  projects outside those assumptions require an appropriate validated consequence tool.
+
+Attach the five results to `EngineeringProductionReadinessBasis`. They become independent fail-closed readiness
+gates, exact `method@version` entries in the benchmark and project-qualification backlog, canonical calculation nodes
+in the engineering graph/DAG, and evidence in the relevant coordinated package reports. A numerically passing result
+retains `CALCULATED_REVIEW_REQUIRED` until its standards, evidence, vendor and accountable review records are valid.
+
 See `examples/notebooks/engineering_production_qualification_workflow.ipynb` for benchmark, DEXPI, pilot, release and
 relief workflow examples. The notebook uses synthetic references only to demonstrate the API; replace every such value
 and reviewer string with controlled project evidence before assessing readiness.
@@ -419,7 +446,7 @@ replace accountable discipline work for:
 - HAZOP/LOPA scenario credibility, SIL selection or SRS approval;
 - vendor compressor, pump, exchanger, valve or instrument guarantees;
 - final two-phase relief method and disposal-system network verification;
-- code mechanical design, fatigue, external loads, nozzle reinforcement or fabrication;
+- final code mechanical design, fatigue/load-model acceptance, nozzle design or fabrication release;
 - corrosion assessment, welding and material approval;
 - plot plan, maintainability, escape, access, fire and gas coverage; or
 - construction, commissioning and operating approval.
