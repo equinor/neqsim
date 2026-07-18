@@ -18,6 +18,9 @@ import neqsim.process.engineering.model.EngineeringGraphDiff;
 import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.engineering.production.EngineeringProductionReadinessAssessment;
 import neqsim.process.engineering.production.EngineeringProductionReadinessBasis;
+import neqsim.process.engineering.production.EngineeringExternalEvidenceAssessment;
+import neqsim.process.engineering.production.EngineeringExternalEvidenceRegister;
+import neqsim.process.engineering.validation.EngineeringSchemaCatalog;
 
 /** Builds coordinated, traceable engineering documents from the canonical project and graph. */
 final class EngineeringCoordinatedPackage {
@@ -37,6 +40,7 @@ final class EngineeringCoordinatedPackage {
     documents.put("flare-blowdown-report.json", flareBlowdownReport(project));
     documents.put("utility-summary.json", utilitySummary(project, envelope));
     documents.put("materials-selection-report.json", materialsReport(project));
+    documents.put("engineering-external-evidence-register.json", externalEvidenceRegister(project));
     documents.put("unresolved-engineering-actions.json", unresolvedActions(project));
     documents.put("revision-impact-report.json", revisionImpact(project, diff));
     return documents;
@@ -243,6 +247,20 @@ final class EngineeringCoordinatedPackage {
             : basis.getMechanicalIntegrityQualification().toMap());
     result.put("standard", "NORSOK M-001:2025");
     result.put("finalMetallurgyApproved", Boolean.FALSE);
+    return result;
+  }
+
+  private static Map<String, Object> externalEvidenceRegister(EngineeringProject project) {
+    Map<String, Object> result = header(project, EngineeringSchemaCatalog.EXTERNAL_EVIDENCE_REGISTER);
+    result.put("schemaUri", EngineeringSchemaCatalog.schemaUri(EngineeringSchemaCatalog.EXTERNAL_EVIDENCE_REGISTER));
+    EngineeringProductionReadinessBasis basis = project.getProductionReadinessBasis();
+    EngineeringExternalEvidenceRegister register = basis == null ? null : basis.getExternalEvidenceRegister();
+    result.put("register", register == null ? null : register.toMap());
+    result.put("assessment", EngineeringExternalEvidenceAssessment.assess(register).toMap());
+    result.put("evidenceGeneratedBySimulator", Boolean.FALSE);
+    result.put("approvalGrantedBySimulator", Boolean.FALSE);
+    result.put("governance",
+        "Records are controlled receipts from accountable external parties; NeqSim only verifies completeness");
     return result;
   }
 
