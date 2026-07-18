@@ -58,6 +58,7 @@ Reviewed NeqSim-to-DEXPI Process mappings are:
 | mixer | `MixingSimple` |
 | splitter | `SplittingMaterial` |
 | expander | `TransportingFluids` |
+| pipeline or pipe segment | `TransportingFluids` |
 
 An unmapped equipment class aborts export with its Java type and tag. The exporter never substitutes
 an unreviewed generic DEXPI type merely to make a file validate.

@@ -1,0 +1,100 @@
+name: Execute process-to-engineering simulator notebook
+
+on:
+  pull_request:
+    paths:
+      - "examples/notebooks/process_to_engineering_simulator.ipynb"
+      - "src/main/java/neqsim/process/engineering/**"
+      - "src/main/java/neqsim/process/processmodel/dexpi/**"
+      - "src/test/java/neqsim/process/engineering/**"
+      - "src/test/java/neqsim/process/processmodel/dexpi/**"
+      - ".github/workflows/execute-process-to-engineering-simulator.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  execute-notebook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Build workspace classes
+        run: ./mvnw -B -ntp -Dmaven.test.skip=true package
+
+      - name: Check formatting and focused handover tests
+        run: |
+          ./mvnw -B -ntp -DskipTests spotless:check
+          ./mvnw -B -ntp -Dtest=Cfihos20HandoverExporterTest,Dexpi20ProcessModelWriterTest,EngineeringNumericalHealthAnalyzerTest test
+
+      - name: Install notebook runtime
+        run: python -m pip install --upgrade nbconvert nbclient nbformat ipykernel pandas matplotlib numpy jpype1
+
+      - name: Execute notebook
+        env:
+          MPLBACKEND: Agg
+          NEQSIM_PROJECT_ROOT: ${{ github.workspace }}
+        run: |
+          mkdir -p build/executed-notebooks
+          python -m jupyter nbconvert --to notebook --execute examples/notebooks/process_to_engineering_simulator.ipynb --ExecutePreprocessor.timeout=2700 --ExecutePreprocessor.kernel_name=python3 --output process_to_engineering_simulator.ipynb --output-dir build/executed-notebooks
+
+      - name: Verify notebook and handover package
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          executed = Path("build/executed-notebooks/process_to_engineering_simulator.ipynb")
+          notebook = json.loads(executed.read_text(encoding="utf-8"))
+          code = [cell for cell in notebook["cells"] if cell["cell_type"] == "code"]
+          assert code and all(cell.get("execution_count") is not None for cell in code)
+          assert not any(
+              output.get("output_type") == "error"
+              for cell in code
+              for output in cell.get("outputs", [])
+          )
+
+          package = Path("/tmp/neqsim-process-to-engineering-package")
+          numerical = json.loads((package / "engineering-numerical-health.json").read_text(encoding="utf-8"))
+          assert numerical["status"] != "FAILED"
+          assert (package / "process-model.dexpi.xml").is_file()
+
+          handover = package / "cfihos-20-staging"
+          assessment = json.loads((handover / "cfihos-20-assessment.json").read_text(encoding="utf-8"))
+          manifest = json.loads((handover / "cfihos-20-manifest.json").read_text(encoding="utf-8"))
+          assert assessment["status"] == "INCOMPLETE"
+          assert assessment["cfihosConformanceClaim"] is False
+          assert manifest["targetSystemTransformationRequired"] is True
+          for name in (
+              "cfihos-tags.csv",
+              "cfihos-equipment.csv",
+              "cfihos-properties.csv",
+              "cfihos-documents.csv",
+              "cfihos-relationships.csv",
+              "cfihos-unmapped.csv",
+          ):
+              assert (handover / name).is_file(), name
+          print(f"Verified {len(code)} executed code cells")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: process-to-engineering-simulator
+          path: |
+            build/executed-notebooks/process_to_engineering_simulator.ipynb
+            /tmp/neqsim-process-to-engineering-package
+          if-no-files-found: error
+          retention-days: 14
