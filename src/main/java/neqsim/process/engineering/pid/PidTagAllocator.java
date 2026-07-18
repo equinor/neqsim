@@ -29,8 +29,7 @@ public final class PidTagAllocator implements Serializable {
     if (existing != null) {
       return existing;
     }
-    int sequence = counters.containsKey(function) ? counters.get(function).intValue()
-        : basis.getFirstSequenceNumber();
+    int sequence = counters.containsKey(function) ? counters.get(function).intValue() : basis.getFirstSequenceNumber();
     String candidate;
     do {
       candidate = basis.getAreaCode() + "-" + function + "-" + pad(sequence, basis.getSequenceWidth());
