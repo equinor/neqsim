@@ -11,6 +11,7 @@
     "engineeringApprovalRequired",
     "register",
     "assessment",
+    "documentIntegrity",
     "evidenceGeneratedBySimulator",
     "approvalGrantedBySimulator",
     "governance"
@@ -54,6 +55,47 @@
         "evidenceOrApprovalGeneratedBySimulator",
         "simulatorGrantedConstructionAuthority"
       ]
+    },
+    "documentIntegrity": {
+      "type": "object",
+      "required": [
+        "passed",
+        "verifiedRecordIds",
+        "documents",
+        "findings",
+        "approvalGrantedBySimulator"
+      ],
+      "properties": {
+        "passed": {
+          "type": "boolean"
+        },
+        "verifiedRecordIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "reference",
+              "computedSha256",
+              "byteLength"
+            ]
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "approvalGrantedBySimulator": {
+          "const": false
+        }
+      }
     },
     "evidenceGeneratedBySimulator": {
       "const": false
