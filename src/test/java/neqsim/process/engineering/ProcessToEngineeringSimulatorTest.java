@@ -84,8 +84,9 @@ class ProcessToEngineeringSimulatorTest {
     String[] coordinatedArtifacts = new String[] { "process-design-basis.json", "equipment-datasheets.json",
         "valve-list.json", "io-list.json", "alarm-trip-schedule.json", "shutdown-narratives.json",
         "psv-datasheets.json", "flare-blowdown-report.json", "utility-summary.json", "materials-selection-report.json",
-        "engineering-diagram-layout.json", "unresolved-engineering-actions.json", "revision-impact-report.json",
-        "engineering-production-readiness.json", "engineering-qualification-plan.json" };
+        "engineering-external-evidence-register.json", "engineering-diagram-layout.json",
+        "unresolved-engineering-actions.json", "revision-impact-report.json", "engineering-production-readiness.json",
+        "engineering-qualification-plan.json" };
     for (String artifact : coordinatedArtifacts) {
       assertTrue(Files.exists(temporaryDirectory.resolve(artifact)), artifact);
     }
@@ -104,6 +105,11 @@ class ProcessToEngineeringSimulatorTest {
         Files.readAllBytes(temporaryDirectory.resolve("engineering-production-readiness.json")),
         StandardCharsets.UTF_8);
     assertTrue(productionReadiness.contains("\"fitnessForConstruction\": false"));
+    String externalEvidence = new String(
+        Files.readAllBytes(temporaryDirectory.resolve("engineering-external-evidence-register.json")),
+        StandardCharsets.UTF_8);
+    assertTrue(externalEvidence.contains("\"evidenceGeneratedBySimulator\": false"));
+    assertTrue(externalEvidence.contains("\"approvalGrantedBySimulator\": false"));
     String qualificationPlan = new String(
         Files.readAllBytes(temporaryDirectory.resolve("engineering-qualification-plan.json")), StandardCharsets.UTF_8);
     assertTrue(qualificationPlan.contains("\"externalEvidenceMayNotBeGeneratedBySimulator\": true"));
