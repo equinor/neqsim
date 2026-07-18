@@ -19,6 +19,7 @@ import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.engineering.production.EngineeringProductionReadinessAssessment;
 import neqsim.process.engineering.production.EngineeringProductionReadinessBasis;
 import neqsim.process.engineering.production.EngineeringExternalEvidenceAssessment;
+import neqsim.process.engineering.production.EngineeringExternalEvidenceDocumentIntegrity;
 import neqsim.process.engineering.production.EngineeringExternalEvidenceRegister;
 import neqsim.process.engineering.validation.EngineeringSchemaCatalog;
 
@@ -257,10 +258,13 @@ final class EngineeringCoordinatedPackage {
     EngineeringExternalEvidenceRegister register = basis == null ? null : basis.getExternalEvidenceRegister();
     result.put("register", register == null ? null : register.toMap());
     result.put("assessment", EngineeringExternalEvidenceAssessment.assess(register).toMap());
+    EngineeringExternalEvidenceDocumentIntegrity integrity = basis == null ? null
+        : basis.getExternalEvidenceDocumentIntegrity();
+    result.put("documentIntegrity", EngineeringExternalEvidenceDocumentIntegrity.assess(register, integrity).toMap());
     result.put("evidenceGeneratedBySimulator", Boolean.FALSE);
     result.put("approvalGrantedBySimulator", Boolean.FALSE);
     result.put("governance",
-        "Records are controlled receipts from accountable external parties; NeqSim only verifies completeness");
+        "Records are controlled receipts from accountable external parties; NeqSim verifies completeness and content integrity only");
     return result;
   }
 
