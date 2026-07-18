@@ -79,7 +79,14 @@ public final class EngineeringQualificationPlan {
       actions.add(action("RELEASE_QUALITY", "release",
           "Close CI, Java matrix, determinism, performance, API, migration, security and review evidence"));
     }
-    EngineeringSafetyLifecycleAssessment.Result safety = EngineeringSafetyLifecycleAssessment.assess(project);
+    EngineeringExternalEvidenceAssessment.Result external = EngineeringExternalEvidenceAssessment
+        .assess(evidence.getExternalEvidenceRegister());
+    for (Map<String, Object> finding : external.getFindings()) {
+      actions.add(action("EXTERNAL_EVIDENCE", String.valueOf(finding.get("subject")),
+          String.valueOf(finding.get("requiredAction"))));
+    }
+    EngineeringSafetyLifecycleAssessment.Result safety = EngineeringSafetyLifecycleAssessment.assess(project,
+        evidence.getExternalEvidenceRegister());
     if (!safety.isPassed()) {
       actions.add(action("SAFETY_LIFECYCLE", "project", "Close accountable HAZOP/LOPA/SRS, SIF and shutdown findings"));
     }
@@ -98,6 +105,7 @@ public final class EngineeringQualificationPlan {
     result.put("revision", project.getRevision());
     result.put("executedMethods", new ArrayList<String>(executed));
     result.put("methodQualificationMatrix", methods);
+    result.put("externalEvidenceAssessment", external.toMap());
     result.put("actions", actions);
     result.put("openActionCount", Integer.valueOf(actions.size()));
     result.put("readinessLevel", assessment.getLevel().name());

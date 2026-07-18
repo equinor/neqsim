@@ -1,0 +1,280 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-external-evidence-register:v1",
+  "title": "NeqSim external engineering evidence register",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "schemaUri",
+    "projectId",
+    "revision",
+    "engineeringApprovalRequired",
+    "register",
+    "assessment",
+    "documentIntegrity",
+    "evidenceGeneratedBySimulator",
+    "approvalGrantedBySimulator",
+    "governance"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "neqsim_external_engineering_evidence.v1"
+    },
+    "schemaUri": {
+      "const": "urn:neqsim:schema:engineering-external-evidence-register:v1"
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "revision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "engineeringApprovalRequired": {
+      "const": true
+    },
+    "register": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/register"
+        }
+      ]
+    },
+    "assessment": {
+      "type": "object",
+      "required": [
+        "passed",
+        "coverage",
+        "matchedRecords",
+        "findings",
+        "constructionAuthorityEvidenceAccepted",
+        "evidenceOrApprovalGeneratedBySimulator",
+        "simulatorGrantedConstructionAuthority"
+      ]
+    },
+    "documentIntegrity": {
+      "type": "object",
+      "required": [
+        "passed",
+        "verifiedRecordIds",
+        "documents",
+        "findings",
+        "approvalGrantedBySimulator"
+      ],
+      "properties": {
+        "passed": {
+          "type": "boolean"
+        },
+        "verifiedRecordIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "reference",
+              "computedSha256",
+              "byteLength"
+            ]
+          }
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "approvalGrantedBySimulator": {
+          "const": false
+        }
+      }
+    },
+    "evidenceGeneratedBySimulator": {
+      "const": false
+    },
+    "approvalGrantedBySimulator": {
+      "const": false
+    },
+    "governance": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "$defs": {
+    "register": {
+      "type": "object",
+      "required": [
+        "requirements",
+        "records"
+      ],
+      "properties": {
+        "requirements": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/requirement"
+          }
+        },
+        "records": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/record"
+          }
+        }
+      }
+    },
+    "requirement": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "scopeReference",
+        "description",
+        "requiredDecisionRole"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "$ref": "#/$defs/evidenceType"
+        },
+        "scopeReference": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1
+        },
+        "requiredDecisionRole": {
+          "type": "string"
+        }
+      }
+    },
+    "record": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "documentId",
+        "revision",
+        "title",
+        "documentReference",
+        "sha256",
+        "issuingOrganization",
+        "issuedBy",
+        "issuedDate",
+        "scopeReferences",
+        "status",
+        "decisionBy",
+        "decisionRole",
+        "decisionDate",
+        "decisionReference",
+        "independenceStatement",
+        "authorityJurisdiction",
+        "supersedesRecordId",
+        "missingFields",
+        "acceptedAndComplete"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "type": {
+          "$ref": "#/$defs/evidenceType"
+        },
+        "documentId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "type": "string",
+          "minLength": 1
+        },
+        "title": {
+          "type": "string"
+        },
+        "documentReference": {
+          "type": "string"
+        },
+        "sha256": {
+          "type": "string"
+        },
+        "issuingOrganization": {
+          "type": "string"
+        },
+        "issuedBy": {
+          "type": "string"
+        },
+        "issuedDate": {
+          "type": "string"
+        },
+        "scopeReferences": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "enum": [
+            "DRAFT",
+            "ACCEPTED",
+            "REJECTED",
+            "SUPERSEDED"
+          ]
+        },
+        "decisionBy": {
+          "type": "string"
+        },
+        "decisionRole": {
+          "type": "string"
+        },
+        "decisionDate": {
+          "type": "string"
+        },
+        "decisionReference": {
+          "type": "string"
+        },
+        "independenceStatement": {
+          "type": "string"
+        },
+        "authorityJurisdiction": {
+          "type": "string"
+        },
+        "supersedesRecordId": {
+          "type": "string"
+        },
+        "missingFields": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "acceptedAndComplete": {
+          "type": "boolean"
+        }
+      }
+    },
+    "evidenceType": {
+      "enum": [
+        "ACCOUNTABLE_ENGINEERING_APPROVAL",
+        "VENDOR_GUARANTEE",
+        "HAZOP_DECISION",
+        "LOPA_DECISION",
+        "SRS_APPROVAL",
+        "INDEPENDENT_VALIDATION",
+        "CONSTRUCTION_AUTHORITY"
+      ]
+    }
+  }
+}

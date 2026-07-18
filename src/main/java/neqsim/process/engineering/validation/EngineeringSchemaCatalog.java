@@ -33,9 +33,11 @@ public final class EngineeringSchemaCatalog {
   public static final String VALIDATION_REPORT = "neqsim_engineering_validation_report.v1";
   public static final String PRODUCTION_READINESS = "neqsim_engineering_production_readiness.v1";
   public static final String QUALIFICATION_PLAN = "neqsim_engineering_qualification_plan.v1";
+  public static final String EXTERNAL_EVIDENCE_REGISTER = "neqsim_external_engineering_evidence.v1";
   public static final String DISCIPLINE_ORCHESTRATION = "neqsim_engineering_discipline_orchestration.v1";
   public static final String VERTICAL_SLICE_QUALIFICATION = "neqsim_engineering_vertical_slice_qualification.v1";
   public static final String VERTICAL_SLICE_EXECUTION_MANIFEST = "neqsim_engineering_vertical_slice_execution_manifest.v1";
+  public static final String MODEL_PACKAGE = "neqsim_model_package.v1";
 
   /** One immutable schema registration. */
   public static final class Definition {
@@ -109,12 +111,15 @@ public final class EngineeringSchemaCatalog {
         "engineering-production-readiness.schema.json"));
     values.add(definition("engineering-qualification-plan.json", QUALIFICATION_PLAN,
         "engineering-qualification-plan.schema.json"));
+    values.add(definition("engineering-external-evidence-register.json", EXTERNAL_EVIDENCE_REGISTER,
+        "engineering-external-evidence-register.schema.json"));
     values.add(definition("engineering-discipline-orchestration.json", DISCIPLINE_ORCHESTRATION,
         "engineering-discipline-orchestration.schema.json"));
     values.add(definition("engineering-vertical-slice-qualification.json", VERTICAL_SLICE_QUALIFICATION,
         "engineering-vertical-slice-qualification.schema.json"));
     values.add(definition("engineering-vertical-slice-execution-manifest.json", VERTICAL_SLICE_EXECUTION_MANIFEST,
         "engineering-vertical-slice-execution-manifest.schema.json"));
+    values.add(definition("neqsim-model-package.json", MODEL_PACKAGE, "model-package-manifest.schema.json"));
     DEFINITIONS = Collections.unmodifiableList(values);
     Map<String, Definition> artifacts = new LinkedHashMap<String, Definition>();
     Map<String, Definition> versions = new LinkedHashMap<String, Definition>();

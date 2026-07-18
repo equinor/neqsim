@@ -195,6 +195,11 @@ calculation DAG, approval
 ledger and graph difference complete the package. Each calculated value retains its governing case, method or module,
 unit and graph/evidence relationship.
 
+The compiler also writes `neqsim-model-package.json`, an outer model-lifecycle manifest with stable asset/model/revision
+identity, a canonical-graph reference, software versions, dependency slots, and SHA-256 hashes for every contained
+artifact. The model-package validator fails closed when an inventoried file is missing or changed. Package integrity
+does not grant engineering approval or fitness for construction.
+
 ## Standards profile
 
 The supplied methods are designed to be used with version-controlled project rule packs, including:
@@ -427,6 +432,56 @@ gates, exact `method@version` entries in the benchmark and project-qualification
 in the engineering graph/DAG, and evidence in the relevant coordinated package reports. A numerically passing result
 retains `CALCULATED_REVIEW_REQUIRED` until its standards, evidence, vendor and accountable review records are valid.
 
+### Controlled external engineering evidence
+
+`EngineeringExternalEvidenceRegister` closes the interface to accountable organizations without turning NeqSim into
+an approval authority. `productionMinimum(projectScope)` creates explicit requirements for accountable engineering
+approval, vendor guarantees, HAZOP, LOPA, SRS, independent validation and construction-authority evidence. Add
+equipment-, loop- or package-specific requirements where project scope is more granular.
+
+Each `EngineeringExternalEvidenceRecord` identifies the controlled document and revision, immutable SHA-256 content
+hash, issuing organization and person, issue date, governed scope, decision status, decision maker, accountable role,
+decision date and workflow/signature reference. Independent validation also requires an independence statement;
+construction evidence requires the governing jurisdiction. Draft, rejected, incomplete, conflicting or superseded
+records fail closed.
+
+```java
+String projectScope = "project:compression-rev-C";
+EngineeringExternalEvidenceRegister external =
+    EngineeringExternalEvidenceRegister.productionMinimum(projectScope)
+        .addRequirement(new EngineeringExternalEvidenceRequirement(
+            "VENDOR-K-100", EngineeringExternalEvidenceRecord.Type.VENDOR_GUARANTEE,
+            "equipment:K-100", "Accepted compressor performance and mechanical guarantees"))
+        .addRecord(EngineeringExternalEvidenceRecord
+            .builder("EV-VENDOR-K-100-C", EngineeringExternalEvidenceRecord.Type.VENDOR_GUARANTEE,
+                "VDR-K-100", "C")
+            .title("K-100 certified guarantee package")
+            .controlledDocument("stid://VDR-K-100/C", controlledDocumentSha256)
+            .issuer("Compressor vendor", "Vendor package authority", "2026-07-18")
+            .addScopeReference(projectScope)
+            .addScopeReference("equipment:K-100")
+            .decision(EngineeringExternalEvidenceRecord.Status.ACCEPTED,
+                "Accountable machinery engineer", "Machinery Technical Authority",
+                "2026-07-18", "workflow://VDR-K-100/C/accepted")
+            .build());
+
+EngineeringExternalEvidenceDocumentIntegrity documentIntegrity =
+    new EngineeringExternalEvidenceDocumentIntegrity()
+        .addDocument("stid://VDR-K-100/C", Files.readAllBytes(controlledDocumentPath));
+
+project.getProductionReadinessBasis().externalEvidenceRegister(external)
+    .externalEvidenceDocumentIntegrity(documentIntegrity);
+```
+
+Supply equivalent accepted receipts and the actual controlled document bytes for every declared requirement. The
+production-readiness assessment recomputes SHA-256 from those bytes and fails closed when a document is missing or its
+content differs from the receipt. The package records only the computed integrity manifest, not the document content.
+ Compilation writes
+`engineering-external-evidence-register.json`, embeds the assessment in production readiness, and creates an exact
+qualification backlog for missing or conflicting evidence. `constructionAuthorityEvidenceAccepted=true` means that
+the supplied external receipt passed structural and scope checks; `fitnessForConstruction` and
+`finalEngineeringApprovalGranted` remain false because the simulator never issues those decisions.
+
 See `examples/notebooks/engineering_production_qualification_workflow.ipynb` for benchmark, DEXPI, pilot, release and
 relief workflow examples. The notebook uses synthetic references only to demonstrate the API; replace every such value
 and reviewer string with controlled project evidence before assessing readiness.
@@ -438,10 +493,33 @@ The companion
 [discipline-orchestration notebook](../../examples/notebooks/engineering_discipline_orchestration.ipynb) focuses on
 execution blockers, dependency fingerprints, revision invalidation and the multi-area `ProcessModel` API.
 
+## Implementation-plan completion (#2451)
+
+The software implementation requested by issue #2451 is complete and regression-controlled. The following matrix is
+the canonical mapping from the eight requested workstreams to their executable NeqSim implementation:
+
+| Workstream | Executable implementation |
+| --- | --- |
+| Closed engineering loop | `EngineeringDesignLoop`, physical design candidates, constraints, convergence and isolated reruns |
+| Equipment design | Typed separator, compressor, pump, exchanger, column and tank calculations |
+| Piping and hydraulics | `PipingNetworkDesignCalculation`, rule packs and distributed transient qualification |
+| Valves and instruments | Typed valve/instrument design plus response, installation and logic qualification |
+| Safety scenarios | Governed scenario engine, relief/blowdown/flare coupling and consequence qualification |
+| Materials and mechanical | Material selection, pressure design and detailed mechanical-integrity qualification |
+| Data-centric DEXPI | Canonical engineering graph, deterministic DEXPI 2.0 and semantic round-trip qualification |
+| Coordinated package | Schema-validated registers, datasheets, reports, calculation DAG and revision impact |
+
+The qualified separator → compressor → cooler → export reference facility exercises the full chain across ten controlled
+cases. Production readiness additionally requires the exact-version benchmarks, named-tool round trips, pilots,
+release evidence and accountable external receipts declared by the readiness gates. Accepted external receipts must
+now match the actual supplied document bytes. These evidence requirements are project inputs, not unfinished simulator
+features, and the simulator always retains `fitnessForConstruction=false`.
+
 ## Required engineering review
 
-The simulator produces calculated or proposed engineering suitable for concept and pre-FEED development. It does not
-replace accountable discipline work for:
+The simulator produces calculated or proposed engineering suitable for concept and pre-FEED development. It can
+verify controlled receipts for the following decisions, but it does not replace the accountable parties that create
+or approve them:
 
 - HAZOP/LOPA scenario credibility, SIL selection or SRS approval;
 - vendor compressor, pump, exchanger, valve or instrument guarantees;

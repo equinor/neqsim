@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:impact-analysis:v1",
+  "title": "NeqSim engineering impact analysis",
+  "type": "object",
+  "required": [
+    "schemaVersion", "schemaUri", "eventId", "projectId", "graphRevision", "impactedObjects",
+    "unresolvedSubjectIds", "propagationCycleEdgeIds", "recalculationOrder",
+    "recalculationCycleNodeIds", "reapprovalNodeIds", "fitnessForConstruction", "governance"
+  ],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_impact_analysis.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:impact-analysis:v1"},
+    "eventId": {"type": "string", "minLength": 1},
+    "projectId": {"type": "string", "minLength": 1},
+    "graphRevision": {"type": "string", "minLength": 1},
+    "impactedObjects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "nodeId", "nodeKind", "directChange", "propagationDepth", "requiredActions",
+          "propagationPath", "reasonEdgeIds"
+        ],
+        "properties": {
+          "nodeId": {"type": "string", "minLength": 1},
+          "nodeKind": {"type": "string", "minLength": 1},
+          "directChange": {"type": "boolean"},
+          "propagationDepth": {"type": "integer", "minimum": 0},
+          "requiredActions": {
+            "type": "array",
+            "items": {"enum": ["REVIEW_CHANGE", "RECALCULATE", "REGENERATE", "REVALIDATE", "REAPPROVE", "REQUALIFY"]}
+          },
+          "propagationPath": {"type": "array", "items": {"type": "string", "minLength": 1}},
+          "reasonEdgeIds": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        },
+        "additionalProperties": false
+      }
+    },
+    "unresolvedSubjectIds": {"type": "array", "items": {"type": "string"}},
+    "propagationCycleEdgeIds": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "recalculationOrder": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "recalculationCycleNodeIds": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "reapprovalNodeIds": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "fitnessForConstruction": {"const": false},
+    "governance": {"type": "string", "minLength": 1}
+  },
+  "additionalProperties": false
+}

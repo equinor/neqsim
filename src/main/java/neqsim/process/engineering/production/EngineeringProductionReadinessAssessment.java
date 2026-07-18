@@ -78,7 +78,16 @@ public final class EngineeringProductionReadinessAssessment {
     gates.put("NAMED_DEXPI_TOOL_ROUNDTRIP",
         gate(dexpi, "Record successful named-tool import/export and close every semantic difference"));
 
-    EngineeringSafetyLifecycleAssessment.Result safety = EngineeringSafetyLifecycleAssessment.assess(project);
+    EngineeringExternalEvidenceAssessment.Result external = EngineeringExternalEvidenceAssessment
+        .assess(evidence.getExternalEvidenceRegister());
+    addExternalEvidenceGates(gates, external);
+    EngineeringExternalEvidenceDocumentIntegrity.Result documentIntegrity = EngineeringExternalEvidenceDocumentIntegrity
+        .assess(evidence.getExternalEvidenceRegister(), evidence.getExternalEvidenceDocumentIntegrity());
+    gates.put("EXTERNAL_EVIDENCE_DOCUMENT_INTEGRITY", gate(documentIntegrity.isPassed(),
+        "Supply every accepted controlled document and resolve all SHA-256 mismatches"));
+
+    EngineeringSafetyLifecycleAssessment.Result safety = EngineeringSafetyLifecycleAssessment.assess(project,
+        evidence.getExternalEvidenceRegister());
     gates.put("SAFETY_LIFECYCLE", gate(safety.isPassed(), "Close HAZOP/LOPA/SRS, SIF and shutdown findings"));
 
     Set<EngineeringPilotProjectEvidence.Scope> acceptedPilotScopes = EnumSet
@@ -118,11 +127,41 @@ public final class EngineeringProductionReadinessAssessment {
     }
     boolean technicalCompletion = transientPiping && compressorProtection && valveInstrument && mechanicalIntegrity
         && flareConsequence;
+    boolean externalValidation = external
+        .isTypePassed(EngineeringExternalEvidenceRecord.Type.ACCOUNTABLE_ENGINEERING_APPROVAL)
+        && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.VENDOR_GUARANTEE)
+        && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.HAZOP_DECISION)
+        && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.LOPA_DECISION)
+        && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.SRS_APPROVAL)
+        && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.INDEPENDENT_VALIDATION)
+        && documentIntegrity.isPassed();
     boolean validated = designLoop && benchmarkPassed && methods && automation != null && automation.isComplete()
-        && safety.isPassed() && technicalCompletion;
+        && safety.isPassed() && technicalCompletion && externalValidation;
     Level level = all ? Level.QUALIFIED_FEED_SUPPORT
         : validated ? Level.VALIDATED_PRELIMINARY : designLoop ? Level.EXPERIMENTAL : Level.NOT_READY;
-    return new Result(project.getProjectId(), project.getRevision(), level, gates, safety, evidence, all);
+    return new Result(project.getProjectId(), project.getRevision(), level, gates, safety, external, documentIntegrity,
+        evidence, all);
+  }
+
+  private static void addExternalEvidenceGates(Map<String, Gate> gates,
+      EngineeringExternalEvidenceAssessment.Result external) {
+    gates.put("ACCOUNTABLE_ENGINEERING_APPROVALS",
+        gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.ACCOUNTABLE_ENGINEERING_APPROVAL),
+            "Attach complete, immutable approval receipts from accountable engineering authorities"));
+    gates.put("VENDOR_GUARANTEES", gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.VENDOR_GUARANTEE),
+        "Attach accepted vendor guarantees for every declared equipment and instrument scope"));
+    gates.put("HAZOP_DECISIONS", gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.HAZOP_DECISION),
+        "Attach approved HAZOP decisions and evidence of action closure"));
+    gates.put("LOPA_DECISIONS", gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.LOPA_DECISION),
+        "Attach approved LOPA decisions and independent-protection-layer basis"));
+    gates.put("SRS_APPROVAL", gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.SRS_APPROVAL),
+        "Attach the approved safety requirements specification"));
+    gates.put("INDEPENDENT_VALIDATION_ACCEPTANCE",
+        gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.INDEPENDENT_VALIDATION),
+            "Attach complete acceptance from a demonstrably independent validator"));
+    gates.put("CONSTRUCTION_AUTHORITY_EVIDENCE",
+        gate(external.isTypePassed(EngineeringExternalEvidenceRecord.Type.CONSTRUCTION_AUTHORITY),
+            "Attach the jurisdiction-specific construction authority release for this design revision"));
   }
 
   public static Set<String> executedMethods(EngineeringProject project) {
@@ -199,17 +238,23 @@ public final class EngineeringProductionReadinessAssessment {
     private final Level level;
     private final Map<String, Gate> gates;
     private final EngineeringSafetyLifecycleAssessment.Result safety;
+    private final EngineeringExternalEvidenceAssessment.Result externalEvidence;
+    private final EngineeringExternalEvidenceDocumentIntegrity.Result externalEvidenceDocumentIntegrity;
     private final EngineeringProductionReadinessBasis basis;
     private final boolean preliminaryProductionReady;
 
     Result(String projectId, String revision, Level level, Map<String, Gate> gates,
-        EngineeringSafetyLifecycleAssessment.Result safety, EngineeringProductionReadinessBasis basis,
-        boolean preliminaryProductionReady) {
+        EngineeringSafetyLifecycleAssessment.Result safety,
+        EngineeringExternalEvidenceAssessment.Result externalEvidence,
+        EngineeringExternalEvidenceDocumentIntegrity.Result externalEvidenceDocumentIntegrity,
+        EngineeringProductionReadinessBasis basis, boolean preliminaryProductionReady) {
       this.projectId = projectId;
       this.revision = revision;
       this.level = level;
       this.gates = new LinkedHashMap<String, Gate>(gates);
       this.safety = safety;
+      this.externalEvidence = externalEvidence;
+      this.externalEvidenceDocumentIntegrity = externalEvidenceDocumentIntegrity;
       this.basis = basis;
       this.preliminaryProductionReady = preliminaryProductionReady;
     }
@@ -246,11 +291,16 @@ public final class EngineeringProductionReadinessAssessment {
       result.put("gates", gateMaps);
       result.put("failedGates", getFailedGates());
       result.put("safetyLifecycle", safety.toMap());
+      result.put("externalEngineeringEvidence", externalEvidence.toMap());
+      result.put("externalEvidenceDocumentIntegrity", externalEvidenceDocumentIntegrity.toMap());
       result.put("evidenceBasis", basis.toMap());
       result.put("preliminaryProductionReady", Boolean.valueOf(preliminaryProductionReady));
       result.put("fitnessForConstruction", Boolean.FALSE);
       result.put("finalEngineeringApprovalGranted", Boolean.FALSE);
-      result.put("governance", "Qualified FEED support still requires accountable discipline and project approval");
+      result.put("constructionAuthorityEvidenceAccepted", Boolean
+          .valueOf(externalEvidence.isTypePassed(EngineeringExternalEvidenceRecord.Type.CONSTRUCTION_AUTHORITY)));
+      result.put("governance",
+          "NeqSim verifies external evidence receipts but does not issue engineering or construction approval");
       return result;
     }
   }

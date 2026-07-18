@@ -102,6 +102,18 @@ public final class EngineeringGraphDiff implements Serializable {
         && removedEdgeIds.isEmpty();
   }
 
+  public String getProjectId() {
+    return projectId;
+  }
+
+  public String getFromRevision() {
+    return fromRevision;
+  }
+
+  public String getToRevision() {
+    return toRevision;
+  }
+
   public List<String> getAddedNodeIds() {
     return Collections.unmodifiableList(addedNodeIds);
   }
@@ -112,6 +124,14 @@ public final class EngineeringGraphDiff implements Serializable {
 
   public List<String> getModifiedNodeIds() {
     return Collections.unmodifiableList(modifiedNodeIds);
+  }
+
+  public List<String> getAddedEdgeIds() {
+    return Collections.unmodifiableList(addedEdgeIds);
+  }
+
+  public List<String> getRemovedEdgeIds() {
+    return Collections.unmodifiableList(removedEdgeIds);
   }
 
   public Set<String> getImpactedNodeIds() {

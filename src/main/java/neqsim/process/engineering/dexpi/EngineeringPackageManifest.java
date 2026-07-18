@@ -55,7 +55,7 @@ final class EngineeringPackageManifest {
       for (Path entry : stream) {
         if (Files.isDirectory(entry)) {
           collectFiles(entry, outputFile, result);
-        } else if (!entry.equals(outputFile)) {
+        } else if (!entry.equals(outputFile) && !"neqsim-model-package.json".equals(entry.getFileName().toString())) {
           result.add(entry);
         }
       }
