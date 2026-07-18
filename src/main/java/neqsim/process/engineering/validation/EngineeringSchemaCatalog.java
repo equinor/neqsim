@@ -32,6 +32,7 @@ public final class EngineeringSchemaCatalog {
   public static final String REVISION_DIFF = "neqsim_engineering_revision_diff.v1";
   public static final String VALIDATION_REPORT = "neqsim_engineering_validation_report.v1";
   public static final String PRODUCTION_READINESS = "neqsim_engineering_production_readiness.v1";
+  public static final String NUMERICAL_HEALTH = "neqsim_engineering_numerical_health.v1";
   public static final String QUALIFICATION_PLAN = "neqsim_engineering_qualification_plan.v1";
   public static final String EXTERNAL_EVIDENCE_REGISTER = "neqsim_external_engineering_evidence.v1";
   public static final String DISCIPLINE_ORCHESTRATION = "neqsim_engineering_discipline_orchestration.v1";
@@ -109,6 +110,8 @@ public final class EngineeringSchemaCatalog {
     values.add(definition("engineering-validation-report.json", VALIDATION_REPORT, "validation-report.schema.json"));
     values.add(definition("engineering-production-readiness.json", PRODUCTION_READINESS,
         "engineering-production-readiness.schema.json"));
+    values.add(
+        definition("engineering-numerical-health.json", NUMERICAL_HEALTH, "engineering-numerical-health.schema.json"));
     values.add(definition("engineering-qualification-plan.json", QUALIFICATION_PLAN,
         "engineering-qualification-plan.schema.json"));
     values.add(definition("engineering-external-evidence-register.json", EXTERNAL_EVIDENCE_REGISTER,

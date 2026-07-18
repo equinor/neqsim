@@ -129,6 +129,9 @@ the governed enterprise checklist and readiness gates use
   `EngineeringMethodQualificationRegistry`: require an independent benchmark, approved structured applicability
   envelope, intended use, controlled service inputs, uncertainty basis and explicit extrapolation policy. A converged
   calculation outside the envelope remains investigation evidence, not a qualified engineering result.
+- Use `EngineeringNumericalHealthAnalyzer` to capture convergence, mass/energy closure, residual, and sensitivity
+  evidence for every process state that governs an engineering decision. Required but absent evidence must remain
+  `INCOMPLETE`; never replace unavailable closure data with zero.
 - Compressor, pump, heat exchanger, separator, and pipeline cases identify applicable
   standards through `neqsim-standards-lookup`.
 

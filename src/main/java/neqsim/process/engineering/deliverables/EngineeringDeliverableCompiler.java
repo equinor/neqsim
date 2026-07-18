@@ -31,6 +31,8 @@ import neqsim.process.engineering.model.EngineeringGraphDiff;
 import neqsim.process.engineering.model.EngineeringIds;
 import neqsim.process.engineering.model.EngineeringNode;
 import neqsim.process.engineering.model.EngineeringProvenance;
+import neqsim.process.engineering.numerics.EngineeringNumericalHealthAnalyzer;
+import neqsim.process.engineering.numerics.EngineeringNumericalHealthReport;
 import neqsim.process.engineering.production.EngineeringProductionReadinessAssessment;
 import neqsim.process.engineering.production.EngineeringQualificationPlan;
 import neqsim.process.engineering.validation.EngineeringPackageValidationException;
@@ -74,6 +76,7 @@ public final class EngineeringDeliverableCompiler {
     private final Path equipmentRegisterFile;
     private final Path lineRegisterFile;
     private final Path instrumentRegisterFile;
+    private final Path numericalHealthFile;
     private final Path productionReadinessFile;
     private final Path verticalSliceQualificationFile;
     private final Path verticalSliceExecutionManifestFile;
@@ -91,9 +94,9 @@ public final class EngineeringDeliverableCompiler {
         Path engineeringCalculationDagFile, Path engineeringDesignCaseMatrixFile, Path engineeringDisciplinePackageFile,
         Path engineeringApprovalLedgerFile, Path engineeringDexpiRoundTripReportFile,
         Path engineeringAutomationPlanFile, Path designEnvelopeFile, Path equipmentRegisterFile, Path lineRegisterFile,
-        Path instrumentRegisterFile, Path productionReadinessFile, Path verticalSliceQualificationFile,
-        Path verticalSliceExecutionManifestFile, Path qualificationPlanFile, Path compilerManifestFile,
-        Path validationReportFile, Path revisionDiffFile, EngineeringGraph engineeringGraph,
+        Path instrumentRegisterFile, Path numericalHealthFile, Path productionReadinessFile,
+        Path verticalSliceQualificationFile, Path verticalSliceExecutionManifestFile, Path qualificationPlanFile,
+        Path compilerManifestFile, Path validationReportFile, Path revisionDiffFile, EngineeringGraph engineeringGraph,
         EngineeringDesignEnvelope designEnvelope, DexpiEngineeringExporter.ExportResult dexpiResult,
         EngineeringPackageValidationReport validationReport, Path modelPackageFile) {
       this.outputDirectory = outputDirectory;
@@ -109,6 +112,7 @@ public final class EngineeringDeliverableCompiler {
       this.equipmentRegisterFile = equipmentRegisterFile;
       this.lineRegisterFile = lineRegisterFile;
       this.instrumentRegisterFile = instrumentRegisterFile;
+      this.numericalHealthFile = numericalHealthFile;
       this.productionReadinessFile = productionReadinessFile;
       this.verticalSliceQualificationFile = verticalSliceQualificationFile;
       this.verticalSliceExecutionManifestFile = verticalSliceExecutionManifestFile;
@@ -173,6 +177,10 @@ public final class EngineeringDeliverableCompiler {
 
     public Path getInstrumentRegisterFile() {
       return instrumentRegisterFile;
+    }
+
+    public Path getNumericalHealthFile() {
+      return numericalHealthFile;
     }
 
     public Path getProductionReadinessFile() {
@@ -300,6 +308,10 @@ public final class EngineeringDeliverableCompiler {
     write(lineFile, registerJson("neqsim_line_register.v1", lineRegister(project)));
     Path instrumentFile = outputDirectory.resolve("instrument-register.json");
     write(instrumentFile, registerJson("neqsim_instrument_register.v1", instrumentRegister(project)));
+    EngineeringNumericalHealthReport numericalHealth = EngineeringNumericalHealthAnalyzer
+        .analyze(project.getEngineeringProcessSystem());
+    Path numericalHealthFile = outputDirectory.resolve("engineering-numerical-health.json");
+    write(numericalHealthFile, numericalHealth.toJson());
 
     Path diffFile = null;
     EngineeringGraphDiff diff = null;
@@ -363,9 +375,9 @@ public final class EngineeringDeliverableCompiler {
     }
     return new CompilationResult(outputDirectory, graphFile, connectivityFile, calculationDagFile, designCaseMatrixFile,
         disciplinePackageFile, approvalLedgerFile, dexpiRoundTripReportFile, automationPlanFile, envelopeFile,
-        equipmentFile, lineFile, instrumentFile, productionReadinessFile, verticalSliceQualificationFile,
-        verticalSliceExecutionManifestFile, qualificationPlanFile, compilerManifest, validationFile, diffFile, graph,
-        envelope, dexpiResult, validation, modelPackageFile);
+        equipmentFile, lineFile, instrumentFile, numericalHealthFile, productionReadinessFile,
+        verticalSliceQualificationFile, verticalSliceExecutionManifestFile, qualificationPlanFile, compilerManifest,
+        validationFile, diffFile, graph, envelope, dexpiResult, validation, modelPackageFile);
   }
 
   private static void addDocumentNodes(EngineeringGraph graph, EngineeringProject project) {
@@ -382,8 +394,9 @@ public final class EngineeringDeliverableCompiler {
         "alarm-trip-schedule.json", "shutdown-narratives.json", "psv-datasheets.json", "flare-blowdown-report.json",
         "utility-summary.json", "materials-selection-report.json", "unresolved-engineering-actions.json",
         "revision-impact-report.json", "engineering-production-readiness.json", "engineering-qualification-plan.json",
-        "engineering-discipline-orchestration.json", "engineering-vertical-slice-qualification.json",
-        "engineering-vertical-slice-execution-manifest.json", "neqsim-model-package.json" };
+        "engineering-numerical-health.json", "engineering-discipline-orchestration.json",
+        "engineering-vertical-slice-qualification.json", "engineering-vertical-slice-execution-manifest.json",
+        "neqsim-model-package.json" };
     for (String document : documents) {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, document);
       graph.addNode(new EngineeringNode(nodeId, EngineeringNode.Kind.DOCUMENT, document, document)
@@ -592,6 +605,7 @@ public final class EngineeringDeliverableCompiler {
     artifacts.add("equipment-register.json");
     artifacts.add("line-register.json");
     artifacts.add("instrument-register.json");
+    artifacts.add("engineering-numerical-health.json");
     artifacts.add("engineering-diagram-layout.json");
     artifacts.add("engineering-schema-catalog.json");
     artifacts.add("engineering-validation-report.json");

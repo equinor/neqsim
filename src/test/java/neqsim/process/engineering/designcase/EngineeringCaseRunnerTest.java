@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import neqsim.process.equipment.stream.Stream;
+import neqsim.process.engineering.numerics.EngineeringNumericalHealthCriteria;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -31,6 +32,19 @@ class EngineeringCaseRunnerTest {
     assertEquals(2, sequential.getEnvelope().getSuccessfulCaseCount());
     assertTrue(sequential.toJson().contains("isolatedProcessCopies"));
     assertNotEquals(sequential.getDefinitionFingerprint(), sequential.getResultFingerprint());
+  }
+
+  @Test
+  void caseRunnerCanEmbedNumericalHealthReports() {
+    ProcessSystem process = process();
+    EngineeringCaseSet cases = new EngineeringCaseSet("health-report").addCase(caseAtPressure("normal", 50.0, 10))
+        .addMetric(EngineeringMetric.equipmentPressure("FEED"));
+
+    EngineeringCaseRunReport report = EngineeringCaseRunner.run(process, cases, EngineeringCaseRunOptions.builder()
+        .numericalHealthCriteria(EngineeringNumericalHealthCriteria.defaults()).build());
+
+    assertTrue(report.toJson().contains("numericalHealth"));
+    assertEquals("HEALTHY", report.getEnvelope().getCaseResults().get(0).getNumericalHealthReport().getStatus().name());
   }
 
   private EngineeringDesignCase caseAtPressure(String id, final double pressureBara, int priority) {

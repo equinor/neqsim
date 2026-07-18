@@ -68,6 +68,12 @@ public final class EngineeringQualificationPlan {
       actions.add(action("AUTOMATIC_CONFIGURATION", "project",
           "Complete explicit configuration coverage without hidden numerical defaults"));
     }
+    for (int index = 0; index < evidence.getNumericalHealthReports().size(); index++) {
+      if (!evidence.getNumericalHealthReports().get(index).isAcceptableForEngineering()) {
+        actions.add(action("NUMERICAL_HEALTH_AND_CLOSURE", "process-state-" + (index + 1),
+            "Resolve every convergence, closure, residual, and sensitivity finding in the numerical-health report"));
+      }
+    }
     boolean dexpi = false;
     for (DexpiToolQualificationEvidence item : evidence.getDexpiEvidence()) {
       dexpi |= item.isQualified();

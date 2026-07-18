@@ -76,6 +76,7 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(Files.isRegularFile(result.getEquipmentRegisterFile()));
     assertTrue(Files.isRegularFile(result.getLineRegisterFile()));
     assertTrue(Files.isRegularFile(result.getInstrumentRegisterFile()));
+    assertTrue(Files.isRegularFile(result.getNumericalHealthFile()));
     assertTrue(Files.isRegularFile(result.getValidationReportFile()));
     assertTrue(Files.isRegularFile(result.getModelPackageFile()));
     assertTrue(Files.isRegularFile(temporaryDirectory.resolve("engineering-schema-catalog.json")));
@@ -97,6 +98,7 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
     assertTrue(read(result.getEngineeringDexpiRoundTripReportFile()).contains("QUALIFICATION_REQUIRED"));
     assertTrue(read(result.getEngineeringAutomationPlanFile()).contains("READY_FOR_ISOLATED_SCREENING"));
     assertTrue(read(result.getEngineeringAutomationPlanFile()).contains("REQUIRED_PROCESS_SYSTEM_COPY"));
+    assertTrue(read(result.getNumericalHealthFile()).contains("\"massClosure\""));
     assertTrue(result.getValidationReport().isValid());
     assertTrue(EngineeringPackageValidator.validatePackage(temporaryDirectory).isValid());
     assertTrue(ModelPackageValidator.validate(temporaryDirectory).isValid());

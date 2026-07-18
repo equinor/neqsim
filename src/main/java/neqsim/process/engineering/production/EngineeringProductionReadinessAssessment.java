@@ -14,6 +14,7 @@ import neqsim.process.engineering.design.EngineeringDesignIteration;
 import neqsim.process.engineering.design.EngineeringDesignModuleResult;
 import neqsim.process.engineering.instrumentation.ValveInstrumentQualificationCalculation;
 import neqsim.process.engineering.mechanical.MechanicalIntegrityQualificationCalculation;
+import neqsim.process.engineering.numerics.EngineeringNumericalHealthReport;
 import neqsim.process.engineering.piping.TransientPipingQualificationCalculation;
 import neqsim.process.engineering.rotating.CompressorProtectionQualificationCalculation;
 import neqsim.process.engineering.safety.FlareConsequenceCalculation;
@@ -84,6 +85,16 @@ public final class EngineeringProductionReadinessAssessment {
                   : "Missing qualifying service assessments " + missingServiceAssessments));
     }
 
+    boolean numericalHealth = true;
+    if (!evidence.getNumericalHealthReports().isEmpty()) {
+      for (EngineeringNumericalHealthReport report : evidence.getNumericalHealthReports()) {
+        numericalHealth &= report.isAcceptableForEngineering();
+      }
+      gates.put("NUMERICAL_HEALTH_AND_ENGINEERING_CLOSURE",
+          gate(numericalHealth, numericalHealth ? "Every attached process state has complete numerical closure"
+              : "Resolve convergence, mass/energy closure, residual, or sensitivity findings"));
+    }
+
     EngineeringAutoConfigurator.Result automation = evidence.getAutoConfigurationResult();
     gates.put("EXPLICIT_AUTOMATIC_CONFIGURATION", gate(automation != null && automation.isComplete(),
         "Attach a complete explicit auto-configuration result with no hidden defaults"));
@@ -152,8 +163,9 @@ public final class EngineeringProductionReadinessAssessment {
         && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.SRS_APPROVAL)
         && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.INDEPENDENT_VALIDATION)
         && documentIntegrity.isPassed();
-    boolean validated = designLoop && benchmarkPassed && methods && industrialApplicability && automation != null
-        && automation.isComplete() && safety.isPassed() && technicalCompletion && externalValidation;
+    boolean validated = designLoop && benchmarkPassed && methods && industrialApplicability && numericalHealth
+        && automation != null && automation.isComplete() && safety.isPassed() && technicalCompletion
+        && externalValidation;
     Level level = all ? Level.QUALIFIED_FEED_SUPPORT
         : validated ? Level.VALIDATED_PRELIMINARY : designLoop ? Level.EXPERIMENTAL : Level.NOT_READY;
     return new Result(project.getProjectId(), project.getRevision(), level, gates, safety, external, documentIntegrity,
