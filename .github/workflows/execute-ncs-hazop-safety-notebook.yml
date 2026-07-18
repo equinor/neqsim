@@ -27,6 +27,26 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
+      - name: Verify committed engineering outputs
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("examples/notebooks/complete_offshore_process_engineering_study.ipynb")
+          notebook = json.loads(path.read_text(encoding="utf-8"))
+          required = ("PidBasis =", "ESDValve =", "advanced_model =")
+          cells = {
+              marker: next(cell for cell in notebook["cells"]
+                           if cell["cell_type"] == "code"
+                           and marker in "".join(cell.get("source", [])))
+              for marker in required
+          }
+          assert all(cell.get("execution_count") is not None for cell in cells.values())
+          assert all(cell.get("outputs") for cell in cells.values())
+          render_outputs = cells["advanced_model ="]["outputs"]
+          assert any("image/svg+xml" in output.get("data", {}) for output in render_outputs)
+          PY
       - name: Build, format and test
         run: |
           ./mvnw -Dmaven.test.skip=true package
