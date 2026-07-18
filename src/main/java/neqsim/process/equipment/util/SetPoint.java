@@ -198,15 +198,18 @@ public class SetPoint extends ProcessEquipmentBaseClass {
           val = sourceEquipment.getTemperature();
         }
         targetEquipment.setTemperature(val * multiplier + offset);
+      } else if (targetVariable.equals("massFlow") || targetVariable.equals("molarFlow")
+          || targetVariable.equals("flow")) {
+        // Wire a flow rate from the source stream onto the target stream. Mirrors a
+        // UniSim SET on a flow spec (target = multiplier * source + offset).
+        String flowUnit = targetVariable.equals("molarFlow") ? "mole/sec" : "kg/hr";
+        if (sourceValueCalculator == null && sourceEquipment instanceof Stream) {
+          val = ((Stream) sourceEquipment).getFlowRate(flowUnit);
+        }
+        ((Stream) targetEquipment).setFlowRate(val * multiplier + offset, flowUnit);
       } else {
-        // Legacy logic for other variables?
-        // The original code had some specific logic here involving inputValue and deviation
-        // which looked like copy-paste from Adjuster?
-        // "inputValue = ((Stream) sourceEquipment).getThermoSystem().getNumberOfMoles();"
-        // "double deviation = targetValue - targetValueCurrent;"
-        // This looks suspicious in SetPoint. SetPoint should just set value.
-        // But I will preserve it if possible, or just ignore for now as I am fixing the
-        // structure.
+        logger.warn("SetPoint '{}': set of variable '{}' is not supported for Stream — no action taken.", getName(),
+            targetVariable);
       }
     } else if (targetEquipment instanceof ThrottlingValve) {
       if (targetVariable.equals("pressure")) {

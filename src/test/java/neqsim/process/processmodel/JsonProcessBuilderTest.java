@@ -19,6 +19,7 @@ import neqsim.process.equipment.pipeline.WaterHammerPipe;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.equipment.util.SpreadsheetBlock;
 import neqsim.process.equipment.util.UnisimCalculator;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -123,6 +124,37 @@ class JsonProcessBuilderTest {
     // generic property applier cannot reach and the new configureDistillationColumn handles.
     assertEquals(1.5, col.getCondenser().getRefluxRatio(), 1e-9,
         "Reflux-ratio spec from JSON must be applied to the column condenser");
+  }
+
+  @Test
+  void testSetPointWiresSourceToTargetAndStaysLive() {
+    // A SetPoint copies temperature from stream A onto stream B as
+    // target = multiplier*source + offset (offset in Kelvin). The link must stay
+    // live: changing A's temperature and re-running must move B accordingly,
+    // mirroring the UniSim SET behaviour.
+    String json = "{" + "\"fluid\": {\"model\": \"SRK\", \"temperature\": 300.0, \"pressure\": 50.0,"
+        + "  \"components\": {\"methane\": 1.0}}," + "\"process\": [" + "  {\"type\": \"Stream\", \"name\": \"A\","
+        + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"], \"temperature\": [40.0, \"C\"],"
+        + "     \"pressure\": [50.0, \"bara\"]}}," + "  {\"type\": \"Stream\", \"name\": \"B\","
+        + "   \"properties\": {\"flowRate\": [1000.0, \"kg/hr\"], \"temperature\": [20.0, \"C\"],"
+        + "     \"pressure\": [50.0, \"bara\"]}}," + "  {\"type\": \"SetPoint\", \"name\": \"SET-1\","
+        + "   \"properties\": {\"sourceEquipment\": \"A\", \"sourceVariable\": \"temperature\","
+        + "     \"targetEquipment\": \"B\", \"targetVariable\": \"temperature\","
+        + "     \"multiplier\": 1.0, \"offset\": 5.0}}" + "]" + "}";
+
+    SimulationResult result = new JsonProcessBuilder().build(json);
+    assertTrue(result.isSuccess(), "Build should succeed: " + result);
+    ProcessSystem process = result.getProcessSystem();
+    SetPoint set = (SetPoint) process.getUnit("SET-1");
+    assertNotNull(set, "SetPoint should be built and wired from JSON");
+    process.run();
+    Stream b = (Stream) process.getUnit("B");
+    // B = A + 5 K = 40 C + 5 K = 45 C
+    assertEquals(45.0, b.getTemperature("C"), 1e-6, "SetPoint must copy A's temperature (+5 K) onto B");
+    // Change the input and re-run — the link must follow.
+    ((Stream) process.getUnit("A")).setTemperature(60.0, "C");
+    process.run();
+    assertEquals(65.0, b.getTemperature("C"), 1e-6, "SetPoint link must stay live when A changes");
   }
 
   @Test

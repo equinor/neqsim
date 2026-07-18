@@ -2020,6 +2020,15 @@ class UniSimReader:
                 props['target_variable'] = str(op.TargetVariable.GetValue()) if hasattr(op, 'TargetVariable') else None
             except Exception:
                 pass
+            # UniSim SET relation: target = multiplier * source + offset
+            try:
+                props['multiplier'] = float(op.Multiplier.GetValue()) if hasattr(op, 'Multiplier') else None
+            except Exception:
+                pass
+            try:
+                props['offset'] = float(op.Offset.GetValue()) if hasattr(op, 'Offset') else None
+            except Exception:
+                pass
 
         elif type_name == 'pidfbcontrolop':
             # PID controller: extract tuning parameters
@@ -3353,6 +3362,42 @@ class UniSimToNeqSim:
             step_size = op.properties.get('step_size')
             if step_size is not None:
                 props['stepSize'] = step_size
+
+        elif neqsim_type == 'SetPoint':
+            # SetPoint wires a variable from a source unit onto a target unit,
+            # mirroring the UniSim SET relation target = multiplier*source + offset.
+            def _norm_setvar(raw):
+                if not raw:
+                    return None
+                key = str(raw).strip().lower()
+                mapping = {
+                    'temperature': 'temperature', 't': 'temperature',
+                    'pressure': 'pressure', 'p': 'pressure',
+                    'massflow': 'massFlow', 'mass flow': 'massFlow',
+                    'molarflow': 'molarFlow', 'molar flow': 'molarFlow',
+                    'molarflowrate': 'molarFlow',
+                    'flow': 'flow', 'flowrate': 'flow',
+                }
+                return mapping.get(key, str(raw))
+
+            src_obj = op.properties.get('source_object_name')
+            src_var = _norm_setvar(op.properties.get('source_variable'))
+            if src_obj:
+                props['sourceEquipment'] = src_obj
+            if src_var:
+                props['sourceVariable'] = src_var
+            set_tgt_obj = op.properties.get('target_object_name')
+            set_tgt_var = _norm_setvar(op.properties.get('target_variable'))
+            if set_tgt_obj:
+                props['targetEquipment'] = set_tgt_obj
+            if set_tgt_var:
+                props['targetVariable'] = set_tgt_var
+            mult = op.properties.get('multiplier')
+            if mult is not None:
+                props['multiplier'] = mult
+            offset = op.properties.get('offset')
+            if offset is not None:
+                props['offset'] = offset
 
         if props:
             entry['properties'] = props

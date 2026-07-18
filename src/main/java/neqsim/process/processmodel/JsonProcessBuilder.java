@@ -35,6 +35,7 @@ import neqsim.process.equipment.util.AccelerationMethod;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Calculator;
 import neqsim.process.equipment.util.Recycle;
+import neqsim.process.equipment.util.SetPoint;
 import neqsim.thermo.component.ComponentEos;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemGERG2008Eos;
@@ -220,6 +221,9 @@ public class JsonProcessBuilder {
           JsonObject props = unitDef.getAsJsonObject("properties");
           if (eq instanceof Adjuster && (props.has("adjustedEquipment") || props.has("targetEquipment"))) {
             wireAdjuster((Adjuster) eq, props);
+          }
+          if (eq instanceof SetPoint && (props.has("sourceEquipment") || props.has("targetEquipment"))) {
+            wireSetPoint((SetPoint) eq, props);
           }
           if (eq instanceof Calculator && (props.has("calculatorInputs") || props.has("calculatorOutput"))) {
             wireCalculator((Calculator) eq, props);
@@ -1512,6 +1516,10 @@ public class JsonProcessBuilder {
       if (equipment instanceof Adjuster && (props.has("adjustedEquipment") || props.has("targetEquipment"))) {
         wireAdjuster((Adjuster) equipment, props);
       }
+      // Handle SetPoint: wire source/target variables by equipment reference
+      if (equipment instanceof SetPoint && (props.has("sourceEquipment") || props.has("targetEquipment"))) {
+        wireSetPoint((SetPoint) equipment, props);
+      }
       if (equipment instanceof Calculator && (props.has("calculatorInputs") || props.has("calculatorOutput"))) {
         wireCalculator((Calculator) equipment, props);
       }
@@ -1956,6 +1964,8 @@ public class JsonProcessBuilder {
         java.util.Arrays.asList("splitFactors", "flowRates", "flowUnit", "adjustedEquipment", "adjustedVariable",
             "targetEquipment", "targetVariable", "targetValue", "stepSize", "compressorChart", "antiSurge", "driver",
             "calculatorInputs", "calculatorOutput", "calculationType", "accelerationMethod", "downstreamProperty",
+            // SetPoint links are applied by wireSetPoint (source/target equipment references).
+            "sourceEquipment", "sourceVariable", "multiplier", "offset", "targetUnit",
             // DistillationColumn specs are applied by configureDistillationColumn
             // at construction (nested condenser/reboiler setters), not by generic
             // reflection.
@@ -2483,6 +2493,72 @@ public class JsonProcessBuilder {
       } else {
         warnings.add("Adjuster '" + adjuster.getName() + "' — target equipment '" + tgtEquipName + "' not found");
       }
+    }
+  }
+
+  /**
+   * Wires a SetPoint's source and target variables from JSON properties.
+   *
+   * <p>
+   * A SetPoint copies a variable from one unit (source) onto another unit (target), mirroring the UniSim SET relation
+   * {@code target = multiplier * source + offset}. JSON format:
+   * </p>
+   *
+   * <pre>
+   * "properties": {
+   *   "sourceEquipment": "Stream-A",
+   *   "sourceVariable": "temperature",
+   *   "targetEquipment": "Stream-B",
+   *   "targetVariable": "temperature",
+   *   "multiplier": 1.0,
+   *   "offset": 0.0,
+   *   "targetUnit": "C"
+   * }
+   * </pre>
+   *
+   * @param setPoint the set point to configure
+   * @param props the properties JSON object
+   */
+  private void wireSetPoint(SetPoint setPoint, JsonObject props) {
+    // Wire source variable (the variable being read)
+    if (props.has("sourceEquipment")) {
+      String srcEquipName = props.get("sourceEquipment").getAsString();
+      ProcessEquipmentInterface srcEquip = namedEquipment.get(srcEquipName);
+      if (srcEquip != null) {
+        if (props.has("sourceVariable")) {
+          setPoint.setSourceVariable(srcEquip, props.get("sourceVariable").getAsString());
+        } else {
+          setPoint.setSourceVariable(srcEquip);
+        }
+      } else {
+        warnings.add("SetPoint '" + setPoint.getName() + "' — source equipment '" + srcEquipName + "' not found");
+      }
+    }
+
+    // Wire target variable (the variable being written)
+    if (props.has("targetEquipment")) {
+      String tgtEquipName = props.get("targetEquipment").getAsString();
+      ProcessEquipmentInterface tgtEquip = namedEquipment.get(tgtEquipName);
+      if (tgtEquip != null) {
+        String tgtVar = props.has("targetVariable") ? props.get("targetVariable").getAsString() : "";
+        double tgtVal = props.has("targetValue") ? props.get("targetValue").getAsDouble() : 0.0;
+        String tgtUnit = props.has("targetUnit") ? props.get("targetUnit").getAsString() : "";
+        if (!tgtVar.isEmpty()) {
+          setPoint.setTargetVariable(tgtEquip, tgtVar, tgtVal, tgtUnit);
+        } else {
+          setPoint.setTargetVariable(tgtEquip);
+        }
+      } else {
+        warnings.add("SetPoint '" + setPoint.getName() + "' — target equipment '" + tgtEquipName + "' not found");
+      }
+    }
+
+    // Apply the UniSim SET relation target = multiplier * source + offset
+    if (props.has("multiplier")) {
+      setPoint.setMultiplier(props.get("multiplier").getAsDouble());
+    }
+    if (props.has("offset")) {
+      setPoint.setOffset(props.get("offset").getAsDouble());
     }
   }
 
