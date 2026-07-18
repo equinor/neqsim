@@ -36,9 +36,8 @@ public final class CompressorProtectionQualificationCalculation implements
     private final double shaftPowerKw;
     private final double mapExtrapolationFraction;
 
-    public OperatingCase(String caseId, double actualFlowM3Hr, double surgeControlFlowM3Hr,
-        double stonewallFlowM3Hr, double dischargeTemperatureC, double shaftPowerKw,
-        double mapExtrapolationFraction) {
+    public OperatingCase(String caseId, double actualFlowM3Hr, double surgeControlFlowM3Hr, double stonewallFlowM3Hr,
+        double dischargeTemperatureC, double shaftPowerKw, double mapExtrapolationFraction) {
       this.caseId = text(caseId, "caseId");
       this.actualFlowM3Hr = positive(actualFlowM3Hr, "actualFlowM3Hr");
       this.surgeControlFlowM3Hr = positive(surgeControlFlowM3Hr, "surgeControlFlowM3Hr");
@@ -87,12 +86,10 @@ public final class CompressorProtectionQualificationCalculation implements
       sourceModel = text(builder.sourceModel, "sourceModel");
       sourceModelVersion = text(builder.sourceModelVersion, "sourceModelVersion");
       operatingCases = Collections.unmodifiableList(new ArrayList<OperatingCase>(builder.operatingCases));
-      minimumSurgeMarginFraction = nonNegative(builder.minimumSurgeMarginFraction,
-          "minimumSurgeMarginFraction");
+      minimumSurgeMarginFraction = nonNegative(builder.minimumSurgeMarginFraction, "minimumSurgeMarginFraction");
       minimumStonewallMarginFraction = nonNegative(builder.minimumStonewallMarginFraction,
           "minimumStonewallMarginFraction");
-      maximumDischargeTemperatureC = finite(builder.maximumDischargeTemperatureC,
-          "maximumDischargeTemperatureC");
+      maximumDischargeTemperatureC = finite(builder.maximumDischargeTemperatureC, "maximumDischargeTemperatureC");
       maximumMapExtrapolationFraction = nonNegative(builder.maximumMapExtrapolationFraction,
           "maximumMapExtrapolationFraction");
       driverRatedPowerKw = positive(builder.driverRatedPowerKw, "driverRatedPowerKw");
@@ -102,16 +99,11 @@ public final class CompressorProtectionQualificationCalculation implements
           "minimumRundownSurgeMarginFraction");
       requiredRundownSurgeMarginFraction = nonNegative(builder.requiredRundownSurgeMarginFraction,
           "requiredRundownSurgeMarginFraction");
-      antiSurgeDetectionSeconds = nonNegative(builder.antiSurgeDetectionSeconds,
-          "antiSurgeDetectionSeconds");
-      antiSurgeControllerSeconds = nonNegative(builder.antiSurgeControllerSeconds,
-          "antiSurgeControllerSeconds");
-      antiSurgeInstrumentSeconds = nonNegative(builder.antiSurgeInstrumentSeconds,
-          "antiSurgeInstrumentSeconds");
-      antiSurgeValveTravelSeconds = nonNegative(builder.antiSurgeValveTravelSeconds,
-          "antiSurgeValveTravelSeconds");
-      antiSurgeFinalOpeningPercent = percent(builder.antiSurgeFinalOpeningPercent,
-          "antiSurgeFinalOpeningPercent");
+      antiSurgeDetectionSeconds = nonNegative(builder.antiSurgeDetectionSeconds, "antiSurgeDetectionSeconds");
+      antiSurgeControllerSeconds = nonNegative(builder.antiSurgeControllerSeconds, "antiSurgeControllerSeconds");
+      antiSurgeInstrumentSeconds = nonNegative(builder.antiSurgeInstrumentSeconds, "antiSurgeInstrumentSeconds");
+      antiSurgeValveTravelSeconds = nonNegative(builder.antiSurgeValveTravelSeconds, "antiSurgeValveTravelSeconds");
+      antiSurgeFinalOpeningPercent = percent(builder.antiSurgeFinalOpeningPercent, "antiSurgeFinalOpeningPercent");
       requiredAntiSurgeOpeningPercent = percent(builder.requiredAntiSurgeOpeningPercent,
           "requiredAntiSurgeOpeningPercent");
       processSafetyTimeSeconds = positive(builder.processSafetyTimeSeconds, "processSafetyTimeSeconds");
@@ -172,8 +164,8 @@ public final class CompressorProtectionQualificationCalculation implements
         return this;
       }
 
-      public Builder mapLimits(double surgeMarginFraction, double stonewallMarginFraction,
-          double dischargeTemperatureC, double extrapolationFraction) {
+      public Builder mapLimits(double surgeMarginFraction, double stonewallMarginFraction, double dischargeTemperatureC,
+          double extrapolationFraction) {
         minimumSurgeMarginFraction = surgeMarginFraction;
         minimumStonewallMarginFraction = stonewallMarginFraction;
         maximumDischargeTemperatureC = dischargeTemperatureC;
@@ -194,9 +186,9 @@ public final class CompressorProtectionQualificationCalculation implements
         return this;
       }
 
-      public Builder antiSurgeResponse(double detectionSeconds, double controllerSeconds,
-          double instrumentSeconds, double valveTravelSeconds, double finalOpeningPercent,
-          double requiredOpeningPercent, double safetyTimeSeconds) {
+      public Builder antiSurgeResponse(double detectionSeconds, double controllerSeconds, double instrumentSeconds,
+          double valveTravelSeconds, double finalOpeningPercent, double requiredOpeningPercent,
+          double safetyTimeSeconds) {
         antiSurgeDetectionSeconds = detectionSeconds;
         antiSurgeControllerSeconds = controllerSeconds;
         antiSurgeInstrumentSeconds = instrumentSeconds;
@@ -207,8 +199,7 @@ public final class CompressorProtectionQualificationCalculation implements
         return this;
       }
 
-      public Builder rotorDynamics(double separationPercent, double requiredSeparationPercent,
-          boolean approved) {
+      public Builder rotorDynamics(double separationPercent, double requiredSeparationPercent, boolean approved) {
         rotorCriticalSpeedSeparationPercent = separationPercent;
         requiredRotorSeparationPercent = requiredSeparationPercent;
         rotorDynamicReviewApproved = approved;
@@ -332,8 +323,7 @@ public final class CompressorProtectionQualificationCalculation implements
         minimumStonewallMargin = stonewallMargin;
         governingStonewallCase = operatingCase.caseId;
       }
-      maximumDischargeTemperature = Math.max(maximumDischargeTemperature,
-          operatingCase.dischargeTemperatureC);
+      maximumDischargeTemperature = Math.max(maximumDischargeTemperature, operatingCase.dischargeTemperatureC);
       maximumShaftPower = Math.max(maximumShaftPower, operatingCase.shaftPowerKw);
       maximumExtrapolation = Math.max(maximumExtrapolation, operatingCase.mapExtrapolationFraction);
     }
@@ -348,17 +338,14 @@ public final class CompressorProtectionQualificationCalculation implements
     metrics.put("maximumMapExtrapolationFraction", Double.valueOf(maximumExtrapolation));
     metrics.put("startupTorqueMarginNm",
         Double.valueOf(input.startupAvailableTorqueNm - input.startupRequiredTorqueNm));
-    metrics.put("minimumRundownSurgeMarginFraction",
-        Double.valueOf(input.minimumRundownSurgeMarginFraction));
+    metrics.put("minimumRundownSurgeMarginFraction", Double.valueOf(input.minimumRundownSurgeMarginFraction));
     metrics.put("totalAntiSurgeResponseSeconds", Double.valueOf(totalAntiSurgeResponseSeconds));
     metrics.put("antiSurgeFinalOpeningPercent", Double.valueOf(input.antiSurgeFinalOpeningPercent));
-    metrics.put("rotorCriticalSpeedSeparationPercent",
-        Double.valueOf(input.rotorCriticalSpeedSeparationPercent));
+    metrics.put("rotorCriticalSpeedSeparationPercent", Double.valueOf(input.rotorCriticalSpeedSeparationPercent));
     metrics.put("settleOutPressureBara", Double.valueOf(input.settleOutPressureBara));
 
     Map<String, Boolean> constraints = new LinkedHashMap<String, Boolean>();
-    constraints.put("SURGE_CONTROL_MARGIN",
-        Boolean.valueOf(minimumSurgeMargin >= input.minimumSurgeMarginFraction));
+    constraints.put("SURGE_CONTROL_MARGIN", Boolean.valueOf(minimumSurgeMargin >= input.minimumSurgeMarginFraction));
     constraints.put("STONEWALL_MARGIN",
         Boolean.valueOf(minimumStonewallMargin >= input.minimumStonewallMarginFraction));
     constraints.put("DISCHARGE_TEMPERATURE",
@@ -366,16 +353,15 @@ public final class CompressorProtectionQualificationCalculation implements
     constraints.put("MAP_EXTRAPOLATION",
         Boolean.valueOf(maximumExtrapolation <= input.maximumMapExtrapolationFraction));
     constraints.put("DRIVER_RATED_POWER", Boolean.valueOf(maximumShaftPower <= input.driverRatedPowerKw));
-    constraints.put("STARTUP_TORQUE",
-        Boolean.valueOf(input.startupAvailableTorqueNm >= input.startupRequiredTorqueNm));
-    constraints.put("RUNDOWN_SURGE_MARGIN", Boolean
-        .valueOf(input.minimumRundownSurgeMarginFraction >= input.requiredRundownSurgeMarginFraction));
+    constraints.put("STARTUP_TORQUE", Boolean.valueOf(input.startupAvailableTorqueNm >= input.startupRequiredTorqueNm));
+    constraints.put("RUNDOWN_SURGE_MARGIN",
+        Boolean.valueOf(input.minimumRundownSurgeMarginFraction >= input.requiredRundownSurgeMarginFraction));
     constraints.put("ANTI_SURGE_RESPONSE_TIME",
         Boolean.valueOf(totalAntiSurgeResponseSeconds <= input.processSafetyTimeSeconds));
     constraints.put("ANTI_SURGE_PROTECTIVE_OPENING",
         Boolean.valueOf(input.antiSurgeFinalOpeningPercent >= input.requiredAntiSurgeOpeningPercent));
-    constraints.put("ROTOR_CRITICAL_SPEED_SEPARATION", Boolean
-        .valueOf(input.rotorCriticalSpeedSeparationPercent >= input.requiredRotorSeparationPercent));
+    constraints.put("ROTOR_CRITICAL_SPEED_SEPARATION",
+        Boolean.valueOf(input.rotorCriticalSpeedSeparationPercent >= input.requiredRotorSeparationPercent));
     constraints.put("SETTLE_OUT_PRESSURE",
         Boolean.valueOf(input.settleOutPressureBara <= input.suctionSystemRatingBara));
     constraints.put("VENDOR_GUARANTEE_ACCEPTED", Boolean.valueOf(input.vendorGuaranteeAccepted));
