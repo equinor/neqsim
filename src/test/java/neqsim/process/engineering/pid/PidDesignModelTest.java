@@ -101,8 +101,7 @@ public class PidDesignModelTest extends NeqSimTest {
       String tag = context.getTagAllocator().allocate("PT", stableKey);
       PidElement element = new PidElement("instrument:" + tag, tag, PidElementType.MEASUREMENT)
           .equipment(equipment.getName()).description("Separator pressure transmitter")
-          .provenance(getId(), "Measure pressure for control and protection review")
-          .standard("ANSI/ISA-5.1:2024");
+          .provenance(getId(), "Measure pressure for control and protection review").standard("ANSI/ISA-5.1:2024");
       context.requirements(equipment.getName(), null).stream()
           .filter(requirement -> requirement.getId().contains("PRESSURE"))
           .forEach(requirement -> element.requirement(requirement.getId()));
