@@ -146,7 +146,9 @@ replace:
 
 - all eight separators/scrubbers: gas/liquid loads, density basis, diameter, length and retention;
 - all four compressors: operating flow, provisional surge/choke boundaries, shaft power and driver screen;
-- both pumps: flow, head, power and assumed NPSHA/NPSHR;
+- the continuously operating oil-export pump: closed-envelope power, driver and NPSH checks;
+- the intermittent LP recycle pump: a separate flow/head/power/NPSH screen with visible 8 m NPSHA and 4 m NPSHR
+  assumptions, because steady cases with negligible scrubber liquid are not a valid continuous NPSH basis;
 - all eleven heaters/coolers/exchangers: governing duty and preliminary area;
 - both export lines: NORSOK P-002 rule pack, schedule candidates and hydraulic constraints;
 - both let-down valves: Cv, predicted opening, choked/flashing/cavitation/noise and actuator screens;
