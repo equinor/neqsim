@@ -11,6 +11,8 @@ Documentation for safety systems modeling in NeqSim.
 - [Overview](#overview)
 - [Safety Equipment](#safety-equipment)
 - [Emergency Shutdown (ESD)](#emergency-shutdown-esd)
+- [Closed-loop SIF Verification](closed-loop-sif-verification.md)
+- [SIF Reliability and Degraded Modes](sif-reliability-and-degraded-modes.md)
 - [Blowdown Systems](#blowdown-systems)
 - [Pressure Safety Valves](#pressure-safety-valves)
 - [Release and Gas Dispersion Scenarios](release-dispersion-scenarios.md)
@@ -82,6 +84,11 @@ esdLogic.addAction(new TripValveAction(inletValve), 0.0);
 Use `neqsim.process.safety.esd.EmergencyShutdownTestRunner` when the ESD sequence needs a
 structured dynamic evidence report with monitored time series, tagreader comparisons, standards
 references, and acceptance criteria.
+
+Use [`ClosedLoopSafetyFunction`](closed-loop-sif-verification.md) with
+`DynamicSafetyScenarioRunner` when the test must include live process detection, channel response
+and fault modes, MooN voting, logic-solver delay, and physical final-element response in one
+isolated transient.
 
 ### ESD Levels
 
@@ -219,6 +226,8 @@ EmergencyShutdownTestResult report = EmergencyShutdownTestRunner.run(process, pl
 - [Release and Gas Dispersion Scenarios](release-dispersion-scenarios.md) - Automatic source-term and cloud endpoint screening from ProcessSystem streams
 - [Open Drain Review](../../safety/open_drain_review.md) - NORSOK S-001 Clause 9 review with NeqSim stream evidence and normalized STID/tagreader inputs
 - [ESD Dynamic Testing Workflow](../../safety/esd_testing_workflow.md) - ESD transient testing with process logic, tagreader evidence, and criteria reports
+- [Closed-loop SIF Verification](closed-loop-sif-verification.md) - Sensor-to-vote-to-final-element transient verification with structured evidence
+- [SIF Reliability and Degraded Modes](sif-reliability-and-degraded-modes.md) - Seeded PFD/PFH uncertainty and governed bypass, maintenance, failure, and proof-test assessment
 - [ESD Blowdown System](../../safety/ESD_BLOWDOWN_SYSTEM) - Detailed ESD guide
 - [HIPPS Summary](../../safety/HIPPS_SUMMARY) - HIPPS overview
 - [PSV Dynamic Sizing](../../safety/psv_dynamic_sizing_example) - PSV sizing example

@@ -1,8 +1,8 @@
 ---
 name: neqsim-process-safety
-version: "1.0.0"
+version: "1.2.0"
 description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, bow-tie analysis, risk-matrix scoring, TR3001 overpressure-protection studies, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, overpressure relief-cause / governing-case studies, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, and neqsim.process.safety.rupture classes."
-last_verified: "2026-06-27"
+last_verified: "2026-07-18"
 requires:
   java_packages: [neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, neqsim.process.safety.rupture, neqsim.process.safety.risk.sis.nog070, neqsim.process.safety.esd, neqsim.process.safety.api14c, neqsim.process.safety.compliance]
 ---
@@ -20,6 +20,7 @@ sizing (`neqsim-relief-flare-network`).
 - Barrier management for PSFs/SCEs with document evidence and performance standards
 - LOPA for a specific scenario — calculate residual frequency and required RRF
 - SIL determination for an SIF — IEC 61508 / IEC 61511 verification
+- Closed-loop SIF execution from live process signal through MooN voting and final element
 - Bow-tie analysis (top event with threats + barriers + consequences)
 - ALARP / risk-matrix scoring (5×5)
 - Trapped-liquid fire rupture screening for blocked-in liquid-filled segments,
@@ -226,6 +227,44 @@ boolean within = res.isWithinBudget();        // true
 ```
 
 Verified by `EsdResponseTimeSimulatorTest`.
+
+### Method 3d — Closed-loop SIF transient verification
+
+Use `ClosedLoopSafetyFunction` inside a `DynamicSafetyScenario` when a response-time budget must
+be demonstrated against the process model rather than summed from prepared durations. Bind every
+`SafetyFunctionChannel` to the isolated process copy, select the SRS voting pattern, then pass an
+existing `ESDLogic`, `HIPPSLogic`, or other `ProcessLogic` as the final-element sequence.
+
+Recommended sequence:
+
+1. Configure and solve the normal process case.
+2. Apply one controlled initiating event on the scenario copy.
+3. Bind sensor channels to live process properties, including response delay and an explicit
+   `FaultMode` for degraded cases.
+4. Use the SRS MooN `VotingPattern` and logic-solver delay.
+5. Define dynamic criteria for the actual safe state and deadline, such as ESD valve opening,
+   protected pressure, compressor state, or depressuring pressure.
+6. Review `DynamicSafetyScenarioResult.getLogicEvidence()` for readings, bypass/fault state, vote
+   time, final-element actuation, and trace; do not approve from the boolean verdict alone.
+
+See `docs/process/safety/closed-loop-sif-verification.md`. This simulation evidence does not infer
+SIL or approve the SRS; hand the result to the SIL/LOPA and engineering-approval workflow.
+
+### Method 3e — Reliability uncertainty and degraded/maintenance modes
+
+After the deterministic `SafetyFunctionDesign` screen, use `SafetyFunctionReliabilityStudy` to
+propagate evidence-based failure-rate, diagnostic-coverage, proof-test, repair-time, beta, and bypass
+uncertainty. Always provide a fixed seed and retain P10/P50/P90 PFDavg/PFH, target-met probability,
+iteration count, distributions, and their data sources in the verification package.
+
+Use `SafetyFunctionOperatingMode` plus `SafetyFunctionDegradedModeAssessment` before evaluating a
+bypass or maintenance state. Record every unavailable, forced-trip, or under-repair channel, actual
+proof-test age, authorization reference, compensating measure, elapsed duration, and maximum duration.
+The effective architecture (for example 2oo3 to 2oo2) is a demand-capability screen, not permission to
+preserve the SIL claim or continue operation.
+
+Handoff the assessed mode back to the closed-loop scenario workflow to verify the physical safe state.
+See `docs/process/safety/sif-reliability-and-degraded-modes.md`.
 
 ## Method 4 — Bow-Tie Analysis
 
