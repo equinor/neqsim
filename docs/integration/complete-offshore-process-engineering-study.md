@@ -37,7 +37,13 @@ HAZOP decisions, vendor guarantees, code design, or construction approval.
 | Are the design selections internally converged? | Iteration history for applied updates, physical-variable change, process-value change and constraints. |
 | What preliminary equipment is required? | Separator/scrubber geometry and inventory, compressor and pump ratings/margins, and exchanger duties/areas. |
 | What piping, valves and instruments are indicated? | Export-line schedule candidates, velocities/pressure-drop constraints, Cv/opening and phenomena screens, calibrated ranges, uncertainty and response margins. |
-| What abnormal cases must be handled? | Blocked outlet, cooling failure, compressor trip/settle-out, fire, oil-export blockage and simultaneous blowdown screens with API-orifice and common-load results. |
+| What abnormal cases must be handled? | Blocked outlet, cooling failure, compressor trip/settle-out, fire, oil-export blockage and simultaneous blowdown screens, followed by an executed closed-loop ESD case and coupled PSV/blowdown/flare calculation. |
+| Does the SIF reach its physical safe state? | A live 2oo3 high-pressure vote with one bypassed channel drives a copied ESD valve through its real stroke and records channel, vote, actuation and response-time evidence. |
+| How robust is the SIF and what happens during bypass? | Seeded P10/P50/P90 PFD/PFH uncertainty plus an authorized 2oo3-to-2oo2 degraded-mode assessment retain assumptions, proof-test age and the explicit no-SIL-preservation boundary. |
+| Can hazard review feed implementation without losing traceability? | Eligible IPLs are credited, residual frequency is calculated, and the remaining gap creates a review-required draft SRS linked to the HAZOP node and LOPA. |
+| Can the full protective response be reviewed together? | Executed ESD, compressor-trip, PSV, blowdown, flare, MDMT and hydrate-margin evidence are joined without duplicating the owning calculations. |
+| What safety work becomes stale after a design change? | The canonical dependency graph generates HAZOP, LOPA, SRS, dynamic-SIF, disposal and facility-response revalidation tasks and invalidates the linked approval. |
+| Are safety methods independently qualified? | The notebook executes versioned PFD, LOPA and response-time comparisons, but deliberately declares them a regression baseline; the result correctly remains non-qualifying until controlled independent evidence and review are attached. |
 | What materials and mechanical work is indicated? | Degradation/material class screening and preliminary pressure-vessel thickness, mass, nozzle and footprint values. |
 | What is delivered? | A coordinated graph, case matrix/envelope, registers, datasheets, calculation DAG, DEXPI 2.0 files, validation report and unresolved-action register. |
 | What happens when the model changes? | Revision A and B packages, an idempotent and replayable change event, and a graph-derived impact register identify every deliverable that must be regenerated, recalculated, revalidated or reapproved. |
@@ -122,8 +128,10 @@ The closed design loop runs these steady process cases on isolated copies:
 
 Startup, shutdown, compressor trip, settle-out, blocked outlet, fire and blowdown cannot be represented faithfully by
 renaming a steady state. The notebook therefore keeps them in a separate accidental-case matrix and evaluates the
-screening loads with `SafetyScenarioEngineCalculation`. A project implementation must add controlled dynamic scenarios
-and coupled relief/blowdown/flare calculations for the selected events.
+screening loads with `SafetyScenarioEngineCalculation`. It then demonstrates the controlled implementation path for one
+selected event with a copied-process `DynamicSafetyScenario`, `ClosedLoopSafetyFunction`, physical ESD-valve stroke,
+compressor-trip evidence and `CoupledReliefBlowdownFlareCalculation`. Project use still requires approved scenario
+selection, concurrency and input evidence for every selected event.
 
 ### 3. Closed engineering loop
 
@@ -161,7 +169,33 @@ replace:
 The scenario credibility reference is named `SCREENING-CREDIBILITY-ASSUMPTION-NOT-HAZOP-APPROVED` so it cannot be
 mistaken for a real HAZOP record.
 
-### 5. Coordinated package and readiness
+### 5. Safety lifecycle verification
+
+The advanced safety section extends the same HP-separator and compression context through eight reviewable JSON
+artifacts:
+
+| Artifact | Content |
+| --- | --- |
+| `closed-loop-sif-result.json` | Live pressure channels, bypass state, 2oo3 vote, logic delay, ESD-valve actuation trace and safe-state deadline |
+| `sif-reliability-uncertainty.json` | Seeded P10/P50/P90 PFD/PFH, deterministic baseline, distributions and target-met probability |
+| `sif-degraded-mode-assessment.json` | Effective 2oo2 architecture, proof-test age, authorization, compensation and no-preserved-SIL finding |
+| `hazop-lopa-srs-handoff.json` | HAZOP trace, IPL eligibility, frequency arithmetic and unapproved draft SRS |
+| `coupled-relief-blowdown-flare.json` | Governing steady/dynamic load, PSV checks, blowdown trace, header Mach and flare capacity |
+| `facility-safety-response.json` | Joined ESD, compressor trip, disposal, MDMT and hydrate-margin evidence |
+| `safety-revalidation-plan.json` | Graph-derived lifecycle work, propagation paths, reason edges and stale approval |
+| `safety-benchmark-report.json` | Versioned PFD, LOPA and dynamic-response comparisons with source/review qualification status |
+
+The example labels all frequency, barrier, SRS, C&E, datasheet, MOC and review inputs as example or draft evidence. A
+technical pass means the modeled case met its configured criteria; it does not approve credibility, independence, SIL,
+continued degraded operation or facility design. The method benchmark is intentionally a `REGRESSION_BASELINE`, so the
+standard production-readiness result is false even though the numerical checks pass.
+
+The coupled blowdown/flare demonstration deliberately uses a documented 90/10 methane/ethane SRK screening fluid.
+The full offshore wellstream contains TBP pseudo-components whose elemental and flare-property characterization is not
+qualified for this transient handoff. Project adaptation must replace the screening fluid with a controlled,
+method-compatible depressuring composition and reconcile its inventory and thermodynamics with the full process case.
+
+### 6. Coordinated package and readiness
 
 `EngineeringDeliverableCompiler` produces the same controlled model in multiple discipline views, including:
 
@@ -172,7 +206,7 @@ mistaken for a real HAZOP record.
 - native DEXPI 2.0 plus internal semantic round-trip evidence; and
 - structural, reference, unit and cross-artifact validation.
 
-### 6. Revisioned model lifecycle and DEXPI impact
+### 7. Revisioned model lifecycle and DEXPI impact
 
 The notebook extends the same full process—not a second toy flowsheet—through a controlled A-to-B lifecycle:
 
@@ -192,7 +226,7 @@ is modified and every compiler document has a `GENERATED_FROM` relationship to i
 propagation path. The same mechanism reaches calculations, registers and approval records without embedding a fixed
 list of DEXPI files in the analyzer.
 
-### 7. Required PyDEXPI import and P&ID illustrations
+### 8. Required PyDEXPI import and P&ID illustrations
 
 Revision B's `plant-pydexpi.xml` is loaded directly with PyDEXPI's `ProteusSerializer`. The notebook requires a real
 model diagram, renders it with `DrawDiagram`, retains the resulting genuine-symbol SVG and writes
@@ -257,10 +291,12 @@ Before using the study on a real project:
 4. install controlled compressor and pump maps and vendor operating limits;
 5. replace assumed exchanger U/LMTD values with utility and vendor thermal design;
 6. connect the complete piping route, elevations, fittings, specification breaks and stress interfaces;
-7. complete HAZOP/LOPA/SRS and approve scenario credibility, valve failure action and shutdown sequence;
-8. run project-qualified two-phase relief, blowdown, flare-network and consequence methods;
-9. complete materials/corrosion, pressure design, external loads, fatigue, buckling, nozzles, NDE and fabrication review;
-10. qualify DEXPI exchange in the named CAE tool and attach immutable approval evidence.
+7. complete and approve the HAZOP/LOPA/SRS, IPL independence, scenario credibility, valve failure action, shutdown sequence and degraded-mode rules;
+8. replace example SIF failure distributions, proof-test ages and response limits with controlled data, then rerun closed-loop, reliability and benchmark cases;
+9. run project-qualified two-phase relief, blowdown, flare-network and consequence methods with approved concurrency and capacity bases;
+10. close every graph-derived safety revalidation task and restore invalidated approvals through management of change;
+11. complete materials/corrosion, pressure design, external loads, fatigue, buckling, nozzles, NDE and fabrication review;
+12. qualify DEXPI exchange in the named CAE tool and attach immutable approval evidence.
 
 Even after all receipts are structurally valid, NeqSim records them; it does not issue final engineering or construction
 approval. `fitnessForConstruction` and `finalEngineeringApprovalGranted` remain false.
