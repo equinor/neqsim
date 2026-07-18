@@ -7,6 +7,9 @@ description: The `process` package provides process equipment, unit operations, 
 
 The `process` package provides process equipment, unit operations, controllers, and process system management for building complete flowsheets.
 
+For controlled design cases, equipment and discipline sizing, safety verification, engineering deliverables, and
+handover, use the separate [Engineering documentation](../engineering/).
+
 ## Table of Contents
 - [Overview](#overview)
 - [Documentation Structure](#documentation-structure)
@@ -15,7 +18,7 @@ The `process` package provides process equipment, unit operations, controllers, 
 - [Equipment Categories](#equipment-categories)
 - [Controllers and Logic](#controllers-and-logic)
 - [Safety Systems](#safety-systems)
-- [Usage Examples](#usage-examples)
+- [Basic Usage](#basic-usage)
 
 ---
 

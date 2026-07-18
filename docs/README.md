@@ -52,6 +52,17 @@ System.out.println("Compressibility: " + gas.getZ());
 | `neqsim.process` | [process/](process/) | Process equipment, unit operations, controllers, process systems, safety systems |
 | `neqsim.fluidmechanics` | [fluidmechanics/](fluidmechanics/) | Pipeline flow, pressure drop, two-phase flow, flow nodes |
 
+### Engineering
+
+| Topic | Documentation | Description |
+|---------|---------------|-------------|
+| Engineering workflows | [engineering/](engineering/) | Design cases, governing envelopes, sizing, discipline verification, deliverables, and lifecycle evidence |
+| Engineering guide | [engineering/guide.md](engineering/guide) | Practical path from a validated process model to a review-ready engineering package |
+| Current capabilities | [engineering/current-capabilities.md](engineering/current-capabilities) | Implemented entry points, discipline modules, qualification layers, readiness levels, and review boundaries |
+| Design cases and envelopes | [engineering/design-cases-and-envelopes.md](engineering/design-cases-and-envelopes) | Controlled case definitions, metrics, limits, isolated execution, and governing values |
+| DEXPI engineering guide | [engineering/dexpi-guide.md](engineering/dexpi-guide) | Select, generate, validate, and qualify DEXPI exchanges |
+| Deliverables and handover | [engineering/deliverables-and-handover.md](engineering/deliverables-and-handover) | Coordinated packages, DEXPI, CFIHOS, approvals, manifests, and revisions |
+
 ### PVT and Reservoir
 
 | Package | Documentation | Description |
@@ -113,6 +124,14 @@ docs/
 │   ├── equipment/                 # Equipment documentation
 │   ├── processmodel/              # ProcessSystem, modules
 │   └── safety/                    # Safety systems
+│
+├── engineering/                   # Engineering workflows and guides
+│   ├── index.md                   # Engineering topic hub
+│   ├── guide.md                   # End-to-end engineering guide
+│   ├── current-capabilities.md    # Implemented APIs, maturity, and boundaries
+│   ├── design-cases-and-envelopes.md
+│   ├── dexpi-guide.md             # DEXPI selection, validation, and qualification
+│   └── deliverables-and-handover.md
 │
 ├── fluidmechanics/               # Pipe flow
 │   └── README.md
@@ -325,4 +344,3 @@ Specialized guides for advanced features and use cases:
 - [NeqSim GitHub Repository](https://github.com/equinor/neqsim)
 - [neqsim-python](https://github.com/equinor/neqsim-python)
 - [Example Notebooks](examples/index)
-

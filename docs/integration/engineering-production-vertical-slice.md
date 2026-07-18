@@ -179,5 +179,5 @@ compressor protection/machinery, valve/instrument response and installation, det
 radiation/dispersion/noise. HAZOP/LOPA/SRS decisions, scenario credibility, SIL, valve failure actions, materials
 approval, vendor selection and final shutdown actions cannot be manufactured by the simulator.
 
-See the [controlled-pilot notebook](../../examples/notebooks/engineering_vertical_slice_controlled_pilot.ipynb) for
+See the [controlled-pilot notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/engineering_vertical_slice_controlled_pilot.ipynb) for
 the executable API pattern.

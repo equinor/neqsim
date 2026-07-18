@@ -5,6 +5,9 @@ description: "Iterate NeqSim process cases into review-governed design, exchange
 
 # Process-to-engineering simulator
 
+Start with [Current Engineering Capabilities](../engineering/current-capabilities) for a map of the implemented
+entry points, discipline modules, qualification layers, readiness levels, and accountable-review boundary.
+
 See also [Numerical health and engineering closure](numerical-health-and-engineering-closure.md) for fail-closed
 convergence, mass/energy closure, residual, and sensitivity evidence that can be embedded in design-case and
 production-readiness reports.
@@ -55,8 +58,10 @@ One run now follows the complete preliminary-engineering chain:
 8. The compiler serializes the canonical graph to DEXPI 2.0 and produces coordinated registers, datasheets,
    calculation evidence and revision/action reports.
 
-The implementation is intentionally preliminary and composable. Detailed company methods can replace a family module
-without changing the iteration, provenance, graph or package contracts.
+The workflow implementation is complete for the scope below and remains composable. Built-in screening and
+preliminary methods retain a review-required maturity until their exact method versions are qualified for the project.
+Detailed company methods can replace a family module without changing the iteration, provenance, graph, or package
+contracts.
 
 ## Configure the first complete vertical slice
 
@@ -504,16 +509,17 @@ relief workflow examples. The notebook uses synthetic references only to demonst
 and reviewer string with controlled project evidence before assessing readiness.
 
 See the executable
-[production-readiness notebook](../../examples/notebooks/engineering_production_readiness.ipynb) for explicit
+[production-readiness notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/engineering_production_readiness.ipynb) for explicit
 auto-configuration, executed-method discovery, a regression-evidence rejection, and the compiled gate report.
 The companion
-[discipline-orchestration notebook](../../examples/notebooks/engineering_discipline_orchestration.ipynb) focuses on
+[discipline-orchestration notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/engineering_discipline_orchestration.ipynb) focuses on
 execution blockers, dependency fingerprints, revision invalidation and the multi-area `ProcessModel` API.
 
-## Implementation-plan completion (#2451)
+## Implemented engineering workstreams
 
-The software implementation requested by issue #2451 is complete and regression-controlled. The following matrix is
-the canonical mapping from the eight requested workstreams to their executable NeqSim implementation:
+The current implementation is regression-controlled for the following workstreams. This matrix maps each workstream
+to its executable NeqSim API; the remaining project inputs are method qualification, controlled external evidence,
+and accountable approval rather than missing orchestration features.
 
 | Workstream | Executable implementation |
 | --- | --- |
@@ -551,8 +557,8 @@ or approve them:
 - construction, commissioning and operating approval.
 
 See the executed
-[process-to-engineering notebook](../../examples/notebooks/process_to_engineering_simulator.ipynb) for the full
+[process-to-engineering notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process_to_engineering_simulator.ipynb) for the full
 vertical slice, process/design convergence plots, numerical-health report, native DEXPI Process assessment, and
 controlled CFIHOS staging example. The executed
-[engineering-roadmap workbench](../../examples/notebooks/engineering_roadmap_steps_1_to_8.ipynb) demonstrates every
+[engineering-roadmap workbench](https://github.com/equinor/neqsim/blob/master/examples/notebooks/engineering_roadmap_steps_1_to_8.ipynb) demonstrates every
 new typed equipment, piping, valve/instrument, safety, materials and preliminary mechanical calculation family.

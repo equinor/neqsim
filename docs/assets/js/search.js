@@ -39,6 +39,7 @@
     'api': ['standard', 'petroleum'],
     'dnv': ['standard', 'subsea', 'pipeline'],
     'process system': ['processsystem', 'flowsheet', 'simulation'],
+    'engineering': ['design case', 'sizing', 'rating', 'handover', 'engineering package'],
     'dynamic': ['transient', 'dynamic simulation', 'time step'],
     'recycle': ['iteration', 'convergence', 'loop'],
     'subsea': ['tieback', 'manifold', 'tree', 'riser', 'umbilical', 'flowline'],
@@ -72,6 +73,7 @@
   var SECTION_LABELS = {
     'thermo': 'Thermodynamics',
     'process': 'Process Simulation',
+    'engineering': 'Engineering',
     'pvtsimulation': 'PVT Simulation',
     'physical_properties': 'Physical Properties',
     'fluidmechanics': 'Fluid Mechanics',
@@ -102,6 +104,7 @@
   var SECTION_COLORS = {
     'thermo': '#2196F3',
     'process': '#4CAF50',
+    'engineering': '#FF9800',
     'pvtsimulation': '#9C27B0',
     'physical_properties': '#FF9800',
     'standards': '#795548',

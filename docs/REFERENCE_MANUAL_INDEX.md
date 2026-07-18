@@ -40,14 +40,14 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | -------------- | --------------------------------------------------------- | -------------------------------------- |
 | NeqSim Web App | [neqsim.streamlit.app](https://neqsim.streamlit.app/)     | Browser-based calculations             |
 | NeqSim Colab   | [NeqSim-Colab](https://github.com/EvenSol/NeqSim-Colab)   | Jupyter/Colab notebook examples        |
-| NeqSimLive API | [NeqSimAPI](https://github.com/equinor/NeqSimAPI)         | Container-based APIs for digital twins |
+| NeqSimLive API | [Deployment workflow](process/plant-data-tagreader#step-5-neqsimapi-cloud-rest) | Container-based APIs for digital twins |
 | Process Models | [neqsimprocess](https://github.com/equinor/neqsimprocess) | Pre-built process model library        |
 
 ### AI & Optimization
 
 | Project   | Repository                                                                      | Description                                                 |
 | --------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| RL Agents | [NeqSim-Process-RL-Agents](https://github.com/equinor/NeqSim-Process-RL-Agents) | Multi-agent reinforcement learning for process optimization |
+| RL Agents | [RL Multi-Agent Integration notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/RL_MultiAgent_Integration.ipynb) | Multi-agent reinforcement learning for process optimization |
 
 ### Support & Community
 
@@ -567,6 +567,47 @@ Fluid characterization handles plus fraction splitting, property estimation, and
 | ProcessAutomation Foundations | [docs/simulation/automation/automation_foundations.md](simulation/automation/automation_foundations) | Address resolution, variable catalogs, unit handling, and safe-access schema |
 | ProcessAutomation Integration Patterns | [docs/simulation/automation/automation_integrations.md](simulation/automation/automation_integrations) | Multi-area addressing plus optimizer/digital-twin integration workflows |
 | ProcessAutomation Operations and Troubleshooting | [docs/simulation/automation/automation_operations.md](simulation/automation/automation_operations) | Diagnostics playbook, bounds validation, and troubleshooting checklist |
+
+---
+
+## Part IIIb: Engineering
+
+### Engineering workflow and governance
+
+| Document | Path | Description |
+| --- | --- | --- |
+| **Engineering Hub** | [docs/engineering/index.md](engineering/) | **Dedicated entry point for design cases, closed-loop sizing, discipline verification, safety, handover, and lifecycle evidence** |
+| **Engineering Guide** | [docs/engineering/guide.md](engineering/guide) | **Practical, gated workflow from a validated process model to review-ready deliverables** |
+| **Current Engineering Capabilities** | [docs/engineering/current-capabilities.md](engineering/current-capabilities) | **Implemented entry points, discipline coverage, qualification layers, readiness levels, and accountable-review boundaries** |
+| **Design Cases and Governing Envelopes** | [docs/engineering/design-cases-and-envelopes.md](engineering/design-cases-and-envelopes) | **Controlled cases, metric direction, acceptance limits, isolated execution, and governing-value selection** |
+| **DEXPI Engineering Guide** | [docs/engineering/dexpi-guide.md](engineering/dexpi-guide) | **Choose, generate, validate, and qualify DEXPI Plant, Process, Proteus, and pyDEXPI exchanges** |
+| **Engineering Deliverables and Handover** | [docs/engineering/deliverables-and-handover.md](engineering/deliverables-and-handover) | **Package layers, registers, DEXPI, CFIHOS, issue controls, approvals, and revisions** |
+| Engineering Simulator Foundations | [docs/integration/engineering-simulator-foundations.md](integration/engineering-simulator-foundations) | Isolated case execution, provenance, readiness, uncertainty, and dynamic verification contracts |
+| Process-to-Engineering Simulator | [docs/integration/process-to-engineering-simulator.md](integration/process-to-engineering-simulator) | Iterative process/design convergence and explicit discipline sizing modules |
+| Process Model to Engineering Workflow | [docs/integration/process-to-engineering-workflow.md](integration/process-to-engineering-workflow) | Governed compilation, artifact contracts, approvals, and revision workflow |
+| Numerical Health and Engineering Closure | [docs/integration/numerical-health-and-engineering-closure.md](integration/numerical-health-and-engineering-closure) | Convergence, closure, residual, and sensitivity evidence |
+
+### Discipline engineering and deliverables
+
+| Document | Path | Description |
+| --- | --- | --- |
+| Process Design Guide | [docs/process/process_design_guide.md](process/process_design_guide) | Process design, mechanical design, validation, and reporting |
+| Mechanical Design | [docs/process/mechanical_design.md](process/mechanical_design) | Equipment sizing, ratings, standards, and design reports |
+| Topside Piping Design | [docs/process/topside_piping_design.md](process/topside_piping_design) | Hydraulic, mechanical, vibration, and stress screening |
+| Instrument Design | [docs/process/instrument-design.md](process/instrument-design) | Instrument ranges, I/O, uncertainty, response, and SIS interfaces |
+| Electrical Design | [docs/process/electrical-design.md](process/electrical-design) | Motors, VFDs, cables, transformers, switchgear, and load lists |
+| DEXPI Engineering Generation | [docs/integration/dexpi-engineering-generation.md](integration/dexpi-engineering-generation) | Canonical graph, governed DEXPI, registers, datasheets, and calculation evidence |
+| CFIHOS Engineering Handover | [docs/integration/cfihos-20-engineering-handover.md](integration/cfihos-20-engineering-handover) | Controlled engineering data handover and readiness assessment |
+
+### Examples and lifecycle
+
+| Document | Path | Description |
+| --- | --- | --- |
+| Complete Offshore Engineering Study | [docs/integration/complete-offshore-process-engineering-study.md](integration/complete-offshore-process-engineering-study) | Full-facility executed example from benchmark to review-governed package |
+| Model Change Events | [docs/process/model-change-events.md](process/model-change-events) | Controlled model revisions and event identity |
+| Model Impact Analysis | [docs/process/model-impact-analysis.md](process/model-impact-analysis) | Dependency-derived recalculation, revalidation, and reapproval scope |
+| Operational Evidence Package | [docs/process/operational_evidence_package.md](process/operational_evidence_package) | Evidence linking simulation results, constraints, and review status |
+| Industrial Method Qualification | [docs/integration/industrial-method-qualification.md](integration/industrial-method-qualification) | Method qualification boundaries and external evidence requirements |
 
 ---
 

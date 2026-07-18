@@ -10,7 +10,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 
 <div class="hero-badges" style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin: 1rem 0;">
   <a href="https://github.com/equinor/neqsim/actions"><img src="https://github.com/equinor/neqsim/actions/workflows/verify_build.yml/badge.svg" alt="Java CI"></a>
-  <a href="https://search.maven.org/search?q=g:%22com.equinor.neqsim%22%20AND%20a:%22neqsim%22"><img src="https://img.shields.io/maven-central/v/com.equinor.neqsim/neqsim.svg?label=Maven%20Central" alt="Maven Central"></a>
+  <a href="https://central.sonatype.com/artifact/com.equinor.neqsim/neqsim"><img src="https://img.shields.io/maven-central/v/com.equinor.neqsim/neqsim.svg?label=Maven%20Central" alt="Maven Central"></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
 </div>
 
@@ -53,6 +53,16 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="process/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Process Equipment</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Separators, compressors, heat exchangers</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="fluidmechanics/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Fluid Mechanics</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Pipeline flow, pressure drop</span></li>
 <li style="padding: 0.5rem 0;"><a href="safety/README.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Safety Systems</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Relief valves, flare systems</span></li>
+</ul>
+</div>
+
+<div class="nav-card" style="background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%); border: 2px solid #ff9800; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #ff9800; color: #24292e; font-size: 1.25rem;">🏗️ Engineering</h3>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="engineering/index.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Engineering Hub</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Design cases, discipline calculations, safety, and handover</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="engineering/guide.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Engineering Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">From a converged process model to review-ready deliverables</span></li>
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="engineering/current-capabilities.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Current Capabilities</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Implemented APIs, discipline coverage, readiness, and boundaries</span></li>
+<li style="padding: 0.5rem 0;"><a href="engineering/dexpi-guide.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>DEXPI Engineering Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Plant, Process, Proteus, pyDEXPI, validation, and qualification</span></li>
 </ul>
 </div>
 
@@ -159,9 +169,9 @@ System.out.println("Compressibility: " + gas.getZ());
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #ff9800; color: #24292e; font-size: 1.25rem;">🎓 Learning Paths</h3>
 <p style="color: #6a737d; margin-bottom: 1rem;">Structured tracks by role</p>
 <ul style="list-style: none; padding: 0; margin: 0;">
-<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#pvt-engineer-track" style="color: #155799; text-decoration: none;">🛢️ PVT Engineer Track</a></li>
-<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#process-engineer-track" style="color: #155799; text-decoration: none;">⚙️ Process Engineer Track</a></li>
-<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#developer-track" style="color: #155799; text-decoration: none;">💻 Developer Track</a></li>
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#pvt-engineer-path" style="color: #155799; text-decoration: none;">🛢️ PVT Engineer Track</a></li>
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#process-engineer-path" style="color: #155799; text-decoration: none;">⚙️ Process Engineer Track</a></li>
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#developer-path" style="color: #155799; text-decoration: none;">💻 Developer Track</a></li>
 </ul>
 </div>
 
@@ -192,6 +202,7 @@ System.out.println("Compressibility: " + gas.getZ());
 <tbody>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="thermo/README.html">🧪 Thermodynamics</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Equations of state, phase behavior, component properties</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="process/README.html">⚙️ Process Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Unit operations, process systems, controllers</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="engineering/index.html">🏗️ Engineering</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Design cases, equipment sizing, safety verification, deliverables, and lifecycle evidence</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="simulation/dynamic_simulation_guide.html">🔄 Dynamic Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Transient simulation, time-stepping, depressurization</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="physical_properties/README.html">📊 Physical Properties</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Transport properties, interfacial tension</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="pvtsimulation/README.html">🛢️ PVT Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Reservoir fluid characterization, tuning</td></tr>
@@ -252,7 +263,7 @@ print(f"Gas density: {gas.getDensity('kg/m3'):.2f} kg/m³")
 <span style="font-size: 1.5rem;">📦</span>
 <span><strong>GitHub Repository</strong><br><small style="color: #6a737d;">Source code & issues</small></span>
 </a>
-<a href="https://search.maven.org/artifact/com.equinor.neqsim/neqsim" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; text-decoration: none; color: #24292e; transition: all 0.2s ease;">
+<a href="https://central.sonatype.com/artifact/com.equinor.neqsim/neqsim" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; text-decoration: none; color: #24292e; transition: all 0.2s ease;">
 <span style="font-size: 1.5rem;">☕</span>
 <span><strong>Maven Central</strong><br><small style="color: #6a737d;">Latest releases</small></span>
 </a>

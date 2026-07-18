@@ -5,6 +5,10 @@ description: "Generate governed DEXPI packages with instrumentation, safeguardin
 
 # Standards-based DEXPI engineering generation
 
+> For profile selection, validation levels, named-tool qualification, import limitations, and troubleshooting, see the
+> [DEXPI Engineering Guide](../engineering/dexpi-guide). For coordinated issue and handover controls, see
+> [Engineering Deliverables and Handover](../engineering/deliverables-and-handover).
+
 `EngineeringProject` adds a governed engineering layer to a runnable `ProcessSystem`. It records the
 design basis, applicable standards, deterministic control and safeguarding proposals, approval state,
 and validation findings without treating automatically generated safeguards as approved design.
@@ -263,13 +267,13 @@ reconciliation.
 
 ## Executable notebooks
 
-- [Full ProcessSystem engineering package](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/dexpi_engineering_full_processsystem.ipynb)
+- [Full ProcessSystem engineering package](https://github.com/equinor/neqsim/blob/master/examples/notebooks/dexpi_engineering_full_processsystem.ipynb)
   demonstrates equipment and piping design, compressor maps, trip envelopes, explicit PSV sizing, transient
   blowdown/flare calculations, materials screening, DEXPI materialization, cause/effect and all sidecars.
-- [Multi-area ProcessModel engineering packages](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/dexpi_engineering_processmodel.ipynb)
+- [Multi-area ProcessModel engineering packages](https://github.com/equinor/neqsim/blob/master/examples/notebooks/dexpi_engineering_processmodel.ipynb)
   demonstrates one governed project/package per process area, shared-stream topology and area-level comparison of
   requirements, calculated design coverage and unresolved inputs.
-- [DEXPI P&ID visualization](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/dexpi_pid_visualization.ipynb)
+- [DEXPI P&ID visualization](https://github.com/equinor/neqsim/blob/master/examples/notebooks/dexpi_pid_visualization.ipynb)
   reads native DEXPI 2.0 or Proteus 4.1.1 without pyDEXPI, creates deterministic PNG/SVG structural previews and
   explains the boundary between documentation figures and target-CAE qualification.
 

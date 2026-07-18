@@ -5,6 +5,9 @@ description: Official native DEXPI XML Plant and Process model export, determini
 
 # DEXPI 2.0 native exchange and conformance
 
+> Start with the [DEXPI Engineering Guide](../engineering/dexpi-guide) when deciding whether the recipient needs the
+> native Plant/P&ID model, native Process/PFD/BFD model, or a Proteus-compatible exchange.
+
 DEXPI 2.0.0 was released on 10 October 2025. It combines the Plant/P&ID and Process/PFD/BFD
 information models and introduces DEXPI XML as their common serialization. Native DEXPI XML has a
 `Model` root containing `Import`, `Object`, `Components`, `Data`, and `References` elements; it is

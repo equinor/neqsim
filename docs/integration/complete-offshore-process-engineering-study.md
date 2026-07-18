@@ -6,7 +6,7 @@ description: "End-to-end engineering study of the comparesimulations offshore oi
 # Complete offshore process engineering study
 
 The executable
-[`complete_offshore_process_engineering_study.ipynb`](../../examples/notebooks/complete_offshore_process_engineering_study.ipynb)
+[`complete_offshore_process_engineering_study.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/complete_offshore_process_engineering_study.ipynb)
 applies NeqSim's process-to-engineering workflow to the complete process in the
 [`comparesimulations.ipynb`](https://colab.research.google.com/github/EvenSol/NeqSim-Colab/blob/master/notebooks/process/comparesimulations.ipynb)
 Colab example. This is intentionally a full facility study, not the smaller separator/compressor reference slice.

@@ -259,7 +259,7 @@ python examples/neqsim/render_engineering_pid.py \
   --svg build/engineering-package/pid-preview.svg
 ```
 
-![Native DEXPI structural P&ID preview](../../examples/notebooks/figures/dexpi_engineering_pid_roundtrip.png)
+![Native DEXPI structural P&ID preview](https://raw.githubusercontent.com/equinor/neqsim/master/examples/notebooks/figures/dexpi_engineering_pid_roundtrip.png)
 
 The preview contracts hidden nozzle/connection nodes and visualizes resolved DEXPI references. It is useful for
 topology review and automated documentation, but it is not evidence of symbol or layout fidelity in a commercial CAE
@@ -286,12 +286,12 @@ fingerprints make it possible to detect changes without regenerating unrelated a
 
 ## Notebook learning path
 
-1. [`dexpi_engineering_full_processsystem.ipynb`](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/dexpi_engineering_full_processsystem.ipynb)
+1. [`dexpi_engineering_full_processsystem.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/dexpi_engineering_full_processsystem.ipynb)
    builds a simulation-backed package with equipment design, relief, SIL/voting, shutdown, blowdown/flare, materials,
    compressor maps and readiness plots.
-2. [`dexpi_engineering_processmodel.ipynb`](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/dexpi_engineering_processmodel.ipynb)
+2. [`dexpi_engineering_processmodel.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/dexpi_engineering_processmodel.ipynb)
    demonstrates multi-area engineering packages and discipline/readiness comparisons.
-3. [`dexpi_pid_visualization.ipynb`](https://nbviewer.org/github/equinor/neqsim/blob/master/examples/notebooks/dexpi_pid_visualization.ipynb)
+3. [`dexpi_pid_visualization.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/dexpi_pid_visualization.ipynb)
    reads native DEXPI or Proteus XML, inspects identities/references and produces PNG/SVG P&ID previews.
 
 ## Verification checklist

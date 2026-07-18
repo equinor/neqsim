@@ -1,6 +1,6 @@
 ---
 title: Search Documentation
-description: Search across all NeqSim documentation — thermodynamics, process simulation, PVT, standards, safety, field development, and more.
+description: Search across all NeqSim documentation — thermodynamics, process simulation, engineering, PVT, standards, safety, field development, and more.
 permalink: /search/
 ---
 
@@ -38,6 +38,11 @@ permalink: /search/
             <span class="sp-topic-icon" style="background:#4CAF50;">P</span>
             <span class="sp-topic-label">Process Simulation</span>
             <span class="sp-topic-desc">Equipment, flowsheets, dynamic</span>
+          </a>
+          <a href="{{ '/engineering/' | relative_url }}" class="sp-topic-card">
+            <span class="sp-topic-icon" style="background:#FF9800;">E</span>
+            <span class="sp-topic-label">Engineering</span>
+            <span class="sp-topic-desc">Design cases, sizing, safety, handover</span>
           </a>
           <a href="{{ '/pvtsimulation/' | relative_url }}" class="sp-topic-card">
             <span class="sp-topic-icon" style="background:#9C27B0;">V</span>
