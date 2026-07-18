@@ -256,7 +256,7 @@ final class EngineeringCoordinatedPackage {
     result.put("schemaUri", EngineeringSchemaCatalog.schemaUri(EngineeringSchemaCatalog.EXTERNAL_EVIDENCE_REGISTER));
     EngineeringProductionReadinessBasis basis = project.getProductionReadinessBasis();
     EngineeringExternalEvidenceRegister register = basis == null ? null : basis.getExternalEvidenceRegister();
-    result.put("register", register == null ? null : register.toMap());
+    result.put("register", register == null ? com.google.gson.JsonNull.INSTANCE : register.toMap());
     result.put("assessment", EngineeringExternalEvidenceAssessment.assess(register).toMap());
     EngineeringExternalEvidenceDocumentIntegrity integrity = basis == null ? null
         : basis.getExternalEvidenceDocumentIntegrity();
