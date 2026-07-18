@@ -14,6 +14,8 @@ import java.util.function.DoubleSupplier;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.costestimation.UnitCostEstimateBaseClass;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.capacity.CapacityConstraint;
@@ -43,6 +45,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 public class MechanicalDesign implements java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  private static final Logger logger = LogManager.getLogger(MechanicalDesign.class);
 
   /**
    * Getter for the field <code>materialPipeDesignStandard</code>.
@@ -1031,8 +1035,8 @@ public class MechanicalDesign implements java.io.Serializable {
       // setPipingDesignStandard("TR1945_Statoil");
       // setValveDesignStandard("TR1903_Statoil");
     } else {
-      System.out.println(
-          "using default mechanical design standards...no design standard " + this.companySpecificDesignStandards);
+      logger.debug("using default mechanical design standards...no design standard {}",
+          this.companySpecificDesignStandards);
       getDesignStandard().put("pressure vessel design code",
           new PressureVesselDesignStandard("ASME - Pressure Vessel Code", this));
       getDesignStandard().put("separator process design", new SeparatorDesignStandard("StatoilTR", this));

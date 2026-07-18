@@ -949,6 +949,88 @@ def test_distillation_column_config_emitted():
     print("  PASS")
 
 
+def test_setpoint_wires_source_to_target():
+    """A UniSim SET is emitted as a NeqSim SetPoint that copies a variable from a
+    source unit onto a target unit (target = multiplier*source + offset), so the
+    link stays live when an upstream input is changed."""
+    model = UniSimModel(
+        file_path=r"C:\test\Set.usc", file_name="Set.usc",
+        fluid_packages=[UniSimFluidPackage(
+            name="Basis-1", property_package="Peng-Robinson",
+            components=[UniSimComponent("Methane", 0)])],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("A", temperature_C=40.0, pressure_bara=50.0,
+                                 mass_flow_kgh=1000.0, composition={"Methane": 1.0}),
+                UniSimStreamData("B", temperature_C=40.0, pressure_bara=50.0,
+                                 mass_flow_kgh=1000.0, composition={"Methane": 1.0}),
+            ],
+            operations=[
+                UniSimOperation(
+                    "SET-1", "setop",
+                    properties={"source_object_name": "A",
+                                "source_variable": "Temperature",
+                                "target_object_name": "B",
+                                "target_variable": "Temperature",
+                                "multiplier": 1.0, "offset": 5.0}),
+            ],
+        ),
+    )
+    result = UniSimToNeqSim(model).to_json()
+    sp = next(e for e in result['process'] if e.get('name') == 'SET-1')
+    assert sp['type'] == 'SetPoint', sp
+    p = sp['properties']
+    assert p['sourceEquipment'] == 'A', p
+    assert p['sourceVariable'] == 'temperature', p
+    assert p['targetEquipment'] == 'B', p
+    assert p['targetVariable'] == 'temperature', p
+    assert abs(p['multiplier'] - 1.0) < 1e-9, p
+    assert abs(p['offset'] - 5.0) < 1e-9, p
+    print("  PASS")
+
+
+def test_adjuster_wires_adjusted_and_target():
+    """A UniSim ADJUST is emitted as a NeqSim Adjuster that varies an adjusted
+    variable on one unit until a target variable on another unit meets a value,
+    so it re-solves when an input changes (not baked in)."""
+    model = UniSimModel(
+        file_path=r"C:\test\Adj.usc", file_name="Adj.usc",
+        fluid_packages=[UniSimFluidPackage(
+            name="Basis-1", property_package="Peng-Robinson",
+            components=[UniSimComponent("Methane", 0)])],
+        flowsheet=UniSimFlowsheet(
+            name="Main",
+            material_streams=[
+                UniSimStreamData("Feed", temperature_C=40.0, pressure_bara=50.0,
+                                 mass_flow_kgh=1000.0, composition={"Methane": 1.0}),
+            ],
+            operations=[
+                UniSimOperation(
+                    "ADJ-1", "adjust",
+                    properties={"adjusted_object_name": "Feed",
+                                "adjusted_variable": "pressure",
+                                "target_object_name": "Feed",
+                                "target_variable": "temperature",
+                                "target_value": 300.0,
+                                "tolerance": 0.1, "step_size": 2.0}),
+            ],
+        ),
+    )
+    result = UniSimToNeqSim(model).to_json()
+    adj = next(e for e in result['process'] if e.get('name') == 'ADJ-1')
+    assert adj['type'] == 'Adjuster', adj
+    p = adj['properties']
+    assert p['adjustedEquipment'] == 'Feed', p
+    assert p['adjustedVariable'] == 'pressure', p
+    assert p['targetEquipment'] == 'Feed', p
+    assert p['targetVariable'] == 'temperature', p
+    assert abs(p['targetValue'] - 300.0) < 1e-9, p
+    assert abs(p['tolerance'] - 0.1) < 1e-9, p
+    assert abs(p['stepSize'] - 2.0) < 1e-9, p
+    print("  PASS")
+
+
 if __name__ == "__main__":
     tests = [
         ("to_python", test_to_python),
@@ -975,6 +1057,10 @@ if __name__ == "__main__":
          test_pipe_segment_geometry_uses_beggs_and_brills),
         ("distillation_column_config_emitted",
          test_distillation_column_config_emitted),
+        ("setpoint_wires_source_to_target",
+         test_setpoint_wires_source_to_target),
+        ("adjuster_wires_adjusted_and_target",
+         test_adjuster_wires_adjusted_and_target),
     ]
     passed = 0
     failed = 0
