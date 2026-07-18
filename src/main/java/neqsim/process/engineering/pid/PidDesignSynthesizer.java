@@ -10,8 +10,7 @@ public final class PidDesignSynthesizer {
   private PidDesignSynthesizer() {
   }
 
-  public static PidDesignModel synthesize(EngineeringProject project, PidDesignBasis basis,
-      PidRuleCatalog catalog) {
+  public static PidDesignModel synthesize(EngineeringProject project, PidDesignBasis basis, PidRuleCatalog catalog) {
     if (project == null || basis == null || catalog == null) {
       throw new IllegalArgumentException("project, basis and catalog must not be null");
     }
