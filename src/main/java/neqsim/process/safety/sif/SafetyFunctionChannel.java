@@ -16,17 +16,12 @@ public final class SafetyFunctionChannel implements Serializable {
 
   /** Direction in which the measured signal demands a trip. */
   public enum TripDirection {
-    HIGH,
-    LOW
+    HIGH, LOW
   }
 
   /** Explicit channel state used for fault-injection and degraded-mode verification. */
   public enum FaultMode {
-    HEALTHY,
-    BYPASSED,
-    STUCK_NORMAL,
-    STUCK_TRIP,
-    BIASED
+    HEALTHY, BYPASSED, STUCK_NORMAL, STUCK_TRIP, BIASED
   }
 
   /** One sampled channel state recorded in the scenario evidence. */

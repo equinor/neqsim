@@ -14,11 +14,12 @@ import neqsim.process.safety.scenario.DynamicSafetyScenarioEvidenceProvider;
 /**
  * Closed-loop sensor, voting, logic-solver, and final-element execution for dynamic SIF verification.
  *
- * <p>The loop is deliberately bound to the isolated {@link ProcessSystem} copy created by the dynamic scenario runner.
- * It can therefore verify process detection and real final-element response without modifying the design case.</p>
+ * <p>
+ * The loop is deliberately bound to the isolated {@link ProcessSystem} copy created by the dynamic scenario runner. It
+ * can therefore verify process detection and real final-element response without modifying the design case.
+ * </p>
  */
-public final class ClosedLoopSafetyFunction
-    implements ProcessLogic, DynamicSafetyScenarioEvidenceProvider {
+public final class ClosedLoopSafetyFunction implements ProcessLogic, DynamicSafetyScenarioEvidenceProvider {
   private static final long serialVersionUID = 1000L;
 
   private final String sifId;
@@ -135,8 +136,7 @@ public final class ClosedLoopSafetyFunction
       } else {
         voteElapsedSeconds += timeStep;
       }
-      if (finalElementActuationSeconds == null
-          && voteElapsedSeconds + 1.0e-12 >= logicSolverDelaySeconds) {
+      if (finalElementActuationSeconds == null && voteElapsedSeconds + 1.0e-12 >= logicSolverDelaySeconds) {
         finalElementLogic.activate();
         finalElementActuationSeconds = Double.valueOf(elapsedSeconds);
       }
