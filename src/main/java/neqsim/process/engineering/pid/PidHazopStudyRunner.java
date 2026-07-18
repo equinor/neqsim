@@ -48,20 +48,18 @@ public final class PidHazopStudyRunner {
         }
       }
     }
-    findings.add(new PidCompletenessFinding("HAZOP-WORKSHOP-REQUIRED",
-        PidCompletenessFinding.Severity.REVIEW, project.getProjectId(),
+    findings.add(new PidCompletenessFinding("HAZOP-WORKSHOP-REQUIRED", PidCompletenessFinding.Severity.REVIEW,
+        project.getProjectId(),
         "Auto-populated deviations require a multidisciplinary IEC 61882 workshop and recorded decisions."));
     return new PidHazopStudyReport(project.getProjectId(), nodes, findings);
   }
 
-  private static Map<String, Object> node(ProcessEquipmentInterface equipment,
-      List<PidElement> safeguards) {
+  private static Map<String, Object> node(ProcessEquipmentInterface equipment, List<PidElement> safeguards) {
     HAZOPTemplate seed = new HAZOPTemplate("HAZOP-" + equipment.getName(),
         "Operate " + equipment.getName()
             + " within the approved pressure, temperature, flow, level and composition envelope")
-            .generateGrid(HAZOPTemplate.Parameter.FLOW, HAZOPTemplate.Parameter.PRESSURE,
-                HAZOPTemplate.Parameter.TEMPERATURE, HAZOPTemplate.Parameter.LEVEL,
-                HAZOPTemplate.Parameter.COMPOSITION);
+        .generateGrid(HAZOPTemplate.Parameter.FLOW, HAZOPTemplate.Parameter.PRESSURE,
+            HAZOPTemplate.Parameter.TEMPERATURE, HAZOPTemplate.Parameter.LEVEL, HAZOPTemplate.Parameter.COMPOSITION);
     HAZOPTemplate populated = new HazopConsequenceAutoPopulator().populate(seed);
     List<Map<String, Object>> deviations = new ArrayList<Map<String, Object>>();
     for (HAZOPTemplate.HAZOPDeviation deviation : populated.getDeviations()) {
@@ -86,8 +84,7 @@ public final class PidHazopStudyRunner {
     return node;
   }
 
-  private static List<String> matchingSafeguards(List<PidElement> elements,
-      HAZOPTemplate.Parameter parameter) {
+  private static List<String> matchingSafeguards(List<PidElement> elements, HAZOPTemplate.Parameter parameter) {
     List<String> tags = new ArrayList<String>();
     String variable = parameter.name();
     for (PidElement element : elements) {
@@ -110,7 +107,7 @@ public final class PidHazopStudyRunner {
   }
 
   private static PidCompletenessFinding error(String subject, String message) {
-    return new PidCompletenessFinding("HAZOP-PID-NODE-INCOMPLETE",
-        PidCompletenessFinding.Severity.ERROR, subject, message);
+    return new PidCompletenessFinding("HAZOP-PID-NODE-INCOMPLETE", PidCompletenessFinding.Severity.ERROR, subject,
+        message);
   }
 }
