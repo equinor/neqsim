@@ -61,8 +61,7 @@ public final class FlareConsequenceCalculation
       targetConcentrationKgM3 = positive(builder.targetConcentrationKgM3, "targetConcentrationKgM3");
       maximumDispersionDistanceM = positive(builder.maximumDispersionDistanceM, "maximumDispersionDistanceM");
       sourceSoundPowerDbA = finite(builder.sourceSoundPowerDbA, "sourceSoundPowerDbA");
-      atmosphericAbsorptionDbPerM = nonNegative(builder.atmosphericAbsorptionDbPerM,
-          "atmosphericAbsorptionDbPerM");
+      atmosphericAbsorptionDbPerM = nonNegative(builder.atmosphericAbsorptionDbPerM, "atmosphericAbsorptionDbPerM");
       maximumNoiseDbA = finite(builder.maximumNoiseDbA, "maximumNoiseDbA");
       flareTipVelocityMPerS = nonNegative(builder.flareTipVelocityMPerS, "flareTipVelocityMPerS");
       speedOfSoundMPerS = positive(builder.speedOfSoundMPerS, "speedOfSoundMPerS");
@@ -110,9 +109,8 @@ public final class FlareConsequenceCalculation
         return this;
       }
 
-      public Builder dispersion(double releaseMassRateKgS, double windSpeedMPerS,
-          double lateralSpreadCoefficient, double verticalSpreadCoefficient, double targetConcentrationKgM3,
-          double maximumDispersionDistanceM) {
+      public Builder dispersion(double releaseMassRateKgS, double windSpeedMPerS, double lateralSpreadCoefficient,
+          double verticalSpreadCoefficient, double targetConcentrationKgM3, double maximumDispersionDistanceM) {
         this.releaseMassRateKgS = releaseMassRateKgS;
         this.windSpeedMPerS = windSpeedMPerS;
         this.lateralSpreadCoefficient = lateralSpreadCoefficient;
@@ -122,8 +120,7 @@ public final class FlareConsequenceCalculation
         return this;
       }
 
-      public Builder noise(double sourceSoundPowerDbA, double atmosphericAbsorptionDbPerM,
-          double maximumNoiseDbA) {
+      public Builder noise(double sourceSoundPowerDbA, double atmosphericAbsorptionDbPerM, double maximumNoiseDbA) {
         this.sourceSoundPowerDbA = sourceSoundPowerDbA;
         this.atmosphericAbsorptionDbPerM = atmosphericAbsorptionDbPerM;
         this.maximumNoiseDbA = maximumNoiseDbA;
@@ -223,9 +220,8 @@ public final class FlareConsequenceCalculation
     double heatReleaseW = input.heatReleaseMw * 1.0e6;
     double radiationKwM2 = input.radiativeFraction * input.atmosphericTransmissivity * input.geometryFactor
         * heatReleaseW / (4.0 * Math.PI * input.receptorDistanceM * input.receptorDistanceM) / 1000.0;
-    double dispersionDistanceM = Math.sqrt(input.releaseMassRateKgS
-        / (2.0 * Math.PI * input.windSpeedMPerS * input.lateralSpreadCoefficient
-            * input.verticalSpreadCoefficient * input.targetConcentrationKgM3));
+    double dispersionDistanceM = Math.sqrt(input.releaseMassRateKgS / (2.0 * Math.PI * input.windSpeedMPerS
+        * input.lateralSpreadCoefficient * input.verticalSpreadCoefficient * input.targetConcentrationKgM3));
     double receptorNoiseDbA = input.sourceSoundPowerDbA - 20.0 * Math.log10(input.receptorDistanceM) - 11.0
         - input.atmosphericAbsorptionDbPerM * input.receptorDistanceM;
     double tipMach = input.flareTipVelocityMPerS / input.speedOfSoundMPerS;
@@ -238,14 +234,12 @@ public final class FlareConsequenceCalculation
 
     Map<String, Boolean> constraints = new LinkedHashMap<String, Boolean>();
     constraints.put("THERMAL_RADIATION", Boolean.valueOf(radiationKwM2 <= input.maximumRadiationKwM2));
-    constraints.put("DISPERSION_DISTANCE",
-        Boolean.valueOf(dispersionDistanceM <= input.maximumDispersionDistanceM));
+    constraints.put("DISPERSION_DISTANCE", Boolean.valueOf(dispersionDistanceM <= input.maximumDispersionDistanceM));
     constraints.put("RECEPTOR_NOISE", Boolean.valueOf(receptorNoiseDbA <= input.maximumNoiseDbA));
     constraints.put("FLARE_TIP_MACH", Boolean.valueOf(tipMach <= input.maximumTipMach));
 
-    return output.status(EngineeringCalculationResult.Status.CALCULATED_REVIEW_REQUIRED)
-        .input("studyId", input.studyId).input("receptorDistanceM", Double.valueOf(input.receptorDistanceM))
-        .value(new Result(metrics, constraints))
+    return output.status(EngineeringCalculationResult.Status.CALCULATED_REVIEW_REQUIRED).input("studyId", input.studyId)
+        .input("receptorDistanceM", Double.valueOf(input.receptorDistanceM)).value(new Result(metrics, constraints))
         .uncertainty(new EngineeringCalculationResult.Uncertainty(0.7 * radiationKwM2, radiationKwM2,
             1.5 * radiationKwM2, "kW/m2", "Screening correlation range; replace with project uncertainty model"))
         .warning("Complex geometry, crosswind, combustion efficiency and weather classes require qualified modeling")
