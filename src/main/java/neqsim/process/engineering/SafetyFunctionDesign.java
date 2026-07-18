@@ -214,6 +214,69 @@ public final class SafetyFunctionDesign implements Serializable {
       return type;
     }
 
+    public String getName() {
+      return name;
+    }
+
+    public int getVotesRequired() {
+      return votesRequired;
+    }
+
+    public int getChannelCount() {
+      return channelCount;
+    }
+
+    public double getDangerousFailureRatePerHour() {
+      return dangerousFailureRatePerHour;
+    }
+
+    public double getDiagnosticCoverage() {
+      return diagnosticCoverage;
+    }
+
+    public double getProofTestIntervalHours() {
+      return proofTestIntervalHours;
+    }
+
+    public double getMeanRepairTimeHours() {
+      return meanRepairTimeHours;
+    }
+
+    public double getBetaFactor() {
+      return betaFactor;
+    }
+
+    public double getBypassProbability() {
+      return bypassProbability;
+    }
+
+    /**
+     * Copies the subsystem while replacing uncertain reliability inputs.
+     *
+     * @param dangerousFailureRate sampled dangerous failure rate in 1/h
+     * @param coverage sampled diagnostic coverage
+     * @param proofInterval sampled proof-test interval in hours
+     * @param repairTime sampled mean repair time in hours
+     * @param beta sampled common-cause beta factor
+     * @param bypass sampled probability of bypass on demand
+     * @return subsystem copy retaining proof-test, PST, mission, architecture, and evidence settings
+     */
+    public Subsystem copyWithReliabilityInputs(double dangerousFailureRate, double coverage, double proofInterval,
+        double repairTime, double beta, double bypass) {
+      Subsystem copy = new Subsystem(name, type, votesRequired, channelCount, dangerousFailureRate, coverage,
+          proofInterval, repairTime, beta);
+      copy.proofTestCoverage = proofTestCoverage;
+      copy.partialStrokeCoverage = partialStrokeCoverage;
+      copy.partialStrokeTestIntervalHours = partialStrokeTestIntervalHours;
+      copy.missionTimeHours = missionTimeHours;
+      copy.bypassProbability = bypass;
+      copy.systematicCapability = systematicCapability;
+      copy.hardwareFaultTolerance = hardwareFaultTolerance;
+      copy.commonCauseGroup = commonCauseGroup;
+      copy.certifiedDataReference = certifiedDataReference;
+      return copy;
+    }
+
     public String getVotingArchitecture() {
       return votesRequired + "oo" + channelCount;
     }
@@ -426,5 +489,9 @@ public final class SafetyFunctionDesign implements Serializable {
 
   public EngineeringApprovalStatus getApprovalStatus() {
     return approvalStatus;
+  }
+
+  public DemandMode getDemandMode() {
+    return demandMode;
   }
 }

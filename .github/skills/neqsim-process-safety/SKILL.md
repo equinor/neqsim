@@ -1,6 +1,6 @@
 ---
 name: neqsim-process-safety
-version: "1.1.0"
+version: "1.2.0"
 description: "Process safety methodology — barrier management, PSFs/SCEs, HAZOP guidewords, LOPA worksheets, SIL determination per IEC 61511, bow-tie analysis, risk-matrix scoring, TR3001 overpressure-protection studies, and trapped-liquid fire rupture screening. USE WHEN: a task requires barrier registers, hazard identification, layer-of-protection analysis, safety-integrity-level assignment for an SIF, overpressure relief-cause / governing-case studies, trapped liquid rupture/PFP demand, or quantitative risk evaluation. Anchors on neqsim.process.safety.barrier, neqsim.process.safety.risk, neqsim.process.safety.overpressure, and neqsim.process.safety.rupture classes."
 last_verified: "2026-07-18"
 requires:
@@ -249,6 +249,22 @@ Recommended sequence:
 
 See `docs/process/safety/closed-loop-sif-verification.md`. This simulation evidence does not infer
 SIL or approve the SRS; hand the result to the SIL/LOPA and engineering-approval workflow.
+
+### Method 3e — Reliability uncertainty and degraded/maintenance modes
+
+After the deterministic `SafetyFunctionDesign` screen, use `SafetyFunctionReliabilityStudy` to
+propagate evidence-based failure-rate, diagnostic-coverage, proof-test, repair-time, beta, and bypass
+uncertainty. Always provide a fixed seed and retain P10/P50/P90 PFDavg/PFH, target-met probability,
+iteration count, distributions, and their data sources in the verification package.
+
+Use `SafetyFunctionOperatingMode` plus `SafetyFunctionDegradedModeAssessment` before evaluating a
+bypass or maintenance state. Record every unavailable, forced-trip, or under-repair channel, actual
+proof-test age, authorization reference, compensating measure, elapsed duration, and maximum duration.
+The effective architecture (for example 2oo3 to 2oo2) is a demand-capability screen, not permission to
+preserve the SIL claim or continue operation.
+
+Handoff the assessed mode back to the closed-loop scenario workflow to verify the physical safe state.
+See `docs/process/safety/sif-reliability-and-degraded-modes.md`.
 
 ## Method 4 — Bow-Tie Analysis
 
