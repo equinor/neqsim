@@ -108,6 +108,7 @@ class ProcessToEngineeringSimulatorTest {
     String externalEvidence = new String(
         Files.readAllBytes(temporaryDirectory.resolve("engineering-external-evidence-register.json")),
         StandardCharsets.UTF_8);
+    assertTrue(externalEvidence.contains("\"register\": null"));
     assertTrue(externalEvidence.contains("\"evidenceGeneratedBySimulator\": false"));
     assertTrue(externalEvidence.contains("\"approvalGrantedBySimulator\": false"));
     String qualificationPlan = new String(

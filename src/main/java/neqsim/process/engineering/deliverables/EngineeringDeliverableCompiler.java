@@ -47,7 +47,7 @@ import neqsim.process.modelpackage.NeqSimModelPackage;
 
 /** Compiles one governed project into a coordinated engineering package and canonical graph snapshot. */
 public final class EngineeringDeliverableCompiler {
-  private static final Gson GSON = new GsonBuilder().setPrettyPrinting().serializeNulls()
+  private static final Gson GSON = new GsonBuilder().serializeNulls().setPrettyPrinting()
       .serializeSpecialFloatingPointValues().create();
   private static final String[] COORDINATED_ARTIFACTS = new String[] { "process-design-basis.json",
       "equipment-datasheets.json", "valve-list.json", "io-list.json", "alarm-trip-schedule.json",
