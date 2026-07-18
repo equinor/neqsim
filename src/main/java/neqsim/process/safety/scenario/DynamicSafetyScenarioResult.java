@@ -37,6 +37,11 @@ public final class DynamicSafetyScenarioResult implements Serializable {
           && firstSatisfiedSeconds.doubleValue() <= criterion.getDeadlineSeconds() + 1.0e-9;
     }
 
+    /** @return first time the criterion was satisfied, or null when it was never satisfied */
+    public Double getFirstSatisfiedSeconds() {
+      return firstSatisfiedSeconds;
+    }
+
     DynamicScenarioCriterion getCriterion() {
       return criterion;
     }

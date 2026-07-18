@@ -15,6 +15,7 @@ Documentation for safety systems modeling in NeqSim.
 - [SIF Reliability and Degraded Modes](sif-reliability-and-degraded-modes.md)
 - [HAZOP/LOPA to Draft SRS Handoff](hazop-lopa-srs-handoff.md)
 - [Integrated Facility Safety Response](integrated-facility-safety-response.md)
+- [Safety Change Revalidation and Independent Benchmarks](safety-change-revalidation-and-benchmarks.md)
 - [Blowdown Systems](#blowdown-systems)
 - [Pressure Safety Valves](#pressure-safety-valves)
 - [Release and Gas Dispersion Scenarios](release-dispersion-scenarios.md)
@@ -233,6 +234,7 @@ EmergencyShutdownTestResult report = EmergencyShutdownTestRunner.run(process, pl
 - [SIF Reliability and Degraded Modes](sif-reliability-and-degraded-modes.md) - Seeded PFD/PFH uncertainty and governed bypass, maintenance, failure, and proof-test assessment
 - [HAZOP/LOPA to Draft SRS Handoff](hazop-lopa-srs-handoff.md) - IPL eligibility, LOPA arithmetic, and traceable unapproved SRS drafting
 - [Integrated Facility Safety Response](integrated-facility-safety-response.md) - Executed ESD, compressor-trip, relief, blowdown, flare, and process-limit evidence in one review package
+- [Safety Change Revalidation and Independent Benchmarks](safety-change-revalidation-and-benchmarks.md) - Graph-driven lifecycle rework and versioned external-reference qualification
 - [ESD Blowdown System](../../safety/ESD_BLOWDOWN_SYSTEM) - Detailed ESD guide
 - [HIPPS Summary](../../safety/HIPPS_SUMMARY) - HIPPS overview
 - [PSV Dynamic Sizing](../../safety/psv_dynamic_sizing_example) - PSV sizing example
