@@ -205,8 +205,8 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
     }
   }
 
-  private static void addCalculation(List<EngineeringCalculation> target,
-      EngineeringCalculationResult<?> value, String subjectNodeId) {
+  private static void addCalculation(List<EngineeringCalculation> target, EngineeringCalculationResult<?> value,
+      String subjectNodeId) {
     if (value == null) {
       return;
     }
@@ -215,8 +215,8 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
         .setDesignCaseId(value.getContext().getDesignCaseId()).setMessage(value.getMessage())
         .setStandardsRequired(true);
     if (value.getValue() instanceof EngineeringConstraintResult) {
-      calculation.setResult(
-          ((EngineeringConstraintResult) value.getValue()).allConstraintsSatisfied() ? 1.0 : 0.0, "fraction");
+      calculation.setResult(((EngineeringConstraintResult) value.getValue()).allConstraintsSatisfied() ? 1.0 : 0.0,
+          "fraction");
     }
     for (String standard : value.getContext().getStandardReferences()) {
       calculation.addStandardReference(
