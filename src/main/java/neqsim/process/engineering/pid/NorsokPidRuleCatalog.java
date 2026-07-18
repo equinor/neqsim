@@ -31,7 +31,8 @@ public final class NorsokPidRuleCatalog {
 
   /** Returns the complete control, instrumentation, isolation and safeguarding proposal profile. */
   public static PidRuleCatalog completeProposals() {
-    return controlAndInstrumentation().add(new ProcessTopologyPidRule()).add(new SeparatorSafeguardingPidRule()).add(new CompressorSafeguardingPidRule())
-        .add(new PumpSafeguardingPidRule()).add(new ThermalSafeguardingPidRule()).add(new PressureReliefPidRule());
+    return controlAndInstrumentation().add(new ProcessTopologyPidRule()).add(new SeparatorSafeguardingPidRule())
+        .add(new CompressorSafeguardingPidRule()).add(new PumpSafeguardingPidRule())
+        .add(new ThermalSafeguardingPidRule()).add(new PressureReliefPidRule());
   }
 }
