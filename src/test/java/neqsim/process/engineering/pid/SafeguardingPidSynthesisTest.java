@@ -31,7 +31,8 @@ public class SafeguardingPidSynthesisTest extends NeqSimTest {
     PidDesignModel model = PidDesignSynthesizer.synthesize(project,
         new PidDesignBasis("NORSOK-COMPLETE-PID-PROPOSALS", "20"), NorsokPidRuleCatalog.completeProposals());
 
-    assertEquals(58, model.getElements().size());
+    assertEquals(67, model.getElements().size());
+    assertEquals(9, model.getElementsByType(PidElementType.NOZZLE).size());
     assertEquals(10, model.getElementsByType(PidElementType.TRIP).size());
     assertEquals(5, model.getElementsByType(PidElementType.SHUTDOWN_VALVE).size());
     assertEquals(2, model.getElementsByType(PidElementType.BLOWDOWN_VALVE).size());
