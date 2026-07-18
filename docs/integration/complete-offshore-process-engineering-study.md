@@ -21,6 +21,7 @@ The study keeps the published PR-EOS fluid characterization and models:
 - gas/gas heat recovery, refrigeration and low-temperature liquid recovery;
 - final export compression to 188.6 barg;
 - stabilized-oil cooling and export pumping to 60 barg; and
+- explicit 6 m recycle-pump and 15 m oil-export-pump static suction heads;
 - explicit gas and oil export lines for hydraulic design.
 
 All calculated outputs are preliminary and review-required. The notebook never converts synthetic assumptions into
@@ -92,8 +93,10 @@ flowchart TD
 ### 1. Process benchmark
 
 The notebook reconstructs every unit and connection from the source example. It corrects the final gas-cooler pressure
-basis to the gas-export pressure, then adds short terminal line objects without changing the product definition. The
-base calculation produces:
+basis to the gas-export pressure, then adds short terminal line objects without changing the product definition. It
+also represents the missing vessel-to-pump elevation basis with 6 m and 15 m downhill suction segments. Those explicit
+layout assumptions are required for the recycle- and oil-export-pump NPSH constraints; without static head, the
+screening margins are -2.00 m and -7.99 m, respectively. The base calculation produces:
 
 - a mass/product-quality table;
 - a source-versus-current regression table;
@@ -210,4 +213,3 @@ Before using the study on a real project:
 
 Even after all receipts are structurally valid, NeqSim records them; it does not issue final engineering or construction
 approval. `fitnessForConstruction` and `finalEngineeringApprovalGranted` remain false.
-
