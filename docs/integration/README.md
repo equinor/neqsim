@@ -76,6 +76,7 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 | [process-to-engineering-workflow.md](process-to-engineering-workflow) | **End-to-end implementation guide from ProcessSystem/ProcessModel through design cases, calculation DAGs, approvals, validated registers, DEXPI P&IDs, automation studies, and revision-controlled engineering handoff** |
 | [engineering-simulator-foundations.md](engineering-simulator-foundations) | **Deterministic isolated design cases, typed calculation provenance and uncertainty, coupled PSV/blowdown/flare envelopes, and dynamic control/SIS response testing** |
 | [process-to-engineering-simulator.md](process-to-engineering-simulator) | **Closed-loop process cases, equipment/piping/valve/instrument/safety/material/mechanical design, convergence, and designed-process DEXPI handoff** |
+| [complete-offshore-process-engineering-study.md](complete-offshore-process-engineering-study) | **Full `comparesimulations` offshore oil-and-gas train: published benchmark, seven-case design loop, every discipline calculation, coordinated DEXPI package, results, and fail-closed readiness gaps** |
 
 ---
 
