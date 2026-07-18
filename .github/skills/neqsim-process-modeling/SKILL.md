@@ -135,6 +135,10 @@ the governed enterprise checklist and readiness gates use
 - Use `Dexpi20XmlWriter` for native Plant/P&ID exchange and `Dexpi20ProcessModelWriter` for native Process/PFD/BFD
   exchange. A Proteus document with a changed header is not native DEXPI 2.0. Preserve the conformance report and still
   require a named-CAE round-trip before project qualification.
+- Use `Cfihos20HandoverExporter` only with an exact project-controlled CFIHOS 2.0 Core or Extended RDL delivery.
+  Verify its digest from controlled bytes, map canonical nodes/properties/documents to exact RDL identifiers, record
+  mapping approval, and close the generated gap register. Its CSVs are staging data; Principal transformation,
+  target-system validation, contractual completeness, and information acceptance remain external decisions.
 - Compressor, pump, heat exchanger, separator, and pipeline cases identify applicable
   standards through `neqsim-standards-lookup`.
 

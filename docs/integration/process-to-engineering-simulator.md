@@ -1,6 +1,6 @@
 ---
 title: "Process-to-engineering simulator"
-description: "Iterate NeqSim process cases into review-governed equipment, piping, valve, instrument, safety, material, mechanical, and DEXPI design outputs."
+description: "Iterate NeqSim process cases into review-governed design, exchange, numerical-health, and handover outputs."
 ---
 
 # Process-to-engineering simulator
@@ -11,6 +11,10 @@ production-readiness reports.
 
 Native [DEXPI 2.0 Plant and Process exchange](dexpi-20-conformance.md) provides separate P&ID and PFD/BFD information
 models with offline official-schema validation and auditable conformance reports.
+
+Controlled [CFIHOS 2.0 engineering handover](cfihos-20-engineering-handover.md) maps the canonical graph through a
+verified, project-approved RDL mapping into deterministic staging files, gap registers, digests, and a fail-closed
+readiness assessment.
 
 The process-to-engineering simulator closes the loop between process physics and preliminary engineering design. It
 runs every controlled process case on isolated copies, sizes configured engineering objects, applies selected design
@@ -528,6 +532,10 @@ release evidence and accountable external receipts declared by the readiness gat
 now match the actual supplied document bytes. These evidence requirements are project inputs, not unfinished simulator
 features, and the simulator always retains `fitnessForConstruction=false`.
 
+After compilation, `Cfihos20HandoverExporter` can stage tags, physical equipment, properties, documents, and graph
+relationships against exact CFIHOS 2.0 RDL identifiers. The Principal still owns contractual completeness,
+target-system transformation, load validation, and final information acceptance.
+
 ## Required engineering review
 
 The simulator produces calculated or proposed engineering suitable for concept and pre-FEED development. It can
@@ -544,6 +552,7 @@ or approve them:
 
 See the executed
 [process-to-engineering notebook](../../examples/notebooks/process_to_engineering_simulator.ipynb) for the full
-vertical slice, process/design convergence plots and coordinated package. The executed
+vertical slice, process/design convergence plots, numerical-health report, native DEXPI Process assessment, and
+controlled CFIHOS staging example. The executed
 [engineering-roadmap workbench](../../examples/notebooks/engineering_roadmap_steps_1_to_8.ipynb) demonstrates every
 new typed equipment, piping, valve/instrument, safety, materials and preliminary mechanical calculation family.

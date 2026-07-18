@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -31,6 +32,7 @@ class Dexpi20ProcessModelWriterTest {
     assertTrue(xml.contains("type=\"Process/ProcessModel\""));
     assertTrue(xml.contains("type=\"Process/Process.Compressing\""));
     assertTrue(xml.contains("type=\"Process/Process.Pumping\""));
+    assertTrue(xml.contains("type=\"Process/Process.TransportingFluids\""));
     assertTrue(xml.contains("property=\"ConnectorReference\""));
     assertTrue(xml.contains("MassFlowRateUnit.KilogramPerHour"));
     assertTrue(report.toJson().contains("NOT_A_DEXPI_EV_CERTIFICATE"));
@@ -84,12 +86,14 @@ class Dexpi20ProcessModelWriterTest {
     feed.setFlowRate(1000.0, "kg/hr");
     Separator separator = new Separator("10-VA-001", feed);
     Compressor compressor = new Compressor("10-KA-001", separator.getGasOutStream());
+    AdiabaticPipe pipeline = new AdiabaticPipe("10-PL-001", compressor.getOutletStream());
     Pump pump = new Pump("10-PA-001", separator.getLiquidOutStream());
     ProcessSystem process = new ProcessSystem();
     process.setName("DEXPI 2.0 Process exchange");
     process.add(feed);
     process.add(separator);
     process.add(compressor);
+    process.add(pipeline);
     process.add(pump);
     return process;
   }

@@ -27,6 +27,7 @@ import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
+import neqsim.process.equipment.pipeline.PipeLineInterface;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.splitter.Splitter;
@@ -220,6 +221,9 @@ public final class Dexpi20ProcessModelWriter {
       return "Process/Process.Source";
     }
     if (unit instanceof Expander) {
+      return "Process/Process.TransportingFluids";
+    }
+    if (unit instanceof PipeLineInterface) {
       return "Process/Process.TransportingFluids";
     }
     if (unit instanceof Compressor) {
