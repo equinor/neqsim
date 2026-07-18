@@ -266,6 +266,9 @@ public final class TransientPipingQualificationCalculation implements
     if (!readiness.isReady()) {
       return output.status(EngineeringCalculationResult.Status.BLOCKED).build();
     }
+    if (input == null || input.samples == null || input.samples.isEmpty()) {
+      return output.status(EngineeringCalculationResult.Status.BLOCKED).build();
+    }
 
     double integratedBoundaryImbalanceKg = 0.0;
     double maximumTimeStepSeconds = 0.0;
