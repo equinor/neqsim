@@ -69,7 +69,7 @@ class EngineeringProductionReadinessTest {
   }
 
   @Test
-  void reachesQualifiedFeedSupportOnlyWithEveryEvidenceGate() {
+  void externalEvidenceDoesNotBypassMissingTechnicalQualification() {
     EngineeringProject project = project();
     ProcessToEngineeringSimulator.run(project);
     EngineeringAutoConfigurator.Result automation = EngineeringAutoConfigurator.configure(project,
@@ -95,7 +95,8 @@ class EngineeringProductionReadinessTest {
         .releaseQualityEvidence(new EngineeringReleaseQualityEvidence("release-candidate-1").fullCiPassed(true)
             .supportedJavaMatrixPassed(true).deterministicConvergencePassed(true).performanceAcceptancePassed(true)
             .apiCompatibilityPassed(true).serializationMigrationPassed(true).securityReviewPassed(true)
-            .evidenceReference("RELEASE-EVIDENCE-001").accountableReviewer("Release authority / RA-001"));
+            .evidenceReference("RELEASE-EVIDENCE-001").accountableReviewer("Release authority / RA-001"))
+        .externalEvidenceRegister(ExternalEvidenceTestSupport.completeRegister("project:production-readiness"));
     project.addEvidenceRecord(new EngineeringEvidenceRecord("HAZOP-001", "HAZOP", "A").setTitle("Test hazard review")
         .setSourceOrganization("Independent engineering team").linkEquipment("FEED")
         .approve("Hazop chair / HAZOP-001-A"));
@@ -103,8 +104,11 @@ class EngineeringProductionReadinessTest {
     EngineeringProductionReadinessAssessment.Result result = EngineeringProductionReadinessAssessment.assess(project,
         basis);
 
-    assertEquals(EngineeringProductionReadinessAssessment.Level.QUALIFIED_FEED_SUPPORT, result.getLevel());
-    assertTrue(result.isPreliminaryProductionReady());
+    assertEquals(EngineeringProductionReadinessAssessment.Level.EXPERIMENTAL, result.getLevel());
+    assertFalse(result.isPreliminaryProductionReady());
+    assertFalse(result.getFailedGates().contains("ACCOUNTABLE_ENGINEERING_APPROVALS"));
+    assertFalse(result.getFailedGates().contains("CONSTRUCTION_AUTHORITY_EVIDENCE"));
+    assertTrue(result.getFailedGates().contains("DISTRIBUTED_TRANSIENT_PIPING"));
     assertFalse(Boolean.TRUE.equals(result.toMap().get("fitnessForConstruction")));
   }
 

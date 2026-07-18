@@ -427,6 +427,48 @@ gates, exact `method@version` entries in the benchmark and project-qualification
 in the engineering graph/DAG, and evidence in the relevant coordinated package reports. A numerically passing result
 retains `CALCULATED_REVIEW_REQUIRED` until its standards, evidence, vendor and accountable review records are valid.
 
+### Controlled external engineering evidence
+
+`EngineeringExternalEvidenceRegister` closes the interface to accountable organizations without turning NeqSim into
+an approval authority. `productionMinimum(projectScope)` creates explicit requirements for accountable engineering
+approval, vendor guarantees, HAZOP, LOPA, SRS, independent validation and construction-authority evidence. Add
+equipment-, loop- or package-specific requirements where project scope is more granular.
+
+Each `EngineeringExternalEvidenceRecord` identifies the controlled document and revision, immutable SHA-256 content
+hash, issuing organization and person, issue date, governed scope, decision status, decision maker, accountable role,
+decision date and workflow/signature reference. Independent validation also requires an independence statement;
+construction evidence requires the governing jurisdiction. Draft, rejected, incomplete, conflicting or superseded
+records fail closed.
+
+```java
+String projectScope = "project:compression-rev-C";
+EngineeringExternalEvidenceRegister external =
+    EngineeringExternalEvidenceRegister.productionMinimum(projectScope)
+        .addRequirement(new EngineeringExternalEvidenceRequirement(
+            "VENDOR-K-100", EngineeringExternalEvidenceRecord.Type.VENDOR_GUARANTEE,
+            "equipment:K-100", "Accepted compressor performance and mechanical guarantees"))
+        .addRecord(EngineeringExternalEvidenceRecord
+            .builder("EV-VENDOR-K-100-C", EngineeringExternalEvidenceRecord.Type.VENDOR_GUARANTEE,
+                "VDR-K-100", "C")
+            .title("K-100 certified guarantee package")
+            .controlledDocument("stid://VDR-K-100/C", controlledDocumentSha256)
+            .issuer("Compressor vendor", "Vendor package authority", "2026-07-18")
+            .addScopeReference(projectScope)
+            .addScopeReference("equipment:K-100")
+            .decision(EngineeringExternalEvidenceRecord.Status.ACCEPTED,
+                "Accountable machinery engineer", "Machinery Technical Authority",
+                "2026-07-18", "workflow://VDR-K-100/C/accepted")
+            .build());
+
+project.getProductionReadinessBasis().externalEvidenceRegister(external);
+```
+
+Supply equivalent accepted receipts for every declared requirement. Compilation writes
+`engineering-external-evidence-register.json`, embeds the assessment in production readiness, and creates an exact
+qualification backlog for missing or conflicting evidence. `constructionAuthorityEvidenceAccepted=true` means that
+the supplied external receipt passed structural and scope checks; `fitnessForConstruction` and
+`finalEngineeringApprovalGranted` remain false because the simulator never issues those decisions.
+
 See `examples/notebooks/engineering_production_qualification_workflow.ipynb` for benchmark, DEXPI, pilot, release and
 relief workflow examples. The notebook uses synthetic references only to demonstrate the API; replace every such value
 and reviewer string with controlled project evidence before assessing readiness.
@@ -440,8 +482,9 @@ execution blockers, dependency fingerprints, revision invalidation and the multi
 
 ## Required engineering review
 
-The simulator produces calculated or proposed engineering suitable for concept and pre-FEED development. It does not
-replace accountable discipline work for:
+The simulator produces calculated or proposed engineering suitable for concept and pre-FEED development. It can
+verify controlled receipts for the following decisions, but it does not replace the accountable parties that create
+or approve them:
 
 - HAZOP/LOPA scenario credibility, SIL selection or SRS approval;
 - vendor compressor, pump, exchanger, valve or instrument guarantees;

@@ -47,9 +47,9 @@ public final class EngineeringDeliverableCompiler {
   private static final String[] COORDINATED_ARTIFACTS = new String[] { "process-design-basis.json",
       "equipment-datasheets.json", "valve-list.json", "io-list.json", "alarm-trip-schedule.json",
       "shutdown-narratives.json", "psv-datasheets.json", "flare-blowdown-report.json", "utility-summary.json",
-      "materials-selection-report.json", "unresolved-engineering-actions.json", "revision-impact-report.json",
-      "engineering-production-readiness.json", "engineering-qualification-plan.json",
-      "engineering-vertical-slice-execution-manifest.json" };
+      "materials-selection-report.json", "engineering-external-evidence-register.json",
+      "unresolved-engineering-actions.json", "revision-impact-report.json", "engineering-production-readiness.json",
+      "engineering-qualification-plan.json", "engineering-vertical-slice-execution-manifest.json" };
 
   private EngineeringDeliverableCompiler() {
   }

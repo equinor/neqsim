@@ -256,9 +256,7 @@ public final class ValveInstrumentQualificationCalculation implements
       return output.status(EngineeringCalculationResult.Status.BLOCKED).build();
     }
     if (input == null) {
-      return output.status(EngineeringCalculationResult.Status.BLOCKED)
-          .warning("Calculation input is missing")
-          .build();
+      return output.status(EngineeringCalculationResult.Status.BLOCKED).warning("Calculation input is missing").build();
     }
     double totalResponseSeconds = input.valveStrokeSeconds + input.instrumentResponseSeconds
         + input.logicSolverResponseSeconds;

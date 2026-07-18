@@ -112,6 +112,15 @@ independent readiness gates and their exact-version benchmark/method-qualificati
 Never reinterpret a passing numerical constraint as vendor, HAZOP, code, CAE-tool, pilot,
 or construction approval.
 
+For external assurance, create an `EngineeringExternalEvidenceRegister` from explicit
+project-, equipment-, loop- and package-scope requirements. Accept a receipt only through
+`EngineeringExternalEvidenceRecord` with a controlled document revision, SHA-256 content
+hash, issuer, scope, accountable decision identity/role/date and workflow reference. Require
+an independence statement for independent validation and a jurisdiction for construction
+authority evidence. Inspect `engineering-external-evidence-register.json`; draft, rejected,
+incomplete, conflicting and superseded records remain blockers. Never create an accepted
+receipt from a simulator result or agent assertion.
+
 ### 1. StudyClass Enum
 Controls which deliverables are produced:
 

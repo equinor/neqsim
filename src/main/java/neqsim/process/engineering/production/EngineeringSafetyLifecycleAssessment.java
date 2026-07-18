@@ -19,11 +19,19 @@ public final class EngineeringSafetyLifecycleAssessment {
   }
 
   public static Result assess(EngineeringProject project) {
+    return assess(project, null);
+  }
+
+  /** Assesses safety completeness using legacy project records and the controlled external evidence register. */
+  public static Result assess(EngineeringProject project, EngineeringExternalEvidenceRegister externalRegister) {
     if (project == null) {
       throw new IllegalArgumentException("project must not be null");
     }
     List<Map<String, Object>> findings = new ArrayList<Map<String, Object>>();
-    boolean approvedHazopEvidence = false;
+    EngineeringExternalEvidenceAssessment.Result external = externalRegister == null ? null
+        : EngineeringExternalEvidenceAssessment.assess(externalRegister);
+    boolean approvedHazopEvidence = external != null
+        && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.HAZOP_DECISION);
     for (EngineeringEvidenceRecord evidence : project.getEvidenceRecords()) {
       if ("HAZOP".equalsIgnoreCase(evidence.getDocumentType())
           && evidence.getApprovalStatus() == EngineeringApprovalStatus.APPROVED
@@ -33,6 +41,12 @@ public final class EngineeringSafetyLifecycleAssessment {
     }
     if (!approvedHazopEvidence) {
       findings.add(finding("HAZOP_EVIDENCE", "Approved and complete HAZOP evidence is required"));
+    }
+    if (external != null && !external.isTypePassed(EngineeringExternalEvidenceRecord.Type.LOPA_DECISION)) {
+      findings.add(finding("LOPA_EVIDENCE", "Approved and complete LOPA evidence is required"));
+    }
+    if (external != null && !external.isTypePassed(EngineeringExternalEvidenceRecord.Type.SRS_APPROVAL)) {
+      findings.add(finding("SRS_EVIDENCE", "Approved and complete SRS evidence is required"));
     }
     for (ReliefScenarioBasis basis : project.getReliefScenarioBases()) {
       for (String missing : basis.getMissingFields()) {

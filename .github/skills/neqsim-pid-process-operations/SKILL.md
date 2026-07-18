@@ -241,6 +241,15 @@ calculated DEXPI package is never equivalent to HAZOP/LOPA acceptance, vendor
 certification, code mechanical design, final metallurgy approval or
 construction authorization.
 
+Represent those external decisions with `EngineeringExternalEvidenceRegister`, starting from
+`productionMinimum(projectRevisionScope)` and adding equipment-, SIF- and package-specific
+requirements. `EngineeringExternalEvidenceRecord` must carry the controlled document revision,
+SHA-256 hash, issuer, governed scope, decision authority, decision date and workflow/signature
+reference. Independent validation additionally needs an independence statement; construction
+authority evidence needs the applicable jurisdiction. Inspect
+`engineering-external-evidence-register.json` and keep draft, rejected, incomplete, conflicting
+or superseded evidence open. The register verifies receipts; it never creates approval.
+
 Also inspect `engineering-production-readiness.json`. Do not describe a package
 as production-ready merely because the design loop converged or package
 validation passed. `QUALIFIED_FEED_SUPPORT` additionally requires independent

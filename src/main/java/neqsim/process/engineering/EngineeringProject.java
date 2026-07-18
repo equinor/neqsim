@@ -787,6 +787,9 @@ public final class EngineeringProject implements Serializable {
       calculationNodes.add(gson.toJsonTree(calculation.toMap()));
     }
     root.add("calculationProvenance", calculationNodes);
+    if (productionReadinessBasis != null) {
+      root.add("productionReadinessBasis", gson.toJsonTree(productionReadinessBasis.toMap()));
+    }
     root.add("validation", gson.toJsonTree(validate().getFindings()));
     return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(root);
   }

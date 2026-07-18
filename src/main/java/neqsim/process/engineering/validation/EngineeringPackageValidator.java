@@ -178,6 +178,17 @@ public final class EngineeringPackageValidator {
       requireArray(root, "availableEngines", artifactName, report);
       requireObject(root, "executionBoundary", artifactName, report);
       requireObject(root, "summary", artifactName, report);
+    } else if ("engineering-external-evidence-register.json".equals(artifactName)) {
+      requireString(root, "projectId", artifactName, report);
+      requireString(root, "revision", artifactName, report);
+      if (!root.has("register") || !(root.get("register").isJsonNull() || root.get("register").isJsonObject())) {
+        report.addError("ENG-SCHEMA-013", artifactName, "/register",
+            "Required register property must be an object or null");
+      }
+      requireObject(root, "assessment", artifactName, report);
+      requireFalse(root, "evidenceGeneratedBySimulator", artifactName, report);
+      requireFalse(root, "approvalGrantedBySimulator", artifactName, report);
+      requireString(root, "governance", artifactName, report);
     } else if (artifactName.endsWith("-register.json")) {
       validateRegisterStructure(root, artifactName, report);
     } else if ("design-case-envelope.json".equals(artifactName)) {
