@@ -35,7 +35,7 @@ jobs:
 
           path = Path("examples/notebooks/complete_offshore_process_engineering_study.ipynb")
           notebook = json.loads(path.read_text(encoding="utf-8"))
-          required = ("PidBasis =", "ESDValve =", "advanced_model =")
+          required = ("PidBasis =", "ESDValve =", "advanced_model =", "all_artifacts =")
           cells = {
               marker: next(cell for cell in notebook["cells"]
                            if cell["cell_type"] == "code"
@@ -46,6 +46,8 @@ jobs:
           assert all(cell.get("outputs") for cell in cells.values())
           render_outputs = cells["advanced_model ="]["outputs"]
           assert any("image/svg+xml" in output.get("data", {}) for output in render_outputs)
+          artifact_outputs = cells["all_artifacts ="]["outputs"]
+          assert any("text/html" in output.get("data", {}) for output in artifact_outputs)
           PY
       - name: Build, format and test
         run: |
