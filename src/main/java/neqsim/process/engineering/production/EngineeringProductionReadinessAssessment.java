@@ -9,8 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import neqsim.process.engineering.EngineeringProject;
+import neqsim.process.engineering.calculation.EngineeringCalculationResult;
 import neqsim.process.engineering.design.EngineeringDesignIteration;
 import neqsim.process.engineering.design.EngineeringDesignModuleResult;
+import neqsim.process.engineering.instrumentation.ValveInstrumentQualificationCalculation;
+import neqsim.process.engineering.mechanical.MechanicalIntegrityQualificationCalculation;
+import neqsim.process.engineering.piping.TransientPipingQualificationCalculation;
+import neqsim.process.engineering.rotating.CompressorProtectionQualificationCalculation;
+import neqsim.process.engineering.safety.FlareConsequenceCalculation;
 import neqsim.process.engineering.validation.EngineeringSchemaCatalog;
 
 /** Aggregates technical and accountable evidence without ever authorizing final or construction design. */
@@ -35,6 +41,7 @@ public final class EngineeringProductionReadinessAssessment {
 
     EngineeringBenchmarkSuite.Report benchmark = evidence.getBenchmarkReport();
     Set<String> executedMethods = executedMethods(project);
+    executedMethods.addAll(evidence.getTechnicalMethodKeys());
     Set<String> unbenchmarkedMethods = new LinkedHashSet<String>(executedMethods);
     if (benchmark != null) {
       unbenchmarkedMethods.removeAll(benchmark.getQualifyingMethods());
@@ -89,12 +96,35 @@ public final class EngineeringProductionReadinessAssessment {
     gates.put("RELEASE_QUALITY", gate(release != null && release.isPassed(),
         release == null ? "Attach release quality evidence" : release.getMissingGates().toString()));
 
+    boolean transientPiping = transientPipingPasses(evidence.getTransientPipingQualification());
+    gates.put("DISTRIBUTED_TRANSIENT_PIPING",
+        gate(transientPiping,
+            "Attach a passing distributed transient profile with line-pack, wave, slug, acoustic and stress checks"));
+    boolean compressorProtection = compressorProtectionPasses(evidence.getCompressorProtectionQualification());
+    gates.put("COMPRESSOR_PROTECTION_AND_MACHINERY",
+        gate(compressorProtection,
+            "Close compressor map, startup, rundown, anti-surge, rotor, settle-out and vendor constraints"));
+    boolean valveInstrument = valveInstrumentPasses(evidence.getValveInstrumentQualification());
+    gates.put("VALVE_AND_INSTRUMENT_QUALIFICATION",
+        gate(valveInstrument,
+            "Close actuator, leakage, response, installation, thermowell, tuning and logic constraints"));
+    boolean mechanicalIntegrity = mechanicalIntegrityPasses(evidence.getMechanicalIntegrityQualification());
+    gates.put("DETAILED_MECHANICAL_INTEGRITY",
+        gate(mechanicalIntegrity,
+            "Close pressure, external load, buckling, fatigue, nozzle, MDMT and fabrication constraints"));
+    boolean flareConsequence = flareConsequencePasses(evidence.getFlareConsequenceQualification());
+    gates.put("FLARE_RADIATION_DISPERSION_AND_NOISE",
+        gate(flareConsequence,
+            "Attach passing project-qualified flare radiation, dispersion, noise and tip-velocity evidence"));
+
     boolean all = true;
     for (Gate value : gates.values()) {
       all &= value.passed;
     }
+    boolean technicalCompletion = transientPiping && compressorProtection && valveInstrument && mechanicalIntegrity
+        && flareConsequence;
     boolean validated = designLoop && benchmarkPassed && methods && automation != null && automation.isComplete()
-        && safety.isPassed();
+        && safety.isPassed() && technicalCompletion;
     Level level = all ? Level.QUALIFIED_FEED_SUPPORT
         : validated ? Level.VALIDATED_PRELIMINARY : designLoop ? Level.EXPERIMENTAL : Level.NOT_READY;
     return new Result(project.getProjectId(), project.getRevision(), level, gates, safety, evidence, all);
@@ -116,6 +146,35 @@ public final class EngineeringProductionReadinessAssessment {
 
   private static Gate gate(boolean passed, String action) {
     return new Gate(passed, action);
+  }
+
+  private static boolean transientPipingPasses(
+      EngineeringCalculationResult<TransientPipingQualificationCalculation.Result> value) {
+    return value != null && calculated(value) && value.getValue() != null && value.getValue().allConstraintsSatisfied();
+  }
+
+  private static boolean compressorProtectionPasses(
+      EngineeringCalculationResult<CompressorProtectionQualificationCalculation.Result> value) {
+    return value != null && calculated(value) && value.getValue() != null && value.getValue().allConstraintsSatisfied();
+  }
+
+  private static boolean valveInstrumentPasses(
+      EngineeringCalculationResult<ValveInstrumentQualificationCalculation.Result> value) {
+    return value != null && calculated(value) && value.getValue() != null && value.getValue().allConstraintsSatisfied();
+  }
+
+  private static boolean mechanicalIntegrityPasses(
+      EngineeringCalculationResult<MechanicalIntegrityQualificationCalculation.Result> value) {
+    return value != null && calculated(value) && value.getValue() != null && value.getValue().allConstraintsSatisfied();
+  }
+
+  private static boolean flareConsequencePasses(EngineeringCalculationResult<FlareConsequenceCalculation.Result> value) {
+    return value != null && calculated(value) && value.getValue() != null && value.getValue().allConstraintsSatisfied();
+  }
+
+  private static boolean calculated(EngineeringCalculationResult<?> value) {
+    return value.getStatus() == EngineeringCalculationResult.Status.CALCULATED
+        || value.getStatus() == EngineeringCalculationResult.Status.CALCULATED_REVIEW_REQUIRED;
   }
 
   private static final class Gate implements Serializable {
