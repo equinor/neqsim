@@ -40,6 +40,8 @@ HAZOP decisions, vendor guarantees, code design, or construction approval.
 | What abnormal cases must be handled? | Blocked outlet, cooling failure, compressor trip/settle-out, fire, oil-export blockage and simultaneous blowdown screens with API-orifice and common-load results. |
 | What materials and mechanical work is indicated? | Degradation/material class screening and preliminary pressure-vessel thickness, mass, nozzle and footprint values. |
 | What is delivered? | A coordinated graph, case matrix/envelope, registers, datasheets, calculation DAG, DEXPI 2.0 files, validation report and unresolved-action register. |
+| What happens when the model changes? | Revision A and B packages, an idempotent and replayable change event, and a graph-derived impact register identify every deliverable that must be regenerated, recalculated, revalidated or reapproved. |
+| Can an independent open-source consumer read the drawing? | PyDEXPI imports `plant-pydexpi.xml`, renders the full P&ID inline and records `IMPORT_AND_RENDER_PASSED`; the SVG, compact PNG/SVG overview and import report are integrity-protected revision B artifacts. |
 | Is the result approved for construction? | No. Readiness fails closed on missing independent, vendor, safety-lifecycle, detailed mechanical and authority evidence; `fitnessForConstruction=false`. |
 
 ## Published normal-case benchmark
@@ -169,6 +171,49 @@ mistaken for a real HAZOP record.
 - utility, materials and unresolved-action reports;
 - native DEXPI 2.0 plus internal semantic round-trip evidence; and
 - structural, reference, unit and cross-artifact validation.
+
+### 6. Revisioned model lifecycle and DEXPI impact
+
+The notebook extends the same full process—not a second toy flowsheet—through a controlled A-to-B lifecycle:
+
+1. compile revision A and verify its `NeqSimModelPackage` v1 identity and SHA-256 inventory;
+2. add a review-required 125% debottleneck design case with source reference
+   `DEBOTTLENECK-CHANGE-REQUEST-001`;
+3. compile revision B against A's canonical graph and retain `engineering-revision-diff.json`;
+4. convert that graph difference into a deterministic `ModelChangeEvent`;
+5. publish it once, reject an idempotent duplicate, append it to a JSON-lines journal, reload and replay it;
+6. run `GeneralizedImpactAnalyzer` and retain `impact-analysis.json`; and
+7. refresh and validate revision B's outer package after adding event, impact and rendering evidence.
+
+The generalized impact rules follow relationships in the existing engineering graph. For this change, the project node
+is modified and every compiler document has a `GENERATED_FROM` relationship to it. Consequently
+`plant.dexpi.xml`, `plant-proteus.xml`, `plant-pydexpi.xml` and
+`engineering-dexpi-roundtrip-report.json` all receive both `REGENERATE` and `REVALIDATE` actions with an explicit
+propagation path. The same mechanism reaches calculations, registers and approval records without embedding a fixed
+list of DEXPI files in the analyzer.
+
+### 7. Required PyDEXPI import and P&ID illustrations
+
+Revision B's `plant-pydexpi.xml` is loaded directly with PyDEXPI's `ProteusSerializer`. The notebook requires a real
+model diagram, renders it with `DrawDiagram`, displays the resulting genuine-symbol SVG inline and writes
+`pydexpi-render-report.json` with status `IMPORT_AND_RENDER_PASSED`. A deterministic second view contracts hidden
+connection nodes and produces a review-friendly PNG/SVG overview of the large offshore train.
+
+The workflow uses PyDEXPI 1.2.0 on Python 3.12 and fails CI if import, rendering, or any expected revision-B artifact is
+missing. It uploads both complete model-package directories as workflow artifacts. The PyDEXPI report, rendered SVG,
+overview PNG/SVG, change event, journal and impact register are written before `NeqSimModelPackage.write(...)` refreshes
+the manifest. `ModelPackageValidator` therefore verifies their sizes and hashes together with the DEXPI XML and
+engineering registers.
+
+These are deliberately separate gates:
+
+- native DEXPI 2.0 structure and NeqSim's internal semantic round trip;
+- Proteus and namespace-free PyDEXPI exchange representations;
+- independent PyDEXPI import and rendering; and
+- named commercial-CAE import/round-trip evidence, which remains a project qualification action.
+
+Rendering proves that a third-party consumer resolved the exported graphical model. It does not establish engineering
+correctness, target-CAE fidelity, approval, or fitness for construction.
 
 `EngineeringProductionReadinessAssessment` is then run without fabricated external evidence. A converged loop may reach
 the `EXPERIMENTAL` maturity level, while the following remain failed gates until real evidence is supplied:
