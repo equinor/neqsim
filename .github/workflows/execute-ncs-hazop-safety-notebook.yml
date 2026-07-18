@@ -54,17 +54,17 @@ jobs:
           mkdir -p build/executed-notebooks
           python -m jupyter nbconvert \
             --to notebook \
-            --execute examples/notebooks/ncs_offshore_hazop_esd_hipps_engineering_study.ipynb \
+            --execute examples/notebooks/complete_offshore_process_engineering_study.ipynb \
             --ExecutePreprocessor.timeout=5400 \
             --ExecutePreprocessor.kernel_name=python3 \
-            --output ncs_offshore_hazop_esd_hipps_engineering_study.ipynb \
+            --output complete_offshore_process_engineering_study.ipynb \
             --output-dir build/executed-notebooks
       - name: Verify advanced outputs
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          notebook = json.loads(Path("build/executed-notebooks/ncs_offshore_hazop_esd_hipps_engineering_study.ipynb").read_text(encoding="utf-8"))
+          notebook = json.loads(Path("build/executed-notebooks/complete_offshore_process_engineering_study.ipynb").read_text(encoding="utf-8"))
           code = [cell for cell in notebook["cells"] if cell["cell_type"] == "code"]
           assert code and all(cell.get("execution_count") is not None for cell in code)
           assert not any(output.get("output_type") == "error" for cell in code for output in cell.get("outputs", []))
@@ -81,7 +81,7 @@ jobs:
         with:
           name: ncs-hazop-esd-hipps-engineering-study
           path: |
-            build/executed-notebooks/ncs_offshore_hazop_esd_hipps_engineering_study.ipynb
+            build/executed-notebooks/complete_offshore_process_engineering_study.ipynb
             build/complete-offshore-process-engineering-study/revision-b/ncs-hazop-safety-study
             src/main/java/neqsim/process/engineering/pid
             src/main/java/neqsim/process/engineering/safety
