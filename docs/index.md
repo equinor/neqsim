@@ -56,6 +56,14 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 </ul>
 </div>
 
+<div class="nav-card" style="background: linear-gradient(135deg, #fff8e1 0%, #ffffff 100%); border: 2px solid #ff9800; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
+<h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #ff9800; color: #24292e; font-size: 1.25rem;">🏗️ Engineering</h3>
+<ul style="list-style: none; padding: 0; margin: 0;">
+<li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="engineering/index.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Engineering Hub</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Design cases, discipline calculations, safety, and handover</span></li>
+<li style="padding: 0.5rem 0;"><a href="engineering/guide.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Engineering Guide</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">From a converged process model to review-ready deliverables</span></li>
+</ul>
+</div>
+
 <div class="nav-card" style="background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%); border: 1px solid #e1e4e8; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #9c27b0; color: #24292e; font-size: 1.25rem;">📊 Applications</h3>
 <ul style="list-style: none; padding: 0; margin: 0;">
@@ -192,6 +200,7 @@ System.out.println("Compressibility: " + gas.getZ());
 <tbody>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="thermo/README.html">🧪 Thermodynamics</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Equations of state, phase behavior, component properties</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="process/README.html">⚙️ Process Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Unit operations, process systems, controllers</td></tr>
+<tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="engineering/index.html">🏗️ Engineering</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Design cases, equipment sizing, safety verification, deliverables, and lifecycle evidence</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="simulation/dynamic_simulation_guide.html">🔄 Dynamic Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Transient simulation, time-stepping, depressurization</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;"><a href="physical_properties/README.html">📊 Physical Properties</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #f6f8fa;">Transport properties, interfacial tension</td></tr>
 <tr><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;"><a href="pvtsimulation/README.html">🛢️ PVT Simulation</a></td><td style="padding: 0.875rem 1rem; border-bottom: 1px solid #e1e4e8; background: #fff;">Reservoir fluid characterization, tuning</td></tr>

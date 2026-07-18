@@ -52,6 +52,13 @@ System.out.println("Compressibility: " + gas.getZ());
 | `neqsim.process` | [process/](process/) | Process equipment, unit operations, controllers, process systems, safety systems |
 | `neqsim.fluidmechanics` | [fluidmechanics/](fluidmechanics/) | Pipeline flow, pressure drop, two-phase flow, flow nodes |
 
+### Engineering
+
+| Topic | Documentation | Description |
+|---------|---------------|-------------|
+| Engineering workflows | [engineering/](engineering/) | Design cases, governing envelopes, sizing, discipline verification, deliverables, and lifecycle evidence |
+| Engineering guide | [engineering/guide.md](engineering/guide) | Practical path from a validated process model to a review-ready engineering package |
+
 ### PVT and Reservoir
 
 | Package | Documentation | Description |
@@ -113,6 +120,10 @@ docs/
 │   ├── equipment/                 # Equipment documentation
 │   ├── processmodel/              # ProcessSystem, modules
 │   └── safety/                    # Safety systems
+│
+├── engineering/                   # Engineering workflows and guides
+│   ├── index.md                   # Engineering topic hub
+│   └── guide.md                   # End-to-end engineering guide
 │
 ├── fluidmechanics/               # Pipe flow
 │   └── README.md
@@ -325,4 +336,3 @@ Specialized guides for advanced features and use cases:
 - [NeqSim GitHub Repository](https://github.com/equinor/neqsim)
 - [neqsim-python](https://github.com/equinor/neqsim-python)
 - [Example Notebooks](examples/index)
-
