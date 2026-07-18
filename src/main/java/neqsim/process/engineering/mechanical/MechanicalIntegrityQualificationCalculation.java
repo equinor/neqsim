@@ -55,13 +55,11 @@ public final class MechanicalIntegrityQualificationCalculation implements
       sourceCalculationVersion = text(builder.sourceCalculationVersion, "sourceCalculationVersion");
       designPressureBara = positive(builder.designPressureBara, "designPressureBara");
       calculatedMawpBara = positive(builder.calculatedMawpBara, "calculatedMawpBara");
-      requiredStructuralThicknessMm = positive(builder.requiredStructuralThicknessMm,
-          "requiredStructuralThicknessMm");
+      requiredStructuralThicknessMm = positive(builder.requiredStructuralThicknessMm, "requiredStructuralThicknessMm");
       availableStructuralThicknessMm = positive(builder.availableStructuralThicknessMm,
           "availableStructuralThicknessMm");
       externalDesignPressureBar = nonNegative(builder.externalDesignPressureBar, "externalDesignPressureBar");
-      allowableExternalPressureBar = nonNegative(builder.allowableExternalPressureBar,
-          "allowableExternalPressureBar");
+      allowableExternalPressureBar = nonNegative(builder.allowableExternalPressureBar, "allowableExternalPressureBar");
       bucklingUtilization = nonNegative(builder.bucklingUtilization, "bucklingUtilization");
       fatigueUsageFactor = nonNegative(builder.fatigueUsageFactor, "fatigueUsageFactor");
       requiredNozzleReinforcementAreaMm2 = nonNegative(builder.requiredNozzleReinforcementAreaMm2,
@@ -71,8 +69,7 @@ public final class MechanicalIntegrityQualificationCalculation implements
       externalLoadUtilization = nonNegative(builder.externalLoadUtilization, "externalLoadUtilization");
       designMinimumTemperatureC = finite(builder.designMinimumTemperatureC, "designMinimumTemperatureC");
       materialQualifiedMdmtC = finite(builder.materialQualifiedMdmtC, "materialQualifiedMdmtC");
-      requiredCorrosionAllowanceMm = nonNegative(builder.requiredCorrosionAllowanceMm,
-          "requiredCorrosionAllowanceMm");
+      requiredCorrosionAllowanceMm = nonNegative(builder.requiredCorrosionAllowanceMm, "requiredCorrosionAllowanceMm");
       specifiedCorrosionAllowanceMm = nonNegative(builder.specifiedCorrosionAllowanceMm,
           "specifiedCorrosionAllowanceMm");
       designCodeBasisApproved = builder.designCodeBasisApproved;
@@ -247,24 +244,23 @@ public final class MechanicalIntegrityQualificationCalculation implements
         Double.valueOf(input.allowableExternalPressureBar - input.externalDesignPressureBar));
     metrics.put("bucklingUtilization", Double.valueOf(input.bucklingUtilization));
     metrics.put("fatigueUsageFactor", Double.valueOf(input.fatigueUsageFactor));
-    metrics.put("nozzleReinforcementAreaMarginMm2", Double
-        .valueOf(input.availableNozzleReinforcementAreaMm2 - input.requiredNozzleReinforcementAreaMm2));
+    metrics.put("nozzleReinforcementAreaMarginMm2",
+        Double.valueOf(input.availableNozzleReinforcementAreaMm2 - input.requiredNozzleReinforcementAreaMm2));
     metrics.put("externalLoadUtilization", Double.valueOf(input.externalLoadUtilization));
     metrics.put("mdmtMarginC", Double.valueOf(input.designMinimumTemperatureC - input.materialQualifiedMdmtC));
     metrics.put("corrosionAllowanceMarginMm",
         Double.valueOf(input.specifiedCorrosionAllowanceMm - input.requiredCorrosionAllowanceMm));
 
     Map<String, Boolean> constraints = new LinkedHashMap<String, Boolean>();
-    constraints.put("INTERNAL_PRESSURE_MAWP",
-        Boolean.valueOf(input.calculatedMawpBara >= input.designPressureBara));
+    constraints.put("INTERNAL_PRESSURE_MAWP", Boolean.valueOf(input.calculatedMawpBara >= input.designPressureBara));
     constraints.put("STRUCTURAL_THICKNESS",
         Boolean.valueOf(input.availableStructuralThicknessMm >= input.requiredStructuralThicknessMm));
     constraints.put("EXTERNAL_PRESSURE",
         Boolean.valueOf(input.allowableExternalPressureBar >= input.externalDesignPressureBar));
     constraints.put("BUCKLING", Boolean.valueOf(input.bucklingUtilization <= 1.0));
     constraints.put("FATIGUE", Boolean.valueOf(input.fatigueUsageFactor <= 1.0));
-    constraints.put("NOZZLE_REINFORCEMENT", Boolean
-        .valueOf(input.availableNozzleReinforcementAreaMm2 >= input.requiredNozzleReinforcementAreaMm2));
+    constraints.put("NOZZLE_REINFORCEMENT",
+        Boolean.valueOf(input.availableNozzleReinforcementAreaMm2 >= input.requiredNozzleReinforcementAreaMm2));
     constraints.put("EXTERNAL_LOADS", Boolean.valueOf(input.externalLoadUtilization <= 1.0));
     constraints.put("MINIMUM_DESIGN_METAL_TEMPERATURE",
         Boolean.valueOf(input.designMinimumTemperatureC >= input.materialQualifiedMdmtC));
