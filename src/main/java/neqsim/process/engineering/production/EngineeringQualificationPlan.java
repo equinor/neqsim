@@ -117,10 +117,8 @@ public final class EngineeringQualificationPlan {
   }
 
   private static boolean isTechnicalCompletionGate(String gate) {
-    return "DISTRIBUTED_TRANSIENT_PIPING".equals(gate)
-        || "COMPRESSOR_PROTECTION_AND_MACHINERY".equals(gate)
-        || "VALVE_AND_INSTRUMENT_QUALIFICATION".equals(gate)
-        || "DETAILED_MECHANICAL_INTEGRITY".equals(gate)
+    return "DISTRIBUTED_TRANSIENT_PIPING".equals(gate) || "COMPRESSOR_PROTECTION_AND_MACHINERY".equals(gate)
+        || "VALVE_AND_INSTRUMENT_QUALIFICATION".equals(gate) || "DETAILED_MECHANICAL_INTEGRITY".equals(gate)
         || "FLARE_RADIATION_DISPERSION_AND_NOISE".equals(gate);
   }
 }
