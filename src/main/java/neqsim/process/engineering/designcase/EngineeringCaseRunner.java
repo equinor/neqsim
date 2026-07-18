@@ -13,6 +13,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import neqsim.process.engineering.numerics.EngineeringNumericalHealthAnalyzer;
 import neqsim.process.processmodel.ProcessSystem;
 
 /** Executes engineering cases on independent process copies with deterministic ordering and fingerprints. */
@@ -87,6 +88,10 @@ public final class EngineeringCaseRunner {
       designCase.configure(working);
       working.run();
       boolean converged = working.solved();
+      if (options.getNumericalHealthCriteria() != null) {
+        result.numericalHealthReport(
+            new EngineeringNumericalHealthAnalyzer(working, options.getNumericalHealthCriteria()).analyze());
+      }
       for (EngineeringMetric metric : metrics) {
         try {
           result.addValue(metric, metric.extract(working));

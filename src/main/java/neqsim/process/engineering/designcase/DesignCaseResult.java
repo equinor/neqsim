@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import neqsim.process.engineering.numerics.EngineeringNumericalHealthReport;
 
 /** Result of running one design case on an isolated process copy. */
 public final class DesignCaseResult implements Serializable {
@@ -56,6 +57,7 @@ public final class DesignCaseResult implements Serializable {
   private String status = "PENDING";
   private String message = "";
   private boolean converged;
+  private EngineeringNumericalHealthReport numericalHealthReport;
 
   DesignCaseResult(EngineeringDesignCase designCase) {
     this.designCase = designCase;
@@ -70,6 +72,10 @@ public final class DesignCaseResult implements Serializable {
   void failMetric(EngineeringMetric metric, String failureMessage) {
     metricResults.put(metric.getId(),
         new MetricResult(metric, null, "FAILED", "NOT_EVALUATED", failureMessage == null ? "" : failureMessage));
+  }
+
+  void numericalHealthReport(EngineeringNumericalHealthReport value) {
+    numericalHealthReport = value;
   }
 
   void finish() {
@@ -135,6 +141,10 @@ public final class DesignCaseResult implements Serializable {
     return Collections.unmodifiableMap(metricResults);
   }
 
+  public EngineeringNumericalHealthReport getNumericalHealthReport() {
+    return numericalHealthReport;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("case", designCase.toMap());
@@ -147,6 +157,7 @@ public final class DesignCaseResult implements Serializable {
       metrics.put(entry.getKey(), entry.getValue().toMap());
     }
     result.put("metricResults", metrics);
+    result.put("numericalHealth", numericalHealthReport == null ? null : numericalHealthReport.toMap());
     return result;
   }
 }

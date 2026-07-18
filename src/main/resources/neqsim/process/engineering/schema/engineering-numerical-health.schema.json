@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-numerical-health:v1",
+  "title": "NeqSim engineering numerical health report",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "schemaUri",
+    "processName",
+    "status",
+    "acceptableForEngineering",
+    "converged",
+    "criteria",
+    "massClosure",
+    "energyClosure",
+    "equationResiduals",
+    "findings"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "neqsim_engineering_numerical_health.v1"
+    },
+    "schemaUri": {
+      "const": "urn:neqsim:schema:engineering-numerical-health:v1"
+    },
+    "processName": {
+      "type": "string"
+    },
+    "status": {
+      "enum": ["HEALTHY", "INCOMPLETE", "FAILED"]
+    },
+    "acceptableForEngineering": {
+      "type": "boolean"
+    },
+    "converged": {
+      "type": "boolean"
+    },
+    "convergenceDiagnostics": {
+      "type": "string"
+    },
+    "criteria": {
+      "type": "object"
+    },
+    "massClosure": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/closure"
+      }
+    },
+    "energyClosure": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/closure"
+      }
+    },
+    "equationResiduals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "tolerance", "unit", "status"],
+        "properties": {
+          "name": {"type": "string"},
+          "value": {"type": ["number", "null"]},
+          "tolerance": {"type": "number", "exclusiveMinimum": 0},
+          "normalizedResidual": {"type": ["number", "null"]},
+          "unit": {"type": "string"},
+          "status": {"$ref": "#/$defs/observationStatus"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "jacobianHealth": {
+      "type": ["object", "null"]
+    },
+    "findings": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "engineeringReviewRequired": {
+      "const": true
+    }
+  },
+  "$defs": {
+    "observationStatus": {
+      "enum": ["PASS", "FAIL", "NOT_APPLICABLE", "NOT_AVAILABLE"]
+    },
+    "closure": {
+      "type": "object",
+      "required": ["type", "scope", "unit", "tolerancePercent", "status", "message"],
+      "properties": {
+        "type": {"enum": ["MASS", "ENERGY"]},
+        "scope": {"type": "string"},
+        "absoluteError": {"type": ["number", "null"]},
+        "relativeErrorPercent": {"type": ["number", "null"]},
+        "unit": {"type": "string"},
+        "tolerancePercent": {"type": "number", "exclusiveMinimum": 0},
+        "status": {"$ref": "#/$defs/observationStatus"},
+        "message": {"type": "string"}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

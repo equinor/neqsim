@@ -5,6 +5,10 @@ description: "Iterate NeqSim process cases into review-governed equipment, pipin
 
 # Process-to-engineering simulator
 
+See also [Numerical health and engineering closure](numerical-health-and-engineering-closure.md) for fail-closed
+convergence, mass/energy closure, residual, and sensitivity evidence that can be embedded in design-case and
+production-readiness reports.
+
 The process-to-engineering simulator closes the loop between process physics and preliminary engineering design. It
 runs every controlled process case on isolated copies, sizes configured engineering objects, applies selected design
 variables to a separate working flowsheet, reruns the cases, and stops only when no design variable changes and all

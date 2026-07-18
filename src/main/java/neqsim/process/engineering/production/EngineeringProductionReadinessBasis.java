@@ -13,6 +13,7 @@ import neqsim.process.engineering.calculation.EngineeringConstraintResult;
 import neqsim.process.engineering.instrumentation.ValveInstrumentQualificationCalculation;
 import neqsim.process.engineering.mechanical.MechanicalIntegrityQualificationCalculation;
 import neqsim.process.engineering.model.EngineeringCalculation;
+import neqsim.process.engineering.numerics.EngineeringNumericalHealthReport;
 import neqsim.process.engineering.piping.TransientPipingQualificationCalculation;
 import neqsim.process.engineering.rotating.CompressorProtectionQualificationCalculation;
 import neqsim.process.engineering.safety.FlareConsequenceCalculation;
@@ -30,6 +31,7 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
   private EngineeringExternalEvidenceDocumentIntegrity externalEvidenceDocumentIntegrity;
   private EngineeringMethodQualificationRegistry methodQualificationRegistry;
   private final List<EngineeringMethodQualificationRegistry.Result> methodServiceAssessments = new ArrayList<EngineeringMethodQualificationRegistry.Result>();
+  private final List<EngineeringNumericalHealthReport> numericalHealthReports = new ArrayList<EngineeringNumericalHealthReport>();
   private EngineeringCalculationResult<TransientPipingQualificationCalculation.Result> transientPipingQualification;
   private EngineeringCalculationResult<CompressorProtectionQualificationCalculation.Result> compressorProtectionQualification;
   private EngineeringCalculationResult<ValveInstrumentQualificationCalculation.Result> valveInstrumentQualification;
@@ -113,6 +115,15 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
     return this;
   }
 
+  /** Adds fail-closed convergence and engineering-closure evidence for one controlled process state. */
+  public EngineeringProductionReadinessBasis addNumericalHealthReport(EngineeringNumericalHealthReport value) {
+    if (value == null) {
+      throw new IllegalArgumentException("numericalHealthReport must not be null");
+    }
+    numericalHealthReports.add(value);
+    return this;
+  }
+
   public EngineeringProductionReadinessBasis transientPipingQualification(
       EngineeringCalculationResult<TransientPipingQualificationCalculation.Result> value) {
     transientPipingQualification = require(value, "transientPipingQualification");
@@ -181,6 +192,10 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
 
   public List<EngineeringMethodQualificationRegistry.Result> getMethodServiceAssessments() {
     return Collections.unmodifiableList(methodServiceAssessments);
+  }
+
+  public List<EngineeringNumericalHealthReport> getNumericalHealthReports() {
+    return Collections.unmodifiableList(numericalHealthReports);
   }
 
   public EngineeringCalculationResult<TransientPipingQualificationCalculation.Result> getTransientPipingQualification() {
@@ -256,6 +271,11 @@ public final class EngineeringProductionReadinessBasis implements Serializable {
       methodAssessments.add(assessment.toMap());
     }
     result.put("methodServiceAssessments", methodAssessments);
+    List<Map<String, Object>> numericalReports = new ArrayList<Map<String, Object>>();
+    for (EngineeringNumericalHealthReport report : numericalHealthReports) {
+      numericalReports.add(report.toMap());
+    }
+    result.put("numericalHealthReports", numericalReports);
     result.put("transientPipingQualification", map(transientPipingQualification));
     result.put("compressorProtectionQualification", map(compressorProtectionQualification));
     result.put("valveInstrumentQualification", map(valveInstrumentQualification));
