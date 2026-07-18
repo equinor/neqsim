@@ -1,7 +1,7 @@
 ---
 name: neqsim-process-modeling
 description: "Process modeling and flowsheet construction patterns for NeqSim. USE WHEN: building executable NeqSim process simulations, ProcessSystem flowsheets, or runnable process models with streams, separators, compressors, heat exchangers, valves, pumps, distillation columns, recycles, adjusters, topology checks, result extraction, and engineering validation."
-last_verified: "2026-05-31"
+last_verified: "2026-07-18"
 ---
 
 # NeqSim Process Modeling Skill
@@ -125,6 +125,10 @@ the governed enterprise checklist and readiness gates use
   unbalanced model. For multi-area `ProcessModel`s, also confirm `plant.run()` converged.
 - Results include the verified mass balance, expected pressure ordering, and physically
   reasonable phase splits.
+- For industrial engineering use, assess every exact `method@version` with
+  `EngineeringMethodQualificationRegistry`: require an independent benchmark, approved structured applicability
+  envelope, intended use, controlled service inputs, uncertainty basis and explicit extrapolation policy. A converged
+  calculation outside the envelope remains investigation evidence, not a qualified engineering result.
 - Compressor, pump, heat exchanger, separator, and pipeline cases identify applicable
   standards through `neqsim-standards-lookup`.
 

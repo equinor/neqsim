@@ -50,6 +50,20 @@ public final class EngineeringQualificationPlan {
             "Approve standards, applicability limits and evidence for the project service"));
       }
     }
+    if (evidence.getMethodQualificationRegistry() != null) {
+      Set<String> serviceQualified = new LinkedHashSet<String>();
+      for (EngineeringMethodQualificationRegistry.Result assessment : evidence.getMethodServiceAssessments()) {
+        if (assessment.isQualifiedForService()) {
+          serviceQualified.add(assessment.getMethodKey());
+        }
+      }
+      for (String method : executed) {
+        if (!serviceQualified.contains(method)) {
+          actions.add(action("METHOD_SERVICE_APPLICABILITY", method,
+              "Assess the exact method against a complete service context, intended use and qualified envelope"));
+        }
+      }
+    }
     if (evidence.getAutoConfigurationResult() == null || !evidence.getAutoConfigurationResult().isComplete()) {
       actions.add(action("AUTOMATIC_CONFIGURATION", "project",
           "Complete explicit configuration coverage without hidden numerical defaults"));

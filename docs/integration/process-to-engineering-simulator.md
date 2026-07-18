@@ -345,6 +345,12 @@ The current built-in calculation modules remain preliminary screening methods un
 been benchmarked and project-qualified for the stated service. The readiness framework exposes that gap instead of
 silently promoting the results.
 
+For industrial qualification, use the machine-evaluable
+[method applicability registry](industrial-method-qualification.md). It binds the exact method version to an intended
+use, required service inputs, numeric and categorical limits, uncertainty basis, known limitations, benchmark
+tolerances and controlled approval. When attached to the readiness basis it adds a fail-closed gate for every method
+executed by the final design iteration.
+
 ### Execute the qualification workflows
 
 The production-readiness gates are backed by executable, serializable workflows. They derive evidence from supplied
