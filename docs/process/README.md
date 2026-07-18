@@ -18,7 +18,7 @@ handover, use the separate [Engineering documentation](../engineering/).
 - [Equipment Categories](#equipment-categories)
 - [Controllers and Logic](#controllers-and-logic)
 - [Safety Systems](#safety-systems)
-- [Usage Examples](#usage-examples)
+- [Basic Usage](#basic-usage)
 
 ---
 

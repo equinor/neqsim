@@ -118,10 +118,10 @@ approvals that have become stale.
 ## Executable learning path
 
 1. Read the [Engineering Guide](guide) to choose the appropriate workflow and gates.
-2. Run the focused [`process_to_engineering_simulator.ipynb`](../../examples/notebooks/process_to_engineering_simulator.ipynb)
+2. Run the focused [`process_to_engineering_simulator.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process_to_engineering_simulator.ipynb)
    example for the closed design loop.
 3. Run the
-   [`complete_offshore_process_engineering_study.ipynb`](../../examples/notebooks/complete_offshore_process_engineering_study.ipynb)
+   [`complete_offshore_process_engineering_study.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/complete_offshore_process_engineering_study.ipynb)
    example to see a multi-discipline facility package.
 4. Use the [Process Model to Engineering Workflow](../integration/process-to-engineering-workflow) when moving from a
    single `ProcessSystem` to governed multi-area delivery.

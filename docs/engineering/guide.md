@@ -14,7 +14,7 @@ documentation rather than treating this page as a replacement for discipline met
 
 | Starting point | Recommended route |
 | --- | --- |
-| Learning or method evaluation | Run the [focused engineering notebook](../../examples/notebooks/process_to_engineering_simulator.ipynb) |
+| Learning or method evaluation | Run the [focused engineering notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/process_to_engineering_simulator.ipynb) |
 | One tagged process system | Use the [Process-to-Engineering Simulator](../integration/process-to-engineering-simulator) |
 | Several process areas or shared systems | Use the [Process Model to Engineering Workflow](../integration/process-to-engineering-workflow) |
 | Full offshore facility example | Run the [Complete Offshore Engineering Study](../integration/complete-offshore-process-engineering-study) |

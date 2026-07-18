@@ -10,7 +10,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 
 <div class="hero-badges" style="display: flex; gap: 0.5rem; flex-wrap: wrap; justify-content: center; margin: 1rem 0;">
   <a href="https://github.com/equinor/neqsim/actions"><img src="https://github.com/equinor/neqsim/actions/workflows/verify_build.yml/badge.svg" alt="Java CI"></a>
-  <a href="https://search.maven.org/search?q=g:%22com.equinor.neqsim%22%20AND%20a:%22neqsim%22"><img src="https://img.shields.io/maven-central/v/com.equinor.neqsim/neqsim.svg?label=Maven%20Central" alt="Maven Central"></a>
+  <a href="https://central.sonatype.com/artifact/com.equinor.neqsim/neqsim"><img src="https://img.shields.io/maven-central/v/com.equinor.neqsim/neqsim.svg?label=Maven%20Central" alt="Maven Central"></a>
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
 </div>
 
@@ -168,9 +168,9 @@ System.out.println("Compressibility: " + gas.getZ());
 <h3 style="margin-top: 0; margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 2px solid #ff9800; color: #24292e; font-size: 1.25rem;">🎓 Learning Paths</h3>
 <p style="color: #6a737d; margin-bottom: 1rem;">Structured tracks by role</p>
 <ul style="list-style: none; padding: 0; margin: 0;">
-<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#pvt-engineer-track" style="color: #155799; text-decoration: none;">🛢️ PVT Engineer Track</a></li>
-<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#process-engineer-track" style="color: #155799; text-decoration: none;">⚙️ Process Engineer Track</a></li>
-<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#developer-track" style="color: #155799; text-decoration: none;">💻 Developer Track</a></li>
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#pvt-engineer-path" style="color: #155799; text-decoration: none;">🛢️ PVT Engineer Track</a></li>
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#process-engineer-path" style="color: #155799; text-decoration: none;">⚙️ Process Engineer Track</a></li>
+<li style="padding: 0.4rem 0;"><a href="tutorials/learning-paths.html#developer-path" style="color: #155799; text-decoration: none;">💻 Developer Track</a></li>
 </ul>
 </div>
 
@@ -262,7 +262,7 @@ print(f"Gas density: {gas.getDensity('kg/m3'):.2f} kg/m³")
 <span style="font-size: 1.5rem;">📦</span>
 <span><strong>GitHub Repository</strong><br><small style="color: #6a737d;">Source code & issues</small></span>
 </a>
-<a href="https://search.maven.org/artifact/com.equinor.neqsim/neqsim" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; text-decoration: none; color: #24292e; transition: all 0.2s ease;">
+<a href="https://central.sonatype.com/artifact/com.equinor.neqsim/neqsim" style="display: flex; align-items: center; gap: 0.75rem; padding: 1rem; background: #fff; border: 1px solid #e1e4e8; border-radius: 8px; text-decoration: none; color: #24292e; transition: all 0.2s ease;">
 <span style="font-size: 1.5rem;">☕</span>
 <span><strong>Maven Central</strong><br><small style="color: #6a737d;">Latest releases</small></span>
 </a>

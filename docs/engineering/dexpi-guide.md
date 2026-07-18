@@ -154,13 +154,13 @@ classification, target-system loading, or final information acceptance.
 
 ## Executable examples
 
-- [`professional_process_flow_diagrams.ipynb`](../../examples/notebooks/professional_process_flow_diagrams.ipynb) —
+- [`professional_process_flow_diagrams.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/professional_process_flow_diagrams.ipynb) —
   Proteus/pyDEXPI export and rendering.
-- [`dexpi_engineering_full_processsystem.ipynb`](../../examples/notebooks/dexpi_engineering_full_processsystem.ipynb) —
+- [`dexpi_engineering_full_processsystem.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/dexpi_engineering_full_processsystem.ipynb) —
   full `ProcessSystem` engineering export.
-- [`dexpi_engineering_processmodel.ipynb`](../../examples/notebooks/dexpi_engineering_processmodel.ipynb) —
+- [`dexpi_engineering_processmodel.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/dexpi_engineering_processmodel.ipynb) —
   multi-area `ProcessModel` engineering packages.
-- [`complete_pid_design_synthesis.ipynb`](../../examples/notebooks/complete_pid_design_synthesis.ipynb) —
+- [`complete_pid_design_synthesis.ipynb`](https://github.com/equinor/neqsim/blob/master/examples/notebooks/complete_pid_design_synthesis.ipynb) —
   governed P&ID proposal and package.
 
 ## Related documentation

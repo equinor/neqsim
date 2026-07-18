@@ -40,14 +40,14 @@ NeqSim is distributed under the Apache-2.0 license and can be used via:
 | -------------- | --------------------------------------------------------- | -------------------------------------- |
 | NeqSim Web App | [neqsim.streamlit.app](https://neqsim.streamlit.app/)     | Browser-based calculations             |
 | NeqSim Colab   | [NeqSim-Colab](https://github.com/EvenSol/NeqSim-Colab)   | Jupyter/Colab notebook examples        |
-| NeqSimLive API | [NeqSimAPI](https://github.com/equinor/NeqSimAPI)         | Container-based APIs for digital twins |
+| NeqSimLive API | [Deployment workflow](process/plant-data-tagreader#step-5-neqsimapi-cloud-rest) | Container-based APIs for digital twins |
 | Process Models | [neqsimprocess](https://github.com/equinor/neqsimprocess) | Pre-built process model library        |
 
 ### AI & Optimization
 
 | Project   | Repository                                                                      | Description                                                 |
 | --------- | ------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| RL Agents | [NeqSim-Process-RL-Agents](https://github.com/equinor/NeqSim-Process-RL-Agents) | Multi-agent reinforcement learning for process optimization |
+| RL Agents | [RL Multi-Agent Integration notebook](https://github.com/equinor/neqsim/blob/master/examples/notebooks/RL_MultiAgent_Integration.ipynb) | Multi-agent reinforcement learning for process optimization |
 
 ### Support & Community
 
