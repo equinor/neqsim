@@ -81,6 +81,10 @@ public final class EngineeringProductionReadinessAssessment {
     EngineeringExternalEvidenceAssessment.Result external = EngineeringExternalEvidenceAssessment
         .assess(evidence.getExternalEvidenceRegister());
     addExternalEvidenceGates(gates, external);
+    EngineeringExternalEvidenceDocumentIntegrity.Result documentIntegrity = EngineeringExternalEvidenceDocumentIntegrity
+        .assess(evidence.getExternalEvidenceRegister(), evidence.getExternalEvidenceDocumentIntegrity());
+    gates.put("EXTERNAL_EVIDENCE_DOCUMENT_INTEGRITY", gate(documentIntegrity.isPassed(),
+        "Supply every accepted controlled document and resolve all SHA-256 mismatches"));
 
     EngineeringSafetyLifecycleAssessment.Result safety = EngineeringSafetyLifecycleAssessment.assess(project,
         evidence.getExternalEvidenceRegister());
@@ -129,12 +133,14 @@ public final class EngineeringProductionReadinessAssessment {
         && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.HAZOP_DECISION)
         && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.LOPA_DECISION)
         && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.SRS_APPROVAL)
-        && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.INDEPENDENT_VALIDATION);
+        && external.isTypePassed(EngineeringExternalEvidenceRecord.Type.INDEPENDENT_VALIDATION)
+        && documentIntegrity.isPassed();
     boolean validated = designLoop && benchmarkPassed && methods && automation != null && automation.isComplete()
         && safety.isPassed() && technicalCompletion && externalValidation;
     Level level = all ? Level.QUALIFIED_FEED_SUPPORT
         : validated ? Level.VALIDATED_PRELIMINARY : designLoop ? Level.EXPERIMENTAL : Level.NOT_READY;
-    return new Result(project.getProjectId(), project.getRevision(), level, gates, safety, external, evidence, all);
+    return new Result(project.getProjectId(), project.getRevision(), level, gates, safety, external, documentIntegrity,
+        evidence, all);
   }
 
   private static void addExternalEvidenceGates(Map<String, Gate> gates,
@@ -233,19 +239,22 @@ public final class EngineeringProductionReadinessAssessment {
     private final Map<String, Gate> gates;
     private final EngineeringSafetyLifecycleAssessment.Result safety;
     private final EngineeringExternalEvidenceAssessment.Result externalEvidence;
+    private final EngineeringExternalEvidenceDocumentIntegrity.Result externalEvidenceDocumentIntegrity;
     private final EngineeringProductionReadinessBasis basis;
     private final boolean preliminaryProductionReady;
 
     Result(String projectId, String revision, Level level, Map<String, Gate> gates,
         EngineeringSafetyLifecycleAssessment.Result safety,
-        EngineeringExternalEvidenceAssessment.Result externalEvidence, EngineeringProductionReadinessBasis basis,
-        boolean preliminaryProductionReady) {
+        EngineeringExternalEvidenceAssessment.Result externalEvidence,
+        EngineeringExternalEvidenceDocumentIntegrity.Result externalEvidenceDocumentIntegrity,
+        EngineeringProductionReadinessBasis basis, boolean preliminaryProductionReady) {
       this.projectId = projectId;
       this.revision = revision;
       this.level = level;
       this.gates = new LinkedHashMap<String, Gate>(gates);
       this.safety = safety;
       this.externalEvidence = externalEvidence;
+      this.externalEvidenceDocumentIntegrity = externalEvidenceDocumentIntegrity;
       this.basis = basis;
       this.preliminaryProductionReady = preliminaryProductionReady;
     }
@@ -283,6 +292,7 @@ public final class EngineeringProductionReadinessAssessment {
       result.put("failedGates", getFailedGates());
       result.put("safetyLifecycle", safety.toMap());
       result.put("externalEngineeringEvidence", externalEvidence.toMap());
+      result.put("externalEvidenceDocumentIntegrity", externalEvidenceDocumentIntegrity.toMap());
       result.put("evidenceBasis", basis.toMap());
       result.put("preliminaryProductionReady", Boolean.valueOf(preliminaryProductionReady));
       result.put("fitnessForConstruction", Boolean.FALSE);
