@@ -1,0 +1,97 @@
+name: Execute NCS HAZOP and safety engineering notebook
+
+on:
+  pull_request:
+    paths:
+      - "examples/notebooks/complete_offshore_process_engineering_study.ipynb"
+      - "src/main/java/neqsim/process/engineering/pid/**"
+      - "src/main/java/neqsim/process/engineering/safety/**"
+      - ".github/workflows/execute-ncs-hazop-safety-notebook.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  execute-notebook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Verify committed engineering outputs
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path("examples/notebooks/complete_offshore_process_engineering_study.ipynb")
+          notebook = json.loads(path.read_text(encoding="utf-8"))
+          required = ("PidBasis =", "ESDValve =", "advanced_model =", "all_artifacts =")
+          cells = {
+              marker: next(cell for cell in notebook["cells"]
+                           if cell["cell_type"] == "code"
+                           and marker in "".join(cell.get("source", [])))
+              for marker in required
+          }
+          assert all(cell.get("execution_count") is not None for cell in cells.values())
+          assert all(cell.get("outputs") for cell in cells.values())
+          render_outputs = cells["advanced_model ="]["outputs"]
+          assert any("image/svg+xml" in output.get("data", {}) for output in render_outputs)
+          artifact_outputs = cells["all_artifacts ="]["outputs"]
+          assert any("text/html" in output.get("data", {}) for output in artifact_outputs)
+          PY
+      - name: Build, format and test
+        run: |
+          ./mvnw -Dmaven.test.skip=true package
+          ./mvnw spotless:check
+          ./mvnw -Dtest='PidHazopStudyRunnerTest,NcsSafetyFunctionStudyTest' test
+      - name: Install notebook runtime
+        run: python -m pip install --upgrade nbconvert nbclient nbformat ipykernel pandas matplotlib numpy jpype1 pydexpi==1.2.0 cairosvg==2.9.0
+      - name: Execute advanced study
+        env:
+          MPLBACKEND: Agg
+          NEQSIM_PROJECT_ROOT: ${{ github.workspace }}
+        run: |
+          mkdir -p build/executed-notebooks
+          python -m jupyter nbconvert \
+            --to notebook \
+            --execute examples/notebooks/complete_offshore_process_engineering_study.ipynb \
+            --ExecutePreprocessor.timeout=5400 \
+            --ExecutePreprocessor.kernel_name=python3 \
+            --output complete_offshore_process_engineering_study.ipynb \
+            --output-dir build/executed-notebooks
+      - name: Verify advanced outputs
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          notebook = json.loads(Path("build/executed-notebooks/complete_offshore_process_engineering_study.ipynb").read_text(encoding="utf-8"))
+          code = [cell for cell in notebook["cells"] if cell["cell_type"] == "code"]
+          assert code and all(cell.get("execution_count") is not None for cell in code)
+          assert not any(output.get("output_type") == "error" for cell in code for output in cell.get("outputs", []))
+          package = Path("build/complete-offshore-process-engineering-study/revision-b/ncs-hazop-safety-study")
+          required = ("plant-pydexpi.xml", "ncs-detailed-pid.svg", "pid-design-model.json",
+                      "pid-hazop-study.json", "esd-dynamic-test.json", "hipps-dynamic-test.json",
+                      "ncs-safety-function-study.json")
+          assert all((package / name).is_file() for name in required)
+          hazop = json.loads((package / "pid-hazop-study.json").read_text(encoding="utf-8"))
+          assert hazop["readyForHazopWorkshop"] is True and len(hazop["nodes"]) >= 30
+          assert len(json.loads((package / "pid-design-model.json").read_text(encoding="utf-8"))["elements"]) > 100
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ncs-hazop-esd-hipps-engineering-study
+          path: |
+            build/executed-notebooks/complete_offshore_process_engineering_study.ipynb
+            build/complete-offshore-process-engineering-study/revision-b/ncs-hazop-safety-study
+          if-no-files-found: error
+          retention-days: 14
