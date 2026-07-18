@@ -40,6 +40,10 @@ import neqsim.process.engineering.validation.EngineeringSchemaCatalog;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.measurementdevice.MeasurementDeviceInterface;
+import neqsim.process.modelpackage.ModelDependency;
+import neqsim.process.modelpackage.ModelPackageIdentity;
+import neqsim.process.modelpackage.ModelPackageValidator;
+import neqsim.process.modelpackage.NeqSimModelPackage;
 
 /** Compiles one governed project into a coordinated engineering package and canonical graph snapshot. */
 public final class EngineeringDeliverableCompiler {
@@ -77,6 +81,7 @@ public final class EngineeringDeliverableCompiler {
     private final Path compilerManifestFile;
     private final Path validationReportFile;
     private final Path revisionDiffFile;
+    private final Path modelPackageFile;
     private final EngineeringGraph engineeringGraph;
     private final EngineeringDesignEnvelope designEnvelope;
     private final DexpiEngineeringExporter.ExportResult dexpiResult;
@@ -90,7 +95,7 @@ public final class EngineeringDeliverableCompiler {
         Path verticalSliceExecutionManifestFile, Path qualificationPlanFile, Path compilerManifestFile,
         Path validationReportFile, Path revisionDiffFile, EngineeringGraph engineeringGraph,
         EngineeringDesignEnvelope designEnvelope, DexpiEngineeringExporter.ExportResult dexpiResult,
-        EngineeringPackageValidationReport validationReport) {
+        EngineeringPackageValidationReport validationReport, Path modelPackageFile) {
       this.outputDirectory = outputDirectory;
       this.engineeringGraphFile = engineeringGraphFile;
       this.engineeringConnectivityFile = engineeringConnectivityFile;
@@ -115,6 +120,7 @@ public final class EngineeringDeliverableCompiler {
       this.designEnvelope = designEnvelope;
       this.dexpiResult = dexpiResult;
       this.validationReport = validationReport;
+      this.modelPackageFile = modelPackageFile;
     }
 
     public Path getOutputDirectory() {
@@ -195,6 +201,10 @@ public final class EngineeringDeliverableCompiler {
 
     public Path getRevisionDiffFile() {
       return revisionDiffFile;
+    }
+
+    public Path getModelPackageFile() {
+      return modelPackageFile;
     }
 
     public EngineeringGraph getEngineeringGraph() {
@@ -339,17 +349,23 @@ public final class EngineeringDeliverableCompiler {
     write(compilerManifest, compilerManifest(project, graph, envelope, diff, schemaArtifacts));
     Path validationFile = outputDirectory.resolve("engineering-validation-report.json");
     write(validationFile, new EngineeringPackageValidationReport().toJson());
+    Path modelPackageFile = writeModelPackage(project, outputDirectory, baselineGraph);
     EngineeringPackageValidationReport validation = EngineeringPackageValidator.validatePackage(outputDirectory);
     write(validationFile, validation.toJson());
     if (!validation.isValid()) {
       throw new EngineeringPackageValidationException(validationFile, validation);
     }
     DexpiEngineeringExporter.refreshPackageManifest(outputDirectory);
+    modelPackageFile = writeModelPackage(project, outputDirectory, baselineGraph);
+    ModelPackageValidator.Result modelPackageValidation = ModelPackageValidator.validate(outputDirectory);
+    if (!modelPackageValidation.isValid()) {
+      throw new IOException("Invalid NeqSim model package: " + modelPackageValidation.getFindings());
+    }
     return new CompilationResult(outputDirectory, graphFile, connectivityFile, calculationDagFile, designCaseMatrixFile,
         disciplinePackageFile, approvalLedgerFile, dexpiRoundTripReportFile, automationPlanFile, envelopeFile,
         equipmentFile, lineFile, instrumentFile, productionReadinessFile, verticalSliceQualificationFile,
         verticalSliceExecutionManifestFile, qualificationPlanFile, compilerManifest, validationFile, diffFile, graph,
-        envelope, dexpiResult, validation);
+        envelope, dexpiResult, validation, modelPackageFile);
   }
 
   private static void addDocumentNodes(EngineeringGraph graph, EngineeringProject project) {
@@ -367,7 +383,7 @@ public final class EngineeringDeliverableCompiler {
         "utility-summary.json", "materials-selection-report.json", "unresolved-engineering-actions.json",
         "revision-impact-report.json", "engineering-production-readiness.json", "engineering-qualification-plan.json",
         "engineering-discipline-orchestration.json", "engineering-vertical-slice-qualification.json",
-        "engineering-vertical-slice-execution-manifest.json" };
+        "engineering-vertical-slice-execution-manifest.json", "neqsim-model-package.json" };
     for (String document : documents) {
       String nodeId = EngineeringIds.nodeId(EngineeringNode.Kind.DOCUMENT, document);
       graph.addNode(new EngineeringNode(nodeId, EngineeringNode.Kind.DOCUMENT, document, document)
@@ -581,6 +597,7 @@ public final class EngineeringDeliverableCompiler {
     artifacts.add("engineering-validation-report.json");
     artifacts.add("engineering-discipline-orchestration.json");
     artifacts.add("engineering-vertical-slice-qualification.json");
+    artifacts.add("neqsim-model-package.json");
     artifacts.add("plant.dexpi.xml");
     artifacts.add("plant-proteus.xml");
     artifacts.add("plant-pydexpi.xml");
@@ -603,6 +620,20 @@ public final class EngineeringDeliverableCompiler {
     document.put("schemas", EngineeringSchemaCatalog.manifestEntries());
     document.put("governance", "Generated values and documents remain review-required until discipline approval");
     return GSON.toJson(document);
+  }
+
+  private static Path writeModelPackage(EngineeringProject project, Path outputDirectory,
+      EngineeringGraph baselineGraph) throws IOException {
+    ModelPackageIdentity identity = new ModelPackageIdentity(project.getProjectId(), project.getName(),
+        project.getProjectId(), "ENGINEERING_PROCESS_MODEL", project.getRevision(),
+        baselineGraph == null ? "" : baselineGraph.getRevision(), "DESIGN", "");
+    Map<String, String> softwareVersions = new LinkedHashMap<String, String>();
+    String implementationVersion = NeqSimModelPackage.class.getPackage().getImplementationVersion();
+    if (implementationVersion != null && !implementationVersion.trim().isEmpty()) {
+      softwareVersions.put("neqsim", implementationVersion);
+    }
+    return NeqSimModelPackage.write(outputDirectory, identity, "engineering-model.json", "REVIEW_REQUIRED",
+        Collections.<ModelDependency>emptyList(), softwareVersions);
   }
 
   private static void write(Path file, String content) throws IOException {
