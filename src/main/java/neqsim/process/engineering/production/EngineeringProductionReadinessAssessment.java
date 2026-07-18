@@ -97,25 +97,20 @@ public final class EngineeringProductionReadinessAssessment {
         release == null ? "Attach release quality evidence" : release.getMissingGates().toString()));
 
     boolean transientPiping = transientPipingPasses(evidence.getTransientPipingQualification());
-    gates.put("DISTRIBUTED_TRANSIENT_PIPING",
-        gate(transientPiping,
-            "Attach a passing distributed transient profile with line-pack, wave, slug, acoustic and stress checks"));
+    gates.put("DISTRIBUTED_TRANSIENT_PIPING", gate(transientPiping,
+        "Attach a passing distributed transient profile with line-pack, wave, slug, acoustic and stress checks"));
     boolean compressorProtection = compressorProtectionPasses(evidence.getCompressorProtectionQualification());
-    gates.put("COMPRESSOR_PROTECTION_AND_MACHINERY",
-        gate(compressorProtection,
-            "Close compressor map, startup, rundown, anti-surge, rotor, settle-out and vendor constraints"));
+    gates.put("COMPRESSOR_PROTECTION_AND_MACHINERY", gate(compressorProtection,
+        "Close compressor map, startup, rundown, anti-surge, rotor, settle-out and vendor constraints"));
     boolean valveInstrument = valveInstrumentPasses(evidence.getValveInstrumentQualification());
-    gates.put("VALVE_AND_INSTRUMENT_QUALIFICATION",
-        gate(valveInstrument,
-            "Close actuator, leakage, response, installation, thermowell, tuning and logic constraints"));
+    gates.put("VALVE_AND_INSTRUMENT_QUALIFICATION", gate(valveInstrument,
+        "Close actuator, leakage, response, installation, thermowell, tuning and logic constraints"));
     boolean mechanicalIntegrity = mechanicalIntegrityPasses(evidence.getMechanicalIntegrityQualification());
-    gates.put("DETAILED_MECHANICAL_INTEGRITY",
-        gate(mechanicalIntegrity,
-            "Close pressure, external load, buckling, fatigue, nozzle, MDMT and fabrication constraints"));
+    gates.put("DETAILED_MECHANICAL_INTEGRITY", gate(mechanicalIntegrity,
+        "Close pressure, external load, buckling, fatigue, nozzle, MDMT and fabrication constraints"));
     boolean flareConsequence = flareConsequencePasses(evidence.getFlareConsequenceQualification());
-    gates.put("FLARE_RADIATION_DISPERSION_AND_NOISE",
-        gate(flareConsequence,
-            "Attach passing project-qualified flare radiation, dispersion, noise and tip-velocity evidence"));
+    gates.put("FLARE_RADIATION_DISPERSION_AND_NOISE", gate(flareConsequence,
+        "Attach passing project-qualified flare radiation, dispersion, noise and tip-velocity evidence"));
 
     boolean all = true;
     for (Gate value : gates.values()) {
@@ -168,7 +163,8 @@ public final class EngineeringProductionReadinessAssessment {
     return value != null && calculated(value) && value.getValue() != null && value.getValue().allConstraintsSatisfied();
   }
 
-  private static boolean flareConsequencePasses(EngineeringCalculationResult<FlareConsequenceCalculation.Result> value) {
+  private static boolean flareConsequencePasses(
+      EngineeringCalculationResult<FlareConsequenceCalculation.Result> value) {
     return value != null && calculated(value) && value.getValue() != null && value.getValue().allConstraintsSatisfied();
   }
 
