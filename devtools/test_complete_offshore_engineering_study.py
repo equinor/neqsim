@@ -22,7 +22,7 @@ class CompleteOffshoreEngineeringStudyTest(unittest.TestCase):
         cls.guide = GUIDE.read_text(encoding="utf-8")
 
     def test_committed_notebook_is_syntactically_valid_and_fully_executed(self):
-        self.assertEqual(16, len(self.code_cells))
+        self.assertEqual(19, len(self.code_cells))
         for index, cell in enumerate(self.code_cells, start=1):
             with self.subTest(code_cell=index):
                 ast.parse("".join(cell.get("source", [])), filename=f"code-cell-{index}")
@@ -51,18 +51,26 @@ class CompleteOffshoreEngineeringStudyTest(unittest.TestCase):
             "SafetyScenarioEngineCalculation", "MaterialsMechanicalDesignCalculations$MaterialSelection",
             "MaterialsMechanicalDesignCalculations$PreliminaryMechanical",
             "EngineeringDeliverableCompiler", "EngineeringProductionReadinessAssessment",
+            "NeqSimModelPackage", "ModelPackageValidator", "ModelChangeEvent",
+            "InMemoryModelChangeEventBus", "ModelChangeEventJournal",
+            "GeneralizedImpactAnalyzer", "ProteusSerializer", "DrawDiagram",
         )
         for api in required_apis:
             with self.subTest(api=api):
                 self.assertIn(api, self.source)
 
     def test_results_visuals_and_governance_are_explicit(self):
-        self.assertGreaterEqual(self.source.count("plt.subplots"), 3)
+        self.assertGreaterEqual(self.source.count("plt.subplots"), 4)
         self.assertGreaterEqual(self.source.count("**Figure discussion"), 3)
+        self.assertIn("**P&ID discussion", self.source)
         self.assertIn("Gas export rate [kmol/h]", self.source)
         self.assertIn("Total rotating power [kW]", self.source)
         self.assertIn("fitnessForConstruction", self.source)
         self.assertIn("assert not bool(readiness_map.get('fitnessForConstruction'))", self.source)
+        self.assertIn("plant-pydexpi.xml", self.source)
+        self.assertIn("IMPORT_AND_RENDER_PASSED", self.source)
+        self.assertIn("REGENERATE", self.source)
+        self.assertIn("REVALIDATE", self.source)
         errors = [
             output for cell in self.notebook["cells"] for output in cell.get("outputs", [])
             if output.get("output_type") == "error"
@@ -74,6 +82,8 @@ class CompleteOffshoreEngineeringStudyTest(unittest.TestCase):
             "5,111.624 kmol/h", "2,753.353 kmol/h", "10,376.1 kW",
             "Seven isolated steady cases", "SCREENING-CREDIBILITY-ASSUMPTION-NOT-HAZOP-APPROVED",
             "fitnessForConstruction=false", "vendor guarantees", "HAZOP, LOPA and SRS",
+            "NeqSimModelPackage", "ModelChangeEvent", "GeneralizedImpactAnalyzer",
+            "PyDEXPI", "plant-pydexpi.xml", "IMPORT_AND_RENDER_PASSED",
         ):
             with self.subTest(phrase=phrase):
                 self.assertIn(phrase, self.guide)
