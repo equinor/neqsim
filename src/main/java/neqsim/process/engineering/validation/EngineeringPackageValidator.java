@@ -186,6 +186,7 @@ public final class EngineeringPackageValidator {
             "Required register property must be an object or null");
       }
       requireObject(root, "assessment", artifactName, report);
+      requireObject(root, "documentIntegrity", artifactName, report);
       requireFalse(root, "evidenceGeneratedBySimulator", artifactName, report);
       requireFalse(root, "approvalGrantedBySimulator", artifactName, report);
       requireString(root, "governance", artifactName, report);

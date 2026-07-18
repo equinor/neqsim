@@ -12,10 +12,13 @@
     "gates",
     "failedGates",
     "safetyLifecycle",
+    "externalEngineeringEvidence",
+    "externalEvidenceDocumentIntegrity",
     "evidenceBasis",
     "preliminaryProductionReady",
     "fitnessForConstruction",
     "finalEngineeringApprovalGranted",
+    "constructionAuthorityEvidenceAccepted",
     "governance"
   ],
   "properties": {
@@ -41,10 +44,24 @@
     },
     "failedGates": {"type": "array", "items": {"type": "string"}},
     "safetyLifecycle": {"type": "object"},
+    "externalEngineeringEvidence": {"type": "object"},
+    "externalEvidenceDocumentIntegrity": {
+      "type": "object",
+      "required": ["passed", "verifiedRecordIds", "documents", "findings", "approvalGrantedBySimulator"],
+      "properties": {
+        "passed": {"type": "boolean"},
+        "verifiedRecordIds": {"type": "array", "items": {"type": "string"}},
+        "documents": {"type": "array", "items": {"type": "object"}},
+        "findings": {"type": "array", "items": {"type": "object"}},
+        "approvalGrantedBySimulator": {"const": false}
+      },
+      "additionalProperties": false
+    },
     "evidenceBasis": {"type": "object"},
     "preliminaryProductionReady": {"type": "boolean"},
     "fitnessForConstruction": {"const": false},
     "finalEngineeringApprovalGranted": {"const": false},
+    "constructionAuthorityEvidenceAccepted": {"type": "boolean"},
     "governance": {"type": "string", "minLength": 1}
   },
   "additionalProperties": false

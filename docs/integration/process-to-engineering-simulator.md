@@ -460,10 +460,18 @@ EngineeringExternalEvidenceRegister external =
                 "2026-07-18", "workflow://VDR-K-100/C/accepted")
             .build());
 
-project.getProductionReadinessBasis().externalEvidenceRegister(external);
+EngineeringExternalEvidenceDocumentIntegrity documentIntegrity =
+    new EngineeringExternalEvidenceDocumentIntegrity()
+        .addDocument("stid://VDR-K-100/C", Files.readAllBytes(controlledDocumentPath));
+
+project.getProductionReadinessBasis().externalEvidenceRegister(external)
+    .externalEvidenceDocumentIntegrity(documentIntegrity);
 ```
 
-Supply equivalent accepted receipts for every declared requirement. Compilation writes
+Supply equivalent accepted receipts and the actual controlled document bytes for every declared requirement. The
+production-readiness assessment recomputes SHA-256 from those bytes and fails closed when a document is missing or its
+content differs from the receipt. The package records only the computed integrity manifest, not the document content.
+ Compilation writes
 `engineering-external-evidence-register.json`, embeds the assessment in production readiness, and creates an exact
 qualification backlog for missing or conflicting evidence. `constructionAuthorityEvidenceAccepted=true` means that
 the supplied external receipt passed structural and scope checks; `fitnessForConstruction` and
@@ -479,6 +487,28 @@ auto-configuration, executed-method discovery, a regression-evidence rejection, 
 The companion
 [discipline-orchestration notebook](../../examples/notebooks/engineering_discipline_orchestration.ipynb) focuses on
 execution blockers, dependency fingerprints, revision invalidation and the multi-area `ProcessModel` API.
+
+## Implementation-plan completion (#2451)
+
+The software implementation requested by issue #2451 is complete and regression-controlled. The following matrix is
+the canonical mapping from the eight requested workstreams to their executable NeqSim implementation:
+
+| Workstream | Executable implementation |
+| --- | --- |
+| Closed engineering loop | `EngineeringDesignLoop`, physical design candidates, constraints, convergence and isolated reruns |
+| Equipment design | Typed separator, compressor, pump, exchanger, column and tank calculations |
+| Piping and hydraulics | `PipingNetworkDesignCalculation`, rule packs and distributed transient qualification |
+| Valves and instruments | Typed valve/instrument design plus response, installation and logic qualification |
+| Safety scenarios | Governed scenario engine, relief/blowdown/flare coupling and consequence qualification |
+| Materials and mechanical | Material selection, pressure design and detailed mechanical-integrity qualification |
+| Data-centric DEXPI | Canonical engineering graph, deterministic DEXPI 2.0 and semantic round-trip qualification |
+| Coordinated package | Schema-validated registers, datasheets, reports, calculation DAG and revision impact |
+
+The qualified separator → compressor → cooler → export reference facility exercises the full chain across ten controlled
+cases. Production readiness additionally requires the exact-version benchmarks, named-tool round trips, pilots,
+release evidence and accountable external receipts declared by the readiness gates. Accepted external receipts must
+now match the actual supplied document bytes. These evidence requirements are project inputs, not unfinished simulator
+features, and the simulator always retains `fitnessForConstruction=false`.
 
 ## Required engineering review
 
