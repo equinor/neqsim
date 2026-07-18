@@ -1,7 +1,7 @@
 ---
 name: neqsim-capability-map
 description: "Structured inventory of NeqSim's capabilities by engineering discipline. USE WHEN: checking what NeqSim can do, planning implementations, assessing gaps for engineering tasks, or routing work to the right agent. Covers thermodynamics, process equipment, PVT, standards, mechanical design, flow assurance, safety, and economics."
-last_verified: "2026-07-10"
+last_verified: "2026-07-18"
 ---
 
 # NeqSim Capability Map
@@ -9,7 +9,7 @@ last_verified: "2026-07-10"
 Structured reference of what NeqSim can do, organized by engineering discipline.
 Use this to quickly check if a capability exists before searching the source code.
 
-**Last updated:** 2026-07-09
+**Last updated:** 2026-07-18
 
 ---
 
@@ -527,7 +527,7 @@ transport properties (viscosity, thermal conductivity, density).
 | **Membrane separation** | Basic membrane model | No detailed permeation |
 | **BWRS EOS** | Only CH4 + C2H6 parameterized | Use SRK/PR instead |
 | **NACE MR0175 material selection** | No systematic material logic | Manual standard lookup |
-| **Detailed flare modeling** | No radiation / noise model | Source term only |
+| **Site-specific flare consequences** | Point-source radiation, neutral Gaussian centerline dispersion, spherical noise, tip-Mach screening and API 537 flame geometry are available | Use validated specialist models for complex terrain/weather, toxic/combustion detail and final siting |
 | **API 2000 tank venting** | No in-/out-breathing tank vent sizing (thermal + pump-in/out) | Use general relief methods manually; flag as gap in `capability_assessment.md` |
 | **Full pipeline network** | LoopedPipeNetwork: NR-GGA solver, 120+ wells, IPR (PI/Vogel/Fetkovich), chokes, tubing VLP, Beggs-Brill multiphase, compressors, regulators, artificial lift (gas lift/ESP/jet/rod pump), water handling, sand erosion (DNV RP O501), corrosion (de Waard-Milliams/NORSOK M-506), GHG emissions tracking | Full-featured production network |
 
@@ -663,4 +663,3 @@ API 520 omega method) is **already present** and must not be re-flagged as
 missing. Confirmed live gaps (e.g. **API 2000 tank venting**) are recorded in
 section J; add newly confirmed gaps there so the next scout does not repeat the
 search.
-
