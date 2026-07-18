@@ -35,7 +35,8 @@ jobs:
 
           path = Path("examples/notebooks/complete_offshore_process_engineering_study.ipynb")
           notebook = json.loads(path.read_text(encoding="utf-8"))
-          required = ("PidBasis =", "ESDValve =", "advanced_model =", "all_artifacts =")
+          required = ("PidBasis =", "ESDValve =", "BenchmarkSuite =", "advanced_model =",
+                      "all_artifacts =")
           cells = {
               marker: next(cell for cell in notebook["cells"]
                            if cell["cell_type"] == "code"
@@ -53,7 +54,7 @@ jobs:
         run: |
           ./mvnw -Dmaven.test.skip=true package
           ./mvnw spotless:check
-          ./mvnw -Dtest='PidHazopStudyRunnerTest,NcsSafetyFunctionStudyTest' test
+          ./mvnw -Dtest='PidHazopStudyRunnerTest,NcsSafetyFunctionStudyTest,ClosedLoopSafetyFunctionTest,SafetyFunctionReliabilityStudyTest,SafetyFunctionDegradedModeAssessmentTest,HazopLopaSrsWorkflowTest,FacilitySafetyResponseStudyTest,SafetyStudyRevalidationPlannerTest,SafetyVerificationBenchmarkSuiteTest' test
       - name: Install notebook runtime
         run: python -m pip install --upgrade nbconvert nbclient nbformat ipykernel pandas matplotlib numpy jpype1 pydexpi==1.2.0 cairosvg==2.9.0
       - name: Execute advanced study
@@ -81,11 +82,35 @@ jobs:
           package = Path("build/complete-offshore-process-engineering-study/revision-b/ncs-hazop-safety-study")
           required = ("plant-pydexpi.xml", "ncs-detailed-pid.svg", "pid-design-model.json",
                       "pid-hazop-study.json", "esd-dynamic-test.json", "hipps-dynamic-test.json",
-                      "ncs-safety-function-study.json")
+                      "ncs-safety-function-study.json", "closed-loop-sif-result.json",
+                      "sif-reliability-uncertainty.json", "sif-degraded-mode-assessment.json",
+                      "hazop-lopa-srs-handoff.json", "coupled-relief-blowdown-flare.json",
+                      "facility-safety-response.json", "safety-revalidation-plan.json",
+                      "safety-benchmark-report.json")
           assert all((package / name).is_file() for name in required)
           hazop = json.loads((package / "pid-hazop-study.json").read_text(encoding="utf-8"))
           assert hazop["readyForHazopWorkshop"] is True and len(hazop["nodes"]) >= 30
           assert len(json.loads((package / "pid-design-model.json").read_text(encoding="utf-8"))["elements"]) > 100
+
+          def safety_json(name):
+              return json.loads((package / name).read_text(encoding="utf-8"))
+
+          closed_loop = safety_json("closed-loop-sif-result.json")
+          assert closed_loop["passed"] is True and len(closed_loop["logicEvidence"]) == 1
+          reliability = safety_json("sif-reliability-uncertainty.json")
+          assert reliability["p10PfdAverage"] <= reliability["p50PfdAverage"] <= reliability["p90PfdAverage"]
+          degraded = safety_json("sif-degraded-mode-assessment.json")
+          assert degraded["demandCapable"] is True and degraded["targetSilClaimPreserved"] is False
+          lifecycle = safety_json("hazop-lopa-srs-handoff.json")
+          assert lifecycle["srsDraftCreated"] is True and lifecycle["fitForConstruction"] is False
+          assert safety_json("coupled-relief-blowdown-flare.json")["capacityAcceptable"] is True
+          facility = safety_json("facility-safety-response.json")
+          assert facility["readyForEngineeringReview"] is True
+          assert facility["engineeringApprovalRequired"] is True
+          revalidation = safety_json("safety-revalidation-plan.json")
+          assert len(revalidation["tasks"]) == 7 and revalidation["fitForConstruction"] is False
+          benchmarks = safety_json("safety-benchmark-report.json")
+          assert benchmarks["passed"] is False and len(benchmarks["missingQualifyingMethods"]) == 3
           PY
       - uses: actions/upload-artifact@v4
         with:

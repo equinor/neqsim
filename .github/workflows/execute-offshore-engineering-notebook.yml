@@ -94,6 +94,57 @@ jobs:
               "offshore-process-revision-b-pydexpi-panel-4.png",
           ):
               assert (package / name).is_file(), name
+
+          safety_package = package / "ncs-hazop-safety-study"
+          safety_artifacts = (
+              "closed-loop-sif-result.json",
+              "sif-reliability-uncertainty.json",
+              "sif-degraded-mode-assessment.json",
+              "hazop-lopa-srs-handoff.json",
+              "coupled-relief-blowdown-flare.json",
+              "facility-safety-response.json",
+              "safety-revalidation-plan.json",
+              "safety-benchmark-report.json",
+          )
+          assert all((safety_package / name).is_file() for name in safety_artifacts)
+
+          def safety_json(name):
+              return json.loads((safety_package / name).read_text(encoding="utf-8"))
+
+          closed_loop = safety_json("closed-loop-sif-result.json")
+          assert closed_loop["schemaVersion"] == "dynamic_safety_scenario_result.v2"
+          assert closed_loop["passed"] is True
+          assert len(closed_loop["logicEvidence"]) == 1
+          logic_evidence = next(iter(closed_loop["logicEvidence"].values()))
+          assert logic_evidence["schemaVersion"] == "closed_loop_sif_evidence.v1"
+          assert len(logic_evidence["channelConfiguration"]) == 3
+
+          reliability = safety_json("sif-reliability-uncertainty.json")
+          assert reliability["schemaVersion"] == "sif_reliability_uncertainty.v1"
+          assert reliability["p10PfdAverage"] <= reliability["p50PfdAverage"] <= reliability["p90PfdAverage"]
+
+          degraded = safety_json("sif-degraded-mode-assessment.json")
+          assert degraded["demandCapable"] is True
+          assert degraded["targetSilClaimPreserved"] is False
+
+          lifecycle = safety_json("hazop-lopa-srs-handoff.json")
+          assert lifecycle["srsDraftCreated"] is True
+          assert lifecycle["fitForConstruction"] is False
+
+          coupled = safety_json("coupled-relief-blowdown-flare.json")
+          assert coupled["capacityAcceptable"] is True
+
+          facility = safety_json("facility-safety-response.json")
+          assert facility["readyForEngineeringReview"] is True
+          assert facility["engineeringApprovalRequired"] is True
+
+          revalidation = safety_json("safety-revalidation-plan.json")
+          assert len(revalidation["tasks"]) == 7
+          assert revalidation["fitForConstruction"] is False
+
+          benchmarks = safety_json("safety-benchmark-report.json")
+          assert benchmarks["passed"] is False
+          assert len(benchmarks["missingQualifyingMethods"]) == 3
           print(f"Verified {len(code_cells)} executed code cells")
           PY
 
