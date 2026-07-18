@@ -7,6 +7,7 @@ import neqsim.process.electricaldesign.pipeline.PipelineElectricalDesign;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.instrumentdesign.pipeline.PipelineInstrumentDesign;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -14,8 +15,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Single-phase adiabatic pipe model.
  *
  * <p>
- * This class models a simple adiabatic (no heat transfer) pipe for single-phase flow using basic gas flow equations. It
- * calculates pressure drop from friction and elevation changes.
+ * This class models a simple adiabatic (no heat transfer) pipe for single-phase flow. It calculates pressure drop from
+ * friction and elevation changes and is phase-aware: a gas phase uses the compressible general flow equation (P₁² − P₂²
+ * form) while an incompressible liquid phase uses the Darcy-Weisbach equation. Both share the same Haaland friction
+ * factor, giving results consistent with the Beggs and Brills single-phase limit.
  * </p>
  *
  * <h2>Calculation Modes</h2>
@@ -221,7 +224,7 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
    * Calculate the outlet pressure based on friction and elevation losses.
    *
    * <p>
-   * This method calculates the pressure drop using the general flow equation for compressible gas flow, accounting for:
+   * The method is phase-aware and selects the appropriate hydraulic model, accounting for:
    * </p>
    * <ul>
    * <li>Friction pressure loss (using effective length including fittings)</li>
@@ -229,7 +232,18 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
    * </ul>
    *
    * <p>
-   * The effective length includes both physical pipe length and equivalent length from fittings:
+   * For a <b>gas</b> phase the compressible general flow equation is used (P₁² − P₂² form). For an <b>incompressible
+   * liquid</b> phase the Darcy-Weisbach equation is used:
+   * </p>
+   *
+   * <pre>
+   * ΔP_friction = f · (L_eff / D) · ρ · v² / 2
+   * </pre>
+   *
+   * <p>
+   * Both models share the same Haaland friction factor and velocity/Reynolds evaluation, so results are consistent with
+   * the Beggs and Brills single-phase limit. The effective length includes both physical pipe length and equivalent
+   * length from fittings:
    * </p>
    *
    * <pre>
@@ -247,15 +261,31 @@ public class AdiabaticPipe extends Pipeline implements neqsim.process.design.Aut
     reynoldsNumber = velocity * insideDiameter / system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
     frictionFactor = calcWallFrictionFactor(reynoldsNumber);
 
-    // Pressure drop calculation with effective length
-    double dp = Math
-        .pow(4.0 * system.getPhase(0).getNumberOfMolesInPhase() * system.getPhase(0).getMolarMass()
-            / neqsim.thermo.ThermodynamicConstantsInterface.pi, 2.0)
-        * frictionFactor * effectiveLength * system.getPhase(0).getZ() * neqsim.thermo.ThermodynamicConstantsInterface.R
-        / system.getPhase(0).getMolarMass() * system.getTemperature() / Math.pow(insideDiameter, 5.0);
     double dp_gravity = system.getDensity("kg/m3") * neqsim.thermo.ThermodynamicConstantsInterface.gravity
         * (inletElevation - outletElevation);
-    return Math.sqrt(Math.pow(inletPressure * 1e5, 2.0) - dp) / 1.0e5 + dp_gravity / 1.0e5;
+
+    if (system.getPhase(0).getType() == PhaseType.GAS) {
+      // Compressible general flow equation (P1^2 - P2^2 form) for gas.
+      double dp = Math
+          .pow(4.0 * system.getPhase(0).getNumberOfMolesInPhase() * system.getPhase(0).getMolarMass()
+              / neqsim.thermo.ThermodynamicConstantsInterface.pi, 2.0)
+          * frictionFactor * effectiveLength * system.getPhase(0).getZ()
+          * neqsim.thermo.ThermodynamicConstantsInterface.R / system.getPhase(0).getMolarMass()
+          * system.getTemperature() / Math.pow(insideDiameter, 5.0);
+      return Math.sqrt(Math.pow(inletPressure * 1e5, 2.0) - dp) / 1.0e5 + dp_gravity / 1.0e5;
+    }
+
+    // Incompressible Darcy-Weisbach equation for liquid. Use the physical-properties density
+    // (rather than the EOS molar volume) for both velocity and the friction term so the result is
+    // consistent with the Beggs and Brills single-phase limit. Cubic EOS liquid volumes are
+    // inaccurate for polar fluids (e.g. water), which would otherwise bias the velocity.
+    double density = system.getPhase(0).getPhysicalProperties().getDensity();
+    double massFlowRate = system.getFlowRate("kg/sec");
+    velocity = massFlowRate / density / area;
+    reynoldsNumber = velocity * insideDiameter / system.getPhase(0).getPhysicalProperties().getKinematicViscosity();
+    frictionFactor = calcWallFrictionFactor(reynoldsNumber);
+    double dpFriction = frictionFactor * effectiveLength / insideDiameter * density * velocity * velocity / 2.0;
+    return (inletPressure * 1e5 - dpFriction + dp_gravity) / 1.0e5;
   }
 
   /**
