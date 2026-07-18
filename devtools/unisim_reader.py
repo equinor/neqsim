@@ -2024,6 +2024,7 @@ class UniSimReader:
             try:
                 props['multiplier'] = float(op.Multiplier.GetValue()) if hasattr(op, 'Multiplier') else None
             except Exception:
+                # Multiplier can be unavailable or unreadable for some SET operations; keep parsing other fields.
                 pass
             try:
                 props['offset'] = float(op.Offset.GetValue()) if hasattr(op, 'Offset') else None
