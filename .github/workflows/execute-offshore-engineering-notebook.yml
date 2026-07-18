@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - "examples/notebooks/complete_offshore_process_engineering_study.ipynb"
+      - "devtools/test_complete_offshore_engineering_study.py"
+      - "src/main/java/neqsim/process/engineering/**"
+      - "src/test/java/neqsim/process/engineering/**"
       - ".github/workflows/execute-offshore-engineering-notebook.yml"
   workflow_dispatch:
 
