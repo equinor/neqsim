@@ -216,6 +216,9 @@ public final class FlareConsequenceCalculation
     if (!readiness.isReady()) {
       return output.status(EngineeringCalculationResult.Status.BLOCKED).build();
     }
+    if (input == null) {
+      return output.status(EngineeringCalculationResult.Status.BLOCKED).build();
+    }
 
     double heatReleaseW = input.heatReleaseMw * 1.0e6;
     double radiationKwM2 = input.radiativeFraction * input.atmosphericTransmissivity * input.geometryFactor
