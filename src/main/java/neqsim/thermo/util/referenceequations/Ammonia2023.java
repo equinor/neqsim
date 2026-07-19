@@ -56,6 +56,10 @@ public class Ammonia2023 {
   private static final double[] GAOB_EPS = { 0.4478, 0.44689 };
   private static final double[] GAOB_B = { 1.244, 0.6826 };
 
+  // Saturated-liquid density ancillary used only to select the dense EOS root.
+  private static final double[] SAT_LIQ_N = { 2.447, 5.8341, -25.944, 53.383, -54.411, 22.771 };
+  private static final double[] SAT_LIQ_T = { 0.384, 1.65, 2.2, 2.75, 3.35, 4.0 };
+
   // --- Simple viscosity correlation coefficients ----------------------------
   // Fitted to CoolProp viscosity data at 293.15 K
 
@@ -96,7 +100,7 @@ public class Ammonia2023 {
   private double solveDensity(double T, double p) {
     boolean liquidGuess = phase != null && (phase.getType() == PhaseType.LIQUID || phase.getType() == PhaseType.OIL);
 
-    double rho = liquidGuess ? RHO_CRIT * 2.0 : p / (R * T);
+    double rho = liquidGuess ? saturatedLiquidDensityGuess(T) : p / (R * T);
 
     // Newton iteration using the initial guess
     for (int i = 0; i < 100; i++) {
@@ -146,6 +150,19 @@ public class Ammonia2023 {
       }
     }
     return rho;
+  }
+
+  private static double saturatedLiquidDensityGuess(double temperature) {
+    if (temperature >= T_CRIT) {
+      return RHO_CRIT;
+    }
+
+    double theta = 1.0 - temperature / T_CRIT;
+    double reducedDensity = 1.0;
+    for (int i = 0; i < SAT_LIQ_N.length; i++) {
+      reducedDensity += SAT_LIQ_N[i] * Math.pow(theta, SAT_LIQ_T[i]);
+    }
+    return RHO_CRIT * reducedDensity;
   }
 
   private double pressureFromDensity(double rho, double T) {
@@ -289,16 +306,17 @@ public class Ammonia2023 {
       double tauPow = Math.pow(tau, GAOB_T[i]);
       double a = delta - GAOB_EPS[i];
       double Y = GAOB_BETA[i] * Math.pow(tau - GAOB_GAMMA[i], 2.0) + GAOB_B[i];
-      double expo = Math.exp(GAOB_ETA[i] * a * a - 1.0 / Y);
+      double expo = Math.exp(GAOB_ETA[i] * a * a + 1.0 / Y);
       double term = GAOB_N[i] * delPow * tauPow * expo;
       double Bdelta = GAOB_D[i] / delta + 2.0 * GAOB_ETA[i] * a;
-      double Bt = GAOB_T[i] / tau + (2.0 * GAOB_BETA[i] * (tau - GAOB_GAMMA[i])) / (Y * Y);
+      double Bt = GAOB_T[i] / tau - (2.0 * GAOB_BETA[i] * (tau - GAOB_GAMMA[i])) / (Y * Y);
       r.alpha += term;
       r.dalpha_dDelta += term * Bdelta;
       r.d2alpha_dDelta2 += term * (Bdelta * Bdelta - GAOB_D[i] / (delta * delta) + 2.0 * GAOB_ETA[i]);
       r.dalpha_dTau += term * Bt;
-      r.d2alpha_dTau2 += term * (Bt * Bt - GAOB_T[i] / (tau * tau)
-          + 2.0 * GAOB_BETA[i] * ((Y - 2.0 * GAOB_BETA[i] * Math.pow(tau - GAOB_GAMMA[i], 2.0)) / (Y * Y * Y)));
+      double tauOffset = tau - GAOB_GAMMA[i];
+      r.d2alpha_dTau2 += term * (Bt * Bt - GAOB_T[i] / (tau * tau) - 2.0 * GAOB_BETA[i] / (Y * Y)
+          + 8.0 * GAOB_BETA[i] * GAOB_BETA[i] * tauOffset * tauOffset / (Y * Y * Y));
       r.d2alpha_dDelta_dTau += term * Bdelta * Bt;
     }
 
@@ -351,7 +369,7 @@ public class Ammonia2023 {
 
     double cv = -R * tau * tau * (id.d2alpha_dTau2 + r.d2alpha_dTau2);
     double numer = 1.0 + delta * r.dalpha_dDelta - delta * tau * r.d2alpha_dDelta_dTau;
-    double denom = 1.0 - delta * delta * r.d2alpha_dDelta2;
+    double denom = 1.0 + 2.0 * delta * r.dalpha_dDelta + delta * delta * r.d2alpha_dDelta2;
     double cp = cv + R * numer * numer / denom;
 
     double u = R * T * tau * (id.dalpha_dTau + r.dalpha_dTau);
