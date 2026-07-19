@@ -81,8 +81,7 @@ class PhaseAmmoniaEosTest {
   @Test
   void testBubblePointPressureAgainstReferenceEquation() throws IsNaNException {
     double[] temperatures = { 260.0, 280.0, 300.0, 320.0 };
-    double[] expectedPressures = { 2.552457115844972, 5.507043744582428,
-        10.611215021486935, 18.71755110160696 };
+    double[] expectedPressures = { 2.552457115844972, 5.507043744582428, 10.611215021486935, 18.71755110160696 };
 
     for (int i = 0; i < temperatures.length; i++) {
       SystemInterface system = new SystemAmmoniaEos(temperatures[i], expectedPressures[i]);
