@@ -132,6 +132,16 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
     return 100.0e-6; // default 100 micron
   }
 
+  /** Return the total particle-relative speed used in transfer correlations. */
+  private double getParticleRelativeVelocity(FlowNodeInterface node) {
+    if (node instanceof DropletFlowNode) {
+      return ((DropletFlowNode) node).getDispersedPhaseRelativeVelocity();
+    } else if (node instanceof BubbleFlowNode) {
+      return ((BubbleFlowNode) node).getDispersedPhaseRelativeVelocity();
+    }
+    return Math.abs(node.getVelocity(0) - node.getVelocity(1));
+  }
+
   /**
    * {@inheritDoc}
    *
@@ -217,11 +227,7 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
       // Continuous phase: Ranz-Marshall with particle Re
       int continuousPhase = isBubbleFlow ? 1 : 0;
       int dispersedPhase = isBubbleFlow ? 0 : 1;
-      double relativeVelocity = Math.abs(node.getVelocity(continuousPhase) - node.getVelocity(dispersedPhase));
-      double contVelocity = Math.abs(node.getVelocity(continuousPhase));
-      if (relativeVelocity < 0.01 * contVelocity) {
-        relativeVelocity = Math.max(0.1 * contVelocity, 0.01);
-      }
+      double relativeVelocity = getParticleRelativeVelocity(node);
       double nuContinuous = node.getBulkSystem().getPhase(continuousPhase).getPhysicalProperties()
           .getKinematicViscosity();
       if (nuContinuous < 1e-15) {
@@ -299,11 +305,7 @@ public class InterphaseDropletFlow extends InterphaseTwoPhasePipeFlow
       // Continuous phase: Ranz-Marshall with particle Re
       int continuousPhase = isBubbleFlow ? 1 : 0;
       int dispersedPhase = isBubbleFlow ? 0 : 1;
-      double relativeVelocity = Math.abs(node.getVelocity(continuousPhase) - node.getVelocity(dispersedPhase));
-      double contVelocity = Math.abs(node.getVelocity(continuousPhase));
-      if (relativeVelocity < 0.01 * contVelocity) {
-        relativeVelocity = Math.max(0.1 * contVelocity, 0.01);
-      }
+      double relativeVelocity = getParticleRelativeVelocity(node);
 
       double nuContinuous = node.getBulkSystem().getPhase(continuousPhase).getPhysicalProperties()
           .getKinematicViscosity();

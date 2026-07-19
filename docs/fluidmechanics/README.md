@@ -28,6 +28,7 @@ The `fluidmechanics` package provides models for pipeline flow, pressure drop ca
 |----------|-------------|
 | [MassTransferAPI.md](MassTransferAPI) | **Complete API documentation** for mass transfer with methods, parameters, and examples |
 | [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial) | **Practical tutorial** for liquid evaporation and gas dissolution with worked examples |
+| [PipelineLiquidEvaporation.md](PipelineLiquidEvaporation) | Finite-rate droplet/film evaporation distance with Maxwell-Stefan mass transfer and coupled heat transfer |
 | [MASS_TRANSFER_MODEL_IMPROVEMENTS.md](MASS_TRANSFER_MODEL_IMPROVEMENTS) | **Technical review** of mass transfer model with improvement recommendations |
 | [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer) | Complete theory for interphase mass and heat transfer |
 | [droplet_flow_correlations.md](droplet_flow_correlations) | Ranz-Marshall, Kronig-Brink, Abramzon-Sirignano for droplet/bubble flow |

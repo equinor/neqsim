@@ -9,12 +9,31 @@ description: This document provides a technical review of NeqSim's evaporation a
 
 This document provides a technical review of NeqSim's evaporation and dissolution model, identifying specific areas for improvement in accuracy, stability, and usability.
 
-**STATUS: IMPLEMENTED** - All recommendations in this document have been implemented as of the current version. See the Implementation Status section at the end of this document.
+**STATUS:** Core Maxwell-Stefan, transfer-correlation, configuration, and phase-depletion safeguards are implemented.
+Items still marked as recommendations below, especially external validation and uncertainty quantification, are not
+claimed as complete.
 
 **Related Documentation:**
 - [MassTransferAPI.md](MassTransferAPI) - **Complete API reference with method signatures, parameters, and examples**
 - [EvaporationDissolutionTutorial.md](EvaporationDissolutionTutorial) - Practical tutorial with worked examples
 - [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer) - Theory background
+- [PipelineLiquidEvaporation.md](PipelineLiquidEvaporation) - Dedicated droplet/film completion-distance model and
+  validation limits
+
+## Completion-Distance Audit
+
+The general two-fluid pipeline solver is useful when both phases persist and hydraulic holdup, pressure, and momentum
+coupling are required. It is not a reliable completion-distance metric to interpret a small calculated liquid holdup as
+the remaining fraction of injected material. Holdup also changes with density, velocity, and flow regime.
+
+`PipelineEvaporationStudy` is the recommended path when the engineering question is "how many metres until the injected
+liquid has evaporated?" It retains the Krishna Maxwell-Stefan boundary but adds explicit injected-inventory tracking,
+droplet or wall-film area evolution, conservative component updates, separate phase energy balances, adaptive axial
+steps, and an interpolated mass-based completion criterion. The model reports conservation residuals and warnings.
+
+The automated evidence is equation-level correlation checks, positivity and conservation checks, and short axial
+droplet/film calculations. Absolute completion-distance validation against spray or wetted-wall experiments remains a
+project responsibility; see the validation ladder and Daïf et al. target case in the dedicated documentation.
 
 ## Current Implementation Overview
 
@@ -435,4 +454,3 @@ String report = solver.validateMassTransferAgainstLiterature();
 6. Lamont, J.C., & Scott, D.S. (1970). An eddy cell model of mass transfer into the surface of a turbulent liquid. *AIChE Journal*, 16(4), 513-519.
 
 7. Springer, T.G., & Pigford, R.L. (1970). Influence of surface turbulence and surfactants on gas transport through liquid interfaces. *Industrial & Engineering Chemistry Fundamentals*, 9(3), 458-465.
-

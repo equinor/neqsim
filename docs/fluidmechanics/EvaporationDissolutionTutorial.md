@@ -73,6 +73,11 @@ When one phase is nearly depleted (e.g., last liquid droplets evaporating), nume
 
 ## 2. Complete Liquid Evaporation
 
+> **Completion-distance calculations:** use the dedicated
+> [finite-rate pipeline liquid evaporation model](PipelineLiquidEvaporation). Hydrodynamic liquid holdup is not a
+> remaining-liquid inventory and must not be used to calculate percent evaporated or a completion distance. The older
+> two-fluid example below is retained only to illustrate general non-equilibrium pipe setup.
+
 ### 2.1 Scenario: Water Droplets in Dry Gas
 
 **Physical situation:** Small water droplets carried in a hot, dry methane gas stream. The droplets evaporate as they travel through the pipeline.
@@ -156,48 +161,21 @@ public class WaterEvaporationExample {
                 position, liquidHoldup[i], 1.0 - liquidHoldup[i], temperature[i]);
         }
         
-        // Calculate evaporation progress
-        double inletHoldup = liquidHoldup[0];
-        double outletHoldup = liquidHoldup[numNodes - 1];
-        double evaporationPercent = (inletHoldup - outletHoldup) / inletHoldup * 100;
-        
-        System.out.printf("%nEvaporation: %.1f%% of liquid evaporated%n", evaporationPercent);
-        
-        // Find complete evaporation point
-        for (int i = 0; i < numNodes; i++) {
-            if (liquidHoldup[i] < 1e-6) {
-                double distance = i * pipeLength / (numNodes - 1);
-                System.out.printf("Complete evaporation at: %.1f m%n", distance);
-                break;
-            }
-        }
+        // Holdup is a hydrodynamic result. Do not infer evaporated inventory from it.
+        // Use PipelineEvaporationStudy when the required output is completion distance.
     }
 }
 ```
 
-### 2.3 Expected Results
+### 2.3 Interpreting Results
 
-For this configuration, typical output:
-
-```
-=== Water Evaporation Profile ===
-Position [m]   Liquid Holdup   Gas Fraction   T [K]
---------------------------------------------------
-     0.0      0.000015        0.999985       350.0
-     5.0      0.000012        0.999988       350.0
-    10.0      0.000008        0.999992       350.0
-    15.0      0.000004        0.999996       350.0
-    20.0      0.000001        0.999999       350.0
-    25.0      0.000000        1.000000       350.0
-    ...
-
-Evaporation: 96.5% of liquid evaporated
-Complete evaporation at: 22.5 m
-```
+No fixed completion distance is asserted for this illustrative two-fluid setup. A defensible result requires explicit
+droplet or film area, component inventory tracking, coupled heat transfer, numerical refinement, and validation of the
+thermodynamic and transport inputs. `PipelineEvaporationStudy` supplies those completion-distance-specific elements.
 
 ### 2.4 Key Observations
 
-1. **Exponential decay**: Liquid holdup decreases exponentially (not linearly) because the driving force decreases as the gas becomes more saturated
+1. **Inventory, not holdup**: component flow inventories determine percent evaporated; holdup is a hydraulic state
 
 2. **Temperature effect**: At constant temperature (isothermal case), evaporation is driven purely by concentration difference
 
@@ -220,6 +198,12 @@ Complete evaporation at: 22.5 m
 - Liquid flow: 1200 kg/hr n-decane (large excess)
 
 ### 3.2 Java Implementation
+
+> **Important:** hydrodynamic gas fraction or liquid holdup is not an injected-gas inventory. It cannot be used to
+> calculate percent dissolved or a dissolution completion distance. The general two-fluid example below is useful when
+> pressure drop and holdup are required, but use
+> [`PipelineDissolutionStudy`](PipelineLiquidEvaporation#gas-dissolution-example) for a conservative tracked-inventory
+> completion distance, bubble slip, and a defined incomplete result when gas remains.
 
 ```java
 import neqsim.fluidmechanics.flowsystem.twophaseflowsystem.twophasepipeflowsystem.TwoPhasePipeFlowSystem;
@@ -296,69 +280,35 @@ public class GasDissolutionExample {
                 position, gasFraction, liquidHoldup[i], pressure[i]);
         }
         
-        // Calculate dissolution progress
-        double inletGasFraction = 1.0 - liquidHoldup[0];
-        double outletGasFraction = 1.0 - liquidHoldup[numNodes - 1];
-        double dissolutionPercent = (inletGasFraction - outletGasFraction) / inletGasFraction * 100;
-        
-        System.out.printf("%nDissolution: %.1f%% of gas dissolved%n", dissolutionPercent);
-        
         // Get mass transfer rate
         double massTransferRate = pipe.getTotalMassTransferRate(0);  // methane (component 0)
         System.out.printf("Methane mass transfer rate: %.4f mol/s%n", massTransferRate);
         System.out.println("(Positive = dissolution into liquid)");
-        
-        // Find complete dissolution point
-        for (int i = 0; i < numNodes; i++) {
-            double gasFrac = 1.0 - liquidHoldup[i];
-            if (gasFrac < 0.001) {  // Less than 0.1% gas remaining
-                double distance = i * pipeLength / (numNodes - 1);
-                System.out.printf("Complete dissolution at: %.1f m%n", distance);
-                break;
-            }
-        }
+
+        // Do not infer dissolved inventory or completion distance from liquidHoldup.
+        // Use PipelineDissolutionStudy for that calculation.
     }
 }
 ```
 
-### 3.3 Expected Results
+### 3.3 Result interpretation
 
-For this high-pressure dissolution case:
-
-```
-Number of phases: 2
-Inlet gas fraction: 0.028118
-
-=== Methane Dissolution Profile ===
-Position [m]   Gas Fraction   Liquid Holdup   P [bar]
-----------------------------------------------------
-     0.0      0.028118       0.971882        120.00
-    10.0      0.016401       0.983599        119.99
-    20.0      0.008234       0.991766        119.99
-    30.0      0.004156       0.995844        119.99
-    40.0      0.002089       0.997911        119.99
-    50.0      0.001052       0.998948        119.99
-    60.0      0.000529       0.999471        119.98
-    70.0      0.000266       0.999734        119.98
-    80.0      0.000134       0.999866        119.98
-    90.0      0.000067       0.999933        119.98
-   100.0      0.000034       0.999966        119.98
-
-Dissolution: 99.9% of gas dissolved
-Methane mass transfer rate: 0.6537 mol/s
-(Positive = dissolution into liquid)
-Complete dissolution at: 72.3 m
-```
+The two-fluid result reports hydraulic state and local transfer rates. It does not by itself establish what fraction of
+the initially injected gas remains. For `PipelineDissolutionStudy`, inspect `isCompleteDissolution()` and
+`getCompleteDissolutionDistance()`. When completion is not reached, the distance is `NaN`, the profile extends to the
+configured pipe outlet, and `getRemainingTrackedPhaseFraction()` reports the remaining injected-gas mass fraction.
 
 ### 3.4 Key Observations
 
 1. **High pressure is critical**: At 120 bar, methane has high solubility in n-decane. At 10 bar, dissolution would be much slower.
 
-2. **Exponential approach to saturation**: The dissolution rate slows as the liquid approaches saturation
+2. **Approach to saturation**: The dissolution rate slows as the liquid approaches saturation; complete dissolution may
+   be thermodynamically impossible for the specified liquid inventory and local conditions.
 
 3. **Bubble flow provides large area**: Small bubbles have high surface area per volume, accelerating mass transfer
 
-4. **Sign convention**: Positive mass transfer rate = transfer TO liquid phase
+4. **Sign convention**: Positive mass transfer rate = transfer TO liquid phase. Completion is nevertheless based on the
+   tracked injected-gas inventory, not on the sign of a total flux or on holdup.
 
 ---
 
