@@ -105,7 +105,7 @@ public class GibbsReactor extends TwoPortEquipment {
    * </p>
    *
    * @return element-derived relative mass balance error in percent, or {@link Double#NaN} when no supported element
-   *         inventory is available
+   * inventory is available
    */
   public double getElementMassBalanceError() {
     double elementalMassIn = 0.0;
@@ -346,8 +346,8 @@ public class GibbsReactor extends TwoPortEquipment {
   /**
    * Element molar masses in kg/mol, ordered as O, N, C, H, S, Ar, and charge. The charge entry has zero mass.
    */
-  private static final double[] ELEMENT_MOLAR_MASSES = {0.015999, 0.014007, 0.012011, 0.001008, 0.03206,
-      0.039948, 0.0};
+  private static final double[] ELEMENT_MOLAR_MASSES = { 0.015999, 0.014007, 0.012011, 0.001008, 0.03206, 0.039948,
+      0.0 };
 
   /** Logger object for class. */
   private static final Logger logger = LogManager.getLogger(GibbsReactor.class);
