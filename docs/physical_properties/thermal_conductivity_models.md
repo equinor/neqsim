@@ -6,10 +6,12 @@ description: This guide documents the thermal conductivity calculation methods a
 This guide documents the thermal conductivity calculation methods available in NeqSim for gas, liquid, and multiphase systems.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Available Models](#available-models)
   - [PFCT (Pedersen)](#pfct-pedersen)
   - [Chung Method](#chung-method)
+  - [Chung Dense Method](#chung-dense-method)
   - [Polynomial Correlation](#polynomial-correlation)
   - [CO₂ Reference](#co2-reference)
 - [Model Selection Guide](#model-selection-guide)
@@ -29,10 +31,15 @@ Thermal conductivity ($\lambda$ or $k$) describes a material's ability to conduc
 
 **Setting a conductivity model:**
 ```java
-fluid.initPhysicalProperties();
 fluid.getPhase("gas").getPhysicalProperties().setConductivityModel("Chung");
 fluid.getPhase("oil").getPhysicalProperties().setConductivityModel("PFCT");
+fluid.getPhase("gas").initPhysicalProperties();
+fluid.getPhase("oil").initPhysicalProperties();
 ```
+
+Select the model after the flash and initial property calculation, then reinitialize each changed
+phase as shown. Model keys are case-sensitive. Unsupported keys currently fall back to `PFCT`, so
+use one of the documented keys and cover model selection in tests.
 
 ---
 
@@ -107,6 +114,26 @@ where $G_2$ and $B$ terms account for density effects.
 **Usage:**
 ```java
 fluid.getPhase("gas").getPhysicalProperties().setConductivityModel("Chung");
+fluid.getPhase("gas").initPhysicalProperties();
+```
+
+---
+
+### Chung Dense Method
+
+`Chung-dense` implements the full Chung et al. correlation, including dilute-gas and
+density-dependent contributions. Use it when pressure or liquid-like density makes the dilute
+`Chung` model insufficient.
+
+**Class:** `ChungDenseConductivityMethod`
+
+**Applicable phases:** Gas and liquid
+
+**Usage:**
+
+```java
+fluid.getPhase("gas").getPhysicalProperties().setConductivityModel("Chung-dense");
+fluid.getPhase("gas").initPhysicalProperties();
 ```
 
 ---
@@ -136,20 +163,22 @@ $$\lambda_{mix} = \sum_i x_i \lambda_i$$
 **Usage:**
 ```java
 fluid.getPhase("oil").getPhysicalProperties().setConductivityModel("polynom");
+fluid.getPhase("oil").initPhysicalProperties();
 ```
 
 ---
 
 ### CO2 Reference
 
-High-accuracy thermal conductivity for CO₂ based on the Vesovic et al. correlation.
+Pure-CO₂ thermal conductivity model implemented as a polynomial fit to reference data generated
+with CoolProp. The implementation is checked against NIST values in
+`CO2ConductivityMethodTest` and uses Span-Wagner properties if a usable density is unavailable.
 
 **Class:** `CO2ConductivityMethod`
 
-**Coverage:**
-- Temperature: 200-1500 K
-- Pressure: Up to 300 MPa
-- All phases (gas, liquid, supercritical)
+**Constraint:** The phase must contain pure CO₂. The implementation rejects mixtures; do not use
+`CO2Model` for CO₂-rich multicomponent streams. NeqSim does not enforce a temperature-pressure
+validity envelope for this polynomial, so validate extrapolated states independently.
 
 **Best for:**
 - Pure CO₂ systems
@@ -159,6 +188,7 @@ High-accuracy thermal conductivity for CO₂ based on the Vesovic et al. correla
 **Usage:**
 ```java
 fluid.getPhase("gas").getPhysicalProperties().setConductivityModel("CO2Model");
+fluid.getPhase("gas").initPhysicalProperties();
 ```
 
 ---
@@ -168,11 +198,16 @@ fluid.getPhase("gas").getPhysicalProperties().setConductivityModel("CO2Model");
 | Application | Recommended Model | Notes |
 |-------------|-------------------|-------|
 | Petroleum mixtures | PFCT | Corresponding states with MW correction |
-| Gas processing | Chung | Good for gases |
+| Low-density gas | Chung | Dilute-gas contribution |
+| Dense gas or liquid | Chung-dense | Includes density-dependent contribution |
 | Simple liquid mixtures | polynom | Uses database parameters |
-| Pure CO₂ | CO2Model | High accuracy |
+| Pure CO₂ | CO2Model | Rejects mixtures; validate extrapolation |
 | Wide P-T range | PFCT | Robust extrapolation |
 | Polar systems | Chung | Includes polar corrections |
+
+Additional implemented keys are `friction theory`, `Filippov`, `WaterModel`, and `H2Model`.
+They are specialized models and should be selected only with a composition and phase appropriate
+to the underlying correlation.
 
 ---
 
@@ -182,6 +217,7 @@ fluid.getPhase("gas").getPhysicalProperties().setConductivityModel("CO2Model");
 
 ```java
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 // Create and flash fluid
@@ -199,25 +235,30 @@ fluid.initPhysicalProperties();
 
 // Get thermal conductivity
 double gasConductivity = fluid.getPhase("gas").getThermalConductivity("W/mK");
-System.out.println("Gas thermal conductivity: " + gasConductivity + " W/(m·K)");
+if (!(gasConductivity > 0.0)) {
+    throw new IllegalStateException("Expected positive gas thermal conductivity");
+}
 ```
 
 ### Comparing Conductivity Models
 
 ```java
-String[] models = {"PFCT", "Chung"};
+String[] models = {"PFCT", "Chung-dense"};
+double[] conductivities = new double[models.length];
 
-for (String model : models) {
-    SystemInterface fluid = createFluid();
+for (int i = 0; i < models.length; i++) {
+    SystemInterface fluid = new SystemSrkEos(350.0, 50.0);
+    fluid.addComponent("methane", 0.85);
+    fluid.addComponent("ethane", 0.10);
+    fluid.addComponent("propane", 0.05);
+    fluid.setMixingRule("classic");
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
-    fluid.initPhysicalProperties();
+    fluid.initProperties();
     
-    fluid.getPhase("gas").getPhysicalProperties().setConductivityModel(model);
-    fluid.initPhysicalProperties();
-    
-    double k = fluid.getPhase("gas").getThermalConductivity("W/mK");
-    System.out.println(model + ": " + k + " W/(m·K)");
+    fluid.getPhase("gas").getPhysicalProperties().setConductivityModel(models[i]);
+    fluid.getPhase("gas").initPhysicalProperties();
+    conductivities[i] = fluid.getPhase("gas").getThermalConductivity("W/mK");
 }
 ```
 
@@ -228,18 +269,18 @@ SystemInterface baseFluid = new SystemSrkEos(350.0, 10.0);
 baseFluid.addComponent("methane", 1.0);
 baseFluid.setMixingRule("classic");
 
-double[] pressures = {10, 50, 100, 150, 200};  // bar
+double[] pressuresBara = {10, 50, 100, 150, 200};
+double[] conductivities = new double[pressuresBara.length];
 
-for (double P : pressures) {
+for (int i = 0; i < pressuresBara.length; i++) {
     SystemInterface fluid = baseFluid.clone();
-    fluid.setPressure(P, "bar");
+    fluid.setPressure(pressuresBara[i], "bara");
     
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
     fluid.initPhysicalProperties();
     
-    double k = fluid.getPhase(0).getThermalConductivity("W/mK");
-    System.out.println("P=" + P + " bar: " + k + " W/(m·K)");
+    conductivities[i] = fluid.getPhase(0).getThermalConductivity("W/mK");
 }
 ```
 
@@ -256,14 +297,10 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
 fluid.initPhysicalProperties();
 
-if (fluid.hasPhaseType("gas")) {
-    System.out.println("Gas k: " + 
-        fluid.getPhase("gas").getThermalConductivity("W/mK") + " W/(m·K)");
-}
-if (fluid.hasPhaseType("oil")) {
-    System.out.println("Oil k: " + 
-        fluid.getPhase("oil").getThermalConductivity("W/mK") + " W/(m·K)");
-}
+double gasConductivity = fluid.hasPhaseType("gas")
+    ? fluid.getPhase("gas").getThermalConductivity("W/mK") : Double.NaN;
+double oilConductivity = fluid.hasPhaseType("oil")
+    ? fluid.getPhase("oil").getThermalConductivity("W/mK") : Double.NaN;
 ```
 
 ---
@@ -323,5 +360,6 @@ The PFCT method accounts for this through corresponding states mapping to refere
 
 1. Pedersen, K.S., et al. (1989). Thermal Conductivity of Crude Oils. Chem. Eng. Sci.
 2. Chung, T.H., et al. (1988). Generalized Multiparameter Correlation. I&EC Res.
-3. Vesovic, V., et al. (1990). The Transport Properties of Carbon Dioxide. J. Phys. Chem. Ref. Data.
-4. Poling, B.E., et al. (2001). The Properties of Gases and Liquids, 5th Ed.
+3. Huber, M.L., et al. (2016). New International Formulation for the Thermal Conductivity of CO₂. J. Phys. Chem. Ref. Data.
+4. Scalabrin, G., et al. (2006). A Reference Multiparameter Thermal Conductivity Equation for Carbon Dioxide. J. Phys. Chem. Ref. Data.
+5. Poling, B.E., et al. (2001). The Properties of Gases and Liquids, 5th Ed.
