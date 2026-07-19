@@ -3,7 +3,6 @@ title: NeqSim Troubleshooting Guide
 description: Solutions to common NeqSim problems - convergence issues, density problems, Python integration errors, and more.
 ---
 
-# NeqSim Troubleshooting Guide
 
 Quick solutions to common problems when using NeqSim.
 

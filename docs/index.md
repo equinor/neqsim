@@ -4,7 +4,6 @@ title: NeqSim Documentation
 description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engineering Task Solving in Industry."
 ---
 
-# NeqSim Documentation
 
 **Industrial Agentic Engineering with NeqSim** — AI Agents for Engineering Task Solving in Industry. NeqSim (Non-Equilibrium Simulator) is a comprehensive Java library developed at [NTNU](https://www.ntnu.edu/).
 

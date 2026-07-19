@@ -3,7 +3,6 @@ title: "Benchmark Gallery"
 description: "Validation of NeqSim calculations against reference data from NIST, published literature, and industry standards. Demonstrates accuracy and identifies known limitations."
 ---
 
-# Benchmark Gallery
 
 NeqSim calculations are validated against reference data from NIST, published
 literature, and established commercial simulators. This page summarizes key

@@ -3,7 +3,6 @@ title: Tutorials Index
 description: Step-by-step tutorials and learning paths for mastering NeqSim thermodynamic and process simulation.
 ---
 
-# Tutorials
 
 Structured learning resources to help you master NeqSim.
 

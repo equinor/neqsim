@@ -6,7 +6,6 @@ nav_order: 5
 has_children: true
 ---
 
-# NeqSim Examples
 
 This section contains tutorials, code examples, and Jupyter notebooks demonstrating NeqSim capabilities.
 
@@ -46,7 +45,7 @@ Interactive Python notebooks using NeqSim through [neqsim-python](https://github
 | **TwoFluidPipe Tutorial** | See notebook for details | [Markdown](TwoFluidPipe_Tutorial.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/TwoFluidPipe_Tutorial.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/TwoFluidPipe_Tutorial.ipynb) |
 | **autosize and optimize workflows** | See notebook for details | [Markdown](autosize_and_optimize_workflows.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/autosize_and_optimize_workflows.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/autosize_and_optimize_workflows.ipynb) |
 | **oilgas production energy optimization** | See notebook for details | [Markdown](oilgas_production_energy_optimization.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/oilgas_production_energy_optimization.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/oilgas_production_energy_optimization.ipynb) |
-| **process equipmentutl** | See notebook for details | [Markdown](process equipmentutl.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/process equipmentutl.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/process equipmentutl.ipynb) |
+| **process equipmentutl** | See notebook for details | [Markdown](process%20equipmentutl.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/process%20equipmentutl.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/process%20equipmentutl.ipynb) |
 | **processmodel plant optimization** | See notebook for details | [Markdown](processmodel_plant_optimization.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/processmodel_plant_optimization.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/processmodel_plant_optimization.ipynb) |
 | **reservoir to market optimization** | See notebook for details | [Markdown](reservoir_to_market_optimization.md) \| [nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/reservoir_to_market_optimization.ipynb) \| [Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/reservoir_to_market_optimization.ipynb) |
 

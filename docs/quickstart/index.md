@@ -3,7 +3,6 @@ title: Quick Start Guides
 description: Get up and running with NeqSim in 5 minutes. Quick start guides for Java, Python, and Google Colab with copy-paste examples.
 ---
 
-# Quick Start Guides
 
 Get up and running with NeqSim in 5 minutes! Choose your platform:
 

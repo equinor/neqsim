@@ -5,7 +5,6 @@ nav_order: 7
 description: "NeqSim risk and reliability simulation framework. Covers equipment failure modeling, Monte Carlo simulation, bow-tie analysis, SIS integration, risk matrix, and production impact analysis."
 ---
 
-# Risk Simulation Framework Documentation
 
 This documentation covers NeqSim's comprehensive **Operational Risk Simulation Framework** for equipment failure analysis, production impact assessment, and process topology analysis.
 
@@ -200,4 +199,4 @@ neqsim.process
 - [Examples Index](../examples/index)
 - [OREDA Handbook](https://www.oreda.com/)
 - [ISO 14224 - Petroleum and natural gas industries](https://www.iso.org/standard/64076.html)
-- [NORSOK Z-013 - Risk and emergency preparedness assessment](https://www.standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/z-regularity--emergency/z-0132/)
+- [NORSOK Z-013 - Risk and emergency preparedness assessment](https://standard.no/en/sectors/petroleum/norsok-standards/s-safety-she/)

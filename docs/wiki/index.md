@@ -3,7 +3,6 @@ title: "NeqSim Wiki"
 description: "Welcome to the NeqSim documentation. This comprehensive wiki provides guides, tutorials, and reference materials for using the library and contributing to development."
 ---
 
-# NeqSim Wiki
 
 Welcome to the NeqSim documentation. This comprehensive wiki provides guides, tutorials, and reference materials for using the library and contributing to development.
 
