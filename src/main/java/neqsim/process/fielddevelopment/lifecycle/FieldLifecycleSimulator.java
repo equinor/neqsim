@@ -73,24 +73,22 @@ public class FieldLifecycleSimulator {
       double onlineWaterRate = onlineOilRate * waterCut / Math.max(1.0e-9, 1.0 - waterCut);
       setReservoirProductionRates(model, config, onlineOilRate, onlineWaterRate);
 
-      ProcessRates rates = solveProcessAndAllocateGas(model, config, fieldAgeYears, onlineOilRate,
-          onlineWaterRate);
+      ProcessRates rates = solveProcessAndAllocateGas(model, config, fieldAgeYears, onlineOilRate, onlineWaterRate);
       double operatingDays = dtDays * config.getAvailability();
       double oilVolume = rates.oilRateSm3PerDay * operatingDays;
       double gasExportVolume = rates.gasExportRateSm3PerDay * operatingDays;
       double gasInjectionVolume = rates.gasInjectionRateSm3PerDay * operatingDays;
       double waterVolume = rates.waterRateSm3PerDay * operatingDays;
       double energyMWh = rates.powerKw * 24.0 * operatingDays / 1000.0;
-      double emissionsTonnes = rates.powerKw * 24.0 * operatingDays
-          * config.getGridEmissionFactorKgPerKWh() / 1000.0;
+      double emissionsTonnes = rates.powerKw * 24.0 * operatingDays * config.getGridEmissionFactorKgPerKWh() / 1000.0;
 
       AnnualAccumulator accumulator = annual.get(calendarYear);
       if (accumulator == null) {
         accumulator = new AnnualAccumulator(calendarYear);
         annual.put(calendarYear, accumulator);
       }
-      accumulator.add(dtDays, oilVolume, gasExportVolume, gasInjectionVolume, waterVolume, waterCut,
-          reservoirPressure, energyMWh, emissionsTonnes);
+      accumulator.add(dtDays, oilVolume, gasExportVolume, gasInjectionVolume, waterVolume, waterCut, reservoirPressure,
+          energyMWh, emissionsTonnes);
 
       model.getReservoir().runTransient(operatingDays * SECONDS_PER_DAY);
       elapsedDays += dtDays;
@@ -126,8 +124,7 @@ public class FieldLifecycleSimulator {
   private double calculateConstrainedOilRate(FieldLifecycleConfiguration config, double fieldAgeYears,
       double reservoirPressureBara) {
     double drawdown = Math.max(0.0, reservoirPressureBara - config.getMinimumBottomHolePressureBara());
-    double wellDeliverability = config.getProducerCount()
-        * config.getProductivityIndexSm3PerDayBarPerWell() * drawdown;
+    double wellDeliverability = config.getProducerCount() * config.getProductivityIndexSm3PerDayBarPerWell() * drawdown;
     double waterCut = config.getWaterCut(fieldAgeYears);
     double rate = Math.min(config.getPlateauOilRateSm3PerDay(), wellDeliverability);
     rate = Math.min(rate, config.getMaximumLiquidRateSm3PerDay() * (1.0 - waterCut));
@@ -150,23 +147,21 @@ public class FieldLifecycleSimulator {
     double injectionFraction = fieldAgeYears >= config.getGasInjectionStartYear()
         ? config.getProducedGasRecycleFraction()
         : 0.0;
-    model.getGasAllocationSplitter().setSplitFactors(new double[] {1.0 - injectionFraction, injectionFraction});
+    model.getGasAllocationSplitter().setSplitFactors(new double[] { 1.0 - injectionFraction, injectionFraction });
     double rateScale = runProcessWithRateFallback(model, config, oilRateSm3PerDay, waterRateSm3PerDay);
 
     double recoveredGasRate = nonNegativeFlow(model.getRecoveredGas(), "Sm3/day");
-    double injectionRate = Math.min(recoveredGasRate * injectionFraction,
-        config.getMaximumGasInjectionRateSm3PerDay());
+    double injectionRate = Math.min(recoveredGasRate * injectionFraction, config.getMaximumGasInjectionRateSm3PerDay());
     double actualInjectionFraction = recoveredGasRate > 0.0 ? injectionRate / recoveredGasRate : 0.0;
     model.getGasAllocationSplitter()
-        .setSplitFactors(new double[] {1.0 - actualInjectionFraction, actualInjectionFraction});
+        .setSplitFactors(new double[] { 1.0 - actualInjectionFraction, actualInjectionFraction });
     model.getProcessSystem().run();
 
     synchronizeInjectionStream(model, injectionRate);
     double stabilizedOilRate = stockTankOilRate(model.getStabilizedOilExport());
     double gasExportRate = nonNegativeFlow(model.getGasExport(), "Sm3/day");
     double powerKw = Math.max(0.0, model.getProcessSystem().getPower("kW"));
-    return new ProcessRates(stabilizedOilRate, gasExportRate, injectionRate,
-        waterRateSm3PerDay * rateScale, powerKw);
+    return new ProcessRates(stabilizedOilRate, gasExportRate, injectionRate, waterRateSm3PerDay * rateScale, powerKw);
   }
 
   private double runProcessWithRateFallback(FieldLifecycleModel model, FieldLifecycleConfiguration config,
@@ -243,8 +238,7 @@ public class FieldLifecycleSimulator {
       economics.addCapex(capex.getValue(), capex.getKey());
     }
     for (FieldLifecycleResult.AnnualResult result : annualResults) {
-      economics.addAnnualProduction(result.getYear(), result.getOilSm3() * BBL_PER_SM3,
-          result.getGasExportSm3(), 0.0);
+      economics.addAnnualProduction(result.getYear(), result.getOilSm3() * BBL_PER_SM3, result.getGasExportSm3(), 0.0);
     }
     return economics;
   }
@@ -256,8 +250,8 @@ public class FieldLifecycleSimulator {
     private final double waterRateSm3PerDay;
     private final double powerKw;
 
-    private ProcessRates(double oilRateSm3PerDay, double gasExportRateSm3PerDay,
-        double gasInjectionRateSm3PerDay, double waterRateSm3PerDay, double powerKw) {
+    private ProcessRates(double oilRateSm3PerDay, double gasExportRateSm3PerDay, double gasInjectionRateSm3PerDay,
+        double waterRateSm3PerDay, double powerKw) {
       this.oilRateSm3PerDay = oilRateSm3PerDay;
       this.gasExportRateSm3PerDay = gasExportRateSm3PerDay;
       this.gasInjectionRateSm3PerDay = gasInjectionRateSm3PerDay;
@@ -282,8 +276,8 @@ public class FieldLifecycleSimulator {
       this.year = year;
     }
 
-    private void add(double days, double oil, double gasExport, double gasInjected, double water,
-        double waterCut, double pressure, double energy, double emissions) {
+    private void add(double days, double oil, double gasExport, double gasInjected, double water, double waterCut,
+        double pressure, double energy, double emissions) {
       calendarDays += days;
       oilSm3 += oil;
       gasExportSm3 += gasExport;
@@ -297,8 +291,8 @@ public class FieldLifecycleSimulator {
 
     private FieldLifecycleResult.AnnualResult toResult() {
       double days = Math.max(1.0e-12, calendarDays);
-      return new FieldLifecycleResult.AnnualResult(year, oilSm3, gasExportSm3, gasInjectedSm3, waterSm3,
-          oilSm3 / days, waterCutDays / days, pressureDays / days, energyMWh, emissionsTonnes);
+      return new FieldLifecycleResult.AnnualResult(year, oilSm3, gasExportSm3, gasInjectedSm3, waterSm3, oilSm3 / days,
+          waterCutDays / days, pressureDays / days, energyMWh, emissionsTonnes);
     }
   }
 }

@@ -29,9 +29,9 @@ public final class FieldLifecycleResult implements Serializable {
     private final double energyMWh;
     private final double co2EmissionsTonnes;
 
-    AnnualResult(int year, double oilSm3, double gasExportSm3, double gasInjectedSm3,
-        double waterProducedSm3, double averageOilRateSm3PerDay, double averageWaterCut,
-        double averageReservoirPressureBara, double energyMWh, double co2EmissionsTonnes) {
+    AnnualResult(int year, double oilSm3, double gasExportSm3, double gasInjectedSm3, double waterProducedSm3,
+        double averageOilRateSm3PerDay, double averageWaterCut, double averageReservoirPressureBara, double energyMWh,
+        double co2EmissionsTonnes) {
       this.year = year;
       this.oilSm3 = oilSm3;
       this.gasExportSm3 = gasExportSm3;
@@ -111,10 +111,10 @@ public final class FieldLifecycleResult implements Serializable {
   private final String stopReason;
 
   FieldLifecycleResult(String conceptName, List<AnnualResult> annualResults, CashFlowResult cashFlowResult,
-      double breakevenOilPriceUsdPerBbl, double breakevenGasPriceUsdPerSm3,
-      double initialReservoirPressureBara, double finalReservoirPressureBara, double cumulativeOilSm3,
-      double cumulativeGasExportSm3, double cumulativeGasInjectedSm3, double cumulativeWaterProducedSm3,
-      double lifecycleEnergyMWh, double lifecycleCo2Tonnes, String stopReason) {
+      double breakevenOilPriceUsdPerBbl, double breakevenGasPriceUsdPerSm3, double initialReservoirPressureBara,
+      double finalReservoirPressureBara, double cumulativeOilSm3, double cumulativeGasExportSm3,
+      double cumulativeGasInjectedSm3, double cumulativeWaterProducedSm3, double lifecycleEnergyMWh,
+      double lifecycleCo2Tonnes, String stopReason) {
     this.conceptName = conceptName;
     this.annualResults = Collections.unmodifiableList(new ArrayList<AnnualResult>(annualResults));
     this.cashFlowResult = cashFlowResult;
@@ -223,7 +223,7 @@ public final class FieldLifecycleResult implements Serializable {
    */
   public String toMarkdownRow() {
     return String.format("| %s | %.0f | %.1f | %.1f | %.1f | %.1f | %.1f |", conceptName, getNpvMusd(),
-        getIrr() * 100.0, breakevenOilPriceUsdPerBbl, cumulativeOilSm3 / 1.0e6,
-        cumulativeGasInjectedSm3 / 1.0e9, lifecycleCo2Tonnes / 1000.0);
+        getIrr() * 100.0, breakevenOilPriceUsdPerBbl, cumulativeOilSm3 / 1.0e6, cumulativeGasInjectedSm3 / 1.0e9,
+        lifecycleCo2Tonnes / 1000.0);
   }
 }

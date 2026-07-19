@@ -10,8 +10,8 @@ import java.util.Map;
  *
  * <p>
  * The configuration deliberately separates assumptions from the assembled NeqSim model. This makes it possible to
- * compare development concepts on a common basis while retaining a detailed thermodynamic, reservoir and process
- * model for each concept.
+ * compare development concepts on a common basis while retaining a detailed thermodynamic, reservoir and process model
+ * for each concept.
  * </p>
  *
  * @author ESOL
@@ -81,8 +81,7 @@ public final class FieldLifecycleConfiguration implements Serializable {
     variableOpexUsdPerBoe = builder.variableOpexUsdPerBoe;
     oilTariffUsdPerBbl = builder.oilTariffUsdPerBbl;
     gasTariffUsdPerSm3 = builder.gasTariffUsdPerSm3;
-    capexScheduleMusd = Collections
-        .unmodifiableMap(new LinkedHashMap<Integer, Double>(builder.capexScheduleMusd));
+    capexScheduleMusd = Collections.unmodifiableMap(new LinkedHashMap<Integer, Double>(builder.capexScheduleMusd));
   }
 
   /**
@@ -431,8 +430,7 @@ public final class FieldLifecycleConfiguration implements Serializable {
       if (finalWaterCut < initialWaterCut) {
         throw new IllegalArgumentException("finalWaterCut cannot be below initialWaterCut");
       }
-      requirePositive(productivityIndexSm3PerDayBarPerWell,
-          "productivityIndexSm3PerDayBarPerWell");
+      requirePositive(productivityIndexSm3PerDayBarPerWell, "productivityIndexSm3PerDayBarPerWell");
       requirePositive(minimumBottomHolePressureBara, "minimumBottomHolePressureBara");
       requirePositive(plateauOilRateSm3PerDay, "plateauOilRateSm3PerDay");
       requirePositive(maximumLiquidRateSm3PerDay, "maximumLiquidRateSm3PerDay");

@@ -40,8 +40,8 @@ class NorwegianOilFieldLifecycleTest extends neqsim.NeqSimTest {
   @Test
   void evaluatorRanksIndependentConceptsAndExportsComparisonTable() {
     FieldLifecycleEvaluator evaluator = new FieldLifecycleEvaluator();
-    List<FieldLifecycleResult> results = evaluator.evaluateAll(Arrays.asList(
-        NorwegianOilFieldCase.createGasInjectionCase(), NorwegianOilFieldCase.createNaturalDepletionCase()));
+    List<FieldLifecycleResult> results = evaluator.evaluateAll(Arrays
+        .asList(NorwegianOilFieldCase.createGasInjectionCase(), NorwegianOilFieldCase.createNaturalDepletionCase()));
 
     assertEquals(2, results.size());
     assertTrue(results.get(0).getNpvMusd() >= results.get(1).getNpvMusd());
@@ -53,8 +53,8 @@ class NorwegianOilFieldLifecycleTest extends neqsim.NeqSimTest {
 
   @Test
   void configurationAppliesWaterBreakthroughAndValidatesFractions() {
-    FieldLifecycleConfiguration configuration = FieldLifecycleConfiguration.builder()
-        .waterCut(0.05, 0.65, 2.0, 10.0).build();
+    FieldLifecycleConfiguration configuration = FieldLifecycleConfiguration.builder().waterCut(0.05, 0.65, 2.0, 10.0)
+        .build();
 
     assertEquals(0.05, configuration.getWaterCut(1.0), 1.0e-12);
     assertEquals(0.35, configuration.getWaterCut(7.0), 1.0e-12);
