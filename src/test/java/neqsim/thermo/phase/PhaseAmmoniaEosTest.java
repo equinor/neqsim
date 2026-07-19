@@ -7,6 +7,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemAmmoniaEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.exception.IsNaNException;
 
 /**
  * Simple sanity check for the {@link PhaseAmmoniaEos} implementation.
@@ -78,7 +79,7 @@ class PhaseAmmoniaEosTest {
   }
 
   @Test
-  void testBubblePointPressureAgainstReferenceEquation() {
+  void testBubblePointPressureAgainstReferenceEquation() throws IsNaNException {
     double[] temperatures = {260.0, 280.0, 300.0, 320.0};
     double[] expectedPressures = {
         2.552457115844972, 5.507043744582428, 10.611215021486935, 18.71755110160696};
