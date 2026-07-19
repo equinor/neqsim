@@ -4,8 +4,6 @@ description: "NeqSim computes phase and mixture properties after thermodynamic i
 keywords: "physical properties, transport properties, viscosity, thermal conductivity, surface tension, diffusion coefficient, density, Cp, Cv, speed of sound"
 ---
 
-# Physical Property Calculations
-
 NeqSim computes phase and mixture properties after thermodynamic initialization. This guide highlights the most used methods and how to choose appropriate models.
 
 ## Density and Compressibility
