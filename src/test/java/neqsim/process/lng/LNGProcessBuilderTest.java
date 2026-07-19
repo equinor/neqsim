@@ -34,6 +34,12 @@ class LNGProcessBuilderTest {
     assertNotNull(model.getProcessSystem());
     assertNotNull(model.getFeedStream());
     assertNotNull(model.getProductStream());
+    assertNotNull(model.getFlashGasStream());
+    assertSame(model.getProductStream(),
+        model.getOutputStream(LNGProcessModel.LNG_OUTPUT));
+    assertSame(model.getFlashGasStream(),
+        model.getOutputStream(LNGProcessModel.FLASH_GAS_OUTPUT));
+    assertEquals(2, model.getOutputStreams().size());
     assertTrue(model.getCompressors().size() >= 2);
     assertTrue(model.getCryogenicHeatExchangers().size() >= 1);
 
@@ -79,6 +85,8 @@ class LNGProcessBuilderTest {
     assertSame(feed, model.getFeedStream());
     feed.setFlowRate(30000.0, "kg/hr");
     assertEquals(30000.0, model.getFeedStream().getFlowRate("kg/hr"), 1.0e-9);
+    model.registerOutputStream("CUSTOM_PRODUCT", feed);
+    assertSame(feed, model.getOutputStream("CUSTOM_PRODUCT"));
   }
 
   @Test
