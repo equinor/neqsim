@@ -104,4 +104,3 @@ public final class FacilityModificationPlan implements Serializable {
     return table.toString();
   }
 }
-
