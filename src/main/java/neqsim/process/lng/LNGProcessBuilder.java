@@ -361,6 +361,8 @@ public class LNGProcessBuilder {
 
     ThrottlingValve mrValve = new ThrottlingValve(name + " MR JT valve", mche.getOutStream(1));
     mrValve.setOutletPressure(3.0, "bara");
+    initializeExpansionInlet(mche.getOutStream(1), -150.0, 30.0);
+    mrValve.run();
     mche.addInStreamMSHE(mrValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
 
@@ -409,6 +411,8 @@ public class LNGProcessBuilder {
 
     ThrottlingValve mrValve = new ThrottlingValve(name + " MR JT valve", mche.getOutStream(1));
     mrValve.setOutletPressure(4.0, "bara");
+    initializeExpansionInlet(mche.getOutStream(1), -150.0, 45.0);
+    mrValve.run();
     mche.addInStreamMSHE(mrValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
     context.process.add(mche);
@@ -459,6 +463,8 @@ public class LNGProcessBuilder {
 
     ThrottlingValve coldValve = new ThrottlingValve(name + " cold MR JT valve", mche.getOutStream(1));
     coldValve.setOutletPressure(3.0, "bara");
+    initializeExpansionInlet(mche.getOutStream(1), -150.0, 38.0);
+    coldValve.run();
     mche.addInStreamMSHE(coldValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
     context.process.add(mche);
@@ -489,6 +495,8 @@ public class LNGProcessBuilder {
     Expander expander = new Expander(name + " nitrogen expander", mche.getOutStream(1));
     expander.setOutletPressure(8.0, "bara");
     expander.setIsentropicEfficiency(expanderEfficiency);
+    initializeExpansionInlet(mche.getOutStream(1), -105.0, 55.0);
+    expander.run();
     context.expanders.add(expander);
     mche.addInStreamMSHE(expander.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
@@ -647,6 +655,26 @@ public class LNGProcessBuilder {
     exchanger.setTemperatureApproach(minimumApproachC);
     exchanger.setFlowMaldistributionFactor(0.97);
     return exchanger;
+  }
+
+  /**
+   * Initializes the high-pressure exchanger outlet before its expansion device is first evaluated.
+   *
+   * <p>
+   * The main exchanger and its downstream valve or expander form a recycle loop. The exchanger executes first in
+   * insertion order, so its cold-side inlet needs a thermodynamically consistent first-iteration state. The normal unit
+   * operations overwrite this seed as the recycle converges.
+   * </p>
+   *
+   * @param highPressureStream exchanger outlet feeding the expansion device
+   * @param temperatureC specified exchanger outlet temperature in Celsius
+   * @param pressureBara high-side pressure in bara
+   */
+  private void initializeExpansionInlet(StreamInterface highPressureStream, double temperatureC,
+      double pressureBara) {
+    highPressureStream.setTemperature(temperatureC, "C");
+    highPressureStream.setPressure(pressureBara, "bara");
+    highPressureStream.run();
   }
 
   /**
