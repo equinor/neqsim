@@ -254,4 +254,3 @@ public final class FieldProductSpecifications implements Serializable {
     }
   }
 }
-
