@@ -1,7 +1,7 @@
 ---
 name: neqsim-field-economics
 description: "Oil & gas field economics, NPV, IRR, cash flow, and fiscal regime modeling with NeqSim. USE WHEN: calculating project economics (NPV, IRR, payback), evaluating tax regimes (Norwegian NCS, UK, generic), building cost estimates (CAPEX/OPEX), or running Monte Carlo sensitivity analysis on economic outcomes."
-last_verified: "2026-07-04"
+last_verified: "2026-07-19"
 ---
 
 # NeqSim Field Economics Skill
@@ -82,6 +82,13 @@ double adjustedCost = baseCost * factors.getCostMultiplier();
 ---
 
 ## Cash Flow Engine
+
+### Direct Lifecycle Integration
+
+`FieldLifecycleSimulator` aggregates live NeqSim reservoir/process results by calendar year and feeds oil and export
+gas volumes directly to `CashFlowEngine("NO")`. `FieldLifecycleResult` exposes after-tax NPV, IRR, payback and
+break-even oil/gas prices together with the technical production, injection, energy and emissions profiles. Use this
+route when economics must reflect process capacity and reservoir response rather than an independent decline curve.
 
 ### Basic Usage
 

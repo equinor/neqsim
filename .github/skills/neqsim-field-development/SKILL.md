@@ -1,7 +1,7 @@
 ---
 name: neqsim-field-development
 description: "Field development workflows, concept selection, and integrated project evaluation using NeqSim. USE WHEN: performing field development studies, concept screening, tieback analysis, production forecasting, or integrated field planning. Covers the full lifecycle from discovery through operations with NeqSim's field development classes."
-last_verified: "2026-07-04"
+last_verified: "2026-07-19"
 ---
 
 # NeqSim Field Development Skill
@@ -116,6 +116,22 @@ for (ConceptKPIs kpi : results) {
 }
 List<ConceptKPIs> ranked = ranker.rankByNPV();
 ```
+
+### Physically Coupled Lifetime Comparison
+
+Use `process.fielddevelopment.lifecycle` after rapid screening when reservoir pressure, well/SURF hydraulics,
+processing capacity, gas injection and economics must share one time-dependent state:
+
+```java
+FieldLifecycleEvaluator evaluator = new FieldLifecycleEvaluator();
+List<FieldLifecycleResult> ranked = evaluator.evaluateAll(Arrays.asList(
+    NorwegianOilFieldCase.createGasInjectionCase(),
+    NorwegianOilFieldCase.createNaturalDepletionCase()));
+```
+
+`FieldLifecycleModel` accepts a normal user-built `ProcessSystem`, so screening concepts can be refined without
+replacing the lifecycle/economic interface. Each concept must own an independent mutable reservoir/process model.
+See `docs/fielddevelopment/FIELD_LIFECYCLE_SIMULATION.md` for the connection points and fidelity boundaries.
 
 ---
 

@@ -19,6 +19,7 @@ This folder contains comprehensive documentation for NeqSim's field development 
 | [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS) | Decision-engine workflows for tiebacks, greenfield concepts, portfolios, process coupling, reservoir exports, and report-ready tables |
 | [HOST_TIE_IN_CAPACITY.md](HOST_TIE_IN_CAPACITY) | Host capacity, holdback, process-equipment bottlenecks, and debottleneck decisions for brownfield tiebacks |
 | [INTEGRATED_PRODUCTION_MODELLING.md](INTEGRATED_PRODUCTION_MODELLING) | **Reservoir-to-market IPM** &mdash; reservoir drives, well deliverability curves, network solver, gas-lift allocation, well-test matching, artificial-lift pumps, and choke optimisation (GAP/PROSPER/MBAL + Pipesim style) |
+| [FIELD_LIFECYCLE_SIMULATION.md](FIELD_LIFECYCLE_SIMULATION) | Time-marching oil-field concepts with process constraints, gas injection, emissions, NPV and break-even |
 
 ---
 
@@ -108,6 +109,9 @@ neqsim.process.fielddevelopment/
 ├── facility/          # Process generation
 │   ├── ConceptToProcessLinker
 │   └── FacilityBuilder
+├── lifecycle/         # Executable reservoir-to-market lifetime concepts
+│   ├── FieldLifecycleSimulator
+│   └── NorwegianOilFieldCase
 ├── network/           # Pipeline network
 │   ├── MultiphaseFlowIntegrator
 │   └── NetworkSolver
@@ -268,6 +272,7 @@ See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT) for detailed
 
 | Topic | Document |
 |-------|----------|
+| Integrated Field Lifecycle Simulation | [FIELD_LIFECYCLE_SIMULATION.md](FIELD_LIFECYCLE_SIMULATION) |
 | SURF Subsea Equipment | [SURF_SUBSEA_EQUIPMENT.md](../process/SURF_SUBSEA_EQUIPMENT) |
 | Late-Life Operations | [LATE_LIFE_OPERATIONS.md](LATE_LIFE_OPERATIONS) |
 | Field Development Strategy | [FIELD_DEVELOPMENT_STRATEGY.md](FIELD_DEVELOPMENT_STRATEGY) |
