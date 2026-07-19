@@ -1190,11 +1190,13 @@ retained for compatibility, while the evidence-bearing API separates feedstock d
 
 **Legacy substrate types:** `FOOD_WASTE`, `SEWAGE_SLUDGE`, `MANURE`, `CROP_RESIDUE`, `ENERGY_CROP`, and `CUSTOM`.
 
-Two conversion models are available:
+Three conversion-model levels are available:
 
 - `EmpiricalYieldDigestionModel` uses prescribed VS destruction and methane yield for screening.
 - `FirstOrderHydrolysisDigestionModel` calculates conversion from maximum degradability, hydrolysis rate, hydraulic
   retention time, and a bounded temperature correction.
+- `CalibratedFirstOrderHydrolysisDigestionModel` applies fitted kinetic parameters, an evidence reference, and explicit
+  retention-time and temperature validity ranges.
 
 The first-order model uses:
 
@@ -1237,6 +1239,26 @@ double carbonClosure = ledger.getCarbonClosureFraction();
 ModelFidelity fidelity = ledger.getFidelity();
 List<String> warnings = ledger.getWarnings();
 ```
+
+Fit the first-order model to measured volatile-solids destruction at two or more distinct retention times:
+
+```java
+FirstOrderHydrolysisModelCalibrator calibrator = new FirstOrderHydrolysisModelCalibrator();
+calibrator.addObservation(10.0, 308.15, 0.40); // HRT days, temperature K, measured VS destruction
+calibrator.addObservation(20.0, 308.15, 0.57);
+calibrator.addObservation(30.0, 308.15, 0.64);
+
+CalibrationResult calibration = calibrator.calibrate("pilot campaign A, reconciled VS balance");
+CalibratedFirstOrderHydrolysisDigestionModel calibratedModel = calibration.getModel();
+digester.setDigestionModel(calibratedModel);
+```
+
+The calibrator fits maximum degradability and the first-order hydrolysis rate by deterministic least squares and reports
+RMSE, R-squared, and whether the rate reached a configured search boundary. A calibrated label requires a non-empty
+evidence reference. Calculations outside the observed retention-time or temperature range remain executable but carry
+extrapolation warnings. Use measured, reconciled VS destruction for fitting; fitting methane production alone confounds
+kinetics with methane-yield uncertainty. Temperature-only variation at one retention time does not identify both fitted
+parameters.
 
 The thermodynamic digestate stream represents the aqueous carrier. Nonvolatile residual solids are reported explicitly
 in `AnaerobicDigestionResult.getDigestateSolidsKgPerDay()` because they are not conventional fluid components.

@@ -31,4 +31,13 @@ public interface AnaerobicDigestionModel extends Serializable {
    * @return model identifier
    */
   String getModelIdentifier();
+
+  /**
+   * Returns a traceable calibration or model-evidence reference when available.
+   *
+   * @return evidence reference, or an empty string for uncalibrated models
+   */
+  default String getEvidenceReference() {
+    return "";
+  }
 }

@@ -8,9 +8,9 @@ import neqsim.thermo.characterization.BioFeedstock;
  * Engineering screening model with first-order hydrolysis and a bounded temperature correction.
  *
  * <p>
- * The model calculates volatile-solids destruction as
- * {@code X = Xmax * (1 - exp(-k * theta)) * fT}. It represents residence-time and feed-preparation effects without
- * claiming the acid-base, inhibition, or population detail of a full anaerobic-digestion state model.
+ * The model calculates volatile-solids destruction as {@code X = Xmax * (1 - exp(-k * theta)) * fT}. It represents
+ * residence-time and feed-preparation effects without claiming the acid-base, inhibition, or population detail of a
+ * full anaerobic-digestion state model.
  * </p>
  *
  * @author NeqSim team
@@ -42,7 +42,7 @@ public class FirstOrderHydrolysisDigestionModel extends EmpiricalYieldDigestionM
   /** {@inheritDoc} */
   @Override
   public AnaerobicDigestionResult calculate(AnaerobicDigestionInput input) {
-    BioFeedstock feedstock = input.getFeedstock();
+    BioFeedstock feedstock = getEffectiveFeedstock(input);
     double feedKgPerDay = input.getWetFeedRateKgPerHr() * 24.0;
     double totalSolids = feedKgPerDay * feedstock.getTotalSolidsFraction();
     double volatileSolids = totalSolids * feedstock.getVolatileSolidsFraction();
@@ -67,10 +67,36 @@ public class FirstOrderHydrolysisDigestionModel extends EmpiricalYieldDigestionM
     double h2s = calculateHydrogenSulfide(input, totalSolids);
     double feedCarbon = totalSolids * feedstock.getCarbonFraction();
 
+    List<String> warnings = getCalculationWarnings(input);
+    return new AnaerobicDigestionResult(getModelIdentifier(), getFidelity(), getEvidenceReference(), feedKgPerDay,
+        totalSolids, volatileSolids, destroyedVs, methane, carbonDioxide, h2s, methaneFraction, feedCarbon, warnings);
+  }
+
+  /**
+   * Returns the feedstock parameters used by the kinetic calculation.
+   *
+   * <p>
+   * Subclasses may return an independent copy carrying fitted parameters. The caller's characterization must not be
+   * mutated.
+   * </p>
+   *
+   * @param input digestion input
+   * @return effective feedstock characterization
+   */
+  protected BioFeedstock getEffectiveFeedstock(AnaerobicDigestionInput input) {
+    return input.getFeedstock();
+  }
+
+  /**
+   * Returns qualification warnings attached to a calculation.
+   *
+   * @param input digestion input
+   * @return mutable warning list
+   */
+  protected List<String> getCalculationWarnings(AnaerobicDigestionInput input) {
     List<String> warnings = new ArrayList<String>();
     warnings.add("First-order model requires calibration of hydrolysis rate and maximum degradability");
-    return new AnaerobicDigestionResult(getModelIdentifier(), getFidelity(), feedKgPerDay, totalSolids, volatileSolids,
-        destroyedVs, methane, carbonDioxide, h2s, methaneFraction, feedCarbon, warnings);
+    return warnings;
   }
 
   /** {@inheritDoc} */

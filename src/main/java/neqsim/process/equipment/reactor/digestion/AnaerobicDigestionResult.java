@@ -37,6 +37,8 @@ public class AnaerobicDigestionResult implements Serializable {
   private final String modelIdentifier;
   /** Model fidelity. */
   private final ModelFidelity fidelity;
+  /** Traceable model calibration or evidence reference. */
+  private final String modelEvidenceReference;
   /** Wet feed in kg/day. */
   private final double wetFeedKgPerDay;
   /** Total solids in kg/day. */
@@ -86,8 +88,35 @@ public class AnaerobicDigestionResult implements Serializable {
       double totalSolidsKgPerDay, double volatileSolidsKgPerDay, double destroyedVsKgPerDay, double methaneNm3PerDay,
       double carbonDioxideNm3PerDay, double hydrogenSulfideNm3PerDay, double methaneFraction, double feedCarbonKgPerDay,
       List<String> warnings) {
+    this(modelIdentifier, fidelity, "", wetFeedKgPerDay, totalSolidsKgPerDay, volatileSolidsKgPerDay,
+        destroyedVsKgPerDay, methaneNm3PerDay, carbonDioxideNm3PerDay, hydrogenSulfideNm3PerDay, methaneFraction,
+        feedCarbonKgPerDay, warnings);
+  }
+
+  /**
+   * Creates an evidence-bearing digestion result and calculates conservation diagnostics.
+   *
+   * @param modelIdentifier model identifier
+   * @param fidelity model fidelity
+   * @param modelEvidenceReference calibration or model-evidence reference
+   * @param wetFeedKgPerDay wet feed in kg/day
+   * @param totalSolidsKgPerDay total solids in kg/day
+   * @param volatileSolidsKgPerDay volatile solids in kg/day
+   * @param destroyedVsKgPerDay destroyed volatile solids in kg/day
+   * @param methaneNm3PerDay methane in Nm3/day
+   * @param carbonDioxideNm3PerDay carbon dioxide in Nm3/day
+   * @param hydrogenSulfideNm3PerDay hydrogen sulfide in Nm3/day
+   * @param methaneFraction dry-gas methane fraction
+   * @param feedCarbonKgPerDay carbon entering in kg/day
+   * @param warnings calculation warnings
+   */
+  public AnaerobicDigestionResult(String modelIdentifier, ModelFidelity fidelity, String modelEvidenceReference,
+      double wetFeedKgPerDay, double totalSolidsKgPerDay, double volatileSolidsKgPerDay, double destroyedVsKgPerDay,
+      double methaneNm3PerDay, double carbonDioxideNm3PerDay, double hydrogenSulfideNm3PerDay, double methaneFraction,
+      double feedCarbonKgPerDay, List<String> warnings) {
     this.modelIdentifier = modelIdentifier;
     this.fidelity = fidelity;
+    this.modelEvidenceReference = modelEvidenceReference == null ? "" : modelEvidenceReference;
     this.wetFeedKgPerDay = wetFeedKgPerDay;
     this.totalSolidsKgPerDay = totalSolidsKgPerDay;
     this.volatileSolidsKgPerDay = volatileSolidsKgPerDay;
@@ -131,6 +160,7 @@ public class AnaerobicDigestionResult implements Serializable {
     Map<String, Object> values = new LinkedHashMap<String, Object>();
     values.put("modelIdentifier", modelIdentifier);
     values.put("modelFidelity", fidelity.name());
+    values.put("modelEvidenceReference", modelEvidenceReference);
     values.put("wetFeed_kgPerDay", wetFeedKgPerDay);
     values.put("totalSolids_kgPerDay", totalSolidsKgPerDay);
     values.put("volatileSolids_kgPerDay", volatileSolidsKgPerDay);
@@ -156,6 +186,11 @@ public class AnaerobicDigestionResult implements Serializable {
   /** @return model fidelity */
   public ModelFidelity getFidelity() {
     return fidelity;
+  }
+
+  /** @return calibration or model-evidence reference, or an empty string when unavailable */
+  public String getModelEvidenceReference() {
+    return modelEvidenceReference;
   }
 
   /** @return wet feed in kg/day */

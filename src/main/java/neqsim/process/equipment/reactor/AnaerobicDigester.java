@@ -729,6 +729,7 @@ public class AnaerobicDigester extends Fermenter {
     if (digestionResult != null) {
       results.put("digestionModel", digestionResult.getModelIdentifier());
       results.put("modelFidelity", digestionResult.getFidelity().name());
+      results.put("modelEvidenceReference", digestionResult.getModelEvidenceReference());
       results.put("dryMassClosureFraction", digestionResult.getMassClosureFraction());
       results.put("carbonClosureFraction", digestionResult.getCarbonClosureFraction());
       results.put("digestateSolids_kgPerDay", digestionResult.getDigestateSolidsKgPerDay());

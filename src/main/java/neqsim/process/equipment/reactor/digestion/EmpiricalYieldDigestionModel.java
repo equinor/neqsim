@@ -38,8 +38,8 @@ public class EmpiricalYieldDigestionModel implements AnaerobicDigestionModel {
 
     List<String> warnings = new ArrayList<String>();
     warnings.add("Screening model uses prescribed conversion and yield; calibrate before design use");
-    return new AnaerobicDigestionResult(getModelIdentifier(), getFidelity(), feedKgPerDay, totalSolids, volatileSolids,
-        destroyedVs, methane, carbonDioxide, h2s, methaneFraction, feedCarbon, warnings);
+    return new AnaerobicDigestionResult(getModelIdentifier(), getFidelity(), getEvidenceReference(), feedKgPerDay,
+        totalSolids, volatileSolids, destroyedVs, methane, carbonDioxide, h2s, methaneFraction, feedCarbon, warnings);
   }
 
   /**

@@ -384,6 +384,7 @@ public class BiogasToGridModule extends ProcessModule {
     if (digester != null && digester.getDigestionResult() != null) {
       results.put("digestionModel", digester.getDigestionResult().getModelIdentifier());
       results.put("modelFidelity", digester.getDigestionResult().getFidelity().name());
+      results.put("modelEvidenceReference", digester.getDigestionResult().getModelEvidenceReference());
       results.put("dryMassClosureFraction", digester.getDigestionResult().getMassClosureFraction());
       results.put("carbonClosureFraction", digester.getDigestionResult().getCarbonClosureFraction());
     }
