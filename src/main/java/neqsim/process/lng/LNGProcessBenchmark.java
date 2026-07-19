@@ -11,19 +11,16 @@ import java.util.Map;
  * Published comparison points and range-based validation for LNG process simulations.
  *
  * <p>
- * The mixed-refrigerant reference points are from Pereira et al., Energy Conversion and
- * Management 272 (2022) 116364, doi:10.1016/j.enconman.2022.116364. Their common
- * 20,000 kg/h Aspen HYSYS comparison reported 0.2561, 0.2548, and 0.2456 kWh/kg LNG
- * for optimized SMR, C3MR, and DMR cases. The nitrogen-expander point is based on the
- * optimized parallel nitrogen expansion case reported by He et al., Energy 167 (2019)
- * 1-12, doi:10.1016/j.energy.2018.10.169.
+ * The mixed-refrigerant reference points are from Pereira et al., Energy Conversion and Management 272 (2022) 116364,
+ * doi:10.1016/j.enconman.2022.116364. Their common 20,000 kg/h Aspen HYSYS comparison reported 0.2561, 0.2548, and
+ * 0.2456 kWh/kg LNG for optimized SMR, C3MR, and DMR cases. The nitrogen-expander point is based on the optimized
+ * parallel nitrogen expansion case reported by He et al., Energy 167 (2019) 1-12, doi:10.1016/j.energy.2018.10.169.
  * </p>
  *
  * <p>
- * These values are comparison points, not universal acceptance limits. Feed composition,
- * ambient temperature, pressure, product flash specification, driver efficiency, and process
- * complexity materially affect specific energy. The default validation band is therefore
- * deliberately wider than the optimization tolerance used in the source studies.
+ * These values are comparison points, not universal acceptance limits. Feed composition, ambient temperature, pressure,
+ * product flash specification, driver efficiency, and process complexity materially affect specific energy. The default
+ * validation band is therefore deliberately wider than the optimization tolerance used in the source studies.
  * </p>
  *
  * @author NeqSim contributors
@@ -31,22 +28,18 @@ import java.util.Map;
  */
 public final class LNGProcessBenchmark {
   /** Reference benchmark data indexed by process cycle. */
-  private static final Map<LNGProcessCycle, Benchmark> BENCHMARKS =
-      new EnumMap<LNGProcessCycle, Benchmark>(LNGProcessCycle.class);
+  private static final Map<LNGProcessCycle, Benchmark> BENCHMARKS = new EnumMap<LNGProcessCycle, Benchmark>(
+      LNGProcessCycle.class);
 
   static {
-    BENCHMARKS.put(LNGProcessCycle.SMR,
-        new Benchmark(0.2561, 0.19, 0.43, -164.0, -157.0, 0.90,
-            "Pereira et al. (2022), doi:10.1016/j.enconman.2022.116364"));
-    BENCHMARKS.put(LNGProcessCycle.C3MR,
-        new Benchmark(0.2548, 0.19, 0.40, -164.0, -157.0, 0.90,
-            "Pereira et al. (2022), doi:10.1016/j.enconman.2022.116364"));
-    BENCHMARKS.put(LNGProcessCycle.DMR,
-        new Benchmark(0.2456, 0.18, 0.39, -164.0, -157.0, 0.90,
-            "Pereira et al. (2022), doi:10.1016/j.enconman.2022.116364"));
+    BENCHMARKS.put(LNGProcessCycle.SMR, new Benchmark(0.2561, 0.19, 0.43, -164.0, -157.0, 0.90,
+        "Pereira et al. (2022), doi:10.1016/j.enconman.2022.116364"));
+    BENCHMARKS.put(LNGProcessCycle.C3MR, new Benchmark(0.2548, 0.19, 0.40, -164.0, -157.0, 0.90,
+        "Pereira et al. (2022), doi:10.1016/j.enconman.2022.116364"));
+    BENCHMARKS.put(LNGProcessCycle.DMR, new Benchmark(0.2456, 0.18, 0.39, -164.0, -157.0, 0.90,
+        "Pereira et al. (2022), doi:10.1016/j.enconman.2022.116364"));
     BENCHMARKS.put(LNGProcessCycle.NITROGEN_EXPANDER,
-        new Benchmark(0.6180, 0.40, 0.80, -164.0, -157.0, 0.85,
-            "He et al. (2019), doi:10.1016/j.energy.2018.10.169"));
+        new Benchmark(0.6180, 0.40, 0.80, -164.0, -157.0, 0.85, "He et al. (2019), doi:10.1016/j.energy.2018.10.169"));
   }
 
   /** Utility class. */
@@ -102,18 +95,14 @@ public final class LNGProcessBenchmark {
         && productTemperature >= benchmark.getMinimumProductTemperatureC()
         && productTemperature <= benchmark.getMaximumProductTemperatureC();
     if (!temperatureOk) {
-      messages.add("Product temperature " + productTemperature
-          + " C is outside the atmospheric-LNG comparison range "
-          + benchmark.getMinimumProductTemperatureC() + " to "
-          + benchmark.getMaximumProductTemperatureC());
+      messages.add("Product temperature " + productTemperature + " C is outside the atmospheric-LNG comparison range "
+          + benchmark.getMinimumProductTemperatureC() + " to " + benchmark.getMaximumProductTemperatureC());
     }
 
     double yield = result.getLNGYield();
-    boolean yieldOk = Double.isFinite(yield) && yield >= benchmark.getMinimumLNGYield()
-        && yield <= 1.000001;
+    boolean yieldOk = Double.isFinite(yield) && yield >= benchmark.getMinimumLNGYield() && yield <= 1.000001;
     if (!yieldOk) {
-      messages.add("LNG yield " + yield + " is below the screening minimum "
-          + benchmark.getMinimumLNGYield());
+      messages.add("LNG yield " + yield + " is below the screening minimum " + benchmark.getMinimumLNGYield());
     }
 
     double mita = result.getMinimumInternalTemperatureApproachC();
@@ -122,8 +111,8 @@ public final class LNGProcessBenchmark {
       messages.add("Negative minimum internal temperature approach indicates a temperature cross");
     }
 
-    return new Assessment(energyOk, temperatureOk, yieldOk, mitaOk, sec
-        - benchmark.getReferenceSpecificEnergy(), messages);
+    return new Assessment(energyOk, temperatureOk, yieldOk, mitaOk, sec - benchmark.getReferenceSpecificEnergy(),
+        messages);
   }
 
   /**
@@ -153,9 +142,8 @@ public final class LNGProcessBenchmark {
      * @param minimumLNGYield minimum liquid mass yield
      * @param source literature source
      */
-    private Benchmark(double referenceSpecificEnergy, double minimumSpecificEnergy,
-        double maximumSpecificEnergy, double minimumProductTemperatureC,
-        double maximumProductTemperatureC, double minimumLNGYield, String source) {
+    private Benchmark(double referenceSpecificEnergy, double minimumSpecificEnergy, double maximumSpecificEnergy,
+        double minimumProductTemperatureC, double maximumProductTemperatureC, double minimumLNGYield, String source) {
       this.referenceSpecificEnergy = referenceSpecificEnergy;
       this.minimumSpecificEnergy = minimumSpecificEnergy;
       this.maximumSpecificEnergy = maximumSpecificEnergy;
@@ -226,9 +214,8 @@ public final class LNGProcessBenchmark {
      * @param specificEnergyDeviation deviation from reference in kWh/kg LNG
      * @param messages diagnostic messages
      */
-    private Assessment(boolean energyWithinRange, boolean productTemperatureWithinRange,
-        boolean yieldWithinRange, boolean temperatureApproachValid,
-        double specificEnergyDeviation, List<String> messages) {
+    private Assessment(boolean energyWithinRange, boolean productTemperatureWithinRange, boolean yieldWithinRange,
+        boolean temperatureApproachValid, double specificEnergyDeviation, List<String> messages) {
       this.energyWithinRange = energyWithinRange;
       this.productTemperatureWithinRange = productTemperatureWithinRange;
       this.yieldWithinRange = yieldWithinRange;
@@ -239,8 +226,7 @@ public final class LNGProcessBenchmark {
 
     /** @return true when every benchmark check passes */
     public boolean isWithinRange() {
-      return energyWithinRange && productTemperatureWithinRange && yieldWithinRange
-          && temperatureApproachValid;
+      return energyWithinRange && productTemperatureWithinRange && yieldWithinRange && temperatureApproachValid;
     }
 
     /** @return true when specific energy is inside the screening envelope */
