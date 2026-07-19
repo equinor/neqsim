@@ -102,8 +102,7 @@ public final class NorwegianOilFieldCase {
         .gasInjection(0.0, recycleFraction, gasInjectionCapacity).gridEmissionFactor(0.018).prices(75.0, 0.28)
         .discountRate(0.08).opex(135.0, 8.5).tariffs(2.0, 0.015).capex(firstOilYear - 3, totalCapexMusd * 0.20)
         .capex(firstOilYear - 2, totalCapexMusd * 0.50).capex(firstOilYear - 1, totalCapexMusd * 0.30)
-        .facilityLifecycleStrategy(facilityStrategy).productSpecifications(createReferenceSpecifications())
-        .build();
+        .facilityLifecycleStrategy(facilityStrategy).productSpecifications(createReferenceSpecifications()).build();
 
     return new FieldLifecycleConcept(fieldConcept, model, configuration);
   }
@@ -120,8 +119,8 @@ public final class NorwegianOilFieldCase {
 
   /** Creates a longer tieback to a second mature host with a different production and capacity envelope. */
   public static FieldLifecycleConcept createRemoteHostTiebackCase() {
-    return createTiebackCase("NCS oil tieback - remote host B", CapacityAllocationPolicy.BASE_FIRST,
-        0.0, 0.0, 25.0, true);
+    return createTiebackCase("NCS oil tieback - remote host B", CapacityAllocationPolicy.BASE_FIRST, 0.0, 0.0, 25.0,
+        true);
   }
 
   /** Returns greenfield, depletion, direct tieback and managed tieback concepts ready for consistent ranking. */
@@ -133,14 +132,13 @@ public final class NorwegianOilFieldCase {
   /** Returns a multi-asset area portfolio with standalone, two-host, and managed-allocation routes. */
   public static AreaDevelopmentPortfolio createAreaDevelopmentPortfolio() {
     return new AreaDevelopmentPortfolio("Synthetic NCS area development")
-        .addOption(AreaDevelopmentOption.greenfield("Standalone FPSO", "New area FPSO",
-            createGasInjectionCase()))
+        .addOption(AreaDevelopmentOption.greenfield("Standalone FPSO", "New area FPSO", createGasInjectionCase()))
         .addOption(AreaDevelopmentOption.tieback("Host A priority tieback", "Existing NCS host A",
             createHostPriorityTiebackCase()))
-        .addOption(AreaDevelopmentOption.tieback("Host A managed tieback", "Existing NCS host A",
-            createManagedTiebackCase()))
-        .addOption(AreaDevelopmentOption.tieback("Remote host B tieback", "Mature NCS host B",
-            createRemoteHostTiebackCase()));
+        .addOption(
+            AreaDevelopmentOption.tieback("Host A managed tieback", "Existing NCS host A", createManagedTiebackCase()))
+        .addOption(
+            AreaDevelopmentOption.tieback("Remote host B tieback", "Mature NCS host B", createRemoteHostTiebackCase()));
   }
 
   static FieldLifecycleConcept createTiebackCase(String name, CapacityAllocationPolicy policy, double hostHoldback,
@@ -155,11 +153,10 @@ public final class NorwegianOilFieldCase {
     FieldConcept fieldConcept = createTiebackScreeningConcept(name, tiebackLengthKm);
     FieldLifecycleModel model = createModel(name, tiebackLengthKm, true, false);
     HostFacility host = HostFacility.builder(remoteHost ? "Mature NCS host B" : "Existing NCS host A")
-        .operator("Reference operator").type(FacilityType.PLATFORM)
-        .waterDepth(remoteHost ? 210.0 : 140.0).oilCapacity(remoteHost ? 120000.0 : 150000.0)
-        .gasCapacity(remoteHost ? 5.0 : 7.0).waterCapacity(remoteHost ? 45000.0 : 32000.0)
-        .liquidCapacity(remoteHost ? 55000.0 : 52000.0).minTieInPressure(45.0)
-        .maxTieInPressure(90.0).processSystem(model.getProcessSystem()).build();
+        .operator("Reference operator").type(FacilityType.PLATFORM).waterDepth(remoteHost ? 210.0 : 140.0)
+        .oilCapacity(remoteHost ? 120000.0 : 150000.0).gasCapacity(remoteHost ? 5.0 : 7.0)
+        .waterCapacity(remoteHost ? 45000.0 : 32000.0).liquidCapacity(remoteHost ? 55000.0 : 52000.0)
+        .minTieInPressure(45.0).maxTieInPressure(90.0).processSystem(model.getProcessSystem()).build();
     ProductionProfileSeries hostProfile = remoteHost ? createRemoteHostProductionProfile()
         : createPrimaryHostProductionProfile();
     FacilityLifecycleStrategy facilityStrategy = FacilityLifecycleStrategy
@@ -212,8 +209,7 @@ public final class NorwegianOilFieldCase {
 
   private static FieldProductSpecifications createReferenceSpecifications() {
     return FieldProductSpecifications.builder().gasComposition(2.5, 5.0).gasOxygen(0.0002)
-        .gasEnergyContent(38.1, 43.7, 48.3, 52.8, 0.70).oilExport(1.0, 0.5)
-        .producedWater(30.0).build();
+        .gasEnergyContent(38.1, 43.7, 48.3, 52.8, 0.70).oilExport(1.0, 0.5).producedWater(30.0).build();
   }
 
   private static FieldConcept createTiebackScreeningConcept(String name, double tiebackLengthKm) {
@@ -364,14 +360,12 @@ public final class NorwegianOilFieldCase {
       process.add(injectionAftercooler);
     }
 
-    FieldLifecycleModel model = new FieldLifecycleModel(name, reservoir, process, oilProducer,
-        waterProducer, reservoirGasInjector,
-        recoveredGasMixer.getOutletStream(), gasAllocation, oilExportPump.getOutletStream(),
+    FieldLifecycleModel model = new FieldLifecycleModel(name, reservoir, process, oilProducer, waterProducer,
+        reservoirGasInjector, recoveredGasMixer.getOutletStream(), gasAllocation, oilExportPump.getOutletStream(),
         gasExportCooler.getOutletStream(), compressedInjectionGas, hostOilFeed, hostGasFeed, hostWaterFeed,
         hpSeparator.getWaterOutStream());
-    model.setProductQualityProvider((lifecycleModel, specifications) ->
-        new ProductSpecificationEvaluator().evaluate(lifecycleModel, specifications,
-            producedWaterTreatment.getOilInWaterMgL()));
+    model.setProductQualityProvider((lifecycleModel, specifications) -> new ProductSpecificationEvaluator()
+        .evaluate(lifecycleModel, specifications, producedWaterTreatment.getOilInWaterMgL()));
     return model;
   }
 
@@ -453,3 +447,4 @@ public final class NorwegianOilFieldCase {
     return oilSm3PerDay / ProductionLoad.BARREL_TO_M3;
   }
 }
+
