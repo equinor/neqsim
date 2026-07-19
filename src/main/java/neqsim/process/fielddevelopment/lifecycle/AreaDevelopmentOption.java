@@ -73,4 +73,3 @@ public final class AreaDevelopmentOption implements Serializable {
     return lifecycleConcept;
   }
 }
-
