@@ -1,5 +1,6 @@
 package neqsim.process.processmodel.biorefinery;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
@@ -77,6 +78,7 @@ class BiogasToGridModuleTest {
     BiogasToGridModule module = new BiogasToGridModule("BTG-4");
     module.setFeedStream(createOrganicFeed());
     module.setHydraulicRetentionTimeDays(30.0);
+    module.setTotalSolidsFraction(0.12);
     module.run();
 
     Map<String, Object> results = module.getResults();
@@ -84,5 +86,7 @@ class BiogasToGridModuleTest {
     assertTrue(results.containsKey("processType"));
     assertTrue(results.containsKey("gridPressure_bara"));
     assertTrue(results.containsKey("upgradingTechnology"));
+    assertEquals(0.12, module.getDigester().getTotalSolidsFraction(), 1.0e-12);
+    assertTrue(results.containsKey("dryMassClosureFraction"));
   }
 }

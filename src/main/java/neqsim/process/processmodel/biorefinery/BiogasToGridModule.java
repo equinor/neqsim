@@ -9,10 +9,12 @@ import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.reactor.AnaerobicDigester;
+import neqsim.process.equipment.reactor.digestion.AnaerobicDigestionModel;
 import neqsim.process.equipment.splitter.BiogasUpgrader;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessModule;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.characterization.BioFeedstock;
 
 /**
  * Pre-built biorefinery module for biogas-to-grid injection.
@@ -53,6 +55,12 @@ public class BiogasToGridModule extends ProcessModule {
   private BiogasUpgrader.UpgradingTechnology upgradingTechnology = BiogasUpgrader.UpgradingTechnology.MEMBRANE;
   /** Substrate type for digester. */
   private AnaerobicDigester.SubstrateType substrateType = AnaerobicDigester.SubstrateType.FOOD_WASTE;
+  /** As-received total-solids fraction used when no characterized feedstock is supplied. */
+  private double totalSolidsFraction = 0.25;
+  /** Optional evidence-bearing feedstock characterization. */
+  private BioFeedstock feedstock;
+  /** Optional biochemical conversion model. */
+  private AnaerobicDigestionModel digestionModel;
 
   // ── Internal equipment ──
   private transient AnaerobicDigester digester;
@@ -130,7 +138,58 @@ public class BiogasToGridModule extends ProcessModule {
    * @param substrate substrate type
    */
   public void setSubstrateType(AnaerobicDigester.SubstrateType substrate) {
+    if (substrate == null) {
+      throw new IllegalArgumentException("Substrate type must be provided");
+    }
     this.substrateType = substrate;
+    this.feedstock = null;
+  }
+
+  /**
+   * Sets the as-received total-solids fraction for legacy substrate-family scenarios.
+   *
+   * @param fraction total-solids mass fraction between zero and one
+   */
+  public void setTotalSolidsFraction(double fraction) {
+    if (fraction <= 0.0 || fraction > 1.0) {
+      throw new IllegalArgumentException("Total-solids fraction must be greater than zero and at most one");
+    }
+    totalSolidsFraction = fraction;
+  }
+
+  /**
+   * Returns the configured total-solids fraction.
+   *
+   * @return total-solids fraction
+   */
+  public double getTotalSolidsFraction() {
+    return totalSolidsFraction;
+  }
+
+  /**
+   * Sets an evidence-bearing feedstock characterization for the digester.
+   *
+   * @param characterizedFeedstock feedstock characterization
+   */
+  public void setFeedstock(BioFeedstock characterizedFeedstock) {
+    if (characterizedFeedstock == null) {
+      throw new IllegalArgumentException("Feedstock must be provided");
+    }
+    characterizedFeedstock.validate();
+    feedstock = characterizedFeedstock;
+    totalSolidsFraction = characterizedFeedstock.getTotalSolidsFraction();
+  }
+
+  /**
+   * Sets the biochemical conversion model used by the internal digester.
+   *
+   * @param model digestion model
+   */
+  public void setDigestionModel(AnaerobicDigestionModel model) {
+    if (model == null) {
+      throw new IllegalArgumentException("Digestion model must be provided");
+    }
+    digestionModel = model;
   }
 
   /**
@@ -197,6 +256,24 @@ public class BiogasToGridModule extends ProcessModule {
   }
 
   /**
+   * Returns the internal digester after the module has been run.
+   *
+   * @return digester, or null before the first run
+   */
+  public AnaerobicDigester getDigester() {
+    return digester;
+  }
+
+  /**
+   * Returns the internal upgrading unit after the module has been run.
+   *
+   * @return upgrader, or null before the first run
+   */
+  public BiogasUpgrader getUpgrader() {
+    return upgrader;
+  }
+
+  /**
    * Builds and runs the complete biogas-to-grid process.
    *
    * @param id calculation identifier
@@ -211,9 +288,16 @@ public class BiogasToGridModule extends ProcessModule {
 
     // ── Step 1: Anaerobic Digestion ──
     digester = new AnaerobicDigester(getName() + "_digester", feedStream);
-    digester.setSubstrateType(substrateType);
+    if (feedstock == null) {
+      digester.setSubstrateType(substrateType);
+    } else {
+      digester.setFeedstock(feedstock);
+    }
+    if (digestionModel != null) {
+      digester.setDigestionModel(digestionModel);
+    }
     digester.setDigesterTemperature(digesterTemperatureC, "C");
-    digester.setFeedRate(feedStream.getFlowRate("kg/hr"), 0.25);
+    digester.setFeedRate(feedStream.getFlowRate("kg/hr"), getTotalSolidsFraction());
     // Set vessel volume from HRT: V = Q_m3/day * HRT_days
     double feedM3PerDay = feedStream.getFlowRate("kg/hr") * 24.0 / 1000.0;
     digester.setVesselVolume(feedM3PerDay * hydraulicRetentionTimeDays);
@@ -291,10 +375,18 @@ public class BiogasToGridModule extends ProcessModule {
     results.put("gridTemperature_C", gridTemperatureC);
     results.put("upgradingTechnology", upgradingTechnology.name());
     results.put("substrateType", substrateType.name());
+    results.put("feedstock", feedstock == null ? substrateType.name() : feedstock.getName());
+    results.put("totalSolidsFraction", getTotalSolidsFraction());
     results.put("biomethaneFlow_Nm3_per_hr", biomethaneFlowNm3PerHour);
     results.put("compressorPower_kW", compressorPowerKW);
     results.put("coolerDuty_kW", coolerDutyKW);
     results.put("hasRun", hasRun);
+    if (digester != null && digester.getDigestionResult() != null) {
+      results.put("digestionModel", digester.getDigestionResult().getModelIdentifier());
+      results.put("modelFidelity", digester.getDigestionResult().getFidelity().name());
+      results.put("dryMassClosureFraction", digester.getDigestionResult().getMassClosureFraction());
+      results.put("carbonClosureFraction", digester.getDigestionResult().getCarbonClosureFraction());
+    }
     return results;
   }
 
