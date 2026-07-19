@@ -14,4 +14,3 @@ public interface FieldProductQualityProvider extends Serializable {
    */
   ProductSpecificationResult evaluate(FieldLifecycleModel model, FieldProductSpecifications specifications);
 }
-
