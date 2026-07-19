@@ -155,4 +155,3 @@ public final class ProductSpecificationResult implements Serializable {
     return Math.max(first, second);
   }
 }
-
