@@ -401,4 +401,3 @@ public final class FieldLifecycleResult implements Serializable {
         lifecycleCo2Tonnes / 1000.0, getOffSpecificationYears());
   }
 }
-
