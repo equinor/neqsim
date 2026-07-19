@@ -194,6 +194,9 @@ class RootCauseAnalyzerTest {
 
     h.setLikelihoodEvaluation(0.0, Hypothesis.EvaluationStatus.UNSUPPORTED);
     assertEquals(0.4, h.getConfidenceScore(), 0.001, "unsupported evaluation must be explicit and neutral");
+
+    h.setLikelihoodEvaluation(0.0, Hypothesis.EvaluationStatus.FAILED);
+    assertEquals(0.4, h.getConfidenceScore(), 0.001, "failed evaluation must be explicit and neutral");
   }
 
   /** Verifies diagnosis provenance and evaluation states are serialized without breaking legacy fields. */
