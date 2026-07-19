@@ -17,17 +17,14 @@ class RiskDocumentationTest {
     SISIntegratedRiskModel model = new SISIntegratedRiskModel("HP vessel LOPA");
     model.addInitiatingEvent(eventName, 0.1, RiskEvent.ConsequenceCategory.MAJOR);
 
-    SISIntegratedRiskModel.IndependentProtectionLayer bpcs =
-        new SISIntegratedRiskModel.IndependentProtectionLayer(
-            "BPCS pressure control", 0.1,
-            SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.BPCS);
+    SISIntegratedRiskModel.IndependentProtectionLayer bpcs = new SISIntegratedRiskModel.IndependentProtectionLayer(
+        "BPCS pressure control", 0.1, SISIntegratedRiskModel.IndependentProtectionLayer.IPLType.BPCS);
     bpcs.addApplicableEvent(eventName);
     model.addIPL(bpcs);
 
-    SafetyInstrumentedFunction esd =
-        SafetyInstrumentedFunction.builder().id("SIF-001").name("High-pressure ESD")
-            .description("Isolate the HP vessel on confirmed high pressure").sil(2).pfd(0.005)
-            .initiatingEvent(eventName).addProtectedEquipment("HP vessel").safeState("Isolated").build();
+    SafetyInstrumentedFunction esd = SafetyInstrumentedFunction.builder().id("SIF-001").name("High-pressure ESD")
+        .description("Isolate the HP vessel on confirmed high pressure").sil(2).pfd(0.005).initiatingEvent(eventName)
+        .addProtectedEquipment("HP vessel").safeState("Isolated").build();
     model.addSIF(esd);
 
     LOPAResult result = model.performLOPA(eventName);
