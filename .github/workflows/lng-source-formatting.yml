@@ -1,0 +1,35 @@
+name: LNG source formatting artifact
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/lng-source-formatting.yml"
+      - "src/main/java/neqsim/process/lng/**"
+      - "src/main/java/neqsim/process/equipment/heatexchanger/LNGHeatExchanger.java"
+      - "src/test/java/neqsim/process/lng/**"
+      - "src/test/java/neqsim/process/equipment/heatexchanger/LNGHeatExchangerTest.java"
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Apply repository Java formatter
+        run: ./mvnw -q spotless:apply
+      - name: Upload formatted LNG sources
+        uses: actions/upload-artifact@v7
+        with:
+          name: formatted-lng-sources
+          path: |
+            src/main/java/neqsim/process/lng
+            src/main/java/neqsim/process/equipment/heatexchanger/LNGHeatExchanger.java
+            src/test/java/neqsim/process/lng
+            src/test/java/neqsim/process/equipment/heatexchanger/LNGHeatExchangerTest.java
