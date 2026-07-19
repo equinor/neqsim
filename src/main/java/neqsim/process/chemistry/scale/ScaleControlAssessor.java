@@ -41,10 +41,8 @@ public class ScaleControlAssessor implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private final ScalePredictionCalculator predictor;
-  private final Map<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance> inhibitors =
-      new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance>();
-  private final Map<ScaleInhibitorPerformance.ScaleType, Double> kineticRiskIndex =
-      new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, Double>();
+  private final Map<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance> inhibitors = new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance>();
+  private final Map<ScaleInhibitorPerformance.ScaleType, Double> kineticRiskIndex = new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, Double>();
   private boolean evaluated = false;
 
   /**
@@ -96,8 +94,7 @@ public class ScaleControlAssessor implements Serializable {
   public void evaluate() {
     predictor.calculate();
     kineticRiskIndex.clear();
-    Map<ScaleInhibitorPerformance.ScaleType, Double> uninh =
-        new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, Double>();
+    Map<ScaleInhibitorPerformance.ScaleType, Double> uninh = new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, Double>();
     uninh.put(ScaleInhibitorPerformance.ScaleType.CACO3, predictor.getCaCO3SaturationIndex());
     uninh.put(ScaleInhibitorPerformance.ScaleType.BASO4, predictor.getBaSO4SaturationIndex());
     uninh.put(ScaleInhibitorPerformance.ScaleType.SRSO4, predictor.getSrSO4SaturationIndex());

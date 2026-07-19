@@ -14,10 +14,9 @@ public class ProductionChemicalScaleScenarioTest {
 
   private ProductionChemicalScaleScenario carbonateBrine() {
     return new ProductionChemicalScaleScenario().setTemperatureCelsius(60.0).setPressureBara(50.0).setPH(6.5)
-        .setCalciumMgL(2500.0).setBariumMgL(50.0).setStrontiumMgL(200.0).setIronMgL(20.0)
-        .setSodiumMgL(50000.0).setSulphateMgL(500.0).setBicarbonateMgL(1000.0)
-        .setTotalDissolvedSolidsMgL(100000.0).setActivityModel(
-            MultiMineralScaleEquilibrium.ActivityModel.PITZER_BINARY);
+        .setCalciumMgL(2500.0).setBariumMgL(50.0).setStrontiumMgL(200.0).setIronMgL(20.0).setSodiumMgL(50000.0)
+        .setSulphateMgL(500.0).setBicarbonateMgL(1000.0).setTotalDissolvedSolidsMgL(100000.0)
+        .setActivityModel(MultiMineralScaleEquilibrium.ActivityModel.PITZER_BINARY);
   }
 
   /** Base-equivalent dosing raises pH and produces auditable calcite SI evidence. */
@@ -50,8 +49,7 @@ public class ProductionChemicalScaleScenarioTest {
   public void vendorH2SCapacityOverridesDefaultStoichiometry() {
     ProductionChemical scavenger = ProductionChemical.h2sScavenger("qualified product", 1000.0);
     scavenger.setH2SCapacityKgPerKgActive(0.30);
-    ProductionChemicalScaleScenario scenario = carbonateBrine().setDissolvedH2SMgL(100.0)
-        .addChemical(scavenger);
+    ProductionChemicalScaleScenario scenario = carbonateBrine().setDissolvedH2SMgL(100.0).addChemical(scavenger);
     scenario.evaluate();
 
     // 1000 mg/L product * 40% active * 0.30 kg H2S/kg active = 120 mg/L capacity.

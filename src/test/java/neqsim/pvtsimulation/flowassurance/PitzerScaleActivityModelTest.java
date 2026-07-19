@@ -24,8 +24,8 @@ public class PitzerScaleActivityModelTest {
     predictor.setTemperatureCelsius(25.0);
     double a = predictor.getDebyeHuckelAParameter();
 
-    InputStream input = getClass().getResourceAsStream(
-        "/neqsim/pvtsimulation/flowassurance/nacl_mean_activity_hamer_wu_1972.csv");
+    InputStream input = getClass()
+        .getResourceAsStream("/neqsim/pvtsimulation/flowassurance/nacl_mean_activity_hamer_wu_1972.csv");
     assertTrue(input != null, "Hamer-Wu benchmark data must be packaged with the tests");
 
     double maximumAbsoluteError = 0.0;
@@ -50,8 +50,7 @@ public class PitzerScaleActivityModelTest {
         if (molality >= 0.5) {
           double sqrtI = Math.sqrt(molality);
           double davies = Math.pow(10.0, -a * (sqrtI / (1.0 + sqrtI) - 0.3 * molality));
-          double bdot = Math.pow(10.0,
-              -a * sqrtI / (1.0 + 5.0 * 0.3283 * sqrtI) + 0.041 * molality);
+          double bdot = Math.pow(10.0, -a * sqrtI / (1.0 + 5.0 * 0.3283 * sqrtI) + 0.041 * molality);
           pitzerHighSalinitySquaredError += error * error;
           daviesHighSalinitySquaredError += Math.pow(davies - reference, 2.0);
           bdotHighSalinitySquaredError += Math.pow(bdot - reference, 2.0);
@@ -69,8 +68,7 @@ public class PitzerScaleActivityModelTest {
     double daviesRmse = Math.sqrt(daviesHighSalinitySquaredError / highSalinityCount);
     double bdotRmse = Math.sqrt(bdotHighSalinitySquaredError / highSalinityCount);
     assertTrue(pitzerRmse < 0.005, "Pitzer high-salinity RMSE must be below 0.005, got " + pitzerRmse);
-    assertTrue(pitzerRmse < 0.1 * bdotRmse,
-        "Pitzer must materially outperform B-dot for the published NaCl data");
+    assertTrue(pitzerRmse < 0.1 * bdotRmse, "Pitzer must materially outperform B-dot for the published NaCl data");
     assertTrue(pitzerRmse < 0.1 * daviesRmse,
         "Pitzer must materially outperform Davies outside the Davies validity range");
   }

@@ -391,21 +391,21 @@ public class ProductionChemicalScaleScenario implements Serializable {
   }
 
   private static double carbonateK1(double temperatureK) {
-    double logK1 = -356.3094 - 0.06091964 * temperatureK + 21834.37 / temperatureK
-        + 126.8339 * Math.log10(temperatureK) - 1684915.0 / (temperatureK * temperatureK);
+    double logK1 = -356.3094 - 0.06091964 * temperatureK + 21834.37 / temperatureK + 126.8339 * Math.log10(temperatureK)
+        - 1684915.0 / (temperatureK * temperatureK);
     return Math.pow(10.0, logK1);
   }
 
   private static double carbonateK2(double temperatureK) {
-    double logK2 = -107.8871 - 0.03252849 * temperatureK + 5151.79 / temperatureK
-        + 38.92561 * Math.log10(temperatureK) - 563713.9 / (temperatureK * temperatureK);
+    double logK2 = -107.8871 - 0.03252849 * temperatureK + 5151.79 / temperatureK + 38.92561 * Math.log10(temperatureK)
+        - 563713.9 / (temperatureK * temperatureK);
     return Math.pow(10.0, logK2);
   }
 
   private static double[] carbonateFractions(double valuePH, double k1, double k2) {
     double h = Math.pow(10.0, -valuePH);
     double denominator = h * h + k1 * h + k1 * k2;
-    return new double[] {h * h / denominator, k1 * h / denominator, k1 * k2 / denominator};
+    return new double[] { h * h / denominator, k1 * h / denominator, k1 * k2 / denominator };
   }
 
   private static double alkalinity(double totalCarbon, double valuePH, double k1, double k2) {

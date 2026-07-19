@@ -58,32 +58,29 @@ public final class PitzerScaleActivityModel implements Serializable {
   /** Binary salts represented by PHREEQC Pitzer parameters. */
   public enum Salt {
     /** Sodium chloride. */
-    NACL(1, 1, 1, 1, 2.0, 0.0,
-        p(0.07534, 9598.4, 35.48, -0.058731, 1.798e-5, -5.0e5),
+    NACL(1, 1, 1, 1, 2.0, 0.0, p(0.07534, 9598.4, 35.48, -0.058731, 1.798e-5, -5.0e5),
         p(0.2769, 1.377e4, 46.8, -0.069512, 2.0e-5, -7.4823e5), p(0.0),
         p(0.00148, -120.5, -0.2081, 0.0, 1.166e-7, 11121.0)),
     /** Calcium chloride. */
-    CACL2(1, 2, 2, 1, 2.0, 12.0, p(0.3159, 0.0, 0.0, -3.27e-4, 1.4e-7, 0.0),
-        p(1.614, 0.0, 0.0, 7.63e-3, -8.19e-7, 0.0), p(-1.13, 0.0, 0.0, -0.0476, 0.0, 0.0),
-        p(1.4e-4, -57.0, -0.098, -7.83e-4, 7.18e-7, 0.0)),
+    CACL2(1, 2, 2, 1, 2.0, 12.0, p(0.3159, 0.0, 0.0, -3.27e-4, 1.4e-7, 0.0), p(1.614, 0.0, 0.0, 7.63e-3, -8.19e-7, 0.0),
+        p(-1.13, 0.0, 0.0, -0.0476, 0.0, 0.0), p(1.4e-4, -57.0, -0.098, -7.83e-4, 7.18e-7, 0.0)),
     /** Barium chloride. */
-    BACL2(1, 2, 2, 1, 2.0, 0.0, p(0.5268, 0.0, 0.0, 0.0, 0.0, 4.75e4),
-        p(0.687, 0.0, 0.0, 0.01417, 0.0, 0.0), p(0.0), p(-0.143, -114.5, 0.0, 0.0, 0.0, 0.0)),
+    BACL2(1, 2, 2, 1, 2.0, 0.0, p(0.5268, 0.0, 0.0, 0.0, 0.0, 4.75e4), p(0.687, 0.0, 0.0, 0.01417, 0.0, 0.0), p(0.0),
+        p(-0.143, -114.5, 0.0, 0.0, 0.0, 0.0)),
     /** Strontium chloride. */
-    SRCL2(1, 2, 2, 1, 2.0, 0.0, p(0.2858, 0.0, 0.0, 7.17e-4, 0.0, 0.0),
-        p(1.667, 0.0, 0.0, 2.8425e-3, 0.0, 0.0), p(0.0), p(-0.0013, 0.0, 0.0, 0.0, 0.0, 0.0)),
+    SRCL2(1, 2, 2, 1, 2.0, 0.0, p(0.2858, 0.0, 0.0, 7.17e-4, 0.0, 0.0), p(1.667, 0.0, 0.0, 2.8425e-3, 0.0, 0.0), p(0.0),
+        p(-0.0013, 0.0, 0.0, 0.0, 0.0, 0.0)),
     /** Ferrous chloride. */
     FECL2(1, 2, 2, 1, 2.0, 0.0, p(0.335925), p(1.53225), p(0.0), p(-0.00860725)),
     /** Sodium sulphate. */
     NA2SO4(2, 1, 1, 2, 2.0, 0.0, p(0.0273, 0.0, -5.8, 0.00989, 0.0, -1.563e5),
-        p(0.956, 2663.0, 0.0, 0.01158, 0.0, -3.194e5), p(0.0),
-        p(0.003418, -384.0, 0.0, -8.451e-4, 0.0, 5.177e4)),
+        p(0.956, 2663.0, 0.0, 0.01158, 0.0, -3.194e5), p(0.0), p(0.003418, -384.0, 0.0, -8.451e-4, 0.0, 5.177e4)),
     /** Sodium carbonate. */
-    NA2CO3(2, 1, 1, 2, 2.0, 0.0, p(0.0399, 0.0, 0.0, 0.00179, 0.0, 0.0),
-        p(1.389, 0.0, 0.0, 0.00205, 0.0, 0.0), p(0.0), p(0.0044)),
+    NA2CO3(2, 1, 1, 2, 2.0, 0.0, p(0.0399, 0.0, 0.0, 0.00179, 0.0, 0.0), p(1.389, 0.0, 0.0, 0.00205, 0.0, 0.0), p(0.0),
+        p(0.0044)),
     /** Sodium bicarbonate. */
-    NAHCO3(1, 1, 1, 1, 2.0, 12.0, p(-0.018, 0.0, 0.0, -2.3e-4, 0.0, 0.0),
-        p(-0.0101, 0.0, 0.0, 0.00172, 0.0, 0.0), p(6.84, 0.0, 0.0, -0.00711, 0.0, 0.0), p(0.0));
+    NAHCO3(1, 1, 1, 1, 2.0, 12.0, p(-0.018, 0.0, 0.0, -2.3e-4, 0.0, 0.0), p(-0.0101, 0.0, 0.0, 0.00172, 0.0, 0.0),
+        p(6.84, 0.0, 0.0, -0.00711, 0.0, 0.0), p(0.0));
 
     private final int cationStoichiometry;
     private final int anionStoichiometry;
@@ -155,13 +152,11 @@ public final class PitzerScaleActivityModel implements Serializable {
       return 1.0;
     }
 
-    double ionicStrength = 0.5 * saltMolality
-        * (salt.cationStoichiometry * salt.cationCharge * salt.cationCharge
-            + salt.anionStoichiometry * salt.anionCharge * salt.anionCharge);
+    double ionicStrength = 0.5 * saltMolality * (salt.cationStoichiometry * salt.cationCharge * salt.cationCharge
+        + salt.anionStoichiometry * salt.anionCharge * salt.anionCharge);
     double sqrtI = Math.sqrt(Math.max(ionicStrength, MIN_IONIC_STRENGTH));
     double aPhi = debyeHuckelA * Math.log(10.0) / 3.0;
-    double fGamma = -aPhi
-        * (sqrtI / (1.0 + PITZER_B * sqrtI) + 2.0 / PITZER_B * Math.log(1.0 + PITZER_B * sqrtI));
+    double fGamma = -aPhi * (sqrtI / (1.0 + PITZER_B * sqrtI) + 2.0 / PITZER_B * Math.log(1.0 + PITZER_B * sqrtI));
 
     double beta0 = temperatureParameter(salt.beta0, temperatureK);
     double beta1 = temperatureParameter(salt.beta1, temperatureK);
@@ -175,8 +170,8 @@ public final class PitzerScaleActivityModel implements Serializable {
     double bFactor = 2.0 * salt.cationStoichiometry * salt.anionStoichiometry / nu;
     double cFactor = 3.0 * Math.pow(salt.cationStoichiometry * salt.anionStoichiometry, 1.5) / nu;
     double cPhi = temperatureParameter(salt.cPhi, temperatureK);
-    double lnGamma = Math.abs(salt.cationCharge * salt.anionCharge) * fGamma
-        + saltMolality * bFactor * bGamma + saltMolality * saltMolality * cFactor * cPhi;
+    double lnGamma = Math.abs(salt.cationCharge * salt.anionCharge) * fGamma + saltMolality * bFactor * bGamma
+        + saltMolality * saltMolality * cFactor * cPhi;
     return Math.exp(lnGamma);
   }
 
@@ -239,9 +234,8 @@ public final class PitzerScaleActivityModel implements Serializable {
   }
 
   private double meanAtEquivalentIonicStrength(Salt salt, double ionicStrength) {
-    double ionicStrengthPerMolality = 0.5
-        * (salt.cationStoichiometry * salt.cationCharge * salt.cationCharge
-            + salt.anionStoichiometry * salt.anionCharge * salt.anionCharge);
+    double ionicStrengthPerMolality = 0.5 * (salt.cationStoichiometry * salt.cationCharge * salt.cationCharge
+        + salt.anionStoichiometry * salt.anionCharge * salt.anionCharge);
     return getMeanActivityCoefficient(salt, ionicStrength / ionicStrengthPerMolality);
   }
 

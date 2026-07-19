@@ -114,8 +114,7 @@ public class RootCauseAnalyser implements Serializable {
    *
    * @param scenario configured production-chemical scale scenario
    */
-  public void setChemicalTreatmentScenario(
-      neqsim.process.chemistry.scale.ProductionChemicalScaleScenario scenario) {
+  public void setChemicalTreatmentScenario(neqsim.process.chemistry.scale.ProductionChemicalScaleScenario scenario) {
     this.chemicalTreatmentScenario = scenario;
   }
 
