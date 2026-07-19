@@ -173,8 +173,16 @@ public class FieldLifecycleSimulator {
           suppliedPotential.getGasSm3PerDay() > 0.0 ? suppliedPotential.getGasSm3PerDay() : potential.gasRateSm3PerDay,
           potential.waterRateSm3PerDay);
       AllocationResult allocation = allocator.allocate(strategy, calendarYear, satellitePotential);
-      FacilityOperatingResult operation = operateSharedFacility(model, config, strategy, fieldAgeYears, allocation,
-          facilityDesign, potential.oilRecoveryFactor);
+      FacilityOperatingResult operation;
+      try {
+        operation = operateSharedFacility(model, config, strategy, fieldAgeYears, allocation, facilityDesign,
+            potential.oilRecoveryFactor);
+      } catch (IllegalStateException ex) {
+        logger.warn("Facility/process model for {} reached its operating limit: {}", model.getName(),
+            ex.getMessage());
+        stopReason = "facility/process operating limit reached";
+        break;
+      }
       ProductSpecificationResult productQuality = evaluateProductQuality(model, config);
 
       double operatingDays = dtDays * config.getAvailability();

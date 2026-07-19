@@ -56,6 +56,18 @@ class NorwegianOilFieldLifecycleTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void facilityOperatingLimitEndsLifecycleGracefully() {
+    FieldLifecycleConcept concept =
+        NorwegianOilFieldCase.createCase("operating-limit regression", 0.85, 5.0e6, 13.0);
+
+    FieldLifecycleResult result = new FieldLifecycleEvaluator().evaluate(concept);
+
+    assertFalse(result.getAnnualResults().isEmpty());
+    assertEquals("facility/process operating limit reached", result.getStopReason());
+    assertTrue(Double.isFinite(result.getNpvMusd()));
+  }
+
+  @Test
   void naturalDepletionDoesNotInjectGas() {
     FieldLifecycleResult result = new FieldLifecycleEvaluator()
         .evaluate(NorwegianOilFieldCase.createCase("short depletion", 0.0, 0.0, 2.0));
