@@ -73,6 +73,11 @@ When one phase is nearly depleted (e.g., last liquid droplets evaporating), nume
 
 ## 2. Complete Liquid Evaporation
 
+> **Completion-distance calculations:** use the dedicated
+> [finite-rate pipeline liquid evaporation model](PipelineLiquidEvaporation). Hydrodynamic liquid holdup is not a
+> remaining-liquid inventory and must not be used to calculate percent evaporated or a completion distance. The older
+> two-fluid example below is retained only to illustrate general non-equilibrium pipe setup.
+
 ### 2.1 Scenario: Water Droplets in Dry Gas
 
 **Physical situation:** Small water droplets carried in a hot, dry methane gas stream. The droplets evaporate as they travel through the pipeline.
@@ -156,48 +161,21 @@ public class WaterEvaporationExample {
                 position, liquidHoldup[i], 1.0 - liquidHoldup[i], temperature[i]);
         }
         
-        // Calculate evaporation progress
-        double inletHoldup = liquidHoldup[0];
-        double outletHoldup = liquidHoldup[numNodes - 1];
-        double evaporationPercent = (inletHoldup - outletHoldup) / inletHoldup * 100;
-        
-        System.out.printf("%nEvaporation: %.1f%% of liquid evaporated%n", evaporationPercent);
-        
-        // Find complete evaporation point
-        for (int i = 0; i < numNodes; i++) {
-            if (liquidHoldup[i] < 1e-6) {
-                double distance = i * pipeLength / (numNodes - 1);
-                System.out.printf("Complete evaporation at: %.1f m%n", distance);
-                break;
-            }
-        }
+        // Holdup is a hydrodynamic result. Do not infer evaporated inventory from it.
+        // Use PipelineEvaporationStudy when the required output is completion distance.
     }
 }
 ```
 
-### 2.3 Expected Results
+### 2.3 Interpreting Results
 
-For this configuration, typical output:
-
-```
-=== Water Evaporation Profile ===
-Position [m]   Liquid Holdup   Gas Fraction   T [K]
---------------------------------------------------
-     0.0      0.000015        0.999985       350.0
-     5.0      0.000012        0.999988       350.0
-    10.0      0.000008        0.999992       350.0
-    15.0      0.000004        0.999996       350.0
-    20.0      0.000001        0.999999       350.0
-    25.0      0.000000        1.000000       350.0
-    ...
-
-Evaporation: 96.5% of liquid evaporated
-Complete evaporation at: 22.5 m
-```
+No fixed completion distance is asserted for this illustrative two-fluid setup. A defensible result requires explicit
+droplet or film area, component inventory tracking, coupled heat transfer, numerical refinement, and validation of the
+thermodynamic and transport inputs. `PipelineEvaporationStudy` supplies those completion-distance-specific elements.
 
 ### 2.4 Key Observations
 
-1. **Exponential decay**: Liquid holdup decreases exponentially (not linearly) because the driving force decreases as the gas becomes more saturated
+1. **Inventory, not holdup**: component flow inventories determine percent evaporated; holdup is a hydraulic state
 
 2. **Temperature effect**: At constant temperature (isothermal case), evaporation is driven purely by concentration difference
 
