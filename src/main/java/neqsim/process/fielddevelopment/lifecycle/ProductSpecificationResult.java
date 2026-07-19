@@ -24,10 +24,9 @@ public final class ProductSpecificationResult implements Serializable {
   private final double oilInWaterMgPerL;
   private final List<String> violations;
 
-  ProductSpecificationResult(boolean evaluated, double gasCo2MolePercent, double gasH2sPpm,
-      double gasOxygenMolePercent, double gasWaterDewPointC, double gasHydrocarbonDewPointC,
-      double gasGrossCalorificValueMjPerSm3, double gasWobbeIndexMjPerSm3,
-      double gasRelativeDensity, double oilRvpBara, double oilBswVolumePercent,
+  ProductSpecificationResult(boolean evaluated, double gasCo2MolePercent, double gasH2sPpm, double gasOxygenMolePercent,
+      double gasWaterDewPointC, double gasHydrocarbonDewPointC, double gasGrossCalorificValueMjPerSm3,
+      double gasWobbeIndexMjPerSm3, double gasRelativeDensity, double oilRvpBara, double oilBswVolumePercent,
       double oilInWaterMgPerL, List<String> violations) {
     this.evaluated = evaluated;
     this.gasCo2MolePercent = gasCo2MolePercent;
@@ -46,9 +45,8 @@ public final class ProductSpecificationResult implements Serializable {
 
   /** Returns a result used when no product specifications are configured. */
   public static ProductSpecificationResult notEvaluated() {
-    return new ProductSpecificationResult(false, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
-        Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
-        Collections.<String>emptyList());
+    return new ProductSpecificationResult(false, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN,
+        Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Collections.<String>emptyList());
   }
 
   /** Returns whether quality was evaluated. */
@@ -123,8 +121,7 @@ public final class ProductSpecificationResult implements Serializable {
 
   /** Returns a compact compliance summary. */
   public String getSummary() {
-    return violations.isEmpty() ? (evaluated ? "on specification" : "not evaluated")
-        : String.join("; ", violations);
+    return violations.isEmpty() ? (evaluated ? "on specification" : "not evaluated") : String.join("; ", violations);
   }
 
   /** Returns a result retaining worst measurements and all violations from both inputs. */
@@ -138,15 +135,14 @@ public final class ProductSpecificationResult implements Serializable {
     Set<String> combinedViolations = new LinkedHashSet<String>(violations);
     combinedViolations.addAll(other.violations);
     return new ProductSpecificationResult(true, maximum(gasCo2MolePercent, other.gasCo2MolePercent),
-        maximum(gasH2sPpm, other.gasH2sPpm),
-        maximum(gasOxygenMolePercent, other.gasOxygenMolePercent),
+        maximum(gasH2sPpm, other.gasH2sPpm), maximum(gasOxygenMolePercent, other.gasOxygenMolePercent),
         maximum(gasWaterDewPointC, other.gasWaterDewPointC),
         maximum(gasHydrocarbonDewPointC, other.gasHydrocarbonDewPointC),
         maximum(gasGrossCalorificValueMjPerSm3, other.gasGrossCalorificValueMjPerSm3),
         maximum(gasWobbeIndexMjPerSm3, other.gasWobbeIndexMjPerSm3),
-        maximum(gasRelativeDensity, other.gasRelativeDensity),
-        maximum(oilRvpBara, other.oilRvpBara), maximum(oilBswVolumePercent, other.oilBswVolumePercent),
-        maximum(oilInWaterMgPerL, other.oilInWaterMgPerL), new ArrayList<String>(combinedViolations));
+        maximum(gasRelativeDensity, other.gasRelativeDensity), maximum(oilRvpBara, other.oilRvpBara),
+        maximum(oilBswVolumePercent, other.oilBswVolumePercent), maximum(oilInWaterMgPerL, other.oilInWaterMgPerL),
+        new ArrayList<String>(combinedViolations));
   }
 
   private static double maximum(double first, double second) {
@@ -159,3 +155,4 @@ public final class ProductSpecificationResult implements Serializable {
     return Math.max(first, second);
   }
 }
+
