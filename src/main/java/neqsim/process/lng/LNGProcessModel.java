@@ -3,8 +3,13 @@ package neqsim.process.lng;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import com.google.gson.GsonBuilder;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.capacity.BottleneckResult;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.LNGHeatExchanger;
@@ -15,9 +20,10 @@ import neqsim.process.processmodel.ProcessSystem;
  * Runnable LNG process template with consistent process-level performance metrics.
  *
  * <p>
- * The model wraps a {@link ProcessSystem} and the streams and rotating equipment needed to evaluate liquefaction
- * performance. It deliberately keeps thermodynamic and equipment calculations in the standard NeqSim unit operations;
- * this class only coordinates execution and calculates route-comparison metrics on a common basis.
+ * The model wraps a {@link ProcessSystem} and the streams and rotating equipment needed to
+ * evaluate liquefaction performance. It deliberately keeps thermodynamic and equipment
+ * calculations in the standard NeqSim unit operations; this class only coordinates execution
+ * and calculates route-comparison metrics on a common basis.
  * </p>
  *
  * @author NeqSim contributors
@@ -53,15 +59,16 @@ public final class LNGProcessModel implements Serializable {
    * @param expanders expander list
    * @param cryogenicHeatExchangers cryogenic exchanger list
    */
-  LNGProcessModel(String name, LNGProcessCycle cycle, ProcessSystem processSystem, StreamInterface feedStream,
-      StreamInterface productStream, List<Compressor> compressors, List<Expander> expanders,
-      List<LNGHeatExchanger> cryogenicHeatExchangers) {
+  LNGProcessModel(String name, LNGProcessCycle cycle, ProcessSystem processSystem,
+      StreamInterface feedStream, StreamInterface productStream, List<Compressor> compressors,
+      List<Expander> expanders, List<LNGHeatExchanger> cryogenicHeatExchangers) {
     this.name = name;
     this.cycle = cycle;
     this.processSystem = processSystem;
     this.feedStream = feedStream;
     this.productStream = productStream;
-    this.compressors = Collections.unmodifiableList(new ArrayList<Compressor>(compressors));
+    this.compressors =
+        Collections.unmodifiableList(new ArrayList<Compressor>(compressors));
     this.expanders = Collections.unmodifiableList(new ArrayList<Expander>(expanders));
     this.cryogenicHeatExchangers = Collections
         .unmodifiableList(new ArrayList<LNGHeatExchanger>(cryogenicHeatExchangers));
@@ -100,8 +107,10 @@ public final class LNGProcessModel implements Serializable {
     }
 
     double netPowerKW = Math.max(0.0, compressorPowerKW - expanderPowerKW);
-    double specificEnergy = lngKgPerHour > 1.0e-12 ? netPowerKW / lngKgPerHour : Double.NaN;
-    double lngYield = feedKgPerHour > 1.0e-12 ? lngKgPerHour / feedKgPerHour : Double.NaN;
+    double specificEnergy = lngKgPerHour > 1.0e-12 ? netPowerKW / lngKgPerHour
+        : Double.NaN;
+    double lngYield = feedKgPerHour > 1.0e-12 ? lngKgPerHour / feedKgPerHour
+        : Double.NaN;
     double mtpa = lngKgPerHour * OPERATING_HOURS_PER_YEAR / 1.0e9;
 
     double mita = Double.POSITIVE_INFINITY;
@@ -120,9 +129,11 @@ public final class LNGProcessModel implements Serializable {
       mita = Double.NaN;
     }
 
-    return new Result(name, cycle, feedKgPerHour, lngKgPerHour, lngYield, mtpa, compressorPowerKW, expanderPowerKW,
-        netPowerKW, specificEnergy, productStream.getTemperature("C"), productStream.getPressure("bara"),
-        productStream.getFluid().getDensity("kg/m3"), mita, exchangerExergyDestructionKW, lastRunTimeNanos / 1.0e6);
+    return new Result(name, cycle, feedKgPerHour, lngKgPerHour, lngYield, mtpa,
+        compressorPowerKW, expanderPowerKW, netPowerKW, specificEnergy,
+        productStream.getTemperature("C"), productStream.getPressure("bara"),
+        productStream.getFluid().getDensity("kg/m3"), mita,
+        exchangerExergyDestructionKW, lastRunTimeNanos / 1.0e6);
   }
 
   /** @return model name */
@@ -165,6 +176,100 @@ public final class LNGProcessModel implements Serializable {
     return cryogenicHeatExchangers;
   }
 
+  /**
+   * Appends downstream equipment to the integrated process system.
+   *
+   * <p>
+   * This is useful for product pipelines, storage, loading, boil-off handling, and other
+   * equipment that should participate in the same execution and capacity analysis as the LNG
+   * train. For upstream integration, use
+   * {@link LNGProcessBuilder#setUpstreamProcess(ProcessSystem, StreamInterface)}.
+   * Measurement devices, controllers, and other process elements can be added through
+   * {@link #getProcessSystem()} using the standard NeqSim APIs.
+   * </p>
+   *
+   * @param equipment equipment connected to an existing model stream
+   * @return this model
+   */
+  public LNGProcessModel addEquipment(ProcessEquipmentInterface equipment) {
+    if (equipment == null) {
+      throw new IllegalArgumentException("equipment cannot be null");
+    }
+    processSystem.add(equipment);
+    return this;
+  }
+
+  /**
+   * Evaluates process-wide equipment and pipeline capacity at the current converged state.
+   *
+   * <p>
+   * The result delegates to the universal NeqSim capacity-constraint framework and therefore
+   * includes every registered unit with enabled constraints. Call {@link #run()} first, and
+   * configure equipment design limits or apply mechanical-design constraints before using this
+   * read-only evaluation.
+   * </p>
+   *
+   * @return ranked capacity result for the complete integrated process
+   */
+  public CapacityResult evaluateCapacity() {
+    return evaluateCapacity(0, 0);
+  }
+
+  /**
+   * Runs, auto-sizes, activates mechanical-design constraints, reruns, and evaluates capacity.
+   *
+   * <p>
+   * The workflow includes upstream equipment supplied through
+   * {@link LNGProcessBuilder#setUpstreamProcess(ProcessSystem, StreamInterface)} and downstream
+   * equipment appended with {@link #addEquipment(ProcessEquipmentInterface)}. Consequently,
+   * detailed pipe velocity, pressure-drop, volume-flow, compressor, exchanger, separator, valve,
+   * and other available NeqSim constraints are ranked together.
+   * </p>
+   *
+   * @param safetyFactor design-capacity multiplier, normally 1.1 to 1.3
+   * @return ranked capacity result for the complete integrated process
+   */
+  public CapacityResult autoSizeAndEvaluateCapacity(double safetyFactor) {
+    if (!Double.isFinite(safetyFactor) || safetyFactor <= 1.0) {
+      throw new IllegalArgumentException("safetyFactor must be finite and greater than 1.0");
+    }
+    run();
+    int sizedEquipment = processSystem.autoSizeEquipment(safetyFactor);
+    int derivedConstraints = processSystem.applyMechanicalDesignCapacityConstraints();
+    run();
+    return evaluateCapacity(sizedEquipment, derivedConstraints);
+  }
+
+  /**
+   * Builds a capacity result with workflow counters.
+   *
+   * @param sizedEquipment number of auto-sized units
+   * @param derivedConstraints number of activated mechanical-design constraints
+   * @return capacity result
+   */
+  private CapacityResult evaluateCapacity(int sizedEquipment, int derivedConstraints) {
+    Map<String, Double> utilization = processSystem.getCapacityUtilizationSummary();
+    List<Map.Entry<String, Double>> ranked =
+        new ArrayList<Map.Entry<String, Double>>(utilization.entrySet());
+    Collections.sort(ranked, new Comparator<Map.Entry<String, Double>>() {
+      @Override
+      public int compare(Map.Entry<String, Double> first,
+          Map.Entry<String, Double> second) {
+        return Double.compare(second.getValue(), first.getValue());
+      }
+    });
+    Map<String, Double> rankedUtilization = new LinkedHashMap<String, Double>();
+    for (Map.Entry<String, Double> entry : ranked) {
+      rankedUtilization.put(entry.getKey(), entry.getValue());
+    }
+
+    return new CapacityResult(processSystem.findBottleneck(), rankedUtilization,
+        processSystem.getEquipmentNearCapacityLimit(),
+        processSystem.isAnyEquipmentOverloaded(), processSystem.isAnyHardLimitExceeded(),
+        sizedEquipment, derivedConstraints, processSystem.getUtilizationSnapshotJson(),
+        processSystem.getDesignReportJson());
+  }
+
   /** @return result from the most recent run, or null before the first run */
   public Result getLastResult() {
     return lastResult;
@@ -179,7 +284,105 @@ public final class LNGProcessModel implements Serializable {
     if (lastResult == null) {
       return null;
     }
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(lastResult);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
+        .toJson(lastResult);
+  }
+
+  /**
+   * Immutable process-wide capacity result for an integrated LNG flowsheet.
+   *
+   * @author NeqSim contributors
+   * @version 1.0
+   */
+  public static final class CapacityResult implements Serializable {
+    private static final long serialVersionUID = 1L;
+
+    private final BottleneckResult bottleneck;
+    private final Map<String, Double> rankedUtilizationPercent;
+    private final List<String> equipmentNearCapacityLimit;
+    private final boolean anyEquipmentOverloaded;
+    private final boolean anyHardLimitExceeded;
+    private final int autoSizedEquipmentCount;
+    private final int derivedConstraintCount;
+    private final String utilizationSnapshotJson;
+    private final String designReportJson;
+
+    /**
+     * Creates a process-wide capacity result.
+     *
+     * @param bottleneck most limiting equipment constraint
+     * @param rankedUtilizationPercent utilization by equipment, highest first
+     * @param equipmentNearCapacityLimit equipment above its warning threshold
+     * @param anyEquipmentOverloaded true when a design capacity is exceeded
+     * @param anyHardLimitExceeded true when an absolute equipment limit is exceeded
+     * @param autoSizedEquipmentCount number of units auto-sized by the workflow
+     * @param derivedConstraintCount number of activated mechanical-design constraints
+     * @param utilizationSnapshotJson complete machine-readable utilization snapshot
+     * @param designReportJson complete auto-sizing and design report
+     */
+    private CapacityResult(BottleneckResult bottleneck,
+        Map<String, Double> rankedUtilizationPercent,
+        List<String> equipmentNearCapacityLimit, boolean anyEquipmentOverloaded,
+        boolean anyHardLimitExceeded, int autoSizedEquipmentCount,
+        int derivedConstraintCount, String utilizationSnapshotJson,
+        String designReportJson) {
+      this.bottleneck = bottleneck;
+      this.rankedUtilizationPercent = Collections.unmodifiableMap(
+          new LinkedHashMap<String, Double>(rankedUtilizationPercent));
+      this.equipmentNearCapacityLimit = Collections.unmodifiableList(
+          new ArrayList<String>(equipmentNearCapacityLimit));
+      this.anyEquipmentOverloaded = anyEquipmentOverloaded;
+      this.anyHardLimitExceeded = anyHardLimitExceeded;
+      this.autoSizedEquipmentCount = autoSizedEquipmentCount;
+      this.derivedConstraintCount = derivedConstraintCount;
+      this.utilizationSnapshotJson = utilizationSnapshotJson;
+      this.designReportJson = designReportJson;
+    }
+
+    /** @return most limiting equipment constraint, or an empty result */
+    public BottleneckResult getBottleneck() {
+      return bottleneck;
+    }
+
+    /** @return equipment utilization percentages ordered from highest to lowest */
+    public Map<String, Double> getRankedUtilizationPercent() {
+      return rankedUtilizationPercent;
+    }
+
+    /** @return immutable list of equipment above its warning threshold */
+    public List<String> getEquipmentNearCapacityLimit() {
+      return equipmentNearCapacityLimit;
+    }
+
+    /** @return true when any registered equipment exceeds design capacity */
+    public boolean isAnyEquipmentOverloaded() {
+      return anyEquipmentOverloaded;
+    }
+
+    /** @return true when any absolute equipment limit is exceeded */
+    public boolean isAnyHardLimitExceeded() {
+      return anyHardLimitExceeded;
+    }
+
+    /** @return number of units auto-sized by the capacity workflow */
+    public int getAutoSizedEquipmentCount() {
+      return autoSizedEquipmentCount;
+    }
+
+    /** @return number of activated mechanical-design constraints */
+    public int getDerivedConstraintCount() {
+      return derivedConstraintCount;
+    }
+
+    /** @return complete process utilization snapshot JSON */
+    public String getUtilizationSnapshotJson() {
+      return utilizationSnapshotJson;
+    }
+
+    /** @return complete auto-sizing and design report JSON */
+    public String getDesignReportJson() {
+      return designReportJson;
+    }
   }
 
   /**
@@ -228,11 +431,13 @@ public final class LNGProcessModel implements Serializable {
      * @param exchangerExergyDestructionKW exchanger exergy destruction in kW
      * @param runTimeMilliseconds process execution time in milliseconds
      */
-    Result(String name, LNGProcessCycle cycle, double feedMassFlowKgPerHour, double lngMassFlowKgPerHour,
-        double lngYield, double capacityMTPA, double compressorPowerKW, double expanderRecoveredPowerKW,
-        double netPowerKW, double specificEnergyKWhPerKgLNG, double productTemperatureC, double productPressureBara,
-        double productDensityKgPerM3, double minimumInternalTemperatureApproachC, double exchangerExergyDestructionKW,
-        double runTimeMilliseconds) {
+    Result(String name, LNGProcessCycle cycle, double feedMassFlowKgPerHour,
+        double lngMassFlowKgPerHour, double lngYield, double capacityMTPA,
+        double compressorPowerKW, double expanderRecoveredPowerKW, double netPowerKW,
+        double specificEnergyKWhPerKgLNG, double productTemperatureC,
+        double productPressureBara, double productDensityKgPerM3,
+        double minimumInternalTemperatureApproachC,
+        double exchangerExergyDestructionKW, double runTimeMilliseconds) {
       this.name = name;
       this.cycle = cycle;
       this.feedMassFlowKgPerHour = feedMassFlowKgPerHour;
@@ -246,7 +451,8 @@ public final class LNGProcessModel implements Serializable {
       this.productTemperatureC = productTemperatureC;
       this.productPressureBara = productPressureBara;
       this.productDensityKgPerM3 = productDensityKgPerM3;
-      this.minimumInternalTemperatureApproachC = minimumInternalTemperatureApproachC;
+      this.minimumInternalTemperatureApproachC =
+          minimumInternalTemperatureApproachC;
       this.exchangerExergyDestructionKW = exchangerExergyDestructionKW;
       this.runTimeMilliseconds = runTimeMilliseconds;
     }
