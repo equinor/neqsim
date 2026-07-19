@@ -9,6 +9,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.compressor.CompressorChartInterface;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.fielddevelopment.economics.CashFlowEngine;
 import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
@@ -625,7 +626,39 @@ public class FieldLifecycleSimulator {
   }
 
   private double getProcessPower(FieldLifecycleModel model, String unit) {
-    return model.hasProcessModel() ? model.getProcessModel().getPower(unit) : model.getProcessSystem().getPower(unit);
+    double reportedPower = model.hasProcessModel() ? model.getProcessModel().getPower(unit)
+        : model.getProcessSystem().getPower(unit);
+    if (Double.isFinite(reportedPower)) {
+      return reportedPower;
+    }
+
+    double finitePower = 0.0;
+    if (model.hasProcessModel()) {
+      for (String areaName : model.getProcessModel().getProcessSystemNames()) {
+        finitePower += sumFiniteProcessPower(model.getProcessModel().get(areaName), unit);
+      }
+    } else {
+      finitePower = sumFiniteProcessPower(model.getProcessSystem(), unit);
+    }
+    logger.warn("Process {} reported non-finite total power; using {} {} from finite equipment duties",
+        model.getName(), finitePower, unit);
+    return finitePower;
+  }
+
+  private double sumFiniteProcessPower(ProcessSystem process, String unit) {
+    double finitePower = 0.0;
+    for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
+      double equipmentPower = Double.NaN;
+      if (equipment instanceof Compressor) {
+        equipmentPower = ((Compressor) equipment).getPower(unit);
+      } else if (equipment instanceof Pump) {
+        equipmentPower = ((Pump) equipment).getPower(unit);
+      }
+      if (Double.isFinite(equipmentPower)) {
+        finitePower += equipmentPower;
+      }
+    }
+    return finitePower;
   }
 
   private int autoSizeProcess(FieldLifecycleModel model, double designMargin) {
