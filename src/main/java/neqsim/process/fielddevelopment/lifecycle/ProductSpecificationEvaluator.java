@@ -15,8 +15,7 @@ public final class ProductSpecificationEvaluator {
   private static final double MINIMUM_FLOW_KG_PER_SECOND = 1.0e-9;
 
   /** Evaluates configured limits using streams exposed by a lifecycle model. */
-  public ProductSpecificationResult evaluate(FieldLifecycleModel model,
-      FieldProductSpecifications specifications) {
+  public ProductSpecificationResult evaluate(FieldLifecycleModel model, FieldProductSpecifications specifications) {
     return evaluate(model, specifications, Double.NaN);
   }
 
@@ -28,8 +27,8 @@ public final class ProductSpecificationEvaluator {
    * @param measuredOilInWaterMgPerL measured treated-water OIW, or NaN to derive it from the water stream
    * @return measured compliance result
    */
-  public ProductSpecificationResult evaluate(FieldLifecycleModel model,
-      FieldProductSpecifications specifications, double measuredOilInWaterMgPerL) {
+  public ProductSpecificationResult evaluate(FieldLifecycleModel model, FieldProductSpecifications specifications,
+      double measuredOilInWaterMgPerL) {
     if (model == null || specifications == null) {
       return ProductSpecificationResult.notEvaluated();
     }
@@ -53,8 +52,8 @@ public final class ProductSpecificationEvaluator {
       gasH2s = gasMoleConcentration(gasExport, "H2S", 1.0e6);
       gasOxygen = gasMoleConcentration(gasExport, "oxygen", 100.0);
       if (Double.isFinite(specifications.getMaximumGasWaterDewPointC())) {
-        waterDewPoint = calculateWaterDewPoint(gasExport,
-            specifications.getGasDewPointReferencePressureBara(), violations);
+        waterDewPoint = calculateWaterDewPoint(gasExport, specifications.getGasDewPointReferencePressureBara(),
+            violations);
       }
       if (Double.isFinite(specifications.getMaximumGasHydrocarbonDewPointC())) {
         hydrocarbonDewPoint = calculateHydrocarbonDewPoint(gasExport,
@@ -86,43 +85,36 @@ public final class ProductSpecificationEvaluator {
     }
 
     if (gasExporting) {
-      checkMaximum("gas CO2", gasCo2, specifications.getMaximumGasCo2MolePercent(), "mol%",
-          violations);
+      checkMaximum("gas CO2", gasCo2, specifications.getMaximumGasCo2MolePercent(), "mol%", violations);
       checkMaximum("gas H2S", gasH2s, specifications.getMaximumGasH2sPpm(), "ppm", violations);
-      checkMaximum("gas oxygen", gasOxygen, specifications.getMaximumGasOxygenMolePercent(),
-          "mol%", violations);
-      checkMaximum("gas water dew point", waterDewPoint,
-          specifications.getMaximumGasWaterDewPointC(), "C", violations);
-      checkMaximum("gas hydrocarbon dew point", hydrocarbonDewPoint,
-          specifications.getMaximumGasHydrocarbonDewPointC(), "C", violations);
+      checkMaximum("gas oxygen", gasOxygen, specifications.getMaximumGasOxygenMolePercent(), "mol%", violations);
+      checkMaximum("gas water dew point", waterDewPoint, specifications.getMaximumGasWaterDewPointC(), "C", violations);
+      checkMaximum("gas hydrocarbon dew point", hydrocarbonDewPoint, specifications.getMaximumGasHydrocarbonDewPointC(),
+          "C", violations);
       checkRange("gas gross calorific value", gasGrossCalorificValue,
           specifications.getMinimumGasGrossCalorificValueMjPerSm3(),
           specifications.getMaximumGasGrossCalorificValueMjPerSm3(), "MJ/Sm3", violations);
-      checkRange("gas Wobbe index", gasWobbeIndex,
-          specifications.getMinimumGasWobbeIndexMjPerSm3(),
+      checkRange("gas Wobbe index", gasWobbeIndex, specifications.getMinimumGasWobbeIndexMjPerSm3(),
           specifications.getMaximumGasWobbeIndexMjPerSm3(), "MJ/Sm3", violations);
-      checkMaximum("gas relative density", gasRelativeDensity,
-          specifications.getMaximumGasRelativeDensity(), "-", violations);
+      checkMaximum("gas relative density", gasRelativeDensity, specifications.getMaximumGasRelativeDensity(), "-",
+          violations);
     }
     if (oilExporting) {
       checkMaximum("oil RVP", oilRvp, specifications.getMaximumOilRvpBara(), "bara", violations);
-      checkMaximum("oil BS&W", oilBsw, specifications.getMaximumOilBswVolumePercent(), "vol%",
-          violations);
+      checkMaximum("oil BS&W", oilBsw, specifications.getMaximumOilBswVolumePercent(), "vol%", violations);
     }
     checkMaximum("oil in water", oilInWater, specifications.getMaximumOilInWaterMgPerL(), "mg/L", violations);
 
-    return new ProductSpecificationResult(specifications.hasActiveLimits(), gasCo2, gasH2s,
-        gasOxygen, waterDewPoint, hydrocarbonDewPoint, gasGrossCalorificValue, gasWobbeIndex,
-        gasRelativeDensity, oilRvp, oilBsw, oilInWater, violations);
+    return new ProductSpecificationResult(specifications.hasActiveLimits(), gasCo2, gasH2s, gasOxygen, waterDewPoint,
+        hydrocarbonDewPoint, gasGrossCalorificValue, gasWobbeIndex, gasRelativeDensity, oilRvp, oilBsw, oilInWater,
+        violations);
   }
 
   private static boolean hasFlow(StreamInterface stream) {
-    return stream != null && stream.getFluid() != null
-        && stream.getFlowRate("kg/sec") > MINIMUM_FLOW_KG_PER_SECOND;
+    return stream != null && stream.getFluid() != null && stream.getFlowRate("kg/sec") > MINIMUM_FLOW_KG_PER_SECOND;
   }
 
-  private static double gasMoleConcentration(StreamInterface stream, String component,
-      double multiplier) {
+  private static double gasMoleConcentration(StreamInterface stream, String component, double multiplier) {
     SystemInterface fluid = stream.getFluid();
     if (!fluid.hasComponent(component)) {
       return 0.0;
@@ -131,8 +123,7 @@ public final class ProductSpecificationEvaluator {
     return phase.getComponent(component).getx() * multiplier;
   }
 
-  private static double calculateWaterDewPoint(StreamInterface stream, double pressureBara,
-      List<String> violations) {
+  private static double calculateWaterDewPoint(StreamInterface stream, double pressureBara, List<String> violations) {
     try {
       if (!stream.getFluid().hasComponent("water")) {
         return Double.NEGATIVE_INFINITY;
@@ -149,8 +140,8 @@ public final class ProductSpecificationEvaluator {
   private static double calculateHydrocarbonDewPoint(StreamInterface stream, double pressureBara,
       List<String> violations) {
     try {
-      HydrocarbonDewPointAnalyser analyser =
-          new HydrocarbonDewPointAnalyser("lifecycle gas hydrocarbon dew point", stream);
+      HydrocarbonDewPointAnalyser analyser = new HydrocarbonDewPointAnalyser("lifecycle gas hydrocarbon dew point",
+          stream);
       analyser.setReferencePressure(pressureBara);
       return analyser.getMeasuredValue("C");
     } catch (RuntimeException ex) {
@@ -167,16 +158,13 @@ public final class ProductSpecificationEvaluator {
         || Double.isFinite(specifications.getMaximumGasRelativeDensity());
   }
 
-  private static double[] calculateGasEnergyQuality(StreamInterface stream,
-      List<String> violations) {
+  private static double[] calculateGasEnergyQuality(StreamInterface stream, List<String> violations) {
     try {
-      Standard_ISO6976_2016 standard =
-          new Standard_ISO6976_2016(stream.getFluid(), 15.0, 25.0, "volume");
+      Standard_ISO6976_2016 standard = new Standard_ISO6976_2016(stream.getFluid(), 15.0, 25.0, "volume");
       standard.setReferenceState("real");
       standard.setReferenceType("volume");
       standard.calculate();
-      return new double[] { standard.getValue("GCV") / 1000.0,
-          standard.getValue("SuperiorWobbeIndex") / 1000.0,
+      return new double[] { standard.getValue("GCV") / 1000.0, standard.getValue("SuperiorWobbeIndex") / 1000.0,
           standard.getValue("RelativeDensity") };
     } catch (RuntimeException ex) {
       violations.add("gas energy quality could not be calculated");
@@ -217,8 +205,7 @@ public final class ProductSpecificationEvaluator {
       PhaseInterface aqueous = fluid.getPhase("aqueous");
       double hydrocarbonWeightFraction = 0.0;
       for (int component = 0; component < aqueous.getNumberOfComponents(); component++) {
-        if (aqueous.getComponent(component).isHydrocarbon()
-            || aqueous.getComponent(component).isIsTBPfraction()) {
+        if (aqueous.getComponent(component).isHydrocarbon() || aqueous.getComponent(component).isIsTBPfraction()) {
           hydrocarbonWeightFraction += aqueous.getWtFrac(component);
         }
       }
@@ -229,8 +216,7 @@ public final class ProductSpecificationEvaluator {
     }
   }
 
-  private static void checkMaximum(String name, double measured, double maximum, String unit,
-      List<String> violations) {
+  private static void checkMaximum(String name, double measured, double maximum, String unit, List<String> violations) {
     if (!Double.isFinite(maximum)) {
       return;
     }
@@ -243,8 +229,8 @@ public final class ProductSpecificationEvaluator {
     }
   }
 
-  private static void checkRange(String name, double measured, double minimum, double maximum,
-      String unit, List<String> violations) {
+  private static void checkRange(String name, double measured, double minimum, double maximum, String unit,
+      List<String> violations) {
     if (!Double.isFinite(minimum) && !Double.isFinite(maximum)) {
       return;
     }

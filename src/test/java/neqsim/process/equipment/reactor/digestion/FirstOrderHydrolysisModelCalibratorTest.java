@@ -16,7 +16,7 @@ class FirstOrderHydrolysisModelCalibratorTest {
     double maximumDestruction = 0.68;
     double hydrolysisRate = 0.11;
     FirstOrderHydrolysisModelCalibrator calibrator = new FirstOrderHydrolysisModelCalibrator();
-    for (double retentionTime : new double[] {5.0, 10.0, 20.0, 35.0}) {
+    for (double retentionTime : new double[] { 5.0, 10.0, 20.0, 35.0 }) {
       double measured = maximumDestruction * (1.0 - Math.exp(-hydrolysisRate * retentionTime));
       calibrator.addObservation(retentionTime, 308.15, measured);
     }
@@ -42,8 +42,8 @@ class FirstOrderHydrolysisModelCalibratorTest {
     BioFeedstock feedstock = BioFeedstock.library("crop_residue");
     double originalRate = feedstock.getHydrolysisRatePerDay();
 
-    AnaerobicDigestionResult result = model.calculate(new AnaerobicDigestionInput(feedstock, 100.0, 40.0, 318.15,
-        Double.NaN, Double.NaN, Double.NaN, 0.10));
+    AnaerobicDigestionResult result = model.calculate(
+        new AnaerobicDigestionInput(feedstock, 100.0, 40.0, 318.15, Double.NaN, Double.NaN, Double.NaN, 0.10));
 
     assertEquals(originalRate, feedstock.getHydrolysisRatePerDay(), 0.0);
     assertEquals(ModelFidelity.CALIBRATED, result.getFidelity());

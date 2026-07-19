@@ -11,8 +11,8 @@ import java.util.List;
  * <p>
  * For each candidate hydrolysis rate, the least-squares optimum maximum destruction is obtained analytically and
  * bounded to the physical interval. A coarse logarithmic search followed by golden-section refinement makes the fit
- * deterministic and independent of optional numerical libraries. At least two distinct effective exposures are
-   * required to identify both fitted parameters.
+ * deterministic and independent of optional numerical libraries. At least two distinct effective exposures are required
+ * to identify both fitted parameters.
  * </p>
  *
  * @author NeqSim team

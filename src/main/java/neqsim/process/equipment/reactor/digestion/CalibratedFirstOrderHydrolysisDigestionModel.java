@@ -8,10 +8,10 @@ import neqsim.thermo.characterization.BioFeedstock;
  * First-order hydrolysis model fitted to a named conversion data set.
  *
  * <p>
- * The fitted hydrolysis rate and maximum volatile-solids destruction replace the corresponding feedstock defaults on
- * an independent characterization copy. Other feedstock properties, including methane yield and elemental analysis,
- * remain unchanged. Calculations outside the observed retention-time or temperature range are retained but explicitly
- * warned as extrapolations.
+ * The fitted hydrolysis rate and maximum volatile-solids destruction replace the corresponding feedstock defaults on an
+ * independent characterization copy. Other feedstock properties, including methane yield and elemental analysis, remain
+ * unchanged. Calculations outside the observed retention-time or temperature range are retained but explicitly warned
+ * as extrapolations.
  * </p>
  *
  * @author NeqSim team

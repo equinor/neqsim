@@ -85,14 +85,13 @@ public final class FieldLifecycleModel implements Serializable {
    * @param existingProcessSystem existing plant flowsheet, including its equipment constraints
    * @return connection-point builder
    */
-  public static Builder existingFacility(String name, SimpleReservoir reservoir,
-      ProcessSystem existingProcessSystem) {
+  public static Builder existingFacility(String name, SimpleReservoir reservoir, ProcessSystem existingProcessSystem) {
     return builder(name, reservoir, existingProcessSystem);
   }
 
   /** Starts a builder for an existing facility represented by a multi-area process model. */
-  public static Builder existingFacility(String name, SimpleReservoir reservoir,
-      ProcessModel existingProcessModel, String facilityAreaName) {
+  public static Builder existingFacility(String name, SimpleReservoir reservoir, ProcessModel existingProcessModel,
+      String facilityAreaName) {
     return builder(name, reservoir, existingProcessModel, facilityAreaName);
   }
 
@@ -115,8 +114,8 @@ public final class FieldLifecycleModel implements Serializable {
     ProcessModel infrastructure = new ProcessModel();
     infrastructure.add("existing SURF", existingSurfSystem);
     infrastructure.add("existing facility", existingFacilitySystem);
-    return new Builder(name, reservoir, existingFacilitySystem, infrastructure,
-        "existing facility", existingSurfSystem, "existing SURF");
+    return new Builder(name, reservoir, existingFacilitySystem, infrastructure, "existing facility", existingSurfSystem,
+        "existing SURF");
   }
 
   /**
@@ -129,8 +128,7 @@ public final class FieldLifecycleModel implements Serializable {
     if (surf == facility) {
       throw new IllegalArgumentException("SURF and facility area names must identify distinct process systems");
     }
-    return new Builder(name, reservoir, facility, existingInfrastructure, facilityAreaName, surf,
-        surfAreaName);
+    return new Builder(name, reservoir, facility, existingInfrastructure, facilityAreaName, surf, surfAreaName);
   }
 
   /**
@@ -185,9 +183,9 @@ public final class FieldLifecycleModel implements Serializable {
       StreamInterface reservoirGasInjector, StreamInterface recoveredGas, Splitter gasAllocationSplitter,
       StreamInterface stabilizedOilExport, StreamInterface gasExport, StreamInterface compressedInjectionGas,
       StreamInterface hostOilFeed, StreamInterface hostGasFeed, StreamInterface hostWaterFeed) {
-    this(name, reservoir, processSystem, reservoirOilProducer, reservoirWaterProducer,
-        reservoirGasInjector, recoveredGas, gasAllocationSplitter, stabilizedOilExport, gasExport,
-        compressedInjectionGas, hostOilFeed, hostGasFeed, hostWaterFeed, null);
+    this(name, reservoir, processSystem, reservoirOilProducer, reservoirWaterProducer, reservoirGasInjector,
+        recoveredGas, gasAllocationSplitter, stabilizedOilExport, gasExport, compressedInjectionGas, hostOilFeed,
+        hostGasFeed, hostWaterFeed, null);
   }
 
   /** Creates a tieback-capable lifecycle model with an explicit treated-water discharge stream. */
@@ -197,20 +195,17 @@ public final class FieldLifecycleModel implements Serializable {
       StreamInterface stabilizedOilExport, StreamInterface gasExport, StreamInterface compressedInjectionGas,
       StreamInterface hostOilFeed, StreamInterface hostGasFeed, StreamInterface hostWaterFeed,
       StreamInterface treatedWaterDischarge) {
-    this(name, reservoir, processSystem, null, null, null, null, reservoirOilProducer,
-        reservoirWaterProducer, reservoirGasInjector, recoveredGas, gasAllocationSplitter,
-        stabilizedOilExport, gasExport, compressedInjectionGas, hostOilFeed, hostGasFeed,
-        hostWaterFeed, treatedWaterDischarge);
+    this(name, reservoir, processSystem, null, null, null, null, reservoirOilProducer, reservoirWaterProducer,
+        reservoirGasInjector, recoveredGas, gasAllocationSplitter, stabilizedOilExport, gasExport,
+        compressedInjectionGas, hostOilFeed, hostGasFeed, hostWaterFeed, treatedWaterDischarge);
   }
 
   private FieldLifecycleModel(String name, SimpleReservoir reservoir, ProcessSystem processSystem,
-      ProcessModel processModel, String facilityAreaName, ProcessSystem existingSurfSystem,
-      String surfAreaName, StreamInterface reservoirOilProducer,
-      StreamInterface reservoirWaterProducer, StreamInterface reservoirGasInjector,
-      StreamInterface recoveredGas, Splitter gasAllocationSplitter,
-      StreamInterface stabilizedOilExport, StreamInterface gasExport,
-      StreamInterface compressedInjectionGas, StreamInterface hostOilFeed,
-      StreamInterface hostGasFeed, StreamInterface hostWaterFeed,
+      ProcessModel processModel, String facilityAreaName, ProcessSystem existingSurfSystem, String surfAreaName,
+      StreamInterface reservoirOilProducer, StreamInterface reservoirWaterProducer,
+      StreamInterface reservoirGasInjector, StreamInterface recoveredGas, Splitter gasAllocationSplitter,
+      StreamInterface stabilizedOilExport, StreamInterface gasExport, StreamInterface compressedInjectionGas,
+      StreamInterface hostOilFeed, StreamInterface hostGasFeed, StreamInterface hostWaterFeed,
       StreamInterface treatedWaterDischarge) {
     this.name = require(name, "name");
     this.reservoir = require(reservoir, "reservoir");
@@ -240,15 +235,13 @@ public final class FieldLifecycleModel implements Serializable {
     return value;
   }
 
-  private static ProcessSystem requireArea(ProcessModel processModel, String areaName,
-      String parameterName) {
+  private static ProcessSystem requireArea(ProcessModel processModel, String areaName, String parameterName) {
     require(processModel, "processModel");
     require(areaName, parameterName);
     ProcessSystem area = processModel.get(areaName);
     if (area == null) {
       throw new IllegalArgumentException(parameterName + " '" + areaName
-          + "' is not present in process model; available areas: "
-          + processModel.getProcessSystemNames());
+          + "' is not present in process model; available areas: " + processModel.getProcessSystemNames());
     }
     return area;
   }
@@ -414,9 +407,8 @@ public final class FieldLifecycleModel implements Serializable {
     private FieldProductionPotentialProvider productionPotentialProvider;
     private FieldProductQualityProvider productQualityProvider;
 
-    private Builder(String name, SimpleReservoir reservoir, ProcessSystem processSystem,
-        ProcessModel processModel, String facilityAreaName, ProcessSystem existingSurfSystem,
-        String surfAreaName) {
+    private Builder(String name, SimpleReservoir reservoir, ProcessSystem processSystem, ProcessModel processModel,
+        String facilityAreaName, ProcessSystem existingSurfSystem, String surfAreaName) {
       this.name = require(name, "name");
       this.reservoir = require(reservoir, "reservoir");
       this.processSystem = require(processSystem, "processSystem");
@@ -459,8 +451,7 @@ public final class FieldLifecycleModel implements Serializable {
      * flowsheet determines which shared hydraulic and processing equipment sees the host load.
      * </p>
      */
-    public Builder hostFeeds(StreamInterface oilFeed, StreamInterface gasFeed,
-        StreamInterface waterFeed) {
+    public Builder hostFeeds(StreamInterface oilFeed, StreamInterface gasFeed, StreamInterface waterFeed) {
       hostOilFeed = oilFeed;
       hostGasFeed = gasFeed;
       hostWaterFeed = waterFeed;
@@ -492,11 +483,10 @@ public final class FieldLifecycleModel implements Serializable {
       if (hasAnyHostFeed && !hasAllHostFeeds) {
         throw new IllegalArgumentException("host oil, gas, and water feeds must be supplied together");
       }
-      FieldLifecycleModel model = new FieldLifecycleModel(name, reservoir, processSystem,
-          processModel, facilityAreaName, existingSurfSystem, surfAreaName, reservoirOilProducer,
-          reservoirWaterProducer, reservoirGasInjector, recoveredGas, gasAllocationSplitter,
-          stabilizedOilExport, gasExport, compressedInjectionGas, hostOilFeed, hostGasFeed,
-          hostWaterFeed, treatedWaterDischarge);
+      FieldLifecycleModel model = new FieldLifecycleModel(name, reservoir, processSystem, processModel,
+          facilityAreaName, existingSurfSystem, surfAreaName, reservoirOilProducer, reservoirWaterProducer,
+          reservoirGasInjector, recoveredGas, gasAllocationSplitter, stabilizedOilExport, gasExport,
+          compressedInjectionGas, hostOilFeed, hostGasFeed, hostWaterFeed, treatedWaterDischarge);
       model.setProductionPotentialProvider(productionPotentialProvider);
       model.setProductQualityProvider(productQualityProvider);
       return model;
