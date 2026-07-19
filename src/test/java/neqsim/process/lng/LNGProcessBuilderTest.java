@@ -30,19 +30,16 @@ class LNGProcessBuilderTest {
   @ParameterizedTest
   @EnumSource(LNGProcessCycle.class)
   void testBuildsEverySupportedCycle(LNGProcessCycle cycle) {
-    LNGProcessModel model = new LNGProcessBuilder().setName("test " + cycle)
-        .setCycle(cycle).setFeedFlowRate(20000.0).setNumberOfZones(4)
-        .setAdaptiveRefinement(false).build();
+    LNGProcessModel model = new LNGProcessBuilder().setName("test " + cycle).setCycle(cycle).setFeedFlowRate(20000.0)
+        .setNumberOfZones(4).setAdaptiveRefinement(false).build();
 
     assertEquals(cycle, model.getCycle());
     assertNotNull(model.getProcessSystem());
     assertNotNull(model.getFeedStream());
     assertNotNull(model.getProductStream());
     assertNotNull(model.getFlashGasStream());
-    assertSame(model.getProductStream(),
-        model.getOutputStream(LNGProcessModel.LNG_OUTPUT));
-    assertSame(model.getFlashGasStream(),
-        model.getOutputStream(LNGProcessModel.FLASH_GAS_OUTPUT));
+    assertSame(model.getProductStream(), model.getOutputStream(LNGProcessModel.LNG_OUTPUT));
+    assertSame(model.getFlashGasStream(), model.getOutputStream(LNGProcessModel.FLASH_GAS_OUTPUT));
     assertEquals(2, model.getOutputStreams().size());
     assertTrue(model.getCompressors().size() >= 2);
     assertTrue(model.getCryogenicHeatExchangers().size() >= 1);
@@ -57,9 +54,8 @@ class LNGProcessBuilderTest {
   @Test
   @Tag("slow")
   void testSmrRouteRunsAndReportsPerformance() {
-    LNGProcessModel model = new LNGProcessBuilder().setName("SMR smoke test")
-        .setCycle(LNGProcessCycle.SMR).setFeedFlowRate(20000.0)
-        .setNumberOfZones(4).setAdaptiveRefinement(false).build();
+    LNGProcessModel model = new LNGProcessBuilder().setName("SMR smoke test").setCycle(LNGProcessCycle.SMR)
+        .setFeedFlowRate(20000.0).setNumberOfZones(4).setAdaptiveRefinement(false).build();
 
     LNGProcessModel.Result result = model.run();
 
@@ -83,8 +79,8 @@ class LNGProcessBuilderTest {
     Stream feed = new Stream("external LNG feed", fluid);
     feed.setFlowRate(25000.0, "kg/hr");
 
-    LNGProcessModel model = new LNGProcessBuilder().setName("integrated LNG")
-        .setFeedStream(feed).setNumberOfZones(4).build();
+    LNGProcessModel model = new LNGProcessBuilder().setName("integrated LNG").setFeedStream(feed).setNumberOfZones(4)
+        .build();
 
     assertSame(feed, model.getFeedStream());
     feed.setFlowRate(30000.0, "kg/hr");
@@ -105,25 +101,21 @@ class LNGProcessBuilderTest {
 
     ProcessSystem integratedProcess = new ProcessSystem("integrated LNG plant");
     integratedProcess.add(supply);
-    PipeBeggsAndBrills feedPipeline =
-        new PipeBeggsAndBrills("LNG feed pipeline", supply);
+    PipeBeggsAndBrills feedPipeline = new PipeBeggsAndBrills("LNG feed pipeline", supply);
     feedPipeline.setLength(20000.0);
     feedPipeline.setDiameter(0.35);
-    feedPipeline.addCapacityConstraint(
-        new CapacityConstraint("pipelineThroughput", "kg/hr", ConstraintType.DESIGN)
-            .setDesignValue(25000.0).setCurrentValue(20000.0));
+    feedPipeline.addCapacityConstraint(new CapacityConstraint("pipelineThroughput", "kg/hr", ConstraintType.DESIGN)
+        .setDesignValue(25000.0).setCurrentValue(20000.0));
     integratedProcess.add(feedPipeline);
 
     LNGProcessModel model = new LNGProcessBuilder().setName("pipeline integrated LNG")
-        .setUpstreamProcess(integratedProcess, feedPipeline.getOutletStream())
-        .setNumberOfZones(4).build();
+        .setUpstreamProcess(integratedProcess, feedPipeline.getOutletStream()).setNumberOfZones(4).build();
     LNGProcessModel.CapacityResult capacity = model.evaluateCapacity();
 
     assertSame(integratedProcess, model.getProcessSystem());
     assertSame(feedPipeline.getOutletStream(), model.getFeedStream());
     assertEquals("LNG feed pipeline", capacity.getBottleneck().getEquipmentName());
-    assertEquals(80.0,
-        capacity.getRankedUtilizationPercent().get("LNG feed pipeline"), 1.0e-9);
+    assertEquals(80.0, capacity.getRankedUtilizationPercent().get("LNG feed pipeline"), 1.0e-9);
     assertFalse(capacity.isAnyEquipmentOverloaded());
     assertNotNull(capacity.getUtilizationSnapshotJson());
     assertNotNull(capacity.getDesignReportJson());
@@ -144,8 +136,7 @@ class LNGProcessBuilderTest {
 
     ProcessSystem plant = new ProcessSystem("professional LNG flowsheet");
     plant.add(inlet);
-    DistillationColumn scrubColumn =
-        new DistillationColumn("heavy hydrocarbon scrub column", 8, true, true);
+    DistillationColumn scrubColumn = new DistillationColumn("heavy hydrocarbon scrub column", 8, true, true);
     scrubColumn.addFeedStream(inlet, 4);
     scrubColumn.setCondenserTemperature(-35.0, "C");
     scrubColumn.setReboilerTemperature(65.0, "C");
@@ -153,9 +144,8 @@ class LNGProcessBuilderTest {
 
     StreamInterface treatedGas = scrubColumn.getGasOutStream();
     StreamInterface ngl = scrubColumn.getLiquidOutStream();
-    LNGProcessModel model = new LNGProcessBuilder().setName("professional C3MR train")
-        .setCycle(LNGProcessCycle.C3MR).setUpstreamProcess(plant, treatedGas)
-        .setNumberOfZones(4).build().registerOutputStream("NGL", ngl);
+    LNGProcessModel model = new LNGProcessBuilder().setName("professional C3MR train").setCycle(LNGProcessCycle.C3MR)
+        .setUpstreamProcess(plant, treatedGas).setNumberOfZones(4).build().registerOutputStream("NGL", ngl);
 
     assertSame(plant, model.getProcessSystem());
     assertSame(treatedGas, model.getFeedStream());
@@ -177,9 +167,7 @@ class LNGProcessBuilderTest {
     assertThrows(IllegalArgumentException.class, () -> builder.setFeedPressure(-1.0));
     assertThrows(IllegalArgumentException.class, () -> builder.setNumberOfZones(1));
     assertThrows(IllegalArgumentException.class, () -> builder.setFeedStream(null));
-    assertThrows(IllegalArgumentException.class,
-        () -> builder.setUpstreamProcess(null, null));
-    assertThrows(IllegalArgumentException.class,
-        () -> builder.setCompressorEfficiency(1.1));
+    assertThrows(IllegalArgumentException.class, () -> builder.setUpstreamProcess(null, null));
+    assertThrows(IllegalArgumentException.class, () -> builder.setCompressorEfficiency(1.1));
   }
 }
