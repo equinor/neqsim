@@ -15,10 +15,9 @@ import neqsim.process.processmodel.ProcessSystem;
  * Runnable LNG process template with consistent process-level performance metrics.
  *
  * <p>
- * The model wraps a {@link ProcessSystem} and the streams and rotating equipment needed to
- * evaluate liquefaction performance. It deliberately keeps thermodynamic and equipment
- * calculations in the standard NeqSim unit operations; this class only coordinates execution
- * and calculates route-comparison metrics on a common basis.
+ * The model wraps a {@link ProcessSystem} and the streams and rotating equipment needed to evaluate liquefaction
+ * performance. It deliberately keeps thermodynamic and equipment calculations in the standard NeqSim unit operations;
+ * this class only coordinates execution and calculates route-comparison metrics on a common basis.
  * </p>
  *
  * @author NeqSim contributors
@@ -54,16 +53,15 @@ public final class LNGProcessModel implements Serializable {
    * @param expanders expander list
    * @param cryogenicHeatExchangers cryogenic exchanger list
    */
-  LNGProcessModel(String name, LNGProcessCycle cycle, ProcessSystem processSystem,
-      StreamInterface feedStream, StreamInterface productStream, List<Compressor> compressors,
-      List<Expander> expanders, List<LNGHeatExchanger> cryogenicHeatExchangers) {
+  LNGProcessModel(String name, LNGProcessCycle cycle, ProcessSystem processSystem, StreamInterface feedStream,
+      StreamInterface productStream, List<Compressor> compressors, List<Expander> expanders,
+      List<LNGHeatExchanger> cryogenicHeatExchangers) {
     this.name = name;
     this.cycle = cycle;
     this.processSystem = processSystem;
     this.feedStream = feedStream;
     this.productStream = productStream;
-    this.compressors =
-        Collections.unmodifiableList(new ArrayList<Compressor>(compressors));
+    this.compressors = Collections.unmodifiableList(new ArrayList<Compressor>(compressors));
     this.expanders = Collections.unmodifiableList(new ArrayList<Expander>(expanders));
     this.cryogenicHeatExchangers = Collections
         .unmodifiableList(new ArrayList<LNGHeatExchanger>(cryogenicHeatExchangers));
@@ -102,10 +100,8 @@ public final class LNGProcessModel implements Serializable {
     }
 
     double netPowerKW = Math.max(0.0, compressorPowerKW - expanderPowerKW);
-    double specificEnergy = lngKgPerHour > 1.0e-12 ? netPowerKW / lngKgPerHour
-        : Double.NaN;
-    double lngYield = feedKgPerHour > 1.0e-12 ? lngKgPerHour / feedKgPerHour
-        : Double.NaN;
+    double specificEnergy = lngKgPerHour > 1.0e-12 ? netPowerKW / lngKgPerHour : Double.NaN;
+    double lngYield = feedKgPerHour > 1.0e-12 ? lngKgPerHour / feedKgPerHour : Double.NaN;
     double mtpa = lngKgPerHour * OPERATING_HOURS_PER_YEAR / 1.0e9;
 
     double mita = Double.POSITIVE_INFINITY;
@@ -124,11 +120,9 @@ public final class LNGProcessModel implements Serializable {
       mita = Double.NaN;
     }
 
-    return new Result(name, cycle, feedKgPerHour, lngKgPerHour, lngYield, mtpa,
-        compressorPowerKW, expanderPowerKW, netPowerKW, specificEnergy,
-        productStream.getTemperature("C"), productStream.getPressure("bara"),
-        productStream.getFluid().getDensity("kg/m3"), mita,
-        exchangerExergyDestructionKW, lastRunTimeNanos / 1.0e6);
+    return new Result(name, cycle, feedKgPerHour, lngKgPerHour, lngYield, mtpa, compressorPowerKW, expanderPowerKW,
+        netPowerKW, specificEnergy, productStream.getTemperature("C"), productStream.getPressure("bara"),
+        productStream.getFluid().getDensity("kg/m3"), mita, exchangerExergyDestructionKW, lastRunTimeNanos / 1.0e6);
   }
 
   /** @return model name */
@@ -185,8 +179,7 @@ public final class LNGProcessModel implements Serializable {
     if (lastResult == null) {
       return null;
     }
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(lastResult);
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(lastResult);
   }
 
   /**
@@ -235,13 +228,11 @@ public final class LNGProcessModel implements Serializable {
      * @param exchangerExergyDestructionKW exchanger exergy destruction in kW
      * @param runTimeMilliseconds process execution time in milliseconds
      */
-    Result(String name, LNGProcessCycle cycle, double feedMassFlowKgPerHour,
-        double lngMassFlowKgPerHour, double lngYield, double capacityMTPA,
-        double compressorPowerKW, double expanderRecoveredPowerKW, double netPowerKW,
-        double specificEnergyKWhPerKgLNG, double productTemperatureC,
-        double productPressureBara, double productDensityKgPerM3,
-        double minimumInternalTemperatureApproachC,
-        double exchangerExergyDestructionKW, double runTimeMilliseconds) {
+    Result(String name, LNGProcessCycle cycle, double feedMassFlowKgPerHour, double lngMassFlowKgPerHour,
+        double lngYield, double capacityMTPA, double compressorPowerKW, double expanderRecoveredPowerKW,
+        double netPowerKW, double specificEnergyKWhPerKgLNG, double productTemperatureC, double productPressureBara,
+        double productDensityKgPerM3, double minimumInternalTemperatureApproachC, double exchangerExergyDestructionKW,
+        double runTimeMilliseconds) {
       this.name = name;
       this.cycle = cycle;
       this.feedMassFlowKgPerHour = feedMassFlowKgPerHour;
@@ -255,8 +246,7 @@ public final class LNGProcessModel implements Serializable {
       this.productTemperatureC = productTemperatureC;
       this.productPressureBara = productPressureBara;
       this.productDensityKgPerM3 = productDensityKgPerM3;
-      this.minimumInternalTemperatureApproachC =
-          minimumInternalTemperatureApproachC;
+      this.minimumInternalTemperatureApproachC = minimumInternalTemperatureApproachC;
       this.exchangerExergyDestructionKW = exchangerExergyDestructionKW;
       this.runTimeMilliseconds = runTimeMilliseconds;
     }
