@@ -43,6 +43,7 @@ This documentation is organized into the following sections:
 |---------|-------------|
 | [equipment/](equipment/) | Equipment documentation (separators, compressors, etc.) |
 | [equipment/adsorption_bed.md](equipment/adsorption_bed) | **Adsorption bed** — transient simulation, LDF mass transfer, PSA/TSA cycles |
+| [lng_liquefaction.md](lng_liquefaction) | **LNG liquefaction** — closed-loop SMR, C3MR, DMR, and nitrogen-expander templates with common KPIs and literature screening |
 | [mercury_removal.md](mercury_removal) | **Mercury removal guard beds** — chemisorption (PuraSpec), bed loading, breakthrough, degradation, mechanical design, cost |
 | [bioprocessing.md](bioprocessing) | **Bio-processing** — reactors, fermenters, solid-liquid separators, LLE, evaporators, dryers, crystallizers |
 | [neqsim-studio.md](neqsim-studio) | **NeqSim Studio (Python)** — newcomer-friendly process builder: natural language, templates, guided wizard, edit-by-chat, recipe gallery |
@@ -200,6 +201,7 @@ This documentation is organized into the following sections:
 | **Water Hammer Screening** | [water_hammer_implementation.md](../wiki/water_hammer_implementation.md) | WaterHammerPipe, WaterHammerStudy, MCP runWaterHammer |
 | **Piping Route Builder** | [piping_route_builder.md](piping_route_builder) | PipingRouteBuilder for STID/E3D line-list route hydraulics |
 | **CO2 Well Analysis** | [co2_injection_well_analysis.md](co2_injection_well_analysis) | CO2InjectionWellAnalyzer, ImpurityMonitor, TransientWellbore, CO2FlowCorrections |
+| **LNG Liquefaction** | [lng_liquefaction.md](lng_liquefaction) | LNGProcessBuilder, LNGProcessModel, LNGProcessBenchmark, LNGHeatExchanger |
 | **Hydrogen Production** | [hydrogen_production.md](hydrogen_production) | SMR/ATR/POX route templates, ReformerFurnace, CatalyticTubeReformer, AutothermalReformer, PartialOxidationReactor, PSACascade, Electrolyzer |
 | Looped Networks | [looped_networks.md](equipment/looped_networks) | LoopedPipeNetwork, Hardy Cross solver |
 | Tanks | [tanks.md](equipment/tanks) | Tank, VesselDepressurization |
