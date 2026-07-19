@@ -276,6 +276,22 @@ class EconomicsTest {
   }
 
   @Test
+  void testFixedOpexCanStartAtFirstProduction() {
+    engine.addCapex(300.0, 2024);
+    engine.addCapex(500.0, 2025);
+    engine.setOpexPercentOfCapex(0.0);
+    engine.setFixedOpexPerYear(50.0);
+    engine.setFixedOpexStartYear(2026);
+    engine.addAnnualProduction(2026, 1.0e6, 0.0, 0.0);
+
+    CashFlowResult result = engine.calculate(0.08);
+
+    assertEquals(0.0, result.getAnnualCashFlows().get(0).getOpex(), 1.0e-12);
+    assertEquals(0.0, result.getAnnualCashFlows().get(1).getOpex(), 1.0e-12);
+    assertEquals(50.0, result.getAnnualCashFlows().get(2).getOpex(), 1.0e-12);
+  }
+
+  @Test
   void testCashFlowCopyPreservesSchedulesAndProfiles() {
     engine.addCapex(300.0, 2024);
     engine.addCapex(400.0, 2025);

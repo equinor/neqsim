@@ -144,6 +144,9 @@ public class CashFlowEngine implements Serializable {
   /** Fixed OPEX per year (MUSD). */
   private double fixedOpexPerYear = 0.0;
 
+  /** First calendar year with fixed OPEX; zero preserves legacy all-project-year behavior. */
+  private int fixedOpexStartYear = 0;
+
   /** Variable OPEX per barrel of oil equivalent (USD/boe). */
   private double variableOpexPerBoe = 0.0;
 
@@ -279,6 +282,23 @@ public class CashFlowEngine implements Serializable {
    */
   public void setFixedOpexPerYear(double fixedOpexMusd) {
     this.fixedOpexPerYear = fixedOpexMusd;
+  }
+
+  /**
+   * Sets the first calendar year in which fixed OPEX is charged.
+   *
+   * <p>
+   * Use this when construction CAPEX precedes production. The default value of zero applies fixed OPEX in every
+   * represented project year for backward compatibility.
+   * </p>
+   *
+   * @param year first fixed-OPEX calendar year, or zero to apply it throughout the project
+   */
+  public void setFixedOpexStartYear(int year) {
+    if (year < 0) {
+      throw new IllegalArgumentException("Fixed OPEX start year cannot be negative");
+    }
+    this.fixedOpexStartYear = year;
   }
 
   /**
@@ -435,7 +455,8 @@ public class CashFlowEngine implements Serializable {
 
       // Calculate OPEX
       double boe = oilProd + nglProd + gasProd / 1000.0; // Simplified BOE conversion
-      double opex = fixedOpexPerYear + (totalCapex * opexPercentOfCapex) + (boe * variableOpexPerBoe / 1.0e6);
+      double fixedOpex = fixedOpexStartYear == 0 || year >= fixedOpexStartYear ? fixedOpexPerYear : 0.0;
+      double opex = fixedOpex + (totalCapex * opexPercentOfCapex) + (boe * variableOpexPerBoe / 1.0e6);
 
       // Calculate depreciation and uplift
       double depreciation = calculateDepreciation(year);
@@ -864,6 +885,7 @@ public class CashFlowEngine implements Serializable {
     clone.setOilTariff(oilTariffUsdPerBbl);
     clone.setOpexPercentOfCapex(opexPercentOfCapex);
     clone.setFixedOpexPerYear(fixedOpexPerYear);
+    clone.setFixedOpexStartYear(fixedOpexStartYear);
     clone.setVariableOpexPerBoe(variableOpexPerBoe);
     clone.setCapexSchedule(capexByYear);
     clone.setProductionProfile(oilProductionByYear, gasProductionByYear, nglProductionByYear);
