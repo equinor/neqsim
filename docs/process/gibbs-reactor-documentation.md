@@ -308,7 +308,16 @@ int niter = reactor.getActualIterations();         // Iterations performed
 double err = reactor.getFinalConvergenceError();   // Final ||Δx|| norm
 double mbErr = reactor.getMassBalanceError();       // Mass balance error (%)
 boolean mbOk = reactor.getMassBalanceConverged();   // Mass balance < 0.001%?
+double elementMbErr = reactor.getElementMassBalanceError();
+boolean elementMbOk = reactor.getElementMassBalanceConverged();
 ```
+
+For reacting systems, prefer the element-derived diagnostic when verifying
+physical conservation. It converts the conserved C/H/O/N/S/Ar inventories to
+mass with one consistent set of atomic molar masses. The legacy stream-based
+diagnostic uses component molar masses, which are rounded independently and can
+show a small apparent imbalance even when every element is conserved exactly.
+The legacy methods remain unchanged for compatibility.
 
 ### 3.5 Results — Thermodynamic Quantities
 

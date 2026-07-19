@@ -94,6 +94,42 @@ public class GibbsReactor extends TwoPortEquipment {
     return !Double.isNaN(error) && error < 1e-3;
   }
 
+  /**
+   * Get the element-derived relative mass balance error as a percentage.
+   *
+   * <p>
+   * This diagnostic converts the inlet and outlet C/H/O/N/S/Ar element inventories to mass using one internally
+   * consistent set of atomic molar masses. It is useful for reacting systems because independently rounded component
+   * molar masses can create a small apparent imbalance in {@link #getMassBalanceError()} even when every element is
+   * conserved exactly.
+   * </p>
+   *
+   * @return element-derived relative mass balance error in percent, or {@link Double#NaN} when no supported element
+   * inventory is available
+   */
+  public double getElementMassBalanceError() {
+    double elementalMassIn = 0.0;
+    double elementalMassOut = 0.0;
+    for (int i = 0; i < ELEMENT_MOLAR_MASSES.length; i++) {
+      elementalMassIn += elementMoleBalanceIn[i] * ELEMENT_MOLAR_MASSES[i];
+      elementalMassOut += elementMoleBalanceOut[i] * ELEMENT_MOLAR_MASSES[i];
+    }
+    if (elementalMassIn <= 0.0) {
+      return Double.NaN;
+    }
+    return 100.0 * Math.abs(elementalMassIn - elementalMassOut) / elementalMassIn;
+  }
+
+  /**
+   * Check whether the element-derived relative mass balance error is less than 0.001%.
+   *
+   * @return true if the element-derived mass balance is converged, false otherwise
+   */
+  public boolean getElementMassBalanceConverged() {
+    double error = getElementMassBalanceError();
+    return !Double.isNaN(error) && error < 1e-3;
+  }
+
   // Thread-local reusable system for fugacity calculations to minimize cloning
   private transient ThreadLocal<neqsim.thermo.system.SystemInterface> tempFugacitySystem = new ThreadLocal<>();
 
@@ -306,6 +342,12 @@ public class GibbsReactor extends TwoPortEquipment {
 
   /** Small threshold for detecting zero element coefficients. */
   private static final double ELEMENT_ZERO_THRESHOLD = 1e-6;
+
+  /**
+   * Element molar masses in kg/mol, ordered as O, N, C, H, S, Ar, and charge. The charge entry has zero mass.
+   */
+  private static final double[] ELEMENT_MOLAR_MASSES = { 0.015999, 0.014007, 0.012011, 0.001008, 0.03206, 0.039948,
+      0.0 };
 
   /** Logger object for class. */
   private static final Logger logger = LogManager.getLogger(GibbsReactor.class);
