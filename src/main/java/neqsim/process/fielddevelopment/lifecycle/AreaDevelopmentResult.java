@@ -88,4 +88,3 @@ public final class AreaDevelopmentResult implements Serializable {
     return table.toString();
   }
 }
-
