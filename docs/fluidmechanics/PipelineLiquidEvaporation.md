@@ -10,7 +10,7 @@ description: "Maxwell-Stefan mass transfer, heat transfer, droplets, films, comp
 `PipelineEvaporationStudy` estimates the axial distance needed for an injected hydrocarbon liquid to fall below a
 specified remaining mass fraction. It supports two prescribed liquid geometries:
 
-- spherical droplets represented by an evolving Sauter mean diameter, (d_{32}); and
+- spherical droplets represented by an evolving Sauter mean diameter, $d_{32}$; and
 - a wall film represented by an evolving thickness and wetted-perimeter fraction.
 
 The completion criterion is the remaining fraction of the *initially injected liquid inventory*. Liquid holdup is not
@@ -55,7 +55,7 @@ The geometry follows total liquid-phase volume, so gas absorbed into the liquid 
 the tracked injected material evaporates. Completion still uses only the mass provenance of the initial liquid phase.
 
 These relations do not model breakup, coalescence, entrainment, deposition, or dry-patch formation. Supply a realistic
-inlet (d_{32}), film thickness, and wetted fraction, and perform sensitivity cases.
+inlet $d_{32}$, film thickness, and wetted fraction, and perform sensitivity cases.
 
 ### Conservative axial integration
 
@@ -159,7 +159,7 @@ Recommended project validation is:
 
 1. reproduce mixture VLE and transport properties independently;
 2. compare a single-droplet time history with Daïf et al. or project-specific spray data;
-3. measure or bound (d_{32}), relative velocity, film coverage, and wall heat transfer;
+3. measure or bound $d_{32}$, relative velocity, film coverage, and wall heat transfer;
 4. compare outlet liquid carryover at two or more pipeline lengths; and
 5. calibrate geometry parameters on one case and validate on another.
 
