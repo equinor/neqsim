@@ -46,37 +46,33 @@ public final class FieldLifecycleResult implements Serializable {
         double co2EmissionsTonnes, double potentialOilRateSm3PerDay, double requestedOilRateSm3PerDay,
         double hostOilRateSm3PerDay, double hostGasRateSm3PerDay, double hostWaterRateSm3PerDay, double holdbackOilSm3,
         double capacityDeferredOilSm3, double maximumFacilityUtilization, String primaryBottleneck) {
-      this(year, oilSm3, gasExportSm3, gasInjectedSm3, waterProducedSm3,
-          averageOilRateSm3PerDay, averageWaterCut, averageReservoirPressureBara, energyMWh,
-          co2EmissionsTonnes, potentialOilRateSm3PerDay, requestedOilRateSm3PerDay,
-          hostOilRateSm3PerDay, hostGasRateSm3PerDay, hostWaterRateSm3PerDay, holdbackOilSm3,
+      this(year, oilSm3, gasExportSm3, gasInjectedSm3, waterProducedSm3, averageOilRateSm3PerDay, averageWaterCut,
+          averageReservoirPressureBara, energyMWh, co2EmissionsTonnes, potentialOilRateSm3PerDay,
+          requestedOilRateSm3PerDay, hostOilRateSm3PerDay, hostGasRateSm3PerDay, hostWaterRateSm3PerDay, holdbackOilSm3,
           capacityDeferredOilSm3, maximumFacilityUtilization, primaryBottleneck,
           ProductSpecificationResult.notEvaluated());
     }
 
-    AnnualResult(int year, double oilSm3, double gasExportSm3, double gasInjectedSm3,
-        double waterProducedSm3, double averageOilRateSm3PerDay, double averageWaterCut,
-        double averageReservoirPressureBara, double energyMWh, double co2EmissionsTonnes,
-        double potentialOilRateSm3PerDay, double requestedOilRateSm3PerDay,
-        double hostOilRateSm3PerDay, double hostGasRateSm3PerDay, double hostWaterRateSm3PerDay,
-        double holdbackOilSm3, double capacityDeferredOilSm3, double maximumFacilityUtilization,
-        String primaryBottleneck, ProductSpecificationResult productSpecificationResult) {
-      this(year, oilSm3, gasExportSm3, gasInjectedSm3, waterProducedSm3,
-          averageOilRateSm3PerDay, averageWaterCut, averageReservoirPressureBara, energyMWh,
-          co2EmissionsTonnes, potentialOilRateSm3PerDay, requestedOilRateSm3PerDay,
-          hostOilRateSm3PerDay, hostGasRateSm3PerDay, hostWaterRateSm3PerDay, holdbackOilSm3,
-          capacityDeferredOilSm3, maximumFacilityUtilization, primaryBottleneck,
-          maximumFacilityUtilization, primaryBottleneck, productSpecificationResult);
+    AnnualResult(int year, double oilSm3, double gasExportSm3, double gasInjectedSm3, double waterProducedSm3,
+        double averageOilRateSm3PerDay, double averageWaterCut, double averageReservoirPressureBara, double energyMWh,
+        double co2EmissionsTonnes, double potentialOilRateSm3PerDay, double requestedOilRateSm3PerDay,
+        double hostOilRateSm3PerDay, double hostGasRateSm3PerDay, double hostWaterRateSm3PerDay, double holdbackOilSm3,
+        double capacityDeferredOilSm3, double maximumFacilityUtilization, String primaryBottleneck,
+        ProductSpecificationResult productSpecificationResult) {
+      this(year, oilSm3, gasExportSm3, gasInjectedSm3, waterProducedSm3, averageOilRateSm3PerDay, averageWaterCut,
+          averageReservoirPressureBara, energyMWh, co2EmissionsTonnes, potentialOilRateSm3PerDay,
+          requestedOilRateSm3PerDay, hostOilRateSm3PerDay, hostGasRateSm3PerDay, hostWaterRateSm3PerDay, holdbackOilSm3,
+          capacityDeferredOilSm3, maximumFacilityUtilization, primaryBottleneck, maximumFacilityUtilization,
+          primaryBottleneck, productSpecificationResult);
     }
 
-    AnnualResult(int year, double oilSm3, double gasExportSm3, double gasInjectedSm3,
-        double waterProducedSm3, double averageOilRateSm3PerDay, double averageWaterCut,
-        double averageReservoirPressureBara, double energyMWh, double co2EmissionsTonnes,
-        double potentialOilRateSm3PerDay, double requestedOilRateSm3PerDay,
-        double hostOilRateSm3PerDay, double hostGasRateSm3PerDay, double hostWaterRateSm3PerDay,
-        double holdbackOilSm3, double capacityDeferredOilSm3, double maximumFacilityUtilization,
-        String primaryBottleneck, double unconstrainedFacilityUtilization,
-        String unconstrainedBottleneck, ProductSpecificationResult productSpecificationResult) {
+    AnnualResult(int year, double oilSm3, double gasExportSm3, double gasInjectedSm3, double waterProducedSm3,
+        double averageOilRateSm3PerDay, double averageWaterCut, double averageReservoirPressureBara, double energyMWh,
+        double co2EmissionsTonnes, double potentialOilRateSm3PerDay, double requestedOilRateSm3PerDay,
+        double hostOilRateSm3PerDay, double hostGasRateSm3PerDay, double hostWaterRateSm3PerDay, double holdbackOilSm3,
+        double capacityDeferredOilSm3, double maximumFacilityUtilization, String primaryBottleneck,
+        double unconstrainedFacilityUtilization, String unconstrainedBottleneck,
+        ProductSpecificationResult productSpecificationResult) {
       this.year = year;
       this.oilSm3 = oilSm3;
       this.gasExportSm3 = gasExportSm3;
@@ -98,8 +94,8 @@ public final class FieldLifecycleResult implements Serializable {
       this.primaryBottleneck = primaryBottleneck;
       this.unconstrainedFacilityUtilization = unconstrainedFacilityUtilization;
       this.unconstrainedBottleneck = unconstrainedBottleneck;
-      this.productSpecificationResult = productSpecificationResult == null
-          ? ProductSpecificationResult.notEvaluated() : productSpecificationResult;
+      this.productSpecificationResult = productSpecificationResult == null ? ProductSpecificationResult.notEvaluated()
+          : productSpecificationResult;
     }
 
     /** Returns the calendar year. */
@@ -398,11 +394,11 @@ public final class FieldLifecycleResult implements Serializable {
    * @return Markdown table row
    */
   public String toMarkdownRow() {
-    return String.format("| %s | %.0f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f | %d |",
-        conceptName, getNpvMusd(), getIrr() * 100.0, breakevenOilPriceUsdPerBbl,
-        cumulativeOilSm3 / 1.0e6, cumulativeDeferredOilSm3 / 1.0e6,
-        peakFacilityUtilization * 100.0, getPeakUnconstrainedFacilityUtilization() * 100.0,
-        cumulativeGasInjectedSm3 / 1.0e9, lifecycleCo2Tonnes / 1000.0,
-        getOffSpecificationYears());
+    return String.format("| %s | %.0f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f | %d |", conceptName,
+        getNpvMusd(), getIrr() * 100.0, breakevenOilPriceUsdPerBbl, cumulativeOilSm3 / 1.0e6,
+        cumulativeDeferredOilSm3 / 1.0e6, peakFacilityUtilization * 100.0,
+        getPeakUnconstrainedFacilityUtilization() * 100.0, cumulativeGasInjectedSm3 / 1.0e9,
+        lifecycleCo2Tonnes / 1000.0, getOffSpecificationYears());
   }
 }
+
