@@ -1,9 +1,8 @@
 name: Spotless format patch
 
 on:
-  push:
-    branches:
-      - agent/integrated-field-lifecycle-evaluation
+  pull_request:
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
