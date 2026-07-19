@@ -12,8 +12,8 @@ import neqsim.thermo.system.SystemPrEos;
  * Cross-tool benchmark of steam methane reforming equilibrium against the IDAES 2.4.0 Gibbs reactor example.
  *
  * <p>
- * Reference: IDAES Examples, "Flowsheet Gibbs Reactor Simulation and Optimization of Steam Methane Reforming",
- * updated 2023-06-01.
+ * Reference: IDAES Examples, "Flowsheet Gibbs Reactor Simulation and Optimization of Steam Methane Reforming", updated
+ * 2023-06-01.
  * </p>
  */
 class IdaesSteamMethaneReformingBenchmarkTest {
@@ -24,10 +24,10 @@ class IdaesSteamMethaneReformingBenchmarkTest {
 
   @Test
   void reproducesPrimaryAndHoldoutEquilibriumStates() {
-    BenchmarkResult primary = runCase(920.80, 2.0,
-        new double[] { 0.034965, 0.32532, 0.49984, 0.059609, 0.080265 }, 0.800);
-    BenchmarkResult holdout = runCase(1087.385, 10.0,
-        new double[] { 0.016892, 0.31609, 0.51498, 0.093140, 0.058900 }, 0.900);
+    BenchmarkResult primary = runCase(920.80, 2.0, new double[] { 0.034965, 0.32532, 0.49984, 0.059609, 0.080265 },
+        0.800);
+    BenchmarkResult holdout = runCase(1087.385, 10.0, new double[] { 0.016892, 0.31609, 0.51498, 0.093140, 0.058900 },
+        0.900);
 
     assertBenchmark(primary);
     assertBenchmark(holdout);
