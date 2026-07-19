@@ -447,4 +447,3 @@ public final class NorwegianOilFieldCase {
     return oilSm3PerDay / ProductionLoad.BARREL_TO_M3;
   }
 }
-
