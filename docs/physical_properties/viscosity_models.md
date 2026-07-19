@@ -6,17 +6,17 @@ description: This guide documents the viscosity calculation methods available in
 This guide documents the viscosity calculation methods available in NeqSim for gas, liquid, and multiphase systems.
 
 ## Table of Contents
+
 - [Overview](#overview)
 - [Available Models](#available-models)
   - [LBC (Lohrenz-Bray-Clark)](#lbc-lohrenz-bray-clark)
   - [Friction Theory](#friction-theory)
   - [PFCT (Pedersen)](#pfct-pedersen)
-  - [Chung Method](#chung-method)
   - [Polynomial Correlation](#polynomial-correlation)
   - [Reference Fluid Methods](#reference-fluid-methods)
 - [Model Selection Guide](#model-selection-guide)
 - [Tuning Parameters](#tuning-parameters)
-    - [CSP PFCT Parameter Tuning](#csp-pfct-parameter-tuning)
+  - [CSP PFCT Parameter Tuning](#csp-pfct-parameter-tuning)
 - [Usage Examples](#usage-examples)
 
 ---
@@ -26,6 +26,7 @@ This guide documents the viscosity calculation methods available in NeqSim for g
 Viscosity describes a fluid's resistance to flow. NeqSim provides several viscosity models suitable for different applications:
 
 **Units:**
+
 - Default output: **Pa·s** (Pascal-seconds)
 - Alternative: **cP** (centipoise), where 1 cP = 0.001 Pa·s
 
@@ -34,7 +35,14 @@ Viscosity describes a fluid's resistance to flow. NeqSim provides several viscos
 fluid.initPhysicalProperties();
 fluid.getPhase("gas").getPhysicalProperties().setViscosityModel("friction theory");
 fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("LBC");
+fluid.getPhase("gas").initPhysicalProperties();
+fluid.getPhase("oil").initPhysicalProperties();
 ```
+
+Select the model after the flash and initial property calculation, then reinitialize each changed
+phase as shown. Model keys are case-sensitive. Unlike conductivity selection, an unsupported
+viscosity key leaves the current model unchanged; verify the selected key in tests rather than
+assuming a fallback.
 
 ---
 
@@ -50,6 +58,7 @@ The Lohrenz-Bray-Clark (1964) method is widely used in reservoir simulation. It 
 $$\eta = \eta^* + \frac{(\eta_r - 0.0001)^4}{\xi}$$
 
 where:
+
 - $\eta^*$ is the dilute gas viscosity
 - $\eta_r$ is a function of reduced density
 - $\xi$ is the inverse viscosity parameter
@@ -62,6 +71,7 @@ $$\eta_r = a_0 + a_1\rho_r + a_2\rho_r^2 + a_3\rho_r^3 + a_4\rho_r^4$$
 **Applicable phases:** Gas, Oil
 
 **Best for:**
+
 - Reservoir simulation
 - Light to medium oils
 - Systems where tuning to lab data is available
@@ -69,6 +79,7 @@ $$\eta_r = a_0 + a_1\rho_r + a_2\rho_r^2 + a_3\rho_r^3 + a_4\rho_r^4$$
 **Usage:**
 ```java
 fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("LBC");
+fluid.getPhase("oil").initPhysicalProperties();
 ```
 
 ---
@@ -83,6 +94,7 @@ The Quiñones-Cisneros and Firoozabadi (2000) friction theory relates viscosity 
 $$\eta = \eta_0 + \kappa_a P_a + \kappa_{aa} P_a^2 + \kappa_r P_r + \kappa_{rr} P_r^2$$
 
 where:
+
 - $\eta_0$ is the dilute gas viscosity (Chung low-density term + Wilke mixture rule)
 - $P_a$ is the attractive pressure from EoS
 - $P_r$ is the repulsive pressure from EoS
@@ -91,6 +103,7 @@ where:
 **Applicable phases:** Gas, Oil (any EoS-based phase)
 
 **Best for:**
+
 - Wide pressure/temperature ranges
 - Near-critical conditions
 - When using SRK or PR EoS
@@ -98,6 +111,7 @@ where:
 **Automatic EoS detection:** The method automatically selects SRK or PR constants based on the phase type.
 
 **Implementation notes in NeqSim (2026 update):**
+
 - SRK and PR friction constants are selected automatically.
 - The dilute-gas baseline now uses **Wilke mixing**, which is the standard state-of-practice for mixture dilute viscosities.
 - The Chung correction factor $F_c$ includes acentric factor, dipole moment, and component viscosity correction term to better handle polar species.
@@ -106,17 +120,22 @@ where:
 **Usage:**
 ```java
 fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("friction theory");
+fluid.getPhase("oil").initPhysicalProperties();
 ```
 
-**Custom constants (for other EoS):**
+**Custom constants (advanced use):**
 ```java
 FrictionTheoryViscosityMethod viscModel =
     (FrictionTheoryViscosityMethod) fluid.getPhase("oil")
         .getPhysicalProperties().getViscosityModel();
 
-// Set custom friction theory constants
+// Values must come from an independently validated parameter set.
 viscModel.setFrictionTheoryConstants(kapac, kaprc, kaprrc, kapa, kapr, kaprr);
 ```
+
+Here `kapac`, `kaprc`, `kaprrc`, and `kaprr` are scalar `double` values; `kapa` and
+`kapr` are `double[][]` matrices. This API replaces the model's complete parameter set and is not
+a general fitting shortcut.
 
 ---
 
@@ -127,6 +146,7 @@ The Pedersen Friction Corresponding States Theory uses methane as a reference fl
 The model can be selected with either `"PFCT"` or `"CSP"`. The `"CSP"` alias is intended for PVT workflows and external reports that label the Pedersen/PFCT viscosity model as CSP viscosity.
 
 **Classes:**
+
 - `PFCTViscosityMethodMod86` - Standard Pedersen method (1987)
 - `PFCTViscosityMethodHeavyOil` - Extended for heavy oils
 
@@ -134,6 +154,7 @@ The model can be selected with either `"PFCT"` or `"CSP"`. The `"CSP"` alias is 
 $$\eta_{mix} = \eta_{ref} \cdot \frac{f_\eta \cdot \alpha_{mix}}{\alpha_0}$$
 
 where:
+
 - $\eta_{ref}$ is the reference fluid (methane) viscosity
 - $f_\eta$ is the shape factor ratio
 - $\alpha$ are molecular weight correction factors
@@ -141,6 +162,7 @@ where:
 **Applicable phases:** Gas, Oil
 
 **Best for:**
+
 - Petroleum mixtures with characterized fractions
 - Heavy oil systems (use `"PFCT-Heavy-Oil"`)
 - Wide-range predictions
@@ -150,42 +172,11 @@ where:
 ```java
 // Standard Pedersen
 fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("PFCT");
-
-// Equivalent CSP alias
-fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("CSP");
-
-// Heavy oil variant
-fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("PFCT-Heavy-Oil");
+fluid.getPhase("oil").initPhysicalProperties();
 ```
 
----
-
-### Chung Method
-
-The Chung method (1984, 1988) is a corresponding states method for dilute gas and dense fluid viscosity.
-
-**Class:** `ChungViscosityMethod`
-
-**Equation (dilute gas):**
-$$\eta_0 = \frac{40.785 F_c \sqrt{M T}}{\Omega_v V_c^{2/3}}$$
-
-where:
-- $F_c$ is the correction factor for polar/associating fluids
-- $\Omega_v$ is the collision integral
-- $V_c$ is critical volume
-- $M$ is molar mass
-
-**Applicable phases:** Primarily gas phase
-
-**Best for:**
-- Dilute gas mixtures
-- Polar gases
-- As baseline for other methods
-
-**Usage:**
-```java
-fluid.getPhase("gas").getPhysicalProperties().setViscosityModel("Chung");
-```
+Use `"CSP"` as an equivalent alias for `"PFCT"`, or select `"PFCT-Heavy-Oil"` for
+characterized heavy fractions. Reinitialize the phase after any selection.
 
 ---
 
@@ -205,12 +196,14 @@ where A, B, C, D are component-specific parameters from COMP database.
 **Applicable phases:** Primarily liquid
 
 **Best for:**
+
 - Pure components with available parameters
 - Simple mixtures with mixing rules
 
 **Usage:**
 ```java
 fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("polynom");
+fluid.getPhase("oil").initPhysicalProperties();
 ```
 
 ---
@@ -220,26 +213,42 @@ fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("polynom");
 Specialized high-accuracy methods for specific fluids:
 
 #### Methane (Reference)
+
 **Class:** `MethaneViscosityMethod`
+
 - Uses Setzmann & Wagner reference equation
 - High accuracy for pure methane
 - Used as reference in PFCT calculations
 
 #### CO₂
+
 **Class:** `CO2ViscosityMethod`
+
 - Fenghour et al. correlation
 - Covers gas, liquid, and supercritical regions
 
 #### Hydrogen
+
 **Classes:** `MuznyViscosityMethod`, `MuznyModViscosityMethod`
+
 - High-accuracy hydrogen viscosity
 - Important for hydrogen energy applications
 
-**Usage:**
+The implemented case-sensitive keys and their constraints are:
+
+| Key | Intended fluid |
+|---|---|
+| `MethaneModel` | Pure methane |
+| `CO2Model` | Pure CO₂ |
+| `Muzny`, `Muzny_mod` | Pure hydrogen |
+| `KTA`, `KTA_mod` | Pure helium |
+| `Salt Water` | Aqueous water/brine phase |
+
+For example, select and recalculate a pure-hydrogen gas phase with:
+
 ```java
-fluid.getPhase("gas").getPhysicalProperties().setViscosityModel("MethaneModel");
-fluid.getPhase("gas").getPhysicalProperties().setViscosityModel("CO2Model");
 fluid.getPhase("gas").getPhysicalProperties().setViscosityModel("Muzny");
+fluid.getPhase("gas").initPhysicalProperties();
 ```
 
 ---
@@ -252,10 +261,11 @@ fluid.getPhase("gas").getPhysicalProperties().setViscosityModel("Muzny");
 | Wide P-T range | Friction Theory | Good near critical |
 | Heavy oils | PFCT-Heavy-Oil | Extended for high MW |
 | Characterized crudes | PFCT | Works with pseudo-components |
-| Gas processing | Chung | Good for gases |
+| General gas processing | Friction theory or PFCT | Validate against representative data |
 | Pure CO₂ | CO2Model | High accuracy |
 | Pure H₂ | Muzny | Reference accuracy |
-| Aqueous systems | Salt Water | Water correlation |
+| Pure helium | KTA | Reference-fluid correlation |
+| Aqueous systems | Salt Water | Water/brine correlation |
 
 ---
 
@@ -266,9 +276,7 @@ fluid.getPhase("gas").getPhysicalProperties().setViscosityModel("Muzny");
 The LBC method is commonly tuned to match laboratory viscosity data:
 
 ```java
-// Get current parameters
-LBCViscosityMethod lbc = (LBCViscosityMethod)
-    fluid.getPhase("oil").getPhysicalProperties().getViscosityModel();
+fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("LBC");
 
 // Set all 5 parameters
 double[] params = {0.1023, 0.023364, 0.058533, -0.040758, 0.0093324};
@@ -276,9 +284,11 @@ fluid.getPhase("oil").getPhysicalProperties().setLbcParameters(params);
 
 // Or tune individual parameters
 fluid.getPhase("oil").getPhysicalProperties().setLbcParameter(0, 0.105);
+fluid.getPhase("oil").initPhysicalProperties();
 ```
 
 **Tuning procedure:**
+
 1. Measure viscosity at multiple P-T conditions
 2. Run flash and calculate properties
 3. Adjust parameters to minimize error
@@ -307,15 +317,13 @@ For automated fitting, add viscosity measurements to `PVTRegression` with `addVi
 
 ```java
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 // Create and flash fluid
-SystemInterface fluid = new SystemSrkEos(350.0, 150.0);
-fluid.addComponent("methane", 0.70);
-fluid.addComponent("ethane", 0.10);
-fluid.addComponent("propane", 0.05);
-fluid.addComponent("n-heptane", 0.10);
-fluid.addComponent("n-decane", 0.05);
+SystemInterface fluid = new SystemSrkEos(298.15, 4.0);
+fluid.addComponent("n-heptane", 0.5);
+fluid.addComponent("nC10", 0.5);
 fluid.setMixingRule("classic");
 
 ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
@@ -323,51 +331,57 @@ ops.TPflash();
 
 // Initialize physical properties
 fluid.initPhysicalProperties();
+fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("LBC");
+fluid.getPhase("oil").initPhysicalProperties();
 
-// Get viscosities
-double gasVisc = fluid.getPhase("gas").getViscosity("cP");
+// Get viscosity
 double oilVisc = fluid.getPhase("oil").getViscosity("cP");
-
-System.out.println("Gas viscosity: " + gasVisc + " cP");
-System.out.println("Oil viscosity: " + oilVisc + " cP");
+if (!(oilVisc > 0.0) || !Double.isFinite(oilVisc)) {
+    throw new IllegalStateException("Expected positive finite oil viscosity");
+}
 ```
 
 ### Comparing Viscosity Models
 
 ```java
 String[] models = {"LBC", "friction theory", "PFCT"};
+double[] viscositiesCp = new double[models.length];
 
-for (String model : models) {
-    SystemInterface fluid = createFluid();
+for (int i = 0; i < models.length; i++) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 4.0);
+    fluid.addComponent("n-heptane", 0.5);
+    fluid.addComponent("nC10", 0.5);
+    fluid.setMixingRule("classic");
+    ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
     fluid.initPhysicalProperties();
 
-    fluid.getPhase("oil").getPhysicalProperties().setViscosityModel(model);
-    fluid.initPhysicalProperties();
-
-    double visc = fluid.getPhase("oil").getViscosity("cP");
-    System.out.println(model + ": " + visc + " cP");
+    fluid.getPhase("oil").getPhysicalProperties().setViscosityModel(models[i]);
+    fluid.getPhase("oil").initPhysicalProperties();
+    viscositiesCp[i] = fluid.getPhase("oil").getViscosity("cP");
 }
 ```
 
 ### Viscosity vs Temperature
 
 ```java
-SystemInterface baseFluid = createFluid();
-baseFluid.initPhysicalProperties();
+SystemInterface baseFluid = new SystemSrkEos(300.0, 20.0);
+baseFluid.addComponent("nC10", 1.0);
+baseFluid.setMixingRule("classic");
 
 double[] temps = {300, 320, 340, 360, 380, 400};  // K
+double[] viscositiesCp = new double[temps.length];
 
-for (double T : temps) {
+for (int i = 0; i < temps.length; i++) {
     SystemInterface fluid = baseFluid.clone();
-    fluid.setTemperature(T, "K");
+    fluid.setTemperature(temps[i], "K");
 
     ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
     ops.TPflash();
     fluid.initPhysicalProperties();
-
-    double visc = fluid.getPhase("oil").getViscosity("cP");
-    System.out.println("T=" + (T-273.15) + "°C: " + visc + " cP");
+    fluid.getPhase("oil").getPhysicalProperties().setViscosityModel("LBC");
+    fluid.getPhase("oil").initPhysicalProperties();
+    viscositiesCp[i] = fluid.getPhase("oil").getViscosity("cP");
 }
 ```
 
@@ -382,13 +396,14 @@ For dilute gases, viscosity is calculated from kinetic theory:
 $$\eta_0 = \frac{5}{16} \frac{\sqrt{\pi m k_B T}}{\pi \sigma^2 \Omega^{(2,2)*}}$$
 
 where:
+
 - $m$ is molecular mass
 - $\sigma$ is Lennard-Jones diameter
 - $\Omega^{(2,2)*}$ is the collision integral
 
 ### Mixing Rules
 
-Most models use molar fraction-weighted mixing:
+Mixing behavior is model-specific. Common forms include logarithmic molar weighting:
 
 $$\eta_{mix} = \exp\left(\sum_i x_i \ln \eta_i\right)$$
 
