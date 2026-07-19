@@ -1145,6 +1145,7 @@ hypothesis scoring with OREDA, historian, STID, and NeqSim simulation verificati
 | Sulfur Deposition Analysis | [docs/chemicalreactions/sulfur_deposition_analysis.md](chemicalreactions/sulfur_deposition_analysis)       | Sulfur formation, solubility, deposition, and FeS corrosion |
 | Chemistry & Integrity      | [docs/chemistry/index.md](chemistry/)                                                                      | Open standards-traceable chemical integrity stack (scale, corrosion, scavengers, RCA, MCP) |
 | Electrolyte Scale (Davies) | [docs/chemistry/electrolyte_scale.md](chemistry/electrolyte_scale)                                         | Davies SI math, ion conventions, North-Sea worked example   |
+| High-salinity scale & chemicals | [docs/pvtsimulation/mineral_scale_chemical_treatment_validation.md](pvtsimulation/mineral_scale_chemical_treatment_validation) | Pitzer validation, production-chemical scenarios and RCA |
 | Mechanistic CO2 Corrosion  | [docs/chemistry/mechanistic_corrosion.md](chemistry/mechanistic_corrosion)                                 | NORSOK + Nesic + Langmuir inhibitor with worked example     |
 | Packed-bed Scavenger       | [docs/chemistry/packed_bed_scavenger.md](chemistry/packed_bed_scavenger)                                   | 1D PFR PDE for H2S scavenger sizing and breakthrough        |
 | Closed-loop Deposition     | [docs/chemistry/closed_loop_deposition.md](chemistry/closed_loop_deposition)                               | Coupling pipe hydraulics with `ScaleDepositionAccumulator`  |

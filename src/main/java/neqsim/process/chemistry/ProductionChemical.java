@@ -121,6 +121,12 @@ public class ProductionChemical implements Serializable {
   /** Free-form notes (vendor, batch, special handling). */
   private String notes = "";
 
+  /** Optional signed acid/base capacity of active ingredient in mol equivalents per kg active. */
+  private double alkalinityCapacityMolEqPerKgActive = Double.NaN;
+
+  /** Optional measured H2S capacity in kg H2S per kg active ingredient. */
+  private double h2sCapacityKgPerKgActive = Double.NaN;
+
   // ─── Constructors ───────────────────────────────────────
 
   /**
@@ -217,6 +223,47 @@ public class ProductionChemical implements Serializable {
     c.ionicNature = IonicNature.NON_IONIC;
     c.minTemperatureC = 0.0;
     c.maxTemperatureC = 80.0;
+    c.h2sCapacityKgPerKgActive = 34.08 / 189.26;
+    return c;
+  }
+
+  /**
+   * Creates an MDEA-based pH stabiliser for produced-water treatment.
+   *
+   * @param name commercial name
+   * @param dosagePpm neat-product dose in mg/L (approximately ppm for water-like density)
+   * @return configured ProductionChemical
+   */
+  public static ProductionChemical phStabilizer(String name, double dosagePpm) {
+    ProductionChemical c = new ProductionChemical(name, ChemicalType.PH_ADJUSTER);
+    c.activeIngredient = "MDEA";
+    c.activeWtPct = 50.0;
+    c.dosagePpm = dosagePpm;
+    c.pH = 11.0;
+    c.ionicNature = IonicNature.CATIONIC;
+    c.minTemperatureC = 0.0;
+    c.maxTemperatureC = 150.0;
+    c.alkalinityCapacityMolEqPerKgActive = 1000.0 / 119.163;
+    return c;
+  }
+
+  /**
+   * Creates a sodium-hydroxide pH adjuster.
+   *
+   * @param name commercial name
+   * @param dosagePpm neat-product dose in mg/L (approximately ppm for water-like density)
+   * @return configured ProductionChemical
+   */
+  public static ProductionChemical causticPHAdjuster(String name, double dosagePpm) {
+    ProductionChemical c = new ProductionChemical(name, ChemicalType.PH_ADJUSTER);
+    c.activeIngredient = "NaOH";
+    c.activeWtPct = 50.0;
+    c.dosagePpm = dosagePpm;
+    c.pH = 14.0;
+    c.ionicNature = IonicNature.ANIONIC;
+    c.minTemperatureC = 0.0;
+    c.maxTemperatureC = 150.0;
+    c.alkalinityCapacityMolEqPerKgActive = 1000.0 / 39.997;
     return c;
   }
 
@@ -235,6 +282,7 @@ public class ProductionChemical implements Serializable {
     c.ionicNature = IonicNature.ANIONIC;
     c.minTemperatureC = 0.0;
     c.maxTemperatureC = 120.0;
+    c.alkalinityCapacityMolEqPerKgActive = -1000.0 / 36.461;
     return c;
   }
 
@@ -339,6 +387,32 @@ public class ProductionChemical implements Serializable {
    */
   public void setNotes(String notes) {
     this.notes = notes;
+  }
+
+  /**
+   * Sets a measured or vendor-specified acid/base capacity for the active ingredient.
+   *
+   * <p>
+   * Positive values add alkalinity; negative values add acidity. This overrides name-based defaults in treatment
+   * scenarios and allows proprietary formulations to be represented without exposing their composition.
+   * </p>
+   *
+   * @param molEqPerKgActive signed mol equivalents per kg active ingredient
+   */
+  public void setAlkalinityCapacityMolEqPerKgActive(double molEqPerKgActive) {
+    this.alkalinityCapacityMolEqPerKgActive = molEqPerKgActive;
+  }
+
+  /**
+   * Sets measured or vendor-specified H2S capacity.
+   *
+   * @param kgH2SPerKgActive kg H2S removed per kg active ingredient
+   */
+  public void setH2SCapacityKgPerKgActive(double kgH2SPerKgActive) {
+    if (kgH2SPerKgActive < 0.0 || Double.isNaN(kgH2SPerKgActive)) {
+      throw new IllegalArgumentException("H2S capacity must be non-negative");
+    }
+    this.h2sCapacityKgPerKgActive = kgH2SPerKgActive;
   }
 
   // ─── Getters ────────────────────────────────────────────
@@ -451,6 +525,24 @@ public class ProductionChemical implements Serializable {
     return notes;
   }
 
+  /**
+   * Gets the optional signed acid/base capacity.
+   *
+   * @return mol equivalents per kg active, or NaN if unspecified
+   */
+  public double getAlkalinityCapacityMolEqPerKgActive() {
+    return alkalinityCapacityMolEqPerKgActive;
+  }
+
+  /**
+   * Gets the optional H2S capacity.
+   *
+   * @return kg H2S per kg active, or NaN if unspecified
+   */
+  public double getH2SCapacityKgPerKgActive() {
+    return h2sCapacityKgPerKgActive;
+  }
+
   // ─── Output ─────────────────────────────────────────────
 
   /**
@@ -483,6 +575,12 @@ public class ProductionChemical implements Serializable {
     map.put("densityKgM3", densityKgM3);
     if (notes != null && !notes.isEmpty()) {
       map.put("notes", notes);
+    }
+    if (!Double.isNaN(alkalinityCapacityMolEqPerKgActive)) {
+      map.put("alkalinityCapacityMolEqPerKgActive", alkalinityCapacityMolEqPerKgActive);
+    }
+    if (!Double.isNaN(h2sCapacityKgPerKgActive)) {
+      map.put("h2sCapacityKgPerKgActive", h2sCapacityKgPerKgActive);
     }
     return map;
   }
