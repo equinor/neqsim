@@ -19,9 +19,8 @@ public final class FacilityModificationPlan implements Serializable {
     private final double requiredCapacityMultiplier;
     private final double associatedDeferredOilSm3;
 
-    Candidate(int firstRequiredYear, String bottleneck, String modificationScope,
-        double peakRequestedUtilization, double requiredCapacityMultiplier,
-        double associatedDeferredOilSm3) {
+    Candidate(int firstRequiredYear, String bottleneck, String modificationScope, double peakRequestedUtilization,
+        double requiredCapacityMultiplier, double associatedDeferredOilSm3) {
       this.firstRequiredYear = firstRequiredYear;
       this.bottleneck = bottleneck;
       this.modificationScope = modificationScope;
@@ -65,8 +64,7 @@ public final class FacilityModificationPlan implements Serializable {
   private final double targetUtilization;
   private final List<Candidate> candidates;
 
-  FacilityModificationPlan(String conceptName, double targetUtilization,
-      List<Candidate> candidates) {
+  FacilityModificationPlan(String conceptName, double targetUtilization, List<Candidate> candidates) {
     this.conceptName = conceptName;
     this.targetUtilization = targetUtilization;
     this.candidates = Collections.unmodifiableList(new ArrayList<Candidate>(candidates));
@@ -99,12 +97,11 @@ public final class FacilityModificationPlan implements Serializable {
     table.append("| Capacity multiplier | Deferred oil (MSm3) |\n");
     table.append("|---:|---|---|---:|---:|---:|\n");
     for (Candidate candidate : candidates) {
-      table.append(String.format("| %d | %s | %s | %.1f%% | %.2f | %.2f |%n",
-          candidate.getFirstRequiredYear(), candidate.getBottleneck(),
-          candidate.getModificationScope(), candidate.getPeakRequestedUtilization() * 100.0,
-          candidate.getRequiredCapacityMultiplier(),
-          candidate.getAssociatedDeferredOilSm3() / 1.0e6));
+      table.append(String.format("| %d | %s | %s | %.1f%% | %.2f | %.2f |%n", candidate.getFirstRequiredYear(),
+          candidate.getBottleneck(), candidate.getModificationScope(), candidate.getPeakRequestedUtilization() * 100.0,
+          candidate.getRequiredCapacityMultiplier(), candidate.getAssociatedDeferredOilSm3() / 1.0e6));
     }
     return table.toString();
   }
 }
+
