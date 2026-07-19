@@ -3,8 +3,6 @@ title: Thermal Conductivity Models
 description: This guide documents the thermal conductivity calculation methods available in NeqSim for gas, liquid, and multiphase systems.
 ---
 
-# Thermal Conductivity Models
-
 This guide documents the thermal conductivity calculation methods available in NeqSim for gas, liquid, and multiphase systems.
 
 ## Table of Contents
@@ -142,7 +140,7 @@ fluid.getPhase("oil").getPhysicalProperties().setConductivityModel("polynom");
 
 ---
 
-### CO₂ Reference
+### CO2 Reference
 
 High-accuracy thermal conductivity for CO₂ based on the Vesovic et al. correlation.
 

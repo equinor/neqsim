@@ -3,8 +3,6 @@ title: Diffusivity Models
 description: "Diffusion coefficient calculation methods in NeqSim: Chapman-Enskog, Wilke-Lee, Fuller-Schettler-Giddings for gases; Siddiqi-Lucas, Wilke-Chang, Tyn-Calus, Hayduk-Minhas for liquids. Includes validation against experimental data."
 ---
 
-# Diffusivity Models
-
 This guide documents the diffusion coefficient calculation methods available in NeqSim for gas and liquid systems.
 
 ## Table of Contents
