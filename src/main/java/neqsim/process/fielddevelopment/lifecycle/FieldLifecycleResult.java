@@ -309,9 +309,8 @@ public final class FieldLifecycleResult implements Serializable {
    * @return Markdown table row
    */
   public String toMarkdownRow() {
-    return String.format("| %s | %.0f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f |", conceptName,
-        getNpvMusd(), getIrr() * 100.0, breakevenOilPriceUsdPerBbl, cumulativeOilSm3 / 1.0e6,
-        cumulativeDeferredOilSm3 / 1.0e6, peakFacilityUtilization * 100.0, cumulativeGasInjectedSm3 / 1.0e9,
-        lifecycleCo2Tonnes / 1000.0);
+    return String.format("| %s | %.0f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f |", conceptName, getNpvMusd(),
+        getIrr() * 100.0, breakevenOilPriceUsdPerBbl, cumulativeOilSm3 / 1.0e6, cumulativeDeferredOilSm3 / 1.0e6,
+        peakFacilityUtilization * 100.0, cumulativeGasInjectedSm3 / 1.0e9, lifecycleCo2Tonnes / 1000.0);
   }
 }

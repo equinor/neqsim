@@ -165,8 +165,7 @@ public class FieldLifecycleSimulator {
         break;
       }
       FacilityProductionRate satellitePotential = new FacilityProductionRate(potential.oilRateSm3PerDay,
-          suppliedPotential.getGasSm3PerDay() > 0.0 ? suppliedPotential.getGasSm3PerDay()
-              : potential.gasRateSm3PerDay,
+          suppliedPotential.getGasSm3PerDay() > 0.0 ? suppliedPotential.getGasSm3PerDay() : potential.gasRateSm3PerDay,
           potential.waterRateSm3PerDay);
       AllocationResult allocation = allocator.allocate(strategy, calendarYear, satellitePotential);
       FacilityOperatingResult operation = operateSharedFacility(model, config, strategy, fieldAgeYears, allocation,
@@ -178,8 +177,8 @@ public class FieldLifecycleSimulator {
       double gasInjectionVolume = operation.gasInjectionRateSm3PerDay * operatingDays;
       double waterVolume = operation.satelliteAllocated.getWaterSm3PerDay() * operatingDays;
       double energyMWh = operation.powerKw * 24.0 * operatingDays / 1000.0;
-      double emissionsTonnes =
-          operation.powerKw * 24.0 * operatingDays * config.getGridEmissionFactorKgPerKWh() / 1000.0;
+      double emissionsTonnes = operation.powerKw * 24.0 * operatingDays * config.getGridEmissionFactorKgPerKWh()
+          / 1000.0;
       double holdbackOil = Math.max(0.0,
           allocation.getSatellitePotential().getOilSm3PerDay() - allocation.getSatelliteRequested().getOilSm3PerDay())
           * operatingDays;
@@ -682,8 +681,8 @@ public class FieldLifecycleSimulator {
 
     private void add(double days, double oil, double gasExport, double gasInjected, double water, double waterCut,
         double pressure, double energy, double emissions, double potentialOilRate, double requestedOilRate,
-        double hostOilRate, double hostGasRate, double hostWaterRate, double holdbackOil,
-        double capacityDeferredOil, double facilityUtilization, String bottleneck) {
+        double hostOilRate, double hostGasRate, double hostWaterRate, double holdbackOil, double capacityDeferredOil,
+        double facilityUtilization, String bottleneck) {
       calendarDays += days;
       oilSm3 += oil;
       gasExportSm3 += gasExport;

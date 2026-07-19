@@ -19,8 +19,8 @@ class NorwegianOilFieldLifecycleTest extends neqsim.NeqSimTest {
   @Test
   void gasInjectionCaseRunsFromReservoirToEconomics() {
     FieldLifecycleConcept concept = NorwegianOilFieldCase.createCase("short gas injection", 0.85, 5.0e6, 2.0);
-    concept.getModel().setProductionPotentialProvider((model, configuration, ageYears, pressureBara) ->
-        new FacilityProductionRate(18000.0, 0.0, 1500.0));
+    concept.getModel().setProductionPotentialProvider(
+        (model, configuration, ageYears, pressureBara) -> new FacilityProductionRate(18000.0, 0.0, 1500.0));
     FieldLifecycleResult result = new FieldLifecycleEvaluator().evaluate(concept);
 
     assertFalse(result.getAnnualResults().isEmpty());
@@ -51,8 +51,8 @@ class NorwegianOilFieldLifecycleTest extends neqsim.NeqSimTest {
   @Test
   void evaluatorRanksIndependentConceptsAndExportsComparisonTable() {
     FieldLifecycleEvaluator evaluator = new FieldLifecycleEvaluator();
-    List<FieldLifecycleResult> results = evaluator.evaluateAll(Arrays
-        .asList(NorwegianOilFieldCase.createCase("short injection", 0.85, 5.0e6, 1.0),
+    List<FieldLifecycleResult> results = evaluator
+        .evaluateAll(Arrays.asList(NorwegianOilFieldCase.createCase("short injection", 0.85, 5.0e6, 1.0),
             NorwegianOilFieldCase.createCase("short depletion", 0.0, 0.0, 1.0)));
 
     assertEquals(2, results.size());
@@ -65,14 +65,13 @@ class NorwegianOilFieldLifecycleTest extends neqsim.NeqSimTest {
 
   @Test
   void allocatorHandlesDynamicHostCapacityPriorityAndHoldback() {
-    HostFacility host = HostFacility.builder("test host").oilCapacity(125796.0).gasCapacity(6.0)
-        .waterCapacity(30000.0).liquidCapacity(45000.0).build();
+    HostFacility host = HostFacility.builder("test host").oilCapacity(125796.0).gasCapacity(6.0).waterCapacity(30000.0)
+        .liquidCapacity(45000.0).build();
     ProductionProfileSeries profile = new ProductionProfileSeries("host profile")
         .addPeriod(2030, 3.0, 15000.0 / ProductionLoad.BARREL_TO_M3, 10000.0, 0.0)
         .addPeriod(2040, 1.0, 5000.0 / ProductionLoad.BARREL_TO_M3, 18000.0, 0.0);
     FacilityLifecycleStrategy strategy = FacilityLifecycleStrategy.tieback("shared host", host, profile)
-        .allocationPolicy(CapacityAllocationPolicy.BASE_FIRST).holdback(0.0, 0.10)
-        .useDetailedProcessConstraints(false)
+        .allocationPolicy(CapacityAllocationPolicy.BASE_FIRST).holdback(0.0, 0.10).useDetailedProcessConstraints(false)
         .build();
 
     FacilityCapacityAllocator.AllocationResult early = new FacilityCapacityAllocator().allocate(strategy, 2030,
@@ -81,10 +80,8 @@ class NorwegianOilFieldLifecycleTest extends neqsim.NeqSimTest {
         new FacilityProductionRate(12000.0, 4.0e6, 8000.0));
 
     assertEquals(15000.0, early.getHostAllocated().getOilSm3PerDay(), 1.0e-9);
-    assertTrue(early.getSatelliteAllocated().getOilSm3PerDay()
-        < early.getSatelliteRequested().getOilSm3PerDay());
-    assertTrue(late.getSatelliteAllocated().getOilSm3PerDay()
-        > early.getSatelliteAllocated().getOilSm3PerDay());
+    assertTrue(early.getSatelliteAllocated().getOilSm3PerDay() < early.getSatelliteRequested().getOilSm3PerDay());
+    assertTrue(late.getSatelliteAllocated().getOilSm3PerDay() > early.getSatelliteAllocated().getOilSm3PerDay());
     assertEquals(1.0, early.getMaximumUtilization(), 1.0e-6);
   }
 

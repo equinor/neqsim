@@ -113,8 +113,7 @@ public final class NorwegianOilFieldCase {
 
   /** Creates a managed tieback with proportional allocation and planned host/satellite holdback. */
   public static FieldLifecycleConcept createManagedTiebackCase() {
-    return createTiebackCase("NCS oil tieback - managed capacity", CapacityAllocationPolicy.PRO_RATA, 0.05, 0.10,
-        25.0);
+    return createTiebackCase("NCS oil tieback - managed capacity", CapacityAllocationPolicy.PRO_RATA, 0.05, 0.10, 25.0);
   }
 
   /** Returns greenfield, depletion, direct tieback and managed tieback concepts ready for consistent ranking. */
@@ -129,28 +128,27 @@ public final class NorwegianOilFieldCase {
     FieldConcept fieldConcept = createTiebackScreeningConcept(name);
     FieldLifecycleModel model = createModel(name, 35.0, true, false);
     HostFacility host = HostFacility.builder("Existing NCS host").operator("Reference operator")
-        .type(FacilityType.PLATFORM).waterDepth(140.0).oilCapacity(150000.0).gasCapacity(7.0)
-        .waterCapacity(32000.0).liquidCapacity(52000.0).minTieInPressure(45.0).maxTieInPressure(90.0)
-        .processSystem(model.getProcessSystem()).build();
+        .type(FacilityType.PLATFORM).waterDepth(140.0).oilCapacity(150000.0).gasCapacity(7.0).waterCapacity(32000.0)
+        .liquidCapacity(52000.0).minTieInPressure(45.0).maxTieInPressure(90.0).processSystem(model.getProcessSystem())
+        .build();
     ProductionProfileSeries hostProfile = new ProductionProfileSeries("existing host production")
         .addPeriod(2029, 3.2, oilSm3dToBopd(16000.0), 14000.0, 0.0)
         .addPeriod(2034, 2.4, oilSm3dToBopd(12500.0), 19000.0, 0.0)
         .addPeriod(2039, 1.4, oilSm3dToBopd(7500.0), 22000.0, 0.0)
         .addPeriod(2049, 0.45, oilSm3dToBopd(2200.0), 15500.0, 0.0);
-    FacilityLifecycleStrategy facilityStrategy = FacilityLifecycleStrategy.tieback("Existing host shared processing",
-        host, hostProfile).allocationPolicy(policy).holdback(hostHoldback, satelliteHoldback)
-        .designMargin(1.10).maximumDetailedProcessUtilization(1.0).autoSizeDetailedProcess(false)
-        .useDetailedProcessConstraints(false).build();
+    FacilityLifecycleStrategy facilityStrategy = FacilityLifecycleStrategy
+        .tieback("Existing host shared processing", host, hostProfile).allocationPolicy(policy)
+        .holdback(hostHoldback, satelliteHoldback).designMargin(1.10).maximumDetailedProcessUtilization(1.0)
+        .autoSizeDetailedProcess(false).useDetailedProcessConstraints(false).build();
     double capexMusd = estimateTiebackCapexMusd();
 
     FieldLifecycleConfiguration configuration = FieldLifecycleConfiguration.builder().startYear(firstOilYear)
         .projectYears(projectYears).timeStepDays(365.25).availability(0.92).producers(PRODUCERS, 55.0)
         .minimumBottomHolePressure(250.0).plateauOilRate(23000.0).facilityCapacities(52000.0, 7.0e6, 32000.0)
         .economicLimitOilRate(600.0).waterCut(0.04, 0.78, 3.0, 15.0).standardDensities(835.0, 1025.0)
-        .gasInjection(0.0, 0.0, 0.0).gridEmissionFactor(0.018).prices(75.0, 0.28).discountRate(0.08)
-        .opex(65.0, 10.5).tariffs(6.5, 0.025).capex(firstOilYear - 3, capexMusd * 0.15)
-        .capex(firstOilYear - 2, capexMusd * 0.50).capex(firstOilYear - 1, capexMusd * 0.35)
-        .facilityLifecycleStrategy(facilityStrategy).build();
+        .gasInjection(0.0, 0.0, 0.0).gridEmissionFactor(0.018).prices(75.0, 0.28).discountRate(0.08).opex(65.0, 10.5)
+        .tariffs(6.5, 0.025).capex(firstOilYear - 3, capexMusd * 0.15).capex(firstOilYear - 2, capexMusd * 0.50)
+        .capex(firstOilYear - 1, capexMusd * 0.35).facilityLifecycleStrategy(facilityStrategy).build();
     return new FieldLifecycleConcept(fieldConcept, model, configuration);
   }
 
@@ -170,9 +168,9 @@ public final class NorwegianOilFieldCase {
   }
 
   private static FieldConcept createTiebackScreeningConcept(String name) {
-    ReservoirInput reservoir = ReservoirInput.blackOil().gor(180.0, "Sm3/Sm3").waterCut(0.04)
-        .reservoirPressure(330.0).reservoirTemperature(90.0).apiGravity(34.0)
-        .resourceUncertainty(550.0, 700.0, 850.0, "MMbbl").recoveryFactor(0.40).build();
+    ReservoirInput reservoir = ReservoirInput.blackOil().gor(180.0, "Sm3/Sm3").waterCut(0.04).reservoirPressure(330.0)
+        .reservoirTemperature(90.0).apiGravity(34.0).resourceUncertainty(550.0, 700.0, 850.0, "MMbbl")
+        .recoveryFactor(0.40).build();
     WellsInput wells = WellsInput.builder().producerCount(PRODUCERS).injectorCount(0).tubeheadPressure(85.0)
         .ratePerWell(23000.0 / PRODUCERS, "Sm3/day").productivityIndex(55.0).build();
     InfrastructureInput infrastructure = InfrastructureInput.builder()
@@ -257,8 +255,7 @@ public final class NorwegianOilFieldCase {
     recoveredGasMixer.addStream(lpGasCooler.getOutletStream());
     Splitter gasAllocation = new Splitter("Gas export and injection allocation", recoveredGasMixer.getOutletStream(),
         2);
-    gasAllocation.setSplitFactors(includeGasInjectionTrain ? new double[] { 0.15, 0.85 }
-        : new double[] { 1.0, 0.0 });
+    gasAllocation.setSplitFactors(includeGasInjectionTrain ? new double[] { 0.15, 0.85 } : new double[] { 1.0, 0.0 });
 
     Compressor gasExportCompressor = new Compressor("Gas export compressor", gasAllocation.getSplitStream(0));
     gasExportCompressor.setOutletPressure(180.0, "bara");
@@ -272,14 +269,12 @@ public final class NorwegianOilFieldCase {
     Cooler injectionAftercooler = null;
     StreamInterface compressedInjectionGas = gasAllocation.getSplitStream(1);
     if (includeGasInjectionTrain) {
-      injectionStageOne =
-          new Compressor("Gas injection compressor stage 1", gasAllocation.getSplitStream(1));
+      injectionStageOne = new Compressor("Gas injection compressor stage 1", gasAllocation.getSplitStream(1));
       injectionStageOne.setOutletPressure(135.0, "bara");
       injectionStageOne.setPolytropicEfficiency(0.78);
       injectionIntercooler = new Cooler("Gas injection intercooler", injectionStageOne.getOutletStream());
       injectionIntercooler.setOutletTemperature(273.15 + 35.0);
-      injectionStageTwo = new Compressor("Gas injection compressor stage 2",
-          injectionIntercooler.getOutletStream());
+      injectionStageTwo = new Compressor("Gas injection compressor stage 2", injectionIntercooler.getOutletStream());
       injectionStageTwo.setOutletPressure(350.0, "bara");
       injectionStageTwo.setPolytropicEfficiency(0.78);
       injectionAftercooler = new Cooler("Gas injection aftercooler", injectionStageTwo.getOutletStream());

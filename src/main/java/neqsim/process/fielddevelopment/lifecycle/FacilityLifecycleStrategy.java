@@ -17,8 +17,7 @@ public final class FacilityLifecycleStrategy implements Serializable {
 
   /** Development mode. */
   public enum DevelopmentMode {
-    GREENFIELD,
-    BROWNFIELD_TIEBACK
+    GREENFIELD, BROWNFIELD_TIEBACK
   }
 
   private final String name;
@@ -55,8 +54,8 @@ public final class FacilityLifecycleStrategy implements Serializable {
         : developmentMode == DevelopmentMode.GREENFIELD
             ? FacilityCapacity.fromDesignRates(designRates, builder.designPowerKw, designMargin)
             : FacilityCapacity.fromHostFacility(hostFacility, builder.designPowerKw);
-    capacitySchedule = Collections.unmodifiableNavigableMap(
-        new TreeMap<Integer, FacilityCapacity>(builder.capacitySchedule));
+    capacitySchedule = Collections
+        .unmodifiableNavigableMap(new TreeMap<Integer, FacilityCapacity>(builder.capacitySchedule));
   }
 
   /** Creates a greenfield strategy whose nameplate is derived from design rates and margin. */
@@ -189,8 +188,7 @@ public final class FacilityLifecycleStrategy implements Serializable {
     private final FacilityProductionRate designRates;
     private final HostFacility hostFacility;
     private final ProductionProfileSeries hostProductionProfile;
-    private final NavigableMap<Integer, FacilityCapacity> capacitySchedule =
-        new TreeMap<Integer, FacilityCapacity>();
+    private final NavigableMap<Integer, FacilityCapacity> capacitySchedule = new TreeMap<Integer, FacilityCapacity>();
     private String name;
     private CapacityAllocationPolicy allocationPolicy = CapacityAllocationPolicy.BASE_FIRST;
     private HoldbackPolicy holdbackPolicy = HoldbackPolicy.DEFER_TO_LATER_YEARS;

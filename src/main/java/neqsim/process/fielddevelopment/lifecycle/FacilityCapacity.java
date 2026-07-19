@@ -14,8 +14,8 @@ public final class FacilityCapacity implements Serializable {
   private final double powerKw;
 
   /** Creates a capacity envelope. Non-positive entries mean that dimension is not constrained. */
-  public FacilityCapacity(double oilSm3PerDay, double gasSm3PerDay, double waterSm3PerDay,
-      double liquidSm3PerDay, double powerKw) {
+  public FacilityCapacity(double oilSm3PerDay, double gasSm3PerDay, double waterSm3PerDay, double liquidSm3PerDay,
+      double powerKw) {
     this.oilSm3PerDay = capacity(oilSm3PerDay);
     this.gasSm3PerDay = capacity(gasSm3PerDay);
     this.waterSm3PerDay = capacity(waterSm3PerDay);
@@ -77,8 +77,9 @@ public final class FacilityCapacity implements Serializable {
 
   /** Returns the highest nameplate utilization across oil, gas, water and total liquid. */
   public double getMaximumUtilization(FacilityProductionRate rates) {
-    return Math.max(Math.max(utilization(rates.getOilSm3PerDay(), oilSm3PerDay),
-        utilization(rates.getGasSm3PerDay(), gasSm3PerDay)),
+    return Math.max(
+        Math.max(utilization(rates.getOilSm3PerDay(), oilSm3PerDay),
+            utilization(rates.getGasSm3PerDay(), gasSm3PerDay)),
         Math.max(utilization(rates.getWaterSm3PerDay(), waterSm3PerDay),
             utilization(rates.getLiquidSm3PerDay(), liquidSm3PerDay)));
   }

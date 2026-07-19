@@ -20,8 +20,7 @@ public final class FacilityCapacityAllocator {
     FacilityCapacity capacity = strategy.getCapacity(year);
     FacilityProductionRate hostPotential = strategy.getHostProduction(year);
     FacilityProductionRate hostRequested = hostPotential.scale(1.0 - strategy.getHostHoldbackFraction());
-    FacilityProductionRate satelliteRequested =
-        satellitePotential.scale(1.0 - strategy.getSatelliteHoldbackFraction());
+    FacilityProductionRate satelliteRequested = satellitePotential.scale(1.0 - strategy.getSatelliteHoldbackFraction());
     FacilityProductionRate hostAllocated;
     FacilityProductionRate satelliteAllocated;
 
@@ -36,9 +35,9 @@ public final class FacilityCapacityAllocator {
     }
 
     FacilityProductionRate total = hostAllocated.plus(satelliteAllocated);
-    return new AllocationResult(year, capacity, hostPotential, hostRequested, hostAllocated,
-        satellitePotential, satelliteRequested, satelliteAllocated,
-        capacity.getPrimaryConstraint(total), capacity.getMaximumUtilization(total));
+    return new AllocationResult(year, capacity, hostPotential, hostRequested, hostAllocated, satellitePotential,
+        satelliteRequested, satelliteAllocated, capacity.getPrimaryConstraint(total),
+        capacity.getMaximumUtilization(total));
   }
 
   private TieInPeriodResult runCanonicalTieInAllocation(FacilityLifecycleStrategy strategy, int year,
@@ -51,17 +50,15 @@ public final class FacilityCapacityAllocator {
         .add(toProductionLoad("base host", year, hostRequested));
     ProductionProfileSeries satelliteProfile = new ProductionProfileSeries("satellite")
         .add(toProductionLoad("satellite", year, satelliteRequested));
-    TieInCapacityResult result = new TieInCapacityPlanner(allocationHost)
-        .setHostProductionProfile(hostProfile).setSatelliteProductionProfile(satelliteProfile)
-        .setAllocationPolicy(strategy.getAllocationPolicy())
+    TieInCapacityResult result = new TieInCapacityPlanner(allocationHost).setHostProductionProfile(hostProfile)
+        .setSatelliteProductionProfile(satelliteProfile).setAllocationPolicy(strategy.getAllocationPolicy())
         .setHoldbackPolicy(strategy.getHoldbackPolicy()).run();
     return result.getPeriodResults().get(0);
   }
 
   private ProductionLoad toProductionLoad(String name, int year, FacilityProductionRate rates) {
     return new ProductionLoad(name, year, rates.getGasSm3PerDay() / 1.0e6,
-        rates.getOilSm3PerDay() / ProductionLoad.BARREL_TO_M3, rates.getWaterSm3PerDay(),
-        rates.getLiquidSm3PerDay());
+        rates.getOilSm3PerDay() / ProductionLoad.BARREL_TO_M3, rates.getWaterSm3PerDay(), rates.getLiquidSm3PerDay());
   }
 
   private FacilityProductionRate fromProductionLoad(ProductionLoad load) {
