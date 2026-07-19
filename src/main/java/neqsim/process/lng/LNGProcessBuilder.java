@@ -670,8 +670,7 @@ public class LNGProcessBuilder {
    * @param temperatureC specified exchanger outlet temperature in Celsius
    * @param pressureBara high-side pressure in bara
    */
-  private void initializeExpansionInlet(StreamInterface highPressureStream, double temperatureC,
-      double pressureBara) {
+  private void initializeExpansionInlet(StreamInterface highPressureStream, double temperatureC, double pressureBara) {
     highPressureStream.setTemperature(temperatureC, "C");
     highPressureStream.setPressure(pressureBara, "bara");
     highPressureStream.run();
