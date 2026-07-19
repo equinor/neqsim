@@ -6,8 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -121,15 +119,7 @@ class LNGProcessBuilderTest {
     assertFalse(capacity.isAnyEquipmentOverloaded());
     assertNotNull(capacity.getUtilizationSnapshotJson());
     assertNotNull(capacity.getDesignReportJson());
-    boolean hasUnavailableSizingData = false;
-    for (JsonElement equipmentReport : JsonParser.parseString(capacity.getDesignReportJson()).getAsJsonObject()
-        .getAsJsonArray("equipment")) {
-      if (equipmentReport.getAsJsonObject().has("sizingDataAvailable")
-          && !equipmentReport.getAsJsonObject().get("sizingDataAvailable").getAsBoolean()) {
-        hasUnavailableSizingData = true;
-      }
-    }
-    assertTrue(hasUnavailableSizingData);
+    assertTrue(capacity.getDesignReportJson().contains("\"sizingDataAvailable\": false"));
   }
 
   @Test
