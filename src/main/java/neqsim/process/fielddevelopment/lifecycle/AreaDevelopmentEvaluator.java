@@ -31,4 +31,3 @@ public final class AreaDevelopmentEvaluator {
     return new AreaDevelopmentResult(portfolio.getAreaName(), results);
   }
 }
-
