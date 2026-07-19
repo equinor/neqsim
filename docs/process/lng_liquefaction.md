@@ -58,9 +58,70 @@ LNGProcessModel connectedModel = new LNGProcessBuilder()
 ```
 
 The stream reference remains live, so composition, flow, temperature, and
-pressure are supplied by the surrounding process. Run its producing process
-before the LNG model. Acid gas, water, mercury, and heavy hydrocarbon removal
-must be represented upstream when those contaminants are present.
+pressure are supplied by the surrounding process. Refrigerant circulation is
+initialized from the live stream rate when `build()` is called. Rebuild or
+retune the refrigerant inventory after large feed-rate changes. Run a separate
+producing process before the LNG model, or use the shared-process form below.
+Acid gas, water, mercury, and heavy hydrocarbon removal must be represented
+upstream when those contaminants are present.
+
+## Professional integrated flowsheet
+
+The route templates assume pretreated gas at the battery limit, but every
+piece of route equipment is explicit: compressor suction scrubbers, two-stage
+compressors, intercoolers and aftercoolers, refrigerant valves or an expander,
+multi-stream cryogenic exchangers, separators, and recycle tear streams.
+Pretreatment and fractionation can be assembled with the normal NeqSim unit
+operations and then extended in place:
+
+```java
+ProcessSystem plant = new ProcessSystem("Professional LNG plant");
+
+Stream richFeed = new Stream("Rich natural gas", richGasFluid);
+richFeed.setFlowRate(30000.0, "kg/hr");
+plant.add(richFeed);
+
+PipeBeggsAndBrills inletPipeline =
+    new PipeBeggsAndBrills("Feed-gas pipeline", richFeed);
+inletPipeline.setLength(20000.0);
+inletPipeline.setDiameter(0.40);
+plant.add(inletPipeline);
+
+DistillationColumn scrubColumn =
+    new DistillationColumn("Heavy-hydrocarbon scrub column", 8, true, true);
+scrubColumn.addFeedStream(inletPipeline.getOutletStream(), 4);
+scrubColumn.setCondenserTemperature(-35.0, "C");
+scrubColumn.setReboilerTemperature(65.0, "C");
+plant.add(scrubColumn);
+
+LNGProcessModel model = new LNGProcessBuilder()
+    .setName("C3MR train")
+    .setCycle(LNGProcessCycle.C3MR)
+    .setUpstreamProcess(plant, scrubColumn.getGasOutStream())
+    .build();
+
+model.registerOutputStream("NGL", scrubColumn.getLiquidOutStream());
+model.run();
+
+StreamInterface lng = model.getOutputStream(LNGProcessModel.LNG_OUTPUT);
+StreamInterface flashGas =
+    model.getOutputStream(LNGProcessModel.FLASH_GAS_OUTPUT);
+StreamInterface ngl = model.getOutputStream("NGL");
+
+List<DistillationColumn> columns =
+    model.getEquipment(DistillationColumn.class);
+List<Compressor> compressors = model.getEquipment(Compressor.class);
+List<Recycle> recycles = model.getEquipment(Recycle.class);
+```
+
+This makes the result behave like a professional process-simulation
+flowsheet: upstream pipeline hydraulics and columns, the complete refrigeration
+train, controls or measurements, and downstream product handling all remain in
+one `ProcessSystem`. `getEquipment()` returns the immutable flowsheet-order
+unit manifest, while `getEquipment(Class)` selects any NeqSim equipment type.
+The representative scrub column above separates an NGL bottoms stream; project
+models should add the required acid-gas removal, dehydration, mercury removal,
+NGL fractionation, and utility systems for the actual feed specification.
 
 ## Common comparison metrics
 
