@@ -44,11 +44,23 @@ double minimumApproach = result.getMinimumInternalTemperatureApproachC();
 LNGProcessBenchmark.Assessment benchmark = result.assessBenchmark();
 ```
 
-Use `setFeedFluid(SystemInterface)` to supply a custom pretreated feed. The
-builder clones the supplied thermodynamic system and applies the configured
-flow, temperature, and pressure. Acid gas, water, mercury, and heavy
-hydrocarbon removal must be represented upstream when those contaminants are
-present.
+Use `setFeedFluid(SystemInterface)` to clone a custom pretreated fluid into a
+standalone LNG feed. To connect a larger NeqSim simulation without copying its
+state, pass the live stream:
+
+```java
+StreamInterface treatedGas = upstreamPipeline.getOutletStream();
+LNGProcessModel connectedModel = new LNGProcessBuilder()
+    .setName("Integrated LNG train")
+    .setFeedStream(treatedGas)
+    .setCycle(LNGProcessCycle.DMR)
+    .build();
+```
+
+The stream reference remains live, so composition, flow, temperature, and
+pressure are supplied by the surrounding process. Run its producing process
+before the LNG model. Acid gas, water, mercury, and heavy hydrocarbon removal
+must be represented upstream when those contaminants are present.
 
 ## Common comparison metrics
 
@@ -94,6 +106,58 @@ regression comparisons.
 The builder also enables process flash warm starts and optimized execution.
 For parameter studies, converge a base case before making small changes, and
 verify the fast configuration against a higher-zone reference case.
+
+## Integrated process and pipeline capacity
+
+Use `setUpstreamProcess(processSystem, feedStream)` when inlet pipelines,
+pretreatment, fractionation, and the LNG train should execute as one
+`ProcessSystem`. The builder extends the supplied system in place. Standard
+NeqSim measurement devices, controllers, automation, optimization, mechanical
+design, cost, emissions, and reporting APIs remain available through
+`model.getProcessSystem()`.
+
+Downstream equipment can be appended directly. This example adds an LNG
+product pipeline and evaluates its hydraulic constraints together with every
+process equipment constraint:
+
+```java
+ProcessSystem plant = new ProcessSystem("Integrated LNG plant");
+// Add upstream pipelines and pretreatment to plant.
+StreamInterface treatedGas = feedPipeline.getOutletStream();
+
+LNGProcessModel model = new LNGProcessBuilder()
+    .setName("LNG train")
+    .setUpstreamProcess(plant, treatedGas)
+    .setCycle(LNGProcessCycle.C3MR)
+    .build();
+
+PipeBeggsAndBrills productPipeline =
+    new PipeBeggsAndBrills("LNG product pipeline", model.getProductStream());
+productPipeline.setLength(15000.0);
+productPipeline.setDiameter(0.50);
+model.addEquipment(productPipeline);
+
+LNGProcessModel.CapacityResult capacity =
+    model.autoSizeAndEvaluateCapacity(1.20);
+BottleneckResult bottleneck = capacity.getBottleneck();
+Map<String, Double> rankedUtilization =
+    capacity.getRankedUtilizationPercent();
+String detailedSnapshot = capacity.getUtilizationSnapshotJson();
+```
+
+`autoSizeAndEvaluateCapacity` runs the integrated flowsheet, calls the
+standard plant-wide auto-sizing bridge, activates mechanical-design-derived
+constraints, reruns, and ranks all enabled constraints. For pipelines this can
+include velocity, pressure drop, volume flow, erosion/FIV, and other constraints
+provided by the selected pipeline and mechanical-design models. Compressors,
+exchangers, separators, valves, pumps, and other constrained equipment are
+ranked on the same basis.
+
+For an existing design, set the actual mechanical design limits and call
+`model.evaluateCapacity()` after running instead of auto-sizing from the
+current operating point. The capacity snapshot is a constraint-utilization
+report; a maximum-throughput study should vary the live feed rate with the
+NeqSim optimization framework until the first hard or design constraint binds.
 
 ## Literature comparison points
 
