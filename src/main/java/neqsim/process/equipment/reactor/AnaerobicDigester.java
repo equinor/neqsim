@@ -9,10 +9,17 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.process.equipment.reactor.digestion.AnaerobicDigestionInput;
+import neqsim.process.equipment.reactor.digestion.AnaerobicDigestionModel;
+import neqsim.process.equipment.reactor.digestion.AnaerobicDigestionResult;
+import neqsim.process.equipment.reactor.digestion.EmpiricalYieldDigestionModel;
+import neqsim.process.equipment.reactor.digestion.FirstOrderHydrolysisDigestionModel;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.characterization.BioFeedstock;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Anaerobic digester for biogas production from organic substrates.
@@ -195,6 +202,14 @@ public class AnaerobicDigester extends Fermenter {
   // ── Biogas configuration ──
   /** Methane content in biogas (volume fraction, default 0.60). */
   private double methaneFraction = 0.60;
+  /** Optional evidence-bearing feedstock characterization. */
+  private BioFeedstock feedstock;
+  /** Pluggable biochemical conversion model. */
+  private AnaerobicDigestionModel digestionModel = new EmpiricalYieldDigestionModel();
+  /** Fraction of feed sulfur released to the dry gas as hydrogen sulfide. */
+  private double sulfurToGasFraction = 0.10;
+  /** Whether the product gas is saturated with water at reactor conditions. */
+  private boolean saturateBiogasWithWater = true;
 
   // ── Output streams ──
   /** Biogas product stream. */
@@ -215,6 +230,8 @@ public class AnaerobicDigester extends Fermenter {
   private double actualVsDestruction = 0.0;
   /** Actual specific methane yield used. */
   private double actualSpecificMethaneYield = 0.0;
+  /** Detailed biochemical calculation result. */
+  private AnaerobicDigestionResult digestionResult;
   /** Whether the digester has been run. */
   private boolean digesterHasRun = false;
 
@@ -247,7 +264,11 @@ public class AnaerobicDigester extends Fermenter {
    * @param type the substrate type
    */
   public void setSubstrateType(SubstrateType type) {
+    if (type == null) {
+      throw new IllegalArgumentException("Substrate type must be provided");
+    }
     this.substrateType = type;
+    this.feedstock = null;
   }
 
   /**
@@ -257,6 +278,93 @@ public class AnaerobicDigester extends Fermenter {
    */
   public SubstrateType getSubstrateType() {
     return substrateType;
+  }
+
+  /**
+   * Sets an evidence-bearing feedstock characterization.
+   *
+   * <p>
+   * The feedstock supplies solids, elemental, kinetic, gas-composition, and yield properties. A later call to
+   * {@link #setFeedRate(double, double)} may still override the as-received total-solids fraction for a scenario.
+   * </p>
+   *
+   * @param characterizedFeedstock feedstock characterization
+   */
+  public void setFeedstock(BioFeedstock characterizedFeedstock) {
+    if (characterizedFeedstock == null) {
+      throw new IllegalArgumentException("Feedstock must be provided");
+    }
+    characterizedFeedstock.validate();
+    feedstock = characterizedFeedstock;
+    totalSolidsFraction = characterizedFeedstock.getTotalSolidsFraction();
+    methaneFraction = characterizedFeedstock.getMethaneFraction();
+  }
+
+  /**
+   * Returns the explicitly configured feedstock.
+   *
+   * @return configured feedstock, or null when legacy substrate defaults are active
+   */
+  public BioFeedstock getFeedstock() {
+    return feedstock;
+  }
+
+  /**
+   * Sets the biochemical conversion model.
+   *
+   * @param model digestion model
+   */
+  public void setDigestionModel(AnaerobicDigestionModel model) {
+    if (model == null) {
+      throw new IllegalArgumentException("Digestion model must be provided");
+    }
+    digestionModel = model;
+  }
+
+  /**
+   * Selects the residence-time and temperature-sensitive first-order hydrolysis model.
+   */
+  public void useFirstOrderHydrolysisModel() {
+    digestionModel = new FirstOrderHydrolysisDigestionModel();
+  }
+
+  /**
+   * Returns the active biochemical conversion model.
+   *
+   * @return digestion model
+   */
+  public AnaerobicDigestionModel getDigestionModel() {
+    return digestionModel;
+  }
+
+  /**
+   * Returns the last biochemical calculation result.
+   *
+   * @return digestion result, or null before the first run
+   */
+  public AnaerobicDigestionResult getDigestionResult() {
+    return digestionResult;
+  }
+
+  /**
+   * Sets the fraction of feed sulfur released as hydrogen sulfide.
+   *
+   * @param fraction sulfur release fraction between zero and one
+   */
+  public void setSulfurToGasFraction(double fraction) {
+    if (fraction < 0.0 || fraction > 1.0) {
+      throw new IllegalArgumentException("Sulfur-to-gas fraction must be between zero and one");
+    }
+    sulfurToGasFraction = fraction;
+  }
+
+  /**
+   * Enables or disables thermodynamic water saturation of the product gas.
+   *
+   * @param enabled true to saturate at digester conditions
+   */
+  public void setSaturateBiogasWithWater(boolean enabled) {
+    saturateBiogasWithWater = enabled;
   }
 
   /**
@@ -465,69 +573,125 @@ public class AnaerobicDigester extends Fermenter {
       throw new IllegalStateException("Feed rate must be positive");
     }
 
-    // ── Step 1: Resolve parameters ──
-    double effVstsRatio = Double.isNaN(vstsFraction) ? substrateType.getVstsRatio() : vstsFraction;
-    actualVsDestruction = Double.isNaN(vsDestruction) ? substrateType.getVsDestruction() : vsDestruction;
+    // ── Step 1: Resolve parameters and operating conditions ──
+    double effVstsRatio = Double.isNaN(vstsFraction)
+        ? (feedstock == null ? substrateType.getVstsRatio() : feedstock.getVolatileSolidsFraction())
+        : vstsFraction;
     actualSpecificMethaneYield = Double.isNaN(specificMethaneYield) ? substrateType.getSpecificMethaneYield()
         : specificMethaneYield;
-
-    // ── Step 2: Mass flow calculations ──
     double feedKgPerDay = feedRateKgPerHr * 24.0;
-    double tsKgPerDay = feedKgPerDay * totalSolidsFraction;
-    double vsKgPerDay = tsKgPerDay * effVstsRatio;
-    double vsDestroyedKgPerDay = vsKgPerDay * actualVsDestruction;
-
-    // ── Step 3: Biogas production ──
-    methaneProductionNm3PerDay = vsDestroyedKgPerDay * actualSpecificMethaneYield;
-    biogasFlowRateNm3PerDay = methaneFraction > 0.0 ? methaneProductionNm3PerDay / methaneFraction : 0.0;
-    double co2ProductionNm3PerDay = biogasFlowRateNm3PerDay - methaneProductionNm3PerDay;
-
-    // ── Step 4: Operational parameters ──
     double vesselVol = getVesselVolume();
     if (vesselVol > 0) {
       double feedM3PerDay = feedKgPerDay / 1000.0; // approximate water density
       hydraulicRetentionTimeDays = vesselVol / Math.max(1e-10, feedM3PerDay);
-      organicLoadingRate = vsKgPerDay / vesselVol;
+    } else {
+      hydraulicRetentionTimeDays = 0.0;
     }
 
-    // ── Step 5: Create biogas stream ──
+    BioFeedstock effectiveFeedstock = resolveFeedstock(effVstsRatio);
+    double methaneFractionOverride = feedstock == null ? methaneFraction : Double.NaN;
+    AnaerobicDigestionInput input = new AnaerobicDigestionInput(effectiveFeedstock, feedRateKgPerHr,
+        hydraulicRetentionTimeDays, digesterTemperature, vsDestruction, specificMethaneYield, methaneFractionOverride,
+        sulfurToGasFraction);
+    digestionResult = digestionModel.calculate(input);
+
+    actualVsDestruction = digestionResult.getVsDestruction();
+    actualSpecificMethaneYield = digestionResult.getDestroyedVsKgPerDay() > 0.0
+        ? digestionResult.getMethaneNm3PerDay() / digestionResult.getDestroyedVsKgPerDay()
+        : 0.0;
+    methaneFraction = digestionResult.getMethaneFraction();
+    methaneProductionNm3PerDay = digestionResult.getMethaneNm3PerDay();
+    biogasFlowRateNm3PerDay = digestionResult.getDryBiogasNm3PerDay();
+    organicLoadingRate = vesselVol > 0.0 ? digestionResult.getVolatileSolidsKgPerDay() / vesselVol : 0.0;
+
+    // ── Step 2: Create a dry gas stream and optionally saturate it with water ──
     double ch4MolPerHr = (methaneProductionNm3PerDay / 24.0) * 1000.0 / 22.414;
-    double co2MolPerHr = (co2ProductionNm3PerDay / 24.0) * 1000.0 / 22.414;
-    // Trace H2S in biogas (typically 100-10000 ppm)
-    double h2sMolPerHr = ch4MolPerHr * 0.002; // ~0.2% H2S
+    double co2MolPerHr = (digestionResult.getCarbonDioxideNm3PerDay() / 24.0) * 1000.0 / 22.414;
+    double h2sMolPerHr = (digestionResult.getHydrogenSulfideNm3PerDay() / 24.0) * 1000.0 / 22.414;
 
     SystemInterface biogasFluid = new SystemSrkEos(digesterTemperature, 1.01325);
     biogasFluid.addComponent("methane", Math.max(1e-10, ch4MolPerHr), "mole/hr");
     biogasFluid.addComponent("CO2", Math.max(1e-10, co2MolPerHr), "mole/hr");
     biogasFluid.addComponent("H2S", Math.max(1e-10, h2sMolPerHr), "mole/hr");
-    // Trace water vapour saturated at digester temperature
-    biogasFluid.addComponent("water", Math.max(1e-10, ch4MolPerHr * 0.05), "mole/hr");
     biogasFluid.setMixingRule("classic");
-    biogasFluid.init(0);
+    if (saturateBiogasWithWater) {
+      try {
+        new ThermodynamicOperations(biogasFluid).saturateWithWater();
+      } catch (Exception e) {
+        logger.warn("Could not saturate digester product gas with water; returning dry gas", e);
+      }
+    }
     biogasFluid.init(3);
 
     biogasOutStream = new Stream(getName() + " biogas", biogasFluid);
     biogasOutStream.run(id);
 
-    // ── Step 6: Create digestate stream ──
-    double digestateWaterKgPerHr = feedRateKgPerHr * (1.0 - totalSolidsFraction);
-    double residualTsKgPerHr = feedRateKgPerHr * totalSolidsFraction - vsDestroyedKgPerDay / 24.0;
-    residualTsKgPerHr = Math.max(0.0, residualTsKgPerHr);
-    double digestateKgPerHr = digestateWaterKgPerHr + residualTsKgPerHr;
-
+    // ── Step 3: Create the aqueous digestate carrier; residual solids remain in the result ledger ──
+    double dryGasMassKgPerHr = ch4MolPerHr * 16.043 / 1000.0 + co2MolPerHr * 44.010 / 1000.0
+        + h2sMolPerHr * 34.081 / 1000.0;
+    double waterVaporKgPerHr = Math.max(0.0, biogasOutStream.getFlowRate("kg/hr") - dryGasMassKgPerHr);
+    double digestateWaterKgPerHr = Math.max(1.0e-10,
+        (digestionResult.getDigestateKgPerDay() - digestionResult.getDigestateSolidsKgPerDay()) / 24.0
+            - waterVaporKgPerHr);
     SystemInterface digestateFluid = new SystemSrkEos(digesterTemperature, 1.01325);
     double waterMolPerHr = digestateWaterKgPerHr / 18.015;
     digestateFluid.addComponent("water", Math.max(1e-10, waterMolPerHr), "mole/hr");
-    // Some dissolved CO2 in digestate
-    digestateFluid.addComponent("CO2", Math.max(1e-10, co2MolPerHr * 0.05), "mole/hr");
     digestateFluid.setMixingRule("classic");
-    digestateFluid.init(0);
     digestateFluid.init(3);
 
     digestateOutStream = new Stream(getName() + " digestate", digestateFluid);
     digestateOutStream.run(id);
 
     digesterHasRun = true;
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Resolves legacy substrate defaults into the same feedstock contract used by pluggable models.
+   *
+   * @param effectiveVstsRatio volatile-solids fraction selected for the run
+   * @return run-specific feedstock characterization
+   */
+  private BioFeedstock resolveFeedstock(double effectiveVstsRatio) {
+    BioFeedstock resolved = feedstock == null ? createLegacyFeedstock() : feedstock.copy();
+    double maximumDestruction = Double.isNaN(vsDestruction)
+        ? (feedstock == null ? substrateType.getVsDestruction() : resolved.getMaximumVsDestruction())
+        : vsDestruction;
+    double methaneYield = Double.isNaN(specificMethaneYield)
+        ? (feedstock == null ? substrateType.getSpecificMethaneYield() : resolved.getMethaneYieldNm3PerKgDestroyedVs())
+        : specificMethaneYield;
+    resolved.setSolidsAnalysis(totalSolidsFraction, effectiveVstsRatio, maximumDestruction, resolved.getAshFraction());
+    resolved.setDigestionProperties(methaneYield, resolved.getHydrolysisRatePerDay(), methaneFraction);
+    resolved.validate();
+    return resolved;
+  }
+
+  /**
+   * Creates an elemental and handling basis for the legacy substrate enumeration.
+   *
+   * @return legacy-compatible characterization
+   */
+  private BioFeedstock createLegacyFeedstock() {
+    BioFeedstock resolved;
+    switch (substrateType) {
+    case SEWAGE_SLUDGE:
+      resolved = BioFeedstock.library("sewage_sludge");
+      break;
+    case MANURE:
+      resolved = BioFeedstock.library("manure");
+      break;
+    case CROP_RESIDUE:
+    case ENERGY_CROP:
+      resolved = BioFeedstock.library("crop_residue");
+      break;
+    case FOOD_WASTE:
+    case CUSTOM:
+    default:
+      resolved = BioFeedstock.library("food_residue");
+      break;
+    }
+    resolved.setEvidenceReference("legacy substrate-family screening basis");
+    return resolved;
   }
 
   /**
@@ -562,6 +726,15 @@ public class AnaerobicDigester extends Fermenter {
     results.put("hydraulicRetentionTime_days", hydraulicRetentionTimeDays);
     results.put("vsDestruction", actualVsDestruction);
     results.put("specificMethaneYield_Nm3perKgVS", actualSpecificMethaneYield);
+    if (digestionResult != null) {
+      results.put("digestionModel", digestionResult.getModelIdentifier());
+      results.put("modelFidelity", digestionResult.getFidelity().name());
+      results.put("modelEvidenceReference", digestionResult.getModelEvidenceReference());
+      results.put("dryMassClosureFraction", digestionResult.getMassClosureFraction());
+      results.put("carbonClosureFraction", digestionResult.getCarbonClosureFraction());
+      results.put("digestateSolids_kgPerDay", digestionResult.getDigestateSolidsKgPerDay());
+      results.put("calculationWarnings", digestionResult.getWarnings());
+    }
     return results;
   }
 
