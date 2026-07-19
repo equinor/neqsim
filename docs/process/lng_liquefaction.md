@@ -76,6 +76,34 @@ route:
 - summed exchanger exergy destruction; and
 - wall-clock process execution time.
 
+## Output streams and downstream processing
+
+Every output is a normal NeqSim `StreamInterface` and can feed other unit
+operations or process modules. The built-in named outputs are:
+
+- `LNGProcessModel.LNG_OUTPUT` — flashed liquid LNG;
+- `LNGProcessModel.FLASH_GAS_OUTPUT` — product flash gas for fuel,
+  boil-off-gas handling, or recompression.
+
+```java
+StreamInterface lng = model.getOutputStream(LNGProcessModel.LNG_OUTPUT);
+StreamInterface flashGas =
+    model.getOutputStream(LNGProcessModel.FLASH_GAS_OUTPUT);
+
+PipeBeggsAndBrills lngPipeline =
+    new PipeBeggsAndBrills("LNG transfer pipeline", lng);
+model.addEquipment(lngPipeline);
+
+Compressor flashGasCompressor =
+    new Compressor("Flash gas compressor", flashGas);
+model.addEquipment(flashGasCompressor);
+```
+
+`getProductStream()` remains a convenience alias for the liquid LNG stream,
+and `getFlashGasStream()` exposes the vapor directly. Use
+`registerOutputStream(name, stream)` to publish later route-specific or
+downstream products through the same registry.
+
 ## Accuracy controls
 
 The exchanger performs TP flashes at zone boundaries, applies per-stream
