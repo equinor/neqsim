@@ -15,8 +15,8 @@ import java.util.Map;
  * Management 272 (2022) 116364, doi:10.1016/j.enconman.2022.116364. Their common
  * 20,000 kg/h Aspen HYSYS comparison reported 0.2561, 0.2548, and 0.2456 kWh/kg LNG
  * for optimized SMR, C3MR, and DMR cases. The nitrogen-expander point is based on the
- * optimized parallel nitrogen expansion case reported by Cao et al., Applied Thermal
- * Engineering 121 (2017) 220-228, doi:10.1016/j.applthermaleng.2017.04.054.
+ * optimized parallel nitrogen expansion case reported by He et al., Energy 167 (2019)
+ * 1-12, doi:10.1016/j.energy.2018.10.169.
  * </p>
  *
  * <p>
@@ -46,7 +46,7 @@ public final class LNGProcessBenchmark {
             "Pereira et al. (2022), doi:10.1016/j.enconman.2022.116364"));
     BENCHMARKS.put(LNGProcessCycle.NITROGEN_EXPANDER,
         new Benchmark(0.6180, 0.40, 0.80, -164.0, -157.0, 0.85,
-            "Cao et al. (2017), doi:10.1016/j.applthermaleng.2017.04.054"));
+            "He et al. (2019), doi:10.1016/j.energy.2018.10.169"));
   }
 
   /** Utility class. */
