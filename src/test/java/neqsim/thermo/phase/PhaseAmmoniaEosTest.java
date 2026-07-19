@@ -67,11 +67,28 @@ class PhaseAmmoniaEosTest {
     system.init(3);
 
     PhaseInterface liq = system.getPhase(0);
-    assertEquals(415.24155674578753, liq.getDensity(), 4.2e-4);
-    assertEquals(92.846, liq.getCp(), 0.1);
-    assertEquals(87.457, liq.getCv(), 0.1);
-    assertEquals(0.0, liq.getSoundSpeed(), 1.0e-6);
-    assertEquals(0.23094, liq.getThermalConductivity(), 1.0e-3);
-    assertEquals(6.55e-5, liq.getViscosity(), 1.0e-7);
+    // Reference values from the Gao et al. (2020) EOS as implemented in CoolProp 8.0.0.
+    assertEquals(610.5159719028246, liq.getDensity(), 1.0e-3);
+    assertEquals(80.67821299666132, liq.getCp(), 1.0e-3);
+    assertEquals(47.49260694762637, liq.getCv(), 1.0e-3);
+    assertEquals(1374.6068258903206, liq.getSoundSpeed(), 1.0e-2);
+    assertEquals(0.5004989173082783, liq.getThermalConductivity(), 1.0e-4);
+    assertEquals(1.3860846498812973e-4, liq.getViscosity(), 1.0e-6);
+    assertTrue(liq.getCp() > liq.getCv());
+  }
+
+  @Test
+  void testBubblePointPressureAgainstReferenceEquation() {
+    double[] temperatures = {260.0, 280.0, 300.0, 320.0};
+    double[] expectedPressures = {
+        2.552457115844972, 5.507043744582428, 10.611215021486935, 18.71755110160696};
+
+    for (int i = 0; i < temperatures.length; i++) {
+      SystemInterface system = new SystemAmmoniaEos(temperatures[i], expectedPressures[i]);
+      ThermodynamicOperations operations = new ThermodynamicOperations(system);
+      operations.bubblePointPressureFlash(false);
+
+      assertEquals(expectedPressures[i], system.getPressure(), 1.0e-4);
+    }
   }
 }
