@@ -37,9 +37,8 @@ class ViscosityDocumentationTest {
 
   @Test
   void basicCalculationAndComparisonExamplesRun() {
-    String[] models = {"LBC", "friction theory", "PFCT"};
-    String[] expectedClasses = {
-        "LBCViscosityMethod", "FrictionTheoryViscosityMethod", "PFCTViscosityMethodMod86"};
+    String[] models = { "LBC", "friction theory", "PFCT" };
+    String[] expectedClasses = { "LBCViscosityMethod", "FrictionTheoryViscosityMethod", "PFCTViscosityMethodMod86" };
     double[] viscositiesCp = new double[models.length];
 
     for (int i = 0; i < models.length; i++) {
@@ -48,8 +47,8 @@ class ViscosityDocumentationTest {
       fluid.getPhase("oil").getPhysicalProperties().setViscosityModel(models[i]);
       fluid.getPhase("oil").initPhysicalProperties();
 
-      assertEquals(expectedClasses[i], fluid.getPhase("oil").getPhysicalProperties()
-          .getViscosityModel().getClass().getSimpleName());
+      assertEquals(expectedClasses[i],
+          fluid.getPhase("oil").getPhysicalProperties().getViscosityModel().getClass().getSimpleName());
       viscositiesCp[i] = fluid.getPhase("oil").getViscosity("cP");
       assertPositiveFinite(viscositiesCp[i]);
     }
@@ -57,7 +56,7 @@ class ViscosityDocumentationTest {
 
   @Test
   void temperatureSweepRemainsLiquidAndDecreases() {
-    double[] temperatures = {300.0, 320.0, 340.0, 360.0, 380.0, 400.0};
+    double[] temperatures = { 300.0, 320.0, 340.0, 360.0, 380.0, 400.0 };
     double previousViscosityCp = Double.POSITIVE_INFINITY;
 
     for (double temperature : temperatures) {
@@ -94,8 +93,8 @@ class ViscosityDocumentationTest {
     water.getPhase("aqueous").getPhysicalProperties().setViscosityModel("Salt Water");
     water.getPhase("aqueous").initPhysicalProperties();
 
-    assertEquals("Water", water.getPhase("aqueous").getPhysicalProperties()
-        .getViscosityModel().getClass().getSimpleName());
+    assertEquals("Water",
+        water.getPhase("aqueous").getPhysicalProperties().getViscosityModel().getClass().getSimpleName());
     assertPositiveFinite(water.getPhase("aqueous").getViscosity("cP"));
   }
 
@@ -105,32 +104,29 @@ class ViscosityDocumentationTest {
     oil.initPhysicalProperties();
 
     oil.getPhase("oil").getPhysicalProperties().setViscosityModel("LBC");
-    double[] lbcParameters = {0.1023, 0.023364, 0.058533, -0.040758, 0.0093324};
+    double[] lbcParameters = { 0.1023, 0.023364, 0.058533, -0.040758, 0.0093324 };
     oil.getPhase("oil").getPhysicalProperties().setLbcParameters(lbcParameters);
     oil.getPhase("oil").getPhysicalProperties().setLbcParameter(0, 0.105);
     oil.getPhase("oil").initPhysicalProperties();
     lbcParameters[0] = 0.105;
-    assertArrayEquals(lbcParameters,
-        oil.getPhase("oil").getPhysicalProperties().getLbcParameters(), 1.0e-12);
+    assertArrayEquals(lbcParameters, oil.getPhase("oil").getPhysicalProperties().getLbcParameters(), 1.0e-12);
 
     oil.getPhase("oil").getPhysicalProperties().setViscosityModel("PFCT");
-    double[] cspParameters = {0.95, 1.05, 1.0, 1.0};
+    double[] cspParameters = { 0.95, 1.05, 1.0, 1.0 };
     oil.getPhase("oil").getPhysicalProperties().setCspViscosityParameters(cspParameters);
     oil.getPhase("oil").getPhysicalProperties().setCspViscosityParameter(3, 0.98);
     oil.getPhase("oil").initPhysicalProperties();
     cspParameters[3] = 0.98;
-    assertArrayEquals(cspParameters,
-        oil.getPhase("oil").getPhysicalProperties().getCspViscosityParameters(), 1.0e-12);
+    assertArrayEquals(cspParameters, oil.getPhase("oil").getPhysicalProperties().getCspViscosityParameters(), 1.0e-12);
 
     oil.getPhase("oil").getPhysicalProperties().setViscosityModel("friction theory");
-    FrictionTheoryViscosityMethod method = (FrictionTheoryViscosityMethod) oil.getPhase("oil")
-        .getPhysicalProperties().getViscosityModel();
-    double[][] kapa = {{-0.114804, 0.246622, -3.94638e-2},
-        {0.246622, -1.15648e-4, 4.18863e-5}, {-3.94638e-2, 4.18863e-5, -5.91999e-9}};
-    double[][] kapr = {{-0.315903, 0.566713, -7.29995e-2},
-        {0.566713, -1.0086e-4, 5.17459e-5}, {-7.29995e-2, 5.17459e-5, -5.68708e-9}};
-    method.setFrictionTheoryConstants(-0.165302, 6.99574e-3, 1.26358e-3, kapa, kapr,
-        1.35994e-8);
+    FrictionTheoryViscosityMethod method = (FrictionTheoryViscosityMethod) oil.getPhase("oil").getPhysicalProperties()
+        .getViscosityModel();
+    double[][] kapa = { { -0.114804, 0.246622, -3.94638e-2 }, { 0.246622, -1.15648e-4, 4.18863e-5 },
+        { -3.94638e-2, 4.18863e-5, -5.91999e-9 } };
+    double[][] kapr = { { -0.315903, 0.566713, -7.29995e-2 }, { 0.566713, -1.0086e-4, 5.17459e-5 },
+        { -7.29995e-2, 5.17459e-5, -5.68708e-9 } };
+    method.setFrictionTheoryConstants(-0.165302, 6.99574e-3, 1.26358e-3, kapa, kapr, 1.35994e-8);
     oil.getPhase("oil").initPhysicalProperties();
     assertPositiveFinite(oil.getPhase("oil").getViscosity("cP"));
   }
@@ -141,13 +137,11 @@ class ViscosityDocumentationTest {
     gas.addComponent("methane", 1.0);
     new ThermodynamicOperations(gas).TPflash();
     gas.initPhysicalProperties();
-    String before = gas.getPhase("gas").getPhysicalProperties().getViscosityModel().getClass()
-        .getSimpleName();
+    String before = gas.getPhase("gas").getPhysicalProperties().getViscosityModel().getClass().getSimpleName();
 
     gas.getPhase("gas").getPhysicalProperties().setViscosityModel("unsupported-key");
 
-    assertEquals(before, gas.getPhase("gas").getPhysicalProperties().getViscosityModel()
-        .getClass().getSimpleName());
+    assertEquals(before, gas.getPhase("gas").getPhysicalProperties().getViscosityModel().getClass().getSimpleName());
   }
 
   private static SystemInterface createOil(double temperature, double pressureBara) {
@@ -159,8 +153,7 @@ class ViscosityDocumentationTest {
     return fluid;
   }
 
-  private static void assertSpecializedGasModel(String key, String component,
-      String expectedClass) {
+  private static void assertSpecializedGasModel(String key, String component, String expectedClass) {
     SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
     fluid.addComponent(component, 1.0);
     new ThermodynamicOperations(fluid).TPflash();
@@ -168,8 +161,8 @@ class ViscosityDocumentationTest {
     fluid.getPhase("gas").getPhysicalProperties().setViscosityModel(key);
     fluid.getPhase("gas").initPhysicalProperties();
 
-    assertEquals(expectedClass, fluid.getPhase("gas").getPhysicalProperties()
-        .getViscosityModel().getClass().getSimpleName());
+    assertEquals(expectedClass,
+        fluid.getPhase("gas").getPhysicalProperties().getViscosityModel().getClass().getSimpleName());
     assertPositiveFinite(fluid.getPhase("gas").getViscosity("cP"));
   }
 
