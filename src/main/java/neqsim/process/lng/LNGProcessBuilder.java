@@ -382,7 +382,7 @@ public class LNGProcessBuilder {
     context.process.add(mrValve);
     addRecycle(context, name + " MR recycle", mche.getOutStream(2), mrSuction);
 
-    StreamInterface product = addProductSection(context, mche.getOutStream(0));
+    ProductSection product = addProductSection(context, mche.getOutStream(0));
     return context.toModel(cycle, product);
   }
 
@@ -436,7 +436,7 @@ public class LNGProcessBuilder {
     context.process.add(mrValve);
     addRecycle(context, name + " MR recycle", mche.getOutStream(2), mrSuction);
 
-    StreamInterface product = addProductSection(context, mche.getOutStream(0));
+    ProductSection product = addProductSection(context, mche.getOutStream(0));
     return context.toModel(cycle, product);
   }
 
@@ -493,7 +493,7 @@ public class LNGProcessBuilder {
     addRecycle(context, name + " cold MR recycle", mche.getOutStream(2),
         coldMrSuction);
 
-    StreamInterface product = addProductSection(context, mche.getOutStream(0));
+    ProductSection product = addProductSection(context, mche.getOutStream(0));
     return context.toModel(cycle, product);
   }
 
@@ -528,7 +528,7 @@ public class LNGProcessBuilder {
     addRecycle(context, name + " nitrogen recycle", mche.getOutStream(2),
         nitrogenSuction);
 
-    StreamInterface product = addProductSection(context, mche.getOutStream(0));
+    ProductSection product = addProductSection(context, mche.getOutStream(0));
     return context.toModel(cycle, product);
   }
 
@@ -705,9 +705,9 @@ public class LNGProcessBuilder {
    *
    * @param context build context
    * @param coldNaturalGas high-pressure liquefied natural gas
-   * @return liquid product stream
+   * @return liquid LNG and product-flash gas streams
    */
-  private StreamInterface addProductSection(BuildContext context,
+  private ProductSection addProductSection(BuildContext context,
       StreamInterface coldNaturalGas) {
     ThrottlingValve productValve =
         new ThrottlingValve(name + " LNG product valve", coldNaturalGas);
@@ -717,7 +717,8 @@ public class LNGProcessBuilder {
     Separator productFlash = new Separator(name + " LNG product flash",
         productValve.getOutletStream());
     context.process.add(productFlash);
-    return productFlash.getLiquidOutStream();
+    return new ProductSection(productFlash.getLiquidOutStream(),
+        productFlash.getGasOutStream());
   }
 
   /**
@@ -764,6 +765,28 @@ public class LNGProcessBuilder {
   }
 
   /**
+   * Product-section streams exposed by the process model.
+   *
+   * @author NeqSim contributors
+   * @version 1.0
+   */
+  private static final class ProductSection {
+    private final StreamInterface lng;
+    private final StreamInterface flashGas;
+
+    /**
+     * Creates a product-section result.
+     *
+     * @param lng liquid LNG product
+     * @param flashGas product-flash gas
+     */
+    private ProductSection(StreamInterface lng, StreamInterface flashGas) {
+      this.lng = lng;
+      this.flashGas = flashGas;
+    }
+  }
+
+  /**
    * Mutable state used while assembling a route.
    *
    * @author NeqSim contributors
@@ -792,13 +815,13 @@ public class LNGProcessBuilder {
      * Creates the final process model.
      *
      * @param builtCycle cycle type
-     * @param product product stream
+     * @param product product-section streams
      * @return LNG process model
      */
     private LNGProcessModel toModel(LNGProcessCycle builtCycle,
-        StreamInterface product) {
-      return new LNGProcessModel(name, builtCycle, process, feed, product,
-          compressors, expanders, exchangers);
+        ProductSection product) {
+      return new LNGProcessModel(name, builtCycle, process, feed, product.lng,
+          product.flashGas, compressors, expanders, exchangers);
     }
   }
 }
