@@ -19,20 +19,17 @@ import neqsim.thermo.system.SystemSrkEos;
  * Builder for closed-loop LNG liquefaction process templates.
  *
  * <p>
- * Four routes are supported: single mixed refrigerant (SMR), propane-precooled
- * mixed refrigerant (C3MR), dual mixed refrigerant (DMR), and a nitrogen-expander
- * reverse-Brayton cycle. Each route uses energy-coupled {@link LNGHeatExchanger}
- * units and explicit {@link Recycle} tear streams. This avoids the common screening
- * error of imposing natural-gas precooling with disconnected coolers whose duty is
- * not included in refrigeration power.
+ * Four routes are supported: single mixed refrigerant (SMR), propane-precooled mixed refrigerant (C3MR), dual mixed
+ * refrigerant (DMR), and a nitrogen-expander reverse-Brayton cycle. Each route uses energy-coupled
+ * {@link LNGHeatExchanger} units and explicit {@link Recycle} tear streams. This avoids the common screening error of
+ * imposing natural-gas precooling with disconnected coolers whose duty is not included in refrigeration power.
  * </p>
  *
  * <p>
- * The templates are intended for thermodynamic screening, teaching, optimization,
- * and regression testing. C3MR uses a single equivalent propane evaporation level;
- * detailed baseload design should replace it with three or four propane pressure
- * levels, phase separators, pumps, and project-specific compressor maps. Likewise,
- * vendor guarantees require calibrated exchanger geometry and refrigerant inventory.
+ * The templates are intended for thermodynamic screening, teaching, optimization, and regression testing. C3MR uses a
+ * single equivalent propane evaporation level; detailed baseload design should replace it with three or four propane
+ * pressure levels, phase separators, pumps, and project-specific compressor maps. Likewise, vendor guarantees require
+ * calibrated exchanger geometry and refrigerant inventory.
  * </p>
  *
  * @author NeqSim contributors
@@ -113,9 +110,8 @@ public class LNGProcessBuilder {
    * Sets a custom pretreated natural-gas feed fluid.
    *
    * <p>
-   * The builder clones the supplied system and applies configured feed temperature,
-   * pressure, and flow. Water, carbon dioxide, mercury, and heavy hydrocarbon removal
-   * must be represented upstream when those contaminants are present.
+   * The builder clones the supplied system and applies configured feed temperature, pressure, and flow. Water, carbon
+   * dioxide, mercury, and heavy hydrocarbon removal must be represented upstream when those contaminants are present.
    * </p>
    *
    * @param feedFluid pretreated feed thermodynamic system
@@ -148,8 +144,7 @@ public class LNGProcessBuilder {
    * @return this builder
    */
   public LNGProcessBuilder setFeedTemperature(double feedTemperatureC) {
-    if (!Double.isFinite(feedTemperatureC) || feedTemperatureC <= -200.0
-        || feedTemperatureC >= 100.0) {
+    if (!Double.isFinite(feedTemperatureC) || feedTemperatureC <= -200.0 || feedTemperatureC >= 100.0) {
       throw new IllegalArgumentException("feedTemperatureC must be between -200 and 100 C");
     }
     this.feedTemperatureC = feedTemperatureC;
@@ -187,10 +182,8 @@ public class LNGProcessBuilder {
    * @return this builder
    */
   public LNGProcessBuilder setTargetLiquefactionTemperature(double targetTemperatureC) {
-    if (!Double.isFinite(targetTemperatureC) || targetTemperatureC <= -190.0
-        || targetTemperatureC >= -100.0) {
-      throw new IllegalArgumentException(
-          "targetTemperatureC must be between -190 and -100 C");
+    if (!Double.isFinite(targetTemperatureC) || targetTemperatureC <= -190.0 || targetTemperatureC >= -100.0) {
+      throw new IllegalArgumentException("targetTemperatureC must be between -190 and -100 C");
     }
     this.targetLiquefactionTemperatureC = targetTemperatureC;
     return this;
@@ -275,16 +268,16 @@ public class LNGProcessBuilder {
    */
   public LNGProcessModel build() {
     switch (cycle) {
-      case SMR:
-        return buildSMR();
-      case C3MR:
-        return buildC3MR();
-      case DMR:
-        return buildDMR();
-      case NITROGEN_EXPANDER:
-        return buildNitrogenExpander();
-      default:
-        throw new IllegalStateException("Unsupported LNG process cycle " + cycle);
+    case SMR:
+      return buildSMR();
+    case C3MR:
+      return buildC3MR();
+    case DMR:
+      return buildDMR();
+    case NITROGEN_EXPANDER:
+      return buildNitrogenExpander();
+    default:
+      throw new IllegalStateException("Unsupported LNG process cycle " + cycle);
     }
   }
 
@@ -296,20 +289,17 @@ public class LNGProcessBuilder {
   private LNGProcessModel buildSMR() {
     BuildContext context = newContext();
     Stream mrSuction = createMixedRefrigerant(name + " MR suction",
-        new String[] {"nitrogen", "methane", "ethane", "propane"},
-        new double[] {0.05, 0.42, 0.33, 0.20}, 20.0, 3.0,
+        new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.05, 0.42, 0.33, 0.20 }, 20.0, 3.0,
         feedFlowKgPerHour * 2.0);
     context.process.add(mrSuction);
 
-    CompressionTrain mrTrain = addTwoStageCompression(context, name + " MR",
-        mrSuction, 30.0, compressorEfficiency);
+    CompressionTrain mrTrain = addTwoStageCompression(context, name + " MR", mrSuction, 30.0, compressorEfficiency);
 
     LNGHeatExchanger mche = createExchanger(name + " main cryogenic exchanger");
     mche.addInStreamMSHE(context.feed, "hot", targetLiquefactionTemperatureC);
     mche.addInStreamMSHE(mrTrain.outlet, "hot", -150.0);
 
-    ThrottlingValve mrValve =
-        new ThrottlingValve(name + " MR JT valve", mche.getOutStream(1));
+    ThrottlingValve mrValve = new ThrottlingValve(name + " MR JT valve", mche.getOutStream(1));
     mrValve.setOutletPressure(3.0, "bara");
     mche.addInStreamMSHE(mrValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
@@ -330,24 +320,20 @@ public class LNGProcessBuilder {
   private LNGProcessModel buildC3MR() {
     BuildContext context = newContext();
 
-    Stream propaneSuction = createPureRefrigerant(name + " propane suction",
-        "propane", -35.0, 1.5, feedFlowKgPerHour * 1.25);
+    Stream propaneSuction = createPureRefrigerant(name + " propane suction", "propane", -35.0, 1.5,
+        feedFlowKgPerHour * 1.25);
     context.process.add(propaneSuction);
-    CompressionTrain propaneTrain = addTwoStageCompression(context,
-        name + " propane", propaneSuction, 15.0, 0.80);
+    CompressionTrain propaneTrain = addTwoStageCompression(context, name + " propane", propaneSuction, 15.0, 0.80);
 
-    ThrottlingValve propaneValve = new ThrottlingValve(name + " propane JT valve",
-        propaneTrain.outlet);
+    ThrottlingValve propaneValve = new ThrottlingValve(name + " propane JT valve", propaneTrain.outlet);
     propaneValve.setOutletPressure(1.5, "bara");
     context.process.add(propaneValve);
 
     Stream mrSuction = createMixedRefrigerant(name + " MR suction",
-        new String[] {"nitrogen", "methane", "ethane", "propane"},
-        new double[] {0.04, 0.43, 0.36, 0.17}, 20.0, 4.0,
+        new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.04, 0.43, 0.36, 0.17 }, 20.0, 4.0,
         feedFlowKgPerHour * 1.75);
     context.process.add(mrSuction);
-    CompressionTrain mrTrain = addTwoStageCompression(context, name + " MR",
-        mrSuction, 45.0, compressorEfficiency);
+    CompressionTrain mrTrain = addTwoStageCompression(context, name + " MR", mrSuction, 45.0, compressorEfficiency);
 
     LNGHeatExchanger precooler = createExchanger(name + " propane precooler");
     precooler.addInStreamMSHE(context.feed, "hot", -32.0);
@@ -355,16 +341,13 @@ public class LNGProcessBuilder {
     precooler.addInStreamMSHE(propaneValve.getOutletStream(), "cold", null);
     context.exchangers.add(precooler);
     context.process.add(precooler);
-    addRecycle(context, name + " propane recycle", precooler.getOutStream(2),
-        propaneSuction);
+    addRecycle(context, name + " propane recycle", precooler.getOutStream(2), propaneSuction);
 
     LNGHeatExchanger mche = createExchanger(name + " main cryogenic exchanger");
-    mche.addInStreamMSHE(precooler.getOutStream(0), "hot",
-        targetLiquefactionTemperatureC);
+    mche.addInStreamMSHE(precooler.getOutStream(0), "hot", targetLiquefactionTemperatureC);
     mche.addInStreamMSHE(precooler.getOutStream(1), "hot", -150.0);
 
-    ThrottlingValve mrValve =
-        new ThrottlingValve(name + " MR JT valve", mche.getOutStream(1));
+    ThrottlingValve mrValve = new ThrottlingValve(name + " MR JT valve", mche.getOutStream(1));
     mrValve.setOutletPressure(4.0, "bara");
     mche.addInStreamMSHE(mrValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
@@ -385,25 +368,22 @@ public class LNGProcessBuilder {
     BuildContext context = newContext();
 
     Stream warmMrSuction = createMixedRefrigerant(name + " warm MR suction",
-        new String[] {"methane", "ethane", "propane", "n-butane"},
-        new double[] {0.12, 0.33, 0.42, 0.13}, 20.0, 3.5,
+        new String[] { "methane", "ethane", "propane", "n-butane" }, new double[] { 0.12, 0.33, 0.42, 0.13 }, 20.0, 3.5,
         feedFlowKgPerHour * 1.45);
     context.process.add(warmMrSuction);
-    CompressionTrain warmTrain = addTwoStageCompression(context, name + " warm MR",
-        warmMrSuction, 18.0, compressorEfficiency);
+    CompressionTrain warmTrain = addTwoStageCompression(context, name + " warm MR", warmMrSuction, 18.0,
+        compressorEfficiency);
 
-    ThrottlingValve warmValve = new ThrottlingValve(name + " warm MR JT valve",
-        warmTrain.outlet);
+    ThrottlingValve warmValve = new ThrottlingValve(name + " warm MR JT valve", warmTrain.outlet);
     warmValve.setOutletPressure(3.5, "bara");
     context.process.add(warmValve);
 
     Stream coldMrSuction = createMixedRefrigerant(name + " cold MR suction",
-        new String[] {"nitrogen", "methane", "ethane", "propane"},
-        new double[] {0.08, 0.48, 0.31, 0.13}, 20.0, 3.0,
+        new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.08, 0.48, 0.31, 0.13 }, 20.0, 3.0,
         feedFlowKgPerHour * 1.55);
     context.process.add(coldMrSuction);
-    CompressionTrain coldTrain = addTwoStageCompression(context, name + " cold MR",
-        coldMrSuction, 38.0, compressorEfficiency);
+    CompressionTrain coldTrain = addTwoStageCompression(context, name + " cold MR", coldMrSuction, 38.0,
+        compressorEfficiency);
 
     LNGHeatExchanger precooler = createExchanger(name + " warm MR precooler");
     precooler.addInStreamMSHE(context.feed, "hot", -45.0);
@@ -411,23 +391,19 @@ public class LNGProcessBuilder {
     precooler.addInStreamMSHE(warmValve.getOutletStream(), "cold", null);
     context.exchangers.add(precooler);
     context.process.add(precooler);
-    addRecycle(context, name + " warm MR recycle", precooler.getOutStream(2),
-        warmMrSuction);
+    addRecycle(context, name + " warm MR recycle", precooler.getOutStream(2), warmMrSuction);
 
     LNGHeatExchanger mche = createExchanger(name + " main cryogenic exchanger");
-    mche.addInStreamMSHE(precooler.getOutStream(0), "hot",
-        targetLiquefactionTemperatureC);
+    mche.addInStreamMSHE(precooler.getOutStream(0), "hot", targetLiquefactionTemperatureC);
     mche.addInStreamMSHE(precooler.getOutStream(1), "hot", -150.0);
 
-    ThrottlingValve coldValve =
-        new ThrottlingValve(name + " cold MR JT valve", mche.getOutStream(1));
+    ThrottlingValve coldValve = new ThrottlingValve(name + " cold MR JT valve", mche.getOutStream(1));
     coldValve.setOutletPressure(3.0, "bara");
     mche.addInStreamMSHE(coldValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
     context.process.add(mche);
     context.process.add(coldValve);
-    addRecycle(context, name + " cold MR recycle", mche.getOutStream(2),
-        coldMrSuction);
+    addRecycle(context, name + " cold MR recycle", mche.getOutStream(2), coldMrSuction);
 
     StreamInterface product = addProductSection(context, mche.getOutStream(0));
     return context.toModel(cycle, product);
@@ -441,18 +417,16 @@ public class LNGProcessBuilder {
   private LNGProcessModel buildNitrogenExpander() {
     BuildContext context = newContext();
 
-    Stream nitrogenSuction = createPureRefrigerant(name + " nitrogen suction",
-        "nitrogen", 20.0, 8.0, feedFlowKgPerHour * 5.0);
+    Stream nitrogenSuction = createPureRefrigerant(name + " nitrogen suction", "nitrogen", 20.0, 8.0,
+        feedFlowKgPerHour * 5.0);
     context.process.add(nitrogenSuction);
-    CompressionTrain nitrogenTrain = addTwoStageCompression(context,
-        name + " nitrogen", nitrogenSuction, 55.0, 0.82);
+    CompressionTrain nitrogenTrain = addTwoStageCompression(context, name + " nitrogen", nitrogenSuction, 55.0, 0.82);
 
     LNGHeatExchanger mche = createExchanger(name + " nitrogen main exchanger");
     mche.addInStreamMSHE(context.feed, "hot", targetLiquefactionTemperatureC);
     mche.addInStreamMSHE(nitrogenTrain.outlet, "hot", -105.0);
 
-    Expander expander =
-        new Expander(name + " nitrogen expander", mche.getOutStream(1));
+    Expander expander = new Expander(name + " nitrogen expander", mche.getOutStream(1));
     expander.setOutletPressure(8.0, "bara");
     expander.setIsentropicEfficiency(expanderEfficiency);
     context.expanders.add(expander);
@@ -461,8 +435,7 @@ public class LNGProcessBuilder {
 
     context.process.add(mche);
     context.process.add(expander);
-    addRecycle(context, name + " nitrogen recycle", mche.getOutStream(2),
-        nitrogenSuction);
+    addRecycle(context, name + " nitrogen recycle", mche.getOutStream(2), nitrogenSuction);
 
     StreamInterface product = addProductSection(context, mche.getOutStream(0));
     return context.toModel(cycle, product);
@@ -521,9 +494,8 @@ public class LNGProcessBuilder {
    * @param flowKgPerHour mass flow in kg/h
    * @return refrigerant stream
    */
-  private Stream createMixedRefrigerant(String streamName, String[] components,
-      double[] fractions, double temperatureC, double pressureBara,
-      double flowKgPerHour) {
+  private Stream createMixedRefrigerant(String streamName, String[] components, double[] fractions, double temperatureC,
+      double pressureBara, double flowKgPerHour) {
     if (components.length != fractions.length) {
       throw new IllegalArgumentException("components and fractions must have equal length");
     }
@@ -549,10 +521,10 @@ public class LNGProcessBuilder {
    * @param flowKgPerHour mass flow in kg/h
    * @return refrigerant stream
    */
-  private Stream createPureRefrigerant(String streamName, String component,
-      double temperatureC, double pressureBara, double flowKgPerHour) {
-    return createMixedRefrigerant(streamName, new String[] {component},
-        new double[] {1.0}, temperatureC, pressureBara, flowKgPerHour);
+  private Stream createPureRefrigerant(String streamName, String component, double temperatureC, double pressureBara,
+      double flowKgPerHour) {
+    return createMixedRefrigerant(streamName, new String[] { component }, new double[] { 1.0 }, temperatureC,
+        pressureBara, flowKgPerHour);
   }
 
   /**
@@ -565,12 +537,10 @@ public class LNGProcessBuilder {
    * @param efficiency isentropic efficiency
    * @return train outlet and compressor references
    */
-  private CompressionTrain addTwoStageCompression(BuildContext context,
-      String unitPrefix, StreamInterface suction, double dischargePressureBara,
-      double efficiency) {
+  private CompressionTrain addTwoStageCompression(BuildContext context, String unitPrefix, StreamInterface suction,
+      double dischargePressureBara, double efficiency) {
     double suctionPressure = suction.getPressure("bara");
-    double intermediatePressure =
-        Math.sqrt(suctionPressure * dischargePressureBara);
+    double intermediatePressure = Math.sqrt(suctionPressure * dischargePressureBara);
 
     Compressor first = new Compressor(unitPrefix + " compressor stage 1", suction);
     first.setOutletPressure(intermediatePressure, "bara");
@@ -578,20 +548,17 @@ public class LNGProcessBuilder {
     context.compressors.add(first);
     context.process.add(first);
 
-    Cooler intercooler =
-        new Cooler(unitPrefix + " intercooler", first.getOutletStream());
+    Cooler intercooler = new Cooler(unitPrefix + " intercooler", first.getOutletStream());
     intercooler.setOutTemperature(303.15);
     context.process.add(intercooler);
 
-    Compressor second = new Compressor(unitPrefix + " compressor stage 2",
-        intercooler.getOutletStream());
+    Compressor second = new Compressor(unitPrefix + " compressor stage 2", intercooler.getOutletStream());
     second.setOutletPressure(dischargePressureBara, "bara");
     second.setIsentropicEfficiency(efficiency);
     context.compressors.add(second);
     context.process.add(second);
 
-    Cooler aftercooler =
-        new Cooler(unitPrefix + " aftercooler", second.getOutletStream());
+    Cooler aftercooler = new Cooler(unitPrefix + " aftercooler", second.getOutletStream());
     aftercooler.setOutTemperature(303.15);
     context.process.add(aftercooler);
 
@@ -622,8 +589,8 @@ public class LNGProcessBuilder {
    * @param returnStream calculated loop-return stream
    * @param suctionStream tear stream updated by the recycle
    */
-  private void addRecycle(BuildContext context, String recycleName,
-      StreamInterface returnStream, StreamInterface suctionStream) {
+  private void addRecycle(BuildContext context, String recycleName, StreamInterface returnStream,
+      StreamInterface suctionStream) {
     Recycle recycle = new Recycle(recycleName);
     recycle.addStream(returnStream);
     recycle.setOutletStream(suctionStream);
@@ -639,15 +606,12 @@ public class LNGProcessBuilder {
    * @param coldNaturalGas high-pressure liquefied natural gas
    * @return liquid product stream
    */
-  private StreamInterface addProductSection(BuildContext context,
-      StreamInterface coldNaturalGas) {
-    ThrottlingValve productValve =
-        new ThrottlingValve(name + " LNG product valve", coldNaturalGas);
+  private StreamInterface addProductSection(BuildContext context, StreamInterface coldNaturalGas) {
+    ThrottlingValve productValve = new ThrottlingValve(name + " LNG product valve", coldNaturalGas);
     productValve.setOutletPressure(productPressureBara, "bara");
     context.process.add(productValve);
 
-    Separator productFlash = new Separator(name + " LNG product flash",
-        productValve.getOutletStream());
+    Separator productFlash = new Separator(name + " LNG product flash", productValve.getOutletStream());
     context.process.add(productFlash);
     return productFlash.getLiquidOutStream();
   }
@@ -706,8 +670,7 @@ public class LNGProcessBuilder {
     private final Stream feed;
     private final List<Compressor> compressors = new ArrayList<Compressor>();
     private final List<Expander> expanders = new ArrayList<Expander>();
-    private final List<LNGHeatExchanger> exchangers =
-        new ArrayList<LNGHeatExchanger>();
+    private final List<LNGHeatExchanger> exchangers = new ArrayList<LNGHeatExchanger>();
 
     /**
      * Creates a build context.
@@ -727,10 +690,8 @@ public class LNGProcessBuilder {
      * @param product product stream
      * @return LNG process model
      */
-    private LNGProcessModel toModel(LNGProcessCycle builtCycle,
-        StreamInterface product) {
-      return new LNGProcessModel(name, builtCycle, process, feed, product,
-          compressors, expanders, exchangers);
+    private LNGProcessModel toModel(LNGProcessCycle builtCycle, StreamInterface product) {
+      return new LNGProcessModel(name, builtCycle, process, feed, product, compressors, expanders, exchangers);
     }
   }
 }
