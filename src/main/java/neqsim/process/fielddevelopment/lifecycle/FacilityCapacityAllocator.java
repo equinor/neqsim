@@ -35,9 +35,11 @@ public final class FacilityCapacityAllocator {
     }
 
     FacilityProductionRate total = hostAllocated.plus(satelliteAllocated);
+    FacilityProductionRate totalRequested = hostRequested.plus(satelliteRequested);
     return new AllocationResult(year, capacity, hostPotential, hostRequested, hostAllocated, satellitePotential,
         satelliteRequested, satelliteAllocated, capacity.getPrimaryConstraint(total),
-        capacity.getMaximumUtilization(total));
+        capacity.getMaximumUtilization(total), capacity.getPrimaryConstraint(totalRequested),
+        capacity.getMaximumUtilization(totalRequested));
   }
 
   private TieInPeriodResult runCanonicalTieInAllocation(FacilityLifecycleStrategy strategy, int year,
@@ -91,11 +93,14 @@ public final class FacilityCapacityAllocator {
     private final FacilityProductionRate satelliteAllocated;
     private final String primaryBottleneck;
     private final double maximumUtilization;
+    private final String requestedPrimaryBottleneck;
+    private final double requestedMaximumUtilization;
 
     private AllocationResult(int year, FacilityCapacity capacity, FacilityProductionRate hostPotential,
         FacilityProductionRate hostRequested, FacilityProductionRate hostAllocated,
         FacilityProductionRate satellitePotential, FacilityProductionRate satelliteRequested,
-        FacilityProductionRate satelliteAllocated, String primaryBottleneck, double maximumUtilization) {
+        FacilityProductionRate satelliteAllocated, String primaryBottleneck, double maximumUtilization,
+        String requestedPrimaryBottleneck, double requestedMaximumUtilization) {
       this.year = year;
       this.capacity = capacity;
       this.hostPotential = hostPotential;
@@ -106,6 +111,8 @@ public final class FacilityCapacityAllocator {
       this.satelliteAllocated = satelliteAllocated;
       this.primaryBottleneck = primaryBottleneck;
       this.maximumUtilization = maximumUtilization;
+      this.requestedPrimaryBottleneck = requestedPrimaryBottleneck;
+      this.requestedMaximumUtilization = requestedMaximumUtilization;
     }
 
     /** Returns allocation calendar year. */
@@ -156,6 +163,16 @@ public final class FacilityCapacityAllocator {
     /** Returns maximum nameplate utilization as a fraction. */
     public double getMaximumUtilization() {
       return maximumUtilization;
+    }
+
+    /** Returns the nameplate constraint at requested rates before capacity allocation. */
+    public String getRequestedPrimaryBottleneck() {
+      return requestedPrimaryBottleneck;
+    }
+
+    /** Returns maximum nameplate utilization at requested rates before capacity allocation. */
+    public double getRequestedMaximumUtilization() {
+      return requestedMaximumUtilization;
     }
   }
 }

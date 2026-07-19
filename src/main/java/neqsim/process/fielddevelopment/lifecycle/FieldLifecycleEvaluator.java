@@ -36,8 +36,10 @@ public class FieldLifecycleEvaluator {
   public String toMarkdownTable(List<FieldLifecycleResult> results) {
     StringBuilder table = new StringBuilder();
     table.append("| Concept | NPV (MUSD) | IRR (%) | Break-even oil (USD/bbl) | Oil (MSm3) ");
-    table.append("| Deferred oil (MSm3) | Peak facility utilization (%) | Gas injected (GSm3) | CO2 (kt) |\n");
-    table.append("|---|---:|---:|---:|---:|---:|---:|---:|---:|\n");
+    table.append("| Deferred oil (MSm3) | Peak operating utilization (%) | Peak requested utilization (%) ");
+    table.append("| Gas injected (GSm3) | CO2 (kt) ");
+    table.append("| Off-spec years |\n");
+    table.append("|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|\n");
     for (FieldLifecycleResult result : results) {
       table.append(result.toMarkdownRow()).append("\n");
     }

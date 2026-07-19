@@ -51,6 +51,7 @@ public final class FieldLifecycleConfiguration implements Serializable {
   private final double gasTariffUsdPerSm3;
   private final Map<Integer, Double> capexScheduleMusd;
   private final FacilityLifecycleStrategy facilityLifecycleStrategy;
+  private final FieldProductSpecifications productSpecifications;
 
   private FieldLifecycleConfiguration(Builder builder) {
     startYear = builder.startYear;
@@ -84,6 +85,7 @@ public final class FieldLifecycleConfiguration implements Serializable {
     gasTariffUsdPerSm3 = builder.gasTariffUsdPerSm3;
     capexScheduleMusd = Collections.unmodifiableMap(new LinkedHashMap<Integer, Double>(builder.capexScheduleMusd));
     facilityLifecycleStrategy = builder.facilityLifecycleStrategy;
+    productSpecifications = builder.productSpecifications;
   }
 
   /**
@@ -264,6 +266,11 @@ public final class FieldLifecycleConfiguration implements Serializable {
     return facilityLifecycleStrategy;
   }
 
+  /** Returns optional export-product and produced-water specifications. */
+  public FieldProductSpecifications getProductSpecifications() {
+    return productSpecifications;
+  }
+
   /** Builder for {@link FieldLifecycleConfiguration}. */
   public static final class Builder {
     private int startYear = 2028;
@@ -297,6 +304,7 @@ public final class FieldLifecycleConfiguration implements Serializable {
     private double gasTariffUsdPerSm3 = 0.015;
     private final Map<Integer, Double> capexScheduleMusd = new LinkedHashMap<Integer, Double>();
     private FacilityLifecycleStrategy facilityLifecycleStrategy;
+    private FieldProductSpecifications productSpecifications;
 
     private Builder() {
     }
@@ -424,6 +432,12 @@ public final class FieldLifecycleConfiguration implements Serializable {
     /** Sets facility sizing, host profile, shared capacity, allocation and holdback assumptions. */
     public Builder facilityLifecycleStrategy(FacilityLifecycleStrategy strategy) {
       facilityLifecycleStrategy = strategy;
+      return this;
+    }
+
+    /** Sets export-gas, stabilized-oil, and produced-water specifications. */
+    public Builder productSpecifications(FieldProductSpecifications specifications) {
+      productSpecifications = specifications;
       return this;
     }
 

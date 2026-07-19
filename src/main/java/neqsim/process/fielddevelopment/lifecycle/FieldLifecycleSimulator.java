@@ -12,6 +12,7 @@ import neqsim.process.fielddevelopment.economics.CashFlowEngine;
 import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
 import neqsim.process.fielddevelopment.lifecycle.FacilityCapacityAllocator.AllocationResult;
 import neqsim.process.fielddevelopment.tieback.capacity.CapacityAllocationPolicy;
+import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -80,6 +81,7 @@ public class FieldLifecycleSimulator {
       setReservoirProductionRates(model, config, onlineOilRate, onlineWaterRate);
 
       ProcessRates rates = solveProcessAndAllocateGas(model, config, fieldAgeYears, onlineOilRate, onlineWaterRate);
+      ProductSpecificationResult productQuality = evaluateProductQuality(model, config);
       double operatingDays = dtDays * config.getAvailability();
       double oilVolume = rates.oilRateSm3PerDay * operatingDays;
       double gasExportVolume = rates.gasExportRateSm3PerDay * operatingDays;
@@ -95,7 +97,7 @@ public class FieldLifecycleSimulator {
       }
       accumulator.add(dtDays, oilVolume, gasExportVolume, gasInjectionVolume, waterVolume, waterCut, reservoirPressure,
           energyMWh, emissionsTonnes, onlineOilRate, onlineOilRate, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-          "legacy facility limits");
+          "legacy facility limits", 0.0, "legacy facility limits", productQuality);
 
       model.getReservoir().runTransient(operatingDays * SECONDS_PER_DAY);
       elapsedDays += dtDays;
@@ -170,6 +172,7 @@ public class FieldLifecycleSimulator {
       AllocationResult allocation = allocator.allocate(strategy, calendarYear, satellitePotential);
       FacilityOperatingResult operation = operateSharedFacility(model, config, strategy, fieldAgeYears, allocation,
           facilityDesign, potential.oilRecoveryFactor);
+      ProductSpecificationResult productQuality = evaluateProductQuality(model, config);
 
       double operatingDays = dtDays * config.getAvailability();
       double oilVolume = operation.satelliteOilExportRateSm3PerDay * operatingDays;
@@ -195,7 +198,8 @@ public class FieldLifecycleSimulator {
           energyMWh, emissionsTonnes, allocation.getSatellitePotential().getOilSm3PerDay(),
           allocation.getSatelliteRequested().getOilSm3PerDay(), operation.hostAllocated.getOilSm3PerDay(),
           operation.hostAllocated.getGasSm3PerDay(), operation.hostAllocated.getWaterSm3PerDay(), holdbackOil,
-          capacityDeferredOil, operation.maximumUtilization, operation.primaryBottleneck);
+          capacityDeferredOil, operation.maximumUtilization, operation.primaryBottleneck,
+          operation.unconstrainedUtilization, operation.unconstrainedBottleneck, productQuality);
 
       setReservoirProductionRates(model, config, operation.satelliteAllocated.getOilSm3PerDay(),
           operation.satelliteAllocated.getWaterSm3PerDay());
@@ -288,19 +292,19 @@ public class FieldLifecycleSimulator {
     }
 
     configureGasAllocation(model, config, 0.0);
-    model.getProcessSystem().run();
-    double designPowerKw = Math.max(0.0, model.getProcessSystem().getPower("kW"));
+    runProcess(model);
+    double designPowerKw = Math.max(0.0, getProcessPower(model, "kW"));
     int autoSizedCount = 0;
     int constraintCount = 0;
     if (strategy.isAutoSizeDetailedProcess()) {
-      autoSizedCount = model.getProcessSystem().autoSizeEquipment(strategy.getDesignMargin());
+      autoSizedCount = autoSizeProcess(model, strategy.getDesignMargin());
       if (strategy.isUseDetailedProcessConstraints()) {
-        constraintCount = model.getProcessSystem().applyMechanicalDesignCapacityConstraints();
-        model.getProcessSystem().run();
+        constraintCount = applyMechanicalDesignCapacityConstraints(model);
+        runProcess(model);
       }
     } else if (strategy.isUseDetailedProcessConstraints()) {
-      constraintCount = model.getProcessSystem().applyMechanicalDesignCapacityConstraints();
-      model.getProcessSystem().run();
+      constraintCount = applyMechanicalDesignCapacityConstraints(model);
+      runProcess(model);
     }
 
     FacilityCapacity configured = strategy.getBaseCapacity();
@@ -311,10 +315,10 @@ public class FieldLifecycleSimulator {
     FacilityCapacity effectiveCapacity = new FacilityCapacity(configured.getOilSm3PerDay(),
         configured.getGasSm3PerDay(), configured.getWaterSm3PerDay(), configured.getLiquidSm3PerDay(), powerCapacity);
     ProcessEquipmentInterface bottleneck = strategy.isUseDetailedProcessConstraints()
-        ? model.getProcessSystem().getBottleneck()
+        ? getProcessBottleneck(model)
         : null;
     double designBottleneckUtilization = strategy.isUseDetailedProcessConstraints()
-        ? model.getProcessSystem().getBottleneckUtilization()
+        ? getProcessBottleneckUtilization(model)
         : 0.0;
     double detailedCapacityMultiplier = strategy.isAutoSizeDetailedProcess()
         ? Math.max(1.0, designBottleneckUtilization / strategy.getMaximumDetailedProcessUtilization())
@@ -322,7 +326,8 @@ public class FieldLifecycleSimulator {
     int requiredParallelTrainCount = (int) Math.ceil(detailedCapacityMultiplier - 1.0e-12);
     return new FacilityDesignResult(strategy.getName(), strategy.getDevelopmentMode(), designRates, effectiveCapacity,
         strategy.getDesignMargin(), designPowerKw, autoSizedCount, constraintCount,
-        bottleneck == null ? null : bottleneck.getName(), designBottleneckUtilization, detailedCapacityMultiplier,
+        getProcessBottleneckName(model, bottleneck), designBottleneckUtilization,
+        detailedCapacityMultiplier,
         requiredParallelTrainCount);
   }
 
@@ -344,7 +349,7 @@ public class FieldLifecycleSimulator {
     for (int attempt = 0; attempt < 7; attempt++) {
       try {
         setReservoirProductionRates(model, config, requestedOilRate * scale, requestedWaterRate * scale);
-        model.getProcessSystem().run();
+        runProcess(model);
         double oilFeedRate = requestedOilRate * scale;
         double oilRecoveryFactor = oilFeedRate <= 1.0e-12 ? 0.0
             : stockTankOilRate(model.getStabilizedOilExport()) / oilFeedRate;
@@ -370,13 +375,16 @@ public class FieldLifecycleSimulator {
     FacilityProductionRate host = allocation.getHostAllocated();
     FacilityOperatingResult lastResult = null;
     RuntimeException lastFailure = null;
+    double unconstrainedUtilization = allocation.getRequestedMaximumUtilization();
+    String unconstrainedBottleneck = allocation.getRequestedPrimaryBottleneck();
+    boolean detailedRequestedStateCaptured = false;
 
     for (int attempt = 0; attempt < 10; attempt++) {
       try {
         setReservoirProductionRates(model, config, satellite.getOilSm3PerDay(), satellite.getWaterSm3PerDay());
         setHostProductionRates(model, host);
         configureGasAllocation(model, config, fieldAgeYears);
-        model.getProcessSystem().run();
+        runProcess(model);
 
         double recoveredGasRate = nonNegativeFlow(model.getRecoveredGas(), "Sm3/day");
         double injectionFraction = fieldAgeYears >= config.getGasInjectionStartYear()
@@ -388,13 +396,13 @@ public class FieldLifecycleSimulator {
         if (Math.abs(actualInjectionFraction - injectionFraction) > 1.0e-9) {
           model.getGasAllocationSplitter()
               .setSplitFactors(new double[] { 1.0 - actualInjectionFraction, actualInjectionFraction });
-          model.getProcessSystem().run();
+          runProcess(model);
         }
 
         double totalOilExport = stockTankOilRate(model.getStabilizedOilExport());
         double totalGasExport = nonNegativeFlow(model.getGasExport(), "Sm3/day");
         double satelliteGasShare = share(satellite.getGasSm3PerDay(), host.getGasSm3PerDay());
-        double powerKw = Math.max(0.0, model.getProcessSystem().getPower("kW"));
+        double powerKw = Math.max(0.0, getProcessPower(model, "kW"));
 
         FacilityProductionRate totalAllocated = satellite.plus(host);
         FacilityCapacity annualCapacity = allocation.getCapacity();
@@ -407,19 +415,29 @@ public class FieldLifecycleSimulator {
           primaryBottleneck = "facility power capacity";
         }
         if (strategy.isUseDetailedProcessConstraints()) {
-          double detailedUtilization = model.getProcessSystem().getBottleneckUtilization()
+          double detailedUtilization = getProcessBottleneckUtilization(model)
               / facilityDesign.getDetailedCapacityMultiplier();
-          ProcessEquipmentInterface bottleneck = model.getProcessSystem().getBottleneck();
+          ProcessEquipmentInterface bottleneck = getProcessBottleneck(model);
           if (detailedUtilization > maximumUtilization) {
             maximumUtilization = detailedUtilization;
-            primaryBottleneck = bottleneck == null ? "detailed process equipment" : bottleneck.getName();
+            primaryBottleneck = bottleneck == null ? "detailed process equipment"
+                : getProcessBottleneckName(model, bottleneck);
           }
+        }
+
+        if (!detailedRequestedStateCaptured) {
+          if (maximumUtilization > unconstrainedUtilization) {
+            unconstrainedUtilization = maximumUtilization;
+            unconstrainedBottleneck = primaryBottleneck;
+          }
+          detailedRequestedStateCaptured = true;
         }
 
         double attributedSatelliteOil = Math.min(totalOilExport,
             satellite.getOilSm3PerDay() * satelliteOilRecoveryFactor);
         lastResult = new FacilityOperatingResult(satellite, host, attributedSatelliteOil,
-            totalGasExport * satelliteGasShare, injectionRate, powerKw, maximumUtilization, primaryBottleneck);
+            totalGasExport * satelliteGasShare, injectionRate, powerKw, maximumUtilization,
+            primaryBottleneck, unconstrainedUtilization, unconstrainedBottleneck);
         if (maximumUtilization <= strategy.getMaximumDetailedProcessUtilization() + 1.0e-6) {
           return lastResult;
         }
@@ -510,12 +528,12 @@ public class FieldLifecycleSimulator {
     double actualInjectionFraction = recoveredGasRate > 0.0 ? injectionRate / recoveredGasRate : 0.0;
     model.getGasAllocationSplitter()
         .setSplitFactors(new double[] { 1.0 - actualInjectionFraction, actualInjectionFraction });
-    model.getProcessSystem().run();
+    runProcess(model);
 
     synchronizeInjectionStream(model, injectionRate);
     double stabilizedOilRate = stockTankOilRate(model.getStabilizedOilExport());
     double gasExportRate = nonNegativeFlow(model.getGasExport(), "Sm3/day");
-    double powerKw = Math.max(0.0, model.getProcessSystem().getPower("kW"));
+    double powerKw = Math.max(0.0, getProcessPower(model, "kW"));
     return new ProcessRates(stabilizedOilRate, gasExportRate, injectionRate, waterRateSm3PerDay * rateScale, powerKw);
   }
 
@@ -526,7 +544,7 @@ public class FieldLifecycleSimulator {
     for (int attempt = 0; attempt < 6; attempt++) {
       try {
         setReservoirProductionRates(model, config, requestedOilRate * scale, requestedWaterRate * scale);
-        model.getProcessSystem().run();
+        runProcess(model);
         double gasRate = nonNegativeFlow(model.getRecoveredGas(), "Sm3/day");
         if (gasRate > config.getMaximumGasRateSm3PerDay() && gasRate > 0.0) {
           scale *= config.getMaximumGasRateSm3PerDay() / gasRate;
@@ -543,6 +561,58 @@ public class FieldLifecycleSimulator {
     throw new IllegalStateException("Could not solve lifecycle process after rate reduction", lastFailure);
   }
 
+  private void runProcess(FieldLifecycleModel model) {
+    if (model.hasProcessModel()) {
+      model.getProcessModel().run();
+    } else {
+      model.getProcessSystem().run();
+    }
+  }
+
+  private double getProcessPower(FieldLifecycleModel model, String unit) {
+    return model.hasProcessModel() ? model.getProcessModel().getPower(unit)
+        : model.getProcessSystem().getPower(unit);
+  }
+
+  private int autoSizeProcess(FieldLifecycleModel model, double designMargin) {
+    return model.hasProcessModel() ? model.getProcessModel().autoSizeEquipment(designMargin)
+        : model.getProcessSystem().autoSizeEquipment(designMargin);
+  }
+
+  private int applyMechanicalDesignCapacityConstraints(FieldLifecycleModel model) {
+    return model.hasProcessModel()
+        ? model.getProcessModel().applyMechanicalDesignCapacityConstraints()
+        : model.getProcessSystem().applyMechanicalDesignCapacityConstraints();
+  }
+
+  private ProcessEquipmentInterface getProcessBottleneck(FieldLifecycleModel model) {
+    return model.hasProcessModel() ? model.getProcessModel().getBottleneck()
+        : model.getProcessSystem().getBottleneck();
+  }
+
+  private double getProcessBottleneckUtilization(FieldLifecycleModel model) {
+    return model.hasProcessModel() ? model.getProcessModel().getBottleneckUtilization()
+        : model.getProcessSystem().getBottleneckUtilization();
+  }
+
+  private String getProcessBottleneckName(FieldLifecycleModel model,
+      ProcessEquipmentInterface bottleneck) {
+    if (bottleneck == null) {
+      return null;
+    }
+    if (model.hasProcessModel()) {
+      for (String areaName : model.getProcessModel().getProcessSystemNames()) {
+        ProcessSystem area = model.getProcessModel().get(areaName);
+        for (ProcessEquipmentInterface equipment : area.getUnitOperations()) {
+          if (equipment == bottleneck) {
+            return areaName + "::" + bottleneck.getName();
+          }
+        }
+      }
+    }
+    return bottleneck.getName();
+  }
+
   private void synchronizeInjectionStream(FieldLifecycleModel model, double injectionRateSm3PerDay) {
     if (injectionRateSm3PerDay <= 0.0) {
       model.getReservoirGasInjector().setFlowRate(1.0e-12, "kg/sec");
@@ -556,6 +626,23 @@ public class FieldLifecycleSimulator {
   private double nonNegativeFlow(StreamInterface stream, String unit) {
     double value = stream.getFlowRate(unit);
     return Double.isNaN(value) ? 0.0 : Math.max(0.0, value);
+  }
+
+  private ProductSpecificationResult evaluateProductQuality(FieldLifecycleModel model,
+      FieldLifecycleConfiguration config) {
+    FieldProductSpecifications specifications = config.getProductSpecifications();
+    if (specifications == null || !specifications.hasActiveLimits()) {
+      return ProductSpecificationResult.notEvaluated();
+    }
+    if (model.getProductQualityProvider() != null) {
+      ProductSpecificationResult result =
+          model.getProductQualityProvider().evaluate(model, specifications);
+      if (result == null) {
+        throw new IllegalStateException("product quality provider returned null");
+      }
+      return result;
+    }
+    return new ProductSpecificationEvaluator().evaluate(model, specifications);
   }
 
   private double stockTankOilRate(StreamInterface stream) {
@@ -639,10 +726,13 @@ public class FieldLifecycleSimulator {
     private final double powerKw;
     private final double maximumUtilization;
     private final String primaryBottleneck;
+    private final double unconstrainedUtilization;
+    private final String unconstrainedBottleneck;
 
     private FacilityOperatingResult(FacilityProductionRate satelliteAllocated, FacilityProductionRate hostAllocated,
         double satelliteOilExportRateSm3PerDay, double satelliteGasExportRateSm3PerDay,
-        double gasInjectionRateSm3PerDay, double powerKw, double maximumUtilization, String primaryBottleneck) {
+        double gasInjectionRateSm3PerDay, double powerKw, double maximumUtilization,
+        String primaryBottleneck, double unconstrainedUtilization, String unconstrainedBottleneck) {
       this.satelliteAllocated = satelliteAllocated;
       this.hostAllocated = hostAllocated;
       this.satelliteOilExportRateSm3PerDay = satelliteOilExportRateSm3PerDay;
@@ -651,6 +741,8 @@ public class FieldLifecycleSimulator {
       this.powerKw = powerKw;
       this.maximumUtilization = maximumUtilization;
       this.primaryBottleneck = primaryBottleneck;
+      this.unconstrainedUtilization = unconstrainedUtilization;
+      this.unconstrainedBottleneck = unconstrainedBottleneck;
     }
   }
 
@@ -674,6 +766,10 @@ public class FieldLifecycleSimulator {
     private double capacityDeferredOilSm3;
     private double maximumFacilityUtilization;
     private String primaryBottleneck;
+    private double unconstrainedFacilityUtilization;
+    private String unconstrainedBottleneck;
+    private ProductSpecificationResult productSpecificationResult =
+        ProductSpecificationResult.notEvaluated();
 
     private AnnualAccumulator(int year) {
       this.year = year;
@@ -682,7 +778,8 @@ public class FieldLifecycleSimulator {
     private void add(double days, double oil, double gasExport, double gasInjected, double water, double waterCut,
         double pressure, double energy, double emissions, double potentialOilRate, double requestedOilRate,
         double hostOilRate, double hostGasRate, double hostWaterRate, double holdbackOil, double capacityDeferredOil,
-        double facilityUtilization, String bottleneck) {
+        double facilityUtilization, String bottleneck, double requestedFacilityUtilization,
+        String requestedBottleneck, ProductSpecificationResult productQuality) {
       calendarDays += days;
       oilSm3 += oil;
       gasExportSm3 += gasExport;
@@ -703,6 +800,11 @@ public class FieldLifecycleSimulator {
         maximumFacilityUtilization = facilityUtilization;
         primaryBottleneck = bottleneck;
       }
+      if (requestedFacilityUtilization >= unconstrainedFacilityUtilization) {
+        unconstrainedFacilityUtilization = requestedFacilityUtilization;
+        unconstrainedBottleneck = requestedBottleneck;
+      }
+      productSpecificationResult = productSpecificationResult.combine(productQuality);
     }
 
     private FieldLifecycleResult.AnnualResult toResult() {
@@ -710,7 +812,8 @@ public class FieldLifecycleSimulator {
       return new FieldLifecycleResult.AnnualResult(year, oilSm3, gasExportSm3, gasInjectedSm3, waterSm3, oilSm3 / days,
           waterCutDays / days, pressureDays / days, energyMWh, emissionsTonnes, potentialOilRateDays / days,
           requestedOilRateDays / days, hostOilRateDays / days, hostGasRateDays / days, hostWaterRateDays / days,
-          holdbackOilSm3, capacityDeferredOilSm3, maximumFacilityUtilization, primaryBottleneck);
+          holdbackOilSm3, capacityDeferredOilSm3, maximumFacilityUtilization, primaryBottleneck,
+          unconstrainedFacilityUtilization, unconstrainedBottleneck, productSpecificationResult);
     }
   }
 }

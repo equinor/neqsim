@@ -91,8 +91,12 @@ break-even oil/gas prices together with the technical production, injection, ene
 route when economics must reflect process capacity and reservoir response rather than an independent decline curve.
 For a host tieback, only the new field's attributed oil and gas enter project revenue; existing-host production is a
 capacity load, not project revenue. Configure tieback tariff/OPEX and modification CAPEX explicitly. The result's
-holdback, capacity-deferred oil, peak utilization and annual bottleneck fields explain the economic difference between
-standalone greenfield, direct tieback, managed allocation and debottleneck cases.
+holdback, capacity-deferred oil, peak operating/requested utilization and annual bottleneck fields explain the economic
+difference between standalone greenfield, direct tieback through existing SURF, managed allocation and debottleneck
+cases. A user-supplied `ProcessModel` keeps the economic result coupled to all SURF and host process areas.
+For area studies, use `AreaDevelopmentEvaluator` to compare multiple producing hosts and greenfield routes on the same
+economic basis. A `REJECT_OPTION` product-quality policy makes an off-spec route ineligible before NPV ranking;
+`REPORT_ONLY` preserves the route for sensitivity and debottleneck diagnosis.
 
 ### Basic Usage
 

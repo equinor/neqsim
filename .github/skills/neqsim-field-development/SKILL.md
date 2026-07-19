@@ -128,20 +128,38 @@ List<FieldLifecycleResult> ranked = evaluator.evaluateAll(
     NorwegianOilFieldCase.createDevelopmentPortfolio());
 ```
 
-`FieldLifecycleModel` accepts a normal user-built `ProcessSystem`, so screening concepts can be refined without
-replacing the lifecycle/economic interface. Each concept must own an independent mutable reservoir/process model.
+`FieldLifecycleModel` accepts a user-built `ProcessSystem` or a complete multi-area `ProcessModel`, so screening
+concepts can be refined without replacing the lifecycle/economic interface. Use
+`existingSurfAndFacility(...)` when the new field enters a shared existing SURF area before a host facility; wire the
+areas with shared streams and map host feeds at their actual subsea or topsides entry points. Whole-model execution,
+power, sizing and `area::equipment` bottlenecks then include both SURF and processing. Each concept must own an
+independent mutable reservoir/process model.
 Use `FacilityLifecycleStrategy.greenfield(...)` to auto-size a new detailed processing facility from design cases. Use
 `FacilityLifecycleStrategy.tieback(...)` with the existing `HostFacility`, `ProductionProfileSeries`,
 `CapacityAllocationPolicy`, and `HoldbackPolicy` types for a producing-host tieback. Connect the model's optional host
 oil/gas/water feeds to the real shared process so annual `FieldLifecycleResult` records host load, admitted satellite
-rate, deliberate holdback, capacity-deferred oil, facility/equipment utilization and the primary bottleneck.
+rate, deliberate holdback, capacity-deferred oil, operating and requested utilization, and their primary bottlenecks.
 Set `FieldLifecycleModel.setProductionPotentialProvider(...)` when a detailed NeqSim well/network model or imported
 reservoir schedule should replace the reference aggregate PI/water-cut potential calculation.
+
+Use `AreaDevelopmentPortfolio` when one discovery can be routed to several independently modeled producing assets or
+to a new facility. Add one `AreaDevelopmentOption` per host/tieback route or greenfield alternative, then use
+`AreaDevelopmentEvaluator` to compare route identity, NPV, break-even, recovery, deferment, utilization, bottlenecks
+and specification compliance. Each option must own its reservoir, SURF and mutable process state.
+
+Attach `FieldProductSpecifications` to each configuration to check live export-gas CO2/H2S/O2, ISO 6976 GCV/Wobbe,
+dew points, stabilized-oil RVP/BS&W and treated-water oil-in-water. The built-in evaluator uses NeqSim stream
+analysers and standards; connect
+`FieldProductQualityProvider` where a real facility has a dedicated water-treatment or online-analyser model. Choose
+`REPORT_ONLY` for diagnostics or `REJECT_OPTION` to exclude non-compliant options from the area recommendation.
 
 For brownfield studies, preserve actual equipment limits (`autoSizeDetailedProcess(false)`). For greenfield studies,
 run the process at the simultaneous design case, auto-size equipment with the selected design margin, and use explicit
 oil/gas/water/liquid nameplates for non-coincident component peak cases. Put any debottleneck capacity change in
 `capacityFromYear(...)` and its CAPEX in `FieldLifecycleConfiguration`.
+Use `FacilityModificationPlanner.analyse(result, targetUtilization)` to create traceable screening candidates from
+annual requested utilization and deferred oil. Implement, size and cost each candidate in a cloned detailed process
+before comparing its rerun lifecycle; the planner's multiplier is not a substitute for that engineering model.
 See `docs/fielddevelopment/FIELD_LIFECYCLE_SIMULATION.md` for the connection points and fidelity boundaries.
 
 ---

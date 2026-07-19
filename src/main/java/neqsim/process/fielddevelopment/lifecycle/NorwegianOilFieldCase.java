@@ -13,6 +13,7 @@ import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.equipment.watertreatment.ProducedWaterTreatmentTrain;
 import neqsim.process.fielddevelopment.concept.FieldConcept;
 import neqsim.process.fielddevelopment.concept.InfrastructureInput;
 import neqsim.process.fielddevelopment.concept.ReservoirInput;
@@ -101,7 +102,8 @@ public final class NorwegianOilFieldCase {
         .gasInjection(0.0, recycleFraction, gasInjectionCapacity).gridEmissionFactor(0.018).prices(75.0, 0.28)
         .discountRate(0.08).opex(135.0, 8.5).tariffs(2.0, 0.015).capex(firstOilYear - 3, totalCapexMusd * 0.20)
         .capex(firstOilYear - 2, totalCapexMusd * 0.50).capex(firstOilYear - 1, totalCapexMusd * 0.30)
-        .facilityLifecycleStrategy(facilityStrategy).build();
+        .facilityLifecycleStrategy(facilityStrategy).productSpecifications(createReferenceSpecifications())
+        .build();
 
     return new FieldLifecycleConcept(fieldConcept, model, configuration);
   }
@@ -116,31 +118,55 @@ public final class NorwegianOilFieldCase {
     return createTiebackCase("NCS oil tieback - managed capacity", CapacityAllocationPolicy.PRO_RATA, 0.05, 0.10, 25.0);
   }
 
+  /** Creates a longer tieback to a second mature host with a different production and capacity envelope. */
+  public static FieldLifecycleConcept createRemoteHostTiebackCase() {
+    return createTiebackCase("NCS oil tieback - remote host B", CapacityAllocationPolicy.BASE_FIRST,
+        0.0, 0.0, 25.0, true);
+  }
+
   /** Returns greenfield, depletion, direct tieback and managed tieback concepts ready for consistent ranking. */
   public static List<FieldLifecycleConcept> createDevelopmentPortfolio() {
     return Arrays.asList(createGasInjectionCase(), createNaturalDepletionCase(), createHostPriorityTiebackCase(),
         createManagedTiebackCase());
   }
 
+  /** Returns a multi-asset area portfolio with standalone, two-host, and managed-allocation routes. */
+  public static AreaDevelopmentPortfolio createAreaDevelopmentPortfolio() {
+    return new AreaDevelopmentPortfolio("Synthetic NCS area development")
+        .addOption(AreaDevelopmentOption.greenfield("Standalone FPSO", "New area FPSO",
+            createGasInjectionCase()))
+        .addOption(AreaDevelopmentOption.tieback("Host A priority tieback", "Existing NCS host A",
+            createHostPriorityTiebackCase()))
+        .addOption(AreaDevelopmentOption.tieback("Host A managed tieback", "Existing NCS host A",
+            createManagedTiebackCase()))
+        .addOption(AreaDevelopmentOption.tieback("Remote host B tieback", "Mature NCS host B",
+            createRemoteHostTiebackCase()));
+  }
+
   static FieldLifecycleConcept createTiebackCase(String name, CapacityAllocationPolicy policy, double hostHoldback,
       double satelliteHoldback, double projectYears) {
+    return createTiebackCase(name, policy, hostHoldback, satelliteHoldback, projectYears, false);
+  }
+
+  private static FieldLifecycleConcept createTiebackCase(String name, CapacityAllocationPolicy policy,
+      double hostHoldback, double satelliteHoldback, double projectYears, boolean remoteHost) {
     int firstOilYear = 2029;
-    FieldConcept fieldConcept = createTiebackScreeningConcept(name);
-    FieldLifecycleModel model = createModel(name, 35.0, true, false);
-    HostFacility host = HostFacility.builder("Existing NCS host").operator("Reference operator")
-        .type(FacilityType.PLATFORM).waterDepth(140.0).oilCapacity(150000.0).gasCapacity(7.0).waterCapacity(32000.0)
-        .liquidCapacity(52000.0).minTieInPressure(45.0).maxTieInPressure(90.0).processSystem(model.getProcessSystem())
-        .build();
-    ProductionProfileSeries hostProfile = new ProductionProfileSeries("existing host production")
-        .addPeriod(2029, 3.2, oilSm3dToBopd(16000.0), 14000.0, 0.0)
-        .addPeriod(2034, 2.4, oilSm3dToBopd(12500.0), 19000.0, 0.0)
-        .addPeriod(2039, 1.4, oilSm3dToBopd(7500.0), 22000.0, 0.0)
-        .addPeriod(2049, 0.45, oilSm3dToBopd(2200.0), 15500.0, 0.0);
+    double tiebackLengthKm = remoteHost ? 65.0 : 35.0;
+    FieldConcept fieldConcept = createTiebackScreeningConcept(name, tiebackLengthKm);
+    FieldLifecycleModel model = createModel(name, tiebackLengthKm, true, false);
+    HostFacility host = HostFacility.builder(remoteHost ? "Mature NCS host B" : "Existing NCS host A")
+        .operator("Reference operator").type(FacilityType.PLATFORM)
+        .waterDepth(remoteHost ? 210.0 : 140.0).oilCapacity(remoteHost ? 120000.0 : 150000.0)
+        .gasCapacity(remoteHost ? 5.0 : 7.0).waterCapacity(remoteHost ? 45000.0 : 32000.0)
+        .liquidCapacity(remoteHost ? 55000.0 : 52000.0).minTieInPressure(45.0)
+        .maxTieInPressure(90.0).processSystem(model.getProcessSystem()).build();
+    ProductionProfileSeries hostProfile = remoteHost ? createRemoteHostProductionProfile()
+        : createPrimaryHostProductionProfile();
     FacilityLifecycleStrategy facilityStrategy = FacilityLifecycleStrategy
         .tieback("Existing host shared processing", host, hostProfile).allocationPolicy(policy)
         .holdback(hostHoldback, satelliteHoldback).designMargin(1.10).maximumDetailedProcessUtilization(1.0)
         .autoSizeDetailedProcess(false).useDetailedProcessConstraints(false).build();
-    double capexMusd = estimateTiebackCapexMusd();
+    double capexMusd = estimateTiebackCapexMusd(tiebackLengthKm);
 
     FieldLifecycleConfiguration configuration = FieldLifecycleConfiguration.builder().startYear(firstOilYear)
         .projectYears(projectYears).timeStepDays(365.25).availability(0.92).producers(PRODUCERS, 55.0)
@@ -148,7 +174,8 @@ public final class NorwegianOilFieldCase {
         .economicLimitOilRate(600.0).waterCut(0.04, 0.78, 3.0, 15.0).standardDensities(835.0, 1025.0)
         .gasInjection(0.0, 0.0, 0.0).gridEmissionFactor(0.018).prices(75.0, 0.28).discountRate(0.08).opex(65.0, 10.5)
         .tariffs(6.5, 0.025).capex(firstOilYear - 3, capexMusd * 0.15).capex(firstOilYear - 2, capexMusd * 0.50)
-        .capex(firstOilYear - 1, capexMusd * 0.35).facilityLifecycleStrategy(facilityStrategy).build();
+        .capex(firstOilYear - 1, capexMusd * 0.35).facilityLifecycleStrategy(facilityStrategy)
+        .productSpecifications(createReferenceSpecifications()).build();
     return new FieldLifecycleConcept(fieldConcept, model, configuration);
   }
 
@@ -167,7 +194,29 @@ public final class NorwegianOilFieldCase {
         .reservoir(reservoir).wells(wells).infrastructure(infrastructure).build();
   }
 
-  private static FieldConcept createTiebackScreeningConcept(String name) {
+  private static ProductionProfileSeries createPrimaryHostProductionProfile() {
+    return new ProductionProfileSeries("existing host A production")
+        .addPeriod(2029, 3.2, oilSm3dToBopd(16000.0), 14000.0, 0.0)
+        .addPeriod(2034, 2.4, oilSm3dToBopd(12500.0), 19000.0, 0.0)
+        .addPeriod(2039, 1.4, oilSm3dToBopd(7500.0), 22000.0, 0.0)
+        .addPeriod(2049, 0.45, oilSm3dToBopd(2200.0), 15500.0, 0.0);
+  }
+
+  private static ProductionProfileSeries createRemoteHostProductionProfile() {
+    return new ProductionProfileSeries("mature host B production")
+        .addPeriod(2029, 2.0, oilSm3dToBopd(10000.0), 28000.0, 0.0)
+        .addPeriod(2034, 1.6, oilSm3dToBopd(8000.0), 34000.0, 0.0)
+        .addPeriod(2039, 0.9, oilSm3dToBopd(4500.0), 38000.0, 0.0)
+        .addPeriod(2049, 0.25, oilSm3dToBopd(1500.0), 24000.0, 0.0);
+  }
+
+  private static FieldProductSpecifications createReferenceSpecifications() {
+    return FieldProductSpecifications.builder().gasComposition(2.5, 5.0).gasOxygen(0.0002)
+        .gasEnergyContent(38.1, 43.7, 48.3, 52.8, 0.70).oilExport(1.0, 0.5)
+        .producedWater(30.0).build();
+  }
+
+  private static FieldConcept createTiebackScreeningConcept(String name, double tiebackLengthKm) {
     ReservoirInput reservoir = ReservoirInput.blackOil().gor(180.0, "Sm3/Sm3").waterCut(0.04).reservoirPressure(330.0)
         .reservoirTemperature(90.0).apiGravity(34.0).resourceUncertainty(550.0, 700.0, 850.0, "MMbbl")
         .recoveryFactor(0.40).build();
@@ -175,7 +224,7 @@ public final class NorwegianOilFieldCase {
         .ratePerWell(23000.0 / PRODUCERS, "Sm3/day").productivityIndex(55.0).build();
     InfrastructureInput infrastructure = InfrastructureInput.builder()
         .processingLocation(InfrastructureInput.ProcessingLocation.HOST_PLATFORM).waterDepth(WATER_DEPTH_M)
-        .tiebackLength(35.0).exportType(InfrastructureInput.ExportType.STABILIZED_OIL)
+        .tiebackLength(tiebackLengthKm).exportType(InfrastructureInput.ExportType.STABILIZED_OIL)
         .powerSupply(InfrastructureInput.PowerSupply.POWER_FROM_HOST).exportPressure(180.0).build();
     return FieldConcept.builder(name)
         .description("Synthetic NCS satellite tied through detailed 35 km SURF to a producing host facility")
@@ -237,6 +286,8 @@ public final class NorwegianOilFieldCase {
     ThrottlingValve inletChoke = new ThrottlingValve("Facility inlet choke", facilityInletMixer.getOutletStream());
     inletChoke.setOutletPressure(55.0, "bara");
     ThreePhaseSeparator hpSeparator = new ThreePhaseSeparator("HP separator", inletChoke.getOutletStream());
+    ProducedWaterTreatmentTrain producedWaterTreatment = new ProducedWaterTreatmentTrain(
+        "Produced water hydrocyclone and flotation train", hpSeparator.getWaterOutStream());
 
     ThrottlingValve lpValve = new ThrottlingValve("LP separator letdown", hpSeparator.getOilOutStream());
     lpValve.setOutletPressure(5.0, "bara");
@@ -296,6 +347,7 @@ public final class NorwegianOilFieldCase {
     process.add(facilityInletMixer);
     process.add(inletChoke);
     process.add(hpSeparator);
+    process.add(producedWaterTreatment);
     process.add(lpValve);
     process.add(lpSeparator);
     process.add(oilExportPump);
@@ -312,9 +364,15 @@ public final class NorwegianOilFieldCase {
       process.add(injectionAftercooler);
     }
 
-    return new FieldLifecycleModel(name, reservoir, process, oilProducer, waterProducer, reservoirGasInjector,
+    FieldLifecycleModel model = new FieldLifecycleModel(name, reservoir, process, oilProducer,
+        waterProducer, reservoirGasInjector,
         recoveredGasMixer.getOutletStream(), gasAllocation, oilExportPump.getOutletStream(),
-        gasExportCooler.getOutletStream(), compressedInjectionGas, hostOilFeed, hostGasFeed, hostWaterFeed);
+        gasExportCooler.getOutletStream(), compressedInjectionGas, hostOilFeed, hostGasFeed, hostWaterFeed,
+        hpSeparator.getWaterOutStream());
+    model.setProductQualityProvider((lifecycleModel, specifications) ->
+        new ProductSpecificationEvaluator().evaluate(lifecycleModel, specifications,
+            producedWaterTreatment.getOilInWaterMgL()));
+    return model;
   }
 
   /** Creates the compositional PVT model used by the reference case. */
@@ -373,7 +431,7 @@ public final class NorwegianOilFieldCase {
     return wellsMusd + surfMusd + fpsoAndTopsidesMusd + gasInjectionAndExportMusd + projectAndContingencyMusd;
   }
 
-  private static double estimateTiebackCapexMusd() {
+  private static double estimateTiebackCapexMusd(double tiebackLengthKm) {
     WellCostEstimator producerCost = new WellCostEstimator(SubseaCostEstimator.Region.NORWAY);
     producerCost.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "SMART_COMPLETION", 3600.0, WATER_DEPTH_M, 75.0,
         35.0, 0.0, true, 5);
@@ -381,10 +439,10 @@ public final class NorwegianOilFieldCase {
     SURFCostEstimator surf = new SURFCostEstimator(PRODUCERS, WATER_DEPTH_M, SubseaCostEstimator.Region.NORWAY);
     surf.setInfieldFlowlineLengthKm(36.0);
     surf.setInfieldFlowlineDiameterInches(12.0);
-    surf.setUmbilicalLengthKm(42.0);
+    surf.setUmbilicalLengthKm(tiebackLengthKm + 7.0);
     surf.setRiserLengthM(450.0);
     surf.setNumberOfProductionRisers(1);
-    surf.setExportPipelineLengthKm(35.0);
+    surf.setExportPipelineLengthKm(tiebackLengthKm);
     double surfMusd = surf.calculate() / 1.0e6;
     double hostModificationAndTieInMusd = 550.0;
     double projectAndContingencyMusd = 450.0;
