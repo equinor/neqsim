@@ -683,9 +683,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Configure reuse of the thermodynamic state between adjacent zone flashes.
    *
    * <p>
-   * Reuse is enabled by default. It avoids a fluid clone and a
-   * {@link ThermodynamicOperations} allocation at every zone boundary and also supplies the
-   * previous zone solution as the initial state for the next TP flash. Disable it for
+   * Reuse is enabled by default. It avoids a fluid clone and a {@link ThermodynamicOperations} allocation at every zone
+   * boundary and also supplies the previous zone solution as the initial state for the next TP flash. Disable it for
    * regression comparisons with the independent-zone implementation.
    * </p>
    *
@@ -1177,10 +1176,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       massFlowKgS[i] = inStr.getFlowRate("kg/sec");
 
       SystemInterface baseFluid = inStr.getFluid().clone();
-      SystemInterface reusableZoneFluid =
-          reuseZoneFlashState ? baseFluid.clone() : null;
-      ThermodynamicOperations reusableOperations = reuseZoneFlashState
-          ? new ThermodynamicOperations(reusableZoneFluid)
+      SystemInterface reusableZoneFluid = reuseZoneFlashState ? baseFluid.clone() : null;
+      ThermodynamicOperations reusableOperations = reuseZoneFlashState ? new ThermodynamicOperations(reusableZoneFluid)
           : null;
 
       for (int z = 0; z < nPoints; z++) {
@@ -1191,11 +1188,8 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
           pres = 0.01;
         }
 
-        SystemInterface zoneFluid =
-            reuseZoneFlashState ? reusableZoneFluid : baseFluid.clone();
-        ThermodynamicOperations ops = reuseZoneFlashState
-            ? reusableOperations
-            : new ThermodynamicOperations(zoneFluid);
+        SystemInterface zoneFluid = reuseZoneFlashState ? reusableZoneFluid : baseFluid.clone();
+        ThermodynamicOperations ops = reuseZoneFlashState ? reusableOperations : new ThermodynamicOperations(zoneFluid);
         zoneFluid.setTemperature(temp, "C");
         zoneFluid.setPressure(pres, "bara");
 
@@ -1398,10 +1392,9 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
    * Refine zone fractions near phase boundaries where enthalpy gradient is steep (P4).
    *
    * <p>
-   * Uses a first-pass enthalpy scan on every registered stream to detect zones where
-   * |dH/dT| exceeds {@link #adaptiveThresholdFactor} times that stream's average gradient.
-   * Such zones are bisected to improve resolution near phase transitions on either the
-   * process or refrigerant side.
+   * Uses a first-pass enthalpy scan on every registered stream to detect zones where |dH/dT| exceeds
+   * {@link #adaptiveThresholdFactor} times that stream's average gradient. Such zones are bisected to improve
+   * resolution near phase transitions on either the process or refrigerant side.
    * </p>
    *
    * @param uniformFracs initial uniform fraction list
@@ -1422,25 +1415,19 @@ public class LNGHeatExchanger extends MultiStreamHeatExchanger2 {
       double inletTemperature = getInTemperature(i);
       double outletTemperature = getOutTemperature(i);
       double inletPressure = stream.getPressure("bara");
-      double pressureDrop =
-          i < streamPressureDrops.size() ? streamPressureDrops.get(i) : 0.0;
+      double pressureDrop = i < streamPressureDrops.size() ? streamPressureDrops.get(i) : 0.0;
       SystemInterface baseFluid = stream.getFluid().clone();
-      SystemInterface reusableFluid =
-          reuseZoneFlashState ? baseFluid.clone() : null;
-      ThermodynamicOperations reusableOperations = reuseZoneFlashState
-          ? new ThermodynamicOperations(reusableFluid)
+      SystemInterface reusableFluid = reuseZoneFlashState ? baseFluid.clone() : null;
+      ThermodynamicOperations reusableOperations = reuseZoneFlashState ? new ThermodynamicOperations(reusableFluid)
           : null;
 
       double[] enthalpy = new double[numberOfPoints];
       for (int z = 0; z < numberOfPoints; z++) {
         double fraction = uniformFracs.get(z);
-        double temperature =
-            inletTemperature + fraction * (outletTemperature - inletTemperature);
+        double temperature = inletTemperature + fraction * (outletTemperature - inletTemperature);
         double pressure = Math.max(0.01, inletPressure - fraction * pressureDrop);
-        SystemInterface zoneFluid =
-            reuseZoneFlashState ? reusableFluid : baseFluid.clone();
-        ThermodynamicOperations operations = reuseZoneFlashState
-            ? reusableOperations
+        SystemInterface zoneFluid = reuseZoneFlashState ? reusableFluid : baseFluid.clone();
+        ThermodynamicOperations operations = reuseZoneFlashState ? reusableOperations
             : new ThermodynamicOperations(zoneFluid);
         zoneFluid.setTemperature(temperature, "C");
         zoneFluid.setPressure(pressure, "bara");
