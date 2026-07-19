@@ -12,6 +12,5 @@ public interface FieldProductQualityProvider extends Serializable {
    * @param specifications limits to evaluate
    * @return measured compliance result
    */
-  ProductSpecificationResult evaluate(FieldLifecycleModel model,
-      FieldProductSpecifications specifications);
+  ProductSpecificationResult evaluate(FieldLifecycleModel model, FieldProductSpecifications specifications);
 }

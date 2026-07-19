@@ -119,6 +119,7 @@ class LNGProcessBuilderTest {
     assertFalse(capacity.isAnyEquipmentOverloaded());
     assertNotNull(capacity.getUtilizationSnapshotJson());
     assertNotNull(capacity.getDesignReportJson());
+    assertTrue(capacity.getDesignReportJson().contains("\"sizingDataAvailable\": false"));
   }
 
   @Test
