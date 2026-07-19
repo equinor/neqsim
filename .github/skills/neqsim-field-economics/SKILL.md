@@ -89,6 +89,10 @@ double adjustedCost = baseCost * factors.getCostMultiplier();
 gas volumes directly to `CashFlowEngine("NO")`. `FieldLifecycleResult` exposes after-tax NPV, IRR, payback and
 break-even oil/gas prices together with the technical production, injection, energy and emissions profiles. Use this
 route when economics must reflect process capacity and reservoir response rather than an independent decline curve.
+For a host tieback, only the new field's attributed oil and gas enter project revenue; existing-host production is a
+capacity load, not project revenue. Configure tieback tariff/OPEX and modification CAPEX explicitly. The result's
+holdback, capacity-deferred oil, peak utilization and annual bottleneck fields explain the economic difference between
+standalone greenfield, direct tieback, managed allocation and debottleneck cases.
 
 ### Basic Usage
 

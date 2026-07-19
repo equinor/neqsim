@@ -28,10 +28,21 @@ public final class FieldLifecycleResult implements Serializable {
     private final double averageReservoirPressureBara;
     private final double energyMWh;
     private final double co2EmissionsTonnes;
+    private final double potentialOilRateSm3PerDay;
+    private final double requestedOilRateSm3PerDay;
+    private final double hostOilRateSm3PerDay;
+    private final double hostGasRateSm3PerDay;
+    private final double hostWaterRateSm3PerDay;
+    private final double holdbackOilSm3;
+    private final double capacityDeferredOilSm3;
+    private final double maximumFacilityUtilization;
+    private final String primaryBottleneck;
 
     AnnualResult(int year, double oilSm3, double gasExportSm3, double gasInjectedSm3, double waterProducedSm3,
         double averageOilRateSm3PerDay, double averageWaterCut, double averageReservoirPressureBara, double energyMWh,
-        double co2EmissionsTonnes) {
+        double co2EmissionsTonnes, double potentialOilRateSm3PerDay, double requestedOilRateSm3PerDay,
+        double hostOilRateSm3PerDay, double hostGasRateSm3PerDay, double hostWaterRateSm3PerDay, double holdbackOilSm3,
+        double capacityDeferredOilSm3, double maximumFacilityUtilization, String primaryBottleneck) {
       this.year = year;
       this.oilSm3 = oilSm3;
       this.gasExportSm3 = gasExportSm3;
@@ -42,6 +53,15 @@ public final class FieldLifecycleResult implements Serializable {
       this.averageReservoirPressureBara = averageReservoirPressureBara;
       this.energyMWh = energyMWh;
       this.co2EmissionsTonnes = co2EmissionsTonnes;
+      this.potentialOilRateSm3PerDay = potentialOilRateSm3PerDay;
+      this.requestedOilRateSm3PerDay = requestedOilRateSm3PerDay;
+      this.hostOilRateSm3PerDay = hostOilRateSm3PerDay;
+      this.hostGasRateSm3PerDay = hostGasRateSm3PerDay;
+      this.hostWaterRateSm3PerDay = hostWaterRateSm3PerDay;
+      this.holdbackOilSm3 = holdbackOilSm3;
+      this.capacityDeferredOilSm3 = capacityDeferredOilSm3;
+      this.maximumFacilityUtilization = maximumFacilityUtilization;
+      this.primaryBottleneck = primaryBottleneck;
     }
 
     /** Returns the calendar year. */
@@ -93,6 +113,51 @@ public final class FieldLifecycleResult implements Serializable {
     public double getCo2EmissionsTonnes() {
       return co2EmissionsTonnes;
     }
+
+    /** Returns average unconstrained new-field oil potential in Sm3/day. */
+    public double getPotentialOilRateSm3PerDay() {
+      return potentialOilRateSm3PerDay;
+    }
+
+    /** Returns average new-field oil requested after planned holdback in Sm3/day. */
+    public double getRequestedOilRateSm3PerDay() {
+      return requestedOilRateSm3PerDay;
+    }
+
+    /** Returns average admitted existing-host oil in Sm3/day. */
+    public double getHostOilRateSm3PerDay() {
+      return hostOilRateSm3PerDay;
+    }
+
+    /** Returns average admitted existing-host gas in Sm3/day. */
+    public double getHostGasRateSm3PerDay() {
+      return hostGasRateSm3PerDay;
+    }
+
+    /** Returns average admitted existing-host water in Sm3/day. */
+    public double getHostWaterRateSm3PerDay() {
+      return hostWaterRateSm3PerDay;
+    }
+
+    /** Returns annual new-field oil deliberately held back before allocation in Sm3. */
+    public double getHoldbackOilSm3() {
+      return holdbackOilSm3;
+    }
+
+    /** Returns annual requested new-field oil deferred by nameplate or equipment constraints in Sm3. */
+    public double getCapacityDeferredOilSm3() {
+      return capacityDeferredOilSm3;
+    }
+
+    /** Returns the maximum nameplate or detailed-equipment utilization during the year. */
+    public double getMaximumFacilityUtilization() {
+      return maximumFacilityUtilization;
+    }
+
+    /** Returns the highest-utilization facility or equipment bottleneck in the year. */
+    public String getPrimaryBottleneck() {
+      return primaryBottleneck;
+    }
   }
 
   private final String conceptName;
@@ -109,12 +174,16 @@ public final class FieldLifecycleResult implements Serializable {
   private final double lifecycleEnergyMWh;
   private final double lifecycleCo2Tonnes;
   private final String stopReason;
+  private final FacilityDesignResult facilityDesignResult;
+  private final double cumulativeDeferredOilSm3;
+  private final double peakFacilityUtilization;
 
   FieldLifecycleResult(String conceptName, List<AnnualResult> annualResults, CashFlowResult cashFlowResult,
       double breakevenOilPriceUsdPerBbl, double breakevenGasPriceUsdPerSm3, double initialReservoirPressureBara,
       double finalReservoirPressureBara, double cumulativeOilSm3, double cumulativeGasExportSm3,
       double cumulativeGasInjectedSm3, double cumulativeWaterProducedSm3, double lifecycleEnergyMWh,
-      double lifecycleCo2Tonnes, String stopReason) {
+      double lifecycleCo2Tonnes, String stopReason, FacilityDesignResult facilityDesignResult,
+      double cumulativeDeferredOilSm3, double peakFacilityUtilization) {
     this.conceptName = conceptName;
     this.annualResults = Collections.unmodifiableList(new ArrayList<AnnualResult>(annualResults));
     this.cashFlowResult = cashFlowResult;
@@ -129,6 +198,9 @@ public final class FieldLifecycleResult implements Serializable {
     this.lifecycleEnergyMWh = lifecycleEnergyMWh;
     this.lifecycleCo2Tonnes = lifecycleCo2Tonnes;
     this.stopReason = stopReason;
+    this.facilityDesignResult = facilityDesignResult;
+    this.cumulativeDeferredOilSm3 = cumulativeDeferredOilSm3;
+    this.peakFacilityUtilization = peakFacilityUtilization;
   }
 
   /** Returns the evaluated concept name. */
@@ -216,14 +288,30 @@ public final class FieldLifecycleResult implements Serializable {
     return stopReason;
   }
 
+  /** Returns greenfield sizing or brownfield nameplate/design information, or null for a legacy run. */
+  public FacilityDesignResult getFacilityDesignResult() {
+    return facilityDesignResult;
+  }
+
+  /** Returns cumulative new-field oil deferred by holdback and facility constraints in Sm3. */
+  public double getCumulativeDeferredOilSm3() {
+    return cumulativeDeferredOilSm3;
+  }
+
+  /** Returns peak lifecycle facility/equipment utilization as a fraction. */
+  public double getPeakFacilityUtilization() {
+    return peakFacilityUtilization;
+  }
+
   /**
    * Returns a compact comparison table row.
    *
    * @return Markdown table row
    */
   public String toMarkdownRow() {
-    return String.format("| %s | %.0f | %.1f | %.1f | %.1f | %.1f | %.1f |", conceptName, getNpvMusd(),
-        getIrr() * 100.0, breakevenOilPriceUsdPerBbl, cumulativeOilSm3 / 1.0e6, cumulativeGasInjectedSm3 / 1.0e9,
+    return String.format("| %s | %.0f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f |", conceptName,
+        getNpvMusd(), getIrr() * 100.0, breakevenOilPriceUsdPerBbl, cumulativeOilSm3 / 1.0e6,
+        cumulativeDeferredOilSm3 / 1.0e6, peakFacilityUtilization * 100.0, cumulativeGasInjectedSm3 / 1.0e9,
         lifecycleCo2Tonnes / 1000.0);
   }
 }

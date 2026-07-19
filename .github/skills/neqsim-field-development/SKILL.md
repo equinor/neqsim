@@ -124,13 +124,24 @@ processing capacity, gas injection and economics must share one time-dependent s
 
 ```java
 FieldLifecycleEvaluator evaluator = new FieldLifecycleEvaluator();
-List<FieldLifecycleResult> ranked = evaluator.evaluateAll(Arrays.asList(
-    NorwegianOilFieldCase.createGasInjectionCase(),
-    NorwegianOilFieldCase.createNaturalDepletionCase()));
+List<FieldLifecycleResult> ranked = evaluator.evaluateAll(
+    NorwegianOilFieldCase.createDevelopmentPortfolio());
 ```
 
 `FieldLifecycleModel` accepts a normal user-built `ProcessSystem`, so screening concepts can be refined without
 replacing the lifecycle/economic interface. Each concept must own an independent mutable reservoir/process model.
+Use `FacilityLifecycleStrategy.greenfield(...)` to auto-size a new detailed processing facility from design cases. Use
+`FacilityLifecycleStrategy.tieback(...)` with the existing `HostFacility`, `ProductionProfileSeries`,
+`CapacityAllocationPolicy`, and `HoldbackPolicy` types for a producing-host tieback. Connect the model's optional host
+oil/gas/water feeds to the real shared process so annual `FieldLifecycleResult` records host load, admitted satellite
+rate, deliberate holdback, capacity-deferred oil, facility/equipment utilization and the primary bottleneck.
+Set `FieldLifecycleModel.setProductionPotentialProvider(...)` when a detailed NeqSim well/network model or imported
+reservoir schedule should replace the reference aggregate PI/water-cut potential calculation.
+
+For brownfield studies, preserve actual equipment limits (`autoSizeDetailedProcess(false)`). For greenfield studies,
+run the process at the simultaneous design case, auto-size equipment with the selected design margin, and use explicit
+oil/gas/water/liquid nameplates for non-coincident component peak cases. Put any debottleneck capacity change in
+`capacityFromYear(...)` and its CAPEX in `FieldLifecycleConfiguration`.
 See `docs/fielddevelopment/FIELD_LIFECYCLE_SIMULATION.md` for the connection points and fidelity boundaries.
 
 ---

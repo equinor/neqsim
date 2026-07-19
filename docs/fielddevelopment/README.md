@@ -111,7 +111,9 @@ neqsim.process.fielddevelopment/
 │   └── FacilityBuilder
 ├── lifecycle/         # Executable reservoir-to-market lifetime concepts
 │   ├── FieldLifecycleSimulator
-│   └── NorwegianOilFieldCase
+│   ├── FacilityLifecycleStrategy
+│   ├── FacilityCapacityAllocator
+│   └── NorwegianOilFieldCase (greenfield + producing-host tieback portfolio)
 ├── network/           # Pipeline network
 │   ├── MultiphaseFlowIntegrator
 │   └── NetworkSolver
@@ -272,7 +274,7 @@ See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT) for detailed
 
 | Topic | Document |
 |-------|----------|
-| Integrated Field Lifecycle Simulation | [FIELD_LIFECYCLE_SIMULATION.md](FIELD_LIFECYCLE_SIMULATION) |
+| Integrated Field Lifecycle Simulation | [FIELD_LIFECYCLE_SIMULATION.md](FIELD_LIFECYCLE_SIMULATION) — detailed wells/SURF/process lifetime, greenfield sizing, brownfield host allocation, bottlenecks, NPV and break-even |
 | SURF Subsea Equipment | [SURF_SUBSEA_EQUIPMENT.md](../process/SURF_SUBSEA_EQUIPMENT) |
 | Late-Life Operations | [LATE_LIFE_OPERATIONS.md](LATE_LIFE_OPERATIONS) |
 | Field Development Strategy | [FIELD_DEVELOPMENT_STRATEGY.md](FIELD_DEVELOPMENT_STRATEGY) |

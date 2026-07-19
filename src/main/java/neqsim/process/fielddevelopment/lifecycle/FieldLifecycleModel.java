@@ -32,6 +32,10 @@ public final class FieldLifecycleModel implements Serializable {
   private final StreamInterface stabilizedOilExport;
   private final StreamInterface gasExport;
   private final StreamInterface compressedInjectionGas;
+  private final StreamInterface hostOilFeed;
+  private final StreamInterface hostGasFeed;
+  private final StreamInterface hostWaterFeed;
+  private FieldProductionPotentialProvider productionPotentialProvider;
 
   /**
    * Creates an assembled lifecycle model.
@@ -52,6 +56,39 @@ public final class FieldLifecycleModel implements Serializable {
       StreamInterface reservoirOilProducer, StreamInterface reservoirWaterProducer,
       StreamInterface reservoirGasInjector, StreamInterface recoveredGas, Splitter gasAllocationSplitter,
       StreamInterface stabilizedOilExport, StreamInterface gasExport, StreamInterface compressedInjectionGas) {
+    this(name, reservoir, processSystem, reservoirOilProducer, reservoirWaterProducer, reservoirGasInjector,
+        recoveredGas, gasAllocationSplitter, stabilizedOilExport, gasExport, compressedInjectionGas, null, null, null);
+  }
+
+  /**
+   * Creates an assembled lifecycle model with explicit existing-host feed streams for tieback studies.
+   *
+   * <p>
+   * The detailed {@code ProcessSystem} should mix these streams with the new-field SURF arrival stream upstream of
+   * shared processing equipment. The lifecycle simulator updates all three host rates every year before solving the
+   * combined process.
+   * </p>
+   *
+   * @param name model/concept name
+   * @param reservoir reservoir material-balance model
+   * @param processSystem wells, SURF and shared-facility process model
+   * @param reservoirOilProducer new-field oil producer stream
+   * @param reservoirWaterProducer new-field water producer stream
+   * @param reservoirGasInjector new-field gas injector stream
+   * @param recoveredGas combined recovered gas upstream of allocation
+   * @param gasAllocationSplitter gas export/injection splitter
+   * @param stabilizedOilExport combined stabilized-oil product stream
+   * @param gasExport combined sales-gas stream
+   * @param compressedInjectionGas compressed injection-gas stream
+   * @param hostOilFeed existing-host oil feed, or null for greenfield
+   * @param hostGasFeed existing-host free-gas feed, or null for greenfield
+   * @param hostWaterFeed existing-host water feed, or null for greenfield
+   */
+  public FieldLifecycleModel(String name, SimpleReservoir reservoir, ProcessSystem processSystem,
+      StreamInterface reservoirOilProducer, StreamInterface reservoirWaterProducer,
+      StreamInterface reservoirGasInjector, StreamInterface recoveredGas, Splitter gasAllocationSplitter,
+      StreamInterface stabilizedOilExport, StreamInterface gasExport, StreamInterface compressedInjectionGas,
+      StreamInterface hostOilFeed, StreamInterface hostGasFeed, StreamInterface hostWaterFeed) {
     this.name = require(name, "name");
     this.reservoir = require(reservoir, "reservoir");
     this.processSystem = require(processSystem, "processSystem");
@@ -63,6 +100,9 @@ public final class FieldLifecycleModel implements Serializable {
     this.stabilizedOilExport = require(stabilizedOilExport, "stabilizedOilExport");
     this.gasExport = require(gasExport, "gasExport");
     this.compressedInjectionGas = require(compressedInjectionGas, "compressedInjectionGas");
+    this.hostOilFeed = hostOilFeed;
+    this.hostGasFeed = hostGasFeed;
+    this.hostWaterFeed = hostWaterFeed;
   }
 
   private static <T> T require(T value, String name) {
@@ -125,5 +165,41 @@ public final class FieldLifecycleModel implements Serializable {
   /** Returns the gas stream downstream of injection compression. */
   public StreamInterface getCompressedInjectionGas() {
     return compressedInjectionGas;
+  }
+
+  /** Returns true when the detailed process exposes all existing-host feed streams. */
+  public boolean hasHostProductionFeeds() {
+    return hostOilFeed != null && hostGasFeed != null && hostWaterFeed != null;
+  }
+
+  /** Returns the existing-host oil feed, or null for a greenfield model. */
+  public StreamInterface getHostOilFeed() {
+    return hostOilFeed;
+  }
+
+  /** Returns the existing-host free-gas feed, or null for a greenfield model. */
+  public StreamInterface getHostGasFeed() {
+    return hostGasFeed;
+  }
+
+  /** Returns the existing-host water feed, or null for a greenfield model. */
+  public StreamInterface getHostWaterFeed() {
+    return hostWaterFeed;
+  }
+
+  /**
+   * Sets an optional detailed-well, network, reservoir-schedule or surrogate production-potential provider.
+   *
+   * @param provider provider to use instead of the default linear PI/water-cut calculation
+   * @return this model
+   */
+  public FieldLifecycleModel setProductionPotentialProvider(FieldProductionPotentialProvider provider) {
+    productionPotentialProvider = provider;
+    return this;
+  }
+
+  /** Returns the optional custom production-potential provider. */
+  public FieldProductionPotentialProvider getProductionPotentialProvider() {
+    return productionPotentialProvider;
   }
 }

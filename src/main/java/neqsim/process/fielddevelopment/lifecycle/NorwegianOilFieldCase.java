@@ -1,5 +1,7 @@
 package neqsim.process.fielddevelopment.lifecycle;
 
+import java.util.Arrays;
+import java.util.List;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.mixer.Mixer;
@@ -8,6 +10,7 @@ import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.reservoir.SimpleReservoir;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.process.equipment.splitter.Splitter;
+import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.fielddevelopment.concept.FieldConcept;
@@ -16,12 +19,18 @@ import neqsim.process.fielddevelopment.concept.ReservoirInput;
 import neqsim.process.fielddevelopment.concept.WellsInput;
 import neqsim.process.fielddevelopment.reservoir.InjectionWellModel;
 import neqsim.process.fielddevelopment.reservoir.InjectionWellModel.InjectionType;
+import neqsim.process.fielddevelopment.tieback.HostFacility;
+import neqsim.process.fielddevelopment.tieback.HostFacility.FacilityType;
+import neqsim.process.fielddevelopment.tieback.capacity.CapacityAllocationPolicy;
+import neqsim.process.fielddevelopment.tieback.capacity.ProductionLoad;
+import neqsim.process.fielddevelopment.tieback.capacity.ProductionProfileSeries;
 import neqsim.process.mechanicaldesign.subsea.SURFCostEstimator;
 import neqsim.process.mechanicaldesign.subsea.SubseaCostEstimator;
 import neqsim.process.mechanicaldesign.subsea.WellCostEstimator;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Reference Norwegian Continental Shelf oil development for lifecycle concept studies.
@@ -68,21 +77,80 @@ public final class NorwegianOilFieldCase {
    * @return executable field concept
    */
   public static FieldLifecycleConcept createCase(String name, double recycleFraction, double maximumInjectionRateSm3d) {
+    return createCase(name, recycleFraction, maximumInjectionRateSm3d, 25.0);
+  }
+
+  static FieldLifecycleConcept createCase(String name, double recycleFraction, double maximumInjectionRateSm3d,
+      double projectYears) {
     FieldConcept fieldConcept = createScreeningConcept(name);
-    FieldLifecycleModel model = createModel(name);
+    boolean includeGasInjectionTrain = recycleFraction > 0.0 && maximumInjectionRateSm3d > 0.0;
+    FieldLifecycleModel model = createModel(name, 12.0, false, includeGasInjectionTrain);
     double injectionWellCapacity = estimateGasInjectionCapacity();
     double gasInjectionCapacity = Math.min(maximumInjectionRateSm3d, injectionWellCapacity);
     double totalCapexMusd = estimateDevelopmentCapexMusd();
     int firstOilYear = 2029;
+    FacilityLifecycleStrategy facilityStrategy = FacilityLifecycleStrategy
+        .greenfield("New-build FPSO processing facility", new FacilityProductionRate(23000.0, 4.5e6, 1000.0))
+        .nameplateCapacity(new FacilityCapacity(26450.0, 5.5e6, 32000.0, 52000.0, 0.0)).designMargin(1.15)
+        .maximumDetailedProcessUtilization(1.0).autoSizeDetailedProcess(true).build();
 
     FieldLifecycleConfiguration configuration = FieldLifecycleConfiguration.builder().startYear(firstOilYear)
-        .projectYears(25.0).timeStepDays(365.25).availability(0.92).producers(PRODUCERS, 55.0)
+        .projectYears(projectYears).timeStepDays(365.25).availability(0.92).producers(PRODUCERS, 55.0)
         .minimumBottomHolePressure(250.0).plateauOilRate(23000.0).facilityCapacities(42000.0, 5.5e6, 28000.0)
         .economicLimitOilRate(600.0).waterCut(0.04, 0.78, 3.0, 15.0).standardDensities(835.0, 1025.0)
         .gasInjection(0.0, recycleFraction, gasInjectionCapacity).gridEmissionFactor(0.018).prices(75.0, 0.28)
         .discountRate(0.08).opex(135.0, 8.5).tariffs(2.0, 0.015).capex(firstOilYear - 3, totalCapexMusd * 0.20)
-        .capex(firstOilYear - 2, totalCapexMusd * 0.50).capex(firstOilYear - 1, totalCapexMusd * 0.30).build();
+        .capex(firstOilYear - 2, totalCapexMusd * 0.50).capex(firstOilYear - 1, totalCapexMusd * 0.30)
+        .facilityLifecycleStrategy(facilityStrategy).build();
 
+    return new FieldLifecycleConcept(fieldConcept, model, configuration);
+  }
+
+  /** Creates a direct host-priority tieback to an existing NCS processing facility. */
+  public static FieldLifecycleConcept createHostPriorityTiebackCase() {
+    return createTiebackCase("NCS oil tieback - host priority", CapacityAllocationPolicy.BASE_FIRST, 0.0, 0.0, 25.0);
+  }
+
+  /** Creates a managed tieback with proportional allocation and planned host/satellite holdback. */
+  public static FieldLifecycleConcept createManagedTiebackCase() {
+    return createTiebackCase("NCS oil tieback - managed capacity", CapacityAllocationPolicy.PRO_RATA, 0.05, 0.10,
+        25.0);
+  }
+
+  /** Returns greenfield, depletion, direct tieback and managed tieback concepts ready for consistent ranking. */
+  public static List<FieldLifecycleConcept> createDevelopmentPortfolio() {
+    return Arrays.asList(createGasInjectionCase(), createNaturalDepletionCase(), createHostPriorityTiebackCase(),
+        createManagedTiebackCase());
+  }
+
+  static FieldLifecycleConcept createTiebackCase(String name, CapacityAllocationPolicy policy, double hostHoldback,
+      double satelliteHoldback, double projectYears) {
+    int firstOilYear = 2029;
+    FieldConcept fieldConcept = createTiebackScreeningConcept(name);
+    FieldLifecycleModel model = createModel(name, 35.0, true, false);
+    HostFacility host = HostFacility.builder("Existing NCS host").operator("Reference operator")
+        .type(FacilityType.PLATFORM).waterDepth(140.0).oilCapacity(150000.0).gasCapacity(7.0)
+        .waterCapacity(32000.0).liquidCapacity(52000.0).minTieInPressure(45.0).maxTieInPressure(90.0)
+        .processSystem(model.getProcessSystem()).build();
+    ProductionProfileSeries hostProfile = new ProductionProfileSeries("existing host production")
+        .addPeriod(2029, 3.2, oilSm3dToBopd(16000.0), 14000.0, 0.0)
+        .addPeriod(2034, 2.4, oilSm3dToBopd(12500.0), 19000.0, 0.0)
+        .addPeriod(2039, 1.4, oilSm3dToBopd(7500.0), 22000.0, 0.0)
+        .addPeriod(2049, 0.45, oilSm3dToBopd(2200.0), 15500.0, 0.0);
+    FacilityLifecycleStrategy facilityStrategy = FacilityLifecycleStrategy.tieback("Existing host shared processing",
+        host, hostProfile).allocationPolicy(policy).holdback(hostHoldback, satelliteHoldback)
+        .designMargin(1.10).maximumDetailedProcessUtilization(1.0).autoSizeDetailedProcess(false)
+        .useDetailedProcessConstraints(false).build();
+    double capexMusd = estimateTiebackCapexMusd();
+
+    FieldLifecycleConfiguration configuration = FieldLifecycleConfiguration.builder().startYear(firstOilYear)
+        .projectYears(projectYears).timeStepDays(365.25).availability(0.92).producers(PRODUCERS, 55.0)
+        .minimumBottomHolePressure(250.0).plateauOilRate(23000.0).facilityCapacities(52000.0, 7.0e6, 32000.0)
+        .economicLimitOilRate(600.0).waterCut(0.04, 0.78, 3.0, 15.0).standardDensities(835.0, 1025.0)
+        .gasInjection(0.0, 0.0, 0.0).gridEmissionFactor(0.018).prices(75.0, 0.28).discountRate(0.08)
+        .opex(65.0, 10.5).tariffs(6.5, 0.025).capex(firstOilYear - 3, capexMusd * 0.15)
+        .capex(firstOilYear - 2, capexMusd * 0.50).capex(firstOilYear - 1, capexMusd * 0.35)
+        .facilityLifecycleStrategy(facilityStrategy).build();
     return new FieldLifecycleConcept(fieldConcept, model, configuration);
   }
 
@@ -101,7 +169,23 @@ public final class NorwegianOilFieldCase {
         .reservoir(reservoir).wells(wells).infrastructure(infrastructure).build();
   }
 
-  private static FieldLifecycleModel createModel(String name) {
+  private static FieldConcept createTiebackScreeningConcept(String name) {
+    ReservoirInput reservoir = ReservoirInput.blackOil().gor(180.0, "Sm3/Sm3").waterCut(0.04)
+        .reservoirPressure(330.0).reservoirTemperature(90.0).apiGravity(34.0)
+        .resourceUncertainty(550.0, 700.0, 850.0, "MMbbl").recoveryFactor(0.40).build();
+    WellsInput wells = WellsInput.builder().producerCount(PRODUCERS).injectorCount(0).tubeheadPressure(85.0)
+        .ratePerWell(23000.0 / PRODUCERS, "Sm3/day").productivityIndex(55.0).build();
+    InfrastructureInput infrastructure = InfrastructureInput.builder()
+        .processingLocation(InfrastructureInput.ProcessingLocation.HOST_PLATFORM).waterDepth(WATER_DEPTH_M)
+        .tiebackLength(35.0).exportType(InfrastructureInput.ExportType.STABILIZED_OIL)
+        .powerSupply(InfrastructureInput.PowerSupply.POWER_FROM_HOST).exportPressure(180.0).build();
+    return FieldConcept.builder(name)
+        .description("Synthetic NCS satellite tied through detailed 35 km SURF to a producing host facility")
+        .reservoir(reservoir).wells(wells).infrastructure(infrastructure).build();
+  }
+
+  private static FieldLifecycleModel createModel(String name, double tiebackLengthKm, boolean includeHostFeeds,
+      boolean includeGasInjectionTrain) {
     SystemInterface reservoirFluid = createReservoirFluid();
     SimpleReservoir reservoir = new SimpleReservoir(name + " reservoir");
     reservoir.setReservoirFluid(reservoirFluid, 45.0e6, 180.0e6, 90.0e6);
@@ -125,13 +209,34 @@ public final class NorwegianOilFieldCase {
 
     PipeBeggsAndBrills productionFlowline = new PipeBeggsAndBrills("Production flowline",
         aggregateTubing.getOutletStream());
-    productionFlowline.setLength(12000.0);
+    productionFlowline.setLength(tiebackLengthKm * 1000.0);
     productionFlowline.setElevation(WATER_DEPTH_M);
     productionFlowline.setDiameter(0.356);
     productionFlowline.setPipeWallRoughness(1.5e-5);
     productionFlowline.setNumberOfIncrements(5);
 
-    ThrottlingValve inletChoke = new ThrottlingValve("FPSO inlet choke", productionFlowline.getOutletStream());
+    StreamInterface hostOilFeed = null;
+    StreamInterface hostGasFeed = null;
+    StreamInterface hostWaterFeed = null;
+    Mixer facilityInletMixer = new Mixer("Shared facility inlet mixer");
+    facilityInletMixer.addStream(productionFlowline.getOutletStream());
+    if (includeHostFeeds) {
+      SystemInterface hostFluid = createReservoirFluid();
+      hostFluid.setPressure(55.0, "bara");
+      hostFluid.setTemperature(50.0, "C");
+      new ThermodynamicOperations(hostFluid).TPflash();
+      hostOilFeed = new Stream("Existing host oil feed", hostFluid.phaseToSystem("oil"));
+      hostGasFeed = new Stream("Existing host gas feed", hostFluid.phaseToSystem("gas"));
+      hostWaterFeed = new Stream("Existing host water feed", hostFluid.phaseToSystem("aqueous"));
+      hostOilFeed.setFlowRate(1.0e-12, "kg/sec");
+      hostGasFeed.setFlowRate(1.0e-12, "kg/sec");
+      hostWaterFeed.setFlowRate(1.0e-12, "kg/sec");
+      facilityInletMixer.addStream(hostOilFeed);
+      facilityInletMixer.addStream(hostGasFeed);
+      facilityInletMixer.addStream(hostWaterFeed);
+    }
+
+    ThrottlingValve inletChoke = new ThrottlingValve("Facility inlet choke", facilityInletMixer.getOutletStream());
     inletChoke.setOutletPressure(55.0, "bara");
     ThreePhaseSeparator hpSeparator = new ThreePhaseSeparator("HP separator", inletChoke.getOutletStream());
 
@@ -152,7 +257,8 @@ public final class NorwegianOilFieldCase {
     recoveredGasMixer.addStream(lpGasCooler.getOutletStream());
     Splitter gasAllocation = new Splitter("Gas export and injection allocation", recoveredGasMixer.getOutletStream(),
         2);
-    gasAllocation.setSplitFactors(new double[] { 0.15, 0.85 });
+    gasAllocation.setSplitFactors(includeGasInjectionTrain ? new double[] { 0.15, 0.85 }
+        : new double[] { 1.0, 0.0 });
 
     Compressor gasExportCompressor = new Compressor("Gas export compressor", gasAllocation.getSplitStream(0));
     gasExportCompressor.setOutletPressure(180.0, "bara");
@@ -160,17 +266,26 @@ public final class NorwegianOilFieldCase {
     Cooler gasExportCooler = new Cooler("Gas export cooler", gasExportCompressor.getOutletStream());
     gasExportCooler.setOutletTemperature(273.15 + 35.0);
 
-    Compressor injectionStageOne = new Compressor("Gas injection compressor stage 1", gasAllocation.getSplitStream(1));
-    injectionStageOne.setOutletPressure(135.0, "bara");
-    injectionStageOne.setPolytropicEfficiency(0.78);
-    Cooler injectionIntercooler = new Cooler("Gas injection intercooler", injectionStageOne.getOutletStream());
-    injectionIntercooler.setOutletTemperature(273.15 + 35.0);
-    Compressor injectionStageTwo = new Compressor("Gas injection compressor stage 2",
-        injectionIntercooler.getOutletStream());
-    injectionStageTwo.setOutletPressure(350.0, "bara");
-    injectionStageTwo.setPolytropicEfficiency(0.78);
-    Cooler injectionAftercooler = new Cooler("Gas injection aftercooler", injectionStageTwo.getOutletStream());
-    injectionAftercooler.setOutletTemperature(273.15 + 35.0);
+    Compressor injectionStageOne = null;
+    Cooler injectionIntercooler = null;
+    Compressor injectionStageTwo = null;
+    Cooler injectionAftercooler = null;
+    StreamInterface compressedInjectionGas = gasAllocation.getSplitStream(1);
+    if (includeGasInjectionTrain) {
+      injectionStageOne =
+          new Compressor("Gas injection compressor stage 1", gasAllocation.getSplitStream(1));
+      injectionStageOne.setOutletPressure(135.0, "bara");
+      injectionStageOne.setPolytropicEfficiency(0.78);
+      injectionIntercooler = new Cooler("Gas injection intercooler", injectionStageOne.getOutletStream());
+      injectionIntercooler.setOutletTemperature(273.15 + 35.0);
+      injectionStageTwo = new Compressor("Gas injection compressor stage 2",
+          injectionIntercooler.getOutletStream());
+      injectionStageTwo.setOutletPressure(350.0, "bara");
+      injectionStageTwo.setPolytropicEfficiency(0.78);
+      injectionAftercooler = new Cooler("Gas injection aftercooler", injectionStageTwo.getOutletStream());
+      injectionAftercooler.setOutletTemperature(273.15 + 35.0);
+      compressedInjectionGas = injectionAftercooler.getOutletStream();
+    }
 
     ProcessSystem process = new ProcessSystem();
     process.setName(name + " reservoir-to-export process");
@@ -178,6 +293,12 @@ public final class NorwegianOilFieldCase {
     process.add(wellstreamMixer);
     process.add(aggregateTubing);
     process.add(productionFlowline);
+    if (includeHostFeeds) {
+      process.add(hostOilFeed);
+      process.add(hostGasFeed);
+      process.add(hostWaterFeed);
+    }
+    process.add(facilityInletMixer);
     process.add(inletChoke);
     process.add(hpSeparator);
     process.add(lpValve);
@@ -189,14 +310,16 @@ public final class NorwegianOilFieldCase {
     process.add(gasAllocation);
     process.add(gasExportCompressor);
     process.add(gasExportCooler);
-    process.add(injectionStageOne);
-    process.add(injectionIntercooler);
-    process.add(injectionStageTwo);
-    process.add(injectionAftercooler);
+    if (includeGasInjectionTrain) {
+      process.add(injectionStageOne);
+      process.add(injectionIntercooler);
+      process.add(injectionStageTwo);
+      process.add(injectionAftercooler);
+    }
 
     return new FieldLifecycleModel(name, reservoir, process, oilProducer, waterProducer, reservoirGasInjector,
         recoveredGasMixer.getOutletStream(), gasAllocation, oilExportPump.getOutletStream(),
-        gasExportCooler.getOutletStream(), injectionAftercooler.getOutletStream());
+        gasExportCooler.getOutletStream(), compressedInjectionGas, hostOilFeed, hostGasFeed, hostWaterFeed);
   }
 
   /** Creates the compositional PVT model used by the reference case. */
@@ -253,5 +376,27 @@ public final class NorwegianOilFieldCase {
     double gasInjectionAndExportMusd = 650.0;
     double projectAndContingencyMusd = 900.0;
     return wellsMusd + surfMusd + fpsoAndTopsidesMusd + gasInjectionAndExportMusd + projectAndContingencyMusd;
+  }
+
+  private static double estimateTiebackCapexMusd() {
+    WellCostEstimator producerCost = new WellCostEstimator(SubseaCostEstimator.Region.NORWAY);
+    producerCost.calculateWellCost("OIL_PRODUCER", "SEMI_SUBMERSIBLE", "SMART_COMPLETION", 3600.0, WATER_DEPTH_M, 75.0,
+        35.0, 0.0, true, 5);
+    double wellsMusd = PRODUCERS * producerCost.getTotalCost() / 1.0e6;
+    SURFCostEstimator surf = new SURFCostEstimator(PRODUCERS, WATER_DEPTH_M, SubseaCostEstimator.Region.NORWAY);
+    surf.setInfieldFlowlineLengthKm(36.0);
+    surf.setInfieldFlowlineDiameterInches(12.0);
+    surf.setUmbilicalLengthKm(42.0);
+    surf.setRiserLengthM(450.0);
+    surf.setNumberOfProductionRisers(1);
+    surf.setExportPipelineLengthKm(35.0);
+    double surfMusd = surf.calculate() / 1.0e6;
+    double hostModificationAndTieInMusd = 550.0;
+    double projectAndContingencyMusd = 450.0;
+    return wellsMusd + surfMusd + hostModificationAndTieInMusd + projectAndContingencyMusd;
+  }
+
+  private static double oilSm3dToBopd(double oilSm3PerDay) {
+    return oilSm3PerDay / ProductionLoad.BARREL_TO_M3;
   }
 }
