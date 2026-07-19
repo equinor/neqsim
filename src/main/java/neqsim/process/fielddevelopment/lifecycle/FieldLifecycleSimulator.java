@@ -640,8 +640,8 @@ public class FieldLifecycleSimulator {
     } else {
       finitePower = sumFiniteProcessPower(model.getProcessSystem(), unit);
     }
-    logger.warn("Process {} reported non-finite total power; using {} {} from finite equipment duties",
-        model.getName(), finitePower, unit);
+    logger.warn("Process {} reported non-finite total power; using {} {} from finite equipment duties", model.getName(),
+        finitePower, unit);
     return finitePower;
   }
 
