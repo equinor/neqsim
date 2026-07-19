@@ -131,11 +131,9 @@ public final class FieldProductSpecifications implements Serializable {
   /** Returns whether at least one quality or discharge limit is active. */
   public boolean hasActiveLimits() {
     return Double.isFinite(maximumGasCo2MolePercent) || Double.isFinite(maximumGasH2sPpm)
-        || Double.isFinite(maximumGasOxygenMolePercent)
-        || Double.isFinite(maximumGasWaterDewPointC) || Double.isFinite(maximumGasHydrocarbonDewPointC)
-        || Double.isFinite(minimumGasGrossCalorificValueMjPerSm3)
-        || Double.isFinite(maximumGasGrossCalorificValueMjPerSm3)
-        || Double.isFinite(minimumGasWobbeIndexMjPerSm3)
+        || Double.isFinite(maximumGasOxygenMolePercent) || Double.isFinite(maximumGasWaterDewPointC)
+        || Double.isFinite(maximumGasHydrocarbonDewPointC) || Double.isFinite(minimumGasGrossCalorificValueMjPerSm3)
+        || Double.isFinite(maximumGasGrossCalorificValueMjPerSm3) || Double.isFinite(minimumGasWobbeIndexMjPerSm3)
         || Double.isFinite(maximumGasWobbeIndexMjPerSm3) || Double.isFinite(maximumGasRelativeDensity)
         || Double.isFinite(maximumOilRvpBara) || Double.isFinite(maximumOilBswVolumePercent)
         || Double.isFinite(maximumOilInWaterMgPerL);
@@ -171,8 +169,7 @@ public final class FieldProductSpecifications implements Serializable {
 
     /** Sets the export-gas oxygen maximum in mole percent. */
     public Builder gasOxygen(double maximumOxygenMolePercent) {
-      maximumGasOxygenMolePercent = nonNegative(maximumOxygenMolePercent,
-          "maximumOxygenMolePercent");
+      maximumGasOxygenMolePercent = nonNegative(maximumOxygenMolePercent, "maximumOxygenMolePercent");
       return this;
     }
 
@@ -184,8 +181,7 @@ public final class FieldProductSpecifications implements Serializable {
       }
       gasDewPointReferencePressureBara = referencePressureBara;
       maximumGasWaterDewPointC = finite(maximumWaterDewPointC, "maximumWaterDewPointC");
-      maximumGasHydrocarbonDewPointC = finite(maximumHydrocarbonDewPointC,
-          "maximumHydrocarbonDewPointC");
+      maximumGasHydrocarbonDewPointC = finite(maximumHydrocarbonDewPointC, "maximumHydrocarbonDewPointC");
       return this;
     }
 
@@ -193,16 +189,14 @@ public final class FieldProductSpecifications implements Serializable {
      * Sets ISO 6976 gas energy-content limits at 15 C volume and 25 C combustion reference temperatures.
      */
     public Builder gasEnergyContent(double minimumGrossCalorificValueMjPerSm3,
-        double maximumGrossCalorificValueMjPerSm3, double minimumWobbeIndexMjPerSm3,
-        double maximumWobbeIndexMjPerSm3, double maximumRelativeDensity) {
+        double maximumGrossCalorificValueMjPerSm3, double minimumWobbeIndexMjPerSm3, double maximumWobbeIndexMjPerSm3,
+        double maximumRelativeDensity) {
       minimumGasGrossCalorificValueMjPerSm3 = positive(minimumGrossCalorificValueMjPerSm3,
           "minimumGrossCalorificValueMjPerSm3");
       maximumGasGrossCalorificValueMjPerSm3 = positive(maximumGrossCalorificValueMjPerSm3,
           "maximumGrossCalorificValueMjPerSm3");
-      minimumGasWobbeIndexMjPerSm3 = positive(minimumWobbeIndexMjPerSm3,
-          "minimumWobbeIndexMjPerSm3");
-      maximumGasWobbeIndexMjPerSm3 = positive(maximumWobbeIndexMjPerSm3,
-          "maximumWobbeIndexMjPerSm3");
+      minimumGasWobbeIndexMjPerSm3 = positive(minimumWobbeIndexMjPerSm3, "minimumWobbeIndexMjPerSm3");
+      maximumGasWobbeIndexMjPerSm3 = positive(maximumWobbeIndexMjPerSm3, "maximumWobbeIndexMjPerSm3");
       this.maximumGasRelativeDensity = positive(maximumRelativeDensity, "maximumRelativeDensity");
       if (minimumGasGrossCalorificValueMjPerSm3 > maximumGasGrossCalorificValueMjPerSm3
           || minimumGasWobbeIndexMjPerSm3 > maximumGasWobbeIndexMjPerSm3) {
@@ -214,15 +208,13 @@ public final class FieldProductSpecifications implements Serializable {
     /** Sets stabilized-oil RVP and BS&amp;W maxima. */
     public Builder oilExport(double maximumRvpBara, double maximumBswVolumePercent) {
       maximumOilRvpBara = nonNegative(maximumRvpBara, "maximumRvpBara");
-      maximumOilBswVolumePercent = nonNegative(maximumBswVolumePercent,
-          "maximumBswVolumePercent");
+      maximumOilBswVolumePercent = nonNegative(maximumBswVolumePercent, "maximumBswVolumePercent");
       return this;
     }
 
     /** Sets the produced-water discharge oil-in-water maximum. */
     public Builder producedWater(double maximumOilInWaterMgPerL) {
-      this.maximumOilInWaterMgPerL = nonNegative(maximumOilInWaterMgPerL,
-          "maximumOilInWaterMgPerL");
+      this.maximumOilInWaterMgPerL = nonNegative(maximumOilInWaterMgPerL, "maximumOilInWaterMgPerL");
       return this;
     }
 
@@ -262,3 +254,4 @@ public final class FieldProductSpecifications implements Serializable {
     }
   }
 }
+
