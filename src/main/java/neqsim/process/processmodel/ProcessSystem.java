@@ -7543,9 +7543,13 @@ public class ProcessSystem extends SimulationBaseClass {
         try {
           String jsonReport = sizeable.getSizingReportJson();
           if (jsonReport != null && !jsonReport.equals("{}")) {
-            com.google.gson.JsonObject sizingData = com.google.gson.JsonParser.parseString(jsonReport)
-                .getAsJsonObject();
-            equipReport.add("sizingData", sizingData);
+            try {
+              com.google.gson.JsonObject sizingData = com.google.gson.JsonParser.parseString(jsonReport)
+                  .getAsJsonObject();
+              equipReport.add("sizingData", sizingData);
+            } catch (Exception e) {
+              equipReport.addProperty("sizingData", jsonReport);
+            }
           }
           equipReport.addProperty("sizingDataAvailable", true);
         } catch (RuntimeException e) {
