@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
@@ -86,6 +87,15 @@ class AutonomousInvestigationTest {
     assertFalse(rca.getLastCausalEdges().isEmpty(), "causal edges should be produced without a supplied tag map");
     assertEquals(CausalTopologyModel.Verdict.LOCAL, rca.getLastCausalEdges().get(0).getVerdict(),
         "both tags belong to the same compressor, so the edge is LOCAL");
+    boolean autonomousEvidenceUsed = false;
+    for (Hypothesis hypothesis : report.getRankedHypotheses()) {
+      for (Hypothesis.Evidence evidence : hypothesis.getEvidenceList()) {
+        if ("autonomous-anomaly".equals(evidence.getSource()) || "causal-topology".equals(evidence.getSource())) {
+          autonomousEvidenceUsed = true;
+        }
+      }
+    }
+    assertTrue(autonomousEvidenceUsed, "autonomous findings should feed hypothesis evidence and ranking");
   }
 
   /**

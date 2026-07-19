@@ -35,7 +35,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * rca.setStidData(stidMap);
  * rca.setDesignLimit("vibration_mm_s", Double.NaN, 7.1);
  * RootCauseReport report = rca.analyze();
- * System.out.println(report.toTextReport());
+ * String textReport = report.toTextReport();
  * </pre>
  *
  * @author NeqSim Development Team
@@ -84,6 +84,12 @@ public class RootCauseAnalyzer implements Serializable {
 
   /** Topology-classified causal edges from the most recent autonomous analysis. */
   private List<CausalTopologyModel.CausalEdge> lastCausalEdges = new ArrayList<>();
+
+  /** Reproducibility and provenance context for the analysis. */
+  private DiagnosisCase diagnosisCase;
+
+  /** Whether the current analysis should consume the most recent autonomous findings. */
+  private transient boolean autonomousEvidenceActive;
 
   /**
    * Creates a root cause analyzer.
@@ -171,6 +177,24 @@ public class RootCauseAnalyzer implements Serializable {
   }
 
   /**
+   * Sets caller-supplied reproducibility and provenance context.
+   *
+   * @param diagnosisCase diagnosis case, or {@code null} to derive one from the historian data
+   */
+  public void setDiagnosisCase(DiagnosisCase diagnosisCase) {
+    this.diagnosisCase = diagnosisCase;
+  }
+
+  /**
+   * Returns the configured diagnosis case.
+   *
+   * @return diagnosis case, or {@code null} before it is configured or derived by analysis
+   */
+  public DiagnosisCase getDiagnosisCase() {
+    return diagnosisCase;
+  }
+
+  /**
    * Runs an autonomous root cause analysis that discovers the symptom and relationships on its own.
    *
    * <p>
@@ -236,8 +260,13 @@ public class RootCauseAnalyzer implements Serializable {
       this.lastCausalEdges = new ArrayList<>();
     }
 
-    // Step D: run the standard Bayesian analysis with the (now set) symptom.
-    return analyze();
+    // Step D: run the standard analysis while admitting relevant autonomous findings as evidence.
+    this.autonomousEvidenceActive = true;
+    try {
+      return analyze();
+    } finally {
+      this.autonomousEvidenceActive = false;
+    }
   }
 
   /**
@@ -374,11 +403,18 @@ public class RootCauseAnalyzer implements Serializable {
 
     for (Hypothesis h : hypotheses) {
       List<Hypothesis.Evidence> evidence = collector.collectEvidence(h);
+      if (autonomousEvidenceActive) {
+        evidence.addAll(collector.collectAutonomousEvidence(h, lastAnomalies, lastCausalEdges));
+      }
       for (Hypothesis.Evidence e : evidence) {
         h.addEvidence(e);
       }
-      double likelihood = collector.calculateLikelihoodScore(evidence);
-      h.setLikelihoodScore(likelihood);
+      if (evidence.isEmpty()) {
+        h.setLikelihoodEvaluation(0.5, Hypothesis.EvaluationStatus.UNKNOWN);
+      } else {
+        double likelihood = collector.calculateLikelihoodScore(evidence);
+        h.setLikelihoodEvaluation(likelihood, Hypothesis.EvaluationStatus.EVALUATED);
+      }
     }
 
     // Step 6: Simulation verification (if enabled and process available)
@@ -401,6 +437,17 @@ public class RootCauseAnalyzer implements Serializable {
     // Step 8: Build report
     String eqType = equipment != null ? generator.classifyEquipment(equipment) : "unknown";
     RootCauseReport report = new RootCauseReport(equipmentName, eqType, symptom);
+    if (diagnosisCase == null) {
+      diagnosisCase = DiagnosisCase.fromHistorian(equipmentName, timestamps, historianData)
+          .setProcessModel(processSystem.getClass().getName(), "runtime-instance");
+      if (!stidData.isEmpty()) {
+        diagnosisCase.addDataSource("STID", "in-memory design metadata");
+      }
+      if (!designLimits.isEmpty()) {
+        diagnosisCase.addDataSource("designLimits", "configured analysis limits");
+      }
+    }
+    report.setDiagnosisCase(diagnosisCase);
     report.setHypotheses(hypotheses);
     report.setDataPointsAnalyzed(totalDataPoints);
     report.setParametersAnalyzed(historianData.size());
