@@ -1,7 +1,7 @@
 package neqsim.process.equipment.pipeline.evaporation;
 
 /**
- * Numerical and geometric settings for {@link PipelineEvaporationStudy}.
+ * Numerical and geometric settings for {@link PipelineEvaporationStudy} and {@link PipelineDissolutionStudy}.
  *
  * <p>
  * Velocities are actual phase velocities, not superficial velocities. SI units are used throughout.
@@ -15,6 +15,7 @@ public class PipelineEvaporationConfig {
   private double gasVelocity = 10.0;
   private double liquidVelocity = 0.5;
   private double initialDropletDiameter = 200.0e-6;
+  private double initialBubbleDiameter = 1.0e-3;
   private double initialFilmThickness = 0.50e-3;
   private double wettedPerimeterFraction = 1.0;
   private double ambientTemperature = 288.15;
@@ -27,6 +28,8 @@ public class PipelineEvaporationConfig {
   private double completionFraction = 1.0e-4;
   private int maximumNumberOfSteps = 100000;
   private boolean useAbramzonSirignano = true;
+  private DispersedPhaseSlipModel slipModel = DispersedPhaseSlipModel.USER_SPECIFIED;
+  private double pipeInclinationAngle = 0.0;
 
   /** @return liquid geometry model */
   public LiquidDistribution getLiquidDistribution() {
@@ -96,6 +99,16 @@ public class PipelineEvaporationConfig {
   /** @param initialDropletDiameter initial droplet Sauter mean diameter in m */
   public void setInitialDropletDiameter(double initialDropletDiameter) {
     this.initialDropletDiameter = initialDropletDiameter;
+  }
+
+  /** @return initial bubble Sauter mean diameter in m */
+  public double getInitialBubbleDiameter() {
+    return initialBubbleDiameter;
+  }
+
+  /** @param initialBubbleDiameter initial bubble Sauter mean diameter in m */
+  public void setInitialBubbleDiameter(double initialBubbleDiameter) {
+    this.initialBubbleDiameter = initialBubbleDiameter;
   }
 
   /** @return initial film thickness in m */
@@ -188,12 +201,12 @@ public class PipelineEvaporationConfig {
     this.maximumTemperatureChangePerStep = change;
   }
 
-  /** @return remaining injected-liquid fraction defining complete evaporation */
+  /** @return remaining tracked dispersed-phase fraction defining completion */
   public double getCompletionFraction() {
     return completionFraction;
   }
 
-  /** @param completionFraction remaining injected-liquid fraction defining complete evaporation */
+  /** @param completionFraction remaining tracked dispersed-phase fraction defining completion */
   public void setCompletionFraction(double completionFraction) {
     this.completionFraction = completionFraction;
   }
@@ -218,17 +231,40 @@ public class PipelineEvaporationConfig {
     this.useAbramzonSirignano = useAbramzonSirignano;
   }
 
+  /** @return dispersed-phase slip closure */
+  public DispersedPhaseSlipModel getSlipModel() {
+    return slipModel;
+  }
+
+  /** @param slipModel dispersed-phase slip closure */
+  public void setSlipModel(DispersedPhaseSlipModel slipModel) {
+    this.slipModel = slipModel;
+  }
+
+  /** @return pipe inclination from horizontal in radians, positive uphill */
+  public double getPipeInclinationAngle() {
+    return pipeInclinationAngle;
+  }
+
+  /** @param pipeInclinationAngle pipe inclination from horizontal in radians, positive uphill */
+  public void setPipeInclinationAngle(double pipeInclinationAngle) {
+    this.pipeInclinationAngle = pipeInclinationAngle;
+  }
+
   /** Validate all settings before a calculation. */
   public void validate() {
     require(liquidDistribution != null, "liquid distribution must be specified");
+    require(slipModel != null, "slip model must be specified");
     requirePositive(pipeLength, "pipe length");
     requirePositive(pipeDiameter, "pipe diameter");
     requireNonNegative(pipeRoughness, "pipe roughness");
     requirePositive(gasVelocity, "gas velocity");
     requirePositive(liquidVelocity, "liquid velocity");
     requirePositive(initialDropletDiameter, "initial droplet diameter");
+    requirePositive(initialBubbleDiameter, "initial bubble diameter");
     requirePositive(initialFilmThickness, "initial film thickness");
     require(initialDropletDiameter < pipeDiameter, "initial droplet diameter must be smaller than the pipe diameter");
+    require(initialBubbleDiameter < pipeDiameter, "initial bubble diameter must be smaller than the pipe diameter");
     require(2.0 * initialFilmThickness < pipeDiameter, "initial film thickness must be smaller than the pipe radius");
     require(wettedPerimeterFraction > 0.0 && wettedPerimeterFraction <= 1.0,
         "wetted perimeter fraction must be in (0, 1]");
@@ -244,6 +280,8 @@ public class PipelineEvaporationConfig {
     requirePositive(maximumTemperatureChangePerStep, "maximum temperature change");
     require(completionFraction > 0.0 && completionFraction < 1.0, "completion fraction must be in (0, 1)");
     require(maximumNumberOfSteps > 0, "maximum number of steps must be positive");
+    require(Double.isFinite(pipeInclinationAngle) && Math.abs(pipeInclinationAngle) <= 0.5 * Math.PI,
+        "pipe inclination angle must be finite and between -pi/2 and pi/2");
   }
 
   private static void requirePositive(double value, String name) {

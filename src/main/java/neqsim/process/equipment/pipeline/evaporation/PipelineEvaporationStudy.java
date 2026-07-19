@@ -2,9 +2,11 @@ package neqsim.process.equipment.pipeline.evaporation;
 
 import java.util.ArrayList;
 import java.util.List;
+import neqsim.fluidmechanics.flownode.DispersedPhaseSlipCalculator;
 import neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoefficient.interphasetwophase.interphasepipeflow.InterphaseDropletFlow;
 import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow;
+import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.BubbleFlowNode;
 import neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.DropletFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.phase.PhaseType;
@@ -37,6 +39,7 @@ public class PipelineEvaporationStudy {
   private static final double MINIMUM_INVENTORY = 1.0e-20;
   private final SystemInterface inletSystem;
   private final PipelineEvaporationConfig config;
+  private final boolean gasDissolution;
 
   /**
    * Constructor.
@@ -45,6 +48,12 @@ public class PipelineEvaporationStudy {
    * @param config geometry and numerical settings
    */
   public PipelineEvaporationStudy(SystemInterface inletSystem, PipelineEvaporationConfig config) {
+    this(inletSystem, config, false);
+  }
+
+  /** Constructor used by the gas-dissolution specialization. */
+  protected PipelineEvaporationStudy(SystemInterface inletSystem, PipelineEvaporationConfig config,
+      boolean gasDissolution) {
     if (inletSystem == null) {
       throw new IllegalArgumentException("inlet system cannot be null");
     }
@@ -53,6 +62,7 @@ public class PipelineEvaporationStudy {
     }
     this.inletSystem = inletSystem.clone();
     this.config = config;
+    this.gasDissolution = gasDissolution;
   }
 
   /**
@@ -64,25 +74,29 @@ public class PipelineEvaporationStudy {
     config.validate();
     SystemInterface state = inletSystem.clone();
     validateSystem(state);
+    PhaseType configuredLiquidPhaseType = state.getPhase(1).getType();
     state.init(3);
+    setLiquidPhaseType(state, configuredLiquidPhaseType);
     state.initPhysicalProperties();
 
     int componentCount = state.getPhase(0).getNumberOfComponents();
     double[] initialComponentTotals = componentTotals(state, componentCount);
-    double[] trackedLiquidMoles = new double[componentCount];
+    int trackedPhase = gasDissolution ? 0 : 1;
+    double[][] trackedMolesByPhase = new double[2][componentCount];
     for (int i = 0; i < componentCount; i++) {
-      trackedLiquidMoles[i] = state.getPhase(1).getComponent(i).getNumberOfMolesInPhase();
+      trackedMolesByPhase[trackedPhase][i] = state.getPhase(trackedPhase).getComponent(i).getNumberOfMolesInPhase();
     }
 
-    double initialTrackedMass = trackedMass(state, trackedLiquidMoles);
+    double initialTrackedMass = trackedMass(state, trackedMolesByPhase[trackedPhase], trackedPhase);
     if (!(initialTrackedMass > 0.0)) {
-      throw new IllegalArgumentException("phase 1 must contain a positive injected-liquid flow");
+      throw new IllegalArgumentException(gasDissolution ? "phase 0 must contain a positive injected-gas flow"
+          : "phase 1 must contain a positive injected-liquid flow");
     }
-    double initialLiquidDensity = state.getPhase(1).getPhysicalProperties().getDensity();
-    if (!Double.isFinite(initialLiquidDensity) || initialLiquidDensity <= 0.0) {
-      throw new IllegalArgumentException("phase 1 liquid density must be finite and positive");
+    double initialDispersedDensity = state.getPhase(trackedPhase).getPhysicalProperties().getDensity();
+    if (!Double.isFinite(initialDispersedDensity) || initialDispersedDensity <= 0.0) {
+      throw new IllegalArgumentException("dispersed-phase density must be finite and positive");
     }
-    double initialLiquidVolumeFlow = initialTrackedMass / initialLiquidDensity;
+    double initialDispersedVolumeFlow = initialTrackedMass / initialDispersedDensity;
     double initialEnthalpy = totalEnthalpy(state);
 
     List<EvaporationProfilePoint> profile = new ArrayList<EvaporationProfilePoint>();
@@ -94,25 +108,32 @@ public class PipelineEvaporationStudy {
     double completionDistance = Double.NaN;
     boolean complete = false;
 
+    LocalHydrodynamics initialHydrodynamics = calculateLocalHydrodynamics(state, characteristicSize(1.0));
     profile.add(new EvaporationProfilePoint(0.0, 1.0, characteristicSize(1.0), state.getPhase(0).getTemperature(),
-        state.getPhase(1).getTemperature(), interfacialAreaPerLength(1.0, initialLiquidVolumeFlow), 0.0,
-        new double[componentCount]));
+        state.getPhase(1).getTemperature(),
+        interfacialAreaPerLength(1.0, initialDispersedVolumeFlow,
+            initialHydrodynamics.dispersedPhaseVelocity(gasDissolution)),
+        0.0, new double[componentCount], initialHydrodynamics.gasVelocity, initialHydrodynamics.liquidVelocity,
+        initialHydrodynamics.relativeVelocity));
 
     int acceptedSteps = 0;
     while (distance < config.getPipeLength() && remainingFraction > config.getCompletionFraction()
         && acceptedSteps < config.getMaximumNumberOfSteps()) {
       state.init(3);
+      setLiquidPhaseType(state, configuredLiquidPhaseType);
       state.initPhysicalProperties();
-      double liquidVolumeRatio = phaseVolumeFlow(state, 1) / initialLiquidVolumeFlow;
-      double characteristicSize = characteristicSize(liquidVolumeRatio);
-      LocalClosure closure = calculateLocalClosure(state, characteristicSize, trackedLiquidMoles);
+      double dispersedVolumeRatio = phaseVolumeFlow(state, trackedPhase) / initialDispersedVolumeFlow;
+      double characteristicSize = characteristicSize(dispersedVolumeRatio);
+      LocalHydrodynamics hydrodynamics = calculateLocalHydrodynamics(state, characteristicSize);
+      LocalClosure closure = calculateLocalClosure(state, characteristicSize, trackedMolesByPhase[1], hydrodynamics);
       validateClosure(closure);
       if (closure.usedHeatFluxFallback) {
         addWarningOnce(warnings, "The coupled boundary returned a non-finite heat flux near phase depletion; "
             + "a bounded two-film enthalpy closure was used for that axial state.");
       }
 
-      double areaPerLength = interfacialAreaPerLength(liquidVolumeRatio, initialLiquidVolumeFlow);
+      double areaPerLength = interfacialAreaPerLength(dispersedVolumeRatio, initialDispersedVolumeFlow,
+          hydrodynamics.dispersedPhaseVelocity(gasDissolution));
       double candidateStep = Math.min(stepLength, config.getPipeLength() - distance);
       StepEstimate estimate = estimateStep(state, closure, areaPerLength, candidateStep);
 
@@ -127,11 +148,10 @@ public class PipelineEvaporationStudy {
       double previousFraction = remainingFraction;
       double enthalpyBefore = totalEnthalpy(state);
       double[] transfer = new double[componentCount];
-      double[] liquidInventoryBefore = new double[componentCount];
       for (int i = 0; i < componentCount; i++) {
-        liquidInventoryBefore[i] = state.getPhase(1).getComponent(i).getNumberOfMolesInPhase();
         transfer[i] = closure.componentMolarFluxes[i] * effectiveArea;
         int donorPhase = transfer[i] >= 0.0 ? 0 : 1;
+        int receiverPhase = 1 - donorPhase;
         double donorInventory = state.getPhase(donorPhase).getComponent(i).getNumberOfMolesInPhase();
         double maximumTransfer = 0.999 * Math.max(0.0, donorInventory);
         if (Math.abs(transfer[i]) > maximumTransfer) {
@@ -139,13 +159,14 @@ public class PipelineEvaporationStudy {
           addWarningOnce(warnings, "A closure flux pointed out of a depleted component inventory; "
               + "a conservative component limiter was applied.");
         }
+        if (donorInventory > MINIMUM_INVENTORY) {
+          double trackedShare = Math.min(1.0, trackedMolesByPhase[donorPhase][i] / donorInventory);
+          double trackedTransfer = Math.abs(transfer[i]) * trackedShare;
+          trackedMolesByPhase[donorPhase][i] = Math.max(0.0, trackedMolesByPhase[donorPhase][i] - trackedTransfer);
+          trackedMolesByPhase[receiverPhase][i] += trackedTransfer;
+        }
         state.getPhase(0).addMoles(i, -transfer[i]);
         state.getPhase(1).addMoles(i, transfer[i]);
-
-        if (transfer[i] < 0.0 && liquidInventoryBefore[i] > MINIMUM_INVENTORY) {
-          double trackedShare = Math.min(1.0, trackedLiquidMoles[i] / liquidInventoryBefore[i]);
-          trackedLiquidMoles[i] = Math.max(0.0, trackedLiquidMoles[i] + transfer[i] * trackedShare);
-        }
       }
 
       double gasTemperature = state.getPhase(0).getTemperature();
@@ -153,10 +174,11 @@ public class PipelineEvaporationStudy {
       state.initBeta();
       state.init_x_y();
       state.init(3);
+      setLiquidPhaseType(state, configuredLiquidPhaseType);
 
       double wallHeat = wallHeat(candidateStep, gasTemperature, liquidTemperature);
-      double gasWallHeat = config.getLiquidDistribution() == LiquidDistribution.DROPLETS ? wallHeat : 0.0;
-      double liquidWallHeat = config.getLiquidDistribution() == LiquidDistribution.WALL_FILM ? wallHeat : 0.0;
+      double gasWallHeat = wallHeatReceivingPhase() == 0 ? wallHeat : 0.0;
+      double liquidWallHeat = wallHeatReceivingPhase() == 1 ? wallHeat : 0.0;
       double gasTargetEnthalpy = state.getPhase(0).getEnthalpy("J") + closure.interphaseHeatFluxes[0] * effectiveArea
           + gasWallHeat;
       double liquidTargetEnthalpy = state.getPhase(1).getEnthalpy("J") + closure.interphaseHeatFluxes[1] * effectiveArea
@@ -166,6 +188,7 @@ public class PipelineEvaporationStudy {
       solvePhaseTemperature(state, 1, liquidTargetEnthalpy, liquidTemperature);
       solveTotalEnergy(state, enthalpyBefore + wallHeat);
       state.init(3);
+      setLiquidPhaseType(state, configuredLiquidPhaseType);
       state.initPhysicalProperties();
 
       double stepEnergyResidual = totalEnthalpy(state) - enthalpyBefore - wallHeat;
@@ -178,7 +201,7 @@ public class PipelineEvaporationStudy {
       distance += candidateStep;
       cumulativeWallHeat += wallHeat;
       acceptedSteps++;
-      remainingFraction = trackedMass(state, trackedLiquidMoles) / initialTrackedMass;
+      remainingFraction = trackedMass(state, trackedMolesByPhase[trackedPhase], trackedPhase) / initialTrackedMass;
       remainingFraction = Math.max(0.0, Math.min(1.0, remainingFraction));
 
       double totalFlux = 0.0;
@@ -187,10 +210,16 @@ public class PipelineEvaporationStudy {
         appliedFluxes[i] = transfer[i] / effectiveArea;
         totalFlux += appliedFluxes[i];
       }
-      double outletLiquidVolumeRatio = phaseVolumeFlow(state, 1) / initialLiquidVolumeFlow;
-      profile.add(new EvaporationProfilePoint(distance, remainingFraction, characteristicSize(outletLiquidVolumeRatio),
-          state.getPhase(0).getTemperature(), state.getPhase(1).getTemperature(),
-          interfacialAreaPerLength(outletLiquidVolumeRatio, initialLiquidVolumeFlow), totalFlux, appliedFluxes));
+      double outletDispersedVolumeRatio = phaseVolumeFlow(state, trackedPhase) / initialDispersedVolumeFlow;
+      double outletCharacteristicSize = characteristicSize(outletDispersedVolumeRatio);
+      LocalHydrodynamics outletHydrodynamics = calculateLocalHydrodynamics(state, outletCharacteristicSize);
+      profile.add(new EvaporationProfilePoint(distance, remainingFraction,
+          characteristicSize(outletDispersedVolumeRatio), state.getPhase(0).getTemperature(),
+          state.getPhase(1).getTemperature(),
+          interfacialAreaPerLength(outletDispersedVolumeRatio, initialDispersedVolumeFlow,
+              outletHydrodynamics.dispersedPhaseVelocity(gasDissolution)),
+          totalFlux, appliedFluxes, outletHydrodynamics.gasVelocity, outletHydrodynamics.liquidVelocity,
+          outletHydrodynamics.relativeVelocity));
 
       if (remainingFraction <= config.getCompletionFraction()) {
         double denominator = previousFraction - remainingFraction;
@@ -213,15 +242,18 @@ public class PipelineEvaporationStudy {
       addWarningOnce(warnings, "The maximum number of axial steps was reached before completion.");
     }
     if (!complete && remainingFraction > config.getCompletionFraction()) {
-      addWarningOnce(warnings, "The injected liquid did not reach the completion criterion within the pipe length.");
+      addWarningOnce(warnings,
+          gasDissolution ? "The injected gas did not reach the dissolution criterion within the pipe length."
+              : "The injected liquid did not reach the evaporation criterion within the pipe length.");
     }
 
     double maxComponentBalanceError = maximumComponentBalanceError(state, initialComponentTotals);
+    setLiquidPhaseType(state, configuredLiquidPhaseType);
     double finalEnthalpy = totalEnthalpy(state);
     double energyScale = Math.max(1.0, Math.abs(initialEnthalpy) + Math.abs(cumulativeWallHeat));
     double relativeEnergyError = Math.abs(finalEnthalpy - initialEnthalpy - cumulativeWallHeat) / energyScale;
     return new PipelineEvaporationResult(profile, complete, completionDistance, maxComponentBalanceError,
-        relativeEnergyError, warnings, state);
+        relativeEnergyError, warnings, state, gasDissolution);
   }
 
   private void validateSystem(SystemInterface system) {
@@ -232,8 +264,8 @@ public class PipelineEvaporationStudy {
       throw new IllegalArgumentException("phase 0 must be gas");
     }
     PhaseType liquidType = system.getPhase(1).getType();
-    if (liquidType != PhaseType.OIL && liquidType != PhaseType.LIQUID) {
-      throw new IllegalArgumentException("phase 1 must be a hydrocarbon liquid or oil phase");
+    if (liquidType != PhaseType.OIL && liquidType != PhaseType.LIQUID && liquidType != PhaseType.AQUEOUS) {
+      throw new IllegalArgumentException("phase 1 must be an oil, liquid, or aqueous phase");
     }
     if (system.getPhase(0).getNumberOfComponents() < 2) {
       throw new IllegalArgumentException("Maxwell-Stefan transfer requires at least two components");
@@ -241,19 +273,25 @@ public class PipelineEvaporationStudy {
   }
 
   private LocalClosure calculateLocalClosure(SystemInterface state, double characteristicSize,
-      double[] trackedLiquidMoles) {
+      double[] trackedLiquidMoles, LocalHydrodynamics hydrodynamics) {
     PipeData pipe = new PipeData(config.getPipeDiameter(), config.getPipeRoughness());
     SystemInterface localSystem = state.clone();
     TwoPhaseFlowNode node;
-    if (config.getLiquidDistribution() == LiquidDistribution.DROPLETS) {
+    if (gasDissolution) {
+      BubbleFlowNode bubbleNode = new BubbleFlowNode(localSystem, pipe);
+      bubbleNode.setAverageBubbleDiameter(characteristicSize);
+      bubbleNode.setSpecifiedDispersedPhaseRelativeVelocity(hydrodynamics.relativeVelocity);
+      node = bubbleNode;
+    } else if (config.getLiquidDistribution() == LiquidDistribution.DROPLETS) {
       DropletFlowNode dropletNode = new DropletFlowNode(localSystem, pipe);
       dropletNode.setAverageDropletDiameter(characteristicSize);
+      dropletNode.setSpecifiedDispersedPhaseRelativeVelocity(hydrodynamics.relativeVelocity);
       node = dropletNode;
     } else {
       node = new AnnularFlow(localSystem, pipe);
     }
 
-    setLocalHydrodynamics(node, localSystem, pipe);
+    setLocalHydrodynamics(node, localSystem, pipe, hydrodynamics);
     node.setLengthOfNode(1.0);
     node.getFluidBoundary().setMassTransferCalc(true);
     node.getFluidBoundary().setHeatTransferCalc(true);
@@ -300,7 +338,8 @@ public class PipelineEvaporationStudy {
             : (phase == 0 ? 0.02 : 0.10);
         double characteristicLength = node instanceof DropletFlowNode
             ? ((DropletFlowNode) node).getAverageDropletDiameter()
-            : 0.01 * node.getGeometry().getDiameter();
+            : node instanceof BubbleFlowNode ? ((BubbleFlowNode) node).getAverageBubbleDiameter()
+                : 0.01 * node.getGeometry().getDiameter();
         double stagnantNusseltNumber = node instanceof DropletFlowNode && phase == 1 ? 17.66 : 2.0;
         heatTransferCoefficients[phase] = stagnantNusseltNumber * safeConductivity
             / Math.max(1.0e-8, characteristicLength);
@@ -336,19 +375,42 @@ public class PipelineEvaporationStudy {
         -heatTransferCoefficients[1] * (node.getBulkSystem().getPhase(1).getTemperature() - interfaceTemperature) };
   }
 
-  private void setLocalHydrodynamics(TwoPhaseFlowNode node, SystemInterface system, PipeData pipe) {
+  private void setLocalHydrodynamics(TwoPhaseFlowNode node, SystemInterface system, PipeData pipe,
+      LocalHydrodynamics hydrodynamics) {
     double gasVolumeFlow = phaseVolumeFlow(system, 0);
     double liquidVolumeFlow = phaseVolumeFlow(system, 1);
-    double gasAreaDemand = gasVolumeFlow / config.getGasVelocity();
-    double liquidAreaDemand = liquidVolumeFlow / config.getLiquidVelocity();
+    double gasAreaDemand = gasVolumeFlow / hydrodynamics.gasVelocity;
+    double liquidAreaDemand = liquidVolumeFlow / hydrodynamics.liquidVelocity;
     double totalAreaDemand = gasAreaDemand + liquidAreaDemand;
     double gasFraction = totalAreaDemand > 0.0 ? gasAreaDemand / totalAreaDemand : 0.999;
     gasFraction = Math.max(1.0e-6, Math.min(1.0 - 1.0e-6, gasFraction));
     node.setPhaseFraction(0, gasFraction);
     node.setPhaseFraction(1, 1.0 - gasFraction);
-    node.setVelocity(0, config.getGasVelocity());
-    node.setVelocity(1, config.getLiquidVelocity());
+    node.setVelocity(0, hydrodynamics.gasVelocity);
+    node.setVelocity(1, hydrodynamics.liquidVelocity);
     pipe.setNodeLength(1.0);
+  }
+
+  private LocalHydrodynamics calculateLocalHydrodynamics(SystemInterface system, double characteristicSize) {
+    if (config.getSlipModel() == DispersedPhaseSlipModel.USER_SPECIFIED
+        || config.getLiquidDistribution() == LiquidDistribution.WALL_FILM && !gasDissolution) {
+      return new LocalHydrodynamics(config.getGasVelocity(), config.getLiquidVelocity(),
+          Math.abs(config.getGasVelocity() - config.getLiquidVelocity()));
+    }
+
+    int dispersedPhase = gasDissolution ? 0 : 1;
+    int continuousPhase = 1 - dispersedPhase;
+    double continuousDensity = system.getPhase(continuousPhase).getPhysicalProperties().getDensity();
+    double dispersedDensity = system.getPhase(dispersedPhase).getPhysicalProperties().getDensity();
+    double continuousViscosity = system.getPhase(continuousPhase).getPhysicalProperties().getViscosity();
+    double relativeVelocity = DispersedPhaseSlipCalculator.terminalVelocityMagnitude(characteristicSize,
+        continuousDensity, dispersedDensity, continuousViscosity);
+    double axialSlip = -Math.signum(dispersedDensity - continuousDensity) * relativeVelocity
+        * Math.sin(config.getPipeInclinationAngle());
+    double continuousVelocity = gasDissolution ? config.getLiquidVelocity() : config.getGasVelocity();
+    double dispersedVelocity = Math.max(1.0e-6, continuousVelocity + axialSlip);
+    return gasDissolution ? new LocalHydrodynamics(dispersedVelocity, continuousVelocity, relativeVelocity)
+        : new LocalHydrodynamics(continuousVelocity, dispersedVelocity, relativeVelocity);
   }
 
   private double calculateSpaldingMassTransferNumber(TwoPhaseFlowNode node, double[] trackedLiquidMoles) {
@@ -397,8 +459,8 @@ public class PipelineEvaporationStudy {
     }
 
     double wallHeat = wallHeat(stepLength, state.getPhase(0).getTemperature(), state.getPhase(1).getTemperature());
-    double gasWallHeat = config.getLiquidDistribution() == LiquidDistribution.DROPLETS ? wallHeat : 0.0;
-    double liquidWallHeat = config.getLiquidDistribution() == LiquidDistribution.WALL_FILM ? wallHeat : 0.0;
+    double gasWallHeat = wallHeatReceivingPhase() == 0 ? wallHeat : 0.0;
+    double liquidWallHeat = wallHeatReceivingPhase() == 1 ? wallHeat : 0.0;
     double gasCp = safeHeatCapacity(state.getPhase(0).getCp());
     double liquidCp = safeHeatCapacity(state.getPhase(1).getCp());
     double gasChange = Math.abs(closure.interphaseHeatFluxes[0] * area + gasWallHeat) / gasCp;
@@ -407,10 +469,21 @@ public class PipelineEvaporationStudy {
   }
 
   private double interfacialAreaPerLength(double liquidVolumeRatio, double initialLiquidVolumeFlow) {
+    return interfacialAreaPerLength(liquidVolumeRatio, initialLiquidVolumeFlow,
+        gasDissolution ? config.getGasVelocity() : config.getLiquidVelocity());
+  }
+
+  private double interfacialAreaPerLength(double liquidVolumeRatio, double initialLiquidVolumeFlow,
+      double dispersedPhaseVelocity) {
+    if (gasDissolution) {
+      double diameter = characteristicSize(liquidVolumeRatio);
+      double currentVolumeFlow = initialLiquidVolumeFlow * Math.max(0.0, liquidVolumeRatio);
+      return bubbleAreaPerLength(currentVolumeFlow, dispersedPhaseVelocity, diameter);
+    }
     if (config.getLiquidDistribution() == LiquidDistribution.DROPLETS) {
       double diameter = characteristicSize(liquidVolumeRatio);
       double currentVolumeFlow = initialLiquidVolumeFlow * Math.max(0.0, liquidVolumeRatio);
-      return dropletAreaPerLength(currentVolumeFlow, config.getLiquidVelocity(), diameter);
+      return dropletAreaPerLength(currentVolumeFlow, dispersedPhaseVelocity, diameter);
     }
     double filmThickness = characteristicSize(liquidVolumeRatio);
     return filmAreaPerLength(config.getPipeDiameter(), filmThickness, config.getWettedPerimeterFraction());
@@ -432,6 +505,18 @@ public class PipelineEvaporationStudy {
   }
 
   /**
+   * Calculate the surface area of a spherical-bubble population per axial length.
+   *
+   * @param gasVolumeFlow dispersed gas volume flow in m3/s
+   * @param gasVelocity bubble velocity in m/s
+   * @param sauterMeanDiameter Sauter mean diameter in m
+   * @return interfacial area per length in m2/m
+   */
+  static double bubbleAreaPerLength(double gasVolumeFlow, double gasVelocity, double sauterMeanDiameter) {
+    return dropletAreaPerLength(gasVolumeFlow, gasVelocity, sauterMeanDiameter);
+  }
+
+  /**
    * Calculate wall-film interfacial area per axial length.
    *
    * @param pipeDiameter pipe inside diameter in m
@@ -446,6 +531,9 @@ public class PipelineEvaporationStudy {
 
   private double characteristicSize(double liquidVolumeRatio) {
     double boundedRatio = Math.max(0.0, liquidVolumeRatio);
+    if (gasDissolution) {
+      return config.getInitialBubbleDiameter() * Math.cbrt(boundedRatio);
+    }
     if (config.getLiquidDistribution() == LiquidDistribution.DROPLETS) {
       return config.getInitialDropletDiameter() * Math.cbrt(boundedRatio);
     }
@@ -453,16 +541,24 @@ public class PipelineEvaporationStudy {
   }
 
   private double wallHeat(double stepLength, double gasTemperature, double liquidTemperature) {
-    double receivingTemperature = config.getLiquidDistribution() == LiquidDistribution.DROPLETS ? gasTemperature
-        : liquidTemperature;
+    double receivingTemperature = wallHeatReceivingPhase() == 0 ? gasTemperature : liquidTemperature;
     return config.getOverallWallHeatTransferCoefficient() * Math.PI * config.getPipeDiameter() * stepLength
         * (config.getAmbientTemperature() - receivingTemperature);
+  }
+
+  private int wallHeatReceivingPhase() {
+    return !gasDissolution && config.getLiquidDistribution() == LiquidDistribution.DROPLETS ? 0 : 1;
   }
 
   private static double phaseVolumeFlow(SystemInterface system, int phase) {
     double massFlow = system.getPhase(phase).getNumberOfMolesInPhase() * system.getPhase(phase).getMolarMass();
     double density = system.getPhase(phase).getPhysicalProperties().getDensity();
     return density > 0.0 ? massFlow / density : 0.0;
+  }
+
+  private static void setLiquidPhaseType(SystemInterface system, PhaseType phaseType) {
+    system.setPhaseType(1, phaseType);
+    system.getPhase(1).setType(phaseType);
   }
 
   private static void solvePhaseTemperature(SystemInterface state, int phaseNumber, double targetEnthalpy,
@@ -540,10 +636,10 @@ public class PipelineEvaporationStudy {
     return maximumError;
   }
 
-  private static double trackedMass(SystemInterface system, double[] trackedMoles) {
+  private static double trackedMass(SystemInterface system, double[] trackedMoles, int trackedPhase) {
     double mass = 0.0;
     for (int i = 0; i < trackedMoles.length; i++) {
-      mass += trackedMoles[i] * system.getPhase(1).getComponent(i).getMolarMass();
+      mass += trackedMoles[i] * system.getPhase(trackedPhase).getComponent(i).getMolarMass();
     }
     return mass;
   }
@@ -593,6 +689,22 @@ public class PipelineEvaporationStudy {
       this.componentMolarFluxes = componentMolarFluxes;
       this.interphaseHeatFluxes = interphaseHeatFluxes;
       this.usedHeatFluxFallback = usedHeatFluxFallback;
+    }
+  }
+
+  private static final class LocalHydrodynamics {
+    private final double gasVelocity;
+    private final double liquidVelocity;
+    private final double relativeVelocity;
+
+    private LocalHydrodynamics(double gasVelocity, double liquidVelocity, double relativeVelocity) {
+      this.gasVelocity = gasVelocity;
+      this.liquidVelocity = liquidVelocity;
+      this.relativeVelocity = relativeVelocity;
+    }
+
+    private double dispersedPhaseVelocity(boolean gasIsDispersed) {
+      return gasIsDispersed ? gasVelocity : liquidVelocity;
     }
   }
 

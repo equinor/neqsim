@@ -1,6 +1,6 @@
 package neqsim.process.equipment.pipeline.evaporation;
 
-/** One accepted axial state from a pipeline evaporation calculation. */
+/** One accepted axial state from a pipeline evaporation or gas-dissolution calculation. */
 public class EvaporationProfilePoint {
   private final double distance;
   private final double remainingInjectedLiquidFraction;
@@ -10,6 +10,9 @@ public class EvaporationProfilePoint {
   private final double interfacialAreaPerLength;
   private final double totalMolarFlux;
   private final double[] componentMolarFluxes;
+  private final double gasVelocity;
+  private final double liquidVelocity;
+  private final double dispersedPhaseRelativeVelocity;
 
   /**
    * Constructor.
@@ -26,6 +29,15 @@ public class EvaporationProfilePoint {
   public EvaporationProfilePoint(double distance, double remainingInjectedLiquidFraction,
       double characteristicLiquidSize, double gasTemperature, double liquidTemperature, double interfacialAreaPerLength,
       double totalMolarFlux, double[] componentMolarFluxes) {
+    this(distance, remainingInjectedLiquidFraction, characteristicLiquidSize, gasTemperature, liquidTemperature,
+        interfacialAreaPerLength, totalMolarFlux, componentMolarFluxes, Double.NaN, Double.NaN, Double.NaN);
+  }
+
+  /** Constructor including the local slip state. */
+  public EvaporationProfilePoint(double distance, double remainingInjectedLiquidFraction,
+      double characteristicLiquidSize, double gasTemperature, double liquidTemperature, double interfacialAreaPerLength,
+      double totalMolarFlux, double[] componentMolarFluxes, double gasVelocity, double liquidVelocity,
+      double dispersedPhaseRelativeVelocity) {
     this.distance = distance;
     this.remainingInjectedLiquidFraction = remainingInjectedLiquidFraction;
     this.characteristicLiquidSize = characteristicLiquidSize;
@@ -34,6 +46,9 @@ public class EvaporationProfilePoint {
     this.interfacialAreaPerLength = interfacialAreaPerLength;
     this.totalMolarFlux = totalMolarFlux;
     this.componentMolarFluxes = componentMolarFluxes.clone();
+    this.gasVelocity = gasVelocity;
+    this.liquidVelocity = liquidVelocity;
+    this.dispersedPhaseRelativeVelocity = dispersedPhaseRelativeVelocity;
   }
 
   /** @return axial distance in m */
@@ -46,8 +61,26 @@ public class EvaporationProfilePoint {
     return remainingInjectedLiquidFraction;
   }
 
+  /**
+   * Return the remaining fraction of the initially tracked dispersed-phase mass.
+   *
+   * <p>
+   * This is injected liquid for evaporation and injected gas for dissolution.
+   * </p>
+   *
+   * @return remaining tracked mass fraction
+   */
+  public double getRemainingTrackedPhaseFraction() {
+    return remainingInjectedLiquidFraction;
+  }
+
   /** @return droplet diameter or film thickness in m */
   public double getCharacteristicLiquidSize() {
+    return characteristicLiquidSize;
+  }
+
+  /** @return droplet diameter, bubble diameter, or film thickness in m */
+  public double getCharacteristicDispersedPhaseSize() {
     return characteristicLiquidSize;
   }
 
@@ -74,5 +107,20 @@ public class EvaporationProfilePoint {
   /** @return component molar fluxes, positive from gas to liquid, in mol/(m2 s) */
   public double[] getComponentMolarFluxes() {
     return componentMolarFluxes.clone();
+  }
+
+  /** @return local actual gas velocity in m/s */
+  public double getGasVelocity() {
+    return gasVelocity;
+  }
+
+  /** @return local actual liquid velocity in m/s */
+  public double getLiquidVelocity() {
+    return liquidVelocity;
+  }
+
+  /** @return total particle-relative speed used in transfer correlations in m/s */
+  public double getDispersedPhaseRelativeVelocity() {
+    return dispersedPhaseRelativeVelocity;
   }
 }
