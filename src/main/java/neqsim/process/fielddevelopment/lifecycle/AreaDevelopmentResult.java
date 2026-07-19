@@ -33,8 +33,8 @@ public final class AreaDevelopmentResult implements Serializable {
 
     /** Returns whether the option remains eligible under its product-specification policy. */
     public boolean isEligible() {
-      FieldProductSpecifications specifications =
-          option.getLifecycleConcept().getConfiguration().getProductSpecifications();
+      FieldProductSpecifications specifications = option.getLifecycleConcept().getConfiguration()
+          .getProductSpecifications();
       return specifications == null || specifications.getViolationAction() != ViolationAction.REJECT_OPTION
           || lifecycleResult.areAllProductSpecificationsMet();
     }
@@ -78,14 +78,14 @@ public final class AreaDevelopmentResult implements Serializable {
     for (OptionResult optionResult : rankedOptions) {
       AreaDevelopmentOption option = optionResult.getOption();
       FieldLifecycleResult result = optionResult.getLifecycleResult();
-      table.append(String.format("| %s | %s | %s | %s | %.0f | %.1f | %.1f | %.1f | %.1f | %.1f | %d |%n",
-          option.getName(), option.getRouteType(), option.getReceivingAssetName(),
-          optionResult.isEligible() ? "yes" : "no", result.getNpvMusd(),
-          result.getBreakevenOilPriceUsdPerBbl(), result.getCumulativeOilSm3() / 1.0e6,
-          result.getCumulativeDeferredOilSm3() / 1.0e6, result.getPeakFacilityUtilization() * 100.0,
-          result.getPeakUnconstrainedFacilityUtilization() * 100.0,
-          result.getOffSpecificationYears()));
+      table.append(
+          String.format("| %s | %s | %s | %s | %.0f | %.1f | %.1f | %.1f | %.1f | %.1f | %d |%n", option.getName(),
+              option.getRouteType(), option.getReceivingAssetName(), optionResult.isEligible() ? "yes" : "no",
+              result.getNpvMusd(), result.getBreakevenOilPriceUsdPerBbl(), result.getCumulativeOilSm3() / 1.0e6,
+              result.getCumulativeDeferredOilSm3() / 1.0e6, result.getPeakFacilityUtilization() * 100.0,
+              result.getPeakUnconstrainedFacilityUtilization() * 100.0, result.getOffSpecificationYears()));
     }
     return table.toString();
   }
 }
+
