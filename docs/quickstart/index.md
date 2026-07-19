@@ -3,8 +3,7 @@ title: Quick Start Guides
 description: Get up and running with NeqSim in 5 minutes. Quick start guides for Java, Python, and Google Colab with copy-paste examples.
 ---
 
-
-Get up and running with NeqSim in 5 minutes! Choose your platform:
+Get up and running with NeqSim in 5 minutes. Choose your platform:
 
 > **Documentation Version:** These guides are for NeqSim 3.x. Check the [Maven Central](https://search.maven.org/search?q=g:%22com.equinor.neqsim%22%20AND%20a:%22neqsim%22) page for the latest version number.
 
@@ -16,24 +15,13 @@ Get up and running with NeqSim in 5 minutes! Choose your platform:
 
 ## Which Should I Choose?
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  "I want to try NeqSim right now without installing anything"│
-│  ➜ Google Colab Quickstart                                   │
-├─────────────────────────────────────────────────────────────┤
-│  "I'm a Python user / data scientist"                        │
-│  ➜ Python Quickstart                                         │
-├─────────────────────────────────────────────────────────────┤
-│  "I'm building a production application"                     │
-│  ➜ Java Quickstart                                           │
-├─────────────────────────────────────────────────────────────┤
-│  "I want to extend or contribute to NeqSim"                  │
-│  ➜ Java Quickstart + Developer Setup                         │
-├─────────────────────────────────────────────────────────────┤
-│  "I want AI to solve an engineering problem for me"           │
-│  ➜ AI-Assisted Task Solving Tutorial                         │
-└─────────────────────────────────────────────────────────────┘
-```
+| Goal | Recommended path |
+|------|------------------|
+| Try NeqSim immediately without installing anything | [Google Colab Quickstart](colab-quickstart) |
+| Use NeqSim from Python, data-science tools, or notebooks | [Python Quickstart](python-quickstart) |
+| Build a production Java application with full API access | [Java Quickstart](java-quickstart) |
+| Extend NeqSim or contribute to the repository | [Java Quickstart](java-quickstart) and [Developer Setup](../development/DEVELOPER_SETUP) |
+| Use AI agents to solve and document an engineering problem | [Solve an Engineering Task](../tutorials/solve-engineering-task) |
 
 ## After the Quickstart
 
