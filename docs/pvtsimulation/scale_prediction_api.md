@@ -5,10 +5,13 @@ description: "Complete API reference for NeqSim mineral scale prediction classes
 
 # Scale Prediction API Reference
 
-NeqSim provides two complementary approaches for mineral scale prediction:
+NeqSim provides three complementary approaches for mineral scale prediction:
 
 1. **Rigorous EOS-based** (`CheckScalePotential`) — Uses Electrolyte CPA or Pitzer activity coefficients from a full thermodynamic flash. Best accuracy, requires complete fluid definition.
-2. **Empirical standalone** (`ScalePredictionCalculator`) — Uses Davies equation with ion pairing corrections. Fast screening, needs only water analysis data.
+2. **High-salinity standalone** (`PitzerScaleActivityModel` + `MultiMineralScaleEquilibrium`) — Uses published binary
+   Pitzer parameters and coupled shared-ion precipitation for NaCl-dominated brines.
+3. **Empirical standalone** (`ScalePredictionCalculator`) — Uses Davies equation with ion pairing corrections. Fast
+   dilute-brine screening, needs only water analysis data.
 
 Both approaches share improved Ksp correlations, pressure corrections, and T-dependent parameters.
 
@@ -373,18 +376,18 @@ System.out.println("Total SI: " + ss.getTotalSaturationIndex());
 
 ---
 
-## Comparison: Empirical vs EOS-Based
+## Comparison of thermodynamic routes
 
-| Feature | ScalePredictionCalculator | CheckScalePotential |
-|---------|--------------------------|---------------------|
-| Activity coefficients | Davies equation | Electrolyte CPA or Pitzer |
-| Ion pairing | 6 explicit pairs | Implicit in EOS |
-| Pressure correction | $\Delta V^\circ$ method | $\Delta V^\circ$ method |
-| Input | Water analysis (mg/L) | Full fluid definition (moles) |
-| Speed | Milliseconds | Seconds (flash required) |
-| Best for | Screening, large studies | Detailed design, complex fluids |
-| T range | 0-200°C | EOS-limited |
-| Ionic strength | Davies valid to ~0.5 M | CPA/Pitzer valid to ~6 M |
+| Feature | Davies standalone | Pitzer binary + coupled solids | Electrolyte EOS / full Pitzer |
+|---------|--------------------|--------------------------------|-------------------------------|
+| Activity coefficients | Charge-based Davies | Ion-specific binary Pitzer | Full fluid speciation/model |
+| Ion pairing | 6 explicit pairs | 6 pairs plus trace-ion activity mapping | Thermodynamic phase model |
+| Input | Water analysis | Water analysis + salinity/molality | Full fluid definition |
+| Best for | Dilute screening | NaCl-dominated oilfield-brine screening | Detailed design, complex brines |
+| Ionic strength | Approximately <=0.5 mol/kg | Validated against NaCl data to 6 mol/kg | Model/database dependent |
+
+See [High-Salinity Mineral Scale and Production-Chemical Validation](mineral_scale_chemical_treatment_validation.md)
+for published-data errors, treatment scenarios and limitations.
 
 ---
 

@@ -10,20 +10,21 @@ import neqsim.pvtsimulation.flowassurance.ScalePredictionCalculator;
  * the residual scaling risk after chemical treatment.
  *
  * <p>
- * The inhibitor reduces the effective supersaturation seen by the system. The residual saturation index after treatment
- * is approximated as:
+ * A threshold inhibitor changes nucleation and crystal-growth kinetics, not the mineral chemical potential. Therefore
+ * the thermodynamic saturation index is unchanged. For backwards-compatible screening, a separate inhibited kinetic
+ * risk index is calculated as:
  * </p>
  *
  * <pre>
  * {@code
- * SI_inhibited = SI_uninhibited + log10(1 - efficiency)
+ * risk_index = SI_thermodynamic + log10(1 - efficiency)
  * }
  * </pre>
  *
  * <p>
- * If efficiency = 0 the residual SI equals the uninhibited SI; if efficiency = 1 the residual SI approaches negative
- * infinity (no scale). The model assumes the inhibitor acts on nucleation / growth kinetics, not on thermodynamic
- * equilibrium — so this is a screening-level risk metric.
+ * If efficiency = 0 the risk index equals SI; if efficiency approaches 1 the risk index falls. It must not be reported
+ * as a post-treatment thermodynamic SI or used in an equilibrium precipitation calculation. Vendor static and dynamic
+ * tests remain the basis for deployment.
  * </p>
  *
  * <p>
@@ -40,8 +41,10 @@ public class ScaleControlAssessor implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private final ScalePredictionCalculator predictor;
-  private final Map<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance> inhibitors = new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance>();
-  private final Map<ScaleInhibitorPerformance.ScaleType, Double> residualSI = new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, Double>();
+  private final Map<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance> inhibitors =
+      new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance>();
+  private final Map<ScaleInhibitorPerformance.ScaleType, Double> kineticRiskIndex =
+      new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, Double>();
   private boolean evaluated = false;
 
   /**
@@ -92,8 +95,9 @@ public class ScaleControlAssessor implements Serializable {
    */
   public void evaluate() {
     predictor.calculate();
-    residualSI.clear();
-    Map<ScaleInhibitorPerformance.ScaleType, Double> uninh = new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, Double>();
+    kineticRiskIndex.clear();
+    Map<ScaleInhibitorPerformance.ScaleType, Double> uninh =
+        new LinkedHashMap<ScaleInhibitorPerformance.ScaleType, Double>();
     uninh.put(ScaleInhibitorPerformance.ScaleType.CACO3, predictor.getCaCO3SaturationIndex());
     uninh.put(ScaleInhibitorPerformance.ScaleType.BASO4, predictor.getBaSO4SaturationIndex());
     uninh.put(ScaleInhibitorPerformance.ScaleType.SRSO4, predictor.getSrSO4SaturationIndex());
@@ -103,12 +107,12 @@ public class ScaleControlAssessor implements Serializable {
     for (Map.Entry<ScaleInhibitorPerformance.ScaleType, Double> entry : uninh.entrySet()) {
       double si = entry.getValue();
       if (Double.isNaN(si)) {
-        residualSI.put(entry.getKey(), Double.NaN);
+        kineticRiskIndex.put(entry.getKey(), Double.NaN);
         continue;
       }
       ScaleInhibitorPerformance perf = inhibitors.get(entry.getKey());
       if (perf == null) {
-        residualSI.put(entry.getKey(), si);
+        kineticRiskIndex.put(entry.getKey(), si);
         continue;
       }
       if (!perf.isEvaluated()) {
@@ -116,30 +120,78 @@ public class ScaleControlAssessor implements Serializable {
       }
       double eff = Math.min(0.999, Math.max(0.0, perf.getEfficiency()));
       double residual = si + Math.log10(Math.max(1.0e-6, 1.0 - eff));
-      residualSI.put(entry.getKey(), residual);
+      kineticRiskIndex.put(entry.getKey(), residual);
     }
     evaluated = true;
   }
 
   /**
-   * Returns the residual SI for the supplied scale.
+   * Returns the inhibited kinetic risk index for the supplied scale.
    *
    * @param scaleType scale type
-   * @return residual SI (NaN if not applicable)
+   * @return inhibited kinetic risk index (NaN if not applicable)
+   * @deprecated use {@link #getKineticRiskIndex(ScaleInhibitorPerformance.ScaleType)}; an inhibitor does not change
+   * thermodynamic SI
    */
+  @Deprecated
   public double getResidualSI(ScaleInhibitorPerformance.ScaleType scaleType) {
-    Double v = residualSI.get(scaleType);
+    return getKineticRiskIndex(scaleType);
+  }
+
+  /**
+   * Returns the inhibited kinetic risk index for a scale type.
+   *
+   * @param scaleType scale type
+   * @return kinetic risk index, or NaN if not applicable
+   */
+  public double getKineticRiskIndex(ScaleInhibitorPerformance.ScaleType scaleType) {
+    Double v = kineticRiskIndex.get(scaleType);
     return v == null ? Double.NaN : v.doubleValue();
   }
 
   /**
-   * Returns the worst residual SI among all evaluated scales.
+   * Returns the unchanged thermodynamic saturation index for a scale type.
    *
-   * @return worst SI (most positive)
+   * @param scaleType scale type
+   * @return thermodynamic SI, or NaN if not applicable
    */
+  public double getThermodynamicSaturationIndex(ScaleInhibitorPerformance.ScaleType scaleType) {
+    predictor.calculate();
+    switch (scaleType) {
+    case CACO3:
+      return predictor.getCaCO3SaturationIndex();
+    case BASO4:
+      return predictor.getBaSO4SaturationIndex();
+    case SRSO4:
+      return predictor.getSrSO4SaturationIndex();
+    case CASO4:
+      return predictor.getCaSO4SaturationIndex();
+    case FECO3:
+      return predictor.getFeCO3SaturationIndex();
+    default:
+      return Double.NaN;
+    }
+  }
+
+  /**
+   * Returns the worst inhibited kinetic risk index among all evaluated scales.
+   *
+   * @return worst kinetic risk index (most positive)
+   * @deprecated use {@link #getWorstKineticRiskIndex()}; this value is not a thermodynamic residual SI
+   */
+  @Deprecated
   public double getWorstResidualSI() {
+    return getWorstKineticRiskIndex();
+  }
+
+  /**
+   * Returns the worst inhibited kinetic risk index among all evaluated scales.
+   *
+   * @return worst kinetic risk index (most positive)
+   */
+  public double getWorstKineticRiskIndex() {
     double worst = Double.NEGATIVE_INFINITY;
-    for (Double v : residualSI.values()) {
+    for (Double v : kineticRiskIndex.values()) {
       if (v != null && !Double.isNaN(v) && v.doubleValue() > worst) {
         worst = v.doubleValue();
       }
@@ -148,13 +200,25 @@ public class ScaleControlAssessor implements Serializable {
   }
 
   /**
-   * Returns whether the worst residual SI is below the supplied scaling threshold.
+   * Returns whether the worst kinetic risk index is below the supplied screening threshold.
    *
-   * @param threshold scaling SI threshold (e.g. 0.5)
-   * @return true if all scales are controlled
+   * @param threshold kinetic risk threshold (e.g. 0.5)
+   * @return true if all registered scale risks are screened as controlled
+   * @deprecated use {@link #isKineticallyControlled(double)}
    */
+  @Deprecated
   public boolean isControlled(double threshold) {
-    double worst = getWorstResidualSI();
+    return isKineticallyControlled(threshold);
+  }
+
+  /**
+   * Returns whether the worst kinetic risk index is below the supplied screening threshold.
+   *
+   * @param threshold kinetic risk threshold (e.g. 0.5)
+   * @return true if all registered scale risks are screened as controlled
+   */
+  public boolean isKineticallyControlled(double threshold) {
+    double worst = getWorstKineticRiskIndex();
     return !Double.isNaN(worst) && worst < threshold;
   }
 
@@ -180,19 +244,24 @@ public class ScaleControlAssessor implements Serializable {
     uninhibited.put("SRSO4", predictor.getSrSO4SaturationIndex());
     uninhibited.put("CASO4", predictor.getCaSO4SaturationIndex());
     uninhibited.put("FECO3", predictor.getFeCO3SaturationIndex());
-    map.put("uninhibitedSI", uninhibited);
+    map.put("thermodynamicSI", uninhibited);
+    map.put("thermodynamicSIChangedByInhibitor", false);
+    map.put("uninhibitedSI", uninhibited); // Backwards-compatible alias.
     Map<String, Object> residual = new LinkedHashMap<String, Object>();
-    for (Map.Entry<ScaleInhibitorPerformance.ScaleType, Double> entry : residualSI.entrySet()) {
+    for (Map.Entry<ScaleInhibitorPerformance.ScaleType, Double> entry : kineticRiskIndex.entrySet()) {
       residual.put(entry.getKey().name(), entry.getValue());
     }
-    map.put("residualSI", residual);
+    map.put("kineticRiskIndex", residual);
+    map.put("residualSI", residual); // Backwards-compatible alias; not a thermodynamic SI.
     Map<String, Object> inh = new LinkedHashMap<String, Object>();
     for (Map.Entry<ScaleInhibitorPerformance.ScaleType, ScaleInhibitorPerformance> entry : inhibitors.entrySet()) {
       inh.put(entry.getKey().name(), entry.getValue().toMap());
     }
     map.put("inhibitors", inh);
-    map.put("worstResidualSI", getWorstResidualSI());
-    map.put("controlledAt0p5", isControlled(0.5));
+    map.put("worstKineticRiskIndex", getWorstKineticRiskIndex());
+    map.put("worstResidualSI", getWorstKineticRiskIndex()); // Backwards-compatible alias.
+    map.put("kineticallyControlledAt0p5", isKineticallyControlled(0.5));
+    map.put("controlledAt0p5", isKineticallyControlled(0.5)); // Backwards-compatible alias.
     map.put("standardsApplied", getStandardsApplied());
     return map;
   }

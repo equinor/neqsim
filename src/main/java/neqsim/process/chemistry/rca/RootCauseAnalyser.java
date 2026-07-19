@@ -49,6 +49,7 @@ public class RootCauseAnalyser implements Serializable {
   private final List<Symptom> symptoms = new ArrayList<Symptom>();
   private final List<ProductionChemical> chemicals = new ArrayList<ProductionChemical>();
   private ChemicalCompatibilityAssessor compatibilityAssessor;
+  private neqsim.process.chemistry.scale.ProductionChemicalScaleScenario chemicalTreatmentScenario;
   private transient neqsim.process.chemistry.scale.ScaleRemediationAdvisor remediationAdvisor;
   private double temperatureC = 60.0;
   private double pressureBara = 50.0;
@@ -106,6 +107,16 @@ public class RootCauseAnalyser implements Serializable {
    */
   public void setCompatibilityAssessor(ChemicalCompatibilityAssessor assessor) {
     this.compatibilityAssessor = assessor;
+  }
+
+  /**
+   * Sets a treatment-aware scale scenario whose before/after results are used as RCA evidence.
+   *
+   * @param scenario configured production-chemical scale scenario
+   */
+  public void setChemicalTreatmentScenario(
+      neqsim.process.chemistry.scale.ProductionChemicalScaleScenario scenario) {
+    this.chemicalTreatmentScenario = scenario;
   }
 
   /**
@@ -345,7 +356,10 @@ public class RootCauseAnalyser implements Serializable {
           "Multiple chemicals declared but no ChemicalCompatibilityAssessor configured — compatibility not verified");
     }
 
-    // Pass 3: deduplicate by code (keep highest score)
+    // Pass 3: treatment-aware thermodynamic and stoichiometric evidence.
+    analyseChemicalTreatmentScenario();
+
+    // Pass 4: deduplicate by code (keep highest score)
     Map<String, RootCauseCandidate> dedup = new LinkedHashMap<String, RootCauseCandidate>();
     for (RootCauseCandidate c : candidates) {
       RootCauseCandidate prev = dedup.get(c.getCode());
@@ -380,6 +394,50 @@ public class RootCauseAnalyser implements Serializable {
     }
 
     evaluated = true;
+  }
+
+  private void analyseChemicalTreatmentScenario() {
+    if (chemicalTreatmentScenario == null) {
+      return;
+    }
+    if (!chemicalTreatmentScenario.isEvaluated()) {
+      chemicalTreatmentScenario.evaluate();
+    }
+    Map<String, String> treatmentWarnings = chemicalTreatmentScenario.getWarnings();
+    if (treatmentWarnings.containsKey("chemical_induced_calcite_risk")) {
+      double delta = chemicalTreatmentScenario.getSaturationIndexChange("CaCO3");
+      candidates.add(new RootCauseCandidate("CHEMICAL_INDUCED_CARBONATE_SCALE",
+          "pH-control chemical increased carbonate-scale supersaturation", 0.82,
+          "Treatment scenario increases calcite SI by " + String.format(java.util.Locale.ROOT, "%.2f", delta)
+              + " and predicts treated pH "
+              + String.format(java.util.Locale.ROOT, "%.2f", chemicalTreatmentScenario.getTreatedPH()),
+          "Review base-equivalent dose and injection point; confirm treated pH/alkalinity and deposit mineralogy"));
+    }
+    if (treatmentWarnings.containsKey("h2s_scavenger_under_capacity")) {
+      candidates.add(new RootCauseCandidate("H2S_SCAVENGER_UNDER_CAPACITY",
+          "Injected H2S scavenger has insufficient stoichiometric capacity", 0.80,
+          "Treatment scenario leaves "
+              + String.format(java.util.Locale.ROOT, "%.1f", chemicalTreatmentScenario.getResidualDissolvedH2SMgL())
+              + " mg/L dissolved H2S after consuming active capacity",
+          "Verify active concentration, actual H2S load, residence time and mass-transfer efficiency; increase "
+              + "capacity"));
+    }
+    if (treatmentWarnings.containsKey("triazine_spent_product") && hasSymptom(Symptom.Category.DEPOSIT)) {
+      candidates.add(new RootCauseCandidate("SCAVENGER_SPENT_PRODUCT_DEPOSIT",
+          "H2S-scavenger reaction product contributed to the deposit", 0.62,
+          "Triazine is present in the treatment scenario and a deposit symptom was reported",
+          "Analyse deposit for dithiazine/amorphous organics; review scavenger dose, contact time and injection "
+              + "location" + remediationHint("dithiazine")));
+    }
+  }
+
+  private boolean hasSymptom(Symptom.Category category) {
+    for (Symptom symptom : symptoms) {
+      if (symptom.getCategory() == category) {
+        return true;
+      }
+    }
+    return false;
   }
 
   // ─── Symptom analysers ──────────────────────────────────
@@ -730,6 +788,9 @@ public class RootCauseAnalyser implements Serializable {
     map.put("candidates", cList);
     map.put("primary", getPrimary() != null ? getPrimary().toMap() : null);
     map.put("dataGaps", dataGaps);
+    if (chemicalTreatmentScenario != null) {
+      map.put("chemicalTreatmentScenario", chemicalTreatmentScenario.toMap());
+    }
     if (!bayesianPosteriors.isEmpty()) {
       map.put("bayesianPosteriors", new LinkedHashMap<String, Double>(bayesianPosteriors));
     }

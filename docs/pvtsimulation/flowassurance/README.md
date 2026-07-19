@@ -29,6 +29,7 @@ Flow assurance encompasses the prevention and remediation of:
 | [Asphaltene Method Comparison](asphaltene_method_comparison) | Comparing CPA vs De Boer approaches |
 | [Asphaltene Model Validation](asphaltene_validation) | Validation against SPE-24987 field data |
 | [Flow Assurance Screening Tools](flow_assurance_screening_tools) | Pipeline cooldown, CO2 corrosion, scale prediction, wax curve monotonicity |
+| [High-salinity scale and chemical treatment](../mineral_scale_chemical_treatment_validation) | Pitzer validation, pH/H2S dosing and RCA |
 
 ## Key Classes
 
@@ -43,6 +44,8 @@ Flow assurance encompasses the prevention and remediation of:
 > material selection per NORSOK M-001, see the **[Corrosion Analysis Module](../../process/corrosion/)**
 > in `neqsim.process.corrosion`. These integrate directly with pipeline mechanical design.
 | `ScalePredictionCalculator` | `neqsim.pvtsimulation.flowassurance` | Saturation index for CaCO3, BaSO4, SrSO4, CaSO4, FeCO3 |
+| `PitzerScaleActivityModel` | `neqsim.pvtsimulation.flowassurance` | Validated high-salinity activity coefficients for NaCl-dominated brines |
+| `MultiMineralScaleEquilibrium` | `neqsim.pvtsimulation.flowassurance` | Coupled shared-ion precipitation for five minerals |
 | `WaxCurveCalculator` | `neqsim.pvtsimulation.flowassurance` | Wax fraction curves with monotonicity enforcement |
 
 ### Asphaltene Analysis

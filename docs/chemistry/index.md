@@ -1,6 +1,6 @@
 ---
 title: "Chemistry and Integrity Modelling in NeqSim"
-description: "Open standards-traceable framework for chemical integrity management — electrolyte scale prediction (Davies activity coefficients), mechanistic CO2 corrosion (NORSOK M-506 with Nesic mass-transfer + Langmuir inhibitor), packed-bed H2S scavenger breakthrough, closed-loop deposition coupling with pipe hydraulics, Bayesian root-cause analysis, and Monte Carlo uncertainty. Exposed via the NeqSim MCP server for AI-driven workflows."
+description: "Open standards-traceable framework for chemical integrity management — Davies and Pitzer mineral-scale prediction, production-chemical scenarios, mechanistic CO2 corrosion, H2S scavenger breakthrough, deposition coupling, and explainable root-cause analysis."
 ---
 
 # Chemistry and Integrity Modelling
@@ -19,6 +19,8 @@ exposed over the [Model Context Protocol](../integration/mcp_getting_started.md)
 |--------|-------|-------|-----------|
 | Mineral scale | `scale.ScalePredictionCalculator` | Oddo–Tomson SI | NACE TM0374 |
 | Mineral scale (rigorous) | `scale.ElectrolyteScaleCalculator` | Davies activity-coeff SI for CaCO3, BaSO4, CaSO4, SrSO4 | NACE TM0374, NORSOK M-001 |
+| High-salinity scale | `flowassurance.PitzerScaleActivityModel` | Published binary Pitzer parameters + coupled solids | Pitzer (1973), USGS PHREEQC |
+| Chemical/scale RCA | `scale.ProductionChemicalScaleScenario` | Carbonate alkalinity + H2S capacity + before/after SI | Literature stoichiometry |
 | Pipeline deposition | `scale.ScaleDepositionAccumulator` | Per-segment SI × velocity × time | NACE SP0775 |
 | Closed-loop deposition | `scale.ClosedLoopDepositionSolver` | Iterates effective diameter against deposition | NACE SP0775 |
 | CO2 corrosion | `corrosion.CorrosionCalculator` | NORSOK M-506 base | NORSOK M-506 |
@@ -91,6 +93,7 @@ release, 47 chemistry tests pass and serve as the regression baseline.
 ## Deep-dive references
 
 - [Electrolyte scale prediction (Davies)](electrolyte_scale.md) — ion table conventions, SI math, worked North-Sea mixing example.
+- [High-salinity scale and chemical treatment](../pvtsimulation/mineral_scale_chemical_treatment_validation.md) — Pitzer validation, pH/H2S scenarios and RCA.
 - [Mechanistic CO2 corrosion](mechanistic_corrosion.md) — NORSOK + Nesic mass-transfer + Langmuir inhibitor with worked export-line example.
 - [Closed-loop deposition coupling](closed_loop_deposition.md) — how `ClosedLoopDepositionSolver` iterates `PipeBeggsAndBrills` against `ScaleDepositionAccumulator`.
 - [Packed-bed scavenger reactor](packed_bed_scavenger.md) — 1D PFR PDE, breakthrough, sizing workflow.
