@@ -7536,16 +7536,24 @@ public class ProcessSystem extends SimulationBaseClass {
         equipReport.addProperty("type", equipment.getClass().getSimpleName());
         equipReport.addProperty("autoSized", sizeable.isAutoSized());
 
-        // Get JSON sizing report if available
-        String jsonReport = sizeable.getSizingReportJson();
-        if (jsonReport != null && !jsonReport.equals("{}")) {
-          try {
-            com.google.gson.JsonObject sizingData = com.google.gson.JsonParser.parseString(jsonReport)
-                .getAsJsonObject();
-            equipReport.add("sizingData", sizingData);
-          } catch (Exception e) {
-            equipReport.addProperty("sizingData", jsonReport);
+        // Get JSON sizing report if available. Some equipment cannot calculate a sizing
+        // report before its first process run; keep the process-level report usable and
+        // make that state explicit instead of aborting the complete capacity report.
+        equipReport.addProperty("sizingDataAvailable", false);
+        try {
+          String jsonReport = sizeable.getSizingReportJson();
+          if (jsonReport != null && !jsonReport.equals("{}")) {
+            try {
+              com.google.gson.JsonObject sizingData = com.google.gson.JsonParser.parseString(jsonReport)
+                  .getAsJsonObject();
+              equipReport.add("sizingData", sizingData);
+            } catch (Exception e) {
+              equipReport.addProperty("sizingData", jsonReport);
+            }
+            equipReport.addProperty("sizingDataAvailable", true);
           }
+        } catch (RuntimeException ex) {
+          equipReport.addProperty("sizingDataError", ex.getClass().getSimpleName());
         }
 
         // Add capacity constraints if equipment is capacity-constrained

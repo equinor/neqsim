@@ -25,8 +25,7 @@ public final class AreaDevelopmentEvaluator {
         if (first.isEligible() != second.isEligible()) {
           return first.isEligible() ? -1 : 1;
         }
-        return Double.compare(second.getLifecycleResult().getNpvMusd(),
-            first.getLifecycleResult().getNpvMusd());
+        return Double.compare(second.getLifecycleResult().getNpvMusd(), first.getLifecycleResult().getNpvMusd());
       }
     });
     return new AreaDevelopmentResult(portfolio.getAreaName(), results);

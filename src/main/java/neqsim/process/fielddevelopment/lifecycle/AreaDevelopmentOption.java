@@ -22,12 +22,11 @@ public final class AreaDevelopmentOption implements Serializable {
 
   private AreaDevelopmentOption(String name, RouteType routeType, String receivingAssetName,
       FieldLifecycleConcept lifecycleConcept) {
-    if (name == null || name.trim().isEmpty() || receivingAssetName == null
-        || receivingAssetName.trim().isEmpty() || lifecycleConcept == null) {
+    if (name == null || name.trim().isEmpty() || receivingAssetName == null || receivingAssetName.trim().isEmpty()
+        || lifecycleConcept == null) {
       throw new IllegalArgumentException("option name, receiving asset, and lifecycle concept are required");
     }
-    FacilityLifecycleStrategy facility =
-        lifecycleConcept.getConfiguration().getFacilityLifecycleStrategy();
+    FacilityLifecycleStrategy facility = lifecycleConcept.getConfiguration().getFacilityLifecycleStrategy();
     if (facility == null) {
       throw new IllegalArgumentException("area-development options require a facility lifecycle strategy");
     }
