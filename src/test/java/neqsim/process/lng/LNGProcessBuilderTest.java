@@ -18,9 +18,8 @@ class LNGProcessBuilderTest {
   @ParameterizedTest
   @EnumSource(LNGProcessCycle.class)
   void testBuildsEverySupportedCycle(LNGProcessCycle cycle) {
-    LNGProcessModel model = new LNGProcessBuilder().setName("test " + cycle)
-        .setCycle(cycle).setFeedFlowRate(20000.0).setNumberOfZones(4)
-        .setAdaptiveRefinement(false).build();
+    LNGProcessModel model = new LNGProcessBuilder().setName("test " + cycle).setCycle(cycle).setFeedFlowRate(20000.0)
+        .setNumberOfZones(4).setAdaptiveRefinement(false).build();
 
     assertEquals(cycle, model.getCycle());
     assertNotNull(model.getProcessSystem());
@@ -39,9 +38,8 @@ class LNGProcessBuilderTest {
   @Test
   @Tag("slow")
   void testSmrRouteRunsAndReportsPerformance() {
-    LNGProcessModel model = new LNGProcessBuilder().setName("SMR smoke test")
-        .setCycle(LNGProcessCycle.SMR).setFeedFlowRate(20000.0)
-        .setNumberOfZones(4).setAdaptiveRefinement(false).build();
+    LNGProcessModel model = new LNGProcessBuilder().setName("SMR smoke test").setCycle(LNGProcessCycle.SMR)
+        .setFeedFlowRate(20000.0).setNumberOfZones(4).setAdaptiveRefinement(false).build();
 
     LNGProcessModel.Result result = model.run();
 
@@ -64,7 +62,6 @@ class LNGProcessBuilderTest {
     assertThrows(IllegalArgumentException.class, () -> builder.setFeedFlowRate(0.0));
     assertThrows(IllegalArgumentException.class, () -> builder.setFeedPressure(-1.0));
     assertThrows(IllegalArgumentException.class, () -> builder.setNumberOfZones(1));
-    assertThrows(IllegalArgumentException.class,
-        () -> builder.setCompressorEfficiency(1.1));
+    assertThrows(IllegalArgumentException.class, () -> builder.setCompressorEfficiency(1.1));
   }
 }
