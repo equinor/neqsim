@@ -14,6 +14,7 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.distillation.DistillationColumn;
+import neqsim.process.equipment.heatexchanger.LNGHeatExchanger;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -43,6 +44,13 @@ class LNGProcessBuilderTest {
     assertEquals(2, model.getOutputStreams().size());
     assertTrue(model.getCompressors().size() >= 2);
     assertTrue(model.getCryogenicHeatExchangers().size() >= 1);
+
+    LNGHeatExchanger mainExchanger = model.getCryogenicHeatExchangers()
+        .get(model.getCryogenicHeatExchangers().size() - 1);
+    double coldSideInletC = mainExchanger.getInStream(2).getTemperature("C");
+    double coldestHotOutletC = Math.min(mainExchanger.getOutTemperature(0), mainExchanger.getOutTemperature(1));
+    assertTrue(coldSideInletC < coldestHotOutletC,
+        cycle + " cold-side warm start must be colder than the specified hot-stream outlets");
 
     if (cycle == LNGProcessCycle.NITROGEN_EXPANDER) {
       assertEquals(1, model.getExpanders().size());
