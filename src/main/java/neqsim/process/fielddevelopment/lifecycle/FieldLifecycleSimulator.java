@@ -321,8 +321,7 @@ public class FieldLifecycleSimulator {
     }
     FacilityCapacity effectiveCapacity = new FacilityCapacity(configured.getOilSm3PerDay(),
         configured.getGasSm3PerDay(), configured.getWaterSm3PerDay(), configured.getLiquidSm3PerDay(), powerCapacity);
-    ProcessEquipmentInterface bottleneck = strategy.isUseDetailedProcessConstraints()
-        ? getProcessBottleneck(model)
+    ProcessEquipmentInterface bottleneck = strategy.isUseDetailedProcessConstraints() ? getProcessBottleneck(model)
         : null;
     double designBottleneckUtilization = strategy.isUseDetailedProcessConstraints()
         ? getProcessBottleneckUtilization(model)
@@ -333,8 +332,7 @@ public class FieldLifecycleSimulator {
     int requiredParallelTrainCount = (int) Math.ceil(detailedCapacityMultiplier - 1.0e-12);
     return new FacilityDesignResult(strategy.getName(), strategy.getDevelopmentMode(), designRates, effectiveCapacity,
         strategy.getDesignMargin(), designPowerKw, autoSizedCount, constraintCount,
-        getProcessBottleneckName(model, bottleneck), designBottleneckUtilization,
-        detailedCapacityMultiplier,
+        getProcessBottleneckName(model, bottleneck), designBottleneckUtilization, detailedCapacityMultiplier,
         requiredParallelTrainCount);
   }
 
@@ -443,8 +441,8 @@ public class FieldLifecycleSimulator {
         double attributedSatelliteOil = Math.min(totalOilExport,
             satellite.getOilSm3PerDay() * satelliteOilRecoveryFactor);
         lastResult = new FacilityOperatingResult(satellite, host, attributedSatelliteOil,
-            totalGasExport * satelliteGasShare, injectionRate, powerKw, maximumUtilization,
-            primaryBottleneck, unconstrainedUtilization, unconstrainedBottleneck);
+            totalGasExport * satelliteGasShare, injectionRate, powerKw, maximumUtilization, primaryBottleneck,
+            unconstrainedUtilization, unconstrainedBottleneck);
         if (maximumUtilization <= strategy.getMaximumDetailedProcessUtilization() + 1.0e-6) {
           return lastResult;
         }
@@ -627,8 +625,7 @@ public class FieldLifecycleSimulator {
   }
 
   private double getProcessPower(FieldLifecycleModel model, String unit) {
-    return model.hasProcessModel() ? model.getProcessModel().getPower(unit)
-        : model.getProcessSystem().getPower(unit);
+    return model.hasProcessModel() ? model.getProcessModel().getPower(unit) : model.getProcessSystem().getPower(unit);
   }
 
   private int autoSizeProcess(FieldLifecycleModel model, double designMargin) {
@@ -664,14 +661,12 @@ public class FieldLifecycleSimulator {
   }
 
   private int applyMechanicalDesignCapacityConstraints(FieldLifecycleModel model) {
-    return model.hasProcessModel()
-        ? model.getProcessModel().applyMechanicalDesignCapacityConstraints()
+    return model.hasProcessModel() ? model.getProcessModel().applyMechanicalDesignCapacityConstraints()
         : model.getProcessSystem().applyMechanicalDesignCapacityConstraints();
   }
 
   private ProcessEquipmentInterface getProcessBottleneck(FieldLifecycleModel model) {
-    return model.hasProcessModel() ? model.getProcessModel().getBottleneck()
-        : model.getProcessSystem().getBottleneck();
+    return model.hasProcessModel() ? model.getProcessModel().getBottleneck() : model.getProcessSystem().getBottleneck();
   }
 
   private double getProcessBottleneckUtilization(FieldLifecycleModel model) {
@@ -679,8 +674,7 @@ public class FieldLifecycleSimulator {
         : model.getProcessSystem().getBottleneckUtilization();
   }
 
-  private String getProcessBottleneckName(FieldLifecycleModel model,
-      ProcessEquipmentInterface bottleneck) {
+  private String getProcessBottleneckName(FieldLifecycleModel model, ProcessEquipmentInterface bottleneck) {
     if (bottleneck == null) {
       return null;
     }
@@ -719,8 +713,7 @@ public class FieldLifecycleSimulator {
       return ProductSpecificationResult.notEvaluated();
     }
     if (model.getProductQualityProvider() != null) {
-      ProductSpecificationResult result =
-          model.getProductQualityProvider().evaluate(model, specifications);
+      ProductSpecificationResult result = model.getProductQualityProvider().evaluate(model, specifications);
       if (result == null) {
         throw new IllegalStateException("product quality provider returned null");
       }
@@ -787,8 +780,7 @@ public class FieldLifecycleSimulator {
   }
 
   /**
-   * Compressor settings that control the thermodynamic operating solve rather than
-   * the retained mechanical design.
+   * Compressor settings that control the thermodynamic operating solve rather than the retained mechanical design.
    */
   private static final class CompressorOperatingMode {
     private final Compressor compressor;
@@ -844,8 +836,8 @@ public class FieldLifecycleSimulator {
 
     private FacilityOperatingResult(FacilityProductionRate satelliteAllocated, FacilityProductionRate hostAllocated,
         double satelliteOilExportRateSm3PerDay, double satelliteGasExportRateSm3PerDay,
-        double gasInjectionRateSm3PerDay, double powerKw, double maximumUtilization,
-        String primaryBottleneck, double unconstrainedUtilization, String unconstrainedBottleneck) {
+        double gasInjectionRateSm3PerDay, double powerKw, double maximumUtilization, String primaryBottleneck,
+        double unconstrainedUtilization, String unconstrainedBottleneck) {
       this.satelliteAllocated = satelliteAllocated;
       this.hostAllocated = hostAllocated;
       this.satelliteOilExportRateSm3PerDay = satelliteOilExportRateSm3PerDay;
@@ -881,8 +873,7 @@ public class FieldLifecycleSimulator {
     private String primaryBottleneck;
     private double unconstrainedFacilityUtilization;
     private String unconstrainedBottleneck;
-    private ProductSpecificationResult productSpecificationResult =
-        ProductSpecificationResult.notEvaluated();
+    private ProductSpecificationResult productSpecificationResult = ProductSpecificationResult.notEvaluated();
 
     private AnnualAccumulator(int year) {
       this.year = year;
@@ -891,8 +882,8 @@ public class FieldLifecycleSimulator {
     private void add(double days, double oil, double gasExport, double gasInjected, double water, double waterCut,
         double pressure, double energy, double emissions, double potentialOilRate, double requestedOilRate,
         double hostOilRate, double hostGasRate, double hostWaterRate, double holdbackOil, double capacityDeferredOil,
-        double facilityUtilization, String bottleneck, double requestedFacilityUtilization,
-        String requestedBottleneck, ProductSpecificationResult productQuality) {
+        double facilityUtilization, String bottleneck, double requestedFacilityUtilization, String requestedBottleneck,
+        ProductSpecificationResult productQuality) {
       calendarDays += days;
       oilSm3 += oil;
       gasExportSm3 += gasExport;
