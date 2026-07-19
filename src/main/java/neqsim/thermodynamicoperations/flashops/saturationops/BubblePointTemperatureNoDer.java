@@ -47,11 +47,9 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
         && system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
       double tGuess = system.getPhase(0).getComponent(0).getAntoineVaporTemperature(system.getPressure());
       ComponentInterface comp = system.getPhase(0).getComponent(0);
-      if (Double.isNaN(tGuess) || tGuess < comp.getTriplePointTemperature()
-          || tGuess >= comp.getTC()) {
+      if (Double.isNaN(tGuess) || tGuess < comp.getTriplePointTemperature() || tGuess >= comp.getTC()) {
         tGuess = comp.getTC()
-            / (1.0 - Math.log(system.getPressure() / comp.getPC())
-                / (5.373 * (1.0 + comp.getAcentricFactor())));
+            / (1.0 - Math.log(system.getPressure() / comp.getPC()) / (5.373 * (1.0 + comp.getAcentricFactor())));
       }
       system.setTemperature(tGuess);
     }

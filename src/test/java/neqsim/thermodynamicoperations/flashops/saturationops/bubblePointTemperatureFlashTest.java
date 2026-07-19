@@ -32,6 +32,7 @@ public class bubblePointTemperatureFlashTest {
     }
     assertEquals(-117.7205968083, fluid0_HC.getTemperature("C"), 1e-2);
   }
+
   @Test
   void testPureHydrogenBubblePoint() throws Exception {
     SystemSrkEos hydrogen = new SystemSrkEos(20.0, 1.01325);
@@ -43,10 +44,8 @@ public class bubblePointTemperatureFlashTest {
 
     assertEquals(20.5414083, hydrogen.getTemperature(), 1e-6);
     assertEquals(20.369, hydrogen.getTemperature(), 0.5);
-    assertEquals(13.8033,
-        hydrogen.getPhase(0).getComponent("hydrogen").getTriplePointTemperature(), 1e-4);
-    assertEquals(0.07041,
-        hydrogen.getPhase(0).getComponent("hydrogen").getTriplePointPressure(), 1e-5);
+    assertEquals(13.8033, hydrogen.getPhase(0).getComponent("hydrogen").getTriplePointTemperature(), 1e-4);
+    assertEquals(0.07041, hydrogen.getPhase(0).getComponent("hydrogen").getTriplePointPressure(), 1e-5);
   }
 
   @Test
