@@ -52,6 +52,9 @@ public class RootCauseReport implements Serializable {
   /** Number of parameters analyzed. */
   private int parametersAnalyzed;
 
+  /** Reproducibility and provenance context for this report. */
+  private DiagnosisCase diagnosisCase;
+
   /** Gson serializer for stable pretty-printed JSON output. */
   private static final transient Gson GSON = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues()
       .create();
@@ -88,6 +91,24 @@ public class RootCauseReport implements Serializable {
    */
   public void setAnalysisSummary(String summary) {
     this.analysisSummary = summary;
+  }
+
+  /**
+   * Sets the reproducible diagnosis case.
+   *
+   * @param diagnosisCase case context
+   */
+  public void setDiagnosisCase(DiagnosisCase diagnosisCase) {
+    this.diagnosisCase = diagnosisCase;
+  }
+
+  /**
+   * Returns the reproducible diagnosis case.
+   *
+   * @return diagnosis case, or {@code null} for reports created by legacy callers
+   */
+  public DiagnosisCase getDiagnosisCase() {
+    return diagnosisCase;
   }
 
   /**
@@ -213,6 +234,9 @@ public class RootCauseReport implements Serializable {
     root.addProperty("timestamp", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").format(new Date(analysisTimestamp)));
     root.addProperty("dataPointsAnalyzed", dataPointsAnalyzed);
     root.addProperty("parametersAnalyzed", parametersAnalyzed);
+    if (diagnosisCase != null) {
+      root.add("diagnosisCase", GSON.toJsonTree(diagnosisCase));
+    }
 
     if (analysisSummary != null) {
       root.addProperty("summary", analysisSummary);
@@ -230,6 +254,10 @@ public class RootCauseReport implements Serializable {
       hypothesisJson.addProperty("priorProbability", hypothesis.getPriorProbability());
       hypothesisJson.addProperty("likelihoodScore", hypothesis.getLikelihoodScore());
       hypothesisJson.addProperty("verificationScore", hypothesis.getVerificationScore());
+      hypothesisJson.addProperty("likelihoodStatus", hypothesis.getLikelihoodStatus().name());
+      hypothesisJson.addProperty("verificationStatus", hypothesis.getVerificationStatus().name());
+      hypothesisJson.addProperty("verificationCoverage", hypothesis.getVerificationCoverage());
+      hypothesisJson.addProperty("verificationComparisonCount", hypothesis.getVerificationComparisonCount());
 
       if (hypothesis.getDescription() != null) {
         hypothesisJson.addProperty("description", hypothesis.getDescription());
@@ -289,6 +317,11 @@ public class RootCauseReport implements Serializable {
         .append("\n");
     sb.append("Data points:  ").append(dataPointsAnalyzed).append("\n");
     sb.append("Parameters:   ").append(parametersAnalyzed).append("\n\n");
+    if (diagnosisCase != null) {
+      sb.append("Case ID:      ").append(diagnosisCase.getCaseId()).append("\n");
+      sb.append("Process model:").append(" ").append(diagnosisCase.getProcessModelId()).append(" @ ")
+          .append(diagnosisCase.getProcessModelRevision()).append("\n\n");
+    }
 
     if (analysisSummary != null) {
       sb.append("Summary: ").append(analysisSummary).append("\n\n");
@@ -302,8 +335,11 @@ public class RootCauseReport implements Serializable {
       Hypothesis h = rankedHypotheses.get(i);
       sb.append(String.format("#%d  %s  (Confidence: %.1f%%)\n", i + 1, h.getName(), h.getConfidenceScore() * 100));
       sb.append(String.format("    Category: %s\n", h.getCategory().name()));
-      sb.append(String.format("    Prior: %.3f | Likelihood: %.3f | Verification: %.3f\n", h.getPriorProbability(),
-          h.getLikelihoodScore(), h.getVerificationScore()));
+      sb.append(String.format("    Prior: %.3f | Likelihood: %.3f (%s) | Verification: %.3f (%s)\n",
+          h.getPriorProbability(), h.getLikelihoodScore(), h.getLikelihoodStatus().name(), h.getVerificationScore(),
+          h.getVerificationStatus().name()));
+      sb.append(String.format("    Verification coverage: %.1f%% (%d KPI comparisons)\n",
+          h.getVerificationCoverage() * 100.0, h.getVerificationComparisonCount()));
 
       if (h.getDescription() != null) {
         sb.append("    Description: ").append(h.getDescription()).append("\n");
@@ -350,6 +386,9 @@ public class RootCauseReport implements Serializable {
     result.put("symptom", symptom.name());
     result.put("dataPointsAnalyzed", dataPointsAnalyzed);
     result.put("parametersAnalyzed", parametersAnalyzed);
+    if (diagnosisCase != null) {
+      result.put("diagnosisCase", diagnosisCase);
+    }
 
     Hypothesis top = getTopHypothesis();
     if (top != null) {
@@ -360,6 +399,9 @@ public class RootCauseReport implements Serializable {
       topResult.put("confidenceScore", top.getConfidenceScore());
       topResult.put("evidenceCount", top.getEvidenceList().size());
       topResult.put("contradictoryEvidenceCount", countContradictoryEvidence(top));
+      topResult.put("likelihoodStatus", top.getLikelihoodStatus().name());
+      topResult.put("verificationStatus", top.getVerificationStatus().name());
+      topResult.put("verificationCoverage", top.getVerificationCoverage());
       result.put("topHypothesis", topResult);
     }
 

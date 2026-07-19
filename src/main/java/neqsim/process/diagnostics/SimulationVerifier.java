@@ -69,6 +69,16 @@ public class SimulationVerifier implements Serializable {
    * @param hypothesis hypothesis to verify
    */
   public void verify(Hypothesis hypothesis) {
+    verifyWithResult(hypothesis);
+  }
+
+  /**
+   * Verifies a hypothesis and returns structured coverage and status information.
+   *
+   * @param hypothesis hypothesis to verify
+   * @return structured verification result
+   */
+  public VerificationResult verifyWithResult(Hypothesis hypothesis) {
     try {
       ProcessSystem modifiedProcess = baseProcess.copy();
       modifiedProcess.run();
@@ -78,23 +88,33 @@ public class SimulationVerifier implements Serializable {
 
       PerturbationResult perturbation = applyPerturbation(modifiedProcess, hypothesis);
       if (!perturbation.isApplied()) {
-        hypothesis.setVerificationScore(0.5);
+        hypothesis.setVerificationEvaluation(0.0, Hypothesis.EvaluationStatus.UNSUPPORTED);
+        hypothesis.setVerificationCoverage(0.0, 0);
         hypothesis.setSimulationSummary("Simulation verification neutral: " + perturbation.getDescription());
-        return;
+        return new VerificationResult(Hypothesis.EvaluationStatus.UNSUPPORTED, 0.0, 0.0, 0,
+            perturbation.getDescription());
       }
 
       modifiedProcess.run();
       ProcessAutomation modifiedAuto = new ProcessAutomation(modifiedProcess);
       Map<String, Double> modifiedKpis = readKpis(modifiedAuto);
 
-      double score = compareToHistorian(baselineKpis, modifiedKpis);
-      hypothesis.setVerificationScore(score);
-      hypothesis.setSimulationSummary(buildSummary(perturbation, baselineKpis, modifiedKpis, score));
-      logger.info("Hypothesis '{}' verification score: {}", hypothesis.getName(), score);
+      ComparisonResult comparison = compareToHistorian(baselineKpis, modifiedKpis);
+      hypothesis.setVerificationEvaluation(comparison.score, comparison.status);
+      hypothesis.setVerificationCoverage(comparison.coverage, comparison.comparisonCount);
+      String summary = buildSummary(perturbation, baselineKpis, modifiedKpis, comparison);
+      hypothesis.setSimulationSummary(summary);
+      logger.info("Hypothesis '{}' verification status {}, score {}, coverage {}", hypothesis.getName(),
+          comparison.status, comparison.score, comparison.coverage);
+      return new VerificationResult(comparison.status, comparison.score, comparison.coverage,
+          comparison.comparisonCount, summary);
     } catch (Exception e) {
       logger.warn("Simulation verification failed for '{}': {}", hypothesis.getName(), e.getMessage());
-      hypothesis.setVerificationScore(0.3);
+      hypothesis.setVerificationEvaluation(0.0, Hypothesis.EvaluationStatus.FAILED);
+      hypothesis.setVerificationCoverage(0.0, 0);
       hypothesis.setSimulationSummary("Simulation failed: " + e.getMessage());
+      return new VerificationResult(Hypothesis.EvaluationStatus.FAILED, 0.0, 0.0, 0,
+          "Simulation failed: " + e.getMessage());
     }
   }
 
@@ -390,37 +410,53 @@ public class SimulationVerifier implements Serializable {
    *
    * @param baseline baseline KPI values
    * @param modified modified KPI values after perturbation
-   * @return match score in range 0 to 1
+   * @return comparison result with score and coverage
    */
-  private double compareToHistorian(Map<String, Double> baseline, Map<String, Double> modified) {
+  private ComparisonResult compareToHistorian(Map<String, Double> baseline, Map<String, Double> modified) {
     if (historianData.isEmpty() || baseline.isEmpty() || modified.isEmpty()) {
-      return 0.5;
+      return ComparisonResult.unknown();
     }
 
-    int matchCount = 0;
+    double totalScore = 0.0;
     int totalComparisons = 0;
+    int changedKpis = 0;
     for (Map.Entry<String, Double> entry : modified.entrySet()) {
       String kpi = entry.getKey();
       Double baseVal = baseline.get(kpi);
       if (baseVal == null || Math.abs(baseVal) < 1e-10) {
         continue;
       }
+      double simulationChange = entry.getValue() - baseVal;
+      if (Math.abs(simulationChange) < 1e-12) {
+        continue;
+      }
+      changedKpis++;
       double[] historianValues = findHistorianValuesForKpi(kpi);
       if (historianValues == null || historianValues.length < 2) {
         continue;
       }
 
-      double simulationChange = entry.getValue() - baseVal;
       double observedChange = historianValues[historianValues.length - 1] - historianValues[0];
-      if (Math.abs(simulationChange) < 1e-12 || Math.abs(observedChange) < 1e-12) {
+      double observedBase = historianValues[0];
+      if (Math.abs(observedChange) < 1e-12 || Math.abs(observedBase) < 1e-10) {
         continue;
       }
       if (Math.signum(simulationChange) == Math.signum(observedChange)) {
-        matchCount++;
+        double simulatedFraction = Math.abs(simulationChange / baseVal);
+        double observedFraction = Math.abs(observedChange / observedBase);
+        double magnitudeRatio = Math.min(simulatedFraction, observedFraction)
+            / Math.max(simulatedFraction, observedFraction);
+        totalScore += 0.5 + 0.5 * magnitudeRatio;
       }
       totalComparisons++;
     }
-    return totalComparisons == 0 ? 0.5 : (double) matchCount / totalComparisons;
+    if (totalComparisons == 0) {
+      return ComparisonResult.unknown();
+    }
+    double coverage = changedKpis == 0 ? 0.0 : (double) totalComparisons / changedKpis;
+    double score = totalScore / totalComparisons;
+    score *= 0.5 + 0.5 * coverage;
+    return new ComparisonResult(Hypothesis.EvaluationStatus.EVALUATED, score, coverage, totalComparisons);
   }
 
   /**
@@ -477,11 +513,11 @@ public class SimulationVerifier implements Serializable {
    * @param perturbation perturbation that was applied
    * @param baseline baseline KPI values
    * @param modified modified KPI values
-   * @param score verification score
+   * @param comparison verification comparison
    * @return summary text
    */
   private String buildSummary(PerturbationResult perturbation, Map<String, Double> baseline,
-      Map<String, Double> modified, double score) {
+      Map<String, Double> modified, ComparisonResult comparison) {
     StringBuilder summary = new StringBuilder();
     summary.append("Applied ").append(perturbation.getChangedVariable()).append(": ")
         .append(perturbation.getDescription()).append(". KPI changes: ");
@@ -492,8 +528,92 @@ public class SimulationVerifier implements Serializable {
         summary.append(String.format(Locale.US, "%s %.1f%%; ", entry.getKey(), changePct));
       }
     }
-    summary.append(String.format(Locale.US, "direction match score %.2f", score));
+    summary.append(String.format(Locale.US, "magnitude-aware score %.2f; coverage %.0f%% (%d comparisons)",
+        comparison.score, comparison.coverage * 100.0, comparison.comparisonCount));
     return summary.toString();
+  }
+
+  /** Structured public result of a simulation verification attempt. */
+  public static final class VerificationResult implements Serializable {
+    private static final long serialVersionUID = 1L;
+    private final Hypothesis.EvaluationStatus status;
+    private final double score;
+    private final double coverage;
+    private final int comparisonCount;
+    private final String summary;
+
+    private VerificationResult(Hypothesis.EvaluationStatus status, double score, double coverage, int comparisonCount,
+        String summary) {
+      this.status = status;
+      this.score = score;
+      this.coverage = coverage;
+      this.comparisonCount = comparisonCount;
+      this.summary = summary;
+    }
+
+    /**
+     * Returns the evaluation status.
+     *
+     * @return evaluation status
+     */
+    public Hypothesis.EvaluationStatus getStatus() {
+      return status;
+    }
+
+    /**
+     * Returns the verification score.
+     *
+     * @return verification score in range 0 to 1
+     */
+    public double getScore() {
+      return score;
+    }
+
+    /**
+     * Returns comparable-KPI coverage.
+     *
+     * @return fraction of changed simulated KPIs compared with observations
+     */
+    public double getCoverage() {
+      return coverage;
+    }
+
+    /**
+     * Returns the number of KPI comparisons.
+     *
+     * @return number of KPI comparisons
+     */
+    public int getComparisonCount() {
+      return comparisonCount;
+    }
+
+    /**
+     * Returns the human-readable verification summary.
+     *
+     * @return verification summary
+     */
+    public String getSummary() {
+      return summary;
+    }
+  }
+
+  /** Internal aggregate of KPI comparisons. */
+  private static final class ComparisonResult {
+    private final Hypothesis.EvaluationStatus status;
+    private final double score;
+    private final double coverage;
+    private final int comparisonCount;
+
+    private ComparisonResult(Hypothesis.EvaluationStatus status, double score, double coverage, int comparisonCount) {
+      this.status = status;
+      this.score = score;
+      this.coverage = coverage;
+      this.comparisonCount = comparisonCount;
+    }
+
+    private static ComparisonResult unknown() {
+      return new ComparisonResult(Hypothesis.EvaluationStatus.UNKNOWN, 0.0, 0.0, 0);
+    }
   }
 
   /**

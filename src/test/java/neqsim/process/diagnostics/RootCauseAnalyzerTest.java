@@ -180,6 +180,76 @@ class RootCauseAnalyzerTest {
     assertEquals(0.360, h.getConfidenceScore(), 0.001);
   }
 
+  /** Ensures an evaluated contradictory zero is not confused with an unevaluated score. */
+  @Test
+  void testEvaluatedZeroIsNotNeutral() {
+    Hypothesis h = Hypothesis.builder().name("contradicted").priorProbability(0.4).build();
+
+    assertEquals(Hypothesis.EvaluationStatus.UNKNOWN, h.getLikelihoodStatus());
+    assertEquals(0.4, h.getConfidenceScore(), 0.001);
+
+    h.setLikelihoodScore(0.0);
+    assertEquals(Hypothesis.EvaluationStatus.EVALUATED, h.getLikelihoodStatus());
+    assertEquals(0.0, h.getConfidenceScore(), 0.001);
+
+    h.setLikelihoodEvaluation(0.0, Hypothesis.EvaluationStatus.UNSUPPORTED);
+    assertEquals(0.4, h.getConfidenceScore(), 0.001, "unsupported evaluation must be explicit and neutral");
+  }
+
+  /** Verifies diagnosis provenance and evaluation states are serialized without breaking legacy fields. */
+  @Test
+  void testDiagnosisCaseAndEvaluationStatusSerialization() {
+    RootCauseAnalyzer rca = new RootCauseAnalyzer(process, compressorName);
+    rca.setSymptom(Symptom.HIGH_VIBRATION);
+    rca.setSimulationEnabled(false);
+    DiagnosisCase diagnosisCase = new DiagnosisCase(compressorName).setCaseId("case-2026-07")
+        .setTimeWindow(1000.0, 2000.0).setCaseId("case-2026-07").setProcessModel("export-compression", "model-rev-7")
+        .addDataSource("PI", "query-42").addOperatingContext("mode", "recycle").addDataQuality("coverage", "98%");
+    rca.setDiagnosisCase(diagnosisCase);
+
+    RootCauseReport report = rca.analyze();
+    String json = report.toJson();
+
+    assertEquals(diagnosisCase, report.getDiagnosisCase());
+    assertTrue(json.contains("\"diagnosisCase\""));
+    assertTrue(json.contains("\"caseId\": \"case-2026-07\""));
+    assertTrue(json.contains("\"likelihoodStatus\""));
+    assertTrue(json.contains("\"verificationStatus\": \"UNKNOWN\""));
+    assertTrue(json.contains("\"equipment\": \"" + compressorName + "\""));
+  }
+
+  /** Verifies unsupported simulation is explicit and does not penalize confidence. */
+  @Test
+  void testUnsupportedSimulationVerificationStatus() {
+    Hypothesis h = Hypothesis.builder().name("unknown perturbation").priorProbability(0.4).build();
+    SimulationVerifier verifier = new SimulationVerifier(process, "missing-equipment");
+
+    SimulationVerifier.VerificationResult result = verifier.verifyWithResult(h);
+
+    assertEquals(Hypothesis.EvaluationStatus.UNSUPPORTED, result.getStatus());
+    assertEquals(Hypothesis.EvaluationStatus.UNSUPPORTED, h.getVerificationStatus());
+    assertEquals(0.0, result.getCoverage(), 0.001);
+    assertEquals(0.4, h.getConfidenceScore(), 0.001);
+  }
+
+  /** Verifies comparable KPI responses produce evaluated, magnitude-aware results with coverage. */
+  @Test
+  void testSimulationVerificationReportsCoverage() {
+    Hypothesis h = Hypothesis.builder().name("compressor fouling").failureMode("fouling")
+        .category(Hypothesis.Category.MECHANICAL).priorProbability(0.4).build();
+    SimulationVerifier verifier = new SimulationVerifier(process, compressorName);
+    Map<String, double[]> historian = new HashMap<String, double[]>();
+    historian.put("polytropicEfficiency", new double[] { 1.0, 0.85 });
+    verifier.setHistorianData(historian);
+
+    SimulationVerifier.VerificationResult result = verifier.verifyWithResult(h);
+
+    assertEquals(Hypothesis.EvaluationStatus.EVALUATED, result.getStatus());
+    assertTrue(result.getComparisonCount() > 0);
+    assertTrue(result.getCoverage() > 0.0);
+    assertTrue(result.getSummary().contains("magnitude-aware score"));
+  }
+
   /**
    * Tests richer evidence metadata.
    */

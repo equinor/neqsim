@@ -175,6 +175,90 @@ public class EvidenceCollector implements Serializable {
   }
 
   /**
+   * Converts autonomous anomaly and topology findings into hypothesis-specific evidence.
+   *
+   * <p>
+   * Only findings that match an expected signal fingerprint are admitted. Anomalies retain their observed direction and
+   * can therefore support or contradict a hypothesis. Topology edges are supporting only when the statistical
+   * relationship is local or follows process flow; ambiguous, counter-flow, and common-cause verdicts remain reportable
+   * findings but do not affect ranking.
+   * </p>
+   *
+   * @param hypothesis hypothesis being evaluated
+   * @param anomalies anomalies detected by {@link AnomalyScanner}
+   * @param causalEdges relationships classified by {@link CausalTopologyModel}
+   * @return autonomous evidence relevant to the hypothesis
+   */
+  public List<Hypothesis.Evidence> collectAutonomousEvidence(Hypothesis hypothesis,
+      List<AnomalyScanner.Anomaly> anomalies, List<CausalTopologyModel.CausalEdge> causalEdges) {
+    List<Hypothesis.Evidence> evidence = new ArrayList<Hypothesis.Evidence>();
+    if (anomalies != null) {
+      for (AnomalyScanner.Anomaly anomaly : anomalies) {
+        ExpectedBehavior behavior = anomalyBehavior(anomaly.getKind());
+        Hypothesis.EvidenceStrength strength = anomaly.getSeverity() >= 0.85 ? Hypothesis.EvidenceStrength.STRONG
+            : anomaly.getSeverity() >= 0.60 ? Hypothesis.EvidenceStrength.MODERATE : Hypothesis.EvidenceStrength.WEAK;
+        Hypothesis.Evidence item = createEvidenceForObservedBehavior(anomaly.getTag(), anomaly.getDescription(),
+            strength, "autonomous-anomaly", behavior, hypothesis);
+        if (item != null) {
+          evidence.add(item);
+        }
+      }
+    }
+    if (causalEdges != null && !hypothesis.getExpectedSignals().isEmpty()) {
+      for (CausalTopologyModel.CausalEdge edge : causalEdges) {
+        if (edge.getVerdict() != CausalTopologyModel.Verdict.CAUSAL_CANDIDATE
+            && edge.getVerdict() != CausalTopologyModel.Verdict.LOCAL) {
+          continue;
+        }
+        RelationshipGraph.Relationship relationship = edge.getRelationship();
+        ExpectedSignal signal = matchingSignalForEitherTag(hypothesis, relationship.getSource(),
+            relationship.getTarget());
+        if (signal == null) {
+          continue;
+        }
+        double correlation = Math.abs(relationship.getCorrelation());
+        Hypothesis.EvidenceStrength strength = correlation >= 0.9 ? Hypothesis.EvidenceStrength.STRONG
+            : Hypothesis.EvidenceStrength.MODERATE;
+        String observation = relationship.toString() + "; topology verdict " + edge.getVerdict().name() + " ("
+            + edge.getRationale() + ")";
+        evidence.add(new Hypothesis.Evidence(relationship.getSource() + " -> " + relationship.getTarget(), observation,
+            strength, "causal-topology", true, signal.getWeight() * correlation,
+            "leaderEquipment=" + edge.getLeaderEquipment() + ";followerEquipment=" + edge.getFollowerEquipment()));
+      }
+    }
+    return evidence;
+  }
+
+  /** Returns the observed behavior represented by an anomaly kind. */
+  private ExpectedBehavior anomalyBehavior(AnomalyScanner.AnomalyKind kind) {
+    switch (kind) {
+    case THRESHOLD_HIGH:
+      return ExpectedBehavior.HIGH_LIMIT;
+    case THRESHOLD_LOW:
+      return ExpectedBehavior.LOW_LIMIT;
+    case SPIKE_HIGH:
+    case TREND_UP:
+      return ExpectedBehavior.INCREASE;
+    case SPIKE_LOW:
+    case TREND_DOWN:
+      return ExpectedBehavior.DECREASE;
+    default:
+      return ExpectedBehavior.ANY_CHANGE;
+    }
+  }
+
+  /** Finds an expected signal matching either endpoint of a relationship. */
+  private ExpectedSignal matchingSignalForEitherTag(Hypothesis hypothesis, String source, String target) {
+    for (ExpectedSignal signal : hypothesis.getExpectedSignals()) {
+      if (matchesPattern(source, signal.getParameterPattern())
+          || matchesPattern(target, signal.getParameterPattern())) {
+        return signal;
+      }
+    }
+    return null;
+  }
+
+  /**
    * Calculates the aggregate likelihood score from evidence items.
    *
    * @param evidenceList evidence items
