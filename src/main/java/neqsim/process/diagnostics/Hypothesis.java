@@ -51,6 +51,18 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
     EXTERNAL
   }
 
+  /** Status of an evidence or simulation evaluation. */
+  public enum EvaluationStatus {
+    /** Evaluation has not been attempted or produced no comparable observations. */
+    UNKNOWN,
+    /** Evaluation completed and the associated score is meaningful, including an exact zero. */
+    EVALUATED,
+    /** The current implementation cannot evaluate this hypothesis or equipment type. */
+    UNSUPPORTED,
+    /** Evaluation was attempted but failed because of a model or execution error. */
+    FAILED
+  }
+
   /**
    * Strength of a piece of evidence.
    */
@@ -274,6 +286,10 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
   private double likelihoodScore;
   private double verificationScore;
   private double confidenceScore;
+  private EvaluationStatus likelihoodStatus;
+  private EvaluationStatus verificationStatus;
+  private double verificationCoverage;
+  private int verificationComparisonCount;
   private final List<Evidence> evidenceList;
   private final List<ExpectedSignal> expectedSignals;
   private final List<String> recommendedActions;
@@ -288,6 +304,10 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
     this.likelihoodScore = 0.0;
     this.verificationScore = 0.0;
     this.confidenceScore = builder.priorProbability;
+    this.likelihoodStatus = EvaluationStatus.UNKNOWN;
+    this.verificationStatus = EvaluationStatus.UNKNOWN;
+    this.verificationCoverage = 0.0;
+    this.verificationComparisonCount = 0;
     this.evidenceList = new ArrayList<>(builder.evidenceList);
     this.expectedSignals = new ArrayList<>(builder.expectedSignals);
     this.recommendedActions = new ArrayList<>(builder.recommendedActions);
@@ -369,6 +389,42 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
   }
 
   /**
+   * Returns the status of historian and autonomous evidence evaluation.
+   *
+   * @return likelihood evaluation status
+   */
+  public EvaluationStatus getLikelihoodStatus() {
+    return likelihoodStatus;
+  }
+
+  /**
+   * Returns the status of process-simulation verification.
+   *
+   * @return verification evaluation status
+   */
+  public EvaluationStatus getVerificationStatus() {
+    return verificationStatus;
+  }
+
+  /**
+   * Returns simulation verification coverage.
+   *
+   * @return fraction of simulation KPI changes compared with historian observations
+   */
+  public double getVerificationCoverage() {
+    return verificationCoverage;
+  }
+
+  /**
+   * Returns the number of simulation-to-historian KPI comparisons.
+   *
+   * @return number of KPI comparisons
+   */
+  public int getVerificationComparisonCount() {
+    return verificationComparisonCount;
+  }
+
+  /**
    * Gets the evidence list.
    *
    * @return unmodifiable list of evidence items
@@ -431,7 +487,18 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
    * @param score score in range 0 to 1
    */
   public void setLikelihoodScore(double score) {
+    setLikelihoodEvaluation(score, EvaluationStatus.EVALUATED);
+  }
+
+  /**
+   * Sets the likelihood result and its explicit evaluation status.
+   *
+   * @param score score in range 0 to 1
+   * @param status evaluation status
+   */
+  public void setLikelihoodEvaluation(double score, EvaluationStatus status) {
     this.likelihoodScore = Math.max(0.0, Math.min(1.0, score));
+    this.likelihoodStatus = status == null ? EvaluationStatus.UNKNOWN : status;
     updateConfidence();
   }
 
@@ -441,8 +508,30 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
    * @param score score in range 0 to 1
    */
   public void setVerificationScore(double score) {
+    setVerificationEvaluation(score, EvaluationStatus.EVALUATED);
+  }
+
+  /**
+   * Sets the simulation result and its explicit evaluation status.
+   *
+   * @param score score in range 0 to 1
+   * @param status evaluation status
+   */
+  public void setVerificationEvaluation(double score, EvaluationStatus status) {
     this.verificationScore = Math.max(0.0, Math.min(1.0, score));
+    this.verificationStatus = status == null ? EvaluationStatus.UNKNOWN : status;
     updateConfidence();
+  }
+
+  /**
+   * Records how much of the simulated response could be compared with observations.
+   *
+   * @param coverage fraction in range 0 to 1
+   * @param comparisonCount number of comparable KPIs
+   */
+  public void setVerificationCoverage(double coverage, int comparisonCount) {
+    this.verificationCoverage = Math.max(0.0, Math.min(1.0, coverage));
+    this.verificationComparisonCount = Math.max(0, comparisonCount);
   }
 
   /**
@@ -465,11 +554,11 @@ public class Hypothesis implements Serializable, Comparable<Hypothesis> {
 
   /**
    * Updates the combined confidence score using Bayesian-inspired formula: confidence = prior x likelihood x
-   * verification. If likelihood or verification are 0 (not yet evaluated), they are treated as 1.0 (neutral).
+   * verification. Unknown, unsupported, and failed stages are neutral. An evaluated score of zero remains zero.
    */
   void updateConfidence() {
-    double lik = likelihoodScore > 0 ? likelihoodScore : 1.0;
-    double ver = verificationScore > 0 ? verificationScore : 1.0;
+    double lik = likelihoodStatus == EvaluationStatus.EVALUATED ? likelihoodScore : 1.0;
+    double ver = verificationStatus == EvaluationStatus.EVALUATED ? verificationScore : 1.0;
     this.confidenceScore = priorProbability * lik * ver;
   }
 

@@ -23,7 +23,7 @@ ALWAYS read these skills before proceeding:
 2. **Gather data**: Collect historian time-series, STID design docs, OREDA data
 3. **Build or load process model**: Need a running ProcessSystem for simulation verification
 4. **Run RCA**: Use RootCauseAnalyzer orchestrator
-5. **Interpret results**: Separate supporting evidence, contradictory evidence, and neutral simulation limitations
+5. **Interpret results**: Separate evaluated evidence from unknown, unsupported, and failed stages; report simulation coverage
 6. **Recommend actions**: Provide prioritized corrective action list with immediate safe-operation checks
 
 ## Workflow
@@ -85,6 +85,12 @@ If user has an existing model:
 
 ```java
 RootCauseAnalyzer rca = new RootCauseAnalyzer(processSystem, equipmentName);
+DiagnosisCase diagnosisCase = new DiagnosisCase(equipmentName)
+    .setCaseId(caseId)
+    .setTimeWindow(windowStartEpochSeconds, windowEndEpochSeconds)
+    .setProcessModel(modelId, modelRevision)
+    .addDataSource("historian", historianQueryReference);
+rca.setDiagnosisCase(diagnosisCase);
 rca.setSymptom(symptom);
 rca.setHistorianData(historianMap, timestamps);
 rca.setStidData(stidMap);
@@ -98,7 +104,7 @@ RootCauseReport report = rca.analyze();
 Present the report to the user with:
 1. **Top hypothesis**: Name, confidence %, category
 2. **Key evidence**: What data supports this conclusion
-3. **Simulation verification**: Did the simulation reproduce the observed behavior?
+3. **Simulation verification**: Status, KPI coverage, and whether direction and normalized magnitude matched
 4. **Alternative hypotheses**: Other possibilities ranked by confidence
 5. **Recommended actions**: Prioritized list from the top hypothesis
 
@@ -179,7 +185,7 @@ historian tag or STID document, making the diagnosis fully auditable.
 - **Missing design limits**: Without design limits, threshold analysis cannot run
 - **Simulation without calibration**: Process model must match current operating conditions
 - **Ignoring correlations**: Parameter correlations often point to the root cause faster than individual trends
-- **Over-reading simulation verification**: A neutral score means the current process model could not test that hypothesis; it is not a pass/fail verdict
+- **Over-reading simulation verification**: `UNKNOWN`, `UNSUPPORTED`, and `FAILED` are neutral but distinct; only `EVALUATED` scores are evidence, and low coverage limits the conclusion
 
 ## Post-Trip Analysis: Detect → Trace → Restart
 
@@ -213,7 +219,7 @@ FailurePropagationTracer.PropagationResult propagation = tracer.trace(trips.get(
 // 3. Generate restart sequence
 RestartSequenceGenerator generator = new RestartSequenceGenerator(processSystem);
 RestartSequenceGenerator.RestartPlan plan = generator.generate(propagation);
-System.out.println(plan.toTextReport());
+String restartPlanReport = plan.toTextReport();
 ```
 
 See the `neqsim-root-cause-analysis` skill for full API reference.

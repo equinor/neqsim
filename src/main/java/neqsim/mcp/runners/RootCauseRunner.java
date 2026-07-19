@@ -14,6 +14,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.diagnostics.AnomalyScanner;
 import neqsim.process.diagnostics.CausalTopologyModel;
+import neqsim.process.diagnostics.DiagnosisCase;
 import neqsim.process.diagnostics.RelationshipGraph;
 import neqsim.process.diagnostics.RootCauseAnalyzer;
 import neqsim.process.diagnostics.RootCauseReport;
@@ -40,6 +41,7 @@ import neqsim.process.processmodel.SimulationResult;
  * <li>{@code designLimits} — optional map of parameter to [min, max] design limits</li>
  * <li>{@code stidData} — optional map of STID design values</li>
  * <li>{@code simulationEnabled} — whether to run simulation verification (default true)</li>
+ * <li>{@code diagnosisCase} — optional reproducibility, provenance, and operating-context metadata</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -102,6 +104,43 @@ public final class RootCauseRunner {
       RootCauseAnalyzer rca = new RootCauseAnalyzer(process, equipmentName);
       if (symptom != null) {
         rca.setSymptom(symptom);
+      }
+
+      // Optional reproducibility and provenance context. Missing fields are allowed for incremental adoption.
+      if (input.has("diagnosisCase") && input.get("diagnosisCase").isJsonObject()) {
+        JsonObject caseJson = input.getAsJsonObject("diagnosisCase");
+        DiagnosisCase diagnosisCase = new DiagnosisCase(equipmentName);
+        if (caseJson.has("caseId")) {
+          diagnosisCase.setCaseId(caseJson.get("caseId").getAsString());
+        }
+        if (caseJson.has("windowStartEpochSeconds") && caseJson.has("windowEndEpochSeconds")) {
+          diagnosisCase.setTimeWindow(caseJson.get("windowStartEpochSeconds").getAsDouble(),
+              caseJson.get("windowEndEpochSeconds").getAsDouble());
+        }
+        String modelId = caseJson.has("processModelId") ? caseJson.get("processModelId").getAsString()
+            : process.getClass().getName();
+        String modelRevision = caseJson.has("processModelRevision") ? caseJson.get("processModelRevision").getAsString()
+            : "runtime-instance";
+        diagnosisCase.setProcessModel(modelId, modelRevision);
+        addStringMap(caseJson, "dataSources", new StringMapConsumer() {
+          @Override
+          public void accept(String key, String value) {
+            diagnosisCase.addDataSource(key, value);
+          }
+        });
+        addStringMap(caseJson, "operatingContext", new StringMapConsumer() {
+          @Override
+          public void accept(String key, String value) {
+            diagnosisCase.addOperatingContext(key, value);
+          }
+        });
+        addStringMap(caseJson, "dataQuality", new StringMapConsumer() {
+          @Override
+          public void accept(String key, String value) {
+            diagnosisCase.addDataQuality(key, value);
+          }
+        });
+        rca.setDiagnosisCase(diagnosisCase);
       }
 
       // Optional: simulation enabled
@@ -237,6 +276,21 @@ public final class RootCauseRunner {
       return Symptom.valueOf(str.toUpperCase().trim());
     } catch (IllegalArgumentException e) {
       return null;
+    }
+  }
+
+  /** Callback used while copying JSON string maps into a diagnosis case. */
+  private interface StringMapConsumer {
+    void accept(String key, String value);
+  }
+
+  /** Copies a JSON object's scalar members to a callback as strings. */
+  private static void addStringMap(JsonObject parent, String field, StringMapConsumer consumer) {
+    if (!parent.has(field) || !parent.get(field).isJsonObject()) {
+      return;
+    }
+    for (Map.Entry<String, JsonElement> entry : parent.getAsJsonObject(field).entrySet()) {
+      consumer.accept(entry.getKey(), entry.getValue().getAsString());
     }
   }
 
