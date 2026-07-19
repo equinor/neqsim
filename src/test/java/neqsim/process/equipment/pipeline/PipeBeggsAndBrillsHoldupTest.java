@@ -39,8 +39,7 @@ class PipeBeggsAndBrillsHoldupTest {
 
     Stream inlet = new Stream("liquid-rich inlet", fluid);
     inlet.run();
-    PipeBeggsAndBrills pipe =
-        new PipeBeggsAndBrills("holdup regression pipe", inlet);
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("holdup regression pipe", inlet);
     pipe.setLength(10000.0);
     pipe.setDiameter(0.25);
     pipe.setElevation(0.0);
@@ -56,10 +55,6 @@ class PipeBeggsAndBrillsHoldupTest {
       maximumHoldup = Math.max(maximumHoldup, holdup);
     }
 
-    assertEquals(
-        1.0,
-        maximumHoldup,
-        1.0e-12,
-        "This liquid-rich regression case should exercise the upper bound");
+    assertEquals(1.0, maximumHoldup, 1.0e-12, "This liquid-rich regression case should exercise the upper bound");
   }
 }
