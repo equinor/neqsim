@@ -1290,6 +1290,13 @@ public class PipeBeggsAndBrills extends Pipeline implements neqsim.process.desig
           * (Math.sin(1.8 * angle * 0.01745329) - (1.0 / 3.0) * Math.pow(Math.sin(1.8 * angle * 0.01745329), 3.0));
 
       El = BThetta * El;
+
+      // Liquid holdup is a physical volume fraction. The empirical correlation and
+      // inclination correction can exceed unity for low-Froude, liquid-rich flow.
+      // Bound the result by the no-slip liquid fraction and one before it is used
+      // in mixture-density and pressure-drop calculations.
+      El = Math.max(inputVolumeFractionLiquid, Math.min(1.0, El));
+
       if (system.getNumberOfPhases() == 3) {
         mixtureDensity = mixtureLiquidDensity * El + system.getPhase(0).getDensity("lb/ft3") * (1 - El);
       } else {

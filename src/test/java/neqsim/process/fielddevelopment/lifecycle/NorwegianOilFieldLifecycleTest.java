@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.fielddevelopment.lifecycle.FacilityLifecycleStrategy.DevelopmentMode;
 import neqsim.process.fielddevelopment.tieback.HostFacility;
 import neqsim.process.fielddevelopment.tieback.capacity.CapacityAllocationPolicy;
@@ -43,6 +45,14 @@ class NorwegianOilFieldLifecycleTest extends neqsim.NeqSimTest {
     assertTrue(Double.isFinite(quality.getGasGrossCalorificValueMjPerSm3()));
     assertTrue(Double.isFinite(quality.getGasWobbeIndexMjPerSm3()));
     assertTrue(Double.isFinite(quality.getOilInWaterMgPerL()));
+    assertTrue(concept.getModel().getProcessSystem().isUseOptimizedExecution());
+    for (ProcessEquipmentInterface equipment : concept.getModel().getProcessSystem().getUnitOperations()) {
+      if (equipment instanceof Compressor) {
+        Compressor compressor = (Compressor) equipment;
+        assertFalse(compressor.isSolveSpeed());
+        assertFalse(compressor.getCompressorChart().isUseCompressorChart());
+      }
+    }
   }
 
   @Test
