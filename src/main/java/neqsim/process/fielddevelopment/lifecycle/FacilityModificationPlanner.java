@@ -15,9 +15,8 @@ public final class FacilityModificationPlanner {
    * Identifies nameplate and detailed-equipment debottleneck candidates.
    *
    * <p>
-   * The multiplier is a screening target. Each candidate must be implemented in a cloned detailed
-   * {@code ProcessSystem} or {@code ProcessModel}, mechanically sized, costed, and rerun as a new lifecycle option
-   * before selection.
+   * The multiplier is a screening target. Each candidate must be implemented in a cloned detailed {@code ProcessSystem}
+   * or {@code ProcessModel}, mechanically sized, costed, and rerun as a new lifecycle option before selection.
    * </p>
    *
    * @param result evaluated field lifecycle
@@ -28,16 +27,14 @@ public final class FacilityModificationPlanner {
     if (result == null) {
       throw new IllegalArgumentException("field lifecycle result is required");
     }
-    if (!(targetUtilization > 0.0) || targetUtilization > 1.0
-        || !Double.isFinite(targetUtilization)) {
+    if (!(targetUtilization > 0.0) || targetUtilization > 1.0 || !Double.isFinite(targetUtilization)) {
       throw new IllegalArgumentException("target utilization must be finite, positive, and at most one");
     }
 
     Map<String, MutableCandidate> grouped = new LinkedHashMap<String, MutableCandidate>();
     for (AnnualResult annual : result.getAnnualResults()) {
       double requestedUtilization = annual.getUnconstrainedFacilityUtilization();
-      if (requestedUtilization <= targetUtilization + 1.0e-9
-          && annual.getCapacityDeferredOilSm3() <= 1.0e-9) {
+      if (requestedUtilization <= targetUtilization + 1.0e-9 && annual.getCapacityDeferredOilSm3() <= 1.0e-9) {
         continue;
       }
       String bottleneck = annual.getUnconstrainedBottleneck();
@@ -52,26 +49,23 @@ public final class FacilityModificationPlanner {
         candidate = new MutableCandidate(annual.getYear(), bottleneck);
         grouped.put(bottleneck, candidate);
       }
-      candidate.peakRequestedUtilization =
-          Math.max(candidate.peakRequestedUtilization, requestedUtilization);
+      candidate.peakRequestedUtilization = Math.max(candidate.peakRequestedUtilization, requestedUtilization);
       candidate.deferredOilSm3 += annual.getCapacityDeferredOilSm3();
     }
 
     List<Candidate> candidates = new ArrayList<Candidate>();
     for (MutableCandidate candidate : grouped.values()) {
       double multiplier = Math.max(1.0, candidate.peakRequestedUtilization / targetUtilization);
-      candidates.add(new Candidate(candidate.firstYear, candidate.bottleneck,
-          modificationScope(candidate.bottleneck), candidate.peakRequestedUtilization, multiplier,
-          candidate.deferredOilSm3));
+      candidates.add(new Candidate(candidate.firstYear, candidate.bottleneck, modificationScope(candidate.bottleneck),
+          candidate.peakRequestedUtilization, multiplier, candidate.deferredOilSm3));
     }
     return new FacilityModificationPlan(result.getConceptName(), targetUtilization, candidates);
   }
 
   private static String modificationScope(String bottleneck) {
     String normalized = bottleneck.toLowerCase(Locale.ROOT);
-    if (normalized.contains("surf") || normalized.contains("flowline")
-        || normalized.contains("pipeline") || normalized.contains("riser")
-        || normalized.contains("subsea")) {
+    if (normalized.contains("surf") || normalized.contains("flowline") || normalized.contains("pipeline")
+        || normalized.contains("riser") || normalized.contains("subsea")) {
       return "rerate the shared SURF route; evaluate pressure support, looping, a new riser, or an alternate tie-in";
     }
     if (normalized.contains("water") || normalized.contains("hydrocyclone")) {
@@ -104,3 +98,4 @@ public final class FacilityModificationPlanner {
     }
   }
 }
+
