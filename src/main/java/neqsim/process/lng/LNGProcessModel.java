@@ -32,6 +32,12 @@ import neqsim.process.processmodel.ProcessSystem;
 public final class LNGProcessModel implements Serializable {
   private static final long serialVersionUID = 1L;
 
+  /** Name of the liquid LNG output in the output-stream registry. */
+  public static final String LNG_OUTPUT = "LNG";
+
+  /** Name of the product-flash gas output in the output-stream registry. */
+  public static final String FLASH_GAS_OUTPUT = "FLASH_GAS";
+
   /** Hours per year used for nameplate MTPA conversion. */
   private static final double OPERATING_HOURS_PER_YEAR = 8000.0;
 
@@ -40,6 +46,9 @@ public final class LNGProcessModel implements Serializable {
   private final ProcessSystem processSystem;
   private final StreamInterface feedStream;
   private final StreamInterface productStream;
+  private final StreamInterface flashGasStream;
+  private final Map<String, StreamInterface> outputStreams =
+      new LinkedHashMap<String, StreamInterface>();
   private final List<Compressor> compressors;
   private final List<Expander> expanders;
   private final List<LNGHeatExchanger> cryogenicHeatExchangers;
@@ -55,18 +64,23 @@ public final class LNGProcessModel implements Serializable {
    * @param processSystem configured process system
    * @param feedStream natural-gas feed
    * @param productStream flashed liquid LNG product
+   * @param flashGasStream product-flash gas
    * @param compressors compressor list
    * @param expanders expander list
    * @param cryogenicHeatExchangers cryogenic exchanger list
    */
   LNGProcessModel(String name, LNGProcessCycle cycle, ProcessSystem processSystem,
-      StreamInterface feedStream, StreamInterface productStream, List<Compressor> compressors,
+      StreamInterface feedStream, StreamInterface productStream,
+      StreamInterface flashGasStream, List<Compressor> compressors,
       List<Expander> expanders, List<LNGHeatExchanger> cryogenicHeatExchangers) {
     this.name = name;
     this.cycle = cycle;
     this.processSystem = processSystem;
     this.feedStream = feedStream;
     this.productStream = productStream;
+    this.flashGasStream = flashGasStream;
+    this.outputStreams.put(LNG_OUTPUT, productStream);
+    this.outputStreams.put(FLASH_GAS_OUTPUT, flashGasStream);
     this.compressors =
         Collections.unmodifiableList(new ArrayList<Compressor>(compressors));
     this.expanders = Collections.unmodifiableList(new ArrayList<Expander>(expanders));
@@ -159,6 +173,55 @@ public final class LNGProcessModel implements Serializable {
   /** @return flashed liquid LNG product stream */
   public StreamInterface getProductStream() {
     return productStream;
+  }
+
+  /** @return product-flash gas for fuel, boil-off, or recompression processing */
+  public StreamInterface getFlashGasStream() {
+    return flashGasStream;
+  }
+
+  /**
+   * Returns a named process output stream.
+   *
+   * <p>
+   * Built-in outputs are {@link #LNG_OUTPUT} and {@link #FLASH_GAS_OUTPUT}. Additional
+   * route-specific or downstream products can be exposed with
+   * {@link #registerOutputStream(String, StreamInterface)}.
+   * </p>
+   *
+   * @param outputName output name
+   * @return output stream, or null when the name is not registered
+   */
+  public StreamInterface getOutputStream(String outputName) {
+    return outputStreams.get(outputName);
+  }
+
+  /**
+   * Returns all named process output streams.
+   *
+   * @return immutable output-name to stream map
+   */
+  public Map<String, StreamInterface> getOutputStreams() {
+    return Collections.unmodifiableMap(outputStreams);
+  }
+
+  /**
+   * Registers an additional process output for downstream connection.
+   *
+   * @param outputName unique output name
+   * @param outputStream output stream
+   * @return this model
+   */
+  public LNGProcessModel registerOutputStream(String outputName,
+      StreamInterface outputStream) {
+    if (outputName == null || outputName.trim().isEmpty()) {
+      throw new IllegalArgumentException("outputName cannot be null or empty");
+    }
+    if (outputStream == null) {
+      throw new IllegalArgumentException("outputStream cannot be null");
+    }
+    outputStreams.put(outputName, outputStream);
+    return this;
   }
 
   /** @return immutable compressor list */
