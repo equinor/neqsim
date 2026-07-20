@@ -1,311 +1,226 @@
 ---
 title: Pumps
-description: Documentation for liquid pumping equipment in NeqSim.
+description: Simulate liquid pumps, vendor curves, NPSH, and API 610 mechanical-design screening.
 ---
 
-# Pumps
+NeqSim's `Pump` models a liquid pump from a process inlet stream. Use either a specified
+discharge pressure and isentropic efficiency, a vendor head/efficiency curve, or a specified
+discharge temperature. `PumpMechanicalDesign` adds preliminary mechanical-design calculations
+and an auditable API 610 screening result.
 
-Documentation for liquid pumping equipment in NeqSim.
+## Packages
 
-## Table of Contents
-- [Overview](#overview)
-- [Pump Class](#pump-class)
-- [Pump Performance](#pump-performance)
-- [Head and Efficiency Curves](#head-and-efficiency-curves)
-- [NPSH Calculations](#npsh-calculations)
-- [API 610 Mechanical Design Screening](#api-610-mechanical-design-screening)
-- [Examples](#examples)
+| Class | Package | Purpose |
+| --- | --- | --- |
+| `Pump` | `neqsim.process.equipment.pump` | Steady-state and transient process calculation |
+| `PumpChartInterface` | `neqsim.process.equipment.pump` | Vendor head, efficiency, and NPSHr curves |
+| `PumpMechanicalDesign` | `neqsim.process.mechanicaldesign.pump` | Preliminary sizing and design outputs |
+| `PumpApi610DesignCalculator` | `neqsim.process.mechanicaldesign.pump` | Structured API 610 screening checks |
 
----
+## Calculation modes
 
-## Overview
+### Specified discharge pressure
 
-**Location:** `neqsim.process.equipment.pump`
-
-**Classes:**
-| Class           | Description                               |
-| --------------- | ----------------------------------------- |
-| `Pump`          | Centrifugal or positive displacement pump |
-| `PumpInterface` | Pump interface                            |
-
----
-
-## Pump Class
-
-### Basic Usage
+Set the discharge pressure and isentropic efficiency before calling `run()`:
 
 ```java
+pump.setOutletPressure(15.0, "bara");
+pump.setIsentropicEfficiency(0.78);
+pump.run();
+```
+
+The absorbed shaft power is based on the isentropic enthalpy rise divided by the specified
+efficiency:
+
+$$
+P = \frac{\dot m\left(h_{2s}-h_1\right)}{\eta_s}
+$$
+
+Here $P$ is shaft power, $\dot m$ is mass flow, $h_1$ is inlet specific enthalpy,
+$h_{2s}$ is the isentropic discharge enthalpy, and $\eta_s$ is isentropic efficiency.
+
+### Vendor performance curves
+
+Supply one row per speed to `PumpChartInterface.setCurves(...)`. Flow is in m³/h,
+efficiency is supplied in percent, and the head unit is set separately. The NPSHr array must
+have the same speed/flow layout.
+
+```java
+double[] speed = new double[] { 1000.0 };
+double[][] flow = new double[][] { { 50.0, 75.0, 100.0, 125.0, 150.0 } };
+double[][] head = new double[][] { { 120.0, 115.0, 105.0, 90.0, 70.0 } };
+double[][] efficiency = new double[][] { { 65.0, 75.0, 82.0, 78.0, 68.0 } };
+double[][] npshRequired = new double[][] { { 2.0, 2.4, 3.0, 4.0, 5.5 } };
+
+pump.getPumpChart().setCurves(new double[] {}, speed, flow, head, efficiency);
+pump.getPumpChart().setHeadUnit("meter");
+pump.getPumpChart().setNPSHCurve(npshRequired);
+pump.setSpeed(1000.0);
+pump.run();
+```
+
+Do not use `setHeadCurve`, `setEfficiencyCurve`, or `setNPSHRequiredCurve`; those convenience
+methods are not part of the current `Pump` API.
+
+### Specified discharge temperature
+
+Calling `setOutletTemperature(...)` selects the fixed-temperature mode. NeqSim performs a TP
+flash at the specified discharge temperature and pressure and back-calculates power from the
+inlet/outlet enthalpy difference. This mode represents a measured or externally specified
+discharge state; it does not evaluate a vendor performance curve.
+
+```java
+pump.setOutletPressure(15.0, "bara");
+pump.setOutletTemperature(35.0, "C");
+pump.run();
+```
+
+`setOutTemperature(double)` is deprecated. Use `setOutletTemperature(double)` for kelvin or
+`setOutletTemperature(double, String)` for an explicit unit.
+
+## NPSH screening
+
+`getNPSHAvailable()` returns metres of liquid head. It clones the inlet fluid, calculates its
+bubble-point pressure at the inlet temperature, and evaluates the pressure head. The current
+implementation assumes zero velocity-head contribution and expects static elevation effects to
+already be represented in the suction system:
+
+$$
+NPSH_A = \frac{P_s-P_v}{\rho g}
+$$
+
+where $P_s$ is absolute suction pressure, $P_v$ is bubble-point pressure, $\rho$ is inlet-fluid
+density, and $g$ is gravitational acceleration. A failed bubble-point calculation returns
+`Double.NaN`; it is not interpreted as a large safe margin.
+
+`getNPSHRequired()` returns the interpolated vendor NPSHr when a chart is present. Without a
+vendor NPSHr curve it returns a coarse flow-based screening estimate. Treat that fallback as a
+data gap, not as vendor qualification.
+
+```java
+double npshAvailableM = pump.getNPSHAvailable();
+double npshRequiredM = pump.getNPSHRequired();
+pump.setCheckNPSH(true);
+pump.setNPSHMargin(1.15);
+boolean cavitationRisk = pump.isCavitating();
+```
+
+The getter methods do not accept unit strings; both values are returned in metres.
+
+## API 610 mechanical-design screening
+
+`PumpMechanicalDesign` combines the simulated duty with purchaser inputs and vendor curve data.
+Its `PumpApi610DesignCalculator` reports each check as `PASS`, `WARNING`, `FAIL`, or
+`NOT_EVALUATED`, and combines them into `PASS`, `PASS_WITH_WARNINGS`, `FAIL`, or
+`NOT_EVALUATED`.
+
+The screen covers:
+
+- rated flow relative to vendor BEP, rated-point region, POR, and AOR;
+- NPSHa/NPSHr head and ratio margins;
+- maximum suction pressure, shutoff head, furnished casing MAWP, and preliminary hydrotest pressure;
+- absorbed power, driver margin, and selection from configured driver ratings;
+- head rise to shutoff when vendor or purchaser evidence is available;
+- ISO 281 basic rating life when rolling-element bearing loads are supplied; and
+- optional shaft-deflection, critical-speed, nozzle-load, and vibration evidence.
+
+Missing purchaser or vendor values remain `NOT_EVALUATED`. NeqSim does not certify casing,
+rotor, bearing, nozzle, seal, baseplate, material, inspection, or test compliance. Use the
+purchased standard edition, project specification, and vendor documentation for final design.
+
+## Complete Java example
+
+This Java 8 example runs a water pump with a vendor curve, checks NPSH, performs the API 610
+screen, and exports the structured mechanical-design response.
+
+```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.stream.Stream;
+import neqsim.process.mechanicaldesign.pump.PumpApi610DesignCalculator;
+import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 
-// Create pump on liquid stream
-Pump pump = new Pump("P-100", liquidStream);
-pump.setOutletPressure(50.0, "bara");
-pump.run();
+public final class PumpDesignExample {
+  private static final Logger logger = LogManager.getLogger(PumpDesignExample.class);
 
-// Results
-double power = pump.getPower("kW");
-double head = pump.getHead("m");
-double efficiency = pump.getIsentropicEfficiency();
-```
+  private PumpDesignExample() {}
 
-### Outlet Specification
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 5.0);
+    fluid.addComponent("water", 1.0);
+    fluid.setMixingRule("classic");
 
-```java
-// By outlet pressure
-pump.setOutletPressure(50.0, "bara");
+    Stream feed = new Stream("pump feed", fluid);
+    feed.setFlowRate(100.0, "m3/hr");
+    feed.run();
 
-// By outlet pressure and temperature (TP flash mode)
-pump.setOutletPressure(50.0, "bara");
-pump.setOutletTemperature(35.0, "C"); // supports "K", "C", "F", "R"
-```
+    Pump pump = new Pump("P-100", feed);
+    double[] speed = new double[] { 1000.0 };
+    double[][] flow = new double[][] { { 50.0, 75.0, 100.0, 125.0, 150.0 } };
+    double[][] head = new double[][] { { 120.0, 115.0, 105.0, 90.0, 70.0 } };
+    double[][] efficiency = new double[][] { { 65.0, 75.0, 82.0, 78.0, 68.0 } };
+    double[][] npshRequired = new double[][] { { 2.0, 2.4, 3.0, 4.0, 5.5 } };
 
-### Outlet Temperature Mode
+    pump.getPumpChart().setCurves(new double[] {}, speed, flow, head, efficiency);
+    pump.getPumpChart().setHeadUnit("meter");
+    pump.getPumpChart().setNPSHCurve(npshRequired);
+    pump.setSpeed(1000.0);
+    pump.setCheckNPSH(true);
+    pump.setNPSHMargin(1.15);
+    pump.run();
 
-When `setOutletTemperature` is called, the pump switches to **TP flash mode**:
-- The isentropic / pump-curve calculation is skipped
-- A TP flash is performed at the specified temperature and outlet pressure
-- Power is **back-calculated** from the enthalpy difference between inlet and outlet
+    double powerKw = pump.getPower("kW");
+    double headM = pump.getHead("m");
+    double npshAvailableM = pump.getNPSHAvailable();
+    double npshRequiredM = pump.getNPSHRequired();
 
-This is useful when discharge conditions are known from plant data or design specifications.
+    PumpMechanicalDesign design = pump.getMechanicalDesign();
+    design.setApi610PumpType(PumpApi610DesignCalculator.Api610PumpType.OH2);
+    design.setMaximumSuctionPressure(8.0);
+    design.setFurnishedCasingMawp(25.0);
+    design.calcDesign();
 
-```java
-// Set outlet temperature with unit
-pump.setOutletTemperature(35.0, "C");   // Celsius
-pump.setOutletTemperature(308.15, "K"); // Kelvin
-pump.setOutletTemperature(95.0, "F");   // Fahrenheit
-pump.setOutletTemperature(554.67, "R"); // Rankine
+    PumpApi610DesignCalculator assessment = design.getApi610Assessment();
+    PumpApi610DesignCalculator.AssessmentStatus status = assessment.getAssessmentStatus();
+    String responseJson = design.getResponse().toJson();
 
-// Or in Kelvin without unit
-pump.setOutletTemperature(308.15);
-
-pump.run();
-double power = pump.getPower("kW"); // back-calculated from enthalpy difference
-```
-
-> **Note:** The legacy method `setOutTemperature(double)` is deprecated.
-> Use `setOutletTemperature(double)` or `setOutletTemperature(double, String)` instead.
-
----
-
-## Pump Performance
-
-### Isentropic Efficiency
-
-```java
-// Set pump efficiency
-pump.setIsentropicEfficiency(0.75);  // 75%
-
-// Calculate power
-pump.run();
-double power = pump.getPower("kW");
-double isentropicPower = pump.getIsentropicPower("kW");
-double actualPower = pump.getActualPower("kW");
-
-// Efficiency = Isentropic Power / Actual Power
-```
-
-### Power Calculation
-
-The pump power is calculated as:
-
-$$P = \frac{\dot{m} \cdot \Delta h_{isentropic}}{\eta_{isentropic}}$$
-
-Where:
-- $\dot{m}$ = mass flow rate
-- $\Delta h_{isentropic}$ = isentropic enthalpy rise
-- $\eta_{isentropic}$ = isentropic efficiency
-
-### Head Calculation
-
-$$H = \frac{\Delta P}{\rho \cdot g}$$
-
-Where:
-- $\Delta P$ = pressure rise
-- $\rho$ = liquid density
-- $g$ = gravitational acceleration
-
----
-
-## Head and Efficiency Curves
-
-### Define Pump Curves
-
-```java
-// Define head vs flow curve points
-double[] flowRates = {0, 50, 100, 150, 200};      // m³/hr
-double[] heads = {350, 340, 310, 260, 180};       // m
-double[] efficiencies = {0, 0.65, 0.80, 0.75, 0.60};
-
-pump.setHeadCurve(flowRates, heads, "m3/hr", "m");
-pump.setEfficiencyCurve(flowRates, efficiencies, "m3/hr");
-```
-
-### Operating Point
-
-```java
-pump.run();
-
-// Get operating point
-double flowRate = pump.getInletStream().getFlowRate("m3/hr");
-double actualHead = pump.getHead("m");
-double actualEff = pump.getIsentropicEfficiency();
-```
-
----
-
-## NPSH Calculations
-
-### Net Positive Suction Head
-
-```java
-// NPSH available from process conditions
-double npshAvailable = pump.getNPSHAvailable("m");
-
-// NPSH required (from pump curve)
-double[] flows = {50, 100, 150, 200};
-double[] npshReq = {1.5, 2.0, 3.0, 5.0};
-pump.setNPSHRequiredCurve(flows, npshReq, "m3/hr", "m");
-
-double npshRequired = pump.getNPSHRequired("m");
-
-// Check cavitation margin
-double margin = npshAvailable - npshRequired;
-if (margin < 1.0) {
-    System.out.println("Warning: Low NPSH margin");
+    logger.info("Power: {} kW; head: {} m", powerKw, headM);
+    logger.info("NPSHa: {} m; NPSHr: {} m", npshAvailableM, npshRequiredM);
+    logger.info("API 610 status: {}; response: {}", status, responseJson);
+  }
 }
 ```
 
-### NPSH Available Calculation
+## Interpreting results
 
-$$NPSH_A = \frac{P_{suction}}{\rho g} + \frac{v^2}{2g} - \frac{P_{vapor}}{\rho g}$$
+| Result | Interpretation |
+| --- | --- |
+| `pump.getPower("kW")` | Absorbed shaft power calculated by the process model |
+| `pump.getHead("m")` | Developed pump head |
+| `pump.getNPSHAvailable()` | Process-side NPSHa in metres, or `NaN` if unavailable |
+| `pump.getNPSHRequired()` | Vendor curve value or coarse fallback estimate in metres |
+| `assessment.getOperatingRegion()` | Rated-point classification relative to vendor BEP |
+| `assessment.getSelectedDriverPowerKw()` | First configured rating meeting the required driver power |
+| `assessment.getRequiredCasingPressureBara()` | Screening casing-pressure requirement in bara |
+| `assessment.getChecks()` | Immutable list of individual checks and missing-evidence findings |
 
----
+## Limitations
 
-## API 610 Mechanical Design Screening
+- The process model is a one-dimensional steady-state equipment calculation; it does not resolve
+  internal impeller or volute CFD.
+- Vendor curves govern realistic head, efficiency, NPSHr, runout, and shutoff behaviour.
+- The fallback NPSHr correlation is only a preliminary screen.
+- The mechanical-design calculation provides screening dimensions and evidence status, not a
+  certificate of conformity or accountable design approval.
+- Positive-displacement pumps require equipment and standards models appropriate to their type;
+  this page describes the centrifugal `Pump` implementation.
 
-`PumpMechanicalDesign` combines the simulated duty point with purchaser and vendor data to produce an auditable
-API 610 13th-edition screening result. It distinguishes a calculated pass or failure from missing evidence using
-`PASS`, `WARNING`, `FAIL`, and `NOT_EVALUATED` check statuses.
+## Related documentation
 
-```java
-import neqsim.process.mechanicaldesign.pump.PumpApi610DesignCalculator;
-import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
-
-PumpMechanicalDesign design = pump.getMechanicalDesign();
-design.setApi610PumpType(PumpApi610DesignCalculator.Api610PumpType.OH2);
-design.setMaximumSuctionPressure(8.0); // bara
-design.setFurnishedCasingMawp(25.0);  // bara
-design.calcDesign();
-
-PumpApi610DesignCalculator assessment = design.getApi610Assessment();
-PumpApi610DesignCalculator.AssessmentStatus status = assessment.getAssessmentStatus();
-String json = design.getResponse().toJson();
-```
-
-The screen calculates or checks:
-
-- Rated flow against vendor BEP, rated-point region, POR, and AOR
-- NPSHa/NPSHr head and ratio margins
-- Maximum suction pressure plus shutoff head, furnished casing MAWP, and preliminary hydrotest pressure
-- Absorbed shaft power, driver margin, and the next configured driver rating
-- Head rise to shutoff when a vendor curve or purchaser value is available
-- ISO 281 bearing L10 life from vendor `C` and `P` loads
-- Optional shaft-deflection, critical-speed, nozzle-load, and vibration evidence
-- Exact OH1-OH6, BB1-BB5, or VS1-VS7 construction type and sealless-pump scope warning
-
-Use `assessment.setBearingData(...)` and `assessment.setMechanicalEvidence(...)` before the next
-`design.calcDesign()` call to add vendor mechanical evidence. Unavailable values remain `NOT_EVALUATED`; NeqSim does
-not infer detailed casing, rotor, nozzle, seal, baseplate, material, inspection, or test compliance. Final verification
-must use the purchased edition, project specification, and vendor documentation.
-
----
-
-## Examples
-
-### Example 1: Simple Pump
-
-```java
-import neqsim.thermo.system.SystemSrkEos;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.pump.Pump;
-
-// Create liquid stream
-SystemSrkEos fluid = new SystemSrkEos(298.15, 5.0);
-fluid.addComponent("n-heptane", 1.0);
-fluid.setMixingRule("classic");
-
-Stream feed = new Stream("Feed", fluid);
-feed.setFlowRate(100.0, "m3/hr");
-feed.run();
-
-// Pump
-Pump pump = new Pump("P-100", feed);
-pump.setOutletPressure(30.0, "bara");
-pump.setIsentropicEfficiency(0.75);
-pump.run();
-
-// Results
-System.out.println("Flow rate: " + pump.getInletStream().getFlowRate("m3/hr") + " m³/hr");
-System.out.println("Head: " + pump.getHead("m") + " m");
-System.out.println("Power: " + pump.getPower("kW") + " kW");
-System.out.println("Efficiency: " + pump.getIsentropicEfficiency() * 100 + " %");
-```
-
-### Example 2: Pump with Curves
-
-```java
-// Define pump curves
-double[] flows = {0, 25, 50, 75, 100, 125, 150};
-double[] heads = {400, 395, 380, 355, 320, 270, 200};
-double[] effs = {0, 0.55, 0.70, 0.78, 0.80, 0.75, 0.65};
-
-Pump pump = new Pump("P-100", liquidStream);
-pump.setHeadCurve(flows, heads, "m3/hr", "m");
-pump.setEfficiencyCurve(flows, effs, "m3/hr");
-pump.run();
-
-// Operating point found on curves
-System.out.println("Operating flow: " + pump.getInletStream().getFlowRate("m3/hr"));
-System.out.println("Operating head: " + pump.getHead("m"));
-System.out.println("Operating efficiency: " + pump.getIsentropicEfficiency());
-```
-
-### Example 3: Booster Pump System
-
-```java
-// Inlet conditions
-SystemSrkEos crude = new SystemSrkEos(340.0, 3.0);
-crude.addComponent("methane", 0.01);
-crude.addComponent("n-pentane", 0.20);
-crude.addComponent("n-heptane", 0.50);
-crude.addComponent("n-decane", 0.29);
-crude.setMixingRule("classic");
-
-Stream feed = new Stream("Crude Feed", crude);
-feed.setFlowRate(500.0, "m3/hr");
-feed.run();
-
-// First stage pump
-Pump pump1 = new Pump("P-100A", feed);
-pump1.setOutletPressure(20.0, "bara");
-pump1.setIsentropicEfficiency(0.78);
-pump1.run();
-
-// Second stage pump
-Pump pump2 = new Pump("P-100B", pump1.getOutletStream());
-pump2.setOutletPressure(50.0, "bara");
-pump2.setIsentropicEfficiency(0.75);
-pump2.run();
-
-// Total power
-double totalPower = pump1.getPower("kW") + pump2.getPower("kW");
-System.out.println("Total pump power: " + totalPower + " kW");
-```
-
----
-
-## Related Documentation
-
-- [Equipment Index](index.md) - All equipment
-- [Compressors](compressors) - Gas compression
-- [Separators](separators) - Phase separation
+- [Equipment index](index.md)
+- [Mechanical design](../mechanical_design.md)
+- [Compressors](compressors.md)
+- [Separators](separators.md)
