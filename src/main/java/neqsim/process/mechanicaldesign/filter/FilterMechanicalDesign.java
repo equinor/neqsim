@@ -1,5 +1,7 @@
 package neqsim.process.mechanicaldesign.filter;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -8,16 +10,18 @@ import com.google.gson.GsonBuilder;
 import neqsim.process.costestimation.filter.FilterCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.filter.Filter;
+import neqsim.process.equipment.filter.FilterType;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 
 /**
- * General mechanical design for filter vessels per ASME VIII Div 1.
+ * General mechanical design for oil and gas process filters.
  *
  * <p>
  * This class sizes a filter pressure vessel (diameter, length, wall thickness), selects filter elements based on the
- * required gas face velocity, estimates weight and cost, and calculates maintenance intervals. It follows the standard
- * pressure vessel design methodology (ASME Section VIII Division 1) and industry practices for gas filtration
- * equipment.
+ * required process face velocity, estimates weight and cost, and calculates maintenance intervals. It follows the
+ * pressure vessel design methodology (ASME Section VIII Division 1) and configurable, type-specific filtration
+ * practices. The calculation is preliminary engineering and does not replace code calculations, certified material
+ * allowables, nozzle reinforcement, external-load checks, fatigue assessment, or vendor element qualification.
  * </p>
  *
  * <p>
@@ -51,6 +55,9 @@ public class FilterMechanicalDesign extends MechanicalDesign {
   /** Design pressure margin factor (1.1 = 10% above max operating). */
   private double designPressureMargin = 1.10;
 
+  /** Minimum absolute design-pressure increment above operation in bar. */
+  private double minimumDesignPressureMarginBar = 3.5;
+
   /** Design temperature margin above max operating in Celsius. */
   private double designTemperatureMarginC = 25.0;
 
@@ -60,7 +67,7 @@ public class FilterMechanicalDesign extends MechanicalDesign {
   /** Maximum allowable stress for SA-516-70 at design temperature (MPa). */
   private double allowableStress = 138.0;
 
-  /** Joint efficiency for fully radiographed welds. */
+  /** Configurable welded-joint efficiency used in the screening calculation. */
   private double jointEfficiency = 0.85;
 
   /** Corrosion allowance in metres. */
@@ -71,6 +78,15 @@ public class FilterMechanicalDesign extends MechanicalDesign {
 
   /** Filter element area per element (m2). Typical cartridge: 0.5-2.0 m2. */
   private double elementArea = 1.0;
+
+  /** Whether maximum face velocity was explicitly overridden. */
+  private boolean maxFaceVelocityUserSpecified = false;
+
+  /** Whether element area was explicitly overridden. */
+  private boolean elementAreaUserSpecified = false;
+
+  /** Maximum process velocity through inlet and outlet nozzles in m/s. */
+  private double maxNozzleVelocity = Double.NaN;
 
   /** Minimum vessel L/D ratio. */
   private double minLDRatio = 2.0;
@@ -109,6 +125,27 @@ public class FilterMechanicalDesign extends MechanicalDesign {
   /** Total equipped weight in kg. */
   private double totalEquippedWeight = 0.0;
 
+  /** Required inlet/outlet nozzle inside diameter in metres. */
+  private double requiredNozzleDiameter = 0.0;
+
+  /** Selected preliminary nominal nozzle diameter in millimetres. */
+  private double selectedNozzleDiameterMm = 0.0;
+
+  /** Actual element face velocity at the design flow in m/s. */
+  private double calculatedFaceVelocity = 0.0;
+
+  /** Actual inlet/outlet nozzle velocity at the selected diameter in m/s. */
+  private double calculatedNozzleVelocity = 0.0;
+
+  /** Current differential-pressure utilization of the terminal replacement limit. */
+  private double terminalDifferentialPressureUtilization = 0.0;
+
+  /** Current differential-pressure utilization of the element collapse rating. */
+  private double elementCollapsePressureUtilization = 0.0;
+
+  /** Design warnings and failed preliminary checks. */
+  private List<String> designWarnings = new ArrayList<String>();
+
   // ============================================================================
   // Cost Parameters
   // ============================================================================
@@ -136,6 +173,23 @@ public class FilterMechanicalDesign extends MechanicalDesign {
   public FilterMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
     costEstimate = new FilterCostEstimate(this);
+  }
+
+  /**
+   * Restores safe defaults for fields added to older serialized mechanical designs.
+   *
+   * @param input serialized object input
+   * @throws IOException if the serialized form cannot be read
+   * @throws ClassNotFoundException if a serialized class cannot be resolved
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (designWarnings == null) {
+      designWarnings = new ArrayList<String>();
+    }
+    if (maxNozzleVelocity <= 0.0) {
+      maxNozzleVelocity = Double.NaN;
+    }
   }
 
   // ============================================================================
@@ -170,7 +224,7 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * @return initial element count
    */
   protected int getInitialElementCount() {
-    return 1;
+    return ((Filter) getProcessEquipment()).getNumberOfElements();
   }
 
   /**
@@ -183,7 +237,7 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * @param count the calculated number of filter elements
    */
   protected void updateEquipmentElementCount(int count) {
-    // no-op by default
+    ((Filter) getProcessEquipment()).setNumberOfElements(count);
   }
 
   /**
@@ -197,7 +251,12 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * @return change interval in hours
    */
   protected double getFilterChangeIntervalHours() {
-    return Double.MAX_VALUE;
+    Filter filter = (Filter) getProcessEquipment();
+    double capturedRate = filter.getSolidsLoadingRate();
+    if (capturedRate <= 0.0 || Double.isInfinite(filter.getLoadingCapacity())) {
+      return Double.MAX_VALUE;
+    }
+    return Math.max(0.0, filter.getLoadingCapacity() - filter.getSolidsLoading()) / capturedRate;
   }
 
   /**
@@ -206,7 +265,7 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * @return equipment type string
    */
   protected String getEquipmentTypeName() {
-    return "Filter Vessel";
+    return ((Filter) getProcessEquipment()).getFilterServiceType().getDisplayName() + " Filter Vessel";
   }
 
   /**
@@ -229,7 +288,15 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * @return element material string
    */
   protected String getElementMaterialDescription() {
-    return "316L SS / Glass Fibre";
+    FilterType type = ((Filter) getProcessEquipment()).getFilterServiceType();
+    if (type == FilterType.Y_STRAINER || type == FilterType.BASKET_STRAINER) {
+      return "316L SS screen";
+    }
+    if (type == FilterType.GRANULAR_MEDIA || type == FilterType.BACKWASHABLE_MEDIA
+        || type == FilterType.ACTIVATED_CARBON) {
+      return type.getDisplayName() + " media and support screens";
+    }
+    return "316L SS / synthetic or glass-fibre media";
   }
 
   // ============================================================================
@@ -243,65 +310,105 @@ public class FilterMechanicalDesign extends MechanicalDesign {
 
     Filter filter = (Filter) getProcessEquipment();
 
-    // --- Operating conditions ---
+    designWarnings.clear();
+    FilterType type = filter.getFilterServiceType();
+
+    // --- Operating and design conditions ---
     double operatingPressure = getMaxOperationPressure();
-    if (operatingPressure < 1.0 && filter.getInletStream() != null) {
-      operatingPressure = filter.getInletStream().getPressure("bara");
-    }
-    double operatingTempC = getMaxOperationTemperature() - 273.15;
-    if (operatingTempC < -200.0 && filter.getInletStream() != null) {
-      operatingTempC = filter.getInletStream().getTemperature("C");
-    }
-
-    // --- Design conditions ---
-    designPressure = operatingPressure * designPressureMargin;
-    designTemperatureC = operatingTempC + designTemperatureMarginC;
-
-    // --- Gas volumetric flow for element sizing ---
-    double gasFlowKgHr = getGasFlowRateKgHr();
-
-    double gasDensity = 50.0; // default kg/m3
-    if (filter.getInletStream() != null && filter.getInletStream().getThermoSystem() != null) {
-      try {
-        gasDensity = filter.getInletStream().getThermoSystem().getPhase(0).getDensity("kg/m3");
-        if (gasDensity < 0.1) {
-          gasDensity = 50.0;
-        }
-      } catch (Exception e) {
-        gasDensity = 50.0;
+    double operatingTemperatureK = getMaxOperationTemperature();
+    if (filter.getInletStream() != null) {
+      if (!Double.isFinite(operatingPressure) || operatingPressure < 1.0) {
+        operatingPressure = filter.getInletStream().getPressure("bara");
+      }
+      if (!Double.isFinite(operatingTemperatureK) || operatingTemperatureK < 150.0) {
+        operatingTemperatureK = filter.getInletStream().getTemperature("K");
       }
     }
+    double operatingTempC = operatingTemperatureK - 273.15;
+    setMaxOperationPressure(operatingPressure);
+    setMaxOperationTemperature(operatingTemperatureK);
+    designPressure = Math.max(operatingPressure * designPressureMargin,
+        operatingPressure + minimumDesignPressureMarginBar);
+    designTemperatureC = operatingTempC + designTemperatureMarginC;
 
-    double volumetricFlowM3s = (gasFlowKgHr / 3600.0) / gasDensity;
+    // --- Actual flow and preliminary type defaults ---
+    double volumetricFlowM3s = 0.0;
+    double fluidDensity = 50.0;
+    if (filter.getInletStream() != null && filter.getInletStream().getThermoSystem() != null) {
+      try {
+        volumetricFlowM3s = Math.max(0.0, filter.getInletStream().getFlowRate("m3/hr") / 3600.0);
+        fluidDensity = filter.getInletStream().getThermoSystem().getDensity("kg/m3");
+      } catch (Exception e) {
+        volumetricFlowM3s = 0.0;
+      }
+    }
+    if (!Double.isFinite(fluidDensity) || fluidDensity <= 0.0) {
+      fluidDensity = 50.0;
+    }
+    if (volumetricFlowM3s <= 0.0) {
+      volumetricFlowM3s = Math.max(0.0, getGasFlowRateKgHr() / 3600.0 / fluidDensity);
+    }
 
-    // --- Filter element sizing ---
-    double requiredArea = volumetricFlowM3s / maxFaceVelocity;
-    requiredElements = (int) Math.ceil(requiredArea / elementArea);
-    requiredElements = Math.max(requiredElements, getInitialElementCount());
+    double designFaceVelocity = maxFaceVelocityUserSpecified ? maxFaceVelocity
+        : type.getDefaultMaximumFaceVelocity();
+    double designElementArea = elementAreaUserSpecified ? elementArea : type.getDefaultElementArea();
+    maxFaceVelocity = designFaceVelocity;
+    elementArea = designElementArea;
+    double requiredArea = volumetricFlowM3s / Math.max(designFaceVelocity, 1.0e-12);
+
+    // --- Filter elements and vessel diameter ---
+    boolean granularMedia = type == FilterType.GRANULAR_MEDIA || type == FilterType.BACKWASHABLE_MEDIA
+        || type == FilterType.ACTIVATED_CARBON;
+    if (granularMedia) {
+      requiredElements = 1;
+      innerDiameter = Math.max(Math.sqrt(4.0 * requiredArea / Math.PI), 0.5);
+      calculatedFaceVelocity = volumetricFlowM3s / (Math.PI * innerDiameter * innerDiameter / 4.0);
+    } else {
+      requiredElements = (int) Math.ceil(requiredArea / Math.max(designElementArea, 1.0e-12));
+      requiredElements = Math.max(1, Math.max(requiredElements, getInitialElementCount()));
+      double bundleDiameter = Math.sqrt(requiredElements) * type.getDefaultElementDiameter() * 1.8;
+      innerDiameter = Math.max(bundleDiameter + 0.2, 0.5);
+      calculatedFaceVelocity = volumetricFlowM3s / (requiredElements * designElementArea);
+    }
     updateEquipmentElementCount(requiredElements);
 
-    // --- Vessel diameter from element bundle ---
-    double elementDiameter = 0.15; // m per element envelope
-    double bundleDiameter = Math.sqrt(requiredElements) * elementDiameter * 1.8;
-    innerDiameter = Math.max(bundleDiameter + 0.2, 0.5); // min 500mm ID
-
-    // --- Vessel length from L/D constraints ---
-    double elementLength = 1.0;
-    vesselLength = elementLength + innerDiameter;
+    // --- Vessel length from element or media depth and L/D constraints ---
+    double activeLength = granularMedia ? filter.getMediaBedDepth() : type.getDefaultElementLength();
+    vesselLength = activeLength + innerDiameter;
     double ldRatio = vesselLength / innerDiameter;
     if (ldRatio < minLDRatio) {
       vesselLength = innerDiameter * minLDRatio;
     } else if (ldRatio > maxLDRatio) {
       innerDiameter = vesselLength / maxLDRatio;
     }
+    if (granularMedia) {
+      double mediaArea = Math.PI * innerDiameter * innerDiameter / 4.0;
+      calculatedFaceVelocity = volumetricFlowM3s / mediaArea;
+      filter.setMediaGeometry(mediaArea, filter.getMediaBedDepth(), filter.getMediaParticleDiameter(),
+          filter.getMediaVoidFraction());
+    }
 
-    // --- Wall thickness per ASME VIII Div 1 ---
-    // Shell: t = PR / (SE - 0.6P)
-    double P = designPressure * 0.1; // bara to MPa
+    // --- Inlet/outlet nozzle velocity sizing ---
+    double designNozzleVelocity = Double.isFinite(maxNozzleVelocity) ? maxNozzleVelocity
+        : (fluidDensity < 200.0 ? 20.0 : 3.0);
+    requiredNozzleDiameter = volumetricFlowM3s > 0.0
+        ? Math.sqrt(4.0 * volumetricFlowM3s / (Math.PI * designNozzleVelocity)) : 0.0;
+    selectedNozzleDiameterMm = selectNominalNozzleDiameterMm(requiredNozzleDiameter * 1000.0);
+    double selectedArea = Math.PI * Math.pow(selectedNozzleDiameterMm / 1000.0, 2.0) / 4.0;
+    calculatedNozzleVelocity = selectedArea > 0.0 ? volumetricFlowM3s / selectedArea : 0.0;
+
+    // --- Pressure boundary screening calculation ---
+    // Shell: t = PR / (SE - 0.6P), using gauge pressure for membrane stress.
+    double referencePressureBar = 1.01325;
+    double P = Math.max(0.0, designPressure - referencePressureBar) * 0.1;
     double S = allowableStress;
     double E = jointEfficiency;
     double R = innerDiameter / 2.0;
-    shellThickness = (P * R) / (S * E - 0.6 * P) + corrosionAllowance;
+    double shellDenominator = S * E - 0.6 * P;
+    if (shellDenominator <= 0.0) {
+      throw new IllegalStateException("Filter shell design pressure exceeds the range of the configured material data");
+    }
+    shellThickness = (P * R) / shellDenominator + corrosionAllowance;
     shellThickness = Math.max(shellThickness, 0.006); // min 6mm
 
     // Head (2:1 ellipsoidal): t = PD / (2SE - 0.2P)
@@ -312,6 +419,12 @@ public class FilterMechanicalDesign extends MechanicalDesign {
     outerDiameter = innerDiameter + 2.0 * shellThickness;
     wallThickness = shellThickness;
 
+    terminalDifferentialPressureUtilization = filter.getDifferentialPressureUtilization();
+    elementCollapsePressureUtilization = filter.getElementCollapsePressure() > 0.0
+        ? filter.getUnrestrictedDeltaP() / filter.getElementCollapsePressure() : Double.POSITIVE_INFINITY;
+    setMaxDesignPressureDrop(filter.getTerminalDeltaP());
+    populateDesignWarnings(filter, calculatedNozzleVelocity, designNozzleVelocity);
+
     // --- Weight estimation ---
     double steelDensity = 7850.0; // kg/m3
     double shellArea = Math.PI * innerDiameter * vesselLength;
@@ -320,8 +433,14 @@ public class FilterMechanicalDesign extends MechanicalDesign {
 
     double accessoriesWeight = emptyVesselWeight * 0.30;
 
-    double weightPerElement = 10.0; // typical cartridge: 5-15 kg each
-    elementWeight = requiredElements * weightPerElement;
+    if (granularMedia) {
+      double mediaBulkDensity = type == FilterType.ACTIVATED_CARBON ? 500.0 : 1000.0;
+      elementWeight = Math.PI * innerDiameter * innerDiameter / 4.0 * filter.getMediaBedDepth()
+          * mediaBulkDensity;
+    } else {
+      double weightPerElement = Math.max(2.0, type.getDefaultElementLength() * 10.0);
+      elementWeight = requiredElements * weightPerElement;
+    }
 
     totalEquippedWeight = emptyVesselWeight + accessoriesWeight + elementWeight;
 
@@ -333,6 +452,57 @@ public class FilterMechanicalDesign extends MechanicalDesign {
     setOuterDiameter(outerDiameter);
     setWallThickness(shellThickness);
     tantanLength = vesselLength;
+  }
+
+  /**
+   * Selects the next larger preliminary nominal nozzle inside diameter.
+   *
+   * @param requiredDiameterMm required hydraulic inside diameter in mm
+   * @return selected nominal diameter in mm
+   */
+  private double selectNominalNozzleDiameterMm(double requiredDiameterMm) {
+    double[] nominalDiametersMm = {15.0, 20.0, 25.0, 40.0, 50.0, 65.0, 80.0, 100.0, 150.0, 200.0,
+        250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 600.0, 750.0, 900.0, 1050.0, 1200.0};
+    if (requiredDiameterMm <= 0.0) {
+      return 0.0;
+    }
+    for (double nominalDiameterMm : nominalDiametersMm) {
+      if (nominalDiameterMm >= requiredDiameterMm) {
+        return nominalDiameterMm;
+      }
+    }
+    return requiredDiameterMm;
+  }
+
+  /**
+   * Populates preliminary integrity, operability, and sizing warnings.
+   *
+   * @param filter filter equipment
+   * @param nozzleVelocity calculated nozzle velocity in m/s
+   * @param maximumNozzleVelocity configured maximum nozzle velocity in m/s
+   */
+  private void populateDesignWarnings(Filter filter, double nozzleVelocity, double maximumNozzleVelocity) {
+    if (terminalDifferentialPressureUtilization >= 1.0) {
+      designWarnings.add("Terminal differential pressure is exceeded; replace or backwash the element");
+    }
+    if (elementCollapsePressureUtilization >= 1.0) {
+      designWarnings.add("Calculated differential pressure exceeds the element collapse/burst rating");
+    }
+    if (filter.getTerminalDeltaP() >= filter.getElementCollapsePressure()) {
+      designWarnings.add("Terminal replacement differential pressure must be below the element collapse rating");
+    }
+    if (calculatedFaceVelocity > maxFaceVelocity * 1.000001) {
+      designWarnings.add("Calculated element face velocity exceeds the configured design limit");
+    }
+    if (nozzleVelocity > maximumNozzleVelocity * 1.000001) {
+      designWarnings.add("Selected preliminary nozzle size exceeds the configured velocity limit");
+    }
+    if (!filter.isElementIntegrityVerified()) {
+      designWarnings.add("Filter element fabrication integrity has not been recorded as verified");
+    }
+    if (filter.getPerformanceCurve().size() == 0 && filter.getNominalRemovalEfficiency() <= 0.0) {
+      designWarnings.add("No particle-size efficiency or beta-ratio test data have been configured");
+    }
   }
 
   // ============================================================================
@@ -403,7 +573,8 @@ public class FilterMechanicalDesign extends MechanicalDesign {
     bom.add(vessel);
 
     Map<String, Object> elements = new LinkedHashMap<String, Object>();
-    elements.put("item", "Filter Cartridge Elements");
+    elements.put("item", ((Filter) getProcessEquipment()).getFilterServiceType().getDisplayName()
+        + " Elements/Media");
     elements.put("material", getElementMaterialDescription());
     elements.put("quantity", requiredElements);
     elements.put("weight_kg", elementWeight);
@@ -414,6 +585,7 @@ public class FilterMechanicalDesign extends MechanicalDesign {
     nozzles.put("item", "Inlet/Outlet Nozzles & Flanges");
     nozzles.put("material", materialGrade);
     nozzles.put("quantity", 3); // inlet, outlet, drain
+    nozzles.put("nominalDiameter_mm", selectedNozzleDiameterMm);
     nozzles.put("weight_kg", emptyVesselWeight * 0.10);
     nozzles.put("unitCost_USD", emptyVesselWeight * 0.10 * steelCostPerKg * 1.5);
     bom.add(nozzles);
@@ -445,8 +617,17 @@ public class FilterMechanicalDesign extends MechanicalDesign {
 
     result.put("equipmentName", filter.getName());
     result.put("equipmentType", getEquipmentTypeName());
-    result.put("designCode", "ASME VIII Div 1");
+    result.put("filterType", filter.getFilterServiceType().name());
+    result.put("designCode", "ASME Section VIII Division 1 screening equations");
     result.put("materialGrade", materialGrade);
+
+    Map<String, Object> standardBasis = new LinkedHashMap<String, Object>();
+    standardBasis.put("pressureBoundary", "ASME Section VIII Division 1 screening only");
+    standardBasis.put("particlePerformance", filter.getPerformanceCurve().getTestStandard());
+    standardBasis.put("pressureDropTest", filter.getPressureDropCurve().getTestStandard());
+    standardBasis.put("elementIntegrity", "Project/vendor verification; ISO 2942 method may be recorded");
+    standardBasis.put("disclaimer", "Not a certified code calculation or vendor element qualification");
+    result.put("standardBasis", standardBasis);
 
     // Design conditions
     Map<String, Object> design = new LinkedHashMap<String, Object>();
@@ -473,9 +654,30 @@ public class FilterMechanicalDesign extends MechanicalDesign {
     Map<String, Object> elemData = new LinkedHashMap<String, Object>();
     elemData.put("numberOfElements", requiredElements);
     elemData.put("elementArea_m2", elementArea);
-    elemData.put("totalFilterArea_m2", requiredElements * elementArea);
+    boolean mediaFilter = filter.getFilterServiceType() == FilterType.GRANULAR_MEDIA
+        || filter.getFilterServiceType() == FilterType.BACKWASHABLE_MEDIA
+        || filter.getFilterServiceType() == FilterType.ACTIVATED_CARBON;
+    elemData.put("totalFilterArea_m2", mediaFilter ? filter.getMediaArea() : requiredElements * elementArea);
     elemData.put("maxFaceVelocity_ms", maxFaceVelocity);
+    elemData.put("calculatedFaceVelocity_ms", calculatedFaceVelocity);
+    elemData.put("terminalDeltaP_bar", filter.getTerminalDeltaP());
+    elemData.put("collapsePressure_bar", filter.getElementCollapsePressure());
+    elemData.put("integrityVerified", filter.isElementIntegrityVerified());
     result.put("filterElements", elemData);
+
+    Map<String, Object> nozzles = new LinkedHashMap<String, Object>();
+    nozzles.put("requiredInsideDiameter_mm", requiredNozzleDiameter * 1000.0);
+    nozzles.put("selectedNominalDiameter_mm", selectedNozzleDiameterMm);
+    nozzles.put("calculatedVelocity_ms", calculatedNozzleVelocity);
+    result.put("nozzleSizing", nozzles);
+
+    Map<String, Object> checks = new LinkedHashMap<String, Object>();
+    checks.put("terminalDifferentialPressureUtilization", terminalDifferentialPressureUtilization);
+    checks.put("elementCollapsePressureUtilization", elementCollapsePressureUtilization);
+    checks.put("terminalDifferentialPressurePassed", terminalDifferentialPressureUtilization < 1.0);
+    checks.put("elementCollapsePressurePassed", elementCollapsePressureUtilization < 1.0);
+    checks.put("warnings", new ArrayList<String>(designWarnings));
+    result.put("mechanicalChecks", checks);
 
     // Weight
     Map<String, Object> weight = new LinkedHashMap<String, Object>();
@@ -562,7 +764,11 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * @param velocity face velocity in m/s (typically 0.05 to 0.20)
    */
   public void setMaxFaceVelocity(double velocity) {
+    if (!Double.isFinite(velocity) || velocity <= 0.0) {
+      throw new IllegalArgumentException("Maximum face velocity must be finite and positive");
+    }
     this.maxFaceVelocity = velocity;
+    this.maxFaceVelocityUserSpecified = true;
   }
 
   /**
@@ -571,7 +777,11 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * @param areaM2 element filtration area in m2
    */
   public void setElementArea(double areaM2) {
+    if (!Double.isFinite(areaM2) || areaM2 <= 0.0) {
+      throw new IllegalArgumentException("Element area must be finite and positive");
+    }
     this.elementArea = areaM2;
+    this.elementAreaUserSpecified = true;
   }
 
   /**
@@ -607,7 +817,22 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * @param margin pressure margin factor (e.g., 1.10 for 10%)
    */
   public void setDesignPressureMargin(double margin) {
+    if (!Double.isFinite(margin) || margin < 1.0) {
+      throw new IllegalArgumentException("Design pressure margin factor must be at least one");
+    }
     this.designPressureMargin = margin;
+  }
+
+  /**
+   * Sets the minimum design-pressure increment above the maximum operating pressure.
+   *
+   * @param marginBar minimum increment in bar
+   */
+  public void setMinimumDesignPressureMarginBar(double marginBar) {
+    if (!Double.isFinite(marginBar) || marginBar < 0.0) {
+      throw new IllegalArgumentException("Minimum design pressure margin must be finite and non-negative");
+    }
+    this.minimumDesignPressureMarginBar = marginBar;
   }
 
   /**
@@ -680,6 +905,58 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    */
   public double getElementArea() {
     return elementArea;
+  }
+
+  /** @return calculated element face velocity in m/s */
+  public double getCalculatedFaceVelocity() {
+    return calculatedFaceVelocity;
+  }
+
+  /** @return required hydraulic nozzle inside diameter in m */
+  public double getRequiredNozzleDiameter() {
+    return requiredNozzleDiameter;
+  }
+
+  /** @return selected preliminary nominal nozzle diameter in mm */
+  public double getSelectedNozzleDiameterMm() {
+    return selectedNozzleDiameterMm;
+  }
+
+  /** @return calculated velocity through the selected nozzle in m/s */
+  public double getCalculatedNozzleVelocity() {
+    return calculatedNozzleVelocity;
+  }
+
+  /**
+   * Sets the maximum nozzle velocity used for preliminary inlet/outlet sizing.
+   *
+   * @param velocity maximum velocity in m/s
+   */
+  public void setMaxNozzleVelocity(double velocity) {
+    if (!Double.isFinite(velocity) || velocity <= 0.0) {
+      throw new IllegalArgumentException("Maximum nozzle velocity must be finite and positive");
+    }
+    maxNozzleVelocity = velocity;
+  }
+
+  /** @return terminal differential-pressure utilization */
+  public double getTerminalDifferentialPressureUtilization() {
+    return terminalDifferentialPressureUtilization;
+  }
+
+  /** @return element collapse/burst differential-pressure utilization */
+  public double getElementCollapsePressureUtilization() {
+    return elementCollapsePressureUtilization;
+  }
+
+  /** @return true when terminal and collapse differential-pressure checks pass */
+  public boolean isDifferentialPressureDesignAcceptable() {
+    return terminalDifferentialPressureUtilization < 1.0 && elementCollapsePressureUtilization < 1.0;
+  }
+
+  /** @return defensive copy of preliminary design warnings */
+  public List<String> getDesignWarnings() {
+    return new ArrayList<String>(designWarnings);
   }
 
   /**
