@@ -4,8 +4,8 @@ package neqsim.process.mechanicaldesign.designstandards;
  * Evidence level for a standard listed by the NeqSim mechanical-design framework.
  *
  * <p>
- * The level describes NeqSim's implementation evidence. It does not describe the authority of the
- * published standard and must not be interpreted as design certification.
+ * The level describes NeqSim's implementation evidence. It does not describe the authority of the published standard
+ * and must not be interpreted as design certification.
  * </p>
  */
 public enum StandardSupportLevel {
