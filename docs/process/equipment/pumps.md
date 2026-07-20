@@ -173,7 +173,8 @@ public final class PumpDesignExample {
     pump.run();
 
     double powerKw = pump.getPower("kW");
-    double headM = pump.getHead("m");
+    double vendorHeadM =
+        pump.getPumpChart().getHead(feed.getFlowRate("m3/hr"), pump.getSpeed());
     double npshAvailableM = pump.getNPSHAvailable();
     double npshRequiredM = pump.getNPSHRequired();
 
@@ -187,7 +188,7 @@ public final class PumpDesignExample {
     PumpApi610DesignCalculator.AssessmentStatus status = assessment.getAssessmentStatus();
     String responseJson = design.getResponse().toJson();
 
-    logger.info("Power: {} kW; head: {} m", powerKw, headM);
+    logger.info("Power: {} kW; vendor head: {} m", powerKw, vendorHeadM);
     logger.info("NPSHa: {} m; NPSHr: {} m", npshAvailableM, npshRequiredM);
     logger.info("API 610 status: {}; response: {}", status, responseJson);
   }
@@ -199,7 +200,7 @@ public final class PumpDesignExample {
 | Result | Interpretation |
 | --- | --- |
 | `pump.getPower("kW")` | Absorbed shaft power calculated by the process model |
-| `pump.getHead("m")` | Developed pump head |
+| `pump.getPumpChart().getHead(flow, speed)` | Vendor-curve head in the configured head unit |
 | `pump.getNPSHAvailable()` | Process-side NPSHa in metres, or `NaN` if unavailable |
 | `pump.getNPSHRequired()` | Vendor curve value or coarse fallback estimate in metres |
 | `assessment.getOperatingRegion()` | Rated-point classification relative to vendor BEP |
