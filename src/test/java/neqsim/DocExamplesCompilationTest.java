@@ -60,6 +60,7 @@ import neqsim.thermo.system.FluidBuilder;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPitzer;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
