@@ -11,6 +11,7 @@ description: Comprehensive Java library for thermodynamic, physical property, an
 ## Quick Start
 
 ```java
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
