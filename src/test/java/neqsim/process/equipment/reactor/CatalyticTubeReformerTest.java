@@ -34,5 +34,8 @@ public class CatalyticTubeReformerTest extends neqsim.NeqSimTest {
     assertTrue(reformer.getHeatDuty("kW") > 0.0,
         "Steam-methane reforming and feed heating should require positive duty");
     assertEquals(3.0, reformer.getSteamToCarbonRatio(), 1.0e-8);
+    assertEquals(23.0, reformer.getOutletStream().getPressure("bara"), 1.0e-8);
+    assertTrue(reformer.getOutletStream().getThermoSystem().hasComponent("hydrogen"));
+    assertTrue(reformer.isTubeWallTemperatureAcceptable());
   }
 }
