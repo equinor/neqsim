@@ -338,6 +338,24 @@ public class SulfurFilter extends Filter {
   }
 
   /**
+   * Returns a configured beta-curve efficiency when present, otherwise the sulfur-specific removal efficiency.
+   *
+   * <p>
+   * The fallback also preserves the efficiency of sulfur filters serialized before the generic filter performance
+   * fields were introduced.
+   * </p>
+   *
+   * @return nominal sulfur-particle removal efficiency
+   */
+  @Override
+  public double getNominalRemovalEfficiency() {
+    if (getPerformanceCurve().size() > 0) {
+      return super.getNominalRemovalEfficiency();
+    }
+    return removalEfficiency;
+  }
+
+  /**
    * Sets the filter element S8 holding capacity.
    *
    * @param capacityKg capacity in kg of solid S8 per element set
