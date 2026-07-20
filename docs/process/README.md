@@ -194,7 +194,7 @@ This documentation is organized into the following sections:
 | Membranes | [membranes.md](equipment/membranes) | MembraneSeparator |
 | Flares | [flares.md](equipment/flares) | Flare, FlareStack |
 | Electrolyzers | [electrolyzers.md](equipment/electrolyzers) | Electrolyzer, CO2Electrolyzer |
-| Filters | [filters.md](equipment/filters) | Filter, CharCoalFilter |
+| Filters | [filters.md](equipment/filters) | Particle, coalescing, strainer, and media filters with dynamic loading and mechanical design |
 | H2S Scavengers | [H2S_scavenger_guide.md](H2S_scavenger_guide) | H2S chemical scavenging (triazine, glyoxal, iron sponge) |
 | Reactors | [reactors.md](equipment/reactors) | GibbsReactor |
 | Pipelines | [pipelines.md](equipment/pipelines) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |

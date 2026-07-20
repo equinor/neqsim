@@ -1,6 +1,6 @@
 ---
 title: Filter Equipment
-description: Documentation for filter equipment in NeqSim process simulation, including dynamic loading, breakthrough, backwash, regeneration, and sulfur S8 capture.
+description: Oil and gas filter simulation with type presets, beta-ratio efficiency, hydraulic curves, Ergun pressure drop, dynamic loading, bypass, and mechanical design.
 ---
 
 # Filter Equipment
@@ -10,8 +10,14 @@ Documentation for filter equipment in NeqSim process simulation.
 ## Table of Contents
 - [Overview](#overview)
 - [Filter Class](#filter-class)
+- [Filter Types](#filter-types)
+- [Particle and Droplet Capture](#particle-and-droplet-capture)
+- [Pressure-Drop Models](#pressure-drop-models)
 - [CharCoalFilter Class](#charcoalfilter-class)
 - [Dynamic Filter Loading](#dynamic-filter-loading)
+- [Differential-Pressure Bypass](#differential-pressure-bypass)
+- [Mechanical Design](#mechanical-design)
+- [Standards Basis](#standards-basis)
 - [Sulfur Filter](#sulfur-filter)
 - [Usage Examples](#usage-examples)
 
@@ -24,14 +30,20 @@ Documentation for filter equipment in NeqSim process simulation.
 **Classes:**
 | Class | Description |
 |-------|-------------|
-| `Filter` | Generic filter unit with optional dynamic loading and pressure-drop buildup |
+| `Filter` | Generic particulate, strainer, coalescer, and media-filter unit operation |
 | `CharCoalFilter` | Activated charcoal filter; inherits dynamic loading and regeneration behaviour |
 | `SulfurFilter` | Captures solid elemental sulfur (`S8`) and feeds captured mass into dynamic loading |
+| `FilterPerformanceCurve` | Particle-size versus beta-ratio performance data |
+| `FilterPressureDropCurve` | Actual volumetric flow versus clean differential-pressure data |
 
-Filters are used to remove specific components or contaminants from process streams. Applications include:
+Applications include:
+
 - Particulate removal
-- Activated carbon adsorption
-- Mercury removal
+- Gas and liquid coalescing
+- Temporary and permanent strainers
+- Bag and cartridge filtration
+- Sand, nutshell, and backwashable media beds
+- Activated-carbon guard media hydraulics and loading
 - Sulfur compound and solid sulfur removal
 
 ---
@@ -45,40 +57,131 @@ import neqsim.process.equipment.filter.Filter;
 
 // Create filter on gas stream
 Filter filter = new Filter("Particulate Filter", gasStream);
+filter.setFilterServiceType(FilterType.CARTRIDGE);
 filter.run();
 
 // Get outlet stream
 StreamInterface cleanGas = filter.getOutletStream();
 ```
 
+The original fixed differential-pressure behavior remains the default. Select a
+filter type or pressure-drop model only when the required input data are
+available.
+
+## Filter Types
+
+`FilterType` provides construction-specific starting points. Calling
+`setFilterServiceType(...)` selects the associated pressure-drop model, flow
+exponent, face velocity, element geometry, and mechanical-design behavior.
+
+| Type | Typical service | Default hydraulic model |
+|---|---|---|
+| `CARTRIDGE` | Gas or liquid particulate removal | Flow-scaled |
+| `BAG` | Produced water and liquid filtration | Flow-scaled |
+| `Y_STRAINER` | Temporary or compact coarse protection | Flow-scaled, quadratic |
+| `BASKET_STRAINER` | Coarse liquid protection with larger dirt capacity | Flow-scaled, quadratic |
+| `COALESCER` | Aerosol or dispersed-droplet capture | Flow-scaled, quadratic |
+| `GRANULAR_MEDIA` | Sand, nutshell, or guard media | Ergun |
+| `BACKWASHABLE_MEDIA` | Regenerable produced-water media filters | Ergun |
+| `ACTIVATED_CARBON` | Sorbent guard-bed hydraulics and loading | Ergun |
+
+The defaults are screening values. Replace face velocities, element areas,
+media geometry, ratings, and curves with project/vendor data.
+
+## Particle and Droplet Capture
+
+The size-dependent performance model uses the filtration beta ratio:
+
+$$
+\beta_x = \frac{N_{\mathrm{upstream},x}}{N_{\mathrm{downstream},x}}
+$$
+
+$$
+\eta_x = 1 - \frac{1}{\beta_x}
+$$
+
+where $x$ is the minimum particle or droplet size in micrometres. NeqSim uses
+log-linear interpolation between supplied beta-ratio points and clamps outside
+the tested size range.
+
+```java
+FilterPerformanceCurve efficiencyCurve = new FilterPerformanceCurve(
+    new double[] {5.0, 10.0, 20.0},
+    new double[] {2.0, 100.0, 1000.0});
+efficiencyCurve.setTestStandard("ISO 16889:2022");
+
+Filter filter = new Filter("10 micron liquid filter", feed);
+filter.setPerformanceCurve(efficiencyCurve);
+filter.setParticleSize(10.0);
+filter.setInletParticleConcentration(100.0); // mg/kg
+filter.run();
+
+double efficiency = filter.getCurrentRemovalEfficiency();
+double outletConcentration = filter.getOutletParticleConcentration(); // mg/kg
+double capturedRate = filter.getCalculatedCapturedRate(); // kg/hr
+```
+
+The generic concentration is an external solids/aerosol inventory and is not a
+thermodynamic component. It changes reported contaminant concentration and
+dynamic filter loading, but it does not change the outlet stream composition or
+enthalpy. Use a contaminant-specific unit such as `SulfurFilter`,
+`MercuryRemovalBed`, or `AdsorptionBed` when molecular material removal must be
+included in the stream material balance.
+
+## Pressure-Drop Models
+
+`FilterPressureDropModel` supports four approaches:
+
+| Model | Calculation | Required inputs |
+|---|---|---|
+| `FIXED` | Constant clean differential pressure | `setDeltaP(...)` |
+| `FLOW_SCALED` | $\Delta P=\Delta P_{ref}(Q/Q_{ref})^n$ | Clean ΔP, reference actual flow, exponent |
+| `TABULATED` | Linear interpolation/extrapolation of test points | `FilterPressureDropCurve` |
+| `ERGUN` | Viscous and inertial packed-bed terms | Area, bed depth, media size, void fraction |
+
+Actual volumetric flow is evaluated at inlet conditions. The Ergun model uses
+NeqSim density and viscosity, so gas compression, temperature, and liquid
+viscosity affect differential pressure.
+
+```java
+Filter strainer = new Filter("basket strainer", liquidFeed);
+strainer.setFilterServiceType(FilterType.BASKET_STRAINER);
+strainer.setDeltaP(0.15); // bar at reference flow
+strainer.setReferenceFlowRate(120.0); // actual m3/hr
+
+FilterPressureDropCurve testedCurve = new FilterPressureDropCurve(
+    new double[] {50.0, 100.0, 150.0},
+    new double[] {0.05, 0.18, 0.40});
+testedCurve.setTestStandard("ISO 3968:2017");
+strainer.setPressureDropCurve(testedCurve);
+```
+
 ---
 
 ## CharCoalFilter Class
 
-Activated charcoal filter for removing specific components.
+`CharCoalFilter` is the compatibility class for an activated-carbon media
+filter. It automatically selects `ACTIVATED_CARBON`, including Ergun hydraulics,
+dynamic contaminant loading, and regeneration. It does not currently remove a
+named thermodynamic component.
 
 ### Basic Usage
 
 ```java
 import neqsim.process.equipment.filter.CharCoalFilter;
 
-// Create charcoal filter
-CharCoalFilter charFilter = new CharCoalFilter("Mercury Filter", gasStream);
-charFilter.setRemovalEfficiency("mercury", 0.99);  // 99% removal
+CharCoalFilter charFilter = new CharCoalFilter("carbon guard filter", gasStream);
+charFilter.setMediaGeometry(2.0, 3.0, 0.003, 0.40);
+charFilter.setNominalRemovalEfficiency(0.99);
+charFilter.setInletParticleConcentration(1.0); // external contaminant, mg/kg
 charFilter.run();
 
 // Get treated stream
 StreamInterface treatedGas = charFilter.getOutletStream();
 ```
 
-### Removal Efficiency
-
-```java
-// Set removal efficiency for specific components
-charFilter.setRemovalEfficiency("mercury", 0.99);
-charFilter.setRemovalEfficiency("H2S", 0.95);
-charFilter.setRemovalEfficiency("benzene", 0.90);
-```
+Use `MercuryRemovalBed` for mercury chemisorption, `AdsorptionBed` for
+component adsorption, or `H2SScavenger` for reactive H2S removal.
 
 ---
 
@@ -100,7 +203,7 @@ The generic loading model tracks:
 - backwash and regeneration removal rates
 - holdup volume and calculated residence time
 
-The pressure-drop relation is intentionally simple and transparent:
+Loading is added to the selected clean-filter hydraulic model:
 
 $$
 \Delta P = \Delta P_\mathrm{clean} + \Delta P_\mathrm{capacity}\,f_\mathrm{loading}
@@ -109,6 +212,10 @@ $$
 where $f_\mathrm{loading}$ is the fraction of the configured loading capacity
 used. Breakthrough remains zero below the configured start fraction and then
 ramps linearly to one at full capacity.
+
+When inlet concentration and a beta ratio/efficiency are configured, the
+captured rate is calculated automatically. `setSolidsLoadingRate(...)` remains
+available as a manual captured-rate input when measured loading is known.
 
 ```java
 Filter filter = new Filter("dynamic filter", feed);
@@ -140,6 +247,87 @@ filter.runTransient(1800.0, UUID.randomUUID());
 
 Use `resetDynamicState()` after replacement, clean-out, or completed
 regeneration to clear loading, breakthrough, and active maintenance flags.
+
+## Differential-Pressure Bypass
+
+A filter bypass or relief path can be represented by a cracking differential
+pressure. When unrestricted filter differential pressure exceeds the setting,
+the applied differential pressure is capped and an approximate bypass fraction
+is reported. Bypassed flow receives no filtration, so capture efficiency falls.
+
+```java
+filter.setBypassCrackingDeltaP(1.5); // bar
+filter.run();
+
+double unrestrictedDeltaP = filter.getUnrestrictedDeltaP();
+double appliedDeltaP = filter.getDeltaP();
+double bypassFraction = filter.getBypassFraction();
+```
+
+The bypass split assumes a quadratic parallel bypass path and is a screening
+model. Use a splitter, valve, recycle path, and controller for a detailed
+hydraulic network.
+
+## Mechanical Design
+
+Every `Filter` owns a `FilterMechanicalDesign`. `calcDesign()` performs:
+
+- type-specific element area or media-bed cross-section sizing;
+- element count and actual face-velocity calculation;
+- vessel diameter and tangent-length screening;
+- shell and 2:1 ellipsoidal-head thickness screening;
+- inlet/outlet nozzle velocity sizing and preliminary nominal diameter;
+- terminal differential-pressure and element collapse/burst checks;
+- element integrity evidence tracking;
+- weight, bill of materials, CAPEX, maintenance, and lifecycle-cost estimates.
+
+```java
+filter.setTerminalDeltaP(1.0);          // normal replacement/backwash point, bar
+filter.setElementCollapsePressure(5.0); // supplier rating, bar
+filter.setElementIntegrityVerified(true);
+filter.run();
+
+FilterMechanicalDesign design =
+    (FilterMechanicalDesign) filter.getMechanicalDesign();
+design.setMaxOperationPressure(70.0);    // bara
+design.setMaxOperationTemperature(333.15); // K
+design.calcDesign();
+
+int elements = design.getRequiredElements();
+double vesselId = design.getInnerDiameter();
+double shellThickness = design.getShellThickness();
+double nozzleSize = design.getSelectedNozzleDiameterMm();
+List<String> warnings = design.getDesignWarnings();
+```
+
+The pressure-boundary calculation is preliminary. Certified design still needs
+the governing code edition, project pressure/temperature rules, certified
+allowable stresses, weld efficiency, corrosion/erosion allowance, external
+loads, nozzle reinforcement, closure design, supports, fatigue, fire case,
+relief protection, materials compatibility, inspection, and vendor review.
+
+## Standards Basis
+
+NeqSim implements open, user-configurable representations of standard test
+results; it does not reproduce protected acceptance tables or claim equipment
+certification.
+
+| Reference | Implemented use |
+|---|---|
+| [ISO 16889:2022](https://www.iso.org/standard/77245.html) | Store and interpolate beta-ratio, contaminant-capacity, and differential-pressure performance supplied by a test laboratory/vendor |
+| [ISO 3968:2017](https://www.iso.org/standard/64104.html) | Store and interpolate measured clean differential-pressure versus actual-flow data |
+| [ISO 2942:2018](https://www.iso.org/standard/68005.html) | Record that element fabrication integrity was verified; bubble point is not converted into efficiency |
+| [ISO 2941:2009](https://www.iso.org/standard/41062.html) | Check operating differential pressure against a user-supplied element collapse/burst rating |
+| [ASME Section VIII Division 1](https://www.asme.org/codes-standards/find-codes-standards/bpvc-viii-1-bpvc-section-viii-rules-construction-pressure-vessels-division-1) | Screening shell/head membrane-thickness equations with configurable material allowable stress, joint efficiency, and corrosion allowance |
+
+The ISO references above are primarily hydraulic-fluid filter test methods.
+Their data structures are also useful for oil and gas liquid filters, while gas
+coalescers and special media should use the applicable vendor test method and
+record it in the curve metadata.
+
+ISO and ASME publish the scope and status pages openly, while the normative
+documents remain copyrighted. Consequently, NeqSim stores user-supplied test
+results and configurable design inputs rather than embedding protected tables.
 
 ---
 
@@ -195,10 +383,9 @@ process.add(rawGas);
 Filter particleFilter = new Filter("Inlet Filter", rawGas);
 process.add(particleFilter);
 
-// Mercury removal
-CharCoalFilter hgFilter = new CharCoalFilter("Hg Guard Bed",
+// Molecular mercury removal uses a chemisorption bed
+MercuryRemovalBed hgFilter = new MercuryRemovalBed("Hg Guard Bed",
     particleFilter.getOutletStream());
-hgFilter.setRemovalEfficiency("mercury", 0.999);
 process.add(hgFilter);
 
 // Run
@@ -247,8 +434,7 @@ This example is covered by `SulfurOxidationReactorTest` and `FilterTest`.
 
 ```java
 // Upstream of cryogenic section
-CharCoalFilter mercuryRemoval = new CharCoalFilter("Mercury Removal", feed);
-mercuryRemoval.setRemovalEfficiency("mercury", 0.9999);  // Critical for aluminum equipment
+MercuryRemovalBed mercuryRemoval = new MercuryRemovalBed("Mercury Removal", feed);
 mercuryRemoval.run();
 
 double outletMercury = mercuryRemoval.getOutletStream()
