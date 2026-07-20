@@ -60,6 +60,7 @@ import neqsim.thermo.system.FluidBuilder;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPitzer;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -70,6 +71,28 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @version 1.0
  */
 public class DocExamplesCompilationTest {
+
+  /**
+   * Quick-start example shared by docs/index.md and docs/README.md.
+   */
+  @Test
+  public void testDocumentationLandingPageQuickStart() {
+    SystemInterface gas = new SystemSrkEos(298.15, 50.0);
+    gas.addComponent("methane", 0.90);
+    gas.addComponent("ethane", 0.05);
+    gas.addComponent("propane", 0.03);
+    gas.addComponent("CO2", 0.02);
+    gas.setMixingRule("classic");
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(gas);
+    ops.TPflash();
+    gas.initProperties();
+
+    assertTrue(gas.getDensity("kg/m3") > 35.0);
+    assertTrue(gas.getDensity("kg/m3") < 50.0);
+    assertTrue(gas.getZ() > 0.8);
+    assertTrue(gas.getZ() < 1.0);
+  }
 
   /**
    * FluidBuilder fluent API example from docs/util/engineering_utilities.md.
