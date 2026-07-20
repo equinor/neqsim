@@ -112,7 +112,7 @@ jobs:
           benchmarks = safety_json("safety-benchmark-report.json")
           assert benchmarks["passed"] is False and len(benchmarks["missingQualifyingMethods"]) == 3
           PY
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ncs-hazop-esd-hipps-engineering-study
           path: |

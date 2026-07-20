@@ -149,7 +149,7 @@ jobs:
           PY
 
       - name: Upload executed notebook
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: complete-offshore-engineering-study-executed
           path: build/executed-notebooks/complete_offshore_process_engineering_study.ipynb
@@ -157,7 +157,7 @@ jobs:
           retention-days: 14
 
       - name: Upload governed revision packages
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: complete-offshore-engineering-study-model-packages
           path: build/complete-offshore-process-engineering-study
