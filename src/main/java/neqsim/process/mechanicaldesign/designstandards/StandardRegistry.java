@@ -81,37 +81,66 @@ public final class StandardRegistry {
     String effectiveVersion = version != null ? version : getEffectiveVersion(standardType);
     String standardName = standardType.getCode() + " " + effectiveVersion;
 
-    String category = standardType.getDesignStandardCategory();
+    Class<? extends DesignStandard> implementationClass = getMappedImplementationClass(standardType);
 
-    // Create appropriate standard based on category
+    if (implementationClass == PressureVesselDesignStandard.class) {
+      return new PressureVesselDesignStandard(standardName, equipment);
+    } else if (implementationClass == SeparatorDesignStandard.class) {
+      return new SeparatorDesignStandard(standardName, equipment);
+    } else if (implementationClass == GasScrubberDesignStandard.class) {
+      return new GasScrubberDesignStandard(standardName, equipment);
+    } else if (implementationClass == PipelineDesignStandard.class) {
+      return new PipelineDesignStandard(standardName, equipment);
+    } else if (implementationClass == CompressorDesignStandard.class) {
+      return new CompressorDesignStandard(standardName, equipment);
+    } else if (implementationClass == MaterialPlateDesignStandard.class) {
+      return new MaterialPlateDesignStandard(standardName, equipment);
+    } else if (implementationClass == MaterialPipeDesignStandard.class) {
+      return new MaterialPipeDesignStandard(standardName, equipment);
+    } else if (implementationClass == ValveDesignStandard.class) {
+      return new ValveDesignStandard(standardName, equipment);
+    }
+    return new DesignStandard(standardName, equipment);
+  }
+
+  /**
+   * Get the class selected by the category-based standards factory.
+   *
+   * <p>
+   * A mapping to {@link DesignStandard} means that the registry only creates a metadata holder; it
+   * does not imply that the named standard has an executable calculation. Use
+   * {@link StandardSupportAudit#getSupport(StandardType)} to inspect the implementation evidence.
+   * </p>
+   *
+   * @param standardType standard to inspect
+   * @return class selected by {@link #createStandard(StandardType, MechanicalDesign)}
+   * @throws IllegalArgumentException if {@code standardType} is null
+   */
+  public static Class<? extends DesignStandard> getMappedImplementationClass(StandardType standardType) {
+    if (standardType == null) {
+      throw new IllegalArgumentException("standardType cannot be null");
+    }
+
+    String category = standardType.getDesignStandardCategory();
     switch (category) {
     case "pressure vessel design code":
-      return new PressureVesselDesignStandard(standardName, equipment);
-
+      return PressureVesselDesignStandard.class;
     case "separator process design":
-      return new SeparatorDesignStandard(standardName, equipment);
-
+      return SeparatorDesignStandard.class;
     case "gas scrubber process design":
-      return new GasScrubberDesignStandard(standardName, equipment);
-
+      return GasScrubberDesignStandard.class;
     case "pipeline design codes":
-      return new PipelineDesignStandard(standardName, equipment);
-
+      return PipelineDesignStandard.class;
     case "compressor design codes":
-      return new CompressorDesignStandard(standardName, equipment);
-
+      return CompressorDesignStandard.class;
     case "material plate design codes":
-      return new MaterialPlateDesignStandard(standardName, equipment);
-
+      return MaterialPlateDesignStandard.class;
     case "material pipe design codes":
-      return new MaterialPipeDesignStandard(standardName, equipment);
-
+      return MaterialPipeDesignStandard.class;
     case "valve design codes":
-      return new ValveDesignStandard(standardName, equipment);
-
+      return ValveDesignStandard.class;
     default:
-      // Return base DesignStandard for unknown categories
-      return new DesignStandard(standardName, equipment);
+      return DesignStandard.class;
     }
   }
 
