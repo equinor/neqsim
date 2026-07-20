@@ -8,8 +8,8 @@ import java.util.List;
  * Produces an auditable view of the calculations behind standards catalogued by NeqSim.
  *
  * <p>
- * This class reports current implementation evidence only. It does not assess or reproduce the
- * contents of the published standards.
+ * This class reports current implementation evidence only. It does not assess or reproduce the contents of the
+ * published standards.
  * </p>
  */
 public final class StandardSupportAudit {
@@ -40,19 +40,17 @@ public final class StandardSupportAudit {
           "API 610 screening is available through PumpMechanicalDesign but is not selected by StandardRegistry.");
     case API_650:
     case API_620:
-      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, registryImplementation,
-          NO_CALCULATION,
+      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, registryImplementation, NO_CALCULATION,
           "The registry maps this tank standard to a separator-oriented pressure-vessel class; "
               + "no tank-code calculation is implemented.");
     case API_660:
     case API_661:
     case ISO_16812:
-      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, registryImplementation,
-          NO_CALCULATION, "No standard-specific heat-exchanger mechanical calculation is connected.");
+      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, registryImplementation, NO_CALCULATION,
+          "No standard-specific heat-exchanger mechanical calculation is connected.");
     case API_521:
     case API_526:
-      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, registryImplementation,
-          NO_CALCULATION,
+      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, registryImplementation, NO_CALCULATION,
           "The mapped valve class does not implement relief-system or relief-valve standard calculations.");
     default:
       return getCategorySupport(standardType, registryImplementation);
@@ -90,14 +88,13 @@ public final class StandardSupportAudit {
           .append(escapeMarkdown(standardType.getDesignStandardCategory())).append(" | ")
           .append(escapeMarkdown(support.getRegistryImplementation())).append(" | ")
           .append(escapeMarkdown(support.getCalculationImplementation())).append(" | ")
-          .append(support.getSupportLevel().name()).append(" | ")
-          .append(escapeMarkdown(support.getLimitation())).append(" |\n");
+          .append(support.getSupportLevel().name()).append(" | ").append(escapeMarkdown(support.getLimitation()))
+          .append(" |\n");
     }
     return table.toString();
   }
 
-  private static StandardSupport getCategorySupport(StandardType standardType,
-      String registryImplementation) {
+  private static StandardSupport getCategorySupport(StandardType standardType, String registryImplementation) {
     String category = standardType.getDesignStandardCategory();
 
     if ("pressure vessel design code".equals(category)) {
@@ -119,20 +116,18 @@ public final class StandardSupportAudit {
       return screening(standardType, registryImplementation,
           "Preliminary compressor-factor screening only; package and vendor requirements are not implemented.");
     }
-    if ("material plate design codes".equals(category)
-        || "material pipe design codes".equals(category)) {
+    if ("material plate design codes".equals(category) || "material pipe design codes".equals(category)) {
       return screening(standardType, registryImplementation,
           "Material-property lookup only; material selection, qualification, and code acceptance are not implemented.");
     }
 
-    return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, registryImplementation,
-        NO_CALCULATION, "No category-specific calculation is connected.");
+    return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, registryImplementation, NO_CALCULATION,
+        "No category-specific calculation is connected.");
   }
 
-  private static StandardSupport screening(StandardType standardType, String implementation,
-      String limitation) {
-    return new StandardSupport(standardType, StandardSupportLevel.SCREENING, implementation,
-        implementation, limitation);
+  private static StandardSupport screening(StandardType standardType, String implementation, String limitation) {
+    return new StandardSupport(standardType, StandardSupportLevel.SCREENING, implementation, implementation,
+        limitation);
   }
 
   private static String escapeMarkdown(String value) {
