@@ -349,8 +349,7 @@ public class FilterMechanicalDesign extends MechanicalDesign {
       volumetricFlowM3s = Math.max(0.0, getGasFlowRateKgHr() / 3600.0 / fluidDensity);
     }
 
-    double designFaceVelocity = maxFaceVelocityUserSpecified ? maxFaceVelocity
-        : type.getDefaultMaximumFaceVelocity();
+    double designFaceVelocity = maxFaceVelocityUserSpecified ? maxFaceVelocity : type.getDefaultMaximumFaceVelocity();
     double designElementArea = elementAreaUserSpecified ? elementArea : type.getDefaultElementArea();
     maxFaceVelocity = designFaceVelocity;
     elementArea = designElementArea;
@@ -392,7 +391,8 @@ public class FilterMechanicalDesign extends MechanicalDesign {
     double designNozzleVelocity = Double.isFinite(maxNozzleVelocity) ? maxNozzleVelocity
         : (fluidDensity < 200.0 ? 20.0 : 3.0);
     requiredNozzleDiameter = volumetricFlowM3s > 0.0
-        ? Math.sqrt(4.0 * volumetricFlowM3s / (Math.PI * designNozzleVelocity)) : 0.0;
+        ? Math.sqrt(4.0 * volumetricFlowM3s / (Math.PI * designNozzleVelocity))
+        : 0.0;
     selectedNozzleDiameterMm = selectNominalNozzleDiameterMm(requiredNozzleDiameter * 1000.0);
     double selectedArea = Math.PI * Math.pow(selectedNozzleDiameterMm / 1000.0, 2.0) / 4.0;
     calculatedNozzleVelocity = selectedArea > 0.0 ? volumetricFlowM3s / selectedArea : 0.0;
@@ -421,7 +421,8 @@ public class FilterMechanicalDesign extends MechanicalDesign {
 
     terminalDifferentialPressureUtilization = filter.getDifferentialPressureUtilization();
     elementCollapsePressureUtilization = filter.getElementCollapsePressure() > 0.0
-        ? filter.getUnrestrictedDeltaP() / filter.getElementCollapsePressure() : Double.POSITIVE_INFINITY;
+        ? filter.getUnrestrictedDeltaP() / filter.getElementCollapsePressure()
+        : Double.POSITIVE_INFINITY;
     setMaxDesignPressureDrop(filter.getTerminalDeltaP());
     populateDesignWarnings(filter, calculatedNozzleVelocity, designNozzleVelocity);
 
@@ -435,8 +436,7 @@ public class FilterMechanicalDesign extends MechanicalDesign {
 
     if (granularMedia) {
       double mediaBulkDensity = type == FilterType.ACTIVATED_CARBON ? 500.0 : 1000.0;
-      elementWeight = Math.PI * innerDiameter * innerDiameter / 4.0 * filter.getMediaBedDepth()
-          * mediaBulkDensity;
+      elementWeight = Math.PI * innerDiameter * innerDiameter / 4.0 * filter.getMediaBedDepth() * mediaBulkDensity;
     } else {
       double weightPerElement = Math.max(2.0, type.getDefaultElementLength() * 10.0);
       elementWeight = requiredElements * weightPerElement;
@@ -461,8 +461,8 @@ public class FilterMechanicalDesign extends MechanicalDesign {
    * @return selected nominal diameter in mm
    */
   private double selectNominalNozzleDiameterMm(double requiredDiameterMm) {
-    double[] nominalDiametersMm = {15.0, 20.0, 25.0, 40.0, 50.0, 65.0, 80.0, 100.0, 150.0, 200.0,
-        250.0, 300.0, 350.0, 400.0, 450.0, 500.0, 600.0, 750.0, 900.0, 1050.0, 1200.0};
+    double[] nominalDiametersMm = { 15.0, 20.0, 25.0, 40.0, 50.0, 65.0, 80.0, 100.0, 150.0, 200.0, 250.0, 300.0, 350.0,
+        400.0, 450.0, 500.0, 600.0, 750.0, 900.0, 1050.0, 1200.0 };
     if (requiredDiameterMm <= 0.0) {
       return 0.0;
     }
@@ -573,8 +573,7 @@ public class FilterMechanicalDesign extends MechanicalDesign {
     bom.add(vessel);
 
     Map<String, Object> elements = new LinkedHashMap<String, Object>();
-    elements.put("item", ((Filter) getProcessEquipment()).getFilterServiceType().getDisplayName()
-        + " Elements/Media");
+    elements.put("item", ((Filter) getProcessEquipment()).getFilterServiceType().getDisplayName() + " Elements/Media");
     elements.put("material", getElementMaterialDescription());
     elements.put("quantity", requiredElements);
     elements.put("weight_kg", elementWeight);

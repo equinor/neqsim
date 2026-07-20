@@ -390,7 +390,8 @@ public class Filter extends TwoPortEquipment {
     if (!Double.isFinite(areaM2) || areaM2 <= 0.0 || !Double.isFinite(bedDepthM) || bedDepthM <= 0.0
         || !Double.isFinite(particleDiameterM) || particleDiameterM <= 0.0 || !Double.isFinite(voidFraction)
         || voidFraction <= 0.0 || voidFraction >= 1.0) {
-      throw new IllegalArgumentException("Media geometry must be finite and positive with void fraction between zero and one");
+      throw new IllegalArgumentException(
+          "Media geometry must be finite and positive with void fraction between zero and one");
     }
     this.mediaArea = areaM2;
     this.mediaBedDepth = bedDepthM;
@@ -884,8 +885,7 @@ public class Filter extends TwoPortEquipment {
   protected void updateHydraulicState(SystemInterface system) {
     initialiseDynamicState();
     calculatedCleanDeltaP = calculateCleanPressureDrop(system);
-    unrestrictedDeltaP = calculatedCleanDeltaP
-        + pressureDropIncreaseAtCapacity * Math.max(0.0, getLoadingFraction());
+    unrestrictedDeltaP = calculatedCleanDeltaP + pressureDropIncreaseAtCapacity * Math.max(0.0, getLoadingFraction());
     bypassFraction = 0.0;
     deltaP = unrestrictedDeltaP;
     if (bypassEnabled && unrestrictedDeltaP > bypassCrackingDeltaP) {
@@ -904,24 +904,24 @@ public class Filter extends TwoPortEquipment {
   private double calculateCleanPressureDrop(SystemInterface system) {
     double actualFlowM3Hr = Math.max(0.0, inStream.getFlowRate("m3/hr"));
     switch (pressureDropModel) {
-      case FLOW_SCALED:
-        if (!Double.isFinite(referenceFlowRateM3Hr) || referenceFlowRateM3Hr <= 0.0) {
-          referenceFlowRateM3Hr = actualFlowM3Hr;
-        }
-        if (referenceFlowRateM3Hr <= 0.0) {
-          return 0.0;
-        }
-        return cleanDeltaP * Math.pow(actualFlowM3Hr / referenceFlowRateM3Hr, flowExponent);
-      case TABULATED:
-        if (pressureDropCurve.size() == 0) {
-          return cleanDeltaP;
-        }
-        return pressureDropCurve.getPressureDrop(actualFlowM3Hr);
-      case ERGUN:
-        return calculateErgunPressureDrop(system, actualFlowM3Hr);
-      case FIXED:
-      default:
+    case FLOW_SCALED:
+      if (!Double.isFinite(referenceFlowRateM3Hr) || referenceFlowRateM3Hr <= 0.0) {
+        referenceFlowRateM3Hr = actualFlowM3Hr;
+      }
+      if (referenceFlowRateM3Hr <= 0.0) {
+        return 0.0;
+      }
+      return cleanDeltaP * Math.pow(actualFlowM3Hr / referenceFlowRateM3Hr, flowExponent);
+    case TABULATED:
+      if (pressureDropCurve.size() == 0) {
         return cleanDeltaP;
+      }
+      return pressureDropCurve.getPressureDrop(actualFlowM3Hr);
+    case ERGUN:
+      return calculateErgunPressureDrop(system, actualFlowM3Hr);
+    case FIXED:
+    default:
+      return cleanDeltaP;
     }
   }
 
@@ -946,8 +946,8 @@ public class Filter extends TwoPortEquipment {
     double voidCube = Math.pow(mediaVoidFraction, 3.0);
     double viscousTerm = 150.0 * viscosity * solidFraction * solidFraction
         / (voidCube * mediaParticleDiameter * mediaParticleDiameter) * superficialVelocity;
-    double inertialTerm = 1.75 * density * solidFraction / (voidCube * mediaParticleDiameter)
-        * superficialVelocity * superficialVelocity;
+    double inertialTerm = 1.75 * density * solidFraction / (voidCube * mediaParticleDiameter) * superficialVelocity
+        * superficialVelocity;
     return Math.max(0.0, mediaBedDepth * (viscousTerm + inertialTerm) / 1.0e5);
   }
 
@@ -1022,12 +1022,10 @@ public class Filter extends TwoPortEquipment {
    */
   private void updateDynamicPressureDrop() {
     initialiseDynamicState();
-    unrestrictedDeltaP = calculatedCleanDeltaP
-        + pressureDropIncreaseAtCapacity * Math.max(0.0, getLoadingFraction());
+    unrestrictedDeltaP = calculatedCleanDeltaP + pressureDropIncreaseAtCapacity * Math.max(0.0, getLoadingFraction());
     deltaP = unrestrictedDeltaP;
     if (bypassEnabled && unrestrictedDeltaP > bypassCrackingDeltaP) {
-      bypassFraction = Math.max(0.0,
-          Math.min(1.0, 1.0 - Math.sqrt(bypassCrackingDeltaP / unrestrictedDeltaP)));
+      bypassFraction = Math.max(0.0, Math.min(1.0, 1.0 - Math.sqrt(bypassCrackingDeltaP / unrestrictedDeltaP)));
       deltaP = bypassCrackingDeltaP;
     } else {
       bypassFraction = 0.0;

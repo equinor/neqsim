@@ -401,8 +401,7 @@ public class SulfurFilter extends Filter {
       setFilterServiceType(FilterType.COALESCER);
     } else if ("bag".equalsIgnoreCase(this.filterType)) {
       setFilterServiceType(FilterType.BAG);
-    } else if ("mesh pad".equalsIgnoreCase(this.filterType)
-        || "basket strainer".equalsIgnoreCase(this.filterType)) {
+    } else if ("mesh pad".equalsIgnoreCase(this.filterType) || "basket strainer".equalsIgnoreCase(this.filterType)) {
       setFilterServiceType(FilterType.BASKET_STRAINER);
     } else {
       setFilterServiceType(FilterType.CARTRIDGE);

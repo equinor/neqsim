@@ -109,8 +109,8 @@ public class FilterTest {
   @Test
   public void testBetaRatioCurveCalculatesParticleCapture() {
     Stream feed = createFeedStream();
-    FilterPerformanceCurve curve = new FilterPerformanceCurve(new double[] {5.0, 10.0, 20.0},
-        new double[] {2.0, 100.0, 1000.0});
+    FilterPerformanceCurve curve = new FilterPerformanceCurve(new double[] { 5.0, 10.0, 20.0 },
+        new double[] { 2.0, 100.0, 1000.0 });
     curve.setTestStandard("ISO 16889:2022");
 
     Filter filter = new Filter("beta rated filter", feed);
@@ -150,8 +150,8 @@ public class FilterTest {
   public void testTabulatedPressureDropCurve() {
     Stream feed = createFeedStream();
     double flow = feed.getFlowRate("m3/hr");
-    FilterPressureDropCurve curve = new FilterPressureDropCurve(new double[] {0.5 * flow, 1.5 * flow},
-        new double[] {0.10, 0.50});
+    FilterPressureDropCurve curve = new FilterPressureDropCurve(new double[] { 0.5 * flow, 1.5 * flow },
+        new double[] { 0.10, 0.50 });
     curve.setTestStandard("ISO 3968:2017");
 
     Filter filter = new Filter("tested cartridge", feed);
@@ -210,8 +210,8 @@ public class FilterTest {
 
     assertEquals(0.5, filter.getDeltaP(), 1.0e-12);
     assertThrows(IllegalArgumentException.class,
-        () -> new FilterPerformanceCurve(new double[] {10.0, 5.0}, new double[] {100.0, 200.0}));
+        () -> new FilterPerformanceCurve(new double[] { 10.0, 5.0 }, new double[] { 100.0, 200.0 }));
     assertThrows(IllegalArgumentException.class,
-        () -> new FilterPressureDropCurve(new double[] {1.0}, new double[] {-0.1}));
+        () -> new FilterPressureDropCurve(new double[] { 1.0 }, new double[] { -0.1 }));
   }
 }

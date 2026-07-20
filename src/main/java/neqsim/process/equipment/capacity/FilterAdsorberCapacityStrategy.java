@@ -119,8 +119,8 @@ public class FilterAdsorberCapacityStrategy implements EquipmentCapacityStrategy
     double terminalDp = filter.getTerminalDeltaP() > 0.0 ? filter.getTerminalDeltaP() : maxDpBar;
     CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop").setDesignValue(terminalDp)
         .setMaxValue(filter.getElementCollapsePressure()).setUnit("bar")
-        .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-        .setWarningThreshold(0.8).setDescription("Filter pressure drop vs maximum allowable")
+        .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setWarningThreshold(0.8)
+        .setDescription("Filter pressure drop vs maximum allowable")
         .setValueSupplier(() -> Math.abs(filter.getUnrestrictedDeltaP()));
     constraints.put("pressureDrop", dpConstraint);
 

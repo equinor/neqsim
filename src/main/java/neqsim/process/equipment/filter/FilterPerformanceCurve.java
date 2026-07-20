@@ -25,7 +25,8 @@ public class FilterPerformanceCurve implements Serializable {
   private String testStandard = "";
 
   /** Empty performance curve. */
-  public FilterPerformanceCurve() {}
+  public FilterPerformanceCurve() {
+  }
 
   /**
    * Creates a performance curve.

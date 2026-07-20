@@ -8,8 +8,8 @@ import java.util.Arrays;
  *
  * <p>
  * This data object supports supplier curves and laboratory measurements such as ISO 3968 differential-pressure versus
- * flow characterization. Values within the range are linearly interpolated. The first segment is extended to zero
- * flow and the last segment is linearly extrapolated above the tested range.
+ * flow characterization. Values within the range are linearly interpolated. The first segment is extended to zero flow
+ * and the last segment is linearly extrapolated above the tested range.
  * </p>
  *
  * @author esol
@@ -24,7 +24,8 @@ public class FilterPressureDropCurve implements Serializable {
   private String testStandard = "";
 
   /** Empty pressure-drop curve. */
-  public FilterPressureDropCurve() {}
+  public FilterPressureDropCurve() {
+  }
 
   /**
    * Creates a pressure-drop curve.
@@ -103,10 +104,8 @@ public class FilterPressureDropCurve implements Serializable {
   }
 
   private double interpolate(double flowRateM3Hr, int lower, int upper) {
-    double fraction = (flowRateM3Hr - flowRatesM3Hr[lower])
-        / (flowRatesM3Hr[upper] - flowRatesM3Hr[lower]);
-    return Math.max(0.0,
-        pressureDropsBar[lower] + fraction * (pressureDropsBar[upper] - pressureDropsBar[lower]));
+    double fraction = (flowRateM3Hr - flowRatesM3Hr[lower]) / (flowRatesM3Hr[upper] - flowRatesM3Hr[lower]);
+    return Math.max(0.0, pressureDropsBar[lower] + fraction * (pressureDropsBar[upper] - pressureDropsBar[lower]));
   }
 
   private void validatePoints(double[] flows, double[] pressureDrops) {
