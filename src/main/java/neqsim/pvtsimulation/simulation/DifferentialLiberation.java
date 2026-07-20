@@ -316,8 +316,11 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     for (int i = 1; i < Bo.length; i++) {
-      // Bo should decrease as pressure decreases (pressures array is typically decreasing)
-      if (pressures[i] < pressures[i - 1] && Bo[i] > Bo[i - 1]) {
+      boolean bothPointsBelowSaturation = pressures[i] <= saturationPressure
+          && pressures[i - 1] <= saturationPressure;
+      // Bo should decrease as pressure decreases below saturation.
+      if (bothPointsBelowSaturation && pressures[i] < pressures[i - 1]
+          && Bo[i] > Bo[i - 1]) {
         return false;
       }
     }
@@ -388,8 +391,11 @@ public class DifferentialLiberation extends BasePVTsimulation {
     }
 
     for (int i = 1; i < oilDensity.length; i++) {
-      // Density should increase as pressure decreases (gas liberates)
-      if (pressures[i] < pressures[i - 1] && oilDensity[i] < oilDensity[i - 1]) {
+      boolean bothPointsBelowSaturation = pressures[i] <= saturationPressure
+          && pressures[i - 1] <= saturationPressure;
+      // Density should increase as pressure decreases below saturation.
+      if (bothPointsBelowSaturation && pressures[i] < pressures[i - 1]
+          && oilDensity[i] < oilDensity[i - 1]) {
         return false;
       }
     }
