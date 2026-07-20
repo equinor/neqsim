@@ -62,12 +62,10 @@ public class FilterDocumentationTest extends neqsim.NeqSimTest {
     int elements = design.getRequiredElements();
     double vesselId = design.getInnerDiameter();
     List<String> warnings = design.getDesignWarnings();
-    int warningCount = warnings.size();
 
     assertTrue(elements > 0);
     assertTrue(vesselId > 0.0);
     assertNotNull(warnings);
-    assertTrue(warningCount >= 0);
     assertTrue(design.getShellThickness() > 0.0);
     assertTrue(design.getSelectedNozzleDiameterMm() > 0.0);
     assertTrue(design.isDifferentialPressureDesignAcceptable());
