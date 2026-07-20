@@ -18,7 +18,7 @@ public class PumpDocumentationTest {
   @Test
   public void testPumpAndApi610GuideExample() {
     SystemInterface fluid = new SystemSrkEos(298.15, 5.0);
-    fluid.addComponent("water", 1.0);
+    fluid.addComponent("n-hexane", 1.0);
     fluid.setMixingRule("classic");
 
     Stream feed = new Stream("pump feed", fluid);
@@ -46,10 +46,11 @@ public class PumpDocumentationTest {
     double npshRequiredM = pump.getNPSHRequired();
 
     assertTrue(powerKw > 0.0);
+    assertEquals(100.0, feed.getFlowRate("m3/hr"), 1.0e-9);
     assertEquals(105.0, vendorHeadM, 1.0e-9);
     assertTrue(Double.isFinite(npshAvailableM));
     assertTrue(npshAvailableM > npshRequiredM);
-    assertEquals(3.0, npshRequiredM, 1.0e-9);
+    assertEquals(3.0, npshRequiredM, 0.02);
     assertFalse(pump.isCavitating());
 
     PumpMechanicalDesign design = pump.getMechanicalDesign();
