@@ -20,8 +20,8 @@ class PhaseAmmoniaEosTest {
     system.init(3);
 
     double density = system.getPhase(0).getDensity();
-    // reference value from the Ammonia2023 reference equation in kg/m3
-    assertEquals(8.306908267489456, density, 8.306908267489456e-6);
+    // Reference value from the Gao et al. (2020) EOS as implemented in CoolProp 8.0.0.
+    assertEquals(7.776761102217432, density, 7.776761102217432e-6);
 
     double cp = system.getPhase(0).getCp();
     assertTrue(cp > 0.0);
