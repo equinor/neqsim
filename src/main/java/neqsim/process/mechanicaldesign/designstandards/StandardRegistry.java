@@ -107,9 +107,9 @@ public final class StandardRegistry {
    * Get the class selected by the category-based standards factory.
    *
    * <p>
-   * A mapping to {@link DesignStandard} means that the registry only creates a metadata holder; it
-   * does not imply that the named standard has an executable calculation. Use
-   * {@link StandardSupportAudit#getSupport(StandardType)} to inspect the implementation evidence.
+   * A mapping to {@link DesignStandard} means that the registry only creates a metadata holder; it does not imply that
+   * the named standard has an executable calculation. Use {@link StandardSupportAudit#getSupport(StandardType)} to
+   * inspect the implementation evidence.
    * </p>
    *
    * @param standardType standard to inspect
