@@ -93,8 +93,7 @@ public class PumpMechanicalDesignTest {
 
     assertEquals(absorbedPower, mechDesign.getAbsorbedPower(), Math.max(1.0e-9, absorbedPower * 1.0e-9));
     assertEquals(absorbedPower * mechDesign.getDriverMargin(),
-        mechDesign.getApi610Assessment().getRequiredDriverPowerKw(),
-        Math.max(1.0e-9, absorbedPower * 1.0e-9));
+        mechDesign.getApi610Assessment().getRequiredDriverPowerKw(), Math.max(1.0e-9, absorbedPower * 1.0e-9));
   }
 
   @Test
@@ -306,8 +305,7 @@ public class PumpMechanicalDesignTest {
     mechDesign.calcDesign();
 
     assertEquals(123.0, mechDesign.getApi610Assessment().getGoverningShutoffHeadM(), 1.0e-12);
-    assertEquals(DataSource.PURCHASER_INPUT,
-        mechDesign.getApi610Assessment().getShutoffHeadSource());
+    assertEquals(DataSource.PURCHASER_INPUT, mechDesign.getApi610Assessment().getShutoffHeadSource());
     assertTrue(mechDesign.getApi610Assessment().getRequiredCasingPressureBara() > 7.0);
   }
 

@@ -73,20 +73,17 @@ class PumpApi610DesignCalculatorTest {
     assertEquals(CheckStatus.NOT_EVALUATED, calculator.getCheck("operating-region").getStatus());
     assertEquals(CheckStatus.NOT_EVALUATED, calculator.getCheck("pressure-casing").getStatus());
     assertEquals(CheckStatus.NOT_EVALUATED, calculator.getCheck("bearing-life").getStatus());
-    assertTrue(calculator.getChecks().stream()
-        .allMatch(check -> check.getStatus() == CheckStatus.NOT_EVALUATED));
+    assertTrue(calculator.getChecks().stream().allMatch(check -> check.getStatus() == CheckStatus.NOT_EVALUATED));
   }
 
   @Test
   void bearingLifeAndDriverSelectionUseEngineeringUnits() {
-    assertEquals(44444.444, PumpApi610DesignCalculator.calculateBearingL10LifeHours(100.0, 5.0,
-        3000.0, BearingType.BALL), 0.01);
-    assertTrue(Double.isNaN(PumpApi610DesignCalculator.calculateBearingL10LifeHours(100.0, 5.0,
-        3000.0, BearingType.SLEEVE)));
-    assertEquals(30.0,
-        PumpApi610DesignCalculator.selectDriverRating(27.5, new double[] { 37.0, 22.0, 30.0 }), 1.0e-12);
-    assertTrue(Double.isNaN(
-        PumpApi610DesignCalculator.selectDriverRating(40.0, new double[] { 22.0, 30.0, 37.0 })));
+    assertEquals(44444.444,
+        PumpApi610DesignCalculator.calculateBearingL10LifeHours(100.0, 5.0, 3000.0, BearingType.BALL), 0.01);
+    assertTrue(
+        Double.isNaN(PumpApi610DesignCalculator.calculateBearingL10LifeHours(100.0, 5.0, 3000.0, BearingType.SLEEVE)));
+    assertEquals(30.0, PumpApi610DesignCalculator.selectDriverRating(27.5, new double[] { 37.0, 22.0, 30.0 }), 1.0e-12);
+    assertTrue(Double.isNaN(PumpApi610DesignCalculator.selectDriverRating(40.0, new double[] { 22.0, 30.0, 37.0 })));
   }
 
   @Test

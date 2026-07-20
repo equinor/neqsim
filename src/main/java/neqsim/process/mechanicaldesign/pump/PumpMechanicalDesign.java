@@ -359,8 +359,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
 
     npshRequired = pump.getNPSHRequired();
     npshAvailable = pump.getNPSHAvailable();
-    if (pump.getPumpChart() != null && pump.getPumpChart().isUsePumpChart()
-        && pump.getPumpChart().hasNPSHCurve()) {
+    if (pump.getPumpChart() != null && pump.getPumpChart().isUsePumpChart() && pump.getPumpChart().hasNPSHCurve()) {
       npshrDataSource = DataSource.VENDOR_CURVE;
     } else if (npshRequired > 0.0) {
       npshrDataSource = DataSource.SCREENING_ESTIMATE;
@@ -480,8 +479,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
       }
     }
     if (!shutoffHeadUserSpecified) {
-      double chartShutoffHead =
-          convertChartHeadToMeters(chart.getHead(0.0, speedRpm), chart.getHeadUnit(), densityKgM3);
+      double chartShutoffHead = convertChartHeadToMeters(chart.getHead(0.0, speedRpm), chart.getHeadUnit(),
+          densityKgM3);
       if (chartShutoffHead > 0.0) {
         shutoffHead = chartShutoffHead;
         shutoffHeadDataSource = DataSource.VENDOR_CURVE;
@@ -517,8 +516,8 @@ public class PumpMechanicalDesign extends MechanicalDesign {
     api610Assessment.setNpshCriteria(npshMarginFactor, minimumNpshMarginM);
     api610Assessment.setDriverCriteria(driverMargin, null);
     api610Assessment.setPressureBasis(
-        Double.isFinite(maximumSuctionPressure) ? maximumSuctionPressure : suctionPressureBara,
-        furnishedCasingMawp, shutoffHead, shutoffHeadDataSource);
+        Double.isFinite(maximumSuctionPressure) ? maximumSuctionPressure : suctionPressureBara, furnishedCasingMawp,
+        shutoffHead, shutoffHeadDataSource);
     api610Assessment.setSeallessPump(sealType == SealType.MAGNETIC_DRIVE || sealType == SealType.CANNED_MOTOR);
     api610Assessment.calculate();
     double selectedDriver = api610Assessment.getSelectedDriverPowerKw();
@@ -1179,8 +1178,7 @@ public class PumpMechanicalDesign extends MechanicalDesign {
   public void setShutoffHead(double headM) {
     this.shutoffHead = headM;
     this.shutoffHeadUserSpecified = Double.isFinite(headM) && headM > 0.0;
-    this.shutoffHeadDataSource =
-        this.shutoffHeadUserSpecified ? DataSource.PURCHASER_INPUT : DataSource.NOT_AVAILABLE;
+    this.shutoffHeadDataSource = this.shutoffHeadUserSpecified ? DataSource.PURCHASER_INPUT : DataSource.NOT_AVAILABLE;
   }
 
   /**

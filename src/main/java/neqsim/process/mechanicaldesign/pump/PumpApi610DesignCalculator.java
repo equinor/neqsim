@@ -9,9 +9,9 @@ import java.util.List;
  * Value-only calculator for API 610 pump design screening.
  *
  * <p>
- * The calculator evaluates process and purchaser data that can be checked without detailed vendor geometry. It does
- * not certify API 610 conformity. Final casing, rotor, bearing, nozzle-load, seal, baseplate and test compliance must
- * be verified against the purchased standard, project specification and vendor documentation.
+ * The calculator evaluates process and purchaser data that can be checked without detailed vendor geometry. It does not
+ * certify API 610 conformity. Final casing, rotor, bearing, nozzle-load, seal, baseplate and test compliance must be
+ * verified against the purchased standard, project specification and vendor documentation.
  * </p>
  *
  * <p>
@@ -224,10 +224,9 @@ public class PumpApi610DesignCalculator implements Serializable {
   private boolean seallessPump;
 
   // Candidate driver ratings and calculated results.
-  private double[] driverCandidateRatingsKw = new double[] { 0.75, 1.1, 1.5, 2.2, 3.0, 4.0, 5.5, 7.5, 11.0, 15.0,
-      18.5, 22.0, 30.0, 37.0, 45.0, 55.0, 75.0, 90.0, 110.0, 132.0, 160.0, 200.0, 250.0, 315.0, 400.0,
-      500.0, 630.0, 800.0, 1000.0, 1250.0, 1600.0, 2000.0, 2500.0, 3150.0, 4000.0, 5000.0, 6300.0,
-      8000.0, 10000.0 };
+  private double[] driverCandidateRatingsKw = new double[] { 0.75, 1.1, 1.5, 2.2, 3.0, 4.0, 5.5, 7.5, 11.0, 15.0, 18.5,
+      22.0, 30.0, 37.0, 45.0, 55.0, 75.0, 90.0, 110.0, 132.0, 160.0, 200.0, 250.0, 315.0, 400.0, 500.0, 630.0, 800.0,
+      1000.0, 1250.0, 1600.0, 2000.0, 2500.0, 3150.0, 4000.0, 5000.0, 6300.0, 8000.0, 10000.0 };
   private double operatingFlowRatio = Double.NaN;
   private String operatingRegion = "NOT_EVALUATED";
   private double npshMarginM = Double.NaN;
@@ -303,8 +302,8 @@ public class PumpApi610DesignCalculator implements Serializable {
     boolean ratioPass = npshMarginRatio >= npshMarginFactor;
     boolean headPass = npshMarginM >= minimumNpshMarginM;
     CheckStatus status = ratioPass && headPass ? CheckStatus.PASS : CheckStatus.FAIL;
-    addCheck("npsh-margin", "NPSHa shall exceed NPSHr by configured head and ratio margins", status,
-        npshMarginM, minimumNpshMarginM, "m",
+    addCheck("npsh-margin", "NPSHa shall exceed NPSHr by configured head and ratio margins", status, npshMarginM,
+        minimumNpshMarginM, "m",
         "NPSH margin ratio=" + format(npshMarginRatio) + ", required ratio=" + format(npshMarginFactor));
   }
 
@@ -629,8 +628,7 @@ public class PumpApi610DesignCalculator implements Serializable {
     this.shutoffHeadSource = shutoffHeadSource;
   }
 
-  public void setDutyPoint(double flowM3h, double headM, double speedRpm, double densityKgM3,
-      double absorbedPowerKw) {
+  public void setDutyPoint(double flowM3h, double headM, double speedRpm, double densityKgM3, double absorbedPowerKw) {
     this.operatingFlowM3h = flowM3h;
     this.ratedHeadM = headM;
     this.ratedSpeedRpm = speedRpm;
