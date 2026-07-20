@@ -484,8 +484,8 @@ separator.getMechanicalDesign().loadProcessDesignParameters();  // Loads from Te
 |-----------|--------|------|---------------|-------------|
 | NPSH margin factor | `getNpshMarginFactor()` | - | 1.1-1.3 | NPSHa / NPSHr requirement |
 | Hydraulic power margin | `getHydraulicPowerMargin()` | - | 1.05-1.15 | Driver sizing margin |
-| POR low fraction | `getPorLowFraction()` | - | 0.70-0.80 | Preferred Operating Region low limit (of BEP) |
-| POR high fraction | `getPorHighFraction()` | - | 1.10-1.15 | Preferred Operating Region high limit (of BEP) |
+| POR low fraction | `getPorLowFraction()` | - | 0.70 | Preferred Operating Region low limit (of BEP) |
+| POR high fraction | `getPorHighFraction()` | - | 1.20 | Preferred Operating Region high limit (of BEP) |
 | AOR low fraction | `getAorLowFraction()` | - | 0.60-0.70 | Allowable Operating Region low limit |
 | AOR high fraction | `getAorHighFraction()` | - | 1.20-1.30 | Allowable Operating Region high limit |
 | Maximum suction specific speed | `getMaxSuctionSpecificSpeed()` | - | 8000-13000 | Nss limit for stable operation |
@@ -696,6 +696,10 @@ Design calculations include:
 ```java
 PumpMechanicalDesign pumpDesign =
     (PumpMechanicalDesign) pump.getMechanicalDesign();
+pumpDesign.setApi610PumpType(PumpApi610DesignCalculator.Api610PumpType.OH2);
+pumpDesign.setMaximumSuctionPressure(8.0); // bara, purchaser maximum
+pumpDesign.setFurnishedCasingMawp(25.0);  // bara, vendor value
+pumpDesign.calcDesign();
 
 // Key parameters
 double specificSpeed = pumpDesign.getSpecificSpeed();
@@ -711,16 +715,27 @@ double aorLow = pumpDesign.getAorLowFraction();   // Allowable Operating Region
 double aorHigh = pumpDesign.getAorHighFraction();
 double maxNss = pumpDesign.getMaxSuctionSpecificSpeed();
 double headMargin = pumpDesign.getHeadMarginFactor();
+
+// Structured API 610 screening result
+PumpApi610DesignCalculator api610 = pumpDesign.getApi610Assessment();
+PumpApi610DesignCalculator.AssessmentStatus status = api610.getAssessmentStatus();
+List<PumpApi610DesignCalculator.Check> checks = api610.getChecks();
 ```
 
 Design calculations include:
-- Pump type selection (OH, BB, VS) based on application
+- Exact API 610 construction type (OH1-OH6, BB1-BB5 or VS1-VS7), supplied by the purchaser or preliminarily recommended
 - Impeller sizing from affinity laws
-- NPSH margin verification against requirements
-- Driver margin per API 610 (10-25%)
-- Seal type selection
-- Operating region validation (POR/AOR vs BEP)
-- Suction specific speed verification
+- Speed-aware vendor BEP, shutoff-head and NPSHr ingestion
+- Rated-point, POR and AOR screening relative to vendor BEP
+- NPSH head and ratio margin verification
+- Maximum-discharge-pressure, furnished MAWP and preliminary hydrotest-pressure screening
+- Driver selection without double-counting pump efficiency
+- ISO 281 rolling-element bearing life when vendor bearing load data are supplied
+- Vendor-evidence checks for shaft deflection, critical speed, nozzle loads and vibration
+
+The result is an API 610 13th-edition engineering screen, not a certificate of conformity. Checks that require vendor
+geometry, loads, analysis or test data return `NOT_EVALUATED` until those data are provided. Project criteria and the
+purchased standard remain governing.
 
 ### Valves (IEC 60534)
 

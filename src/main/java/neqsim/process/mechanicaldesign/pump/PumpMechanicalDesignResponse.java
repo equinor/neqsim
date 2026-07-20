@@ -1,5 +1,6 @@
 package neqsim.process.mechanicaldesign.pump;
 
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 
 /**
@@ -81,6 +82,15 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
   /** NPSH margin [m]. */
   private double npshMargin;
 
+  /** NPSH margin ratio [NPSHa/NPSHr]. */
+  private double npshMarginRatio;
+
+  /** Absorbed pump shaft power [kW]. */
+  private double absorbedPower;
+
+  /** Hydraulic liquid power [kW]. */
+  private double hydraulicPower;
+
   /** Casing wall thickness [mm]. */
   private double casingWallThickness;
 
@@ -139,6 +149,9 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
   /** Head margin factor. */
   private double headMarginFactor;
 
+  /** Structured API 610 screening result with pass/fail/data-gap checks. */
+  private PumpApi610DesignCalculator api610Screening;
+
   // ============================================================================
   // Constructors
   // ============================================================================
@@ -148,7 +161,7 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
    */
   public PumpMechanicalDesignResponse() {
     setEquipmentType("Pump");
-    setDesignStandard("API 610");
+    setDesignStandard("API 610, 13th edition screening");
   }
 
   /**
@@ -159,7 +172,7 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
   public PumpMechanicalDesignResponse(PumpMechanicalDesign mecDesign) {
     super(mecDesign);
     setEquipmentType("Pump");
-    setDesignStandard("API 610");
+    setDesignStandard("API 610, 13th edition screening");
     populateFromPumpDesign(mecDesign);
   }
 
@@ -173,21 +186,36 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
       return;
     }
 
-    // Use only methods that exist in PumpMechanicalDesign
     this.numberOfStages = mecDesign.getNumberOfStages();
     this.impellerDiameter = mecDesign.getImpellerDiameter();
+    this.impellerWidth = mecDesign.getImpellerWidth();
     this.shaftDiameter = mecDesign.getShaftDiameter();
     this.ratedSpeed = mecDesign.getRatedSpeed();
     this.specificSpeed = mecDesign.getSpecificSpeed();
     this.suctionSpecificSpeed = mecDesign.getSuctionSpecificSpeed();
     this.driverPower = mecDesign.getDriverPower();
+    this.driverMargin = mecDesign.getDriverMargin();
+    this.ratedFlow = mecDesign.getRatedFlow();
+    this.ratedHead = mecDesign.getRatedHead();
+    this.bepFlow = mecDesign.getBepFlow();
+    this.bepHead = mecDesign.getBepHead();
+    this.efficiency = mecDesign.getPumpEfficiency();
     this.npshr = mecDesign.getNpshRequired();
+    this.npsha = mecDesign.getNpshAvailable();
+    this.npshMargin = mecDesign.getNpshMargin();
+    this.npshMarginRatio = mecDesign.getNpshMarginRatio();
+    this.absorbedPower = mecDesign.getAbsorbedPower();
+    this.hydraulicPower = mecDesign.getHydraulicPower();
+    this.casingWallThickness = mecDesign.getCasingWallThickness();
     this.suctionNozzleSize = mecDesign.getSuctionNozzleSize();
     this.dischargeNozzleSize = mecDesign.getDischargeNozzleSize();
     this.minimumContinuousFlow = mecDesign.getMinimumFlow();
 
     if (mecDesign.getPumpType() != null) {
       this.pumpType = mecDesign.getPumpType().name();
+    }
+    if (mecDesign.getApi610PumpType() != null) {
+      this.api610TypeCode = mecDesign.getApi610PumpType().name();
     }
     if (mecDesign.getSealType() != null) {
       this.sealType = mecDesign.getSealType().name();
@@ -202,6 +230,23 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
     this.aorHighFraction = mecDesign.getAorHighFraction();
     this.maxSuctionSpecificSpeed = mecDesign.getMaxSuctionSpecificSpeed();
     this.headMarginFactor = mecDesign.getHeadMarginFactor();
+    this.api610Screening = mecDesign.getApi610Assessment();
+
+    if (mecDesign.getProcessEquipment() instanceof Pump) {
+      Pump pump = (Pump) mecDesign.getProcessEquipment();
+      if (pump.getInletStream() != null && pump.getOutletStream() != null) {
+        this.suctionPressure = pump.getInletStream().getPressure("bara");
+        this.dischargePressure = pump.getOutletStream().getPressure("bara");
+        this.differentialPressure = dischargePressure - suctionPressure;
+        this.fluidTemperature = pump.getInletStream().getTemperature("C");
+        this.fluidDensity = pump.getInletStream().getThermoSystem().getDensity("kg/m3");
+        try {
+          this.fluidViscosity = pump.getInletStream().getThermoSystem().getViscosity("cP");
+        } catch (Exception ex) {
+          this.fluidViscosity = Double.NaN;
+        }
+      }
+    }
   }
 
   // ============================================================================
@@ -368,6 +413,30 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
     this.npshMargin = npshMargin;
   }
 
+  public double getNpshMarginRatio() {
+    return npshMarginRatio;
+  }
+
+  public void setNpshMarginRatio(double npshMarginRatio) {
+    this.npshMarginRatio = npshMarginRatio;
+  }
+
+  public double getAbsorbedPower() {
+    return absorbedPower;
+  }
+
+  public void setAbsorbedPower(double absorbedPower) {
+    this.absorbedPower = absorbedPower;
+  }
+
+  public double getHydraulicPower() {
+    return hydraulicPower;
+  }
+
+  public void setHydraulicPower(double hydraulicPower) {
+    this.hydraulicPower = hydraulicPower;
+  }
+
   public double getCasingWallThickness() {
     return casingWallThickness;
   }
@@ -514,5 +583,13 @@ public class PumpMechanicalDesignResponse extends MechanicalDesignResponse {
 
   public void setHeadMarginFactor(double headMarginFactor) {
     this.headMarginFactor = headMarginFactor;
+  }
+
+  public PumpApi610DesignCalculator getApi610Screening() {
+    return api610Screening;
+  }
+
+  public void setApi610Screening(PumpApi610DesignCalculator api610Screening) {
+    this.api610Screening = api610Screening;
   }
 }
