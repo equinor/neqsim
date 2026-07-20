@@ -43,6 +43,27 @@ public class FieldLifecycleSimulator {
   private static final double DAYS_PER_YEAR = 365.25;
   private static final double SECONDS_PER_DAY = 86400.0;
   private static final double BBL_PER_SM3 = 6.28981077;
+  private final Runnable facilityOperationGuard;
+
+  /**
+   * Creates a lifecycle simulator with no additional facility operating guard.
+   */
+  public FieldLifecycleSimulator() {
+    this(() -> {
+    });
+  }
+
+  /**
+   * Creates a lifecycle simulator with a guard invoked before each detailed facility solve.
+   *
+   * @param facilityOperationGuard guard that can reject an unavailable facility operating state
+   */
+  FieldLifecycleSimulator(Runnable facilityOperationGuard) {
+    if (facilityOperationGuard == null) {
+      throw new IllegalArgumentException("facilityOperationGuard cannot be null");
+    }
+    this.facilityOperationGuard = facilityOperationGuard;
+  }
 
   /** Runs an executable field concept over its configured lifetime. */
   public FieldLifecycleResult run(FieldLifecycleConcept concept) {
@@ -394,6 +415,7 @@ public class FieldLifecycleSimulator {
 
     for (int attempt = 0; attempt < 10; attempt++) {
       try {
+        facilityOperationGuard.run();
         setReservoirProductionRates(model, config, satellite.getOilSm3PerDay(), satellite.getWaterSm3PerDay());
         setHostProductionRates(model, host);
         configureGasAllocation(model, config, fieldAgeYears);
