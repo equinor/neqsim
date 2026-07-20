@@ -49,14 +49,10 @@ class StandardSupportAuditTest {
   void testFactoryMappingCanBeInspectedWithoutCreatingStandard() {
     assertEquals(PressureVesselDesignStandard.class,
         StandardRegistry.getMappedImplementationClass(StandardType.ASME_VIII_DIV1));
-    assertEquals(SeparatorDesignStandard.class,
-        StandardRegistry.getMappedImplementationClass(StandardType.API_12J));
-    assertEquals(DesignStandard.class,
-        StandardRegistry.getMappedImplementationClass(StandardType.API_610));
-    assertEquals(DesignStandard.class,
-        StandardRegistry.getMappedImplementationClass(StandardType.API_660));
-    assertThrows(IllegalArgumentException.class,
-        () -> StandardRegistry.getMappedImplementationClass(null));
+    assertEquals(SeparatorDesignStandard.class, StandardRegistry.getMappedImplementationClass(StandardType.API_12J));
+    assertEquals(DesignStandard.class, StandardRegistry.getMappedImplementationClass(StandardType.API_610));
+    assertEquals(DesignStandard.class, StandardRegistry.getMappedImplementationClass(StandardType.API_660));
+    assertThrows(IllegalArgumentException.class, () -> StandardRegistry.getMappedImplementationClass(null));
   }
 
   @Test
