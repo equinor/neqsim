@@ -355,13 +355,14 @@ public class LNGProcessBuilder {
 
     CompressionTrain mrTrain = addTwoStageCompression(context, name + " MR", mrSuction, 30.0, compressorEfficiency);
 
+    double mrOutletTemperatureC = targetLiquefactionTemperatureC - 5.0;
     LNGHeatExchanger mche = createExchanger(name + " main cryogenic exchanger");
     mche.addInStreamMSHE(context.feed, "hot", targetLiquefactionTemperatureC);
-    mche.addInStreamMSHE(mrTrain.outlet, "hot", -150.0);
+    mche.addInStreamMSHE(mrTrain.outlet, "hot", mrOutletTemperatureC);
 
     ThrottlingValve mrValve = new ThrottlingValve(name + " MR JT valve", mche.getOutStream(1));
     mrValve.setOutletPressure(3.0, "bara");
-    initializeExpansionInlet(mche.getOutStream(1), -150.0, 30.0);
+    initializeExpansionInlet(mche.getOutStream(1), mrOutletTemperatureC, 30.0);
     mrValve.run();
     mche.addInStreamMSHE(mrValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
@@ -405,13 +406,14 @@ public class LNGProcessBuilder {
     context.process.add(precooler);
     addRecycle(context, name + " propane recycle", precooler.getOutStream(2), propaneSuction);
 
+    double mrOutletTemperatureC = targetLiquefactionTemperatureC - 5.0;
     LNGHeatExchanger mche = createExchanger(name + " main cryogenic exchanger");
     mche.addInStreamMSHE(precooler.getOutStream(0), "hot", targetLiquefactionTemperatureC);
-    mche.addInStreamMSHE(precooler.getOutStream(1), "hot", -150.0);
+    mche.addInStreamMSHE(precooler.getOutStream(1), "hot", mrOutletTemperatureC);
 
     ThrottlingValve mrValve = new ThrottlingValve(name + " MR JT valve", mche.getOutStream(1));
     mrValve.setOutletPressure(4.0, "bara");
-    initializeExpansionInlet(mche.getOutStream(1), -150.0, 45.0);
+    initializeExpansionInlet(mche.getOutStream(1), mrOutletTemperatureC, 45.0);
     mrValve.run();
     mche.addInStreamMSHE(mrValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
@@ -457,13 +459,14 @@ public class LNGProcessBuilder {
     context.process.add(precooler);
     addRecycle(context, name + " warm MR recycle", precooler.getOutStream(2), warmMrSuction);
 
+    double coldMrOutletTemperatureC = targetLiquefactionTemperatureC - 5.0;
     LNGHeatExchanger mche = createExchanger(name + " main cryogenic exchanger");
     mche.addInStreamMSHE(precooler.getOutStream(0), "hot", targetLiquefactionTemperatureC);
-    mche.addInStreamMSHE(precooler.getOutStream(1), "hot", -150.0);
+    mche.addInStreamMSHE(precooler.getOutStream(1), "hot", coldMrOutletTemperatureC);
 
     ThrottlingValve coldValve = new ThrottlingValve(name + " cold MR JT valve", mche.getOutStream(1));
     coldValve.setOutletPressure(3.0, "bara");
-    initializeExpansionInlet(mche.getOutStream(1), -150.0, 38.0);
+    initializeExpansionInlet(mche.getOutStream(1), coldMrOutletTemperatureC, 38.0);
     coldValve.run();
     mche.addInStreamMSHE(coldValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
