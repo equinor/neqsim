@@ -41,12 +41,13 @@ public class PumpDocumentationTest {
     pump.run();
 
     double powerKw = pump.getPower("kW");
-    double headM = pump.getHead("m");
+    double vendorHeadM =
+        pump.getPumpChart().getHead(feed.getFlowRate("m3/hr"), pump.getSpeed());
     double npshAvailableM = pump.getNPSHAvailable();
     double npshRequiredM = pump.getNPSHRequired();
 
     assertTrue(powerKw > 0.0);
-    assertTrue(headM > 0.0);
+    assertEquals(105.0, vendorHeadM, 1.0e-9);
     assertTrue(Double.isFinite(npshAvailableM));
     assertTrue(npshAvailableM > npshRequiredM);
     assertEquals(3.0, npshRequiredM, 1.0e-9);
