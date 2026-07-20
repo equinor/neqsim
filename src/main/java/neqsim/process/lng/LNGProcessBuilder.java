@@ -364,6 +364,7 @@ public class LNGProcessBuilder {
     mrValve.setOutletPressure(3.0, "bara");
     initializeExpansionInlet(mche.getOutStream(1), mrOutletTemperatureC, 30.0);
     mrValve.run();
+    initializeColdSideWarmStart(mrValve.getOutletStream(), mrOutletTemperatureC, mrValve.getOutletPressure());
     mche.addInStreamMSHE(mrValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
 
@@ -415,6 +416,7 @@ public class LNGProcessBuilder {
     mrValve.setOutletPressure(4.0, "bara");
     initializeExpansionInlet(mche.getOutStream(1), mrOutletTemperatureC, 45.0);
     mrValve.run();
+    initializeColdSideWarmStart(mrValve.getOutletStream(), mrOutletTemperatureC, mrValve.getOutletPressure());
     mche.addInStreamMSHE(mrValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
     context.process.add(mche);
@@ -468,6 +470,8 @@ public class LNGProcessBuilder {
     coldValve.setOutletPressure(3.0, "bara");
     initializeExpansionInlet(mche.getOutStream(1), coldMrOutletTemperatureC, 38.0);
     coldValve.run();
+    initializeColdSideWarmStart(coldValve.getOutletStream(), coldMrOutletTemperatureC,
+        coldValve.getOutletPressure());
     mche.addInStreamMSHE(coldValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
     context.process.add(mche);
@@ -677,6 +681,26 @@ public class LNGProcessBuilder {
     highPressureStream.setTemperature(temperatureC, "C");
     highPressureStream.setPressure(pressureBara, "bara");
     highPressureStream.run();
+  }
+
+  /**
+   * Seeds a recycle cold-side inlet below the coldest specified hot-stream outlet.
+   *
+   * <p>
+   * The expansion device first establishes an isenthalpic outlet. For the initial exchanger iteration only, the recycle
+   * tear stream may still need a colder temperature guess to provide a feasible heat-flow direction. Subsequent process
+   * iterations overwrite this seed with the expansion-device result.
+   * </p>
+   *
+   * @param coldSideStream expansion-device outlet used as the exchanger cold-side inlet
+   * @param coldestHotOutletTemperatureC coldest specified hot-stream outlet temperature in Celsius
+   * @param pressureBara cold-side pressure in bara
+   */
+  private void initializeColdSideWarmStart(StreamInterface coldSideStream, double coldestHotOutletTemperatureC,
+      double pressureBara) {
+    double seedTemperatureC =
+        Math.min(coldSideStream.getTemperature("C"), coldestHotOutletTemperatureC - 5.0);
+    initializeExpansionInlet(coldSideStream, seedTemperatureC, pressureBara);
   }
 
   /**
