@@ -507,6 +507,15 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
    */
   @Override
   public double getBestEfficiencyFlowRate() {
+    return getBestEfficiencyFlowRate(referenceSpeed);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getBestEfficiencyFlowRate(double speed) {
+    if (speed <= 0.0 || reducedEfficiencyFunc == null) {
+      return 0.0;
+    }
     // Find maximum efficiency by searching through reduced flow range
     double bestFlow = 0.0;
     double bestEff = 0.0;
@@ -516,7 +525,7 @@ public class PumpChart implements PumpChartInterface, java.io.Serializable {
       double eff = reducedEfficiencyFunc.value(rFlow);
       if (eff > bestEff) {
         bestEff = eff;
-        bestFlow = rFlow * referenceSpeed;
+        bestFlow = rFlow * speed;
       }
     }
     return bestFlow;

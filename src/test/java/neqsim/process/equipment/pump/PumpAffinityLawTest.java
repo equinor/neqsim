@@ -153,6 +153,15 @@ public class PumpAffinityLawTest extends neqsim.NeqSimTest {
   }
 
   @Test
+  void testBestEfficiencyPointScalesWithRequestedSpeed() {
+    double bepAtReferenceSpeed = pump.getPumpChart().getBestEfficiencyFlowRate(1000.0);
+    double bepAtHigherSpeed = pump.getPumpChart().getBestEfficiencyFlowRate(1500.0);
+
+    Assertions.assertEquals(1.5, bepAtHigherSpeed / bepAtReferenceSpeed, 0.01,
+        "BEP flow should scale linearly with speed");
+  }
+
+  @Test
   void testSpecificSpeed() {
     // Calculate specific speed (should be consistent with centrifugal pump)
     double ns = pump.getPumpChart().getSpecificSpeed();

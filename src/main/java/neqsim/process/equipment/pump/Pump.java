@@ -1189,11 +1189,9 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
       try {
         thermoOps.bubblePointPressureFlash(false);
       } catch (Exception e) {
-        // If bubble point flash fails, fluid might be in supercritical state or single
-        // phase
-        // Use a conservative estimate or return high value
-        logger.warn("Could not calculate vapor pressure for NPSH calculation: " + e.getMessage());
-        return 1000.0; // Return large value to indicate no cavitation risk
+        // Missing vapour-pressure evidence must not be interpreted as a safe NPSH margin.
+        logger.warn("Could not calculate vapor pressure for NPSH calculation: {}", e.getMessage());
+        return Double.NaN;
       }
       double pressureVapor = tempSystem.getPressure("Pa");
 
@@ -1210,8 +1208,8 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
 
       return npsha;
     } catch (Exception e) {
-      logger.error("Error calculating NPSH available: " + e.getMessage());
-      return 0.0;
+      logger.error("Error calculating NPSH available: {}", e.getMessage());
+      return Double.NaN;
     }
   }
 
@@ -1268,6 +1266,10 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
     }
     double npsha = getNPSHAvailable();
     double npshr = getNPSHRequired();
+    if (!Double.isFinite(npsha) || !Double.isFinite(npshr) || npshr <= 0.0) {
+      logger.warn("Pump {} NPSH status is unknown because NPSHa or NPSHr is unavailable", getName());
+      return true;
+    }
     boolean cavitating = npsha < (npshMargin * npshr);
     if (cavitating) {
       logger.warn("Pump " + getName() + " cavitation risk: NPSHa=" + String.format("%.2f", npsha) + " m < "

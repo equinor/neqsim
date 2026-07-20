@@ -13,6 +13,7 @@ Documentation for liquid pumping equipment in NeqSim.
 - [Pump Performance](#pump-performance)
 - [Head and Efficiency Curves](#head-and-efficiency-curves)
 - [NPSH Calculations](#npsh-calculations)
+- [API 610 Mechanical Design Screening](#api-610-mechanical-design-screening)
 - [Examples](#examples)
 
 ---
@@ -177,6 +178,45 @@ if (margin < 1.0) {
 ### NPSH Available Calculation
 
 $$NPSH_A = \frac{P_{suction}}{\rho g} + \frac{v^2}{2g} - \frac{P_{vapor}}{\rho g}$$
+
+---
+
+## API 610 Mechanical Design Screening
+
+`PumpMechanicalDesign` combines the simulated duty point with purchaser and vendor data to produce an auditable
+API 610 13th-edition screening result. It distinguishes a calculated pass or failure from missing evidence using
+`PASS`, `WARNING`, `FAIL`, and `NOT_EVALUATED` check statuses.
+
+```java
+import neqsim.process.mechanicaldesign.pump.PumpApi610DesignCalculator;
+import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
+
+PumpMechanicalDesign design = pump.getMechanicalDesign();
+design.setApi610PumpType(PumpApi610DesignCalculator.Api610PumpType.OH2);
+design.setMaximumSuctionPressure(8.0); // bara
+design.setFurnishedCasingMawp(25.0);  // bara
+design.calcDesign();
+
+PumpApi610DesignCalculator assessment = design.getApi610Assessment();
+PumpApi610DesignCalculator.AssessmentStatus status = assessment.getAssessmentStatus();
+String json = design.getResponse().toJson();
+```
+
+The screen calculates or checks:
+
+- Rated flow against vendor BEP, rated-point region, POR, and AOR
+- NPSHa/NPSHr head and ratio margins
+- Maximum suction pressure plus shutoff head, furnished casing MAWP, and preliminary hydrotest pressure
+- Absorbed shaft power, driver margin, and the next configured driver rating
+- Head rise to shutoff when a vendor curve or purchaser value is available
+- ISO 281 bearing L10 life from vendor `C` and `P` loads
+- Optional shaft-deflection, critical-speed, nozzle-load, and vibration evidence
+- Exact OH1-OH6, BB1-BB5, or VS1-VS7 construction type and sealless-pump scope warning
+
+Use `assessment.setBearingData(...)` and `assessment.setMechanicalEvidence(...)` before the next
+`design.calcDesign()` call to add vendor mechanical evidence. Unavailable values remain `NOT_EVALUATED`; NeqSim does
+not infer detailed casing, rotor, nozzle, seal, baseplate, material, inspection, or test compliance. Final verification
+must use the purchased edition, project specification, and vendor documentation.
 
 ---
 
