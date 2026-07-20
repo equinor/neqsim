@@ -470,8 +470,7 @@ public class LNGProcessBuilder {
     coldValve.setOutletPressure(3.0, "bara");
     initializeExpansionInlet(mche.getOutStream(1), coldMrOutletTemperatureC, 38.0);
     coldValve.run();
-    initializeColdSideWarmStart(coldValve.getOutletStream(), coldMrOutletTemperatureC,
-        coldValve.getOutletPressure());
+    initializeColdSideWarmStart(coldValve.getOutletStream(), coldMrOutletTemperatureC, coldValve.getOutletPressure());
     mche.addInStreamMSHE(coldValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
     context.process.add(mche);
@@ -698,8 +697,7 @@ public class LNGProcessBuilder {
    */
   private void initializeColdSideWarmStart(StreamInterface coldSideStream, double coldestHotOutletTemperatureC,
       double pressureBara) {
-    double seedTemperatureC =
-        Math.min(coldSideStream.getTemperature("C"), coldestHotOutletTemperatureC - 5.0);
+    double seedTemperatureC = Math.min(coldSideStream.getTemperature("C"), coldestHotOutletTemperatureC - 5.0);
     initializeExpansionInlet(coldSideStream, seedTemperatureC, pressureBara);
   }
 
