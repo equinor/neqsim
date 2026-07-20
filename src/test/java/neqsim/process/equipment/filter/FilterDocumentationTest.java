@@ -27,8 +27,8 @@ public class FilterDocumentationTest extends neqsim.NeqSimTest {
     feed.setFlowRate(1000.0, "kg/hr");
     feed.run();
 
-    FilterPerformanceCurve curve = new FilterPerformanceCurve(
-        new double[] {5.0, 10.0, 20.0}, new double[] {2.0, 100.0, 1000.0});
+    FilterPerformanceCurve curve = new FilterPerformanceCurve(new double[] { 5.0, 10.0, 20.0 },
+        new double[] { 2.0, 100.0, 1000.0 });
     curve.setTestStandard("ISO 16889:2022");
 
     Filter filter = new Filter("inlet cartridge filter", feed);
@@ -53,8 +53,7 @@ public class FilterDocumentationTest extends neqsim.NeqSimTest {
     assertEquals(1.0, outletConcentration, 1.0e-12);
     assertEquals(0.099, capturedRate, 1.0e-12);
 
-    FilterMechanicalDesign design =
-        (FilterMechanicalDesign) filter.getMechanicalDesign();
+    FilterMechanicalDesign design = (FilterMechanicalDesign) filter.getMechanicalDesign();
     design.setMaxOperationPressure(70.0);
     design.setMaxOperationTemperature(333.15);
     design.calcDesign();
