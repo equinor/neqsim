@@ -83,6 +83,11 @@ public final class NorwegianOilFieldCase {
 
   static FieldLifecycleConcept createCase(String name, double recycleFraction, double maximumInjectionRateSm3d,
       double projectYears) {
+    return createCase(name, recycleFraction, maximumInjectionRateSm3d, projectYears, 600.0);
+  }
+
+  static FieldLifecycleConcept createCase(String name, double recycleFraction, double maximumInjectionRateSm3d,
+      double projectYears, double economicLimitOilRateSm3d) {
     FieldConcept fieldConcept = createScreeningConcept(name);
     boolean includeGasInjectionTrain = recycleFraction > 0.0 && maximumInjectionRateSm3d > 0.0;
     FieldLifecycleModel model = createModel(name, 12.0, false, includeGasInjectionTrain);
@@ -98,7 +103,8 @@ public final class NorwegianOilFieldCase {
     FieldLifecycleConfiguration configuration = FieldLifecycleConfiguration.builder().startYear(firstOilYear)
         .projectYears(projectYears).timeStepDays(365.25).availability(0.92).producers(PRODUCERS, 55.0)
         .minimumBottomHolePressure(250.0).plateauOilRate(23000.0).facilityCapacities(42000.0, 5.5e6, 28000.0)
-        .economicLimitOilRate(600.0).waterCut(0.04, 0.78, 3.0, 15.0).standardDensities(835.0, 1025.0)
+        .economicLimitOilRate(economicLimitOilRateSm3d).waterCut(0.04, 0.78, 3.0, 15.0)
+        .standardDensities(835.0, 1025.0)
         .gasInjection(0.0, recycleFraction, gasInjectionCapacity).gridEmissionFactor(0.018).prices(75.0, 0.28)
         .discountRate(0.08).opex(135.0, 8.5).tariffs(2.0, 0.015).capex(firstOilYear - 3, totalCapexMusd * 0.20)
         .capex(firstOilYear - 2, totalCapexMusd * 0.50).capex(firstOilYear - 1, totalCapexMusd * 0.30)
