@@ -355,14 +355,17 @@ public class LNGProcessBuilder {
 
     CompressionTrain mrTrain = addTwoStageCompression(context, name + " MR", mrSuction, 30.0, compressorEfficiency);
 
+    double mrExpansionInletSeedTemperatureC = targetLiquefactionTemperatureC - 5.0;
     LNGHeatExchanger mche = createExchanger(name + " main cryogenic exchanger");
     mche.addInStreamMSHE(context.feed, "hot", targetLiquefactionTemperatureC);
-    mche.addInStreamMSHE(mrTrain.outlet, "hot", -150.0);
+    mche.addInStreamMSHE(mrTrain.outlet, "hot", null);
 
     ThrottlingValve mrValve = new ThrottlingValve(name + " MR JT valve", mche.getOutStream(1));
     mrValve.setOutletPressure(3.0, "bara");
-    initializeExpansionInlet(mche.getOutStream(1), -150.0, 30.0);
+    initializeExpansionInlet(mche.getOutStream(1), mrExpansionInletSeedTemperatureC, 30.0);
     mrValve.run();
+    initializeColdSideWarmStart(mrValve.getOutletStream(), mrExpansionInletSeedTemperatureC,
+        mrValve.getOutletPressure());
     mche.addInStreamMSHE(mrValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
 
@@ -405,14 +408,17 @@ public class LNGProcessBuilder {
     context.process.add(precooler);
     addRecycle(context, name + " propane recycle", precooler.getOutStream(2), propaneSuction);
 
+    double mrExpansionInletSeedTemperatureC = targetLiquefactionTemperatureC - 5.0;
     LNGHeatExchanger mche = createExchanger(name + " main cryogenic exchanger");
     mche.addInStreamMSHE(precooler.getOutStream(0), "hot", targetLiquefactionTemperatureC);
-    mche.addInStreamMSHE(precooler.getOutStream(1), "hot", -150.0);
+    mche.addInStreamMSHE(precooler.getOutStream(1), "hot", null);
 
     ThrottlingValve mrValve = new ThrottlingValve(name + " MR JT valve", mche.getOutStream(1));
     mrValve.setOutletPressure(4.0, "bara");
-    initializeExpansionInlet(mche.getOutStream(1), -150.0, 45.0);
+    initializeExpansionInlet(mche.getOutStream(1), mrExpansionInletSeedTemperatureC, 45.0);
     mrValve.run();
+    initializeColdSideWarmStart(mrValve.getOutletStream(), mrExpansionInletSeedTemperatureC,
+        mrValve.getOutletPressure());
     mche.addInStreamMSHE(mrValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
     context.process.add(mche);
@@ -457,14 +463,17 @@ public class LNGProcessBuilder {
     context.process.add(precooler);
     addRecycle(context, name + " warm MR recycle", precooler.getOutStream(2), warmMrSuction);
 
+    double coldMrExpansionInletSeedTemperatureC = targetLiquefactionTemperatureC - 5.0;
     LNGHeatExchanger mche = createExchanger(name + " main cryogenic exchanger");
     mche.addInStreamMSHE(precooler.getOutStream(0), "hot", targetLiquefactionTemperatureC);
-    mche.addInStreamMSHE(precooler.getOutStream(1), "hot", -150.0);
+    mche.addInStreamMSHE(precooler.getOutStream(1), "hot", null);
 
     ThrottlingValve coldValve = new ThrottlingValve(name + " cold MR JT valve", mche.getOutStream(1));
     coldValve.setOutletPressure(3.0, "bara");
-    initializeExpansionInlet(mche.getOutStream(1), -150.0, 38.0);
+    initializeExpansionInlet(mche.getOutStream(1), coldMrExpansionInletSeedTemperatureC, 38.0);
     coldValve.run();
+    initializeColdSideWarmStart(coldValve.getOutletStream(), coldMrExpansionInletSeedTemperatureC,
+        coldValve.getOutletPressure());
     mche.addInStreamMSHE(coldValve.getOutletStream(), "cold", null);
     context.exchangers.add(mche);
     context.process.add(mche);
@@ -667,13 +676,32 @@ public class LNGProcessBuilder {
    * </p>
    *
    * @param highPressureStream exchanger outlet feeding the expansion device
-   * @param temperatureC specified exchanger outlet temperature in Celsius
+   * @param temperatureC cold-end initialization temperature in Celsius
    * @param pressureBara high-side pressure in bara
    */
   private void initializeExpansionInlet(StreamInterface highPressureStream, double temperatureC, double pressureBara) {
     highPressureStream.setTemperature(temperatureC, "C");
     highPressureStream.setPressure(pressureBara, "bara");
     highPressureStream.run();
+  }
+
+  /**
+   * Seeds a recycle cold-side inlet below the high-pressure cold-end initialization temperature.
+   *
+   * <p>
+   * The expansion device first establishes an isenthalpic outlet. For the initial exchanger iteration only, the recycle
+   * tear stream may still need a colder temperature guess to provide a feasible heat-flow direction. Subsequent process
+   * iterations overwrite this seed with the expansion-device result.
+   * </p>
+   *
+   * @param coldSideStream expansion-device outlet used as the exchanger cold-side inlet
+   * @param coldEndSeedTemperatureC high-pressure cold-end initialization temperature in Celsius
+   * @param pressureBara cold-side pressure in bara
+   */
+  private void initializeColdSideWarmStart(StreamInterface coldSideStream, double coldEndSeedTemperatureC,
+      double pressureBara) {
+    double seedTemperatureC = Math.min(coldSideStream.getTemperature("C"), coldEndSeedTemperatureC - 5.0);
+    initializeExpansionInlet(coldSideStream, seedTemperatureC, pressureBara);
   }
 
   /**

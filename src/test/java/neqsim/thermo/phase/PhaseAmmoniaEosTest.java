@@ -7,6 +7,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemAmmoniaEos;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+import neqsim.util.exception.IsNaNException;
 
 /**
  * Simple sanity check for the {@link PhaseAmmoniaEos} implementation.
@@ -19,8 +20,8 @@ class PhaseAmmoniaEosTest {
     system.init(3);
 
     double density = system.getPhase(0).getDensity();
-    // reference value from the Ammonia2023 reference equation in kg/m3
-    assertEquals(8.306908267489456, density, 8.306908267489456e-6);
+    // Reference value from the Gao et al. (2020) EOS as implemented in CoolProp 8.0.0.
+    assertEquals(7.776761102217432, density, 7.776761102217432e-6);
 
     double cp = system.getPhase(0).getCp();
     assertTrue(cp > 0.0);
@@ -78,10 +79,9 @@ class PhaseAmmoniaEosTest {
   }
 
   @Test
-  void testBubblePointPressureAgainstReferenceEquation() {
-    double[] temperatures = {260.0, 280.0, 300.0, 320.0};
-    double[] expectedPressures = {
-        2.552457115844972, 5.507043744582428, 10.611215021486935, 18.71755110160696};
+  void testBubblePointPressureAgainstReferenceEquation() throws IsNaNException {
+    double[] temperatures = { 260.0, 280.0, 300.0, 320.0 };
+    double[] expectedPressures = { 2.552457115844972, 5.507043744582428, 10.611215021486935, 18.71755110160696 };
 
     for (int i = 0; i < temperatures.length; i++) {
       SystemInterface system = new SystemAmmoniaEos(temperatures[i], expectedPressures[i]);

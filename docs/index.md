@@ -116,6 +116,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 ## ⚡ Quick Start Example
 
 ```java
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -139,7 +140,7 @@ System.out.println("Compressibility: " + gas.getZ());
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
 
-## � New: Quickstart & Learning Resources
+## 🆕 Quickstart & Learning Resources
 
 <div class="nav-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0;">
 
@@ -188,7 +189,7 @@ System.out.println("Compressibility: " + gas.getZ());
 
 <hr class="section-divider" style="border: none; height: 2px; background: linear-gradient(to right, transparent, #159957, transparent); margin: 2rem 0;">
 
-## �📖 Documentation Sections
+## 📖 Documentation Sections
 
 <div style="overflow-x: auto; margin: 1.5rem 0;">
 <table style="width: 100%; border-collapse: separate; border-spacing: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);">

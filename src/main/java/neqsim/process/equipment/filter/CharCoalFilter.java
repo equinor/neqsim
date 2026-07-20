@@ -20,5 +20,6 @@ public class CharCoalFilter extends Filter {
    */
   public CharCoalFilter(String name, StreamInterface inStream) {
     super(name, inStream);
+    setFilterServiceType(FilterType.ACTIVATED_CARBON);
   }
 }

@@ -88,10 +88,10 @@ public class SimulationVerifier implements Serializable {
 
       PerturbationResult perturbation = applyPerturbation(modifiedProcess, hypothesis);
       if (!perturbation.isApplied()) {
-        hypothesis.setVerificationEvaluation(0.0, Hypothesis.EvaluationStatus.UNSUPPORTED);
+        hypothesis.setVerificationEvaluation(0.5, Hypothesis.EvaluationStatus.UNSUPPORTED);
         hypothesis.setVerificationCoverage(0.0, 0);
         hypothesis.setSimulationSummary("Simulation verification neutral: " + perturbation.getDescription());
-        return new VerificationResult(Hypothesis.EvaluationStatus.UNSUPPORTED, 0.0, 0.0, 0,
+        return new VerificationResult(Hypothesis.EvaluationStatus.UNSUPPORTED, 0.5, 0.0, 0,
             perturbation.getDescription());
       }
 
@@ -178,7 +178,9 @@ public class SimulationVerifier implements Serializable {
    */
   private PerturbationResult perturbCompressor(Compressor compressor, String failureMode,
       Hypothesis.Category category) {
-    double oldEfficiency = compressor.getPolytropicEfficiency();
+    boolean usesPolytropicEfficiency = compressor.usePolytropicCalc();
+    double oldEfficiency = usesPolytropicEfficiency ? compressor.getPolytropicEfficiency()
+        : compressor.getIsentropicEfficiency();
     double factor;
     if (failureMode.contains("surge") || failureMode.contains("flow")) {
       factor = 0.70;
@@ -196,9 +198,16 @@ public class SimulationVerifier implements Serializable {
     if (Math.abs(newEfficiency - oldEfficiency) < 1e-9) {
       return PerturbationResult.notApplied("compressor efficiency perturbation produced no change");
     }
-    compressor.setPolytropicEfficiency(newEfficiency);
-    return PerturbationResult.applied("polytropicEfficiency", String.format(Locale.US,
-        "reduced compressor polytropic efficiency from %.3f to %.3f", oldEfficiency, newEfficiency));
+    String changedVariable;
+    if (usesPolytropicEfficiency) {
+      compressor.setPolytropicEfficiency(newEfficiency);
+      changedVariable = "polytropicEfficiency";
+    } else {
+      compressor.setIsentropicEfficiency(newEfficiency);
+      changedVariable = "isentropicEfficiency";
+    }
+    return PerturbationResult.applied(changedVariable, String.format(Locale.US,
+        "reduced active compressor %s from %.3f to %.3f", changedVariable, oldEfficiency, newEfficiency));
   }
 
   /**

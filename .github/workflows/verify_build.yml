@@ -57,6 +57,9 @@ jobs:
 
   test_java_matrix:
     name: Assert tests with Java 21 on ${{ matrix.platform }}
+    permissions:
+      contents: read
+      id-token: write
     runs-on: ${{ matrix.os }}
     needs: test_javadoc
     strategy:
@@ -107,7 +110,7 @@ jobs:
         with:
           files: target/site/jacoco/jacoco.xml
           name: codecov
-          token: ${{ secrets.CODECOV_TOKEN }}
+          use_oidc: true
           fail_ci_if_error: true
 
   test_java_8:
