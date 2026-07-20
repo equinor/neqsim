@@ -60,7 +60,6 @@ import neqsim.thermo.system.FluidBuilder;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPitzer;
-import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
@@ -92,6 +91,81 @@ public class DocExamplesCompilationTest {
     assertTrue(gas.getDensity("kg/m3") < 50.0);
     assertTrue(gas.getZ() > 0.8);
     assertTrue(gas.getZ() < 1.0);
+  }
+
+  /**
+   * State-flash example from docs/thermodynamicoperations/README.md.
+   */
+  @Test
+  public void testThermodynamicOperationsStateFlashDocs() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.03);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.initProperties();
+
+    double initialEnthalpy = fluid.getEnthalpy();
+    fluid.setPressure(30.0, "bara");
+    operations.PHflash(initialEnthalpy);
+    assertEquals(initialEnthalpy, fluid.getEnthalpy(), 1.0e-3);
+
+    double initialEntropy = fluid.getEntropy();
+    fluid.setPressure(70.0, "bara");
+    operations.PSflash(initialEntropy);
+    assertEquals(initialEntropy, fluid.getEntropy(), 1.0e-6);
+  }
+
+  /**
+   * PT-envelope example from docs/thermodynamicoperations/README.md.
+   */
+  @Test
+  public void testThermodynamicOperationsPhaseEnvelopeDocs() {
+    SystemInterface fluid = new SystemSrkEos(280.0, 10.0);
+    fluid.addComponent("methane", 0.75);
+    fluid.addComponent("ethane", 0.12);
+    fluid.addComponent("propane", 0.08);
+    fluid.addComponent("n-butane", 0.05);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.calcPTphaseEnvelope();
+    double[] cricondenbar = operations.get("cricondenbar");
+    double[] cricondentherm = operations.get("cricondentherm");
+
+    assertTrue(cricondenbar.length >= 2);
+    assertTrue(cricondentherm.length >= 2);
+    assertTrue(cricondenbar[1] > 0.0);
+    assertTrue(cricondentherm[0] > 0.0);
+  }
+
+  /**
+   * Reactive-flash example from docs/thermodynamicoperations/README.md.
+   */
+  @Test
+  public void testThermodynamicOperationsReactiveFlashDocs() {
+    SystemInterface reactive = new SystemSrkEos(600.0, 1.0);
+    reactive.addComponent("CO", 0.25);
+    reactive.addComponent("water", 0.25);
+    reactive.addComponent("CO2", 0.25);
+    reactive.addComponent("hydrogen", 0.25);
+    reactive.setMixingRule("classic");
+    reactive.setMaxNumberOfPhases(1);
+    reactive.setNumberOfPhases(1);
+    reactive.init(0);
+    reactive.init(1);
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(reactive);
+    operations.reactiveTPflash();
+
+    double compositionSum = 0.0;
+    for (int i = 0; i < reactive.getPhase(0).getNumberOfComponents(); i++) {
+      compositionSum += reactive.getPhase(0).getComponent(i).getx();
+    }
+    assertEquals(1.0, compositionSum, 1.0e-10);
   }
 
   /**
