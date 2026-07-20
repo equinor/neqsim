@@ -173,8 +173,7 @@ public final class PumpDesignExample {
     pump.run();
 
     double powerKw = pump.getPower("kW");
-    double vendorHeadM =
-        pump.getPumpChart().getHead(feed.getFlowRate("m3/hr"), pump.getSpeed());
+    double vendorHeadM = pump.getPumpChart().getHead(feed.getFlowRate("m3/hr"), pump.getSpeed());
     double npshAvailableM = pump.getNPSHAvailable();
     double npshRequiredM = pump.getNPSHRequired();
 
