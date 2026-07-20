@@ -206,9 +206,8 @@ public class SimulationVerifier implements Serializable {
       compressor.setIsentropicEfficiency(newEfficiency);
       changedVariable = "isentropicEfficiency";
     }
-    return PerturbationResult.applied(changedVariable,
-        String.format(Locale.US, "reduced active compressor %s from %.3f to %.3f", changedVariable, oldEfficiency,
-            newEfficiency));
+    return PerturbationResult.applied(changedVariable, String.format(Locale.US,
+        "reduced active compressor %s from %.3f to %.3f", changedVariable, oldEfficiency, newEfficiency));
   }
 
   /**
