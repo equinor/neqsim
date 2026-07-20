@@ -130,8 +130,10 @@ purchased standard edition, project specification, and vendor documentation for 
 
 ## Complete Java example
 
-This Java 8 example runs a water pump with a vendor curve, checks NPSH, performs the API 610
-screen, and exports the structured mechanical-design response.
+This Java 8 example runs a single-phase liquid pump with a vendor curve, checks NPSH, performs
+the API 610 screen, and exports the structured mechanical-design response. The inlet uses
+n-hexane so the actual-volume flow conversion is based on one stable liquid phase at the stated
+temperature and pressure.
 
 ```java
 import org.apache.logging.log4j.LogManager;
@@ -150,7 +152,7 @@ public final class PumpDesignExample {
 
   public static void main(String[] args) {
     SystemInterface fluid = new SystemSrkEos(298.15, 5.0);
-    fluid.addComponent("water", 1.0);
+    fluid.addComponent("n-hexane", 1.0);
     fluid.setMixingRule("classic");
 
     Stream feed = new Stream("pump feed", fluid);
@@ -201,7 +203,7 @@ public final class PumpDesignExample {
 | `pump.getPower("kW")` | Absorbed shaft power calculated by the process model |
 | `pump.getPumpChart().getHead(flow, speed)` | Vendor-curve head in the configured head unit |
 | `pump.getNPSHAvailable()` | Process-side NPSHa in metres, or `NaN` if unavailable |
-| `pump.getNPSHRequired()` | Vendor curve value or coarse fallback estimate in metres |
+| `pump.getNPSHRequired()` | Fitted vendor-curve value or coarse fallback estimate in metres |
 | `assessment.getOperatingRegion()` | Rated-point classification relative to vendor BEP |
 | `assessment.getSelectedDriverPowerKw()` | First configured rating meeting the required driver power |
 | `assessment.getRequiredCasingPressureBara()` | Screening casing-pressure requirement in bara |
@@ -212,6 +214,10 @@ public final class PumpDesignExample {
 - The process model is a one-dimensional steady-state equipment calculation; it does not resolve
   internal impeller or volute CFD.
 - Vendor curves govern realistic head, efficiency, NPSHr, runout, and shutoff behaviour.
+- Set actual-volume flow only for a fluid with an established phase state. A multiphase or
+  unflashed fluid can change density after the flow conversion and move the operating point.
+- `setCurves` and `setNPSHCurve` fit reduced polynomial curves; evaluated values can differ
+  slightly from individual tabulated points.
 - The fallback NPSHr correlation is only a preliminary screen.
 - The mechanical-design calculation provides screening dimensions and evidence status, not a
   certificate of conformity or accountable design approval.
