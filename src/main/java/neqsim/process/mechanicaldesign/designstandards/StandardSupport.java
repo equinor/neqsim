@@ -19,8 +19,8 @@ public final class StandardSupport {
    * @param calculationImplementation calculation path that provides the stated support
    * @param limitation concise implementation boundary
    */
-  StandardSupport(StandardType standardType, StandardSupportLevel supportLevel,
-      String registryImplementation, String calculationImplementation, String limitation) {
+  StandardSupport(StandardType standardType, StandardSupportLevel supportLevel, String registryImplementation,
+      String calculationImplementation, String limitation) {
     this.standardType = standardType;
     this.supportLevel = supportLevel;
     this.registryImplementation = registryImplementation;
