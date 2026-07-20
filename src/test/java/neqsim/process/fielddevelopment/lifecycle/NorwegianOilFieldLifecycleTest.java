@@ -57,8 +57,7 @@ class NorwegianOilFieldLifecycleTest extends neqsim.NeqSimTest {
 
   @Test
   void facilityOperatingLimitEndsLifecycleGracefully() {
-    FieldLifecycleConcept concept =
-        NorwegianOilFieldCase.createCase("operating-limit regression", 0.85, 5.0e6, 13.0);
+    FieldLifecycleConcept concept = NorwegianOilFieldCase.createCase("operating-limit regression", 0.85, 5.0e6, 13.0);
 
     FieldLifecycleResult result = new FieldLifecycleEvaluator().evaluate(concept);
 

@@ -178,8 +178,7 @@ public class FieldLifecycleSimulator {
         operation = operateSharedFacility(model, config, strategy, fieldAgeYears, allocation, facilityDesign,
             potential.oilRecoveryFactor);
       } catch (IllegalStateException ex) {
-        logger.warn("Facility/process model for {} reached its operating limit: {}", model.getName(),
-            ex.getMessage());
+        logger.warn("Facility/process model for {} reached its operating limit: {}", model.getName(), ex.getMessage());
         stopReason = "facility/process operating limit reached";
         break;
       }
