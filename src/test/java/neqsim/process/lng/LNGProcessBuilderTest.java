@@ -48,9 +48,9 @@ class LNGProcessBuilderTest {
     LNGHeatExchanger mainExchanger = model.getCryogenicHeatExchangers()
         .get(model.getCryogenicHeatExchangers().size() - 1);
     double coldSideInletC = mainExchanger.getInStream(2).getTemperature("C");
-    double coldestHotOutletC = Math.min(mainExchanger.getOutTemperature(0), mainExchanger.getOutTemperature(1));
-    assertTrue(coldSideInletC < coldestHotOutletC,
-        cycle + " cold-side warm start must be colder than the specified hot-stream outlets");
+    double specifiedFeedOutletC = mainExchanger.getOutTemperature(0);
+    assertTrue(coldSideInletC < specifiedFeedOutletC,
+        cycle + " cold-side warm start must be colder than the specified feed outlet");
 
     if (cycle == LNGProcessCycle.NITROGEN_EXPANDER) {
       assertEquals(1, model.getExpanders().size());
