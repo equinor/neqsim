@@ -114,12 +114,20 @@ pfr.setCatalystEffectivenessEnabled(true);
 ## Compatibility
 
 The sulfur-recovery API is additive: no existing public class, constructor, method, or enum value
-is removed. `PlugFlowReactor` retains its historical frozen-property thermodynamic coupling and
-activity-only catalyst behavior unless the new options are enabled explicitly.
+is removed, so existing source and compiled callers remain API-compatible. Compatibility with
+previously serialized object graphs is outside this change's scope. `PlugFlowReactor` retains its
+historical frozen-property thermodynamic coupling and activity-only catalyst behavior unless the
+new options are enabled explicitly.
 
 Calculations that already use `S8`, `sulfur(S8)`, or `COS` can produce different reaction or energy
 results because their incorrect CAS identities and gas-phase formation properties have been
 corrected. This is an intentional data-quality correction, not numerical result compatibility.
+
+Exact numerical reproducibility is also not claimed for existing non-isothermal
+`PlugFlowReactor` cases. Its heat-capacity request now uses the supported `J/molK` unit instead of
+falling through to the fixed 30 J/(mol K) estimate, and axial-profile reaction rates are reported on
+their declared volumetric basis with catalyst activity included. These are defect corrections; the
+public API and opt-in defaults remain unchanged.
 
 ## Results and validation
 
