@@ -188,8 +188,8 @@ public final class StandardRegistry {
     StandardType standardType = selection.getStandardType();
     EquipmentDesignKernelRegistry.Lookup lookup = getDesignKernel(standardType);
     if (!lookup.isImplemented()) {
-      throw new StandardSelectionException(StandardSelectionException.Reason.KERNEL_NOT_IMPLEMENTED, standardType,
-          null, "No common engineering design kernel is registered for the selected standard");
+      throw new StandardSelectionException(StandardSelectionException.Reason.KERNEL_NOT_IMPLEMENTED, standardType, null,
+          "No common engineering design kernel is registered for the selected standard");
     }
     if (!lookup.supports(selection.getEdition())) {
       throw new StandardSelectionException(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, standardType,
@@ -284,7 +284,7 @@ public final class StandardRegistry {
    * @param standardType the standard type to override
    * @param version the version to use (null to clear override)
    * @deprecated use an explicit {@link StandardEdition} inside {@link StandardSelection}; global mutable edition state
-   *             is not reproducible across concurrent designs
+   * is not reproducible across concurrent designs
    */
   @Deprecated
   public static void setVersionOverride(StandardType standardType, String version) {
