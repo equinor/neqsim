@@ -3,8 +3,6 @@ title: Process-design standards implementation program
 description: Priorities, evidence gates, and engineering boundaries for extending standards support in NeqSim.
 ---
 
-# Process-design standards implementation program
-
 NeqSim should implement more standards support, but catalog breadth is not the governing measure of
 success. The useful target is traceable calculation and review coverage for a named edition, stated
 applicability envelope, and independent evidence. This program separates work that can be maintained

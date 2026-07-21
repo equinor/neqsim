@@ -128,8 +128,10 @@ public final class StandardSupportAudit {
     StandardRequirementPackRegistry.Lookup packLookup = StandardRequirementPackRegistry.lookup(standardType);
     if (packLookup.isImplemented()) {
       StandardRequirementPack pack = packLookup.requirePack();
+      int capabilityCount = pack.getCapabilities().size();
       return new StandardSupport(standardType, StandardSupportLevel.SCREENING, false, registryImplementation,
-          "StandardRequirementPackRegistry (" + pack.getCapabilities().size() + " capabilities)",
+          "StandardRequirementPackRegistry (" + capabilityCount
+              + (capabilityCount == 1 ? " capability)" : " capabilities)"),
           "Mapped calculations and review workflows are discoverable as a versioned requirement pack; this is not "
               + "a complete conformity assessment and is intentionally separate from the legacy factory.");
     }
