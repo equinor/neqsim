@@ -20,12 +20,30 @@ import neqsim.process.processmodel.ProcessSystem;
  */
 public class DesignResult {
 
+  /** Describes what work produced this result without conflating validation with optimization. */
+  public enum ExecutionStatus {
+    /** No workflow has run. */
+    NOT_RUN,
+    /** A baseline simulation and constraint validation ran, but no search ran. */
+    VALIDATED,
+    /** Equipment auto-sizing and validation ran, but no search ran. */
+    AUTO_SIZED,
+    /** A configured optimization search returned a feasible operating point. */
+    OPTIMIZED,
+    /** A configured search completed without finding a feasible operating point. */
+    INFEASIBLE,
+    /** The workflow failed before it could return an engineering result. */
+    FAILED
+  }
+
   private ProcessSystem process;
+  private ExecutionStatus executionStatus = ExecutionStatus.NOT_RUN;
   private boolean converged;
   private int iterations;
   private double objectiveValue;
 
   private Map<String, Double> optimizedFlowRates = new HashMap<>();
+  private Map<String, Double> decisionVariables = new HashMap<>();
   private Map<String, Map<String, Double>> equipmentSizes = new HashMap<>();
   private Map<String, ConstraintStatus> constraintStatus = new HashMap<>();
   private List<String> warnings = new ArrayList<>();
@@ -47,6 +65,24 @@ public class DesignResult {
    */
   public ProcessSystem getProcess() {
     return process;
+  }
+
+  /**
+   * Get the workflow status.
+   *
+   * @return status distinguishing validation, sizing, optimization, infeasibility, and failure
+   */
+  public ExecutionStatus getExecutionStatus() {
+    return executionStatus;
+  }
+
+  /**
+   * Set the workflow status.
+   *
+   * @param executionStatus workflow status
+   */
+  public void setExecutionStatus(ExecutionStatus executionStatus) {
+    this.executionStatus = executionStatus;
   }
 
   /**
@@ -123,6 +159,25 @@ public class DesignResult {
   }
 
   /**
+   * Record a decision-variable value returned by an actual optimizer search.
+   *
+   * @param name decision-variable name
+   * @param value selected value
+   */
+  public void addDecisionVariable(String name, double value) {
+    decisionVariables.put(name, value);
+  }
+
+  /**
+   * Get the decision variables returned by an optimizer search.
+   *
+   * @return defensive map of decision-variable names and selected values
+   */
+  public Map<String, Double> getDecisionVariables() {
+    return new HashMap<>(decisionVariables);
+  }
+
+  /**
    * Record equipment size.
    *
    * @param equipmentName equipment name
@@ -140,7 +195,8 @@ public class DesignResult {
    * @return map of size name to value
    */
   public Map<String, Double> getEquipmentSizes(String equipmentName) {
-    return equipmentSizes.getOrDefault(equipmentName, new HashMap<>());
+    Map<String, Double> sizes = equipmentSizes.get(equipmentName);
+    return sizes == null ? new HashMap<String, Double>() : new HashMap<String, Double>(sizes);
   }
 
   /**
@@ -229,7 +285,7 @@ public class DesignResult {
    * @return the equipment
    */
   public ProcessEquipmentInterface getEquipment(String name) {
-    return process.getUnit(name);
+    return process == null ? null : process.getUnit(name);
   }
 
   /**
@@ -249,7 +305,8 @@ public class DesignResult {
    */
   public String getSummary() {
     StringBuilder sb = new StringBuilder();
-    sb.append("=== Design Optimization Result ===\n");
+    sb.append("=== Design Result ===\n");
+    sb.append("Status: ").append(executionStatus).append("\n");
     sb.append("Converged: ").append(converged).append("\n");
     sb.append("Iterations: ").append(iterations).append("\n");
     sb.append("Objective: ").append(String.format("%.4f", objectiveValue)).append("\n\n");
