@@ -45,8 +45,8 @@ the source catalog diverge.
 | API-620 | 13th Ed | pressure vessel design code | PressureVesselDesignStandard | None | CATALOGUED | The registry maps this tank standard to a separator-oriented pressure-vessel class; no tank-code calculation is implemented. |
 | API-660 | 9th Ed | heat exchanger design codes | DesignStandard | None | CATALOGUED | No standard-specific heat-exchanger mechanical calculation is connected. |
 | API-661 | 7th Ed | heat exchanger design codes | DesignStandard | None | CATALOGUED | No standard-specific heat-exchanger mechanical calculation is connected. |
-| API-521 | 7th Ed | valve design codes | ValveDesignStandard | None | CATALOGUED | The mapped valve class does not implement relief-system or relief-valve standard calculations. |
-| API-526 | 7th Ed | valve design codes | ValveDesignStandard | None | CATALOGUED | The mapped valve class does not implement relief-system or relief-valve standard calculations. |
+| API-521 | 7th Ed | relief system design codes | ValveDesignStandard | Api521ReliefDesignKernel | SCREENING | Scenario aggregation, governing-case selection, relief-area sizing, and accumulated-pressure screening only; scenario completeness, installation, and conformity require independent review. |
+| API-526 | 7th Ed | relief valve design codes | ValveDesignStandard | Api526OrificeSelectionKernel | SCREENING | Standard-orifice area selection only; valve pressure class, dimensions, materials, installation, and vendor certification are not evaluated. |
 | API-5L | 46th Ed | material pipe design codes | MaterialPipeDesignStandard | MaterialPipeDesignStandard | SCREENING | Material-property lookup only; material selection, qualification, and code acceptance are not implemented. |
 | API-12J | 8th Ed | separator process design | SeparatorDesignStandard | SeparatorDesignStandard | SCREENING | Preliminary K-factor and sizing inputs only; standard-specific requirements are not independently validated. |
 | DNV-ST-F101 | 2021 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
@@ -90,12 +90,19 @@ not add calculation support.
 implemented standard, audited maturity, and structured applicability. Kernels must not mutate their
 input or a `ProcessSystem`. Compatibility adapters defensively copy legacy mutable calculators.
 
-`StandardRegistry.getDesignKernel(...)` returns an explicit lookup status. API 610 is the first
-connected adapter and returns `IMPLEMENTED`; standards that have not been adapted return
-`NOT_IMPLEMENTED`, never an empty or implied success. The API 610 kernel returns an immutable
-assessment snapshot and always requires engineering and vendor review because its maturity remains
-`SCREENING`. The current kernel explicitly supports 13th edition; a different edition fails closed
-as `EDITION_NOT_IMPLEMENTED` until separately implemented and validated.
+`StandardRegistry.getDesignKernel(...)` returns an explicit lookup status. API 610, API 521, and API
+526 have connected adapters and return `IMPLEMENTED`; standards that have not been adapted return
+`NOT_IMPLEMENTED`, never an empty or implied success. Each kernel returns an immutable assessment
+snapshot and always requires engineering review because its maturity remains `SCREENING`.
+Unsupported editions fail closed as `EDITION_NOT_IMPLEMENTED` until separately implemented and
+validated.
+
+The API 521 adapter defensively copies the mutable protected-item basis, requires at least one
+complete credible scenario, selects the governing rate, and records the sizing and accumulated
+pressure checks. The API 526 adapter accepts an explicitly unit-tagged required area and reports an
+inadequate result when a single standard orifice cannot cover it. These adapters do not establish
+scenario completeness or qualify valve construction, installation, reaction loads, flare-network
+effects, or vendor certification.
 
 ## How to interpret the registry
 
