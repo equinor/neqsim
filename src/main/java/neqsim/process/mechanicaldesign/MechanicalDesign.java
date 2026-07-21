@@ -36,6 +36,8 @@ import neqsim.process.mechanicaldesign.designstandards.StandardRegistry;
 import neqsim.process.mechanicaldesign.designstandards.StandardSelection;
 import neqsim.process.mechanicaldesign.designstandards.StandardType;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
+import neqsim.util.unit.PressureUnit;
+import neqsim.util.unit.TemperatureUnit;
 
 /**
  * MechanicalDesign class.
@@ -686,16 +688,56 @@ public class MechanicalDesign implements java.io.Serializable {
     return designLimitData.getMaxPressure();
   }
 
+  /**
+   * Gets the maximum pressure limit in an explicit pressure unit.
+   *
+   * @param unit requested pressure unit
+   * @return converted maximum pressure limit
+   */
+  public double getDesignMaxPressureLimit(String unit) {
+    return new PressureUnit(getDesignMaxPressureLimit(), "bara").getValue(unit);
+  }
+
   public double getDesignMinPressureLimit() {
     return designLimitData.getMinPressure();
+  }
+
+  /**
+   * Gets the minimum pressure limit in an explicit pressure unit.
+   *
+   * @param unit requested pressure unit
+   * @return converted minimum pressure limit
+   */
+  public double getDesignMinPressureLimit(String unit) {
+    return new PressureUnit(getDesignMinPressureLimit(), "bara").getValue(unit);
   }
 
   public double getDesignMaxTemperatureLimit() {
     return designLimitData.getMaxTemperature();
   }
 
+  /**
+   * Gets the maximum temperature limit in an explicit temperature unit.
+   *
+   * @param unit requested temperature unit
+   * @return converted maximum temperature limit
+   */
+  public double getDesignMaxTemperatureLimit(String unit) {
+    return new TemperatureUnit(getDesignMaxTemperatureLimit(), "K").getValue(unit);
+  }
+
   public double getDesignMinTemperatureLimit() {
     return designLimitData.getMinTemperature();
+  }
+
+  /**
+   * Gets the minimum temperature limit in an explicit temperature unit.
+   *
+   * @param unit requested temperature unit
+   * @return converted minimum temperature limit
+   */
+  public double getDesignMinTemperatureLimit(String unit) {
+    return new TemperatureUnit(getDesignMinTemperatureLimit(), "K").getValue(unit);
   }
 
   public double getDesignCorrosionAllowance() {
@@ -763,10 +805,20 @@ public class MechanicalDesign implements java.io.Serializable {
   /**
    * Getter for the field <code>maxOperationPressure</code>.
    *
-   * @return the maxPressure
+   * @return maximum operating pressure in bara
    */
   public double getMaxOperationPressure() {
     return maxOperationPressure;
+  }
+
+  /**
+   * Gets the maximum operating pressure in an explicit pressure unit.
+   *
+   * @param unit requested pressure unit
+   * @return converted maximum operating pressure
+   */
+  public double getMaxOperationPressure(String unit) {
+    return new PressureUnit(maxOperationPressure, "bara").getValue(unit);
   }
 
   /**
@@ -779,12 +831,32 @@ public class MechanicalDesign implements java.io.Serializable {
   }
 
   /**
+   * Gets the maximum design pressure in an explicit pressure unit.
+   *
+   * @param unit requested pressure unit
+   * @return converted maximum design pressure
+   */
+  public double getMaxDesignPressure(String unit) {
+    return new PressureUnit(getMaxDesignPressure(), "bara").getValue(unit);
+  }
+
+  /**
    * getMinDesignPressure.
    *
    * @return a double
    */
   public double getMinDesignPressure() {
     return getMinOperationPressure() * (1.0 - pressureMarginFactor);
+  }
+
+  /**
+   * Gets the minimum design pressure in an explicit pressure unit.
+   *
+   * @param unit requested pressure unit
+   * @return converted minimum design pressure
+   */
+  public double getMinDesignPressure(String unit) {
+    return new PressureUnit(getMinDesignPressure(), "bara").getValue(unit);
   }
 
   /**
@@ -796,64 +868,134 @@ public class MechanicalDesign implements java.io.Serializable {
   /**
    * Setter for the field <code>maxOperationPressure</code>.
    *
-   * @param maxPressure the maxPressure to set
+   * @param maxPressure maximum operating pressure in bara
    */
   public void setMaxOperationPressure(double maxPressure) {
     this.maxOperationPressure = maxPressure;
   }
 
   /**
+   * Sets the maximum operating pressure using an explicit absolute or gauge pressure unit.
+   *
+   * @param maxPressure maximum operating pressure
+   * @param unit pressure unit supported by {@link PressureUnit}
+   */
+  public void setMaxOperationPressure(double maxPressure, String unit) {
+    this.maxOperationPressure = new PressureUnit(maxPressure, unit).getValue("bara");
+  }
+
+  /**
    * Getter for the field <code>minOperationPressure</code>.
    *
-   * @return the minPressure
+   * @return minimum operating pressure in bara
    */
   public double getMinOperationPressure() {
     return minOperationPressure;
   }
 
   /**
+   * Gets the minimum operating pressure in an explicit pressure unit.
+   *
+   * @param unit requested pressure unit
+   * @return converted minimum operating pressure
+   */
+  public double getMinOperationPressure(String unit) {
+    return new PressureUnit(minOperationPressure, "bara").getValue(unit);
+  }
+
+  /**
    * Setter for the field <code>minOperationPressure</code>.
    *
-   * @param minPressure the minPressure to set
+   * @param minPressure minimum operating pressure in bara
    */
   public void setMinOperationPressure(double minPressure) {
     this.minOperationPressure = minPressure;
   }
 
   /**
+   * Sets the minimum operating pressure using an explicit absolute or gauge pressure unit.
+   *
+   * @param minPressure minimum operating pressure
+   * @param unit pressure unit supported by {@link PressureUnit}
+   */
+  public void setMinOperationPressure(double minPressure, String unit) {
+    this.minOperationPressure = new PressureUnit(minPressure, unit).getValue("bara");
+  }
+
+  /**
    * Getter for the field <code>maxOperationTemperature</code>.
    *
-   * @return the maxTemperature
+   * @return maximum operating temperature in kelvin
    */
   public double getMaxOperationTemperature() {
     return maxOperationTemperature;
   }
 
   /**
+   * Gets the maximum operating temperature in an explicit temperature unit.
+   *
+   * @param unit requested temperature unit
+   * @return converted maximum operating temperature
+   */
+  public double getMaxOperationTemperature(String unit) {
+    return new TemperatureUnit(maxOperationTemperature, "K").getValue(unit);
+  }
+
+  /**
    * Setter for the field <code>maxOperationTemperature</code>.
    *
-   * @param maxTemperature the maxTemperature to set
+   * @param maxTemperature maximum operating temperature in kelvin
    */
   public void setMaxOperationTemperature(double maxTemperature) {
     this.maxOperationTemperature = maxTemperature;
   }
 
   /**
+   * Sets the maximum operating temperature using an explicit temperature unit.
+   *
+   * @param maxTemperature maximum operating temperature
+   * @param unit temperature unit supported by {@link TemperatureUnit}
+   */
+  public void setMaxOperationTemperature(double maxTemperature, String unit) {
+    this.maxOperationTemperature = new TemperatureUnit(maxTemperature, unit).getValue("K");
+  }
+
+  /**
    * Getter for the field <code>minOperationTemperature</code>.
    *
-   * @return the minTemperature
+   * @return minimum operating temperature in kelvin
    */
   public double getMinOperationTemperature() {
     return minOperationTemperature;
   }
 
   /**
+   * Gets the minimum operating temperature in an explicit temperature unit.
+   *
+   * @param unit requested temperature unit
+   * @return converted minimum operating temperature
+   */
+  public double getMinOperationTemperature(String unit) {
+    return new TemperatureUnit(minOperationTemperature, "K").getValue(unit);
+  }
+
+  /**
    * Setter for the field <code>minOperationTemperature</code>.
    *
-   * @param minTemperature the minTemperature to set
+   * @param minTemperature minimum operating temperature in kelvin
    */
   public void setMinOperationTemperature(double minTemperature) {
     this.minOperationTemperature = minTemperature;
+  }
+
+  /**
+   * Sets the minimum operating temperature using an explicit temperature unit.
+   *
+   * @param minTemperature minimum operating temperature
+   * @param unit temperature unit supported by {@link TemperatureUnit}
+   */
+  public void setMinOperationTemperature(double minTemperature, String unit) {
+    this.minOperationTemperature = new TemperatureUnit(minTemperature, unit).getValue("K");
   }
 
   /**
