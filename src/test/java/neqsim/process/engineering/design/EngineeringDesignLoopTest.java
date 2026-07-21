@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import neqsim.process.engineering.calculation.EngineeringCalculationContext;
 import neqsim.process.engineering.designcase.EngineeringCaseRunReport;
 import neqsim.process.engineering.designcase.EngineeringCaseSet;
@@ -80,6 +82,87 @@ class EngineeringDesignLoopTest {
     assertEquals(3, result.getIterations().size());
   }
 
+  @Test
+  void dependencyGraphOrdersModulesAndMakesUpstreamStateAvailableInSameIteration() {
+    DependencyModule downstream = new DependencyModule("a-downstream", Arrays.asList("z-upstream"),
+        "design.downstream", 2.0, "design.upstream", EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
+    DependencyModule upstream = new DependencyModule("z-upstream", Collections.<String>emptyList(),
+        "design.upstream", 1.0, null, EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
+
+    EngineeringDesignDependencyGraph graph = EngineeringDesignDependencyGraph
+        .of(Arrays.<EngineeringDesignModule>asList(downstream, upstream));
+    EngineeringDesignLoopResult result = EngineeringDesignLoop.run(process(), cases("dependency-order"),
+        Arrays.<EngineeringDesignModule>asList(downstream, upstream),
+        EngineeringDesignLoopOptions.builder().maximumIterations(4).build());
+
+    assertEquals(Arrays.asList("z-upstream", "a-downstream"), graph.getOrderedModuleIds());
+    assertTrue(result.isConverged());
+    assertEquals(1.0, result.getState().requireValue("design.upstream"), 1.0e-12);
+    assertEquals(2.0, result.getState().requireValue("design.downstream"), 1.0e-12);
+  }
+
+  @Test
+  void dependencyGraphRejectsMissingDependenciesAndCycles() {
+    DependencyModule missing = new DependencyModule("missing-user", Arrays.asList("not-configured"), null, 0.0,
+        null, EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
+    EngineeringDesignDependencyException missingException = assertThrows(EngineeringDesignDependencyException.class,
+        () -> EngineeringDesignDependencyGraph.of(Arrays.<EngineeringDesignModule>asList(missing)));
+    assertTrue(missingException.getMessage().contains("not-configured"));
+
+    DependencyModule first = new DependencyModule("first", Arrays.asList("second"), null, 0.0, null,
+        EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
+    DependencyModule second = new DependencyModule("second", Arrays.asList("first"), null, 0.0, null,
+        EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
+    EngineeringDesignDependencyException cycleException = assertThrows(EngineeringDesignDependencyException.class,
+        () -> EngineeringDesignDependencyGraph.of(Arrays.<EngineeringDesignModule>asList(first, second)));
+    assertTrue(cycleException.getMessage().contains("Cycle detected"));
+  }
+
+  @Test
+  void duplicateUpdatesFailClosedWithoutGoverningRule() {
+    DependencyModule first = new DependencyModule("first", Collections.<String>emptyList(), "shared.pressure", 60.0,
+        null, EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
+    DependencyModule second = new DependencyModule("second", Collections.<String>emptyList(), "shared.pressure",
+        70.0, null, EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
+
+    EngineeringDesignConflictException exception = assertThrows(EngineeringDesignConflictException.class,
+        () -> EngineeringDesignLoop.run(process(), cases("conflict"),
+            Arrays.<EngineeringDesignModule>asList(first, second),
+            EngineeringDesignLoopOptions.builder().maximumIterations(3).build()));
+
+    assertEquals("shared.pressure", exception.getDesignVariableKey());
+    assertTrue(exception.getMessage().contains("first=60.0 bara"));
+    assertTrue(exception.getMessage().contains("second=70.0 bara"));
+  }
+
+  @Test
+  void explicitGoverningMaximumSelectsTraceableProposal() {
+    DependencyModule low = new DependencyModule("low-case", Collections.<String>emptyList(), "shared.pressure", 60.0,
+        null, EngineeringDesignUpdate.ConflictResolution.GOVERNING_MAXIMUM);
+    DependencyModule high = new DependencyModule("high-case", Collections.<String>emptyList(), "shared.pressure",
+        70.0, null, EngineeringDesignUpdate.ConflictResolution.GOVERNING_MAXIMUM);
+
+    EngineeringDesignLoopResult result = EngineeringDesignLoop.run(process(), cases("governing-maximum"),
+        Arrays.<EngineeringDesignModule>asList(low, high),
+        EngineeringDesignLoopOptions.builder().maximumIterations(3).build());
+
+    assertTrue(result.isConverged());
+    assertEquals(70.0, result.getState().requireValue("shared.pressure"), 1.0e-12);
+    assertEquals("high-case", result.getState().get("shared.pressure").getSourceModule());
+  }
+
+  private EngineeringCaseSet cases(String id) {
+    return new EngineeringCaseSet(id).addCase(new EngineeringDesignCase("normal", "Normal",
+        EngineeringDesignCase.Type.NORMAL, new EngineeringDesignCase.Configurator() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public void configure(ProcessSystem process) {
+            // The dependency and conflict tests use the unchanged normal case.
+          }
+        })).addMetric(EngineeringMetric.equipmentPressure("FEED"));
+  }
+
   private ProcessSystem process() {
     SystemInterface fluid = new SystemSrkEos(300.0, 50.0);
     fluid.addComponent("methane", 1.0);
@@ -143,6 +226,51 @@ class EngineeringDesignLoopTest {
                 }
               }).build())
           .build();
+    }
+  }
+
+  private static final class DependencyModule implements EngineeringDesignModule {
+    private static final long serialVersionUID = 1000L;
+    private final String id;
+    private final List<String> dependencies;
+    private final String updateKey;
+    private final double value;
+    private final String requiredStateKey;
+    private final EngineeringDesignUpdate.ConflictResolution conflictResolution;
+
+    private DependencyModule(String id, List<String> dependencies, String updateKey, double value,
+        String requiredStateKey, EngineeringDesignUpdate.ConflictResolution conflictResolution) {
+      this.id = id;
+      this.dependencies = dependencies;
+      this.updateKey = updateKey;
+      this.value = value;
+      this.requiredStateKey = requiredStateKey;
+      this.conflictResolution = conflictResolution;
+    }
+
+    @Override
+    public String getId() {
+      return id;
+    }
+
+    @Override
+    public List<String> getDependencies() {
+      return dependencies;
+    }
+
+    @Override
+    public EngineeringDesignModuleResult evaluate(ProcessSystem process, EngineeringCaseRunReport caseReport,
+        EngineeringDesignState state, EngineeringCalculationContext context) {
+      if (requiredStateKey != null && !state.contains(requiredStateKey)) {
+        throw new IllegalStateException("Required upstream state was not available: " + requiredStateKey);
+      }
+      EngineeringDesignModuleResult.Builder builder = EngineeringDesignModuleResult.builder(id, "dependency test",
+          "1.0");
+      if (updateKey != null) {
+        builder.addUpdate(EngineeringDesignUpdate.builder(updateKey, value, "bara")
+            .conflictResolution(conflictResolution).build());
+      }
+      return builder.build();
     }
   }
 }
