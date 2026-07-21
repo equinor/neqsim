@@ -39,7 +39,7 @@ the source catalog diverge.
 | ASME-B31.3 | 2022 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
 | ASME-B31.4 | 2022 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
 | ASME-B31.8 | 2022 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
-| API-617 | 8th Ed | compressor design codes | CompressorDesignStandard | CompressorDesignStandard | SCREENING | Preliminary compressor-factor screening only; package and vendor requirements are not implemented. |
+| API-617 | 8th Ed | compressor design codes | CompressorDesignStandard | Api617CompressorDesignKernel | SCREENING | Compressor-casing pressure containment, flange, nozzle-load allowance, and thermal-growth screening only; rotor dynamics, package integration, and vendor conformity are not evaluated. |
 | API-610 | 13th Ed | pump design codes | DesignStandard | PumpApi610DesignKernel | SCREENING | API 610 screening is connected through a pure engineering-workflow adapter; purchased-standard, project, and vendor verification remain required. |
 | API-650 | 13th Ed | pressure vessel design code | PressureVesselDesignStandard | None | CATALOGUED | The registry maps this tank standard to a separator-oriented pressure-vessel class; no tank-code calculation is implemented. |
 | API-620 | 13th Ed | pressure vessel design code | PressureVesselDesignStandard | None | CATALOGUED | The registry maps this tank standard to a separator-oriented pressure-vessel class; no tank-code calculation is implemented. |
@@ -48,7 +48,7 @@ the source catalog diverge.
 | API-521 | 7th Ed | relief system design codes | ValveDesignStandard | Api521ReliefDesignKernel | SCREENING | Scenario aggregation, governing-case selection, relief-area sizing, and accumulated-pressure screening only; scenario completeness, installation, and conformity require independent review. |
 | API-526 | 7th Ed | relief valve design codes | ValveDesignStandard | Api526OrificeSelectionKernel | SCREENING | Standard-orifice area selection only; valve pressure class, dimensions, materials, installation, and vendor certification are not evaluated. |
 | API-5L | 46th Ed | material pipe design codes | MaterialPipeDesignStandard | MaterialPipeDesignStandard | SCREENING | Material-property lookup only; material selection, qualification, and code acceptance are not implemented. |
-| API-12J | 8th Ed | separator process design | SeparatorDesignStandard | SeparatorDesignStandard | SCREENING | Preliminary K-factor and sizing inputs only; standard-specific requirements are not independently validated. |
+| API-12J | 8th Ed | separator process design | SeparatorDesignStandard | Api12JSeparatorDesignKernel | SCREENING | Gravity cut-diameter, K-factor, and liquid residence-time screening only; service applicability, vessel construction, internals, and performance guarantees require independent review. |
 | DNV-ST-F101 | 2021 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
 | DNV-OS-F101 | 2013 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
 | DNV-RP-F105 | 2021 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
@@ -90,12 +90,12 @@ not add calculation support.
 implemented standard, audited maturity, and structured applicability. Kernels must not mutate their
 input or a `ProcessSystem`. Compatibility adapters defensively copy legacy mutable calculators.
 
-`StandardRegistry.getDesignKernel(...)` returns an explicit lookup status. API 610, API 521, and API
-526 have connected adapters and return `IMPLEMENTED`; standards that have not been adapted return
-`NOT_IMPLEMENTED`, never an empty or implied success. Each kernel returns an immutable assessment
-snapshot and always requires engineering review because its maturity remains `SCREENING`.
-Unsupported editions fail closed as `EDITION_NOT_IMPLEMENTED` until separately implemented and
-validated.
+`StandardRegistry.getDesignKernel(...)` returns an explicit lookup status. API 617, API 610, API
+521, API 526, and API 12J have connected adapters and return `IMPLEMENTED`; standards that have not
+been adapted return `NOT_IMPLEMENTED`, never an empty or implied success. Each kernel returns an
+immutable assessment snapshot and always requires engineering review because its maturity remains
+`SCREENING`. Unsupported editions fail closed as `EDITION_NOT_IMPLEMENTED` until separately
+implemented and validated.
 
 The API 521 adapter defensively copies the mutable protected-item basis, requires at least one
 complete credible scenario, selects the governing rate, and records the sizing and accumulated
@@ -103,6 +103,11 @@ pressure checks. The API 526 adapter accepts an explicitly unit-tagged required 
 inadequate result when a single standard orifice cannot cover it. These adapters do not establish
 scenario completeness or qualify valve construction, installation, reaction loads, flare-network
 effects, or vendor certification.
+
+The API 617 adapter defensively copies a compressor-casing configuration before evaluating pressure
+containment, hydrotest, flange-rating, nozzle-load allowance, and thermal-growth screens. The API
+12J adapter uses explicitly unit-tagged cut diameter together with K-factor and liquid residence
+time. Passing either result is not a package, vessel, or performance certification.
 
 ## How to interpret the registry
 
