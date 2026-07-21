@@ -1,7 +1,9 @@
 package neqsim.process.mechanicaldesign;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
@@ -82,6 +84,33 @@ public class SystemMechanicalDesignTest {
 
     private int getCalculationCount() {
       return calculationCount;
+    }
+  }
+
+  private static final class FailingTestEquipment extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000L;
+    private final MechanicalDesign mechanicalDesign;
+
+    private FailingTestEquipment(String name) {
+      super(name);
+      mechanicalDesign = new MechanicalDesign(this) {
+        private static final long serialVersionUID = 1000L;
+
+        @Override
+        public void calcDesign() {
+          throw new IllegalStateException("Deliberate design failure");
+        }
+      };
+    }
+
+    @Override
+    public MechanicalDesign getMechanicalDesign() {
+      return mechanicalDesign;
+    }
+
+    @Override
+    public void run(UUID id) {
+      setCalculationIdentifier(id);
     }
   }
 
@@ -244,6 +273,62 @@ public class SystemMechanicalDesignTest {
     assertEquals(2L, restoredDesign.getDesignCalculationRevision());
     assertEquals(120.0, restoredDesign.getTotalWeight(), 1.0e-12);
     assertEquals(654.0, restoredEquipment.getMechanicalDesign().getPower(), 1.0e-12);
+  }
+
+  @Test
+  void bestEffortCalculationReturnsStructuredPartialResult() {
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
+    process.add(new PersistentTestEquipment("first calculated"));
+    process.add(new FailingTestEquipment("failed equipment"));
+    process.add(new PersistentTestEquipment("second calculated"));
+    SystemMechanicalDesign systemDesign = process.getSystemMechanicalDesign();
+
+    SystemMechanicalDesignResult result = systemDesign.calculate(SystemDesignExecutionMode.BEST_EFFORT);
+
+    assertFalse(result.isComplete());
+    assertTrue(result.hasFailures());
+    assertEquals(2, result.getCalculatedCount());
+    assertEquals(1, result.getFailedCount());
+    assertEquals(0, result.getSkippedCount());
+    assertEquals(3, result.getEquipmentOutcomes().size());
+    assertEquals(EquipmentDesignOutcome.Status.FAILED,
+        result.getEquipmentOutcomes().get(1).getStatus());
+    assertEquals(IllegalStateException.class.getName(),
+        result.getEquipmentOutcomes().get(1).getErrorType());
+    assertEquals("Deliberate design failure", result.getEquipmentOutcomes().get(1).getMessage());
+    assertFalse(systemDesign.hasRunDesignCalculation());
+    assertSame(result, systemDesign.getLastCalculationResult().get());
+    assertEquals(240.0, systemDesign.getTotalWeight(), 1.0e-12);
+
+    neqsim.process.processmodel.ProcessSystem restoredProcess = process.copy();
+    SystemMechanicalDesignResult restoredResult = restoredProcess.getSystemMechanicalDesign()
+        .getLastCalculationResult().get();
+    assertEquals(1, restoredResult.getFailedCount());
+    assertEquals("failed equipment", restoredResult.getEquipmentOutcomes().get(1).getEquipmentName());
+  }
+
+  @Test
+  void failFastCalculationThrowsWithPartialResultAndSkippedEquipment() {
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
+    process.add(new PersistentTestEquipment("calculated"));
+    process.add(new FailingTestEquipment("failed equipment"));
+    process.add(new PersistentTestEquipment("not attempted"));
+    SystemMechanicalDesign systemDesign = process.getSystemMechanicalDesign();
+
+    SystemMechanicalDesignException exception = assertThrows(SystemMechanicalDesignException.class,
+        () -> systemDesign.calculate(SystemDesignExecutionMode.FAIL_FAST));
+    SystemMechanicalDesignResult result = exception.getPartialResult();
+
+    assertFalse(result.isComplete());
+    assertEquals(SystemDesignExecutionMode.FAIL_FAST, result.getExecutionMode());
+    assertEquals(1, result.getCalculatedCount());
+    assertEquals(1, result.getFailedCount());
+    assertEquals(1, result.getSkippedCount());
+    assertEquals(EquipmentDesignOutcome.Status.SKIPPED,
+        result.getEquipmentOutcomes().get(2).getStatus());
+    assertEquals(120.0, systemDesign.getTotalWeight(), 1.0e-12);
+    assertEquals(1L, systemDesign.getDesignCalculationRevision());
+    assertSame(result, systemDesign.getLastCalculationResult().get());
   }
 
   @Test
