@@ -29,6 +29,13 @@ The design framework consists of several integrated components:
 | `EquipmentConstraintRegistry` | Registry of default constraint templates |
 | `DesignOptimizer` | Integrated design-to-optimization workflow |
 | `DesignResult` | Container for optimization results |
+| `EquipmentDesignKernel` | Readiness-gated, standard-specific calculation adapter |
+
+Standard-specific equipment calculations are registered explicitly. The current registry exposes
+screening kernels for API 610 pump checks, API 521 relief-scenario evaluation, and API 526
+standard-orifice selection. Unsupported editions, inapplicable equipment types, and incomplete
+inputs return blocked results. All three remain preliminary engineering screens and do not claim
+certification or construction readiness.
 
 ## Quick Start
 
@@ -827,4 +834,3 @@ Export Pipeline:
 4. **Optimization** finds the maximum flow rate that respects ALL constraints across ALL equipment
 5. The **Active Constraint** is the specific limit currently preventing higher production
 6. The **Bottleneck** is the equipment where that active constraint exists
-
