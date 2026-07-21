@@ -29,8 +29,8 @@ public final class EngineeringDesignDependencyGraph implements Serializable {
   private final List<List<EngineeringDesignModule>> orderedLevels;
 
   private EngineeringDesignDependencyGraph(List<EngineeringDesignModule> configuredModules) {
-    List<EngineeringDesignModule> modules = configuredModules == null
-        ? new ArrayList<EngineeringDesignModule>() : new ArrayList<EngineeringDesignModule>(configuredModules);
+    List<EngineeringDesignModule> modules = configuredModules == null ? new ArrayList<EngineeringDesignModule>()
+        : new ArrayList<EngineeringDesignModule>(configuredModules);
     Collections.sort(modules, new Comparator<EngineeringDesignModule>() {
       @Override
       public int compare(EngineeringDesignModule first, EngineeringDesignModule second) {
@@ -108,8 +108,8 @@ public final class EngineeringDesignDependencyGraph implements Serializable {
     return orderedLevels;
   }
 
-  private static List<List<EngineeringDesignModule>> buildOrderedLevels(
-      Map<String, EngineeringDesignModule> modules, Map<String, List<String>> dependencies) {
+  private static List<List<EngineeringDesignModule>> buildOrderedLevels(Map<String, EngineeringDesignModule> modules,
+      Map<String, List<String>> dependencies) {
     Set<String> remaining = new LinkedHashSet<String>(modules.keySet());
     Set<String> completed = new LinkedHashSet<String>();
     List<List<EngineeringDesignModule>> levels = new ArrayList<List<EngineeringDesignModule>>();
@@ -122,8 +122,7 @@ public final class EngineeringDesignDependencyGraph implements Serializable {
       }
       Collections.sort(ready);
       if (ready.isEmpty()) {
-        throw new EngineeringDesignDependencyException(
-            "Cycle detected among engineering design modules " + remaining);
+        throw new EngineeringDesignDependencyException("Cycle detected among engineering design modules " + remaining);
       }
       List<EngineeringDesignModule> level = new ArrayList<EngineeringDesignModule>();
       for (String id : ready) {
