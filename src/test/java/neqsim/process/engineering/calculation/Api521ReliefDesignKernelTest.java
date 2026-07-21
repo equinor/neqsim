@@ -34,13 +34,12 @@ class Api521ReliefDesignKernelTest {
 
   @Test
   void selectsGoverningScenarioWithoutMutatingInput() throws Exception {
-    ProtectedItem item = new ProtectedItem("V-100", 100.0).setReliefSetPressureBara(100.0)
-        .setBackPressureBara(1.0);
+    ProtectedItem item = new ProtectedItem("V-100", 100.0).setReliefSetPressureBara(100.0).setBackPressureBara(1.0);
     ReliefScenario blockedOutlet = vapourScenario("blocked outlet", ReliefCause.BLOCKED_OUTLET, 1.0);
     ReliefScenario fire = vapourScenario("pool fire", ReliefCause.FIRE, 2.0);
     Api521ReliefDesignKernel.Input input = new Api521ReliefDesignKernel.Input(
-        StandardEdition.defaultEdition(StandardType.API_521), "ProtectedItem", item,
-        Arrays.asList(blockedOutlet, fire), false);
+        StandardEdition.defaultEdition(StandardType.API_521), "ProtectedItem", item, Arrays.asList(blockedOutlet, fire),
+        false);
     item.setMaximumAllowableWorkingPressureBara(1.0).setReliefSetPressureBara(1.0);
 
     EngineeringCalculationResult<Api521ReliefAssessment> result = new Api521ReliefDesignKernel().calculate(input,
