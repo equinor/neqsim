@@ -16,10 +16,10 @@ import neqsim.thermodynamicoperations.BaseOperation;
  * </p>
  *
  * <p>
- * The outer loop solves: Q(T) = [H(T,P,n(T)) - H_spec] / |H_spec| = 0, where n(T) is the equilibrium composition from
- * the reactive TP flash at temperature T. The Newton update uses: dQ/d(1/T) = -T^2 * Cp_total / |H_spec|, where
- * Cp_total = (dH/dT)_P includes both sensible heat and reaction heat effects (since the equilibrium composition shifts
- * with temperature, the system Cp implicitly captures reaction enthalpy contributions via Le Chatelier's principle).
+ * The outer loop solves a thermochemical enthalpy balance. NeqSim's process-stream enthalpy uses a sensible-enthalpy
+ * reference and intentionally excludes ideal-gas formation enthalpies. A reactive flash must therefore add the species
+ * formation-enthalpy inventory to both the supplied feed enthalpy and each trial equilibrium state. The secant updates
+ * capture composition-dependent reaction heat while the first heat-capacity step supplies a robust initial estimate.
  * </p>
  *
  * <p>
@@ -90,6 +90,9 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
   /** Specified enthalpy (J). */
   private double enthalpySpec;
 
+  /** Specified thermochemical enthalpy including ideal-gas formation enthalpies (J). */
+  private double thermochemicalEnthalpySpec;
+
   /** Specified entropy (J/K). If non-zero, overrides enthalpy mode. */
   private double entropySpec = 0.0;
 
@@ -129,6 +132,7 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
   public ReactiveMultiphasePHflash(SystemInterface system, double enthalpySpec) {
     this.system = system;
     this.enthalpySpec = enthalpySpec;
+    this.thermochemicalEnthalpySpec = enthalpySpec + getFormationEnthalpyInventory();
     this.converged = false;
     this.outerIterations = 0;
     this.totalInnerIterations = 0;
@@ -225,7 +229,7 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
    * </p>
    */
   private void solveEnthalpySpec() {
-    double absHspec = Math.abs(enthalpySpec);
+    double absHspec = Math.abs(thermochemicalEnthalpySpec);
     if (absHspec < 1.0e-10) {
       absHspec = 1.0; // Prevent division by zero for near-zero enthalpy
     }
@@ -271,7 +275,7 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
         if (Math.abs(Cp) < 1.0e-20) {
           Cp = 100.0;
         }
-        Tnew = T - (system.getEnthalpy() - enthalpySpec) / Cp;
+        Tnew = T - (getThermochemicalEnthalpy() - thermochemicalEnthalpySpec) / Cp;
       } else {
         // Secant method: interpolate using two successive (T, error) pairs.
         // This naturally captures the effective dH/dT including reaction enthalpy
@@ -284,7 +288,7 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
           if (Math.abs(Cp) < 1.0e-20) {
             Cp = 100.0;
           }
-          Tnew = T - (system.getEnthalpy() - enthalpySpec) / Cp;
+          Tnew = T - (getThermochemicalEnthalpy() - thermochemicalEnthalpySpec) / Cp;
         }
       }
 
@@ -329,9 +333,10 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
       }
 
       logger.debug(
-          "PH iter=" + iter + " T=" + String.format("%.4f", T) + " H=" + String.format("%.4e", system.getEnthalpy())
-              + " Hspec=" + String.format("%.4e", enthalpySpec) + " err=" + String.format("%.3e", error) + " bracket=["
-              + String.format("%.2f", tLow) + "," + String.format("%.2f", tHigh) + "]");
+          "PH iter=" + iter + " T=" + String.format("%.4f", T) + " H_therm="
+              + String.format("%.4e", getThermochemicalEnthalpy()) + " Hspec_therm="
+              + String.format("%.4e", thermochemicalEnthalpySpec) + " err=" + String.format("%.3e", error)
+              + " bracket=[" + String.format("%.2f", tLow) + "," + String.format("%.2f", tHigh) + "]");
 
       // Check convergence
       if (Math.abs(error) < TOL) {
@@ -513,7 +518,36 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
    * @return (H_system - H_spec) / |H_spec|
    */
   private double computeEnthalpyResidual(double absHspec) {
-    return (system.getEnthalpy() - enthalpySpec) / absHspec;
+    return (getThermochemicalEnthalpy() - thermochemicalEnthalpySpec) / absHspec;
+  }
+
+  /**
+   * Calculate the current species formation-enthalpy inventory.
+   *
+   * @return sum of n_i times the ideal-gas formation enthalpy of species i, in J
+   */
+  private double getFormationEnthalpyInventory() {
+    double formationEnthalpy = 0.0;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      for (int componentIndex = 0; componentIndex < system.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
+        double numberOfMoles = system.getPhase(phaseIndex).getComponent(componentIndex)
+            .getNumberOfMolesInPhase();
+        double formationEnthalpyPerMole = system.getPhase(phaseIndex).getComponent(componentIndex)
+            .getIdealGasEnthalpyOfFormation();
+        formationEnthalpy += numberOfMoles * formationEnthalpyPerMole;
+      }
+    }
+    return formationEnthalpy;
+  }
+
+  /**
+   * Get sensible plus formation enthalpy for the current reactive state.
+   *
+   * @return thermochemical enthalpy in J
+   */
+  private double getThermochemicalEnthalpy() {
+    return system.getEnthalpy() + getFormationEnthalpyInventory();
   }
 
   /**
@@ -524,10 +558,8 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
    * </p>
    *
    * <p>
-   * The system Cp includes both sensible heat and implicit reaction heat effects: as T changes, the reactive TP flash
-   * produces a different equilibrium composition, and the resulting Cp from init(2) reflects the full derivative dH/dT
-   * at fixed P and feed composition. For strongly exothermic/endothermic reactions (e.g., WGS, SMR), this correctly
-   * captures the coupling between equilibrium shift and enthalpy.
+   * The system Cp supplies only the initial sensible-enthalpy slope. Subsequent secant steps use complete
+   * thermochemical residuals and therefore capture equilibrium-composition shifts and reaction heat.
    * </p>
    *
    * @param absHspec absolute value of H_spec for normalization
@@ -647,8 +679,9 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
     sb.append("  Inner iters:    ").append(totalInnerIterations).append("\n");
     sb.append("  Phases:         ").append(system.getNumberOfPhases()).append("\n");
     if (converged) {
-      sb.append("  H_spec:         ").append(String.format("%.4e J", enthalpySpec)).append("\n");
-      sb.append("  H_actual:       ").append(String.format("%.4e J", system.getEnthalpy())).append("\n");
+      sb.append("  H_process_spec: ").append(String.format("%.4e J", enthalpySpec)).append("\n");
+      sb.append("  H_therm_spec:   ").append(String.format("%.4e J", thermochemicalEnthalpySpec)).append("\n");
+      sb.append("  H_therm_actual: ").append(String.format("%.4e J", getThermochemicalEnthalpy())).append("\n");
     }
     return sb.toString();
   }
