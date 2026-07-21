@@ -531,8 +531,7 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
           ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(), "mole/sec");
         }
         mixedStream.run();
-        ThermodynamicOperations testOps =
-            new ThermodynamicOperations(mixedStream.getThermoSystem());
+        ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
 
         if (isSetOutTemperature) {
           if (!Double.isNaN(getOutTemperature())) {
