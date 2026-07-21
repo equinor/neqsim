@@ -62,12 +62,21 @@ public final class EngineeringDesignEnvelope implements Serializable {
     }
   }
 
+  private final List<EngineeringMetric> configuredMetrics;
   private final List<DesignCaseResult> caseResults;
   private final Map<String, GoverningValue> governingValues;
 
-  EngineeringDesignEnvelope(List<DesignCaseResult> caseResults, Map<String, GoverningValue> governingValues) {
+  EngineeringDesignEnvelope(List<EngineeringMetric> configuredMetrics, List<DesignCaseResult> caseResults,
+      Map<String, GoverningValue> governingValues) {
+    this.configuredMetrics = Collections
+        .unmodifiableList(new ArrayList<EngineeringMetric>(configuredMetrics));
     this.caseResults = new ArrayList<DesignCaseResult>(caseResults);
     this.governingValues = new LinkedHashMap<String, GoverningValue>(governingValues);
+  }
+
+  /** @return immutable metrics configured for every executable case */
+  public List<EngineeringMetric> getConfiguredMetrics() {
+    return configuredMetrics;
   }
 
   public List<DesignCaseResult> getCaseResults() {
@@ -117,6 +126,47 @@ public final class EngineeringDesignEnvelope implements Serializable {
     return getPartialCaseCount() > 0 || getFailedCaseCount() > 0;
   }
 
+  /** @return configured metric IDs for which no converged case produced a governing value */
+  public List<String> getMissingGoverningMetricIds() {
+    List<String> missing = new ArrayList<String>();
+    for (EngineeringMetric metric : configuredMetrics) {
+      if (!governingValues.containsKey(metric.getId())) {
+        missing.add(metric.getId());
+      }
+    }
+    return Collections.unmodifiableList(missing);
+  }
+
+  /** @return governing metric IDs without any configured acceptance limit */
+  public List<String> getUnassessedGoverningMetricIds() {
+    List<String> unassessed = new ArrayList<String>();
+    for (GoverningValue governing : governingValues.values()) {
+      EngineeringMetric metric = governing.getMetric();
+      if (metric.getLowerAcceptanceLimit() == null && metric.getUpperAcceptanceLimit() == null) {
+        unassessed.add(metric.getId());
+      }
+    }
+    return Collections.unmodifiableList(unassessed);
+  }
+
+  /** @return whether every configured metric has a governing value and no case failed or was partial */
+  public boolean isComplete() {
+    return !hasCaseFailures() && getMissingGoverningMetricIds().isEmpty();
+  }
+
+  /**
+   * Determine whether a complete envelope is within every configured acceptance limit.
+   *
+   * <p>
+   * A complete envelope with unconfigured limits remains review-required and is not reported as accepted.
+   * </p>
+   *
+   * @return true only when complete, fully assessed, and without limit violations
+   */
+  public boolean isAccepted() {
+    return isComplete() && getUnassessedGoverningMetricIds().isEmpty() && getLimitViolationCount() == 0;
+  }
+
   public List<EngineeringCalculation> toCalculations() {
     List<EngineeringCalculation> result = new ArrayList<EngineeringCalculation>();
     for (GoverningValue governing : governingValues.values()) {
@@ -133,6 +183,11 @@ public final class EngineeringDesignEnvelope implements Serializable {
 
   public Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
+    List<Map<String, Object>> metricDefinitions = new ArrayList<Map<String, Object>>();
+    for (EngineeringMetric metric : configuredMetrics) {
+      metricDefinitions.add(metric.toMap());
+    }
+    result.put("configuredMetrics", metricDefinitions);
     List<Map<String, Object>> cases = new ArrayList<Map<String, Object>>();
     for (DesignCaseResult caseResult : caseResults) {
       cases.add(caseResult.toMap());
@@ -150,6 +205,10 @@ public final class EngineeringDesignEnvelope implements Serializable {
     summary.put("failedCaseCount", Integer.valueOf(getFailedCaseCount()));
     summary.put("skippedCaseCount", Integer.valueOf(getSkippedCaseCount()));
     summary.put("limitViolationCount", Integer.valueOf(getLimitViolationCount()));
+    summary.put("missingGoverningMetricIds", new ArrayList<String>(getMissingGoverningMetricIds()));
+    summary.put("unassessedGoverningMetricIds", new ArrayList<String>(getUnassessedGoverningMetricIds()));
+    summary.put("complete", Boolean.valueOf(isComplete()));
+    summary.put("accepted", Boolean.valueOf(isAccepted()));
     result.put("summary", summary);
     return result;
   }
