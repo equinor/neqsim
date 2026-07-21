@@ -208,8 +208,8 @@ public class DesignOptimizer {
     if (feedStreamName == null || feedStreamName.trim().isEmpty()) {
       throw new IllegalArgumentException("Feed stream name is required");
     }
-    if (Double.isNaN(lowerBound) || Double.isInfinite(lowerBound) || lowerBound < 0.0
-        || Double.isNaN(upperBound) || Double.isInfinite(upperBound) || upperBound <= lowerBound) {
+    if (Double.isNaN(lowerBound) || Double.isInfinite(lowerBound) || lowerBound < 0.0 || Double.isNaN(upperBound)
+        || Double.isInfinite(upperBound) || upperBound <= lowerBound) {
       throw new IllegalArgumentException("Optimization bounds must be finite with 0 <= lower < upper");
     }
     if (rateUnit == null || rateUnit.trim().isEmpty()) {
@@ -275,8 +275,7 @@ public class DesignOptimizer {
    * @param maximize {@code true} to maximize, {@code false} to minimize
    * @return this optimizer for chaining
    */
-  public DesignOptimizer setCustomObjective(String name, ToDoubleFunction<ProcessSystem> evaluator,
-      boolean maximize) {
+  public DesignOptimizer setCustomObjective(String name, ToDoubleFunction<ProcessSystem> evaluator, boolean maximize) {
     ProductionOptimizer.ObjectiveType direction = maximize ? ProductionOptimizer.ObjectiveType.MAXIMIZE
         : ProductionOptimizer.ObjectiveType.MINIMIZE;
     customObjective = new ProductionOptimizer.OptimizationObjective(name, evaluator, 1.0, direction);
@@ -420,10 +419,9 @@ public class DesignOptimizer {
     }
     StreamInterface feedStream = requireStream(optimizationFeedStreamName, "optimization feed");
     ProductionOptimizer.SearchMode effectiveSearchMode = effectiveSearchMode();
-    ProductionOptimizer.OptimizationConfig config = new ProductionOptimizer.OptimizationConfig(
-        optimizationLowerBound, optimizationUpperBound).rateUnit(optimizationRateUnit)
-            .tolerance(optimizationTolerance).maxIterations(optimizationMaxIterations)
-            .searchMode(effectiveSearchMode);
+    ProductionOptimizer.OptimizationConfig config = new ProductionOptimizer.OptimizationConfig(optimizationLowerBound,
+        optimizationUpperBound).rateUnit(optimizationRateUnit).tolerance(optimizationTolerance)
+        .maxIterations(optimizationMaxIterations).searchMode(effectiveSearchMode);
     ProductionOptimizer.OptimizationObjective configuredObjective = createObjective(feedStream);
     ProductionOptimizer engine = new ProductionOptimizer();
     ProductionOptimizer.OptimizationResult optimizationResult = engine.optimize(process, feedStream, config,
@@ -449,8 +447,8 @@ public class DesignOptimizer {
 
     for (ProductionOptimizer.ConstraintStatus status : optimizationResult.getConstraintStatuses()) {
       if (status.violated()) {
-        result.addViolation("Optimization constraint " + status.getName() + " violated with margin "
-            + status.getMargin());
+        result.addViolation(
+            "Optimization constraint " + status.getName() + " violated with margin " + status.getMargin());
       }
     }
     if (optimizationResult.isFeasible()) {
@@ -482,14 +480,12 @@ public class DesignOptimizer {
     if (objective == ObjectiveType.MAXIMIZE_OIL) {
       final StreamInterface product = requireConfiguredProductStream();
       return new ProductionOptimizer.OptimizationObjective("oil production",
-          proc -> phaseFlow(product, "oil", optimizationRateUnit), 1.0,
-          ProductionOptimizer.ObjectiveType.MAXIMIZE);
+          proc -> phaseFlow(product, "oil", optimizationRateUnit), 1.0, ProductionOptimizer.ObjectiveType.MAXIMIZE);
     }
     if (objective == ObjectiveType.MAXIMIZE_GAS) {
       final StreamInterface product = requireConfiguredProductStream();
       return new ProductionOptimizer.OptimizationObjective("gas production",
-          proc -> phaseFlow(product, "gas", optimizationRateUnit), 1.0,
-          ProductionOptimizer.ObjectiveType.MAXIMIZE);
+          proc -> phaseFlow(product, "gas", optimizationRateUnit), 1.0, ProductionOptimizer.ObjectiveType.MAXIMIZE);
     }
     return new ProductionOptimizer.OptimizationObjective("total energy", proc -> totalEnergyRequirement(), 1.0,
         ProductionOptimizer.ObjectiveType.MINIMIZE);
