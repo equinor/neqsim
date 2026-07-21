@@ -33,6 +33,7 @@ import neqsim.process.mechanicaldesign.designstandards.PipelineDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.PressureVesselDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.SeparatorDesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.StandardRegistry;
+import neqsim.process.mechanicaldesign.designstandards.StandardSelection;
 import neqsim.process.mechanicaldesign.designstandards.StandardType;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
@@ -1097,6 +1098,25 @@ public class MechanicalDesign implements java.io.Serializable {
     }
     DesignStandard standard = StandardRegistry.createStandard(standardType, version, this);
     String category = standardType.getDesignStandardCategory();
+    getDesignStandard().put(category, standard);
+    hasSetCompanySpecificDesignStandards = true;
+  }
+
+  /**
+   * Set a design standard from an explicit typed selection.
+   *
+   * <p>
+   * Use {@link StandardSelection#strict(StandardType)} for fail-closed selection. The existing
+   * {@link #setDesignStandard(StandardType)} overload remains legacy compatible.
+   * </p>
+   *
+   * @param selection typed edition and selection behavior
+   * @throws neqsim.process.mechanicaldesign.designstandards.StandardSelectionException if a strict
+   *         selection cannot be honored
+   */
+  public void setDesignStandard(StandardSelection selection) {
+    DesignStandard standard = StandardRegistry.createStandard(selection, this);
+    String category = selection.getStandardType().getDesignStandardCategory();
     getDesignStandard().put(category, standard);
     hasSetCompanySpecificDesignStandards = true;
   }
