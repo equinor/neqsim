@@ -75,6 +75,7 @@ public class PumpDocumentationTest {
     assertTrue(assessment.getRequiredCasingPressureBara() <= 25.0);
     assertFalse(assessment.getChecks().isEmpty());
     assertTrue(responseObject.has("api610Screening"));
+    assertTrue(responseObject.has("api610TypeCode"));
     assertEquals("OH2", responseObject.get("api610TypeCode").getAsString());
   }
 }
