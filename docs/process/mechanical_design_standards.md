@@ -84,6 +84,12 @@ the same applicability decision without creating a standard.
 retaining the permissive factory behavior. It may create a metadata-only `DesignStandard`; it does
 not add calculation support.
 
+Process-global `setVersionOverride(...)` and `clearVersionOverrides()` are deprecated. New code
+should retain a `StandardEdition` in each `StandardSelection`, then call
+`StandardRegistry.requireDesignKernel(selection)` when an executable implementation is required.
+The require call distinguishes missing kernel support from an unsupported edition. See the
+[typed-kernel migration guide](standard_design_kernel_migration.md) for a staged compatibility path.
+
 ## Consolidated design kernels
 
 `EquipmentDesignKernel<I, O>` extends the existing typed engineering-calculation contract with the
