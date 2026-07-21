@@ -49,8 +49,9 @@ public final class StandardDesignKernelVerificationSuite {
     Api12JSeparatorDesignKernel separatorKernel = new Api12JSeparatorDesignKernel();
 
     EngineeringBenchmarkSuite suite = new EngineeringBenchmarkSuite(SUITE_ID, REVISION)
-        .requireMethod(methodKey(pumpKernel)).requireMethod(methodKey(reliefKernel)).requireMethod(methodKey(orificeKernel))
-        .requireMethod(methodKey(compressorKernel)).requireMethod(methodKey(separatorKernel));
+        .requireMethod(methodKey(pumpKernel)).requireMethod(methodKey(reliefKernel))
+        .requireMethod(methodKey(orificeKernel)).requireMethod(methodKey(compressorKernel))
+        .requireMethod(methodKey(separatorKernel));
     suite.add(pumpBenchmark(pumpKernel));
     suite.add(reliefBenchmark(reliefKernel));
     suite.add(orificeBenchmark(orificeKernel));
@@ -68,8 +69,8 @@ public final class StandardDesignKernelVerificationSuite {
         .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
         .check("selectedDriverPower", 30.0, value == null ? FAILURE_SENTINEL : value.getSelectedDriverPowerKw(), "kW",
             1.0e-12, 1.0e-12)
-        .check("screeningPass", 1.0,
-            value != null && value.getAssessmentStatus() == AssessmentStatus.PASS ? 1.0 : 0.0, "flag", 0.0, 0.0)
+        .check("screeningPass", 1.0, value != null && value.getAssessmentStatus() == AssessmentStatus.PASS ? 1.0 : 0.0,
+            "flag", 0.0, 0.0)
         .build();
   }
 
@@ -87,32 +88,29 @@ public final class StandardDesignKernelVerificationSuite {
         .check("governingReliefRate", 2.0, value == null ? FAILURE_SENTINEL : value.getGoverningReliefRateKgPerS(),
             "kg/s", 1.0e-12, 1.0e-12)
         .check("capacityAdequate", 1.0, value != null && value.isCapacityAdequate() ? 1.0 : 0.0, "flag", 0.0, 0.0)
-        .check("accumulatedPressureAccepted", 1.0,
-            value != null && value.isAccumulatedPressureAccepted() ? 1.0 : 0.0, "flag", 0.0, 0.0)
+        .check("accumulatedPressureAccepted", 1.0, value != null && value.isAccumulatedPressureAccepted() ? 1.0 : 0.0,
+            "flag", 0.0, 0.0)
         .build();
   }
 
   private static EngineeringValidationBenchmark orificeBenchmark(Api526OrificeSelectionKernel kernel) {
     StandardEdition edition = StandardEdition.defaultEdition(StandardType.API_526);
-    Api526OrificeSelectionAssessment customary = kernel
-        .calculate(new Api526OrificeSelectionKernel.Input(edition, "SafetyValve", 0.503,
-            Api526OrificeSelectionKernel.AreaUnit.SQUARE_INCH), null)
-        .getValue();
+    Api526OrificeSelectionAssessment customary = kernel.calculate(new Api526OrificeSelectionKernel.Input(edition,
+        "SafetyValve", 0.503, Api526OrificeSelectionKernel.AreaUnit.SQUARE_INCH), null).getValue();
     Api526OrificeSelectionAssessment si = kernel
         .calculate(new Api526OrificeSelectionKernel.Input(edition, "SafetyReliefValve",
             0.503 * SQUARE_METRES_PER_SQUARE_INCH, Api526OrificeSelectionKernel.AreaUnit.SQUARE_METRE), null)
         .getValue();
     return baseline("api-526-boundary-and-unit-equivalence", kernel)
-        .check("selectedStandardArea", 0.503,
-            customary == null ? FAILURE_SENTINEL : customary.getSelectedAreaIn2(), "in2", 1.0e-12, 1.0e-12)
+        .check("selectedStandardArea", 0.503, customary == null ? FAILURE_SENTINEL : customary.getSelectedAreaIn2(),
+            "in2", 1.0e-12, 1.0e-12)
         .check("requiredAreaSiConversion", 0.503, si == null ? FAILURE_SENTINEL : si.getRequiredAreaIn2(), "in2",
             1.0e-12, 1.0e-12)
         .check("unitEquivalentRequiredArea", 0.0,
             customary == null || si == null ? FAILURE_SENTINEL
                 : Math.abs(customary.getRequiredAreaIn2() - si.getRequiredAreaIn2()),
             "in2", 1.0e-12, 0.0)
-        .check("adequate", 1.0, customary != null && customary.isAdequate() ? 1.0 : 0.0, "flag", 0.0, 0.0)
-        .build();
+        .check("adequate", 1.0, customary != null && customary.isAdequate() ? 1.0 : 0.0, "flag", 0.0, 0.0).build();
   }
 
   private static EngineeringValidationBenchmark compressorBenchmark(Api617CompressorDesignKernel kernel) {
@@ -122,8 +120,8 @@ public final class StandardDesignKernelVerificationSuite {
     Api617CompressorAssessment value = result.getValue();
     return baseline("api-617-pressure-containment", kernel)
         .check("calculatedReviewRequired", 1.0, calculated(result), "flag", 0.0, 0.0)
-        .check("selectedWallThickness", 12.7,
-            value == null ? FAILURE_SENTINEL : value.getSelectedWallThicknessMm(), "mm", 1.0e-12, 1.0e-12)
+        .check("selectedWallThickness", 12.7, value == null ? FAILURE_SENTINEL : value.getSelectedWallThicknessMm(),
+            "mm", 1.0e-12, 1.0e-12)
         .check("hydroTestPressure", 7.5, value == null ? FAILURE_SENTINEL : value.getHydroTestPressureMPa(), "MPa",
             1.0e-12, 1.0e-12)
         .build();
@@ -131,29 +129,24 @@ public final class StandardDesignKernelVerificationSuite {
 
   private static EngineeringValidationBenchmark separatorBenchmark(Api12JSeparatorDesignKernel kernel) {
     StandardEdition edition = StandardEdition.defaultEdition(StandardType.API_12J);
-    Api12JSeparatorAssessment micrometre = kernel
-        .calculate(new Api12JSeparatorDesignKernel.Input(edition, "Separator", 80.0,
-            Api12JSeparatorDesignKernel.DiameterUnit.MICROMETRE, 0.08, false, 240.0,
-            Api12JSeparatorDesignKernel.Orientation.HORIZONTAL, false), null)
-        .getValue();
-    Api12JSeparatorAssessment si = kernel
-        .calculate(new Api12JSeparatorDesignKernel.Input(edition, "Separator", 80.0e-6,
-            Api12JSeparatorDesignKernel.DiameterUnit.METRE, 0.08, false, 240.0,
-            Api12JSeparatorDesignKernel.Orientation.HORIZONTAL, false), null)
-        .getValue();
+    Api12JSeparatorAssessment micrometre = kernel.calculate(new Api12JSeparatorDesignKernel.Input(edition, "Separator",
+        80.0, Api12JSeparatorDesignKernel.DiameterUnit.MICROMETRE, 0.08, false, 240.0,
+        Api12JSeparatorDesignKernel.Orientation.HORIZONTAL, false), null).getValue();
+    Api12JSeparatorAssessment si = kernel.calculate(new Api12JSeparatorDesignKernel.Input(edition, "Separator", 80.0e-6,
+        Api12JSeparatorDesignKernel.DiameterUnit.METRE, 0.08, false, 240.0,
+        Api12JSeparatorDesignKernel.Orientation.HORIZONTAL, false), null).getValue();
     return baseline("api-12j-screen-and-unit-equivalence", kernel)
         .check("gravityCutDiameter", 80.0,
-            micrometre == null ? FAILURE_SENTINEL : micrometre.getGravityCutDiameterMicrometre(), "micrometre",
-            1.0e-12, 1.0e-12)
-        .check("kFactorUtilization", 2.0 / 3.0,
-            micrometre == null ? FAILURE_SENTINEL : micrometre.getKFactorUtilization(), "fraction", 1.0e-12,
+            micrometre == null ? FAILURE_SENTINEL : micrometre.getGravityCutDiameterMicrometre(), "micrometre", 1.0e-12,
             1.0e-12)
+        .check("kFactorUtilization", 2.0 / 3.0,
+            micrometre == null ? FAILURE_SENTINEL : micrometre.getKFactorUtilization(), "fraction", 1.0e-12, 1.0e-12)
         .check("unitEquivalentCutDiameter", 0.0,
             micrometre == null || si == null ? FAILURE_SENTINEL
                 : Math.abs(micrometre.getGravityCutDiameterMicrometre() - si.getGravityCutDiameterMicrometre()),
             "micrometre", 1.0e-12, 0.0)
-        .check("screeningPass", 1.0,
-            micrometre != null && micrometre.areAllScreeningCriteriaPassing() ? 1.0 : 0.0, "flag", 0.0, 0.0)
+        .check("screeningPass", 1.0, micrometre != null && micrometre.areAllScreeningCriteriaPassing() ? 1.0 : 0.0,
+            "flag", 0.0, 0.0)
         .build();
   }
 
@@ -184,7 +177,7 @@ public final class StandardDesignKernelVerificationSuite {
     calculator.setNpsh(6.0, 4.0, DataSource.VENDOR_CURVE);
     calculator.setPressureBasis(5.0, 20.0, 90.0, DataSource.VENDOR_CURVE);
     calculator.setHydrostaticTestPressureBara(30.0);
-    calculator.setDriverCriteria(1.10, new double[] {22.0, 30.0, 37.0});
+    calculator.setDriverCriteria(1.10, new double[] { 22.0, 30.0, 37.0 });
     calculator.setBearingData(BearingType.BALL, 100.0, 5.0);
     calculator.setMechanicalEvidence(0.03, 4000.0, 0.8, 2.5);
     return calculator;
