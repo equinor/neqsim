@@ -88,10 +88,9 @@ public final class StandardRegistry {
    * Create a standard from a typed edition selection.
    *
    * <p>
-   * Strict selections fail closed when the standard is catalog-only, its calculation is not
-   * connected to this registry, the equipment context is missing, or the standard is not listed
-   * for the equipment type. Legacy-compatible selections preserve the permissive factory behavior
-   * while still using an explicit, reproducible edition.
+   * Strict selections fail closed when the standard is catalog-only, its calculation is not connected to this registry,
+   * the equipment context is missing, or the standard is not listed for the equipment type. Legacy-compatible
+   * selections preserve the permissive factory behavior while still using an explicit, reproducible edition.
    * </p>
    *
    * @param selection typed standard selection
