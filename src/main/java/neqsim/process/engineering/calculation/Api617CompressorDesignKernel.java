@@ -150,8 +150,7 @@ public final class Api617CompressorDesignKernel
     }
     StandardApplicability decision = applicability(input);
     if (!decision.isApplicable()) {
-      readiness.addBlocker("API617_NOT_APPLICABLE", decision.getReason(),
-          "Use API 617 only for Compressor equipment");
+      readiness.addBlocker("API617_NOT_APPLICABLE", decision.getReason(), "Use API 617 only for Compressor equipment");
     }
     if (!supports(input.getEdition())) {
       readiness.addBlocker("API617_EDITION_NOT_IMPLEMENTED",
@@ -233,8 +232,8 @@ public final class Api617CompressorDesignKernel
           "Select a supported casing material grade");
     }
     if (!Double.isFinite(calculator.getCorrosionAllowanceMm()) || calculator.getCorrosionAllowanceMm() < 0.0) {
-      readiness.addBlocker("API617_CORROSION_ALLOWANCE_INVALID",
-          "Corrosion allowance must be finite and non-negative", "Supply the project corrosion allowance");
+      readiness.addBlocker("API617_CORROSION_ALLOWANCE_INVALID", "Corrosion allowance must be finite and non-negative",
+          "Supply the project corrosion allowance");
     }
     if (!Double.isFinite(calculator.getJointEfficiency()) || calculator.getJointEfficiency() <= 0.0
         || calculator.getJointEfficiency() > 1.0) {
