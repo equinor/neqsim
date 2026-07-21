@@ -106,8 +106,7 @@ public final class PumpApi610DesignKernel
 
     StandardApplicability decision = applicability(input);
     if (!decision.isApplicable()) {
-      readiness.addBlocker("API610_NOT_APPLICABLE", decision.getReason(),
-          "Use API 610 only for a Pump equipment type");
+      readiness.addBlocker("API610_NOT_APPLICABLE", decision.getReason(), "Use API 610 only for a Pump equipment type");
     }
     if (!supports(input.getEdition())) {
       readiness.addBlocker("API610_EDITION_NOT_IMPLEMENTED",
@@ -124,13 +123,12 @@ public final class PumpApi610DesignKernel
   @Override
   public EngineeringCalculationResult<PumpApi610DesignAssessment> calculate(Input input,
       EngineeringCalculationContext context) {
-    EngineeringCalculationContext effectiveContext =
-        context == null ? EngineeringCalculationContext.builder().build() : context;
+    EngineeringCalculationContext effectiveContext = context == null ? EngineeringCalculationContext.builder().build()
+        : context;
     CalculationReadiness readiness = assess(input, effectiveContext);
-    EngineeringCalculationResult.Builder<PumpApi610DesignAssessment> result =
-        EngineeringCalculationResult.<PumpApi610DesignAssessment>builder("api-610-pump-screening", getMethod(),
-            getMethodVersion())
-            .context(effectiveContext).readiness(readiness);
+    EngineeringCalculationResult.Builder<PumpApi610DesignAssessment> result = EngineeringCalculationResult
+        .<PumpApi610DesignAssessment>builder("api-610-pump-screening", getMethod(), getMethodVersion())
+        .context(effectiveContext).readiness(readiness);
 
     if (input == null || !readiness.isReady()) {
       return result.status(EngineeringCalculationResult.Status.BLOCKED)
