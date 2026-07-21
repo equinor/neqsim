@@ -246,8 +246,8 @@ public class PumpApi610DesignCalculator implements Serializable {
    * Copy all input data and screening criteria without copying calculated results.
    *
    * <p>
-   * The engineering-workflow adapter uses this method to execute the legacy mutable calculator
-   * without mutating caller-owned state.
+   * The engineering-workflow adapter uses this method to execute the legacy mutable calculator without mutating
+   * caller-owned state.
    * </p>
    *
    * @return independent calculator configuration
