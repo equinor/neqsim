@@ -381,8 +381,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
    */
   public void setCompanySpecificDesignStandards(String name) {
     for (int i = 0; i < this.processSystem.getUnitOperations().size(); i++) {
-      MechanicalDesign mechanicalDesign = getOrInitializeMechanicalDesign(
-          this.getProcess().getUnitOperations().get(i));
+      MechanicalDesign mechanicalDesign = getOrInitializeMechanicalDesign(this.getProcess().getUnitOperations().get(i));
       if (mechanicalDesign != null) {
         mechanicalDesign.setCompanySpecificDesignStandards(name);
       }
