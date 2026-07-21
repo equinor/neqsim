@@ -35,6 +35,13 @@ public final class StandardSupportAudit {
     String registryImplementation = StandardRegistry.getMappedImplementationClass(standardType).getSimpleName();
 
     switch (standardType) {
+    case API_617:
+      EquipmentDesignKernelRegistry.Lookup compressorImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING,
+          compressorImplementation.isImplemented(), registryImplementation,
+          compressorImplementation.getImplementationClassName(),
+          "Compressor-casing pressure containment, flange, nozzle-load allowance, and thermal-growth screening only; "
+              + "rotor dynamics, package integration, and vendor conformity are not evaluated.");
     case API_610:
       EquipmentDesignKernelRegistry.Lookup pumpImplementation = StandardRegistry.getDesignKernel(standardType);
       return new StandardSupport(standardType, StandardSupportLevel.SCREENING, pumpImplementation.isImplemented(),
@@ -63,6 +70,13 @@ public final class StandardSupportAudit {
           registryImplementation, orificeImplementation.getImplementationClassName(),
           "Standard-orifice area selection only; valve pressure class, dimensions, materials, installation, and vendor "
               + "certification are not evaluated.");
+    case API_12J:
+      EquipmentDesignKernelRegistry.Lookup separatorImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING,
+          separatorImplementation.isImplemented(), registryImplementation,
+          separatorImplementation.getImplementationClassName(),
+          "Gravity cut-diameter, K-factor, and liquid residence-time screening only; service applicability, vessel "
+              + "construction, internals, and performance guarantees require independent review.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }
