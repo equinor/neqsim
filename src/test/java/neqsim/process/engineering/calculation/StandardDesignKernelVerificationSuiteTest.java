@@ -59,8 +59,8 @@ class StandardDesignKernelVerificationSuiteTest {
     }
 
     EquipmentDesignKernelRegistry.Lookup relief = EquipmentDesignKernelRegistry.lookup(StandardType.API_521);
-    assertFalse(relief.supports(StandardEdition.of(StandardType.API_521, "7th Ed",
-        Collections.singletonList("Project amendment A"))));
+    assertFalse(relief.supports(
+        StandardEdition.of(StandardType.API_521, "7th Ed", Collections.singletonList("Project amendment A"))));
   }
 
   @SuppressWarnings("unchecked")

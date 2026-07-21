@@ -150,8 +150,8 @@ public final class StandardRegistry {
           support.getLimitation());
     }
     if (!support.isRegistryConnected()) {
-      throw new StandardSelectionException(StandardSelectionException.Reason.NOT_REGISTRY_CONNECTED, standardType,
-          null, support.getLimitation());
+      throw new StandardSelectionException(StandardSelectionException.Reason.NOT_REGISTRY_CONNECTED, standardType, null,
+          support.getLimitation());
     }
   }
 
@@ -176,16 +176,14 @@ public final class StandardRegistry {
   }
 
   private static String replacementMessage(StandardCatalogEntry catalogEntry) {
-    return catalogEntry.getSupersededBy() == null ? ""
-        : "; replacement is " + catalogEntry.getSupersededBy().getCode();
+    return catalogEntry.getSupersededBy() == null ? "" : "; replacement is " + catalogEntry.getSupersededBy().getCode();
   }
 
   private static void validateNoAmendments(StandardSelection selection) {
     if (!selection.getEdition().getAmendments().isEmpty()) {
       throw new StandardSelectionException(StandardSelectionException.Reason.AMENDMENTS_NOT_IMPLEMENTED,
           selection.getStandardType(), null,
-          "No executable method implements the selected project amendments: "
-              + selection.getEdition().getAmendments());
+          "No executable method implements the selected project amendments: " + selection.getEdition().getAmendments());
     }
   }
 

@@ -71,8 +71,8 @@ class StandardRegistryTest {
 
   @Test
   void testRecognizedUnsupportedLegacyCalculationsFailClosed() {
-    PipelineDesignStandard pipeline = (PipelineDesignStandard) StandardRegistry
-        .createStandard(StandardType.ASME_B31_3, mechanicalDesign);
+    PipelineDesignStandard pipeline = (PipelineDesignStandard) StandardRegistry.createStandard(StandardType.ASME_B31_3,
+        mechanicalDesign);
     PressureVesselDesignStandard storageTank = (PressureVesselDesignStandard) StandardRegistry
         .createStandard(StandardType.API_620, mechanicalDesign);
 

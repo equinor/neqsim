@@ -10,25 +10,17 @@ import java.util.Map;
 public final class StandardCatalog {
   private static final String VERIFIED_ON = "2026-07-21";
   private static final String NORSOK_P = "https://standard.no/en/sectors/petroleum/norsok-standards/p-process";
-  private static final String NORSOK_L =
-      "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/l-piping--layout/";
-  private static final String NORSOK_M =
-      "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/m-material/";
-  private static final String NORSOK_S =
-      "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/s-safety-she/";
+  private static final String NORSOK_L = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/l-piping--layout/";
+  private static final String NORSOK_M = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/m-material/";
+  private static final String NORSOK_S = "https://standard.no/en/sectors/energi-og-klima/petroleum/norsok-standard-categories/s-safety-she/";
   private static final String NORSOK_I = "https://standard.no/en/sectors/petroleum/norsok-standards/i-instrumentation";
   private static final String ASME_BPVC = "https://www.asme.org/codes-standards/bpvc-standards/bpvc-2025";
-  private static final String ASME_B313 =
-      "https://www.asme.org/codes-standards/find-codes-standards/b313-2018-process-piping";
-  private static final String ASME_B314 =
-      "https://www.asme.org/codes-standards/find-codes-standards/b31-4-pipeline-transportation-systems-liquids-slurries";
-  private static final String ASME_B318 =
-      "https://www.asme.org/codes-standards/find-codes-standards/b31-8-gas-transmission-distribution-piping-systems";
+  private static final String ASME_B313 = "https://www.asme.org/codes-standards/find-codes-standards/b313-2018-process-piping";
+  private static final String ASME_B314 = "https://www.asme.org/codes-standards/find-codes-standards/b31-4-pipeline-transportation-systems-liquids-slurries";
+  private static final String ASME_B318 = "https://www.asme.org/codes-standards/find-codes-standards/b31-8-gas-transmission-distribution-piping-systems";
   private static final String API_CATALOG = "https://www.api.org/products-and-services/standards/digital-catalog";
-  private static final String API_REFINING_2025 =
-      "https://www.api.org/-/media/files/publications/2025-catalog/06_refining_2025.pdf";
-  private static final String DNV_F101 =
-      "https://www.dnv.com/energy/standards-guidelines/dnv-st-f101-submarine-pipeline-systems/";
+  private static final String API_REFINING_2025 = "https://www.api.org/-/media/files/publications/2025-catalog/06_refining_2025.pdf";
+  private static final String DNV_F101 = "https://www.dnv.com/energy/standards-guidelines/dnv-st-f101-submarine-pipeline-systems/";
   private static final String IEC_61511_SOURCE = "https://webstore.iec.ch/en/publication/5527";
   private static final Map<StandardType, StandardCatalogEntry> ENTRIES;
 
@@ -56,8 +48,8 @@ public final class StandardCatalog {
     current(entries, API_CATALOG, StandardType.API_617, StandardType.API_610, StandardType.API_650,
         StandardType.API_620, StandardType.API_660, StandardType.API_661, StandardType.API_521,
         StandardType.API_520_PART_1, StandardType.API_520_PART_2, StandardType.API_527, StandardType.API_2000,
-        StandardType.API_614, StandardType.API_618, StandardType.API_625, StandardType.API_676,
-        StandardType.API_685, StandardType.API_5L, StandardType.API_12J);
+        StandardType.API_614, StandardType.API_618, StandardType.API_625, StandardType.API_676, StandardType.API_685,
+        StandardType.API_5L, StandardType.API_12J);
     current(entries, API_REFINING_2025, StandardType.API_526);
 
     current(entries, DNV_F101, StandardType.DNV_ST_F101);

@@ -113,15 +113,14 @@ class StandardSelectionTest {
         () -> StandardRegistry.createStandard(StandardSelection.strict(StandardType.API_610), pumpDesign));
     assertEquals(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, currentEdition.getReason());
 
-    DesignStandard historical = StandardRegistry.createStandard(
-        StandardSelection.historical(StandardEdition.of(StandardType.API_610, "13th Ed")), pumpDesign);
+    DesignStandard historical = StandardRegistry
+        .createStandard(StandardSelection.historical(StandardEdition.of(StandardType.API_610, "13th Ed")), pumpDesign);
     assertEquals("API-610 13th Ed", historical.getStandardName());
   }
 
   @Test
   void testExplicitSelectionCanRequireExactKernelEdition() {
-    StandardSelection selection = StandardSelection
-        .historical(StandardEdition.of(StandardType.API_610, "13th Ed"));
+    StandardSelection selection = StandardSelection.historical(StandardEdition.of(StandardType.API_610, "13th Ed"));
 
     EquipmentDesignKernel<?, ?> kernel = StandardRegistry.requireDesignKernel(selection);
 
@@ -193,9 +192,8 @@ class StandardSelectionTest {
 
     assertEquals(StandardEdition.defaultEdition(StandardType.NORSOK_P_002), pack.getEdition());
     assertEquals(3, pack.getCapabilities().size());
-    StandardSelectionException missing = assertThrows(StandardSelectionException.class,
-        () -> StandardRegistry.requireRequirementPack(
-            StandardSelection.strictRequirements(StandardType.ASME_VIII_DIV1)));
+    StandardSelectionException missing = assertThrows(StandardSelectionException.class, () -> StandardRegistry
+        .requireRequirementPack(StandardSelection.strictRequirements(StandardType.ASME_VIII_DIV1)));
     assertEquals(StandardSelectionException.Reason.REQUIREMENT_PACK_NOT_IMPLEMENTED, missing.getReason());
     StandardSelectionException wrongContract = assertThrows(StandardSelectionException.class,
         () -> StandardRegistry.requireRequirementPack(StandardSelection.strict(StandardType.API_521)));

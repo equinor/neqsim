@@ -254,8 +254,8 @@ class EngineeringDesignLoopTest {
         .addMetric(EngineeringMetric.equipmentPressure("FEED").setAcceptanceRange(null, Double.valueOf(1.0)));
 
     EngineeringDesignLoopResult result = EngineeringDesignLoop.run(process(), rejectedCases,
-        Arrays.<EngineeringDesignModule>asList(new FeedPressureDesignModule()), EngineeringDesignLoopOptions.builder()
-            .maximumIterations(3).requireAcceptedCaseEnvelope(true).build());
+        Arrays.<EngineeringDesignModule>asList(new FeedPressureDesignModule()),
+        EngineeringDesignLoopOptions.builder().maximumIterations(3).requireAcceptedCaseEnvelope(true).build());
 
     assertFalse(result.isConverged());
     EngineeringCaseRunReport lastReport = result.getIterations().get(2).getCaseReport();

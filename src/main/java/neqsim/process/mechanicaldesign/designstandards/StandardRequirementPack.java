@@ -22,8 +22,7 @@ public final class StandardRequirementPack implements Serializable {
     if (capabilities == null || capabilities.isEmpty()) {
       throw new IllegalArgumentException("capabilities cannot be null or empty");
     }
-    this.capabilities = Collections
-        .unmodifiableList(new ArrayList<StandardRequirementCapability>(capabilities));
+    this.capabilities = Collections.unmodifiableList(new ArrayList<StandardRequirementCapability>(capabilities));
   }
 
   /** @return explicit standard and edition basis */

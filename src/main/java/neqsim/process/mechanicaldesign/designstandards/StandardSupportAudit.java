@@ -113,9 +113,8 @@ public final class StandardSupportAudit {
       EquipmentDesignKernelRegistry.Lookup kernel = StandardRegistry.getDesignKernel(standardType);
       table.append("| ").append(escapeMarkdown(standardType.getCode())).append(" | ")
           .append(escapeMarkdown(standardType.getDefaultVersion())).append(" | ")
-          .append(catalogEntry.getLifecycleStatus().name()).append(" | ")
-          .append(publisherLink(catalogEntry)).append(" | ")
-          .append(escapeMarkdown(standardType.getDesignStandardCategory())).append(" | ")
+          .append(catalogEntry.getLifecycleStatus().name()).append(" | ").append(publisherLink(catalogEntry))
+          .append(" | ").append(escapeMarkdown(standardType.getDesignStandardCategory())).append(" | ")
           .append(escapeMarkdown(support.getRegistryImplementation())).append(" | ")
           .append(escapeMarkdown(support.getCalculationImplementation())).append(" | ")
           .append(support.getSupportLevel().name()).append(" | ")

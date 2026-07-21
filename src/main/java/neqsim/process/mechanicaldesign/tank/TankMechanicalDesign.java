@@ -24,8 +24,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  *
  * <p>
  * The class is not an edition-specific API 650 or API 620 implementation and does not establish code conformity,
- * fabrication readiness, or vendor acceptance. API 620 selections remain catalog-only in the strict standards
- * registry.
+ * fabrication readiness, or vendor acceptance. API 620 selections remain catalog-only in the strict standards registry.
  * </p>
  *
  * <p>
