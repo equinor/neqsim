@@ -29,6 +29,25 @@ public final class StandardApplicability implements Serializable {
     this.reason = reason == null ? "" : reason;
   }
 
+  /**
+   * Assess a standard against a simple equipment class name.
+   *
+   * @param standardType standard to assess
+   * @param equipmentType simple equipment class name
+   * @return structured applicability decision
+   */
+  public static StandardApplicability assess(StandardType standardType, String equipmentType) {
+    if (standardType == null) {
+      throw new IllegalArgumentException("standardType cannot be null");
+    }
+    if (equipmentType == null || equipmentType.trim().isEmpty()) {
+      return unknown(standardType, "An equipment type is required to assess applicability.");
+    }
+    String normalizedEquipmentType = equipmentType.trim();
+    return standardType.appliesTo(normalizedEquipmentType) ? applicable(standardType, normalizedEquipmentType)
+        : notApplicable(standardType, normalizedEquipmentType);
+  }
+
   static StandardApplicability applicable(StandardType standardType, String equipmentType) {
     return new StandardApplicability(standardType, equipmentType, Status.APPLICABLE,
         standardType.getCode() + " lists " + equipmentType + " as applicable equipment.");
