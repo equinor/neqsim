@@ -164,6 +164,37 @@ class MixerTest {
     assertEquals(10.0, testMixer.getOutletStream().getPressure("bara"), 1e-1);
   }
 
+  @Test
+  void testOutletEnthalpyMatchesInletSum() {
+    SystemSrkEos hotFluid = new SystemSrkEos(338.15, 85.0);
+    hotFluid.addComponent("methane", 0.86);
+    hotFluid.addComponent("ethane", 0.14);
+    hotFluid.setMixingRule("classic");
+
+    SystemSrkEos coolFluid = new SystemSrkEos(328.15, 82.0);
+    coolFluid.addComponent("methane", 0.92);
+    coolFluid.addComponent("ethane", 0.08);
+    coolFluid.setMixingRule("classic");
+
+    Stream hotStream = new Stream("hot stream", hotFluid);
+    hotStream.setFlowRate(15000.0, "kg/hr");
+    hotStream.run();
+
+    Stream coolStream = new Stream("cool stream", coolFluid);
+    coolStream.setFlowRate(10000.0, "kg/hr");
+    coolStream.run();
+
+    double inletEnthalpy =
+        hotStream.getFluid().getEnthalpy() + coolStream.getFluid().getEnthalpy();
+
+    Mixer testMixer = new Mixer("enthalpy closure mixer");
+    testMixer.addStream(hotStream);
+    testMixer.addStream(coolStream);
+    testMixer.run();
+
+    assertEquals(inletEnthalpy, testMixer.getOutletStream().getFluid().getEnthalpy(), 1e-3);
+  }
+
   /**
    * Test method for mass balance conservation in Mixer.
    */
