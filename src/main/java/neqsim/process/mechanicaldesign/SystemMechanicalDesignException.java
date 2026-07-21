@@ -18,8 +18,7 @@ public class SystemMechanicalDesignException extends RuntimeException {
    * @param cause original equipment calculation exception
    * @param partialResult structured result including calculated, failed, and skipped equipment
    */
-  public SystemMechanicalDesignException(String message, Throwable cause,
-      SystemMechanicalDesignResult partialResult) {
+  public SystemMechanicalDesignException(String message, Throwable cause, SystemMechanicalDesignResult partialResult) {
     super(message, cause);
     this.partialResult = partialResult;
   }
