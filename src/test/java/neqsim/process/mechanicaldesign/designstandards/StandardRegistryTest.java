@@ -46,7 +46,8 @@ class StandardRegistryTest {
 
   @Test
   void testCreateStandardThrowsOnNull() {
-    assertThrows(IllegalArgumentException.class, () -> StandardRegistry.createStandard(null, mechanicalDesign));
+    assertThrows(IllegalArgumentException.class,
+        () -> StandardRegistry.createStandard((StandardType) null, mechanicalDesign));
   }
 
   @Test
