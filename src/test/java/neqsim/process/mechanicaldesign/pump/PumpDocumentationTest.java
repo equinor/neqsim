@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 
 import neqsim.process.equipment.pump.Pump;
@@ -62,6 +64,7 @@ public class PumpDocumentationTest {
     PumpApi610DesignCalculator assessment = design.getApi610Assessment();
     PumpApi610DesignCalculator.AssessmentStatus status = assessment.getAssessmentStatus();
     String responseJson = design.getResponse().toJson();
+    JsonObject responseObject = JsonParser.parseString(responseJson).getAsJsonObject();
 
     assertNotNull(status);
     assertEquals(DataSource.VENDOR_CURVE, assessment.getBepSource());
@@ -71,7 +74,7 @@ public class PumpDocumentationTest {
     assertTrue(assessment.getSelectedDriverPowerKw() > powerKw);
     assertTrue(assessment.getRequiredCasingPressureBara() <= 25.0);
     assertFalse(assessment.getChecks().isEmpty());
-    assertTrue(responseJson.contains("\"api610Screening\""));
-    assertTrue(responseJson.contains("\"api610TypeCode\":\"OH2\""));
+    assertTrue(responseObject.has("api610Screening"));
+    assertEquals("OH2", responseObject.get("api610TypeCode").getAsString());
   }
 }
