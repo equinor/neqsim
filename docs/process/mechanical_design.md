@@ -161,6 +161,10 @@ sysMecDesign.setCompanySpecificDesignStandards("Equinor");
 // Run design calculations for all equipment
 sysMecDesign.runDesignCalculation();
 
+// The aggregate is cached on the ProcessSystem and survives copy/serialization
+boolean calculated = sysMecDesign.hasRunDesignCalculation();
+long revision = sysMecDesign.getDesignCalculationRevision();
+
 // Access aggregated results
 double totalWeight = sysMecDesign.getTotalWeight();           // kg
 double totalVolume = sysMecDesign.getTotalVolume();           // m³
@@ -177,6 +181,13 @@ Map<String, Integer> countByType = sysMecDesign.getEquipmentCountByType();
 // Print summary report
 System.out.println(sysMecDesign.generateSummaryReport());
 ```
+
+System-wide calculation reuses each equipment's current `MechanicalDesign` object. Standards,
+limits, and sizing inputs configured before the call are therefore preserved. Repeated calls
+replace the aggregate totals instead of accumulating them and increment the calculation revision.
+The system-level result is serialized with `ProcessSystem`, including its equipment summaries and
+breakdowns. Collection getters return defensive snapshots, so modifying a returned summary does not
+alter the stored design state.
 
 ## JSON Export
 
