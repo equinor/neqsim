@@ -146,6 +146,7 @@ This documentation is organized into the following sections:
 |----------|-------------|
 | [EQUIPMENT_DESIGN_PARAMETERS.md](EQUIPMENT_DESIGN_PARAMETERS) | **Equipment design parameters, autoSize vs MechanicalDesign guide** |
 | [mechanical_design_standards.md](mechanical_design_standards) | Design standards (NORSOK, ASME, API, DNV, etc.) |
+| [standard_design_kernel_migration.md](standard_design_kernel_migration) | Migrate global editions, metadata factories, mutable calculators, and legacy case execution to typed kernels |
 | [mechanical_design_database.md](mechanical_design_database) | Data sources, database schemas, and CSV configuration |
 | [pipeline_mechanical_design.md](pipeline_mechanical_design) | Pipeline mechanical design (wall thickness, stress, buckling, corrosion) |
 | [topside_piping_design.md](topside_piping_design) | **Topside piping design (velocity, support, vibration per ASME B31.3)** |
@@ -196,6 +197,7 @@ This documentation is organized into the following sections:
 | Electrolyzers | [electrolyzers.md](equipment/electrolyzers) | Electrolyzer, CO2Electrolyzer |
 | Filters | [filters.md](equipment/filters) | Particle, coalescing, strainer, and media filters with dynamic loading and mechanical design |
 | H2S Scavengers | [H2S_scavenger_guide.md](H2S_scavenger_guide) | H2S chemical scavenging (triazine, glyoxal, iron sponge) |
+| **Sulfur Recovery** | [sulfur_recovery.md](sulfur_recovery) | Integrated Claus furnace, WHB, converters, sulfur condensers, TGTU recycle, incineration, and KPIs |
 | Reactors | [reactors.md](equipment/reactors) | GibbsReactor |
 | Pipelines | [pipelines.md](equipment/pipelines) | Pipeline, AdiabaticPipe, TopsidePiping, Riser |
 | **Water Hammer Screening** | [water_hammer_implementation.md](../wiki/water_hammer_implementation.md) | WaterHammerPipe, WaterHammerStudy, MCP runWaterHammer |
