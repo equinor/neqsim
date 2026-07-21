@@ -796,7 +796,6 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       if (directionOk && energyOk && heatFeasible && (!UATest || uaOk) && !localMin) {
         logger.debug("✓ No reset on attempt " + attempt);
         logger.debug("With Streams " + outletTemps);
-        localMin = false; // once triggered, don't persist
         return;
       } else {
         logger.debug("✗ reset on attempt " + attempt + ": " + String.join("; ", msgs));
@@ -822,6 +821,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
           double guess = lower + fraction * (upper - lower);
           outletTemps.set(idx, guess);
         }
+        // A detected stall forces exactly one new starting point. Keeping this flag true
+        // makes the acceptance condition unreachable and exhausts every restart attempt.
+        localMin = false;
 
         logger.debug("Outlet temps before solving: " + outletTemps);
         logger.debug("Unknown flags: " + unknownOutlets);
