@@ -51,6 +51,10 @@ class StandardSupportAuditTest {
         StandardSupportAudit.getSupport(StandardType.ASME_VIII_DIV1).getSupportLevel());
     assertEquals(StandardSupportLevel.SCREENING,
         StandardSupportAudit.getSupport(StandardType.API_12J).getSupportLevel());
+    assertEquals("Api617CompressorDesignKernel",
+        StandardSupportAudit.getSupport(StandardType.API_617).getCalculationImplementation());
+    assertEquals("Api12JSeparatorDesignKernel",
+        StandardSupportAudit.getSupport(StandardType.API_12J).getCalculationImplementation());
     assertTrue(StandardSupportAudit.getSupport(StandardType.API_12J).isRegistryConnected());
     assertFalse(StandardSupportAudit.getSupport(StandardType.API_660).isRegistryConnected());
   }
