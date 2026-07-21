@@ -84,8 +84,8 @@ public final class Api521ReliefDesignKernel
 
     private static ProtectedItem copy(ProtectedItem item) {
       return new ProtectedItem(item.getName(), item.getMaximumAllowableWorkingPressureBara())
-          .setReliefSetPressureBara(item.getReliefSetPressureBara())
-          .setDesignTemperatureC(item.getDesignTemperatureC()).setBackPressureBara(item.getBackPressureBara());
+          .setReliefSetPressureBara(item.getReliefSetPressureBara()).setDesignTemperatureC(item.getDesignTemperatureC())
+          .setBackPressureBara(item.getBackPressureBara());
     }
   }
 
