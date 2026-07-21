@@ -491,8 +491,8 @@ class DesignFrameworkTest {
     process.add(feed);
 
     DesignResult result = DesignOptimizer.forProcess(process)
-        .configureFeedRateOptimization("Optimization feed", 1000.0, 2000.0, "kg/hr")
-        .setSearchConvergence(1.0, 20).setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION).optimize();
+        .configureFeedRateOptimization("Optimization feed", 1000.0, 2000.0, "kg/hr").setSearchConvergence(1.0, 20)
+        .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION).optimize();
 
     assertEquals(DesignResult.ExecutionStatus.OPTIMIZED, result.getExecutionStatus());
     assertTrue(result.isConverged());
