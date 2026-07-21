@@ -63,6 +63,27 @@ the source catalog diverge.
 | PD-5500 | 2021 | pressure vessel design code | PressureVesselDesignStandard | PressureVesselDesignStandard | SCREENING | Generic thin-wall separator screening only; edition-specific clauses and complete vessel checks are not implemented. |
 <!-- END GENERATED STANDARD SUPPORT MATRIX -->
 
+## Typed standard selection
+
+New code can select an explicit edition and any project amendments without depending on the
+registry's process-wide version overrides:
+
+```java
+StandardEdition edition = StandardEdition.of(StandardType.API_12J, "8th Ed",
+    Arrays.asList("Project amendment A", "Corrigendum 1"));
+mechanicalDesign.setDesignStandard(StandardSelection.strict(edition));
+```
+
+Strict selection fails closed with a `StandardSelectionException` when the entry is catalog-only,
+its calculation is not connected to the registry, the equipment context is missing, or the
+standard is not listed for that equipment type. The exception exposes a machine-readable reason so
+applications do not need to parse its message. `StandardRegistry.assessApplicability(...)` provides
+the same applicability decision without creating a standard.
+
+`StandardSelection.legacy(...)` is available for migrations that need an explicit edition while
+retaining the permissive factory behavior. It may create a metadata-only `DesignStandard`; it does
+not add calculation support.
+
 ## How to interpret the registry
 
 `StandardRegistry.createStandard(...)` remains backward compatible. The factory class shown in the
