@@ -112,6 +112,12 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   /** Maximum equipment height [m]. */
   private double maxEquipmentHeight = 0.0;
 
+  /** Whether at least one complete system design calculation has been run. */
+  private boolean designCalculationRun = false;
+
+  /** Monotonic revision number incremented after every complete system design calculation. */
+  private long designCalculationRevision = 0L;
+
   // ============================================================================
   // Equipment Design Summary Inner Class
   // ============================================================================
@@ -143,6 +149,25 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     public EquipmentDesignSummary(String name, String type) {
       this.name = name;
       this.type = type;
+    }
+
+    /**
+     * Copy constructor used when exposing a defensive result snapshot.
+     *
+     * @param source summary to copy
+     */
+    private EquipmentDesignSummary(EquipmentDesignSummary source) {
+      this.name = source.name;
+      this.type = source.type;
+      this.weight = source.weight;
+      this.designPressure = source.designPressure;
+      this.designTemperature = source.designTemperature;
+      this.power = source.power;
+      this.duty = source.duty;
+      this.dimensions = source.dimensions;
+      this.length = source.length;
+      this.width = source.width;
+      this.height = source.height;
     }
 
     /**
@@ -356,7 +381,11 @@ public class SystemMechanicalDesign implements java.io.Serializable {
    */
   public void setCompanySpecificDesignStandards(String name) {
     for (int i = 0; i < this.processSystem.getUnitOperations().size(); i++) {
-      this.getProcess().getUnitOperations().get(i).getMechanicalDesign().setCompanySpecificDesignStandards(name);
+      MechanicalDesign mechanicalDesign = getOrInitializeMechanicalDesign(
+          this.getProcess().getUnitOperations().get(i));
+      if (mechanicalDesign != null) {
+        mechanicalDesign.setCompanySpecificDesignStandards(name);
+      }
     }
   }
 
@@ -364,8 +393,9 @@ public class SystemMechanicalDesign implements java.io.Serializable {
    * Run design calculations for all equipment in the process system.
    *
    * <p>
-   * This method iterates through all unit operations, initializes their mechanical design, runs calculations, and
-   * aggregates the results. After calling this method, all getters will return updated values.
+   * This method iterates through all unit operations, initializes missing mechanical designs, runs calculations, and
+   * aggregates the results. Existing mechanical design objects are retained so caller-supplied standards, limits, and
+   * sizing inputs are not discarded. After calling this method, all getters will return updated values.
    * </p>
    */
   public void runDesignCalculation() {
@@ -380,12 +410,14 @@ public class SystemMechanicalDesign implements java.io.Serializable {
           continue;
         }
 
-        equipment.initMechanicalDesign();
-        MechanicalDesign mecDesign = equipment.getMechanicalDesign();
+        MechanicalDesign mecDesign = getOrInitializeMechanicalDesign(equipment);
+        if (mecDesign == null) {
+          throw new IllegalStateException("Mechanical design is not available for " + equipment.getName());
+        }
         mecDesign.calcDesign();
 
         // Accumulate totals
-        double plotSpace = mecDesign.getModuleHeight() * mecDesign.getModuleLength();
+        double plotSpace = mecDesign.getModuleWidth() * mecDesign.getModuleLength();
         totalPlotSpace += plotSpace;
         totalVolume += mecDesign.getVolumeTotal();
         totalWeight += mecDesign.getWeightTotal();
@@ -414,6 +446,27 @@ public class SystemMechanicalDesign implements java.io.Serializable {
         logger.error("Error processing equipment " + names.get(i) + ": " + ex.getMessage(), ex);
       }
     }
+
+    designCalculationRun = true;
+    designCalculationRevision++;
+  }
+
+  /**
+   * Return the current mechanical design, initializing it only when the equipment has no design yet.
+   *
+   * @param equipment process equipment
+   * @return persistent mechanical design, or {@code null} when the equipment provides none
+   */
+  private MechanicalDesign getOrInitializeMechanicalDesign(ProcessEquipmentInterface equipment) {
+    if (equipment == null) {
+      return null;
+    }
+    MechanicalDesign mechanicalDesign = equipment.getMechanicalDesign();
+    if (mechanicalDesign == null) {
+      equipment.initMechanicalDesign();
+      mechanicalDesign = equipment.getMechanicalDesign();
+    }
+    return mechanicalDesign;
   }
 
   /**
@@ -592,6 +645,9 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     String dims = String.format("%.1fm x %.1fm x %.1fm", mecDesign.getModuleLength(), mecDesign.getModuleWidth(),
         mecDesign.getModuleHeight());
     summary.setDimensions(dims);
+    summary.setLength(mecDesign.getModuleLength());
+    summary.setWidth(mecDesign.getModuleWidth());
+    summary.setHeight(mecDesign.getModuleHeight());
 
     return summary;
   }
@@ -601,7 +657,11 @@ public class SystemMechanicalDesign implements java.io.Serializable {
    */
   public void setDesign() {
     for (int i = 0; i < this.processSystem.getUnitOperations().size(); i++) {
-      this.processSystem.getUnitOperations().get(i).getMechanicalDesign().setDesign();
+      MechanicalDesign mechanicalDesign = getOrInitializeMechanicalDesign(
+          this.processSystem.getUnitOperations().get(i));
+      if (mechanicalDesign != null) {
+        mechanicalDesign.setDesign();
+      }
     }
   }
 
@@ -678,7 +738,29 @@ public class SystemMechanicalDesign implements java.io.Serializable {
    * @return list of equipment design summaries
    */
   public List<EquipmentDesignSummary> getEquipmentList() {
-    return new ArrayList<EquipmentDesignSummary>(equipmentList);
+    List<EquipmentDesignSummary> result = new ArrayList<EquipmentDesignSummary>();
+    for (EquipmentDesignSummary summary : equipmentList) {
+      result.add(new EquipmentDesignSummary(summary));
+    }
+    return result;
+  }
+
+  /**
+   * Check whether this object contains a completed aggregate calculation.
+   *
+   * @return {@code true} after {@link #runDesignCalculation()} completes
+   */
+  public boolean hasRunDesignCalculation() {
+    return designCalculationRun;
+  }
+
+  /**
+   * Get the persistent calculation revision.
+   *
+   * @return number of completed calls to {@link #runDesignCalculation()}
+   */
+  public long getDesignCalculationRevision() {
+    return designCalculationRevision;
   }
 
   /**
@@ -963,10 +1045,14 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   public double getMechanicalWeight(String unit) {
     double weight = 0.0;
     for (int i = 0; i < processSystem.getUnitOperations().size(); i++) {
-      processSystem.getUnitOperations().get(i).getMechanicalDesign().calcDesign();
-      System.out.println("Name " + processSystem.getUnitOperations().get(i).getName() + "  weight "
-          + processSystem.getUnitOperations().get(i).getMechanicalDesign().getWeightTotal());
-      weight += processSystem.getUnitOperations().get(i).getMechanicalDesign().getWeightTotal();
+      ProcessEquipmentInterface equipment = processSystem.getUnitOperations().get(i);
+      MechanicalDesign mechanicalDesign = getOrInitializeMechanicalDesign(equipment);
+      if (mechanicalDesign == null) {
+        continue;
+      }
+      mechanicalDesign.calcDesign();
+      logger.debug("Equipment {} mechanical weight {} kg", equipment.getName(), mechanicalDesign.getWeightTotal());
+      weight += mechanicalDesign.getWeightTotal();
     }
     return weight;
   }
@@ -1067,7 +1153,7 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   @Override
   public int hashCode() {
     return Objects.hash(numberOfModules, processSystem, totalPlotSpace, totalVolume, totalWeight, totalPowerRequired,
-        totalPowerRecovered, totalHeatingDuty, totalCoolingDuty);
+        totalPowerRecovered, totalHeatingDuty, totalCoolingDuty, designCalculationRun, designCalculationRevision);
   }
 
   /** {@inheritDoc} */
@@ -1088,6 +1174,10 @@ public class SystemMechanicalDesign implements java.io.Serializable {
         && Double.doubleToLongBits(totalVolume) == Double.doubleToLongBits(other.totalVolume)
         && Double.doubleToLongBits(totalWeight) == Double.doubleToLongBits(other.totalWeight)
         && Double.doubleToLongBits(totalPowerRequired) == Double.doubleToLongBits(other.totalPowerRequired)
-        && Double.doubleToLongBits(totalPowerRecovered) == Double.doubleToLongBits(other.totalPowerRecovered);
+        && Double.doubleToLongBits(totalPowerRecovered) == Double.doubleToLongBits(other.totalPowerRecovered)
+        && Double.doubleToLongBits(totalHeatingDuty) == Double.doubleToLongBits(other.totalHeatingDuty)
+        && Double.doubleToLongBits(totalCoolingDuty) == Double.doubleToLongBits(other.totalCoolingDuty)
+        && designCalculationRun == other.designCalculationRun
+        && designCalculationRevision == other.designCalculationRevision;
   }
 }
