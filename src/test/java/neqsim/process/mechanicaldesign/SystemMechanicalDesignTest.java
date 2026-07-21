@@ -1,10 +1,15 @@
 package neqsim.process.mechanicaldesign;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import neqsim.process.costestimation.CostEstimateBaseClass;
+import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pipeline.AdiabaticPipe;
 import neqsim.process.equipment.pump.Pump;
@@ -23,6 +28,62 @@ import neqsim.thermo.system.SystemSrkEos;
 
 public class SystemMechanicalDesignTest {
   private static final Logger logger = LogManager.getLogger(SystemMechanicalDesignTest.class);
+
+  private static final class PersistentTestEquipment extends ProcessEquipmentBaseClass {
+    private static final long serialVersionUID = 1000L;
+    private CountingMechanicalDesign mechanicalDesign;
+    private int initializationCount;
+
+    private PersistentTestEquipment(String name) {
+      super(name);
+      mechanicalDesign = new CountingMechanicalDesign(this);
+    }
+
+    @Override
+    public MechanicalDesign getMechanicalDesign() {
+      return mechanicalDesign;
+    }
+
+    @Override
+    public void initMechanicalDesign() {
+      initializationCount++;
+      mechanicalDesign = new CountingMechanicalDesign(this);
+    }
+
+    @Override
+    public void run(UUID id) {
+      setCalculationIdentifier(id);
+    }
+
+    private int getInitializationCount() {
+      return initializationCount;
+    }
+  }
+
+  private static final class CountingMechanicalDesign extends MechanicalDesign {
+    private static final long serialVersionUID = 1000L;
+    private int calculationCount;
+
+    private CountingMechanicalDesign(PersistentTestEquipment equipment) {
+      super(equipment);
+    }
+
+    @Override
+    public void calcDesign() {
+      calculationCount++;
+      setWeightTotal(120.0);
+      setVolumeTotal(12.0);
+      setModuleLength(4.0);
+      setModuleWidth(3.0);
+      setModuleHeight(2.0);
+      setMaxOperationPressure(50.0);
+      setMaxOperationTemperature(60.0);
+    }
+
+    private int getCalculationCount() {
+      return calculationCount;
+    }
+  }
 
   static neqsim.process.processmodel.ProcessSystem operations;
 
@@ -124,6 +185,63 @@ public class SystemMechanicalDesignTest {
     operations.add(recycle1);
 
     operations.run();
+  }
+
+  @Test
+  void processHelpersPreserveConfiguredMechanicalDesign() {
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
+    PersistentTestEquipment equipment = new PersistentTestEquipment("configured equipment");
+    process.add(equipment);
+    CountingMechanicalDesign configuredDesign = (CountingMechanicalDesign) equipment.getMechanicalDesign();
+    configuredDesign.setMaxDesignPower(321.0);
+
+    process.initAllMechanicalDesigns();
+    process.runAllMechanicalDesigns();
+    MechanicalDesign selectedDesign = process.getEquipmentMechanicalDesign(equipment.getName());
+
+    assertSame(configuredDesign, selectedDesign);
+    assertSame(configuredDesign, equipment.getMechanicalDesign());
+    assertEquals(0, equipment.getInitializationCount());
+    assertEquals(2, configuredDesign.getCalculationCount());
+    assertEquals(321.0, configuredDesign.getPower(), 1.0e-12);
+  }
+
+  @Test
+  void aggregateStateIsRepeatableDefensiveAndPersistent() {
+    neqsim.process.processmodel.ProcessSystem process = new neqsim.process.processmodel.ProcessSystem();
+    PersistentTestEquipment equipment = new PersistentTestEquipment("persistent equipment");
+    process.add(equipment);
+    CountingMechanicalDesign configuredDesign = (CountingMechanicalDesign) equipment.getMechanicalDesign();
+    configuredDesign.setMaxDesignPower(654.0);
+    SystemMechanicalDesign systemDesign = process.getSystemMechanicalDesign();
+
+    systemDesign.runDesignCalculation();
+    systemDesign.runDesignCalculation();
+
+    assertSame(configuredDesign, equipment.getMechanicalDesign());
+    assertEquals(0, equipment.getInitializationCount());
+    assertEquals(2, configuredDesign.getCalculationCount());
+    assertTrue(systemDesign.hasRunDesignCalculation());
+    assertEquals(2L, systemDesign.getDesignCalculationRevision());
+    assertEquals(120.0, systemDesign.getTotalWeight(), 1.0e-12);
+    assertEquals(12.0, systemDesign.getTotalVolume(), 1.0e-12);
+    assertEquals(12.0, systemDesign.getTotalPlotSpace(), 1.0e-12);
+    assertEquals(1, systemDesign.getEquipmentList().size());
+    assertEquals(4.0, systemDesign.getEquipmentList().get(0).getLength(), 1.0e-12);
+
+    systemDesign.getEquipmentList().get(0).setWeight(999.0);
+    assertEquals(120.0, systemDesign.getEquipmentList().get(0).getWeight(), 1.0e-12);
+
+    neqsim.process.processmodel.ProcessSystem restoredProcess = process.copy();
+    SystemMechanicalDesign restoredDesign = restoredProcess.getSystemMechanicalDesign();
+    PersistentTestEquipment restoredEquipment = (PersistentTestEquipment) restoredProcess
+        .getUnit("persistent equipment");
+
+    assertSame(restoredProcess, restoredDesign.getProcess());
+    assertTrue(restoredDesign.hasRunDesignCalculation());
+    assertEquals(2L, restoredDesign.getDesignCalculationRevision());
+    assertEquals(120.0, restoredDesign.getTotalWeight(), 1.0e-12);
+    assertEquals(654.0, restoredEquipment.getMechanicalDesign().getPower(), 1.0e-12);
   }
 
   @Test
