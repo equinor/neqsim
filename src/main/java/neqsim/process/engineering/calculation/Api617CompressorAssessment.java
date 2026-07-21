@@ -162,8 +162,7 @@ public final class Api617CompressorAssessment implements Serializable {
 
   /** @return whether every implemented mechanical screen passes */
   public boolean areAllScreeningChecksPassing() {
-    return hydroTestPasses && flangeRatingPasses && thermalGrowthPasses && splitLineBoltsPass
-        && designIssues.isEmpty();
+    return hydroTestPasses && flangeRatingPasses && thermalGrowthPasses && splitLineBoltsPass && designIssues.isEmpty();
   }
 
   /** @return serializable assessment representation */
