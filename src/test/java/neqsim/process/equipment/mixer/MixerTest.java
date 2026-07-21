@@ -183,16 +183,15 @@ class MixerTest {
     coolStream.setFlowRate(10000.0, "kg/hr");
     coolStream.run();
 
-    double inletEnthalpy =
-        hotStream.getFluid().getEnthalpy() + coolStream.getFluid().getEnthalpy();
+    double inletEnthalpyJ =
+        hotStream.getFluid().getEnthalpy("J") + coolStream.getFluid().getEnthalpy("J");
 
     Mixer testMixer = new Mixer("enthalpy closure mixer");
     testMixer.addStream(hotStream);
     testMixer.addStream(coolStream);
     testMixer.run();
 
-    assertEquals(inletEnthalpy, testMixer.getOutletStream().getFluid().getEnthalpy(), 1e-3);
-  }
+    assertEquals(inletEnthalpyJ, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-3);
 
   /**
    * Test method for mass balance conservation in Mixer.
