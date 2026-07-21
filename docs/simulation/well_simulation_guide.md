@@ -81,7 +81,8 @@ q = C × (P_res² - P_wf²)^n
 ```
 
 ```java
-well.setFetkovichParameters(0.012, 0.85, 200.0);  // C, n, and reservoir pressure (bara)
+// C, n, and reservoir pressure (bara)
+well.setFetkovichParameters(0.012, 0.85, 200.0);
 ```
 
 #### 4. Backpressure Equation
@@ -95,7 +96,8 @@ P_res² - P_wf² = A×q + B×q²
 Where A is the Darcy term and B is the non-Darcy (rate-dependent) term.
 
 ```java
-well.setBackpressureParameters(0.5, 0.001, 200.0);  // A, B, and reservoir pressure (bara)
+// A, B, and reservoir pressure (bara)
+well.setBackpressureParameters(0.5, 0.001, 200.0);
 ```
 
 #### 5. Table-Driven IPR
