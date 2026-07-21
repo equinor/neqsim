@@ -37,8 +37,7 @@ public final class SystemMechanicalDesignResult implements Serializable {
       List<EquipmentDesignOutcome> equipmentOutcomes) {
     this.revision = revision;
     this.executionMode = executionMode;
-    this.equipmentOutcomes = Collections
-        .unmodifiableList(new ArrayList<EquipmentDesignOutcome>(equipmentOutcomes));
+    this.equipmentOutcomes = Collections.unmodifiableList(new ArrayList<EquipmentDesignOutcome>(equipmentOutcomes));
 
     int successful = 0;
     int failed = 0;
