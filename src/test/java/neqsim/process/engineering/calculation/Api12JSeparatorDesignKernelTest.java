@@ -14,7 +14,7 @@ class Api12JSeparatorDesignKernelTest {
   @Test
   void passingSiAndMicrometreInputsAreEquivalent() {
     Api12JSeparatorDesignKernel kernel = new Api12JSeparatorDesignKernel();
-    StandardEdition edition = StandardEdition.defaultEdition(StandardType.API_12J);
+    StandardEdition edition = StandardEdition.of(StandardType.API_12J, "8th Ed");
     Api12JSeparatorDesignKernel.Input micrometre = new Api12JSeparatorDesignKernel.Input(edition, "Separator", 80.0,
         Api12JSeparatorDesignKernel.DiameterUnit.MICROMETRE, 0.08, false, 240.0,
         Api12JSeparatorDesignKernel.Orientation.HORIZONTAL, false);
@@ -34,7 +34,7 @@ class Api12JSeparatorDesignKernelTest {
   @Test
   void nonPassingCriteriaRemainCalculatedFindings() {
     Api12JSeparatorDesignKernel.Input input = new Api12JSeparatorDesignKernel.Input(
-        StandardEdition.defaultEdition(StandardType.API_12J), "ThreePhaseSeparator", 150.0,
+        StandardEdition.of(StandardType.API_12J, "8th Ed"), "ThreePhaseSeparator", 150.0,
         Api12JSeparatorDesignKernel.DiameterUnit.MICROMETRE, 0.30, false, 200.0,
         Api12JSeparatorDesignKernel.Orientation.VERTICAL, true);
 

@@ -1,9 +1,9 @@
 package neqsim.process.engineering.calculation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import java.util.Collections;
 import org.junit.jupiter.api.Test;
 import neqsim.process.mechanicaldesign.designstandards.StandardApplicability;
 import neqsim.process.mechanicaldesign.designstandards.StandardEdition;
@@ -25,7 +25,8 @@ class PumpApi610DesignKernelTest {
     assertEquals(EquipmentDesignKernelRegistry.Status.IMPLEMENTED, implemented.getStatus());
     assertEquals("PumpApi610DesignKernel", implemented.getImplementationClassName());
     assertEquals(StandardSupportLevel.SCREENING, implemented.getMaturity());
-    assertTrue(implemented.supports(StandardEdition.defaultEdition(StandardType.API_610)));
+    assertFalse(implemented.supports(StandardEdition.defaultEdition(StandardType.API_610)));
+    assertTrue(implemented.supports(StandardEdition.of(StandardType.API_610, "13th Ed")));
     assertTrue(implemented.requireKernel() instanceof PumpApi610DesignKernel);
     assertEquals(EquipmentDesignKernelRegistry.Status.NOT_IMPLEMENTED, absent.getStatus());
     assertEquals("None", absent.getImplementationClassName());
@@ -35,8 +36,7 @@ class PumpApi610DesignKernelTest {
   @Test
   void calculatesWithoutMutatingLegacyConfiguration() {
     PumpApi610DesignCalculator legacyConfiguration = passingConfiguration();
-    StandardEdition edition = StandardEdition.of(StandardType.API_610, "13th Ed",
-        Collections.singletonList("Project amendment A"));
+    StandardEdition edition = StandardEdition.of(StandardType.API_610, "13th Ed");
     PumpApi610DesignKernel.Input input = new PumpApi610DesignKernel.Input(edition, "Pump", legacyConfiguration);
     PumpApi610DesignKernel kernel = new PumpApi610DesignKernel();
     EngineeringCalculationContext context = EngineeringCalculationContext.builder().designCaseId("rated")
