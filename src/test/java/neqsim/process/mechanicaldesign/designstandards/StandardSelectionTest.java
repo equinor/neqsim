@@ -11,6 +11,8 @@ import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.engineering.calculation.EquipmentDesignKernelRegistry;
+import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 
@@ -90,11 +92,20 @@ class StandardSelectionTest {
   }
 
   @Test
-  void testStrictSelectionRejectsDisconnectedCalculation() {
-    StandardSelectionException exception = assertThrows(StandardSelectionException.class,
-        () -> StandardRegistry.createStandard(StandardSelection.strict(StandardType.API_610), mechanicalDesign));
+  void testStrictSelectionUsesConsolidatedApi610Kernel() {
+    MechanicalDesign pumpDesign = new Pump("Test Pump").getMechanicalDesign();
 
-    assertEquals(StandardSelectionException.Reason.NOT_REGISTRY_CONNECTED, exception.getReason());
+    DesignStandard standard =
+        StandardRegistry.createStandard(StandardSelection.strict(StandardType.API_610), pumpDesign);
+
+    assertEquals("API-610 13th Ed", standard.getStandardName());
+    assertEquals(EquipmentDesignKernelRegistry.Status.IMPLEMENTED,
+        StandardRegistry.getDesignKernel(StandardType.API_610).getStatus());
+
+    StandardSelectionException oldEdition = assertThrows(StandardSelectionException.class,
+        () -> StandardRegistry.createStandard(
+            StandardSelection.strict(StandardEdition.of(StandardType.API_610, "12th Ed")), pumpDesign));
+    assertEquals(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, oldEdition.getReason());
   }
 
   @Test
