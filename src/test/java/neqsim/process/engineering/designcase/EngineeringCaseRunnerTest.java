@@ -78,20 +78,19 @@ class EngineeringCaseRunnerTest {
     assertSame(partial, requireException.getPartialReport());
 
     EngineeringCaseExecutionException executionException = assertThrows(EngineeringCaseExecutionException.class,
-        () -> EngineeringCaseRunner.run(process, cases,
-            EngineeringCaseRunOptions.builder()
-                .failurePolicy(EngineeringCaseFailurePolicy.THROW_WITH_PARTIAL_RESULT).build()));
+        () -> EngineeringCaseRunner.run(process, cases, EngineeringCaseRunOptions.builder()
+            .failurePolicy(EngineeringCaseFailurePolicy.THROW_WITH_PARTIAL_RESULT).build()));
     assertFalse(executionException.getPartialReport().isComplete());
   }
 
   @Test
   void acceptanceRequiresConfiguredLimitsAndNoViolation() {
     ProcessSystem process = process();
-    EngineeringCaseSet passing = new EngineeringCaseSet("passing-limits")
-        .addCase(caseAtPressure("normal", 50.0, 10)).addCase(caseAtPressure("maximum", 80.0, 20))
+    EngineeringCaseSet passing = new EngineeringCaseSet("passing-limits").addCase(caseAtPressure("normal", 50.0, 10))
+        .addCase(caseAtPressure("maximum", 80.0, 20))
         .addMetric(EngineeringMetric.equipmentPressure("FEED").setAcceptanceRange(null, Double.valueOf(90.0)));
-    EngineeringCaseSet failing = new EngineeringCaseSet("failing-limits")
-        .addCase(caseAtPressure("normal", 50.0, 10)).addCase(caseAtPressure("maximum", 80.0, 20))
+    EngineeringCaseSet failing = new EngineeringCaseSet("failing-limits").addCase(caseAtPressure("normal", 50.0, 10))
+        .addCase(caseAtPressure("maximum", 80.0, 20))
         .addMetric(EngineeringMetric.equipmentPressure("FEED").setAcceptanceRange(null, Double.valueOf(70.0)));
 
     EngineeringCaseRunReport accepted = EngineeringCaseRunner.run(process, passing,
