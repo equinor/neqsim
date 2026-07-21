@@ -32,10 +32,11 @@ The design framework consists of several integrated components:
 | `EquipmentDesignKernel` | Readiness-gated, standard-specific calculation adapter |
 
 Standard-specific equipment calculations are registered explicitly. The current registry exposes
-screening kernels for API 610 pump checks, API 521 relief-scenario evaluation, and API 526
-standard-orifice selection. Unsupported editions, inapplicable equipment types, and incomplete
-inputs return blocked results. All three remain preliminary engineering screens and do not claim
-certification or construction readiness.
+screening kernels for API 617 compressor-casing checks, API 610 pump checks, API 521 relief-scenario
+evaluation, API 526 standard-orifice selection, and API 12J separator-performance checks.
+Unsupported editions, inapplicable equipment types, and incomplete inputs return blocked results.
+All remain preliminary engineering screens and do not claim certification or construction
+readiness.
 
 ## Quick Start
 
