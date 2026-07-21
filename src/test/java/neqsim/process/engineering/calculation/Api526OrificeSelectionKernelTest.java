@@ -27,15 +27,15 @@ class Api526OrificeSelectionKernelTest {
   void exactBoundaryAndUnitEquivalentInputsSelectSameOrifice() {
     Api526OrificeSelectionKernel kernel = new Api526OrificeSelectionKernel();
     StandardEdition edition = StandardEdition.defaultEdition(StandardType.API_526);
-    Api526OrificeSelectionKernel.Input customary = new Api526OrificeSelectionKernel.Input(edition, "SafetyValve",
-        0.503, Api526OrificeSelectionKernel.AreaUnit.SQUARE_INCH);
+    Api526OrificeSelectionKernel.Input customary = new Api526OrificeSelectionKernel.Input(edition, "SafetyValve", 0.503,
+        Api526OrificeSelectionKernel.AreaUnit.SQUARE_INCH);
     Api526OrificeSelectionKernel.Input si = new Api526OrificeSelectionKernel.Input(edition, "SafetyReliefValve",
         0.503 * SQUARE_METRES_PER_SQUARE_INCH, Api526OrificeSelectionKernel.AreaUnit.SQUARE_METRE);
 
     Api526OrificeSelectionAssessment customaryResult = kernel
         .calculate(customary, EngineeringCalculationContext.builder().build()).getValue();
-    Api526OrificeSelectionAssessment siResult = kernel
-        .calculate(si, EngineeringCalculationContext.builder().build()).getValue();
+    Api526OrificeSelectionAssessment siResult = kernel.calculate(si, EngineeringCalculationContext.builder().build())
+        .getValue();
 
     assertEquals("G", customaryResult.getSelectedOrifice());
     assertEquals(customaryResult.getSelectedOrifice(), siResult.getSelectedOrifice());
