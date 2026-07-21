@@ -622,8 +622,8 @@ public class SystemMechanicalDesign implements java.io.Serializable {
     String type = classifyEquipment(equipment);
     EquipmentDesignSummary summary = new EquipmentDesignSummary(equipment.getName(), type);
     summary.setWeight(mecDesign.getWeightTotal());
-    summary.setDesignPressure(mecDesign.getMaxOperationPressure() * 1.1);
-    summary.setDesignTemperature(mecDesign.getMaxOperationTemperature() + 30);
+    summary.setDesignPressure(mecDesign.getMaxDesignPressure());
+    summary.setDesignTemperature(mecDesign.getMaxOperationTemperature("C") + 30.0);
 
     // Set power/duty based on equipment type
     try {
