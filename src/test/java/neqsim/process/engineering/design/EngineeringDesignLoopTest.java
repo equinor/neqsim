@@ -84,10 +84,10 @@ class EngineeringDesignLoopTest {
 
   @Test
   void dependencyGraphOrdersModulesAndMakesUpstreamStateAvailableInSameIteration() {
-    DependencyModule downstream = new DependencyModule("a-downstream", Arrays.asList("z-upstream"),
-        "design.downstream", 2.0, "design.upstream", EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
-    DependencyModule upstream = new DependencyModule("z-upstream", Collections.<String>emptyList(),
-        "design.upstream", 1.0, null, EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
+    DependencyModule downstream = new DependencyModule("a-downstream", Arrays.asList("z-upstream"), "design.downstream",
+        2.0, "design.upstream", EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
+    DependencyModule upstream = new DependencyModule("z-upstream", Collections.<String>emptyList(), "design.upstream",
+        1.0, null, EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
 
     EngineeringDesignDependencyGraph graph = EngineeringDesignDependencyGraph
         .of(Arrays.<EngineeringDesignModule>asList(downstream, upstream));
@@ -103,8 +103,8 @@ class EngineeringDesignLoopTest {
 
   @Test
   void dependencyGraphRejectsMissingDependenciesAndCycles() {
-    DependencyModule missing = new DependencyModule("missing-user", Arrays.asList("not-configured"), null, 0.0,
-        null, EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
+    DependencyModule missing = new DependencyModule("missing-user", Arrays.asList("not-configured"), null, 0.0, null,
+        EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
     EngineeringDesignDependencyException missingException = assertThrows(EngineeringDesignDependencyException.class,
         () -> EngineeringDesignDependencyGraph.of(Arrays.<EngineeringDesignModule>asList(missing)));
     assertTrue(missingException.getMessage().contains("not-configured"));
@@ -122,8 +122,8 @@ class EngineeringDesignLoopTest {
   void duplicateUpdatesFailClosedWithoutGoverningRule() {
     DependencyModule first = new DependencyModule("first", Collections.<String>emptyList(), "shared.pressure", 60.0,
         null, EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
-    DependencyModule second = new DependencyModule("second", Collections.<String>emptyList(), "shared.pressure",
-        70.0, null, EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
+    DependencyModule second = new DependencyModule("second", Collections.<String>emptyList(), "shared.pressure", 70.0,
+        null, EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
 
     EngineeringDesignConflictException exception = assertThrows(EngineeringDesignConflictException.class,
         () -> EngineeringDesignLoop.run(process(), cases("conflict"),
@@ -139,8 +139,8 @@ class EngineeringDesignLoopTest {
   void explicitGoverningMaximumSelectsTraceableProposal() {
     DependencyModule low = new DependencyModule("low-case", Collections.<String>emptyList(), "shared.pressure", 60.0,
         null, EngineeringDesignUpdate.ConflictResolution.GOVERNING_MAXIMUM);
-    DependencyModule high = new DependencyModule("high-case", Collections.<String>emptyList(), "shared.pressure",
-        70.0, null, EngineeringDesignUpdate.ConflictResolution.GOVERNING_MAXIMUM);
+    DependencyModule high = new DependencyModule("high-case", Collections.<String>emptyList(), "shared.pressure", 70.0,
+        null, EngineeringDesignUpdate.ConflictResolution.GOVERNING_MAXIMUM);
 
     EngineeringDesignLoopResult result = EngineeringDesignLoop.run(process(), cases("governing-maximum"),
         Arrays.<EngineeringDesignModule>asList(low, high),
@@ -267,8 +267,8 @@ class EngineeringDesignLoopTest {
       EngineeringDesignModuleResult.Builder builder = EngineeringDesignModuleResult.builder(id, "dependency test",
           "1.0");
       if (updateKey != null) {
-        builder.addUpdate(EngineeringDesignUpdate.builder(updateKey, value, "bara")
-            .conflictResolution(conflictResolution).build());
+        builder.addUpdate(
+            EngineeringDesignUpdate.builder(updateKey, value, "bara").conflictResolution(conflictResolution).build());
       }
       return builder.build();
     }
