@@ -120,6 +120,16 @@ public class PlugFlowReactor extends TwoPortEquipment {
     RK4
   }
 
+  /**
+   * Coupling between the ODE state and thermodynamic property calculations.
+   */
+  public enum ThermodynamicCoupling {
+    /** Reuse properties between configured property-update steps. */
+    FROZEN_PROPERTIES,
+    /** Rebuild and flash the thermodynamic state for every ODE residual evaluation. */
+    FULLY_COUPLED
+  }
+
   // ============================================================================
   // Geometry
   // ============================================================================
@@ -166,8 +176,17 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /** Integration method. */
   private IntegrationMethod integrationMethod = IntegrationMethod.RK4;
 
-  /** Re-flash thermodynamic properties every N steps. */
+  /** Re-flash thermodynamic properties every N steps in frozen-property mode. */
   private int propertyUpdateFrequency = 10;
+
+  /** Thermodynamic coupling used during numerical integration. */
+  private ThermodynamicCoupling thermodynamicCoupling = ThermodynamicCoupling.FROZEN_PROPERTIES;
+
+  /** Representative molecular diffusivity used for catalyst effectiveness [m2/s]. */
+  private double catalystMolecularDiffusivity = 1.0e-5;
+
+  /** Whether to apply the internal catalyst-pellet effectiveness calculation. */
+  private boolean catalystEffectivenessEnabled = false;
 
   // ============================================================================
   // Key Component Tracking
@@ -198,6 +217,12 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /** Mean residence time [s]. */
   private double residenceTime = 0.0;
 
+  /** Number of fully coupled state/property evaluations in the latest run. */
+  private int thermodynamicStateEvaluationCount = 0;
+
+  /** Last calculated internal catalyst effectiveness factor [-]. */
+  private double lastCatalystEffectivenessFactor = 1.0;
+
   /**
    * Constructor for PlugFlowReactor.
    *
@@ -220,6 +245,9 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    thermodynamicStateEvaluationCount = 0;
+    lastCatalystEffectivenessFactor = 1.0;
+
     if (reactions.isEmpty()) {
       logger.warn("PlugFlowReactor '{}': no reactions defined, passing through", getName());
       outStream.setThermoSystem(inStream.getThermoSystem().clone());
@@ -252,7 +280,6 @@ public class PlugFlowReactor extends TwoPortEquipment {
 
     // Get initial molar flows
     double[] molFlows = new double[nComp];
-    double totalMolFlow = system.getTotalNumberOfMoles();
     for (int i = 0; i < nComp; i++) {
       molFlows[i] = system.getComponent(i).getNumberOfmoles();
     }
@@ -313,7 +340,8 @@ public class PlugFlowReactor extends TwoPortEquipment {
       double z = step * dz;
 
       // Re-flash properties periodically to update Cp, density, etc.
-      if (step % propertyUpdateFrequency == 0 && step > 0) {
+      if (thermodynamicCoupling == ThermodynamicCoupling.FROZEN_PROPERTIES
+          && step % propertyUpdateFrequency == 0 && step > 0) {
         updateSystemState(system, molFlows, currentT, currentP);
         ops = new ThermodynamicOperations(system);
         try {
@@ -364,6 +392,11 @@ public class PlugFlowReactor extends TwoPortEquipment {
       // Isothermal mode: override temperature back to inlet
       if (energyMode == EnergyMode.ISOTHERMAL) {
         currentT = inStream.getThermoSystem().getTemperature();
+      }
+
+      if (thermodynamicCoupling == ThermodynamicCoupling.FULLY_COUPLED) {
+        updateThermodynamicStateForResidual(system,
+            packState(molFlows, currentT, currentP), nComp);
       }
 
       // Calculate conversion
@@ -422,8 +455,12 @@ public class PlugFlowReactor extends TwoPortEquipment {
       double perimeter, String[] compNames) {
     double[] derivs = new double[nComp + 2];
 
-    double temperature = state[nComp];
-    double pressure = state[nComp + 1];
+    if (thermodynamicCoupling == ThermodynamicCoupling.FULLY_COUPLED) {
+      updateThermodynamicStateForResidual(system, state, nComp);
+    }
+
+    double temperature = Math.max(state[nComp], 1.0);
+    double pressure = Math.max(state[nComp + 1], 0.1);
 
     // Get total molar flow for this state
     double totalMolFlow = 0.0;
@@ -443,6 +480,15 @@ public class PlugFlowReactor extends TwoPortEquipment {
       // Apply catalyst effectiveness and activity if heterogeneous
       if (catalystBed != null) {
         rate *= catalystBed.getActivityFactor();
+        if (catalystEffectivenessEnabled) {
+          double effectiveDiffusivity =
+              catalystBed.getEffectiveDiffusivity(catalystMolecularDiffusivity);
+          double thieleModulus = catalystBed.calculateThieleModulus(
+              rxn.calculateRateConstant(temperature), effectiveDiffusivity);
+          lastCatalystEffectivenessFactor =
+              catalystBed.calculateEffectivenessFactor(thieleModulus);
+          rate *= lastCatalystEffectivenessFactor;
+        }
       }
 
       // Convert rate to volumetric basis if needed
@@ -529,7 +575,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
   private double estimateTotalHeatCapacityFlow(SystemInterface system, double[] state, int nComp) {
     // Use system Cp if available
     try {
-      double cpMolar = system.getCp("J/mol/K");
+      double cpMolar = system.getCp("J/molK");
       double totalMolFlow = 0.0;
       for (int i = 0; i < nComp; i++) {
         totalMolFlow += Math.max(state[i], 0.0);
@@ -602,7 +648,18 @@ public class PlugFlowReactor extends TwoPortEquipment {
   private double calculateTotalReactionRate(SystemInterface system, String[] compNames) {
     double totalRate = 0.0;
     for (KineticReaction rxn : reactions) {
-      totalRate += Math.abs(rxn.calculateRate(system, 0));
+      double rate = rxn.calculateRate(system, 0);
+      if (catalystBed != null) {
+        rate *= catalystBed.getActivityFactor();
+        if (catalystEffectivenessEnabled) {
+          double effectiveDiffusivity =
+              catalystBed.getEffectiveDiffusivity(catalystMolecularDiffusivity);
+          double thieleModulus = catalystBed.calculateThieleModulus(
+              rxn.calculateRateConstant(system.getTemperature()), effectiveDiffusivity);
+          rate *= catalystBed.calculateEffectivenessFactor(thieleModulus);
+        }
+      }
+      totalRate += Math.abs(convertRateToVolumetric(rate, rxn));
     }
     return totalRate;
   }
@@ -728,6 +785,35 @@ public class PlugFlowReactor extends TwoPortEquipment {
     system.setTemperature(temperature);
     system.setPressure(pressure);
     system.init(0);
+  }
+
+  /**
+   * Synchronize and flash the system for one ODE residual evaluation.
+   *
+   * @param system thermodynamic system to update
+   * @param state packed state vector
+   * @param nComp number of components
+   */
+  private void updateThermodynamicStateForResidual(SystemInterface system, double[] state, int nComp) {
+    double[] molFlows = new double[nComp];
+    for (int i = 0; i < nComp; i++) {
+      molFlows[i] = Math.max(state[i], 1.0e-30);
+    }
+    double temperature = Math.max(state[nComp], 1.0);
+    double pressure = Math.max(state[nComp + 1], 0.1);
+    updateSystemState(system, molFlows, temperature, pressure);
+
+    try {
+      ThermodynamicOperations operations = new ThermodynamicOperations(system);
+      operations.TPflash();
+      system.initProperties();
+      thermodynamicStateEvaluationCount++;
+    } catch (Exception ex) {
+      throw new IllegalStateException(
+          "Fully coupled thermodynamic evaluation failed in PlugFlowReactor '"
+              + getName() + "' at T=" + temperature + " K and P=" + pressure + " bar",
+          ex);
+    }
   }
 
   /**
@@ -964,7 +1050,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
   }
 
   /**
-   * Set frequency of thermodynamic property updates.
+   * Set frequency of thermodynamic property updates in frozen-property mode.
    *
    * @param frequency re-flash every N steps
    */
@@ -979,6 +1065,72 @@ public class PlugFlowReactor extends TwoPortEquipment {
    */
   public int getPropertyUpdateFrequency() {
     return propertyUpdateFrequency;
+  }
+
+  /**
+   * Set thermodynamic coupling for ODE residual evaluations.
+   *
+   * @param coupling coupling mode
+   */
+  public void setThermodynamicCoupling(ThermodynamicCoupling coupling) {
+    if (coupling == null) {
+      throw new IllegalArgumentException("coupling cannot be null");
+    }
+    this.thermodynamicCoupling = coupling;
+  }
+
+  /**
+   * Get thermodynamic coupling mode.
+   *
+   * @return coupling mode
+   */
+  public ThermodynamicCoupling getThermodynamicCoupling() {
+    return thermodynamicCoupling;
+  }
+
+  /**
+   * Set molecular diffusivity used for internal catalyst effectiveness.
+   *
+   * @param diffusivity molecular diffusivity [m2/s]
+   */
+  public void setCatalystMolecularDiffusivity(double diffusivity) {
+    if (!Double.isFinite(diffusivity) || diffusivity <= 0.0) {
+      throw new IllegalArgumentException("diffusivity must be positive and finite");
+    }
+    this.catalystMolecularDiffusivity = diffusivity;
+  }
+
+  /** @return molecular diffusivity used for catalyst effectiveness [m2/s] */
+  public double getCatalystMolecularDiffusivity() {
+    return catalystMolecularDiffusivity;
+  }
+
+  /**
+   * Enable or disable internal catalyst-pellet effectiveness calculations.
+   *
+   * <p>This option is disabled by default to preserve the historical activity-only catalyst
+   * behavior. Enable it after setting a representative molecular diffusivity when diffusion
+   * limitations are part of the reactor model.</p>
+   *
+   * @param enabled whether the Thiele-modulus effectiveness factor is applied
+   */
+  public void setCatalystEffectivenessEnabled(boolean enabled) {
+    catalystEffectivenessEnabled = enabled;
+  }
+
+  /** @return whether internal catalyst-pellet effectiveness is enabled */
+  public boolean isCatalystEffectivenessEnabled() {
+    return catalystEffectivenessEnabled;
+  }
+
+  /** @return fully coupled state/property evaluations in the latest run */
+  public int getThermodynamicStateEvaluationCount() {
+    return thermodynamicStateEvaluationCount;
+  }
+
+  /** @return last internal catalyst effectiveness factor [-] */
+  public double getLastCatalystEffectivenessFactor() {
+    return lastCatalystEffectivenessFactor;
   }
 
   /**
