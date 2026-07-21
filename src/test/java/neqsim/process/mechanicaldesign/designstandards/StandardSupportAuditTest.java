@@ -70,6 +70,11 @@ class StandardSupportAuditTest {
   }
 
   @Test
+  void testLineEndingNormalization() {
+    assertEquals("header\nrow\n", normalizeLineEndings("header\r\nrow\r"));
+  }
+
+  @Test
   void testPublishedMatrixMatchesGeneratedAudit() throws IOException {
     Path documentation = Paths.get("docs", "process", "mechanical_design_standards.md");
     String contents = new String(Files.readAllBytes(documentation), StandardCharsets.UTF_8);
@@ -79,7 +84,12 @@ class StandardSupportAuditTest {
     assertTrue(begin >= 0, "Generated matrix start marker is missing");
     assertTrue(end > begin, "Generated matrix end marker is missing");
 
-    String published = contents.substring(begin + MATRIX_BEGIN.length(), end).trim();
-    assertEquals(StandardSupportAudit.generateMarkdownTable().trim(), published);
+    String published = normalizeLineEndings(contents.substring(begin + MATRIX_BEGIN.length(), end)).trim();
+    String generated = normalizeLineEndings(StandardSupportAudit.generateMarkdownTable()).trim();
+    assertEquals(generated, published);
+  }
+
+  private static String normalizeLineEndings(String value) {
+    return value.replace("\r\n", "\n").replace('\r', '\n');
   }
 }
