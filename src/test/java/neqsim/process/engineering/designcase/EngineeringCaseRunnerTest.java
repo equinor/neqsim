@@ -1,7 +1,10 @@
 package neqsim.process.engineering.designcase;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.engineering.numerics.EngineeringNumericalHealthCriteria;
@@ -30,6 +33,9 @@ class EngineeringCaseRunnerTest {
     assertEquals(80.0, sequential.getEnvelope().getGoverningValues().get("FEED.pressure").getValue(), 1.0e-10);
     assertEquals(basePressure, ((Stream) process.getUnit("FEED")).getPressure("bara"), 1.0e-10);
     assertEquals(2, sequential.getEnvelope().getSuccessfulCaseCount());
+    assertTrue(sequential.isComplete());
+    assertFalse(sequential.isAccepted());
+    assertEquals(1, sequential.getEnvelope().getUnassessedGoverningMetricIds().size());
     assertTrue(sequential.toJson().contains("isolatedProcessCopies"));
     assertNotEquals(sequential.getDefinitionFingerprint(), sequential.getResultFingerprint());
   }
@@ -45,6 +51,59 @@ class EngineeringCaseRunnerTest {
 
     assertTrue(report.toJson().contains("numericalHealth"));
     assertEquals("HEALTHY", report.getEnvelope().getCaseResults().get(0).getNumericalHealthReport().getStatus().name());
+  }
+
+  @Test
+  void incompleteEnvelopeCanReturnOrThrowWithTheSamePartialEvidence() {
+    ProcessSystem process = process();
+    EngineeringMetric nonFinite = new EngineeringMetric("FEED.invalid", "FEED", "Invalid metric", "fraction",
+        EngineeringMetric.GoverningDirection.MAXIMUM, new EngineeringMetric.Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem ignored) {
+            return Double.NaN;
+          }
+        });
+    EngineeringCaseSet cases = new EngineeringCaseSet("incomplete").addCase(caseAtPressure("normal", 50.0, 10))
+        .addMetric(nonFinite);
+
+    EngineeringCaseRunReport partial = EngineeringCaseRunner.run(process, cases,
+        EngineeringCaseRunOptions.sequential());
+
+    assertFalse(partial.isComplete());
+    assertEquals("FEED.invalid", partial.getEnvelope().getMissingGoverningMetricIds().get(0));
+    EngineeringCaseExecutionException requireException = assertThrows(EngineeringCaseExecutionException.class,
+        partial::requireComplete);
+    assertSame(partial, requireException.getPartialReport());
+
+    EngineeringCaseExecutionException executionException = assertThrows(EngineeringCaseExecutionException.class,
+        () -> EngineeringCaseRunner.run(process, cases,
+            EngineeringCaseRunOptions.builder()
+                .failurePolicy(EngineeringCaseFailurePolicy.THROW_WITH_PARTIAL_RESULT).build()));
+    assertFalse(executionException.getPartialReport().isComplete());
+  }
+
+  @Test
+  void acceptanceRequiresConfiguredLimitsAndNoViolation() {
+    ProcessSystem process = process();
+    EngineeringCaseSet passing = new EngineeringCaseSet("passing-limits")
+        .addCase(caseAtPressure("normal", 50.0, 10)).addCase(caseAtPressure("maximum", 80.0, 20))
+        .addMetric(EngineeringMetric.equipmentPressure("FEED").setAcceptanceRange(null, Double.valueOf(90.0)));
+    EngineeringCaseSet failing = new EngineeringCaseSet("failing-limits")
+        .addCase(caseAtPressure("normal", 50.0, 10)).addCase(caseAtPressure("maximum", 80.0, 20))
+        .addMetric(EngineeringMetric.equipmentPressure("FEED").setAcceptanceRange(null, Double.valueOf(70.0)));
+
+    EngineeringCaseRunReport accepted = EngineeringCaseRunner.run(process, passing,
+        EngineeringCaseRunOptions.sequential());
+    EngineeringCaseRunReport violated = EngineeringCaseRunner.run(process, failing,
+        EngineeringCaseRunOptions.sequential());
+
+    assertTrue(accepted.isComplete());
+    assertTrue(accepted.isAccepted());
+    assertTrue(violated.isComplete());
+    assertFalse(violated.isAccepted());
+    assertEquals(1, violated.getEnvelope().getLimitViolationCount());
   }
 
   private EngineeringDesignCase caseAtPressure(String id, final double pressureBara, int priority) {
