@@ -52,9 +52,9 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
   /**
    * Returns the configured solid phase, including inactive phases retained in the system phase array.
    *
-   * <p>A fluid-only TP flash reduces {@code getNumberOfPhases()}, but the configured solid phase
-   * remains available in {@code getPhases()}. Searching only active phases therefore fails during a
-   * freezing-point iteration.
+   * <p>
+   * A fluid-only TP flash reduces {@code getNumberOfPhases()}, but the configured solid phase remains available in
+   * {@code getPhases()}. Searching only active phases therefore fails during a freezing-point iteration.
    *
    * @return configured solid phase
    * @throws IllegalStateException if solid-phase checking has not been enabled
