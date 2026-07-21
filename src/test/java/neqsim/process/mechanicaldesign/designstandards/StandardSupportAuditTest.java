@@ -1,6 +1,7 @@
 package neqsim.process.mechanicaldesign.designstandards;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.io.IOException;
@@ -32,6 +33,7 @@ class StandardSupportAuditTest {
     assertEquals(StandardSupportLevel.SCREENING, pumpSupport.getSupportLevel());
     assertEquals("DesignStandard", pumpSupport.getRegistryImplementation());
     assertEquals("PumpApi610DesignCalculator", pumpSupport.getCalculationImplementation());
+    assertFalse(pumpSupport.isRegistryConnected());
 
     assertEquals(StandardSupportLevel.CATALOGUED,
         StandardSupportAudit.getSupport(StandardType.API_660).getSupportLevel());
@@ -43,6 +45,8 @@ class StandardSupportAuditTest {
         StandardSupportAudit.getSupport(StandardType.ASME_VIII_DIV1).getSupportLevel());
     assertEquals(StandardSupportLevel.SCREENING,
         StandardSupportAudit.getSupport(StandardType.API_12J).getSupportLevel());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.API_12J).isRegistryConnected());
+    assertFalse(StandardSupportAudit.getSupport(StandardType.API_660).isRegistryConnected());
   }
 
   @Test
