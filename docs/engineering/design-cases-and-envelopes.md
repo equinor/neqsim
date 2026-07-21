@@ -135,6 +135,11 @@ The process-to-engineering simulator repeatedly:
 If a selected pipe diameter, separator geometry, valve Cv, or exchanger area changes the process hydraulics, the old
 envelope is stale. The rerun is what closes the engineering loop.
 
+Within each iteration, declared module dependencies are evaluated as topological levels. A downstream
+module sees upstream selections from that same iteration. Conflicting proposals for one state key are
+rejected unless every proposer declares the same governing maximum or minimum rule; the loop never
+uses module list order as an implicit engineering-selection rule.
+
 ## Case-coverage review
 
 Use a case matrix to review equipment and metric coverage:
