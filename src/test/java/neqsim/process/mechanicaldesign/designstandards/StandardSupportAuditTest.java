@@ -32,8 +32,8 @@ class StandardSupportAuditTest {
     StandardSupport pumpSupport = StandardSupportAudit.getSupport(StandardType.API_610);
     assertEquals(StandardSupportLevel.SCREENING, pumpSupport.getSupportLevel());
     assertEquals("DesignStandard", pumpSupport.getRegistryImplementation());
-    assertEquals("PumpApi610DesignCalculator", pumpSupport.getCalculationImplementation());
-    assertFalse(pumpSupport.isRegistryConnected());
+    assertEquals("PumpApi610DesignKernel", pumpSupport.getCalculationImplementation());
+    assertTrue(pumpSupport.isRegistryConnected());
 
     assertEquals(StandardSupportLevel.CATALOGUED,
         StandardSupportAudit.getSupport(StandardType.API_660).getSupportLevel());
