@@ -137,7 +137,8 @@ public final class EngineeringDesignLoop {
       OwnedUpdate candidate = proposals.get(index);
       double candidateValue = candidate.update.selectedValue();
       boolean governing = resolution == EngineeringDesignUpdate.ConflictResolution.GOVERNING_MAXIMUM
-          ? candidateValue > selectedValue : candidateValue < selectedValue;
+          ? candidateValue > selectedValue
+          : candidateValue < selectedValue;
       if (governing || (candidateValue == selectedValue && candidate.moduleId.compareTo(selected.moduleId) < 0)) {
         selected = candidate;
         selectedValue = candidateValue;
@@ -146,10 +147,9 @@ public final class EngineeringDesignLoop {
     return selected;
   }
 
-  private static EngineeringDesignConflictException conflict(String key, List<OwnedUpdate> proposals,
-      String reason) {
-    StringBuilder diagnostic = new StringBuilder("Conflicting engineering design updates for ").append(key)
-        .append(": ").append(reason).append("; proposals=");
+  private static EngineeringDesignConflictException conflict(String key, List<OwnedUpdate> proposals, String reason) {
+    StringBuilder diagnostic = new StringBuilder("Conflicting engineering design updates for ").append(key).append(": ")
+        .append(reason).append("; proposals=");
     for (int index = 0; index < proposals.size(); index++) {
       OwnedUpdate proposal = proposals.get(index);
       if (index > 0) {
