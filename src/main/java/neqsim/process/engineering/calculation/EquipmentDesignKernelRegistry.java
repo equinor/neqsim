@@ -83,9 +83,11 @@ public final class EquipmentDesignKernelRegistry {
   static {
     Map<StandardType, EquipmentDesignKernel<?, ?>> kernels = new EnumMap<StandardType, EquipmentDesignKernel<?, ?>>(
         StandardType.class);
+    register(kernels, new Api617CompressorDesignKernel());
     register(kernels, new PumpApi610DesignKernel());
     register(kernels, new Api521ReliefDesignKernel());
     register(kernels, new Api526OrificeSelectionKernel());
+    register(kernels, new Api12JSeparatorDesignKernel());
     KERNELS = Collections.unmodifiableMap(kernels);
   }
 
