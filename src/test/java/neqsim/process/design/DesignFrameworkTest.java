@@ -474,6 +474,51 @@ class DesignFrameworkTest {
 
     // Verify result
     assertNotNull(result);
+    assertEquals(DesignResult.ExecutionStatus.AUTO_SIZED, result.getExecutionStatus());
+    assertFalse(result.isConverged());
+    assertTrue(result.getWarnings().get(0).contains("No optimization search was performed"));
+  }
+
+  @Test
+  void configuredDesignOptimizerRunsBoundedSearchAndRestoresSelectedPoint() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+    Stream feed = new Stream("Optimization feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    process.add(feed);
+
+    DesignResult result = DesignOptimizer.forProcess(process)
+        .configureFeedRateOptimization("Optimization feed", 1000.0, 2000.0, "kg/hr")
+        .setSearchConvergence(1.0, 20).setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION).optimize();
+
+    assertEquals(DesignResult.ExecutionStatus.OPTIMIZED, result.getExecutionStatus());
     assertTrue(result.isConverged());
+    assertTrue(result.getIterations() > 1);
+    assertTrue(result.getOptimizedFlowRate("Optimization feed") > 1998.0);
+    assertEquals(result.getOptimizedFlowRate("Optimization feed"), feed.getFlowRate("kg/hr"), 1.0e-9);
+    assertTrue(result.getDecisionVariables().containsKey("Optimization feed"));
+  }
+
+  @Test
+  void phaseObjectiveFailsClosedWithoutExplicitProductStream() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+    Stream feed = new Stream("Feed without product", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    process.add(feed);
+
+    DesignResult result = DesignOptimizer.forProcess(process)
+        .configureFeedRateOptimization("Feed without product", 500.0, 1500.0, "kg/hr")
+        .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_GAS).optimize();
+
+    assertEquals(DesignResult.ExecutionStatus.FAILED, result.getExecutionStatus());
+    assertFalse(result.isConverged());
+    assertTrue(result.getViolations().get(0).contains("setProductStream"));
   }
 }
