@@ -229,7 +229,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       try {
         delta = linearSystemOneUnknown(jacobian, residuals);
       } catch (ArithmeticException e) {
-        throw new RuntimeException("Jacobian is singular or poorly conditioned.");
+        logger.debug("Restarting one-unknown exchanger solve after singular Jacobian", e);
+        resetOfExtremesAndStalls(unknownIndices, true, false);
+        continue;
       }
 
       outletTemps.set(idx, outletTemps.get(idx) - damping * delta[0]);
@@ -301,7 +303,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       try {
         delta = linearSystemTwoUnknowns(jacobian, residuals);
       } catch (ArithmeticException e) {
-        throw new RuntimeException("Jacobian is singular or poorly conditioned.");
+        logger.debug("Restarting two-unknown exchanger solve after singular Jacobian", e);
+        resetOfExtremesAndStalls(unknownIndices, true, false);
+        continue;
       }
 
       for (int i = 0; i < unknownIndices.size(); i++) {
@@ -382,7 +386,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       try {
         delta = linearSystemThreeUnknowns(jacobian, residuals);
       } catch (ArithmeticException e) {
-        throw new RuntimeException("Jacobian is singular or poorly conditioned.");
+        logger.debug("Restarting three-unknown exchanger solve after singular Jacobian", e);
+        resetOfExtremesAndStalls(unknownIndices, true, true);
+        continue;
       }
 
       for (int i = 0; i < unknownIndices.size(); i++) {
