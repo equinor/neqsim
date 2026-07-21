@@ -242,6 +242,68 @@ public class PumpApi610DesignCalculator implements Serializable {
   private AssessmentStatus assessmentStatus = AssessmentStatus.NOT_EVALUATED;
   private final List<Check> checks = new ArrayList<Check>();
 
+  /**
+   * Copy all input data and screening criteria without copying calculated results.
+   *
+   * <p>
+   * The engineering-workflow adapter uses this method to execute the legacy mutable calculator without mutating
+   * caller-owned state.
+   * </p>
+   *
+   * @return independent calculator configuration
+   */
+  public PumpApi610DesignCalculator copyConfiguration() {
+    PumpApi610DesignCalculator copy = new PumpApi610DesignCalculator();
+    copy.standardEdition = standardEdition;
+    copy.assessmentBasis = assessmentBasis;
+    copy.pumpType = pumpType;
+    copy.pumpTypeSource = pumpTypeSource;
+    copy.dutyPointSource = dutyPointSource;
+    copy.bepSource = bepSource;
+    copy.npshrSource = npshrSource;
+    copy.shutoffHeadSource = shutoffHeadSource;
+    copy.operatingFlowM3h = operatingFlowM3h;
+    copy.ratedHeadM = ratedHeadM;
+    copy.ratedSpeedRpm = ratedSpeedRpm;
+    copy.fluidDensityKgM3 = fluidDensityKgM3;
+    copy.absorbedPowerKw = absorbedPowerKw;
+    copy.bepFlowM3h = bepFlowM3h;
+    copy.bepHeadM = bepHeadM;
+    copy.npshAvailableM = npshAvailableM;
+    copy.npshRequiredM = npshRequiredM;
+    copy.maximumSuctionPressureBara = maximumSuctionPressureBara;
+    copy.furnishedMawpBara = furnishedMawpBara;
+    copy.shutoffHeadM = shutoffHeadM;
+    copy.hydrostaticTestPressureBara = hydrostaticTestPressureBara;
+    copy.porLowFraction = porLowFraction;
+    copy.porHighFraction = porHighFraction;
+    copy.ratedPointLowFraction = ratedPointLowFraction;
+    copy.ratedPointHighFraction = ratedPointHighFraction;
+    copy.aorLowFraction = aorLowFraction;
+    copy.aorHighFraction = aorHighFraction;
+    copy.npshMarginFactor = npshMarginFactor;
+    copy.minimumNpshMarginM = minimumNpshMarginM;
+    copy.assumedShutoffHeadFactor = assumedShutoffHeadFactor;
+    copy.minimumHeadRiseToShutoffFraction = minimumHeadRiseToShutoffFraction;
+    copy.hydrostaticTestPressureFactor = hydrostaticTestPressureFactor;
+    copy.driverMarginFactor = driverMarginFactor;
+    copy.minimumBearingLifeHours = minimumBearingLifeHours;
+    copy.maximumShaftDeflectionMm = maximumShaftDeflectionMm;
+    copy.minimumCriticalSpeedRatio = minimumCriticalSpeedRatio;
+    copy.maximumNozzleLoadUtilization = maximumNozzleLoadUtilization;
+    copy.maximumVibrationVelocityMmS = maximumVibrationVelocityMmS;
+    copy.bearingType = bearingType;
+    copy.bearingDynamicLoadRatingKn = bearingDynamicLoadRatingKn;
+    copy.bearingEquivalentDynamicLoadKn = bearingEquivalentDynamicLoadKn;
+    copy.shaftDeflectionMm = shaftDeflectionMm;
+    copy.firstCriticalSpeedRpm = firstCriticalSpeedRpm;
+    copy.nozzleLoadUtilization = nozzleLoadUtilization;
+    copy.vibrationVelocityMmS = vibrationVelocityMmS;
+    copy.seallessPump = seallessPump;
+    copy.driverCandidateRatingsKw = driverCandidateRatingsKw.clone();
+    return copy;
+  }
+
   /** Evaluates all configured checks and replaces any previous result. */
   public void calculate() {
     checks.clear();

@@ -21,7 +21,9 @@ class FreezingPointTemperatureFlashTest {
     system.setSolidPhaseCheck("CO2");
 
     ThermodynamicOperations operations = new ThermodynamicOperations(system);
-    assertDoesNotThrow(operations::freezingPointTemperatureFlash);
+    assertDoesNotThrow(() -> {
+      operations.freezingPointTemperatureFlash();
+    });
 
     double freezingTemperature = system.getTemperature();
     assertTrue(Double.isFinite(freezingTemperature));

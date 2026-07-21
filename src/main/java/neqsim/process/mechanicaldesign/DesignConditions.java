@@ -1,7 +1,12 @@
 package neqsim.process.mechanicaldesign;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.EnumMap;
+import java.util.Map;
+import java.util.Optional;
 import com.google.gson.GsonBuilder;
+import neqsim.process.mechanicaldesign.DesignConditionValue.Type;
 
 /**
  * Lightweight holder for the explicit nameplate design conditions of a piece of process equipment.
@@ -76,12 +81,33 @@ public final class DesignConditions implements Serializable {
   }
 
   /**
+   * Sets the design pressure using an explicit absolute or gauge pressure unit.
+   *
+   * @param value design pressure
+   * @param unit pressure unit supported by {@code PressureUnit}
+   * @return this holder for chaining
+   */
+  public DesignConditions setDesignPressure(double value, String unit) {
+    return setCondition(DesignConditionValue.of(Type.DESIGN_PRESSURE, value, unit));
+  }
+
+  /**
    * Gets the design pressure (maximum allowable working pressure, MAWP).
    *
    * @return design pressure in bara, or {@link Double#NaN} if not set
    */
   public double getDesignPressure() {
     return designPressureBara;
+  }
+
+  /**
+   * Gets the design pressure in an explicit pressure unit.
+   *
+   * @param unit requested pressure unit
+   * @return converted pressure, or {@link Double#NaN} if not set
+   */
+  public double getDesignPressure(String unit) {
+    return convertIfSet(Type.DESIGN_PRESSURE, designPressureBara, unit);
   }
 
   /**
@@ -105,12 +131,33 @@ public final class DesignConditions implements Serializable {
   }
 
   /**
+   * Sets the maximum design temperature using an explicit temperature unit.
+   *
+   * @param value maximum design temperature
+   * @param unit temperature unit supported by {@code TemperatureUnit}
+   * @return this holder for chaining
+   */
+  public DesignConditions setMaxDesignTemperature(double value, String unit) {
+    return setCondition(DesignConditionValue.of(Type.MAX_DESIGN_TEMPERATURE, value, unit));
+  }
+
+  /**
    * Gets the maximum design temperature.
    *
    * @return maximum design temperature in degrees Celsius, or {@link Double#NaN} if not set
    */
   public double getMaxDesignTemperature() {
     return maxDesignTemperatureC;
+  }
+
+  /**
+   * Gets the maximum design temperature in an explicit unit.
+   *
+   * @param unit requested temperature unit
+   * @return converted temperature, or {@link Double#NaN} if not set
+   */
+  public double getMaxDesignTemperature(String unit) {
+    return convertIfSet(Type.MAX_DESIGN_TEMPERATURE, maxDesignTemperatureC, unit);
   }
 
   /**
@@ -134,12 +181,33 @@ public final class DesignConditions implements Serializable {
   }
 
   /**
+   * Sets the minimum design metal temperature using an explicit temperature unit.
+   *
+   * @param value minimum design metal temperature
+   * @param unit temperature unit supported by {@code TemperatureUnit}
+   * @return this holder for chaining
+   */
+  public DesignConditions setMinDesignTemperature(double value, String unit) {
+    return setCondition(DesignConditionValue.of(Type.MIN_DESIGN_TEMPERATURE, value, unit));
+  }
+
+  /**
    * Gets the minimum design metal temperature (MDMT).
    *
    * @return minimum design metal temperature in degrees Celsius, or {@link Double#NaN} if not set
    */
   public double getMinDesignTemperature() {
     return minDesignTemperatureC;
+  }
+
+  /**
+   * Gets the minimum design metal temperature in an explicit unit.
+   *
+   * @param unit requested temperature unit
+   * @return converted temperature, or {@link Double#NaN} if not set
+   */
+  public double getMinDesignTemperature(String unit) {
+    return convertIfSet(Type.MIN_DESIGN_TEMPERATURE, minDesignTemperatureC, unit);
   }
 
   /**
@@ -163,12 +231,33 @@ public final class DesignConditions implements Serializable {
   }
 
   /**
+   * Sets the relief set pressure using an explicit absolute or gauge pressure unit.
+   *
+   * @param value relief set pressure
+   * @param unit pressure unit supported by {@code PressureUnit}
+   * @return this holder for chaining
+   */
+  public DesignConditions setReliefSetPressure(double value, String unit) {
+    return setCondition(DesignConditionValue.of(Type.RELIEF_SET_PRESSURE, value, unit));
+  }
+
+  /**
    * Gets the relief (PSV) set pressure protecting the equipment.
    *
    * @return relief set pressure in bara, or {@link Double#NaN} if not set
    */
   public double getReliefSetPressure() {
     return reliefSetPressureBara;
+  }
+
+  /**
+   * Gets the relief set pressure in an explicit pressure unit.
+   *
+   * @param unit requested pressure unit
+   * @return converted pressure, or {@link Double#NaN} if not set
+   */
+  public double getReliefSetPressure(String unit) {
+    return convertIfSet(Type.RELIEF_SET_PRESSURE, reliefSetPressureBara, unit);
   }
 
   /**
@@ -192,12 +281,33 @@ public final class DesignConditions implements Serializable {
   }
 
   /**
+   * Sets the corrosion allowance using an explicit length unit.
+   *
+   * @param value corrosion allowance
+   * @param unit length unit supported by {@code LengthUnit}
+   * @return this holder for chaining
+   */
+  public DesignConditions setCorrosionAllowance(double value, String unit) {
+    return setCondition(DesignConditionValue.of(Type.CORROSION_ALLOWANCE, value, unit));
+  }
+
+  /**
    * Gets the corrosion allowance.
    *
    * @return corrosion allowance in mm, or {@link Double#NaN} if not set
    */
   public double getCorrosionAllowance() {
     return corrosionAllowanceMm;
+  }
+
+  /**
+   * Gets the corrosion allowance in an explicit length unit.
+   *
+   * @param unit requested length unit
+   * @return converted allowance, or {@link Double#NaN} if not set
+   */
+  public double getCorrosionAllowance(String unit) {
+    return convertIfSet(Type.CORROSION_ALLOWANCE, corrosionAllowanceMm, unit);
   }
 
   /**
@@ -265,6 +375,88 @@ public final class DesignConditions implements Serializable {
    */
   public boolean isFailureActionSet() {
     return failureAction != null && failureAction != FailureAction.NOT_SPECIFIED;
+  }
+
+  /**
+   * Set one immutable typed design condition.
+   *
+   * @param condition typed value to store
+   * @return this holder for chaining
+   */
+  public DesignConditions setCondition(DesignConditionValue condition) {
+    if (condition == null) {
+      throw new IllegalArgumentException("condition cannot be null");
+    }
+    switch (condition.getType()) {
+    case DESIGN_PRESSURE:
+      return setDesignPressure(condition.getCanonicalValue());
+    case MAX_DESIGN_TEMPERATURE:
+      return setMaxDesignTemperature(condition.getCanonicalValue());
+    case MIN_DESIGN_TEMPERATURE:
+      return setMinDesignTemperature(condition.getCanonicalValue());
+    case RELIEF_SET_PRESSURE:
+      return setReliefSetPressure(condition.getCanonicalValue());
+    case CORROSION_ALLOWANCE:
+      return setCorrosionAllowance(condition.getCanonicalValue());
+    default:
+      throw new IllegalStateException("Unsupported design condition " + condition.getType());
+    }
+  }
+
+  /**
+   * Get one typed condition when it has been declared.
+   *
+   * @param type condition type
+   * @return typed value, or empty when the condition is unset
+   */
+  public Optional<DesignConditionValue> getCondition(Type type) {
+    if (type == null) {
+      throw new IllegalArgumentException("type cannot be null");
+    }
+    switch (type) {
+    case DESIGN_PRESSURE:
+      return conditionIfSet(type, designPressureBara);
+    case MAX_DESIGN_TEMPERATURE:
+      return conditionIfSet(type, maxDesignTemperatureC);
+    case MIN_DESIGN_TEMPERATURE:
+      return conditionIfSet(type, minDesignTemperatureC);
+    case RELIEF_SET_PRESSURE:
+      return conditionIfSet(type, reliefSetPressureBara);
+    case CORROSION_ALLOWANCE:
+      return conditionIfSet(type, corrosionAllowanceMm);
+    default:
+      throw new IllegalStateException("Unsupported design condition " + type);
+    }
+  }
+
+  /**
+   * Get an immutable snapshot of all declared typed numeric conditions.
+   *
+   * @return map keyed by condition type
+   */
+  public Map<Type, DesignConditionValue> getConditions() {
+    Map<Type, DesignConditionValue> result = new EnumMap<Type, DesignConditionValue>(Type.class);
+    for (Type type : Type.values()) {
+      Optional<DesignConditionValue> condition = getCondition(type);
+      if (condition.isPresent()) {
+        result.put(type, condition.get());
+      }
+    }
+    return Collections.unmodifiableMap(result);
+  }
+
+  private Optional<DesignConditionValue> conditionIfSet(Type type, double canonicalValue) {
+    if (Double.isNaN(canonicalValue)) {
+      return Optional.empty();
+    }
+    return Optional.of(DesignConditionValue.of(type, canonicalValue, type.getCanonicalUnit()));
+  }
+
+  private double convertIfSet(Type type, double canonicalValue, String unit) {
+    if (Double.isNaN(canonicalValue)) {
+      return Double.NaN;
+    }
+    return DesignConditionValue.of(type, canonicalValue, type.getCanonicalUnit()).getValue(unit);
   }
 
   /**

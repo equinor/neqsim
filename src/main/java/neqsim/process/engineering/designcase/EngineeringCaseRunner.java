@@ -32,10 +32,17 @@ public final class EngineeringCaseRunner {
     EngineeringCaseRunOptions effectiveOptions = options == null ? EngineeringCaseRunOptions.sequential() : options;
     List<DesignCaseResult> results = execute(baseProcess, caseSet, effectiveOptions);
     Map<String, EngineeringDesignEnvelope.GoverningValue> governing = governing(caseSet.getMetrics(), results);
-    EngineeringDesignEnvelope envelope = new EngineeringDesignEnvelope(results, governing);
+    EngineeringDesignEnvelope envelope = new EngineeringDesignEnvelope(caseSet.getMetrics(), results, governing);
     String definitionFingerprint = fingerprint(caseSet.toMap());
     String resultFingerprint = fingerprint(envelope.toMap());
-    return new EngineeringCaseRunReport(caseSet.getId(), definitionFingerprint, resultFingerprint, envelope);
+    EngineeringCaseRunReport report = new EngineeringCaseRunReport(caseSet.getId(), definitionFingerprint,
+        resultFingerprint, envelope);
+    if (!report.isComplete()
+        && effectiveOptions.getFailurePolicy() == EngineeringCaseFailurePolicy.THROW_WITH_PARTIAL_RESULT) {
+      throw new EngineeringCaseExecutionException(
+          "Engineering case set " + caseSet.getId() + " did not produce a complete governing envelope", report);
+    }
+    return report;
   }
 
   private static List<DesignCaseResult> execute(ProcessSystem baseProcess, EngineeringCaseSet caseSet,

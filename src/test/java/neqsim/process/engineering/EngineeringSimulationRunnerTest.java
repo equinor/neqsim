@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import neqsim.process.engineering.designcase.EngineeringCaseRunOptions;
+import neqsim.process.engineering.designcase.EngineeringCaseSet;
 import neqsim.process.engineering.designcase.EngineeringDesignCase;
 import neqsim.process.engineering.designcase.EngineeringMetric;
 import neqsim.process.equipment.stream.Stream;
@@ -34,7 +35,12 @@ class EngineeringSimulationRunnerTest {
     EngineeringSimulationResult result = EngineeringSimulationRunner.run(project,
         EngineeringCaseRunOptions.builder().parallelism(2).build());
 
+    EngineeringCaseSet caseSet = EngineeringSimulationRunner.buildCaseSet(project);
+
     assertNotNull(result.getCaseRunReport());
+    assertEquals("project-1@working", caseSet.getId());
+    assertEquals(1, caseSet.getCases().size());
+    assertEquals(1, caseSet.getMetrics().size());
     assertEquals(1, result.getCaseRunReport().getEnvelope().getSuccessfulCaseCount());
     assertEquals(80.0, result.getCaseRunReport().getEnvelope().getGoverningValues().get("FEED.pressure").getValue(),
         1.0e-10);

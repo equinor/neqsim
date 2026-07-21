@@ -7,6 +7,18 @@ description: The Design Framework provides an integrated workflow for automated 
 
 The Design Framework provides an integrated workflow for automated equipment sizing, process template-based design, and production optimization. This document describes the key components and usage patterns.
 
+## Compatibility
+
+The typed process-design additions retain the legacy public source entry points, so callers can
+migrate incrementally. They are not a promise of identical behavior: validation-only optimizer runs
+no longer report false convergence, configured mechanical-design objects are preserved, invalid or
+ambiguous engineering inputs fail earlier, and corrected standard editions/applicability can change
+selection results. Java object deserialization across NeqSim versions is not part of this
+compatibility contract.
+
+See [Migrate process design to typed standard kernels](standard_design_kernel_migration) for the
+complete compatibility boundary and staged migration path.
+
 ## Related Documentation
 
 | Document | Description |
@@ -29,6 +41,27 @@ The design framework consists of several integrated components:
 | `EquipmentConstraintRegistry` | Registry of default constraint templates |
 | `DesignOptimizer` | Integrated design-to-optimization workflow |
 | `DesignResult` | Container for optimization results |
+| `EquipmentDesignKernel` | Readiness-gated, standard-specific calculation adapter |
+
+Standard-specific equipment calculations are registered explicitly. The current registry exposes
+screening kernels for API 617 compressor-casing checks, API 610 pump checks, API 521 relief-scenario
+evaluation, API 526 standard-orifice selection, and API 12J separator-performance checks.
+Unsupported editions, inapplicable equipment types, and incomplete inputs return blocked results.
+All remain preliminary engineering screens and do not claim certification or construction
+readiness.
+
+The executable `StandardDesignKernelVerificationSuite.evaluateRegression()` runs every registered
+kernel against deterministic numeric baselines. It includes SI/customary equivalence at the API 526
+orifice boundary and metre/micrometre equivalence for API 12J. Inspect
+`report.areAllBenchmarksPassed()` for regression health and `report.getFailedBenchmarkIds()` for
+diagnosis. The records are deliberately classified as `REGRESSION_BASELINE`; therefore
+`report.isPassed()` remains false until separately controlled, independently reviewed evidence is
+provided for the exact method versions.
+
+`EquipmentDesignKernelRegistry.getRegisteredStandards()` provides an immutable, deterministic
+registry snapshot for API and serialization regression checks. A registered kernel must identify the
+same standard as its lookup key, support the catalogued default edition, expose a unique
+`method@version`, use a maturity above `CATALOGUED`, and remain serializable.
 
 ## Quick Start
 
@@ -100,12 +133,13 @@ process.run();
 DesignOptimizer optimizer = DesignOptimizer.fromTemplate(template, basis)
     .autoSizeEquipment(1.2)
     .applyDefaultConstraints()
+    .configureFeedRateOptimization("Feed", 25000.0, 80000.0, "kg/hr")
     .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION);
 
 DesignResult result = optimizer.optimize();
 
-if (result.isConverged()) {
-    System.out.println(result.getSummary());
+if (result.getExecutionStatus() == DesignResult.ExecutionStatus.OPTIMIZED) {
+    logger.info(result.getSummary());
 }
 ```
 
@@ -260,18 +294,21 @@ DesignOptimizer optimizer = DesignOptimizer.fromTemplate(template, basis);
 optimizer
     .autoSizeEquipment(1.2)       // Auto-size all AutoSizeable equipment
     .applyDefaultConstraints()     // Apply registry constraints
+    .configureFeedRateOptimization("Feed", 25000.0, 80000.0, "kg/hr")
     .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION);
 
 // Run
 DesignResult result = optimizer.validate();  // Just validate
-DesignResult result = optimizer.optimize();  // Full optimization
+DesignResult result = optimizer.optimize();  // Bounded search only when explicitly configured
 ```
 
 **ProcessModule Support:**
 - Use `forProcess(ProcessModule)` for modular process structures
 - Check mode with `optimizer.isModuleMode()`
 - Access the module with `optimizer.getModule()`
-- All child ProcessSystems are automatically evaluated for constraints
+- Baseline validation, constraint reporting, and auto-sizing cover all child `ProcessSystem` objects
+- Bounded search through `DesignOptimizer` currently requires one `ProcessSystem`; use the whole-plant
+  `ProductionOptimizer`/`ProcessModelOptimizationView` APIs for multi-system optimization
 
 **Objective Types:**
 - `MAXIMIZE_PRODUCTION` - Maximize total hydrocarbon production
@@ -280,6 +317,11 @@ DesignResult result = optimizer.optimize();  // Full optimization
 - `MINIMIZE_ENERGY` - Minimize energy consumption
 - `CUSTOM` - Custom objective function
 
+Optimization is fail-closed. Without `configureFeedRateOptimization(...)`, `optimize()` runs only the
+baseline, optional auto-sizing, and validation; the result status is `VALIDATED` or `AUTO_SIZED`,
+`isConverged()` is false, and no optimized flow is reported. Oil and gas objectives additionally
+require `setProductStream(...)`. A custom objective requires `setCustomObjective(...)`.
+
 ### DesignResult
 
 Container for design and optimization results.
@@ -287,8 +329,11 @@ Container for design and optimization results.
 ```java
 DesignResult result = optimizer.optimize();
 
-// Check convergence
-if (result.isConverged()) {
+// First distinguish validation/sizing from a real bounded search
+if (result.getExecutionStatus() == DesignResult.ExecutionStatus.OPTIMIZED) {
+    // isConverged() means the configured interval search can reach its decision-variable tolerance
+    boolean toleranceReached = result.isConverged();
+
     // Get metrics
     int iterations = result.getIterations();
     double objective = result.getObjectiveValue();
@@ -503,6 +548,7 @@ The design framework integrates with existing NeqSim capabilities:
 DesignOptimizer designOpt = DesignOptimizer.forProcess(process)
     .autoSizeEquipment()
     .applyDefaultConstraints()
+    .configureFeedRateOptimization("Feed", 25000.0, 80000.0, "kg/hr")
     .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION);
 
 // The underlying ProductionOptimizer handles the mathematical optimization
@@ -814,5 +860,3 @@ Export Pipeline:
 4. **Optimization** finds the maximum flow rate that respects ALL constraints across ALL equipment
 5. The **Active Constraint** is the specific limit currently preventing higher production
 6. The **Bottleneck** is the equipment where that active constraint exists
-
-

@@ -12,10 +12,15 @@ public final class DesignLimitData implements Serializable {
   /** Empty data set with undefined limits. */
   public static final DesignLimitData EMPTY = DesignLimitData.builder().build();
 
+  /** Maximum pressure limit in bara. */
   private final double maxPressure;
+  /** Minimum pressure limit in bara. */
   private final double minPressure;
+  /** Maximum temperature limit in kelvin. */
   private final double maxTemperature;
+  /** Minimum temperature limit in kelvin. */
   private final double minTemperature;
+  /** Corrosion allowance in millimetres. */
   private final double corrosionAllowance;
   private final double jointEfficiency;
 

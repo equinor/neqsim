@@ -91,8 +91,11 @@ not describe all design limits.
 ## Execute isolated cases
 
 `EngineeringCaseRunner` executes enabled cases on independent process copies. `EngineeringCaseRunOptions` controls
-parallelism and whether convergence is required. The report retains definition and result fingerprints so a case-set
-change can be distinguished from a result change.
+parallelism, whether convergence is required, and incomplete-result propagation. The default
+`RETURN_PARTIAL` policy retains all available evidence. `THROW_WITH_PARTIAL_RESULT` raises an
+`EngineeringCaseExecutionException`; its `getPartialReport()` preserves the same auditable case and
+metric findings. The report retains definition and result fingerprints so a case-set change can be
+distinguished from a result change.
 
 Case status remains explicit:
 
@@ -104,8 +107,9 @@ Case status remains explicit:
 | `FAILED` | Case configuration or simulation failed |
 | `SKIPPED` | Case was disabled or intentionally excluded |
 
-Partial and failed cases are not silently promoted into the governing envelope. They remain visible as readiness
-findings and must be resolved or accepted with a controlled scope decision.
+Successful metrics from a partial case may still identify a candidate governing value, but the
+envelope remains explicitly incomplete. Failed/non-converged cases and metrics with no governing
+value remain visible and must be resolved before a complete report can be required.
 
 ## Interpret the governing envelope
 
@@ -121,6 +125,12 @@ direction and retains:
 The envelope is a selection result, not an approval. Review it for physical discontinuities, phase changes,
 extrapolation, unexpected governing cases, and missing coverage.
 
+`isComplete()` means every configured metric has a governing value and no case is failed or partial.
+It does not mean limits pass. `isAccepted()` is deliberately stricter: the envelope must be complete,
+every governing metric must have at least one configured acceptance limit, and no evaluated case may
+violate a limit. Therefore an otherwise successful envelope with unconfigured limits remains
+review-required rather than reporting a false acceptance.
+
 ## Connect cases to the closed design loop
 
 The process-to-engineering simulator repeatedly:
@@ -135,6 +145,11 @@ The process-to-engineering simulator repeatedly:
 If a selected pipe diameter, separator geometry, valve Cv, or exchanger area changes the process hydraulics, the old
 envelope is stale. The rerun is what closes the engineering loop.
 
+Within each iteration, declared module dependencies are evaluated as topological levels. A downstream
+module sees upstream selections from that same iteration. Conflicting proposals for one state key are
+rejected unless every proposer declares the same governing maximum or minimum rule; the loop never
+uses module list order as an implicit engineering-selection rule.
+
 ## Case-coverage review
 
 Use a case matrix to review equipment and metric coverage:
@@ -144,8 +159,9 @@ Use a case matrix to review equipment and metric coverage:
 | Are all required cases present? | Case IDs, types, required/enabled state, and controlled basis |
 | Did every required case converge? | Per-case process and unit run status |
 | Did every metric evaluate? | Per-case metric status and units |
+| Is the envelope complete? | No failed/partial case and no missing governing metric ID |
 | Is the governing direction correct? | Engineering rationale for maximum/minimum/absolute selection |
-| Are limits explicit? | Lower/upper limits, units, source, and margin |
+| Are limits explicit and accepted? | Lower/upper limits, units, source, margin, and `isAccepted()` state |
 | Are accidental cases modeled with adequate physics? | Dynamic/safety method, initial conditions, sequence, and credibility reference |
 | Is the envelope still current? | Definition fingerprint, result fingerprint, process revision, and design-loop iteration |
 

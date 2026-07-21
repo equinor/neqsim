@@ -1,212 +1,139 @@
 ---
 title: Mechanical Design Standards in NeqSim
-description: NeqSim provides comprehensive support for international design standards used in process equipment mechanical design. The framework enables engineers to apply company-specific and international standa...
+description: Audited catalog of mechanical-design standards, implementation maturity, calculation paths, and engineering limitations in NeqSim.
 ---
 
-# Mechanical Design Standards in NeqSim
+NeqSim catalogs standards that may be relevant to process-equipment design. Catalog inclusion is
+not a statement that every requirement or calculation in a published standard has been implemented.
+The matrix below reports the calculation evidence that currently exists in NeqSim.
 
-## Overview
+## Maturity definitions
 
-NeqSim provides comprehensive support for international design standards used in process equipment mechanical design. The framework enables engineers to apply company-specific and international standards consistently across all equipment in a process simulation.
+| Maturity | Meaning |
+| --- | --- |
+| `CATALOGUED` | Standard identity, edition metadata, category, and equipment applicability are available, but no standard calculation is exposed. |
+| `SCREENING` | A preliminary engineering calculation is available with the boundary stated in the matrix. It is not a conformity assessment. |
+| `VALIDATED` | The stated calculation range has independent numerical validation and controlled regression evidence. |
+| `QUALIFIED` | A controlled implementation and evidence package has been released for a stated use. Accountable engineering approval is still required. |
 
-## Supported Design Standards
+No current entry is classified as `VALIDATED` or `QUALIFIED`. Existing calculations remain useful
+for preliminary screening, but project criteria, purchased standards, vendor data, and engineering
+review remain governing.
 
-### StandardType Enumeration
+## Current support matrix
 
-The `StandardType` enum catalogs 30+ international design standards organized by category:
+The table between the generated markers is produced by
+`StandardSupportAudit.generateMarkdownTable()`. A regression test fails if the published table and
+the source catalog diverge.
 
-| Category | Standards |
-|----------|-----------|
-| **Pressure Vessel Codes** | ASME Section VIII Div.1/2, EN 13445, PD 5500, DNV-OS-F101 |
-| **Piping Codes** | ASME B31.3, ASME B31.4, ASME B31.8, EN 13480, NORSOK L-002 |
-| **Process Design** | NORSOK P-001, NORSOK P-002, API RP 14E, API RP 521 |
-| **Material Standards** | ASTM A516, ASTM A106, EN 10028, NORSOK M-001 |
-| **Safety Standards** | API RP 520, API RP 521, ISO 23251 |
+<!-- BEGIN GENERATED STANDARD SUPPORT MATRIX -->
+| Standard | Edition metadata | Category | Registry factory | Calculation path | Maturity | Boundary |
+| --- | --- | --- | --- | --- | --- | --- |
+| NORSOK-L-001 | Rev 6 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
+| NORSOK-P-001 | Rev 5 | separator process design | SeparatorDesignStandard | SeparatorDesignStandard | SCREENING | Preliminary K-factor and sizing inputs only; standard-specific requirements are not independently validated. |
+| NORSOK-P-002 | Rev 5 | separator process design | SeparatorDesignStandard | SeparatorDesignStandard | SCREENING | Preliminary K-factor and sizing inputs only; standard-specific requirements are not independently validated. |
+| NORSOK-M-001 | Rev 6 | material plate design codes | MaterialPlateDesignStandard | MaterialPlateDesignStandard | SCREENING | Material-property lookup only; material selection, qualification, and code acceptance are not implemented. |
+| NORSOK-M-630 | Rev 7 | material pipe design codes | MaterialPipeDesignStandard | MaterialPipeDesignStandard | SCREENING | Material-property lookup only; material selection, qualification, and code acceptance are not implemented. |
+| ASME-VIII-Div1 | 2021 | pressure vessel design code | PressureVesselDesignStandard | PressureVesselDesignStandard | SCREENING | Generic thin-wall separator screening only; edition-specific clauses and complete vessel checks are not implemented. |
+| ASME-VIII-Div2 | 2021 | pressure vessel design code | PressureVesselDesignStandard | PressureVesselDesignStandard | SCREENING | Generic thin-wall separator screening only; edition-specific clauses and complete vessel checks are not implemented. |
+| ASME-B31.3 | 2022 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
+| ASME-B31.4 | 2022 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
+| ASME-B31.8 | 2022 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
+| API-617 | 8th Ed | compressor design codes | CompressorDesignStandard | Api617CompressorDesignKernel | SCREENING | Compressor-casing pressure containment, flange, nozzle-load allowance, and thermal-growth screening only; rotor dynamics, package integration, and vendor conformity are not evaluated. |
+| API-610 | 13th Ed | pump design codes | DesignStandard | PumpApi610DesignKernel | SCREENING | API 610 screening is connected through a pure engineering-workflow adapter; purchased-standard, project, and vendor verification remain required. |
+| API-650 | 13th Ed | pressure vessel design code | PressureVesselDesignStandard | None | CATALOGUED | The registry maps this tank standard to a separator-oriented pressure-vessel class; no tank-code calculation is implemented. |
+| API-620 | 13th Ed | pressure vessel design code | PressureVesselDesignStandard | None | CATALOGUED | The registry maps this tank standard to a separator-oriented pressure-vessel class; no tank-code calculation is implemented. |
+| API-660 | 9th Ed | heat exchanger design codes | DesignStandard | None | CATALOGUED | No standard-specific heat-exchanger mechanical calculation is connected. |
+| API-661 | 7th Ed | heat exchanger design codes | DesignStandard | None | CATALOGUED | No standard-specific heat-exchanger mechanical calculation is connected. |
+| API-521 | 7th Ed | relief system design codes | ValveDesignStandard | Api521ReliefDesignKernel | SCREENING | Scenario aggregation, governing-case selection, relief-area sizing, and accumulated-pressure screening only; scenario completeness, installation, and conformity require independent review. |
+| API-526 | 7th Ed | relief valve design codes | ValveDesignStandard | Api526OrificeSelectionKernel | SCREENING | Standard-orifice area selection only; valve pressure class, dimensions, materials, installation, and vendor certification are not evaluated. |
+| API-5L | 46th Ed | material pipe design codes | MaterialPipeDesignStandard | MaterialPipeDesignStandard | SCREENING | Material-property lookup only; material selection, qualification, and code acceptance are not implemented. |
+| API-12J | 8th Ed | separator process design | SeparatorDesignStandard | Api12JSeparatorDesignKernel | SCREENING | Gravity cut-diameter, K-factor, and liquid residence-time screening only; service applicability, vessel construction, internals, and performance guarantees require independent review. |
+| DNV-ST-F101 | 2021 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
+| DNV-OS-F101 | 2013 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
+| DNV-RP-F105 | 2021 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
+| ISO-13623 | 2017 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
+| ISO-15649 | 2001 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
+| ISO-16812 | 2019 | heat exchanger design codes | DesignStandard | None | CATALOGUED | No standard-specific heat-exchanger mechanical calculation is connected. |
+| ASTM-A106 | 2022 | material pipe design codes | MaterialPipeDesignStandard | MaterialPipeDesignStandard | SCREENING | Material-property lookup only; material selection, qualification, and code acceptance are not implemented. |
+| ASTM-A516 | 2022 | material plate design codes | MaterialPlateDesignStandard | MaterialPlateDesignStandard | SCREENING | Material-property lookup only; material selection, qualification, and code acceptance are not implemented. |
+| ASTM-A333 | 2022 | material pipe design codes | MaterialPipeDesignStandard | MaterialPipeDesignStandard | SCREENING | Material-property lookup only; material selection, qualification, and code acceptance are not implemented. |
+| EN-13480 | 2017 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
+| EN-13445 | 2021 | pressure vessel design code | PressureVesselDesignStandard | PressureVesselDesignStandard | SCREENING | Generic thin-wall separator screening only; edition-specific clauses and complete vessel checks are not implemented. |
+| PD-5500 | 2021 | pressure vessel design code | PressureVesselDesignStandard | PressureVesselDesignStandard | SCREENING | Generic thin-wall separator screening only; edition-specific clauses and complete vessel checks are not implemented. |
+<!-- END GENERATED STANDARD SUPPORT MATRIX -->
 
-### Using StandardType
+## Typed standard selection
 
-```java
-import neqsim.process.mechanicaldesign.designstandards.StandardType;
-
-// Get standard by code
-StandardType standard = StandardType.fromCode("ASME-VIII-1");
-
-// Get standard properties
-String code = standard.getCode();           // "ASME-VIII-1"
-String name = standard.getName();           // "ASME Section VIII Division 1"
-String version = standard.getDefaultVersion(); // "2023"
-String category = standard.getDesignStandardCategory(); // "pressure vessel design code"
-
-// Check equipment applicability
-boolean applies = standard.appliesTo("separator"); // true
-boolean applies2 = standard.appliesTo("pump");     // false
-
-// Get all standards for an equipment type
-List<StandardType> applicable = StandardType.getApplicableStandards("compressor");
-```
-
-## Standard Categories
-
-NeqSim uses category-based standard assignment to ensure appropriate standards are applied to each equipment type:
-
-| Category Key | Description | Example Standards |
-|--------------|-------------|-------------------|
-| `pressure vessel design code` | Pressure containment design | ASME VIII, EN 13445 |
-| `separator process design` | Separator sizing rules | NORSOK P-002, API 12J |
-| `compressor design` | Compressor design requirements | API 617, API 618 |
-| `pipeline design codes` | Pipeline design | DNV-OS-F101, ASME B31.4 |
-| `valve design` | Valve sizing and selection | API 6D, EN ISO 10497 |
-| `material plate design` | Plate material selection | ASTM A516, EN 10028 |
-| `material pipe design` | Pipe material selection | ASTM A106, API 5L |
-
-## StandardRegistry
-
-The `StandardRegistry` class provides factory methods for creating `DesignStandard` instances:
-
-```java
-import neqsim.process.mechanicaldesign.designstandards.StandardRegistry;
-import neqsim.process.mechanicaldesign.designstandards.DesignStandard;
-
-// Create a design standard from StandardType
-DesignStandard standard = StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1);
-
-// Create with specific version
-DesignStandard standard2 = StandardRegistry.createStandard(StandardType.NORSOK_P002, "Rev 3");
-
-// Get recommended standards for equipment
-List<StandardType> recommended = StandardRegistry.getRecommendedStandards("separator", "Equinor");
-```
-
-## Applying Standards to Equipment
-
-### Single Equipment
+New code can select an explicit edition and any project amendments without depending on the
+registry's process-wide version overrides:
 
 ```java
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.mechanicaldesign.MechanicalDesign;
-import neqsim.process.mechanicaldesign.designstandards.StandardType;
-
-// Create equipment
-Separator separator = new Separator("HP Separator", feedStream);
-
-// Get mechanical design
-MechanicalDesign mechDesign = separator.getMechanicalDesign();
-
-// Apply single standard
-mechDesign.setDesignStandard(StandardType.ASME_VIII_DIV1);
-
-// Apply standard with version
-mechDesign.setDesignStandard(StandardType.NORSOK_P002, "Rev 3");
-
-// Apply multiple standards
-List<StandardType> standards = Arrays.asList(
-    StandardType.ASME_VIII_DIV1,
-    StandardType.NORSOK_P002,
-    StandardType.ASTM_A516
-);
-mechDesign.setDesignStandards(standards);
+StandardEdition edition = StandardEdition.of(StandardType.API_12J, "8th Ed",
+    Arrays.asList("Project amendment A", "Corrigendum 1"));
+mechanicalDesign.setDesignStandard(StandardSelection.strict(edition));
 ```
 
-### System-Wide Standards
+Strict selection fails closed with a `StandardSelectionException` when the entry is catalog-only,
+its calculation is not connected to the registry, the equipment context is missing, or the
+standard is not listed for that equipment type. The exception exposes a machine-readable reason so
+applications do not need to parse its message. `StandardRegistry.assessApplicability(...)` provides
+the same applicability decision without creating a standard.
 
-```java
-import neqsim.process.mechanicaldesign.SystemMechanicalDesign;
-import neqsim.process.processmodel.ProcessSystem;
+`StandardSelection.legacy(...)` is available for migrations that need an explicit edition while
+retaining the permissive factory behavior. It may create a metadata-only `DesignStandard`; it does
+not add calculation support.
 
-// Create process system
-ProcessSystem process = new ProcessSystem();
-process.add(separator);
-process.add(compressor);
-process.add(heatExchanger);
+Process-global `setVersionOverride(...)` and `clearVersionOverrides()` are deprecated. New code
+should retain a `StandardEdition` in each `StandardSelection`, then call
+`StandardRegistry.requireDesignKernel(selection)` when an executable implementation is required.
+The require call distinguishes missing kernel support from an unsupported edition. See the
+[typed-kernel migration guide](standard_design_kernel_migration.md) for a staged compatibility path.
 
-// Apply company standards to all equipment
-SystemMechanicalDesign sysMechDesign = new SystemMechanicalDesign(process);
-sysMechDesign.setCompanySpecificDesignStandards("Equinor");
+## Consolidated design kernels
 
-// Run design calculations
-sysMechDesign.runDesignCalculation();
-```
+`EquipmentDesignKernel<I, O>` extends the existing typed engineering-calculation contract with the
+implemented standard, audited maturity, and structured applicability. Kernels must not mutate their
+input or a `ProcessSystem`. Compatibility adapters defensively copy legacy mutable calculators.
 
-## Design Standard Hierarchy
+`StandardRegistry.getDesignKernel(...)` returns an explicit lookup status. API 617, API 610, API
+521, API 526, and API 12J have connected adapters and return `IMPLEMENTED`; standards that have not
+been adapted return `NOT_IMPLEMENTED`, never an empty or implied success. Each kernel returns an
+immutable assessment snapshot and always requires engineering review because its maturity remains
+`SCREENING`. Unsupported editions fail closed as `EDITION_NOT_IMPLEMENTED` until separately
+implemented and validated.
 
-Standards are applied hierarchically based on specificity:
+The API 521 adapter defensively copies the mutable protected-item basis, requires at least one
+complete credible scenario, selects the governing rate, and records the sizing and accumulated
+pressure checks. The API 526 adapter accepts an explicitly unit-tagged required area and reports an
+inadequate result when a single standard orifice cannot cover it. These adapters do not establish
+scenario completeness or qualify valve construction, installation, reaction loads, flare-network
+effects, or vendor certification.
 
-```
-1. Equipment-specific standard (highest priority)
-   ↓
-2. TORG project standards
-   ↓
-3. Company default standards
-   ↓
-4. NeqSim default standards (lowest priority)
-```
+The API 617 adapter defensively copies a compressor-casing configuration before evaluating pressure
+containment, hydrotest, flange-rating, nozzle-load allowance, and thermal-growth screens. The API
+12J adapter uses explicitly unit-tagged cut diameter together with K-factor and liquid residence
+time. Passing either result is not a package, vessel, or performance certification.
 
-## Available Design Standard Classes
+## How to interpret the registry
 
-NeqSim includes specialized design standard implementations:
+`StandardRegistry.createStandard(...)` remains backward compatible. The factory class shown in the
+matrix records what it currently creates; it does not prove that the resulting class implements the
+selected edition. `StandardRegistry.getMappedImplementationClass(...)` allows applications and
+audits to inspect that mapping without constructing equipment or accessing the design database.
 
-| Class | Purpose |
-|-------|---------|
-| `PressureVesselDesignStandard` | ASME/EN pressure vessel calculations |
-| `SeparatorDesignStandard` | Separator sizing per NORSOK/API |
-| `CompressorDesignStandard` | Compressor design per API 617/618 |
-| `PipelineDesignStandard` | Pipeline wall thickness per DNV/ASME |
-| `MaterialPlateDesignStandard` | Plate material properties |
-| `MaterialPipeDesignStandard` | Pipe material properties |
-| `JointEfficiencyPlateStandard` | Weld joint efficiency factors |
-| `GasScrubberDesignStandard` | Gas scrubber sizing rules |
-| `AdsorptionDehydrationDesignStandard` | Dehydration unit design |
+The API 610 pump screen remains available through `PumpMechanicalDesign`. The consolidated
+`PumpApi610DesignKernel` is a pure adapter over the same calculator, so existing callers are not
+removed or redirected. The generic legacy factory still creates a base `DesignStandard`; executable
+kernel support is exposed explicitly through `StandardRegistry.getDesignKernel(...)`.
 
-## Example: Complete Standard Application
+## Engineering boundary
 
-```java
-import neqsim.process.equipment.separator.Separator;
-import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.mechanicaldesign.SystemMechanicalDesign;
-import neqsim.process.mechanicaldesign.designstandards.StandardType;
-import neqsim.process.processmodel.ProcessSystem;
-import neqsim.thermo.system.SystemSrkEos;
+- Treat `CATALOGUED` entries as discovery metadata only.
+- Treat `SCREENING` results as preliminary design information with the stated boundary.
+- Do not infer certification, code compliance, vendor acceptance, or construction readiness.
+- Record the purchased edition, project amendments, input provenance, and accountable approval
+  outside the current legacy registry.
 
-// Create fluid
-SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
-fluid.addComponent("methane", 0.85);
-fluid.addComponent("ethane", 0.10);
-fluid.addComponent("propane", 0.05);
-fluid.setMixingRule("classic");
-
-// Create feed stream
-Stream feed = new Stream("Feed", fluid);
-feed.setFlowRate(10000, "kg/hr");
-feed.setTemperature(25, "C");
-feed.setPressure(50, "bara");
-
-// Create equipment with standards
-Separator separator = new Separator("HP Separator", feed);
-separator.getMechanicalDesign().setDesignStandard(StandardType.ASME_VIII_DIV1);
-separator.getMechanicalDesign().setDesignStandard(StandardType.NORSOK_P002);
-
-Compressor compressor = new Compressor("Export Compressor", separator.getGasOutStream());
-compressor.setOutletPressure(150, "bara");
-compressor.getMechanicalDesign().setDesignStandard(StandardType.API_617);
-
-// Build process
-ProcessSystem process = new ProcessSystem();
-process.add(feed);
-process.add(separator);
-process.add(compressor);
-process.run();
-
-// Run mechanical design
-SystemMechanicalDesign sysMechDesign = new SystemMechanicalDesign(process);
-sysMechDesign.runDesignCalculation();
-
-// Get results
-System.out.println("Total Weight: " + sysMechDesign.getTotalWeight() + " kg");
-System.out.println("Total Volume: " + sysMechDesign.getTotalVolume() + " m³");
-```
-
-## See Also
-
-- [Mechanical Design Database](mechanical_design_database) - Data sources for design parameters
-- [TORG Document Integration](torg_integration) - Technical Requirements Documents
-- [Field Development Orchestration](field_development_orchestration) - Complete design workflows
+See the [engineering capability statement](../engineering/current-capabilities.md) for the broader
+process-to-engineering workflow and its qualification boundary.

@@ -1,10 +1,11 @@
 package neqsim.process.engineering.design;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import neqsim.process.engineering.calculation.EngineeringCalculationContext;
 import neqsim.process.engineering.designcase.EngineeringCaseRunOptions;
 import neqsim.process.engineering.designcase.EngineeringCaseRunReport;
@@ -24,7 +25,7 @@ public final class EngineeringDesignLoop {
     }
     EngineeringDesignLoopOptions options = configuredOptions == null ? EngineeringDesignLoopOptions.builder().build()
         : configuredOptions;
-    List<EngineeringDesignModule> modules = orderedModules(configuredModules);
+    EngineeringDesignDependencyGraph dependencyGraph = EngineeringDesignDependencyGraph.of(configuredModules);
     ProcessSystem working = baseProcess.copy();
     EngineeringDesignState state = new EngineeringDesignState();
     List<EngineeringDesignIteration> iterations = new ArrayList<EngineeringDesignIteration>();
@@ -38,35 +39,48 @@ public final class EngineeringDesignLoop {
           .simulationFingerprint(caseReport.getResultFingerprint())
           .attribute("designIteration", Integer.toString(number)).build();
       List<EngineeringDesignModuleResult> moduleResults = new ArrayList<EngineeringDesignModuleResult>();
-      for (EngineeringDesignModule module : modules) {
-        moduleResults.add(module.evaluate(working, caseReport, state, context));
-      }
-
       int appliedUpdates = 0;
       double maximumChange = 0.0;
-      List<EngineeringDesignVariable> designVariables = new ArrayList<EngineeringDesignVariable>();
-      Map<String, EngineeringDesignUpdate> selectedUpdates = new java.util.LinkedHashMap<String, EngineeringDesignUpdate>();
-      Map<String, String> updateOwners = new java.util.LinkedHashMap<String, String>();
-      for (EngineeringDesignModuleResult moduleResult : moduleResults) {
-        for (EngineeringDesignUpdate update : moduleResult.getUpdates()) {
-          selectedUpdates.put(update.getKey(), update);
-          updateOwners.put(update.getKey(), moduleResult.getModuleId());
+      Map<String, EngineeringDesignVariable> designVariablesByKey = new LinkedHashMap<String, EngineeringDesignVariable>();
+      Map<String, List<OwnedUpdate>> proposalsByKey = new LinkedHashMap<String, List<OwnedUpdate>>();
+      for (List<EngineeringDesignModule> level : dependencyGraph.getOrderedLevels()) {
+        Set<String> levelUpdateKeys = new LinkedHashSet<String>();
+        for (EngineeringDesignModule module : level) {
+          EngineeringDesignModuleResult moduleResult = module.evaluate(working, caseReport, state, context);
+          if (moduleResult == null || !module.getId().trim().equals(moduleResult.getModuleId())) {
+            throw new EngineeringDesignDependencyException("Engineering design module " + module.getId()
+                + " returned a result for " + (moduleResult == null ? "null" : moduleResult.getModuleId()));
+          }
+          moduleResults.add(moduleResult);
+          for (EngineeringDesignUpdate update : moduleResult.getUpdates()) {
+            List<OwnedUpdate> proposals = proposalsByKey.get(update.getKey());
+            if (proposals == null) {
+              proposals = new ArrayList<OwnedUpdate>();
+              proposalsByKey.put(update.getKey(), proposals);
+            }
+            proposals.add(new OwnedUpdate(moduleResult.getModuleId(), update));
+            levelUpdateKeys.add(update.getKey());
+          }
+        }
+        for (String key : levelUpdateKeys) {
+          OwnedUpdate selectedUpdate = resolveUpdate(key, proposalsByKey.get(key));
+          EngineeringDesignUpdate update = selectedUpdate.update;
+          double selected = update.selectedValue();
+          EngineeringDesignValue previous = state.get(update.getKey());
+          double change = relativeChange(previous, selected);
+          maximumChange = Math.max(maximumChange, change);
+          boolean applied = previous == null || change > update.getRelativeTolerance();
+          designVariablesByKey.put(key, new EngineeringDesignVariable(update, previous, selected, change, applied));
+          if (applied) {
+            update.apply(working, selected);
+            state.put(new EngineeringDesignValue(update.getKey(), selected, update.getUnit(), selectedUpdate.moduleId,
+                update.getGoverningCaseId(), number));
+            appliedUpdates++;
+          }
         }
       }
-      for (EngineeringDesignUpdate update : selectedUpdates.values()) {
-        double selected = update.selectedValue();
-        EngineeringDesignValue previous = state.get(update.getKey());
-        double change = relativeChange(previous, selected);
-        maximumChange = Math.max(maximumChange, change);
-        boolean applied = previous == null || change > update.getRelativeTolerance();
-        designVariables.add(new EngineeringDesignVariable(update, previous, selected, change, applied));
-        if (applied) {
-          update.apply(working, selected);
-          state.put(new EngineeringDesignValue(update.getKey(), selected, update.getUnit(),
-              updateOwners.get(update.getKey()), update.getGoverningCaseId(), number));
-          appliedUpdates++;
-        }
-      }
+      List<EngineeringDesignVariable> designVariables = new ArrayList<EngineeringDesignVariable>(
+          designVariablesByKey.values());
 
       List<EngineeringConstraintResult> constraintResults = evaluateConstraints(moduleResults, state);
       Map<String, Double> processValues = flattenProcessValues(caseReport);
@@ -99,16 +113,62 @@ public final class EngineeringDesignLoop {
     return new EngineeringDesignLoopResult(false, "MAXIMUM_ITERATIONS_REACHED", state, iterations, working);
   }
 
-  private static List<EngineeringDesignModule> orderedModules(List<EngineeringDesignModule> configured) {
-    List<EngineeringDesignModule> result = configured == null ? new ArrayList<EngineeringDesignModule>()
-        : new ArrayList<EngineeringDesignModule>(configured);
-    Collections.sort(result, new Comparator<EngineeringDesignModule>() {
-      @Override
-      public int compare(EngineeringDesignModule first, EngineeringDesignModule second) {
-        return first.getId().compareTo(second.getId());
+  private static OwnedUpdate resolveUpdate(String key, List<OwnedUpdate> proposals) {
+    if (proposals.size() == 1) {
+      return proposals.get(0);
+    }
+    EngineeringDesignUpdate.ConflictResolution resolution = proposals.get(0).update.getConflictResolution();
+    String unit = proposals.get(0).update.getUnit();
+    for (OwnedUpdate proposal : proposals) {
+      if (!unit.equals(proposal.update.getUnit())) {
+        throw conflict(key, proposals, "incompatible units");
       }
-    });
-    return result;
+      if (resolution != proposal.update.getConflictResolution()) {
+        throw conflict(key, proposals, "incompatible conflict-resolution rules");
+      }
+    }
+    if (resolution == EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE) {
+      throw conflict(key, proposals, "no governing rule was declared");
+    }
+
+    OwnedUpdate selected = proposals.get(0);
+    double selectedValue = selected.update.selectedValue();
+    for (int index = 1; index < proposals.size(); index++) {
+      OwnedUpdate candidate = proposals.get(index);
+      double candidateValue = candidate.update.selectedValue();
+      boolean governing = resolution == EngineeringDesignUpdate.ConflictResolution.GOVERNING_MAXIMUM
+          ? candidateValue > selectedValue
+          : candidateValue < selectedValue;
+      if (governing || (candidateValue == selectedValue && candidate.moduleId.compareTo(selected.moduleId) < 0)) {
+        selected = candidate;
+        selectedValue = candidateValue;
+      }
+    }
+    return selected;
+  }
+
+  private static EngineeringDesignConflictException conflict(String key, List<OwnedUpdate> proposals, String reason) {
+    StringBuilder diagnostic = new StringBuilder("Conflicting engineering design updates for ").append(key).append(": ")
+        .append(reason).append("; proposals=");
+    for (int index = 0; index < proposals.size(); index++) {
+      OwnedUpdate proposal = proposals.get(index);
+      if (index > 0) {
+        diagnostic.append(", ");
+      }
+      diagnostic.append(proposal.moduleId).append("=").append(proposal.update.selectedValue()).append(" ")
+          .append(proposal.update.getUnit()).append(" [").append(proposal.update.getConflictResolution()).append("]");
+    }
+    return new EngineeringDesignConflictException(key, diagnostic.toString());
+  }
+
+  private static final class OwnedUpdate {
+    private final String moduleId;
+    private final EngineeringDesignUpdate update;
+
+    private OwnedUpdate(String moduleId, EngineeringDesignUpdate update) {
+      this.moduleId = moduleId;
+      this.update = update;
+    }
   }
 
   private static List<EngineeringConstraintResult> evaluateConstraints(

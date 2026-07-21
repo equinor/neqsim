@@ -39,6 +39,21 @@ public final class EngineeringDesignValue implements Serializable {
     return unit;
   }
 
+  /** @return module that supplied the selected governing proposal */
+  public String getSourceModule() {
+    return sourceModule;
+  }
+
+  /** @return governing design case ID, or an empty string when not case-specific */
+  public String getGoverningCaseId() {
+    return governingCaseId;
+  }
+
+  /** @return design-loop iteration in which this value was selected */
+  public int getIteration() {
+    return iteration;
+  }
+
   public Map<String, Object> toMap() {
     Map<String, Object> result = new LinkedHashMap<String, Object>();
     result.put("key", key);

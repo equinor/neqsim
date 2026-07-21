@@ -53,7 +53,7 @@ public final class EngineeringSimulationRunner {
     if (project.getEngineeringDesignModules().isEmpty()) {
       return null;
     }
-    EngineeringCaseSet set = caseSet(project);
+    EngineeringCaseSet set = buildCaseSet(project);
     int parallelism = options == null ? 1 : options.getParallelism();
     return EngineeringDesignLoop.run(project.getProcessSystem(), set, project.getEngineeringDesignModules(),
         EngineeringDesignLoopOptions.builder().caseParallelism(parallelism).build());
@@ -63,12 +63,21 @@ public final class EngineeringSimulationRunner {
     if (project.getExecutableDesignCases().isEmpty() && project.getEngineeringMetrics().isEmpty()) {
       return null;
     }
-    EngineeringCaseSet set = caseSet(project);
+    EngineeringCaseSet set = buildCaseSet(project);
     return EngineeringCaseRunner.run(project.getProcessSystem(), set,
         options == null ? EngineeringCaseRunOptions.sequential() : options);
   }
 
-  private static EngineeringCaseSet caseSet(EngineeringProject project) {
+  /**
+   * Build the deterministic case-set representation used by the detailed runner and design loop.
+   *
+   * @param project governed project
+   * @return independent case-set container with the project's cases and metrics
+   */
+  public static EngineeringCaseSet buildCaseSet(EngineeringProject project) {
+    if (project == null) {
+      throw new IllegalArgumentException("project must not be null");
+    }
     EngineeringCaseSet set = new EngineeringCaseSet(project.getProjectId() + "@" + project.getRevision());
     for (neqsim.process.engineering.designcase.EngineeringDesignCase designCase : project.getExecutableDesignCases()) {
       set.addCase(designCase);
