@@ -23,6 +23,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ConstantVolumeDepletion.class);
 
+  private static final double CELL_VOLUME_RELATIVE_TOLERANCE = 1.0e-8;
+  private static final int MAX_CELL_VOLUME_ITERATIONS = 100;
+
   private double[] relativeVolume = null;
   double[] totalVolume = null;
   double[] liquidVolumeRelativeToVsat = null;
@@ -63,6 +66,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     getThermoSystem().setPressure(1.0);
     do {
       getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
+      thermoOps.TPflash();
     } while (getThermoSystem().getNumberOfPhases() == 1 && getThermoSystem().getPressure() < 1000.0);
     do {
       getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
@@ -90,6 +94,45 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
+   * Restore the constant CVD cell volume by withdrawing equilibrium gas.
+   */
+  private void restoreSaturationVolume() {
+    for (int iteration = 0; iteration < MAX_CELL_VOLUME_ITERATIONS; iteration++) {
+      thermoOps.TPflash();
+      getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+
+      double currentVolume = getThermoSystem().getCorrectedVolume();
+      double relativeResidual = (currentVolume - saturationVolume) / saturationVolume;
+      if (relativeResidual <= CELL_VOLUME_RELATIVE_TOLERANCE) {
+        return;
+      }
+      if (!getThermoSystem().hasPhaseType("gas")) {
+        throw new IllegalStateException("Cannot restore CVD cell volume without a gas phase.");
+      }
+
+      double gasMoles = getThermoSystem().getPhase("gas").getNumberOfMolesInPhase();
+      double gasVolume = getThermoSystem().getPhase("gas").getCorrectedVolume();
+      if (gasMoles <= 0.0 || gasVolume <= 0.0) {
+        throw new IllegalStateException("Cannot restore CVD cell volume from an empty gas phase.");
+      }
+
+      double molesToRemove = (currentVolume - saturationVolume) / gasVolume * gasMoles;
+      molesToRemove = Math.min(molesToRemove, 0.95 * gasMoles);
+      double[] componentRemoval = new double[getThermoSystem().getNumberOfComponents()];
+      for (int componentIndex = 0; componentIndex < componentRemoval.length; componentIndex++) {
+        componentRemoval[componentIndex] =
+            molesToRemove * getThermoSystem().getPhase("gas").getComponent(componentIndex).getx();
+      }
+
+      for (int componentIndex = 0; componentIndex < componentRemoval.length; componentIndex++) {
+        getThermoSystem().addComponent(componentIndex, -componentRemoval[componentIndex]);
+      }
+    }
+
+    throw new IllegalStateException("CVD gas removal did not restore the saturation volume.");
+  }
+
+  /**
    * runCalc.
    */
   public void runCalc() {
@@ -101,83 +144,41 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     Zgas = new double[pressures.length];
     Zmix = new double[pressures.length];
     liquidRelativeVolume = new double[pressures.length];
-    double oldVolCorr = 0.0;
-    double volumeCorrection = 0.0;
     cummulativeMolePercDepleted = new double[pressures.length];
+
     double totalNumberOfMoles = getThermoSystem().getTotalNumberOfMoles();
     if (!Double.isNaN(temperature)) {
       getThermoSystem().setTemperature(temperature, temperatureUnit);
     }
+    calcSaturationConditions();
 
     for (int i = 0; i < pressures.length; i++) {
       getThermoSystem().setPressure(pressures[i]);
-      try {
-        thermoOps.TPflash();
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+      thermoOps.TPflash();
+      getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+
+      if (getThermoSystem().getNumberOfPhases() > 1
+          && getThermoSystem().getCorrectedVolume()
+              > saturationVolume * (1.0 + CELL_VOLUME_RELATIVE_TOLERANCE)) {
+        restoreSaturationVolume();
       }
       getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-      // getThermoSystem().display();
+
       totalVolume[i] = getThermoSystem().getCorrectedVolume();
-      // System.out.println("volume " + totalVolume[i]);
-      cummulativeMolePercDepleted[i] = 100.0 - getThermoSystem().getTotalNumberOfMoles() / totalNumberOfMoles * 100;
-      if (getThermoSystem().getNumberOfPhases() > 1) {
-        if (!saturationConditionFound) {
-          calcSaturationConditions();
-          getThermoSystem().setPressure(pressures[i]);
-          try {
-            thermoOps.TPflash();
-            getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-          } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-          }
-        }
+      relativeVolume[i] = totalVolume[i] / saturationVolume;
+      cummulativeMolePercDepleted[i] =
+          100.0 - getThermoSystem().getTotalNumberOfMoles() / totalNumberOfMoles * 100.0;
+      Zmix[i] = getThermoSystem().getZvolcorr();
 
-        // if (totalVolume[i] > saturationVolume) {
-        liquidVolume[i] = getThermoSystem().getPhase(1).getCorrectedVolume();
+      if (getThermoSystem().hasPhaseType("gas")) {
+        Zgas[i] = getThermoSystem().getPhase("gas").getZvolcorr();
+      }
+      if (getThermoSystem().hasPhaseType("oil")) {
+        liquidVolume[i] = getThermoSystem().getPhase("oil").getCorrectedVolume();
         liquidVolumeRelativeToVsat[i] = liquidVolume[i] / saturationVolume;
-        Zgas[i] = getThermoSystem().getPhase(0).getZvolcorr();
-        Zmix[i] = getThermoSystem().getZvolcorr();
-        liquidRelativeVolume[i] = getThermoSystem().getPhase("oil").getCorrectedVolume() / saturationVolume * 100;
-        oldVolCorr = volumeCorrection;
-        volumeCorrection = getThermoSystem().getCorrectedVolume() - saturationVolume;
-        double test = (volumeCorrection - oldVolCorr) / getThermoSystem().getPhase(0).getCorrectedVolume();
-        double[] change = new double[getThermoSystem().getPhase(0).getNumberOfComponents()];
-        // System.out.println(test);
-
-        for (int j = 0; j < getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
-          try {
-            change[j] = (test * getThermoSystem().getPhase(0).getComponent(j).getx() < getThermoSystem().getPhase(0)
-                .getComponent(j).getNumberOfMolesInPhase())
-                    ? test * getThermoSystem().getPhase(0).getComponent(j).getx()
-                    : 0.0;
-          } catch (Exception e) {
-            logger.debug(e.getMessage());
-          }
-        }
-        getThermoSystem().init(0);
-        for (int j = 0; j < getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
-          try {
-            getThermoSystem().addComponent(j, -change[j]);
-          } catch (Exception e) {
-            logger.debug(e.getMessage());
-          }
-        }
-        // getThermoSystem().init(0);
-        // getThermoSystem().init(1);
+        liquidRelativeVolume[i] = liquidVolumeRelativeToVsat[i] * 100.0;
       }
     }
-
-    for (int i = 0; i < pressures.length; i++) {
-      relativeVolume[i] = totalVolume[i] / saturationVolume;
-      // System.out.println("rel volume " + relativeVolume[i]);
-    }
-    try {
-      thermoOps.TPflash();
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    }
-    // System.out.println("test finished");
   }
 
   /**
