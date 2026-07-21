@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import neqsim.process.engineering.calculation.EngineeringCalculationContext;
-import neqsim.process.engineering.designcase.EngineeringCaseRunOptions;
 import neqsim.process.engineering.designcase.EngineeringCaseRunReport;
 import neqsim.process.engineering.designcase.EngineeringCaseRunner;
 import neqsim.process.engineering.designcase.EngineeringCaseSet;
@@ -33,8 +32,7 @@ public final class EngineeringDesignLoop {
     Map<String, Double> previousProcessValues = null;
 
     for (int number = 1; number <= options.getMaximumIterations(); number++) {
-      EngineeringCaseRunReport caseReport = EngineeringCaseRunner.run(working, cases, EngineeringCaseRunOptions
-          .builder().parallelism(options.getCaseParallelism()).requireConvergence(true).build());
+      EngineeringCaseRunReport caseReport = EngineeringCaseRunner.run(working, cases, options.getCaseRunOptions());
       EngineeringCalculationContext context = EngineeringCalculationContext.builder().designCaseId(cases.getId())
           .simulationFingerprint(caseReport.getResultFingerprint())
           .attribute("designIteration", Integer.toString(number)).build();
@@ -88,7 +86,11 @@ public final class EngineeringDesignLoop {
       int satisfiedConstraints = countSatisfied(constraintResults);
       boolean processStable = !options.isStableProcessValuesRequired()
           || (previousProcessValues != null && maximumProcessChange <= options.getProcessValueRelativeTolerance());
-      boolean caseSuccess = !caseReport.getEnvelope().hasCaseFailures();
+      boolean caseSuccess = options.isCompleteCaseEnvelopeRequired() ? caseReport.isComplete()
+          : !caseReport.getEnvelope().hasCaseFailures();
+      if (options.isAcceptedCaseEnvelopeRequired()) {
+        caseSuccess = caseSuccess && caseReport.isAccepted();
+      }
       EngineeringConvergenceReport convergence = new EngineeringConvergenceReport(maximumChange, maximumProcessChange,
           options.getProcessValueRelativeTolerance(), satisfiedConstraints, constraintResults.size(),
           appliedUpdates == 0, processStable, caseSuccess);

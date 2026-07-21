@@ -54,9 +54,9 @@ public final class EngineeringSimulationRunner {
       return null;
     }
     EngineeringCaseSet set = buildCaseSet(project);
-    int parallelism = options == null ? 1 : options.getParallelism();
+    EngineeringCaseRunOptions effectiveOptions = options == null ? EngineeringCaseRunOptions.sequential() : options;
     return EngineeringDesignLoop.run(project.getProcessSystem(), set, project.getEngineeringDesignModules(),
-        EngineeringDesignLoopOptions.builder().caseParallelism(parallelism).build());
+        EngineeringDesignLoopOptions.builder().caseRunOptions(effectiveOptions).build());
   }
 
   private static EngineeringCaseRunReport runCases(EngineeringProject project, EngineeringCaseRunOptions options) {

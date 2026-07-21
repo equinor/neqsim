@@ -7,17 +7,18 @@ import java.util.List;
 import com.google.gson.GsonBuilder;
 
 /**
- * NORSOK P-002 ("Process system design") compliance checker.
+ * Point-by-point NORSOK P-002-oriented process screening checker.
  *
  * <p>
  * Evaluates calculated process values against NORSOK P-002 prescriptive design limits and collects {@link P002Finding}
  * objects. The checker is intentionally point-by-point - callers feed it the values from their NeqSim simulation
  * (header Mach numbers, blowdown momentum fluxes, carry-over fractions, etc.) and receive a structured pass/fail
- * report.
+ * report. Despite the legacy class and method names, a passing report covers only the supplied point checks and is not
+ * a conformity assessment of the complete standard.
  * </p>
  *
  * <p>
- * Typical limit values used (all configurable via the {@code check...} method overloads):
+ * Default screening values used (all configurable via the {@code check...} method overloads):
  * </p>
  *
  * <table>
@@ -47,6 +48,11 @@ import com.google.gson.GsonBuilder;
  * <td>0.001 (0.1 vol%)</td>
  * </tr>
  * </table>
+ *
+ * <p>
+ * Projects must verify each limit against their purchased edition, project requirements, service, and approved design
+ * basis before use.
+ * </p>
  *
  * @author ESOL
  * @version 1.0

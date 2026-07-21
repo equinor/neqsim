@@ -9,6 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.Set;
@@ -51,10 +52,15 @@ class StandardDesignKernelVerificationSuiteTest {
       assertTrue(lookup.isImplemented());
       assertEquals(standard, kernel.standard());
       assertTrue(kernel.maturity() != StandardSupportLevel.CATALOGUED);
-      assertTrue(kernel.supports(StandardEdition.defaultEdition(standard)));
+      boolean currentEditionImplemented = standard == StandardType.API_521;
+      assertEquals(currentEditionImplemented, kernel.supports(StandardEdition.defaultEdition(standard)));
       assertTrue(methodKeys.add(kernel.getMethod() + "@" + kernel.getMethodVersion()), "Duplicate method key");
       assertNotNull(roundTrip(kernel));
     }
+
+    EquipmentDesignKernelRegistry.Lookup relief = EquipmentDesignKernelRegistry.lookup(StandardType.API_521);
+    assertFalse(relief.supports(StandardEdition.of(StandardType.API_521, "7th Ed",
+        Collections.singletonList("Project amendment A"))));
   }
 
   @SuppressWarnings("unchecked")

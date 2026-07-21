@@ -8,6 +8,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import neqsim.process.engineering.calculation.EngineeringCalculationContext;
+import neqsim.process.engineering.designcase.EngineeringCaseExecutionException;
+import neqsim.process.engineering.designcase.EngineeringCaseFailurePolicy;
+import neqsim.process.engineering.designcase.EngineeringCaseRunOptions;
 import neqsim.process.engineering.designcase.EngineeringCaseRunReport;
 import neqsim.process.engineering.designcase.EngineeringCaseSet;
 import neqsim.process.engineering.designcase.EngineeringDesignCase;
@@ -165,6 +168,99 @@ class EngineeringDesignLoopTest {
     assertTrue(result.isConverged());
     assertEquals(70.0, result.getState().requireValue("shared.pressure"), 1.0e-12);
     assertEquals("high-case", result.getState().get("shared.pressure").getSourceModule());
+  }
+
+  @Test
+  void incompleteCaseEnvelopeCannotConvergeByDefault() {
+    EngineeringMetric nonFinite = new EngineeringMetric("FEED.invalid", "FEED", "Invalid metric", "fraction",
+        EngineeringMetric.GoverningDirection.MAXIMUM, new EngineeringMetric.Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem ignored) {
+            return Double.NaN;
+          }
+        });
+    EngineeringCaseSet incompleteCases = new EngineeringCaseSet("incomplete-loop")
+        .addCase(new EngineeringDesignCase("normal", "Normal", EngineeringDesignCase.Type.NORMAL,
+            new EngineeringDesignCase.Configurator() {
+              private static final long serialVersionUID = 1000L;
+
+              @Override
+              public void configure(ProcessSystem ignored) {
+                // The invalid metric creates an incomplete envelope.
+              }
+            }))
+        .addMetric(nonFinite);
+
+    EngineeringDesignLoopResult result = EngineeringDesignLoop.run(process(), incompleteCases,
+        Arrays.<EngineeringDesignModule>asList(new FeedPressureDesignModule()),
+        EngineeringDesignLoopOptions.builder().maximumIterations(3).build());
+
+    assertFalse(result.isConverged());
+    assertEquals("MAXIMUM_ITERATIONS_REACHED", result.getTerminationReason());
+    assertFalse(result.getIterations().get(2).getCaseReport().isComplete());
+  }
+
+  @Test
+  void designLoopPreservesCaseFailurePolicy() {
+    EngineeringMetric nonFinite = new EngineeringMetric("FEED.invalid", "FEED", "Invalid metric", "fraction",
+        EngineeringMetric.GoverningDirection.MAXIMUM, new EngineeringMetric.Extractor() {
+          private static final long serialVersionUID = 1000L;
+
+          @Override
+          public double extract(ProcessSystem ignored) {
+            return Double.NaN;
+          }
+        });
+    EngineeringCaseSet incompleteCases = new EngineeringCaseSet("throwing-loop")
+        .addCase(new EngineeringDesignCase("normal", "Normal", EngineeringDesignCase.Type.NORMAL,
+            new EngineeringDesignCase.Configurator() {
+              private static final long serialVersionUID = 1000L;
+
+              @Override
+              public void configure(ProcessSystem ignored) {
+                // The invalid metric creates an incomplete envelope.
+              }
+            }))
+        .addMetric(nonFinite);
+    EngineeringCaseRunOptions caseOptions = EngineeringCaseRunOptions.builder().requireConvergence(false)
+        .failurePolicy(EngineeringCaseFailurePolicy.THROW_WITH_PARTIAL_RESULT).build();
+    EngineeringDesignLoopOptions options = EngineeringDesignLoopOptions.builder().maximumIterations(3)
+        .caseRunOptions(caseOptions).build();
+
+    EngineeringCaseExecutionException exception = assertThrows(EngineeringCaseExecutionException.class,
+        () -> EngineeringDesignLoop.run(process(), incompleteCases,
+            Arrays.<EngineeringDesignModule>asList(new FeedPressureDesignModule()), options));
+
+    assertFalse(exception.getPartialReport().isComplete());
+    assertEquals(EngineeringCaseFailurePolicy.THROW_WITH_PARTIAL_RESULT,
+        options.getCaseRunOptions().getFailurePolicy());
+    assertFalse(options.getCaseRunOptions().isConvergenceRequired());
+  }
+
+  @Test
+  void rejectedCaseEnvelopeCannotConvergeWhenAcceptanceIsRequired() {
+    EngineeringCaseSet rejectedCases = new EngineeringCaseSet("rejected-loop")
+        .addCase(new EngineeringDesignCase("normal", "Normal", EngineeringDesignCase.Type.NORMAL,
+            new EngineeringDesignCase.Configurator() {
+              private static final long serialVersionUID = 1000L;
+
+              @Override
+              public void configure(ProcessSystem ignored) {
+                // Base case is sufficient for the acceptance-limit check.
+              }
+            }))
+        .addMetric(EngineeringMetric.equipmentPressure("FEED").setAcceptanceRange(null, Double.valueOf(1.0)));
+
+    EngineeringDesignLoopResult result = EngineeringDesignLoop.run(process(), rejectedCases,
+        Arrays.<EngineeringDesignModule>asList(new FeedPressureDesignModule()), EngineeringDesignLoopOptions.builder()
+            .maximumIterations(3).requireAcceptedCaseEnvelope(true).build());
+
+    assertFalse(result.isConverged());
+    EngineeringCaseRunReport lastReport = result.getIterations().get(2).getCaseReport();
+    assertTrue(lastReport.isComplete());
+    assertFalse(lastReport.isAccepted());
   }
 
   private EngineeringCaseSet cases(String id) {

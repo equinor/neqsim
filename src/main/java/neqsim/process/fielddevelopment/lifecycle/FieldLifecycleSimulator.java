@@ -675,7 +675,8 @@ public class FieldLifecycleSimulator {
       return finitePower;
     }
     if (!Double.isFinite(reportedPower)) {
-      logger.warn("Process {} reported non-finite total power and no finite equipment duty", model.getName());
+      logger.warn("Process {} reported non-finite total power {} {} and no finite equipment duty", model.getName(),
+          reportedPower, unit);
       return 0.0;
     }
     return Math.max(0.0, reportedPower);

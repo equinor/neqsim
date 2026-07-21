@@ -12,11 +12,16 @@ package neqsim.process.util.fire;
  * <p>
  * Key features:
  * <ul>
- * <li>API 520/521 compliant orifice area calculations</li>
+ * <li>API 520/521-oriented screening equations for orifice area calculations</li>
  * <li>Support for both conventional and balanced-bellows PSVs</li>
  * <li>Dynamic fire scenarios with time-varying heat input</li>
  * <li>Back pressure effects for multiple PSV installations</li>
  * </ul>
+ *
+ * <p>
+ * These calculations do not establish scenario completeness, installation acceptability, valve certification, or
+ * conformity with a purchased standard edition. Project and independent engineering review remain required.
+ * </p>
  *
  * <p>
  * References:

@@ -49,14 +49,25 @@ class StandardSelectionTest {
   }
 
   @Test
-  void testStrictSelectionStoresExplicitEditionAndAmendments() {
+  void testLegacySelectionStoresExplicitEditionAndAmendments() {
     StandardEdition edition = StandardEdition.of(StandardType.API_12J, "8th Ed",
         Arrays.asList("Project amendment A", "Corrigendum 1"));
 
-    mechanicalDesign.setDesignStandard(StandardSelection.strict(edition));
+    mechanicalDesign.setDesignStandard(StandardSelection.legacy(edition));
 
     DesignStandard standard = mechanicalDesign.getDesignStandard().get("separator process design");
     assertEquals("API-12J 8th Ed [amendments: Project amendment A; Corrigendum 1]", standard.getStandardName());
+  }
+
+  @Test
+  void testExecutableSelectionRejectsUnimplementedAmendments() {
+    StandardEdition edition = StandardEdition.of(StandardType.API_12J, "8th Ed",
+        Collections.singletonList("Project amendment A"));
+
+    StandardSelectionException exception = assertThrows(StandardSelectionException.class,
+        () -> StandardRegistry.requireDesignKernel(StandardSelection.historical(edition)));
+
+    assertEquals(StandardSelectionException.Reason.AMENDMENTS_NOT_IMPLEMENTED, exception.getReason());
   }
 
   @Test
@@ -64,7 +75,7 @@ class StandardSelectionTest {
     StandardRegistry.setVersionOverride(StandardType.API_12J, "global override");
 
     DesignStandard standard = StandardRegistry.createStandard(
-        StandardSelection.strict(StandardEdition.of(StandardType.API_12J, "8th Ed")), mechanicalDesign);
+        StandardSelection.historical(StandardEdition.of(StandardType.API_12J, "8th Ed")), mechanicalDesign);
 
     assertEquals("API-12J 8th Ed", standard.getStandardName());
   }
@@ -84,33 +95,33 @@ class StandardSelectionTest {
   }
 
   @Test
-  void testStrictSelectionRejectsCatalogOnlyStandard() {
+  void testStrictSelectionRejectsStandardWithoutCommonKernel() {
     StandardSelectionException exception = assertThrows(StandardSelectionException.class,
         () -> StandardRegistry.createStandard(StandardSelection.strict(StandardType.API_660), mechanicalDesign));
 
-    assertEquals(StandardSelectionException.Reason.CATALOG_ONLY, exception.getReason());
+    assertEquals(StandardSelectionException.Reason.KERNEL_NOT_IMPLEMENTED, exception.getReason());
     assertEquals(StandardType.API_660, exception.getStandardType());
   }
 
   @Test
-  void testStrictSelectionUsesConsolidatedApi610Kernel() {
+  void testCurrentStrictSelectionRejectsOutdatedApi610Kernel() {
     MechanicalDesign pumpDesign = new Pump("Test Pump").getMechanicalDesign();
 
-    DesignStandard standard = StandardRegistry.createStandard(StandardSelection.strict(StandardType.API_610),
-        pumpDesign);
-
-    assertEquals("API-610 13th Ed", standard.getStandardName());
     assertEquals(EquipmentDesignKernelRegistry.Status.IMPLEMENTED,
         StandardRegistry.getDesignKernel(StandardType.API_610).getStatus());
+    StandardSelectionException currentEdition = assertThrows(StandardSelectionException.class,
+        () -> StandardRegistry.createStandard(StandardSelection.strict(StandardType.API_610), pumpDesign));
+    assertEquals(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, currentEdition.getReason());
 
-    StandardSelectionException oldEdition = assertThrows(StandardSelectionException.class, () -> StandardRegistry
-        .createStandard(StandardSelection.strict(StandardEdition.of(StandardType.API_610, "12th Ed")), pumpDesign));
-    assertEquals(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, oldEdition.getReason());
+    DesignStandard historical = StandardRegistry.createStandard(
+        StandardSelection.historical(StandardEdition.of(StandardType.API_610, "13th Ed")), pumpDesign);
+    assertEquals("API-610 13th Ed", historical.getStandardName());
   }
 
   @Test
   void testExplicitSelectionCanRequireExactKernelEdition() {
-    StandardSelection selection = StandardSelection.strict(StandardType.API_610);
+    StandardSelection selection = StandardSelection
+        .historical(StandardEdition.of(StandardType.API_610, "13th Ed"));
 
     EquipmentDesignKernel<?, ?> kernel = StandardRegistry.requireDesignKernel(selection);
 
@@ -122,6 +133,12 @@ class StandardSelectionTest {
     StandardSelectionException oldEdition = assertThrows(StandardSelectionException.class, () -> StandardRegistry
         .requireDesignKernel(StandardSelection.strict(StandardEdition.of(StandardType.API_610, "12th Ed"))));
     assertEquals(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, oldEdition.getReason());
+    StandardSelectionException currentApi526 = assertThrows(StandardSelectionException.class,
+        () -> StandardRegistry.requireDesignKernel(StandardSelection.strict(StandardType.API_526)));
+    assertEquals(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, currentApi526.getReason());
+    StandardSelectionException wrongContract = assertThrows(StandardSelectionException.class,
+        () -> StandardRegistry.requireDesignKernel(StandardSelection.strictRequirements(StandardType.API_520_PART_1)));
+    assertEquals(StandardSelectionException.Reason.EXECUTION_REQUIREMENT_MISMATCH, wrongContract.getReason());
     assertEquals(StandardSelectionException.Reason.MISSING_SELECTION,
         assertThrows(StandardSelectionException.class, () -> StandardRegistry.requireDesignKernel(null)).getReason());
   }
@@ -129,7 +146,8 @@ class StandardSelectionTest {
   @Test
   void testStrictSelectionRejectsInapplicableEquipment() {
     StandardSelectionException exception = assertThrows(StandardSelectionException.class,
-        () -> StandardRegistry.createStandard(StandardSelection.strict(StandardType.API_617), mechanicalDesign));
+        () -> StandardRegistry.createStandard(
+            StandardSelection.historical(StandardEdition.of(StandardType.API_617, "8th Ed")), mechanicalDesign));
 
     assertEquals(StandardSelectionException.Reason.NOT_APPLICABLE, exception.getReason());
     assertEquals("Separator", exception.getEquipmentType());
@@ -138,7 +156,7 @@ class StandardSelectionTest {
   @Test
   void testStrictSelectionRejectsMissingContext() {
     StandardSelectionException missingEquipment = assertThrows(StandardSelectionException.class,
-        () -> StandardRegistry.createStandard(StandardSelection.strict(StandardType.API_12J), null));
+        () -> StandardRegistry.createStandard(StandardSelection.strict(StandardType.API_521), null));
     StandardSelectionException missingSelection = assertThrows(StandardSelectionException.class,
         () -> StandardRegistry.createStandard((StandardSelection) null, mechanicalDesign));
 
@@ -152,6 +170,35 @@ class StandardSelectionTest {
         mechanicalDesign);
 
     assertEquals(DesignStandard.class, standard.getClass());
-    assertEquals("API-660 9th Ed", standard.getStandardName());
+    assertEquals("API-660 10th Ed", standard.getStandardName());
+  }
+
+  @Test
+  void testCurrentSelectionRejectsSupersededAndUnverifiedCatalogEntries() {
+    StandardSelectionException superseded = assertThrows(StandardSelectionException.class,
+        () -> StandardRegistry.createStandard(StandardSelection.strict(StandardType.NORSOK_P_001), mechanicalDesign));
+    StandardSelectionException unverified = assertThrows(StandardSelectionException.class,
+        () -> StandardRegistry.createStandard(StandardSelection.strict(StandardType.API_670), mechanicalDesign));
+
+    assertEquals(StandardSelectionException.Reason.STANDARD_NOT_CURRENT, superseded.getReason());
+    assertTrue(superseded.getMessage().contains("NORSOK-P-002"));
+    assertEquals(StandardSelectionException.Reason.LIFECYCLE_UNVERIFIED, unverified.getReason());
+  }
+
+  @Test
+  void testCurrentRequirementPackIsExplicitAndEditionBound() {
+    StandardSelection selection = StandardSelection.strictRequirements(StandardType.NORSOK_P_002);
+
+    StandardRequirementPack pack = StandardRegistry.requireRequirementPack(selection);
+
+    assertEquals(StandardEdition.defaultEdition(StandardType.NORSOK_P_002), pack.getEdition());
+    assertEquals(3, pack.getCapabilities().size());
+    StandardSelectionException missing = assertThrows(StandardSelectionException.class,
+        () -> StandardRegistry.requireRequirementPack(
+            StandardSelection.strictRequirements(StandardType.ASME_VIII_DIV1)));
+    assertEquals(StandardSelectionException.Reason.REQUIREMENT_PACK_NOT_IMPLEMENTED, missing.getReason());
+    StandardSelectionException wrongContract = assertThrows(StandardSelectionException.class,
+        () -> StandardRegistry.requireRequirementPack(StandardSelection.strict(StandardType.API_521)));
+    assertEquals(StandardSelectionException.Reason.EXECUTION_REQUIREMENT_MISMATCH, wrongContract.getReason());
   }
 }
