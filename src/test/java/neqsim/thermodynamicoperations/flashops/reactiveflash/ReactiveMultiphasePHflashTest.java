@@ -383,4 +383,65 @@ public class ReactiveMultiphasePHflashTest {
     assertEquals(xCO2_tp, xCO2_verify, 0.02, "CO2 from PH flash temperature should match original TP flash");
     assertEquals(Hspec, H_verify, Math.abs(Hspec) * 0.01, "Enthalpy at PH flash T should match specification");
   }
+
+  /**
+   * Verify an adiabatic WGS flash from an unreacted feed.
+   *
+   * <p>
+   * The forward water-gas shift reaction is exothermic. A correct thermochemical enthalpy balance therefore raises the
+   * equilibrium temperature above the 700 K feed temperature. This regression also verifies the balance independently
+   * by adding the species formation-enthalpy inventory to NeqSim's process-stream enthalpy.
+   * </p>
+   */
+  @Test
+  public void testAdiabaticWGSIncludesFormationEnthalpy() {
+    SystemInterface system = new SystemSrkEos(700.0, 10.0);
+    system.addComponent("CO", 0.40);
+    system.addComponent("water", 0.40);
+    system.addComponent("CO2", 0.10);
+    system.addComponent("hydrogen", 0.10);
+    system.setMixingRule("classic");
+    system.setMaxNumberOfPhases(1);
+    system.setNumberOfPhases(1);
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(system);
+    operations.TPflash();
+    system.init(2);
+
+    double processEnthalpySpec = system.getEnthalpy();
+    double thermochemicalEnthalpySpec = processEnthalpySpec + getFormationEnthalpyInventory(system);
+    double feedCO2Moles = system.getPhase(0).getComponent("CO2").getNumberOfMolesInPhase();
+
+    system.setTemperature(800.0);
+    operations.reactivePHflash(processEnthalpySpec, 0);
+    system.init(2);
+
+    ReactiveMultiphasePHflash flash = (ReactiveMultiphasePHflash) operations.getOperation();
+    double thermochemicalEnthalpy = system.getEnthalpy() + getFormationEnthalpyInventory(system);
+    double equilibriumCO2Moles = system.getPhase(0).getComponent("CO2").getNumberOfMolesInPhase();
+
+    assertTrue(flash.isConverged(), "Reactive PH flash should converge");
+    assertEquals(1, system.getNumberOfPhases(), "The gas-only phase limit must be preserved");
+    assertTrue(system.getTemperature() > 700.0, "Exothermic forward reaction should heat the adiabatic outlet");
+    assertEquals(898.1, system.getTemperature(), 2.0, "Adiabatic WGS temperature should match the independent root");
+    assertTrue(equilibriumCO2Moles > feedCO2Moles, "The forward WGS reaction should form CO2");
+    assertEquals(thermochemicalEnthalpySpec, thermochemicalEnthalpy,
+        Math.abs(thermochemicalEnthalpySpec) * 1.0e-7, "Thermochemical enthalpy should close");
+  }
+
+  /** Return the species formation-enthalpy inventory in J. */
+  private double getFormationEnthalpyInventory(SystemInterface system) {
+    double formationEnthalpy = 0.0;
+    for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
+      for (int componentIndex = 0; componentIndex < system.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
+        double numberOfMoles = system.getPhase(phaseIndex).getComponent(componentIndex)
+            .getNumberOfMolesInPhase();
+        double formationEnthalpyPerMole = system.getPhase(phaseIndex).getComponent(componentIndex)
+            .getIdealGasEnthalpyOfFormation();
+        formationEnthalpy += numberOfMoles * formationEnthalpyPerMole;
+      }
+    }
+    return formationEnthalpy;
+  }
 }

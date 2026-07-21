@@ -214,8 +214,11 @@ public class ReactiveMultiphaseTPflash extends BaseOperation {
       // Enforce effectiveMaxPhases: electrolyte CPA init may have created extra phases
       if (effectiveMaxPhases == 1 && system.getNumberOfPhases() > 1) {
         system.setNumberOfPhases(1);
-        system.setMaxNumberOfPhases(1);
         system.init(0);
+        // init(0) may restore the implementation default. Re-apply the user's
+        // one-phase limit after initialization so stability analysis cannot add
+        // a duplicate trial phase.
+        system.setMaxNumberOfPhases(1);
       }
 
       // Step 2.5: Reactive stability analysis
