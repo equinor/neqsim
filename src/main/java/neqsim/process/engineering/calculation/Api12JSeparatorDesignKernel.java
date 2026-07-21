@@ -68,8 +68,7 @@ public final class Api12JSeparatorDesignKernel
       }
       this.edition = edition;
       this.equipmentType = equipmentType.trim();
-      this.gravityCutDiameterM = diameterUnit == DiameterUnit.METRE ? gravityCutDiameter
-          : gravityCutDiameter * 1.0e-6;
+      this.gravityCutDiameterM = diameterUnit == DiameterUnit.METRE ? gravityCutDiameter : gravityCutDiameter * 1.0e-6;
       this.kFactorMPerS = kFactorMPerS;
       this.mistEliminatorPresent = mistEliminatorPresent;
       this.liquidResidenceTimeS = liquidResidenceTimeS;
@@ -199,8 +198,7 @@ public final class Api12JSeparatorDesignKernel
         : context;
     CalculationReadiness readiness = assess(input, effectiveContext);
     EngineeringCalculationResult.Builder<Api12JSeparatorAssessment> result = EngineeringCalculationResult
-        .<Api12JSeparatorAssessment>builder("api-12j-separator-performance-screening", getMethod(),
-            getMethodVersion())
+        .<Api12JSeparatorAssessment>builder("api-12j-separator-performance-screening", getMethod(), getMethodVersion())
         .context(effectiveContext).readiness(readiness);
     if (input == null || !readiness.isReady()) {
       return result.status(EngineeringCalculationResult.Status.BLOCKED)
