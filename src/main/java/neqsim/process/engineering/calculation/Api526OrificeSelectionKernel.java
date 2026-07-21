@@ -12,10 +12,10 @@ public final class Api526OrificeSelectionKernel
   private static final long serialVersionUID = 1000L;
   private static final String IMPLEMENTED_EDITION = "7th Ed";
   private static final double SQUARE_METRES_PER_SQUARE_INCH = 6.4516e-4;
-  private static final double[] ORIFICE_AREAS_IN2 = {0.110, 0.196, 0.307, 0.503, 0.785, 1.287, 1.838, 2.853,
-      3.600, 4.340, 6.380, 11.05, 16.0, 26.0};
-  private static final String[] ORIFICE_LETTERS = {"D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P",
-      "Q", "R", "T"};
+  private static final double[] ORIFICE_AREAS_IN2 = { 0.110, 0.196, 0.307, 0.503, 0.785, 1.287, 1.838, 2.853, 3.600,
+      4.340, 6.380, 11.05, 16.0, 26.0 };
+  private static final String[] ORIFICE_LETTERS = { "D", "E", "F", "G", "H", "J", "K", "L", "M", "N", "P", "Q", "R",
+      "T" };
 
   /** Unit used to supply a required effective flow area. */
   public enum AreaUnit {
@@ -52,8 +52,7 @@ public final class Api526OrificeSelectionKernel
       }
       this.edition = edition;
       this.equipmentType = equipmentType.trim();
-      this.requiredAreaM2 = unit == AreaUnit.SQUARE_METRE ? requiredArea
-          : requiredArea * SQUARE_METRES_PER_SQUARE_INCH;
+      this.requiredAreaM2 = unit == AreaUnit.SQUARE_METRE ? requiredArea : requiredArea * SQUARE_METRES_PER_SQUARE_INCH;
     }
 
     /** @return explicit API 526 edition */
@@ -175,8 +174,8 @@ public final class Api526OrificeSelectionKernel
         .input("requiredAreaM2", Double.valueOf(input.getRequiredAreaM2()))
         .warning("API 526 screening does not certify valve or installation compliance");
     if (!adequate) {
-      result.warning("Required area exceeds the largest catalogued standard orifice")
-          .message("No adequate single standard orifice was found; use multiple devices or a separately engineered size");
+      result.warning("Required area exceeds the largest catalogued standard orifice").message(
+          "No adequate single standard orifice was found; use multiple devices or a separately engineered size");
     } else {
       result.message("API 526 standard-orifice screening completed; valve and installation review remain required");
     }
