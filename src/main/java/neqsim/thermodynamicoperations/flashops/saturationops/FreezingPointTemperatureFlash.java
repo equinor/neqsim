@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
+import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
@@ -49,12 +50,33 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
   }
 
   /**
+   * Returns the configured solid phase, including inactive phases retained in the system phase array.
+   *
+   * <p>A fluid-only TP flash reduces {@code getNumberOfPhases()}, but the configured solid phase
+   * remains available in {@code getPhases()}. Searching only active phases therefore fails during a
+   * freezing-point iteration.
+   *
+   * @return configured solid phase
+   * @throws IllegalStateException if solid-phase checking has not been enabled
+   */
+  private PhaseInterface getConfiguredSolidPhase() {
+    for (PhaseInterface phase : system.getPhases()) {
+      if (phase != null && phase.getType() == PhaseType.SOLID) {
+        return phase;
+      }
+    }
+    throw new IllegalStateException(
+        "Solid phase is not configured. Call setSolidPhaseCheck before the freezing-point flash.");
+  }
+
+  /**
    * calcFunc.
    *
    * @return a double
    */
   public double calcFunc() {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    PhaseInterface solidPhase = getConfiguredSolidPhase();
     // double deriv = 0, funkOld = 0;
     double funk = 0;
     double SolidFugCoeff = 0.0;
@@ -64,7 +86,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
       // logger.info("Checking all the components " + k);
       if (system.getPhase(0).getComponent(k).doSolidCheck()) {
         ops.TPflash(false);
-        SolidFugCoeff = system.getPhase(PhaseType.SOLID).getComponent(k).fugcoef(system.getPhase(PhaseType.SOLID));
+        SolidFugCoeff = solidPhase.getComponent(k).fugcoef(solidPhase);
         funk = system.getPhase(0).getComponent(k).getz();
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
           funk -= system.getPhase(i).getBeta() * SolidFugCoeff
@@ -79,6 +101,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
   @Override
   public void run() {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
+    PhaseInterface solidPhase = getConfiguredSolidPhase();
     int iterations = 0;
     int maxNumberOfIterations = 100;
     double deriv = 0;
@@ -114,7 +137,7 @@ public class FreezingPointTemperatureFlash extends ConstantDutyTemperatureFlash
           iterations++;
           // oldPhaseType = system.getPhase(0).getType();
           ops.TPflash(false);
-          SolidFugCoeff = system.getPhase(PhaseType.SOLID).getComponent(k).fugcoef(system.getPhase(PhaseType.SOLID));
+          SolidFugCoeff = solidPhase.getComponent(k).fugcoef(solidPhase);
           funk = system.getPhase(0).getComponent(k).getz();
           for (int i = 0; i < system.getNumberOfPhases(); i++) {
             funk -= system.getPhase(i).getBeta() * SolidFugCoeff
