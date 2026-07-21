@@ -58,7 +58,7 @@ class MixerTest {
     testMixer.addStream(waterStream);
     testMixer.run();
     assertEquals(testMixer.calcMixStreamEnthalpy(),
-        testMixer.getOutletStream().getFluid().getEnthalpy(), 1.0);
+        testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1.0);
   }
 
   /**
