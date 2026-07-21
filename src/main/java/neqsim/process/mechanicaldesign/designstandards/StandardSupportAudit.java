@@ -3,6 +3,7 @@ package neqsim.process.mechanicaldesign.designstandards;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import neqsim.process.engineering.calculation.EquipmentDesignKernelRegistry;
 
 /**
  * Produces an auditable view of the calculations behind standards catalogued by NeqSim.
@@ -35,9 +36,11 @@ public final class StandardSupportAudit {
 
     switch (standardType) {
     case API_610:
-      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, false, registryImplementation,
-          "PumpApi610DesignCalculator",
-          "API 610 screening is available through PumpMechanicalDesign but is not selected by StandardRegistry.");
+      EquipmentDesignKernelRegistry.Lookup pumpImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, pumpImplementation.isImplemented(),
+          registryImplementation, pumpImplementation.getImplementationClassName(),
+          "API 610 screening is connected through a pure engineering-workflow adapter; purchased-standard, project, "
+              + "and vendor verification remain required.");
     case API_650:
     case API_620:
       return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, false, registryImplementation,
