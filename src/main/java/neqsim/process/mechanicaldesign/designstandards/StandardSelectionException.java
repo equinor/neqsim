@@ -14,6 +14,8 @@ public final class StandardSelectionException extends IllegalArgumentException {
     CATALOG_ONLY,
     /** A calculation exists elsewhere but is not connected to the registry. */
     NOT_REGISTRY_CONNECTED,
+    /** No common design kernel is registered for the selected standard. */
+    KERNEL_NOT_IMPLEMENTED,
     /** A kernel exists, but not for the requested edition basis. */
     EDITION_NOT_IMPLEMENTED,
     /** The standard does not apply to the supplied equipment type. */
