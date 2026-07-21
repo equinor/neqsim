@@ -1111,8 +1111,8 @@ public class MechanicalDesign implements java.io.Serializable {
    * </p>
    *
    * @param selection typed edition and selection behavior
-   * @throws neqsim.process.mechanicaldesign.designstandards.StandardSelectionException if a strict
-   *         selection cannot be honored
+   * @throws neqsim.process.mechanicaldesign.designstandards.StandardSelectionException if a strict selection cannot be
+   * honored
    */
   public void setDesignStandard(StandardSelection selection) {
     DesignStandard standard = StandardRegistry.createStandard(selection, this);
