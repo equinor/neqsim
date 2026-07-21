@@ -57,8 +57,8 @@ class MixerTest {
     testMixer.addStream(gasStream);
     testMixer.addStream(waterStream);
     testMixer.run();
-    // Enthalpy after getMassBalance fix to match calcMixStreamEnthalpy negligible flow filtering
-    assertEquals(testMixer.getOutletStream().getFluid().getEnthalpy("kJ/kg"), -105.52297413351504, 1e-1);
+    assertEquals(testMixer.calcMixStreamEnthalpy(),
+        testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1.0);
   }
 
   /**
@@ -158,11 +158,40 @@ class MixerTest {
     testMixer.addStream(gasStream2);
     testMixer.run();
 
-    // After getMassBalance fix, enthalpy values updated to reflect correct negligible flow
-    // filtering
-    assertEquals(-2827531.357618357, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-1);
+    assertEquals(testMixer.calcMixStreamEnthalpy(),
+        testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1.0);
     assertEquals(10.0, testMixer.getOutletStream().getPressure("bara"), 1e-1);
   }
+
+  @Test
+  void testOutletEnthalpyMatchesInletSum() {
+    SystemSrkEos hotFluid = new SystemSrkEos(338.15, 85.0);
+    hotFluid.addComponent("methane", 0.86);
+    hotFluid.addComponent("ethane", 0.14);
+    hotFluid.setMixingRule("classic");
+
+    SystemSrkEos coolFluid = new SystemSrkEos(328.15, 82.0);
+    coolFluid.addComponent("methane", 0.92);
+    coolFluid.addComponent("ethane", 0.08);
+    coolFluid.setMixingRule("classic");
+
+    Stream hotStream = new Stream("hot stream", hotFluid);
+    hotStream.setFlowRate(15000.0, "kg/hr");
+    hotStream.run();
+
+    Stream coolStream = new Stream("cool stream", coolFluid);
+    coolStream.setFlowRate(10000.0, "kg/hr");
+    coolStream.run();
+
+    double inletEnthalpyJ =
+        hotStream.getFluid().getEnthalpy("J") + coolStream.getFluid().getEnthalpy("J");
+
+    Mixer testMixer = new Mixer("enthalpy closure mixer");
+    testMixer.addStream(hotStream);
+    testMixer.addStream(coolStream);
+    testMixer.run();
+
+    assertEquals(inletEnthalpyJ, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-3);
 
   /**
    * Test method for mass balance conservation in Mixer.

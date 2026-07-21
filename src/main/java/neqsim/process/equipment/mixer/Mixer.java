@@ -515,7 +515,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
     // thermoSystem2.getTotalNumberOfMoles());
     mixedStream.setThermoSystem(thermoSystem2);
     // thermoSystem2.display();
-    ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
     if (streams.size() >= 2) {
       mixStream();
       if (mixedStream.getFlowRate("kg/hr") > getMinimumFlow()) {
@@ -532,6 +531,8 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
           ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(), "mole/sec");
         }
         mixedStream.run();
+        ThermodynamicOperations testOps =
+            new ThermodynamicOperations(mixedStream.getThermoSystem());
 
         if (isSetOutTemperature) {
           if (!Double.isNaN(getOutTemperature())) {
