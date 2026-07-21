@@ -68,8 +68,7 @@ public final class EngineeringDesignEnvelope implements Serializable {
 
   EngineeringDesignEnvelope(List<EngineeringMetric> configuredMetrics, List<DesignCaseResult> caseResults,
       Map<String, GoverningValue> governingValues) {
-    this.configuredMetrics = Collections
-        .unmodifiableList(new ArrayList<EngineeringMetric>(configuredMetrics));
+    this.configuredMetrics = Collections.unmodifiableList(new ArrayList<EngineeringMetric>(configuredMetrics));
     this.caseResults = new ArrayList<DesignCaseResult>(caseResults);
     this.governingValues = new LinkedHashMap<String, GoverningValue>(governingValues);
   }
