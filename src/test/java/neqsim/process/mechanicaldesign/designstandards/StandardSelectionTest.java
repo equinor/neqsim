@@ -35,8 +35,8 @@ class StandardSelectionTest {
     assertEquals("8th Ed", edition.getEdition());
     assertEquals(Collections.singletonList("Project amendment A"), edition.getAmendments());
     assertThrows(UnsupportedOperationException.class, () -> edition.getAmendments().add("Mutation"));
-    assertEquals(StandardEdition.of(StandardType.API_12J, "8th Ed",
-        Collections.singletonList("Project amendment A")), edition);
+    assertEquals(StandardEdition.of(StandardType.API_12J, "8th Ed", Collections.singletonList("Project amendment A")),
+        edition);
     assertNotEquals(StandardEdition.of(StandardType.API_12J, "9th Ed"), edition);
 
     assertThrows(IllegalArgumentException.class, () -> StandardEdition.of(null, "8th Ed"));
@@ -53,8 +53,7 @@ class StandardSelectionTest {
     mechanicalDesign.setDesignStandard(StandardSelection.strict(edition));
 
     DesignStandard standard = mechanicalDesign.getDesignStandard().get("separator process design");
-    assertEquals("API-12J 8th Ed [amendments: Project amendment A; Corrigendum 1]",
-        standard.getStandardName());
+    assertEquals("API-12J 8th Ed [amendments: Project amendment A; Corrigendum 1]", standard.getStandardName());
   }
 
   @Test
@@ -69,10 +68,8 @@ class StandardSelectionTest {
 
   @Test
   void testApplicabilityIsStructured() {
-    StandardApplicability applicable =
-        StandardRegistry.assessApplicability(StandardType.API_12J, mechanicalDesign);
-    StandardApplicability notApplicable =
-        StandardRegistry.assessApplicability(StandardType.API_617, mechanicalDesign);
+    StandardApplicability applicable = StandardRegistry.assessApplicability(StandardType.API_12J, mechanicalDesign);
+    StandardApplicability notApplicable = StandardRegistry.assessApplicability(StandardType.API_617, mechanicalDesign);
     StandardApplicability unknown = StandardRegistry.assessApplicability(StandardType.API_12J, null);
 
     assertEquals(StandardApplicability.Status.APPLICABLE, applicable.getStatus());
@@ -122,8 +119,8 @@ class StandardSelectionTest {
 
   @Test
   void testLegacyCompatibleSelectionPreservesPermissiveFactory() {
-    DesignStandard standard =
-        StandardRegistry.createStandard(StandardSelection.legacy(StandardType.API_660), mechanicalDesign);
+    DesignStandard standard = StandardRegistry.createStandard(StandardSelection.legacy(StandardType.API_660),
+        mechanicalDesign);
 
     assertEquals(DesignStandard.class, standard.getClass());
     assertEquals("API-660 9th Ed", standard.getStandardName());
