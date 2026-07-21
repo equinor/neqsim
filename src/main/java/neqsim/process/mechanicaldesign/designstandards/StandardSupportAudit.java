@@ -52,10 +52,17 @@ public final class StandardSupportAudit {
       return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, false, registryImplementation,
           NO_CALCULATION, "No standard-specific heat-exchanger mechanical calculation is connected.");
     case API_521:
+      EquipmentDesignKernelRegistry.Lookup reliefImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, reliefImplementation.isImplemented(),
+          registryImplementation, reliefImplementation.getImplementationClassName(),
+          "Scenario aggregation, governing-case selection, relief-area sizing, and accumulated-pressure screening only; "
+              + "scenario completeness, installation, and conformity require independent review.");
     case API_526:
-      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, false, registryImplementation,
-          NO_CALCULATION,
-          "The mapped valve class does not implement relief-system or relief-valve standard calculations.");
+      EquipmentDesignKernelRegistry.Lookup orificeImplementation = StandardRegistry.getDesignKernel(standardType);
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, orificeImplementation.isImplemented(),
+          registryImplementation, orificeImplementation.getImplementationClassName(),
+          "Standard-orifice area selection only; valve pressure class, dimensions, materials, installation, and vendor "
+              + "certification are not evaluated.");
     default:
       return getCategorySupport(standardType, registryImplementation);
     }
