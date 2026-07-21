@@ -40,7 +40,7 @@ the source catalog diverge.
 | ASME-B31.4 | 2022 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
 | ASME-B31.8 | 2022 | pipeline design codes | PipelineDesignStandard | PipelineDesignStandard | SCREENING | Preliminary category screening with fixed fallback values; not a complete edition-specific wall-thickness calculation. |
 | API-617 | 8th Ed | compressor design codes | CompressorDesignStandard | CompressorDesignStandard | SCREENING | Preliminary compressor-factor screening only; package and vendor requirements are not implemented. |
-| API-610 | 12th Ed | pump design codes | DesignStandard | PumpApi610DesignCalculator | SCREENING | API 610 screening is available through PumpMechanicalDesign but is not selected by StandardRegistry. |
+| API-610 | 13th Ed | pump design codes | DesignStandard | PumpApi610DesignKernel | SCREENING | API 610 screening is connected through a pure engineering-workflow adapter; purchased-standard, project, and vendor verification remain required. |
 | API-650 | 13th Ed | pressure vessel design code | PressureVesselDesignStandard | None | CATALOGUED | The registry maps this tank standard to a separator-oriented pressure-vessel class; no tank-code calculation is implemented. |
 | API-620 | 13th Ed | pressure vessel design code | PressureVesselDesignStandard | None | CATALOGUED | The registry maps this tank standard to a separator-oriented pressure-vessel class; no tank-code calculation is implemented. |
 | API-660 | 9th Ed | heat exchanger design codes | DesignStandard | None | CATALOGUED | No standard-specific heat-exchanger mechanical calculation is connected. |
@@ -84,6 +84,19 @@ the same applicability decision without creating a standard.
 retaining the permissive factory behavior. It may create a metadata-only `DesignStandard`; it does
 not add calculation support.
 
+## Consolidated design kernels
+
+`EquipmentDesignKernel<I, O>` extends the existing typed engineering-calculation contract with the
+implemented standard, audited maturity, and structured applicability. Kernels must not mutate their
+input or a `ProcessSystem`. Compatibility adapters defensively copy legacy mutable calculators.
+
+`StandardRegistry.getDesignKernel(...)` returns an explicit lookup status. API 610 is the first
+connected adapter and returns `IMPLEMENTED`; standards that have not been adapted return
+`NOT_IMPLEMENTED`, never an empty or implied success. The API 610 kernel returns an immutable
+assessment snapshot and always requires engineering and vendor review because its maturity remains
+`SCREENING`. The current kernel explicitly supports 13th edition; a different edition fails closed
+as `EDITION_NOT_IMPLEMENTED` until separately implemented and validated.
+
 ## How to interpret the registry
 
 `StandardRegistry.createStandard(...)` remains backward compatible. The factory class shown in the
@@ -91,10 +104,10 @@ matrix records what it currently creates; it does not prove that the resulting c
 selected edition. `StandardRegistry.getMappedImplementationClass(...)` allows applications and
 audits to inspect that mapping without constructing equipment or accessing the design database.
 
-The API 610 pump screen is a deliberate special case. It is implemented by
-`PumpApi610DesignCalculator` through `PumpMechanicalDesign`, while the generic registry currently
-creates only a base `DesignStandard`. A later consolidation will connect equipment-specific
-calculators through one typed standards interface.
+The API 610 pump screen remains available through `PumpMechanicalDesign`. The consolidated
+`PumpApi610DesignKernel` is a pure adapter over the same calculator, so existing callers are not
+removed or redirected. The generic legacy factory still creates a base `DesignStandard`; executable
+kernel support is exposed explicitly through `StandardRegistry.getDesignKernel(...)`.
 
 ## Engineering boundary
 
