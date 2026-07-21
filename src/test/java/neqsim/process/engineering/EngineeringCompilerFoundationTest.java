@@ -55,7 +55,8 @@ class EngineeringCompilerFoundationTest extends NeqSimTest {
         project.getExecutableDesignCases(), project.getEngineeringMetrics());
 
     assertEquals(3, envelope.getCaseResults().size());
-    assertEquals("FAILED", envelope.getCaseResults().get(2).getStatus());
+    assertEquals("FAILED", envelope.getCaseResults().stream()
+        .filter(result -> "CASE-INVALID".equals(result.getDesignCase().getId())).findFirst().get().getStatus());
     EngineeringDesignEnvelope.GoverningValue pressure = envelope.getGoverningValues().get("20-VG-001.pressure");
     assertNotNull(pressure);
     assertEquals("CASE-MAX", pressure.getDesignCaseId());

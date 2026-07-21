@@ -24,7 +24,7 @@ class DesignConditionValueTest {
     assertEquals(10.0, pressure.getCanonicalValue(), 1.0e-10);
     assertEquals(100.0, maxTemperature.getCanonicalValue(), 1.0e-10);
     assertEquals(3.175, corrosion.getCanonicalValue(), 1.0e-12);
-    assertEquals(1.25, corrosion.getValue("cm"), 1.0e-12);
+    assertEquals(0.3175, corrosion.getValue("cm"), 1.0e-12);
     assertEquals("bara", pressure.getCanonicalUnit());
     assertEquals("C", maxTemperature.getCanonicalUnit());
   }

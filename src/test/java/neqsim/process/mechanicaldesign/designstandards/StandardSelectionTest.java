@@ -64,9 +64,9 @@ class StandardSelectionTest {
     StandardRegistry.setVersionOverride(StandardType.API_12J, "global override");
 
     DesignStandard standard = StandardRegistry.createStandard(
-        StandardSelection.strict(StandardEdition.of(StandardType.API_12J, "project edition")), mechanicalDesign);
+        StandardSelection.strict(StandardEdition.of(StandardType.API_12J, "8th Ed")), mechanicalDesign);
 
-    assertEquals("API-12J project edition", standard.getStandardName());
+    assertEquals("API-12J 8th Ed", standard.getStandardName());
   }
 
   @Test

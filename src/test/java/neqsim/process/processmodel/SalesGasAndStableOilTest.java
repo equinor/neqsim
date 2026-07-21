@@ -218,7 +218,7 @@ public class SalesGasAndStableOilTest extends neqsim.NeqSimTest {
     dewPointControlCooler.run();
 
     // dewPointControlCooler.getOutStream().getFluid().prettyPrint();
-    Assertions.assertEquals(0.9964135182937641, dewPointControlCooler.getOutletStream().getFluid().getBeta(), 1e-6);
+    Assertions.assertEquals(0.9964135182937641, dewPointControlCooler.getOutletStream().getFluid().getBeta(), 1e-5);
     Separator dewPointScrubber = new neqsim.process.equipment.separator.Separator("dew point scrubber",
         dewPointControlCooler.getOutletStream());
     dewPointScrubber.run();

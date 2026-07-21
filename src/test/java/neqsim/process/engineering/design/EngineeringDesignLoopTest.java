@@ -136,6 +136,22 @@ class EngineeringDesignLoopTest {
   }
 
   @Test
+  void equivalentDuplicateUpdatesAreAcceptedWithoutGoverningRule() {
+    DependencyModule second = new DependencyModule("second", Collections.<String>emptyList(), "shared.pressure", 60.0,
+        null, EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
+    DependencyModule first = new DependencyModule("first", Collections.<String>emptyList(), "shared.pressure", 60.0,
+        null, EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE);
+
+    EngineeringDesignLoopResult result = EngineeringDesignLoop.run(process(), cases("equivalent-updates"),
+        Arrays.<EngineeringDesignModule>asList(second, first),
+        EngineeringDesignLoopOptions.builder().maximumIterations(3).build());
+
+    assertTrue(result.isConverged());
+    assertEquals(60.0, result.getState().requireValue("shared.pressure"), 1.0e-12);
+    assertEquals("first", result.getState().get("shared.pressure").getSourceModule());
+  }
+
+  @Test
   void explicitGoverningMaximumSelectsTraceableProposal() {
     DependencyModule low = new DependencyModule("low-case", Collections.<String>emptyList(), "shared.pressure", 60.0,
         null, EngineeringDesignUpdate.ConflictResolution.GOVERNING_MAXIMUM);

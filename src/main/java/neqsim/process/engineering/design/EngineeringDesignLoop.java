@@ -128,6 +128,10 @@ public final class EngineeringDesignLoop {
       }
     }
     if (resolution == EngineeringDesignUpdate.ConflictResolution.REQUIRE_UNIQUE) {
+      OwnedUpdate equivalent = equivalentProposal(proposals);
+      if (equivalent != null) {
+        return equivalent;
+      }
       throw conflict(key, proposals, "no governing rule was declared");
     }
 
@@ -142,6 +146,27 @@ public final class EngineeringDesignLoop {
       if (governing || (candidateValue == selectedValue && candidate.moduleId.compareTo(selected.moduleId) < 0)) {
         selected = candidate;
         selectedValue = candidateValue;
+      }
+    }
+    return selected;
+  }
+
+  private static OwnedUpdate equivalentProposal(List<OwnedUpdate> proposals) {
+    OwnedUpdate referenceProposal = proposals.get(0);
+    OwnedUpdate selected = referenceProposal;
+    double reference = referenceProposal.update.selectedValue();
+    double tolerance = 0.0;
+    for (OwnedUpdate proposal : proposals) {
+      tolerance = Math.max(tolerance, proposal.update.getRelativeTolerance());
+    }
+    for (OwnedUpdate proposal : proposals) {
+      double candidate = proposal.update.selectedValue();
+      double scale = Math.max(Math.max(Math.abs(reference), Math.abs(candidate)), 1.0e-12);
+      if (Math.abs(candidate - reference) / scale > tolerance) {
+        return null;
+      }
+      if (proposal.moduleId.compareTo(selected.moduleId) < 0) {
+        selected = proposal;
       }
     }
     return selected;

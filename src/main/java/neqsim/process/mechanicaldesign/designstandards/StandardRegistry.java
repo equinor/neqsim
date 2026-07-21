@@ -241,6 +241,10 @@ public final class StandardRegistry {
       throw new IllegalArgumentException("standardType cannot be null");
     }
 
+    if (standardType == StandardType.API_521 || standardType == StandardType.API_526) {
+      return ValveDesignStandard.class;
+    }
+
     String category = standardType.getDesignStandardCategory();
     switch (category) {
     case "pressure vessel design code":

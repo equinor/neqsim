@@ -119,6 +119,11 @@ public class SulfurRecoveryEquipmentTest extends neqsim.NeqSimTest {
     system.addComponent("H2S", h2sMoles);
     system.addComponent("CO2", 2.0);
     system.addComponent("water", 1.0);
+    for (String component : SulfurProcessUtil.CORE_COMPONENTS) {
+      if (!system.hasComponent(component)) {
+        system.addComponent(component, 1.0e-30);
+      }
+    }
     system.setMixingRule("classic");
     return system;
   }

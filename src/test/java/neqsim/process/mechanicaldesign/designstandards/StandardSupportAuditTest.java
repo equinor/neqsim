@@ -66,6 +66,8 @@ class StandardSupportAuditTest {
     assertEquals(SeparatorDesignStandard.class, StandardRegistry.getMappedImplementationClass(StandardType.API_12J));
     assertEquals(DesignStandard.class, StandardRegistry.getMappedImplementationClass(StandardType.API_610));
     assertEquals(DesignStandard.class, StandardRegistry.getMappedImplementationClass(StandardType.API_660));
+    assertEquals(ValveDesignStandard.class, StandardRegistry.getMappedImplementationClass(StandardType.API_521));
+    assertEquals(ValveDesignStandard.class, StandardRegistry.getMappedImplementationClass(StandardType.API_526));
     assertThrows(IllegalArgumentException.class, () -> StandardRegistry.getMappedImplementationClass(null));
   }
 

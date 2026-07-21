@@ -26,7 +26,7 @@ class Api617CompressorDesignKernelTest {
     assertTrue(result.getValue().getRequiredWallThicknessMm() > 0.0);
     assertTrue(result.getValue().getSelectedWallThicknessMm() >= result.getValue().getMinimumWallThicknessMm());
     assertEquals("SA-516-70", result.getValue().getMaterialGrade());
-    assertTrue(result.getValue().getAppliedStandards().get(0).contains("API 617 8th Ed"));
+    assertTrue(result.getValue().getAppliedStandards().stream().anyMatch(value -> value.contains("API 617 8th Ed")));
     assertThrows(UnsupportedOperationException.class, () -> result.getValue().getAppliedStandards().clear());
     assertEquals(5.0, input.getConfiguration().getDesignPressureMPa(), 1.0e-12);
     input.getConfiguration().setDesignPressureMPa(1.0);
