@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.engineering.calculation.EquipmentDesignKernel;
 import neqsim.process.engineering.calculation.EquipmentDesignKernelRegistry;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.separator.Separator;
@@ -105,6 +106,24 @@ class StandardSelectionTest {
     StandardSelectionException oldEdition = assertThrows(StandardSelectionException.class, () -> StandardRegistry
         .createStandard(StandardSelection.strict(StandardEdition.of(StandardType.API_610, "12th Ed")), pumpDesign));
     assertEquals(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, oldEdition.getReason());
+  }
+
+  @Test
+  void testExplicitSelectionCanRequireExactKernelEdition() {
+    StandardSelection selection = StandardSelection.strict(StandardType.API_610);
+
+    EquipmentDesignKernel<?, ?> kernel = StandardRegistry.requireDesignKernel(selection);
+
+    assertEquals(StandardType.API_610, kernel.standard());
+    assertEquals("api-610-pump-screening", kernel.getMethod());
+    StandardSelectionException missingKernel = assertThrows(StandardSelectionException.class,
+        () -> StandardRegistry.requireDesignKernel(StandardSelection.strict(StandardType.API_660)));
+    assertEquals(StandardSelectionException.Reason.KERNEL_NOT_IMPLEMENTED, missingKernel.getReason());
+    StandardSelectionException oldEdition = assertThrows(StandardSelectionException.class, () -> StandardRegistry
+        .requireDesignKernel(StandardSelection.strict(StandardEdition.of(StandardType.API_610, "12th Ed"))));
+    assertEquals(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, oldEdition.getReason());
+    assertEquals(StandardSelectionException.Reason.MISSING_SELECTION,
+        assertThrows(StandardSelectionException.class, () -> StandardRegistry.requireDesignKernel(null)).getReason());
   }
 
   @Test
