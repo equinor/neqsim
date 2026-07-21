@@ -13,6 +13,16 @@ public final class DesignCaseEngine {
   private DesignCaseEngine() {
   }
 
+  /**
+   * Execute the legacy envelope-only case path.
+   *
+   * @param baseProcess base process
+   * @param designCases cases to execute
+   * @param metrics governing metrics
+   * @return envelope without run fingerprints or configurable partial-result propagation
+   * @deprecated use {@link EngineeringCaseRunner#run(ProcessSystem, EngineeringCaseSet, EngineeringCaseRunOptions)}
+   */
+  @Deprecated
   public static EngineeringDesignEnvelope run(ProcessSystem baseProcess, List<EngineeringDesignCase> designCases,
       List<EngineeringMetric> metrics) {
     if (baseProcess == null) {
