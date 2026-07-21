@@ -32,8 +32,8 @@ class DesignConditionValueTest {
   @Test
   void designConditionsExposeTypedDefensiveSnapshot() {
     DesignConditions conditions = new DesignConditions().setDesignPressure(145.03773773020922, "psia")
-        .setMaxDesignTemperature(373.15, "K").setMinDesignTemperature(-50.0, "C")
-        .setReliefSetPressure(10.0, "barg").setCorrosionAllowance(0.125, "in");
+        .setMaxDesignTemperature(373.15, "K").setMinDesignTemperature(-50.0, "C").setReliefSetPressure(10.0, "barg")
+        .setCorrosionAllowance(0.125, "in");
 
     assertEquals(10.0, conditions.getDesignPressure(), 1.0e-10);
     assertEquals(145.03773773020922, conditions.getDesignPressure("psia"), 1.0e-8);
@@ -44,18 +44,15 @@ class DesignConditionValueTest {
 
     Map<Type, DesignConditionValue> snapshot = conditions.getConditions();
     assertEquals(5, snapshot.size());
-    assertEquals(Type.MIN_DESIGN_TEMPERATURE,
-        conditions.getCondition(Type.MIN_DESIGN_TEMPERATURE).get().getType());
+    assertEquals(Type.MIN_DESIGN_TEMPERATURE, conditions.getCondition(Type.MIN_DESIGN_TEMPERATURE).get().getType());
     assertThrows(UnsupportedOperationException.class, snapshot::clear);
     assertFalse(new DesignConditions().getCondition(Type.DESIGN_PRESSURE).isPresent());
   }
 
   @Test
   void rejectsInvalidUnitsAndPhysicalValues() {
-    assertThrows(IllegalArgumentException.class,
-        () -> DesignConditionValue.of(Type.MAX_DESIGN_TEMPERATURE, -1.0, "K"));
-    assertThrows(IllegalArgumentException.class,
-        () -> DesignConditionValue.of(Type.CORROSION_ALLOWANCE, -1.0, "mm"));
+    assertThrows(IllegalArgumentException.class, () -> DesignConditionValue.of(Type.MAX_DESIGN_TEMPERATURE, -1.0, "K"));
+    assertThrows(IllegalArgumentException.class, () -> DesignConditionValue.of(Type.CORROSION_ALLOWANCE, -1.0, "mm"));
     assertThrows(RuntimeException.class, () -> DesignConditionValue.of(Type.DESIGN_PRESSURE, 10.0, "unknown"));
     assertThrows(IllegalArgumentException.class, () -> new DesignConditions().setCondition(null));
   }
