@@ -38,6 +38,19 @@ Unsupported editions, inapplicable equipment types, and incomplete inputs return
 All remain preliminary engineering screens and do not claim certification or construction
 readiness.
 
+The executable `StandardDesignKernelVerificationSuite.evaluateRegression()` runs every registered
+kernel against deterministic numeric baselines. It includes SI/customary equivalence at the API 526
+orifice boundary and metre/micrometre equivalence for API 12J. Inspect
+`report.areAllBenchmarksPassed()` for regression health and `report.getFailedBenchmarkIds()` for
+diagnosis. The records are deliberately classified as `REGRESSION_BASELINE`; therefore
+`report.isPassed()` remains false until separately controlled, independently reviewed evidence is
+provided for the exact method versions.
+
+`EquipmentDesignKernelRegistry.getRegisteredStandards()` provides an immutable, deterministic
+registry snapshot for API and serialization regression checks. A registered kernel must identify the
+same standard as its lookup key, support the catalogued default edition, expose a unique
+`method@version`, use a maturity above `CATALOGUED`, and remain serializable.
+
 ## Quick Start
 
 ### Basic Auto-Sizing Example
