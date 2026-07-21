@@ -77,7 +77,7 @@ public class SystemMechanicalDesignTest {
       setModuleWidth(3.0);
       setModuleHeight(2.0);
       setMaxOperationPressure(50.0);
-      setMaxOperationTemperature(60.0);
+      setMaxOperationTemperature(60.0, "C");
     }
 
     private int getCalculationCount() {
@@ -228,6 +228,8 @@ public class SystemMechanicalDesignTest {
     assertEquals(12.0, systemDesign.getTotalPlotSpace(), 1.0e-12);
     assertEquals(1, systemDesign.getEquipmentList().size());
     assertEquals(4.0, systemDesign.getEquipmentList().get(0).getLength(), 1.0e-12);
+    assertEquals(55.0, systemDesign.getEquipmentList().get(0).getDesignPressure(), 1.0e-12);
+    assertEquals(90.0, systemDesign.getEquipmentList().get(0).getDesignTemperature(), 1.0e-12);
 
     systemDesign.getEquipmentList().get(0).setWeight(999.0);
     assertEquals(120.0, systemDesign.getEquipmentList().get(0).getWeight(), 1.0e-12);
