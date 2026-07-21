@@ -59,7 +59,7 @@ public enum StandardType {
   // API Standards (American Petroleum Institute)
   API_617("API-617", "Axial and Centrifugal Compressors", "8th Ed", new String[] { "Compressor" },
       "compressor design codes"),
-  API_610("API-610", "Centrifugal Pumps", "12th Ed", new String[] { "Pump" }, "pump design codes"),
+  API_610("API-610", "Centrifugal Pumps", "13th Ed", new String[] { "Pump" }, "pump design codes"),
   API_650("API-650", "Welded Tanks for Oil Storage", "13th Ed", new String[] { "Tank", "SimpleTankFiller" },
       "pressure vessel design code"),
   API_620("API-620", "Large Welded Low-Pressure Storage Tanks", "13th Ed", new String[] { "Tank", "SimpleTankFiller" },
