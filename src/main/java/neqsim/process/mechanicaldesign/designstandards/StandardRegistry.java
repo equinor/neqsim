@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import neqsim.process.engineering.calculation.EquipmentDesignKernelRegistry;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 
 /**
@@ -115,6 +116,11 @@ public final class StandardRegistry {
         throw new StandardSelectionException(StandardSelectionException.Reason.NOT_REGISTRY_CONNECTED, standardType,
             null, support.getLimitation());
       }
+      EquipmentDesignKernelRegistry.Lookup kernel = getDesignKernel(standardType);
+      if (kernel.isImplemented() && !kernel.supports(selection.getEdition())) {
+        throw new StandardSelectionException(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, standardType,
+            null, "No registered kernel implements " + selection.getEdition().getDisplayName());
+      }
 
       StandardApplicability applicability = assessApplicability(standardType, equipment);
       if (applicability.getStatus() == StandardApplicability.Status.UNKNOWN) {
@@ -148,10 +154,17 @@ public final class StandardRegistry {
     }
 
     String equipmentType = equipment.getProcessEquipment().getClass().getSimpleName();
-    if (standardType.appliesTo(equipmentType)) {
-      return StandardApplicability.applicable(standardType, equipmentType);
-    }
-    return StandardApplicability.notApplicable(standardType, equipmentType);
+    return StandardApplicability.assess(standardType, equipmentType);
+  }
+
+  /**
+   * Look up the standard-specific design kernel exposed through the engineering workflow.
+   *
+   * @param standardType standard to inspect
+   * @return explicit implemented or not-implemented lookup
+   */
+  public static EquipmentDesignKernelRegistry.Lookup getDesignKernel(StandardType standardType) {
+    return EquipmentDesignKernelRegistry.lookup(standardType);
   }
 
   private static DesignStandard instantiateStandard(StandardType standardType, String standardName,
