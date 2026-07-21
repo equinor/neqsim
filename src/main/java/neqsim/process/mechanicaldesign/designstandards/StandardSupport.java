@@ -6,6 +6,7 @@ package neqsim.process.mechanicaldesign.designstandards;
 public final class StandardSupport {
   private final StandardType standardType;
   private final StandardSupportLevel supportLevel;
+  private final boolean registryConnected;
   private final String registryImplementation;
   private final String calculationImplementation;
   private final String limitation;
@@ -15,14 +16,16 @@ public final class StandardSupport {
    *
    * @param standardType catalogued standard
    * @param supportLevel implementation evidence level
+   * @param registryConnected whether the stated calculation is selected by the registry
    * @param registryImplementation class selected by {@link StandardRegistry}
    * @param calculationImplementation calculation path that provides the stated support
    * @param limitation concise implementation boundary
    */
-  StandardSupport(StandardType standardType, StandardSupportLevel supportLevel, String registryImplementation,
-      String calculationImplementation, String limitation) {
+  StandardSupport(StandardType standardType, StandardSupportLevel supportLevel, boolean registryConnected,
+      String registryImplementation, String calculationImplementation, String limitation) {
     this.standardType = standardType;
     this.supportLevel = supportLevel;
+    this.registryConnected = registryConnected;
     this.registryImplementation = registryImplementation;
     this.calculationImplementation = calculationImplementation;
     this.limitation = limitation;
@@ -44,6 +47,15 @@ public final class StandardSupport {
    */
   public StandardSupportLevel getSupportLevel() {
     return supportLevel;
+  }
+
+  /**
+   * Check whether the calculation path is selected by {@link StandardRegistry}.
+   *
+   * @return {@code true} when strict registry selection can reach the calculation
+   */
+  public boolean isRegistryConnected() {
+    return registryConnected;
   }
 
   /**
