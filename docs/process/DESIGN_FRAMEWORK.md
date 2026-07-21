@@ -7,6 +7,18 @@ description: The Design Framework provides an integrated workflow for automated 
 
 The Design Framework provides an integrated workflow for automated equipment sizing, process template-based design, and production optimization. This document describes the key components and usage patterns.
 
+## Compatibility
+
+The typed process-design additions retain the legacy public source entry points, so callers can
+migrate incrementally. They are not a promise of identical behavior: validation-only optimizer runs
+no longer report false convergence, configured mechanical-design objects are preserved, invalid or
+ambiguous engineering inputs fail earlier, and corrected standard editions/applicability can change
+selection results. Java object deserialization across NeqSim versions is not part of this
+compatibility contract.
+
+See [Migrate process design to typed standard kernels](standard_design_kernel_migration) for the
+complete compatibility boundary and staged migration path.
+
 ## Related Documentation
 
 | Document | Description |
