@@ -2,6 +2,8 @@ package neqsim.process.engineering.calculation;
 
 import java.util.Collections;
 import java.util.EnumMap;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.Map;
 import neqsim.process.mechanicaldesign.designstandards.StandardEdition;
 import neqsim.process.mechanicaldesign.designstandards.StandardSupportLevel;
@@ -107,6 +109,15 @@ public final class EquipmentDesignKernelRegistry {
     }
     EquipmentDesignKernel<?, ?> kernel = KERNELS.get(standardType);
     return new Lookup(standardType, kernel == null ? Status.NOT_IMPLEMENTED : Status.IMPLEMENTED, kernel);
+  }
+
+  /**
+   * List standards with an executable common design kernel.
+   *
+   * @return deterministic immutable standard set
+   */
+  public static Set<StandardType> getRegisteredStandards() {
+    return Collections.unmodifiableSet(EnumSet.copyOf(KERNELS.keySet()));
   }
 
   private static void register(Map<StandardType, EquipmentDesignKernel<?, ?>> kernels,
