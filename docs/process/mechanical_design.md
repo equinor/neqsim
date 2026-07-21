@@ -186,8 +186,16 @@ SystemMechanicalDesign sysMecDesign = new SystemMechanicalDesign(process);
 // Set company standards for all equipment
 sysMecDesign.setCompanySpecificDesignStandards("Equinor");
 
-// Run design calculations for all equipment
-sysMecDesign.runDesignCalculation();
+// Prefer the structured API so partial system totals cannot be mistaken for complete results
+SystemMechanicalDesignResult calculation =
+    sysMecDesign.calculate(SystemDesignExecutionMode.BEST_EFFORT);
+if (!calculation.isComplete()) {
+  for (EquipmentDesignOutcome outcome : calculation.getEquipmentOutcomes()) {
+    if (outcome.getStatus() == EquipmentDesignOutcome.Status.FAILED) {
+      logger.error("Design failed for {}: {}", outcome.getEquipmentName(), outcome.getMessage());
+    }
+  }
+}
 
 // The aggregate is cached on the ProcessSystem and survives copy/serialization
 boolean calculated = sysMecDesign.hasRunDesignCalculation();
@@ -216,6 +224,15 @@ replace the aggregate totals instead of accumulating them and increment the calc
 The system-level result is serialized with `ProcessSystem`, including its equipment summaries and
 breakdowns. Collection getters return defensive snapshots, so modifying a returned summary does not
 alter the stored design state.
+
+`calculate(BEST_EFFORT)` continues with independent equipment after a calculation error and returns
+an immutable outcome for every item. Aggregate weights, dimensions, and utilities then contain only
+successfully calculated equipment, and `isComplete()` is false. `calculate(FAIL_FAST)` stops on the
+first failure and throws `SystemMechanicalDesignException`; `getPartialResult()` preserves the
+calculated, failed, and skipped outcomes. Exception class and message are included in the serialized
+result, while stack traces remain in the application log. The legacy `runDesignCalculation()` method
+retains best-effort behavior for source compatibility; inspect `getLastCalculationResult()` before
+using its aggregates.
 
 ## JSON Export
 
