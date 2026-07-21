@@ -19,8 +19,7 @@ import neqsim.process.mechanicaldesign.pump.PumpApi610DesignCalculator.DataSourc
 class PumpApi610DesignKernelTest {
   @Test
   void registryReturnsExplicitImplementationStatus() {
-    EquipmentDesignKernelRegistry.Lookup implemented =
-        EquipmentDesignKernelRegistry.lookup(StandardType.API_610);
+    EquipmentDesignKernelRegistry.Lookup implemented = EquipmentDesignKernelRegistry.lookup(StandardType.API_610);
     EquipmentDesignKernelRegistry.Lookup absent = EquipmentDesignKernelRegistry.lookup(StandardType.API_660);
 
     assertEquals(EquipmentDesignKernelRegistry.Status.IMPLEMENTED, implemented.getStatus());
@@ -38,8 +37,7 @@ class PumpApi610DesignKernelTest {
     PumpApi610DesignCalculator legacyConfiguration = passingConfiguration();
     StandardEdition edition = StandardEdition.of(StandardType.API_610, "13th Ed",
         Collections.singletonList("Project amendment A"));
-    PumpApi610DesignKernel.Input input =
-        new PumpApi610DesignKernel.Input(edition, "Pump", legacyConfiguration);
+    PumpApi610DesignKernel.Input input = new PumpApi610DesignKernel.Input(edition, "Pump", legacyConfiguration);
     PumpApi610DesignKernel kernel = new PumpApi610DesignKernel();
     EngineeringCalculationContext context = EngineeringCalculationContext.builder().designCaseId("rated")
         .addStandardReference(edition.getDisplayName()).build();
@@ -65,8 +63,8 @@ class PumpApi610DesignKernelTest {
     PumpApi610DesignKernel.Input separatorInput = new PumpApi610DesignKernel.Input(
         StandardEdition.defaultEdition(StandardType.API_610), "Separator", passingConfiguration());
 
-    EngineeringCalculationResult<PumpApi610DesignAssessment> result =
-        kernel.calculate(separatorInput, EngineeringCalculationContext.builder().build());
+    EngineeringCalculationResult<PumpApi610DesignAssessment> result = kernel.calculate(separatorInput,
+        EngineeringCalculationContext.builder().build());
 
     assertEquals(EngineeringCalculationResult.Status.BLOCKED, result.getStatus());
     assertEquals(StandardApplicability.Status.NOT_APPLICABLE, kernel.applicability(separatorInput).getStatus());
