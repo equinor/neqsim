@@ -47,9 +47,9 @@ combined fresh and recycle feed.
 `SulfurThermodynamics` treats sulfur vapor as an ideal reacting mixture of S2 through S8. For each
 species `i`,
 
-\[
+$$
 y_i P = P^\circ \exp\left(\frac{n_i\lambda-G_i^\circ(T)}{RT}\right),
-\]
+$$
 
 where `n_i` is its sulfur-atom count and `lambda` is the sulfur atomic chemical potential. A scalar
 root solve enforces total sulfur vapor pressure. This gives allotrope fractions and mean sulfur

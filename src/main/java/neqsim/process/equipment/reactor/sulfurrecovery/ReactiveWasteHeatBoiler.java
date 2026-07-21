@@ -125,6 +125,7 @@ public class ReactiveWasteHeatBoiler extends TwoPortEquipment {
   }
 
   /** Set process-gas outlet temperature. */
+  @Override
   public void setOutletTemperature(double value, String unit) {
     outletTemperatureK = "C".equalsIgnoreCase(unit) ? value + 273.15 : value;
   }

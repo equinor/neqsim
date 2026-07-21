@@ -459,7 +459,6 @@ public class PlugFlowReactor extends TwoPortEquipment {
     }
 
     double temperature = Math.max(state[nComp], 1.0);
-    double pressure = Math.max(state[nComp + 1], 0.1);
 
     // Get total molar flow for this state
     double totalMolFlow = 0.0;

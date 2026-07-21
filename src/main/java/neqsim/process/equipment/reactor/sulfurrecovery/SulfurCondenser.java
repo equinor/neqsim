@@ -89,6 +89,7 @@ public class SulfurCondenser extends TwoPortEquipment {
   }
 
   /** Set condenser gas and liquid outlet temperature. */
+  @Override
   public void setOutletTemperature(double value, String unit) {
     outletTemperatureK = "C".equalsIgnoreCase(unit) ? value + 273.15 : value;
   }
