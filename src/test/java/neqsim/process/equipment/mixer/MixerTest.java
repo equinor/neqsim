@@ -181,8 +181,7 @@ class MixerTest {
     coolStream.setFlowRate(10000.0, "kg/hr");
     coolStream.run();
 
-    double inletEnthalpyJ =
-        hotStream.getFluid().getEnthalpy("J") + coolStream.getFluid().getEnthalpy("J");
+    double inletEnthalpyJ = hotStream.getFluid().getEnthalpy("J") + coolStream.getFluid().getEnthalpy("J");
 
     Mixer testMixer = new Mixer("enthalpy closure mixer");
     testMixer.addStream(hotStream);
