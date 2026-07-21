@@ -190,6 +190,7 @@ class MixerTest {
     testMixer.run();
 
     assertEquals(inletEnthalpyJ, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-3);
+  }
 
   /**
    * Test method for mass balance conservation in Mixer.
