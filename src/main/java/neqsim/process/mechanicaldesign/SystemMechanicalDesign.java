@@ -479,10 +479,9 @@ public class SystemMechanicalDesign implements java.io.Serializable {
           }
           designCalculationRevision++;
           designCalculationRun = false;
-          lastCalculationResult = new SystemMechanicalDesignResult(designCalculationRevision, executionMode,
-              outcomes);
-          throw new SystemMechanicalDesignException(
-              "Mechanical design failed for equipment " + names.get(i), ex, lastCalculationResult);
+          lastCalculationResult = new SystemMechanicalDesignResult(designCalculationRevision, executionMode, outcomes);
+          throw new SystemMechanicalDesignException("Mechanical design failed for equipment " + names.get(i), ex,
+              lastCalculationResult);
         }
       }
     }
