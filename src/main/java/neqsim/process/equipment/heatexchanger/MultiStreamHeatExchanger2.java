@@ -45,6 +45,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   /** Message used when the Jacobian is singular. */
   private static final String SINGULAR_JACOBIAN_MSG = "Jacobian determinant is zero";
 
+  /** Prime bases used for deterministic low-discrepancy restart guesses. */
+  private static final int[] RESTART_SEQUENCE_BASES = { 2, 3, 5 };
+
   private final double extremeEnergy = 0.3;
   private final double extremeUA = 2.0;
   private final int extremeAttempts = 1000;
@@ -798,10 +801,12 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       } else {
         logger.debug("✗ reset on attempt " + attempt + ": " + String.join("; ", msgs));
 
-        // Randomize outlet temps within physical bounds
+        // Select a deterministic low-discrepancy restart within the physical bounds.
+        // Math.random() made convergence depend on unrelated test and execution order.
         double hottestHot = Collections.max(inletTemps);
         double coldestCold = Collections.min(inletTemps);
-        for (int idx : unknownIndices) {
+        for (int position = 0; position < unknownIndices.size(); position++) {
+          int idx = unknownIndices.get(position);
           double inlet = inletTemps.get(idx);
           double lower;
           double upper;
@@ -813,7 +818,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
             lower = inlet;
             upper = hottestHot - approachTemperature;
           }
-          double guess = lower + Math.random() * (upper - lower);
+          double fraction = deterministicRestartFraction(attempt, position);
+          double guess = lower + fraction * (upper - lower);
           outletTemps.set(idx, guess);
         }
 
@@ -825,6 +831,31 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     // If all attempts fail
     throw new RuntimeException(
         "resetOfExtremes: gave up after " + extremeAttempts + " attempts - last issues: " + String.join("; ", msgs));
+  }
+
+  /**
+   * Returns a reproducible low-discrepancy fraction for solver restarts.
+   *
+   * <p>
+   * A radical-inverse sequence explores each unknown temperature's interval without coupling convergence to JVM-global
+   * random state. Separate prime bases avoid placing multiple unknowns on the same diagonal in the search space.
+   * </p>
+   *
+   * @param attempt one-based restart attempt
+   * @param dimension zero-based unknown-temperature dimension
+   * @return fraction in the interval {@code [0, 1)}
+   */
+  private static double deterministicRestartFraction(int attempt, int dimension) {
+    int base = RESTART_SEQUENCE_BASES[dimension % RESTART_SEQUENCE_BASES.length];
+    int value = attempt;
+    double fraction = 0.0;
+    double inversePower = 1.0 / base;
+    while (value > 0) {
+      fraction += (value % base) * inversePower;
+      value /= base;
+      inversePower /= base;
+    }
+    return fraction;
   }
 
   private boolean stallDetection(List<Integer> unknownIndices) {
