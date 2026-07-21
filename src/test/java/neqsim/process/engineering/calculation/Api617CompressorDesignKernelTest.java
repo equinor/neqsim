@@ -51,8 +51,8 @@ class Api617CompressorDesignKernelTest {
     assertEquals(EngineeringCalculationResult.Status.BLOCKED, kernel.calculate(invalid, null).getStatus());
     assertFalse(kernel.assess(invalid, null).isReady());
     assertThrows(IllegalArgumentException.class,
-        () -> new Api617CompressorDesignKernel.Input(StandardEdition.defaultEdition(StandardType.API_610),
-            "Compressor", passingConfiguration()));
+        () -> new Api617CompressorDesignKernel.Input(StandardEdition.defaultEdition(StandardType.API_610), "Compressor",
+            passingConfiguration()));
   }
 
   private static CompressorCasingDesignCalculator passingConfiguration() {
