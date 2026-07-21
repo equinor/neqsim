@@ -35,22 +35,23 @@ public final class StandardSupportAudit {
 
     switch (standardType) {
     case API_610:
-      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, registryImplementation,
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, false, registryImplementation,
           "PumpApi610DesignCalculator",
           "API 610 screening is available through PumpMechanicalDesign but is not selected by StandardRegistry.");
     case API_650:
     case API_620:
-      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, registryImplementation, NO_CALCULATION,
-          "The registry maps this tank standard to a separator-oriented pressure-vessel class; "
+      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, false, registryImplementation,
+          NO_CALCULATION, "The registry maps this tank standard to a separator-oriented pressure-vessel class; "
               + "no tank-code calculation is implemented.");
     case API_660:
     case API_661:
     case ISO_16812:
-      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, registryImplementation, NO_CALCULATION,
-          "No standard-specific heat-exchanger mechanical calculation is connected.");
+      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, false, registryImplementation,
+          NO_CALCULATION, "No standard-specific heat-exchanger mechanical calculation is connected.");
     case API_521:
     case API_526:
-      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, registryImplementation, NO_CALCULATION,
+      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, false, registryImplementation,
+          NO_CALCULATION,
           "The mapped valve class does not implement relief-system or relief-valve standard calculations.");
     default:
       return getCategorySupport(standardType, registryImplementation);
@@ -121,12 +122,12 @@ public final class StandardSupportAudit {
           "Material-property lookup only; material selection, qualification, and code acceptance are not implemented.");
     }
 
-    return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, registryImplementation, NO_CALCULATION,
-        "No category-specific calculation is connected.");
+    return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, false, registryImplementation,
+        NO_CALCULATION, "No category-specific calculation is connected.");
   }
 
   private static StandardSupport screening(StandardType standardType, String implementation, String limitation) {
-    return new StandardSupport(standardType, StandardSupportLevel.SCREENING, implementation, implementation,
+    return new StandardSupport(standardType, StandardSupportLevel.SCREENING, true, implementation, implementation,
         limitation);
   }
 
