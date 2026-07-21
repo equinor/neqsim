@@ -81,6 +81,83 @@ public final class StandardRegistry {
     String effectiveVersion = version != null ? version : getEffectiveVersion(standardType);
     String standardName = standardType.getCode() + " " + effectiveVersion;
 
+    return instantiateStandard(standardType, standardName, equipment);
+  }
+
+  /**
+   * Create a standard from a typed edition selection.
+   *
+   * <p>
+   * Strict selections fail closed when the standard is catalog-only, its calculation is not
+   * connected to this registry, the equipment context is missing, or the standard is not listed
+   * for the equipment type. Legacy-compatible selections preserve the permissive factory behavior
+   * while still using an explicit, reproducible edition.
+   * </p>
+   *
+   * @param selection typed standard selection
+   * @param equipment mechanical design equipment context
+   * @return a new DesignStandard instance
+   * @throws StandardSelectionException if a strict selection cannot be honored
+   */
+  public static DesignStandard createStandard(StandardSelection selection, MechanicalDesign equipment) {
+    if (selection == null) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.MISSING_SELECTION, null, null,
+          "selection cannot be null");
+    }
+
+    StandardType standardType = selection.getStandardType();
+    if (selection.getMode() == StandardSelection.Mode.STRICT) {
+      StandardSupport support = StandardSupportAudit.getSupport(standardType);
+      if (support.getSupportLevel() == StandardSupportLevel.CATALOGUED) {
+        throw new StandardSelectionException(StandardSelectionException.Reason.CATALOG_ONLY, standardType, null,
+            support.getLimitation());
+      }
+      if (!support.isRegistryConnected()) {
+        throw new StandardSelectionException(StandardSelectionException.Reason.NOT_REGISTRY_CONNECTED, standardType,
+            null, support.getLimitation());
+      }
+
+      StandardApplicability applicability = assessApplicability(standardType, equipment);
+      if (applicability.getStatus() == StandardApplicability.Status.UNKNOWN) {
+        throw new StandardSelectionException(StandardSelectionException.Reason.MISSING_EQUIPMENT, standardType, null,
+            applicability.getReason());
+      }
+      if (applicability.getStatus() == StandardApplicability.Status.NOT_APPLICABLE) {
+        throw new StandardSelectionException(StandardSelectionException.Reason.NOT_APPLICABLE, standardType,
+            applicability.getEquipmentType(), applicability.getReason());
+      }
+    }
+
+    return instantiateStandard(standardType, selection.getEdition().getDisplayName(), equipment);
+  }
+
+  /**
+   * Assess applicability using the process equipment represented by a mechanical design.
+   *
+   * @param standardType standard to assess
+   * @param equipment mechanical design equipment context
+   * @return structured applicability result
+   * @throws IllegalArgumentException if {@code standardType} is null
+   */
+  public static StandardApplicability assessApplicability(StandardType standardType, MechanicalDesign equipment) {
+    if (standardType == null) {
+      throw new IllegalArgumentException("standardType cannot be null");
+    }
+    if (equipment == null || equipment.getProcessEquipment() == null) {
+      return StandardApplicability.unknown(standardType,
+          "A mechanical design with process equipment is required to assess applicability.");
+    }
+
+    String equipmentType = equipment.getProcessEquipment().getClass().getSimpleName();
+    if (standardType.appliesTo(equipmentType)) {
+      return StandardApplicability.applicable(standardType, equipmentType);
+    }
+    return StandardApplicability.notApplicable(standardType, equipmentType);
+  }
+
+  private static DesignStandard instantiateStandard(StandardType standardType, String standardName,
+      MechanicalDesign equipment) {
+
     Class<? extends DesignStandard> implementationClass = getMappedImplementationClass(standardType);
 
     if (implementationClass == PressureVesselDesignStandard.class) {
