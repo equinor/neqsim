@@ -61,6 +61,12 @@ approved hazard-review basis.
 
 Gate check: every design variable and calculated load can be traced to the case that governs it.
 
+Require `EngineeringCaseRunReport.isComplete()` before using the envelope as a closed design basis.
+Completeness and acceptance are separate: `isAccepted()` additionally requires configured limits and
+no violations. Workflows that must stop on incomplete coverage can select
+`EngineeringCaseFailurePolicy.THROW_WITH_PARTIAL_RESULT`; the thrown exception retains the partial
+report for diagnosis and audit.
+
 ## Gate 3: Run isolated cases and create governing envelopes
 
 Run cases on independent copies. This prevents one case or design update from contaminating another and preserves the
