@@ -291,18 +291,16 @@ public class SystemMechanicalDesignTest {
     assertEquals(1, result.getFailedCount());
     assertEquals(0, result.getSkippedCount());
     assertEquals(3, result.getEquipmentOutcomes().size());
-    assertEquals(EquipmentDesignOutcome.Status.FAILED,
-        result.getEquipmentOutcomes().get(1).getStatus());
-    assertEquals(IllegalStateException.class.getName(),
-        result.getEquipmentOutcomes().get(1).getErrorType());
+    assertEquals(EquipmentDesignOutcome.Status.FAILED, result.getEquipmentOutcomes().get(1).getStatus());
+    assertEquals(IllegalStateException.class.getName(), result.getEquipmentOutcomes().get(1).getErrorType());
     assertEquals("Deliberate design failure", result.getEquipmentOutcomes().get(1).getMessage());
     assertFalse(systemDesign.hasRunDesignCalculation());
     assertSame(result, systemDesign.getLastCalculationResult().get());
     assertEquals(240.0, systemDesign.getTotalWeight(), 1.0e-12);
 
     neqsim.process.processmodel.ProcessSystem restoredProcess = process.copy();
-    SystemMechanicalDesignResult restoredResult = restoredProcess.getSystemMechanicalDesign()
-        .getLastCalculationResult().get();
+    SystemMechanicalDesignResult restoredResult = restoredProcess.getSystemMechanicalDesign().getLastCalculationResult()
+        .get();
     assertEquals(1, restoredResult.getFailedCount());
     assertEquals("failed equipment", restoredResult.getEquipmentOutcomes().get(1).getEquipmentName());
   }
@@ -324,8 +322,7 @@ public class SystemMechanicalDesignTest {
     assertEquals(1, result.getCalculatedCount());
     assertEquals(1, result.getFailedCount());
     assertEquals(1, result.getSkippedCount());
-    assertEquals(EquipmentDesignOutcome.Status.SKIPPED,
-        result.getEquipmentOutcomes().get(2).getStatus());
+    assertEquals(EquipmentDesignOutcome.Status.SKIPPED, result.getEquipmentOutcomes().get(2).getStatus());
     assertEquals(120.0, systemDesign.getTotalWeight(), 1.0e-12);
     assertEquals(1L, systemDesign.getDesignCalculationRevision());
     assertSame(result, systemDesign.getLastCalculationResult().get());
