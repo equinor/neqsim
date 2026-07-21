@@ -6,8 +6,8 @@ import java.io.Serializable;
  * Immutable outcome for one equipment item in a system mechanical design calculation.
  *
  * <p>
- * Failure details deliberately contain only the exception type and message. Stack traces remain in the application
- * log and are not copied into serialized engineering results.
+ * Failure details deliberately contain only the exception type and message. Stack traces remain in the application log
+ * and are not copied into serialized engineering results.
  * </p>
  *
  * @author NeqSim Development Team
@@ -67,8 +67,8 @@ public final class EquipmentDesignOutcome implements Serializable {
     if (failureMessage == null || failureMessage.trim().isEmpty()) {
       failureMessage = "No error message was provided";
     }
-    return new EquipmentDesignOutcome(equipmentName, equipmentType, Status.FAILED,
-        exception.getClass().getName(), failureMessage);
+    return new EquipmentDesignOutcome(equipmentName, equipmentType, Status.FAILED, exception.getClass().getName(),
+        failureMessage);
   }
 
   /**
