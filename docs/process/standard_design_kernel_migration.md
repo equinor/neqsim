@@ -9,6 +9,32 @@ The typed workflow is additive. Existing mechanical-design classes continue to w
 migrated code should make editions, applicability, readiness, calculation status, cases, and
 qualification evidence explicit.
 
+## Backward compatibility
+
+The migration preserves the existing public source entry points. Legacy standard factories,
+single-argument canonical-unit methods, mechanical-design execution methods, and unconfigured
+`DesignOptimizer` fluent calls remain available. The strict selection and typed-kernel APIs are
+additive and can be adopted incrementally.
+
+Backward compatibility does not mean identical behavior. Correctness fixes deliberately change
+several observable results:
+
+- `DesignOptimizer.optimize()` without explicit search bounds reports `VALIDATED` or
+  `AUTO_SIZED` with `isConverged() == false`; it no longer claims that an optimization ran.
+- invalid safety factors, null objectives, incompatible shared design updates, unsupported strict
+  selections, and incomplete typed-kernel inputs fail earlier;
+- system mechanical-design execution retains caller-configured design objects instead of replacing
+  them with defaults;
+- the API 610 catalog default is the implemented 13th-edition screening basis, and API 521/API 526
+  applicability is restricted to relief-system equipment;
+- returned equipment-size collections are defensive snapshots and no longer expose mutable internal
+  state.
+
+Existing integrations should therefore continue to compile, but tests or control logic that relied
+on the previous permissive outcomes must migrate to explicit result statuses. This compatibility
+contract covers public source APIs and normal runtime use; deserializing Java object graphs written
+by older NeqSim versions is outside its scope.
+
 ## 1. Replace global edition overrides
 
 Process-global overrides are deprecated because concurrent projects can observe each other's mutable
@@ -86,7 +112,7 @@ Require `areAllBenchmarksPassed()` in regression CI. Do not use that flag as qua
 3. Move calculation calls behind typed kernels without deleting the legacy configuration path.
 4. Replace envelope-only execution and require complete case reports.
 5. Add project limits, independent benchmark datasets, applicability envelopes, and approvals.
-6. Remove use of global overrides only after serialized projects and integrations have migrated.
+6. Remove use of global overrides only after integrations have migrated and the removal is scheduled for a major release.
 
 The complete runnable API 526 path is in
 `examples/neqsim/process/design/StandardDesignKernelMigrationExample.java`.
