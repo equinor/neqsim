@@ -125,6 +125,10 @@ MechanicalDesign mecDesign = separator.getMechanicalDesign();
 // Set design standards (optional - uses defaults if not specified)
 mecDesign.setCompanySpecificDesignStandards("Equinor");
 
+// Prefer explicit units for operating conditions; canonical storage is bara and K
+mecDesign.setMaxOperationPressure(1450.38, "psia");
+mecDesign.setMaxOperationTemperature(250.0, "F");
+
 // Calculate design
 mecDesign.calcDesign();
 
@@ -138,6 +142,30 @@ double designPressure = mecDesign.getMaxDesignPressure(); // bara
 // Display results in GUI
 mecDesign.displayResults();
 ```
+
+### Declared design conditions and units
+
+`DesignConditions` stores data-sheet declarations separately from calculated sizing results. Legacy
+single-argument setters retain their documented canonical units: pressure in `bara`, temperature in
+degrees Celsius, and corrosion allowance in `mm`. Unit-aware overloads should be preferred for new
+code:
+
+```java
+DesignConditions conditions = separator.getDesignConditions();
+conditions.setDesignPressure(1450.38, "psia");
+conditions.setMaxDesignTemperature(250.0, "F");
+conditions.setMinDesignTemperature(-50.0, "C");
+conditions.setReliefSetPressure(100.0, "barg");
+conditions.setCorrosionAllowance(0.125, "in");
+
+double designPressureBara = conditions.getDesignPressure("bara");
+double maximumTemperatureC = conditions.getMaxDesignTemperature("C");
+```
+
+`DesignConditionValue` adds an immutable typed representation for pressure, temperature, and length
+conditions. `DesignConditions.getCondition(type)` and `getConditions()` expose typed defensive
+snapshots. Values are converted to the condition's canonical unit on creation, invalid units fail
+closed, and physically impossible pressure, temperature, or corrosion values are rejected.
 
 ### System-Wide Mechanical Design
 
