@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -115,8 +116,11 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   /** Whether at least one complete system design calculation has been run. */
   private boolean designCalculationRun = false;
 
-  /** Monotonic revision number incremented after every complete system design calculation. */
+  /** Monotonic revision number incremented after every system design calculation attempt. */
   private long designCalculationRevision = 0L;
+
+  /** Structured outcome from the most recent calculation attempt. */
+  private SystemMechanicalDesignResult lastCalculationResult;
 
   // ============================================================================
   // Equipment Design Summary Inner Class
@@ -397,16 +401,38 @@ public class SystemMechanicalDesign implements java.io.Serializable {
    * sizing inputs are not discarded. After calling this method, all getters will return updated values.
    * </p>
    */
-  public void runDesignCalculation() {
+  public synchronized void runDesignCalculation() {
+    calculate(SystemDesignExecutionMode.BEST_EFFORT);
+  }
+
+  /**
+   * Run system mechanical design with explicit failure handling.
+   *
+   * <p>
+   * In {@link SystemDesignExecutionMode#BEST_EFFORT} mode, independent equipment continues after a failure and the
+   * returned result identifies partial aggregates. In {@link SystemDesignExecutionMode#FAIL_FAST} mode, the first
+   * failure throws {@link SystemMechanicalDesignException}; its partial result identifies the failed item and every
+   * item not attempted. Aggregate fields contain only successfully calculated equipment in either mode.
+   * </p>
+   *
+   * @param executionMode failure handling mode
+   * @return structured calculation result
+   * @throws NullPointerException if executionMode is null
+   * @throws SystemMechanicalDesignException on the first failure in fail-fast mode
+   */
+  public synchronized SystemMechanicalDesignResult calculate(SystemDesignExecutionMode executionMode) {
+    Objects.requireNonNull(executionMode, "executionMode");
     // Reset all accumulators
     resetAccumulators();
 
     ArrayList<String> names = this.processSystem.getAllUnitNames();
+    List<EquipmentDesignOutcome> outcomes = new ArrayList<EquipmentDesignOutcome>();
     for (int i = 0; i < names.size(); i++) {
+      ProcessEquipmentInterface equipment = null;
       try {
-        ProcessEquipmentInterface equipment = this.processSystem.getUnit(names.get(i));
+        equipment = this.processSystem.getUnit(names.get(i));
         if (equipment == null) {
-          continue;
+          throw new IllegalStateException("Process equipment could not be resolved");
         }
 
         MechanicalDesign mecDesign = getOrInitializeMechanicalDesign(equipment);
@@ -441,13 +467,30 @@ public class SystemMechanicalDesign implements java.io.Serializable {
         EquipmentDesignSummary summary = createEquipmentSummary(equipment, mecDesign);
         equipmentList.add(summary);
 
+        outcomes.add(EquipmentDesignOutcome.calculated(equipment.getName(), equipment.getClass().getName()));
+
       } catch (Exception ex) {
-        logger.error("Error processing equipment " + names.get(i) + ": " + ex.getMessage(), ex);
+        String equipmentType = equipment == null ? "" : equipment.getClass().getName();
+        outcomes.add(EquipmentDesignOutcome.failed(names.get(i), equipmentType, ex));
+        logger.error("Mechanical design failed for equipment " + names.get(i) + ": " + ex.getMessage(), ex);
+        if (executionMode == SystemDesignExecutionMode.FAIL_FAST) {
+          for (int j = i + 1; j < names.size(); j++) {
+            outcomes.add(EquipmentDesignOutcome.skipped(names.get(j)));
+          }
+          designCalculationRevision++;
+          designCalculationRun = false;
+          lastCalculationResult = new SystemMechanicalDesignResult(designCalculationRevision, executionMode,
+              outcomes);
+          throw new SystemMechanicalDesignException(
+              "Mechanical design failed for equipment " + names.get(i), ex, lastCalculationResult);
+        }
       }
     }
 
-    designCalculationRun = true;
     designCalculationRevision++;
+    lastCalculationResult = new SystemMechanicalDesignResult(designCalculationRevision, executionMode, outcomes);
+    designCalculationRun = lastCalculationResult.isComplete();
+    return lastCalculationResult;
   }
 
   /**
@@ -756,10 +799,19 @@ public class SystemMechanicalDesign implements java.io.Serializable {
   /**
    * Get the persistent calculation revision.
    *
-   * @return number of completed calls to {@link #runDesignCalculation()}
+   * @return number of completed calculation attempts, including structured partial results
    */
   public long getDesignCalculationRevision() {
     return designCalculationRevision;
+  }
+
+  /**
+   * Get the structured outcome from the most recent system design attempt.
+   *
+   * @return immutable result, or an empty optional before the first attempt
+   */
+  public synchronized Optional<SystemMechanicalDesignResult> getLastCalculationResult() {
+    return Optional.ofNullable(lastCalculationResult);
   }
 
   /**
