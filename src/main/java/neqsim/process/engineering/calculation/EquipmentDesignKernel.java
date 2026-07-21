@@ -10,8 +10,8 @@ import neqsim.process.mechanicaldesign.designstandards.StandardType;
  * Pure, typed adapter contract for an equipment design calculation associated with a standard.
  *
  * <p>
- * Implementations must not mutate the supplied input or a {@code ProcessSystem}. Legacy mutable
- * calculators are connected through adapters that copy their configuration before execution.
+ * Implementations must not mutate the supplied input or a {@code ProcessSystem}. Legacy mutable calculators are
+ * connected through adapters that copy their configuration before execution.
  * </p>
  *
  * @param <I> immutable or defensively copied calculation input
