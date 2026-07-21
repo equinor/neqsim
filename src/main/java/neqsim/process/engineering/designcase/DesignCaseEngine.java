@@ -30,7 +30,8 @@ public final class DesignCaseEngine {
     Collections.sort(orderedCases, new Comparator<EngineeringDesignCase>() {
       @Override
       public int compare(EngineeringDesignCase first, EngineeringDesignCase second) {
-        return Integer.compare(first.getPriority(), second.getPriority());
+        int priorityComparison = Integer.compare(first.getPriority(), second.getPriority());
+        return priorityComparison != 0 ? priorityComparison : first.getId().compareTo(second.getId());
       }
     });
     for (EngineeringDesignCase designCase : orderedCases) {
@@ -63,7 +64,7 @@ public final class DesignCaseEngine {
       }
       results.add(result);
     }
-    return new EngineeringDesignEnvelope(results, governing);
+    return new EngineeringDesignEnvelope(metrics, results, governing);
   }
 
   /** Executes the enhanced isolated case runner and returns fingerprints and convergence evidence. */
