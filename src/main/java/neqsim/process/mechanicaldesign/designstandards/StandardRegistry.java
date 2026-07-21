@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import neqsim.process.engineering.calculation.EquipmentDesignKernel;
 import neqsim.process.engineering.calculation.EquipmentDesignKernelRegistry;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 
@@ -167,6 +168,36 @@ public final class StandardRegistry {
     return EquipmentDesignKernelRegistry.lookup(standardType);
   }
 
+  /**
+   * Require an executable common kernel for an explicit standard edition.
+   *
+   * <p>
+   * This is the fail-closed migration path from a metadata/factory selection to the typed engineering calculation API.
+   * Applicability to the concrete input remains enforced by the returned kernel.
+   * </p>
+   *
+   * @param selection explicit standard and edition basis
+   * @return registered typed-kernel contract
+   * @throws StandardSelectionException when the selection is missing, no kernel exists, or the edition is unsupported
+   */
+  public static EquipmentDesignKernel<?, ?> requireDesignKernel(StandardSelection selection) {
+    if (selection == null) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.MISSING_SELECTION, null, null,
+          "selection cannot be null");
+    }
+    StandardType standardType = selection.getStandardType();
+    EquipmentDesignKernelRegistry.Lookup lookup = getDesignKernel(standardType);
+    if (!lookup.isImplemented()) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.KERNEL_NOT_IMPLEMENTED, standardType,
+          null, "No common engineering design kernel is registered for the selected standard");
+    }
+    if (!lookup.supports(selection.getEdition())) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, standardType,
+          null, "No registered kernel implements " + selection.getEdition().getDisplayName());
+    }
+    return lookup.requireKernel();
+  }
+
   private static DesignStandard instantiateStandard(StandardType standardType, String standardName,
       MechanicalDesign equipment) {
 
@@ -248,11 +279,14 @@ public final class StandardRegistry {
   }
 
   /**
-   * Set a version override for a standard type.
+   * Set a process-global version override for legacy callers.
    *
    * @param standardType the standard type to override
    * @param version the version to use (null to clear override)
+   * @deprecated use an explicit {@link StandardEdition} inside {@link StandardSelection}; global mutable edition state
+   *             is not reproducible across concurrent designs
    */
+  @Deprecated
   public static void setVersionOverride(StandardType standardType, String version) {
     if (standardType == null) {
       return;
@@ -265,8 +299,11 @@ public final class StandardRegistry {
   }
 
   /**
-   * Clear all version overrides.
+   * Clear process-global version overrides retained for legacy callers.
+   *
+   * @deprecated explicit {@link StandardSelection} values require no global cleanup
    */
+  @Deprecated
   public static void clearVersionOverrides() {
     versionOverrides.clear();
   }
