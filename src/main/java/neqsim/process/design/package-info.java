@@ -23,6 +23,7 @@
  *
  * // 2. Run integrated design-optimization
  * DesignResult result = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2).applyDefaultConstraints()
+ *     .configureFeedRateOptimization("Feed", 25000.0, 80000.0, "kg/hr")
  *     .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION).optimize();
  *
  * // 3. Check results
