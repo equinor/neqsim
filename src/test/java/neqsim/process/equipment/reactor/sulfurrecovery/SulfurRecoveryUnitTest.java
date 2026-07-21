@@ -16,9 +16,7 @@ public class SulfurRecoveryUnitTest extends neqsim.NeqSimTest {
   @Test
   public void testStraightThroughProcess() {
     Stream acidGas = createFeed();
-    SulfurRecoveryUnit unit = new SulfurRecoveryProcessBuilder("SRU", acidGas)
-        .catalyticStages(2)
-        .incinerator(true)
+    SulfurRecoveryUnit unit = new SulfurRecoveryProcessBuilder("SRU", acidGas).catalyticStages(2).incinerator(true)
         .build();
     unit.run();
 
@@ -39,19 +37,14 @@ public class SulfurRecoveryUnitTest extends neqsim.NeqSimTest {
   @Test
   public void testOxygenEnrichedConfiguration() {
     Stream acidGas = createFeed();
-    SulfurRecoveryUnit airUnit = new SulfurRecoveryProcessBuilder("air SRU", acidGas)
-        .catalyticStages(1)
-        .incinerator(false)
-        .build();
+    SulfurRecoveryUnit airUnit = new SulfurRecoveryProcessBuilder("air SRU", acidGas).catalyticStages(1)
+        .incinerator(false).build();
     airUnit.run();
-    double airNitrogen = airUnit.getReactionFurnace().getInletStream().getThermoSystem()
-        .getComponent("nitrogen").getNumberOfmoles();
+    double airNitrogen = airUnit.getReactionFurnace().getInletStream().getThermoSystem().getComponent("nitrogen")
+        .getNumberOfmoles();
 
     SulfurRecoveryUnit enrichedUnit = new SulfurRecoveryProcessBuilder("enriched SRU", acidGas)
-        .configuration(SulfurRecoveryUnit.Configuration.OXYGEN_ENRICHED)
-        .catalyticStages(1)
-        .incinerator(false)
-        .build();
+        .configuration(SulfurRecoveryUnit.Configuration.OXYGEN_ENRICHED).catalyticStages(1).incinerator(false).build();
     enrichedUnit.run();
     double enrichedNitrogen = enrichedUnit.getReactionFurnace().getInletStream().getThermoSystem()
         .getComponent("nitrogen").getNumberOfmoles();
@@ -63,11 +56,8 @@ public class SulfurRecoveryUnitTest extends neqsim.NeqSimTest {
   @Test
   public void testSplitFlowBuilderConfiguration() {
     SulfurRecoveryUnit unit = new SulfurRecoveryProcessBuilder("split SRU", createFeed())
-        .configuration(SulfurRecoveryUnit.Configuration.SPLIT_FLOW)
-        .splitFlowFurnaceFraction(0.35)
-        .catalyticStages(1)
-        .incinerator(false)
-        .build();
+        .configuration(SulfurRecoveryUnit.Configuration.SPLIT_FLOW).splitFlowFurnaceFraction(0.35).catalyticStages(1)
+        .incinerator(false).build();
     unit.run();
 
     assertEquals(SulfurRecoveryUnit.Configuration.SPLIT_FLOW, unit.getConfiguration());
@@ -78,11 +68,8 @@ public class SulfurRecoveryUnitTest extends neqsim.NeqSimTest {
   /** Integrated TGTU exposes its converged acid-gas recycle and cleaned outlet. */
   @Test
   public void testTailGasRecycleTopology() {
-    SulfurRecoveryUnit unit = new SulfurRecoveryProcessBuilder("SRU with TGTU", createFeed())
-        .catalyticStages(1)
-        .tailGasTreatment(true)
-        .incinerator(false)
-        .build();
+    SulfurRecoveryUnit unit = new SulfurRecoveryProcessBuilder("SRU with TGTU", createFeed()).catalyticStages(1)
+        .tailGasTreatment(true).incinerator(false).build();
     unit.setMaximumAirControlIterations(1);
     unit.setRecycleConvergence(1.0, 2, 0.5);
     unit.run();

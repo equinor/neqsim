@@ -332,11 +332,10 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
         tLow = T;
       }
 
-      logger.debug(
-          "PH iter=" + iter + " T=" + String.format("%.4f", T) + " H_therm="
-              + String.format("%.4e", getThermochemicalEnthalpy()) + " Hspec_therm="
-              + String.format("%.4e", thermochemicalEnthalpySpec) + " err=" + String.format("%.3e", error)
-              + " bracket=[" + String.format("%.2f", tLow) + "," + String.format("%.2f", tHigh) + "]");
+      logger.debug("PH iter=" + iter + " T=" + String.format("%.4f", T) + " H_therm="
+          + String.format("%.4e", getThermochemicalEnthalpy()) + " Hspec_therm="
+          + String.format("%.4e", thermochemicalEnthalpySpec) + " err=" + String.format("%.3e", error) + " bracket=["
+          + String.format("%.2f", tLow) + "," + String.format("%.2f", tHigh) + "]");
 
       // Check convergence
       if (Math.abs(error) < TOL) {
@@ -531,8 +530,7 @@ public class ReactiveMultiphasePHflash extends BaseOperation {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       for (int componentIndex = 0; componentIndex < system.getPhase(phaseIndex)
           .getNumberOfComponents(); componentIndex++) {
-        double numberOfMoles = system.getPhase(phaseIndex).getComponent(componentIndex)
-            .getNumberOfMolesInPhase();
+        double numberOfMoles = system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase();
         double formationEnthalpyPerMole = system.getPhase(phaseIndex).getComponent(componentIndex)
             .getIdealGasEnthalpyOfFormation();
         formationEnthalpy += numberOfMoles * formationEnthalpyPerMole;

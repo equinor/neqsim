@@ -10,10 +10,9 @@ import neqsim.thermo.system.SystemInterface;
  * Claus tail-gas hydrogenation, hydrolysis, and selective H2S-removal unit.
  *
  * <p>
- * The hydrogenation reactor is finite-rate. The absorber is represented by explicit H2S removal
- * and CO2 co-absorption efficiencies and exposes a separate acid-gas recycle stream. This keeps the
- * process topology rigorous while allowing a future rate-based electrolyte column to replace the
- * absorber calculation without changing the SRU flowsheet API.
+ * The hydrogenation reactor is finite-rate. The absorber is represented by explicit H2S removal and CO2 co-absorption
+ * efficiencies and exposes a separate acid-gas recycle stream. This keeps the process topology rigorous while allowing
+ * a future rate-based electrolyte column to replace the absorber calculation without changing the SRU flowsheet API.
  * </p>
  */
 public class TailGasTreatmentUnit extends TwoPortEquipment {
@@ -51,20 +50,17 @@ public class TailGasTreatmentUnit extends TwoPortEquipment {
   public void run(UUID id) {
     SystemInterface system = SulfurProcessUtil.prepareSystem(inStream.getThermoSystem());
     system.setTemperature(reactorTemperatureK);
-    double reducibleSulfur = SulfurProcessUtil.moles(system, "SO2")
-        + 8.0 * SulfurProcessUtil.moles(system, "S8");
+    double reducibleSulfur = SulfurProcessUtil.moles(system, "SO2") + 8.0 * SulfurProcessUtil.moles(system, "S8");
     double requiredHydrogen = 3.0 * SulfurProcessUtil.moles(system, "SO2")
         + 8.0 * SulfurProcessUtil.moles(system, "S8");
     double targetHydrogen = hydrogenStoichiometricFactor * requiredHydrogen;
-    hydrogenAddedMoles = Math.max(0.0,
-        targetHydrogen - SulfurProcessUtil.moles(system, "hydrogen"));
+    hydrogenAddedMoles = Math.max(0.0, targetHydrogen - SulfurProcessUtil.moles(system, "hydrogen"));
     SulfurProcessUtil.addMoles(system, "hydrogen", hydrogenAddedMoles);
 
     double hydrogenationRate = hydrogenationPreExponentialFactor
-        * Math.exp(-hydrogenationActivationEnergyJPerMol
-            / (8.314462618 * reactorTemperatureK));
-    hydrogenationConversion = SulfurProcessUtil.clamp(
-        1.0 - Math.exp(-hydrogenationRate * residenceTimeSeconds), 0.0, 1.0);
+        * Math.exp(-hydrogenationActivationEnergyJPerMol / (8.314462618 * reactorTemperatureK));
+    hydrogenationConversion = SulfurProcessUtil.clamp(1.0 - Math.exp(-hydrogenationRate * residenceTimeSeconds), 0.0,
+        1.0);
 
     double so2Extent = Math.min(SulfurProcessUtil.moles(system, "SO2"),
         SulfurProcessUtil.moles(system, "hydrogen") / 3.0) * hydrogenationConversion;
@@ -80,27 +76,24 @@ public class TailGasTreatmentUnit extends TwoPortEquipment {
     SulfurProcessUtil.addMoles(system, "H2S", 8.0 * sulfurExtent);
 
     double hydrolysisRate = hydrolysisPreExponentialFactor
-        * Math.exp(-hydrolysisActivationEnergyJPerMol
-            / (8.314462618 * reactorTemperatureK));
-    hydrolysisConversion = SulfurProcessUtil.clamp(
-        1.0 - Math.exp(-hydrolysisRate * residenceTimeSeconds), 0.0, 1.0);
+        * Math.exp(-hydrolysisActivationEnergyJPerMol / (8.314462618 * reactorTemperatureK));
+    hydrolysisConversion = SulfurProcessUtil.clamp(1.0 - Math.exp(-hydrolysisRate * residenceTimeSeconds), 0.0, 1.0);
 
-    double cosExtent = Math.min(SulfurProcessUtil.moles(system, "COS"),
-        SulfurProcessUtil.moles(system, "water")) * hydrolysisConversion;
+    double cosExtent = Math.min(SulfurProcessUtil.moles(system, "COS"), SulfurProcessUtil.moles(system, "water"))
+        * hydrolysisConversion;
     SulfurProcessUtil.addMoles(system, "COS", -cosExtent);
     SulfurProcessUtil.addMoles(system, "water", -cosExtent);
     SulfurProcessUtil.addMoles(system, "CO2", cosExtent);
     SulfurProcessUtil.addMoles(system, "H2S", cosExtent);
 
-    double cs2Extent = Math.min(SulfurProcessUtil.moles(system, "CS2"),
-        SulfurProcessUtil.moles(system, "water") / 2.0) * hydrolysisConversion;
+    double cs2Extent = Math.min(SulfurProcessUtil.moles(system, "CS2"), SulfurProcessUtil.moles(system, "water") / 2.0)
+        * hydrolysisConversion;
     SulfurProcessUtil.addMoles(system, "CS2", -cs2Extent);
     SulfurProcessUtil.addMoles(system, "water", -2.0 * cs2Extent);
     SulfurProcessUtil.addMoles(system, "CO2", cs2Extent);
     SulfurProcessUtil.addMoles(system, "H2S", 2.0 * cs2Extent);
 
-    absorbedH2SMoles = SulfurProcessUtil.moles(system, "H2S")
-        * SulfurProcessUtil.clamp(h2sRemovalEfficiency, 0.0, 1.0);
+    absorbedH2SMoles = SulfurProcessUtil.moles(system, "H2S") * SulfurProcessUtil.clamp(h2sRemovalEfficiency, 0.0, 1.0);
     double absorbedCo2 = SulfurProcessUtil.moles(system, "CO2")
         * SulfurProcessUtil.clamp(co2CoAbsorptionFraction, 0.0, 1.0);
     SulfurProcessUtil.addMoles(system, "H2S", -absorbedH2SMoles);

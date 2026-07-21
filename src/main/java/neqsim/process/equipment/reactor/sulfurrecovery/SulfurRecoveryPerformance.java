@@ -22,12 +22,10 @@ public final class SulfurRecoveryPerformance implements Serializable {
   private final boolean recycleConverged;
 
   /** Package-private construction by the integrated SRU model. */
-  SulfurRecoveryPerformance(double feedSulfurKgPerHour, double recoveredSulfurKgPerHour,
-      double sulfurRecoveryPercent, double overallSulfurRecoveryPercent,
-      double sulfurBalanceRelativeError, double tailGasH2SToSO2Ratio,
-      double oxygenDemandMoles, double furnaceTemperatureK, double stackSO2KgPerHour,
-      int airControlIterations, int recycleIterations, boolean airControlConverged,
-      boolean recycleConverged) {
+  SulfurRecoveryPerformance(double feedSulfurKgPerHour, double recoveredSulfurKgPerHour, double sulfurRecoveryPercent,
+      double overallSulfurRecoveryPercent, double sulfurBalanceRelativeError, double tailGasH2SToSO2Ratio,
+      double oxygenDemandMoles, double furnaceTemperatureK, double stackSO2KgPerHour, int airControlIterations,
+      int recycleIterations, boolean airControlConverged, boolean recycleConverged) {
     this.feedSulfurKgPerHour = feedSulfurKgPerHour;
     this.recoveredSulfurKgPerHour = recoveredSulfurKgPerHour;
     this.sulfurRecoveryPercent = sulfurRecoveryPercent;

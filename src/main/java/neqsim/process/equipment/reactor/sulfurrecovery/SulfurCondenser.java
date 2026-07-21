@@ -46,44 +46,37 @@ public class SulfurCondenser extends TwoPortEquipment {
     double nonSulfurMoles = Math.max(1.0e-30, system.getTotalNumberOfMoles() - inletS8);
     double pressureBar = Math.max(0.1, system.getPressure() - pressureDropBar);
 
-    inletSulfurDewPointK = SulfurProcessUtil.calculateSulfurDewPointK(
-        pressureBar, nonSulfurMoles, inletS8);
+    inletSulfurDewPointK = SulfurProcessUtil.calculateSulfurDewPointK(pressureBar, nonSulfurMoles, inletS8);
 
     double saturationPressureBar = SulfurThermodynamics.calculateVapourPressureBar(outletTemperatureK);
     double sulfurVapourMoleFraction = Math.min(0.999999, saturationPressureBar / pressureBar);
-    double meanAtoms = SulfurThermodynamics.calculateMeanSulfurAtomsPerMolecule(
-        outletTemperatureK, Math.max(saturationPressureBar, 1.0e-12));
-    double saturatedSulfurMolecules =
-        sulfurVapourMoleFraction * nonSulfurMoles / (1.0 - sulfurVapourMoleFraction);
+    double meanAtoms = SulfurThermodynamics.calculateMeanSulfurAtomsPerMolecule(outletTemperatureK,
+        Math.max(saturationPressureBar, 1.0e-12));
+    double saturatedSulfurMolecules = sulfurVapourMoleFraction * nonSulfurMoles / (1.0 - sulfurVapourMoleFraction);
     double saturatedS8Equivalent = saturatedSulfurMolecules * meanAtoms / 8.0;
 
     double thermodynamicCondensate = Math.max(0.0, inletS8 - saturatedS8Equivalent);
-    condensedS8Moles = thermodynamicCondensate
-        * SulfurProcessUtil.clamp(sulfurRemovalEfficiency, 0.0, 1.0);
-    double entrainedMoles = condensedS8Moles
-        * SulfurProcessUtil.clamp(liquidSulfurEntrainmentFraction, 0.0, 1.0);
+    condensedS8Moles = thermodynamicCondensate * SulfurProcessUtil.clamp(sulfurRemovalEfficiency, 0.0, 1.0);
+    double entrainedMoles = condensedS8Moles * SulfurProcessUtil.clamp(liquidSulfurEntrainmentFraction, 0.0, 1.0);
     condensedS8Moles -= entrainedMoles;
     SulfurProcessUtil.addMoles(system, "S8", -condensedS8Moles);
 
     double heatCapacityFlow = estimateHeatCapacityFlow(system);
-    heatDutyW = heatCapacityFlow * (outletTemperatureK - inletTemperature)
-        - condensedS8Moles * latentHeatJPerMolS8;
+    heatDutyW = heatCapacityFlow * (outletTemperatureK - inletTemperature) - condensedS8Moles * latentHeatJPerMolS8;
     system.setTemperature(outletTemperatureK);
     system.setPressure(pressureBar);
     SulfurProcessUtil.flash(system, getName());
     SulfurProcessUtil.updateOutlet(outStream, system, id);
-    liquidSulfurStream = SulfurProcessUtil.createSingleComponentStream(
-        getName() + " liquid sulfur", system, "S8", condensedS8Moles,
-        outletTemperatureK, pressureBar, id);
+    liquidSulfurStream = SulfurProcessUtil.createSingleComponentStream(getName() + " liquid sulfur", system, "S8",
+        condensedS8Moles, outletTemperatureK, pressureBar, id);
 
     double outletS8 = SulfurProcessUtil.moles(system, "S8");
-    double outletSulfurPressure = SulfurProcessUtil.calculateElementalSulfurVapourPressureBar(
-        outletTemperatureK, pressureBar, nonSulfurMoles, outletS8);
-    double outletDewPoint = SulfurProcessUtil.calculateSulfurDewPointK(
+    double outletSulfurPressure = SulfurProcessUtil.calculateElementalSulfurVapourPressureBar(outletTemperatureK,
         pressureBar, nonSulfurMoles, outletS8);
+    double outletDewPoint = SulfurProcessUtil.calculateSulfurDewPointK(pressureBar, nonSulfurMoles, outletS8);
     outletDewPointMarginK = outletTemperatureK - outletDewPoint;
-    outletSulfurAllotropeFractions = SulfurThermodynamics.calculateAllotropeMoleFractions(
-        outletTemperatureK, Math.max(outletSulfurPressure, 1.0e-12));
+    outletSulfurAllotropeFractions = SulfurThermodynamics.calculateAllotropeMoleFractions(outletTemperatureK,
+        Math.max(outletSulfurPressure, 1.0e-12));
     setCalculationIdentifier(id);
   }
 

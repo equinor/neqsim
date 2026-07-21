@@ -41,13 +41,11 @@ public class SulfurComponentDataTest extends neqsim.NeqSimTest {
   /** Gibbs-reactor reference rows must remain aligned with the audited component data. */
   @Test
   void testGibbsReactorSulfurRows() throws Exception {
-    InputStream input = getClass().getResourceAsStream(
-        "/data/GibbsReactDatabase/GibbsReactDatabase.csv");
+    InputStream input = getClass().getResourceAsStream("/data/GibbsReactDatabase/GibbsReactDatabase.csv");
     assertNotNull(input);
     String s8Row = null;
     String cosRow = null;
-    try (BufferedReader reader = new BufferedReader(
-        new InputStreamReader(input, StandardCharsets.UTF_8))) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(input, StandardCharsets.UTF_8))) {
       String line;
       while ((line = reader.readLine()) != null) {
         if (line.startsWith("S8;")) {

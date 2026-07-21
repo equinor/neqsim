@@ -35,27 +35,20 @@ public class ThermalIncinerator extends TwoPortEquipment {
   @Override
   public void run(UUID id) {
     SystemInterface system = SulfurProcessUtil.prepareSystem(inStream.getThermoSystem());
-    double inletReducedSulfur = SulfurProcessUtil.sulfurAtomMoles(system)
-        - SulfurProcessUtil.moles(system, "SO2");
-    double oxygenDemand = 1.5 * SulfurProcessUtil.moles(system, "H2S")
-        + 1.5 * SulfurProcessUtil.moles(system, "COS")
-        + 3.0 * SulfurProcessUtil.moles(system, "CS2")
-        + 8.0 * SulfurProcessUtil.moles(system, "S8")
-        + 0.5 * SulfurProcessUtil.moles(system, "hydrogen")
-        + 0.5 * SulfurProcessUtil.moles(system, "CO")
+    double inletReducedSulfur = SulfurProcessUtil.sulfurAtomMoles(system) - SulfurProcessUtil.moles(system, "SO2");
+    double oxygenDemand = 1.5 * SulfurProcessUtil.moles(system, "H2S") + 1.5 * SulfurProcessUtil.moles(system, "COS")
+        + 3.0 * SulfurProcessUtil.moles(system, "CS2") + 8.0 * SulfurProcessUtil.moles(system, "S8")
+        + 0.5 * SulfurProcessUtil.moles(system, "hydrogen") + 0.5 * SulfurProcessUtil.moles(system, "CO")
         + 2.0 * SulfurProcessUtil.moles(system, "methane");
     double targetOxygen = oxygenDemand * (1.0 + Math.max(excessOxygenFraction, 0.0));
-    double oxygenAdded = Math.max(0.0,
-        targetOxygen - SulfurProcessUtil.moles(system, "oxygen"));
+    double oxygenAdded = Math.max(0.0, targetOxygen - SulfurProcessUtil.moles(system, "oxygen"));
     SulfurProcessUtil.addMoles(system, "oxygen", oxygenAdded);
     double oxygenFraction = SulfurProcessUtil.clamp(oxidantOxygenMoleFraction, 0.01, 0.99);
-    SulfurProcessUtil.addMoles(system, "nitrogen",
-        oxygenAdded * (1.0 - oxygenFraction) / oxygenFraction);
+    SulfurProcessUtil.addMoles(system, "nitrogen", oxygenAdded * (1.0 - oxygenFraction) / oxygenFraction);
 
-    double rateConstant = preExponentialFactor
-        * Math.exp(-activationEnergyJPerMol / (8.314462618 * temperatureK));
-    double conversion = SulfurProcessUtil.clamp(
-        mixingFactor * (1.0 - Math.exp(-rateConstant * residenceTimeSeconds)), 0.0, 1.0);
+    double rateConstant = preExponentialFactor * Math.exp(-activationEnergyJPerMol / (8.314462618 * temperatureK));
+    double conversion = SulfurProcessUtil.clamp(mixingFactor * (1.0 - Math.exp(-rateConstant * residenceTimeSeconds)),
+        0.0, 1.0);
 
     double h2sExtent = SulfurProcessUtil.moles(system, "H2S") * conversion;
     oxidize(system, "H2S", h2sExtent, 1.5, 1.0, 0.0, 1.0);
@@ -84,20 +77,16 @@ public class ThermalIncinerator extends TwoPortEquipment {
     system.setPressure(Math.max(0.1, system.getPressure() - pressureDropBar));
     SulfurProcessUtil.flash(system, getName());
     SulfurProcessUtil.updateOutlet(outStream, system, id);
-    double outletReducedSulfur = SulfurProcessUtil.sulfurAtomMoles(system)
-        - SulfurProcessUtil.moles(system, "SO2");
-    sulfurDestructionEfficiency = inletReducedSulfur <= 1.0e-20 ? 1.0
-        : 1.0 - outletReducedSulfur / inletReducedSulfur;
+    double outletReducedSulfur = SulfurProcessUtil.sulfurAtomMoles(system) - SulfurProcessUtil.moles(system, "SO2");
+    sulfurDestructionEfficiency = inletReducedSulfur <= 1.0e-20 ? 1.0 : 1.0 - outletReducedSulfur / inletReducedSulfur;
     so2EmissionKgPerHour = SulfurProcessUtil.moles(system, "SO2") * 0.0640638 * 3600.0;
     setCalculationIdentifier(id);
   }
 
   /** Apply a balanced sulfur-species oxidation extent. */
-  private void oxidize(SystemInterface system, String reactant, double extent,
-      double oxygenCoefficient, double so2Coefficient, double co2Coefficient,
-      double waterCoefficient) {
-    double oxygenLimitedExtent = Math.min(extent,
-        SulfurProcessUtil.moles(system, "oxygen") / oxygenCoefficient);
+  private void oxidize(SystemInterface system, String reactant, double extent, double oxygenCoefficient,
+      double so2Coefficient, double co2Coefficient, double waterCoefficient) {
+    double oxygenLimitedExtent = Math.min(extent, SulfurProcessUtil.moles(system, "oxygen") / oxygenCoefficient);
     SulfurProcessUtil.addMoles(system, reactant, -oxygenLimitedExtent);
     SulfurProcessUtil.addMoles(system, "oxygen", -oxygenCoefficient * oxygenLimitedExtent);
     SulfurProcessUtil.addMoles(system, "SO2", so2Coefficient * oxygenLimitedExtent);
@@ -137,7 +126,6 @@ public class ThermalIncinerator extends TwoPortEquipment {
 
   /** Return stack SO2 mass rate. */
   public double getSo2Emission(String unit) {
-    return "kg/s".equalsIgnoreCase(unit) ? so2EmissionKgPerHour / 3600.0
-        : so2EmissionKgPerHour;
+    return "kg/s".equalsIgnoreCase(unit) ? so2EmissionKgPerHour / 3600.0 : so2EmissionKgPerHour;
   }
 }

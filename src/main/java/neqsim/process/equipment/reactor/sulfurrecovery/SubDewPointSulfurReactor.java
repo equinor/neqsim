@@ -7,10 +7,12 @@ import neqsim.thermo.system.SystemInterface;
 /**
  * Claus converter with cyclic below-dew-point sulfur adsorption and regeneration state.
  *
- * <p>The reaction calculation is inherited from {@link ClausCatalyticConverter}. In adsorption
- * mode, elemental sulfur is removed from the gas up to the available bed capacity. Regeneration
- * mode releases a user-configured fraction of stored sulfur as a separate product stream. The
- * retained inventory makes this unit suitable for sequential dynamic/cycle studies.</p>
+ * <p>
+ * The reaction calculation is inherited from {@link ClausCatalyticConverter}. In adsorption mode, elemental sulfur is
+ * removed from the gas up to the available bed capacity. Regeneration mode releases a user-configured fraction of
+ * stored sulfur as a separate product stream. The retained inventory makes this unit suitable for sequential
+ * dynamic/cycle studies.
+ * </p>
  */
 public class SubDewPointSulfurReactor extends ClausCatalyticConverter {
   /** Serialization version UID. */
@@ -50,20 +52,17 @@ public class SubDewPointSulfurReactor extends ClausCatalyticConverter {
     if (bedMode == BedMode.ADSORPTION) {
       double capacityMoles = sulfurCapacityKg / SulfurProcessUtil.S8_MOLAR_MASS_KG_PER_MOL;
       double availableCapacity = Math.max(0.0, capacityMoles - storedSulfurS8Moles);
-      transferredMoles = Math.min(availableCapacity,
-          SulfurProcessUtil.moles(system, "S8") * adsorptionEfficiency);
+      transferredMoles = Math.min(availableCapacity, SulfurProcessUtil.moles(system, "S8") * adsorptionEfficiency);
       SulfurProcessUtil.addMoles(system, "S8", -transferredMoles);
       storedSulfurS8Moles += transferredMoles;
     } else {
-      transferredMoles = storedSulfurS8Moles
-          * SulfurProcessUtil.clamp(regenerationFractionPerRun, 0.0, 1.0);
+      transferredMoles = storedSulfurS8Moles * SulfurProcessUtil.clamp(regenerationFractionPerRun, 0.0, 1.0);
       storedSulfurS8Moles -= transferredMoles;
     }
     SulfurProcessUtil.flash(system, getName());
     SulfurProcessUtil.updateOutlet(getOutletStream(), system, id);
-    sulfurProductStream = SulfurProcessUtil.createSingleComponentStream(
-        getName() + " sulfur product", system, "S8", transferredMoles,
-        system.getTemperature(), system.getPressure(), id);
+    sulfurProductStream = SulfurProcessUtil.createSingleComponentStream(getName() + " sulfur product", system, "S8",
+        transferredMoles, system.getTemperature(), system.getPressure(), id);
     setCalculationIdentifier(id);
   }
 

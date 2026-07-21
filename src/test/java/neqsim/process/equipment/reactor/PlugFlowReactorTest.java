@@ -140,8 +140,7 @@ public class PlugFlowReactorTest extends neqsim.NeqSimTest {
     pfr.setCatalystEffectivenessEnabled(true);
     pfr.run();
 
-    assertTrue(pfr.getLastCatalystEffectivenessFactor() > 0.0
-        && pfr.getLastCatalystEffectivenessFactor() <= 1.0,
+    assertTrue(pfr.getLastCatalystEffectivenessFactor() > 0.0 && pfr.getLastCatalystEffectivenessFactor() <= 1.0,
         "Packed-bed effectiveness must be in the physical interval (0, 1]");
 
     // Pressure drop should be positive in packed bed
@@ -258,12 +257,10 @@ public class PlugFlowReactorTest extends neqsim.NeqSimTest {
   public void testConfigurationSettersGetters() {
     PlugFlowReactor pfr = new PlugFlowReactor("PFR-config");
 
-    assertEquals(PlugFlowReactor.ThermodynamicCoupling.FROZEN_PROPERTIES,
-        pfr.getThermodynamicCoupling());
+    assertEquals(PlugFlowReactor.ThermodynamicCoupling.FROZEN_PROPERTIES, pfr.getThermodynamicCoupling());
 
     pfr.setThermodynamicCoupling(PlugFlowReactor.ThermodynamicCoupling.FULLY_COUPLED);
-    assertEquals(PlugFlowReactor.ThermodynamicCoupling.FULLY_COUPLED,
-        pfr.getThermodynamicCoupling());
+    assertEquals(PlugFlowReactor.ThermodynamicCoupling.FULLY_COUPLED, pfr.getThermodynamicCoupling());
 
     pfr.setCatalystMolecularDiffusivity(2.0e-5);
     assertEquals(2.0e-5, pfr.getCatalystMolecularDiffusivity(), 1.0e-12);

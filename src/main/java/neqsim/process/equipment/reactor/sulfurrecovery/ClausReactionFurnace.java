@@ -11,10 +11,9 @@ import neqsim.thermo.system.SystemInterface;
  * Claus reaction furnace with selectable equilibrium or reduced-kinetic calculation.
  *
  * <p>
- * The reduced mechanism resolves ammonia and methane destruction, H2S oxidation, the thermal
- * Claus reaction, H2S dissociation, and balanced COS/CS2 side reactions. Model coefficients are
- * public configuration inputs so a plant-specific calibration can be fitted without changing the
- * material-balance implementation.
+ * The reduced mechanism resolves ammonia and methane destruction, H2S oxidation, the thermal Claus reaction, H2S
+ * dissociation, and balanced COS/CS2 side reactions. Model coefficients are public configuration inputs so a
+ * plant-specific calibration can be fitted without changing the material-balance implementation.
  * </p>
  */
 public class ClausReactionFurnace extends TwoPortEquipment {
@@ -118,8 +117,7 @@ public class ClausReactionFurnace extends TwoPortEquipment {
 
     double kineticApproach = thermalClausApproach * kineticCalibrationFactor
         * (1.0 - Math.exp(-residenceTimeSeconds / 0.5));
-    double clausExtent = Math.min(SulfurProcessUtil.moles(system, "H2S") / 2.0,
-        SulfurProcessUtil.moles(system, "SO2"));
+    double clausExtent = Math.min(SulfurProcessUtil.moles(system, "H2S") / 2.0, SulfurProcessUtil.moles(system, "SO2"));
     clausExtent *= SulfurProcessUtil.clamp(kineticApproach, 0.0, 1.0);
     SulfurProcessUtil.addMoles(system, "H2S", -2.0 * clausExtent);
     SulfurProcessUtil.addMoles(system, "SO2", -clausExtent);
@@ -133,8 +131,7 @@ public class ClausReactionFurnace extends TwoPortEquipment {
     SulfurProcessUtil.addMoles(system, "hydrogen", dissociationExtent);
     SulfurProcessUtil.addMoles(system, "S8", dissociationExtent / 8.0);
 
-    double cosExtent = Math.min(SulfurProcessUtil.moles(system, "CO"),
-        SulfurProcessUtil.moles(system, "H2S"));
+    double cosExtent = Math.min(SulfurProcessUtil.moles(system, "CO"), SulfurProcessUtil.moles(system, "H2S"));
     cosExtent *= SulfurProcessUtil.clamp(cosFormationFraction * kineticCalibrationFactor, 0.0, 0.2);
     SulfurProcessUtil.addMoles(system, "CO", -cosExtent);
     SulfurProcessUtil.addMoles(system, "H2S", -cosExtent);
@@ -151,9 +148,8 @@ public class ClausReactionFurnace extends TwoPortEquipment {
 
     if (energyMode == EnergyMode.ADIABATIC) {
       double heatCapacityFlow = estimateHeatCapacityFlow(system);
-      furnaceTemperatureK = inletTemperatureK
-          + heatReleasedJ * (1.0 - SulfurProcessUtil.clamp(heatLossFraction, 0.0, 0.95))
-              / Math.max(heatCapacityFlow, 1.0);
+      furnaceTemperatureK = inletTemperatureK + heatReleasedJ
+          * (1.0 - SulfurProcessUtil.clamp(heatLossFraction, 0.0, 0.95)) / Math.max(heatCapacityFlow, 1.0);
       furnaceTemperatureK = SulfurProcessUtil.clamp(furnaceTemperatureK, 700.0, 2500.0);
     } else {
       furnaceTemperatureK = specifiedOutletTemperatureK;
@@ -171,13 +167,13 @@ public class ClausReactionFurnace extends TwoPortEquipment {
   }
 
   /** Run the existing Gibbs minimizer as the furnace chemistry kernel. */
-  private void runEquilibrium(SystemInterface system, double inletSulfurAtoms,
-      double inletMethane, double inletAmmonia, UUID id) {
+  private void runEquilibrium(SystemInterface system, double inletSulfurAtoms, double inletMethane, double inletAmmonia,
+      UUID id) {
     Stream feed = new Stream(getName() + " equilibrium feed", system);
     feed.run(id);
     GibbsReactor reactor = new GibbsReactor(getName() + " Gibbs kernel", feed);
-    reactor.setEnergyMode(energyMode == EnergyMode.ADIABATIC
-        ? GibbsReactor.EnergyMode.ADIABATIC : GibbsReactor.EnergyMode.ISOTHERMAL);
+    reactor.setEnergyMode(
+        energyMode == EnergyMode.ADIABATIC ? GibbsReactor.EnergyMode.ADIABATIC : GibbsReactor.EnergyMode.ISOTHERMAL);
     reactor.setUseAllDatabaseSpecies(false);
     reactor.setMaxIterations(5000);
     reactor.setConvergenceTolerance(1.0e-9);
@@ -190,13 +186,10 @@ public class ClausReactionFurnace extends TwoPortEquipment {
     furnaceTemperatureK = result.getTemperature();
     SulfurProcessUtil.updateOutlet(outStream, result, id);
     h2sOxidizedMoles = Double.NaN;
-    methaneConversion = inletMethane <= 1.0e-20 ? 1.0
-        : 1.0 - SulfurProcessUtil.moles(result, "methane") / inletMethane;
-    ammoniaConversion = inletAmmonia <= 1.0e-20 ? 1.0
-        : 1.0 - SulfurProcessUtil.moles(result, "ammonia") / inletAmmonia;
+    methaneConversion = inletMethane <= 1.0e-20 ? 1.0 : 1.0 - SulfurProcessUtil.moles(result, "methane") / inletMethane;
+    ammoniaConversion = inletAmmonia <= 1.0e-20 ? 1.0 : 1.0 - SulfurProcessUtil.moles(result, "ammonia") / inletAmmonia;
     sulfurBalanceError = inletSulfurAtoms <= 1.0e-20 ? 0.0
-        : (SulfurProcessUtil.sulfurAtomMoles(result) - inletSulfurAtoms)
-            / inletSulfurAtoms;
+        : (SulfurProcessUtil.sulfurAtomMoles(result) - inletSulfurAtoms) / inletSulfurAtoms;
     setCalculationIdentifier(id);
   }
 

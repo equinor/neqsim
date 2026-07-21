@@ -6,10 +6,12 @@ import neqsim.thermo.system.SystemInterface;
 /**
  * Feed-forward and tail-gas feedback calculation for Claus combustion-air demand.
  *
- * <p>The feed-forward term burns one third of the H2S and completely oxidizes configured ammonia
- * and hydrocarbon contaminants. The feedback term trims that demand from the measured tail-gas
- * H2S/SO2 ratio. A flowsheet may use {@link #calculateOxygenDemand(SystemInterface)} alone or use
- * {@link #calculateTrimmedOxygenDemand(SystemInterface, double)} in an outer convergence loop.</p>
+ * <p>
+ * The feed-forward term burns one third of the H2S and completely oxidizes configured ammonia and hydrocarbon
+ * contaminants. The feedback term trims that demand from the measured tail-gas H2S/SO2 ratio. A flowsheet may use
+ * {@link #calculateOxygenDemand(SystemInterface)} alone or use
+ * {@link #calculateTrimmedOxygenDemand(SystemInterface, double)} in an outer convergence loop.
+ * </p>
  */
 public class AirDemandController implements Serializable {
   /** Serialization version UID. */
@@ -23,10 +25,8 @@ public class AirDemandController implements Serializable {
   /** Calculate the stoichiometric oxygen demand on the stream molar-flow basis. */
   public double calculateOxygenDemand(SystemInterface acidGas) {
     SystemInterface system = SulfurProcessUtil.prepareSystem(acidGas);
-    return 0.5 * SulfurProcessUtil.moles(system, "H2S")
-        + 0.75 * SulfurProcessUtil.moles(system, "ammonia")
-        + 2.0 * SulfurProcessUtil.moles(system, "methane")
-        + 0.5 * SulfurProcessUtil.moles(system, "hydrogen")
+    return 0.5 * SulfurProcessUtil.moles(system, "H2S") + 0.75 * SulfurProcessUtil.moles(system, "ammonia")
+        + 2.0 * SulfurProcessUtil.moles(system, "methane") + 0.5 * SulfurProcessUtil.moles(system, "hydrogen")
         + 0.5 * SulfurProcessUtil.moles(system, "CO");
   }
 
@@ -42,11 +42,10 @@ public class AirDemandController implements Serializable {
     if (!Double.isFinite(measuredRatio)) {
       normalizedError = 1.0;
     } else {
-      normalizedError = (measuredRatio - targetH2SToSO2Ratio)
-          / Math.max(targetH2SToSO2Ratio, 1.0e-12);
+      normalizedError = (measuredRatio - targetH2SToSO2Ratio) / Math.max(targetH2SToSO2Ratio, 1.0e-12);
     }
-    double trimFactor = SulfurProcessUtil.clamp(1.0 + feedbackGain * normalizedError,
-        minimumTrimFactor, maximumTrimFactor);
+    double trimFactor = SulfurProcessUtil.clamp(1.0 + feedbackGain * normalizedError, minimumTrimFactor,
+        maximumTrimFactor);
     return calculateOxygenDemand(acidGas) * trimFactor;
   }
 

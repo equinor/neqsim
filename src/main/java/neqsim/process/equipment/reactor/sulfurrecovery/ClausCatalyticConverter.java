@@ -9,10 +9,10 @@ import neqsim.thermo.system.SystemInterface;
  * Finite-rate Claus catalytic converter with COS and CS2 hydrolysis.
  *
  * <p>
- * Reaction progress is calculated from catalyst contact time, Arrhenius kinetics, equilibrium
- * approach, catalyst activity, and a first-order pellet-effectiveness factor. Alumina, titania, and
- * mixed beds use separate hydrolysis activity multipliers. The public calibration multiplier is
- * intentionally explicit and must be fitted against catalyst-vendor or plant data for rating use.
+ * Reaction progress is calculated from catalyst contact time, Arrhenius kinetics, equilibrium approach, catalyst
+ * activity, and a first-order pellet-effectiveness factor. Alumina, titania, and mixed beds use separate hydrolysis
+ * activity multipliers. The public calibration multiplier is intentionally explicit and must be fitted against
+ * catalyst-vendor or plant data for rating use.
  * </p>
  */
 public class ClausCatalyticConverter extends TwoPortEquipment {
@@ -67,13 +67,12 @@ public class ClausCatalyticConverter extends TwoPortEquipment {
 
     double clausRateConstant = clausPreExponentialFactor
         * Math.exp(-clausActivationEnergyJPerMol / (8.314462618 * inletTemperature));
-    double kineticConversion = 1.0 - Math.exp(-clausRateConstant * rateMultiplier
-        * contactTimeSeconds);
-    double equilibriumLimit = SulfurProcessUtil.clamp(
-        0.995 - 1.8e-4 * Math.max(0.0, inletTemperature - 473.15), 0.80, 0.995);
+    double kineticConversion = 1.0 - Math.exp(-clausRateConstant * rateMultiplier * contactTimeSeconds);
+    double equilibriumLimit = SulfurProcessUtil.clamp(0.995 - 1.8e-4 * Math.max(0.0, inletTemperature - 473.15), 0.80,
+        0.995);
     clausConversion = Math.min(kineticConversion, equilibriumLimit);
-    double clausExtent = Math.min(SulfurProcessUtil.moles(system, "H2S") / 2.0,
-        SulfurProcessUtil.moles(system, "SO2")) * clausConversion;
+    double clausExtent = Math.min(SulfurProcessUtil.moles(system, "H2S") / 2.0, SulfurProcessUtil.moles(system, "SO2"))
+        * clausConversion;
     SulfurProcessUtil.addMoles(system, "H2S", -2.0 * clausExtent);
     SulfurProcessUtil.addMoles(system, "SO2", -clausExtent);
     SulfurProcessUtil.addMoles(system, "S8", 3.0 * clausExtent / 8.0);
@@ -83,18 +82,16 @@ public class ClausCatalyticConverter extends TwoPortEquipment {
         : catalystType == CatalystType.MIXED ? 1.7 : 1.0;
     double hydrolysisRateConstant = hydrolysisPreExponentialFactor
         * Math.exp(-hydrolysisActivationEnergyJPerMol / (8.314462618 * inletTemperature));
-    double hydrolysisConversion = 1.0 - Math.exp(-hydrolysisRateConstant * rateMultiplier
-        * hydrolysisMultiplier * contactTimeSeconds);
+    double hydrolysisConversion = 1.0
+        - Math.exp(-hydrolysisRateConstant * rateMultiplier * hydrolysisMultiplier * contactTimeSeconds);
 
-    double cosExtent = Math.min(inletCos, SulfurProcessUtil.moles(system, "water"))
-        * hydrolysisConversion;
+    double cosExtent = Math.min(inletCos, SulfurProcessUtil.moles(system, "water")) * hydrolysisConversion;
     SulfurProcessUtil.addMoles(system, "COS", -cosExtent);
     SulfurProcessUtil.addMoles(system, "water", -cosExtent);
     SulfurProcessUtil.addMoles(system, "CO2", cosExtent);
     SulfurProcessUtil.addMoles(system, "H2S", cosExtent);
 
-    double cs2Extent = Math.min(inletCs2, SulfurProcessUtil.moles(system, "water") / 2.0)
-        * hydrolysisConversion;
+    double cs2Extent = Math.min(inletCs2, SulfurProcessUtil.moles(system, "water") / 2.0) * hydrolysisConversion;
     SulfurProcessUtil.addMoles(system, "CS2", -cs2Extent);
     SulfurProcessUtil.addMoles(system, "water", -2.0 * cs2Extent);
     SulfurProcessUtil.addMoles(system, "CO2", cs2Extent);
@@ -102,8 +99,7 @@ public class ClausCatalyticConverter extends TwoPortEquipment {
 
     cosConversion = inletCos <= 1.0e-20 ? 0.0 : cosExtent / inletCos;
     cs2Conversion = inletCs2 <= 1.0e-20 ? 0.0 : cs2Extent / inletCs2;
-    temperatureRiseK = adiabatic
-        ? 145000.0 * clausExtent / Math.max(estimateHeatCapacityFlow(system), 1.0) : 0.0;
+    temperatureRiseK = adiabatic ? 145000.0 * clausExtent / Math.max(estimateHeatCapacityFlow(system), 1.0) : 0.0;
     system.setTemperature(inletTemperature + temperatureRiseK);
     system.setPressure(Math.max(0.1, system.getPressure() - pressureDropBar));
     SulfurProcessUtil.flash(system, getName());

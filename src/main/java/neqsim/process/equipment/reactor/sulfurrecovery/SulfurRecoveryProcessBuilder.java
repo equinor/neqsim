@@ -6,8 +6,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 public final class SulfurRecoveryProcessBuilder {
   private final String name;
   private final StreamInterface acidGasFeed;
-  private SulfurRecoveryUnit.Configuration configuration =
-      SulfurRecoveryUnit.Configuration.STRAIGHT_THROUGH;
+  private SulfurRecoveryUnit.Configuration configuration = SulfurRecoveryUnit.Configuration.STRAIGHT_THROUGH;
   private int catalyticStages = 2;
   private boolean tailGasTreatment;
   private boolean incinerator = true;
@@ -25,14 +24,12 @@ public final class SulfurRecoveryProcessBuilder {
   }
 
   /** Select process configuration. */
-  public SulfurRecoveryProcessBuilder configuration(
-      SulfurRecoveryUnit.Configuration configuration) {
+  public SulfurRecoveryProcessBuilder configuration(SulfurRecoveryUnit.Configuration configuration) {
     if (configuration == null) {
       throw new IllegalArgumentException("configuration cannot be null");
     }
     this.configuration = configuration;
-    if (configuration == SulfurRecoveryUnit.Configuration.OXYGEN_ENRICHED
-        && oxygenMoleFraction <= 0.21) {
+    if (configuration == SulfurRecoveryUnit.Configuration.OXYGEN_ENRICHED && oxygenMoleFraction <= 0.21) {
       oxygenMoleFraction = 0.35;
     }
     return this;

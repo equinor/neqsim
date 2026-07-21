@@ -340,8 +340,8 @@ public class PlugFlowReactor extends TwoPortEquipment {
       double z = step * dz;
 
       // Re-flash properties periodically to update Cp, density, etc.
-      if (thermodynamicCoupling == ThermodynamicCoupling.FROZEN_PROPERTIES
-          && step % propertyUpdateFrequency == 0 && step > 0) {
+      if (thermodynamicCoupling == ThermodynamicCoupling.FROZEN_PROPERTIES && step % propertyUpdateFrequency == 0
+          && step > 0) {
         updateSystemState(system, molFlows, currentT, currentP);
         ops = new ThermodynamicOperations(system);
         try {
@@ -395,8 +395,7 @@ public class PlugFlowReactor extends TwoPortEquipment {
       }
 
       if (thermodynamicCoupling == ThermodynamicCoupling.FULLY_COUPLED) {
-        updateThermodynamicStateForResidual(system,
-            packState(molFlows, currentT, currentP), nComp);
+        updateThermodynamicStateForResidual(system, packState(molFlows, currentT, currentP), nComp);
       }
 
       // Calculate conversion
@@ -481,12 +480,10 @@ public class PlugFlowReactor extends TwoPortEquipment {
       if (catalystBed != null) {
         rate *= catalystBed.getActivityFactor();
         if (catalystEffectivenessEnabled) {
-          double effectiveDiffusivity =
-              catalystBed.getEffectiveDiffusivity(catalystMolecularDiffusivity);
-          double thieleModulus = catalystBed.calculateThieleModulus(
-              rxn.calculateRateConstant(temperature), effectiveDiffusivity);
-          lastCatalystEffectivenessFactor =
-              catalystBed.calculateEffectivenessFactor(thieleModulus);
+          double effectiveDiffusivity = catalystBed.getEffectiveDiffusivity(catalystMolecularDiffusivity);
+          double thieleModulus = catalystBed.calculateThieleModulus(rxn.calculateRateConstant(temperature),
+              effectiveDiffusivity);
+          lastCatalystEffectivenessFactor = catalystBed.calculateEffectivenessFactor(thieleModulus);
           rate *= lastCatalystEffectivenessFactor;
         }
       }
@@ -652,10 +649,9 @@ public class PlugFlowReactor extends TwoPortEquipment {
       if (catalystBed != null) {
         rate *= catalystBed.getActivityFactor();
         if (catalystEffectivenessEnabled) {
-          double effectiveDiffusivity =
-              catalystBed.getEffectiveDiffusivity(catalystMolecularDiffusivity);
-          double thieleModulus = catalystBed.calculateThieleModulus(
-              rxn.calculateRateConstant(system.getTemperature()), effectiveDiffusivity);
+          double effectiveDiffusivity = catalystBed.getEffectiveDiffusivity(catalystMolecularDiffusivity);
+          double thieleModulus = catalystBed.calculateThieleModulus(rxn.calculateRateConstant(system.getTemperature()),
+              effectiveDiffusivity);
           rate *= catalystBed.calculateEffectivenessFactor(thieleModulus);
         }
       }
@@ -809,10 +805,8 @@ public class PlugFlowReactor extends TwoPortEquipment {
       system.initProperties();
       thermodynamicStateEvaluationCount++;
     } catch (Exception ex) {
-      throw new IllegalStateException(
-          "Fully coupled thermodynamic evaluation failed in PlugFlowReactor '"
-              + getName() + "' at T=" + temperature + " K and P=" + pressure + " bar",
-          ex);
+      throw new IllegalStateException("Fully coupled thermodynamic evaluation failed in PlugFlowReactor '" + getName()
+          + "' at T=" + temperature + " K and P=" + pressure + " bar", ex);
     }
   }
 
@@ -1108,9 +1102,10 @@ public class PlugFlowReactor extends TwoPortEquipment {
   /**
    * Enable or disable internal catalyst-pellet effectiveness calculations.
    *
-   * <p>This option is disabled by default to preserve the historical activity-only catalyst
-   * behavior. Enable it after setting a representative molecular diffusivity when diffusion
-   * limitations are part of the reactor model.</p>
+   * <p>
+   * This option is disabled by default to preserve the historical activity-only catalyst behavior. Enable it after
+   * setting a representative molecular diffusivity when diffusion limitations are part of the reactor model.
+   * </p>
    *
    * @param enabled whether the Thiele-modulus effectiveness factor is applied
    */

@@ -12,12 +12,13 @@ import neqsim.thermo.system.SystemInterface;
 /**
  * Integrated, converged Claus sulfur-recovery process model.
  *
- * <p>The flowsheet contains combustion-air control, a reaction furnace, a reactive waste-heat
- * boiler, a thermal sulfur condenser, configurable reheater/converter/condenser trains, optional
- * tail-gas hydrogenation and H2S recycle, and an optional thermal incinerator. Sulfur-product
- * streams and all major equipment objects remain accessible after a run for rating and reporting.
- * Plant-specific kinetic factors can therefore be calibrated without changing the flowsheet
- * material balances.</p>
+ * <p>
+ * The flowsheet contains combustion-air control, a reaction furnace, a reactive waste-heat boiler, a thermal sulfur
+ * condenser, configurable reheater/converter/condenser trains, optional tail-gas hydrogenation and H2S recycle, and an
+ * optional thermal incinerator. Sulfur-product streams and all major equipment objects remain accessible after a run
+ * for rating and reporting. Plant-specific kinetic factors can therefore be calibrated without changing the flowsheet
+ * material balances.
+ * </p>
  */
 public class SulfurRecoveryUnit extends TwoPortEquipment {
   /** Serialization version UID. */
@@ -46,11 +47,9 @@ public class SulfurRecoveryUnit extends TwoPortEquipment {
   private double recycleTolerance = 1.0e-6;
   private int maximumRecycleIterations = 20;
   private double recycleRelaxationFactor = 0.5;
-  private double[] converterInletTemperaturesK = {513.15, 493.15, 473.15};
-  private ClausCatalyticConverter.CatalystType[] catalystTypes = {
-      ClausCatalyticConverter.CatalystType.ALUMINA,
-      ClausCatalyticConverter.CatalystType.ALUMINA,
-      ClausCatalyticConverter.CatalystType.TITANIA};
+  private double[] converterInletTemperaturesK = { 513.15, 493.15, 473.15 };
+  private ClausCatalyticConverter.CatalystType[] catalystTypes = { ClausCatalyticConverter.CatalystType.ALUMINA,
+      ClausCatalyticConverter.CatalystType.ALUMINA, ClausCatalyticConverter.CatalystType.TITANIA };
 
   private final AirDemandController airDemandController = new AirDemandController();
   private ClausReactionFurnace reactionFurnace;
@@ -117,16 +116,14 @@ public class SulfurRecoveryUnit extends TwoPortEquipment {
         break;
       }
 
-      finalTailGasUnit = new TailGasTreatmentUnit(getName() + " tail gas treatment",
-          section.tailGas);
+      finalTailGasUnit = new TailGasTreatmentUnit(getName() + " tail gas treatment", section.tailGas);
       finalTailGasUnit.run(id);
       treatedTail = finalTailGasUnit.getOutletStream();
-      SystemInterface calculatedRecycle = SulfurProcessUtil.prepareSystem(
-          finalTailGasUnit.getAcidGasRecycleStream().getThermoSystem());
+      SystemInterface calculatedRecycle = SulfurProcessUtil
+          .prepareSystem(finalTailGasUnit.getAcidGasRecycleStream().getThermoSystem());
       double previousH2S = SulfurProcessUtil.moles(recycle, "H2S");
       double calculatedH2S = SulfurProcessUtil.moles(calculatedRecycle, "H2S");
-      double relativeChange = Math.abs(calculatedH2S - previousH2S)
-          / Math.max(calculatedH2S, 1.0e-20);
+      double relativeChange = Math.abs(calculatedH2S - previousH2S) / Math.max(calculatedH2S, 1.0e-20);
       if (relativeChange <= recycleTolerance && iteration > 1) {
         recycle = calculatedRecycle;
         recycleConverged = true;
@@ -146,7 +143,8 @@ public class SulfurRecoveryUnit extends TwoPortEquipment {
     clausTailGasStream = section.tailGas;
     tailGasTreatmentUnit = finalTailGasUnit;
     acidGasRecycleStream = tailGasTreatmentEnabled && finalTailGasUnit != null
-        ? finalTailGasUnit.getAcidGasRecycleStream() : null;
+        ? finalTailGasUnit.getAcidGasRecycleStream()
+        : null;
     combinedSulfurProductStream = combineSulfurProducts(section.sulfurProducts, freshFeed, id);
 
     StreamInterface finalOutlet = treatedTail;
@@ -157,8 +155,7 @@ public class SulfurRecoveryUnit extends TwoPortEquipment {
       thermalIncinerator.run(id);
       finalOutlet = thermalIncinerator.getOutletStream();
     }
-    SulfurProcessUtil.updateOutlet(outStream,
-        SulfurProcessUtil.prepareSystem(finalOutlet.getThermoSystem()), id);
+    SulfurProcessUtil.updateOutlet(outStream, SulfurProcessUtil.prepareSystem(finalOutlet.getThermoSystem()), id);
     calculatePerformance(freshFeed, finalOutlet, section, recycleUsedInFinalPass);
     setCalculationIdentifier(id);
   }
@@ -177,13 +174,11 @@ public class SulfurRecoveryUnit extends TwoPortEquipment {
       double ratio = SulfurProcessUtil.h2sToSo2Ratio(result.tailGas.getThermoSystem());
       lastOxygenDemandMoles = oxygenDemand;
       if (Double.isFinite(ratio)
-          && Math.abs(ratio - airDemandController.getTargetH2SToSO2Ratio())
-              <= airControlTolerance) {
+          && Math.abs(ratio - airDemandController.getTargetH2SToSO2Ratio()) <= airControlTolerance) {
         airControlConverged = true;
         break;
       }
-      if (!Double.isFinite(ratio)
-          || ratio > airDemandController.getTargetH2SToSO2Ratio()) {
+      if (!Double.isFinite(ratio) || ratio > airDemandController.getTargetH2SToSO2Ratio()) {
         lowerDemand = oxygenDemand;
       } else {
         upperDemand = oxygenDemand;
@@ -196,18 +191,17 @@ public class SulfurRecoveryUnit extends TwoPortEquipment {
   private ClausSectionResult runClausSection(SystemInterface feed, double oxygenDemand, UUID id) {
     ClausSectionResult result = new ClausSectionResult();
     double furnaceFraction = configuration == Configuration.SPLIT_FLOW
-        ? SulfurProcessUtil.clamp(splitFlowFurnaceFraction, 0.05, 1.0) : 1.0;
+        ? SulfurProcessUtil.clamp(splitFlowFurnaceFraction, 0.05, 1.0)
+        : 1.0;
     SystemInterface furnaceFeed = SulfurProcessUtil.scaledClone(feed, furnaceFraction);
     SulfurProcessUtil.addMoles(furnaceFeed, "oxygen", oxygenDemand);
     double oxygenFraction = SulfurProcessUtil.clamp(oxidantOxygenMoleFraction, 0.01, 0.99);
-    SulfurProcessUtil.addMoles(furnaceFeed, "nitrogen",
-        oxygenDemand * (1.0 - oxygenFraction) / oxygenFraction);
+    SulfurProcessUtil.addMoles(furnaceFeed, "nitrogen", oxygenDemand * (1.0 - oxygenFraction) / oxygenFraction);
     SulfurProcessUtil.flash(furnaceFeed, getName() + " furnace feed");
     Stream furnaceFeedStream = new Stream(getName() + " furnace feed", furnaceFeed);
     furnaceFeedStream.run(id);
 
-    result.furnace = new ClausReactionFurnace(getName() + " reaction furnace",
-        furnaceFeedStream);
+    result.furnace = new ClausReactionFurnace(getName() + " reaction furnace", furnaceFeedStream);
     result.furnace.run(id);
     result.wasteHeatBoiler = new ReactiveWasteHeatBoiler(getName() + " waste heat boiler",
         result.furnace.getOutletStream());
@@ -223,43 +217,34 @@ public class SulfurRecoveryUnit extends TwoPortEquipment {
       current = mixedStream;
     }
 
-    SulfurCondenser thermalCondenser = new SulfurCondenser(
-        getName() + " thermal condenser", current);
+    SulfurCondenser thermalCondenser = new SulfurCondenser(getName() + " thermal condenser", current);
     thermalCondenser.run(id);
     result.condensers.add(thermalCondenser);
     result.sulfurProducts.add(thermalCondenser.getLiquidSulfurStream());
     current = thermalCondenser.getOutletStream();
 
     for (int stage = 0; stage < numberOfCatalyticStages; stage++) {
-      double reheatTemperature = converterInletTemperaturesK[
-          Math.min(stage, converterInletTemperaturesK.length - 1)];
-      if (configuration == Configuration.SUB_DEW_POINT
-          && stage == numberOfCatalyticStages - 1) {
+      double reheatTemperature = converterInletTemperaturesK[Math.min(stage, converterInletTemperaturesK.length - 1)];
+      if (configuration == Configuration.SUB_DEW_POINT && stage == numberOfCatalyticStages - 1) {
         reheatTemperature = Math.min(reheatTemperature, 438.15);
       }
-      StreamInterface reheated = SulfurProcessUtil.createConditionedStream(
-          getName() + " converter " + (stage + 1) + " feed", current,
-          reheatTemperature, id);
+      StreamInterface reheated = SulfurProcessUtil
+          .createConditionedStream(getName() + " converter " + (stage + 1) + " feed", current, reheatTemperature, id);
       ClausCatalyticConverter converter;
-      if (configuration == Configuration.SUB_DEW_POINT
-          && stage == numberOfCatalyticStages - 1) {
-        converter = new SubDewPointSulfurReactor(
-            getName() + " sub-dew-point converter " + (stage + 1), reheated);
+      if (configuration == Configuration.SUB_DEW_POINT && stage == numberOfCatalyticStages - 1) {
+        converter = new SubDewPointSulfurReactor(getName() + " sub-dew-point converter " + (stage + 1), reheated);
       } else {
-        converter = new ClausCatalyticConverter(
-            getName() + " converter " + (stage + 1), reheated);
+        converter = new ClausCatalyticConverter(getName() + " converter " + (stage + 1), reheated);
       }
       converter.setCatalystType(catalystTypes[Math.min(stage, catalystTypes.length - 1)]);
       converter.run(id);
       result.converters.add(converter);
       current = converter.getOutletStream();
       if (converter instanceof SubDewPointSulfurReactor) {
-        result.sulfurProducts.add(
-            ((SubDewPointSulfurReactor) converter).getSulfurProductStream());
+        result.sulfurProducts.add(((SubDewPointSulfurReactor) converter).getSulfurProductStream());
       }
 
-      SulfurCondenser condenser = new SulfurCondenser(
-          getName() + " catalytic condenser " + (stage + 1), current);
+      SulfurCondenser condenser = new SulfurCondenser(getName() + " catalytic condenser " + (stage + 1), current);
       condenser.run(id);
       result.condensers.add(condenser);
       result.sulfurProducts.add(condenser.getLiquidSulfurStream());
@@ -274,8 +259,7 @@ public class SulfurRecoveryUnit extends TwoPortEquipment {
     SystemInterface relaxed = SulfurProcessUtil.prepareSystem(previous);
     for (int i = 0; i < relaxed.getNumberOfComponents(); i++) {
       String component = relaxed.getComponent(i).getComponentName();
-      double updated = (1.0 - recycleRelaxationFactor)
-          * SulfurProcessUtil.moles(previous, component)
+      double updated = (1.0 - recycleRelaxationFactor) * SulfurProcessUtil.moles(previous, component)
           + recycleRelaxationFactor * SulfurProcessUtil.moles(calculated, component);
       SulfurProcessUtil.setMoles(relaxed, component, updated);
     }
@@ -286,47 +270,38 @@ public class SulfurRecoveryUnit extends TwoPortEquipment {
   }
 
   /** Combine the individual sulfur products into a single reporting stream. */
-  private StreamInterface combineSulfurProducts(List<StreamInterface> products,
-      SystemInterface reference, UUID id) {
+  private StreamInterface combineSulfurProducts(List<StreamInterface> products, SystemInterface reference, UUID id) {
     double totalS8Moles = 0.0;
     for (StreamInterface product : products) {
       if (product != null) {
         totalS8Moles += SulfurProcessUtil.moles(product.getThermoSystem(), "S8");
       }
     }
-    return SulfurProcessUtil.createSingleComponentStream(getName() + " sulfur product",
-        reference, "S8", totalS8Moles, 423.15, reference.getPressure(), id);
+    return SulfurProcessUtil.createSingleComponentStream(getName() + " sulfur product", reference, "S8", totalS8Moles,
+        423.15, reference.getPressure(), id);
   }
 
   /** Calculate overall sulfur closure and process KPIs. */
-  private void calculatePerformance(SystemInterface freshFeed, StreamInterface finalOutlet,
-      ClausSectionResult section, SystemInterface recycle) {
+  private void calculatePerformance(SystemInterface freshFeed, StreamInterface finalOutlet, ClausSectionResult section,
+      SystemInterface recycle) {
     double feedSulfurAtoms = SulfurProcessUtil.sulfurAtomMoles(freshFeed);
-    double productSulfurAtoms = 8.0 * SulfurProcessUtil.moles(
-        combinedSulfurProductStream.getThermoSystem(), "S8");
-    double outletSulfurAtoms = SulfurProcessUtil.sulfurAtomMoles(
-        finalOutlet.getThermoSystem());
+    double productSulfurAtoms = 8.0 * SulfurProcessUtil.moles(combinedSulfurProductStream.getThermoSystem(), "S8");
+    double outletSulfurAtoms = SulfurProcessUtil.sulfurAtomMoles(finalOutlet.getThermoSystem());
     double recycleResidualAtoms = tailGasTreatmentEnabled && acidGasRecycleStream != null
         ? SulfurProcessUtil.sulfurAtomMoles(acidGasRecycleStream.getThermoSystem())
             - SulfurProcessUtil.sulfurAtomMoles(recycle)
         : 0.0;
-    double feedSulfurKgPerHour = feedSulfurAtoms
-        * SulfurProcessUtil.SULFUR_ATOMIC_MOLAR_MASS_KG_PER_MOL * 3600.0;
-    double productSulfurKgPerHour = productSulfurAtoms
-        * SulfurProcessUtil.SULFUR_ATOMIC_MOLAR_MASS_KG_PER_MOL * 3600.0;
+    double feedSulfurKgPerHour = feedSulfurAtoms * SulfurProcessUtil.SULFUR_ATOMIC_MOLAR_MASS_KG_PER_MOL * 3600.0;
+    double productSulfurKgPerHour = productSulfurAtoms * SulfurProcessUtil.SULFUR_ATOMIC_MOLAR_MASS_KG_PER_MOL * 3600.0;
     double clausRecovery = 100.0 * productSulfurAtoms / Math.max(feedSulfurAtoms, 1.0e-30);
-    double overallRecovery = 100.0
-        * (1.0 - outletSulfurAtoms / Math.max(feedSulfurAtoms, 1.0e-30));
-    double balanceError = (productSulfurAtoms + outletSulfurAtoms + recycleResidualAtoms
-        - feedSulfurAtoms) / Math.max(feedSulfurAtoms, 1.0e-30);
-    double stackSO2 = thermalIncinerator == null ? 0.0
-        : thermalIncinerator.getSo2Emission("kg/hr");
-    performance = new SulfurRecoveryPerformance(feedSulfurKgPerHour,
-        productSulfurKgPerHour, clausRecovery, overallRecovery, balanceError,
-        SulfurProcessUtil.h2sToSo2Ratio(section.tailGas.getThermoSystem()),
-        lastOxygenDemandMoles, section.furnace.getFurnaceTemperature(), stackSO2,
-        lastAirControlIterations, lastRecycleIterations, airControlConverged,
-        recycleConverged);
+    double overallRecovery = 100.0 * (1.0 - outletSulfurAtoms / Math.max(feedSulfurAtoms, 1.0e-30));
+    double balanceError = (productSulfurAtoms + outletSulfurAtoms + recycleResidualAtoms - feedSulfurAtoms)
+        / Math.max(feedSulfurAtoms, 1.0e-30);
+    double stackSO2 = thermalIncinerator == null ? 0.0 : thermalIncinerator.getSo2Emission("kg/hr");
+    performance = new SulfurRecoveryPerformance(feedSulfurKgPerHour, productSulfurKgPerHour, clausRecovery,
+        overallRecovery, balanceError, SulfurProcessUtil.h2sToSo2Ratio(section.tailGas.getThermoSystem()),
+        lastOxygenDemandMoles, section.furnace.getFurnaceTemperature(), stackSO2, lastAirControlIterations,
+        lastRecycleIterations, airControlConverged, recycleConverged);
   }
 
   /** Set process configuration and apply its conventional oxidant default. */
@@ -389,8 +364,7 @@ public class SulfurRecoveryUnit extends TwoPortEquipment {
   }
 
   /** Set tail-gas recycle convergence options. */
-  public void setRecycleConvergence(double tolerance, int maximumIterations,
-      double relaxationFactor) {
+  public void setRecycleConvergence(double tolerance, int maximumIterations, double relaxationFactor) {
     recycleTolerance = Math.max(tolerance, 1.0e-12);
     maximumRecycleIterations = Math.max(maximumIterations, 1);
     recycleRelaxationFactor = SulfurProcessUtil.clamp(relaxationFactor, 0.01, 1.0);
@@ -474,8 +448,7 @@ public class SulfurRecoveryUnit extends TwoPortEquipment {
   private static final class ClausSectionResult {
     private ClausReactionFurnace furnace;
     private ReactiveWasteHeatBoiler wasteHeatBoiler;
-    private final List<ClausCatalyticConverter> converters =
-        new ArrayList<ClausCatalyticConverter>();
+    private final List<ClausCatalyticConverter> converters = new ArrayList<ClausCatalyticConverter>();
     private final List<SulfurCondenser> condensers = new ArrayList<SulfurCondenser>();
     private final List<StreamInterface> sulfurProducts = new ArrayList<StreamInterface>();
     private StreamInterface tailGas;

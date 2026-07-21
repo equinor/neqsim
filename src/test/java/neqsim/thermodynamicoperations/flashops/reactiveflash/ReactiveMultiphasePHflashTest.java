@@ -425,8 +425,8 @@ public class ReactiveMultiphasePHflashTest {
     assertTrue(system.getTemperature() > 700.0, "Exothermic forward reaction should heat the adiabatic outlet");
     assertEquals(898.1, system.getTemperature(), 2.0, "Adiabatic WGS temperature should match the independent root");
     assertTrue(equilibriumCO2Moles > feedCO2Moles, "The forward WGS reaction should form CO2");
-    assertEquals(thermochemicalEnthalpySpec, thermochemicalEnthalpy,
-        Math.abs(thermochemicalEnthalpySpec) * 1.0e-7, "Thermochemical enthalpy should close");
+    assertEquals(thermochemicalEnthalpySpec, thermochemicalEnthalpy, Math.abs(thermochemicalEnthalpySpec) * 1.0e-7,
+        "Thermochemical enthalpy should close");
   }
 
   /** Return the species formation-enthalpy inventory in J. */
@@ -435,8 +435,7 @@ public class ReactiveMultiphasePHflashTest {
     for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
       for (int componentIndex = 0; componentIndex < system.getPhase(phaseIndex)
           .getNumberOfComponents(); componentIndex++) {
-        double numberOfMoles = system.getPhase(phaseIndex).getComponent(componentIndex)
-            .getNumberOfMolesInPhase();
+        double numberOfMoles = system.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase();
         double formationEnthalpyPerMole = system.getPhase(phaseIndex).getComponent(componentIndex)
             .getIdealGasEnthalpyOfFormation();
         formationEnthalpy += numberOfMoles * formationEnthalpyPerMole;

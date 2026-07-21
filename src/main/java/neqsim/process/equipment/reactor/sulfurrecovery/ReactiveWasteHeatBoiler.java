@@ -12,10 +12,10 @@ import neqsim.thermo.util.sulfur.SulfurThermodynamics;
  * Reactive one-dimensional waste-heat-boiler surrogate for a Claus thermal stage.
  *
  * <p>
- * The model couples specified cooling duty with finite-rate Claus recombination and COS/CS2
- * hydrolysis during rapid quench. It exposes steam production and the equilibrium sulfur vapour
- * distribution at the outlet. Detailed tube-by-tube geometry can be represented by increasing the
- * number of cells; each cell updates composition and temperature before the next kinetic step.
+ * The model couples specified cooling duty with finite-rate Claus recombination and COS/CS2 hydrolysis during rapid
+ * quench. It exposes steam production and the equilibrium sulfur vapour distribution at the outlet. Detailed
+ * tube-by-tube geometry can be represented by increasing the number of cells; each cell updates composition and
+ * temperature before the next kinetic step.
  * </p>
  */
 public class ReactiveWasteHeatBoiler extends TwoPortEquipment {
@@ -74,8 +74,7 @@ public class ReactiveWasteHeatBoiler extends TwoPortEquipment {
 
       double cosRateConstant = cosHydrolysisPreExponentialFactor
           * Math.exp(-cosHydrolysisActivationEnergyJPerMol / (8.314462618 * temperature));
-      double cosExtent = Math.min(SulfurProcessUtil.moles(system, "COS"),
-          SulfurProcessUtil.moles(system, "water"));
+      double cosExtent = Math.min(SulfurProcessUtil.moles(system, "COS"), SulfurProcessUtil.moles(system, "water"));
       cosExtent *= 1.0 - Math.exp(-cosRateConstant * cellTime);
       SulfurProcessUtil.addMoles(system, "COS", -cosExtent);
       SulfurProcessUtil.addMoles(system, "water", -cosExtent);
@@ -101,23 +100,20 @@ public class ReactiveWasteHeatBoiler extends TwoPortEquipment {
     SulfurProcessUtil.flash(system, getName());
     SulfurProcessUtil.updateOutlet(outStream, system, id);
 
-    cosConversion = inletCos <= 1.0e-20 ? 0.0
-        : 1.0 - SulfurProcessUtil.moles(system, "COS") / inletCos;
-    cs2Conversion = inletCs2 <= 1.0e-20 ? 0.0
-        : 1.0 - SulfurProcessUtil.moles(system, "CS2") / inletCs2;
+    cosConversion = inletCos <= 1.0e-20 ? 0.0 : 1.0 - SulfurProcessUtil.moles(system, "COS") / inletCos;
+    cs2Conversion = inletCs2 <= 1.0e-20 ? 0.0 : 1.0 - SulfurProcessUtil.moles(system, "CS2") / inletCs2;
     double sulfurPressure = calculateElementalSulfurPartialPressure(system);
-    outletSulfurAllotropeFractions = SulfurThermodynamics.calculateAllotropeMoleFractions(
-        outletTemperatureK, Math.max(sulfurPressure, 1.0e-12));
+    outletSulfurAllotropeFractions = SulfurThermodynamics.calculateAllotropeMoleFractions(outletTemperatureK,
+        Math.max(sulfurPressure, 1.0e-12));
     setCalculationIdentifier(id);
   }
 
   /** Estimate sulfur molecular partial pressure from S8-equivalent atom inventory. */
   private double calculateElementalSulfurPartialPressure(SystemInterface system) {
     double s8Equivalent = SulfurProcessUtil.moles(system, "S8");
-    double nonSulfurMoles = Math.max(1.0e-30,
-        system.getTotalNumberOfMoles() - s8Equivalent);
-    return SulfurProcessUtil.calculateElementalSulfurVapourPressureBar(
-        system.getTemperature(), system.getPressure(), nonSulfurMoles, s8Equivalent);
+    double nonSulfurMoles = Math.max(1.0e-30, system.getTotalNumberOfMoles() - s8Equivalent);
+    return SulfurProcessUtil.calculateElementalSulfurVapourPressureBar(system.getTemperature(), system.getPressure(),
+        nonSulfurMoles, s8Equivalent);
   }
 
   private double estimateHeatCapacityFlow(SystemInterface system) {
@@ -161,8 +157,7 @@ public class ReactiveWasteHeatBoiler extends TwoPortEquipment {
 
   /** Return equivalent steam production in the requested unit. */
   public double getSteamProduction(String unit) {
-    return "kg/hr".equalsIgnoreCase(unit) ? steamProductionKgPerSecond * 3600.0
-        : steamProductionKgPerSecond;
+    return "kg/hr".equalsIgnoreCase(unit) ? steamProductionKgPerSecond * 3600.0 : steamProductionKgPerSecond;
   }
 
   /** Return latest COS hydrolysis conversion. */

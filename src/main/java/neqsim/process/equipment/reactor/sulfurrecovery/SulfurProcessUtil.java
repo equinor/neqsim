@@ -16,11 +16,12 @@ final class SulfurProcessUtil {
   static final double S8_MOLAR_MASS_KG_PER_MOL = 0.25648;
 
   /** Components required by the core sulfur-recovery models. */
-  static final String[] CORE_COMPONENTS = {"H2S", "SO2", "S8", "COS", "CS2", "water",
-      "oxygen", "nitrogen", "hydrogen", "CO", "CO2", "methane", "ammonia"};
+  static final String[] CORE_COMPONENTS = { "H2S", "SO2", "S8", "COS", "CS2", "water", "oxygen", "nitrogen", "hydrogen",
+      "CO", "CO2", "methane", "ammonia" };
 
   /** Utility class. */
-  private SulfurProcessUtil() {}
+  private SulfurProcessUtil() {
+  }
 
   /** Clone a system and ensure all SRU species are present. */
   static SystemInterface prepareSystem(SystemInterface source) {
@@ -68,8 +69,7 @@ final class SulfurProcessUtil {
       operations.TPflash();
       system.initProperties();
     } catch (Exception ex) {
-      throw new IllegalStateException(
-          "Thermodynamic flash failed in sulfur-recovery equipment '" + equipmentName + "'",
+      throw new IllegalStateException("Thermodynamic flash failed in sulfur-recovery equipment '" + equipmentName + "'",
           ex);
     }
   }
@@ -81,8 +81,8 @@ final class SulfurProcessUtil {
   }
 
   /** Create a stream containing only one component from a reference system. */
-  static StreamInterface createSingleComponentStream(String name, SystemInterface reference,
-      String component, double componentMoles, double temperatureK, double pressureBar, UUID id) {
+  static StreamInterface createSingleComponentStream(String name, SystemInterface reference, String component,
+      double componentMoles, double temperatureK, double pressureBar, UUID id) {
     SystemInterface product = prepareSystem(reference);
     for (int i = 0; i < product.getNumberOfComponents(); i++) {
       setMoles(product, product.getComponent(i).getComponentName(), 1.0e-30);
@@ -120,8 +120,7 @@ final class SulfurProcessUtil {
   }
 
   /** Create and run a stream at a specified temperature. */
-  static StreamInterface createConditionedStream(String name, StreamInterface source,
-      double temperatureK, UUID id) {
+  static StreamInterface createConditionedStream(String name, StreamInterface source, double temperatureK, UUID id) {
     SystemInterface conditioned = prepareSystem(source.getThermoSystem());
     conditioned.setTemperature(temperatureK);
     flash(conditioned, name);
@@ -132,8 +131,8 @@ final class SulfurProcessUtil {
 
   /** Calculate sulfur atom moles represented by all supported sulfur species. */
   static double sulfurAtomMoles(SystemInterface system) {
-    return moles(system, "H2S") + moles(system, "SO2") + moles(system, "COS")
-        + 2.0 * moles(system, "CS2") + 8.0 * moles(system, "S8");
+    return moles(system, "H2S") + moles(system, "SO2") + moles(system, "COS") + 2.0 * moles(system, "CS2")
+        + 8.0 * moles(system, "S8");
   }
 
   /** Calculate the H2S/SO2 molar ratio, returning infinity when SO2 is absent. */
@@ -154,20 +153,18 @@ final class SulfurProcessUtil {
    * @param s8EquivalentMoles elemental-sulfur atom inventory divided by eight
    * @return total molecular partial pressure of S2-S8 [bar]
    */
-  static double calculateElementalSulfurVapourPressureBar(double temperatureK,
-      double totalPressureBar, double nonSulfurMoles, double s8EquivalentMoles) {
+  static double calculateElementalSulfurVapourPressureBar(double temperatureK, double totalPressureBar,
+      double nonSulfurMoles, double s8EquivalentMoles) {
     if (s8EquivalentMoles <= 1.0e-30) {
       return 1.0e-12;
     }
     double pressure = Math.max(totalPressureBar, 1.0e-12);
-    double sulfurPressure = pressure * s8EquivalentMoles
-        / Math.max(nonSulfurMoles + s8EquivalentMoles, 1.0e-30);
+    double sulfurPressure = pressure * s8EquivalentMoles / Math.max(nonSulfurMoles + s8EquivalentMoles, 1.0e-30);
     for (int iteration = 0; iteration < 60; iteration++) {
-      double meanAtoms = SulfurThermodynamics.calculateMeanSulfurAtomsPerMolecule(
-          temperatureK, Math.max(sulfurPressure, 1.0e-12));
+      double meanAtoms = SulfurThermodynamics.calculateMeanSulfurAtomsPerMolecule(temperatureK,
+          Math.max(sulfurPressure, 1.0e-12));
       double sulfurMolecules = 8.0 * s8EquivalentMoles / meanAtoms;
-      double updatedPressure = pressure * sulfurMolecules
-          / Math.max(nonSulfurMoles + sulfurMolecules, 1.0e-30);
+      double updatedPressure = pressure * sulfurMolecules / Math.max(nonSulfurMoles + sulfurMolecules, 1.0e-30);
       if (Math.abs(updatedPressure - sulfurPressure) <= 1.0e-12 * pressure) {
         sulfurPressure = updatedPressure;
         break;
@@ -178,30 +175,26 @@ final class SulfurProcessUtil {
   }
 
   /** Calculate sulfur dew point from an S8-equivalent atom inventory. */
-  static double calculateSulfurDewPointK(double totalPressureBar, double nonSulfurMoles,
-      double s8EquivalentMoles) {
+  static double calculateSulfurDewPointK(double totalPressureBar, double nonSulfurMoles, double s8EquivalentMoles) {
     double lowerTemperature = 312.15;
     double upperTemperature = 1308.15;
     if (s8EquivalentMoles <= 1.0e-30) {
       return lowerTemperature;
     }
-    double lowerResidual = calculateElementalSulfurVapourPressureBar(lowerTemperature,
-        totalPressureBar, nonSulfurMoles, s8EquivalentMoles)
-        - SulfurThermodynamics.calculateVapourPressureBar(lowerTemperature);
+    double lowerResidual = calculateElementalSulfurVapourPressureBar(lowerTemperature, totalPressureBar, nonSulfurMoles,
+        s8EquivalentMoles) - SulfurThermodynamics.calculateVapourPressureBar(lowerTemperature);
     if (lowerResidual <= 0.0) {
       return lowerTemperature;
     }
-    double upperResidual = calculateElementalSulfurVapourPressureBar(upperTemperature,
-        totalPressureBar, nonSulfurMoles, s8EquivalentMoles)
-        - SulfurThermodynamics.calculateVapourPressureBar(upperTemperature);
+    double upperResidual = calculateElementalSulfurVapourPressureBar(upperTemperature, totalPressureBar, nonSulfurMoles,
+        s8EquivalentMoles) - SulfurThermodynamics.calculateVapourPressureBar(upperTemperature);
     if (upperResidual >= 0.0) {
       return upperTemperature;
     }
     for (int iteration = 0; iteration < 100; iteration++) {
       double trialTemperature = 0.5 * (lowerTemperature + upperTemperature);
-      double residual = calculateElementalSulfurVapourPressureBar(trialTemperature,
-          totalPressureBar, nonSulfurMoles, s8EquivalentMoles)
-          - SulfurThermodynamics.calculateVapourPressureBar(trialTemperature);
+      double residual = calculateElementalSulfurVapourPressureBar(trialTemperature, totalPressureBar, nonSulfurMoles,
+          s8EquivalentMoles) - SulfurThermodynamics.calculateVapourPressureBar(trialTemperature);
       if (residual > 0.0) {
         lowerTemperature = trialTemperature;
       } else {
