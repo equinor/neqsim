@@ -39,8 +39,14 @@ class StandardSupportAuditTest {
         StandardSupportAudit.getSupport(StandardType.API_660).getSupportLevel());
     assertEquals(StandardSupportLevel.CATALOGUED,
         StandardSupportAudit.getSupport(StandardType.API_650).getSupportLevel());
-    assertEquals(StandardSupportLevel.CATALOGUED,
+    assertEquals(StandardSupportLevel.SCREENING,
         StandardSupportAudit.getSupport(StandardType.API_521).getSupportLevel());
+    assertEquals("Api521ReliefDesignKernel",
+        StandardSupportAudit.getSupport(StandardType.API_521).getCalculationImplementation());
+    assertEquals(StandardSupportLevel.SCREENING,
+        StandardSupportAudit.getSupport(StandardType.API_526).getSupportLevel());
+    assertEquals("Api526OrificeSelectionKernel",
+        StandardSupportAudit.getSupport(StandardType.API_526).getCalculationImplementation());
     assertEquals(StandardSupportLevel.SCREENING,
         StandardSupportAudit.getSupport(StandardType.ASME_VIII_DIV1).getSupportLevel());
     assertEquals(StandardSupportLevel.SCREENING,
