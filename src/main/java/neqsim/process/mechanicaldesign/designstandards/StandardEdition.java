@@ -10,8 +10,8 @@ import java.util.Objects;
  * Immutable, explicit edition of a catalogued design standard.
  *
  * <p>
- * Unlike the legacy global version override, an edition travels with a selection and can therefore
- * be reproduced independently of process-wide mutable state.
+ * Unlike the legacy global version override, an edition travels with a selection and can therefore be reproduced
+ * independently of process-wide mutable state.
  * </p>
  */
 public final class StandardEdition implements Serializable {
@@ -118,8 +118,7 @@ public final class StandardEdition implements Serializable {
       return false;
     }
     StandardEdition other = (StandardEdition) object;
-    return standardType == other.standardType && edition.equals(other.edition)
-        && amendments.equals(other.amendments);
+    return standardType == other.standardType && edition.equals(other.edition) && amendments.equals(other.amendments);
   }
 
   /** {@inheritDoc} */
