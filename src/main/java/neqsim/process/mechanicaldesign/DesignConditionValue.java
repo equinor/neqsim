@@ -11,9 +11,7 @@ public final class DesignConditionValue implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private enum Dimension {
-    PRESSURE,
-    TEMPERATURE,
-    LENGTH
+    PRESSURE, TEMPERATURE, LENGTH
   }
 
   /** Supported declared design-condition quantities and their canonical storage units. */
