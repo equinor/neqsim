@@ -70,18 +70,15 @@ class LNGProcessBuilderTest {
         .get(model.getCryogenicHeatExchangers().size() - 1);
     System.out.println("SMR cold-side seed before process run: "
         + seededExchanger.getInStream(2).getTemperature("C"));
-    model.getProcessSystem().setProgressListener(new ProcessSystem.SimulationProgressListener() {
-      @Override
-      public void onUnitComplete(neqsim.process.equipment.ProcessEquipmentInterface unit, int unitIndex,
-          int totalUnits, int iterationNumber) {}
-
-      @Override
-      public void onBeforeUnit(neqsim.process.equipment.ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
-          int iterationNumber) {
-        System.out.println("SMR before " + unit.getName() + ": cold-side inlet "
-            + seededExchanger.getInStream(2).getTemperature("C"));
+    java.util.UUID diagnosticId = java.util.UUID.randomUUID();
+    for (neqsim.process.equipment.ProcessEquipmentInterface unit : model.getProcessSystem().getUnitOperations()) {
+      if (unit == seededExchanger) {
+        break;
       }
-    });
+      unit.run(diagnosticId);
+      System.out.println("SMR after " + unit.getName() + ": cold-side inlet "
+          + seededExchanger.getInStream(2).getTemperature("C"));
+    }
 
     LNGProcessModel.Result result = model.run();
 
