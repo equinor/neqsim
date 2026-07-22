@@ -370,8 +370,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
    * @param residuals residual vector at the current temperatures
    * @return true when an improving trial step was accepted
    */
-  private boolean applyBacktrackingTwoUnknownStep(List<Integer> unknownIndices, double[] delta,
-      double[] residuals) {
+  private boolean applyBacktrackingTwoUnknownStep(List<Integer> unknownIndices, double[] delta, double[] residuals) {
     double energyScale = Math.max(1.0, Math.max(Math.abs(hotLoad), Math.abs(coldLoad)));
     double currentMerit = twoUnknownMerit(residuals, energyScale);
     if (!Double.isFinite(currentMerit)) {
