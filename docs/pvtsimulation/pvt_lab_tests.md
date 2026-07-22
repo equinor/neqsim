@@ -25,8 +25,9 @@ explicitly:
 | `ViscositySim.setTemperaturesAndPressures` temperature array | K |
 | `ViscositySim` viscosity outputs | Pa·s; multiply by 1000 for cP |
 
-Pseudo-component names must not contain `+`. For example, represent a C20-plus fraction as
-`"C20"`, not `"C20+"`.
+Pseudo-component names may contain `+`. `addTBPfraction` and `addPlusFraction` preserve it
+when they append the internal `_PC` suffix. For example, `addPlusFraction("C20+", ...)`
+creates `C20+_PC` before characterization.
 
 ## Supported experiments
 
@@ -86,7 +87,7 @@ public final class ConstantMassExpansionExample {
     fluid.addTBPfraction("C17", 0.99, 236.0 / 1000.0, 0.840);
     fluid.addTBPfraction("C18", 0.92, 245.0 / 1000.0, 0.846);
     fluid.addTBPfraction("C19", 0.60, 265.0 / 1000.0, 0.857);
-    fluid.addPlusFraction("C20", 6.64, 453.0 / 1000.0, 0.918);
+    fluid.addPlusFraction("C20+", 6.64, 453.0 / 1000.0, 0.918);
     fluid.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12);
     fluid.getCharacterization().characterisePlusFraction();
     fluid.setMixingRule("classic");
