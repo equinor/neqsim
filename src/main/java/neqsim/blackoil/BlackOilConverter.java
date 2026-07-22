@@ -208,6 +208,7 @@ public class BlackOilConverter {
         SystemInterface oilComp = phaseAsStandaloneSystem(base, oil, Tref, p);
         ThermodynamicOperations oilResOps = new ThermodynamicOperations(oilComp);
         oilResOps.TPflash();
+        oilComp.initProperties();
         PhaseInterface oilRes = findOilPhase(oilComp);
         double V_res_liq = (oilRes != null) ? phaseVolume(oilRes) : totalVolume(oilComp);
         double mu_o = (oilRes != null) ? oilRes.getViscosity() : Double.NaN;
@@ -241,6 +242,7 @@ public class BlackOilConverter {
 
         ThermodynamicOperations gasResOps = new ThermodynamicOperations(gasComp);
         gasResOps.TPflash();
+        gasComp.initProperties();
         PhaseInterface gasRes = findGasPhase(gasComp);
         double V_res_gas = (gasRes != null) ? phaseVolume(gasRes) : totalVolume(gasComp);
         double mu_g = (gasRes != null) ? gasRes.getViscosity() : Double.NaN;
@@ -271,6 +273,7 @@ public class BlackOilConverter {
         SystemInterface wRes = phaseAsStandaloneSystem(base, wat, Tref, p);
         ThermodynamicOperations wOps = new ThermodynamicOperations(wRes);
         wOps.TPflash();
+        wRes.initProperties();
         PhaseInterface wPhase = findWaterPhase(wRes);
         double rho_w_res = (wPhase != null) ? wPhase.getDensity() : Double.NaN;
         double mu_w = (wPhase != null) ? wPhase.getViscosity() : Double.NaN;
@@ -321,7 +324,7 @@ public class BlackOilConverter {
     for (int i = 0; i < s.getNumberOfPhases(); i++) {
       PhaseInterface p = s.getPhase(i);
       String type = safeTypeName(p);
-      if (type.contains("liquid") && hydrocarbonFraction(p) > 1e-6 && !isMostlyWater(p)) {
+      if ((type.contains("liquid") || type.equals("oil")) && hydrocarbonFraction(p) > 1e-6 && !isMostlyWater(p)) {
         return p;
       }
     }
