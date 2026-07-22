@@ -318,8 +318,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     }
     double[] finalResiduals = residualFunctionTwoUnknowns();
     throw new RuntimeException(String.format(
-        "twoUnknowns(): Failed to converge after maxIterations (energy residual %.6g kW, pinch residual %.6g C, outlet temperatures %s).",
-        finalResiduals[0], finalResiduals[1], outletTemps));
+        "twoUnknowns(): Failed to converge after maxIterations (energy residual %.6g kW, pinch residual %.6g C, inlet temperatures %s, outlet temperatures %s).",
+        finalResiduals[0], finalResiduals[1], inletTemps, outletTemps));
   }
 
   /**
