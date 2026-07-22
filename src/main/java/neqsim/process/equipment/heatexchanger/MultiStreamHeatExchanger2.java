@@ -437,7 +437,17 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     for (int i = 0; i < 2; i++) {
       int idx = unknownIndices.get(i);
       double[] bounds = restartBounds(idx);
-      double perturbation = baseTemps[i] + jacobiDelta < bounds[1] ? jacobiDelta : -jacobiDelta;
+      double roomBelow = baseTemps[i] - bounds[0];
+      double roomAbove = bounds[1] - baseTemps[i];
+      double perturbation;
+      if (roomAbove >= roomBelow) {
+        perturbation = Math.min(jacobiDelta, 0.5 * roomAbove);
+      } else {
+        perturbation = -Math.min(jacobiDelta, 0.5 * roomBelow);
+      }
+      if (!Double.isFinite(perturbation) || Math.abs(perturbation) < 1.0e-12) {
+        throw new ArithmeticException("No bounded temperature perturbation available");
+      }
       try {
         outletTemps.set(idx, baseTemps[i] + perturbation);
         double[] perturbed = residualFunctionTwoUnknowns();
@@ -518,6 +528,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
           if (Double.isFinite(trialMerit) && trialMerit < currentMerit) {
             return true;
           }
+        } catch (NullPointerException | ClassCastException | IndexOutOfBoundsException ex) {
+          throw ex;
         } catch (RuntimeException ex) {
           logger.debug("Rejected invalid two-unknown exchanger trial step", ex);
         }
@@ -1110,6 +1122,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
           lowerResidual = midpointResidual;
         }
       }
+    } catch (NullPointerException | ClassCastException | IndexOutOfBoundsException ex) {
+      throw ex;
     } catch (RuntimeException ex) {
       logger.debug("Unable to bracket exchanger energy balance using stream {}", index, ex);
     }
