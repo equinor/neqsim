@@ -7,6 +7,9 @@ on:
   push:
     branches:
       - fix-multistream-restart-sequence
+  pull_request:
+    branches:
+      - master
 
 concurrency:
   group: temporary-smr-solver-${{ github.ref }}
