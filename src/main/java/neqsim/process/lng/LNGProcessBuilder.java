@@ -354,7 +354,7 @@ public class LNGProcessBuilder {
     // feasible first state.
     context.process.setUseOptimizedExecution(false);
     Stream mrSuction = createMixedRefrigerant(name + " MR suction",
-        new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.05, 0.42, 0.33, 0.20 }, 20.0, 1.0,
+        new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.15, 0.75, 0.08, 0.02 }, 20.0, 1.0,
         context.feedFlowKgPerHour * 5.0);
     context.process.add(mrSuction);
 
