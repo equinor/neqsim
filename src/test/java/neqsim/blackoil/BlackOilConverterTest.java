@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
+import neqsim.thermo.system.SystemSrkCPAstatoil;
 
 class BlackOilConverterTest {
   @Test
@@ -50,6 +51,30 @@ class BlackOilConverterTest {
       assertTrue(result.pvt.Bg(pressure) > 0.0);
       assertTrue(Double.isFinite(result.pvt.mu_g(pressure)));
       assertTrue(result.pvt.mu_g(pressure) > 0.0);
+    }
+  }
+
+  @Test
+  void testConvertWetOilProducesFiniteWaterProperties() {
+    SystemInterface wetOil = new SystemSrkCPAstatoil(353.15, 200.0);
+    wetOil.addComponent("methane", 0.35);
+    wetOil.addComponent("n-heptane", 0.25);
+    wetOil.addComponent("nC10", 0.20);
+    wetOil.addComponent("water", 0.20);
+    wetOil.setMixingRule(10);
+    wetOil.setMultiPhaseCheck(true);
+
+    double[] pressures = { 50.0, 100.0, 150.0, 200.0 };
+    BlackOilConverter.Result result =
+        BlackOilConverter.convert(wetOil, 353.15, pressures, 1.01325, 288.15);
+
+    assertTrue(Double.isFinite(result.rho_w_sc));
+    assertTrue(result.rho_w_sc > 0.0);
+    for (double pressure : pressures) {
+      assertTrue(Double.isFinite(result.pvt.Bw(pressure)));
+      assertTrue(result.pvt.Bw(pressure) > 0.0);
+      assertTrue(Double.isFinite(result.pvt.mu_w(pressure)));
+      assertTrue(result.pvt.mu_w(pressure) > 0.0);
     }
   }
 }
