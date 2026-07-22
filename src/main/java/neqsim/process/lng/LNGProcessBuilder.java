@@ -355,7 +355,7 @@ public class LNGProcessBuilder {
     context.process.setUseOptimizedExecution(false);
     Stream mrSuction = createMixedRefrigerant(name + " MR suction",
         new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.05, 0.42, 0.33, 0.20 }, 20.0, 3.0,
-        context.feedFlowKgPerHour * 2.0);
+        context.feedFlowKgPerHour * 5.0);
     context.process.add(mrSuction);
 
     CompressionTrain mrTrain = addTwoStageCompression(context, name + " MR", mrSuction, 30.0, compressorEfficiency);
