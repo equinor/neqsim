@@ -209,8 +209,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       relativeVolume[i] = totalVolume[i] / saturationVolume;
       double remainingMoles = getThermoSystem().getTotalNumberOfMoles();
       cummulativeMolePercDepleted[i] = 100.0 - remainingMoles / initialMoles * 100.0;
-      materialBalanceRelativeError[i] =
-          Math.abs(initialMoles - remainingMoles - cumulativeMolesRemoved) / initialMoles;
+      materialBalanceRelativeError[i] = Math.abs(initialMoles - remainingMoles - cumulativeMolesRemoved) / initialMoles;
       Zmix[i] = getThermoSystem().getZvolcorr();
 
       if (getThermoSystem().hasPhaseType("gas")) {
