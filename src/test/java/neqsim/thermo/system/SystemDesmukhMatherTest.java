@@ -34,8 +34,9 @@ class SystemDesmukhMatherTest {
     system.addComponent("MDEA", 1.0);
     system.addComponent("water", 9.0);
     system.chemicalReactionInit();
-    assertTrue(system.getChemicalReactionOperations().getReactionList().getChemicalReactionList().stream()
-        .noneMatch(reaction -> "MDEACO2CH4".equals(reaction.getName())),
+    assertTrue(
+        system.getChemicalReactionOperations().getReactionList().getChemicalReactionList().stream()
+            .noneMatch(reaction -> "MDEACO2CH4".equals(reaction.getName())),
         "Desmukh-Mather must not load the Electrolyte CPA-specific MDEACO2CH4 reaction");
     system.createDatabase(true);
     system.setMixingRule("classic");
