@@ -295,10 +295,10 @@ reservoir.setReservoirFluid(fluid, 20.0e6, 0.0, 0.0);
 StreamInterface producer = reservoir.addGasProducer("GP-1");
 producer.setFlowRate(5.0, "MSm3/day");
 
-// Initialize the well stream before the first transient step.
-reservoir.run();
-
 UUID id = UUID.randomUUID();
+
+// Use the same calculation identifier for initialization and the transient step.
+reservoir.run(id);
 reservoir.runTransient(86400.0, id);
 double remainingGas = reservoir.getGasInPlace("Sm3");
 ```
