@@ -348,9 +348,14 @@ public class LNGProcessBuilder {
    */
   private LNGProcessModel buildSMR() {
     BuildContext context = newContext();
+    // The exchanger must consume the seeded JT outlet before the valve updates it on the
+    // first recycle pass. Graph scheduling follows the valve-to-exchanger stream edge and
+    // would otherwise replace the cold tear seed before the exchanger can establish a
+    // feasible first state.
+    context.process.setUseOptimizedExecution(false);
     Stream mrSuction = createMixedRefrigerant(name + " MR suction",
-        new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.05, 0.42, 0.33, 0.20 }, 20.0, 3.0,
-        context.feedFlowKgPerHour * 2.0);
+        new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.15, 0.75, 0.08, 0.02 }, 20.0, 1.0,
+        context.feedFlowKgPerHour * 5.0);
     context.process.add(mrSuction);
 
     CompressionTrain mrTrain = addTwoStageCompression(context, name + " MR", mrSuction, 30.0, compressorEfficiency);
@@ -361,7 +366,7 @@ public class LNGProcessBuilder {
     mche.addInStreamMSHE(mrTrain.outlet, "hot", null);
 
     ThrottlingValve mrValve = new ThrottlingValve(name + " MR JT valve", mche.getOutStream(1));
-    mrValve.setOutletPressure(3.0, "bara");
+    mrValve.setOutletPressure(1.0, "bara");
     initializeExpansionInlet(mche.getOutStream(1), mrExpansionInletSeedTemperatureC, 30.0);
     mrValve.run();
     initializeColdSideWarmStart(mrValve.getOutletStream(), mrExpansionInletSeedTemperatureC,

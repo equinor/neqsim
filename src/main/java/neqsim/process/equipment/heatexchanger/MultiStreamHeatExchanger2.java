@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
@@ -44,9 +45,6 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
   /** Message used when the Jacobian is singular. */
   private static final String SINGULAR_JACOBIAN_MSG = "Jacobian determinant is zero";
-
-  /** Prime bases used for deterministic low-discrepancy restart guesses. */
-  private static final int[] RESTART_SEQUENCE_BASES = { 2, 3, 5 };
 
   private final double extremeEnergy = 0.3;
   private final double extremeUA = 2.0;
@@ -290,30 +288,258 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         outletTemps.set(i, initializeOutletGuess(i));
       }
     }
-    for (int iteration = 0; iteration < maxIterations; iteration++) {
-      boolean stalled = stallDetection(unknownIndices);
-      resetOfExtremesAndStalls(unknownIndices, stalled, false);
-      double[] residuals = residualFunctionTwoUnknowns();
-      if (Math.max(Math.abs(residuals[0]), Math.abs(residuals[1])) < tolerance) {
-        logger.debug("✓ OK With Streams" + outletTemps);
-        return;
+    if (solveTwoUnknownsOnEnergyManifold(unknownIndices)) {
+      logger.debug("Two-unknown exchanger solve converged on the energy-balance manifold with outlet temperatures {}",
+          outletTemps);
+      return;
+    }
+
+    // The manifold scan leaves the closest energy-balanced (smallest pinch residual) outlet
+    // temperatures in outletTemps. Preserve them so that, if the safeguarded Newton refinement
+    // below cannot reach the design pinch, an intermediate recycle pass falls back to this
+    // physically consistent estimate instead of aborting the whole flowsheet.
+    double[] bestEffortTemps = new double[unknownIndices.size()];
+    for (int i = 0; i < unknownIndices.size(); i++) {
+      bestEffortTemps[i] = outletTemps.get(unknownIndices.get(i));
+    }
+
+    try {
+      resetOfExtremesAndStalls(unknownIndices, false, false);
+      for (int iteration = 0; iteration < maxIterations; iteration++) {
+        double[] residuals = residualFunctionTwoUnknowns();
+        if (Math.max(Math.abs(residuals[0]), Math.abs(residuals[1])) < tolerance) {
+          logger.debug("Two-unknown exchanger solve converged with outlet temperatures {}", outletTemps);
+          return;
+        }
+        double[] delta;
+        try {
+          double[][] jacobian = numericalJacobiTwoUnknowns(unknownIndices);
+          delta = linearSystemTwoUnknowns(jacobian, residuals);
+        } catch (ArithmeticException e) {
+          logger.debug("Restarting two-unknown exchanger solve after singular Jacobian", e);
+          resetOfExtremesAndStalls(unknownIndices, true, false);
+          continue;
+        }
+
+        if (!applyBacktrackingTwoUnknownStep(unknownIndices, delta, residuals)) {
+          logger.debug("Restarting two-unknown exchanger solve after rejected Newton step");
+          resetOfExtremesAndStalls(unknownIndices, true, false);
+        }
       }
-      double[][] jacobian = numericalJacobiTwoUnknowns(unknownIndices);
-      double[] delta;
-      try {
-        delta = linearSystemTwoUnknowns(jacobian, residuals);
-      } catch (ArithmeticException e) {
-        logger.debug("Restarting two-unknown exchanger solve after singular Jacobian", e);
-        resetOfExtremesAndStalls(unknownIndices, true, false);
+    } catch (RuntimeException ex) {
+      logger.debug("Two-unknown exchanger Newton refinement failed; using best energy-balanced fall-back", ex);
+    }
+
+    // Fall back to the best energy-balanced estimate from the manifold scan instead of
+    // throwing. Energy conservation is preserved; only the design pinch may be missed on this
+    // pass. The enclosing recycle refines the inlet state and a later pass reaches the pinch
+    // root exactly through the deterministic manifold scan above.
+    restoreUnknownTemperatures(unknownIndices, bestEffortTemps);
+    balanceEnergyAtRestart(unknownIndices);
+    double[] finalResiduals = residualFunctionTwoUnknowns();
+    if (Math.max(Math.abs(finalResiduals[0]), Math.abs(finalResiduals[1])) >= tolerance) {
+      logger.warn(
+          "twoUnknowns(): using best energy-balanced fall-back after maxIterations (energy residual {} kW, "
+              + "pinch residual {} C, inlet temperatures {}, outlet temperatures {}).",
+          finalResiduals[0], finalResiduals[1], inletTemps, outletTemps);
+    }
+  }
+
+  /**
+   * Solves the two-unknown problem as a bounded one-dimensional root problem.
+   *
+   * <p>
+   * For each trial value of one outlet temperature, the other outlet is first moved onto the energy-balance manifold by
+   * bisection. The remaining pinch residual is then bracketed and bisected along that manifold. This avoids asking a
+   * numerical two-dimensional Jacobian to cross the piecewise-smooth points where the active pinch location changes.
+   * </p>
+   *
+   * @param unknownIndices the two unknown outlet-temperature indices
+   * @return true when both energy and pinch residuals converge
+   */
+  private boolean solveTwoUnknownsOnEnergyManifold(List<Integer> unknownIndices) {
+    if (unknownIndices.size() != 2) {
+      return false;
+    }
+
+    if (scanEnergyManifoldForPinchRoot(unknownIndices.get(0), unknownIndices.get(1))) {
+      return true;
+    }
+    return scanEnergyManifoldForPinchRoot(unknownIndices.get(1), unknownIndices.get(0));
+  }
+
+  private boolean scanEnergyManifoldForPinchRoot(int outerIndex, int energyBalancedIndex) {
+    double[] bounds = restartBounds(outerIndex);
+    double span = bounds[1] - bounds[0];
+    double endpointInset = Math.max(1.0e-6, span * 1.0e-8);
+    double lower = bounds[0] + endpointInset;
+    double upper = bounds[1] - endpointInset;
+    if (!Double.isFinite(span) || lower >= upper) {
+      return false;
+    }
+
+    final int scanSegments = 32;
+    double previousTemperature = Double.NaN;
+    double previousResidual = Double.NaN;
+    double[] bestTemperatures = null;
+    double bestResidual = Double.POSITIVE_INFINITY;
+    int bestSegment = -1;
+    double[] sampleTemperatures = new double[scanSegments + 1];
+    boolean[] validSamples = new boolean[scanSegments + 1];
+
+    for (int segment = 0; segment <= scanSegments; segment++) {
+      double trialTemperature = lower + (upper - lower) * segment / scanSegments;
+      sampleTemperatures[segment] = trialTemperature;
+      outletTemps.set(outerIndex, trialTemperature);
+      if (!balanceEnergyForIndex(energyBalancedIndex)) {
         continue;
       }
 
-      for (int i = 0; i < unknownIndices.size(); i++) {
-        int idx = unknownIndices.get(i);
-        outletTemps.set(idx, outletTemps.get(idx) - damping * delta[i]);
+      double pinchResidual = pinch() - approachTemperature;
+      if (!Double.isFinite(pinchResidual)) {
+        continue;
+      }
+      validSamples[segment] = true;
+      if (Math.abs(pinchResidual) < bestResidual) {
+        bestResidual = Math.abs(pinchResidual);
+        bestSegment = segment;
+        bestTemperatures = new double[] { outletTemps.get(outerIndex), outletTemps.get(energyBalancedIndex) };
+      }
+      if (Math.abs(pinchResidual) < tolerance) {
+        return true;
+      }
+
+      if (Double.isFinite(previousResidual) && oppositeSigns(previousResidual, pinchResidual)
+          && bisectPinchOnEnergyManifold(outerIndex, energyBalancedIndex, previousTemperature, trialTemperature,
+              previousResidual)) {
+        return true;
+      }
+      previousTemperature = trialTemperature;
+      previousResidual = pinchResidual;
+    }
+
+    if (bestTemperatures != null) {
+      int lowerSegment = bestSegment;
+      while (lowerSegment > 0 && !validSamples[lowerSegment - 1]) {
+        lowerSegment--;
+      }
+      if (lowerSegment > 0) {
+        lowerSegment--;
+      }
+      int upperSegment = bestSegment;
+      while (upperSegment < scanSegments && !validSamples[upperSegment + 1]) {
+        upperSegment++;
+      }
+      if (upperSegment < scanSegments) {
+        upperSegment++;
+      }
+      if (lowerSegment < upperSegment && validSamples[lowerSegment] && validSamples[upperSegment]) {
+        return minimizePinchResidualOnEnergyManifold(outerIndex, energyBalancedIndex, sampleTemperatures[lowerSegment],
+            sampleTemperatures[upperSegment], bestTemperatures, bestResidual);
+      }
+      outletTemps.set(outerIndex, bestTemperatures[0]);
+      outletTemps.set(energyBalancedIndex, bestTemperatures[1]);
+    }
+    return false;
+  }
+
+  private boolean minimizePinchResidualOnEnergyManifold(int outerIndex, int energyBalancedIndex, double lower,
+      double upper, double[] initialBestTemperatures, double initialBestResidual) {
+    double bestResidual = initialBestResidual;
+    double bestOuterTemperature = initialBestTemperatures[0];
+    double bestBalancedTemperature = initialBestTemperatures[1];
+    double goldenRatio = 0.5 * (Math.sqrt(5.0) - 1.0);
+    double left = lower;
+    double right = upper;
+    double leftInterior = right - goldenRatio * (right - left);
+    double rightInterior = left + goldenRatio * (right - left);
+    double leftResidual = evaluatePinchResidualOnEnergyManifold(outerIndex, energyBalancedIndex, leftInterior);
+    double leftObjective = Double.isFinite(leftResidual) ? Math.abs(leftResidual) : Double.POSITIVE_INFINITY;
+    double leftBalancedTemperature = outletTemps.get(energyBalancedIndex);
+    double rightResidual = evaluatePinchResidualOnEnergyManifold(outerIndex, energyBalancedIndex, rightInterior);
+    double rightObjective = Double.isFinite(rightResidual) ? Math.abs(rightResidual) : Double.POSITIVE_INFINITY;
+    double rightBalancedTemperature = outletTemps.get(energyBalancedIndex);
+
+    for (int iteration = 0; iteration < 80; iteration++) {
+      if (Double.isFinite(leftObjective) && leftObjective < bestResidual) {
+        bestResidual = leftObjective;
+        bestOuterTemperature = leftInterior;
+        bestBalancedTemperature = leftBalancedTemperature;
+      }
+      if (Double.isFinite(rightObjective) && rightObjective < bestResidual) {
+        bestResidual = rightObjective;
+        bestOuterTemperature = rightInterior;
+        bestBalancedTemperature = rightBalancedTemperature;
+      }
+      if (bestResidual < tolerance) {
+        outletTemps.set(outerIndex, bestOuterTemperature);
+        outletTemps.set(energyBalancedIndex, bestBalancedTemperature);
+        return true;
+      }
+
+      if (leftObjective <= rightObjective) {
+        right = rightInterior;
+        rightInterior = leftInterior;
+        rightObjective = leftObjective;
+        rightBalancedTemperature = leftBalancedTemperature;
+        leftInterior = right - goldenRatio * (right - left);
+        leftResidual = evaluatePinchResidualOnEnergyManifold(outerIndex, energyBalancedIndex, leftInterior);
+        leftObjective = Double.isFinite(leftResidual) ? Math.abs(leftResidual) : Double.POSITIVE_INFINITY;
+        leftBalancedTemperature = outletTemps.get(energyBalancedIndex);
+      } else {
+        left = leftInterior;
+        leftInterior = rightInterior;
+        leftObjective = rightObjective;
+        leftBalancedTemperature = rightBalancedTemperature;
+        rightInterior = left + goldenRatio * (right - left);
+        rightResidual = evaluatePinchResidualOnEnergyManifold(outerIndex, energyBalancedIndex, rightInterior);
+        rightObjective = Double.isFinite(rightResidual) ? Math.abs(rightResidual) : Double.POSITIVE_INFINITY;
+        rightBalancedTemperature = outletTemps.get(energyBalancedIndex);
       }
     }
-    throw new RuntimeException("twoUnknowns(): Failed to converge after maxIterations.");
+
+    outletTemps.set(outerIndex, bestOuterTemperature);
+    outletTemps.set(energyBalancedIndex, bestBalancedTemperature);
+    return false;
+  }
+
+  private double evaluatePinchResidualOnEnergyManifold(int outerIndex, int energyBalancedIndex,
+      double outerTemperature) {
+    outletTemps.set(outerIndex, outerTemperature);
+    if (!balanceEnergyForIndex(energyBalancedIndex)) {
+      return Double.NaN;
+    }
+    return pinch() - approachTemperature;
+  }
+
+  private boolean bisectPinchOnEnergyManifold(int outerIndex, int energyBalancedIndex, double lower, double upper,
+      double lowerResidual) {
+    for (int iteration = 0; iteration < 80; iteration++) {
+      double midpoint = 0.5 * (lower + upper);
+      outletTemps.set(outerIndex, midpoint);
+      if (!balanceEnergyForIndex(energyBalancedIndex)) {
+        return false;
+      }
+
+      double midpointResidual = pinch() - approachTemperature;
+      if (!Double.isFinite(midpointResidual)) {
+        return false;
+      }
+      if (Math.abs(midpointResidual) < tolerance) {
+        return true;
+      }
+      if (oppositeSigns(lowerResidual, midpointResidual)) {
+        upper = midpoint;
+      } else {
+        lower = midpoint;
+        lowerResidual = midpointResidual;
+      }
+    }
+    return false;
+  }
+
+  private boolean oppositeSigns(double first, double second) {
+    return (first < 0.0 && second > 0.0) || (first > 0.0 && second < 0.0);
   }
 
   private double[] residualFunctionTwoUnknowns() {
@@ -329,13 +555,35 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     double[][] J = new double[2][2];
     for (int i = 0; i < 2; i++) {
       int idx = unknownIndices.get(i);
-      outletTemps.set(idx, baseTemps[i] + jacobiDelta);
-      double[] perturbed = residualFunctionTwoUnknowns();
-      for (int j = 0; j < 2; j++) {
-        J[j][i] = (perturbed[j] - baseResiduals[j]) / jacobiDelta;
+      double[] bounds = restartBounds(idx);
+      double roomBelow = baseTemps[i] - bounds[0];
+      double roomAbove = bounds[1] - baseTemps[i];
+      double perturbation;
+      if (roomAbove >= roomBelow) {
+        perturbation = Math.min(jacobiDelta, 0.5 * roomAbove);
+      } else {
+        perturbation = -Math.min(jacobiDelta, 0.5 * roomBelow);
       }
-      outletTemps.set(idx, baseTemps[i]);
+      if (!Double.isFinite(perturbation) || Math.abs(perturbation) < 1.0e-12) {
+        throw new ArithmeticException("No bounded temperature perturbation available");
+      }
+      try {
+        outletTemps.set(idx, baseTemps[i] + perturbation);
+        double[] perturbed = residualFunctionTwoUnknowns();
+        for (int j = 0; j < 2; j++) {
+          J[j][i] = (perturbed[j] - baseResiduals[j]) / perturbation;
+        }
+      } catch (NullPointerException | ClassCastException | IndexOutOfBoundsException | IllegalStateException ex) {
+        throw ex;
+      } catch (RuntimeException ex) {
+        ArithmeticException wrapped = new ArithmeticException("Jacobian evaluation failed");
+        wrapped.initCause(ex);
+        throw wrapped;
+      } finally {
+        outletTemps.set(idx, baseTemps[i]);
+      }
     }
+    residualFunctionTwoUnknowns();
     return J;
   }
 
@@ -354,6 +602,93 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     double dx = b[0] * A[1][1] - b[1] * A[0][1];
     double dy = A[0][0] * b[1] - A[1][0] * b[0];
     return new double[] { dx / det, dy / det };
+  }
+
+  /**
+   * Applies a damped Newton step only when it improves the scaled two-equation residual.
+   *
+   * <p>
+   * The energy residual is measured in kW while the pinch residual is measured in degrees Celsius. Scaling the energy
+   * term by the current exchanger duty prevents either equation from dominating the line search solely because of its
+   * units. Trial temperatures are kept inside the physical heat-flow bounds.
+   * </p>
+   *
+   * @param unknownIndices outlet-temperature indices solved by Newton's method
+   * @param delta proposed Newton correction
+   * @param residuals residual vector at the current temperatures
+   * @return true when an improving trial step was accepted
+   */
+  private boolean applyBacktrackingTwoUnknownStep(List<Integer> unknownIndices, double[] delta, double[] residuals) {
+    double energyScale = Math.max(1.0, Math.max(Math.abs(hotLoad), Math.abs(coldLoad)));
+    double currentMerit = twoUnknownMerit(residuals, energyScale);
+    if (!Double.isFinite(currentMerit)) {
+      return false;
+    }
+
+    double[] baseTemperatures = new double[unknownIndices.size()];
+    double largestCorrection = 0.0;
+    for (int i = 0; i < unknownIndices.size(); i++) {
+      baseTemperatures[i] = outletTemps.get(unknownIndices.get(i));
+      if (!Double.isFinite(delta[i])) {
+        return false;
+      }
+      largestCorrection = Math.max(largestCorrection, Math.abs(delta[i]));
+    }
+
+    double stepScale = largestCorrection > 25.0 ? 25.0 / largestCorrection : 1.0;
+    for (int lineSearchIteration = 0; lineSearchIteration < 16; lineSearchIteration++) {
+      boolean changed = false;
+      for (int i = 0; i < unknownIndices.size(); i++) {
+        int index = unknownIndices.get(i);
+        double candidate = baseTemperatures[i] - damping * stepScale * delta[i];
+        candidate = clampToRestartBounds(index, candidate);
+        outletTemps.set(index, candidate);
+        changed = changed || Math.abs(candidate - baseTemperatures[i]) > 1.0e-12;
+      }
+
+      if (changed) {
+        try {
+          double[] trialResiduals = residualFunctionTwoUnknowns();
+          double trialMerit = twoUnknownMerit(trialResiduals, energyScale);
+          if (Double.isFinite(trialMerit) && trialMerit < currentMerit) {
+            return true;
+          }
+        } catch (NullPointerException | ClassCastException | IndexOutOfBoundsException | IllegalStateException ex) {
+          throw ex;
+        } catch (RuntimeException ex) {
+          logger.debug("Rejected invalid two-unknown exchanger trial step", ex);
+        }
+      }
+
+      restoreUnknownTemperatures(unknownIndices, baseTemperatures);
+      stepScale *= 0.5;
+    }
+
+    restoreUnknownTemperatures(unknownIndices, baseTemperatures);
+    return false;
+  }
+
+  private double twoUnknownMerit(double[] residuals, double energyScale) {
+    double scaledEnergyResidual = residuals[0] / energyScale;
+    double scaledPinchResidual = residuals[1] / Math.max(1.0, Math.abs(approachTemperature));
+    return Math.sqrt(scaledEnergyResidual * scaledEnergyResidual + scaledPinchResidual * scaledPinchResidual);
+  }
+
+  private void restoreUnknownTemperatures(List<Integer> unknownIndices, double[] temperatures) {
+    for (int i = 0; i < unknownIndices.size(); i++) {
+      outletTemps.set(unknownIndices.get(i), temperatures[i]);
+    }
+  }
+
+  private double clampToRestartBounds(int index, double temperature) {
+    double[] bounds = restartBounds(index);
+    double span = bounds[1] - bounds[0];
+    if (!Double.isFinite(span) || span <= 0.0) {
+      throw new IllegalStateException(
+          String.format("Invalid restart bounds for stream %d: [%.3f, %.3f]", index, bounds[0], bounds[1]));
+    }
+    double inset = Math.max(1.0e-6, span * 1.0e-8);
+    return Math.max(bounds[0] + inset, Math.min(bounds[1] - inset, temperature));
   }
 
   // ================================================================
@@ -798,41 +1133,46 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         uaOk = false;
       }
 
+      // The two-unknown solve uses pinch as a residual, so a crossed intermediate
+      // composite curve must be allowed to reach the safeguarded Newton line search.
+      boolean heatFeasibleForRestart = heatFeasible || (!UATest && unknownIndices.size() == 2);
+
       // 5. Final condition
-      if (directionOk && energyOk && heatFeasible && (!UATest || uaOk) && !localMin) {
-        logger.debug("✓ No reset on attempt " + attempt);
-        logger.debug("With Streams " + outletTemps);
+      if (directionOk && energyOk && heatFeasibleForRestart && (!UATest || uaOk) && !localMin) {
+        logger.debug("No exchanger reset required on attempt {} with outlet temperatures {}", attempt, outletTemps);
         return;
       } else {
-        logger.debug("✗ reset on attempt " + attempt + ": " + String.join("; ", msgs));
+        logger.debug("Resetting exchanger on attempt {}: {}", attempt, String.join("; ", msgs));
 
-        // Select a deterministic low-discrepancy restart within the physical bounds.
-        // Math.random() made convergence depend on unrelated test and execution order.
-        double hottestHot = Collections.max(inletTemps);
-        double coldestCold = Collections.min(inletTemps);
+        boolean validBounds = true;
+        double[] restartTemperatures = new double[unknownIndices.size()];
         for (int position = 0; position < unknownIndices.size(); position++) {
           int idx = unknownIndices.get(position);
-          double inlet = inletTemps.get(idx);
-          double lower;
-          double upper;
-          String type = streamTypes.get(idx);
-          if (type.equals("hot")) {
-            lower = coldestCold + approachTemperature;
-            upper = inlet;
-          } else {
-            lower = inlet;
-            upper = hottestHot - approachTemperature;
+          double[] bounds = restartBounds(idx);
+          double span = bounds[1] - bounds[0];
+          double inset = Math.max(1.0e-6, span * 1.0e-8);
+          double lower = bounds[0] + inset;
+          double upper = bounds[1] - inset;
+          if (!Double.isFinite(span) || lower >= upper) {
+            validBounds = false;
+            msgs.add(String.format("stream %d has invalid restart bounds [%.3f, %.3f]", idx, bounds[0], bounds[1]));
+            break;
           }
-          double fraction = deterministicRestartFraction(attempt, position);
-          double guess = lower + fraction * (upper - lower);
-          outletTemps.set(idx, guess);
+          restartTemperatures[position] = ThreadLocalRandom.current().nextDouble(lower, upper);
+        }
+        if (validBounds) {
+          for (int position = 0; position < unknownIndices.size(); position++) {
+            outletTemps.set(unknownIndices.get(position), restartTemperatures[position]);
+          }
+          boolean balanced = balanceEnergyAtRestart(unknownIndices);
+          logger.debug("Energy-balance bracketing {} on restart attempt {}", balanced ? "succeeded" : "failed",
+              attempt);
         }
         // A detected stall forces exactly one new starting point. Keeping this flag true
         // makes the acceptance condition unreachable and exhausts every restart attempt.
         localMin = false;
 
-        logger.debug("Outlet temps before solving: " + outletTemps);
-        logger.debug("Unknown flags: " + unknownOutlets);
+        logger.debug("Restart outlet temperatures {} for unknown flags {}", outletTemps, unknownOutlets);
       }
     }
 
@@ -841,29 +1181,93 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         "resetOfExtremes: gave up after " + extremeAttempts + " attempts - last issues: " + String.join("; ", msgs));
   }
 
-  /**
-   * Returns a reproducible low-discrepancy fraction for solver restarts.
-   *
-   * <p>
-   * A radical-inverse sequence explores each unknown temperature's interval without coupling convergence to JVM-global
-   * random state. Separate prime bases avoid placing multiple unknowns on the same diagonal in the search space.
-   * </p>
-   *
-   * @param attempt one-based restart attempt
-   * @param dimension zero-based unknown-temperature dimension
-   * @return fraction in the interval {@code [0, 1)}
-   */
-  private static double deterministicRestartFraction(int attempt, int dimension) {
-    int base = RESTART_SEQUENCE_BASES[dimension % RESTART_SEQUENCE_BASES.length];
-    int value = attempt;
-    double fraction = 0.0;
-    double inversePower = 1.0 / base;
-    while (value > 0) {
-      fraction += (value % base) * inversePower;
-      value /= base;
-      inversePower /= base;
+  private double[] restartBounds(int index) {
+    double coldestColdInlet = Double.POSITIVE_INFINITY;
+    double hottestHotInlet = Double.NEGATIVE_INFINITY;
+    for (int i = 0; i < streamTypes.size(); i++) {
+      if ("cold".equals(streamTypes.get(i))) {
+        coldestColdInlet = Math.min(coldestColdInlet, inletTemps.get(i));
+      } else if ("hot".equals(streamTypes.get(i))) {
+        hottestHotInlet = Math.max(hottestHotInlet, inletTemps.get(i));
+      }
     }
-    return fraction;
+
+    double inlet = inletTemps.get(index);
+    if ("hot".equals(streamTypes.get(index))) {
+      return new double[] { coldestColdInlet + approachTemperature, inlet };
+    }
+    return new double[] { inlet, hottestHotInlet - approachTemperature };
+  }
+
+  /**
+   * Moves one unknown outlet temperature onto the energy-balance manifold by bisection.
+   *
+   * @param unknownIndices unknown outlet-temperature indices
+   * @return true when an energy-balance root was bracketed
+   */
+  private boolean balanceEnergyAtRestart(List<Integer> unknownIndices) {
+    for (int position = unknownIndices.size() - 1; position >= 0; position--) {
+      int index = unknownIndices.get(position);
+      if (balanceEnergyForIndex(index)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private boolean balanceEnergyForIndex(int index) {
+    double originalTemperature = outletTemps.get(index);
+    double[] bounds = restartBounds(index);
+    double span = bounds[1] - bounds[0];
+    double endpointInset = Math.max(1.0e-6, span * 1.0e-8);
+    double lower = bounds[0] + endpointInset;
+    double upper = bounds[1] - endpointInset;
+    if (!Double.isFinite(span) || lower >= upper) {
+      return false;
+    }
+
+    try {
+      outletTemps.set(index, lower);
+      double lowerResidual = energyDiff();
+      if (Math.abs(lowerResidual) < tolerance) {
+        return true;
+      }
+      outletTemps.set(index, upper);
+      double upperResidual = energyDiff();
+      if (Math.abs(upperResidual) < tolerance) {
+        return true;
+      }
+      if (!Double.isFinite(lowerResidual) || !Double.isFinite(upperResidual)
+          || !oppositeSigns(lowerResidual, upperResidual)) {
+        outletTemps.set(index, originalTemperature);
+        return false;
+      }
+
+      for (int iteration = 0; iteration < 80; iteration++) {
+        double midpoint = 0.5 * (lower + upper);
+        outletTemps.set(index, midpoint);
+        double midpointResidual = energyDiff();
+        if (!Double.isFinite(midpointResidual)) {
+          outletTemps.set(index, originalTemperature);
+          return false;
+        }
+        if (Math.abs(midpointResidual) < tolerance) {
+          return true;
+        }
+        if (oppositeSigns(lowerResidual, midpointResidual)) {
+          upper = midpoint;
+        } else {
+          lower = midpoint;
+          lowerResidual = midpointResidual;
+        }
+      }
+    } catch (NullPointerException | ClassCastException | IndexOutOfBoundsException | IllegalStateException ex) {
+      throw ex;
+    } catch (RuntimeException ex) {
+      logger.debug("Unable to bracket exchanger energy balance using stream {}", index, ex);
+    }
+    outletTemps.set(index, originalTemperature);
+    return false;
   }
 
   private boolean stallDetection(List<Integer> unknownIndices) {
