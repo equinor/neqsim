@@ -54,6 +54,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
   private List<Double> prevOutletTemps = null;
   private int stallCounter = 0;
+  /** Index of the next deterministic solver restart point within the current run. */
+  private int restartSequenceIndex = 0;
   private final int stallLimit = 50;
   private double localRange = 5.0;
   private double damping = 1.0;
@@ -159,6 +161,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     fluidInlet.clear();
     prevOutletTemps = null;
     stallCounter = 0;
+    restartSequenceIndex = 0;
 
     // Calculate inlet state caches from the current connected streams.
     for (int i = 0; i < inStreams.size(); i++) {
@@ -810,6 +813,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         // Math.random() made convergence depend on unrelated test and execution order.
         double hottestHot = Collections.max(inletTemps);
         double coldestCold = Collections.min(inletTemps);
+        int restartPoint = ++restartSequenceIndex;
         for (int position = 0; position < unknownIndices.size(); position++) {
           int idx = unknownIndices.get(position);
           double inlet = inletTemps.get(idx);
@@ -823,7 +827,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
             lower = inlet;
             upper = hottestHot - approachTemperature;
           }
-          double fraction = deterministicRestartFraction(attempt, position);
+          double fraction = deterministicRestartFraction(restartPoint, position);
           double guess = lower + fraction * (upper - lower);
           outletTemps.set(idx, guess);
         }
