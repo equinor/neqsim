@@ -68,6 +68,7 @@ class LNGProcessBuilderTest {
 
     LNGProcessModel.Result result = model.run();
 
+    assertFalse(model.getCryogenicHeatExchangers().isEmpty());
     LNGHeatExchanger mainExchanger = model.getCryogenicHeatExchangers()
         .get(model.getCryogenicHeatExchangers().size() - 1);
     assertEquals(0.0, mainExchanger.energyDiff(), 1.0e-3);
