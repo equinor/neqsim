@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
@@ -45,17 +46,12 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   /** Message used when the Jacobian is singular. */
   private static final String SINGULAR_JACOBIAN_MSG = "Jacobian determinant is zero";
 
-  /** Prime bases used for deterministic low-discrepancy restart guesses. */
-  private static final int[] RESTART_SEQUENCE_BASES = { 2, 3, 5 };
-
   private final double extremeEnergy = 0.3;
   private final double extremeUA = 2.0;
   private final int extremeAttempts = 1000;
 
   private List<Double> prevOutletTemps = null;
   private int stallCounter = 0;
-  /** Number of deterministic solver restart points generated during the current run. */
-  private int restartSequenceIndex = 0;
   private final int stallLimit = 50;
   private double localRange = 5.0;
   private double damping = 1.0;
@@ -161,7 +157,6 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     fluidInlet.clear();
     prevOutletTemps = null;
     stallCounter = 0;
-    restartSequenceIndex = 0;
 
     // Calculate inlet state caches from the current connected streams.
     for (int i = 0; i < inStreams.size(); i++) {
@@ -293,27 +288,26 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         outletTemps.set(i, initializeOutletGuess(i));
       }
     }
+    resetOfExtremesAndStalls(unknownIndices, false, false);
     for (int iteration = 0; iteration < maxIterations; iteration++) {
-      boolean stalled = stallDetection(unknownIndices);
-      resetOfExtremesAndStalls(unknownIndices, stalled, false);
       double[] residuals = residualFunctionTwoUnknowns();
       if (Math.max(Math.abs(residuals[0]), Math.abs(residuals[1])) < tolerance) {
-        logger.debug("✓ OK With Streams" + outletTemps);
+        logger.debug("Two-unknown exchanger solve converged with outlet temperatures {}", outletTemps);
         return;
       }
-      double[][] jacobian = numericalJacobiTwoUnknowns(unknownIndices);
       double[] delta;
       try {
+        double[][] jacobian = numericalJacobiTwoUnknowns(unknownIndices);
         delta = linearSystemTwoUnknowns(jacobian, residuals);
-      } catch (ArithmeticException e) {
-        logger.debug("Restarting two-unknown exchanger solve after singular Jacobian", e);
+      } catch (RuntimeException e) {
+        logger.debug("Restarting two-unknown exchanger solve after invalid Jacobian", e);
         resetOfExtremesAndStalls(unknownIndices, true, false);
         continue;
       }
 
-      for (int i = 0; i < unknownIndices.size(); i++) {
-        int idx = unknownIndices.get(i);
-        outletTemps.set(idx, outletTemps.get(idx) - damping * delta[i]);
+      if (!applyBacktrackingTwoUnknownStep(unknownIndices, delta, residuals)) {
+        logger.debug("Restarting two-unknown exchanger solve after rejected Newton step");
+        resetOfExtremesAndStalls(unknownIndices, true, false);
       }
     }
     throw new RuntimeException("twoUnknowns(): Failed to converge after maxIterations.");
@@ -332,12 +326,15 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     double[][] J = new double[2][2];
     for (int i = 0; i < 2; i++) {
       int idx = unknownIndices.get(i);
-      outletTemps.set(idx, baseTemps[i] + jacobiDelta);
-      double[] perturbed = residualFunctionTwoUnknowns();
-      for (int j = 0; j < 2; j++) {
-        J[j][i] = (perturbed[j] - baseResiduals[j]) / jacobiDelta;
+      try {
+        outletTemps.set(idx, baseTemps[i] + jacobiDelta);
+        double[] perturbed = residualFunctionTwoUnknowns();
+        for (int j = 0; j < 2; j++) {
+          J[j][i] = (perturbed[j] - baseResiduals[j]) / jacobiDelta;
+        }
+      } finally {
+        outletTemps.set(idx, baseTemps[i]);
       }
-      outletTemps.set(idx, baseTemps[i]);
     }
     return J;
   }
@@ -357,6 +354,87 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     double dx = b[0] * A[1][1] - b[1] * A[0][1];
     double dy = A[0][0] * b[1] - A[1][0] * b[0];
     return new double[] { dx / det, dy / det };
+  }
+
+  /**
+   * Applies a damped Newton step only when it improves the scaled two-equation residual.
+   *
+   * <p>
+   * The energy residual is measured in kW while the pinch residual is measured in degrees Celsius. Scaling the energy
+   * term by the current exchanger duty prevents either equation from dominating the line search solely because of its
+   * units. Trial temperatures are kept inside the physical heat-flow bounds.
+   * </p>
+   *
+   * @param unknownIndices outlet-temperature indices solved by Newton's method
+   * @param delta proposed Newton correction
+   * @param residuals residual vector at the current temperatures
+   * @return true when an improving trial step was accepted
+   */
+  private boolean applyBacktrackingTwoUnknownStep(List<Integer> unknownIndices, double[] delta,
+      double[] residuals) {
+    double energyScale = Math.max(1.0, Math.max(Math.abs(hotLoad), Math.abs(coldLoad)));
+    double currentMerit = twoUnknownMerit(residuals, energyScale);
+    if (!Double.isFinite(currentMerit)) {
+      return false;
+    }
+
+    double[] baseTemperatures = new double[unknownIndices.size()];
+    double largestCorrection = 0.0;
+    for (int i = 0; i < unknownIndices.size(); i++) {
+      baseTemperatures[i] = outletTemps.get(unknownIndices.get(i));
+      if (!Double.isFinite(delta[i])) {
+        return false;
+      }
+      largestCorrection = Math.max(largestCorrection, Math.abs(delta[i]));
+    }
+
+    double stepScale = largestCorrection > 25.0 ? 25.0 / largestCorrection : 1.0;
+    for (int lineSearchIteration = 0; lineSearchIteration < 16; lineSearchIteration++) {
+      boolean changed = false;
+      for (int i = 0; i < unknownIndices.size(); i++) {
+        int index = unknownIndices.get(i);
+        double candidate = baseTemperatures[i] - damping * stepScale * delta[i];
+        candidate = clampToRestartBounds(index, candidate);
+        outletTemps.set(index, candidate);
+        changed = changed || Math.abs(candidate - baseTemperatures[i]) > 1.0e-12;
+      }
+
+      if (changed) {
+        try {
+          double[] trialResiduals = residualFunctionTwoUnknowns();
+          double trialMerit = twoUnknownMerit(trialResiduals, energyScale);
+          if (Double.isFinite(trialMerit) && trialMerit < currentMerit) {
+            return true;
+          }
+        } catch (RuntimeException ex) {
+          logger.debug("Rejected invalid two-unknown exchanger trial step", ex);
+        }
+      }
+
+      restoreUnknownTemperatures(unknownIndices, baseTemperatures);
+      stepScale *= 0.5;
+    }
+
+    restoreUnknownTemperatures(unknownIndices, baseTemperatures);
+    return false;
+  }
+
+  private double twoUnknownMerit(double[] residuals, double energyScale) {
+    double scaledEnergyResidual = residuals[0] / energyScale;
+    double scaledPinchResidual = residuals[1] / Math.max(1.0, Math.abs(approachTemperature));
+    return Math.sqrt(scaledEnergyResidual * scaledEnergyResidual + scaledPinchResidual * scaledPinchResidual);
+  }
+
+  private void restoreUnknownTemperatures(List<Integer> unknownIndices, double[] temperatures) {
+    for (int i = 0; i < unknownIndices.size(); i++) {
+      outletTemps.set(unknownIndices.get(i), temperatures[i]);
+    }
+  }
+
+  private double clampToRestartBounds(int index, double temperature) {
+    double[] bounds = restartBounds(index);
+    double inset = Math.max(1.0e-6, (bounds[1] - bounds[0]) * 1.0e-8);
+    return Math.max(bounds[0] + inset, Math.min(bounds[1] - inset, temperature));
   }
 
   // ================================================================
@@ -801,49 +879,35 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         uaOk = false;
       }
 
-      // 5. Final condition
-      // The two-unknown solve uses the pinch temperature as a Newton residual and does
-      // not evaluate LMTD or UA. It can therefore safely start from a crossed
-      // composite curve and drive the pinch to the positive approach-temperature
-      // target. Requiring a positive profile here can otherwise make that root
-      // unreachable. Three-unknown UA solves still require a valid LMTD profile.
+      // The two-unknown solve uses pinch as a residual, so a crossed intermediate
+      // composite curve must be allowed to reach the safeguarded Newton line search.
       boolean heatFeasibleForRestart = heatFeasible || (!UATest && unknownIndices.size() == 2);
+
+      // 5. Final condition
       if (directionOk && energyOk && heatFeasibleForRestart && (!UATest || uaOk) && !localMin) {
-        logger.debug("✓ No reset on attempt " + attempt);
-        logger.debug("With Streams " + outletTemps);
+        logger.debug("No exchanger reset required on attempt {} with outlet temperatures {}", attempt, outletTemps);
         return;
       } else {
-        logger.debug("✗ reset on attempt " + attempt + ": " + String.join("; ", msgs));
+        logger.debug("Resetting exchanger on attempt {}: {}", attempt, String.join("; ", msgs));
 
-        // Select a deterministic low-discrepancy restart within the physical bounds.
-        // Math.random() made convergence depend on unrelated test and execution order.
-        int restartPoint = ++restartSequenceIndex;
-        logger.debug("Using deterministic restart point {}", restartPoint);
-        for (int position = 0; position < unknownIndices.size(); position++) {
-          int idx = unknownIndices.get(position);
+        boolean validBounds = true;
+        for (int idx : unknownIndices) {
           double[] bounds = restartBounds(idx);
-          double span = bounds[1] - bounds[0];
-          if (!Double.isFinite(span) || span <= 0.0) {
-            logger.debug("Skipping deterministic restart for stream {} with invalid bounds [{}, {}]", idx, bounds[0],
-                bounds[1]);
-            continue;
+          if (!Double.isFinite(bounds[0]) || !Double.isFinite(bounds[1]) || bounds[0] >= bounds[1]) {
+            validBounds = false;
+            msgs.add(String.format("stream %d has invalid restart bounds [%.3f, %.3f]", idx, bounds[0], bounds[1]));
+            break;
           }
-          double fraction = deterministicRestartFraction(restartPoint, position);
-          double guess = bounds[0] + fraction * span;
-          outletTemps.set(idx, guess);
+          outletTemps.set(idx, ThreadLocalRandom.current().nextDouble(bounds[0], bounds[1]));
         }
-        // Energy balance is monotonic in each outlet temperature. Bracket one
-        // unknown after every low-discrepancy restart so the Newton solver starts
-        // near the energy-balance manifold instead of relying on a narrow random hit.
-        boolean energyBalanced = balanceEnergyAtRestart(unknownIndices);
-        logger.debug("Energy-balance bracketing {} for restart point {}", energyBalanced ? "succeeded" : "failed",
-            restartPoint);
+        if (validBounds) {
+          balanceEnergyAtRestart(unknownIndices);
+        }
         // A detected stall forces exactly one new starting point. Keeping this flag true
         // makes the acceptance condition unreachable and exhausts every restart attempt.
         localMin = false;
 
-        logger.debug("Outlet temps before solving: " + outletTemps);
-        logger.debug("Unknown flags: " + unknownOutlets);
+        logger.debug("Restart outlet temperatures {} for unknown flags {}", outletTemps, unknownOutlets);
       }
     }
 
@@ -852,53 +916,26 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         "resetOfExtremes: gave up after " + extremeAttempts + " attempts - last issues: " + String.join("; ", msgs));
   }
 
-  /**
-   * Returns a reproducible low-discrepancy fraction for solver restarts.
-   *
-   * <p>
-   * A radical-inverse sequence explores each unknown temperature's interval without coupling convergence to JVM-global
-   * random state. Separate prime bases avoid placing multiple unknowns on the same diagonal in the search space.
-   * </p>
-   *
-   * @param attempt one-based restart attempt
-   * @param dimension zero-based unknown-temperature dimension
-   * @return fraction in the interval {@code [0, 1)}
-   */
-  private static double deterministicRestartFraction(int attempt, int dimension) {
-    int base = RESTART_SEQUENCE_BASES[dimension % RESTART_SEQUENCE_BASES.length];
-    int value = attempt;
-    double fraction = 0.0;
-    double inversePower = 1.0 / base;
-    while (value > 0) {
-      fraction += (value % base) * inversePower;
-      value /= base;
-      inversePower /= base;
-    }
-    return fraction;
-  }
-
-  /**
-   * Returns the physical outlet-temperature bounds used for deterministic restarts.
-   *
-   * @param index stream index
-   * @return lower and upper outlet-temperature bounds in degrees Celsius
-   */
   private double[] restartBounds(int index) {
+    double coldestColdInlet = Double.POSITIVE_INFINITY;
+    double hottestHotInlet = Double.NEGATIVE_INFINITY;
+    for (int i = 0; i < streamTypes.size(); i++) {
+      if ("cold".equals(streamTypes.get(i))) {
+        coldestColdInlet = Math.min(coldestColdInlet, inletTemps.get(i));
+      } else if ("hot".equals(streamTypes.get(i))) {
+        hottestHotInlet = Math.max(hottestHotInlet, inletTemps.get(i));
+      }
+    }
+
     double inlet = inletTemps.get(index);
     if ("hot".equals(streamTypes.get(index))) {
-      return new double[] { Collections.min(inletTemps) + approachTemperature, inlet };
+      return new double[] { coldestColdInlet + approachTemperature, inlet };
     }
-    return new double[] { inlet, Collections.max(inletTemps) - approachTemperature };
+    return new double[] { inlet, hottestHotInlet - approachTemperature };
   }
 
   /**
    * Moves one unknown outlet temperature onto the energy-balance manifold by bisection.
-   *
-   * <p>
-   * At fixed values of the other outlet temperatures, total exchanger duty is monotonic in each outlet temperature.
-   * Trying each unknown from last to first preserves the low-discrepancy coverage of the remaining dimensions while
-   * providing a reproducible, thermodynamically meaningful restart.
-   * </p>
    *
    * @param unknownIndices unknown outlet-temperature indices
    * @return true when an energy-balance root was bracketed
@@ -909,49 +946,35 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       double originalTemperature = outletTemps.get(index);
       double[] bounds = restartBounds(index);
       double span = bounds[1] - bounds[0];
-      if (!Double.isFinite(span) || span <= 0.0) {
-        continue;
-      }
-
       double endpointInset = Math.max(1.0e-6, span * 1.0e-8);
       double lower = bounds[0] + endpointInset;
       double upper = bounds[1] - endpointInset;
-      if (lower >= upper) {
+      if (!Double.isFinite(span) || lower >= upper) {
         continue;
       }
 
       try {
         outletTemps.set(index, lower);
         double lowerResidual = energyDiff();
-        if (Math.abs(lowerResidual) < tolerance) {
-          return true;
-        }
-
         outletTemps.set(index, upper);
         double upperResidual = energyDiff();
-        if (Math.abs(upperResidual) < tolerance) {
-          return true;
-        }
-
         if (!Double.isFinite(lowerResidual) || !Double.isFinite(upperResidual)
             || (lowerResidual < 0.0) == (upperResidual < 0.0)) {
           outletTemps.set(index, originalTemperature);
           continue;
         }
 
-        boolean finiteBisection = true;
         for (int iteration = 0; iteration < 60; iteration++) {
           double midpoint = 0.5 * (lower + upper);
           outletTemps.set(index, midpoint);
           double midpointResidual = energyDiff();
           if (!Double.isFinite(midpointResidual)) {
-            finiteBisection = false;
+            outletTemps.set(index, originalTemperature);
             break;
           }
           if (Math.abs(midpointResidual) < tolerance || upper - lower < 1.0e-6) {
             return true;
           }
-
           if ((lowerResidual < 0.0) != (midpointResidual < 0.0)) {
             upper = midpoint;
           } else {
@@ -959,17 +982,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
             lowerResidual = midpointResidual;
           }
         }
-
-        if (!finiteBisection) {
-          outletTemps.set(index, originalTemperature);
-          continue;
-        }
-        outletTemps.set(index, 0.5 * (lower + upper));
-        return true;
-      } catch (Exception ex) {
+      } catch (RuntimeException ex) {
         logger.debug("Unable to bracket exchanger energy balance using stream {}", index, ex);
       }
-
       outletTemps.set(index, originalTemperature);
     }
     return false;
