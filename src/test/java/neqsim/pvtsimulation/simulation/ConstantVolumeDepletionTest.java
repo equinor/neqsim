@@ -74,8 +74,7 @@ public class ConstantVolumeDepletionTest {
     cvd.setPressures(new double[] { 120.0, 100.0, 80.0, 60.0, 40.0, 20.0 });
     cvd.runCalc();
 
-    assertEquals(saturationReference.getSaturationPressure(), cvd.getSaturationPressure(),
-        0.05);
+    assertEquals(saturationReference.getSaturationPressure(), cvd.getSaturationPressure(), 0.05);
     assertTrue(cvd.validateMaterialBalance(0.02));
 
     double[] depletion = cvd.getCummulativeMolePercDepleted();
@@ -90,8 +89,7 @@ public class ConstantVolumeDepletionTest {
       if (depletion[i] > 1.0e-8) {
         assertEquals(1.0, relativeVolume[i], 1.0e-6);
       }
-      maximumLiquidDropout =
-          Math.max(maximumLiquidDropout, cvd.getLiquidRelativeVolume()[i]);
+      maximumLiquidDropout = Math.max(maximumLiquidDropout, cvd.getLiquidRelativeVolume()[i]);
     }
     assertTrue(maximumLiquidDropout > 0.5);
   }
