@@ -288,6 +288,12 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         outletTemps.set(i, initializeOutletGuess(i));
       }
     }
+    if (solveTwoUnknownsOnEnergyManifold(unknownIndices)) {
+      logger.debug("Two-unknown exchanger solve converged on the energy-balance manifold with outlet temperatures {}",
+          outletTemps);
+      return;
+    }
+
     resetOfExtremesAndStalls(unknownIndices, false, false);
     for (int iteration = 0; iteration < maxIterations; iteration++) {
       double[] residuals = residualFunctionTwoUnknowns();
@@ -311,6 +317,110 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       }
     }
     throw new RuntimeException("twoUnknowns(): Failed to converge after maxIterations.");
+  }
+
+  /**
+   * Solves the two-unknown problem as a bounded one-dimensional root problem.
+   *
+   * <p>
+   * For each trial value of one outlet temperature, the other outlet is first moved onto the energy-balance manifold
+   * by bisection. The remaining pinch residual is then bracketed and bisected along that manifold. This avoids asking a
+   * numerical two-dimensional Jacobian to cross the piecewise-smooth points where the active pinch location changes.
+   * </p>
+   *
+   * @param unknownIndices the two unknown outlet-temperature indices
+   * @return true when both energy and pinch residuals converge
+   */
+  private boolean solveTwoUnknownsOnEnergyManifold(List<Integer> unknownIndices) {
+    if (unknownIndices.size() != 2) {
+      return false;
+    }
+
+    if (scanEnergyManifoldForPinchRoot(unknownIndices.get(0), unknownIndices.get(1))) {
+      return true;
+    }
+    return scanEnergyManifoldForPinchRoot(unknownIndices.get(1), unknownIndices.get(0));
+  }
+
+  private boolean scanEnergyManifoldForPinchRoot(int outerIndex, int energyBalancedIndex) {
+    double[] bounds = restartBounds(outerIndex);
+    double span = bounds[1] - bounds[0];
+    double endpointInset = Math.max(1.0e-6, span * 1.0e-8);
+    double lower = bounds[0] + endpointInset;
+    double upper = bounds[1] - endpointInset;
+    if (!Double.isFinite(span) || lower >= upper) {
+      return false;
+    }
+
+    final int scanSegments = 32;
+    double previousTemperature = Double.NaN;
+    double previousResidual = Double.NaN;
+    double[] bestTemperatures = null;
+    double bestResidual = Double.POSITIVE_INFINITY;
+
+    for (int segment = 0; segment <= scanSegments; segment++) {
+      double trialTemperature = lower + (upper - lower) * segment / scanSegments;
+      outletTemps.set(outerIndex, trialTemperature);
+      if (!balanceEnergyForIndex(energyBalancedIndex)) {
+        continue;
+      }
+
+      double pinchResidual = pinch() - approachTemperature;
+      if (!Double.isFinite(pinchResidual)) {
+        continue;
+      }
+      if (Math.abs(pinchResidual) < bestResidual) {
+        bestResidual = Math.abs(pinchResidual);
+        bestTemperatures = new double[] { outletTemps.get(outerIndex), outletTemps.get(energyBalancedIndex) };
+      }
+      if (Math.abs(pinchResidual) < tolerance) {
+        return true;
+      }
+
+      if (Double.isFinite(previousResidual) && oppositeSigns(previousResidual, pinchResidual)
+          && bisectPinchOnEnergyManifold(outerIndex, energyBalancedIndex, previousTemperature, trialTemperature,
+              previousResidual)) {
+        return true;
+      }
+      previousTemperature = trialTemperature;
+      previousResidual = pinchResidual;
+    }
+
+    if (bestTemperatures != null) {
+      outletTemps.set(outerIndex, bestTemperatures[0]);
+      outletTemps.set(energyBalancedIndex, bestTemperatures[1]);
+    }
+    return false;
+  }
+
+  private boolean bisectPinchOnEnergyManifold(int outerIndex, int energyBalancedIndex, double lower, double upper,
+      double lowerResidual) {
+    for (int iteration = 0; iteration < 80; iteration++) {
+      double midpoint = 0.5 * (lower + upper);
+      outletTemps.set(outerIndex, midpoint);
+      if (!balanceEnergyForIndex(energyBalancedIndex)) {
+        return false;
+      }
+
+      double midpointResidual = pinch() - approachTemperature;
+      if (!Double.isFinite(midpointResidual)) {
+        return false;
+      }
+      if (Math.abs(midpointResidual) < tolerance) {
+        return true;
+      }
+      if (oppositeSigns(lowerResidual, midpointResidual)) {
+        upper = midpoint;
+      } else {
+        lower = midpoint;
+        lowerResidual = midpointResidual;
+      }
+    }
+    return false;
+  }
+
+  private boolean oppositeSigns(double first, double second) {
+    return (first < 0.0 && second > 0.0) || (first > 0.0 && second < 0.0);
   }
 
   private double[] residualFunctionTwoUnknowns() {
@@ -947,56 +1057,63 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
   private boolean balanceEnergyAtRestart(List<Integer> unknownIndices) {
     for (int position = unknownIndices.size() - 1; position >= 0; position--) {
       int index = unknownIndices.get(position);
-      double originalTemperature = outletTemps.get(index);
-      double[] bounds = restartBounds(index);
-      double span = bounds[1] - bounds[0];
-      double endpointInset = Math.max(1.0e-6, span * 1.0e-8);
-      double lower = bounds[0] + endpointInset;
-      double upper = bounds[1] - endpointInset;
-      if (!Double.isFinite(span) || lower >= upper) {
-        continue;
+      if (balanceEnergyForIndex(index)) {
+        return true;
       }
-
-      try {
-        outletTemps.set(index, lower);
-        double lowerResidual = energyDiff();
-        if (Math.abs(lowerResidual) < tolerance) {
-          return true;
-        }
-        outletTemps.set(index, upper);
-        double upperResidual = energyDiff();
-        if (Math.abs(upperResidual) < tolerance) {
-          return true;
-        }
-        if (!Double.isFinite(lowerResidual) || !Double.isFinite(upperResidual)
-            || (lowerResidual < 0.0) == (upperResidual < 0.0)) {
-          outletTemps.set(index, originalTemperature);
-          continue;
-        }
-
-        for (int iteration = 0; iteration < 60; iteration++) {
-          double midpoint = 0.5 * (lower + upper);
-          outletTemps.set(index, midpoint);
-          double midpointResidual = energyDiff();
-          if (!Double.isFinite(midpointResidual)) {
-            outletTemps.set(index, originalTemperature);
-            break;
-          }
-          if (Math.abs(midpointResidual) < tolerance || upper - lower < 1.0e-6) {
-            return true;
-          }
-          if ((lowerResidual < 0.0) != (midpointResidual < 0.0)) {
-            upper = midpoint;
-          } else {
-            lower = midpoint;
-            lowerResidual = midpointResidual;
-          }
-        }
-      } catch (RuntimeException ex) {
-        logger.debug("Unable to bracket exchanger energy balance using stream {}", index, ex);
-      }
-      outletTemps.set(index, originalTemperature);
     }
+    return false;
+  }
+
+  private boolean balanceEnergyForIndex(int index) {
+    double originalTemperature = outletTemps.get(index);
+    double[] bounds = restartBounds(index);
+    double span = bounds[1] - bounds[0];
+    double endpointInset = Math.max(1.0e-6, span * 1.0e-8);
+    double lower = bounds[0] + endpointInset;
+    double upper = bounds[1] - endpointInset;
+    if (!Double.isFinite(span) || lower >= upper) {
+      return false;
+    }
+
+    try {
+      outletTemps.set(index, lower);
+      double lowerResidual = energyDiff();
+      if (Math.abs(lowerResidual) < tolerance) {
+        return true;
+      }
+      outletTemps.set(index, upper);
+      double upperResidual = energyDiff();
+      if (Math.abs(upperResidual) < tolerance) {
+        return true;
+      }
+      if (!Double.isFinite(lowerResidual) || !Double.isFinite(upperResidual)
+          || !oppositeSigns(lowerResidual, upperResidual)) {
+        outletTemps.set(index, originalTemperature);
+        return false;
+      }
+
+      for (int iteration = 0; iteration < 80; iteration++) {
+        double midpoint = 0.5 * (lower + upper);
+        outletTemps.set(index, midpoint);
+        double midpointResidual = energyDiff();
+        if (!Double.isFinite(midpointResidual)) {
+          outletTemps.set(index, originalTemperature);
+          return false;
+        }
+        if (Math.abs(midpointResidual) < tolerance) {
+          return true;
+        }
+        if (oppositeSigns(lowerResidual, midpointResidual)) {
+          upper = midpoint;
+        } else {
+          lower = midpoint;
+          lowerResidual = midpointResidual;
+        }
+      }
+    } catch (RuntimeException ex) {
+      logger.debug("Unable to bracket exchanger energy balance using stream {}", index, ex);
+    }
+    outletTemps.set(index, originalTemperature);
     return false;
   }
 
