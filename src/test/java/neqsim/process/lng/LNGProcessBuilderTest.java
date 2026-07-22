@@ -66,25 +66,6 @@ class LNGProcessBuilderTest {
     LNGProcessModel model = new LNGProcessBuilder().setName("SMR smoke test").setCycle(LNGProcessCycle.SMR)
         .setFeedFlowRate(20000.0).setNumberOfZones(4).setAdaptiveRefinement(false).build();
 
-    LNGHeatExchanger seededExchanger = model.getCryogenicHeatExchangers()
-        .get(model.getCryogenicHeatExchangers().size() - 1);
-    System.out.println("SMR cold-side seed before process run: "
-        + seededExchanger.getInStream(2).getTemperature("C"));
-    java.util.UUID diagnosticId = java.util.UUID.randomUUID();
-    for (neqsim.process.equipment.ProcessEquipmentInterface unit : model.getProcessSystem().getUnitOperations()) {
-      if (unit == seededExchanger) {
-        break;
-      }
-      unit.run(diagnosticId);
-      System.out.println("SMR after " + unit.getName() + ": cold-side inlet "
-          + seededExchanger.getInStream(2).getTemperature("C"));
-    }
-    seededExchanger.run(diagnosticId);
-    System.out.println("SMR direct exchanger warm start: energy " + seededExchanger.energyDiff() + ", pinch "
-        + seededExchanger.getTemperatureApproach() + ", high-pressure MR outlet "
-        + seededExchanger.getOutStream(1).getTemperature("C") + ", cold MR outlet "
-        + seededExchanger.getOutStream(2).getTemperature("C"));
-
     LNGProcessModel.Result result = model.run();
 
     assertFalse(model.getCryogenicHeatExchangers().isEmpty());
