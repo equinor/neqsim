@@ -411,8 +411,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         upperSegment++;
       }
       if (lowerSegment < upperSegment && validSamples[lowerSegment] && validSamples[upperSegment]) {
-        return minimizePinchResidualOnEnergyManifold(outerIndex, energyBalancedIndex,
-            sampleTemperatures[lowerSegment], sampleTemperatures[upperSegment], bestTemperatures, bestResidual);
+        return minimizePinchResidualOnEnergyManifold(outerIndex, energyBalancedIndex, sampleTemperatures[lowerSegment],
+            sampleTemperatures[upperSegment], bestTemperatures, bestResidual);
       }
       outletTemps.set(outerIndex, bestTemperatures[0]);
       outletTemps.set(energyBalancedIndex, bestTemperatures[1]);
