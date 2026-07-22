@@ -67,17 +67,17 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     getThermoSystem().setPressure(1.0);
     do {
       getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
-      thermoOps.TPflash();
+      runSaturationTPflash();
     } while (getThermoSystem().getNumberOfPhases() == 1 && getThermoSystem().getPressure() < 1000.0);
     do {
       getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
-      thermoOps.TPflash();
+      runSaturationTPflash();
     } while (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPressure() < 1000.0);
     double minPres = getThermoSystem().getPressure() - 10.0;
     double maxPres = getThermoSystem().getPressure();
     do {
       getThermoSystem().setPressure((minPres + maxPres) / 2.0);
-      thermoOps.TPflash();
+      runSaturationTPflash();
       if (getThermoSystem().getNumberOfPhases() > 1) {
         minPres = getThermoSystem().getPressure();
       } else {
@@ -92,6 +92,20 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     saturationPressure = getThermoSystem().getPressure();
     Zsaturation = getThermoSystem().getZvolcorr();
     saturationConditionFound = true;
+  }
+
+  /**
+   * Runs a TP flash during the saturation-pressure scan with pressure context.
+   */
+  private void runSaturationTPflash() {
+    try {
+      thermoOps.TPflash();
+    } catch (Exception ex) {
+      String message = String.format(Locale.ROOT, "CVD saturation scan TP flash failed at pressure %.6f bara.",
+          getThermoSystem().getPressure("bara"));
+      logger.error(message, ex);
+      throw new IllegalStateException(message, ex);
+    }
   }
 
   /**
