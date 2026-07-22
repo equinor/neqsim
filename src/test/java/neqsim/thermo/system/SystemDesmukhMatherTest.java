@@ -1,6 +1,7 @@
 package neqsim.thermo.system;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseDesmukhMather;
@@ -34,6 +35,8 @@ class SystemDesmukhMatherTest {
     system.addComponent("MDEA", 1.0);
     system.addComponent("water", 9.0);
     system.chemicalReactionInit();
+    assertNull(system.getChemicalReactionOperations().getReactionList().getReaction("MDEACO2CH4"),
+        "Desmukh-Mather must not load the Electrolyte CPA-specific MDEACO2CH4 reaction");
     system.createDatabase(true);
     system.setMixingRule("classic");
 
