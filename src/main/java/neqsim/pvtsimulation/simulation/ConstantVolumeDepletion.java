@@ -108,9 +108,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         return;
       }
       if (relativeResidual < 0.0) {
-        throw new IllegalStateException(
-            String.format(Locale.ROOT, "CVD gas removal overshot the saturation volume by %.3e relative.",
-                -relativeResidual));
+        throw new IllegalStateException(String.format(Locale.ROOT,
+            "CVD gas removal overshot the saturation volume by %.3e relative.", -relativeResidual));
       }
       if (!getThermoSystem().hasPhaseType("gas")) {
         throw new IllegalStateException("Cannot restore CVD cell volume without a gas phase.");
