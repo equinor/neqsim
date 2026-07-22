@@ -528,7 +528,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
           if (Double.isFinite(trialMerit) && trialMerit < currentMerit) {
             return true;
           }
-        } catch (NullPointerException | ClassCastException | IndexOutOfBoundsException ex) {
+        } catch (NullPointerException | ClassCastException | IndexOutOfBoundsException | IllegalStateException ex) {
           throw ex;
         } catch (RuntimeException ex) {
           logger.debug("Rejected invalid two-unknown exchanger trial step", ex);
@@ -557,7 +557,12 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
   private double clampToRestartBounds(int index, double temperature) {
     double[] bounds = restartBounds(index);
-    double inset = Math.max(1.0e-6, (bounds[1] - bounds[0]) * 1.0e-8);
+    double span = bounds[1] - bounds[0];
+    if (!Double.isFinite(span) || span <= 0.0) {
+      throw new IllegalStateException(
+          String.format("Invalid restart bounds for stream %d: [%.3f, %.3f]", index, bounds[0], bounds[1]));
+    }
+    double inset = Math.max(1.0e-6, span * 1.0e-8);
     return Math.max(bounds[0] + inset, Math.min(bounds[1] - inset, temperature));
   }
 
@@ -1015,16 +1020,25 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         logger.debug("Resetting exchanger on attempt {}: {}", attempt, String.join("; ", msgs));
 
         boolean validBounds = true;
-        for (int idx : unknownIndices) {
+        double[] restartTemperatures = new double[unknownIndices.size()];
+        for (int position = 0; position < unknownIndices.size(); position++) {
+          int idx = unknownIndices.get(position);
           double[] bounds = restartBounds(idx);
-          if (!Double.isFinite(bounds[0]) || !Double.isFinite(bounds[1]) || bounds[0] >= bounds[1]) {
+          double span = bounds[1] - bounds[0];
+          double inset = Math.max(1.0e-6, span * 1.0e-8);
+          double lower = bounds[0] + inset;
+          double upper = bounds[1] - inset;
+          if (!Double.isFinite(span) || lower >= upper) {
             validBounds = false;
             msgs.add(String.format("stream %d has invalid restart bounds [%.3f, %.3f]", idx, bounds[0], bounds[1]));
             break;
           }
-          outletTemps.set(idx, ThreadLocalRandom.current().nextDouble(bounds[0], bounds[1]));
+          restartTemperatures[position] = ThreadLocalRandom.current().nextDouble(lower, upper);
         }
         if (validBounds) {
+          for (int position = 0; position < unknownIndices.size(); position++) {
+            outletTemps.set(unknownIndices.get(position), restartTemperatures[position]);
+          }
           boolean balanced = balanceEnergyAtRestart(unknownIndices);
           logger.debug("Energy-balance bracketing {} on restart attempt {}", balanced ? "succeeded" : "failed",
               attempt);
@@ -1122,7 +1136,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
           lowerResidual = midpointResidual;
         }
       }
-    } catch (NullPointerException | ClassCastException | IndexOutOfBoundsException ex) {
+    } catch (NullPointerException | ClassCastException | IndexOutOfBoundsException | IllegalStateException ex) {
       throw ex;
     } catch (RuntimeException ex) {
       logger.debug("Unable to bracket exchanger energy balance using stream {}", index, ex);
