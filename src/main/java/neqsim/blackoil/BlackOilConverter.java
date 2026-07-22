@@ -208,7 +208,7 @@ public class BlackOilConverter {
         SystemInterface oilComp = phaseAsStandaloneSystem(base, oil, Tref, p);
         ThermodynamicOperations oilResOps = new ThermodynamicOperations(oilComp);
         oilResOps.TPflash();
-        oilComp.initPhysicalProperties();
+        oilComp.initProperties();
         PhaseInterface oilRes = findOilPhase(oilComp);
         double V_res_liq = (oilRes != null) ? phaseVolume(oilRes) : totalVolume(oilComp);
         double mu_o = (oilRes != null) ? oilRes.getViscosity() : Double.NaN;
@@ -242,7 +242,7 @@ public class BlackOilConverter {
 
         ThermodynamicOperations gasResOps = new ThermodynamicOperations(gasComp);
         gasResOps.TPflash();
-        gasComp.initPhysicalProperties();
+        gasComp.initProperties();
         PhaseInterface gasRes = findGasPhase(gasComp);
         double V_res_gas = (gasRes != null) ? phaseVolume(gasRes) : totalVolume(gasComp);
         double mu_g = (gasRes != null) ? gasRes.getViscosity() : Double.NaN;
@@ -273,7 +273,7 @@ public class BlackOilConverter {
         SystemInterface wRes = phaseAsStandaloneSystem(base, wat, Tref, p);
         ThermodynamicOperations wOps = new ThermodynamicOperations(wRes);
         wOps.TPflash();
-        wRes.initPhysicalProperties();
+        wRes.initProperties();
         PhaseInterface wPhase = findWaterPhase(wRes);
         double rho_w_res = (wPhase != null) ? wPhase.getDensity() : Double.NaN;
         double mu_w = (wPhase != null) ? wPhase.getViscosity() : Double.NaN;
