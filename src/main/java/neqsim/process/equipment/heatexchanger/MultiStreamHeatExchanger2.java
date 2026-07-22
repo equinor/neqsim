@@ -54,7 +54,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
   private List<Double> prevOutletTemps = null;
   private int stallCounter = 0;
-  /** Index of the next deterministic solver restart point within the current run. */
+  /** Number of deterministic solver restart points generated during the current run. */
   private int restartSequenceIndex = 0;
   private final int stallLimit = 50;
   private double localRange = 5.0;
@@ -814,6 +814,7 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         double hottestHot = Collections.max(inletTemps);
         double coldestCold = Collections.min(inletTemps);
         int restartPoint = ++restartSequenceIndex;
+        logger.debug("Using deterministic restart point " + restartPoint);
         for (int position = 0; position < unknownIndices.size(); position++) {
           int idx = unknownIndices.get(position);
           double inlet = inletTemps.get(idx);
