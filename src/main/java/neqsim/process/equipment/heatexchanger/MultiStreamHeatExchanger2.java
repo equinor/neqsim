@@ -316,7 +316,10 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         resetOfExtremesAndStalls(unknownIndices, true, false);
       }
     }
-    throw new RuntimeException("twoUnknowns(): Failed to converge after maxIterations.");
+    double[] finalResiduals = residualFunctionTwoUnknowns();
+    throw new RuntimeException(String.format(
+        "twoUnknowns(): Failed to converge after maxIterations (energy residual %.6g kW, pinch residual %.6g C, outlet temperatures %s).",
+        finalResiduals[0], finalResiduals[1], outletTemps));
   }
 
   /**
@@ -357,9 +360,13 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     double previousResidual = Double.NaN;
     double[] bestTemperatures = null;
     double bestResidual = Double.POSITIVE_INFINITY;
+    int bestSegment = -1;
+    double[] sampleTemperatures = new double[scanSegments + 1];
+    boolean[] validSamples = new boolean[scanSegments + 1];
 
     for (int segment = 0; segment <= scanSegments; segment++) {
       double trialTemperature = lower + (upper - lower) * segment / scanSegments;
+      sampleTemperatures[segment] = trialTemperature;
       outletTemps.set(outerIndex, trialTemperature);
       if (!balanceEnergyForIndex(energyBalancedIndex)) {
         continue;
@@ -369,8 +376,10 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       if (!Double.isFinite(pinchResidual)) {
         continue;
       }
+      validSamples[segment] = true;
       if (Math.abs(pinchResidual) < bestResidual) {
         bestResidual = Math.abs(pinchResidual);
+        bestSegment = segment;
         bestTemperatures = new double[] { outletTemps.get(outerIndex), outletTemps.get(energyBalancedIndex) };
       }
       if (Math.abs(pinchResidual) < tolerance) {
@@ -387,10 +396,97 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     }
 
     if (bestTemperatures != null) {
+      int lowerSegment = bestSegment;
+      while (lowerSegment > 0 && !validSamples[lowerSegment - 1]) {
+        lowerSegment--;
+      }
+      if (lowerSegment > 0) {
+        lowerSegment--;
+      }
+      int upperSegment = bestSegment;
+      while (upperSegment < scanSegments && !validSamples[upperSegment + 1]) {
+        upperSegment++;
+      }
+      if (upperSegment < scanSegments) {
+        upperSegment++;
+      }
+      if (lowerSegment < upperSegment && validSamples[lowerSegment] && validSamples[upperSegment]) {
+        return minimizePinchResidualOnEnergyManifold(outerIndex, energyBalancedIndex,
+            sampleTemperatures[lowerSegment], sampleTemperatures[upperSegment], bestTemperatures, bestResidual);
+      }
       outletTemps.set(outerIndex, bestTemperatures[0]);
       outletTemps.set(energyBalancedIndex, bestTemperatures[1]);
     }
     return false;
+  }
+
+  private boolean minimizePinchResidualOnEnergyManifold(int outerIndex, int energyBalancedIndex, double lower,
+      double upper, double[] initialBestTemperatures, double initialBestResidual) {
+    double bestResidual = initialBestResidual;
+    double bestOuterTemperature = initialBestTemperatures[0];
+    double bestBalancedTemperature = initialBestTemperatures[1];
+    double goldenRatio = 0.5 * (Math.sqrt(5.0) - 1.0);
+    double left = lower;
+    double right = upper;
+    double leftInterior = right - goldenRatio * (right - left);
+    double rightInterior = left + goldenRatio * (right - left);
+    double leftResidual = evaluatePinchResidualOnEnergyManifold(outerIndex, energyBalancedIndex, leftInterior);
+    double leftObjective = Double.isFinite(leftResidual) ? Math.abs(leftResidual) : Double.POSITIVE_INFINITY;
+    double leftBalancedTemperature = outletTemps.get(energyBalancedIndex);
+    double rightResidual = evaluatePinchResidualOnEnergyManifold(outerIndex, energyBalancedIndex, rightInterior);
+    double rightObjective = Double.isFinite(rightResidual) ? Math.abs(rightResidual) : Double.POSITIVE_INFINITY;
+    double rightBalancedTemperature = outletTemps.get(energyBalancedIndex);
+
+    for (int iteration = 0; iteration < 80; iteration++) {
+      if (Double.isFinite(leftObjective) && leftObjective < bestResidual) {
+        bestResidual = leftObjective;
+        bestOuterTemperature = leftInterior;
+        bestBalancedTemperature = leftBalancedTemperature;
+      }
+      if (Double.isFinite(rightObjective) && rightObjective < bestResidual) {
+        bestResidual = rightObjective;
+        bestOuterTemperature = rightInterior;
+        bestBalancedTemperature = rightBalancedTemperature;
+      }
+      if (bestResidual < tolerance) {
+        outletTemps.set(outerIndex, bestOuterTemperature);
+        outletTemps.set(energyBalancedIndex, bestBalancedTemperature);
+        return true;
+      }
+
+      if (leftObjective <= rightObjective) {
+        right = rightInterior;
+        rightInterior = leftInterior;
+        rightObjective = leftObjective;
+        rightBalancedTemperature = leftBalancedTemperature;
+        leftInterior = right - goldenRatio * (right - left);
+        leftResidual = evaluatePinchResidualOnEnergyManifold(outerIndex, energyBalancedIndex, leftInterior);
+        leftObjective = Double.isFinite(leftResidual) ? Math.abs(leftResidual) : Double.POSITIVE_INFINITY;
+        leftBalancedTemperature = outletTemps.get(energyBalancedIndex);
+      } else {
+        left = leftInterior;
+        leftInterior = rightInterior;
+        leftObjective = rightObjective;
+        leftBalancedTemperature = rightBalancedTemperature;
+        rightInterior = left + goldenRatio * (right - left);
+        rightResidual = evaluatePinchResidualOnEnergyManifold(outerIndex, energyBalancedIndex, rightInterior);
+        rightObjective = Double.isFinite(rightResidual) ? Math.abs(rightResidual) : Double.POSITIVE_INFINITY;
+        rightBalancedTemperature = outletTemps.get(energyBalancedIndex);
+      }
+    }
+
+    outletTemps.set(outerIndex, bestOuterTemperature);
+    outletTemps.set(energyBalancedIndex, bestBalancedTemperature);
+    return false;
+  }
+
+  private double evaluatePinchResidualOnEnergyManifold(int outerIndex, int energyBalancedIndex,
+      double outerTemperature) {
+    outletTemps.set(outerIndex, outerTemperature);
+    if (!balanceEnergyForIndex(energyBalancedIndex)) {
+      return Double.NaN;
+    }
+    return pinch() - approachTemperature;
   }
 
   private boolean bisectPinchOnEnergyManifold(int outerIndex, int energyBalancedIndex, double lower, double upper,
