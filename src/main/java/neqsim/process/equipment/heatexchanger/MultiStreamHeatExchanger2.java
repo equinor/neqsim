@@ -925,11 +925,13 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
           continue;
         }
 
+        boolean finiteBisection = true;
         for (int iteration = 0; iteration < 60; iteration++) {
           double midpoint = 0.5 * (lower + upper);
           outletTemps.set(index, midpoint);
           double midpointResidual = energyDiff();
           if (!Double.isFinite(midpointResidual)) {
+            finiteBisection = false;
             break;
           }
           if (Math.abs(midpointResidual) < tolerance || upper - lower < 1.0e-6) {
@@ -938,13 +940,16 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
           if ((lowerResidual < 0.0) != (midpointResidual < 0.0)) {
             upper = midpoint;
-            upperResidual = midpointResidual;
           } else {
             lower = midpoint;
             lowerResidual = midpointResidual;
           }
         }
 
+        if (!finiteBisection) {
+          outletTemps.set(index, originalTemperature);
+          continue;
+        }
         outletTemps.set(index, 0.5 * (lower + upper));
         return true;
       } catch (Exception ex) {
