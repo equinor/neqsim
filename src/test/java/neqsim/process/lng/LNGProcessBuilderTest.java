@@ -79,6 +79,9 @@ class LNGProcessBuilderTest {
       System.out.println("SMR after " + unit.getName() + ": cold-side inlet "
           + seededExchanger.getInStream(2).getTemperature("C"));
     }
+    seededExchanger.run(diagnosticId);
+    System.out.println("SMR direct exchanger warm start: energy " + seededExchanger.energyDiff() + ", pinch "
+        + seededExchanger.getTemperatureApproach());
 
     LNGProcessModel.Result result = model.run();
 
