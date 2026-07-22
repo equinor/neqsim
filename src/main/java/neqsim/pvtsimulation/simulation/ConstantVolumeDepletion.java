@@ -108,9 +108,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       }
       if (relativeResidual < 0.0) {
         throw new IllegalStateException(
-            String.format(
-                "CVD gas removal overshot the saturation volume by %.3e relative.",
-                -relativeResidual));
+            String.format("CVD gas removal overshot the saturation volume by %.3e relative.", -relativeResidual));
       }
       if (!getThermoSystem().hasPhaseType("gas")) {
         throw new IllegalStateException("Cannot restore CVD cell volume without a gas phase.");
@@ -126,8 +124,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       molesToRemove = Math.min(molesToRemove, 0.95 * gasMoles);
       double[] componentRemoval = new double[getThermoSystem().getNumberOfComponents()];
       for (int componentIndex = 0; componentIndex < componentRemoval.length; componentIndex++) {
-        componentRemoval[componentIndex] =
-            molesToRemove * getThermoSystem().getPhase("gas").getComponent(componentIndex).getx();
+        componentRemoval[componentIndex] = molesToRemove
+            * getThermoSystem().getPhase("gas").getComponent(componentIndex).getx();
       }
 
       for (int componentIndex = 0; componentIndex < componentRemoval.length; componentIndex++) {
@@ -163,26 +161,22 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        String message =
-            String.format(
-                "CVD TP flash failed at pressure %.6f bara.",
-                getThermoSystem().getPressure("bara"));
+        String message = String.format("CVD TP flash failed at pressure %.6f bara.",
+            getThermoSystem().getPressure("bara"));
         logger.error(message, ex);
         throw new IllegalStateException(message, ex);
       }
       getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
       if (getThermoSystem().getNumberOfPhases() > 1
-          && getThermoSystem().getCorrectedVolume()
-              > saturationVolume * (1.0 + CELL_VOLUME_RELATIVE_TOLERANCE)) {
+          && getThermoSystem().getCorrectedVolume() > saturationVolume * (1.0 + CELL_VOLUME_RELATIVE_TOLERANCE)) {
         restoreSaturationVolume();
       }
       getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
       totalVolume[i] = getThermoSystem().getCorrectedVolume();
       relativeVolume[i] = totalVolume[i] / saturationVolume;
-      cummulativeMolePercDepleted[i] =
-          100.0 - getThermoSystem().getTotalNumberOfMoles() / totalNumberOfMoles * 100.0;
+      cummulativeMolePercDepleted[i] = 100.0 - getThermoSystem().getTotalNumberOfMoles() / totalNumberOfMoles * 100.0;
       Zmix[i] = getThermoSystem().getZvolcorr();
 
       if (getThermoSystem().hasPhaseType("gas")) {
