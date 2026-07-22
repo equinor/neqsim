@@ -61,6 +61,9 @@ class PvtLabTestsDocumentationTest extends NeqSimTest {
     assertEquals(0.95756922523, relativeVolume[0], 0.001);
     assertEquals(1.35726592522, relativeVolume[12], 0.001);
     assertEquals(2.18937648076, yFunction[12], 0.001);
+    assertTrue(Double.isFinite(liquidRelativeVolume[12]));
+    assertTrue(liquidRelativeVolume[12] >= 0.0);
+    assertTrue(liquidRelativeVolume[12] <= 100.0);
     assertTrue(Double.isFinite(cce.getSaturationPressure()));
     assertTrue(cce.getSaturationPressure() > 0.0);
   }
