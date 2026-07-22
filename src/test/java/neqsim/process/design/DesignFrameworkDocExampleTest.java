@@ -15,15 +15,13 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Compilation-and-run guard for the copy-paste examples in
- * {@code docs/process/DESIGN_FRAMEWORK.md}.
+ * Compilation-and-run guard for the copy-paste examples in {@code docs/process/DESIGN_FRAMEWORK.md}.
  *
  * <p>
- * The code in these tests is intentionally kept identical (apart from assertions) to the runnable
- * snippets in the documentation. If the public design API changes, this test fails and the
- * documentation must be updated in lock-step. Only classes that actually exist in the source tree
- * are used here — {@code DesignOptimizer}, {@code DesignResult}, {@code StandardRegistry}, and
- * {@code StandardType}.
+ * The code in these tests is intentionally kept identical (apart from assertions) to the runnable snippets in the
+ * documentation. If the public design API changes, this test fails and the documentation must be updated in lock-step.
+ * Only classes that actually exist in the source tree are used here — {@code DesignOptimizer}, {@code DesignResult},
+ * {@code StandardRegistry}, and {@code StandardType}.
  * </p>
  *
  * @author NeqSim Development Team
@@ -34,8 +32,7 @@ class DesignFrameworkDocExampleTest {
   /**
    * Build a simple single-separator process used by the documentation snippets.
    *
-   * @return a run {@link ProcessSystem} containing one feed stream and one separator named
-   *         {@code "HP-Separator"}
+   * @return a run {@link ProcessSystem} containing one feed stream and one separator named {@code "HP-Separator"}
    */
   private static ProcessSystem buildProcess() {
     SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
@@ -61,16 +58,15 @@ class DesignFrameworkDocExampleTest {
   }
 
   /**
-   * Mirrors the "Auto-size and read the design result" doc snippet. Verifies the fluent
-   * {@link DesignOptimizer} workflow returns a populated {@link DesignResult}.
+   * Mirrors the "Auto-size and read the design result" doc snippet. Verifies the fluent {@link DesignOptimizer}
+   * workflow returns a populated {@link DesignResult}.
    */
   @Test
   void docExampleAutoSizeAndReadResult() {
     ProcessSystem process = buildProcess();
 
-    DesignResult result =
-        DesignOptimizer.forProcess(process).autoSizeEquipment(1.2).applyDefaultConstraints()
-            .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION).optimize();
+    DesignResult result = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2).applyDefaultConstraints()
+        .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION).optimize();
 
     // The workflow ran to completion (no exception path).
     assertTrue(result.isConverged());
@@ -108,9 +104,9 @@ class DesignFrameworkDocExampleTest {
   }
 
   /**
-   * Mirrors the "Select a mechanical-design standard" doc snippet. Verifies the real
-   * {@link StandardRegistry} / {@link StandardType} selection API (NOT the not-yet-implemented
-   * {@code StandardSelection.strict(...)} shown elsewhere).
+   * Mirrors the "Select a mechanical-design standard" doc snippet. Verifies the real {@link StandardRegistry} /
+   * {@link StandardType} selection API (NOT the not-yet-implemented {@code StandardSelection.strict(...)} shown
+   * elsewhere).
    */
   @Test
   void docExampleStandardSelection() {
@@ -122,8 +118,8 @@ class DesignFrameworkDocExampleTest {
     assertFalse(applicable.isEmpty());
 
     // Create a concrete design standard bound to the separator's mechanical-design context.
-    DesignStandard vesselStandard =
-        StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, sep.getMechanicalDesign());
+    DesignStandard vesselStandard = StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1,
+        sep.getMechanicalDesign());
     assertNotNull(vesselStandard);
     assertTrue(vesselStandard.getStandardName().startsWith("ASME-VIII-Div1"));
   }
