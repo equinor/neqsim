@@ -62,7 +62,7 @@ public final class StandardDesignKernelVerificationSuite {
 
   private static EngineeringValidationBenchmark pumpBenchmark(PumpApi610DesignKernel kernel) {
     PumpApi610DesignKernel.Input input = new PumpApi610DesignKernel.Input(
-        StandardEdition.defaultEdition(StandardType.API_610), "Pump", pumpConfiguration());
+        StandardEdition.of(StandardType.API_610, "13th Ed"), "Pump", pumpConfiguration());
     EngineeringCalculationResult<PumpApi610DesignAssessment> result = kernel.calculate(input, null);
     PumpApi610DesignAssessment value = result.getValue();
     return baseline("api-610-rated-duty", kernel)
@@ -94,7 +94,7 @@ public final class StandardDesignKernelVerificationSuite {
   }
 
   private static EngineeringValidationBenchmark orificeBenchmark(Api526OrificeSelectionKernel kernel) {
-    StandardEdition edition = StandardEdition.defaultEdition(StandardType.API_526);
+    StandardEdition edition = StandardEdition.of(StandardType.API_526, "7th Ed");
     Api526OrificeSelectionAssessment customary = kernel.calculate(new Api526OrificeSelectionKernel.Input(edition,
         "SafetyValve", 0.503, Api526OrificeSelectionKernel.AreaUnit.SQUARE_INCH), null).getValue();
     Api526OrificeSelectionAssessment si = kernel
@@ -115,7 +115,7 @@ public final class StandardDesignKernelVerificationSuite {
 
   private static EngineeringValidationBenchmark compressorBenchmark(Api617CompressorDesignKernel kernel) {
     Api617CompressorDesignKernel.Input input = new Api617CompressorDesignKernel.Input(
-        StandardEdition.defaultEdition(StandardType.API_617), "Compressor", compressorConfiguration());
+        StandardEdition.of(StandardType.API_617, "8th Ed"), "Compressor", compressorConfiguration());
     EngineeringCalculationResult<Api617CompressorAssessment> result = kernel.calculate(input, null);
     Api617CompressorAssessment value = result.getValue();
     return baseline("api-617-pressure-containment", kernel)
@@ -128,7 +128,7 @@ public final class StandardDesignKernelVerificationSuite {
   }
 
   private static EngineeringValidationBenchmark separatorBenchmark(Api12JSeparatorDesignKernel kernel) {
-    StandardEdition edition = StandardEdition.defaultEdition(StandardType.API_12J);
+    StandardEdition edition = StandardEdition.of(StandardType.API_12J, "8th Ed");
     Api12JSeparatorAssessment micrometre = kernel.calculate(new Api12JSeparatorDesignKernel.Input(edition, "Separator",
         80.0, Api12JSeparatorDesignKernel.DiameterUnit.MICROMETRE, 0.08, false, 240.0,
         Api12JSeparatorDesignKernel.Orientation.HORIZONTAL, false), null).getValue();

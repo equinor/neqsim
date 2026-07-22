@@ -146,6 +146,7 @@ This documentation is organized into the following sections:
 |----------|-------------|
 | [EQUIPMENT_DESIGN_PARAMETERS.md](EQUIPMENT_DESIGN_PARAMETERS) | **Equipment design parameters, autoSize vs MechanicalDesign guide** |
 | [mechanical_design_standards.md](mechanical_design_standards) | Design standards (NORSOK, ASME, API, DNV, etc.) |
+| [process_design_standards_program.md](process_design_standards_program) | Standards priorities, evidence gates, requirement coverage, and change control |
 | [standard_design_kernel_migration.md](standard_design_kernel_migration) | Migrate global editions, metadata factories, mutable calculators, and legacy case execution to typed kernels |
 | [mechanical_design_database.md](mechanical_design_database) | Data sources, database schemas, and CSV configuration |
 | [pipeline_mechanical_design.md](pipeline_mechanical_design) | Pipeline mechanical design (wall thickness, stress, buckling, corrosion) |

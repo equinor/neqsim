@@ -106,6 +106,15 @@ public class SetPoint extends ProcessEquipmentBaseClass {
   }
 
   /**
+   * Returns the equipment whose variable is read by this set-point relation.
+   *
+   * @return source equipment, or {@code null} when it has not been configured
+   */
+  public ProcessEquipmentInterface getSourceEquipment() {
+    return sourceEquipment;
+  }
+
+  /**
    * Setter for the field <code>targetVariable</code>.
    *
    * @param targetEquipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
@@ -139,6 +148,15 @@ public class SetPoint extends ProcessEquipmentBaseClass {
    */
   public void setTargetVariable(ProcessEquipmentInterface targetEquipment) {
     this.targetEquipment = targetEquipment;
+  }
+
+  /**
+   * Returns the equipment whose variable is written by this set-point relation.
+   *
+   * @return target equipment, or {@code null} when it has not been configured
+   */
+  public ProcessEquipmentInterface getTargetEquipment() {
+    return targetEquipment;
   }
 
   /**

@@ -26,7 +26,7 @@ class Api526OrificeSelectionKernelTest {
   @Test
   void exactBoundaryAndUnitEquivalentInputsSelectSameOrifice() {
     Api526OrificeSelectionKernel kernel = new Api526OrificeSelectionKernel();
-    StandardEdition edition = StandardEdition.defaultEdition(StandardType.API_526);
+    StandardEdition edition = StandardEdition.of(StandardType.API_526, "7th Ed");
     Api526OrificeSelectionKernel.Input customary = new Api526OrificeSelectionKernel.Input(edition, "SafetyValve", 0.503,
         Api526OrificeSelectionKernel.AreaUnit.SQUARE_INCH);
     Api526OrificeSelectionKernel.Input si = new Api526OrificeSelectionKernel.Input(edition, "SafetyReliefValve",
@@ -48,7 +48,7 @@ class Api526OrificeSelectionKernelTest {
   @Test
   void reportsLargestOrificeAsInadequateInsteadOfClaimingSuccess() {
     Api526OrificeSelectionKernel.Input input = new Api526OrificeSelectionKernel.Input(
-        StandardEdition.defaultEdition(StandardType.API_526), "SafetyValve", 30.0,
+        StandardEdition.of(StandardType.API_526, "7th Ed"), "SafetyValve", 30.0,
         Api526OrificeSelectionKernel.AreaUnit.SQUARE_INCH);
 
     EngineeringCalculationResult<Api526OrificeSelectionAssessment> result = new Api526OrificeSelectionKernel()

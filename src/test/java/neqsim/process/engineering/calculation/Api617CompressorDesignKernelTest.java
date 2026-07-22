@@ -16,7 +16,7 @@ class Api617CompressorDesignKernelTest {
   void calculatesFromDefensiveConfigurationCopy() {
     CompressorCasingDesignCalculator configuration = passingConfiguration();
     Api617CompressorDesignKernel.Input input = new Api617CompressorDesignKernel.Input(
-        StandardEdition.defaultEdition(StandardType.API_617), "Compressor", configuration);
+        StandardEdition.of(StandardType.API_617, "8th Ed"), "Compressor", configuration);
     configuration.setDesignPressureMPa(50.0);
 
     EngineeringCalculationResult<Api617CompressorAssessment> result = new Api617CompressorDesignKernel()

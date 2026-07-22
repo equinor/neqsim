@@ -92,7 +92,7 @@ public final class Api526OrificeSelectionKernel
   @Override
   public boolean supports(StandardEdition edition) {
     return edition != null && edition.getStandardType() == standard()
-        && IMPLEMENTED_EDITION.equalsIgnoreCase(edition.getEdition());
+        && IMPLEMENTED_EDITION.equalsIgnoreCase(edition.getEdition()) && edition.getAmendments().isEmpty();
   }
 
   /** {@inheritDoc} */

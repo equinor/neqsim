@@ -47,12 +47,15 @@ public final class StandardSupportAudit {
           registryImplementation, pumpImplementation.getImplementationClassName(),
           "API 610 screening is connected through a pure engineering-workflow adapter; purchased-standard, project, "
               + "and vendor verification remain required.");
-    case API_650:
     case API_620:
+    case API_625:
       return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, false, registryImplementation,
           NO_CALCULATION, "The registry maps this tank standard to a separator-oriented pressure-vessel class; "
-              + "no tank-code calculation is implemented.");
-    case API_660:
+              + "no edition-specific common calculation is implemented.");
+    case ASME_VIII_DIV2:
+      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, false, registryImplementation,
+          NO_CALCULATION, "No Division 2 pressure-vessel calculation is implemented; the legacy generic fallback is "
+              + "blocked for this selection.");
     case API_661:
     case ISO_16812:
       return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, false, registryImplementation,
@@ -100,24 +103,38 @@ public final class StandardSupportAudit {
    */
   public static String generateMarkdownTable() {
     StringBuilder table = new StringBuilder();
-    table.append("| Standard | Edition metadata | Category | Registry factory | Calculation path "
-        + "| Maturity | Boundary |\n");
-    table.append("| --- | --- | --- | --- | --- | --- | --- |\n");
+    table.append("| Standard | Edition metadata | Lifecycle | Publisher source | Category | Registry factory "
+        + "| Calculation path | Maturity | Current kernel | Boundary |\n");
+    table.append("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n");
 
     for (StandardSupport support : getAllSupport()) {
       StandardType standardType = support.getStandardType();
+      StandardCatalogEntry catalogEntry = StandardCatalog.get(standardType);
+      EquipmentDesignKernelRegistry.Lookup kernel = StandardRegistry.getDesignKernel(standardType);
       table.append("| ").append(escapeMarkdown(standardType.getCode())).append(" | ")
           .append(escapeMarkdown(standardType.getDefaultVersion())).append(" | ")
-          .append(escapeMarkdown(standardType.getDesignStandardCategory())).append(" | ")
+          .append(catalogEntry.getLifecycleStatus().name()).append(" | ").append(publisherLink(catalogEntry))
+          .append(" | ").append(escapeMarkdown(standardType.getDesignStandardCategory())).append(" | ")
           .append(escapeMarkdown(support.getRegistryImplementation())).append(" | ")
           .append(escapeMarkdown(support.getCalculationImplementation())).append(" | ")
-          .append(support.getSupportLevel().name()).append(" | ").append(escapeMarkdown(support.getLimitation()))
-          .append(" |\n");
+          .append(support.getSupportLevel().name()).append(" | ")
+          .append(kernel.supports(StandardEdition.defaultEdition(standardType)) ? "yes" : "no").append(" | ")
+          .append(escapeMarkdown(support.getLimitation())).append(" |\n");
     }
     return table.toString();
   }
 
   private static StandardSupport getCategorySupport(StandardType standardType, String registryImplementation) {
+    StandardRequirementPackRegistry.Lookup packLookup = StandardRequirementPackRegistry.lookup(standardType);
+    if (packLookup.isImplemented()) {
+      StandardRequirementPack pack = packLookup.requirePack();
+      int capabilityCount = pack.getCapabilities().size();
+      return new StandardSupport(standardType, StandardSupportLevel.SCREENING, false, registryImplementation,
+          "StandardRequirementPackRegistry (" + capabilityCount
+              + (capabilityCount == 1 ? " capability)" : " capabilities)"),
+          "Mapped calculations and review workflows are discoverable as a versioned requirement pack; this is not "
+              + "a complete conformity assessment and is intentionally separate from the legacy factory.");
+    }
     String category = standardType.getDesignStandardCategory();
 
     if ("pressure vessel design code".equals(category)) {
@@ -131,9 +148,9 @@ public final class StandardSupportAudit {
               + "independently validated.");
     }
     if ("pipeline design codes".equals(category)) {
-      return screening(standardType, registryImplementation,
-          "Preliminary category screening with fixed fallback values; not a complete "
-              + "edition-specific wall-thickness calculation.");
+      return new StandardSupport(standardType, StandardSupportLevel.CATALOGUED, false, registryImplementation,
+          NO_CALCULATION, "Catalogued pipeline selections fail closed because no edition-specific wall-thickness "
+              + "calculation is connected.");
     }
     if ("compressor design codes".equals(category)) {
       return screening(standardType, registryImplementation,
@@ -155,5 +172,12 @@ public final class StandardSupportAudit {
 
   private static String escapeMarkdown(String value) {
     return value == null ? "" : value.replace("|", "\\|").replace("\n", " ");
+  }
+
+  private static String publisherLink(StandardCatalogEntry entry) {
+    if (entry.getPublisherSourceUrl().isEmpty()) {
+      return "unverified";
+    }
+    return "[publisher](" + entry.getPublisherSourceUrl() + ") (checked " + entry.getVerifiedOn() + ")";
   }
 }

@@ -70,6 +70,17 @@ class StandardRegistryTest {
   }
 
   @Test
+  void testRecognizedUnsupportedLegacyCalculationsFailClosed() {
+    PipelineDesignStandard pipeline = (PipelineDesignStandard) StandardRegistry.createStandard(StandardType.ASME_B31_3,
+        mechanicalDesign);
+    PressureVesselDesignStandard storageTank = (PressureVesselDesignStandard) StandardRegistry
+        .createStandard(StandardType.API_620, mechanicalDesign);
+
+    assertThrows(UnsupportedOperationException.class, pipeline::calcPipelineWallThickness);
+    assertThrows(UnsupportedOperationException.class, storageTank::calcWallThickness);
+  }
+
+  @Test
   void testVersionOverride() {
     // Set override
     StandardRegistry.setVersionOverride(StandardType.ASME_VIII_DIV1, "2019");
@@ -81,7 +92,7 @@ class StandardRegistryTest {
 
     // Clear override
     StandardRegistry.setVersionOverride(StandardType.ASME_VIII_DIV1, null);
-    assertEquals("2021", StandardRegistry.getEffectiveVersion(StandardType.ASME_VIII_DIV1));
+    assertEquals("2025", StandardRegistry.getEffectiveVersion(StandardType.ASME_VIII_DIV1));
   }
 
   @Test
@@ -91,8 +102,8 @@ class StandardRegistryTest {
 
     StandardRegistry.clearVersionOverrides();
 
-    assertEquals("2021", StandardRegistry.getEffectiveVersion(StandardType.ASME_VIII_DIV1));
-    assertEquals("8th Ed", StandardRegistry.getEffectiveVersion(StandardType.API_617));
+    assertEquals("2025", StandardRegistry.getEffectiveVersion(StandardType.ASME_VIII_DIV1));
+    assertEquals("9th Ed", StandardRegistry.getEffectiveVersion(StandardType.API_617));
   }
 
   @Test

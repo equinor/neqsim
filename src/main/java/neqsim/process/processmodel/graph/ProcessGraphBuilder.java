@@ -27,6 +27,7 @@ import neqsim.process.equipment.splitter.SplitterInterface;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.util.Adjuster;
 import neqsim.process.equipment.util.Calculator;
+import neqsim.process.equipment.util.SetPoint;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
@@ -543,6 +544,14 @@ public final class ProcessGraphBuilder {
             "signal:" + safeName(adjuster.getTargetEquipment()) + "->" + adjuster.getName());
         addSignalEdgeIfAbsent(graph, adjuster, adjuster.getAdjustedEquipment(),
             "signal:" + adjuster.getName() + "->" + safeName(adjuster.getAdjustedEquipment()));
+      }
+
+      if (unit instanceof SetPoint) {
+        SetPoint setPoint = (SetPoint) unit;
+        addSignalEdgeIfAbsent(graph, setPoint.getSourceEquipment(), setPoint,
+            "signal:" + safeName(setPoint.getSourceEquipment()) + "->" + setPoint.getName());
+        addSignalEdgeIfAbsent(graph, setPoint, setPoint.getTargetEquipment(),
+            "signal:" + setPoint.getName() + "->" + safeName(setPoint.getTargetEquipment()));
       }
     }
 

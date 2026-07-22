@@ -10,12 +10,24 @@ public final class StandardSelectionException extends IllegalArgumentException {
     MISSING_SELECTION,
     /** No equipment context was supplied. */
     MISSING_EQUIPMENT,
+    /** The standard lifecycle has not been verified against a current publisher source. */
+    LIFECYCLE_UNVERIFIED,
+    /** The selected standard is withdrawn or superseded. */
+    STANDARD_NOT_CURRENT,
+    /** The requested edition is not the publisher-verified current edition. */
+    EDITION_NOT_CURRENT,
+    /** The selection contains project amendments not implemented by the executable method. */
+    AMENDMENTS_NOT_IMPLEMENTED,
     /** The standard is discovery metadata without an implemented calculation. */
     CATALOG_ONLY,
     /** A calculation exists elsewhere but is not connected to the registry. */
     NOT_REGISTRY_CONNECTED,
     /** No common design kernel is registered for the selected standard. */
     KERNEL_NOT_IMPLEMENTED,
+    /** No cross-equipment requirement pack is registered for the selected standard. */
+    REQUIREMENT_PACK_NOT_IMPLEMENTED,
+    /** The selection requests a different execution contract than the called registry method. */
+    EXECUTION_REQUIREMENT_MISMATCH,
     /** A kernel exists, but not for the requested edition basis. */
     EDITION_NOT_IMPLEMENTED,
     /** The standard does not apply to the supplied equipment type. */

@@ -108,19 +108,11 @@ public final class StandardRegistry {
 
     StandardType standardType = selection.getStandardType();
     if (selection.getMode() == StandardSelection.Mode.STRICT) {
-      StandardSupport support = StandardSupportAudit.getSupport(standardType);
-      if (support.getSupportLevel() == StandardSupportLevel.CATALOGUED) {
-        throw new StandardSelectionException(StandardSelectionException.Reason.CATALOG_ONLY, standardType, null,
-            support.getLimitation());
-      }
-      if (!support.isRegistryConnected()) {
-        throw new StandardSelectionException(StandardSelectionException.Reason.NOT_REGISTRY_CONNECTED, standardType,
-            null, support.getLimitation());
-      }
-      EquipmentDesignKernelRegistry.Lookup kernel = getDesignKernel(standardType);
-      if (kernel.isImplemented() && !kernel.supports(selection.getEdition())) {
-        throw new StandardSelectionException(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, standardType,
-            null, "No registered kernel implements " + selection.getEdition().getDisplayName());
+      validateLifecycle(selection);
+      if (selection.getExecutionRequirement() == StandardSelection.ExecutionRequirement.REQUIREMENT_PACK) {
+        requireRequirementPack(selection);
+      } else {
+        validateFactoryOrKernel(selection);
       }
 
       StandardApplicability applicability = assessApplicability(standardType, equipment);
@@ -135,6 +127,64 @@ public final class StandardRegistry {
     }
 
     return instantiateStandard(standardType, selection.getEdition().getDisplayName(), equipment);
+  }
+
+  private static void validateFactoryOrKernel(StandardSelection selection) {
+    StandardType standardType = selection.getStandardType();
+    EquipmentDesignKernelRegistry.Lookup kernel = getDesignKernel(standardType);
+    if (selection.getExecutionRequirement() == StandardSelection.ExecutionRequirement.COMMON_KERNEL) {
+      validateNoAmendments(selection);
+      if (!kernel.isImplemented()) {
+        throw new StandardSelectionException(StandardSelectionException.Reason.KERNEL_NOT_IMPLEMENTED, standardType,
+            null, "No edition-specific common engineering design kernel is registered for the selected standard");
+      }
+      if (!kernel.supports(selection.getEdition())) {
+        throw new StandardSelectionException(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, standardType,
+            null, "No registered kernel implements " + selection.getEdition().getDisplayName());
+      }
+      return;
+    }
+    StandardSupport support = StandardSupportAudit.getSupport(standardType);
+    if (support.getSupportLevel() == StandardSupportLevel.CATALOGUED) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.CATALOG_ONLY, standardType, null,
+          support.getLimitation());
+    }
+    if (!support.isRegistryConnected()) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.NOT_REGISTRY_CONNECTED, standardType, null,
+          support.getLimitation());
+    }
+  }
+
+  private static void validateLifecycle(StandardSelection selection) {
+    if (selection.isHistoricalEditionAllowed()) {
+      return;
+    }
+    StandardType standardType = selection.getStandardType();
+    StandardCatalogEntry catalogEntry = StandardCatalog.get(standardType);
+    if (catalogEntry.getLifecycleStatus() == StandardLifecycleStatus.UNVERIFIED) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.LIFECYCLE_UNVERIFIED, standardType, null,
+          "Verify the edition and lifecycle against an authoritative publisher source before use");
+    }
+    if (catalogEntry.getLifecycleStatus() != StandardLifecycleStatus.CURRENT) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.STANDARD_NOT_CURRENT, standardType, null,
+          "Publisher lifecycle status is " + catalogEntry.getLifecycleStatus() + replacementMessage(catalogEntry));
+    }
+    if (!catalogEntry.isCurrentEdition(selection.getEdition())) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.EDITION_NOT_CURRENT, standardType, null,
+          "The verified current edition is " + standardType.getDefaultVersion());
+    }
+  }
+
+  private static String replacementMessage(StandardCatalogEntry catalogEntry) {
+    return catalogEntry.getSupersededBy() == null ? "" : "; replacement is " + catalogEntry.getSupersededBy().getCode();
+  }
+
+  private static void validateNoAmendments(StandardSelection selection) {
+    if (!selection.getEdition().getAmendments().isEmpty()) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.AMENDMENTS_NOT_IMPLEMENTED,
+          selection.getStandardType(), null,
+          "No executable method implements the selected project amendments: " + selection.getEdition().getAmendments());
+    }
   }
 
   /**
@@ -186,6 +236,14 @@ public final class StandardRegistry {
           "selection cannot be null");
     }
     StandardType standardType = selection.getStandardType();
+    if (selection.getExecutionRequirement() != StandardSelection.ExecutionRequirement.COMMON_KERNEL) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.EXECUTION_REQUIREMENT_MISMATCH,
+          standardType, null, "The selection does not request a common engineering design kernel");
+    }
+    if (selection.getMode() == StandardSelection.Mode.STRICT) {
+      validateLifecycle(selection);
+    }
+    validateNoAmendments(selection);
     EquipmentDesignKernelRegistry.Lookup lookup = getDesignKernel(standardType);
     if (!lookup.isImplemented()) {
       throw new StandardSelectionException(StandardSelectionException.Reason.KERNEL_NOT_IMPLEMENTED, standardType, null,
@@ -196,6 +254,40 @@ public final class StandardRegistry {
           null, "No registered kernel implements " + selection.getEdition().getDisplayName());
     }
     return lookup.requireKernel();
+  }
+
+  /**
+   * Require a mapped set of calculations and review workflows for a cross-equipment standard.
+   *
+   * @param selection explicit requirement-pack selection
+   * @return registered immutable capability pack
+   * @throws StandardSelectionException when lifecycle or implementation checks fail
+   */
+  public static StandardRequirementPack requireRequirementPack(StandardSelection selection) {
+    if (selection == null) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.MISSING_SELECTION, null, null,
+          "selection cannot be null");
+    }
+    StandardType standardType = selection.getStandardType();
+    if (selection.getExecutionRequirement() != StandardSelection.ExecutionRequirement.REQUIREMENT_PACK) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.EXECUTION_REQUIREMENT_MISMATCH,
+          standardType, null, "The selection does not request a cross-equipment requirement pack");
+    }
+    if (selection.getMode() == StandardSelection.Mode.STRICT) {
+      validateLifecycle(selection);
+    }
+    validateNoAmendments(selection);
+    StandardRequirementPackRegistry.Lookup lookup = StandardRequirementPackRegistry.lookup(standardType);
+    if (!lookup.isImplemented()) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.REQUIREMENT_PACK_NOT_IMPLEMENTED,
+          standardType, null, "No cross-equipment requirement pack is registered for the selected standard");
+    }
+    StandardRequirementPack pack = lookup.requirePack();
+    if (!pack.getEdition().equals(selection.getEdition())) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, standardType,
+          null, "No requirement pack implements " + selection.getEdition().getDisplayName());
+    }
+    return pack;
   }
 
   private static DesignStandard instantiateStandard(StandardType standardType, String standardName,

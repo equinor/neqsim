@@ -35,9 +35,9 @@ class StandardSupportAuditTest {
     assertEquals("PumpApi610DesignKernel", pumpSupport.getCalculationImplementation());
     assertTrue(pumpSupport.isRegistryConnected());
 
-    assertEquals(StandardSupportLevel.CATALOGUED,
+    assertEquals(StandardSupportLevel.SCREENING,
         StandardSupportAudit.getSupport(StandardType.API_660).getSupportLevel());
-    assertEquals(StandardSupportLevel.CATALOGUED,
+    assertEquals(StandardSupportLevel.SCREENING,
         StandardSupportAudit.getSupport(StandardType.API_650).getSupportLevel());
     assertEquals(StandardSupportLevel.SCREENING,
         StandardSupportAudit.getSupport(StandardType.API_521).getSupportLevel());
@@ -57,6 +57,8 @@ class StandardSupportAuditTest {
         StandardSupportAudit.getSupport(StandardType.API_12J).getCalculationImplementation());
     assertTrue(StandardSupportAudit.getSupport(StandardType.API_12J).isRegistryConnected());
     assertFalse(StandardSupportAudit.getSupport(StandardType.API_660).isRegistryConnected());
+    assertTrue(StandardSupportAudit.getSupport(StandardType.API_660).getCalculationImplementation()
+        .startsWith("StandardRequirementPackRegistry"));
   }
 
   @Test
