@@ -103,8 +103,14 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
       double currentVolume = getThermoSystem().getCorrectedVolume();
       double relativeResidual = (currentVolume - saturationVolume) / saturationVolume;
-      if (relativeResidual <= CELL_VOLUME_RELATIVE_TOLERANCE) {
+      if (Math.abs(relativeResidual) <= CELL_VOLUME_RELATIVE_TOLERANCE) {
         return;
+      }
+      if (relativeResidual < 0.0) {
+        throw new IllegalStateException(
+            String.format(
+                "CVD gas removal overshot the saturation volume by %.3e relative.",
+                -relativeResidual));
       }
       if (!getThermoSystem().hasPhaseType("gas")) {
         throw new IllegalStateException("Cannot restore CVD cell volume without a gas phase.");
@@ -154,7 +160,16 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
     for (int i = 0; i < pressures.length; i++) {
       getThermoSystem().setPressure(pressures[i]);
-      thermoOps.TPflash();
+      try {
+        thermoOps.TPflash();
+      } catch (Exception ex) {
+        String message =
+            String.format(
+                "CVD TP flash failed at pressure %.6f bara.",
+                getThermoSystem().getPressure("bara"));
+        logger.error(message, ex);
+        throw new IllegalStateException(message, ex);
+      }
       getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
       if (getThermoSystem().getNumberOfPhases() > 1
