@@ -81,7 +81,9 @@ class LNGProcessBuilderTest {
     }
     seededExchanger.run(diagnosticId);
     System.out.println("SMR direct exchanger warm start: energy " + seededExchanger.energyDiff() + ", pinch "
-        + seededExchanger.getTemperatureApproach());
+        + seededExchanger.getTemperatureApproach() + ", high-pressure MR outlet "
+        + seededExchanger.getOutStream(1).getTemperature("C") + ", cold MR outlet "
+        + seededExchanger.getOutStream(2).getTemperature("C"));
 
     LNGProcessModel.Result result = model.run();
 
