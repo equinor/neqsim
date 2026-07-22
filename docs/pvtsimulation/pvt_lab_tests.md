@@ -33,7 +33,7 @@ Pseudo-component names must not contain `+`. For example, represent a C20-plus f
 | Experiment | Class | Main results |
 | --- | --- | --- |
 | Constant mass expansion (CCE/CME) | `ConstantMassExpansion` | Relative volume, liquid volume as percent of saturation volume, gas Z-factor, Y-function |
-| Constant volume depletion (CVD) | `ConstantVolumeDepletion` | Saturation pressure, relative volume, liquid dropout, cumulative mole-percent depletion |
+| Constant volume depletion (CVD) | `ConstantVolumeDepletion` | Saturation pressure, relative volume, liquid volume as percent of saturation volume, cumulative mole-percent depletion |
 | Differential liberation (DL) | `DifferentialLiberation` | Saturation pressure, Bo, Bg, Rs, oil density, gas Z-factor |
 | Legacy separator test | `SeparatorTest` | Per-stage GOR and oil formation-volume factor arrays |
 | Swelling test | `SwellingTest` | Pressure and relative-oil-volume arrays |
@@ -127,6 +127,7 @@ Configure `ConstantVolumeDepletion` with `setTemperature`, `setPressures`, and `
 Read `getSaturationPressure`, `getRelativeVolume`, `getLiquidRelativeVolume`,
 `getCummulativeMolePercDepleted`, `getZmix`, and `getZgas`. The spelling
 `getCummulativeMolePercDepleted` is the current compatibility API.
+`getLiquidRelativeVolume` returns percent of saturation volume, not a unitless fraction.
 
 ### Differential liberation
 
