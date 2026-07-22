@@ -288,14 +288,18 @@ comp.runTransient(dt, id);
 
 ```java
 SimpleReservoir reservoir = new SimpleReservoir("Field");
-reservoir.setReservoirFluid(fluid);
-reservoir.setGasVolume(1e9, "Sm3");
+
+// Initial phase volumes are in-situ m³: gas, oil, and water.
+reservoir.setReservoirFluid(fluid, 20.0e6, 0.0, 0.0);
 
 StreamInterface producer = reservoir.addGasProducer("GP-1");
 producer.setFlowRate(5.0, "MSm3/day");
 
-// Run for one day
-reservoir.runTransient(86400, id);
+// Initialize the well stream before the first transient step.
+reservoir.run();
+
+UUID id = UUID.randomUUID();
+reservoir.runTransient(86400.0, id);
 double remainingGas = reservoir.getGasInPlace("Sm3");
 ```
 
