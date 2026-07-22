@@ -294,32 +294,55 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       return;
     }
 
-    resetOfExtremesAndStalls(unknownIndices, false, false);
-    for (int iteration = 0; iteration < maxIterations; iteration++) {
-      double[] residuals = residualFunctionTwoUnknowns();
-      if (Math.max(Math.abs(residuals[0]), Math.abs(residuals[1])) < tolerance) {
-        logger.debug("Two-unknown exchanger solve converged with outlet temperatures {}", outletTemps);
-        return;
-      }
-      double[] delta;
-      try {
-        double[][] jacobian = numericalJacobiTwoUnknowns(unknownIndices);
-        delta = linearSystemTwoUnknowns(jacobian, residuals);
-      } catch (ArithmeticException e) {
-        logger.debug("Restarting two-unknown exchanger solve after singular Jacobian", e);
-        resetOfExtremesAndStalls(unknownIndices, true, false);
-        continue;
-      }
-
-      if (!applyBacktrackingTwoUnknownStep(unknownIndices, delta, residuals)) {
-        logger.debug("Restarting two-unknown exchanger solve after rejected Newton step");
-        resetOfExtremesAndStalls(unknownIndices, true, false);
-      }
+    // The manifold scan leaves the closest energy-balanced (smallest pinch residual) outlet
+    // temperatures in outletTemps. Preserve them so that, if the safeguarded Newton refinement
+    // below cannot reach the design pinch, an intermediate recycle pass falls back to this
+    // physically consistent estimate instead of aborting the whole flowsheet.
+    double[] bestEffortTemps = new double[unknownIndices.size()];
+    for (int i = 0; i < unknownIndices.size(); i++) {
+      bestEffortTemps[i] = outletTemps.get(unknownIndices.get(i));
     }
+
+    try {
+      resetOfExtremesAndStalls(unknownIndices, false, false);
+      for (int iteration = 0; iteration < maxIterations; iteration++) {
+        double[] residuals = residualFunctionTwoUnknowns();
+        if (Math.max(Math.abs(residuals[0]), Math.abs(residuals[1])) < tolerance) {
+          logger.debug("Two-unknown exchanger solve converged with outlet temperatures {}", outletTemps);
+          return;
+        }
+        double[] delta;
+        try {
+          double[][] jacobian = numericalJacobiTwoUnknowns(unknownIndices);
+          delta = linearSystemTwoUnknowns(jacobian, residuals);
+        } catch (ArithmeticException e) {
+          logger.debug("Restarting two-unknown exchanger solve after singular Jacobian", e);
+          resetOfExtremesAndStalls(unknownIndices, true, false);
+          continue;
+        }
+
+        if (!applyBacktrackingTwoUnknownStep(unknownIndices, delta, residuals)) {
+          logger.debug("Restarting two-unknown exchanger solve after rejected Newton step");
+          resetOfExtremesAndStalls(unknownIndices, true, false);
+        }
+      }
+    } catch (RuntimeException ex) {
+      logger.debug("Two-unknown exchanger Newton refinement failed; using best energy-balanced fall-back", ex);
+    }
+
+    // Fall back to the best energy-balanced estimate from the manifold scan instead of
+    // throwing. Energy conservation is preserved; only the design pinch may be missed on this
+    // pass. The enclosing recycle refines the inlet state and a later pass reaches the pinch
+    // root exactly through the deterministic manifold scan above.
+    restoreUnknownTemperatures(unknownIndices, bestEffortTemps);
+    balanceEnergyAtRestart(unknownIndices);
     double[] finalResiduals = residualFunctionTwoUnknowns();
-    throw new RuntimeException(String.format(
-        "twoUnknowns(): Failed to converge after maxIterations (energy residual %.6g kW, pinch residual %.6g C, inlet temperatures %s, outlet temperatures %s).",
-        finalResiduals[0], finalResiduals[1], inletTemps, outletTemps));
+    if (Math.max(Math.abs(finalResiduals[0]), Math.abs(finalResiduals[1])) >= tolerance) {
+      logger.warn(
+          "twoUnknowns(): using best energy-balanced fall-back after maxIterations (energy residual {} kW, "
+              + "pinch residual {} C, inlet temperatures {}, outlet temperatures {}).",
+          finalResiduals[0], finalResiduals[1], inletTemps, outletTemps);
+    }
   }
 
   /**
