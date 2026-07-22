@@ -36,6 +36,9 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   private double[] Zmix;
   private double[] Zgas = null;
   private double[] cummulativeMolePercDepleted = null;
+  private double[] materialBalanceRelativeError = null;
+  private double initialMoles = Double.NaN;
+  private double cumulativeMolesRemoved = 0.0;
   double[] temperatures = null;
   double[] pressure = null;
 
@@ -113,7 +116,15 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    */
   private void restoreSaturationVolume() {
     for (int iteration = 0; iteration < MAX_CELL_VOLUME_ITERATIONS; iteration++) {
-      thermoOps.TPflash();
+      try {
+        thermoOps.TPflash();
+      } catch (Exception ex) {
+        String message = String.format(Locale.ROOT,
+            "CVD cell-volume restoration TP flash failed at pressure %.6f bara, iteration %d.",
+            getThermoSystem().getPressure("bara"), iteration);
+        logger.error(message, ex);
+        throw new IllegalStateException(message, ex);
+      }
       getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
 
       double currentVolume = getThermoSystem().getCorrectedVolume();
@@ -143,9 +154,12 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
             * getThermoSystem().getPhase("gas").getComponent(componentIndex).getx();
       }
 
+      double removedMoles = 0.0;
       for (int componentIndex = 0; componentIndex < componentRemoval.length; componentIndex++) {
         getThermoSystem().addComponent(componentIndex, -componentRemoval[componentIndex]);
+        removedMoles += componentRemoval[componentIndex];
       }
+      cumulativeMolesRemoved += removedMoles;
     }
 
     throw new IllegalStateException("CVD gas removal did not restore the saturation volume.");
@@ -164,8 +178,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     Zmix = new double[pressures.length];
     liquidRelativeVolume = new double[pressures.length];
     cummulativeMolePercDepleted = new double[pressures.length];
+    materialBalanceRelativeError = new double[pressures.length];
 
-    double totalNumberOfMoles = getThermoSystem().getTotalNumberOfMoles();
+    initialMoles = getThermoSystem().getTotalNumberOfMoles();
+    cumulativeMolesRemoved = 0.0;
     if (!Double.isNaN(temperature)) {
       getThermoSystem().setTemperature(temperature, temperatureUnit);
     }
@@ -191,7 +207,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
       totalVolume[i] = getThermoSystem().getCorrectedVolume();
       relativeVolume[i] = totalVolume[i] / saturationVolume;
-      cummulativeMolePercDepleted[i] = 100.0 - getThermoSystem().getTotalNumberOfMoles() / totalNumberOfMoles * 100.0;
+      double remainingMoles = getThermoSystem().getTotalNumberOfMoles();
+      cummulativeMolePercDepleted[i] = 100.0 - remainingMoles / initialMoles * 100.0;
+      materialBalanceRelativeError[i] =
+          Math.abs(initialMoles - remainingMoles - cumulativeMolesRemoved) / initialMoles;
       Zmix[i] = getThermoSystem().getZvolcorr();
 
       if (getThermoSystem().hasPhaseType("gas")) {
@@ -437,8 +456,17 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    * @return true if material balance is satisfied within tolerance
    */
   public boolean validateMaterialBalance(double tolerance) {
-    if (cummulativeMolePercDepleted == null || cummulativeMolePercDepleted.length == 0) {
+    if (!Double.isFinite(tolerance) || tolerance < 0.0 || cummulativeMolePercDepleted == null
+        || cummulativeMolePercDepleted.length == 0 || materialBalanceRelativeError == null) {
       return false;
+    }
+
+    for (int i = 0; i < materialBalanceRelativeError.length; i++) {
+      if (!Double.isFinite(materialBalanceRelativeError[i]) || materialBalanceRelativeError[i] > tolerance) {
+        logger.warn("CVD QC: Material-balance error {} exceeds tolerance {} at step {}",
+            materialBalanceRelativeError[i], tolerance, i);
+        return false;
+      }
     }
 
     // Check that cumulative depletion is monotonically increasing
