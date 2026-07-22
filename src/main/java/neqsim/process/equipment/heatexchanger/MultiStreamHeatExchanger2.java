@@ -811,27 +811,19 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
 
         // Select a deterministic low-discrepancy restart within the physical bounds.
         // Math.random() made convergence depend on unrelated test and execution order.
-        double hottestHot = Collections.max(inletTemps);
-        double coldestCold = Collections.min(inletTemps);
         int restartPoint = ++restartSequenceIndex;
-        logger.debug("Using deterministic restart point " + restartPoint);
+        logger.debug("Using deterministic restart point {}", restartPoint);
         for (int position = 0; position < unknownIndices.size(); position++) {
           int idx = unknownIndices.get(position);
-          double inlet = inletTemps.get(idx);
-          double lower;
-          double upper;
-          String type = streamTypes.get(idx);
-          if (type.equals("hot")) {
-            lower = coldestCold + approachTemperature;
-            upper = inlet;
-          } else {
-            lower = inlet;
-            upper = hottestHot - approachTemperature;
-          }
+          double[] bounds = restartBounds(idx);
           double fraction = deterministicRestartFraction(restartPoint, position);
-          double guess = lower + fraction * (upper - lower);
+          double guess = bounds[0] + fraction * (bounds[1] - bounds[0]);
           outletTemps.set(idx, guess);
         }
+        // Energy balance is monotonic in each outlet temperature. Bracket one
+        // unknown after every low-discrepancy restart so the Newton solver starts
+        // near the energy-balance manifold instead of relying on a narrow random hit.
+        balanceEnergyAtRestart(unknownIndices);
         // A detected stall forces exactly one new starting point. Keeping this flag true
         // makes the acceptance condition unreachable and exhausts every restart attempt.
         localMin = false;
@@ -869,6 +861,100 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       inversePower /= base;
     }
     return fraction;
+  }
+
+  /**
+   * Returns the physical outlet-temperature bounds used for deterministic restarts.
+   *
+   * @param index stream index
+   * @return lower and upper outlet-temperature bounds in degrees Celsius
+   */
+  private double[] restartBounds(int index) {
+    double inlet = inletTemps.get(index);
+    if ("hot".equals(streamTypes.get(index))) {
+      return new double[] { Collections.min(inletTemps) + approachTemperature, inlet };
+    }
+    return new double[] { inlet, Collections.max(inletTemps) - approachTemperature };
+  }
+
+  /**
+   * Moves one unknown outlet temperature onto the energy-balance manifold by bisection.
+   *
+   * <p>
+   * At fixed values of the other outlet temperatures, total exchanger duty is monotonic
+   * in each outlet temperature. Trying each unknown from last to first preserves the
+   * low-discrepancy coverage of the remaining dimensions while providing a reproducible,
+   * thermodynamically meaningful restart.
+   * </p>
+   *
+   * @param unknownIndices unknown outlet-temperature indices
+   * @return true when an energy-balance root was bracketed
+   */
+  private boolean balanceEnergyAtRestart(List<Integer> unknownIndices) {
+    for (int position = unknownIndices.size() - 1; position >= 0; position--) {
+      int index = unknownIndices.get(position);
+      double originalTemperature = outletTemps.get(index);
+      double[] bounds = restartBounds(index);
+      double span = bounds[1] - bounds[0];
+      if (!Double.isFinite(span) || span <= 0.0) {
+        continue;
+      }
+
+      double endpointInset = Math.max(1.0e-6, span * 1.0e-8);
+      double lower = bounds[0] + endpointInset;
+      double upper = bounds[1] - endpointInset;
+      if (lower >= upper) {
+        continue;
+      }
+
+      try {
+        outletTemps.set(index, lower);
+        double lowerResidual = energyDiff();
+        if (Math.abs(lowerResidual) < tolerance) {
+          return true;
+        }
+
+        outletTemps.set(index, upper);
+        double upperResidual = energyDiff();
+        if (Math.abs(upperResidual) < tolerance) {
+          return true;
+        }
+
+        if (!Double.isFinite(lowerResidual) || !Double.isFinite(upperResidual)
+            || (lowerResidual < 0.0) == (upperResidual < 0.0)) {
+          outletTemps.set(index, originalTemperature);
+          continue;
+        }
+
+        for (int iteration = 0; iteration < 60; iteration++) {
+          double midpoint = 0.5 * (lower + upper);
+          outletTemps.set(index, midpoint);
+          double midpointResidual = energyDiff();
+          if (!Double.isFinite(midpointResidual)) {
+            break;
+          }
+          if (Math.abs(midpointResidual) < tolerance || upper - lower < 1.0e-6) {
+            return true;
+          }
+
+          if ((lowerResidual < 0.0) != (midpointResidual < 0.0)) {
+            upper = midpoint;
+            upperResidual = midpointResidual;
+          } else {
+            lower = midpoint;
+            lowerResidual = midpointResidual;
+          }
+        }
+
+        outletTemps.set(index, 0.5 * (lower + upper));
+        return true;
+      } catch (Exception ex) {
+        logger.debug("Unable to bracket exchanger energy balance using stream {}", index, ex);
+      }
+
+      outletTemps.set(index, originalTemperature);
+    }
+    return false;
   }
 
   private boolean stallDetection(List<Integer> unknownIndices) {
