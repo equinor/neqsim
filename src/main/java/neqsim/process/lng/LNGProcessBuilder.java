@@ -348,6 +348,11 @@ public class LNGProcessBuilder {
    */
   private LNGProcessModel buildSMR() {
     BuildContext context = newContext();
+    // The exchanger must consume the seeded JT outlet before the valve updates it on the
+    // first recycle pass. Graph scheduling follows the valve-to-exchanger stream edge and
+    // would otherwise replace the cold tear seed before the exchanger can establish a
+    // feasible first state.
+    context.process.setUseOptimizedExecution(false);
     Stream mrSuction = createMixedRefrigerant(name + " MR suction",
         new String[] { "nitrogen", "methane", "ethane", "propane" }, new double[] { 0.05, 0.42, 0.33, 0.20 }, 20.0, 3.0,
         context.feedFlowKgPerHour * 2.0);
