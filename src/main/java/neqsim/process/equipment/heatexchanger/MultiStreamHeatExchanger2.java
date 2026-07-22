@@ -326,16 +326,19 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
     double[][] J = new double[2][2];
     for (int i = 0; i < 2; i++) {
       int idx = unknownIndices.get(i);
+      double[] bounds = restartBounds(idx);
+      double perturbation = baseTemps[i] + jacobiDelta < bounds[1] ? jacobiDelta : -jacobiDelta;
       try {
-        outletTemps.set(idx, baseTemps[i] + jacobiDelta);
+        outletTemps.set(idx, baseTemps[i] + perturbation);
         double[] perturbed = residualFunctionTwoUnknowns();
         for (int j = 0; j < 2; j++) {
-          J[j][i] = (perturbed[j] - baseResiduals[j]) / jacobiDelta;
+          J[j][i] = (perturbed[j] - baseResiduals[j]) / perturbation;
         }
       } finally {
         outletTemps.set(idx, baseTemps[i]);
       }
     }
+    residualFunctionTwoUnknowns();
     return J;
   }
 
@@ -900,7 +903,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
           outletTemps.set(idx, ThreadLocalRandom.current().nextDouble(bounds[0], bounds[1]));
         }
         if (validBounds) {
-          balanceEnergyAtRestart(unknownIndices);
+          boolean balanced = balanceEnergyAtRestart(unknownIndices);
+          logger.debug("Energy-balance bracketing {} on restart attempt {}", balanced ? "succeeded" : "failed",
+              attempt);
         }
         // A detected stall forces exactly one new starting point. Keeping this flag true
         // makes the acceptance condition unreachable and exhausts every restart attempt.
@@ -955,8 +960,14 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       try {
         outletTemps.set(index, lower);
         double lowerResidual = energyDiff();
+        if (Math.abs(lowerResidual) < tolerance) {
+          return true;
+        }
         outletTemps.set(index, upper);
         double upperResidual = energyDiff();
+        if (Math.abs(upperResidual) < tolerance) {
+          return true;
+        }
         if (!Double.isFinite(lowerResidual) || !Double.isFinite(upperResidual)
             || (lowerResidual < 0.0) == (upperResidual < 0.0)) {
           outletTemps.set(index, originalTemperature);
