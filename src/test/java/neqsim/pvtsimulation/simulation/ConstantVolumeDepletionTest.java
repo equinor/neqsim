@@ -90,6 +90,7 @@ public class ConstantVolumeDepletionTest {
       }
       maximumLiquidDropout = Math.max(maximumLiquidDropout, cvd.getLiquidRelativeVolume()[i]);
     }
+    assertTrue(cvd.validateMaterialBalance(0.02));
     assertTrue(maximumLiquidDropout > 0.5);
   }
 
