@@ -284,6 +284,7 @@ private void writeData(Appendable out, String data) throws IOException {
 
 ### HTML Tag Nesting
 - **NEVER** have orphan closing tags (e.g., `</p>` without matching `<p>`)
+- In JavaDoc HTML, starting a `<ul>` or `<ol>` implicitly closes the current paragraph. Do **NOT** add `</p>` after the list unless you explicitly open a new `<p>` afterward.
 - Check that `<ul>` lists end with `</ul>`, not `</p>`
 - Common mistake: ending a list with `</ul></p>` when there's no opening `<p>` after the list
 - Wrong:
@@ -312,7 +313,7 @@ private void writeData(Appendable out, String data) throws IOException {
 - For comparisons, use `&gt;` entity: `if (value &gt; threshold)`
 
 ### Verification
-Before committing, run `./mvnw javadoc:javadoc` to catch JavaDoc errors early.
+Before committing, run `./mvnw javadoc:javadoc` to catch JavaDoc errors early. A common failure is an orphan `</p>` after a `<ul>` or `<ol>`, because lists implicitly close the current paragraph in JavaDoc HTML.
 
 - **Java 8 Features**: All new code must be Java 8 compatible; use streams, lambdas, and `Optional` where they enhance readability. NEVER use `String.repeat()` - use `StringUtils.repeat()` from Apache Commons. NEVER use `var`, `List.of()`, `Map.of()`, text blocks, or any Java 9+ syntax. See the critical Java 8 Compatibility section at the top of this document for complete list.
 - **Validation Framework**: Use `SimulationValidator.validate(object)` before running simulations to catch configuration errors early. When extending equipment, override `validateSetup()` to add custom validation. See `neqsim.util.validation` package and docs/integration/ai_validation_framework.md.
@@ -435,7 +436,9 @@ When creating or editing markdown documentation files:
 - Always include a blank line before and after tables
 - Use consistent column separator widths: `|----------|` not `|---|`
 - Ensure header separator row has same column count as data rows
-
+   `summary` attribute, no `@see` with plain text, and remember that `<ul>`/`<ol>`
+   implicitly close the current paragraph so a trailing `</p>` after the list will
+   break JavaDoc HTML. Run `./mvnw javadoc:javadoc`
 ### List Formatting
 
 - Always include a blank line before numbered/bullet lists
