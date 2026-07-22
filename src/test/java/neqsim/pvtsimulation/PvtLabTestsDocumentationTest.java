@@ -36,7 +36,8 @@ class PvtLabTestsDocumentationTest extends NeqSimTest {
     fluid.addTBPfraction("C17", 0.99, 236.0 / 1000.0, 0.840);
     fluid.addTBPfraction("C18", 0.92, 245.0 / 1000.0, 0.846);
     fluid.addTBPfraction("C19", 0.60, 265.0 / 1000.0, 0.857);
-    fluid.addPlusFraction("C20", 6.64, 453.0 / 1000.0, 0.918);
+    fluid.addPlusFraction("C20+", 6.64, 453.0 / 1000.0, 0.918);
+    assertTrue(fluid.hasComponent("C20+_PC"));
     fluid.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12);
     fluid.getCharacterization().characterisePlusFraction();
     fluid.setMixingRule("classic");
