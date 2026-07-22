@@ -65,8 +65,7 @@ class BlackOilConverterTest {
     wetOil.setMultiPhaseCheck(true);
 
     double[] pressures = { 50.0, 100.0, 150.0, 200.0 };
-    BlackOilConverter.Result result =
-        BlackOilConverter.convert(wetOil, 353.15, pressures, 1.01325, 288.15);
+    BlackOilConverter.Result result = BlackOilConverter.convert(wetOil, 353.15, pressures, 1.01325, 288.15);
 
     assertTrue(Double.isFinite(result.rho_w_sc));
     assertTrue(result.rho_w_sc > 0.0);
