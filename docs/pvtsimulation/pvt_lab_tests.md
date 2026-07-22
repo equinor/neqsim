@@ -18,7 +18,7 @@ explicitly:
 | EOS constructor temperature | K |
 | EOS constructor pressure | bara |
 | `addTBPfraction` and `addPlusFraction` molar mass | kg/mol |
-| TBP/plus-fraction density | kg/m³ |
+| TBP/plus-fraction density | Specific gravity (numerically g/cm³); kg/m³ inputs are auto-detected and converted |
 | `BasePVTsimulation.setTemperature(value, unit)` | Use `"C"` or `"K"` explicitly |
 | Pressure arrays | bara |
 | `SeparatorTest.setSeparatorConditions` temperature array | K |
@@ -32,7 +32,7 @@ Pseudo-component names must not contain `+`. For example, represent a C20-plus f
 
 | Experiment | Class | Main results |
 | --- | --- | --- |
-| Constant mass expansion (CCE/CME) | `ConstantMassExpansion` | Relative volume, liquid relative volume, gas Z-factor, Y-function |
+| Constant mass expansion (CCE/CME) | `ConstantMassExpansion` | Relative volume, liquid volume as percent of saturation volume, gas Z-factor, Y-function |
 | Constant volume depletion (CVD) | `ConstantVolumeDepletion` | Saturation pressure, relative volume, liquid dropout, cumulative mole-percent depletion |
 | Differential liberation (DL) | `DifferentialLiberation` | Saturation pressure, Bo, Bg, Rs, oil density, gas Z-factor |
 | Legacy separator test | `SeparatorTest` | Per-stage GOR and oil formation-volume factor arrays |
@@ -49,11 +49,16 @@ This complete Java example uses SI molar masses for every characterized fraction
 pressure schedule and returned arrays share the same index.
 
 ```java
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.pvtsimulation.simulation.ConstantMassExpansion;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public final class ConstantMassExpansionExample {
+  private static final Logger logger =
+      LogManager.getLogger(ConstantMassExpansionExample.class);
+
   private ConstantMassExpansionExample() {}
 
   public static void main(String[] args) {
@@ -102,12 +107,10 @@ public final class ConstantMassExpansionExample {
     double[] yFunction = cce.getYfactor();
 
     for (int i = 0; i < pressuresBara.length; i++) {
-      System.out.printf(
-          "%7.1f bara  Vrel=%8.5f  Vliq,rel=%8.5f  Zgas=%8.5f  Y=%8.5f%n",
-          pressuresBara[i], relativeVolume[i], liquidRelativeVolume[i], gasZ[i],
-          yFunction[i]);
+      logger.info("{} bara: Vrel={}, Vliq={} %, Zgas={}, Y={}", pressuresBara[i],
+          relativeVolume[i], liquidRelativeVolume[i], gasZ[i], yFunction[i]);
     }
-    System.out.printf("Saturation pressure: %.3f bara%n", cce.getSaturationPressure());
+    logger.info("Saturation pressure: {} bara", cce.getSaturationPressure());
   }
 }
 ```
@@ -171,4 +174,3 @@ depend on the fluid, available measurements, and intended prediction range.
 - [Fluid characterization](../thermo/pvt_fluid_characterization.md)
 - [Thermodynamic models](../thermo/thermodynamic_models.md)
 - [Phase-envelope guide](phase_envelope_guide.md)
-
