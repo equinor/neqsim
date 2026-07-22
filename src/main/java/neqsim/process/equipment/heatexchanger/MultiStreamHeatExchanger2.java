@@ -323,8 +323,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
    * Solves the two-unknown problem as a bounded one-dimensional root problem.
    *
    * <p>
-   * For each trial value of one outlet temperature, the other outlet is first moved onto the energy-balance manifold
-   * by bisection. The remaining pinch residual is then bracketed and bisected along that manifold. This avoids asking a
+   * For each trial value of one outlet temperature, the other outlet is first moved onto the energy-balance manifold by
+   * bisection. The remaining pinch residual is then bracketed and bisected along that manifold. This avoids asking a
    * numerical two-dimensional Jacobian to cross the piecewise-smooth points where the active pinch location changes.
    * </p>
    *
