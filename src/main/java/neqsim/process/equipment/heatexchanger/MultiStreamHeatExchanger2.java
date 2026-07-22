@@ -802,7 +802,13 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       }
 
       // 5. Final condition
-      if (directionOk && energyOk && heatFeasible && (!UATest || uaOk) && !localMin) {
+      // The two-unknown solve uses the pinch temperature as a Newton residual and does
+      // not evaluate LMTD or UA. It can therefore safely start from a crossed
+      // composite curve and drive the pinch to the positive approach-temperature
+      // target. Requiring a positive profile here can otherwise make that root
+      // unreachable. Three-unknown UA solves still require a valid LMTD profile.
+      boolean heatFeasibleForRestart = heatFeasible || (!UATest && unknownIndices.size() == 2);
+      if (directionOk && energyOk && heatFeasibleForRestart && (!UATest || uaOk) && !localMin) {
         logger.debug("✓ No reset on attempt " + attempt);
         logger.debug("With Streams " + outletTemps);
         return;
