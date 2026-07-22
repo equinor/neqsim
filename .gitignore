@@ -90,5 +90,8 @@ eclipse_dictionary.txt
 src/main/**/*.png
 src/main/**/*.gif
 
+# Java Flight Recorder profiler dumps
+*.jfr
+
 # Gemini Agent
 .gemini/
