@@ -299,8 +299,8 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
       try {
         double[][] jacobian = numericalJacobiTwoUnknowns(unknownIndices);
         delta = linearSystemTwoUnknowns(jacobian, residuals);
-      } catch (RuntimeException e) {
-        logger.debug("Restarting two-unknown exchanger solve after invalid Jacobian", e);
+      } catch (ArithmeticException e) {
+        logger.debug("Restarting two-unknown exchanger solve after singular Jacobian", e);
         resetOfExtremesAndStalls(unknownIndices, true, false);
         continue;
       }
