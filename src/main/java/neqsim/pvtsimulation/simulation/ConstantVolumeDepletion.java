@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.simulation;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -108,7 +109,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       }
       if (relativeResidual < 0.0) {
         throw new IllegalStateException(
-            String.format("CVD gas removal overshot the saturation volume by %.3e relative.", -relativeResidual));
+            String.format(Locale.ROOT, "CVD gas removal overshot the saturation volume by %.3e relative.",
+                -relativeResidual));
       }
       if (!getThermoSystem().hasPhaseType("gas")) {
         throw new IllegalStateException("Cannot restore CVD cell volume without a gas phase.");
@@ -161,7 +163,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        String message = String.format("CVD TP flash failed at pressure %.6f bara.",
+        String message = String.format(Locale.ROOT, "CVD TP flash failed at pressure %.6f bara.",
             getThermoSystem().getPressure("bara"));
         logger.error(message, ex);
         throw new IllegalStateException(message, ex);
