@@ -41,10 +41,8 @@ class PvtLabTestsDocumentationTest extends NeqSimTest {
     fluid.getCharacterization().characterisePlusFraction();
     fluid.setMixingRule("classic");
 
-    double[] pressuresBara = {
-      351.4, 323.2, 301.5, 275.9, 250.1, 226.1, 205.9, 197.3,
-      189.3, 183.3, 165.0, 131.2, 108.3, 85.3, 55.6
-    };
+    double[] pressuresBara = { 351.4, 323.2, 301.5, 275.9, 250.1, 226.1, 205.9, 197.3, 189.3, 183.3, 165.0, 131.2,
+        108.3, 85.3, 55.6 };
 
     ConstantMassExpansion cce = new ConstantMassExpansion(fluid);
     cce.setTemperature(97.5, "C");
