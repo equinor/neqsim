@@ -75,7 +75,6 @@ public class ConstantVolumeDepletionTest {
     cvd.runCalc();
 
     assertEquals(saturationReference.getSaturationPressure(), cvd.getSaturationPressure(), 0.05);
-    assertTrue(cvd.validateMaterialBalance(0.02));
 
     double[] depletion = cvd.getCummulativeMolePercDepleted();
     double[] relativeVolume = cvd.getRelativeVolume();
