@@ -324,7 +324,8 @@ public class BlackOilConverter {
     for (int i = 0; i < s.getNumberOfPhases(); i++) {
       PhaseInterface p = s.getPhase(i);
       String type = safeTypeName(p);
-      if ((type.contains("liquid") || type.contains("oil")) && hydrocarbonFraction(p) > 1e-6 && !isMostlyWater(p)) {
+      if ((type.contains("liquid") || type.equals("oil")) && hydrocarbonFraction(p) > 1e-6
+          && !isMostlyWater(p)) {
         return p;
       }
     }
