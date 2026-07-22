@@ -881,10 +881,9 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
    * Moves one unknown outlet temperature onto the energy-balance manifold by bisection.
    *
    * <p>
-   * At fixed values of the other outlet temperatures, total exchanger duty is monotonic
-   * in each outlet temperature. Trying each unknown from last to first preserves the
-   * low-discrepancy coverage of the remaining dimensions while providing a reproducible,
-   * thermodynamically meaningful restart.
+   * At fixed values of the other outlet temperatures, total exchanger duty is monotonic in each outlet temperature.
+   * Trying each unknown from last to first preserves the low-discrepancy coverage of the remaining dimensions while
+   * providing a reproducible, thermodynamically meaningful restart.
    * </p>
    *
    * @param unknownIndices unknown outlet-temperature indices
