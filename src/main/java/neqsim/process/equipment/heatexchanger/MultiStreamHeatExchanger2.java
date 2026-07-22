@@ -822,14 +822,22 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         for (int position = 0; position < unknownIndices.size(); position++) {
           int idx = unknownIndices.get(position);
           double[] bounds = restartBounds(idx);
+          double span = bounds[1] - bounds[0];
+          if (!Double.isFinite(span) || span <= 0.0) {
+            logger.debug("Skipping deterministic restart for stream {} with invalid bounds [{}, {}]", idx, bounds[0],
+                bounds[1]);
+            continue;
+          }
           double fraction = deterministicRestartFraction(restartPoint, position);
-          double guess = bounds[0] + fraction * (bounds[1] - bounds[0]);
+          double guess = bounds[0] + fraction * span;
           outletTemps.set(idx, guess);
         }
         // Energy balance is monotonic in each outlet temperature. Bracket one
         // unknown after every low-discrepancy restart so the Newton solver starts
         // near the energy-balance manifold instead of relying on a narrow random hit.
-        balanceEnergyAtRestart(unknownIndices);
+        boolean energyBalanced = balanceEnergyAtRestart(unknownIndices);
+        logger.debug("Energy-balance bracketing {} for restart point {}", energyBalanced ? "succeeded" : "failed",
+            restartPoint);
         // A detected stall forces exactly one new starting point. Keeping this flag true
         // makes the acceptance condition unreachable and exhausts every restart attempt.
         localMin = false;
