@@ -573,6 +573,12 @@ public class MultiStreamHeatExchanger2 extends Heater implements MultiStreamHeat
         for (int j = 0; j < 2; j++) {
           J[j][i] = (perturbed[j] - baseResiduals[j]) / perturbation;
         }
+      } catch (NullPointerException | ClassCastException | IndexOutOfBoundsException | IllegalStateException ex) {
+        throw ex;
+      } catch (RuntimeException ex) {
+        ArithmeticException wrapped = new ArithmeticException("Jacobian evaluation failed");
+        wrapped.initCause(ex);
+        throw wrapped;
       } finally {
         outletTemps.set(idx, baseTemps[i]);
       }
