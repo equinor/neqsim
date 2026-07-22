@@ -143,6 +143,75 @@ if (result.getExecutionStatus() == DesignResult.ExecutionStatus.OPTIMIZED) {
 }
 ```
 
+### Reading the DesignResult
+
+`optimize()` (and `validate()`) return a `DesignResult` you can inspect programmatically —
+convergence status, per-equipment sizes, constraint utilisation, warnings, and hard violations.
+
+```java
+DesignResult result = DesignOptimizer.forProcess(process)
+    .autoSizeEquipment(1.2)
+    .applyDefaultConstraints()
+    .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION)
+    .optimize();
+
+// Convergence and objective
+boolean ok = result.isConverged();
+double objective = result.getObjectiveValue();
+
+// Sized dimensions for a named unit (e.g. keys "diameter", "length" for a separator)
+java.util.Map<String, Double> sepSize = result.getEquipmentSizes("HP-Separator");
+
+// Constraint utilisation (0-1) per constraint
+for (java.util.Map.Entry<String, DesignResult.ConstraintStatus> e :
+    result.getConstraintStatus().entrySet()) {
+  DesignResult.ConstraintStatus cs = e.getValue();
+  System.out.printf("%s: %.0f%% used, satisfied=%b%n",
+      cs.getName(), 100.0 * cs.getUtilization(), cs.isSatisfied());
+}
+
+// Advisory warnings vs. hard violations
+if (result.hasViolations()) {
+  result.getViolations().forEach(System.out::println);
+}
+```
+
+To validate an existing design without optimising, use `.validate()`:
+
+```java
+DesignResult check = DesignOptimizer.forProcess(process).validate();
+boolean feasible = !check.hasViolations();
+```
+
+### Selecting a mechanical-design standard
+
+Mechanical-design standards are chosen through `StandardRegistry` / `StandardType` and bound to an
+equipment's mechanical-design context. Discover the applicable standards, then create a concrete
+`DesignStandard`:
+
+```java
+import neqsim.process.mechanicaldesign.designstandards.DesignStandard;
+import neqsim.process.mechanicaldesign.designstandards.StandardRegistry;
+import neqsim.process.mechanicaldesign.designstandards.StandardType;
+
+Separator sep = (Separator) process.getUnit("HP-Separator");
+
+// Which standards apply to a separator?
+java.util.List<StandardType> applicable =
+    StandardRegistry.getApplicableStandards("Separator");
+
+// Create a concrete standard bound to this separator's mechanical design
+DesignStandard vesselStandard =
+    StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, sep.getMechanicalDesign());
+```
+
+> **Verified examples.** The runnable snippets in this "Quick Start" section are exercised by
+> `neqsim.process.design.DesignFrameworkDocExampleTest`
+> (`src/test/java/neqsim/process/design/DesignFrameworkDocExampleTest.java`). The test uses only
+> classes that exist in the source tree, so if the public design API changes the test fails and this
+> document must be updated in lock-step. Run it with
+> `./mvnw test -Dtest=DesignFrameworkDocExampleTest`.
+
 ## Component Details
 
 ### AutoSizeable Interface
