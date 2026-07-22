@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * destillation1 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -24,8 +22,7 @@ public class destillation1 {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 63.0), 16.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 63.0), 16.00);
     // testSystem.addComponent("methane", 1.00);
     testSystem.addComponent("ethane", 0.002);
     // testSystem.addComponent("CO2", 10.00);
@@ -53,14 +50,12 @@ public class destillation1 {
     /*
      * Heater heater = new Heater((Stream) column.getGasOutStream()); heater.setdT(-15.0);
      *
-     * DistillationColumn column2 = new DistillationColumn(4, true, true);
-     * column2.addFeedStream(heater.getOutStream(), 2); ((Reboiler)
-     * column2.getReboiler()).setRefluxRatio(0.01); ((Condenser)
+     * DistillationColumn column2 = new DistillationColumn(4, true, true); column2.addFeedStream(heater.getOutStream(),
+     * 2); ((Reboiler) column2.getReboiler()).setRefluxRatio(0.01); ((Condenser)
      * column2.getCondenser()).setRefluxRatio(0.01);
      */
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(column);
     // operations.add(heater);

@@ -37,7 +37,8 @@ public class ValveCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public ValveCapacityStrategy() {}
+  public ValveCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom opening limits.
@@ -121,25 +122,24 @@ public class ValveCapacityStrategy implements EquipmentCapacityStrategy {
     }
 
     final double finalMaxOpening = maxAllowedOpening;
-    CapacityConstraint openingConstraint = new CapacityConstraint("valveOpening")
-        .setDesignValue(maxOpening).setMaxValue(finalMaxOpening).setMinValue(minOpening)
-        .setUnit("%").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-        .setWarningThreshold(0.9).setValueSupplier(() -> valve.getPercentValveOpening());
+    CapacityConstraint openingConstraint = new CapacityConstraint("valveOpening").setDesignValue(maxOpening)
+        .setMaxValue(finalMaxOpening).setMinValue(minOpening).setUnit("%")
+        .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setWarningThreshold(0.9)
+        .setValueSupplier(() -> valve.getPercentValveOpening());
     constraints.put("valveOpening", openingConstraint);
 
     // Pressure drop constraint (control authority)
     if (valve.getInletStream() != null && valve.getOutletStream() != null) {
       // Check for excessive pressure drop (>50% of inlet is typically too much)
-      CapacityConstraint dpConstraint =
-          new CapacityConstraint("pressureDropRatio").setDesignValue(0.3) // 30% DP ratio as design
-              .setMaxValue(0.5) // 50% as max before choked flow concerns
-              .setUnit("ratio").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-              .setValueSupplier(() -> {
-                double inletP = valve.getInletStream().getPressure("bara");
-                double outletP = valve.getOutletStream().getPressure("bara");
-                double dp = inletP - outletP;
-                return (dp > 0 && inletP > 0) ? dp / inletP : 0.0;
-              });
+      CapacityConstraint dpConstraint = new CapacityConstraint("pressureDropRatio").setDesignValue(0.3) // 30% DP ratio
+          // as design
+          .setMaxValue(0.5) // 50% as max before choked flow concerns
+          .setUnit("ratio").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setValueSupplier(() -> {
+            double inletP = valve.getInletStream().getPressure("bara");
+            double outletP = valve.getOutletStream().getPressure("bara");
+            double dp = inletP - outletP;
+            return (dp > 0 && inletP > 0) ? dp / inletP : 0.0;
+          });
       constraints.put("pressureDropRatio", dpConstraint);
     }
 

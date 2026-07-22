@@ -8,8 +8,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class dewPointPressureFlashTest {
+  private static final Logger logger = LogManager.getLogger(dewPointPressureFlashTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(dewPointPressureFlashTest.class);
 
   @Test
   void testRun() {

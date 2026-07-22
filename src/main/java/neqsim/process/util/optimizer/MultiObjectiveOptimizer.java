@@ -20,8 +20,8 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
  * Multi-objective optimizer for process systems.
  *
  * <p>
- * This optimizer finds Pareto-optimal solutions when optimizing multiple competing objectives. It
- * supports two main methods:
+ * This optimizer finds Pareto-optimal solutions when optimizing multiple competing objectives. It supports two main
+ * methods:
  * </p>
  * <ul>
  * <li><b>Weighted Sum</b>: Varies weights to find different trade-off points</li>
@@ -31,14 +31,14 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>{@code
- * List<ObjectiveFunction> objectives =
- *     Arrays.asList(StandardObjective.MAXIMIZE_THROUGHPUT, StandardObjective.MINIMIZE_POWER);
- * 
+ * List<ObjectiveFunction> objectives = Arrays.asList(StandardObjective.MAXIMIZE_THROUGHPUT,
+ *     StandardObjective.MINIMIZE_POWER);
+ *
  * MultiObjectiveOptimizer moo = new MultiObjectiveOptimizer();
  * ParetoFront front = moo.optimizeWeightedSum(process, feedStream, objectives, baseConfig, 20);
- * 
+ *
  * ParetoSolution knee = front.findKneePoint();
  * System.out.println("Best trade-off: " + knee);
  * }</pre>
@@ -51,8 +51,8 @@ public class MultiObjectiveOptimizer implements Serializable {
   private static final long serialVersionUID = 1L;
 
   /** Logger for this class. */
-  private static final org.apache.logging.log4j.Logger logger =
-      org.apache.logging.log4j.LogManager.getLogger(MultiObjectiveOptimizer.class);
+  private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
+      .getLogger(MultiObjectiveOptimizer.class);
 
   /** Default number of weight combinations to explore. */
   public static final int DEFAULT_WEIGHT_COMBINATIONS = 20;
@@ -67,13 +67,13 @@ public class MultiObjectiveOptimizer implements Serializable {
   private static final int MAX_OBJECTIVES_EFFICIENT = 5;
 
   /** Inner single-objective optimizer. */
-  private final ProductionOptimizer singleObjectiveOptimizer;
+  private final transient ProductionOptimizer singleObjectiveOptimizer;
 
   /** Whether to include infeasible solutions in the front. */
   private boolean includeInfeasible = false;
 
   /** Callback for progress reporting. */
-  private ProgressCallback progressCallback;
+  private transient ProgressCallback progressCallback;
 
   /**
    * Progress callback interface.
@@ -122,8 +122,8 @@ public class MultiObjectiveOptimizer implements Serializable {
    * Find Pareto front using weighted-sum scalarization.
    *
    * <p>
-   * This method varies weights across objectives and solves single-objective problems. It's simple
-   * but may miss solutions on non-convex regions of the front.
+   * This method varies weights across objectives and solves single-objective problems. It's simple but may miss
+   * solutions on non-convex regions of the front.
    * </p>
    *
    * @param process the process system to optimize
@@ -134,14 +134,25 @@ public class MultiObjectiveOptimizer implements Serializable {
    * @return Pareto front of non-dominated solutions
    */
   public ParetoFront optimizeWeightedSum(ProcessSystem process, StreamInterface feedStream,
-      List<ObjectiveFunction> objectives, OptimizationConfig baseConfig,
-      int numWeightCombinations) {
+      List<ObjectiveFunction> objectives, OptimizationConfig baseConfig, int numWeightCombinations) {
     return optimizeWeightedSum(process, feedStream, objectives, baseConfig, numWeightCombinations,
         Collections.emptyList());
   }
 
   /**
    * Find Pareto front using weighted-sum scalarization with additional constraints.
+   *
+   * <p>
+   * <strong>Limitation:</strong> Weighted-sum scalarization can only discover Pareto-optimal solutions that lie on the
+   * <em>convex</em> hull of the true Pareto front. Non-convex regions of the front will be missed because no weight
+   * vector maps to those solutions. For problems where the Pareto front may be non-convex, prefer
+   * {@link #optimizeEpsilonConstraint} or {@link #sampleParetoFront} which can find non-convex Pareto-optimal points.
+   * </p>
+   *
+   * <p>
+   * <em>Note:</em> This method is best suited for convex Pareto fronts. If you observe large gaps between adjacent
+   * solutions, the front is likely non-convex and epsilon-constraint or direct sampling methods should be used instead.
+   * </p>
    *
    * @param process the process system to optimize
    * @param feedStream the feed stream to manipulate
@@ -173,14 +184,13 @@ public class MultiObjectiveOptimizer implements Serializable {
           "Number of weight combinations must be at least 2, got: " + numWeightCombinations);
     }
 
-    logger.info("Starting weighted-sum optimization with {} objectives, {} weight combinations",
-        objectives.size(), numWeightCombinations);
+    logger.info("Starting weighted-sum optimization with {} objectives, {} weight combinations", objectives.size(),
+        numWeightCombinations);
 
     if (objectives.size() == 1) {
       // Single objective - just run normal optimization
       logger.debug("Single objective detected, delegating to single-objective optimizer");
-      return optimizeSingleObjective(process, feedStream, objectives.get(0), baseConfig,
-          constraints);
+      return optimizeSingleObjective(process, feedStream, objectives.get(0), baseConfig, constraints);
     }
 
     ParetoFront front = new ParetoFront(!includeInfeasible);
@@ -211,12 +221,11 @@ public class MultiObjectiveOptimizer implements Serializable {
         }
 
         // Create weighted objective
-        ProductionOptimizer.OptimizationObjective weightedObjective =
-            createWeightedObjective(objectives, w);
+        ProductionOptimizer.OptimizationObjective weightedObjective = createWeightedObjective(objectives, w);
 
         // Run single-objective optimization
-        OptimizationResult result = singleObjectiveOptimizer.optimize(processCopy, feedCopy,
-            baseConfig, Collections.singletonList(weightedObjective), constraints);
+        OptimizationResult result = singleObjectiveOptimizer.optimize(processCopy, feedCopy, baseConfig,
+            Collections.singletonList(weightedObjective), constraints);
 
         // Set the optimized process state and run
         feedCopy.setFlowRate(result.getOptimalRate(), baseConfig.getRateUnit());
@@ -255,8 +264,8 @@ public class MultiObjectiveOptimizer implements Serializable {
    * Find Pareto front using epsilon-constraint method.
    *
    * <p>
-   * This method optimizes the primary objective while constraining other objectives. It can find
-   * solutions on non-convex regions of the front.
+   * This method optimizes the primary objective while constraining other objectives. It can find solutions on
+   * non-convex regions of the front.
    * </p>
    *
    * @param process the process system to optimize
@@ -268,10 +277,10 @@ public class MultiObjectiveOptimizer implements Serializable {
    * @return Pareto front of non-dominated solutions
    */
   public ParetoFront optimizeEpsilonConstraint(ProcessSystem process, StreamInterface feedStream,
-      ObjectiveFunction primaryObjective, List<ObjectiveFunction> constrainedObjectives,
-      OptimizationConfig baseConfig, int gridPoints) {
-    return optimizeEpsilonConstraint(process, feedStream, primaryObjective, constrainedObjectives,
-        baseConfig, gridPoints, Collections.emptyList());
+      ObjectiveFunction primaryObjective, List<ObjectiveFunction> constrainedObjectives, OptimizationConfig baseConfig,
+      int gridPoints) {
+    return optimizeEpsilonConstraint(process, feedStream, primaryObjective, constrainedObjectives, baseConfig,
+        gridPoints, Collections.emptyList());
   }
 
   /**
@@ -287,9 +296,8 @@ public class MultiObjectiveOptimizer implements Serializable {
    * @return Pareto front of non-dominated solutions
    */
   public ParetoFront optimizeEpsilonConstraint(ProcessSystem process, StreamInterface feedStream,
-      ObjectiveFunction primaryObjective, List<ObjectiveFunction> constrainedObjectives,
-      OptimizationConfig baseConfig, int gridPoints,
-      List<OptimizationConstraint> additionalConstraints) {
+      ObjectiveFunction primaryObjective, List<ObjectiveFunction> constrainedObjectives, OptimizationConfig baseConfig,
+      int gridPoints, List<OptimizationConstraint> additionalConstraints) {
     Objects.requireNonNull(process, "Process cannot be null");
     Objects.requireNonNull(feedStream, "Feed stream cannot be null");
     Objects.requireNonNull(primaryObjective, "Primary objective cannot be null");
@@ -301,8 +309,7 @@ public class MultiObjectiveOptimizer implements Serializable {
           "At least one constrained objective is required for epsilon-constraint method");
     }
     if (gridPoints < 2) {
-      throw new IllegalArgumentException(
-          "Number of grid points must be at least 2, got: " + gridPoints);
+      throw new IllegalArgumentException("Number of grid points must be at least 2, got: " + gridPoints);
     }
 
     int totalObjectives = 1 + constrainedObjectives.size();
@@ -317,8 +324,8 @@ public class MultiObjectiveOptimizer implements Serializable {
     ParetoFront front = new ParetoFront(!includeInfeasible);
 
     // First, find bounds for each constrained objective
-    Map<ObjectiveFunction, double[]> bounds =
-        findObjectiveBounds(process, feedStream, constrainedObjectives, baseConfig);
+    Map<ObjectiveFunction, double[]> bounds = findObjectiveBounds(process, feedStream, constrainedObjectives,
+        baseConfig);
 
     // Create all objectives list for evaluation
     List<ObjectiveFunction> allObjectives = new ArrayList<>();
@@ -346,12 +353,11 @@ public class MultiObjectiveOptimizer implements Serializable {
       }
 
       // Create primary objective for ProductionOptimizer
-      ProductionOptimizer.OptimizationObjective primaryObjConfig =
-          objectiveFunctionToConfig(primaryObjective);
+      ProductionOptimizer.OptimizationObjective primaryObjConfig = objectiveFunctionToConfig(primaryObjective);
 
       // Run optimization
-      OptimizationResult result = singleObjectiveOptimizer.optimize(processCopy, feedCopy,
-          baseConfig, Collections.singletonList(primaryObjConfig), allConstraints);
+      OptimizationResult result = singleObjectiveOptimizer.optimize(processCopy, feedCopy, baseConfig,
+          Collections.singletonList(primaryObjConfig), allConstraints);
 
       if (!result.isFeasible() && !includeInfeasible) {
         continue;
@@ -387,10 +393,16 @@ public class MultiObjectiveOptimizer implements Serializable {
 
   /**
    * Optimize a single objective (convenience method).
+   *
+   * @param process the process system to optimize
+   * @param feedStream the feed stream to manipulate
+   * @param objective the single objective function to optimize
+   * @param baseConfig base optimization configuration
+   * @param constraints additional optimization constraints
+   * @return Pareto front containing the single optimal solution
    */
   private ParetoFront optimizeSingleObjective(ProcessSystem process, StreamInterface feedStream,
-      ObjectiveFunction objective, OptimizationConfig baseConfig,
-      List<OptimizationConstraint> constraints) {
+      ObjectiveFunction objective, OptimizationConfig baseConfig, List<OptimizationConstraint> constraints) {
     ParetoFront front = new ParetoFront(!includeInfeasible);
 
     ProcessSystem processCopy = process.copy();
@@ -408,14 +420,13 @@ public class MultiObjectiveOptimizer implements Serializable {
       return front;
     }
 
-    double[] rawValues = new double[] {objective.evaluate(processCopy)};
+    double[] rawValues = new double[] { objective.evaluate(processCopy) };
 
     Map<String, Double> decisionVars = new HashMap<>();
     decisionVars.put("flowRate", result.getOptimalRate());
 
-    ParetoSolution solution =
-        new ParetoSolution.Builder().objectives(Collections.singletonList(objective), rawValues)
-            .decisionVariables(decisionVars).feasible(result.isFeasible()).build();
+    ParetoSolution solution = new ParetoSolution.Builder().objectives(Collections.singletonList(objective), rawValues)
+        .decisionVariables(decisionVars).feasible(result.isFeasible()).build();
 
     front.add(solution);
     return front;
@@ -425,9 +436,9 @@ public class MultiObjectiveOptimizer implements Serializable {
    * Generate Pareto front by sampling at fixed flow rates within the feasible range.
    *
    * <p>
-   * This method directly samples the decision variable space by evaluating the process at different
-   * flow rates. It's useful when objectives are linearly related (e.g., throughput vs power) where
-   * weighted-sum methods converge to a single point.
+   * This method directly samples the decision variable space by evaluating the process at different flow rates. It's
+   * useful when objectives are linearly related (e.g., throughput vs power) where weighted-sum methods converge to a
+   * single point.
    * </p>
    *
    * @param process the process system to evaluate
@@ -439,8 +450,7 @@ public class MultiObjectiveOptimizer implements Serializable {
    */
   public ParetoFront sampleParetoFront(ProcessSystem process, StreamInterface feedStream,
       List<ObjectiveFunction> objectives, OptimizationConfig baseConfig, int numSamples) {
-    return sampleParetoFront(process, feedStream, objectives, baseConfig, numSamples,
-        Collections.emptyList());
+    return sampleParetoFront(process, feedStream, objectives, baseConfig, numSamples, Collections.emptyList());
   }
 
   /**
@@ -523,13 +533,18 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Check feasibility of current process state using equipment utilization and constraints.
+   * Checks process feasibility against equipment utilization limits and hard constraints.
+   *
+   * @param process the process system to check
+   * @param config optimization configuration providing the utilization limit
+   * @param constraints list of explicit optimization constraints
+   * @return true if all utilization and hard constraints are satisfied
    */
   private boolean checkFeasibility(ProcessSystem process, OptimizationConfig config,
       List<OptimizationConstraint> constraints) {
-    // Check equipment utilization limits
-    // Use the configured default utilization limit (directly access the field)
-    double utilizationLimit = ProductionOptimizer.DEFAULT_UTILIZATION_LIMIT;
+    // Check equipment utilization limits using the configured limit from OptimizationConfig
+    double utilizationLimit = config != null ? config.getDefaultUtilizationLimit()
+        : ProductionOptimizer.DEFAULT_UTILIZATION_LIMIT;
 
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       double duty = unit.getCapacityDuty();
@@ -552,7 +567,12 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Generate weight combinations for n objectives.
+   * Generates weight combinations for n objectives using linear interpolation (2 objectives) or simplex lattice design
+   * (3+ objectives).
+   *
+   * @param numObjectives the number of objectives
+   * @param numCombinations the number of weight combinations to generate
+   * @return list of weight arrays, each summing to 1.0
    */
   private List<double[]> generateWeights(int numObjectives, int numCombinations) {
     List<double[]> weights = new ArrayList<>();
@@ -561,22 +581,28 @@ public class MultiObjectiveOptimizer implements Serializable {
       // Simple linear interpolation for 2 objectives
       for (int i = 0; i <= numCombinations; i++) {
         double w1 = (double) i / numCombinations;
-        weights.add(new double[] {w1, 1.0 - w1});
+        weights.add(new double[] { w1, 1.0 - w1 });
       }
     } else {
       // For more objectives, use simplex lattice design
-      generateSimplexWeights(weights, numObjectives, numCombinations, new double[numObjectives], 0,
-          1.0);
+      generateSimplexWeights(weights, numObjectives, numCombinations, new double[numObjectives], 0, 1.0);
     }
 
     return weights;
   }
 
   /**
-   * Recursive generation of simplex lattice weights.
+   * Recursively generates simplex lattice weights where all entries sum to 1.0.
+   *
+   * @param weights accumulator list for generated weight arrays
+   * @param numObjectives total number of objectives
+   * @param divisions number of divisions along each axis
+   * @param current working array holding the current partial weight assignment
+   * @param index current dimension being filled
+   * @param remaining remaining weight budget (starts at 1.0)
    */
-  private void generateSimplexWeights(List<double[]> weights, int numObjectives, int divisions,
-      double[] current, int index, double remaining) {
+  private void generateSimplexWeights(List<double[]> weights, int numObjectives, int divisions, double[] current,
+      int index, double remaining) {
     if (index == numObjectives - 1) {
       current[index] = remaining;
       weights.add(Arrays.copyOf(current, current.length));
@@ -587,17 +613,20 @@ public class MultiObjectiveOptimizer implements Serializable {
       double w = (double) i / divisions;
       if (w <= remaining + 1e-9) {
         current[index] = w;
-        generateSimplexWeights(weights, numObjectives, divisions, current, index + 1,
-            remaining - w);
+        generateSimplexWeights(weights, numObjectives, divisions, current, index + 1, remaining - w);
       }
     }
   }
 
   /**
-   * Create weighted objective for ProductionOptimizer.
+   * Creates a single weighted objective that combines multiple objectives with the given weights.
+   *
+   * @param objectives the list of objective functions
+   * @param weights array of weights (same length as objectives), should sum to 1.0
+   * @return a ProductionOptimizer objective representing the weighted sum
    */
-  private ProductionOptimizer.OptimizationObjective createWeightedObjective(
-      List<ObjectiveFunction> objectives, double[] weights) {
+  private ProductionOptimizer.OptimizationObjective createWeightedObjective(List<ObjectiveFunction> objectives,
+      double[] weights) {
     return new ProductionOptimizer.OptimizationObjective("WeightedSum", process -> {
       double score = 0.0;
       for (int i = 0; i < objectives.size(); i++) {
@@ -614,20 +643,24 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Convert ObjectiveFunction to ProductionOptimizer.OptimizationObjective.
+   * Converts an {@link ObjectiveFunction} to a {@link ProductionOptimizer.OptimizationObjective}.
+   *
+   * @param objective the objective function to convert
+   * @return the equivalent ProductionOptimizer objective
    */
-  private ProductionOptimizer.OptimizationObjective objectiveFunctionToConfig(
-      ObjectiveFunction objective) {
-    ProductionOptimizer.ObjectiveType type =
-        objective.getDirection() == ObjectiveFunction.Direction.MAXIMIZE
-            ? ProductionOptimizer.ObjectiveType.MAXIMIZE
-            : ProductionOptimizer.ObjectiveType.MINIMIZE;
-    return new ProductionOptimizer.OptimizationObjective(objective.getName(), objective::evaluate,
-        1.0, type);
+  private ProductionOptimizer.OptimizationObjective objectiveFunctionToConfig(ObjectiveFunction objective) {
+    ProductionOptimizer.ObjectiveType type = objective.getDirection() == ObjectiveFunction.Direction.MAXIMIZE
+        ? ProductionOptimizer.ObjectiveType.MAXIMIZE
+        : ProductionOptimizer.ObjectiveType.MINIMIZE;
+    return new ProductionOptimizer.OptimizationObjective(objective.getName(), objective::evaluate, 1.0, type);
   }
 
   /**
-   * Evaluate all objectives for the current process state.
+   * Evaluates all objectives for the current process state.
+   *
+   * @param process the process system
+   * @param objectives the list of objective functions
+   * @return array of objective values in the same order as the input list
    */
   private double[] evaluateObjectives(ProcessSystem process, List<ObjectiveFunction> objectives) {
     double[] values = new double[objectives.size()];
@@ -638,11 +671,16 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Find bounds for each objective by optimizing individually.
+   * Finds the min/max bounds for each objective by running single-objective optimization.
+   *
+   * @param process the process system template (will be copied)
+   * @param feedStream the feed stream to vary
+   * @param objectives the objectives to bound
+   * @param baseConfig the base optimization configuration
+   * @return map from each objective to a [min, max] array
    */
-  private Map<ObjectiveFunction, double[]> findObjectiveBounds(ProcessSystem process,
-      StreamInterface feedStream, List<ObjectiveFunction> objectives,
-      OptimizationConfig baseConfig) {
+  private Map<ObjectiveFunction, double[]> findObjectiveBounds(ProcessSystem process, StreamInterface feedStream,
+      List<ObjectiveFunction> objectives, OptimizationConfig baseConfig) {
     Map<ObjectiveFunction, double[]> bounds = new HashMap<>();
 
     for (ObjectiveFunction obj : objectives) {
@@ -650,11 +688,10 @@ public class MultiObjectiveOptimizer implements Serializable {
       StreamInterface feedCopy = (StreamInterface) processCopy.getUnit(feedStream.getName());
 
       // Find minimum
-      ProductionOptimizer.OptimizationObjective minObj =
-          new ProductionOptimizer.OptimizationObjective(obj.getName() + "_min", obj::evaluate, 1.0,
-              ProductionOptimizer.ObjectiveType.MINIMIZE);
-      OptimizationResult minResult = singleObjectiveOptimizer.optimize(processCopy, feedCopy,
-          baseConfig, Collections.singletonList(minObj), Collections.emptyList());
+      ProductionOptimizer.OptimizationObjective minObj = new ProductionOptimizer.OptimizationObjective(
+          obj.getName() + "_min", obj::evaluate, 1.0, ProductionOptimizer.ObjectiveType.MINIMIZE);
+      OptimizationResult minResult = singleObjectiveOptimizer.optimize(processCopy, feedCopy, baseConfig,
+          Collections.singletonList(minObj), Collections.emptyList());
 
       feedCopy.setFlowRate(minResult.getOptimalRate(), baseConfig.getRateUnit());
       try {
@@ -668,11 +705,10 @@ public class MultiObjectiveOptimizer implements Serializable {
       processCopy = process.copy();
       feedCopy = (StreamInterface) processCopy.getUnit(feedStream.getName());
 
-      ProductionOptimizer.OptimizationObjective maxObj =
-          new ProductionOptimizer.OptimizationObjective(obj.getName() + "_max", obj::evaluate, 1.0,
-              ProductionOptimizer.ObjectiveType.MAXIMIZE);
-      OptimizationResult maxResult = singleObjectiveOptimizer.optimize(processCopy, feedCopy,
-          baseConfig, Collections.singletonList(maxObj), Collections.emptyList());
+      ProductionOptimizer.OptimizationObjective maxObj = new ProductionOptimizer.OptimizationObjective(
+          obj.getName() + "_max", obj::evaluate, 1.0, ProductionOptimizer.ObjectiveType.MAXIMIZE);
+      OptimizationResult maxResult = singleObjectiveOptimizer.optimize(processCopy, feedCopy, baseConfig,
+          Collections.singletonList(maxObj), Collections.emptyList());
 
       feedCopy.setFlowRate(maxResult.getOptimalRate(), baseConfig.getRateUnit());
       try {
@@ -682,14 +718,19 @@ public class MultiObjectiveOptimizer implements Serializable {
       }
       double maxValue = obj.evaluate(processCopy);
 
-      bounds.put(obj, new double[] {Math.min(minValue, maxValue), Math.max(minValue, maxValue)});
+      bounds.put(obj, new double[] { Math.min(minValue, maxValue), Math.max(minValue, maxValue) });
     }
 
     return bounds;
   }
 
   /**
-   * Generate epsilon grid for epsilon-constraint method.
+   * Generates an epsilon grid for the epsilon-constraint method.
+   *
+   * @param objectives the constrained objectives
+   * @param bounds map of objective bounds ([min, max])
+   * @param gridPoints number of grid divisions per objective
+   * @return list of epsilon value arrays
    */
   private List<double[]> generateEpsilonGrid(List<ObjectiveFunction> objectives,
       Map<ObjectiveFunction, double[]> bounds, int gridPoints) {
@@ -701,7 +742,7 @@ public class MultiObjectiveOptimizer implements Serializable {
       double[] bound = bounds.get(obj);
       for (int i = 0; i <= gridPoints; i++) {
         double epsilon = bound[0] + (bound[1] - bound[0]) * i / gridPoints;
-        grid.add(new double[] {epsilon});
+        grid.add(new double[] { epsilon });
       }
     } else {
       // Multiple constrained objectives - full grid
@@ -712,7 +753,14 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Recursive grid generation.
+   * Recursively generates a full combinatorial grid of epsilon values.
+   *
+   * @param grid accumulator list for generated epsilon arrays
+   * @param objectives the constrained objectives
+   * @param bounds map of objective bounds ([min, max])
+   * @param gridPoints number of grid divisions per objective
+   * @param current working array for the current grid point
+   * @param index current dimension being filled
    */
   private void generateGrid(List<double[]> grid, List<ObjectiveFunction> objectives,
       Map<ObjectiveFunction, double[]> bounds, int gridPoints, double[] current, int index) {
@@ -730,19 +778,21 @@ public class MultiObjectiveOptimizer implements Serializable {
   }
 
   /**
-   * Create epsilon constraint for an objective.
+   * Creates an epsilon constraint bounding an objective from above or below.
+   *
+   * @param objective the objective function to constrain
+   * @param epsilon the epsilon bound value
+   * @return an optimization constraint enforcing the bound
    */
-  private OptimizationConstraint createEpsilonConstraint(ObjectiveFunction objective,
-      double epsilon) {
+  private OptimizationConstraint createEpsilonConstraint(ObjectiveFunction objective, double epsilon) {
     if (objective.getDirection() == ObjectiveFunction.Direction.MINIMIZE) {
       // For minimize objectives, constraint is: value <= epsilon
-      return OptimizationConstraint.lessThan("epsilon_" + objective.getName(), objective::evaluate,
-          epsilon, ConstraintSeverity.HARD, 0.0, "Epsilon constraint for " + objective.getName());
+      return OptimizationConstraint.lessThan("epsilon_" + objective.getName(), objective::evaluate, epsilon,
+          ConstraintSeverity.HARD, 0.0, "Epsilon constraint for " + objective.getName());
     } else {
       // For maximize objectives, constraint is: value >= epsilon
-      return OptimizationConstraint.greaterThan("epsilon_" + objective.getName(),
-          objective::evaluate, epsilon, ConstraintSeverity.HARD, 0.0,
-          "Epsilon constraint for " + objective.getName());
+      return OptimizationConstraint.greaterThan("epsilon_" + objective.getName(), objective::evaluate, epsilon,
+          ConstraintSeverity.HARD, 0.0, "Epsilon constraint for " + objective.getName());
     }
   }
 
@@ -766,8 +816,8 @@ public class MultiObjectiveOptimizer implements Serializable {
      * @param method optimization method used
      * @param computationTimeMs computation time in milliseconds
      */
-    public MultiObjectiveResult(ParetoFront paretoFront, List<ObjectiveFunction> objectives,
-        String method, long computationTimeMs) {
+    public MultiObjectiveResult(ParetoFront paretoFront, List<ObjectiveFunction> objectives, String method,
+        long computationTimeMs) {
       this.paretoFront = paretoFront;
       this.kneePoint = paretoFront.findKneePoint();
       this.objectives = objectives;

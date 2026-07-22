@@ -12,9 +12,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * BubbleFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -25,52 +23,42 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(BubbleFlowNode.class);
   private double averageBubbleDiameter = 0.001;
+  private double specifiedDispersedPhaseRelativeVelocity = Double.NaN;
 
   /**
-   * <p>
    * Constructor for BubbleFlowNode.
-   * </p>
    */
   public BubbleFlowNode() {
     this.flowNodeType = "bubble";
   }
 
   /**
-   * <p>
    * Constructor for BubbleFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public BubbleFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "bubble";
     this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+        this);
   }
 
   /**
-   * <p>
    * Constructor for BubbleFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
-  public BubbleFlowNode(SystemInterface system, SystemInterface interphaseSystem,
-      GeometryDefinitionInterface pipe) {
+  public BubbleFlowNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "bubble";
     this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+        this);
   }
 
   /** {@inheritDoc} */
@@ -117,9 +105,8 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
   /** {@inheritDoc} */
   @Override
   public double calcContactLength() {
-    double phaseAngel =
-        pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-            + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+    double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
+        + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
     wallContactLength[1] = phaseAngel * pipe.getDiameter();
     wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
     interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -129,7 +116,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
     double surfaceAreaOfBubble = 4.0 * Math.PI * Math.pow(averageBubbleDiameter / 2.0, 2.0);
 
     double numbDropletsPerTime = getBulkSystem().getPhase(0).getVolume("m3") / volumeOfBubble;
-    interphaseContactLength[0] = numbDropletsPerTime * surfaceAreaOfBubble / velocity[0];
+    interphaseContactLength[0] = numbDropletsPerTime * surfaceAreaOfBubble / Math.max(1.0e-12, Math.abs(velocity[0]));
     interphaseContactLength[1] = interphaseContactLength[0];
 
     return wallContactLength[0];
@@ -139,8 +126,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
    * {@inheritDoc}
    *
    * <p>
-   * For bubble flow, the interfacial area per unit volume is calculated using Sauter mean diameter:
-   * a = 6 * α_G / d_32
+   * For bubble flow, the interfacial area per unit volume is calculated using Sauter mean diameter: a = 6 * α_G / d_32
    * </p>
    */
   @Override
@@ -156,8 +142,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
    * {@inheritDoc}
    *
    * <p>
-   * For bubble flow, uses Hinze theory for maximum stable bubble size: d_max = 0.725 * (σ/ρ_L)^0.6
-   * * ε^(-0.4)
+   * For bubble flow, uses Hinze theory for maximum stable bubble size: d_max = 0.725 * (σ/ρ_L)^0.6 * ε^(-0.4)
    * </p>
    */
   @Override
@@ -195,17 +180,14 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkSchwartzentruberEos(295.3, 50.01325);
+    SystemInterface testSystem = new neqsim.thermo.system.SystemSrkSchwartzentruberEos(295.3, 50.01325);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     PipeData pipe1 = new PipeData(0.0250203, 0.00025);
     testSystem.addComponent("CO2", 100.1061152181, "kg/hr", 0);
@@ -260,9 +242,7 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Getter for the field <code>averageBubbleDiameter</code>.
-   * </p>
    *
    * @return a double
    */
@@ -271,13 +251,33 @@ public class BubbleFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Setter for the field <code>averageBubbleDiameter</code>.
-   * </p>
    *
    * @param averageBubbleDiameter a double
    */
   public void setAverageBubbleDiameter(double averageBubbleDiameter) {
     this.averageBubbleDiameter = averageBubbleDiameter;
+  }
+
+  /**
+   * Set a particle-relative speed for heat and mass transfer without changing axial phase velocities.
+   *
+   * @param relativeVelocity non-negative relative speed in m/s, or NaN to use the axial velocity difference
+   */
+  public void setSpecifiedDispersedPhaseRelativeVelocity(double relativeVelocity) {
+    if (!Double.isNaN(relativeVelocity) && (!Double.isFinite(relativeVelocity) || relativeVelocity < 0.0)) {
+      throw new IllegalArgumentException("relative velocity must be finite and non-negative, or NaN");
+    }
+    specifiedDispersedPhaseRelativeVelocity = relativeVelocity;
+  }
+
+  /**
+   * Get the relative speed used by dispersed-particle transfer correlations.
+   *
+   * @return specified speed, or the absolute axial gas-liquid velocity difference in m/s
+   */
+  public double getDispersedPhaseRelativeVelocity() {
+    return Double.isFinite(specifiedDispersedPhaseRelativeVelocity) ? specifiedDispersedPhaseRelativeVelocity
+        : Math.abs(getVelocity(0) - getVelocity(1));
   }
 }

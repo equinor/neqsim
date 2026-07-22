@@ -1,3 +1,8 @@
+---
+title: Rupture Disk Dynamic Behavior
+description: This document explains the rupture disk implementation in NeqSim, demonstrating the key difference between rupture disks and pressure safety valves (PSVs).
+---
+
 # Rupture Disk Dynamic Behavior
 
 This document explains the rupture disk implementation in NeqSim, demonstrating the key difference between rupture disks and pressure safety valves (PSVs).
@@ -123,6 +128,7 @@ Time: 200-300s: PCV reopens, pressure drops to 30 bara
 ```
 
 ### Key Observations
+
 | Metric | Value |
 |--------|-------|
 | Burst pressure | 55.0 bara |

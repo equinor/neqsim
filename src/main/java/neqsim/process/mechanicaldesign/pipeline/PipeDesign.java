@@ -43,9 +43,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * <p>
  * PipeDesign class.
- * </p>
  *
  * @author ESOL
  */
@@ -64,200 +62,183 @@ public class PipeDesign {
   // ------------------------------------------------------------
 
   /** Constant <code>NPS5</code> */
-  public static final double[] NPS5 =
-      {0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 30};
+  public static final double[] NPS5 = { 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22,
+      24, 30 };
   /** Constant <code>S5i</code> */
-  public static final double[] S5i = {18, 23.4, 30.1, 38.9, 45, 57, 68.78, 84.68, 97.38, 110.08,
-      135.76, 162.76, 213.56, 266.2, 315.88, 347.68, 398.02, 448.62, 498.44, 549.44, 598.92, 749.3};
+  public static final double[] S5i = { 18, 23.4, 30.1, 38.9, 45, 57, 68.78, 84.68, 97.38, 110.08, 135.76, 162.76,
+      213.56, 266.2, 315.88, 347.68, 398.02, 448.62, 498.44, 549.44, 598.92, 749.3 };
   /** Constant <code>S5o</code> */
-  public static final double[] S5o = {21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 101.6, 114.3,
-      141.3, 168.3, 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610, 762};
+  public static final double[] S5o = { 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 101.6, 114.3, 141.3, 168.3, 219.1,
+      273, 323.8, 355.6, 406.4, 457, 508, 559, 610, 762 };
   /** Constant <code>S5t</code> */
-  public static final double[] S5t = {1.65, 1.65, 1.65, 1.65, 1.65, 1.65, 2.11, 2.11, 2.11, 2.11,
-      2.77, 2.77, 2.77, 3.4, 3.96, 3.96, 4.19, 4.19, 4.78, 4.78, 5.54, 6.35};
+  public static final double[] S5t = { 1.65, 1.65, 1.65, 1.65, 1.65, 1.65, 2.11, 2.11, 2.11, 2.11, 2.77, 2.77, 2.77,
+      3.4, 3.96, 3.96, 4.19, 4.19, 4.78, 4.78, 5.54, 6.35 };
 
   /** Constant <code>NPS10</code> */
-  public static final double[] NPS10 = {0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5,
-      4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36};
+  public static final double[] NPS10 = { 0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10,
+      12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36 };
   /** Constant <code>S10i</code> */
-  public static final double[] S10i = {7.82, 10.4, 13.8, 17.08, 22.48, 27.86, 36.66, 42.76, 54.76,
-      66.9, 82.8, 95.5, 108.2, 134.5, 161.5, 211.58, 264.62, 314.66, 342.9, 393.7, 444.3, 495.3,
-      546.3, 597.3, 644.16, 695.16, 746.16, 797.16, 848.16, 898.16};
+  public static final double[] S10i = { 7.82, 10.4, 13.8, 17.08, 22.48, 27.86, 36.66, 42.76, 54.76, 66.9, 82.8, 95.5,
+      108.2, 134.5, 161.5, 211.58, 264.62, 314.66, 342.9, 393.7, 444.3, 495.3, 546.3, 597.3, 644.16, 695.16, 746.16,
+      797.16, 848.16, 898.16 };
   /** Constant <code>S10o</code> */
-  public static final double[] S10o =
-      {10.3, 13.7, 17.1, 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 101.6, 114.3, 141.3, 168.3,
-          219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610, 660, 711, 762, 813, 864, 914};
+  public static final double[] S10o = { 10.3, 13.7, 17.1, 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 101.6, 114.3,
+      141.3, 168.3, 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610, 660, 711, 762, 813, 864, 914 };
   /** Constant <code>S10t</code> */
-  public static final double[] S10t =
-      {1.24, 1.65, 1.65, 2.11, 2.11, 2.77, 2.77, 2.77, 2.77, 3.05, 3.05, 3.05, 3.05, 3.4, 3.4, 3.76,
-          4.19, 4.57, 6.35, 6.35, 6.35, 6.35, 6.35, 6.35, 7.92, 7.92, 7.92, 7.92, 7.92, 7.92};
+  public static final double[] S10t = { 1.24, 1.65, 1.65, 2.11, 2.11, 2.77, 2.77, 2.77, 2.77, 3.05, 3.05, 3.05, 3.05,
+      3.4, 3.4, 3.76, 4.19, 4.57, 6.35, 6.35, 6.35, 6.35, 6.35, 6.35, 7.92, 7.92, 7.92, 7.92, 7.92, 7.92 };
 
   /** Constant <code>NPS20</code> */
-  public static final double[] NPS20 = {8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36};
+  public static final double[] NPS20 = { 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36 };
   /** Constant <code>S20i</code> */
-  public static final double[] S20i = {206.4, 260.3, 311.1, 339.76, 390.56, 441.16, 488.94, 539.94,
-      590.94, 634.6, 685.6, 736.6, 787.6, 838.6, 888.6};
+  public static final double[] S20i = { 206.4, 260.3, 311.1, 339.76, 390.56, 441.16, 488.94, 539.94, 590.94, 634.6,
+      685.6, 736.6, 787.6, 838.6, 888.6 };
   /** Constant <code>S20o</code> */
-  public static final double[] S20o =
-      {219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610, 660, 711, 762, 813, 864, 914};
+  public static final double[] S20o = { 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610, 660, 711, 762, 813, 864,
+      914 };
   /** Constant <code>S20t</code> */
-  public static final double[] S20t =
-      {6.35, 6.35, 6.35, 7.92, 7.92, 7.92, 9.53, 9.53, 9.53, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7};
+  public static final double[] S20t = { 6.35, 6.35, 6.35, 7.92, 7.92, 7.92, 9.53, 9.53, 9.53, 12.7, 12.7, 12.7, 12.7,
+      12.7, 12.7 };
 
   /** Constant <code>NPS30</code> */
-  public static final double[] NPS30 = {0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5,
-      4, 8, 10, 12, 14, 16, 18, 20, 22, 24, 28, 30, 32, 34, 36};
+  public static final double[] NPS30 = { 0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4, 8, 10, 12, 14,
+      16, 18, 20, 22, 24, 28, 30, 32, 34, 36 };
   /** Constant <code>S30i</code> */
-  public static final double[] S30i = {7.4, 10, 13.4, 16.48, 21.88, 27.6, 36.26, 41.94, 53.94,
-      63.44, 79.34, 92.04, 104.74, 205.02, 257.4, 307.04, 336.54, 387.34, 434.74, 482.6, 533.6,
-      581.46, 679.24, 730.24, 781.24, 832.24, 882.24};
+  public static final double[] S30i = { 7.4, 10, 13.4, 16.48, 21.88, 27.6, 36.26, 41.94, 53.94, 63.44, 79.34, 92.04,
+      104.74, 205.02, 257.4, 307.04, 336.54, 387.34, 434.74, 482.6, 533.6, 581.46, 679.24, 730.24, 781.24, 832.24,
+      882.24 };
   /** Constant <code>S30o</code> */
-  public static final double[] S30o =
-      {10.3, 13.7, 17.1, 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 101.6, 114.3, 219.1, 273,
-          323.8, 355.6, 406.4, 457, 508, 559, 610, 711, 762, 813, 864, 914};
+  public static final double[] S30o = { 10.3, 13.7, 17.1, 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 101.6, 114.3,
+      219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610, 711, 762, 813, 864, 914 };
   /** Constant <code>S30t</code> */
-  public static final double[] S30t =
-      {1.45, 1.85, 1.85, 2.41, 2.41, 2.9, 2.97, 3.18, 3.18, 4.78, 4.78, 4.78, 4.78, 7.04, 7.8, 8.38,
-          9.53, 9.53, 11.13, 12.7, 12.7, 14.27, 15.88, 15.88, 15.88, 15.88, 15.88};
+  public static final double[] S30t = { 1.45, 1.85, 1.85, 2.41, 2.41, 2.9, 2.97, 3.18, 3.18, 4.78, 4.78, 4.78, 4.78,
+      7.04, 7.8, 8.38, 9.53, 9.53, 11.13, 12.7, 12.7, 14.27, 15.88, 15.88, 15.88, 15.88, 15.88 };
 
   /** Constant <code>NPS40</code> */
-  public static final double[] NPS40 = {0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5,
-      4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 24, 32, 34, 36};
+  public static final double[] NPS40 = { 0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10,
+      12, 14, 16, 18, 20, 24, 32, 34, 36 };
   /** Constant <code>S40i</code> */
-  public static final double[] S40i = {6.84, 9.22, 12.48, 15.76, 20.96, 26.64, 35.08, 40.94, 52.48,
-      62.68, 77.92, 90.12, 102.26, 128.2, 154.08, 202.74, 254.46, 303.18, 333.34, 381, 428.46,
-      477.82, 575.04, 778.04, 829.04, 875.9};
+  public static final double[] S40i = { 6.84, 9.22, 12.48, 15.76, 20.96, 26.64, 35.08, 40.94, 52.48, 62.68, 77.92,
+      90.12, 102.26, 128.2, 154.08, 202.74, 254.46, 303.18, 333.34, 381, 428.46, 477.82, 575.04, 778.04, 829.04,
+      875.9 };
   /** Constant <code>S40o</code> */
-  public static final double[] S40o =
-      {10.3, 13.7, 17.1, 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 101.6, 114.3, 141.3, 168.3,
-          219.1, 273, 323.8, 355.6, 406.4, 457, 508, 610, 813, 864, 914};
+  public static final double[] S40o = { 10.3, 13.7, 17.1, 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 101.6, 114.3,
+      141.3, 168.3, 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 610, 813, 864, 914 };
   /** Constant <code>S40t</code> */
-  public static final double[] S40t =
-      {1.73, 2.24, 2.31, 2.77, 2.87, 3.38, 3.56, 3.68, 3.91, 5.16, 5.49, 5.74, 6.02, 6.55, 7.11,
-          8.18, 9.27, 10.31, 11.13, 12.7, 14.27, 15.09, 17.48, 17.48, 17.48, 19.05};
+  public static final double[] S40t = { 1.73, 2.24, 2.31, 2.77, 2.87, 3.38, 3.56, 3.68, 3.91, 5.16, 5.49, 5.74, 6.02,
+      6.55, 7.11, 8.18, 9.27, 10.31, 11.13, 12.7, 14.27, 15.09, 17.48, 17.48, 17.48, 19.05 };
 
   // ... and so on for schedules 60, 80, 100, 120, 140, 160, STD, XS, XXS, etc.
   // The Python snippet defines them all. We include them all below:
 
   /** Constant <code>NPS60</code> */
-  public static final double[] NPS60 = {8, 10, 12, 14, 16, 18, 20, 22, 24};
+  public static final double[] NPS60 = { 8, 10, 12, 14, 16, 18, 20, 22, 24 };
   /** Constant <code>S60i</code> */
-  public static final double[] S60i =
-      {198.48, 247.6, 295.26, 325.42, 373.08, 418.9, 466.76, 514.54, 560.78};
+  public static final double[] S60i = { 198.48, 247.6, 295.26, 325.42, 373.08, 418.9, 466.76, 514.54, 560.78 };
   /** Constant <code>S60o</code> */
-  public static final double[] S60o = {219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610};
+  public static final double[] S60o = { 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610 };
   /** Constant <code>S60t</code> */
-  public static final double[] S60t =
-      {10.31, 12.7, 14.27, 15.09, 16.66, 19.05, 20.62, 22.23, 24.61};
+  public static final double[] S60t = { 10.31, 12.7, 14.27, 15.09, 16.66, 19.05, 20.62, 22.23, 24.61 };
 
   /** Constant <code>NPS80</code> */
-  public static final double[] NPS80 = {0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5,
-      4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24};
+  public static final double[] NPS80 = { 0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10,
+      12, 14, 16, 18, 20, 22, 24 };
   /** Constant <code>S80i</code> */
-  public static final double[] S80i =
-      {5.48, 7.66, 10.7, 13.84, 18.88, 24.3, 32.5, 38.14, 49.22, 58.98, 73.66, 85.44, 97.18, 122.24,
-          146.36, 193.7, 242.82, 288.84, 317.5, 363.52, 409.34, 455.62, 501.84, 548.08};
+  public static final double[] S80i = { 5.48, 7.66, 10.7, 13.84, 18.88, 24.3, 32.5, 38.14, 49.22, 58.98, 73.66, 85.44,
+      97.18, 122.24, 146.36, 193.7, 242.82, 288.84, 317.5, 363.52, 409.34, 455.62, 501.84, 548.08 };
   /** Constant <code>S80o</code> */
-  public static final double[] S80o = {10.3, 13.7, 17.1, 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73,
-      88.9, 101.6, 114.3, 141.3, 168.3, 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610};
+  public static final double[] S80o = { 10.3, 13.7, 17.1, 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 101.6, 114.3,
+      141.3, 168.3, 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610 };
   /** Constant <code>S80t</code> */
-  public static final double[] S80t = {2.41, 3.02, 3.2, 3.73, 3.91, 4.55, 4.85, 5.08, 5.54, 7.01,
-      7.62, 8.08, 8.56, 9.53, 10.97, 12.7, 15.09, 17.48, 19.05, 21.44, 23.83, 26.19, 28.58, 30.96};
+  public static final double[] S80t = { 2.41, 3.02, 3.2, 3.73, 3.91, 4.55, 4.85, 5.08, 5.54, 7.01, 7.62, 8.08, 8.56,
+      9.53, 10.97, 12.7, 15.09, 17.48, 19.05, 21.44, 23.83, 26.19, 28.58, 30.96 };
 
   /** Constant <code>NPS100</code> */
-  public static final double[] NPS100 = {8, 10, 12, 14, 16, 18, 20, 22, 24};
+  public static final double[] NPS100 = { 8, 10, 12, 14, 16, 18, 20, 22, 24 };
   /** Constant <code>S100i</code> */
-  public static final double[] S100i =
-      {188.92, 236.48, 280.92, 307.94, 354.02, 398.28, 442.92, 489.14, 532.22};
+  public static final double[] S100i = { 188.92, 236.48, 280.92, 307.94, 354.02, 398.28, 442.92, 489.14, 532.22 };
   /** Constant <code>S100o</code> */
-  public static final double[] S100o = {219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610};
+  public static final double[] S100o = { 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610 };
   /** Constant <code>S100t</code> */
-  public static final double[] S100t =
-      {15.09, 18.26, 21.44, 23.83, 26.19, 29.36, 32.54, 34.93, 38.89};
+  public static final double[] S100t = { 15.09, 18.26, 21.44, 23.83, 26.19, 29.36, 32.54, 34.93, 38.89 };
 
   /** Constant <code>NPS120</code> */
-  public static final double[] NPS120 = {4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24};
+  public static final double[] NPS120 = { 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24 };
   /** Constant <code>S120i</code> */
-  public static final double[] S120i =
-      {92.04, 115.9, 139.76, 182.58, 230.12, 273, 300.02, 344.48, 387.14, 431.8, 476.44, 517.96};
+  public static final double[] S120i = { 92.04, 115.9, 139.76, 182.58, 230.12, 273, 300.02, 344.48, 387.14, 431.8,
+      476.44, 517.96 };
   /** Constant <code>S120o</code> */
-  public static final double[] S120o =
-      {114.3, 141.3, 168.3, 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610};
+  public static final double[] S120o = { 114.3, 141.3, 168.3, 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610 };
   /** Constant <code>S120t</code> */
-  public static final double[] S120t =
-      {11.13, 12.7, 14.27, 18.26, 21.44, 25.4, 27.79, 30.96, 34.93, 38.1, 41.28, 46.02};
+  public static final double[] S120t = { 11.13, 12.7, 14.27, 18.26, 21.44, 25.4, 27.79, 30.96, 34.93, 38.1, 41.28,
+      46.02 };
 
   /** Constant <code>NPS140</code> */
-  public static final double[] NPS140 = {8, 10, 12, 14, 16, 18, 20, 22, 24};
+  public static final double[] NPS140 = { 8, 10, 12, 14, 16, 18, 20, 22, 24 };
   /** Constant <code>S140i</code> */
-  public static final double[] S140i =
-      {177.86, 222.2, 266.64, 292.1, 333.34, 377.66, 419.1, 463.74, 505.26};
+  public static final double[] S140i = { 177.86, 222.2, 266.64, 292.1, 333.34, 377.66, 419.1, 463.74, 505.26 };
   /** Constant <code>S140o</code> */
-  public static final double[] S140o = {219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610};
+  public static final double[] S140o = { 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610 };
   /** Constant <code>S140t</code> */
-  public static final double[] S140t =
-      {20.62, 25.4, 28.58, 31.75, 36.53, 39.67, 44.45, 47.63, 52.37};
+  public static final double[] S140t = { 20.62, 25.4, 28.58, 31.75, 36.53, 39.67, 44.45, 47.63, 52.37 };
 
   /** Constant <code>NPS160</code> */
-  public static final double[] NPS160 =
-      {0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24};
+  public static final double[] NPS160 = { 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22,
+      24 };
   /** Constant <code>S160i</code> */
-  public static final double[] S160i = {11.74, 15.58, 20.7, 29.5, 34.02, 42.82, 53.94, 66.64, 87.32,
-      109.54, 131.78, 173.08, 215.84, 257.16, 284.18, 325.42, 366.52, 407.98, 451.04, 490.92};
+  public static final double[] S160i = { 11.74, 15.58, 20.7, 29.5, 34.02, 42.82, 53.94, 66.64, 87.32, 109.54, 131.78,
+      173.08, 215.84, 257.16, 284.18, 325.42, 366.52, 407.98, 451.04, 490.92 };
   /** Constant <code>S160o</code> */
-  public static final double[] S160o = {21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 114.3, 141.3,
-      168.3, 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610};
+  public static final double[] S160o = { 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 114.3, 141.3, 168.3, 219.1, 273,
+      323.8, 355.6, 406.4, 457, 508, 559, 610 };
   /** Constant <code>S160t</code> */
-  public static final double[] S160t = {4.78, 5.56, 6.35, 6.35, 7.14, 8.74, 9.53, 11.13, 13.49,
-      15.88, 18.26, 23.01, 28.58, 33.32, 35.71, 40.49, 45.24, 50.01, 53.98, 59.54};
+  public static final double[] S160t = { 4.78, 5.56, 6.35, 6.35, 7.14, 8.74, 9.53, 11.13, 13.49, 15.88, 18.26, 23.01,
+      28.58, 33.32, 35.71, 40.49, 45.24, 50.01, 53.98, 59.54 };
 
   // STD, XS, XXS
   /** Constant <code>NPSSTD</code> */
-  public static final double[] NPSSTD =
-      {0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10, 12, 14, 16, 18,
-          20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48};
+  public static final double[] NPSSTD = { 0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10,
+      12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48 };
   /** Constant <code>STDi</code> */
-  public static final double[] STDi = {6.84, 9.22, 12.48, 15.76, 20.96, 26.64, 35.08, 40.94, 52.48,
-      62.68, 77.92, 90.12, 102.26, 128.2, 154.08, 202.74, 254.46, 304.74, 336.54, 387.34, 437.94,
-      488.94, 539.94, 590.94, 640.94, 691.94, 742.94, 793.94, 844.94, 894.94, 945.94, 996.94,
-      1047.94, 1098.94, 1148.94, 1199.94};
+  public static final double[] STDi = { 6.84, 9.22, 12.48, 15.76, 20.96, 26.64, 35.08, 40.94, 52.48, 62.68, 77.92,
+      90.12, 102.26, 128.2, 154.08, 202.74, 254.46, 304.74, 336.54, 387.34, 437.94, 488.94, 539.94, 590.94, 640.94,
+      691.94, 742.94, 793.94, 844.94, 894.94, 945.94, 996.94, 1047.94, 1098.94, 1148.94, 1199.94 };
   /** Constant <code>STDo</code> */
-  public static final double[] STDo = {10.3, 13.7, 17.1, 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73,
-      88.9, 101.6, 114.3, 141.3, 168.3, 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610, 660,
-      711, 762, 813, 864, 914, 965, 1016, 1067, 1118, 1168, 1219};
+  public static final double[] STDo = { 10.3, 13.7, 17.1, 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 101.6, 114.3,
+      141.3, 168.3, 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610, 660, 711, 762, 813, 864, 914, 965, 1016, 1067,
+      1118, 1168, 1219 };
   /** Constant <code>STDt</code> */
-  public static final double[] STDt = {1.73, 2.24, 2.31, 2.77, 2.87, 3.38, 3.56, 3.68, 3.91, 5.16,
-      5.49, 5.74, 6.02, 6.55, 7.11, 8.18, 9.27, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53,
-      9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53};
+  public static final double[] STDt = { 1.73, 2.24, 2.31, 2.77, 2.87, 3.38, 3.56, 3.68, 3.91, 5.16, 5.49, 5.74, 6.02,
+      6.55, 7.11, 8.18, 9.27, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53, 9.53,
+      9.53, 9.53, 9.53, 9.53 };
 
   /** Constant <code>NPSXS</code> */
-  public static final double[] NPSXS = {0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5,
-      4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48};
+  public static final double[] NPSXS = { 0.125, 0.25, 0.375, 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10,
+      12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44, 46, 48 };
   /** Constant <code>XSi</code> */
-  public static final double[] XSi =
-      {5.48, 7.66, 10.7, 13.84, 18.88, 24.3, 32.5, 38.14, 49.22, 58.98, 73.66, 85.44, 97.18, 122.24,
-          146.36, 193.7, 247.6, 298.4, 330.2, 381, 431.6, 482.6, 533.6, 584.6, 634.6, 685.6, 736.6,
-          787.6, 838.6, 888.6, 939.6, 990.6, 1041.6, 1092.6, 1142.6, 1193.6};
+  public static final double[] XSi = { 5.48, 7.66, 10.7, 13.84, 18.88, 24.3, 32.5, 38.14, 49.22, 58.98, 73.66, 85.44,
+      97.18, 122.24, 146.36, 193.7, 247.6, 298.4, 330.2, 381, 431.6, 482.6, 533.6, 584.6, 634.6, 685.6, 736.6, 787.6,
+      838.6, 888.6, 939.6, 990.6, 1041.6, 1092.6, 1142.6, 1193.6 };
   /** Constant <code>XSo</code> */
-  public static final double[] XSo = {10.3, 13.7, 17.1, 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73,
-      88.9, 101.6, 114.3, 141.3, 168.3, 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610, 660,
-      711, 762, 813, 864, 914, 965, 1016, 1067, 1118, 1168, 1219};
+  public static final double[] XSo = { 10.3, 13.7, 17.1, 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 101.6, 114.3,
+      141.3, 168.3, 219.1, 273, 323.8, 355.6, 406.4, 457, 508, 559, 610, 660, 711, 762, 813, 864, 914, 965, 1016, 1067,
+      1118, 1168, 1219 };
   /** Constant <code>XSt</code> */
-  public static final double[] XSt = {2.41, 3.02, 3.2, 3.73, 3.91, 4.55, 4.85, 5.08, 5.54, 7.01,
-      7.62, 8.08, 8.56, 9.53, 10.97, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7,
-      12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7};
+  public static final double[] XSt = { 2.41, 3.02, 3.2, 3.73, 3.91, 4.55, 4.85, 5.08, 5.54, 7.01, 7.62, 8.08, 8.56,
+      9.53, 10.97, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7, 12.7,
+      12.7, 12.7, 12.7, 12.7 };
 
   /** Constant <code>NPSXXS</code> */
-  public static final double[] NPSXXS = {0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10, 12};
+  public static final double[] NPSXXS = { 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10, 12 };
   /** Constant <code>XXSi</code> */
-  public static final double[] XXSi =
-      {6.36, 11.06, 15.22, 22.8, 28, 38.16, 44.96, 58.42, 80.06, 103.2, 124.4, 174.64, 222.2, 273};
+  public static final double[] XXSi = { 6.36, 11.06, 15.22, 22.8, 28, 38.16, 44.96, 58.42, 80.06, 103.2, 124.4, 174.64,
+      222.2, 273 };
   /** Constant <code>XXSo</code> */
-  public static final double[] XXSo =
-      {21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 114.3, 141.3, 168.3, 219.1, 273, 323.8};
+  public static final double[] XXSo = { 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 114.3, 141.3, 168.3, 219.1, 273,
+      323.8 };
   /** Constant <code>XXSt</code> */
-  public static final double[] XXSt =
-      {7.47, 7.82, 9.09, 9.7, 10.15, 11.07, 14.02, 15.24, 17.12, 19.05, 21.95, 22.23, 25.4, 25.4};
+  public static final double[] XXSt = { 7.47, 7.82, 9.09, 9.7, 10.15, 11.07, 14.02, 15.24, 17.12, 19.05, 21.95, 22.23,
+      25.4, 25.4 };
 
   // Similarly, all Schedules for Stainless Steel, ABS, PVC, AWWA, etc. from the Python snippet...
   // For brevity, the entire code is huge, so we replicate everything the snippet had:
@@ -267,20 +248,20 @@ public class PipeDesign {
 
   // For example, a few of the stainless steels:
   /** Constant <code>NPSS5</code> */
-  public static final double[] NPSS5 =
-      {0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 30};
+  public static final double[] NPSS5 = { 0.5, 0.75, 1, 1.25, 1.5, 2, 2.5, 3, 3.5, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20,
+      22, 24, 30 };
   /** Constant <code>SS5DN</code> */
-  public static final double[] SS5DN = {15, 20, 25, 32, 40, 50, 65, 80, 90, 100, 125, 150, 200, 250,
-      300, 350, 400, 450, 500, 550, 600, 750};
+  public static final double[] SS5DN = { 15, 20, 25, 32, 40, 50, 65, 80, 90, 100, 125, 150, 200, 250, 300, 350, 400,
+      450, 500, 550, 600, 750 };
   /** Constant <code>SS5i</code> */
-  public static final double[] SS5i = {18, 23.4, 30.1, 38.9, 45, 57, 68.78, 84.68, 97.38, 110.08,
-      135.76, 162.76, 213.56, 266.3, 315.98, 347.68, 398.02, 448.62, 498.44, 549.44, 598.92, 749.3};
+  public static final double[] SS5i = { 18, 23.4, 30.1, 38.9, 45, 57, 68.78, 84.68, 97.38, 110.08, 135.76, 162.76,
+      213.56, 266.3, 315.98, 347.68, 398.02, 448.62, 498.44, 549.44, 598.92, 749.3 };
   /** Constant <code>SS5o</code> */
-  public static final double[] SS5o = {21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 101.6, 114.3,
-      141.3, 168.3, 219.1, 273.1, 323.9, 355.6, 406.4, 457, 508, 559, 610, 762};
+  public static final double[] SS5o = { 21.3, 26.7, 33.4, 42.2, 48.3, 60.3, 73, 88.9, 101.6, 114.3, 141.3, 168.3, 219.1,
+      273.1, 323.9, 355.6, 406.4, 457, 508, 559, 610, 762 };
   /** Constant <code>SS5t</code> */
-  public static final double[] SS5t = {1.65, 1.65, 1.65, 1.65, 1.65, 1.65, 2.11, 2.11, 2.11, 2.11,
-      2.77, 2.77, 2.77, 3.4, 3.96, 3.96, 4.19, 4.19, 4.78, 4.78, 5.54, 6.35};
+  public static final double[] SS5t = { 1.65, 1.65, 1.65, 1.65, 1.65, 1.65, 2.11, 2.11, 2.11, 2.11, 2.77, 2.77, 2.77,
+      3.4, 3.96, 3.96, 4.19, 4.19, 4.78, 4.78, 5.54, 6.35 };
 
   // (And so on for 10S, 40S, 80S, and so forth)...
 
@@ -292,8 +273,7 @@ public class PipeDesign {
   // ------------------------------------------------------------------------
 
   /**
-   * A simple holder for arrays describing a pipe schedule: nps, inner diameters, outer diameters,
-   * thicknesses.
+   * A simple holder for arrays describing a pipe schedule: nps, inner diameters, outer diameters, thicknesses.
    */
   public static class ScheduleData {
     public final double[] nps;
@@ -342,51 +322,49 @@ public class PipeDesign {
   // Utility methods for looking up by Di, Do, or NPS
   // ------------------------------------------------------------------------
 
-  private static double[] DiLookup(double DiMm, double[] NPSes, double[] Dis, double[] Dos,
-      double[] ts) {
+  private static double[] DiLookup(double DiMm, double[] NPSes, double[] Dis, double[] Dos, double[] ts) {
     // Go up ascending list; once we find Dis[i] >= DiMm, return that
     if (DiMm > Dis[Dis.length - 1]) {
       return null; // bigger than everything
     }
     for (int i = 0; i < Dis.length; i++) {
       if (Dis[i] >= DiMm) {
-        return new double[] {NPSes[i], Dis[i], Dos[i], ts[i]};
+        return new double[] { NPSes[i], Dis[i], Dos[i], ts[i] };
       }
     }
     // Should not happen
     throw new RuntimeException("Di lookup failed");
   }
 
-  private static double[] DoLookup(double DoMm, double[] NPSes, double[] Dis, double[] Dos,
-      double[] ts) {
+  private static double[] DoLookup(double DoMm, double[] NPSes, double[] Dis, double[] Dos, double[] ts) {
     if (DoMm > Dos[Dos.length - 1]) {
       return null; // bigger than everything
     }
     for (int i = 0; i < Dos.length; i++) {
       if (Dos[i] >= DoMm) {
-        return new double[] {NPSes[i], Dis[i], Dos[i], ts[i]};
+        return new double[] { NPSes[i], Dis[i], Dos[i], ts[i] };
       }
     }
     throw new RuntimeException("Do lookup failed");
   }
 
-  private static double[] NPSLookup(double wantedNPS, double[] NPSes, double[] Dis, double[] Dos,
-      double[] ts) {
+  private static double[] NPSLookup(double wantedNPS, double[] NPSes, double[] Dis, double[] Dos, double[] ts) {
     for (int i = 0; i < NPSes.length; i++) {
       if (Double.compare(NPSes[i], wantedNPS) == 0) {
-        return new double[] {NPSes[i], Dis[i], Dos[i], ts[i]};
+        return new double[] { NPSes[i], Dis[i], Dos[i], ts[i] };
       }
     }
     throw new RuntimeException("NPS not in list: " + wantedNPS);
   }
 
   /**
-   * Searches for and finds the nearest standard pipe size to a given specification. Acceptable
-   * inputs: - Outer diameter Do - Inner diameter Di - NPS - optionally specify the schedule
-   * (default "40")
+   * Searches for and finds the nearest standard pipe size to a given specification. Acceptable inputs: - Outer diameter
+   * Do - Inner diameter Di - NPS - optionally specify the schedule (default "40")
    *
+   * <p>
    * Returns an array {foundNPS, foundDi (m), foundDo (m), foundT (m)}.
    *
+   * <p>
    * If none is found (i.e. the diameter is bigger than the largest in the table), throws exception.
    *
    * @param Do a {@link java.lang.Double} object
@@ -426,7 +404,7 @@ public class PipeDesign {
     double foundDo = result[2] / 1000.0;
     double foundT = result[3] / 1000.0;
 
-    return new double[] {foundNPS, foundDi, foundDo, foundT};
+    return new double[] { foundNPS, foundDi, foundDo, foundT };
   }
 
   // ------------------------------------------------------------------------
@@ -440,10 +418,9 @@ public class PipeDesign {
     public final double[] thicknessInch;
     public final double[] thicknessM; // thickness in meters
     public final boolean something; // the Python code had a boolean for "true if the schedule
-                                    // numbering is x..."
+    // numbering is x..."
 
-    public WireScheduleData(double[] gaugeNumbers, double[] thicknessInch, double[] thicknessM,
-        boolean something) {
+    public WireScheduleData(double[] gaugeNumbers, double[] thicknessInch, double[] thicknessM, boolean something) {
       this.gaugeNumbers = gaugeNumbers;
       this.thicknessInch = thicknessInch;
       this.thicknessM = thicknessM;
@@ -453,48 +430,42 @@ public class PipeDesign {
 
   // All gauge arrays from the snippet
   /** Constant <code>SSWG_integers</code> */
-  public static final double[] SSWG_integers = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
-      16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38,
-      39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61,
-      62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80};
+  public static final double[] SSWG_integers = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+      21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48,
+      49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76,
+      77, 78, 79, 80 };
   /** Constant <code>SSWG_inch</code> */
-  public static final double[] SSWG_inch = {0.227, 0.219, 0.212, 0.207, 0.204, 0.201, 0.199, 0.197,
-      0.194, 0.191, 0.188, 0.185, 0.182, 0.18, 0.178, 0.175, 0.172, 0.168, 0.164, 0.161, 0.157,
-      0.155, 0.153, 0.151, 0.148, 0.146, 0.143, 0.139, 0.134, 0.127, 0.12, 0.115, 0.112, 0.11,
-      0.108, 0.106, 0.103, 0.101, 0.099, 0.097, 0.095, 0.092, 0.088, 0.085, 0.081, 0.079, 0.077,
-      0.075, 0.072, 0.069, 0.066, 0.063, 0.058, 0.055, 0.05, 0.045, 0.042, 0.041, 0.04, 0.039,
-      0.038, 0.037, 0.036, 0.035, 0.033, 0.032, 0.031, 0.03, 0.029, 0.027, 0.026, 0.024, 0.023,
-      0.022, 0.02, 0.018, 0.016, 0.015, 0.014, 0.013};
+  public static final double[] SSWG_inch = { 0.227, 0.219, 0.212, 0.207, 0.204, 0.201, 0.199, 0.197, 0.194, 0.191,
+      0.188, 0.185, 0.182, 0.18, 0.178, 0.175, 0.172, 0.168, 0.164, 0.161, 0.157, 0.155, 0.153, 0.151, 0.148, 0.146,
+      0.143, 0.139, 0.134, 0.127, 0.12, 0.115, 0.112, 0.11, 0.108, 0.106, 0.103, 0.101, 0.099, 0.097, 0.095, 0.092,
+      0.088, 0.085, 0.081, 0.079, 0.077, 0.075, 0.072, 0.069, 0.066, 0.063, 0.058, 0.055, 0.05, 0.045, 0.042, 0.041,
+      0.04, 0.039, 0.038, 0.037, 0.036, 0.035, 0.033, 0.032, 0.031, 0.03, 0.029, 0.027, 0.026, 0.024, 0.023, 0.022,
+      0.02, 0.018, 0.016, 0.015, 0.014, 0.013 };
   /** Constant <code>SSWG_SI</code> */
-  public static final double[] SSWG_SI =
-      {0.0057658, 0.0055626, 0.0053848, 0.0052578, 0.0051816, 0.0051054, 0.0050546, 0.0050038,
-          0.0049276, 0.0048514, 0.0047752, 0.004699, 0.0046228, 0.004572, 0.0045212, 0.004445,
-          0.0043688, 0.0042672, 0.0041656, 0.0040894, 0.0039878, 0.003937, 0.0038862, 0.0038354,
-          0.0037592, 0.0037084, 0.0036322, 0.0035306, 0.0034036, 0.0032258, 0.003048, 0.002921,
-          0.0028448, 0.002794, 0.0027432, 0.0026924, 0.0026162, 0.0025654, 0.0025146, 0.0024638,
-          0.002413, 0.0023368, 0.0022352, 0.002159, 0.0020574, 0.0020066, 0.0019558, 0.001905,
-          0.0018288, 0.0017526, 0.0016764, 0.0016002, 0.0014732, 0.001397, 0.00127, 0.001143,
-          0.0010668, 0.0010414, 0.001016, 0.0009906, 0.0009652, 0.0009398, 0.0009144, 0.000889,
-          0.0008382, 0.0008128, 0.0007874, 0.000762, 0.0007366, 0.0006858, 0.0006604, 0.0006096,
-          0.0005842, 0.0005588, 0.000508, 0.0004572, 0.0004064, 0.000381, 0.0003556, 0.0003302};
+  public static final double[] SSWG_SI = { 0.0057658, 0.0055626, 0.0053848, 0.0052578, 0.0051816, 0.0051054, 0.0050546,
+      0.0050038, 0.0049276, 0.0048514, 0.0047752, 0.004699, 0.0046228, 0.004572, 0.0045212, 0.004445, 0.0043688,
+      0.0042672, 0.0041656, 0.0040894, 0.0039878, 0.003937, 0.0038862, 0.0038354, 0.0037592, 0.0037084, 0.0036322,
+      0.0035306, 0.0034036, 0.0032258, 0.003048, 0.002921, 0.0028448, 0.002794, 0.0027432, 0.0026924, 0.0026162,
+      0.0025654, 0.0025146, 0.0024638, 0.002413, 0.0023368, 0.0022352, 0.002159, 0.0020574, 0.0020066, 0.0019558,
+      0.001905, 0.0018288, 0.0017526, 0.0016764, 0.0016002, 0.0014732, 0.001397, 0.00127, 0.001143, 0.0010668,
+      0.0010414, 0.001016, 0.0009906, 0.0009652, 0.0009398, 0.0009144, 0.000889, 0.0008382, 0.0008128, 0.0007874,
+      0.000762, 0.0007366, 0.0006858, 0.0006604, 0.0006096, 0.0005842, 0.0005588, 0.000508, 0.0004572, 0.0004064,
+      0.000381, 0.0003556, 0.0003302 };
 
   // Similarly for BWG, AWG, SWG, MWG, BSWG...
   // We place them below. (Due to length, we won't re-paste every single line here in the comment.)
   /** Constant <code>BWG_integers</code> */
-  public static final double[] BWG_integers =
-      {0.2, 0.25, 0.33, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
-          22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36};
+  public static final double[] BWG_integers = { 0.2, 0.25, 0.33, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+      17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36 };
   /** Constant <code>BWG_inch</code> */
-  public static final double[] BWG_inch = {0.5, 0.454, 0.425, 0.38, 0.34, 0.3, 0.284, 0.259, 0.238,
-      0.22, 0.203, 0.18, 0.165, 0.148, 0.134, 0.12, 0.109, 0.095, 0.083, 0.072, 0.065, 0.058, 0.049,
-      0.042, 0.035, 0.032, 0.028, 0.025, 0.022, 0.02, 0.018, 0.016, 0.014, 0.013, 0.012, 0.01,
-      0.009, 0.008, 0.007, 0.005, 0.004};
+  public static final double[] BWG_inch = { 0.5, 0.454, 0.425, 0.38, 0.34, 0.3, 0.284, 0.259, 0.238, 0.22, 0.203, 0.18,
+      0.165, 0.148, 0.134, 0.12, 0.109, 0.095, 0.083, 0.072, 0.065, 0.058, 0.049, 0.042, 0.035, 0.032, 0.028, 0.025,
+      0.022, 0.02, 0.018, 0.016, 0.014, 0.013, 0.012, 0.01, 0.009, 0.008, 0.007, 0.005, 0.004 };
   /** Constant <code>BWG_SI</code> */
-  public static final double[] BWG_SI = {0.0127, 0.011532, 0.010795, 0.009652, 0.008636, 0.00762,
-      0.007214, 0.006579, 0.006045, 0.005588, 0.005156, 0.004572, 0.004191, 0.003759, 0.003404,
-      0.003048, 0.002769, 0.002413, 0.002108, 0.001829, 0.001651, 0.001473, 0.001245, 0.001067,
-      0.000889, 0.000813, 0.000711, 0.000635, 0.000559, 0.000508, 0.000457, 0.000406, 0.000356,
-      0.00033, 0.000305, 0.000254, 0.000229, 0.000203, 0.000178, 0.000127, 0.000102};
+  public static final double[] BWG_SI = { 0.0127, 0.011532, 0.010795, 0.009652, 0.008636, 0.00762, 0.007214, 0.006579,
+      0.006045, 0.005588, 0.005156, 0.004572, 0.004191, 0.003759, 0.003404, 0.003048, 0.002769, 0.002413, 0.002108,
+      0.001829, 0.001651, 0.001473, 0.001245, 0.001067, 0.000889, 0.000813, 0.000711, 0.000635, 0.000559, 0.000508,
+      0.000457, 0.000406, 0.000356, 0.00033, 0.000305, 0.000254, 0.000229, 0.000203, 0.000178, 0.000127, 0.000102 };
 
   // And so on for AWG, SWG, MWG, BSWG. We likewise define them fully, referencing
   // the big tables from the snippet. Example for AWG_inch, etc.
@@ -521,9 +492,10 @@ public class PipeDesign {
 
   /**
    * Looks up the gauge of a given wire thickness for a chosen schedule.
+   *
    * <p>
-   * If SI is true, input thickness t is in meters; otherwise, in inches. This returns the gauge
-   * number that best matches. If t is out of range, it will throw an IllegalArgumentException.
+   * If SI is true, input thickness t is in meters; otherwise, in inches. This returns the gauge number that best
+   * matches. If t is out of range, it will throw an IllegalArgumentException.
    *
    * @param t thickness in meters if SI=true, else in inches
    * @param SI true if t is in meters
@@ -541,8 +513,7 @@ public class PipeDesign {
     double largest = wsd.thicknessInch[0];
     double smallest = wsd.thicknessInch[wsd.thicknessInch.length - 1];
     if (tInch > largest) {
-      throw new IllegalArgumentException(
-          "Thickness bigger than largest in schedule: " + tInch + " > " + largest);
+      throw new IllegalArgumentException("Thickness bigger than largest in schedule: " + tInch + " > " + largest);
     }
 
     // Tolerance from original Python
@@ -640,17 +611,14 @@ public class PipeDesign {
   // main method to demonstrate usage
   // ------------------------------------------------------------------------
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   public static void main(String[] args) {
     // Example usage: nearestPipe by inner diameter 0.021 m, schedule "40"
     double[] res = nearestPipe(null, 0.021, null, "40");
-    System.out.printf(
-        "nearestPipe(Di=0.021, schedule=40) => NPS=%.3f, Di=%.6f m, Do=%.6f m, t=%.6f m%n", res[0],
+    System.out.printf("nearestPipe(Di=0.021, schedule=40) => NPS=%.3f, Di=%.6f m, Do=%.6f m, t=%.6f m%n", res[0],
         res[1], res[2], res[3]);
 
     // Example usage: gaugeFromThickness

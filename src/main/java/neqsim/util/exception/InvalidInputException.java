@@ -1,9 +1,7 @@
 package neqsim.util.exception;
 
 /**
- * <p>
  * InvalidInputException class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -64,11 +62,11 @@ public class InvalidInputException extends neqsim.util.exception.ThermoException
 
   /**
    * Get remediation advice for this exception.
-   * 
+   *
    * <p>
    * Returns a hint on how to fix the invalid input. AI agents can use this to self-correct.
    * </p>
-   * 
+   *
    * @return remediation advice string
    */
   public String getRemediation() {

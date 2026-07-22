@@ -2,6 +2,7 @@
 layout: default
 title: Degraded Operation
 parent: Risk Framework
+description: "Degraded operation analysis for process plants. Model partial equipment failures, reduced capacity scenarios, and production impact using NeqSim simulations."
 ---
 
 # Degraded Operation Optimization
@@ -62,11 +63,12 @@ for (OperatingAdjustment adj : result.getAdjustments()) {
 ```java
 // Optimize for revenue (considers product prices)
 optimizer.setObjective(OptimizationObjective.MAXIMIZE_REVENUE);
-optimizer.setProductPrices(Map.of(
-    "gas", 500.0,
-    "oil", 600.0,
-    "condensate", 400.0
-));
+
+Map<String, Double> productPrices = new HashMap<>();
+productPrices.put("gas", 500.0);
+productPrices.put("oil", 600.0);
+productPrices.put("condensate", 400.0);
+optimizer.setProductPrices(productPrices);
 
 DegradedOperationResult result = optimizer.optimizeWithEquipmentDown(failure);
 ```
@@ -83,13 +85,13 @@ public class DegradedOperationResult {
     double getNormalProduction();     // Before failure
     double getOptimalProduction();    // Optimized degraded
     double getProductionRecovery();   // % of normal achieved
-    
+
     // Operating adjustments
     List<OperatingAdjustment> getAdjustments();
-    
+
     // Recovery plan
     RecoveryPlan getRecoveryPlan();
-    
+
     // Constraints
     List<OperatingConstraint> getActiveConstraints();
     List<OperatingConstraint> getViolatedConstraints();
@@ -123,7 +125,7 @@ Before failure:
 
 After Compressor A trips:
   Compressor A: 0% load → Compressor B: 100% load = ~95% total*
-  
+
 * Limited by maximum capacity
 ```
 
@@ -151,7 +153,7 @@ OperatingAdjustment feedReduction = result.getAdjustments().stream()
     .orElse(null);
 
 if (feedReduction != null) {
-    System.out.println("Reduce feed rate to: " + 
+    System.out.println("Reduce feed rate to: " +
         feedReduction.getRecommendedValue() + " kg/hr");
 }
 ```
@@ -181,12 +183,12 @@ When multiple products are possible, optimize the product mix:
 optimizer.setObjective(OptimizationObjective.MAXIMIZE_REVENUE);
 
 // Different products have different values
-optimizer.setProductPrices(Map.of(
-    "export_gas", 500.0,    // USD/tonne
-    "lpg", 450.0,
-    "condensate", 400.0,
-    "fuel_gas", 100.0       // Low value
-));
+Map<String, Double> productPrices = new HashMap<>();
+productPrices.put("export_gas", 500.0);    // USD/tonne
+productPrices.put("lpg", 450.0);
+productPrices.put("condensate", 400.0);
+productPrices.put("fuel_gas", 100.0);       // Low value
+optimizer.setProductPrices(productPrices);
 
 // Optimizer may recommend maximizing high-value products
 DegradedOperationResult result = optimizer.optimizeWithEquipmentDown(failure);
@@ -240,7 +242,7 @@ RecoveryPlan plan = optimizer.createRecoveryPlan(failure);
 
 System.out.println("Recovery Plan:");
 for (RecoveryStep step : plan.getSteps()) {
-    System.out.printf("%d. [%s] %s%n", 
+    System.out.printf("%d. [%s] %s%n",
         step.getSequence(),
         step.getTiming(),
         step.getAction());
@@ -305,8 +307,8 @@ DegradedOperationResult result = optimizer.optimizeWithEquipmentDown(failure);
 if (result.hasViolatedConstraints()) {
     System.out.println("Warning: Some constraints cannot be satisfied:");
     for (OperatingConstraint constraint : result.getViolatedConstraints()) {
-        System.out.printf("  %s: %s%n", 
-            constraint.getParameter(), 
+        System.out.printf("  %s: %s%n",
+            constraint.getParameter(),
             constraint.getDescription());
     }
 }
@@ -330,7 +332,7 @@ DegradedOperationResult result = optimizer.optimizeWithMultipleFailures(failures
 if (result.getOptimalProduction() == 0) {
     System.out.println("No feasible operating point - recommend shutdown");
 } else {
-    System.out.println("Partial operation possible at " + 
+    System.out.println("Partial operation possible at " +
         result.getProductionRecovery() + "% capacity");
 }
 ```
@@ -419,6 +421,6 @@ Recommended adjustments:
 
 ## See Also
 
-- [Production Impact Analysis](production-impact.md)
-- [Dependency Analysis](dependency-analysis.md)
-- [API Reference](api-reference.md#degradedoperationoptimizer)
+- [Production Impact Analysis](production-impact)
+- [Dependency Analysis](dependency-analysis)
+- [API Reference](api-reference#degradedoperationoptimizer)

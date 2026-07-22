@@ -1,24 +1,22 @@
 package neqsim.process.equipment.heatexchanger;
 
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
-import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * MultiStreamHeatExchangerInterface interface.
  *
  * <p>
- * Defines the contract for a multi-stream heat exchanger, enabling the simulation and management of
- * multiple input and output streams. This interface extends the
- * {@link neqsim.process.equipment.ProcessEquipmentInterface} to integrate with the broader NeqSim
- * process simulation framework.
+ * Defines the contract for a multi-stream heat exchanger, enabling the simulation and management of multiple input and
+ * output streams. This interface extends the {@link neqsim.process.equipment.ProcessEquipmentInterface} to integrate
+ * with the broader NeqSim process simulation framework.
  * </p>
  *
  * <p>
- * Implementations of this interface should handle the addition and management of multiple streams,
- * perform energy and mass balance calculations, and provide methods to analyze the performance and
- * condition of the heat exchanger.
+ * Implementations of this interface should handle the addition and management of multiple streams, perform energy and
+ * mass balance calculations, and provide methods to analyze the performance and condition of the heat exchanger.
  * </p>
  *
  * @author esol
@@ -70,9 +68,20 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   /**
    * Sets the outlet temperature for the heat exchanger.
    *
-   * @param temperature Desired outlet temperature
+   * @param temperature Desired outlet temperature in Kelvin
    */
-  void setOutTemperature(double temperature);
+  void setOutletTemperature(double temperature);
+
+  /**
+   * Sets the outlet temperature for the heat exchanger.
+   *
+   * @param temperature Desired outlet temperature in Kelvin
+   * @deprecated use {@link #setOutletTemperature(double)} instead
+   */
+  @Deprecated
+  default void setOutTemperature(double temperature) {
+    setOutletTemperature(temperature);
+  }
 
   /**
    * Gets the outlet temperature of a specific output stream.
@@ -137,8 +146,7 @@ public interface MultiStreamHeatExchangerInterface extends ProcessEquipmentInter
   void setThermalEffectiveness(double thermalEffectiveness);
 
   /**
-   * Calculates the thermal effectiveness based on the Number of Transfer Units (NTU) and the
-   * capacity ratio (Cr).
+   * Calculates the thermal effectiveness based on the Number of Transfer Units (NTU) and the capacity ratio (Cr).
    *
    * @param NTU Number of Transfer Units
    * @param Cr Capacity ratio (Cmin/Cmax)

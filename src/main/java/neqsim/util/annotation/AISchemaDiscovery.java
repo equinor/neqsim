@@ -12,29 +12,29 @@ import java.util.stream.Collectors;
 
 /**
  * Discovers and documents AI-exposed NeqSim functionality.
- * 
+ *
  * <p>
- * This class uses reflection to find methods marked with {@link AIExposable} and generates
- * structured documentation that AI agents can parse.
+ * This class uses reflection to find methods marked with {@link AIExposable} and generates structured documentation
+ * that AI agents can parse.
  * </p>
- * 
+ *
  * <h2>Usage:</h2>
- * 
+ *
  * <pre>
  * {@code
  * AISchemaDiscovery discovery = new AISchemaDiscovery();
- * 
+ *
  * // Discover methods in a class
  * List<MethodSchema> methods = discovery.discoverMethods(SystemSrkEos.class);
- * 
+ *
  * // Generate prompt for AI
  * String prompt = discovery.generateMethodPrompt(methods);
- * 
+ *
  * // Get all core NeqSim APIs
  * Map<String, List<MethodSchema>> coreAPIs = discovery.discoverCoreAPIs();
  * }
  * </pre>
- * 
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -60,10 +60,20 @@ public class AISchemaDiscovery implements Serializable {
 
     /**
      * Constructor.
+     *
+     * @param className class exposing the method
+     * @param methodName exposed method name
+     * @param description method description
+     * @param category method category
+     * @param example example invocation text
+     * @param priority discovery priority, where higher values sort first
+     * @param safe whether invoking the method is expected to avoid state changes
+     * @param tags discovery tags
+     * @param parameters parameter schemas
+     * @param returnType method return type
      */
-    public MethodSchema(String className, String methodName, String description, String category,
-        String example, int priority, boolean safe, String[] tags, List<ParameterSchema> parameters,
-        String returnType) {
+    public MethodSchema(String className, String methodName, String description, String category, String example,
+        int priority, boolean safe, String[] tags, List<ParameterSchema> parameters, String returnType) {
       this.className = className;
       this.methodName = methodName;
       this.description = description;
@@ -118,6 +128,8 @@ public class AISchemaDiscovery implements Serializable {
 
     /**
      * Convert to structured text for AI consumption.
+     *
+     * @return formatted prompt text containing schema metadata
      */
     public String toPromptText() {
       StringBuilder sb = new StringBuilder();
@@ -163,9 +175,19 @@ public class AISchemaDiscovery implements Serializable {
 
     /**
      * Constructor.
+     *
+     * @param name the parameter name
+     * @param type the Java type or schema type name
+     * @param description human-readable parameter description
+     * @param unit engineering unit, or an empty string when unitless
+     * @param minValue minimum allowed value, or {@link Double#NEGATIVE_INFINITY} if unbounded
+     * @param maxValue maximum allowed value, or {@link Double#POSITIVE_INFINITY} if unbounded
+     * @param defaultValue default value represented as text, or an empty string when absent
+     * @param required whether the parameter is required by the exposed method
+     * @param options allowed option values, or an empty array when unrestricted
      */
-    public ParameterSchema(String name, String type, String description, String unit,
-        double minValue, double maxValue, String defaultValue, boolean required, String[] options) {
+    public ParameterSchema(String name, String type, String description, String unit, double minValue, double maxValue,
+        String defaultValue, boolean required, String[] options) {
       this.name = name;
       this.type = type;
       this.description = description;
@@ -177,16 +199,28 @@ public class AISchemaDiscovery implements Serializable {
       this.options = options;
     }
 
+    /**
+     * Gets the parameter name.
+     *
+     * @return parameter name
+     */
     public String getName() {
       return name;
     }
 
+    /**
+     * Gets the parameter type.
+     *
+     * @return parameter type name
+     */
     public String getType() {
       return type;
     }
 
     /**
      * Convert to structured text for AI consumption.
+     *
+     * @return prompt-friendly parameter schema text
      */
     public String toPromptText() {
       StringBuilder sb = new StringBuilder();
@@ -213,7 +247,7 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Discover all AI-exposed methods in a class.
-   * 
+   *
    * @param clazz class to scan
    * @return list of method schemas
    */
@@ -234,11 +268,11 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Discover common NeqSim methods even without annotations.
-   * 
+   *
    * <p>
    * This provides a basic discovery of frequently-used methods for AI consumption.
    * </p>
-   * 
+   *
    * @param clazz class to scan
    * @return list of common method schemas
    */
@@ -246,10 +280,10 @@ public class AISchemaDiscovery implements Serializable {
     List<MethodSchema> schemas = new ArrayList<>();
 
     // Common thermodynamic methods
-    List<String> commonMethods = Arrays.asList("addComponent", "setTemperature", "setPressure",
-        "setMixingRule", "init", "run", "getTemperature", "getPressure", "getDensity",
-        "getEnthalpy", "getEntropy", "getZ", "getBeta", "getViscosity", "getThermalConductivity",
-        "getMolarMass", "setFlowRate", "getFlowRate", "getFluid", "getThermoSystem", "clone");
+    List<String> commonMethods = Arrays.asList("addComponent", "setTemperature", "setPressure", "setMixingRule", "init",
+        "run", "getTemperature", "getPressure", "getDensity", "getEnthalpy", "getEntropy", "getZ", "getBeta",
+        "getViscosity", "getThermalConductivity", "getMolarMass", "setFlowRate", "getFlowRate", "getFluid",
+        "getThermoSystem", "clone");
 
     for (Method method : clazz.getMethods()) {
       if (commonMethods.contains(method.getName())) {
@@ -262,14 +296,18 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Create MethodSchema from annotation.
+   *
+   * @param clazz class declaring the method
+   * @param method reflected method
+   * @param annotation AI exposure annotation on the method
+   * @return generated method schema
    */
   private MethodSchema createMethodSchema(Class<?> clazz, Method method, AIExposable annotation) {
     List<ParameterSchema> params = new ArrayList<>();
     for (Parameter param : method.getParameters()) {
       AIParameter paramAnnotation = param.getAnnotation(AIParameter.class);
       if (paramAnnotation != null) {
-        params.add(new ParameterSchema(
-            paramAnnotation.name().isEmpty() ? param.getName() : paramAnnotation.name(),
+        params.add(new ParameterSchema(paramAnnotation.name().isEmpty() ? param.getName() : paramAnnotation.name(),
             param.getType().getSimpleName(), paramAnnotation.description(), paramAnnotation.unit(),
             paramAnnotation.minValue(), paramAnnotation.maxValue(), paramAnnotation.defaultValue(),
             paramAnnotation.required(), paramAnnotation.options()));
@@ -279,30 +317,36 @@ public class AISchemaDiscovery implements Serializable {
       }
     }
 
-    return new MethodSchema(clazz.getSimpleName(), method.getName(), annotation.description(),
-        annotation.category(), annotation.example(), annotation.priority(), annotation.safe(),
-        annotation.tags(), params, method.getReturnType().getSimpleName());
+    return new MethodSchema(clazz.getSimpleName(), method.getName(), annotation.description(), annotation.category(),
+        annotation.example(), annotation.priority(), annotation.safe(), annotation.tags(), params,
+        method.getReturnType().getSimpleName());
   }
 
   /**
    * Create MethodSchema from method without annotation.
+   *
+   * @param clazz class declaring the method
+   * @param method reflected method
+   * @return generated method schema
    */
   private MethodSchema createMethodSchemaFromMethod(Class<?> clazz, Method method) {
     List<ParameterSchema> params = new ArrayList<>();
     for (Parameter param : method.getParameters()) {
-      params.add(new ParameterSchema(param.getName(), param.getType().getSimpleName(), "", "",
-          Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, "", true, new String[0]));
+      params.add(new ParameterSchema(param.getName(), param.getType().getSimpleName(), "", "", Double.NEGATIVE_INFINITY,
+          Double.POSITIVE_INFINITY, "", true, new String[0]));
     }
 
     String description = generateDescriptionFromName(method.getName());
 
     return new MethodSchema(clazz.getSimpleName(), method.getName(), description, "general", "", 50,
-        !method.getName().startsWith("set"), new String[0], params,
-        method.getReturnType().getSimpleName());
+        !method.getName().startsWith("set"), new String[0], params, method.getReturnType().getSimpleName());
   }
 
   /**
    * Generate a basic description from method name.
+   *
+   * @param methodName reflected method name
+   * @return generated description text
    */
   private String generateDescriptionFromName(String methodName) {
     if (methodName.startsWith("get")) {
@@ -319,6 +363,9 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Convert camelCase to spaces.
+   *
+   * @param camel camel-case input text
+   * @return lower-case text with spaces between camel-case words
    */
   private String camelToSpaces(String camel) {
     return camel.replaceAll("([a-z])([A-Z])", "$1 $2").toLowerCase();
@@ -326,7 +373,7 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Generate a prompt containing discovered methods.
-   * 
+   *
    * @param methods list of method schemas
    * @return formatted prompt text
    */
@@ -335,8 +382,8 @@ public class AISchemaDiscovery implements Serializable {
     sb.append("# Available NeqSim Methods\n\n");
 
     // Group by category
-    Map<String, List<MethodSchema>> byCategory =
-        methods.stream().collect(Collectors.groupingBy(MethodSchema::getCategory));
+    Map<String, List<MethodSchema>> byCategory = methods.stream()
+        .collect(Collectors.groupingBy(MethodSchema::getCategory));
 
     for (Map.Entry<String, List<MethodSchema>> entry : byCategory.entrySet()) {
       sb.append("## ").append(entry.getKey()).append("\n\n");
@@ -350,7 +397,7 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Discover core NeqSim APIs by scanning common classes.
-   * 
+   *
    * @return map of class name to method schemas
    */
   public Map<String, List<MethodSchema>> discoverCoreAPIs() {
@@ -358,29 +405,25 @@ public class AISchemaDiscovery implements Serializable {
 
     // Core thermodynamic classes
     try {
-      apis.put("SystemSrkEos",
-          discoverCommonMethods(Class.forName("neqsim.thermo.system.SystemSrkEos")));
+      apis.put("SystemSrkEos", discoverCommonMethods(Class.forName("neqsim.thermo.system.SystemSrkEos")));
     } catch (ClassNotFoundException e) {
       // Ignore if class not found
     }
 
     try {
-      apis.put("Stream",
-          discoverCommonMethods(Class.forName("neqsim.process.equipment.stream.Stream")));
+      apis.put("Stream", discoverCommonMethods(Class.forName("neqsim.process.equipment.stream.Stream")));
     } catch (ClassNotFoundException e) {
       // Ignore
     }
 
     try {
-      apis.put("Separator",
-          discoverCommonMethods(Class.forName("neqsim.process.equipment.separator.Separator")));
+      apis.put("Separator", discoverCommonMethods(Class.forName("neqsim.process.equipment.separator.Separator")));
     } catch (ClassNotFoundException e) {
       // Ignore
     }
 
     try {
-      apis.put("ProcessSystem",
-          discoverCommonMethods(Class.forName("neqsim.process.processmodel.ProcessSystem")));
+      apis.put("ProcessSystem", discoverCommonMethods(Class.forName("neqsim.process.processmodel.ProcessSystem")));
     } catch (ClassNotFoundException e) {
       // Ignore
     }
@@ -390,7 +433,7 @@ public class AISchemaDiscovery implements Serializable {
 
   /**
    * Get a quick-start prompt for AI agents.
-   * 
+   *
    * @return formatted quick-start prompt
    */
   public String getQuickStartPrompt() {
@@ -407,7 +450,7 @@ public class AISchemaDiscovery implements Serializable {
     sb.append("```java\n");
     sb.append("ThermodynamicOperations ops = new ThermodynamicOperations(fluid);\n");
     sb.append("ops.TPflash();  // Calculate phase equilibrium\n");
-    sb.append("fluid.init(3);  // Initialize properties\n");
+    sb.append("fluid.initProperties();  // Initialize thermodynamic and transport properties\n");
     sb.append("```\n\n");
     sb.append("## Getting Properties\n");
     sb.append("```java\n");

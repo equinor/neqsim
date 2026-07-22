@@ -5,18 +5,17 @@ import java.util.List;
 
 /**
  * Generic voting logic evaluator for redundant sensors or conditions.
- * 
+ *
  * <p>
- * Voting logic is used throughout process control and safety systems to increase reliability by
- * requiring multiple independent signals to agree before taking action. This generic implementation
- * supports:
+ * Voting logic is used throughout process control and safety systems to increase reliability by requiring multiple
+ * independent signals to agree before taking action. This generic implementation supports:
  * <ul>
  * <li>Digital voting (boolean conditions: 1oo2, 2oo3, etc.)</li>
  * <li>Analog voting (continuous values: average, median, mid-value select)</li>
  * <li>Configurable voting patterns</li>
  * <li>Sensor fault detection and exclusion</li>
  * </ul>
- * 
+ *
  * <p>
  * Common applications:
  * <ul>
@@ -25,10 +24,10 @@ import java.util.List;
  * <li>Redundant control loops</li>
  * <li>Quality measurements</li>
  * </ul>
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * // Digital voting: 2 out of 3 pressure switches must be high
  * VotingEvaluator&lt;Boolean&gt; pressureVoting = new VotingEvaluator&lt;&gt;(VotingPattern.TWO_OUT_OF_THREE);
@@ -36,7 +35,7 @@ import java.util.List;
  * pressureVoting.addInput(pt2.isHigh(), pt2.isFaulty());
  * pressureVoting.addInput(pt3.isHigh(), pt3.isFaulty());
  * boolean pressureHigh = pressureVoting.evaluateDigital();
- * 
+ *
  * // Analog voting: median of 3 temperature sensors
  * VotingEvaluator&lt;Double&gt; tempVoting = new VotingEvaluator&lt;&gt;(VotingPattern.TWO_OUT_OF_THREE);
  * tempVoting.addInput(tt1.getValue(), tt1.isFaulty());
@@ -81,7 +80,7 @@ public class VotingEvaluator<T> {
 
   /**
    * Evaluates digital (boolean) voting.
-   * 
+   *
    * <p>
    * Counts how many non-faulty inputs are TRUE and applies voting pattern.
    * </p>
@@ -113,10 +112,10 @@ public class VotingEvaluator<T> {
 
   /**
    * Evaluates analog voting using median selection.
-   * 
+   *
    * <p>
-   * Returns the median value of non-faulty inputs. Median is preferred over average for safety
-   * systems as it's less sensitive to outliers.
+   * Returns the median value of non-faulty inputs. Median is preferred over average for safety systems as it's less
+   * sensitive to outliers.
    * </p>
    *
    * @return median value
@@ -171,10 +170,10 @@ public class VotingEvaluator<T> {
 
   /**
    * Evaluates analog voting using mid-value select.
-   * 
+   *
    * <p>
-   * For 3 inputs, returns the middle value (not highest, not lowest). This provides some outlier
-   * rejection like median but is more intuitive for 3-input systems.
+   * For 3 inputs, returns the middle value (not highest, not lowest). This provides some outlier rejection like median
+   * but is more intuitive for 3-input systems.
    * </p>
    *
    * @return mid-value

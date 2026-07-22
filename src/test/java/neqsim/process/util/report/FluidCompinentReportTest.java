@@ -1,9 +1,13 @@
 package neqsim.process.util.report;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class FluidCompinentReportTest {
+  private static final Logger logger = LogManager.getLogger(FluidCompinentReportTest.class);
+
   @Test
   void testWrite() {
     SystemSrkEos testSystem = new SystemSrkEos(298.0, 10.0);
@@ -13,9 +17,9 @@ public class FluidCompinentReportTest {
     testSystem.setMultiPhaseCheck(true);
 
     String report = testSystem.toCompJson();
-    // System.out.println(report);
+    // logger.info(report);
     neqsim.util.unit.Units.activateFieldUnits();
     report = testSystem.toCompJson();
-    // System.out.println(report);
+    // logger.info(report);
   }
 }

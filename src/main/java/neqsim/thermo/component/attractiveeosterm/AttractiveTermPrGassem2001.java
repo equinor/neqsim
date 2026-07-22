@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermPrGassem2001 class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
   protected double E = -0.0467;
 
   /**
-   * <p>
    * Constructor for AttractiveTermPrGassem2001.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -55,8 +51,8 @@ public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
   @Override
   public double alpha(double temperature) {
     // System.out.println("alpha gassem");
-    return Math.exp((A + B * temperature / getComponent().getTC()) * (1.0
-        - Math.pow(temperature / getComponent().getTC(), C + D * getComponent().getAcentricFactor()
+    return Math.exp((A + B * temperature / getComponent().getTC())
+        * (1.0 - Math.pow(temperature / getComponent().getTC(), C + D * getComponent().getAcentricFactor()
             + E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor())));
   }
 
@@ -76,10 +72,8 @@ public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
             - (A + B * temperature / getComponent().getTC())
                 * (C + D * getComponent().getAcentricFactor()
                     + E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor())
-                * Math.pow(temperature / getComponent().getTC(),
-                    C + D * getComponent().getAcentricFactor() + E
-                        * getComponent().getAcentricFactor() * getComponent().getAcentricFactor()
-                        - 1.0));
+                * Math.pow(temperature / getComponent().getTC(), C + D * getComponent().getAcentricFactor()
+                    + E * getComponent().getAcentricFactor() * getComponent().getAcentricFactor() - 1.0));
   }
 
   /** {@inheritDoc} */
@@ -89,8 +83,7 @@ public class AttractiveTermPrGassem2001 extends AttractiveTermPr {
 
     return m * m / temperature / getComponent().getTC() / 2.0
         + (1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
-            / Math.sqrt(
-                temperature * temperature * temperature / (Math.pow(getComponent().getTC(), 3.0)))
+            / Math.sqrt(temperature * temperature * temperature / (Math.pow(getComponent().getTC(), 3.0)))
             / (getComponent().getTC() * getComponent().getTC()) / 2.0;
   }
 

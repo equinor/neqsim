@@ -38,8 +38,8 @@ public class PIDController implements Controller {
    * @param actionMax maximum action value
    * @param dt time step for integration
    */
-  public PIDController(String name, int errorIndex, double kp, double ki, double kd,
-      double actionMin, double actionMax, double dt) {
+  public PIDController(String name, int errorIndex, double kp, double ki, double kd, double actionMin, double actionMax,
+      double dt) {
     this.name = name;
     this.errorIndex = errorIndex;
     this.kp = kp;
@@ -75,7 +75,7 @@ public class PIDController implements Controller {
     double action = pTerm + iTerm + dTerm;
     action = Math.max(actionMin, Math.min(actionMax, action));
 
-    return new double[] {action};
+    return new double[] { action };
   }
 
   @Override

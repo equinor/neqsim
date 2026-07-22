@@ -5,9 +5,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import org.junit.jupiter.api.Test;
 
 /**
- * <p>
  * ModelBaseTest class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public abstract class ModelBaseTest extends neqsim.NeqSimTest {
   neqsim.thermo.ThermodynamicModelTest fugTest;
 
   /**
-   * <p>
    * testInit0.
-   * </p>
    */
   @Test
   public void testInit0() {
@@ -32,9 +28,7 @@ public abstract class ModelBaseTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testInit1.
-   * </p>
    */
   @Test
   public void testInit1() {
@@ -46,9 +40,7 @@ public abstract class ModelBaseTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testActivity.
-   * </p>
    */
   @Test
   public void testActivity() {
@@ -62,9 +54,7 @@ public abstract class ModelBaseTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testVolume.
-   * </p>
    */
   @Test
   public void testVolume() {
@@ -78,9 +68,7 @@ public abstract class ModelBaseTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testGibbs.
-   * </p>
    */
   @Test
   public void testGibbs() {
@@ -94,9 +82,7 @@ public abstract class ModelBaseTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testFugasities.
-   * </p>
    */
   @Test
   public void testFugasities() {
@@ -107,9 +93,7 @@ public abstract class ModelBaseTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testFugasitiesdT.
-   * </p>
    */
   @Test
   public void testFugasitiesdT() {
@@ -120,9 +104,7 @@ public abstract class ModelBaseTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testFugasitiesdP.
-   * </p>
    */
   @Test
   public void testFugasitiesdP() {
@@ -133,9 +115,7 @@ public abstract class ModelBaseTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testFugasitiesdn.
-   * </p>
    */
   @Test
   public void testFugasitiesdn() {

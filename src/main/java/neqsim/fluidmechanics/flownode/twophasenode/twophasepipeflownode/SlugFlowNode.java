@@ -12,16 +12,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SlugFlowNode class.
- * </p>
- * 
+ *
  * <p>
- * Represents a flow node for slug flow regime in two-phase pipe flow. Slug flow is characterized by
- * alternating liquid slugs and elongated gas bubbles (Taylor bubbles). This regime is common in
- * horizontal and near-horizontal pipelines at intermediate gas and liquid flow rates.
+ * Represents a flow node for slug flow regime in two-phase pipe flow. Slug flow is characterized by alternating liquid
+ * slugs and elongated gas bubbles (Taylor bubbles). This regime is common in horizontal and near-horizontal pipelines
+ * at intermediate gas and liquid flow rates.
  * </p>
- * 
+ *
  * <p>
  * The model accounts for:
  * <ul>
@@ -50,50 +48,39 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   private double slugTranslationalVelocity = 0.0;
 
   /**
-   * <p>
    * Constructor for SlugFlowNode.
-   * </p>
    */
   public SlugFlowNode() {
     this.flowNodeType = "slug";
   }
 
   /**
-   * <p>
    * Constructor for SlugFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public SlugFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "slug";
     this.interphaseTransportCoefficient = new InterphaseSlugFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+        this);
   }
 
   /**
-   * <p>
    * Constructor for SlugFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
-  public SlugFlowNode(SystemInterface system, SystemInterface interphaseSystem,
-      GeometryDefinitionInterface pipe) {
+  public SlugFlowNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "slug";
     this.interphaseTransportCoefficient = new InterphaseSlugFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+        this);
   }
 
   /** {@inheritDoc} */
@@ -119,10 +106,8 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Calculates slug flow characteristics including frequency and translational velocity.
-   * </p>
-   * 
+   *
    * <p>
    * Uses correlations from Gregory and Scott (1969) and Bendiksen (1984).
    * </p>
@@ -176,14 +161,12 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
     double liquidHoldupFilm = phaseFraction[1]; // Liquid holdup in film region
     double slugUnitFraction = 0.6; // Fraction of unit occupied by slug body
 
-    double avgLiquidHoldup =
-        slugUnitFraction * liquidHoldupSlug + (1 - slugUnitFraction) * liquidHoldupFilm;
+    double avgLiquidHoldup = slugUnitFraction * liquidHoldupSlug + (1 - slugUnitFraction) * liquidHoldupFilm;
 
     // Wall contact lengths based on average holdup
     // Simplified geometry assuming cylindrical pipe
-    double phaseAngle =
-        pi * avgLiquidHoldup + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * avgLiquidHoldup
-            + Math.pow(avgLiquidHoldup, 1.0 / 3.0) - Math.pow(1 - avgLiquidHoldup, 1.0 / 3.0));
+    double phaseAngle = pi * avgLiquidHoldup + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * avgLiquidHoldup
+        + Math.pow(avgLiquidHoldup, 1.0 / 3.0) - Math.pow(1 - avgLiquidHoldup, 1.0 / 3.0));
 
     wallContactLength[1] = phaseAngle * pipe.getDiameter();
     wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
@@ -215,8 +198,8 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
    * {@inheritDoc}
    *
    * <p>
-   * For slug flow, the interfacial area per unit volume is a weighted average of Taylor bubble film
-   * interface and slug body interface: a = a_Taylor * f_bubble + a_slug * (1-f_bubble)
+   * For slug flow, the interfacial area per unit volume is a weighted average of Taylor bubble film interface and slug
+   * body interface: a = a_Taylor * f_bubble + a_slug * (1-f_bubble)
    * </p>
    */
   @Override
@@ -231,7 +214,6 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
     double bubbleFraction = 1.0 - slugUnitFraction;
 
     // Interfacial area in Taylor bubble region (annular-like film)
-    double alphaFilm = phaseFraction[1] * 0.3; // Film holdup in bubble region
     double aTaylor = 4.0 / diameter; // Simplified annular-like interface
 
     // Interfacial area in slug body (dispersed bubbles)
@@ -272,9 +254,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Getter for slug frequency.
-   * </p>
    *
    * @return slug frequency in Hz
    */
@@ -283,9 +263,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Setter for slug frequency.
-   * </p>
    *
    * @param frequency slug frequency in Hz
    */
@@ -294,9 +272,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Getter for slug length ratio.
-   * </p>
    *
    * @return slug length to diameter ratio
    */
@@ -305,9 +281,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Setter for slug length ratio.
-   * </p>
    *
    * @param ratio slug length to diameter ratio
    */
@@ -316,9 +290,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Getter for slug translational velocity.
-   * </p>
    *
    * @return slug translational velocity in m/s
    */
@@ -327,9 +299,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -354,8 +324,7 @@ public class SlugFlowNode extends TwoPhaseFlowNode {
     testNode.initFlowCalc();
 
     System.out.println("Slug frequency: " + testNode.getSlugFrequency() + " Hz");
-    System.out.println(
-        "Slug translational velocity: " + testNode.getSlugTranslationalVelocity() + " m/s");
+    System.out.println("Slug translational velocity: " + testNode.getSlugTranslationalVelocity() + " m/s");
     System.out.println("Interphase contact area: " + testNode.getInterphaseContactArea() + " m2");
   }
 }

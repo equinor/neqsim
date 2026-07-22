@@ -17,7 +17,7 @@ import java.util.Objects;
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * BoundaryConditions conditions = BoundaryConditions.builder().ambientTemperature(278.15) // 5°C
  *     .windSpeed(8.0) // 8 m/s
@@ -232,8 +232,7 @@ public final class BoundaryConditions implements Serializable {
    */
   public static BoundaryConditions northSeaWinter() {
     return builder().ambientTemperature(278.15) // 5°C
-        .windSpeed(15.0).relativeHumidity(0.85).pasquillStabilityClass('D')
-        .seaWaterTemperature(280.15) // 7°C
+        .windSpeed(15.0).relativeHumidity(0.85).pasquillStabilityClass('D').seaWaterTemperature(280.15) // 7°C
         .isOffshore(true).surfaceRoughness(0.0002) // Open sea
         .build();
   }
@@ -269,8 +268,8 @@ public final class BoundaryConditions implements Serializable {
    */
   public static BoundaryConditions onshoreIndustrial() {
     return builder().ambientTemperature(293.15) // 20°C
-        .windSpeed(3.0).relativeHumidity(0.50).solarRadiation(400.0).pasquillStabilityClass('D')
-        .isOffshore(false).surfaceRoughness(1.0) // Industrial area
+        .windSpeed(3.0).relativeHumidity(0.50).solarRadiation(400.0).pasquillStabilityClass('D').isOffshore(false)
+        .surfaceRoughness(1.0) // Industrial area
         .build();
   }
 
@@ -284,8 +283,7 @@ public final class BoundaryConditions implements Serializable {
     }
     BoundaryConditions that = (BoundaryConditions) o;
     return Double.compare(that.ambientTemperature, ambientTemperature) == 0
-        && Double.compare(that.windSpeed, windSpeed) == 0
-        && Double.compare(that.windDirection, windDirection) == 0
+        && Double.compare(that.windSpeed, windSpeed) == 0 && Double.compare(that.windDirection, windDirection) == 0
         && Double.compare(that.relativeHumidity, relativeHumidity) == 0
         && Double.compare(that.atmosphericPressure, atmosphericPressure) == 0
         && pasquillStabilityClass == that.pasquillStabilityClass && isOffshore == that.isOffshore;
@@ -293,16 +291,15 @@ public final class BoundaryConditions implements Serializable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(ambientTemperature, windSpeed, windDirection, relativeHumidity,
-        atmosphericPressure, pasquillStabilityClass, isOffshore);
+    return Objects.hash(ambientTemperature, windSpeed, windDirection, relativeHumidity, atmosphericPressure,
+        pasquillStabilityClass, isOffshore);
   }
 
   @Override
   public String toString() {
-    return String.format(
-        "BoundaryConditions[T=%.1f°C, wind=%.1f m/s @ %.0f°, RH=%.0f%%, P=%.0f Pa, stability=%c, %s]",
-        getAmbientTemperature("C"), windSpeed, windDirection, relativeHumidity * 100,
-        atmosphericPressure, pasquillStabilityClass, isOffshore ? "offshore" : "onshore");
+    return String.format("BoundaryConditions[T=%.1f°C, wind=%.1f m/s @ %.0f°, RH=%.0f%%, P=%.0f Pa, stability=%c, %s]",
+        getAmbientTemperature("C"), windSpeed, windDirection, relativeHumidity * 100, atmosphericPressure,
+        pasquillStabilityClass, isOffshore ? "offshore" : "onshore");
   }
 
   /**
@@ -413,8 +410,7 @@ public final class BoundaryConditions implements Serializable {
     public Builder pasquillStabilityClass(char stabilityClass) {
       char upper = Character.toUpperCase(stabilityClass);
       if (upper < 'A' || upper > 'F') {
-        throw new IllegalArgumentException(
-            "Pasquill stability class must be A-F, got: " + stabilityClass);
+        throw new IllegalArgumentException("Pasquill stability class must be A-F, got: " + stabilityClass);
       }
       this.pasquillStabilityClass = upper;
       return this;

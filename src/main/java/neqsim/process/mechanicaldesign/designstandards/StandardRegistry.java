@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import neqsim.process.engineering.calculation.EquipmentDesignKernel;
+import neqsim.process.engineering.calculation.EquipmentDesignKernelRegistry;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 
 /**
@@ -22,11 +24,10 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * // Get a pressure vessel standard
- * DesignStandard pvStandard =
- *     StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, mechanicalDesign);
+ * DesignStandard pvStandard = StandardRegistry.createStandard(StandardType.ASME_VIII_DIV1, mechanicalDesign);
  *
  * // Find all applicable standards for a separator
  * List&lt;StandardType&gt; sepStandards = StandardRegistry.getApplicableStandards("Separator");
@@ -41,8 +42,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
 public final class StandardRegistry {
 
   /** Map of standard type to custom version overrides. */
-  private static final Map<StandardType, String> versionOverrides =
-      new HashMap<StandardType, String>();
+  private static final Map<StandardType, String> versionOverrides = new HashMap<StandardType, String>();
 
   /** Private constructor to prevent instantiation. */
   private StandardRegistry() {
@@ -53,8 +53,8 @@ public final class StandardRegistry {
    * Create a DesignStandard instance for the given standard type.
    *
    * <p>
-   * This factory method creates the appropriate DesignStandard subclass based on the standard
-   * type's category. The standard name is set to the standard code.
+   * This factory method creates the appropriate DesignStandard subclass based on the standard type's category. The
+   * standard name is set to the standard code.
    * </p>
    *
    * @param standardType the international standard type
@@ -62,8 +62,7 @@ public final class StandardRegistry {
    * @return a new DesignStandard instance
    * @throws IllegalArgumentException if standardType is null
    */
-  public static DesignStandard createStandard(StandardType standardType,
-      MechanicalDesign equipment) {
+  public static DesignStandard createStandard(StandardType standardType, MechanicalDesign equipment) {
     return createStandard(standardType, null, equipment);
   }
 
@@ -76,8 +75,7 @@ public final class StandardRegistry {
    * @return a new DesignStandard instance
    * @throws IllegalArgumentException if standardType is null
    */
-  public static DesignStandard createStandard(StandardType standardType, String version,
-      MechanicalDesign equipment) {
+  public static DesignStandard createStandard(StandardType standardType, String version, MechanicalDesign equipment) {
     if (standardType == null) {
       throw new IllegalArgumentException("standardType cannot be null");
     }
@@ -85,37 +83,280 @@ public final class StandardRegistry {
     String effectiveVersion = version != null ? version : getEffectiveVersion(standardType);
     String standardName = standardType.getCode() + " " + effectiveVersion;
 
+    return instantiateStandard(standardType, standardName, equipment);
+  }
+
+  /**
+   * Create a standard from a typed edition selection.
+   *
+   * <p>
+   * Strict selections fail closed when the standard is catalog-only, its calculation is not connected to this registry,
+   * the equipment context is missing, or the standard is not listed for the equipment type. Legacy-compatible
+   * selections preserve the permissive factory behavior while still using an explicit, reproducible edition.
+   * </p>
+   *
+   * @param selection typed standard selection
+   * @param equipment mechanical design equipment context
+   * @return a new DesignStandard instance
+   * @throws StandardSelectionException if a strict selection cannot be honored
+   */
+  public static DesignStandard createStandard(StandardSelection selection, MechanicalDesign equipment) {
+    if (selection == null) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.MISSING_SELECTION, null, null,
+          "selection cannot be null");
+    }
+
+    StandardType standardType = selection.getStandardType();
+    if (selection.getMode() == StandardSelection.Mode.STRICT) {
+      validateLifecycle(selection);
+      if (selection.getExecutionRequirement() == StandardSelection.ExecutionRequirement.REQUIREMENT_PACK) {
+        requireRequirementPack(selection);
+      } else {
+        validateFactoryOrKernel(selection);
+      }
+
+      StandardApplicability applicability = assessApplicability(standardType, equipment);
+      if (applicability.getStatus() == StandardApplicability.Status.UNKNOWN) {
+        throw new StandardSelectionException(StandardSelectionException.Reason.MISSING_EQUIPMENT, standardType, null,
+            applicability.getReason());
+      }
+      if (applicability.getStatus() == StandardApplicability.Status.NOT_APPLICABLE) {
+        throw new StandardSelectionException(StandardSelectionException.Reason.NOT_APPLICABLE, standardType,
+            applicability.getEquipmentType(), applicability.getReason());
+      }
+    }
+
+    return instantiateStandard(standardType, selection.getEdition().getDisplayName(), equipment);
+  }
+
+  private static void validateFactoryOrKernel(StandardSelection selection) {
+    StandardType standardType = selection.getStandardType();
+    EquipmentDesignKernelRegistry.Lookup kernel = getDesignKernel(standardType);
+    if (selection.getExecutionRequirement() == StandardSelection.ExecutionRequirement.COMMON_KERNEL) {
+      validateNoAmendments(selection);
+      if (!kernel.isImplemented()) {
+        throw new StandardSelectionException(StandardSelectionException.Reason.KERNEL_NOT_IMPLEMENTED, standardType,
+            null, "No edition-specific common engineering design kernel is registered for the selected standard");
+      }
+      if (!kernel.supports(selection.getEdition())) {
+        throw new StandardSelectionException(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, standardType,
+            null, "No registered kernel implements " + selection.getEdition().getDisplayName());
+      }
+      return;
+    }
+    StandardSupport support = StandardSupportAudit.getSupport(standardType);
+    if (support.getSupportLevel() == StandardSupportLevel.CATALOGUED) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.CATALOG_ONLY, standardType, null,
+          support.getLimitation());
+    }
+    if (!support.isRegistryConnected()) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.NOT_REGISTRY_CONNECTED, standardType, null,
+          support.getLimitation());
+    }
+  }
+
+  private static void validateLifecycle(StandardSelection selection) {
+    if (selection.isHistoricalEditionAllowed()) {
+      return;
+    }
+    StandardType standardType = selection.getStandardType();
+    StandardCatalogEntry catalogEntry = StandardCatalog.get(standardType);
+    if (catalogEntry.getLifecycleStatus() == StandardLifecycleStatus.UNVERIFIED) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.LIFECYCLE_UNVERIFIED, standardType, null,
+          "Verify the edition and lifecycle against an authoritative publisher source before use");
+    }
+    if (catalogEntry.getLifecycleStatus() != StandardLifecycleStatus.CURRENT) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.STANDARD_NOT_CURRENT, standardType, null,
+          "Publisher lifecycle status is " + catalogEntry.getLifecycleStatus() + replacementMessage(catalogEntry));
+    }
+    if (!catalogEntry.isCurrentEdition(selection.getEdition())) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.EDITION_NOT_CURRENT, standardType, null,
+          "The verified current edition is " + standardType.getDefaultVersion());
+    }
+  }
+
+  private static String replacementMessage(StandardCatalogEntry catalogEntry) {
+    return catalogEntry.getSupersededBy() == null ? "" : "; replacement is " + catalogEntry.getSupersededBy().getCode();
+  }
+
+  private static void validateNoAmendments(StandardSelection selection) {
+    if (!selection.getEdition().getAmendments().isEmpty()) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.AMENDMENTS_NOT_IMPLEMENTED,
+          selection.getStandardType(), null,
+          "No executable method implements the selected project amendments: " + selection.getEdition().getAmendments());
+    }
+  }
+
+  /**
+   * Assess applicability using the process equipment represented by a mechanical design.
+   *
+   * @param standardType standard to assess
+   * @param equipment mechanical design equipment context
+   * @return structured applicability result
+   * @throws IllegalArgumentException if {@code standardType} is null
+   */
+  public static StandardApplicability assessApplicability(StandardType standardType, MechanicalDesign equipment) {
+    if (standardType == null) {
+      throw new IllegalArgumentException("standardType cannot be null");
+    }
+    if (equipment == null || equipment.getProcessEquipment() == null) {
+      return StandardApplicability.unknown(standardType,
+          "A mechanical design with process equipment is required to assess applicability.");
+    }
+
+    String equipmentType = equipment.getProcessEquipment().getClass().getSimpleName();
+    return StandardApplicability.assess(standardType, equipmentType);
+  }
+
+  /**
+   * Look up the standard-specific design kernel exposed through the engineering workflow.
+   *
+   * @param standardType standard to inspect
+   * @return explicit implemented or not-implemented lookup
+   */
+  public static EquipmentDesignKernelRegistry.Lookup getDesignKernel(StandardType standardType) {
+    return EquipmentDesignKernelRegistry.lookup(standardType);
+  }
+
+  /**
+   * Require an executable common kernel for an explicit standard edition.
+   *
+   * <p>
+   * This is the fail-closed migration path from a metadata/factory selection to the typed engineering calculation API.
+   * Applicability to the concrete input remains enforced by the returned kernel.
+   * </p>
+   *
+   * @param selection explicit standard and edition basis
+   * @return registered typed-kernel contract
+   * @throws StandardSelectionException when the selection is missing, no kernel exists, or the edition is unsupported
+   */
+  public static EquipmentDesignKernel<?, ?> requireDesignKernel(StandardSelection selection) {
+    if (selection == null) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.MISSING_SELECTION, null, null,
+          "selection cannot be null");
+    }
+    StandardType standardType = selection.getStandardType();
+    if (selection.getExecutionRequirement() != StandardSelection.ExecutionRequirement.COMMON_KERNEL) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.EXECUTION_REQUIREMENT_MISMATCH,
+          standardType, null, "The selection does not request a common engineering design kernel");
+    }
+    if (selection.getMode() == StandardSelection.Mode.STRICT) {
+      validateLifecycle(selection);
+    }
+    validateNoAmendments(selection);
+    EquipmentDesignKernelRegistry.Lookup lookup = getDesignKernel(standardType);
+    if (!lookup.isImplemented()) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.KERNEL_NOT_IMPLEMENTED, standardType, null,
+          "No common engineering design kernel is registered for the selected standard");
+    }
+    if (!lookup.supports(selection.getEdition())) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, standardType,
+          null, "No registered kernel implements " + selection.getEdition().getDisplayName());
+    }
+    return lookup.requireKernel();
+  }
+
+  /**
+   * Require a mapped set of calculations and review workflows for a cross-equipment standard.
+   *
+   * @param selection explicit requirement-pack selection
+   * @return registered immutable capability pack
+   * @throws StandardSelectionException when lifecycle or implementation checks fail
+   */
+  public static StandardRequirementPack requireRequirementPack(StandardSelection selection) {
+    if (selection == null) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.MISSING_SELECTION, null, null,
+          "selection cannot be null");
+    }
+    StandardType standardType = selection.getStandardType();
+    if (selection.getExecutionRequirement() != StandardSelection.ExecutionRequirement.REQUIREMENT_PACK) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.EXECUTION_REQUIREMENT_MISMATCH,
+          standardType, null, "The selection does not request a cross-equipment requirement pack");
+    }
+    if (selection.getMode() == StandardSelection.Mode.STRICT) {
+      validateLifecycle(selection);
+    }
+    validateNoAmendments(selection);
+    StandardRequirementPackRegistry.Lookup lookup = StandardRequirementPackRegistry.lookup(standardType);
+    if (!lookup.isImplemented()) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.REQUIREMENT_PACK_NOT_IMPLEMENTED,
+          standardType, null, "No cross-equipment requirement pack is registered for the selected standard");
+    }
+    StandardRequirementPack pack = lookup.requirePack();
+    if (!pack.getEdition().equals(selection.getEdition())) {
+      throw new StandardSelectionException(StandardSelectionException.Reason.EDITION_NOT_IMPLEMENTED, standardType,
+          null, "No requirement pack implements " + selection.getEdition().getDisplayName());
+    }
+    return pack;
+  }
+
+  private static DesignStandard instantiateStandard(StandardType standardType, String standardName,
+      MechanicalDesign equipment) {
+
+    Class<? extends DesignStandard> implementationClass = getMappedImplementationClass(standardType);
+
+    if (implementationClass == PressureVesselDesignStandard.class) {
+      return new PressureVesselDesignStandard(standardName, equipment);
+    } else if (implementationClass == SeparatorDesignStandard.class) {
+      return new SeparatorDesignStandard(standardName, equipment);
+    } else if (implementationClass == GasScrubberDesignStandard.class) {
+      return new GasScrubberDesignStandard(standardName, equipment);
+    } else if (implementationClass == PipelineDesignStandard.class) {
+      return new PipelineDesignStandard(standardName, equipment);
+    } else if (implementationClass == CompressorDesignStandard.class) {
+      return new CompressorDesignStandard(standardName, equipment);
+    } else if (implementationClass == MaterialPlateDesignStandard.class) {
+      return new MaterialPlateDesignStandard(standardName, equipment);
+    } else if (implementationClass == MaterialPipeDesignStandard.class) {
+      return new MaterialPipeDesignStandard(standardName, equipment);
+    } else if (implementationClass == ValveDesignStandard.class) {
+      return new ValveDesignStandard(standardName, equipment);
+    }
+    return new DesignStandard(standardName, equipment);
+  }
+
+  /**
+   * Get the class selected by the category-based standards factory.
+   *
+   * <p>
+   * A mapping to {@link DesignStandard} means that the registry only creates a metadata holder; it does not imply that
+   * the named standard has an executable calculation. Use {@link StandardSupportAudit#getSupport(StandardType)} to
+   * inspect the implementation evidence.
+   * </p>
+   *
+   * @param standardType standard to inspect
+   * @return class selected by {@link #createStandard(StandardType, MechanicalDesign)}
+   * @throws IllegalArgumentException if {@code standardType} is null
+   */
+  public static Class<? extends DesignStandard> getMappedImplementationClass(StandardType standardType) {
+    if (standardType == null) {
+      throw new IllegalArgumentException("standardType cannot be null");
+    }
+
+    if (standardType == StandardType.API_521 || standardType == StandardType.API_526) {
+      return ValveDesignStandard.class;
+    }
+
     String category = standardType.getDesignStandardCategory();
-
-    // Create appropriate standard based on category
     switch (category) {
-      case "pressure vessel design code":
-        return new PressureVesselDesignStandard(standardName, equipment);
-
-      case "separator process design":
-        return new SeparatorDesignStandard(standardName, equipment);
-
-      case "gas scrubber process design":
-        return new GasScrubberDesignStandard(standardName, equipment);
-
-      case "pipeline design codes":
-        return new PipelineDesignStandard(standardName, equipment);
-
-      case "compressor design codes":
-        return new CompressorDesignStandard(standardName, equipment);
-
-      case "material plate design codes":
-        return new MaterialPlateDesignStandard(standardName, equipment);
-
-      case "material pipe design codes":
-        return new MaterialPipeDesignStandard(standardName, equipment);
-
-      case "valve design codes":
-        return new ValveDesignStandard(standardName, equipment);
-
-      default:
-        // Return base DesignStandard for unknown categories
-        return new DesignStandard(standardName, equipment);
+    case "pressure vessel design code":
+      return PressureVesselDesignStandard.class;
+    case "separator process design":
+      return SeparatorDesignStandard.class;
+    case "gas scrubber process design":
+      return GasScrubberDesignStandard.class;
+    case "pipeline design codes":
+      return PipelineDesignStandard.class;
+    case "compressor design codes":
+      return CompressorDesignStandard.class;
+    case "material plate design codes":
+      return MaterialPlateDesignStandard.class;
+    case "material pipe design codes":
+      return MaterialPipeDesignStandard.class;
+    case "valve design codes":
+      return ValveDesignStandard.class;
+    default:
+      return DesignStandard.class;
     }
   }
 
@@ -134,11 +375,14 @@ public final class StandardRegistry {
   }
 
   /**
-   * Set a version override for a standard type.
+   * Set a process-global version override for legacy callers.
    *
    * @param standardType the standard type to override
    * @param version the version to use (null to clear override)
+   * @deprecated use an explicit {@link StandardEdition} inside {@link StandardSelection}; global mutable edition state
+   * is not reproducible across concurrent designs
    */
+  @Deprecated
   public static void setVersionOverride(StandardType standardType, String version) {
     if (standardType == null) {
       return;
@@ -151,8 +395,11 @@ public final class StandardRegistry {
   }
 
   /**
-   * Clear all version overrides.
+   * Clear process-global version overrides retained for legacy callers.
+   *
+   * @deprecated explicit {@link StandardSelection} values require no global cleanup
    */
+  @Deprecated
   public static void clearVersionOverrides() {
     versionOverrides.clear();
   }
@@ -180,29 +427,29 @@ public final class StandardRegistry {
     String org = organization.trim().toUpperCase();
 
     switch (org) {
-      case "NORSOK":
-        return StandardType.getNorsokStandards();
-      case "ASME":
-        return StandardType.getAsmeStandards();
-      case "API":
-        return StandardType.getApiStandards();
-      case "DNV":
-        return StandardType.getDnvStandards();
-      case "ISO":
-        return StandardType.getIsoStandards();
-      case "ASTM":
-        return StandardType.getAstmStandards();
-      case "EN":
-        return StandardType.getEnStandards();
-      default:
-        // Search by prefix
-        List<StandardType> result = new ArrayList<StandardType>();
-        for (StandardType type : StandardType.values()) {
-          if (type.getCode().toUpperCase().startsWith(org)) {
-            result.add(type);
-          }
+    case "NORSOK":
+      return StandardType.getNorsokStandards();
+    case "ASME":
+      return StandardType.getAsmeStandards();
+    case "API":
+      return StandardType.getApiStandards();
+    case "DNV":
+      return StandardType.getDnvStandards();
+    case "ISO":
+      return StandardType.getIsoStandards();
+    case "ASTM":
+      return StandardType.getAstmStandards();
+    case "EN":
+      return StandardType.getEnStandards();
+    default:
+      // Search by prefix
+      List<StandardType> result = new ArrayList<StandardType>();
+      for (StandardType type : StandardType.values()) {
+        if (type.getCode().toUpperCase().startsWith(org)) {
+          result.add(type);
         }
-        return result;
+      }
+      return result;
     }
   }
 
@@ -289,7 +536,7 @@ public final class StandardRegistry {
     sb.append("Available Design Standards:\n");
     sb.append("===========================\n\n");
 
-    String[] orgs = {"NORSOK", "ASME", "API", "DNV", "ISO", "ASTM", "EN", "PD"};
+    String[] orgs = { "NORSOK", "ASME", "API", "DNV", "ISO", "ASTM", "EN", "PD" };
     for (String org : orgs) {
       List<StandardType> standards = getStandardsByOrganization(org);
       if (!standards.isEmpty()) {

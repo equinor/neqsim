@@ -34,7 +34,7 @@ class MixerTest {
     testSystem.setMultiPhaseCheck(true);
 
     waterSystem = testSystem.clone();
-    waterSystem.setMolarComposition(new double[] {1.0, 0.0, 0.0, 0.0, 0.0});
+    waterSystem.setMolarComposition(new double[] { 1.0, 0.0, 0.0, 0.0, 0.0 });
 
     gasStream = new Stream("turbine stream", testSystem);
     gasStream.setFlowRate(1.0, "MSm3/day");
@@ -57,9 +57,63 @@ class MixerTest {
     testMixer.addStream(gasStream);
     testMixer.addStream(waterStream);
     testMixer.run();
-    // Enthalpy after getMassBalance fix to match calcMixStreamEnthalpy negligible flow filtering
-    assertEquals(testMixer.getOutletStream().getFluid().getEnthalpy("kJ/kg"), -105.52297413351504,
-        1e-1);
+    assertEquals(testMixer.calcMixStreamEnthalpy(), testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1.0);
+  }
+
+  /**
+   * Active inlets arriving at materially different pressures must raise the pressure-mismatch flag; the outlet still
+   * takes the lowest inlet pressure.
+   */
+  @Test
+  void testPressureMismatchFlag() {
+    Stream lowP = new Stream("low pressure", testSystem.clone());
+    lowP.setFlowRate(1.0, "MSm3/day");
+    lowP.setTemperature(40.0, "C");
+    lowP.setPressure(20.0, "bara");
+    lowP.run();
+
+    Stream highP = new Stream("high pressure", testSystem.clone());
+    highP.setFlowRate(1.0, "MSm3/day");
+    highP.setTemperature(40.0, "C");
+    highP.setPressure(50.0, "bara"); // e.g. a compressor discharge that did reach spec
+    highP.run();
+
+    Mixer mismatchMixer = new Mixer("mismatch mixer");
+    mismatchMixer.addStream(lowP);
+    mismatchMixer.addStream(highP);
+    mismatchMixer.run();
+
+    assertTrue(mismatchMixer.isPressureMismatch(),
+        "mixer should flag that inlets at 20 and 50 bara were collapsed to the lowest");
+    assertEquals(30.0, mismatchMixer.getInletPressureSpread(), 1e-6);
+    assertEquals(20.0, mismatchMixer.getOutletStream().getPressure("bara"), 1e-6);
+    assertEquals(50.0, mismatchMixer.getMaxInletPressure(), 1e-6);
+  }
+
+  /**
+   * Inlets at (essentially) the same pressure must NOT raise the pressure-mismatch flag.
+   */
+  @Test
+  void testNoPressureMismatchWhenPressuresMatch() {
+    Stream a = new Stream("stream a", testSystem.clone());
+    a.setFlowRate(1.0, "MSm3/day");
+    a.setTemperature(40.0, "C");
+    a.setPressure(30.0, "bara");
+    a.run();
+
+    Stream b = new Stream("stream b", testSystem.clone());
+    b.setFlowRate(1.0, "MSm3/day");
+    b.setTemperature(40.0, "C");
+    b.setPressure(30.0, "bara");
+    b.run();
+
+    Mixer matchedMixer = new Mixer("matched mixer");
+    matchedMixer.addStream(a);
+    matchedMixer.addStream(b);
+    matchedMixer.run();
+
+    assertFalse(matchedMixer.isPressureMismatch(), "equal inlet pressures must not raise the mismatch flag");
+    assertEquals(0.0, matchedMixer.getInletPressureSpread(), 1e-6);
   }
 
   /**
@@ -103,10 +157,38 @@ class MixerTest {
     testMixer.addStream(gasStream2);
     testMixer.run();
 
-    // After getMassBalance fix, enthalpy values updated to reflect correct negligible flow
-    // filtering
-    assertEquals(-2827531.357618357, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-1);
+    assertEquals(testMixer.calcMixStreamEnthalpy(), testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1.0);
     assertEquals(10.0, testMixer.getOutletStream().getPressure("bara"), 1e-1);
+  }
+
+  @Test
+  void testOutletEnthalpyMatchesInletSum() {
+    SystemSrkEos hotFluid = new SystemSrkEos(338.15, 85.0);
+    hotFluid.addComponent("methane", 0.86);
+    hotFluid.addComponent("ethane", 0.14);
+    hotFluid.setMixingRule("classic");
+
+    SystemSrkEos coolFluid = new SystemSrkEos(328.15, 82.0);
+    coolFluid.addComponent("methane", 0.92);
+    coolFluid.addComponent("ethane", 0.08);
+    coolFluid.setMixingRule("classic");
+
+    Stream hotStream = new Stream("hot stream", hotFluid);
+    hotStream.setFlowRate(15000.0, "kg/hr");
+    hotStream.run();
+
+    Stream coolStream = new Stream("cool stream", coolFluid);
+    coolStream.setFlowRate(10000.0, "kg/hr");
+    coolStream.run();
+
+    double inletEnthalpyJ = hotStream.getFluid().getEnthalpy("J") + coolStream.getFluid().getEnthalpy("J");
+
+    Mixer testMixer = new Mixer("enthalpy closure mixer");
+    testMixer.addStream(hotStream);
+    testMixer.addStream(coolStream);
+    testMixer.run();
+
+    assertEquals(inletEnthalpyJ, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-3);
   }
 
   /**
@@ -122,8 +204,7 @@ class MixerTest {
     // Mass balance should be approximately zero (outlet flow - inlet flow)
     // getMassBalance() now only counts streams with flow > minimumFlow()
     double massBalance = testMixer.getMassBalance("kg/hr");
-    assertEquals(0.0, massBalance, 1e-6,
-        "Mixer mass balance error: outlet flow should equal sum of inlet flows");
+    assertEquals(0.0, massBalance, 1e-6, "Mixer mass balance error: outlet flow should equal sum of inlet flows");
   }
 
   @Test

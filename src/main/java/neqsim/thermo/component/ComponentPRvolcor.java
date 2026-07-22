@@ -11,9 +11,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhasePrEosvolcor;
 
 /**
- * <p>
  * ComponentPRvolcor class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public class ComponentPRvolcor extends ComponentPR {
   private double CiT = 0;
 
   /**
-   * <p>
    * Constructor for ComponentPRvolcor.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -44,12 +40,8 @@ public class ComponentPRvolcor extends ComponentPR {
     super(number, TC, PC, M, a, moles);
   }
 
-  /// ** {@inheritDoc} */
-  // @Override
   /**
-   * <p>
    * calcc.
-   * </p>
    *
    * @return a double
    */
@@ -59,9 +51,7 @@ public class ComponentPRvolcor extends ComponentPR {
 
   // derivative of translation with regards to temperature
   /**
-   * <p>
    * calccT.
-   * </p>
    *
    * @return a double
    */
@@ -71,9 +61,7 @@ public class ComponentPRvolcor extends ComponentPR {
 
   // second derivative of translation with regards to temperature*temperature
   /**
-   * <p>
    * calccTT.
-   * </p>
    *
    * @return a double
    */
@@ -82,9 +70,7 @@ public class ComponentPRvolcor extends ComponentPR {
   }
 
   /**
-   * <p>
    * Constructor for ComponentPRvolcor.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -113,9 +99,7 @@ public class ComponentPRvolcor extends ComponentPR {
 
   /** {@inheritDoc} */
   /**
-   * <p>
    * getc.
-   * </p>
    *
    * @return a double
    */
@@ -124,9 +108,7 @@ public class ComponentPRvolcor extends ComponentPR {
   }
 
   /**
-   * <p>
    * getcT.
-   * </p>
    *
    * @return a double
    */
@@ -147,16 +129,13 @@ public class ComponentPRvolcor extends ComponentPR {
 
     if (initType >= 3) {
       for (int j = 0; j < numberOfComponents; j++) {
-        Cij[j] = ((PhasePrEosvolcor) phase).calcCij(componentNumber, j, phase, temp, pres,
-            numberOfComponents);
+        Cij[j] = ((PhasePrEosvolcor) phase).calcCij(componentNumber, j, phase, temp, pres, numberOfComponents);
       }
     }
   }
 
   /**
-   * <p>
    * getCi.
-   * </p>
    *
    * @return a double
    */
@@ -165,9 +144,7 @@ public class ComponentPRvolcor extends ComponentPR {
   }
 
   /**
-   * <p>
    * getCiT.
-   * </p>
    *
    * @return a double
    */
@@ -176,14 +153,11 @@ public class ComponentPRvolcor extends ComponentPR {
   }
 
   private double calculatePenelouxShift() {
-    return (0.1154 - 0.4406 * (0.29056 - 0.08775 * getAcentricFactor())) * R * criticalTemperature
-        / criticalPressure;
+    return (0.1154 - 0.4406 * (0.29056 - 0.08775 * getAcentricFactor())) * R * criticalTemperature / criticalPressure;
   }
 
   /**
-   * <p>
    * getCij.
-   * </p>
    *
    * @param j a int
    * @return a double
@@ -197,9 +171,7 @@ public class ComponentPRvolcor extends ComponentPR {
 
   // second derivative of C with regards to mole fraction and temperature
   /**
-   * <p>
    * getCiT.
-   * </p>
    *
    * @return a double
    */
@@ -209,16 +181,12 @@ public class ComponentPRvolcor extends ComponentPR {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
-    return phase.Fn() + phase.FB() * getBi() + phase.FD() * getAi()
-        + ((PhasePrEosvolcor) phase).FC() * getCi();
+  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    return phase.Fn() + phase.FB() * getBi() + phase.FD() * getAi() + ((PhasePrEosvolcor) phase).FC() * getCi();
   }
 
   /**
-   * <p>
    * getFC.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -226,15 +194,13 @@ public class ComponentPRvolcor extends ComponentPR {
    * @param pressure a double
    * @return a double
    */
-  public double getFC(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double getFC(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return ((PhasePrEosvolcor) phase).FC();
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double loc_CT = ((PhasePrEosvolcor) phase).getCT();
     double loc_FnC = ((PhasePrEosvolcor) phase).FnC();
     double loc_FBC = ((PhasePrEosvolcor) phase).FBC();
@@ -243,17 +209,14 @@ public class ComponentPRvolcor extends ComponentPR {
     double loc_FCT = ((PhasePrEosvolcor) phase).FTC();
     double loc_FCC = ((PhasePrEosvolcor) phase).FCC();
 
-    return loc_FnC * loc_CT
-        + (phase.FBT() + phase.FBD() * phase.getAT() + loc_FBC * loc_CT) * getBi()
-        + (loc_FCD * loc_CT + phase.FDT()) * getAi()
-        + (loc_FCT + loc_FCC * loc_CT + loc_FCD * phase.getAT()) * getCi() + phase.FD() * getAiT()
-        + loc_FC * getCiT();
+    return loc_FnC * loc_CT + (phase.FBT() + phase.FBD() * phase.getAT() + loc_FBC * loc_CT) * getBi()
+        + (loc_FCD * loc_CT + phase.FDT()) * getAi() + (loc_FCT + loc_FCC * loc_CT + loc_FCD * phase.getAT()) * getCi()
+        + phase.FD() * getAiT() + loc_FC * getCiT();
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double loc_FnC = ((PhasePrEosvolcor) phase).FnC();
     double loc_FBC = ((PhasePrEosvolcor) phase).FBC();
     double loc_FCD = ((PhasePrEosvolcor) phase).FCD();
@@ -267,19 +230,17 @@ public class ComponentPRvolcor extends ComponentPR {
     double loc_Cj = ((ComponentPRvolcor) comp_Array[j]).getCi();
     // double loc_Ci= ((ComponentPRvolcor))component.getCi();
     return phase.FnB() * comp_Array[j].getBi() + loc_FnC * loc_Cj
-        + (phase.FnB() + phase.FBB() * comp_Array[j].getBi() + loc_FBC * loc_Cj
-            + phase.FBD() * comp_Array[j].getAi()) * getBi()
+        + (phase.FnB() + phase.FBB() * comp_Array[j].getBi() + loc_FBC * loc_Cj + phase.FBD() * comp_Array[j].getAi())
+            * getBi()
         + phase.FB() * getBij(j)
-        + (loc_FnC + loc_FCC * loc_Cj + loc_FBC * comp_Array[j].getBi()
-            + loc_FCD * comp_Array[j].getAi()) * getCi()
+        + (loc_FnC + loc_FCC * loc_Cj + loc_FBC * comp_Array[j].getBi() + loc_FCD * comp_Array[j].getAi()) * getCi()
         + loc_FC * getCij(j) + (loc_FCD * loc_Cj + phase.FBD() * comp_Array[j].getBi()) * getAi()
         + phase.FD() * getAij(j);
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double loc_FCV = ((PhasePrEosvolcor) phase).FCV();
     return phase.FnV() + phase.FBV() * getBi() + phase.FDV() * getAi() + loc_FCV * getCi();
   }

@@ -21,19 +21,19 @@ import org.apache.commons.lang3.StringUtils;
  * </ul>
  *
  * <h2>Usage:</h2>
- * 
+ *
  * <pre>
  * {@code
  * BatchResult result = estimator.solve();
- * 
+ *
  * double[] estimates = result.getEstimates();
  * double[] uncertainties = result.getUncertainties();
  * double rmse = result.getRMSE();
- * 
+ *
  * // Get 95% confidence intervals
  * double[] lowerCI = result.getConfidenceIntervalLower();
  * double[] upperCI = result.getConfidenceIntervalUpper();
- * 
+ *
  * // Check convergence
  * if (result.isConverged()) {
  *   System.out.println("Optimization converged in " + result.getIterations() + " iterations");
@@ -104,10 +104,10 @@ public class BatchResult implements Serializable {
    * @param dataPointCount number of data points
    * @param converged whether optimization converged
    */
-  public BatchResult(String[] parameterNames, double[] estimates, double[] uncertainties,
-      double chiSquare, int iterations, int dataPointCount, boolean converged) {
-    this(parameterNames, estimates, uncertainties, chiSquare, iterations, dataPointCount, converged,
-        null, null, Double.NaN, Double.NaN, Double.NaN);
+  public BatchResult(String[] parameterNames, double[] estimates, double[] uncertainties, double chiSquare,
+      int iterations, int dataPointCount, boolean converged) {
+    this(parameterNames, estimates, uncertainties, chiSquare, iterations, dataPointCount, converged, null, null,
+        Double.NaN, Double.NaN, Double.NaN);
   }
 
   /**
@@ -126,10 +126,9 @@ public class BatchResult implements Serializable {
    * @param bias mean signed deviation
    * @param rSquared coefficient of determination
    */
-  public BatchResult(String[] parameterNames, double[] estimates, double[] uncertainties,
-      double chiSquare, int iterations, int dataPointCount, boolean converged,
-      double[][] covarianceMatrix, double[][] correlationMatrix, double meanAbsoluteDeviation,
-      double bias, double rSquared) {
+  public BatchResult(String[] parameterNames, double[] estimates, double[] uncertainties, double chiSquare,
+      int iterations, int dataPointCount, boolean converged, double[][] covarianceMatrix, double[][] correlationMatrix,
+      double meanAbsoluteDeviation, double bias, double rSquared) {
     this.parameterNames = parameterNames != null ? parameterNames.clone() : new String[0];
     this.estimates = estimates != null ? estimates.clone() : new double[0];
     this.uncertainties = uncertainties != null ? uncertainties.clone() : new double[0];
@@ -367,8 +366,8 @@ public class BatchResult implements Serializable {
     if (converged) {
       return CalibrationResult.success(toMap(), rmse, iterations, dataPointCount);
     } else {
-      return CalibrationResult.failure("Optimization did not converge after " + iterations
-          + " iterations. Chi-square: " + chiSquare);
+      return CalibrationResult
+          .failure("Optimization did not converge after " + iterations + " iterations. Chi-square: " + chiSquare);
     }
   }
 
@@ -400,8 +399,8 @@ public class BatchResult implements Serializable {
     System.out.printf("%-40s %12s %12s %20s%n", "Parameter", "Value", "Std Dev", "95% CI");
     printSeparator(86);
     for (int i = 0; i < parameterNames.length; i++) {
-      System.out.printf("%-40s %12.6f %12.6f [%8.4f, %8.4f]%n", parameterNames[i], estimates[i],
-          uncertainties[i], confidenceIntervalLower[i], confidenceIntervalUpper[i]);
+      System.out.printf("%-40s %12.6f %12.6f [%8.4f, %8.4f]%n", parameterNames[i], estimates[i], uncertainties[i],
+          confidenceIntervalLower[i], confidenceIntervalUpper[i]);
     }
   }
 
@@ -417,7 +416,7 @@ public class BatchResult implements Serializable {
   /** {@inheritDoc} */
   @Override
   public String toString() {
-    return "BatchResult{converged=" + converged + ", iterations=" + iterations + ", chiSquare="
-        + chiSquare + ", rmse=" + rmse + ", estimates=" + Arrays.toString(estimates) + "}";
+    return "BatchResult{converged=" + converged + ", iterations=" + iterations + ", chiSquare=" + chiSquare + ", rmse="
+        + rmse + ", estimates=" + Arrays.toString(estimates) + "}";
   }
 }

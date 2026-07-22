@@ -1,3 +1,8 @@
+---
+title: "Battery storage unit"
+description: "The `BatteryStorage` unit stores electrical energy for later use. It maintains an"
+---
+
 # Battery storage unit
 
 The `BatteryStorage` unit stores electrical energy for later use. It maintains an

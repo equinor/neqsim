@@ -12,9 +12,8 @@ import neqsim.process.safety.risk.sis.SafetyInstrumentedFunction;
  * Bow-Tie Model representing hazard, threats, consequences, and barriers.
  *
  * <p>
- * A bow-tie model visualizes the relationship between causes (threats), a central hazardous event
- * (top event), and potential outcomes (consequences), along with the preventive and mitigating
- * barriers in place.
+ * A bow-tie model visualizes the relationship between causes (threats), a central hazardous event (top event), and
+ * potential outcomes (consequences), along with the preventive and mitigating barriers in place.
  * </p>
  *
  * @author NeqSim Development Team
@@ -391,8 +390,7 @@ public class BowTieModel implements Serializable {
     // Calculate mitigated frequency through prevention barriers
     mitigatedFrequency = unmitigatedFrequency;
     for (Barrier barrier : barriers) {
-      if (barrier.getBarrierType() == BarrierType.PREVENTION
-          || barrier.getBarrierType() == BarrierType.BOTH) {
+      if (barrier.getBarrierType() == BarrierType.PREVENTION || barrier.getBarrierType() == BarrierType.BOTH) {
         if (barrier.isFunctional()) {
           mitigatedFrequency *= barrier.getPfd();
         }
@@ -416,8 +414,7 @@ public class BowTieModel implements Serializable {
   public List<Barrier> getPreventionBarriers() {
     List<Barrier> prevention = new ArrayList<>();
     for (Barrier barrier : barriers) {
-      if (barrier.getBarrierType() == BarrierType.PREVENTION
-          || barrier.getBarrierType() == BarrierType.BOTH) {
+      if (barrier.getBarrierType() == BarrierType.PREVENTION || barrier.getBarrierType() == BarrierType.BOTH) {
         prevention.add(barrier);
       }
     }
@@ -432,8 +429,7 @@ public class BowTieModel implements Serializable {
   public List<Barrier> getMitigationBarriers() {
     List<Barrier> mitigation = new ArrayList<>();
     for (Barrier barrier : barriers) {
-      if (barrier.getBarrierType() == BarrierType.MITIGATION
-          || barrier.getBarrierType() == BarrierType.BOTH) {
+      if (barrier.getBarrierType() == BarrierType.MITIGATION || barrier.getBarrierType() == BarrierType.BOTH) {
         mitigation.add(barrier);
       }
     }
@@ -580,8 +576,8 @@ public class BowTieModel implements Serializable {
     sb.append("│ PREVENTION BARRIERS:                                                │\n");
     for (Barrier b : prevention) {
       String status = b.isFunctional() ? "✓" : "✗";
-      sb.append(String.format("│   %s %-40s PFD=%.2e  RRF=%.0f │%n", status, b.getDescription(),
-          b.getPfd(), b.getRRF()));
+      sb.append(
+          String.format("│   %s %-40s PFD=%.2e  RRF=%.0f │%n", status, b.getDescription(), b.getPfd(), b.getRRF()));
     }
     if (prevention.isEmpty()) {
       sb.append("│   (none)                                                            │\n");
@@ -591,17 +587,16 @@ public class BowTieModel implements Serializable {
     sb.append("│ MITIGATION BARRIERS:                                                │\n");
     for (Barrier b : mitigation) {
       String status = b.isFunctional() ? "✓" : "✗";
-      sb.append(String.format("│   %s %-40s PFD=%.2e  RRF=%.0f │%n", status, b.getDescription(),
-          b.getPfd(), b.getRRF()));
+      sb.append(
+          String.format("│   %s %-40s PFD=%.2e  RRF=%.0f │%n", status, b.getDescription(), b.getPfd(), b.getRRF()));
     }
     if (mitigation.isEmpty()) {
       sb.append("│   (none)                                                            │\n");
     }
 
     sb.append("├─────────────────────────────────────────────────────────────────────┤\n");
-    sb.append(
-        String.format("│ Unmitigated Freq: %.2e /yr    Mitigated Freq: %.2e /yr   RRF: %.0f │%n",
-            unmitigatedFrequency, mitigatedFrequency, getTotalRRF()));
+    sb.append(String.format("│ Unmitigated Freq: %.2e /yr    Mitigated Freq: %.2e /yr   RRF: %.0f │%n",
+        unmitigatedFrequency, mitigatedFrequency, getTotalRRF()));
     sb.append("└─────────────────────────────────────────────────────────────────────┘\n");
 
     return sb.toString();
@@ -656,13 +651,12 @@ public class BowTieModel implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   @Override
   public String toString() {
-    return String.format("BowTieModel[%s: threats=%d, consequences=%d, barriers=%d]", hazardId,
-        threats.size(), consequences.size(), barriers.size());
+    return String.format("BowTieModel[%s: threats=%d, consequences=%d, barriers=%d]", hazardId, threats.size(),
+        consequences.size(), barriers.size());
   }
 }

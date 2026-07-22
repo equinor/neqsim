@@ -18,7 +18,7 @@ import java.util.Arrays;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * PropertyGradient densityGrad = flash.computePropertyGradient("density");
@@ -66,17 +66,15 @@ public class PropertyGradient implements Serializable {
    * @param dz derivatives with respect to composition
    * @param componentNames names of components
    */
-  public PropertyGradient(String propertyName, String unit, double value, double dT, double dP,
-      double[] dz, String[] componentNames) {
+  public PropertyGradient(String propertyName, String unit, double value, double dT, double dP, double[] dz,
+      String[] componentNames) {
     this.propertyName = propertyName;
     this.unit = unit;
     this.value = value;
     this.dT = dT;
     this.dP = dP;
     this.dz = dz != null ? Arrays.copyOf(dz, dz.length) : new double[0];
-    this.componentNames =
-        componentNames != null ? Arrays.copyOf(componentNames, componentNames.length)
-            : new String[0];
+    this.componentNames = componentNames != null ? Arrays.copyOf(componentNames, componentNames.length) : new String[0];
   }
 
   /**
@@ -89,8 +87,7 @@ public class PropertyGradient implements Serializable {
    * @param dP derivative with respect to pressure
    * @param dz derivatives with respect to composition
    */
-  public PropertyGradient(String propertyName, String unit, double value, double dT, double dP,
-      double[] dz) {
+  public PropertyGradient(String propertyName, String unit, double value, double dT, double dP, double[] dz) {
     this(propertyName, unit, value, dT, dP, dz, null);
   }
 
@@ -220,10 +217,8 @@ public class PropertyGradient implements Serializable {
    * @param numberOfComponents number of components
    * @return zero gradient
    */
-  public static PropertyGradient zero(String propertyName, String unit, double value,
-      int numberOfComponents) {
-    return new PropertyGradient(propertyName, unit, value, 0.0, 0.0,
-        new double[numberOfComponents]);
+  public static PropertyGradient zero(String propertyName, String unit, double value, int numberOfComponents) {
+    return new PropertyGradient(propertyName, unit, value, 0.0, 0.0, new double[numberOfComponents]);
   }
 
   @Override

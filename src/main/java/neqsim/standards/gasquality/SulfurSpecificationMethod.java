@@ -3,9 +3,7 @@ package neqsim.standards.gasquality;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * SulfurSpecificationMethod class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class SulfurSpecificationMethod extends neqsim.standards.Standard {
   double H2Scontent = 0.0;
 
   /**
-   * <p>
    * Constructor for SulfurSpecificationMethod.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */

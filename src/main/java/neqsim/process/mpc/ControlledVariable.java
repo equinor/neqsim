@@ -7,9 +7,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Represents a controlled variable (CV) in an MPC formulation.
  *
  * <p>
- * A controlled variable is a process output that the MPC aims to keep at a setpoint or within
- * specified constraints. Common examples include pressures, temperatures, compositions, and quality
- * specifications.
+ * A controlled variable is a process output that the MPC aims to keep at a setpoint or within specified constraints.
+ * Common examples include pressures, temperatures, compositions, and quality specifications.
  * </p>
  *
  * <p>
@@ -26,24 +25,22 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Pressure CV with setpoint control
- * ControlledVariable pressureCV =
- *     new ControlledVariable("Pressure", separator, "pressure", "bara").setSetpoint(50.0) // Target
- *                                                                                         // pressure
- *         .setWeight(1.0) // High priority
- *         .setSoftConstraints(45.0, 55.0) // Comfortable range
- *         .setHardConstraints(35.0, 65.0); // Absolute limits
+ * ControlledVariable pressureCV = new ControlledVariable("Pressure", separator, "pressure", "bara").setSetpoint(50.0) // Target
+ *     // pressure
+ *     .setWeight(1.0) // High priority
+ *     .setSoftConstraints(45.0, 55.0) // Comfortable range
+ *     .setHardConstraints(35.0, 65.0); // Absolute limits
  *
  * // Temperature CV with zone control
- * ControlledVariable tempCV =
- *     new ControlledVariable("Temperature", outlet, "temperature", "C").setZone(20.0, 30.0) // Keep
- *                                                                                           // in
- *                                                                                           // this
- *                                                                                           // zone
- *         .setWeight(0.5); // Lower priority
+ * ControlledVariable tempCV = new ControlledVariable("Temperature", outlet, "temperature", "C").setZone(20.0, 30.0) // Keep
+ *     // in
+ *     // this
+ *     // zone
+ *     .setWeight(0.5); // Lower priority
  * }
  * </pre>
  *
@@ -115,8 +112,7 @@ public class ControlledVariable extends MPCVariable {
    * @param propertyName the property to control
    * @param unit the unit for the property value
    */
-  public ControlledVariable(String name, ProcessEquipmentInterface equipment, String propertyName,
-      String unit) {
+  public ControlledVariable(String name, ProcessEquipmentInterface equipment, String propertyName, String unit) {
     super(name, equipment, propertyName, unit);
   }
 
@@ -162,8 +158,7 @@ public class ControlledVariable extends MPCVariable {
    * Set the tracking weight for this CV.
    *
    * <p>
-   * Higher weight means this CV is prioritized over others when the controller must make
-   * trade-offs.
+   * Higher weight means this CV is prioritized over others when the controller must make trade-offs.
    * </p>
    *
    * @param weight the weight (non-negative)
@@ -199,8 +194,8 @@ public class ControlledVariable extends MPCVariable {
    * Set soft constraints for this CV.
    *
    * <p>
-   * Soft constraints define the preferred operating range. The controller penalizes violations but
-   * may exceed these limits if necessary to satisfy higher-priority objectives.
+   * Soft constraints define the preferred operating range. The controller penalizes violations but may exceed these
+   * limits if necessary to satisfy higher-priority objectives.
    * </p>
    *
    * @param min lower soft limit
@@ -238,8 +233,7 @@ public class ControlledVariable extends MPCVariable {
    * Set hard constraints for this CV.
    *
    * <p>
-   * Hard constraints are never violated. They represent physical or safety limits that the
-   * controller must respect.
+   * Hard constraints are never violated. They represent physical or safety limits that the controller must respect.
    * </p>
    *
    * @param min lower hard limit
@@ -311,9 +305,8 @@ public class ControlledVariable extends MPCVariable {
    * Set zone control for this CV.
    *
    * <p>
-   * In zone control mode, the controller only acts when the CV leaves the specified zone. No
-   * control action is taken as long as the CV remains within the zone. This reduces control effort
-   * and wear on equipment.
+   * In zone control mode, the controller only acts when the CV leaves the specified zone. No control action is taken as
+   * long as the CV remains within the zone. This reduces control effort and wear on equipment.
    * </p>
    *
    * @param lower lower zone bound
@@ -407,7 +400,6 @@ public class ControlledVariable extends MPCVariable {
         } else {
           currentValue = stream.getFlowRate("kg/hr");
         }
-        return currentValue;
       }
     }
 
@@ -460,8 +452,8 @@ public class ControlledVariable extends MPCVariable {
    * Calculate the effective setpoint considering zone control.
    *
    * <p>
-   * In zone control mode, returns the current value if within zone (no action needed), or the
-   * nearest zone boundary if outside.
+   * In zone control mode, returns the current value if within zone (no action needed), or the nearest zone boundary if
+   * outside.
    * </p>
    *
    * @return the effective setpoint for control

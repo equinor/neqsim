@@ -1,3 +1,8 @@
+---
+title: Mixers and Splitters
+description: Documentation for stream mixing and splitting equipment in NeqSim.
+---
+
 # Mixers and Splitters
 
 Documentation for stream mixing and splitting equipment in NeqSim.
@@ -16,13 +21,13 @@ Documentation for stream mixing and splitting equipment in NeqSim.
 **Location:** `neqsim.process.equipment.mixer`, `neqsim.process.equipment.splitter`
 
 **Classes:**
-| Class | Description |
-|-------|-------------|
-| `Mixer` | Combine multiple streams |
-| `MixerInterface` | Mixer interface |
-| `Splitter` | Split stream into fractions |
-| `SplitterInterface` | Splitter interface |
-| `StaticMixer` | Static mixing element |
+| Class               | Description                 |
+| ------------------- | --------------------------- |
+| `Mixer`             | Combine multiple streams    |
+| `MixerInterface`    | Mixer interface             |
+| `Splitter`          | Split stream into fractions |
+| `SplitterInterface` | Splitter interface          |
+| `StaticMixer`       | Static mixing element       |
 
 ---
 
@@ -53,6 +58,8 @@ $$\dot{m}_{out} = \sum_i \dot{m}_i$$
 $$\dot{m}_{out} \cdot h_{out} = \sum_i \dot{m}_i \cdot h_i$$
 
 $$x_{j,out} = \frac{\sum_i \dot{m}_i \cdot x_{j,i}}{\sum_i \dot{m}_i}$$
+
+> **Note:** The outlet temperature of a mixer is **calculated** from the energy balance of the inlet streams — there is no `setOutletTemperature()` method for the mixer. If you need to control the temperature after mixing, use a downstream `Heater` or `Cooler`.
 
 ### Pressure Handling
 
@@ -201,11 +208,11 @@ for (int i = 1; i <= 4; i++) {
     wellFluid.addComponent("propane", 0.05);
     wellFluid.addComponent("water", 0.02);
     wellFluid.setMixingRule("classic");
-    
+
     Stream wellStream = new Stream("Well " + i, wellFluid);
     wellStream.setFlowRate(1000.0 + i * 200, "Sm3/day");
     wellStream.run();
-    
+
     manifold.addStream(wellStream);
 }
 
@@ -266,6 +273,6 @@ System.out.println("Bypass temp control: " + remix.getOutletStream().getTemperat
 
 ## Related Documentation
 
-- [Equipment Index](README.md) - All equipment
-- [Streams](streams.md) - Stream handling
-- [Controllers](../controllers.md) - Adjusters and recycles
+- [Equipment Index](index.md) - All equipment
+- [Streams](streams) - Stream handling
+- [Controllers](../controllers) - Adjusters and recycles

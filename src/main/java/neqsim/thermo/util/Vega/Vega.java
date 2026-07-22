@@ -9,9 +9,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 // https://nvlpubs.nist.gov/nistpubs/ir/2023/NIST.IR.8474.pdf
 
 /**
- * <p>
  * Vega class.
- * </p>
  *
  * @author victorigi99
  */
@@ -41,9 +39,7 @@ public class Vega {
   double epsilon = 1e-15;
 
   /**
-   * <p>
    * DensityVega.
-   * </p>
    *
    * @param iFlag a int
    * @param T a double
@@ -155,11 +151,11 @@ public class Vega {
         nFail++;
         if (nFail == 1) {
           D.val = Dcx.val * 3; // If vapor phase search fails, look for root in liquid
-                               // region
+          // region
         } else if (nFail == 2) {
           D.val = Dcx.val * 2.5; // If liquid phase search fails, look for root between
-                                 // liquid and critical
-                                 // regions
+          // liquid and critical
+          // regions
         } else if (nFail == 3) {
           D.val = Dcx.val * 2; // If search fails, look for root in critical region
         }
@@ -196,16 +192,14 @@ public class Vega {
 
             // If requested, check to see if point is possibly 2-phase
             if (iFlag > 0) {
-              propertiesVega(T, D.val, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
-                  Kappa, A);
-              if ((PP.val <= 0 || dPdD.val <= 0 || d2PdTD.val <= 0)
-                  || (Cv.val <= 0 || Cp.val <= 0 || W.val <= 0)) {
-                // Iteration failed (above loop did find a solution or checks made
+              propertiesVega(T, D.val, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
+              if ((PP.val <= 0 || dPdD.val <= 0 || d2PdTD.val <= 0) || (Cv.val <= 0 || Cp.val <= 0 || W.val <= 0)) {
+                // Iteration failed (above loop did find a solution or
+                // checks made
                 // below
                 // indicate possible 2-phase state)
                 ierr.val = 1;
-                herr.val =
-                    "Calculation failed to converge in Vega method, ideal gas density returned.";
+                herr.val = "Calculation failed to converge in Vega method, ideal gas density returned.";
                 D.val = P / R / T;
               }
             }
@@ -222,9 +216,7 @@ public class Vega {
   }
 
   /**
-   * <p>
    * PressureVega.
-   * </p>
    *
    * @param T a double
    * @param D a double
@@ -275,17 +267,14 @@ public class Vega {
       double B = n_i[k] * Math.pow(delta, d_i[k]) * Math.pow(tau, t_i[k]);
 
       double dBddelta = n_i[k] * d_i[k] * Math.pow(delta, d_i[k] - 1) * Math.pow(tau, t_i[k]);
-      double d2Bddelta2 =
-          n_i[k] * d_i[k] * (d_i[k] - 1) * Math.pow(delta, d_i[k] - 2) * Math.pow(tau, t_i[k]);
-      double d3Bddelta3 = n_i[k] * d_i[k] * (d_i[k] - 1) * (d_i[k] - 2)
-          * Math.pow(delta, d_i[k] - 3) * Math.pow(tau, t_i[k]);
+      double d2Bddelta2 = n_i[k] * d_i[k] * (d_i[k] - 1) * Math.pow(delta, d_i[k] - 2) * Math.pow(tau, t_i[k]);
+      double d3Bddelta3 = n_i[k] * d_i[k] * (d_i[k] - 1) * (d_i[k] - 2) * Math.pow(delta, d_i[k] - 3)
+          * Math.pow(tau, t_i[k]);
 
       double dBdtau = n_i[k] * Math.pow(delta, d_i[k]) * t_i[k] * Math.pow(tau, t_i[k] - 1);
-      double d2Bdtau2 =
-          n_i[k] * Math.pow(delta, d_i[k]) * t_i[k] * (t_i[k] - 1) * Math.pow(tau, t_i[k] - 2);
+      double d2Bdtau2 = n_i[k] * Math.pow(delta, d_i[k]) * t_i[k] * (t_i[k] - 1) * Math.pow(tau, t_i[k] - 2);
 
-      double d2Bddeltadtau =
-          n_i[k] * d_i[k] * Math.pow(delta, d_i[k] - 1) * t_i[k] * Math.pow(tau, t_i[k] - 1);
+      double d2Bddeltadtau = n_i[k] * d_i[k] * Math.pow(delta, d_i[k] - 1) * t_i[k] * Math.pow(tau, t_i[k] - 1);
 
       ar[0][0].val += B;
       ar[0][1].val += dBddelta;
@@ -330,9 +319,8 @@ public class Vega {
       double G = d2Bddelta2 + 2 * dBddelta * deddelta + B * d2eddelta2 + B * deddelta * deddelta;
       ar[0][2].val += G * E;
       // d^3(alpha^r)/d(delta)^3
-      double dGddelta =
-          d3Bddelta3 + 2 * (d2Bddelta2 * deddelta + dBddelta * d2eddelta2) + dBddelta * d2Bddelta2
-              + B * d3eddelta3 + dBddelta * deddelta * deddelta + 2 * B * deddelta * d2eddelta2;
+      double dGddelta = d3Bddelta3 + 2 * (d2Bddelta2 * deddelta + dBddelta * d2eddelta2) + dBddelta * d2Bddelta2
+          + B * d3eddelta3 + dBddelta * deddelta * deddelta + 2 * B * deddelta * d2eddelta2;
       ar[0][3].val += dGddelta * E;
 
       // d(alpha^r)/d(tau)
@@ -341,14 +329,12 @@ public class Vega {
       ar[2][0].val += d2Bdtau2 * E + 2 * dBdtau * dedtau * E + B * E * d2edtau2;
 
       // d^2(alpha^r)/d(delta)d(tau)
-      ar[1][1].val +=
-          d2Bddeltadtau * E + dBddelta * dedtau * E + dBdtau * deddelta * E + B * d2edeltadtau * E;
+      ar[1][1].val += d2Bddeltadtau * E + dBddelta * dedtau * E + dBdtau * deddelta * E + B * d2edeltadtau * E;
     }
     // thirdsum
     for (int k = I_pol + I_Exp; k < I_pol + I_Exp + I_GBS; k++) {
       double B = n_i[k] * Math.pow(delta, d_i[k]) * Math.pow(tau, t_i[k]);
-      double e =
-          -eta_i[k] * Math.pow(delta - epsilon_i[k], 2) - beta_i[k] * Math.pow(tau - gamma_i[k], 2);
+      double e = -eta_i[k] * Math.pow(delta - epsilon_i[k], 2) - beta_i[k] * Math.pow(tau - gamma_i[k], 2);
       double E = Math.exp(e);
 
       // derivates of delta
@@ -378,9 +364,8 @@ public class Vega {
       double G = d2Bddelta2 + 2 * dBddelta * deddelta + B * d2eddelta2 + B * deddelta * deddelta;
       ar[0][2].val += G * E;
       // d^3(alpha^r)/d(delta)^3
-      double dGddelta =
-          d3Bddelta3 + 2 * (d2Bddelta2 * deddelta + dBddelta * d2eddelta2) + dBddelta * d2eddelta2
-              + B * d3eddelta3 + dBddelta * deddelta * deddelta + 2 * B * deddelta * d2eddelta2;
+      double dGddelta = d3Bddelta3 + 2 * (d2Bddelta2 * deddelta + dBddelta * d2eddelta2) + dBddelta * d2eddelta2
+          + B * d3eddelta3 + dBddelta * deddelta * deddelta + 2 * B * deddelta * d2eddelta2;
       ar[0][3].val += E * (dGddelta + G * deddelta);
 
       // d(alpha^r)/d(tau)
@@ -389,8 +374,8 @@ public class Vega {
       ar[2][0].val += d2Bdtau2 * E + 2 * dBdtau * dedtau * E + B * E * d2edtau2;
 
       // d^2(alpha^r)/d(delta)d(tau)
-      ar[1][1].val += d2Bddeltadtau * E + dBddelta * dedtau * E + dBdtau * deddelta * E
-          + B * d2edeltadtau * E + B * deddelta * dedtau * E;
+      ar[1][1].val += d2Bddeltadtau * E + dBddelta * dedtau * E + dBdtau * deddelta * E + B * d2edeltadtau * E
+          + B * deddelta * dedtau * E;
     }
     ar[0][1].val = delta * ar[0][1].val;
     ar[0][2].val = delta * delta * ar[0][2].val;
@@ -431,9 +416,7 @@ public class Vega {
   }
 
   /**
-   * <p>
    * propertiesVega.
-   * </p>
    *
    * @param T a double
    * @param D a double
@@ -454,9 +437,9 @@ public class Vega {
    * @param Kappa a {@link org.netlib.util.doubleW} object
    * @param A a {@link org.netlib.util.doubleW} object
    */
-  public void propertiesVega(double T, double D, doubleW P, doubleW Z, doubleW dPdD, doubleW d2PdD2,
-      doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv, doubleW Cp,
-      doubleW W, doubleW G, doubleW JT, doubleW Kappa, doubleW A) {
+  public void propertiesVega(double T, double D, doubleW P, doubleW Z, doubleW dPdD, doubleW d2PdD2, doubleW d2PdTD,
+      doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv, doubleW Cp, doubleW W, doubleW G, doubleW JT,
+      doubleW Kappa, doubleW A) {
     // Sub PropertiesGERG(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv,
     // Cp, W, G, JT, Kappa, A)
 
@@ -533,8 +516,8 @@ public class Vega {
       Cp.val = Cv.val + T * (dPdT.val / D) * (dPdT.val / D) / dPdD.val;
       d2PdD2.val = RT * (2 * ar[0][1].val + 4 * ar[0][2].val + ar[0][3].val) / D;
       JT.val = (T / D * dPdT.val / dPdD.val - 1) / Cp.val / D; // '=(dB/dT*T-B)/Cp for an
-                                                               // ideal gas, but dB/dT is
-                                                               // not known
+      // ideal gas, but dB/dT is
+      // not known
     } else {
       Cp.val = Cv.val + R;
       d2PdD2.val = 0;
@@ -551,8 +534,7 @@ public class Vega {
   void PseudoCriticalPointVega(doubleW Tcx, doubleW Dcx) {
     // Use the pre-initialized class-level values for Tc and Dc
     if (Tc == 0 || Dc == 0) {
-      throw new IllegalStateException(
-          "Critical point parameters not set. Please call SetupVega() first.");
+      throw new IllegalStateException("Critical point parameters not set. Please call SetupVega() first.");
     }
 
     Tcx.val = Tc; // Assign the pre-initialized critical temperature
@@ -564,9 +546,7 @@ public class Vega {
 
   // The following routine must be called once before any other routine.
   /**
-   * <p>
    * SetupVega.
-   * </p>
    */
   public void SetupVega() {
     // Initialize all the constants and parameters in the GERG-2008 model.
@@ -581,28 +561,25 @@ public class Vega {
     a1 = 0.1733487932835764;
     a2 = 0.4674522201550815;
 
-    n_i = new double[] {0.015559018, 3.0638932, -4.2420844, 0.054418088, -0.18971904, 0.087856262,
-        2.2833566, -0.53331595, -0.53296502, 0.99444915, -0.30078896, -1.6432563, 0.8029102,
-        0.026838669, 0.04687678, -0.14832766, 0.03016211, -0.019986041, 0.14283514, 0.007418269,
-        -0.22989793, 0.79224829, -0.049386338};
-    t_i = new double[] {1.0, 0.425, 0.63, 0.69, 1.83, 0.575, 0.925, 1.585, 1.69, 1.51, 2.9, 0.8,
-        1.26, 3.51, 2.785, 1.0, 4.22, 0.83, 1.575, 3.447, 0.73, 1.634, 6.13};
-    d_i = new double[] {4, 1, 1, 2, 2, 3, 1, 1, 3, 2, 2, 1, 2, 1, 2, 1, 1, 3, 2, 2, 3, 2, 2};
-    l_i = new double[] {0, 0, 0, 0, 0, 0, 1, 2, 2, 1, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    eta_i = new double[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.5497, 9.245, 4.76323, 6.3826,
-        8.7023, 0.255, 0.3523, 0.1492, 0.05, 0.1668, 42.2358};
-    beta_i = new double[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.2471, 0.0983, 0.1556, 2.6782,
-        2.7077, 0.6621, 0.1775, 0.4821, 0.3069, 0.1758, 1357.6577};
-    gamma_i = new double[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3.15, 2.54505, 1.2513, 1.9416,
-        0.5984, 2.2282, 1.606, 3.815, 1.61958, 0.6407, 1.076};
-    epsilon_i = new double[] {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.596, 0.3423, 0.761, 0.9747,
-        0.5868, 0.5627, 2.5346, 3.6763, 4.5245, 5.039, 0.959};
+    n_i = new double[] { 0.015559018, 3.0638932, -4.2420844, 0.054418088, -0.18971904, 0.087856262, 2.2833566,
+        -0.53331595, -0.53296502, 0.99444915, -0.30078896, -1.6432563, 0.8029102, 0.026838669, 0.04687678, -0.14832766,
+        0.03016211, -0.019986041, 0.14283514, 0.007418269, -0.22989793, 0.79224829, -0.049386338 };
+    t_i = new double[] { 1.0, 0.425, 0.63, 0.69, 1.83, 0.575, 0.925, 1.585, 1.69, 1.51, 2.9, 0.8, 1.26, 3.51, 2.785,
+        1.0, 4.22, 0.83, 1.575, 3.447, 0.73, 1.634, 6.13 };
+    d_i = new double[] { 4, 1, 1, 2, 2, 3, 1, 1, 3, 2, 2, 1, 2, 1, 2, 1, 1, 3, 2, 2, 3, 2, 2 };
+    l_i = new double[] { 0, 0, 0, 0, 0, 0, 1, 2, 2, 1, 2, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    eta_i = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1.5497, 9.245, 4.76323, 6.3826, 8.7023, 0.255, 0.3523,
+        0.1492, 0.05, 0.1668, 42.2358 };
+    beta_i = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.2471, 0.0983, 0.1556, 2.6782, 2.7077, 0.6621, 0.1775,
+        0.4821, 0.3069, 0.1758, 1357.6577 };
+    gamma_i = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3.15, 2.54505, 1.2513, 1.9416, 0.5984, 2.2282, 1.606,
+        3.815, 1.61958, 0.6407, 1.076 };
+    epsilon_i = new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.596, 0.3423, 0.761, 0.9747, 0.5868, 0.5627, 2.5346,
+        3.6763, 4.5245, 5.039, 0.959 };
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String}objects
    */
@@ -648,22 +625,20 @@ public class Vega {
     doubleW JT = new doubleW(0.0d);
     doubleW Kappa = new doubleW(0.0d);
     doubleW PP = new doubleW(0.0d);
-    test.propertiesVega(T, D.val, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
-        Kappa, A);
+    test.propertiesVega(T, D.val, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
 
     /*
-     * // test.PressureGERG(400, 12.798286, x); String herr = ""; test.DensityGERG(0, T, P, x, ierr,
-     * herr); double pres = test.P; double molarmass = test.Mm;
+     * // test.PressureGERG(400, 12.798286, x); String herr = ""; test.DensityGERG(0, T, P, x, ierr, herr); double pres
+     * = test.P; double molarmass = test.Mm;
      *
-     * // double dPdD=0.0, dPdD2=0.0, d2PdTD=0.0, dPdT=0.0, U=0.0, H=0.0, S=0.0, // Cv=0.0, Cp=0.0,
-     * W=0.0, G=0.0, JT=0.0, Kappa=0.0, A=0.0;
+     * // double dPdD=0.0, dPdD2=0.0, d2PdTD=0.0, dPdT=0.0, U=0.0, H=0.0, S=0.0, // Cv=0.0, Cp=0.0, W=0.0, G=0.0,
+     * JT=0.0, Kappa=0.0, A=0.0;
      *
-     * // void DensityGERG(const int iFlag, const double T, const double P, const //
-     * std::vector<double> &x, double &D, int &ierr, std::string &herr) // test.DensityGERG(0, T, P,
-     * x, ierr, herr);
+     * // void DensityGERG(const int iFlag, const double T, const double P, const // std::vector<double> &x, double &D,
+     * int &ierr, std::string &herr) // test.DensityGERG(0, T, P, x, ierr, herr);
      *
-     * // Sub PropertiesGERG(T, D, x, P, Z, dPdD, dPdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, // W, G, JT,
-     * Kappa) // test.PropertiesGERG(T, test.D, x);
+     * // Sub PropertiesGERG(T, D, x, P, Z, dPdD, dPdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, // W, G, JT, Kappa) //
+     * test.PropertiesGERG(T, test.D, x);
      */
     System.out.println("Outputs-----\n");
     System.out.println("Outputs-----\n");
@@ -685,4 +660,3 @@ public class Vega {
     System.out.println("Isentropic exponent:                " + Kappa.val);
   }
 }
-

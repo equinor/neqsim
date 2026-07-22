@@ -1,17 +1,19 @@
 package neqsim.integration;
 
+import neqsim.integration.ValidationFramework.CommonErrors;
+import neqsim.integration.ValidationFramework.ValidationBuilder;
+import neqsim.integration.ValidationFramework.ValidationResult;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.TwoPortEquipment;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
+import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.integration.ValidationFramework.*;
 
 /**
  * Validators for process equipment (Separator, DistillationColumn, Heater, Cooler, etc.).
- * 
+ *
  * <p>
  * Checks:
  * <ul>
@@ -25,7 +27,7 @@ public class EquipmentValidator {
 
   /**
    * Validate any ProcessEquipmentBaseClass before execution.
-   * 
+   *
    * @param equipment The equipment to validate
    * @return ValidationResult with errors and warnings
    */
@@ -79,8 +81,7 @@ public class EquipmentValidator {
     try {
       double pressure = separator.getPressure();
       if (pressure <= 0) {
-        builder.checkTrue(false, CommonErrors.INVALID_PRESSURE,
-            CommonErrors.REMEDIATION_INVALID_PRESSURE);
+        builder.checkTrue(false, CommonErrors.INVALID_PRESSURE, CommonErrors.REMEDIATION_INVALID_PRESSURE);
       }
     } catch (Exception e) {
       builder.addWarning("separator", "Could not verify pressure setting",
@@ -106,8 +107,7 @@ public class EquipmentValidator {
    * @param builder the validation builder to add results to
    * @param column the distillation column to validate
    */
-  private static void validateDistillationColumn(ValidationBuilder builder,
-      DistillationColumn column) {
+  private static void validateDistillationColumn(ValidationBuilder builder, DistillationColumn column) {
     // Check: Number of trays reasonable (use getNumerOfTrays())
     try {
       int trayCount = column.getNumerOfTrays();
@@ -166,8 +166,7 @@ public class EquipmentValidator {
             "Call heater.setInletStream(stream) to connect inlet");
       }
     } catch (Exception e) {
-      builder.addWarning("heater", "Could not verify inlet stream",
-          "Ensure inlet stream is connected");
+      builder.addWarning("heater", "Could not verify inlet stream", "Ensure inlet stream is connected");
     }
 
     // Check: Outlet temperature set
@@ -206,8 +205,7 @@ public class EquipmentValidator {
             "Call cooler.setInletStream(stream) to connect inlet");
       }
     } catch (Exception e) {
-      builder.addWarning("cooler", "Could not verify inlet stream",
-          "Ensure inlet stream is connected");
+      builder.addWarning("cooler", "Could not verify inlet stream", "Ensure inlet stream is connected");
     }
 
     // Check: Outlet temperature set
@@ -257,8 +255,7 @@ public class EquipmentValidator {
 
       if (!result.isReady()) {
         builder.checkTrue(false, "Equipment [" + i + "] (" + equipment.getName() + ") not ready",
-            "Fix errors in " + equipment.getClass().getSimpleName() + ": "
-                + result.getErrors().get(0).getMessage());
+            "Fix errors in " + equipment.getClass().getSimpleName() + ": " + result.getErrors().get(0).getMessage());
       }
 
       // Check: Output of (i) could be input to (i+1)

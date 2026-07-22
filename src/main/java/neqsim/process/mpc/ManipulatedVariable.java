@@ -8,9 +8,8 @@ import neqsim.process.equipment.valve.ValveInterface;
  * Represents a manipulated variable (MV) in an MPC formulation.
  *
  * <p>
- * A manipulated variable is a process input that the MPC controller can adjust to achieve control
- * objectives. Common examples include valve openings, heater duties, compressor speeds, and flow
- * rate setpoints.
+ * A manipulated variable is a process input that the MPC controller can adjust to achieve control objectives. Common
+ * examples include valve openings, heater duties, compressor speeds, and flow rate setpoints.
  * </p>
  *
  * <p>
@@ -26,20 +25,19 @@ import neqsim.process.equipment.valve.ValveInterface;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Valve opening as MV
- * ManipulatedVariable valveMV =
- *     new ManipulatedVariable("InletValve", valve, "opening").setBounds(0.0, 1.0) // Physical
- *                                                                                 // limits
- *         .setRateLimit(-0.1, 0.1) // Max 10% change per step
- *         .setPreferredValue(0.7) // Preferred operating point
- *         .setCost(0.0); // No direct cost
+ * ManipulatedVariable valveMV = new ManipulatedVariable("InletValve", valve, "opening").setBounds(0.0, 1.0) // Physical
+ *     // limits
+ *     .setRateLimit(-0.1, 0.1) // Max 10% change per step
+ *     .setPreferredValue(0.7) // Preferred operating point
+ *     .setCost(0.0); // No direct cost
  *
  * // Heater duty as MV with energy cost
- * ManipulatedVariable heaterMV = new ManipulatedVariable("Heater", heater, "duty", "kW")
- *     .setBounds(0.0, 5000.0).setRateLimit(-500.0, 500.0).setCost(0.05); // $/kWh energy cost
+ * ManipulatedVariable heaterMV = new ManipulatedVariable("Heater", heater, "duty", "kW").setBounds(0.0, 5000.0)
+ *     .setRateLimit(-500.0, 500.0).setCost(0.05); // $/kWh energy cost
  * }
  * </pre>
  *
@@ -87,8 +85,7 @@ public class ManipulatedVariable extends MPCVariable {
    * @param equipment the process equipment to control
    * @param propertyName the property to manipulate
    */
-  public ManipulatedVariable(String name, ProcessEquipmentInterface equipment,
-      String propertyName) {
+  public ManipulatedVariable(String name, ProcessEquipmentInterface equipment, String propertyName) {
     super(name, equipment, propertyName);
   }
 
@@ -100,8 +97,7 @@ public class ManipulatedVariable extends MPCVariable {
    * @param propertyName the property to manipulate
    * @param unit the unit for the property value
    */
-  public ManipulatedVariable(String name, ProcessEquipmentInterface equipment, String propertyName,
-      String unit) {
+  public ManipulatedVariable(String name, ProcessEquipmentInterface equipment, String propertyName, String unit) {
     super(name, equipment, propertyName, unit);
   }
 
@@ -157,9 +153,8 @@ public class ManipulatedVariable extends MPCVariable {
    * Set the preferred operating value.
    *
    * <p>
-   * The MPC will try to keep the MV near this value when there is slack in the control objectives.
-   * This is useful for economic optimization (e.g., minimize energy use by preferring lower heater
-   * duty).
+   * The MPC will try to keep the MV near this value when there is slack in the control objectives. This is useful for
+   * economic optimization (e.g., minimize energy use by preferring lower heater duty).
    * </p>
    *
    * @param value the preferred operating point
@@ -183,8 +178,8 @@ public class ManipulatedVariable extends MPCVariable {
    * Set the cost coefficient for using this MV.
    *
    * <p>
-   * This is used for economic MPC where the objective includes minimizing operational costs.
-   * Examples: energy cost for heater duty, compression cost for compressor power.
+   * This is used for economic MPC where the objective includes minimizing operational costs. Examples: energy cost for
+   * heater duty, compression cost for compressor power.
    * </p>
    *
    * @param cost cost per unit (e.g., $/kWh)
@@ -298,8 +293,7 @@ public class ManipulatedVariable extends MPCVariable {
     // Handle common equipment types
     if (equipment instanceof ValveInterface) {
       ValveInterface valve = (ValveInterface) equipment;
-      if ("opening".equalsIgnoreCase(propertyName)
-          || "percentValveOpening".equalsIgnoreCase(propertyName)) {
+      if ("opening".equalsIgnoreCase(propertyName) || "percentValveOpening".equalsIgnoreCase(propertyName)) {
         currentValue = valve.getPercentValveOpening() / 100.0;
         return currentValue;
       }
@@ -331,7 +325,6 @@ public class ManipulatedVariable extends MPCVariable {
         } else {
           currentValue = stream.getPressure("bara");
         }
-        return currentValue;
       }
     }
 
@@ -375,8 +368,7 @@ public class ManipulatedVariable extends MPCVariable {
     // Handle common equipment types
     if (equipment instanceof ValveInterface) {
       ValveInterface valve = (ValveInterface) equipment;
-      if ("opening".equalsIgnoreCase(propertyName)
-          || "percentValveOpening".equalsIgnoreCase(propertyName)) {
+      if ("opening".equalsIgnoreCase(propertyName) || "percentValveOpening".equalsIgnoreCase(propertyName)) {
         valve.setPercentValveOpening(clampedValue * 100.0);
         return;
       }
@@ -408,7 +400,6 @@ public class ManipulatedVariable extends MPCVariable {
         } else {
           stream.setPressure(clampedValue, "bara");
         }
-        return;
       }
     }
   }

@@ -7,9 +7,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * SimpleFlowLine class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -36,9 +34,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>pipeline</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.pipeline.AdiabaticTwoPhasePipe} object
    */
@@ -65,13 +61,11 @@ public class SimpleFlowLine extends TwoPortEquipment {
      *
      * double density = fluidIn.getDensity("kg/m3");
      *
-     * double deltaP = density*getHeight()*neqsim.thermo.ThermodynamicConstantsInterface.gravity/1.
-     * 0e5;
+     * double deltaP = density*getHeight()*neqsim.thermo.ThermodynamicConstantsInterface.gravity/1. 0e5;
      *
      * System.out.println("density " +density + " delta P " + deltaP);
      *
-     * fluidIn.setPressure(fluidIn.getPressure("bara")-deltaP);
-     * fluidIn.setTemperature(outletTemperature);
+     * fluidIn.setPressure(fluidIn.getPressure("bara")-deltaP); fluidIn.setTemperature(outletTemperature);
      *
      * ThermodynamicOperations ops = new ThermodynamicOperations(fluidIn); ops.TPflash();
      *
@@ -81,9 +75,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>height</code>.
-   * </p>
    *
    * @return a double
    */
@@ -92,9 +84,7 @@ public class SimpleFlowLine extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>height</code>.
-   * </p>
    *
    * @param height a double
    */

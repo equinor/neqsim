@@ -11,8 +11,7 @@ import java.util.Map;
  * Full-lifecycle cash flow engine for field development economics.
  *
  * <p>
- * This class generates year-by-year cash flow projections for oil and gas field developments,
- * incorporating:
+ * This class generates year-by-year cash flow projections for oil and gas field developments, incorporating:
  * </p>
  * <ul>
  * <li><b>Revenue</b>: From oil, gas, and NGL sales</li>
@@ -37,11 +36,11 @@ import java.util.Map;
  * <p>
  * The engine supports any country's fiscal regime via the {@link TaxModel} interface:
  * </p>
- * 
+ *
  * <pre>{@code
  * // Use Norwegian tax model (default)
  * CashFlowEngine engine = new CashFlowEngine();
- * 
+ *
  * // Use any country from the registry
  * engine.setTaxModel(TaxModelRegistry.createModel("BR-PSA")); // Brazil Pre-Salt
  * engine.setTaxModel(TaxModelRegistry.createModel("UK")); // UK Continental Shelf
@@ -49,27 +48,27 @@ import java.util.Map;
  * }</pre>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create engine with Brazilian tax model
  * CashFlowEngine engine = new CashFlowEngine("BR");
- * 
+ *
  * // Set project parameters
  * engine.setCapex(800, 2025); // 800 MUSD in 2025
  * engine.setOpexPercentOfCapex(0.04); // 4% of CAPEX per year
- * 
+ *
  * // Set price assumptions
  * engine.setOilPrice(75.0); // USD/bbl
  * engine.setGasPrice(0.25); // USD/Sm3
- * 
+ *
  * // Add production profile
  * engine.addAnnualProduction(2026, 0, 5.0e6, 0); // 5 MSm3 gas in 2026
  * engine.addAnnualProduction(2027, 0, 10.0e6, 0); // 10 MSm3 gas in 2027
  * // ... more years
- * 
+ *
  * // Calculate cash flow
  * CashFlowResult result = engine.calculate(0.08); // 8% discount rate
- * 
+ *
  * // Results
  * System.out.println("NPV: " + result.getNpv() + " MUSD");
  * System.out.println("IRR: " + result.getIrr() * 100 + "%");
@@ -144,6 +143,9 @@ public class CashFlowEngine implements Serializable {
 
   /** Fixed OPEX per year (MUSD). */
   private double fixedOpexPerYear = 0.0;
+
+  /** First calendar year with fixed OPEX; zero preserves legacy all-project-year behavior. */
+  private int fixedOpexStartYear = 0;
 
   /** Variable OPEX per barrel of oil equivalent (USD/boe). */
   private double variableOpexPerBoe = 0.0;
@@ -280,6 +282,23 @@ public class CashFlowEngine implements Serializable {
    */
   public void setFixedOpexPerYear(double fixedOpexMusd) {
     this.fixedOpexPerYear = fixedOpexMusd;
+  }
+
+  /**
+   * Sets the first calendar year in which fixed OPEX is charged.
+   *
+   * <p>
+   * Use this when construction CAPEX precedes production. The default value of zero applies fixed OPEX in every
+   * represented project year for backward compatibility.
+   * </p>
+   *
+   * @param year first fixed-OPEX calendar year, or zero to apply it throughout the project
+   */
+  public void setFixedOpexStartYear(int year) {
+    if (year < 0) {
+      throw new IllegalArgumentException("Fixed OPEX start year cannot be negative");
+    }
+    this.fixedOpexStartYear = year;
   }
 
   /**
@@ -436,8 +455,8 @@ public class CashFlowEngine implements Serializable {
 
       // Calculate OPEX
       double boe = oilProd + nglProd + gasProd / 1000.0; // Simplified BOE conversion
-      double opex =
-          fixedOpexPerYear + (totalCapex * opexPercentOfCapex) + (boe * variableOpexPerBoe / 1.0e6);
+      double fixedOpex = fixedOpexStartYear == 0 || year >= fixedOpexStartYear ? fixedOpexPerYear : 0.0;
+      double opex = fixedOpex + (totalCapex * opexPercentOfCapex) + (boe * variableOpexPerBoe / 1.0e6);
 
       // Calculate depreciation and uplift
       double depreciation = calculateDepreciation(year);
@@ -466,10 +485,9 @@ public class CashFlowEngine implements Serializable {
       }
 
       // Create annual record
-      AnnualCashFlow annual = new AnnualCashFlow(year, grossRevenue, tariff, netRevenue, capex,
-          opex, depreciation, uplift, taxResult.getCorporateTax(), taxResult.getPetroleumTax(),
-          taxResult.getTotalTax(), preTaxCashFlow, afterTaxCashFlow, cumulativeCashFlow,
-          discountedCashFlow);
+      AnnualCashFlow annual = new AnnualCashFlow(year, grossRevenue, tariff, netRevenue, capex, opex, depreciation,
+          uplift, taxResult.getCorporateTax(), taxResult.getPetroleumTax(), taxResult.getTotalTax(), preTaxCashFlow,
+          afterTaxCashFlow, cumulativeCashFlow, discountedCashFlow);
       annualCashFlows.add(annual);
     }
 
@@ -479,8 +497,7 @@ public class CashFlowEngine implements Serializable {
     // Calculate payback period
     double paybackYears = paybackYear > 0 ? paybackYear - firstYear + 1 : Double.NaN;
 
-    return new CashFlowResult(annualCashFlows, npv, irr, paybackYears, discountRate, totalCapex,
-        firstYear, lastYear);
+    return new CashFlowResult(annualCashFlows, npv, irr, paybackYears, discountRate, totalCapex, firstYear, lastYear);
   }
 
   /**
@@ -728,6 +745,171 @@ public class CashFlowEngine implements Serializable {
     return totalCapex;
   }
 
+  /**
+   * Gets the oil price.
+   *
+   * @return oil price in USD per barrel
+   */
+  public double getOilPrice() {
+    return oilPriceUsdPerBbl;
+  }
+
+  /**
+   * Gets the gas price.
+   *
+   * @return gas price in USD per Sm3
+   */
+  public double getGasPrice() {
+    return gasPriceUsdPerSm3;
+  }
+
+  /**
+   * Gets the NGL price.
+   *
+   * @return NGL price in USD per barrel
+   */
+  public double getNglPrice() {
+    return nglPriceUsdPerBbl;
+  }
+
+  /**
+   * Gets the gas transport tariff.
+   *
+   * @return gas tariff in USD per Sm3
+   */
+  public double getGasTariff() {
+    return gasTariffUsdPerSm3;
+  }
+
+  /**
+   * Gets the oil transport tariff.
+   *
+   * @return oil tariff in USD per barrel
+   */
+  public double getOilTariff() {
+    return oilTariffUsdPerBbl;
+  }
+
+  /**
+   * Gets OPEX as a fraction of total CAPEX per year.
+   *
+   * @return OPEX fraction of CAPEX
+   */
+  public double getOpexPercentOfCapex() {
+    return opexPercentOfCapex;
+  }
+
+  /**
+   * Gets fixed annual OPEX.
+   *
+   * @return fixed OPEX in MUSD per year
+   */
+  public double getFixedOpexPerYear() {
+    return fixedOpexPerYear;
+  }
+
+  /**
+   * Gets variable OPEX.
+   *
+   * @return variable OPEX in USD per BOE
+   */
+  public double getVariableOpexPerBoe() {
+    return variableOpexPerBoe;
+  }
+
+  /**
+   * Gets the CAPEX schedule.
+   *
+   * @return defensive copy of year-to-CAPEX map in MUSD
+   */
+  public Map<Integer, Double> getCapexSchedule() {
+    return new LinkedHashMap<Integer, Double>(capexByYear);
+  }
+
+  /**
+   * Gets the annual oil production profile.
+   *
+   * @return defensive copy of year-to-oil-production map in barrels
+   */
+  public Map<Integer, Double> getOilProductionProfile() {
+    return new LinkedHashMap<Integer, Double>(oilProductionByYear);
+  }
+
+  /**
+   * Gets the annual gas production profile.
+   *
+   * @return defensive copy of year-to-gas-production map in Sm3
+   */
+  public Map<Integer, Double> getGasProductionProfile() {
+    return new LinkedHashMap<Integer, Double>(gasProductionByYear);
+  }
+
+  /**
+   * Gets the annual NGL production profile.
+   *
+   * @return defensive copy of year-to-NGL-production map in barrels
+   */
+  public Map<Integer, Double> getNglProductionProfile() {
+    return new LinkedHashMap<Integer, Double>(nglProductionByYear);
+  }
+
+  /**
+   * Gets the first project year represented by CAPEX or production data.
+   *
+   * @return first project year, or 0 if no project data is set
+   */
+  public int getFirstYear() {
+    return firstYear;
+  }
+
+  /**
+   * Gets the last project year represented by CAPEX or production data.
+   *
+   * @return last project year, or 0 if no project data is set
+   */
+  public int getLastYear() {
+    return lastYear;
+  }
+
+  /**
+   * Creates a defensive copy preserving prices, tariffs, OPEX, CAPEX timing, and production.
+   *
+   * @return copied cash-flow engine with independent maps and tax model state reset
+   */
+  public CashFlowEngine copy() {
+    CashFlowEngine clone = new CashFlowEngine(copyTaxModel(taxModel));
+    clone.setOilPrice(oilPriceUsdPerBbl);
+    clone.setGasPrice(gasPriceUsdPerSm3);
+    clone.setNglPrice(nglPriceUsdPerBbl);
+    clone.setGasTariff(gasTariffUsdPerSm3);
+    clone.setOilTariff(oilTariffUsdPerBbl);
+    clone.setOpexPercentOfCapex(opexPercentOfCapex);
+    clone.setFixedOpexPerYear(fixedOpexPerYear);
+    clone.setFixedOpexStartYear(fixedOpexStartYear);
+    clone.setVariableOpexPerBoe(variableOpexPerBoe);
+    clone.setCapexSchedule(capexByYear);
+    clone.setProductionProfile(oilProductionByYear, gasProductionByYear, nglProductionByYear);
+    return clone;
+  }
+
+  /**
+   * Copies a tax model configuration while resetting accumulated calculation state.
+   *
+   * @param source tax model to copy
+   * @return copied tax model
+   */
+  private TaxModel copyTaxModel(TaxModel source) {
+    if (source instanceof NorwegianTaxModel) {
+      NorwegianTaxModel norwegian = (NorwegianTaxModel) source;
+      NorwegianTaxModel copy = new NorwegianTaxModel(norwegian.getCorporateTaxRate(), norwegian.getPetroleumTaxRate());
+      copy.setUpliftRate(norwegian.getUpliftRate());
+      copy.setUpliftYears(norwegian.getUpliftYears());
+      copy.setDepreciationYears(norwegian.getDepreciationYears());
+      return copy;
+    }
+    return TaxModelRegistry.createModel(source.getCountryCode());
+  }
+
   // ============================================================================
   // INNER CLASS - ANNUAL CASH FLOW
   // ============================================================================
@@ -773,10 +955,9 @@ public class CashFlowEngine implements Serializable {
      * @param cumulativeCashFlow cumulative cash flow (MUSD)
      * @param discountedCashFlow discounted cash flow (MUSD)
      */
-    public AnnualCashFlow(int year, double grossRevenue, double tariff, double netRevenue,
-        double capex, double opex, double depreciation, double uplift, double corporateTax,
-        double petroleumTax, double totalTax, double preTaxCashFlow, double afterTaxCashFlow,
-        double cumulativeCashFlow, double discountedCashFlow) {
+    public AnnualCashFlow(int year, double grossRevenue, double tariff, double netRevenue, double capex, double opex,
+        double depreciation, double uplift, double corporateTax, double petroleumTax, double totalTax,
+        double preTaxCashFlow, double afterTaxCashFlow, double cumulativeCashFlow, double discountedCashFlow) {
       this.year = year;
       this.grossRevenue = grossRevenue;
       this.tariff = tariff;
@@ -886,10 +1067,9 @@ public class CashFlowEngine implements Serializable {
      * @param firstYear first year of project
      * @param lastYear last year of project
      */
-    public CashFlowResult(List<AnnualCashFlow> annualCashFlows, double npv, double irr,
-        double paybackYears, double discountRate, double totalCapex, int firstYear, int lastYear) {
-      this.annualCashFlows =
-          Collections.unmodifiableList(new ArrayList<AnnualCashFlow>(annualCashFlows));
+    public CashFlowResult(List<AnnualCashFlow> annualCashFlows, double npv, double irr, double paybackYears,
+        double discountRate, double totalCapex, int firstYear, int lastYear) {
+      this.annualCashFlows = Collections.unmodifiableList(new ArrayList<AnnualCashFlow>(annualCashFlows));
       this.npv = npv;
       this.irr = irr;
       this.paybackYears = paybackYears;
@@ -996,8 +1176,7 @@ public class CashFlowEngine implements Serializable {
     public String getSummary() {
       StringBuilder sb = new StringBuilder();
       sb.append("=== Cash Flow Summary ===\n");
-      sb.append(String.format("Project period: %d - %d (%d years)\n", firstYear, lastYear,
-          getProjectDuration()));
+      sb.append(String.format("Project period: %d - %d (%d years)\n", firstYear, lastYear, getProjectDuration()));
       sb.append(String.format("Total CAPEX: %.1f MUSD\n", totalCapex));
       sb.append(String.format("Total Revenue: %.1f MUSD\n", getTotalRevenue()));
       sb.append(String.format("Total Tax: %.1f MUSD\n", getTotalTax()));
@@ -1020,9 +1199,9 @@ public class CashFlowEngine implements Serializable {
       sb.append("|------|---------|-------|------|-----|-----------|------------|-----|\n");
 
       for (AnnualCashFlow cf : annualCashFlows) {
-        sb.append(String.format("| %d | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f |\n",
-            cf.getYear(), cf.getGrossRevenue(), cf.getCapex(), cf.getOpex(), cf.getTotalTax(),
-            cf.getAfterTaxCashFlow(), cf.getCumulativeCashFlow(), cf.getDiscountedCashFlow()));
+        sb.append(String.format("| %d | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f | %.1f |\n", cf.getYear(),
+            cf.getGrossRevenue(), cf.getCapex(), cf.getOpex(), cf.getTotalTax(), cf.getAfterTaxCashFlow(),
+            cf.getCumulativeCashFlow(), cf.getDiscountedCashFlow()));
       }
 
       return sb.toString();

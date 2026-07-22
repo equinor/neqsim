@@ -16,8 +16,7 @@ public class FrictionFactorCalculatorTest {
     double reynoldsNumber = 1000;
     double relativeRoughness = 0.001;
 
-    double frictionFactor =
-        FrictionFactorCalculator.calcDarcyFrictionFactor(reynoldsNumber, relativeRoughness);
+    double frictionFactor = FrictionFactorCalculator.calcDarcyFrictionFactor(reynoldsNumber, relativeRoughness);
 
     assertEquals(64.0 / reynoldsNumber, frictionFactor, TOLERANCE);
     assertEquals("laminar", FrictionFactorCalculator.getFlowRegime(reynoldsNumber));
@@ -29,8 +28,7 @@ public class FrictionFactorCalculatorTest {
     double reynoldsNumber = 100000;
     double relativeRoughness = 0.0001;
 
-    double frictionFactor =
-        FrictionFactorCalculator.calcDarcyFrictionFactor(reynoldsNumber, relativeRoughness);
+    double frictionFactor = FrictionFactorCalculator.calcDarcyFrictionFactor(reynoldsNumber, relativeRoughness);
 
     // Known approximate value for these conditions
     assertTrue(frictionFactor > 0.01 && frictionFactor < 0.03);
@@ -42,8 +40,7 @@ public class FrictionFactorCalculatorTest {
     double reynoldsNumber = 3000;
     double relativeRoughness = 0.001;
 
-    double frictionFactor =
-        FrictionFactorCalculator.calcDarcyFrictionFactor(reynoldsNumber, relativeRoughness);
+    double frictionFactor = FrictionFactorCalculator.calcDarcyFrictionFactor(reynoldsNumber, relativeRoughness);
 
     // Should be between laminar and turbulent values
     double fLaminar = 64.0 / 2300.0;
@@ -75,8 +72,7 @@ public class FrictionFactorCalculatorTest {
     double reynoldsNumber = 50000;
     double relativeRoughness = 0.0;
 
-    double frictionFactor =
-        FrictionFactorCalculator.calcDarcyFrictionFactor(reynoldsNumber, relativeRoughness);
+    double frictionFactor = FrictionFactorCalculator.calcDarcyFrictionFactor(reynoldsNumber, relativeRoughness);
 
     // Smooth pipe should have lower friction than rough pipe
     double frictionRough = FrictionFactorCalculator.calcDarcyFrictionFactor(reynoldsNumber, 0.01);
@@ -88,10 +84,8 @@ public class FrictionFactorCalculatorTest {
     double reynoldsNumber = 10000;
     double relativeRoughness = 0.001;
 
-    double darcy =
-        FrictionFactorCalculator.calcDarcyFrictionFactor(reynoldsNumber, relativeRoughness);
-    double fanning =
-        FrictionFactorCalculator.calcFanningFrictionFactor(reynoldsNumber, relativeRoughness);
+    double darcy = FrictionFactorCalculator.calcDarcyFrictionFactor(reynoldsNumber, relativeRoughness);
+    double fanning = FrictionFactorCalculator.calcFanningFrictionFactor(reynoldsNumber, relativeRoughness);
 
     assertEquals(darcy / 4.0, fanning, TOLERANCE);
   }
@@ -103,8 +97,8 @@ public class FrictionFactorCalculatorTest {
     double density = 1000; // kg/m³
     double velocity = 2.0; // m/s
 
-    double dpPerLength = FrictionFactorCalculator.calcPressureDropPerLength(frictionFactor,
-        diameter, density, velocity);
+    double dpPerLength = FrictionFactorCalculator.calcPressureDropPerLength(frictionFactor, diameter, density,
+        velocity);
 
     // Expected: 0.02 * 1000 * 4 / (2 * 0.1) = 400 Pa/m
     assertEquals(400.0, dpPerLength, TOLERANCE);
@@ -144,8 +138,7 @@ public class FrictionFactorCalculatorTest {
     double reynoldsNumber = 1e8;
     double relativeRoughness = 0.0001;
 
-    double frictionFactor =
-        FrictionFactorCalculator.calcDarcyFrictionFactor(reynoldsNumber, relativeRoughness);
+    double frictionFactor = FrictionFactorCalculator.calcDarcyFrictionFactor(reynoldsNumber, relativeRoughness);
 
     assertTrue(Double.isFinite(frictionFactor));
     assertTrue(frictionFactor > 0);

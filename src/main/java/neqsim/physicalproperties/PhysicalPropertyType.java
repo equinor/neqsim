@@ -22,8 +22,8 @@ public enum PhysicalPropertyType {
    */
   public static PhysicalPropertyType byName(String name) {
     if (name == null || name.trim().isEmpty()) {
-      throw new RuntimeException(new InvalidInputException("PhysicalPropertyType", "byName",
-          "name", "cannot be null or empty."));
+      throw new RuntimeException(
+          new InvalidInputException("PhysicalPropertyType", "byName", "name", "cannot be null or empty."));
     }
 
     // suport old names
@@ -44,7 +44,6 @@ public enum PhysicalPropertyType {
         return pt;
       }
     }
-    throw new RuntimeException(
-        new InvalidInputException("PhysicalPropertyType", "byName", "name", "is not valid."));
+    throw new RuntimeException(new InvalidInputException("PhysicalPropertyType", "byName", "name", "is not valid."));
   }
 }

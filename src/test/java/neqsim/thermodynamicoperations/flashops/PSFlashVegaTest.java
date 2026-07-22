@@ -39,4 +39,3 @@ public class PSFlashVegaTest {
     assertEquals(VegaEntropy, VegaEntropy2, Math.abs(VegaEntropy2) / 1000.0);
   }
 }
-

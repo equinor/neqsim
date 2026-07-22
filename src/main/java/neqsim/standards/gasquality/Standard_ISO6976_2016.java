@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Standard_ISO6976_2016 class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -68,9 +66,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
   double HinfIdeal60F = 0.0;
 
   /**
-   * <p>
    * Constructor for Standard_ISO6976_2016.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -106,9 +102,8 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
       java.sql.ResultSet dataSet = null;
       for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
         try {
-          dataSet =
-              database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='"
-                  + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
+          dataSet = database.getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='"
+              + this.thermoSystem.getPhase(0).getComponent(i).getName() + "'"));
           dataSet.next();
           M[i] = Double.parseDouble(dataSet.getString("MolarMass"));
         } catch (Exception ex) {
@@ -123,17 +118,22 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
             }
 
             dataSet.close();
-            dataSet = database.getResultSet(
-                ("SELECT * FROM iso6976constants2016 WHERE ComponentName='" + compName + "'"));
+            dataSet = database
+                .getResultSet(("SELECT * FROM iso6976constants2016 WHERE ComponentName='" + compName + "'"));
             M[i] = this.thermoSystem.getPhase(0).getComponent(i).getMolarMass();
             dataSet.next();
           } catch (Exception er) {
             logger.error(er.getMessage());
           }
-          componentsNotDefinedByStandard
-              .add("this.thermoSystem.getPhase(0).getComponent(i).getComponentName()");
+          componentsNotDefinedByStandard.add(this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
           logger.info("added component not specified by ISO6976constants2016 "
               + this.thermoSystem.getPhase(0).getComponent(i).getComponentName());
+        }
+
+        if (dataSet == null) {
+          logger
+              .error("No ISO6976 data found for component " + this.thermoSystem.getPhase(0).getComponent(i).getName());
+          continue;
         }
 
         carbonNumber[i] = Integer.parseInt(dataSet.getString("numberOfCarbon"));
@@ -168,18 +168,15 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
   }
 
   /**
-   * <p>
    * Constructor for Standard_ISO6976_2016.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param volumetricReferenceTemperaturedegC a double (valid are 0, 15, 15.55 and 20)
    * @param energyReferenceTemperaturedegC a double (valid are 0, 15, 15.55 and 20)
    * @param calculationType a {@link java.lang.String} object
    */
-  public Standard_ISO6976_2016(SystemInterface thermoSystem,
-      double volumetricReferenceTemperaturedegC, double energyReferenceTemperaturedegC,
-      String calculationType) {
+  public Standard_ISO6976_2016(SystemInterface thermoSystem, double volumetricReferenceTemperaturedegC,
+      double energyReferenceTemperaturedegC, String calculationType) {
     this(thermoSystem);
     this.referenceType = calculationType;
     volRefT = volumetricReferenceTemperaturedegC;
@@ -236,8 +233,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
     Zmix15 -= Math.pow(Zmixtemp15, 2.0);
     Zmix60F -= Math.pow(Zmixtemp60F, 2.0);
     Zmix20 -= Math.pow(Zmixtemp20, 2.0);
-    molRefm3 =
-        volRefP * 1.0e5 * 1.0 / (R * (getVolRefT() + 273.15) * getValue("CompressionFactor"));
+    molRefm3 = volRefP * 1.0e5 * 1.0 / (R * (getVolRefT() + 273.15) * getValue("CompressionFactor"));
     // System.out.println("molRefm3 " + molRefm3);
   }
 
@@ -250,6 +246,9 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
     }
     if (returnParameter.equals("LCV")) {
       returnParameter = "InferiorCalorificValue";
+    }
+    if (returnParameter.equals("WI") || returnParameter.equals("WobbeIndex")) {
+      returnParameter = "SuperiorWobbeIndex";
     }
 
     double returnValue = 0.0;
@@ -340,8 +339,7 @@ public class Standard_ISO6976_2016 extends Standard_ISO6976 {
     if (returnParameter.equals("RelativeDensity")) {
       return relativeDens;
     }
-    if (returnParameter.equals("InferiorWobbeIndex")
-        || returnParameter.equals("SuperiorWobbeIndex")) {
+    if (returnParameter.equals("InferiorWobbeIndex") || returnParameter.equals("SuperiorWobbeIndex")) {
       returnValue /= Math.sqrt(relativeDens);
     }
     if (returnParameter.equals("DensityIdeal")) {

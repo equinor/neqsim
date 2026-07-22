@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
@@ -34,6 +36,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 class TemperatureDropComparisonTest {
+  private static final Logger logger = LogManager.getLogger(TemperatureDropComparisonTest.class);
   private SystemInterface testFluid;
   private Stream inletStream;
 
@@ -96,8 +99,7 @@ class TemperatureDropComparisonTest {
     double inletTemp = tempProfile[0];
     double outletTemp = tempProfile[tempProfile.length - 1];
     assertEquals(inletTemp, outletTemp, 1.0,
-        "Adiabatic pipe should have minimal temperature change. Inlet=" + inletTemp + ", Outlet="
-            + outletTemp);
+        "Adiabatic pipe should have minimal temperature change. Inlet=" + inletTemp + ", Outlet=" + outletTemp);
   }
 
   /**
@@ -185,10 +187,10 @@ class TemperatureDropComparisonTest {
     assertTrue(bbOutletTemp >= 0, "Beggs & Brill outlet should be physical");
     assertTrue(twoFluidOutlet >= 0, "TwoFluidPipe outlet should be physical");
 
-    System.out.println("TwoFluidPipe inlet: " + twoFluidInlet + " K");
-    System.out.println("TwoFluidPipe outlet: " + twoFluidOutlet + " K");
-    System.out.println("Beggs & Brill inlet: " + bbInletTemp + " K");
-    System.out.println("Beggs & Brill outlet: " + bbOutletTemp + " K");
+    logger.info("TwoFluidPipe inlet: " + twoFluidInlet + " K");
+    logger.info("TwoFluidPipe outlet: " + twoFluidOutlet + " K");
+    logger.info("Beggs & Brill inlet: " + bbInletTemp + " K");
+    logger.info("Beggs & Brill outlet: " + bbOutletTemp + " K");
   }
 
   /**
@@ -269,8 +271,7 @@ class TemperatureDropComparisonTest {
     // Profiles should match point-by-point (reproducible)
     assertEquals(tempProfile1.length, tempProfile2.length, "Profiles should have same length");
     for (int i = 0; i < tempProfile1.length; i++) {
-      assertEquals(tempProfile1[i], tempProfile2[i], 1e-9,
-          "Temperature at section " + i + " should be reproducible");
+      assertEquals(tempProfile1[i], tempProfile2[i], 1e-9, "Temperature at section " + i + " should be reproducible");
     }
   }
 
@@ -328,8 +329,8 @@ class TemperatureDropComparisonTest {
     double lowFlowDrop = lowFlowTemp[0] - lowFlowTemp[lowFlowTemp.length - 1];
     double highFlowDrop = highFlowTemp[0] - highFlowTemp[highFlowTemp.length - 1];
 
-    System.out.println("Low flow temperature drop: " + lowFlowDrop + " K");
-    System.out.println("High flow temperature drop: " + highFlowDrop + " K");
+    logger.info("Low flow temperature drop: " + lowFlowDrop + " K");
+    logger.info("High flow temperature drop: " + highFlowDrop + " K");
 
     // Both should be small (adiabatic)
     assertTrue(Math.abs(lowFlowDrop) < 1.0, "Low flow drop should be minimal (adiabatic)");
@@ -357,8 +358,7 @@ class TemperatureDropComparisonTest {
 
     // All temperatures must be positive (Kelvin scale)
     for (int i = 0; i < tempProfile.length; i++) {
-      assertTrue(tempProfile[i] > 0,
-          "Temperature at section " + i + " must be positive (K): " + tempProfile[i]);
+      assertTrue(tempProfile[i] > 0, "Temperature at section " + i + " must be positive (K): " + tempProfile[i]);
     }
 
     // Outlet should be reasonable (not lower than absolute zero, not higher than inlet + margin)
@@ -403,11 +403,11 @@ class TemperatureDropComparisonTest {
     double outletTemp = tempProfile[tempProfile.length - 1];
     double tempDrop = inletTemp - outletTemp;
 
-    System.out.println("TwoFluidPipe with heat transfer:");
-    System.out.println("  Inlet temp: " + inletTemp + " K");
-    System.out.println("  Outlet temp: " + outletTemp + " K");
-    System.out.println("  Temperature drop: " + tempDrop + " K");
-    System.out.println("  Heat transfer enabled: " + pipe.isHeatTransferEnabled());
+    logger.info("TwoFluidPipe with heat transfer:");
+    logger.info("  Inlet temp: " + inletTemp + " K");
+    logger.info("  Outlet temp: " + outletTemp + " K");
+    logger.info("  Temperature drop: " + tempDrop + " K");
+    logger.info("  Heat transfer enabled: " + pipe.isHeatTransferEnabled());
 
     // With heat transfer enabled, should show cooling
     assertTrue(pipe.isHeatTransferEnabled(), "Heat transfer should be enabled");
@@ -463,15 +463,13 @@ class TemperatureDropComparisonTest {
     double[] htTemp = heatTransferPipe.getTemperatureProfile();
     double htDrop = htTemp[0] - htTemp[htTemp.length - 1];
 
-    System.out.println("Adiabatic pipe temperature drop: " + adiabaticDrop + " K");
-    System.out.println("Heat transfer pipe temperature drop: " + htDrop + " K");
+    logger.info("Adiabatic pipe temperature drop: " + adiabaticDrop + " K");
+    logger.info("Heat transfer pipe temperature drop: " + htDrop + " K");
 
     // Heat transfer disabled for adiabatic
-    assertFalse(adiabaticPipe.isHeatTransferEnabled(),
-        "Adiabatic pipe should not have heat transfer");
+    assertFalse(adiabaticPipe.isHeatTransferEnabled(), "Adiabatic pipe should not have heat transfer");
     // Heat transfer enabled for the other
-    assertTrue(heatTransferPipe.isHeatTransferEnabled(),
-        "Heat transfer pipe should have heat transfer enabled");
+    assertTrue(heatTransferPipe.isHeatTransferEnabled(), "Heat transfer pipe should have heat transfer enabled");
 
     // Both should have positive outlet temperatures
     assertTrue(adiabaticTemp[adiabaticTemp.length - 1] > 0, "Adiabatic outlet > 0");
@@ -549,7 +547,7 @@ class TemperatureDropComparisonTest {
     assertEquals(T_K - 273.15, T_C, 0.01, "Celsius conversion correct");
     assertEquals((T_K - 273.15) * 9.0 / 5.0 + 32.0, T_F, 0.01, "Fahrenheit conversion correct");
 
-    System.out.println("Temperature at inlet: " + T_K + " K = " + T_C + " °C = " + T_F + " °F");
+    logger.info("Temperature at inlet: " + T_K + " K = " + T_C + " °C = " + T_F + " °F");
   }
 
   /**
@@ -585,15 +583,15 @@ class TemperatureDropComparisonTest {
     pipe.run();
 
     // Check that risk is detected
-    System.out.println("Hydrate formation temp: " + pipe.getHydrateFormationTemperature() + " K");
-    System.out.println("Wax appearance temp: " + pipe.getWaxAppearanceTemperature() + " K");
-    System.out.println("Has hydrate risk: " + pipe.hasHydrateRisk());
-    System.out.println("Has wax risk: " + pipe.hasWaxRisk());
+    logger.info("Hydrate formation temp: " + pipe.getHydrateFormationTemperature() + " K");
+    logger.info("Wax appearance temp: " + pipe.getWaxAppearanceTemperature() + " K");
+    logger.info("Has hydrate risk: " + pipe.hasHydrateRisk());
+    logger.info("Has wax risk: " + pipe.hasWaxRisk());
 
     // Temperature should drop significantly with cold seabed
     double[] tempProfile = pipe.getTemperatureProfile("C");
-    System.out.println("Inlet temp: " + tempProfile[0] + " °C");
-    System.out.println("Outlet temp: " + tempProfile[tempProfile.length - 1] + " °C");
+    logger.info("Inlet temp: " + tempProfile[0] + " °C");
+    logger.info("Outlet temp: " + tempProfile[tempProfile.length - 1] + " °C");
 
     // Verify temperatures are set correctly
     assertEquals(283.15, pipe.getHydrateFormationTemperature(), 0.01);
@@ -603,7 +601,7 @@ class TemperatureDropComparisonTest {
     if (pipe.hasHydrateRisk()) {
       int firstRisk = pipe.getFirstHydrateRiskSection();
       double distance = pipe.getDistanceToHydrateRisk();
-      System.out.println("First hydrate risk at section " + firstRisk + " (" + distance + " m)");
+      logger.info("First hydrate risk at section " + firstRisk + " (" + distance + " m)");
       assertTrue(firstRisk >= 0);
       assertTrue(distance >= 0);
     }
@@ -650,8 +648,7 @@ class TemperatureDropComparisonTest {
 
     // Temperature should drop more in middle section
     double[] tempC = pipe.getTemperatureProfile("C");
-    System.out.println("Variable HTC test - Inlet: " + tempC[0] + " °C, Outlet: "
-        + tempC[tempC.length - 1] + " °C");
+    logger.info("Variable HTC test - Inlet: " + tempC[0] + " °C, Outlet: " + tempC[tempC.length - 1] + " °C");
   }
 
   /**
@@ -701,8 +698,8 @@ class TemperatureDropComparisonTest {
     double dropBuried = pipeBuried.getTemperatureProfile()[0]
         - pipeBuried.getTemperatureProfile()[pipeBuried.getTemperatureProfile().length - 1];
 
-    System.out.println("Temperature drop without soil resistance: " + dropNoSoil + " K");
-    System.out.println("Temperature drop with soil resistance: " + dropBuried + " K");
+    logger.info("Temperature drop without soil resistance: " + dropNoSoil + " K");
+    logger.info("Temperature drop with soil resistance: " + dropBuried + " K");
 
     // Buried pipe should have less heat loss due to soil thermal resistance
     assertTrue(dropBuried < dropNoSoil, "Buried pipe should have less heat loss");
@@ -732,7 +729,7 @@ class TemperatureDropComparisonTest {
 
     pipeJT.run();
 
-    System.out.println("J-T enabled: " + pipeJT.isJouleThomsonEnabled());
+    logger.info("J-T enabled: " + pipeJT.isJouleThomsonEnabled());
 
     // Test disabling J-T
     pipeJT.setEnableJouleThomson(false);

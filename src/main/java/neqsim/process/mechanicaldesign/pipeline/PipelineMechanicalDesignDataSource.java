@@ -3,9 +3,9 @@ package neqsim.process.mechanicaldesign.pipeline;
 import java.sql.ResultSet;
 import java.util.Locale;
 import java.util.Optional;
-import neqsim.util.database.NeqSimProcessDesignDataBase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.util.database.NeqSimProcessDesignDataBase;
 
 /**
  * Data source for loading pipeline mechanical design parameters from the NeqSim database.
@@ -23,22 +23,18 @@ import org.apache.logging.log4j.Logger;
  * @version 1.0
  */
 public class PipelineMechanicalDesignDataSource {
-  private static final Logger logger =
-      LogManager.getLogger(PipelineMechanicalDesignDataSource.class);
+  private static final Logger logger = LogManager.getLogger(PipelineMechanicalDesignDataSource.class);
 
   /** Query template for material properties. */
-  private static final String MATERIAL_QUERY =
-      "SELECT * FROM MaterialPipeProperties WHERE grade='%s'";
+  private static final String MATERIAL_QUERY = "SELECT * FROM MaterialPipeProperties WHERE grade='%s'";
 
   /** Query template for company-specific design factors. */
-  private static final String DESIGN_FACTORS_QUERY =
-      "SELECT SPECIFICATION, MAXVALUE, MINVALUE FROM TechnicalRequirements_Process "
-          + "WHERE EQUIPMENTTYPE='Pipeline' AND Company='%s'";
+  private static final String DESIGN_FACTORS_QUERY = "SELECT SPECIFICATION, MAXVALUE, MINVALUE FROM TechnicalRequirements_Process "
+      + "WHERE EQUIPMENTTYPE='Pipeline' AND Company='%s'";
 
   /** Query template for piping requirements. */
-  private static final String PIPING_QUERY =
-      "SELECT SPECIFICATION, MAXVALUE, MINVALUE FROM TechnicalRequirements_Piping "
-          + "WHERE Company='%s'";
+  private static final String PIPING_QUERY = "SELECT SPECIFICATION, MAXVALUE, MINVALUE FROM TechnicalRequirements_Piping "
+      + "WHERE Company='%s'";
 
   /**
    * Pipeline material data holder.
@@ -70,8 +66,8 @@ public class PipelineMechanicalDesignDataSource {
      * @param jointFactor joint factor
      * @param temperatureDerating temperature derating factor
      */
-    public PipeMaterialData(String grade, String specificationNumber, double smys, double smts,
-        double designFactor, double jointFactor, double temperatureDerating) {
+    public PipeMaterialData(String grade, String specificationNumber, double smys, double smts, double designFactor,
+        double jointFactor, double temperatureDerating) {
       this.grade = grade;
       this.specificationNumber = specificationNumber;
       this.smys = smys;
@@ -146,8 +142,7 @@ public class PipelineMechanicalDesignDataSource {
         double jointFactor = 1.0;
         double tempDerating = 1.0;
 
-        return Optional.of(new PipeMaterialData(grade, specNo, smys, smts, designFactor,
-            jointFactor, tempDerating));
+        return Optional.of(new PipeMaterialData(grade, specNo, smys, smts, designFactor, jointFactor, tempDerating));
       }
     } catch (Exception ex) {
       logger.warn("Could not load material properties for grade: " + grade, ex);
@@ -182,44 +177,44 @@ public class PipelineMechanicalDesignDataSource {
         }
 
         switch (specification.toLowerCase(Locale.ROOT)) {
-          case "designfactor":
-            if (!Double.isNaN(maxValue)) {
-              factors.designFactor = maxValue;
-            }
-            break;
-          case "jointfactor":
-            if (!Double.isNaN(maxValue)) {
-              factors.jointFactor = maxValue;
-            }
-            break;
-          case "corrosionallowance":
-            if (!Double.isNaN(maxValue)) {
-              factors.corrosionAllowance = maxValue;
-            }
-            break;
-          case "locationclass":
-            if (!Double.isNaN(maxValue)) {
-              factors.locationClass = (int) maxValue;
-            }
-            break;
-          case "safetyfactor":
-            if (!Double.isNaN(maxValue)) {
-              factors.safetyFactor = maxValue;
-            }
-            break;
-          case "designcode":
-            String codeValue = dataSet.getString("MAXVALUE");
-            if (codeValue != null && !codeValue.isEmpty()) {
-              factors.designCode = codeValue;
-            }
-            break;
-          case "fabricationtolerance":
-            if (!Double.isNaN(maxValue)) {
-              factors.fabricationTolerance = maxValue;
-            }
-            break;
-          default:
-            break;
+        case "designfactor":
+          if (!Double.isNaN(maxValue)) {
+            factors.designFactor = maxValue;
+          }
+          break;
+        case "jointfactor":
+          if (!Double.isNaN(maxValue)) {
+            factors.jointFactor = maxValue;
+          }
+          break;
+        case "corrosionallowance":
+          if (!Double.isNaN(maxValue)) {
+            factors.corrosionAllowance = maxValue;
+          }
+          break;
+        case "locationclass":
+          if (!Double.isNaN(maxValue)) {
+            factors.locationClass = (int) maxValue;
+          }
+          break;
+        case "safetyfactor":
+          if (!Double.isNaN(maxValue)) {
+            factors.safetyFactor = maxValue;
+          }
+          break;
+        case "designcode":
+          String codeValue = dataSet.getString("MAXVALUE");
+          if (codeValue != null && !codeValue.isEmpty()) {
+            factors.designCode = codeValue;
+          }
+          break;
+        case "fabricationtolerance":
+          if (!Double.isNaN(maxValue)) {
+            factors.fabricationTolerance = maxValue;
+          }
+          break;
+        default:
+          break;
         }
       }
     } catch (Exception ex) {
@@ -253,13 +248,13 @@ public class PipelineMechanicalDesignDataSource {
 
         // Add any piping-specific overrides
         switch (specification.toLowerCase(Locale.ROOT)) {
-          case "corrosionallowance":
-            if (!Double.isNaN(maxValue)) {
-              factors.corrosionAllowance = maxValue;
-            }
-            break;
-          default:
-            break;
+        case "corrosionallowance":
+          if (!Double.isNaN(maxValue)) {
+            factors.corrosionAllowance = maxValue;
+          }
+          break;
+        default:
+          break;
         }
       }
     } catch (Exception ex) {
@@ -275,8 +270,7 @@ public class PipelineMechanicalDesignDataSource {
    * @param equipmentType the equipment type (e.g., "Pipeline", "MultiphasePipe")
    * @param factors design factors to update with loaded values
    */
-  public void loadFromStandardsTable(String designCode, String equipmentType,
-      PipeDesignFactors factors) {
+  public void loadFromStandardsTable(String designCode, String equipmentType, PipeDesignFactors factors) {
     if (designCode == null || designCode.isEmpty()) {
       return;
     }
@@ -288,8 +282,7 @@ public class PipelineMechanicalDesignDataSource {
     } else if (designCode.toUpperCase(Locale.ROOT).contains("ASME")) {
       tableName = "asme_standards";
     } else if (designCode.toUpperCase(Locale.ROOT).contains("DNV")
-        || designCode.toUpperCase(Locale.ROOT).contains("ISO")
-        || designCode.toUpperCase(Locale.ROOT).contains("EN")) {
+        || designCode.toUpperCase(Locale.ROOT).contains("ISO") || designCode.toUpperCase(Locale.ROOT).contains("EN")) {
       tableName = "dnv_iso_en_standards";
     } else if (designCode.toUpperCase(Locale.ROOT).contains("NORSOK")) {
       tableName = "norsok_standards";
@@ -300,8 +293,8 @@ public class PipelineMechanicalDesignDataSource {
     }
 
     String query = String.format(Locale.ROOT,
-        "SELECT SPECIFICATION, MINVALUE, MAXVALUE FROM %s WHERE STANDARD_CODE='%s' AND EQUIPMENTTYPE='%s'",
-        tableName, designCode, equipmentType);
+        "SELECT SPECIFICATION, MINVALUE, MAXVALUE FROM %s WHERE STANDARD_CODE='%s' AND EQUIPMENTTYPE='%s'", tableName,
+        designCode, equipmentType);
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
         ResultSet dataSet = database.getResultSet(query)) {

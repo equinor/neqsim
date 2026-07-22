@@ -13,9 +13,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * TVflash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -33,11 +31,14 @@ public class TVfractionFlash extends Flash {
   private boolean reportedUncountableState = false;
   /** Flag indicating if the flash calculation converged successfully. */
   private boolean converged = false;
+  /**
+   * Whether the vapor volume fraction objective uses the Peneloux volume-corrected phase volumes. Enabled by default so
+   * vapor/liquid volume ratios (for example the ASTM D6377 VPCR4 4:1 ratio) reflect the corrected liquid density.
+   */
+  private boolean useVolumeCorrection = true;
 
   /**
-   * <p>
    * Constructor for TVflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vfractionspec a double
@@ -49,9 +50,25 @@ public class TVfractionFlash extends Flash {
   }
 
   /**
-   * <p>
+   * Returns whether the vapor volume fraction objective uses Peneloux volume-corrected phase volumes.
+   *
+   * @return true if volume correction is applied to the vapor fraction objective
+   */
+  public boolean isUseVolumeCorrection() {
+    return useVolumeCorrection;
+  }
+
+  /**
+   * Sets whether the vapor volume fraction objective uses Peneloux volume-corrected phase volumes.
+   *
+   * @param useVolumeCorrection true to apply volume correction (default), false to use raw EOS volumes
+   */
+  public void setUseVolumeCorrection(boolean useVolumeCorrection) {
+    this.useVolumeCorrection = useVolumeCorrection;
+  }
+
+  /**
    * calcdQdVP.
-   * </p>
    *
    * @return a double
    */
@@ -62,21 +79,25 @@ public class TVfractionFlash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdV.
-   * </p>
    *
    * @return a double
    */
   public double calcdQdV() {
+    if (useVolumeCorrection) {
+      // Use Peneloux volume-corrected phase volumes so the vapor/liquid volume ratio reflects the
+      // corrected liquid density (ASTM D6377 VPCR4 is defined on a real 4:1 vapor/liquid volume
+      // ratio).
+      system.initPhysicalProperties("density");
+      double dQ = system.getCorrectedVolumeFraction(0) - Vfractionspec;
+      return dQ;
+    }
     double dQ = system.getPhase(0).getVolume() / system.getVolume() - Vfractionspec;
     return dQ;
   }
 
   /**
-   * <p>
    * solveQ.
-   * </p>
    *
    * @return a double
    */
@@ -99,8 +120,7 @@ public class TVfractionFlash extends Flash {
       if (stateHasUncountableNumbers(system)) {
         consecutiveFailures++;
         if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-          logger.debug("TVfractionFlash aborting after {} consecutive failures",
-              consecutiveFailures);
+          logger.debug("TVfractionFlash aborting after {} consecutive failures", consecutiveFailures);
           system.setPressure(lastValidPressure);
           converged = false;
           return lastValidPressure;
@@ -121,8 +141,7 @@ public class TVfractionFlash extends Flash {
 
       // Validate derivatives - abort if calculations produce invalid values
       if (!Double.isFinite(dqdv) || !Double.isFinite(dqdvdp) || Math.abs(dqdvdp) < 1e-30) {
-        logger.debug("TVfractionFlash: invalid derivatives dqdv={} dqdvdp={}, aborting", dqdv,
-            dqdvdp);
+        logger.debug("TVfractionFlash: invalid derivatives dqdv={} dqdvdp={}, aborting", dqdv, dqdvdp);
         system.setPressure(lastValidPressure);
         converged = false;
         return lastValidPressure;
@@ -165,8 +184,7 @@ public class TVfractionFlash extends Flash {
         if (stateHasUncountableNumbers(system)) {
           consecutiveFailures++;
           if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
-            logger.debug("TVfractionFlash aborting after {} consecutive flash failures",
-                consecutiveFailures);
+            logger.debug("TVfractionFlash aborting after {} consecutive flash failures", consecutiveFailures);
             system.setPressure(lastValidPressure);
             converged = false;
             return lastValidPressure;
@@ -174,8 +192,7 @@ public class TVfractionFlash extends Flash {
           continue;
         }
       } else {
-        logger.debug("Too high pressure in TVfractionFlash ({} bar), stopping",
-            system.getPressure());
+        logger.debug("Too high pressure in TVfractionFlash ({} bar), stopping", system.getPressure());
         system.setPressure(lastValidPressure);
         converged = false;
         return lastValidPressure;
@@ -192,8 +209,7 @@ public class TVfractionFlash extends Flash {
         return lastValidPressure;
       }
 
-      logger.trace("iter {} pressure {:.6f} error {:.3e} damping {:.1f}", iterations, nyPres, error,
-          dampingFactor);
+      logger.trace("iter {} pressure {:.6f} error {:.3e} damping {:.1f}", iterations, nyPres, error, dampingFactor);
 
       // Convergence check with early exit
       if (error < 1e-8 && iterations > 3) {
@@ -206,8 +222,7 @@ public class TVfractionFlash extends Flash {
     converged = (error <= 1e-4);
 
     if (!converged) {
-      logger.debug("TVfractionFlash converged with high error: {} after {} iterations", error,
-          iterations);
+      logger.debug("TVfractionFlash converged with high error: {} after {} iterations", error, iterations);
     }
 
     return nyPres;
@@ -230,50 +245,60 @@ public class TVfractionFlash extends Flash {
     int phaseSearchAttempts = 0;
     final int MAX_PHASE_SEARCH_ATTEMPTS = 20;
 
-    tpFlash.run();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values;
+    // warm-start enabled only for the subsequent pressure-search and Newton
+    // iterations driven by solveQ.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
 
-    // Check for initial flash failure
-    if (stateHasUncountableNumbers(system)) {
-      logger.debug("TVfractionFlash: initial flash produced invalid state, aborting");
-      system.setPressure(initialPressure);
-      return;
-    }
-
-    // Try to establish two-phase state if needed
-    if (system.getNumberOfPhases() == 1 || !system.hasPhaseType("gas")) {
-      while (phaseSearchAttempts < MAX_PHASE_SEARCH_ATTEMPTS) {
-        phaseSearchAttempts++;
-        system.setPressure(system.getPressure() * 0.9);
-
-        // Check for pressure getting too low
-        if (system.getPressure() < 1e-6) {
-          logger.debug("TVfractionFlash: pressure too low during phase search, aborting");
-          system.setPressure(initialPressure);
-          return;
-        }
-
-        tpFlash.run();
-
-        if (stateHasUncountableNumbers(system)) {
-          logger.debug("TVfractionFlash: invalid state during phase search, aborting");
-          system.setPressure(initialPressure);
-          return;
-        }
-
-        if (system.getNumberOfPhases() > 1 && system.hasPhaseType("gas")) {
-          break;
-        }
-      }
-
-      if (phaseSearchAttempts >= MAX_PHASE_SEARCH_ATTEMPTS) {
-        logger.debug("TVfractionFlash: could not establish two-phase state after {} attempts",
-            MAX_PHASE_SEARCH_ATTEMPTS);
+      // Check for initial flash failure
+      if (stateHasUncountableNumbers(system)) {
+        logger.debug("TVfractionFlash: initial flash produced invalid state, aborting");
         system.setPressure(initialPressure);
         return;
       }
-    }
 
-    solveQ();
+      // Try to establish two-phase state if needed
+      if (system.getNumberOfPhases() == 1 || !system.hasPhaseType("gas")) {
+        while (phaseSearchAttempts < MAX_PHASE_SEARCH_ATTEMPTS) {
+          phaseSearchAttempts++;
+          system.setPressure(system.getPressure() * 0.9);
+
+          // Check for pressure getting too low
+          if (system.getPressure() < 1e-6) {
+            logger.debug("TVfractionFlash: pressure too low during phase search, aborting");
+            system.setPressure(initialPressure);
+            return;
+          }
+
+          tpFlash.run();
+
+          if (stateHasUncountableNumbers(system)) {
+            logger.debug("TVfractionFlash: invalid state during phase search, aborting");
+            system.setPressure(initialPressure);
+            return;
+          }
+
+          if (system.getNumberOfPhases() > 1 && system.hasPhaseType("gas")) {
+            break;
+          }
+        }
+
+        if (phaseSearchAttempts >= MAX_PHASE_SEARCH_ATTEMPTS) {
+          logger.debug("TVfractionFlash: could not establish two-phase state after {} attempts",
+              MAX_PHASE_SEARCH_ATTEMPTS);
+          system.setPressure(initialPressure);
+          return;
+        }
+      }
+
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */
@@ -326,12 +351,10 @@ public class TVfractionFlash extends Flash {
     reportedUncountableState = true;
 
     if (componentName != null) {
-      logger.debug(
-          "Solution contains uncountable numbers: {} for component '{}' in phase {} (value={})",
-          field, componentName, phaseIndex, value);
+      logger.debug("Solution contains uncountable numbers: {} for component '{}' in phase {} (value={})", field,
+          componentName, phaseIndex, value);
     } else {
-      logger.debug("Solution contains uncountable numbers: {} in phase {} (value={})", field,
-          phaseIndex, value);
+      logger.debug("Solution contains uncountable numbers: {} in phase {} (value={})", field, phaseIndex, value);
     }
   }
 }

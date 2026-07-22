@@ -7,8 +7,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Interface representing an optimization objective for multi-objective optimization.
  *
  * <p>
- * An objective function evaluates a process system and returns a scalar value to be optimized
- * (either maximized or minimized). Multiple objectives can be combined for Pareto optimization.
+ * An objective function evaluates a process system and returns a scalar value to be optimized (either maximized or
+ * minimized). Multiple objectives can be combined for Pareto optimization.
  * </p>
  *
  * @author ASMF
@@ -75,8 +75,8 @@ public interface ObjectiveFunction {
    * @param unit unit string
    * @return new ObjectiveFunction instance
    */
-  static ObjectiveFunction create(String name, ToDoubleFunction<ProcessSystem> evaluator,
-      Direction direction, String unit) {
+  static ObjectiveFunction create(String name, ToDoubleFunction<ProcessSystem> evaluator, Direction direction,
+      String unit) {
     return new ObjectiveFunction() {
       @Override
       public String getName() {

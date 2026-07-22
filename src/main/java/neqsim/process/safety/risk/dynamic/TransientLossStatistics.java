@@ -296,13 +296,12 @@ public class TransientLossStatistics implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   @Override
   public String toString() {
-    return String.format("TransientLossStatistics[total=%.0f kg, transient=%.1f%%, events=%d]",
-        totalLoss, transientFraction * 100, totalEventCount);
+    return String.format("TransientLossStatistics[total=%.0f kg, transient=%.1f%%, events=%d]", totalLoss,
+        transientFraction * 100, totalEventCount);
   }
 }

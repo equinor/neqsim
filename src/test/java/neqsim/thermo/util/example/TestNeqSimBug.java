@@ -7,9 +7,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestNeqSimBug class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -17,9 +15,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class TestNeqSimBug {
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -60,8 +56,8 @@ public class TestNeqSimBug {
     fluidOps.propertyFlash(Arrays.asList(spec1), Arrays.asList(spec2), 3, null, null);
 
     /*
-     * for (int t = 0; t < 1; t++) { fluid.setPressure(spec1[t]); fluidOps.PHflash(spec2[t],
-     * "J/mol"); // fluidOps.TPflash(); fluid.init(2); fluid.initPhysicalProperties();
+     * for (int t = 0; t < 1; t++) { fluid.setPressure(spec1[t]); fluidOps.PHflash(spec2[t], "J/mol"); //
+     * fluidOps.TPflash(); fluid.init(2); fluid.initPhysicalProperties();
      */
     fluid.display();
   }

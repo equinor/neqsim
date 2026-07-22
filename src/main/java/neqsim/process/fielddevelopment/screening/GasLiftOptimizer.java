@@ -11,8 +11,8 @@ import java.util.Map;
  * Multi-well gas lift optimization for optimal gas allocation.
  *
  * <p>
- * This class optimizes the allocation of limited lift gas across multiple wells to maximize total
- * field production. It considers:
+ * This class optimizes the allocation of limited lift gas across multiple wells to maximize total field production. It
+ * considers:
  * </p>
  * <ul>
  * <li><b>Well performance curves:</b> Oil rate vs. injection gas rate for each well</li>
@@ -48,29 +48,28 @@ import java.util.Map;
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * GasLiftOptimizer optimizer = new GasLiftOptimizer();
- * 
+ *
  * // Add wells with their performance curves
  * optimizer.addWell("Well-1", performanceCurve1, 50000.0); // Max 50 MSm³/d injection
  * optimizer.addWell("Well-2", performanceCurve2, 40000.0);
  * optimizer.addWell("Well-3", performanceCurve3, 60000.0);
- * 
+ *
  * // Set total available gas
  * optimizer.setAvailableGas(100000.0, "Sm3/d");
- * 
+ *
  * // Set compression constraints
  * optimizer.setMaxCompressionPower(5000.0); // kW
  * optimizer.setCompressionEfficiency(0.75);
- * 
+ *
  * // Optimize
  * AllocationResult result = optimizer.optimize();
- * 
+ *
  * System.out.println("Total oil production: " + result.totalOilRate + " Sm³/d");
  * for (WellAllocation alloc : result.allocations) {
- *   System.out.println(
- *       alloc.wellName + ": " + alloc.gasRate + " Sm³/d gas → " + alloc.oilRate + " Sm³/d oil");
+ *   System.out.println(alloc.wellName + ": " + alloc.gasRate + " Sm³/d gas → " + alloc.oilRate + " Sm³/d oil");
  * }
  * }</pre>
  *
@@ -194,9 +193,9 @@ public class GasLiftOptimizer implements Serializable {
      * Finds the optimal gas-liquid ratio from the performance curve.
      *
      * <p>
-     * The optimal GLR is the ratio of gas injection rate to oil rate at the point of maximum oil
-     * production on the performance curve. Beyond this point, additional gas injection provides
-     * diminishing returns or may even reduce production.
+     * The optimal GLR is the ratio of gas injection rate to oil rate at the point of maximum oil production on the
+     * performance curve. Beyond this point, additional gas injection provides diminishing returns or may even reduce
+     * production.
      * </p>
      */
     private void findOptimalGLR() {
@@ -237,8 +236,8 @@ public class GasLiftOptimizer implements Serializable {
      * <li>ΔQ = Q_max - Q_natural is the maximum incremental production</li>
      * </ul>
      * <p>
-     * This model captures: (1) rapid initial response, (2) plateau near optimal GLR, (3) decline at
-     * excessive gas rates due to liquid loading.
+     * This model captures: (1) rapid initial response, (2) plateau near optimal GLR, (3) decline at excessive gas rates
+     * due to liquid loading.
      * </p>
      *
      * @param gas gas injection rate (Sm³/d)
@@ -386,21 +385,19 @@ public class GasLiftOptimizer implements Serializable {
       sb.append(String.format("Converged: %s (iterations: %d)%n", converged, iterations));
       sb.append(String.format("%nGas Allocation:%n"));
       sb.append(String.format("  Available: %.0f Sm³/d%n", availableGas));
-      sb.append(String.format("  Allocated: %.0f Sm³/d (%.1f%%)%n", totalGasAllocated,
-          gasUtilization * 100));
+      sb.append(String.format("  Allocated: %.0f Sm³/d (%.1f%%)%n", totalGasAllocated, gasUtilization * 100));
       sb.append(String.format("%nProduction:%n"));
       sb.append(String.format("  Natural flow: %.0f Sm³/d%n", totalNaturalFlow));
       sb.append(String.format("  With gas lift: %.0f Sm³/d%n", totalOilRate));
       sb.append(String.format("  Incremental: %.0f Sm³/d (+%.1f%%)%n", totalIncrementalOil,
           totalNaturalFlow > 0 ? totalIncrementalOil / totalNaturalFlow * 100 : 0));
       sb.append(String.format("%nEfficiency:%n"));
-      sb.append(
-          String.format("  Field gas efficiency: %.4f Sm³ oil/Sm³ gas%n", fieldGasEfficiency));
+      sb.append(String.format("  Field gas efficiency: %.4f Sm³ oil/Sm³ gas%n", fieldGasEfficiency));
       sb.append(String.format("  Compression power: %.0f kW%n", compressionPower));
       sb.append(String.format("%nWell Allocations:%n"));
       for (WellAllocation alloc : allocations) {
-        sb.append(String.format("  %s: %.0f Sm³/d gas → %.0f Sm³/d oil (+%.0f)%n", alloc.wellName,
-            alloc.gasRate, alloc.oilRate, alloc.incrementalOil));
+        sb.append(String.format("  %s: %.0f Sm³/d gas → %.0f Sm³/d oil (+%.0f)%n", alloc.wellName, alloc.gasRate,
+            alloc.oilRate, alloc.incrementalOil));
       }
       return sb.toString();
     }
@@ -425,7 +422,8 @@ public class GasLiftOptimizer implements Serializable {
   /**
    * Creates a new gas lift optimizer.
    */
-  public GasLiftOptimizer() {}
+  public GasLiftOptimizer() {
+  }
 
   // ============================================================================
   // CONFIGURATION METHODS
@@ -454,8 +452,8 @@ public class GasLiftOptimizer implements Serializable {
    * @param maxGasRate maximum allowed gas rate (Sm³/d)
    * @return this for chaining
    */
-  public GasLiftOptimizer addWell(String name, double naturalRate, double maxRate,
-      double optimalGas, double maxGasRate) {
+  public GasLiftOptimizer addWell(String name, double naturalRate, double maxRate, double optimalGas,
+      double maxGasRate) {
     PerformanceCurve curve = new PerformanceCurve(naturalRate, maxRate, optimalGas);
     return addWell(name, curve, maxGasRate);
   }
@@ -577,27 +575,26 @@ public class GasLiftOptimizer implements Serializable {
     AllocationResult result;
 
     switch (method) {
-      case PROPORTIONAL:
-        result = optimizeProportional(effectiveAvailable);
-        break;
-      case SEQUENTIAL:
-        result = optimizeSequential(effectiveAvailable);
-        break;
-      case GRADIENT:
-        result = optimizeGradient(effectiveAvailable);
-        break;
-      case EQUAL_SLOPE:
-      default:
-        result = optimizeEqualSlope(effectiveAvailable);
-        break;
+    case PROPORTIONAL:
+      result = optimizeProportional(effectiveAvailable);
+      break;
+    case SEQUENTIAL:
+      result = optimizeSequential(effectiveAvailable);
+      break;
+    case GRADIENT:
+      result = optimizeGradient(effectiveAvailable);
+      break;
+    case EQUAL_SLOPE:
+    default:
+      result = optimizeEqualSlope(effectiveAvailable);
+      break;
     }
 
     // Calculate final metrics
     result.availableGas = availableGas;
-    result.gasUtilization =
-        result.availableGas > 0 ? result.totalGasAllocated / result.availableGas : 0;
-    result.fieldGasEfficiency =
-        result.totalGasAllocated > 0 ? result.totalIncrementalOil / result.totalGasAllocated : 0;
+    result.gasUtilization = result.availableGas > 0 ? result.totalGasAllocated / result.availableGas : 0;
+    result.fieldGasEfficiency = result.totalGasAllocated > 0 ? result.totalIncrementalOil / result.totalGasAllocated
+        : 0;
     result.compressionPower = calculateCompressionPower(result.totalGasAllocated);
     result.method = method;
 
@@ -608,15 +605,15 @@ public class GasLiftOptimizer implements Serializable {
    * Optimizes using equal slope (marginal response) method.
    *
    * <p>
-   * This method implements the optimal gas allocation strategy based on economic theory. At the
-   * optimum, the marginal production response should be equal for all wells:
+   * This method implements the optimal gas allocation strategy based on economic theory. At the optimum, the marginal
+   * production response should be equal for all wells:
    * </p>
    * <p>
    * <code>∂Q_oil,1/∂Q_gas,1 = ∂Q_oil,2/∂Q_gas,2 = ... = λ</code>
    * </p>
    * <p>
-   * where λ is the common marginal response (Lagrange multiplier). The algorithm uses binary search
-   * to find λ such that the total gas allocation equals the available gas.
+   * where λ is the common marginal response (Lagrange multiplier). The algorithm uses binary search to find λ such that
+   * the total gas allocation equals the available gas.
    * </p>
    *
    * <p>
@@ -820,8 +817,7 @@ public class GasLiftOptimizer implements Serializable {
    * where potential_i = (Q_oil_max,i - Q_oil_natural,i) × priority_i
    * </p>
    * <p>
-   * This is a simple heuristic that does not account for varying marginal responses but is fast and
-   * intuitive.
+   * This is a simple heuristic that does not account for varying marginal responses but is fast and intuitive.
    * </p>
    *
    * @param totalGas total available gas (Sm³/d)
@@ -834,8 +830,7 @@ public class GasLiftOptimizer implements Serializable {
     double totalPotential = 0;
     for (WellData well : wells) {
       if (well.enabled) {
-        totalPotential +=
-            (well.curve.getOilRate(well.maxGasRate) - well.curve.naturalFlowRate) * well.priority;
+        totalPotential += (well.curve.getOilRate(well.maxGasRate) - well.curve.naturalFlowRate) * well.priority;
       }
     }
 
@@ -846,8 +841,7 @@ public class GasLiftOptimizer implements Serializable {
       if (!well.enabled) {
         alloc.gasRate = 0;
       } else {
-        double potential =
-            (well.curve.getOilRate(well.maxGasRate) - well.curve.naturalFlowRate) * well.priority;
+        double potential = (well.curve.getOilRate(well.maxGasRate) - well.curve.naturalFlowRate) * well.priority;
         double fraction = totalPotential > 0 ? potential / totalPotential : 0;
         alloc.gasRate = Math.min(fraction * totalGas, well.maxGasRate);
       }
@@ -883,8 +877,8 @@ public class GasLiftOptimizer implements Serializable {
    * <li>Repeat until gas is exhausted or no beneficial allocation remains</li>
    * </ol>
    * <p>
-   * This greedy approach converges to the optimal solution as the increment size approaches zero.
-   * Uses 1% increments for reasonable accuracy.
+   * This greedy approach converges to the optimal solution as the increment size approaches zero. Uses 1% increments
+   * for reasonable accuracy.
    * </p>
    *
    * @param totalGas total available gas (Sm³/d)
@@ -974,8 +968,8 @@ public class GasLiftOptimizer implements Serializable {
    * <code>Q_gas,i(k+1) = Q_gas,i(k) + α × (∂Q_oil,i/∂Q_gas,i - avg_slope)</code>
    * </p>
    * <p>
-   * where α is the step size. After each iteration, allocations are renormalized to satisfy the
-   * total gas constraint. The step size decreases with iterations for convergence stability.
+   * where α is the step size. After each iteration, allocations are renormalized to satisfy the total gas constraint.
+   * The step size decreases with iterations for convergence stability.
    * </p>
    *
    * @param totalGas total available gas (Sm³/d)

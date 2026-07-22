@@ -2,10 +2,9 @@ package neqsim.process.logic.sis;
 
 /**
  * Represents a fire or gas detector in a Safety Instrumented System.
- * 
+ *
  * <p>
- * Detectors monitor process conditions and can trigger safety actions when thresholds are exceeded.
- * Each detector has:
+ * Detectors monitor process conditions and can trigger safety actions when thresholds are exceeded. Each detector has:
  * <ul>
  * <li>Alarm level (L, H, HH) indicating severity</li>
  * <li>Trip status (normal or tripped)</li>
@@ -39,8 +38,7 @@ public class Detector {
    * @param setpoint trip setpoint
    * @param unit engineering unit
    */
-  public Detector(String name, DetectorType type, AlarmLevel alarmLevel, double setpoint,
-      String unit) {
+  public Detector(String name, DetectorType type, AlarmLevel alarmLevel, double setpoint, String unit) {
     this.name = name;
     this.type = type;
     this.alarmLevel = alarmLevel;
@@ -63,14 +61,14 @@ public class Detector {
     // Check trip condition based on alarm level
     boolean shouldTrip = false;
     switch (alarmLevel) {
-      case LOW:
-      case LOW_LOW:
-        shouldTrip = measuredValue < setpoint;
-        break;
-      case HIGH:
-      case HIGH_HIGH:
-        shouldTrip = measuredValue > setpoint;
-        break;
+    case LOW:
+    case LOW_LOW:
+      shouldTrip = measuredValue < setpoint;
+      break;
+    case HIGH:
+    case HIGH_HIGH:
+      shouldTrip = measuredValue > setpoint;
+      break;
     }
 
     if (shouldTrip && !isTripped) {
@@ -95,7 +93,7 @@ public class Detector {
 
   /**
    * Resets the detector after acknowledgment.
-   * 
+   *
    * <p>
    * In safety systems, reset typically requires operator action and may have permissive conditions.
    * </p>
@@ -241,8 +239,8 @@ public class Detector {
    * Detector type enumeration.
    */
   public enum DetectorType {
-    FIRE("Fire Detector"), GAS("Gas Detector"), PRESSURE("Pressure Transmitter"), TEMPERATURE(
-        "Temperature Transmitter"), LEVEL("Level Transmitter"), FLOW("Flow Transmitter");
+    FIRE("Fire Detector"), GAS("Gas Detector"), PRESSURE("Pressure Transmitter"),
+    TEMPERATURE("Temperature Transmitter"), LEVEL("Level Transmitter"), FLOW("Flow Transmitter");
 
     private final String description;
 

@@ -6,8 +6,8 @@ import java.util.Objects;
  * AntiSurge class for compressor surge protection in dynamic simulations.
  *
  * <p>
- * This class models anti-surge control systems including recycle valve control, surge detection,
- * and various control strategies used to protect centrifugal compressors from surge.
+ * This class models anti-surge control systems including recycle valve control, surge detection, and various control
+ * strategies used to protect centrifugal compressors from surge.
  * </p>
  *
  * @author asmund
@@ -80,7 +80,8 @@ public class AntiSurge implements java.io.Serializable {
   /**
    * Default constructor.
    */
-  public AntiSurge() {}
+  public AntiSurge() {
+  }
 
   /**
    * Constructor with control strategy.
@@ -314,24 +315,24 @@ public class AntiSurge implements java.io.Serializable {
 
     // Calculate target valve position based on control strategy
     switch (controlStrategy) {
-      case ON_OFF:
-        targetValvePosition = calculateOnOffControl(surgeMargin);
-        break;
-      case PROPORTIONAL:
-        targetValvePosition = calculateProportionalControl(surgeMargin);
-        break;
-      case PID:
-        targetValvePosition = calculatePIDControl(surgeMargin, timeStep);
-        break;
-      case PREDICTIVE:
-        targetValvePosition = calculatePredictiveControl(surgeMargin, timeStep);
-        break;
-      case DUAL_LOOP:
-        targetValvePosition = calculateDualLoopControl(surgeMargin, timeStep);
-        break;
-      default:
-        targetValvePosition = calculateProportionalControl(surgeMargin);
-        break;
+    case ON_OFF:
+      targetValvePosition = calculateOnOffControl(surgeMargin);
+      break;
+    case PROPORTIONAL:
+      targetValvePosition = calculateProportionalControl(surgeMargin);
+      break;
+    case PID:
+      targetValvePosition = calculatePIDControl(surgeMargin, timeStep);
+      break;
+    case PREDICTIVE:
+      targetValvePosition = calculatePredictiveControl(surgeMargin, timeStep);
+      break;
+    case DUAL_LOOP:
+      targetValvePosition = calculateDualLoopControl(surgeMargin, timeStep);
+      break;
+    default:
+      targetValvePosition = calculateProportionalControl(surgeMargin);
+      break;
     }
 
     // Apply valve rate limiting
@@ -498,6 +499,15 @@ public class AntiSurge implements java.io.Serializable {
   }
 
   /**
+   * Get the configured number of surge cycles that demands a compressor trip.
+   *
+   * @return maximum allowed surge cycles before trip
+   */
+  public int getMaxSurgeCyclesBeforeTrip() {
+    return maxSurgeCyclesBeforeTrip;
+  }
+
+  /**
    * Reset the surge cycle counter.
    */
   public void resetSurgeCycleCount() {
@@ -567,6 +577,9 @@ public class AntiSurge implements java.io.Serializable {
    * @param maxCycles maximum cycles
    */
   public void setMaxSurgeCyclesBeforeTrip(int maxCycles) {
+    if (maxCycles <= 0) {
+      throw new IllegalArgumentException("maxCycles must be positive");
+    }
     this.maxSurgeCyclesBeforeTrip = maxCycles;
   }
 
@@ -645,8 +658,7 @@ public class AntiSurge implements java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public int hashCode() {
-    return Objects.hash(currentSurgeFraction, isActive, isSurge, surgeControlFactor,
-        controlStrategy, valvePosition);
+    return Objects.hash(currentSurgeFraction, isActive, isSurge, surgeControlFactor, controlStrategy, valvePosition);
   }
 
   /** {@inheritDoc} */
@@ -662,11 +674,9 @@ public class AntiSurge implements java.io.Serializable {
       return false;
     }
     AntiSurge other = (AntiSurge) obj;
-    return Double.doubleToLongBits(currentSurgeFraction) == Double
-        .doubleToLongBits(other.currentSurgeFraction) && isActive == other.isActive
-        && isSurge == other.isSurge
-        && Double.doubleToLongBits(surgeControlFactor) == Double
-            .doubleToLongBits(other.surgeControlFactor)
+    return Double.doubleToLongBits(currentSurgeFraction) == Double.doubleToLongBits(other.currentSurgeFraction)
+        && isActive == other.isActive && isSurge == other.isSurge
+        && Double.doubleToLongBits(surgeControlFactor) == Double.doubleToLongBits(other.surgeControlFactor)
         && controlStrategy == other.controlStrategy
         && Double.doubleToLongBits(valvePosition) == Double.doubleToLongBits(other.valvePosition);
   }

@@ -10,8 +10,7 @@ import neqsim.process.equipment.stream.Stream;
 public class PipeBeggsAndBrillsBoundaryTest {
   @Test
   public void testOutOfBoundsProfileIndex() {
-    neqsim.thermo.system.SystemInterface system =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 50.0);
+    neqsim.thermo.system.SystemInterface system = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 50.0);
     system.addComponent("methane", 1.0);
     system.setMixingRule(2);
     system.init(0);
@@ -25,13 +24,11 @@ public class PipeBeggsAndBrillsBoundaryTest {
     pipe.setDiameter(0.1);
     pipe.setNumberOfIncrements(1);
 
-    neqsim.process.processmodel.ProcessSystem proc =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem proc = new neqsim.process.processmodel.ProcessSystem();
     proc.add(stream);
     proc.add(pipe);
     proc.run();
 
-    assertThrows(IndexOutOfBoundsException.class,
-        () -> pipe.getSegmentLength(pipe.getNumberOfIncrements() + 1));
+    assertThrows(IndexOutOfBoundsException.class, () -> pipe.getSegmentLength(pipe.getNumberOfIncrements() + 1));
   }
 }

@@ -2,6 +2,7 @@
 layout: default
 title: Mathematical Reference
 parent: Risk Framework
+description: "Mathematical foundations for the NeqSim risk framework. Probability distributions, reliability theory, Monte Carlo methods, Markov chains, and fault tree algebra."
 ---
 
 # Mathematical Reference
@@ -126,20 +127,20 @@ For each iteration i = 1 to N:
     t = 0
     Initialize all equipment to OPERATING
     production[i] = 0
-    
+
     While t < T_horizon:
         # Generate next event
         For each equipment j:
             If operating: t_fail[j] = t + Exp(λ_j)
             If failed: t_repair[j] = t + Exp(μ_j)
-        
+
         t_next = min(all event times)
-        
+
         # Advance time and update state
         production[i] += P(state) × (t_next - t)
         t = t_next
         Update equipment states
-    
+
     Store production[i]
 
 Calculate statistics from production[]
@@ -356,7 +357,7 @@ $$X_p = X_k + (p \cdot n - k)(X_{k+1} - X_k)$$
 
 ## See Also
 
-- [Monte Carlo Simulation](monte-carlo.md)
-- [Risk Matrix](risk-matrix.md)
-- [Equipment Failure Modeling](equipment-failure.md)
-- [API Reference](api-reference.md)
+- [Monte Carlo Simulation](monte-carlo)
+- [Risk Matrix](risk-matrix)
+- [Equipment Failure Modeling](equipment-failure)
+- [API Reference](api-reference)

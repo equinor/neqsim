@@ -5,14 +5,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.designstandards.DesignStandard;
 import neqsim.process.mechanicaldesign.designstandards.StandardRegistry;
 import neqsim.process.mechanicaldesign.designstandards.StandardType;
 import neqsim.process.processmodel.ProcessSystem;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Manager class for applying Technical Requirements Documents (TORG) to process systems.
@@ -30,7 +30,7 @@ import org.apache.logging.log4j.Logger;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * // Create TORG manager with CSV data source
  * TorgManager manager = new TorgManager();
@@ -40,9 +40,8 @@ import org.apache.logging.log4j.Logger;
  * manager.loadAndApply("PROJECT-001", processSystem);
  *
  * // Or manually create and apply a TORG
- * TechnicalRequirementsDocument torg =
- *     TechnicalRequirementsDocument.builder().projectId("MANUAL-001")
- *         .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1).build();
+ * TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("MANUAL-001")
+ *     .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1).build();
  *
  * manager.apply(torg, processSystem);
  * </pre>
@@ -116,11 +115,9 @@ public class TorgManager {
    * @param projectName the project name
    * @return optional containing the TORG if found
    */
-  public Optional<TechnicalRequirementsDocument> load(String companyIdentifier,
-      String projectName) {
+  public Optional<TechnicalRequirementsDocument> load(String companyIdentifier, String projectName) {
     for (TorgDataSource source : dataSources) {
-      Optional<TechnicalRequirementsDocument> torg =
-          source.loadByCompanyAndProject(companyIdentifier, projectName);
+      Optional<TechnicalRequirementsDocument> torg = source.loadByCompanyAndProject(companyIdentifier, projectName);
       if (torg.isPresent()) {
         return torg;
       }
@@ -149,8 +146,8 @@ public class TorgManager {
    * Apply a TORG to a process system.
    *
    * <p>
-   * This method iterates through all equipment in the process system and applies the appropriate
-   * design standards from the TORG based on equipment type.
+   * This method iterates through all equipment in the process system and applies the appropriate design standards from
+   * the TORG based on equipment type.
    * </p>
    *
    * @param torg the TORG to apply
@@ -164,8 +161,7 @@ public class TorgManager {
     this.activeTorg = torg;
     this.appliedStandards.clear();
 
-    logger.info("Applying TORG {} to process system {}", torg.getProjectId(),
-        processSystem.getName());
+    logger.info("Applying TORG {} to process system {}", torg.getProjectId(), processSystem.getName());
 
     List<ProcessEquipmentInterface> units = processSystem.getUnitOperations();
     for (ProcessEquipmentInterface unit : units) {
@@ -181,8 +177,7 @@ public class TorgManager {
    * @param torg the TORG to apply
    * @param equipment the equipment to configure
    */
-  public void applyToEquipment(TechnicalRequirementsDocument torg,
-      ProcessEquipmentInterface equipment) {
+  public void applyToEquipment(TechnicalRequirementsDocument torg, ProcessEquipmentInterface equipment) {
     if (torg == null || equipment == null) {
       return;
     }
@@ -209,8 +204,7 @@ public class TorgManager {
         appliedList.add(standardType);
         logger.debug("Applied {} to {}", standardType.getCode(), equipmentName);
       } catch (Exception e) {
-        logger.warn("Failed to apply standard {} to {}: {}", standardType.getCode(), equipmentName,
-            e.getMessage());
+        logger.warn("Failed to apply standard {} to {}: {}", standardType.getCode(), equipmentName, e.getMessage());
       }
     }
 

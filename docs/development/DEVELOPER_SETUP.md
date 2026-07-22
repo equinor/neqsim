@@ -1,3 +1,8 @@
+---
+title: Developer Setup
+description: This document summarizes the basic steps from the NeqSim wiki for setting up a local development environment.
+---
+
 # Developer Setup
 
 This document summarizes the basic steps from the NeqSim wiki for setting up a local development environment.

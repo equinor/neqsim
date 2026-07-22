@@ -4,9 +4,7 @@ import java.util.HashMap;
 import neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger;
 
 /**
- * <p>
  * HeaterResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class MultiStreamHeatExchangerResponse extends BaseResponse {
   public Double[] flowRate;
 
   /**
-   * <p>
    * Constructor for MultiStreamHeatExchangerResponse.
-   * </p>
    *
    * @param inputHX a {@link neqsim.process.equipment.heatexchanger.MultiStreamHeatExchanger} object
    */
@@ -43,17 +39,13 @@ public class MultiStreamHeatExchangerResponse extends BaseResponse {
 
       String streamId = Integer.toString(i + 1);
       data.put("feed temperature stream " + streamId,
-          new Value(Double.toString(feedTemperature[i]),
-              neqsim.util.unit.Units.getSymbol("temperature")));
+          new Value(Double.toString(feedTemperature[i]), neqsim.util.unit.Units.getSymbol("temperature")));
       data.put("discharge temperature stream " + streamId,
-          new Value(Double.toString(dischargeTemperature[i]),
-              neqsim.util.unit.Units.getSymbol("temperature")));
+          new Value(Double.toString(dischargeTemperature[i]), neqsim.util.unit.Units.getSymbol("temperature")));
       data.put("duty stream " + streamId,
-          new Value(Double.toString(duty[i]),
-              neqsim.util.unit.Units.getSymbol("duty")));
+          new Value(Double.toString(duty[i]), neqsim.util.unit.Units.getSymbol("duty")));
       data.put("mass flow stream " + streamId,
-          new Value(Double.toString(flowRate[i]),
-              neqsim.util.unit.Units.getSymbol("mass flow")));
+          new Value(Double.toString(flowRate[i]), neqsim.util.unit.Units.getSymbol("mass flow")));
     }
 
     data.put("UA value", new Value(Double.toString(inputHX.getUAvalue()), "W/K"));

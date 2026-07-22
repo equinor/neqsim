@@ -1,3 +1,8 @@
+---
+title: "Component Package"
+description: "Documentation for component modeling in NeqSim."
+---
+
 # Component Package
 
 Documentation for component modeling in NeqSim.
@@ -293,7 +298,7 @@ for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
 
 ## Related Documentation
 
-- [System Package](../system/README.md) - Fluid systems
-- [Phase Package](../phase/README.md) - Phase modeling
-- [Mixing Rules](../mixingrule/README.md) - Binary interactions
-- [Thermo Package](../README.md) - Package overview
+- [System Package](../system/) - Fluid systems
+- [Phase Package](../phase/) - Phase modeling
+- [Mixing Rules](../mixingrule/) - Binary interactions
+- [Thermo Package](../) - Package overview

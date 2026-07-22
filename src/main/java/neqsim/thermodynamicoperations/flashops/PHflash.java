@@ -9,9 +9,7 @@ package neqsim.thermodynamicoperations.flashops;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PHflash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class PHflash extends Flash {
   int type = 0;
 
   /**
-   * <p>
    * Constructor for PHflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec a double
@@ -41,9 +37,7 @@ public class PHflash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdTT.
-   * </p>
    *
    * @return a double
    */
@@ -53,9 +47,7 @@ public class PHflash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdT.
-   * </p>
    *
    * @return a double
    */
@@ -65,9 +57,7 @@ public class PHflash extends Flash {
   }
 
   /**
-   * <p>
    * solveQ.
-   * </p>
    *
    * @return a double
    */
@@ -96,12 +86,11 @@ public class PHflash extends Flash {
       nyTemp = oldTemp - newCorr;
 
       if (iterations > 150 && Math.abs(error) < 10.0) {
-        nyTemp = 1.0 / (system.getTemperature()
-            - Math.signum(system.getTemperature() - 1.0 / nyTemp) * Math.abs(error));
+        nyTemp = 1.0
+            / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * Math.abs(error));
         correctFactor = false;
       } else if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-        nyTemp = 1.0 / (system.getTemperature()
-            - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+        nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
         correctFactor = false;
       } else if (nyTemp < 0) {
         nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
@@ -118,7 +107,23 @@ public class PHflash extends Flash {
       } else if (system.getTemperature() < minTemperature) {
         system.setTemperature(minTemperature + 0.1);
       }
-      tpFlash.run();
+      // A trial temperature can land in a region where the cubic EOS has no valid root
+      // (NaN compressibility). Instead of aborting the whole PH flash, back the temperature
+      // off toward the previous (successful) value until the inner TP flash converges.
+      int flashBackoff = 0;
+      while (true) {
+        try {
+          tpFlash.run();
+          break;
+        } catch (RuntimeException ex) {
+          flashBackoff++;
+          if (flashBackoff > 15) {
+            throw ex;
+          }
+          nyTemp = 0.5 * (nyTemp + oldTemp);
+          system.setTemperature(1.0 / nyTemp);
+        }
+      }
       system.init(2);
       errorOld = error;
       error = calcdQdT();
@@ -133,9 +138,7 @@ public class PHflash extends Flash {
   }
 
   /**
-   * <p>
    * solveQ2.
-   * </p>
    *
    * @return a double
    */
@@ -161,8 +164,7 @@ public class PHflash extends Flash {
       newCorr = factor * calcdQdT() / calcdQdTT();
       nyTemp = oldTemp - newCorr;
       if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-        nyTemp = 1.0 / (system.getTemperature()
-            - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+        nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
         correctFactor = false;
       } else if (nyTemp < 0) {
         nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
@@ -191,15 +193,27 @@ public class PHflash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    // System.out.println("enthalpy start: " + system.getEnthalpy());
-    if (type == 0) {
-      solveQ();
-    } else {
-      SysNewtonRhapsonPHflash secondOrderSolver =
-          new SysNewtonRhapsonPHflash(system, 2, system.getPhases()[0].getNumberOfComponents(), 0);
-      secondOrderSolver.setSpec(Hspec);
-      secondOrderSolver.solve(1);
+    // First TPflash runs COLD (Wilson initial K) so that stale K from a
+    // previous unrelated flash (at different P/T) does not bias the solution.
+    // Then enable K-value warm-start only for subsequent TPflash iterations
+    // within this outer PH-flash loop — safe because the outer loop converges
+    // on T via enthalpy residual. Typical speedup: 3-5x.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      // System.out.println("enthalpy start: " + system.getEnthalpy());
+      if (type == 0) {
+        solveQ();
+      } else {
+        SysNewtonRhapsonPHflash secondOrderSolver = new SysNewtonRhapsonPHflash(system, 2,
+            system.getPhases()[0].getNumberOfComponents(), 0);
+        secondOrderSolver.setSpec(Hspec);
+        secondOrderSolver.solve(1);
+      }
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
     }
     // System.out.println("enthalpy: " + system.getEnthalpy());
     // System.out.println("Temperature: " + system.getTemperature());

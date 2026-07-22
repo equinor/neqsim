@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,9 +18,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Unit tests for DifferentiableFlash and gradient computation.
  */
 class DifferentiableFlashTest {
+  private static final Logger logger = LogManager.getLogger(DifferentiableFlashTest.class);
+
   /** Relative tolerance for gradient comparison. */
   private static final double RELATIVE_TOLERANCE = 0.25; // 25% tolerance for analytical vs
-                                                         // numerical
+  // numerical
 
   /** Absolute tolerance for near-zero values. */
   private static final double ABSOLUTE_TOLERANCE = 1e-6;
@@ -79,10 +83,10 @@ class DifferentiableFlashTest {
 
     // Check that composition derivatives are non-zero (requires init(3) to have been called)
     // Note: without init(3), these may be zero
-    System.out.println("dlnPhidn[0][0] = " + dlnPhidn[0][0]);
-    System.out.println("dlnPhidn[0][1] = " + dlnPhidn[0][1]);
-    System.out.println("dlnPhidn[1][0] = " + dlnPhidn[1][0]);
-    System.out.println("dlnPhidn[1][1] = " + dlnPhidn[1][1]);
+    logger.info("dlnPhidn[0][0] = " + dlnPhidn[0][0]);
+    logger.info("dlnPhidn[0][1] = " + dlnPhidn[0][1]);
+    logger.info("dlnPhidn[1][0] = " + dlnPhidn[1][0]);
+    logger.info("dlnPhidn[1][1] = " + dlnPhidn[1][1]);
   }
 
   @Test
@@ -347,8 +351,8 @@ class DifferentiableFlashTest {
   }
 
   /**
-   * Helper method to compute K-value for component at given T, P with fresh system. K-value is
-   * defined as y_i/x_i where y is vapor mole fraction and x is liquid mole fraction.
+   * Helper method to compute K-value for component at given T, P with fresh system. K-value is defined as y_i/x_i where
+   * y is vapor mole fraction and x is liquid mole fraction.
    */
   private double computeKValueFresh(int componentIndex, double T, double P) {
     SystemInterface sys = new SystemSrkEos(T, P);
@@ -395,14 +399,13 @@ class DifferentiableFlashTest {
   private void assertGradientEquals(String description, double analytical, double numerical) {
     if (Math.abs(numerical) < ABSOLUTE_TOLERANCE) {
       // For near-zero values, use absolute tolerance
-      assertEquals(numerical, analytical, ABSOLUTE_TOLERANCE,
-          description + " (absolute comparison)");
+      assertEquals(numerical, analytical, ABSOLUTE_TOLERANCE, description + " (absolute comparison)");
     } else {
       // For non-zero values, use relative tolerance
       double relativeError = Math.abs((analytical - numerical) / numerical);
       assertTrue(relativeError < RELATIVE_TOLERANCE,
-          String.format("%s: analytical=%.6f, numerical=%.6f, relative error=%.2f%%", description,
-              analytical, numerical, relativeError * 100));
+          String.format("%s: analytical=%.6f, numerical=%.6f, relative error=%.2f%%", description, analytical,
+              numerical, relativeError * 100));
     }
   }
 
@@ -410,10 +413,9 @@ class DifferentiableFlashTest {
   @DisplayName("Gradient Validation Tests - Analytical vs Numerical")
   class GradientValidationTests {
     /**
-     * Note: These tests compare analytical gradients from DifferentiableFlash with numerical finite
-     * differences. Failing tests indicate the analytical implementation needs improvement. Tests
-     * are marked as @Disabled until the implementation is fixed, but the validation logic is kept
-     * for future verification.
+     * Note: These tests compare analytical gradients from DifferentiableFlash with numerical finite differences.
+     * Failing tests indicate the analytical implementation needs improvement. Tests are marked as @Disabled until the
+     * implementation is fixed, but the validation logic is kept for future verification.
      */
 
     @Test
@@ -435,9 +437,8 @@ class DifferentiableFlashTest {
       double P = testSystem.getPressure();
 
       // Numerical derivative using central difference
-      double dRho_dT_numerical =
-          (computeDensityFresh(T + EPSILON, P) - computeDensityFresh(T - EPSILON, P))
-              / (2 * EPSILON);
+      double dRho_dT_numerical = (computeDensityFresh(T + EPSILON, P) - computeDensityFresh(T - EPSILON, P))
+          / (2 * EPSILON);
 
       double dRho_dT_analytical = densityGrad.getDerivativeWrtTemperature();
 
@@ -446,9 +447,8 @@ class DifferentiableFlashTest {
       assertFalse(Double.isNaN(dRho_dT_numerical), "Numerical ∂ρ/∂T should be finite");
 
       // Log the comparison for analysis
-      System.out.println(String.format("∂ρ/∂T: analytical=%.6f, numerical=%.6f, ratio=%.2f",
-          dRho_dT_analytical, dRho_dT_numerical,
-          dRho_dT_numerical != 0 ? dRho_dT_analytical / dRho_dT_numerical : Double.NaN));
+      logger.info(String.format("∂ρ/∂T: analytical=%.6f, numerical=%.6f, ratio=%.2f", dRho_dT_analytical,
+          dRho_dT_numerical, dRho_dT_numerical != 0 ? dRho_dT_analytical / dRho_dT_numerical : Double.NaN));
     }
 
     @Test
@@ -470,9 +470,8 @@ class DifferentiableFlashTest {
       double P = testSystem.getPressure();
 
       // Numerical derivative using central difference
-      double dRho_dP_numerical =
-          (computeDensityFresh(T, P + EPSILON) - computeDensityFresh(T, P - EPSILON))
-              / (2 * EPSILON);
+      double dRho_dP_numerical = (computeDensityFresh(T, P + EPSILON) - computeDensityFresh(T, P - EPSILON))
+          / (2 * EPSILON);
 
       double dRho_dP_analytical = densityGrad.getDerivativeWrtPressure();
 
@@ -480,9 +479,8 @@ class DifferentiableFlashTest {
       assertFalse(Double.isNaN(dRho_dP_analytical), "Analytical ∂ρ/∂P should be finite");
       assertFalse(Double.isNaN(dRho_dP_numerical), "Numerical ∂ρ/∂P should be finite");
 
-      System.out.println(String.format("∂ρ/∂P: analytical=%.6f, numerical=%.6f, ratio=%.2f",
-          dRho_dP_analytical, dRho_dP_numerical,
-          dRho_dP_numerical != 0 ? dRho_dP_analytical / dRho_dP_numerical : Double.NaN));
+      logger.info(String.format("∂ρ/∂P: analytical=%.6f, numerical=%.6f, ratio=%.2f", dRho_dP_analytical,
+          dRho_dP_numerical, dRho_dP_numerical != 0 ? dRho_dP_analytical / dRho_dP_numerical : Double.NaN));
     }
 
     @Test
@@ -507,8 +505,7 @@ class DifferentiableFlashTest {
       double P = testSystem.getPressure();
 
       // Numerical derivative
-      double dBeta_dT_numerical =
-          (computeBetaFresh(T + EPSILON, P) - computeBetaFresh(T - EPSILON, P)) / (2 * EPSILON);
+      double dBeta_dT_numerical = (computeBetaFresh(T + EPSILON, P) - computeBetaFresh(T - EPSILON, P)) / (2 * EPSILON);
 
       double dBeta_dT_analytical = flashGrads.getDBetadT();
 
@@ -518,9 +515,8 @@ class DifferentiableFlashTest {
       // Assert the gradient matches within tolerance
       assertGradientEquals("∂β/∂T", dBeta_dT_analytical, dBeta_dT_numerical);
 
-      System.out.println(String.format("∂β/∂T: analytical=%.6f, numerical=%.6f, ratio=%.2f",
-          dBeta_dT_analytical, dBeta_dT_numerical,
-          dBeta_dT_numerical != 0 ? dBeta_dT_analytical / dBeta_dT_numerical : Double.NaN));
+      logger.info(String.format("∂β/∂T: analytical=%.6f, numerical=%.6f, ratio=%.2f", dBeta_dT_analytical,
+          dBeta_dT_numerical, dBeta_dT_numerical != 0 ? dBeta_dT_analytical / dBeta_dT_numerical : Double.NaN));
     }
 
     @Test
@@ -545,8 +541,7 @@ class DifferentiableFlashTest {
       double P = testSystem.getPressure();
 
       // Numerical derivative
-      double dBeta_dP_numerical =
-          (computeBetaFresh(T, P + EPSILON) - computeBetaFresh(T, P - EPSILON)) / (2 * EPSILON);
+      double dBeta_dP_numerical = (computeBetaFresh(T, P + EPSILON) - computeBetaFresh(T, P - EPSILON)) / (2 * EPSILON);
 
       double dBeta_dP_analytical = flashGrads.getDBetadP();
 
@@ -556,9 +551,8 @@ class DifferentiableFlashTest {
       // Assert the gradient matches within tolerance
       assertGradientEquals("∂β/∂P", dBeta_dP_analytical, dBeta_dP_numerical);
 
-      System.out.println(String.format("∂β/∂P: analytical=%.6f, numerical=%.6f, ratio=%.2f",
-          dBeta_dP_analytical, dBeta_dP_numerical,
-          dBeta_dP_numerical != 0 ? dBeta_dP_analytical / dBeta_dP_numerical : Double.NaN));
+      logger.info(String.format("∂β/∂P: analytical=%.6f, numerical=%.6f, ratio=%.2f", dBeta_dP_analytical,
+          dBeta_dP_numerical, dBeta_dP_numerical != 0 ? dBeta_dP_analytical / dBeta_dP_numerical : Double.NaN));
     }
 
     @Test
@@ -579,8 +573,7 @@ class DifferentiableFlashTest {
       double P = testSystem.getPressure();
 
       // Numerical derivative using central difference
-      double dCp_dT_numerical =
-          (computeCpFresh(T + EPSILON, P) - computeCpFresh(T - EPSILON, P)) / (2 * EPSILON);
+      double dCp_dT_numerical = (computeCpFresh(T + EPSILON, P) - computeCpFresh(T - EPSILON, P)) / (2 * EPSILON);
 
       double dCp_dT_analytical = cpGrad.getDerivativeWrtTemperature();
 
@@ -589,9 +582,8 @@ class DifferentiableFlashTest {
       assertFalse(Double.isNaN(dCp_dT_numerical), "Numerical ∂Cp/∂T should be finite");
 
       // Log the comparison for analysis
-      System.out.println(String.format("∂Cp/∂T: analytical=%.6f, numerical=%.6f, ratio=%.2f",
-          dCp_dT_analytical, dCp_dT_numerical,
-          dCp_dT_numerical != 0 ? dCp_dT_analytical / dCp_dT_numerical : Double.NaN));
+      logger.info(String.format("∂Cp/∂T: analytical=%.6f, numerical=%.6f, ratio=%.2f", dCp_dT_analytical,
+          dCp_dT_numerical, dCp_dT_numerical != 0 ? dCp_dT_analytical / dCp_dT_numerical : Double.NaN));
     }
 
     @Test
@@ -612,8 +604,7 @@ class DifferentiableFlashTest {
       double P = testSystem.getPressure();
 
       // Numerical derivative using central difference
-      double dCp_dP_numerical =
-          (computeCpFresh(T, P + EPSILON) - computeCpFresh(T, P - EPSILON)) / (2 * EPSILON);
+      double dCp_dP_numerical = (computeCpFresh(T, P + EPSILON) - computeCpFresh(T, P - EPSILON)) / (2 * EPSILON);
 
       double dCp_dP_analytical = cpGrad.getDerivativeWrtPressure();
 
@@ -621,9 +612,8 @@ class DifferentiableFlashTest {
       assertFalse(Double.isNaN(dCp_dP_analytical), "Analytical ∂Cp/∂P should be finite");
       assertFalse(Double.isNaN(dCp_dP_numerical), "Numerical ∂Cp/∂P should be finite");
 
-      System.out.println(String.format("∂Cp/∂P: analytical=%.6f, numerical=%.6f, ratio=%.2f",
-          dCp_dP_analytical, dCp_dP_numerical,
-          dCp_dP_numerical != 0 ? dCp_dP_analytical / dCp_dP_numerical : Double.NaN));
+      logger.info(String.format("∂Cp/∂P: analytical=%.6f, numerical=%.6f, ratio=%.2f", dCp_dP_analytical,
+          dCp_dP_numerical, dCp_dP_numerical != 0 ? dCp_dP_analytical / dCp_dP_numerical : Double.NaN));
     }
 
     @Test
@@ -658,12 +648,10 @@ class DifferentiableFlashTest {
 
         double dK_dT_numerical = (K_plus - K_minus) / (2 * EPSILON);
 
-        assertFalse(Double.isNaN(dK_dT_analytical[i]),
-            "Analytical ∂K[" + i + "]/∂T should be finite");
+        assertFalse(Double.isNaN(dK_dT_analytical[i]), "Analytical ∂K[" + i + "]/∂T should be finite");
 
-        System.out.println(String.format("∂K[%d]/∂T: analytical=%.6f, numerical=%.6f, ratio=%.2f",
-            i, dK_dT_analytical[i], dK_dT_numerical,
-            dK_dT_numerical != 0 ? dK_dT_analytical[i] / dK_dT_numerical : Double.NaN));
+        logger.info(String.format("∂K[%d]/∂T: analytical=%.6f, numerical=%.6f, ratio=%.2f", i, dK_dT_analytical[i],
+            dK_dT_numerical, dK_dT_numerical != 0 ? dK_dT_analytical[i] / dK_dT_numerical : Double.NaN));
       }
     }
 
@@ -699,12 +687,10 @@ class DifferentiableFlashTest {
 
         double dK_dP_numerical = (K_plus - K_minus) / (2 * EPSILON);
 
-        assertFalse(Double.isNaN(dK_dP_analytical[i]),
-            "Analytical ∂K[" + i + "]/∂P should be finite");
+        assertFalse(Double.isNaN(dK_dP_analytical[i]), "Analytical ∂K[" + i + "]/∂P should be finite");
 
-        System.out.println(String.format("∂K[%d]/∂P: analytical=%.6f, numerical=%.6f, ratio=%.2f",
-            i, dK_dP_analytical[i], dK_dP_numerical,
-            dK_dP_numerical != 0 ? dK_dP_analytical[i] / dK_dP_numerical : Double.NaN));
+        logger.info(String.format("∂K[%d]/∂P: analytical=%.6f, numerical=%.6f, ratio=%.2f", i, dK_dP_analytical[i],
+            dK_dP_numerical, dK_dP_numerical != 0 ? dK_dP_analytical[i] / dK_dP_numerical : Double.NaN));
       }
     }
   }

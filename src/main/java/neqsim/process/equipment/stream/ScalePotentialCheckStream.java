@@ -9,9 +9,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * ScalePotentialCheckStream class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -44,9 +42,7 @@ public class ScalePotentialCheckStream extends Stream {
   }
 
   /**
-   * <p>
    * Constructor for ScalePotentialCheckStream.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -71,8 +67,7 @@ public class ScalePotentialCheckStream extends Stream {
   @Override
   public ScalePotentialCheckStream clone(String name) {
     if (this.getName() == name) {
-      throw new RuntimeException(
-          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+      throw new RuntimeException(new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
     }
     ScalePotentialCheckStream s = this.clone();
     s.setName(name);

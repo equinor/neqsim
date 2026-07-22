@@ -1,6 +1,9 @@
 package neqsim.process.equipment.heatexchanger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
@@ -13,6 +16,67 @@ public class MultiStreamHeatExchanger2Test {
 
   static neqsim.thermo.system.SystemInterface testSystem;
   Stream gasStream;
+
+  @Test
+  void testPublicStreamApiRegistersAndUpdatesStreams() {
+    testSystem = new neqsim.thermo.Fluid().create("dry gas");
+    testSystem.setPressure(10.0, "bara");
+    testSystem.setTemperature(273.15 + 60.0, "K");
+    testSystem.setMixingRule(2);
+
+    Stream firstStream = new Stream("first stream", testSystem.clone());
+    firstStream.setTemperature(100.0, "C");
+    firstStream.setFlowRate(20000.0, "kg/hr");
+
+    Stream secondStream = new Stream("second stream", testSystem.clone());
+    secondStream.setTemperature(20.0, "C");
+    secondStream.setFlowRate(8000.0, "kg/hr");
+
+    MultiStreamHeatExchanger2 heatEx = new MultiStreamHeatExchanger2("stream api heatEx");
+    heatEx.addInStream(firstStream);
+
+    assertSame(firstStream, heatEx.getInStream(0));
+    assertNotNull(heatEx.getOutStream(0));
+
+    heatEx.setFeedStream(0, secondStream);
+
+    assertSame(secondStream, heatEx.getInStream(0));
+    assertNotNull(heatEx.getOutStream(0));
+  }
+
+  @Test
+  void testRunRefreshesInletStateOnRepeatedRuns() {
+    testSystem = new neqsim.thermo.Fluid().create("dry gas");
+    testSystem.setPressure(10.0, "bara");
+    testSystem.setTemperature(273.15 + 60.0, "K");
+    testSystem.setMixingRule(2);
+
+    Stream hotStream = new Stream("hot stream", testSystem.clone());
+    hotStream.setTemperature(100.0, "C");
+    hotStream.setFlowRate(20000.0, "kg/hr");
+    hotStream.run();
+
+    Stream coldStream = new Stream("cold stream", testSystem.clone());
+    coldStream.setTemperature(0.0, "C");
+    coldStream.setFlowRate(8000.0, "kg/hr");
+    coldStream.run();
+
+    MultiStreamHeatExchanger2 heatEx = new MultiStreamHeatExchanger2("state refresh heatEx");
+    heatEx.addInStreamMSHE(hotStream, "hot", null);
+    heatEx.addInStreamMSHE(coldStream, "cold", 30.0);
+    heatEx.run();
+
+    double firstHotOutletTemp = heatEx.getOutStream(0).getTemperature("C");
+    assertEquals(0.0, heatEx.energyDiff(), 1e-3);
+
+    coldStream.setFlowRate(12000.0, "kg/hr");
+    coldStream.run();
+    heatEx.run();
+
+    double secondHotOutletTemp = heatEx.getOutStream(0).getTemperature("C");
+    assertEquals(0.0, heatEx.energyDiff(), 1e-3);
+    assertTrue(secondHotOutletTemp < firstHotOutletTemp - 1.0);
+  }
 
   @Test
   void testRun1() {
@@ -58,8 +122,7 @@ public class MultiStreamHeatExchanger2Test {
     heatEx.setUAvalue(70000);
 
     // Build and run process
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
 
     operations.add(streamHot1);
     operations.add(streamHot2);
@@ -138,8 +201,7 @@ public class MultiStreamHeatExchanger2Test {
     heatEx.setTemperatureApproach(5.0);
 
     // Build and run process
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
 
     operations.add(streamHot1);
     operations.add(streamHot2);
@@ -215,8 +277,7 @@ public class MultiStreamHeatExchanger2Test {
     heatEx.addInStreamMSHE(streamCold3, "cold", 30.0); // known outlet temp
 
     // Build and run process
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
 
     operations.add(streamHot1);
     operations.add(streamHot2);
@@ -261,8 +322,7 @@ public class MultiStreamHeatExchanger2Test {
      */
 
     // ---------- H1 ----------
-    neqsim.thermo.system.SystemInterface H1Fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface H1Fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     H1Fluid.addComponent("methane", 0.55);
     H1Fluid.addComponent("ethane", 0.30);
     H1Fluid.addComponent("propane", 0.15);
@@ -277,8 +337,7 @@ public class MultiStreamHeatExchanger2Test {
     H1.run();
 
     // ---------- H2 ----------
-    neqsim.thermo.system.SystemInterface H2Fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface H2Fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     H2Fluid.addComponent("methane", 0.50);
     H2Fluid.addComponent("ethane", 0.35);
     H2Fluid.addComponent("propane", 0.15);
@@ -293,8 +352,7 @@ public class MultiStreamHeatExchanger2Test {
     H2.run();
 
     // ---------- H3 ----------
-    neqsim.thermo.system.SystemInterface H3Fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface H3Fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     H3Fluid.addComponent("methane", 0.45);
     H3Fluid.addComponent("ethane", 0.35);
     H3Fluid.addComponent("propane", 0.20);
@@ -309,8 +367,7 @@ public class MultiStreamHeatExchanger2Test {
     H3.run();
 
     // ---------- H4 ----------
-    neqsim.thermo.system.SystemInterface H4Fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface H4Fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     H4Fluid.addComponent("methane", 0.60);
     H4Fluid.addComponent("ethane", 0.25);
     H4Fluid.addComponent("propane", 0.15);
@@ -330,8 +387,7 @@ public class MultiStreamHeatExchanger2Test {
      */
 
     // ---------- C1 ----------
-    neqsim.thermo.system.SystemInterface C1Fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface C1Fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     C1Fluid.addComponent("methane", 0.25);
     C1Fluid.addComponent("ethane", 0.35);
     C1Fluid.addComponent("propane", 0.40);
@@ -346,8 +402,7 @@ public class MultiStreamHeatExchanger2Test {
     C1.run();
 
     // ---------- C2 ----------
-    neqsim.thermo.system.SystemInterface C2Fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface C2Fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     C2Fluid.addComponent("methane", 0.30);
     C2Fluid.addComponent("ethane", 0.40);
     C2Fluid.addComponent("propane", 0.30);
@@ -362,8 +417,7 @@ public class MultiStreamHeatExchanger2Test {
     C2.run();
 
     // ---------- C3 ----------
-    neqsim.thermo.system.SystemInterface C3Fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface C3Fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     C3Fluid.addComponent("methane", 0.20);
     C3Fluid.addComponent("ethane", 0.45);
     C3Fluid.addComponent("propane", 0.35);
@@ -378,8 +432,7 @@ public class MultiStreamHeatExchanger2Test {
     C3.run();
 
     // ---------- C4 ----------
-    neqsim.thermo.system.SystemInterface C4Fluid =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface C4Fluid = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     C4Fluid.addComponent("methane", 0.35);
     C4Fluid.addComponent("ethane", 0.35);
     C4Fluid.addComponent("propane", 0.30);
@@ -394,16 +447,16 @@ public class MultiStreamHeatExchanger2Test {
     C4.run();
 
     /*
-     * ----------------------------------------------------------------- MULTI-STREAM HEAT EXCHANGER
-     * SETUP – testRun4 -----------------------------------------------------------------
+     * ----------------------------------------------------------------- MULTI-STREAM HEAT EXCHANGER SETUP – testRun4
+     * -----------------------------------------------------------------
      */
 
     // 1. Create the exchanger object
     MultiStreamHeatExchanger2 heatEx = new MultiStreamHeatExchanger2("heatEx4");
 
     /*
-     * 2. Register the eight inlet streams Pass • "hot" / "cold" • outlet-temperature set-point
-     * (null = unknown / to be solved) • order matters: heatEx.getOutStream(i) returns in same order
+     * 2. Register the eight inlet streams Pass • "hot" / "cold" • outlet-temperature set-point (null = unknown / to be
+     * solved) • order matters: heatEx.getOutStream(i) returns in same order
      */
     // ----- HOT SIDE -----
     heatEx.addInStreamMSHE(H1, "hot", 80.0); // H1Out fixed
@@ -423,8 +476,7 @@ public class MultiStreamHeatExchanger2Test {
     valve1.setOutletPressure(20.0, "bara");
 
     /* 3. Build and run the process model */
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
 
     operations.add(H1);
     operations.add(H2);
@@ -440,8 +492,8 @@ public class MultiStreamHeatExchanger2Test {
     operations.run(); // <–– calls the exchanger solver
 
     /*
-     * ----------------------------------------------------------------- ASSERTIONS – outlet
-     * temperatures, ΔTmin -----------------------------------------------------------------
+     * ----------------------------------------------------------------- ASSERTIONS – outlet temperatures, ΔTmin
+     * -----------------------------------------------------------------
      */
 
     // Grab the solved outlet temperatures (order = same as addInStreamMSHE)

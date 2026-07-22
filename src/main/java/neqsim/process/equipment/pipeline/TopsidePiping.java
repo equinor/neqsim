@@ -7,25 +7,27 @@ import neqsim.process.mechanicaldesign.pipeline.TopsidePipingMechanicalDesign;
 /**
  * Topside piping equipment class for offshore platforms and onshore facilities.
  *
- * &lt;p&gt; This class extends PipeBeggsAndBrills to provide topside piping-specific functionality
- * including: &lt;/p&gt; &lt;ul&gt; &lt;li&gt;ASME B31.3 Process Piping design&lt;/li&gt;
- * &lt;li&gt;Velocity limits for erosion and vibration prevention&lt;/li&gt; &lt;li&gt;Pipe support
- * spacing calculations&lt;/li&gt; &lt;li&gt;Flow-induced vibration (FIV) analysis&lt;/li&gt;
- * &lt;li&gt;Acoustic-induced vibration (AIV) screening&lt;/li&gt; &lt;li&gt;Thermal expansion and
- * stress analysis&lt;/li&gt; &lt;/ul&gt;
+ * <p>
+ * &lt;p&gt; This class extends PipeBeggsAndBrills to provide topside piping-specific functionality including:
+ * &lt;/p&gt; &lt;ul&gt; &lt;li&gt;ASME B31.3 Process Piping design&lt;/li&gt; &lt;li&gt;Velocity limits for erosion and
+ * vibration prevention&lt;/li&gt; &lt;li&gt;Pipe support spacing calculations&lt;/li&gt; &lt;li&gt;Flow-induced
+ * vibration (FIV) analysis&lt;/li&gt; &lt;li&gt;Acoustic-induced vibration (AIV) screening&lt;/li&gt; &lt;li&gt;Thermal
+ * expansion and stress analysis&lt;/li&gt; &lt;/ul&gt;
  *
- * &lt;h2&gt;Service Types&lt;/h2&gt; &lt;p&gt; The class supports multiple service types:
- * &lt;/p&gt; &lt;ul&gt; &lt;li&gt;&lt;b&gt;PROCESS_GAS&lt;/b&gt;: High-pressure gas
- * piping&lt;/li&gt; &lt;li&gt;&lt;b&gt;PROCESS_LIQUID&lt;/b&gt;: Liquid hydrocarbon
- * piping&lt;/li&gt; &lt;li&gt;&lt;b&gt;MULTIPHASE&lt;/b&gt;: Two-phase or multiphase flow
- * piping&lt;/li&gt; &lt;li&gt;&lt;b&gt;PRODUCED_WATER&lt;/b&gt;: Produced water handling&lt;/li&gt;
- * &lt;li&gt;&lt;b&gt;STEAM&lt;/b&gt;: Steam distribution piping&lt;/li&gt;
- * &lt;li&gt;&lt;b&gt;UTILITY_AIR&lt;/b&gt;: Instrument and utility air&lt;/li&gt;
+ * <p>
+ * &lt;h2&gt;Service Types&lt;/h2&gt; &lt;p&gt; The class supports multiple service types: &lt;/p&gt; &lt;ul&gt;
+ * &lt;li&gt;&lt;b&gt;PROCESS_GAS&lt;/b&gt;: High-pressure gas piping&lt;/li&gt;
+ * &lt;li&gt;&lt;b&gt;PROCESS_LIQUID&lt;/b&gt;: Liquid hydrocarbon piping&lt;/li&gt;
+ * &lt;li&gt;&lt;b&gt;MULTIPHASE&lt;/b&gt;: Two-phase or multiphase flow piping&lt;/li&gt;
+ * &lt;li&gt;&lt;b&gt;PRODUCED_WATER&lt;/b&gt;: Produced water handling&lt;/li&gt; &lt;li&gt;&lt;b&gt;STEAM&lt;/b&gt;:
+ * Steam distribution piping&lt;/li&gt; &lt;li&gt;&lt;b&gt;UTILITY_AIR&lt;/b&gt;: Instrument and utility air&lt;/li&gt;
  * &lt;li&gt;&lt;b&gt;FLARE&lt;/b&gt;: Flare header and knockout drum piping&lt;/li&gt;
  * &lt;li&gt;&lt;b&gt;FUEL_GAS&lt;/b&gt;: Fuel gas distribution&lt;/li&gt; &lt;/ul&gt;
  *
+ * <p>
  * &lt;h2&gt;Usage Example&lt;/h2&gt;
  *
+ * <p>
  * &lt;pre&gt;{@code
  * // Create topside process piping
  * TopsidePiping gasHeader = new TopsidePiping("HP Gas Header", inletStream);
@@ -466,6 +468,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    *
    * @return equivalent length in meters
    */
+  @Override
   public double getEquivalentLength() {
     double diameter = getDiameter();
     double leq = getLength();
@@ -566,6 +569,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    *
    * @return insulation thickness in meters
    */
+  @Override
   public double getInsulationThickness() {
     return insulationThickness;
   }
@@ -575,6 +579,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    *
    * @param insulationThickness insulation thickness in meters
    */
+  @Override
   public void setInsulationThickness(double insulationThickness) {
     this.insulationThickness = insulationThickness;
   }
@@ -890,6 +895,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    *
    * @return ambient temperature in Celsius
    */
+  @Override
   public double getAmbientTemperature() {
     return ambientTemperature;
   }
@@ -899,6 +905,7 @@ public class TopsidePiping extends PipeBeggsAndBrills {
    *
    * @param ambientTemperature ambient temperature in Celsius
    */
+  @Override
   public void setAmbientTemperature(double ambientTemperature) {
     this.ambientTemperature = ambientTemperature;
   }

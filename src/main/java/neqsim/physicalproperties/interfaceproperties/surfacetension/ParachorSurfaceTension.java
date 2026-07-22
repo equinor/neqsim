@@ -3,9 +3,7 @@ package neqsim.physicalproperties.interfaceproperties.surfacetension;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * ParachorSurfaceTension class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,16 +13,13 @@ public class ParachorSurfaceTension extends SurfaceTension {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ParachorSurfaceTension.
-   * </p>
    */
-  public ParachorSurfaceTension() {}
+  public ParachorSurfaceTension() {
+  }
 
   /**
-   * <p>
    * Constructor for ParachorSurfaceTension.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -41,15 +36,12 @@ public class ParachorSurfaceTension extends SurfaceTension {
    */
   @Override
   public double calcPureComponentSurfaceTension(int componentNumber) {
-    return 1.0e-3 * Math
-        .pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
-            * (system.getPhases()[1].getPhysicalProperties().getDensity()
-                / system.getPhases()[1].getMolarMass()
-                * system.getPhases()[1].getComponents()[componentNumber].getx()
-                - system.getPhases()[0].getPhysicalProperties().getDensity()
-                    / system.getPhases()[0].getMolarMass()
-                    * system.getPhases()[0].getComponents()[componentNumber].getx()),
-            4.0);
+    return 1.0e-3 * Math.pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
+        * (system.getPhases()[1].getPhysicalProperties().getDensity() / system.getPhases()[1].getMolarMass()
+            * system.getPhases()[1].getComponents()[componentNumber].getx()
+            - system.getPhases()[0].getPhysicalProperties().getDensity() / system.getPhases()[0].getMolarMass()
+                * system.getPhases()[0].getComponents()[componentNumber].getx()),
+        4.0);
   }
 
   /**
@@ -75,11 +67,9 @@ public class ParachorSurfaceTension extends SurfaceTension {
         // system.getPhase(interface2).getPhysicalProperties().getDensity());
         temp += system.getPhase(interface1).getComponent(i).getParachorParameter() * 1.0e-6
             * (system.getPhase(interface2).getPhysicalProperties().getDensity()
-                / system.getPhase(interface2).getMolarMass()
-                * system.getPhase(interface2).getComponent(i).getx()
+                / system.getPhase(interface2).getMolarMass() * system.getPhase(interface2).getComponent(i).getx()
                 - system.getPhase(interface1).getPhysicalProperties().getDensity()
-                    / system.getPhase(interface1).getMolarMass()
-                    * system.getPhase(interface1).getComponent(i).getx());
+                    / system.getPhase(interface1).getMolarMass() * system.getPhase(interface1).getComponent(i).getx());
       }
     } catch (Exception ex) {
       // logger.error(ex.getMessage(), ex);

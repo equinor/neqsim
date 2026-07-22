@@ -37,7 +37,8 @@ public class SplitterCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public SplitterCapacityStrategy() {}
+  public SplitterCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
@@ -84,7 +85,7 @@ public class SplitterCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If equipment implements CapacityConstrainedEquipment, use its constraints
     if (splitter instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) splitter).getMaxUtilization();
+      return splitter.getMaxUtilization();
     }
 
     // Fall back to basic evaluation
@@ -139,35 +140,33 @@ public class SplitterCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If splitter implements CapacityConstrainedEquipment, use its constraints
     if (splitter instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) splitter).getCapacityConstraints();
+      return splitter.getCapacityConstraints();
     }
 
     // Pressure drop constraint
-    CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop")
-        .setDesignValue(maxPressureDrop).setMaxValue(maxPressureDrop * 1.2).setUnit("bar")
-        .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+    CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop").setDesignValue(maxPressureDrop)
+        .setMaxValue(maxPressureDrop * 1.2).setUnit("bar").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
         .setDescription("Pressure drop across splitter").setValueSupplier(() -> 0.0); // Ideal
-                                                                                      // splitter
-                                                                                      // has zero
-                                                                                      // pressure
-                                                                                      // drop
+    // splitter
+    // has zero
+    // pressure
+    // drop
     constraints.put("pressureDrop", dpConstraint);
 
     // Flow distribution constraint
-    CapacityConstraint flowDistConstraint =
-        new CapacityConstraint("flowDistribution").setDesignValue(1.0).setUnit("-")
-            .setSeverity(CapacityConstraint.ConstraintSeverity.ADVISORY)
-            .setDescription("Split ratio sum (should be 1.0)").setValueSupplier(() -> {
-              double[] factors = splitter.getSplitFactors();
-              if (factors == null) {
-                return 0.0;
-              }
-              double sum = 0.0;
-              for (double f : factors) {
-                sum += f;
-              }
-              return sum;
-            });
+    CapacityConstraint flowDistConstraint = new CapacityConstraint("flowDistribution").setDesignValue(1.0).setUnit("-")
+        .setSeverity(CapacityConstraint.ConstraintSeverity.ADVISORY).setDescription("Split ratio sum (should be 1.0)")
+        .setValueSupplier(() -> {
+          double[] factors = splitter.getSplitFactors();
+          if (factors == null) {
+            return 0.0;
+          }
+          double sum = 0.0;
+          for (double f : factors) {
+            sum += f;
+          }
+          return sum;
+        });
     constraints.put("flowDistribution", flowDistConstraint);
 
     return constraints;

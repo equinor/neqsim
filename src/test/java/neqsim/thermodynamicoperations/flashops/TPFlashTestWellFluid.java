@@ -63,10 +63,9 @@ class TPFlashTestWellFluid {
   void testTPflashComp2() {
     wellFluid.setTemperature(339.04);
     wellFluid.setPressure(1.5);
-    wellFluid.setMolarComposition(new double[] {0.0, 4.76579e-6, 1.21459e-5, 1.3409e-3, 3.30439e-2,
-        5.06e-3, 7.34e-3, 1.53e-3, 4.11e-3, 1.58e-3, 2.255e-3, 2.8779e-4, 8.58e-4, 8.73e-4, 8.5e-4,
-        3.88e-3, 7.36e-2, 1.47e-1, 6.176e-2, 3.69e-2, 7.735e-3, 1.023e-2, 6.19e-3, 4.3e-3, 1.2e-2,
-        8.96e-3, 1.539e-3, 5.9921e-1});
+    wellFluid.setMolarComposition(new double[] { 0.0, 4.76579e-6, 1.21459e-5, 1.3409e-3, 3.30439e-2, 5.06e-3, 7.34e-3,
+        1.53e-3, 4.11e-3, 1.58e-3, 2.255e-3, 2.8779e-4, 8.58e-4, 8.73e-4, 8.5e-4, 3.88e-3, 7.36e-2, 1.47e-1, 6.176e-2,
+        3.69e-2, 7.735e-3, 1.023e-2, 6.19e-3, 4.3e-3, 1.2e-2, 8.96e-3, 1.539e-3, 5.9921e-1 });
     testOps = new ThermodynamicOperations(wellFluid);
     testOps.TPflash();
     assertEquals(1.432253736300898, wellFluid.getPhase(0).getDensity(), 1e-5);

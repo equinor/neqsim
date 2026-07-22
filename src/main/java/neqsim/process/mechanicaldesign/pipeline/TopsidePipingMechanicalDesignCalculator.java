@@ -10,9 +10,9 @@ import com.google.gson.GsonBuilder;
  * Calculator for topside piping mechanical design based on industry standards.
  *
  * <p>
- * This class provides methods to calculate wall thickness, velocity limits, support spacing,
- * vibration analysis, and stress analysis for topside (offshore platform and onshore facility)
- * piping according to various design codes including:
+ * This class provides methods to calculate wall thickness, velocity limits, support spacing, vibration analysis, and
+ * stress analysis for topside (offshore platform and onshore facility) piping according to various design codes
+ * including:
  * </p>
  * <ul>
  * <li>ASME B31.3 - Process Piping</li>
@@ -195,41 +195,38 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
   static {
     // NPS -> [OD (m), SCH40 thickness (m), SCH80 thickness (m)]
     STANDARD_PIPE_DIMENSIONS = new HashMap<String, double[]>();
-    STANDARD_PIPE_DIMENSIONS.put("2", new double[] {0.0603, 0.00391, 0.00554});
-    STANDARD_PIPE_DIMENSIONS.put("3", new double[] {0.0889, 0.00549, 0.00762});
-    STANDARD_PIPE_DIMENSIONS.put("4", new double[] {0.1143, 0.00602, 0.00851});
-    STANDARD_PIPE_DIMENSIONS.put("6", new double[] {0.1683, 0.00711, 0.01097});
-    STANDARD_PIPE_DIMENSIONS.put("8", new double[] {0.2191, 0.00823, 0.01270});
-    STANDARD_PIPE_DIMENSIONS.put("10", new double[] {0.2731, 0.00927, 0.01270});
-    STANDARD_PIPE_DIMENSIONS.put("12", new double[] {0.3239, 0.01048, 0.01270});
-    STANDARD_PIPE_DIMENSIONS.put("14", new double[] {0.3556, 0.01118, 0.01270});
-    STANDARD_PIPE_DIMENSIONS.put("16", new double[] {0.4064, 0.01270, 0.01588});
-    STANDARD_PIPE_DIMENSIONS.put("18", new double[] {0.4572, 0.01422, 0.01778});
-    STANDARD_PIPE_DIMENSIONS.put("20", new double[] {0.5080, 0.01270, 0.01588});
-    STANDARD_PIPE_DIMENSIONS.put("24", new double[] {0.6096, 0.01422, 0.01778});
+    STANDARD_PIPE_DIMENSIONS.put("2", new double[] { 0.0603, 0.00391, 0.00554 });
+    STANDARD_PIPE_DIMENSIONS.put("3", new double[] { 0.0889, 0.00549, 0.00762 });
+    STANDARD_PIPE_DIMENSIONS.put("4", new double[] { 0.1143, 0.00602, 0.00851 });
+    STANDARD_PIPE_DIMENSIONS.put("6", new double[] { 0.1683, 0.00711, 0.01097 });
+    STANDARD_PIPE_DIMENSIONS.put("8", new double[] { 0.2191, 0.00823, 0.01270 });
+    STANDARD_PIPE_DIMENSIONS.put("10", new double[] { 0.2731, 0.00927, 0.01270 });
+    STANDARD_PIPE_DIMENSIONS.put("12", new double[] { 0.3239, 0.01048, 0.01270 });
+    STANDARD_PIPE_DIMENSIONS.put("14", new double[] { 0.3556, 0.01118, 0.01270 });
+    STANDARD_PIPE_DIMENSIONS.put("16", new double[] { 0.4064, 0.01270, 0.01588 });
+    STANDARD_PIPE_DIMENSIONS.put("18", new double[] { 0.4572, 0.01422, 0.01778 });
+    STANDARD_PIPE_DIMENSIONS.put("20", new double[] { 0.5080, 0.01270, 0.01588 });
+    STANDARD_PIPE_DIMENSIONS.put("24", new double[] { 0.6096, 0.01422, 0.01778 });
 
     // Material -> [Allowable at 20C, at 100C, at 200C, at 300C, at 400C] in MPa
     ASME_B31_3_ALLOWABLE_STRESSES = new HashMap<String, double[]>();
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A106-B", new double[] {138.0, 138.0, 138.0, 132.0, 121.0});
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A106-C", new double[] {159.0, 159.0, 159.0, 152.0, 139.0});
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A333-6", new double[] {138.0, 138.0, 138.0, 132.0, 121.0});
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP304", new double[] {138.0, 115.0, 101.0, 90.0, 82.0});
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP316", new double[] {138.0, 115.0, 103.0, 92.0, 84.0});
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP316L", new double[] {115.0, 103.0, 92.0, 83.0, 76.0});
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP321", new double[] {138.0, 115.0, 103.0, 93.0, 85.0});
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP347",
-        new double[] {138.0, 127.0, 114.0, 105.0, 97.0});
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A790-S31803",
-        new double[] {207.0, 192.0, 177.0, 165.0, 0.0}); // Duplex
-    ASME_B31_3_ALLOWABLE_STRESSES.put("A790-S32750",
-        new double[] {241.0, 226.0, 211.0, 197.0, 0.0}); // Super duplex
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A106-B", new double[] { 138.0, 138.0, 138.0, 132.0, 121.0 });
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A106-C", new double[] { 159.0, 159.0, 159.0, 152.0, 139.0 });
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A333-6", new double[] { 138.0, 138.0, 138.0, 132.0, 121.0 });
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP304", new double[] { 138.0, 115.0, 101.0, 90.0, 82.0 });
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP316", new double[] { 138.0, 115.0, 103.0, 92.0, 84.0 });
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP316L", new double[] { 115.0, 103.0, 92.0, 83.0, 76.0 });
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP321", new double[] { 138.0, 115.0, 103.0, 93.0, 85.0 });
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A312-TP347", new double[] { 138.0, 127.0, 114.0, 105.0, 97.0 });
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A790-S31803", new double[] { 207.0, 192.0, 177.0, 165.0, 0.0 }); // Duplex
+    ASME_B31_3_ALLOWABLE_STRESSES.put("A790-S32750", new double[] { 241.0, 226.0, 211.0, 197.0, 0.0 }); // Super
+                                                                                                        // duplex
   }
 
   /**
    * Default constructor.
    */
   public TopsidePipingMechanicalDesignCalculator() {
-    super();
     setDesignCode(ASME_B31_3);
   }
 
@@ -362,8 +359,8 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
    * @param molecularWeight molecular weight in kg/kmol
    * @return acoustic power level in Watts
    */
-  public double calculateAcousticPowerLevel(double upstreamPressure, double downstreamPressure,
-      double temperature, double molecularWeight) {
+  public double calculateAcousticPowerLevel(double upstreamPressure, double downstreamPressure, double temperature,
+      double molecularWeight) {
     double p1 = upstreamPressure * 1e5;
     double p2 = downstreamPressure * 1e5;
     double tempK = temperature + 273.15;
@@ -377,8 +374,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
       pressureRatio = 0;
     }
 
-    acousticPowerLevel =
-        3.2e-9 * mdot * p1 * Math.pow(pressureRatio, 3.6) * Math.pow(tempK / 273.15, 0.8);
+    acousticPowerLevel = 3.2e-9 * mdot * p1 * Math.pow(pressureRatio, 3.6) * Math.pow(tempK / 273.15, 0.8);
 
     appliedStandards.add("Energy Institute Guidelines - AIV Assessment");
     return acousticPowerLevel;
@@ -434,8 +430,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
     }
 
     double E = getYoungsModulus() * 1e6;
-    pipeNaturalFrequency =
-        (Math.PI / 2.0) * Math.sqrt(E * momentOfInertia / (massPerMeter * Math.pow(spanLength, 4)));
+    pipeNaturalFrequency = (Math.PI / 2.0) * Math.sqrt(E * momentOfInertia / (massPerMeter * Math.pow(spanLength, 4)));
 
     double strouhalNumber = 0.2;
     double externalVelocity = 0.0;
@@ -626,8 +621,9 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
     double deltaL = Math.abs(freeExpansion) / 1000;
     requiredLoopLength = Math.sqrt(3.0 * getOuterDiameter() * deltaL / 0.03);
 
-    double area = Math.PI * (getOuterDiameter() * getOuterDiameter()
-        - Math.pow(getOuterDiameter() - 2 * getNominalWallThickness(), 2)) / 4.0;
+    double area = Math.PI
+        * (getOuterDiameter() * getOuterDiameter() - Math.pow(getOuterDiameter() - 2 * getNominalWallThickness(), 2))
+        / 4.0;
     anchorForce = thermalExpansionStress * 1e6 * area / 1000;
 
     double Sc = allowableStress;
@@ -791,8 +787,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
     velocityResults.put("erosionalCFactor", erosionalCFactor);
     velocityResults.put("maxGasVelocity_m_s", maxGasVelocity);
     velocityResults.put("maxLiquidVelocity_m_s", maxLiquidVelocity);
-    velocityResults.put("velocityRatio",
-        erosionalVelocity > 0 ? actualVelocity / erosionalVelocity : 0);
+    velocityResults.put("velocityRatio", erosionalVelocity > 0 ? actualVelocity / erosionalVelocity : 0);
     velocityResults.put("velocityCheckPassed", velocityCheckPassed);
     result.put("velocityAnalysis", velocityResults);
 
@@ -802,8 +797,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
     vibrationResults.put("fivScreeningNumber", fivScreeningNumber);
     vibrationResults.put("pipeNaturalFrequency_Hz", pipeNaturalFrequency);
     vibrationResults.put("vortexSheddingFrequency_Hz", vortexSheddingFrequency);
-    vibrationResults.put("lockInVelocityRange_m_s",
-        "[" + lockInVelocityLower + ", " + lockInVelocityUpper + "]");
+    vibrationResults.put("lockInVelocityRange_m_s", "[" + lockInVelocityLower + ", " + lockInVelocityUpper + "]");
     vibrationResults.put("vibrationCheckPassed", vibrationCheckPassed);
     result.put("vibrationAnalysis", vibrationResults);
 
@@ -849,8 +843,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
    */
   @Override
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   // ============================================================================
@@ -988,6 +981,7 @@ public class TopsidePipingMechanicalDesignCalculator extends PipeMechanicalDesig
    *
    * @return support spacing in meters
    */
+  @Override
   public double getSupportSpacing() {
     return calculatedSupportSpacing;
   }

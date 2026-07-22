@@ -2,16 +2,14 @@
  * Subsea equipment package for SURF (Subsea, Umbilicals, Risers, Flowlines) field development.
  *
  * <p>
- * This package provides comprehensive equipment classes for modeling subsea production systems,
- * including:
+ * This package provides comprehensive equipment classes for modeling subsea production systems, including:
  * </p>
  *
  * <h2>Pipeline Infrastructure</h2>
  * <ul>
  * <li>{@link neqsim.process.equipment.subsea.PLET} - Pipeline End Termination structures</li>
  * <li>{@link neqsim.process.equipment.subsea.PLEM} - Pipeline End Manifold structures</li>
- * <li>{@link neqsim.process.equipment.subsea.SubseaJumper} - Rigid and flexible jumper
- * connections</li>
+ * <li>{@link neqsim.process.equipment.subsea.SubseaJumper} - Rigid and flexible jumper connections</li>
  * <li>{@link neqsim.process.equipment.subsea.FlexiblePipe} - Dynamic and static flexible pipes</li>
  * </ul>
  *
@@ -24,8 +22,7 @@
  *
  * <h2>Control Systems</h2>
  * <ul>
- * <li>{@link neqsim.process.equipment.subsea.Umbilical} - Control umbilicals (hydraulic,
- * electrical, chemical)</li>
+ * <li>{@link neqsim.process.equipment.subsea.Umbilical} - Control umbilicals (hydraulic, electrical, chemical)</li>
  * </ul>
  *
  * <h2>Design Standards Support</h2>

@@ -3,22 +3,16 @@ package neqsim.process.mechanicaldesign.separator.sectiontype;
 import neqsim.process.equipment.separator.sectiontype.SeparatorSection;
 
 /**
- * <p>
  * DistillationTraySection class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class DistillationTraySection extends SepDesignSection {
   /**
-   * <p>
    * Constructor for DistillationTraySection.
-   * </p>
    *
-   * @param separatorSection a
-   *        {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection}
-   *        object
+   * @param separatorSection a {@link neqsim.process.equipment.separator.sectiontype.SeparatorSection} object
    */
   public DistillationTraySection(SeparatorSection separatorSection) {
     super(separatorSection);

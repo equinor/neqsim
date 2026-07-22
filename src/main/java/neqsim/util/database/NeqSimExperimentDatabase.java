@@ -9,19 +9,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * NeqSimExperimentDatabase class.
- * </p>
  *
  * @author Even Solbraa
  * @version Dec 2018
  */
-public class NeqSimExperimentDatabase
-    implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class NeqSimExperimentDatabase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
   /**
-   * <p>
    * createTemporaryTables.
-   * </p>
    *
    * @return the createTemporaryTables
    */
@@ -30,9 +25,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * Setter for the field <code>createTemporaryTables</code>.
-   * </p>
    *
    * @param createTemporaryTables the createTemporaryTables to set
    */
@@ -56,16 +49,13 @@ public class NeqSimExperimentDatabase
 
   private static String dataBaseType = "MSAccessUCanAccess";
   /** Constant <code>connectionString="jdbc:ucanaccess://C:/Users/esol/OneDriv"{trunked}</code>. */
-  public static String connectionString =
-      "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimExperimentalData.mdb;memory=true";
+  public static String connectionString = "jdbc:ucanaccess://C:/Users/esol/OneDrive - Equinor/programming/neqsimdatabase/MSAccess/NeqSimExperimentalData.mdb;memory=true";
 
-  private Statement statement = null;
-  protected Connection databaseConnection = null;
+  private transient Statement statement = null;
+  protected transient Connection databaseConnection = null;
 
   /**
-   * <p>
    * Constructor for NeqSimExperimentDatabase.
-   * </p>
    */
   public NeqSimExperimentDatabase() {
     setDataBaseType(dataBaseType);
@@ -80,9 +70,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * openConnection.
-   * </p>
    *
    * @return a Connection object
    * @throws java.sql.SQLException if any.
@@ -95,8 +83,7 @@ public class NeqSimExperimentDatabase
     try {
       if (dataBaseType.equals("MSAccessUCanAccess")) {
         return DriverManager.getConnection(getConnectionString());
-      } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU")
-          || dataBaseType.equals("Derby")) {
+      } else if (dataBaseType.equals("mySQL") || dataBaseType.equals("mySQLNTNU") || dataBaseType.equals("Derby")) {
         return DriverManager.getConnection(getConnectionString(), username, password);
       } else if (dataBaseType.equals("mySQLNeqSimWeb")) {
         ctx = new javax.naming.InitialContext();
@@ -123,9 +110,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * getConnection.
-   * </p>
    *
    * @return a Connection object
    */
@@ -134,9 +119,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * getResultSet.
-   * </p>
    *
    * @param sqlString a {@link java.lang.String} object
    * @return a ResultSet object
@@ -152,9 +135,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * execute.
-   * </p>
    *
    * @param sqlString a {@link java.lang.String} object
    */
@@ -173,9 +154,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * Getter for the field <code>dataBaseType</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -184,9 +163,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * Setter for the field <code>dataBaseType</code>.
-   * </p>
    *
    * @param aDataBaseType a {@link java.lang.String} object
    */
@@ -195,9 +172,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * Setter for the field <code>dataBaseType</code>.
-   * </p>
    *
    * @param aDataBaseType a {@link java.lang.String} object
    * @param connectionString a {@link java.lang.String} object
@@ -223,8 +198,7 @@ public class NeqSimExperimentDatabase
       } else if (dataBaseType.equals("mySQLNTNU")) {
         Class.forName("com.mysql.cj.jdbc.Driver").getDeclaredConstructor().newInstance();
       } else if (dataBaseType.equals("Derby")) {
-        Class.forName("org.apache.derby.jdbc.EmbeddedDriver").getDeclaredConstructor()
-            .newInstance();
+        Class.forName("org.apache.derby.jdbc.EmbeddedDriver").getDeclaredConstructor().newInstance();
       } else if (dataBaseType.equals("oracle")) {
         Class.forName("oracle.jdbc.driver.OracleDriver").getDeclaredConstructor().newInstance();
       } else if (dataBaseType.equals("oracleST")) {
@@ -239,9 +213,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * Getter for the field <code>statement</code>.
-   * </p>
    *
    * @return a Statement object
    */
@@ -250,9 +222,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * Setter for the field <code>statement</code>.
-   * </p>
    *
    * @param statement a Statement object
    */
@@ -261,9 +231,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * Setter for the field <code>username</code>.
-   * </p>
    *
    * @param aUsername the username to set
    */
@@ -272,9 +240,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * Setter for the field <code>password</code>.
-   * </p>
    *
    * @param aPassword the password to set
    */
@@ -283,9 +249,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * Getter for the field <code>connectionString</code>.
-   * </p>
    *
    * @return the connectionString
    */
@@ -294,9 +258,7 @@ public class NeqSimExperimentDatabase
   }
 
   /**
-   * <p>
    * Setter for the field <code>connectionString</code>.
-   * </p>
    *
    * @param aConnectionString the connectionString to set
    */

@@ -3,9 +3,7 @@ package neqsim.pvtsimulation.modeltuning;
 import neqsim.pvtsimulation.simulation.SimulationInterface;
 
 /**
- * <p>
  * BaseTuningClass class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class BaseTuningClass implements TuningInterface {
   public double saturationPressure = 273.15;
 
   /**
-   * <p>
    * Constructor for BaseTuningClass.
-   * </p>
    *
    * @param simulationClass a {@link neqsim.pvtsimulation.simulation.SimulationInterface} object
    */
@@ -42,9 +38,7 @@ public class BaseTuningClass implements TuningInterface {
   }
 
   /**
-   * <p>
    * isTunePlusMolarMass.
-   * </p>
    *
    * @return the tunePlusMolarMass
    */
@@ -53,9 +47,7 @@ public class BaseTuningClass implements TuningInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>tunePlusMolarMass</code>.
-   * </p>
    *
    * @param tunePlusMolarMass the tunePlusMolarMass to set
    */
@@ -64,9 +56,7 @@ public class BaseTuningClass implements TuningInterface {
   }
 
   /**
-   * <p>
    * isTuneVolumeCorrection.
-   * </p>
    *
    * @return the tuneVolumeCorrection
    */
@@ -75,9 +65,7 @@ public class BaseTuningClass implements TuningInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>tuneVolumeCorrection</code>.
-   * </p>
    *
    * @param tuneVolumeCorrection the tuneVolumeCorrection to set
    */
@@ -87,5 +75,6 @@ public class BaseTuningClass implements TuningInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void run() {}
+  public void run() {
+  }
 }

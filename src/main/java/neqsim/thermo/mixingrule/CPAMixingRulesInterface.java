@@ -9,9 +9,7 @@ package neqsim.thermo.mixingrule;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * CPAMixingRulesInterface interface.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
   // double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDeltadT.
-   * </p>
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
@@ -35,13 +31,11 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    * @param numbcomp a int
    * @return a double
    */
-  public double calcDeltadT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
-      PhaseInterface phase, double temperature, double pressure, int numbcomp);
+  public double calcDeltadT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+      double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDeltadTdV.
-   * </p>
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
@@ -53,13 +47,11 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    * @param numbcomp a int
    * @return a double
    */
-  public double calcDeltadTdV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
-      PhaseInterface phase, double temperature, double pressure, int numbcomp);
+  public double calcDeltadTdV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+      double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDeltadTdT.
-   * </p>
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
@@ -71,13 +63,11 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    * @param numbcomp a int
    * @return a double
    */
-  public double calcDeltadTdT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
-      PhaseInterface phase, double temperature, double pressure, int numbcomp);
+  public double calcDeltadTdT(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+      double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcXi.
-   * </p>
    *
    * @param assosScheme an array of int objects
    * @param assosScheme2 an array of int objects
@@ -89,13 +79,11 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    * @param numbcomp a int
    * @return a double
    */
-  public double calcXi(int[][][] assosScheme, int[][][][] assosScheme2, int siteNumber,
-      int compnumb, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+  public double calcXi(int[][][] assosScheme, int[][][][] assosScheme2, int siteNumber, int compnumb,
+      PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDelta.
-   * </p>
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
@@ -107,13 +95,11 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    * @param numbcomp a int
    * @return a double
    */
-  public double calcDelta(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
-      PhaseInterface phase, double temperature, double pressure, int numbcomp);
+  public double calcDelta(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+      double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDeltadN.
-   * </p>
    *
    * @param derivativeComp a int
    * @param siteNumber1 a int
@@ -126,13 +112,11 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    * @param numbcomp a int
    * @return a double
    */
-  public double calcDeltadN(int derivativeComp, int siteNumber1, int siteNumber2, int compnumb1,
-      int compnumb2, PhaseInterface phase, double temperature, double pressure, int numbcomp);
+  public double calcDeltadN(int derivativeComp, int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
+      PhaseInterface phase, double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDeltadV.
-   * </p>
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
@@ -144,13 +128,11 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    * @param numbcomp a int
    * @return a double
    */
-  public double calcDeltadV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
-      PhaseInterface phase, double temperature, double pressure, int numbcomp);
+  public double calcDeltadV(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+      double temperature, double pressure, int numbcomp);
 
   /**
-   * <p>
    * calcDeltaNog.
-   * </p>
    *
    * @param siteNumber1 a int
    * @param siteNumber2 a int
@@ -162,6 +144,6 @@ public interface CPAMixingRulesInterface extends MixingRulesInterface {
    * @param numbcomp a int
    * @return a double
    */
-  public double calcDeltaNog(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2,
-      PhaseInterface phase, double temperature, double pressure, int numbcomp);
+  public double calcDeltaNog(int siteNumber1, int siteNumber2, int compnumb1, int compnumb2, PhaseInterface phase,
+      double temperature, double pressure, int numbcomp);
 }

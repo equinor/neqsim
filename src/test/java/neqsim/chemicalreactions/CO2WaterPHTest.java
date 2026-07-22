@@ -1,6 +1,8 @@
 package neqsim.chemicalreactions;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
@@ -8,16 +10,18 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Test pH calculation for CO2-water system.
- * 
+ *
  * <p>
- * CO2 dissolved in water should form carbonic acid and its dissociation products, resulting in an
- * acidic solution with pH around 4-5 at ambient conditions.
+ * CO2 dissolved in water should form carbonic acid and its dissociation products, resulting in an acidic solution with
+ * pH around 4-5 at ambient conditions.
  * </p>
  */
 public class CO2WaterPHTest {
+  private static final Logger logger = LogManager.getLogger(CO2WaterPHTest.class);
+
   /**
    * Test that CO2-water system produces acidic pH.
-   * 
+   *
    * <p>
    * Expected: pH around 4-5 (acidic due to carbonic acid formation).
    * </p>
@@ -25,10 +29,10 @@ public class CO2WaterPHTest {
   @Test
   @org.junit.jupiter.api.Disabled("pH calculation gives NaN at low pressures - needs investigation")
   public void testCO2WaterAcidicPH() {
-    System.out.println("\n=== CO2-Water pH Test ===");
-    System.out.println("Conditions: 1 bar, 25°C (298.15 K)");
-    System.out.println("Expected: Acidic pH (around 4-5 due to carbonic acid)");
-    System.out.println("--------------------------------------------------");
+    logger.info("\n=== CO2-Water pH Test ===");
+    logger.info("Conditions: 1 bar, 25°C (298.15 K)");
+    logger.info("Expected: Acidic pH (around 4-5 due to carbonic acid)");
+    logger.info("--------------------------------------------------");
 
     double temperature = 298.15; // 25°C in Kelvin
     double pressure = 11.01325; // 1 bar
@@ -57,65 +61,62 @@ public class CO2WaterPHTest {
     system.init(0);
 
     // Check what reactions are loaded
-    System.out.println(
-        "\nChemical reactions available: " + system.getChemicalReactionOperations().hasReactions());
+    logger.info("\nChemical reactions available: " + system.getChemicalReactionOperations().hasReactions());
 
     // Print reaction list
-    System.out.println("\nLoaded reactions:");
-    neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList reactionList =
-        system.getChemicalReactionOperations().getReactionList();
+    logger.info("\nLoaded reactions:");
+    neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList reactionList = system.getChemicalReactionOperations()
+        .getReactionList();
     for (int r = 0; r < reactionList.getChemicalReactionList().size(); r++) {
-      neqsim.chemicalreactions.chemicalreaction.ChemicalReaction reaction =
-          reactionList.getReaction(r);
-      System.out.println("  Reaction " + r + ": " + reaction.getName() + ", K = "
-          + reaction.getK(system.getPhase(0)));
+      neqsim.chemicalreactions.chemicalreaction.ChemicalReaction reaction = reactionList.getReaction(r);
+      logger.info("  Reaction " + r + ": " + reaction.getName() + ", K = " + reaction.getK(system.getPhase(0)));
       String[] names = reaction.getNames();
       double[] coefs = reaction.getStocCoefs();
       for (int i = 0; i < names.length; i++) {
-        System.out.println("    " + names[i] + ": " + coefs[i]);
+        logger.info("    " + names[i] + ": " + coefs[i]);
       }
     }
 
     // Print reference potentials for all components
-    System.out.println("\nReference potentials (Gibbs formation energy):");
+    logger.info("\nReference potentials (Gibbs formation energy):");
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName();
       double refPot = system.getPhase(0).getComponent(i).getReferencePotential();
       double gf = system.getPhase(0).getComponent(i).getGibbsEnergyOfFormation();
-      System.out.println("  " + name + ": refPot = " + refPot + ", Gf = " + gf);
+      logger.info("  " + name + ": refPot = " + refPot + ", Gf = " + gf);
     }
 
     // Print component list before flash
-    System.out.println("\nComponents in system:");
+    logger.info("\nComponents in system:");
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName();
       double moles = system.getPhase(0).getComponent(i).getNumberOfMolesInPhase();
-      System.out.println("  " + name + ": " + moles + " mol");
+      logger.info("  " + name + ": " + moles + " mol");
     }
 
     // Manually call chemical equilibrium solver to see what happens
-    System.out.println("\n--- Calling chemical equilibrium solver directly ---");
+    logger.info("\n--- Calling chemical equilibrium solver directly ---");
     boolean chemSolved = system.getChemicalReactionOperations().solveChemEq(0, 0);
-    System.out.println("Chemical equilibrium solver (type=0) result: " + chemSolved);
+    logger.info("Chemical equilibrium solver (type=0) result: " + chemSolved);
 
     // Print composition after chemical equilibrium type 0
-    System.out.println("\nAfter chemical equilibrium type 0:");
+    logger.info("\nAfter chemical equilibrium type 0:");
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName();
       double moles = system.getPhase(0).getComponent(i).getNumberOfMolesInPhase();
-      System.out.println("  " + name + ": " + moles + " mol");
+      logger.info("  " + name + ": " + moles + " mol");
     }
 
     // Now call type 1 (Newton solver)
     boolean chemSolved2 = system.getChemicalReactionOperations().solveChemEq(0, 1);
-    System.out.println("Chemical equilibrium solver (type=1) result: " + chemSolved2);
+    logger.info("Chemical equilibrium solver (type=1) result: " + chemSolved2);
 
     // Print composition after chemical equilibrium type 1
-    System.out.println("\nAfter chemical equilibrium type 1:");
+    logger.info("\nAfter chemical equilibrium type 1:");
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName();
       double moles = system.getPhase(0).getComponent(i).getNumberOfMolesInPhase();
-      System.out.println("  " + name + ": " + moles + " mol");
+      logger.info("  " + name + ": " + moles + " mol");
     }
 
     // Now perform TP flash with chemical equilibrium
@@ -126,27 +127,27 @@ public class CO2WaterPHTest {
     system.initProperties();
 
     // Print results after flash
-    System.out.println("\nAfter flash:");
-    System.out.println("Number of phases: " + system.getNumberOfPhases());
+    logger.info("\nAfter flash:");
+    logger.info("Number of phases: " + system.getNumberOfPhases());
 
     // Find aqueous phase
     int aqueousPhaseIndex = 0;
     for (int p = 0; p < system.getNumberOfPhases(); p++) {
       String phaseType = system.getPhase(p).getPhaseTypeName();
-      System.out.println("Phase " + p + " type: " + phaseType);
+      logger.info("Phase " + p + " type: " + phaseType);
       if (phaseType.equalsIgnoreCase("aqueous") || phaseType.equalsIgnoreCase("liquid")) {
         aqueousPhaseIndex = p;
       }
     }
 
     // Print composition of aqueous phase
-    System.out.println("\nAqueous phase composition:");
+    logger.info("\nAqueous phase composition:");
     for (int i = 0; i < system.getPhase(aqueousPhaseIndex).getNumberOfComponents(); i++) {
       String name = system.getPhase(aqueousPhaseIndex).getComponent(i).getComponentName();
       double moles = system.getPhase(aqueousPhaseIndex).getComponent(i).getNumberOfMolesInPhase();
       double moleFrac = system.getPhase(aqueousPhaseIndex).getComponent(i).getx();
       if (moles > 1e-20) {
-        System.out.println("  " + name + ": " + moles + " mol (x=" + moleFrac + ")");
+        logger.info("  " + name + ": " + moles + " mol (x=" + moleFrac + ")");
       }
     }
 
@@ -168,30 +169,30 @@ public class CO2WaterPHTest {
       }
     }
 
-    System.out.println("\nIon concentrations:");
-    System.out.println("  H3O+ moles: " + h3oMoles + ", mole fraction: " + h3oMoleFrac);
-    System.out.println("  OH- moles: " + ohMoles + ", mole fraction: " + ohMoleFrac);
+    logger.info("\nIon concentrations:");
+    logger.info("  H3O+ moles: " + h3oMoles + ", mole fraction: " + h3oMoleFrac);
+    logger.info("  OH- moles: " + ohMoles + ", mole fraction: " + ohMoleFrac);
 
     // Calculate pH
     double pH = system.getPhase(aqueousPhaseIndex).getpH();
-    System.out.println("\nCalculated pH: " + pH);
+    logger.info("\nCalculated pH: " + pH);
 
     // For acidic CO2-water solution:
     // - pH should be less than 7 (acidic)
     // - Typically around 4-5 for CO2-saturated water at ambient conditions
-    System.out.println("\n--- pH Analysis ---");
+    logger.info("\n--- pH Analysis ---");
     if (pH < 7.0) {
-      System.out.println("PASS: Solution is acidic (pH < 7)");
+      logger.info("PASS: Solution is acidic (pH < 7)");
     } else {
-      System.out.println("FAIL: Solution should be acidic but pH = " + pH);
+      logger.info("FAIL: Solution should be acidic but pH = " + pH);
     }
 
     // Check if H3O+ > OH- (acidic condition)
     if (h3oMoles > ohMoles) {
-      System.out.println("PASS: H3O+ > OH- (acidic condition)");
+      logger.info("PASS: H3O+ > OH- (acidic condition)");
     } else {
-      System.out.println("FAIL: H3O+ should be > OH- for acidic solution");
-      System.out.println("  H3O+/OH- ratio: " + (h3oMoles / ohMoles));
+      logger.info("FAIL: H3O+ should be > OH- for acidic solution");
+      logger.info("  H3O+/OH- ratio: " + (h3oMoles / ohMoles));
     }
 
     // The test should verify acidic pH

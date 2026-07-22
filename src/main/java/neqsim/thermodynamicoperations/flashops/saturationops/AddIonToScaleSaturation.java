@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * addIonToScaleSaturation class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -26,9 +24,7 @@ public class AddIonToScaleSaturation extends ConstantDutyTemperatureFlash {
   String[][] resultTable = null;
 
   /**
-   * <p>
    * Constructor for addIonToScaleSaturation.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseNumber a int
@@ -86,19 +82,22 @@ public class AddIonToScaleSaturation extends ConstantDutyTemperatureFlash {
         iterations++;
         stoc1 = Double.parseDouble(dataSet.getString("stoc1"));
         stoc2 = Double.parseDouble(dataSet.getString("stoc2"));
-        double temperatureC = system.getPhase(phaseNumber).getTemperature();
-        ksp = Math.exp(Double.parseDouble(dataSet.getString("Ksp-water")) / temperatureC
+        // Temperature in Kelvin from system (getTemperature() returns Kelvin)
+        double temperatureK = system.getPhase(phaseNumber).getTemperature();
+        double temperatureC = temperatureK - 273.15;
+        // Ksp correlation: lnKsp = A/T + B + C*ln(T) + D*T + E/T² (T in Kelvin)
+        ksp = Math.exp(Double.parseDouble(dataSet.getString("Ksp-water")) / temperatureK
             + Double.parseDouble(dataSet.getString("Ksp-water2"))
-            + Math.log(temperatureC) * Double.parseDouble(dataSet.getString("Ksp-water3"))
-            + temperatureC * Double.parseDouble(dataSet.getString("Ksp-water4"))
-            + Double.parseDouble(dataSet.getString("Ksp-water5")) / (temperatureC * temperatureC));
+            + Math.log(temperatureK) * Double.parseDouble(dataSet.getString("Ksp-water3"))
+            + temperatureK * Double.parseDouble(dataSet.getString("Ksp-water4"))
+            + Double.parseDouble(dataSet.getString("Ksp-water5")) / (temperatureK * temperatureK));
         if (saltName.equals("NaCl")) {
-          ksp = -814.18 + 7.4685 * temperatureC - 2.3262e-2 * temperatureC * temperatureC
-              + 3.0536e-5 * Math.pow(temperatureC, 3.0) - 1.4573e-8 * Math.pow(temperatureC, 4.0);
+          // NaCl Ksp correlation using temperature in Kelvin
+          // Fitted to CRC Handbook solubility data: Ksp = m² ≈ 37-45 over 0-100°C
+          ksp = 92.78 - 0.407 * temperatureK + 0.000747 * temperatureK * temperatureK;
         }
 
-        if (system.getPhase(phaseNumber).hasComponent(name1)
-            && system.getPhase(phaseNumber).hasComponent(name2)) {
+        if (system.getPhase(phaseNumber).hasComponent(name1) && system.getPhase(phaseNumber).hasComponent(name2)) {
           numb++;
           logger.info("reaction added: " + name1 + " " + name2);
           logger.info("theoretic Ksp = " + ksp);
@@ -110,8 +109,7 @@ public class AddIonToScaleSaturation extends ConstantDutyTemperatureFlash {
             logger.info("theoretic lnKsp = " + Math.log(ksp));
             int compNumb1 = system.getPhase(phaseNumber).getComponent(name1).getComponentNumber();
             int compNumb2 = system.getPhase(phaseNumber).getComponent(name2).getComponentNumber();
-            int waterompNumb =
-                system.getPhase(phaseNumber).getComponent("water").getComponentNumber();
+            int waterompNumb = system.getPhase(phaseNumber).getComponent("water").getComponentNumber();
 
             double x1 = system.getPhase(phaseNumber).getComponent(name1).getx()
                 / (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
@@ -119,12 +117,9 @@ public class AddIonToScaleSaturation extends ConstantDutyTemperatureFlash {
             double x2 = system.getPhase(phaseNumber).getComponent(name2).getx()
                 / (system.getPhase(phaseNumber).getComponent(waterompNumb).getx()
                     * system.getPhase(phaseNumber).getComponent(waterompNumb).getMolarMass());
-            double kspReac = Math
-                .pow(system.getPhase(phaseNumber).getActivityCoefficient(compNumb1, waterompNumb)
-                    * x1, stoc1)
-                * Math.pow(x2
-                    * system.getPhase(phaseNumber).getActivityCoefficient(compNumb2, waterompNumb),
-                    stoc2);
+            double kspReac = Math.pow(system.getPhase(phaseNumber).getActivityCoefficient(compNumb1, waterompNumb) * x1,
+                stoc1)
+                * Math.pow(x2 * system.getPhase(phaseNumber).getActivityCoefficient(compNumb2, waterompNumb), stoc2);
             double stocKsp = Math.pow(x1, stoc1) * Math.pow(x2, stoc2);
             logger.info("calc Ksp " + kspReac);
             logger.info("stoc Ksp " + stocKsp);
@@ -143,8 +138,7 @@ public class AddIonToScaleSaturation extends ConstantDutyTemperatureFlash {
             if (saltName.equals(scaleSaltName)) {
               logger.info("error " + error);
               logger.info("pH : " + system.getPhase(phaseNumber).getpH());
-              system.addComponent(nameOfIonToBeAdded, (1.0 - scalePotentialFactor) / 100000.0,
-                  phaseNumber);
+              system.addComponent(nameOfIonToBeAdded, (1.0 - scalePotentialFactor) / 100000.0, phaseNumber);
               ops.TPflash();
               logger.info("x1 " + system.getPhase(phaseNumber).getComponent(name1).getx());
               logger.info("x2 " + system.getPhase(phaseNumber).getComponent(name2).getx());
@@ -166,7 +160,8 @@ public class AddIonToScaleSaturation extends ConstantDutyTemperatureFlash {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 
   /** {@inheritDoc} */
   @Override

@@ -9,9 +9,7 @@ class process1Test extends neqsim.NeqSimTest {
   static neqsim.process.processmodel.ProcessSystem operations;
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {
@@ -25,8 +23,8 @@ class process1Test extends neqsim.NeqSimTest {
 
     Stream stream_1 = new Stream("Stream1", testSystem);
 
-    neqsim.process.equipment.compressor.Compressor compr =
-        new neqsim.process.equipment.compressor.Compressor("compr", stream_1);
+    neqsim.process.equipment.compressor.Compressor compr = new neqsim.process.equipment.compressor.Compressor("compr",
+        stream_1);
     compr.setOutletPressure(80.0);
     compr.setPolytropicEfficiency(0.9);
     compr.setIsentropicEfficiency(0.9);

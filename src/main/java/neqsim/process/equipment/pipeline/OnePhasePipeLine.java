@@ -16,15 +16,15 @@ import neqsim.thermo.system.SystemInterface;
  * One-phase pipeline with compositional tracking support.
  *
  * <p>
- * This class wraps {@link PipeFlowSystem} for use in process simulations. It supports both
- * steady-state and transient simulations, including compositional tracking for scenarios like gas
- * switching (e.g., natural gas to nitrogen transitions).
+ * This class wraps {@link PipeFlowSystem} for use in process simulations. It supports both steady-state and transient
+ * simulations, including compositional tracking for scenarios like gas switching (e.g., natural gas to nitrogen
+ * transitions).
  * </p>
  *
  * <h2>Transient Compositional Tracking</h2>
  * <p>
- * For gas switching scenarios, use {@link #setAdvectionScheme(AdvectionScheme)} to select a
- * higher-order scheme that reduces numerical dispersion:
+ * For gas switching scenarios, use {@link #setAdvectionScheme(AdvectionScheme)} to select a higher-order scheme that
+ * reduces numerical dispersion:
  * </p>
  * <ul>
  * <li>{@link AdvectionScheme#FIRST_ORDER_UPWIND} - Default, most stable but high dispersion</li>
@@ -33,14 +33,14 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Example: Gas Switching Simulation</h2>
- * 
+ *
  * <pre>{@code
  * // Create pipeline
  * OnePhasePipeLine pipe = new OnePhasePipeLine("GasPipe", inletStream);
  * pipe.setNumberOfLegs(1);
  * pipe.setNumberOfNodesInLeg(100);
- * pipe.setPipeDiameters(new double[] {0.3, 0.3});
- * pipe.setLegPositions(new double[] {0.0, 5000.0});
+ * pipe.setPipeDiameters(new double[] { 0.3, 0.3 });
+ * pipe.setLegPositions(new double[] { 0.0, 5000.0 });
  *
  * // Select TVD scheme for sharp composition fronts
  * pipe.setAdvectionScheme(AdvectionScheme.TVD_VAN_LEER);
@@ -120,8 +120,8 @@ public class OnePhasePipeLine extends Pipeline {
    * Set the advection scheme for compositional tracking.
    *
    * <p>
-   * Higher-order schemes reduce numerical dispersion (front spreading) during compositional
-   * tracking. For gas switching scenarios, TVD schemes are recommended.
+   * Higher-order schemes reduce numerical dispersion (front spreading) during compositional tracking. For gas switching
+   * scenarios, TVD schemes are recommended.
    * </p>
    *
    * @param scheme the advection scheme to use
@@ -144,8 +144,8 @@ public class OnePhasePipeLine extends Pipeline {
    * Enable or disable compositional tracking during transient simulation.
    *
    * <p>
-   * When enabled, the transient solver tracks component mass fractions through the pipe. Use this
-   * for gas switching or composition gradient tracking scenarios.
+   * When enabled, the transient solver tracks component mass fractions through the pipe. Use this for gas switching or
+   * composition gradient tracking scenarios.
    * </p>
    *
    * @param enable true to enable compositional tracking
@@ -301,14 +301,13 @@ public class OnePhasePipeLine extends Pipeline {
    * Run transient simulation for the specified time step.
    *
    * <p>
-   * This method advances the pipe simulation by the specified time step and updates the outlet
-   * stream with the current outlet conditions. The inlet boundary is updated from the current inlet
-   * stream state.
+   * This method advances the pipe simulation by the specified time step and updates the outlet stream with the current
+   * outlet conditions. The inlet boundary is updated from the current inlet stream state.
    * </p>
    *
    * <p>
-   * If compositional tracking is enabled, the solver tracks component mass fractions through the
-   * pipe using the selected advection scheme.
+   * If compositional tracking is enabled, the solver tracks component mass fractions through the pipe using the
+   * selected advection scheme.
    * </p>
    *
    * @param dt time step in seconds
@@ -334,9 +333,8 @@ public class OnePhasePipeLine extends Pipeline {
       double stepDt = Math.min(internalTimeStep, timeRemaining);
 
       // Set up time series for single step
-      double[] times = {simulationTime, simulationTime + stepDt};
-      SystemInterface[] systems =
-          {inStream.getThermoSystem().clone(), inStream.getThermoSystem().clone()};
+      double[] times = { simulationTime, simulationTime + stepDt };
+      SystemInterface[] systems = { inStream.getThermoSystem().clone(), inStream.getThermoSystem().clone() };
 
       pipe.getTimeSeries().setTimes(times);
       pipe.getTimeSeries().setInletThermoSystems(systems);

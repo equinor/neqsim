@@ -15,38 +15,38 @@ permissions:
 jobs:
   convert-notebooks:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      
+
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
-      
+          python-version: '3.12'
+
       - name: Convert notebooks to Markdown
         run: |
           cd docs
           python convert_notebooks.py
-      
+
       - name: Check for changes
         id: git-check
         run: |
           git diff --exit-code docs/examples/*.md || echo "changes=true" >> $GITHUB_OUTPUT
-      
+
       - name: Create Pull Request
         if: steps.git-check.outputs.changes == 'true'
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "Auto-convert notebooks to Markdown for GitHub Pages"
           title: "docs: Auto-convert notebooks to Markdown"
           body: |
             This PR was automatically generated to convert Jupyter notebooks to Markdown for GitHub Pages.
-            
+
             Changes include updated markdown versions of notebooks in `docs/examples/`.
           branch: auto-convert-notebooks
           delete-branch: true

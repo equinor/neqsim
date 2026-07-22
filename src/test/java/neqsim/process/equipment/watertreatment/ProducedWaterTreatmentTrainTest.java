@@ -26,8 +26,7 @@ public class ProducedWaterTreatmentTrainTest {
 
   @Test
   void testNCSLimit() {
-    assertEquals(30.0, ProducedWaterTreatmentTrain.NCS_OIW_LIMIT_MGL, 0.01,
-        "NCS OIW limit should be 30 mg/L");
+    assertEquals(30.0, ProducedWaterTreatmentTrain.NCS_OIW_LIMIT_MGL, 0.01, "NCS OIW limit should be 30 mg/L");
   }
 
   @Test

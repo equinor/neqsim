@@ -4,8 +4,8 @@ package neqsim.fluidmechanics.util;
  * Utility class for calculating friction factors in pipe flow.
  *
  * <p>
- * This class provides static methods for calculating Darcy and Fanning friction factors for
- * laminar, transitional, and turbulent flow regimes. The correlations implemented include:
+ * This class provides static methods for calculating Darcy and Fanning friction factors for laminar, transitional, and
+ * turbulent flow regimes. The correlations implemented include:
  * </p>
  * <ul>
  * <li>Laminar flow (Re &lt; 2300): f = 64/Re (Hagen-Poiseuille)</li>
@@ -59,8 +59,7 @@ public final class FrictionFactorCalculator {
       // Transition zone - linear interpolation
       double fLaminar = 64.0 / RE_LAMINAR_LIMIT;
       double fTurbulent = calcHaalandFrictionFactor(RE_TURBULENT_LIMIT, relativeRoughness);
-      return fLaminar + (fTurbulent - fLaminar) * (absRe - RE_LAMINAR_LIMIT)
-          / (RE_TURBULENT_LIMIT - RE_LAMINAR_LIMIT);
+      return fLaminar + (fTurbulent - fLaminar) * (absRe - RE_LAMINAR_LIMIT) / (RE_TURBULENT_LIMIT - RE_LAMINAR_LIMIT);
     } else {
       // Turbulent flow - Haaland equation
       return calcHaalandFrictionFactor(absRe, relativeRoughness);
@@ -90,8 +89,8 @@ public final class FrictionFactorCalculator {
    * Calculates the friction factor using the Haaland equation.
    *
    * <p>
-   * The Haaland equation is an explicit approximation to the Colebrook-White equation and is valid
-   * for turbulent flow in rough pipes:
+   * The Haaland equation is an explicit approximation to the Colebrook-White equation and is valid for turbulent flow
+   * in rough pipes:
    * </p>
    *
    * <p>
@@ -135,8 +134,8 @@ public final class FrictionFactorCalculator {
    * @param velocity the fluid velocity (m/s)
    * @return pressure drop per unit length (Pa/m)
    */
-  public static double calcPressureDropPerLength(double frictionFactor, double diameter,
-      double density, double velocity) {
+  public static double calcPressureDropPerLength(double frictionFactor, double diameter, double density,
+      double velocity) {
     return frictionFactor * density * velocity * velocity / (2.0 * diameter);
   }
 }

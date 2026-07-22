@@ -1,3 +1,8 @@
+---
+title: "Heat Exchanger Mechanical Design"
+description: "The `HeatExchangerMechanicalDesign` class provides sizing estimates for shell-and-tube, plate-and-frame, air cooler, and double-pipe exchangers. It can be attached to a full two-stream `HeatExchanger`..."
+---
+
 # Heat Exchanger Mechanical Design
 
 ## Overview
@@ -73,6 +78,8 @@ design.calcDesign();
 
 ## Related Topics
 
+- [Thermal-Hydraulic Design Guide](../process/mechanical_design/thermal_hydraulic_design) — tube-side/shell-side HTC correlations (Gnielinski, Kern, Bell-Delaware), overall U, pressure drops, LMTD correction factors, vibration screening, zone-by-zone analysis, and rating mode.
+- [TEMA Standard Guide](../process/mechanical_design/tema_standard_guide) — TEMA classification and shell-and-tube design standards.
 - `UtilityStreamSpecification` (JavaDoc) for the full list of utility parameters.
 - Unit tests in `HeaterCoolerMechanicalDesignTest` illustrate heater and cooler sizing workflows.
 - The README section "Heat exchanger mechanical design" (see below) for a short summary.

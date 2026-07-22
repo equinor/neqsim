@@ -16,8 +16,8 @@ import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
  * Monte Carlo simulation runner for uncertainty quantification in field development.
  *
  * <p>
- * Supports various probability distributions (triangular, normal, lognormal, uniform) and
- * integrates with CashFlowEngine for economic uncertainty analysis. Typical use cases include:
+ * Supports various probability distributions (triangular, normal, lognormal, uniform) and integrates with
+ * CashFlowEngine for economic uncertainty analysis. Typical use cases include:
  * <ul>
  * <li>CAPEX/OPEX uncertainty analysis</li>
  * <li>Oil price sensitivity</li>
@@ -28,7 +28,7 @@ import neqsim.process.fielddevelopment.economics.CashFlowEngine.CashFlowResult;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * MonteCarloRunner mc = new MonteCarloRunner(cashFlowEngine);
@@ -91,8 +91,7 @@ public class MonteCarloRunner implements Serializable {
      * @param param2 second parameter
      * @param param3 third parameter (only for triangular)
      */
-    public UncertainVariable(String name, DistributionType distribution, double param1,
-        double param2, double param3) {
+    public UncertainVariable(String name, DistributionType distribution, double param1, double param2, double param3) {
       this.name = name;
       this.distribution = distribution;
       this.param1 = param1;
@@ -374,8 +373,7 @@ public class MonteCarloRunner implements Serializable {
    * @param param2 second parameter (mode for triangular, max for uniform, stddev for normal)
    * @param param3 third parameter (max for triangular, unused for others)
    */
-  public void addVariable(String name, DistributionType distribution, double param1, double param2,
-      double param3) {
+  public void addVariable(String name, DistributionType distribution, double param1, double param2, double param3) {
     variables.add(new UncertainVariable(name, distribution, param1, param2, param3));
   }
 
@@ -435,18 +433,18 @@ public class MonteCarloRunner implements Serializable {
    */
   private double sample(UncertainVariable var) {
     switch (var.getDistribution()) {
-      case TRIANGULAR:
-        return sampleTriangular(var.getParam1(), var.getParam2(), var.getParam3());
-      case NORMAL:
-        return sampleNormal(var.getParam1(), var.getParam2());
-      case LOGNORMAL:
-        return sampleLognormal(var.getParam1(), var.getParam2());
-      case UNIFORM:
-        return sampleUniform(var.getParam1(), var.getParam2());
-      case FIXED:
-        return var.getParam1();
-      default:
-        return var.getParam1();
+    case TRIANGULAR:
+      return sampleTriangular(var.getParam1(), var.getParam2(), var.getParam3());
+    case NORMAL:
+      return sampleNormal(var.getParam1(), var.getParam2());
+    case LOGNORMAL:
+      return sampleLognormal(var.getParam1(), var.getParam2());
+    case UNIFORM:
+      return sampleUniform(var.getParam1(), var.getParam2());
+    case FIXED:
+      return var.getParam1();
+    default:
+      return var.getParam1();
     }
   }
 
@@ -507,8 +505,8 @@ public class MonteCarloRunner implements Serializable {
    * Run the Monte Carlo simulation.
    *
    * <p>
-   * Executes the specified number of iterations, sampling from each uncertain variable and
-   * calculating NPV for each scenario.
+   * Executes the specified number of iterations, sampling from each uncertain variable and calculating NPV for each
+   * scenario.
    * </p>
    *
    * @return true if simulation completed successfully
@@ -542,7 +540,7 @@ public class MonteCarloRunner implements Serializable {
         double pi = totalCapex > 0 ? (cfResult.getNpv() / totalCapex) + 1.0 : 0.0;
         result.setProfitabilityIndex(pi);
         result.setConverged(true);
-        convergedCount++;;
+        convergedCount++;
       } catch (Exception e) {
         logger.debug("Iteration {} failed: {}", i, e.getMessage());
         result.setConverged(false);
@@ -827,8 +825,8 @@ public class MonteCarloRunner implements Serializable {
 
     sb.append("Variables:\n");
     for (UncertainVariable var : variables) {
-      sb.append(String.format("  %s: %s (%.2f, %.2f, %.2f)%n", var.getName(), var.getDistribution(),
-          var.getParam1(), var.getParam2(), var.getParam3()));
+      sb.append(String.format("  %s: %s (%.2f, %.2f, %.2f)%n", var.getName(), var.getDistribution(), var.getParam1(),
+          var.getParam2(), var.getParam3()));
     }
     sb.append("\n");
 

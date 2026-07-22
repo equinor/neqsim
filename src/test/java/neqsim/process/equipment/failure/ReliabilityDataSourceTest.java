@@ -25,8 +25,7 @@ class ReliabilityDataSourceTest {
   void testGetCompressorReliability() {
     ReliabilityDataSource dataSource = ReliabilityDataSource.getInstance();
 
-    ReliabilityDataSource.ReliabilityData data =
-        dataSource.getReliabilityData("Compressor", "Centrifugal");
+    ReliabilityDataSource.ReliabilityData data = dataSource.getReliabilityData("Compressor", "Centrifugal");
 
     assertNotNull(data);
     assertEquals("Compressor", data.getEquipmentType());
@@ -40,8 +39,7 @@ class ReliabilityDataSourceTest {
   void testGetPumpReliability() {
     ReliabilityDataSource dataSource = ReliabilityDataSource.getInstance();
 
-    ReliabilityDataSource.ReliabilityData data =
-        dataSource.getReliabilityData("Pump", "Centrifugal");
+    ReliabilityDataSource.ReliabilityData data = dataSource.getReliabilityData("Pump", "Centrifugal");
 
     assertNotNull(data);
     assertTrue(data.getMtbf() > 0);
@@ -52,8 +50,7 @@ class ReliabilityDataSourceTest {
   void testGetCompressorFailureModes() {
     ReliabilityDataSource dataSource = ReliabilityDataSource.getInstance();
 
-    List<ReliabilityDataSource.FailureModeData> modes =
-        dataSource.getFailureModes("Compressor", "Centrifugal");
+    List<ReliabilityDataSource.FailureModeData> modes = dataSource.getFailureModes("Compressor", "Centrifugal");
 
     assertNotNull(modes);
     assertTrue(modes.size() > 0);
@@ -95,8 +92,7 @@ class ReliabilityDataSourceTest {
   void testCreateFailureMode() {
     ReliabilityDataSource dataSource = ReliabilityDataSource.getInstance();
 
-    EquipmentFailureMode mode =
-        dataSource.createFailureMode("My Compressor", "Compressor", "Centrifugal");
+    EquipmentFailureMode mode = dataSource.createFailureMode("My Compressor", "Compressor", "Centrifugal");
 
     assertNotNull(mode);
     assertTrue(mode.getName().contains("My Compressor"));
@@ -105,8 +101,8 @@ class ReliabilityDataSourceTest {
 
   @Test
   void testFailureModeDataConversion() {
-    ReliabilityDataSource.FailureModeData data =
-        new ReliabilityDataSource.FailureModeData("Compressor", "Seal Failure", 20.0);
+    ReliabilityDataSource.FailureModeData data = new ReliabilityDataSource.FailureModeData("Compressor", "Seal Failure",
+        20.0);
     data.setTypicalMttr(72);
     data.setSeverity("High");
 
@@ -120,8 +116,7 @@ class ReliabilityDataSourceTest {
 
   @Test
   void testReliabilityDataCalculations() {
-    ReliabilityDataSource.ReliabilityData data =
-        new ReliabilityDataSource.ReliabilityData("Test", "Type", 8760, 24);
+    ReliabilityDataSource.ReliabilityData data = new ReliabilityDataSource.ReliabilityData("Test", "Type", 8760, 24);
 
     // 1 failure per year
     assertEquals(1.0, data.getFailuresPerYear(), 0.01);
@@ -139,10 +134,29 @@ class ReliabilityDataSourceTest {
   void testUnknownEquipment() {
     ReliabilityDataSource dataSource = ReliabilityDataSource.getInstance();
 
-    ReliabilityDataSource.ReliabilityData data =
-        dataSource.getReliabilityData("Unknown Equipment", "Unknown Type");
+    ReliabilityDataSource.ReliabilityData data = dataSource.getReliabilityData("Unknown Equipment", "Unknown Type");
 
     // Should return null for unknown equipment
     assertTrue(data == null);
+  }
+
+  @Test
+  void testSupplementaryDataLoaded() {
+    ReliabilityDataSource dataSource = ReliabilityDataSource.getInstance();
+
+    // Supplementary CSVs add equipment types beyond the primary CSV
+    // (e.g. Transformer, Circuit Breaker from IEEE 493; Wellhead, BOP from IOGP)
+    int entryCount = dataSource.getEntryCount();
+    // Primary CSV has 37 entries; supplementary CSVs add many more
+    assertTrue(entryCount > 37, "Expected supplementary data to increase entry count above 37, got " + entryCount);
+  }
+
+  @Test
+  void testGetDataSources() {
+    ReliabilityDataSource dataSource = ReliabilityDataSource.getInstance();
+
+    List<String> sources = dataSource.getDataSources();
+    assertNotNull(sources);
+    assertTrue(sources.size() >= 2, "Expected at least 2 distinct data sources, got " + sources.size());
   }
 }

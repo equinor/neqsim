@@ -80,8 +80,7 @@ public class CompressorOptimizationHelperTest {
 
     assertNotNull(bounds);
     assertTrue(bounds.getMinSpeed() > 0, "Min speed should be positive");
-    assertTrue(bounds.getMaxSpeed() > bounds.getMinSpeed(),
-        "Max speed should be greater than min speed");
+    assertTrue(bounds.getMaxSpeed() > bounds.getMinSpeed(), "Max speed should be greater than min speed");
     assertNotNull(bounds.toString());
   }
 
@@ -138,8 +137,7 @@ public class CompressorOptimizationHelperTest {
     assertEquals("avgEfficiency", objective.getName());
 
     double avgEff = objective.evaluate(process);
-    assertTrue(avgEff >= 0 && avgEff <= 1.0,
-        "Average efficiency should be between 0 and 1: " + avgEff);
+    assertTrue(avgEff >= 0 && avgEff <= 1.0, "Average efficiency should be between 0 and 1: " + avgEff);
   }
 
   @Test
@@ -165,9 +163,8 @@ public class CompressorOptimizationHelperTest {
     // Test gradient descent with single variable optimization
     ProductionOptimizer optimizer = new ProductionOptimizer();
 
-    OptimizationConfig config = new OptimizationConfig(50000.0, 150000.0)
-        .searchMode(SearchMode.GRADIENT_DESCENT_SCORE).maxIterations(20).tolerance(100.0)
-        .rateUnit("kg/hr");
+    OptimizationConfig config = new OptimizationConfig(50000.0, 150000.0).searchMode(SearchMode.GRADIENT_DESCENT_SCORE)
+        .maxIterations(20).tolerance(100.0).rateUnit("kg/hr");
 
     OptimizationResult result = optimizer.optimize(process, feedStream, config, null, null);
 
@@ -208,9 +205,8 @@ public class CompressorOptimizationHelperTest {
     List<Compressor> compressors = Collections.singletonList(compressor1);
     List<OptimizationObjective> objectives = CompressorOptimizationHelper.createStandardObjectives(compressors);
 
-    OptimizationConfig config = new OptimizationConfig(50000.0, 150000.0)
-        .searchMode(SearchMode.GRADIENT_DESCENT_SCORE).maxIterations(15).tolerance(100.0)
-        .rateUnit("kg/hr");
+    OptimizationConfig config = new OptimizationConfig(50000.0, 150000.0).searchMode(SearchMode.GRADIENT_DESCENT_SCORE)
+        .maxIterations(15).tolerance(100.0).rateUnit("kg/hr");
 
     OptimizationResult result = optimizer.optimize(process, feedStream, config, objectives, null);
 

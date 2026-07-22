@@ -1,16 +1,37 @@
 {
-  "java.configuration.updateBuildConfiguration": "interactive",
+  // ─── Java Configuration ───
+  "java.configuration.updateBuildConfiguration": "automatic",
+  "java.compile.nullAnalysis.mode": "automatic",
   "[java]": {
+    // Organize imports on save (Spotless does NOT manage imports, and checkstyle flags unused ones).
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    // Formatting authority for Java in this repo is Spotless (Eclipse formatter 4.35,
+    // .config/neqsim_formatter.xml), enforced by the Maven `spotless:check` CI gate and the
+    // `spotless-apply` pre-commit hook. The Red Hat Java extension bundles a DIFFERENT Eclipse JDT
+    // engine that, even with the same profile, formats some constructs differently (e.g. collapses
+    // empty method bodies to `{}`). Leaving formatOnSave on therefore rewrites files into a state
+    // Spotless rejects, producing spurious working-tree diffs. It is disabled here so Spotless is
+    // the single source of truth — run `./mvnw spotless:apply` (or just commit; the pre-commit hook
+    // applies it automatically).
+    "editor.formatOnSave": false,
     "editor.defaultFormatter": "redhat.java",
-    "editor.formatOnSave": true,
     "editor.tabSize": 2,
     "editor.insertSpaces": true,
     "editor.detectIndentation": false
   },
-  "java.format.settings.url": "https://raw.githubusercontent.com/google/styleguide/gh-pages/eclipse-java-google-style.xml",
-  "java.saveActions.organizeImports": true,
-  "java.checkstyle.version": "10.18.1",
-  "java.checkstyle.configuration": "${workspaceFolder}/checkstyle_neqsim.xml",
+  "java.format.settings.url": "${workspaceFolder}/.config/neqsim_formatter.xml",
+  "java.format.settings.profile": "neqsim_formatter",
+  "java.checkstyle.version": "10.26.1",
+  "java.checkstyle.configuration": "${workspaceFolder}/.config/checkstyle_neqsim.xml",
+  "java.test.defaultConfig": "default",
+  "java.debug.settings.onBuildFailureProceed": true,
+  // ─── Editor ───
+  "editor.rulers": [
+    120
+  ],
+  "files.trimTrailingWhitespace": true,
   "[xml]": {
     "editor.tabSize": 4,
     "editor.insertSpaces": false
@@ -19,8 +40,29 @@
     "editor.tabSize": 4,
     "editor.insertSpaces": true
   },
+  // ─── Copilot Agent Configuration ───
+  // Auto-approve agent actions (file edits, terminal commands, etc.)
+  "github.copilot.chat.agent.autoApprove": true,
   "github.copilot.chat.autoCommit.enabled": false,
-  "github.copilot.chat.confirmEditGeneration": true,
+  "github.copilot.chat.confirmEditGeneration": false,
   "chat.agent.maxRequests": 2500,
-  "java.debug.settings.onBuildFailureProceed": true
+  // ─── Python / Jupyter ───
+  // Default Python environment for this workspace (notebooks + terminals).
+  "python.defaultInterpreterPath": "C:\\appl\\neqsim-venv\\Scripts\\python.exe",
+  "python.terminal.activateEnvironment": true,
+  "jupyter.notebookFileRoot": "${workspaceFolder}",
+  // ─── Search Exclusions ───
+  "search.exclude": {
+    "**/target": true,
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/dependency-reduced-pom.xml": true
+  },
+  "python-envs.pythonProjects": [
+    {
+      "path": ".",
+      "envManager": "ms-python.python:venv",
+      "packageManager": "ms-python.python:pip"
+    }
+  ]
 }

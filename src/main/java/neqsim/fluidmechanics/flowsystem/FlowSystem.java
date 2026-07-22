@@ -12,9 +12,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * Abstract FlowSystem class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -73,16 +71,13 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   protected AdvectionScheme advectionScheme = AdvectionScheme.FIRST_ORDER_UPWIND;
 
   /**
-   * <p>
    * Constructor for FlowSystem.
-   * </p>
    */
-  public FlowSystem() {}
+  public FlowSystem() {
+  }
 
   /**
-   * <p>
    * Constructor for FlowSystem.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -92,7 +87,8 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
 
   /** {@inheritDoc} */
   @Override
-  public void init() {}
+  public void init() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -114,9 +110,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   }
 
   /**
-   * <p>
    * flowLegInit.
-   * </p>
    */
   public void flowLegInit() {
     // TODO: add checks that input arguments have correct size to avoid generic
@@ -179,9 +173,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   }
 
   /**
-   * <p>
    * calcTotalNumberOfNodes.
-   * </p>
    *
    * @return a int
    */
@@ -313,25 +305,24 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
     for (int i = 0; i < getTotalNumberOfNodes() - 1; i++) {
       System.out.println("node " + flowNode[i].getDistanceToCenterOfNode() + " pressure: "
           + flowNode[i].getBulkSystem().getPhases()[0].getPressure() + " temperature: "
-          + flowNode[i].getBulkSystem().getPhases()[1].getTemperature() + "  flow: "
-          + flowNode[i].getMassFlowRate(0) + " velocity: " + flowNode[i].getVelocity()
-          + " reynolds number " + flowNode[i].getReynoldsNumber() + " friction : "
-          + flowNode[i].getWallFrictionFactor() + " x1 : "
+          + flowNode[i].getBulkSystem().getPhases()[1].getTemperature() + "  flow: " + flowNode[i].getMassFlowRate(0)
+          + " velocity: " + flowNode[i].getVelocity() + " reynolds number " + flowNode[i].getReynoldsNumber()
+          + " friction : " + flowNode[i].getWallFrictionFactor() + " x1 : "
           + flowNode[i].getBulkSystem().getPhases()[0].getComponent(1).getx());
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public void calcFluxes() {}
+  public void calcFluxes() {
+  }
 
   /** {@inheritDoc} */
   @Override
   public double getTotalMolarMassTransferRate(int component) {
     double tot = 0.0;
     for (int i = 0; i < getTotalNumberOfNodes() - 1; i++) {
-      tot += flowNode[i].getFluidBoundary().getInterphaseMolarFlux(component)
-          * flowNode[i].getInterphaseContactArea();
+      tot += flowNode[i].getFluidBoundary().getInterphaseMolarFlux(component) * flowNode[i].getInterphaseContactArea();
     }
     return tot;
   }
@@ -341,8 +332,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   public double getTotalMolarMassTransferRate(int component, int lastNode) {
     double tot = 0.0;
     for (int i = 0; i < lastNode; i++) {
-      tot += flowNode[i].getFluidBoundary().getInterphaseMolarFlux(component)
-          * flowNode[i].getInterphaseContactArea();
+      tot += flowNode[i].getFluidBoundary().getInterphaseMolarFlux(component) * flowNode[i].getInterphaseContactArea();
     }
     return tot;
   }
@@ -357,8 +347,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   /** {@inheritDoc} */
   @Override
   public double getTotalPressureDrop(int lastNode) {
-    return flowNode[0].getBulkSystem().getPressure()
-        - flowNode[lastNode].getBulkSystem().getPressure();
+    return flowNode[0].getBulkSystem().getPressure() - flowNode[lastNode].getBulkSystem().getPressure();
   }
 
   /** {@inheritDoc} */
@@ -377,9 +366,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   }
 
   /**
-   * <p>
    * setEquilibriumMassTransferModel.
-   * </p>
    *
    * @param startNode a int
    * @param endNode a int
@@ -396,9 +383,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   }
 
   /**
-   * <p>
    * setNonEquilibriumMassTransferModel.
-   * </p>
    *
    * @param startNode a int
    * @param endNode a int
@@ -415,9 +400,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   }
 
   /**
-   * <p>
    * setNonEquilibriumHeatTransferModel.
-   * </p>
    *
    * @param startNode a int
    * @param endNode a int
@@ -429,9 +412,7 @@ public abstract class FlowSystem implements FlowSystemInterface, java.io.Seriali
   }
 
   /**
-   * <p>
    * setEquilibriumHeatTransferModel.
-   * </p>
    *
    * @param startNode a int
    * @param endNode a int

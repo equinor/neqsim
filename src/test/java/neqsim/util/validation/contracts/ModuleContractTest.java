@@ -215,8 +215,7 @@ class ModuleContractTest {
 
       // Check postconditions
       ValidationResult postStream = streamContract.checkPostconditions(feed);
-      assertTrue(postStream.isValid() || postStream.hasWarnings(),
-          "Stream postconditions: " + postStream.getReport());
+      assertTrue(postStream.isValid() || postStream.hasWarnings(), "Stream postconditions: " + postStream.getReport());
 
       // Create and validate separator
       Separator separator = new Separator("InletSep", feed);
@@ -247,9 +246,7 @@ class ModuleContractTest {
 
       // Check that remediation messages contain code hints
       String report = result.getReport();
-      assertTrue(
-          report.contains("addComponent") || report.contains("setTemperature")
-              || report.contains("Temperature"),
+      assertTrue(report.contains("addComponent") || report.contains("setTemperature") || report.contains("Temperature"),
           "Remediation should contain code hints: " + report);
     }
   }

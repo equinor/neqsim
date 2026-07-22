@@ -9,8 +9,8 @@ import java.util.Map;
 import neqsim.process.mechanicaldesign.designstandards.StandardType;
 
 /**
- * Represents a Technical Requirements Document (TORG) that specifies design standards and methods
- * to be used in process design for a project.
+ * Represents a Technical Requirements Document (TORG) that specifies design standards and methods to be used in process
+ * design for a project.
  *
  * <p>
  * A TORG typically contains:
@@ -27,10 +27,10 @@ import neqsim.process.mechanicaldesign.designstandards.StandardType;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
- * TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
- *     .projectId("PROJECT-001").projectName("Offshore Gas Platform").companyIdentifier("Equinor")
+ * TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("PROJECT-001")
+ *     .projectName("Offshore Gas Platform").companyIdentifier("Equinor")
  *     .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1)
  *     .addStandard("separator process design", StandardType.API_12J)
  *     .addStandard("pipeline design codes", StandardType.NORSOK_L_001).minAmbientTemperature(-40.0)
@@ -91,8 +91,7 @@ public class TechnicalRequirementsDocument implements Serializable {
     this.revision = builder.revision;
     this.issueDate = builder.issueDate;
     this.designStandards = Collections.unmodifiableMap(new HashMap<>(builder.designStandards));
-    this.equipmentStandards =
-        Collections.unmodifiableMap(new HashMap<>(builder.equipmentStandards));
+    this.equipmentStandards = Collections.unmodifiableMap(new HashMap<>(builder.equipmentStandards));
     this.environmentalConditions = builder.environmentalConditions;
     this.safetyFactors = builder.safetyFactors;
     this.materialSpecs = builder.materialSpecs;
@@ -176,8 +175,8 @@ public class TechnicalRequirementsDocument implements Serializable {
   }
 
   /**
-   * Get all applicable standards for a given equipment type. This combines equipment-specific
-   * standards with category-based standards.
+   * Get all applicable standards for a given equipment type. This combines equipment-specific standards with
+   * category-based standards.
    *
    * @param equipmentType the equipment type
    * @return combined list of applicable standards
@@ -327,9 +326,8 @@ public class TechnicalRequirementsDocument implements Serializable {
      * @param waveHeight design wave height [m]
      * @param location installation location
      */
-    public EnvironmentalConditions(double minAmbientTemp, double maxAmbientTemp,
-        double seawaterTemp, String seismicZone, double windSpeed, double waveHeight,
-        String location) {
+    public EnvironmentalConditions(double minAmbientTemp, double maxAmbientTemp, double seawaterTemp,
+        String seismicZone, double windSpeed, double waveHeight, String location) {
       this.minAmbientTemperature = minAmbientTemp;
       this.maxAmbientTemperature = maxAmbientTemp;
       this.designSeawaterTemperature = seawaterTemp;
@@ -424,8 +422,8 @@ public class TechnicalRequirementsDocument implements Serializable {
      * @param wallTolerance wall thickness tolerance (fraction)
      * @param loadFactor load factor (multiplier)
      */
-    public SafetyFactors(double pressureSF, double tempMargin, double corrosion,
-        double wallTolerance, double loadFactor) {
+    public SafetyFactors(double pressureSF, double tempMargin, double corrosion, double wallTolerance,
+        double loadFactor) {
       this.pressureSafetyFactor = pressureSF;
       this.temperatureSafetyMargin = tempMargin;
       this.corrosionAllowance = corrosion;
@@ -502,8 +500,8 @@ public class TechnicalRequirementsDocument implements Serializable {
      * @param impactTesting whether impact testing is required
      * @param materialStd material standard (e.g., "ASTM", "EN")
      */
-    public MaterialSpecifications(String plateMaterial, String pipeMaterial, double minTemp,
-        double maxTemp, boolean impactTesting, String materialStd) {
+    public MaterialSpecifications(String plateMaterial, String pipeMaterial, double minTemp, double maxTemp,
+        boolean impactTesting, String materialStd) {
       this.defaultPlateMaterial = plateMaterial;
       this.defaultPipeMaterial = pipeMaterial;
       this.minDesignTemperature = minTemp;
@@ -709,8 +707,7 @@ public class TechnicalRequirementsDocument implements Serializable {
      * @return this builder
      */
     public Builder environmentalConditions(double minAmbientTemp, double maxAmbientTemp) {
-      this.environmentalConditions =
-          new EnvironmentalConditions(minAmbientTemp, maxAmbientTemp, 4.0, "0", 0, 0, "");
+      this.environmentalConditions = new EnvironmentalConditions(minAmbientTemp, maxAmbientTemp, 4.0, "0", 0, 0, "");
       return this;
     }
 

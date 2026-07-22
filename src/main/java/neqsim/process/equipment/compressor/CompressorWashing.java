@@ -353,16 +353,14 @@ public class CompressorWashing implements Serializable {
     currentFoulingFactor = Math.max(0.0, currentFoulingFactor - recovery);
 
     // Record wash event
-    WashEvent event =
-        new WashEvent(method, totalOperatingHours, previousFouling, currentFoulingFactor, recovery);
+    WashEvent event = new WashEvent(method, totalOperatingHours, previousFouling, currentFoulingFactor, recovery);
     washHistory.add(event);
 
     // Reset counter
     hoursSinceLastWash = 0.0;
     lastWashMethod = method;
 
-    logger.info("Compressor wash performed: {} - Recovery: {:.1f}%", method.getDisplayName(),
-        recovery * 100);
+    logger.info("Compressor wash performed: {} - Recovery: {:.1f}%", method.getDisplayName(), recovery * 100);
 
     return recovery;
   }
@@ -393,18 +391,18 @@ public class CompressorWashing implements Serializable {
    */
   public double estimateWaterConsumption(WashingMethod method) {
     switch (method) {
-      case ONLINE_WET:
-        return onlineWashWaterFlow * onlineWashDuration;
-      case OFFLINE_SOAK:
-        return 500.0; // Typical soak tank volume
-      case CRANK_WASH:
-        return 1000.0; // Multiple fill cycles
-      case CHEMICAL_CLEAN:
-        return 200.0; // Smaller volume with chemicals
-      case DRY_ICE_BLAST:
-        return 0.0; // No water
-      default:
-        return 500.0;
+    case ONLINE_WET:
+      return onlineWashWaterFlow * onlineWashDuration;
+    case OFFLINE_SOAK:
+      return 500.0; // Typical soak tank volume
+    case CRANK_WASH:
+      return 1000.0; // Multiple fill cycles
+    case CHEMICAL_CLEAN:
+      return 200.0; // Smaller volume with chemicals
+    case DRY_ICE_BLAST:
+      return 0.0; // No water
+    default:
+      return 500.0;
     }
   }
 
@@ -470,8 +468,7 @@ public class CompressorWashing implements Serializable {
    * @param operatingHours annual operating hours
    * @return production loss [units]
    */
-  public double estimateAnnualProductionLoss(double baseProductionRate, double avgFouling,
-      double operatingHours) {
+  public double estimateAnnualProductionLoss(double baseProductionRate, double avgFouling, double operatingHours) {
     double avgHeadLoss = avgFouling * avgFouling * 0.20;
     // Assume production proportional to compressor capacity
     return baseProductionRate * avgHeadLoss * operatingHours;
@@ -503,8 +500,7 @@ public class CompressorWashing implements Serializable {
      * @param after fouling factor after wash
      * @param recovery performance recovery achieved
      */
-    public WashEvent(WashingMethod method, double hours, double before, double after,
-        double recovery) {
+    public WashEvent(WashingMethod method, double hours, double before, double after, double recovery) {
       this.method = method;
       this.operatingHoursAtWash = hours;
       this.foulingBefore = before;

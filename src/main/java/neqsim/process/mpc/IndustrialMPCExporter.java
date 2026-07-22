@@ -17,8 +17,8 @@ import com.google.gson.GsonBuilder;
  * Exports MPC models and configurations in formats compatible with industrial control systems.
  *
  * <p>
- * This class provides export capabilities for integrating NeqSim-generated models with external MPC
- * platforms commonly used in process industries. It supports multiple standard formats including:
+ * This class provides export capabilities for integrating NeqSim-generated models with external MPC platforms commonly
+ * used in process industries. It supports multiple standard formats including:
  * </p>
  * <ul>
  * <li>Step response coefficients (DMC-style) for dynamic matrix controllers</li>
@@ -28,15 +28,14 @@ import com.google.gson.GsonBuilder;
  * </ul>
  *
  * <p>
- * The exports include complete variable definitions with engineering units, limits, tuning
- * parameters, and model data in formats that can be directly imported into industrial MPC
- * configuration tools.
+ * The exports include complete variable definitions with engineering units, limits, tuning parameters, and model data
+ * in formats that can be directly imported into industrial MPC configuration tools.
  * </p>
  *
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Configure and identify model
@@ -125,8 +124,7 @@ public class IndustrialMPCExporter implements Serializable {
    * Set the tag prefix for variable naming.
    *
    * <p>
-   * This prefix is prepended to all variable names in exports, useful for matching plant tag naming
-   * conventions.
+   * This prefix is prepended to all variable names in exports, useful for matching plant tag naming conventions.
    * </p>
    *
    * @param prefix the tag prefix (e.g., "UNIT1.")
@@ -152,8 +150,8 @@ public class IndustrialMPCExporter implements Serializable {
    * Export the complete MPC model in step response coefficient format.
    *
    * <p>
-   * This format is commonly used by Dynamic Matrix Control (DMC) style controllers. Each MV-CV pair
-   * is represented by a vector of step response coefficients that describe the dynamic response.
+   * This format is commonly used by Dynamic Matrix Control (DMC) style controllers. Each MV-CV pair is represented by a
+   * vector of step response coefficients that describe the dynamic response.
    * </p>
    *
    * @param filename the output filename
@@ -162,8 +160,7 @@ public class IndustrialMPCExporter implements Serializable {
   public void exportStepResponseModel(String filename) throws IOException {
     LinearizationResult result = controller.getLinearizationResult();
     if (result == null) {
-      throw new IllegalStateException(
-          "Model not identified. Call controller.identifyModel() first");
+      throw new IllegalStateException("Model not identified. Call controller.identifyModel() first");
     }
 
     Map<String, Object> model = new LinkedHashMap<>();
@@ -226,8 +223,7 @@ public class IndustrialMPCExporter implements Serializable {
     model.put("stepResponses", responses);
 
     // Write JSON
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
       writer.write(gson.toJson(model));
     }
@@ -237,8 +233,8 @@ public class IndustrialMPCExporter implements Serializable {
    * Export variable configuration in a format suitable for industrial control systems.
    *
    * <p>
-   * The output includes all MVs, CVs, and DVs with their limits, setpoints, engineering units, and
-   * tuning parameters in a standardized format.
+   * The output includes all MVs, CVs, and DVs with their limits, setpoints, engineering units, and tuning parameters in
+   * a standardized format.
    * </p>
    *
    * @param filename the output filename
@@ -285,8 +281,7 @@ public class IndustrialMPCExporter implements Serializable {
     config.put("disturbanceVariables", dvList);
 
     // Write JSON
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
       writer.write(gson.toJson(config));
     }
@@ -296,8 +291,8 @@ public class IndustrialMPCExporter implements Serializable {
    * Export the gain matrix in CSV format.
    *
    * <p>
-   * The matrix shows the steady-state gain from each MV to each CV. Row headers are CV names,
-   * column headers are MV names.
+   * The matrix shows the steady-state gain from each MV to each CV. Row headers are CV names, column headers are MV
+   * names.
    * </p>
    *
    * @param filename the output filename
@@ -336,8 +331,8 @@ public class IndustrialMPCExporter implements Serializable {
    * Export transfer function parameters in CSV format.
    *
    * <p>
-   * Each row contains the FOPDT (First Order Plus Dead Time) parameters for one MV-CV pair: gain,
-   * time constant, and dead time.
+   * Each row contains the FOPDT (First Order Plus Dead Time) parameters for one MV-CV pair: gain, time constant, and
+   * dead time.
    * </p>
    *
    * @param filename the output filename
@@ -377,8 +372,8 @@ public class IndustrialMPCExporter implements Serializable {
    * Export the complete model configuration as a single comprehensive JSON file.
    *
    * <p>
-   * This format includes all information needed to configure an external MPC controller: variable
-   * definitions, model parameters, tuning weights, and constraints.
+   * This format includes all information needed to configure an external MPC controller: variable definitions, model
+   * parameters, tuning weights, and constraints.
    * </p>
    *
    * @param filename the output filename
@@ -450,8 +445,7 @@ public class IndustrialMPCExporter implements Serializable {
     double[][][] stepCoeffs = new double[cvs.size()][mvs.size()][numStepCoefficients];
     for (int i = 0; i < cvs.size(); i++) {
       for (int j = 0; j < mvs.size(); j++) {
-        stepCoeffs[i][j] =
-            generateStepCoefficients(gains[i][j], defaultTimeConstant, controller.getSampleTime());
+        stepCoeffs[i][j] = generateStepCoefficients(gains[i][j], defaultTimeConstant, controller.getSampleTime());
       }
     }
     model.put("stepResponseCoefficients", stepCoeffs);
@@ -459,8 +453,7 @@ public class IndustrialMPCExporter implements Serializable {
     export.put("model", model);
 
     // Write JSON
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
       writer.write(gson.toJson(export));
     }
@@ -580,8 +573,8 @@ public class IndustrialMPCExporter implements Serializable {
    * Export step response coefficients in tabular CSV format.
    *
    * <p>
-   * This format is designed for easy import into industrial MPC systems. Each row contains the step
-   * response coefficient for one time step, with columns for each MV-CV pair.
+   * This format is designed for easy import into industrial MPC systems. Each row contains the step response
+   * coefficient for one time step, with columns for each MV-CV pair.
    * </p>
    *
    * @param filename the output filename
@@ -629,9 +622,8 @@ public class IndustrialMPCExporter implements Serializable {
    * Export model object structure as a hierarchical configuration.
    *
    * <p>
-   * This format mirrors the object structure used by industrial control system cores for
-   * configuration storage and data logging. It provides a complete description of the controller
-   * that can be serialized/deserialized.
+   * This format mirrors the object structure used by industrial control system cores for configuration storage and data
+   * logging. It provides a complete description of the controller that can be serialized/deserialized.
    * </p>
    *
    * @param filename the output filename
@@ -705,8 +697,7 @@ public class IndustrialMPCExporter implements Serializable {
       double[][][] stepCoeffs = new double[cvs.size()][mvs.size()][numStepCoefficients];
       for (int i = 0; i < cvs.size(); i++) {
         for (int j = 0; j < mvs.size(); j++) {
-          stepCoeffs[i][j] = generateStepCoefficients(gains[i][j], defaultTimeConstant,
-              controller.getSampleTime());
+          stepCoeffs[i][j] = generateStepCoefficients(gains[i][j], defaultTimeConstant, controller.getSampleTime());
         }
       }
       model.put("stepResponseCoefficients", stepCoeffs);
@@ -714,8 +705,7 @@ public class IndustrialMPCExporter implements Serializable {
     }
 
     // Write JSON
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
       writer.write(gson.toJson(structure));
     }

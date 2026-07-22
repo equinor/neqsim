@@ -16,15 +16,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Abstract ProcessModuleBaseClass class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
-public abstract class ProcessModuleBaseClass extends SimulationBaseClass
-    implements ModuleInterface {
+public abstract class ProcessModuleBaseClass extends SimulationBaseClass implements ModuleInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -33,13 +30,10 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   protected boolean isInitializedStreams = false;
 
   private boolean isCalcDesign = false;
-  private neqsim.process.processmodel.ProcessSystem operations =
-      new neqsim.process.processmodel.ProcessSystem();
+  private neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
 
   /**
-   * <p>
    * Constructor for ProcessModuleBaseClass.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -68,11 +62,13 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void setRegulatorOutSignal(double signal) {}
+  public void setRegulatorOutSignal(double signal) {
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void setController(ControllerDeviceInterface controller) {}
+  public void setController(ControllerDeviceInterface controller) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -87,16 +83,12 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   }
 
   /**
-   * <p>
    * calcDesign.
-   * </p>
    */
   public abstract void calcDesign();
 
   /**
-   * <p>
    * setDesign.
-   * </p>
    */
   public abstract void setDesign();
 
@@ -150,18 +142,18 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   }
 
   /**
-   * <p>
    * setSpecification.
-   * </p>
    *
    * @param specificationName a {@link java.lang.String} object
    * @param value a double
    */
-  public void setSpecification(String specificationName, double value) {}
+  public void setSpecification(String specificationName, double value) {
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void setSpecification(String specification) {}
+  public void setSpecification(String specification) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -176,15 +168,14 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   }
 
   /**
-   * <p>
    * setProperty.
-   * </p>
    *
    * @param propertyName a {@link java.lang.String} object
    * @param value a double
    * @param unit a {@link java.lang.String} object
    */
-  public void setProperty(String propertyName, double value, String unit) {}
+  public void setProperty(String propertyName, double value, String unit) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -200,12 +191,13 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void setPressure(double pressure) {}
+  public void setPressure(double pressure) {
+  }
 
   /** {@inheritDoc} */
   @Override
   public double getEntropyProduction(String unit) {
-    return 0.0;
+    return getOperations().getEntropyProduction(unit);
   }
 
   /** {@inheritDoc} */
@@ -217,12 +209,25 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   /** {@inheritDoc} */
   @Override
   public double getExergyChange(String unit, double surroundingTemperature) {
-    return 0.0;
+    return getOperations().getExergyChange(unit, surroundingTemperature);
+  }
+
+  /**
+   * Exergy destruction rate aggregated over all unit operations contained in this module.
+   *
+   * @param unit energy / power unit of the returned value
+   * @param surroundingTemperature dead-state temperature in K
+   * @return total exergy destruction in the requested unit
+   */
+  @Override
+  public double getExergyDestruction(String unit, double surroundingTemperature) {
+    return getOperations().getExergyDestruction(unit, surroundingTemperature);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {}
+  public void runConditionAnalysis(ProcessEquipmentInterface refExchanger) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -256,7 +261,8 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void run_step(UUID id) {}
+  public void run_step(UUID id) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -274,5 +280,33 @@ public abstract class ProcessModuleBaseClass extends SimulationBaseClass
   @Override
   public void setTemperature(double temperature) {
     getFluid().setTemperature(temperature);
+  }
+
+  /**
+   * Disables all capacity constraints on all equipment in this module.
+   *
+   * <p>
+   * Use this for what-if scenarios where you want to ignore capacity limits. Delegates to the internal
+   * {@link ProcessSystem#disableAllConstraints()}.
+   * </p>
+   *
+   * @return the total number of constraints that were disabled
+   */
+  public int disableAllConstraints() {
+    return getOperations().disableAllConstraints();
+  }
+
+  /**
+   * Enables all capacity constraints on all equipment in this module.
+   *
+   * <p>
+   * Re-enables all constraints that were previously disabled. Delegates to the internal
+   * {@link ProcessSystem#enableAllConstraints()}.
+   * </p>
+   *
+   * @return the total number of constraints that were enabled
+   */
+  public int enableAllConstraints() {
+    return getOperations().enableAllConstraints();
   }
 }

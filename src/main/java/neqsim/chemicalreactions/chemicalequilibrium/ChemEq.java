@@ -6,9 +6,7 @@ import Jama.Matrix;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
- * <p>
  * ChemEq class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -52,12 +50,10 @@ public class ChemEq implements java.io.Serializable {
   double[][] matrix;
 
   /**
-   * <p>
    * Constructor for ChemEq.
-   * </p>
    *
    * @deprecated This constructor is incomplete and may cause NPE. Use
-   *             {@link #ChemEq(double, double, double[][], double[], double[], double[])} instead.
+   * {@link #ChemEq(double, double, double[][], double[], double[], double[])} instead.
    */
   @Deprecated
   public ChemEq() {
@@ -87,9 +83,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Constructor for ChemEq.
-   * </p>
    *
    * @param T a double
    * @param P a double
@@ -98,8 +92,7 @@ public class ChemEq implements java.io.Serializable {
    * @param chem_ref an array of type double
    * @param b_element an array of type double
    */
-  public ChemEq(double T, double P, double[][] A_matrix, double[] n_mol, double[] chem_ref,
-      double[] b_element) {
+  public ChemEq(double T, double P, double[][] A_matrix, double[] n_mol, double[] chem_ref, double[] b_element) {
     this.T = T;
     this.P = P;
     this.A_matrix = A_matrix;
@@ -140,9 +133,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Constructor for ChemEq.
-   * </p>
    *
    * @param A_matrix an array of type double
    */
@@ -151,9 +142,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Constructor for ChemEq.
-   * </p>
    *
    * @param T a double
    * @param P a double
@@ -166,9 +155,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * chemSolve.
-   * </p>
    */
   public void chemSolve() {
     n_t = 0;
@@ -259,9 +246,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * step.
-   * </p>
    *
    * @return a double
    */
@@ -320,9 +305,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * innerStep.
-   * </p>
    *
    * @param startIndex starting index for loop (fixes bug where instance field was used)
    * @param n_omega an array of type double
@@ -355,9 +338,7 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @param T a double
    * @param P a double
@@ -401,7 +382,7 @@ public class ChemEq implements java.io.Serializable {
     phi = new double[NELE];
 
     // Initialize phi with default Lagrange multiplier estimates (bounds-checked)
-    double[] defaultPhi = {-9.7851, -12.969, -15.222, -10.0, -10.0};
+    double[] defaultPhi = { -9.7851, -12.969, -15.222, -10.0, -10.0 };
     for (int i = 0; i < NELE && i < defaultPhi.length; i++) {
       phi[i] = defaultPhi[i];
     }
@@ -423,13 +404,11 @@ public class ChemEq implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
-   * 
+   *
    * <p>
-   * Iteratively solves the chemical equilibrium using Newton-Raphson method. Continues until
-   * relative change in moles is below tolerance or max iterations reached.
+   * Iteratively solves the chemical equilibrium using Newton-Raphson method. Continues until relative change in moles
+   * is below tolerance or max iterations reached.
    * </p>
    */
   public void solve() {
@@ -471,8 +450,7 @@ public class ChemEq implements java.io.Serializable {
       }
     } while (error > overallTolerance && iteration < maxIterations);
     if (iteration >= maxIterations) {
-      logger
-          .debug("ChemEq.solve(): max iterations (" + maxIterations + ") reached, error: " + error);
+      logger.debug("ChemEq.solve(): max iterations (" + maxIterations + ") reached, error: " + error);
     }
 
     for (int j = 0; j < NSPEC; j++) {

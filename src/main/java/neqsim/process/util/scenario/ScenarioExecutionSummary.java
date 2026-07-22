@@ -10,7 +10,7 @@ import neqsim.process.util.monitor.ScenarioKPI;
 
 /**
  * Summary of scenario execution results.
- * 
+ *
  * <p>
  * Captures:
  * <ul>
@@ -173,7 +173,7 @@ public class ScenarioExecutionSummary {
 
   /**
    * Prints detailed scenario results to console.
-   * 
+   *
    * <p>
    * This is a convenience method for consistent result formatting. It displays:
    * <ul>
@@ -204,8 +204,8 @@ public class ScenarioExecutionSummary {
     System.out.println("Logic Results:");
     for (Map.Entry<String, LogicResult> entry : logicResults.entrySet()) {
       LogicResult result = entry.getValue();
-      System.out.println("  " + entry.getKey() + ": " + result.getFinalState() + " ("
-          + result.getStatusDescription() + ")");
+      System.out
+          .println("  " + entry.getKey() + ": " + result.getFinalState() + " (" + result.getStatusDescription() + ")");
     }
     System.out.println();
   }

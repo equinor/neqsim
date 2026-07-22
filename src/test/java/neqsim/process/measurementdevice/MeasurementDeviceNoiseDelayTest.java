@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 class MeasurementDeviceNoiseDelayTest {
   static class DummyTransmitter extends MeasurementDeviceBaseClass {
+    private static final long serialVersionUID = 1L;
     private double value = 0.0;
 
     DummyTransmitter(String name, String unit) {
@@ -46,4 +47,3 @@ class MeasurementDeviceNoiseDelayTest {
     Assertions.assertEquals(2.0, trans.getMeasuredValue("u"), 1e-12);
   }
 }
-

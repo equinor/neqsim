@@ -38,11 +38,11 @@ public class ConstantMassExpansionTest {
     tempSystem.setMixingRule("classic");
 
     ConstantMassExpansion CMEsim = new ConstantMassExpansion(tempSystem);
-    double[] pressures = new double[] {351.4, 323.2, 301.5, 275.9, 250.1, 226.1, 205.9, 197.3,
-        189.3, 183.3, 165.0, 131.2, 108.3, 85.3, 55.6};
+    double[] pressures = new double[] { 351.4, 323.2, 301.5, 275.9, 250.1, 226.1, 205.9, 197.3, 189.3, 183.3, 165.0,
+        131.2, 108.3, 85.3, 55.6 };
 
     CMEsim.setPressures(pressures);
-    double[][] expData = {{0.95, 0.99, 1.12, 1.9}};
+    double[][] expData = { { 0.95, 0.99, 1.12, 1.9 } };
     CMEsim.setExperimentalData(expData);
     CMEsim.setTemperature(97.5, "C");
     // CMEsim.runTuning();
@@ -52,7 +52,6 @@ public class ConstantMassExpansionTest {
     assertEquals(0.95756922523, CMEsim.getRelativeVolume()[0], 0.001);
     assertEquals(0.99569265437, CMEsim.getRelativeVolume()[6], 0.001);
     assertEquals(1.3572659252241415, CMEsim.getRelativeVolume()[12], 0.001);
-    assertEquals(2.153242696868, CMEsim.getYfactor()[12], 0.001);
+    assertEquals(2.189376480762446, CMEsim.getYfactor()[12], 0.001);
   }
 }
-

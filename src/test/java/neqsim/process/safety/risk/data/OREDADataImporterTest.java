@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -29,8 +30,7 @@ class OREDADataImporterTest {
 
   @Test
   void testGetCompressorData() {
-    OREDADataImporter.ReliabilityRecord record =
-        importer.getRecord("Compressor", "Centrifugal", "All modes");
+    OREDADataImporter.ReliabilityRecord record = importer.getRecord("Compressor", "Centrifugal", "All modes");
     assertNotNull(record);
     assertEquals("Compressor", record.getEquipmentType());
     assertEquals("Centrifugal", record.getEquipmentClass());
@@ -111,7 +111,7 @@ class OREDADataImporterTest {
   void testToMap() {
     OREDADataImporter.ReliabilityRecord record = importer.getRecord("Valve", "Control");
     assertNotNull(record);
-    var map = record.toMap();
+    Map<String, Object> map = record.toMap();
     assertEquals("Valve", map.get("equipmentType"));
     assertEquals("Control", map.get("equipmentClass"));
     assertTrue((Double) map.get("availability") > 0.99);
@@ -120,8 +120,8 @@ class OREDADataImporterTest {
   @Test
   void testAddCustomRecord() {
     OREDADataImporter custom = new OREDADataImporter();
-    custom.addRecord(new OREDADataImporter.ReliabilityRecord("CustomEquipment", "TypeA",
-        "All modes", 1e-5, 100000, 24, "Internal", "High"));
+    custom.addRecord(new OREDADataImporter.ReliabilityRecord("CustomEquipment", "TypeA", "All modes", 1e-5, 100000, 24,
+        "Internal", "High"));
 
     OREDADataImporter.ReliabilityRecord retrieved = custom.getRecord("CustomEquipment", "TypeA");
     assertNotNull(retrieved);

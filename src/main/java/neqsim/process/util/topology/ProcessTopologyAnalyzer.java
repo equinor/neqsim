@@ -350,11 +350,21 @@ public class ProcessTopologyAnalyzer implements Serializable {
 
   private List<StreamInterface> getOutletStreams(ProcessEquipmentInterface equipment) {
     List<StreamInterface> outlets = new ArrayList<>();
+    // Standard interface accessor first - covers Separator, Mixer, Splitter, Recycle, etc.
+    try {
+      for (StreamInterface out : equipment.getOutletStreams()) {
+        if (out != null && !containsByIdentity(outlets, out)) {
+          outlets.add(out);
+        }
+      }
+    } catch (Exception e) {
+      // Equipment may not expose standard outlet list
+    }
     try {
       // Gas outlet (separator)
       java.lang.reflect.Method gasMethod = equipment.getClass().getMethod("getGasOutStream");
       StreamInterface gas = (StreamInterface) gasMethod.invoke(equipment);
-      if (gas != null) {
+      if (gas != null && !containsByIdentity(outlets, gas)) {
         outlets.add(gas);
       }
     } catch (Exception e) {
@@ -364,7 +374,7 @@ public class ProcessTopologyAnalyzer implements Serializable {
       // Liquid outlet (separator)
       java.lang.reflect.Method liqMethod = equipment.getClass().getMethod("getLiquidOutStream");
       StreamInterface liq = (StreamInterface) liqMethod.invoke(equipment);
-      if (liq != null) {
+      if (liq != null && !containsByIdentity(outlets, liq)) {
         outlets.add(liq);
       }
     } catch (Exception e) {
@@ -389,16 +399,42 @@ public class ProcessTopologyAnalyzer implements Serializable {
 
   private List<StreamInterface> getInletStreams(ProcessEquipmentInterface equipment) {
     List<StreamInterface> inlets = new ArrayList<>();
+    // Standard interface accessor first - covers Mixer, Splitter, Recycle, etc.
+    try {
+      for (StreamInterface in : equipment.getInletStreams()) {
+        if (in != null && !containsByIdentity(inlets, in)) {
+          inlets.add(in);
+        }
+      }
+    } catch (Exception e) {
+      // Equipment may not expose standard inlet list
+    }
     try {
       java.lang.reflect.Method method = equipment.getClass().getMethod("getFeedStream");
       StreamInterface feed = (StreamInterface) method.invoke(equipment);
-      if (feed != null) {
+      if (feed != null && !containsByIdentity(inlets, feed)) {
         inlets.add(feed);
       }
     } catch (Exception e) {
       // No feed stream method
     }
     return inlets;
+  }
+
+  /**
+   * Checks whether a stream is already present in a list by object identity (not name or equality).
+   *
+   * @param list the list to search
+   * @param stream the stream to look for
+   * @return {@code true} if the same stream instance is already in the list
+   */
+  private static boolean containsByIdentity(List<StreamInterface> list, StreamInterface stream) {
+    for (StreamInterface s : list) {
+      if (s == stream) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private void calculateTopologicalOrder() {
@@ -451,8 +487,8 @@ public class ProcessTopologyAnalyzer implements Serializable {
         }
 
         // Check if same type and same connections
-        if (node1.getEquipmentType().equals(node2.getEquipmentType())
-            && hasSameUpstream(node1, node2) && hasSameDownstream(node1, node2)) {
+        if (node1.getEquipmentType().equals(node2.getEquipmentType()) && hasSameUpstream(node1, node2)
+            && hasSameDownstream(node1, node2)) {
           node1.addParallel(node2.getName());
           node2.addParallel(node1.getName());
         }
@@ -483,16 +519,14 @@ public class ProcessTopologyAnalyzer implements Serializable {
     if (node1.getUpstreamEquipment().isEmpty() && node2.getUpstreamEquipment().isEmpty()) {
       return true;
     }
-    return new HashSet<>(node1.getUpstreamEquipment())
-        .equals(new HashSet<>(node2.getUpstreamEquipment()));
+    return new HashSet<>(node1.getUpstreamEquipment()).equals(new HashSet<>(node2.getUpstreamEquipment()));
   }
 
   private boolean hasSameDownstream(EquipmentNode node1, EquipmentNode node2) {
     if (node1.getDownstreamEquipment().isEmpty() && node2.getDownstreamEquipment().isEmpty()) {
       return true;
     }
-    return new HashSet<>(node1.getDownstreamEquipment())
-        .equals(new HashSet<>(node2.getDownstreamEquipment()));
+    return new HashSet<>(node1.getDownstreamEquipment()).equals(new HashSet<>(node2.getDownstreamEquipment()));
   }
 
   private void calculateCriticality() {
@@ -817,16 +851,14 @@ public class ProcessTopologyAnalyzer implements Serializable {
         label += "\\n" + node.getFunctionalLocation().getFullTag();
       }
 
-      sb.append(String.format("  \"%s\" [label=\"%s\", fillcolor=\"%s\"];\n", node.getName(), label,
-          color));
+      sb.append(String.format("  \"%s\" [label=\"%s\", fillcolor=\"%s\"];\n", node.getName(), label, color));
     }
 
     sb.append("\n");
 
     // Edges
     for (ProcessEdge edge : edges) {
-      sb.append(
-          String.format("  \"%s\" -> \"%s\";\n", edge.getFromEquipment(), edge.getToEquipment()));
+      sb.append(String.format("  \"%s\" -> \"%s\";\n", edge.getFromEquipment(), edge.getToEquipment()));
     }
 
     // Parallel equipment (dashed lines)
@@ -836,8 +868,8 @@ public class ProcessTopologyAnalyzer implements Serializable {
         String key = node.getName().compareTo(parallel) < 0 ? node.getName() + "-" + parallel
             : parallel + "-" + node.getName();
         if (!drawnParallel.contains(key)) {
-          sb.append(String.format("  \"%s\" -> \"%s\" [style=dashed, dir=none, color=blue];\n",
-              node.getName(), parallel));
+          sb.append(
+              String.format("  \"%s\" -> \"%s\" [style=dashed, dir=none, color=blue];\n", node.getName(), parallel));
           drawnParallel.add(key);
         }
       }

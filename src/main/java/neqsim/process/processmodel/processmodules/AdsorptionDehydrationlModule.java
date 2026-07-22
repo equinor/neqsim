@@ -13,9 +13,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * AdsorptionDehydrationlModule class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -40,9 +38,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
   double adsorbentFillingHeight = 3.0;
 
   /**
-   * <p>
    * Constructor for AdsorptionDehydrationlModule.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -159,8 +155,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     tempStream.getThermoSystem().setTemperature(designAdsorptionTemperature);
     tempStream.run();
     tempStream.getThermoSystem().initPhysicalProperties();
-    double gasDensity =
-        tempStream.getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double gasDensity = tempStream.getThermoSystem().getPhase(0).getPhysicalProperties().getDensity();
 
     double gasVelocity = 67.0 / Math.sqrt(gasDensity);
 
@@ -172,16 +167,16 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     double waterLoadingCycle = regenerationCycleTime * designFlow * 42.29489667
         * tempStream.getThermoSystem().getPhase(0).getComponent("water").getx()
         * tempStream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass(); // 360.0;
-                                                                                         // kg/cycle
-                                                                                         // this
-                                                                                         // needs
-                                                                                         // to be
-                                                                                         // calculated
+    // kg/cycle
+    // this
+    // needs
+    // to be
+    // calculated
     double usefulDesiccantCapacity = 10.0; // 10%
     double bulkDensityDesiccant = 750.0; // 10%
 
-    adsorbentFillingHeight = 400.0 * waterLoadingCycle / (Math.PI * usefulDesiccantCapacity
-        * bulkDensityDesiccant * adsorberInternalDiameter * adsorberInternalDiameter);
+    adsorbentFillingHeight = 400.0 * waterLoadingCycle / (Math.PI * usefulDesiccantCapacity * bulkDensityDesiccant
+        * adsorberInternalDiameter * adsorberInternalDiameter);
 
     // double lenghtDiameterRatio = adsorbentFillingHeight / adsorberInternalDiameter;
     // design is done here
@@ -198,16 +193,13 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 30.0), 10.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 30.0), 10.0);
 
     testSystem.addComponent("methane", 1.0);
     testSystem.addComponent("water", 1.0);
@@ -217,8 +209,8 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     Stream inletStream = new Stream("inletStream", testSystem);
     Separator separator = new Separator("Separator 1", inletStream);
 
-    neqsim.process.processmodel.processmodules.AdsorptionDehydrationlModule adsorptionPlant =
-        new neqsim.process.processmodel.processmodules.AdsorptionDehydrationlModule("absPlant");
+    neqsim.process.processmodel.processmodules.AdsorptionDehydrationlModule adsorptionPlant = new neqsim.process.processmodel.processmodules.AdsorptionDehydrationlModule(
+        "absPlant");
     adsorptionPlant.addInputStream("gasStreamToAdsorber", separator.getGasOutStream());
     adsorptionPlant.setSpecification("water dew point temperature", 273.15 - 100.0);
     adsorptionPlant.setSpecification("designFlow", 20.0e6); // MSm^3/day
@@ -229,8 +221,7 @@ public class AdsorptionDehydrationlModule extends ProcessModuleBaseClass {
     adsorptionPlant.setSpecification("maxDesignPressure", 100.0);
     adsorptionPlant.setSpecification("maxDesignTemperature", 100.0);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(inletStream);
     operations.add(separator);
     operations.add(adsorptionPlant);

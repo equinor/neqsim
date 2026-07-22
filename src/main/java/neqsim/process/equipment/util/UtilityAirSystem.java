@@ -10,11 +10,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
-import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.stream.Stream;
-import neqsim.process.equipment.stream.StreamInterface;
-import neqsim.thermo.system.SystemInterface;
-import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Models utility air systems for offshore and onshore facilities.
@@ -389,8 +384,7 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
     double inletPressurePa = 101325.0;
     double flowM3s = compressorFlowNm3h / 3600.0;
     compressorPowerKW = (polytropicExponent / (polytropicExponent - 1)) * inletPressurePa * flowM3s
-        * (Math.pow(pressureRatio, (polytropicExponent - 1) / polytropicExponent) - 1)
-        / isentropicEfficiency / 1000.0;
+        * (Math.pow(pressureRatio, (polytropicExponent - 1) / polytropicExponent) - 1) / isentropicEfficiency / 1000.0;
 
     // Account for motor/drive efficiency
     compressorPowerKW = compressorPowerKW / 0.95;
@@ -504,8 +498,7 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
    * @param operatingHoursPerYear annual operating hours
    * @return annual cost
    */
-  public double calculateAnnualOperatingCost(double electricityCostPerKWh,
-      double operatingHoursPerYear) {
+  public double calculateAnnualOperatingCost(double electricityCostPerKWh, double operatingHoursPerYear) {
     return compressorPowerKW * operatingHoursPerYear * electricityCostPerKWh;
   }
 
@@ -514,6 +507,7 @@ public class UtilityAirSystem extends ProcessEquipmentBaseClass {
    *
    * @return JSON string
    */
+  @Override
   public String toJson() {
     Map<String, Object> results = new LinkedHashMap<>();
     results.put("systemName", getName());

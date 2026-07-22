@@ -6,8 +6,8 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * Result class containing information about the bottleneck equipment and constraint.
  *
  * <p>
- * This class is returned by ProcessSystem.findBottleneck() and contains the equipment that is
- * limiting process capacity, along with the specific constraint that is most limiting.
+ * This class is returned by ProcessSystem.findBottleneck() and contains the equipment that is limiting process
+ * capacity, along with the specific constraint that is most limiting.
  * </p>
  *
  * @author NeqSim Development Team
@@ -31,8 +31,7 @@ public class BottleneckResult {
    * @param constraint the limiting constraint (may be null if no constraints defined)
    * @param utilization the utilization as fraction (1.0 = 100%)
    */
-  public BottleneckResult(ProcessEquipmentInterface equipment, CapacityConstraint constraint,
-      double utilization) {
+  public BottleneckResult(ProcessEquipmentInterface equipment, CapacityConstraint constraint, double utilization) {
     this.equipment = equipment;
     this.constraint = constraint;
     this.utilization = utilization;

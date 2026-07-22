@@ -4,10 +4,15 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Arrays;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import neqsim.process.fielddevelopment.concept.DevelopmentCaseTemplate;
 import neqsim.process.fielddevelopment.concept.FieldConcept;
+import neqsim.process.fielddevelopment.concept.GreenfieldConceptFactory;
 import neqsim.process.fielddevelopment.concept.InfrastructureInput;
 import neqsim.process.fielddevelopment.concept.ReservoirInput;
 import neqsim.process.fielddevelopment.concept.WellsInput;
@@ -18,6 +23,7 @@ import neqsim.process.fielddevelopment.facility.BlockConfig;
 import neqsim.process.fielddevelopment.facility.BlockType;
 import neqsim.process.fielddevelopment.facility.FacilityBuilder;
 import neqsim.process.fielddevelopment.facility.FacilityConfig;
+import neqsim.process.fielddevelopment.reporting.FieldDevelopmentReportExporter;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceReport;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceResult;
 import neqsim.process.fielddevelopment.screening.FlowAssuranceScreener;
@@ -28,6 +34,8 @@ import neqsim.process.fielddevelopment.screening.SafetyScreener;
  * Tests for the Field Development Engine.
  */
 class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(FieldDevelopmentEngineTest.class);
+
   private FieldConcept gasTiebackConcept;
   private FieldConcept oilDevelopmentConcept;
   private FieldConcept highCO2Concept;
@@ -37,30 +45,27 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
     // Simple gas tieback concept
     gasTiebackConcept = FieldConcept.builder("Lean Gas Tieback")
         .reservoir(ReservoirInput.leanGas().gor(10000).co2Percent(1.5).h2sPercent(0.0).build())
-        .wells(WellsInput.builder().producerCount(3).tubeheadPressure(100)
-            .ratePerWell(1.0e6, "Sm3/d").build())
-        .infrastructure(InfrastructureInput.subseaTieback().tiebackLength(25).waterDepth(300)
-            .exportPressure(180).build())
+        .wells(WellsInput.builder().producerCount(3).tubeheadPressure(100).ratePerWell(1.0e6, "Sm3/d").build())
+        .infrastructure(
+            InfrastructureInput.subseaTieback().tiebackLength(25).waterDepth(300).exportPressure(180).build())
         .build();
 
     // Oil development concept
     oilDevelopmentConcept = FieldConcept.builder("Black Oil Development")
         .reservoir(ReservoirInput.blackOil().gor(150).waterCut(0.15).build())
-        .wells(WellsInput.builder().producerCount(8).injectorCount(4).tubeheadPressure(50)
-            .ratePerWell(5000, "Sm3/d").build())
-        .infrastructure(InfrastructureInput.builder()
-            .processingLocation(InfrastructureInput.ProcessingLocation.FPSO).waterDepth(800)
-            .exportType(InfrastructureInput.ExportType.STABILIZED_OIL).build())
+        .wells(WellsInput.builder().producerCount(8).injectorCount(4).tubeheadPressure(50).ratePerWell(5000, "Sm3/d")
+            .build())
+        .infrastructure(InfrastructureInput.builder().processingLocation(InfrastructureInput.ProcessingLocation.FPSO)
+            .waterDepth(800).exportType(InfrastructureInput.ExportType.STABILIZED_OIL).build())
         .build();
 
     // High CO2 concept
     highCO2Concept = FieldConcept.builder("High CO2 Gas Field")
         .reservoir(ReservoirInput.richGas().gor(3000).co2Percent(15).h2sPercent(0.05).build())
-        .wells(WellsInput.builder().producerCount(6).tubeheadPressure(120)
-            .ratePerWell(2.0e6, "Sm3/d").build())
-        .infrastructure(InfrastructureInput.builder()
-            .processingLocation(InfrastructureInput.ProcessingLocation.PLATFORM)
-            .powerSupply(InfrastructureInput.PowerSupply.POWER_FROM_SHORE).waterDepth(150).build())
+        .wells(WellsInput.builder().producerCount(6).tubeheadPressure(120).ratePerWell(2.0e6, "Sm3/d").build())
+        .infrastructure(
+            InfrastructureInput.builder().processingLocation(InfrastructureInput.ProcessingLocation.PLATFORM)
+                .powerSupply(InfrastructureInput.PowerSupply.POWER_FROM_SHORE).waterDepth(150).build())
         .build();
   }
 
@@ -77,6 +82,30 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
 
     ReservoirInput blackOil = ReservoirInput.blackOil().build();
     assertEquals(ReservoirInput.FluidType.BLACK_OIL, blackOil.getFluidType());
+  }
+
+  @Test
+  @DisplayName("ReservoirInput stores recoverable resource assumptions")
+  void testReservoirInputResourceEstimate() {
+    ReservoirInput reservoir = ReservoirInput.richGas().resourceEstimate(10.0, "GSm3").recoveryFactor(0.65).build();
+
+    assertEquals(10.0, reservoir.getResourceEstimate(), 0.001);
+    assertEquals("GSm3", reservoir.getResourceUnit());
+    assertEquals(0.65, reservoir.getRecoveryFactor(), 0.001);
+    assertEquals(6.5, reservoir.getRecoverableResourceEstimate(), 0.001);
+  }
+
+  @Test
+  @DisplayName("ReservoirInput stores resource uncertainty assumptions")
+  void testReservoirInputResourceUncertainty() {
+    ReservoirInput reservoir = ReservoirInput.richGas().resourceUncertainty(8.0, 10.0, 14.0, "GSm3")
+        .recoveryFactor(0.70).build();
+
+    assertTrue(reservoir.hasResourceUncertainty());
+    assertEquals(10.0, reservoir.getResourceEstimate(), 0.001);
+    assertEquals(8.0, reservoir.getResourceP10(), 0.001);
+    assertEquals(14.0, reservoir.getResourceP90(), 0.001);
+    assertEquals(7.0, reservoir.getRecoverableResourceP50(), 0.001);
   }
 
   @Test
@@ -112,9 +141,8 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("FacilityBuilder creates correct block sequence")
   void testFacilityBuilderBlockSequence() {
-    FacilityConfig config =
-        FacilityBuilder.forConcept(gasTiebackConcept).addBlock(BlockConfig.inletSeparation(80, 25))
-            .addCompression(2, 180).addTegDehydration(50).build();
+    FacilityConfig config = FacilityBuilder.forConcept(gasTiebackConcept).addBlock(BlockConfig.inletSeparation(80, 25))
+        .addCompression(2, 180).addTegDehydration(50).build();
 
     assertEquals(4, config.getBlockCount()); // 3 added + flare (default)
     assertTrue(config.hasCompression());
@@ -158,12 +186,9 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
   @Test
   @DisplayName("FlowAssuranceResult combine returns worst case")
   void testFlowAssuranceResultCombine() {
-    assertEquals(FlowAssuranceResult.FAIL,
-        FlowAssuranceResult.PASS.combine(FlowAssuranceResult.FAIL));
-    assertEquals(FlowAssuranceResult.MARGINAL,
-        FlowAssuranceResult.PASS.combine(FlowAssuranceResult.MARGINAL));
-    assertEquals(FlowAssuranceResult.PASS,
-        FlowAssuranceResult.PASS.combine(FlowAssuranceResult.PASS));
+    assertEquals(FlowAssuranceResult.FAIL, FlowAssuranceResult.PASS.combine(FlowAssuranceResult.FAIL));
+    assertEquals(FlowAssuranceResult.MARGINAL, FlowAssuranceResult.PASS.combine(FlowAssuranceResult.MARGINAL));
+    assertEquals(FlowAssuranceResult.PASS, FlowAssuranceResult.PASS.combine(FlowAssuranceResult.PASS));
   }
 
   @Test
@@ -195,8 +220,8 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
     SafetyReport report = screener.screen(highCO2Concept, config);
 
     assertTrue(report.isH2sPresent());
-    assertTrue(report.getRequirements().containsKey("h2s_detection")
-        || report.getRequirements().containsKey("h2s_ppe"));
+    assertTrue(
+        report.getRequirements().containsKey("h2s_detection") || report.getRequirements().containsKey("h2s_ppe"));
   }
 
   // ============ Concept Evaluator Tests ============
@@ -215,6 +240,56 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
     assertNotNull(kpis.getFlowAssuranceReport());
     assertNotNull(kpis.getEmissionsReport());
     assertNotNull(kpis.getEconomicsReport());
+    assertTrue(kpis.getFieldLifeYears() > 0.0);
+    assertTrue(kpis.getEstimatedRecoveryPercent() > 0.0);
+    assertTrue(kpis.getNotes().containsKey("production_forecast"));
+  }
+
+  @Test
+  @DisplayName("GreenfieldConceptFactory creates comparable standard templates")
+  void testGreenfieldConceptFactoryTemplates() {
+    DevelopmentCaseTemplate tieback = GreenfieldConceptFactory.subseaTieback("Book Tieback");
+    DevelopmentCaseTemplate fpso = GreenfieldConceptFactory.standaloneFpso("Book FPSO");
+    DevelopmentCaseTemplate fixedPlatform = GreenfieldConceptFactory.fixedPlatform("Book Platform");
+    DevelopmentCaseTemplate subseaToShore = GreenfieldConceptFactory.subseaToShore("Book Shore");
+    DevelopmentCaseTemplate onshoreTerminal = GreenfieldConceptFactory.onshoreTerminal("Book Terminal");
+    DevelopmentCaseTemplate brownfield = GreenfieldConceptFactory.phasedBrownfieldExpansion("Book Brownfield");
+
+    assertTemplateIsComplete(tieback);
+    assertTemplateIsComplete(fpso);
+    assertTemplateIsComplete(fixedPlatform);
+    assertTemplateIsComplete(subseaToShore);
+    assertTemplateIsComplete(onshoreTerminal);
+    assertTemplateIsComplete(brownfield);
+
+    assertEquals("Subsea tieback", tieback.getCaseType());
+    assertEquals("Standalone FPSO", fpso.getCaseType());
+    assertTrue(fpso.getTotalCapexMusd() > tieback.getTotalCapexMusd());
+
+    FieldDevelopmentReportExporter exporter = new FieldDevelopmentReportExporter();
+    String table = exporter.exportTemplateComparisonMarkdown(Arrays.asList(tieback, fpso));
+    assertTrue(table.contains("Lifecycle CO2"));
+    assertTrue(table.contains("P50 resource"));
+  }
+
+  /**
+   * Asserts that a template includes all comparable screening outputs.
+   *
+   * @param template development case template
+   */
+  private void assertTemplateIsComplete(DevelopmentCaseTemplate template) {
+    assertNotNull(template.getConcept());
+    assertNotNull(template.getFacilityConfig());
+    assertNotNull(template.getEconomics());
+    assertTrue(template.getTotalCapexMusd() > 0.0);
+    assertTrue(template.getAnnualOpexMusd() > 0.0);
+    assertTrue(template.getPowerMw() > 0.0);
+    assertTrue(template.getAnnualEmissionsTonnes() >= 0.0);
+    assertTrue(template.getUncertainty().getCapex().getP90() >= template.getUncertainty().getCapex().getP50());
+    assertTrue(template.getLifecycleEmissionsProfile().hasData());
+    assertFalse(template.getProductionProfile().isEmpty());
+    assertFalse(template.getCapexBreakdownMusd().isEmpty());
+    assertTrue(template.getAssumptionsSummary().contains(template.getCaseType()));
   }
 
   @Test
@@ -271,12 +346,11 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
 
     // Check for errors - if any, print them for debugging
     if (!results.getErrors().isEmpty()) {
-      System.out.println("Batch errors: " + results.getErrors());
+      logger.info("Batch errors: " + results.getErrors());
     }
 
     assertNotNull(results.getRankedResults());
-    assertTrue(results.getErrors().isEmpty(),
-        "Batch should have no errors: " + results.getErrors());
+    assertTrue(results.getErrors().isEmpty(), "Batch should have no errors: " + results.getErrors());
     assertEquals(2, results.getRankedResults().size());
     assertNotNull(results.getComparisonSummary());
     assertTrue(results.getComparisonSummary().contains("CONCEPT COMPARISON"));
@@ -303,15 +377,13 @@ class FieldDevelopmentEngineTest extends neqsim.NeqSimTest {
     // 1. Define concept - low CO2 to minimize vented emissions
     FieldConcept concept = FieldConcept.builder("Integration Test Concept")
         .reservoir(ReservoirInput.leanGas().gor(10000).co2Percent(0.5).build())
-        .wells(WellsInput.builder().producerCount(4).tubeheadPressure(90)
-            .ratePerWell(1.5e6, "Sm3/d").build())
+        .wells(WellsInput.builder().producerCount(4).tubeheadPressure(90).ratePerWell(1.5e6, "Sm3/d").build())
         .infrastructure(InfrastructureInput.subseaTieback().tiebackLength(40).waterDepth(400)
             .powerSupply(InfrastructureInput.PowerSupply.POWER_FROM_SHORE).build())
         .build();
 
     // 2. Build facility
-    FacilityConfig facility =
-        FacilityBuilder.autoGenerate(concept).withRedundancy("compression", 1).build();
+    FacilityConfig facility = FacilityBuilder.autoGenerate(concept).withRedundancy("compression", 1).build();
 
     // 3. Evaluate
     ConceptEvaluator evaluator = new ConceptEvaluator();

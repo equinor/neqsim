@@ -78,8 +78,7 @@ class DynamicRiskSimulatorTest {
 
   @Test
   void testRampUpProfileSetting() {
-    DynamicRiskSimulator result =
-        simulator.setRampUpProfile(DynamicRiskSimulator.RampProfile.LINEAR);
+    DynamicRiskSimulator result = simulator.setRampUpProfile(DynamicRiskSimulator.RampProfile.LINEAR);
     assertNotNull(result);
 
     result = simulator.setRampUpProfile(DynamicRiskSimulator.RampProfile.EXPONENTIAL);
@@ -91,8 +90,7 @@ class DynamicRiskSimulatorTest {
 
   @Test
   void testShutdownProfileSetting() {
-    DynamicRiskSimulator result =
-        simulator.setShutdownProfile(DynamicRiskSimulator.RampProfile.STEP);
+    DynamicRiskSimulator result = simulator.setShutdownProfile(DynamicRiskSimulator.RampProfile.STEP);
     assertNotNull(result);
   }
 
@@ -100,14 +98,10 @@ class DynamicRiskSimulatorTest {
   void testRampProfileEnumValues() {
     DynamicRiskSimulator.RampProfile[] profiles = DynamicRiskSimulator.RampProfile.values();
     assertEquals(4, profiles.length);
-    assertEquals(DynamicRiskSimulator.RampProfile.LINEAR,
-        DynamicRiskSimulator.RampProfile.valueOf("LINEAR"));
-    assertEquals(DynamicRiskSimulator.RampProfile.EXPONENTIAL,
-        DynamicRiskSimulator.RampProfile.valueOf("EXPONENTIAL"));
-    assertEquals(DynamicRiskSimulator.RampProfile.S_CURVE,
-        DynamicRiskSimulator.RampProfile.valueOf("S_CURVE"));
-    assertEquals(DynamicRiskSimulator.RampProfile.STEP,
-        DynamicRiskSimulator.RampProfile.valueOf("STEP"));
+    assertEquals(DynamicRiskSimulator.RampProfile.LINEAR, DynamicRiskSimulator.RampProfile.valueOf("LINEAR"));
+    assertEquals(DynamicRiskSimulator.RampProfile.EXPONENTIAL, DynamicRiskSimulator.RampProfile.valueOf("EXPONENTIAL"));
+    assertEquals(DynamicRiskSimulator.RampProfile.S_CURVE, DynamicRiskSimulator.RampProfile.valueOf("S_CURVE"));
+    assertEquals(DynamicRiskSimulator.RampProfile.STEP, DynamicRiskSimulator.RampProfile.valueOf("STEP"));
   }
 
   @Test
@@ -231,10 +225,9 @@ class DynamicRiskSimulatorTest {
   @Test
   void testMethodChaining() {
     // Test fluent API
-    DynamicRiskSimulator configured =
-        simulator.setTimestepHours(0.5).setRampUpTimeHours(2.0).setShutdownTimeHours(0.5)
-            .setSimulateTransients(true).setRampUpProfile(DynamicRiskSimulator.RampProfile.LINEAR)
-            .setShutdownProfile(DynamicRiskSimulator.RampProfile.EXPONENTIAL);
+    DynamicRiskSimulator configured = simulator.setTimestepHours(0.5).setRampUpTimeHours(2.0).setShutdownTimeHours(0.5)
+        .setSimulateTransients(true).setRampUpProfile(DynamicRiskSimulator.RampProfile.LINEAR)
+        .setShutdownProfile(DynamicRiskSimulator.RampProfile.EXPONENTIAL);
 
     assertNotNull(configured, "Configured simulator should not be null");
     assertEquals(0.5, configured.getTimestepHours(), 0.001);

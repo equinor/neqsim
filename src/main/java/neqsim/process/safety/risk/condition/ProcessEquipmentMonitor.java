@@ -14,9 +14,8 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
  * Physics-based equipment monitor that directly integrates with NeqSim process equipment.
  *
  * <p>
- * This class connects reliability monitoring directly to NeqSim's process simulation physics,
- * automatically extracting condition indicators (temperature, pressure, capacity utilization) from
- * the equipment's actual process state.
+ * This class connects reliability monitoring directly to NeqSim's process simulation physics, automatically extracting
+ * condition indicators (temperature, pressure, capacity utilization) from the equipment's actual process state.
  * </p>
  *
  * <p>
@@ -32,13 +31,13 @@ import neqsim.process.equipment.capacity.CapacityConstraint;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * ProcessEquipmentMonitor monitor = new ProcessEquipmentMonitor(separator);
  * monitor.setDesignTemperatureRange(273.15, 373.15); // Design T range in K
  * monitor.setDesignPressureRange(1.0, 50.0); // Design P range in bara
  * monitor.setBaseFailureRate(0.0001); // per hour
- * 
+ *
  * // After process simulation runs:
  * monitor.update(); // Reads T, P, capacity from equipment
  * double failureRate = monitor.getAdjustedFailureRate();
@@ -105,8 +104,8 @@ public class ProcessEquipmentMonitor implements Serializable {
      * @param healthIndex calculated health index 0-1
      * @param failureRate adjusted failure rate per hour
      */
-    public MonitorReading(Instant timestamp, double temperature, double pressure,
-        double capacityUtilization, double healthIndex, double failureRate) {
+    public MonitorReading(Instant timestamp, double temperature, double pressure, double capacityUtilization,
+        double healthIndex, double failureRate) {
       this.timestamp = timestamp;
       this.temperature = temperature;
       this.pressure = pressure;
@@ -184,8 +183,8 @@ public class ProcessEquipmentMonitor implements Serializable {
    * Updates monitor by reading current values from equipment.
    *
    * <p>
-   * This method reads temperature, pressure, and capacity utilization directly from the NeqSim
-   * equipment and recalculates health index and failure rate.
+   * This method reads temperature, pressure, and capacity utilization directly from the NeqSim equipment and
+   * recalculates health index and failure rate.
    * </p>
    */
   public void update() {
@@ -213,8 +212,8 @@ public class ProcessEquipmentMonitor implements Serializable {
 
     // Record history
     lastUpdated = Instant.now();
-    history.add(new MonitorReading(lastUpdated, currentTemperature, currentPressure,
-        currentCapacityUtilization, healthIndex, adjustedFailureRate));
+    history.add(new MonitorReading(lastUpdated, currentTemperature, currentPressure, currentCapacityUtilization,
+        healthIndex, adjustedFailureRate));
 
     // Limit history size
     while (history.size() > maxHistorySize) {
@@ -236,8 +235,8 @@ public class ProcessEquipmentMonitor implements Serializable {
     recalculateHealth();
 
     lastUpdated = Instant.now();
-    history.add(new MonitorReading(lastUpdated, currentTemperature, currentPressure,
-        currentCapacityUtilization, healthIndex, adjustedFailureRate));
+    history.add(new MonitorReading(lastUpdated, currentTemperature, currentPressure, currentCapacityUtilization,
+        healthIndex, adjustedFailureRate));
 
     while (history.size() > maxHistorySize) {
       history.remove(0);
@@ -254,9 +253,8 @@ public class ProcessEquipmentMonitor implements Serializable {
 
     // Weighted average of health contributions
     double totalWeight = temperatureWeight + pressureWeight + capacityWeight;
-    healthIndex =
-        (tempHealth * temperatureWeight + pressHealth * pressureWeight + capHealth * capacityWeight)
-            / totalWeight;
+    healthIndex = (tempHealth * temperatureWeight + pressHealth * pressureWeight + capHealth * capacityWeight)
+        / totalWeight;
 
     // Adjust failure rate based on health
     // Lower health = higher failure rate (exponential relationship)

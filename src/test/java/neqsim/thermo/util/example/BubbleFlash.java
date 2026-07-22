@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * BubbleFlash class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
  * @version $Id: $Id
  */
 public class BubbleFlash {
+  private static final Logger logger = LogManager.getLogger(BubbleFlash.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(BubbleFlash.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -52,7 +49,7 @@ public class BubbleFlash {
       logger.error(ex.getMessage(), ex);
     }
 
-    // System.out.println("wt% MEG " +
+    // logger.info("wt% MEG " +
     // 100*testSystem.getPhase(1).getComponent("MEG").getx()*testSystem.getPhase(1).getComponent("MEG").getMolarMass()/testSystem.getPhase(1).getMolarMass());
 
     // testSystem.display();

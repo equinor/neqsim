@@ -26,8 +26,7 @@ import java.util.List;
  * <code>ΔP = (q·μ)/(4πkh) × Ei(-r²/(4·η·t))</code>
  * </p>
  * <p>
- * where η = k/(φ·μ·ct) is the hydraulic diffusivity. For the wellbore (r=rw), using the logarithmic
- * approximation:
+ * where η = k/(φ·μ·ct) is the hydraulic diffusivity. For the wellbore (r=rw), using the logarithmic approximation:
  * </p>
  * <p>
  * <code>P_wf = P_i - (q·μ)/(4πkh) × [ln(4·η·t/r_w²) - γ + 2S]</code>
@@ -45,7 +44,7 @@ import java.util.List;
  * </p>
  *
  * <h2>Usage Example - Drawdown Analysis</h2>
- * 
+ *
  * <pre>{@code
  * TransientWellModel well = new TransientWellModel();
  * well.setReservoirPressure(250.0, "bara");
@@ -56,19 +55,19 @@ import java.util.List;
  * well.setFluidViscosity(0.5, "cP");
  * well.setWellboreRadius(0.1, "m");
  * well.setSkinFactor(2.0);
- * 
+ *
  * // Calculate flowing pressure after 10 hours at 1000 Sm3/day
  * DrawdownResult result = well.calculateDrawdown(1000.0, 10.0);
  * System.out.println("Pwf after 10 hours: " + result.flowingPressure + " bara");
  * }</pre>
  *
  * <h2>Usage Example - Buildup Analysis (Horner Method)</h2>
- * 
+ *
  * <pre>{@code
  * // Well flowed at 1500 Sm3/day for 100 hours before shut-in
  * well.addRateChange(0.0, 1500.0); // Start production
  * well.addRateChange(100.0, 0.0); // Shut-in
- * 
+ *
  * BuildupResult buildup = well.calculateBuildup(24.0); // After 24 hrs shut-in
  * System.out.println("Pws: " + buildup.shutInPressure + " bara");
  * System.out.println("Permeability from slope: " + buildup.permeabilityFromSlope + " mD");
@@ -427,8 +426,7 @@ public class TransientWellModel implements Serializable {
 
     // Permeability from slope: k = q·μ·B / (4πmh)
     // m in bar/log cycle, h in m
-    double kCalc = qReservoir * fluidViscosity * 1e-3 * formationVolumeFactor
-        / (4 * PI * m / 1e5 * formationThickness);
+    double kCalc = qReservoir * fluidViscosity * 1e-3 * formationVolumeFactor / (4 * PI * m / 1e5 * formationThickness);
     result.permeabilityFromSlope = kCalc / 9.869233e-16; // Convert to mD
 
     // Extrapolated pressure P* (Horner time → 1)
@@ -441,8 +439,10 @@ public class TransientWellModel implements Serializable {
     double p1hr = calculatePressureWithSuperposition(shutInStartTime + 1.0);
     double pwfAtShutIn = calculatePressureWithSuperposition(shutInStartTime);
     if (m > 0) {
-      double logTerm = Math.log10(permeability * 9.869233e-16 / (porosity * fluidViscosity * 1e-3
-          * totalCompressibility / 1e5 * wellboreRadius * wellboreRadius)) - 3.23;
+      double logTerm = Math
+          .log10(permeability * 9.869233e-16
+              / (porosity * fluidViscosity * 1e-3 * totalCompressibility / 1e5 * wellboreRadius * wellboreRadius))
+          - 3.23;
       result.skinFromIntercept = 1.151 * ((p1hr - pwfAtShutIn) / m - logTerm);
     } else {
       result.skinFromIntercept = skinFactor;
@@ -590,8 +590,8 @@ public class TransientWellModel implements Serializable {
    * <code>t_D = η·t / r_w² = (k·t) / (φ·μ·c_t·r_w²)</code>
    * </p>
    * <p>
-   * where η is the hydraulic diffusivity. This parameter controls the rate of pressure propagation
-   * through the reservoir.
+   * where η is the hydraulic diffusivity. This parameter controls the rate of pressure propagation through the
+   * reservoir.
    * </p>
    *
    * @param timeSec time (seconds)
@@ -612,9 +612,8 @@ public class TransientWellModel implements Serializable {
    * <code>r_inv = √(4·η·t)</code>
    * </p>
    * <p>
-   * This is based on the distance at which the pressure disturbance is approximately 1% of the
-   * wellbore value. When r_inv approaches the drainage radius, the well transitions from
-   * infinite-acting to boundary-dominated flow.
+   * This is based on the distance at which the pressure disturbance is approximately 1% of the wellbore value. When
+   * r_inv approaches the drainage radius, the well transitions from infinite-acting to boundary-dominated flow.
    * </p>
    *
    * @param timeSec time (seconds)
@@ -638,11 +637,9 @@ public class TransientWellModel implements Serializable {
    * For negative arguments (transient flow), this is computed using:
    * </p>
    * <ul>
-   * <li><b>Small |x| (less than 1):</b> Series expansion:
-   * {@code Ei(-x) = -γ - ln(x) + x - x²/(2·2!) + x³/(3·3!) -
+   * <li><b>Small |x| (less than 1):</b> Series expansion: {@code Ei(-x) = -γ - ln(x) + x - x²/(2·2!) + x³/(3·3!) -
    * ...}</li>
-   * <li><b>Large |x| (≥ 1):</b> Asymptotic expansion: Ei(-x) ≈ -(e^(-x)/x) × [1 - 1/x + 2!/x² -
-   * ...]</li>
+   * <li><b>Large |x| (≥ 1):</b> Asymptotic expansion: Ei(-x) ≈ -(e^(-x)/x) × [1 - 1/x + 2!/x² - ...]</li>
    * </ul>
    * <p>
    * where γ = 0.5772... is the Euler-Mascheroni constant.

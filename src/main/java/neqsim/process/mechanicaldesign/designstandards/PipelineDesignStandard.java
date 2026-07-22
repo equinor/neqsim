@@ -6,9 +6,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.MechanicalDesignMarginResult;
 
 /**
- * <p>
  * PipelineDesignStandard class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class PipelineDesignStandard extends DesignStandard {
   private final MechanicalDesignMarginResult safetyMargins;
 
   /**
-   * <p>
    * Constructor for PipelineDesignStandard.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
@@ -39,10 +35,10 @@ public class PipelineDesignStandard extends DesignStandard {
     // double jointEfficiency =
     // equipment.getJointEfficiencyStandard().getJEFactor();
 
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
-      try (java.sql.ResultSet dataSet = database.getResultSet(
-          ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Pipeline' AND Company='"
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      try (java.sql.ResultSet dataSet = database
+          .getResultSet(("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Pipeline' AND Company='"
               + resolveCompanyIdentifier() + "'"))) {
         while (dataSet.next()) {
           String specName = dataSet.getString("SPECIFICATION");
@@ -60,18 +56,21 @@ public class PipelineDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * calcPipelineWallThickness.
-   * </p>
    *
    * @return a double
    */
   public double calcPipelineWallThickness() {
     if (standardName.equals("StatoilTR")) {
       return 0.11 * safetyFactor;
-    } else {
-      return 0.01;
     }
+    StandardType selectedStandard = cataloguedPipelineStandard();
+    if (selectedStandard != null) {
+      throw new UnsupportedOperationException("No edition-specific wall-thickness calculation is implemented for "
+          + selectedStandard.getCode() + "; use a typed design kernel or requirement pack");
+    }
+    logger.warn("Using legacy 0.01 m pipeline wall-thickness fallback for unrecognised standard {}", standardName);
+    return 0.01;
   }
 
   /**
@@ -89,5 +88,15 @@ public class PipelineDesignStandard extends DesignStandard {
       return standardName;
     }
     return identifier;
+  }
+
+  private StandardType cataloguedPipelineStandard() {
+    for (StandardType standardType : StandardType.values()) {
+      if ("pipeline design codes".equals(standardType.getDesignStandardCategory())
+          && standardName.startsWith(standardType.getCode())) {
+        return standardType;
+      }
+    }
+    return null;
   }
 }

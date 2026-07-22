@@ -21,9 +21,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Abstract FluidBoundary class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -65,9 +63,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   protected int solverType = 0;
 
   /**
-   * <p>
    * Constructor for FluidBoundary.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -98,17 +94,15 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * initInterphaseSystem.
-   * </p>
    */
   public void initInterphaseSystem() {
     interphaseSystem = bulkSystem.clone();
     interphaseSystem.setNumberOfPhases(2);
 
     interphaseSystem.initBeta();
-    interphaseSystem.setTemperature(
-        (bulkSystem.getPhase(0).getTemperature() + bulkSystem.getPhase(1).getTemperature()) / 2.0);
+    interphaseSystem
+        .setTemperature((bulkSystem.getPhase(0).getTemperature() + bulkSystem.getPhase(1).getTemperature()) / 2.0);
     interphaseSystem.calc_x_y();
     interphaseSystem.init(3);
 
@@ -131,9 +125,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * Constructor for FluidBoundary.
-   * </p>
    *
    * @param flowNode a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */
@@ -160,8 +152,8 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * Specifies if both mass and heat transfer should be solved for. Also specifies if we are going
-   * to solve using multicomponent mass transfer models.
+   * Specifies if both mass and heat transfer should be solved for. Also specifies if we are going to solve using
+   * multicomponent mass transfer models.
    *
    * @param type a int
    */
@@ -170,23 +162,19 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * initMassTransferCalc.
-   * </p>
    */
-  public void initMassTransferCalc() {}
+  public void initMassTransferCalc() {
+  }
 
   /**
-   * <p>
    * initHeatTransferCalc.
-   * </p>
    */
-  public void initHeatTransferCalc() {}
+  public void initHeatTransferCalc() {
+  }
 
   /**
-   * <p>
    * init. Calls interphaseSystem.init(3)
-   * </p>
    */
   public void init() {
     // if(this.bulkSystem.isChemicalSystem()) this.bulkSystem.initNumeric();
@@ -214,9 +202,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * Setter for the field <code>bulkSystem</code>.
-   * </p>
    *
    * @param bulkSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -237,9 +223,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * getInterphaseOpertions.
-   * </p>
    *
    * @return a {@link neqsim.thermodynamicoperations.ThermodynamicOperations} object
    */
@@ -254,51 +238,43 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * calcFluxTypeCorrectionMatrix.
-   * </p>
    *
    * @param phaseNum a int
    * @param k a int
    */
   public void calcFluxTypeCorrectionMatrix(int phaseNum, int k) {
-    fluxTypeCorrectionMatrixV[phaseNum] =
-        new Matrix(bulkSystem.getPhase(phaseNum).getNumberOfComponents(), 1);
-    fluxTypeCorrectionMatrix[phaseNum] =
-        new Matrix(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1, 1);
+    fluxTypeCorrectionMatrixV[phaseNum] = new Matrix(bulkSystem.getPhase(phaseNum).getNumberOfComponents(), 1);
+    fluxTypeCorrectionMatrix[phaseNum] = new Matrix(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1, 1);
     double temp = 0;
 
     double sum = 0;
     for (int i = 0; i < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
       temp = (i == k) ? 1.0 : 0.0;
       fluxTypeCorrectionMatrixV[phaseNum].set(i, 0, temp);
-      sum += fluxTypeCorrectionMatrixV[phaseNum].get(i, 0)
-          * bulkSystem.getPhase(phaseNum).getComponent(i).getx();
+      sum += fluxTypeCorrectionMatrixV[phaseNum].get(i, 0) * bulkSystem.getPhase(phaseNum).getComponent(i).getx();
     }
 
-    sum += fluxTypeCorrectionMatrixV[phaseNum]
-        .get(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1, 0)
-        * bulkSystem.getPhase(phaseNum)
-            .getComponents()[bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1].getx();
+    sum += fluxTypeCorrectionMatrixV[phaseNum].get(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1, 0)
+        * bulkSystem.getPhase(phaseNum).getComponents()[bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1]
+            .getx();
 
     for (int i = 0; i < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
       fluxTypeCorrectionMatrix[phaseNum].set(i, 0,
-          (fluxTypeCorrectionMatrixV[phaseNum].get(i, 0) - fluxTypeCorrectionMatrixV[phaseNum]
-              .get(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1, 0)) / sum);
+          (fluxTypeCorrectionMatrixV[phaseNum].get(i, 0)
+              - fluxTypeCorrectionMatrixV[phaseNum].get(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1, 0))
+              / sum);
     }
   }
 
   /**
-   * <p>
    * calcNonIdealCorrections.
-   * </p>
    *
    * @param phaseNum a int
    */
   public void calcNonIdealCorrections(int phaseNum) {
-    nonIdealCorrections[phaseNum] =
-        new Matrix(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1,
-            bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1);
+    nonIdealCorrections[phaseNum] = new Matrix(bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1,
+        bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1);
     double temp = 0;
     for (int i = 0; i < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; i++) {
       for (int j = 0; j < bulkSystem.getPhase(phaseNum).getNumberOfComponents() - 1; j++) {
@@ -328,11 +304,13 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
 
   /** {@inheritDoc} */
   @Override
-  public void massTransSolve() {}
+  public void massTransSolve() {
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void heatTransSolve() {}
+  public void heatTransSolve() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -352,8 +330,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     double temp = 0.0;
     for (int j = 0; j < bulkSystem.getPhase(phaseNum).getNumberOfComponents(); j++) {
       try {
-        temp += bulkSystem.getPhase(phaseNum).getComponent(j).getx()
-            * binaryMassTransferCoefficient[phaseNum][i][j];
+        temp += bulkSystem.getPhase(phaseNum).getComponent(j).getx() * binaryMassTransferCoefficient[phaseNum][i][j];
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }
@@ -369,7 +346,8 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
 
   /** {@inheritDoc} */
   @Override
-  public void setEnhancementType(int type) {}
+  public void setEnhancementType(int type) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -430,9 +408,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   }
 
   /**
-   * <p>
    * createTable.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return an array of {@link java.lang.String} objects
@@ -460,34 +436,31 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     FieldPosition test = new FieldPosition(0);
     for (int i = 0; i < bulkSystem.getNumberOfPhases(); i++) {
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 1][0] =
-            "eff. mass trans coef. " + bulkSystem.getPhases()[0].getComponent(j).getName();
+        table[j + 1][0] = "eff. mass trans coef. " + bulkSystem.getPhases()[0].getComponent(j).getName();
         buf = new StringBuffer();
-        table[j + 1][i + 1] =
-            nf.format(getEffectiveMassTransferCoefficient(i, j), buf, test).toString();
+        table[j + 1][i + 1] = nf.format(getEffectiveMassTransferCoefficient(i, j), buf, test).toString();
         table[j + 1][4] = "[-] bulkcoef";
       }
       if (getBulkSystem().isChemicalSystem()) {
         getEnhancementFactor().calcEnhancementVec(i);
         for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
-          table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][0] =
-              "enhancement " + getInterphaseSystem().getPhases()[0].getComponent(j).getName();
+          table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][0] = "enhancement "
+              + getInterphaseSystem().getPhases()[0].getComponent(j).getName();
           buf = new StringBuffer();
-          table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] =
-              nf.format(getEnhancementFactor().getEnhancementVec(j), buf, test).toString();
+          table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] = nf
+              .format(getEnhancementFactor().getEnhancementVec(j), buf, test).toString();
           table[j + bulkSystem.getPhases()[0].getNumberOfComponents() + 2][4] = "[-] interfacecoef";
         }
       }
       getBulkSystem().getPhase(i).getPhysicalProperties().calcEffectiveDiffusionCoefficients();
       for (int j = 0; j < bulkSystem.getPhases()[0].getNumberOfComponents(); j++) {
-        table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][0] =
-            "schmidt " + bulkSystem.getPhases()[0].getComponent(j).getName();
+        table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][0] = "schmidt "
+            + bulkSystem.getPhases()[0].getComponent(j).getName();
         buf = new StringBuffer();
-        table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] = nf.format(
-            getBulkSystem().getPhase(i).getPhysicalProperties().getEffectiveSchmidtNumber(j), buf,
-            test).toString();
-        table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][4] =
-            "[-] fluidboundarycoef";
+        table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][i + 1] = nf
+            .format(getBulkSystem().getPhase(i).getPhysicalProperties().getEffectiveSchmidtNumber(j), buf, test)
+            .toString();
+        table[j + 2 * bulkSystem.getPhases()[0].getNumberOfComponents() + 3][4] = "[-] fluidboundarycoef";
       }
 
       buf = new StringBuffer();
@@ -511,14 +484,14 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
     dialogContentPane.setLayout(new BorderLayout());
     Dimension screenDimension = Toolkit.getDefaultToolkit().getScreenSize();
     dialog.setSize(screenDimension.width / 2, screenDimension.height / 2); // pack();
-    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
+    String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
     String[][] table = createTable(name);
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
     dialogContentPane.add(scrollpane);
     Jtab.setRowHeight(dialog.getHeight() / table.length);
-    Jtab.setFont(new Font("Serif", Font.PLAIN,
-        dialog.getHeight() / table.length - dialog.getHeight() / table.length / 10));
+    Jtab.setFont(
+        new Font("Serif", Font.PLAIN, dialog.getHeight() / table.length - dialog.getHeight() / table.length / 10));
     // dialog.pack();
     dialog.setVisible(true);
   }
@@ -527,8 +500,7 @@ public abstract class FluidBoundary implements FluidBoundaryInterface, java.io.S
   @Override
   public void write(String name, String filename, boolean newfile) {
     String[][] table = createTable(name);
-    neqsim.datapresentation.filehandling.TextFile file =
-        new neqsim.datapresentation.filehandling.TextFile();
+    neqsim.datapresentation.filehandling.TextFile file = new neqsim.datapresentation.filehandling.TextFile();
     if (newfile) {
       file.newFile(filename);
     }

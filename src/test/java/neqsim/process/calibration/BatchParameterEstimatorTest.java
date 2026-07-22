@@ -105,16 +105,15 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
 
   @Test
   void testBatchResultCreation() {
-    String[] names = {"param1", "param2"};
-    double[] estimates = {10.0, 20.0};
-    double[] uncertainties = {0.5, 1.0};
+    String[] names = { "param1", "param2" };
+    double[] estimates = { 10.0, 20.0 };
+    double[] uncertainties = { 0.5, 1.0 };
     double chiSquare = 5.0;
     int iterations = 25;
     int dataPoints = 50;
     boolean converged = true;
 
-    BatchResult result = new BatchResult(names, estimates, uncertainties, chiSquare, iterations,
-        dataPoints, converged);
+    BatchResult result = new BatchResult(names, estimates, uncertainties, chiSquare, iterations, dataPoints, converged);
 
     assertNotNull(result);
     assertEquals(2, result.getEstimates().length);
@@ -130,9 +129,9 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
 
   @Test
   void testBatchResultConfidenceIntervals() {
-    String[] names = {"param1"};
-    double[] estimates = {10.0};
-    double[] uncertainties = {1.0}; // std dev = 1.0
+    String[] names = { "param1" };
+    double[] estimates = { 10.0 };
+    double[] uncertainties = { 1.0 }; // std dev = 1.0
 
     BatchResult result = new BatchResult(names, estimates, uncertainties, 1.0, 10, 20, true);
 
@@ -146,9 +145,9 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
 
   @Test
   void testBatchResultToMap() {
-    String[] names = {"param1", "param2"};
-    double[] estimates = {10.0, 20.0};
-    double[] uncertainties = {0.5, 1.0};
+    String[] names = { "param1", "param2" };
+    double[] estimates = { 10.0, 20.0 };
+    double[] uncertainties = { 0.5, 1.0 };
 
     BatchResult result = new BatchResult(names, estimates, uncertainties, 1.0, 10, 20, true);
 
@@ -161,9 +160,9 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
 
   @Test
   void testBatchResultToCalibrationResult() {
-    String[] names = {"param1"};
-    double[] estimates = {10.0};
-    double[] uncertainties = {0.5};
+    String[] names = { "param1" };
+    double[] estimates = { 10.0 };
+    double[] uncertainties = { 0.5 };
 
     BatchResult result = new BatchResult(names, estimates, uncertainties, 1.0, 10, 20, true);
 
@@ -178,8 +177,7 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
   void testProcessSimulationFunctionConfiguration() {
     ProcessSimulationFunction function = new ProcessSimulationFunction(process);
 
-    function.addParameter("heater1.outTemperature", 30.0, 80.0)
-        .addParameter("heater2.outTemperature", 40.0, 90.0)
+    function.addParameter("heater1.outTemperature", 30.0, 80.0).addParameter("heater2.outTemperature", 40.0, 90.0)
         .addMeasurement("mixer.outletStream.temperature");
 
     assertEquals(2, function.getParameterCount());
@@ -203,8 +201,8 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
 
   @Test
   void testTunableParameterClass() {
-    BatchParameterEstimator.TunableParameter param =
-        new BatchParameterEstimator.TunableParameter("path.to.param", "C", 0.0, 100.0, 50.0);
+    BatchParameterEstimator.TunableParameter param = new BatchParameterEstimator.TunableParameter("path.to.param", "C",
+        0.0, 100.0, 50.0);
 
     assertEquals("path.to.param", param.getPath());
     assertEquals("C", param.getUnit());
@@ -215,8 +213,8 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
 
   @Test
   void testMeasuredVariableClass() {
-    BatchParameterEstimator.MeasuredVariable meas =
-        new BatchParameterEstimator.MeasuredVariable("path.to.meas", "C", 0.5);
+    BatchParameterEstimator.MeasuredVariable meas = new BatchParameterEstimator.MeasuredVariable("path.to.meas", "C",
+        0.5);
 
     assertEquals("path.to.meas", meas.getPath());
     assertEquals("C", meas.getUnit());
@@ -231,8 +229,7 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
     Map<String, Double> measurements = new HashMap<>();
     measurements.put("outlet.temperature", 55.0);
 
-    BatchParameterEstimator.DataPoint dp =
-        new BatchParameterEstimator.DataPoint(conditions, measurements);
+    BatchParameterEstimator.DataPoint dp = new BatchParameterEstimator.DataPoint(conditions, measurements);
 
     assertEquals(100.0, dp.getConditions().get("feed.flowRate"), 1e-6);
     assertEquals(55.0, dp.getMeasurements().get("outlet.temperature"), 1e-6);
@@ -243,8 +240,7 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
     BatchParameterEstimator estimator = new BatchParameterEstimator(process);
 
     estimator.addTunableParameter("heater1.outTemperature", "C", 30.0, 80.0, 45.0)
-        .addMeasuredVariable("mixer.outletStream.temperature", "C", 0.5)
-        .addDataPoint(new HashMap<>(), new HashMap<>());
+        .addMeasuredVariable("mixer.outletStream.temperature", "C", 0.5).addDataPoint(new HashMap<>(), new HashMap<>());
 
     assertEquals(1, estimator.getParameterNames().length);
     assertEquals(1, estimator.getMeasurementNames().length);
@@ -261,8 +257,7 @@ class BatchParameterEstimatorTest extends neqsim.NeqSimTest {
   void testClearDataPoints() {
     BatchParameterEstimator estimator = new BatchParameterEstimator(process);
 
-    estimator.addDataPoint(new HashMap<>(), new HashMap<>()).addDataPoint(new HashMap<>(),
-        new HashMap<>());
+    estimator.addDataPoint(new HashMap<>(), new HashMap<>()).addDataPoint(new HashMap<>(), new HashMap<>());
 
     assertEquals(2, estimator.getDataPointCount());
 

@@ -16,10 +16,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.component.ComponentInterface;
 
 /**
- * <p>
- * Water Density Calculation class for aqueous salt solutions using Labiberte/Cooper partial
- * specific volumes.
- * </p>
+ * Water Density Calculation class for aqueous salt solutions using Labiberte/Cooper partial specific volumes.
  *
  * @author esol
  */
@@ -35,14 +32,14 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
   static {
     // Example: these entries must match how your components are named
     // in the phase, and use the correct c0..c4 from your table:
-    saltParameters.put("nacl", new double[] {-0.00433, 0.06471, 1.0166, 0.014624, 3315.6});
-    saltParameters.put("kcl", new double[] {-0.46782, 4.308, 2.378, 0.022044, 2714.0});
-    saltParameters.put("nabr", new double[] {109.77, 513.04, 1.5454, 0.011019, 1618.1});
-    saltParameters.put("cacl2", new double[] {-0.63254, 0.93995, 4.2785, 0.048319, 3180.9});
-    saltParameters.put("hcoona", new double[] {0.72701, 5.2872, 1.2768, 0.012640, 2554.3});
-    saltParameters.put("hcook", new double[] {13.500, 5.6764, 0.12357, 0.0055267, 2181.9});
-    saltParameters.put("kbr", new double[] {-0.0034507, 0.41086, 3.0836, 0.037482, 3202.1});
-    saltParameters.put("hcoocs", new double[] {30.138, 8.7212, 0.094231, 0.0063516, 2139.9});
+    saltParameters.put("nacl", new double[] { -0.00433, 0.06471, 1.0166, 0.014624, 3315.6 });
+    saltParameters.put("kcl", new double[] { -0.46782, 4.308, 2.378, 0.022044, 2714.0 });
+    saltParameters.put("nabr", new double[] { 109.77, 513.04, 1.5454, 0.011019, 1618.1 });
+    saltParameters.put("cacl2", new double[] { -0.63254, 0.93995, 4.2785, 0.048319, 3180.9 });
+    saltParameters.put("hcoona", new double[] { 0.72701, 5.2872, 1.2768, 0.012640, 2554.3 });
+    saltParameters.put("hcook", new double[] { 13.500, 5.6764, 0.12357, 0.0055267, 2181.9 });
+    saltParameters.put("kbr", new double[] { -0.0034507, 0.41086, 3.0836, 0.037482, 3202.1 });
+    saltParameters.put("hcoocs", new double[] { 30.138, 8.7212, 0.094231, 0.0063516, 2139.9 });
   }
 
   /**
@@ -70,8 +67,7 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
    * {@inheritDoc}
    *
    * <p>
-   * Calculate the density of the liquid phase (kg/m^3) using partial specific volumes of water +
-   * dissolved salts.
+   * Calculate the density of the liquid phase (kg/m^3) using partial specific volumes of water + dissolved salts.
    * </p>
    */
   @Override
@@ -85,7 +81,9 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
     double rhoWater = 1000.0; // fallback if water not found
 
     double phaseMolarMass = liquidPhase.getPhase().getMolarMass();
+    double totalMass = liquidPhase.getPhase().getNumberOfMolesInPhase() * phaseMolarMass;
     int numComps = liquidPhase.getPhase().getNumberOfComponents();
+    double[] pairedMoles = new double[numComps];
 
     // First pass: find water, store wH2O, get pure water density
     for (int i = 0; i < numComps; i++) {
@@ -118,7 +116,12 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
 
     boolean hasComponentContribution = sumPartialVolumes > 0.0;
 
-    // 3) Now compute partial volumes of salts and other solutes
+    sumPartialVolumes += calcIonPairSaltPartialVolumes(pairedMoles, totalMass, tempC);
+    if (sumPartialVolumes > 0.0) {
+      hasComponentContribution = true;
+    }
+
+    // 3) Now compute partial volumes of molecular salts and other unpaired solutes
     for (int i = 0; i < numComps; i++) {
       ComponentInterface comp = liquidPhase.getPhase().getComponent(i);
       String compName = comp.getName();
@@ -127,9 +130,14 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
         continue;
       }
 
-      // is it one of our salts?
+      double unpairedMoles = comp.getNumberOfMolesInPhase() - pairedMoles[i];
+      if (unpairedMoles <= 1.0e-30) {
+        continue;
+      }
+
+      // is it one of our molecular salts?
       double[] params = saltParameters.get(compName.toLowerCase());
-      double wComponent = comp.getx() * comp.getMolarMass() / phaseMolarMass;
+      double wComponent = unpairedMoles * comp.getMolarMass() / totalMass;
       if (params != null) {
         double vSalt = calcPartialVolumeSalt(params, tempC, wComponent);
         // partial volume contribution = mass fraction * vSalt
@@ -155,8 +163,93 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
   }
 
   /**
-   * Calculate partial specific volume (in m^3/kg) for a given salt using Labiberte and Cooper's
-   * correlation.
+   * Calculates partial-volume contributions from neutral salts reconstructed from explicit ions.
+   *
+   * @param pairedMoles mutable array receiving the number of moles consumed for each ion component
+   * @param totalMass total phase mass in kg
+   * @param temperatureC phase temperature in degrees Celsius
+   * @return sum of salt partial-volume contributions in m<sup>3</sup>/kg mixture
+   */
+  private double calcIonPairSaltPartialVolumes(double[] pairedMoles, double totalMass, double temperatureC) {
+    if (totalMass <= 0.0) {
+      return 0.0;
+    }
+
+    double partialVolume = 0.0;
+    partialVolume += calcIonPairSaltPartialVolume("cacl2", "Ca++", "Cl-", 1.0, 2.0, pairedMoles, totalMass,
+        temperatureC);
+    partialVolume += calcIonPairSaltPartialVolume("nacl", "Na+", "Cl-", 1.0, 1.0, pairedMoles, totalMass, temperatureC);
+    partialVolume += calcIonPairSaltPartialVolume("kcl", "K+", "Cl-", 1.0, 1.0, pairedMoles, totalMass, temperatureC);
+    partialVolume += calcIonPairSaltPartialVolume("nabr", "Na+", "Br-", 1.0, 1.0, pairedMoles, totalMass, temperatureC);
+    partialVolume += calcIonPairSaltPartialVolume("kbr", "K+", "Br-", 1.0, 1.0, pairedMoles, totalMass, temperatureC);
+    return partialVolume;
+  }
+
+  /**
+   * Adds one reconstructed ion-pair salt contribution to the mixture partial volume.
+   *
+   * @param saltKey key in the salt density-parameter map
+   * @param cationName cation component name
+   * @param anionName anion component name
+   * @param cationStoic cation stoichiometric coefficient in the neutral salt formula
+   * @param anionStoic anion stoichiometric coefficient in the neutral salt formula
+   * @param pairedMoles mutable array receiving consumed component moles
+   * @param totalMass total phase mass in kg
+   * @param temperatureC phase temperature in degrees Celsius
+   * @return salt partial-volume contribution in m<sup>3</sup>/kg mixture
+   */
+  private double calcIonPairSaltPartialVolume(String saltKey, String cationName, String anionName, double cationStoic,
+      double anionStoic, double[] pairedMoles, double totalMass, double temperatureC) {
+    double[] params = saltParameters.get(saltKey);
+    if (params == null) {
+      return 0.0;
+    }
+
+    int cationIndex = findComponentIndex(cationName);
+    int anionIndex = findComponentIndex(anionName);
+    if (cationIndex < 0 || anionIndex < 0) {
+      return 0.0;
+    }
+
+    ComponentInterface cation = liquidPhase.getPhase().getComponent(cationIndex);
+    ComponentInterface anion = liquidPhase.getPhase().getComponent(anionIndex);
+    double cationMoles = cation.getNumberOfMolesInPhase() - pairedMoles[cationIndex];
+    double anionMoles = anion.getNumberOfMolesInPhase() - pairedMoles[anionIndex];
+    double formulaMoles = Math.min(cationMoles / cationStoic, anionMoles / anionStoic);
+    if (formulaMoles <= 1.0e-30) {
+      return 0.0;
+    }
+
+    pairedMoles[cationIndex] += cationStoic * formulaMoles;
+    pairedMoles[anionIndex] += anionStoic * formulaMoles;
+
+    double saltMass = formulaMoles * (cationStoic * cation.getMolarMass() + anionStoic * anion.getMolarMass());
+    double wSalt = saltMass / totalMass;
+    if (wSalt <= 0.0) {
+      return 0.0;
+    }
+    return wSalt * calcPartialVolumeSalt(params, temperatureC, wSalt);
+  }
+
+  /**
+   * Finds a component by NeqSim component name.
+   *
+   * @param componentName component name to find
+   * @return component index, or {@code -1} if absent
+   */
+  private int findComponentIndex(String componentName) {
+    int numComps = liquidPhase.getPhase().getNumberOfComponents();
+    for (int i = 0; i < numComps; i++) {
+      String name = liquidPhase.getPhase().getComponent(i).getComponentName();
+      if (name != null && name.equals(componentName)) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Calculate partial specific volume (in m^3/kg) for a given salt using Labiberte and Cooper's correlation.
    *
    * <p>
    * v_salt = ( w_i + c2 + c3*T ) / [ (c0*w_i + c1) * exp( 0.000001*(T + c4)^2 ) ]
@@ -192,8 +285,7 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
    * @param pressureBar pressure [bar]
    * @return estimated density in kg/m^3 or {@code 0.0} if no estimate is available
    */
-  private double estimateComponentDensity(ComponentInterface comp, double temperatureK,
-      double pressureBar) {
+  private double estimateComponentDensity(ComponentInterface comp, double temperatureK, double pressureBar) {
     double density = 0.0;
 
     try {
@@ -221,8 +313,8 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
 
   private boolean isPolarSolventFallback(String componentName) {
     String name = normalizeComponentName(componentName);
-    return name.equals("meg") || name.equals("deg") || name.equals("teg")
-        || name.equals("methanol") || name.equals("ethanol");
+    return name.equals("meg") || name.equals("deg") || name.equals("teg") || name.equals("methanol")
+        || name.equals("ethanol");
   }
 
   private String normalizeComponentName(String componentName) {
@@ -238,32 +330,32 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
     double alpha; // volumetric thermal expansion coefficient [1/K]
 
     switch (name) {
-      case "meg":
-      case "monoethyleneglycol":
-      case "ethyleneglycol":
-        rhoRef = 1113.2;
-        alpha = 5.4e-4;
-        break;
-      case "deg":
-      case "diethyleneglycol":
-        rhoRef = 1118.0;
-        alpha = 5.0e-4;
-        break;
-      case "teg":
-      case "triethyleneglycol":
-        rhoRef = 1125.0;
-        alpha = 4.5e-4;
-        break;
-      case "methanol":
-        rhoRef = 791.8;
-        alpha = 1.20e-3;
-        break;
-      case "ethanol":
-        rhoRef = 789.3;
-        alpha = 1.10e-3;
-        break;
-      default:
-        return 0.0;
+    case "meg":
+    case "monoethyleneglycol":
+    case "ethyleneglycol":
+      rhoRef = 1113.2;
+      alpha = 5.4e-4;
+      break;
+    case "deg":
+    case "diethyleneglycol":
+      rhoRef = 1118.0;
+      alpha = 5.0e-4;
+      break;
+    case "teg":
+    case "triethyleneglycol":
+      rhoRef = 1125.0;
+      alpha = 4.5e-4;
+      break;
+    case "methanol":
+      rhoRef = 791.8;
+      alpha = 1.20e-3;
+      break;
+    case "ethanol":
+      rhoRef = 789.3;
+      alpha = 1.10e-3;
+      break;
+    default:
+      return 0.0;
     }
 
     double denom = 1.0 + alpha * deltaT;
@@ -275,12 +367,12 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
   }
 
   /**
-   * Density of pure liquid water from IAPWS-IF97 Region 1. Inputs: temperatureK — absolute
-   * temperature [K], pressureBar — absolute pressure [bar] Returns: density [kg/m^3]
+   * Density of pure liquid water from IAPWS-IF97 Region 1. Inputs: temperatureK — absolute temperature [K], pressureBar
+   * — absolute pressure [bar] Returns: density [kg/m^3]
    *
    * <p>
-   * Valid (Region 1): 273.15 K ≤ T ≤ 623.15 K and p ≥ p_sat(T) up to 1000 bar. This is the
-   * compressed-/subcooled-liquid region. For steam or T greater than 623 K, use other IF97 regions.
+   * Valid (Region 1): 273.15 K ≤ T ≤ 623.15 K and p ≥ p_sat(T) up to 1000 bar. This is the compressed-/subcooled-liquid
+   * region. For steam or T greater than 623 K, use other IF97 regions.
    * </p>
    *
    * @param temperatureK Temperature in Kelvin
@@ -298,19 +390,18 @@ public class Water extends LiquidPhysicalPropertyMethod implements DensityInterf
     final double TStarK = 1386.0; // Region 1 temperature scaling [K]
 
     // Coefficients for Region 1 (Table 2 in IF97)
-    final int[] I = {0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5,
-        8, 8, 21, 23, 29, 30, 31, 32};
-    final int[] J = {-2, -1, 0, 1, 2, 3, 4, 5, -9, -7, -1, 0, 1, 3, -3, 0, 1, 3, 17, -4, 0, 6, -5,
-        -2, 10, -8, -11, -6, -29, -31, -38, -39, -40, -41};
-    final double[] n = {0.14632971213167, -0.84548187169114, -0.37563603672040e1,
-        0.33855169168385e1, -0.95791963387872, 0.15772038513228e-1, -0.16616417199501e-1,
-        0.81214629983568e-3, 0.28319080123804e-3, -0.60706301565874e-3, -0.18990068218419e-1,
-        -0.32529748770505e-1, -0.21841717175414e-1, -0.52838357969930e-4, -0.47184321073267e-3,
-        -0.30001780793026e-3, 0.47661393906987e-4, -0.44141845330846e-5, -0.72694996297594e-15,
-        -0.31679644845054e-4, -0.28270797985312e-5, -0.85205128120103e-9, -0.22425281908000e-5,
-        -0.65171222895601e-6, -0.14341729937924e-12, -0.40516996860117e-6, -0.12734301741641e-8,
-        -0.17424871230634e-9, -0.68762131295531e-18, 0.14478307828521e-19, 0.26335781662795e-22,
-        -0.11947622640071e-22, 0.18228094581404e-23, -0.93537087292458e-25};
+    final int[] I = { 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 4, 4, 4, 5, 8, 8, 21, 23, 29,
+        30, 31, 32 };
+    final int[] J = { -2, -1, 0, 1, 2, 3, 4, 5, -9, -7, -1, 0, 1, 3, -3, 0, 1, 3, 17, -4, 0, 6, -5, -2, 10, -8, -11, -6,
+        -29, -31, -38, -39, -40, -41 };
+    final double[] n = { 0.14632971213167, -0.84548187169114, -0.37563603672040e1, 0.33855169168385e1,
+        -0.95791963387872, 0.15772038513228e-1, -0.16616417199501e-1, 0.81214629983568e-3, 0.28319080123804e-3,
+        -0.60706301565874e-3, -0.18990068218419e-1, -0.32529748770505e-1, -0.21841717175414e-1, -0.52838357969930e-4,
+        -0.47184321073267e-3, -0.30001780793026e-3, 0.47661393906987e-4, -0.44141845330846e-5, -0.72694996297594e-15,
+        -0.31679644845054e-4, -0.28270797985312e-5, -0.85205128120103e-9, -0.22425281908000e-5, -0.65171222895601e-6,
+        -0.14341729937924e-12, -0.40516996860117e-6, -0.12734301741641e-8, -0.17424871230634e-9, -0.68762131295531e-18,
+        0.14478307828521e-19, 0.26335781662795e-22, -0.11947622640071e-22, 0.18228094581404e-23,
+        -0.93537087292458e-25 };
 
     // Reduced variables
     final double pMPa = pressureBar * 0.1; // bar -> MPa

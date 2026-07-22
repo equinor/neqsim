@@ -9,9 +9,7 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * GTSurfaceTensionSimple class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -32,16 +30,13 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   private double[][][] dmudn2 = null;
 
   /**
-   * <p>
    * Constructor for GTSurfaceTensionSimple.
-   * </p>
    */
-  public GTSurfaceTensionSimple() {}
+  public GTSurfaceTensionSimple() {
+  }
 
   /**
-   * <p>
    * Constructor for GTSurfaceTensionSimple.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -50,9 +45,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * calcInfluenceParameters.
-   * </p>
    */
   public void calcInfluenceParameters() {
     influenceParam = new double[localSystem.getPhase(0).getNumberOfComponents()];
@@ -79,10 +72,10 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
     double[] del_den_interface = new double[localSystem.getPhase(0).getNumberOfComponents()];
     double[] del_den_interface_old = new double[localSystem.getPhase(0).getNumberOfComponents()];
     double[] mu_equi = new double[localSystem.getPhase(0).getNumberOfComponents()];
-    double[][][] dmudn = new double[ite_step][localSystem.getPhase(0)
-        .getNumberOfComponents()][localSystem.getPhase(0).getNumberOfComponents()];
-    dmudn2 = new double[ite_step][localSystem.getPhase(0).getNumberOfComponents()][localSystem
-        .getPhase(0).getNumberOfComponents()];
+    double[][][] dmudn = new double[ite_step][localSystem.getPhase(0).getNumberOfComponents()][localSystem.getPhase(0)
+        .getNumberOfComponents()];
+    dmudn2 = new double[ite_step][localSystem.getPhase(0).getNumberOfComponents()][localSystem.getPhase(0)
+        .getNumberOfComponents()];
     double[][] mu_inter = new double[ite_step][localSystem.getPhase(0).getNumberOfComponents()];
     double[] mu_times_den = new double[ite_step];
     double[][] fmatrix = new double[localSystem.getPhase(0).getNumberOfComponents()
@@ -99,33 +92,29 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
     }
 
     for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
-      mu_equi[i] = system.getPhase(interface1).getComponent(i)
-          .getChemicalPotential(system.getPhase(interface1));
+      mu_equi[i] = system.getPhase(interface1).getComponent(i).getChemicalPotential(system.getPhase(interface1));
       den_interface[0][i] = 1e5 * system.getPhase(interface1).getComponent(i).getx()
           / system.getPhase(interface1).getMolarVolume();
       localSystem.addComponent(localSystem.getPhase(0).getComponent(i).getName(),
           -system.getPhase(0).getComponent(i).getNumberOfmoles());
       localSystem.addComponent(localSystem.getPhase(0).getComponent(i).getName(),
-          system.getPhase(interface1).getComponent(i).getx()
-              / system.getPhase(interface1).getMolarVolume());
+          system.getPhase(interface1).getComponent(i).getx() / system.getPhase(interface1).getMolarVolume());
     }
 
-    del_den_interface[referenceComponentNumber] =
-        (1e5 * system.getPhase(interface2).getComponent(referenceComponentNumber).getx()
-            / system.getPhase(interface2).getMolarVolume()
-            - 1e5 * system.getPhase(interface1).getComponent(referenceComponentNumber).getx()
-                / system.getPhase(interface1).getMolarVolume())
-            / (ite_step * 1.0);
+    del_den_interface[referenceComponentNumber] = (1e5
+        * system.getPhase(interface2).getComponent(referenceComponentNumber).getx()
+        / system.getPhase(interface2).getMolarVolume()
+        - 1e5 * system.getPhase(interface1).getComponent(referenceComponentNumber).getx()
+            / system.getPhase(interface1).getMolarVolume())
+        / (ite_step * 1.0);
     /*
      * System.out.println("del den ref " + system.getPhase(interface1).getComponent(0).getx() /
      * system.getPhase(interface1).getMolarVolume()); System.out.println("del den ref2 " +
-     * system.getPhase(interface2).getComponent(0).getx() /
-     * system.getPhase(interface2).getMolarVolume());
+     * system.getPhase(interface2).getComponent(0).getx() / system.getPhase(interface2).getMolarVolume());
      *
      * System.out.println("del den ref " + system.getPhase(interface1).getComponent(1).getx() /
      * system.getPhase(interface1).getMolarVolume()); System.out.println("del den ref2 " +
-     * system.getPhase(interface2).getComponent(1).getx() /
-     * system.getPhase(interface2).getMolarVolume());
+     * system.getPhase(interface2).getComponent(1).getx() / system.getPhase(interface2).getMolarVolume());
      */
 
     localSystem.init(0);
@@ -137,16 +126,14 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
     localSystem.init(3);
     for (int j = 1; j < ite_step; j++) {
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
-        mu_inter[j][i] =
-            localSystem.getPhase(0).getComponent(i).getChemicalPotential(localSystem.getPhase(0));
+        mu_inter[j][i] = localSystem.getPhase(0).getComponent(i).getChemicalPotential(localSystem.getPhase(0));
         /*
          * if (java.lang.Double.isNaN(mu_inter[j][i])) { double chemicalPotential =
          * localSystem.getPhase(0).getComponent(i) .getChemicalPotential(localSystem.getPhase(0)); }
          */
 
         for (int k = 0; k < localSystem.getPhase(0).getNumberOfComponents(); k++) {
-          dmudn[j][i][k] = localSystem.getPhase(0).getComponent(i).getChemicalPotentialdNTV(k,
-              localSystem.getPhase(0));
+          dmudn[j][i][k] = localSystem.getPhase(0).getComponent(i).getChemicalPotentialdNTV(k, localSystem.getPhase(0));
         }
       }
 
@@ -156,10 +143,8 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         if (i == referenceComponentNumber) {
           continue;
         }
-        bmatrix[ii] = Math.sqrt(influenceParam[referenceComponentNumber])
-            * dmudn[j][i][referenceComponentNumber]
-            - Math.sqrt(influenceParam[i])
-                * dmudn[j][referenceComponentNumber][referenceComponentNumber];
+        bmatrix[ii] = Math.sqrt(influenceParam[referenceComponentNumber]) * dmudn[j][i][referenceComponentNumber]
+            - Math.sqrt(influenceParam[i]) * dmudn[j][referenceComponentNumber][referenceComponentNumber];
         kk = 0;
         for (int k = 0; k < localSystem.getPhase(0).getNumberOfComponents(); k++) {
           if (k == referenceComponentNumber) {
@@ -174,8 +159,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
 
       if (localSystem.getPhase(0).getNumberOfComponents() > 1) {
         Matrix fmatrixJama = new Matrix(fmatrix);
-        Matrix bmatrixJama =
-            new Matrix(bmatrix, localSystem.getPhase(0).getNumberOfComponents() - 1);
+        Matrix bmatrixJama = new Matrix(bmatrix, localSystem.getPhase(0).getNumberOfComponents() - 1);
         try {
           ans = fmatrixJama.solveTranspose(bmatrixJama.transpose());
         } catch (Exception ex) {
@@ -187,8 +171,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
         if (i != referenceComponentNumber) {
           del_den_interface[i] = ans.get(pp, 0) * del_den_interface[referenceComponentNumber];
-          if (Math.abs(ans.get(pp, 0)) * del_den_interface[referenceComponentNumber]
-              / den_interface[j - 1][i] > 0.1) {
+          if (Math.abs(ans.get(pp, 0)) * del_den_interface[referenceComponentNumber] / den_interface[j - 1][i] > 0.1) {
             del_den_interface[i] = Math.signum(ans.get(pp, 0)) * den_interface[j - 1][i];
           }
           pp++;
@@ -212,8 +195,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         localSystem.init(3);
 
         for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
-          mu_inter[j][i] =
-              localSystem.getPhase(0).getComponent(i).getChemicalPotential(localSystem.getPhase(0));
+          mu_inter[j][i] = localSystem.getPhase(0).getComponent(i).getChemicalPotential(localSystem.getPhase(0));
           for (int k = 0; k < localSystem.getPhase(0).getNumberOfComponents(); k++) {
             dmudn[j][i][k] = localSystem.getPhase(0).getComponent(i).getChemicalPotentialdNTV(k,
                 localSystem.getPhase(0));
@@ -252,8 +234,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
           try {
             // ans = fmatrixJama.solveTranspose(bmatrixJama.transpose());
             // ans2 = new BigMatrixImpl(fmatrixJama.solve(bmatrix));
-            DecompositionSolver solver1 =
-                new org.apache.commons.math3.linear.LUDecomposition(fmatrixJama).getSolver();
+            DecompositionSolver solver1 = new org.apache.commons.math3.linear.LUDecomposition(fmatrixJama).getSolver();
             ans2 = solver1.solve(bRealMatrix);
           } catch (Exception ex) {
             logger.error(ex.getMessage(), ex);
@@ -298,13 +279,12 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
         }
       }
       mu_times_den[j] += -(pressure_interface[j] - pressure_interface[0]);
-      z_step[j] = z_step[j - 1] + Math.sqrt(kappa / (2.0 * mu_times_den[j]))
-          * del_den_interface[referenceComponentNumber];
+      z_step[j] = z_step[j - 1]
+          + Math.sqrt(kappa / (2.0 * mu_times_den[j])) * del_den_interface[referenceComponentNumber];
       if (Double.isNaN(z_step[j])) {
         break;
       }
-      surdenstemp +=
-          Math.sqrt(2.0 * kappa * mu_times_den[j]) * del_den_interface[referenceComponentNumber];
+      surdenstemp += Math.sqrt(2.0 * kappa * mu_times_den[j]) * del_den_interface[referenceComponentNumber];
       // * thermo.ThermodynamicConstantsInterface.avagadroNumber;
     }
 
@@ -325,9 +305,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getMolarDensity.
-   * </p>
    *
    * @param compnum a int
    * @return an array of type double
@@ -341,9 +319,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getMolarDensityTotal.
-   * </p>
    *
    * @return an array of type double
    */
@@ -358,9 +334,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getz.
-   * </p>
    *
    * @return an array of type double
    */
@@ -369,9 +343,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getPressure.
-   * </p>
    *
    * @return an array of type double
    */
@@ -380,9 +352,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getInfluenceParameter.
-   * </p>
    *
    * @param interfaceTension a double
    * @param componentNumber a int
@@ -410,8 +380,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
       }
       calcVal = calcSurfaceTension(0, 1) - interfaceTension;
 
-      dSurfTensdinfluence =
-          (calcVal - oldCalcVal) / (influenceParam[componentNumber] - oldInfluenceParameter);
+      dSurfTensdinfluence = (calcVal - oldCalcVal) / (influenceParam[componentNumber] - oldInfluenceParameter);
       oldInfluenceParameter = influenceParam[componentNumber];
     } while (Math.abs(calcVal / interfaceTension) > 1e-8 && iter < 100);
     calcInfluenceParameter = true;
@@ -419,9 +388,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dmudn2</code>.
-   * </p>
    *
    * @return the dmudn2
    */
@@ -430,9 +397,7 @@ public class GTSurfaceTensionSimple extends SurfaceTension {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dmudn2</code>.
-   * </p>
    *
    * @param dmudn2 the dmudn2 to set
    */

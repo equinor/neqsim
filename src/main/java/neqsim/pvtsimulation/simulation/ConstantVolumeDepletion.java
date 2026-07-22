@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.simulation;
 
 import java.util.ArrayList;
+import java.util.Locale;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -14,9 +15,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ConstantVolumeDepletion class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -24,6 +23,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 public class ConstantVolumeDepletion extends BasePVTsimulation {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(ConstantVolumeDepletion.class);
+
+  private static final double CELL_VOLUME_RELATIVE_TOLERANCE = 1.0e-8;
+  private static final int MAX_CELL_VOLUME_ITERATIONS = 100;
 
   private double[] relativeVolume = null;
   double[] totalVolume = null;
@@ -34,13 +36,14 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   private double[] Zmix;
   private double[] Zgas = null;
   private double[] cummulativeMolePercDepleted = null;
+  private double[] materialBalanceRelativeError = null;
+  private double initialMoles = Double.NaN;
+  private double cumulativeMolesRemoved = 0.0;
   double[] temperatures = null;
   double[] pressure = null;
 
   /**
-   * <p>
    * Constructor for ConstantVolumeDepletion.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -49,9 +52,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * setTemperaturesAndPressures.
-   * </p>
    *
    * @param temperature an array of type double
    * @param pressure an array of type double
@@ -63,25 +64,23 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * calcSaturationConditions.
-   * </p>
    */
   public void calcSaturationConditions() {
     getThermoSystem().setPressure(1.0);
     do {
       getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
-    } while (getThermoSystem().getNumberOfPhases() == 1
-        && getThermoSystem().getPressure() < 1000.0);
+      runSaturationTPflash();
+    } while (getThermoSystem().getNumberOfPhases() == 1 && getThermoSystem().getPressure() < 1000.0);
     do {
       getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
-      thermoOps.TPflash();
+      runSaturationTPflash();
     } while (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPressure() < 1000.0);
     double minPres = getThermoSystem().getPressure() - 10.0;
     double maxPres = getThermoSystem().getPressure();
     do {
       getThermoSystem().setPressure((minPres + maxPres) / 2.0);
-      thermoOps.TPflash();
+      runSaturationTPflash();
       if (getThermoSystem().getNumberOfPhases() > 1) {
         minPres = getThermoSystem().getPressure();
       } else {
@@ -89,8 +88,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
     /*
-     * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) {
-     * logger.error(ex.getMessage(), ex); }
+     * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) { logger.error(ex.getMessage(), ex); }
      */
     getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     saturationVolume = getThermoSystem().getCorrectedVolume();
@@ -100,9 +98,75 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
+   * Runs a TP flash during the saturation-pressure scan with pressure context.
+   */
+  private void runSaturationTPflash() {
+    try {
+      thermoOps.TPflash();
+    } catch (Exception ex) {
+      String message = String.format(Locale.ROOT, "CVD saturation scan TP flash failed at pressure %.6f bara.",
+          getThermoSystem().getPressure("bara"));
+      logger.error(message, ex);
+      throw new IllegalStateException(message, ex);
+    }
+  }
+
+  /**
+   * Restore the constant CVD cell volume by withdrawing equilibrium gas.
+   */
+  private void restoreSaturationVolume() {
+    for (int iteration = 0; iteration < MAX_CELL_VOLUME_ITERATIONS; iteration++) {
+      try {
+        thermoOps.TPflash();
+      } catch (Exception ex) {
+        String message = String.format(Locale.ROOT,
+            "CVD cell-volume restoration TP flash failed at pressure %.6f bara, iteration %d.",
+            getThermoSystem().getPressure("bara"), iteration);
+        logger.error(message, ex);
+        throw new IllegalStateException(message, ex);
+      }
+      getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+
+      double currentVolume = getThermoSystem().getCorrectedVolume();
+      double relativeResidual = (currentVolume - saturationVolume) / saturationVolume;
+      if (Math.abs(relativeResidual) <= CELL_VOLUME_RELATIVE_TOLERANCE) {
+        return;
+      }
+      if (relativeResidual < 0.0) {
+        throw new IllegalStateException(String.format(Locale.ROOT,
+            "CVD gas removal overshot the saturation volume by %.3e relative.", -relativeResidual));
+      }
+      if (!getThermoSystem().hasPhaseType("gas")) {
+        throw new IllegalStateException("Cannot restore CVD cell volume without a gas phase.");
+      }
+
+      double gasMoles = getThermoSystem().getPhase("gas").getNumberOfMolesInPhase();
+      double gasVolume = getThermoSystem().getPhase("gas").getCorrectedVolume();
+      if (gasMoles <= 0.0 || gasVolume <= 0.0) {
+        throw new IllegalStateException("Cannot restore CVD cell volume from an empty gas phase.");
+      }
+
+      double molesToRemove = (currentVolume - saturationVolume) / gasVolume * gasMoles;
+      molesToRemove = Math.min(molesToRemove, 0.95 * gasMoles);
+      double[] componentRemoval = new double[getThermoSystem().getNumberOfComponents()];
+      for (int componentIndex = 0; componentIndex < componentRemoval.length; componentIndex++) {
+        componentRemoval[componentIndex] = molesToRemove
+            * getThermoSystem().getPhase("gas").getComponent(componentIndex).getx();
+      }
+
+      double removedMoles = 0.0;
+      for (int componentIndex = 0; componentIndex < componentRemoval.length; componentIndex++) {
+        getThermoSystem().addComponent(componentIndex, -componentRemoval[componentIndex]);
+        removedMoles += componentRemoval[componentIndex];
+      }
+      cumulativeMolesRemoved += removedMoles;
+    }
+
+    throw new IllegalStateException("CVD gas removal did not restore the saturation volume.");
+  }
+
+  /**
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     saturationConditionFound = false;
@@ -113,93 +177,54 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
     Zgas = new double[pressures.length];
     Zmix = new double[pressures.length];
     liquidRelativeVolume = new double[pressures.length];
-    double oldVolCorr = 0.0;
-    double volumeCorrection = 0.0;
     cummulativeMolePercDepleted = new double[pressures.length];
-    double totalNumberOfMoles = getThermoSystem().getTotalNumberOfMoles();
+    materialBalanceRelativeError = new double[pressures.length];
+
+    initialMoles = getThermoSystem().getTotalNumberOfMoles();
+    cumulativeMolesRemoved = 0.0;
     if (!Double.isNaN(temperature)) {
       getThermoSystem().setTemperature(temperature, temperatureUnit);
     }
+    calcSaturationConditions();
 
     for (int i = 0; i < pressures.length; i++) {
       getThermoSystem().setPressure(pressures[i]);
       try {
         thermoOps.TPflash();
       } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
+        String message = String.format(Locale.ROOT, "CVD TP flash failed at pressure %.6f bara.",
+            getThermoSystem().getPressure("bara"));
+        logger.error(message, ex);
+        throw new IllegalStateException(message, ex);
       }
       getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-      // getThermoSystem().display();
+
+      if (getThermoSystem().getNumberOfPhases() > 1
+          && getThermoSystem().getCorrectedVolume() > saturationVolume * (1.0 + CELL_VOLUME_RELATIVE_TOLERANCE)) {
+        restoreSaturationVolume();
+      }
+      getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+
       totalVolume[i] = getThermoSystem().getCorrectedVolume();
-      // System.out.println("volume " + totalVolume[i]);
-      cummulativeMolePercDepleted[i] =
-          100.0 - getThermoSystem().getTotalNumberOfMoles() / totalNumberOfMoles * 100;
-      if (getThermoSystem().getNumberOfPhases() > 1) {
-        if (!saturationConditionFound) {
-          calcSaturationConditions();
-          getThermoSystem().setPressure(pressures[i]);
-          try {
-            thermoOps.TPflash();
-            getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-          } catch (Exception ex) {
-            logger.error(ex.getMessage(), ex);
-          }
-        }
+      relativeVolume[i] = totalVolume[i] / saturationVolume;
+      double remainingMoles = getThermoSystem().getTotalNumberOfMoles();
+      cummulativeMolePercDepleted[i] = 100.0 - remainingMoles / initialMoles * 100.0;
+      materialBalanceRelativeError[i] = Math.abs(initialMoles - remainingMoles - cumulativeMolesRemoved) / initialMoles;
+      Zmix[i] = getThermoSystem().getZvolcorr();
 
-        // if (totalVolume[i] > saturationVolume) {
-        liquidVolume[i] = getThermoSystem().getPhase(1).getCorrectedVolume();
+      if (getThermoSystem().hasPhaseType("gas")) {
+        Zgas[i] = getThermoSystem().getPhase("gas").getZvolcorr();
+      }
+      if (getThermoSystem().hasPhaseType("oil")) {
+        liquidVolume[i] = getThermoSystem().getPhase("oil").getCorrectedVolume();
         liquidVolumeRelativeToVsat[i] = liquidVolume[i] / saturationVolume;
-        Zgas[i] = getThermoSystem().getPhase(0).getZvolcorr();
-        Zmix[i] = getThermoSystem().getZvolcorr();
-        liquidRelativeVolume[i] =
-            getThermoSystem().getPhase("oil").getCorrectedVolume() / saturationVolume * 100;
-        oldVolCorr = volumeCorrection;
-        volumeCorrection = getThermoSystem().getCorrectedVolume() - saturationVolume;
-        double test =
-            (volumeCorrection - oldVolCorr) / getThermoSystem().getPhase(0).getCorrectedVolume();
-        double[] change = new double[getThermoSystem().getPhase(0).getNumberOfComponents()];
-        // System.out.println(test);
-
-        for (int j = 0; j < getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
-          try {
-            change[j] =
-                (test * getThermoSystem().getPhase(0).getComponent(j).getx() < getThermoSystem()
-                    .getPhase(0).getComponent(j).getNumberOfMolesInPhase())
-                        ? test * getThermoSystem().getPhase(0).getComponent(j).getx()
-                        : 0.0;
-          } catch (Exception e) {
-            logger.debug(e.getMessage());
-          }
-        }
-        getThermoSystem().init(0);
-        for (int j = 0; j < getThermoSystem().getPhase(0).getNumberOfComponents(); j++) {
-          try {
-            getThermoSystem().addComponent(j, -change[j]);
-          } catch (Exception e) {
-            logger.debug(e.getMessage());
-          }
-        }
-        // getThermoSystem().init(0);
-        // getThermoSystem().init(1);
+        liquidRelativeVolume[i] = liquidVolumeRelativeToVsat[i] * 100.0;
       }
     }
-
-    for (int i = 0; i < pressures.length; i++) {
-      relativeVolume[i] = totalVolume[i] / saturationVolume;
-      // System.out.println("rel volume " + relativeVolume[i]);
-    }
-    try {
-      thermoOps.TPflash();
-    } catch (Exception ex) {
-      logger.error(ex.getMessage(), ex);
-    }
-    // System.out.println("test finished");
   }
 
   /**
-   * <p>
    * runTuning.
-   * </p>
    */
   public void runTuning() {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
@@ -209,7 +234,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
       for (int i = 0; i < experimentalData[0].length; i++) {
         CVDFunction function = new CVDFunction();
-        double[] guess = new double[] {234.0 / 1000.0}; // getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus()/1000.0};
+        double[] guess = new double[] { 234.0 / 1000.0 }; // getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus()/1000.0};
         function.setInitialGuess(guess);
 
         SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
@@ -218,11 +243,10 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
         tempSystem.setPressure(pressures[i]);
         // thermoOps.TPflash();
         // tempSystem.display();
-        double[] sample1 = {temperatures[i], pressures[i]};
+        double[] sample1 = { temperatures[i], pressures[i] };
         double relativeVolume = experimentalData[0][i];
-        double[] standardDeviation1 = {1.5};
-        SampleValue sample =
-            new SampleValue(relativeVolume, relativeVolume / 50.0, sample1, standardDeviation1);
+        double[] standardDeviation1 = { 1.5 };
+        SampleValue sample = new SampleValue(relativeVolume, relativeVolume / 50.0, sample1, standardDeviation1);
         sample.setFunction(function);
         sample.setThermodynamicSystem(tempSystem);
         sampleList.add(sample);
@@ -243,9 +267,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -258,20 +280,15 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
      * tempSystem.addComponent("propane", 5.05); tempSystem.addComponent("i-butane", 0.85);
      * tempSystem.addComponent("n-butane", 1.68); tempSystem.addComponent("iC5", 0.62);
      * tempSystem.addComponent("n-pentane", 0.79); tempSystem.addComponent("n-hexane", 0.83);
-     * tempSystem.addTBPfraction("C7", 1.06, 92.2 / 1000.0, 0.7324); tempSystem.addTBPfraction("C8",
-     * 1.06, 104.6 / 1000.0, 0.7602); tempSystem.addTBPfraction("C9", 0.79, 119.1 / 1000.0, 0.7677);
-     * tempSystem.addTBPfraction("C10", 0.57, 133.0 / 1000.0, 0.79);
-     * tempSystem.addTBPfraction("C11", 0.38, 155.0 / 1000.0, 0.795);
-     * tempSystem.addTBPfraction("C12", 0.37, 162.0 / 1000.0, 0.806);
-     * tempSystem.addTBPfraction("C13", 0.32, 177.0 / 1000.0, 0.824);
-     * tempSystem.addTBPfraction("C14", 0.27, 198.0 / 1000.0, 0.835);
-     * tempSystem.addTBPfraction("C15", 0.23, 202.0 / 1000.0, 0.84);
-     * tempSystem.addTBPfraction("C16", 0.19, 215.0 / 1000.0, 0.846);
-     * tempSystem.addTBPfraction("C17", 0.17, 234.0 / 1000.0, 0.84);
-     * tempSystem.addTBPfraction("C18", 0.13, 251.0 / 1000.0, 0.844);
-     * tempSystem.addTBPfraction("C19", 0.13, 270.0 / 1000.0, 0.854);
-     * tempSystem.addPlusFraction("C20", 0.62, 381.0 / 1000.0, 0.88);
-     * tempSystem.getCharacterization().getLumpingModel(). setNumberOfLumpedComponents(6);
+     * tempSystem.addTBPfraction("C7", 1.06, 92.2 / 1000.0, 0.7324); tempSystem.addTBPfraction("C8", 1.06, 104.6 /
+     * 1000.0, 0.7602); tempSystem.addTBPfraction("C9", 0.79, 119.1 / 1000.0, 0.7677); tempSystem.addTBPfraction("C10",
+     * 0.57, 133.0 / 1000.0, 0.79); tempSystem.addTBPfraction("C11", 0.38, 155.0 / 1000.0, 0.795);
+     * tempSystem.addTBPfraction("C12", 0.37, 162.0 / 1000.0, 0.806); tempSystem.addTBPfraction("C13", 0.32, 177.0 /
+     * 1000.0, 0.824); tempSystem.addTBPfraction("C14", 0.27, 198.0 / 1000.0, 0.835); tempSystem.addTBPfraction("C15",
+     * 0.23, 202.0 / 1000.0, 0.84); tempSystem.addTBPfraction("C16", 0.19, 215.0 / 1000.0, 0.846);
+     * tempSystem.addTBPfraction("C17", 0.17, 234.0 / 1000.0, 0.84); tempSystem.addTBPfraction("C18", 0.13, 251.0 /
+     * 1000.0, 0.844); tempSystem.addTBPfraction("C19", 0.13, 270.0 / 1000.0, 0.854); tempSystem.addPlusFraction("C20",
+     * 0.62, 381.0 / 1000.0, 0.88); tempSystem.getCharacterization().getLumpingModel(). setNumberOfLumpedComponents(6);
      * tempSystem.getCharacterization().characterisePlusFraction();
      */
     // tempSystem.addComponent("methane", 70.78);
@@ -303,19 +320,16 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
     ConstantVolumeDepletion CVDsim = new ConstantVolumeDepletion(tempSystem);
     CVDsim.setTemperature(315.0, "K");
-    CVDsim.setPressures(new double[] {400, 300.0, 200.0, 150.0, 100.0, 50.0});
+    CVDsim.setPressures(new double[] { 400, 300.0, 200.0, 150.0, 100.0, 50.0 });
     CVDsim.runCalc();
-    CVDsim.setTemperaturesAndPressures(new double[] {313, 313, 313, 313},
-        new double[] {400, 300.0, 200.0, 100.0});
-    double[][] expData = {{0.95, 0.99, 1.0, 1.1}};
+    CVDsim.setTemperaturesAndPressures(new double[] { 313, 313, 313, 313 }, new double[] { 400, 300.0, 200.0, 100.0 });
+    double[][] expData = { { 0.95, 0.99, 1.0, 1.1 } };
     CVDsim.setExperimentalData(expData);
     // CVDsim.runTuning();
   }
 
   /**
-   * <p>
    * Getter for the field <code>relativeVolume</code>.
-   * </p>
    *
    * @return the relativeVolume
    */
@@ -330,9 +344,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getZmix.
-   * </p>
    *
    * @return the Zmix
    */
@@ -341,9 +353,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getZgas.
-   * </p>
    *
    * @return the Zgas
    */
@@ -352,9 +362,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidRelativeVolume</code>.
-   * </p>
    *
    * @return the liquidRelativeVolume
    */
@@ -363,9 +371,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>cummulativeMolePercDepleted</code>.
-   * </p>
    *
    * @return the cummulativeMolePercDepleted
    */
@@ -385,8 +391,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    * </p>
    *
    * <p>
-   * This is a key QC check per Whitson methodology - K-value plots should show smooth, consistent
-   * trends. Erratic K-values indicate data quality issues.
+   * This is a key QC check per Whitson methodology - K-value plots should show smooth, consistent trends. Erratic
+   * K-values indicate data quality issues.
    * </p>
    *
    * @return 2D array of K-values [pressure_index][component_index], or null if not calculated
@@ -441,16 +447,25 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    * Validate material balance using the wet-gas material balance approach per Whitson.
    *
    * <p>
-   * This QC check verifies that the cumulative moles produced match the expected values based on
-   * the gas removed at each step. A tolerance of 1-2% is typically acceptable.
+   * This QC check verifies that the cumulative moles produced match the expected values based on the gas removed at
+   * each step. A tolerance of 1-2% is typically acceptable.
    * </p>
    *
    * @param tolerance acceptable relative error (e.g., 0.01 for 1%)
    * @return true if material balance is satisfied within tolerance
    */
   public boolean validateMaterialBalance(double tolerance) {
-    if (cummulativeMolePercDepleted == null || cummulativeMolePercDepleted.length == 0) {
+    if (!Double.isFinite(tolerance) || tolerance < 0.0 || cummulativeMolePercDepleted == null
+        || cummulativeMolePercDepleted.length == 0 || materialBalanceRelativeError == null) {
       return false;
+    }
+
+    for (int i = 0; i < materialBalanceRelativeError.length; i++) {
+      if (!Double.isFinite(materialBalanceRelativeError[i]) || materialBalanceRelativeError[i] > tolerance) {
+        logger.warn("CVD QC: Material-balance error {} exceeds tolerance {} at step {}",
+            materialBalanceRelativeError[i], tolerance, i);
+        return false;
+      }
     }
 
     // Check that cumulative depletion is monotonically increasing
@@ -479,8 +494,7 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    * </p>
    *
    * <p>
-   * This QC method allows comparison with reported gas densities to validate Z-factor and molecular
-   * weight consistency.
+   * This QC method allows comparison with reported gas densities to validate Z-factor and molecular weight consistency.
    * </p>
    *
    * @return array of calculated gas densities in kg/m³
@@ -509,8 +523,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    * Calculate oil density at each pressure step using material balance.
    *
    * <p>
-   * Per Whitson methodology, oil density is back-calculated from cell volume, liquid volume, and
-   * moles remaining. This serves as a QC check for the consistency of CVD data.
+   * Per Whitson methodology, oil density is back-calculated from cell volume, liquid volume, and moles remaining. This
+   * serves as a QC check for the consistency of CVD data.
    * </p>
    *
    * @return array of calculated oil densities in kg/m³, or null if calculation not possible
@@ -553,8 +567,8 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
    * Get liquid dropout curve (liquid volume percentage vs pressure).
    *
    * <p>
-   * The liquid dropout curve is a key result from CVD experiments for gas condensate fluids. It
-   * shows the percentage of liquid condensed at each pressure below the dew point.
+   * The liquid dropout curve is a key result from CVD experiments for gas condensate fluids. It shows the percentage of
+   * liquid condensed at each pressure below the dew point.
    * </p>
    *
    * @return array of liquid dropout percentages (volume %)
@@ -591,25 +605,20 @@ public class ConstantVolumeDepletion extends BasePVTsimulation {
 
     // Results table
     sb.append("Pressure Step Results:\n");
-    sb.append(String.format("%10s %12s %12s %12s %12s\n", "P (bar)", "Vrel", "Liq Vol %", "Z-gas",
-        "Depleted %"));
+    sb.append(String.format("%10s %12s %12s %12s %12s\n", "P (bar)", "Vrel", "Liq Vol %", "Z-gas", "Depleted %"));
     sb.append(StringUtils.repeat("-", 60) + "\n");
 
     if (pressures != null) {
       for (int i = 0; i < pressures.length; i++) {
-        double vrel =
-            (relativeVolume != null && i < relativeVolume.length) ? relativeVolume[i] : Double.NaN;
-        double liqVol = (liquidRelativeVolume != null && i < liquidRelativeVolume.length)
-            ? liquidRelativeVolume[i]
+        double vrel = (relativeVolume != null && i < relativeVolume.length) ? relativeVolume[i] : Double.NaN;
+        double liqVol = (liquidRelativeVolume != null && i < liquidRelativeVolume.length) ? liquidRelativeVolume[i]
             : Double.NaN;
         double zg = (Zgas != null && i < Zgas.length) ? Zgas[i] : Double.NaN;
-        double depl =
-            (cummulativeMolePercDepleted != null && i < cummulativeMolePercDepleted.length)
-                ? cummulativeMolePercDepleted[i]
-                : Double.NaN;
+        double depl = (cummulativeMolePercDepleted != null && i < cummulativeMolePercDepleted.length)
+            ? cummulativeMolePercDepleted[i]
+            : Double.NaN;
 
-        sb.append(String.format("%10.2f %12.4f %12.2f %12.4f %12.2f\n", pressures[i], vrel, liqVol,
-            zg, depl));
+        sb.append(String.format("%10.2f %12.4f %12.2f %12.4f %12.2f\n", pressures[i], vrel, liqVol, zg, depl));
       }
     }
     sb.append("\n");

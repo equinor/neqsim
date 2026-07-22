@@ -9,15 +9,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * AspenIP21Database class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class AspenIP21Database
-    implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class AspenIP21Database implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -28,9 +25,7 @@ public class AspenIP21Database
   private transient Statement statement = null;
 
   /**
-   * <p>
    * Constructor for AspenIP21Database.
-   * </p>
    */
   public AspenIP21Database() {
     try {
@@ -51,9 +46,7 @@ public class AspenIP21Database
   }
 
   /**
-   * <p>
    * openConnection.
-   * </p>
    *
    * @param database a {@link java.lang.String} object
    * @return a Connection object
@@ -81,9 +74,7 @@ public class AspenIP21Database
   }
 
   /**
-   * <p>
    * Setter for the field <code>statement</code>.
-   * </p>
    *
    * @param statement a Statement object
    */
@@ -92,9 +83,7 @@ public class AspenIP21Database
   }
 
   /**
-   * <p>
    * getResultSet.
-   * </p>
    *
    * @param sqlString a {@link java.lang.String} object
    * @return a ResultSet object
@@ -104,9 +93,7 @@ public class AspenIP21Database
   }
 
   /**
-   * <p>
    * getResultSet.
-   * </p>
    *
    * @param database a {@link java.lang.String} object
    * @param sqlString a {@link java.lang.String} object
@@ -124,9 +111,7 @@ public class AspenIP21Database
   }
 
   /**
-   * <p>
    * Getter for the field <code>statement</code>.
-   * </p>
    *
    * @return a Statement object
    */

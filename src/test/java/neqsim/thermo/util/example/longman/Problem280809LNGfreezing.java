@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Problem280809LNGfreezing class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class Problem280809LNGfreezing {
+  private static final Logger logger = LogManager.getLogger(Problem280809LNGfreezing.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(Problem280809LNGfreezing.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

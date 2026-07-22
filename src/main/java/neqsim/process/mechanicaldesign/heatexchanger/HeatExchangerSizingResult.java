@@ -3,8 +3,7 @@ package neqsim.process.mechanicaldesign.heatexchanger;
 import java.util.Objects;
 
 /**
- * Result structure capturing calculated geometry and performance indicators for a candidate heat
- * exchanger type.
+ * Result structure capturing calculated geometry and performance indicators for a candidate heat exchanger type.
  */
 public final class HeatExchangerSizingResult {
   private final HeatExchangerType type;
@@ -119,22 +118,21 @@ public final class HeatExchangerSizingResult {
 
   public double getMetric(HeatExchangerMechanicalDesign.SelectionCriterion criterion) {
     switch (Objects.requireNonNull(criterion, "criterion")) {
-      case MIN_AREA:
-        return requiredArea;
-      case MIN_WEIGHT:
-        return estimatedWeight;
-      case MIN_PRESSURE_DROP:
-        return estimatedPressureDrop;
-      default:
-        throw new IllegalStateException("Unknown selection criterion: " + criterion);
+    case MIN_AREA:
+      return requiredArea;
+    case MIN_WEIGHT:
+      return estimatedWeight;
+    case MIN_PRESSURE_DROP:
+      return estimatedPressureDrop;
+    default:
+      throw new IllegalStateException("Unknown selection criterion: " + criterion);
     }
   }
 
   @Override
   public String toString() {
-    return "HeatExchangerSizingResult{" + "type=" + type + ", requiredArea=" + requiredArea
-        + ", estimatedWeight=" + estimatedWeight + ", estimatedPressureDrop="
-        + estimatedPressureDrop + '}';
+    return "HeatExchangerSizingResult{" + "type=" + type + ", requiredArea=" + requiredArea + ", estimatedWeight="
+        + estimatedWeight + ", estimatedPressureDrop=" + estimatedPressureDrop + '}';
   }
 
   /**
@@ -159,7 +157,8 @@ public final class HeatExchangerSizingResult {
     private double moduleWidth;
     private double moduleHeight;
 
-    private Builder() {}
+    private Builder() {
+    }
 
     public Builder type(HeatExchangerType type) {
       this.type = type;

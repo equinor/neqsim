@@ -9,22 +9,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * AmineFlash class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
  * @version $Id: $Id
  */
 public class AmineFlash {
+  private static final Logger logger = LogManager.getLogger(AmineFlash.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(AmineFlash.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -57,8 +54,7 @@ public class AmineFlash {
     }
     double molprMDEA = (molMDEA / (1.0 + 0.30 * molMDEA));
     logger.info("mol % MDEA " + molprMDEA);
-    logger.info("molCO2/liter "
-        + loading * molprMDEA / testSystem.getPhase(1).getMolarMass() * density / 1e3);
+    logger.info("molCO2/liter " + loading * molprMDEA / testSystem.getPhase(1).getMolarMass() * density / 1e3);
     logger.info("pressure " + testSystem.getPressure());
     logger.info("pH " + testSystem.getPhase(1).getpH());
     logger.info("Henrys Constant CO2 " + testSystem.calcHenrysConstant("CO2"));

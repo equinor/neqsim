@@ -1,3 +1,8 @@
+---
+title: Alarm-Triggered Process Logic Integration Example
+description: "The example implements a comprehensive 5-layer safety system for process control."
+---
+
 # Alarm-Triggered Process Logic Integration Example
 
 ## Overview
@@ -386,11 +391,8 @@ alarmManager.acknowledgeAll(currentTime);
 ## Running the Example
 
 ```bash
-# Compile
-mvn compile
-
-# Run
-mvn exec:java -Dexec.mainClass="neqsim.process.util.example.ProcessLogicAlarmIntegratedExample"
+# Run example main() from test sources
+./mvnw -Dexec.classpathScope=test -Dexec.mainClass="neqsim.process.util.example.ProcessLogicAlarmIntegratedExample" exec:java
 ```
 
 ## Key Takeaways

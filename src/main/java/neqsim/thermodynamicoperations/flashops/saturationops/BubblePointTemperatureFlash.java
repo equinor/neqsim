@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * bubblePointTemperatureFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
   static Logger logger = LogManager.getLogger(BubblePointTemperatureFlash.class);
 
   /**
-   * <p>
    * Constructor for bubblePointTemperatureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -46,8 +42,8 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
     double ktot = 0.0;
     for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
       system.getPhases()[1].getComponent(i).setx(system.getPhases()[0].getComponent(i).getz());
-      system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getK()
-          * system.getPhases()[1].getComponent(i).getx());
+      system.getPhases()[0].getComponent(i)
+          .setx(system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getx());
     }
     system.setNumberOfPhases(2);
     do {
@@ -63,9 +59,8 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
           iterations++;
 
           yold = system.getPhases()[0].getComponent(i).getx();
-          system.getPhases()[0].getComponent(i)
-              .setK(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
-                  / system.getPhases()[0].getComponent(i).getFugacityCoefficient());
+          system.getPhases()[0].getComponent(i).setK(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
+              / system.getPhases()[0].getComponent(i).getFugacityCoefficient());
           system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
           system.getPhases()[0].getComponent(i)
               .setx(system.getPhases()[1].getComponent(i).getx()
@@ -75,12 +70,9 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
             && (iterations < maxNumberOfIterations));
 
         ytotal += system.getPhases()[0].getComponent(i).getx();
-        funk += system.getPhases()[1].getComponent(i).getx()
-            * system.getPhases()[1].getComponent(i).getK();
-        deriv += system.getPhases()[1].getComponent(i).getx()
-            * system.getPhases()[1].getComponent(i).getK()
-            * (system.getPhases()[1].getComponent(i).getdfugdt()
-                - system.getPhases()[0].getComponent(i).getdfugdt());
+        funk += system.getPhases()[1].getComponent(i).getx() * system.getPhases()[1].getComponent(i).getK();
+        deriv += system.getPhases()[1].getComponent(i).getx() * system.getPhases()[1].getComponent(i).getK()
+            * (system.getPhases()[1].getComponent(i).getdfugdt() - system.getPhases()[0].getComponent(i).getdfugdt());
         ktot += Math.abs(system.getPhases()[1].getComponent(i).getK() - 1.0);
       }
 
@@ -89,8 +81,7 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
       // system.setPressure(-Math.log(funk)/(deriv/funk)+system.getPressure());
       system.setTemperature(-(funk - 1) / deriv + system.getTemperature());
     } while ((Math.abs(ytotal - 1) > 1e-10) && (iterations < maxNumberOfIterations));
-    if (Math.abs(ytotal - 1.0) >= 1e-5
-        || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
+    if (Math.abs(ytotal - 1.0) >= 1e-5 || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
       setSuperCritical(true);
     }
     if (system.getPhase(0).getNumberOfComponents() == 1
@@ -105,5 +96,6 @@ public class BubblePointTemperatureFlash extends ConstantDutyTemperatureFlash {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 }

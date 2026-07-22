@@ -1,0 +1,13 @@
+{
+  "profile": "neqsim_dexpi_golden_fixture.v1",
+  "generator": "Dexpi20XmlWriter",
+  "sourceModel": "branching separator with compressor and pump outlets",
+  "nativeDexpi": "branching-process.dexpi.xml",
+  "semanticSummary": "neqsim-native-summary.json",
+  "validation": {
+    "officialDexpi20Xsd": "PASSED",
+    "neqsimSemanticProfile": "PASSED",
+    "roundTripSummary": "PASSED"
+  },
+  "approvalStatus": "REGRESSION_FIXTURE_NOT_ENGINEERING_DELIVERABLE"
+}

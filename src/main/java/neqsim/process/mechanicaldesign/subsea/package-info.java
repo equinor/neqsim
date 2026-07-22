@@ -2,36 +2,30 @@
  * Mechanical design package for subsea SURF (Subsea, Umbilicals, Risers, Flowlines) equipment.
  *
  * <p>
- * This package provides mechanical design calculation classes for subsea production equipment,
- * implementing industry standards for:
+ * This package provides mechanical design calculation classes for subsea production equipment, implementing industry
+ * standards for:
  * </p>
  *
  * <h2>Pipeline Infrastructure</h2>
  * <ul>
- * <li>{@link neqsim.process.mechanicaldesign.subsea.PLETMechanicalDesign} - PLET structural and
- * foundation design</li>
- * <li>{@link neqsim.process.mechanicaldesign.subsea.PLEMMechanicalDesign} - PLEM header and
- * foundation design</li>
- * <li>{@link neqsim.process.mechanicaldesign.subsea.SubseaJumperMechanicalDesign} - Jumper stress
- * analysis</li>
- * <li>{@link neqsim.process.mechanicaldesign.subsea.FlexiblePipeMechanicalDesign} - Flexible pipe
- * layer design</li>
+ * <li>{@link neqsim.process.mechanicaldesign.subsea.PLETMechanicalDesign} - PLET structural and foundation design</li>
+ * <li>{@link neqsim.process.mechanicaldesign.subsea.PLEMMechanicalDesign} - PLEM header and foundation design</li>
+ * <li>{@link neqsim.process.mechanicaldesign.subsea.SubseaJumperMechanicalDesign} - Jumper stress analysis</li>
+ * <li>{@link neqsim.process.mechanicaldesign.subsea.FlexiblePipeMechanicalDesign} - Flexible pipe layer design</li>
  * </ul>
  *
  * <h2>Production Equipment</h2>
  * <ul>
- * <li>{@link neqsim.process.mechanicaldesign.subsea.SubseaManifoldMechanicalDesign} - Manifold
- * header and structure design</li>
- * <li>{@link neqsim.process.mechanicaldesign.subsea.SubseaTreeMechanicalDesign} - Tree valve and
- * pressure containment design</li>
- * <li>{@link neqsim.process.mechanicaldesign.subsea.SubseaBoosterMechanicalDesign} - Pump/compressor
- * sizing</li>
+ * <li>{@link neqsim.process.mechanicaldesign.subsea.SubseaManifoldMechanicalDesign} - Manifold header and structure
+ * design</li>
+ * <li>{@link neqsim.process.mechanicaldesign.subsea.SubseaTreeMechanicalDesign} - Tree valve and pressure containment
+ * design</li>
+ * <li>{@link neqsim.process.mechanicaldesign.subsea.SubseaBoosterMechanicalDesign} - Pump/compressor sizing</li>
  * </ul>
  *
  * <h2>Control Systems</h2>
  * <ul>
- * <li>{@link neqsim.process.mechanicaldesign.subsea.UmbilicalMechanicalDesign} - Umbilical tube and
- * armor design</li>
+ * <li>{@link neqsim.process.mechanicaldesign.subsea.UmbilicalMechanicalDesign} - Umbilical tube and armor design</li>
  * </ul>
  *
  * <h2>Supported Design Standards</h2>

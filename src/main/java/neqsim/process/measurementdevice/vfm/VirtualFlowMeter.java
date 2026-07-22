@@ -9,14 +9,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Virtual Flow Meter for calculating multiphase flow rates from pressure and temperature
- * measurements.
+ * Virtual Flow Meter for calculating multiphase flow rates from pressure and temperature measurements.
  *
  * <p>
- * This class implements a physics-based virtual flow meter using NeqSim's thermodynamic models to
- * estimate oil, gas, and water flow rates. It is designed for integration with AI-powered
- * production optimization platforms that require accurate flow estimates with uncertainty
- * quantification.
+ * This class implements a physics-based virtual flow meter using NeqSim's thermodynamic models to estimate oil, gas,
+ * and water flow rates. It is designed for integration with AI-powered production optimization platforms that require
+ * accurate flow estimates with uncertainty quantification.
  * </p>
  *
  * <p>
@@ -46,7 +44,7 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   private double flowCoefficient = 1.0;
   private double calibrationFactor = 1.0;
 
-  private List<WellTestData> calibrationHistory = new ArrayList<>();
+  private transient List<WellTestData> calibrationHistory = new ArrayList<>();
   private Instant lastCalibration;
 
   private VFMResult lastResult;
@@ -63,8 +61,8 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
     private final double temperature;
     private final double chokeOpening;
 
-    public WellTestData(Instant timestamp, double oilRate, double gasRate, double waterRate,
-        double pressure, double temperature, double chokeOpening) {
+    public WellTestData(Instant timestamp, double oilRate, double gasRate, double waterRate, double pressure,
+        double temperature, double chokeOpening) {
       this.timestamp = timestamp;
       this.oilRate = oilRate;
       this.gasRate = gasRate;
@@ -177,8 +175,7 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
    * @param differentialPressure pressure drop in bar
    * @return VFM result with flow rates and uncertainties
    */
-  public VFMResult calculateFlowRates(double pressure, double differentialPressure,
-      double temperature) {
+  public VFMResult calculateFlowRates(double pressure, double differentialPressure, double temperature) {
     StreamInterface str = getStream();
     if (str == null || str.getFluid() == null) {
       return VFMResult.builder().quality(VFMResult.Quality.INVALID).build();
@@ -199,7 +196,6 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
 
     // Calculate phase flow rates based on differential pressure
     double dpRatio = Math.sqrt(Math.abs(differentialPressure));
-    double totalMolarFlow = fluid.getTotalNumberOfMoles();
 
     // Apply flow coefficient and calibration
     double flowMultiplier = flowCoefficient * calibrationFactor * dpRatio * (chokeOpening / 100.0);
@@ -222,15 +218,13 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
     // Calculate uncertainties using error propagation
     double oilStdDev = calculateUncertainty(oilRate, pressureUncertainty, temperatureUncertainty);
     double gasStdDev = calculateUncertainty(gasRate, pressureUncertainty, temperatureUncertainty);
-    double waterStdDev =
-        calculateUncertainty(waterRate, pressureUncertainty, temperatureUncertainty);
+    double waterStdDev = calculateUncertainty(waterRate, pressureUncertainty, temperatureUncertainty);
 
     // Determine quality based on calibration recency and conditions
     VFMResult.Quality quality = determineQuality(pressure, temperature);
 
-    lastResult = VFMResult.builder().timestamp(Instant.now())
-        .oilFlowRate(oilRate, oilStdDev, "Sm3/d").gasFlowRate(gasRate, gasStdDev, "Sm3/d")
-        .waterFlowRate(waterRate, waterStdDev, "Sm3/d").quality(quality)
+    lastResult = VFMResult.builder().timestamp(Instant.now()).oilFlowRate(oilRate, oilStdDev, "Sm3/d")
+        .gasFlowRate(gasRate, gasStdDev, "Sm3/d").waterFlowRate(waterRate, waterStdDev, "Sm3/d").quality(quality)
         .addProperty("pressure", pressure).addProperty("temperature", temperature)
         .addProperty("chokeOpening", chokeOpening).build();
 
@@ -248,7 +242,7 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
   private double calculateUncertainty(double rate, double pressureUncert, double tempUncert) {
     // Simplified uncertainty model: combine relative uncertainties
     double relativeUncert = Math.sqrt(pressureUncert * pressureUncert + 0.02 * 0.02); // 2% model
-                                                                                      // uncertainty
+    // uncertainty
     return rate * relativeUncert;
   }
 
@@ -275,15 +269,13 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
       maxT = Math.max(maxT, test.getTemperature());
     }
 
-    if (pressure < minP * 0.9 || pressure > maxP * 1.1 || temperature < minT - 10
-        || temperature > maxT + 10) {
+    if (pressure < minP * 0.9 || pressure > maxP * 1.1 || temperature < minT - 10 || temperature > maxT + 10) {
       return VFMResult.Quality.EXTRAPOLATED;
     }
 
     // Check calibration age
     if (lastCalibration != null) {
-      long daysSinceCalibration =
-          java.time.Duration.between(lastCalibration, Instant.now()).toDays();
+      long daysSinceCalibration = java.time.Duration.between(lastCalibration, Instant.now()).toDays();
       if (daysSinceCalibration < 7) {
         return VFMResult.Quality.HIGH;
       } else if (daysSinceCalibration < 30) {
@@ -311,8 +303,7 @@ public class VirtualFlowMeter extends StreamMeasurementDeviceBaseClass {
     int count = 0;
 
     for (WellTestData test : wellTests) {
-      VFMResult calculated =
-          calculateFlowRates(test.getPressure(), test.getPressure() * 0.1, test.getTemperature());
+      VFMResult calculated = calculateFlowRates(test.getPressure(), test.getPressure() * 0.1, test.getTemperature());
 
       if (calculated.isUsable() && calculated.getOilFlowRate() > 0 && test.getOilRate() > 0) {
         sumError += test.getOilRate() / calculated.getOilFlowRate();

@@ -41,8 +41,7 @@ class ESDValveTest {
   void testInitialState() {
     // ESD valve should start energized and fully open
     assertTrue(esdValve.isEnergized(), "Valve should be energized initially");
-    assertEquals(100.0, esdValve.getPercentValveOpening(), 0.1,
-        "Valve should be fully open initially");
+    assertEquals(100.0, esdValve.getPercentValveOpening(), 0.1, "Valve should be fully open initially");
     assertFalse(esdValve.isClosing(), "Valve should not be closing initially");
   }
 
@@ -90,8 +89,7 @@ class ESDValveTest {
       esdValve.runTransient(dt, id);
     }
 
-    assertEquals(0.0, esdValve.getPercentValveOpening(), 0.1,
-        "Valve should be fully closed after stroke time");
+    assertEquals(0.0, esdValve.getPercentValveOpening(), 0.1, "Valve should be fully closed after stroke time");
     assertFalse(esdValve.isClosing(), "Valve should not be closing anymore");
     assertTrue(esdValve.hasTripCompleted(), "Trip should be completed");
   }
@@ -120,8 +118,7 @@ class ESDValveTest {
     esdValve.reset();
 
     assertTrue(esdValve.isEnergized(), "Valve should be energized after reset");
-    assertEquals(100.0, esdValve.getPercentValveOpening(), 0.1,
-        "Valve should be fully open after reset");
+    assertEquals(100.0, esdValve.getPercentValveOpening(), 0.1, "Valve should be fully open after reset");
     assertFalse(esdValve.isClosing(), "Valve should not be closing after reset");
     assertFalse(esdValve.hasTripCompleted(), "Trip completed flag should be cleared");
   }
@@ -133,25 +130,21 @@ class ESDValveTest {
 
     // Test minimum stroke time enforcement
     esdValve.setStrokeTime(0.1);
-    assertTrue(esdValve.getStrokeTime() >= 0.5,
-        "Stroke time should be enforced to minimum 0.5 seconds");
+    assertTrue(esdValve.getStrokeTime() >= 0.5, "Stroke time should be enforced to minimum 0.5 seconds");
   }
 
   @Test
   void testFailSafePosition() {
     // Test default fail-closed behavior
-    assertEquals(0.0, esdValve.getFailSafePosition(), 0.1,
-        "Default fail-safe position should be closed");
+    assertEquals(0.0, esdValve.getFailSafePosition(), 0.1, "Default fail-safe position should be closed");
 
     // Test custom fail-safe position (e.g., fail-open valve)
     esdValve.setFailSafePosition(100.0);
-    assertEquals(100.0, esdValve.getFailSafePosition(), 0.1,
-        "Fail-safe position should be settable");
+    assertEquals(100.0, esdValve.getFailSafePosition(), 0.1, "Fail-safe position should be settable");
 
     // Test clamping
     esdValve.setFailSafePosition(150.0);
-    assertEquals(100.0, esdValve.getFailSafePosition(), 0.1,
-        "Fail-safe position should be clamped to 100%");
+    assertEquals(100.0, esdValve.getFailSafePosition(), 0.1, "Fail-safe position should be clamped to 100%");
   }
 
   @Test
@@ -176,8 +169,7 @@ class ESDValveTest {
     esdValve.completePartialStrokeTest();
 
     assertFalse(esdValve.isPartialStrokeTestActive(), "Partial stroke test should be inactive");
-    assertEquals(100.0, esdValve.getPercentValveOpening(), 0.1,
-        "Valve should return to 100% after PST");
+    assertEquals(100.0, esdValve.getPercentValveOpening(), 0.1, "Valve should return to 100% after PST");
   }
 
   @Test
@@ -192,8 +184,7 @@ class ESDValveTest {
       esdValve.runTransient(dt, id);
     }
 
-    assertEquals(5.0, esdValve.getTimeElapsedSinceTrip(), 0.1,
-        "Elapsed time should be tracked correctly");
+    assertEquals(5.0, esdValve.getTimeElapsedSinceTrip(), 0.1, "Elapsed time should be tracked correctly");
   }
 
   @Test

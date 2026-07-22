@@ -11,8 +11,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Bridge class that auto-configures and links MPC to a ProcessSystem.
  *
  * <p>
- * ProcessLinkedMPC provides automatic integration between NeqSim's ProcessSystem simulation and
- * Model Predictive Control. It handles:
+ * ProcessLinkedMPC provides automatic integration between NeqSim's ProcessSystem simulation and Model Predictive
+ * Control. It handles:
  * </p>
  * <ul>
  * <li>Automatic model identification through linearization or step testing</li>
@@ -24,7 +24,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Build process
@@ -86,7 +86,7 @@ public class ProcessLinkedMPC implements Serializable {
   private final List<StateVariable> stateVariables;
 
   /** Linearizer for model identification. */
-  private ProcessLinearizer linearizer;
+  private transient ProcessLinearizer linearizer;
 
   /** Last linearization result. */
   private LinearizationResult linearizationResult;
@@ -152,8 +152,7 @@ public class ProcessLinkedMPC implements Serializable {
    * @param maxValue maximum value
    * @return the created ManipulatedVariable
    */
-  public ManipulatedVariable addMV(String equipmentName, String propertyName, double minValue,
-      double maxValue) {
+  public ManipulatedVariable addMV(String equipmentName, String propertyName, double minValue, double maxValue) {
     ManipulatedVariable mv = new ManipulatedVariable(equipmentName + "." + propertyName,
         processSystem.getUnit(equipmentName), propertyName);
     mv.setBounds(minValue, maxValue);
@@ -171,8 +170,8 @@ public class ProcessLinkedMPC implements Serializable {
    * @param maxRateOfChange maximum rate of change per sample
    * @return the created ManipulatedVariable
    */
-  public ManipulatedVariable addMV(String equipmentName, String propertyName, double minValue,
-      double maxValue, double maxRateOfChange) {
+  public ManipulatedVariable addMV(String equipmentName, String propertyName, double minValue, double maxValue,
+      double maxRateOfChange) {
     ManipulatedVariable mv = addMV(equipmentName, propertyName, minValue, maxValue);
     mv.setRateLimit(-maxRateOfChange, maxRateOfChange);
     return mv;
@@ -218,8 +217,7 @@ public class ProcessLinkedMPC implements Serializable {
    * @param minValue minimum constraint
    * @param maxValue maximum constraint
    */
-  public void setConstraint(String equipmentName, String propertyName, double minValue,
-      double maxValue) {
+  public void setConstraint(String equipmentName, String propertyName, double minValue, double maxValue) {
     String fullName = equipmentName + "." + propertyName;
     for (ControlledVariable cv : controlledVariables) {
       if (cv.getName().equals(fullName)) {
@@ -248,9 +246,8 @@ public class ProcessLinkedMPC implements Serializable {
    * Add a state variable (SVR) for nonlinear MPC.
    *
    * <p>
-   * State variables are internal model states that evolve according to dynamic equations. They are
-   * tracked for model accuracy but not directly controlled. Examples include flow rates, internal
-   * pressures, and calculated gains.
+   * State variables are internal model states that evolve according to dynamic equations. They are tracked for model
+   * accuracy but not directly controlled. Examples include flow rates, internal pressures, and calculated gains.
    * </p>
    *
    * @param equipmentName the equipment name
@@ -258,8 +255,8 @@ public class ProcessLinkedMPC implements Serializable {
    * @return the created StateVariable
    */
   public StateVariable addSVR(String equipmentName, String propertyName) {
-    StateVariable svr = new StateVariable(equipmentName + "." + propertyName,
-        processSystem.getUnit(equipmentName), propertyName);
+    StateVariable svr = new StateVariable(equipmentName + "." + propertyName, processSystem.getUnit(equipmentName),
+        propertyName);
     stateVariables.add(svr);
     return svr;
   }
@@ -741,8 +738,8 @@ public class ProcessLinkedMPC implements Serializable {
    * Create an industrial MPC exporter for this controller.
    *
    * <p>
-   * The exporter can generate model files in formats compatible with industrial MPC platforms,
-   * including step response models, gain matrices, and variable configurations.
+   * The exporter can generate model files in formats compatible with industrial MPC platforms, including step response
+   * models, gain matrices, and variable configurations.
    * </p>
    *
    * @return a new IndustrialMPCExporter instance
@@ -755,9 +752,8 @@ public class ProcessLinkedMPC implements Serializable {
    * Create a data exchange interface for real-time integration.
    *
    * <p>
-   * The data exchange interface provides standardized methods for bidirectional communication with
-   * external control systems, including timestamped data vectors, quality flags, and execution
-   * status.
+   * The data exchange interface provides standardized methods for bidirectional communication with external control
+   * systems, including timestamped data vectors, quality flags, and execution status.
    * </p>
    *
    * @return a new ControllerDataExchange instance
@@ -770,9 +766,9 @@ public class ProcessLinkedMPC implements Serializable {
    * Create a SubrModl exporter for nonlinear MPC integration.
    *
    * <p>
-   * The SubrModl exporter generates configuration files compatible with industrial nonlinear MPC
-   * systems that use programmed model objects. This includes SubrXvr definitions with DtaIx
-   * mappings, model parameters, and state variables.
+   * The SubrModl exporter generates configuration files compatible with industrial nonlinear MPC systems that use
+   * programmed model objects. This includes SubrXvr definitions with DtaIx mappings, model parameters, and state
+   * variables.
    * </p>
    *
    * @return a new SubrModlExporter instance populated from this controller
@@ -785,8 +781,7 @@ public class ProcessLinkedMPC implements Serializable {
 
     // Add state variables
     for (StateVariable svr : stateVariables) {
-      exporter.addStateVariable(svr.getName(), svr.getDtaIx(), svr.getDescription(),
-          svr.getModelValue());
+      exporter.addStateVariable(svr.getName(), svr.getDtaIx(), svr.getDescription(), svr.getModelValue());
     }
 
     return exporter;
@@ -794,8 +789,7 @@ public class ProcessLinkedMPC implements Serializable {
 
   @Override
   public String toString() {
-    return "ProcessLinkedMPC[" + name + ", MVs=" + manipulatedVariables.size() + ", CVs="
-        + controlledVariables.size() + ", SVRs=" + stateVariables.size() + ", identified="
-        + modelIdentified + "]";
+    return "ProcessLinkedMPC[" + name + ", MVs=" + manipulatedVariables.size() + ", CVs=" + controlledVariables.size()
+        + ", SVRs=" + stateVariables.size() + ", identified=" + modelIdentified + "]";
   }
 }

@@ -3,9 +3,7 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentElectrolyteCPAstatoil class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -15,24 +13,19 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentElectrolyteCPAstatoil.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
    * @param molesInPhase Number of moles in phase.
    * @param compIndex Index number of component in phase object component array.
    */
-  public ComponentElectrolyteCPAstatoil(String name, double moles, double molesInPhase,
-      int compIndex) {
+  public ComponentElectrolyteCPAstatoil(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
   }
 
   /**
-   * <p>
    * Constructor for ComponentElectrolyteCPAstatoil.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -41,8 +34,7 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
    * @param a Acentric factor
    * @param moles Total number of moles of component.
    */
-  public ComponentElectrolyteCPAstatoil(int number, double TC, double PC, double M, double a,
-      double moles) {
+  public ComponentElectrolyteCPAstatoil(int number, double TC, double PC, double M, double a, double moles) {
     super(number, TC, PC, M, a, moles);
   }
 
@@ -64,8 +56,7 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
   public double calc_lngi(PhaseInterface phase) {
     // System.out.println("val "
     // +0.475/(1.0-0.475*phase.getB()/phase.getTotalVolume())*getBi()/phase.getTotalVolume());
-    return 0.475 / (1.0 - 0.475 * phase.getB() / phase.getTotalVolume()) * getBi()
-        / phase.getTotalVolume();
+    return 0.475 / (1.0 - 0.475 * phase.getB() / phase.getTotalVolume()) * getBi() / phase.getTotalVolume();
   }
 
   /** {@inheritDoc} */
@@ -84,7 +75,7 @@ public class ComponentElectrolyteCPAstatoil extends ComponentElectrolyteCPA {
     double temp2 = temp * temp;
     // System.out.println("B " + phase.getB() + " Bi " + getBi() + " bij " +
     // getBij(j));
-    return 0.475 * getBij(j) * 0 / temp - 0.475 * getBi() * 1.0 / temp2
-        * (-0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi());
+    return 0.475 * getBij(j) * 0 / temp
+        - 0.475 * getBi() * 1.0 / temp2 * (-0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi());
   }
 }

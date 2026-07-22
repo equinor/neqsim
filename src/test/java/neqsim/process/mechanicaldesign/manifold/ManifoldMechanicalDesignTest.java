@@ -417,7 +417,7 @@ public class ManifoldMechanicalDesignTest {
       // Create manifold
       Manifold manifold = new Manifold("Production Manifold");
       manifold.addStream(feed);
-      manifold.setSplitFactors(new double[] {0.5, 0.5});
+      manifold.setSplitFactors(new double[] { 0.5, 0.5 });
       manifold.run();
 
       // Initialize mechanical design
@@ -462,7 +462,7 @@ public class ManifoldMechanicalDesignTest {
       // Create manifold
       Manifold manifold = new Manifold("Subsea Manifold");
       manifold.addStream(feed);
-      manifold.setSplitFactors(new double[] {0.25, 0.25, 0.25, 0.25});
+      manifold.setSplitFactors(new double[] { 0.25, 0.25, 0.25, 0.25 });
       manifold.run();
 
       // Initialize mechanical design
@@ -508,7 +508,7 @@ public class ManifoldMechanicalDesignTest {
 
       Manifold manifold = new Manifold("Test Manifold");
       manifold.addStream(feed);
-      manifold.setSplitFactors(new double[] {0.6, 0.4});
+      manifold.setSplitFactors(new double[] { 0.6, 0.4 });
       manifold.run();
 
       manifold.initMechanicalDesign();

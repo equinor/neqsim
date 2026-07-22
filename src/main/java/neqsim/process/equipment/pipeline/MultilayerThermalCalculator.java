@@ -21,7 +21,7 @@ import java.util.List;
  * <p>
  * The thermal resistance network approach is used:
  * </p>
- * 
+ *
  * <pre>
  * T_fluid --- R_inner --- [ Layer 1 ] --- [ Layer 2 ] --- ... --- R_outer --- T_ambient
  * </pre>
@@ -89,8 +89,8 @@ public class MultilayerThermalCalculator implements Serializable {
    * Add a thermal layer to the outside of existing layers.
    *
    * <p>
-   * Layers must be added from inside to outside. The inner radius of the new layer will be
-   * automatically set to match the outer radius of the previous layer.
+   * Layers must be added from inside to outside. The inner radius of the new layer will be automatically set to match
+   * the outer radius of the previous layer.
    * </p>
    *
    * @param thickness Layer thickness [m]
@@ -115,11 +115,10 @@ public class MultilayerThermalCalculator implements Serializable {
    * @param specificHeat Specific heat [J/(kg·K)]
    * @return The created layer
    */
-  public RadialThermalLayer addCustomLayer(String name, double thickness,
-      double thermalConductivity, double density, double specificHeat) {
+  public RadialThermalLayer addCustomLayer(String name, double thickness, double thermalConductivity, double density,
+      double specificHeat) {
     double ri = getOuterRadius();
-    RadialThermalLayer layer =
-        new RadialThermalLayer(name, ri, thickness, thermalConductivity, density, specificHeat);
+    RadialThermalLayer layer = new RadialThermalLayer(name, ri, thickness, thermalConductivity, density, specificHeat);
     layers.add(layer);
     uValueDirty = true;
     return layer;
@@ -144,9 +143,8 @@ public class MultilayerThermalCalculator implements Serializable {
    * @param concreteThickness Concrete coating thickness [m] (0 for none)
    * @param insulationMaterial Type of insulation material
    */
-  public void createSubseaPipeConfig(double pipeInnerDiameter, double wallThickness,
-      double insulationThickness, double concreteThickness,
-      RadialThermalLayer.MaterialType insulationMaterial) {
+  public void createSubseaPipeConfig(double pipeInnerDiameter, double wallThickness, double insulationThickness,
+      double concreteThickness, RadialThermalLayer.MaterialType insulationMaterial) {
     layers.clear();
     this.innerRadius = pipeInnerDiameter / 2.0;
 
@@ -186,8 +184,7 @@ public class MultilayerThermalCalculator implements Serializable {
    * @param wallThickness Steel wall thickness [m]
    * @param insulationThickness Insulation thickness [m]
    */
-  public void createInsulatedSubseaPipe(double pipeInnerDiameter, double wallThickness,
-      double insulationThickness) {
+  public void createInsulatedSubseaPipe(double pipeInnerDiameter, double wallThickness, double insulationThickness) {
     createSubseaPipeConfig(pipeInnerDiameter, wallThickness, insulationThickness, 0,
         RadialThermalLayer.MaterialType.PU_FOAM);
   }
@@ -200,8 +197,8 @@ public class MultilayerThermalCalculator implements Serializable {
    * @param burialDepth Depth of cover [m]
    * @param soilType Wet or dry soil
    */
-  public void createBuriedOnshorePipe(double pipeInnerDiameter, double wallThickness,
-      double burialDepth, RadialThermalLayer.MaterialType soilType) {
+  public void createBuriedOnshorePipe(double pipeInnerDiameter, double wallThickness, double burialDepth,
+      RadialThermalLayer.MaterialType soilType) {
     layers.clear();
     this.innerRadius = pipeInnerDiameter / 2.0;
 
@@ -412,7 +409,7 @@ public class MultilayerThermalCalculator implements Serializable {
    * <p>
    * Uses explicit finite difference scheme for each layer. The heat balance for each layer is:
    * </p>
-   * 
+   *
    * <pre>
    * m * Cp * dT/dt = Q_in - Q_out
    * </pre>
@@ -489,8 +486,8 @@ public class MultilayerThermalCalculator implements Serializable {
    * Calculate cooldown time from current state to a target temperature.
    *
    * <p>
-   * Estimates time for pipe wall (first layer) to cool to target, assuming no flow. Uses lumped
-   * capacitance approximation.
+   * Estimates time for pipe wall (first layer) to cool to target, assuming no flow. Uses lumped capacitance
+   * approximation.
    * </p>
    *
    * @param targetTemperature Target temperature in Kelvin
@@ -769,29 +766,23 @@ public class MultilayerThermalCalculator implements Serializable {
   public String getSummary() {
     StringBuilder sb = new StringBuilder();
     sb.append("Multi-layer Thermal Configuration:\n");
-    sb.append(
-        String.format("  Inner radius: %.4f m (ID = %.1f mm)\n", innerRadius, innerRadius * 2000));
+    sb.append(String.format("  Inner radius: %.4f m (ID = %.1f mm)\n", innerRadius, innerRadius * 2000));
     sb.append(String.format("  Inner HTC: %.1f W/(m²·K)\n", innerHTC));
     sb.append(String.format("  Outer HTC: %.1f W/(m²·K)\n", outerHTC));
-    sb.append(String.format("  Fluid temperature: %.1f K (%.1f °C)\n", fluidTemperature,
-        fluidTemperature - 273.15));
-    sb.append(String.format("  Ambient temperature: %.1f K (%.1f °C)\n", ambientTemperature,
-        ambientTemperature - 273.15));
+    sb.append(String.format("  Fluid temperature: %.1f K (%.1f °C)\n", fluidTemperature, fluidTemperature - 273.15));
+    sb.append(
+        String.format("  Ambient temperature: %.1f K (%.1f °C)\n", ambientTemperature, ambientTemperature - 273.15));
 
     sb.append("\nLayers (inside to outside):\n");
     for (int i = 0; i < layers.size(); i++) {
       RadialThermalLayer layer = layers.get(i);
-      sb.append(String.format("  %d. %s: t=%.1f mm, k=%.3f W/(m·K), R=%.4f (m·K)/W\n", i + 1,
-          layer.getName(), layer.getThickness() * 1000, layer.getThermalConductivity(),
-          layer.getThermalResistance()));
+      sb.append(String.format("  %d. %s: t=%.1f mm, k=%.3f W/(m·K), R=%.4f (m·K)/W\n", i + 1, layer.getName(),
+          layer.getThickness() * 1000, layer.getThermalConductivity(), layer.getThermalResistance()));
     }
 
-    sb.append(String.format("\nOuter radius: %.4f m (OD = %.1f mm)\n", getOuterRadius(),
-        getOuterRadius() * 2000));
-    sb.append(String.format("Total thermal resistance: %.4f (m·K)/W\n",
-        calculateTotalThermalResistance()));
-    sb.append(
-        String.format("Overall U-value (inner basis): %.2f W/(m²·K)\n", calculateOverallUValue()));
+    sb.append(String.format("\nOuter radius: %.4f m (OD = %.1f mm)\n", getOuterRadius(), getOuterRadius() * 2000));
+    sb.append(String.format("Total thermal resistance: %.4f (m·K)/W\n", calculateTotalThermalResistance()));
+    sb.append(String.format("Overall U-value (inner basis): %.2f W/(m²·K)\n", calculateOverallUValue()));
     sb.append(String.format("Heat loss rate: %.1f W/m\n", calculateHeatLossPerLength()));
 
     return sb.toString();
@@ -799,7 +790,7 @@ public class MultilayerThermalCalculator implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("MultilayerThermalCalculator[%d layers, U=%.2f W/(m²·K), Q=%.1f W/m]",
-        layers.size(), calculateOverallUValue(), calculateHeatLossPerLength());
+    return String.format("MultilayerThermalCalculator[%d layers, U=%.2f W/(m²·K), Q=%.1f W/m]", layers.size(),
+        calculateOverallUValue(), calculateHeatLossPerLength());
   }
 }

@@ -15,9 +15,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Builder class for constructing a {@link ProcessModelGraph} from a {@link ProcessModule}.
  *
  * <p>
- * This builder handles the complexity of combining multiple {@link ProcessSystem} objects into a
- * unified graph representation, while maintaining information about the hierarchical structure and
- * cross-system connections.
+ * This builder handles the complexity of combining multiple {@link ProcessSystem} objects into a unified graph
+ * representation, while maintaining information about the hierarchical structure and cross-system connections.
  * </p>
  *
  * <p>
@@ -81,8 +80,7 @@ public final class ProcessModelGraphBuilder {
       ProcessGraph graph = ProcessGraphBuilder.buildGraph(system);
       String systemName = system.getName() != null ? system.getName() : "System_" + execIndex;
 
-      subSystemGraphs
-          .add(new ProcessModelGraph.SubSystemGraph(systemName, graph, execIndex, false));
+      subSystemGraphs.add(new ProcessModelGraph.SubSystemGraph(systemName, graph, execIndex, false));
 
       // Track node ownership
       for (ProcessNode node : graph.getNodes()) {
@@ -99,11 +97,10 @@ public final class ProcessModelGraphBuilder {
       ProcessModelGraph nestedGraph = buildModelGraph(nestedModule);
 
       // Add the flattened graph as a subsystem
-      String moduleName =
-          nestedModule.getName() != null ? nestedModule.getName() : "Module_" + execIndex;
+      String moduleName = nestedModule.getName() != null ? nestedModule.getName() : "Module_" + execIndex;
 
-      subSystemGraphs.add(new ProcessModelGraph.SubSystemGraph(moduleName,
-          nestedGraph.getFlattenedGraph(), execIndex, true));
+      subSystemGraphs
+          .add(new ProcessModelGraph.SubSystemGraph(moduleName, nestedGraph.getFlattenedGraph(), execIndex, true));
 
       // Track node ownership
       for (ProcessNode node : nestedGraph.getFlattenedGraph().getNodes()) {
@@ -115,11 +112,9 @@ public final class ProcessModelGraphBuilder {
     ProcessGraph flattenedGraph = buildFlattenedGraph(subSystemGraphs);
 
     // Detect inter-system connections
-    detectInterSystemConnections(subSystemGraphs, nodeToSystem, interSystemConnections,
-        flattenedGraph);
+    detectInterSystemConnections(subSystemGraphs, nodeToSystem, interSystemConnections, flattenedGraph);
 
-    return new ProcessModelGraph(modelName, subSystemGraphs, flattenedGraph,
-        interSystemConnections);
+    return new ProcessModelGraph(modelName, subSystemGraphs, flattenedGraph, interSystemConnections);
   }
 
   /**
@@ -155,11 +150,9 @@ public final class ProcessModelGraphBuilder {
     }
 
     ProcessGraph flattenedGraph = buildFlattenedGraph(subSystemGraphs);
-    detectInterSystemConnections(subSystemGraphs, nodeToSystem, interSystemConnections,
-        flattenedGraph);
+    detectInterSystemConnections(subSystemGraphs, nodeToSystem, interSystemConnections, flattenedGraph);
 
-    return new ProcessModelGraph(modelName, subSystemGraphs, flattenedGraph,
-        interSystemConnections);
+    return new ProcessModelGraph(modelName, subSystemGraphs, flattenedGraph, interSystemConnections);
   }
 
   /**
@@ -168,8 +161,7 @@ public final class ProcessModelGraphBuilder {
    * @param subSystemGraphs list of sub-system graphs to flatten
    * @return a new ProcessGraph containing all nodes and edges from all sub-systems
    */
-  private static ProcessGraph buildFlattenedGraph(
-      List<ProcessModelGraph.SubSystemGraph> subSystemGraphs) {
+  private static ProcessGraph buildFlattenedGraph(List<ProcessModelGraph.SubSystemGraph> subSystemGraphs) {
     ProcessGraph flattened = new ProcessGraph();
 
     // Add all nodes from all sub-systems
@@ -196,18 +188,18 @@ public final class ProcessModelGraphBuilder {
   }
 
   /**
-   * Detects connections between different sub-systems by analyzing stream references. This includes
-   * both explicit edges within sub-systems AND implicit dependencies where one system uses
-   * stream/fluid objects from another system's equipment.
+   * Detects connections between different sub-systems by analyzing stream references. This includes both explicit edges
+   * within sub-systems AND implicit dependencies where one system uses stream/fluid objects from another system's
+   * equipment.
    *
    * @param subSystemGraphs list of sub-system graphs to analyze
    * @param nodeToSystem mapping from nodes to their owning system names
    * @param connections list to populate with detected inter-system connections
    * @param flattenedGraph the flattened graph containing all nodes
    */
-  private static void detectInterSystemConnections(
-      List<ProcessModelGraph.SubSystemGraph> subSystemGraphs, Map<ProcessNode, String> nodeToSystem,
-      List<ProcessModelGraph.InterSystemConnection> connections, ProcessGraph flattenedGraph) {
+  private static void detectInterSystemConnections(List<ProcessModelGraph.SubSystemGraph> subSystemGraphs,
+      Map<ProcessNode, String> nodeToSystem, List<ProcessModelGraph.InterSystemConnection> connections,
+      ProcessGraph flattenedGraph) {
     // Build a map of stream objects to their producing equipment AND their
     // sub-system
     Map<Object, ProcessEquipmentInterface> streamProducers = new IdentityHashMap<>();
@@ -275,8 +267,7 @@ public final class ProcessModelGraphBuilder {
                 String sourceSystem = streamToSystem.get(sourceStream);
                 ProcessEquipmentInterface sourceEquipment = streamProducers.get(sourceStream);
 
-                if (sourceSystem != null && !sourceSystem.equals(targetSystemName)
-                    && sourceEquipment != null) {
+                if (sourceSystem != null && !sourceSystem.equals(targetSystemName) && sourceEquipment != null) {
                   ProcessNode sourceNode = flattenedGraph.getNode(sourceEquipment);
                   ProcessNode targetFlatNode = flattenedGraph.getNode(targetEquipment);
 
@@ -289,8 +280,8 @@ public final class ProcessModelGraphBuilder {
 
                     boolean exists = connectionExists(connections, sourceNode, targetFlatNode);
                     if (!exists && existingEdge != null) {
-                      connections.add(new ProcessModelGraph.InterSystemConnection(sourceSystem,
-                          targetSystemName, sourceNode, targetFlatNode, existingEdge));
+                      connections.add(new ProcessModelGraph.InterSystemConnection(sourceSystem, targetSystemName,
+                          sourceNode, targetFlatNode, existingEdge));
                     }
                   }
                 }
@@ -306,8 +297,7 @@ public final class ProcessModelGraphBuilder {
             String sourceSystem = streamToSystem.get(fluid);
             ProcessEquipmentInterface sourceEquipment = streamProducers.get(fluid);
 
-            if (sourceSystem != null && !sourceSystem.equals(targetSystemName)
-                && sourceEquipment != null) {
+            if (sourceSystem != null && !sourceSystem.equals(targetSystemName) && sourceEquipment != null) {
               // Found a cross-system connection!
               ProcessNode sourceNode = flattenedGraph.getNode(sourceEquipment);
               ProcessNode targetFlatNode = flattenedGraph.getNode(targetEquipment);
@@ -322,8 +312,8 @@ public final class ProcessModelGraphBuilder {
 
                 boolean exists = connectionExists(connections, sourceNode, targetFlatNode);
                 if (!exists && existingEdge != null) {
-                  connections.add(new ProcessModelGraph.InterSystemConnection(sourceSystem,
-                      targetSystemName, sourceNode, targetFlatNode, existingEdge));
+                  connections.add(new ProcessModelGraph.InterSystemConnection(sourceSystem, targetSystemName,
+                      sourceNode, targetFlatNode, existingEdge));
                 }
               }
             }
@@ -332,8 +322,8 @@ public final class ProcessModelGraphBuilder {
 
         // Check Mixer inputs for cross-system connections
         if (targetEquipment instanceof neqsim.process.equipment.mixer.MixerInterface) {
-          checkMixerInputs(targetEquipment, targetSystemName, streamProducers, streamToSystem,
-              flattenedGraph, connections);
+          checkMixerInputs(targetEquipment, targetSystemName, streamProducers, streamToSystem, flattenedGraph,
+              connections);
         }
 
         // Also check edges within this sub-system that might reference external
@@ -351,8 +341,8 @@ public final class ProcessModelGraphBuilder {
               if (flatEdge != null) {
                 // Avoid duplicates
                 if (!connectionExists(connections, flatSource, flatTarget)) {
-                  connections.add(new ProcessModelGraph.InterSystemConnection(sourceSystemName,
-                      targetSystemName, flatSource, flatTarget, flatEdge));
+                  connections.add(new ProcessModelGraph.InterSystemConnection(sourceSystemName, targetSystemName,
+                      flatSource, flatTarget, flatEdge));
                 }
               }
             }
@@ -370,13 +360,11 @@ public final class ProcessModelGraphBuilder {
    * @param streamProducers map to populate with stream-to-producer mappings
    * @param streamToSystem map to populate with stream-to-system mappings
    */
-  private static void collectEquipmentOutputs(ProcessEquipmentInterface equipment,
-      String systemName, Map<Object, ProcessEquipmentInterface> streamProducers,
-      Map<Object, String> streamToSystem) {
+  private static void collectEquipmentOutputs(ProcessEquipmentInterface equipment, String systemName,
+      Map<Object, ProcessEquipmentInterface> streamProducers, Map<Object, String> streamToSystem) {
     // Separator outputs - use reflection since interface doesn't have all methods
     if (equipment instanceof neqsim.process.equipment.separator.Separator) {
-      neqsim.process.equipment.separator.Separator sep =
-          (neqsim.process.equipment.separator.Separator) equipment;
+      neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) equipment;
       try {
         StreamInterface gasOut = sep.getGasOutStream();
         if (gasOut != null) {
@@ -406,8 +394,7 @@ public final class ProcessModelGraphBuilder {
 
       // ThreePhaseSeparator has additional aqueous (water) outlet
       if (equipment instanceof neqsim.process.equipment.separator.ThreePhaseSeparator) {
-        neqsim.process.equipment.separator.ThreePhaseSeparator threePhaseSep =
-            (neqsim.process.equipment.separator.ThreePhaseSeparator) equipment;
+        neqsim.process.equipment.separator.ThreePhaseSeparator threePhaseSep = (neqsim.process.equipment.separator.ThreePhaseSeparator) equipment;
         try {
           StreamInterface waterOut = threePhaseSep.getWaterOutStream();
           if (waterOut != null) {
@@ -426,8 +413,7 @@ public final class ProcessModelGraphBuilder {
 
     // Splitter outputs
     if (equipment instanceof neqsim.process.equipment.splitter.SplitterInterface) {
-      neqsim.process.equipment.splitter.SplitterInterface splitter =
-          (neqsim.process.equipment.splitter.SplitterInterface) equipment;
+      neqsim.process.equipment.splitter.SplitterInterface splitter = (neqsim.process.equipment.splitter.SplitterInterface) equipment;
       for (int i = 0; i < 20; i++) {
         try {
           StreamInterface splitStream = splitter.getSplitStream(i);
@@ -447,8 +433,7 @@ public final class ProcessModelGraphBuilder {
 
     // TwoPort outlet
     if (equipment instanceof neqsim.process.equipment.TwoPortInterface) {
-      neqsim.process.equipment.TwoPortInterface twoPort =
-          (neqsim.process.equipment.TwoPortInterface) equipment;
+      neqsim.process.equipment.TwoPortInterface twoPort = (neqsim.process.equipment.TwoPortInterface) equipment;
       StreamInterface outStream = twoPort.getOutletStream();
       if (outStream != null) {
         streamProducers.put(outStream, equipment);
@@ -462,8 +447,7 @@ public final class ProcessModelGraphBuilder {
 
     // Mixer outlet
     if (equipment instanceof neqsim.process.equipment.mixer.MixerInterface) {
-      neqsim.process.equipment.mixer.MixerInterface mixer =
-          (neqsim.process.equipment.mixer.MixerInterface) equipment;
+      neqsim.process.equipment.mixer.MixerInterface mixer = (neqsim.process.equipment.mixer.MixerInterface) equipment;
       StreamInterface outStream = mixer.getOutletStream();
       if (outStream != null) {
         streamProducers.put(outStream, equipment);
@@ -500,8 +484,8 @@ public final class ProcessModelGraphBuilder {
    * @param target the target node
    * @return true if the connection exists, false otherwise
    */
-  private static boolean connectionExists(List<ProcessModelGraph.InterSystemConnection> connections,
-      ProcessNode source, ProcessNode target) {
+  private static boolean connectionExists(List<ProcessModelGraph.InterSystemConnection> connections, ProcessNode source,
+      ProcessNode target) {
     for (ProcessModelGraph.InterSystemConnection conn : connections) {
       if (conn.getSourceNode().getEquipment() == source.getEquipment()
           && conn.getTargetNode().getEquipment() == target.getEquipment()) {
@@ -557,8 +541,7 @@ public final class ProcessModelGraphBuilder {
               String sourceSystem = streamToSystem.get(inputStream);
               ProcessEquipmentInterface sourceEquipment = streamProducers.get(inputStream);
 
-              if (sourceSystem != null && !sourceSystem.equals(targetSystemName)
-                  && sourceEquipment != null) {
+              if (sourceSystem != null && !sourceSystem.equals(targetSystemName) && sourceEquipment != null) {
                 ProcessNode sourceNode = flattenedGraph.getNode(sourceEquipment);
                 ProcessNode targetNode = flattenedGraph.getNode(mixer);
 
@@ -569,10 +552,9 @@ public final class ProcessModelGraphBuilder {
                     existingEdge = findEdge(sourceNode, targetNode);
                   }
 
-                  if (!connectionExists(connections, sourceNode, targetNode)
-                      && existingEdge != null) {
-                    connections.add(new ProcessModelGraph.InterSystemConnection(sourceSystem,
-                        targetSystemName, sourceNode, targetNode, existingEdge));
+                  if (!connectionExists(connections, sourceNode, targetNode) && existingEdge != null) {
+                    connections.add(new ProcessModelGraph.InterSystemConnection(sourceSystem, targetSystemName,
+                        sourceNode, targetNode, existingEdge));
                   }
                 }
               }

@@ -8,9 +8,9 @@ import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.fluidmechanics.geometrydefinitions.surrounding.PipeSurroundingEnvironment;
 
 /**
- * Tests for the pipe wall heat transfer system including: - PipeMaterial enum database -
- * MaterialLayer with factory methods - PipeWall with cylindrical heat transfer -
- * PipeSurroundingEnvironment with buried/subsea models - PipeWallBuilder convenience patterns
+ * Tests for the pipe wall heat transfer system including: - PipeMaterial enum database - MaterialLayer with factory
+ * methods - PipeWall with cylindrical heat transfer - PipeSurroundingEnvironment with buried/subsea models -
+ * PipeWallBuilder convenience patterns
  */
 public class PipeWallHeatTransferTest {
   // ===== PipeMaterial Tests =====
@@ -158,8 +158,7 @@ public class PipeWallHeatTransferTest {
     // Insulation dominates: U-value should be much lower than steel alone
     PipeWall bareWall = new PipeWall(0.10);
     bareWall.addMaterialLayer(MaterialLayer.carbonSteel(0.010));
-    assertTrue(wall.calcCylindricalHeatTransferCoefficient() < bareWall
-        .calcCylindricalHeatTransferCoefficient() / 10);
+    assertTrue(wall.calcCylindricalHeatTransferCoefficient() < bareWall.calcCylindricalHeatTransferCoefficient() / 10);
   }
 
   @Test
@@ -224,8 +223,8 @@ public class PipeWallHeatTransferTest {
   void testBuriedPipeEnvironment() {
     double depth = 1.5; // m
     double outerRadius = 0.15; // m
-    PipeSurroundingEnvironment env =
-        PipeSurroundingEnvironment.buriedPipe(283.0, depth, outerRadius, PipeMaterial.SOIL_TYPICAL);
+    PipeSurroundingEnvironment env = PipeSurroundingEnvironment.buriedPipe(283.0, depth, outerRadius,
+        PipeMaterial.SOIL_TYPICAL);
 
     assertEquals(PipeSurroundingEnvironment.EnvironmentType.BURIED, env.getEnvironmentType());
     assertEquals(283.0, env.getTemperature(), 0.1);
@@ -239,13 +238,11 @@ public class PipeWallHeatTransferTest {
     double outerRadius = 0.15;
     double kSoil = 1.0;
 
-    double resistance =
-        PipeSurroundingEnvironment.calcBuriedPipeThermalResistance(depth, outerRadius, kSoil);
+    double resistance = PipeSurroundingEnvironment.calcBuriedPipeThermalResistance(depth, outerRadius, kSoil);
 
     // Shape factor method: R = ln(2z/r + sqrt((2z/r)² - 1)) / (2π * k)
     double ratio = depth / outerRadius;
-    double expected =
-        Math.log(2.0 * ratio + Math.sqrt(4.0 * ratio * ratio - 1)) / (2.0 * Math.PI * kSoil);
+    double expected = Math.log(2.0 * ratio + Math.sqrt(4.0 * ratio * ratio - 1)) / (2.0 * Math.PI * kSoil);
 
     assertEquals(expected, resistance, 1e-6);
   }
@@ -263,8 +260,7 @@ public class PipeWallHeatTransferTest {
 
   @Test
   void testBuilderInsulatedPipe() {
-    PipeWall wall =
-        PipeWallBuilder.carbonSteelPipe(0.20, 0.010).addMineralWoolInsulation(0.050).build();
+    PipeWall wall = PipeWallBuilder.carbonSteelPipe(0.20, 0.010).addMineralWoolInsulation(0.050).build();
 
     assertEquals(2, wall.getNumberOfLayers());
     assertEquals(0.16, wall.getOuterRadius(), 1e-6);
@@ -281,8 +277,8 @@ public class PipeWallHeatTransferTest {
 
   @Test
   void testBuilderWithEnvironment() {
-    PipeWallBuilder builder = PipeWallBuilder.carbonSteelPipe(0.20, 0.010)
-        .addMineralWoolInsulation(0.050).exposedToAir(293.0, 2.0);
+    PipeWallBuilder builder = PipeWallBuilder.carbonSteelPipe(0.20, 0.010).addMineralWoolInsulation(0.050)
+        .exposedToAir(293.0, 2.0);
 
     PipeWall wall = builder.build();
     PipeSurroundingEnvironment env = builder.buildEnvironment();
@@ -294,8 +290,8 @@ public class PipeWallHeatTransferTest {
 
   @Test
   void testBuilderOverallUValue() {
-    PipeWallBuilder builder = PipeWallBuilder.carbonSteelPipe(0.20, 0.010)
-        .addMineralWoolInsulation(0.050).exposedToAir(293.0, 2.0);
+    PipeWallBuilder builder = PipeWallBuilder.carbonSteelPipe(0.20, 0.010).addMineralWoolInsulation(0.050)
+        .exposedToAir(293.0, 2.0);
 
     double innerFilmCoeff = 1000.0; // W/(m²·K) - typical for flowing liquid
     double overallU = builder.calcOverallUValue(innerFilmCoeff);
@@ -329,8 +325,8 @@ public class PipeWallHeatTransferTest {
 
   @Test
   void testPipeDataFromBuilder() {
-    PipeData pipe = PipeData.createFromBuilder(PipeWallBuilder.carbonSteelPipe(0.20, 0.010)
-        .addMineralWoolInsulation(0.050).exposedToAir(293.0, 2.0));
+    PipeData pipe = PipeData.createFromBuilder(
+        PipeWallBuilder.carbonSteelPipe(0.20, 0.010).addMineralWoolInsulation(0.050).exposedToAir(293.0, 2.0));
 
     assertEquals(0.20, pipe.getDiameter(), 1e-6);
     assertEquals(2, pipe.getPipeWall().getNumberOfLayers());
@@ -352,8 +348,7 @@ public class PipeWallHeatTransferTest {
     barePipe.setCarbonSteelWall(0.010);
     barePipe.setAirEnvironment(293.0, 2.0);
 
-    assertTrue(
-        pipe.calcOverallHeatTransferCoefficient() < barePipe.calcOverallHeatTransferCoefficient());
+    assertTrue(pipe.calcOverallHeatTransferCoefficient() < barePipe.calcOverallHeatTransferCoefficient());
   }
 
   // ===== Validation Tests =====
@@ -376,8 +371,7 @@ public class PipeWallHeatTransferTest {
 
     // For small pipe with thick insulation, cylindrical U > planar U
     // (because outer surface area is larger, reducing resistance)
-    assertTrue(Math.abs(cylU - planarU) / planarU > 0.1,
-        "Cylindrical and planar should differ for small pipes");
+    assertTrue(Math.abs(cylU - planarU) / planarU > 0.1, "Cylindrical and planar should differ for small pipes");
   }
 
   @Test
@@ -386,12 +380,9 @@ public class PipeWallHeatTransferTest {
     assertTrue(PipeMaterial.values().length >= 25, "Should have at least 25 materials");
 
     // Check we have categories
-    long metals =
-        java.util.Arrays.stream(PipeMaterial.values()).filter(PipeMaterial::isMetal).count();
-    long insulations =
-        java.util.Arrays.stream(PipeMaterial.values()).filter(PipeMaterial::isInsulation).count();
-    long soils =
-        java.util.Arrays.stream(PipeMaterial.values()).filter(PipeMaterial::isSoil).count();
+    long metals = java.util.Arrays.stream(PipeMaterial.values()).filter(PipeMaterial::isMetal).count();
+    long insulations = java.util.Arrays.stream(PipeMaterial.values()).filter(PipeMaterial::isInsulation).count();
+    long soils = java.util.Arrays.stream(PipeMaterial.values()).filter(PipeMaterial::isSoil).count();
 
     assertTrue(metals >= 5, "Should have at least 5 metals");
     assertTrue(insulations >= 5, "Should have at least 5 insulation types");

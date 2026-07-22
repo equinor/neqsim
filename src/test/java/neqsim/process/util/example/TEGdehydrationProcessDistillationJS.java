@@ -19,9 +19,7 @@ import neqsim.process.measurementdevice.HydrateEquilibriumTemperatureAnalyser;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TEGdehydrationProcessDistillationJS class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -154,24 +152,20 @@ public class TEGdehydrationProcessDistillationJS {
   public double coldTEGpumpIsentropicEfficiency = 0.75;
 
   /**
-   * <p>
    * Constructor for TEGdehydrationProcessDistillationJS.
-   * </p>
    */
-  public TEGdehydrationProcessDistillationJS() {}
+  public TEGdehydrationProcessDistillationJS() {
+  }
 
   /**
-   * <p>
    * getProcess.
-   * </p>
    *
    * @return a {@link neqsim.process.processmodel.ProcessSystem} object
    */
   public neqsim.process.processmodel.ProcessSystem getProcess() {
     // Create the input fluid to the TEG process and saturate it with water at
     // scrubber conditions
-    neqsim.thermo.system.SystemInterface feedGas =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
+    neqsim.thermo.system.SystemInterface feedGas = new neqsim.thermo.system.SystemSrkCPAstatoil(273.15 + 42.0, 10.00);
     feedGas.addComponent("nitrogen", 1.42);
     feedGas.addComponent("CO2", 0.5339);
     feedGas.addComponent("methane", 95.2412);
@@ -197,23 +191,20 @@ public class TEGdehydrationProcessDistillationJS {
 
     StreamSaturatorUtil saturatedFeedGas = new StreamSaturatorUtil("water saturator", dryFeedGas);
 
-    Stream waterSaturatedFeedGas =
-        new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
+    Stream waterSaturatedFeedGas = new Stream("water saturated feed gas", saturatedFeedGas.getOutletStream());
 
-    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser =
-        new HydrateEquilibriumTemperatureAnalyser("hydrate temperature analyser",
-            waterSaturatedFeedGas);
+    HydrateEquilibriumTemperatureAnalyser hydrateTAnalyser = new HydrateEquilibriumTemperatureAnalyser(
+        "hydrate temperature analyser", waterSaturatedFeedGas);
 
     neqsim.thermo.system.SystemInterface feedTEG = feedGas.clone();
     feedTEG.setMolarComposition(
-        new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97});
+        new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.03, 0.97 });
 
     Heater feedTPsetterToAbsorber = new Heater("TP of gas to absorber", waterSaturatedFeedGas);
     feedTPsetterToAbsorber.setOutPressure(absorberFeedGasPressure, "bara");
     feedTPsetterToAbsorber.setOutTemperature(absorberFeedGasTemperature, "C");
 
-    Stream feedToAbsorber =
-        new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
+    Stream feedToAbsorber = new Stream("feed to TEG absorber", feedTPsetterToAbsorber.getOutletStream());
 
     Stream TEGFeed = new Stream("lean TEG to absorber", feedTEG);
     TEGFeed.setFlowRate(leanTEGFlowRate, "kg/hr");
@@ -230,16 +221,14 @@ public class TEGdehydrationProcessDistillationJS {
 
     Stream richTEG = new Stream("rich TEG from absorber", absorber.getSolventOutStream());
 
-    HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser =
-        new HydrateEquilibriumTemperatureAnalyser("water dew point analyser", dehydratedGas);
+    HydrateEquilibriumTemperatureAnalyser waterDewPointAnalyser = new HydrateEquilibriumTemperatureAnalyser(
+        "water dew point analyser", dehydratedGas);
     ThrottlingValve glycol_flash_valve = new ThrottlingValve("Rich TEG HP flash valve", richTEG);
     glycol_flash_valve.setOutletPressure(flashDrumPressure);
 
-    Heater richGLycolHeaterCondenser =
-        new Heater("rich TEG preheater", glycol_flash_valve.getOutletStream());
+    Heater richGLycolHeaterCondenser = new Heater("rich TEG preheater", glycol_flash_valve.getOutletStream());
 
-    HeatExchanger heatEx2 =
-        new HeatExchanger("rich TEG heat exchanger 1", richGLycolHeaterCondenser.getOutletStream());
+    HeatExchanger heatEx2 = new HeatExchanger("rich TEG heat exchanger 1", richGLycolHeaterCondenser.getOutletStream());
     heatEx2.setGuessOutTemperature(273.15 + 62.0);
     heatEx2.setUAvalue(UAvalueRichTEGHeatExchanger_1);
 
@@ -247,8 +236,7 @@ public class TEGdehydrationProcessDistillationJS {
 
     Stream flashGas = new Stream("gas from degassing separator", flashSep.getGasOutStream());
 
-    Stream flashLiquid =
-        new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
+    Stream flashLiquid = new Stream("liquid from degassing separator", flashSep.getLiquidOutStream());
 
     Filter fineFilter = new Filter("TEG fine filter", flashLiquid);
     fineFilter.setDeltaP(0.05, "bara");
@@ -256,13 +244,11 @@ public class TEGdehydrationProcessDistillationJS {
     Filter carbonFilter = new Filter("activated carbon filter", fineFilter.getOutletStream());
     carbonFilter.setDeltaP(0.01, "bara");
 
-    HeatExchanger heatEx =
-        new HeatExchanger("rich TEG heat exchanger 2", carbonFilter.getOutletStream());
+    HeatExchanger heatEx = new HeatExchanger("rich TEG heat exchanger 2", carbonFilter.getOutletStream());
     heatEx.setGuessOutTemperature(273.15 + 130.0);
     heatEx.setUAvalue(UAvalueRichTEGHeatExchanger_2);
 
-    ThrottlingValve glycol_flash_valve2 =
-        new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
+    ThrottlingValve glycol_flash_valve2 = new ThrottlingValve("Rich TEG LP flash valve", heatEx.getOutStream(0));
     glycol_flash_valve2.setOutletPressure(reboilerPressure);
 
     neqsim.thermo.system.SystemInterface stripGas = feedGas.clone();
@@ -319,14 +305,13 @@ public class TEGdehydrationProcessDistillationJS {
     hotLeanTEGPump2.setOutletPressure(absorberFeedGasPressure);
     hotLeanTEGPump2.setIsentropicEfficiency(coldTEGpumpIsentropicEfficiency);
 
-    SetPoint pumpHPPresSet =
-        new SetPoint("HP pump set", hotLeanTEGPump2, "pressure", feedToAbsorber);
+    SetPoint pumpHPPresSet = new SetPoint("HP pump set", hotLeanTEGPump2, "pressure", feedToAbsorber);
 
     Stream leanTEGtoabs = new Stream("lean TEG to absorber", hotLeanTEGPump2.getOutletStream());
 
     neqsim.thermo.system.SystemInterface pureTEG = feedGas.clone();
     pureTEG.setMolarComposition(
-        new double[] {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0});
+        new double[] { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0 });
 
     Stream makeupTEG = new Stream("makeup TEG", pureTEG);
     makeupTEG.setFlowRate(1e-6, "kg/hr");
@@ -353,8 +338,7 @@ public class TEGdehydrationProcessDistillationJS {
     richGLycolHeaterCondenser.setEnergyStream(column.getCondenser().getEnergyStream());
     // richGLycolHeater.isSetEnergyStream();
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(dryFeedGas);
     operations.add(saturatedFeedGas);
     operations.add(waterSaturatedFeedGas);
@@ -401,9 +385,7 @@ public class TEGdehydrationProcessDistillationJS {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

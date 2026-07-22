@@ -12,9 +12,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import neqsim.process.mechanicaldesign.designstandards.StandardType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.mechanicaldesign.designstandards.StandardType;
 
 /**
  * CSV-based data source for loading Technical Requirements Documents (TORG).
@@ -24,7 +24,7 @@ import org.apache.logging.log4j.Logger;
  * </p>
  *
  * <h2>Format 1: Standards-focused (standards.csv)</h2>
- * 
+ *
  * <pre>
  * PROJECT_ID,PROJECT_NAME,COMPANY,DESIGN_CATEGORY,STANDARD_CODE,VERSION,PRIORITY
  * PROJ-001,Offshore Platform,Equinor,pressure vessel design code,ASME-VIII-Div1,2021,1
@@ -33,15 +33,15 @@ import org.apache.logging.log4j.Logger;
  * </pre>
  *
  * <h2>Format 2: Full TORG (torg_master.csv)</h2>
- * 
+ *
  * <pre>
  * PROJECT_ID,PROJECT_NAME,COMPANY,REVISION,ISSUE_DATE,MIN_AMBIENT_TEMP,MAX_AMBIENT_TEMP,...
  * PROJ-001,Offshore Platform,Equinor,2,-40,45,...
  * </pre>
  *
  * <p>
- * When using Format 1, the data source automatically combines rows with the same PROJECT_ID into a
- * single TechnicalRequirementsDocument.
+ * When using Format 1, the data source automatically combines rows with the same PROJECT_ID into a single
+ * TechnicalRequirementsDocument.
  * </p>
  *
  * @author esol
@@ -160,8 +160,7 @@ public class CsvTorgDataSource implements TorgDataSource {
    * @param headerIndex map of column names to their indices
    * @throws IOException if an I/O error occurs while reading
    */
-  private void loadStandardsFormat(BufferedReader reader, Map<String, Integer> headerIndex)
-      throws IOException {
+  private void loadStandardsFormat(BufferedReader reader, Map<String, Integer> headerIndex) throws IOException {
     // Group rows by project ID
     Map<String, List<String[]>> projectRows = new HashMap<>();
 
@@ -194,8 +193,8 @@ public class CsvTorgDataSource implements TorgDataSource {
 
       // Use first row for project metadata
       String[] firstRow = rows.get(0);
-      TechnicalRequirementsDocument.Builder builder = TechnicalRequirementsDocument.builder()
-          .projectId(projectId).projectName(getField(firstRow, headerIndex, COL_PROJECT_NAME))
+      TechnicalRequirementsDocument.Builder builder = TechnicalRequirementsDocument.builder().projectId(projectId)
+          .projectName(getField(firstRow, headerIndex, COL_PROJECT_NAME))
           .companyIdentifier(getField(firstRow, headerIndex, COL_COMPANY))
           .revision(getFieldOrDefault(firstRow, headerIndex, COL_REVISION, "1"))
           .issueDate(getField(firstRow, headerIndex, COL_ISSUE_DATE));
@@ -224,8 +223,8 @@ public class CsvTorgDataSource implements TorgDataSource {
         double seawaterTemp = parseDouble(getField(firstRow, headerIndex, COL_SEAWATER_TEMP), 4.0);
         String seismicZone = getFieldOrDefault(firstRow, headerIndex, COL_SEISMIC_ZONE, "0");
 
-        builder.environmentalConditions(new TechnicalRequirementsDocument.EnvironmentalConditions(
-            minTemp, maxTemp, seawaterTemp, seismicZone, 0, 0, ""));
+        builder.environmentalConditions(new TechnicalRequirementsDocument.EnvironmentalConditions(minTemp, maxTemp,
+            seawaterTemp, seismicZone, 0, 0, ""));
       }
 
       cache.put(projectId, builder.build());
@@ -239,8 +238,7 @@ public class CsvTorgDataSource implements TorgDataSource {
    * @param headerIndex map of column names to their indices
    * @throws IOException if an I/O error occurs while reading
    */
-  private void loadMasterFormat(BufferedReader reader, Map<String, Integer> headerIndex)
-      throws IOException {
+  private void loadMasterFormat(BufferedReader reader, Map<String, Integer> headerIndex) throws IOException {
     String line;
     while ((line = reader.readLine()) != null) {
       if (line.trim().isEmpty()) {
@@ -254,8 +252,8 @@ public class CsvTorgDataSource implements TorgDataSource {
         continue;
       }
 
-      TechnicalRequirementsDocument.Builder builder = TechnicalRequirementsDocument.builder()
-          .projectId(projectId).projectName(getField(values, headerIndex, COL_PROJECT_NAME))
+      TechnicalRequirementsDocument.Builder builder = TechnicalRequirementsDocument.builder().projectId(projectId)
+          .projectName(getField(values, headerIndex, COL_PROJECT_NAME))
           .companyIdentifier(getField(values, headerIndex, COL_COMPANY))
           .revision(getFieldOrDefault(values, headerIndex, COL_REVISION, "1"))
           .issueDate(getField(values, headerIndex, COL_ISSUE_DATE));
@@ -269,16 +267,16 @@ public class CsvTorgDataSource implements TorgDataSource {
         double seawaterTemp = parseDouble(getField(values, headerIndex, COL_SEAWATER_TEMP), 4.0);
         String seismicZone = getFieldOrDefault(values, headerIndex, COL_SEISMIC_ZONE, "0");
 
-        builder.environmentalConditions(new TechnicalRequirementsDocument.EnvironmentalConditions(
-            minTemp, maxTemp, seawaterTemp, seismicZone, 0, 0, ""));
+        builder.environmentalConditions(new TechnicalRequirementsDocument.EnvironmentalConditions(minTemp, maxTemp,
+            seawaterTemp, seismicZone, 0, 0, ""));
       }
 
       // Safety factors
       String pressureSF = getField(values, headerIndex, COL_PRESSURE_SF);
       String corrosion = getField(values, headerIndex, COL_CORROSION_ALLOWANCE);
       if (pressureSF != null || corrosion != null) {
-        builder.safetyFactors(new TechnicalRequirementsDocument.SafetyFactors(
-            parseDouble(pressureSF, 1.1), 10.0, parseDouble(corrosion, 3.0), 0.125, 1.0));
+        builder.safetyFactors(new TechnicalRequirementsDocument.SafetyFactors(parseDouble(pressureSF, 1.1), 10.0,
+            parseDouble(corrosion, 3.0), 0.125, 1.0));
       }
 
       // Material specs
@@ -286,9 +284,9 @@ public class CsvTorgDataSource implements TorgDataSource {
       String pipeMat = getField(values, headerIndex, COL_PIPE_MATERIAL);
       if (plateMat != null || pipeMat != null) {
         double minDesignTemp = parseDouble(minAmbient, -46.0);
-        builder.materialSpecifications(new TechnicalRequirementsDocument.MaterialSpecifications(
-            plateMat != null ? plateMat : "A516-70", pipeMat != null ? pipeMat : "A106-B",
-            minDesignTemp, 300.0, minDesignTemp < -29, "ASTM"));
+        builder.materialSpecifications(
+            new TechnicalRequirementsDocument.MaterialSpecifications(plateMat != null ? plateMat : "A516-70",
+                pipeMat != null ? pipeMat : "A106-B", minDesignTemp, 300.0, minDesignTemp < -29, "ASTM"));
       }
 
       cache.put(projectId, builder.build());
@@ -302,8 +300,7 @@ public class CsvTorgDataSource implements TorgDataSource {
   }
 
   @Override
-  public Optional<TechnicalRequirementsDocument> loadByCompanyAndProject(String companyIdentifier,
-      String projectName) {
+  public Optional<TechnicalRequirementsDocument> loadByCompanyAndProject(String companyIdentifier, String projectName) {
     loadData();
     for (TechnicalRequirementsDocument torg : cache.values()) {
       if (companyIdentifier.equalsIgnoreCase(torg.getCompanyIdentifier())

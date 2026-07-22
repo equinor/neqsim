@@ -19,9 +19,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.unit.PressureUnit;
 
 /**
- * <p>
  * SimpleReservoir class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -29,6 +27,9 @@ import neqsim.util.unit.PressureUnit;
 public class SimpleReservoir extends ProcessEquipmentBaseClass {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
+      .getLogger(SimpleReservoir.class);
 
   SystemInterface thermoSystem;
 
@@ -52,10 +53,24 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   double reservoirVolume = 0.0;
   double lowPressureLimit = 50.0;
 
+  /** Cumulative water produced at surface conditions (Sm3). */
+  double waterProductionTotal = 0.0;
+
+  /** Flag enabling recording of the pressure/production surveillance history during transient runs. */
+  private boolean recordProductionHistory = true;
+  /** Reservoir time at each recorded history point (s). */
+  private final ArrayList<Double> timeHistory = new ArrayList<Double>();
+  /** Average reservoir pressure at each recorded history point (bara). */
+  private final ArrayList<Double> pressureHistory = new ArrayList<Double>();
+  /** Cumulative gas produced at each recorded history point (Sm3). */
+  private final ArrayList<Double> gasProductionHistory = new ArrayList<Double>();
+  /** Cumulative oil produced at each recorded history point (Sm3). */
+  private final ArrayList<Double> oilProductionHistory = new ArrayList<Double>();
+  /** Cumulative water produced at each recorded history point (Sm3). */
+  private final ArrayList<Double> waterProductionHistory = new ArrayList<Double>();
+
   /**
-   * <p>
    * Constructor for SimpleReservoir.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -64,9 +79,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getReservoirFluid.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -81,9 +94,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
    */
 
   /**
-   * <p>
    * addGasProducer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -99,9 +110,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * addOilProducer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -117,9 +126,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * addWaterInjector.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -136,9 +143,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * addWaterProducer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -154,9 +159,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * addGasInjector.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -172,9 +175,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getGasInPlace.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -197,9 +198,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getOilInPlace.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -222,9 +221,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasProducer</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.reservoir.Well} object
@@ -234,9 +231,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>oilProducer</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.reservoir.Well} object
@@ -246,9 +241,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>oilProducer</code>.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.process.equipment.reservoir.Well} object
@@ -263,9 +256,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>waterProducer</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.reservoir.Well} object
@@ -275,9 +266,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>waterInjector</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.reservoir.Well} object
@@ -287,9 +276,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasInjector</code>.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.reservoir.Well} object
@@ -299,17 +286,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * setReservoirFluid.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param gasVolume a double
    * @param oilVolume a double
    * @param waterVolume a double
    */
-  public void setReservoirFluid(SystemInterface thermoSystem, double gasVolume, double oilVolume,
-      double waterVolume) {
+  public void setReservoirFluid(SystemInterface thermoSystem, double gasVolume, double oilVolume, double waterVolume) {
     this.thermoSystem = thermoSystem;
     this.oilVolume = oilVolume;
     this.gasVolume = gasVolume;
@@ -351,6 +335,8 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     OOIP = getOilInPlace("Sm3");
     OGIP = getGasInPlace("Sm3");
     lowPressureLimit = 50.0;
+    clearProductionHistory();
+    recordProductionHistoryPoint();
   }
 
   /** {@inheritDoc} */
@@ -383,9 +369,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * GORprodution.
-   * </p>
    *
    * @return a double
    */
@@ -394,21 +378,17 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     double flow = 0.0;
     for (int i = 0; i < gasProducer.size(); i++) {
       flow += gasProducer.get(i).getStream().getFluid().getTotalNumberOfMoles();
-      GOR += gasProducer.get(i).getGOR()
-          * gasProducer.get(i).getStream().getFluid().getTotalNumberOfMoles();
+      GOR += gasProducer.get(i).getGOR() * gasProducer.get(i).getStream().getFluid().getTotalNumberOfMoles();
     }
     for (int i = 0; i < oilProducer.size(); i++) {
       flow += oilProducer.get(i).getStream().getFluid().getTotalNumberOfMoles();
-      GOR += oilProducer.get(i).getGOR()
-          * oilProducer.get(i).getStream().getFluid().getTotalNumberOfMoles();
+      GOR += oilProducer.get(i).getGOR() * oilProducer.get(i).getStream().getFluid().getTotalNumberOfMoles();
     }
     return GOR / flow;
   }
 
   /**
-   * <p>
    * getGasProdution.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -429,9 +409,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getOilProdution.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -452,9 +430,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getWaterProdution.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -484,12 +460,13 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   public void runTransient(double dt, UUID id) {
     increaseTime(dt);
     if (thermoSystem.getPressure("bara") < lowPressureLimit) {
-      System.out.println("low pressure reservoir limit reached");
+      logger.info("low pressure reservoir limit reached");
       setCalculationIdentifier(id);
       return;
     }
     gasProductionTotal += getGasProdution("Sm3/sec") * dt;
     oilProductionTotal += getOilProdution("Sm3/sec") * dt;
+    waterProductionTotal += getWaterProdution("Sm3/sec") * dt;
     thermoSystem.init(0);
     for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
       // thermoSystem.addComponent(i, -10000000000.001);
@@ -512,8 +489,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
             -waterProducer.get(k).getStream().getFluid().getComponent(i).getNumberOfmoles() * dt);
       }
       for (int k = 0; k < gasInjector.size(); k++) {
-        thermoSystem.addComponent(i,
-            gasInjector.get(k).getStream().getFluid().getComponent(i).getNumberOfmoles() * dt);
+        thermoSystem.addComponent(i, gasInjector.get(k).getStream().getFluid().getComponent(i).getNumberOfmoles() * dt);
       }
     }
 
@@ -560,9 +536,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
       gasInjector.get(k).getStream().run(id);
     }
     /*
-     * double totalVolume = 0; for (int i = 0; i < getReservoirFluid().getNumberOfPhases(); i++) {
-     * totalVolume += getReservoirFluid().getPhase(i).getVolume("m3"); }
-     * System.out.println("tot volume " + totalVolume/1.0e6 + " gas volume "+
+     * double totalVolume = 0; for (int i = 0; i < getReservoirFluid().getNumberOfPhases(); i++) { totalVolume +=
+     * getReservoirFluid().getPhase(i).getVolume("m3"); } System.out.println("tot volume " + totalVolume/1.0e6 +
+     * " gas volume "+
      */
 
     // getReservoirFluid().getPhase("gas").getVolume("m3")/1.0e6 + " oil volume "+
@@ -589,6 +565,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     for (int k = 0; k < gasInjector.size(); k++) {
       gasInjector.get(k).getStream().setPressure(thermoSystem.getPressure());
     }
+    recordProductionHistoryPoint();
     setCalculationIdentifier(id);
   }
 
@@ -600,16 +577,13 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0), 200.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 100.0), 200.00);
     testSystem.addComponent("nitrogen", 0.100);
     testSystem.addComponent("methane", 30.00);
     testSystem.addComponent("ethane", 1.0);
@@ -635,8 +609,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     StreamInterface producedGasStream = reservoirOps.addGasProducer("SLP_A32562G");
     StreamInterface waterInjectorStream = reservoirOps.addWaterInjector("SLP_WI32562O");
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(reservoirOps);
     // operations.save("c:/temp/resmode1.neqsim");
 
@@ -671,12 +644,9 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     reservoirOps.runTransient(60 * 60 * 24 * 3);
     for (int i = 0; i < 1; i++) {
       reservoirOps.runTransient(60 * 60 * 24 * 15);
-      System.out.println("water volume"
-          + reservoirOps.getReservoirFluid().getPhase("aqueous").getVolume("m3") / 1.0e6);
-      System.out
-          .println("oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
-      System.out
-          .println("total produced  " + reservoirOps.getProductionTotal("MSm3 oe") + " MSm3 oe");
+      System.out.println("water volume" + reservoirOps.getReservoirFluid().getPhase("aqueous").getVolume("m3") / 1.0e6);
+      System.out.println("oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
+      System.out.println("total produced  " + reservoirOps.getProductionTotal("MSm3 oe") + " MSm3 oe");
       if (reservoirOps.getFluid().getPressure() < 50.0) {
         break;
       }
@@ -690,17 +660,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     System.out.println("gas production  " + reservoirOps.getGasProdution("Sm3/day") + " Sm3/day");
     System.out.println("oil production  " + reservoirOps.getOilProdution("Sm3/day") + " Sm3/day");
 
-    System.out
-        .println("oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
+    System.out.println("oil production  total" + reservoirOps.getOilProductionTotal("Sm3") + " Sm3");
 
     // reservoirOps.runTransient(60 * 60 * 24 * 365);
     // reservoirOps.runTransient(60 * 60 * 24 * 365);
     // reservoirOps.runTransient(60 * 60 * 24 * 365);
-    System.out
-        .println("gas production  total" + reservoirOps.getGasProductionTotal("GSm3") + " GSm3");
+    System.out.println("gas production  total" + reservoirOps.getGasProductionTotal("GSm3") + " GSm3");
 
-    System.out
-        .println("oil production  total" + reservoirOps.getOilProductionTotal("MSm3") + " MSm3");
+    System.out.println("oil production  total" + reservoirOps.getOilProductionTotal("MSm3") + " MSm3");
     System.out.println("gas in place (GIP) " + reservoirOps.getGasInPlace("GSm3") + " GSm3");
     System.out.println("oil in place (OIP) " + reservoirOps.getOilInPlace("MSm3") + " MSm3");
     System.out.println("original oil in place (OOIP) " + reservoirOps.getOOIP("MSm3") + " MSm3");
@@ -731,16 +698,14 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
     for (int i = 0; i < 60; i++) {
       reservoirOps.runTransient(60 * 60 * 24 * 25);
       testPipe.run();
-      System.out.println("oil flow " + producedOilStream.getFlowRate("kg/hr") + " pressure "
-          + producedOilStream.getPressure("bara") + " pipe out pres "
-          + testPipe.getOutletStream().getFluid().getPressure());
+      System.out.println(
+          "oil flow " + producedOilStream.getFlowRate("kg/hr") + " pressure " + producedOilStream.getPressure("bara")
+              + " pipe out pres " + testPipe.getOutletStream().getFluid().getPressure());
     }
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasProductionTotal</code>.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -756,9 +721,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>oilProductionTotal</code>.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -771,9 +734,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getProductionTotal.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -787,9 +748,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getOOIP.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -802,9 +761,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * getOGIP.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -823,9 +780,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>lowPressureLimit</code>.
-   * </p>
    *
    * @param value a double
    * @param unit a {@link java.lang.String} object
@@ -836,9 +791,7 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>lowPressureLimit</code>.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -846,5 +799,156 @@ public class SimpleReservoir extends ProcessEquipmentBaseClass {
   public double getLowPressureLimit(String unit) {
     PressureUnit conver = new PressureUnit(lowPressureLimit, "bara");
     return conver.getValue(unit);
+  }
+
+  // ============================================================
+  // Production-history surveillance support
+  // ============================================================
+
+  /**
+   * Enable or disable recording of the pressure/production surveillance history during transient runs.
+   *
+   * @param record {@code true} to record the history (default), {@code false} to disable
+   */
+  public void setRecordProductionHistory(boolean record) {
+    this.recordProductionHistory = record;
+  }
+
+  /**
+   * Clear the recorded pressure/production surveillance history.
+   */
+  public void clearProductionHistory() {
+    timeHistory.clear();
+    pressureHistory.clear();
+    gasProductionHistory.clear();
+    oilProductionHistory.clear();
+    waterProductionHistory.clear();
+  }
+
+  /**
+   * Record the current time, average reservoir pressure and cumulative production to the surveillance history.
+   *
+   * <p>
+   * Called automatically at initialization and after each transient step when recording is enabled.
+   * </p>
+   */
+  public void recordProductionHistoryPoint() {
+    if (!recordProductionHistory || thermoSystem == null) {
+      return;
+    }
+    timeHistory.add(getTime());
+    pressureHistory.add(thermoSystem.getPressure("bara"));
+    gasProductionHistory.add(gasProductionTotal);
+    oilProductionHistory.add(oilProductionTotal);
+    waterProductionHistory.add(waterProductionTotal);
+  }
+
+  /**
+   * Get the recorded reservoir-time history.
+   *
+   * @return array of times (s) at each recorded point
+   */
+  public double[] getTimeHistory() {
+    return toArray(timeHistory);
+  }
+
+  /**
+   * Get the recorded average-reservoir-pressure history.
+   *
+   * @return array of pressures (bara) at each recorded point
+   */
+  public double[] getPressureHistory() {
+    return toArray(pressureHistory);
+  }
+
+  /**
+   * Get the recorded cumulative gas-production history.
+   *
+   * @return array of cumulative gas produced (Sm3) at each recorded point
+   */
+  public double[] getGasProductionHistory() {
+    return toArray(gasProductionHistory);
+  }
+
+  /**
+   * Get the recorded cumulative oil-production history.
+   *
+   * @return array of cumulative oil produced (Sm3) at each recorded point
+   */
+  public double[] getOilProductionHistory() {
+    return toArray(oilProductionHistory);
+  }
+
+  /**
+   * Get the recorded cumulative water-production history.
+   *
+   * @return array of cumulative water produced (Sm3) at each recorded point
+   */
+  public double[] getWaterProductionHistory() {
+    return toArray(waterProductionHistory);
+  }
+
+  /**
+   * Get the cumulative water produced at surface conditions.
+   *
+   * @param unit "Sm3" or "MSm3"
+   * @return cumulative water production
+   */
+  public double getWaterProductionTotal(String unit) {
+    if (unit.equals("MSm3")) {
+      return waterProductionTotal / 1.0e6;
+    }
+    return waterProductionTotal;
+  }
+
+  /**
+   * Reservoir temperature of the current fluid.
+   *
+   * @param unit "K" or "C"
+   * @return reservoir temperature
+   */
+  public double getReservoirTemperature(String unit) {
+    return thermoSystem.getTemperature(unit);
+  }
+
+  /**
+   * Gas specific gravity (air = 1.0) of the reservoir gas phase, or of the total fluid when no gas phase is present.
+   *
+   * @return gas specific gravity (dimensionless)
+   */
+  public double getGasGravity() {
+    double airMolarMass = 28.9647;
+    if (thermoSystem.hasPhaseType("gas")) {
+      return thermoSystem.getPhase("gas").getMolarMass("gr/mol") / airMolarMass;
+    }
+    return thermoSystem.getMolarMass("gr/mol") / airMolarMass;
+  }
+
+  /**
+   * Create a reservoir-surveillance analyser bound to this reservoir.
+   *
+   * <p>
+   * The returned {@link ReservoirSurveillance} runs analytical (inverse) material balance, decline-curve fitting and
+   * aquifer-influx calculations on the recorded pressure/production history.
+   * </p>
+   *
+   * @return a {@link ReservoirSurveillance} bound to this reservoir
+   */
+  public ReservoirSurveillance getSurveillance() {
+    return new ReservoirSurveillance(this);
+  }
+
+  /**
+   * Convert a list of doubles to a primitive array.
+   *
+   * @param list the list to convert
+   * @return primitive double array
+   */
+  private static double[] toArray(ArrayList<Double> list) {
+    double[] out = new double[list.size()];
+    for (int i = 0; i < list.size(); i++) {
+      out[i] = list.get(i);
+    }
+    return out;
   }
 }

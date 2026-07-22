@@ -14,6 +14,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermCPAstatoil;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermGERG;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCop;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCop5PRUMR;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCopPR;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermMatCopPRUMR;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermMollerup;
@@ -22,6 +23,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermPr1978;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDanesh;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrDelft1998;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrGassem2001;
+import neqsim.thermo.component.attractiveeosterm.AttractiveTermPrLeeKesler;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermRk;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermSchwartzentruber;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermSoreideWhitson;
@@ -34,9 +36,7 @@ import neqsim.thermo.component.attractiveeosterm.AttractiveTermUMRPRU;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * Abstract ComponentEos class.
- * </p>
  *
  * @author Even Solbraa
  */
@@ -48,11 +48,19 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   public double b = 1;
 
+  /** Per-component OmegaA override. NaN means use the EOS default. */
+  protected double omegaAOverride = Double.NaN;
+
   public double m = 0;
 
   public double alpha = 0;
 
   public double aT = 1;
+
+  /**
+   * Cached {@code Math.sqrt(aT)} for use by mixing-rule inner loops. Kept in sync with aT by init().
+   */
+  public double sqrtAT = 1;
 
   public double aDiffT = 0;
 
@@ -89,9 +97,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   static Logger logger = LogManager.getLogger(ComponentEos.class);
 
   /**
-   * <p>
    * Constructor for ComponentEos.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -103,9 +109,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * Constructor for ComponentEos.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -140,6 +144,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     a = calca();
     b = calcb();
     aT = a * alpha(temp);
+    sqrtAT = aT > 0 ? Math.sqrt(aT) : 0.0;
     if (initType >= 2) {
       aDiffT = diffaT(temp);
       aDiffDiffT = diffdiffaT(temp);
@@ -158,8 +163,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     double totVol = phase.getMolarVolume() * phase.getNumberOfMolesInPhase();
     voli = -(-R * temp * dFdNdV(phase, numberOfComponents, temp, pres)
         + R * temp / (phase.getMolarVolume() * phase.getNumberOfMolesInPhase()))
-        / (-R * temp * phase.dFdVdV()
-            - phase.getNumberOfMolesInPhase() * R * temp / (totVol * totVol));
+        / (-R * temp * phase.dFdVdV() - phase.getNumberOfMolesInPhase() * R * temp / (totVol * totVol));
 
     if (initType >= 3) {
       for (int j = 0; j < numberOfComponents; j++) {
@@ -219,6 +223,10 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       setAttractiveParameter(new AtractiveTermMatCopPRUMRNew(this, getMatiascopemanParamsUMRPRU()));
     } else if (i == 20) {
       setAttractiveParameter(new AttractiveTermSoreideWhitson(this));
+    } else if (i == 21) {
+      setAttractiveParameter(new AttractiveTermPrLeeKesler(this));
+    } else if (i == 22) {
+      setAttractiveParameter(new AttractiveTermMatCop5PRUMR(this, getMatiascopemanParamsUMRCPA()));
     } else {
       logger.error("error selecting an alpha formulation term");
       logger.info("ok setting alpha function");
@@ -245,35 +253,29 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   /** {@inheritDoc} */
   @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return phase.Fn() + phase.FB() * getBi() + phase.FD() * getAi();
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
-    return (phase.FBT() + phase.FBD() * phase.getAT()) * getBi() + phase.FDT() * getAi()
-        + phase.FD() * getAiT();
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
+    return (phase.FBT() + phase.FBD() * phase.getAT()) * getBi() + phase.FDT() * getAi() + phase.FD() * getAiT();
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return phase.FnV() + phase.FBV() * getBi() + phase.FDV() * getAi();
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     ComponentEosInterface[] comp_Array = (ComponentEosInterface[]) phase.getcomponentArray();
     return phase.FnB() * (getBi() + comp_Array[j].getBi())
-        + phase.FBD() * (getBi() * comp_Array[j].getAi() + comp_Array[j].getBi() * getAi())
-        + phase.FB() * getBij(j) + phase.FBB() * getBi() * comp_Array[j].getBi()
-        + phase.FD() * getAij(j);
+        + phase.FBD() * (getBi() * comp_Array[j].getAi() + comp_Array[j].getBi() * getAi()) + phase.FB() * getBij(j)
+        + phase.FBB() * getBi() * comp_Array[j].getBi() + phase.FD() * getAij(j);
   }
 
   /** {@inheritDoc} */
@@ -329,9 +331,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   public double fugcoef(PhaseInterface phase) {
     double temperature = phase.getTemperature();
     double pressure = phase.getPressure();
-    double logFugacityCoefficient =
-        dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
-            - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
+    double logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
+        - Math.log(pressure * phase.getMolarVolume() / (R * temperature));
     fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
   }
@@ -352,8 +353,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     double pressure = phase.getPressure();
     int numberOfComponents = phase.getNumberOfComponents();
     dfugdt = (this.dFdNdT(phase, numberOfComponents, temperature, pressure) + 1.0 / temperature
-        - getVoli() / R / temperature
-            * (-R * temperature * phase.dFdTdV() + pressure / temperature));
+        - getVoli() / R / temperature * (-R * temperature * phase.dFdTdV() + pressure / temperature));
     return dfugdt;
   }
 
@@ -373,8 +373,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
       dfugdn[i] = (this.dFdNdN(i, phase, numberOfComponents, temperature, pressure)
           + 1.0 / phase.getNumberOfMolesInPhase()
           - getVoli() / R / temperature
-              * (-R * temperature
-                  * comp_Array[i].dFdNdV(phase, numberOfComponents, temperature, pressure)
+              * (-R * temperature * comp_Array[i].dFdNdV(phase, numberOfComponents, temperature, pressure)
                   + R * temperature / phase.getTotalVolume()));
       // System.out.println("dfugdn " + dfugdn[i]);
       // System.out.println("dFdndn " + dFdNdN(i, phase, numberOfComponents,
@@ -389,8 +388,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   // Method added by Neeraj
   /*
-   * public double getdfugdn(int i){ double[] dfugdnv = this.logfugcoefdN(phase); //return 0.0001;
-   * return dfugdnv[i]; }
+   * public double getdfugdn(int i){ double[] dfugdnv = this.logfugcoefdN(phase); //return 0.0001; return dfugdnv[i]; }
    */
   // Added By Neeraj
   /** {@inheritDoc} */
@@ -408,8 +406,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     dfugdn[k] = (this.dFdNdN(k, phase, numberOfComponents, temperature, pressure)
         + 1.0 / phase.getNumberOfMolesInPhase()
         - voli / R / temperature
-            * (-R * temperature
-                * comp_Array[k].dFdNdV(phase, numberOfComponents, temperature, pressure)
+            * (-R * temperature * comp_Array[k].dFdNdV(phase, numberOfComponents, temperature, pressure)
                 + R * temperature / (vol * phase.getNumberOfMolesInPhase())));
     dfugdx[k] = dfugdn[k] * (phase.getNumberOfMolesInPhase());
     // System.out.println("Main dfugdn "+dfugdn[k]);
@@ -465,9 +462,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * getdAdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -513,7 +508,8 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
   /** {@inheritDoc} */
   @Override
-  public void setdBdTdT(double val) {}
+  public void setdBdTdT(double val) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -528,9 +524,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * alpha.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -546,9 +540,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * diffalphaT.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -558,9 +550,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * diffdiffalphaT.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -584,7 +574,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   /** {@inheritDoc} */
   @Override
   public double[] getDeltaEosParameters() {
-    double[] param = {delta1, delta2};
+    double[] param = { delta1, delta2 };
     return param;
   }
 
@@ -592,6 +582,35 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   @Override
   public void seta(double a) {
     this.a = a;
+  }
+
+  /**
+   * Override the OmegaA parameter used in {@link #calca()}. Once set, every call to {@code calca()} (including those
+   * triggered by {@code init()}) will use this value instead of the EOS class default. Use {@code Double.NaN} to revert
+   * to the EOS default.
+   *
+   * @param omegaA the OmegaA value, e.g. 0.45724 for PR or 0.42748 for SRK.
+   */
+  public void setOmegaA(double omegaA) {
+    this.omegaAOverride = omegaA;
+  }
+
+  /**
+   * Returns true when a per-component OmegaA override has been set via {@link #setOmegaA}.
+   *
+   * @return true if an OmegaA override is active
+   */
+  public boolean hasOmegaAOverride() {
+    return !Double.isNaN(omegaAOverride);
+  }
+
+  /**
+   * Returns the active OmegaA value, or {@code Double.NaN} when no override has been set.
+   *
+   * @return active OmegaA override, or NaN
+   */
+  public double getOmegaAOverride() {
+    return omegaAOverride;
   }
 
   /** {@inheritDoc} */
@@ -614,10 +633,9 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
     /*
      * double a_inf = -3.471 + 4.927 * getCriticalCompressibilityFactor() + 13.085 *
      * Math.pow(getCriticalCompressibilityFactor(), 2.0) - 2.067 * getAcentricFactor() + 1.891 *
-     * Math.pow(getAcentricFactor(), 2.0); double b_inf = -1.690 + 2.311 *
-     * getCriticalCompressibilityFactor() + 5.644 * Math.pow(getCriticalCompressibilityFactor(),
-     * 2.0) - 1.027 * getAcentricFactor() + 1.424 * Math.pow(getAcentricFactor(), 2.0); double c_inf
-     * = -0.318 + 0.299 * getCriticalCompressibilityFactor() + 1.710 *
+     * Math.pow(getAcentricFactor(), 2.0); double b_inf = -1.690 + 2.311 * getCriticalCompressibilityFactor() + 5.644 *
+     * Math.pow(getCriticalCompressibilityFactor(), 2.0) - 1.027 * getAcentricFactor() + 1.424 *
+     * Math.pow(getAcentricFactor(), 2.0); double c_inf = -0.318 + 0.299 * getCriticalCompressibilityFactor() + 1.710 *
      * Math.pow(getCriticalCompressibilityFactor(), 2.0) - 0.174 * getAcentricFactor() + 0.157 *
      * Math.pow(getAcentricFactor(), 2.0);
      */
@@ -648,9 +666,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * getAresnTV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -675,17 +691,15 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
 
     // double chempot2 = super.getChemicalPotential(phase);
     // System.out.println("d " + chempot + " " + chempot2);
-    return ((entalp - phase.getTemperature() * entrop) + numberOfMolesInPhase * R
-        * phase.getTemperature() * Math.log(numberOfMolesInPhase * R * phase.getTemperature()
-            / phase.getVolume() / referencePressure)
+    return ((entalp - phase.getTemperature() * entrop)
+        + numberOfMolesInPhase * R * phase.getTemperature()
+            * Math.log(numberOfMolesInPhase * R * phase.getTemperature() / phase.getVolume() / referencePressure)
         + getAresnTV(phase) * numberOfMolesInPhase) / numberOfMolesInPhase;
     // return dF;
   }
 
   /**
-   * <p>
    * getdUdnSV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -695,9 +709,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * getdUdSdnV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -708,9 +720,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * getdUdVdnS.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -721,9 +731,7 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * getdUdndnSV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param compNumb1 a int
@@ -731,17 +739,13 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
    * @return a double
    */
   public double getdUdndnSV(PhaseInterface phase, int compNumb1, int compNumb2) {
-    return dFdNdN(compNumb2, phase, phase.getNumberOfComponents(), phase.getTemperature(),
-        phase.getPressure())
-        - dFdNdT(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure())
-            * 1.0 / phase.FTT();
+    return dFdNdN(compNumb2, phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure())
+        - dFdNdT(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure()) * 1.0 / phase.FTT();
     // * phase.getComponent(compNumb2).getF;
   }
 
   /**
-   * <p>
    * Getter for the field <code>attractiveParameter</code>.
-   * </p>
    *
    * @return a {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface} object
    */
@@ -750,12 +754,9 @@ public abstract class ComponentEos extends Component implements ComponentEosInte
   }
 
   /**
-   * <p>
    * Setter for the field <code>attractiveParameter</code>.
-   * </p>
    *
-   * @param attractiveParameter a
-   *        {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface} object
+   * @param attractiveParameter a {@link neqsim.thermo.component.attractiveeosterm.AttractiveTermInterface} object
    */
   public void setAttractiveParameter(AttractiveTermInterface attractiveParameter) {
     this.attractiveParameter = attractiveParameter;

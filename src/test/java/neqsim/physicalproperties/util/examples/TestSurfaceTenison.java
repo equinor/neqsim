@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestSurfaceTenison class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TestSurfaceTenison {
+  private static final Logger logger = LogManager.getLogger(TestSurfaceTenison.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestSurfaceTenison.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -74,10 +71,8 @@ public class TestSurfaceTenison {
       testOps.TPflash();
       testSystem.display();
       // testSystem = testSystem.clone();
-      testSystem.getInterphaseProperties().setInterfacialTensionModel("gas", "oil",
-          "Linear Gradient Theory");
-      System.out.println(
-          "tension gas-oil " + testSystem.getInterphaseProperties().getSurfaceTension(0, 1));
+      testSystem.getInterphaseProperties().setInterfacialTensionModel("gas", "oil", "Linear Gradient Theory");
+      logger.info("tension gas-oil " + testSystem.getInterphaseProperties().getSurfaceTension(0, 1));
 
       // testOps.TPflash();
       // testSystem.display();
@@ -93,10 +88,10 @@ public class TestSurfaceTenison {
     // testSystem.getInterphaseProperties().setInterfacialTensionModel(2); // GT ==
     // 1 Parac==0
     // testSystem.initPhysicalProperties();
-    // System.out.println("influence n-pentane " + ((GTSurfaceTension)
+    // logger.info("influence n-pentane " + ((GTSurfaceTension)
     // testSystem.getInterphaseProperties().getSurfaceTensionModel(0)).getInfluenceParameter((2.74
     // * 1e-3), 1));
-    // System.out.println("z " + ((GTSurfaceTension)
+    // logger.info("z " + ((GTSurfaceTension)
     // testSystem.getInterphaseProperties().getSurfaceTensionModel(0)).getz()[40]);
     // testSystem.getInterphaseProperties().getInterfacialTensionModel(i)
     // testSystem.getInterphaseProperties().getSurfaceTensionModel(0).getMolarDensity(0);
@@ -108,7 +103,7 @@ public class TestSurfaceTenison {
     // testSystem.getInterphaseProperties().getSurfaceTensionModel(0).getMolarDensityTotal();
     // //total density profile for comp 0
     testSystem.display();
-    // System.out.println("tension gas-water " +
+    // logger.info("tension gas-water " +
     // testSystem.getInterphaseProperties().getSurfaceTension(0, 1));
   }
 }

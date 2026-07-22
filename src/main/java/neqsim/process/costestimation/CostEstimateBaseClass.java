@@ -7,9 +7,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.mechanicaldesign.SystemMechanicalDesign;
 
 /**
- * <p>
  * CostEstimateBaseClass class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class CostEstimateBaseClass implements java.io.Serializable {
   private double CAPEXperWeight = 1000.0; // KNOK/tones
 
   /**
-   * <p>
    * Constructor for CostEstimateBaseClass.
-   * </p>
    *
    * @param processdesign a {@link neqsim.process.mechanicaldesign.SystemMechanicalDesign} object
    */
@@ -35,9 +31,7 @@ public class CostEstimateBaseClass implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Constructor for CostEstimateBaseClass.
-   * </p>
    *
    * @param processdesign a {@link neqsim.process.mechanicaldesign.SystemMechanicalDesign}
    * @param costFactor cost factor
@@ -48,9 +42,7 @@ public class CostEstimateBaseClass implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getWeightBasedCAPEXEstimate.
-   * </p>
    *
    * @return a double
    */
@@ -59,9 +51,7 @@ public class CostEstimateBaseClass implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getCAPEXestimate.
-   * </p>
    *
    * @return a double
    */
@@ -71,8 +61,8 @@ public class CostEstimateBaseClass implements java.io.Serializable {
     for (int i = 0; i < names.size(); i++) {
       try {
         if (!(this.processdesign.getProcess().getUnit(names.get(i)) == null)) {
-          cost += this.processdesign.getProcess().getUnit(names.get(i)).getMechanicalDesign()
-              .getCostEstimate().getTotalCost();
+          cost += this.processdesign.getProcess().getUnit(names.get(i)).getMechanicalDesign().getCostEstimate()
+              .getTotalCost();
         }
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);

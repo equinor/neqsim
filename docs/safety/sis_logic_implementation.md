@@ -1,3 +1,8 @@
+---
+title: Safety Instrumented System (SIS) Logic Implementation
+description: Implemented a comprehensive **Safety Instrumented System (SIS)** framework for NeqSim following IEC 61511 standards, enabling realistic fire and gas detection with voting logic and automatic ESD trigg...
+---
+
 # Safety Instrumented System (SIS) Logic Implementation
 
 ## Overview

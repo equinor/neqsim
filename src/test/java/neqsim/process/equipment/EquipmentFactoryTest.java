@@ -21,8 +21,7 @@ import neqsim.thermo.system.SystemSrkEos;
 public class EquipmentFactoryTest extends neqsim.NeqSimTest {
   @Test
   public void createEquipmentFromEnum() {
-    ProcessEquipmentInterface equipment =
-        EquipmentFactory.createEquipment("valve1", EquipmentEnum.ThrottlingValve);
+    ProcessEquipmentInterface equipment = EquipmentFactory.createEquipment("valve1", EquipmentEnum.ThrottlingValve);
 
     assertInstanceOf(ThrottlingValve.class, equipment);
     assertEquals("valve1", equipment.getName());
@@ -38,8 +37,7 @@ public class EquipmentFactoryTest extends neqsim.NeqSimTest {
 
   @Test
   public void ejectorRequiresStreams() {
-    assertThrows(IllegalArgumentException.class,
-        () -> EquipmentFactory.createEquipment("ej", "ejector"));
+    assertThrows(IllegalArgumentException.class, () -> EquipmentFactory.createEquipment("ej", "ejector"));
 
     StreamInterface motive = new Stream("motive");
     StreamInterface suction = new Stream("suction");
@@ -71,5 +69,36 @@ public class EquipmentFactoryTest extends neqsim.NeqSimTest {
     ReservoirCVDsim simulator = EquipmentFactory.createReservoirCVDsim("cvd", fluid);
     assertNotNull(simulator);
     assertEquals("cvd", simulator.getName());
+  }
+
+  @Test
+  public void createEquipmentByClassNameReflectionFallback() {
+    ProcessEquipmentInterface controlValve = EquipmentFactory.createEquipment("cv", "ControlValve");
+    assertInstanceOf(neqsim.process.equipment.valve.ControlValve.class, controlValve);
+    assertEquals("cv", controlValve.getName());
+
+    ProcessEquipmentInterface airCooler = EquipmentFactory.createEquipment("ac", "AirCooler");
+    assertInstanceOf(neqsim.process.equipment.heatexchanger.AirCooler.class, airCooler);
+    assertEquals("ac", airCooler.getName());
+
+    ProcessEquipmentInterface orifice = EquipmentFactory.createEquipment("or", "Orifice");
+    assertInstanceOf(neqsim.process.equipment.diffpressure.Orifice.class, orifice);
+    assertEquals("or", orifice.getName());
+
+    ProcessEquipmentInterface train = EquipmentFactory.createEquipment("ct", "CompressorTrain");
+    assertInstanceOf(neqsim.process.equipment.compressor.CompressorTrain.class, train);
+    assertEquals("ct", train.getName());
+  }
+
+  @Test
+  public void columnEnumMapsToDistillationColumn() {
+    ProcessEquipmentInterface column = EquipmentFactory.createEquipment("col", EquipmentEnum.Column);
+    assertInstanceOf(neqsim.process.equipment.distillation.DistillationColumn.class, column);
+    assertEquals("col", column.getName());
+  }
+
+  @Test
+  public void unknownEquipmentTypeThrows() {
+    assertThrows(IllegalArgumentException.class, () -> EquipmentFactory.createEquipment("x", "NotARealEquipmentClass"));
   }
 }

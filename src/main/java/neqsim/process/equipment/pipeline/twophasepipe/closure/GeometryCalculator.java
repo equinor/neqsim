@@ -6,9 +6,8 @@ import java.io.Serializable;
  * Geometry calculations for stratified two-phase flow in circular pipes.
  *
  * <p>
- * Provides methods to calculate wetted perimeters, interfacial width, and phase areas based on
- * liquid level in stratified flow. These geometric parameters are essential for the two-fluid model
- * closure relations.
+ * Provides methods to calculate wetted perimeters, interfacial width, and phase areas based on liquid level in
+ * stratified flow. These geometric parameters are essential for the two-fluid model closure relations.
  * </p>
  *
  * <h2>Geometry Definition</h2>
@@ -293,8 +292,8 @@ public class GeometryCalculator implements Serializable {
    * @param inclination Pipe inclination (radians, positive = uphill)
    * @return true if stratified flow is stable
    */
-  public boolean isStratifiedStable(double gasVelocity, double liquidLevel, double diameter,
-      double gasDensity, double liquidDensity, double inclination) {
+  public boolean isStratifiedStable(double gasVelocity, double liquidLevel, double diameter, double gasDensity,
+      double liquidDensity, double inclination) {
     StratifiedGeometry geom = calculateFromLiquidLevel(liquidLevel, diameter);
 
     if (geom.gasArea < 1e-10 || geom.liquidArea < 1e-10) {
@@ -312,8 +311,7 @@ public class GeometryCalculator implements Serializable {
     }
 
     double deltaRho = liquidDensity - gasDensity;
-    double critVelSquared =
-        deltaRho * g * Math.cos(inclination) * geom.gasArea / (gasDensity * dAdh);
+    double critVelSquared = deltaRho * g * Math.cos(inclination) * geom.gasArea / (gasDensity * dAdh);
 
     if (critVelSquared < 0) {
       return false; // Downhill flow, always unstable at some velocity

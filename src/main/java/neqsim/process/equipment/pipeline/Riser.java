@@ -244,8 +244,7 @@ public class Riser extends PipeBeggsAndBrills {
    * @param buoyancyDepth depth of buoyancy modules from surface
    * @return configured lazy-wave riser
    */
-  public static Riser createLazyWave(String name, StreamInterface inStream, double waterDepth,
-      double buoyancyDepth) {
+  public static Riser createLazyWave(String name, StreamInterface inStream, double waterDepth, double buoyancyDepth) {
     Riser riser = new Riser(RiserType.LAZY_WAVE, name, inStream);
     riser.setWaterDepth(waterDepth);
     riser.setBuoyancyModuleDepth(buoyancyDepth);
@@ -291,32 +290,32 @@ public class Riser extends PipeBeggsAndBrills {
    */
   public void updateGeometryFromType() {
     switch (riserType) {
-      case STEEL_CATENARY_RISER:
-        configureSCR();
-        break;
-      case FLEXIBLE_RISER:
-        configureFlexible();
-        break;
-      case TOP_TENSIONED_RISER:
-        configureTTR();
-        break;
-      case LAZY_WAVE:
-        configureLazyWave();
-        break;
-      case STEEP_WAVE:
-        configureSteepWave();
-        break;
-      case HYBRID_RISER:
-        configureHybrid();
-        break;
-      case FREE_STANDING:
-        configureFreeStanding();
-        break;
-      case VERTICAL:
-        configureVertical();
-        break;
-      default:
-        configureSCR();
+    case STEEL_CATENARY_RISER:
+      configureSCR();
+      break;
+    case FLEXIBLE_RISER:
+      configureFlexible();
+      break;
+    case TOP_TENSIONED_RISER:
+      configureTTR();
+      break;
+    case LAZY_WAVE:
+      configureLazyWave();
+      break;
+    case STEEP_WAVE:
+      configureSteepWave();
+      break;
+    case HYBRID_RISER:
+      configureHybrid();
+      break;
+    case FREE_STANDING:
+      configureFreeStanding();
+      break;
+    case VERTICAL:
+      configureVertical();
+      break;
+    default:
+      configureSCR();
     }
 
     // Set ambient temperature
@@ -851,7 +850,6 @@ public class Riser extends PipeBeggsAndBrills {
    * @return true if has buoyancy modules
    */
   public boolean hasBuoyancyModules() {
-    return riserType == RiserType.LAZY_WAVE || riserType == RiserType.STEEP_WAVE
-        || riserType == RiserType.HYBRID_RISER;
+    return riserType == RiserType.LAZY_WAVE || riserType == RiserType.STEEP_WAVE || riserType == RiserType.HYBRID_RISER;
   }
 }

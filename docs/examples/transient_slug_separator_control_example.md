@@ -1,3 +1,8 @@
+---
+title: Transient slug separator control example
+description: This example wires a terrain-affected transient flowline to an inlet separator that is controlled by independent liquid-level and gas-pressure loops. The flowline uses a sinusoidal elevation profile t...
+---
+
 # Transient slug separator control example
 
 This example wires a terrain-affected transient flowline to an inlet separator that is controlled by independent liquid-level and gas-pressure loops. The flowline uses a sinusoidal elevation profile to shed slugs into the separator while a choke on the inlet protects separator pressure and a pair of throttling valves, each driven by a transmitter/PID loop, work to hold the separator liquid level and gas outlet pressure near their set points. The sample program reports slug statistics plus the final liquid level and gas outlet pressure once the transient run finishes.

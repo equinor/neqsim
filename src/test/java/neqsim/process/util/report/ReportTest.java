@@ -1,5 +1,7 @@
 package neqsim.process.util.report;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -11,6 +13,8 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class ReportTest {
+  private static final Logger logger = LogManager.getLogger(ReportTest.class);
+
   @Test
   void testWrite() {
     SystemSrkEos testSystem = new SystemSrkEos(298.0, 10.0);
@@ -52,11 +56,11 @@ public class ReportTest {
     String obj = report.generateJsonReport();
     neqsim.util.unit.Units.activateFieldUnits();
     String obj2 = report.generateJsonReport();
-    // System.out.println(obj2);
+    // logger.info(obj2);
     neqsim.util.unit.Units.activateSIUnits();
     // reporting from process Object
     String processreportasjson = processOps.getReport_json();
-    // System.out.println(processreportasjson);
+    // logger.info(processreportasjson);
     // report stream
     String streamreportasjson = inletStream.getReport_json();
   }

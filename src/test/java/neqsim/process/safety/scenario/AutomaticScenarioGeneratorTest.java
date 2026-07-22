@@ -68,9 +68,8 @@ public class AutomaticScenarioGeneratorTest {
 
   @Test
   void testAddFailureModes() {
-    AutomaticScenarioGenerator result =
-        generator.addFailureModes(AutomaticScenarioGenerator.FailureMode.COOLING_LOSS,
-            AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_CLOSED);
+    AutomaticScenarioGenerator result = generator.addFailureModes(AutomaticScenarioGenerator.FailureMode.COOLING_LOSS,
+        AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_CLOSED);
 
     // Should return same generator for chaining
     assertEquals(generator, result);
@@ -136,16 +135,14 @@ public class AutomaticScenarioGeneratorTest {
   @Test
   void testFailureModeEnum() {
     // Test all failure modes exist
-    AutomaticScenarioGenerator.FailureMode[] modes =
-        AutomaticScenarioGenerator.FailureMode.values();
+    AutomaticScenarioGenerator.FailureMode[] modes = AutomaticScenarioGenerator.FailureMode.values();
 
     assertTrue(modes.length > 0);
   }
 
   @Test
   void testFailureModeDescription() {
-    AutomaticScenarioGenerator.FailureMode mode =
-        AutomaticScenarioGenerator.FailureMode.COOLING_LOSS;
+    AutomaticScenarioGenerator.FailureMode mode = AutomaticScenarioGenerator.FailureMode.COOLING_LOSS;
 
     assertNotNull(mode.getDescription());
     assertEquals("Loss of Cooling", mode.getDescription());
@@ -153,16 +150,14 @@ public class AutomaticScenarioGeneratorTest {
 
   @Test
   void testFailureModeCategory() {
-    AutomaticScenarioGenerator.FailureMode mode =
-        AutomaticScenarioGenerator.FailureMode.COOLING_LOSS;
+    AutomaticScenarioGenerator.FailureMode mode = AutomaticScenarioGenerator.FailureMode.COOLING_LOSS;
 
     assertNotNull(mode.getCategory());
   }
 
   @Test
   void testFailureModeHazopDeviation() {
-    AutomaticScenarioGenerator.FailureMode mode =
-        AutomaticScenarioGenerator.FailureMode.COOLING_LOSS;
+    AutomaticScenarioGenerator.FailureMode mode = AutomaticScenarioGenerator.FailureMode.COOLING_LOSS;
 
     assertNotNull(mode.getHazopDeviation());
     assertEquals(AutomaticScenarioGenerator.HazopDeviation.NO_FLOW, mode.getHazopDeviation());
@@ -170,8 +165,7 @@ public class AutomaticScenarioGeneratorTest {
 
   @Test
   void testHazopDeviationEnum() {
-    AutomaticScenarioGenerator.HazopDeviation[] deviations =
-        AutomaticScenarioGenerator.HazopDeviation.values();
+    AutomaticScenarioGenerator.HazopDeviation[] deviations = AutomaticScenarioGenerator.HazopDeviation.values();
 
     assertTrue(deviations.length > 0);
     assertNotNull(AutomaticScenarioGenerator.HazopDeviation.NO_FLOW);
@@ -241,10 +235,9 @@ public class AutomaticScenarioGeneratorTest {
 
   @Test
   void testChainedConfiguration() {
-    List<ProcessSafetyScenario> scenarios =
-        generator.addFailureModes(AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_CLOSED)
-            .addFailureModes(AutomaticScenarioGenerator.FailureMode.COOLING_LOSS)
-            .generateSingleFailures();
+    List<ProcessSafetyScenario> scenarios = generator
+        .addFailureModes(AutomaticScenarioGenerator.FailureMode.VALVE_STUCK_CLOSED)
+        .addFailureModes(AutomaticScenarioGenerator.FailureMode.COOLING_LOSS).generateSingleFailures();
 
     assertNotNull(scenarios);
   }

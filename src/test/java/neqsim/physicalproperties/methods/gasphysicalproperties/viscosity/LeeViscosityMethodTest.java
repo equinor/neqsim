@@ -48,8 +48,7 @@ class LeeViscosityMethodTest {
     double viscLow = LeeViscosityMethod.calcViscosity(300.0, densityKgM3, molarMassKgMol);
     double viscHigh = LeeViscosityMethod.calcViscosity(400.0, densityKgM3, molarMassKgMol);
 
-    assertTrue(viscHigh > viscLow,
-        "Gas viscosity should increase with temperature at constant density");
+    assertTrue(viscHigh > viscLow, "Gas viscosity should increase with temperature at constant density");
   }
 
   @Test
@@ -124,8 +123,7 @@ class LeeViscosityMethodTest {
     double viscLowDens = LeeViscosityMethod.calcViscosity(temperatureK, 0.01, molarMassKgMol);
 
     // Should be close when density is very low
-    assertEquals(viscLP, viscLowDens, viscLP * 0.1,
-        "Low density result should be close to low-pressure result");
+    assertEquals(viscLP, viscLowDens, viscLP * 0.1, "Low density result should be close to low-pressure result");
   }
 
   @Test

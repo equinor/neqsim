@@ -11,7 +11,7 @@ import neqsim.process.util.monitor.ScenarioKPI;
 
 /**
  * Utility class for running process scenarios with integrated logic execution.
- * 
+ *
  * <p>
  * This runner coordinates:
  * <ul>
@@ -20,21 +20,21 @@ import neqsim.process.util.monitor.ScenarioKPI;
  * <li>Scenario perturbation application</li>
  * <li>Status monitoring and reporting</li>
  * </ul>
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * ProcessSystem system = new ProcessSystem();
  * // ... configure system ...
- * 
+ *
  * ProcessScenarioRunner runner = new ProcessScenarioRunner(system);
  * runner.addLogic(esdLogic);
  * runner.addLogic(startupLogic);
- * 
+ *
  * ProcessSafetyScenario scenario = ProcessSafetyScenario.builder("High Pressure")
  *     .customManipulator("Feed", stream -&gt; stream.setPressure(80.0, "bara")).build();
- * 
+ *
  * runner.runScenario("High Pressure Test", scenario, 60.0, 1.0);
  * </pre>
  *
@@ -58,11 +58,9 @@ public class ProcessScenarioRunner {
   }
 
   /**
-   * Ensures the process system has a valid steady-state solution before running
-   * scenarios. This
-   * method should be called before running any scenarios to establish baseline
-   * conditions.
-   * 
+   * Ensures the process system has a valid steady-state solution before running scenarios. This method should be called
+   * before running any scenarios to establish baseline conditions.
+   *
    * @throws RuntimeException if steady-state calculation fails
    */
   public void initializeSteadyState() {
@@ -82,23 +80,19 @@ public class ProcessScenarioRunner {
       // Print initial process conditions
       System.out.println("Initial Process Conditions:");
       system.getUnitOperations().stream()
-          .filter(unit -> unit.getName().contains("Separator") || unit.getName().contains("Stream"))
-          .forEach(unit -> {
+          .filter(unit -> unit.getName().contains("Separator") || unit.getName().contains("Stream")).forEach(unit -> {
             try {
               if (unit instanceof neqsim.process.equipment.separator.Separator) {
                 neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) unit;
                 System.out.printf("  %s: P=%.1f bara, T=%.1f °C%n", unit.getName(),
-                    sep.getGasOutStream().getPressure("bara"),
-                    sep.getGasOutStream().getTemperature("C"));
+                    sep.getGasOutStream().getPressure("bara"), sep.getGasOutStream().getTemperature("C"));
               } else if (unit instanceof neqsim.process.equipment.stream.Stream) {
                 neqsim.process.equipment.stream.Stream stream = (neqsim.process.equipment.stream.Stream) unit;
                 System.out.printf("  %s: P=%.1f bara, T=%.1f °C, Flow=%.1f kg/hr%n", unit.getName(),
-                    stream.getPressure("bara"), stream.getTemperature("C"),
-                    stream.getFlowRate("kg/hr"));
+                    stream.getPressure("bara"), stream.getTemperature("C"), stream.getFlowRate("kg/hr"));
               }
             } catch (Exception e) {
-              System.out.println(
-                  "  " + unit.getName() + ": Unable to read conditions - " + e.getMessage());
+              System.out.println("  " + unit.getName() + ": Unable to read conditions - " + e.getMessage());
             }
           });
       System.out.println();
@@ -109,8 +103,7 @@ public class ProcessScenarioRunner {
   }
 
   /**
-   * Validates that process conditions are within reasonable ranges to prevent
-   * simulation errors.
+   * Validates that process conditions are within reasonable ranges to prevent simulation errors.
    */
   private void validateProcessConditions() {
     for (Object unit : system.getUnitOperations()) {
@@ -121,12 +114,10 @@ public class ProcessScenarioRunner {
           double temperature = stream.getTemperature("C");
 
           if (Double.isNaN(pressure) || Double.isInfinite(pressure) || pressure <= 0) {
-            throw new IllegalStateException(
-                "Invalid pressure in " + stream.getName() + ": " + pressure);
+            throw new IllegalStateException("Invalid pressure in " + stream.getName() + ": " + pressure);
           }
           if (Double.isNaN(temperature) || Double.isInfinite(temperature)) {
-            throw new IllegalStateException(
-                "Invalid temperature in " + stream.getName() + ": " + temperature);
+            throw new IllegalStateException("Invalid temperature in " + stream.getName() + ": " + temperature);
           }
         }
       } catch (Exception e) {
@@ -158,7 +149,7 @@ public class ProcessScenarioRunner {
 
   /**
    * Removes a logic sequence by name.
-   * 
+   *
    * @param logicName name of the logic sequence to remove
    * @return true if logic was found and removed, false otherwise
    */
@@ -191,49 +182,45 @@ public class ProcessScenarioRunner {
    * Runs a scenario with the given parameters.
    *
    * @param scenarioName descriptive name for logging
-   * @param scenario     scenario perturbations to apply (can be null)
-   * @param duration     simulation duration in seconds
-   * @param timeStep     time step in seconds
+   * @param scenario scenario perturbations to apply (can be null)
+   * @param duration simulation duration in seconds
+   * @param timeStep time step in seconds
    * @return scenario execution summary
    */
-  public ScenarioExecutionSummary runScenario(String scenarioName, ProcessSafetyScenario scenario,
-      double duration, double timeStep) {
+  public ScenarioExecutionSummary runScenario(String scenarioName, ProcessSafetyScenario scenario, double duration,
+      double timeStep) {
     return runScenarioWithLogic(scenarioName, scenario, duration, timeStep, null);
   }
 
   /**
    * Runs a scenario with only specific logic sequences enabled.
-   * 
+   *
    * <p>
-   * This allows you to run a scenario with a subset of registered logic
-   * sequences. Only the logic
-   * sequences with names matching the provided list will be executed during this
-   * scenario.
-   * 
+   * This allows you to run a scenario with a subset of registered logic sequences. Only the logic sequences with names
+   * matching the provided list will be executed during this scenario.
+   *
    * <p>
    * Example:
-   * 
+   *
    * <pre>
    * runner.addLogic(hippsLogic);
    * runner.addLogic(esdLogic);
    * runner.addLogic(startupLogic);
-   * 
+   *
    * // Run scenario with only ESD logic active (HIPPS and startup will be
    * // ignored)
    * runner.runScenarioWithLogic("ESD Test", scenario, 30.0, 1.0, Arrays.asList("ESD Level 1"));
    * </pre>
-   * 
-   * @param scenarioName      descriptive name for logging
-   * @param scenario          scenario perturbations to apply (can be null)
-   * @param duration          simulation duration in seconds
-   * @param timeStep          time step in seconds
-   * @param enabledLogicNames names of logic sequences to enable (null = all logic
-   *                          enabled)
+   *
+   * @param scenarioName descriptive name for logging
+   * @param scenario scenario perturbations to apply (can be null)
+   * @param duration simulation duration in seconds
+   * @param timeStep time step in seconds
+   * @param enabledLogicNames names of logic sequences to enable (null = all logic enabled)
    * @return scenario execution summary
    */
-  public ScenarioExecutionSummary runScenarioWithLogic(String scenarioName,
-      ProcessSafetyScenario scenario, double duration, double timeStep,
-      List<String> enabledLogicNames) {
+  public ScenarioExecutionSummary runScenarioWithLogic(String scenarioName, ProcessSafetyScenario scenario,
+      double duration, double timeStep, List<String> enabledLogicNames) {
     System.out.println("╔══════════════════════════════════════════════════════════════╗");
     System.out.printf("║  RUNNING SCENARIO: %-42s ║%n", scenarioName);
     System.out.println("╚══════════════════════════════════════════════════════════════╝");
@@ -245,8 +232,7 @@ public class ProcessScenarioRunner {
     if (enabledLogicNames == null || enabledLogicNames.isEmpty()) {
       // Use all registered logic
       activeLogic = logicSequences;
-      System.out
-          .println("Running with all " + logicSequences.size() + " registered logic sequences");
+      System.out.println("Running with all " + logicSequences.size() + " registered logic sequences");
     } else {
       // Filter to only enabled logic
       activeLogic = new ArrayList<>();
@@ -255,8 +241,7 @@ public class ProcessScenarioRunner {
           activeLogic.add(logic);
         }
       }
-      System.out.println("Running with " + activeLogic.size() + " of " + logicSequences.size()
-          + " logic sequences:");
+      System.out.println("Running with " + activeLogic.size() + " of " + logicSequences.size() + " logic sequences:");
       for (ProcessLogic logic : activeLogic) {
         System.out.println("  - " + logic.getName());
       }
@@ -277,8 +262,7 @@ public class ProcessScenarioRunner {
         System.out.println("  - Utility losses: " + scenario.getUtilityLossUnits());
       }
       if (!scenario.getControllerSetPointOverrides().isEmpty()) {
-        System.out
-            .println("  - Controller overrides: " + scenario.getControllerSetPointOverrides());
+        System.out.println("  - Controller overrides: " + scenario.getControllerSetPointOverrides());
       }
       summary.setScenario(scenario);
     }
@@ -320,8 +304,7 @@ public class ProcessScenarioRunner {
 
         // Stop simulation if too many consecutive errors
         if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-          System.err
-              .println("✗ Stopping simulation due to " + consecutiveErrors + " consecutive errors");
+          System.err.println("✗ Stopping simulation due to " + consecutiveErrors + " consecutive errors");
           summary.addError("Simulation stopped: Too many consecutive errors");
           break;
         }
@@ -335,8 +318,7 @@ public class ProcessScenarioRunner {
         try {
           validateProcessConditions();
         } catch (Exception e) {
-          System.out
-              .println("Warning: Process validation failed at t=" + time + "s: " + e.getMessage());
+          System.out.println("Warning: Process validation failed at t=" + time + "s: " + e.getMessage());
           summary.addWarning("Process validation warning: " + e.getMessage());
         }
       }
@@ -390,7 +372,7 @@ public class ProcessScenarioRunner {
   /**
    * Prints current status of scenario execution.
    *
-   * @param time      current simulation time
+   * @param time current simulation time
    * @param logicList list of logic sequences to monitor
    */
   private void printStatus(double time, List<ProcessLogic> logicList) {
@@ -401,8 +383,7 @@ public class ProcessScenarioRunner {
       if (logic.isActive()) {
         if (activeCount > 0)
           activeLogic.append(", ");
-        activeLogic.append(logic.getName()).append("(").append(getShortState(logic.getState()))
-            .append(")");
+        activeLogic.append(logic.getName()).append("(").append(getShortState(logic.getState())).append(")");
         activeCount++;
       }
     }
@@ -415,12 +396,13 @@ public class ProcessScenarioRunner {
     String processStatus = getProcessStatus();
 
     System.out.printf("%7.1f | %-22s | %s%n", time,
-        activeLogic.length() > 22 ? activeLogic.substring(0, 19) + "..." : activeLogic.toString(),
-        processStatus);
+        activeLogic.length() > 22 ? activeLogic.substring(0, 19) + "..." : activeLogic.toString(), processStatus);
   }
 
   /**
    * Gets a summary of key process parameters for status monitoring.
+   *
+   * @return formatted string with key process parameters (pressure, temperature)
    */
   private String getProcessStatus() {
     try {
@@ -458,27 +440,27 @@ public class ProcessScenarioRunner {
    */
   private String getShortState(LogicState state) {
     switch (state) {
-      case IDLE:
-        return "IDLE";
-      case RUNNING:
-        return "RUN";
-      case COMPLETED:
-        return "DONE";
-      case FAILED:
-        return "FAIL";
-      case PAUSED:
-        return "PAUSE";
-      case WAITING_PERMISSIVES:
-        return "WAIT";
-      default:
-        return "?";
+    case IDLE:
+      return "IDLE";
+    case RUNNING:
+      return "RUN";
+    case COMPLETED:
+      return "DONE";
+    case FAILED:
+      return "FAIL";
+    case PAUSED:
+      return "PAUSE";
+    case WAITING_PERMISSIVES:
+      return "WAIT";
+    default:
+      return "?";
     }
   }
 
   /**
    * Prints final summary of scenario execution.
    *
-   * @param summary   execution summary
+   * @param summary execution summary
    * @param logicList list of logic sequences that were active in this scenario
    */
   private void printFinalSummary(ScenarioExecutionSummary summary, List<ProcessLogic> logicList) {
@@ -520,11 +502,10 @@ public class ProcessScenarioRunner {
 
   /**
    * Resets the system for the next scenario.
-   * 
+   *
    * <p>
-   * This method resets logic states and re-establishes steady-state conditions to
-   * ensure clean
-   * starting conditions for each scenario.
+   * This method resets logic states and re-establishes steady-state conditions to ensure clean starting conditions for
+   * each scenario.
    */
   public void reset() {
     System.out.println("\nResetting system for next scenario...");
@@ -553,7 +534,7 @@ public class ProcessScenarioRunner {
 
   /**
    * Activates a logic sequence by name.
-   * 
+   *
    * @param logicName name of the logic sequence to activate
    * @return true if logic was found and activated, false otherwise
    */
@@ -569,7 +550,7 @@ public class ProcessScenarioRunner {
 
   /**
    * Finds a logic sequence by name.
-   * 
+   *
    * @param logicName name of the logic sequence to find
    * @return the logic sequence if found, null otherwise
    */

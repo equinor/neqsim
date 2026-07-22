@@ -6,9 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * NeqSimProcessDesignDataBase class.
- * </p>
  *
  * @author Even Solbraa
  * @version June 2023
@@ -31,26 +29,26 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
   private static String dataBaseType = "H2fromCSV";
   private static String connectionString = "jdbc:h2:mem:neqsimprocessdesigndatabase";
   /** True if h2 database has been initialized, i.e., populated with tables */
-  private static boolean h2IsInitialized = false;
+  private static volatile boolean h2IsInitialized = false;
   /** True while h2 database is being initialized. */
-  private static boolean h2IsInitalizing = false;
+  private static volatile boolean h2IsInitalizing = false;
   // static String dataBaseType = "MSAccessUCanAccess";
   // public static String connectionString =
   // "jdbc:ucanaccess://C:/Users/esol/OneDrive -
   // Equinor/programming/neqsimdatabase/MSAccess/NeqSimDataBase.mdb;memory=true";
 
-  private Statement statement = null;
-  protected Connection databaseConnection = null;
+  private transient Statement statement = null;
+  protected transient Connection databaseConnection = null;
 
   /**
-   * <p>
    * Constructor for NeqSimDataBase.
-   * </p>
    */
   public NeqSimProcessDesignDataBase() {
     // Fill tables from csv-files if not initialized and not currently being initialized.
-    if ("H2fromCSV".equals(dataBaseType) && !h2IsInitialized && !h2IsInitalizing) {
-      initH2DatabaseFromCSVfiles();
+    synchronized (NeqSimProcessDesignDataBase.class) {
+      if ("H2fromCSV".equals(dataBaseType) && !h2IsInitialized && !h2IsInitalizing) {
+        initH2DatabaseFromCSVfiles();
+      }
     }
     setDataBaseType(dataBaseType);
 
@@ -63,20 +61,16 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
     }
   }
 
-  /** {@inheritDoc} */
   public static void updateTable(String tableName) {
     updateTable(tableName, "designdata/" + tableName + ".csv");
   }
 
   /**
-   * <p>
    * initH2DatabaseFromCSVfiles.
-   * </p>
    */
   public static void initH2DatabaseFromCSVfiles() {
     h2IsInitalizing = true;
-    neqsim.util.database.NeqSimProcessDesignDataBase.connectionString =
-        "jdbc:h2:mem:neqsimprocessdesigndatabase;DB_CLOSE_DELAY=-1";
+    neqsim.util.database.NeqSimProcessDesignDataBase.connectionString = "jdbc:h2:mem:neqsimprocessdesigndatabase;DB_CLOSE_DELAY=-1";
     neqsim.util.database.NeqSimProcessDesignDataBase.dataBaseType = "H2";
 
     try {
@@ -89,6 +83,8 @@ public class NeqSimProcessDesignDataBase extends NeqSimDataBase {
       updateTable("Packing");
       updateTable("MaterialPipeProperties");
       updateTable("MaterialPlateProperties");
+      updateTable("CompressorCasingMaterials");
+      updateTable("HeatExchangerTubeMaterials");
       updateTable("Fittings");
 
       // Design standards tables - loaded from standards subdirectory

@@ -7,17 +7,16 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * compressorTest_1 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class compressorTest_1 {
+  private static final Logger logger = LogManager.getLogger(compressorTest_1.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(compressorTest_1.class);
 
   /**
    * This method is just meant to test the thermo package.
@@ -26,8 +25,8 @@ public class compressorTest_1 {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 20.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 20.0),
+        10.00);
     testSystem.addComponent("nitrogen", 0.8);
     testSystem.addComponent("oxygen", 2.0);
     // testSystem.addComponent("water", 0.2);
@@ -42,8 +41,7 @@ public class compressorTest_1 {
 
     comp_1.setPolytropicEfficiency(0.74629255);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(comp_1);
 
@@ -53,20 +51,17 @@ public class compressorTest_1 {
     // operations.displayResult();
     logger.info("power " + comp_1.getTotalWork());
 
-    logger.info(
-        "speed of sound " + comp_1.getOutletStream().getThermoSystem().getPhase(0).getSoundSpeed());
+    logger.info("speed of sound " + comp_1.getOutletStream().getThermoSystem().getPhase(0).getSoundSpeed());
     logger.info("out temperature" + comp_1.getOutletStream().getThermoSystem().getTemperature());
     logger.info("Cp " + comp_1.getOutletStream().getThermoSystem().getPhase(0).getCp());
     logger.info("Cv " + comp_1.getOutletStream().getThermoSystem().getPhase(0).getCv());
-    logger
-        .info("molarmass " + comp_1.getOutletStream().getThermoSystem().getPhase(0).getMolarMass());
+    logger.info("molarmass " + comp_1.getOutletStream().getThermoSystem().getPhase(0).getMolarMass());
 
     double outTemp = 500.1; // temperature in Kelvin
     double efficiency = comp_1.solveEfficiency(outTemp);
     logger.info("compressor polytropic efficiency " + efficiency);
     logger.info("compressor out temperature " + comp_1.getOutletStream().getTemperature());
     logger.info("compressor power " + comp_1.getPower() + " J/sec");
-    logger.info("compressor head "
-        + comp_1.getPower() / comp_1.getThermoSystem().getTotalNumberOfMoles() + " J/mol");
+    logger.info("compressor head " + comp_1.getPower() / comp_1.getThermoSystem().getTotalNumberOfMoles() + " J/mol");
   }
 }

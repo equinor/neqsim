@@ -8,8 +8,7 @@ import neqsim.thermo.system.SystemInterface;
  * Result of a PVT regression optimization.
  *
  * <p>
- * Contains the tuned fluid, objective function values, optimized parameters, and uncertainty
- * analysis.
+ * Contains the tuned fluid, objective function values, optimized parameters, and uncertainty analysis.
  * </p>
  *
  * @author ESOL
@@ -34,8 +33,8 @@ public class RegressionResult {
    * @param finalChiSquare final chi-square value
    */
   public RegressionResult(SystemInterface tunedFluid, Map<ExperimentType, Double> objectiveValues,
-      List<RegressionParameterConfig> parameterConfigs, UncertaintyAnalysis uncertainty,
-      double[] optimizedParameters, double finalChiSquare) {
+      List<RegressionParameterConfig> parameterConfigs, UncertaintyAnalysis uncertainty, double[] optimizedParameters,
+      double finalChiSquare) {
     this.tunedFluid = tunedFluid;
     this.objectiveValues = objectiveValues;
     this.parameterConfigs = parameterConfigs;
@@ -134,7 +133,7 @@ public class RegressionResult {
       if (parameterConfigs.get(i).getParameter() == parameter) {
         double value = optimizedParameters[i];
         double ci = uncertainty.getConfidenceInterval95(i);
-        return new double[] {value - ci, value + ci};
+        return new double[] { value - ci, value + ci };
       }
     }
     return null;
@@ -185,8 +184,7 @@ public class RegressionResult {
 
     sb.append("\nFit Quality:\n");
     sb.append(String.format("  Chi-square: %.6f\n", finalChiSquare));
-    sb.append(
-        String.format("  Average Absolute Deviation: %.2f%%\n", getAverageAbsoluteDeviation()));
+    sb.append(String.format("  Average Absolute Deviation: %.2f%%\n", getAverageAbsoluteDeviation()));
 
     return sb.toString();
   }

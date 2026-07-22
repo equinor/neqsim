@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermPr class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class AttractiveTermPr extends AttractiveTermBaseClass {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for AttractiveTermPr.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -43,10 +39,9 @@ public class AttractiveTermPr extends AttractiveTermBaseClass {
   @Override
   public void setm(double val) {
     this.m = val;
-    neqsim.mathlib.nonlinearsolver.NewtonRhapson solve =
-        new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
+    neqsim.mathlib.nonlinearsolver.NewtonRhapson solve = new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
     solve.setOrder(2);
-    double[] acentricConstants = {-0.26992, 1.54226, (0.37464 - this.m)};
+    double[] acentricConstants = { -0.26992, 1.54226, (0.37464 - this.m) };
     solve.setConstants(acentricConstants);
     getComponent().setAcentricFactor(solve.solve(0.2));
     // System.out.println("solve accen " + component.getAcentricFactor());
@@ -83,8 +78,8 @@ public class AttractiveTermPr extends AttractiveTermBaseClass {
   @Override
   public double diffdiffalphaT(double temperature) {
     double tr = temperature / getComponent().getTC();
-    return m * m / temperature / getComponent().getTC() / 2.0 + (1.0 + m * (1.0 - Math.sqrt(tr)))
-        * m / Math.sqrt(tr * tr * tr) / (getComponent().getTC() * getComponent().getTC()) / 2.0;
+    return m * m / temperature / getComponent().getTC() / 2.0 + (1.0 + m * (1.0 - Math.sqrt(tr))) * m
+        / Math.sqrt(tr * tr * tr) / (getComponent().getTC() * getComponent().getTC()) / 2.0;
   }
 
   /** {@inheritDoc} */

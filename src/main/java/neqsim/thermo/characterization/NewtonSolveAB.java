@@ -6,9 +6,7 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * NewtonSolveAB class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -29,16 +27,13 @@ public class NewtonSolveAB implements java.io.Serializable {
   SystemInterface system = null;
 
   /**
-   * <p>
    * Constructor for NewtonSolveAB.
-   * </p>
    */
-  public NewtonSolveAB() {}
+  public NewtonSolveAB() {
+  }
 
   /**
-   * <p>
    * Constructor for NewtonSolveAB.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param characterizeClass a {@link neqsim.thermo.characterization.TBPCharacterize} object
@@ -55,9 +50,7 @@ public class NewtonSolveAB implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvec</code>.
-   * </p>
    */
   public void setfvec() {
     double f0 = -characterizeClass.getZPlus();
@@ -70,16 +63,13 @@ public class NewtonSolveAB implements java.io.Serializable {
     f0 = -characterizeClass.getMPlus() * characterizeClass.getZPlus();
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
         .getLastPlusFractionNumber(); i++) {
-      f0 += Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i))
-          * (14.0 * i - 4.0);
+      f0 += Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i)) * (14.0 * i - 4.0);
     }
     fvec.set(1, 0, f0);
   }
 
   /**
-   * <p>
    * setJac.
-   * </p>
    */
   public void setJac() {
     Jac.timesEquals(0.0);
@@ -102,8 +92,7 @@ public class NewtonSolveAB implements java.io.Serializable {
     f0 = 0.0;
     for (int i = characterizeClass.getFirstPlusFractionNumber(); i < characterizeClass
         .getLastPlusFractionNumber(); i++) {
-      f0 += (14.0 * i - 4.0)
-          * Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
+      f0 += (14.0 * i - 4.0) * Math.exp(characterizeClass.getPlusCoefs(0) + characterizeClass.getPlusCoefs(1) * (i));
     }
     Jac.set(0, 1, f0);
 
@@ -117,9 +106,7 @@ public class NewtonSolveAB implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    */
   public void solve() {
     do {

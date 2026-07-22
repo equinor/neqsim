@@ -3,27 +3,29 @@ package neqsim.process.util.fire;
 /**
  * Implements a Scandpower-style thin-wall rupture check using von Mises stress.
  *
- * <p>The utility is intended for integrating rupture progression checks into dynamic blowdown and
- * fire scenarios. It provides a deterministic stress estimate and a safety margin relative to the
- * allowable tensile strength of the vessel material.
+ * <p>
+ * The utility is intended for integrating rupture progression checks into dynamic blowdown and fire scenarios. It
+ * provides a deterministic stress estimate and a safety margin relative to the allowable tensile strength of the vessel
+ * material.
  */
 public final class VesselRuptureCalculator {
 
-  private VesselRuptureCalculator() {}
+  private VesselRuptureCalculator() {
+  }
 
   /**
    * Calculates the von Mises equivalent stress for a cylindrical thin-walled vessel.
    *
-   * <p>Hoop stress = P * r / t, axial stress = P * r / (2 * t). The von Mises stress combines these
-   * principal stresses to represent yielding under multiaxial loading.
+   * <p>
+   * Hoop stress = P * r / t, axial stress = P * r / (2 * t). The von Mises stress combines these principal stresses to
+   * represent yielding under multiaxial loading.
    *
    * @param internalPressurePa Internal pressure [Pa]
    * @param innerRadiusM Vessel inner radius [m]
    * @param wallThicknessM Wall thickness [m]
    * @return von Mises stress in Pascals
    */
-  public static double vonMisesStress(double internalPressurePa, double innerRadiusM,
-      double wallThicknessM) {
+  public static double vonMisesStress(double internalPressurePa, double innerRadiusM, double wallThicknessM) {
     if (internalPressurePa < 0.0) {
       throw new IllegalArgumentException("Internal pressure cannot be negative");
     }
@@ -58,8 +60,7 @@ public final class VesselRuptureCalculator {
    * @param allowableTensileStrengthPa Allowable tensile strength [Pa]
    * @return {@code true} if von Mises stress exceeds allowable strength
    */
-  public static boolean isRuptureLikely(double vonMisesStressPa,
-      double allowableTensileStrengthPa) {
+  public static boolean isRuptureLikely(double vonMisesStressPa, double allowableTensileStrengthPa) {
     return vonMisesStressPa >= allowableTensileStrengthPa;
   }
 }

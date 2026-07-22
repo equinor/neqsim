@@ -9,30 +9,26 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>
  * WaxFlash class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class WaxFlash {
+  private static final Logger logger = LogManager.getLogger(WaxFlash.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(WaxFlash.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    NeqSimDataBase.setConnectionString(
-        "jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
+    NeqSimDataBase.setConnectionString("jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
     NeqSimDataBase.setCreateTemporaryTables(true);
 
     SystemInterface testSystem = new SystemSrkEos(273.0 + 30, 50.0);
@@ -73,7 +69,7 @@ public class WaxFlash {
     }
     // testSystem.getPhase("oil").getPhysicalProperties().getViscosityOfWaxyOil(waxVOlumeFrac,
     // 1000.0);
-    // System.out.println("viscosity wax-oil suspesion " +
+    // logger.info("viscosity wax-oil suspesion " +
     // testSystem.getPhase("oil").getPhysicalProperties().getViscosityOfWaxyOil(waxVOlumeFrac,
     // 1000.0));
   }

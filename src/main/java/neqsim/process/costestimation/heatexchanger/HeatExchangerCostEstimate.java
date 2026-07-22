@@ -9,8 +9,8 @@ import neqsim.process.mechanicaldesign.heatexchanger.HeatExchangerMechanicalDesi
  * Cost estimation class for heat exchangers.
  *
  * <p>
- * This class provides heat exchanger-specific cost estimation methods using chemical engineering
- * cost correlations for shell-and-tube, plate, and air-cooled heat exchangers.
+ * This class provides heat exchanger-specific cost estimation methods using chemical engineering cost correlations for
+ * shell-and-tube, plate, and air-cooled heat exchangers.
  * </p>
  *
  * <p>
@@ -104,8 +104,7 @@ public class HeatExchangerCostEstimate extends UnitCostEstimateBaseClass {
     double baseCost;
     if ("plate".equalsIgnoreCase(exchangerType)) {
       baseCost = getCostCalculator().calcPlateHeatExchangerCost(area);
-    } else if ("air-cooler".equalsIgnoreCase(exchangerType)
-        || "aircooler".equalsIgnoreCase(exchangerType)) {
+    } else if ("air-cooler".equalsIgnoreCase(exchangerType) || "aircooler".equalsIgnoreCase(exchangerType)) {
       baseCost = getCostCalculator().calcAirCoolerCost(area);
     } else if ("double-pipe".equalsIgnoreCase(exchangerType)) {
       // Double pipe is typically cheaper than shell-tube
@@ -242,8 +241,7 @@ public class HeatExchangerCostEstimate extends UnitCostEstimateBaseClass {
     breakdown.put("installationManHours", installationManHours);
 
     if (mechanicalEquipment != null) {
-      HeatExchangerMechanicalDesign hxMecDesign =
-          (HeatExchangerMechanicalDesign) mechanicalEquipment;
+      HeatExchangerMechanicalDesign hxMecDesign = (HeatExchangerMechanicalDesign) mechanicalEquipment;
       breakdown.put("heatTransferArea_m2", hxMecDesign.getHeatTransferArea());
       breakdown.put("duty_kW", hxMecDesign.getDuty());
       breakdown.put("weight_kg", hxMecDesign.getWeightTotal());

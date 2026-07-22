@@ -4,8 +4,8 @@ package neqsim.process.mechanicaldesign;
  * Enumeration of field development design phases with associated accuracy requirements.
  *
  * <p>
- * Each phase represents a stage in the project lifecycle with specific deliverables and accuracy
- * expectations for sizing, weight, and cost estimates.
+ * Each phase represents a stage in the project lifecycle with specific deliverables and accuracy expectations for
+ * sizing, weight, and cost estimates.
  * </p>
  *
  * @author esol

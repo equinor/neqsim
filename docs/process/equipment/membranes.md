@@ -1,3 +1,8 @@
+---
+title: Membrane Separation Equipment
+description: Documentation for membrane separation equipment in NeqSim process simulation.
+---
+
 # Membrane Separation Equipment
 
 Documentation for membrane separation equipment in NeqSim process simulation.
@@ -315,6 +320,7 @@ membrane.setInletStream(feedCooler.getOutletStream());
 - Higher stage cut → lower product purity
 
 ### Membrane Selection
+
 | Type | Applications | Selectivity |
 |------|--------------|-------------|
 | Cellulose acetate | CO₂/CH₄ | 15-25 |
@@ -326,6 +332,6 @@ membrane.setInletStream(feedCooler.getOutletStream());
 
 ## Related Documentation
 
-- [Absorbers](absorbers.md) - Alternative for gas treating
-- [Separators](separators.md) - Phase separation
-- [Streams](streams.md) - Stream handling
+- [Absorbers](absorbers) - Alternative for gas treating
+- [Separators](separators) - Phase separation
+- [Streams](streams) - Stream handling

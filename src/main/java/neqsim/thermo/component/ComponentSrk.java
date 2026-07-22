@@ -4,9 +4,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermSrk;
 
 /**
- * <p>
  * ComponentSrk class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class ComponentSrk extends ComponentEos {
   private double factTemp = Math.pow(2.0, 1.0 / 3.0);
 
   /**
-   * <p>
    * Constructor for ComponentSrk.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -30,8 +26,8 @@ public class ComponentSrk extends ComponentEos {
   public ComponentSrk(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
 
-    a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature
-        * criticalTemperature / criticalPressure;
+    a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
+        / criticalPressure;
     b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
     delta1 = 1.0;
     delta2 = 0.0;
@@ -39,15 +35,12 @@ public class ComponentSrk extends ComponentEos {
     // attractiveParameter = new AttractiveTermSchwartzentruber(this);
     setAttractiveParameter(new AttractiveTermSrk(this));
 
-    double[] surfTensInfluenceParamtemp =
-        {-0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157};
+    double[] surfTensInfluenceParamtemp = { -0.7708158524, 0.4990571549, 0.8645478315, -0.3509810630, -0.1611763157 };
     this.surfTensInfluenceParam = surfTensInfluenceParamtemp;
   }
 
   /**
-   * <p>
    * Constructor for ComponentSrk.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -96,8 +89,10 @@ public class ComponentSrk extends ComponentEos {
   /** {@inheritDoc} */
   @Override
   public double calca() {
-    return 1.0 / (9.0 * (factTemp - 1.0)) * R * R * criticalTemperature * criticalTemperature
-        / criticalPressure;
+    if (hasOmegaAOverride()) {
+      return omegaAOverride * R * R * criticalTemperature * criticalTemperature / criticalPressure;
+    }
+    return 1.0 / (9.0 * (factTemp - 1.0)) * R * R * criticalTemperature * criticalTemperature / criticalPressure;
   }
 
   /** {@inheritDoc} */
@@ -107,9 +102,7 @@ public class ComponentSrk extends ComponentEos {
   }
 
   /**
-   * <p>
    * getQpure.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -119,9 +112,7 @@ public class ComponentSrk extends ComponentEos {
   }
 
   /**
-   * <p>
    * getdQpuredT.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -131,9 +122,7 @@ public class ComponentSrk extends ComponentEos {
   }
 
   /**
-   * <p>
    * getdQpuredTdT.
-   * </p>
    *
    * @param temperature a double
    * @return a double

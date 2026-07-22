@@ -9,17 +9,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Injection strategy for reservoir pressure maintenance.
  *
  * <p>
- * This class calculates required injection rates for voidage replacement and pressure maintenance
- * strategies. Supports water injection, gas injection, and WAG (water-alternating-gas).
+ * This class calculates required injection rates for voidage replacement and pressure maintenance strategies. Supports
+ * water injection, gas injection, and WAG (water-alternating-gas).
  * </p>
  *
  * <p>
  * <b>Voidage Replacement:</b>
  * </p>
  * <p>
- * Voidage replacement ratio (VRR) is defined as: VRR = (Injection Volume) / (Production Voidage)
- * where production voidage is the reservoir volume of produced fluids. VRR = 1.0 maintains
- * reservoir pressure.
+ * Voidage replacement ratio (VRR) is defined as: VRR = (Injection Volume) / (Production Voidage) where production
+ * voidage is the reservoir volume of produced fluids. VRR = 1.0 maintains reservoir pressure.
  * </p>
  *
  * @author ESOL
@@ -152,8 +151,8 @@ public class InjectionStrategy implements Serializable {
     }
 
     // Calculate production voidage at reservoir conditions
-    double productionVoidage = calculateProductionVoidage(reservoir, oilProductionRate,
-        gasProductionRate, waterProductionRate);
+    double productionVoidage = calculateProductionVoidage(reservoir, oilProductionRate, gasProductionRate,
+        waterProductionRate);
 
     result.productionVoidage = productionVoidage;
 
@@ -161,43 +160,39 @@ public class InjectionStrategy implements Serializable {
     double requiredInjectionVolume = productionVoidage * targetVRR;
 
     switch (strategyType) {
-      case WATER_INJECTION:
-        result.waterInjectionRate = calculateWaterRate(reservoir, requiredInjectionVolume);
-        result.gasInjectionRate = 0.0;
-        break;
+    case WATER_INJECTION:
+      result.waterInjectionRate = calculateWaterRate(reservoir, requiredInjectionVolume);
+      result.gasInjectionRate = 0.0;
+      break;
 
-      case GAS_INJECTION:
-        result.gasInjectionRate = calculateGasRate(reservoir, requiredInjectionVolume);
-        result.waterInjectionRate = 0.0;
-        break;
+    case GAS_INJECTION:
+      result.gasInjectionRate = calculateGasRate(reservoir, requiredInjectionVolume);
+      result.waterInjectionRate = 0.0;
+      break;
 
-      case WAG:
-        // Distribute injection between water and gas based on WAG ratio
-        double waterFraction = wagRatio / (1.0 + wagRatio);
-        result.waterInjectionRate =
-            calculateWaterRate(reservoir, requiredInjectionVolume * waterFraction);
-        result.gasInjectionRate =
-            calculateGasRate(reservoir, requiredInjectionVolume * (1.0 - waterFraction));
-        break;
+    case WAG:
+      // Distribute injection between water and gas based on WAG ratio
+      double waterFraction = wagRatio / (1.0 + wagRatio);
+      result.waterInjectionRate = calculateWaterRate(reservoir, requiredInjectionVolume * waterFraction);
+      result.gasInjectionRate = calculateGasRate(reservoir, requiredInjectionVolume * (1.0 - waterFraction));
+      break;
 
-      case PRESSURE_MAINTENANCE:
-        // For pressure maintenance, calculate based on compressibility
-        result.waterInjectionRate = calculatePressureMaintenanceRate(reservoir);
-        break;
+    case PRESSURE_MAINTENANCE:
+      // For pressure maintenance, calculate based on compressibility
+      result.waterInjectionRate = calculatePressureMaintenanceRate(reservoir);
+      break;
 
-      default:
-        break;
+    default:
+      break;
     }
 
     // Apply rate limits
-    result.waterInjectionRate =
-        Math.min(result.waterInjectionRate, maxWaterRate) * waterInjectionEfficiency;
-    result.gasInjectionRate =
-        Math.min(result.gasInjectionRate, maxGasRate) * gasInjectionEfficiency;
+    result.waterInjectionRate = Math.min(result.waterInjectionRate, maxWaterRate) * waterInjectionEfficiency;
+    result.gasInjectionRate = Math.min(result.gasInjectionRate, maxGasRate) * gasInjectionEfficiency;
 
     // Calculate actual VRR achieved
-    double actualInjectionVolume =
-        calculateInjectionVolume(reservoir, result.waterInjectionRate, result.gasInjectionRate);
+    double actualInjectionVolume = calculateInjectionVolume(reservoir, result.waterInjectionRate,
+        result.gasInjectionRate);
     result.achievedVRR = productionVoidage > 0 ? actualInjectionVolume / productionVoidage : 0.0;
 
     return result;
@@ -212,8 +207,8 @@ public class InjectionStrategy implements Serializable {
    * @param waterRate water rate (Sm3/day)
    * @return production voidage (m3/day at reservoir conditions)
    */
-  private double calculateProductionVoidage(SimpleReservoir reservoir, double oilRate,
-      double gasRate, double waterRate) {
+  private double calculateProductionVoidage(SimpleReservoir reservoir, double oilRate, double gasRate,
+      double waterRate) {
     SystemInterface reservoirFluid = reservoir.getReservoirFluid();
     double reservoirPressure = reservoirFluid.getPressure();
     double reservoirTemperature = reservoirFluid.getTemperature();
@@ -243,8 +238,7 @@ public class InjectionStrategy implements Serializable {
     }
 
     // Calculate Bg (gas formation volume factor)
-    double bg =
-        reservoirPressure > 0 ? 1.01325 / reservoirPressure * reservoirTemperature / 288.15 : 0.01;
+    double bg = reservoirPressure > 0 ? 1.01325 / reservoirPressure * reservoirTemperature / 288.15 : 0.01;
 
     // Calculate Bw (water formation volume factor) - approximately 1.0
     double bw = 1.02;
@@ -313,8 +307,7 @@ public class InjectionStrategy implements Serializable {
    * @param gasRate gas rate (Sm3/day)
    * @return injection volume (m3/day at reservoir conditions)
    */
-  private double calculateInjectionVolume(SimpleReservoir reservoir, double waterRate,
-      double gasRate) {
+  private double calculateInjectionVolume(SimpleReservoir reservoir, double waterRate, double gasRate) {
     SystemInterface reservoirFluid = reservoir.getReservoirFluid();
     double reservoirPressure = reservoirFluid.getPressure();
     double reservoirTemperature = reservoirFluid.getTemperature();
@@ -413,8 +406,8 @@ public class InjectionStrategy implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("InjectionResult[water=%.0f Sm3/d, gas=%.0f Sm3/d, VRR=%.2f]",
-          waterInjectionRate, gasInjectionRate, achievedVRR);
+      return String.format("InjectionResult[water=%.0f Sm3/d, gas=%.0f Sm3/d, VRR=%.2f]", waterInjectionRate,
+          gasInjectionRate, achievedVRR);
     }
   }
 }

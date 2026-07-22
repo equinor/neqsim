@@ -15,18 +15,14 @@ public class SystemGERG2004Eos extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemGERG2004Eos.
-   * </p>
    */
   public SystemGERG2004Eos() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemGERG2004Eos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -36,9 +32,7 @@ public class SystemGERG2004Eos extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemGERG2004Eos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -87,9 +81,7 @@ public class SystemGERG2004Eos extends SystemEos {
   }
 
   /**
-   * <p>
    * commonInitialization.
-   * </p>
    */
   public void commonInitialization() {
     setImplementedCompositionDeriativesofFugacity(false);

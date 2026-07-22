@@ -1,3 +1,8 @@
+---
+title: NeqSim Future Infrastructure Overview
+description: This document provides an overview of the foundational infrastructure added to NeqSim to support the future of process simulation.
+---
+
 # NeqSim Future Infrastructure Overview
 
 This document provides an overview of the foundational infrastructure added to NeqSim to support the future of process simulation.
@@ -149,12 +154,12 @@ Detailed documentation for each module:
 
 | Module | Documentation |
 |--------|---------------|
-| Lifecycle Management | [lifecycle/README.md](lifecycle/README.md) |
-| Sustainability | [sustainability/README.md](sustainability/README.md) |
-| Advisory Systems | [advisory/README.md](advisory/README.md) |
-| ML Integration | [ml/README.md](ml/README.md) |
-| Safety Scenarios | [safety/README.md](safety/README.md) |
-| Batch Studies | [optimization/README.md](optimization/README.md) |
+| Lifecycle Management | [lifecycle/README.md](lifecycle/) |
+| Sustainability | [sustainability/README.md](sustainability/) |
+| Advisory Systems | [advisory/README.md](advisory/) |
+| ML Integration | [ml/README.md](ml/) |
+| Safety Scenarios | [safety/README.md](safety/) |
+| Batch Studies | [optimization/README.md](optimization/) |
 
 ## Architecture Principles
 
@@ -227,6 +232,6 @@ When extending these modules:
 
 ## Related Resources
 
-- [NeqSim Main Documentation](../README.md)
-- [Developer Setup](../development/DEVELOPER_SETUP.md)
-- [Contributing Guide](../development/contributing-structure.md)
+- [NeqSim Main Documentation](../)
+- [Developer Setup](../development/DEVELOPER_SETUP)
+- [Contributing Guide](../development/contributing-structure)

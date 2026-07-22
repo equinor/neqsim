@@ -65,16 +65,16 @@ public final class AlarmConfig implements Serializable {
 
   public Double getLimit(AlarmLevel level) {
     switch (Objects.requireNonNull(level, "level")) {
-      case LOLO:
-        return lowLowLimit;
-      case LO:
-        return lowLimit;
-      case HI:
-        return highLimit;
-      case HIHI:
-        return highHighLimit;
-      default:
-        return null;
+    case LOLO:
+      return lowLowLimit;
+    case LO:
+      return lowLimit;
+    case HI:
+      return highLimit;
+    case HIHI:
+      return highHighLimit;
+    default:
+      return null;
     }
   }
 
@@ -90,7 +90,8 @@ public final class AlarmConfig implements Serializable {
     private double delay;
     private String unit = "";
 
-    private Builder() {}
+    private Builder() {
+    }
 
     public Builder lowLowLimit(Double value) {
       this.lowLowLimit = value;
@@ -113,12 +114,12 @@ public final class AlarmConfig implements Serializable {
     }
 
     public Builder deadband(double value) {
-      this.deadband = Math.max(0.0, value);
+      this.deadband = sanitizeNonNegative(value);
       return this;
     }
 
     public Builder delay(double value) {
-      this.delay = Math.max(0.0, value);
+      this.delay = sanitizeNonNegative(value);
       return this;
     }
 
@@ -129,6 +130,10 @@ public final class AlarmConfig implements Serializable {
 
     public AlarmConfig build() {
       return new AlarmConfig(this);
+    }
+
+    private static double sanitizeNonNegative(double value) {
+      return Double.isFinite(value) ? Math.max(0.0, value) : 0.0;
     }
   }
 }

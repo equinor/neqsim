@@ -35,8 +35,8 @@ public class CalibrationQuality implements Serializable {
    * @param sampleCount number of samples used
    * @param coverage percentage of operating range covered
    */
-  public CalibrationQuality(Instant timestamp, double rmse, double mse, double mae, double r2,
-      int sampleCount, double coverage) {
+  public CalibrationQuality(Instant timestamp, double rmse, double mse, double mae, double r2, int sampleCount,
+      double coverage) {
     this.timestamp = timestamp;
     this.rmse = rmse;
     this.mse = mse;
@@ -156,7 +156,7 @@ public class CalibrationQuality implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("CalibrationQuality[RMSE=%.4f, R2=%.4f, samples=%d, coverage=%.1f%%]",
-        rmse, r2, sampleCount, coverage);
+    return String.format("CalibrationQuality[RMSE=%.4f, R2=%.4f, samples=%d, coverage=%.1f%%]", rmse, r2, sampleCount,
+        coverage);
   }
 }

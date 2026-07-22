@@ -12,8 +12,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Online calibrator for continuously updating model parameters based on real-time data.
  *
  * <p>
- * Designed for integration with AI platforms that require auto-calibrating physics models. Supports
- * incremental updates for real-time applications and full recalibration for periodic maintenance.
+ * Designed for integration with AI platforms that require auto-calibrating physics models. Supports incremental updates
+ * for real-time applications and full recalibration for periodic maintenance.
  * </p>
  *
  * @author ESOL
@@ -130,8 +130,7 @@ public class OnlineCalibrator implements Serializable {
    * @param predictions model predicted values
    * @return true if deviation exceeds threshold
    */
-  public boolean recordDataPoint(Map<String, Double> measurements,
-      Map<String, Double> predictions) {
+  public boolean recordDataPoint(Map<String, Double> measurements, Map<String, Double> predictions) {
     return recordDataPoint(measurements, predictions, new HashMap<>());
   }
 
@@ -180,8 +179,7 @@ public class OnlineCalibrator implements Serializable {
    * @param predictions current predicted values
    * @return calibration result
    */
-  public CalibrationResult incrementalUpdate(Map<String, Double> measurements,
-      Map<String, Double> predictions) {
+  public CalibrationResult incrementalUpdate(Map<String, Double> measurements, Map<String, Double> predictions) {
     if (tunableParameters.isEmpty()) {
       return CalibrationResult.failure("No tunable parameters configured");
     }

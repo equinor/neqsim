@@ -14,22 +14,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ScalePotentialCheck class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class ScalePotentialCheck {
+  private static final Logger logger = LogManager.getLogger(ScalePotentialCheck.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(ScalePotentialCheck.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

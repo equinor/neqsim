@@ -10,8 +10,8 @@ import java.util.function.Consumer;
  * Interface for high-frequency real-time data streaming.
  *
  * <p>
- * Designed for integration with AI-powered production optimization platforms that require
- * continuous data feeds at high rates (millions of data points per hour).
+ * Designed for integration with AI-powered production optimization platforms that require continuous data feeds at high
+ * rates (millions of data points per hour).
  * </p>
  *
  * <p>
@@ -48,8 +48,7 @@ public interface StreamingDataInterface {
    * Publish a batch of values for multiple tags efficiently.
    *
    * <p>
-   * This method is optimized for high-throughput scenarios where many values need to be published
-   * simultaneously.
+   * This method is optimized for high-throughput scenarios where many values need to be published simultaneously.
    * </p>
    *
    * @param values map of tag IDs to their timestamped values
@@ -72,8 +71,8 @@ public interface StreamingDataInterface {
    * Get current state vector for ML model input.
    *
    * <p>
-   * Returns a numeric array representing the current state of all monitored variables. The order
-   * and meaning of elements is defined by {@link #getStateVectorLabels()}.
+   * Returns a numeric array representing the current state of all monitored variables. The order and meaning of
+   * elements is defined by {@link #getStateVectorLabels()}.
    * </p>
    *
    * @return array of current state values

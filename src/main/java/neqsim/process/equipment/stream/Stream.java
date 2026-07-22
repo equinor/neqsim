@@ -7,7 +7,6 @@
 package neqsim.process.equipment.stream;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
@@ -26,9 +25,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * Stream class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -55,6 +52,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   protected double lastPressure = 0.0;
   protected double lastFlowRate = 0.0;
   protected double[] lastComposition = null;
+  /** Cached specification for skip-if-unchanged check in {@link #run(UUID)}. */
+  protected String lastSpecification = null;
 
   /**
    * Constructor for Stream.
@@ -66,14 +65,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * Constructor for Stream.
-   * </p>
    *
    * <p>
    * NB! This construct uses the input stream object internally, i.e., it is not cloned. Use
-   * <code>streamObject.clone(newName)</code> rather than
-   * <code>new Stream(newName,streamObject)</code>
+   * <code>streamObject.clone(newName)</code> rather than <code>new Stream(newName,streamObject)</code>
    * </p>
    *
    * @param name name of stream
@@ -87,9 +83,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * Constructor for Stream.
-   * </p>
    *
    * <p>
    * NB! This construct uses the input thermoSystem object internally, i.e., it is not cloned.
@@ -106,9 +100,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasQuality</code>.
-   * </p>
    *
    * @return the gasQuality
    */
@@ -117,9 +109,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>gasQuality</code>.
-   * </p>
    *
    * @param gasQuality the gasQuality to set
    */
@@ -147,9 +137,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * getSolidFormationTemperature.
-   * </p>
    *
    * @param solidName a {@link java.lang.String} object
    * @return a double
@@ -197,9 +185,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   /** {@inheritDoc} */
   @Override
   public Stream clone(String name) {
-    if (this.getName() == name) {
-      throw new RuntimeException(
-          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+    if (this.getName().equals(name)) {
+      throw new RuntimeException(new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
     }
     Stream s = this.clone();
     s.setName(name);
@@ -254,8 +241,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       } else if (thermoSystem.hasPhaseType("oil")) {
         this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("oil"));
       } else if (thermoSystem.hasPhaseType("aqueous")) {
-        this.thermoSystem =
-            thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("aqueous"));
+        this.thermoSystem = thermoSystem.phaseToSystem(thermoSystem.getPhaseNumberOfPhase("aqueous"));
       } else {
         logger.warn("no phase of type " + phaseTypeName);
         logger.warn("...returning empty system ");
@@ -328,14 +314,35 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       }
       thermoSystem = stream.getFluid();
     }
-    if (getFluid().getTemperature() == lastTemperature && getFluid().getPressure() == lastPressure
-        && Math.abs(getFluid().getFlowRate("kg/hr") - lastFlowRate)
-            / getFluid().getFlowRate("kg/hr") < 1e-6
-        && Arrays.equals(getFluid().getMolarComposition(), lastComposition)) {
-      return false;
-    } else {
+    SystemInterface fluid = getFluid();
+    if (fluid == null || lastComposition == null) {
       return true;
     }
+    // Specification change (e.g., TP -> PH) produces a different flash even with same inputs.
+    if (!java.util.Objects.equals(getSpecification(), lastSpecification)) {
+      return true;
+    }
+    // Cheap scalar checks first - avoid allocating the composition array if any fail.
+    if (fluid.getTemperature() != lastTemperature || fluid.getPressure() != lastPressure) {
+      return true;
+    }
+    double flow = fluid.getFlowRate("kg/hr");
+    if (flow <= 0.0 || lastFlowRate <= 0.0 || Math.abs(flow - lastFlowRate) / flow >= 1e-6) {
+      return true;
+    }
+    // Allocation-free composition comparison: read component z() values directly against
+    // the cached array instead of calling getMolarComposition() which allocates a double[].
+    neqsim.thermo.phase.PhaseInterface ph0 = fluid.getPhase(0);
+    int n = ph0.getNumberOfComponents();
+    if (n != lastComposition.length) {
+      return true;
+    }
+    for (int i = 0; i < n; i++) {
+      if (ph0.getComponent(i).getz() != lastComposition[i]) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /** {@inheritDoc} */
@@ -353,6 +360,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
       lastTemperature = thermoSystem.getTemperature();
       lastPressure = thermoSystem.getPressure();
       lastComposition = thermoSystem.getMolarComposition();
+      lastSpecification = getSpecification();
 
       if (stream != null) {
         stream.setFluid(thermoSystem);
@@ -365,8 +373,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
     ThermodynamicOperations thermoOps = new ThermodynamicOperations(thermoSystem);
 
-    if (stream != null && thermoSystem.getNumberOfComponents() == 1
-        && getSpecification().equals("TP")) {
+    if (stream != null && thermoSystem.getNumberOfComponents() == 1 && getSpecification().equals("TP")) {
       setSpecification("PH");
     }
     if (getSpecification().equals("TP")) {
@@ -424,9 +431,11 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     lastTemperature = thermoSystem.getTemperature();
     lastPressure = thermoSystem.getPressure();
     lastComposition = thermoSystem.getMolarComposition();
+    lastSpecification = getSpecification();
 
     if (stream != null) {
-      thermoSystem.initProperties();
+      // initProperties() already called above at line ~428; the duplicate call here
+      // was pure overhead on every Stream.run() invocation.
       stream.setFluid(thermoSystem);
     }
     // logger.info("number of phases: " + thermoSystem.getNumberOfPhases());
@@ -462,9 +471,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * runController.
-   * </p>
    *
    * @param dt a double
    * @param id UUID of run
@@ -483,9 +490,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * phaseEnvelope.
-   * </p>
    */
   public void phaseEnvelope() {
     SystemInterface localSyst = getFluid().clone();
@@ -586,8 +591,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
   /** {@inheritDoc} */
   @Override
-  public double getRVP(double referenceTemperature, String unit, String returnUnit,
-      String rvpMethod) {
+  public double getRVP(double referenceTemperature, String unit, String returnUnit, String rvpMethod) {
     SystemInterface localSyst = getFluid().clone();
     Standard_ASTM_D6377 standard = new Standard_ASTM_D6377(localSyst);
     standard.setReferenceTemperature(referenceTemperature, unit);
@@ -608,9 +612,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * getProperty.
-   * </p>
    *
    * @param propertyName a {@link java.lang.String} object
    * @param unit a {@link java.lang.String} object
@@ -619,8 +621,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    * @return a {@link java.lang.Object} object
    */
   public Object getProperty(String propertyName, String unit, String phase, String component) {
-    throw new RuntimeException(
-        new neqsim.util.exception.NotImplementedException(this, "getProperty"));
+    throw new RuntimeException(new neqsim.util.exception.NotImplementedException(this, "getProperty"));
     // getFluid().getProperties.containsKey(propertyName)) {
     // if(properties.containsKey(propertyName)) {
     // }
@@ -640,10 +641,8 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
   /** {@inheritDoc} */
   @Override
-  public double getHydrocarbonDewPoint(String temperatureUnit, double refpressure,
-      String refPressureUnit) {
-    HydrocarbonDewPointAnalyser dewPointAnalyser =
-        new HydrocarbonDewPointAnalyser("dew point analyser", this);
+  public double getHydrocarbonDewPoint(String temperatureUnit, double refpressure, String refPressureUnit) {
+    HydrocarbonDewPointAnalyser dewPointAnalyser = new HydrocarbonDewPointAnalyser("dew point analyser", this);
     dewPointAnalyser.setReferencePressure(refpressure);
     return dewPointAnalyser.getMeasuredValue(temperatureUnit);
   }
@@ -651,8 +650,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   /** {@inheritDoc} */
   @Override
   public double getGCV(String unit, double refTVolume, double refTCombustion) {
-    Standard_ISO6976 standard =
-        new Standard_ISO6976(getFluid().clone(), refTVolume, refTCombustion, unit);
+    Standard_ISO6976 standard = new Standard_ISO6976(getFluid().clone(), refTVolume, refTCombustion, unit);
     standard.setReferenceState("real");
     standard.calculate();
     return standard.getValue("SuperiorCalorificValue") * 1.0e3;
@@ -661,8 +659,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   /** {@inheritDoc} */
   @Override
   public double getWI(String unit, double refTVolume, double refTCombustion) {
-    Standard_ISO6976 standard =
-        new Standard_ISO6976(getFluid().clone(), refTVolume, refTCombustion, unit);
+    Standard_ISO6976 standard = new Standard_ISO6976(getFluid().clone(), refTVolume, refTCombustion, unit);
     standard.setReferenceState("real");
     standard.calculate();
     return standard.getValue("SuperiorWobbeIndex") * 1.0e3;
@@ -671,8 +668,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   /** {@inheritDoc} */
   @Override
   public Standard_ISO6976 getISO6976(String unit, double refTVolume, double refTCombustion) {
-    Standard_ISO6976 standard =
-        new Standard_ISO6976(getFluid().clone(), refTVolume, refTCombustion, unit);
+    Standard_ISO6976 standard = new Standard_ISO6976(getFluid().clone(), refTVolume, refTCombustion, unit);
     standard.setReferenceState("real");
     return standard;
   }
@@ -687,9 +683,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>stream</code>.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -698,9 +692,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * Setter for the field <code>stream</code>.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -728,9 +720,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
   }
 
   /**
-   * <p>
    * getReport.
-   * </p>
    *
    * @return a String object
    */
@@ -741,8 +731,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
     phases.add("Total");
     if (getFluid().hasPhaseType("gas")) {
       phases.add("Gas");
-      gasprops.put("temperature",
-          Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))));
+      gasprops.put("temperature", Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))));
     }
     if (getFluid().hasPhaseType("oil")) {
       phases.add("oil");
@@ -753,29 +742,26 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
 
     ArrayList<String[]> report = new ArrayList<String[]>();
     report.add(phases.toArray(new String[0]));
-    report.add(new String[] {"temperature",
-        Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
-        neqsim.util.unit.Units.getSymbol("temperature")});
-    report.add(new String[] {"pressure",
-        Double.toString(getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
-        neqsim.util.unit.Units.getSymbol("pressure")});
-    report.add(new String[] {"mass flow",
-        Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
-        neqsim.util.unit.Units.getSymbol("mass flow")});
-    report.add(new String[] {"molar flow",
-        Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
-        neqsim.util.unit.Units.getSymbol("molar flow")});
-    report.add(new String[] {"volume flow",
-        Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
-        neqsim.util.unit.Units.getSymbol("volume flow")});
+    report.add(
+        new String[] { "temperature", Double.toString(getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+            neqsim.util.unit.Units.getSymbol("temperature") });
+    report.add(new String[] { "pressure", Double.toString(getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+        neqsim.util.unit.Units.getSymbol("pressure") });
+    report.add(new String[] { "mass flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+        neqsim.util.unit.Units.getSymbol("mass flow") });
+    report
+        .add(new String[] { "molar flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
+            neqsim.util.unit.Units.getSymbol("molar flow") });
+    report.add(
+        new String[] { "volume flow", Double.toString(getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
+            neqsim.util.unit.Units.getSymbol("volume flow") });
     return report;
   }
 
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new StreamResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(new StreamResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -804,8 +790,7 @@ public class Stream extends ProcessEquipmentBaseClass implements StreamInterface
    */
   @Override
   public neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
+    neqsim.util.validation.ValidationResult result = new neqsim.util.validation.ValidationResult(getName());
 
     // Check: Equipment has a valid name
     if (getName() == null || getName().trim().isEmpty()) {

@@ -9,8 +9,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Test class for ThreePhaseSeparator getMassBalance method to verify it handles edge cases
- * correctly, including missing phases and zero flow streams.
+ * Test class for ThreePhaseSeparator getMassBalance method to verify it handles edge cases correctly, including missing
+ * phases and zero flow streams.
  */
 public class ThreePhaseSeparatorMassBalanceTest {
   static SystemInterface testSystem;
@@ -43,8 +43,7 @@ public class ThreePhaseSeparatorMassBalanceTest {
 
     double massBalance = sep.getMassBalance("kg/hr");
     // Mass balance should be close to zero (inlet = outlet)
-    assertTrue(Math.abs(massBalance) < 1.0,
-        "Mass balance should be near zero, got: " + massBalance);
+    assertTrue(Math.abs(massBalance) < 1.0, "Mass balance should be near zero, got: " + massBalance);
   }
 
   /**
@@ -96,8 +95,7 @@ public class ThreePhaseSeparatorMassBalanceTest {
 
     double massBalance = sep.getMassBalance("kg/hr");
     // Single phase - all should go to gas outlet
-    assertTrue(Math.abs(massBalance) < 1.0,
-        "Single phase gas mass balance should be near zero, got: " + massBalance);
+    assertTrue(Math.abs(massBalance) < 1.0, "Single phase gas mass balance should be near zero, got: " + massBalance);
   }
 
   /**
@@ -172,8 +170,7 @@ public class ThreePhaseSeparatorMassBalanceTest {
 
     // Conversions should be consistent (24 hours per day)
     double kgDayFromKgHr = massBalanceKgHr * 24.0;
-    assertEquals(massBalanceKgDay, kgDayFromKgHr, 0.01,
-        "Mass balance units should convert correctly");
+    assertEquals(massBalanceKgDay, kgDayFromKgHr, 0.01, "Mass balance units should convert correctly");
   }
 
   /**

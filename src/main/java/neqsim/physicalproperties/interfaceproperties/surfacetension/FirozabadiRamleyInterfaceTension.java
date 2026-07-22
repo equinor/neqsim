@@ -3,9 +3,7 @@ package neqsim.physicalproperties.interfaceproperties.surfacetension;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * FirozabadiRamleyInterfaceTension class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,16 +13,13 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for FirozabadiRamleyInterfaceTension.
-   * </p>
    */
-  public FirozabadiRamleyInterfaceTension() {}
+  public FirozabadiRamleyInterfaceTension() {
+  }
 
   /**
-   * <p>
    * Constructor for FirozabadiRamleyInterfaceTension.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -41,15 +36,12 @@ public class FirozabadiRamleyInterfaceTension extends SurfaceTension {
    */
   @Override
   public double calcPureComponentSurfaceTension(int componentNumber) {
-    return 1.0e-3 * Math
-        .pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
-            * (system.getPhases()[1].getPhysicalProperties().getDensity()
-                / system.getPhases()[1].getMolarMass()
-                * system.getPhases()[1].getComponents()[componentNumber].getx()
-                - system.getPhases()[0].getPhysicalProperties().getDensity()
-                    / system.getPhases()[0].getMolarMass()
-                    * system.getPhases()[0].getComponents()[componentNumber].getx()),
-            4.0);
+    return 1.0e-3 * Math.pow(system.getPhases()[0].getComponents()[componentNumber].getParachorParameter() * 1.0e-6
+        * (system.getPhases()[1].getPhysicalProperties().getDensity() / system.getPhases()[1].getMolarMass()
+            * system.getPhases()[1].getComponents()[componentNumber].getx()
+            - system.getPhases()[0].getPhysicalProperties().getDensity() / system.getPhases()[0].getMolarMass()
+                * system.getPhases()[0].getComponents()[componentNumber].getx()),
+        4.0);
   }
 
   /**

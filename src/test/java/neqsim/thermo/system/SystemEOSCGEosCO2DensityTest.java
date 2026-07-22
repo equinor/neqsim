@@ -10,7 +10,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SystemEOSCGEosCO2DensityTest extends neqsim.NeqSimTest {
-  static Logger logger = LogManager.getLogger(SystemEOSCGEosCO2DensityTest.class);
+  private static final Logger logger = LogManager.getLogger(SystemEOSCGEosCO2DensityTest.class);
 
   @Test
   @DisplayName("Check density of CO2 gas with EOS-CG")
@@ -52,8 +52,7 @@ public class SystemEOSCGEosCO2DensityTest extends neqsim.NeqSimTest {
 
     // Expected density for CO2 at 298.15 K and 100 bar is approx 800-850 kg/m3
     // Using a range for validation
-    assertTrue(density > 700.0 && density < 900.0,
-        "Density should be in liquid range (~800 kg/m3)");
+    assertTrue(density > 700.0 && density < 900.0, "Density should be in liquid range (~800 kg/m3)");
     // Note: NeqSim might label high-pressure single-phase fluids as GAS in some contexts
     // even if subcritical liquid, depending on the flash initialization.
     // We primarily verify the density value here.

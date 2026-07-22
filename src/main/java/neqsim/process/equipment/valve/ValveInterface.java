@@ -11,45 +11,35 @@ import neqsim.process.equipment.TwoPortInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * ValveInterface interface.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterface {
   /**
-   * <p>
    * isIsoThermal.
-   * </p>
    *
    * @return a boolean
    */
   public boolean isIsoThermal();
 
   /**
-   * <p>
    * setIsoThermal.
-   * </p>
    *
    * @param isoThermal a boolean
    */
   public void setIsoThermal(boolean isoThermal);
 
   /**
-   * <p>
    * getPercentValveOpening.
-   * </p>
    *
    * @return a double
    */
   public double getPercentValveOpening();
 
   /**
-   * <p>
    * setPercentValveOpening.
-   * </p>
    *
    * @param percentValveOpening a double
    */
@@ -63,35 +53,29 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
   public double getTargetPercentValveOpening();
 
   /**
-   * Sets the requested (target) valve opening in percent. The actual valve opening may lag the
-   * request depending on the selected travel model.
+   * Sets the requested (target) valve opening in percent. The actual valve opening may lag the request depending on the
+   * selected travel model.
    *
    * @param percentValveOpening target valve opening in percent
    */
   public void setTargetPercentValveOpening(double percentValveOpening);
 
   /**
-   * <p>
    * getCv.
-   * </p>
    *
    * @return a double
    */
   public double getCv();
 
   /**
-   * <p>
    * getCg.
-   * </p>
    *
    * @return a double
    */
   public double getCg();
 
   /**
-   * <p>
    * getCv.
-   * </p>
    *
    * @param unit can be SI or US SI is unit litre/minute US is gallons per minute
    * @return a double
@@ -99,18 +83,14 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
   public double getCv(String unit);
 
   /**
-   * <p>
    * setCv.
-   * </p>
    *
    * @param Cv a double
    */
   public void setCv(double Cv);
 
   /**
-   * <p>
    * setCv.
-   * </p>
    *
    * @param Cv a double
    * @param unit can be SI or US SI is unit litre/minute US is gallons per minute
@@ -136,8 +116,7 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
   public double getKv();
 
   /**
-   * Sets the total travel time (seconds) corresponding to a movement from fully closed to fully
-   * open.
+   * Sets the total travel time (seconds) corresponding to a movement from fully closed to fully open.
    *
    * @param travelTimeSec full travel time in seconds
    */
@@ -151,8 +130,7 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
   public double getTravelTime();
 
   /**
-   * Sets the travel time for opening actions (seconds). When not specified, the symmetric travel
-   * time is used.
+   * Sets the travel time for opening actions (seconds). When not specified, the symmetric travel time is used.
    *
    * @param travelTimeSec opening travel time in seconds
    */
@@ -166,8 +144,7 @@ public interface ValveInterface extends ProcessEquipmentInterface, TwoPortInterf
   public double getOpeningTravelTime();
 
   /**
-   * Sets the travel time for closing actions (seconds). When not specified, the symmetric travel
-   * time is used.
+   * Sets the travel time for closing actions (seconds). When not specified, the symmetric travel time is used.
    *
    * @param travelTimeSec closing travel time in seconds
    */

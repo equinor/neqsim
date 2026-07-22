@@ -2,8 +2,8 @@
  * Field Development Engine for NeqSim.
  *
  * <p>
- * This package provides a concept-level API for rapid field development screening. It shifts NeqSim
- * from detailed equipment simulation to physics-consistent concept evaluation across:
+ * This package provides a concept-level API for rapid field development screening. It shifts NeqSim from detailed
+ * equipment simulation to physics-consistent concept evaluation across:
  * <ul>
  * <li>Production capacity</li>
  * <li>Flow assurance envelopes</li>
@@ -21,7 +21,7 @@
  * </ul>
  *
  * <h2>Quick Start</h2>
- * 
+ *
  * <pre>
  * // 1. Define the concept
  * FieldConcept concept = FieldConcept.builder("Marginal Gas Tieback")
@@ -41,7 +41,7 @@
  * </pre>
  *
  * <h2>Batch Processing</h2>
- * 
+ *
  * <pre>
  * BatchConceptRunner runner = new BatchConceptRunner();
  * runner.addConcept(concept1);

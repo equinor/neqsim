@@ -9,9 +9,7 @@ package neqsim.thermodynamicoperations;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Abstract BaseOperation class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -23,16 +21,22 @@ public abstract class BaseOperation implements OperationInterface {
   SystemInterface systemThermo = null;
 
   /**
-   * <p>
    * Constructor for BaseOperation.
-   * </p>
    */
-  public BaseOperation() {}
+  public BaseOperation() {
+  }
 
   /** {@inheritDoc} */
   @Override
   public double[] get(String name) {
     return new double[3];
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double[] get(String name, double[] defaultValue) {
+    double[] result = get(name);
+    return result != null ? result : defaultValue;
   }
 
   /** {@inheritDoc} */
@@ -55,7 +59,8 @@ public abstract class BaseOperation implements OperationInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -65,5 +70,6 @@ public abstract class BaseOperation implements OperationInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addData(String name, double[][] data) {}
+  public void addData(String name, double[][] data) {
+  }
 }

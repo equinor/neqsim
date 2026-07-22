@@ -30,15 +30,14 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * ProcessSystem baseCase = new ProcessSystem();
  * // ... configure base case ...
  *
  * BatchStudy study = BatchStudy.builder(baseCase).vary("heater.duty", 1.0e6, 5.0e6, 5) // 5 values
  *     .vary("compressor.pressure", 30.0, 80.0, 6) // 6 values
- *     .addObjective("power", Objective.MINIMIZE).addObjective("throughput", Objective.MAXIMIZE)
- *     .parallelism(8).build();
+ *     .addObjective("power", Objective.MINIMIZE).addObjective("throughput", Objective.MAXIMIZE).parallelism(8).build();
  *
  * BatchStudyResult result = study.run();
  *
@@ -57,7 +56,7 @@ public class BatchStudy implements Serializable {
   private final ProcessSystem baseCase;
   private final List<ParameterVariation> variations;
   private final Map<String, ObjectiveDefinition> objectives;
-  private final Map<String, Function<ProcessSystem, Double>> objectiveExtractors;
+  private final transient Map<String, Function<ProcessSystem, Double>> objectiveExtractors;
   private int parallelism;
   private String studyName;
   private boolean stopOnFailure = false;
@@ -133,8 +132,7 @@ public class BatchStudy implements Serializable {
     return cases;
   }
 
-  private void generateCasesRecursive(List<ParameterSet> cases, Map<String, Double> currentValues,
-      int varIndex) {
+  private void generateCasesRecursive(List<ParameterSet> cases, Map<String, Double> currentValues, int varIndex) {
     if (varIndex >= variations.size()) {
       // Base case: all parameters assigned
       ParameterSet params = new ParameterSet(new HashMap<>(currentValues));
@@ -167,8 +165,7 @@ public class BatchStudy implements Serializable {
 
       // Extract objectives
       Map<String, Double> objectiveValues = new HashMap<>();
-      for (Map.Entry<String, Function<ProcessSystem, Double>> extractor : objectiveExtractors
-          .entrySet()) {
+      for (Map.Entry<String, Function<ProcessSystem, Double>> extractor : objectiveExtractors.entrySet()) {
         try {
           double value = extractor.getValue().apply(caseCopy);
           objectiveValues.put(extractor.getKey(), value);
@@ -205,77 +202,75 @@ public class BatchStudy implements Serializable {
 
     // Common property setters (can be extended)
     switch (property.toLowerCase()) {
-      // Heater/Cooler properties
-      case "duty":
-        if (equipment instanceof neqsim.process.equipment.heatexchanger.Heater) {
-          ((neqsim.process.equipment.heatexchanger.Heater) equipment).setDuty(value);
-        }
-        break;
-      case "outlettemperature":
-        if (equipment instanceof neqsim.process.equipment.heatexchanger.Heater) {
-          ((neqsim.process.equipment.heatexchanger.Heater) equipment).setOutTemperature(value, "C");
-        }
-        break;
+    // Heater/Cooler properties
+    case "duty":
+      if (equipment instanceof neqsim.process.equipment.heatexchanger.Heater) {
+        ((neqsim.process.equipment.heatexchanger.Heater) equipment).setDuty(value);
+      }
+      break;
+    case "outlettemperature":
+      if (equipment instanceof neqsim.process.equipment.heatexchanger.Heater) {
+        ((neqsim.process.equipment.heatexchanger.Heater) equipment).setOutTemperature(value, "C");
+      }
+      break;
 
-      // Valve properties
-      case "pressure":
-      case "outletpressure":
-        if (equipment instanceof neqsim.process.equipment.valve.ThrottlingValve) {
-          ((neqsim.process.equipment.valve.ThrottlingValve) equipment).setOutletPressure(value);
-        } else if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
-          ((neqsim.process.equipment.compressor.Compressor) equipment).setOutletPressure(value);
-        } else if (equipment instanceof neqsim.process.equipment.pump.Pump) {
-          ((neqsim.process.equipment.pump.Pump) equipment).setOutletPressure(value);
-        }
-        break;
-      case "opening":
-      case "percentvalveopening":
-        if (equipment instanceof neqsim.process.equipment.valve.ValveInterface) {
-          ((neqsim.process.equipment.valve.ValveInterface) equipment).setPercentValveOpening(value);
-        }
-        break;
-      case "cv":
-        if (equipment instanceof neqsim.process.equipment.valve.ThrottlingValve) {
-          ((neqsim.process.equipment.valve.ThrottlingValve) equipment).setCv(value);
-        }
-        break;
+    // Valve properties
+    case "pressure":
+    case "outletpressure":
+      if (equipment instanceof neqsim.process.equipment.valve.ThrottlingValve) {
+        ((neqsim.process.equipment.valve.ThrottlingValve) equipment).setOutletPressure(value);
+      } else if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
+        ((neqsim.process.equipment.compressor.Compressor) equipment).setOutletPressure(value);
+      } else if (equipment instanceof neqsim.process.equipment.pump.Pump) {
+        ((neqsim.process.equipment.pump.Pump) equipment).setOutletPressure(value);
+      }
+      break;
+    case "opening":
+    case "percentvalveopening":
+      if (equipment instanceof neqsim.process.equipment.valve.ValveInterface) {
+        ((neqsim.process.equipment.valve.ValveInterface) equipment).setPercentValveOpening(value);
+      }
+      break;
+    case "cv":
+      if (equipment instanceof neqsim.process.equipment.valve.ThrottlingValve) {
+        ((neqsim.process.equipment.valve.ThrottlingValve) equipment).setCv(value);
+      }
+      break;
 
-      // Compressor properties
-      case "polytropicefficiency":
-        if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
-          ((neqsim.process.equipment.compressor.Compressor) equipment)
-              .setPolytropicEfficiency(value);
-        }
-        break;
-      case "isentropicefficiency":
-        if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
-          ((neqsim.process.equipment.compressor.Compressor) equipment)
-              .setIsentropicEfficiency(value);
-        }
-        break;
+    // Compressor properties
+    case "polytropicefficiency":
+      if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
+        ((neqsim.process.equipment.compressor.Compressor) equipment).setPolytropicEfficiency(value);
+      }
+      break;
+    case "isentropicefficiency":
+      if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
+        ((neqsim.process.equipment.compressor.Compressor) equipment).setIsentropicEfficiency(value);
+      }
+      break;
 
-      // Stream properties
-      case "temperature":
-        if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
-          ((neqsim.process.equipment.stream.StreamInterface) equipment).setTemperature(value, "C");
-        }
-        break;
-      case "flowrate":
-        if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
-          ((neqsim.process.equipment.stream.StreamInterface) equipment).setFlowRate(value, "kg/hr");
-        }
-        break;
+    // Stream properties
+    case "temperature":
+      if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
+        ((neqsim.process.equipment.stream.StreamInterface) equipment).setTemperature(value, "C");
+      }
+      break;
+    case "flowrate":
+      if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
+        ((neqsim.process.equipment.stream.StreamInterface) equipment).setFlowRate(value, "kg/hr");
+      }
+      break;
 
-      // Separator properties
-      case "internaldiameter":
-        if (equipment instanceof neqsim.process.equipment.separator.Separator) {
-          ((neqsim.process.equipment.separator.Separator) equipment).setInternalDiameter(value);
-        }
-        break;
+    // Separator properties
+    case "internaldiameter":
+      if (equipment instanceof neqsim.process.equipment.separator.Separator) {
+        ((neqsim.process.equipment.separator.Separator) equipment).setInternalDiameter(value);
+      }
+      break;
 
-      default:
-        // Extensible for other properties
-        break;
+    default:
+      // Extensible for other properties
+      break;
     }
   }
 
@@ -299,8 +294,7 @@ public class BatchStudy implements Serializable {
     private final ProcessSystem baseCase;
     private final List<ParameterVariation> variations = new ArrayList<>();
     private final Map<String, ObjectiveDefinition> objectives = new HashMap<>();
-    private final Map<String, Function<ProcessSystem, Double>> objectiveExtractors =
-        new HashMap<>();
+    private final Map<String, Function<ProcessSystem, Double>> objectiveExtractors = new HashMap<>();
     private int parallelism = Runtime.getRuntime().availableProcessors();
     private String studyName = "BatchStudy";
     private boolean stopOnFailure = false;
@@ -347,8 +341,7 @@ public class BatchStudy implements Serializable {
      * @param extractor function to extract objective value from process
      * @return this builder
      */
-    public Builder addObjective(String name, Objective direction,
-        Function<ProcessSystem, Double> extractor) {
+    public Builder addObjective(String name, Objective direction, Function<ProcessSystem, Double> extractor) {
       objectives.put(name, new ObjectiveDefinition(name, direction));
       objectiveExtractors.put(name, extractor);
       return this;
@@ -506,8 +499,7 @@ public class BatchStudy implements Serializable {
      * @return the best case result
      */
     public CaseResult getBestCase(String objectiveName) {
-      return getSuccessfulResults().stream()
-          .filter(r -> r.objectiveValues.containsKey(objectiveName))
+      return getSuccessfulResults().stream().filter(r -> r.objectiveValues.containsKey(objectiveName))
           .min(Comparator.comparingDouble(r -> r.objectiveValues.get(objectiveName))).orElse(null);
     }
 
@@ -592,9 +584,9 @@ public class BatchStudy implements Serializable {
      * @return list of Pareto-optimal cases
      */
     public List<CaseResult> getParetoFront(String objective1, String objective2) {
-      List<CaseResult> successful =
-          getSuccessfulResults().stream().filter(r -> r.objectiveValues.containsKey(objective1)
-              && r.objectiveValues.containsKey(objective2)).collect(Collectors.toList());
+      List<CaseResult> successful = getSuccessfulResults().stream()
+          .filter(r -> r.objectiveValues.containsKey(objective1) && r.objectiveValues.containsKey(objective2))
+          .collect(Collectors.toList());
 
       List<CaseResult> paretoFront = new ArrayList<>();
 
@@ -610,7 +602,8 @@ public class BatchStudy implements Serializable {
           double otherVal1 = other.objectiveValues.get(objective1);
           double otherVal2 = other.objectiveValues.get(objective2);
 
-          // Check if 'other' dominates 'candidate' (better or equal in both, strictly better in
+          // Check if 'other' dominates 'candidate' (better or equal in both, strictly
+          // better in
           // one)
           if (otherVal1 <= val1 && otherVal2 <= val2 && (otherVal1 < val1 || otherVal2 < val2)) {
             isDominated = true;
@@ -643,8 +636,7 @@ public class BatchStudy implements Serializable {
       sb.append("Successful: ").append(successCount).append("\n");
       sb.append("Failed: ").append(failureCount).append("\n");
       sb.append("Total runtime: ").append(totalRuntime.getSeconds()).append(" seconds\n");
-      sb.append("Avg per case: ").append(totalRuntime.toMillis() / Math.max(1, results.size()))
-          .append(" ms\n");
+      sb.append("Avg per case: ").append(totalRuntime.toMillis() / Math.max(1, results.size())).append(" ms\n");
 
       return sb.toString();
     }

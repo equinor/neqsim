@@ -21,8 +21,8 @@ package neqsim.datapresentation;
  * A dummy data source for an XY plot.
  *
  * <p>
- * Note that the aim of this class is to create a self-contained data source for demo purposes - it
- * is NOT intended to show how you should go about writing your own data sources.
+ * Note that the aim of this class is to create a self-contained data source for demo purposes - it is NOT intended to
+ * show how you should go about writing your own data sources.
  * </p>
  *
  * @author Even Solbraa
@@ -34,9 +34,7 @@ public class SampleXYDataSource {
   String[] seriesName;
 
   /**
-   * <p>
    * Constructor for SampleXYDataSource.
-   * </p>
    *
    * @param p an array of type double
    * @param name an array of {@link java.lang.String} objects
@@ -44,8 +42,7 @@ public class SampleXYDataSource {
    * @param xaxis a {@link java.lang.String} object
    * @param yaxsis a {@link java.lang.String} object
    */
-  public SampleXYDataSource(double[][] p, String[] name, String title, String xaxis,
-      String yaxsis) {
+  public SampleXYDataSource(double[][] p, String[] name, String title, String xaxis, String yaxsis) {
     // items = p[0].length;
     numberOfSeries = p.length / 2;
 

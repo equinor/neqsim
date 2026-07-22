@@ -3,9 +3,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentTST;
 
 /**
- * <p>
  * PhaseTSTEos class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class PhaseTSTEos extends PhaseEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PhaseTSTEos.
-   * </p>
    */
   public PhaseTSTEos() {
     uEOS = 2.5;

@@ -5,8 +5,6 @@ import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -15,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -35,14 +34,13 @@ import neqsim.thermo.system.SystemInterface;
  * This class enables:
  * <ul>
  * <li><b>Checkpointing:</b> Save and restore simulation state</li>
- * <li><b>Digital Twin Lifecycle:</b> Track model evolution through concept → design →
- * operation</li>
+ * <li><b>Digital Twin Lifecycle:</b> Track model evolution through concept → design → operation</li>
  * <li><b>Version Control:</b> Export models to JSON for Git-based versioning</li>
  * <li><b>Knowledge Preservation:</b> Maintain institutional knowledge despite staff turnover</li>
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * ProcessSystem process = new ProcessSystem();
  * // ... configure process ...
@@ -68,8 +66,8 @@ public class ProcessSystemState implements Serializable {
   private static final String CURRENT_SCHEMA_VERSION = "1.1";
 
   /** Logger for this class. */
-  private static final org.apache.logging.log4j.Logger logger =
-      org.apache.logging.log4j.LogManager.getLogger(ProcessSystemState.class);
+  private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
+      .getLogger(ProcessSystemState.class);
 
   /** Schema version of this state (for migration support). */
   private String schemaVersion = CURRENT_SCHEMA_VERSION;
@@ -82,6 +80,7 @@ public class ProcessSystemState implements Serializable {
   private String createdBy;
   private ModelMetadata metadata;
   private List<EquipmentState> equipmentStates;
+  private Map<String, StreamState> streamStates;
   private List<ConnectionState> connectionStates;
   private Map<String, Object> customProperties;
   private String checksum;
@@ -93,6 +92,7 @@ public class ProcessSystemState implements Serializable {
     this.createdAt = Instant.now();
     this.lastModifiedAt = Instant.now();
     this.equipmentStates = new ArrayList<>();
+    this.streamStates = new LinkedHashMap<>();
     this.connectionStates = new ArrayList<>();
     this.customProperties = new HashMap<>();
     this.metadata = new ModelMetadata();
@@ -114,6 +114,12 @@ public class ProcessSystemState implements Serializable {
     for (ProcessEquipmentInterface equipment : process.getUnitOperations()) {
       EquipmentState eqState = EquipmentState.fromEquipment(equipment);
       state.equipmentStates.add(eqState);
+
+      // Also capture as StreamState if it is a stream
+      if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
+        neqsim.process.equipment.stream.StreamInterface stream = (neqsim.process.equipment.stream.StreamInterface) equipment;
+        state.streamStates.put(stream.getName(), StreamState.fromStream(stream));
+      }
     }
 
     // Capture stream connections
@@ -142,36 +148,32 @@ public class ProcessSystemState implements Serializable {
       try {
         // Check for common output stream patterns
         if (equipment instanceof neqsim.process.equipment.separator.Separator) {
-          neqsim.process.equipment.separator.Separator sep =
-              (neqsim.process.equipment.separator.Separator) equipment;
+          neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) equipment;
           if (sep.getGasOutStream() != null) {
-            connectionStates.add(new ConnectionState(equipment.getName(), "gasOutStream",
-                sep.getGasOutStream().getName(), "inlet"));
+            connectionStates.add(
+                new ConnectionState(equipment.getName(), "gasOutStream", sep.getGasOutStream().getName(), "inlet"));
           }
           if (sep.getLiquidOutStream() != null) {
             connectionStates.add(new ConnectionState(equipment.getName(), "liquidOutStream",
                 sep.getLiquidOutStream().getName(), "inlet"));
           }
         } else if (equipment instanceof neqsim.process.equipment.heatexchanger.Heater) {
-          neqsim.process.equipment.heatexchanger.Heater heater =
-              (neqsim.process.equipment.heatexchanger.Heater) equipment;
+          neqsim.process.equipment.heatexchanger.Heater heater = (neqsim.process.equipment.heatexchanger.Heater) equipment;
           if (heater.getOutletStream() != null) {
-            connectionStates.add(new ConnectionState(equipment.getName(), "outletStream",
-                heater.getOutletStream().getName(), "inlet"));
+            connectionStates.add(
+                new ConnectionState(equipment.getName(), "outletStream", heater.getOutletStream().getName(), "inlet"));
           }
         } else if (equipment instanceof neqsim.process.equipment.valve.ThrottlingValve) {
-          neqsim.process.equipment.valve.ThrottlingValve valve =
-              (neqsim.process.equipment.valve.ThrottlingValve) equipment;
+          neqsim.process.equipment.valve.ThrottlingValve valve = (neqsim.process.equipment.valve.ThrottlingValve) equipment;
           if (valve.getOutletStream() != null) {
-            connectionStates.add(new ConnectionState(equipment.getName(), "outletStream",
-                valve.getOutletStream().getName(), "inlet"));
+            connectionStates.add(
+                new ConnectionState(equipment.getName(), "outletStream", valve.getOutletStream().getName(), "inlet"));
           }
         } else if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
-          neqsim.process.equipment.compressor.Compressor comp =
-              (neqsim.process.equipment.compressor.Compressor) equipment;
+          neqsim.process.equipment.compressor.Compressor comp = (neqsim.process.equipment.compressor.Compressor) equipment;
           if (comp.getOutletStream() != null) {
-            connectionStates.add(new ConnectionState(equipment.getName(), "outletStream",
-                comp.getOutletStream().getName(), "inlet"));
+            connectionStates.add(
+                new ConnectionState(equipment.getName(), "outletStream", comp.getOutletStream().getName(), "inlet"));
           }
         }
       } catch (Exception e) {
@@ -184,9 +186,8 @@ public class ProcessSystemState implements Serializable {
    * Reconstructs a ProcessSystem from this state.
    *
    * <p>
-   * Note: Full reconstruction requires the original equipment classes to be available. This method
-   * provides a foundation for model serialization; complete reconstruction may require additional
-   * factory methods.
+   * Note: Full reconstruction requires the original equipment classes to be available. This method provides a
+   * foundation for model serialization; complete reconstruction may require additional factory methods.
    * </p>
    *
    * @return a new ProcessSystem initialized with the captured state
@@ -208,7 +209,7 @@ public class ProcessSystemState implements Serializable {
     updateChecksum();
 
     Gson gson = createGson();
-    try (FileWriter writer = new FileWriter(filePath)) {
+    try (OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(filePath), StandardCharsets.UTF_8)) {
       gson.toJson(this, writer);
     } catch (IOException e) {
       throw new RuntimeException("Failed to save state to file: " + filePath, e);
@@ -232,7 +233,7 @@ public class ProcessSystemState implements Serializable {
    */
   public static ProcessSystemState loadFromFile(String filePath) {
     Gson gson = createGson();
-    try (FileReader reader = new FileReader(filePath)) {
+    try (InputStreamReader reader = new InputStreamReader(new FileInputStream(filePath), StandardCharsets.UTF_8)) {
       ProcessSystemState state = gson.fromJson(reader, ProcessSystemState.class);
       return migrateIfNeeded(state, filePath);
     } catch (IOException e) {
@@ -255,8 +256,8 @@ public class ProcessSystemState implements Serializable {
    * Saves this state to a GZIP-compressed JSON file.
    *
    * <p>
-   * Compressed files typically achieve 5-20x size reduction compared to plain JSON, making them
-   * ideal for large process models with many equipment states.
+   * Compressed files typically achieve 5-20x size reduction compared to plain JSON, making them ideal for large process
+   * models with many equipment states.
    * </p>
    *
    * @param filePath path to the output file (recommended extension: .neqsim)
@@ -317,8 +318,7 @@ public class ProcessSystemState implements Serializable {
    * Saves this state to a file, automatically detecting whether to use compression.
    *
    * <p>
-   * If the file path ends with ".neqsim", the file will be GZIP-compressed. Otherwise, it will be
-   * saved as plain JSON.
+   * If the file path ends with ".neqsim", the file will be GZIP-compressed. Otherwise, it will be saved as plain JSON.
    * </p>
    *
    * @param filePath path to the output file
@@ -335,8 +335,8 @@ public class ProcessSystemState implements Serializable {
    * Loads a state from a file, automatically detecting whether it is compressed.
    *
    * <p>
-   * If the file path ends with ".neqsim", it will be read as a GZIP-compressed file. Otherwise, it
-   * will be read as plain JSON.
+   * If the file path ends with ".neqsim", it will be read as a GZIP-compressed file. Otherwise, it will be read as
+   * plain JSON.
    * </p>
    *
    * @param filePath path to the input file
@@ -373,8 +373,8 @@ public class ProcessSystemState implements Serializable {
    * Applies this saved state to an existing ProcessSystem.
    *
    * <p>
-   * This method attempts to restore equipment states from the saved snapshot. The process structure
-   * must match the saved state for successful restoration.
+   * This method attempts to restore equipment states from the saved snapshot. The process structure must match the
+   * saved state for successful restoration.
    * </p>
    *
    * @param process the process system to apply the state to
@@ -383,8 +383,19 @@ public class ProcessSystemState implements Serializable {
     for (EquipmentState eqState : equipmentStates) {
       ProcessEquipmentInterface equipment = process.getUnit(eqState.getName());
       if (equipment != null) {
-        // Apply saved properties if we have matching equipment
-        // This is a foundation - full implementation would apply numeric/string properties
+        // Restore low-flow bypass configuration (Phase-2 feature).
+        // See docs/process/processmodel/low_flow_bypass.md.
+        Map<String, Double> np = eqState.getNumericProperties();
+        if (np != null) {
+          Double minFlow = np.get("minimumFlow");
+          if (minFlow != null) {
+            equipment.setMinimumFlow(minFlow.doubleValue());
+          }
+          Double locked = np.get("lockedInactive");
+          if (locked != null) {
+            equipment.setLockedInactive(locked.doubleValue() != 0.0);
+          }
+        }
       }
     }
   }
@@ -409,7 +420,7 @@ public class ProcessSystemState implements Serializable {
   }
 
   private static Gson createGson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues()
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().disableHtmlEscaping()
         .registerTypeAdapter(Instant.class, new InstantAdapter()).create();
   }
 
@@ -428,8 +439,7 @@ public class ProcessSystemState implements Serializable {
     // Handle states from older versions without schemaVersion field
     if (state.schemaVersion == null) {
       state.schemaVersion = "1.0";
-      logger
-          .info("Migrating state from version 1.0 to " + CURRENT_SCHEMA_VERSION + ": " + filePath);
+      logger.info("Migrating state from version 1.0 to " + CURRENT_SCHEMA_VERSION + ": " + filePath);
     }
 
     // Add migration logic for future versions here
@@ -523,8 +533,7 @@ public class ProcessSystemState implements Serializable {
      * @param errors list of validation errors
      * @param warnings list of validation warnings
      */
-    public ValidationResult(boolean valid, java.util.List<String> errors,
-        java.util.List<String> warnings) {
+    public ValidationResult(boolean valid, java.util.List<String> errors, java.util.List<String> warnings) {
       this.valid = valid;
       this.errors = errors;
       this.warnings = warnings;
@@ -657,6 +666,15 @@ public class ProcessSystemState implements Serializable {
   }
 
   /**
+   * Gets the stream states captured from Stream equipment.
+   *
+   * @return map of stream name to StreamState
+   */
+  public Map<String, StreamState> getStreamStates() {
+    return streamStates;
+  }
+
+  /**
    * Gets the connection states capturing stream topology.
    *
    * @return list of connection states
@@ -709,11 +727,29 @@ public class ProcessSystemState implements Serializable {
       state.name = equipment.getName();
       state.type = equipment.getClass().getSimpleName();
 
+      // Capture IEC 81346 reference designation if set
+      neqsim.process.equipment.iec81346.ReferenceDesignation refDes = equipment.getReferenceDesignation();
+      if (refDes != null && refDes.isSet()) {
+        state.stringProperties.put("iec81346_referenceDesignation", refDes.toReferenceDesignationString());
+        state.stringProperties.put("iec81346_functionDesignation", refDes.getFunctionDesignation());
+        state.stringProperties.put("iec81346_productDesignation", refDes.getProductDesignation());
+        state.stringProperties.put("iec81346_locationDesignation", refDes.getLocationDesignation());
+        if (refDes.getLetterCode() != null) {
+          state.stringProperties.put("iec81346_letterCode", refDes.getLetterCode().name());
+        }
+        state.numericProperties.put("iec81346_sequenceNumber", (double) refDes.getSequenceNumber());
+      }
+
       // Capture common properties
       SystemInterface thermo = equipment.getThermoSystem();
       if (thermo != null) {
         state.fluidState = FluidState.fromFluid(thermo);
       }
+
+      // Capture low-flow bypass configuration (always — primitive defaults round-trip safely).
+      // See docs/process/processmodel/low_flow_bypass.md.
+      state.numericProperties.put("minimumFlow", equipment.getMinimumFlow());
+      state.numericProperties.put("lockedInactive", equipment.isLockedInactive() ? 1.0 : 0.0);
 
       // Capture equipment-specific properties
       captureEquipmentProperties(equipment, state);
@@ -727,12 +763,10 @@ public class ProcessSystemState implements Serializable {
      * @param equipment the equipment to capture properties from
      * @param state the state to populate
      */
-    private static void captureEquipmentProperties(ProcessEquipmentInterface equipment,
-        EquipmentState state) {
+    private static void captureEquipmentProperties(ProcessEquipmentInterface equipment, EquipmentState state) {
       // Compressors (and Expanders which extend Compressor)
       if (equipment instanceof neqsim.process.equipment.compressor.Compressor) {
-        neqsim.process.equipment.compressor.Compressor comp =
-            (neqsim.process.equipment.compressor.Compressor) equipment;
+        neqsim.process.equipment.compressor.Compressor comp = (neqsim.process.equipment.compressor.Compressor) equipment;
         state.numericProperties.put("outletPressure", comp.getOutletPressure());
         state.numericProperties.put("polytropicEfficiency", comp.getPolytropicEfficiency());
         state.numericProperties.put("isentropicEfficiency", comp.getIsentropicEfficiency());
@@ -749,12 +783,10 @@ public class ProcessSystemState implements Serializable {
 
       // Valves
       if (equipment instanceof neqsim.process.equipment.valve.ValveInterface) {
-        neqsim.process.equipment.valve.ValveInterface valve =
-            (neqsim.process.equipment.valve.ValveInterface) equipment;
+        neqsim.process.equipment.valve.ValveInterface valve = (neqsim.process.equipment.valve.ValveInterface) equipment;
         state.numericProperties.put("percentValveOpening", valve.getPercentValveOpening());
         if (equipment instanceof neqsim.process.equipment.valve.ThrottlingValve) {
-          neqsim.process.equipment.valve.ThrottlingValve tv =
-              (neqsim.process.equipment.valve.ThrottlingValve) equipment;
+          neqsim.process.equipment.valve.ThrottlingValve tv = (neqsim.process.equipment.valve.ThrottlingValve) equipment;
           state.numericProperties.put("outletPressure", tv.getOutletPressure());
           state.numericProperties.put("cv", tv.getCv());
         }
@@ -762,24 +794,21 @@ public class ProcessSystemState implements Serializable {
 
       // Heaters
       if (equipment instanceof neqsim.process.equipment.heatexchanger.Heater) {
-        neqsim.process.equipment.heatexchanger.Heater heater =
-            (neqsim.process.equipment.heatexchanger.Heater) equipment;
+        neqsim.process.equipment.heatexchanger.Heater heater = (neqsim.process.equipment.heatexchanger.Heater) equipment;
         state.numericProperties.put("duty", heater.getDuty());
         state.numericProperties.put("outletTemperature", heater.getOutletTemperature());
       }
 
       // Coolers
       if (equipment instanceof neqsim.process.equipment.heatexchanger.Cooler) {
-        neqsim.process.equipment.heatexchanger.Cooler cooler =
-            (neqsim.process.equipment.heatexchanger.Cooler) equipment;
+        neqsim.process.equipment.heatexchanger.Cooler cooler = (neqsim.process.equipment.heatexchanger.Cooler) equipment;
         state.numericProperties.put("duty", cooler.getDuty());
         state.numericProperties.put("outletTemperature", cooler.getOutletTemperature());
       }
 
       // Heat Exchangers
       if (equipment instanceof neqsim.process.equipment.heatexchanger.HeatExchanger) {
-        neqsim.process.equipment.heatexchanger.HeatExchanger hx =
-            (neqsim.process.equipment.heatexchanger.HeatExchanger) equipment;
+        neqsim.process.equipment.heatexchanger.HeatExchanger hx = (neqsim.process.equipment.heatexchanger.HeatExchanger) equipment;
         state.numericProperties.put("duty", hx.getDuty());
         state.numericProperties.put("uAvalue", hx.getUAvalue());
         state.numericProperties.put("hotOutTemperature", hx.getOutStream(0).getTemperature());
@@ -788,8 +817,7 @@ public class ProcessSystemState implements Serializable {
 
       // Separators
       if (equipment instanceof neqsim.process.equipment.separator.Separator) {
-        neqsim.process.equipment.separator.Separator sep =
-            (neqsim.process.equipment.separator.Separator) equipment;
+        neqsim.process.equipment.separator.Separator sep = (neqsim.process.equipment.separator.Separator) equipment;
         state.numericProperties.put("pressure", sep.getPressure());
         state.numericProperties.put("temperature", sep.getTemperature());
         state.numericProperties.put("liquidLevel", sep.getLiquidLevel());
@@ -797,23 +825,19 @@ public class ProcessSystemState implements Serializable {
 
       // Three-Phase Separators
       if (equipment instanceof neqsim.process.equipment.separator.ThreePhaseSeparator) {
-        neqsim.process.equipment.separator.ThreePhaseSeparator sep3 =
-            (neqsim.process.equipment.separator.ThreePhaseSeparator) equipment;
+        neqsim.process.equipment.separator.ThreePhaseSeparator sep3 = (neqsim.process.equipment.separator.ThreePhaseSeparator) equipment;
         state.numericProperties.put("waterLevel", sep3.getWaterLevel());
       }
 
       // Mixers
       if (equipment instanceof neqsim.process.equipment.mixer.Mixer) {
-        neqsim.process.equipment.mixer.Mixer mixer =
-            (neqsim.process.equipment.mixer.Mixer) equipment;
-        state.numericProperties.put("numberOfInputStreams",
-            (double) mixer.getNumberOfInputStreams());
+        neqsim.process.equipment.mixer.Mixer mixer = (neqsim.process.equipment.mixer.Mixer) equipment;
+        state.numericProperties.put("numberOfInputStreams", (double) mixer.getNumberOfInputStreams());
       }
 
       // Splitters
       if (equipment instanceof neqsim.process.equipment.splitter.Splitter) {
-        neqsim.process.equipment.splitter.Splitter splitter =
-            (neqsim.process.equipment.splitter.Splitter) equipment;
+        neqsim.process.equipment.splitter.Splitter splitter = (neqsim.process.equipment.splitter.Splitter) equipment;
         double[] fractions = splitter.getSplitFactors();
         if (fractions != null) {
           for (int i = 0; i < fractions.length; i++) {
@@ -824,15 +848,13 @@ public class ProcessSystemState implements Serializable {
 
       // Absorbers/Columns
       if (equipment instanceof neqsim.process.equipment.absorber.SimpleTEGAbsorber) {
-        neqsim.process.equipment.absorber.SimpleTEGAbsorber absorber =
-            (neqsim.process.equipment.absorber.SimpleTEGAbsorber) equipment;
+        neqsim.process.equipment.absorber.SimpleTEGAbsorber absorber = (neqsim.process.equipment.absorber.SimpleTEGAbsorber) equipment;
         state.numericProperties.put("numberOfStages", (double) absorber.getNumberOfStages());
       }
 
       // Streams
       if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
-        neqsim.process.equipment.stream.StreamInterface stream =
-            (neqsim.process.equipment.stream.StreamInterface) equipment;
+        neqsim.process.equipment.stream.StreamInterface stream = (neqsim.process.equipment.stream.StreamInterface) equipment;
         state.numericProperties.put("temperature", stream.getTemperature());
         state.numericProperties.put("pressure", stream.getPressure());
         state.numericProperties.put("flowRate", stream.getFlowRate("kg/hr"));
@@ -841,16 +863,14 @@ public class ProcessSystemState implements Serializable {
 
       // Adjusters - capture max/min adjusted values
       if (equipment instanceof neqsim.process.equipment.util.Adjuster) {
-        neqsim.process.equipment.util.Adjuster adjuster =
-            (neqsim.process.equipment.util.Adjuster) equipment;
+        neqsim.process.equipment.util.Adjuster adjuster = (neqsim.process.equipment.util.Adjuster) equipment;
         state.numericProperties.put("maxAdjustedValue", adjuster.getMaxAdjustedValue());
         state.numericProperties.put("minAdjustedValue", adjuster.getMinAdjustedValue());
       }
 
       // Recycles - capture error values
       if (equipment instanceof neqsim.process.equipment.util.Recycle) {
-        neqsim.process.equipment.util.Recycle recycle =
-            (neqsim.process.equipment.util.Recycle) equipment;
+        neqsim.process.equipment.util.Recycle recycle = (neqsim.process.equipment.util.Recycle) equipment;
         state.numericProperties.put("errorFlow", recycle.getErrorFlow());
         state.numericProperties.put("errorTemperature", recycle.getErrorTemperature());
         state.numericProperties.put("errorPressure", recycle.getErrorPressure());
@@ -865,12 +885,40 @@ public class ProcessSystemState implements Serializable {
       return type;
     }
 
+    /**
+     * Gets the equipment type. Alias for {@link #getType()}.
+     *
+     * @return the equipment type string
+     */
+    public String getEquipmentType() {
+      return type;
+    }
+
     public Map<String, Double> getNumericProperties() {
       return numericProperties;
     }
 
     public Map<String, String> getStringProperties() {
       return stringProperties;
+    }
+
+    /**
+     * Gets all parameters as a combined map. Numeric properties are converted to String values and merged with string
+     * properties.
+     *
+     * @return combined map of all equipment parameters
+     */
+    public Map<String, String> getParameters() {
+      Map<String, String> params = new HashMap<>();
+      if (stringProperties != null) {
+        params.putAll(stringProperties);
+      }
+      if (numericProperties != null) {
+        for (Map.Entry<String, Double> entry : numericProperties.entrySet()) {
+          params.put(entry.getKey(), String.valueOf(entry.getValue()));
+        }
+      }
+      return params;
     }
 
     public FluidState getFluidState() {
@@ -940,6 +988,81 @@ public class ProcessSystemState implements Serializable {
   }
 
   /**
+   * Represents the state of a process stream with key thermodynamic properties.
+   */
+  public static class StreamState implements Serializable {
+    private static final long serialVersionUID = 1000L;
+
+    private double temperature; // K
+    private double pressure; // bara
+    private double molarFlowRate; // mole/sec
+    private Map<String, Double> composition; // mole fractions
+
+    /**
+     * Default constructor.
+     */
+    public StreamState() {
+      this.composition = new HashMap<>();
+    }
+
+    /**
+     * Creates a StreamState from a StreamInterface.
+     *
+     * @param stream the stream to capture
+     * @return a new StreamState
+     */
+    public static StreamState fromStream(neqsim.process.equipment.stream.StreamInterface stream) {
+      StreamState state = new StreamState();
+      state.temperature = stream.getTemperature();
+      state.pressure = stream.getPressure();
+      state.molarFlowRate = stream.getFlowRate("mole/sec");
+      SystemInterface fluid = stream.getFluid();
+      if (fluid != null) {
+        for (int i = 0; i < fluid.getNumberOfComponents(); i++) {
+          state.composition.put(fluid.getComponent(i).getName(), fluid.getComponent(i).getz());
+        }
+      }
+      return state;
+    }
+
+    /**
+     * Gets the stream temperature in Kelvin.
+     *
+     * @return temperature in K
+     */
+    public double getTemperature() {
+      return temperature;
+    }
+
+    /**
+     * Gets the stream pressure in bara.
+     *
+     * @return pressure in bara
+     */
+    public double getPressure() {
+      return pressure;
+    }
+
+    /**
+     * Gets the molar flow rate in mole/sec.
+     *
+     * @return molar flow rate
+     */
+    public double getMolarFlowRate() {
+      return molarFlowRate;
+    }
+
+    /**
+     * Gets the stream composition (mole fractions).
+     *
+     * @return composition map of component name to mole fraction
+     */
+    public Map<String, Double> getComposition() {
+      return composition;
+    }
+  }
+
+  /**
    * Represents a connection between two pieces of equipment.
    *
    * <p>
@@ -957,7 +1080,8 @@ public class ProcessSystemState implements Serializable {
     /**
      * Default constructor.
      */
-    public ConnectionState() {}
+    public ConnectionState() {
+    }
 
     /**
      * Creates a connection state.
@@ -967,8 +1091,8 @@ public class ProcessSystemState implements Serializable {
      * @param targetEquipmentName name of the target equipment
      * @param targetPortName name of the input port (e.g., "inlet")
      */
-    public ConnectionState(String sourceEquipmentName, String sourcePortName,
-        String targetEquipmentName, String targetPortName) {
+    public ConnectionState(String sourceEquipmentName, String sourcePortName, String targetEquipmentName,
+        String targetPortName) {
       this.sourceEquipmentName = sourceEquipmentName;
       this.sourcePortName = sourcePortName;
       this.targetEquipmentName = targetEquipmentName;
@@ -1013,8 +1137,7 @@ public class ProcessSystemState implements Serializable {
 
     @Override
     public String toString() {
-      return sourceEquipmentName + "." + sourcePortName + " -> " + targetEquipmentName + "."
-          + targetPortName;
+      return sourceEquipmentName + "." + sourcePortName + " -> " + targetEquipmentName + "." + targetPortName;
     }
   }
 

@@ -42,8 +42,8 @@ class ProcessSensitivityAnalyzerTest {
       ProcessSystem process = new ProcessSystem();
       ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
 
-      analyzer.withInput("feed", "temperature").withInput("feed", "pressure")
-          .withOutput("product", "temperature").withOutput("product", "flowRate");
+      analyzer.withInput("feed", "temperature").withInput("feed", "pressure").withOutput("product", "temperature")
+          .withOutput("product", "flowRate");
 
       // No exception thrown means success
       assertNotNull(analyzer);
@@ -55,8 +55,8 @@ class ProcessSensitivityAnalyzerTest {
       ProcessSystem process = new ProcessSystem();
       ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
 
-      analyzer.withInput("feed", "temperature", "C").withInput("feed", "flowRate", "kg/hr")
-          .withOutput("product", "temperature", "K");
+      analyzer.withInput("feed", "temperature", "C").withInput("feed", "flowRate", "kg/hr").withOutput("product",
+          "temperature", "K");
 
       assertNotNull(analyzer);
     }
@@ -172,8 +172,7 @@ class ProcessSensitivityAnalyzerTest {
 
       // The output temperature should be directly equal to input (sensitivity = 1)
       double sensitivity = matrix.getSensitivity("feed.temperature", "feed.temperature");
-      assertEquals(1.0, sensitivity, 0.1,
-          "Expected sensitivity ~1.0 for same variable, got: " + sensitivity);
+      assertEquals(1.0, sensitivity, 0.1, "Expected sensitivity ~1.0 for same variable, got: " + sensitivity);
     }
 
     @Test
@@ -200,8 +199,8 @@ class ProcessSensitivityAnalyzerTest {
 
       // Analyze sensitivity
       ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
-      analyzer.withInput("feed", "temperature").withInput("feed", "pressure")
-          .withOutput("feed", "temperature").withOutput("feed", "pressure");
+      analyzer.withInput("feed", "temperature").withInput("feed", "pressure").withOutput("feed", "temperature")
+          .withOutput("feed", "pressure");
 
       SensitivityMatrix matrix = analyzer.compute();
 
@@ -232,13 +231,11 @@ class ProcessSensitivityAnalyzerTest {
 
       // Forward differences
       ProcessSensitivityAnalyzer forwardAnalyzer = new ProcessSensitivityAnalyzer(process);
-      forwardAnalyzer.withInput("feed", "flowRate").withOutput("feed", "temperature")
-          .withCentralDifferences(false);
+      forwardAnalyzer.withInput("feed", "flowRate").withOutput("feed", "temperature").withCentralDifferences(false);
 
       // Central differences
       ProcessSensitivityAnalyzer centralAnalyzer = new ProcessSensitivityAnalyzer(process);
-      centralAnalyzer.withInput("feed", "flowRate").withOutput("feed", "temperature")
-          .withCentralDifferences(true);
+      centralAnalyzer.withInput("feed", "flowRate").withOutput("feed", "temperature").withCentralDifferences(true);
 
       SensitivityMatrix forwardMatrix = forwardAnalyzer.compute();
       SensitivityMatrix centralMatrix = centralAnalyzer.compute();
@@ -248,8 +245,7 @@ class ProcessSensitivityAnalyzerTest {
       double centralSens = centralMatrix.getSensitivity("feed.temperature", "feed.flowRate");
 
       // For a linear relationship (or in this case, no relationship), they should be close
-      assertEquals(forwardSens, centralSens, 0.01,
-          "Forward and central should give similar results");
+      assertEquals(forwardSens, centralSens, 0.01, "Forward and central should give similar results");
     }
   }
 
@@ -273,8 +269,7 @@ class ProcessSensitivityAnalyzerTest {
       process.run();
 
       ProcessSensitivityAnalyzer analyzer = new ProcessSensitivityAnalyzer(process);
-      analyzer.withInput("feed", "temperature").withInput("feed", "pressure").withOutput("feed",
-          "temperature");
+      analyzer.withInput("feed", "temperature").withInput("feed", "pressure").withOutput("feed", "temperature");
 
       SensitivityMatrix matrix = analyzer.compute();
       String report = analyzer.generateReport(matrix);

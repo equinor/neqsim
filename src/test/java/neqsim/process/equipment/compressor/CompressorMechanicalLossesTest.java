@@ -43,8 +43,7 @@ public class CompressorMechanicalLossesTest {
       CompressorMechanicalLosses defaultLosses = new CompressorMechanicalLosses();
       assertEquals(100.0, defaultLosses.getShaftDiameter(), 0.1);
       assertEquals(CompressorMechanicalLosses.SealType.DRY_GAS_TANDEM, defaultLosses.getSealType());
-      assertEquals(CompressorMechanicalLosses.BearingType.TILTING_PAD,
-          defaultLosses.getBearingType());
+      assertEquals(CompressorMechanicalLosses.BearingType.TILTING_PAD, defaultLosses.getBearingType());
     }
 
     @Test
@@ -106,8 +105,7 @@ public class CompressorMechanicalLossesTest {
       double secondary = losses.calculateSecondarySealLeakage();
       double buffer = losses.calculateBufferGasFlow();
 
-      assertEquals(primary + secondary + buffer, total, 0.01,
-          "Total should equal sum of components");
+      assertEquals(primary + secondary + buffer, total, 0.01, "Total should equal sum of components");
     }
 
     @Test
@@ -119,8 +117,7 @@ public class CompressorMechanicalLossesTest {
       losses.setSealType(CompressorMechanicalLosses.SealType.DRY_GAS_SINGLE);
       double singleLeakage = losses.calculatePrimarySealLeakage();
 
-      assertTrue(singleLeakage > tandemLeakage,
-          "Single seal should have higher leakage than tandem");
+      assertTrue(singleLeakage > tandemLeakage, "Single seal should have higher leakage than tandem");
     }
 
     @Test
@@ -189,8 +186,7 @@ public class CompressorMechanicalLossesTest {
 
       // Note: Both may hit minimum bounds for small compressors
       // For larger compressors (>200mm shaft), magnetic would be significantly lower
-      assertTrue(magneticLoss <= tiltingPadLoss,
-          "Magnetic bearings should have equal or lower losses");
+      assertTrue(magneticLoss <= tiltingPadLoss, "Magnetic bearings should have equal or lower losses");
     }
 
     @Test
@@ -206,8 +202,8 @@ public class CompressorMechanicalLossesTest {
       largeLosses.setOperatingConditions(50.0, 150.0, 16000.0, 18.0, 0.95);
       double highSpeedLoss = largeLosses.getTotalBearingLoss();
 
-      assertTrue(highSpeedLoss > lowSpeedLoss, "Bearing loss should increase with speed: low="
-          + lowSpeedLoss + ", high=" + highSpeedLoss);
+      assertTrue(highSpeedLoss > lowSpeedLoss,
+          "Bearing loss should increase with speed: low=" + lowSpeedLoss + ", high=" + highSpeedLoss);
     }
   }
 
@@ -269,8 +265,7 @@ public class CompressorMechanicalLossesTest {
       double lowPowerEfficiency = losses.getMechanicalEfficiency(100.0);
       double highPowerEfficiency = losses.getMechanicalEfficiency(5000.0);
 
-      assertTrue(highPowerEfficiency > lowPowerEfficiency,
-          "Higher power should give higher mechanical efficiency");
+      assertTrue(highPowerEfficiency > lowPowerEfficiency, "Higher power should give higher mechanical efficiency");
     }
 
     @Test
@@ -387,8 +382,7 @@ public class CompressorMechanicalLossesTest {
       losses.setSealType(CompressorMechanicalLosses.SealType.DRY_GAS_DOUBLE);
       double doubleLeakage = losses.calculatePrimarySealLeakage();
 
-      assertTrue(doubleLeakage <= tandemLeakage,
-          "Double opposed should have equal or lower leakage");
+      assertTrue(doubleLeakage <= tandemLeakage, "Double opposed should have equal or lower leakage");
     }
   }
 

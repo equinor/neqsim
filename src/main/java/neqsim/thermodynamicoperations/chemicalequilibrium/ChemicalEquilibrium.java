@@ -13,9 +13,7 @@ import neqsim.thermodynamicoperations.BaseOperation;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ChemicalEquilibrium class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public class ChemicalEquilibrium extends BaseOperation {
   SystemInterface system;
 
   /**
-   * <p>
    * Constructor for ChemicalEquilibrium.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -45,8 +41,7 @@ public class ChemicalEquilibrium extends BaseOperation {
     double chemdev = 0;
     int iter = 1;
     if (system.isChemicalSystem()) {
-      double oldHeat = system.getChemicalReactionOperations().getReactionList()
-          .reacHeat(system.getPhase(1), "HCO3-");
+      double oldHeat = system.getChemicalReactionOperations().getReactionList().reacHeat(system.getPhase(1), "HCO3-");
       do {
         iter++;
         for (int phaseNum = 1; phaseNum < system.getNumberOfPhases(); phaseNum++) {
@@ -65,8 +60,7 @@ public class ChemicalEquilibrium extends BaseOperation {
           }
         }
       } while (Math.abs(chemdev) > 1e-4 && iter < 100);
-      double newHeat = system.getChemicalReactionOperations().getReactionList()
-          .reacHeat(system.getPhase(1), "HCO3-");
+      double newHeat = system.getChemicalReactionOperations().getReactionList().reacHeat(system.getPhase(1), "HCO3-");
       system.getChemicalReactionOperations().setDeltaReactionHeat(newHeat - oldHeat);
     }
     if (iter > 50) {
@@ -83,7 +77,8 @@ public class ChemicalEquilibrium extends BaseOperation {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 
   /** {@inheritDoc} */
   @Override

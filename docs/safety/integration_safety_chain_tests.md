@@ -1,3 +1,8 @@
+---
+title: Integrated HIPPS/ESD Safety Chain Tests
+description: This repository now includes an integration test that links alarms, HIPPS isolation, and ESD
+---
+
 # Integrated HIPPS/ESD Safety Chain Tests
 
 This repository now includes an integration test that links alarms, HIPPS isolation, and ESD

@@ -9,9 +9,7 @@ package neqsim.thermodynamicoperations.flashops;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * VUflash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class VUflash extends Flash {
   Flash pHFlash;
 
   /**
-   * <p>
    * Constructor for VUflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vspec a double
@@ -63,11 +59,9 @@ public class VUflash extends Flash {
         iterations++;
 
         if (system.getNumberOfComponents() == 1) {
-          this.pHFlash = new PHflashSingleComp(system,
-              Uspec + wallHeat + system.getPressure() * system.getVolume(), 0);
+          this.pHFlash = new PHflashSingleComp(system, Uspec + wallHeat + system.getPressure() * system.getVolume(), 0);
         } else {
-          this.pHFlash =
-              new PHflash(system, Uspec + wallHeat + system.getPressure() * system.getVolume(), 0);
+          this.pHFlash = new PHflash(system, Uspec + wallHeat + system.getPressure() * system.getVolume(), 0);
         }
         // System.out.println("Hspec " + Hspec);
         this.pHFlash.run();
@@ -84,9 +78,8 @@ public class VUflash extends Flash {
           system.setPressure(system.getPressure() + err / 10.0);
         } else {
           // System.out.println("pres " + (system.getPressure()+0.1*dPdV*(newVol-Vspec)));
-          system.setPressure(
-              system.getPressure() - 0.6 * 1.0 / system.getdVdPtn() * (newVol - Vspec)); // system.getdVdPtn()*(newVol-Vspec));
-                                                                                         // //dPdV*(newVol-Vspec));
+          system.setPressure(system.getPressure() - 0.6 * 1.0 / system.getdVdPtn() * (newVol - Vspec)); // system.getdVdPtn()*(newVol-Vspec));
+          // //dPdV*(newVol-Vspec));
         }
         // pNew = system.getPressure();
         // dPdV = (pOld - pOldOld) / (newVol - oldVol);

@@ -1,11 +1,13 @@
 package neqsim.process.equipment.valve;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.physicalproperties.PhysicalPropertyType;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
@@ -18,16 +20,13 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ThrottlingValve class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class ThrottlingValve extends TwoPortEquipment
-    implements ValveInterface, neqsim.process.equipment.capacity.CapacityConstrainedEquipment,
-    neqsim.process.design.AutoSizeable {
+public class ThrottlingValve extends TwoPortEquipment implements ValveInterface,
+    neqsim.process.equipment.capacity.CapacityConstrainedEquipment, neqsim.process.design.AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -51,6 +50,18 @@ public class ThrottlingValve extends TwoPortEquipment
   private double valveClosingTravelTimeSec = Double.NaN;
   private double valveTimeConstantSec = 0.0;
   private ValveTravelModel travelModel = ValveTravelModel.NONE;
+  /** Valve deadband in percent — signal changes smaller than this are ignored. */
+  private double valveDeadband = 0.0;
+  /** Valve stiction band in percent — valve sticks until force overcomes this threshold. */
+  private double valveStiction = 0.0;
+  /** Hysteresis band in percent — position offset between increasing/decreasing signal. */
+  private double valveHysteresis = 0.0;
+  /** Last direction the valve moved: +1 = opening, -1 = closing, 0 = initial. */
+  private int lastMoveDirection = 0;
+  /** Whether the valve is currently stuck due to stiction. */
+  private boolean isStuck = true;
+  /** The valve position when it last became stuck. */
+  private double stuckPosition = Double.NaN;
   double molarFlow = 0.0;
   private String pressureUnit = "bara";
   private boolean acceptNegativeDP = true;
@@ -58,10 +69,36 @@ public class ThrottlingValve extends TwoPortEquipment
   boolean isCalcPressure = false;
   private boolean gasValve = true;
   private double Fp = 1.0;
+  /**
+   * Fouling fraction in the range [0, 1) representing the loss of effective flow coefficient caused by scale/solids
+   * deposition on the valve trim. An effective Kv of {@code Kv * (1 - foulingFraction)} is used in all flow and
+   * pressure calculations. 0.0 means a clean valve; 0.9 means 90% of the trim capacity is lost.
+   */
+  private double foulingFraction = 0.0;
   private double deltaPressure = 0.0;
   private boolean allowChoked = false;
   private boolean allowLaminar = true;
   private double xt = 0.6; // critical pressure drop ratio for choked flow
+  private double lastInletTemperature = Double.NaN;
+  private double lastInletPressure = Double.NaN;
+  private double lastInletFlowRate = Double.NaN;
+  private double[] lastInletComposition = null;
+  private double lastOutletPressure = Double.NaN;
+  private double lastKv = Double.NaN;
+  private double lastPercentValveOpening = Double.NaN;
+  private double lastRequestedValveOpening = Double.NaN;
+  private double lastDeltaPressure = Double.NaN;
+  private double lastFp = Double.NaN;
+  private double lastFoulingFraction = Double.NaN;
+  private double lastXt = Double.NaN;
+  private String lastPressureUnit = null;
+  private String lastSpecification = null;
+  private boolean lastValveKvSet = false;
+  private boolean lastIsoThermal = false;
+  private boolean lastAcceptNegativeDP = false;
+  private boolean lastIsCalcPressure = false;
+  private boolean lastAllowChoked = false;
+  private boolean lastAllowLaminar = false;
 
   /** Flag indicating if valve has been auto-sized. */
   private boolean autoSized = false;
@@ -81,9 +118,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Constructor for ThrottlingValve.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -95,9 +130,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * getDeltaPressure.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -136,6 +169,32 @@ public class ThrottlingValve extends TwoPortEquipment
     return getInletStream().getThermoSystem().getPressure();
   }
 
+  /**
+   * Run a choke-collapse diagnostic on this valve. Convenience wrapper around {@link ChokeCollapseAnalyzer}. The valve
+   * must have been run at least once.
+   *
+   * @return analysis result with flow regime, collapse mode, pressure ratio margin and recommendations
+   */
+  public ChokeCollapseResult analyseChokeCollapse() {
+    return new ChokeCollapseAnalyzer(this).analyze();
+  }
+
+  /**
+   * Run an inadvertent valve operation (IVO) diagnostic on this valve. Convenience wrapper around
+   * {@link InadvertentValveOperationAnalyzer}. The valve must have been run at least once. Defaults: role = BLOCK, mode
+   * = SPURIOUS_CLOSE.
+   *
+   * @param role functional role of the valve
+   * @param mode inadvertent operation mode to evaluate
+   * @param designPressureBara MAWP (bara) of the segment that becomes exposed by the IVO
+   * @return analysis result with severity, frequency, overpressure factor and recommendations
+   */
+  public InadvertentValveOperationResult analyseInadvertentOperation(InadvertentValveOperationResult.ValveRole role,
+      InadvertentValveOperationResult.IvoMode mode, double designPressureBara) {
+    return new InadvertentValveOperationAnalyzer(this).setRole(role).setMode(mode)
+        .setDesignPressure(designPressureBara, "bara").analyze();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setPressure(double pressure) {
@@ -143,9 +202,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
@@ -162,13 +219,12 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * setOutletPressure.
-   * </p>
    *
    * @param pressure a double
    * @param unit a {@link java.lang.String} object
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     pressureUnit = unit;
     this.pressure = pressure;
@@ -178,15 +234,70 @@ public class ThrottlingValve extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public boolean needRecalculation() {
-    if (getInletStream().getThermoSystem().getTemperature() == thermoSystem.getTemperature()
-        && getInletStream().getThermoSystem().getPressure() == thermoSystem.getPressure()
-        && getInletStream().getThermoSystem().getFlowRate("kg/hr") == thermoSystem
-            .getFlowRate("kg/hr")
-        && getOutletPressure() == getOutletStream().getPressure()) {
-      return false;
-    } else {
+    if (thermoSystem == null || getInletStream() == null || getInletStream().getThermoSystem() == null
+        || lastInletComposition == null) {
       return true;
     }
+    SystemInterface inThermo = getInletStream().getThermoSystem();
+    if (inThermo.getTemperature() != lastInletTemperature || inThermo.getPressure() != lastInletPressure
+        || pressure != lastOutletPressure || Kv != lastKv || percentValveOpening != lastPercentValveOpening
+        || requestedValveOpening != lastRequestedValveOpening || deltaPressure != lastDeltaPressure || Fp != lastFp
+        || foulingFraction != lastFoulingFraction || xt != lastXt || valveKvSet != lastValveKvSet
+        || isoThermal != lastIsoThermal || acceptNegativeDP != lastAcceptNegativeDP
+        || isCalcPressure != lastIsCalcPressure || allowChoked != lastAllowChoked || allowLaminar != lastAllowLaminar
+        || !java.util.Objects.equals(pressureUnit, lastPressureUnit)
+        || !java.util.Objects.equals(getSpecification(), lastSpecification)) {
+      return true;
+    }
+    double flow = inThermo.getFlowRate("kg/hr");
+    if (flow <= 0.0 || lastInletFlowRate <= 0.0 || Math.abs(flow - lastInletFlowRate) / flow >= 1e-6) {
+      return true;
+    }
+    neqsim.thermo.phase.PhaseInterface phase = inThermo.getPhase(0);
+    int numberOfComponents = phase.getNumberOfComponents();
+    if (numberOfComponents != lastInletComposition.length) {
+      return true;
+    }
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (phase.getComponent(i).getz() != lastInletComposition[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void updateRecalculationState() {
+    if (getInletStream() == null || getInletStream().getThermoSystem() == null) {
+      lastInletComposition = null;
+      return;
+    }
+    SystemInterface inThermo = getInletStream().getThermoSystem();
+    lastInletTemperature = inThermo.getTemperature();
+    lastInletPressure = inThermo.getPressure();
+    lastInletFlowRate = inThermo.getFlowRate("kg/hr");
+    lastInletComposition = inThermo.getMolarComposition();
+    lastOutletPressure = pressure;
+    lastKv = Kv;
+    lastPercentValveOpening = percentValveOpening;
+    lastRequestedValveOpening = requestedValveOpening;
+    lastDeltaPressure = deltaPressure;
+    lastFp = Fp;
+    lastFoulingFraction = foulingFraction;
+    lastXt = xt;
+    lastPressureUnit = pressureUnit;
+    lastSpecification = getSpecification();
+    lastValveKvSet = valveKvSet;
+    lastIsoThermal = isoThermal;
+    lastAcceptNegativeDP = acceptNegativeDP;
+    lastIsCalcPressure = isCalcPressure;
+    lastAllowChoked = allowChoked;
+    lastAllowLaminar = allowLaminar;
+  }
+
+  private void finishRun(UUID id) {
+    updateRecalculationState();
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
   }
 
   /**
@@ -198,8 +309,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * Calculates molar flow for a gas based on IEC 60534 standards. This method accounts for choked
-   * (critical) flow.
+   * Calculates molar flow for a gas based on IEC 60534 standards. This method accounts for choked (critical) flow.
    *
    * @return Molar flow in mole/sec.
    */
@@ -207,8 +317,7 @@ public class ThrottlingValve extends TwoPortEquipment
     double flow_m3_sec = getMechanicalDesign().getValveSizingMethod()
         .calculateFlowRateFromValveOpening(adjustKv(Kv, percentValveOpening), inStream, outStream);
 
-    return flow_m3_sec * inStream.getFluid().getDensity("kg/m3")
-        / inStream.getFluid().getMolarMass("kg/mol");
+    return flow_m3_sec * inStream.getFluid().getDensity("kg/m3") / inStream.getFluid().getMolarMass("kg/mol");
   }
 
   /**
@@ -218,8 +327,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * @return the calculated outlet pressure
    */
   public double calculateOutletPressure(double KvAdjusted) {
-    return getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedKv(KvAdjusted,
-        inStream) / 1.0e5;
+    return getMechanicalDesign().getValveSizingMethod().findOutletPressureForFixedKv(KvAdjusted, inStream) / 1.0e5;
   }
 
   /**
@@ -230,8 +338,9 @@ public class ThrottlingValve extends TwoPortEquipment
    * @return Adjusted flow coefficient (Kv)
    */
   private double adjustKv(double Kv, double percentValveOpening) {
-    return getMechanicalDesign().getValveCharacterizationMethod().getActualKv(Kv,
+    double characterizedKv = getMechanicalDesign().getValveCharacterizationMethod().getActualKv(Kv,
         percentValveOpening);
+    return characterizedKv * (1.0 - foulingFraction);
   }
 
   /** {@inheritDoc} */
@@ -250,7 +359,7 @@ public class ThrottlingValve extends TwoPortEquipment
       return;
     }
 
-    thermoSystem.initProperties();
+    thermoSystem.init(2);
 
     if (thermoSystem.hasPhaseType(PhaseType.GAS) && thermoSystem.getVolumeFraction(0) > 0.5) {
       setGasValve(true);
@@ -259,10 +368,11 @@ public class ThrottlingValve extends TwoPortEquipment
     }
 
     if (!valveKvSet) {
+      thermoSystem.initPhysicalProperties("density");
       calcKv();
       valveKvSet = true;
     }
-    inStream.getThermoSystem().initProperties();
+    // inStream.getThermoSystem().initProperties();
     double enthalpy = thermoSystem.getEnthalpy();
 
     double outPres = getOutletStream().getThermoSystem().getPressure();
@@ -286,8 +396,7 @@ public class ThrottlingValve extends TwoPortEquipment
       setOutletPressure(outPres);
     }
     if (deltaPressure != 0) {
-      thermoSystem.setPressure(thermoSystem.getPressure(pressureUnit) - deltaPressure,
-          pressureUnit);
+      thermoSystem.setPressure(thermoSystem.getPressure(pressureUnit) - deltaPressure, pressureUnit);
       setOutletPressure(thermoSystem.getPressure());
     }
 
@@ -309,11 +418,53 @@ public class ThrottlingValve extends TwoPortEquipment
       thermoSystem.setPressure(outPres, pressureUnit);
       thermoOps.TPflash();
     } else {
-      thermoOps.PHflash(enthalpy, 0);
+      runPHflashWithNaNRetry(thermoOps, enthalpy);
     }
     outStream.setThermoSystem(thermoSystem);
 
-    setCalculationIdentifier(id);
+    finishRun(id);
+  }
+
+  /**
+   * Run an isenthalpic (PH) flash and recover gracefully when the default first-order solver raises an IsNaN-derived
+   * RuntimeException. The default {@code PHflash} (type 0) damped Newton iteration on 1/T is fragile for low-flow,
+   * single-phase gas at high reduced pressure: an intermediate temperature can drive the cubic EOS into a region with
+   * no positive compressibility-factor root, producing {@code PhasePrEos:molarVolumeAnalytical} NaN. The second-order
+   * solver (type 1, {@code SysNewtonRhapsonPHflash}) re-initialises from a fresh TP flash and converges robustly on the
+   * same well-posed problem, so it is used as the primary recovery. A multi-phase-check-disabled retry is kept as a
+   * final fallback.
+   *
+   * @param thermoOps thermodynamic operations bound to the valve thermo system
+   * @param enthalpy target total enthalpy in J
+   */
+  private void runPHflashWithNaNRetry(ThermodynamicOperations thermoOps, double enthalpy) {
+    double preFlashTemperature = thermoSystem.getTemperature();
+    try {
+      thermoOps.PHflash(enthalpy, 0);
+    } catch (RuntimeException ex) {
+      Throwable cause = ex.getCause();
+      boolean isNaN = (ex.getMessage() != null && ex.getMessage().contains("NaN"))
+          || (cause != null && cause.getMessage() != null && cause.getMessage().contains("NaN"));
+      if (!isNaN) {
+        throw ex;
+      }
+      logger.debug("PHflash (type 0) produced NaN; retrying with second-order solver (type 1)");
+      try {
+        thermoSystem.setTemperature(preFlashTemperature);
+        thermoOps.PHflash(enthalpy, 1);
+      } catch (RuntimeException ex2) {
+        logger.debug("Second-order PHflash also failed; retrying with multi-phase check disabled");
+        boolean savedMpc = thermoSystem.doMultiPhaseCheck();
+        thermoSystem.setMultiPhaseCheck(false);
+        try {
+          thermoSystem.setTemperature(preFlashTemperature);
+          thermoSystem.init(0);
+          thermoOps.PHflash(enthalpy, 1);
+        } finally {
+          thermoSystem.setMultiPhaseCheck(savedMpc);
+        }
+      }
+    }
   }
 
   /** {@inheritDoc} */
@@ -388,7 +539,7 @@ public class ThrottlingValve extends TwoPortEquipment
     if (isIsoThermal()) {
       thermoOps.TPflash();
     } else {
-      thermoOps.PHflash(enthalpy, 0);
+      runPHflashWithNaNRetry(thermoOps, enthalpy);
     }
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     outStream.setThermoSystem(thermoSystem);
@@ -416,7 +567,7 @@ public class ThrottlingValve extends TwoPortEquipment
     } catch (Exception ex) {
       logger.error(ex.getMessage());
     }
-    setCalculationIdentifier(id);
+    finishRun(id);
   }
 
   private static final double minimumMolarFlow = 1e-12;
@@ -426,7 +577,6 @@ public class ThrottlingValve extends TwoPortEquipment
       if (flow > minimumMolarFlow) {
         return flow;
       }
-      return 0.0;
     }
     return 0.0;
   }
@@ -457,13 +607,11 @@ public class ThrottlingValve extends TwoPortEquipment
 
     thermoSystem.setPressure(targetPressure, pressureUnit);
     outStream.setThermoSystem(thermoSystem);
-    setCalculationIdentifier(id);
+    finishRun(id);
   }
 
   /**
-   * <p>
    * runController.
-   * </p>
    *
    * @param dt a double
    * @param id Calculation identifier
@@ -476,8 +624,7 @@ public class ThrottlingValve extends TwoPortEquipment
     }
     controllerRequest = clampValveOpening(controllerRequest);
     setTargetPercentValveOpening(controllerRequest);
-    percentValveOpening =
-        clampValveOpening(applyTravelDynamics(percentValveOpening, requestedValveOpening, dt));
+    percentValveOpening = clampValveOpening(applyTravelDynamics(percentValveOpening, requestedValveOpening, dt));
     setCalculationIdentifier(id);
   }
 
@@ -486,37 +633,76 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   private double applyTravelDynamics(double current, double target, double dt) {
+    // Step 1: Apply deadband — ignore small signal changes
+    double effectiveTarget = target;
+    if (valveDeadband > 0.0 && Math.abs(target - current) < valveDeadband) {
+      effectiveTarget = current;
+    }
+
+    // Step 2: Apply stiction — valve sticks until force exceeds stiction band
+    if (valveStiction > 0.0) {
+      if (Double.isNaN(stuckPosition)) {
+        stuckPosition = current;
+        isStuck = true;
+      }
+      if (isStuck) {
+        if (Math.abs(effectiveTarget - stuckPosition) >= valveStiction) {
+          isStuck = false;
+          // Valve breaks free — jump to target
+        } else {
+          effectiveTarget = stuckPosition;
+        }
+      } else {
+        // Valve is moving — check if it should re-stick
+        if (Math.abs(effectiveTarget - current) < valveStiction * 0.1) {
+          isStuck = true;
+          stuckPosition = current;
+          effectiveTarget = current;
+        }
+      }
+    }
+
+    // Step 3: Apply hysteresis — offset position based on direction
+    if (valveHysteresis > 0.0 && Math.abs(effectiveTarget - current) > 1e-12) {
+      int direction = effectiveTarget > current ? 1 : -1;
+      if (direction != lastMoveDirection && lastMoveDirection != 0) {
+        // Direction reversal — apply half hysteresis band as offset
+        effectiveTarget = effectiveTarget - direction * valveHysteresis / 2.0;
+      }
+      lastMoveDirection = direction;
+    }
+
+    // Step 4: Apply rate limiting / lag as before
     if (travelModel == null || travelModel == ValveTravelModel.NONE) {
-      return target;
+      return effectiveTarget;
     }
 
     double effectiveDt = Math.max(0.0, dt);
     switch (travelModel) {
-      case LINEAR_RATE_LIMIT:
-        double delta = target - current;
-        if (Math.abs(delta) < 1e-12 || effectiveDt <= 0.0) {
-          return target;
-        }
-        double travelTime =
-            delta >= 0.0 ? getEffectiveOpeningTravelTime() : getEffectiveClosingTravelTime();
-        if (travelTime <= 0.0) {
-          return target;
-        }
-        double maxRate = 100.0 / travelTime;
-        double maxChange = maxRate * effectiveDt;
-        if (Math.abs(delta) <= maxChange) {
-          return target;
-        }
-        return current + Math.copySign(maxChange, delta);
-      case FIRST_ORDER_LAG:
-        double tau = valveTimeConstantSec > 0.0 ? valveTimeConstantSec : valveTravelTimeSec;
-        if (tau <= 0.0 || effectiveDt <= 0.0) {
-          return target;
-        }
-        double alpha = 1.0 - Math.exp(-effectiveDt / tau);
-        return current + alpha * (target - current);
-      default:
-        return target;
+    case LINEAR_RATE_LIMIT:
+      double delta = effectiveTarget - current;
+      if (Math.abs(delta) < 1e-12 || effectiveDt <= 0.0) {
+        return effectiveTarget;
+      }
+      double travelTime = delta >= 0.0 ? getEffectiveOpeningTravelTime() : getEffectiveClosingTravelTime();
+      if (travelTime <= 0.0) {
+        return effectiveTarget;
+      }
+      double maxRate = 100.0 / travelTime;
+      double maxChange = maxRate * effectiveDt;
+      if (Math.abs(delta) <= maxChange) {
+        return effectiveTarget;
+      }
+      return current + Math.copySign(maxChange, delta);
+    case FIRST_ORDER_LAG:
+      double tau = valveTimeConstantSec > 0.0 ? valveTimeConstantSec : valveTravelTimeSec;
+      if (tau <= 0.0 || effectiveDt <= 0.0) {
+        return effectiveTarget;
+      }
+      double alpha = 1.0 - Math.exp(-effectiveDt / tau);
+      return current + alpha * (effectiveTarget - current);
+    default:
+      return effectiveTarget;
     }
   }
 
@@ -535,9 +721,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * setMinimumValveOpening.
-   * </p>
    *
    * @param minopen a double
    */
@@ -565,6 +749,62 @@ public class ThrottlingValve extends TwoPortEquipment
    */
   public double getMaximumValveOpening() {
     return maxValveOpening;
+  }
+
+  /**
+   * Sets the valve deadband in percent. Signal changes smaller than this are ignored.
+   *
+   * @param deadband deadband in percent (0 to 100)
+   */
+  public void setValveDeadband(double deadband) {
+    this.valveDeadband = Math.max(0.0, deadband);
+  }
+
+  /**
+   * Gets the valve deadband in percent.
+   *
+   * @return deadband in percent
+   */
+  public double getValveDeadband() {
+    return valveDeadband;
+  }
+
+  /**
+   * Sets the valve stiction band in percent. The valve sticks until the requested change exceeds this threshold, then
+   * jumps to the target position.
+   *
+   * @param stiction stiction band in percent (0 to 100)
+   */
+  public void setValveStiction(double stiction) {
+    this.valveStiction = Math.max(0.0, stiction);
+  }
+
+  /**
+   * Gets the valve stiction band in percent.
+   *
+   * @return stiction band in percent
+   */
+  public double getValveStiction() {
+    return valveStiction;
+  }
+
+  /**
+   * Sets the valve hysteresis band in percent. This models the positional offset between increasing and decreasing
+   * signal directions.
+   *
+   * @param hysteresis hysteresis band in percent (0 to 100)
+   */
+  public void setValveHysteresis(double hysteresis) {
+    this.valveHysteresis = Math.max(0.0, hysteresis);
+  }
+
+  /**
+   * Gets the valve hysteresis band in percent.
+   *
+   * @return hysteresis band in percent
+   */
+  public double getValveHysteresis() {
+    return valveHysteresis;
   }
 
   /**
@@ -622,6 +862,50 @@ public class ThrottlingValve extends TwoPortEquipment
       this.Kv = cv;
     }
     valveKvSet = true;
+  }
+
+  /**
+   * Returns the fouling fraction representing loss of effective flow coefficient from scale/solids deposition.
+   *
+   * @return fouling fraction in the range [0, 1); 0.0 means a clean valve
+   */
+  public double getFoulingFraction() {
+    return foulingFraction;
+  }
+
+  /**
+   * Sets the fouling fraction representing the loss of effective flow coefficient caused by scale/solids deposition on
+   * the valve trim. The effective flow coefficient used in all flow and pressure calculations becomes
+   * {@code Kv * (1 - foulingFraction)}.
+   *
+   * @param foulingFraction fouling fraction in the range [0, 1); values are clamped to this range
+   */
+  public void setFoulingFraction(double foulingFraction) {
+    if (foulingFraction < 0.0) {
+      this.foulingFraction = 0.0;
+    } else if (foulingFraction >= 1.0) {
+      this.foulingFraction = 0.999999;
+    } else {
+      this.foulingFraction = foulingFraction;
+    }
+  }
+
+  /**
+   * Returns the effective (fouled) flow coefficient in SI units, i.e. {@code Kv * (1 - foulingFraction)}.
+   *
+   * @return effective flow coefficient Kv (SI)
+   */
+  public double getEffectiveKv() {
+    return Kv * (1.0 - foulingFraction);
+  }
+
+  /**
+   * Returns the effective (fouled) flow coefficient in US units, i.e. {@code Cv * (1 - foulingFraction)}.
+   *
+   * @return effective flow coefficient Cv (US)
+   */
+  public double getEffectiveCv() {
+    return getCv("US") * (1.0 - foulingFraction);
   }
 
   /** {@inheritDoc} */
@@ -703,6 +987,22 @@ public class ThrottlingValve extends TwoPortEquipment
 
   /** {@inheritDoc} */
   @Override
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit, String pressureUnit,
+      String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    state.put("percent_opening", ProcessEquipmentInterface.createStateEntry(percentValveOpening, "%"));
+    StreamInterface out = getOutletStream();
+    if (out != null) {
+      state.put("temperature",
+          ProcessEquipmentInterface.createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
+      state.put("pressure", ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
+      state.put("flow", ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
+    }
+    return state;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setPercentValveOpening(double percentValveOpening) {
     double clamped = clampValveOpening(percentValveOpening);
     this.percentValveOpening = clamped;
@@ -722,9 +1022,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * isValveKvSet.
-   * </p>
    *
    * @return a boolean
    */
@@ -733,9 +1031,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>valveKvSet</code>.
-   * </p>
    *
    * @param valveKvSet a boolean
    */
@@ -760,8 +1056,7 @@ public class ThrottlingValve extends TwoPortEquipment
   public double getEntropyProduction(String unit) {
     outStream.getThermoSystem().init(3);
     inStream.getThermoSystem().init(3);
-    return outStream.getThermoSystem().getEntropy(unit)
-        - inStream.getThermoSystem().getEntropy(unit);
+    return outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
   }
 
   /** {@inheritDoc} */
@@ -774,9 +1069,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * isAcceptNegativeDP.
-   * </p>
    *
    * @return a boolean
    */
@@ -785,9 +1078,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>acceptNegativeDP</code>.
-   * </p>
    *
    * @param acceptNegativeDP a boolean
    */
@@ -808,9 +1099,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * setIsCalcOutPressure.
-   * </p>
    *
    * @param isSetPres a boolean
    */
@@ -821,8 +1110,7 @@ public class ThrottlingValve extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new ValveResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(new ValveResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -837,9 +1125,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * isGasValve.
-   * </p>
    *
    * @return a boolean
    */
@@ -848,9 +1134,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>gasValve</code>.
-   * </p>
    *
    * @param gasValve a boolean
    */
@@ -859,9 +1143,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * getFp.
-   * </p>
    *
    * @return a double
    */
@@ -870,9 +1152,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * setFp.
-   * </p>
    *
    * @param fp a double
    */
@@ -881,9 +1161,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>deltaPressure</code>.
-   * </p>
    *
    * @return a double
    */
@@ -892,9 +1170,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>deltaPressure</code>.
-   * </p>
    *
    * @param deltaPressure a double
    * @param unit a {@link java.lang.String} object
@@ -905,9 +1181,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * isAllowChoked.
-   * </p>
    *
    * @return a boolean
    */
@@ -916,9 +1190,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>allowChoked</code>.
-   * </p>
    *
    * @param allowChoked a boolean
    */
@@ -927,9 +1199,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * isAllowLaminar.
-   * </p>
    *
    * @return a boolean
    */
@@ -938,9 +1208,7 @@ public class ThrottlingValve extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>allowLaminar</code>.
-   * </p>
    *
    * @param allowLaminar a boolean
    */
@@ -956,9 +1224,9 @@ public class ThrottlingValve extends TwoPortEquipment
    * Calculate Acoustic-Induced Vibration (AIV) power level.
    *
    * <p>
-   * AIV is most significant at control valves where high pressure drops occur. The acoustic power
-   * generated is a function of mass flow rate, pressure drop, and temperature. This method
-   * implements the Energy Institute Guidelines formula for AIV screening.
+   * AIV is most significant at control valves where high pressure drops occur. The acoustic power generated is a
+   * function of mass flow rate, pressure drop, and temperature. This method implements the Energy Institute Guidelines
+   * formula for AIV screening.
    * </p>
    *
    * <p>
@@ -996,8 +1264,7 @@ public class ThrottlingValve extends TwoPortEquipment
 
     // Energy Institute formula for acoustic power level
     // W_acoustic = 3.2e-9 * mdot * P1 * (dP/P1)^3.6 * (T/273.15)^0.8
-    double acousticPowerWatts =
-        3.2e-9 * mdot * p1 * Math.pow(pressureRatio, 3.6) * Math.pow(tempK / 273.15, 0.8);
+    double acousticPowerWatts = 3.2e-9 * mdot * p1 * Math.pow(pressureRatio, 3.6) * Math.pow(tempK / 273.15, 0.8);
 
     return acousticPowerWatts / 1000.0; // Return in kW
   }
@@ -1019,8 +1286,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * @param downstreamThickness downstream pipe wall thickness in meters
    * @return AIV likelihood of failure (0.0-1.0)
    */
-  public double calculateAIVLikelihoodOfFailure(double downstreamDiameter,
-      double downstreamThickness) {
+  public double calculateAIVLikelihoodOfFailure(double downstreamDiameter, double downstreamThickness) {
     double acousticPowerKW = calculateAIV();
 
     double externalDiameter = downstreamDiameter + 2 * downstreamThickness;
@@ -1064,48 +1330,43 @@ public class ThrottlingValve extends TwoPortEquipment
   // ============================================================================
 
   /** Storage for capacity constraints. */
-  private final java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> capacityConstraints =
-      new java.util.LinkedHashMap<>();
+  private final java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> capacityConstraints = new java.util.LinkedHashMap<>();
 
   /**
    * Initializes default capacity constraints for the valve.
    *
    * <p>
-   * NOTE: All constraints are disabled by default for backwards compatibility. Enable specific
-   * constraints when valve capacity analysis is needed (e.g., when Cv has been sized).
+   * NOTE: All constraints are disabled by default for backwards compatibility. Enable specific constraints when valve
+   * capacity analysis is needed (e.g., when Cv has been sized).
    * </p>
    */
   protected void initializeCapacityConstraints() {
     // Cv utilization constraint (HARD limit) - disabled by default
-    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("cvUtilization",
-        "", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
-            .setDesignValue(getMechanicalDesign().maxDesignCv).setWarningThreshold(0.9)
-            .setDescription("Cv utilization vs design maximum").setValueSupplier(() -> getCv())
-            .setEnabled(false));
+    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("cvUtilization", "",
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
+        .setDesignValue(getMechanicalDesign().maxDesignCv).setWarningThreshold(0.9)
+        .setDescription("Cv utilization vs design maximum").setValueSupplier(() -> getCv()).setEnabled(false));
 
     // Volume flow constraint (DESIGN limit) - disabled by default
-    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow",
-        "m3/hr", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
-            .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
-            .setDescription("Volume flow vs design maximum")
-            .setValueSupplier(
-                () -> getOutStream() != null ? getOutStream().getFlowRate("m3/hr") : 0.0)
-            .setEnabled(false));
+    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("volumeFlow", "m3/hr",
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
+        .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
+        .setDescription("Volume flow vs design maximum")
+        .setValueSupplier(() -> getOutStream() != null ? getOutStream().getFlowRate("m3/hr") : 0.0).setEnabled(false));
 
     // Valve opening constraint (SOFT limit) - disabled by default
-    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("valveOpening",
-        "%", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxValveOpening).setWarningThreshold(0.9)
-            .setDescription("Valve opening percentage").setValueSupplier(() -> percentValveOpening)
-            .setEnabled(false));
+    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("valveOpening", "%",
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxValveOpening)
+        .setWarningThreshold(0.9).setDescription("Valve opening percentage").setValueSupplier(() -> percentValveOpening)
+        .setEnabled(false));
 
     // AIV (Acoustic-Induced Vibration) constraint - critical for control valves -
     // disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("AIV", "kW",
-        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxDesignAIV).setMaxValue(50.0).setWarningThreshold(0.4)
-            .setDescription("AIV acoustic power (<1kW=low, 1-10kW=medium, >25kW=very high risk)")
-            .setValueSupplier(() -> calculateAIV()).setEnabled(false));
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxDesignAIV)
+        .setMaxValue(50.0).setWarningThreshold(0.4)
+        .setDescription("AIV acoustic power (<1kW=low, 1-10kW=medium, >25kW=very high risk)")
+        .setValueSupplier(() -> calculateAIV()).setEnabled(false));
   }
 
   /** {@inheritDoc} */
@@ -1122,8 +1383,7 @@ public class ThrottlingValve extends TwoPortEquipment
   public neqsim.process.equipment.capacity.CapacityConstraint getBottleneckConstraint() {
     neqsim.process.equipment.capacity.CapacityConstraint bottleneck = null;
     double maxUtil = 0.0;
-    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
         continue;
       }
@@ -1139,8 +1399,7 @@ public class ThrottlingValve extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public boolean isCapacityExceeded() {
-    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
         continue;
       }
@@ -1154,8 +1413,7 @@ public class ThrottlingValve extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public boolean isHardLimitExceeded() {
-    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
         continue;
       }
@@ -1170,8 +1428,7 @@ public class ThrottlingValve extends TwoPortEquipment
   @Override
   public double getMaxUtilization() {
     double maxUtil = 0.0;
-    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
         continue;
       }
@@ -1185,8 +1442,7 @@ public class ThrottlingValve extends TwoPortEquipment
 
   /** {@inheritDoc} */
   @Override
-  public void addCapacityConstraint(
-      neqsim.process.equipment.capacity.CapacityConstraint constraint) {
+  public void addCapacityConstraint(neqsim.process.equipment.capacity.CapacityConstraint constraint) {
     if (constraint != null) {
       capacityConstraints.put(constraint.getName(), constraint);
     }
@@ -1220,9 +1476,8 @@ public class ThrottlingValve extends TwoPortEquipment
    * Auto-sizes the valve based on current flow conditions.
    *
    * <p>
-   * This method calculates the required Cv value so that the valve operates at approximately 50%
-   * opening at the current flow rate. This provides good control range - the valve can open further
-   * for higher flows or close for lower flows.
+   * This method calculates the required Cv value so that the valve operates at approximately 50% opening at the current
+   * flow rate. This provides good control range - the valve can open further for higher flows or close for lower flows.
    * </p>
    *
    * <p>
@@ -1232,8 +1487,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * <li>At normal flow, valve should be at ~50% opening (design point)</li>
    * <li>Maximum Cv (100% opening) = Cv needed at 50% opening * 2 (approximately)</li>
    * <li>This gives control range from ~25% to 100% opening for typical flow variations</li>
-   * <li>For zero flow valves (bypass, emergency), uses minimum default Cv or estimates from
-   * connected equipment</li>
+   * <li>For zero flow valves (bypass, emergency), uses minimum default Cv or estimates from connected equipment</li>
    * </ul>
    *
    * @param safetyFactor safety factor to apply (e.g., 1.2 for 20% margin)
@@ -1288,13 +1542,12 @@ public class ThrottlingValve extends TwoPortEquipment
       // Apply safety factor
       designCv = designCv * safetyFactor;
 
-      logger.info("Valve {} auto-sized: flow={} kg/hr, Cv@100%={}, designOpening={}%, designCv={}",
-          getName(), flowRate, calculatedCv, designOpeningPercent, designCv);
+      logger.info("Valve {} auto-sized: flow={} kg/hr, Cv@100%={}, designOpening={}%, designCv={}", getName(), flowRate,
+          calculatedCv, designOpeningPercent, designCv);
     } else {
       // Zero flow valve - estimate based on connected equipment or use default
       designCv = estimateCvForZeroFlowValve(safetyFactor);
-      logger.info("Valve {} auto-sized for zero flow: using default/estimated Cv={}", getName(),
-          designCv);
+      logger.info("Valve {} auto-sized for zero flow: using default/estimated Cv={}", getName(), designCv);
     }
 
     // Ensure minimum Cv
@@ -1330,8 +1583,7 @@ public class ThrottlingValve extends TwoPortEquipment
    * Estimates Cv from flow rate using simplified correlation.
    *
    * <p>
-   * This is a rough estimate when the standard calculation fails. Uses typical valve sizing rules
-   * of thumb.
+   * This is a rough estimate when the standard calculation fails. Uses typical valve sizing rules of thumb.
    * </p>
    *
    * @param flowRateKghr mass flow rate in kg/hr
@@ -1357,8 +1609,8 @@ public class ThrottlingValve extends TwoPortEquipment
    * Estimates Cv for a valve with zero or negligible flow.
    *
    * <p>
-   * For valves like bypass valves, emergency relief valves, or startup valves that normally have no
-   * flow, this method estimates an appropriate Cv based on:
+   * For valves like bypass valves, emergency relief valves, or startup valves that normally have no flow, this method
+   * estimates an appropriate Cv based on:
    * </p>
    * <ul>
    * <li>Connected stream design conditions (if available)</li>
@@ -1446,26 +1698,21 @@ public class ThrottlingValve extends TwoPortEquipment
       report.append(String.format("  Inlet Pressure: %.2f bara\n", getInletPressure()));
       report.append(String.format("  Outlet Pressure: %.2f bara\n", getOutletPressure()));
       report.append(String.format("  Pressure Drop: %.2f bar\n", getInletPressure() - pressure));
-      report.append(
-          String.format("  Flow Rate: %.2f kg/hr\n", getInletStream().getFlowRate("kg/hr")));
+      report.append(String.format("  Flow Rate: %.2f kg/hr\n", getInletStream().getFlowRate("kg/hr")));
       report.append(String.format("  Valve Opening: %.1f%%\n", percentValveOpening));
     }
 
     // Valve sizing results
     report.append("\nSizing Results:\n");
     report.append(String.format("  Cv (max): %.2f\n", getMechanicalDesign().getValveCvMax()));
-    report.append(
-        String.format("  Nominal Size: %.0f inch\n", getMechanicalDesign().getNominalSizeInches()));
-    report
-        .append(String.format("  ANSI Class: %d\n", getMechanicalDesign().getAnsiPressureClass()));
-    report
-        .append(String.format("  Face-to-Face: %.1f mm\n", getMechanicalDesign().getFaceToFace()));
+    report.append(String.format("  Nominal Size: %.0f inch\n", getMechanicalDesign().getNominalSizeInches()));
+    report.append(String.format("  ANSI Class: %d\n", getMechanicalDesign().getAnsiPressureClass()));
+    report.append(String.format("  Face-to-Face: %.1f mm\n", getMechanicalDesign().getFaceToFace()));
 
     // Weight
     report.append("\nWeight Estimate:\n");
     report.append(String.format("  Body Weight: %.1f kg\n", getMechanicalDesign().getBodyWeight()));
-    report.append(
-        String.format("  Actuator Weight: %.1f kg\n", getMechanicalDesign().getActuatorWeight()));
+    report.append(String.format("  Actuator Weight: %.1f kg\n", getMechanicalDesign().getActuatorWeight()));
 
     return report.toString();
   }

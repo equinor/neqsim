@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,6 +30,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  */
 public class ProductionImpactAnalyzerTest {
+  private static final Logger logger = LogManager.getLogger(ProductionImpactAnalyzerTest.class);
 
   private ProcessSystem process;
   private Stream feed;
@@ -107,7 +110,7 @@ public class ProductionImpactAnalyzerTest {
     // With compressor failed, production should be significantly reduced
     assertTrue(result.getBaselineProductionRate() > 0, "Baseline should have production");
 
-    System.out.println(result);
+    logger.info(result);
   }
 
   @Test
@@ -125,11 +128,10 @@ public class ProductionImpactAnalyzerTest {
     assertEquals(0.0, result.getFullShutdownProduction(), 0.001);
 
     // Degraded operation should produce more than shutdown
-    assertTrue(result.getLossVsFullShutdown() >= 0,
-        "Degraded operation should produce >= shutdown");
+    assertTrue(result.getLossVsFullShutdown() >= 0, "Degraded operation should produce >= shutdown");
 
-    System.out.println("=== Compare to Plant Stop ===");
-    System.out.println(result);
+    logger.info("=== Compare to Plant Stop ===");
+    logger.info(result);
   }
 
   @Test
@@ -162,9 +164,8 @@ public class ProductionImpactAnalyzerTest {
   @DisplayName("Equipment failure mode builder")
   void testEquipmentFailureModeBuilder() {
     EquipmentFailureMode customMode = EquipmentFailureMode.builder().name("Partial Failure")
-        .description("Bearing damage causing reduced speed")
-        .type(EquipmentFailureMode.FailureType.PARTIAL_FAILURE).capacityFactor(0.7)
-        .efficiencyFactor(0.85).mttr(48.0).failureFrequency(0.5).requiresImmediateAction(false)
+        .description("Bearing damage causing reduced speed").type(EquipmentFailureMode.FailureType.PARTIAL_FAILURE)
+        .capacityFactor(0.7).efficiencyFactor(0.85).mttr(48.0).failureFrequency(0.5).requiresImmediateAction(false)
         .build();
 
     assertEquals("Partial Failure", customMode.getName());
@@ -214,10 +215,10 @@ public class ProductionImpactAnalyzerTest {
     assertNotNull(ranking);
     assertFalse(ranking.isEmpty());
 
-    System.out.println("=== Equipment Criticality Ranking ===");
+    logger.info("=== Equipment Criticality Ranking ===");
     for (int i = 0; i < ranking.size(); i++) {
       ProductionImpactResult result = ranking.get(i);
-      System.out.printf("%d. %s: %.1f%% loss%n", i + 1, result.getEquipmentName(),
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%d. %s: %.1f%% loss%n", i + 1, result.getEquipmentName(),
           result.getPercentLoss());
     }
 
@@ -230,8 +231,7 @@ public class ProductionImpactAnalyzerTest {
   @Test
   @DisplayName("Production impact result calculations")
   void testProductionImpactResultCalculations() {
-    ProductionImpactResult result =
-        new ProductionImpactResult("Test Equipment", EquipmentFailureMode.trip("test"));
+    ProductionImpactResult result = new ProductionImpactResult("Test Equipment", EquipmentFailureMode.trip("test"));
 
     result.setBaselineProductionRate(10000.0);
     result.setProductionWithFailure(7000.0);
@@ -256,8 +256,7 @@ public class ProductionImpactAnalyzerTest {
   @Test
   @DisplayName("Production impact result to JSON")
   void testProductionImpactResultToJson() {
-    ProductionImpactResult result =
-        new ProductionImpactResult("Compressor 1", EquipmentFailureMode.trip("Compressor"));
+    ProductionImpactResult result = new ProductionImpactResult("Compressor 1", EquipmentFailureMode.trip("Compressor"));
 
     result.setBaselineProductionRate(50000.0);
     result.setProductionWithFailure(30000.0);
@@ -272,8 +271,8 @@ public class ProductionImpactAnalyzerTest {
     assertTrue(json.contains("percentLoss"));
     assertTrue(json.contains("recommendedAction"));
 
-    System.out.println("=== JSON Output ===");
-    System.out.println(json);
+    logger.info("=== JSON Output ===");
+    logger.info(json);
   }
 
   @Test
@@ -293,8 +292,8 @@ public class ProductionImpactAnalyzerTest {
     assertTrue(result.getEquipmentName().contains("Stage 1 Compressor"));
     assertTrue(result.getEquipmentName().contains("Intercooler"));
 
-    System.out.println("=== Multiple Failures ===");
-    System.out.println(result);
+    logger.info("=== Multiple Failures ===");
+    logger.info(result);
   }
 
   @Test
@@ -312,9 +311,9 @@ public class ProductionImpactAnalyzerTest {
     // Check that optimized setpoints were calculated
     assertNotNull(result.getOptimizedSetpoints());
 
-    System.out.println("=== Optimized Setpoints ===");
+    logger.info("=== Optimized Setpoints ===");
     for (java.util.Map.Entry<String, Double> entry : result.getOptimizedSetpoints().entrySet()) {
-      System.out.printf("  %s: %.2f%n", entry.getKey(), entry.getValue());
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  %s: %.2f%n", entry.getKey(), entry.getValue());
     }
   }
 }

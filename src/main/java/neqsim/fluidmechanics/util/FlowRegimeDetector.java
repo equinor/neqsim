@@ -3,16 +3,13 @@ package neqsim.fluidmechanics.util;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * FlowRegimeDetector class.
- * </p>
- * 
+ *
  * <p>
- * Determines the two-phase flow regime in horizontal and inclined pipes based on fluid properties
- * and flow conditions. Implements flow pattern maps based on Taitel-Dukler (1976) theory and
- * extensions by Barnea et al.
+ * Determines the two-phase flow regime in horizontal and inclined pipes based on fluid properties and flow conditions.
+ * Implements flow pattern maps based on Taitel-Dukler (1976) theory and extensions by Barnea et al.
  * </p>
- * 
+ *
  * <p>
  * Supported flow regimes:
  * <ul>
@@ -68,12 +65,11 @@ public class FlowRegimeDetector {
   /**
    * Private constructor to prevent instantiation.
    */
-  private FlowRegimeDetector() {}
+  private FlowRegimeDetector() {
+  }
 
   /**
-   * <p>
    * Detects the flow regime for horizontal two-phase flow using Taitel-Dukler criteria.
-   * </p>
    *
    * @param system the thermodynamic system with gas (phase 0) and liquid (phase 1)
    * @param gasVelocity superficial gas velocity in m/s
@@ -82,8 +78,8 @@ public class FlowRegimeDetector {
    * @param inclination pipe inclination from horizontal in degrees (positive = uphill)
    * @return the detected flow regime
    */
-  public static FlowRegime detectFlowRegime(SystemInterface system, double gasVelocity,
-      double liquidVelocity, double pipeDiameter, double inclination) {
+  public static FlowRegime detectFlowRegime(SystemInterface system, double gasVelocity, double liquidVelocity,
+      double pipeDiameter, double inclination) {
     // Get fluid properties
     double rhoG = system.getPhase(0).getDensity("kg/m3");
     double rhoL = system.getPhase(1).getDensity("kg/m3");
@@ -96,14 +92,11 @@ public class FlowRegimeDetector {
       sigma = 0.02; // Default value for hydrocarbon-gas interface
     }
 
-    return detectFlowRegime(gasVelocity, liquidVelocity, pipeDiameter, inclination, rhoG, rhoL, muG,
-        muL, sigma);
+    return detectFlowRegime(gasVelocity, liquidVelocity, pipeDiameter, inclination, rhoG, rhoL, muG, muL, sigma);
   }
 
   /**
-   * <p>
    * Detects the flow regime for horizontal two-phase flow using Taitel-Dukler criteria.
-   * </p>
    *
    * @param gasVelocity superficial gas velocity in m/s
    * @param liquidVelocity superficial liquid velocity in m/s
@@ -116,9 +109,8 @@ public class FlowRegimeDetector {
    * @param surfaceTension surface tension in N/m
    * @return the detected flow regime
    */
-  public static FlowRegime detectFlowRegime(double gasVelocity, double liquidVelocity,
-      double pipeDiameter, double inclination, double rhoG, double rhoL, double muG, double muL,
-      double surfaceTension) {
+  public static FlowRegime detectFlowRegime(double gasVelocity, double liquidVelocity, double pipeDiameter,
+      double inclination, double rhoG, double rhoL, double muG, double muL, double surfaceTension) {
     // Calculate dimensionless parameters
 
     // Mixture velocity
@@ -136,12 +128,10 @@ public class FlowRegimeDetector {
     double weG = rhoG * gasVelocity * gasVelocity * pipeDiameter / surfaceTension;
 
     // Lockhart-Martinelli parameter
-    double x = calculateLockhartMartinelli(gasVelocity, liquidVelocity, pipeDiameter, rhoG, rhoL,
-        muG, muL);
+    double x = calculateLockhartMartinelli(gasVelocity, liquidVelocity, pipeDiameter, rhoG, rhoL, muG, muL);
 
     // Kutateladze number for gas
-    double kuG =
-        gasVelocity * Math.sqrt(rhoG) / Math.pow(GRAVITY * surfaceTension * (rhoL - rhoG), 0.25);
+    double kuG = gasVelocity * Math.sqrt(rhoG) / Math.pow(GRAVITY * surfaceTension * (rhoL - rhoG), 0.25);
 
     // Inclination effects
     double inclinationRad = Math.toRadians(inclination);
@@ -216,8 +206,8 @@ public class FlowRegimeDetector {
    * @param muL liquid viscosity [Pa·s]
    * @return Lockhart-Martinelli parameter [-]
    */
-  private static double calculateLockhartMartinelli(double uSG, double uSL, double d, double rhoG,
-      double rhoL, double muG, double muL) {
+  private static double calculateLockhartMartinelli(double uSG, double uSL, double d, double rhoG, double rhoL,
+      double muG, double muL) {
     // Reynolds numbers
     double reG = rhoG * uSG * d / muG;
     double reL = rhoL * uSL * d / muL;
@@ -244,8 +234,7 @@ public class FlowRegimeDetector {
    * @param d pipe diameter [m]
    * @return true if dispersed bubble flow
    */
-  private static boolean isDispersedBubble(double frL, double frMix, double rhoL, double rhoG,
-      double sigma, double d) {
+  private static boolean isDispersedBubble(double frL, double frMix, double rhoL, double rhoG, double sigma, double d) {
     // Barnea (1987) criterion for bubble breakup
     double criticalVelocity = 4.0 * Math.pow(sigma * GRAVITY * (rhoL - rhoG) / (rhoL * rhoL), 0.25);
     return frL > 4.0 && frMix * Math.sqrt(GRAVITY * d) > criticalVelocity;
@@ -276,8 +265,8 @@ public class FlowRegimeDetector {
    * @param muL liquid viscosity [Pa·s]
    * @return true if stratified flow
    */
-  private static boolean isStratified(double frG, double x, double d, double rhoG, double rhoL,
-      double muG, double muL) {
+  private static boolean isStratified(double frG, double x, double d, double rhoG, double rhoL, double muG,
+      double muL) {
     // Simplified Taitel-Dukler criterion
     // Stratified when gas velocity too low to pick up liquid waves
     double densityRatio = rhoL / (rhoG + 1e-10);
@@ -304,9 +293,7 @@ public class FlowRegimeDetector {
   }
 
   /**
-   * <p>
    * Gets the flow node type name for the detected regime.
-   * </p>
    *
    * @param system the thermodynamic system
    * @param gasVelocity superficial gas velocity in m/s
@@ -315,10 +302,9 @@ public class FlowRegimeDetector {
    * @param inclination pipe inclination from horizontal in degrees
    * @return flow pattern name for use with setInitialFlowPattern()
    */
-  public static String detectFlowPatternName(SystemInterface system, double gasVelocity,
-      double liquidVelocity, double pipeDiameter, double inclination) {
-    FlowRegime regime =
-        detectFlowRegime(system, gasVelocity, liquidVelocity, pipeDiameter, inclination);
+  public static String detectFlowPatternName(SystemInterface system, double gasVelocity, double liquidVelocity,
+      double pipeDiameter, double inclination) {
+    FlowRegime regime = detectFlowRegime(system, gasVelocity, liquidVelocity, pipeDiameter, inclination);
     return regime.getNodeName();
   }
 }

@@ -19,9 +19,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * ChemicalReactionList class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -42,9 +40,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   private ComponentInterface[] refPotComponents;
 
   /**
-   * <p>
    * readReactions.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -86,9 +82,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
           r = Double.parseDouble(dataSet.getString("r"));
           actH = Double.parseDouble(dataSet.getString("ACTENERGY"));
 
-          try (
-              neqsim.util.database.NeqSimDataBase database2 =
-                  new neqsim.util.database.NeqSimDataBase();
+          try (neqsim.util.database.NeqSimDataBase database2 = new neqsim.util.database.NeqSimDataBase();
               java.sql.ResultSet dataSet2 = database2
                   .getResultSet("SELECT * FROM stoccoefdata where REACNAME='" + reacname + "'")) {
             dataSet2.next();
@@ -109,8 +103,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
             nameArray[i] = names.get(i);
           }
 
-          ChemicalReaction reaction =
-              new ChemicalReaction(reacname, nameArray, coefArray, K, r, actH, refT);
+          ChemicalReaction reaction = new ChemicalReaction(reacname, nameArray, coefArray, K, r, actH, refT);
           chemicalReactionList.add(reaction);
           // System.out.println("reaction added ok...");
         }
@@ -121,9 +114,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * getReaction.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.chemicalreactions.chemicalreaction.ChemicalReaction} object
@@ -133,9 +124,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * getReaction.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.chemicalreactions.chemicalreaction.ChemicalReaction} object
@@ -151,9 +140,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * removeJunkReactions.
-   * </p>
    *
    * @param names an array of {@link java.lang.String} objects
    */
@@ -169,9 +156,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * removeDependentReactions.
-   * </p>
    */
   public void removeDependentReactions() {
     if (chemicalReactionList.size() == 0) {
@@ -218,9 +203,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * checkReactions.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -232,17 +215,15 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * initMoleNumbers.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
    * @param Amatrix an array of type double
    * @param chemRefPot an array of type double
    */
-  public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components,
-      double[][] Amatrix, double[] chemRefPot) {
+  public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components, double[][] Amatrix,
+      double[] chemRefPot) {
     Iterator<ChemicalReaction> e = chemicalReactionList.iterator();
     while (e.hasNext()) {
       (e.next()).initMoleNumbers(phase, components, Amatrix, chemRefPot);
@@ -251,9 +232,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * getAllComponents.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -276,9 +255,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * createReactionMatrix.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
@@ -305,8 +282,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
           }
         }
         // Store -RT*ln(K) to match equilibrium relationship: Σ(ν_i * μ_i) = -RT*ln(K)
-        reacGMatrix[reactionNumber][components.length] =
-            -R * phase.getTemperature() * Math.log(reaction.getK(phase));
+        reacGMatrix[reactionNumber][components.length] = -R * phase.getTemperature() * Math.log(reaction.getK(phase));
         reactionNumber++;
       }
     } catch (Exception ex) {
@@ -321,9 +297,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * updateReferencePotentials.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
@@ -334,16 +308,14 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
     for (int i = 0; i < chemicalReactionList.size(); i++) {
       // Store -RT*ln(K) to match equilibrium relationship: Σ(ν_i * μ_i) = -RT*ln(K)
       // Must be consistent with createReactionMatrix()
-      reacGMatrix[i][components.length] =
-          -R * phase.getTemperature() * Math.log((chemicalReactionList.get(i)).getK(phase));
+      reacGMatrix[i][components.length] = -R * phase.getTemperature()
+          * Math.log((chemicalReactionList.get(i)).getK(phase));
     }
     return calcReferencePotentials();
   }
 
   /**
-   * <p>
    * getReactionGMatrix.
-   * </p>
    *
    * @return an array of type double
    */
@@ -352,9 +324,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * getReactionMatrix.
-   * </p>
    *
    * @return an array of type double
    */
@@ -363,20 +333,17 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * calcReferencePotentials.
+   *
+   * <p>
+   * Calculates reference potentials (chemical potentials at standard state) for all reactive components using the
+   * reaction equilibrium relationships. For each reaction: sum(nu_i * mu_i^ref) = -RT * ln(K)
    * </p>
    *
    * <p>
-   * Calculates reference potentials (chemical potentials at standard state) for all reactive
-   * components using the reaction equilibrium relationships. For each reaction: sum(nu_i *
-   * mu_i^ref) = -RT * ln(K)
-   * </p>
-   *
-   * <p>
-   * The method first identifies linearly independent columns (components) and solves for their
-   * reference potentials directly. Then it iteratively propagates these values to dependent
-   * components using the reaction stoichiometry, processing them in dependency order.
+   * The method first identifies linearly independent columns (components) and solves for their reference potentials
+   * directly. Then it iteratively propagates these values to dependent components using the reaction stoichiometry,
+   * processing them in dependency order.
    * </p>
    *
    * @return an array of reference potentials for all reactive components
@@ -505,7 +472,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         boolean usedFallback = false;
         for (int depCol : dependentColumns) {
           if (!computed[depCol] && refPotComponents != null && depCol < refPotComponents.length) {
-            // Use Gibbs energy of formation as reference potential for this component
+            // Use Gibbs energy of formation as reference potential for this
+            // component
             double gf = refPotComponents[depCol].getGibbsEnergyOfFormation();
             result[depCol] = gf; // Use Gibbs energy directly (not negated)
             computed[depCol] = true;
@@ -537,9 +505,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * calcReacMatrix.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -558,7 +524,8 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
               for (int o = 0; o < reaction.getNames().length; o++) {
                 if (phase.getComponent(k).getName().equals(reaction.getNames()[o])) {
                   // System.out.println("comp1 " +
-                  // system.getPhases()[1].getComponent(i).getComponentName() +
+                  // system.getPhases()[1].getComponent(i).getComponentName()
+                  // +
                   // " comp2 "
                   // +system.getPhases()[1].getComponent(k).getComponentName()
                   // );
@@ -579,9 +546,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>reacMatrix</code>.
-   * </p>
    *
    * @return an array of type double
    */
@@ -590,9 +555,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * getStocMatrix.
-   * </p>
    *
    * @return an array of type double
    */
@@ -601,9 +564,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * calcReacRates.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param components an array of {@link neqsim.thermo.component.ComponentInterface} objects
@@ -618,8 +579,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
         // System.out.println("mol cons " +
         // components[j].getx()/system.getPhases()[1].getMolarMass());
         modReacMatrix.set(i, j,
-            Math.pow(components[j].getx() * phase.getDensity() / phase.getMolarMass(),
-                Math.abs(reacMatrix[i][j])));
+            Math.pow(components[j].getx() * phase.getDensity() / phase.getMolarMass(), Math.abs(reacMatrix[i][j])));
       }
     }
     // modReacMatrix.print(10,10);
@@ -629,8 +589,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
 
     for (int i = 0; i < chemicalReactionList.size(); i++) {
       tempForward[i] = (chemicalReactionList.get(i)).getRateFactor();
-      tempBackward[i] =
-          (chemicalReactionList.get(i)).getK(phase) / (chemicalReactionList.get(i)).getRateFactor();
+      tempBackward[i] = (chemicalReactionList.get(i)).getK(phase) / (chemicalReactionList.get(i)).getRateFactor();
       for (int j = 0; j < components.length; j++) {
         if (reacMatrix[i][j] > 0) {
           tempForward[i] *= modReacMatrix.get(i, j);
@@ -678,9 +637,7 @@ public class ChemicalReactionList implements ThermodynamicConstantsInterface {
   }
 
   /**
-   * <p>
    * reacHeat.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param comp a {@link java.lang.String} object

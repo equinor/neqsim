@@ -39,8 +39,7 @@ public class BatchStudyTest {
 
   @Test
   void testBuilderCreation() {
-    BatchStudy study =
-        BatchStudy.builder(baseProcess).vary("separator.pressure", 10.0, 50.0, 3).build();
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("separator.pressure", 10.0, 50.0, 3).build();
 
     assertNotNull(study);
     assertEquals(3, study.getTotalCases());
@@ -48,8 +47,7 @@ public class BatchStudyTest {
 
   @Test
   void testVaryWithExplicitValues() {
-    BatchStudy study =
-        BatchStudy.builder(baseProcess).vary("separator.pressure", 10.0, 20.0, 30.0).build();
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("separator.pressure", 10.0, 20.0, 30.0).build();
 
     assertNotNull(study);
     assertEquals(3, study.getTotalCases());
@@ -57,8 +55,7 @@ public class BatchStudyTest {
 
   @Test
   void testMultipleParameters() {
-    BatchStudy study = BatchStudy.builder(baseProcess).vary("param1", 1.0, 2.0, 3.0)
-        .vary("param2", 10.0, 20.0).build();
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("param1", 1.0, 2.0, 3.0).vary("param2", 10.0, 20.0).build();
 
     // 3 values for param1 * 2 values for param2 = 6 cases
     assertEquals(6, study.getTotalCases());
@@ -75,36 +72,32 @@ public class BatchStudyTest {
 
   @Test
   void testParallelismSetting() {
-    BatchStudy study =
-        BatchStudy.builder(baseProcess).vary("pressure", 10.0, 50.0, 3).parallelism(4).build();
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("pressure", 10.0, 50.0, 3).parallelism(4).build();
 
     assertNotNull(study);
   }
 
   @Test
   void testStudyName() {
-    BatchStudy study =
-        BatchStudy.builder(baseProcess).vary("pressure", 10.0, 50.0, 3).name("MyStudy").build();
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("pressure", 10.0, 50.0, 3).name("MyStudy").build();
 
     assertNotNull(study);
   }
 
   @Test
   void testStopOnFailure() {
-    BatchStudy study =
-        BatchStudy.builder(baseProcess).vary("pressure", 10.0, 50.0, 3).stopOnFailure(true).build();
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("pressure", 10.0, 50.0, 3).stopOnFailure(true).build();
 
     assertNotNull(study);
   }
 
   @Test
   void testRunStudy() {
-    BatchStudy study =
-        BatchStudy.builder(baseProcess).vary("separator.pressure", 10.0, 20.0, 2).parallelism(1) // Sequential
-                                                                                                 // for
-                                                                                                 // test
-                                                                                                 // stability
-            .build();
+    BatchStudy study = BatchStudy.builder(baseProcess).vary("separator.pressure", 10.0, 20.0, 2).parallelism(1) // Sequential
+        // for
+        // test
+        // stability
+        .build();
 
     BatchStudy.BatchStudyResult result = study.run();
 
@@ -118,4 +111,3 @@ public class BatchStudyTest {
     assertEquals(BatchStudy.Objective.MAXIMIZE, BatchStudy.Objective.MAXIMIZE);
   }
 }
-

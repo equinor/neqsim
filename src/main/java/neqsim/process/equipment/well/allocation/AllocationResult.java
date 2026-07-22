@@ -34,8 +34,8 @@ public class AllocationResult implements Serializable {
    * @param uncertainties allocation uncertainties by well
    * @param allocationError total allocation error
    */
-  public AllocationResult(Map<String, Double> oilRates, Map<String, Double> gasRates,
-      Map<String, Double> waterRates, Map<String, Double> uncertainties, double allocationError) {
+  public AllocationResult(Map<String, Double> oilRates, Map<String, Double> gasRates, Map<String, Double> waterRates,
+      Map<String, Double> uncertainties, double allocationError) {
     this.timestamp = Instant.now();
     this.oilRates = new HashMap<>(oilRates);
     this.gasRates = new HashMap<>(gasRates);
@@ -231,12 +231,11 @@ public class AllocationResult implements Serializable {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("AllocationResult[%s, balanced=%s, error=%.4f%%]\n",
-        timestamp.toString(), balanced, allocationError * 100));
+    sb.append(String.format("AllocationResult[%s, balanced=%s, error=%.4f%%]\n", timestamp.toString(), balanced,
+        allocationError * 100));
     for (String well : oilRates.keySet()) {
-      sb.append(String.format("  %s: Oil=%.1f, Gas=%.1f, Water=%.1f, GOR=%.1f, WC=%.2f%%\n", well,
-          getOilRate(well), getGasRate(well), getWaterRate(well), getGOR(well),
-          getWaterCut(well) * 100));
+      sb.append(String.format("  %s: Oil=%.1f, Gas=%.1f, Water=%.1f, GOR=%.1f, WC=%.2f%%\n", well, getOilRate(well),
+          getGasRate(well), getWaterRate(well), getGOR(well), getWaterCut(well) * 100));
     }
     return sb.toString();
   }

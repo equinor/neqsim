@@ -1,5 +1,7 @@
 package neqsim.process.equipment;
 
+import java.util.Collections;
+import java.util.List;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
@@ -10,8 +12,7 @@ import neqsim.process.util.report.ReportConfig.DetailLevel;
  * @author ASMF
  * @version $Id: $Id
  */
-public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
-    implements TwoPortInterface {
+public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass implements TwoPortInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   protected StreamInterface inStream;
@@ -83,7 +84,12 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   @Override
   public void setInletStream(StreamInterface stream) {
     this.inStream = stream;
-    this.outStream = inStream.clone(this.getName() + " out stream");
+    StreamInterface newOutletStream = inStream.clone(this.getName() + " out stream");
+    if (this.outStream == null) {
+      this.outStream = newOutletStream;
+    } else {
+      this.outStream.setThermoSystem(newOutletStream.getThermoSystem());
+    }
   }
 
   /** {@inheritDoc} */
@@ -100,6 +106,12 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public void setOutletPressure(double pressure, String unit) {
+    this.outStream.setPressure(pressure, unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setOutletStream(StreamInterface stream) {
     this.outStream = stream;
   }
@@ -107,14 +119,37 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void setOutletTemperature(double temperature) {
-    this.outStream.setTemperature(temperature, "unit");
+    this.outStream.setTemperature(temperature, "K");
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setOutletTemperature(double temperature, String unit) {
+    this.outStream.setTemperature(temperature, unit);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getMassBalance(String unit) {
-    return outStream.getThermoSystem().getFlowRate(unit)
-        - inStream.getThermoSystem().getFlowRate(unit);
+    return outStream.getThermoSystem().getFlowRate(unit) - inStream.getThermoSystem().getFlowRate(unit);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getInletStreams() {
+    if (inStream != null) {
+      return Collections.singletonList(inStream);
+    }
+    return Collections.emptyList();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    if (outStream != null) {
+      return Collections.singletonList(outStream);
+    }
+    return Collections.emptyList();
   }
 
   /** {@inheritDoc} */
@@ -147,8 +182,7 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
    */
   @Override
   public neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
+    neqsim.util.validation.ValidationResult result = new neqsim.util.validation.ValidationResult(getName());
 
     // Check: Equipment has a valid name
     if (getName() == null || getName().trim().isEmpty()) {
@@ -157,8 +191,7 @@ public abstract class TwoPortEquipment extends ProcessEquipmentBaseClass
 
     // Check: Inlet stream is connected
     if (inStream == null) {
-      result.addError("stream", "No inlet stream connected",
-          "Set inlet stream: equipment.setInletStream(stream)");
+      result.addError("stream", "No inlet stream connected", "Set inlet stream: equipment.setInletStream(stream)");
     } else if (inStream.getThermoSystem() == null) {
       result.addError("stream", "Inlet stream has no fluid system",
           "Ensure inlet stream has a valid thermodynamic system");

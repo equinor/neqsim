@@ -8,9 +8,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * FuelCell class representing a simple hydrogen fuel cell.
- * </p>
  *
  * @author OpenAI
  */
@@ -26,18 +24,14 @@ public class FuelCell extends TwoPortEquipment {
   private double heatLoss = 0.0;
 
   /**
-   * <p>
    * Constructor for FuelCell.
-   * </p>
    */
   public FuelCell() {
     this("FuelCell");
   }
 
   /**
-   * <p>
    * Constructor for FuelCell.
-   * </p>
    *
    * @param name name of unit operation
    */
@@ -46,9 +40,7 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Constructor for FuelCell.
-   * </p>
    *
    * @param name name of unit operation
    * @param fuelStream inlet fuel stream
@@ -60,7 +52,7 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>Setter for the field <code>oxidantStream</code>.</p>
+   * Setter for the field <code>oxidantStream</code>.
    *
    * @param stream oxidant stream
    */
@@ -69,7 +61,7 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>Getter for the field <code>oxidantStream</code>.</p>
+   * Getter for the field <code>oxidantStream</code>.
    *
    * @return oxidant stream
    */
@@ -77,8 +69,22 @@ public class FuelCell extends TwoPortEquipment {
     return oxidantStream;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getInletStreams() {
+    java.util.List<StreamInterface> in = new java.util.ArrayList<>();
+    StreamInterface fuel = getInletStream();
+    if (fuel != null) {
+      in.add(fuel);
+    }
+    if (oxidantStream != null) {
+      in.add(oxidantStream);
+    }
+    return in;
+  }
+
   /**
-   * <p>Setter for the field <code>efficiency</code>.</p>
+   * Setter for the field <code>efficiency</code>.
    *
    * @param efficiency electrical efficiency of the cell
    */
@@ -87,7 +93,7 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>Getter for the field <code>efficiency</code>.</p>
+   * Getter for the field <code>efficiency</code>.
    *
    * @return efficiency of the cell
    */
@@ -96,7 +102,7 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>Getter for the field <code>power</code>.</p>
+   * Getter for the field <code>power</code>.
    *
    * @return electrical power produced [W]
    */
@@ -105,7 +111,7 @@ public class FuelCell extends TwoPortEquipment {
   }
 
   /**
-   * <p>Getter for the field <code>heatLoss</code>.</p>
+   * Getter for the field <code>heatLoss</code>.
    *
    * @return heat lost from the cell [W]
    */
@@ -154,4 +160,3 @@ public class FuelCell extends TwoPortEquipment {
     setCalculationIdentifier(id);
   }
 }
-

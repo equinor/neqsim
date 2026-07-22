@@ -13,15 +13,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.NamedBaseClass;
 
 /**
- * <p>
  * ChemicalReaction class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ChemicalReaction extends NamedBaseClass
-    implements neqsim.thermo.ThermodynamicConstantsInterface {
+public class ChemicalReaction extends NamedBaseClass implements neqsim.thermo.ThermodynamicConstantsInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -42,9 +39,7 @@ public class ChemicalReaction extends NamedBaseClass
   int numberOfReactants = 0;
 
   /**
-   * <p>
    * Constructor for ChemicalReaction.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param names an array of {@link java.lang.String} objects
@@ -98,9 +93,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>reactantNames</code>.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -118,9 +111,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>rateFactor</code>.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -132,9 +123,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>stocCoefs</code>.
-   * </p>
    *
    * @return an array of type double
    */
@@ -143,9 +132,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>productNames</code>.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -154,9 +141,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>names</code>.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -165,9 +150,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * <p>
    * calcKx.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseNumb a int
@@ -183,9 +166,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * <p>
    * calcKgamma.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseNumb a int
@@ -196,20 +177,16 @@ public class ChemicalReaction extends NamedBaseClass
     for (int i = 0; i < names.length; i++) {
       // System.out.println("name " + names[i] + " stcoc " + stocCoefs[i]);
       if (system.getPhase(phaseNumb).getComponent(names[i]).calcActivity()) {
-        kgamma *= Math.pow(
-            system.getPhase(phaseNumb).getActivityCoefficient(
-                system.getPhase(phaseNumb).getComponent(names[i]).getComponentNumber(),
-                system.getPhase(phaseNumb).getComponent("water").getComponentNumber()),
-            stocCoefs[i]);
+        kgamma *= Math.pow(system.getPhase(phaseNumb).getActivityCoefficient(
+            system.getPhase(phaseNumb).getComponent(names[i]).getComponentNumber(),
+            system.getPhase(phaseNumb).getComponent("water").getComponentNumber()), stocCoefs[i]);
       }
     }
     return kgamma;
   }
 
   /**
-   * <p>
    * getSaturationRatio.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseNumb a int
@@ -228,9 +205,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * <p>
    * calcK.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseNumb a int
@@ -248,8 +223,8 @@ public class ChemicalReaction extends NamedBaseClass
    * @param Amatrix an array of type double
    * @param chemRefPot an array of type double
    */
-  public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components,
-      double[][] Amatrix, double[] chemRefPot) {
+  public void initMoleNumbers(PhaseInterface phase, ComponentInterface[] components, double[][] Amatrix,
+      double[] chemRefPot) {
     Matrix tempAmatrix = new Matrix(Amatrix.length, names.length);
     Matrix tempNmatrix = new Matrix(names.length, 1);
     Matrix tempRefPotmatrix = new Matrix(names.length, 1);
@@ -306,9 +281,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -330,9 +303,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * <p>
    * checkK.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -346,9 +317,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * <p>
    * reactantsContains.
-   * </p>
    *
    * @param names an array of {@link java.lang.String} objects
    * @return a boolean
@@ -426,8 +395,7 @@ public class ChemicalReaction extends NamedBaseClass
    * @return Value of property reactionHeat.
    */
   public double getReactionHeat(PhaseInterface phase) {
-    double diffKt =
-        -K[1] / Math.pow(phase.getTemperature(), 2.0) + K[2] / phase.getTemperature() + K[3];
+    double diffKt = -K[1] / Math.pow(phase.getTemperature(), 2.0) + K[2] / phase.getTemperature() + K[3];
     double sign = shiftSignK ? -1.0 : 1.0;
     return sign * diffKt * Math.pow(phase.getTemperature(), 2.0) * R;
   }
@@ -442,9 +410,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * <p>
    * getK.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -469,9 +435,7 @@ public class ChemicalReaction extends NamedBaseClass
   }
 
   /**
-   * <p>
    * setK.
-   * </p>
    *
    * @param i a int
    * @param Kd a double

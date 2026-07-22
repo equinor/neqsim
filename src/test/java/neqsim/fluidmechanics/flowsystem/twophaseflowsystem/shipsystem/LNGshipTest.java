@@ -54,8 +54,8 @@ class LNGshipTest {
     testShip.solveTransient(0, null);
 
     assertEquals(testShip.numberOffTimeSteps, testShip.tankTemperature.length); // Check that the
-                                                                                // results have
-                                                                                // correct length
+    // results have
+    // correct length
     assertEquals(600_000.0, testShip.endVolume);
   }
 }

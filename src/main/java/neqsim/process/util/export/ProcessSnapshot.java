@@ -9,8 +9,8 @@ import java.util.Map;
  * Represents a snapshot of a process system state at a point in time.
  *
  * <p>
- * Snapshots capture the complete state of measurement devices and key process variables, enabling
- * checkpointing, comparison, and state restoration.
+ * Snapshots capture the complete state of measurement devices and key process variables, enabling checkpointing,
+ * comparison, and state restoration.
  * </p>
  *
  * @author ESOL
@@ -171,7 +171,6 @@ public class ProcessSnapshot implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("ProcessSnapshot[%s @ %s, %d measurements]", snapshotId, timestamp,
-        measurementValues.size());
+    return String.format("ProcessSnapshot[%s @ %s, %d measurements]", snapshotId, timestamp, measurementValues.size());
   }
 }

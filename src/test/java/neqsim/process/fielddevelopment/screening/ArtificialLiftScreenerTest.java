@@ -117,8 +117,7 @@ class ArtificialLiftScreenerTest {
     for (MethodResult method : result.getAllMethods()) {
       if (method.method == LiftMethod.ESP) {
         assertFalse(method.feasible, "ESP should be infeasible above 180°C");
-        assertTrue(method.infeasibilityReason.contains("Temperature"),
-            "Should cite temperature as reason");
+        assertTrue(method.infeasibilityReason.contains("Temperature"), "Should cite temperature as reason");
       }
     }
   }
@@ -205,8 +204,7 @@ class ArtificialLiftScreenerTest {
     // Feasible methods should have NPV calculated
     for (MethodResult method : result.getFeasibleMethods()) {
       if (method.productionRate > 0) {
-        assertTrue(method.npv > Double.NEGATIVE_INFINITY,
-            "Should calculate NPV for feasible methods");
+        assertTrue(method.npv > Double.NEGATIVE_INFINITY, "Should calculate NPV for feasible methods");
       }
     }
   }

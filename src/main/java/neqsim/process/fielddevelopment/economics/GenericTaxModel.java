@@ -4,8 +4,8 @@ package neqsim.process.fielddevelopment.economics;
  * Generic tax model implementation driven by FiscalParameters.
  *
  * <p>
- * This class provides a parameter-driven implementation of the {@link TaxModel} interface that can
- * model any concessionary or PSC-type fiscal system based on the provided {@link FiscalParameters}.
+ * This class provides a parameter-driven implementation of the {@link TaxModel} interface that can model any
+ * concessionary or PSC-type fiscal system based on the provided {@link FiscalParameters}.
  * </p>
  *
  * <h2>Supported Features</h2>
@@ -20,12 +20,12 @@ package neqsim.process.fielddevelopment.economics;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Using predefined country parameters
  * FiscalParameters params = TaxModelRegistry.getParameters("UK");
  * TaxModel model = new GenericTaxModel(params);
- * 
+ *
  * // Calculate tax
  * TaxModel.TaxResult result = model.calculateTax(500.0, 100.0, 80.0, 0.0);
  * System.out.println("Total tax: " + result.getTotalTax());
@@ -103,8 +103,7 @@ public class GenericTaxModel implements TaxModel {
   }
 
   @Override
-  public TaxResult calculateTax(double grossRevenue, double opex, double depreciation,
-      double uplift) {
+  public TaxResult calculateTax(double grossRevenue, double opex, double depreciation, double uplift) {
     // Calculate royalty first (on gross revenue)
     double royalty = calculateRoyalty(grossRevenue);
     double revenueAfterRoyalty = grossRevenue - royalty;
@@ -158,8 +157,8 @@ public class GenericTaxModel implements TaxModel {
     double totalTax = corporateTax + resourceTax + windfallTax;
     double afterTaxIncome = grossRevenue - opex - royalty - totalTax;
 
-    return new TaxResult(grossRevenue, opex, depreciation, uplift, royalty, corporateTaxBase,
-        corporateTax, resourceTaxBase, resourceTax + windfallTax, totalTax, afterTaxIncome);
+    return new TaxResult(grossRevenue, opex, depreciation, uplift, royalty, corporateTaxBase, corporateTax,
+        resourceTaxBase, resourceTax + windfallTax, totalTax, afterTaxIncome);
   }
 
   @Override
@@ -169,29 +168,29 @@ public class GenericTaxModel implements TaxModel {
     }
 
     switch (parameters.getDepreciationMethod()) {
-      case STRAIGHT_LINE:
-        if (year > parameters.getDepreciationYears()) {
-          return 0.0;
-        }
-        return capex / parameters.getDepreciationYears();
+    case STRAIGHT_LINE:
+      if (year > parameters.getDepreciationYears()) {
+        return 0.0;
+      }
+      return capex / parameters.getDepreciationYears();
 
-      case DECLINING_BALANCE:
-        double rate = parameters.getDecliningBalanceRate();
-        double remainingValue = capex * Math.pow(1 - rate, year - 1);
-        return remainingValue * rate;
+    case DECLINING_BALANCE:
+      double rate = parameters.getDecliningBalanceRate();
+      double remainingValue = capex * Math.pow(1 - rate, year - 1);
+      return remainingValue * rate;
 
-      case IMMEDIATE:
-        return year == 1 ? capex : 0.0;
+    case IMMEDIATE:
+      return year == 1 ? capex : 0.0;
 
-      case UNIT_OF_PRODUCTION:
-        // Would need production profile - use straight-line as fallback
-        if (year > parameters.getDepreciationYears()) {
-          return 0.0;
-        }
-        return capex / parameters.getDepreciationYears();
+    case UNIT_OF_PRODUCTION:
+      // Would need production profile - use straight-line as fallback
+      if (year > parameters.getDepreciationYears()) {
+        return 0.0;
+      }
+      return capex / parameters.getDepreciationYears();
 
-      default:
-        return capex / parameters.getDepreciationYears();
+    default:
+      return capex / parameters.getDepreciationYears();
     }
   }
 
@@ -209,8 +208,7 @@ public class GenericTaxModel implements TaxModel {
   }
 
   @Override
-  public double calculateEffectiveTaxRate(double grossRevenue, double opex, double depreciation,
-      double uplift) {
+  public double calculateEffectiveTaxRate(double grossRevenue, double opex, double depreciation, double uplift) {
     if (grossRevenue <= 0) {
       return 0.0;
     }
@@ -288,8 +286,8 @@ public class GenericTaxModel implements TaxModel {
    * Calculates PSC-style profit sharing.
    *
    * <p>
-   * For PSC systems, after cost recovery, the profit oil/gas is split between the government and
-   * contractor according to the profit sharing terms.
+   * For PSC systems, after cost recovery, the profit oil/gas is split between the government and contractor according
+   * to the profit sharing terms.
    * </p>
    *
    * @param grossRevenue total revenue
@@ -298,7 +296,7 @@ public class GenericTaxModel implements TaxModel {
    */
   public double[] calculateProfitSharing(double grossRevenue, double costRecovery) {
     if (!parameters.isPscSystem()) {
-      return new double[] {0, grossRevenue - costRecovery};
+      return new double[] { 0, grossRevenue - costRecovery };
     }
 
     // Limit cost recovery
@@ -311,7 +309,7 @@ public class GenericTaxModel implements TaxModel {
     double governmentShare = profitOil * parameters.getProfitShareGovernment();
     double contractorShare = profitOil * parameters.getProfitShareContractor();
 
-    return new double[] {governmentShare, contractorShare};
+    return new double[] { governmentShare, contractorShare };
   }
 
   @Override

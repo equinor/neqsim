@@ -3,10 +3,10 @@ package neqsim.process.mechanicaldesign.data;
 import java.sql.ResultSet;
 import java.util.Locale;
 import java.util.Optional;
-import neqsim.process.mechanicaldesign.DesignLimitData;
-import neqsim.util.database.NeqSimProcessDesignDataBase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.mechanicaldesign.DesignLimitData;
+import neqsim.util.database.NeqSimProcessDesignDataBase;
 
 /**
  * Reads mechanical design limits from the NeqSim process design database.
@@ -18,8 +18,7 @@ public class DatabaseMechanicalDesignDataSource implements MechanicalDesignDataS
       + "TechnicalRequirements_Process WHERE EQUIPMENTTYPE='%s' AND Company='%s'";
 
   @Override
-  public Optional<DesignLimitData> getDesignLimits(String equipmentTypeName,
-      String companyIdentifier) {
+  public Optional<DesignLimitData> getDesignLimits(String equipmentTypeName, String companyIdentifier) {
     if (equipmentTypeName == null || equipmentTypeName.isEmpty() || companyIdentifier == null
         || companyIdentifier.isEmpty()) {
       return Optional.empty();
@@ -38,32 +37,32 @@ public class DatabaseMechanicalDesignDataSource implements MechanicalDesignDataS
         double representative = Double.isNaN(maxValue) ? minValue
             : Double.isNaN(minValue) ? maxValue : (maxValue + minValue) / 2.0;
         switch (specification) {
-          case "MaxPressure":
-            builder.maxPressure(representative);
-            found = true;
-            break;
-          case "MinPressure":
-            builder.minPressure(representative);
-            found = true;
-            break;
-          case "MaxTemperature":
-            builder.maxTemperature(representative);
-            found = true;
-            break;
-          case "MinTemperature":
-            builder.minTemperature(representative);
-            found = true;
-            break;
-          case "CorrosionAllowance":
-            builder.corrosionAllowance(representative);
-            found = true;
-            break;
-          case "JointEfficiency":
-            builder.jointEfficiency(representative);
-            found = true;
-            break;
-          default:
-            break;
+        case "MaxPressure":
+          builder.maxPressure(representative);
+          found = true;
+          break;
+        case "MinPressure":
+          builder.minPressure(representative);
+          found = true;
+          break;
+        case "MaxTemperature":
+          builder.maxTemperature(representative);
+          found = true;
+          break;
+        case "MinTemperature":
+          builder.minTemperature(representative);
+          found = true;
+          break;
+        case "CorrosionAllowance":
+          builder.corrosionAllowance(representative);
+          found = true;
+          break;
+        case "JointEfficiency":
+          builder.jointEfficiency(representative);
+          found = true;
+          break;
+        default:
+          break;
         }
       }
     } catch (Exception ex) {

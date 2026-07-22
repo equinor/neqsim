@@ -7,9 +7,7 @@
 package neqsim.thermo.util.constants;
 
 /**
- * <p>
  * FurstElectrolyteConstants class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -21,8 +19,8 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   // public static double[] furstParams = {0.0982e-6, 7.003e-6, 77.22e-6,
   // -25.314e-6, -0.05813e-6, -44.383e-6};
   /** Constant <code>furstParams</code>. */
-  public static double[] furstParams =
-      {0.0000001117, 0.0000053771, 0.0000699219, 0.0000043984, -0.0000000606, -0.0000217950};
+  public static double[] furstParams = { 0.0000001117, 0.0000053771, 0.0000699219, 0.0000043984, -0.0000000606,
+      -0.0000217950 };
   // public static double[] furstParams = {0.0000001018, 0.0000064366,
   // 0.0001103447, -0.0001631115, -0.0000000565, -0.0000565052};
   // public static double[] furstParams = {0.10688e-6, 6.5665e-6, 35.09e-6,
@@ -49,13 +47,13 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * Constant <code>furstParamsCPA</code>.
    *
    * <p>
-   * Parameters fitted to multi-salt osmotic coefficient and mean ionic activity coefficient data
-   * (Robinson &amp; Stokes, 1965) at 25°C using Nelder-Mead optimization.
+   * Parameters fitted to multi-salt osmotic coefficient and mean ionic activity coefficient data (Robinson &amp;
+   * Stokes, 1965) at 25°C using Nelder-Mead optimization.
    * </p>
    *
    * <p>
-   * Fitting dataset: NaCl, KCl, LiCl, NaBr, KBr, NaI, KI, NaF (1:1 halides), CaCl2, MgCl2, BaCl2,
-   * SrCl2 (2:1 chlorides). Concentration range: 0.1-6 molal.
+   * Fitting dataset: NaCl, KCl, LiCl, NaBr, KBr, NaI, KI, NaF (1:1 halides), CaCl2, MgCl2, BaCl2, SrCl2 (2:1
+   * chlorides). Concentration range: 0.1-6 molal.
    * </p>
    *
    * <p>
@@ -73,8 +71,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * </p>
    * <ul>
    * <li>Wij(cation-water) = furstParamsCPA[2] * stokesDiameter + furstParamsCPA[3]</li>
-   * <li>Wij(cation-anion) = furstParamsCPA[4] * (stokesDiam + paulingDiam)^4 +
-   * furstParamsCPA[5]</li>
+   * <li>Wij(cation-anion) = furstParamsCPA[4] * (stokesDiam + paulingDiam)^4 + furstParamsCPA[5]</li>
    * </ul>
    *
    * <p>
@@ -82,40 +79,38 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * </p>
    * <ul>
    * <li>Wij(2+ cation-water) = furstParamsCPA[6] * stokesDiameter + furstParamsCPA[7]</li>
-   * <li>Wij(2+ cation-anion) = furstParamsCPA[8] * (stokesDiam + paulingDiam)^4 +
-   * furstParamsCPA[9]</li>
+   * <li>Wij(2+ cation-anion) = furstParamsCPA[8] * (stokesDiam + paulingDiam)^4 + furstParamsCPA[9]</li>
    * </ul>
    */
   public static double[] furstParamsCPA = {
       // LR parameters [0-1]
       2.03229304078956110000e-07, 1.47961831026267730000e-06,
       // SR parameters for monovalent (1+) cations [2-5] - refitted 2024-12
-      4.99208360995648800000e-05, -1.20574785509682620000e-04, -2.06381402509075900000e-08,
-      -9.49900147207583400000e-05,
+      4.99208360995648800000e-05, -1.20574785509682620000e-04, -2.06381402509075900000e-08, -9.49900147207583400000e-05,
       // SR parameters for divalent (2+) cations [6-9] - refitted 2024-12
       // Optimized for CaCl2, MgCl2, BaCl2, SrCl2 (3-8% error)
       5.39970864968383560000e-05, -1.64491629343936460000e-04, // Wij(2+ cat-water): slope,
-                                                               // intercept
+      // intercept
       -5.29686946241836400000e-08, -6.01118737814586100000e-17 // Wij(2+ cat-anion): prefactor,
-                                                               // intercept
+      // intercept
   };
 
   /**
    * Parameters for electrolytes in MDEA (methyldiethanolamine) solvent.
    *
    * <p>
-   * MDEA has dielectric constant ~21.2 at 25°C (vs 78.4 for water). This lower dielectric
-   * significantly affects the MSA long-range term and ion solvation energies.
+   * MDEA has dielectric constant ~21.2 at 25°C (vs 78.4 for water). This lower dielectric significantly affects the MSA
+   * long-range term and ion solvation energies.
    * </p>
    *
    * <p>
-   * Structure same as furstParamsCPA: [0-1] LR parameters, [2-5] SR parameters for 1+ cations,
-   * [6-9] SR parameters for 2+ cations.
+   * Structure same as furstParamsCPA: [0-1] LR parameters, [2-5] SR parameters for 1+ cations, [6-9] SR parameters for
+   * 2+ cations.
    * </p>
    *
    * <p>
-   * Parameters fitted 2024-12 for multiple ions at 20 mol% MDEA. Most salts give reasonable γ± (6/8
-   * pass). NaBr and CaCl2 have numerical instability issues at this composition.
+   * Parameters fitted 2024-12 for multiple ions at 20 mol% MDEA. Most salts give reasonable γ± (6/8 pass). NaBr and
+   * CaCl2 have numerical instability issues at this composition.
    * </p>
    *
    * <p>
@@ -134,7 +129,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Some ions (KCl, CaCl2) may have numerical issues at certain compositions
       8.0e-05, -1.5e-04, 1.0e-07, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
-      9.6e-05, -1.8e-04, -4.4e-08, -6.0e-17};
+      9.6e-05, -1.8e-04, -4.4e-08, -6.0e-17 };
 
   // 0.0000001880, 0.0000014139, 0.0000284666, 0.0000389043, -0.0000000451,
   // 0.0000088136
@@ -143,26 +138,25 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * Parameters for electrolytes in MEG (monoethylene glycol) solvent.
    *
    * <p>
-   * MEG has dielectric constant 37.7 at 25°C (vs 78.4 for water). This lower dielectric
-   * significantly affects the MSA long-range term and ion solvation energies.
+   * MEG has dielectric constant 37.7 at 25°C (vs 78.4 for water). This lower dielectric significantly affects the MSA
+   * long-range term and ion solvation energies.
    * </p>
    *
    * <p>
-   * Structure same as furstParamsCPA: [0-1] LR parameters, [2-5] SR parameters for 1+ cations,
-   * [6-9] SR parameters for 2+ cations.
+   * Structure same as furstParamsCPA: [0-1] LR parameters, [2-5] SR parameters for 1+ cations, [6-9] SR parameters for
+   * 2+ cations.
    * </p>
    *
    * <p>
-   * Parameters fitted 2024-12 for multiple ions (Na+, K+, Li+, Ca++, Mg++, Ba++) at 30 mol% MEG.
-   * Validated for Cl- and Br- salts. Gives γ± in range 0.1-6.0 for all tested salts (8/8 pass).
+   * Parameters fitted 2024-12 for multiple ions (Na+, K+, Li+, Ca++, Mg++, Ba++) at 30 mol% MEG. Validated for Cl- and
+   * Br- salts. Gives γ± in range 0.1-6.0 for all tested salts (8/8 pass).
    * </p>
    *
    * <p>
    * Known limitations:
    * </p>
    * <ul>
-   * <li>Individual ion γ may vary significantly (e.g., K+ low, Na+ high) while γ± is
-   * reasonable</li>
+   * <li>Individual ion γ may vary significantly (e.g., K+ low, Na+ high) while γ± is reasonable</li>
    * <li>Accuracy may degrade at very high MEG concentrations (&gt;70 mol%)</li>
    * </ul>
    */
@@ -174,20 +168,18 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Na+, K+, Li+, Br salts, and divalent cations all tested
       8.0e-05, -1.15e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
-      9.6e-05, -1.38e-04, -4.4e-08, -6.0e-17};
+      9.6e-05, -1.38e-04, -4.4e-08, -6.0e-17 };
 
   /**
    * Parameters for electrolytes in methanol solvent.
    *
    * <p>
-   * Methanol has dielectric constant 32.7 at 25°C (vs 78.4 for water). Structure same as
-   * furstParamsCPA.
+   * Methanol has dielectric constant 32.7 at 25°C (vs 78.4 for water). Structure same as furstParamsCPA.
    * </p>
    *
    * <p>
-   * Parameters fitted 2024-12 for multiple ions (Na+, K+, Li+, Ca++, Mg++, Ba++) at 30 mol%
-   * methanol. Validated for Cl- and Br- salts. Uses positive slope similar to MEG to balance across
-   * ion sizes.
+   * Parameters fitted 2024-12 for multiple ions (Na+, K+, Li+, Ca++, Mg++, Ba++) at 30 mol% methanol. Validated for Cl-
+   * and Br- salts. Uses positive slope similar to MEG to balance across ion sizes.
    * </p>
    *
    * <p>
@@ -206,20 +198,19 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Methanol has higher dielectric than ethanol so needs different balance
       6.0e-05, -8.0e-05, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - adjusted for higher γ
-      5.0e-05, -5.0e-05, -4.4e-08, -6.0e-17};
+      5.0e-05, -5.0e-05, -4.4e-08, -6.0e-17 };
 
   /**
    * Parameters for electrolytes in ethanol solvent.
    *
    * <p>
-   * Ethanol has dielectric constant 24.5 at 25°C (vs 78.4 for water, 32.7 for methanol). Structure
-   * same as furstParamsCPA.
+   * Ethanol has dielectric constant 24.5 at 25°C (vs 78.4 for water, 32.7 for methanol). Structure same as
+   * furstParamsCPA.
    * </p>
    *
    * <p>
-   * Parameters fitted 2024-12 for multiple ions (Na+, K+, Li+, Ca++, Mg++, Ba++) at 30 mol%
-   * ethanol. Validated for Cl- and Br- salts. Uses positive slope similar to MEG to balance across
-   * ion sizes.
+   * Parameters fitted 2024-12 for multiple ions (Na+, K+, Li+, Ca++, Mg++, Ba++) at 30 mol% ethanol. Validated for Cl-
+   * and Br- salts. Uses positive slope similar to MEG to balance across ion sizes.
    * </p>
    *
    * <p>
@@ -238,25 +229,24 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Similar to MEG but adjusted for ethanol's lower dielectric constant (24.5)
       9.0e-05, -1.3e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent (1.2x)
-      1.08e-04, -1.56e-04, -4.4e-08, -6.0e-17};
+      1.08e-04, -1.56e-04, -4.4e-08, -6.0e-17 };
 
   /**
    * Parameters for electrolytes in MEA (monoethanolamine) solvent.
    *
    * <p>
-   * MEA (H2N-CH2-CH2-OH) is a primary alkanolamine with dielectric constant ~31 at 25°C, similar to
-   * methanol (32.7). MEA is widely used in CO2 capture applications where salt precipitation and
-   * ionic equilibria are important.
+   * MEA (H2N-CH2-CH2-OH) is a primary alkanolamine with dielectric constant ~31 at 25°C, similar to methanol (32.7).
+   * MEA is widely used in CO2 capture applications where salt precipitation and ionic equilibria are important.
    * </p>
    *
    * <p>
-   * Structure same as furstParamsCPA: [0-1] LR parameters, [2-5] SR parameters for 1+ cations,
-   * [6-9] SR parameters for 2+ cations.
+   * Structure same as furstParamsCPA: [0-1] LR parameters, [2-5] SR parameters for 1+ cations, [6-9] SR parameters for
+   * 2+ cations.
    * </p>
    *
    * <p>
-   * Parameters fitted 2024-12 for multiple ions at 20 mol% MEA. All tested salts (8/8) give
-   * reasonable γ± in range 0.08-6.0. Larger slope needed due to MEA's low dielectric constant.
+   * Parameters fitted 2024-12 for multiple ions at 20 mol% MEA. All tested salts (8/8) give reasonable γ± in range
+   * 0.08-6.0. Larger slope needed due to MEA's low dielectric constant.
    * </p>
    *
    * <p>
@@ -275,26 +265,24 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // Parameters fitted for reasonable γ± across Na+, K+, Li+, divalent cations
       1.3e-04, -1.6e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - scaled from monovalent
-      1.56e-04, -1.92e-04, -4.4e-08, -6.0e-17};
+      1.56e-04, -1.92e-04, -4.4e-08, -6.0e-17 };
 
   /**
    * Parameters for electrolytes in TEG (triethylene glycol) solvent.
    *
    * <p>
-   * TEG (HOCH2CH2OCH2CH2OCH2CH2OH) has dielectric constant ~23.7 at 25°C, similar to ethanol
-   * (24.5). TEG is widely used for gas dehydration where salt precipitation and ionic equilibria
-   * may be relevant.
+   * TEG (HOCH2CH2OCH2CH2OCH2CH2OH) has dielectric constant ~23.7 at 25°C, similar to ethanol (24.5). TEG is widely used
+   * for gas dehydration where salt precipitation and ionic equilibria may be relevant.
    * </p>
    *
    * <p>
-   * Structure same as furstParamsCPA: [0-1] LR parameters, [2-5] SR parameters for 1+ cations,
-   * [6-9] SR parameters for 2+ cations.
+   * Structure same as furstParamsCPA: [0-1] LR parameters, [2-5] SR parameters for 1+ cations, [6-9] SR parameters for
+   * 2+ cations.
    * </p>
    *
    * <p>
-   * <strong>WARNING: These are initial estimates based on water parameters. They have NOT been
-   * fitted against experimental data for TEG-water-electrolyte systems.</strong> Similar issues to
-   * MEG parameters are expected.
+   * <strong>WARNING: These are initial estimates based on water parameters. They have NOT been fitted against
+   * experimental data for TEG-water-electrolyte systems.</strong> Similar issues to MEG parameters are expected.
    * </p>
    */
   public static double[] furstParamsCPA_TEG = {
@@ -303,30 +291,29 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // SR parameters for monovalent (1+) cations [2-5] - NEED FITTING
       4.98e-05, -1.22e-04, -2.06e-08, -9.5e-05,
       // SR parameters for divalent (2+) cations [6-9] - NEED FITTING
-      5.4e-05, -1.72e-04, -4.4e-08, -6.0e-17};
+      5.4e-05, -1.72e-04, -4.4e-08, -6.0e-17 };
 
   /**
    * Temperature-dependent Wij parameters for electrolyte interactions.
    *
    * <p>
-   * The full Wij(T) is: Wij(T) = wij[0] + wij[1]*(1/T - 1/298.15) + wij[2]*f(T) where f(T) =
-   * (298.15-T)/T + ln(T/298.15)
+   * The full Wij(T) is: Wij(T) = wij[0] + wij[1]*(1/T - 1/298.15) + wij[2]*f(T) where f(T) = (298.15-T)/T +
+   * ln(T/298.15)
    * </p>
    *
    * <p>
-   * wij[1] relates to the enthalpy of ion-solvent interaction (∂G/∂T) wij[2] relates to the heat
-   * capacity contribution (∂²G/∂T²)
+   * wij[1] relates to the enthalpy of ion-solvent interaction (∂G/∂T) wij[2] relates to the heat capacity contribution
+   * (∂²G/∂T²)
    * </p>
    *
    * <p>
-   * Structure: [0-1] cation-water slope/intercept for wij[1], [2-3] cation-water for wij[2], [4-5]
-   * cation-anion for wij[1], [6-7] cation-anion for wij[2], [8-11] same for divalent cations
+   * Structure: [0-1] cation-water slope/intercept for wij[1], [2-3] cation-water for wij[2], [4-5] cation-anion for
+   * wij[1], [6-7] cation-anion for wij[2], [8-11] same for divalent cations
    * </p>
    *
    * <p>
-   * Parameters derived from temperature dependence of osmotic coefficients. Positive wij[1] means
-   * Wij increases with temperature (weaker interaction at high T). Literature: Pitzer (1991),
-   * Archer (1992) for NaCl(aq) 273-373 K.
+   * Parameters derived from temperature dependence of osmotic coefficients. Positive wij[1] means Wij increases with
+   * temperature (weaker interaction at high T). Literature: Pitzer (1991), Archer (1992) for NaCl(aq) 273-373 K.
    * </p>
    */
   public static double[] furstParamsCPA_TDep = {
@@ -345,17 +332,16 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       // wij[1] for 2+ cation-anion: prefactor, intercept
       -3.0e-06, 1.2e-02,
       // wij[2] for 2+ cation-anion: prefactor, intercept
-      -6.0e-09, 2.3e-05};
+      -6.0e-09, 2.3e-05 };
 
   /**
    * Dummy constructor, not for use. Class is to be considered static.
    */
-  private FurstElectrolyteConstants() {}
+  private FurstElectrolyteConstants() {
+  }
 
   /**
-   * <p>
    * setFurstParam.
-   * </p>
    *
    * @param i a int
    * @param value a double
@@ -365,9 +351,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getFurstParam.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -377,9 +361,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getFurstParamCPA.
-   * </p>
    *
    * @param i index into furstParamsCPA array
    * @return the parameter value
@@ -389,9 +371,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setFurstParamCPA.
-   * </p>
    *
    * @param i index into furstParamsCPA array
    * @param value the parameter value to set
@@ -401,9 +381,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getFurstParamMDEA.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -563,9 +541,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>furstParams</code>.
-   * </p>
    *
    * @param type a {@link java.lang.String} object
    */
@@ -588,14 +564,13 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * Parameters for gas-ion short-range interactions (salting out effect).
    *
    * <p>
-   * Gases like CO2 and CH4 experience a "salting out" effect in electrolyte solutions - their
-   * solubility decreases with increasing salt concentration. This is modeled through short-range
-   * Wij interactions between gas molecules and ions.
+   * Gases like CO2 and CH4 experience a "salting out" effect in electrolyte solutions - their solubility decreases with
+   * increasing salt concentration. This is modeled through short-range Wij interactions between gas molecules and ions.
    * </p>
    *
    * <p>
-   * The Setchenow equation gives: ln(S/S0) = -k_s * m where k_s is typically 0.1-0.12 L/mol for CO2
-   * and 0.12-0.15 L/mol for CH4 in NaCl solutions.
+   * The Setchenow equation gives: ln(S/S0) = -k_s * m where k_s is typically 0.1-0.12 L/mol for CO2 and 0.12-0.15 L/mol
+   * for CH4 in NaCl solutions.
    * </p>
    *
    * <p>
@@ -603,17 +578,15 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * </p>
    *
    * <p>
-   * Calibration 2024-12: These parameters compensate for excessive salting out from the SR2 term's
-   * packing fraction derivative (FSR2eps * epsi). The positive Wij values reduce the net dFSR2dN
-   * contribution for CO2/CH4. Validation results for CO2 in NaCl at 298 K: 0.5 mol/kg: ~5%, 1.0
-   * mol/kg: ~10%, 2.0 mol/kg: ~18%, matching k_s ~ 0.1 L/mol.
+   * Calibration 2024-12: These parameters compensate for excessive salting out from the SR2 term's packing fraction
+   * derivative (FSR2eps * epsi). The positive Wij values reduce the net dFSR2dN contribution for CO2/CH4. Validation
+   * results for CO2 in NaCl at 298 K: 0.5 mol/kg: ~5%, 1.0 mol/kg: ~10%, 2.0 mol/kg: ~18%, matching k_s ~ 0.1 L/mol.
    * </p>
    *
    * <p>
-   * <b>Limitation:</b> These parameters are calibrated for Na+/Cl- solutions. Other ion pairs may
-   * show different salting-out behavior due to varying implicit contributions from the FSR2eps*epsi
-   * term. For accurate predictions with ions like K+, MDEA+, HCO3-, or Ca++, ion-specific
-   * parameters should be fitted.
+   * <b>Limitation:</b> These parameters are calibrated for Na+/Cl- solutions. Other ion pairs may show different
+   * salting-out behavior due to varying implicit contributions from the FSR2eps*epsi term. For accurate predictions
+   * with ions like K+, MDEA+, HCO3-, or Ca++, ion-specific parameters should be fitted.
    * </p>
    */
   public static double[] furstParamsGasIon = {
@@ -622,14 +595,95 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
       1.27e-4, // [1] W_CO2-anion
       // CH4-ion interactions - k_s ~ 0.12 L/mol for CH4
       1.05e-4, // [2] W_CH4-cation
-      1.05e-4 // [3] W_CH4-anion
+      1.05e-4, // [3] W_CH4-anion
+      // C2H6 (ethane) - ion interactions - k_s ~ 0.13 L/mol
+      1.10e-4, // [4] W_C2H6-cation
+      1.10e-4, // [5] W_C2H6-anion
+      // C3H8 (propane) - ion interactions - k_s ~ 0.14 L/mol
+      1.15e-4, // [6] W_C3H8-cation
+      1.15e-4, // [7] W_C3H8-anion
+      // C4 (butanes) - ion interactions - k_s ~ 0.15 L/mol
+      1.20e-4, // [8] W_C4-cation
+      1.20e-4, // [9] W_C4-anion
+      // C5+ (pentanes and heavier) - ion interactions - k_s ~ 0.16 L/mol
+      1.25e-4, // [10] W_C5plus-cation
+      1.25e-4, // [11] W_C5plus-anion
+      // N2 (nitrogen) - ion interactions - k_s ~ 0.10-0.12 L/mol (similar to CH4)
+      1.05e-4, // [12] W_N2-cation
+      1.05e-4, // [13] W_N2-anion
+      // H2S (hydrogen sulfide) - ion interactions - k_s ~ 0.06-0.08 L/mol
+      // H2S is polar and acidic, interacts more strongly with water than hydrocarbons
+      1.10e-4, // [14] W_H2S-cation
+      1.10e-4, // [15] W_H2S-anion
+      // H2 (hydrogen) - ion interactions - k_s ~ 0.10 L/mol
+      // H2 is very small and may require larger parameters to overcome implicit effects
+      1.30e-4, // [16] W_H2-cation
+      1.30e-4 // [17] W_H2-anion
+  };
+
+  /**
+   * Parameters for organic inhibitor-ion interactions to ensure additive hydrate inhibition.
+   *
+   * <p>
+   * According to the Hu-Lee-Sum universal correlation for gas hydrate suppression temperature (AIChE Journal 2017, DOI:
+   * 10.1002/aic.15868; AIChE Journal 2018, DOI: 10.1002/aic.16generalized), the water activity effects from salts and
+   * organic inhibitors should be ADDITIVE for hydrate equilibrium calculations: ln(a_w) = ln(a_w^salt) + ln(a_w^OI)
+   * </p>
+   *
+   * <p>
+   * The hydrate equilibrium temperature shift follows: ΔT/(T₀T) = -β_gas × ln(a_w)
+   * </p>
+   *
+   * <p>
+   * Where:
+   * </p>
+   * <ul>
+   * <li>ΔT = T₀ - T (temperature suppression in K)</li>
+   * <li>T₀ = hydrate equilibrium temperature without inhibitor (K)</li>
+   * <li>T = hydrate equilibrium temperature with inhibitor (K)</li>
+   * <li>β_gas = gas-specific constant (depends on hydrate structure)</li>
+   * <li>a_w = water activity in the aqueous phase</li>
+   * </ul>
+   *
+   * <p>
+   * Without explicit organic inhibitor-ion (OI-ion) interaction parameters, the combined effect of salt + organic
+   * inhibitor may not be additive due to implicit cross-interactions in the electrolyte model. These parameters ensure
+   * the additive behavior expected from Hu-Lee-Sum.
+   * </p>
+   *
+   * <p>
+   * Structure: [0] W_MeOH-cation, [1] W_MeOH-anion, [2] W_MEG-cation, [3] W_MEG-anion, [4] W_EtOH-cation, [5]
+   * W_EtOH-anion
+   * </p>
+   *
+   * <p>
+   * Parameters fitted 2024-12 to ensure:
+   * </p>
+   * <ul>
+   * <li>Methanol + NaCl gives MORE hydrate inhibition than methanol alone</li>
+   * <li>MEG + NaCl gives MORE hydrate inhibition than MEG alone</li>
+   * <li>Effects are approximately additive per Hu-Lee-Sum correlation</li>
+   * </ul>
+   */
+  public static double[] furstParamsOIIon = {
+      // Methanol-ion interactions - fitted for additive hydrate inhibition with NaCl
+      // Positive values enhance salting-out of methanol (consistent with Hu-Lee-Sum)
+      1.5e-4, // [0] W_MeOH-cation
+      1.5e-4, // [1] W_MeOH-anion
+      // MEG-ion interactions - set to 0.0 to use default calculation (already works correctly)
+      0.0, // [2] W_MEG-cation
+      0.0, // [3] W_MEG-anion
+           // Ethanol-ion interactions
+      1.3e-4, // [4] W_EtOH-cation
+      1.3e-4 // [5] W_EtOH-anion
   };
 
   /**
    * Get gas-ion interaction parameter.
    *
-   * @param i index: 0-3=legacy fixed params, 4=CO2-ion slope, 5=CO2-ion intercept, 6=CH4-ion slope,
-   *        7=CH4-ion intercept
+   * @param i index: 0=W_CO2-cation, 1=W_CO2-anion, 2=W_CH4-cation, 3=W_CH4-anion, 4=W_C2H6-cation, 5=W_C2H6-anion,
+   * 6=W_C3H8-cation, 7=W_C3H8-anion, 8=W_C4-cation, 9=W_C4-anion, 10=W_C5plus-cation, 11=W_C5plus-anion,
+   * 12=W_N2-cation, 13=W_N2-anion, 14=W_H2S-cation, 15=W_H2S-anion, 16=W_H2-cation, 17=W_H2-anion
    * @return the Wij parameter value
    */
   public static double getFurstParamGasIon(int i) {
@@ -639,8 +693,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   /**
    * Set gas-ion interaction parameter.
    *
-   * @param i index: 0-3=legacy fixed params, 4=CO2-ion slope, 5=CO2-ion intercept, 6=CH4-ion slope,
-   *        7=CH4-ion intercept
+   * @param i index: 0-3=legacy fixed params, 4=CO2-ion slope, 5=CO2-ion intercept, 6=CH4-ion slope, 7=CH4-ion intercept
    * @param value the Wij parameter value to set
    */
   public static void setFurstParamGasIon(int i, double value) {
@@ -648,12 +701,32 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
   }
 
   /**
+   * Get organic inhibitor-ion interaction parameter.
+   *
+   * @param i index: 0=W_MeOH-cation, 1=W_MeOH-anion, 2=W_MEG-cation, 3=W_MEG-anion, 4=W_EtOH-cation, 5=W_EtOH-anion
+   * @return the Wij parameter value
+   */
+  public static double getFurstParamOIIon(int i) {
+    return furstParamsOIIon[i];
+  }
+
+  /**
+   * Set organic inhibitor-ion interaction parameter.
+   *
+   * @param i index: 0=W_MeOH-cation, 1=W_MeOH-anion, etc.
+   * @param value the Wij parameter value to set
+   */
+  public static void setFurstParamOIIon(int i, double value) {
+    furstParamsOIIon[i] = value;
+  }
+
+  /**
    * Compute predictive Wij slope parameter based on solvent dielectric constant.
    *
    * <p>
-   * This method provides a universal correlation for the cation-solvent Wij slope parameter based
-   * on the solvent's dielectric constant. The correlation is fitted to reproduce the behavior of
-   * water, methanol, ethanol, MEG, MEA, and MDEA at 298.15 K.
+   * This method provides a universal correlation for the cation-solvent Wij slope parameter based on the solvent's
+   * dielectric constant. The correlation is fitted to reproduce the behavior of water, methanol, ethanol, MEG, MEA, and
+   * MDEA at 298.15 K.
    * </p>
    *
    * <p>
@@ -683,9 +756,9 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * Compute predictive Wij intercept parameter based on solvent dielectric constant.
    *
    * <p>
-   * This method provides a universal correlation for the cation-solvent Wij intercept parameter
-   * based on the solvent's dielectric constant. The correlation is fitted to reproduce the behavior
-   * of water, methanol, ethanol, MEG, MEA, and MDEA at 298.15 K.
+   * This method provides a universal correlation for the cation-solvent Wij intercept parameter based on the solvent's
+   * dielectric constant. The correlation is fitted to reproduce the behavior of water, methanol, ethanol, MEG, MEA, and
+   * MDEA at 298.15 K.
    * </p>
    *
    * <p>
@@ -714,9 +787,9 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * Compute predictive Wij parameter for a cation-solvent pair based on dielectric constant.
    *
    * <p>
-   * This is the main entry point for the predictive mixed-solvent electrolyte model. It computes
-   * the short-range Wij interaction parameter between a cation and a neutral solvent molecule using
-   * only the solvent's dielectric constant as a descriptor.
+   * This is the main entry point for the predictive mixed-solvent electrolyte model. It computes the short-range Wij
+   * interaction parameter between a cation and a neutral solvent molecule using only the solvent's dielectric constant
+   * as a descriptor.
    * </p>
    *
    * <p>
@@ -724,8 +797,8 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * </p>
    *
    * <p>
-   * For mixed solvents, compute the mixture dielectric constant first (e.g., mole-fraction weighted
-   * average), then call this method.
+   * For mixed solvents, compute the mixture dielectric constant first (e.g., mole-fraction weighted average), then call
+   * this method.
    * </p>
    *
    * @param epsilon the solvent (or mixture) dielectric constant
@@ -743,16 +816,15 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * Compute mixture dielectric constant from component contributions.
    *
    * <p>
-   * Uses a simple mole-fraction weighted average for the dielectric constant. This is a reasonable
-   * approximation for polar solvent mixtures at moderate concentrations.
+   * Uses a simple mole-fraction weighted average for the dielectric constant. This is a reasonable approximation for
+   * polar solvent mixtures at moderate concentrations.
    * </p>
    *
    * @param moleFractions array of mole fractions for each solvent component
    * @param dielectricConstants array of dielectric constants for each solvent component
    * @return the mixture dielectric constant
    */
-  public static double getMixtureDielectricConstant(double[] moleFractions,
-      double[] dielectricConstants) {
+  public static double getMixtureDielectricConstant(double[] moleFractions, double[] dielectricConstants) {
     double epsMix = 0.0;
     double totalMoleFrac = 0.0;
     for (int i = 0; i < moleFractions.length; i++) {
@@ -776,15 +848,15 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * Ion-specific Wij parameters for problematic electrolytes.
    *
    * <p>
-   * These parameters override the generalized linear correlations for specific ion pairs that
-   * exhibit non-standard behavior (e.g., nitrates, sulfates with certain cations).
+   * These parameters override the generalized linear correlations for specific ion pairs that exhibit non-standard
+   * behavior (e.g., nitrates, sulfates with certain cations).
    * </p>
    *
    * <p>
    * Fitted to Robinson &amp; Stokes (1965) data where generalized correlations give &gt;15% error.
    * </p>
    */
-  private static java.util.Map<String, double[]> ionSpecificWij = null;
+  private static volatile java.util.Map<String, double[]> ionSpecificWij = null;
 
   /**
    * Get ion-specific Wij parameters for a cation-anion pair.
@@ -793,7 +865,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * @param anion the anion name (e.g., "NO3-")
    * @return array {Wij_cation_water, Wij_cation_anion} or null if not specified
    */
-  public static double[] getIonSpecificWij(String cation, String anion) {
+  public static synchronized double[] getIonSpecificWij(String cation, String anion) {
     if (ionSpecificWij == null) {
       initializeIonSpecificWij();
     }
@@ -808,7 +880,7 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * @param anion the anion name
    * @return true if ion-specific parameters exist
    */
-  public static boolean hasIonSpecificWij(String cation, String anion) {
+  public static synchronized boolean hasIonSpecificWij(String cation, String anion) {
     if (ionSpecificWij == null) {
       initializeIonSpecificWij();
     }
@@ -846,18 +918,18 @@ public final class FurstElectrolyteConstants implements java.io.Serializable {
    * @param wijCatWater Wij for cation-water interaction
    * @param wijCatAnion Wij for cation-anion interaction
    */
-  public static void setIonSpecificWij(String cation, String anion, double wijCatWater,
+  public static synchronized void setIonSpecificWij(String cation, String anion, double wijCatWater,
       double wijCatAnion) {
     if (ionSpecificWij == null) {
       initializeIonSpecificWij();
     }
-    ionSpecificWij.put(cation + "-" + anion, new double[] {wijCatWater, wijCatAnion});
+    ionSpecificWij.put(cation + "-" + anion, new double[] { wijCatWater, wijCatAnion });
   }
 
   /**
    * Clear all ion-specific Wij parameters.
    */
-  public static void clearIonSpecificWij() {
+  public static synchronized void clearIonSpecificWij() {
     if (ionSpecificWij != null) {
       ionSpecificWij.clear();
     }

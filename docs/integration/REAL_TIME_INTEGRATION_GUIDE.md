@@ -1,3 +1,8 @@
+---
+title: NeqSim Real-Time Digitalization Integration Guide
+description: This guide shows how to integrate NeqSim process simulations with your existing digitalization ecosystem, including live data feedback, SCADA/PLC interfaces, and historian systems.
+---
+
 # NeqSim Real-Time Digitalization Integration Guide
 
 ## Overview

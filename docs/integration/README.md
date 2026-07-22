@@ -1,3 +1,8 @@
+---
+title: Integration Guides
+description: Documentation for integrating NeqSim with external systems and platforms.
+---
+
 # Integration Guides
 
 Documentation for integrating NeqSim with external systems and platforms.
@@ -16,35 +21,67 @@ This folder contains guides for integrating NeqSim with machine learning platfor
 
 | Document | Description |
 |----------|-------------|
-| [ai_validation_framework.md](ai_validation_framework.md) | **AI-friendly validation framework with structured error handling** |
-| [ai_platform_integration.md](ai_platform_integration.md) | AI platform integration guide |
-| [ml_integration.md](ml_integration.md) | Machine learning integration |
+| [agents_and_skills_setup.md](agents_and_skills_setup) | **Start here — install the `neqsim` CLI and agents/skills into VS Code; link to private enterprise setup** |
+| [ai_validation_framework.md](ai_validation_framework) | **AI-friendly validation framework with structured error handling** |
+| [ai_platform_integration.md](ai_platform_integration) | AI platform integration guide |
+| [ml_integration.md](ml_integration) | Machine learning integration |
+| [ai_agentic_programming_intro.md](ai_agentic_programming_intro) | **Introduction to agentic engineering with NeqSim — concepts, architecture, getting started** |
+| [ai_agents_reference.md](ai_agents_reference) | **Complete catalog of all 16 AI agents and 14 skills** |
+| [ai_workflow_examples.md](ai_workflow_examples) | **Step-by-step walkthroughs of agent-driven engineering workflows** |
+| [skills_guide.md](skills_guide) | **Creating, using, and managing skills — core, community, and local private** |
+| [paperlab_vscode_install.md](paperlab_vscode_install) | **PaperLab CLI commands and VS Code Chat install flow** |
+| [agentic_capability_rating.md](agentic_capability_rating) | **Dimensional capability rating for NeqSim's agentic process simulation stack** |
 
 ### Control Systems
 
 | Document | Description |
 |----------|-------------|
-| [mpc_integration.md](mpc_integration.md) | Model Predictive Control integration |
-| [neqsim_industrial_mpc_integration.md](neqsim_industrial_mpc_integration.md) | Industrial MPC integration |
+| [mpc_integration.md](mpc_integration) | Model Predictive Control integration |
+| [neqsim_industrial_mpc_integration.md](neqsim_industrial_mpc_integration) | Industrial MPC integration |
 
 ### Real-Time Systems
 
 | Document | Description |
 |----------|-------------|
-| [REAL_TIME_INTEGRATION_GUIDE.md](REAL_TIME_INTEGRATION_GUIDE.md) | Real-time systems integration |
-| [QRA_INTEGRATION_GUIDE.md](QRA_INTEGRATION_GUIDE.md) | Quantitative Risk Assessment integration |
+| [REAL_TIME_INTEGRATION_GUIDE.md](REAL_TIME_INTEGRATION_GUIDE) | Real-time systems integration |
+| [QRA_INTEGRATION_GUIDE.md](QRA_INTEGRATION_GUIDE) | Quantitative Risk Assessment integration |
+
+### Data Historians and Analytics Platforms
+
+| Document | Description |
+|----------|-------------|
+| [seeq_datalab.md](seeq_datalab) | **Using NeqSim in Seeq Data Lab — JDK setup, NeqSim install, pulling signals with SPy, running calculations on plant data, and pushing results back** |
+
+### Web API and Online Simulation
+
+| Document | Description |
+|----------|-------------|
+| [web_api_json_process_builder.md](web_api_json_process_builder) | **JSON Process Builder, structured error responses, stream wiring API, and session management for online simulators** |
+
+### MCP / Model Context Protocol
+
+| Document | Description |
+|----------|-------------|
+| [mcp_getting_started.md](mcp_getting_started) | **Getting Started — 5-minute guide to connecting any LLM to NeqSim via MCP** |
+| [mcp_neqsim_core_layer.md](mcp_neqsim_core_layer) | **MCP core layer — FlashRunner, ProcessRunner, Validator, ComponentQuery, typed models, example/schema catalogs** |
+| [mcp_server_guide.md](mcp_server_guide) | **NeqSim MCP Server — Quarkus-based server for VS Code Copilot, Claude Desktop, and other LLM clients** |
+| [mcp_agentic_workflow_improvements.md](mcp_agentic_workflow_improvements) | **Agentic MCP improvements — standard response contracts, all-tool schema/example coverage, setup templates, process JSON contracts, benchmark trust, lifecycle metadata, safety gates, and coverage tests** |
 
 ### P&ID and Design
 
 | Document | Description |
 |----------|-------------|
-| [dexpi-reader.md](dexpi-reader.md) | DEXPI P&ID import/export and diagram generation |
+| [dexpi-reader.md](dexpi-reader) | **DEXPI P&ID import/export with ISO 10628 shapes, auto-layout, instruments, mechanical design data, configurable visualization, and round-trip support** |
+| [dexpi-engineering-generation.md](dexpi-engineering-generation) | **Standards-based engineering compiler with a canonical graph, design-case envelopes, revision impact, coordinated equipment/line/instrument/valve/SIF/relief/evidence registers, installed relief and disposal screening, enhanced SIF/PFD/PFH, dynamic shutdown evidence, validation, integrity hashes, and ProcessModel support** |
+| [process-to-engineering-workflow.md](process-to-engineering-workflow) | **End-to-end implementation guide from ProcessSystem/ProcessModel through design cases, calculation DAGs, approvals, validated registers, DEXPI P&IDs, automation studies, and revision-controlled engineering handoff** |
+| [engineering-simulator-foundations.md](engineering-simulator-foundations) | **Deterministic isolated design cases, typed calculation provenance and uncertainty, coupled PSV/blowdown/flare envelopes, and dynamic control/SIS response testing** |
+| [process-to-engineering-simulator.md](process-to-engineering-simulator) | **Closed-loop process cases, equipment/piping/valve/instrument/safety/material/mechanical design, convergence, and designed-process DEXPI handoff** |
+| [complete-offshore-process-engineering-study.md](complete-offshore-process-engineering-study) | **Full `comparesimulations` offshore oil-and-gas train: published benchmark, seven-case design loop, every discipline calculation, coordinated DEXPI package, results, and fail-closed readiness gaps** |
 
 ---
 
 ## Related Documentation
 
-- [Process Package](../process/README.md) - Process simulation
-- [Simulation Guides](../simulation/README.md) - Advanced simulation
-- [PFD Diagram Export](../process/processmodel/diagram_export.md) - Professional diagram generation
-
+- [Process Package](../process/) - Process simulation
+- [Simulation Guides](../simulation/) - Advanced simulation
+- [PFD Diagram Export](../process/processmodel/diagram_export) - Professional diagram generation

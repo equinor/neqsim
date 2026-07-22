@@ -12,9 +12,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TSFlash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -27,9 +25,7 @@ public class TSFlash extends QfuncFlash {
   Flash tpFlash;
 
   /**
-   * <p>
    * Constructor for TSFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Sspec a double
@@ -62,9 +58,9 @@ public class TSFlash extends QfuncFlash {
   }
 
   /**
-   * Calculate the gradient of Q with respect to pressure for TS-flash. For isentropic flash at
-   * fixed T, we solve for P such that S(T,P) = Sspec. Q = Sspec - S, so dQ/dP = -dS/dP. By Maxwell
-   * relation: (dS/dP)_T = -(dV/dT)_P Therefore: dQ/dP = -(-dV/dT) = dV/dT
+   * Calculate the gradient of Q with respect to pressure for TS-flash. For isentropic flash at fixed T, we solve for P
+   * such that S(T,P) = Sspec. Q = Sspec - S, so dQ/dP = -dS/dP. By Maxwell relation: (dS/dP)_T = -(dV/dT)_P Therefore:
+   * dQ/dP = -(-dV/dT) = dV/dT
    *
    * @return gradient dQ/dP
    */
@@ -75,8 +71,8 @@ public class TSFlash extends QfuncFlash {
   }
 
   /**
-   * Calculate the second derivative of Q with respect to pressure for TS-flash. d²Q/dP² =
-   * d(dV/dT)/dP This approximation uses finite differencing concept for stability.
+   * Calculate the second derivative of Q with respect to pressure for TS-flash. d²Q/dP² = d(dV/dT)/dP This
+   * approximation uses finite differencing concept for stability.
    *
    * @return second derivative d²Q/dP²
    */
@@ -134,7 +130,7 @@ public class TSFlash extends QfuncFlash {
       }
 
       // Apply damping factor that increases with iterations
-      factor = (double) iterations / (iterations + 5.0);
+      factor = iterations / (iterations + 5.0);
       nyPres = oldPres + factor * deltaP;
 
       // Ensure pressure stays positive and physical
@@ -154,23 +150,31 @@ public class TSFlash extends QfuncFlash {
   }
 
   /**
-   * <p>
    * onPhaseSolve.
-   * </p>
    */
-  public void onPhaseSolve() {}
+  public void onPhaseSolve() {
+  }
 
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    solveQ();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values
+    // left by a previous unrelated flash. Warm-start is then enabled for the
+    // inner TPflash iterations within the outer TS-flash loop — safe because
+    // the outer loop converges on P via entropy residual.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

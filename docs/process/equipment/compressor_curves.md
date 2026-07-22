@@ -1,3 +1,8 @@
+---
+title: Compressor Curves and Performance Maps
+description: Detailed documentation for compressor performance curves in NeqSim, including multi-speed and single-speed compressor handling, automatic curve generation, and predefined templates.
+---
+
 # Compressor Curves and Performance Maps
 
 Detailed documentation for compressor performance curves in NeqSim, including multi-speed and single-speed compressor handling, automatic curve generation, and predefined templates.
@@ -14,11 +19,16 @@ Detailed documentation for compressor performance curves in NeqSim, including mu
 - [Distance to Operating Limits](#distance-to-operating-limits)
 - [**Speed Calculation from Operating Point**](#speed-calculation-from-operating-point) ⭐ NEW
 - [Anti-Surge Control](#anti-surge-control)
+- [**Inlet Guide Vane (IGV) Control**](#inlet-guide-vane-igv-control) ⭐ NEW
 - [**Loading Compressor Curves from Files**](#loading-compressor-curves-from-files) ⭐ NEW
   - [Loading from JSON Files](#loading-from-json-files)
   - [Loading from CSV Files](#loading-from-csv-files)
   - [CompressorChartJsonReader Class](#compressorchartjsonreader-class)
   - [Best Practices for File-Based Curves](#best-practices-for-file-based-curves)
+- [**Compressor Chart Library (Multiple Named Charts)**](#compressor-chart-library-multiple-named-charts) ⭐ NEW
+  - [Selecting Between Charts](#selecting-between-charts)
+  - [Chart Metadata](#chart-metadata)
+  - [Saving and Loading a Chart Database](#saving-and-loading-a-chart-database)
 - [API Reference](#api-reference)
 - [Python Examples](#python-examples)
 - [**Automatic Curve Generation**](#automatic-curve-generation) ⭐ NEW
@@ -55,6 +65,8 @@ NeqSim supports comprehensive compressor performance modeling through compressor
 | `SafeSplineStoneWallCurve` | Spline-based stone wall (choke) curve |
 | `CompressorCurve` | Individual speed curve (flow, head, efficiency) |
 | `CompressorMechanicalLosses` | **Seal gas and bearing loss calculations** (API 692/617) |
+| `CompressorChartLibrary` | **Named bundle/database of several charts** for one compressor (select by name, JSON round-trip) |
+| `CompressorChartMetadata` | **Self-describing metadata** for a chart (casing/model, service, tag, document, curve type, reference conditions) |
 
 ### Compressor Operating Envelope
 
@@ -91,7 +103,7 @@ Compressor performance maps are generated at specific **reference conditions**:
 
 When the **actual operating fluid** differs from the reference:
 - Flow capacity changes
-- Head capacity changes  
+- Head capacity changes
 - Surge and stone wall limits shift
 
 ### Solution: CompressorChartKhader2015
@@ -558,25 +570,25 @@ chart.setAutoGenerateStoneWallCurves(true);
 double[] speeds = {10000, 11000, 12000};  // Multiple speeds (RPM)
 
 // Map at MW = 18 g/mol
-double[][] flow18 = {{3000, 3500, 4000, 4500, 5000}, 
+double[][] flow18 = {{3000, 3500, 4000, 4500, 5000},
                      {3300, 3800, 4300, 4800, 5300},
                      {3600, 4100, 4600, 5100, 5600}};
-double[][] head18 = {{120, 115, 108, 98, 85}, 
+double[][] head18 = {{120, 115, 108, 98, 85},
                      {138, 132, 124, 113, 98},
                      {158, 151, 142, 130, 113}};
-double[][] eff18 = {{75, 78, 80, 78, 73}, 
+double[][] eff18 = {{75, 78, 80, 78, 73},
                     {74, 77, 79, 77, 72},
                     {73, 76, 78, 76, 71}};
 chart.addMapAtMW(18.0, speeds, flow18, head18, eff18);  // No chartConditions needed!
 
 // Map at MW = 22 g/mol
-double[][] flow22 = {{2800, 3300, 3800, 4300, 4800}, 
+double[][] flow22 = {{2800, 3300, 3800, 4300, 4800},
                      {3100, 3600, 4100, 4600, 5100},
                      {3400, 3900, 4400, 4900, 5400}};
-double[][] head22 = {{100, 96, 90, 82, 71}, 
+double[][] head22 = {{100, 96, 90, 82, 71},
                      {115, 110, 103, 94, 82},
                      {132, 126, 118, 108, 94}};
-double[][] eff22 = {{73, 76, 78, 76, 71}, 
+double[][] eff22 = {{73, 76, 78, 76, 71},
                     {72, 75, 77, 75, 70},
                     {71, 74, 76, 74, 69}};
 chart.addMapAtMW(22.0, speeds, flow22, head22, eff22);
@@ -1187,6 +1199,11 @@ if comp.isHigherThanMaxSpeed():
 
 ## Anti-Surge Control
 
+For a dynamic example that combines explicit compressor maps, pressure-driven speed control,
+anti-surge recycle, predictive margin supervision, and coordinated pressure-speed-recycle
+override behavior, see [Compressor Anti-Surge and Coordinated Control](compressor_antisurge_control)
+and the [dynamic compressor good maps notebook](../../../examples/notebooks/process/dynamic_compressor_good_maps.ipynb).
+
 ### Surge Control Factor
 
 The anti-surge system adds a safety margin to the surge limit:
@@ -1548,6 +1565,94 @@ reader.setCurvesToCompressor(compressor);
 
 ---
 
+## Compressor Chart Library (Multiple Named Charts)
+
+A single `Compressor` can hold **several performance maps at once** through a
+`CompressorChartLibrary` (a named "bundle" or database of charts). This is the
+professional way to keep, for example, the *vendor expected* curve, the
+*as-tested* (shop test) curve, and a *field-fitted* curve side by side and
+switch the active chart with one call — instead of rebuilding the chart every
+time or juggling separate `CompressorChart` objects.
+
+Each chart is stored under a unique name together with optional descriptive
+`CompressorChartMetadata`, and the whole library can be serialized to and from
+JSON so a shared database of vendor curves can be maintained and reused.
+
+### Selecting Between Charts
+
+```java
+Compressor compressor = new Compressor("K-100", inletStream);
+
+// Add several named charts to this compressor's library (fluent, chainable).
+compressor.addChart("BCL405B-export-design", expectedChart);
+compressor.addChart("BCL405B-export-tested", asTestedChart);
+compressor.addChart("BCL405B-export-fieldfit", fieldFittedChart);
+
+// Switch the active performance chart with a single call.
+// selectChart() sets the chart, enables it, and turns on polytropic calc.
+compressor.selectChart("BCL405B-export-tested");
+
+List<String> names = compressor.getAvailableCharts();   // all chart names
+String active = compressor.getSelectedChartName();       // "BCL405B-export-tested"
+
+compressor.run();
+```
+
+> `selectChart(name)` is equivalent to calling `setCompressorChart(chart)`,
+> `chart.setUseCompressorChart(true)` and `setUsePolytropicCalc(true)` in one
+> step. It throws `IllegalArgumentException` if the name is not in the library.
+
+### Chart Metadata
+
+Attach `CompressorChartMetadata` so a chart is self-describing — which
+casing/model it belongs to, the service and tag it was issued for, the source
+document, whether it is an expected / as-tested / generated / field-fitted
+curve, and the reference (basis) conditions it was measured at:
+
+```java
+CompressorChartMetadata meta = new CompressorChartMetadata(
+    "BCL 405/B",              // casing / model
+    "pipeline gas export",     // service
+    "27-KA01",                 // equipment tag
+    "8300199-CA-001 sheet 14", // source document reference
+    CompressorChartMetadata.CurveType.AS_TESTED);
+meta.setReferenceConditions(18.5, 288.15, 60.0, 0.90); // MW, T[K], P[bara], Z
+meta.setDescription("Shop test curve, 2024 acceptance test");
+
+compressor.addChart("BCL405B-export-tested", asTestedChart, meta);
+```
+
+`CurveType` values: `EXPECTED` (vendor design), `AS_TESTED` (shop test),
+`GENERATED` (NeqSim-generated, anchored to a rated point), `FIELD_FITTED`
+(fitted to historian data), and `UNSPECIFIED`.
+
+### Saving and Loading a Chart Database
+
+The library serializes to JSON — a compact catalog for browsing/selection UIs
+(`describe()`, names + metadata only) or a full round-trippable form
+(`toJson()` / `fromJson()`, including all curves and surge lines):
+
+```java
+CompressorChartLibrary lib = compressor.getChartLibrary();
+
+// Browse catalog (names + metadata + selected flag; no curve data):
+String catalog = lib.describe();
+
+// Persist / reload the full library (all curves + metadata):
+lib.saveToFile("BCL405B_charts.json");
+CompressorChartLibrary loaded = CompressorChartLibrary.loadFromFile("BCL405B_charts.json");
+compressor.setChartLibrary(loaded);
+compressor.selectChart(loaded.getSelectedName());
+```
+
+**When to use the library:** vendor curve databases shared across studies,
+comparing design vs as-tested vs field-fitted performance for the same machine,
+CO₂/revamp what-if studies that swap impellers/curves, and digital-twin
+workflows that keep both the datasheet curve and a historian-fitted curve on the
+same compressor.
+
+---
+
 ## API Reference
 
 ### CompressorChartInterface Methods
@@ -1673,6 +1778,43 @@ reader.setCurvesToCompressor(compressor);
 | `getRatioToMinSpeed()` | Get ratio of current speed to min speed |
 | `getRatioToMinSpeed(speed)` | Get ratio of given speed to min speed |
 
+### Compressor Chart Library Methods
+
+| Method | Description |
+|--------|-------------|
+| `getChartLibrary()` | Get the compressor's `CompressorChartLibrary` (created empty on first access, never null) |
+| `setChartLibrary(library)` | Attach an existing chart library to the compressor |
+| `addChart(name, chart)` | Add a named chart to the library (fluent, returns the compressor) |
+| `addChart(name, chart, metadata)` | Add a named chart with descriptive metadata |
+| `selectChart(name)` | Switch the active chart: sets it, enables it, turns on polytropic calc |
+| `getAvailableCharts()` | List the names of all charts in the library |
+| `getSelectedChartName()` | Get the name of the currently active library chart |
+
+### CompressorChartLibrary Methods
+
+| Method | Description |
+|--------|-------------|
+| `add(name, chart)` / `add(name, chart, metadata)` | Store a chart under a unique name (first added becomes selected) |
+| `get(name)` / `getMetadata(name)` | Retrieve a chart or its metadata by name |
+| `contains(name)` / `size()` / `getNames()` | Membership, count, and ordered name list |
+| `select(name)` | Select a chart by name (throws if not present) |
+| `getSelected()` / `getSelectedName()` | Current active chart / its name |
+| `remove(name)` | Remove a chart (re-selects another if the active one is removed) |
+| `describe()` | Compact JSON catalog (names + metadata + selected flag; no curve data) |
+| `toJson()` / `fromJson(json)` | Full round-trippable serialization (all curves + surge lines + metadata) |
+| `saveToFile(path)` / `loadFromFile(path)` | Persist / reload the full library as a JSON file |
+
+### CompressorChartMetadata Methods
+
+| Method | Description |
+|--------|-------------|
+| `CompressorChartMetadata(casingModel, service, tag, docRef, curveType)` | Convenience constructor for the common descriptive fields |
+| `setReferenceConditions(MW, T_K, P_bara, Z)` | Set the reference (basis) conditions the curve was measured at |
+| `getCasingModel()` / `getService()` / `getTag()` / `getDocumentReference()` | Descriptive accessors |
+| `getCurveType()` / `setCurveType(type)` | Curve origin: `EXPECTED`, `AS_TESTED`, `GENERATED`, `FIELD_FITTED`, `UNSPECIFIED` |
+| `getMolecularWeight()` / `getReferenceTemperature()` / `getReferencePressure()` / `getCompressibilityZ()` | Reference-condition accessors |
+| `getDescription()` / `setDescription(text)` | Free-text description |
+
 ---
 
 ## Python Examples
@@ -1746,14 +1888,14 @@ compressor.setSpeed(10250)
 
 # Set single-point surge and stone wall
 compressor.getCompressorChart().getSurgeCurve().setCurve(
-    chartConditions, 
+    chartConditions,
     [5607.45],   # Single surge flow point
     [150.0]      # Single surge head point
 )
 
 compressor.getCompressorChart().getStoneWallCurve().setCurve(
     chartConditions,
-    [9758.49],   # Single stone wall flow point  
+    [9758.49],   # Single stone wall flow point
     [112.65]     # Single stone wall head point
 )
 
@@ -2147,13 +2289,13 @@ public class CompressorCurveGenerationExample {
         gas.addComponent("ethane", 0.10);
         gas.addComponent("propane", 0.05);
         gas.setMixingRule("classic");
-        
+
         Stream inlet = new Stream("inlet", gas);
         inlet.setFlowRate(15000.0, "kg/hr");
         inlet.setTemperature(25.0, "C");
         inlet.setPressure(40.0, "bara");
         inlet.run();
-        
+
         // 2. Create compressor at design point
         Compressor comp = new Compressor("K-100", inlet);
         comp.setOutletPressure(120.0, "bara");
@@ -2161,40 +2303,40 @@ public class CompressorCurveGenerationExample {
         comp.setPolytropicEfficiency(0.78);
         comp.setSpeed(9500);
         comp.run();
-        
+
         System.out.println("=== Design Point ===");
         System.out.println("Flow: " + String.format("%.1f", inlet.getFlowRate("m3/hr")) + " m³/hr");
         System.out.println("Head: " + String.format("%.1f", comp.getPolytropicFluidHead()) + " kJ/kg");
         System.out.println("Power: " + String.format("%.1f", comp.getPower("kW")) + " kW");
-        
+
         // 3. Generate curves using EXPORT template (offshore gas export)
         CompressorChartGenerator generator = new CompressorChartGenerator(comp);
         generator.setChartType("interpolate and extrapolate");
         generator.enableAdvancedCorrections(6);  // 6-stage compressor
-        
+
         CompressorChartInterface chart = generator.generateFromTemplate("EXPORT", 5);
-        
+
         // 4. Apply chart and verify
         comp.setCompressorChart(chart);
         comp.run();
-        
+
         System.out.println("\n=== With Generated Chart ===");
         System.out.println("Speeds available: " + chart.getSpeeds().length);
-        System.out.println("Efficiency from chart: " + 
+        System.out.println("Efficiency from chart: " +
             String.format("%.1f", comp.getPolytropicEfficiency() * 100) + "%");
-        System.out.println("Distance to surge: " + 
+        System.out.println("Distance to surge: " +
             String.format("%.1f", comp.getDistanceToSurge() * 100) + "%");
-        
+
         // 5. Test at different operating point
         inlet.setFlowRate(12000.0, "kg/hr");
         inlet.run();
         comp.run();
-        
+
         System.out.println("\n=== Turndown Operation ===");
         System.out.println("Flow: " + String.format("%.1f", inlet.getFlowRate("m3/hr")) + " m³/hr");
-        System.out.println("Efficiency: " + 
+        System.out.println("Efficiency: " +
             String.format("%.1f", comp.getPolytropicEfficiency() * 100) + "%");
-        System.out.println("Distance to surge: " + 
+        System.out.println("Distance to surge: " +
             String.format("%.1f", comp.getDistanceToSurge() * 100) + "%");
     }
 }
@@ -2570,20 +2712,20 @@ comp.startCompressor(10000);
 while (simTime < 600.0) {  // 10 minute simulation
     // Update inlet conditions (from upstream process)
     inletStream.run();
-    
+
     // Run compressor
     comp.run();
-    
+
     // Update dynamic state (handles startup/shutdown, checks limits)
     comp.updateDynamicState(dt);
-    
+
     // Update anti-surge controller
     double surgeMargin = comp.getDistanceToSurge();
     comp.getAntiSurge().updateController(surgeMargin, dt);
-    
+
     // Record to history
     comp.recordOperatingPoint(simTime);
-    
+
     simTime += dt;
 }
 
@@ -2700,13 +2842,13 @@ while sim_time < 300.0:
     inlet_stream.run()
     comp.run()
     comp.updateDynamicState(dt)
-    
+
     # Print state periodically
     if int(sim_time) % 10 == 0 and sim_time == int(sim_time):
         print(f"t={sim_time:.0f}s: State={comp.getOperatingState()}, "
               f"Speed={comp.getSpeed():.0f} RPM, "
               f"Surge margin={comp.getDistanceToSurge()*100:.1f}%")
-    
+
     sim_time += dt
 
 # Export results
@@ -2716,7 +2858,88 @@ print(str(comp.getOperatingHistory().generateSummary()))
 
 ---
 
+## Inlet Guide Vane (IGV) Control
+
+Inlet guide vanes (IGV) are a capacity-control device on centrifugal compressors, common on
+**fixed-speed** (constant-speed motor) machines. Closing the vanes adds pre-swirl to the flow
+entering the impeller, which at a fixed speed **reduces the developed head and polytropic
+efficiency and lowers the surge flow** (shifting the surge line left, which extends turndown).
+NeqSim supports IGV in two ways.
+
+### 1. Parametric IGV model (`InletGuideVaneModel`)
+
+A generic, screening-level model that applies IGV corrections on top of the machine's existing
+fully-open chart. Use it when you do **not** have per-vane-position vendor maps. It is the
+validated end-to-end fixed-speed control (head, efficiency, and surge flow all respond).
+
+```java
+compressor.setSolveSpeed(false);              // fixed speed
+compressor.setInletGuideVaneOpening(0.8);     // close IGV to 80% (1.0 = fully open, no effect)
+// or, equivalently, by vane angle:
+compressor.setGuideVaneAngle(20.0);           // deg (mapped to an opening by the model)
+compressor.run();
+// discharge, getPolytropicEfficiency(), getSurgeFlowRate() and getDistanceToSurge()
+// all reflect the IGV setting.
+```
+
+Tune the sensitivities (or supply site-specific values) on the model:
+
+```java
+InletGuideVaneModel igv = compressor.getInletGuideVaneModel();
+igv.setHeadDrop(0.60);        // head multiplier = 1 - 0.60*(1 - opening)
+igv.setEfficiencyDrop(0.08);  // efficiency delta = -0.08*(1 - opening)  [fraction]
+igv.setSurgeFlowDrop(0.50);   // surge-flow multiplier = 1 - 0.50*(1 - opening)
+igv.setReferenceAngles(0.0, 60.0);  // fully-open / fully-closed vane angles (deg)
+```
+
+**Effect at a fixed speed** (illustrative, defaults): as the vanes close the discharge and
+efficiency fall while the surge flow drops, so the distance to surge *increases* (more turndown
+headroom):
+
+<table>
+<caption>Parametric IGV at fixed speed (illustrative)</caption>
+<tr><th>IGV opening</th><th>Discharge</th><th>Polytropic eff.</th><th>Surge flow</th><th>Distance to surge</th></tr>
+<tr><td>100 %</td><td>highest</td><td>highest</td><td>highest</td><td>lowest</td></tr>
+<tr><td>70 %</td><td>lower</td><td>lower</td><td>lower (line moves left)</td><td>higher</td></tr>
+</table>
+
+The defaults are generic linear sensitivities of the form `value = 1 - k*(1 - opening)` and are
+**not** vendor-certified — supply site data for design work.
+
+### 2. Vendor IGV-position chart family (`CompressorChartIGV`)
+
+When you have a **vendor performance map per IGV position** (each a full set of speed lines with
+flow, head and efficiency), use `CompressorChartIGV`. It interpolates the positions into a standard
+`CompressorChart` at any opening and regenerates the surge curve.
+
+```java
+CompressorChartIGV family = new CompressorChartIGV();
+family.setHeadUnit("kJ/kg");
+family.setReferenceConditions(mw, refTK, refPbara, refZ);
+// each position: opening, chartConditions, speed[], flow[][], head[][], polyEff[][]
+family.addPosition(1.0, chartConditions, speed, flow, headFullyOpen, eff);
+family.addPosition(0.5, chartConditions, speed, flow, headHalfOpen, eff);
+
+CompressorChart at75 = family.getChartAtOpening(0.75);  // interpolated map at 75% open
+
+// or attach to a compressor: the active chart is rebuilt from the family at each opening
+compressor.setInletGuideVaneChart(family);
+compressor.setInletGuideVaneOpening(0.75);  // active chart = interpolated map at 75% open
+```
+
+All positions must share the same speed lines and array shapes; openings outside the supplied
+range clamp to the nearest position. While a family is attached, the parametric `InletGuideVaneModel`
+corrections are bypassed (the chart already encodes the IGV effect).
+
+> **When to use which:** use `InletGuideVaneModel` for screening / when only a fully-open chart is
+> available (validated fixed-speed discharge control); use `CompressorChartIGV` to supply and
+> interpolate real vendor per-position maps.
+
+---
+
 ## Related Documentation
 
-- [Compressor Equipment](compressors.md) - Basic compressor usage
-- [Process Simulation](../../simulation/README.md) - Process simulation overview
+- [Compressor Equipment](compressors) - Basic compressor usage
+- [Compressor Anti-Surge and Coordinated Control](compressor_antisurge_control)
+- [CompressorShaft (multiple bodies on one shaft)](compressor_shaft)
+- [Process Simulation](../../simulation/) - Process simulation overview

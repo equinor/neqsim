@@ -7,9 +7,9 @@ import neqsim.util.unit.TemperatureUnit;
  * Specification object describing the utility side of a single-stream heater or cooler.
  *
  * <p>
- * This class stores the supply and return temperatures together with optional minimum approach,
- * heat-capacity rate and assumed overall heat-transfer coefficient so the mechanical design package
- * can derive an approximate size when only the process stream has been simulated.
+ * This class stores the supply and return temperatures together with optional minimum approach, heat-capacity rate and
+ * assumed overall heat-transfer coefficient so the mechanical design package can derive an approximate size when only
+ * the process stream has been simulated.
  * </p>
  */
 public class UtilityStreamSpecification implements Serializable {
@@ -121,20 +121,20 @@ public class UtilityStreamSpecification implements Serializable {
    */
   public void setApproachTemperature(double approach, String unit) {
     switch (unit) {
-      case "K":
-        this.approachTemperature = approach;
-        break;
-      case "C":
-        this.approachTemperature = approach;
-        break;
-      case "F":
-        this.approachTemperature = approach * 5.0 / 9.0;
-        break;
-      case "R":
-        this.approachTemperature = approach * 5.0 / 9.0;
-        break;
-      default:
-        throw new IllegalArgumentException("Unsupported unit for temperature difference: " + unit);
+    case "K":
+      this.approachTemperature = approach;
+      break;
+    case "C":
+      this.approachTemperature = approach;
+      break;
+    case "F":
+      this.approachTemperature = approach * 5.0 / 9.0;
+      break;
+    case "R":
+      this.approachTemperature = approach * 5.0 / 9.0;
+      break;
+    default:
+      throw new IllegalArgumentException("Unsupported unit for temperature difference: " + unit);
     }
   }
 

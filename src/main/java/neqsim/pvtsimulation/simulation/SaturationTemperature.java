@@ -5,18 +5,25 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SaturationPressure class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class SaturationTemperature extends BasePVTsimulation {
+  /** Minimum temperature searched for saturation boundaries, in kelvin. */
+  private static final double MINIMUM_SEARCH_TEMPERATURE_K = 30.0;
+  /** Maximum temperature searched for saturation boundaries, in kelvin. */
+  private static final double MAXIMUM_SEARCH_TEMPERATURE_K = 1200.0;
+  /** Coarse temperature step used to bracket saturation boundaries, in kelvin. */
+  private static final double SEARCH_TEMPERATURE_STEP_K = 10.0;
+  /** Temperature tolerance used when refining the saturation boundary, in kelvin. */
+  private static final double TEMPERATURE_TOLERANCE_K = 1.0e-5;
+  /** Maximum bisection iterations used when refining the saturation boundary. */
+  private static final int MAXIMUM_BISECTION_ITERATIONS = 500;
+
   /**
-   * <p>
    * Constructor for SaturationPressure.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -25,9 +32,7 @@ public class SaturationTemperature extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * calcSaturationPressure.
-   * </p>
    *
    * @return a double
    */
@@ -37,34 +42,80 @@ public class SaturationTemperature extends BasePVTsimulation {
       isMultiPhaseCheckChanged = true;
       getThermoSystem().setMultiPhaseCheck(true);
     }
-    do {
-      getThermoSystem().setTemperature(getThermoSystem().getTemperature() - 10.0);
-      thermoOps.TPflash();
-    } while (getThermoSystem().getNumberOfPhases() == 1
-        && getThermoSystem().getTemperature() > 30.0);
-    do {
-      getThermoSystem().setTemperature(getThermoSystem().getTemperature() + 10.0);
-      thermoOps.TPflash();
-    } while (getThermoSystem().getNumberOfPhases() > 1
-        && getThermoSystem().getTemperature() < 1200.0);
-    double minTemp = getThermoSystem().getTemperature() - 10.0;
-    double maxTemp = getThermoSystem().getTemperature();
+
+    try {
+      double twoPhaseTemperature = Double.NaN;
+      double singlePhaseTemperature = Double.NaN;
+      double previousTemperature = MINIMUM_SEARCH_TEMPERATURE_K;
+      boolean previousIsTwoPhase = isTwoPhaseAtTemperature(previousTemperature);
+
+      for (double trialTemperature = previousTemperature
+          + SEARCH_TEMPERATURE_STEP_K; trialTemperature <= MAXIMUM_SEARCH_TEMPERATURE_K; trialTemperature += SEARCH_TEMPERATURE_STEP_K) {
+        boolean trialIsTwoPhase = isTwoPhaseAtTemperature(trialTemperature);
+        if (previousIsTwoPhase && !trialIsTwoPhase) {
+          twoPhaseTemperature = previousTemperature;
+          singlePhaseTemperature = trialTemperature;
+        }
+        previousTemperature = trialTemperature;
+        previousIsTwoPhase = trialIsTwoPhase;
+      }
+
+      if (previousTemperature < MAXIMUM_SEARCH_TEMPERATURE_K) {
+        boolean trialIsTwoPhase = isTwoPhaseAtTemperature(MAXIMUM_SEARCH_TEMPERATURE_K);
+        if (previousIsTwoPhase && !trialIsTwoPhase) {
+          twoPhaseTemperature = previousTemperature;
+          singlePhaseTemperature = MAXIMUM_SEARCH_TEMPERATURE_K;
+        }
+      }
+
+      if (Double.isNaN(twoPhaseTemperature) || Double.isNaN(singlePhaseTemperature)) {
+        getThermoSystem().setTemperature(MAXIMUM_SEARCH_TEMPERATURE_K);
+        thermoOps.TPflash();
+        return getThermoSystem().getTemperature();
+      }
+
+      return refineUpperSaturationTemperature(twoPhaseTemperature, singlePhaseTemperature);
+    } finally {
+      if (isMultiPhaseCheckChanged) {
+        getThermoSystem().setMultiPhaseCheck(false);
+      }
+    }
+  }
+
+  /**
+   * Checks whether the system is multiphase at a trial temperature.
+   *
+   * @param trialTemperature temperature to test in kelvin
+   * @return true when the TP flash gives more than one phase
+   */
+  private boolean isTwoPhaseAtTemperature(double trialTemperature) {
+    getThermoSystem().setTemperature(trialTemperature);
+    thermoOps.TPflash();
+    return getThermoSystem().getNumberOfPhases() > 1;
+  }
+
+  /**
+   * Refines the upper saturation temperature between a two-phase and a single-phase point.
+   *
+   * @param twoPhaseTemperature lower temperature known to be inside a two-phase region, in kelvin
+   * @param singlePhaseTemperature higher temperature known to be outside the two-phase region, in kelvin
+   * @return refined upper saturation temperature in kelvin
+   */
+  private double refineUpperSaturationTemperature(double twoPhaseTemperature, double singlePhaseTemperature) {
+    double minTemp = twoPhaseTemperature;
+    double maxTemp = singlePhaseTemperature;
     int iteration = 0;
     do {
       iteration++;
-      getThermoSystem().setTemperature((minTemp + maxTemp) / 2.0);
-      thermoOps.TPflash();
-      if (getThermoSystem().getNumberOfPhases() > 1) {
-        minTemp = getThermoSystem().getTemperature();
+      double trialTemperature = (minTemp + maxTemp) / 2.0;
+      if (isTwoPhaseAtTemperature(trialTemperature)) {
+        minTemp = trialTemperature;
       } else {
-        maxTemp = getThermoSystem().getTemperature();
+        maxTemp = trialTemperature;
       }
-    } while (Math.abs(maxTemp - minTemp) > 1e-5 && iteration < 500);
+    } while (Math.abs(maxTemp - minTemp) > TEMPERATURE_TOLERANCE_K && iteration < MAXIMUM_BISECTION_ITERATIONS);
     getThermoSystem().setTemperature(maxTemp);
     thermoOps.TPflash();
-    if (isMultiPhaseCheckChanged) {
-      getThermoSystem().setMultiPhaseCheck(false);
-    }
     return getThermoSystem().getTemperature();
   }
 
@@ -76,9 +127,7 @@ public class SaturationTemperature extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -111,9 +160,8 @@ public class SaturationTemperature extends BasePVTsimulation {
     /*
      * double saturationPressure = 350.0; double saturationTemperature = 273.15 + 80;
      *
-     * TuningInterface tuning = new TuneToSaturation(satPresSim);
-     * tuning.setSaturationConditions(saturationTemperature, saturationPressure); tuning.run();
-     * tuning.getSimulation().getThermoSystem().display();
+     * TuningInterface tuning = new TuneToSaturation(satPresSim); tuning.setSaturationConditions(saturationTemperature,
+     * saturationPressure); tuning.run(); tuning.getSimulation().getThermoSystem().display();
      */
   }
 }

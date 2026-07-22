@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermTwuCoon class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
   private double f = 2.63165;
 
   /**
-   * <p>
    * Constructor for AttractiveTermTwuCoon.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -83,8 +79,7 @@ public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
   private double alphaCrit(double temperature) {
     // c = 1+m/2.0-parameters[0]*(1.0+parameters[1]+parameters[2]);
     // d = 1.0-1.0/d;
-    return Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / getComponent().getTC(), 1.0 * d))),
-        2.0);
+    return Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / getComponent().getTC(), 1.0 * d))), 2.0);
   }
 
   /**
@@ -96,8 +91,7 @@ public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
   private double diffalphaCritT(double temperature) {
     c = 1 + m / 2.0 - parameters[0] * (1.0 + parameters[1] + parameters[2]);
     d = 1.0 - 1.0 / d;
-    return -2.0 * Math
-        .pow(Math.exp(c * (1.0 - Math.pow(temperature / getComponent().getTC(), 1.0 * d))), 2.0) * c
+    return -2.0 * Math.pow(Math.exp(c * (1.0 - Math.pow(temperature / getComponent().getTC(), 1.0 * d))), 2.0) * c
         * Math.pow(temperature / getComponent().getTC(), 1.0 * d) * d / temperature;
   }
 
@@ -151,36 +145,27 @@ public class AttractiveTermTwuCoon extends AttractiveTermBaseClass {
     double Tr = (t / TC);
     return Math.pow(Tr, a) * a * a / Math.pow(t, 2) * Math.exp(b * (1 - Math.pow(Tr, c)))
         - Math.pow(Tr, a) * a / Math.pow(t, 2) * Math.exp(b * (1 - Math.pow(Tr, c)))
-        - 2 * Math.pow(Tr, a) * a / Math.pow(t, 2) * b * Math.pow(Tr, c) * c
+        - 2 * Math.pow(Tr, a) * a / Math.pow(t, 2) * b * Math.pow(Tr, c) * c * Math.exp(b * (1 - Math.pow(Tr, c)))
+        - Math.pow(Tr, a) * b * Math.pow(Tr, c) * Math.pow(c, 2) / Math.pow(t, 2) * Math.exp(b * (1 - Math.pow(Tr, c)))
+        + Math.pow(Tr, a) * b * Math.pow(Tr, c) * c / Math.pow(t, 2) * Math.exp(b * (1 - Math.pow(Tr, c)))
+        + Math.pow(Tr, a) * Math.pow(b, 2) * Math.pow(Math.pow(Tr, c), 2) * Math.pow(c, 2) / Math.pow(t, 2)
             * Math.exp(b * (1 - Math.pow(Tr, c)))
-        - Math.pow(Tr, a) * b * Math.pow(Tr, c) * Math.pow(c, 2) / Math.pow(t, 2)
-            * Math.exp(b * (1 - Math.pow(Tr, c)))
-        + Math.pow(Tr, a) * b * Math.pow(Tr, c) * c / Math.pow(t, 2)
-            * Math.exp(b * (1 - Math.pow(Tr, c)))
-        + Math.pow(Tr, a) * Math.pow(b, 2) * Math.pow(Math.pow(Tr, c), 2) * Math.pow(c, 2)
-            / Math.pow(t, 2) * Math.exp(b * (1 - Math.pow(Tr, c)))
-        + m * (Math.pow(Tr, d) * Math.pow(d, 2) / Math.pow(t, 2)
-            * Math.exp(e * (1 - Math.pow(Tr, f)))
+        + m * (Math.pow(Tr, d) * Math.pow(d, 2) / Math.pow(t, 2) * Math.exp(e * (1 - Math.pow(Tr, f)))
             - Math.pow(Tr, d) * d / Math.pow(t, 2) * Math.exp(e * (1 - Math.pow(Tr, f)))
-            - 2 * Math.pow(Tr, d) * d / Math.pow(t, 2) * e * Math.pow(Tr, f) * f
-                * Math.exp(e * (1 - Math.pow(Tr, f)))
+            - 2 * Math.pow(Tr, d) * d / Math.pow(t, 2) * e * Math.pow(Tr, f) * f * Math.exp(e * (1 - Math.pow(Tr, f)))
             - Math.pow(Tr, d) * e * Math.pow(Tr, f) * Math.pow(f, 2) / Math.pow(t, 2)
                 * Math.exp(e * (1 - Math.pow(Tr, f)))
-            + Math.pow(Tr, d) * e * Math.pow(Tr, f) * f / Math.pow(t, 2)
+            + Math.pow(Tr, d) * e * Math.pow(Tr, f) * f / Math.pow(t, 2) * Math.exp(e * (1 - Math.pow(Tr, f)))
+            + Math.pow(Tr, d) * Math.pow(e, 2) * Math.pow(Math.pow(Tr, f), 2) * Math.pow(f, 2) / Math.pow(t, 2)
                 * Math.exp(e * (1 - Math.pow(Tr, f)))
-            + Math.pow(Tr, d) * Math.pow(e, 2) * Math.pow(Math.pow(Tr, f), 2) * Math.pow(f, 2)
-                / Math.pow(t, 2) * Math.exp(e * (1 - Math.pow(Tr, f)))
-            - Math.pow(Tr, a) * Math.pow(a, 2) / Math.pow(t, 2)
-                * Math.exp(b * (1 - Math.pow(Tr, c)))
+            - Math.pow(Tr, a) * Math.pow(a, 2) / Math.pow(t, 2) * Math.exp(b * (1 - Math.pow(Tr, c)))
             + Math.pow(Tr, a) * a / Math.pow(t, 2) * Math.exp(b * (1 - Math.pow(Tr, c)))
-            + 2 * Math.pow(Tr, a) * a / Math.pow(t, 2) * b * Math.pow(Tr, c) * c
-                * Math.exp(b * (1 - Math.pow(Tr, c)))
+            + 2 * Math.pow(Tr, a) * a / Math.pow(t, 2) * b * Math.pow(Tr, c) * c * Math.exp(b * (1 - Math.pow(Tr, c)))
             + Math.pow(Tr, a) * b * Math.pow(Tr, c) * Math.pow(c, 2) / Math.pow(t, 2)
                 * Math.exp(b * (1 - Math.pow(Tr, c)))
-            - Math.pow(Tr, a) * b * Math.pow(Tr, c) * c / Math.pow(t, 2)
-                * Math.exp(b * (1 - Math.pow(Tr, c)))
-            - Math.pow(Tr, a) * Math.pow(b, 2) * Math.pow(Math.pow(Tr, c), 2) * Math.pow(c, 2)
-                / Math.pow(t, 2) * Math.exp(b * (1 - Math.pow(Tr, c))));
+            - Math.pow(Tr, a) * b * Math.pow(Tr, c) * c / Math.pow(t, 2) * Math.exp(b * (1 - Math.pow(Tr, c)))
+            - Math.pow(Tr, a) * Math.pow(b, 2) * Math.pow(Math.pow(Tr, c), 2) * Math.pow(c, 2) / Math.pow(t, 2)
+                * Math.exp(b * (1 - Math.pow(Tr, c))));
   }
 
   /** {@inheritDoc} */

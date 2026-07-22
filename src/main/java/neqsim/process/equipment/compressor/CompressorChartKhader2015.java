@@ -7,10 +7,9 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * CompressorChartKhader2015 is a class that implements the compressor chart calculations based on
- * the Kader 2015 method. It extends the CompressorChartAlternativeMapLookupExtrapolate class and
- * provides methods to set compressor curves based on speed, flow, head, and efficiency values. See:
- * https://github.com/EvenSol/NeqSim-Colab/discussions/12
+ * CompressorChartKhader2015 is a class that implements the compressor chart calculations based on the Kader 2015
+ * method. It extends the CompressorChartAlternativeMapLookupExtrapolate class and provides methods to set compressor
+ * curves based on speed, flow, head, and efficiency values. See: https://github.com/EvenSol/NeqSim-Colab/discussions/12
  *
  * @author esol
  */
@@ -24,7 +23,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   StreamInterface stream = null;
   private double impellerOuterDiameter = 0.3;
 
-  java.util.List<RealCurve> realCurves = new java.util.ArrayList<>();
+  transient java.util.List<RealCurve> realCurves = new java.util.ArrayList<>();
 
   /**
    * Constructs a CompressorChartKhader2015 object with the specified fluid and impeller diameter.
@@ -33,7 +32,6 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * @param impellerdiam the outer diameter of the impeller
    */
   public CompressorChartKhader2015(SystemInterface fluid, double impellerdiam) {
-    super();
     this.fluid = fluid;
     this.impellerOuterDiameter = impellerdiam;
   }
@@ -45,9 +43,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * @param referenceFluid the referenceFluid for the compressorcurve
    * @param impellerdiam the outer diameter of the impeller
    */
-  public CompressorChartKhader2015(SystemInterface fluid, SystemInterface referenceFluid,
-      double impellerdiam) {
-    super();
+  public CompressorChartKhader2015(SystemInterface fluid, SystemInterface referenceFluid, double impellerdiam) {
     this.fluid = fluid;
     this.ref_fluid = referenceFluid;
     this.impellerOuterDiameter = impellerdiam;
@@ -60,22 +56,21 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * @param impellerdiam the outer diameter of the impeller
    */
   public CompressorChartKhader2015(StreamInterface stream, double impellerdiam) {
-    super();
     this.stream = stream;
     this.impellerOuterDiameter = impellerdiam;
   }
 
   /**
-   * Sets the compressor curves based on the provided chart conditions, speed, flow, head,
-   * flowPolytrpicEfficiency and polytropic efficiency values.
+   * Sets the compressor curves based on the provided chart conditions, speed, flow, head, flowPolytrpicEfficiency and
+   * polytropic efficiency values.
    *
    * <b>Mathematical background (see Kader 2015):</b><br>
    * The method normalizes compressor map data using the following relations:
    * <ul>
    * <li><b>Corrected Head Factor:</b> H<sub>corr</sub> = H / c<sub>s</sub><sup>2</sup></li>
    * <li><b>Corrected Flow Factor:</b> Q<sub>corr</sub> = Q / (c<sub>s</sub> D<sup>2</sup>)</li>
-   * <li><b>Corrected Flow Factor for Efficiency:</b> Q<sub>corr,eff</sub> = Q<sub>eff</sub> /
-   * (c<sub>s</sub> D<sup>2</sup>)</li>
+   * <li><b>Corrected Flow Factor for Efficiency:</b> Q<sub>corr,eff</sub> = Q<sub>eff</sub> / (c<sub>s</sub>
+   * D<sup>2</sup>)</li>
    * <li><b>Polytropic Efficiency:</b> &eta;<sub>p</sub> = &eta;<sub>p</sub></li>
    * <li><b>Machine Mach Number:</b> Ma = N D / c<sub>s</sub></li>
    * </ul>
@@ -88,8 +83,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * <li>D = impeller outer diameter</li>
    * <li>c<sub>s</sub> = sound speed of the fluid</li>
    * </ul>
-   * These dimensionless numbers allow for comparison and extrapolation of compressor performance
-   * across different conditions, as described in Kader (2015) and the referenced NeqSim discussion.
+   * These dimensionless numbers allow for comparison and extrapolation of compressor performance across different
+   * conditions, as described in Kader (2015) and the referenced NeqSim discussion.
    *
    * @param chartConditions array with temperature, pressure, (optionally density, molecular weight)
    * @param speed array of speeds
@@ -98,6 +93,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * @param flowPolyEff 2D array of flows for efficiency
    * @param polyEff 2D array of polytropic efficiencies
    */
+  @Override
   public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
       double[][] flowPolyEff, double[][] polyEff) {
     if (fluid == null && stream != null) {
@@ -122,10 +118,10 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       double[] polEff = new double[flow[i].length];
       for (int j = 0; j < flow[i].length; j++) {
         machNumberCorrectedHeadFactor[j] = head[i][j] / fluidSoundSpeed / fluidSoundSpeed;
-        machNumberCorrectedFlowFactor[j] =
-            flow[i][j] / 3600.0 / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
-        machNumberCorrectedFlowFactorEfficiency[j] =
-            flowPolyEff[i][j] / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
+        machNumberCorrectedFlowFactor[j] = flow[i][j] / 3600.0 / fluidSoundSpeed / impellerOuterDiameter
+            / impellerOuterDiameter;
+        machNumberCorrectedFlowFactorEfficiency[j] = flowPolyEff[i][j] / fluidSoundSpeed / impellerOuterDiameter
+            / impellerOuterDiameter;
         polEff[j] = polyEff[i][j];
       }
       double machineMachNumber = speed[i] / 60.0 * impellerOuterDiameter / fluidSoundSpeed;
@@ -141,10 +137,9 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
-   * Returns a list of corrected compressor curves (dimensionless) based on the provided chart
-   * conditions and map data. Each CorrectedCurve contains the machine Mach number, corrected flow
-   * factor, corrected head factor, corrected flow factor for efficiency, and polytropic efficiency
-   * arrays for each speed.
+   * Returns a list of corrected compressor curves (dimensionless) based on the provided chart conditions and map data.
+   * Each CorrectedCurve contains the machine Mach number, corrected flow factor, corrected head factor, corrected flow
+   * factor for efficiency, and polytropic efficiency arrays for each speed.
    *
    * @param chartConditions array with temperature, pressure, (optionally density, molecular weight)
    * @param speed array of speeds
@@ -154,8 +149,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * @param polyEff 2D array of polytropic efficiencies
    * @return List of CorrectedCurve objects containing dimensionless map data
    */
-  public java.util.List<CorrectedCurve> getCorrectedCurves(double[] chartConditions, double[] speed,
-      double[][] flow, double[][] head, double[][] flowPolyEff, double[][] polyEff) {
+  public java.util.List<CorrectedCurve> getCorrectedCurves(double[] chartConditions, double[] speed, double[][] flow,
+      double[][] head, double[][] flowPolyEff, double[][] polyEff) {
     if (ref_fluid == null) {
       ref_fluid = createDefaultFluid(chartConditions);
     }
@@ -173,10 +168,10 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       double[] polEff = new double[flow[i].length];
       for (int j = 0; j < flow[i].length; j++) {
         machNumberCorrectedHeadFactor[j] = head[i][j] / fluidSoundSpeed / fluidSoundSpeed;
-        machNumberCorrectedFlowFactor[j] =
-            flow[i][j] / 3600.0 / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
-        machNumberCorrectedFlowFactorEfficiency[j] =
-            flowPolyEff[i][j] / fluidSoundSpeed / impellerOuterDiameter / impellerOuterDiameter;
+        machNumberCorrectedFlowFactor[j] = flow[i][j] / 3600.0 / fluidSoundSpeed / impellerOuterDiameter
+            / impellerOuterDiameter;
+        machNumberCorrectedFlowFactorEfficiency[j] = flowPolyEff[i][j] / fluidSoundSpeed / impellerOuterDiameter
+            / impellerOuterDiameter;
         polEff[j] = polyEff[i][j];
       }
       double machineMachNumber = speed[i] / 60.0 * impellerOuterDiameter / fluidSoundSpeed;
@@ -187,8 +182,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
-   * Converts a list of dimensionless (corrected) compressor curves to real (physical units) curves
-   * for a given fluid and speeds.
+   * Converts a list of dimensionless (corrected) compressor curves to real (physical units) curves for a given fluid
+   * and speeds.
    */
   public void generateRealCurvesForFluid() {
     double fluidSoundSpeed = fluid.getSoundSpeed();
@@ -201,11 +196,10 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       double[] flowPolyEff = new double[corr.flowPolytropicEfficiency.length];
       double[] polEff = new double[corr.polytropicEfficiency.length];
       for (int j = 0; j < flow.length; j++) {
-        flow[j] =
-            3600.0 * corr.flow[j] * fluidSoundSpeed * impellerOuterDiameter * impellerOuterDiameter;
+        flow[j] = 3600.0 * corr.flow[j] * fluidSoundSpeed * impellerOuterDiameter * impellerOuterDiameter;
         head[j] = corr.head[j] * fluidSoundSpeed * fluidSoundSpeed;
-        flowPolyEff[j] = 3600.0 * corr.flowPolytropicEfficiency[j] * fluidSoundSpeed
-            * impellerOuterDiameter * impellerOuterDiameter;
+        flowPolyEff[j] = 3600.0 * corr.flowPolytropicEfficiency[j] * fluidSoundSpeed * impellerOuterDiameter
+            * impellerOuterDiameter;
         polEff[j] = corr.polytropicEfficiency[j];
       }
       realCurves.add(new RealCurve(chartSpeeds.get(i), flow, head, flowPolyEff, polEff));
@@ -227,8 +221,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       System.out.println("  Flow: " + java.util.Arrays.toString(curve.flow));
       System.out.println("  Head: " + java.util.Arrays.toString(curve.head));
       System.out.println("  Flow Poly Eff: " + java.util.Arrays.toString(curve.flowPolyEff));
-      System.out.println(
-          "  Polytropic Efficiency: " + java.util.Arrays.toString(curve.polytropicEfficiency));
+      System.out.println("  Polytropic Efficiency: " + java.util.Arrays.toString(curve.polytropicEfficiency));
     }
   }
 
@@ -280,7 +273,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     }
     SystemInterface localfluid = null;
     try {
-      localfluid = (SystemInterface) fluid.getClass().getConstructor().newInstance();
+      localfluid = fluid.getClass().getConstructor().newInstance();
     } catch (Exception e) {
       logger.error("Error creating fluid instance: ", e);
       throw new RuntimeException("Failed to create fluid instance", e);
@@ -304,15 +297,15 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   /**
    * {@inheritDoc}
    *
-   * The method first converts the input flow and speed to dimensionless numbers using the sound
-   * speed and impeller diameter:
+   * <p>
+   * The method first converts the input flow and speed to dimensionless numbers using the sound speed and impeller
+   * diameter:
    * <ul>
    * <li><b>Corrected Flow Factor:</b> Q<sub>corr</sub> = Q / (c<sub>s</sub> D<sup>2</sup>)</li>
    * <li><b>Machine Mach Number:</b> Ma = N D / c<sub>s</sub></li>
    * </ul>
-   * It then interpolates/extrapolates the polytropic head from the reference compressor curves in
-   * this dimensionless space, and finally converts the result back to physical units by multiplying
-   * with c<sub>s</sub><sup>2</sup>.
+   * It then interpolates/extrapolates the polytropic head from the reference compressor curves in this dimensionless
+   * space, and finally converts the result back to physical units by multiplying with c<sub>s</sub><sup>2</sup>.
    */
   @Override
   public double getPolytropicHead(double flow, double speed) {
@@ -320,35 +313,36 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
       fluid = stream.getFluid();
     }
     // System.out.println("Sound speed of actiual fluid: " + fluid.getSoundSpeed() + " m/s");
-    double machNumberCorrectedFlowFactor =
-        flow / 3600.0 / fluid.getSoundSpeed() / impellerOuterDiameter / impellerOuterDiameter;
+    double machNumberCorrectedFlowFactor = flow / 3600.0 / fluid.getSoundSpeed() / impellerOuterDiameter
+        / impellerOuterDiameter;
     double machineMachNumber = speed / 60 * impellerOuterDiameter / fluid.getSoundSpeed();
     // System.out.println("mac numer corrected flow factor: " + machNumberCorrectedFlowFactor
     // + " machine Mach number: " + machineMachNumber + " impeller diameter: "
     // + impellerOuterDiameter);
-    return super.getPolytropicHead(machNumberCorrectedFlowFactor, machineMachNumber)
-        * fluid.getSoundSpeed() * fluid.getSoundSpeed();
+    return super.getPolytropicHead(machNumberCorrectedFlowFactor, machineMachNumber) * fluid.getSoundSpeed()
+        * fluid.getSoundSpeed();
   }
 
   /**
    * {@inheritDoc}
    *
-   * The method first converts the input flow and speed to dimensionless numbers using the sound
-   * speed and impeller diameter:
+   * <p>
+   * The method first converts the input flow and speed to dimensionless numbers using the sound speed and impeller
+   * diameter:
    * <ul>
    * <li><b>Corrected Flow Factor:</b> Q<sub>corr</sub> = Q / (c<sub>s</sub> D<sup>2</sup>)</li>
    * <li><b>Machine Mach Number:</b> Ma = N D / c<sub>s</sub></li>
    * </ul>
-   * It then interpolates/extrapolates the polytropic efficiency from the reference compressor
-   * curves in this dimensionless space.
+   * It then interpolates/extrapolates the polytropic efficiency from the reference compressor curves in this
+   * dimensionless space.
    */
   @Override
   public double getPolytropicEfficiency(double flow, double speed) {
     if (fluid == null) {
       fluid = stream.getFluid();
     }
-    double machNumberCorrectedFlowFactor =
-        flow / 3600.0 / fluid.getSoundSpeed() / impellerOuterDiameter / impellerOuterDiameter;
+    double machNumberCorrectedFlowFactor = flow / 3600.0 / fluid.getSoundSpeed() / impellerOuterDiameter
+        / impellerOuterDiameter;
     double machineMachNumber = speed / 60 * impellerOuterDiameter / fluid.getSoundSpeed();
     return super.getPolytropicEfficiency(machNumberCorrectedFlowFactor, machineMachNumber);
   }
@@ -372,9 +366,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
-   * <p>
    * getReferenceFluid.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -383,9 +375,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
-   * <p>
    * setReferenceFluid.
-   * </p>
    *
    * @param ref_fluid a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -414,9 +404,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
      * @param correctedFlowFactorEfficiency array of corrected flow factors for efficiency
      * @param polytropicEfficiency array of polytropic efficiencies
      */
-    public CorrectedCurve(double machineMachNumber, double[] correctedFlowFactor,
-        double[] correctedHeadFactor, double[] correctedFlowFactorEfficiency,
-        double[] polytropicEfficiency) {
+    public CorrectedCurve(double machineMachNumber, double[] correctedFlowFactor, double[] correctedHeadFactor,
+        double[] correctedFlowFactorEfficiency, double[] polytropicEfficiency) {
       this.machineMachNumber = machineMachNumber;
       this.correctedFlowFactor = correctedFlowFactor;
       this.correctedHeadFactor = correctedHeadFactor;
@@ -444,8 +433,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
      * @param flowPolyEff array of flow values for efficiency
      * @param polytropicEfficiency array of polytropic efficiencies
      */
-    public RealCurve(double speed, double[] flow, double[] head, double[] flowPolyEff,
-        double[] polytropicEfficiency) {
+    public RealCurve(double speed, double[] flow, double[] head, double[] flowPolyEff, double[] polytropicEfficiency) {
       this.speed = speed;
       this.flow = flow;
       this.head = head;
@@ -458,8 +446,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * {@inheritDoc}
    *
    * <p>
-   * Generates and prints the surge curve based on RealCurve data. The surge curve is typically the
-   * minimum stable flow for each speed.
+   * Generates and prints the surge curve based on RealCurve data. The surge curve is typically the minimum stable flow
+   * for each speed.
    * </p>
    */
   @Override
@@ -496,8 +484,8 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * {@inheritDoc}
    *
    * <p>
-   * Generates and sets the stone wall curve based on RealCurve data. The stone wall curve is
-   * typically the maximum flow for each speed.
+   * Generates and sets the stone wall curve based on RealCurve data. The stone wall curve is typically the maximum flow
+   * for each speed.
    * </p>
    */
   @Override
@@ -531,9 +519,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
   }
 
   /**
-   * <p>
    * Getter for the field <code>realCurves</code>.
-   * </p>
    *
    * @return a {@link java.util.List} object
    */
@@ -545,8 +531,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * {@inheritDoc}
    *
    * <p>
-   * Override to use RealCurve data which contains the corrected flow and head values for the actual
-   * fluid.
+   * Override to use RealCurve data which contains the corrected flow and head values for the actual fluid.
    * </p>
    */
   @Override
@@ -581,8 +566,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * {@inheritDoc}
    *
    * <p>
-   * Override to use RealCurve data which contains the corrected flow and head values for the actual
-   * fluid.
+   * Override to use RealCurve data which contains the corrected flow and head values for the actual fluid.
    * </p>
    */
   @Override
@@ -619,8 +603,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * {@inheritDoc}
    *
    * <p>
-   * Override to use RealCurve data which contains the corrected flow and head values for the actual
-   * fluid.
+   * Override to use RealCurve data which contains the corrected flow and head values for the actual fluid.
    * </p>
    */
   @Override
@@ -655,8 +638,7 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
    * {@inheritDoc}
    *
    * <p>
-   * Override to use RealCurve data which contains the corrected flow and head values for the actual
-   * fluid.
+   * Override to use RealCurve data which contains the corrected flow and head values for the actual fluid.
    * </p>
    */
   @Override
@@ -689,4 +671,3 @@ public class CompressorChartKhader2015 extends CompressorChartAlternativeMapLook
     return closestCurve.head[maxFlowIdx];
   }
 }
-

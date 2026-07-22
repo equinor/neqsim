@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * WellStreamMixer class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -17,9 +15,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class WellStreamMixer {
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -47,14 +43,14 @@ public class WellStreamMixer {
     testSystem.setMultiPhaseCheck(true);
 
     testSystem.setMolarComposition(
-        new double[] {1.0, 1.42, 70.1, 8, 3.54, 0.54, 0.2, 0.21, 0.19, 0.28, 5.0, 1.0, 1.0, 0, 0});
+        new double[] { 1.0, 1.42, 70.1, 8, 3.54, 0.54, 0.2, 0.21, 0.19, 0.28, 5.0, 1.0, 1.0, 0, 0 });
 
     neqsim.thermo.system.SystemInterface testSystem2 = testSystem.clone();
     testSystem2.createDatabase(true);
     testSystem2.setMixingRule(2);
     testSystem2.setMultiPhaseCheck(true);
     testSystem2.setMolarComposition(
-        new double[] {1.0, 1.42, 70.1, 8, 3.54, 0.54, 0.2, 0.21, 0.19, 0.28, 5.0, 0.0, 0.0, 1, 1});
+        new double[] { 1.0, 1.42, 70.1, 8, 3.54, 0.54, 0.2, 0.21, 0.19, 0.28, 5.0, 0.0, 0.0, 1, 1 });
 
     Stream wellStream_1 = new Stream("well stream", testSystem);
     wellStream_1.setFlowRate(14.23, "MSm3/day");
@@ -72,8 +68,7 @@ public class WellStreamMixer {
 
     Stream mixerdStream = new Stream("mixed stream", wellStramMixer.getOutletStream());
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(wellStream_1);
     operations.add(wellStream_2);
     operations.add(wellStramMixer);

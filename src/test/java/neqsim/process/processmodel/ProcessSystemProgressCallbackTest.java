@@ -88,8 +88,7 @@ public class ProcessSystemProgressCallbackTest extends neqsim.NeqSimTest {
 
     // Verify simulation completed by checking outlet
     Cooler cooler = (Cooler) process.getUnit("Cooler");
-    assertTrue(cooler.getOutletStream().getTemperature("C") < 30.0,
-        "Cooler should have reduced temperature");
+    assertTrue(cooler.getOutletStream().getTemperature("C") < 30.0, "Cooler should have reduced temperature");
   }
 
   /**
@@ -101,21 +100,18 @@ public class ProcessSystemProgressCallbackTest extends neqsim.NeqSimTest {
     AtomicInteger iterationCompleteCount = new AtomicInteger(0);
     List<Integer> receivedIndices = new ArrayList<>();
 
-    ProcessSystem.SimulationProgressListener listener =
-        new ProcessSystem.SimulationProgressListener() {
-          @Override
-          public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
-              int iterationNumber) {
-            unitCompleteCount.incrementAndGet();
-            receivedIndices.add(unitIndex);
-          }
+    ProcessSystem.SimulationProgressListener listener = new ProcessSystem.SimulationProgressListener() {
+      @Override
+      public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
+        unitCompleteCount.incrementAndGet();
+        receivedIndices.add(unitIndex);
+      }
 
-          @Override
-          public void onIterationComplete(int iterationNumber, boolean converged,
-              double recycleError) {
-            iterationCompleteCount.incrementAndGet();
-          }
-        };
+      @Override
+      public void onIterationComplete(int iterationNumber, boolean converged, double recycleError) {
+        iterationCompleteCount.incrementAndGet();
+      }
+    };
 
     process.setProgressListener(listener);
     process.runWithProgress(UUID.randomUUID());
@@ -139,14 +135,12 @@ public class ProcessSystemProgressCallbackTest extends neqsim.NeqSimTest {
   public void testListenerReceivesTotalUnitsCount() {
     AtomicInteger receivedTotal = new AtomicInteger(0);
 
-    ProcessSystem.SimulationProgressListener listener =
-        new ProcessSystem.SimulationProgressListener() {
-          @Override
-          public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
-              int iterationNumber) {
-            receivedTotal.set(totalUnits);
-          }
-        };
+    ProcessSystem.SimulationProgressListener listener = new ProcessSystem.SimulationProgressListener() {
+      @Override
+      public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
+        receivedTotal.set(totalUnits);
+      }
+    };
 
     process.setProgressListener(listener);
     process.runWithProgress(UUID.randomUUID());
@@ -159,19 +153,16 @@ public class ProcessSystemProgressCallbackTest extends neqsim.NeqSimTest {
    */
   @Test
   public void testGetProgressListenerReturnsSetListener() {
-    ProcessSystem.SimulationProgressListener listener =
-        new ProcessSystem.SimulationProgressListener() {
-          @Override
-          public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
-              int iterationNumber) {
-            // No-op
-          }
-        };
+    ProcessSystem.SimulationProgressListener listener = new ProcessSystem.SimulationProgressListener() {
+      @Override
+      public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
+        // No-op
+      }
+    };
 
     process.setProgressListener(listener);
 
-    assertEquals(listener, process.getProgressListener(),
-        "getProgressListener should return the set listener");
+    assertEquals(listener, process.getProgressListener(), "getProgressListener should return the set listener");
   }
 
   /**
@@ -181,14 +172,12 @@ public class ProcessSystemProgressCallbackTest extends neqsim.NeqSimTest {
   public void testSetNullListenerDisablesCallbacks() {
     AtomicInteger callCount = new AtomicInteger(0);
 
-    ProcessSystem.SimulationProgressListener listener =
-        new ProcessSystem.SimulationProgressListener() {
-          @Override
-          public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
-              int iterationNumber) {
-            callCount.incrementAndGet();
-          }
-        };
+    ProcessSystem.SimulationProgressListener listener = new ProcessSystem.SimulationProgressListener() {
+      @Override
+      public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
+        callCount.incrementAndGet();
+      }
+    };
 
     // Set then clear listener
     process.setProgressListener(listener);
@@ -268,17 +257,15 @@ public class ProcessSystemProgressCallbackTest extends neqsim.NeqSimTest {
   public void testListenerErrorDoesNotStopSimulation() {
     AtomicInteger callCount = new AtomicInteger(0);
 
-    ProcessSystem.SimulationProgressListener faultyListener =
-        new ProcessSystem.SimulationProgressListener() {
-          @Override
-          public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
-              int iterationNumber) {
-            callCount.incrementAndGet();
-            if (callCount.get() == 2) {
-              throw new RuntimeException("Simulated listener error");
-            }
-          }
-        };
+    ProcessSystem.SimulationProgressListener faultyListener = new ProcessSystem.SimulationProgressListener() {
+      @Override
+      public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
+        callCount.incrementAndGet();
+        if (callCount.get() == 2) {
+          throw new RuntimeException("Simulated listener error");
+        }
+      }
+    };
 
     process.setProgressListener(faultyListener);
 
@@ -286,7 +273,6 @@ public class ProcessSystemProgressCallbackTest extends neqsim.NeqSimTest {
     process.runWithProgress(UUID.randomUUID());
 
     // Should have continued after error
-    assertTrue(callCount.get() >= 3,
-        "Should continue calling listener after error: got " + callCount.get());
+    assertTrue(callCount.get() >= 3, "Should continue calling listener after error: got " + callCount.get());
   }
 }

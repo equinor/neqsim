@@ -16,19 +16,17 @@ import java.util.UUID;
  * </ul>
  *
  * <p>
- * This concept-first modeling approach enables rapid iteration during early field development
- * phases (concept selection, FEED) where decisions must be made with limited data but need physical
- * consistency.
+ * This concept-first modeling approach enables rapid iteration during early field development phases (concept
+ * selection, FEED) where decisions must be made with limited data but need physical consistency.
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * FieldConcept concept = FieldConcept.builder("Marginal Gas Tieback")
  *     .reservoir(ReservoirInput.richGas().gor(1200).co2Percent(2.5).waterCut(0.1).build())
  *     .wells(WellsInput.builder().producerCount(4).thp(120).ratePerWell(1.5e6, "Sm3/d").build())
- *     .infrastructure(InfrastructureInput.builder().tiebackLength(35).waterDepth(350).build())
- *     .build();
+ *     .infrastructure(InfrastructureInput.builder().tiebackLength(35).waterDepth(350).build()).build();
  * }
  * </pre>
  *
@@ -76,11 +74,9 @@ public final class FieldConcept implements Serializable {
    * @param ratePerWellMSm3d rate per well in MSm3/d
    * @return configured FieldConcept
    */
-  public static FieldConcept gasTieback(String name, double tiebackKm, int wellCount,
-      double ratePerWellMSm3d) {
+  public static FieldConcept gasTieback(String name, double tiebackKm, int wellCount, double ratePerWellMSm3d) {
     return builder(name).reservoir(ReservoirInput.richGas().build())
-        .wells(WellsInput.builder().producerCount(wellCount)
-            .ratePerWell(ratePerWellMSm3d * 1e6, "Sm3/d").build())
+        .wells(WellsInput.builder().producerCount(wellCount).ratePerWell(ratePerWellMSm3d * 1e6, "Sm3/d").build())
         .infrastructure(InfrastructureInput.builder().tiebackLength(tiebackKm)
             .processingLocation(InfrastructureInput.ProcessingLocation.HOST_PLATFORM).build())
         .build();
@@ -95,14 +91,12 @@ public final class FieldConcept implements Serializable {
    * @param waterCut water cut fraction
    * @return configured FieldConcept
    */
-  public static FieldConcept oilDevelopment(String name, int wellCount, double ratePerWellBopd,
-      double waterCut) {
+  public static FieldConcept oilDevelopment(String name, int wellCount, double ratePerWellBopd, double waterCut) {
     return builder(name).reservoir(ReservoirInput.blackOil().waterCut(waterCut).build())
-        .wells(WellsInput.builder().producerCount(wellCount).ratePerWell(ratePerWellBopd, "bbl/d")
-            .build())
-        .infrastructure(InfrastructureInput.builder()
-            .processingLocation(InfrastructureInput.ProcessingLocation.NEW_PLATFORM)
-            .exportType(InfrastructureInput.ExportType.STABILIZED_OIL).build())
+        .wells(WellsInput.builder().producerCount(wellCount).ratePerWell(ratePerWellBopd, "bbl/d").build())
+        .infrastructure(
+            InfrastructureInput.builder().processingLocation(InfrastructureInput.ProcessingLocation.NEW_PLATFORM)
+                .exportType(InfrastructureInput.ExportType.STABILIZED_OIL).build())
         .build();
   }
 
@@ -232,8 +226,7 @@ public final class FieldConcept implements Serializable {
 
     // For LNG, check reservoir type
     ReservoirInput.FluidType fluidType = reservoir.getFluidType();
-    return fluidType == ReservoirInput.FluidType.LEAN_GAS
-        || fluidType == ReservoirInput.FluidType.RICH_GAS
+    return fluidType == ReservoirInput.FluidType.LEAN_GAS || fluidType == ReservoirInput.FluidType.RICH_GAS
         || fluidType == ReservoirInput.FluidType.GAS_CONDENSATE;
   }
 
@@ -243,8 +236,8 @@ public final class FieldConcept implements Serializable {
    * @return true if subsea
    */
   public boolean isSubseaTieback() {
-    return wells.isSubsea() && infrastructure
-        .getProcessingLocation() == InfrastructureInput.ProcessingLocation.HOST_PLATFORM;
+    return wells.isSubsea()
+        && infrastructure.getProcessingLocation() == InfrastructureInput.ProcessingLocation.HOST_PLATFORM;
   }
 
   /**
@@ -283,16 +276,15 @@ public final class FieldConcept implements Serializable {
     sb.append("\n");
     sb.append("Infrastructure: ").append(String.format("%.0f", infrastructure.getTiebackLength()))
         .append(" km tieback");
-    sb.append(", ").append(String.format("%.0f", infrastructure.getWaterDepth()))
-        .append(" m depth");
+    sb.append(", ").append(String.format("%.0f", infrastructure.getWaterDepth())).append(" m depth");
     sb.append(", ").append(infrastructure.getPowerSupply());
     return sb.toString();
   }
 
   @Override
   public String toString() {
-    return String.format("FieldConcept[%s: %s, %d wells, %.0f km tieback]", name,
-        reservoir.getFluidType(), wells.getProducerCount(), infrastructure.getTiebackLength());
+    return String.format("FieldConcept[%s: %s, %d wells, %.0f km tieback]", name, reservoir.getFluidType(),
+        wells.getProducerCount(), infrastructure.getTiebackLength());
   }
 
   @Override

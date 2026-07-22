@@ -11,10 +11,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
-import neqsim.process.equipment.flare.Flare;
-import neqsim.process.safety.dto.DisposalNetworkSummaryDTO;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.flare.Flare;
+import neqsim.process.processmodel.ProcessSystem;
+import neqsim.process.safety.dto.DisposalNetworkSummaryDTO;
 
 /**
  * High level helper coordinating load case evaluation for disposal networks.
@@ -25,7 +25,7 @@ public class ProcessSafetyAnalyzer implements Serializable {
   private final DisposalNetwork disposalNetwork = new DisposalNetwork();
   private final List<ProcessSafetyLoadCase> loadCases = new ArrayList<>();
   private final ProcessSystem baseProcessSystem;
-  private final ProcessSafetyResultRepository resultRepository;
+  private final transient ProcessSafetyResultRepository resultRepository;
 
   public ProcessSafetyAnalyzer() {
     this(null, null);
@@ -35,8 +35,7 @@ public class ProcessSafetyAnalyzer implements Serializable {
     this(baseProcessSystem, null);
   }
 
-  public ProcessSafetyAnalyzer(ProcessSystem baseProcessSystem,
-      ProcessSafetyResultRepository resultRepository) {
+  public ProcessSafetyAnalyzer(ProcessSystem baseProcessSystem, ProcessSafetyResultRepository resultRepository) {
     this.baseProcessSystem = baseProcessSystem == null ? null : baseProcessSystem.copy();
     this.resultRepository = resultRepository;
   }
@@ -66,6 +65,7 @@ public class ProcessSafetyAnalyzer implements Serializable {
     ProcessSystem referenceSystem = requireBaseProcessSystem();
     ProcessSystem scenarioSystem = referenceSystem.copy();
     scenario.applyTo(scenarioSystem);
+    scenarioSystem.run();
 
     ProcessSafetyAnalysisSummary summary = buildSummary(scenario, referenceSystem, scenarioSystem);
     if (resultRepository != null) {
@@ -74,8 +74,7 @@ public class ProcessSafetyAnalyzer implements Serializable {
     return summary;
   }
 
-  public List<ProcessSafetyAnalysisSummary> analyze(
-      Collection<ProcessSafetyScenario> scenarios) {
+  public List<ProcessSafetyAnalysisSummary> analyze(Collection<ProcessSafetyScenario> scenarios) {
     Objects.requireNonNull(scenarios, "scenarios");
     List<ProcessSafetyAnalysisSummary> summaries = new ArrayList<>();
     for (ProcessSafetyScenario scenario : scenarios) {
@@ -91,8 +90,8 @@ public class ProcessSafetyAnalyzer implements Serializable {
     return baseProcessSystem;
   }
 
-  private ProcessSafetyAnalysisSummary buildSummary(ProcessSafetyScenario scenario,
-      ProcessSystem referenceSystem, ProcessSystem scenarioSystem) {
+  private ProcessSafetyAnalysisSummary buildSummary(ProcessSafetyScenario scenario, ProcessSystem referenceSystem,
+      ProcessSystem scenarioSystem) {
     Set<String> affectedUnits = new LinkedHashSet<>(scenario.getTargetUnits());
     Map<String, String> conditionMessages = new LinkedHashMap<>();
     Map<String, ProcessSafetyAnalysisSummary.UnitKpiSnapshot> unitKpis = new LinkedHashMap<>();
@@ -107,7 +106,8 @@ public class ProcessSafetyAnalyzer implements Serializable {
         try {
           scenarioUnit.runConditionAnalysis(referenceUnit);
         } catch (RuntimeException ex) {
-          // Ignore condition analysis failures for individual units while still capturing KPIs.
+          // Ignore condition analysis failures for individual units while still capturing
+          // KPIs.
         }
       }
 
@@ -120,16 +120,14 @@ public class ProcessSafetyAnalyzer implements Serializable {
       double massBalance = captureSafely(() -> scenarioUnit.getMassBalance("kg/s"));
       double pressure = captureSafely(scenarioUnit::getPressure);
       double temperature = captureSafely(scenarioUnit::getTemperature);
-      unitKpis.put(unitName,
-          new ProcessSafetyAnalysisSummary.UnitKpiSnapshot(massBalance, pressure, temperature));
+      unitKpis.put(unitName, new ProcessSafetyAnalysisSummary.UnitKpiSnapshot(massBalance, pressure, temperature));
     }
 
     String conditionReport = conditionMessages.values().stream()
-        .filter(message -> message != null && !message.isEmpty())
-        .collect(Collectors.joining(System.lineSeparator()));
+        .filter(message -> message != null && !message.isEmpty()).collect(Collectors.joining(System.lineSeparator()));
 
-    return new ProcessSafetyAnalysisSummary(scenario.getName(), affectedUnits, conditionReport,
-        conditionMessages, unitKpis);
+    return new ProcessSafetyAnalysisSummary(scenario.getName(), affectedUnits, conditionReport, conditionMessages,
+        unitKpis);
   }
 
   private double captureSafely(DoubleSupplierWithException supplier) {

@@ -25,9 +25,8 @@ class BowTieTest {
 
     // Create HIPPS using builder pattern
     hipps = SafetyInstrumentedFunction.builder().id("SDV-001").name("Main HIPPS")
-        .description("High Integrity Pipeline Protection")
-        .category(SafetyInstrumentedFunction.SIFCategory.HIPPS).sil(2).pfd(0.005)
-        .architecture("1oo2").protectedEquipment(Arrays.asList("Separator", "Pipeline")).build();
+        .description("High Integrity Pipeline Protection").category(SafetyInstrumentedFunction.SIFCategory.HIPPS).sil(2)
+        .pfd(0.005).architecture("1oo2").protectedEquipment(Arrays.asList("Separator", "Pipeline")).build();
   }
 
   @Test
@@ -46,8 +45,7 @@ class BowTieTest {
 
   @Test
   void testThreatCreation() {
-    BowTieModel.Threat threat =
-        new BowTieModel.Threat("T-001", "Blocked outlet causing overpressure", 0.1);
+    BowTieModel.Threat threat = new BowTieModel.Threat("T-001", "Blocked outlet causing overpressure", 0.1);
 
     assertNotNull(threat);
     assertEquals("T-001", threat.getId());
@@ -57,8 +55,7 @@ class BowTieTest {
 
   @Test
   void testConsequenceCreation() {
-    BowTieModel.Consequence cons =
-        new BowTieModel.Consequence("C-001", "Vessel rupture and release", 5);
+    BowTieModel.Consequence cons = new BowTieModel.Consequence("C-001", "Vessel rupture and release", 5);
 
     assertNotNull(cons);
     assertEquals("C-001", cons.getId());
@@ -421,4 +418,3 @@ class BowTieTest {
     assertTrue(str.contains("bowTies=1"));
   }
 }
-

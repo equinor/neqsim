@@ -4,9 +4,7 @@ import neqsim.pvtsimulation.simulation.SaturationPressure;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
 /**
- * <p>
  * FunctionJohanSverderup class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class FunctionJohanSverderup extends LevenbergMarquardtFunction {
   double molarMass = 0.0;
 
   /**
-   * <p>
    * Constructor for FunctionJohanSverderup.
-   * </p>
    */
   public FunctionJohanSverderup() {
     params = new double[1];

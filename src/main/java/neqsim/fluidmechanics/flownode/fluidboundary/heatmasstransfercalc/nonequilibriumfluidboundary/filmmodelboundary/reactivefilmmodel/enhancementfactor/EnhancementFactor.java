@@ -10,9 +10,7 @@ import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBo
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.FluidBoundarySystemInterface;
 
 /**
- * <p>
  * EnhancementFactor class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -24,33 +22,26 @@ public class EnhancementFactor implements EnhancementFactorInterface {
   protected FluidBoundarySystemInterface nonReactiveInterface, reactiveInterface;
 
   /**
-   * <p>
    * Constructor for EnhancementFactor.
-   * </p>
    */
-  public EnhancementFactor() {}
+  public EnhancementFactor() {
+  }
 
   /**
-   * <p>
    * Constructor for EnhancementFactor.
-   * </p>
    *
    * @param fluidBoundary a
-   *        {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *        object
+   * {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface} object
    */
   public EnhancementFactor(FluidBoundaryInterface fluidBoundary) {
     this();
     this.fluidBoundary = fluidBoundary;
-    enhancementVec =
-        new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
+    enhancementVec = new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
     hattaNumber = new double[fluidBoundary.getBulkSystem().getPhases()[0].getNumberOfComponents()];
   }
 
   /**
-   * <p>
    * calcEnhancementVec.
-   * </p>
    *
    * @param phase a int
    * @param enhancementType a int
@@ -66,7 +57,8 @@ public class EnhancementFactor implements EnhancementFactorInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void calcEnhancementVec(int phase) {}
+  public void calcEnhancementVec(int phase) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -103,15 +95,12 @@ public class EnhancementFactor implements EnhancementFactorInterface {
   }
 
   /**
-   * <p>
    * setOnesVec.
-   * </p>
    *
    * @param phaseNum a int
    */
   public void setOnesVec(int phaseNum) {
-    for (int j = 0; j < fluidBoundary.getBulkSystem().getPhase(phaseNum)
-        .getNumberOfComponents(); j++) {
+    for (int j = 0; j < fluidBoundary.getBulkSystem().getPhase(phaseNum).getNumberOfComponents(); j++) {
       enhancementVec[j] = 1.0;
     }
   }

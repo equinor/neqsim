@@ -9,17 +9,17 @@ import neqsim.thermo.system.SystemInterface;
  * Abstract base class for multiphase choke flow calculations.
  *
  * <p>
- * This class provides the foundation for calculating two-phase (gas-liquid) flow through production
- * chokes. Unlike single-phase IEC 60534 models, these correlations account for the interaction
- * between gas and liquid phases during flow through a restriction.
+ * This class provides the foundation for calculating two-phase (gas-liquid) flow through production chokes. Unlike
+ * single-phase IEC 60534 models, these correlations account for the interaction between gas and liquid phases during
+ * flow through a restriction.
  * </p>
  *
  * <p>
  * Key concepts:
  * </p>
  * <ul>
- * <li><b>Critical flow</b>: Flow is choked when downstream pressure changes have no effect on flow
- * rate. Occurs when pressure ratio P2/P1 falls below critical pressure ratio.</li>
+ * <li><b>Critical flow</b>: Flow is choked when downstream pressure changes have no effect on flow rate. Occurs when
+ * pressure ratio P2/P1 falls below critical pressure ratio.</li>
  * <li><b>Subcritical flow</b>: Both upstream and downstream pressures affect flow rate.</li>
  * <li><b>Gas quality (x_g)</b>: Mass fraction of gas in the two-phase mixture.</li>
  * </ul>
@@ -29,10 +29,8 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  * <ul>
  * <li>Sachdeva, R., et al. (1986). "Two-Phase Flow Through Chokes." SPE 15657.</li>
- * <li>Perkins, T.K. (1990). "Critical and Subcritical Flow of Multiphase Mixtures Through Chokes."
- * SPE 20633.</li>
- * <li>Gilbert, W.E. (1954). "Flowing and Gas-Lift Well Performance." API Drilling and Production
- * Practice.</li>
+ * <li>Perkins, T.K. (1990). "Critical and Subcritical Flow of Multiphase Mixtures Through Chokes." SPE 20633.</li>
+ * <li>Gilbert, W.E. (1954). "Flowing and Gas-Lift Well Performance." API Drilling and Production Practice.</li>
  * </ul>
  *
  * @author esol
@@ -66,7 +64,8 @@ public abstract class MultiphaseChokeFlow implements Serializable {
   /**
    * Default constructor for MultiphaseChokeFlow.
    */
-  public MultiphaseChokeFlow() {}
+  public MultiphaseChokeFlow() {
+  }
 
   /**
    * Constructor with choke diameter.
@@ -106,8 +105,7 @@ public abstract class MultiphaseChokeFlow implements Serializable {
    * @param specificHeatRatio ratio of specific heats (Cp/Cv)
    * @return critical pressure ratio (P2/P1 at choking)
    */
-  public abstract double calculateCriticalPressureRatio(double gasQuality,
-      double specificHeatRatio);
+  public abstract double calculateCriticalPressureRatio(double gasQuality, double specificHeatRatio);
 
   /**
    * Determines the flow regime (critical or subcritical).
@@ -117,8 +115,7 @@ public abstract class MultiphaseChokeFlow implements Serializable {
    * @param downstreamPressure downstream pressure in Pa
    * @return the flow regime
    */
-  public FlowRegime determineFlowRegime(SystemInterface fluid, double upstreamPressure,
-      double downstreamPressure) {
+  public FlowRegime determineFlowRegime(SystemInterface fluid, double upstreamPressure, double downstreamPressure) {
     double gasQuality = calculateGasQuality(fluid);
     double gamma = fluid.getGamma2();
     double criticalRatio = calculateCriticalPressureRatio(gasQuality, gamma);
@@ -182,9 +179,8 @@ public abstract class MultiphaseChokeFlow implements Serializable {
     if (fluid.hasPhaseType("gas")) {
       int gasPhaseIndex = fluid.getPhaseIndex("gas");
       // Approximate standard conditions flow
-      gasStdVolFlow =
-          fluid.getPhase(gasPhaseIndex).getFlowRate("m3/sec") * fluid.getPhase(gasPhaseIndex).getZ()
-              * fluid.getTemperature() / 288.15 * 101325.0 / fluid.getPressure("Pa");
+      gasStdVolFlow = fluid.getPhase(gasPhaseIndex).getFlowRate("m3/sec") * fluid.getPhase(gasPhaseIndex).getZ()
+          * fluid.getTemperature() / 288.15 * 101325.0 / fluid.getPressure("Pa");
     }
 
     if (fluid.hasPhaseType("oil")) {
@@ -293,24 +289,24 @@ public abstract class MultiphaseChokeFlow implements Serializable {
    */
   public void setChokeDiameter(double diameter, String unit) {
     switch (unit.toLowerCase()) {
-      case "m":
-        this.chokeDiameter = diameter;
-        break;
-      case "mm":
-        this.chokeDiameter = diameter / 1000.0;
-        break;
-      case "in":
-      case "inch":
-      case "inches":
-        this.chokeDiameter = diameter * 0.0254;
-        break;
-      case "64ths":
-      case "64th":
-        // Bean size in 64ths of an inch (common oilfield unit)
-        this.chokeDiameter = diameter / 64.0 * 0.0254;
-        break;
-      default:
-        this.chokeDiameter = diameter;
+    case "m":
+      this.chokeDiameter = diameter;
+      break;
+    case "mm":
+      this.chokeDiameter = diameter / 1000.0;
+      break;
+    case "in":
+    case "inch":
+    case "inches":
+      this.chokeDiameter = diameter * 0.0254;
+      break;
+    case "64ths":
+    case "64th":
+      // Bean size in 64ths of an inch (common oilfield unit)
+      this.chokeDiameter = diameter / 64.0 * 0.0254;
+      break;
+    default:
+      this.chokeDiameter = diameter;
     }
   }
 

@@ -1,8 +1,8 @@
 package neqsim.process.equipment.pipeline.twophasepipe;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -35,6 +35,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * </ul>
  */
 class TwoFluidPipeValidationTest {
+  private static final Logger logger = LogManager.getLogger(TwoFluidPipeValidationTest.class);
 
   // Tolerance for comparison (10% relative error acceptable for correlations)
   private static final double CORRELATION_TOLERANCE = 0.15;
@@ -99,24 +100,22 @@ class TwoFluidPipeValidationTest {
       double bbHoldup = getAverageHoldup(bbPipe.getLiquidHoldupProfile());
       double tfHoldup = getAverageHoldup(tfPipe.getLiquidHoldupProfile());
 
-      double bbPressureDrop =
-          stream1.getPressure("bara") - bbPipe.getOutletStream().getPressure("bara");
-      double tfPressureDrop =
-          stream2.getPressure("bara") - tfPipe.getOutletStream().getPressure("bara");
+      double bbPressureDrop = stream1.getPressure("bara") - bbPipe.getOutletStream().getPressure("bara");
+      double tfPressureDrop = stream2.getPressure("bara") - tfPipe.getOutletStream().getPressure("bara");
 
-      System.out.println("=== Horizontal Pipe Comparison ===");
-      System.out.printf("Beggs-Brill: Holdup=%.4f, ΔP=%.3f bar%n", bbHoldup, bbPressureDrop);
-      System.out.printf("TwoFluidPipe: Holdup=%.4f, ΔP=%.3f bar%n", tfHoldup, tfPressureDrop);
+      logger.info("=== Horizontal Pipe Comparison ===");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Beggs-Brill: Holdup=%.4f, ΔP=%.3f bar%n", bbHoldup,
+          bbPressureDrop);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "TwoFluidPipe: Holdup=%.4f, ΔP=%.3f bar%n", tfHoldup,
+          tfPressureDrop);
 
       // Both should give similar holdup (within tolerance)
       double holdupDiff = Math.abs(bbHoldup - tfHoldup) / Math.max(bbHoldup, 0.01);
-      System.out.printf("Holdup relative difference: %.1f%%%n", holdupDiff * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Holdup relative difference: %.1f%%%n", holdupDiff * 100);
 
       // Assert reasonable results (both models should give physically meaningful results)
-      assertTrue(bbHoldup > 0 && bbHoldup < 0.5,
-          String.format("BB holdup should be reasonable: %.4f", bbHoldup));
-      assertTrue(tfHoldup > 0 && tfHoldup < 0.5,
-          String.format("TF holdup should be reasonable: %.4f", tfHoldup));
+      assertTrue(bbHoldup > 0 && bbHoldup < 0.5, String.format("BB holdup should be reasonable: %.4f", bbHoldup));
+      assertTrue(tfHoldup > 0 && tfHoldup < 0.5, String.format("TF holdup should be reasonable: %.4f", tfHoldup));
 
       // Note: Different models may give different results, but both should be in same ballpark
       // We're validating that TwoFluidPipe gives physically reasonable results
@@ -173,13 +172,15 @@ class TwoFluidPipeValidationTest {
       double horizHoldup = getAverageHoldup(horizPipe.getLiquidHoldupProfile());
       double uphillHoldup = getAverageHoldup(uphillPipe.getLiquidHoldupProfile());
 
-      System.out.println("\n=== Uphill vs Horizontal Comparison ===");
-      System.out.printf("Horizontal holdup: %.4f (%.2f%%)%n", horizHoldup, horizHoldup * 100);
-      System.out.printf("Uphill holdup: %.4f (%.2f%%)%n", uphillHoldup, uphillHoldup * 100);
+      logger.info("\n=== Uphill vs Horizontal Comparison ===");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Horizontal holdup: %.4f (%.2f%%)%n", horizHoldup,
+          horizHoldup * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Uphill holdup: %.4f (%.2f%%)%n", uphillHoldup,
+          uphillHoldup * 100);
 
       // Uphill should have higher or equal holdup (gravity holds liquid back)
-      assertTrue(uphillHoldup >= horizHoldup * 0.9, String.format(
-          "Uphill holdup (%.4f) should be >= horizontal (%.4f)", uphillHoldup, horizHoldup));
+      assertTrue(uphillHoldup >= horizHoldup * 0.9,
+          String.format("Uphill holdup (%.4f) should be >= horizontal (%.4f)", uphillHoldup, horizHoldup));
     }
 
     /**
@@ -227,9 +228,11 @@ class TwoFluidPipeValidationTest {
       double bbDP = 50.0 - bbOutletP;
       double tfDP = 50.0 - tfOutletP;
 
-      System.out.println("\n=== Pressure Drop Comparison ===");
-      System.out.printf("Beggs-Brill: Outlet P=%.2f bar, ΔP=%.3f bar%n", bbOutletP, bbDP);
-      System.out.printf("TwoFluidPipe: Outlet P=%.2f bar, ΔP=%.3f bar%n", tfOutletP, tfDP);
+      logger.info("\n=== Pressure Drop Comparison ===");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Beggs-Brill: Outlet P=%.2f bar, ΔP=%.3f bar%n", bbOutletP,
+          bbDP);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "TwoFluidPipe: Outlet P=%.2f bar, ΔP=%.3f bar%n", tfOutletP,
+          tfDP);
 
       // Both should give positive pressure drop
       assertTrue(bbDP > 0, "BB pressure drop should be positive");
@@ -286,14 +289,14 @@ class TwoFluidPipeValidationTest {
       double outletP = pipe.getOutletStream().getPressure("bara");
       double avgHoldup = getAverageHoldup(pipe.getLiquidHoldupProfile());
 
-      System.out.println("\n=== OVIP Case 1: Horizontal Gas-Condensate ===");
-      System.out.printf("Inlet: P=40 bar, T=30°C, m=8 kg/s%n");
-      System.out.printf("Pipe: L=2000m, D=6in%n");
-      System.out.printf("Results: Outlet P=%.2f bar, Avg Holdup=%.4f%n", outletP, avgHoldup);
+      logger.info("\n=== OVIP Case 1: Horizontal Gas-Condensate ===");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Inlet: P=40 bar, T=30°C, m=8 kg/s%n");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Pipe: L=2000m, D=6in%n");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Results: Outlet P=%.2f bar, Avg Holdup=%.4f%n", outletP,
+          avgHoldup);
 
       // Expected: Moderate pressure drop, low holdup for gas-condensate
-      assertTrue(outletP > 30 && outletP < 40,
-          String.format("Outlet pressure should be reasonable: %.2f", outletP));
+      assertTrue(outletP > 30 && outletP < 40, String.format("Outlet pressure should be reasonable: %.2f", outletP));
       assertTrue(avgHoldup > 0.001 && avgHoldup < 0.2,
           String.format("Holdup should be low for gas-condensate: %.4f", avgHoldup));
     }
@@ -339,10 +342,11 @@ class TwoFluidPipeValidationTest {
       double bottomHoldup = holdupProfile[1]; // First section after inlet
       double topHoldup = holdupProfile[holdupProfile.length - 1];
 
-      System.out.println("\n=== OVIP Case 2: Uphill Riser ===");
-      System.out.printf("Riser: L=500m, D=4in, Vertical%n");
-      System.out.printf("Bottom holdup: %.4f (%.2f%%)%n", bottomHoldup, bottomHoldup * 100);
-      System.out.printf("Top holdup: %.4f (%.2f%%)%n", topHoldup, topHoldup * 100);
+      logger.info("\n=== OVIP Case 2: Uphill Riser ===");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Riser: L=500m, D=4in, Vertical%n");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Bottom holdup: %.4f (%.2f%%)%n", bottomHoldup,
+          bottomHoldup * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Top holdup: %.4f (%.2f%%)%n", topHoldup, topHoldup * 100);
 
       // Riser base typically shows accumulation (higher holdup)
       // This test validates the terrain tracking enhancement
@@ -398,11 +402,11 @@ class TwoFluidPipeValidationTest {
       double endHoldup = holdupProfile[holdupProfile.length - 2];
       double avgHighPointHoldup = (startHoldup + endHoldup) / 2;
 
-      System.out.println("\n=== Terrain Tracking: Low Point Accumulation ===");
-      System.out.println("Profile: V-shaped with 30m dip in middle");
-      System.out.printf("Start holdup (high): %.4f%n", startHoldup);
-      System.out.printf("Low point holdup: %.4f%n", lowPointHoldup);
-      System.out.printf("End holdup (high): %.4f%n", endHoldup);
+      logger.info("\n=== Terrain Tracking: Low Point Accumulation ===");
+      logger.info("Profile: V-shaped with 30m dip in middle");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Start holdup (high): %.4f%n", startHoldup);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Low point holdup: %.4f%n", lowPointHoldup);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "End holdup (high): %.4f%n", endHoldup);
 
       // Low point should show equal or higher holdup (liquid accumulates)
       // Note: depends on flow regime and velocity
@@ -410,7 +414,7 @@ class TwoFluidPipeValidationTest {
 
       // Get liquid inventory
       double liquidInventory = pipe.getLiquidInventory("m3");
-      System.out.printf("Total liquid inventory: %.3f m³%n", liquidInventory);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Total liquid inventory: %.3f m³%n", liquidInventory);
       assertTrue(liquidInventory > 0, "Liquid inventory should be positive");
     }
 
@@ -461,18 +465,18 @@ class TwoFluidPipeValidationTest {
       double avgLowVel = getAverage(lowVelG);
       double avgHighVel = getAverage(highVelG);
 
-      System.out.println("\n=== Velocity Effect on Holdup ===");
-      System.out.printf("Low velocity: vG=%.2f m/s, holdup=%.4f (%.2f%%)%n", avgLowVel,
+      logger.info("\n=== Velocity Effect on Holdup ===");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Low velocity: vG=%.2f m/s, holdup=%.4f (%.2f%%)%n", avgLowVel,
           lowVelHoldup, lowVelHoldup * 100);
-      System.out.printf("High velocity: vG=%.2f m/s, holdup=%.4f (%.2f%%)%n", avgHighVel,
-          highVelHoldup, highVelHoldup * 100);
-      System.out.printf("Holdup ratio (low/high): %.2f%n", lowVelHoldup / highVelHoldup);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "High velocity: vG=%.2f m/s, holdup=%.4f (%.2f%%)%n",
+          avgHighVel, highVelHoldup, highVelHoldup * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Holdup ratio (low/high): %.2f%n",
+          lowVelHoldup / highVelHoldup);
 
       // Low velocity should have higher or similar holdup
       // (less gas carrying capacity = more liquid accumulation)
       assertTrue(lowVelHoldup >= highVelHoldup * 0.8,
-          String.format("Low velocity holdup (%.4f) should be >= high velocity (%.4f)",
-              lowVelHoldup, highVelHoldup));
+          String.format("Low velocity holdup (%.4f) should be >= high velocity (%.4f)", lowVelHoldup, highVelHoldup));
     }
   }
 
@@ -530,24 +534,25 @@ class TwoFluidPipeValidationTest {
       double riserBaseHoldup = holdupProfile[24];
       double riserTopHoldup = holdupProfile[holdupProfile.length - 1];
 
-      System.out.println("\n=== Severe Slugging Test ===");
-      System.out.println("Configuration: 2.4km flowline + 200m riser");
-      System.out.printf("Riser base holdup: %.4f (%.2f%%)%n", riserBaseHoldup,
+      logger.info("\n=== Severe Slugging Test ===");
+      logger.info("Configuration: 2.4km flowline + 200m riser");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Riser base holdup: %.4f (%.2f%%)%n", riserBaseHoldup,
           riserBaseHoldup * 100);
-      System.out.printf("Riser top holdup: %.4f (%.2f%%)%n", riserTopHoldup, riserTopHoldup * 100);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Riser top holdup: %.4f (%.2f%%)%n", riserTopHoldup,
+          riserTopHoldup * 100);
 
       // Flow regime at various points
       PipeSection.FlowRegime[] regimes = flowline.getFlowRegimeProfile();
-      System.out.printf("Flowline regime: %s%n", regimes[10]);
-      System.out.printf("Riser base regime: %s%n", regimes[24]);
-      System.out.printf("Riser top regime: %s%n", regimes[regimes.length - 1]);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Flowline regime: %s%n", regimes[10]);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Riser base regime: %s%n", regimes[24]);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Riser top regime: %s%n", regimes[regimes.length - 1]);
 
       // Riser base typically shows higher holdup due to accumulation
       assertTrue(riserBaseHoldup > 0, "Riser base should have liquid holdup");
 
       // Get slug statistics if available
       double liquidInv = flowline.getLiquidInventory("m3");
-      System.out.printf("Total liquid inventory: %.3f m³%n", liquidInv);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Total liquid inventory: %.3f m³%n", liquidInv);
     }
 
     /**
@@ -591,14 +596,14 @@ class TwoFluidPipeValidationTest {
       int lowPoint2 = 25; // Second trough at ~1.5π
       int lowPoint3 = 42; // Third trough at ~2.5π
 
-      System.out.println("\n=== Hilly Terrain Test ===");
-      System.out.println("Profile: Sinusoidal with ±20m, 3 cycles");
-      System.out.printf("Low point 1 (x=%.0fm): elevation=%.1fm, holdup=%.4f%n", lowPoint1 * 100.0,
-          elevation[lowPoint1], holdupProfile[lowPoint1]);
-      System.out.printf("Low point 2 (x=%.0fm): elevation=%.1fm, holdup=%.4f%n", lowPoint2 * 100.0,
-          elevation[lowPoint2], holdupProfile[lowPoint2]);
-      System.out.printf("Low point 3 (x=%.0fm): elevation=%.1fm, holdup=%.4f%n", lowPoint3 * 100.0,
-          elevation[lowPoint3], holdupProfile[lowPoint3]);
+      logger.info("\n=== Hilly Terrain Test ===");
+      logger.info("Profile: Sinusoidal with ±20m, 3 cycles");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Low point 1 (x=%.0fm): elevation=%.1fm, holdup=%.4f%n",
+          lowPoint1 * 100.0, elevation[lowPoint1], holdupProfile[lowPoint1]);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Low point 2 (x=%.0fm): elevation=%.1fm, holdup=%.4f%n",
+          lowPoint2 * 100.0, elevation[lowPoint2], holdupProfile[lowPoint2]);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Low point 3 (x=%.0fm): elevation=%.1fm, holdup=%.4f%n",
+          lowPoint3 * 100.0, elevation[lowPoint3], holdupProfile[lowPoint3]);
 
       // All low points should show liquid presence
       assertTrue(holdupProfile[lowPoint1] > 0, "Low point 1 should have holdup");
@@ -641,15 +646,14 @@ class TwoFluidPipeValidationTest {
       double topHoldup = holdupProfile[1];
       double bottomHoldup = holdupProfile[holdupProfile.length - 2];
 
-      System.out.println("\n=== Downhill Drainage Test ===");
-      System.out.println("Profile: 50m to 0m (5% grade downhill)");
-      System.out.printf("Top (inlet) holdup: %.4f%n", topHoldup);
-      System.out.printf("Bottom (outlet) holdup: %.4f%n", bottomHoldup);
+      logger.info("\n=== Downhill Drainage Test ===");
+      logger.info("Profile: 50m to 0m (5% grade downhill)");
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Top (inlet) holdup: %.4f%n", topHoldup);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "Bottom (outlet) holdup: %.4f%n", bottomHoldup);
 
       // In downhill flow, liquid drains toward low point
       // Outlet should have at least as much holdup as inlet
-      assertTrue(bottomHoldup >= topHoldup * 0.5,
-          "Outlet should have accumulated liquid from drainage");
+      assertTrue(bottomHoldup >= topHoldup * 0.5, "Outlet should have accumulated liquid from drainage");
     }
   }
 

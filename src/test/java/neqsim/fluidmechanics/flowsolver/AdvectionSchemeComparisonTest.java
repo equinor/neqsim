@@ -2,6 +2,8 @@ package neqsim.fluidmechanics.flowsolver;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -11,15 +13,16 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Tests comparing different advection schemes for numerical dispersion.
- * 
+ *
  * <p>
- * This test suite validates that higher-order schemes reduce numerical dispersion compared to
- * first-order upwind, while TVD schemes maintain monotonicity.
+ * This test suite validates that higher-order schemes reduce numerical dispersion compared to first-order upwind, while
+ * TVD schemes maintain monotonicity.
  * </p>
  *
  * @author ESOL
  */
 public class AdvectionSchemeComparisonTest {
+  private static final Logger logger = LogManager.getLogger(AdvectionSchemeComparisonTest.class);
   private SystemInterface testFluidMethane;
   private SystemInterface testFluidNitrogen;
   private double pipeLength = 100.0; // meters
@@ -67,9 +70,8 @@ public class AdvectionSchemeComparisonTest {
     assertTrue(AdvectionScheme.QUICK.getDispersionReductionFactor() < 0.1);
 
     // TVD Superbee should be least diffusive TVD
-    assertTrue(
-        AdvectionScheme.TVD_SUPERBEE.getDispersionReductionFactor() < AdvectionScheme.TVD_MINMOD
-            .getDispersionReductionFactor());
+    assertTrue(AdvectionScheme.TVD_SUPERBEE.getDispersionReductionFactor() < AdvectionScheme.TVD_MINMOD
+        .getDispersionReductionFactor());
   }
 
   @Test
@@ -147,8 +149,7 @@ public class AdvectionSchemeComparisonTest {
       assertTrue(D_scheme <= D_upwind, "Scheme " + scheme + " should not increase dispersion");
 
       if (scheme != AdvectionScheme.FIRST_ORDER_UPWIND) {
-        assertTrue(D_scheme < D_upwind,
-            "Higher-order scheme " + scheme + " should reduce dispersion");
+        assertTrue(D_scheme < D_upwind, "Higher-order scheme " + scheme + " should reduce dispersion");
       }
     }
   }
@@ -159,8 +160,7 @@ public class AdvectionSchemeComparisonTest {
     for (AdvectionScheme scheme : AdvectionScheme.values()) {
       assertTrue(scheme.getDisplayName() != null && !scheme.getDisplayName().isEmpty(),
           "Scheme " + scheme + " should have a display name");
-      assertTrue(scheme.toString().equals(scheme.getDisplayName()),
-          "toString should return display name");
+      assertTrue(scheme.toString().equals(scheme.getDisplayName()), "toString should return display name");
     }
   }
 
@@ -207,7 +207,7 @@ public class AdvectionSchemeComparisonTest {
     assertEquals(0.0, FluxLimiter.mc(0.0), 1e-10);
 
     // For any r > 0, MC should be bounded by [0, 2]
-    for (double testR : new double[] {0.1, 0.5, 1.0, 2.0, 5.0, 10.0}) {
+    for (double testR : new double[] { 0.1, 0.5, 1.0, 2.0, 5.0, 10.0 }) {
       double mcTest = FluxLimiter.mc(testR);
       assertTrue(mcTest >= 0 && mcTest <= 2.0, "MC limiter should be in [0, 2] for r=" + testR);
     }
@@ -232,15 +232,12 @@ public class AdvectionSchemeComparisonTest {
     double sigma_tvd = Math.sqrt(2.0 * D_tvd * transportTime);
     double frontWidth_tvd = 4.0 * sigma_tvd;
 
-    assertTrue(frontWidth_tvd < frontWidth_upwind * 0.5,
-        "TVD should reduce front width by more than 50%");
+    assertTrue(frontWidth_tvd < frontWidth_upwind * 0.5, "TVD should reduce front width by more than 50%");
 
     // Report for documentation
-    System.out.println("=== Front Width Comparison (100m pipe, 5 m/s, dx=1m) ===");
-    System.out
-        .println("First-Order Upwind front width: " + String.format("%.1f m", frontWidth_upwind));
-    System.out.println("TVD Van Leer front width: " + String.format("%.1f m", frontWidth_tvd));
-    System.out
-        .println("Reduction factor: " + String.format("%.1f×", frontWidth_upwind / frontWidth_tvd));
+    logger.info("=== Front Width Comparison (100m pipe, 5 m/s, dx=1m) ===");
+    System.out.println("First-Order Upwind front width: " + String.format("%.1f m", frontWidth_upwind));
+    logger.info("TVD Van Leer front width: " + String.format("%.1f m", frontWidth_tvd));
+    System.out.println("Reduction factor: " + String.format("%.1f×", frontWidth_upwind / frontWidth_tvd));
   }
 }

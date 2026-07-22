@@ -2,6 +2,8 @@ package neqsim.process.mechanicaldesign.compressor;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.stream.Stream;
@@ -12,6 +14,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Tests for compressor mechanical design calculations. */
 public class CompressorMechanicalDesignTest {
+  private static final Logger logger = LogManager.getLogger(CompressorMechanicalDesignTest.class);
+
   @Test
   void testCalcDesign() {
     SystemInterface gas = new SystemSrkEos(300.0, 10.0);
@@ -37,16 +41,12 @@ public class CompressorMechanicalDesignTest {
     comp.getMechanicalDesign().calcDesign();
 
     // Verify basic design outputs are calculated
-    assertTrue(comp.getMechanicalDesign().getWeightTotal() > 0.0,
-        "Total weight should be positive");
+    assertTrue(comp.getMechanicalDesign().getWeightTotal() > 0.0, "Total weight should be positive");
     assertTrue(comp.getMechanicalDesign().getNumberOfStages() >= 1, "Should have at least 1 stage");
-    assertTrue(comp.getMechanicalDesign().getImpellerDiameter() > 0,
-        "Impeller diameter should be positive");
-    assertTrue(comp.getMechanicalDesign().getShaftDiameter() > 0,
-        "Shaft diameter should be positive");
+    assertTrue(comp.getMechanicalDesign().getImpellerDiameter() > 0, "Impeller diameter should be positive");
+    assertTrue(comp.getMechanicalDesign().getShaftDiameter() > 0, "Shaft diameter should be positive");
     assertTrue(comp.getMechanicalDesign().getDriverPower() > 0, "Driver power should be positive");
-    assertTrue(comp.getMechanicalDesign().getDesignPressure() > 40.0,
-        "Design pressure should be > discharge pressure");
+    assertTrue(comp.getMechanicalDesign().getDesignPressure() > 40.0, "Design pressure should be > discharge pressure");
   }
 
   @Test
@@ -74,8 +74,7 @@ public class CompressorMechanicalDesignTest {
     comp.getMechanicalDesign().calcDesign();
 
     // High pressure should result in barrel casing
-    assertEquals(CompressorMechanicalDesign.CasingType.BARREL,
-        comp.getMechanicalDesign().getCasingType(),
+    assertEquals(CompressorMechanicalDesign.CasingType.BARREL, comp.getMechanicalDesign().getCasingType(),
         "High pressure compressor should have barrel casing");
   }
 
@@ -105,10 +104,8 @@ public class CompressorMechanicalDesignTest {
     // High pressure ratio should require multiple stages
     assertTrue(comp.getMechanicalDesign().getNumberOfStages() > 1,
         "High pressure ratio should require multiple stages");
-    assertTrue(comp.getMechanicalDesign().getHeadPerStage() > 0,
-        "Head per stage should be positive");
-    assertTrue(comp.getMechanicalDesign().getHeadPerStage() <= 30.0,
-        "Head per stage should be <= 30 kJ/kg");
+    assertTrue(comp.getMechanicalDesign().getHeadPerStage() > 0, "Head per stage should be positive");
+    assertTrue(comp.getMechanicalDesign().getHeadPerStage() <= 30.0, "Head per stage should be <= 30 kJ/kg");
   }
 
   @Test
@@ -136,8 +133,7 @@ public class CompressorMechanicalDesignTest {
     double driverPower = comp.getMechanicalDesign().getDriverPower();
 
     // Small compressors should have 25% margin
-    assertTrue(driverPower >= shaftPower * 1.20,
-        "Small compressor should have at least 20% driver margin");
+    assertTrue(driverPower >= shaftPower * 1.20, "Small compressor should have at least 20% driver margin");
   }
 
   // ============================================================================
@@ -168,7 +164,7 @@ public class CompressorMechanicalDesignTest {
     double surgeMargin = design.getSurgeMarginPercent();
     assertTrue(surgeMargin >= 10.0, "Surge margin should be >= 10%");
     assertTrue(surgeMargin <= 30.0, "Surge margin should be reasonable (<= 30%)");
-    System.out.println("Surge margin: " + surgeMargin + "%");
+    logger.info("Surge margin: " + surgeMargin + "%");
   }
 
   @Test
@@ -193,7 +189,7 @@ public class CompressorMechanicalDesignTest {
 
     double stonewallMargin = design.getStonewallMarginPercent();
     assertTrue(stonewallMargin >= 5.0, "Stonewall margin should be >= 5%");
-    System.out.println("Stonewall margin: " + stonewallMargin + "%");
+    logger.info("Stonewall margin: " + stonewallMargin + "%");
   }
 
   @Test
@@ -221,7 +217,7 @@ public class CompressorMechanicalDesignTest {
     // Target efficiency is stored as percentage (70-90%)
     assertTrue(targetEff >= 70.0, "Target efficiency should be >= 70%");
     assertTrue(targetEff <= 90.0, "Target efficiency should be <= 90%");
-    System.out.println("Target polytropic efficiency: " + targetEff + "%");
+    logger.info("Target polytropic efficiency: " + targetEff + "%");
   }
 
   // ============================================================================
@@ -254,7 +250,7 @@ public class CompressorMechanicalDesignTest {
     // Test with very low efficiency (might fail)
     // The validation depends on the target set in process design
     boolean lowEffResult = design.validateEfficiency(50.0);
-    System.out.println("Low efficiency (50%) validation: " + lowEffResult);
+    logger.info("Low efficiency (50%) validation: " + lowEffResult);
   }
 
   @Test
@@ -280,12 +276,10 @@ public class CompressorMechanicalDesignTest {
     double maxTemp = design.getMaxDischargeTemperatureC();
 
     // Test within limit
-    assertTrue(design.validateDischargeTemperature(maxTemp - 20),
-        "Temperature 20C below max should pass");
+    assertTrue(design.validateDischargeTemperature(maxTemp - 20), "Temperature 20C below max should pass");
 
     // Test above limit
-    assertTrue(!design.validateDischargeTemperature(maxTemp + 20),
-        "Temperature 20C above max should fail");
+    assertTrue(!design.validateDischargeTemperature(maxTemp + 20), "Temperature 20C above max should fail");
   }
 
   @Test
@@ -314,10 +308,10 @@ public class CompressorMechanicalDesignTest {
     assertTrue(result != null, "Validation result should not be null");
     assertTrue(result.getIssues() != null, "Issues list should not be null");
 
-    System.out.println("Compressor validation valid: " + result.isValid());
+    logger.info("Compressor validation valid: " + result.isValid());
     if (!result.isValid()) {
       for (String issue : result.getIssues()) {
-        System.out.println("  Issue: " + issue);
+        logger.info("  Issue: " + issue);
       }
     }
   }

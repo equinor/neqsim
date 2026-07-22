@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestmercuryTPflash class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TestmercuryTPflash {
+  private static final Logger logger = LogManager.getLogger(TestmercuryTPflash.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestmercuryTPflash.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -52,9 +49,7 @@ public class TestmercuryTPflash {
       logger.error(ex.getMessage(), ex);
     }
     // ((PhaseEosInterface)testSystem.getPhase(0)).displayInteractionCoefficients("");
-    System.out.println("vapour pressure "
-        + testSystem.getPhase(0).getComponent("mercury").getx() * testSystem.getPressure());
-    System.out.println(
-        "Ttrip " + testSystem.getPhase(0).getComponent("mercury").getTriplePointTemperature());
+    logger.info("vapour pressure " + testSystem.getPhase(0).getComponent("mercury").getx() * testSystem.getPressure());
+    logger.info("Ttrip " + testSystem.getPhase(0).getComponent("mercury").getTriplePointTemperature());
   }
 }

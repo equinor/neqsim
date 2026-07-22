@@ -13,9 +13,7 @@ import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestSlugcatcher class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -23,9 +21,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  */
 public class TestSlugcatcher {
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -52,20 +48,18 @@ public class TestSlugcatcher {
     ThrottlingValve valve1 = new ThrottlingValve("snohvit valve", separator.getWaterOutStream());
     valve1.setOutletPressure(1.4);
 
-    ThreePhaseSeparator separator2 =
-        new ThreePhaseSeparator("Separator 1", valve1.getOutletStream());
+    ThreePhaseSeparator separator2 = new ThreePhaseSeparator("Separator 1", valve1.getOutletStream());
     Stream stream_2 = new Stream("stream_2", separator2.getGasOutStream());
 
-    VolumeFlowTransmitter volumeTransmitter3 = new VolumeFlowTransmitter(
-        "Gas Volume FLow From Slug Catcher", separator2.getGasOutStream());
+    VolumeFlowTransmitter volumeTransmitter3 = new VolumeFlowTransmitter("Gas Volume FLow From Slug Catcher",
+        separator2.getGasOutStream());
     volumeTransmitter3.setMeasuredPhaseNumber(0);
 
-    VolumeFlowTransmitter volumeTransmitter4 = new VolumeFlowTransmitter(
-        "Water Volume FLow From Slug Catcher", separator2.getWaterOutStream());
+    VolumeFlowTransmitter volumeTransmitter4 = new VolumeFlowTransmitter("Water Volume FLow From Slug Catcher",
+        separator2.getWaterOutStream());
     volumeTransmitter4.setMeasuredPhaseNumber(0);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(separator);
     operations.add(valve1);

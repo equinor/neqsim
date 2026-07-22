@@ -1,7 +1,6 @@
 package neqsim.process.mechanicaldesign.valve.choke;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -150,8 +149,7 @@ public class GilbertChokeFlowTest {
     double flow_achong = gilbertModel.calculateMassFlowRate(twoPhaseFluid, P1, P2);
 
     // Different correlations should give different results
-    assertTrue(Math.abs(flow_gilbert - flow_achong) > 0.001,
-        "Different correlations should give different results");
+    assertTrue(Math.abs(flow_gilbert - flow_achong) > 0.001, "Different correlations should give different results");
   }
 
   @Test
@@ -176,8 +174,7 @@ public class GilbertChokeFlowTest {
     // Only test if we have meaningful liquid flow
     if (liquidFlow > 1e-6) {
       // Calculate required diameter
-      double requiredDiameter =
-          gilbertModel.calculateRequiredChokeDiameter(twoPhaseFluid, P1, liquidFlow);
+      double requiredDiameter = gilbertModel.calculateRequiredChokeDiameter(twoPhaseFluid, P1, liquidFlow);
 
       // Should be non-negative (may be zero for all-gas case)
       assertTrue(requiredDiameter >= 0, "Required diameter should be non-negative");

@@ -1,6 +1,18 @@
 language: java
 
 setup:
+  # Java 8 + Maven for building NeqSim
   - apt-get update
-  - apt-get install -y maven
+  - apt-get install -y openjdk-8-jdk maven
+  - export JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+  - java -version
   - mvn --version
+
+  # Python packages for task-solving workflow
+  - pip install python-docx matplotlib jupyter
+
+  # Install NeqSim Python (released package — for notebooks)
+  - pip install neqsim
+
+  # GitHub CLI for PR creation
+  - apt-get install -y gh || true

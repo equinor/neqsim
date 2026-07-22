@@ -2,6 +2,8 @@ package neqsim.process.equipment.pipeline;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -11,7 +13,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Comparison tests for different pipeline pressure drop models with pure methane.
- * 
+ *
  * <p>
  * This test class compares the pressure drop calculations from:
  * <ul>
@@ -20,7 +22,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>{@link PipeBeggsAndBrills} - Beggs and Brill correlation</li>
  * </ul>
  * </p>
- * 
+ *
  * <p>
  * Reference equations for gas pipeline flow:
  * </p>
@@ -31,12 +33,14 @@ import neqsim.thermo.system.SystemSrkEos;
  * <li>AGA equation - most accurate, uses Colebrook friction factor</li>
  * <li>Darcy-Weisbach - fundamental equation with explicit friction factor</li>
  * </ul>
- * 
+ *
  * <p>
  * Reference: Menon, E.S. "Gas Pipeline Hydraulics", CRC Press, 2005
  * </p>
  */
 public class PipelinePressureDropComparisonTest {
+  private static final Logger logger = LogManager.getLogger(PipelinePressureDropComparisonTest.class);
+
   private static final double PIPE_LENGTH = 10000.0; // 10 km
   private static final double PIPE_DIAMETER = 0.3; // 0.3 m (12 inch)
   private static final double PIPE_ROUGHNESS = 5e-5; // 0.05 mm
@@ -66,13 +70,13 @@ public class PipelinePressureDropComparisonTest {
   }
 
   /**
-   * Calculates pressure drop using the Darcy-Weisbach equation with Colebrook friction factor. This
-   * is the fundamental equation for pipe flow pressure drop.
-   * 
+   * Calculates pressure drop using the Darcy-Weisbach equation with Colebrook friction factor. This is the fundamental
+   * equation for pipe flow pressure drop.
+   *
    * <p>
    * ΔP = f * (L/D) * (ρV²/2)
    * </p>
-   * 
+   *
    * @param length pipe length in meters
    * @param diameter pipe inner diameter in meters
    * @param roughness pipe wall roughness in meters
@@ -81,8 +85,8 @@ public class PipelinePressureDropComparisonTest {
    * @param viscosity dynamic viscosity in Pa·s
    * @return pressure drop in Pa
    */
-  private double calcDarcyWeisbachPressureDrop(double length, double diameter, double roughness,
-      double density, double velocity, double viscosity) {
+  private double calcDarcyWeisbachPressureDrop(double length, double diameter, double roughness, double density,
+      double velocity, double viscosity) {
     double reynoldsNumber = density * velocity * diameter / viscosity;
     double frictionFactor = calcColebrookFrictionFactor(reynoldsNumber, roughness / diameter);
     return frictionFactor * (length / diameter) * (density * velocity * velocity / 2.0);
@@ -90,11 +94,11 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Iteratively solves the Colebrook-White equation for friction factor.
-   * 
+   *
    * <p>
    * 1/√f = -2 log₁₀(ε/(3.7D) + 2.51/(Re√f))
    * </p>
-   * 
+   *
    * @param reynoldsNumber Reynolds number
    * @param relativeRoughness ε/D
    * @return Darcy friction factor
@@ -104,16 +108,12 @@ public class PipelinePressureDropComparisonTest {
       return 64.0 / reynoldsNumber;
     }
     // Initial guess using Haaland equation
-    double f = Math.pow(
-        1.0 / (-1.8 * Math.log10(Math.pow(relativeRoughness / 3.7, 1.11) + 6.9 / reynoldsNumber)),
-        2.0);
+    double f = Math.pow(1.0 / (-1.8 * Math.log10(Math.pow(relativeRoughness / 3.7, 1.11) + 6.9 / reynoldsNumber)), 2.0);
 
     // Iterate Colebrook equation
     for (int i = 0; i < 20; i++) {
       double sqrtF = Math.sqrt(f);
-      double fNew = Math.pow(
-          1.0 / (-2.0 * Math.log10(relativeRoughness / 3.7 + 2.51 / (reynoldsNumber * sqrtF))),
-          2.0);
+      double fNew = Math.pow(1.0 / (-2.0 * Math.log10(relativeRoughness / 3.7 + 2.51 / (reynoldsNumber * sqrtF))), 2.0);
       if (Math.abs(fNew - f) / f < 1e-8) {
         break;
       }
@@ -124,20 +124,20 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Calculates outlet pressure using the General Flow Equation for gas pipelines.
-   * 
+   *
    * <p>
-   * This is the fundamental equation derived from the mechanical energy balance for compressible
-   * flow in horizontal pipes:
+   * This is the fundamental equation derived from the mechanical energy balance for compressible flow in horizontal
+   * pipes:
    * </p>
-   * 
+   *
    * <p>
    * Q = C * (Tb/Pb) * √[(P1² - P2²) * D⁵ / (f * G * Tf * L * Z)]
    * </p>
-   * 
+   *
    * <p>
    * Rearranged for P2: P2 = √[P1² - (Q * Pb / (C * Tb))² * (f * G * Tf * L * Z / D⁵)]
    * </p>
-   * 
+   *
    * @param inletPressure inlet pressure in bara
    * @param flowRateSm3Sec flow rate in Sm³/s at standard conditions
    * @param length pipe length in m
@@ -148,9 +148,8 @@ public class PipelinePressureDropComparisonTest {
    * @param frictionFactor Darcy friction factor
    * @return outlet pressure in bara
    */
-  private double calcGeneralFlowEquationOutletPressure(double inletPressure, double flowRateSm3Sec,
-      double length, double diameter, double gasGravity, double temperature,
-      double compressibilityZ, double frictionFactor) {
+  private double calcGeneralFlowEquationOutletPressure(double inletPressure, double flowRateSm3Sec, double length,
+      double diameter, double gasGravity, double temperature, double compressibilityZ, double frictionFactor) {
     // General flow equation in pure SI units
     // Q = (Tb/Pb) * sqrt[(P1² - P2²) * D⁵ / (f * G * Tf * L * Z)] * constant
     // Using derivation from Menon with SI adjustment
@@ -181,16 +180,16 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Calculates outlet pressure using the Weymouth equation.
-   * 
+   *
    * <p>
-   * The Weymouth equation (1912) is commonly used for high-pressure gas transmission lines. It
-   * assumes fully turbulent flow and uses an implicit friction factor of f = 0.032/D^(1/3).
+   * The Weymouth equation (1912) is commonly used for high-pressure gas transmission lines. It assumes fully turbulent
+   * flow and uses an implicit friction factor of f = 0.032/D^(1/3).
    * </p>
-   * 
+   *
    * <p>
    * Q = 3.7435e-3 * (Tb/Pb) * √[(P1² - P2²) * D^(16/3) / (G * Tf * L * Z)]
    * </p>
-   * 
+   *
    * @param inletPressure inlet pressure in bara
    * @param flowRateSm3Sec flow rate in Sm³/s at standard conditions
    * @param length pipe length in m
@@ -200,9 +199,8 @@ public class PipelinePressureDropComparisonTest {
    * @param compressibilityZ compressibility factor
    * @return outlet pressure in bara
    */
-  private double calcWeymouthOutletPressure(double inletPressure, double flowRateSm3Sec,
-      double length, double diameter, double gasGravity, double temperature,
-      double compressibilityZ) {
+  private double calcWeymouthOutletPressure(double inletPressure, double flowRateSm3Sec, double length, double diameter,
+      double gasGravity, double temperature, double compressibilityZ) {
     // Weymouth equation with implicit friction factor f = 0.032 / D^(1/3)
     // Using the same SI derivation as General Flow Equation
     double Tb = 288.15;
@@ -228,17 +226,16 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Calculates outlet pressure using the Panhandle A equation.
-   * 
+   *
    * <p>
-   * The Panhandle A equation is used for medium to large diameter pipelines with Reynolds numbers
-   * in the range of 5 to 11 million. It uses an effective friction factor that varies with Reynolds
-   * number.
+   * The Panhandle A equation is used for medium to large diameter pipelines with Reynolds numbers in the range of 5 to
+   * 11 million. It uses an effective friction factor that varies with Reynolds number.
    * </p>
-   * 
+   *
    * <p>
    * The Panhandle A effectively uses f = 0.085 / Re^0.147
    * </p>
-   * 
+   *
    * @param inletPressure inlet pressure in bara
    * @param flowRateSm3Sec flow rate in Sm³/s at standard conditions
    * @param length pipe length in m
@@ -249,9 +246,8 @@ public class PipelinePressureDropComparisonTest {
    * @param reynoldsNumber Reynolds number
    * @return outlet pressure in bara
    */
-  private double calcPanhandleAOutletPressure(double inletPressure, double flowRateSm3Sec,
-      double length, double diameter, double gasGravity, double temperature,
-      double compressibilityZ, double reynoldsNumber) {
+  private double calcPanhandleAOutletPressure(double inletPressure, double flowRateSm3Sec, double length,
+      double diameter, double gasGravity, double temperature, double compressibilityZ, double reynoldsNumber) {
     double Tb = 288.15;
     double Pb = 101325; // Pa
 
@@ -283,10 +279,10 @@ public class PipelinePressureDropComparisonTest {
     double outletPressure = pipe.getOutletStream().getPressure("bara");
     double pressureDrop = INLET_PRESSURE - outletPressure;
 
-    System.out.println("=== AdiabaticPipe (Single-phase compressible) ===");
-    System.out.println("Inlet Pressure: " + INLET_PRESSURE + " bara");
-    System.out.println("Outlet Pressure: " + outletPressure + " bara");
-    System.out.println("Pressure Drop: " + pressureDrop + " bar");
+    logger.info("=== AdiabaticPipe (Single-phase compressible) ===");
+    logger.info("Inlet Pressure: " + INLET_PRESSURE + " bara");
+    logger.info("Outlet Pressure: " + outletPressure + " bara");
+    logger.info("Pressure Drop: " + pressureDrop + " bar");
 
     assertTrue(pressureDrop > 0, "Pressure drop should be positive");
     assertTrue(outletPressure > 0, "Outlet pressure should be positive");
@@ -305,10 +301,10 @@ public class PipelinePressureDropComparisonTest {
     double outletPressure = pipe.getOutletStream().getPressure("bara");
     double pressureDrop = INLET_PRESSURE - outletPressure;
 
-    System.out.println("=== AdiabaticTwoPhasePipe ===");
-    System.out.println("Inlet Pressure: " + INLET_PRESSURE + " bara");
-    System.out.println("Outlet Pressure: " + outletPressure + " bara");
-    System.out.println("Pressure Drop: " + pressureDrop + " bar");
+    logger.info("=== AdiabaticTwoPhasePipe ===");
+    logger.info("Inlet Pressure: " + INLET_PRESSURE + " bara");
+    logger.info("Outlet Pressure: " + outletPressure + " bara");
+    logger.info("Pressure Drop: " + pressureDrop + " bar");
 
     assertTrue(pressureDrop > 0, "Pressure drop should be positive");
     assertTrue(outletPressure > 0, "Outlet pressure should be positive");
@@ -330,11 +326,11 @@ public class PipelinePressureDropComparisonTest {
     double outletPressure = pipe.getOutletPressure();
     double pressureDrop = pipe.getPressureDrop();
 
-    System.out.println("=== PipeBeggsAndBrills ===");
-    System.out.println("Inlet Pressure: " + INLET_PRESSURE + " bara");
-    System.out.println("Outlet Pressure: " + outletPressure + " bara");
-    System.out.println("Pressure Drop: " + pressureDrop + " bar");
-    System.out.println("Flow Regime: " + pipe.getFlowRegime());
+    logger.info("=== PipeBeggsAndBrills ===");
+    logger.info("Inlet Pressure: " + INLET_PRESSURE + " bara");
+    logger.info("Outlet Pressure: " + outletPressure + " bara");
+    logger.info("Pressure Drop: " + pressureDrop + " bar");
+    logger.info("Flow Regime: " + pipe.getFlowRegime());
 
     assertTrue(pressureDrop > 0, "Pressure drop should be positive");
     assertTrue(outletPressure > 0, "Outlet pressure should be positive");
@@ -344,15 +340,14 @@ public class PipelinePressureDropComparisonTest {
 
   @Test
   void testCompareAllModelsHorizontalPipe() {
-    System.out.println("\n========== COMPARISON: Horizontal Pipe with Pure Methane ==========");
-    System.out.println("Conditions:");
-    System.out.println("  Pipe Length: " + PIPE_LENGTH + " m");
-    System.out.println("  Pipe Diameter: " + PIPE_DIAMETER + " m");
-    System.out.println("  Wall Roughness: " + PIPE_ROUGHNESS + " m");
-    System.out.println("  Inlet Pressure: " + INLET_PRESSURE + " bara");
-    System.out.println("  Inlet Temperature: " + INLET_TEMPERATURE + " C");
-    System.out.println("  Mass Flow Rate: " + MASS_FLOW_RATE + " kg/hr");
-    System.out.println();
+    logger.info("\n========== COMPARISON: Horizontal Pipe with Pure Methane ==========");
+    logger.info("Conditions:");
+    logger.info("  Pipe Length: " + PIPE_LENGTH + " m");
+    logger.info("  Pipe Diameter: " + PIPE_DIAMETER + " m");
+    logger.info("  Wall Roughness: " + PIPE_ROUGHNESS + " m");
+    logger.info("  Inlet Pressure: " + INLET_PRESSURE + " bara");
+    logger.info("  Inlet Temperature: " + INLET_TEMPERATURE + " C");
+    logger.info("  Mass Flow Rate: " + MASS_FLOW_RATE + " kg/hr");
 
     // AdiabaticPipe
     AdiabaticPipe adiabaticPipe = new AdiabaticPipe("AdiabaticPipe", inletStream);
@@ -365,8 +360,7 @@ public class PipelinePressureDropComparisonTest {
     // AdiabaticTwoPhasePipe
     Stream inletStream2 = inletStream.clone();
     inletStream2.run();
-    AdiabaticTwoPhasePipe twoPhasePipe =
-        new AdiabaticTwoPhasePipe("AdiabaticTwoPhasePipe", inletStream2);
+    AdiabaticTwoPhasePipe twoPhasePipe = new AdiabaticTwoPhasePipe("AdiabaticTwoPhasePipe", inletStream2);
     twoPhasePipe.setLength(PIPE_LENGTH);
     twoPhasePipe.setDiameter(PIPE_DIAMETER);
     twoPhasePipe.setPipeWallRoughness(PIPE_ROUGHNESS);
@@ -386,13 +380,10 @@ public class PipelinePressureDropComparisonTest {
     beggsBrillsPipe.run();
     double dpBeggsBrills = beggsBrillsPipe.getPressureDrop();
 
-    System.out.println("Results:");
-    System.out
-        .println("  AdiabaticPipe:        ΔP = " + String.format("%.4f", dpAdiabatic) + " bar");
-    System.out
-        .println("  AdiabaticTwoPhasePipe: ΔP = " + String.format("%.4f", dpTwoPhase) + " bar");
-    System.out
-        .println("  PipeBeggsAndBrills:   ΔP = " + String.format("%.4f", dpBeggsBrills) + " bar");
+    logger.info("Results:");
+    System.out.println("  AdiabaticPipe:        ΔP = " + String.format("%.4f", dpAdiabatic) + " bar");
+    System.out.println("  AdiabaticTwoPhasePipe: ΔP = " + String.format("%.4f", dpTwoPhase) + " bar");
+    System.out.println("  PipeBeggsAndBrills:   ΔP = " + String.format("%.4f", dpBeggsBrills) + " bar");
 
     // All models should give positive pressure drop
     assertTrue(dpAdiabatic > 0, "AdiabaticPipe pressure drop should be positive");
@@ -403,20 +394,18 @@ public class PipelinePressureDropComparisonTest {
     // (within factor of 5 for different model assumptions)
     double maxDp = Math.max(Math.max(dpAdiabatic, dpTwoPhase), dpBeggsBrills);
     double minDp = Math.min(Math.min(dpAdiabatic, dpTwoPhase), dpBeggsBrills);
-    assertTrue(maxDp / minDp < 5.0,
-        "Pressure drop results should be within factor of 5 of each other");
+    assertTrue(maxDp / minDp < 5.0, "Pressure drop results should be within factor of 5 of each other");
   }
 
   @Test
   void testCompareModelsWithElevation() {
     double elevation = 500.0; // 500 m elevation change (uphill)
 
-    System.out.println("\n========== COMPARISON: Uphill Pipe with Pure Methane ==========");
-    System.out.println("Conditions:");
-    System.out.println("  Pipe Length: " + PIPE_LENGTH + " m");
-    System.out.println("  Elevation Change: " + elevation + " m (uphill)");
-    System.out.println("  Pipe Diameter: " + PIPE_DIAMETER + " m");
-    System.out.println();
+    logger.info("\n========== COMPARISON: Uphill Pipe with Pure Methane ==========");
+    logger.info("Conditions:");
+    logger.info("  Pipe Length: " + PIPE_LENGTH + " m");
+    logger.info("  Elevation Change: " + elevation + " m (uphill)");
+    logger.info("  Pipe Diameter: " + PIPE_DIAMETER + " m");
 
     // AdiabaticPipe with elevation
     AdiabaticPipe adiabaticPipe = new AdiabaticPipe("AdiabaticPipe", inletStream);
@@ -431,8 +420,7 @@ public class PipelinePressureDropComparisonTest {
     // AdiabaticTwoPhasePipe with elevation
     Stream inletStream2 = inletStream.clone();
     inletStream2.run();
-    AdiabaticTwoPhasePipe twoPhasePipe =
-        new AdiabaticTwoPhasePipe("AdiabaticTwoPhasePipe", inletStream2);
+    AdiabaticTwoPhasePipe twoPhasePipe = new AdiabaticTwoPhasePipe("AdiabaticTwoPhasePipe", inletStream2);
     twoPhasePipe.setLength(PIPE_LENGTH);
     twoPhasePipe.setDiameter(PIPE_DIAMETER);
     twoPhasePipe.setPipeWallRoughness(PIPE_ROUGHNESS);
@@ -454,13 +442,10 @@ public class PipelinePressureDropComparisonTest {
     beggsBrillsPipe.run();
     double dpBeggsBrillsElev = beggsBrillsPipe.getPressureDrop();
 
-    System.out.println("Results with elevation:");
-    System.out
-        .println("  AdiabaticPipe:        ΔP = " + String.format("%.4f", dpAdiabaticElev) + " bar");
-    System.out
-        .println("  AdiabaticTwoPhasePipe: ΔP = " + String.format("%.4f", dpTwoPhaseElev) + " bar");
-    System.out.println(
-        "  PipeBeggsAndBrills:   ΔP = " + String.format("%.4f", dpBeggsBrillsElev) + " bar");
+    logger.info("Results with elevation:");
+    System.out.println("  AdiabaticPipe:        ΔP = " + String.format("%.4f", dpAdiabaticElev) + " bar");
+    System.out.println("  AdiabaticTwoPhasePipe: ΔP = " + String.format("%.4f", dpTwoPhaseElev) + " bar");
+    logger.info("  PipeBeggsAndBrills:   ΔP = " + String.format("%.4f", dpBeggsBrillsElev) + " bar");
 
     // All should still give positive pressure drop for uphill flow
     assertTrue(dpAdiabaticElev > 0, "Uphill AdiabaticPipe pressure drop should be positive");
@@ -470,11 +455,11 @@ public class PipelinePressureDropComparisonTest {
 
   @Test
   void testCompareModelsAtDifferentFlowRates() {
-    double[] flowRates = {10000, 50000, 100000, 200000}; // kg/hr
+    double[] flowRates = { 10000, 50000, 100000, 200000 }; // kg/hr
 
-    System.out.println("\n========== COMPARISON: Different Flow Rates ==========");
-    System.out.println("Flow Rate (kg/hr) | AdiabaticPipe | TwoPhasePipe | BeggsAndBrills");
-    System.out.println("----------------------------------------------------------------");
+    logger.info("\n========== COMPARISON: Different Flow Rates ==========");
+    logger.info("Flow Rate (kg/hr) | AdiabaticPipe | TwoPhasePipe | BeggsAndBrills");
+    logger.info("----------------------------------------------------------------");
 
     for (double flowRate : flowRates) {
       // Create system for this flow rate
@@ -518,8 +503,7 @@ public class PipelinePressureDropComparisonTest {
       pipe3.run();
       double dp3 = pipe3.getPressureDrop();
 
-      System.out
-          .println(String.format("%17.0f | %13.4f | %12.4f | %14.4f", flowRate, dp1, dp2, dp3));
+      System.out.println(String.format("%17.0f | %13.4f | %12.4f | %14.4f", flowRate, dp1, dp2, dp3));
 
       // All should give positive pressure drop
       assertTrue(dp1 >= 0, "Pressure drop should be non-negative at flow rate " + flowRate);
@@ -530,11 +514,11 @@ public class PipelinePressureDropComparisonTest {
 
   @Test
   void testCompareModelsAtDifferentPressures() {
-    double[] pressures = {20, 50, 100, 150}; // bara
+    double[] pressures = { 20, 50, 100, 150 }; // bara
 
-    System.out.println("\n========== COMPARISON: Different Inlet Pressures ==========");
-    System.out.println("Pressure (bara) | AdiabaticPipe | TwoPhasePipe | BeggsAndBrills");
-    System.out.println("--------------------------------------------------------------");
+    logger.info("\n========== COMPARISON: Different Inlet Pressures ==========");
+    logger.info("Pressure (bara) | AdiabaticPipe | TwoPhasePipe | BeggsAndBrills");
+    logger.info("--------------------------------------------------------------");
 
     for (double pressure : pressures) {
       // Create system for this pressure
@@ -578,8 +562,7 @@ public class PipelinePressureDropComparisonTest {
       pipe3.run();
       double dp3 = pipe3.getPressureDrop();
 
-      System.out
-          .println(String.format("%15.0f | %13.4f | %12.4f | %14.4f", pressure, dp1, dp2, dp3));
+      System.out.println(String.format("%15.0f | %13.4f | %12.4f | %14.4f", pressure, dp1, dp2, dp3));
 
       // All should give positive pressure drop
       assertTrue(dp1 >= 0, "Pressure drop should be non-negative at pressure " + pressure);
@@ -590,7 +573,7 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Compares NeqSim pipeline models against classical reference equations from literature.
-   * 
+   *
    * <p>
    * Reference equations used:
    * <ul>
@@ -599,17 +582,16 @@ public class PipelinePressureDropComparisonTest {
    * <li>Panhandle A equation - for medium-large diameter pipelines</li>
    * </ul>
    * </p>
-   * 
+   *
    * <p>
-   * Reference: Menon, E.S. "Gas Pipeline Hydraulics", CRC Press, 2005 Reference: Mohitpour, M. et
-   * al. "Pipeline Design & Construction", ASME Press, 2007
+   * Reference: Menon, E.S. "Gas Pipeline Hydraulics", CRC Press, 2005 Reference: Mohitpour, M. et al. "Pipeline Design
+   * & Construction", ASME Press, 2007
    * </p>
    */
   @Test
   void testCompareAgainstReferenceEquations() {
-    System.out.println("\n========== COMPARISON AGAINST REFERENCE EQUATIONS ==========");
-    System.out.println("Reference: Menon, 'Gas Pipeline Hydraulics', CRC Press, 2005");
-    System.out.println();
+    logger.info("\n========== COMPARISON AGAINST REFERENCE EQUATIONS ==========");
+    logger.info("Reference: Menon, 'Gas Pipeline Hydraulics', CRC Press, 2005");
 
     // Get fluid properties from NeqSim
     inletStream.run();
@@ -641,50 +623,47 @@ public class PipelinePressureDropComparisonTest {
     // Calculate Reynolds number
     double reynoldsNumber = density * velocity * PIPE_DIAMETER / viscosity;
 
-    System.out.println("Operating Conditions:");
-    System.out.println("  Pipe Length: " + PIPE_LENGTH / 1000 + " km");
-    System.out.println("  Pipe Diameter: " + PIPE_DIAMETER * 1000 + " mm");
-    System.out.println("  Wall Roughness: " + PIPE_ROUGHNESS * 1000 + " mm");
-    System.out.println("  Inlet Pressure: " + INLET_PRESSURE + " bara");
-    System.out.println("  Temperature: " + (temperature - 273.15) + " °C");
-    System.out.println("  Mass Flow Rate: " + MASS_FLOW_RATE + " kg/hr");
-    System.out.println();
-    System.out.println("Calculated Properties:");
-    System.out.println("  Gas Density: " + String.format("%.3f", density) + " kg/m³");
-    System.out.println("  Viscosity: " + String.format("%.6f", viscosity * 1000) + " mPa·s");
-    System.out.println("  Compressibility Z: " + String.format("%.4f", compressibilityZ));
-    System.out.println("  Velocity: " + String.format("%.3f", velocity) + " m/s");
-    System.out.println("  Reynolds Number: " + String.format("%.2e", reynoldsNumber));
-    System.out.println("  Flow Rate: " + String.format("%.2f", flowRateSm3Sec) + " Sm³/s");
-    System.out.println("  Flow Rate: " + String.format("%.0f", flowRateSm3Day) + " Sm³/day");
-    System.out.println();
+    logger.info("Operating Conditions:");
+    logger.info("  Pipe Length: " + PIPE_LENGTH / 1000 + " km");
+    logger.info("  Pipe Diameter: " + PIPE_DIAMETER * 1000 + " mm");
+    logger.info("  Wall Roughness: " + PIPE_ROUGHNESS * 1000 + " mm");
+    logger.info("  Inlet Pressure: " + INLET_PRESSURE + " bara");
+    logger.info("  Temperature: " + (temperature - 273.15) + " °C");
+    logger.info("  Mass Flow Rate: " + MASS_FLOW_RATE + " kg/hr");
+
+    logger.info("Calculated Properties:");
+    logger.info("  Gas Density: " + String.format("%.3f", density) + " kg/m³");
+    logger.info("  Viscosity: " + String.format("%.6f", viscosity * 1000) + " mPa·s");
+    logger.info("  Compressibility Z: " + String.format("%.4f", compressibilityZ));
+    logger.info("  Velocity: " + String.format("%.3f", velocity) + " m/s");
+    logger.info("  Reynolds Number: " + String.format("%.2e", reynoldsNumber));
+    logger.info("  Flow Rate: " + String.format("%.2f", flowRateSm3Sec) + " Sm³/s");
+    logger.info("  Flow Rate: " + String.format("%.0f", flowRateSm3Day) + " Sm³/day");
 
     // Calculate Colebrook friction factor
-    double frictionFactor =
-        calcColebrookFrictionFactor(reynoldsNumber, PIPE_ROUGHNESS / PIPE_DIAMETER);
-    System.out.println("  Colebrook Friction Factor: " + String.format("%.6f", frictionFactor));
-    System.out.println();
+    double frictionFactor = calcColebrookFrictionFactor(reynoldsNumber, PIPE_ROUGHNESS / PIPE_DIAMETER);
+    logger.info("  Colebrook Friction Factor: " + String.format("%.6f", frictionFactor));
 
     // === Reference Equation Calculations ===
 
     // 1. Darcy-Weisbach (fundamental)
-    double dpDarcyPa = calcDarcyWeisbachPressureDrop(PIPE_LENGTH, PIPE_DIAMETER, PIPE_ROUGHNESS,
-        density, velocity, viscosity);
+    double dpDarcyPa = calcDarcyWeisbachPressureDrop(PIPE_LENGTH, PIPE_DIAMETER, PIPE_ROUGHNESS, density, velocity,
+        viscosity);
     double dpDarcyBar = dpDarcyPa / 100000;
 
     // 2. General Flow Equation
-    double P2_general = calcGeneralFlowEquationOutletPressure(INLET_PRESSURE, flowRateSm3Sec,
-        PIPE_LENGTH, PIPE_DIAMETER, GAS_GRAVITY, temperature, compressibilityZ, frictionFactor);
+    double P2_general = calcGeneralFlowEquationOutletPressure(INLET_PRESSURE, flowRateSm3Sec, PIPE_LENGTH,
+        PIPE_DIAMETER, GAS_GRAVITY, temperature, compressibilityZ, frictionFactor);
     double dpGeneralBar = INLET_PRESSURE - P2_general;
 
     // 3. Weymouth equation
-    double P2_weymouth = calcWeymouthOutletPressure(INLET_PRESSURE, flowRateSm3Sec, PIPE_LENGTH,
-        PIPE_DIAMETER, GAS_GRAVITY, temperature, compressibilityZ);
+    double P2_weymouth = calcWeymouthOutletPressure(INLET_PRESSURE, flowRateSm3Sec, PIPE_LENGTH, PIPE_DIAMETER,
+        GAS_GRAVITY, temperature, compressibilityZ);
     double dpWeymouthBar = INLET_PRESSURE - P2_weymouth;
 
     // 4. Panhandle A equation
-    double P2_panhandle = calcPanhandleAOutletPressure(INLET_PRESSURE, flowRateSm3Sec, PIPE_LENGTH,
-        PIPE_DIAMETER, GAS_GRAVITY, temperature, compressibilityZ, reynoldsNumber);
+    double P2_panhandle = calcPanhandleAOutletPressure(INLET_PRESSURE, flowRateSm3Sec, PIPE_LENGTH, PIPE_DIAMETER,
+        GAS_GRAVITY, temperature, compressibilityZ, reynoldsNumber);
     double dpPanhandleBar = INLET_PRESSURE - P2_panhandle;
 
     // === NeqSim Model Calculations ===
@@ -721,42 +700,33 @@ public class PipelinePressureDropComparisonTest {
     double dpBeggsBar = beggsPipe.getPressureDrop();
 
     // === Print Results ===
-    System.out.println("=== PRESSURE DROP RESULTS ===");
-    System.out.println();
-    System.out.println("REFERENCE EQUATIONS (Literature):");
-    System.out.println(
-        "  Darcy-Weisbach (Colebrook f):  ΔP = " + String.format("%.4f", dpDarcyBar) + " bar");
-    System.out.println(
-        "  General Flow Equation:         ΔP = " + String.format("%.4f", dpGeneralBar) + " bar");
-    System.out.println(
-        "  Weymouth Equation:             ΔP = " + String.format("%.4f", dpWeymouthBar) + " bar");
-    System.out.println(
-        "  Panhandle A (E=0.95):          ΔP = " + String.format("%.4f", dpPanhandleBar) + " bar");
-    System.out.println();
-    System.out.println("NEQSIM MODELS:");
-    System.out.println(
-        "  AdiabaticPipe:                 ΔP = " + String.format("%.4f", dpAdiabaticBar) + " bar");
-    System.out.println(
-        "  AdiabaticTwoPhasePipe:         ΔP = " + String.format("%.4f", dpTwoPhaseBar) + " bar");
-    System.out.println(
-        "  PipeBeggsAndBrills:            ΔP = " + String.format("%.4f", dpBeggsBar) + " bar");
-    System.out.println();
+    logger.info("=== PRESSURE DROP RESULTS ===");
+
+    logger.info("REFERENCE EQUATIONS (Literature):");
+    logger.info("  Darcy-Weisbach (Colebrook f):  ΔP = " + String.format("%.4f", dpDarcyBar) + " bar");
+    logger.info("  General Flow Equation:         ΔP = " + String.format("%.4f", dpGeneralBar) + " bar");
+    logger.info("  Weymouth Equation:             ΔP = " + String.format("%.4f", dpWeymouthBar) + " bar");
+    logger.info("  Panhandle A (E=0.95):          ΔP = " + String.format("%.4f", dpPanhandleBar) + " bar");
+
+    logger.info("NEQSIM MODELS:");
+    logger.info("  AdiabaticPipe:                 ΔP = " + String.format("%.4f", dpAdiabaticBar) + " bar");
+    logger.info("  AdiabaticTwoPhasePipe:         ΔP = " + String.format("%.4f", dpTwoPhaseBar) + " bar");
+    logger.info("  PipeBeggsAndBrills:            ΔP = " + String.format("%.4f", dpBeggsBar) + " bar");
 
     // === Calculate deviations from Darcy-Weisbach reference ===
-    System.out.println("DEVIATION FROM DARCY-WEISBACH REFERENCE:");
-    System.out.println("  General Flow Equation:  "
-        + String.format("%+.1f", (dpGeneralBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
-    System.out.println("  Weymouth Equation:      "
-        + String.format("%+.1f", (dpWeymouthBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
-    System.out.println("  Panhandle A:            "
-        + String.format("%+.1f", (dpPanhandleBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
-    System.out.println("  AdiabaticPipe:          "
-        + String.format("%+.1f", (dpAdiabaticBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
-    System.out.println("  AdiabaticTwoPhasePipe:  "
-        + String.format("%+.1f", (dpTwoPhaseBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
-    System.out.println("  PipeBeggsAndBrills:     "
-        + String.format("%+.1f", (dpBeggsBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
-    System.out.println();
+    logger.info("DEVIATION FROM DARCY-WEISBACH REFERENCE:");
+    logger.info(
+        "  General Flow Equation:  " + String.format("%+.1f", (dpGeneralBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
+    logger.info(
+        "  Weymouth Equation:      " + String.format("%+.1f", (dpWeymouthBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
+    logger.info(
+        "  Panhandle A:            " + String.format("%+.1f", (dpPanhandleBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
+    logger.info(
+        "  AdiabaticPipe:          " + String.format("%+.1f", (dpAdiabaticBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
+    logger.info(
+        "  AdiabaticTwoPhasePipe:  " + String.format("%+.1f", (dpTwoPhaseBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
+    logger.info(
+        "  PipeBeggsAndBrills:     " + String.format("%+.1f", (dpBeggsBar - dpDarcyBar) / dpDarcyBar * 100) + "%");
 
     // === Assertions ===
     // NeqSim models should be within 50% of Darcy-Weisbach for single-phase gas
@@ -777,17 +747,16 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test case based on example from Menon "Gas Pipeline Hydraulics" Chapter 3.
-   * 
+   *
    * <p>
-   * Example: 100 mile (160.9 km), 16-inch (406.4 mm) natural gas pipeline Inlet pressure: 1400 psia
-   * (96.5 bara), temperature: 60°F (15.6°C) Flow rate: 100 MMSCFD, Gas gravity: 0.6
+   * Example: 100 mile (160.9 km), 16-inch (406.4 mm) natural gas pipeline Inlet pressure: 1400 psia (96.5 bara),
+   * temperature: 60°F (15.6°C) Flow rate: 100 MMSCFD, Gas gravity: 0.6
    * </p>
    */
   @Test
   void testLiteratureExampleMenon() {
-    System.out.println("\n========== LITERATURE EXAMPLE: Menon Gas Pipeline Hydraulics ==========");
-    System.out.println("Example: Natural gas pipeline case study");
-    System.out.println();
+    logger.info("\n========== LITERATURE EXAMPLE: Menon Gas Pipeline Hydraulics ==========");
+    logger.info("Example: Natural gas pipeline case study");
 
     // Realistic example parameters for natural gas pipeline
     // Using shorter segment for stability
@@ -823,18 +792,17 @@ public class PipelinePressureDropComparisonTest {
     double massFlowKgSec = massFlowKgHr / 3600.0;
     double velocity = massFlowKgSec / density / area;
 
-    System.out.println("Input Parameters:");
-    System.out.println("  Length: 10 km");
-    System.out.println("  Diameter: 16 inches (406.4 mm)");
-    System.out.println("  Inlet Pressure: " + inletPressureBara + " bara");
-    System.out.println("  Temperature: 60°F (15.6°C)");
-    System.out.println("  Mass Flow Rate: " + massFlowKgHr + " kg/hr");
-    System.out.println();
-    System.out.println("Calculated Properties:");
-    System.out.println("  Density: " + String.format("%.2f", density) + " kg/m³");
-    System.out.println("  Z-factor: " + String.format("%.4f", Z));
-    System.out.println("  Velocity: " + String.format("%.2f", velocity) + " m/s");
-    System.out.println();
+    logger.info("Input Parameters:");
+    logger.info("  Length: 10 km");
+    logger.info("  Diameter: 16 inches (406.4 mm)");
+    logger.info("  Inlet Pressure: " + inletPressureBara + " bara");
+    logger.info("  Temperature: 60°F (15.6°C)");
+    logger.info("  Mass Flow Rate: " + massFlowKgHr + " kg/hr");
+
+    logger.info("Calculated Properties:");
+    logger.info("  Density: " + String.format("%.2f", density) + " kg/m³");
+    logger.info("  Z-factor: " + String.format("%.4f", Z));
+    logger.info("  Velocity: " + String.format("%.2f", velocity) + " m/s");
 
     // Run NeqSim AdiabaticTwoPhasePipe (most stable for comparison)
     AdiabaticTwoPhasePipe twoPhasePipe = new AdiabaticTwoPhasePipe("TwoPhasePipe", gasStream);
@@ -846,25 +814,23 @@ public class PipelinePressureDropComparisonTest {
     double outletPressure = twoPhasePipe.getOutletStream().getPressure("bara");
     double pressureDrop = inletPressureBara - outletPressure;
 
-    System.out.println("NeqSim Results (AdiabaticTwoPhasePipe):");
-    System.out.println("  Outlet Pressure: " + String.format("%.2f", outletPressure) + " bara");
-    System.out.println("  Pressure Drop: " + String.format("%.4f", pressureDrop) + " bar");
+    logger.info("NeqSim Results (AdiabaticTwoPhasePipe):");
+    logger.info("  Outlet Pressure: " + String.format("%.2f", outletPressure) + " bara");
+    logger.info("  Pressure Drop: " + String.format("%.4f", pressureDrop) + " bar");
 
     // Calculate expected Darcy-Weisbach pressure drop for comparison
     double reynoldsNumber = density * velocity * diameterM / viscosity;
     double frictionFactor = calcColebrookFrictionFactor(reynoldsNumber, 4.6e-5 / diameterM);
-    double dpDarcyPa =
-        calcDarcyWeisbachPressureDrop(lengthM, diameterM, 4.6e-5, density, velocity, viscosity);
+    double dpDarcyPa = calcDarcyWeisbachPressureDrop(lengthM, diameterM, 4.6e-5, density, velocity, viscosity);
     double dpDarcyBar = dpDarcyPa / 100000;
 
-    System.out.println();
-    System.out.println("Reference (Darcy-Weisbach):");
-    System.out.println("  Reynolds Number: " + String.format("%.2e", reynoldsNumber));
-    System.out.println("  Friction Factor: " + String.format("%.6f", frictionFactor));
-    System.out.println("  Expected Pressure Drop: " + String.format("%.4f", dpDarcyBar) + " bar");
+    logger.info("Reference (Darcy-Weisbach):");
+    logger.info("  Reynolds Number: " + String.format("%.2e", reynoldsNumber));
+    logger.info("  Friction Factor: " + String.format("%.6f", frictionFactor));
+    logger.info("  Expected Pressure Drop: " + String.format("%.4f", dpDarcyBar) + " bar");
 
     double deviation = Math.abs(pressureDrop - dpDarcyBar) / dpDarcyBar * 100;
-    System.out.println("  Deviation: " + String.format("%.1f", deviation) + "%");
+    logger.info("  Deviation: " + String.format("%.1f", deviation) + "%");
 
     // Assertions
     assertTrue(outletPressure > 0 && outletPressure < inletPressureBara,
@@ -877,21 +843,20 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Calculates the Hazen-Williams pressure drop for water flow.
-   * 
+   *
    * <p>
-   * The Hazen-Williams equation is an empirical formula commonly used for water distribution
-   * systems. It is valid only for water at 60°F (15.6°C) and for turbulent flow.
+   * The Hazen-Williams equation is an empirical formula commonly used for water distribution systems. It is valid only
+   * for water at 60°F (15.6°C) and for turbulent flow.
    * </p>
-   * 
+   *
    * <p>
-   * ΔP = 4.52 * Q^1.85 / (C^1.85 * D^4.87) [psi/ft] or ΔP = 10.67 * Q^1.85 / (C^1.85 * D^4.87) * L
-   * [m of head]
+   * ΔP = 4.52 * Q^1.85 / (C^1.85 * D^4.87) [psi/ft] or ΔP = 10.67 * Q^1.85 / (C^1.85 * D^4.87) * L [m of head]
    * </p>
-   * 
+   *
    * <p>
    * In SI units: ΔP [Pa] = 10.67 * (Q [m³/s])^1.85 * L [m] / (C^1.85 * D^4.87 [m]) * ρg
    * </p>
-   * 
+   *
    * @param length pipe length in meters
    * @param diameter pipe inner diameter in meters
    * @param flowRateM3s volumetric flow rate in m³/s
@@ -909,17 +874,17 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Calculates pressure drop using Darcy-Weisbach for incompressible (liquid) flow.
-   * 
+   *
    * <p>
    * For incompressible flow, the equation simplifies to: ΔP = f * (L/D) * (ρV²/2)
    * </p>
-   * 
+   *
    * <p>
    * This is exact for liquid flow and serves as the benchmark.
    * </p>
    */
-  private double calcDarcyWeisbachLiquidPressureDrop(double length, double diameter,
-      double roughness, double density, double velocity, double viscosity) {
+  private double calcDarcyWeisbachLiquidPressureDrop(double length, double diameter, double roughness, double density,
+      double velocity, double viscosity) {
     double reynoldsNumber = density * velocity * diameter / viscosity;
     double frictionFactor = calcColebrookFrictionFactor(reynoldsNumber, roughness / diameter);
     return frictionFactor * (length / diameter) * (density * velocity * velocity / 2.0);
@@ -927,15 +892,15 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test liquid (water) flow pressure drop against Darcy-Weisbach reference.
-   * 
+   *
    * <p>
-   * This test uses water at standard conditions to validate the pipeline models for incompressible
-   * liquid flow. Water is ideal for validation because its properties are well-known.
+   * This test uses water at standard conditions to validate the pipeline models for incompressible liquid flow. Water
+   * is ideal for validation because its properties are well-known.
    * </p>
    */
   @Test
   void testLiquidFlowPressureDropWater() {
-    System.out.println("\n========== LIQUID FLOW: Water Pipeline ==========");
+    logger.info("\n========== LIQUID FLOW: Water Pipeline ==========");
 
     // Pipe parameters
     double lengthM = 1000.0; // 1 km (shorter for liquids)
@@ -947,13 +912,13 @@ public class PipelinePressureDropComparisonTest {
     double temperatureC = 20.0;
     double pressureBara = 10.0;
 
-    System.out.println("Operating Conditions:");
-    System.out.println("  Pipe Length: " + lengthM / 1000 + " km");
-    System.out.println("  Pipe Diameter: " + diameterM * 1000 + " mm");
-    System.out.println("  Wall Roughness: " + roughnessM * 1000 + " mm");
-    System.out.println("  Inlet Pressure: " + pressureBara + " bara");
-    System.out.println("  Temperature: " + temperatureC + " °C");
-    System.out.println("  Mass Flow Rate: " + massFlowKgHr + " kg/hr");
+    logger.info("Operating Conditions:");
+    logger.info("  Pipe Length: " + lengthM / 1000 + " km");
+    logger.info("  Pipe Diameter: " + diameterM * 1000 + " mm");
+    logger.info("  Wall Roughness: " + roughnessM * 1000 + " mm");
+    logger.info("  Inlet Pressure: " + pressureBara + " bara");
+    logger.info("  Temperature: " + temperatureC + " °C");
+    logger.info("  Mass Flow Rate: " + massFlowKgHr + " kg/hr");
 
     // Create water system using CPA EOS (better for associating fluids like water)
     SystemInterface waterSystem = new SystemSrkCPAstatoil(273.15 + temperatureC, pressureBara);
@@ -981,17 +946,16 @@ public class PipelinePressureDropComparisonTest {
     // Reynolds number
     double reynoldsNumber = density * velocity * diameterM / viscosity;
 
-    System.out.println();
-    System.out.println("Calculated Properties (NeqSim):");
-    System.out.println("  Density: " + String.format("%.2f", density) + " kg/m³");
-    System.out.println("  Viscosity: " + String.format("%.4f", viscosityCP) + " cP");
-    System.out.println("  Velocity: " + String.format("%.3f", velocity) + " m/s");
-    System.out.println("  Reynolds Number: " + String.format("%.2e", reynoldsNumber));
+    logger.info("Calculated Properties (NeqSim):");
+    logger.info("  Density: " + String.format("%.2f", density) + " kg/m³");
+    logger.info("  Viscosity: " + String.format("%.4f", viscosityCP) + " cP");
+    logger.info("  Velocity: " + String.format("%.3f", velocity) + " m/s");
+    logger.info("  Reynolds Number: " + String.format("%.2e", reynoldsNumber));
 
     // Calculate reference Darcy-Weisbach pressure drop
     double frictionFactor = calcColebrookFrictionFactor(reynoldsNumber, roughnessM / diameterM);
-    double dpDarcyPa = calcDarcyWeisbachLiquidPressureDrop(lengthM, diameterM, roughnessM, density,
-        velocity, viscosity);
+    double dpDarcyPa = calcDarcyWeisbachLiquidPressureDrop(lengthM, diameterM, roughnessM, density, velocity,
+        viscosity);
     double dpDarcyBar = dpDarcyPa / 100000;
 
     // Calculate Hazen-Williams (for water)
@@ -999,9 +963,7 @@ public class PipelinePressureDropComparisonTest {
     double dpHazenPa = calcHazenWilliamsPressureDrop(lengthM, diameterM, volumeFlowM3s, hazenC);
     double dpHazenBar = dpHazenPa / 100000;
 
-    System.out.println();
-    System.out.println("  Colebrook Friction Factor: " + String.format("%.6f", frictionFactor));
-    System.out.println();
+    logger.info("  Colebrook Friction Factor: " + String.format("%.6f", frictionFactor));
 
     // Run NeqSim models
     // 1. PipeBeggsAndBrills (requires elevation or angle to be set)
@@ -1030,21 +992,16 @@ public class PipelinePressureDropComparisonTest {
     adiabaticPipe.run();
     double dpAdiabaticBar = pressureBara - adiabaticPipe.getOutletPressure();
 
-    System.out.println("=== PRESSURE DROP RESULTS (Liquid Water) ===");
-    System.out.println();
-    System.out.println("REFERENCE EQUATIONS (Literature):");
-    System.out.println(
-        "  Darcy-Weisbach (Colebrook f):  ΔP = " + String.format("%.4f", dpDarcyBar) + " bar");
-    System.out.println("  Hazen-Williams (C=" + hazenC + "):   ΔP = "
-        + String.format("%.4f", dpHazenBar) + " bar");
-    System.out.println();
-    System.out.println("NEQSIM MODELS:");
-    System.out.println(
-        "  PipeBeggsAndBrills:            ΔP = " + String.format("%.4f", dpBeggsBar) + " bar");
-    System.out.println(
-        "  AdiabaticTwoPhasePipe:         ΔP = " + String.format("%.4f", dpTwoPhaseBar) + " bar");
-    System.out.println(
-        "  AdiabaticPipe:                 ΔP = " + String.format("%.4f", dpAdiabaticBar) + " bar");
+    logger.info("=== PRESSURE DROP RESULTS (Liquid Water) ===");
+
+    logger.info("REFERENCE EQUATIONS (Literature):");
+    logger.info("  Darcy-Weisbach (Colebrook f):  ΔP = " + String.format("%.4f", dpDarcyBar) + " bar");
+    logger.info("  Hazen-Williams (C=" + hazenC + "):   ΔP = " + String.format("%.4f", dpHazenBar) + " bar");
+
+    logger.info("NEQSIM MODELS:");
+    logger.info("  PipeBeggsAndBrills:            ΔP = " + String.format("%.4f", dpBeggsBar) + " bar");
+    logger.info("  AdiabaticTwoPhasePipe:         ΔP = " + String.format("%.4f", dpTwoPhaseBar) + " bar");
+    logger.info("  AdiabaticPipe:                 ΔP = " + String.format("%.4f", dpAdiabaticBar) + " bar");
 
     // Calculate deviations from Darcy-Weisbach
     double devBeggs = (dpBeggsBar - dpDarcyBar) / dpDarcyBar * 100;
@@ -1052,12 +1009,11 @@ public class PipelinePressureDropComparisonTest {
     double devAdiabatic = (dpAdiabaticBar - dpDarcyBar) / dpDarcyBar * 100;
     double devHazen = (dpHazenBar - dpDarcyBar) / dpDarcyBar * 100;
 
-    System.out.println();
-    System.out.println("DEVIATION FROM DARCY-WEISBACH REFERENCE:");
-    System.out.println("  Hazen-Williams:        " + String.format("%+.1f", devHazen) + "%");
-    System.out.println("  PipeBeggsAndBrills:    " + String.format("%+.1f", devBeggs) + "%");
-    System.out.println("  AdiabaticTwoPhasePipe: " + String.format("%+.1f", devTwoPhase) + "%");
-    System.out.println("  AdiabaticPipe:         " + String.format("%+.1f", devAdiabatic) + "%");
+    logger.info("DEVIATION FROM DARCY-WEISBACH REFERENCE:");
+    logger.info("  Hazen-Williams:        " + String.format("%+.1f", devHazen) + "%");
+    logger.info("  PipeBeggsAndBrills:    " + String.format("%+.1f", devBeggs) + "%");
+    logger.info("  AdiabaticTwoPhasePipe: " + String.format("%+.1f", devTwoPhase) + "%");
+    logger.info("  AdiabaticPipe:         " + String.format("%+.1f", devAdiabatic) + "%");
 
     // Note: PipeBeggsAndBrills underestimates liquid pressure drop by ~28%
     // This may be due to the Beggs & Brill correlation being optimized for multiphase flow
@@ -1069,21 +1025,20 @@ public class PipelinePressureDropComparisonTest {
     assertTrue(Math.abs(devTwoPhase) < 15,
         "AdiabaticTwoPhasePipe should be within 15% of Darcy-Weisbach, got: " + devTwoPhase + "%");
     // Note: PipeBeggsAndBrills shows ~28% deviation for single-phase liquid (water)
-    assertTrue(Math.abs(devBeggs) < 35,
-        "PipeBeggsAndBrills deviation for liquid water: " + devBeggs + "%");
+    assertTrue(Math.abs(devBeggs) < 35, "PipeBeggsAndBrills deviation for liquid water: " + devBeggs + "%");
   }
 
   /**
    * Test crude oil flow pressure drop with realistic field conditions.
-   * 
+   *
    * <p>
-   * Uses a medium-weight crude oil (API 30) at typical pipeline conditions. Note: SRK EOS requires
-   * high pressure to keep hydrocarbons in liquid phase.
+   * Uses a medium-weight crude oil (API 30) at typical pipeline conditions. Note: SRK EOS requires high pressure to
+   * keep hydrocarbons in liquid phase.
    * </p>
    */
   @Test
   void testLiquidFlowPressureDropCrudeOil() {
-    System.out.println("\n========== LIQUID FLOW: Crude Oil Pipeline ==========");
+    logger.info("\n========== LIQUID FLOW: Crude Oil Pipeline ==========");
 
     // Pipe parameters - typical crude oil export line
     double lengthM = 5000.0; // 5 km
@@ -1095,13 +1050,13 @@ public class PipelinePressureDropComparisonTest {
     double temperatureC = 40.0; // Typical export temperature
     double pressureBara = 100.0; // Higher pressure for liquid phase stability
 
-    System.out.println("Operating Conditions:");
-    System.out.println("  Pipe Length: " + lengthM / 1000 + " km");
-    System.out.println("  Pipe Diameter: " + diameterM * 1000 + " mm (12 inch)");
-    System.out.println("  Wall Roughness: " + roughnessM * 1000 + " mm");
-    System.out.println("  Inlet Pressure: " + pressureBara + " bara");
-    System.out.println("  Temperature: " + temperatureC + " °C");
-    System.out.println("  Mass Flow Rate: " + massFlowKgHr + " kg/hr");
+    logger.info("Operating Conditions:");
+    logger.info("  Pipe Length: " + lengthM / 1000 + " km");
+    logger.info("  Pipe Diameter: " + diameterM * 1000 + " mm (12 inch)");
+    logger.info("  Wall Roughness: " + roughnessM * 1000 + " mm");
+    logger.info("  Inlet Pressure: " + pressureBara + " bara");
+    logger.info("  Temperature: " + temperatureC + " °C");
+    logger.info("  Mass Flow Rate: " + massFlowKgHr + " kg/hr");
 
     // Create crude oil system using n-decane as a surrogate
     // nC10 (n-decane) has similar properties to light crude oil
@@ -1132,22 +1087,19 @@ public class PipelinePressureDropComparisonTest {
     // Reynolds number
     double reynoldsNumber = density * velocity * diameterM / viscosity;
 
-    System.out.println();
-    System.out.println("Calculated Properties (NeqSim - nC10/n-Heptane blend):");
-    System.out.println("  Density: " + String.format("%.2f", density) + " kg/m³");
-    System.out.println("  Viscosity: " + String.format("%.3f", viscosityCP) + " cP");
-    System.out.println("  Velocity: " + String.format("%.3f", velocity) + " m/s");
-    System.out.println("  Reynolds Number: " + String.format("%.2e", reynoldsNumber));
+    logger.info("Calculated Properties (NeqSim - nC10/n-Heptane blend):");
+    logger.info("  Density: " + String.format("%.2f", density) + " kg/m³");
+    logger.info("  Viscosity: " + String.format("%.3f", viscosityCP) + " cP");
+    logger.info("  Velocity: " + String.format("%.3f", velocity) + " m/s");
+    logger.info("  Reynolds Number: " + String.format("%.2e", reynoldsNumber));
 
     // Calculate reference Darcy-Weisbach pressure drop
     double frictionFactor = calcColebrookFrictionFactor(reynoldsNumber, roughnessM / diameterM);
-    double dpDarcyPa = calcDarcyWeisbachLiquidPressureDrop(lengthM, diameterM, roughnessM, density,
-        velocity, viscosity);
+    double dpDarcyPa = calcDarcyWeisbachLiquidPressureDrop(lengthM, diameterM, roughnessM, density, velocity,
+        viscosity);
     double dpDarcyBar = dpDarcyPa / 100000;
 
-    System.out.println();
-    System.out.println("  Colebrook Friction Factor: " + String.format("%.6f", frictionFactor));
-    System.out.println();
+    logger.info("  Colebrook Friction Factor: " + String.format("%.6f", frictionFactor));
 
     // Run NeqSim models
     PipeBeggsAndBrills beggsBrills = new PipeBeggsAndBrills("BeggsBrills", oilStream);
@@ -1166,47 +1118,42 @@ public class PipelinePressureDropComparisonTest {
     twoPhasePipe.run();
     double dpTwoPhaseBar = pressureBara - twoPhasePipe.getOutletPressure();
 
-    System.out.println("=== PRESSURE DROP RESULTS (Crude Oil) ===");
-    System.out.println();
-    System.out.println("REFERENCE (Darcy-Weisbach):");
-    System.out.println("  ΔP = " + String.format("%.4f", dpDarcyBar) + " bar");
-    System.out.println();
-    System.out.println("NEQSIM MODELS:");
-    System.out.println(
-        "  PipeBeggsAndBrills:            ΔP = " + String.format("%.4f", dpBeggsBar) + " bar");
-    System.out.println(
-        "  AdiabaticTwoPhasePipe:         ΔP = " + String.format("%.4f", dpTwoPhaseBar) + " bar");
+    logger.info("=== PRESSURE DROP RESULTS (Crude Oil) ===");
+
+    logger.info("REFERENCE (Darcy-Weisbach):");
+    logger.info("  ΔP = " + String.format("%.4f", dpDarcyBar) + " bar");
+
+    logger.info("NEQSIM MODELS:");
+    logger.info("  PipeBeggsAndBrills:            ΔP = " + String.format("%.4f", dpBeggsBar) + " bar");
+    logger.info("  AdiabaticTwoPhasePipe:         ΔP = " + String.format("%.4f", dpTwoPhaseBar) + " bar");
 
     // Calculate deviations
     double devBeggs = (dpBeggsBar - dpDarcyBar) / dpDarcyBar * 100;
     double devTwoPhase = (dpTwoPhaseBar - dpDarcyBar) / dpDarcyBar * 100;
 
-    System.out.println();
-    System.out.println("DEVIATION FROM DARCY-WEISBACH:");
-    System.out.println("  PipeBeggsAndBrills:    " + String.format("%+.1f", devBeggs) + "%");
-    System.out.println("  AdiabaticTwoPhasePipe: " + String.format("%+.1f", devTwoPhase) + "%");
+    logger.info("DEVIATION FROM DARCY-WEISBACH:");
+    logger.info("  PipeBeggsAndBrills:    " + String.format("%+.1f", devBeggs) + "%");
+    logger.info("  AdiabaticTwoPhasePipe: " + String.format("%+.1f", devTwoPhase) + "%");
 
     // Assertions - hydrocarbon liquids typically work better with these models
     assertTrue(dpBeggsBar > 0, "Pressure drop should be positive");
     assertTrue(dpTwoPhaseBar > 0, "Pressure drop should be positive");
     assertTrue(Math.abs(devTwoPhase) < 20,
         "AdiabaticTwoPhasePipe should be within 20% of Darcy-Weisbach, got: " + devTwoPhase + "%");
-    assertTrue(Math.abs(devBeggs) < 35,
-        "PipeBeggsAndBrills deviation for crude oil: " + devBeggs + "%");
+    assertTrue(Math.abs(devBeggs) < 35, "PipeBeggsAndBrills deviation for crude oil: " + devBeggs + "%");
   }
 
   /**
    * Test comparison of liquid flow at different Reynolds numbers.
-   * 
+   *
    * <p>
-   * This test validates the friction factor calculation across different flow regimes: laminar,
-   * transition, and turbulent.
+   * This test validates the friction factor calculation across different flow regimes: laminar, transition, and
+   * turbulent.
    * </p>
    */
   @Test
   void testLiquidFlowDifferentReynoldsNumbers() {
-    System.out.println("\n========== LIQUID FLOW: Reynolds Number Comparison ==========");
-    System.out.println();
+    logger.info("\n========== LIQUID FLOW: Reynolds Number Comparison ==========");
 
     double lengthM = 100.0; // Short pipe for clarity
     double diameterM = 0.1; // 100 mm
@@ -1215,17 +1162,16 @@ public class PipelinePressureDropComparisonTest {
     double temperatureC = 20.0;
 
     // Different flow rates to achieve different Reynolds numbers
-    double[] flowRatesKgHr = {100, 500, 2000, 10000, 50000};
+    double[] flowRatesKgHr = { 100, 500, 2000, 10000, 50000 };
 
-    System.out.println("Conditions:");
-    System.out.println("  Pipe Length: " + lengthM + " m");
-    System.out.println("  Pipe Diameter: " + diameterM * 1000 + " mm");
-    System.out.println("  Fluid: Water at " + temperatureC + "°C");
-    System.out.println();
+    logger.info("Conditions:");
+    logger.info("  Pipe Length: " + lengthM + " m");
+    logger.info("  Pipe Diameter: " + diameterM * 1000 + " mm");
+    logger.info("  Fluid: Water at " + temperatureC + "°C");
 
-    System.out.println(String.format("%-12s | %-12s | %-10s | %-12s | %-12s | %-10s",
-        "Flow (kg/hr)", "Reynolds", "Regime", "Darcy (bar)", "Beggs (bar)", "Deviation"));
-    System.out.println(new String(new char[80]).replace("\0", "-"));
+    logger.info(String.format("%-12s | %-12s | %-10s | %-12s | %-12s | %-10s", "Flow (kg/hr)", "Reynolds", "Regime",
+        "Darcy (bar)", "Beggs (bar)", "Deviation"));
+    logger.info(new String(new char[80]).replace("\0", "-"));
 
     for (double massFlowKgHr : flowRatesKgHr) {
       // Use CPA EOS for water (associating fluid)
@@ -1258,8 +1204,8 @@ public class PipelinePressureDropComparisonTest {
       }
 
       // Darcy-Weisbach reference
-      double dpDarcyPa = calcDarcyWeisbachLiquidPressureDrop(lengthM, diameterM, roughnessM,
-          density, velocity, viscosity);
+      double dpDarcyPa = calcDarcyWeisbachLiquidPressureDrop(lengthM, diameterM, roughnessM, density, velocity,
+          viscosity);
       double dpDarcyBar = dpDarcyPa / 100000;
 
       // NeqSim PipeBeggsAndBrills
@@ -1274,8 +1220,8 @@ public class PipelinePressureDropComparisonTest {
 
       double deviation = (dpBeggsBar - dpDarcyBar) / dpDarcyBar * 100;
 
-      System.out.println(String.format("%12.0f | %12.2e | %-10s | %12.6f | %12.6f | %+9.1f%%",
-          massFlowKgHr, reynoldsNumber, regime, dpDarcyBar, dpBeggsBar, deviation));
+      logger.info(String.format("%12.0f | %12.2e | %-10s | %12.6f | %12.6f | %+9.1f%%", massFlowKgHr, reynoldsNumber,
+          regime, dpDarcyBar, dpBeggsBar, deviation));
 
       // Note: PipeBeggsAndBrills shows larger deviations for single-phase liquid
       // Assertions relaxed to document behavior rather than enforce tight limits
@@ -1285,14 +1231,14 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test viscous (high viscosity) liquid flow - heavy oil or glycol.
-   * 
+   *
    * <p>
    * High viscosity liquids can result in laminar flow even at significant flow rates.
    * </p>
    */
   @Test
   void testHighViscosityLiquidFlow() {
-    System.out.println("\n========== LIQUID FLOW: High Viscosity (TEG) ==========");
+    logger.info("\n========== LIQUID FLOW: High Viscosity (TEG) ==========");
 
     // Pipe parameters
     double lengthM = 500.0;
@@ -1304,12 +1250,12 @@ public class PipelinePressureDropComparisonTest {
     double temperatureC = 25.0;
     double pressureBara = 5.0;
 
-    System.out.println("Operating Conditions:");
-    System.out.println("  Pipe Length: " + lengthM + " m");
-    System.out.println("  Pipe Diameter: " + diameterM * 1000 + " mm");
-    System.out.println("  Inlet Pressure: " + pressureBara + " bara");
-    System.out.println("  Temperature: " + temperatureC + " °C");
-    System.out.println("  Mass Flow Rate: " + massFlowKgHr + " kg/hr");
+    logger.info("Operating Conditions:");
+    logger.info("  Pipe Length: " + lengthM + " m");
+    logger.info("  Pipe Diameter: " + diameterM * 1000 + " mm");
+    logger.info("  Inlet Pressure: " + pressureBara + " bara");
+    logger.info("  Temperature: " + temperatureC + " °C");
+    logger.info("  Mass Flow Rate: " + massFlowKgHr + " kg/hr");
 
     // Create TEG system using CPA EOS (better for associating fluids like glycols)
     SystemInterface tegSystem = new SystemSrkCPAstatoil(273.15 + temperatureC, pressureBara);
@@ -1332,28 +1278,24 @@ public class PipelinePressureDropComparisonTest {
     double velocity = (massFlowKgHr / 3600.0) / density / area;
     double reynoldsNumber = density * velocity * diameterM / viscosity;
 
-    String regime =
-        reynoldsNumber < 2300 ? "Laminar" : (reynoldsNumber < 4000 ? "Transition" : "Turbulent");
+    String regime = reynoldsNumber < 2300 ? "Laminar" : (reynoldsNumber < 4000 ? "Transition" : "Turbulent");
 
-    System.out.println();
-    System.out.println("Calculated Properties (NeqSim - CPA EOS):");
-    System.out.println("  Density: " + String.format("%.2f", density) + " kg/m³");
-    System.out.println("  Viscosity: " + String.format("%.2f", viscosityCP) + " cP");
-    System.out.println("  Velocity: " + String.format("%.4f", velocity) + " m/s");
-    System.out.println("  Reynolds Number: " + String.format("%.2e", reynoldsNumber));
-    System.out.println("  Flow Regime: " + regime);
+    logger.info("Calculated Properties (NeqSim - CPA EOS):");
+    logger.info("  Density: " + String.format("%.2f", density) + " kg/m³");
+    logger.info("  Viscosity: " + String.format("%.2f", viscosityCP) + " cP");
+    logger.info("  Velocity: " + String.format("%.4f", velocity) + " m/s");
+    logger.info("  Reynolds Number: " + String.format("%.2e", reynoldsNumber));
+    logger.info("  Flow Regime: " + regime);
 
     // Darcy-Weisbach reference
     double frictionFactor = calcColebrookFrictionFactor(reynoldsNumber, roughnessM / diameterM);
-    double dpDarcyPa = calcDarcyWeisbachLiquidPressureDrop(lengthM, diameterM, roughnessM, density,
-        velocity, viscosity);
+    double dpDarcyPa = calcDarcyWeisbachLiquidPressureDrop(lengthM, diameterM, roughnessM, density, velocity,
+        viscosity);
     double dpDarcyBar = dpDarcyPa / 100000;
 
-    System.out.println();
-    System.out.println("  Friction Factor: " + String.format("%.6f", frictionFactor));
+    logger.info("  Friction Factor: " + String.format("%.6f", frictionFactor));
     if (reynoldsNumber < 2300) {
-      System.out
-          .println("  (Laminar: f = 64/Re = " + String.format("%.6f", 64.0 / reynoldsNumber) + ")");
+      System.out.println("  (Laminar: f = 64/Re = " + String.format("%.6f", 64.0 / reynoldsNumber) + ")");
     }
 
     // NeqSim PipeBeggsAndBrills
@@ -1366,42 +1308,39 @@ public class PipelinePressureDropComparisonTest {
     beggsBrills.run();
     double dpBeggsBar = pressureBara - beggsBrills.getOutletPressure();
 
-    System.out.println();
-    System.out.println("=== PRESSURE DROP RESULTS (TEG - High Viscosity) ===");
-    System.out.println("  Darcy-Weisbach:     ΔP = " + String.format("%.4f", dpDarcyBar) + " bar");
-    System.out.println("  PipeBeggsAndBrills: ΔP = " + String.format("%.4f", dpBeggsBar) + " bar");
+    logger.info("=== PRESSURE DROP RESULTS (TEG - High Viscosity) ===");
+    logger.info("  Darcy-Weisbach:     ΔP = " + String.format("%.4f", dpDarcyBar) + " bar");
+    logger.info("  PipeBeggsAndBrills: ΔP = " + String.format("%.4f", dpBeggsBar) + " bar");
 
     double deviation = (dpBeggsBar - dpDarcyBar) / dpDarcyBar * 100;
-    System.out.println("  Deviation: " + String.format("%+.1f", deviation) + "%");
+    logger.info("  Deviation: " + String.format("%+.1f", deviation) + "%");
 
     // Assertions - high viscosity liquids in laminar flow show significant deviations
     // This is a known limitation of PipeBeggsAndBrills for single-phase laminar liquid flow
     assertTrue(dpBeggsBar > 0, "Pressure drop should be positive");
     // Document the deviation rather than enforce tight limit
-    System.out
-        .println("\n  NOTE: PipeBeggsAndBrills shows " + String.format("%.0f", Math.abs(deviation))
-            + "% deviation for laminar liquid flow - this is a known limitation.");
+    System.out.println("\n  NOTE: PipeBeggsAndBrills shows " + String.format("%.0f", Math.abs(deviation))
+        + "% deviation for laminar liquid flow - this is a known limitation.");
   }
 
   // ==================== TWO-PHASE FLOW TESTS ====================
 
   /**
    * Test two-phase gas-oil flow with Beggs & Brill correlation.
-   * 
+   *
    * <p>
-   * Reference: Beggs, H.D. and Brill, J.P. "A Study of Two-Phase Flow in Inclined Pipes", Journal
-   * of Petroleum Technology, May 1973, pp. 607-617.
+   * Reference: Beggs, H.D. and Brill, J.P. "A Study of Two-Phase Flow in Inclined Pipes", Journal of Petroleum
+   * Technology, May 1973, pp. 607-617.
    * </p>
-   * 
+   *
    * <p>
-   * The original Beggs & Brill correlation was developed from 584 tests with: - Pipe diameters:
-   * 1-1.5 inches - Pipe angles: -90° to +90° - Gas flow rates: 0-300 Mscf/D - Liquid flow rates:
-   * 0-30 gal/min - Liquid holdups: 0-0.87
+   * The original Beggs & Brill correlation was developed from 584 tests with: - Pipe diameters: 1-1.5 inches - Pipe
+   * angles: -90° to +90° - Gas flow rates: 0-300 Mscf/D - Liquid flow rates: 0-30 gal/min - Liquid holdups: 0-0.87
    * </p>
    */
   @Test
   void testTwoPhaseGasOilHorizontalPipe() {
-    System.out.println("\n========== TWO-PHASE FLOW: Gas-Oil Horizontal Pipe ==========");
+    logger.info("\n========== TWO-PHASE FLOW: Gas-Oil Horizontal Pipe ==========");
 
     // Pipe parameters - typical production tubing
     double lengthM = 500.0; // Shorter pipe to reduce pressure drop
@@ -1414,13 +1353,13 @@ public class PipelinePressureDropComparisonTest {
     double gasFlowKgHr = 1000.0; // methane - moderate flow
     double oilFlowKgHr = 20000.0; // n-decane as oil surrogate
 
-    System.out.println("Operating Conditions:");
-    System.out.println("  Pipe Length: " + lengthM + " m");
-    System.out.println("  Pipe Diameter: " + diameterM * 1000 + " mm");
-    System.out.println("  Inlet Pressure: " + pressureBara + " bara");
-    System.out.println("  Temperature: " + temperatureC + " °C");
-    System.out.println("  Gas Flow (methane): " + gasFlowKgHr + " kg/hr");
-    System.out.println("  Oil Flow (nC10): " + oilFlowKgHr + " kg/hr");
+    logger.info("Operating Conditions:");
+    logger.info("  Pipe Length: " + lengthM + " m");
+    logger.info("  Pipe Diameter: " + diameterM * 1000 + " mm");
+    logger.info("  Inlet Pressure: " + pressureBara + " bara");
+    logger.info("  Temperature: " + temperatureC + " °C");
+    logger.info("  Gas Flow (methane): " + gasFlowKgHr + " kg/hr");
+    logger.info("  Oil Flow (nC10): " + oilFlowKgHr + " kg/hr");
 
     // Create two-phase gas-oil system
     // Use lower pressure and temperature to ensure two distinct phases
@@ -1439,42 +1378,40 @@ public class PipelinePressureDropComparisonTest {
 
     // Get phase properties
     int numPhases = streamSystem.getNumberOfPhases();
-    System.out.println("\nPhase Properties:");
-    System.out.println("  Number of phases: " + numPhases);
+    logger.info("\nPhase Properties:");
+    logger.info("  Number of phases: " + numPhases);
 
     if (streamSystem.hasPhaseType("gas")) {
       double gasVolFrac = streamSystem.getPhase("gas").getVolume() / streamSystem.getVolume();
       double gasDensity = streamSystem.getPhase("gas").getDensity("kg/m3");
       double gasViscosity = streamSystem.getPhase("gas").getViscosity("cP");
-      System.out.println("  Gas volume fraction: " + String.format("%.3f", gasVolFrac));
-      System.out.println("  Gas density: " + String.format("%.2f", gasDensity) + " kg/m³");
-      System.out.println("  Gas viscosity: " + String.format("%.4f", gasViscosity) + " cP");
+      logger.info("  Gas volume fraction: " + String.format("%.3f", gasVolFrac));
+      logger.info("  Gas density: " + String.format("%.2f", gasDensity) + " kg/m³");
+      logger.info("  Gas viscosity: " + String.format("%.4f", gasViscosity) + " cP");
     }
     if (streamSystem.hasPhaseType("oil")) {
       double oilVolFrac = streamSystem.getPhase("oil").getVolume() / streamSystem.getVolume();
       double oilDensity = streamSystem.getPhase("oil").getDensity("kg/m3");
       double oilViscosity = streamSystem.getPhase("oil").getViscosity("cP");
-      System.out.println("  Oil volume fraction: " + String.format("%.3f", oilVolFrac));
-      System.out.println("  Oil density: " + String.format("%.2f", oilDensity) + " kg/m³");
-      System.out.println("  Oil viscosity: " + String.format("%.4f", oilViscosity) + " cP");
+      logger.info("  Oil volume fraction: " + String.format("%.3f", oilVolFrac));
+      logger.info("  Oil density: " + String.format("%.2f", oilDensity) + " kg/m³");
+      logger.info("  Oil viscosity: " + String.format("%.4f", oilViscosity) + " cP");
     }
 
     // Calculate superficial velocities
     double area = Math.PI / 4.0 * diameterM * diameterM;
-    double gasVolFlowM3s =
-        streamSystem.hasPhaseType("gas") ? streamSystem.getPhase("gas").getFlowRate("m3/sec") : 0;
-    double oilVolFlowM3s =
-        streamSystem.hasPhaseType("oil") ? streamSystem.getPhase("oil").getFlowRate("m3/sec") : 0;
+    double gasVolFlowM3s = streamSystem.hasPhaseType("gas") ? streamSystem.getPhase("gas").getFlowRate("m3/sec") : 0;
+    double oilVolFlowM3s = streamSystem.hasPhaseType("oil") ? streamSystem.getPhase("oil").getFlowRate("m3/sec") : 0;
     double vsg = gasVolFlowM3s / area;
     double vsl = oilVolFlowM3s / area;
     double vm = vsg + vsl;
     double lambdaL = vsl / vm; // No-slip liquid holdup
 
-    System.out.println("\nSuperficial Velocities:");
-    System.out.println("  Gas (Vsg): " + String.format("%.3f", vsg) + " m/s");
-    System.out.println("  Liquid (Vsl): " + String.format("%.3f", vsl) + " m/s");
-    System.out.println("  Mixture (Vm): " + String.format("%.3f", vm) + " m/s");
-    System.out.println("  No-slip liquid holdup (λL): " + String.format("%.3f", lambdaL));
+    logger.info("\nSuperficial Velocities:");
+    logger.info("  Gas (Vsg): " + String.format("%.3f", vsg) + " m/s");
+    logger.info("  Liquid (Vsl): " + String.format("%.3f", vsl) + " m/s");
+    logger.info("  Mixture (Vm): " + String.format("%.3f", vm) + " m/s");
+    logger.info("  No-slip liquid holdup (λL): " + String.format("%.3f", lambdaL));
 
     // Run PipeBeggsAndBrills
     PipeBeggsAndBrills beggsBrills = new PipeBeggsAndBrills("BeggsBrills", twoPhaseStream);
@@ -1489,34 +1426,27 @@ public class PipelinePressureDropComparisonTest {
     PipeBeggsAndBrills.FlowRegime flowRegime = beggsBrills.getFlowRegimeEnum();
     double liquidHoldup = beggsBrills.getSegmentLiquidHoldup(beggsBrills.getNumberOfIncrements());
 
-    System.out.println("\n=== RESULTS: Two-Phase Horizontal Flow ===");
-    System.out.println("  Flow Regime: " + flowRegime);
-    System.out.println("  Liquid Holdup (Beggs-Brill): " + String.format("%.3f", liquidHoldup));
-    System.out.println("  Pressure Drop: " + String.format("%.4f", dpBeggsBar) + " bar");
+    logger.info("\n=== RESULTS: Two-Phase Horizontal Flow ===");
+    logger.info("  Flow Regime: " + flowRegime);
+    logger.info("  Liquid Holdup (Beggs-Brill): " + String.format("%.3f", liquidHoldup));
+    logger.info("  Pressure Drop: " + String.format("%.4f", dpBeggsBar) + " bar");
 
     // Calculate Lockhart-Martinelli parameter for reference
     // X² = (dP/dL)_L / (dP/dL)_G
-    double rhoL =
-        streamSystem.hasPhaseType("oil") ? streamSystem.getPhase("oil").getDensity("kg/m3") : 700;
-    double rhoG =
-        streamSystem.hasPhaseType("gas") ? streamSystem.getPhase("gas").getDensity("kg/m3") : 50;
-    double muL =
-        streamSystem.hasPhaseType("oil") ? streamSystem.getPhase("oil").getViscosity("kg/msec")
-            : 0.001;
-    double muG =
-        streamSystem.hasPhaseType("gas") ? streamSystem.getPhase("gas").getViscosity("kg/msec")
-            : 0.00001;
+    double rhoL = streamSystem.hasPhaseType("oil") ? streamSystem.getPhase("oil").getDensity("kg/m3") : 700;
+    double rhoG = streamSystem.hasPhaseType("gas") ? streamSystem.getPhase("gas").getDensity("kg/m3") : 50;
+    double muL = streamSystem.hasPhaseType("oil") ? streamSystem.getPhase("oil").getViscosity("kg/msec") : 0.001;
+    double muG = streamSystem.hasPhaseType("gas") ? streamSystem.getPhase("gas").getViscosity("kg/msec") : 0.00001;
 
     // Lockhart-Martinelli parameter (turbulent-turbulent)
-    double X_tt = Math.pow((1 - lambdaL) / lambdaL, 0.9) * Math.pow(rhoG / rhoL, 0.5)
-        * Math.pow(muL / muG, 0.1);
-    System.out.println("  Lockhart-Martinelli X_tt: " + String.format("%.3f", X_tt));
+    double X_tt = Math.pow((1 - lambdaL) / lambdaL, 0.9) * Math.pow(rhoG / rhoL, 0.5) * Math.pow(muL / muG, 0.1);
+    logger.info("  Lockhart-Martinelli X_tt: " + String.format("%.3f", X_tt));
 
     // Empirical liquid holdup correlation (Eaton et al.)
     // H_L = 1 / (1 + (V_sg/V_sl)^0.5 * (ρ_L/ρ_G)^0.25)
-    double eatonHoldup = 1.0 / (1.0
-        + Math.pow(vsg / Math.max(vsl, 0.001), 0.5) * Math.pow(rhoL / Math.max(rhoG, 1), 0.25));
-    System.out.println("  Eaton Holdup Correlation: " + String.format("%.3f", eatonHoldup));
+    double eatonHoldup = 1.0
+        / (1.0 + Math.pow(vsg / Math.max(vsl, 0.001), 0.5) * Math.pow(rhoL / Math.max(rhoG, 1), 0.25));
+    logger.info("  Eaton Holdup Correlation: " + String.format("%.3f", eatonHoldup));
 
     // Assertions
     assertTrue(dpBeggsBar > 0, "Two-phase pressure drop should be positive");
@@ -1525,21 +1455,20 @@ public class PipelinePressureDropComparisonTest {
 
     // The liquid holdup from Beggs-Brill should be reasonable compared to Eaton
     double holdupDeviation = Math.abs(liquidHoldup - eatonHoldup) / eatonHoldup * 100;
-    System.out.println(
-        "\n  Holdup deviation from Eaton: " + String.format("%.1f", holdupDeviation) + "%");
+    logger.info("\n  Holdup deviation from Eaton: " + String.format("%.1f", holdupDeviation) + "%");
   }
 
   /**
    * Test two-phase uphill flow (well tubing scenario).
-   * 
+   *
    * <p>
-   * Uphill flow typically results in higher liquid holdup due to gravity effects, and the pressure
-   * drop includes significant hydrostatic component.
+   * Uphill flow typically results in higher liquid holdup due to gravity effects, and the pressure drop includes
+   * significant hydrostatic component.
    * </p>
    */
   @Test
   void testTwoPhaseUphillFlow() {
-    System.out.println("\n========== TWO-PHASE FLOW: Uphill (Well Tubing) ==========");
+    logger.info("\n========== TWO-PHASE FLOW: Uphill (Well Tubing) ==========");
 
     // Well tubing parameters - use higher pressure to avoid negative outlet
     double lengthM = 200.0;
@@ -1553,14 +1482,13 @@ public class PipelinePressureDropComparisonTest {
     double gasFlowKgHr = 1000.0;
     double oilFlowKgHr = 20000.0;
 
-    System.out.println("Operating Conditions:");
-    System.out.println("  Pipe Length: " + lengthM + " m");
-    System.out.println("  Elevation Change: " + elevationM + " m (uphill)");
-    System.out.println("  Pipe Angle: "
-        + String.format("%.1f", Math.toDegrees(Math.asin(elevationM / lengthM))) + "°");
-    System.out.println("  Pipe Diameter: " + diameterM * 1000 + " mm (3 inch)");
-    System.out.println("  Inlet Pressure: " + pressureBara + " bara");
-    System.out.println("  Temperature: " + temperatureC + " °C");
+    logger.info("Operating Conditions:");
+    logger.info("  Pipe Length: " + lengthM + " m");
+    logger.info("  Elevation Change: " + elevationM + " m (uphill)");
+    logger.info("  Pipe Angle: " + String.format("%.1f", Math.toDegrees(Math.asin(elevationM / lengthM))) + "°");
+    logger.info("  Pipe Diameter: " + diameterM * 1000 + " mm (3 inch)");
+    logger.info("  Inlet Pressure: " + pressureBara + " bara");
+    logger.info("  Temperature: " + temperatureC + " °C");
 
     // Create two-phase system
     SystemInterface wellSystem = new SystemSrkEos(273.15 + temperatureC, pressureBara);
@@ -1590,38 +1518,34 @@ public class PipelinePressureDropComparisonTest {
     double liquidHoldup = beggsBrills.getSegmentLiquidHoldup(beggsBrills.getNumberOfIncrements());
 
     // Estimate hydrostatic component
-    double mixtureDensity =
-        beggsBrills.getSegmentMixtureDensity(beggsBrills.getNumberOfIncrements());
+    double mixtureDensity = beggsBrills.getSegmentMixtureDensity(beggsBrills.getNumberOfIncrements());
     double dpHydrostaticBar = mixtureDensity * 9.81 * elevationM / 100000;
 
-    System.out.println("\n=== RESULTS: Two-Phase Uphill Flow ===");
-    System.out.println("  Flow Regime: " + flowRegime);
-    System.out.println("  Liquid Holdup: " + String.format("%.3f", liquidHoldup));
-    System.out.println("  Mixture Density: " + String.format("%.2f", mixtureDensity) + " kg/m³");
-    System.out.println("  Total Pressure Drop: " + String.format("%.4f", dpBeggsBar) + " bar");
-    System.out.println(
-        "  Est. Hydrostatic Component: " + String.format("%.4f", dpHydrostaticBar) + " bar");
-    System.out.println("  Est. Friction Component: "
-        + String.format("%.4f", dpBeggsBar - dpHydrostaticBar) + " bar");
+    logger.info("\n=== RESULTS: Two-Phase Uphill Flow ===");
+    logger.info("  Flow Regime: " + flowRegime);
+    logger.info("  Liquid Holdup: " + String.format("%.3f", liquidHoldup));
+    logger.info("  Mixture Density: " + String.format("%.2f", mixtureDensity) + " kg/m³");
+    logger.info("  Total Pressure Drop: " + String.format("%.4f", dpBeggsBar) + " bar");
+    logger.info("  Est. Hydrostatic Component: " + String.format("%.4f", dpHydrostaticBar) + " bar");
+    logger.info("  Est. Friction Component: " + String.format("%.4f", dpBeggsBar - dpHydrostaticBar) + " bar");
 
     // Assertions
     assertTrue(dpBeggsBar > 0, "Uphill pressure drop should be positive");
-    assertTrue(dpBeggsBar > dpHydrostaticBar * 0.5,
-        "Total ΔP should include significant hydrostatic");
+    assertTrue(dpBeggsBar > dpHydrostaticBar * 0.5, "Total ΔP should include significant hydrostatic");
     assertTrue(liquidHoldup > 0.3, "Uphill flow should have elevated liquid holdup");
   }
 
   /**
    * Test two-phase downhill flow (flowline scenario).
-   * 
+   *
    * <p>
-   * Downhill flow typically results in lower liquid holdup (gravity assists liquid drainage), and
-   * the hydrostatic component reduces the total pressure drop.
+   * Downhill flow typically results in lower liquid holdup (gravity assists liquid drainage), and the hydrostatic
+   * component reduces the total pressure drop.
    * </p>
    */
   @Test
   void testTwoPhaseDownhillFlow() {
-    System.out.println("\n========== TWO-PHASE FLOW: Downhill (Flowline) ==========");
+    logger.info("\n========== TWO-PHASE FLOW: Downhill (Flowline) ==========");
 
     // Flowline parameters
     double lengthM = 2000.0;
@@ -1634,12 +1558,12 @@ public class PipelinePressureDropComparisonTest {
     double gasFlowKgHr = 8000.0;
     double oilFlowKgHr = 60000.0;
 
-    System.out.println("Operating Conditions:");
-    System.out.println("  Pipe Length: " + lengthM + " m");
-    System.out.println("  Elevation Change: " + elevationM + " m (downhill)");
-    System.out.println("  Pipe Diameter: " + diameterM * 1000 + " mm");
-    System.out.println("  Inlet Pressure: " + pressureBara + " bara");
-    System.out.println("  Temperature: " + temperatureC + " °C");
+    logger.info("Operating Conditions:");
+    logger.info("  Pipe Length: " + lengthM + " m");
+    logger.info("  Elevation Change: " + elevationM + " m (downhill)");
+    logger.info("  Pipe Diameter: " + diameterM * 1000 + " mm");
+    logger.info("  Inlet Pressure: " + pressureBara + " bara");
+    logger.info("  Temperature: " + temperatureC + " °C");
 
     // Create two-phase system
     SystemInterface flowlineSystem = new SystemSrkEos(273.15 + temperatureC, pressureBara);
@@ -1664,24 +1588,22 @@ public class PipelinePressureDropComparisonTest {
     double dpBeggsBar = pressureBara - beggsBrills.getOutletPressure();
     PipeBeggsAndBrills.FlowRegime flowRegime = beggsBrills.getFlowRegimeEnum();
     double liquidHoldup = beggsBrills.getSegmentLiquidHoldup(beggsBrills.getNumberOfIncrements());
-    double mixtureDensity =
-        beggsBrills.getSegmentMixtureDensity(beggsBrills.getNumberOfIncrements());
+    double mixtureDensity = beggsBrills.getSegmentMixtureDensity(beggsBrills.getNumberOfIncrements());
 
     // Estimate hydrostatic component (negative for downhill)
     double dpHydrostaticBar = mixtureDensity * 9.81 * elevationM / 100000;
 
-    System.out.println("\n=== RESULTS: Two-Phase Downhill Flow ===");
-    System.out.println("  Flow Regime: " + flowRegime);
-    System.out.println("  Liquid Holdup: " + String.format("%.3f", liquidHoldup));
-    System.out.println("  Mixture Density: " + String.format("%.2f", mixtureDensity) + " kg/m³");
-    System.out.println("  Total Pressure Drop: " + String.format("%.4f", dpBeggsBar) + " bar");
-    System.out.println("  Est. Hydrostatic Component: " + String.format("%.4f", dpHydrostaticBar)
-        + " bar (negative = pressure gain)");
+    logger.info("\n=== RESULTS: Two-Phase Downhill Flow ===");
+    logger.info("  Flow Regime: " + flowRegime);
+    logger.info("  Liquid Holdup: " + String.format("%.3f", liquidHoldup));
+    logger.info("  Mixture Density: " + String.format("%.2f", mixtureDensity) + " kg/m³");
+    logger.info("  Total Pressure Drop: " + String.format("%.4f", dpBeggsBar) + " bar");
+    logger.info(
+        "  Est. Hydrostatic Component: " + String.format("%.4f", dpHydrostaticBar) + " bar (negative = pressure gain)");
 
     // For downhill, outlet pressure might be higher than inlet (negative ΔP)
     // if hydrostatic gain exceeds friction loss
-    System.out.println(
-        "  Outlet Pressure: " + String.format("%.2f", beggsBrills.getOutletPressure()) + " bara");
+    logger.info("  Outlet Pressure: " + String.format("%.2f", beggsBrills.getOutletPressure()) + " bara");
 
     assertTrue(liquidHoldup > 0 && liquidHoldup < 1, "Liquid holdup should be between 0 and 1");
     // Downhill holdup should be lower than uphill
@@ -1689,15 +1611,15 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test three-phase gas-oil-water flow.
-   * 
+   *
    * <p>
-   * The Beggs & Brill correlation handles three-phase flow by treating water and oil as a combined
-   * liquid phase with averaged properties.
+   * The Beggs & Brill correlation handles three-phase flow by treating water and oil as a combined liquid phase with
+   * averaged properties.
    * </p>
    */
   @Test
   void testThreePhaseGasOilWaterFlow() {
-    System.out.println("\n========== THREE-PHASE FLOW: Gas-Oil-Water ==========");
+    logger.info("\n========== THREE-PHASE FLOW: Gas-Oil-Water ==========");
 
     // Pipeline parameters
     double lengthM = 1000.0;
@@ -1711,16 +1633,15 @@ public class PipelinePressureDropComparisonTest {
     double oilFlowKgHr = 40000.0;
     double waterFlowKgHr = 20000.0; // 33% water cut
 
-    System.out.println("Operating Conditions:");
-    System.out.println("  Pipe Length: " + lengthM + " m");
-    System.out.println("  Pipe Diameter: " + diameterM * 1000 + " mm");
-    System.out.println("  Inlet Pressure: " + pressureBara + " bara");
-    System.out.println("  Temperature: " + temperatureC + " °C");
-    System.out.println("  Gas Flow: " + gasFlowKgHr + " kg/hr");
-    System.out.println("  Oil Flow: " + oilFlowKgHr + " kg/hr");
-    System.out.println("  Water Flow: " + waterFlowKgHr + " kg/hr");
-    System.out.println("  Water Cut: "
-        + String.format("%.1f", 100.0 * waterFlowKgHr / (oilFlowKgHr + waterFlowKgHr)) + "%");
+    logger.info("Operating Conditions:");
+    logger.info("  Pipe Length: " + lengthM + " m");
+    logger.info("  Pipe Diameter: " + diameterM * 1000 + " mm");
+    logger.info("  Inlet Pressure: " + pressureBara + " bara");
+    logger.info("  Temperature: " + temperatureC + " °C");
+    logger.info("  Gas Flow: " + gasFlowKgHr + " kg/hr");
+    logger.info("  Oil Flow: " + oilFlowKgHr + " kg/hr");
+    logger.info("  Water Flow: " + waterFlowKgHr + " kg/hr");
+    logger.info("  Water Cut: " + String.format("%.1f", 100.0 * waterFlowKgHr / (oilFlowKgHr + waterFlowKgHr)) + "%");
 
     // Create three-phase system
     SystemInterface threePhaseSystem = new SystemSrkEos(273.15 + temperatureC, pressureBara);
@@ -1738,8 +1659,8 @@ public class PipelinePressureDropComparisonTest {
     SystemInterface streamSystem = threePhaseStream.getThermoSystem();
     streamSystem.initProperties();
 
-    System.out.println("\nPhase Properties:");
-    System.out.println("  Number of phases: " + streamSystem.getNumberOfPhases());
+    logger.info("\nPhase Properties:");
+    logger.info("  Number of phases: " + streamSystem.getNumberOfPhases());
 
     // Run PipeBeggsAndBrills
     PipeBeggsAndBrills beggsBrills = new PipeBeggsAndBrills("ThreePhase", threePhaseStream);
@@ -1753,14 +1674,13 @@ public class PipelinePressureDropComparisonTest {
     double dpBeggsBar = pressureBara - beggsBrills.getOutletPressure();
     PipeBeggsAndBrills.FlowRegime flowRegime = beggsBrills.getFlowRegimeEnum();
     double liquidHoldup = beggsBrills.getSegmentLiquidHoldup(beggsBrills.getNumberOfIncrements());
-    double mixtureDensity =
-        beggsBrills.getSegmentMixtureDensity(beggsBrills.getNumberOfIncrements());
+    double mixtureDensity = beggsBrills.getSegmentMixtureDensity(beggsBrills.getNumberOfIncrements());
 
-    System.out.println("\n=== RESULTS: Three-Phase Flow ===");
-    System.out.println("  Flow Regime: " + flowRegime);
-    System.out.println("  Liquid Holdup: " + String.format("%.3f", liquidHoldup));
-    System.out.println("  Mixture Density: " + String.format("%.2f", mixtureDensity) + " kg/m³");
-    System.out.println("  Pressure Drop: " + String.format("%.4f", dpBeggsBar) + " bar");
+    logger.info("\n=== RESULTS: Three-Phase Flow ===");
+    logger.info("  Flow Regime: " + flowRegime);
+    logger.info("  Liquid Holdup: " + String.format("%.3f", liquidHoldup));
+    logger.info("  Mixture Density: " + String.format("%.2f", mixtureDensity) + " kg/m³");
+    logger.info("  Pressure Drop: " + String.format("%.4f", dpBeggsBar) + " bar");
 
     assertTrue(dpBeggsBar > 0, "Three-phase pressure drop should be positive");
     assertTrue(liquidHoldup > 0 && liquidHoldup < 1, "Liquid holdup should be between 0 and 1");
@@ -1769,16 +1689,15 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test flow regime transitions across different gas-liquid ratios.
-   * 
+   *
    * <p>
-   * The Beggs & Brill correlation identifies flow regimes: - Segregated (stratified, wavy) -
-   * Intermittent (plug, slug) - Distributed (bubble, mist) - Transition (between segregated and
-   * intermittent)
+   * The Beggs & Brill correlation identifies flow regimes: - Segregated (stratified, wavy) - Intermittent (plug, slug)
+   * - Distributed (bubble, mist) - Transition (between segregated and intermittent)
    * </p>
    */
   @Test
   void testFlowRegimeTransitions() {
-    System.out.println("\n========== FLOW REGIME TRANSITIONS ==========");
+    logger.info("\n========== FLOW REGIME TRANSITIONS ==========");
 
     double lengthM = 100.0; // Shorter pipe for reasonable pressure drops
     double diameterM = 0.1;
@@ -1787,19 +1706,18 @@ public class PipelinePressureDropComparisonTest {
     double temperatureC = 50.0;
 
     // Test different gas fractions - moderate range
-    double[] gasFlowsKgHr = {200, 500, 1000, 2000, 3000};
+    double[] gasFlowsKgHr = { 200, 500, 1000, 2000, 3000 };
     double oilFlowKgHr = 20000.0;
 
-    System.out.println("Conditions:");
-    System.out.println("  Pipe Length: " + lengthM + " m");
-    System.out.println("  Pipe Diameter: " + diameterM * 1000 + " mm");
-    System.out.println("  Pressure: " + pressureBara + " bara");
-    System.out.println("  Oil Flow: " + oilFlowKgHr + " kg/hr (constant)");
-    System.out.println();
+    logger.info("Conditions:");
+    logger.info("  Pipe Length: " + lengthM + " m");
+    logger.info("  Pipe Diameter: " + diameterM * 1000 + " mm");
+    logger.info("  Pressure: " + pressureBara + " bara");
+    logger.info("  Oil Flow: " + oilFlowKgHr + " kg/hr (constant)");
 
-    System.out.println(String.format("%-12s | %-8s | %-15s | %-10s | %-10s | %-8s", "Gas (kg/hr)",
-        "GOR", "Flow Regime", "Holdup", "ΔP (bar)", "Vsg (m/s)"));
-    System.out.println(new String(new char[75]).replace("\0", "-"));
+    logger.info(String.format("%-12s | %-8s | %-15s | %-10s | %-10s | %-8s", "Gas (kg/hr)", "GOR", "Flow Regime",
+        "Holdup", "ΔP (bar)", "Vsg (m/s)"));
+    logger.info(new String(new char[75]).replace("\0", "-"));
 
     for (double gasFlowKgHr : gasFlowsKgHr) {
       SystemInterface system = new SystemSrkEos(273.15 + temperatureC, pressureBara);
@@ -1815,10 +1733,8 @@ public class PipelinePressureDropComparisonTest {
       // Get gas-oil ratio
       SystemInterface streamSystem = stream.getThermoSystem();
       streamSystem.initProperties();
-      double gasVolM3 =
-          streamSystem.hasPhaseType("gas") ? streamSystem.getPhase("gas").getVolume("m3") : 0;
-      double oilVolM3 =
-          streamSystem.hasPhaseType("oil") ? streamSystem.getPhase("oil").getVolume("m3") : 0;
+      double gasVolM3 = streamSystem.hasPhaseType("gas") ? streamSystem.getPhase("gas").getVolume("m3") : 0;
+      double oilVolM3 = streamSystem.hasPhaseType("oil") ? streamSystem.getPhase("oil").getVolume("m3") : 0;
       double gor = oilVolM3 > 0 ? gasVolM3 / oilVolM3 : 0;
 
       PipeBeggsAndBrills beggsBrills = new PipeBeggsAndBrills("Test", stream);
@@ -1832,11 +1748,10 @@ public class PipelinePressureDropComparisonTest {
       double dpBar = pressureBara - beggsBrills.getOutletPressure();
       PipeBeggsAndBrills.FlowRegime regime = beggsBrills.getFlowRegimeEnum();
       double holdup = beggsBrills.getSegmentLiquidHoldup(beggsBrills.getNumberOfIncrements());
-      double vsg =
-          beggsBrills.getSegmentGasSuperficialVelocity(beggsBrills.getNumberOfIncrements());
+      double vsg = beggsBrills.getSegmentGasSuperficialVelocity(beggsBrills.getNumberOfIncrements());
 
-      System.out.println(String.format("%12.0f | %8.1f | %-15s | %10.3f | %10.4f | %8.2f",
-          gasFlowKgHr, gor, regime, holdup, dpBar, vsg));
+      logger.info(String.format("%12.0f | %8.1f | %-15s | %10.3f | %10.4f | %8.2f", gasFlowKgHr, gor, regime, holdup,
+          dpBar, vsg));
 
       assertTrue(dpBar > 0, "Pressure drop should be positive");
     }
@@ -1844,20 +1759,19 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Comparison of Beggs-Brill against Dukler correlation for horizontal two-phase flow.
-   * 
+   *
    * <p>
-   * The Dukler correlation is another widely-used method for horizontal two-phase flow. This test
-   * compares pressure gradients from both methods.
+   * The Dukler correlation is another widely-used method for horizontal two-phase flow. This test compares pressure
+   * gradients from both methods.
    * </p>
-   * 
+   *
    * <p>
-   * Dukler correlation for pressure gradient: (dP/dL) = f_tp * ρ_ns * v_m² / (2 * D) where f_tp =
-   * f_ns * (ρ_ns/ρ_m)
+   * Dukler correlation for pressure gradient: (dP/dL) = f_tp * ρ_ns * v_m² / (2 * D) where f_tp = f_ns * (ρ_ns/ρ_m)
    * </p>
    */
   @Test
   void testBeggsVsDuklerCorrelation() {
-    System.out.println("\n========== COMPARISON: Beggs-Brill vs Dukler Correlation ==========");
+    logger.info("\n========== COMPARISON: Beggs-Brill vs Dukler Correlation ==========");
 
     double lengthM = 100.0;
     double diameterM = 0.1;
@@ -1868,12 +1782,12 @@ public class PipelinePressureDropComparisonTest {
     double gasFlowKgHr = 3000.0;
     double oilFlowKgHr = 25000.0;
 
-    System.out.println("Conditions:");
-    System.out.println("  Pipe Length: " + lengthM + " m");
-    System.out.println("  Pipe Diameter: " + diameterM * 1000 + " mm");
-    System.out.println("  Pressure: " + pressureBara + " bara");
-    System.out.println("  Gas Flow: " + gasFlowKgHr + " kg/hr");
-    System.out.println("  Oil Flow: " + oilFlowKgHr + " kg/hr");
+    logger.info("Conditions:");
+    logger.info("  Pipe Length: " + lengthM + " m");
+    logger.info("  Pipe Diameter: " + diameterM * 1000 + " mm");
+    logger.info("  Pressure: " + pressureBara + " bara");
+    logger.info("  Gas Flow: " + gasFlowKgHr + " kg/hr");
+    logger.info("  Oil Flow: " + oilFlowKgHr + " kg/hr");
 
     // Create system
     SystemInterface system = new SystemSrkEos(273.15 + temperatureC, pressureBara);
@@ -1936,30 +1850,29 @@ public class PipelinePressureDropComparisonTest {
     double dpHomoPa = f * rhoNS * vm * vm * lengthM / (2 * diameterM);
     double dpHomoBar = dpHomoPa / 100000;
 
-    System.out.println("\nCalculated Properties:");
-    System.out.println("  Vsg: " + String.format("%.3f", vsg) + " m/s");
-    System.out.println("  Vsl: " + String.format("%.3f", vsl) + " m/s");
-    System.out.println("  λL (no-slip): " + String.format("%.3f", lambdaL));
-    System.out.println("  ρ_gas: " + String.format("%.2f", rhoG) + " kg/m³");
-    System.out.println("  ρ_oil: " + String.format("%.2f", rhoL) + " kg/m³");
-    System.out.println("  ρ_no-slip: " + String.format("%.2f", rhoNS) + " kg/m³");
-    System.out.println("  ρ_mixture (with holdup): " + String.format("%.2f", rhoM) + " kg/m³");
-    System.out.println("  Re (no-slip): " + String.format("%.2e", ReNS));
-    System.out.println("  f (Colebrook): " + String.format("%.5f", f));
+    logger.info("\nCalculated Properties:");
+    logger.info("  Vsg: " + String.format("%.3f", vsg) + " m/s");
+    logger.info("  Vsl: " + String.format("%.3f", vsl) + " m/s");
+    logger.info("  λL (no-slip): " + String.format("%.3f", lambdaL));
+    logger.info("  ρ_gas: " + String.format("%.2f", rhoG) + " kg/m³");
+    logger.info("  ρ_oil: " + String.format("%.2f", rhoL) + " kg/m³");
+    logger.info("  ρ_no-slip: " + String.format("%.2f", rhoNS) + " kg/m³");
+    logger.info("  ρ_mixture (with holdup): " + String.format("%.2f", rhoM) + " kg/m³");
+    logger.info("  Re (no-slip): " + String.format("%.2e", ReNS));
+    logger.info("  f (Colebrook): " + String.format("%.5f", f));
 
-    System.out.println("\n=== PRESSURE DROP COMPARISON ===");
-    System.out.println("  Beggs-Brill:         ΔP = " + String.format("%.4f", dpBeggsBar) + " bar");
-    System.out
-        .println("  Dukler Correlation:  ΔP = " + String.format("%.4f", dpDuklerBar) + " bar");
-    System.out.println("  Homogeneous Model:   ΔP = " + String.format("%.4f", dpHomoBar) + " bar");
+    logger.info("\n=== PRESSURE DROP COMPARISON ===");
+    logger.info("  Beggs-Brill:         ΔP = " + String.format("%.4f", dpBeggsBar) + " bar");
+    System.out.println("  Dukler Correlation:  ΔP = " + String.format("%.4f", dpDuklerBar) + " bar");
+    logger.info("  Homogeneous Model:   ΔP = " + String.format("%.4f", dpHomoBar) + " bar");
 
     double devDukler = (dpBeggsBar - dpDuklerBar) / dpDuklerBar * 100;
     double devHomo = (dpBeggsBar - dpHomoBar) / dpHomoBar * 100;
-    System.out.println("\n  Beggs-Brill vs Dukler: " + String.format("%+.1f", devDukler) + "%");
-    System.out.println("  Beggs-Brill vs Homogeneous: " + String.format("%+.1f", devHomo) + "%");
+    logger.info("\n  Beggs-Brill vs Dukler: " + String.format("%+.1f", devDukler) + "%");
+    logger.info("  Beggs-Brill vs Homogeneous: " + String.format("%+.1f", devHomo) + "%");
 
-    System.out.println("\n  Liquid Holdup (Beggs-Brill): " + String.format("%.3f", holdup));
-    System.out.println("  Holdup Ratio (H_L/λ_L): " + String.format("%.2f", holdup / lambdaL));
+    logger.info("\n  Liquid Holdup (Beggs-Brill): " + String.format("%.3f", holdup));
+    logger.info("  Holdup Ratio (H_L/λ_L): " + String.format("%.2f", holdup / lambdaL));
 
     assertTrue(dpBeggsBar > 0, "Pressure drop should be positive");
     // Beggs-Brill typically gives higher pressure drop than homogeneous for horizontal flow
@@ -1967,16 +1880,15 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test that transient simulation includes friction and hydrostatic pressure effects.
-   * 
+   *
    * <p>
-   * This test verifies that: 1. Friction losses are applied during transient flow 2. Hydrostatic
-   * pressure is properly calculated for inclined pipes 3. The transient solution converges to
-   * steady-state
+   * This test verifies that: 1. Friction losses are applied during transient flow 2. Hydrostatic pressure is properly
+   * calculated for inclined pipes 3. The transient solution converges to steady-state
    * </p>
    */
   @Test
   void testTransientIncludesFrictionAndHydrostatic() {
-    System.out.println("\n========== TRANSIENT: Friction and Hydrostatic Effects ==========");
+    logger.info("\n========== TRANSIENT: Friction and Hydrostatic Effects ==========");
 
     double lengthM = 1000.0;
     double elevationM = 100.0; // 10% uphill grade
@@ -1986,12 +1898,12 @@ public class PipelinePressureDropComparisonTest {
     double temperatureC = 25.0;
     double massFlowKgHr = 50000.0;
 
-    System.out.println("Operating Conditions:");
-    System.out.println("  Pipe Length: " + lengthM + " m");
-    System.out.println("  Elevation: " + elevationM + " m (uphill)");
-    System.out.println("  Diameter: " + diameterM * 1000 + " mm");
-    System.out.println("  Inlet Pressure: " + pressureBara + " bara");
-    System.out.println("  Mass Flow: " + massFlowKgHr + " kg/hr");
+    logger.info("Operating Conditions:");
+    logger.info("  Pipe Length: " + lengthM + " m");
+    logger.info("  Elevation: " + elevationM + " m (uphill)");
+    logger.info("  Diameter: " + diameterM * 1000 + " mm");
+    logger.info("  Inlet Pressure: " + pressureBara + " bara");
+    logger.info("  Mass Flow: " + massFlowKgHr + " kg/hr");
 
     // Create gas system
     SystemInterface gas = new SystemSrkEos(273.15 + temperatureC, pressureBara);
@@ -2012,8 +1924,8 @@ public class PipelinePressureDropComparisonTest {
     pipelineSteady.run();
 
     double steadyStateDp = pressureBara - pipelineSteady.getOutletPressure();
-    System.out.println("\nSteady-State Results:");
-    System.out.println("  Pressure Drop: " + String.format("%.4f", steadyStateDp) + " bar");
+    logger.info("\nSteady-State Results:");
+    logger.info("  Pressure Drop: " + String.format("%.4f", steadyStateDp) + " bar");
 
     // Now test transient - start from different initial conditions
     Stream streamTransient = new Stream("feedT", gas.clone());
@@ -2039,17 +1951,15 @@ public class PipelinePressureDropComparisonTest {
       transientDp = pressureProfile[0] - pressureProfile[pressureProfile.length - 1];
     }
 
-    System.out.println("\nTransient Results (after 500 seconds):");
-    System.out.println("  Pressure Drop: " + String.format("%.4f", transientDp) + " bar");
+    logger.info("\nTransient Results (after 500 seconds):");
+    logger.info("  Pressure Drop: " + String.format("%.4f", transientDp) + " bar");
 
     double deviation = Math.abs(transientDp - steadyStateDp) / steadyStateDp * 100;
-    System.out.println("  Deviation from steady-state: " + String.format("%.1f", deviation) + "%");
+    logger.info("  Deviation from steady-state: " + String.format("%.1f", deviation) + "%");
 
     // Transient should converge close to steady state (within 20% for this simple test)
-    assertTrue(transientDp > 0,
-        "Transient pressure drop should be positive (friction + hydrostatic)");
-    assertTrue(deviation < 25,
-        "Transient should converge within 25% of steady-state, got " + deviation + "%");
+    assertTrue(transientDp > 0, "Transient pressure drop should be positive (friction + hydrostatic)");
+    assertTrue(deviation < 25, "Transient should converge within 25% of steady-state, got " + deviation + "%");
 
     // Verify that elevation contributes to pressure drop
     // For uphill flow, total ΔP = ΔP_friction + ΔP_hydrostatic
@@ -2062,7 +1972,7 @@ public class PipelinePressureDropComparisonTest {
    */
   @Test
   void testTransientHorizontalConvergesToSteadyState() {
-    System.out.println("\n========== TRANSIENT: Horizontal Convergence Test ==========");
+    logger.info("\n========== TRANSIENT: Horizontal Convergence Test ==========");
 
     double lengthM = 500.0;
     double diameterM = 0.15;
@@ -2116,21 +2026,20 @@ public class PipelinePressureDropComparisonTest {
       double[] pressureProfile = pipelineT.getPressureProfile();
       transientDp = pressureProfile[0] - pressureProfile[pressureProfile.length - 1];
 
-      if (step > 10
-          && Math.abs(transientDp - prevDp) / Math.max(0.001, Math.abs(transientDp)) < 0.001) {
+      if (step > 10 && Math.abs(transientDp - prevDp) / Math.max(0.001, Math.abs(transientDp)) < 0.001) {
         convergedAt = step;
         break;
       }
       prevDp = transientDp;
     }
 
-    System.out.println("Results:");
-    System.out.println("  Steady-state ΔP: " + String.format("%.4f", steadyDp) + " bar");
-    System.out.println("  Transient ΔP:    " + String.format("%.4f", transientDp) + " bar");
-    System.out.println("  Converged at step: " + convergedAt);
+    logger.info("Results:");
+    logger.info("  Steady-state ΔP: " + String.format("%.4f", steadyDp) + " bar");
+    logger.info("  Transient ΔP:    " + String.format("%.4f", transientDp) + " bar");
+    logger.info("  Converged at step: " + convergedAt);
 
     double deviation = Math.abs(transientDp - steadyDp) / steadyDp * 100;
-    System.out.println("  Deviation: " + String.format("%.1f", deviation) + "%");
+    logger.info("  Deviation: " + String.format("%.1f", deviation) + "%");
 
     assertTrue(transientDp > 0, "Pressure drop should be positive");
     assertTrue(deviation < 20, "Transient should converge within 20% of steady-state");
@@ -2138,18 +2047,17 @@ public class PipelinePressureDropComparisonTest {
 
   /**
    * Test that inlet pressure/flow changes propagate to outlet at physically reasonable time.
-   * 
+   *
    * <p>
-   * The transit time for a fluid particle through a pipe is: τ = L / v (where L = pipe length, v =
-   * fluid velocity)
-   * 
-   * For gas at typical pipeline velocities (5-15 m/s), a 1000m pipe should see changes arrive at
-   * the outlet in roughly 60-200 seconds.
+   * The transit time for a fluid particle through a pipe is: τ = L / v (where L = pipe length, v = fluid velocity)
+   *
+   * For gas at typical pipeline velocities (5-15 m/s), a 1000m pipe should see changes arrive at the outlet in roughly
+   * 60-200 seconds.
    * </p>
    */
   @Test
   void testTransientPropagationTime() {
-    System.out.println("\n========== TRANSIENT: Wave Propagation Time Test ==========");
+    logger.info("\n========== TRANSIENT: Wave Propagation Time Test ==========");
 
     double lengthM = 1000.0;
     double diameterM = 0.2;
@@ -2176,15 +2084,14 @@ public class PipelinePressureDropComparisonTest {
     double velocity = massFlowKgSec / (density * area);
     double expectedTransitTime = lengthM / velocity;
 
-    System.out.println("Initial Conditions:");
-    System.out.println("  Pipe Length: " + lengthM + " m");
-    System.out.println("  Pipe Diameter: " + diameterM * 1000 + " mm");
-    System.out.println("  Inlet Pressure: " + initialPressureBara + " bara");
-    System.out.println("  Mass Flow: " + initialMassFlowKgHr + " kg/hr");
-    System.out.println("  Gas Density: " + String.format("%.2f", density) + " kg/m³");
-    System.out.println("  Flow Velocity: " + String.format("%.2f", velocity) + " m/s");
-    System.out
-        .println("  Expected Transit Time: " + String.format("%.1f", expectedTransitTime) + " s");
+    logger.info("Initial Conditions:");
+    logger.info("  Pipe Length: " + lengthM + " m");
+    logger.info("  Pipe Diameter: " + diameterM * 1000 + " mm");
+    logger.info("  Inlet Pressure: " + initialPressureBara + " bara");
+    logger.info("  Mass Flow: " + initialMassFlowKgHr + " kg/hr");
+    logger.info("  Gas Density: " + String.format("%.2f", density) + " kg/m³");
+    logger.info("  Flow Velocity: " + String.format("%.2f", velocity) + " m/s");
+    System.out.println("  Expected Transit Time: " + String.format("%.1f", expectedTransitTime) + " s");
 
     // Set up pipeline in steady state first
     PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills("pipe", stream);
@@ -2198,10 +2105,9 @@ public class PipelinePressureDropComparisonTest {
     double initialOutletPressure = pipeline.getOutletPressure();
     double initialOutletFlow = pipeline.getOutletStream().getFlowRate("kg/hr");
 
-    System.out.println("\nSteady-State (before change):");
-    System.out
-        .println("  Outlet Pressure: " + String.format("%.4f", initialOutletPressure) + " bara");
-    System.out.println("  Outlet Flow: " + String.format("%.1f", initialOutletFlow) + " kg/hr");
+    logger.info("\nSteady-State (before change):");
+    System.out.println("  Outlet Pressure: " + String.format("%.4f", initialOutletPressure) + " bara");
+    logger.info("  Outlet Flow: " + String.format("%.1f", initialOutletFlow) + " kg/hr");
 
     // Switch to transient mode
     pipeline.setCalculateSteadyState(false);
@@ -2226,8 +2132,8 @@ public class PipelinePressureDropComparisonTest {
     stream.setThermoSystem(newGas);
     stream.run();
 
-    System.out.println("\nStep Change Applied:");
-    System.out.println("  New Inlet Pressure: " + newInletPressure + " bara");
+    logger.info("\nStep Change Applied:");
+    logger.info("  New Inlet Pressure: " + newInletPressure + " bara");
 
     // Track when the change arrives at the outlet
     double threshold = 0.1; // bar - detect 0.1 bar change at outlet
@@ -2260,50 +2166,41 @@ public class PipelinePressureDropComparisonTest {
 
       // Print progress at key intervals
       if (step == 0 || step == 9 || step == 49 || step == 99 || step == 199 || step == 299) {
-        System.out.println("  t=" + String.format("%5.0f", timeHistory[step]) + "s: " + "P_out="
-            + String.format("%.4f", currentOutletPressure) + " bara, " + "ΔP="
-            + String.format("%+.4f", outletChange) + " bar");
+        logger.info("  t=" + String.format("%5.0f", timeHistory[step]) + "s: " + "P_out="
+            + String.format("%.4f", currentOutletPressure) + " bara, " + "ΔP=" + String.format("%+.4f", outletChange)
+            + " bar");
       }
     }
 
     double finalOutletPressure = pipeline.getOutletPressure();
     double totalOutletChange = finalOutletPressure - preChangeOutletPressure;
 
-    System.out.println("\nPropagation Results:");
-    System.out.println("  Pre-change outlet pressure: "
-        + String.format("%.4f", preChangeOutletPressure) + " bara");
-    System.out.println(
-        "  Final outlet pressure: " + String.format("%.4f", finalOutletPressure) + " bara");
-    System.out
-        .println("  Total outlet change: " + String.format("%+.4f", totalOutletChange) + " bar");
-    System.out
-        .println("  Maximum outlet change: " + String.format("%.4f", maxOutletChange) + " bar");
+    logger.info("\nPropagation Results:");
+    logger.info("  Pre-change outlet pressure: " + String.format("%.4f", preChangeOutletPressure) + " bara");
+    logger.info("  Final outlet pressure: " + String.format("%.4f", finalOutletPressure) + " bara");
+    System.out.println("  Total outlet change: " + String.format("%+.4f", totalOutletChange) + " bar");
+    System.out.println("  Maximum outlet change: " + String.format("%.4f", maxOutletChange) + " bar");
 
     if (detectionStep >= 0) {
-      System.out.println("  Change detected at step: " + detectionStep);
-      System.out.println("  Detection time: " + String.format("%.1f", detectedTime) + " s");
-      System.out
-          .println("  Expected transit time: " + String.format("%.1f", expectedTransitTime) + " s");
+      logger.info("  Change detected at step: " + detectionStep);
+      logger.info("  Detection time: " + String.format("%.1f", detectedTime) + " s");
+      System.out.println("  Expected transit time: " + String.format("%.1f", expectedTransitTime) + " s");
       double timeRatio = detectedTime / expectedTransitTime;
-      System.out.println("  Time ratio (detected/expected): " + String.format("%.2f", timeRatio));
+      logger.info("  Time ratio (detected/expected): " + String.format("%.2f", timeRatio));
 
       // The propagation should occur within a reasonable range of the transit time
       // For advective transport, expect detection roughly at transit time
       // Allow factor of 0.3 to 3.0 for model approximations
-      assertTrue(timeRatio > 0.3,
-          "Change should not arrive faster than 0.3x transit time (got " + timeRatio + ")");
-      assertTrue(timeRatio < 5.0,
-          "Change should arrive within 5x transit time (got " + timeRatio + ")");
+      assertTrue(timeRatio > 0.3, "Change should not arrive faster than 0.3x transit time (got " + timeRatio + ")");
+      assertTrue(timeRatio < 5.0, "Change should arrive within 5x transit time (got " + timeRatio + ")");
     } else {
-      System.out.println("  WARNING: Change not detected within " + maxSteps + " steps");
-      System.out.println("  This may indicate a problem with wave propagation");
+      logger.info("  WARNING: Change not detected within " + maxSteps + " steps");
+      logger.info("  This may indicate a problem with wave propagation");
     }
 
     // Verify the pressure change propagated correctly
-    assertTrue(totalOutletChange > 0,
-        "Outlet pressure should increase after inlet pressure increase");
-    assertTrue(maxOutletChange > 0.5,
-        "Outlet should see significant pressure change (>0.5 bar of 5 bar input)");
+    assertTrue(totalOutletChange > 0, "Outlet pressure should increase after inlet pressure increase");
+    assertTrue(maxOutletChange > 0.5, "Outlet should see significant pressure change (>0.5 bar of 5 bar input)");
   }
 
   /**
@@ -2311,7 +2208,7 @@ public class PipelinePressureDropComparisonTest {
    */
   @Test
   void testFlowRateChangePropagation() {
-    System.out.println("\n========== TRANSIENT: Flow Rate Change Propagation ==========");
+    logger.info("\n========== TRANSIENT: Flow Rate Change Propagation ==========");
 
     double lengthM = 500.0;
     double diameterM = 0.15;
@@ -2338,12 +2235,12 @@ public class PipelinePressureDropComparisonTest {
     double velocity = (initialFlowKgHr / 3600.0) / (density * area);
     double transitTime = lengthM / velocity;
 
-    System.out.println("Conditions:");
-    System.out.println("  Pipe: " + lengthM + " m x " + diameterM * 1000 + " mm");
-    System.out.println("  Initial flow: " + initialFlowKgHr + " kg/hr");
-    System.out.println("  Final flow: " + finalFlowKgHr + " kg/hr");
-    System.out.println("  Velocity: " + String.format("%.2f", velocity) + " m/s");
-    System.out.println("  Transit time: " + String.format("%.1f", transitTime) + " s");
+    logger.info("Conditions:");
+    logger.info("  Pipe: " + lengthM + " m x " + diameterM * 1000 + " mm");
+    logger.info("  Initial flow: " + initialFlowKgHr + " kg/hr");
+    logger.info("  Final flow: " + finalFlowKgHr + " kg/hr");
+    logger.info("  Velocity: " + String.format("%.2f", velocity) + " m/s");
+    logger.info("  Transit time: " + String.format("%.1f", transitTime) + " s");
 
     // Setup pipeline
     PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills("pipe", stream);
@@ -2355,8 +2252,7 @@ public class PipelinePressureDropComparisonTest {
     pipeline.run();
 
     double initialOutletFlow = pipeline.getOutletStream().getFlowRate("kg/hr");
-    System.out
-        .println("  Initial outlet flow: " + String.format("%.1f", initialOutletFlow) + " kg/hr");
+    System.out.println("  Initial outlet flow: " + String.format("%.1f", initialOutletFlow) + " kg/hr");
 
     // Switch to transient and stabilize
     pipeline.setCalculateSteadyState(false);
@@ -2381,7 +2277,7 @@ public class PipelinePressureDropComparisonTest {
     double flowThreshold = 1000.0; // kg/hr
     int detectionStep = -1;
 
-    System.out.println("\nFlow propagation:");
+    logger.info("\nFlow propagation:");
     for (int step = 0; step < 300; step++) {
       pipeline.runTransient(dt, id);
       double currentFlow = pipeline.getOutletStream().getFlowRate("kg/hr");
@@ -2389,13 +2285,12 @@ public class PipelinePressureDropComparisonTest {
 
       if (detectionStep < 0 && Math.abs(flowChange) > flowThreshold) {
         detectionStep = step;
-        System.out.println("  Flow change detected at step " + step + " (t="
-            + String.format("%.1f", (step + 1) * dt) + "s)");
-        System.out.println("  Outlet flow: " + String.format("%.1f", currentFlow) + " kg/hr");
+        logger.info("  Flow change detected at step " + step + " (t=" + String.format("%.1f", (step + 1) * dt) + "s)");
+        logger.info("  Outlet flow: " + String.format("%.1f", currentFlow) + " kg/hr");
       }
 
       if (step == 0 || step == 19 || step == 49 || step == 99 || step == 199) {
-        System.out.println("  t=" + String.format("%5.1f", (step + 1) * dt) + "s: " + "Flow="
+        logger.info("  t=" + String.format("%5.1f", (step + 1) * dt) + "s: " + "Flow="
             + String.format("%.1f", currentFlow) + " kg/hr");
       }
     }
@@ -2403,16 +2298,16 @@ public class PipelinePressureDropComparisonTest {
     double finalFlow = pipeline.getOutletStream().getFlowRate("kg/hr");
     double flowChange = finalFlow - preChangeFlow;
 
-    System.out.println("\nResults:");
-    System.out.println("  Pre-change flow: " + String.format("%.1f", preChangeFlow) + " kg/hr");
-    System.out.println("  Final flow: " + String.format("%.1f", finalFlow) + " kg/hr");
-    System.out.println("  Flow change: " + String.format("%+.1f", flowChange) + " kg/hr");
+    logger.info("\nResults:");
+    logger.info("  Pre-change flow: " + String.format("%.1f", preChangeFlow) + " kg/hr");
+    logger.info("  Final flow: " + String.format("%.1f", finalFlow) + " kg/hr");
+    logger.info("  Flow change: " + String.format("%+.1f", flowChange) + " kg/hr");
 
     if (detectionStep >= 0) {
       double detectedTime = (detectionStep + 1) * dt;
       double timeRatio = detectedTime / transitTime;
-      System.out.println("  Detection time: " + String.format("%.1f", detectedTime) + " s");
-      System.out.println("  Time ratio: " + String.format("%.2f", timeRatio));
+      logger.info("  Detection time: " + String.format("%.1f", detectedTime) + " s");
+      logger.info("  Time ratio: " + String.format("%.2f", timeRatio));
 
       assertTrue(timeRatio > 0.2, "Flow change should not propagate faster than 0.2x transit time");
       assertTrue(timeRatio < 5.0, "Flow change should propagate within 5x transit time");
@@ -2427,8 +2322,8 @@ public class PipelinePressureDropComparisonTest {
   // =====================================================================
 
   /**
-   * Tests calculation of flow rate when outlet pressure is specified. This uses bisection iteration
-   * to find the flow rate that achieves the target outlet pressure.
+   * Tests calculation of flow rate when outlet pressure is specified. This uses bisection iteration to find the flow
+   * rate that achieves the target outlet pressure.
    */
   @Test
   void testCalculateFlowRateFromOutletPressure() {
@@ -2445,13 +2340,11 @@ public class PipelinePressureDropComparisonTest {
     double calculatedOutletPressure = pipe1.getOutletPressure();
     double calculatedPressureDrop = pipe1.getPressureDrop();
 
-    System.out.println("=== Calculate Flow Rate from Outlet Pressure ===");
-    System.out.println("Forward calculation:");
-    System.out.println("  Known flow rate: " + String.format("%.1f", knownFlowRate) + " kg/hr");
-    System.out.println("  Calculated outlet pressure: "
-        + String.format("%.4f", calculatedOutletPressure) + " bara");
-    System.out.println(
-        "  Calculated pressure drop: " + String.format("%.4f", calculatedPressureDrop) + " bar");
+    logger.info("=== Calculate Flow Rate from Outlet Pressure ===");
+    logger.info("Forward calculation:");
+    logger.info("  Known flow rate: " + String.format("%.1f", knownFlowRate) + " kg/hr");
+    logger.info("  Calculated outlet pressure: " + String.format("%.4f", calculatedOutletPressure) + " bara");
+    logger.info("  Calculated pressure drop: " + String.format("%.4f", calculatedPressureDrop) + " bar");
 
     // Now create a new system with arbitrary initial flow rate
     SystemInterface testSystem2 = new SystemSrkEos(273.15 + INLET_TEMPERATURE, INLET_PRESSURE);
@@ -2476,22 +2369,18 @@ public class PipelinePressureDropComparisonTest {
     double calculatedFlowRate = pipe2.getInletStream().getFlowRate("kg/hr");
     double achievedOutletPressure = pipe2.getOutletPressure();
 
-    System.out.println("\nReverse calculation (specified outlet pressure):");
-    System.out.println("  Specified outlet pressure: "
-        + String.format("%.4f", calculatedOutletPressure) + " bara");
-    System.out
-        .println("  Calculated flow rate: " + String.format("%.1f", calculatedFlowRate) + " kg/hr");
-    System.out.println(
-        "  Achieved outlet pressure: " + String.format("%.4f", achievedOutletPressure) + " bara");
+    logger.info("\nReverse calculation (specified outlet pressure):");
+    logger.info("  Specified outlet pressure: " + String.format("%.4f", calculatedOutletPressure) + " bara");
+    System.out.println("  Calculated flow rate: " + String.format("%.1f", calculatedFlowRate) + " kg/hr");
+    logger.info("  Achieved outlet pressure: " + String.format("%.4f", achievedOutletPressure) + " bara");
 
     // Check that the calculated flow rate matches the known flow rate
     double flowRateError = Math.abs(calculatedFlowRate - knownFlowRate) / knownFlowRate;
-    double pressureError =
-        Math.abs(achievedOutletPressure - calculatedOutletPressure) / calculatedOutletPressure;
+    double pressureError = Math.abs(achievedOutletPressure - calculatedOutletPressure) / calculatedOutletPressure;
 
-    System.out.println("\nErrors:");
-    System.out.println("  Flow rate error: " + String.format("%.4f", flowRateError * 100) + "%");
-    System.out.println("  Pressure error: " + String.format("%.6f", pressureError * 100) + "%");
+    logger.info("\nErrors:");
+    logger.info("  Flow rate error: " + String.format("%.4f", flowRateError * 100) + "%");
+    logger.info("  Pressure error: " + String.format("%.6f", pressureError * 100) + "%");
 
     assertEquals(knownFlowRate, calculatedFlowRate, knownFlowRate * 0.01,
         "Calculated flow rate should match known flow rate within 1%");
@@ -2504,10 +2393,10 @@ public class PipelinePressureDropComparisonTest {
    */
   @Test
   void testCalculateFlowRateAtDifferentPressures() {
-    System.out.println("=== Flow Rate Calculation at Different Outlet Pressures ===");
+    logger.info("=== Flow Rate Calculation at Different Outlet Pressures ===");
 
     // Test different outlet pressures
-    double[] targetOutletPressures = {95.0, 90.0, 80.0, 70.0, 50.0}; // bara
+    double[] targetOutletPressures = { 95.0, 90.0, 80.0, 70.0, 50.0 }; // bara
 
     for (double targetPressure : targetOutletPressures) {
       // Create new stream for each test
@@ -2533,8 +2422,7 @@ public class PipelinePressureDropComparisonTest {
       double achievedPressure = pipe.getOutletPressure();
       double pressureDrop = INLET_PRESSURE - achievedPressure;
 
-      System.out.println(String.format(
-          "  Target P_out=%.0f bara: Flow=%.0f kg/hr, " + "Achieved P_out=%.3f bara, ΔP=%.3f bar",
+      logger.info(String.format("  Target P_out=%.0f bara: Flow=%.0f kg/hr, " + "Achieved P_out=%.3f bara, ΔP=%.3f bar",
           targetPressure, flowRate, achievedPressure, pressureDrop));
 
       assertEquals(targetPressure, achievedPressure, 0.1,
@@ -2549,8 +2437,7 @@ public class PipelinePressureDropComparisonTest {
   @Test
   void testCalculateFlowRateLiquid() {
     // Create water system
-    SystemInterface waterSystem =
-        new SystemSrkCPAstatoil(273.15 + INLET_TEMPERATURE, INLET_PRESSURE);
+    SystemInterface waterSystem = new SystemSrkCPAstatoil(273.15 + INLET_TEMPERATURE, INLET_PRESSURE);
     waterSystem.addComponent("water", 1.0);
     waterSystem.setMixingRule(10);
     waterSystem.init(0);
@@ -2571,14 +2458,13 @@ public class PipelinePressureDropComparisonTest {
     double knownFlowRate = waterStream.getFlowRate("kg/hr");
     double baselinePressure = pipe1.getOutletPressure();
 
-    System.out.println("=== Liquid Flow Rate Calculation ===");
-    System.out.println("Forward calculation:");
-    System.out.println("  Known flow rate: " + String.format("%.1f", knownFlowRate) + " kg/hr");
-    System.out.println("  Outlet pressure: " + String.format("%.4f", baselinePressure) + " bara");
+    logger.info("=== Liquid Flow Rate Calculation ===");
+    logger.info("Forward calculation:");
+    logger.info("  Known flow rate: " + String.format("%.1f", knownFlowRate) + " kg/hr");
+    logger.info("  Outlet pressure: " + String.format("%.4f", baselinePressure) + " bara");
 
     // Now specify outlet pressure and calculate flow rate
-    SystemInterface waterSystem2 =
-        new SystemSrkCPAstatoil(273.15 + INLET_TEMPERATURE, INLET_PRESSURE);
+    SystemInterface waterSystem2 = new SystemSrkCPAstatoil(273.15 + INLET_TEMPERATURE, INLET_PRESSURE);
     waterSystem2.addComponent("water", 1.0);
     waterSystem2.setMixingRule(10);
     waterSystem2.init(0);
@@ -2598,14 +2484,12 @@ public class PipelinePressureDropComparisonTest {
 
     double calculatedFlowRate = pipe2.getInletStream().getFlowRate("kg/hr");
 
-    System.out.println("\nReverse calculation:");
-    System.out.println(
-        "  Specified outlet pressure: " + String.format("%.4f", baselinePressure) + " bara");
-    System.out
-        .println("  Calculated flow rate: " + String.format("%.1f", calculatedFlowRate) + " kg/hr");
+    logger.info("\nReverse calculation:");
+    logger.info("  Specified outlet pressure: " + String.format("%.4f", baselinePressure) + " bara");
+    System.out.println("  Calculated flow rate: " + String.format("%.1f", calculatedFlowRate) + " kg/hr");
 
     double flowRateError = Math.abs(calculatedFlowRate - knownFlowRate) / knownFlowRate;
-    System.out.println("  Error: " + String.format("%.2f", flowRateError * 100) + "%");
+    logger.info("  Error: " + String.format("%.2f", flowRateError * 100) + "%");
 
     assertEquals(knownFlowRate, calculatedFlowRate, knownFlowRate * 0.02,
         "Calculated flow rate should match known flow rate within 2%");
@@ -2624,8 +2508,7 @@ public class PipelinePressureDropComparisonTest {
     pipe.setNumberOfIncrements(10);
 
     // First run in default mode
-    assertEquals(PipeBeggsAndBrills.CalculationMode.CALCULATE_OUTLET_PRESSURE,
-        pipe.getCalculationMode());
+    assertEquals(PipeBeggsAndBrills.CalculationMode.CALCULATE_OUTLET_PRESSURE, pipe.getCalculationMode());
     pipe.run();
     double outletPressure1 = pipe.getOutletPressure();
 
@@ -2637,34 +2520,31 @@ public class PipelinePressureDropComparisonTest {
 
     // Switch back to outlet pressure mode
     pipe.setCalculationMode(PipeBeggsAndBrills.CalculationMode.CALCULATE_OUTLET_PRESSURE);
-    assertEquals(PipeBeggsAndBrills.CalculationMode.CALCULATE_OUTLET_PRESSURE,
-        pipe.getCalculationMode());
+    assertEquals(PipeBeggsAndBrills.CalculationMode.CALCULATE_OUTLET_PRESSURE, pipe.getCalculationMode());
     pipe.run();
     double outletPressure3 = pipe.getOutletPressure();
 
-    System.out.println("=== Switch Calculation Mode ===");
-    System.out.println(
-        "Mode 1 (P_out calc): P_out = " + String.format("%.4f", outletPressure1) + " bara");
-    System.out.println("Mode 2 (Flow calc): Flow = " + String.format("%.1f", flowRate2) + " kg/hr");
-    System.out.println(
-        "Mode 3 (P_out calc): P_out = " + String.format("%.4f", outletPressure3) + " bara");
+    logger.info("=== Switch Calculation Mode ===");
+    logger.info("Mode 1 (P_out calc): P_out = " + String.format("%.4f", outletPressure1) + " bara");
+    logger.info("Mode 2 (Flow calc): Flow = " + String.format("%.1f", flowRate2) + " kg/hr");
+    logger.info("Mode 3 (P_out calc): P_out = " + String.format("%.4f", outletPressure3) + " bara");
 
     assertTrue(flowRate2 > MASS_FLOW_RATE, "Higher ΔP should require higher flow rate");
   }
 
   /**
-   * Tests that AdiabaticPipe can calculate flow rate when outlet pressure is specified. This
-   * verifies the existing setOutPressure functionality.
-   * 
+   * Tests that AdiabaticPipe can calculate flow rate when outlet pressure is specified. This verifies the existing
+   * setOutPressure functionality.
+   *
    * <p>
-   * NOTE: AdiabaticPipe uses a gas transmission equation (similar to Weymouth/Panhandle) which
-   * calculates flow in standard volumetric units. The flow rate calculation may not be accurate for
-   * all conditions - this test verifies the mechanism works, not the accuracy.
+   * NOTE: AdiabaticPipe uses a gas transmission equation (similar to Weymouth/Panhandle) which calculates flow in
+   * standard volumetric units. The flow rate calculation may not be accurate for all conditions - this test verifies
+   * the mechanism works, not the accuracy.
    * </p>
    */
   @Test
   void testAdiabaticPipeCalculateFlowFromOutletPressure() {
-    System.out.println("=== AdiabaticPipe: Calculate Flow from Outlet Pressure ===");
+    logger.info("=== AdiabaticPipe: Calculate Flow from Outlet Pressure ===");
 
     // First, run forward calculation to get baseline
     AdiabaticPipe pipe1 = new AdiabaticPipe("forward", inletStream);
@@ -2677,11 +2557,10 @@ public class PipelinePressureDropComparisonTest {
     double calculatedOutletPressure = pipe1.getOutletStream().getPressure("bara");
     double pressureDrop = INLET_PRESSURE - calculatedOutletPressure;
 
-    System.out.println("Forward calculation:");
-    System.out.println("  Known flow rate: " + String.format("%.1f", knownFlowRate) + " kg/hr");
-    System.out.println("  Calculated outlet pressure: "
-        + String.format("%.4f", calculatedOutletPressure) + " bara");
-    System.out.println("  Pressure drop: " + String.format("%.4f", pressureDrop) + " bar");
+    logger.info("Forward calculation:");
+    logger.info("  Known flow rate: " + String.format("%.1f", knownFlowRate) + " kg/hr");
+    logger.info("  Calculated outlet pressure: " + String.format("%.4f", calculatedOutletPressure) + " bara");
+    logger.info("  Pressure drop: " + String.format("%.4f", pressureDrop) + " bar");
 
     // Now create a new pipe with specified outlet pressure
     SystemInterface testSystem2 = new SystemSrkEos(273.15 + INLET_TEMPERATURE, INLET_PRESSURE);
@@ -2703,13 +2582,10 @@ public class PipelinePressureDropComparisonTest {
     double calculatedFlowRate = pipe2.getInletStream().getFlowRate("kg/hr");
     double achievedOutletPressure = pipe2.getOutletStream().getPressure("bara");
 
-    System.out.println("\nReverse calculation (specified outlet pressure):");
-    System.out.println("  Specified outlet pressure: "
-        + String.format("%.4f", calculatedOutletPressure) + " bara");
-    System.out
-        .println("  Calculated flow rate: " + String.format("%.1f", calculatedFlowRate) + " kg/hr");
-    System.out.println(
-        "  Achieved outlet pressure: " + String.format("%.4f", achievedOutletPressure) + " bara");
+    logger.info("\nReverse calculation (specified outlet pressure):");
+    logger.info("  Specified outlet pressure: " + String.format("%.4f", calculatedOutletPressure) + " bara");
+    System.out.println("  Calculated flow rate: " + String.format("%.1f", calculatedFlowRate) + " kg/hr");
+    logger.info("  Achieved outlet pressure: " + String.format("%.4f", achievedOutletPressure) + " bara");
 
     // AdiabaticPipe uses a gas transmission formula that may give very different results
     // The important thing is that it calculates SOME positive flow rate and achieves the pressure
@@ -2717,21 +2593,21 @@ public class PipelinePressureDropComparisonTest {
     assertEquals(calculatedOutletPressure, achievedOutletPressure, 0.01,
         "Achieved pressure should match specified pressure");
 
-    System.out.println("\n  NOTE: AdiabaticPipe uses gas transmission equation - flow may differ");
-    System.out.println("        from PipeBeggsAndBrills due to different underlying model.");
+    logger.info("\n  NOTE: AdiabaticPipe uses gas transmission equation - flow may differ");
+    logger.info("        from PipeBeggsAndBrills due to different underlying model.");
   }
 
   /**
    * Tests that AdiabaticTwoPhasePipe can calculate flow rate when outlet pressure is specified.
-   * 
+   *
    * <p>
-   * NOTE: Similar to AdiabaticPipe, uses a gas transmission equation. The flow rate calculation may
-   * not be accurate - this test verifies the mechanism works.
+   * NOTE: Similar to AdiabaticPipe, uses a gas transmission equation. The flow rate calculation may not be accurate -
+   * this test verifies the mechanism works.
    * </p>
    */
   @Test
   void testAdiabaticTwoPhasePipeCalculateFlowFromOutletPressure() {
-    System.out.println("=== AdiabaticTwoPhasePipe: Calculate Flow from Outlet Pressure ===");
+    logger.info("=== AdiabaticTwoPhasePipe: Calculate Flow from Outlet Pressure ===");
 
     // First, run forward calculation to get baseline
     AdiabaticTwoPhasePipe pipe1 = new AdiabaticTwoPhasePipe("forward", inletStream);
@@ -2744,11 +2620,10 @@ public class PipelinePressureDropComparisonTest {
     double calculatedOutletPressure = pipe1.getOutletStream().getPressure("bara");
     double pressureDrop = INLET_PRESSURE - calculatedOutletPressure;
 
-    System.out.println("Forward calculation:");
-    System.out.println("  Known flow rate: " + String.format("%.1f", knownFlowRate) + " kg/hr");
-    System.out.println("  Calculated outlet pressure: "
-        + String.format("%.4f", calculatedOutletPressure) + " bara");
-    System.out.println("  Pressure drop: " + String.format("%.4f", pressureDrop) + " bar");
+    logger.info("Forward calculation:");
+    logger.info("  Known flow rate: " + String.format("%.1f", knownFlowRate) + " kg/hr");
+    logger.info("  Calculated outlet pressure: " + String.format("%.4f", calculatedOutletPressure) + " bara");
+    logger.info("  Pressure drop: " + String.format("%.4f", pressureDrop) + " bar");
 
     // Now create a new pipe with specified outlet pressure
     SystemInterface testSystem2 = new SystemSrkEos(273.15 + INLET_TEMPERATURE, INLET_PRESSURE);
@@ -2770,21 +2645,18 @@ public class PipelinePressureDropComparisonTest {
     double calculatedFlowRate = pipe2.getInletStream().getFlowRate("kg/hr");
     double achievedOutletPressure = pipe2.getOutletStream().getPressure("bara");
 
-    System.out.println("\nReverse calculation (specified outlet pressure):");
-    System.out.println("  Specified outlet pressure: "
-        + String.format("%.4f", calculatedOutletPressure) + " bara");
-    System.out
-        .println("  Calculated flow rate: " + String.format("%.1f", calculatedFlowRate) + " kg/hr");
-    System.out.println(
-        "  Achieved outlet pressure: " + String.format("%.4f", achievedOutletPressure) + " bara");
+    logger.info("\nReverse calculation (specified outlet pressure):");
+    logger.info("  Specified outlet pressure: " + String.format("%.4f", calculatedOutletPressure) + " bara");
+    System.out.println("  Calculated flow rate: " + String.format("%.1f", calculatedFlowRate) + " kg/hr");
+    logger.info("  Achieved outlet pressure: " + String.format("%.4f", achievedOutletPressure) + " bara");
 
     // AdiabaticTwoPhasePipe uses a gas transmission formula that may give very different results
     assertTrue(calculatedFlowRate > 0, "Calculated flow rate should be positive");
     assertEquals(calculatedOutletPressure, achievedOutletPressure, 0.01,
         "Achieved pressure should match specified pressure");
 
-    System.out.println("\n  NOTE: AdiabaticTwoPhasePipe uses gas transmission equation.");
-    System.out.println("        For accurate flow-from-pressure, use PipeBeggsAndBrills.");
+    logger.info("\n  NOTE: AdiabaticTwoPhasePipe uses gas transmission equation.");
+    logger.info("        For accurate flow-from-pressure, use PipeBeggsAndBrills.");
   }
 
   /**
@@ -2792,7 +2664,7 @@ public class PipelinePressureDropComparisonTest {
    */
   @Test
   void testCompareAllModelsFlowFromOutletPressure() {
-    System.out.println("=== Compare All Models: Flow from Outlet Pressure ===");
+    logger.info("=== Compare All Models: Flow from Outlet Pressure ===");
 
     // Target: 90 bara outlet pressure
     double targetOutletPressure = 90.0;
@@ -2853,21 +2725,17 @@ public class PipelinePressureDropComparisonTest {
     double flowTwoPhase = twoPhase.getInletStream().getFlowRate("kg/hr");
     double pOutTwoPhase = twoPhase.getOutletStream().getPressure("bara");
 
-    System.out.println("Target outlet pressure: " + targetOutletPressure + " bara");
-    System.out.println("Pressure drop: " + (INLET_PRESSURE - targetOutletPressure) + " bar");
-    System.out.println("\nResults:");
-    System.out.println(String.format(
-        "  PipeBeggsAndBrills:    Flow = %8.0f kg/hr, P_out = %.3f bara", flowBeggs, pOutBeggs));
-    System.out
-        .println(String.format("  AdiabaticPipe:         Flow = %8.0f kg/hr, P_out = %.3f bara",
-            flowAdiabatic, pOutAdiabatic));
-    System.out
-        .println(String.format("  AdiabaticTwoPhasePipe: Flow = %8.0f kg/hr, P_out = %.3f bara",
-            flowTwoPhase, pOutTwoPhase));
+    logger.info("Target outlet pressure: " + targetOutletPressure + " bara");
+    logger.info("Pressure drop: " + (INLET_PRESSURE - targetOutletPressure) + " bar");
+    logger.info("\nResults:");
+    logger.info(String.format("  PipeBeggsAndBrills:    Flow = %8.0f kg/hr, P_out = %.3f bara", flowBeggs, pOutBeggs));
+    System.out.println(
+        String.format("  AdiabaticPipe:         Flow = %8.0f kg/hr, P_out = %.3f bara", flowAdiabatic, pOutAdiabatic));
+    System.out.println(
+        String.format("  AdiabaticTwoPhasePipe: Flow = %8.0f kg/hr, P_out = %.3f bara", flowTwoPhase, pOutTwoPhase));
 
     // All should achieve close to target pressure
-    assertEquals(targetOutletPressure, pOutBeggs, 0.5,
-        "BeggsBrills should achieve target pressure within 0.5 bar");
+    assertEquals(targetOutletPressure, pOutBeggs, 0.5, "BeggsBrills should achieve target pressure within 0.5 bar");
 
     // Flow rates should be positive and reasonable
     assertTrue(flowBeggs > 0, "BeggsBrills flow should be positive");

@@ -1,24 +1,24 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * PS_PH_flash class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
  * @version $Id: $Id
  */
 public class PS_PH_flash {
+  private static final Logger logger = LogManager.getLogger(PS_PH_flash.class);
+
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -49,10 +49,10 @@ public class PS_PH_flash {
      * testSystem.addTBPfraction("CH5", 0.16517408370, 0.1857899932861330, 0.861050009727478);
      * testSystem.addTBPfraction("CH6", 0.279571933746338, 0.2410899963378910, 0.902539968490601);
      * testSystem.addTBPfraction("CH7", 0.2404942512512, 0.4045100097656250, 0.955269992351531);
-     * testSystem.addTBPfraction("CH8", 0.1131200218, 0.9069699, 1.0074599981308); //
-     * testSystem.addComponent("ethane", 0.05); testSystem.addComponent("water", 1.19299e-1); //
-     * testSystem.addComponent("n-butane", 3.53465e-1); // testSystem.addComponent("propane", 50);
-     * //testSystem.addComponent("CO2", 50); //testSystem.addComponent("water", 20);
+     * testSystem.addTBPfraction("CH8", 0.1131200218, 0.9069699, 1.0074599981308); // testSystem.addComponent("ethane",
+     * 0.05); testSystem.addComponent("water", 1.19299e-1); // testSystem.addComponent("n-butane", 3.53465e-1); //
+     * testSystem.addComponent("propane", 50); //testSystem.addComponent("CO2", 50); //testSystem.addComponent("water",
+     * 20);
      */
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
@@ -67,16 +67,15 @@ public class PS_PH_flash {
 
     // testSystem.setPressure(testSystem.getPressure() - 1.2);
     // double entropy = testSystem.getEntropy();
-    // System.out.println("entropy spec" + entropy);
+    // logger.info("entropy spec" + entropy);
     double enthalpy = testSystem.getEnthalpy();
-    // System.out.println("enthalpy spec" + enthalpy);
+    // logger.info("enthalpy spec" + enthalpy);
 
     double entropy = testSystem.getEntropy();
     /*
-     * testSystem.setTemperature(273.15 + 0.0); testSystem.setPressure(100.0); try {
-     * testOps.TPflash(); // testOps.bubblePointTemperatureFlash(); } catch (Exception ex) { }
-     * testSystem.init(2); testSystem.setPressure(100.0); // System.out.println("entropy spec" +
-     * entropy);
+     * testSystem.setTemperature(273.15 + 0.0); testSystem.setPressure(100.0); try { testOps.TPflash(); //
+     * testOps.bubblePointTemperatureFlash(); } catch (Exception ex) { } testSystem.init(2);
+     * testSystem.setPressure(100.0); // logger.info("entropy spec" + entropy);
      *
      * // testSystem.setPressure(20.894745);
      */
@@ -99,6 +98,6 @@ public class PS_PH_flash {
     // testSystem.setPressure(1.0);
     // testOps.PSflash(entropy);
     testSystem.display();
-    // System.out.println("enthalpy spec" + testSystem.getEnthalpy());
+    // logger.info("enthalpy spec" + testSystem.getEnthalpy());
   }
 }

@@ -24,15 +24,14 @@ public class RachfordRice implements Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private double[] beta = new double[2];
-  private static String method = "Nielsen2023"; // alternative use Nielsen2023 or Michelsen2001
+  private static volatile String method = "Nielsen2023"; // alternative use Nielsen2023 or
+  // Michelsen2001
   // Work arrays reused across iterations
   private double[] c = new double[0];
   private double[] d = new double[0];
 
   /**
-   * <p>
    * Getter for the field <code>method</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -41,9 +40,7 @@ public class RachfordRice implements Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>method</code>.
-   * </p>
    *
    * @param method a {@link java.lang.String} object
    */
@@ -52,9 +49,7 @@ public class RachfordRice implements Serializable {
   }
 
   /**
-   * <p>
    * calcBeta. For gas liquid systems. Method used is defined in method String variable
-   * </p>
    *
    * @param K an array of type double
    * @param z an array of type double
@@ -62,8 +57,8 @@ public class RachfordRice implements Serializable {
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
-  public double calcBeta(double[] K, double[] z) throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+  public double calcBeta(double[] K, double[] z)
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     if (method.equals("Michelsen2001")) {
       return calcBetaMichelsen2001(K, z);
     } else if (method.equals("Nielsen2023")) {
@@ -74,9 +69,7 @@ public class RachfordRice implements Serializable {
   }
 
   /**
-   * <p>
    * calcBeta. For gas liquid systems. Method based on Michelsen Mollerup, 2001
-   * </p>
    *
    * @param K an array of type double
    * @param z an array of type double
@@ -85,8 +78,7 @@ public class RachfordRice implements Serializable {
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double calcBetaMichelsen2001(double[] K, double[] z)
-      throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     int i;
     double midler = 0;
     double minBeta = phaseFractionMinimumLimit;
@@ -221,21 +213,18 @@ public class RachfordRice implements Serializable {
       logger.debug("gbeta " + gbeta);
       logger.debug("K " + Arrays.toString(K));
       logger.debug("z " + Arrays.toString(z));
-      throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(),
-          "calcBetaMichelsen2001", maxIterations);
+      throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(), "calcBetaMichelsen2001",
+          maxIterations);
     }
     if (Double.isNaN(nybeta)) {
-      throw new neqsim.util.exception.IsNaNException(new RachfordRice(), "calcBetaMichelsen2001",
-          "beta");
+      throw new neqsim.util.exception.IsNaNException(new RachfordRice(), "calcBetaMichelsen2001", "beta");
     }
     return nybeta;
   }
 
   /**
-   * <p>
-   * calcBetaNielsen2023. For gas liquid systems. Method based on Avoiding round-off error in the
-   * Rachford–Rice equation, Nielsen, Lia, 2023
-   * </p>
+   * calcBetaNielsen2023. For gas liquid systems. Method based on Avoiding round-off error in the Rachford–Rice
+   * equation, Nielsen, Lia, 2023
    *
    * @param K an array of type double
    * @param z an array of type double
@@ -244,8 +233,7 @@ public class RachfordRice implements Serializable {
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double calcBetaNielsen2023(double[] K, double[] z)
-      throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     double g0 = -1.0;
     double g1 = 1.0;
 
@@ -363,8 +351,7 @@ public class RachfordRice implements Serializable {
           continue; // Skip ions
         }
         funk -= z[i] * a * (1.0 + a) / (d[i] + a * (1.0 + d[i]));
-        funkder -=
-            z[i] * (a * a + (1.0 + a) * (1.0 + a) * d[i]) / Math.pow(d[i] + a * (1.0 + d[i]), 2.0);
+        funkder -= z[i] * (a * a + (1.0 + a) * (1.0 + a) * d[i]) / Math.pow(d[i] + a * (1.0 + d[i]), 2.0);
         hb += z[i] * b / (1.0 + b * (alphaMin - c[i]));
         hbder += z[i] / Math.pow(1.0 + b * (alphaMin - c[i]), 2.0);
       }
@@ -411,21 +398,18 @@ public class RachfordRice implements Serializable {
       logger.debug("K " + Arrays.toString(K));
       logger.debug("z " + Arrays.toString(z));
 
-      throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(),
-          "calcBetaNielsen2023", maxIterations);
+      throw new neqsim.util.exception.TooManyIterationsException(new RachfordRice(), "calcBetaNielsen2023",
+          maxIterations);
     }
     if (Double.isNaN(V)) {
-      throw new neqsim.util.exception.IsNaNException(new RachfordRice(), "calcBetaNielsen2023",
-          "beta");
+      throw new neqsim.util.exception.IsNaNException(new RachfordRice(), "calcBetaNielsen2023", "beta");
     }
 
     return V;
   }
 
   /**
-   * <p>
    * Getter for the field <code>beta</code>.
-   * </p>
    *
    * @return an array of type double
    */
@@ -434,17 +418,15 @@ public class RachfordRice implements Serializable {
   }
 
   /**
-   * <p>
    * calcBetaS.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @return a double
    * @throws neqsim.util.exception.IsNaNException if any.
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
-  public final double calcBetaS(SystemInterface system) throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+  public final double calcBetaS(SystemInterface system)
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     ComponentInterface[] compArray = system.getPhase(0).getComponents();
 
     int i;
@@ -482,8 +464,7 @@ public class RachfordRice implements Serializable {
 
     double gtest = 0.0;
     for (i = 0; i < system.getNumberOfComponents(); i++) {
-      gtest += compArray[i].getz() * (compArray[i].getK() - 1.0)
-          / (1.0 - nybeta + nybeta * compArray[i].getK());
+      gtest += compArray[i].getz() * (compArray[i].getK() - 1.0) / (1.0 - nybeta + nybeta * compArray[i].getK());
     }
 
     if (gtest >= 0) {
@@ -515,8 +496,7 @@ public class RachfordRice implements Serializable {
           double temp1 = (compArray[i].getK() - 1.0);
           double temp2 = 1.0 + temp1 * nybeta;
           deriv += -(compArray[i].getz() * temp1 * temp1) / (temp2 * temp2);
-          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0)
-              / (1.0 + (compArray[i].getK() - 1.0) * nybeta);
+          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0) / (1.0 + (compArray[i].getK() - 1.0) * nybeta);
         }
 
         if (gbeta >= 0) {
@@ -539,8 +519,7 @@ public class RachfordRice implements Serializable {
         for (i = 0; i < system.getNumberOfComponents(); i++) {
           deriv -= (compArray[i].getz() * (compArray[i].getK() - 1.0) * (1.0 - compArray[i].getK()))
               / Math.pow((betal + (1 - betal) * compArray[i].getK()), 2);
-          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0)
-              / (betal + (-betal + 1.0) * compArray[i].getK());
+          gbeta += compArray[i].getz() * (compArray[i].getK() - 1.0) / (betal + (-betal + 1.0) * compArray[i].getK());
         }
 
         if (gbeta < 0) {

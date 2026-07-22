@@ -379,8 +379,8 @@ public enum StandardObjective implements ObjectiveFunction {
    * Create an objective for minimizing FIV LOF (Likelihood of Failure) on a pipeline.
    *
    * <p>
-   * LOF values: &lt;0.5 (low risk), 0.5-1.0 (medium risk), &gt;1.0 (high risk). Minimizing LOF
-   * reduces vibration-induced fatigue failure risk.
+   * LOF values: &lt;0.5 (low risk), 0.5-1.0 (medium risk), &gt;1.0 (high risk). Minimizing LOF reduces
+   * vibration-induced fatigue failure risk.
    * </p>
    *
    * @param fivAnalyzerName name of the FlowInducedVibrationAnalyser measurement device
@@ -428,8 +428,8 @@ public enum StandardObjective implements ObjectiveFunction {
    * Create a pipeline FIV analyzer objective directly from a pipeline.
    *
    * <p>
-   * This creates a temporary FlowInducedVibrationAnalyser and evaluates it. For repeated
-   * optimization, prefer adding the analyzer to the process and using minimizeFIV_LOF().
+   * This creates a temporary FlowInducedVibrationAnalyser and evaluates it. For repeated optimization, prefer adding
+   * the analyzer to the process and using minimizeFIV_LOF().
    * </p>
    *
    * @param pipelineName name of the PipeBeggsAndBrills pipeline
@@ -523,8 +523,7 @@ public enum StandardObjective implements ObjectiveFunction {
    * Create an objective for balancing manifold split ratios.
    *
    * <p>
-   * Returns the standard deviation of split ratios. Lower values indicate more balanced
-   * distribution.
+   * Returns the standard deviation of split ratios. Lower values indicate more balanced distribution.
    * </p>
    *
    * @param manifoldName name of the manifold
@@ -577,8 +576,8 @@ public enum StandardObjective implements ObjectiveFunction {
    * Create an objective for minimizing manifold header LOF (Likelihood of Failure).
    *
    * <p>
-   * LOF values: &lt;0.5 (low risk), 0.5-1.0 (medium risk), &gt;1.0 (high risk). This uses the
-   * manifold's built-in FIV calculations based on header geometry and flow.
+   * LOF values: &lt;0.5 (low risk), 0.5-1.0 (medium risk), &gt;1.0 (high risk). This uses the manifold's built-in FIV
+   * calculations based on header geometry and flow.
    * </p>
    *
    * @param manifoldName name of the manifold

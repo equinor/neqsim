@@ -103,8 +103,7 @@ class PressureControlValveTest {
     valve.setOutletPressure(40.0);
     valve.run();
 
-    assertEquals(75.0, valve.getPercentValveOpening(), 0.1,
-        "Manual mode should maintain set opening");
+    assertEquals(75.0, valve.getPercentValveOpening(), 0.1, "Manual mode should maintain set opening");
   }
 
   @Test

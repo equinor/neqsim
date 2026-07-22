@@ -14,8 +14,8 @@ import org.apache.logging.log4j.Logger;
  * Decision support tool for ranking and scoring development options.
  *
  * <p>
- * Provides multi-criteria decision analysis (MCDA) for comparing field development alternatives.
- * Supports weighted scoring across technical, economic, environmental, and strategic criteria.
+ * Provides multi-criteria decision analysis (MCDA) for comparing field development alternatives. Supports weighted
+ * scoring across technical, economic, environmental, and strategic criteria.
  * </p>
  *
  * <h2>Scoring Dimensions</h2>
@@ -28,17 +28,17 @@ import org.apache.logging.log4j.Logger;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * DevelopmentOptionRanker ranker = new DevelopmentOptionRanker();
- * 
+ *
  * // Define criteria weights
  * ranker.setWeight(Criterion.NPV, 0.25);
  * ranker.setWeight(Criterion.CO2_INTENSITY, 0.15);
  * ranker.setWeight(Criterion.TECHNICAL_RISK, 0.20);
  * ranker.setWeight(Criterion.STRATEGIC_FIT, 0.15);
  * ranker.setWeight(Criterion.EXECUTION_RISK, 0.25);
- * 
+ *
  * // Add development options
  * DevelopmentOption opt1 = ranker.addOption("FPSO Development");
  * opt1.setScore(Criterion.NPV, 850.0); // MUSD
@@ -46,14 +46,14 @@ import org.apache.logging.log4j.Logger;
  * opt1.setScore(Criterion.TECHNICAL_RISK, 0.7); // 0-1, higher=riskier
  * opt1.setScore(Criterion.STRATEGIC_FIT, 0.9); // 0-1
  * opt1.setScore(Criterion.EXECUTION_RISK, 0.6);
- * 
+ *
  * DevelopmentOption opt2 = ranker.addOption("Tieback to Platform A");
  * opt2.setScore(Criterion.NPV, 420.0);
  * opt2.setScore(Criterion.CO2_INTENSITY, 8.0);
  * opt2.setScore(Criterion.TECHNICAL_RISK, 0.3);
  * opt2.setScore(Criterion.STRATEGIC_FIT, 0.7);
  * opt2.setScore(Criterion.EXECUTION_RISK, 0.3);
- * 
+ *
  * // Rank options
  * RankingResult result = ranker.rank();
  * System.out.println(result.generateReport());
@@ -363,8 +363,7 @@ public class DevelopmentOptionRanker implements Serializable {
       sb.append("------------------------------------------------\n");
 
       for (DevelopmentOption opt : rankedOptions) {
-        sb.append(String.format("%-5d %-25s %12.3f%n", opt.getRank(), opt.getName(),
-            opt.getWeightedScore()));
+        sb.append(String.format("%-5d %-25s %12.3f%n", opt.getRank(), opt.getName(), opt.getWeightedScore()));
       }
 
       sb.append("\n");
@@ -373,8 +372,7 @@ public class DevelopmentOptionRanker implements Serializable {
       sb.append("CRITERIA WEIGHTS:\n");
       for (Map.Entry<Criterion, Double> entry : weights.entrySet()) {
         if (entry.getValue().doubleValue() > 0) {
-          sb.append(String.format("  %-25s: %.0f%%%n", entry.getKey().getDisplayName(),
-              entry.getValue() * 100));
+          sb.append(String.format("  %-25s: %.0f%%%n", entry.getKey().getDisplayName(), entry.getValue() * 100));
         }
       }
 
@@ -383,14 +381,13 @@ public class DevelopmentOptionRanker implements Serializable {
       // Detailed scores
       sb.append("DETAILED SCORES:\n");
       for (DevelopmentOption opt : rankedOptions) {
-        sb.append(String.format("\n%d. %s (Score: %.3f)%n", opt.getRank(), opt.getName(),
-            opt.getWeightedScore()));
+        sb.append(String.format("\n%d. %s (Score: %.3f)%n", opt.getRank(), opt.getName(), opt.getWeightedScore()));
         for (Map.Entry<Criterion, Double> entry : opt.getScores().entrySet()) {
           Criterion c = entry.getKey();
           Double weight = weights.get(c);
           if (weight != null && weight.doubleValue() > 0) {
-            sb.append(String.format("   %-25s: %8.2f %s (normalized: %.2f)%n", c.getDisplayName(),
-                entry.getValue(), c.getUnit(), opt.getNormalizedScore(c)));
+            sb.append(String.format("   %-25s: %8.2f %s (normalized: %.2f)%n", c.getDisplayName(), entry.getValue(),
+                c.getUnit(), opt.getNormalizedScore(c)));
           }
         }
       }

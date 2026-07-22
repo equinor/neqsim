@@ -57,8 +57,7 @@ class EOSCGDensityComparisonTest {
 
   private void assertPropertyMatch(String label, double actual, double expected) {
     double deviation = Math.abs(actual - expected) / expected;
-    assertTrue(deviation < REL_TOL,
-        () -> String.format("%s deviation %.5f exceeds tolerance", label, deviation));
+    assertTrue(deviation < REL_TOL, () -> String.format("%s deviation %.5f exceeds tolerance", label, deviation));
   }
 
   private static final class Properties {

@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * H2Sdistribution class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
  * @version $Id: $Id
  */
 public class H2Sdistribution {
+  private static final Logger logger = LogManager.getLogger(H2Sdistribution.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(H2Sdistribution.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -54,6 +51,6 @@ public class H2Sdistribution {
     } catch (Exception ex) {
     }
     testSystem.display();
-    // System.out.println("pH " + testSystem.getPhase("aqueous").getpH());
+    // logger.info("pH " + testSystem.getPhase("aqueous").getpH());
   }
 }

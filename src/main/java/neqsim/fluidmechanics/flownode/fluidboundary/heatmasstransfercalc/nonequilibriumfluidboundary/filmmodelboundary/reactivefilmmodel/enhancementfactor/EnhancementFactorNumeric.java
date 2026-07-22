@@ -5,22 +5,17 @@ import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitev
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysystem.fluidboundarysystemreactive.FluidBoundarySystemReactive;
 
 /**
- * <p>
  * EnhancementFactorNumeric class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class EnhancementFactorNumeric extends EnhancementFactor {
   /**
-   * <p>
    * Constructor for EnhancementFactorNumeric.
-   * </p>
    *
    * @param fluidBoundary a
-   *        {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *        object
+   * {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface} object
    */
   public EnhancementFactorNumeric(FluidBoundaryInterface fluidBoundary) {
     super(fluidBoundary);
@@ -33,9 +28,7 @@ public class EnhancementFactorNumeric extends EnhancementFactor {
   }
 
   /**
-   * <p>
    * calcEnhancementMatrix.
-   * </p>
    *
    * @param phaseNum a int
    */
@@ -44,10 +37,8 @@ public class EnhancementFactorNumeric extends EnhancementFactor {
     nonReactiveInterface.createSystem();
     nonReactiveInterface.solve();
     reactiveInterface.solve();
-    for (int i = 0; i < fluidBoundary.getBulkSystem().getPhase(phaseNum)
-        .getNumberOfComponents(); i++) {
-      for (int j = 0; j < fluidBoundary.getBulkSystem().getPhase(phaseNum)
-          .getNumberOfComponents(); j++) {
+    for (int i = 0; i < fluidBoundary.getBulkSystem().getPhase(phaseNum).getNumberOfComponents(); i++) {
+      for (int j = 0; j < fluidBoundary.getBulkSystem().getPhase(phaseNum).getNumberOfComponents(); j++) {
         // enhancementFactor[1].set(i,j,0);
         // System.out.println("num enhancement " + enhancementFactor[1].get(i,j));
       }

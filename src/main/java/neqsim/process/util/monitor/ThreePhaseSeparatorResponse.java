@@ -4,9 +4,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.separator.ThreePhaseSeparator;
 
 /**
- * <p>
  * ThreePhaseSeparatorResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class ThreePhaseSeparatorResponse extends BaseResponse {
   public FluidResponse gasFluid, oilFluid;
 
   /**
-   * <p>
    * Constructor for ThreePhaseSeparatorResponse.
-   * </p>
    *
    * @param inputSeparator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
    */
@@ -32,9 +28,7 @@ public class ThreePhaseSeparatorResponse extends BaseResponse {
   }
 
   /**
-   * <p>
    * Constructor for ThreePhaseSeparatorResponse.
-   * </p>
    *
    * @param inputSeparator a {@link neqsim.process.equipment.separator.Separator} object
    */

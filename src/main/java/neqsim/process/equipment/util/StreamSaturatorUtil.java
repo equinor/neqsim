@@ -10,9 +10,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * StreamSaturatorUtil class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -28,6 +26,17 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   private double approachToSaturation = 1.0;
 
   protected double oldInletFlowRate = 0.0;
+  /** Cached inlet composition for needRecalculation check. */
+  protected double[] lastComposition = null;
+
+  /**
+   * Constructor for StreamSaturatorUtil with name only.
+   *
+   * @param name name of unit operation
+   */
+  public StreamSaturatorUtil(String name) {
+    super(name);
+  }
 
   /**
    * Constructor for StreamSaturatorUtil.
@@ -65,10 +74,12 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
     if (outStream == null || inStream == null) {
       return true;
     }
-    if (inStream.getTemperature() == outStream.getTemperature()
-        && inStream.getPressure() == outStream.getPressure()
-        && Math.abs(inStream.getFlowRate("kg/hr") - oldInletFlowRate)
-            / inStream.getFlowRate("kg/hr") < 1e-3) {
+    if (lastComposition == null || inStream.getFlowRate("kg/hr") <= 0.0) {
+      return true;
+    }
+    if (inStream.getTemperature() == outStream.getTemperature() && inStream.getPressure() == outStream.getPressure()
+        && Math.abs(inStream.getFlowRate("kg/hr") - oldInletFlowRate) / inStream.getFlowRate("kg/hr") < 1e-3
+        && java.util.Arrays.equals(inStream.getThermoSystem().getMolarComposition(), lastComposition)) {
       return false;
     } else {
       return true;
@@ -105,13 +116,12 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
 
     outStream.setThermoSystem(thermoSystem);
     oldInletFlowRate = inStream.getFlowRate("kg/hr");
+    lastComposition = inStream.getThermoSystem().getMolarComposition().clone();
     setCalculationIdentifier(id);
   }
 
   /**
-   * <p>
    * isMultiPhase.
-   * </p>
    *
    * @return a boolean
    */
@@ -120,9 +130,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>multiPhase</code>.
-   * </p>
    *
    * @param multiPhase a boolean
    */
@@ -131,9 +139,7 @@ public class StreamSaturatorUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setApprachToSaturation.
-   * </p>
    *
    * @param approachToSaturation a double
    */

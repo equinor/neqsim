@@ -24,8 +24,7 @@ public class SysNewtonRhapsonPHflashTest {
     testSystem.initProperties();
 
     double beta = testSystem.getBeta();
-    assertTrue(beta > 0.01 && beta < 0.99,
-        "System should be in 2-phase region for this test, beta=" + beta);
+    assertTrue(beta > 0.01 && beta < 0.99, "System should be in 2-phase region for this test, beta=" + beta);
 
     double targetEnthalpy = testSystem.getEnthalpy();
     double initialTemperature = testSystem.getTemperature();
@@ -43,8 +42,7 @@ public class SysNewtonRhapsonPHflashTest {
 
     assertEquals(targetEnthalpy, testSystem.getEnthalpy(), Math.abs(targetEnthalpy) * 1e-4,
         "Enthalpy should match target");
-    assertEquals(initialTemperature, testSystem.getTemperature(), 1e-2,
-        "Temperature should be recovered");
+    assertEquals(initialTemperature, testSystem.getTemperature(), 1e-2, "Temperature should be recovered");
   }
 
   @Test
@@ -59,8 +57,7 @@ public class SysNewtonRhapsonPHflashTest {
     testSystem.initProperties();
 
     double beta = testSystem.getBeta();
-    assertTrue(beta > 0.01 && beta < 0.99,
-        "System should be in 2-phase region for this test, beta=" + beta);
+    assertTrue(beta > 0.01 && beta < 0.99, "System should be in 2-phase region for this test, beta=" + beta);
 
     double targetEnthalpy = testSystem.getEnthalpy();
     double initialTemperature = testSystem.getTemperature();
@@ -78,8 +75,7 @@ public class SysNewtonRhapsonPHflashTest {
 
     assertEquals(targetEnthalpy, testSystem.getEnthalpy(), Math.abs(targetEnthalpy) * 1e-4,
         "Enthalpy should match target in two-phase");
-    assertEquals(initialTemperature, testSystem.getTemperature(), 0.2,
-        "Temperature should be recovered in two-phase");
+    assertEquals(initialTemperature, testSystem.getTemperature(), 0.2, "Temperature should be recovered in two-phase");
   }
 
   @Test

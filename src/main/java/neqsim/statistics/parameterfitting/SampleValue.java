@@ -12,9 +12,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * SampleValue class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -39,16 +37,13 @@ public class SampleValue implements Cloneable {
   double[] standardDeviations;
 
   /**
-   * <p>
    * Constructor for SampleValue.
-   * </p>
    */
-  public SampleValue() {}
+  public SampleValue() {
+  }
 
   /**
-   * <p>
    * Constructor for SampleValue.
-   * </p>
    *
    * @param sampleValue a double
    * @param standardDeviation a double
@@ -62,9 +57,7 @@ public class SampleValue implements Cloneable {
   }
 
   /**
-   * <p>
    * Constructor for SampleValue.
-   * </p>
    *
    * @param sampleValue a double
    * @param standardDeviation a double
@@ -96,9 +89,7 @@ public class SampleValue implements Cloneable {
   }
 
   /**
-   * <p>
    * setThermodynamicSystem.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -109,9 +100,7 @@ public class SampleValue implements Cloneable {
   }
 
   /**
-   * <p>
    * setFunction.
-   * </p>
    *
    * @param function a {@link neqsim.statistics.parameterfitting.BaseFunction} object
    */
@@ -120,9 +109,7 @@ public class SampleValue implements Cloneable {
   }
 
   /**
-   * <p>
    * getFunction.
-   * </p>
    *
    * @return a {@link neqsim.statistics.parameterfitting.FunctionInterface} object
    */
@@ -131,9 +118,7 @@ public class SampleValue implements Cloneable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>standardDeviation</code>.
-   * </p>
    *
    * @return a double
    */
@@ -142,9 +127,7 @@ public class SampleValue implements Cloneable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>standardDeviation</code>.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -154,9 +137,7 @@ public class SampleValue implements Cloneable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>sampleValue</code>.
-   * </p>
    *
    * @return a double
    */
@@ -165,9 +146,7 @@ public class SampleValue implements Cloneable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dependentValues</code>.
-   * </p>
    *
    * @return an array of type double
    */
@@ -176,9 +155,7 @@ public class SampleValue implements Cloneable {
   }
 
   /**
-   * <p>
    * getDependentValue.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -188,9 +165,7 @@ public class SampleValue implements Cloneable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>dependentValues</code>.
-   * </p>
    *
    * @param vals an array of type double
    */
@@ -199,9 +174,7 @@ public class SampleValue implements Cloneable {
   }
 
   /**
-   * <p>
    * setDependentValue.
-   * </p>
    *
    * @param i a int
    * @param val a double

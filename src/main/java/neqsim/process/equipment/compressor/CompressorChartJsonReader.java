@@ -12,7 +12,7 @@ import com.google.gson.JsonParser;
  * <p>
  * Expected JSON format:
  * </p>
- * 
+ *
  * <pre>
  * {
  *   "compressorName": "Compressor Name",
@@ -135,8 +135,7 @@ public class CompressorChartJsonReader {
       }
 
       // Read head array (support both "head_kJkg" and "head" keys)
-      JsonArray headArray =
-          curve.has("head_kJkg") ? curve.getAsJsonArray("head_kJkg") : curve.getAsJsonArray("head");
+      JsonArray headArray = curve.has("head_kJkg") ? curve.getAsJsonArray("head_kJkg") : curve.getAsJsonArray("head");
       headLines[i] = new double[headArray.size()];
       for (int j = 0; j < headArray.size(); j++) {
         headLines[i][j] = headArray.get(j).getAsDouble();
@@ -186,11 +185,9 @@ public class CompressorChartJsonReader {
    * @param compressor the compressor to configure
    */
   public void setCurvesToCompressor(Compressor compressor) {
-    compressor.getCompressorChart().setCurves(new double[0], speeds, flowLines, headLines,
-        polyEffLines);
+    compressor.getCompressorChart().setCurves(new double[0], speeds, flowLines, headLines, polyEffLines);
 
-    compressor.getCompressorChart()
-        .setStoneWallCurve(new SafeSplineStoneWallCurve(chokeFlow, chokeHead));
+    compressor.getCompressorChart().setStoneWallCurve(new SafeSplineStoneWallCurve(chokeFlow, chokeHead));
     compressor.getCompressorChart().setSurgeCurve(new SafeSplineSurgeCurve(surgeFlow, surgeHead));
     compressor.getCompressorChart().setHeadUnit(headUnit);
 

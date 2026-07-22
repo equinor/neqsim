@@ -1,3 +1,8 @@
+---
+title: Manifold Mechanical Design Guide
+description: This guide documents the manifold mechanical design capabilities in NeqSim, covering topside, onshore, and subsea applications.
+---
+
 # Manifold Mechanical Design Guide
 
 This guide documents the manifold mechanical design capabilities in NeqSim, covering topside, onshore, and subsea applications.
@@ -406,12 +411,10 @@ DNV-ST-F101 and API RP 17A parameters for subsea manifolds.
 
 ## See Also
 
-- [Pipeline Mechanical Design](../pipeline_mechanical_design.md)
-- [Riser Mechanical Design](../riser_mechanical_design.md)
-- [Subsea Systems](subsea_systems.md)
+- [Pipeline Mechanical Design](../pipeline_mechanical_design)
+- [Riser Mechanical Design](../riser_mechanical_design)
+- [Subsea Systems](subsea_systems)
 
 ## API Reference
 
-- [ManifoldMechanicalDesign](../api/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesign.html)
-- [ManifoldMechanicalDesignCalculator](../api/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesignCalculator.html)
-- [ManifoldMechanicalDesignDataSource](../api/neqsim/process/mechanicaldesign/manifold/ManifoldMechanicalDesignDataSource.html)
+See the [JavaDoc API Documentation](https://equinor.github.io/neqsimhome/javadoc/site/apidocs/index.html) for class details.

@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * QfuncFlash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -23,16 +21,13 @@ public class QfuncFlash extends Flash {
   int type = 0;
 
   /**
-   * <p>
    * Constructor for QfuncFlash.
-   * </p>
    */
-  public QfuncFlash() {}
+  public QfuncFlash() {
+  }
 
   /**
-   * <p>
    * Constructor for QfuncFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec a double
@@ -46,9 +41,7 @@ public class QfuncFlash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdTT.
-   * </p>
    *
    * @return a double
    */
@@ -58,9 +51,7 @@ public class QfuncFlash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdT.
-   * </p>
    *
    * @return a double
    */
@@ -70,9 +61,7 @@ public class QfuncFlash extends Flash {
   }
 
   /**
-   * <p>
    * solveQ.
-   * </p>
    *
    * @return a double
    */
@@ -94,12 +83,22 @@ public class QfuncFlash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    logger.info("entropy: " + system.getEntropy());
-    SysNewtonRhapsonPHflash secondOrderSolver =
-        new SysNewtonRhapsonPHflash(system, 2, system.getPhases()[0].getNumberOfComponents(), type);
-    secondOrderSolver.setSpec(Hspec);
-    secondOrderSolver.solve(1);
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values;
+    // warm-start enabled only for subsequent iterations driven by the
+    // second-order PH/PS Newton-Raphson solver.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      logger.info("entropy: " + system.getEntropy());
+      SysNewtonRhapsonPHflash secondOrderSolver = new SysNewtonRhapsonPHflash(system, 2,
+          system.getPhases()[0].getNumberOfComponents(), type);
+      secondOrderSolver.setSpec(Hspec);
+      secondOrderSolver.solve(1);
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */

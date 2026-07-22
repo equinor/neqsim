@@ -3,9 +3,7 @@ package neqsim.thermodynamicoperations.flashops.saturationops;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * constantDutyTemperatureFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -15,16 +13,13 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for constantDutyTemperatureFlash.
-   * </p>
    */
-  public ConstantDutyTemperatureFlash() {}
+  public ConstantDutyTemperatureFlash() {
+  }
 
   /**
-   * <p>
    * Constructor for constantDutyTemperatureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -95,9 +90,9 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
 
       for (int i = 0; i < nc; i++) {
         neqsim.thermo.component.ComponentInterface cL = system.getPhases()[0].getComponent(i); // treat
-                                                                                               // [0]=liq
+        // [0]=liq
         neqsim.thermo.component.ComponentInterface cV = system.getPhases()[1].getComponent(i); // treat
-                                                                                               // [1]=vap
+        // [1]=vap
 
         double phiL = cL.getFugacityCoefficient();
         double phiV = cV.getFugacityCoefficient();
@@ -143,8 +138,9 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
 
           double denom = 1.0 - beta + beta * K;
           double dxidT = -z * beta * dKdT / (denom * denom);
-          double dyidT = dKdT * cV.getx() + K * dxidT; // note: uses x from phase[1] as in your P
-                                                       // solver
+          double dyidT = dKdT * cV.getx() + K * dxidT; // note: uses x from phase[1] as in
+                                                       // your P
+          // solver
 
           funk += cL.getx() - cV.getx(); // match your pressure code sign convention
           deriv += dyidT - dxidT;
@@ -206,13 +202,14 @@ public class ConstantDutyTemperatureFlash extends ConstantDutyFlash {
 
       // If you couple chemistry strongly to T, you may want:
       // if (system.isChemicalSystem()) system.getChemicalReactionOperations().solveChemEq(0);
-    } while ((((Math.abs(dT) / Math.max(1.0, system.getTemperature())) > tolRel)
-        && iterations < maxIter) || iterations < 3);
+    } while ((((Math.abs(dT) / Math.max(1.0, system.getTemperature())) > tolRel) && iterations < maxIter)
+        || iterations < 3);
   }
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 
   /** {@inheritDoc} */
   @Override

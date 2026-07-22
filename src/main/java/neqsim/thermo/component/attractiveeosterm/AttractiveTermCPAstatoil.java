@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermCPAstatoil class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class AttractiveTermCPAstatoil extends AttractiveTermSrk {
   double orgpar = 0.0;
 
   /**
-   * <p>
    * Constructor for AttractiveTermCPAstatoil.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -79,8 +75,7 @@ public class AttractiveTermCPAstatoil extends AttractiveTermSrk {
   public double alpha(double temperature) {
     double Tr = temperature / getComponent().getTC();
     double temp1 = 1.0 - Math.sqrt(Tr);
-    double var = 1.0 + parameters[0] * temp1 + parameters[1] * temp1 * temp1
-        + parameters[2] * temp1 * temp1 * temp1;
+    double var = 1.0 + parameters[0] * temp1 + parameters[1] * temp1 * temp1 + parameters[2] * temp1 * temp1 * temp1;
     return var * var;
     // Math.pow(1.0+parameters[0] *
     // (1.0-Math.sqrt(Tr))+parameters[1]*temp1*temp1+parameters[2]*temp1*temp1*temp1,2.0);
@@ -102,11 +97,9 @@ public class AttractiveTermCPAstatoil extends AttractiveTermSrk {
     double Tr = temperature / getComponent().getTC();
     double TC = getComponent().getTC();
     return 2.0
-        * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr))
-            + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+        * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
             + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0))
-        * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0
-            - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
+        * (-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
             - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC);
   }
 
@@ -116,19 +109,16 @@ public class AttractiveTermCPAstatoil extends AttractiveTermSrk {
     double Tr = temperature / getComponent().getTC();
     double TC = getComponent().getTC();
     return 2.0
-        * Math.pow(-parameters[0] / Math.sqrt(Tr) / TC / 2.0
-            - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
-            - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC,
-            2.0)
-        + 2.0 * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr))
-            + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
-            + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0))
-            * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0
-                + parameters[1] / temperature / TC / 2.0
+        * Math
+            .pow(-parameters[0] / Math.sqrt(Tr) / TC / 2.0 - parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr) / TC
+                - 3.0 / 2.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr) / TC, 2.0)
+        + 2.0
+            * (1.0 + parameters[0] * (1.0 - Math.sqrt(Tr)) + parameters[1] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
+                + parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 3.0))
+            * (parameters[0] / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 4.0 + parameters[1] / temperature / TC / 2.0
                 + parameters[1] * (1.0 - Math.sqrt(Tr)) / Math.sqrt(Tr * Tr * Tr) / (TC * TC) / 2.0
                 + 3.0 / 2.0 * parameters[2] * (1.0 - Math.sqrt(Tr)) / temperature / TC
-                + 3.0 / 4.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0)
-                    / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
+                + 3.0 / 4.0 * parameters[2] * Math.pow(1.0 - Math.sqrt(Tr), 2.0) / Math.sqrt(Tr * Tr * Tr) / (TC * TC));
   }
 
   /** {@inheritDoc} */

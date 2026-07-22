@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * FreezeMEGwater class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class FreezeMEGwater {
+  private static final Logger logger = LogManager.getLogger(FreezeMEGwater.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(FreezeMEGwater.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -55,14 +52,14 @@ public class FreezeMEGwater {
       logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
-    // System.out.println("temperature " + (testSystem.getTemperature() - 273.15));
-    // System.out.println("act water " + testSystem.getPhase(1).getActivityCoefficient(1));
-    // System.out.println("act MEG " + testSystem.getPhase(1).getActivityCoefficient(0));
+    // logger.info("temperature " + (testSystem.getTemperature() - 273.15));
+    // logger.info("act water " + testSystem.getPhase(1).getActivityCoefficient(1));
+    // logger.info("act MEG " + testSystem.getPhase(1).getActivityCoefficient(0));
     // try{
     // testOps.bubblePointPressureFlash(false);
     // }
     // catch(Exception ex){
-    // System.out.println("error");
+    // logger.info("error");
     // }
     // testSystem.display();
   }

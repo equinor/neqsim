@@ -2,13 +2,15 @@ package neqsim.thermodynamicoperations.flashops;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.ejml.data.Complex_F64;
+import org.ejml.data.DMatrixRMaj;
+import org.ejml.dense.row.factory.DecompositionFactory_DDRM;
+import org.ejml.interfaces.decomposition.EigenDecomposition_F64;
 import org.ejml.simple.SimpleMatrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * CriticalPointFlash class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -20,7 +22,6 @@ public class CriticalPointFlash extends Flash {
   static Logger logger = LogManager.getLogger(CriticalPointFlash.class);
 
   SimpleMatrix Mmatrix = null;
-  SimpleMatrix HeidemannMmatrix = null;
   SimpleMatrix Nmatrix = null;
   SimpleMatrix fmatrix = null;
   int numberOfComponents;
@@ -28,9 +29,7 @@ public class CriticalPointFlash extends Flash {
   double Tc0;
 
   /**
-   * <p>
    * Constructor for CriticalPointFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -40,59 +39,18 @@ public class CriticalPointFlash extends Flash {
     numberOfComponents = system.getPhase(0).getNumberOfComponents();
     Mmatrix = new SimpleMatrix(numberOfComponents, numberOfComponents);
     Nmatrix = new SimpleMatrix(numberOfComponents, numberOfComponents);
-    HeidemannMmatrix = new SimpleMatrix(numberOfComponents, numberOfComponents);
     fmatrix = new SimpleMatrix(numberOfComponents, 1);
   }
 
   /**
+   * Builds the scaled Q matrix used in the Heidemann &amp; Khalil (1980) critical-point criterion.
+   *
    * <p>
-   * calcMmatrixHeidemann.
-   * </p>
-   */
-  public void calcMmatrixHeidemann() {
-    Tc0 = system.getPhase(0).getPseudoCriticalTemperature();
-    Vc0 = 4 * system.getPhase(0).getB() / system.getPhase(0).getNumberOfMolesInPhase();
-
-    system.setUseTVasIndependentVariables(true);
-    system.setNumberOfPhases(1);
-    system.setTemperature(Tc0);
-    system.getPhase(0).setTotalVolume(Vc0 * system.getTotalNumberOfMoles());
-    system.init(3);
-    double dt = 1.0;
-
-    for (int iii = 0; iii < 100; iii++) {
-      system.setTemperature(system.getTemperature() + dt);
-      system.init(3);
-      // system.getPressure();
-
-      double dij = 0;
-      double tempJ = 0;
-      for (int i = 0; i < numberOfComponents; i++) {
-        for (int j = 0; j < numberOfComponents; j++) {
-          dij = i == j ? 1.0 : 0.0; // Kroneckers delta
-
-          tempJ = (dij / system.getPhase(0).getComponent(i).getNumberOfMolesInPhase()
-              - 1.0 / system.getPhase(0).getNumberOfMolesInPhase()
-              + (system.getPhase(0).getComponent(i).getdfugdn(j)
-                  + system.getPhase(0).getComponent(i).getdfugdp()
-                      * system.getPhase(0).getComponent(j).getVoli()
-                      * system.getPhase(0).getdPdVTn() * -1));
-          // tempJ = ((PhaseSrkEos)system.getPhase(0)).dFdNdN(i,j);
-
-          HeidemannMmatrix.set(i, j, tempJ);
-          // Math.sqrt(system.getPhase(0).getComponent(i).getz() *
-          // system.getPhase(0).getComponent(j).getz()) *
-        }
-      }
-      HeidemannMmatrix.print();
-      logger.info("Q det " + HeidemannMmatrix.determinant() + " temperature "
-          + system.getTemperature() + " pressure " + system.getPressure());
-    }
-  }
-
-  /**
-   * <p>
-   * calcMmatrix.
+   * The element \(Q_{ij} = \sqrt{z_i z_j}\, \partial \ln f_i / \partial n_j\) is the Hessian of the reduced Helmholtz
+   * energy with respect to mole numbers at constant temperature and volume. It is theoretically symmetric (a Maxwell
+   * relation), so the matrix is explicitly symmetrized after assembly to remove the small numerical asymmetry
+   * introduced by the constant-pressure to constant-volume derivative conversion. Symmetrization guarantees real
+   * eigenvalues and non-null eigenvectors from the eigenvalue decomposition.
    * </p>
    */
   public void calcMmatrix() {
@@ -104,31 +62,69 @@ public class CriticalPointFlash extends Flash {
 
         tempJ = (dij / system.getPhase(0).getComponent(i).getNumberOfMolesInPhase()
             - 1.0 / system.getPhase(0).getNumberOfMolesInPhase()
-            + (system.getPhase(0).getComponent(i).getdfugdn(j)
-                + system.getPhase(0).getComponent(i).getdfugdp()
-                    * system.getPhase(0).getComponent(j).getVoli() * system.getPhase(0).getdPdVTn()
-                    * -1.0));
+            + (system.getPhase(0).getComponent(i).getdfugdn(j) + system.getPhase(0).getComponent(i).getdfugdp()
+                * system.getPhase(0).getComponent(j).getVoli() * system.getPhase(0).getdPdVTn() * -1.0));
 
-        Mmatrix.set(i, j, Math.sqrt(
-            system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(j).getz())
-            * tempJ);
-        // Math.sqrt(system.getPhase(0).getComponent(i).getz() *
-        // system.getPhase(0).getComponent(j).getz()) *
+        Mmatrix.set(i, j,
+            Math.sqrt(system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(j).getz()) * tempJ);
       }
     }
+    // Q is theoretically symmetric; symmetrize to guarantee real eigenvalues/eigenvectors.
+    Mmatrix = Mmatrix.plus(Mmatrix.transpose()).scale(0.5);
   }
 
   /**
+   * Returns the eigenvector associated with the eigenvalue of {@link #Mmatrix} that is closest to zero.
+   *
    * <p>
-   * calcdpd.
+   * At a mixture critical point the smallest eigenvalue of the Q matrix vanishes, and the corresponding eigenvector
+   * defines the direction of the critical composition perturbation (Heidemann &amp; Khalil, 1980). Selecting the
+   * eigenvector by smallest eigenvalue magnitude &mdash; rather than by a fixed index &mdash; ensures the correct
+   * critical direction is used and avoids returning a null (complex) eigenvector.
    * </p>
+   *
+   * @return the eigenvector of the smallest-magnitude eigenvalue, or {@code null} if no real eigenvector is available
+   */
+  public SimpleMatrix getCriticalEigenVector() {
+    // Use the dedicated symmetric eigen decomposition. The Q matrix is symmetrized in
+    // calcMmatrix(), so a symmetric solver is guaranteed to return real eigenvalues and
+    // non-null (real) eigenvectors, unlike the generic SimpleMatrix.eig() which can flag
+    // near-zero imaginary parts as complex and then return null eigenvectors.
+    EigenDecomposition_F64<DMatrixRMaj> evd = DecompositionFactory_DDRM.eig(numberOfComponents, true, true);
+    if (!evd.decompose(Mmatrix.getMatrix().copy())) {
+      return null;
+    }
+    int n = evd.getNumberOfEigenvalues();
+    int bestIndex = -1;
+    double smallestMagnitude = Double.POSITIVE_INFINITY;
+    for (int idx = 0; idx < n; idx++) {
+      if (evd.getEigenVector(idx) == null) {
+        continue;
+      }
+      Complex_F64 eigenvalue = evd.getEigenvalue(idx);
+      double magnitude = Math.abs(eigenvalue.getReal());
+      if (magnitude < smallestMagnitude) {
+        smallestMagnitude = magnitude;
+        bestIndex = idx;
+      }
+    }
+    if (bestIndex < 0) {
+      return null;
+    }
+    return SimpleMatrix.wrap(evd.getEigenVector(bestIndex));
+  }
+
+  /**
+   * calcdpd.
    *
    * @return a double
    */
   public double calcdpd() {
     double[] oldz = system.getMolarRate();
-    i = Mmatrix.eig().getNumberOfEigenvalues();
-    SimpleMatrix eigenVector = Mmatrix.eig().getEigenVector(0);
+    SimpleMatrix eigenVector = getCriticalEigenVector();
+    if (eigenVector == null) {
+      return Double.NaN;
+    }
 
     double[] newz1 = new double[numberOfComponents];
     double[] newz2 = new double[numberOfComponents];
@@ -168,7 +164,6 @@ public class CriticalPointFlash extends Flash {
     system.setTotalNumberOfMoles(1.0);
     system.init(3);
 
-    calcMmatrixHeidemann();
     system.setNumberOfPhases(1);
 
     Tc0 = system.getPhase(0).getPseudoCriticalTemperature();
@@ -188,41 +183,57 @@ public class CriticalPointFlash extends Flash {
       double ddetdT;
       double dT = 0.1;
       calcMmatrix();
-      // int i = Mmatrix.eig().getNumberOfEigenvalues();
-      SimpleMatrix eigenVector = Mmatrix.eig().getEigenVector(0);
+      SimpleMatrix eigenVector = getCriticalEigenVector();
+      if (eigenVector == null) {
+        break;
+      }
       SimpleMatrix evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
-      detM = Mmatrix.determinant(); // evalMatrix.get(0, 0);
+      // Heidemann & Khalil (1980): the temperature is adjusted to drive the smallest eigenvalue of
+      // the symmetric Q matrix to zero. The Rayleigh quotient eigenVector' Q eigenVector equals
+      // that
+      // smallest eigenvalue (the eigenvector is unit-normalised). This is far better scaled than
+      // the
+      // determinant (a product of all eigenvalues) and avoids the spurious roots the determinant
+      // has.
+      detM = evalMatrix.get(0, 0);
       int iter = 0;
       system.setTemperature(system.getTemperature() + dT);
-
-      // double dTOld = 111110;
 
       do {
         system.init(3);
         iter++;
         olddetM = detM;
         calcMmatrix();
-        i = Mmatrix.eig().getNumberOfEigenvalues();
-        eigenVector = Mmatrix.eig().getEigenVector(0);
+        eigenVector = getCriticalEigenVector();
+        if (eigenVector == null) {
+          break;
+        }
         evalMatrix = eigenVector.transpose().mult(Mmatrix).mult(eigenVector);
-        detM = Mmatrix.determinant(); // evalMatrix.get(0, 0);
+        detM = evalMatrix.get(0, 0);
         ddetdT = (detM - olddetM) / dT;
-        // dTOld = dT;
+        if (ddetdT == 0.0 || Double.isNaN(ddetdT)) {
+          break;
+        }
         dT = -detM / ddetdT;
+        // Limit the Newton step so the search does not jump into a non-physical region where
+        // the
+        // EOS returns NaN properties (which would make the Q matrix non-decomposable).
         if (Math.abs(dT) > 5.0) {
-          // dT = Math.signum(dT) * 5.0;
+          dT = Math.signum(dT) * 5.0;
         }
         double oldTemp = system.getTemperature();
         system.setTemperature(oldTemp + dT);
         logger.info("Temperature " + oldTemp + " dT " + dT + " evalMatrix " + evalMatrix.get(0, 0));
-      } while (Math.abs(dT) > 1e-8 && iter < 112); // && (Math.abs(dT) < Math.abs(dTOld) ||
-      // iter < 3));
+      } while (Math.abs(dT) > 1e-8 && iter < 112);
 
       double dVc = Vc0 / 100.0;
       double ddetdV;
       double oldVal;
       system.init(3);
       double valstart = calcdpd();
+      if (Double.isNaN(valstart)) {
+        break;
+      }
       iter = 0;
       system.getPhase(0).setTotalVolume(system.getPhase(0).getTotalVolume() + dVc);
       double dVOld = 1111110;
@@ -231,18 +242,21 @@ public class CriticalPointFlash extends Flash {
         system.init(3);
         iter++;
         valstart = calcdpd();
+        if (Double.isNaN(valstart)) {
+          break;
+        }
         ddetdV = (valstart - oldVal) / dVc;
+        if (ddetdV == 0.0 || Double.isNaN(ddetdV)) {
+          break;
+        }
         dVOld = dVc;
         dVc = -valstart / ddetdV;
         system.getPhase(0).setTotalVolume(system.getPhase(0).getVolume() + 0.5 * dVc);
-        logger.info("Volume " + system.getPhase(0).getVolume() + " dVc " + dVc + " tddpp "
-            + valstart + " pressure " + system.getPressure());
+        logger.info("Volume " + system.getPhase(0).getVolume() + " dVc " + dVc + " tddpp " + valstart + " pressure "
+            + system.getPressure());
       } while (Math.abs(dVc) > 1e-5 && iter < 112 && (Math.abs(dVc) < Math.abs(dVOld) || iter < 3));
     }
-    system.display();
-    // solve(fmatrix);
-    // dnMatrix.print(10, 10);
-    // system.display();
-    // clonedsystem.display();
+    system.setUseTVasIndependentVariables(false);
+    system.init(3);
   }
 }

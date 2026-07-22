@@ -17,11 +17,11 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Unit tests for ProcessConstraintEvaluator.
- * 
+ *
  * <p>
  * Tests constraint evaluation, caching, and sensitivity analysis.
  * </p>
- * 
+ *
  * @author NeqSim Development Team
  * @version 1.0
  */
@@ -112,8 +112,7 @@ class ProcessConstraintEvaluatorTest {
   @Test
   void testEquipmentConstraintSummary() {
     ProcessConstraintEvaluator.ConstraintEvaluationResult result = evaluator.evaluate();
-    Map<String, ProcessConstraintEvaluator.EquipmentConstraintSummary> summaries =
-        result.getEquipmentSummaries();
+    Map<String, ProcessConstraintEvaluator.EquipmentConstraintSummary> summaries = result.getEquipmentSummaries();
 
     assertNotNull(summaries);
     // May or may not have entries depending on registered strategies
@@ -121,8 +120,7 @@ class ProcessConstraintEvaluatorTest {
 
   @Test
   void testConstraintEvaluationResultClass() {
-    ProcessConstraintEvaluator.ConstraintEvaluationResult result =
-        new ProcessConstraintEvaluator.ConstraintEvaluationResult();
+    ProcessConstraintEvaluator.ConstraintEvaluationResult result = new ProcessConstraintEvaluator.ConstraintEvaluationResult();
 
     result.setOverallUtilization(0.85);
     result.setBottleneckEquipment("Compressor1");
@@ -139,8 +137,7 @@ class ProcessConstraintEvaluatorTest {
 
   @Test
   void testEquipmentConstraintSummaryClass() {
-    ProcessConstraintEvaluator.EquipmentConstraintSummary summary =
-        new ProcessConstraintEvaluator.EquipmentConstraintSummary();
+    ProcessConstraintEvaluator.EquipmentConstraintSummary summary = new ProcessConstraintEvaluator.EquipmentConstraintSummary();
 
     summary.setEquipmentName("TestSeparator");
     summary.setEquipmentType("Separator");
@@ -163,8 +160,7 @@ class ProcessConstraintEvaluatorTest {
 
   @Test
   void testCachedConstraintsClass() {
-    ProcessConstraintEvaluator.CachedConstraints cache =
-        new ProcessConstraintEvaluator.CachedConstraints();
+    ProcessConstraintEvaluator.CachedConstraints cache = new ProcessConstraintEvaluator.CachedConstraints();
 
     assertFalse(cache.isValid());
     assertEquals(0, cache.getFlowRate(), 0.001);
@@ -181,8 +177,7 @@ class ProcessConstraintEvaluatorTest {
 
   @Test
   void testCacheInvalidation() {
-    ProcessConstraintEvaluator.CachedConstraints cache =
-        new ProcessConstraintEvaluator.CachedConstraints();
+    ProcessConstraintEvaluator.CachedConstraints cache = new ProcessConstraintEvaluator.CachedConstraints();
 
     cache.setValid(true);
     assertTrue(cache.isValid());
@@ -193,8 +188,7 @@ class ProcessConstraintEvaluatorTest {
 
   @Test
   void testCacheExpiration() throws InterruptedException {
-    ProcessConstraintEvaluator.CachedConstraints cache =
-        new ProcessConstraintEvaluator.CachedConstraints();
+    ProcessConstraintEvaluator.CachedConstraints cache = new ProcessConstraintEvaluator.CachedConstraints();
 
     cache.setTimestamp(System.currentTimeMillis() - 10000); // 10 seconds ago
     cache.setTtlMillis(5000); // 5 second TTL
@@ -205,8 +199,7 @@ class ProcessConstraintEvaluatorTest {
 
   @Test
   void testCacheNotExpired() {
-    ProcessConstraintEvaluator.CachedConstraints cache =
-        new ProcessConstraintEvaluator.CachedConstraints();
+    ProcessConstraintEvaluator.CachedConstraints cache = new ProcessConstraintEvaluator.CachedConstraints();
 
     cache.setTimestamp(System.currentTimeMillis());
     cache.setTtlMillis(60000); // 60 second TTL
@@ -302,8 +295,7 @@ class ProcessConstraintEvaluatorTest {
 
   @Test
   void testConstraintEvaluationResultIsFeasible() {
-    ProcessConstraintEvaluator.ConstraintEvaluationResult result =
-        new ProcessConstraintEvaluator.ConstraintEvaluationResult();
+    ProcessConstraintEvaluator.ConstraintEvaluationResult result = new ProcessConstraintEvaluator.ConstraintEvaluationResult();
 
     result.setFeasible(true);
     assertTrue(result.isFeasible());
@@ -314,8 +306,7 @@ class ProcessConstraintEvaluatorTest {
 
   @Test
   void testEquipmentSummaryConstraintDetails() {
-    ProcessConstraintEvaluator.EquipmentConstraintSummary summary =
-        new ProcessConstraintEvaluator.EquipmentConstraintSummary();
+    ProcessConstraintEvaluator.EquipmentConstraintSummary summary = new ProcessConstraintEvaluator.EquipmentConstraintSummary();
 
     // Test constraint details map
     Map<String, Double> details = summary.getConstraintDetails();
@@ -328,4 +319,3 @@ class ProcessConstraintEvaluatorTest {
     assertEquals(0.85, summary.getConstraintDetails().get("Pressure"), 0.001);
   }
 }
-

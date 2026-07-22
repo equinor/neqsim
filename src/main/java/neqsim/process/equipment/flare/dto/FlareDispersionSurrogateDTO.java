@@ -15,9 +15,8 @@ public class FlareDispersionSurrogateDTO implements Serializable {
   private final double momentumPerMass;
   private final double standardVolumeSm3PerSec;
 
-  public FlareDispersionSurrogateDTO(double massRateKgS, double molarRateMoleS,
-      double exitVelocityMs, double momentumFlux, double momentumPerMass,
-      double standardVolumeSm3PerSec) {
+  public FlareDispersionSurrogateDTO(double massRateKgS, double molarRateMoleS, double exitVelocityMs,
+      double momentumFlux, double momentumPerMass, double standardVolumeSm3PerSec) {
     this.massRateKgS = massRateKgS;
     this.molarRateMoleS = molarRateMoleS;
     this.exitVelocityMs = exitVelocityMs;

@@ -2,9 +2,8 @@
  * Graph-based process representation for NeqSim process flowsheets.
  *
  * <p>
- * This package provides an explicit DAG (Directed Acyclic Graph) representation of process
- * flowsheets, addressing the limitation that {@code ProcessSystem} is a list where topology is
- * implicit via stream connections.
+ * This package provides an explicit DAG (Directed Acyclic Graph) representation of process flowsheets, addressing the
+ * limitation that {@code ProcessSystem} is a list where topology is implicit via stream connections.
  * </p>
  *
  * <h2>Why This Matters</h2>
@@ -31,17 +30,14 @@
  * <h2>Key Classes</h2>
  *
  * <ul>
- * <li>{@link neqsim.process.processmodel.graph.ProcessGraph} - Main graph structure with analysis
- * methods</li>
+ * <li>{@link neqsim.process.processmodel.graph.ProcessGraph} - Main graph structure with analysis methods</li>
  * <li>{@link neqsim.process.processmodel.graph.ProcessNode} - Node representing equipment</li>
- * <li>{@link neqsim.process.processmodel.graph.ProcessEdge} - Edge representing stream
- * connections</li>
- * <li>{@link neqsim.process.processmodel.graph.ProcessGraphBuilder} - Builds graph from
- * ProcessSystem</li>
- * <li>{@link neqsim.process.processmodel.graph.ProcessModelGraph} - Hierarchical graph for combined
- * ProcessSystems in a ProcessModule</li>
- * <li>{@link neqsim.process.processmodel.graph.ProcessModelGraphBuilder} - Builds hierarchical
- * graphs from ProcessModule</li>
+ * <li>{@link neqsim.process.processmodel.graph.ProcessEdge} - Edge representing stream connections</li>
+ * <li>{@link neqsim.process.processmodel.graph.ProcessGraphBuilder} - Builds graph from ProcessSystem</li>
+ * <li>{@link neqsim.process.processmodel.graph.ProcessModelGraph} - Hierarchical graph for combined ProcessSystems in a
+ * ProcessModule</li>
+ * <li>{@link neqsim.process.processmodel.graph.ProcessModelGraphBuilder} - Builds hierarchical graphs from
+ * ProcessModule</li>
  * </ul>
  *
  * <h2>Usage Example - Single ProcessSystem</h2>

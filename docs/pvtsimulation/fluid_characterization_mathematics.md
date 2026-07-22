@@ -1,3 +1,8 @@
+---
+title: "Fluid Characterization in NeqSim: Mathematical Foundations"
+description: "This document provides detailed mathematical documentation of the fluid characterization methods implemented in NeqSim, with emphasis on plus fraction (C7+) modeling, TBP fraction property correlations."
+---
+
 # Fluid Characterization in NeqSim: Mathematical Foundations
 
 This document provides detailed mathematical documentation of the fluid characterization methods implemented in NeqSim, with emphasis on plus fraction (C7+) modeling, TBP fraction property correlations, and pseudo-component generation.
@@ -21,6 +26,7 @@ This document provides detailed mathematical documentation of the fluid characte
 8. [Common Fluid Characterization](#common-fluid-characterization-matching-pseudo-components)
    - [PseudoComponentCombiner Utility](#pseudocomponentcombiner-utility)
    - [CharacterizationOptions](#characterizationoptions)
+   - [Common Slate for Multiple Fluids](#common-slate-for-multiple-fluids-characterizetocommonslate)
    - [BIP Transfer](#bip-transfer)
    - [Validation Reports](#validation-reports)
 
@@ -475,9 +481,9 @@ fluid.getCharacterization()
 fluid.getCharacterization().characterisePlusFraction();
 
 // Check the estimated alpha
-double alpha = ((PlusFractionModel.WhitsonGammaModel) 
+double alpha = ((PlusFractionModel.WhitsonGammaModel)
     fluid.getCharacterization().getPlusFractionModel()).getAlpha();
-double watsonK = ((PlusFractionModel.WhitsonGammaModel) 
+double watsonK = ((PlusFractionModel.WhitsonGammaModel)
     fluid.getCharacterization().getPlusFractionModel()).getWatsonKFactor();
 
 System.out.println("Estimated alpha: " + alpha);
@@ -565,9 +571,9 @@ This section documents the PVT regression framework for automatic EOS model tuni
 | Class | Description |
 |-------|-------------|
 | `PVTRegression` | Main regression framework class |
-| `RegressionParameter` | Enum defining tunable parameters (BIPs, volume shifts, critical properties) |
+| `RegressionParameter` | Enum defining tunable parameters (BIPs, volume shifts, critical properties, CSP viscosity factors) |
 | `ExperimentType` | Enum for experiment types (CCE, CVD, DLE, SEPARATOR, etc.) |
-| `CCEDataPoint`, `CVDDataPoint`, `DLEDataPoint`, `SeparatorDataPoint` | Data point classes for each experiment type |
+| `CCEDataPoint`, `CVDDataPoint`, `DLEDataPoint`, `SeparatorDataPoint`, `ViscosityDataPoint` | Data point classes for each experiment type |
 | `RegressionParameterConfig` | Configuration for each regression parameter with bounds |
 | `PVTRegressionFunction` | Objective function extending LevenbergMarquardtFunction |
 | `RegressionResult` | Result container with tuned fluid and uncertainty analysis |
@@ -637,6 +643,10 @@ $$F_{SEP} = \left(\frac{GOR^{calc} - GOR^{exp}}{GOR^{exp}}\right)^2 + \left(\fra
 #### Viscosity (Optional)
 
 $$F_{\mu} = \sum_{i} \left(\frac{\mu_i^{calc} - \mu_i^{exp}}{\mu_i^{exp}}\right)^2$$
+
+Viscosity data are added with `PVTRegression.addViscosityData(...)`. The framework flashes the fluid at each pressure and temperature, initializes physical properties, and compares the selected phase viscosity in Pa s. Supported phase names are `gas`, `vapor`, `oil`, `liquid`, `aqueous`, and `water`.
+
+When the regression parameters include `VISCOSITY_CSP_1` through `VISCOSITY_CSP_4`, NeqSim activates the PFCT/CSP viscosity model on each phase and fits the four CSP viscosity correction factors. The helper `addCspViscosityRegressionParameters()` registers all four factors with their default bounds.
 
 ---
 
@@ -839,6 +849,10 @@ System.out.println(summary);
 | `PLUS_MOLAR_MASS_MULTIPLIER` | Plus fraction MW multiplier | [0.90, 1.10, 1.0] |
 | `GAMMA_ALPHA` | Gamma distribution shape parameter | [0.5, 4.0, 1.0] |
 | `GAMMA_ETA` | Gamma distribution minimum MW | [75.0, 95.0, 84.0] |
+| `VISCOSITY_CSP_1` | PFCT/CSP critical-temperature scaling correction | [0.2, 2.0, 1.0] |
+| `VISCOSITY_CSP_2` | PFCT/CSP critical-pressure scaling correction | [0.2, 2.0, 1.0] |
+| `VISCOSITY_CSP_3` | PFCT/CSP molar-mass scaling correction | [0.2, 2.0, 1.0] |
+| `VISCOSITY_CSP_4` | PFCT/CSP alpha correction scaling | [0.2, 2.0, 1.0] |
 
 ### Data Input Format (CSV)
 
@@ -860,6 +874,14 @@ Pressure(bara),Rs(Sm3/Sm3),Bo(m3/Sm3),OilDensity(kg/m3),GasGravity
 150.0,85.6,1.312,761.5,0.79
 ```
 
+**Viscosity Data:**
+```csv
+Pressure(bara),Temperature(K),Viscosity(Pa s),Phase
+1.0,320.0,0.000312,oil
+5.0,320.0,0.000331,oil
+15.0,320.0,0.000370,oil
+```
+
 ---
 
 ### Implementation Status
@@ -873,7 +895,8 @@ Pressure(bara),Rs(Sm3/Sm3),Bo(m3/Sm3),OilDensity(kg/m3),GasGravity
 | 5 | Critical property correlation tuning | ✅ Implemented |
 | 6 | Multi-objective optimization framework | ✅ Implemented |
 | 7 | Uncertainty quantification | ✅ Implemented |
-| 8 | GUI/Report generation | 🔲 Future work |
+| 8 | Viscosity data and CSP/PFCT parameter regression | ✅ Implemented |
+| 9 | GUI/Report generation | 🔲 Future work |
 
 ---
 
@@ -883,20 +906,35 @@ When working with multiple reservoir fluids in a simulation model (e.g., composi
 
 ### PseudoComponentCombiner Utility
 
-The `PseudoComponentCombiner` class provides methods for matching fluid characterizations:
+The `PseudoComponentCombiner` class provides three complementary workflows, all based on Pedersen et al. (Chapter 5.5–5.6):
 
 ```java
 import neqsim.thermo.characterization.PseudoComponentCombiner;
 
-// Match source fluid to reference's PC structure
+// 1. Match a source fluid to an existing reference PC structure (Chapter 5.6,
+//    "Common EoS" slate). The source inherits the reference lump properties.
 SystemInterface matched = PseudoComponentCombiner.characterizeToReference(
     sourceFluid, referenceFluid);
 
-// Combine multiple fluids with automatic common PC structure
+// 2. Blend several fluids into ONE merged fluid sharing a common PC structure
+//    (Chapter 5.5).
 SystemInterface combined = PseudoComponentCombiner.combineReservoirFluids(
-    Arrays.asList(fluid1, fluid2, fluid3),
-    Arrays.asList(0.5, 0.3, 0.2));  // volume fractions
+    6,                       // target number of shared pseudo-components
+    fluid1, fluid2, fluid3);
+
+// 3. Re-characterize several fluids onto a SHARED common slate while keeping
+//    them as SEPARATE fluids (Chapter 5.6, Eqs. 5.55–5.60). Boundaries come
+//    from an equal-mass cut of the weighted "imaginary" composition.
+List<SystemInterface> commonSlate = PseudoComponentCombiner.characterizeToCommonSlate(
+    Arrays.asList(fluidA, fluidB),
+    new double[] {0.5, 0.5});  // per-fluid weights
 ```
+
+| Method | Pedersen | Output | Use case |
+|--------|----------|--------|----------|
+| `characterizeToReference(src, ref[, opts])` | Ch. 5.6 | one fluid on the **reference** slate | match a field to a trusted master fluid |
+| `combineReservoirFluids(n, fluids…)` | Ch. 5.5 | one **merged** fluid | commingled / blended stream |
+| `characterizeToCommonSlate(fluids, weights[, n])` | Ch. 5.6 (Eqs. 5.55–5.60) | a **list** of fluids on a shared slate | keep fields separate but EoS-compatible |
 
 ### CharacterizationOptions
 
@@ -911,6 +949,10 @@ CharacterizationOptions options = CharacterizationOptions.builder()
     .normalizeComposition(true)                 // Ensure mole fractions sum to 1.0
     .namingScheme(NamingScheme.REFERENCE)       // Use reference component names
     .generateValidationReport(true)             // Create before/after comparison
+    .inheritReferenceProperties(true)           // Inherit reference lump properties
+    .delumpBeforeRecharacterization(false)      // Split source lumps before re-binning
+    .delumpResolution(12)                        // Sub-fractions per source lump
+    .sharedImaginaryBoundaries(false)           // Equal-mass reference cut points
     .build();
 
 SystemInterface matched = PseudoComponentCombiner.characterizeToReference(
@@ -920,9 +962,57 @@ SystemInterface matched = PseudoComponentCombiner.characterizeToReference(
 | Option | Description | Default |
 |--------|-------------|---------|
 | `transferBinaryInteractionParameters` | Copy BIPs from reference fluid | `false` |
-| `normalizeComposition` | Normalize mole fractions to sum to 1.0 | `true` |
+| `normalizeComposition` | Normalize mole fractions to sum to 1.0 | `false` |
 | `namingScheme` | Use SOURCE, REFERENCE, or MERGED names | `REFERENCE` |
 | `generateValidationReport` | Generate validation report | `false` |
+| `inheritReferenceProperties` | Inherit the reference lump properties (molar mass, density, critical constants). When `false`, lump properties are recomputed from the source mass on the reference cut grid | `true` |
+| `delumpBeforeRecharacterization` | Split each coarse source lump into finer single-carbon-number sub-fractions before re-binning onto the reference cuts (Pedersen Ch. 5 delumping). Conserves source moles and mass exactly | `false` |
+| `delumpResolution` | Number of sub-fractions per source lump when delumping (also the fine grid for equal-mass reference boundaries). Values ≤ 1 disable splitting | `12` |
+| `sharedImaginaryBoundaries` | Place reference cut boundaries as carbon-number **equal-mass** cut points on the reference's imaginary (delumped) composition (Pedersen Ch. 5.6, Eqs. 5.58–5.59) instead of boiling-point midpoints | `false` |
+
+#### Property inheritance vs. recomputation (`inheritReferenceProperties`)
+
+The **Common EoS** slate of Pedersen Ch. 5.6 requires every fluid characterized to the same reference to share an *identical* pseudo-component property set, differing only in the mole fractions. With `inheritReferenceProperties(true)` (default) each output lump copies the reference molar mass, density, and critical constants — so all fluids are directly EoS-compatible. Set it to `false` to keep grid-only behaviour: the cut boundaries still come from the reference, but each lump's molar mass and density are recomputed from the source mass landing in that cut.
+
+#### Delumping before re-characterization (`delumpBeforeRecharacterization`)
+
+When a field's native lumps already sit close to the reference grid, the naive source→reference mapping is effectively the identity: lump mole fractions are frozen and per-cut mass is not conserved against the reference molar masses. Enabling `delumpBeforeRecharacterization(true)` first splits each parent lump into `delumpResolution` single-carbon-number sub-fractions whose moles and mass **exactly** reproduce the parent (a single linear molar-mass rescale enforces $\sum_k n_k M_k = n_\text{parent} M_\text{parent}$). The boiling point spreads monotonically with molar mass so sub-fractions can cross reference cut boundaries; density and critical constants stay at the parent values. The sub-fractions are then re-lumped onto the reference grid, so each cut's molar mass = mass / moles is recomputed self-consistently. This is most effective with `inheritReferenceProperties(false)`; combining it with `inheritReferenceProperties(true)` logs a warning because the reference values still overwrite the redistributed lump properties.
+
+#### Equal-mass reference boundaries (`sharedImaginaryBoundaries`)
+
+By default the reference cut boundaries are the arithmetic boiling-point midpoints between adjacent reference lumps, which ignores how much mass each lump represents. With `sharedImaginaryBoundaries(true)` the reference is first rebuilt into a fine single-carbon-number "imaginary" composition (using `delumpResolution`) and the cut points are placed so each cut carries an **equal mass fraction** — the reference-only (NFLUID = 1) form of the Pedersen Ch. 5.6 common-slate rule (Eqs. 5.58–5.59 with §5.3 cut criterion). Each equal-mass cut is then *clamped* into the gap between the two adjacent reference pseudo-components, guaranteeing every reference lump stays inside its own cut so the one-to-one property inheritance is preserved even when the reference lumps carry unequal mass. With `delumpResolution ≤ 1` it falls back to boiling-point midpoints.
+
+> **Why reference-only here?** `characterizeToReference` inherits the trusted reference's lump properties one-to-one, so the reference fluid is the correct authority for the grid. The pooled multi-fluid imaginary composition of Eqs. 5.58–5.59 remains used by `characterizeToCommonSlate` (free new slate); applying it to the inherit-from-fixed-reference path would break the inherit alignment.
+
+### Common Slate for Multiple Fluids (`characterizeToCommonSlate`)
+
+`characterizeToCommonSlate` implements the Pedersen et al. (Chapter 5.6, Eqs. 5.55–5.60) common-slate procedure for keeping several fluids as **separate** systems while forcing them onto an **identical** pseudo-component slate (so they are mutually EoS-compatible without merging compositions).
+
+```java
+import neqsim.thermo.characterization.PseudoComponentCombiner;
+
+List<SystemInterface> aligned = PseudoComponentCombiner.characterizeToCommonSlate(
+    Arrays.asList(fluidA, fluidB, fluidC),
+    new double[] {0.5, 0.3, 0.2});   // per-fluid weights (need not sum to 1)
+
+// Optional: set the shared lump count explicitly instead of inferring it
+List<SystemInterface> aligned6 = PseudoComponentCombiner.characterizeToCommonSlate(
+    Arrays.asList(fluidA, fluidB), new double[] {0.5, 0.5}, 6);
+```
+
+**Procedure:**
+
+1. **Imaginary composition** — each input fluid is normalized to unit pseudo-component mass and pooled with its weight $w_f$ into a single weighted "imaginary" composition (Eqs. 5.55–5.57). This composition is not a real fluid; it only sets the cut grid, so no single fluid is privileged.
+
+   $$\bar{m}(T_b) = \sum_f w_f \, \frac{m_f(T_b)}{\sum_{T_b} m_f(T_b)}$$
+
+2. **Equal-mass cut points** — the imaginary composition is lumped into $N$ pseudo-components using equal-mass cut points on the carbon-number axis (Eqs. 5.58–5.59, §5.3 criterion): each cut $i$ carries $1/N$ of the total imaginary mass.
+
+   $$\sum_{T_b \le T_b^{(i)}} \bar{m}(T_b) = \frac{i}{N} \sum_{T_b} \bar{m}(T_b), \qquad i = 1 \dots N-1$$
+
+3. **Apply to every fluid** — each input fluid is independently binned onto the shared boundaries and its lump properties are computed from its own mass in each cut (Eq. 5.60). All returned fluids therefore share the same $N$ lump boiling-point ranges and remain individually mass-conserving.
+
+If the shared lump count is not supplied it is inferred from the input fluids (`inferCommonSlateSize`). Weights let a more representative or higher-rate fluid pull the cut grid toward its own carbon-number distribution.
 
 ### BIP Transfer
 
@@ -948,7 +1038,7 @@ fluid.getCharacterization()
 The `CharacterizationValidationReport` provides before/after comparison:
 
 ```java
-CharacterizationValidationReport report = 
+CharacterizationValidationReport report =
     PseudoComponentCombiner.generateValidationReport(sourceFluid, matchedFluid);
 
 System.out.println("Mass conserved: " + report.isMassConserved());
@@ -963,12 +1053,11 @@ System.out.println(report.toReportString());
 When matching a source fluid to a reference PC structure:
 
 1. **Component Mapping**: Discrete components (C1, C2, CO₂, etc.) are mapped directly
-2. **PC Redistribution**: Plus fraction moles are redistributed proportionally across reference PCs:
-
-$$z_i^{matched} = z_{C7+}^{source} \cdot \frac{z_i^{ref}}{\sum_{j \in PC} z_j^{ref}}$$
-
-3. **Mass Conservation**: Total mass is preserved through the redistribution
-4. **BIP Transfer**: For EOS phases, BIPs are copied element-by-element from reference
+2. **Cut boundaries**: The reference lumps define cut boundaries on the carbon-number (boiling-point) axis — boiling-point midpoints by default, or carbon-number **equal-mass** cut points with `sharedImaginaryBoundaries(true)`
+3. **PC binning**: Each source pseudo-component (optionally first delumped into single-carbon-number sub-fractions, see `delumpBeforeRecharacterization`) is assigned to the reference cut whose boundary range contains its boiling point; the lump moles and mass are accumulated per cut
+4. **Lump properties**: Either inherited from the reference (`inheritReferenceProperties(true)`) or recomputed as molar mass = mass / moles per cut (`inheritReferenceProperties(false)`)
+5. **Mass Conservation**: Total source pseudo-fraction moles and mass are preserved through the binning
+6. **BIP Transfer**: For EOS phases, BIPs are copied element-by-element from the reference
 
 ---
 
@@ -977,6 +1066,8 @@ $$z_i^{matched} = z_{C7+}^{source} \cdot \frac{z_i^{ref}}{\sum_{j \in PC} z_j^{r
 1. Whitson, C.H. (1983). "Characterizing Hydrocarbon Plus Fractions." SPE Journal, 23(4), 683-694. SPE-12233-PA.
 
 2. Pedersen, K.S., Thomassen, P., and Fredenslund, A. (1984). "Thermodynamics of Petroleum Mixtures Containing Heavy Hydrocarbons. 1. Phase Envelope Calculations by Use of the Soave-Redlich-Kwong Equation of State." Industrial & Engineering Chemistry Process Design and Development, 23(1), 163-170.
+
+3. Pedersen, K.S., Christensen, P.L., and Shaikh, J.A. (2014). "Phase Behavior of Petroleum Reservoir Fluids," 2nd ed., Chapter 5 (lumping/delumping, §5.5 fluid combination, §5.6 common-slate Eqs. 5.55–5.60). CRC Press.
 
 3. Søreide, I. (1989). "Improved Phase Behavior Predictions of Petroleum Reservoir Fluids from a Cubic Equation of State." Dr.Ing. Thesis, Norwegian Institute of Technology (NTH), Trondheim.
 

@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.compressor.Compressor;
@@ -30,7 +31,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * ProcessSystem process = new ProcessSystem();
  * // ... configure process ...
@@ -151,8 +152,7 @@ public class EmissionsTracker implements Serializable {
 
     // Compressors - power consumption (indirect emissions)
     // Note: Check Expander first since it extends Compressor but generates power
-    if (equipment instanceof Expander
-        && !(equipment instanceof Compressor && !(equipment instanceof Expander))) {
+    if (equipment instanceof Expander && !(equipment instanceof Compressor && !(equipment instanceof Expander))) {
       Expander expander = (Expander) equipment;
       // Expanders generate power (negative consumption)
       emissions.powerConsumptionKW = -Math.abs(expander.getPower("kW"));
@@ -290,19 +290,19 @@ public class EmissionsTracker implements Serializable {
      */
     public double getTotalCO2e(String unit) {
       switch (unit.toLowerCase()) {
-        case "kg/hr":
-          return totalCO2eKgPerHr;
-        case "ton/hr":
-        case "tonne/hr":
-          return totalCO2eKgPerHr / 1000.0;
-        case "ton/day":
-        case "tonne/day":
-          return totalCO2eKgPerHr * 24.0 / 1000.0;
-        case "ton/yr":
-        case "tonne/yr":
-          return totalCO2eKgPerHr * 24.0 * 365.0 / 1000.0;
-        default:
-          return totalCO2eKgPerHr;
+      case "kg/hr":
+        return totalCO2eKgPerHr;
+      case "ton/hr":
+      case "tonne/hr":
+        return totalCO2eKgPerHr / 1000.0;
+      case "ton/day":
+      case "tonne/day":
+        return totalCO2eKgPerHr * 24.0 / 1000.0;
+      case "ton/yr":
+      case "tonne/yr":
+        return totalCO2eKgPerHr * 24.0 * 365.0 / 1000.0;
+      default:
+        return totalCO2eKgPerHr;
       }
     }
 
@@ -314,14 +314,14 @@ public class EmissionsTracker implements Serializable {
      */
     public double getTotalPower(String unit) {
       switch (unit.toLowerCase()) {
-        case "kw":
-          return totalPowerKW;
-        case "mw":
-          return totalPowerKW / 1000.0;
-        case "hp":
-          return totalPowerKW * 1.341;
-        default:
-          return totalPowerKW;
+      case "kw":
+        return totalPowerKW;
+      case "mw":
+        return totalPowerKW / 1000.0;
+      case "hp":
+        return totalPowerKW * 1.341;
+      default:
+        return totalPowerKW;
       }
     }
 
@@ -332,9 +332,8 @@ public class EmissionsTracker implements Serializable {
      * @return flaring emissions
      */
     public double getFlaringCO2e(String unit) {
-      double flaringKgPerHr =
-          equipmentEmissions.values().stream().filter(e -> e.category == EmissionCategory.FLARING)
-              .mapToDouble(e -> e.directCO2eKgPerHr).sum();
+      double flaringKgPerHr = equipmentEmissions.values().stream().filter(e -> e.category == EmissionCategory.FLARING)
+          .mapToDouble(e -> e.directCO2eKgPerHr).sum();
 
       if (unit.toLowerCase().contains("ton")) {
         return flaringKgPerHr / 1000.0;
@@ -363,17 +362,16 @@ public class EmissionsTracker implements Serializable {
      */
     public void exportToCSV(String filePath) throws java.io.IOException {
       StringBuilder sb = new StringBuilder();
-      sb.append(
-          "Equipment,Type,Category,DirectCO2e_kg_hr,IndirectCO2e_kg_hr,TotalCO2e_kg_hr,Power_kW,HeatDuty_kW\n");
+      sb.append("Equipment,Type,Category,DirectCO2e_kg_hr,IndirectCO2e_kg_hr,TotalCO2e_kg_hr,Power_kW,HeatDuty_kW\n");
 
       for (EquipmentEmissions eq : equipmentEmissions.values()) {
-        sb.append(String.format("%s,%s,%s,%.4f,%.4f,%.4f,%.4f,%.4f\n", eq.equipmentName,
-            eq.equipmentType, eq.category, eq.directCO2eKgPerHr, eq.indirectCO2eKgPerHr,
-            eq.getTotalCO2e(), eq.powerConsumptionKW, eq.heatDutyKW));
+        sb.append(String.format(Locale.US, "%s,%s,%s,%.4f,%.4f,%.4f,%.4f,%.4f\n", eq.equipmentName, eq.equipmentType,
+            eq.category, eq.directCO2eKgPerHr, eq.indirectCO2eKgPerHr, eq.getTotalCO2e(), eq.powerConsumptionKW,
+            eq.heatDutyKW));
       }
 
-      sb.append(String.format("\nTOTAL,,,%s,%s,%.4f,%.4f,%.4f\n", "", "", totalCO2eKgPerHr,
-          totalPowerKW, totalHeatDutyKW));
+      sb.append(String.format(Locale.US, "\nTOTAL,,,%s,%s,%.4f,%.4f,%.4f\n", "", "", totalCO2eKgPerHr, totalPowerKW,
+          totalHeatDutyKW));
 
       try (java.io.FileWriter writer = new java.io.FileWriter(filePath)) {
         writer.write(sb.toString());
@@ -414,14 +412,13 @@ public class EmissionsTracker implements Serializable {
       StringBuilder sb = new StringBuilder();
       sb.append("=== Emissions Report: ").append(processName).append(" ===\n");
       sb.append("Timestamp: ").append(timestamp).append("\n\n");
-      sb.append(String.format("Total CO2e: %.2f kg/hr (%.2f tonne/yr)\n", totalCO2eKgPerHr,
+      sb.append(String.format(Locale.US, "Total CO2e: %.2f kg/hr (%.2f tonne/yr)\n", totalCO2eKgPerHr,
           getTotalCO2e("ton/yr")));
-      sb.append(
-          String.format("Total Power: %.2f kW (%.2f MW)\n", totalPowerKW, getTotalPower("MW")));
-      sb.append(String.format("Total Heat Duty: %.2f kW\n", totalHeatDutyKW));
+      sb.append(String.format(Locale.US, "Total Power: %.2f kW (%.2f MW)\n", totalPowerKW, getTotalPower("MW")));
+      sb.append(String.format(Locale.US, "Total Heat Duty: %.2f kW\n", totalHeatDutyKW));
       sb.append("\nBreakdown by Category:\n");
       for (Map.Entry<EmissionCategory, Double> entry : getEmissionsByCategory().entrySet()) {
-        sb.append(String.format("  %s: %.2f kg/hr\n", entry.getKey(), entry.getValue()));
+        sb.append(String.format(Locale.US, "  %s: %.2f kg/hr\n", entry.getKey(), entry.getValue()));
       }
       return sb.toString();
     }

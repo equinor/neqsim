@@ -10,9 +10,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TemperatureTransmitter class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class TemperatureTransmitter extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for TemperatureTransmitter.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -33,9 +29,7 @@ public class TemperatureTransmitter extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for TemperatureTransmitter.
-   * </p>
    *
    * @param name Name of TemperatureTransmitter
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -55,5 +49,13 @@ public class TemperatureTransmitter extends StreamMeasurementDeviceBaseClass {
   @Override
   public double getMeasuredValue(String unit) {
     return applySignalModifiers(stream.getThermoSystem().getTemperature(unit));
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void applyFieldValue() {
+    if (getTagRole() == InstrumentTagRole.INPUT && hasFieldValue()) {
+      stream.setTemperature(getFieldValue(), getUnit());
+    }
   }
 }

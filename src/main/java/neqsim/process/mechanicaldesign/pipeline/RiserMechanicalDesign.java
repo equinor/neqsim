@@ -9,8 +9,7 @@ import neqsim.process.equipment.pipeline.Riser;
  * Mechanical design class for risers.
  *
  * <p>
- * This class extends PipelineMechanicalDesign to provide riser-specific mechanical design
- * calculations including:
+ * This class extends PipelineMechanicalDesign to provide riser-specific mechanical design calculations including:
  * </p>
  * <ul>
  * <li>Top tension calculation for catenary and TTR</li>
@@ -238,6 +237,7 @@ public class RiserMechanicalDesign extends PipelineMechanicalDesign {
    *
    * @return design life
    */
+  @Override
   public double getDesignLifeYears() {
     return 25.0; // Default 25 years
   }
@@ -279,7 +279,6 @@ public class RiserMechanicalDesign extends PipelineMechanicalDesign {
     jsonObj.addProperty("designAcceptable", isDesignAcceptable());
     jsonObj.addProperty("designLifeYears", getDesignLifeYears());
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 }

@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,13 +19,15 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for OnePhasePipeLine transient compositional tracking.
  *
  * <p>
- * These tests verify the integration of compositional tracking with the process simulation
- * framework, including advection scheme selection and gas switching scenarios.
+ * These tests verify the integration of compositional tracking with the process simulation framework, including
+ * advection scheme selection and gas switching scenarios.
  * </p>
  *
  * @author ESOL
  */
 public class OnePhasePipeLineCompositionalTest {
+  private static final Logger logger = LogManager.getLogger(OnePhasePipeLineCompositionalTest.class);
+
   private SystemInterface naturalGas;
   private SystemInterface nitrogen;
 
@@ -95,11 +99,11 @@ public class OnePhasePipeLineCompositionalTest {
     OnePhasePipeLine pipe = new OnePhasePipeLine("TestPipe", inlet);
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(10);
-    pipe.setPipeDiameters(new double[] {0.1, 0.1});
-    pipe.setLegPositions(new double[] {0.0, 100.0});
-    pipe.setHeightProfile(new double[] {0.0, 0.0});
-    pipe.setPipeWallRoughness(new double[] {1e-5, 1e-5});
-    pipe.setOuterTemperatures(new double[] {280.0, 280.0});
+    pipe.setPipeDiameters(new double[] { 0.1, 0.1 });
+    pipe.setLegPositions(new double[] { 0.0, 100.0 });
+    pipe.setHeightProfile(new double[] { 0.0, 0.0 });
+    pipe.setPipeWallRoughness(new double[] { 1e-5, 1e-5 });
+    pipe.setOuterTemperatures(new double[] { 280.0, 280.0 });
 
     pipe.run();
 
@@ -119,11 +123,11 @@ public class OnePhasePipeLineCompositionalTest {
     OnePhasePipeLine pipe = new OnePhasePipeLine("TestPipe", inlet);
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(10);
-    pipe.setPipeDiameters(new double[] {0.1, 0.1});
-    pipe.setLegPositions(new double[] {0.0, 100.0});
-    pipe.setHeightProfile(new double[] {0.0, 0.0});
-    pipe.setPipeWallRoughness(new double[] {1e-5, 1e-5});
-    pipe.setOuterTemperatures(new double[] {280.0, 280.0});
+    pipe.setPipeDiameters(new double[] { 0.1, 0.1 });
+    pipe.setLegPositions(new double[] { 0.0, 100.0 });
+    pipe.setHeightProfile(new double[] { 0.0, 0.0 });
+    pipe.setPipeWallRoughness(new double[] { 1e-5, 1e-5 });
+    pipe.setOuterTemperatures(new double[] { 280.0, 280.0 });
 
     // Initial steady state
     UUID id = UUID.randomUUID();
@@ -151,11 +155,11 @@ public class OnePhasePipeLineCompositionalTest {
     OnePhasePipeLine pipe = new OnePhasePipeLine("TestPipe", inlet);
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(10);
-    pipe.setPipeDiameters(new double[] {0.1, 0.1});
-    pipe.setLegPositions(new double[] {0.0, 100.0});
-    pipe.setHeightProfile(new double[] {0.0, 0.0});
-    pipe.setPipeWallRoughness(new double[] {1e-5, 1e-5});
-    pipe.setOuterTemperatures(new double[] {280.0, 280.0});
+    pipe.setPipeDiameters(new double[] { 0.1, 0.1 });
+    pipe.setLegPositions(new double[] { 0.0, 100.0 });
+    pipe.setHeightProfile(new double[] { 0.0, 0.0 });
+    pipe.setPipeWallRoughness(new double[] { 1e-5, 1e-5 });
+    pipe.setOuterTemperatures(new double[] { 280.0, 280.0 });
     pipe.setAdvectionScheme(AdvectionScheme.TVD_VAN_LEER);
     pipe.setCompositionalTracking(true);
 
@@ -190,11 +194,11 @@ public class OnePhasePipeLineCompositionalTest {
     OnePhasePipeLine pipe = new OnePhasePipeLine("TestPipe", inlet);
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(10);
-    pipe.setPipeDiameters(new double[] {0.1, 0.1});
-    pipe.setLegPositions(new double[] {0.0, 100.0});
-    pipe.setHeightProfile(new double[] {0.0, 0.0});
-    pipe.setPipeWallRoughness(new double[] {1e-5, 1e-5});
-    pipe.setOuterTemperatures(new double[] {280.0, 280.0});
+    pipe.setPipeDiameters(new double[] { 0.1, 0.1 });
+    pipe.setLegPositions(new double[] { 0.0, 100.0 });
+    pipe.setHeightProfile(new double[] { 0.0, 0.0 });
+    pipe.setPipeWallRoughness(new double[] { 1e-5, 1e-5 });
+    pipe.setOuterTemperatures(new double[] { 280.0, 280.0 });
 
     pipe.run();
 
@@ -213,8 +217,7 @@ public class OnePhasePipeLineCompositionalTest {
 
     // All values should be positive
     for (int i = 0; i < nNodes; i++) {
-      assertTrue(methaneProfile[i] >= 0 && methaneProfile[i] <= 1,
-          "Methane mass fraction should be in [0,1]");
+      assertTrue(methaneProfile[i] >= 0 && methaneProfile[i] <= 1, "Methane mass fraction should be in [0,1]");
       assertTrue(pressureProfile[i] > 0, "Pressure should be positive");
       assertTrue(tempProfile[i] > 0, "Temperature should be positive");
     }
@@ -230,11 +233,11 @@ public class OnePhasePipeLineCompositionalTest {
     OnePhasePipeLine pipe = new OnePhasePipeLine("TestPipe", inlet);
     pipe.setNumberOfLegs(1);
     pipe.setNumberOfNodesInLeg(10);
-    pipe.setPipeDiameters(new double[] {0.1, 0.1});
-    pipe.setLegPositions(new double[] {0.0, 100.0});
-    pipe.setHeightProfile(new double[] {0.0, 0.0});
-    pipe.setPipeWallRoughness(new double[] {1e-5, 1e-5});
-    pipe.setOuterTemperatures(new double[] {280.0, 280.0});
+    pipe.setPipeDiameters(new double[] { 0.1, 0.1 });
+    pipe.setLegPositions(new double[] { 0.0, 100.0 });
+    pipe.setHeightProfile(new double[] { 0.0, 0.0 });
+    pipe.setPipeWallRoughness(new double[] { 1e-5, 1e-5 });
+    pipe.setOuterTemperatures(new double[] { 280.0, 280.0 });
 
     pipe.run();
 
@@ -242,10 +245,8 @@ public class OnePhasePipeLineCompositionalTest {
     double methaneMassFrac = pipe.getOutletMassFraction("methane");
     double methaneMoleFrac = pipe.getOutletMoleFraction("methane");
 
-    assertTrue(methaneMassFrac > 0 && methaneMassFrac <= 1,
-        "Methane mass fraction should be in (0,1]");
-    assertTrue(methaneMoleFrac > 0 && methaneMoleFrac <= 1,
-        "Methane mole fraction should be in (0,1]");
+    assertTrue(methaneMassFrac > 0 && methaneMassFrac <= 1, "Methane mass fraction should be in (0,1]");
+    assertTrue(methaneMoleFrac > 0 && methaneMoleFrac <= 1, "Methane mole fraction should be in (0,1]");
 
     // For natural gas, methane should be dominant
     assertTrue(methaneMoleFrac > 0.5, "Methane should be dominant component");
@@ -254,20 +255,19 @@ public class OnePhasePipeLineCompositionalTest {
   @Test
   @DisplayName("Advection scheme properties should be accessible")
   void testAdvectionSchemeProperties() {
-    System.out.println("=== Advection Scheme Selection for Gas Switching ===\n");
+    logger.info("=== Advection Scheme Selection for Gas Switching ===\n");
 
-    System.out.println("Scheme                  | Order | Max CFL | Dispersion Reduction");
-    System.out.println("------------------------|-------|---------|---------------------");
+    logger.info("Scheme                  | Order | Max CFL | Dispersion Reduction");
+    logger.info("------------------------|-------|---------|---------------------");
 
     for (AdvectionScheme scheme : AdvectionScheme.values()) {
-      System.out.printf("%-23s | %5d | %7.1f | %dx%n", scheme.getDisplayName(), scheme.getOrder(),
-          scheme.getMaxCFL(), Math.round(1.0 / scheme.getDispersionReductionFactor()));
+      logger.printf(org.apache.logging.log4j.Level.INFO, "%-23s | %5d | %7.1f | %dx%n", scheme.getDisplayName(),
+          scheme.getOrder(), scheme.getMaxCFL(), Math.round(1.0 / scheme.getDispersionReductionFactor()));
     }
 
-    System.out.println();
-    System.out.println("RECOMMENDATION for gas switching:");
-    System.out.println("  - TVD_VAN_LEER: Best balance of accuracy and stability");
-    System.out.println("  - TVD_SUPERBEE: Sharpest fronts, use for critical tracking");
-    System.out.println("  - FIRST_ORDER_UPWIND: Use only for coarse/quick estimates");
+    logger.info("RECOMMENDATION for gas switching:");
+    logger.info("  - TVD_VAN_LEER: Best balance of accuracy and stability");
+    logger.info("  - TVD_SUPERBEE: Sharpest fronts, use for critical tracking");
+    logger.info("  - FIRST_ORDER_UPWIND: Use only for coarse/quick estimates");
   }
 }

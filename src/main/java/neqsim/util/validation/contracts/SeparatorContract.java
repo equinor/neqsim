@@ -6,26 +6,26 @@ import neqsim.util.validation.ValidationResult;
 
 /**
  * Contract for separator equipment.
- * 
+ *
  * <p>
- * Defines requirements and guarantees for {@link Separator} implementations. AI agents can use this
- * contract to validate separator setup before running.
+ * Defines requirements and guarantees for {@link Separator} implementations. AI agents can use this contract to
+ * validate separator setup before running.
  * </p>
- * 
+ *
  * <h2>Preconditions (what the separator needs):</h2>
  * <ul>
  * <li>At least one inlet stream connected</li>
  * <li>Inlet stream(s) have been run</li>
  * <li>Multi-phase fluid (gas + liquid) for meaningful separation</li>
  * </ul>
- * 
+ *
  * <h2>Postconditions (what run() provides):</h2>
  * <ul>
  * <li>Gas outlet stream with vapor phase</li>
  * <li>Liquid outlet stream with liquid phase(s)</li>
  * <li>Mass/energy balance maintained</li>
  * </ul>
- * 
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -33,11 +33,12 @@ public class SeparatorContract implements ModuleContract<Separator> {
   /** Singleton instance. */
   private static final SeparatorContract INSTANCE = new SeparatorContract();
 
-  private SeparatorContract() {}
+  private SeparatorContract() {
+  }
 
   /**
    * Get the singleton instance.
-   * 
+   *
    * @return contract instance
    */
   public static SeparatorContract getInstance() {
@@ -78,8 +79,7 @@ public class SeparatorContract implements ModuleContract<Separator> {
     ValidationResult inletResult = streamContract.checkPreconditions(feedStream);
     for (ValidationResult.ValidationIssue issue : inletResult.getIssues()) {
       if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
-        result.addError("separator.inlet." + issue.getCategory(), issue.getMessage(),
-            issue.getRemediation());
+        result.addError("separator.inlet." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
       }
     }
 
@@ -87,8 +87,7 @@ public class SeparatorContract implements ModuleContract<Separator> {
     if (feedStream.getFluid() != null) {
       int numPhases = feedStream.getFluid().getNumberOfPhases();
       if (numPhases < 2) {
-        result.addWarning("separator.phases",
-            "Inlet has only " + numPhases + " phase(s) - separator may not be useful",
+        result.addWarning("separator.phases", "Inlet has only " + numPhases + " phase(s) - separator may not be useful",
             "Check if flash conditions produce gas + liquid");
       }
     }
@@ -98,23 +97,20 @@ public class SeparatorContract implements ModuleContract<Separator> {
 
   @Override
   public ValidationResult checkPostconditions(Separator separator) {
-    ValidationResult result =
-        new ValidationResult("Separator:" + separator.getName() + " (post-run)");
+    ValidationResult result = new ValidationResult("Separator:" + separator.getName() + " (post-run)");
 
     // Check: Gas outlet exists and has vapor
     try {
       StreamInterface gasOut = separator.getGasOutStream();
       if (gasOut == null) {
-        result.addWarning("separator.gasOutlet", "No gas outlet stream",
-            "Access via separator.getGasOutStream()");
+        result.addWarning("separator.gasOutlet", "No gas outlet stream", "Access via separator.getGasOutStream()");
       } else if (gasOut.getFluid() != null) {
         double gasFraction = 0;
         if (gasOut.getFluid().hasPhaseType("gas")) {
           gasFraction = gasOut.getFluid().getPhase("gas").getBeta();
         }
         if (gasFraction < 0.01) {
-          result.addWarning("separator.gasOutlet",
-              "Gas outlet has very low vapor fraction: " + gasFraction,
+          result.addWarning("separator.gasOutlet", "Gas outlet has very low vapor fraction: " + gasFraction,
               "Check inlet conditions - may be mostly liquid");
         }
       }
@@ -130,8 +126,7 @@ public class SeparatorContract implements ModuleContract<Separator> {
             "Access via separator.getLiquidOutStream()");
       }
     } catch (Exception e) {
-      result.addWarning("separator.liquidOutlet",
-          "Could not check liquid outlet: " + e.getMessage(), "");
+      result.addWarning("separator.liquidOutlet", "Could not check liquid outlet: " + e.getMessage(), "");
     }
 
     // Check: Mass balance (simplified)
@@ -166,17 +161,15 @@ public class SeparatorContract implements ModuleContract<Separator> {
 
   @Override
   public String getRequirementsDescription() {
-    return "Separator Requirements:\n" + "- Valid name (non-empty string)\n"
-        + "- At least one inlet stream connected\n" + "- Inlet stream has valid fluid\n"
-        + "- Inlet stream has been run (TPflash performed)\n"
+    return "Separator Requirements:\n" + "- Valid name (non-empty string)\n" + "- At least one inlet stream connected\n"
+        + "- Inlet stream has valid fluid\n" + "- Inlet stream has been run (TPflash performed)\n"
         + "- Multi-phase fluid for meaningful separation";
   }
 
   @Override
   public String getProvidesDescription() {
     return "Separator Provides (after run()):\n" + "- Gas outlet stream (getGasOutStream())\n"
-        + "- Liquid outlet stream (getLiquidOutStream())\n"
-        + "- Oil outlet stream if 3-phase (getOilOutStream())\n"
+        + "- Liquid outlet stream (getLiquidOutStream())\n" + "- Oil outlet stream if 3-phase (getOilOutStream())\n"
         + "- Separated phases with correct compositions\n" + "- Mass/energy balance maintained";
   }
 }

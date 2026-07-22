@@ -54,8 +54,7 @@ public class SystemSrkEosvolcorThermodynamicConsistencyTest extends neqsim.NeqSi
           "Configured translation derivative should be non-zero to exercise the implementation");
 
       for (int phaseIndex = 0; phaseIndex < system.getNumberOfPhases(); phaseIndex++) {
-        double actualDerivative =
-            system.getPhase(phaseIndex).getComponent(compIndex).getVolumeCorrectionT();
+        double actualDerivative = system.getPhase(phaseIndex).getComponent(compIndex).getVolumeCorrectionT();
         assertEquals(expectedDerivative, actualDerivative, 1e-12,
             "All phases must share the same translation derivative for a component");
       }
@@ -77,7 +76,7 @@ public class SystemSrkEosvolcorThermodynamicConsistencyTest extends neqsim.NeqSi
     system.addComponent("methane", 1.0);
     system.setMixingRule("classic");
 
-    ThermodynamicModelTest modelTest = prepareSystem(system, new double[] {5.0e-5});
+    ThermodynamicModelTest modelTest = prepareSystem(system, new double[] { 5.0e-5 });
     assertThermodynamicConsistency(modelTest);
   }
 
@@ -90,7 +89,7 @@ public class SystemSrkEosvolcorThermodynamicConsistencyTest extends neqsim.NeqSi
     system.addComponent("n-butane", 0.1);
     system.setMixingRule("classic");
 
-    ThermodynamicModelTest modelTest = prepareSystem(system, new double[] {4.0e-5, 3.5e-5, 2.5e-5});
+    ThermodynamicModelTest modelTest = prepareSystem(system, new double[] { 4.0e-5, 3.5e-5, 2.5e-5 });
     assertThermodynamicConsistency(modelTest);
   }
 
@@ -103,7 +102,7 @@ public class SystemSrkEosvolcorThermodynamicConsistencyTest extends neqsim.NeqSi
     system.addComponent("propane", 0.15);
     system.setMixingRule("classic");
 
-    ThermodynamicModelTest modelTest = prepareSystem(system, new double[] {3.0e-5, 2.5e-5, 2.0e-5});
+    ThermodynamicModelTest modelTest = prepareSystem(system, new double[] { 3.0e-5, 2.5e-5, 2.0e-5 });
     assertThermodynamicConsistency(modelTest);
 
     system.init(3);

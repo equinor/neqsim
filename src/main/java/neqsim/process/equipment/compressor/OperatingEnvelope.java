@@ -18,23 +18,26 @@ import java.util.List;
  * <li>Head limits - maximum and minimum head at each speed</li>
  * </ul>
  *
- * <p><strong>Envelope Definition</strong></p>
  * <p>
- * The operating envelope is typically defined by arrays of flow and head values at different
- * speeds. The surge line represents the minimum flow below which the compressor becomes unstable.
- * The stonewall (choke) line represents the maximum flow where the compressor can no longer
- * increase flow regardless of head.
+ * <strong>Envelope Definition</strong>
+ * </p>
+ * <p>
+ * The operating envelope is typically defined by arrays of flow and head values at different speeds. The surge line
+ * represents the minimum flow below which the compressor becomes unstable. The stonewall (choke) line represents the
+ * maximum flow where the compressor can no longer increase flow regardless of head.
  * </p>
  *
- * <p><strong>Example Usage</strong></p>
- * 
+ * <p>
+ * <strong>Example Usage</strong>
+ * </p>
+ *
  * <pre>
  * OperatingEnvelope envelope = new OperatingEnvelope();
  * envelope.setSurgeLine(surgeFlows, surgeHeads, surgeSpeeds);
  * envelope.setStonewallLine(stonewallFlows, stonewallHeads, stonewallSpeeds);
  * envelope.setMinSpeed(7000);
  * envelope.setMaxSpeed(10500);
- * 
+ *
  * boolean inEnvelope = envelope.isWithinEnvelope(currentFlow, currentHead, currentSpeed);
  * double surgeMargin = envelope.getSurgeMargin(currentFlow, currentHead, currentSpeed);
  * </pre>
@@ -98,7 +101,8 @@ public class OperatingEnvelope implements Serializable {
   /**
    * Default constructor.
    */
-  public OperatingEnvelope() {}
+  public OperatingEnvelope() {
+  }
 
   /**
    * Constructor with speed limits.
@@ -404,8 +408,7 @@ public class OperatingEnvelope implements Serializable {
     // Find bracketing points
     for (int i = 0; i < stonewallHeads.length - 1; i++) {
       if (head >= stonewallHeads[i + 1] && head <= stonewallHeads[i]) {
-        double fraction =
-            (head - stonewallHeads[i + 1]) / (stonewallHeads[i] - stonewallHeads[i + 1]);
+        double fraction = (head - stonewallHeads[i + 1]) / (stonewallHeads[i] - stonewallHeads[i + 1]);
         return stonewallFlows[i + 1] + fraction * (stonewallFlows[i] - stonewallFlows[i + 1]);
       }
     }

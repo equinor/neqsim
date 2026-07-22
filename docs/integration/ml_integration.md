@@ -1,3 +1,8 @@
+---
+title: NeqSim ML Integration Guide
+description: This module provides infrastructure for integrating NeqSim with modern AI/ML systems including Reinforcement Learning, neural network surrogates, and multi-agent control.
+---
+
 # NeqSim ML Integration Guide
 
 This module provides infrastructure for integrating NeqSim with modern AI/ML systems including Reinforcement Learning, neural network surrogates, and multi-agent control.
@@ -135,7 +140,7 @@ while (!env.isDone()) {
     actions.put("compressor", compressorPolicy.predict(compObs));
     
     // Step
-    var result = env.step(actions);
+    StepResult result = env.step(actions);
     
     // Get rewards (shared in cooperative mode)
     double sepReward = result.rewards.get("separator");
@@ -377,6 +382,7 @@ public class MyControlEnv extends RLEnvironment {
 The following equipment classes implement `StateVectorProvider`:
 
 ### Separator
+
 | State Variable | Unit | Description |
 |---------------|------|-------------|
 | pressure | bar | Separator pressure |
@@ -389,6 +395,7 @@ The following equipment classes implement `StateVectorProvider`:
 | gas_load_factor | - | Gas load factor |
 
 ### Compressor
+
 | State Variable | Unit | Description |
 |---------------|------|-------------|
 | inlet_pressure | bar | Inlet pressure |
@@ -405,6 +412,7 @@ The following equipment classes implement `StateVectorProvider`:
 | inlet_flow | kg/s | Inlet mass flow |
 
 ### HeatExchanger
+
 | State Variable | Unit | Description |
 |---------------|------|-------------|
 | hot_inlet_temp | K | Hot side inlet temperature |

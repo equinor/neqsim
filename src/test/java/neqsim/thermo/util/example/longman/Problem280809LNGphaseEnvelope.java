@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Problem280809LNGphaseEnvelope class.
- * </p>
  *
  * @author lozhang
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class Problem280809LNGphaseEnvelope {
+  private static final Logger logger = LogManager.getLogger(Problem280809LNGphaseEnvelope.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(Problem280809LNGphaseEnvelope.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -49,9 +46,9 @@ public class Problem280809LNGphaseEnvelope {
       logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
-    // System.out.println("tempeerature " + (testSystem.getTemperature() - 273.15));
+    // logger.info("tempeerature " + (testSystem.getTemperature() - 273.15));
     // testOps.displayResult();
-    // System.out.println("Cricondenbar " + testOps.get("cricondenbar")[0] + " " +
+    // logger.info("Cricondenbar " + testOps.get("cricondenbar")[0] + " " +
     // testOps.get("cricondenbar")[1]);
   }
 }

@@ -9,14 +9,13 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * ControlValveSizing_IEC_60534 class.
- * </p>
  *
  * @author esol
  */
 public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
+  private static final long serialVersionUID = 1L;
   // === IEC 60534 Constants (Units: Q[m^3/h], P[kPa], rho[kg/m^3]) ===
   /** Constant for liquids (flow in m^3/h, pressure in kPa). */
   static final double N1 = 0.1;
@@ -28,6 +27,10 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   static final double R = 8.314462;
   /** Conversion factor from Kv to Cv. */
   static final double KV_TO_CV_FACTOR = 1.156;
+  /** Standard temperature for IEC 60534 gas volumetric flow [K]. */
+  static final double T_STD = 273.15;
+  /** Standard pressure for IEC 60534 gas volumetric flow [kPa]. */
+  static final double P_STD_KPA = 101.325;
 
   // === Valve Parameters ===
   double FL = 0.9;
@@ -41,25 +44,23 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   boolean fullOutput = true;
 
   /**
-   * <p>
    * isAllowChoked.
-   * </p>
    *
    * @return a boolean
    */
+  @Override
   public boolean isAllowChoked() {
     return allowChoked;
   }
 
   /** {@inheritDoc} */
+  @Override
   public void setAllowChoked(boolean allowChoked) {
     this.allowChoked = allowChoked;
   }
 
   /**
-   * <p>
    * isAllowLaminar.
-   * </p>
    *
    * @return a boolean
    */
@@ -68,9 +69,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * Setter for the field <code>allowLaminar</code>.
-   * </p>
    *
    * @param allowLaminar a boolean
    */
@@ -79,9 +78,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * isFullOutput.
-   * </p>
    *
    * @return a boolean
    */
@@ -90,9 +87,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fullOutput</code>.
-   * </p>
    *
    * @param fullOutput a boolean
    */
@@ -105,30 +100,22 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * Constructor for ControlValveSizing_IEC_60534.
-   * </p>
    */
   public ControlValveSizing_IEC_60534() {
-    super();
   }
 
   /**
-   * <p>
    * Constructor for ControlValveSizing_IEC_60534.
-   * </p>
    *
-   * @param valveMechanicalDesign a
-   *        {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
+   * @param valveMechanicalDesign a {@link neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign} object
    */
   public ControlValveSizing_IEC_60534(ValveMechanicalDesign valveMechanicalDesign) {
     super(valveMechanicalDesign);
   }
 
   /**
-   * <p>
    * getFL.
-   * </p>
    *
    * @return a double
    */
@@ -137,9 +124,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * setFL.
-   * </p>
    *
    * @param FL a double
    */
@@ -148,9 +133,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * getFd.
-   * </p>
    *
    * @return a double
    */
@@ -159,9 +142,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * setFd.
-   * </p>
    *
    * @param Fd a double
    */
@@ -170,9 +151,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * getD1.
-   * </p>
    *
    * @return a double
    */
@@ -181,9 +160,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * setD1.
-   * </p>
    *
    * @param D1 a double
    */
@@ -192,9 +169,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * getD2.
-   * </p>
    *
    * @return a double
    */
@@ -203,9 +178,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * setD2.
-   * </p>
    *
    * @param D2 a double
    */
@@ -214,9 +187,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * Getter for the field <code>d</code>.
-   * </p>
    *
    * @return a double
    */
@@ -225,9 +196,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * Setter for the field <code>d</code>.
-   * </p>
    *
    * @param d a double
    */
@@ -237,25 +206,23 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
   // === Main API ===
   /** {@inheritDoc} */
+  @Override
   public Map<String, Object> calcValveSize(double percentOpening) {
-    SystemInterface fluid =
-        ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
+    SystemInterface fluid = ((ThrottlingValve) valveMechanicalDesign.getProcessEquipment()).getInletStream().getFluid();
     // Map<String, Object> result;
     if (fluid.hasPhaseType(PhaseType.GAS)) {
-      return sizeControlValveGas(fluid.getTemperature(), fluid.getMolarMass("gr/mol"),
-          fluid.getGamma2(), fluid.getZ(), getValve().getInletPressure() * 1e5,
-          getValve().getOutletPressure() * 1e5, fluid.getFlowRate("m3/sec"), percentOpening);
+      return sizeControlValveGas(fluid.getTemperature(), fluid.getMolarMass("gr/mol"), fluid.getGamma2(), fluid.getZ(),
+          getValve().getInletPressure() * 1e5, getValve().getOutletPressure() * 1e5, fluid.getFlowRate("m3/sec"),
+          percentOpening);
     } else {
       return sizeControlValveLiquid(fluid.getDensity("kg/m3"), fluid.getZ(), fluid.getPC() * 1e5,
-          getValve().getInletPressure() * 1e5, getValve().getOutletPressure() * 1e5,
-          fluid.getFlowRate("m3/sec"), percentOpening);
+          getValve().getInletPressure() * 1e5, getValve().getOutletPressure() * 1e5, fluid.getFlowRate("m3/sec"),
+          percentOpening);
     }
   }
 
   /**
-   * <p>
    * getValve.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.valve.ValveInterface} object
    */
@@ -287,10 +254,9 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @param percentOpening Valve opening percentage (0-100)
    * @return a map containing the sizing results
    */
-  public Map<String, Object> sizeControlValve(FluidType type, double rhoOrT, double MW, double mu,
-      double gammaOrPsat, double ZOrPc, double P1, double P2, double Q, Double D1, Double D2,
-      Double d, double FL, double Fd, double xTOrNone, boolean allowChoked, boolean allowLaminar,
-      boolean fullOutput, double percentOpening) {
+  public Map<String, Object> sizeControlValve(FluidType type, double rhoOrT, double MW, double mu, double gammaOrPsat,
+      double ZOrPc, double P1, double P2, double Q, Double D1, Double D2, Double d, double FL, double Fd,
+      double xTOrNone, boolean allowChoked, boolean allowLaminar, boolean fullOutput, double percentOpening) {
     // Map<String, Object> result = fullOutput ? new HashMap<>() : null;
 
     if (type == FluidType.LIQUID) {
@@ -303,8 +269,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * Sizes a control valve for a liquid based on the provided parameters. Aligned with IEC 60534 and
-   * 'fluids' library.
+   * Sizes a control valve for a liquid based on the provided parameters. Aligned with IEC 60534 and 'fluids' library.
    *
    * @param rho Density of the liquid [kg/m^3]
    * @param Psat Saturation pressure of the liquid [Pa]
@@ -315,8 +280,8 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @param percentOpening Valve opening percentage (0-100)
    * @return A map containing the sizing results (Kv, Kv, choked, etc.).
    */
-  public Map<String, Object> sizeControlValveLiquid(double rho, double Psat, double Pc, double P1,
-      double P2, double Q, double percentOpening) {
+  public Map<String, Object> sizeControlValveLiquid(double rho, double Psat, double Pc, double P1, double P2, double Q,
+      double percentOpening) {
     Map<String, Object> ans = new HashMap<>();
 
     // Convert units to match IEC formulas (Pressure: Pa -> kPa, Flow: m^3/s -> m^3/h)
@@ -339,8 +304,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
       Kv = Qloc / (N1 * Math.sqrt(dP * rho0 / rho));
     }
     if (valveMechanicalDesign != null) {
-      Kv = Kv
-          / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
+      Kv = Kv / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
     }
 
     ans.put("FF", FF);
@@ -355,10 +319,10 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the flow rate through a control valve based on the valve opening, Kv, and
-   * inlet/outlet streams.
+   * Calculates the flow rate through a control valve based on the valve opening, Kv, and inlet/outlet streams.
    * </p>
    */
+  @Override
   public double calculateFlowRateFromValveOpening(double adjustedKv, StreamInterface inletStream,
       StreamInterface outletStream) {
     if (inletStream.getThermoSystem().hasPhaseType(PhaseType.GAS)) {
@@ -369,9 +333,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * calculateFlowRateFromValveOpeningGas.
-   * </p>
    *
    * @param adjustedKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -380,12 +342,10 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    */
   public double calculateFlowRateFromValveOpeningGas(double adjustedKv, StreamInterface inletStream,
       StreamInterface outletStream) {
-    return calculateFlowRateFromKvAndValveOpeningGas(adjustedKv,
-        inletStream.getThermoSystem().getTemperature("K"),
-        inletStream.getThermoSystem().getMolarMass("gr/mol"),
-        inletStream.getThermoSystem().getViscosity("kg/msec"),
-        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(),
-        inletStream.getPressure("Pa"), outletStream.getPressure("Pa"), FL, xT, allowChoked);
+    return calculateFlowRateFromKvAndValveOpeningGas(adjustedKv, inletStream.getThermoSystem().getTemperature("K"),
+        inletStream.getThermoSystem().getMolarMass("gr/mol"), inletStream.getThermoSystem().getViscosity("kg/msec"),
+        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(), inletStream.getPressure("Pa"),
+        outletStream.getPressure("Pa"), FL, xT, allowChoked);
   }
 
   /**
@@ -399,8 +359,8 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @param P2 Downstream pressure [Pa]
    * @return Flow rate [m^3/s]
    */
-  public double calculateFlowRateFromValveOpeningLiquid(double adjustedKv, double rho, double Psat,
-      double Pc, double P1, double P2) {
+  public double calculateFlowRateFromValveOpeningLiquid(double adjustedKv, double rho, double Psat, double Pc,
+      double P1, double P2) {
 
     // Use consistent kPa unit system
     double locP1 = P1 / 1000.0;
@@ -424,22 +384,19 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * calculateFlowRateFromValveOpeningLiquid.
-   * </p>
    *
    * @param adjustedKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */
-  public double calculateFlowRateFromValveOpeningLiquid(double adjustedKv,
-      StreamInterface inletStream, StreamInterface outletStream) {
-    return calculateFlowRateFromValveOpeningLiquid(adjustedKv,
-        inletStream.getThermoSystem().getDensity("kg/m3"),
+  public double calculateFlowRateFromValveOpeningLiquid(double adjustedKv, StreamInterface inletStream,
+      StreamInterface outletStream) {
+    return calculateFlowRateFromValveOpeningLiquid(adjustedKv, inletStream.getThermoSystem().getDensity("kg/m3"),
         inletStream.getThermoSystem().getPhase(0).getPressure("Pa"),
-        inletStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
-        inletStream.getPressure("Pa"), outletStream.getPressure("Pa"));
+        inletStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5, inletStream.getPressure("Pa"),
+        outletStream.getPressure("Pa"));
   }
 
   /**
@@ -454,8 +411,8 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @param P2 Downstream pressure [Pa]
    * @return Required valve opening percentage (0-100).
    */
-  public double calculateValveOpeningFromFlowRateLiquid(double Q, double Kv, double rho,
-      double Psat, double Pc, double P1, double P2) {
+  public double calculateValveOpeningFromFlowRateLiquid(double Q, double Kv, double rho, double Psat, double Pc,
+      double P1, double P2) {
     // Use consistent kPa unit system
     double locP1 = P1 / 1000.0;
     double locP2 = P2 / 1000.0;
@@ -480,9 +437,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * calculateValveOpeningFromFlowRateLiquid.
-   * </p>
    *
    * @param Q a double
    * @param Kv a double
@@ -490,18 +445,17 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */
-  public double calculateValveOpeningFromFlowRateLiquid(double Q, double Kv,
-      StreamInterface inletStream, StreamInterface outletStream) {
-    return calculateValveOpeningFromFlowRateLiquid(Q, Kv,
-        inletStream.getThermoSystem().getDensity("kg/m3"),
+  public double calculateValveOpeningFromFlowRateLiquid(double Q, double Kv, StreamInterface inletStream,
+      StreamInterface outletStream) {
+    return calculateValveOpeningFromFlowRateLiquid(Q, Kv, inletStream.getThermoSystem().getDensity("kg/m3"),
         inletStream.getThermoSystem().getPhase(0).getPressure("Pa"),
-        inletStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5,
-        inletStream.getPressure("Pa"), outletStream.getPressure("Pa"));
+        inletStream.getThermoSystem().getPhase(0).getPseudoCriticalPressure() * 1e5, inletStream.getPressure("Pa"),
+        outletStream.getPressure("Pa"));
   }
 
   /**
-   * Finds the outlet pressure for a given flow rate Q and a fixed (actual) Kv in a liquid valve.
-   * This is solved iteratively using a bisection search algorithm.
+   * Finds the outlet pressure for a given flow rate Q and a fixed (actual) Kv in a liquid valve. This is solved
+   * iteratively using a bisection search algorithm.
    *
    * @param rho Density of the liquid [kg/m^3]
    * @param Psat Saturation pressure [Pa]
@@ -516,9 +470,8 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @param allowLaminar Whether to allow laminar flow
    * @return Outlet pressure P2 [Pa]
    */
-  public double findOutletPressureForFixedKvLiquid(double rho, double Psat, double Pc, double mu,
-      double P1, double Q, double actualKv, double FL, double Fd, boolean allowChoked,
-      boolean allowLaminar) {
+  public double findOutletPressureForFixedKvLiquid(double rho, double Psat, double Pc, double mu, double P1, double Q,
+      double actualKv, double FL, double Fd, boolean allowChoked, boolean allowLaminar) {
     // --- CORRECTED: The entire bisection search is performed in kilopascals (kPa) ---
 
     // Set bisection bounds for P2 in kPa.
@@ -535,8 +488,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
       double guessP2_pa = P2_mid_kPa * 1000.0;
 
       Map<String, Object> result = sizeControlValveLiquid(rho, Psat, Pc, P1, guessP2_pa, Q,
-          ((ValveInterface) getValveMechanicalDesign().getProcessEquipment())
-              .getPercentValveOpening());
+          ((ValveInterface) getValveMechanicalDesign().getProcessEquipment()).getPercentValveOpening());
       double requiredKv = (double) result.get("Kv");
 
       // Bisection logic
@@ -564,9 +516,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   // add a general method to find outlet pressure for fixed Kv that work for both gas and liquid
 
   /**
-   * <p>
    * findOutletPressureForFixedKvLiquid.
-   * </p>
    *
    * @param actualKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -581,8 +531,8 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * Sizes a control valve for a gas based on the provided parameters. CORRECTED to include Fgamma,
-   * aligning with IEC 60534 and 'fluids' library.
+   * Sizes a control valve for a gas based on the provided parameters. CORRECTED to include Fgamma, aligning with IEC
+   * 60534 and 'fluids' library.
    *
    * @param T Temperature of the gas [K]
    * @param MW Molecular weight of the gas [g/mol]
@@ -594,14 +544,19 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @param percentOpening Valve opening percentage (0-100)
    * @return A map containing the sizing results (Kv, Kv, Y, choked, etc.).
    */
-  public Map<String, Object> sizeControlValveGas(double T, double MW, double gamma, double Z,
-      double P1, double P2, double Q, double percentOpening) {
+  public Map<String, Object> sizeControlValveGas(double T, double MW, double gamma, double Z, double P1, double P2,
+      double Q, double percentOpening) {
     Map<String, Object> ans = new HashMap<>();
 
     // Convert units (Pressure: Pa -> kPa, Flow: m^3/s -> m^3/h)
     double locP1 = P1 / 1000.0;
     double locP2 = P2 / 1000.0;
     double Qloc = Q * 3600.0;
+
+    // IEC 60534-2-1 requires Q at standard conditions (273.15 K, 101.325 kPa)
+    // Convert actual volumetric flow to standard volumetric flow
+    double Qloc_std = Qloc * (locP1 / P_STD_KPA) * (T_STD / T) / Z;
+
     double dP = locP1 - locP2;
     double x = dP / locP1;
 
@@ -612,16 +567,15 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
 
     double Kv;
     if (choked && isAllowChoked()) {
-      // Choked flow formula, CORRECTED with Fgamma
-      Kv = Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / (this.xT * Fgamma));
+      // Choked flow formula per IEC 60534, using standard volumetric flow
+      Kv = Qloc_std / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / (this.xT * Fgamma));
     } else {
-      // Non-choked flow formula
-      Kv = Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
+      // Non-choked flow formula per IEC 60534, using standard volumetric flow
+      Kv = Qloc_std / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
     }
 
     if (valveMechanicalDesign != null) {
-      Kv = Kv
-          / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
+      Kv = Kv / valveMechanicalDesign.getValveCharacterizationMethod().getOpeningFactor(percentOpening);
     }
 
     ans.put("choked", choked);
@@ -649,9 +603,8 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @param allowChoked whether to allow choked flow
    * @return the calculated flow rate in m^3/s
    */
-  public double calculateFlowRateFromKvAndValveOpeningGas(double adjustedKv, double T, double MW,
-      double mu, double gamma, double Z, double P1, double P2, double FL, double xT,
-      boolean allowChoked) {
+  public double calculateFlowRateFromKvAndValveOpeningGas(double adjustedKv, double T, double MW, double mu,
+      double gamma, double Z, double P1, double P2, double FL, double xT, boolean allowChoked) {
     // Convert pressures to bar
     double locP1 = P1 / 1000.0;
     double locP2 = P2 / 1000.0;
@@ -669,36 +622,35 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     double Y = Math.max(1 - x / (3 * Fgamma * xT), 2.0 / 3.0); // Expansion factor
     boolean choked = isChokedTurbulentG(x, Fgamma, xT);
 
-    // Calculate flow rate in m^3/h
-    double Qloc;
+    // IEC 60534 formula yields standard volumetric flow [m^3/h at 273.15 K, 101.325 kPa]
+    double Qloc_std;
     if (choked && allowChoked) {
-      Qloc = effectiveKv * N9 * locP1 * Y / Math.sqrt(MW * T * Z / xT / Fgamma);
+      Qloc_std = effectiveKv * N9 * locP1 * Y / Math.sqrt(MW * T * Z / xT / Fgamma);
     } else {
-      Qloc = effectiveKv * N9 * locP1 * Y / Math.sqrt(MW * T * Z / x);
+      Qloc_std = effectiveKv * N9 * locP1 * Y / Math.sqrt(MW * T * Z / x);
     }
+
+    // Convert standard volumetric flow back to actual volumetric flow at (P1, T, Z)
+    double Qloc = Qloc_std * (P_STD_KPA / locP1) * (T / T_STD) * Z;
 
     // Convert flow rate from m^3/h to m^3/s
     return Qloc / 3600.0;
   }
 
   /**
-   * <p>
    * calculateFlowRateFromKvAndValveOpeningGas.
-   * </p>
    *
    * @param adjustedKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */
-  public double calculateFlowRateFromKvAndValveOpeningGas(double adjustedKv,
-      StreamInterface inletStream, StreamInterface outletStream) {
-    return calculateFlowRateFromKvAndValveOpeningGas(adjustedKv,
-        inletStream.getThermoSystem().getTemperature("K"),
-        inletStream.getThermoSystem().getMolarMass("g/mol"),
-        inletStream.getThermoSystem().getViscosity("kg/msec"),
-        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(),
-        inletStream.getPressure("Pa"), outletStream.getPressure("Pa"), FL, FD, allowChoked);
+  public double calculateFlowRateFromKvAndValveOpeningGas(double adjustedKv, StreamInterface inletStream,
+      StreamInterface outletStream) {
+    return calculateFlowRateFromKvAndValveOpeningGas(adjustedKv, inletStream.getThermoSystem().getTemperature("K"),
+        inletStream.getThermoSystem().getMolarMass("g/mol"), inletStream.getThermoSystem().getViscosity("kg/msec"),
+        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(), inletStream.getPressure("Pa"),
+        outletStream.getPressure("Pa"), FL, FD, allowChoked);
   }
 
   /**
@@ -718,15 +670,17 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @param allowChoked whether to allow choked flow
    * @return the valve opening percentage (0 to 100%)
    */
-  public double calculateValveOpeningFromFlowRateGas(double Q, double Kv, double T, double MW,
-      double mu, double gamma, double Z, double P1, double P2, double FL, double xT,
-      boolean allowChoked) {
+  public double calculateValveOpeningFromFlowRateGas(double Q, double Kv, double T, double MW, double mu, double gamma,
+      double Z, double P1, double P2, double FL, double xT, boolean allowChoked) {
     // Convert pressures to bar
     double locP1 = P1 / 1000.0;
     double locP2 = P2 / 1000.0;
 
     // Convert flow rate from m^3/s to m^3/h
     double Qloc = Q * 3600.0;
+
+    // IEC 60534-2-1 requires Q at standard conditions (273.15 K, 101.325 kPa)
+    double Qloc_std = Qloc * (locP1 / P_STD_KPA) * (T_STD / T) / Z;
 
     // Gas properties
     double Vm = Z * R * T / (locP1 * 1000.0); // Molar volume (m^3/kmol)
@@ -739,12 +693,12 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
     double Y = Math.max(1 - x / (3 * Fgamma * xT), 2.0 / 3.0); // Expansion factor
     boolean choked = isChokedTurbulentG(x, Fgamma, xT);
 
-    // Calculate the effective Kv required for the given flow rate
+    // Calculate the effective Kv required for the given flow rate (using standard flow)
     double effectiveKv;
     if (choked && allowChoked) {
-      effectiveKv = Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / xT / Fgamma);
+      effectiveKv = Qloc_std / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / xT / Fgamma);
     } else {
-      effectiveKv = Qloc / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
+      effectiveKv = Qloc_std / (N9 * locP1 * Y) * Math.sqrt(MW * T * Z / x);
     }
 
     // Calculate valve opening percentage
@@ -760,9 +714,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * calculateValveOpeningFromFlowRateGas.
-   * </p>
    *
    * @param Q a double
    * @param Kv a double
@@ -773,17 +725,15 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    */
   public double calculateValveOpeningFromFlowRateGas(double Q, double Kv, double valveOpening,
       StreamInterface inletStream, StreamInterface outletStream) {
-    return calculateValveOpeningFromFlowRateGas(Q, Kv,
-        inletStream.getThermoSystem().getTemperature("K"),
-        inletStream.getThermoSystem().getMolarMass("g/mol"),
-        inletStream.getThermoSystem().getViscosity("kg/msec"),
-        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(),
-        inletStream.getPressure("Pa"), outletStream.getPressure("Pa"), FL, FD, allowChoked);
+    return calculateValveOpeningFromFlowRateGas(Q, Kv, inletStream.getThermoSystem().getTemperature("K"),
+        inletStream.getThermoSystem().getMolarMass("g/mol"), inletStream.getThermoSystem().getViscosity("kg/msec"),
+        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(), inletStream.getPressure("Pa"),
+        outletStream.getPressure("Pa"), FL, FD, allowChoked);
   }
 
   /**
-   * Finds the outlet pressure for a given flow rate and a fixed Kv in a gas valve. This is solved
-   * iteratively using a bisection search algorithm.
+   * Finds the outlet pressure for a given flow rate and a fixed Kv in a gas valve. This is solved iteratively using a
+   * bisection search algorithm.
    *
    * @param T Temperature [K]
    * @param MW Molecular Weight [g/mol]
@@ -794,8 +744,8 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * @param actualKv The actual installed valve's Kv
    * @return The calculated outlet pressure P2 [Pa] that satisfies the conditions.
    */
-  public double findOutletPressureForFixedKvGas(double T, double MW, double gamma, double Z,
-      double P1, double Q, double actualKv) {
+  public double findOutletPressureForFixedKvGas(double T, double MW, double gamma, double Z, double P1, double Q,
+      double actualKv) {
     // --- CORRECTED: The entire bisection search is performed in Pascals (Pa) ---
 
     // Set bisection bounds for P2 in Pascals.
@@ -842,9 +792,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
   }
 
   /**
-   * <p>
    * findOutletPressureForFixedKvGas.
-   * </p>
    *
    * @param actualKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -852,9 +800,9 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    */
   public double findOutletPressureForFixedKvGas(double actualKv, StreamInterface inletStream) {
     return findOutletPressureForFixedKvGas(inletStream.getThermoSystem().getTemperature("K"),
-        inletStream.getThermoSystem().getMolarMass("gr/mol"),
-        inletStream.getThermoSystem().getGamma2(), inletStream.getThermoSystem().getZ(),
-        inletStream.getPressure("Pa"), inletStream.getFlowRate("m3/sec"), actualKv);
+        inletStream.getThermoSystem().getMolarMass("gr/mol"), inletStream.getThermoSystem().getGamma2(),
+        inletStream.getThermoSystem().getZ(), inletStream.getPressure("Pa"), inletStream.getFlowRate("m3/sec"),
+        actualKv);
   }
 
   boolean isChokedTurbulentL(double dP, double P1, double Psat, double FF, double FL) {
@@ -885,6 +833,7 @@ public class ControlValveSizing_IEC_60534 extends ControlValveSizing {
    * Finds the outlet pressure for a given flow rate and fixed Kv, for both gas and liquid.
    * </p>
    */
+  @Override
   public double findOutletPressureForFixedKv(double actualKv, StreamInterface inletStream) {
     if (inletStream.getThermoSystem().hasPhaseType(PhaseType.GAS)) {
       return findOutletPressureForFixedKvGas(actualKv, inletStream);

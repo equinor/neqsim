@@ -10,9 +10,7 @@ import java.sql.Time;
 import neqsim.statistics.experimentalsamplecreation.readdatafromfile.DataObject;
 
 /**
- * <p>
  * WettedWallColumnDataObject class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -30,16 +28,13 @@ public class WettedWallColumnDataObject extends DataObject {
   Time time = null;
 
   /**
-   * <p>
    * Constructor for WettedWallColumnDataObject.
-   * </p>
    */
-  public WettedWallColumnDataObject() {}
+  public WettedWallColumnDataObject() {
+  }
 
   /**
-   * <p>
    * Setter for the field <code>time</code>.
-   * </p>
    *
    * @param time a {@link java.lang.String} object
    */
@@ -48,9 +43,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Getter for the field <code>time</code>.
-   * </p>
    *
    * @return a long
    */
@@ -59,9 +52,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param pressure a double
    */
@@ -70,9 +61,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Getter for the field <code>pressure</code>.
-   * </p>
    *
    * @return a double
    */
@@ -81,9 +70,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Setter for the field <code>inletGasTemperature</code>.
-   * </p>
    *
    * @param temperature a double
    */
@@ -92,9 +79,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Getter for the field <code>inletGasTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -103,9 +88,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Setter for the field <code>inletLiquidTemperature</code>.
-   * </p>
    *
    * @param temperature a double
    */
@@ -114,9 +97,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Getter for the field <code>inletLiquidTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -125,9 +106,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Setter for the field <code>outletGasTemperature</code>.
-   * </p>
    *
    * @param temperature a double
    */
@@ -136,9 +115,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outletGasTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -147,9 +124,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Setter for the field <code>outletLiquidTemperature</code>.
-   * </p>
    *
    * @param temperature a double
    */
@@ -158,9 +133,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outletLiquidTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -169,9 +142,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Setter for the field <code>columnWallTemperature</code>.
-   * </p>
    *
    * @param temperature a double
    */
@@ -180,9 +151,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Getter for the field <code>columnWallTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -191,9 +160,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * setInletTotalGasFlow.
-   * </p>
    *
    * @param totalGasFlow a double
    */
@@ -202,9 +169,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * getInletTotalGasFlow.
-   * </p>
    *
    * @return a double
    */
@@ -213,9 +178,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Setter for the field <code>co2SupplyFlow</code>.
-   * </p>
    *
    * @param co2Flow a double
    */
@@ -224,9 +187,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Getter for the field <code>co2SupplyFlow</code>.
-   * </p>
    *
    * @return a double
    */
@@ -235,9 +196,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Setter for the field <code>inletLiquidFlow</code>.
-   * </p>
    *
    * @param inletLiquidFlow a double
    */
@@ -246,9 +205,7 @@ public class WettedWallColumnDataObject extends DataObject {
   }
 
   /**
-   * <p>
    * Getter for the field <code>inletLiquidFlow</code>.
-   * </p>
    *
    * @return a double
    */

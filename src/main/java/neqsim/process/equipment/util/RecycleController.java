@@ -3,9 +3,9 @@ package neqsim.process.equipment.util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import neqsim.process.util.uncertainty.SensitivityMatrix;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.util.uncertainty.SensitivityMatrix;
 
 /**
  * RecycleController class for managing multiple recycle streams in process simulations.
@@ -42,12 +42,15 @@ public class RecycleController implements java.io.Serializable {
   /**
    * Constructor for RecycleController.
    */
-  public RecycleController() {}
+  public RecycleController() {
+  }
 
   /**
    * Initializes the controller for a new convergence cycle.
    */
   public void init() {
+    minimumPriorityLevel = 100;
+    maximumPriorityLevel = 100;
     for (Recycle recyc : recycleArray) {
       recyc.resetIterations();
       if (recyc.getPriority() < minimumPriorityLevel) {
@@ -67,18 +70,14 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * resetPriorityLevel.
-   * </p>
    */
   public void resetPriorityLevel() {
     currentPriorityLevel = minimumPriorityLevel;
   }
 
   /**
-   * <p>
    * addRecycle.
-   * </p>
    *
    * @param recycle a {@link neqsim.process.equipment.util.Recycle} object
    */
@@ -88,9 +87,7 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * doSolveRecycle.
-   * </p>
    *
    * @param recycle a {@link neqsim.process.equipment.util.Recycle} object
    * @return a boolean
@@ -104,9 +101,7 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * isHighestPriority.
-   * </p>
    *
    * @param recycle a {@link neqsim.process.equipment.util.Recycle} object
    * @return a boolean
@@ -120,9 +115,7 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solvedCurrentPriorityLevel.
-   * </p>
    *
    * @return a boolean
    */
@@ -138,18 +131,14 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * nextPriorityLevel.
-   * </p>
    */
   public void nextPriorityLevel() {
     currentPriorityLevel = maximumPriorityLevel;
   }
 
   /**
-   * <p>
    * hasLoverPriorityLevel.
-   * </p>
    *
    * @return a boolean
    */
@@ -162,9 +151,7 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * hasHigherPriorityLevel.
-   * </p>
    *
    * @return a boolean
    */
@@ -177,15 +164,15 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solvedAll.
-   * </p>
    *
    * @return a boolean
    */
   public boolean solvedAll() {
     for (Recycle recyc : recycleArray) {
-      logger.info(recyc.getName() + " solved " + recyc.solved());
+      if (logger.isDebugEnabled()) {
+        logger.debug(recyc.getName() + " solved " + recyc.solved());
+      }
       if (!recyc.solved()) {
         return false;
       }
@@ -194,19 +181,50 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
+   * Compute the maximum tolerance-normalized error across all registered recycles. Each recycle contributes the largest
+   * of its flow, composition, temperature and pressure errors divided by the corresponding tolerance. A value below 1.0
+   * means every recycle is within its tolerances. Used by the process solver to detect a stalled (non-improving)
+   * recycle set so it can stop early instead of iterating to the cap.
+   *
+   * @return the maximum normalized recycle error, or 0.0 when there are no recycles
+   */
+  public double getMaxNormalizedError() {
+    double maxNorm = 0.0;
+    for (Recycle recyc : recycleArray) {
+      maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorFlow(), recyc.getFlowTolerance()));
+      maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorComposition(), recyc.getCompositionTolerance()));
+      maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorTemperature(), recyc.getTemperatureTolerance()));
+      maxNorm = Math.max(maxNorm, normalizedError(recyc.getErrorPressure(), recyc.getPressureTolerance()));
+    }
+    return maxNorm;
+  }
+
+  /**
+   * Normalize an absolute error by its tolerance, guarding against a non-positive tolerance.
+   *
+   * @param error the absolute error value
+   * @param tolerance the convergence tolerance
+   * @return the tolerance-normalized error magnitude
+   */
+  private static double normalizedError(double error, double tolerance) {
+    double t = tolerance > 0.0 ? tolerance : 1.0e-12;
+    double e = Math.abs(error);
+    return Double.isFinite(e) ? e / t : Double.POSITIVE_INFINITY;
+  }
+
+  /**
    * clear.
-   * </p>
    */
   public void clear() {
     recycleArray.clear();
     priorityArray.clear();
+    minimumPriorityLevel = 100;
+    maximumPriorityLevel = 100;
+    currentPriorityLevel = 100;
   }
 
   /**
-   * <p>
    * Getter for the field <code>currentPriorityLevel</code>.
-   * </p>
    *
    * @return a int
    */
@@ -215,9 +233,7 @@ public class RecycleController implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>currentPriorityLevel</code>.
-   * </p>
    *
    * @param currentPriorityLevel a int
    */
@@ -228,8 +244,7 @@ public class RecycleController implements java.io.Serializable {
   /** {@inheritDoc} */
   @Override
   public int hashCode() {
-    return Objects.hash(currentPriorityLevel, maximumPriorityLevel, minimumPriorityLevel,
-        priorityArray, recycleArray);
+    return Objects.hash(currentPriorityLevel, maximumPriorityLevel, minimumPriorityLevel, priorityArray, recycleArray);
   }
 
   /** {@inheritDoc} */
@@ -245,10 +260,8 @@ public class RecycleController implements java.io.Serializable {
       return false;
     }
     RecycleController other = (RecycleController) obj;
-    return currentPriorityLevel == other.currentPriorityLevel
-        && maximumPriorityLevel == other.maximumPriorityLevel
-        && minimumPriorityLevel == other.minimumPriorityLevel
-        && Objects.equals(priorityArray, other.priorityArray)
+    return currentPriorityLevel == other.currentPriorityLevel && maximumPriorityLevel == other.maximumPriorityLevel
+        && minimumPriorityLevel == other.minimumPriorityLevel && Objects.equals(priorityArray, other.priorityArray)
         && Objects.equals(recycleArray, other.recycleArray);
   }
 
@@ -292,9 +305,9 @@ public class RecycleController implements java.io.Serializable {
    * Enables or disables coordinated Broyden acceleration across all recycles at the same priority.
    *
    * <p>
-   * When enabled, all recycles at the current priority level will share a single Broyden
-   * accelerator, treating the combined tear stream values as a single multi-variable system. This
-   * can improve convergence for tightly coupled recycle loops.
+   * When enabled, all recycles at the current priority level will share a single Broyden accelerator, treating the
+   * combined tear stream values as a single multi-variable system. This can improve convergence for tightly coupled
+   * recycle loops.
    *
    * <p>
    * When disabled (default), each recycle uses its own acceleration method independently.
@@ -356,10 +369,9 @@ public class RecycleController implements java.io.Serializable {
    * Performs simultaneous modular solving for all recycles at the current priority level.
    *
    * <p>
-   * This method collects all tear stream variables from recycles at the current priority level into
-   * a single vector and applies global Broyden acceleration. This approach can significantly
-   * improve convergence for tightly coupled recycle loops compared to solving each recycle
-   * independently.
+   * This method collects all tear stream variables from recycles at the current priority level into a single vector and
+   * applies global Broyden acceleration. This approach can significantly improve convergence for tightly coupled
+   * recycle loops compared to solving each recycle independently.
    *
    * <p>
    * The algorithm:
@@ -383,10 +395,8 @@ public class RecycleController implements java.io.Serializable {
     int[] dimensions = new int[currentRecycles.size()];
     for (int i = 0; i < currentRecycles.size(); i++) {
       Recycle recycle = currentRecycles.get(i);
-      if (recycle.getOutletStream() != null
-          && recycle.getOutletStream().getThermoSystem() != null) {
-        int numComponents =
-            recycle.getOutletStream().getThermoSystem().getPhase(0).getNumberOfComponents();
+      if (recycle.getOutletStream() != null && recycle.getOutletStream().getThermoSystem() != null) {
+        int numComponents = recycle.getOutletStream().getThermoSystem().getPhase(0).getNumberOfComponents();
         dimensions[i] = 3 + numComponents; // T, P, flow, compositions
         totalDimension += dimensions[i];
       }
@@ -601,8 +611,8 @@ public class RecycleController implements java.io.Serializable {
    * Gets the sensitivity matrix from the Broyden convergence Jacobian.
    *
    * <p>
-   * This provides sensitivities computed as a byproduct of convergence, without additional
-   * simulations. The matrix represents d(output)/d(input) for tear stream variables.
+   * This provides sensitivities computed as a byproduct of convergence, without additional simulations. The matrix
+   * represents d(output)/d(input) for tear stream variables.
    *
    * @return SensitivityMatrix from convergence, or null if not available
    */

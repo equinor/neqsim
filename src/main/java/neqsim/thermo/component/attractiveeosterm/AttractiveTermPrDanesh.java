@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermPrDanesh class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class AttractiveTermPrDanesh extends AttractiveTermPr1978 {
   double mMod = 0;
 
   /**
-   * <p>
    * Constructor for AttractiveTermPrDanesh.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -87,8 +83,7 @@ public class AttractiveTermPrDanesh extends AttractiveTermPr1978 {
 
     return mMod * mMod / temperature / getComponent().getTC() / 2.0
         + (1.0 + mMod * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
-            / Math.sqrt(
-                temperature * temperature * temperature / (Math.pow(getComponent().getTC(), 3.0)))
+            / Math.sqrt(temperature * temperature * temperature / (Math.pow(getComponent().getTC(), 3.0)))
             / (getComponent().getTC() * getComponent().getTC()) / 2.0;
   }
 

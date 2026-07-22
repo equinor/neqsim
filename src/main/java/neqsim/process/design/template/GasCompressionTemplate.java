@@ -14,9 +14,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Template for creating multi-stage gas compression systems.
  *
  * <p>
- * This template creates a standard gas compression train consisting of multiple stages with
- * interstage cooling and liquid knockout. The number of stages is determined automatically based on
- * the overall pressure ratio or can be specified manually.
+ * This template creates a standard gas compression train consisting of multiple stages with interstage cooling and
+ * liquid knockout. The number of stages is determined automatically based on the overall pressure ratio or can be
+ * specified manually.
  * </p>
  *
  * <h2>Features</h2>
@@ -28,14 +28,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * ProcessBasis basis = new ProcessBasis();
  * basis.setFeedFluid(gasFluid);
  * basis.setFeedPressure(5.0); // bara
  * basis.setParameter("dischargePressure", 100.0); // bara
  * basis.setParameter("interstageTemperature", 40.0); // °C
- * 
+ *
  * GasCompressionTemplate template = new GasCompressionTemplate();
  * ProcessSystem compression = template.create(basis);
  * compression.run();
@@ -86,8 +86,7 @@ public class GasCompressionTemplate implements ProcessTemplate {
 
     double dischargePressure = basis.getParameter("dischargePressure", 100.0);
     double interstageTemp = basis.getParameter("interstageTemperature", DEFAULT_INTERSTAGE_TEMP_C);
-    double polytropicEfficiency =
-        basis.getParameter("polytropicEfficiency", DEFAULT_POLYTROPIC_EFFICIENCY);
+    double polytropicEfficiency = basis.getParameter("polytropicEfficiency", DEFAULT_POLYTROPIC_EFFICIENCY);
     int numStages = (int) basis.getParameter("numberOfStages", 0);
 
     // Calculate number of stages if not specified
@@ -136,8 +135,7 @@ public class GasCompressionTemplate implements ProcessTemplate {
       process.add(knockoutDrum);
 
       // Compressor
-      Compressor compressor =
-          new Compressor("Stage " + stage + " Compressor", knockoutDrum.getGasOutStream());
+      Compressor compressor = new Compressor("Stage " + stage + " Compressor", knockoutDrum.getGasOutStream());
       compressor.setOutletPressure(stageDischargePressure);
       compressor.setPolytropicEfficiency(polytropicEfficiency);
       compressor.setUsePolytropicCalc(true);
@@ -211,15 +209,15 @@ public class GasCompressionTemplate implements ProcessTemplate {
   /** {@inheritDoc} */
   @Override
   public String[] getRequiredEquipmentTypes() {
-    return new String[] {"Compressor", "Cooler", "Separator"};
+    return new String[] { "Compressor", "Cooler", "Separator" };
   }
 
   /** {@inheritDoc} */
   @Override
   public String[] getExpectedOutputs() {
-    return new String[] {"Compressed Gas - High pressure gas from final stage",
+    return new String[] { "Compressed Gas - High pressure gas from final stage",
         "Knockout Liquids - Condensate from each stage knockout drum",
-        "Compression Power - Total shaft power required"};
+        "Compression Power - Total shaft power required" };
   }
 
   /** {@inheritDoc} */

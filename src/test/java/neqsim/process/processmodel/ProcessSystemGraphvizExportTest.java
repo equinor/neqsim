@@ -30,6 +30,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Integration style regression test for the Graphviz export of a complex process model.
  */
 public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
+  private static final Path FIXTURE_DIR = Paths.get("src", "test", "java", "neqsim", "process", "processmodel");
+
   @Test
   public void exportGraphvizForComplexOilProcess(@TempDir Path tempDir) throws IOException {
     ProcessSystem process = createExampleProcess();
@@ -38,29 +40,23 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     process.exportToGraphviz(dotFile.toString());
 
     String dot = readString(dotFile);
-    String expectedDot = readString(Paths.get("src", "test", "java", "neqsim", "process",
-        "processmodel", "example-process.dot"));
+    String expectedDot = readString(FIXTURE_DIR.resolve("example-process.dot"));
     assertEquals(expectedDot.trim(), dot.trim(), "Graphviz export differs from expected fixture");
 
     assertTrue(dot.contains("\"well stream\""), "well stream node missing");
     assertTrue(dot.contains("\"20-HA-01\""), "first heater node missing");
     assertTrue(dot.contains("\"23-KA-01\""), "export compressor node missing");
 
-    assertTrue(dot.contains("\"well stream\" -> \"20-HA-01\""),
-        "connection from well stream to first heater missing");
+    assertTrue(dot.contains("\"well stream\" -> \"20-HA-01\""), "connection from well stream to first heater missing");
     assertTrue(dot.contains("\"20-VA-01\" -> \"VLV-100\""),
         "connection from first separator oil stream to throttling valve missing");
-    assertTrue(dot.contains("\"23-KA-03\" -> \"MIX-103\""),
-        "recompressor to gas mixer connection missing");
-    assertTrue(dot.contains("\"splitter\" -> \"25-HA-01\""),
-        "splitter to heat exchanger connection missing");
-    assertTrue(dot.contains("\"25-HA-01\" -> \"27-KA-01\""),
-        "heat exchanger to export compressor connection missing");
+    assertTrue(dot.contains("\"23-KA-03\" -> \"MIX-103\""), "recompressor to gas mixer connection missing");
+    assertTrue(dot.contains("\"splitter\" -> \"25-HA-01\""), "splitter to heat exchanger connection missing");
+    assertTrue(dot.contains("\"25-HA-01\" -> \"27-KA-01\""), "heat exchanger to export compressor connection missing");
   }
 
   @Test
-  public void exportGraphvizWithStreamAnnotationsAndTable(@TempDir Path tempDir)
-      throws IOException {
+  public void exportGraphvizWithStreamAnnotationsAndTable(@TempDir Path tempDir) throws IOException {
     ProcessSystem process = new ProcessSystem();
 
     Stream feed = new Stream("feed", createWellFluid());
@@ -82,12 +78,10 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     process.add(cooler);
     process.add(product);
 
-    ProcessSystemGraphvizExporter.GraphvizExportOptions options =
-        ProcessSystemGraphvizExporter.GraphvizExportOptions.builder()
-            .includeStreamTemperatures(true).includeStreamPressures(true)
-            .includeStreamFlowRates(true).includeStreamPropertyTable(true).tablePlacement(
-                ProcessSystemGraphvizExporter.GraphvizExportOptions.TablePlacement.BELOW)
-            .build();
+    ProcessSystemGraphvizExporter.GraphvizExportOptions options = ProcessSystemGraphvizExporter.GraphvizExportOptions
+        .builder().includeStreamTemperatures(true).includeStreamPressures(true).includeStreamFlowRates(true)
+        .includeStreamPropertyTable(true)
+        .tablePlacement(ProcessSystemGraphvizExporter.GraphvizExportOptions.TablePlacement.BELOW).build();
 
     Path dotFile = tempDir.resolve("annotated-process.dot");
     process.exportToGraphviz(dotFile.toString(), options);
@@ -101,24 +95,21 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     assertTrue(dot.contains("<TD>40.00 C</TD>"), "Feed stream temperature missing from table");
     assertTrue(dot.contains("<TD>50.00 bara</TD>"), "Feed stream pressure missing from table");
     assertTrue(dot.contains("<TD>1200.00 kg/hr</TD>"), "Feed stream flow rate missing from table");
-    assertTrue(dot.contains(
-        "\"feed\" -> \"heater\" [label=\"feed\\\\nT=40.00 C\\\\nP=50.00 bara\\\\nF=1200.00 kg/hr\"]"),
+    assertTrue(
+        dot.contains("\"feed\" -> \"heater\" [label=\"feed\\\\nT=40.00 C\\\\nP=50.00 bara\\\\nF=1200.00 kg/hr\"]"),
         "Stream edge does not include temperature, pressure, and flow rate annotations");
   }
 
   @Test
-  public void exportGraphvizForThreePhaseSeparatorProcess(@TempDir Path tempDir)
-      throws IOException {
+  public void exportGraphvizForThreePhaseSeparatorProcess(@TempDir Path tempDir) throws IOException {
     ProcessSystem process = createThreePhaseSeparatorProcess();
 
     Path dotFile = tempDir.resolve("three-phase-separator-process.dot");
     process.exportToGraphviz(dotFile.toString());
 
     String dot = readString(dotFile);
-    String expectedDot = readString(Paths.get("src", "test", "java", "neqsim", "process",
-        "processmodel", "three-phase-separator-process.dot"));
-    assertEquals(expectedDot.trim(), dot.trim(),
-        "Graphviz export differs from expected three-phase fixture");
+    String expectedDot = readString(FIXTURE_DIR.resolve("three-phase-separator-process.dot"));
+    assertEquals(expectedDot.trim(), dot.trim(), "Graphviz export differs from expected three-phase fixture");
 
     assertTrue(dot.contains("\"1st stage separator\" -> \"water out 1st stage\""),
         "water draw-off from first stage separator missing");
@@ -128,8 +119,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
         "gas connection from third stage separator missing");
     assertTrue(dot.contains("\"VG-23-006\" -> \"recycle 1st stage liquid\""),
         "liquid recycle to third stage separator missing");
-    assertTrue(dot.contains("\"23-KA-010\" -> \"gas mixer 2\""),
-        "third stage compressor discharge missing");
+    assertTrue(dot.contains("\"23-KA-010\" -> \"gas mixer 2\""), "third stage compressor discharge missing");
   }
 
   @Test
@@ -140,10 +130,8 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     process.exportToGraphviz(dotFile.toString());
 
     String dot = readString(dotFile);
-    String expectedDot = readString(Paths.get("src", "test", "java", "neqsim", "process",
-        "processmodel", "anti-surge-process.dot"));
-    assertEquals(expectedDot.trim(), dot.trim(),
-        "Graphviz export differs from expected anti-surge fixture");
+    String expectedDot = readString(FIXTURE_DIR.resolve("anti-surge-process.dot"));
+    assertEquals(expectedDot.trim(), dot.trim(), "Graphviz export differs from expected anti-surge fixture");
 
     assertTrue(dot.contains("\"3RD stage separator\" -> \"gas mixer 0\""),
         "third stage separator gas connection missing");
@@ -158,7 +146,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
   }
 
   private String readString(Path path) throws IOException {
-    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+    return new String(Files.readAllBytes(path), StandardCharsets.UTF_8).replace("\r\n", "\n");
   }
 
   private ProcessSystem createExampleProcess() {
@@ -169,24 +157,21 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
 
     Heater wellStreamCooler = new Heater("20-HA-01", wellStream);
 
-    ThreePhaseSeparator firstStageSeparator =
-        new ThreePhaseSeparator("20-VA-01", wellStreamCooler.getOutStream());
+    ThreePhaseSeparator firstStageSeparator = new ThreePhaseSeparator("20-VA-01", wellStreamCooler.getOutStream());
 
-    neqsim.process.equipment.valve.ThrottlingValve oilValve1 =
-        new neqsim.process.equipment.valve.ThrottlingValve("VLV-100",
-            firstStageSeparator.getOilOutStream());
+    neqsim.process.equipment.valve.ThrottlingValve oilValve1 = new neqsim.process.equipment.valve.ThrottlingValve(
+        "VLV-100", firstStageSeparator.getOilOutStream());
 
     Mixer oilSecondStageMixer = new Mixer("MIX-101");
     oilSecondStageMixer.addStream(oilValve1.getOutStream());
 
     Heater oilHeaterFromFirstStage = new Heater("20-HA-02", oilSecondStageMixer.getOutStream());
 
-    ThreePhaseSeparator secondStageSeparator =
-        new ThreePhaseSeparator("20-VA-02", oilHeaterFromFirstStage.getOutStream());
+    ThreePhaseSeparator secondStageSeparator = new ThreePhaseSeparator("20-VA-02",
+        oilHeaterFromFirstStage.getOutStream());
 
-    neqsim.process.equipment.valve.ThrottlingValve oilValve2 =
-        new neqsim.process.equipment.valve.ThrottlingValve("VLV-102",
-            secondStageSeparator.getOilOutStream());
+    neqsim.process.equipment.valve.ThrottlingValve oilValve2 = new neqsim.process.equipment.valve.ThrottlingValve(
+        "VLV-102", secondStageSeparator.getOilOutStream());
 
     Stream oilReflux = (Stream) wellStream.clone();
     oilReflux.setName("third stage reflux");
@@ -198,8 +183,8 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
 
     Heater oilHeaterFromSecondStage = new Heater("20-HA-03", thirdStageOilMixer.getOutletStream());
 
-    ThreePhaseSeparator thirdStageSeparator =
-        new ThreePhaseSeparator("20-VA-03", oilHeaterFromSecondStage.getOutStream());
+    ThreePhaseSeparator thirdStageSeparator = new ThreePhaseSeparator("20-VA-03",
+        oilHeaterFromSecondStage.getOutStream());
 
     Cooler firstStageCooler = new Cooler("23-HA-03", thirdStageSeparator.getGasOutStream());
 
@@ -212,8 +197,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     lpRecycle.setOutletStream(oilReflux);
     lpRecycle.setTolerance(1e-6);
 
-    Compressor firstStageRecompressor =
-        new Compressor("23-KA-03", firstStageScrubber.getGasOutStream());
+    Compressor firstStageRecompressor = new Compressor("23-KA-03", firstStageScrubber.getGasOutStream());
     firstStageRecompressor.setIsentropicEfficiency(0.75);
 
     Mixer firstStageGasMixer = new Mixer("MIX-103");
@@ -226,8 +210,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
 
     thirdStageOilMixer.addStream(secondStageScrubber.getLiquidOutStream());
 
-    Compressor secondStageRecompressor =
-        new Compressor("23-KA-02", secondStageScrubber.getGasOutStream());
+    Compressor secondStageRecompressor = new Compressor("23-KA-02", secondStageScrubber.getGasOutStream());
     secondStageRecompressor.setIsentropicEfficiency(0.75);
 
     Mixer exportGasMixer = new Mixer("MIX-100");
@@ -238,8 +221,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     Separator dewPointScrubber = new Separator("23-VG-01", dewPointCooler.getOutStream());
     oilSecondStageMixer.addStream(dewPointScrubber.getLiquidOutStream());
 
-    Compressor firstStageExportCompressor =
-        new Compressor("23-KA-01", dewPointScrubber.getGasOutStream());
+    Compressor firstStageExportCompressor = new Compressor("23-KA-01", dewPointScrubber.getGasOutStream());
     firstStageExportCompressor.setIsentropicEfficiency(0.75);
 
     Cooler dewPointCooler2 = new Cooler("24-HA-01", firstStageExportCompressor.getOutStream());
@@ -248,7 +230,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
 
     Splitter gasSplitter = new Splitter("splitter", dewPointScrubber2.getGasOutStream());
     gasSplitter.setSplitNumber(2);
-    gasSplitter.setFlowRates(new double[] {-1.0, 2966.0}, "kg/hr");
+    gasSplitter.setFlowRates(new double[] { -1.0, 2966.0 }, "kg/hr");
     Stream fuelGas = (Stream) gasSplitter.getSplitStream(1);
     fuelGas.setName("fuel gas");
 
@@ -261,12 +243,10 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     exportGasMixer.addStream(dewPointScrubber3.getLiquidOutStream());
     gasHeatExchanger.setFeedStream(1, dewPointScrubber3.getGasOutStream());
 
-    Compressor secondStageExportCompressor =
-        new Compressor("27-KA-01", gasHeatExchanger.getOutStream(1));
+    Compressor secondStageExportCompressor = new Compressor("27-KA-01", gasHeatExchanger.getOutStream(1));
     secondStageExportCompressor.setIsentropicEfficiency(0.75);
 
-    Cooler exportCompressorCooler =
-        new Cooler("27-HA-01", secondStageExportCompressor.getOutStream());
+    Cooler exportCompressorCooler = new Cooler("27-HA-01", secondStageExportCompressor.getOutStream());
     Stream exportGas = (Stream) exportCompressorCooler.getOutStream();
     exportGas.setName("export gas");
 
@@ -338,18 +318,15 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     feedHeater.setInletStream(feedMixer.getOutStream());
     feedHeater.setOutTemperature(60.0, "C");
 
-    ThreePhaseSeparator firstStageSeparator =
-        new ThreePhaseSeparator("1st stage separator", feedHeater.getOutStream());
+    ThreePhaseSeparator firstStageSeparator = new ThreePhaseSeparator("1st stage separator", feedHeater.getOutStream());
 
-    Stream waterOut1stStage =
-        new Stream("water out 1st stage", firstStageSeparator.getWaterOutStream());
+    Stream waterOut1stStage = new Stream("water out 1st stage", firstStageSeparator.getWaterOutStream());
 
-    ThrottlingValve valveOilFromFirstStage =
-        new ThrottlingValve("valve oil from first stage", firstStageSeparator.getOilOutStream());
+    ThrottlingValve valveOilFromFirstStage = new ThrottlingValve("valve oil from first stage",
+        firstStageSeparator.getOilOutStream());
     valveOilFromFirstStage.setOutletPressure(25.0, "bara");
 
-    Heater oilHeaterFromFirstStage =
-        new Heater("oil heater second stage", valveOilFromFirstStage.getOutStream());
+    Heater oilHeaterFromFirstStage = new Heater("oil heater second stage", valveOilFromFirstStage.getOutStream());
     oilHeaterFromFirstStage.setOutTemperature(55.0, "C");
 
     Stream recycleLiqStream2 = createHydrocarbonStream("recycle 2 nd stage");
@@ -357,15 +334,14 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     recycleLiqStream2.setTemperature(25.0, "C");
     recycleLiqStream2.setFlowRate(1.0, "kg/hr");
 
-    ThreePhaseSeparator secondStageSeparator =
-        new ThreePhaseSeparator("2nd stage separator", oilHeaterFromFirstStage.getOutStream());
+    ThreePhaseSeparator secondStageSeparator = new ThreePhaseSeparator("2nd stage separator",
+        oilHeaterFromFirstStage.getOutStream());
     secondStageSeparator.addStream(recycleLiqStream2);
 
-    Stream waterOut2ndStage =
-        new Stream("water out 2nd stage", secondStageSeparator.getWaterOutStream());
+    Stream waterOut2ndStage = new Stream("water out 2nd stage", secondStageSeparator.getWaterOutStream());
 
-    ThrottlingValve valveOilFromSecondStage =
-        new ThrottlingValve("valve oil from second stage", secondStageSeparator.getOilOutStream());
+    ThrottlingValve valveOilFromSecondStage = new ThrottlingValve("valve oil from second stage",
+        secondStageSeparator.getOilOutStream());
     valveOilFromSecondStage.setOutletPressure(10.0, "bara");
 
     Stream recycleLiqStream3 = createHydrocarbonStream("recycle 3rd stage");
@@ -373,8 +349,8 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     recycleLiqStream3.setTemperature(25.0, "C");
     recycleLiqStream3.setFlowRate(1.0, "kg/hr");
 
-    ThreePhaseSeparator thirdStageSeparator =
-        new ThreePhaseSeparator("3RD stage separator", valveOilFromSecondStage.getOutStream());
+    ThreePhaseSeparator thirdStageSeparator = new ThreePhaseSeparator("3RD stage separator",
+        valveOilFromSecondStage.getOutStream());
     thirdStageSeparator.addStream(recycleLiqStream3);
 
     Stream recycleGasStream1 = createHydrocarbonStream("recycle gas 1st stage");
@@ -388,11 +364,9 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
 
     Separator firstStageScrubber0 = new Separator("VG-23-002", gasMixer0.getOutStream());
 
-    Stream streamToClosedDrain =
-        new Stream("stream to closed drain", firstStageScrubber0.getLiquidOutStream());
+    Stream streamToClosedDrain = new Stream("stream to closed drain", firstStageScrubber0.getLiquidOutStream());
 
-    Compressor firstStageCompressor =
-        new Compressor("23-KA-004", firstStageScrubber0.getGasOutStream());
+    Compressor firstStageCompressor = new Compressor("23-KA-004", firstStageScrubber0.getGasOutStream());
     firstStageCompressor.setUsePolytropicCalc(true);
     firstStageCompressor.setPolytropicEfficiency(0.7);
     firstStageCompressor.setOutletPressure(25.0, "bara");
@@ -417,8 +391,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     recycle1stStageLiquid.setOutletStream(recycleLiqStream3);
     recycle1stStageLiquid.setTolerance(1e-2);
 
-    Compressor secondStageCompressor =
-        new Compressor("23-KA-007", firstStageScrubber1.getGasOutStream());
+    Compressor secondStageCompressor = new Compressor("23-KA-007", firstStageScrubber1.getGasOutStream());
     secondStageCompressor.setUsePolytropicCalc(true);
     secondStageCompressor.setPolytropicEfficiency(0.7);
     secondStageCompressor.setOutletPressure(20.0, "bara");
@@ -442,8 +415,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     recycle2ndStageLiquid.setOutletStream(recycleLiqStream2);
     recycle2ndStageLiquid.setTolerance(1e-2);
 
-    Compressor thirdStageCompressor =
-        new Compressor("23-KA-010", secondStageScrubber1.getGasOutStream());
+    Compressor thirdStageCompressor = new Compressor("23-KA-010", secondStageScrubber1.getGasOutStream());
     thirdStageCompressor.setUsePolytropicCalc(true);
     thirdStageCompressor.setPolytropicEfficiency(0.7);
     thirdStageCompressor.setOutletPressure(40.0, "bara");
@@ -452,12 +424,11 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     gasMixer2.addStream(thirdStageCompressor.getOutStream());
     gasMixer2.addStream(firstStageSeparator.getGasOutStream());
 
-    Stream gasToInjectionManifold =
-        new Stream("gas to injection manifold", gasMixer2.getOutStream());
+    Stream gasToInjectionManifold = new Stream("gas to injection manifold", gasMixer2.getOutStream());
 
     Manifold gasManifold = new Manifold("gas manifold");
     gasManifold.addStream(gasToInjectionManifold);
-    gasManifold.setSplitFactors(new double[] {0.3, 0.3, 0.4});
+    gasManifold.setSplitFactors(new double[] { 0.3, 0.3, 0.4 });
 
     process.add(osebergCFeed);
     process.add(osebergCWaterFeed);
@@ -509,8 +480,7 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     recycleLiqStream3.setTemperature(25.0, "C");
     recycleLiqStream3.setFlowRate(1.0, "kg/hr");
 
-    ThreePhaseSeparator thirdStageSeparator =
-        new ThreePhaseSeparator("3RD stage separator", oilFeed);
+    ThreePhaseSeparator thirdStageSeparator = new ThreePhaseSeparator("3RD stage separator", oilFeed);
     thirdStageSeparator.addStream(recycleLiqStream3);
 
     Stream recycleGasStream1 = createHydrocarbonStream("recycle gas 1st stage");
@@ -524,29 +494,26 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
 
     Separator firstStageScrubber0 = new Separator("VG-23-002", gasMixer0.getOutStream());
 
-    Stream streamToClosedDrain =
-        new Stream("stream to closed drain", firstStageScrubber0.getLiquidOutStream());
+    Stream streamToClosedDrain = new Stream("stream to closed drain", firstStageScrubber0.getLiquidOutStream());
 
-    Compressor firstStageCompressor =
-        new Compressor("23-KA-004", firstStageScrubber0.getGasOutStream());
+    Compressor firstStageCompressor = new Compressor("23-KA-004", firstStageScrubber0.getGasOutStream());
     firstStageCompressor.setCompressorChartType("interpolate and extrapolate");
     firstStageCompressor.setUsePolytropicCalc(true);
     firstStageCompressor.setPolytropicEfficiency(0.7);
     firstStageCompressor.setOutletPressure(25.0, "bara");
 
-    firstStageCompressor.getCompressorChart().getSurgeCurve().setCurve(new double[] {0.0, 0.5, 1.0},
-        new double[] {0.0, 0.5, 1.0}, new double[] {0.0, 0.5, 1.0});
+    firstStageCompressor.getCompressorChart().getSurgeCurve().setCurve(new double[] { 0.0, 0.5, 1.0 },
+        new double[] { 0.0, 0.5, 1.0 }, new double[] { 0.0, 0.5, 1.0 });
 
     Splitter gasSplitterAntiSurge = new Splitter("1st stage anti surge splitter");
     gasSplitterAntiSurge.setInletStream(firstStageCompressor.getOutletStream());
-    gasSplitterAntiSurge.setFlowRates(new double[] {-1.0, 1.0}, "kg/hr");
+    gasSplitterAntiSurge.setFlowRates(new double[] { -1.0, 1.0 }, "kg/hr");
 
     Calculator antiSurgeCalculator = new Calculator("anti surge calculator_1");
     antiSurgeCalculator.addInputVariable(firstStageCompressor);
     antiSurgeCalculator.setOutputVariable(gasSplitterAntiSurge);
 
-    ThrottlingValve antiSurgeValve =
-        new ThrottlingValve("anti surge valve", gasSplitterAntiSurge.getSplitStream(1));
+    ThrottlingValve antiSurgeValve = new ThrottlingValve("anti surge valve", gasSplitterAntiSurge.getSplitStream(1));
     antiSurgeValve.setOutletPressure(10.0, "bara");
 
     Cooler antiSurgeCooler = new Cooler("anti surge cooler", antiSurgeValve.getOutletStream());
@@ -590,8 +557,8 @@ public class ProcessSystemGraphvizExportTest extends neqsim.NeqSimTest {
     fluid.addComponent("water", 0.5);
     fluid.createDatabase(true);
     fluid.setMixingRule(2);
-    fluid.setMolarComposition(new double[] {0.005, 0.01, 0.85, 0.05, 0.04, 0.015, 0.01, 0.008,
-        0.007, 0.005, 0.004, 0.011});
+    fluid.setMolarComposition(
+        new double[] { 0.005, 0.01, 0.85, 0.05, 0.04, 0.015, 0.01, 0.008, 0.007, 0.005, 0.004, 0.011 });
     return fluid;
   }
 

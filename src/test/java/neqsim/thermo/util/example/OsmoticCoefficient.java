@@ -1,32 +1,32 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemElectrolyteCPAstatoil;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OsmoticCoefficient class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
  * @version $Id: $Id
  */
 public class OsmoticCoefficient {
+  private static final Logger logger = LogManager.getLogger(OsmoticCoefficient.class);
+
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    SystemInterface testSystem =
-        new SystemElectrolyteCPAstatoil(298.0, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem = new SystemElectrolyteCPAstatoil(298.0,
+        ThermodynamicConstantsInterface.referencePressure);
     // SystemInterface testSystem = new SystemElectrolyteCPA(298.15,1.01325201325);
     // SystemInterface testSystem = new
     // SystemSrkCPAs(298.15,ThermodynamicConstantsInterface.referencePressure);
@@ -48,11 +48,11 @@ public class OsmoticCoefficient {
     testSystem.init(0);
     testSystem.init(1);
 
-    // System.out.println("furst 1 "
+    // logger.info("furst 1 "
     // +((PhaseModifiedFurstElectrolyteEos)testSystem.getPhase(0)).reInitFurstParam();
-    // // System.out.println("volume " + testSystem.getPhase(1).getMolarVolume());
+    // // logger.info("volume " + testSystem.getPhase(1).getMolarVolume());
     double osmCoef = testSystem.getPhase(1).getOsmoticCoefficientOfWater();
-    // System.out.println("osmotic coefficient: " + osmCoef);
+    // logger.info("osmotic coefficient: " + osmCoef);
 
     // ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     // try{
@@ -62,13 +62,13 @@ public class OsmoticCoefficient {
     // }
     testSystem.display();
 
-    // System.out.println("wt% water " + testSystem.getPhase(1).getWtFrac(0)*100);
+    // logger.info("wt% water " + testSystem.getPhase(1).getWtFrac(0)*100);
     // double meanact = testSystem.getPhase(1).getMeanIonicActivity(2,3);
     // double meanact2 = testSystem.getPhase(1).getActivityCoefficient(3,1);
     // // testSystem.getPhase(1).getActivityCoefficient(3);
     // // testSystem.getPhase(1).getActivityCoefficient(3);
-    // System.out.println("mean ionic activity: " + meanact);
-    // System.out.println("Na+ ionic activity: " + meanact2);
+    // logger.info("mean ionic activity: " + meanact);
+    // logger.info("Na+ ionic activity: " + meanact2);
 
     // thermo.ThermodynamicModelTest testModel = new
     // thermo.ThermodynamicModelTest(testSystem);

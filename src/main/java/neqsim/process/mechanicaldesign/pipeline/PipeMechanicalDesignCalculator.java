@@ -8,8 +8,8 @@ import java.util.Map;
  * Calculator for pipeline mechanical design based on industry standards.
  *
  * <p>
- * This class provides methods to calculate wall thickness, pressure ratings, and stress analysis
- * according to various pipeline design codes including:
+ * This class provides methods to calculate wall thickness, pressure ratings, and stress analysis according to various
+ * pipeline design codes including:
  * </p>
  * <ul>
  * <li>ASME B31.3 - Process Piping</li>
@@ -20,7 +20,7 @@ import java.util.Map;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * PipeMechanicalDesignCalculator calc = new PipeMechanicalDesignCalculator();
  * calc.setDesignPressure(150.0); // bara
@@ -302,20 +302,20 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   static {
     API_5L_GRADES = new HashMap<String, double[]>();
     // Grade -> [SMYS (MPa), SMTS (MPa)] per API 5L 46th Edition
-    API_5L_GRADES.put("A25", new double[] {172, 310}); // 25000 psi yield
-    API_5L_GRADES.put("A", new double[] {207, 331}); // 30000 psi yield
-    API_5L_GRADES.put("B", new double[] {241, 414}); // 35000 psi yield
-    API_5L_GRADES.put("X42", new double[] {290, 414}); // 42000 psi yield
-    API_5L_GRADES.put("X46", new double[] {317, 434}); // 46000 psi yield
-    API_5L_GRADES.put("X52", new double[] {359, 455}); // 52000 psi yield - common for process
-    API_5L_GRADES.put("X56", new double[] {386, 490}); // 56000 psi yield
-    API_5L_GRADES.put("X60", new double[] {414, 517}); // 60000 psi yield - high strength
-    API_5L_GRADES.put("X65", new double[] {448, 531}); // 65000 psi yield - offshore standard
-    API_5L_GRADES.put("X70", new double[] {483, 565}); // 70000 psi yield - high pressure
-    API_5L_GRADES.put("X80", new double[] {552, 621}); // 80000 psi yield - very high strength
-    API_5L_GRADES.put("X90", new double[] {620, 695}); // 90000 psi yield - ultra high strength
-    API_5L_GRADES.put("X100", new double[] {690, 760}); // 100000 psi yield - maximum strength
-    API_5L_GRADES.put("X120", new double[] {827, 931}); // 120000 psi yield - extreme applications
+    API_5L_GRADES.put("A25", new double[] { 172, 310 }); // 25000 psi yield
+    API_5L_GRADES.put("A", new double[] { 207, 331 }); // 30000 psi yield
+    API_5L_GRADES.put("B", new double[] { 241, 414 }); // 35000 psi yield
+    API_5L_GRADES.put("X42", new double[] { 290, 414 }); // 42000 psi yield
+    API_5L_GRADES.put("X46", new double[] { 317, 434 }); // 46000 psi yield
+    API_5L_GRADES.put("X52", new double[] { 359, 455 }); // 52000 psi yield - common for process
+    API_5L_GRADES.put("X56", new double[] { 386, 490 }); // 56000 psi yield
+    API_5L_GRADES.put("X60", new double[] { 414, 517 }); // 60000 psi yield - high strength
+    API_5L_GRADES.put("X65", new double[] { 448, 531 }); // 65000 psi yield - offshore standard
+    API_5L_GRADES.put("X70", new double[] { 483, 565 }); // 70000 psi yield - high pressure
+    API_5L_GRADES.put("X80", new double[] { 552, 621 }); // 80000 psi yield - very high strength
+    API_5L_GRADES.put("X90", new double[] { 620, 695 }); // 90000 psi yield - ultra high strength
+    API_5L_GRADES.put("X100", new double[] { 690, 760 }); // 100000 psi yield - maximum strength
+    API_5L_GRADES.put("X120", new double[] { 827, 931 }); // 120000 psi yield - extreme applications
 
     // Standard pipe sizes per API 5L / ASME B36.10 (NPS -> OD in meters)
     STANDARD_PIPE_SIZES = new HashMap<String, Double>();
@@ -356,7 +356,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
   /**
    * Default constructor.
    */
-  public PipeMechanicalDesignCalculator() {}
+  public PipeMechanicalDesignCalculator() {
+  }
 
   /**
    * Constructor with basic parameters.
@@ -365,8 +366,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @param designPressure design pressure in MPa
    * @param designTemperature design temperature in Celsius
    */
-  public PipeMechanicalDesignCalculator(double outerDiameter, double designPressure,
-      double designTemperature) {
+  public PipeMechanicalDesignCalculator(double outerDiameter, double designPressure, double designTemperature) {
     this.outerDiameter = outerDiameter;
     this.designPressure = designPressure;
     this.designTemperature = designTemperature;
@@ -580,8 +580,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * Calculate all weight and surface area values.
    *
    * <p>
-   * This method calculates steel weight, coating weight, insulation weight, concrete weight,
-   * surface areas, and buoyancy for subsea applications.
+   * This method calculates steel weight, coating weight, insulation weight, concrete weight, surface areas, and
+   * buoyancy for subsea applications.
    * </p>
    */
   public void calculateWeightsAndAreas() {
@@ -673,8 +673,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @param targetSubmergedWeight target submerged weight in kg/m
    * @return required concrete coating thickness in meters
    */
-  public double calculateRequiredConcreteThickness(double contentDensity,
-      double targetSubmergedWeight) {
+  public double calculateRequiredConcreteThickness(double contentDensity, double targetSubmergedWeight) {
     // Iterative calculation for concrete thickness
     double testThickness = 0.0;
     double step = 0.005; // 5mm steps
@@ -759,7 +758,6 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     // Allowable bending stress (typically 0.67 * SMYS)
     double allowableStress = 0.67 * smys * 1e6; // Pa
 
-    double wallThick = nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness;
     double E = youngsModulus * 1e6; // Pa
 
     // For U-loop: L = sqrt(3 * E * D * delta / allowableStress)
@@ -798,7 +796,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    */
   public int selectFlangeClass() {
     // Find minimum class that meets pressure requirement
-    int[] classes = {150, 300, 400, 600, 900, 1500, 2500};
+    int[] classes = { 150, 300, 400, 600, 900, 1500, 2500 };
 
     for (int cls : classes) {
       Double rating = FLANGE_CLASS_RATINGS.get(cls);
@@ -906,9 +904,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     // Solving for L: L = (pi^2 * E * I / (4 * m * fn^2))^0.25
     double E = youngsModulus * 1e6; // Pa
     if (targetFn > 0) {
-      allowableSpanLength = Math.pow(
-          Math.PI * Math.PI * E * momentOfInertia / (4.0 * effectiveMass * targetFn * targetFn),
-          0.25);
+      allowableSpanLength = Math
+          .pow(Math.PI * Math.PI * E * momentOfInertia / (4.0 * effectiveMass * targetFn * targetFn), 0.25);
     } else {
       allowableSpanLength = 50.0; // Default maximum
     }
@@ -951,8 +948,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @param specificHeat fluid specific heat in J/(kg·K)
    * @return required insulation thickness in meters
    */
-  public double calculateInsulationThickness(double inletTemperature, double minArrivalTemperature,
-      double massFlowRate, double specificHeat) {
+  public double calculateInsulationThickness(double inletTemperature, double minArrivalTemperature, double massFlowRate,
+      double specificHeat) {
     // Allowable heat loss per meter
     double deltaT = inletTemperature - minArrivalTemperature;
     double allowableHeatLoss = massFlowRate * specificHeat * deltaT / pipelineLength;
@@ -963,8 +960,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
 
     double r1 = outerDiameter / 2.0 + coatingThickness;
     double k = insulationConductivity;
-    double LMTD =
-        (inletTemperature - ambientTemperature + minArrivalTemperature - ambientTemperature) / 2.0;
+    double LMTD = (inletTemperature - ambientTemperature + minArrivalTemperature - ambientTemperature) / 2.0;
 
     // Iterative solution
     double thickness = 0.025; // Start with 25mm
@@ -991,8 +987,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * Calculate complete project cost estimate.
    *
    * <p>
-   * This method calculates all cost components including materials, fabrication, installation,
-   * engineering, testing, and contingency.
+   * This method calculates all cost components including materials, fabrication, installation, engineering, testing,
+   * and contingency.
    * </p>
    *
    * @return total project cost in USD
@@ -1013,11 +1009,9 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     coatingCost = totalExternalSurfaceArea * coatingPricePerM2;
 
     if (insulationThickness > 0) {
-      double insulationVolume = Math.PI
-          * ((outerDiameter + 2 * coatingThickness + 2 * insulationThickness)
-              * (outerDiameter + 2 * coatingThickness + 2 * insulationThickness)
-              - (outerDiameter + 2 * coatingThickness) * (outerDiameter + 2 * coatingThickness))
-          / 4.0 * pipelineLength;
+      double insulationVolume = Math.PI * ((outerDiameter + 2 * coatingThickness + 2 * insulationThickness)
+          * (outerDiameter + 2 * coatingThickness + 2 * insulationThickness)
+          - (outerDiameter + 2 * coatingThickness) * (outerDiameter + 2 * coatingThickness)) / 4.0 * pipelineLength;
       insulationCost = insulationVolume * insulationPricePerM3;
     } else {
       insulationCost = 0.0;
@@ -1140,9 +1134,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     // Line pipe
     Map<String, Object> pipe = new java.util.LinkedHashMap<String, Object>();
     pipe.put("item", "Line Pipe");
-    pipe.put("description",
-        String.format("API 5L %s, OD %.0fmm x %.1fmm WT", materialGrade, outerDiameter * 1000,
-            (nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness) * 1000));
+    pipe.put("description", String.format("API 5L %s, OD %.0fmm x %.1fmm WT", materialGrade, outerDiameter * 1000,
+        (nominalWallThickness > 0 ? nominalWallThickness : minimumWallThickness) * 1000));
     pipe.put("quantity", numberOfJoints);
     pipe.put("unit", "joints");
     pipe.put("weight_kg", totalPipelineWeight);
@@ -1153,8 +1146,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     // Coating
     Map<String, Object> coating = new java.util.LinkedHashMap<String, Object>();
     coating.put("item", "External Coating");
-    coating.put("description",
-        String.format("%s coating, %.1fmm thick", coatingType, coatingThickness * 1000));
+    coating.put("description", String.format("%s coating, %.1fmm thick", coatingType, coatingThickness * 1000));
     coating.put("quantity", totalExternalSurfaceArea);
     coating.put("unit", "m2");
     coating.put("unitCost_USD", coatingPricePerM2);
@@ -1177,8 +1169,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     if (concreteCoatingThickness > 0) {
       Map<String, Object> concrete = new java.util.LinkedHashMap<String, Object>();
       concrete.put("item", "Concrete Weight Coating");
-      concrete.put("description",
-          String.format("CWC, %.0fmm thick", concreteCoatingThickness * 1000));
+      concrete.put("description", String.format("CWC, %.0fmm thick", concreteCoatingThickness * 1000));
       concrete.put("quantity", pipelineLength);
       concrete.put("unit", "m");
       concrete.put("totalCost_USD", concreteCost);
@@ -1246,8 +1237,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return minimum wall thickness in meters
    */
   private double calculateWallThicknessASMEB318() {
-    return designPressure * outerDiameter
-        / (2.0 * smys * designFactor * jointFactor * temperatureDerating);
+    return designPressure * outerDiameter / (2.0 * smys * designFactor * jointFactor * temperatureDerating);
   }
 
   /**
@@ -1260,8 +1250,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * @return minimum wall thickness in meters
    */
   private double calculateWallThicknessASMEB314() {
-    return designPressure * outerDiameter
-        / (2.0 * smys * designFactor * jointFactor * temperatureDerating);
+    return designPressure * outerDiameter / (2.0 * smys * designFactor * jointFactor * temperatureDerating);
   }
 
   /**
@@ -1348,20 +1337,20 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     if (ASME_B31_8.equals(designCode)) {
       // Design factor F based on location class
       switch (locationClass) {
-        case 1:
-          designFactor = 0.72;
-          break;
-        case 2:
-          designFactor = 0.60;
-          break;
-        case 3:
-          designFactor = 0.50;
-          break;
-        case 4:
-          designFactor = 0.40;
-          break;
-        default:
-          designFactor = 0.72;
+      case 1:
+        designFactor = 0.72;
+        break;
+      case 2:
+        designFactor = 0.60;
+        break;
+      case 3:
+        designFactor = 0.50;
+        break;
+      case 4:
+        designFactor = 0.40;
+        break;
+      default:
+        designFactor = 0.72;
       }
     } else if (ASME_B31_4.equals(designCode)) {
       designFactor = 0.72; // Standard for liquid lines
@@ -1384,8 +1373,7 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     sb.append(String.format("Design Code: %s\n", designCode));
     sb.append(String.format("Material Grade: %s (API 5L)\n", materialGrade));
     sb.append("\n--- Design Parameters ---\n");
-    sb.append(String.format("Design Pressure: %.2f MPa (%.1f bar)\n", designPressure,
-        designPressure * 10));
+    sb.append(String.format("Design Pressure: %.2f MPa (%.1f bar)\n", designPressure, designPressure * 10));
     sb.append(String.format("Design Temperature: %.1f °C\n", designTemperature));
     sb.append(String.format("Outer Diameter: %.1f mm\n", outerDiameter * 1000));
     sb.append(String.format("Corrosion Allowance: %.1f mm\n", corrosionAllowance * 1000));
@@ -1400,13 +1388,12 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     sb.append("\n--- Results ---\n");
     sb.append(String.format("Minimum Wall Thickness: %.2f mm\n", minimumWallThickness * 1000));
     sb.append(String.format("MAOP: %.2f MPa (%.1f bar)\n", maop, maop * 10));
-    sb.append(String.format("Test Pressure: %.2f MPa (%.1f bar)\n", calculateTestPressure(),
-        calculateTestPressure() * 10));
+    sb.append(
+        String.format("Test Pressure: %.2f MPa (%.1f bar)\n", calculateTestPressure(), calculateTestPressure() * 10));
     if (vonMisesStress > 0) {
-      sb.append(String.format("Hoop Stress: %.1f MPa (%.1f%% SMYS)\n", hoopStress,
-          100 * hoopStress / smys));
-      sb.append(String.format("Von Mises Stress: %.1f MPa (%.1f%% SMYS)\n", vonMisesStress,
-          100 * vonMisesStress / smys));
+      sb.append(String.format("Hoop Stress: %.1f MPa (%.1f%% SMYS)\n", hoopStress, 100 * hoopStress / smys));
+      sb.append(
+          String.format("Von Mises Stress: %.1f MPa (%.1f%% SMYS)\n", vonMisesStress, 100 * vonMisesStress / smys));
       sb.append(String.format("Safety Margin: %.1f%%\n", 100 * calculateSafetyMargin()));
     }
     sb.append("==========================================\n");
@@ -1794,7 +1781,6 @@ public class PipeMechanicalDesignCalculator implements Serializable {
     double maopVal = getMaop();
     String lowerUnit = unit.toLowerCase().trim();
     if ("mpa".equals(lowerUnit)) {
-      return maopVal;
     } else if ("bar".equals(lowerUnit) || "bara".equals(lowerUnit)) {
       return maopVal * 10;
     } else if ("psi".equals(lowerUnit) || "psig".equals(lowerUnit)) {
@@ -2397,8 +2383,8 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * Export mechanical design data to JSON format.
    *
    * <p>
-   * This method creates a structured JSON representation of the pipeline mechanical design
-   * including design parameters, material properties, design factors, and calculated results.
+   * This method creates a structured JSON representation of the pipeline mechanical design including design parameters,
+   * material properties, design factors, and calculated results.
    * </p>
    *
    * @return JSON string representation of the mechanical design
@@ -2609,21 +2595,21 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * Load material properties from database.
    *
    * <p>
-   * This method queries the NeqSim process design database for material properties based on the
-   * specified material grade. Supported tables: MaterialPipeProperties.
+   * This method queries the NeqSim process design database for material properties based on the specified material
+   * grade. Supported tables: MaterialPipeProperties.
    * </p>
    *
    * @param grade API 5L material grade (e.g., "X52", "X65", "X70")
    * @deprecated Use {@link PipelineMechanicalDesign#loadMaterialFromDatabase(String)} instead. The
-   *             PipelineMechanicalDesign class provides centralized database access via
-   *             PipelineMechanicalDesignDataSource, following the same pattern as separators.
+   * PipelineMechanicalDesign class provides centralized database access via PipelineMechanicalDesignDataSource,
+   * following the same pattern as separators.
    */
   @Deprecated
   public void loadMaterialFromDatabase(String grade) {
     this.materialGrade = grade;
 
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       String query = "SELECT * FROM MaterialPipeProperties WHERE grade='" + grade + "'";
       try (java.sql.ResultSet dataSet = database.getResultSet(query)) {
         if (dataSet.next()) {
@@ -2656,21 +2642,20 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    * Load design factors from database based on company identifier.
    *
    * <p>
-   * This method queries the TechnicalRequirements_Process table for company-specific design
-   * factors.
+   * This method queries the TechnicalRequirements_Process table for company-specific design factors.
    * </p>
    *
    * @param company company identifier (e.g., "Equinor", "Statoil")
    * @deprecated Use {@link PipelineMechanicalDesign#loadDesignFactorsFromDatabase()} instead. The
-   *             PipelineMechanicalDesign class provides centralized database access via
-   *             PipelineMechanicalDesignDataSource, following the same pattern as separators.
+   * PipelineMechanicalDesign class provides centralized database access via PipelineMechanicalDesignDataSource,
+   * following the same pattern as separators.
    */
   @Deprecated
   public void loadDesignFactorsFromDatabase(String company) {
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
-      String query = "SELECT * FROM TechnicalRequirements_Process WHERE EQUIPMENTTYPE='Pipeline'"
-          + " AND Company='" + company + "'";
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      String query = "SELECT * FROM TechnicalRequirements_Process WHERE EQUIPMENTTYPE='Pipeline'" + " AND Company='"
+          + company + "'";
       try (java.sql.ResultSet dataSet = database.getResultSet(query)) {
         while (dataSet.next()) {
           String specName = dataSet.getString("SPECIFICATION");
@@ -2681,7 +2666,9 @@ public class PipeMechanicalDesignCalculator implements Serializable {
             } else if ("jointFactor".equalsIgnoreCase(specName)) {
               this.jointFactor = Double.parseDouble(maxValue);
             } else if ("corrosionAllowance".equalsIgnoreCase(specName)) {
-              this.corrosionAllowance = Double.parseDouble(maxValue) / 1000.0; // mm to m
+              this.corrosionAllowance = Double.parseDouble(maxValue) / 1000.0; // mm
+                                                                               // to
+                                                                               // m
             }
           }
         }
@@ -2702,9 +2689,9 @@ public class PipeMechanicalDesignCalculator implements Serializable {
    *
    * @param materialGrade API 5L material grade
    * @param company company identifier
-   * @deprecated Use {@link PipelineMechanicalDesign#loadFromDatabase()} instead. The
-   *             PipelineMechanicalDesign class provides centralized database access via
-   *             PipelineMechanicalDesignDataSource, following the same pattern as separators.
+   * @deprecated Use {@link PipelineMechanicalDesign#loadFromDatabase()} instead. The PipelineMechanicalDesign class
+   * provides centralized database access via PipelineMechanicalDesignDataSource, following the same pattern as
+   * separators.
    */
   @Deprecated
   public void loadFromDatabase(String materialGrade, String company) {

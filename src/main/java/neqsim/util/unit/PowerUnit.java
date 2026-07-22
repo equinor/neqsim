@@ -3,9 +3,7 @@ package neqsim.util.unit;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * PowerUnit class for converting between different power units.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -31,20 +29,25 @@ public class PowerUnit extends neqsim.util.unit.BaseUnit {
    */
   public double getConversionFactor(String name) {
     switch (name) {
-      case "W":
-        return 1.0;
-      case "kW":
-        return 1000.0;
-      case "MW":
-        return 1.0e6;
-      case "hp":
-        return 745.699872;
-      case "BTU/hr":
-        return 0.29307107;
-      default:
-        throw new RuntimeException(
-            new InvalidInputException(this, "getConversionFactor", name, "unit not supported"));
+    case "W":
+      return 1.0;
+    case "kW":
+      return 1000.0;
+    case "MW":
+      return 1.0e6;
+    case "hp":
+      return 745.699872;
+    case "BTU/hr":
+      return 0.29307107;
+    default:
+      throw new RuntimeException(new InvalidInputException(this, "getConversionFactor", name, "unit not supported"));
     }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSIvalue() {
+    return getValue("W");
   }
 
   /** {@inheritDoc} */

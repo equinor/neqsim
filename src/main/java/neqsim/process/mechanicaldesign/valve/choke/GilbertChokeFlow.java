@@ -6,15 +6,14 @@ import neqsim.thermo.system.SystemInterface;
  * Gilbert (1954) empirical correlation for two-phase critical choke flow.
  *
  * <p>
- * This is the pioneering empirical correlation for multiphase flow through production chokes,
- * developed from California oil field data. It is widely used for quick estimates and field
- * calculations.
+ * This is the pioneering empirical correlation for multiphase flow through production chokes, developed from California
+ * oil field data. It is widely used for quick estimates and field calculations.
  * </p>
  *
  * <p>
  * <b>Gilbert Equation:</b>
  * </p>
- * 
+ *
  * <pre>
  * q_L = (P_wh * d ^ 1.89) / (C * GLR ^ 0.546)
  * </pre>
@@ -58,8 +57,8 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <p>
- * <b>Reference:</b> Gilbert, W.E. (1954). "Flowing and Gas-Lift Well Performance." API Drilling and
- * Production Practice.
+ * <b>Reference:</b> Gilbert, W.E. (1954). "Flowing and Gas-Lift Well Performance." API Drilling and Production
+ * Practice.
  * </p>
  *
  * @author esol
@@ -97,7 +96,6 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
    * Default constructor using Gilbert's original constants.
    */
   public GilbertChokeFlow() {
-    super();
     this.dischargeCoefficient = 1.0; // Already embedded in correlation constant
     setCorrelationType(CorrelationType.GILBERT);
   }
@@ -119,7 +117,6 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
    * @param correlationType the correlation variant to use
    */
   public GilbertChokeFlow(CorrelationType correlationType) {
-    super();
     this.dischargeCoefficient = 1.0;
     setCorrelationType(correlationType);
   }
@@ -132,29 +129,29 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
   public void setCorrelationType(CorrelationType type) {
     this.correlationType = type;
     switch (type) {
-      case GILBERT:
-        correlationConstant = 10.0;
-        diameterExponent = 1.89;
-        glrExponent = 0.546;
-        break;
-      case BAXENDELL:
-        correlationConstant = 9.56;
-        diameterExponent = 1.93;
-        glrExponent = 0.546;
-        break;
-      case ROS:
-        correlationConstant = 17.4;
-        diameterExponent = 2.0;
-        glrExponent = 0.5;
-        break;
-      case ACHONG:
-        correlationConstant = 3.82;
-        diameterExponent = 1.88;
-        glrExponent = 0.65;
-        break;
-      case CUSTOM:
-        // Keep current values
-        break;
+    case GILBERT:
+      correlationConstant = 10.0;
+      diameterExponent = 1.89;
+      glrExponent = 0.546;
+      break;
+    case BAXENDELL:
+      correlationConstant = 9.56;
+      diameterExponent = 1.93;
+      glrExponent = 0.546;
+      break;
+    case ROS:
+      correlationConstant = 17.4;
+      diameterExponent = 2.0;
+      glrExponent = 0.5;
+      break;
+    case ACHONG:
+      correlationConstant = 3.82;
+      diameterExponent = 1.88;
+      glrExponent = 0.65;
+      break;
+    case CUSTOM:
+      // Keep current values
+      break;
     }
   }
 
@@ -169,8 +166,7 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
 
   /** {@inheritDoc} */
   @Override
-  public double calculateMassFlowRate(SystemInterface fluid, double upstreamPressure,
-      double downstreamPressure) {
+  public double calculateMassFlowRate(SystemInterface fluid, double upstreamPressure, double downstreamPressure) {
     // Convert to field units
     double P_psig = upstreamPressure / 6894.76 - 14.696; // Pa to psig
     double d_64ths = chokeDiameter / 0.0254 * 64.0; // m to 64ths inch
@@ -255,8 +251,7 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
 
   /** {@inheritDoc} */
   @Override
-  public double calculateDownstreamPressure(SystemInterface fluid, double upstreamPressure,
-      double massFlowRate) {
+  public double calculateDownstreamPressure(SystemInterface fluid, double upstreamPressure, double massFlowRate) {
     // Gilbert correlation assumes critical flow - downstream pressure doesn't affect flow
     // Return critical pressure (approximately)
     double gasQuality = calculateGasQuality(fluid);
@@ -274,8 +269,7 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
       return 0.85; // Liquid-dominated
     }
     if (gasQuality >= 0.99) {
-      return Math.pow(2.0 / (specificHeatRatio + 1.0),
-          specificHeatRatio / (specificHeatRatio - 1.0));
+      return Math.pow(2.0 / (specificHeatRatio + 1.0), specificHeatRatio / (specificHeatRatio - 1.0));
     }
     // Two-phase approximation
     return 0.5847 - 0.0227 * Math.log(Math.max(0.02, gasQuality));
@@ -293,8 +287,7 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
    * @param liquidFlowRate liquid flow rate in m3/s
    * @return required choke diameter in meters
    */
-  public double calculateRequiredChokeDiameter(SystemInterface fluid, double upstreamPressure,
-      double liquidFlowRate) {
+  public double calculateRequiredChokeDiameter(SystemInterface fluid, double upstreamPressure, double liquidFlowRate) {
     // Convert to field units
     double P_psig = upstreamPressure / 6894.76 - 14.696;
     double q_stb_day = liquidFlowRate * 86400.0 / 0.158987;
@@ -305,9 +298,8 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
     }
 
     // Invert Gilbert: d = ((q * C * GLR^b) / P)^(1/a)
-    double d_64ths =
-        Math.pow(q_stb_day * correlationConstant * Math.pow(GLR_scf_stb, glrExponent) / P_psig,
-            1.0 / diameterExponent);
+    double d_64ths = Math.pow(q_stb_day * correlationConstant * Math.pow(GLR_scf_stb, glrExponent) / P_psig,
+        1.0 / diameterExponent);
 
     // Convert to meters
     return d_64ths / 64.0 * 0.0254;
@@ -376,17 +368,17 @@ public class GilbertChokeFlow extends MultiphaseChokeFlow {
   @Override
   public String getModelName() {
     switch (correlationType) {
-      case BAXENDELL:
-        return "Baxendell (1958)";
-      case ROS:
-        return "Ros (1960)";
-      case ACHONG:
-        return "Achong (1961)";
-      case CUSTOM:
-        return "Custom Gilbert-type";
-      case GILBERT:
-      default:
-        return "Gilbert (1954)";
+    case BAXENDELL:
+      return "Baxendell (1958)";
+    case ROS:
+      return "Ros (1960)";
+    case ACHONG:
+      return "Achong (1961)";
+    case CUSTOM:
+      return "Custom Gilbert-type";
+    case GILBERT:
+    default:
+      return "Gilbert (1954)";
     }
   }
 }

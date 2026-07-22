@@ -1,9 +1,7 @@
 package neqsim.process.measurementdevice.simpleflowregime;
 
 /**
- * <p>
  * Pipe class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -28,9 +26,7 @@ public class Pipe {
   // Encapsulation: Get and Set Methods. This keyword referes to the current object
   // 1. Pipe name encapsulation
   /**
-   * <p>
    * Setter for the field <code>name</code>.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -39,9 +35,7 @@ public class Pipe {
   }
 
   /**
-   * <p>
    * Getter for the field <code>name</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -51,9 +45,7 @@ public class Pipe {
 
   // 2. Pipe Internal Diameter encapsulation
   /**
-   * <p>
    * Setter for the field <code>internalDiameter</code>.
-   * </p>
    *
    * @param internalDiameter a double
    */
@@ -62,9 +54,7 @@ public class Pipe {
   }
 
   /**
-   * <p>
    * Getter for the field <code>internalDiameter</code>.
-   * </p>
    *
    * @return a double
    */
@@ -74,9 +64,7 @@ public class Pipe {
 
   // 3. Pipe Internal Diameter encapsulation
   /**
-   * <p>
    * Setter for the field <code>leftLength</code>.
-   * </p>
    *
    * @param leftLength a double
    */
@@ -85,9 +73,7 @@ public class Pipe {
   }
 
   /**
-   * <p>
    * Getter for the field <code>leftLength</code>.
-   * </p>
    *
    * @return a double
    */
@@ -97,9 +83,7 @@ public class Pipe {
 
   // 4. Pipe Right Length encapsulation
   /**
-   * <p>
    * Setter for the field <code>rightLength</code>.
-   * </p>
    *
    * @param rightLength a double
    */
@@ -108,9 +92,7 @@ public class Pipe {
   }
 
   /**
-   * <p>
    * Getter for the field <code>rightLength</code>.
-   * </p>
    *
    * @return a double
    */
@@ -120,9 +102,7 @@ public class Pipe {
 
   // 4. Pipe Angle encapsulation
   /**
-   * <p>
    * Setter for the field <code>angle</code>.
-   * </p>
    *
    * @param angle a double
    */
@@ -131,9 +111,7 @@ public class Pipe {
   }
 
   /**
-   * <p>
    * Getter for the field <code>angle</code>.
-   * </p>
    *
    * @param unit Unit
    * @return Angle in unit. Defaults to Degree
@@ -144,14 +122,11 @@ public class Pipe {
     } else if (unit.equals("Radian")) {
       return this.angle * pi / 180;
     }
-    throw new RuntimeException(
-        new neqsim.util.exception.InvalidInputException(this, "getAngle", "unit"));
+    throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getAngle", "unit"));
   }
 
   /**
-   * <p>
    * getArea.
-   * </p>
    *
    * @return a double
    */

@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * sysNewtonRhapson class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -48,16 +46,13 @@ public class SysNewtonRhapson implements java.io.Serializable {
   boolean etterCP2 = false;
 
   /**
-   * <p>
    * Constructor for sysNewtonRhapson.
-   * </p>
    */
-  public SysNewtonRhapson() {}
+  public SysNewtonRhapson() {
+  }
 
   /**
-   * <p>
    * Constructor for sysNewtonRhapson.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param numberOfPhases a int
@@ -80,20 +75,16 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvec</code>.
-   * </p>
    */
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
-      fvec.set(i, 0,
-          u.get(i, 0) + Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
-              / system.getPhases()[0].getComponent(i).getFugacityCoefficient()));
+      fvec.set(i, 0, u.get(i, 0) + Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient()
+          / system.getPhases()[0].getComponent(i).getFugacityCoefficient()));
     }
     double fsum = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      fsum = fsum + system.getPhases()[1].getComponent(i).getx()
-          - system.getPhases()[0].getComponent(i).getx();
+      fsum = fsum + system.getPhases()[1].getComponent(i).getx() - system.getPhases()[0].getComponent(i).getx();
     }
     fvec.set(numberOfComponents, 0, fsum);
     fvec.set(numberOfComponents + 1, 0, 0.0);
@@ -101,9 +92,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * findSpecEqInit.
-   * </p>
    */
   public void findSpecEqInit() {
     speceq = 0;
@@ -111,17 +100,15 @@ public class SysNewtonRhapson implements java.io.Serializable {
     int speceqmin = 0;
 
     for (int i = 0; i < numberOfComponents; i++) {
-      if (system.getPhases()[0].getComponent(i).getTC() > system.getPhases()[0].getComponent(speceq)
-          .getTC()) {
+      if (system.getPhases()[0].getComponent(i).getTC() > system.getPhases()[0].getComponent(speceq).getTC()) {
         speceq = system.getPhases()[0].getComponent(i).getComponentNumber();
       }
-      if (system.getPhases()[0].getComponent(i).getTC() < system.getPhases()[0].getComponent(speceq)
-          .getTC()) {
+      if (system.getPhases()[0].getComponent(i).getTC() < system.getPhases()[0].getComponent(speceq).getTC()) {
         speceqmin = system.getPhases()[0].getComponent(i).getComponentNumber();
       }
     }
-    avscp = (system.getPhases()[0].getComponent(speceq).getTC()
-        - system.getPhases()[0].getComponent(speceqmin).getTC()) / 2000;
+    avscp = (system.getPhases()[0].getComponent(speceq).getTC() - system.getPhases()[0].getComponent(speceqmin).getTC())
+        / 2000;
     System.out.println("avscp: " + avscp);
     dTmax = avscp * 3;
     dPmax = avscp * 1.5;
@@ -129,9 +116,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * findSpecEq.
-   * </p>
    */
   public void findSpecEq() {
     double max = 0;
@@ -143,9 +128,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setJac.
-   * </p>
    */
   public void setJac() {
     Jac.timesEquals(0.0);
@@ -156,8 +139,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
     int nofc = numberOfComponents;
     for (int i = 0; i < numberOfComponents; i++) {
       dxidlnk[i] = -system.getBeta() * system.getPhases()[0].getComponent(i).getx()
-          * system.getPhases()[1].getComponent(i).getx()
-          / system.getPhases()[0].getComponent(i).getz();
+          * system.getPhases()[1].getComponent(i).getx() / system.getPhases()[0].getComponent(i).getz();
       dyidlnk[i] = system.getPhases()[1].getComponent(i).getx()
           + system.getPhases()[0].getComponent(i).getK() * dxidlnk[i];
       // System.out.println("dxidlnk("+i+") "+dxidlnk[i]);
@@ -170,11 +152,11 @@ public class SysNewtonRhapson implements java.io.Serializable {
             - system.getPhases()[0].getComponent(i).getdfugdx(j) * dxidlnk[j];
         Jac.set(i, j, tempJ);
       }
-      tempJ = system.getTemperature() * (system.getPhases()[1].getComponent(i).getdfugdt()
-          - system.getPhases()[0].getComponent(i).getdfugdt());
+      tempJ = system.getTemperature()
+          * (system.getPhases()[1].getComponent(i).getdfugdt() - system.getPhases()[0].getComponent(i).getdfugdt());
       Jac.set(i, nofc, tempJ);
-      tempJ = system.getPressure() * (system.getPhases()[1].getComponent(i).getdfugdp()
-          - system.getPhases()[0].getComponent(i).getdfugdp());
+      tempJ = system.getPressure()
+          * (system.getPhases()[1].getComponent(i).getdfugdp() - system.getPhases()[0].getComponent(i).getdfugdp());
       Jac.set(i, nofc + 1, tempJ);
       Jac.set(nofc, i, dyidlnk[i] - dxidlnk[i]);
     }
@@ -182,9 +164,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>u</code>.
-   * </p>
    */
   public void setu() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -195,9 +175,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    */
   public void init() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -211,9 +189,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * calcInc.
-   * </p>
    *
    * @param np a int
    */
@@ -286,9 +262,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * calcInc2.
-   * </p>
    *
    * @param np a int
    */
@@ -303,8 +277,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
       }
       xcoef = a.solve(xg.transpose());
       double sny = ds + s.get(0, 3);
-      u.set(j, 0, xcoef.get(0, 0)
-          + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
+      u.set(j, 0, xcoef.get(0, 0) + sny * (xcoef.get(1, 0) + sny * (xcoef.get(2, 0) + sny * xcoef.get(3, 0))));
     }
     uold = u.copy();
     // s.print(0,10);
@@ -409,9 +382,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>npCrit</code>.
-   * </p>
    *
    * @return a int
    */
@@ -420,9 +391,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * sign.
-   * </p>
    *
    * @param a a double
    * @param b a double
@@ -435,9 +404,7 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @param np a int
    */
@@ -464,19 +431,16 @@ public class SysNewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     /*
-     * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new double[]{0.4,0.4};
-     * test.setx(constants); while (test.nonsol()>1.0e-8) { constants=test.getx();
-     * System.out.println(constants[0]+" "+constants[1]); } test.nonsol(); constants=test.getf();
-     * System.out.println(constants[0]+" "+constants[1]); System.exit(0);
+     * sysNewtonRhapson test=new sysNewtonRhapson(); double[] constants = new double[]{0.4,0.4}; test.setx(constants);
+     * while (test.nonsol()>1.0e-8) { constants=test.getx(); System.out.println(constants[0]+" "+constants[1]); }
+     * test.nonsol(); constants=test.getf(); System.out.println(constants[0]+" "+constants[1]); System.exit(0);
      */
   }
 }

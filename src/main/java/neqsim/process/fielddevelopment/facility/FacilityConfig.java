@@ -10,8 +10,8 @@ import neqsim.process.fielddevelopment.concept.FieldConcept;
  * Immutable configuration for a complete facility.
  *
  * <p>
- * Created by {@link FacilityBuilder}, this class holds all the block configurations and parameters
- * needed to instantiate a facility.
+ * Created by {@link FacilityBuilder}, this class holds all the block configurations and parameters needed to
+ * instantiate a facility.
  *
  * @author ESOL
  * @version 1.0
@@ -25,13 +25,12 @@ public final class FacilityConfig implements Serializable {
   private final List<String> redundancyRequirements;
   private final double designMargin;
 
-  FacilityConfig(String name, FieldConcept concept, List<BlockConfig> blocks,
-      List<String> redundancyRequirements, double designMargin) {
+  FacilityConfig(String name, FieldConcept concept, List<BlockConfig> blocks, List<String> redundancyRequirements,
+      double designMargin) {
     this.name = name;
     this.concept = concept;
     this.blocks = Collections.unmodifiableList(new ArrayList<>(blocks));
-    this.redundancyRequirements =
-        Collections.unmodifiableList(new ArrayList<>(redundancyRequirements));
+    this.redundancyRequirements = Collections.unmodifiableList(new ArrayList<>(redundancyRequirements));
     this.designMargin = designMargin;
   }
 
@@ -166,8 +165,7 @@ public final class FacilityConfig implements Serializable {
    * @return true if complex
    */
   public boolean isComplex() {
-    return blocks.size() > 6 || hasCo2Removal() || hasBlock(BlockType.H2S_REMOVAL)
-        || hasBlock(BlockType.NGL_RECOVERY);
+    return blocks.size() > 6 || hasCo2Removal() || hasBlock(BlockType.H2S_REMOVAL) || hasBlock(BlockType.NGL_RECOVERY);
   }
 
   /**
@@ -188,7 +186,6 @@ public final class FacilityConfig implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("FacilityConfig[%s, blocks=%d, margin=%.0f%%]", name, blocks.size(),
-        (designMargin - 1) * 100);
+    return String.format("FacilityConfig[%s, blocks=%d, margin=%.0f%%]", name, blocks.size(), (designMargin - 1) * 100);
   }
 }

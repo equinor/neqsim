@@ -2,6 +2,8 @@ package neqsim.thermo.util.Vega;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.netlib.util.StringW;
@@ -10,6 +12,8 @@ import org.netlib.util.intW;
 import neqsim.thermo.system.SystemInterface;
 
 public class VegaTest {
+  private static final Logger logger = LogManager.getLogger(VegaTest.class);
+
   private Vega Vega;
 
   @BeforeEach
@@ -58,8 +62,7 @@ public class VegaTest {
 
     Vega.DensityVega(iFlag, T, P.val, D, ierr, herr);
 
-    Vega.propertiesVega(T, D.val, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
-        Kappa, A);
+    Vega.propertiesVega(T, D.val, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
     assertTrue(P.val > 0);
     assertTrue(Z.val > 0);
     assertTrue(U.val != 0);
@@ -98,8 +101,7 @@ public class VegaTest {
     // vegafluid.setP
 
     double enthalpgas = vegafluid.getPhase("gas").getEnthalpy("J/mol");
-    assertEquals(vegafluid.getPhase("gas").getDensity(), SRKfluid.getPhase("gas").getDensity_Vega(),
-        1e-8);
+    assertEquals(vegafluid.getPhase("gas").getDensity(), SRKfluid.getPhase("gas").getDensity_Vega(), 1e-8);
     assertEquals(SRKfluid.getPhase("gas").getProperties_Vega()[7], enthalpgas, 1e-9);
 
     vegafluid.setNumberOfPhases(1);
@@ -118,35 +120,32 @@ public class VegaTest {
     SRKfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("KTA_mod");
     SRKfluid.getPhase("gas").initPhysicalProperties();
 
-    neqsim.process.equipment.stream.Stream gasstream =
-        new neqsim.process.equipment.stream.Stream("gas", vegafluid);
+    neqsim.process.equipment.stream.Stream gasstream = new neqsim.process.equipment.stream.Stream("gas", vegafluid);
     gasstream.setFlowRate(10000.0, "kg/hr");
     gasstream.run();
 
-    neqsim.process.equipment.stream.Stream gasstream_SKR =
-        new neqsim.process.equipment.stream.Stream("gas", SRKfluid);
+    neqsim.process.equipment.stream.Stream gasstream_SKR = new neqsim.process.equipment.stream.Stream("gas", SRKfluid);
     gasstream_SKR.setFlowRate(10000.0, "kg/hr");
     gasstream_SKR.run();
 
-    neqsim.process.equipment.compressor.Compressor compressor =
-        new neqsim.process.equipment.compressor.Compressor("compressor 1", gasstream);
+    neqsim.process.equipment.compressor.Compressor compressor = new neqsim.process.equipment.compressor.Compressor(
+        "compressor 1", gasstream);
     // compressor.setUseVega(true);
     compressor.setOutletPressure(20.0);
     compressor.setPolytropicMethod("schultz");
     compressor.run();
 
-    neqsim.process.equipment.compressor.Compressor compressor_SRK =
-        new neqsim.process.equipment.compressor.Compressor("compressor 2", gasstream_SKR);
+    neqsim.process.equipment.compressor.Compressor compressor_SRK = new neqsim.process.equipment.compressor.Compressor(
+        "compressor 2", gasstream_SKR);
     compressor_SRK.setUseVega(true);
     compressor_SRK.setOutletPressure(20.0);
     compressor_SRK.run();
 
-    assertEquals(compressor_SRK.getOutletStream().getTemperature("C"),
-        compressor.getOutletStream().getTemperature("C"), 1e-5);
+    assertEquals(compressor_SRK.getOutletStream().getTemperature("C"), compressor.getOutletStream().getTemperature("C"),
+        1e-5);
 
-    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline =
-        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("pipe 1",
-            compressor.getOutletStream());
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
+        "pipe 1", compressor.getOutletStream());
     pipeline.setLength(5000.0);
     pipeline.setDiameter(0.2);
     pipeline.setElevation(0);
@@ -179,24 +178,22 @@ public class VegaTest {
     SRKfluid.setPhaseType(0, "GAS");
     SRKfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("KTA_mod");
 
-    neqsim.process.equipment.stream.Stream Vegastream =
-        new neqsim.process.equipment.stream.Stream("gas", vegafluid);
+    neqsim.process.equipment.stream.Stream Vegastream = new neqsim.process.equipment.stream.Stream("gas", vegafluid);
     Vegastream.setFlowRate(130.0, "MSm3/day");
     Vegastream.run();
 
-    neqsim.process.equipment.stream.Stream SRKstream =
-        new neqsim.process.equipment.stream.Stream("gas", SRKfluid);
+    neqsim.process.equipment.stream.Stream SRKstream = new neqsim.process.equipment.stream.Stream("gas", SRKfluid);
     SRKstream.setFlowRate(130.0, "MSm3/day");
     SRKstream.run();
 
-    neqsim.process.equipment.compressor.Compressor Vegacompressor =
-        new neqsim.process.equipment.compressor.Compressor("compressor 1", Vegastream);
+    neqsim.process.equipment.compressor.Compressor Vegacompressor = new neqsim.process.equipment.compressor.Compressor(
+        "compressor 1", Vegastream);
     Vegacompressor.setOutletPressure(20.0, "bara");
     Vegacompressor.setPolytropicEfficiency(0.75);
     Vegacompressor.run();
 
-    neqsim.process.equipment.compressor.Compressor SRKcompressor =
-        new neqsim.process.equipment.compressor.Compressor("compressor 2", SRKstream);
+    neqsim.process.equipment.compressor.Compressor SRKcompressor = new neqsim.process.equipment.compressor.Compressor(
+        "compressor 2", SRKstream);
     SRKcompressor.setOutletPressure(20.0, "bara");
     SRKcompressor.setPolytropicEfficiency(0.75);
     SRKcompressor.setUseVega(true);
@@ -225,19 +222,19 @@ public class VegaTest {
     // Leachmanfluid.getPhase("gas").getPhysicalProperties().setViscosityModel("PFCT");
     Vegafluid.getPhase("gas").initPhysicalProperties();
 
-    neqsim.process.equipment.stream.Stream gasstream_Vega =
-        new neqsim.process.equipment.stream.Stream("gas", Vegafluid);
+    neqsim.process.equipment.stream.Stream gasstream_Vega = new neqsim.process.equipment.stream.Stream("gas",
+        Vegafluid);
     gasstream_Vega.setFlowRate(60.0, "MSm3/day");
     gasstream_Vega.run();
 
-    neqsim.process.equipment.compressor.Compressor compressor_Vega =
-        new neqsim.process.equipment.compressor.Compressor("compressor 1", gasstream_Vega);
+    neqsim.process.equipment.compressor.Compressor compressor_Vega = new neqsim.process.equipment.compressor.Compressor(
+        "compressor 1", gasstream_Vega);
     compressor_Vega.setOutletPressure(120.0);
     compressor_Vega.setPolytropicEfficiency(0.77);
     compressor_Vega.run();
 
-    neqsim.process.equipment.compressor.Compressor compressor_Schultz =
-        new neqsim.process.equipment.compressor.Compressor("compressor 2", gasstream_Vega);
+    neqsim.process.equipment.compressor.Compressor compressor_Schultz = new neqsim.process.equipment.compressor.Compressor(
+        "compressor 2", gasstream_Vega);
     compressor_Schultz.setOutletPressure(120.0);
     compressor_Schultz.setPolytropicEfficiency(0.77);
     compressor_Schultz.setUsePolytropicCalc(true);
@@ -245,16 +242,16 @@ public class VegaTest {
     compressor_Schultz.run();
 
     /*
-     * System.out.println("Density before compressor " + Vegafluid.getDensity("kg/m3"));
-     * System.out.println("-----------------Normal-----------------"); System.out.println(
-     * "Temperature out of Compr." + compressor_Vega.getOutletStream().getTemperature("C"));
-     * System.out.println("Power out of Compr." + compressor_Vega.getPower("MW")); System.out
-     * .println("Polytropic Head out of Compr." + compressor_Vega.getPolytropicHead("kJ/kg"));
-     * 
-     * System.out.println("-----------------Schultz-----------------"); System.out.println(
-     * "Temperature out of Compr." + compressor_Schultz.getOutletStream().getTemperature("C"));
-     * System.out.println("Power out of Compr." + compressor_Schultz.getPower("MW")); System.out
-     * .println("Polytropic Head out of Compr." + compressor_Schultz.getPolytropicHead("kJ/kg"));
+     * logger.info("Density before compressor " + Vegafluid.getDensity("kg/m3"));
+     * logger.info("-----------------Normal-----------------"); logger.info( "Temperature out of Compr." +
+     * compressor_Vega.getOutletStream().getTemperature("C")); logger.info("Power out of Compr." +
+     * compressor_Vega.getPower("MW")); System.out .println("Polytropic Head out of Compr." +
+     * compressor_Vega.getPolytropicHead("kJ/kg"));
+     *
+     * logger.info("-----------------Schultz-----------------"); logger.info( "Temperature out of Compr." +
+     * compressor_Schultz.getOutletStream().getTemperature("C")); logger.info("Power out of Compr." +
+     * compressor_Schultz.getPower("MW")); System.out .println("Polytropic Head out of Compr." +
+     * compressor_Schultz.getPolytropicHead("kJ/kg"));
      */
   }
 }

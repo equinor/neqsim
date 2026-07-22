@@ -1,3 +1,8 @@
+---
+title: Pressure Monitoring in ESD Blowdown System
+description: The ESD blowdown system now includes comprehensive **pressure monitoring** during transient calculations to verify that the separator pressure is properly released via the blowdown valve.
+---
+
 # Pressure Monitoring in ESD Blowdown System
 
 ## Overview
@@ -180,7 +185,7 @@ The system provides detailed output showing:
 
 ### Run the basic example with pressure monitoring:
 ```bash
-mvn exec:java -Dexec.mainClass="neqsim.process.util.example.ESDBlowdownSystemExample"
+./mvnw -Dexec.classpathScope=test -Dexec.mainClass="neqsim.process.util.example.ESDBlowdownSystemExample" exec:java
 ```
 
 ### Run the comprehensive test suite:

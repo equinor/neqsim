@@ -13,9 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * onePhasePipeFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -27,20 +25,16 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
   static Logger logger = LogManager.getLogger(onePhasePipeFlowNode.class);
 
   /**
-   * <p>
    * Constructor for onePhasePipeFlowNode.
-   * </p>
    */
-  public onePhasePipeFlowNode() {}
+  public onePhasePipeFlowNode() {
+  }
 
   /**
-   * <p>
    * Constructor for onePhasePipeFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public onePhasePipeFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
@@ -71,9 +65,7 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -99,8 +91,7 @@ public class onePhasePipeFlowNode extends onePhaseFlowNode {
     test[0].init();
 
     // test[0].getVolumetricFlow();
-    System.out.println("flow: " + test[0].getVolumetricFlow() + " velocity: "
-        + test[0].getVelocity() + " reynolds number " + test[0].getReynoldsNumber() + "friction : "
-        + test[0].getWallFrictionFactor());
+    System.out.println("flow: " + test[0].getVolumetricFlow() + " velocity: " + test[0].getVelocity()
+        + " reynolds number " + test[0].getReynoldsNumber() + "friction : " + test[0].getWallFrictionFactor());
   }
 }

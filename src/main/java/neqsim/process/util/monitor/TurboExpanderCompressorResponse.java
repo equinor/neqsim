@@ -3,9 +3,7 @@ package neqsim.process.util.monitor;
 import neqsim.process.equipment.expander.TurboExpanderCompressor;
 
 /**
- * <p>
  * TurboExpanderCompressorResponse class.
- * </p>
  *
  * @author esol
  */
@@ -13,39 +11,29 @@ public class TurboExpanderCompressorResponse extends BaseResponse {
   /**
    * Constructs a TurboExpanderCompressorResponse from a TurboExpanderCompressor.
    *
-   * @param turboExpanderCompressor a
-   *        {@link neqsim.process.equipment.expander.TurboExpanderCompressor} object
+   * @param turboExpanderCompressor a {@link neqsim.process.equipment.expander.TurboExpanderCompressor} object
    */
   public TurboExpanderCompressorResponse(TurboExpanderCompressor turboExpanderCompressor) {
     super(turboExpanderCompressor);
     this.speed = turboExpanderCompressor.getSpeed();
     this.powerExpander = turboExpanderCompressor.getPowerExpander();
     this.powerCompressor = turboExpanderCompressor.getPowerCompressor();
-    this.compressorPolytropicEfficiency =
-        turboExpanderCompressor.getCompressorPolytropicEfficiency();
+    this.compressorPolytropicEfficiency = turboExpanderCompressor.getCompressorPolytropicEfficiency();
     this.expanderIsentropicEfficiency = turboExpanderCompressor.getExpanderIsentropicEfficiency();
     this.compressorPolytropicHead = turboExpanderCompressor.getCompressorPolytropicHead();
     this.UCratioexpander = turboExpanderCompressor.getUCratioexpander();
     this.QNratiocompressor = turboExpanderCompressor.getQNratiocompressor();
 
-    this.expanderFeedTemperature =
-        turboExpanderCompressor.getExpanderFeedStream().getTemperature("C");
+    this.expanderFeedTemperature = turboExpanderCompressor.getExpanderFeedStream().getTemperature("C");
     this.expanderFeedFlow = turboExpanderCompressor.getExpanderFeedStream().getFlowRate("kg/hr");
     this.expanderFeedPressure = turboExpanderCompressor.getExpanderFeedStream().getPressure("bara");
-    this.expanderDischargeTemperature =
-        turboExpanderCompressor.getExpanderOutletStream().getTemperature("C");
-    this.expanderDischargePressure =
-        turboExpanderCompressor.getExpanderOutletStream().getPressure("bara");
-    this.compressorFeedFlow =
-        turboExpanderCompressor.getCompressorFeedStream().getFlowRate("kg/hr");
-    this.compresorFeedPressure =
-        turboExpanderCompressor.getCompressorFeedStream().getPressure("bara");
-    this.compresorFeedTemperature =
-        turboExpanderCompressor.getCompressorFeedStream().getTemperature("C");
-    this.compresorDischargePressure =
-        turboExpanderCompressor.getCompressorOutletStream().getPressure("bara");
-    this.compresorDischargeTemperature =
-        turboExpanderCompressor.getCompressorOutletStream().getTemperature("C");
+    this.expanderDischargeTemperature = turboExpanderCompressor.getExpanderOutletStream().getTemperature("C");
+    this.expanderDischargePressure = turboExpanderCompressor.getExpanderOutletStream().getPressure("bara");
+    this.compressorFeedFlow = turboExpanderCompressor.getCompressorFeedStream().getFlowRate("kg/hr");
+    this.compresorFeedPressure = turboExpanderCompressor.getCompressorFeedStream().getPressure("bara");
+    this.compresorFeedTemperature = turboExpanderCompressor.getCompressorFeedStream().getTemperature("C");
+    this.compresorDischargePressure = turboExpanderCompressor.getCompressorOutletStream().getPressure("bara");
+    this.compresorDischargeTemperature = turboExpanderCompressor.getCompressorOutletStream().getTemperature("C");
   }
 
   private Double speed = 0.0;

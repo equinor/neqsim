@@ -300,8 +300,8 @@ public class FuelGasSystem extends ProcessEquipmentBaseClass {
     if (!consumers.isEmpty()) {
       totalDemand = consumers.stream().mapToDouble(FuelGasConsumer::getDemandKgh).sum();
       // Set outlet pressure to most demanding consumer
-      double maxPressure = consumers.stream().mapToDouble(c -> c.getType().getTypicalPressureBarg())
-          .max().orElse(outletPressure);
+      double maxPressure = consumers.stream().mapToDouble(c -> c.getType().getTypicalPressureBarg()).max()
+          .orElse(outletPressure);
       outletPressure = maxPressure;
     }
   }
@@ -467,6 +467,7 @@ public class FuelGasSystem extends ProcessEquipmentBaseClass {
    *
    * @return JSON string
    */
+  @Override
   public String toJson() {
     Map<String, Object> results = new LinkedHashMap<>();
     results.put("systemName", getName());

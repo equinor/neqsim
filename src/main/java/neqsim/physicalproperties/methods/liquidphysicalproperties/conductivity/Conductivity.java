@@ -13,9 +13,7 @@ import neqsim.physicalproperties.methods.methodinterface.ConductivityInterface;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * Conductivity class for liquids.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class Conductivity extends LiquidPhysicalPropertyMethod implements Conduc
   public double[] pureComponentConductivity;
 
   /**
-   * <p>
    * Constructor for Conductivity.
-   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -65,8 +61,7 @@ public class Conductivity extends LiquidPhysicalPropertyMethod implements Conduc
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
         /*
-         * tempVar2 = Math .pow(1.0 + Math .sqrt(pureComponentConductivity[i] /
-         * pureComponentConductivity[j])
+         * tempVar2 = Math .pow(1.0 + Math .sqrt(pureComponentConductivity[i] / pureComponentConductivity[j])
          * Math.pow(liquidPhase.getPhase().getComponent(j).getMolarMass() /
          * liquidPhase.getPhase().getComponent(i).getMolarMass(), 0.25), 2.0) / Math.pow(8.0 (1.0 +
          * liquidPhase.getPhase().getComponent(i).getMolarMass() /
@@ -84,19 +79,16 @@ public class Conductivity extends LiquidPhysicalPropertyMethod implements Conduc
   }
 
   /**
-   * <p>
    * calcPureComponentConductivity.
-   * </p>
    */
   public void calcPureComponentConductivity() {
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
       // pure component conductivity
-      pureComponentConductivity[i] =
-          liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(0)
-              + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(1)
-                  * liquidPhase.getPhase().getTemperature()
-              + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(2)
-                  * Math.pow(liquidPhase.getPhase().getTemperature(), 2.0);
+      pureComponentConductivity[i] = liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(0)
+          + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(1)
+              * liquidPhase.getPhase().getTemperature()
+          + liquidPhase.getPhase().getComponent(i).getLiquidConductivityParameter(2)
+              * Math.pow(liquidPhase.getPhase().getTemperature(), 2.0);
       if (pureComponentConductivity[i] < 0) {
         pureComponentConductivity[i] = 1e-10;
       }

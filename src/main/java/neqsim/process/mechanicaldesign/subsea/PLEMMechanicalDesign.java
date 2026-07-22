@@ -140,8 +140,7 @@ public class PLEMMechanicalDesign extends MechanicalDesign {
     double dragCoeff = 1.2;
     double projectedArea = plem.getStructureLength() * plem.getStructureWidth() * 0.5;
 
-    return 0.5 * seawaterDensity * currentVelocity * currentVelocity * dragCoeff * projectedArea
-        / 1000;
+    return 0.5 * seawaterDensity * currentVelocity * currentVelocity * dragCoeff * projectedArea / 1000;
   }
 
   /**
@@ -168,14 +167,15 @@ public class PLEMMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate cost estimate for the PLEM.
    */
+  @Override
   public void calculateCostEstimate() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
     }
 
     // Use PLET cost calculation with PLEM parameters
-    costEstimator.calculatePLETCost(plem.getDryWeight(), plem.getHeaderSizeInches(),
-        plem.getWaterDepth(), plem.hasBranchIsolationValves(), plem.getNumberOfSlots() > 2);
+    costEstimator.calculatePLETCost(plem.getDryWeight(), plem.getHeaderSizeInches(), plem.getWaterDepth(),
+        plem.hasBranchIsolationValves(), plem.getNumberOfSlots() > 2);
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();
@@ -207,6 +207,7 @@ public class PLEMMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
@@ -311,8 +312,7 @@ public class PLEMMechanicalDesign extends MechanicalDesign {
     }
     jsonObj.add("costEstimation", cost);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 
   /**

@@ -3,9 +3,7 @@ package neqsim.standards.gasquality;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * GasChromotograpyhBase class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class GasChromotograpyhBase extends neqsim.standards.Standard {
   String unit = "mol%";
 
   /**
-   * <p>
    * Constructor for GasChromotograpyhBase.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */

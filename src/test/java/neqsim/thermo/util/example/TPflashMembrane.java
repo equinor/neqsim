@@ -10,22 +10,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TPflashMembrane class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TPflashMembrane {
+  private static final Logger logger = LogManager.getLogger(TPflashMembrane.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TPflashMembrane.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -34,8 +31,7 @@ public class TPflashMembrane {
     // SystemInterface testSystem2 =
     // util.serialization.SerializationManager.open("c:/test.fluid");
     // testSystem2.display();
-    SystemInterface testSystem =
-        new SystemSrkEos(298, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem = new SystemSrkEos(298, ThermodynamicConstantsInterface.referencePressure);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
@@ -53,7 +49,7 @@ public class TPflashMembrane {
     testSystem.allowPhaseShift(false);
 
     try {
-      String[] comps = {"CO2"};
+      String[] comps = { "CO2" };
       testOps.dTPflash(comps);
       // testOps.TPflash();
       testSystem.display();

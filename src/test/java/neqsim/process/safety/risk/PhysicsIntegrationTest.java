@@ -1,6 +1,9 @@
 package neqsim.process.safety.risk;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -14,7 +17,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Tests that verify risk calculations properly integrate with NeqSim physics.
- * 
+ *
  * <p>
  * These tests demonstrate that:
  * </p>
@@ -76,10 +79,8 @@ class PhysicsIntegrationTest {
     assertTrue(pressure > 0, "Pressure should be read from equipment");
 
     // Values should match equipment values
-    assertEquals(separator.getTemperature(), temp, 0.1,
-        "Monitor temperature should match separator temperature");
-    assertEquals(separator.getPressure(), pressure, 0.1,
-        "Monitor pressure should match separator pressure");
+    assertEquals(separator.getTemperature(), temp, 0.1, "Monitor temperature should match separator temperature");
+    assertEquals(separator.getPressure(), pressure, 0.1, "Monitor pressure should match separator pressure");
   }
 
   @Test
@@ -151,8 +152,7 @@ class PhysicsIntegrationTest {
     PhysicsBasedRiskMonitor.PhysicsBasedRiskAssessment assessment = riskMonitor.assess();
 
     // Should have read utilizations from equipment
-    assertFalse(assessment.getEquipmentUtilizations().isEmpty(),
-        "Should have equipment utilizations from NeqSim");
+    assertFalse(assessment.getEquipmentUtilizations().isEmpty(), "Should have equipment utilizations from NeqSim");
 
     // Should have health indices
     assertFalse(assessment.getEquipmentHealthIndices().isEmpty(), "Should have health indices");
@@ -258,8 +258,7 @@ class PhysicsIntegrationTest {
 
     // Data should be meaningful (not all zeros or NaN)
     @SuppressWarnings("unchecked")
-    java.util.Map<String, Double> healthMap =
-        (java.util.Map<String, Double>) map.get("equipmentHealthIndices");
+    java.util.Map<String, Double> healthMap = (java.util.Map<String, Double>) map.get("equipmentHealthIndices");
     boolean hasValidHealth = healthMap.values().stream().anyMatch(v -> v > 0 && v <= 1.0);
     assertTrue(hasValidHealth, "Should have valid health indices from physics");
   }

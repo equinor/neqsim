@@ -13,26 +13,31 @@ package neqsim.process.equipment.compressor.driver;
  * <li>Motor temperature limits</li>
  * </ul>
  *
- * <p><strong>VFD Operation Modes</strong></p>
+ * <p>
+ * <strong>VFD Operation Modes</strong>
+ * </p>
  * <ul>
- * <li><strong>Constant Torque:</strong> Torque is constant up to base speed, power proportional to
- * speed</li>
+ * <li><strong>Constant Torque:</strong> Torque is constant up to base speed, power proportional to speed</li>
  * <li><strong>Constant Power:</strong> Above base speed, power is constant, torque decreases</li>
  * </ul>
  *
- * <p><strong>Efficiency Characteristics</strong></p>
  * <p>
- * Electric motors have high efficiency at rated load (typically 90-97% for large motors) with
- * efficiency dropping at part load due to fixed losses (core losses, friction).
+ * <strong>Efficiency Characteristics</strong>
+ * </p>
+ * <p>
+ * Electric motors have high efficiency at rated load (typically 90-97% for large motors) with efficiency dropping at
+ * part load due to fixed losses (core losses, friction).
  * </p>
  *
- * <p><strong>Example Usage</strong></p>
- * 
+ * <p>
+ * <strong>Example Usage</strong>
+ * </p>
+ *
  * <pre>
  * ElectricMotorDriver motor = new ElectricMotorDriver(5000, 3600, 0.95);
  * motor.setHasVFD(true);
  * motor.setMinSpeedRatio(0.3); // 30% minimum speed with VFD
- * 
+ *
  * double availablePower = motor.getAvailablePower(2500); // At 2500 RPM
  * double efficiency = motor.getEfficiency(3000, 0.8); // At 80% load
  * </pre>
@@ -79,7 +84,6 @@ public class ElectricMotorDriver extends DriverCurveBase {
    * Default constructor.
    */
   public ElectricMotorDriver() {
-    super();
   }
 
   /**

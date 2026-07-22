@@ -7,11 +7,9 @@ import no.uib.cipr.matrix.BandMatrix;
 import no.uib.cipr.matrix.DenseMatrix;
 
 /**
- * <p>
  * GTSurfaceTensionFullGT class. Solving for the surface tension by direct Newton method. <br>
- * TODO: Make use of binary interaction parameter for the influence parameter \f$\beta_{ij}\f$ when
- * this becomes available in NeqSIM API.
- * </p>
+ * TODO: Make use of binary interaction parameter for the influence parameter \f$\beta_{ij}\f$ when this becomes
+ * available in NeqSIM API.
  *
  * @author Olaf Trygve Berglihn olaf.trygve.berglihn@sintef.no
  * @author John C. Morud john.c.morud@sintef.no
@@ -39,9 +37,7 @@ public class GTSurfaceTensionFullGT {
   private static final boolean DEBUGPLOT = false; // Set to true for profile plot.
 
   /**
-   * <p>
    * Constructor for GTSurfaceTensionFullGT.
-   * </p>
    *
    * @param flashedSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param phase1 a int
@@ -69,8 +65,8 @@ public class GTSurfaceTensionFullGT {
       }
     }
     if (hasAddedComp) {
-      neqsim.thermodynamicoperations.ThermodynamicOperations ops =
-          new neqsim.thermodynamicoperations.ThermodynamicOperations(this.sys);
+      neqsim.thermodynamicoperations.ThermodynamicOperations ops = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+          this.sys);
       ops.TPflash();
     }
 
@@ -79,10 +75,10 @@ public class GTSurfaceTensionFullGT {
      */
     for (i = 0; i < this.ncomp; i++) {
       this.ci[i] = this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
-      this.rho_ph1[i] = this.sys.getPhase(phase1).getComponent(i).getx()
-          / this.sys.getPhase(phase1).getMolarVolume() / m3;
-      this.rho_ph2[i] = this.sys.getPhase(phase2).getComponent(i).getx()
-          / this.sys.getPhase(phase2).getMolarVolume() / m3;
+      this.rho_ph1[i] = this.sys.getPhase(phase1).getComponent(i).getx() / this.sys.getPhase(phase1).getMolarVolume()
+          / m3;
+      this.rho_ph2[i] = this.sys.getPhase(phase2).getComponent(i).getx() / this.sys.getPhase(phase2).getMolarVolume()
+          / m3;
     }
     this.sys.setBeta(1.0);
     this.sys.init(0);
@@ -191,8 +187,7 @@ public class GTSurfaceTensionFullGT {
     xgrid = linspace(-L, L, Ngrid);
 
     for (i = 0; i < Nrefinements; i++) {
-      sigma = Newton(cij, L, N_Newton, maxRelChange, highOrder, directMethod, rhomat, sys, ncomp, t,
-          mueq);
+      sigma = Newton(cij, L, N_Newton, maxRelChange, highOrder, directMethod, rhomat, sys, ncomp, t, mueq);
       if (!NDEBUG && DEBUGPLOT) {
         debugPlot(xgrid, rhomat); // create a plot using xaxis and yvalues
       }
@@ -257,14 +252,13 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * Newton. Calculate surface tension by full gradient method and Newtons method
    *
-   * The routine solves the Finite Difference equations for the full Gradient Theory by Newtons
-   * method. Note that the length coordinate is in nm-units. Method: 1. Calculate delta_mu and its
-   * Jacobian 2. Call routine "directsolve" for Newton step 3. Dampen the step if relative step too
-   * large 4. Iterate until convergence or max #iterations (N_Newton)
-   * </p>
+   * <p>
+   * The routine solves the Finite Difference equations for the full Gradient Theory by Newtons method. Note that the
+   * length coordinate is in nm-units. Method: 1. Calculate delta_mu and its Jacobian 2. Call routine "directsolve" for
+   * Newton step 3. Dampen the step if relative step too large 4. Iterate until convergence or max #iterations
+   * (N_Newton)
    *
    * @param cij an array of type double
    * @param L a double
@@ -279,9 +273,8 @@ public class GTSurfaceTensionFullGT {
    * @param mueq an array of type double
    * @return sigma The surface tension [N/m]
    */
-  public static double Newton(double[][] cij, double L, int N_Newton, double allowedRelChange,
-      boolean highOrder, boolean directMethod, double[][] rhomat, SystemInterface sys, int ncomp,
-      double t, double[] mueq) {
+  public static double Newton(double[][] cij, double L, int N_Newton, double allowedRelChange, boolean highOrder,
+      boolean directMethod, double[][] rhomat, SystemInterface sys, int ncomp, double t, double[] mueq) {
     int i;
     int j;
     int k;
@@ -425,9 +418,7 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * directsolve. Solve linear system for Full Gradient method
-   * </p>
    *
    * @param rres an array of type double
    * @param JJ an array of type double
@@ -437,8 +428,8 @@ public class GTSurfaceTensionFullGT {
    * @param rhomat an array of type double
    * @param ncomp a int
    */
-  public static void directsolve(double[][] rres, double[][][] JJ, double[][] C, double H,
-      int Ngrid, double[][] rhomat, int ncomp) {
+  public static void directsolve(double[][] rres, double[][][] JJ, double[][] C, double H, int Ngrid, double[][] rhomat,
+      int ncomp) {
     int i;
     int j;
     int k;
@@ -461,8 +452,7 @@ public class GTSurfaceTensionFullGT {
         for (k = 0; k < ncomp; k++) { // Each specie
           // bb[i][j] = rhomat[i][j] + JJ[i][j][k]*rhomat[i][k] -
           // C[j][k]*(rhomat[i][k-1]-2*rhomat[i][k]+rhomat[i][k+1])/(H*H) //Loop k
-          bbtmp += JJ[i][j][k] * rhomat[i][k]
-              - C[j][k] * (rhomat[i - 1][k] - 2 * rhomat[i][k] + rhomat[i + 1][k]) / H2;
+          bbtmp += JJ[i][j][k] * rhomat[i][k] - C[j][k] * (rhomat[i - 1][k] - 2 * rhomat[i][k] + rhomat[i + 1][k]) / H2;
         }
         bb.set(iglob++, 0, -bbtmp);
       }
@@ -517,12 +507,11 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * sigmaCalc. Calculates the interface tension
    *
-   * The following integral is solved with the trapezoidal method: \f{equation}{ \sigma =
-   * \int_{-\infty}^{\infty} \boldsymbol{n_z}^T \boldsymbol{C} \boldsymbol{n_z} \, dz \f}
-   * </p>
+   * <p>
+   * The following integral is solved with the trapezoidal method: \f{equation}{ \sigma = \int_{-\infty}^{\infty}
+   * \boldsymbol{n_z}^T \boldsymbol{C} \boldsymbol{n_z} \, dz \f}
    *
    * @param h a double
    * @param rrho an array of type double
@@ -532,8 +521,8 @@ public class GTSurfaceTensionFullGT {
    * @param ncomp a int
    * @return sigma The surface tension [N/m]
    */
-  public static double sigmaCalc(double h, double[][] rrho, double[][] C, boolean highOrder,
-      double[][] drhodz, int ncomp) {
+  public static double sigmaCalc(double h, double[][] rrho, double[][] C, boolean highOrder, double[][] drhodz,
+      int ncomp) {
     int i;
     int j;
     int k;
@@ -564,12 +553,11 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * calc_std_integral. Calculate width of interface region (length scale)
    *
-   * Estimate the width of interface by calculating the second moment of the surface tension
-   * integrand. Used to adjust the domain size
-   * </p>
+   * <p>
+   * Estimate the width of interface by calculating the second moment of the surface tension integrand. Used to adjust
+   * the domain size
    *
    * @param z an array of type double
    * @param C an array of type double
@@ -606,9 +594,7 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * delta_mu. Calculate \f$\Delta\mu=\mu-\mu_0\f$ and its number density derivative.
-   * </p>
    *
    * @param sys a {@link neqsim.thermo.system.SystemInterface} object
    * @param ncomp a int
@@ -618,8 +604,8 @@ public class GTSurfaceTensionFullGT {
    * @param delta_mu an array of type double
    * @param dmu_drho an array of type double
    */
-  public static void delta_mu(SystemInterface sys, int ncomp, double t, double[] mueq, double[] rho,
-      double[] delta_mu, double[][] dmu_drho) {
+  public static void delta_mu(SystemInterface sys, int ncomp, double t, double[] mueq, double[] rho, double[] delta_mu,
+      double[][] dmu_drho) {
     int i;
     double[] pdummy = new double[ncomp];
     double[] mu = new double[ncomp];
@@ -632,9 +618,7 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * linspace. Make an array of double with N values linearly spaced between a and b.
-   * </p>
    *
    * @param a start of range
    * @param b end of range
@@ -653,9 +637,7 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
    * debugPlot. Plotting of density profiles y over the domain x.
-   * </p>
    *
    * @param x abscissa values
    * @param y array of ordinate value arrays.
@@ -680,10 +662,7 @@ public class GTSurfaceTensionFullGT {
   }
 
   /**
-   * <p>
-   * initmu. Initialize equilibrium chemical potential, and derivative and test that the bulk
-   * equilibrium is satisfied.
-   * </p>
+   * initmu. Initialize equilibrium chemical potential, and derivative and test that the bulk equilibrium is satisfied.
    *
    * @param sys a {@link neqsim.thermo.system.SystemInterface} object
    * @param ncomp a int
@@ -694,8 +673,8 @@ public class GTSurfaceTensionFullGT {
    * @param p0 an array of type double
    * @param reltol a double
    */
-  public static void initmu(SystemInterface sys, int ncomp, double t, double[] rho_ph1,
-      double[] rho_ph2, double[] mueq, double[] p0, double reltol) {
+  public static void initmu(SystemInterface sys, int ncomp, double t, double[] rho_ph1, double[] rho_ph2, double[] mueq,
+      double[] p0, double reltol) {
     int i;
     double maxerr = 0.;
     double[][] dmu_drho1 = new double[ncomp][ncomp];
@@ -710,8 +689,8 @@ public class GTSurfaceTensionFullGT {
       maxerr = Math.max(maxerr, Math.abs(mueq[i] / mueq2[i] - 1.0));
     }
     if (maxerr > reltol) {
-      logger.warn("Flash is not properly solved.  Maximum relative error in chemical potential:  "
-          + maxerr + " > " + reltol);
+      logger.warn(
+          "Flash is not properly solved.  Maximum relative error in chemical potential:  " + maxerr + " > " + reltol);
       throw new RuntimeException("Flash not solved!");
     }
   }

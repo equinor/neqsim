@@ -13,8 +13,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Performs uncertainty propagation analysis for process simulations.
  *
  * <p>
- * Supports both analytical (linear) uncertainty propagation and Monte Carlo simulation for
- * comprehensive uncertainty quantification.
+ * Supports both analytical (linear) uncertainty propagation and Monte Carlo simulation for comprehensive uncertainty
+ * quantification.
  * </p>
  *
  * @author ESOL
@@ -43,8 +43,7 @@ public class UncertaintyAnalyzer {
       this(variableName, standardDeviation, DistributionType.NORMAL);
     }
 
-    public InputUncertainty(String variableName, double standardDeviation,
-        DistributionType distribution) {
+    public InputUncertainty(String variableName, double standardDeviation, DistributionType distribution) {
       this.variableName = variableName;
       this.standardDeviation = standardDeviation;
       this.distribution = distribution;
@@ -180,8 +179,7 @@ public class UncertaintyAnalyzer {
       List<Double> samples2 = outputSamples.get(output);
       if (!samples2.isEmpty()) {
         double mean = samples2.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
-        double variance =
-            samples2.stream().mapToDouble(v -> Math.pow(v - mean, 2)).average().orElse(0.0);
+        double variance = samples2.stream().mapToDouble(v -> Math.pow(v - mean, 2)).average().orElse(0.0);
         double stdDev = Math.sqrt(variance);
 
         results.put(output, new UncertaintyBounds(mean, stdDev, ""));
@@ -196,6 +194,8 @@ public class UncertaintyAnalyzer {
 
   /**
    * Calculates the sensitivity matrix using finite differences.
+   *
+   * @return sensitivity matrix with finite-difference derivatives for configured inputs and outputs
    */
   private SensitivityMatrix calculateSensitivityMatrix() {
     String[] inputs = inputUncertainties.keySet().toArray(new String[0]);
@@ -247,22 +247,21 @@ public class UncertaintyAnalyzer {
       double perturbation;
 
       switch (uncert.getDistribution()) {
-        case NORMAL:
-          perturbation = random.nextGaussian() * uncert.getStandardDeviation();
-          break;
-        case UNIFORM:
-          double range = uncert.getStandardDeviation() * Math.sqrt(12) / 2;
-          perturbation = (random.nextDouble() - 0.5) * 2 * range;
-          break;
-        case LOGNORMAL:
-          double sigma =
-              Math.sqrt(Math.log(1 + Math.pow(uncert.getStandardDeviation() / baseValue, 2)));
-          double mu = Math.log(baseValue) - sigma * sigma / 2;
-          double logValue = mu + sigma * random.nextGaussian();
-          perturbation = Math.exp(logValue) - baseValue;
-          break;
-        default:
-          perturbation = random.nextGaussian() * uncert.getStandardDeviation();
+      case NORMAL:
+        perturbation = random.nextGaussian() * uncert.getStandardDeviation();
+        break;
+      case UNIFORM:
+        double range = uncert.getStandardDeviation() * Math.sqrt(12) / 2;
+        perturbation = (random.nextDouble() - 0.5) * 2 * range;
+        break;
+      case LOGNORMAL:
+        double sigma = Math.sqrt(Math.log(1 + Math.pow(uncert.getStandardDeviation() / baseValue, 2)));
+        double mu = Math.log(baseValue) - sigma * sigma / 2;
+        double logValue = mu + sigma * random.nextGaussian();
+        perturbation = Math.exp(logValue) - baseValue;
+        break;
+      default:
+        perturbation = random.nextGaussian() * uncert.getStandardDeviation();
       }
 
       setInputValue(uncert.getVariableName(), baseValue + perturbation);

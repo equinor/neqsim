@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OLGApropGenerator class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class OLGApropGenerator {
+  private static final Logger logger = LogManager.getLogger(OLGApropGenerator.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(OLGApropGenerator.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -1,17 +1,17 @@
 package neqsim.process.equipment.distillation;
 
+import java.util.List;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * SimpleTray class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -25,12 +25,43 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   double heatInput = 0.0;
   private double temperature = Double.NaN;
 
-  private double trayPressure = -1.0;
+  /** Tray operating pressure in bara. Negative means use stream pressure. */
+  protected double trayPressure = -1.0;
 
   /**
-   * <p>
+   * When {@code true}, the tray uses reactive flash (Modified RAND, simultaneous chemical + phase equilibrium) instead
+   * of standard VLE flash. Set via {@link DistillationColumn#setReactive(boolean)}.
+   */
+  private boolean useReactiveFlash = false;
+
+  /**
+   * When {@code true}, only thermodynamic properties (init level 2: enthalpy, K-values, densities needed for the
+   * balances) are initialized after each tray flash and the expensive physical/transport properties (viscosity, thermal
+   * conductivity, surface tension) are skipped. The sequential column solver sets this during iteration and calls
+   * {@link #finalizeTrayProperties()} once on the converged state. Default {@code false} preserves standard
+   * standalone-tray behavior.
+   */
+  private boolean skipPhysicalPropertiesDuringSolve = false;
+
+  /** Cached gas out stream, invalidated when run() is called. */
+  private transient StreamInterface cachedGasOutStream = null;
+  /** Cached liquid out stream, invalidated when run() is called. */
+  private transient StreamInterface cachedLiquidOutStream = null;
+  /** Cached gas side-draw stream, invalidated when run() is called. */
+  private transient StreamInterface cachedGasSideDrawStream = null;
+  /** Cached liquid side-draw stream, invalidated when run() is called. */
+  private transient StreamInterface cachedLiquidSideDrawStream = null;
+  /** Cached liquid pumparound draw stream, invalidated when run() is called. */
+  private transient StreamInterface cachedLiquidPumparoundDrawStream = null;
+  /** Fraction of tray vapor outlet withdrawn as a side draw. */
+  private double gasSideDrawFraction = 0.0;
+  /** Fraction of tray liquid outlet withdrawn as a side draw. */
+  private double liquidSideDrawFraction = 0.0;
+  /** Fraction of tray liquid outlet withdrawn as a pumparound draw. */
+  private double liquidPumparoundDrawFraction = 0.0;
+
+  /**
    * Constructor for SimpleTray.
-   * </p>
    *
    * @param name name of tray
    */
@@ -39,9 +70,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    */
   public void init() {
     int pp = 0;
@@ -53,16 +82,30 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     }
   }
 
+  /**
+   * Replace all tray inlet streams with the supplied external streams.
+   *
+   * @param externalStreams external feed streams to keep on the tray
+   */
+  void resetInputStreams(List<StreamInterface> externalStreams) {
+    while (getNumberOfInputStreams() > 0) {
+      removeInputStream(getNumberOfInputStreams() - 1);
+    }
+    for (StreamInterface externalStream : externalStreams) {
+      addStream(externalStream);
+    }
+    invalidateOutStreamCache();
+  }
+
   /** {@inheritDoc} */
   @Override
   public void setHeatInput(double heatinp) {
     this.heatInput = heatinp;
+    invalidateOutStreamCache();
   }
 
   /**
-   * <p>
    * calcMixStreamEnthalpy0.
-   * </p>
    *
    * @return a double
    */
@@ -70,7 +113,10 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     double enthalpy = 0;
 
     for (int k = 0; k < streams.size(); k++) {
-      streams.get(k).getThermoSystem().init(3);
+      // init(2) is sufficient: getEnthalpy() reads only residual thermodynamic
+      // properties, not the composition derivatives that init(3) additionally computes.
+      // This removes redundant derivative work from the per-tray enthalpy summation.
+      streams.get(k).getThermoSystem().init(2);
       enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
       // System.out.println("total enthalpy k : " + ( ((Stream)
       // streams.get(k)).getThermoSystem()).getEnthalpy());
@@ -89,7 +135,9 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
 
     for (int k = 0; k < streams.size(); k++) {
       if (streams.get(k).getFlowRate("kg/hr") > getMinimumFlow()) {
-        streams.get(k).getThermoSystem().init(3);
+        // init(2) is sufficient for getEnthalpy(); composition derivatives from init(3)
+        // are not read here, so skipping them removes dead work from the solver hot loop.
+        streams.get(k).getThermoSystem().init(2);
         enthalpy += streams.get(k).getThermoSystem().getEnthalpy();
       }
       // System.out.println("total enthalpy k : " + ( ((Stream)
@@ -100,30 +148,50 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * run2.
-   * </p>
    */
   public void run2() {
+    invalidateOutStreamCache();
     super.run();
     temperature = mixedStream.getTemperature();
   }
 
   /**
-   * <p>
    * TPflash.
-   * </p>
    */
-  public void TPflash() {}
+  public void TPflash() {
+  }
+
+  /**
+   * Enable or disable reactive flash on this tray.
+   *
+   * @param useReactiveFlash {@code true} to use reactive (chemical + phase) equilibrium
+   */
+  public void setUseReactiveFlash(boolean useReactiveFlash) {
+    this.useReactiveFlash = useReactiveFlash;
+    invalidateOutStreamCache();
+  }
+
+  /**
+   * Check whether this tray uses reactive flash.
+   *
+   * @return {@code true} if reactive flash is enabled
+   */
+  public boolean isUseReactiveFlash() {
+    return useReactiveFlash;
+  }
 
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
-    double enthalpy = 0.0;
+    invalidateOutStreamCache();
     // double flowRate = ((Stream)
     // streams.get(0)).getThermoSystem().getFlowRate("kg/hr");
     // ((Stream) streams.get(0)).getThermoSystem().display();
     boolean changeTo2Phase = false;
+    if (streams.isEmpty()) {
+      throw new IllegalStateException("Tray " + getName() + " has no inlet streams");
+    }
     SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
     if (thermoSystem2.doMultiPhaseCheck()) {
       changeTo2Phase = true;
@@ -131,13 +199,13 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     }
     // System.out.println("total number of moles " +
     // thermoSystem2.getTotalNumberOfMoles());
-    if (trayPressure > 0)
-
-    {
+    if (trayPressure > 0) {
       thermoSystem2.setPressure(trayPressure);
     }
     mixedStream.setThermoSystem(thermoSystem2);
     // thermoSystem2.display();
+
+    double enthalpy = 0.0;
     ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
     if (streams.size() > 0) {
       mixedStream.getThermoSystem().setNumberOfPhases(2);
@@ -160,17 +228,31 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
       if (!Double.isNaN(getOutTemperature())) {
         mixedStream.getThermoSystem().setTemperature(getOutTemperature());
       }
-      testOps.TPflash();
-      mixedStream.getThermoSystem().init(2);
+      if (useReactiveFlash) {
+        testOps.reactiveTPflash();
+      } else {
+        testOps.TPflash();
+      }
+      initTrayProperties();
     } else {
       try {
-        testOps.PHflash(enthalpy, 0);
+        if (useReactiveFlash) {
+          testOps.reactivePHflash(enthalpy, 0);
+        } else {
+          testOps.PHflash(enthalpy, 0);
+        }
+        initTrayProperties();
       } catch (Exception ex) {
         try {
           if (!Double.isNaN(getOutTemperature())) {
             mixedStream.getThermoSystem().setTemperature(getOutTemperature());
           }
-          testOps.TPflash();
+          if (useReactiveFlash) {
+            testOps.reactiveTPflash();
+          } else {
+            testOps.TPflash();
+          }
+          initTrayProperties();
         } catch (Exception ex2) {
           logger.warn("TPflash failed in SimpleTray: " + getName(), ex2);
         }
@@ -188,8 +270,6 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     setCalculationIdentifier(id);
 
     if (mixedStream.getFluid().getNumberOfPhases() >= 3) {
-      System.out
-          .println("error...." + mixedStream.getFluid().getNumberOfPhases() + " phases on tray");
       logger.warn("error...." + mixedStream.getFluid().getNumberOfPhases() + " phases on tray");
     }
 
@@ -199,25 +279,408 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
+   * Enable or disable skipping of physical/transport property initialization after each tray flash. Used by the
+   * sequential column solver to avoid computing viscosity/thermal-conductivity/surface-tension on every inner
+   * iteration; call {@link #finalizeTrayProperties()} once on the converged state to restore full properties.
+   *
+   * @param skip {@code true} to skip physical-property initialization during the solve
+   */
+  public void setSkipPhysicalPropertiesDuringSolve(boolean skip) {
+    this.skipPhysicalPropertiesDuringSolve = skip;
+  }
+
+  /**
+   * Whether physical-property initialization is currently skipped after each tray flash.
+   *
+   * @return {@code true} if physical properties are skipped during the solve
+   */
+  public boolean isSkipPhysicalPropertiesDuringSolve() {
+    return skipPhysicalPropertiesDuringSolve;
+  }
+
+  /**
+   * Initialize tray outlet properties after a flash. Computes full properties (thermodynamic + physical) unless
+   * {@link #skipPhysicalPropertiesDuringSolve} is set, in which case only thermodynamic properties (init level 2, which
+   * the mass/energy balances rely on) are computed.
+   */
+  private void initTrayProperties() {
+    if (skipPhysicalPropertiesDuringSolve) {
+      mixedStream.getThermoSystem().init(2);
+    } else {
+      mixedStream.getThermoSystem().initProperties();
+    }
+  }
+
+  /**
+   * Finalize full physical/transport properties on the converged tray state and re-enable them for subsequent
+   * standalone runs. Called by the sequential column solver after convergence when physical-property initialization was
+   * skipped during iteration, so that product streams cloned from this tray carry complete properties.
+   */
+  public void finalizeTrayProperties() {
+    this.skipPhysicalPropertiesDuringSolve = false;
+    if (mixedStream != null && mixedStream.getThermoSystem() != null) {
+      mixedStream.getThermoSystem().initProperties();
+      invalidateOutStreamCache();
+    }
+  }
+
+  /**
+   * Invalidate the cached gas and liquid output streams. Call this after modifying the tray's thermo system
+   * compositions externally (e.g. Murphree efficiency correction).
+   */
+  public void invalidateOutStreamCache() {
+    cachedGasOutStream = null;
+    cachedLiquidOutStream = null;
+    cachedGasSideDrawStream = null;
+    cachedLiquidSideDrawStream = null;
+    cachedLiquidPumparoundDrawStream = null;
+  }
+
+  /**
+   * Set a pre-built gas out stream (e.g. Murphree-corrected) to be returned by {@link #getGasOutStream()} instead of
+   * the equilibrium result.
+   *
+   * @param stream the corrected gas stream
+   */
+  public void setCachedGasOutStream(StreamInterface stream) {
+    this.cachedGasOutStream = stream;
+  }
+
+  /**
+   * Set a pre-built liquid out stream (e.g. Murphree-corrected) to be returned by {@link #getLiquidOutStream()} instead
+   * of the equilibrium result.
+   *
+   * @param stream the corrected liquid stream
+   */
+  public void setCachedLiquidOutStream(StreamInterface stream) {
+    this.cachedLiquidOutStream = stream;
+  }
+
+  /**
    * getGasOutStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
   public StreamInterface getGasOutStream() {
-    return new Stream("", mixedStream.getThermoSystem().phaseToSystem(0));
+    if (cachedGasOutStream == null) {
+      cachedGasOutStream = createPhaseOutStream("gas", 1.0 - gasSideDrawFraction);
+    }
+    return cachedGasOutStream;
   }
 
   /**
-   * <p>
    * getLiquidOutStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
   public StreamInterface getLiquidOutStream() {
-    return new Stream("", mixedStream.getThermoSystem().phaseToSystem(1));
+    if (cachedLiquidOutStream == null) {
+      cachedLiquidOutStream = createLiquidOutStream(1.0 - liquidSideDrawFraction - liquidPumparoundDrawFraction);
+    }
+    return cachedLiquidOutStream;
+  }
+
+  /**
+   * Get the gas side-draw stream withdrawn from this tray.
+   *
+   * @return gas side-draw stream, or a zero-flow stream when no gas side draw is configured
+   */
+  public StreamInterface getGasSideDrawStream() {
+    if (cachedGasSideDrawStream == null) {
+      cachedGasSideDrawStream = createPhaseOutStream("gas", gasSideDrawFraction);
+    }
+    return cachedGasSideDrawStream;
+  }
+
+  /**
+   * Get the liquid side-draw stream withdrawn from this tray.
+   *
+   * @return liquid side-draw stream, or a zero-flow stream when no liquid side draw is configured
+   */
+  public StreamInterface getLiquidSideDrawStream() {
+    if (cachedLiquidSideDrawStream == null) {
+      cachedLiquidSideDrawStream = createLiquidOutStream(liquidSideDrawFraction);
+    }
+    return cachedLiquidSideDrawStream;
+  }
+
+  /**
+   * Get the liquid pumparound draw stream withdrawn from this tray.
+   *
+   * @return liquid pumparound draw stream, or a zero-flow stream when no draw is configured
+   */
+  public StreamInterface getLiquidPumparoundDrawStream() {
+    if (cachedLiquidPumparoundDrawStream == null) {
+      cachedLiquidPumparoundDrawStream = createLiquidOutStream(liquidPumparoundDrawFraction);
+    }
+    return cachedLiquidPumparoundDrawStream;
+  }
+
+  /**
+   * Set the fraction of tray vapor withdrawn as a side draw.
+   *
+   * @param fraction fraction from zero to one
+   * @throws IllegalArgumentException if the fraction is not finite or outside zero to one
+   */
+  public void setGasSideDrawFraction(double fraction) {
+    validateSideDrawFraction(fraction);
+    gasSideDrawFraction = fraction;
+    invalidateOutStreamCache();
+  }
+
+  /**
+   * Set the fraction of tray liquid withdrawn as a side draw.
+   *
+   * @param fraction fraction from zero to one
+   * @throws IllegalArgumentException if the fraction is not finite or outside zero to one
+   */
+  public void setLiquidSideDrawFraction(double fraction) {
+    validateSideDrawFraction(fraction);
+    validateLiquidSplitFractions(fraction, liquidPumparoundDrawFraction);
+    liquidSideDrawFraction = fraction;
+    invalidateOutStreamCache();
+  }
+
+  /**
+   * Set the fraction of tray liquid withdrawn for a pumparound return.
+   *
+   * @param fraction fraction from zero to one
+   * @throws IllegalArgumentException if the fraction is not finite, outside zero to one, or the total liquid withdrawal
+   * fraction exceeds one
+   */
+  public void setLiquidPumparoundDrawFraction(double fraction) {
+    validateSideDrawFraction(fraction);
+    validateLiquidSplitFractions(liquidSideDrawFraction, fraction);
+    liquidPumparoundDrawFraction = fraction;
+    invalidateOutStreamCache();
+  }
+
+  /**
+   * Get the configured gas side-draw fraction.
+   *
+   * @return gas side-draw fraction
+   */
+  public double getGasSideDrawFraction() {
+    return gasSideDrawFraction;
+  }
+
+  /**
+   * Get the configured liquid side-draw fraction.
+   *
+   * @return liquid side-draw fraction
+   */
+  public double getLiquidSideDrawFraction() {
+    return liquidSideDrawFraction;
+  }
+
+  /**
+   * Get the configured liquid pumparound draw fraction.
+   *
+   * @return liquid pumparound draw fraction
+   */
+  public double getLiquidPumparoundDrawFraction() {
+    return liquidPumparoundDrawFraction;
+  }
+
+  /**
+   * Create the tray gas outlet from the requested phase type and normalize its inventory.
+   *
+   * @param phaseTypeName phase type name to prefer
+   * @param outletFraction fraction of the selected phase inventory to route to the outlet
+   * @return stream containing the selected normalized phase
+   */
+  private StreamInterface createPhaseOutStream(String phaseTypeName, double outletFraction) {
+    SystemInterface traySystem = mixedStream.getThermoSystem();
+    int phaseIndex = findPhaseIndex(phaseTypeName);
+    if (phaseIndex < 0) {
+      return createZeroOutStream(traySystem);
+    }
+    SystemInterface phaseSystem = createPhaseSystemSafely(traySystem, phaseIndex);
+    if (phaseSystem == null) {
+      return createZeroOutStream(traySystem);
+    }
+    scalePhaseSystemByFraction(phaseSystem, outletFraction);
+    return new Stream("", phaseSystem);
+  }
+
+  /**
+   * Create the tray liquid outlet from the liquid or oil phase and normalize its inventory.
+   *
+   * @param outletFraction fraction of the selected liquid inventory to route to the outlet
+   * @return stream containing the selected normalized liquid phase
+   */
+  private StreamInterface createLiquidOutStream(double outletFraction) {
+    SystemInterface traySystem = mixedStream.getThermoSystem();
+    int phaseIndex = findLiquidPhaseIndex();
+    if (phaseIndex < 0) {
+      return createZeroOutStream(traySystem);
+    }
+    SystemInterface phaseSystem = createPhaseSystemSafely(traySystem, phaseIndex);
+    if (phaseSystem == null) {
+      return createZeroOutStream(traySystem);
+    }
+    scalePhaseSystemByFraction(phaseSystem, outletFraction);
+    return new Stream("", phaseSystem);
+  }
+
+  /**
+   * Validate a side-draw fraction.
+   *
+   * @param fraction fraction to validate
+   * @throws IllegalArgumentException if the fraction is not finite or outside zero to one
+   */
+  private void validateSideDrawFraction(double fraction) {
+    if (!Double.isFinite(fraction) || fraction < 0.0 || fraction > 1.0) {
+      throw new IllegalArgumentException("Side draw fraction must be between 0 and 1");
+    }
+  }
+
+  /**
+   * Validate that liquid product and pumparound withdrawals leave non-negative tray traffic.
+   *
+   * @param productFraction liquid product side-draw fraction
+   * @param pumparoundFraction liquid pumparound draw fraction
+   * @throws IllegalArgumentException if total liquid withdrawal exceeds one
+   */
+  private void validateLiquidSplitFractions(double productFraction, double pumparoundFraction) {
+    if (productFraction + pumparoundFraction > 1.0 + 1.0e-12) {
+      throw new IllegalArgumentException("Total liquid side draw and pumparound fractions cannot exceed 1");
+    }
+  }
+
+  /**
+   * Scale a phase outlet system by a split fraction.
+   *
+   * @param phaseSystem phase outlet system to scale
+   * @param outletFraction fraction of phase flow to keep in the stream
+   */
+  private void scalePhaseSystemByFraction(SystemInterface phaseSystem, double outletFraction) {
+    double clampedFraction = Math.max(0.0, Math.min(1.0, outletFraction));
+    scalePhaseSystemToNormalizedMoles(phaseSystem, phaseSystem.getTotalNumberOfMoles() * clampedFraction);
+  }
+
+  /**
+   * Create a zero-flow outlet stream when the requested phase is absent on the tray.
+   *
+   * @param traySystem tray thermodynamic system used as a composition template
+   * @return stream with zero total moles and zero flow
+   */
+  private StreamInterface createZeroOutStream(SystemInterface traySystem) {
+    SystemInterface zeroSystem = traySystem.clone();
+    zeroSystem.setNumberOfPhases(1);
+    scalePhaseSystemToNormalizedMoles(zeroSystem, 0.0);
+    return new Stream("", zeroSystem);
+  }
+
+  /**
+   * Create a phase system without allowing invalid phase roots to escape the tray solve.
+   *
+   * @param traySystem tray thermodynamic system
+   * @param phaseIndex phase index to extract
+   * @return extracted phase system, or {@code null} if phase extraction fails
+   */
+  private SystemInterface createPhaseSystemSafely(SystemInterface traySystem, int phaseIndex) {
+    try {
+      return traySystem.phaseToSystem(phaseIndex);
+    } catch (RuntimeException ex) {
+      logger.debug("Phase extraction failed for tray {} phase {}", getName(), phaseIndex, ex);
+      return null;
+    }
+  }
+
+  /**
+   * Find the phase index with the requested type.
+   *
+   * @param phaseTypeName phase type name to find
+   * @return phase index within the tray system, or {@code -1} when absent
+   */
+  private int findPhaseIndex(String phaseTypeName) {
+    SystemInterface traySystem = mixedStream.getThermoSystem();
+    int numberOfPhases = Math.max(1, traySystem.getNumberOfPhases());
+    for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
+      if (phaseTypeName.equals(traySystem.getPhase(phaseIndex).getPhaseTypeName())) {
+        return phaseIndex;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Find the liquid phase index, accepting both liquid and oil phase names.
+   *
+   * @return liquid phase index within the tray system, or {@code -1} when absent
+   */
+  private int findLiquidPhaseIndex() {
+    SystemInterface traySystem = mixedStream.getThermoSystem();
+    int numberOfPhases = Math.max(1, traySystem.getNumberOfPhases());
+    for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
+      String phaseTypeName = traySystem.getPhase(phaseIndex).getPhaseTypeName();
+      if ("liquid".equals(phaseTypeName) || "oil".equals(phaseTypeName)) {
+        return phaseIndex;
+      }
+    }
+    for (int phaseIndex = 0; phaseIndex < numberOfPhases; phaseIndex++) {
+      if (!"gas".equals(traySystem.getPhase(phaseIndex).getPhaseTypeName())) {
+        return phaseIndex;
+      }
+    }
+    return -1;
+  }
+
+  /**
+   * Scale a single-phase outlet system to the target number of moles.
+   *
+   * @param phaseSystem single-phase outlet system to scale
+   * @param targetMoles target total moles for the outlet system
+   */
+  private void scalePhaseSystemToNormalizedMoles(SystemInterface phaseSystem, double targetMoles) {
+    double currentMoles = phaseSystem.getTotalNumberOfMoles();
+    // Capture the extracted phase type before any re-initialisation can reorder phases.
+    // SystemThermo.phaseToSystem copies the selected phase into slot 0 and marks it with
+    // the correct type (e.g. liquid). A later init(0) re-expands the system to its maximum
+    // number of phases and slot 0 reverts to the default (gas) type, which would make
+    // getEnthalpy() evaluate the wrong EOS root for a liquid outlet.
+    PhaseType extractedPhaseType = phaseSystem.getPhase(0).getType();
+    if (!Double.isFinite(currentMoles) || currentMoles <= 0.0 || !Double.isFinite(targetMoles)) {
+      phaseSystem.setTotalNumberOfMoles(0.0);
+      return;
+    }
+    if (targetMoles <= 0.0) {
+      for (int phaseIndex = 0; phaseIndex < phaseSystem.getMaxNumberOfPhases(); phaseIndex++) {
+        for (int componentIndex = 0; componentIndex < phaseSystem.getPhase(phaseIndex)
+            .getNumberOfComponents(); componentIndex++) {
+          phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfMolesInPhase(0.0);
+          phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfmoles(0.0);
+        }
+      }
+      phaseSystem.setTotalNumberOfMoles(0.0);
+      phaseSystem.init(0);
+      return;
+    }
+    double scaleFactor = Math.max(0.0, targetMoles) / currentMoles;
+    for (int phaseIndex = 0; phaseIndex < phaseSystem.getMaxNumberOfPhases(); phaseIndex++) {
+      for (int componentIndex = 0; componentIndex < phaseSystem.getPhase(phaseIndex)
+          .getNumberOfComponents(); componentIndex++) {
+        double moles = phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).getNumberOfMolesInPhase()
+            * scaleFactor;
+        phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfMolesInPhase(moles);
+        phaseSystem.getPhase(phaseIndex).getComponent(componentIndex).setNumberOfmoles(moles);
+      }
+    }
+    phaseSystem.setTotalNumberOfMoles(Math.max(0.0, targetMoles));
+    phaseSystem.init(0);
+    // The extracted phase system carries the selected phase's moles in every phase
+    // slot and relies on a single-phase designation (see SystemThermo.phaseToSystem).
+    // The preceding init(0) re-expands the system to its maximum number of phases, so
+    // restore the single-phase state, re-apply the captured phase type so the correct
+    // EOS root is used, and initialise residual properties; otherwise getEnthalpy() sums a
+    // spurious second phase (or evaluates the wrong root) and returns an inconsistent
+    // value that breaks reboiler/condenser duty and column energy balances. init(2) is
+    // sufficient here because only the residual thermodynamic properties (enthalpy,
+    // entropy, Cp) are read from the out-stream; composition derivatives are not needed.
+    phaseSystem.setNumberOfPhases(1);
+    phaseSystem.setPhaseType(0, extractedPhaseType);
+    phaseSystem.init(2);
   }
 
   /** {@inheritDoc} */
@@ -230,12 +693,14 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   @Override
   public void setPressure(double pres) {
     trayPressure = pres;
+    invalidateOutStreamCache();
   }
 
   /** {@inheritDoc} */
   @Override
   public void setTemperature(double temperature) {
     this.temperature = temperature;
+    invalidateOutStreamCache();
   }
 
   /** {@inheritDoc} */
@@ -244,8 +709,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
     if (Double.isNaN(temperature)) {
       double gtemp = 0;
       for (int k = 0; k < streams.size(); k++) {
-        gtemp += streams.get(k).getThermoSystem().getTemperature()
-            * streams.get(k).getThermoSystem().getNumberOfMoles()
+        gtemp += streams.get(k).getThermoSystem().getTemperature() * streams.get(k).getThermoSystem().getNumberOfMoles()
             / mixedStream.getThermoSystem().getNumberOfMoles();
       }
       // System.out.println("guess temperature " + gtemp);
@@ -257,9 +721,7 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * getVaporFlowRate.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -273,25 +735,21 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * getLiquidFlowRate.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
    */
   public double getLiquidFlowRate(String unit) {
-    if (getFluid().hasPhaseType("aqueous") || getFluid().hasPhaseType("oil")) {
-      return getFluid().getPhase(1).getFlowRate(unit);
-    } else {
-      return 0.0;
+    int liquidPhaseIndex = findLiquidPhaseIndex();
+    if (liquidPhaseIndex >= 0) {
+      return getFluid().getPhase(liquidPhaseIndex).getFlowRate(unit);
     }
+    return 0.0;
   }
 
   /**
-   * <p>
    * getFeedRate.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -305,10 +763,9 @@ public class SimpleTray extends neqsim.process.equipment.mixer.Mixer implements 
   }
 
   /**
-   * <p>
    * massBalance.
-   * </p>
    *
+   * <p>
    * Calculates the mass balance by comparing the total mass input and output.
    *
    * @return the difference between mass input and mass output

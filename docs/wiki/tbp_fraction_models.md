@@ -1,3 +1,8 @@
+---
+title: "TBP Fraction Models in NeqSim"
+description: "This guide provides comprehensive documentation on True Boiling Point (TBP) fraction models available in NeqSim for petroleum fluid characterization."
+---
+
 # TBP Fraction Models in NeqSim
 
 This guide provides comprehensive documentation on True Boiling Point (TBP) fraction models available in NeqSim for petroleum fluid characterization.
@@ -519,6 +524,7 @@ oil.setPressure(50.0, "bara")
 # Flash and print
 from neqsim.thermodynamicoperations import TPflash
 TPflash(oil)
+oil.initProperties()
 oil.prettyPrint()
 ```
 
@@ -602,6 +608,6 @@ print(f"Pc = {fluid.getComponent(0).getPC()} bar")
 
 ## See Also
 
-- [Fluid Characterization](fluid_characterization.md) - Plus fraction models and lumping
-- [PVT Simulation Workflows](pvt_simulation_workflows.md) - Complete PVT analysis
-- [Thermodynamics Guide](thermodynamics_guide.md) - Equation of state selection
+- [Fluid Characterization](fluid_characterization) - Plus fraction models and lumping
+- [PVT Simulation Workflows](pvt_simulation_workflows) - Complete PVT analysis
+- [Thermodynamics Guide](thermodynamics_guide) - Equation of state selection

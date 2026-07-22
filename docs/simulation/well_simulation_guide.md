@@ -1,3 +1,8 @@
+---
+title: "NeqSim Well Simulation Guide"
+description: "This guide covers NeqSim's well simulation capabilities, providing functionality for"
+---
+
 # NeqSim Well Simulation Guide
 
 This guide covers NeqSim's well simulation capabilities, providing functionality for
@@ -61,7 +66,7 @@ q/q_max = 1 - 0.2(P_wf/P_res) - 0.8(P_wf/P_res)²
 
 ```java
 // From well test data: 500 Sm³/day at 120 bara, reservoir at 200 bara
-well.setVogelIPR(500.0, 120.0, 200.0);
+well.setVogelParameters(500.0, 120.0, 200.0);
 well.setOutletPressure(100.0, "bara");
 well.solveFlowFromOutletPressure(true);
 well.run();
@@ -76,7 +81,8 @@ q = C × (P_res² - P_wf²)^n
 ```
 
 ```java
-well.setFetkovichIPR(0.012, 0.85);  // C and n coefficients
+// C, n, and reservoir pressure (bara)
+well.setFetkovichParameters(0.012, 0.85, 200.0);
 ```
 
 #### 4. Backpressure Equation
@@ -90,7 +96,8 @@ P_res² - P_wf² = A×q + B×q²
 Where A is the Darcy term and B is the non-Darcy (rate-dependent) term.
 
 ```java
-well.setBackpressureIPR(0.5, 0.001);  // A and B coefficients
+// A, B, and reservoir pressure (bara)
+well.setBackpressureParameters(0.5, 0.001, 200.0);
 ```
 
 #### 5. Table-Driven IPR
@@ -100,7 +107,7 @@ For measured IPR curves from well tests:
 ```java
 double[] pressures = {50, 80, 100, 120, 150, 180};  // bara
 double[] rates = {2.5, 2.0, 1.6, 1.2, 0.7, 0.2};    // MSm³/day
-well.setTableIPR(pressures, rates);
+well.setTableInflow(pressures, rates);
 ```
 
 #### 6. Loading IPR from CSV File
@@ -653,10 +660,10 @@ System.out.println("Zone C: " + zoneFlows[2] + " MSm³/day");
 | Method                                | Description                  |
 | ------------------------------------- | ---------------------------- |
 | `setWellProductionIndex(pi)`        | Set productivity index       |
-| `setVogelIPR(qTest, pwfTest, pRes)` | Configure Vogel IPR          |
-| `setFetkovichIPR(c, n)`             | Configure Fetkovich IPR      |
-| `setBackpressureIPR(a, b)`          | Configure Backpressure IPR   |
-| `setTableIPR(pwf[], rate[])`        | Set table-driven IPR         |
+| `setVogelParameters(qTest, pwfTest, pRes)` | Configure Vogel IPR       |
+| `setFetkovichParameters(c, n, pRes)`       | Configure Fetkovich IPR   |
+| `setBackpressureParameters(a, b, pRes)`    | Configure Backpressure IPR |
+| `setTableInflow(pwf[], rate[])`            | Set table-driven IPR      |
 | `addLayer(name, stream, pRes, pi)`  | Add reservoir layer          |
 | `getLayerFlowRates(unit)`           | Get layer flow contributions |
 
@@ -692,7 +699,7 @@ System.out.println("Zone C: " + zoneFlows[2] + " MSm³/day");
 ## Complete Production System Example
 
 For a comprehensive example demonstrating the full integration of well simulation with
-downstream processing, see [WellToOilStabilizationExample.java](examples/WellToOilStabilizationExample.java).
+downstream processing, see [WellToOilStabilizationExample.java](../examples/WellToOilStabilizationExample.java).
 
 This example includes:
 - **Reservoir**: SimpleReservoir with oil, gas, and water phases
@@ -809,10 +816,10 @@ well.setVLPSolverMode(VLPSolverMode.TWO_FLUID);   // Separate momentum equations
 
 ## See Also
 
-- [Wells Documentation](../process/equipment/wells.md) - Well models and IPR
-- [Pipeline Modeling](../process/PipeBeggsAndBrills.md) - PipeBeggsAndBrills correlation
-- [Process System](../process/processmodel/process_system.md) - ProcessSystem class
-- [NeqSim Modules](../modules.md) - Module overview
+- [Wells Documentation](../process/equipment/wells) - Well models and IPR
+- [Pipeline Modeling](../process/PipeBeggsAndBrills) - PipeBeggsAndBrills correlation
+- [Process System](../process/processmodel/process_system) - ProcessSystem class
+- [NeqSim Modules](../modules) - Module overview
 
 ## References
 

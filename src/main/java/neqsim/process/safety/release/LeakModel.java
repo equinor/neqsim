@@ -8,9 +8,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Calculates source terms for leak and rupture release scenarios.
  *
  * <p>
- * This class provides methods for calculating time-dependent release rates from pressurized vessels
- * or pipes. The calculations use NeqSim thermodynamics for accurate real-gas properties and phase
- * behavior.
+ * This class provides methods for calculating time-dependent release rates from pressurized vessels or pipes. The
+ * calculations use NeqSim thermodynamics for accurate real-gas properties and phase behavior.
  * </p>
  *
  * <p>
@@ -25,16 +24,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * SystemInterface gas = new SystemSrkEos(300.0, 50.0);
  * gas.addComponent("methane", 1.0);
  * gas.setMixingRule("classic");
- * 
+ *
  * LeakModel leak = new LeakModel.builder().fluid(gas).holeDiameter(0.02) // 20mm hole
  *     .orientation(ReleaseOrientation.HORIZONTAL).vesselVolume(10.0) // 10 m³
  *     .dischargeCoefficient(0.62).build();
- * 
+ *
  * SourceTermResult result = leak.calculateSourceTerm(300.0); // 5 minutes
  * result.exportToPHAST("release.csv");
  * </pre>
@@ -279,8 +278,7 @@ public class LeakModel implements Serializable {
    */
   public SourceTermResult calculateSourceTerm(double duration, double timeStep) {
     int numPoints = (int) Math.ceil(duration / timeStep) + 1;
-    SourceTermResult result =
-        new SourceTermResult(scenarioName, holeDiameter, orientation, numPoints);
+    SourceTermResult result = new SourceTermResult(scenarioName, holeDiameter, orientation, numPoints);
 
     SystemInterface system = fluid.clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
@@ -317,8 +315,8 @@ public class LeakModel implements Serializable {
       double vaporFraction = system.getBeta();
 
       // Record data point
-      result.setDataPoint(i, t, mdot, system.getTemperature(), system.getPressure() * 1e5,
-          vaporFraction, velocity, momentum, smd);
+      result.setDataPoint(i, t, mdot, system.getTemperature(), system.getPressure() * 1e5, vaporFraction, velocity,
+          momentum, smd);
 
       peakRate = Math.max(peakRate, mdot);
 
@@ -353,8 +351,7 @@ public class LeakModel implements Serializable {
         newPressure = Math.max(newPressure, backPressure / 1e5);
 
         // Adiabatic temperature drop: T2 = T1 * (P2/P1)^((gamma-1)/gamma)
-        double newTemp =
-            system.getTemperature() * Math.pow(newPressure / currentPressure, (gamma - 1) / gamma);
+        double newTemp = system.getTemperature() * Math.pow(newPressure / currentPressure, (gamma - 1) / gamma);
 
         // Apply new conditions
         system.setPressure(newPressure);

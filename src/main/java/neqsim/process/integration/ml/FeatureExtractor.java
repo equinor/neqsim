@@ -6,8 +6,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Utility class for extracting ML features from NeqSim process streams.
  *
  * <p>
- * Provides standardized feature extraction for hybrid physics-ML models, ensuring consistent input
- * formatting for external ML platforms.
+ * Provides standardized feature extraction for hybrid physics-ML models, ensuring consistent input formatting for
+ * external ML platforms.
  * </p>
  *
  * @author ESOL
@@ -18,15 +18,13 @@ public class FeatureExtractor {
   /**
    * Standard feature set for stream properties.
    */
-  public static final String[] STANDARD_STREAM_FEATURES =
-      {"pressure", "temperature", "totalFlowRate", "gasFlowRate", "oilFlowRate", "waterFlowRate",
-          "gor", "waterCut", "density", "viscosity", "z-factor"};
+  public static final String[] STANDARD_STREAM_FEATURES = { "pressure", "temperature", "totalFlowRate", "gasFlowRate",
+      "oilFlowRate", "waterFlowRate", "gor", "waterCut", "density", "viscosity", "z-factor" };
 
   /**
    * Minimal feature set for basic streams.
    */
-  public static final String[] MINIMAL_STREAM_FEATURES =
-      {"pressure", "temperature", "totalFlowRate", "density"};
+  public static final String[] MINIMAL_STREAM_FEATURES = { "pressure", "temperature", "totalFlowRate", "density" };
 
   private FeatureExtractor() {
     // Utility class
@@ -83,62 +81,62 @@ public class FeatureExtractor {
 
     try {
       switch (featureName.toLowerCase()) {
-        case "pressure":
-          return stream.getPressure("bara");
+      case "pressure":
+        return stream.getPressure("bara");
 
-        case "temperature":
-          return stream.getTemperature("K");
+      case "temperature":
+        return stream.getTemperature("K");
 
-        case "totalflowrate":
-          return stream.getFlowRate("kg/hr");
+      case "totalflowrate":
+        return stream.getFlowRate("kg/hr");
 
-        case "gasflowrate":
-          if (stream.getFluid().hasPhaseType("gas")) {
-            return stream.getFluid().getPhase("gas").getFlowRate("kg/hr");
-          }
-          return 0.0;
+      case "gasflowrate":
+        if (stream.getFluid().hasPhaseType("gas")) {
+          return stream.getFluid().getPhase("gas").getFlowRate("kg/hr");
+        }
+        return 0.0;
 
-        case "oilflowrate":
-          if (stream.getFluid().hasPhaseType("oil")) {
-            return stream.getFluid().getPhase("oil").getFlowRate("kg/hr");
-          }
-          return 0.0;
+      case "oilflowrate":
+        if (stream.getFluid().hasPhaseType("oil")) {
+          return stream.getFluid().getPhase("oil").getFlowRate("kg/hr");
+        }
+        return 0.0;
 
-        case "waterflowrate":
-          if (stream.getFluid().hasPhaseType("aqueous")) {
-            return stream.getFluid().getPhase("aqueous").getFlowRate("kg/hr");
-          }
-          return 0.0;
+      case "waterflowrate":
+        if (stream.getFluid().hasPhaseType("aqueous")) {
+          return stream.getFluid().getPhase("aqueous").getFlowRate("kg/hr");
+        }
+        return 0.0;
 
-        case "gor":
-          return calculateGOR(stream);
+      case "gor":
+        return calculateGOR(stream);
 
-        case "watercut":
-          return calculateWaterCut(stream);
+      case "watercut":
+        return calculateWaterCut(stream);
 
-        case "density":
-          return stream.getFluid().getDensity("kg/m3");
+      case "density":
+        return stream.getFluid().getDensity("kg/m3");
 
-        case "viscosity":
-          return stream.getFluid().getViscosity("cP");
+      case "viscosity":
+        return stream.getFluid().getViscosity("cP");
 
-        case "z-factor":
-          if (stream.getFluid().hasPhaseType("gas")) {
-            return stream.getFluid().getPhase("gas").getZ();
-          }
-          return 1.0;
+      case "z-factor":
+        if (stream.getFluid().hasPhaseType("gas")) {
+          return stream.getFluid().getPhase("gas").getZ();
+        }
+        return 1.0;
 
-        case "entropy":
-          return stream.getFluid().getEntropy();
+      case "entropy":
+        return stream.getFluid().getEntropy();
 
-        case "enthalpy":
-          return stream.getFluid().getEnthalpy();
+      case "enthalpy":
+        return stream.getFluid().getEnthalpy();
 
-        case "mw":
-          return stream.getFluid().getMolarMass("kg/mol") * 1000.0;
+      case "mw":
+        return stream.getFluid().getMolarMass("kg/mol") * 1000.0;
 
-        default:
-          return Double.NaN;
+      default:
+        return Double.NaN;
       }
     } catch (Exception e) {
       return Double.NaN;

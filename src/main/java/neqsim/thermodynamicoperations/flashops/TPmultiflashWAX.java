@@ -8,9 +8,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * TPmultiflashWAX class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class TPmultiflashWAX extends TPflash {
   boolean doStabilityAnalysis = true;
 
   /**
-   * <p>
    * Constructor for TPmultiflashWAX.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -41,9 +37,7 @@ public class TPmultiflashWAX extends TPflash {
   }
 
   /**
-   * <p>
    * Constructor for TPmultiflashWAX.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param checkForSolids Set true to do solid phase check and calculations
@@ -53,16 +47,13 @@ public class TPmultiflashWAX extends TPflash {
   }
 
   /**
-   * <p>
    * calcMultiPhaseBeta.
-   * </p>
    */
-  public void calcMultiPhaseBeta() {}
+  public void calcMultiPhaseBeta() {
+  }
 
   /**
-   * <p>
    * setXY.
-   * </p>
    */
   public void setXY() {
     for (int k = 0; k < system.getNumberOfPhases(); k++) {
@@ -72,16 +63,13 @@ public class TPmultiflashWAX extends TPflash {
               / system.getPhase(k).getComponent(i).getFugacityCoefficient());
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            || system.getPhase(0).getComponent(i).isIsIon()
-                && system.getPhase(k).getType() != PhaseType.AQUEOUS) {
+            || system.getPhase(0).getComponent(i).isIsIon() && system.getPhase(k).getType() != PhaseType.AQUEOUS) {
           system.getPhase(k).getComponent(i).setx(1e-50);
         }
         if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            || system.getPhase(0).getComponent(i).isIsIon()
-                && system.getPhase(k).getType() == PhaseType.AQUEOUS) {
-          system.getPhase(k).getComponent(i)
-              .setx(system.getPhase(k).getComponent(i).getNumberOfmoles()
-                  / system.getPhase(k).getNumberOfMolesInPhase());
+            || system.getPhase(0).getComponent(i).isIsIon() && system.getPhase(k).getType() == PhaseType.AQUEOUS) {
+          system.getPhase(k).getComponent(i).setx(
+              system.getPhase(k).getComponent(i).getNumberOfmoles() / system.getPhase(k).getNumberOfMolesInPhase());
         }
         if (system.hasPhaseType("wax")) {
           system.getPhaseOfType("wax").getComponent(i).setx(0);
@@ -92,25 +80,20 @@ public class TPmultiflashWAX extends TPflash {
   }
 
   /**
-   * <p>
    * calcE.
-   * </p>
    */
   public void calcE() {
     E = new double[system.getPhase(0).getNumberOfComponents()];
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        E[i] += system.getPhase(k).getBeta()
-            / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+        E[i] += system.getPhase(k).getBeta() / system.getPhase(k).getComponent(i).getFugacityCoefficient();
       }
     }
   }
 
   /**
-   * <p>
    * calcQ.
-   * </p>
    *
    * @return a double
    */
@@ -156,9 +139,7 @@ public class TPmultiflashWAX extends TPflash {
   }
 
   /**
-   * <p>
    * solveBeta.
-   * </p>
    *
    * @param updateFugacities a boolean
    */
@@ -213,14 +194,12 @@ public class TPmultiflashWAX extends TPflash {
   @Override
   public void stabilityAnalysis() {
     double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
+    double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0).getNumberOfComponents()];
     double[] sumw = new double[system.getPhase(0).getNumberOfComponents()];
     double err = 0;
     double[] oldlogw = new double[system.getPhase(0).getNumberOfComponents()];
     double[] d = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] x = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
+    double[][] x = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0).getNumberOfComponents()];
     tm = new double[system.getPhase(0).getNumberOfComponents()];
 
     SystemInterface minimumGibbsEnergySystem;
@@ -264,20 +243,17 @@ public class TPmultiflashWAX extends TPflash {
 
     for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
       for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
-        if (!((clonedSystem.get(k)) == null)
-            && system.getPhase(0).getComponent(k).getx() > 1e-100) {
-          (clonedSystem.get(k)).getPhase(waxphasenumber).getComponent(i).setx(
-              (clonedSystem.get(k)).getPhase(waxphasenumber).getComponent(i).getx() / sumw[k]);
+        if (!((clonedSystem.get(k)) == null) && system.getPhase(0).getComponent(k).getx() > 1e-100) {
+          (clonedSystem.get(k)).getPhase(waxphasenumber).getComponent(i)
+              .setx((clonedSystem.get(k)).getPhase(waxphasenumber).getComponent(i).getx() / sumw[k]);
           // logger.info("x: " + (
           // clonedSystem.get(k)).getPhase(0).getComponent(i).getx());
         }
       }
 
       if (system.getPhase(0).getComponent(k).getx() > 1e-100) {
-        d[k] = Math.log(
-            minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponent(k).getx())
-            + minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponent(k)
-                .getLogFugacityCoefficient();
+        d[k] = Math.log(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponent(k).getx())
+            + minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponent(k).getLogFugacityCoefficient();
       }
     }
 
@@ -305,16 +281,14 @@ public class TPmultiflashWAX extends TPflash {
     }
     for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()) {
-        if (Math.abs(
-            (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmax) < 1e-5) {
+        if (Math.abs((minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmax) < 1e-5) {
           hydrocarbonTestCompNumb = i;
           // logger.info("CHECKING heavy component " + hydrocarbonTestCompNumb);
         }
       }
 
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()) {
-        if (Math.abs(
-            (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmin) < 1e-5) {
+        if (Math.abs((minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmin) < 1e-5) {
           lightTestCompNumb = i;
           // logger.info("CHECKING light component " + lightTestCompNumb);
         }
@@ -324,8 +298,8 @@ public class TPmultiflashWAX extends TPflash {
     for (int j = system.getPhase(0).getNumberOfComponents() - 1; j >= 0; j--) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getx() < 1e-100
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getIonicCharge() != 0)
-          || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).isHydrocarbon()
-              && j != hydrocarbonTestCompNumb && j != lightTestCompNumb)) {
+          || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).isHydrocarbon() && j != hydrocarbonTestCompNumb
+              && j != lightTestCompNumb)) {
         continue;
       }
       // logger.info("STAB CHECK COMP " +
@@ -339,11 +313,11 @@ public class TPmultiflashWAX extends TPflash {
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
           oldlogw[i] = logWi[i];
-          if (!Double.isInfinite(Math.log((clonedSystem.get(j)).getPhase(waxphasenumber)
-              .getComponent(i).getLogFugacityCoefficient()))
+          if (!Double.isInfinite(
+              Math.log((clonedSystem.get(j)).getPhase(waxphasenumber).getComponent(i).getLogFugacityCoefficient()))
               && system.getPhase(0).getComponent(i).getx() > 1e-100) {
-            logWi[i] = d[i] - Math.log((clonedSystem.get(j)).getPhase(waxphasenumber)
-                .getComponent(i).getFugacityCoefficient());
+            logWi[i] = d[i]
+                - Math.log((clonedSystem.get(j)).getPhase(waxphasenumber).getComponent(i).getFugacityCoefficient());
             if ((clonedSystem.get(j)).getPhase(1).getComponent(i).getIonicCharge() != 0) {
               logWi[i] = -1000.0;
             }
@@ -359,8 +333,7 @@ public class TPmultiflashWAX extends TPflash {
         }
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-          (clonedSystem.get(j)).getPhase(waxphasenumber).getComponent(i)
-              .setx(safeExp(logWi[i]) / sumw[j]);
+          (clonedSystem.get(j)).getPhase(waxphasenumber).getComponent(i).setx(safeExp(logWi[i]) / sumw[j]);
         }
       } while (Math.abs(err) > 1e-9 && iter < 100);
 
@@ -391,8 +364,7 @@ public class TPmultiflashWAX extends TPflash {
           system.getPhase(system.getNumberOfPhases() - 1).getComponent(i).setx(x[k][i]);
         }
         multiPhaseTest = true;
-        system.setBeta(system.getNumberOfPhases() - 1,
-            system.getPhase(0).getComponent(unstabcomp).getz());
+        system.setBeta(system.getNumberOfPhases() - 1, system.getPhase(0).getComponent(unstabcomp).getz());
 
         system.init(1);
         system.normalizeBeta();
@@ -470,8 +442,7 @@ public class TPmultiflashWAX extends TPflash {
     }
     if (!hasRemovedPhase) {
       for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
-        if (Math
-            .abs(system.getPhase(i).getDensity() - system.getPhase(i + 1).getDensity()) < 1.1e-4) {
+        if (Math.abs(system.getPhase(i).getDensity() - system.getPhase(i + 1).getDensity()) < 1.1e-4) {
           system.removePhaseKeepTotalComposition(i + 1);
           doStabilityAnalysis = false;
           hasRemovedPhase = true;
@@ -480,9 +451,8 @@ public class TPmultiflashWAX extends TPflash {
     }
     /*
      * for (int i = 0; i < system.getNumberOfPhases()-1; i++) { if
-     * (Math.abs(system.getPhase(i).getDensity()-system.getPhase(i+1).getDensity())< 1e-6 &&
-     * !hasRemovedPhase) { system.removePhase(i+1); doStabilityAnalysis=false; hasRemovedPhase =
-     * true; } }
+     * (Math.abs(system.getPhase(i).getDensity()-system.getPhase(i+1).getDensity())< 1e-6 && !hasRemovedPhase) {
+     * system.removePhase(i+1); doStabilityAnalysis=false; hasRemovedPhase = true; } }
      */
     if (hasRemovedPhase) {
       run();

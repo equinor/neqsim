@@ -1,6 +1,9 @@
 package neqsim.process.processmodel.diagram;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,8 +14,8 @@ import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.expander.ExpanderInterface;
 import neqsim.process.equipment.heatexchanger.Cooler;
-import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
+import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.pump.PumpInterface;
@@ -36,8 +39,7 @@ import neqsim.thermo.system.SystemInterface;
  * <ul>
  * <li><b>Gravity logic</b> - Gas flows upward, liquids flow downward</li>
  * <li><b>Functional zoning</b> - Separation center, gas processing upper, liquid lower</li>
- * <li><b>Equipment semantics</b> - Separator outlets positioned correctly (gas top, liquid
- * bottom)</li>
+ * <li><b>Equipment semantics</b> - Separator outlets positioned correctly (gas top, liquid bottom)</li>
  * <li><b>Phase-aware routing</b> - Stream colors and paths based on phase</li>
  * <li><b>Stable layout</b> - Same model produces same diagram every time</li>
  * </ul>
@@ -281,7 +283,8 @@ public class PFDLayoutPolicy implements Serializable {
   /**
    * Creates a new PFD layout policy with default settings.
    */
-  public PFDLayoutPolicy() {}
+  public PFDLayoutPolicy() {
+  }
 
   /**
    * Classifies the role of process equipment for layout purposes.
@@ -315,23 +318,20 @@ public class PFDLayoutPolicy implements Serializable {
     String className = equipment.getClass().getSimpleName().toLowerCase();
 
     // Control and utility equipment (Recycle, Adjuster, Calculator, Controller, SetPoint)
-    if (className.contains("recycle") || className.contains("adjuster")
-        || className.contains("calculator") || className.contains("controller")
-        || className.contains("setpoint") || className.contains("control")) {
+    if (className.contains("recycle") || className.contains("adjuster") || className.contains("calculator")
+        || className.contains("controller") || className.contains("setpoint") || className.contains("control")) {
       return EquipmentRole.CONTROL;
     }
 
     // Separators and phase separation equipment
-    if (equipment instanceof SeparatorInterface || className.contains("separator")
-        || className.contains("scrubber") || className.contains("flash")
-        || className.contains("knockout")) {
+    if (equipment instanceof SeparatorInterface || className.contains("separator") || className.contains("scrubber")
+        || className.contains("flash") || className.contains("knockout")) {
       return EquipmentRole.SEPARATOR;
     }
 
     // Distillation columns are special separators
-    if (equipment instanceof DistillationColumn || className.contains("column")
-        || className.contains("distillation") || className.contains("absorber")
-        || className.contains("stripper")) {
+    if (equipment instanceof DistillationColumn || className.contains("column") || className.contains("distillation")
+        || className.contains("absorber") || className.contains("stripper")) {
       return EquipmentRole.SEPARATOR;
     }
 
@@ -342,14 +342,13 @@ public class PFDLayoutPolicy implements Serializable {
     }
 
     // Expanders handle gas
-    if (equipment instanceof ExpanderInterface || equipment instanceof Expander
-        || className.contains("expander") || className.contains("turbine")) {
+    if (equipment instanceof ExpanderInterface || equipment instanceof Expander || className.contains("expander")
+        || className.contains("turbine")) {
       return EquipmentRole.GAS;
     }
 
     // Pumps handle liquid
-    if (equipment instanceof PumpInterface || equipment instanceof Pump
-        || className.contains("pump")) {
+    if (equipment instanceof PumpInterface || equipment instanceof Pump || className.contains("pump")) {
       return EquipmentRole.LIQUID;
     }
 
@@ -364,14 +363,12 @@ public class PFDLayoutPolicy implements Serializable {
     }
 
     // Coolers may be gas or liquid depending on service
-    if (equipment instanceof Cooler || className.contains("cooler")
-        || className.contains("condenser")) {
+    if (equipment instanceof Cooler || className.contains("cooler") || className.contains("condenser")) {
       return classifyByPhase(equipment);
     }
 
     // Heaters may be gas or liquid depending on service
-    if (equipment instanceof Heater || className.contains("heater")
-        || className.contains("reboiler")) {
+    if (equipment instanceof Heater || className.contains("heater") || className.contains("reboiler")) {
       return classifyByPhase(equipment);
     }
 
@@ -403,8 +400,7 @@ public class PFDLayoutPolicy implements Serializable {
     try {
       // Check for phase types directly
       boolean hasGas = fluid.hasPhaseType("gas");
-      boolean hasLiquid = fluid.hasPhaseType("liquid") || fluid.hasPhaseType("oil")
-          || fluid.hasPhaseType("aqueous");
+      boolean hasLiquid = fluid.hasPhaseType("liquid") || fluid.hasPhaseType("oil") || fluid.hasPhaseType("aqueous");
 
       int numPhases = fluid.getNumberOfPhases();
 
@@ -450,8 +446,8 @@ public class PFDLayoutPolicy implements Serializable {
    * Determines the phase of a stream based on phase types and composition.
    *
    * <p>
-   * For streams leaving three-phase separators, this method distinguishes between oil and aqueous
-   * phases using phase type information. For two-phase systems, it uses phase type detection.
+   * For streams leaving three-phase separators, this method distinguishes between oil and aqueous phases using phase
+   * type information. For two-phase systems, it uses phase type detection.
    * </p>
    *
    * @param stream the stream
@@ -539,8 +535,8 @@ public class PFDLayoutPolicy implements Serializable {
    * Classifies a liquid-dominated stream as OIL, AQUEOUS, or LIQUID.
    *
    * <p>
-   * This method uses phase type information when available, and falls back to stream name hints
-   * when phase type cannot be determined.
+   * This method uses phase type information when available, and falls back to stream name hints when phase type cannot
+   * be determined.
    * </p>
    *
    * @param fluid the fluid to check
@@ -600,12 +596,12 @@ public class PFDLayoutPolicy implements Serializable {
     if (source != null) {
       EquipmentRole sourceRole = classifyEquipment(source.getEquipment());
       switch (sourceRole) {
-        case GAS:
-          return StreamPhase.GAS;
-        case LIQUID:
-          return StreamPhase.LIQUID;
-        default:
-          return StreamPhase.MIXED;
+      case GAS:
+        return StreamPhase.GAS;
+      case LIQUID:
+        return StreamPhase.LIQUID;
+      default:
+        return StreamPhase.MIXED;
       }
     }
 
@@ -628,8 +624,7 @@ public class PFDLayoutPolicy implements Serializable {
    * @param outletStream the outlet stream
    * @return the outlet type for positioning
    */
-  public SeparatorOutlet classifySeparatorOutlet(ProcessEquipmentInterface separator,
-      StreamInterface outletStream) {
+  public SeparatorOutlet classifySeparatorOutlet(ProcessEquipmentInterface separator, StreamInterface outletStream) {
     if (separator == null || outletStream == null) {
       return SeparatorOutlet.FEED_SIDE;
     }
@@ -653,8 +648,104 @@ public class PFDLayoutPolicy implements Serializable {
       }
     }
 
-    // Fall back to name-based and phase-based classification
-    return classifySeparatorOutletByNameAndPhase(outletStream);
+    // Generic separation equipment (scrubbers, absorbers, columns, tanks, membranes):
+    // apply gravity convention by phase, then density-order multiple liquid outlets.
+    return classifySeparationOutletByPhaseAndDensity(separator, outletStream);
+  }
+
+  /**
+   * Classifies a generic separation-equipment outlet using phase and liquid density.
+   *
+   * <p>
+   * This covers separators, scrubbers, absorbers, distillation columns, strippers, regenerators, tanks, and similar
+   * equipment where the model exposes outlet streams but does not provide type-specific gas/oil/water getters. Standard
+   * PFD convention is gravity-based: vapour leaves from the top, while liquids leave lower on the equipment. When
+   * several liquid outlets are present, the lighter liquid is drawn from the side/middle and the densest liquid is
+   * drawn from the bottom.
+   * </p>
+   *
+   * @param equipment the separation equipment
+   * @param outletStream the outlet stream to classify
+   * @return outlet type for Graphviz port positioning
+   */
+  private SeparatorOutlet classifySeparationOutletByPhaseAndDensity(ProcessEquipmentInterface equipment,
+      StreamInterface outletStream) {
+    StreamPhase phase = classifyStreamPhase(outletStream);
+    if (phase == StreamPhase.GAS) {
+      return SeparatorOutlet.GAS_TOP;
+    }
+    if (phase == StreamPhase.AQUEOUS) {
+      return SeparatorOutlet.WATER_BOTTOM;
+    }
+
+    List<StreamInterface> liquidOutlets = getLiquidOutletStreams(equipment);
+    if (liquidOutlets.size() <= 1) {
+      return classifySeparatorOutletByNameAndPhase(outletStream);
+    }
+
+    List<StreamInterface> densityOrderedLiquids = new ArrayList<StreamInterface>(liquidOutlets);
+    Collections.sort(densityOrderedLiquids, new Comparator<StreamInterface>() {
+      @Override
+      public int compare(StreamInterface stream1, StreamInterface stream2) {
+        return Double.compare(getStreamDensity(stream1), getStreamDensity(stream2));
+      }
+    });
+
+    if (outletStream == densityOrderedLiquids.get(densityOrderedLiquids.size() - 1)) {
+      return SeparatorOutlet.WATER_BOTTOM;
+    }
+    if (outletStream == densityOrderedLiquids.get(0)) {
+      return SeparatorOutlet.OIL_MIDDLE;
+    }
+    return SeparatorOutlet.LIQUID_BOTTOM;
+  }
+
+  /**
+   * Gets liquid outlet streams from equipment.
+   *
+   * @param equipment the equipment to inspect
+   * @return liquid outlet streams, excluding gas and unknown outlets
+   */
+  private List<StreamInterface> getLiquidOutletStreams(ProcessEquipmentInterface equipment) {
+    List<StreamInterface> liquids = new ArrayList<StreamInterface>();
+    if (equipment == null) {
+      return liquids;
+    }
+    try {
+      List<StreamInterface> outlets = equipment.getOutletStreams();
+      if (outlets == null) {
+        return liquids;
+      }
+      for (StreamInterface outlet : outlets) {
+        if (outlet == null) {
+          continue;
+        }
+        StreamPhase phase = classifyStreamPhase(outlet);
+        if (phase == StreamPhase.OIL || phase == StreamPhase.AQUEOUS || phase == StreamPhase.LIQUID) {
+          liquids.add(outlet);
+        }
+      }
+    } catch (Exception ex) {
+      // Partially configured equipment may not report outlets yet.
+    }
+    return liquids;
+  }
+
+  /**
+   * Gets stream density for ordering liquid draw-offs.
+   *
+   * @param stream the stream to inspect
+   * @return density in kg/m3, or positive infinity when unavailable
+   */
+  private double getStreamDensity(StreamInterface stream) {
+    if (stream == null || stream.getFluid() == null) {
+      return Double.POSITIVE_INFINITY;
+    }
+    try {
+      return stream.getFluid().getDensity("kg/m3");
+    } catch (Exception ex) {
+      return Double.POSITIVE_INFINITY;
+    }
   }
 
   /**
@@ -716,12 +807,12 @@ public class PFDLayoutPolicy implements Serializable {
 
     // Fall back to phase classification
     switch (phase) {
-      case GAS:
-        return SeparatorOutlet.GAS_TOP;
-      case LIQUID:
-        return SeparatorOutlet.LIQUID_BOTTOM;
-      default:
-        return SeparatorOutlet.LIQUID_BOTTOM;
+    case GAS:
+      return SeparatorOutlet.GAS_TOP;
+    case LIQUID:
+      return SeparatorOutlet.LIQUID_BOTTOM;
+    default:
+      return SeparatorOutlet.LIQUID_BOTTOM;
     }
   }
 
@@ -747,14 +838,14 @@ public class PFDLayoutPolicy implements Serializable {
 
     EquipmentRole role = classifyEquipment(node.getEquipment());
     switch (role) {
-      case GAS:
-        return "min";
-      case LIQUID:
-        return "max";
-      case SEPARATOR:
-        return "same";
-      default:
-        return null;
+    case GAS:
+      return "min";
+    case LIQUID:
+      return "max";
+    case SEPARATOR:
+      return "same";
+    default:
+      return null;
     }
   }
 
@@ -839,25 +930,25 @@ public class PFDLayoutPolicy implements Serializable {
     EquipmentRole role = classifyEquipment(equipment);
 
     switch (role) {
-      case GAS:
-        return PhaseZone.GAS_TOP;
+    case GAS:
+      return PhaseZone.GAS_TOP;
 
-      case SEPARATOR:
-        // Separators are part of oil processing cluster
-        return PhaseZone.OIL_MIDDLE;
+    case SEPARATOR:
+      // Separators are part of oil processing cluster
+      return PhaseZone.OIL_MIDDLE;
 
-      case LIQUID:
-        // Try to distinguish oil vs water processing
-        return classifyLiquidZone(node);
+    case LIQUID:
+      // Try to distinguish oil vs water processing
+      return classifyLiquidZone(node);
 
-      case MIXED:
-      case CONTROL:
-      case UNKNOWN:
-        // For mixed/control/unknown equipment, trace upstream to determine zone
-        return classifyByUpstreamPhase(node);
+    case MIXED:
+    case CONTROL:
+    case UNKNOWN:
+      // For mixed/control/unknown equipment, trace upstream to determine zone
+      return classifyByUpstreamPhase(node);
 
-      default:
-        return PhaseZone.UNKNOWN;
+    default:
+      return PhaseZone.UNKNOWN;
     }
   }
 
@@ -865,8 +956,8 @@ public class PFDLayoutPolicy implements Serializable {
    * Classifies a node's phase zone by tracing its upstream connections.
    *
    * <p>
-   * This method is used for equipment that could handle any phase (mixers, heaters, coolers, valves
-   * etc.) by examining what streams feed into it.
+   * This method is used for equipment that could handle any phase (mixers, heaters, coolers, valves etc.) by examining
+   * what streams feed into it.
    * </p>
    *
    * @param node the process node
@@ -897,8 +988,7 @@ public class PFDLayoutPolicy implements Serializable {
         if (isWaterRelatedName(streamName)) {
           return PhaseZone.WATER_BOTTOM;
         }
-        if (streamName.contains("oil") || streamName.contains("condensate")
-            || streamName.contains("crude")) {
+        if (streamName.contains("oil") || streamName.contains("condensate") || streamName.contains("crude")) {
           return PhaseZone.OIL_MIDDLE;
         }
 
@@ -956,8 +1046,8 @@ public class PFDLayoutPolicy implements Serializable {
    * Classifies a liquid processing node as oil or water zone.
    *
    * <p>
-   * This method traces the stream back to determine if it originates from a separator's oil or
-   * water outlet, ensuring proper vertical positioning in the PFD.
+   * This method traces the stream back to determine if it originates from a separator's oil or water outlet, ensuring
+   * proper vertical positioning in the PFD.
    * </p>
    *
    * @param node the process node
@@ -984,8 +1074,8 @@ public class PFDLayoutPolicy implements Serializable {
           return PhaseZone.WATER_BOTTOM;
         }
         // Check for oil outlet naming patterns
-        if (streamName.contains("oil") || streamName.contains("liquid out")
-            || streamName.contains("condensate") || streamName.contains("crude")) {
+        if (streamName.contains("oil") || streamName.contains("liquid out") || streamName.contains("condensate")
+            || streamName.contains("crude")) {
           return PhaseZone.OIL_MIDDLE;
         }
 
@@ -1045,10 +1135,9 @@ public class PFDLayoutPolicy implements Serializable {
    */
   private boolean isWaterRelatedName(String name) {
     return name.contains("water") || name.contains("aqueous") || name.contains("brine")
-        || name.contains("produced water") || name.contains("wastewater")
-        || name.contains("waste water") || name.contains("hydrate") || name.contains("dehydrat")
-        || name.contains("glycol") || name.contains("meg") || name.contains("deg")
-        || name.contains("teg");
+        || name.contains("produced water") || name.contains("wastewater") || name.contains("waste water")
+        || name.contains("hydrate") || name.contains("dehydrat") || name.contains("glycol") || name.contains("meg")
+        || name.contains("deg") || name.contains("teg");
   }
 
   /**
@@ -1069,6 +1158,6 @@ public class PFDLayoutPolicy implements Serializable {
   public int[] getLayoutCoordinates(ProcessNode node, ProcessGraph graph) {
     ProcessPosition hPos = classifyHorizontalPosition(node, graph);
     PhaseZone vZone = classifyPhaseZone(node);
-    return new int[] {hPos.getHorizontalRank(), vZone.getVerticalRank()};
+    return new int[] { hPos.getHorizontalRank(), vZone.getVerticalRank() };
   }
 }

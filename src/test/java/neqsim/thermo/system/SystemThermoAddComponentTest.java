@@ -12,9 +12,8 @@ public class SystemThermoAddComponentTest extends neqsim.NeqSimTest {
     sys = new SystemSrkEos(298.0, 300.0);
     /*
      * sys.addComponent("nitrogen", 0.64); sys.addTBPfraction("C7", 1.06, 92.2 / 1000.0, 0.7324);
-     * sys.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.88);
-     * sys.getCharacterization().characterisePlusFraction(); sys.createDatabase(true);
-     * sys.setMixingRule(2);
+     * sys.addPlusFraction("C20", 10.62, 381.0 / 1000.0, 0.88); sys.getCharacterization().characterisePlusFraction();
+     * sys.createDatabase(true); sys.setMixingRule(2);
      */
   }
 

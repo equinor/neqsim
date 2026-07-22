@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 
 /**
- * <p>
  * CompressorDesignStandard class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class CompressorDesignStandard extends DesignStandard {
   private double compressorFactor = 0.11;
 
   /**
-   * <p>
    * Constructor for CompressorDesignStandard.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
@@ -31,10 +27,10 @@ public class CompressorDesignStandard extends DesignStandard {
   public CompressorDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
-      try (java.sql.ResultSet dataSet = database.getResultSet(
-          ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Compressor' AND Company='"
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+      try (java.sql.ResultSet dataSet = database
+          .getResultSet(("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Compressor' AND Company='"
               + standardName + "'"))) {
         while (dataSet.next()) {
           String specName = dataSet.getString("SPECIFICATION");
@@ -53,9 +49,7 @@ public class CompressorDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Getter for the field <code>compressorFactor</code>.
-   * </p>
    *
    * @return the compressorFactor
    */
@@ -64,9 +58,7 @@ public class CompressorDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * Setter for the field <code>compressorFactor</code>.
-   * </p>
    *
    * @param compressorFactor the compressorFactor to set
    */

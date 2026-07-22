@@ -11,9 +11,7 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * freezingPointTemperatureFlashTR class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -34,9 +32,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
   public boolean CCequation = true;
 
   /**
-   * <p>
    * Constructor for freezingPointTemperatureFlashTR.
-   * </p>
    *
    * @param Freeze a boolean
    */
@@ -45,9 +41,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
   }
 
   /**
-   * <p>
    * Constructor for freezingPointTemperatureFlashTR.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -56,9 +50,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
   }
 
   /**
-   * <p>
    * Constructor for freezingPointTemperatureFlashTR.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Freeze a boolean
@@ -107,16 +99,14 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
 
       if (noFreezeFlash) {
         system.setTemperature(system.getPhases()[0].getComponent(k).getTriplePointTemperature());
-        logger.info("Starting at Triple point temperature "
-            + system.getPhase(0).getComponent(k).getComponentName());
+        logger.info("Starting at Triple point temperature " + system.getPhase(0).getComponent(k).getComponentName());
       } else {
         system.setTemperature(system.getTemperature());
         logger.info("starting at Temperature  " + system.getTemperature());
       }
 
       // init reference system for vapor fugacity
-      SystemInterface testSystem2 =
-          new SystemSrkSchwartzentruberEos(system.getTemperature(), system.getPressure());
+      SystemInterface testSystem2 = new SystemSrkSchwartzentruberEos(system.getTemperature(), system.getPressure());
       ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
       testSystem2.addComponent(system.getPhase(0).getComponent(k).getComponentName(), 1);
 
@@ -172,10 +162,10 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
         for (int i = 0; i < system.getNumberOfPhases(); i++) {
           funk -= system.getPhases()[i].getBeta() * SolidFug * SolVapFugCoeff
               / system.getPhases()[i].getComponent(k).getFugacityCoefficient();
-          deriv -= 0.01 * system.getPhases()[i].getBeta() * (SolidFug * SolVapFugCoeff
-              * Math.exp(system.getPhases()[i].getComponent(k).getdfugdt()) * -1.0
-              / Math.pow(system.getPhases()[i].getComponent(k).getFugacityCoefficient(), 2.0)
-              + Math.exp(dfugdt) / system.getPhases()[i].getComponent(k).getFugacityCoefficient());
+          deriv -= 0.01 * system.getPhases()[i].getBeta()
+              * (SolidFug * SolVapFugCoeff * Math.exp(system.getPhases()[i].getComponent(k).getdfugdt()) * -1.0
+                  / Math.pow(system.getPhases()[i].getComponent(k).getFugacityCoefficient(), 2.0)
+                  + Math.exp(dfugdt) / system.getPhases()[i].getComponent(k).getFugacityCoefficient());
         }
         if (iterations >= 2) {
           deriv = -(funk - funkOld) / (system.getTemperature() - oldTemperature);
@@ -186,15 +176,13 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
         funkOld = funk;
 
         if (oldTemperature < trpTemp + 1) {
-          newTemp =
-              system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk / deriv;
+          newTemp = system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk / deriv;
         } else {
           newTemp = system.getTemperature() + 0.5 * (iterations / (10.0 + iterations)) * funk;
         }
         logger.info("newTEmp  " + newTemp);
         if (newTemp > (trpTemp + 5)) {
-          system.setTemperature(
-              system.getPhases()[0].getComponent(k).getTriplePointTemperature() + 0.4);
+          system.setTemperature(system.getPhases()[0].getComponent(k).getTriplePointTemperature() + 0.4);
         } else if (newTemp < 1) {
           system.setTemperature(oldTemperature + 2);
           // } else if(newTemp=="NaN") { system.setTemperature(oldTemperature*0.9374);
@@ -242,10 +230,8 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
 
       for (int k = 0; k < system.getPhases()[0].getNumberOfComponents(); k++) {
         // print line to output file
-        pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + ","
-            + system.getPressure() + ","
-            + java.lang.Double.toString(system.getPhases()[0].getComponent(k).getz()) + ","
-            + Niterations);
+        pr_writer.println(FCompNames[k] + "," + java.lang.Double.toString(FCompTemp[k]) + "," + system.getPressure()
+            + "," + java.lang.Double.toString(system.getPhases()[0].getComponent(k).getz()) + "," + Niterations);
         pr_writer.flush();
       }
     } catch (SecurityException ex) {
@@ -256,9 +242,7 @@ public class FreezingPointTemperatureFlashTR extends ConstantDutyTemperatureFlas
   }
 
   /**
-   * <p>
    * getNiterations.
-   * </p>
    *
    * @return a int
    */

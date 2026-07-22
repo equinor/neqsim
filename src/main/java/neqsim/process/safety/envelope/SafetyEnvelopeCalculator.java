@@ -21,14 +21,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * <b>Example Usage:</b>
- * 
+ *
  * <pre>
  * {@code
  * SafetyEnvelopeCalculator calc = new SafetyEnvelopeCalculator(gasSystem);
- * 
+ *
  * SafetyEnvelope hydrateEnv = calc.calculateHydrateEnvelope(1.0, 150.0, 20);
  * hydrateEnv.exportToCSV("hydrate_curve.csv");
- * 
+ *
  * // Check operating point
  * boolean safe = hydrateEnv.isOperatingPointSafe(50.0, 280.0);
  * }
@@ -88,10 +88,8 @@ public class SafetyEnvelopeCalculator {
    * @param numPoints number of points to calculate
    * @return hydrate formation envelope
    */
-  public SafetyEnvelope calculateHydrateEnvelope(double minPressure, double maxPressure,
-      int numPoints) {
-    SafetyEnvelope envelope =
-        new SafetyEnvelope("Hydrate Formation", EnvelopeType.HYDRATE, numPoints);
+  public SafetyEnvelope calculateHydrateEnvelope(double minPressure, double maxPressure, int numPoints) {
+    SafetyEnvelope envelope = new SafetyEnvelope("Hydrate Formation", EnvelopeType.HYDRATE, numPoints);
     envelope.setFluidDescription(getFluidDescription());
 
     // Calculate water content if available
@@ -135,8 +133,7 @@ public class SafetyEnvelopeCalculator {
    * @param numPoints number of points to calculate
    * @return WAT envelope
    */
-  public SafetyEnvelope calculateWaxEnvelope(double minPressure, double maxPressure,
-      int numPoints) {
+  public SafetyEnvelope calculateWaxEnvelope(double minPressure, double maxPressure, int numPoints) {
     SafetyEnvelope envelope = new SafetyEnvelope("Wax Appearance", EnvelopeType.WAX, numPoints);
     envelope.setFluidDescription(getFluidDescription());
 
@@ -176,10 +173,8 @@ public class SafetyEnvelopeCalculator {
    * @param numPoints number of points to calculate
    * @return CO2 freezing envelope
    */
-  public SafetyEnvelope calculateCO2FreezingEnvelope(double minPressure, double maxPressure,
-      int numPoints) {
-    SafetyEnvelope envelope =
-        new SafetyEnvelope("CO2 Freezing", EnvelopeType.CO2_FREEZING, numPoints);
+  public SafetyEnvelope calculateCO2FreezingEnvelope(double minPressure, double maxPressure, int numPoints) {
+    SafetyEnvelope envelope = new SafetyEnvelope("CO2 Freezing", EnvelopeType.CO2_FREEZING, numPoints);
     envelope.setFluidDescription(getFluidDescription());
 
     // CO2 triple point: 5.18 bar, 216.55 K (-56.6°C)
@@ -216,8 +211,7 @@ public class SafetyEnvelopeCalculator {
    * @return phase envelope
    */
   public SafetyEnvelope calculatePhaseEnvelope(int numPoints) {
-    SafetyEnvelope envelope =
-        new SafetyEnvelope("Phase Envelope", EnvelopeType.PHASE_ENVELOPE, numPoints);
+    SafetyEnvelope envelope = new SafetyEnvelope("Phase Envelope", EnvelopeType.PHASE_ENVELOPE, numPoints);
     envelope.setFluidDescription(getFluidDescription());
 
     try {
@@ -266,8 +260,8 @@ public class SafetyEnvelopeCalculator {
    * @param numPoints number of points to calculate
    * @return MDMT envelope
    */
-  public SafetyEnvelope calculateMDMTEnvelope(double minPressure, double maxPressure,
-      double designTemp, int numPoints) {
+  public SafetyEnvelope calculateMDMTEnvelope(double minPressure, double maxPressure, double designTemp,
+      int numPoints) {
     SafetyEnvelope envelope = new SafetyEnvelope("MDMT", EnvelopeType.MDMT, numPoints);
     envelope.setFluidDescription(getFluidDescription());
 
@@ -319,13 +313,11 @@ public class SafetyEnvelopeCalculator {
    * @param numPoints number of points per envelope
    * @return array of all calculated envelopes
    */
-  public SafetyEnvelope[] calculateAllEnvelopes(double minPressure, double maxPressure,
-      int numPoints) {
-    return new SafetyEnvelope[] {calculateHydrateEnvelope(minPressure, maxPressure, numPoints),
+  public SafetyEnvelope[] calculateAllEnvelopes(double minPressure, double maxPressure, int numPoints) {
+    return new SafetyEnvelope[] { calculateHydrateEnvelope(minPressure, maxPressure, numPoints),
         calculateWaxEnvelope(minPressure, maxPressure, numPoints),
         calculateCO2FreezingEnvelope(minPressure, maxPressure, numPoints),
-        calculateMDMTEnvelope(minPressure, maxPressure, 300.0, numPoints),
-        calculatePhaseEnvelope(numPoints)};
+        calculateMDMTEnvelope(minPressure, maxPressure, 300.0, numPoints), calculatePhaseEnvelope(numPoints) };
   }
 
   /**
@@ -336,8 +328,7 @@ public class SafetyEnvelopeCalculator {
    * @param temperatureK operating temperature
    * @return true if safe for all envelopes
    */
-  public static boolean isOperatingPointSafe(SafetyEnvelope[] envelopes, double pressureBara,
-      double temperatureK) {
+  public static boolean isOperatingPointSafe(SafetyEnvelope[] envelopes, double pressureBara, double temperatureK) {
     for (SafetyEnvelope env : envelopes) {
       if (!env.isOperatingPointSafe(pressureBara, temperatureK)) {
         return false;
@@ -354,8 +345,8 @@ public class SafetyEnvelopeCalculator {
    * @param temperatureK operating temperature
    * @return the envelope with smallest margin, or null if all have infinite margin
    */
-  public static SafetyEnvelope getMostLimitingEnvelope(SafetyEnvelope[] envelopes,
-      double pressureBara, double temperatureK) {
+  public static SafetyEnvelope getMostLimitingEnvelope(SafetyEnvelope[] envelopes, double pressureBara,
+      double temperatureK) {
     SafetyEnvelope mostLimiting = null;
     double smallestMargin = Double.POSITIVE_INFINITY;
 

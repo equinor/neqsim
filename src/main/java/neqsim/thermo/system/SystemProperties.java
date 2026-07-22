@@ -36,7 +36,7 @@ public class SystemProperties {
    * @param fluid input fluid
    */
   public SystemProperties(SystemInterface fluid) {
-    final String[] phaseName = {"gas", "oil", "aqueous"};
+    final String[] phaseName = { "gas", "oil", "aqueous" };
 
     values = new Double[nCols];
     names = new String[nCols];

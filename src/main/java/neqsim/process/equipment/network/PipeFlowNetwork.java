@@ -16,21 +16,23 @@ import neqsim.process.equipment.stream.StreamInterface;
 /**
  * Network of pipelines connected through manifolds using compositional PipeFlowSystem.
  *
- * &lt;p&gt; This class models pipeline networks where multiple pipelines converge to manifolds
- * (mixers) and pipelines depart from manifolds. Unlike {@link WellFlowlineNetwork} which uses the
- * simpler Beggs-Brill correlation, this class uses the full {@link OnePhasePipeLine} with TDMA
- * solvers supporting: &lt;/p&gt; &lt;ul&gt; &lt;li&gt;Compositional tracking through the
- * network&lt;/li&gt; &lt;li&gt;Steady-state solutions&lt;/li&gt; &lt;li&gt;Transient/dynamic
+ * <p>
+ * &lt;p&gt; This class models pipeline networks where multiple pipelines converge to manifolds (mixers) and pipelines
+ * depart from manifolds. Unlike {@link WellFlowlineNetwork} which uses the simpler Beggs-Brill correlation, this class
+ * uses the full {@link OnePhasePipeLine} with TDMA solvers supporting: &lt;/p&gt; &lt;ul&gt; &lt;li&gt;Compositional
+ * tracking through the network&lt;/li&gt; &lt;li&gt;Steady-state solutions&lt;/li&gt; &lt;li&gt;Transient/dynamic
  * simulations&lt;/li&gt; &lt;li&gt;Energy balance and heat transfer&lt;/li&gt; &lt;/ul&gt;
  *
- * &lt;h2&gt;Architecture&lt;/h2&gt; &lt;p&gt; The network is modeled as a directed graph where:
- * &lt;/p&gt; &lt;ul&gt; &lt;li&gt;Nodes are manifolds (implemented as {@link Mixer})&lt;/li&gt;
- * &lt;li&gt;Edges are pipelines (implemented as {@link OnePhasePipeLine})&lt;/li&gt; &lt;li&gt;Feed
- * streams connect to source nodes&lt;/li&gt; &lt;li&gt;The final node provides the network
- * outlet&lt;/li&gt; &lt;/ul&gt;
+ * <p>
+ * &lt;h2&gt;Architecture&lt;/h2&gt; &lt;p&gt; The network is modeled as a directed graph where: &lt;/p&gt; &lt;ul&gt;
+ * &lt;li&gt;Nodes are manifolds (implemented as {@link Mixer})&lt;/li&gt; &lt;li&gt;Edges are pipelines (implemented as
+ * {@link OnePhasePipeLine})&lt;/li&gt; &lt;li&gt;Feed streams connect to source nodes&lt;/li&gt; &lt;li&gt;The final
+ * node provides the network outlet&lt;/li&gt; &lt;/ul&gt;
  *
+ * <p>
  * &lt;h2&gt;Example Usage&lt;/h2&gt;
- * 
+ *
+ * <p>
  * &lt;pre&gt;{@code
  * // Create feeds
  * Stream feed1 = new Stream("feed1", gas1);
@@ -76,8 +78,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     private final String fromManifold; // null for inlet pipes
     private final String toManifold;
 
-    PipelineSegment(String name, OnePhasePipeLine pipeline, String fromManifold,
-        String toManifold) {
+    PipelineSegment(String name, OnePhasePipeLine pipeline, String fromManifold, String toManifold) {
       this.name = name;
       this.pipeline = pipeline;
       this.fromManifold = fromManifold;
@@ -149,8 +150,8 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     }
   }
 
-  private final Map<String, ManifoldNode> manifolds = new HashMap<>();
-  private final List<PipelineSegment> allPipelines = new ArrayList<>();
+  private final transient Map<String, ManifoldNode> manifolds = new HashMap<>();
+  private final transient List<PipelineSegment> allPipelines = new ArrayList<>();
   private final List<StreamInterface> feedStreams = new ArrayList<>();
   private String terminalManifoldName;
   private boolean compositionalTracking = true;
@@ -160,9 +161,9 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
 
   // Default pipe geometry parameters
   private double defaultWallRoughness = 1e-5;
-  private double[] defaultOuterTemperature = {278.0, 278.0};
-  private double[] defaultOuterHeatTransfer = {5.0, 5.0};
-  private double[] defaultWallHeatTransfer = {15.0, 15.0};
+  private double[] defaultOuterTemperature = { 278.0, 278.0 };
+  private double[] defaultOuterHeatTransfer = { 5.0, 5.0 };
+  private double[] defaultWallHeatTransfer = { 15.0, 15.0 };
 
   /**
    * Create a new pipeline flow network.
@@ -200,8 +201,8 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
    * @param numberOfNodes number of computational nodes
    * @return the created pipeline segment
    */
-  public PipelineSegment addInletPipeline(String pipeName, StreamInterface feedStream,
-      String toManifold, double length, double diameter, int numberOfNodes) {
+  public PipelineSegment addInletPipeline(String pipeName, StreamInterface feedStream, String toManifold, double length,
+      double diameter, int numberOfNodes) {
     Objects.requireNonNull(feedStream, "feedStream cannot be null");
     Objects.requireNonNull(toManifold, "toManifold cannot be null");
 
@@ -212,8 +213,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
 
     feedStreams.add(feedStream);
 
-    OnePhasePipeLine pipeline =
-        createPipeline(pipeName, feedStream, length, diameter, numberOfNodes);
+    OnePhasePipeLine pipeline = createPipeline(pipeName, feedStream, length, diameter, numberOfNodes);
 
     PipelineSegment segment = new PipelineSegment(pipeName, pipeline, null, toManifold);
     manifold.addInboundPipeline(segment);
@@ -233,8 +233,8 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
    * @param numberOfNodes number of computational nodes
    * @return the created pipeline segment
    */
-  public PipelineSegment connectManifolds(String fromManifold, String toManifold, String pipeName,
-      double length, double diameter, int numberOfNodes) {
+  public PipelineSegment connectManifolds(String fromManifold, String toManifold, String pipeName, double length,
+      double diameter, int numberOfNodes) {
     Objects.requireNonNull(fromManifold, "fromManifold cannot be null");
     Objects.requireNonNull(toManifold, "toManifold cannot be null");
 
@@ -248,13 +248,12 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
       throw new IllegalArgumentException("Target manifold '" + toManifold + "' not found");
     }
     if (sourceManifold.getOutboundPipeline() != null) {
-      throw new IllegalStateException(
-          "Manifold '" + fromManifold + "' already has an outbound pipeline");
+      throw new IllegalStateException("Manifold '" + fromManifold + "' already has an outbound pipeline");
     }
 
     // Create pipeline with mixer outlet as inlet stream
-    OnePhasePipeLine pipeline = createPipeline(pipeName,
-        sourceManifold.getMixer().getOutletStream(), length, diameter, numberOfNodes);
+    OnePhasePipeLine pipeline = createPipeline(pipeName, sourceManifold.getMixer().getOutletStream(), length, diameter,
+        numberOfNodes);
 
     PipelineSegment segment = new PipelineSegment(pipeName, pipeline, fromManifold, toManifold);
     sourceManifold.setOutboundPipeline(segment);
@@ -274,15 +273,15 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
    * @param numberOfNodes the number of computational nodes
    * @return the configured pipeline
    */
-  private OnePhasePipeLine createPipeline(String name, StreamInterface inletStream, double length,
-      double diameter, int numberOfNodes) {
+  private OnePhasePipeLine createPipeline(String name, StreamInterface inletStream, double length, double diameter,
+      int numberOfNodes) {
     OnePhasePipeLine pipeline = new OnePhasePipeLine(name, inletStream);
     pipeline.setNumberOfLegs(1);
     pipeline.setNumberOfNodesInLeg(numberOfNodes);
-    pipeline.setPipeDiameters(new double[] {diameter, diameter});
-    pipeline.setLegPositions(new double[] {0.0, length});
-    pipeline.setHeightProfile(new double[] {0.0, 0.0});
-    pipeline.setPipeWallRoughness(new double[] {defaultWallRoughness, defaultWallRoughness});
+    pipeline.setPipeDiameters(new double[] { diameter, diameter });
+    pipeline.setLegPositions(new double[] { 0.0, length });
+    pipeline.setHeightProfile(new double[] { 0.0, 0.0 });
+    pipeline.setPipeWallRoughness(new double[] { defaultWallRoughness, defaultWallRoughness });
     pipeline.setOuterTemperatures(defaultOuterTemperature);
     pipeline.setPipeOuterHeatTransferCoefficients(defaultOuterHeatTransfer);
     pipeline.setPipeWallHeatTransferCoefficients(defaultWallHeatTransfer);
@@ -306,7 +305,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
    * @param temperature outer temperature in Kelvin
    */
   public void setDefaultOuterTemperature(double temperature) {
-    this.defaultOuterTemperature = new double[] {temperature, temperature};
+    this.defaultOuterTemperature = new double[] { temperature, temperature };
   }
 
   /**
@@ -316,8 +315,8 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
    * @param wallCoeff wall heat transfer coefficient (W/m2K)
    */
   public void setDefaultHeatTransferCoefficients(double outerCoeff, double wallCoeff) {
-    this.defaultOuterHeatTransfer = new double[] {outerCoeff, outerCoeff};
-    this.defaultWallHeatTransfer = new double[] {wallCoeff, wallCoeff};
+    this.defaultOuterHeatTransfer = new double[] { outerCoeff, outerCoeff };
+    this.defaultWallHeatTransfer = new double[] { wallCoeff, wallCoeff };
   }
 
   /**
@@ -436,8 +435,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
     return order;
   }
 
-  private void addToExecutionOrder(ManifoldNode node, List<ManifoldNode> order,
-      java.util.Set<String> visited) {
+  private void addToExecutionOrder(ManifoldNode node, List<ManifoldNode> order, java.util.Set<String> visited) {
     if (visited.contains(node.getName())) {
       return;
     }
@@ -480,8 +478,7 @@ public class PipeFlowNetwork extends ProcessEquipmentBaseClass {
 
       // Set up outbound pipeline inlet if exists
       if (manifold.getOutboundPipeline() != null) {
-        manifold.getOutboundPipeline().getPipeline()
-            .setInletStream(manifold.getMixer().getOutletStream());
+        manifold.getOutboundPipeline().getPipeline().setInletStream(manifold.getMixer().getOutletStream());
       }
     }
 

@@ -59,12 +59,11 @@ public class SachdevaChokeFlowValidationTest {
     @DisplayName("Critical ratio should decrease with increasing gas quality")
     void testCriticalRatioTrend() {
       double prevRatio = 1.0;
-      double[] gasQualities = {0.01, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99};
+      double[] gasQualities = { 0.01, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99 };
 
       for (double xg : gasQualities) {
         double ratio = ChokeFlowValidationData.calculateSachdevaCriticalRatio(xg);
-        assertTrue(ratio < prevRatio,
-            String.format("Critical ratio should decrease: xg=%.2f, ratio=%.3f", xg, ratio));
+        assertTrue(ratio < prevRatio, String.format("Critical ratio should decrease: xg=%.2f, ratio=%.3f", xg, ratio));
         prevRatio = ratio;
       }
     }
@@ -79,8 +78,7 @@ public class SachdevaChokeFlowValidationTest {
       // Near-gas limit (should approach isentropic ratio)
       double gasLimit = chokeModel.calculateCriticalPressureRatio(0.999, 1.4);
       double isentropicRatio = Math.pow(2.0 / 2.4, 1.4 / 0.4); // ~0.528 for gamma=1.4
-      assertEquals(isentropicRatio, gasLimit, 0.05,
-          "Near-gas critical ratio should approach isentropic limit");
+      assertEquals(isentropicRatio, gasLimit, 0.05, "Near-gas critical ratio should approach isentropic limit");
     }
   }
 
@@ -146,8 +144,8 @@ public class SachdevaChokeFlowValidationTest {
       }
 
       // Most Sachdeva lab data points should be critical flow (low P2)
-      assertTrue(criticalCount > testData.length / 2, String
-          .format("Most points should be critical flow: %d/%d", criticalCount, testData.length));
+      assertTrue(criticalCount > testData.length / 2,
+          String.format("Most points should be critical flow: %d/%d", criticalCount, testData.length));
     }
 
     @Test
@@ -164,10 +162,10 @@ public class SachdevaChokeFlowValidationTest {
       double flow_at_10_34bar = testData[5][4]; // 35.2 m3/d
       double flow_at_13_79bar = testData[10][4]; // 41.5 m3/d
 
-      assertTrue(flow_at_10_34bar > flow_at_6_89bar, String.format(
-          "Flow should increase with pressure: %.1f > %.1f", flow_at_10_34bar, flow_at_6_89bar));
-      assertTrue(flow_at_13_79bar > flow_at_10_34bar, String.format(
-          "Flow should increase with pressure: %.1f > %.1f", flow_at_13_79bar, flow_at_10_34bar));
+      assertTrue(flow_at_10_34bar > flow_at_6_89bar,
+          String.format("Flow should increase with pressure: %.1f > %.1f", flow_at_10_34bar, flow_at_6_89bar));
+      assertTrue(flow_at_13_79bar > flow_at_10_34bar,
+          String.format("Flow should increase with pressure: %.1f > %.1f", flow_at_13_79bar, flow_at_10_34bar));
     }
   }
 
@@ -249,8 +247,8 @@ public class SachdevaChokeFlowValidationTest {
       double flow_at_GLR_200 = testData[0][3]; // 425 bbl/d
       double flow_at_GLR_1000 = testData[4][3]; // 195 bbl/d
 
-      assertTrue(flow_at_GLR_200 > flow_at_GLR_1000, String
-          .format("Flow should decrease with GLR: %.0f > %.0f", flow_at_GLR_200, flow_at_GLR_1000));
+      assertTrue(flow_at_GLR_200 > flow_at_GLR_1000,
+          String.format("Flow should decrease with GLR: %.0f > %.0f", flow_at_GLR_200, flow_at_GLR_1000));
     }
   }
 
@@ -344,8 +342,7 @@ public class SachdevaChokeFlowValidationTest {
       // Verify Cd values are within reasonable range (0.6 - 1.0)
       for (double[] row : cdData) {
         double cd = row[2];
-        assertTrue(cd >= 0.60 && cd <= 1.0,
-            String.format("Cd=%.2f should be in range [0.60, 1.0]", cd));
+        assertTrue(cd >= 0.60 && cd <= 1.0, String.format("Cd=%.2f should be in range [0.60, 1.0]", cd));
       }
     }
 
@@ -368,8 +365,7 @@ public class SachdevaChokeFlowValidationTest {
       }
 
       // All Ashford validation points should be within 5%
-      assertEquals(valData.length, passedCount,
-          "All Ashford validation points should match within 5%");
+      assertEquals(valData.length, passedCount, "All Ashford validation points should match within 5%");
     }
   }
 }

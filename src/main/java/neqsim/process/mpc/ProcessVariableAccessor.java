@@ -9,8 +9,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * Accessor for reading and writing process variables by path.
  *
  * <p>
- * Provides a unified interface for accessing any variable in a NeqSim ProcessSystem using a simple
- * path notation.
+ * Provides a unified interface for accessing any variable in a NeqSim ProcessSystem using a simple path notation.
  * </p>
  *
  * <p>
@@ -187,8 +186,7 @@ public class ProcessVariableAccessor {
       return getValue(path);
 
     } catch (Exception e) {
-      throw new RuntimeException("Failed to get value for path: " + path + " with unit: " + unit,
-          e);
+      throw new RuntimeException("Failed to get value for path: " + path + " with unit: " + unit, e);
     }
   }
 
@@ -279,8 +277,7 @@ public class ProcessVariableAccessor {
         setValue(path, value);
       }
     } catch (Exception e) {
-      throw new RuntimeException("Failed to set value for path: " + path + " with unit: " + unit,
-          e);
+      throw new RuntimeException("Failed to set value for path: " + path + " with unit: " + unit, e);
     }
   }
 
@@ -397,8 +394,7 @@ public class ProcessVariableAccessor {
       return false;
     }
     for (int i = 0; i < paramTypes.length; i++) {
-      if (!methodParams[i].isAssignableFrom(paramTypes[i])
-          && !isBoxedEquivalent(methodParams[i], paramTypes[i])) {
+      if (!methodParams[i].isAssignableFrom(paramTypes[i]) && !isBoxedEquivalent(methodParams[i], paramTypes[i])) {
         return false;
       }
     }

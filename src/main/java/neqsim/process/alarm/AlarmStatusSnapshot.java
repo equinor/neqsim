@@ -14,8 +14,7 @@ public final class AlarmStatusSnapshot implements Serializable {
   private final double value;
   private final double timestamp;
 
-  public AlarmStatusSnapshot(String source, AlarmLevel level, boolean acknowledged, double value,
-      double timestamp) {
+  public AlarmStatusSnapshot(String source, AlarmLevel level, boolean acknowledged, double value, double timestamp) {
     this.source = source;
     this.level = level;
     this.acknowledged = acknowledged;

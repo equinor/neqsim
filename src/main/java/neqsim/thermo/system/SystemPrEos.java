@@ -5,19 +5,19 @@ import neqsim.thermo.phase.PhasePrEos;
 import neqsim.thermo.phase.PhasePureComponentSolid;
 
 /**
- * This class defines a thermodynamic system using the Peng–Robinson equation of state
- * (PR‑EoS).
+ * This class defines a thermodynamic system using the Peng–Robinson equation of state (PR‑EoS).
  *
- * <p>The Peng–Robinson EOS is expressed as
+ * <p>
+ * The Peng–Robinson EOS is expressed as
  *
  * <pre>
  * P = \frac{R T}{v - b} - \frac{a \alpha}{v (v + b) + b (v - b)}
  * </pre>
  *
- * where {@code R} is the gas constant, {@code T} is the temperature, {@code v} is the molar
- * volume, and {@code a} and {@code b} are component specific parameters. The temperature
- * dependent parameter {@code \alpha} is calculated from the acentric factor {@code \omega}
- * and critical temperature {@code T_c} as
+ * <p>
+ * where {@code R} is the gas constant, {@code T} is the temperature, {@code v} is the molar volume, and {@code a} and
+ * {@code b} are component specific parameters. The temperature dependent parameter {@code \alpha} is calculated from
+ * the acentric factor {@code \omega} and critical temperature {@code T_c} as
  *
  * <pre>
  * \alpha = \left[1 + \left(0.37464 + 1.54226\,\omega - 0.26992\,\omega^2\right)
@@ -86,7 +86,8 @@ public class SystemPrEos extends SystemEos {
   /**
    * {@inheritDoc}
    *
-   * <p>Creates a deep copy of this {@code SystemPrEos} instance.
+   * <p>
+   * Creates a deep copy of this {@code SystemPrEos} instance.
    */
   @Override
   public SystemPrEos clone() {

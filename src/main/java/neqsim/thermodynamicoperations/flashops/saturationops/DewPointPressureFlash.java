@@ -4,9 +4,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * dewPointPressureFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class DewPointPressureFlash extends ConstantDutyTemperatureFlash {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for dewPointPressureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -34,9 +30,15 @@ public class DewPointPressureFlash extends ConstantDutyTemperatureFlash {
       if (system.getTemperature() >= comp.getTC()) {
         // throw new IllegalStateException("System is supercritical");
       }
+      // For single-component systems, dew point pressure equals bubble point pressure,
+      // so we reuse the bubble point calculation to find the saturation pressure.
       BubblePointPressureFlash bubble = new BubblePointPressureFlash(system);
       bubble.run();
       setSuperCritical(bubble.isSuperCritical());
+      // BubblePointPressureFlash sets phase fractions for bubble point (nearly all
+      // liquid). For dew point, we need nearly all gas, so invert the phase fractions.
+      system.setBeta(0, 1.0 - 1e-10);
+      system.setBeta(1, 1e-10);
       return;
     }
 
@@ -61,8 +63,7 @@ public class DewPointPressureFlash extends ConstantDutyTemperatureFlash {
         system.getPhases()[0].getComponent(i).setx(1e-40);
       } else {
         system.getPhases()[1].getComponent(i)
-            .setx(1.0 / system.getPhases()[0].getComponent(i).getK()
-                * system.getPhases()[1].getComponent(i).getz());
+            .setx(1.0 / system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getz());
       }
     }
     // system.setPressure(system.getPhases()[0].getAntoineVaporPressure(system.getTemperature()));
@@ -74,8 +75,7 @@ public class DewPointPressureFlash extends ConstantDutyTemperatureFlash {
     do {
       iterations++;
       for (int i = 0; i < system.getPhases()[1].getNumberOfComponents(); i++) {
-        system.getPhases()[1].getComponent(i)
-            .setx(system.getPhases()[1].getComponent(i).getx() / xtotal);
+        system.getPhases()[1].getComponent(i).setx(system.getPhases()[1].getComponent(i).getx() / xtotal);
       }
       system.init(1);
       ktot = 0.0;
@@ -87,14 +87,13 @@ public class DewPointPressureFlash extends ConstantDutyTemperatureFlash {
               || system.getPhase(0).getComponent(i).isIsIon()) {
             system.getPhases()[0].getComponent(i).setK(1e-40);
           } else {
-            system.getPhases()[0].getComponent(i).setK(
-                Math.exp(Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient())
+            system.getPhases()[0].getComponent(i)
+                .setK(Math.exp(Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient())
                     - Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient())));
           }
           system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
           system.getPhases()[1].getComponent(i)
-              .setx(1.0 / system.getPhases()[0].getComponent(i).getK()
-                  * system.getPhases()[1].getComponent(i).getz());
+              .setx(1.0 / system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getz());
         } while (Math.abs(system.getPhases()[1].getComponent(i).getx() - xold) > 1e-4);
         ktot += Math.abs(system.getPhases()[1].getComponent(i).getK() - 1.0);
       }
@@ -105,13 +104,11 @@ public class DewPointPressureFlash extends ConstantDutyTemperatureFlash {
       system.setPressure(oldPres + 0.1 * (system.getPressure() / xtotal - oldPres));
       // System.out.println("iter " + iterations + " pressure "
       // +system.getPressure());
-    } while ((((Math.abs(xtotal) - 1.0) > 1e-10)
-        || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-9)
+    } while ((((Math.abs(xtotal) - 1.0) > 1e-10) || Math.abs(oldPres - system.getPressure()) / oldPres > 1e-9)
         && (iterations < maxNumberOfIterations));
     // System.out.println("iter " + iterations + " XTOT " +xtotal + " k "
     // +system.getPhases()[1].getComponent(0).getK());
-    if (Math.abs(xtotal - 1.0) >= 1e-5
-        || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
+    if (Math.abs(xtotal - 1.0) >= 1e-5 || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
       setSuperCritical(true);
     }
     if (isSuperCritical()) {
@@ -121,5 +118,6 @@ public class DewPointPressureFlash extends ConstantDutyTemperatureFlash {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 }

@@ -1,3 +1,8 @@
+---
+title: Advisory Systems and Prediction Results
+description: This module provides infrastructure for look-ahead predictions that support real-time advisory systems.
+---
+
 # Advisory Systems and Prediction Results
 
 This module provides infrastructure for look-ahead predictions that support real-time advisory systems.
@@ -166,7 +171,7 @@ PredictionResult prediction = runLookAhead(process, mpcHorizon);
 
 // Extract predicted values for MPC
 Map<String, PredictedValue> values = prediction.getAllPredictedValues();
-for (var entry : values.entrySet()) {
+for (Map.Entry<String, PredictedValue> entry : values.entrySet()) {
     mpc.setDisturbanceForecast(
         entry.getKey(), 
         entry.getValue().getMean()
@@ -203,6 +208,6 @@ prediction.setOverallConfidence(0.85);
 
 ## Related Documentation
 
-- [Physics Constraint Validation](../ml/README.md) - Validate predictions against physics
-- [Safety Scenarios](../safety/README.md) - What-if analysis
-- [MPC Integration](../../integration/mpc_integration.md) - Real-time control integration
+- [Physics Constraint Validation](../ml/) - Validate predictions against physics
+- [Safety Scenarios](../safety/) - What-if analysis
+- [MPC Integration](../../integration/mpc_integration) - Real-time control integration

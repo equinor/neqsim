@@ -7,22 +7,19 @@ import neqsim.thermo.system.SystemSrkCPAstatoil;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * TPflash1 class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TPflash1 {
+  private static final Logger logger = LogManager.getLogger(TPflash1.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TPflash1.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

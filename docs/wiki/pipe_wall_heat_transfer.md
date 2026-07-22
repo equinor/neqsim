@@ -1,3 +1,8 @@
+---
+title: "Pipe Wall Construction and Heat Transfer Modeling"
+description: "This document describes the pipe wall construction and heat transfer modeling capabilities in NeqSim, including material properties, multi-layer walls, and surrounding environment modeling."
+---
+
 # Pipe Wall Construction and Heat Transfer Modeling
 
 This document describes the pipe wall construction and heat transfer modeling capabilities in NeqSim, including material properties, multi-layer walls, and surrounding environment modeling.

@@ -5,12 +5,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import neqsim.process.equipment.valve.ThrottlingValve;
 
 class ProcessLoaderTest {
+  private static final Logger logger = LogManager.getLogger(ProcessLoaderTest.class);
+
   @Test
-  void testLoadProcessFromYaml() throws Exception {
+  void testLoadProcessFromYaml(@TempDir Path tempDir) throws Exception {
     // Create a temporary YAML file for testing
     File tempYamlFile = File.createTempFile("testProcess", ".yaml");
     tempYamlFile.deleteOnExit();
@@ -25,12 +31,12 @@ class ProcessLoaderTest {
     // Call the method under test
     ProcessLoader.loadProcessFromYaml(tempYamlFile, processSystem);
     processSystem.run();
-    // System.out.println(processSystem.getAllUnitNames());
+    // logger.info(processSystem.getAllUnitNames());
     // Verify the unit was added
     ThrottlingValve unit = (ThrottlingValve) processSystem.getUnit("throttlingValve_1");
     assertNotNull(unit, "Unit should be added to the process system");
     assertEquals(10.45841962, unit.getOutletStream().getTemperature("C"), 1e-3);
 
-    processSystem.exportToGraphviz("src/test/java/neqsim/process/processmodel/process.dot");
+    processSystem.exportToGraphviz(tempDir.resolve("process.dot").toString());
   }
 }

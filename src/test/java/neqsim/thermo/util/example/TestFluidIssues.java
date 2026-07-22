@@ -8,17 +8,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestFluidIssues class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TestFluidIssues {
+  private static final Logger logger = LogManager.getLogger(TestFluidIssues.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestFluidIssues.class);
 
   /**
    * This method is just meant to test the thermo package.

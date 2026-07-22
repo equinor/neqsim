@@ -2,12 +2,16 @@ package neqsim.process.equipment.reactor;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class FurnaceBurnerJsonTest {
+  private static final Logger logger = LogManager.getLogger(FurnaceBurnerJsonTest.class);
+
   @Test
   public void testToJson() {
     SystemInterface gas = new SystemSrkEos(298.15, 1.0);
@@ -34,7 +38,7 @@ public class FurnaceBurnerJsonTest {
     burner.run();
 
     String json = burner.toJson();
-    System.out.println("JSON Output: " + json);
+    logger.info("JSON Output: " + json);
 
     assertNotNull(json);
     assertTrue(json.contains("flame temperature"));

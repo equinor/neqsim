@@ -25,11 +25,9 @@ class PublicDataSourcesTest {
     assertTrue(types.contains("Transformer"), "Should have Transformer data");
 
     // Get any transformer record
-    List<OREDADataImporter.ReliabilityRecord> transformerRecords =
-        importer.getRecordsByType("Transformer");
+    List<OREDADataImporter.ReliabilityRecord> transformerRecords = importer.getRecordsByType("Transformer");
     assertFalse(transformerRecords.isEmpty(), "Should have transformer records");
-    assertTrue(transformerRecords.get(0).getDataSource().contains("IEEE493"),
-        "Data source should be IEEE 493");
+    assertTrue(transformerRecords.get(0).getDataSource().contains("IEEE493"), "Data source should be IEEE 493");
 
     // Check motor data
     assertTrue(types.contains("Motor"), "Should have Motor data");
@@ -98,8 +96,7 @@ class PublicDataSourcesTest {
         "Electrical equipment importer should have 50+ records, got: " + importer.getRecordCount());
 
     // Should have transformer data
-    assertTrue(importer.getEquipmentTypes().contains("Transformer"),
-        "Should have transformer data");
+    assertTrue(importer.getEquipmentTypes().contains("Transformer"), "Should have transformer data");
   }
 
   @Test
@@ -110,8 +107,7 @@ class PublicDataSourcesTest {
         "O&G importer should have 150+ records, got: " + importer.getRecordCount());
 
     // Should have subsea data
-    assertTrue(importer.getEquipmentTypes().contains("Subsea Tree"),
-        "Should have subsea tree data");
+    assertTrue(importer.getEquipmentTypes().contains("Subsea Tree"), "Should have subsea tree data");
   }
 
   @Test
@@ -130,8 +126,7 @@ class PublicDataSourcesTest {
     importer.loadFromResource("/reliabilitydata/oreda_equipment.csv");
 
     // Get a record that exists
-    OREDADataImporter.ReliabilityRecord compressorRecord =
-        importer.getRecord("Compressor", "Centrifugal", "All modes");
+    OREDADataImporter.ReliabilityRecord compressorRecord = importer.getRecord("Compressor", "Centrifugal", "All modes");
     assertNotNull(compressorRecord, "Should find compressor record");
 
     double mtbf = compressorRecord.getMtbfHours();
@@ -155,8 +150,7 @@ class PublicDataSourcesTest {
     importer.loadFromResource("/reliabilitydata/oreda_equipment.csv");
 
     List<String> pumpClasses = importer.getEquipmentClasses("Pump");
-    assertTrue(pumpClasses.size() >= 3,
-        "Should have multiple pump classes, got: " + pumpClasses.size());
+    assertTrue(pumpClasses.size() >= 3, "Should have multiple pump classes, got: " + pumpClasses.size());
     assertTrue(pumpClasses.contains("Centrifugal"), "Should have centrifugal pumps");
   }
 
@@ -181,7 +175,6 @@ class PublicDataSourcesTest {
 
     importer.loadIEEE493Data();
     assertTrue(importer.getRecordCount() > 0, "Should have records after reload");
-    assertTrue(importer.getRecordCount() < initialCount,
-        "Should have fewer records than combined sources");
+    assertTrue(importer.getRecordCount() < initialCount, "Should have fewer records than combined sources");
   }
 }

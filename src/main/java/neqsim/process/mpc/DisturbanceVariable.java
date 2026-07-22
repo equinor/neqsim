@@ -7,10 +7,9 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Represents a disturbance variable (DV) in an MPC formulation.
  *
  * <p>
- * A disturbance variable is a measured process input that affects the controlled variables but
- * cannot be manipulated by the controller. DVs are used for feedforward control - the MPC uses
- * knowledge of disturbances to proactively adjust manipulated variables before the disturbance
- * affects the outputs.
+ * A disturbance variable is a measured process input that affects the controlled variables but cannot be manipulated by
+ * the controller. DVs are used for feedforward control - the MPC uses knowledge of disturbances to proactively adjust
+ * manipulated variables before the disturbance affects the outputs.
  * </p>
  *
  * <p>
@@ -26,17 +25,17 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Feed flow as disturbance
- * DisturbanceVariable feedFlowDV =
- *     new DisturbanceVariable("FeedFlow", feedStream, "flowRate", "kg/hr");
+ * DisturbanceVariable feedFlowDV = new DisturbanceVariable("FeedFlow", feedStream, "flowRate", "kg/hr");
  *
  * // Ambient temperature as disturbance
- * DisturbanceVariable ambientDV =
- *     new DisturbanceVariable("Ambient").setUnit("C").setCurrentValue(25.0); // Manual update from
- *                                                                            // external source
+ * DisturbanceVariable ambientDV = new DisturbanceVariable("Ambient").setUnit("C").setCurrentValue(25.0); // Manual
+ * // update from
+ * // external
+ * // source
  * }
  * </pre>
  *
@@ -78,8 +77,7 @@ public class DisturbanceVariable extends MPCVariable {
    * @param equipment the process equipment to monitor
    * @param propertyName the property to read
    */
-  public DisturbanceVariable(String name, ProcessEquipmentInterface equipment,
-      String propertyName) {
+  public DisturbanceVariable(String name, ProcessEquipmentInterface equipment, String propertyName) {
     super(name, equipment, propertyName);
   }
 
@@ -91,8 +89,7 @@ public class DisturbanceVariable extends MPCVariable {
    * @param propertyName the property to read
    * @param unit the unit for the property value
    */
-  public DisturbanceVariable(String name, ProcessEquipmentInterface equipment, String propertyName,
-      String unit) {
+  public DisturbanceVariable(String name, ProcessEquipmentInterface equipment, String propertyName, String unit) {
     super(name, equipment, propertyName, unit);
   }
 
@@ -269,7 +266,6 @@ public class DisturbanceVariable extends MPCVariable {
         } else {
           currentValue = stream.getPressure("bara");
         }
-        return currentValue;
       }
     }
 
@@ -280,8 +276,8 @@ public class DisturbanceVariable extends MPCVariable {
    * Update the disturbance value from an external source.
    *
    * <p>
-   * Used when the disturbance is not directly readable from NeqSim equipment (e.g., ambient
-   * conditions from external sensors).
+   * Used when the disturbance is not directly readable from NeqSim equipment (e.g., ambient conditions from external
+   * sensors).
    * </p>
    *
    * @param value the new value

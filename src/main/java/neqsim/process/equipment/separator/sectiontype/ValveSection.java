@@ -4,9 +4,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.process.mechanicaldesign.separator.sectiontype.DistillationTraySection;
 
 /**
- * <p>
  * ValveSection class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class ValveSection extends SeparatorSection {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ValveSection.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param type a {@link java.lang.String} object

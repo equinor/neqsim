@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-model:v1",
+  "title": "NeqSim canonical engineering graph",
+  "type": "object",
+  "required": ["schemaVersion", "projectId", "revision", "nodes", "edges", "fingerprint"],
+  "properties": {
+    "schemaVersion": {"const": "neqsim_engineering_graph.v1"},
+    "schemaUri": {"const": "urn:neqsim:schema:engineering-model:v1"},
+    "projectId": {"type": "string", "minLength": 1},
+    "revision": {"type": "string", "minLength": 1},
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "externalKey", "label", "properties", "provenance"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "kind": {"type": "string"},
+          "externalKey": {"type": "string", "minLength": 1},
+          "label": {"type": "string", "minLength": 1},
+          "properties": {"type": "object"},
+          "provenance": {"type": "array"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "sourceId", "targetId", "kind", "role"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "sourceId": {"type": "string", "minLength": 1},
+          "targetId": {"type": "string", "minLength": 1},
+          "kind": {"type": "string"},
+          "role": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "fingerprint": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+  },
+  "additionalProperties": false
+}

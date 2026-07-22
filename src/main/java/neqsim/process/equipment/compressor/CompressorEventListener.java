@@ -4,9 +4,8 @@ package neqsim.process.equipment.compressor;
  * Listener interface for compressor events in dynamic simulations.
  *
  * <p>
- * Implement this interface to receive notifications about significant compressor events such as
- * surge approach, speed limits, power limits, and state changes. This enables custom control logic
- * and alarm handling.
+ * Implement this interface to receive notifications about significant compressor events such as surge approach, speed
+ * limits, power limits, and state changes. This enables custom control logic and alarm handling.
  * </p>
  *
  * @author esol
@@ -18,8 +17,8 @@ public interface CompressorEventListener {
    * Called when the compressor operating point approaches the surge line.
    *
    * <p>
-   * This event is triggered when the surge margin falls below the warning threshold but is still
-   * above the critical threshold.
+   * This event is triggered when the surge margin falls below the warning threshold but is still above the critical
+   * threshold.
    * </p>
    *
    * @param compressor the compressor triggering this event
@@ -44,8 +43,8 @@ public interface CompressorEventListener {
    * Called when the compressor speed exceeds the maximum curve speed.
    *
    * <p>
-   * This indicates the compressor is operating outside its design envelope and performance
-   * predictions may be unreliable.
+   * This indicates the compressor is operating outside its design envelope and performance predictions may be
+   * unreliable.
    * </p>
    *
    * @param compressor the compressor triggering this event

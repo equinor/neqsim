@@ -4,6 +4,8 @@ import java.awt.Container;
 import java.awt.FlowLayout;
 import java.text.DecimalFormat;
 import java.text.FieldPosition;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
@@ -12,6 +14,8 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.process.electricaldesign.pump.PumpElectricalDesign;
+import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
@@ -27,35 +31,40 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Centrifugal pump simulation model for process systems.
  *
  * <p>
- * This class simulates a centrifugal pump using either:
+ * This class simulates a centrifugal pump using one of three modes:
  * </p>
  * <ul>
  * <li>Isentropic compression with specified outlet pressure and efficiency</li>
- * <li>Manufacturer pump curves via {@link PumpChart} for realistic
- * performance</li>
+ * <li>Manufacturer pump curves via {@link PumpChart} for realistic performance</li>
+ * <li>Fixed outlet temperature mode using {@link #setOutletTemperature(double, String)}</li>
  * </ul>
  *
  * <h2>Key Features</h2>
  * <ul>
- * <li><b>Pump Curves:</b> Support for head, efficiency, and NPSH curves with
- * affinity law
- * scaling</li>
- * <li><b>Density Correction:</b> Automatic head correction when pumping fluids
- * different from chart
- * test fluid</li>
- * <li><b>NPSH Monitoring:</b> Cavitation detection based on available vs
- * required NPSH</li>
+ * <li><b>Pump Curves:</b> Support for head, efficiency, and NPSH curves with affinity law scaling</li>
+ * <li><b>Density Correction:</b> Automatic head correction when pumping fluids different from chart test fluid</li>
+ * <li><b>NPSH Monitoring:</b> Cavitation detection based on available vs required NPSH</li>
  * <li><b>Operating Status:</b> Surge, stonewall, and efficiency monitoring</li>
+ * <li><b>Outlet Temperature Mode:</b> When outlet temperature is set, the pump performs a TP flash at the specified
+ * temperature and outlet pressure. Power is back-calculated from the enthalpy difference. This is useful when discharge
+ * conditions are known from plant data.</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * // Simple usage with outlet pressure
  * Pump pump = new Pump("MainPump", feedStream);
  * pump.setOutletPressure(10.0, "bara");
  * pump.setIsentropicEfficiency(0.75);
  * pump.run();
+ *
+ * // With fixed outlet temperature (useful for plant data matching)
+ * Pump pump2 = new Pump("PlantPump", feedStream);
+ * pump2.setOutletPressure(10.0, "bara");
+ * pump2.setOutletTemperature(35.0, "C");
+ * pump2.run();
+ * double power = pump2.getPower("kW"); // back-calculated
  *
  * // With manufacturer pump curves
  * double[] speed = { 1000.0, 1500.0 };
@@ -74,9 +83,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @see PumpChart
  * @see PumpChartInterface
  */
-public class Pump extends TwoPortEquipment
-    implements PumpInterface, neqsim.process.equipment.capacity.CapacityConstrainedEquipment,
-    neqsim.process.design.AutoSizeable {
+public class Pump extends TwoPortEquipment implements PumpInterface,
+    neqsim.process.equipment.capacity.CapacityConstrainedEquipment, neqsim.process.design.AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -84,6 +92,9 @@ public class Pump extends TwoPortEquipment
 
   /** Mechanical design for the pump. */
   private PumpMechanicalDesign mechanicalDesign;
+
+  /** Electrical design for the pump. */
+  private PumpElectricalDesign electricalDesign;
 
   SystemInterface thermoSystem;
   double dH = 0.0;
@@ -101,7 +112,65 @@ public class Pump extends TwoPortEquipment
   private PumpChartInterface pumpChart = new PumpChart();
   private boolean checkNPSH = false;
   private double npshMargin = 1.3; // Safety margin for NPSH (NPSHa should be > npshMargin *
-                                   // NPSHr)
+  // NPSHr)
+  private double lastInletTemperature = Double.NaN;
+  private double lastInletPressure = Double.NaN;
+  private double lastInletFlowRate = Double.NaN;
+  private double[] lastInletComposition = null;
+  private double lastOutletPressure = Double.NaN;
+  private double lastOutTemperature = Double.NaN;
+  private double lastSpeed = Double.NaN;
+  private double lastMinimumFlow = Double.NaN;
+  private double lastIsentropicEfficiency = Double.NaN;
+  private double lastPower = Double.NaN;
+  private boolean lastUseOutTemperature = false;
+  private boolean lastCalculateAsCompressor = false;
+  private boolean lastPowerSet = false;
+  private boolean lastUsePumpChart = false;
+  private boolean lastCheckNPSH = false;
+
+  /** Dynamic shaft speed used by transient calculations, in rpm. */
+  private double dynamicSpeed = Double.NaN;
+
+  /**
+   * Dynamic outlet-pressure setpoint used by transient calculations, in the configured pressure unit.
+   */
+  private double dynamicOutletPressure = Double.NaN;
+
+  /** Dynamic shaft power after driver ramp limiting, in W. */
+  private double dynamicPower = 0.0;
+
+  /**
+   * Maximum speed increase/decrease rate in rpm/s. Non-positive or infinite values disable rate limiting.
+   */
+  private double speedRampRate = Double.POSITIVE_INFINITY;
+
+  /**
+   * First-order shaft-speed lag time constant in seconds. Non-positive values disable first-order lag.
+   */
+  private double speedTimeConstant = 0.0;
+
+  /** Maximum outlet-pressure setpoint slew rate in configured pressure units per second. */
+  private double outletPressureRampRate = Double.POSITIVE_INFINITY;
+
+  /**
+   * First-order outlet-pressure actuator lag time constant in seconds. Non-positive values disable first-order lag.
+   */
+  private double outletPressureTimeConstant = 0.0;
+
+  /**
+   * Maximum shaft-power increase/decrease rate in W/s. Non-positive or infinite values disable rate limiting.
+   */
+  private double powerRampRate = Double.POSITIVE_INFINITY;
+
+  /** Shaft-speed coastdown time constant in seconds used when the pump is tripped. */
+  private double tripCoastdownTimeConstant = 5.0;
+
+  /** Minimum speed treated as stopped in dynamic simulations, in rpm. */
+  private double stoppedSpeed = 1.0e-6;
+
+  /** Flag indicating that the pump driver is tripped and coasting down. */
+  private boolean tripped = false;
 
   /**
    * Constructor for Pump.
@@ -111,16 +180,14 @@ public class Pump extends TwoPortEquipment
   public Pump(String name) {
     super(name);
     initMechanicalDesign();
+    initElectricalDesign();
   }
 
   /**
-   * <p>
    * Constructor for Pump.
-   * </p>
    *
-   * @param name        name of pump
-   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface}
-   *                    object
+   * @param name name of pump
+   * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public Pump(String name, StreamInterface inletStream) {
     this(name);
@@ -137,6 +204,18 @@ public class Pump extends TwoPortEquipment
   @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new PumpMechanicalDesign(this);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PumpElectricalDesign getElectricalDesign() {
+    return electricalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initElectricalDesign() {
+    electricalDesign = new PumpElectricalDesign(this);
   }
 
   /** {@inheritDoc} */
@@ -164,9 +243,7 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * getPower.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -176,10 +253,27 @@ public class Pump extends TwoPortEquipment
     return powerUnit.getValue(unit);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, Map<String, Object>> getEquipmentState(String temperatureUnit, String pressureUnit,
+      String flowUnit) {
+    Map<String, Map<String, Object>> state = new LinkedHashMap<String, Map<String, Object>>();
+    StreamInterface out = getOutletStream();
+    if (out != null) {
+      state.put("flow", ProcessEquipmentInterface.createStateEntry(out.getFlowRate(flowUnit), flowUnit));
+      state.put("pressure", ProcessEquipmentInterface.createStateEntry(out.getPressure(pressureUnit), pressureUnit));
+      state.put("temperature",
+          ProcessEquipmentInterface.createStateEntry(out.getTemperature(temperatureUnit), temperatureUnit));
+    }
+    state.put("power", ProcessEquipmentInterface.createStateEntry(getPower("kW"), "kW"));
+    state.put("dynamicSpeed", ProcessEquipmentInterface.createStateEntry(getDynamicSpeed(), "rpm"));
+    state.put("dynamicPower", ProcessEquipmentInterface.createStateEntry(getDynamicPower("kW"), "kW"));
+    state.put("tripped", ProcessEquipmentInterface.createStateEntry(isTripped() ? 1.0 : 0.0, "-"));
+    return state;
+  }
+
   /**
-   * <p>
    * getDuty.
-   * </p>
    *
    * @return a double
    */
@@ -188,14 +282,195 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * calculateAsCompressor.
-   * </p>
    *
    * @param setPumpCalcType a boolean
    */
   public void calculateAsCompressor(boolean setPumpCalcType) {
     calculateAsCompressor = setPumpCalcType;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean needRecalculation() {
+    if (thermoSystem == null || inStream == null || inStream.getThermoSystem() == null
+        || lastInletComposition == null) {
+      return true;
+    }
+    SystemInterface inletSystem = inStream.getThermoSystem();
+    if (inletSystem.getTemperature() != lastInletTemperature || inletSystem.getPressure() != lastInletPressure
+        || pressure != lastOutletPressure || outTemperature != lastOutTemperature || speed != lastSpeed
+        || minimumFlow != lastMinimumFlow || isentropicEfficiency != lastIsentropicEfficiency || dH != lastPower
+        || useOutTemperature != lastUseOutTemperature || calculateAsCompressor != lastCalculateAsCompressor
+        || powerSet != lastPowerSet || pumpChart.isUsePumpChart() != lastUsePumpChart || checkNPSH != lastCheckNPSH) {
+      return true;
+    }
+    double flow = inletSystem.getFlowRate("kg/hr");
+    if (flow <= 0.0 || lastInletFlowRate <= 0.0 || Math.abs(flow - lastInletFlowRate) / flow >= 1e-6) {
+      return true;
+    }
+    neqsim.thermo.phase.PhaseInterface phase = inletSystem.getPhase(0);
+    int numberOfComponents = phase.getNumberOfComponents();
+    if (numberOfComponents != lastInletComposition.length) {
+      return true;
+    }
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (phase.getComponent(i).getz() != lastInletComposition[i]) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void updateRecalculationState() {
+    if (inStream == null || inStream.getThermoSystem() == null) {
+      lastInletComposition = null;
+      return;
+    }
+    SystemInterface inletSystem = inStream.getThermoSystem();
+    lastInletTemperature = inletSystem.getTemperature();
+    lastInletPressure = inletSystem.getPressure();
+    lastInletFlowRate = inletSystem.getFlowRate("kg/hr");
+    lastInletComposition = inletSystem.getMolarComposition();
+    lastOutletPressure = pressure;
+    lastOutTemperature = outTemperature;
+    lastSpeed = speed;
+    lastMinimumFlow = minimumFlow;
+    lastIsentropicEfficiency = isentropicEfficiency;
+    lastPower = dH;
+    lastUseOutTemperature = useOutTemperature;
+    lastCalculateAsCompressor = calculateAsCompressor;
+    lastPowerSet = powerSet;
+    lastUsePumpChart = pumpChart.isUsePumpChart();
+    lastCheckNPSH = checkNPSH;
+  }
+
+  private void finishRun(UUID id) {
+    updateRecalculationState();
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Initializes transient state from the current steady-state setpoints and last calculated duty.
+   */
+  private void initializeDynamicState() {
+    if (!Double.isFinite(dynamicSpeed)) {
+      dynamicSpeed = speed;
+    }
+    if (!Double.isFinite(dynamicOutletPressure)) {
+      dynamicOutletPressure = pressure;
+    }
+    if (!Double.isFinite(dynamicPower)) {
+      dynamicPower = 0.0;
+    }
+  }
+
+  /**
+   * Advances a dynamic state toward a target with first-order lag and optional slew-rate limiting.
+   *
+   * @param current current state value
+   * @param target target value
+   * @param dt timestep in seconds
+   * @param timeConstant first-order time constant in seconds
+   * @param rampRate maximum absolute rate in state units per second
+   * @return updated state value
+   */
+  private double advanceDynamicValue(double current, double target, double dt, double timeConstant, double rampRate) {
+    if (!Double.isFinite(current)) {
+      current = target;
+    }
+    double candidate = target;
+    if (timeConstant > 0.0 && dt > 0.0) {
+      double alpha = 1.0 - Math.exp(-dt / timeConstant);
+      candidate = current + (target - current) * alpha;
+    }
+    if (Double.isFinite(rampRate) && rampRate > 0.0 && dt > 0.0) {
+      double maxChange = rampRate * dt;
+      double change = Math.max(-maxChange, Math.min(maxChange, candidate - current));
+      return current + change;
+    }
+    return candidate;
+  }
+
+  /**
+   * Updates the dynamic driver-load state toward the requested hydraulic duty.
+   *
+   * @param requestedPower requested shaft power in W
+   * @param dt timestep in seconds
+   */
+  private void updateDynamicPower(double requestedPower, double dt) {
+    dynamicPower = advanceDynamicValue(dynamicPower, requestedPower, dt, 0.0, powerRampRate);
+  }
+
+  /**
+   * Applies zero-speed pump state by propagating inlet conditions to the outlet without added head.
+   *
+   * @param id current calculation identifier
+   */
+  private void applyStoppedPumpState(UUID id) {
+    thermoSystem = inStream.getThermoSystem().clone();
+    thermoSystem.setPressure(inStream.getPressure(pressureUnit), pressureUnit);
+    thermoSystem.init(3);
+    dH = 0.0;
+    dynamicPower = 0.0;
+    outStream.setThermoSystem(thermoSystem);
+    finishRun(id);
+  }
+
+  /**
+   * Runs an attached controller against the pump speed target.
+   *
+   * @param dt timestep in seconds
+   * @param id current calculation identifier
+   */
+  public void runController(double dt, UUID id) {
+    if (hasController && getController().isActive()) {
+      getController().runTransient(this.speed, dt, id);
+      this.speed = Math.max(0.0, getController().getResponse());
+    }
+    setCalculationIdentifier(id);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void runTransient(double dt, UUID id) {
+    if (getCalculateSteadyState()) {
+      run(id);
+      increaseTime(dt);
+      return;
+    }
+
+    initializeDynamicState();
+    runController(dt, id);
+
+    double targetSpeed = tripped ? 0.0 : speed;
+    if (tripped) {
+      dynamicSpeed = advanceDynamicValue(dynamicSpeed, 0.0, dt, tripCoastdownTimeConstant, Double.POSITIVE_INFINITY);
+    } else {
+      dynamicSpeed = advanceDynamicValue(dynamicSpeed, targetSpeed, dt, speedTimeConstant, speedRampRate);
+    }
+    dynamicSpeed = Math.max(0.0, dynamicSpeed);
+
+    dynamicOutletPressure = advanceDynamicValue(dynamicOutletPressure, pressure, dt, outletPressureTimeConstant,
+        outletPressureRampRate);
+
+    double targetSpeedBackup = speed;
+    double targetPressureBackup = pressure;
+    speed = dynamicSpeed;
+    pressure = dynamicOutletPressure;
+    try {
+      if (dynamicSpeed <= stoppedSpeed) {
+        applyStoppedPumpState(id);
+      } else {
+        run(id);
+        updateDynamicPower(dH, dt);
+      }
+    } finally {
+      speed = targetSpeedBackup;
+      pressure = targetPressureBackup;
+    }
+    increaseTime(dt);
   }
 
   /** {@inheritDoc} */
@@ -208,8 +483,7 @@ public class Pump extends TwoPortEquipment
       thermoSystem.init(3);
       dH = 0.0;
       outStream.setThermoSystem(thermoSystem);
-      outStream.setCalculationIdentifier(id);
-      setCalculationIdentifier(id);
+      finishRun(id);
       return;
     }
 
@@ -273,12 +547,10 @@ public class Pump extends TwoPortEquipment
 
         if (getPumpChart().isUseViscosityCorrection() && viscosity_cSt > 4.0) {
           // Use fully corrected values for viscous fluids
-          pumpHead = getPumpChart().getFullyCorrectedHead(flowRate_m3hr, getSpeed(), densityInlet,
-              viscosity_cSt);
+          pumpHead = getPumpChart().getFullyCorrectedHead(flowRate_m3hr, getSpeed(), densityInlet, viscosity_cSt);
           efficiencyPercent = getPumpChart().getCorrectedEfficiency(flowRate_m3hr, getSpeed(), viscosity_cSt);
           logger.debug("Using viscosity correction: ν={} cSt, Cq={}, Ch={}, Cη={}",
-              String.format("%.1f", viscosity_cSt),
-              String.format("%.3f", getPumpChart().getFlowCorrectionFactor()),
+              String.format("%.1f", viscosity_cSt), String.format("%.3f", getPumpChart().getFlowCorrectionFactor()),
               String.format("%.3f", getPumpChart().getHeadCorrectionFactor()),
               String.format("%.3f", getPumpChart().getEfficiencyCorrectionFactor()));
         } else {
@@ -300,9 +572,8 @@ public class Pump extends TwoPortEquipment
           // Specific energy in kJ/kg: ΔP = E·ρ
           deltaP_Pa = pumpHead * 1000.0 * densityInlet; // Convert kJ to J
         } else {
-          throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "run",
-              "headUnit", "Unsupported head unit: " + getPumpChart().getHeadUnit()
-                  + ". Use 'meter' or 'kJ/kg'."));
+          throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "run", "headUnit",
+              "Unsupported head unit: " + getPumpChart().getHeadUnit() + ". Use 'meter' or 'kJ/kg'."));
         }
 
         // Set outlet pressure
@@ -346,8 +617,7 @@ public class Pump extends TwoPortEquipment
     // thermoOps.PSflash(entropy);
     dH = thermoSystem.getEnthalpy() - hinn;
     outStream.setThermoSystem(thermoSystem);
-    outStream.setCalculationIdentifier(id);
-    setCalculationIdentifier(id);
+    finishRun(id);
 
     // outStream.run(id);
   }
@@ -384,8 +654,7 @@ public class Pump extends TwoPortEquipment
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][0] = "Density";
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][i + 1] = nf
-          .format(thermoSystem.getPhases()[i].getPhysicalProperties().getDensity(), buf, test)
-          .toString();
+          .format(thermoSystem.getPhases()[i].getPhysicalProperties().getDensity(), buf, test).toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 2][4] = "[kg/m^3]";
 
       // Double.longValue(thermoSystem.getPhases()[i].getBeta());
@@ -404,8 +673,7 @@ public class Pump extends TwoPortEquipment
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][0] = "Cp";
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][i + 1] = nf
-          .format((thermoSystem.getPhases()[i].getCp()
-              / thermoSystem.getPhases()[i].getNumberOfMolesInPhase() * 1.0
+          .format((thermoSystem.getPhases()[i].getCp() / thermoSystem.getPhases()[i].getNumberOfMolesInPhase() * 1.0
               / thermoSystem.getPhases()[i].getMolarMass() * 1000), buf, test)
           .toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 5][4] = "[kJ/kg*K]";
@@ -413,15 +681,13 @@ public class Pump extends TwoPortEquipment
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][0] = "Viscosity";
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][i + 1] = nf
-          .format((thermoSystem.getPhases()[i].getPhysicalProperties().getViscosity()), buf, test)
-          .toString();
+          .format((thermoSystem.getPhases()[i].getPhysicalProperties().getViscosity()), buf, test).toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 7][4] = "[kg/m*sec]";
 
       buf = new StringBuffer();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][0] = "Conductivity";
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][i + 1] = nf
-          .format(thermoSystem.getPhases()[i].getPhysicalProperties().getConductivity(), buf, test)
-          .toString();
+          .format(thermoSystem.getPhases()[i].getPhysicalProperties().getConductivity(), buf, test).toString();
       table[thermoSystem.getPhases()[0].getNumberOfComponents() + 8][4] = "[W/m*K]";
 
       buf = new StringBuffer();
@@ -451,9 +717,7 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>molarFlow</code>.
-   * </p>
    *
    * @return a double
    */
@@ -462,9 +726,7 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>molarFlow</code>.
-   * </p>
    *
    * @param molarFlow a double
    */
@@ -479,9 +741,7 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>isentropicEfficiency</code>.
-   * </p>
    *
    * @return the isentropicEfficiency
    */
@@ -490,9 +750,7 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>isentropicEfficiency</code>.
-   * </p>
    *
    * @param isentropicEfficiency the isentropicEfficiency to set
    */
@@ -501,9 +759,7 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>outTemperature</code>.
-   * </p>
    *
    * @return a double
    */
@@ -516,22 +772,66 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
+   * Set the outlet temperature of the pump in Kelvin.
+   *
    * <p>
-   * Setter for the field <code>outTemperature</code>.
+   * When set, the pump skips the isentropic or pump-curve calculation and instead performs a TP flash at this
+   * temperature and the outlet pressure. Power is back-calculated from the enthalpy difference between inlet and
+   * outlet.
    * </p>
    *
-   * @param outTemperature a double
+   * @param outTemperature outlet temperature in Kelvin
    */
-  public void setOutTemperature(double outTemperature) {
+  @Override
+  public void setOutletTemperature(double outTemperature) {
     useOutTemperature = true;
     this.outTemperature = outTemperature;
+  }
+
+  /**
+   * Set the outlet temperature of the pump with unit specification.
+   *
+   * <p>
+   * When set, the pump skips the isentropic or pump-curve calculation and instead performs a TP flash at this
+   * temperature and the outlet pressure. Power is back-calculated from the enthalpy difference between inlet and
+   * outlet. Supported units: "K" (Kelvin), "C" (Celsius), "F" (Fahrenheit), "R" (Rankine).
+   * </p>
+   *
+   * @param temperature outlet temperature value
+   * @param unit temperature unit ("K", "C", "F", or "R"), case-insensitive
+   */
+  @Override
+  public void setOutletTemperature(double temperature, String unit) {
+    useOutTemperature = true;
+    if (unit.equalsIgnoreCase("K") || unit.equalsIgnoreCase("Kelvin")) {
+      this.outTemperature = temperature;
+    } else if (unit.equalsIgnoreCase("C") || unit.equalsIgnoreCase("Celsius")) {
+      this.outTemperature = temperature + 273.15;
+    } else if (unit.equalsIgnoreCase("F") || unit.equalsIgnoreCase("Fahrenheit")) {
+      this.outTemperature = (temperature - 32.0) * 5.0 / 9.0 + 273.15;
+    } else if (unit.equalsIgnoreCase("R") || unit.equalsIgnoreCase("Rankine")) {
+      this.outTemperature = temperature * 5.0 / 9.0;
+    } else {
+      this.outTemperature = temperature;
+    }
+  }
+
+  /**
+   * Setter for the field <code>outTemperature</code>.
+   *
+   * @param outTemperature outlet temperature in Kelvin
+   * @deprecated use {@link #setOutletTemperature(double)} instead
+   */
+  @Override
+  @Deprecated
+  public void setOutTemperature(double outTemperature) {
+    setOutletTemperature(outTemperature);
   }
 
   /** {@inheritDoc} */
   @Override
   public double getEntropyProduction(String unit) {
-    return outStream.getThermoSystem().getEntropy(unit)
-        - inStream.getThermoSystem().getEntropy(unit);
+    return outStream.getThermoSystem().getEntropy(unit) - inStream.getThermoSystem().getEntropy(unit);
   }
 
   /** {@inheritDoc} */
@@ -541,12 +841,10 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
   public void setPressure(double pressure, String unit) {
     setOutletPressure(pressure);
@@ -560,22 +858,19 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param pressure a double
-   * @param unit     a {@link java.lang.String} object
+   * @param unit a {@link java.lang.String} object
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     setOutletPressure(pressure);
     pressureUnit = unit;
   }
 
   /**
-   * <p>
    * Setter for the field <code>speed</code>.
-   * </p>
    *
    * @param speed a double
    */
@@ -584,9 +879,7 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
-   * <p>
    * Getter for the field <code>speed</code>.
-   * </p>
    *
    * @return a double
    */
@@ -595,9 +888,231 @@ public class Pump extends TwoPortEquipment
   }
 
   /**
-   * <p>
+   * Gets the actual transient shaft speed used by {@link #runTransient(double, UUID)}.
+   *
+   * @return dynamic shaft speed in rpm
+   */
+  public double getDynamicSpeed() {
+    return Double.isFinite(dynamicSpeed) ? dynamicSpeed : speed;
+  }
+
+  /**
+   * Sets the actual transient shaft speed initial condition.
+   *
+   * @param dynamicSpeed dynamic shaft speed in rpm
+   */
+  public void setDynamicSpeed(double dynamicSpeed) {
+    this.dynamicSpeed = Math.max(0.0, dynamicSpeed);
+  }
+
+  /**
+   * Gets the actual transient outlet-pressure setpoint.
+   *
+   * @return dynamic outlet pressure in the configured pressure unit
+   */
+  public double getDynamicOutletPressure() {
+    return Double.isFinite(dynamicOutletPressure) ? dynamicOutletPressure : pressure;
+  }
+
+  /**
+   * Sets the actual transient outlet-pressure initial condition.
+   *
+   * @param dynamicOutletPressure dynamic outlet pressure in the configured pressure unit
+   */
+  public void setDynamicOutletPressure(double dynamicOutletPressure) {
+    this.dynamicOutletPressure = dynamicOutletPressure;
+  }
+
+  /**
+   * Gets the dynamic driver-load state.
+   *
+   * @return dynamic shaft power in W
+   */
+  public double getDynamicPower() {
+    return dynamicPower;
+  }
+
+  /**
+   * Gets the dynamic driver-load state in a requested unit.
+   *
+   * @param unit power unit string
+   * @return dynamic shaft power in the requested unit
+   */
+  public double getDynamicPower(String unit) {
+    neqsim.util.unit.PowerUnit powerUnit = new neqsim.util.unit.PowerUnit(dynamicPower, "W");
+    return powerUnit.getValue(unit);
+  }
+
+  /**
+   * Sets the dynamic driver-load initial condition.
+   *
+   * @param dynamicPower dynamic shaft power in W
+   */
+  public void setDynamicPower(double dynamicPower) {
+    this.dynamicPower = Math.max(0.0, dynamicPower);
+  }
+
+  /**
+   * Sets the maximum shaft-speed ramp rate.
+   *
+   * @param speedRampRate maximum speed change rate in rpm/s
+   */
+  public void setSpeedRampRate(double speedRampRate) {
+    this.speedRampRate = speedRampRate;
+  }
+
+  /**
+   * Gets the maximum shaft-speed ramp rate.
+   *
+   * @return maximum speed change rate in rpm/s
+   */
+  public double getSpeedRampRate() {
+    return speedRampRate;
+  }
+
+  /**
+   * Sets the shaft-speed first-order time constant.
+   *
+   * @param speedTimeConstant time constant in seconds
+   */
+  public void setSpeedTimeConstant(double speedTimeConstant) {
+    this.speedTimeConstant = Math.max(0.0, speedTimeConstant);
+  }
+
+  /**
+   * Gets the shaft-speed first-order time constant.
+   *
+   * @return time constant in seconds
+   */
+  public double getSpeedTimeConstant() {
+    return speedTimeConstant;
+  }
+
+  /**
+   * Sets the outlet-pressure setpoint ramp rate.
+   *
+   * @param outletPressureRampRate maximum pressure change rate in configured pressure units per second
+   */
+  public void setOutletPressureRampRate(double outletPressureRampRate) {
+    this.outletPressureRampRate = outletPressureRampRate;
+  }
+
+  /**
+   * Gets the outlet-pressure setpoint ramp rate.
+   *
+   * @return maximum pressure change rate in configured pressure units per second
+   */
+  public double getOutletPressureRampRate() {
+    return outletPressureRampRate;
+  }
+
+  /**
+   * Sets the outlet-pressure setpoint first-order time constant.
+   *
+   * @param outletPressureTimeConstant time constant in seconds
+   */
+  public void setOutletPressureTimeConstant(double outletPressureTimeConstant) {
+    this.outletPressureTimeConstant = Math.max(0.0, outletPressureTimeConstant);
+  }
+
+  /**
+   * Gets the outlet-pressure setpoint first-order time constant.
+   *
+   * @return time constant in seconds
+   */
+  public double getOutletPressureTimeConstant() {
+    return outletPressureTimeConstant;
+  }
+
+  /**
+   * Sets the dynamic driver-load ramp rate.
+   *
+   * @param powerRampRate maximum power change rate in W/s
+   */
+  public void setPowerRampRate(double powerRampRate) {
+    this.powerRampRate = powerRampRate;
+  }
+
+  /**
+   * Gets the dynamic driver-load ramp rate.
+   *
+   * @return maximum power change rate in W/s
+   */
+  public double getPowerRampRate() {
+    return powerRampRate;
+  }
+
+  /**
+   * Sets the trip coastdown time constant.
+   *
+   * @param tripCoastdownTimeConstant coastdown time constant in seconds
+   */
+  public void setTripCoastdownTimeConstant(double tripCoastdownTimeConstant) {
+    this.tripCoastdownTimeConstant = Math.max(0.0, tripCoastdownTimeConstant);
+  }
+
+  /**
+   * Gets the trip coastdown time constant.
+   *
+   * @return coastdown time constant in seconds
+   */
+  public double getTripCoastdownTimeConstant() {
+    return tripCoastdownTimeConstant;
+  }
+
+  /**
+   * Sets the minimum shaft speed treated as stopped.
+   *
+   * @param stoppedSpeed stopped-speed threshold in rpm
+   */
+  public void setStoppedSpeed(double stoppedSpeed) {
+    this.stoppedSpeed = Math.max(0.0, stoppedSpeed);
+  }
+
+  /**
+   * Gets the minimum shaft speed treated as stopped.
+   *
+   * @return stopped-speed threshold in rpm
+   */
+  public double getStoppedSpeed() {
+    return stoppedSpeed;
+  }
+
+  /**
+   * Trips the pump driver so transient calculations coast the shaft toward zero speed.
+   */
+  public void trip() {
+    tripped = true;
+  }
+
+  /**
+   * Restarts the pump driver so transient calculations ramp toward the configured speed target.
+   */
+  public void restart() {
+    tripped = false;
+  }
+
+  /**
+   * Checks whether the pump driver is tripped.
+   *
+   * @return true if the pump is tripped
+   */
+  public boolean isTripped() {
+    return tripped;
+  }
+
+  /**
+   * Resets transient state so the next transient run reinitializes from steady-state setpoints.
+   */
+  public void resetDynamicState() {
+    dynamicSpeed = Double.NaN;
+    dynamicOutletPressure = Double.NaN;
+    dynamicPower = 0.0;
+    tripped = false;
+  }
+
+  /**
    * Getter for the field <code>pumpChart</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.pump.PumpChart} object
    */
@@ -608,8 +1123,7 @@ public class Pump extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new PumpResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(new PumpResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -651,9 +1165,8 @@ public class Pump extends TwoPortEquipment
    * Calculate the Net Positive Suction Head Available (NPSHa) at the pump inlet.
    *
    * <p>
-   * NPSHa represents the absolute pressure head available at the pump suction
-   * above the fluid vapor
-   * pressure. It must exceed the pump's NPSHr to avoid cavitation.
+   * NPSHa represents the absolute pressure head available at the pump suction above the fluid vapor pressure. It must
+   * exceed the pump's NPSHr to avoid cavitation.
    * </p>
    *
    * <p>
@@ -662,6 +1175,7 @@ public class Pump extends TwoPortEquipment
    *
    * @return NPSHa in meters
    */
+  @Override
   public double getNPSHAvailable() {
     try {
       inStream.getThermoSystem().init(3);
@@ -675,11 +1189,9 @@ public class Pump extends TwoPortEquipment
       try {
         thermoOps.bubblePointPressureFlash(false);
       } catch (Exception e) {
-        // If bubble point flash fails, fluid might be in supercritical state or single
-        // phase
-        // Use a conservative estimate or return high value
-        logger.warn("Could not calculate vapor pressure for NPSH calculation: " + e.getMessage());
-        return 1000.0; // Return large value to indicate no cavitation risk
+        // Missing vapour-pressure evidence must not be interpreted as a safe NPSH margin.
+        logger.warn("Could not calculate vapor pressure for NPSH calculation: {}", e.getMessage());
+        return Double.NaN;
       }
       double pressureVapor = tempSystem.getPressure("Pa");
 
@@ -696,24 +1208,22 @@ public class Pump extends TwoPortEquipment
 
       return npsha;
     } catch (Exception e) {
-      logger.error("Error calculating NPSH available: " + e.getMessage());
-      return 0.0;
+      logger.error("Error calculating NPSH available: {}", e.getMessage());
+      return Double.NaN;
     }
   }
 
   /**
-   * Get the required Net Positive Suction Head (NPSHr) for the pump at current
-   * operating
-   * conditions.
+   * Get the required Net Positive Suction Head (NPSHr) for the pump at current operating conditions.
    *
    * <p>
-   * If a pump chart with NPSH curve is available, uses manufacturer data.
-   * Otherwise returns a
-   * conservative estimate based on pump type and flow rate.
+   * If a pump chart with NPSH curve is available, uses manufacturer data. Otherwise returns a conservative estimate
+   * based on pump type and flow rate.
    * </p>
    *
    * @return NPSHr in meters
    */
+  @Override
   public double getNPSHRequired() {
     // Try to get NPSH from pump chart if available
     if (pumpChart != null && pumpChart.isUsePumpChart() && pumpChart.hasNPSHCurve()) {
@@ -724,8 +1234,7 @@ public class Pump extends TwoPortEquipment
           return npshFromChart;
         }
       } catch (Exception e) {
-        logger.warn(
-            "Error reading NPSH from pump chart: " + e.getMessage() + ". Using estimated value.");
+        logger.warn("Error reading NPSH from pump chart: " + e.getMessage() + ". Using estimated value.");
       }
     }
 
@@ -745,24 +1254,26 @@ public class Pump extends TwoPortEquipment
    * Check if the pump is at risk of cavitation based on NPSH criteria.
    *
    * <p>
-   * Cavitation occurs when NPSHa &lt; NPSHr, causing vapor bubbles to form and
-   * collapse,
-   * potentially damaging the pump.
+   * Cavitation occurs when NPSHa &lt; NPSHr, causing vapor bubbles to form and collapse, potentially damaging the pump.
    * </p>
    *
    * @return true if cavitation risk exists (NPSHa &lt; npshMargin * NPSHr)
    */
+  @Override
   public boolean isCavitating() {
     if (!checkNPSH) {
       return false;
     }
     double npsha = getNPSHAvailable();
     double npshr = getNPSHRequired();
+    if (!Double.isFinite(npsha) || !Double.isFinite(npshr) || npshr <= 0.0) {
+      logger.warn("Pump {} NPSH status is unknown because NPSHa or NPSHr is unavailable", getName());
+      return true;
+    }
     boolean cavitating = npsha < (npshMargin * npshr);
     if (cavitating) {
-      logger.warn("Pump " + getName() + " cavitation risk: NPSHa=" + String.format("%.2f", npsha)
-          + " m < " + String.format("%.2f", npshMargin) + " × NPSHr=" + String.format("%.2f", npshr)
-          + " m");
+      logger.warn("Pump " + getName() + " cavitation risk: NPSHa=" + String.format("%.2f", npsha) + " m < "
+          + String.format("%.2f", npshMargin) + " × NPSHr=" + String.format("%.2f", npshr) + " m");
     }
     return cavitating;
   }
@@ -772,6 +1283,7 @@ public class Pump extends TwoPortEquipment
    *
    * @param checkNPSH true to enable NPSH checking
    */
+  @Override
   public void setCheckNPSH(boolean checkNPSH) {
     this.checkNPSH = checkNPSH;
   }
@@ -844,8 +1356,8 @@ public class Pump extends TwoPortEquipment
     initializeCapacityConstraints();
 
     autoSized = true;
-    logger.info("Pump '{}' auto-sized: Design flow = {:.1f} m3/hr, Safety factor = {}", getName(),
-        designVolumeFlow, safetyFactor);
+    logger.info("Pump '{}' auto-sized: Design flow = {:.1f} m3/hr, Safety factor = {}", getName(), designVolumeFlow,
+        safetyFactor);
   }
 
   /** {@inheritDoc} */
@@ -884,27 +1396,22 @@ public class Pump extends TwoPortEquipment
 
     if (inStream != null) {
       sb.append("\n--- Design Basis ---\n");
-      sb.append("Flow Rate: ").append(String.format("%.2f m3/hr", inStream.getFlowRate("m3/hr")))
-          .append("\n");
-      sb.append("Mass Flow: ").append(String.format("%.2f kg/hr", inStream.getFlowRate("kg/hr")))
-          .append("\n");
-      sb.append("Inlet Pressure: ").append(String.format("%.2f bara", inStream.getPressure("bara")))
-          .append("\n");
+      sb.append("Flow Rate: ").append(String.format("%.2f m3/hr", inStream.getFlowRate("m3/hr"))).append("\n");
+      sb.append("Mass Flow: ").append(String.format("%.2f kg/hr", inStream.getFlowRate("kg/hr"))).append("\n");
+      sb.append("Inlet Pressure: ").append(String.format("%.2f bara", inStream.getPressure("bara"))).append("\n");
       sb.append("Outlet Pressure: ").append(String.format("%.2f bara", pressure)).append("\n");
     }
 
     sb.append("\n--- Operating Parameters ---\n");
     sb.append("Power: ").append(String.format("%.2f kW", getPower("kW"))).append("\n");
-    sb.append("Isentropic Efficiency: ").append(String.format("%.1f%%", isentropicEfficiency * 100))
-        .append("\n");
+    sb.append("Isentropic Efficiency: ").append(String.format("%.1f%%", isentropicEfficiency * 100)).append("\n");
     sb.append("Speed: ").append(String.format("%.0f RPM", speed)).append("\n");
 
     if (mechanicalDesign != null) {
       sb.append("\n--- Design Limits ---\n");
-      sb.append("Max Design Power: ")
-          .append(String.format("%.2f kW", mechanicalDesign.maxDesignPower / 1000.0)).append("\n");
-      sb.append("Max Design Flow: ")
-          .append(String.format("%.2f m3/hr", mechanicalDesign.getMaxDesignVolumeFlow()))
+      sb.append("Max Design Power: ").append(String.format("%.2f kW", mechanicalDesign.maxDesignPower / 1000.0))
+          .append("\n");
+      sb.append("Max Design Flow: ").append(String.format("%.2f m3/hr", mechanicalDesign.getMaxDesignVolumeFlow()))
           .append("\n");
     }
 
@@ -972,36 +1479,33 @@ public class Pump extends TwoPortEquipment
    * Initializes default capacity constraints for the pump.
    *
    * <p>
-   * NOTE: All constraints are disabled by default for backwards compatibility.
-   * Enable specific
-   * constraints when pump capacity analysis is needed (e.g., after sizing).
+   * NOTE: All constraints are disabled by default for backwards compatibility. Enable specific constraints when pump
+   * capacity analysis is needed (e.g., after sizing).
    * </p>
    */
   protected void initializeCapacityConstraints() {
+    capacityConstraints.clear();
     // Power constraint (HARD limit) - disabled by default
     addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("power", "kW",
         neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD)
         .setDesignValue(getMechanicalDesign().maxDesignPower).setWarningThreshold(0.9)
-        .setValueSupplier(() -> getPower())
-        .setEnabled(false));
+        .setValueSupplier(() -> getPower()).setEnabled(false));
 
     // Flow rate constraint (DESIGN limit) - disabled by default
-    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("flowRate",
-        "m3/hr", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
+    addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("flowRate", "m3/hr",
+        neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.DESIGN)
         .setDesignValue(getMechanicalDesign().maxDesignVolumeFlow).setWarningThreshold(0.9)
-        .setValueSupplier(() -> inStream != null ? inStream.getFlowRate("m3/hr") : 0.0)
-        .setEnabled(false));
+        .setValueSupplier(() -> inStream != null ? inStream.getFlowRate("m3/hr") : 0.0).setEnabled(false));
 
     // NPSH margin constraint (SOFT limit) - disabled by default
     if (checkNPSH) {
-      addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("npshMargin",
-          "m", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT)
-          .setDesignValue(npshMargin).setWarningThreshold(0.9).setValueSupplier(() -> {
+      addCapacityConstraint(new neqsim.process.equipment.capacity.CapacityConstraint("npshMargin", "m",
+          neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT).setDesignValue(npshMargin)
+          .setWarningThreshold(0.9).setValueSupplier(() -> {
             double npsha = getNPSHAvailable();
             double npshr = getNPSHRequired();
             return npsha > 0 && npshr > 0 ? npsha / (npshMargin * npshr) : 1.0;
-          })
-          .setEnabled(false));
+          }).setEnabled(false));
     }
   }
 
@@ -1019,8 +1523,7 @@ public class Pump extends TwoPortEquipment
   public neqsim.process.equipment.capacity.CapacityConstraint getBottleneckConstraint() {
     neqsim.process.equipment.capacity.CapacityConstraint bottleneck = null;
     double maxUtil = 0.0;
-    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
         continue;
       }
@@ -1036,8 +1539,7 @@ public class Pump extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public boolean isCapacityExceeded() {
-    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
         continue;
       }
@@ -1051,8 +1553,7 @@ public class Pump extends TwoPortEquipment
   /** {@inheritDoc} */
   @Override
   public boolean isHardLimitExceeded() {
-    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
         continue;
       }
@@ -1067,8 +1568,7 @@ public class Pump extends TwoPortEquipment
   @Override
   public double getMaxUtilization() {
     double maxUtil = 0.0;
-    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints()
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint c : getCapacityConstraints().values()) {
       if (!c.isEnabled()) {
         continue;
       }
@@ -1082,8 +1582,7 @@ public class Pump extends TwoPortEquipment
 
   /** {@inheritDoc} */
   @Override
-  public void addCapacityConstraint(
-      neqsim.process.equipment.capacity.CapacityConstraint constraint) {
+  public void addCapacityConstraint(neqsim.process.equipment.capacity.CapacityConstraint constraint) {
     if (constraint != null) {
       capacityConstraints.put(constraint.getName(), constraint);
     }

@@ -9,9 +9,8 @@ import neqsim.process.mechanicaldesign.expander.ExpanderMechanicalDesign;
  * Cost estimation class for turboexpanders.
  *
  * <p>
- * This class provides expander-specific cost estimation methods using chemical engineering cost
- * correlations for radial inflow and axial turboexpanders used in gas processing, cryogenic, and
- * power recovery applications.
+ * This class provides expander-specific cost estimation methods using chemical engineering cost correlations for radial
+ * inflow and axial turboexpanders used in gas processing, cryogenic, and power recovery applications.
  * </p>
  *
  * <p>
@@ -343,7 +342,7 @@ public class ExpanderCostEstimate extends UnitCostEstimateBaseClass {
       // ~0.5 L/hr per 1000 kW, ~$3/L
       double power = 0.0;
       if (mechanicalEquipment != null) {
-        power = ((ExpanderMechanicalDesign) mechanicalEquipment).getPower();
+        power = mechanicalEquipment.getPower();
       }
       double lubeOilCost = power / 1000.0 * 0.5 * operatingHoursPerYear * 3.0;
       maintenanceCost += lubeOilCost;
@@ -366,7 +365,7 @@ public class ExpanderCostEstimate extends UnitCostEstimateBaseClass {
 
     double power = 0.0;
     if (mechanicalEquipment != null) {
-      power = ((ExpanderMechanicalDesign) mechanicalEquipment).getPower();
+      power = mechanicalEquipment.getPower();
     }
 
     // Assume 95% availability and 97% generator efficiency
@@ -383,7 +382,7 @@ public class ExpanderCostEstimate extends UnitCostEstimateBaseClass {
 
     double power = 0.0;
     if (mechanicalEquipment != null) {
-      power = ((ExpanderMechanicalDesign) mechanicalEquipment).getPower();
+      power = mechanicalEquipment.getPower();
     }
 
     breakdown.put("expanderType", expanderType);

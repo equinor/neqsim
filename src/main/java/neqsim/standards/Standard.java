@@ -22,9 +22,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.NamedBaseClass;
 
 /**
- * <p>
  * Abstract Standard class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -144,9 +142,8 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
       for (int j = 0; j < thermoSystem.getPhases()[0].getNumberOfComponents(); j++) {
         table[j + 1][0] = thermoSystem.getPhases()[0].getComponent(j).getName();
         buf = new StringBuffer();
-        table[j + 1][i + 1] =
-            nf.format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponent(j).getx(),
-                buf, test).toString();
+        table[j + 1][i + 1] = nf
+            .format(thermoSystem.getPhase(thermoSystem.getPhaseIndex(i)).getComponent(j).getx(), buf, test).toString();
         table[j + 1][4] = "[-]";
       }
     }
@@ -163,7 +160,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = {"", "Phase 1", "Phase 2", "Phase 3", "Unit"};
+    String[] names = { "", "Phase 1", "Phase 2", "Phase 3", "Unit" };
     String[][] table = createTable(name);
     JTable Jtab = new JTable(table, names);
     JScrollPane scrollpane = new JScrollPane(Jtab);
@@ -185,9 +182,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   }
 
   /**
-   * <p>
    * Getter for the field <code>referenceState</code>.
-   * </p>
    *
    * @return the referenceState
    */
@@ -196,9 +191,7 @@ public abstract class Standard extends NamedBaseClass implements StandardInterfa
   }
 
   /**
-   * <p>
    * Setter for the field <code>referenceState</code>.
-   * </p>
    *
    * @param referenceState the referenceState to set
    */

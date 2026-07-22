@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * VUflash class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class VUflash {
+  private static final Logger logger = LogManager.getLogger(VUflash.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(VUflash.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -48,13 +45,11 @@ public class VUflash {
       testOps.TPflash();
       testSystem.display();
 
-      logger.info("Volume " + testSystem.getVolume() * 1.1 + " internalEnergy "
-          + testSystem.getInternalEnergy());
+      logger.info("Volume " + testSystem.getVolume() * 1.1 + " internalEnergy " + testSystem.getInternalEnergy());
       // testSystem.setPressure(5);
       // testOps.PHflash(testSystem.getEnthalpy(), 0);
       testOps.VUflash(testSystem.getVolume() * 1.1, testSystem.getInternalEnergy());
-      logger.info(
-          "Volume " + testSystem.getVolume() + " internalEnergy " + testSystem.getInternalEnergy());
+      logger.info("Volume " + testSystem.getVolume() + " internalEnergy " + testSystem.getInternalEnergy());
 
       testSystem.display();
     } catch (Exception ex) {

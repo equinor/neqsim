@@ -1,6 +1,7 @@
 package neqsim.pvtsimulation.simulation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -43,8 +44,8 @@ public class DifferentialLiberationTest {
     assertEquals(193.24093, satPresSim.getThermoSystem().getPressure(), 0.1);
     // tempSystem.prettyPrint();
 
-    double[] pressures = new double[] {351.4, 323.2, 301.5, 275.9, 250.1, 226.1, 205.9, 179.1,
-        154.6, 132.1, 109.0, 78.6, 53.6, 22.0, 1.0};
+    double[] pressures = new double[] { 351.4, 323.2, 301.5, 275.9, 250.1, 226.1, 205.9, 179.1, 154.6, 132.1, 109.0,
+        78.6, 53.6, 22.0, 1.0 };
     DifferentialLiberation differentialLiberation = new DifferentialLiberation(tempSystem);
     differentialLiberation.setPressures(pressures);
     differentialLiberation.setTemperature(97.5, "C");
@@ -59,7 +60,9 @@ public class DifferentialLiberationTest {
     assertEquals(0.0556167850, differentialLiberation.getBg()[pressures.length - 2], 0.001);
     assertEquals(1.0533007759, differentialLiberation.getBo()[pressures.length - 1], 0.001);
     assertEquals(0.0, differentialLiberation.getRs()[pressures.length - 1], 0.001);
-    assertEquals(805.6468027140055, differentialLiberation.getOilDensity()[pressures.length - 1],
-        0.001);
+    assertEquals(805.6468027140055, differentialLiberation.getOilDensity()[pressures.length - 1], 0.001);
+    assertTrue(differentialLiberation.validateBoMonotonicity());
+    assertTrue(differentialLiberation.validateRsMonotonicity());
+    assertTrue(differentialLiberation.validateOilDensityMonotonicity());
   }
 }

@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.fluidmechanics.geometrydefinitions.GeometryDefinition;
 
 /**
- * <p>
  * StirredCell class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -19,16 +17,13 @@ public class StirredCell extends GeometryDefinition {
   static Logger logger = LogManager.getLogger(StirredCell.class);
 
   /**
-   * <p>
    * Constructor for StirredCell.
-   * </p>
    */
-  public StirredCell() {}
+  public StirredCell() {
+  }
 
   /**
-   * <p>
    * Constructor for StirredCell.
-   * </p>
    *
    * @param diameter a double
    */
@@ -37,9 +32,7 @@ public class StirredCell extends GeometryDefinition {
   }
 
   /**
-   * <p>
    * Constructor for StirredCell.
-   * </p>
    *
    * @param diameter a double
    * @param roughness a double

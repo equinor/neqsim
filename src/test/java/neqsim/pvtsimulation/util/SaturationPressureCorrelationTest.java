@@ -32,8 +32,7 @@ public class SaturationPressureCorrelationTest {
     double Pb = SaturationPressureCorrelation.vasquezBeggs(RS, GAMMA_G, API, TEMP_F);
 
     // VB can give higher values for high-Rs systems
-    assertTrue(Pb > 500 && Pb < 25000,
-        "Bubble point should be in reasonable range, got: " + Pb + " psia");
+    assertTrue(Pb > 500 && Pb < 25000, "Bubble point should be in reasonable range, got: " + Pb + " psia");
   }
 
   @Test
@@ -48,8 +47,7 @@ public class SaturationPressureCorrelationTest {
     double Pb = SaturationPressureCorrelation.petroskyFarshad(RS, GAMMA_G, API, TEMP_F);
 
     // PF can give higher values for certain input ranges
-    assertTrue(Pb > 500 && Pb < 25000,
-        "Bubble point should be in reasonable range, got: " + Pb + " psia");
+    assertTrue(Pb > 500 && Pb < 25000, "Bubble point should be in reasonable range, got: " + Pb + " psia");
   }
 
   @Test
@@ -175,8 +173,7 @@ public class SaturationPressureCorrelationTest {
 
   @Test
   void testGenerateComparisonReport() {
-    String report =
-        SaturationPressureCorrelation.generateComparisonReport(RS, GAMMA_G, API, TEMP_F);
+    String report = SaturationPressureCorrelation.generateComparisonReport(RS, GAMMA_G, API, TEMP_F);
 
     assertNotNull(report);
     assertTrue(report.contains("Bubble Point Pressure Comparison"));

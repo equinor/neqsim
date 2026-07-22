@@ -18,13 +18,12 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @since 2.2.3
  */
 public class PhaseEnvelope {
+  private static final Logger logger = LogManager.getLogger(PhaseEnvelope.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(PhaseEnvelope.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -194,11 +193,9 @@ public class PhaseEnvelope {
       double[] cricondenThermY = testOps.get("cricondenthermY");
 
       // testOps.calcCricoP( cricondenBar, cricondenBarX , cricondenBarY) ;
-      logger.info("Cricondenbar Direct " + testOps.get("cricondenbar")[0] + " "
-          + testOps.get("cricondenbar")[1]);
+      logger.info("Cricondenbar Direct " + testOps.get("cricondenbar")[0] + " " + testOps.get("cricondenbar")[1]);
       // testOps.calcCricoT( cricondenTherm, cricondenThermX , cricondenThermY) ;
-      logger.info("Cricondentherm Direct " + testOps.get("cricondentherm")[0] + " "
-          + testOps.get("cricondentherm")[1]);
+      logger.info("Cricondentherm Direct " + testOps.get("cricondentherm")[0] + " " + testOps.get("cricondentherm")[1]);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }

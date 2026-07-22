@@ -6,8 +6,8 @@ import java.io.Serializable;
  * Abstract base class for driver curve implementations.
  *
  * <p>
- * Provides common functionality for driver power, torque, and efficiency calculations. Subclasses
- * implement driver-specific behavior.
+ * Provides common functionality for driver power, torque, and efficiency calculations. Subclasses implement
+ * driver-specific behavior.
  * </p>
  *
  * @author NeqSim Development Team
@@ -42,7 +42,8 @@ public abstract class DriverCurveBase implements DriverCurve, Serializable {
   /**
    * Default constructor.
    */
-  protected DriverCurveBase() {}
+  protected DriverCurveBase() {
+  }
 
   /**
    * Constructor with basic parameters.

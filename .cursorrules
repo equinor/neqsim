@@ -1,0 +1,27 @@
+# Cursor Rules for NeqSim
+
+> This file is read automatically by Cursor AI.
+> It mirrors the content in `AGENTS.md` — see that file for the full reference.
+
+Please read and follow the instructions in AGENTS.md.
+
+All code MUST compile with Java 8. See AGENTS.md for forbidden features,
+build commands, code patterns, skills, and the task-solving workflow.
+
+## Critical Constraints
+
+- Java 8 ONLY — no `var`, `List.of()`, `Map.of()`, `String.repeat()`, text blocks, records
+- Use `Arrays.asList()`, `StringUtils.repeat()`, explicit types
+- Build: `./mvnw install` (Linux/Mac), `mvnw.cmd install` (Windows)
+- Test: `./mvnw test -Dtest=ClassName`
+- Static analysis: `./mvnw checkstyle:check spotbugs:check pmd:check`
+- After flash: call `fluid.initProperties()` before reading transport properties
+- Always set mixing rule: `fluid.setMixingRule("classic")`
+
+## Agent & Skill System
+
+- 25 agents in `.github/agents/*.agent.md`
+- 28 skills in `.github/skills/*/SKILL.md`
+- Full patterns in `AGENTS.md`, quick overview in `CONTEXT.md`
+- Code patterns in `docs/development/CODE_PATTERNS.md`
+- Past solved tasks in `docs/development/TASK_LOG.md`

@@ -34,9 +34,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Optimizer for finding flow rate given inlet and outlet pressure constraints.
  *
  * <p>
- * This class determines the flow rate required to achieve a specified pressure drop across process
- * systems containing equipment such as pipelines, compressors, separators, and heat exchangers. It
- * uses bisection search with constraint checking to find the optimal operating point.
+ * This class determines the flow rate required to achieve a specified pressure drop across process systems containing
+ * equipment such as pipelines, compressors, separators, and heat exchangers. It uses bisection search with constraint
+ * checking to find the optimal operating point.
  * </p>
  *
  * <h2>Supported Configurations</h2>
@@ -64,55 +64,53 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * <li>Speed limits</li>
  * <li>Equipment utilization limits</li>
  * </ul>
- * If hard constraints are violated at all feasible flow rates, the result is marked as
- * INFEASIBLE_CONSTRAINT.
+ * If hard constraints are violated at all feasible flow rates, the result is marked as INFEASIBLE_CONSTRAINT.
  *
  * <h2>Example Usage - ProcessSystem with Compressors</h2>
- * 
+ *
  * <pre>
  * // Create a compression process
  * SystemInterface gas = new SystemSrkEos(298.15, 50.0);
  * gas.addComponent("methane", 0.9);
  * gas.addComponent("ethane", 0.1);
  * gas.setMixingRule("classic");
- * 
+ *
  * Stream feed = new Stream("Feed", gas);
  * feed.setFlowRate(50000, "kg/hr");
- * 
+ *
  * Compressor comp1 = new Compressor("LP Compressor", feed);
  * comp1.setOutletPressure(100.0, "bara");
- * 
+ *
  * Compressor comp2 = new Compressor("HP Compressor", comp1.getOutletStream());
  * comp2.setOutletPressure(150.0, "bara");
- * 
+ *
  * ProcessSystem process = new ProcessSystem();
  * process.add(feed);
  * process.add(comp1);
  * process.add(comp2);
  * process.run();
- * 
+ *
  * // Create optimizer and generate lift curves
  * FlowRateOptimizer optimizer = new FlowRateOptimizer(process, "Feed", "HP Compressor");
  * optimizer.setMinSurgeMargin(0.15); // 15% surge margin
  * optimizer.setMaxPowerLimit(5000.0); // 5 MW per compressor
  * optimizer.configureProcessCompressorCharts();
- * 
+ *
  * // Generate capacity table for reservoir simulator
- * double[] inletPressures = {50, 60, 70, 80}; // bara
- * double[] outletPressures = {140, 145, 150, 155}; // bara
- * ProcessCapacityTable table =
- *     optimizer.generateProcessCapacityTable(inletPressures, outletPressures, "bara", 0.95);
- * 
+ * double[] inletPressures = { 50, 60, 70, 80 }; // bara
+ * double[] outletPressures = { 140, 145, 150, 155 }; // bara
+ * ProcessCapacityTable table = optimizer.generateProcessCapacityTable(inletPressures, outletPressures, "bara", 0.95);
+ *
  * System.out.println(table.toEclipseFormat());
  * </pre>
  *
  * <h2>Example Usage - ProcessModel</h2>
- * 
+ *
  * <pre>
  * ProcessModel model = new ProcessModel();
  * model.add("upstream", upstreamSystem);
  * model.add("downstream", downstreamSystem);
- * 
+ *
  * FlowRateOptimizer optimizer = new FlowRateOptimizer(model, "inletStream", "outletStream");
  * FlowRateOptimizationResult result = optimizer.findFlowRate(150.0, 50.0, "bara");
  * </pre>
@@ -190,15 +188,15 @@ public class FlowRateOptimizer implements Serializable {
   private StreamInterface inletStream;
   private StreamInterface outletStream;
   private ProcessEquipmentInterface outletEquipment; // The outlet equipment (may be same as
-                                                     // outletStream)
+  // outletStream)
   private SystemInterface baseFluid;
 
   /**
    * Callback interface for monitoring optimization progress.
    *
    * <p>
-   * Implement this interface to receive progress updates during lift curve generation or other
-   * long-running operations. This is useful for GUI integration or progress reporting.
+   * Implement this interface to receive progress updates during lift curve generation or other long-running operations.
+   * This is useful for GUI integration or progress reporting.
    * </p>
    */
   public interface ProgressCallback {
@@ -219,8 +217,7 @@ public class FlowRateOptimizer implements Serializable {
    * @param inletStreamName name of the inlet stream
    * @param outletStreamName name of the outlet stream
    */
-  public FlowRateOptimizer(ProcessSystem processSystem, String inletStreamName,
-      String outletStreamName) {
+  public FlowRateOptimizer(ProcessSystem processSystem, String inletStreamName, String outletStreamName) {
     this.mode = Mode.PROCESS_SYSTEM;
     this.processSystem = processSystem;
     this.inletStreamName = inletStreamName;
@@ -258,8 +255,7 @@ public class FlowRateOptimizer implements Serializable {
    * @param inletStreamName name of the inlet stream (in first ProcessSystem)
    * @param outletStreamName name of the outlet stream (in last ProcessSystem)
    */
-  public FlowRateOptimizer(ProcessModel processModel, String inletStreamName,
-      String outletStreamName) {
+  public FlowRateOptimizer(ProcessModel processModel, String inletStreamName, String outletStreamName) {
     this.mode = Mode.PROCESS_MODEL;
     this.processModel = processModel;
     this.inletStreamName = inletStreamName;
@@ -335,8 +331,8 @@ public class FlowRateOptimizer implements Serializable {
 
     // Check flow rate bounds
     if (minFlowRate >= maxFlowRate) {
-      issues.add("Invalid flow rate bounds: minFlowRate (" + minFlowRate
-          + ") must be less than maxFlowRate (" + maxFlowRate + ").");
+      issues.add("Invalid flow rate bounds: minFlowRate (" + minFlowRate + ") must be less than maxFlowRate ("
+          + maxFlowRate + ").");
     }
 
     // Check compressor charts if not auto-configuring
@@ -374,8 +370,8 @@ public class FlowRateOptimizer implements Serializable {
    * Finds the flow rate required to achieve the specified outlet pressure given the inlet pressure.
    *
    * <p>
-   * This method sets the inlet stream to the specified pressure and temperature, then iterates to
-   * find the flow rate that produces the target outlet pressure.
+   * This method sets the inlet stream to the specified pressure and temperature, then iterates to find the flow rate
+   * that produces the target outlet pressure.
    * </p>
    *
    * @param inletPressure inlet pressure
@@ -383,8 +379,7 @@ public class FlowRateOptimizer implements Serializable {
    * @param pressureUnit unit of pressure (e.g., "bara", "barg", "psia")
    * @return optimization result
    */
-  public FlowRateOptimizationResult findFlowRate(double inletPressure, double outletPressure,
-      String pressureUnit) {
+  public FlowRateOptimizationResult findFlowRate(double inletPressure, double outletPressure, String pressureUnit) {
     long startTime = System.currentTimeMillis();
 
     // Validate inputs - note: process systems can have either pressure increase (compressors)
@@ -420,8 +415,7 @@ public class FlowRateOptimizer implements Serializable {
           flowLow *= 2.0;
           if (flowLow > flowHigh) {
             result.setStatus(Status.ERROR);
-            result.setInfeasibilityReason(
-                "Cannot find valid flow region - calculation failed at all flow rates");
+            result.setInfeasibilityReason("Cannot find valid flow region - calculation failed at all flow rates");
             result.setComputationTimeMs(System.currentTimeMillis() - startTime);
             return result;
           }
@@ -437,8 +431,7 @@ public class FlowRateOptimizer implements Serializable {
           flowHigh /= 2.0;
           if (flowHigh < flowLow) {
             result.setStatus(Status.ERROR);
-            result.setInfeasibilityReason(
-                "Cannot find valid flow region - calculation failed at high flow rates");
+            result.setInfeasibilityReason("Cannot find valid flow region - calculation failed at high flow rates");
             result.setComputationTimeMs(System.currentTimeMillis() - startTime);
             return result;
           }
@@ -456,10 +449,8 @@ public class FlowRateOptimizer implements Serializable {
           flowLow /= 10.0;
           if (flowLow < 1e-10) {
             result.setStatus(Status.INFEASIBLE_PRESSURE);
-            result
-                .setInfeasibilityReason("Cannot achieve target outlet pressure even at zero flow. "
-                    + "Minimum outlet pressure at near-zero flow: " + String.format("%.4f", pOutLow)
-                    + " " + pressureUnit);
+            result.setInfeasibilityReason("Cannot achieve target outlet pressure even at zero flow. "
+                + "Minimum outlet pressure at near-zero flow: " + String.format("%.4f", pOutLow) + " " + pressureUnit);
             result.setComputationTimeMs(System.currentTimeMillis() - startTime);
             return result;
           }
@@ -478,8 +469,7 @@ public class FlowRateOptimizer implements Serializable {
         if (flowHigh > maxFlowRate) {
           result.setStatus(Status.INFEASIBLE_PRESSURE);
           result.setInfeasibilityReason("Cannot achieve target outlet pressure within flow limits. "
-              + "Outlet pressure at max flow: " + String.format("%.4f", pOutHigh) + " "
-              + pressureUnit);
+              + "Outlet pressure at max flow: " + String.format("%.4f", pOutHigh) + " " + pressureUnit);
           result.setComputationTimeMs(System.currentTimeMillis() - startTime);
           return result;
         }
@@ -568,11 +558,9 @@ public class FlowRateOptimizer implements Serializable {
       if (result.hasHardViolations()) {
         result.setStatus(Status.INFEASIBLE_CONSTRAINT);
         result.setInfeasibilityReason("Hard constraint violated: " + violations.get(0));
-      } else if (iter >= maxIterations - 1
-          && Math.abs(pOutMid - outletPressure) / outletPressure > tolerance) {
+      } else if (iter >= maxIterations - 1 && Math.abs(pOutMid - outletPressure) / outletPressure > tolerance) {
         result.setStatus(Status.NOT_CONVERGED);
-        result.setInfeasibilityReason(
-            String.format("Did not converge after %d iterations", maxIterations));
+        result.setInfeasibilityReason(String.format("Did not converge after %d iterations", maxIterations));
       } else {
         result.setStatus(Status.OPTIMAL);
         result.setFlowRate(flowMid);
@@ -590,12 +578,11 @@ public class FlowRateOptimizer implements Serializable {
   }
 
   /**
-   * Finds the inlet pressure required to achieve the specified outlet pressure at a given flow
-   * rate.
+   * Finds the inlet pressure required to achieve the specified outlet pressure at a given flow rate.
    *
    * <p>
-   * This is a simpler forward calculation - just run the process at the specified flow rate and
-   * read the inlet pressure required.
+   * This is a simpler forward calculation - just run the process at the specified flow rate and read the inlet pressure
+   * required.
    * </p>
    *
    * @param flowRate flow rate
@@ -604,8 +591,8 @@ public class FlowRateOptimizer implements Serializable {
    * @param pressureUnit unit of pressure
    * @return optimization result with inlet pressure
    */
-  public FlowRateOptimizationResult findInletPressure(double flowRate, String flowRateUnit,
-      double outletPressure, String pressureUnit) {
+  public FlowRateOptimizationResult findInletPressure(double flowRate, String flowRateUnit, double outletPressure,
+      String pressureUnit) {
     long startTime = System.currentTimeMillis();
 
     if (inletStream == null) {
@@ -627,8 +614,7 @@ public class FlowRateOptimizer implements Serializable {
 
       // Evaluate bounds
       double pOutAtLow = evaluateOutletPressureAtFlow(flowRate, flowRateUnit, pInLow, pressureUnit);
-      double pOutAtHigh =
-          evaluateOutletPressureAtFlow(flowRate, flowRateUnit, pInHigh, pressureUnit);
+      double pOutAtHigh = evaluateOutletPressureAtFlow(flowRate, flowRateUnit, pInHigh, pressureUnit);
 
       // Expand high bound if needed
       int boundIter = 0;
@@ -696,8 +682,7 @@ public class FlowRateOptimizer implements Serializable {
    * @param pressureUnit pressure unit
    * @return outlet pressure in the same unit
    */
-  private double evaluateOutletPressure(double flowRate, double inletPressure,
-      String pressureUnit) {
+  private double evaluateOutletPressure(double flowRate, double inletPressure, String pressureUnit) {
     return evaluateOutletPressureAtFlow(flowRate, "kg/hr", inletPressure, pressureUnit);
   }
 
@@ -710,17 +695,17 @@ public class FlowRateOptimizer implements Serializable {
    * @param pressureUnit pressure unit
    * @return outlet pressure
    */
-  private double evaluateOutletPressureAtFlow(double flowRate, String flowRateUnit,
-      double inletPressure, String pressureUnit) {
+  private double evaluateOutletPressureAtFlow(double flowRate, String flowRateUnit, double inletPressure,
+      String pressureUnit) {
     switch (mode) {
-      case PROCESS_SYSTEM:
-        return evaluateProcessSystem(flowRate, flowRateUnit, inletPressure, pressureUnit);
+    case PROCESS_SYSTEM:
+      return evaluateProcessSystem(flowRate, flowRateUnit, inletPressure, pressureUnit);
 
-      case PROCESS_MODEL:
-        return evaluateProcessModel(flowRate, flowRateUnit, inletPressure, pressureUnit);
+    case PROCESS_MODEL:
+      return evaluateProcessModel(flowRate, flowRateUnit, inletPressure, pressureUnit);
 
-      default:
-        throw new IllegalStateException("Unknown mode: " + mode);
+    default:
+      throw new IllegalStateException("Unknown mode: " + mode);
     }
   }
 
@@ -730,8 +715,8 @@ public class FlowRateOptimizer implements Serializable {
    * Configures all compressors in a ProcessSystem with performance charts.
    *
    * <p>
-   * This method sets up compressor performance charts for all compressors in the process system,
-   * following the pattern established in ProcessOptimizationExampleTest. It:
+   * This method sets up compressor performance charts for all compressors in the process system, following the pattern
+   * established in ProcessOptimizationExampleTest. It:
    * <ul>
    * <li>Generates performance charts using CompressorChartGenerator</li>
    * <li>Sets maximum speed with appropriate margin above design speed</li>
@@ -741,7 +726,7 @@ public class FlowRateOptimizer implements Serializable {
    * <p>
    * <strong>Example Usage</strong>
    * </p>
-   * 
+   *
    * <pre>
    * FlowRateOptimizer optimizer = new FlowRateOptimizer(process, "Feed", "Export");
    * optimizer.configureProcessCompressorCharts();
@@ -749,8 +734,7 @@ public class FlowRateOptimizer implements Serializable {
    */
   public void configureProcessCompressorCharts() {
     if (mode != Mode.PROCESS_SYSTEM && mode != Mode.PROCESS_MODEL) {
-      logger
-          .warn("configureProcessCompressorCharts only applicable for PROCESS_SYSTEM/MODEL modes");
+      logger.warn("configureProcessCompressorCharts only applicable for PROCESS_SYSTEM/MODEL modes");
       return;
     }
 
@@ -781,8 +765,7 @@ public class FlowRateOptimizer implements Serializable {
     CompressorChartInterface chart = comp.getCompressorChart();
 
     // Check if chart needs to be generated
-    boolean needsChart =
-        (chart == null || !chart.isUseCompressorChart()) && autoGenerateCompressorChart;
+    boolean needsChart = (chart == null || !chart.isUseCompressorChart()) && autoGenerateCompressorChart;
 
     if (needsChart) {
       logger.info("Auto-generating compressor chart for {}", comp.getName());
@@ -792,18 +775,18 @@ public class FlowRateOptimizer implements Serializable {
       gen.setChartType("interpolate and extrapolate");
 
       // Generate the chart with multiple speed lines
-      CompressorChartInterface newChart =
-          gen.generateCompressorChart("normal curves", numberOfChartSpeeds);
+      CompressorChartInterface newChart = gen.generateCompressorChart("normal curves", numberOfChartSpeeds);
       comp.setCompressorChart(newChart);
       comp.getCompressorChart().setUseCompressorChart(true);
+      comp.setSolveSpeed(solveSpeed);
 
       // Set maximum speed with margin above design speed
       double designSpeed = comp.getSpeed();
       double maxSpeed = designSpeed * (1.0 + speedMarginAboveDesign);
       comp.setMaximumSpeed(maxSpeed);
 
-      logger.info("Chart generated for {} with {} speed lines, max speed set to {} RPM",
-          comp.getName(), numberOfChartSpeeds, maxSpeed);
+      logger.info("Chart generated for {} with {} speed lines, max speed set to {} RPM", comp.getName(),
+          numberOfChartSpeeds, maxSpeed);
     }
   }
 
@@ -929,8 +912,8 @@ public class FlowRateOptimizer implements Serializable {
    * Finds the process operating point at a given flow rate.
    *
    * <p>
-   * This method runs the process at the specified flow rate and inlet pressure, then extracts
-   * comprehensive operating data including:
+   * This method runs the process at the specified flow rate and inlet pressure, then extracts comprehensive operating
+   * data including:
    * <ul>
    * <li>Outlet pressure</li>
    * <li>Total compressor power and individual compressor powers</li>
@@ -944,11 +927,10 @@ public class FlowRateOptimizer implements Serializable {
    * @param pressureUnit the pressure unit
    * @return the process operating point
    */
-  public ProcessOperatingPoint findProcessOperatingPoint(double flowRate, String flowRateUnit,
-      double inletPressure, String pressureUnit) {
+  public ProcessOperatingPoint findProcessOperatingPoint(double flowRate, String flowRateUnit, double inletPressure,
+      String pressureUnit) {
     if (mode != Mode.PROCESS_SYSTEM && mode != Mode.PROCESS_MODEL) {
-      throw new IllegalStateException(
-          "findProcessOperatingPoint requires PROCESS_SYSTEM or PROCESS_MODEL mode");
+      throw new IllegalStateException("findProcessOperatingPoint requires PROCESS_SYSTEM or PROCESS_MODEL mode");
     }
 
     // Auto-configure compressor charts if enabled
@@ -970,8 +952,7 @@ public class FlowRateOptimizer implements Serializable {
 
     try {
       // Evaluate process at the given conditions
-      double outletPressure =
-          evaluateProcessWithPower(flowRate, flowRateUnit, inletPressure, pressureUnit, point);
+      double outletPressure = evaluateProcessWithPower(flowRate, flowRateUnit, inletPressure, pressureUnit, point);
 
       point.setOutletPressure(outletPressure);
 
@@ -1011,9 +992,16 @@ public class FlowRateOptimizer implements Serializable {
 
   /**
    * Evaluates process and captures power data for each compressor.
+   *
+   * @param flowRate the inlet flow rate
+   * @param flowRateUnit the unit for flow rate
+   * @param inletPressure the inlet pressure
+   * @param pressureUnit the unit for pressure
+   * @param point the operating point to store compressor data in
+   * @return the outlet pressure in the specified pressure unit
    */
-  private double evaluateProcessWithPower(double flowRate, String flowRateUnit,
-      double inletPressure, String pressureUnit, ProcessOperatingPoint point) {
+  private double evaluateProcessWithPower(double flowRate, String flowRateUnit, double inletPressure,
+      String pressureUnit, ProcessOperatingPoint point) {
     // Set inlet conditions
     SystemInterface fluid = inletStream.getThermoSystem().clone();
     fluid.setTotalFlowRate(flowRate, flowRateUnit);
@@ -1058,6 +1046,9 @@ public class FlowRateOptimizer implements Serializable {
 
   /**
    * Checks if any violations are hard violations.
+   *
+   * @param violations the list of constraint violations to check
+   * @return true if any violation is a hard violation
    */
   private boolean hasHardViolations(List<ConstraintViolation> violations) {
     for (ConstraintViolation v : violations) {
@@ -1084,14 +1075,14 @@ public class FlowRateOptimizer implements Serializable {
    * <p>
    * <strong>Example Usage</strong>
    * </p>
-   * 
+   *
    * <pre>
    * FlowRateOptimizer optimizer = new FlowRateOptimizer(process, "Feed", "Export");
    * optimizer.configureProcessCompressorCharts();
-   * 
-   * ProcessPerformanceTable table = optimizer.generateProcessPerformanceTable(
-   *     new double[] {30000, 50000, 70000, 90000}, "kg/hr", 80.0, "bara");
-   * 
+   *
+   * ProcessPerformanceTable table = optimizer
+   *     .generateProcessPerformanceTable(new double[] { 30000, 50000, 70000, 90000 }, "kg/hr", 80.0, "bara");
+   *
    * System.out.println(table.toFormattedString());
    * System.out.println("Total power at 50000 kg/hr: " + table.getTotalPower(1) + " kW");
    * </pre>
@@ -1102,11 +1093,10 @@ public class FlowRateOptimizer implements Serializable {
    * @param pressureUnit the pressure unit
    * @return a ProcessPerformanceTable with comprehensive process data
    */
-  public ProcessPerformanceTable generateProcessPerformanceTable(double[] flowRates,
-      String flowRateUnit, double inletPressure, String pressureUnit) {
+  public ProcessPerformanceTable generateProcessPerformanceTable(double[] flowRates, String flowRateUnit,
+      double inletPressure, String pressureUnit) {
     if (mode != Mode.PROCESS_SYSTEM && mode != Mode.PROCESS_MODEL) {
-      throw new IllegalStateException(
-          "generateProcessPerformanceTable requires PROCESS_SYSTEM or PROCESS_MODEL mode");
+      throw new IllegalStateException("generateProcessPerformanceTable requires PROCESS_SYSTEM or PROCESS_MODEL mode");
     }
 
     // Get compressor names for table structure
@@ -1116,8 +1106,7 @@ public class FlowRateOptimizer implements Serializable {
       compressorNames.add(comp.getName());
     }
 
-    ProcessPerformanceTable table =
-        new ProcessPerformanceTable("Process_Performance", flowRates, compressorNames);
+    ProcessPerformanceTable table = new ProcessPerformanceTable("Process_Performance", flowRates, compressorNames);
     table.setFlowRateUnit(flowRateUnit);
     table.setPressureUnit(pressureUnit);
     table.setInletPressure(inletPressure);
@@ -1130,8 +1119,8 @@ public class FlowRateOptimizer implements Serializable {
     // Evaluate at each flow rate
     for (int i = 0; i < flowRates.length; i++) {
       try {
-        ProcessOperatingPoint point =
-            findProcessOperatingPoint(flowRates[i], flowRateUnit, inletPressure, pressureUnit);
+        ProcessOperatingPoint point = findProcessOperatingPoint(flowRates[i], flowRateUnit, inletPressure,
+            pressureUnit);
         table.setOperatingPoint(i, point);
       } catch (Exception e) {
         logger.debug("Error at flow={}: {}", flowRates[i], e.getMessage());
@@ -1145,22 +1134,21 @@ public class FlowRateOptimizer implements Serializable {
    * Generates a process lift curve suitable for reservoir simulator integration.
    *
    * <p>
-   * This method creates a table of outlet pressures and total power for different flow rates and
-   * inlet pressures. The output format is suitable for conversion to VFP (Vertical Flow
-   * Performance) tables used by reservoir simulators like Eclipse.
+   * This method creates a table of outlet pressures and total power for different flow rates and inlet pressures. The
+   * output format is suitable for conversion to VFP (Vertical Flow Performance) tables used by reservoir simulators
+   * like Eclipse.
    * </p>
    *
    * <p>
    * <strong>Example Usage</strong>
    * </p>
-   * 
+   *
    * <pre>
-   * double[] flowRates = {20000, 40000, 60000, 80000, 100000};
-   * double[] inletPressures = {60, 70, 80, 90};
-   * 
-   * ProcessLiftCurveTable table =
-   *     optimizer.generateProcessLiftCurve(flowRates, "kg/hr", inletPressures, "bara");
-   * 
+   * double[] flowRates = { 20000, 40000, 60000, 80000, 100000 };
+   * double[] inletPressures = { 60, 70, 80, 90 };
+   *
+   * ProcessLiftCurveTable table = optimizer.generateProcessLiftCurve(flowRates, "kg/hr", inletPressures, "bara");
+   *
    * System.out.println(table.toEclipseFormat());
    * System.out.println("Minimum power operating point: " + table.findMinimumPowerPoint());
    * </pre>
@@ -1174,8 +1162,7 @@ public class FlowRateOptimizer implements Serializable {
   public ProcessLiftCurveTable generateProcessLiftCurve(double[] flowRates, String flowRateUnit,
       double[] inletPressures, String pressureUnit) {
     if (mode != Mode.PROCESS_SYSTEM && mode != Mode.PROCESS_MODEL) {
-      throw new IllegalStateException(
-          "generateProcessLiftCurve requires PROCESS_SYSTEM or PROCESS_MODEL mode");
+      throw new IllegalStateException("generateProcessLiftCurve requires PROCESS_SYSTEM or PROCESS_MODEL mode");
     }
 
     // Get compressor names
@@ -1185,8 +1172,8 @@ public class FlowRateOptimizer implements Serializable {
       compressorNames.add(comp.getName());
     }
 
-    ProcessLiftCurveTable table =
-        new ProcessLiftCurveTable("Process_LiftCurve", flowRates, inletPressures, compressorNames);
+    ProcessLiftCurveTable table = new ProcessLiftCurveTable("Process_LiftCurve", flowRates, inletPressures,
+        compressorNames);
     table.setFlowRateUnit(flowRateUnit);
     table.setPressureUnit(pressureUnit);
 
@@ -1199,12 +1186,11 @@ public class FlowRateOptimizer implements Serializable {
     for (int i = 0; i < flowRates.length; i++) {
       for (int j = 0; j < inletPressures.length; j++) {
         try {
-          ProcessOperatingPoint point = findProcessOperatingPoint(flowRates[i], flowRateUnit,
-              inletPressures[j], pressureUnit);
+          ProcessOperatingPoint point = findProcessOperatingPoint(flowRates[i], flowRateUnit, inletPressures[j],
+              pressureUnit);
           table.setOperatingPoint(i, j, point);
         } catch (Exception e) {
-          logger.debug("Error at flow={}, Pin={}: {}", flowRates[i], inletPressures[j],
-              e.getMessage());
+          logger.debug("Error at flow={}, Pin={}: {}", flowRates[i], inletPressures[j], e.getMessage());
         }
       }
     }
@@ -1216,19 +1202,18 @@ public class FlowRateOptimizer implements Serializable {
    * Finds the flow rate that achieves minimum total power for a given pressure ratio.
    *
    * <p>
-   * This method searches for the flow rate that results in minimum total compressor power
-   * consumption while achieving the target outlet pressure and staying within all equipment
-   * constraints.
+   * This method searches for the flow rate that results in minimum total compressor power consumption while achieving
+   * the target outlet pressure and staying within all equipment constraints.
    * </p>
    *
    * <p>
    * <strong>Example Usage</strong>
    * </p>
-   * 
+   *
    * <pre>
-   * ProcessOperatingPoint minPowerPoint =
-   *     optimizer.findMinimumTotalPowerOperatingPoint(80.0, 150.0, "bara", 20000, 100000, "kg/hr");
-   * 
+   * ProcessOperatingPoint minPowerPoint = optimizer.findMinimumTotalPowerOperatingPoint(80.0, 150.0, "bara", 20000,
+   *     100000, "kg/hr");
+   *
    * System.out.println("Minimum total power: " + minPowerPoint.getTotalPower() + " kW");
    * System.out.println("At flow rate: " + minPowerPoint.getFlowRate() + " kg/hr");
    * </pre>
@@ -1241,9 +1226,8 @@ public class FlowRateOptimizer implements Serializable {
    * @param flowRateUnit the flow rate unit
    * @return the process operating point with minimum total power, or null if no feasible point
    */
-  public ProcessOperatingPoint findMinimumTotalPowerOperatingPoint(double inletPressure,
-      double targetOutletPressure, String pressureUnit, double minFlow, double maxFlow,
-      String flowRateUnit) {
+  public ProcessOperatingPoint findMinimumTotalPowerOperatingPoint(double inletPressure, double targetOutletPressure,
+      String pressureUnit, double minFlow, double maxFlow, String flowRateUnit) {
     if (mode != Mode.PROCESS_SYSTEM && mode != Mode.PROCESS_MODEL) {
       throw new IllegalStateException(
           "findMinimumTotalPowerOperatingPoint requires PROCESS_SYSTEM or PROCESS_MODEL mode");
@@ -1268,10 +1252,8 @@ public class FlowRateOptimizer implements Serializable {
     double searchTolerance = (maxFlow - minFlow) * 0.01; // 1% of range
 
     for (int iter = 0; iter < maxIter && (b - a) > searchTolerance; iter++) {
-      ProcessOperatingPoint pointC =
-          findProcessOperatingPoint(c, flowRateUnit, inletPressure, pressureUnit);
-      ProcessOperatingPoint pointD =
-          findProcessOperatingPoint(d, flowRateUnit, inletPressure, pressureUnit);
+      ProcessOperatingPoint pointC = findProcessOperatingPoint(c, flowRateUnit, inletPressure, pressureUnit);
+      ProcessOperatingPoint pointD = findProcessOperatingPoint(d, flowRateUnit, inletPressure, pressureUnit);
 
       // Check if points achieve target outlet pressure (within tolerance)
       double pressureTol = targetOutletPressure * tolerance;
@@ -1306,8 +1288,7 @@ public class FlowRateOptimizer implements Serializable {
 
     // Final check at midpoint
     double midFlow = (a + b) / 2.0;
-    ProcessOperatingPoint midPoint =
-        findProcessOperatingPoint(midFlow, flowRateUnit, inletPressure, pressureUnit);
+    ProcessOperatingPoint midPoint = findProcessOperatingPoint(midFlow, flowRateUnit, inletPressure, pressureUnit);
     if (midPoint != null && midPoint.isFeasible() && midPoint.getTotalPower() < minPower) {
       bestPoint = midPoint;
     }
@@ -1319,8 +1300,8 @@ public class FlowRateOptimizer implements Serializable {
    * Finds the maximum feasible flow rate within equipment constraints.
    *
    * <p>
-   * This method uses bisection search to find the maximum flow rate that can be processed while
-   * keeping all equipment within their capacity constraints.
+   * This method uses bisection search to find the maximum flow rate that can be processed while keeping all equipment
+   * within their capacity constraints.
    * </p>
    *
    * @param inletPressure the inlet pressure
@@ -1328,11 +1309,10 @@ public class FlowRateOptimizer implements Serializable {
    * @param targetUtilization the target maximum utilization (e.g., 0.95 for 95%)
    * @return the process operating point at maximum feasible flow
    */
-  public ProcessOperatingPoint findMaximumFeasibleFlowRate(double inletPressure,
-      String pressureUnit, double targetUtilization) {
+  public ProcessOperatingPoint findMaximumFeasibleFlowRate(double inletPressure, String pressureUnit,
+      double targetUtilization) {
     if (mode != Mode.PROCESS_SYSTEM && mode != Mode.PROCESS_MODEL) {
-      throw new IllegalStateException(
-          "findMaximumFeasibleFlowRate requires PROCESS_SYSTEM or PROCESS_MODEL mode");
+      throw new IllegalStateException("findMaximumFeasibleFlowRate requires PROCESS_SYSTEM or PROCESS_MODEL mode");
     }
 
     // Auto-configure compressor charts
@@ -1350,8 +1330,7 @@ public class FlowRateOptimizer implements Serializable {
     while ((highRate - lowRate) > searchTolerance && iter < maxIterations) {
       double midRate = (lowRate + highRate) / 2.0;
 
-      ProcessOperatingPoint point =
-          findProcessOperatingPoint(midRate, "kg/hr", inletPressure, pressureUnit);
+      ProcessOperatingPoint point = findProcessOperatingPoint(midRate, "kg/hr", inletPressure, pressureUnit);
 
       if (point != null && point.isFeasible() && point.getMaxUtilization() <= targetUtilization) {
         // Feasible - try higher
@@ -1369,14 +1348,13 @@ public class FlowRateOptimizer implements Serializable {
   }
 
   /**
-   * Finds the maximum flow rate that achieves a specified outlet pressure while respecting
-   * equipment capacity constraints.
+   * Finds the maximum flow rate that achieves a specified outlet pressure while respecting equipment capacity
+   * constraints.
    *
    * <p>
-   * This method solves the inverse problem: given inlet and outlet pressure boundary conditions,
-   * find the maximum feed flow rate that keeps all equipment within their capacity limits. This is
-   * useful for generating lift curves for reservoir simulators where pressure boundary conditions
-   * are known from reservoir deliverability.
+   * This method solves the inverse problem: given inlet and outlet pressure boundary conditions, find the maximum feed
+   * flow rate that keeps all equipment within their capacity limits. This is useful for generating lift curves for
+   * reservoir simulators where pressure boundary conditions are known from reservoir deliverability.
    * </p>
    *
    * <p>
@@ -1391,15 +1369,14 @@ public class FlowRateOptimizer implements Serializable {
    * <p>
    * <strong>Example Usage</strong>
    * </p>
-   * 
+   *
    * <pre>
    * FlowRateOptimizer optimizer = new FlowRateOptimizer(process, "Feed", "Export");
    * optimizer.configureProcessCompressorCharts();
-   * 
+   *
    * // Find max flow rate for given pressure boundary conditions
-   * ProcessOperatingPoint result =
-   *     optimizer.findMaxFlowRateAtPressureBoundaries(80.0, 150.0, "bara", 0.95);
-   * 
+   * ProcessOperatingPoint result = optimizer.findMaxFlowRateAtPressureBoundaries(80.0, 150.0, "bara", 0.95);
+   *
    * if (result != null &amp;&amp; result.isFeasible()) {
    *   System.out.println("Max flow: " + result.getFlowRate() + " kg/hr");
    *   System.out.println("Total power: " + result.getTotalPower() + " kW");
@@ -1412,8 +1389,8 @@ public class FlowRateOptimizer implements Serializable {
    * @param maxUtilization the maximum allowed equipment utilization (e.g., 0.95 for 95%)
    * @return the process operating point at maximum flow, or null if no feasible point exists
    */
-  public ProcessOperatingPoint findMaxFlowRateAtPressureBoundaries(double inletPressure,
-      double targetOutletPressure, String pressureUnit, double maxUtilization) {
+  public ProcessOperatingPoint findMaxFlowRateAtPressureBoundaries(double inletPressure, double targetOutletPressure,
+      String pressureUnit, double maxUtilization) {
     if (mode != Mode.PROCESS_SYSTEM && mode != Mode.PROCESS_MODEL) {
       throw new IllegalStateException(
           "findMaxFlowRateAtPressureBoundaries requires PROCESS_SYSTEM or PROCESS_MODEL mode");
@@ -1447,8 +1424,7 @@ public class FlowRateOptimizer implements Serializable {
       while ((highRate - lowRate) > searchTolerance && iter < maxIterations) {
         double midRate = (lowRate + highRate) / 2.0;
 
-        ProcessOperatingPoint point =
-            findProcessOperatingPoint(midRate, "kg/hr", inletPressure, pressureUnit);
+        ProcessOperatingPoint point = findProcessOperatingPoint(midRate, "kg/hr", inletPressure, pressureUnit);
 
         if (point == null) {
           // Simulation failed - reduce flow
@@ -1469,8 +1445,8 @@ public class FlowRateOptimizer implements Serializable {
 
         boolean feasible = point.isFeasible() && utilizationOk && pressureOk && compressorsFeasible;
 
-        logger.debug("Iter {}: flow={:.0f}, Pout={:.2f} (target={:.2f}), util={:.1f}%, feasible={}",
-            iter, midRate, outletPressure, targetOutletPressure, util * 100, feasible);
+        logger.debug("Iter {}: flow={:.0f}, Pout={:.2f} (target={:.2f}), util={:.1f}%, feasible={}", iter, midRate,
+            outletPressure, targetOutletPressure, util * 100, feasible);
 
         if (feasible) {
           // This flow rate works - try higher
@@ -1539,27 +1515,24 @@ public class FlowRateOptimizer implements Serializable {
   }
 
   /**
-   * Generates a process capacity table showing maximum flow rate at different inlet/outlet pressure
-   * combinations.
+   * Generates a process capacity table showing maximum flow rate at different inlet/outlet pressure combinations.
    *
    * <p>
-   * This method creates a 2D table where each cell contains the maximum flow rate achievable for
-   * the given inlet pressure (row) and outlet pressure (column) while respecting equipment
-   * constraints. This is the natural format for lift curve generation where pressures are the
-   * boundary conditions.
+   * This method creates a 2D table where each cell contains the maximum flow rate achievable for the given inlet
+   * pressure (row) and outlet pressure (column) while respecting equipment constraints. This is the natural format for
+   * lift curve generation where pressures are the boundary conditions.
    * </p>
    *
    * <p>
    * <strong>Example Usage</strong>
    * </p>
-   * 
+   *
    * <pre>
-   * double[] inletPressures = {60, 70, 80, 90}; // bara
-   * double[] outletPressures = {130, 140, 150, 160}; // bara
-   * 
-   * ProcessCapacityTable table =
-   *     optimizer.generateProcessCapacityTable(inletPressures, outletPressures, "bara", 0.95);
-   * 
+   * double[] inletPressures = { 60, 70, 80, 90 }; // bara
+   * double[] outletPressures = { 130, 140, 150, 160 }; // bara
+   *
+   * ProcessCapacityTable table = optimizer.generateProcessCapacityTable(inletPressures, outletPressures, "bara", 0.95);
+   *
    * System.out.println(table.toFormattedString());
    * System.out.println(table.toEclipseFormat());
    * </pre>
@@ -1570,11 +1543,10 @@ public class FlowRateOptimizer implements Serializable {
    * @param maxUtilization the maximum allowed equipment utilization
    * @return a ProcessCapacityTable with maximum flow rates and power data
    */
-  public ProcessCapacityTable generateProcessCapacityTable(double[] inletPressures,
-      double[] outletPressures, String pressureUnit, double maxUtilization) {
+  public ProcessCapacityTable generateProcessCapacityTable(double[] inletPressures, double[] outletPressures,
+      String pressureUnit, double maxUtilization) {
     if (mode != Mode.PROCESS_SYSTEM && mode != Mode.PROCESS_MODEL) {
-      throw new IllegalStateException(
-          "generateProcessCapacityTable requires PROCESS_SYSTEM or PROCESS_MODEL mode");
+      throw new IllegalStateException("generateProcessCapacityTable requires PROCESS_SYSTEM or PROCESS_MODEL mode");
     }
 
     // Auto-configure compressor charts
@@ -1589,8 +1561,8 @@ public class FlowRateOptimizer implements Serializable {
       compressorNames.add(comp.getName());
     }
 
-    ProcessCapacityTable table = new ProcessCapacityTable("Process_Capacity", inletPressures,
-        outletPressures, compressorNames);
+    ProcessCapacityTable table = new ProcessCapacityTable("Process_Capacity", inletPressures, outletPressures,
+        compressorNames);
     table.setPressureUnit(pressureUnit);
     table.setMaxUtilization(maxUtilization);
 
@@ -1599,12 +1571,10 @@ public class FlowRateOptimizer implements Serializable {
 
     if (enableParallelEvaluation) {
       // Parallel evaluation using thread pool
-      generateCapacityTableParallel(table, inletPressures, outletPressures, pressureUnit,
-          maxUtilization, totalEvals);
+      generateCapacityTableParallel(table, inletPressures, outletPressures, pressureUnit, maxUtilization, totalEvals);
     } else {
       // Sequential evaluation (original implementation)
-      generateCapacityTableSequential(table, inletPressures, outletPressures, pressureUnit,
-          maxUtilization, totalEvals);
+      generateCapacityTableSequential(table, inletPressures, outletPressures, pressureUnit, maxUtilization, totalEvals);
     }
 
     reportProgress(totalEvals, totalEvals, "Capacity table generation complete");
@@ -1628,15 +1598,14 @@ public class FlowRateOptimizer implements Serializable {
       for (int j = 0; j < outletPressures.length; j++) {
         evalCount++;
         try {
-          reportProgress(evalCount, totalEvals, String.format("Evaluating Pin=%.1f, Pout=%.1f %s",
-              inletPressures[i], outletPressures[j], pressureUnit));
+          reportProgress(evalCount, totalEvals,
+              String.format("Evaluating Pin=%.1f, Pout=%.1f %s", inletPressures[i], outletPressures[j], pressureUnit));
 
-          ProcessOperatingPoint point = findMaxFlowRateAtPressureBoundaries(inletPressures[i],
-              outletPressures[j], pressureUnit, maxUtilization);
+          ProcessOperatingPoint point = findMaxFlowRateAtPressureBoundaries(inletPressures[i], outletPressures[j],
+              pressureUnit, maxUtilization);
           table.setOperatingPoint(i, j, point);
         } catch (Exception e) {
-          logger.debug("Error at Pin={}, Pout={}: {}", inletPressures[i], outletPressures[j],
-              e.getMessage());
+          logger.debug("Error at Pin={}, Pout={}: {}", inletPressures[i], outletPressures[j], e.getMessage());
         }
       }
     }
@@ -1646,8 +1615,8 @@ public class FlowRateOptimizer implements Serializable {
    * Generates capacity table using parallel evaluation with thread pool.
    *
    * <p>
-   * This method creates a cloned FlowRateOptimizer for each thread to ensure thread safety. Each
-   * evaluation is submitted to a thread pool, and results are collected into the table.
+   * This method creates a cloned FlowRateOptimizer for each thread to ensure thread safety. Each evaluation is
+   * submitted to a thread pool, and results are collected into the table.
    * </p>
    *
    * @param table the table to populate
@@ -1663,8 +1632,7 @@ public class FlowRateOptimizer implements Serializable {
     AtomicInteger evalCount = new AtomicInteger(0);
 
     // Store results in thread-safe map (key: "i,j" -> value: ProcessOperatingPoint)
-    ConcurrentHashMap<String, ProcessOperatingPoint> results =
-        new ConcurrentHashMap<String, ProcessOperatingPoint>();
+    ConcurrentHashMap<String, ProcessOperatingPoint> results = new ConcurrentHashMap<String, ProcessOperatingPoint>();
 
     // Create thread pool
     ExecutorService executor = Executors.newFixedThreadPool(parallelThreads);
@@ -1686,19 +1654,18 @@ public class FlowRateOptimizer implements Serializable {
                 // Create a cloned optimizer for thread safety
                 FlowRateOptimizer threadOptimizer = createThreadSafeClone();
 
-                ProcessOperatingPoint point = threadOptimizer.findMaxFlowRateAtPressureBoundaries(
-                    inletP, outletP, pressureUnit, maxUtilization);
+                ProcessOperatingPoint point = threadOptimizer.findMaxFlowRateAtPressureBoundaries(inletP, outletP,
+                    pressureUnit, maxUtilization);
 
                 if (point != null) {
                   results.put(rowIdx + "," + colIdx, point);
                 }
 
                 int currentCount = evalCount.incrementAndGet();
-                reportProgress(currentCount, totalEvals, String
-                    .format("Parallel: Pin=%.1f, Pout=%.1f %s", inletP, outletP, pressureUnit));
+                reportProgress(currentCount, totalEvals,
+                    String.format("Parallel: Pin=%.1f, Pout=%.1f %s", inletP, outletP, pressureUnit));
               } catch (Exception e) {
-                logger.debug("Parallel error at Pin={}, Pout={}: {}", inletP, outletP,
-                    e.getMessage());
+                logger.debug("Parallel error at Pin={}, Pout={}: {}", inletP, outletP, e.getMessage());
                 evalCount.incrementAndGet();
               }
               return null;
@@ -1743,9 +1710,8 @@ public class FlowRateOptimizer implements Serializable {
    * Creates a thread-safe clone of this optimizer for parallel evaluation.
    *
    * <p>
-   * This method clones the underlying ProcessSystem to ensure each thread has its own independent
-   * copy. The clone maintains all configuration settings but operates on a separate process
-   * instance.
+   * This method clones the underlying ProcessSystem to ensure each thread has its own independent copy. The clone
+   * maintains all configuration settings but operates on a separate process instance.
    * </p>
    *
    * @return a cloned FlowRateOptimizer for thread-safe use
@@ -1755,8 +1721,7 @@ public class FlowRateOptimizer implements Serializable {
     ProcessSystem clonedProcess = processSystem.copy();
 
     // Create new optimizer with cloned process
-    FlowRateOptimizer clone =
-        new FlowRateOptimizer(clonedProcess, inletStreamName, outletStreamName);
+    FlowRateOptimizer clone = new FlowRateOptimizer(clonedProcess, inletStreamName, outletStreamName);
 
     // Copy configuration settings
     clone.maxIterations = this.maxIterations;
@@ -1791,9 +1756,8 @@ public class FlowRateOptimizer implements Serializable {
    * Generates a detailed process capacity curve for a fixed inlet pressure.
    *
    * <p>
-   * For each target outlet pressure, finds the maximum flow rate and reports total power, equipment
-   * utilizations, and bottleneck information. This is useful for understanding process capacity
-   * versus delivery pressure.
+   * For each target outlet pressure, finds the maximum flow rate and reports total power, equipment utilizations, and
+   * bottleneck information. This is useful for understanding process capacity versus delivery pressure.
    * </p>
    *
    * @param inletPressure the inlet pressure (fixed)
@@ -1803,11 +1767,10 @@ public class FlowRateOptimizer implements Serializable {
    * @param flowRateUnit unit for reporting flow rates
    * @return array of ProcessOperatingPoints for each outlet pressure
    */
-  public ProcessOperatingPoint[] generateCapacityCurve(double inletPressure,
-      double[] outletPressures, String pressureUnit, double maxUtilization, String flowRateUnit) {
+  public ProcessOperatingPoint[] generateCapacityCurve(double inletPressure, double[] outletPressures,
+      String pressureUnit, double maxUtilization, String flowRateUnit) {
     if (mode != Mode.PROCESS_SYSTEM && mode != Mode.PROCESS_MODEL) {
-      throw new IllegalStateException(
-          "generateCapacityCurve requires PROCESS_SYSTEM or PROCESS_MODEL mode");
+      throw new IllegalStateException("generateCapacityCurve requires PROCESS_SYSTEM or PROCESS_MODEL mode");
     }
 
     // Auto-configure compressor charts
@@ -1818,13 +1781,11 @@ public class FlowRateOptimizer implements Serializable {
     ProcessOperatingPoint[] curve = new ProcessOperatingPoint[outletPressures.length];
 
     for (int i = 0; i < outletPressures.length; i++) {
-      curve[i] = findMaxFlowRateAtPressureBoundaries(inletPressure, outletPressures[i],
-          pressureUnit, maxUtilization);
+      curve[i] = findMaxFlowRateAtPressureBoundaries(inletPressure, outletPressures[i], pressureUnit, maxUtilization);
 
       if (curve[i] != null) {
-        logger.info("Pout={} {}: Max flow={} {}, Power={} kW, Util={}%", outletPressures[i],
-            pressureUnit, curve[i].getFlowRate(), flowRateUnit, curve[i].getTotalPower(),
-            curve[i].getMaxUtilization() * 100);
+        logger.info("Pout={} {}: Max flow={} {}, Power={} kW, Util={}%", outletPressures[i], pressureUnit,
+            curve[i].getFlowRate(), flowRateUnit, curve[i].getTotalPower(), curve[i].getMaxUtilization() * 100);
       }
     }
 
@@ -1833,6 +1794,12 @@ public class FlowRateOptimizer implements Serializable {
 
   /**
    * Evaluates ProcessSystem outlet pressure.
+   *
+   * @param flowRate the flow rate value
+   * @param flowRateUnit the unit of the flow rate
+   * @param inletPressure the inlet pressure value
+   * @param pressureUnit the unit of the pressure
+   * @return the outlet pressure in the specified pressure unit
    */
   private double evaluateProcessSystem(double flowRate, String flowRateUnit, double inletPressure,
       String pressureUnit) {
@@ -1856,9 +1823,14 @@ public class FlowRateOptimizer implements Serializable {
 
   /**
    * Evaluates ProcessModel outlet pressure.
+   *
+   * @param flowRate the flow rate value
+   * @param flowRateUnit the unit of the flow rate
+   * @param inletPressure the inlet pressure value
+   * @param pressureUnit the unit of the pressure
+   * @return the outlet pressure in the specified pressure unit
    */
-  private double evaluateProcessModel(double flowRate, String flowRateUnit, double inletPressure,
-      String pressureUnit) {
+  private double evaluateProcessModel(double flowRate, String flowRateUnit, double inletPressure, String pressureUnit) {
     // Set inlet conditions directly on the stream's thermo system
     inletStream.getThermoSystem().setTotalFlowRate(flowRate, flowRateUnit);
     inletStream.getThermoSystem().setPressure(inletPressure, pressureUnit);
@@ -1905,8 +1877,8 @@ public class FlowRateOptimizer implements Serializable {
                     || c.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL
                     || c.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD;
 
-                violations.add(new ConstraintViolation(c.getName(), equip.getName(),
-                    c.getCurrentValue(), c.getDesignValue(), c.getUnit(), isHard));
+                violations.add(new ConstraintViolation(c.getName(), equip.getName(), c.getCurrentValue(),
+                    c.getDesignValue(), c.getUnit(), isHard));
               }
             }
           }
@@ -1921,20 +1893,22 @@ public class FlowRateOptimizer implements Serializable {
 
   /**
    * Gets list of all equipment to check for constraints.
+   *
+   * @return list of all process equipment in the current mode
    */
   private List<ProcessEquipmentInterface> getEquipmentList() {
     List<ProcessEquipmentInterface> equipment = new ArrayList<ProcessEquipmentInterface>();
 
     switch (mode) {
-      case PROCESS_SYSTEM:
-        equipment.addAll(processSystem.getUnitOperations());
-        break;
+    case PROCESS_SYSTEM:
+      equipment.addAll(processSystem.getUnitOperations());
+      break;
 
-      case PROCESS_MODEL:
-        for (ProcessSystem ps : processModel.getAllProcesses()) {
-          equipment.addAll(ps.getUnitOperations());
-        }
-        break;
+    case PROCESS_MODEL:
+      for (ProcessSystem ps : processModel.getAllProcesses()) {
+        equipment.addAll(ps.getUnitOperations());
+      }
+      break;
     }
 
     return equipment;
@@ -2090,8 +2064,8 @@ public class FlowRateOptimizer implements Serializable {
    * Sets the minimum surge margin for compressor operation.
    *
    * <p>
-   * Operating points with surge margin below this value will be marked as infeasible. Typical
-   * values are 0.10 to 0.20 (10-20% margin).
+   * Operating points with surge margin below this value will be marked as infeasible. Typical values are 0.10 to 0.20
+   * (10-20% margin).
    * </p>
    *
    * @param minSurgeMargin minimum surge margin as a fraction
@@ -2131,8 +2105,8 @@ public class FlowRateOptimizer implements Serializable {
    * Sets the maximum power limit for compressor operation.
    *
    * <p>
-   * Operating points where compressor power exceeds this limit will be marked as infeasible. This
-   * is typically set based on driver rated power or mechanical design limits.
+   * Operating points where compressor power exceeds this limit will be marked as infeasible. This is typically set
+   * based on driver rated power or mechanical design limits.
    * </p>
    *
    * @param maxPowerLimit maximum power in kW
@@ -2154,8 +2128,8 @@ public class FlowRateOptimizer implements Serializable {
    * Sets the maximum speed limit for compressor operation.
    *
    * <p>
-   * Operating points where compressor speed exceeds this limit will be marked as infeasible. This
-   * is typically set based on mechanical design or compressor chart limits.
+   * Operating points where compressor speed exceeds this limit will be marked as infeasible. This is typically set
+   * based on mechanical design or compressor chart limits.
    * </p>
    *
    * @param maxSpeedLimit maximum speed in RPM
@@ -2177,8 +2151,8 @@ public class FlowRateOptimizer implements Serializable {
    * Sets the minimum speed limit for compressor operation.
    *
    * <p>
-   * Operating points where compressor speed is below this limit will be marked as infeasible. This
-   * may be set based on stability limits or minimum turndown.
+   * Operating points where compressor speed is below this limit will be marked as infeasible. This may be set based on
+   * stability limits or minimum turndown.
    * </p>
    *
    * @param minSpeedLimit minimum speed in RPM
@@ -2200,9 +2174,9 @@ public class FlowRateOptimizer implements Serializable {
    * Sets whether to auto-generate compressor charts if not configured.
    *
    * <p>
-   * When enabled (default), if the compressor doesn't have a chart configured, one will be
-   * auto-generated using the CompressorChartGenerator based on the current design point. This
-   * follows the pattern used in the ProductionOptimizer framework.
+   * When enabled (default), if the compressor doesn't have a chart configured, one will be auto-generated using the
+   * CompressorChartGenerator based on the current design point. This follows the pattern used in the
+   * ProductionOptimizer framework.
    * </p>
    *
    * @param autoGenerateCompressorChart true to auto-generate charts
@@ -2242,8 +2216,8 @@ public class FlowRateOptimizer implements Serializable {
    * Sets the speed margin above design for auto-generated charts.
    *
    * <p>
-   * When auto-generating charts, the maximum speed is set to the design speed times (1 + margin).
-   * Typical values are 0.10 to 0.20 (10-20% margin above design).
+   * When auto-generating charts, the maximum speed is set to the design speed times (1 + margin). Typical values are
+   * 0.10 to 0.20 (10-20% margin above design).
    * </p>
    *
    * @param speedMarginAboveDesign speed margin as fraction
@@ -2265,8 +2239,8 @@ public class FlowRateOptimizer implements Serializable {
    * Sets whether to auto-configure compressor charts for process systems.
    *
    * <p>
-   * When enabled (default), all compressors in the process will have their charts auto-generated if
-   * not already configured. This follows the pattern from ProcessOptimizationExampleTest.
+   * When enabled (default), all compressors in the process will have their charts auto-generated if not already
+   * configured. This follows the pattern from ProcessOptimizationExampleTest.
    * </p>
    *
    * @param autoConfigureProcessCompressors true to auto-configure
@@ -2288,8 +2262,8 @@ public class FlowRateOptimizer implements Serializable {
    * Sets the maximum total power limit for all compressors.
    *
    * <p>
-   * Operating points where the sum of all compressor powers exceeds this limit will be marked as
-   * infeasible. This is useful for overall process power constraints.
+   * Operating points where the sum of all compressor powers exceeds this limit will be marked as infeasible. This is
+   * useful for overall process power constraints.
    * </p>
    *
    * @param maxTotalPowerLimit maximum total power in kW
@@ -2311,8 +2285,8 @@ public class FlowRateOptimizer implements Serializable {
    * Sets the maximum equipment utilization limit.
    *
    * <p>
-   * Operating points where any equipment exceeds this utilization will be marked as infeasible.
-   * Default is 1.0 (100%). Set to 0.95 for a 5% margin.
+   * Operating points where any equipment exceeds this utilization will be marked as infeasible. Default is 1.0 (100%).
+   * Set to 0.95 for a 5% margin.
    * </p>
    *
    * @param maxEquipmentUtilization maximum utilization as a fraction
@@ -2343,8 +2317,8 @@ public class FlowRateOptimizer implements Serializable {
    * Enables or disables progress logging to the logger.
    *
    * <p>
-   * When enabled, progress messages will be logged at INFO level during long-running operations
-   * like lift curve generation.
+   * When enabled, progress messages will be logged at INFO level during long-running operations like lift curve
+   * generation.
    * </p>
    *
    * @param enabled true to enable progress logging
@@ -2357,14 +2331,14 @@ public class FlowRateOptimizer implements Serializable {
    * Enables or disables parallel evaluation for lift curve generation.
    *
    * <p>
-   * When enabled, multiple pressure combinations are evaluated in parallel using a thread pool.
-   * This can significantly speed up lift curve generation for large tables. Note that parallel
-   * evaluation requires the process system to be thread-safe or uses process cloning.
+   * When enabled, multiple pressure combinations are evaluated in parallel using a thread pool. This can significantly
+   * speed up lift curve generation for large tables. Note that parallel evaluation requires the process system to be
+   * thread-safe or uses process cloning.
    * </p>
    *
    * <p>
-   * <strong>Important:</strong> Parallel evaluation creates cloned copies of the process system for
-   * each thread, which increases memory usage but ensures thread safety.
+   * <strong>Important:</strong> Parallel evaluation creates cloned copies of the process system for each thread, which
+   * increases memory usage but ensures thread safety.
    * </p>
    *
    * @param enabled true to enable parallel evaluation, false for sequential (default)
@@ -2386,8 +2360,8 @@ public class FlowRateOptimizer implements Serializable {
    * Sets the number of threads to use for parallel lift curve generation.
    *
    * <p>
-   * Default is the number of available processors. Setting this too high may cause memory issues as
-   * each thread maintains a cloned copy of the process system.
+   * Default is the number of available processors. Setting this too high may cause memory issues as each thread
+   * maintains a cloned copy of the process system.
    * </p>
    *
    * @param threads number of threads (must be at least 1)
@@ -2430,24 +2404,23 @@ public class FlowRateOptimizer implements Serializable {
    * Configuration class for professional lift curve generation.
    *
    * <p>
-   * This builder class encapsulates best practices for generating lift curves suitable for
-   * integration with reservoir simulators like Eclipse E300. It provides sensible defaults while
-   * allowing customization of all parameters.
+   * This builder class encapsulates best practices for generating lift curves suitable for integration with reservoir
+   * simulators like Eclipse E300. It provides sensible defaults while allowing customization of all parameters.
    * </p>
    *
    * <p>
    * <strong>Example Usage</strong>
    * </p>
-   * 
+   *
    * <pre>
-   * LiftCurveConfiguration config =
-   *     new LiftCurveConfiguration().withInletPressureRange(50.0, 90.0, 5) // 50-90 bara, 5 points
-   *         .withOutletPressureRange(130.0, 160.0, 4) // 130-160 bara, 4 points
-   *         .withSurgeMargin(0.15) // 15% surge margin
-   *         .withMaxPowerLimit(5000.0) // 5 MW limit
-   *         .withMaxUtilization(0.95) // 95% max utilization
-   *         .withProgressLogging(true);
-   * 
+   * LiftCurveConfiguration config = new LiftCurveConfiguration().withInletPressureRange(50.0, 90.0, 5) // 50-90 bara, 5
+   *     // points
+   *     .withOutletPressureRange(130.0, 160.0, 4) // 130-160 bara, 4 points
+   *     .withSurgeMargin(0.15) // 15% surge margin
+   *     .withMaxPowerLimit(5000.0) // 5 MW limit
+   *     .withMaxUtilization(0.95) // 95% max utilization
+   *     .withProgressLogging(true);
+   *
    * LiftCurveResult result = optimizer.generateProfessionalLiftCurves(config);
    * System.out.println(result.getCapacityTable().toEclipseFormat());
    * </pre>
@@ -2485,7 +2458,7 @@ public class FlowRateOptimizer implements Serializable {
 
     // Progress and logging
     private boolean enableProgressLogging = false;
-    private ProgressCallback progressCallback;
+    private transient ProgressCallback progressCallback;
 
     // Output options
     private boolean generateCapacityTable = true;
@@ -2495,7 +2468,8 @@ public class FlowRateOptimizer implements Serializable {
     /**
      * Default constructor with sensible defaults for offshore gas compression.
      */
-    public LiftCurveConfiguration() {}
+    public LiftCurveConfiguration() {
+    }
 
     /**
      * Sets the inlet pressure range.
@@ -2505,8 +2479,7 @@ public class FlowRateOptimizer implements Serializable {
      * @param numPoints number of pressure points
      * @return this configuration for chaining
      */
-    public LiftCurveConfiguration withInletPressureRange(double minPressure, double maxPressure,
-        int numPoints) {
+    public LiftCurveConfiguration withInletPressureRange(double minPressure, double maxPressure, int numPoints) {
       this.minInletPressure = minPressure;
       this.maxInletPressure = maxPressure;
       this.numInletPressurePoints = numPoints;
@@ -2521,8 +2494,7 @@ public class FlowRateOptimizer implements Serializable {
      * @param numPoints number of pressure points
      * @return this configuration for chaining
      */
-    public LiftCurveConfiguration withOutletPressureRange(double minPressure, double maxPressure,
-        int numPoints) {
+    public LiftCurveConfiguration withOutletPressureRange(double minPressure, double maxPressure, int numPoints) {
       this.minOutletPressure = minPressure;
       this.maxOutletPressure = maxPressure;
       this.numOutletPressurePoints = numPoints;
@@ -2653,8 +2625,7 @@ public class FlowRateOptimizer implements Serializable {
      * @param performance generate performance table
      * @return this configuration for chaining
      */
-    public LiftCurveConfiguration withTables(boolean capacity, boolean liftCurve,
-        boolean performance) {
+    public LiftCurveConfiguration withTables(boolean capacity, boolean liftCurve, boolean performance) {
       this.generateCapacityTable = capacity;
       this.generateLiftCurveTable = liftCurve;
       this.generatePerformanceTable = performance;
@@ -2690,7 +2661,7 @@ public class FlowRateOptimizer implements Serializable {
 
     private double[] generateLinearArray(double min, double max, int points) {
       if (points <= 1) {
-        return new double[] {min};
+        return new double[] { min };
       }
       double[] arr = new double[points];
       double step = (max - min) / (points - 1);
@@ -2791,7 +2762,8 @@ public class FlowRateOptimizer implements Serializable {
     /**
      * Default constructor.
      */
-    public LiftCurveResult() {}
+    public LiftCurveResult() {
+    }
 
     /** @return the capacity table */
     public ProcessCapacityTable getCapacityTable() {
@@ -2889,8 +2861,7 @@ public class FlowRateOptimizer implements Serializable {
       sb.append("=== Lift Curve Generation Summary ===\n");
       sb.append(String.format("Generation Time: %.2f seconds\n", generationTimeMs / 1000.0));
       sb.append(String.format("Total Evaluations: %d\n", totalEvaluations));
-      sb.append(String.format("Feasible Points: %d (%.1f%%)\n", feasiblePoints,
-          getFeasibilityPercentage()));
+      sb.append(String.format("Feasible Points: %d (%.1f%%)\n", feasiblePoints, getFeasibilityPercentage()));
 
       if (!warnings.isEmpty()) {
         sb.append("\nWarnings:\n");
@@ -2902,9 +2873,9 @@ public class FlowRateOptimizer implements Serializable {
       if (capacityTable != null) {
         ProcessOperatingPoint maxFlow = capacityTable.findMaxFlowRatePoint();
         if (maxFlow != null) {
-          sb.append(String.format("\nMax Flow Rate: %.0f %s at Pin=%.1f, Pout=%.1f %s\n",
-              maxFlow.getFlowRate(), capacityTable.getFlowRateUnit(), maxFlow.getInletPressure(),
-              maxFlow.getOutletPressure(), capacityTable.getPressureUnit()));
+          sb.append(String.format("\nMax Flow Rate: %.0f %s at Pin=%.1f, Pout=%.1f %s\n", maxFlow.getFlowRate(),
+              capacityTable.getFlowRateUnit(), maxFlow.getInletPressure(), maxFlow.getOutletPressure(),
+              capacityTable.getPressureUnit()));
         }
 
         ProcessOperatingPoint minPower = capacityTable.findMinimumPowerPoint();
@@ -2974,16 +2945,15 @@ public class FlowRateOptimizer implements Serializable {
     if (config.isGenerateCapacityTable()) {
       reportProgress(0, 100, "Generating capacity table...");
 
-      ProcessCapacityTable capacityTable =
-          generateProcessCapacityTable(inletPressures, outletPressures, pressureUnit, maxUtil);
+      ProcessCapacityTable capacityTable = generateProcessCapacityTable(inletPressures, outletPressures, pressureUnit,
+          maxUtil);
       result.setCapacityTable(capacityTable);
 
       totalEvals += inletPressures.length * outletPressures.length;
       feasibleCount += capacityTable.countFeasiblePoints();
 
       // Check for low feasibility
-      if (capacityTable.countFeasiblePoints() < inletPressures.length * outletPressures.length
-          / 2) {
+      if (capacityTable.countFeasiblePoints() < inletPressures.length * outletPressures.length / 2) {
         result.addWarning("Less than 50% of pressure combinations are feasible. "
             + "Consider expanding pressure ranges or relaxing constraints.");
       }
@@ -2993,8 +2963,8 @@ public class FlowRateOptimizer implements Serializable {
     if (config.isGenerateLiftCurveTable()) {
       reportProgress(50, 100, "Generating lift curve table...");
 
-      ProcessLiftCurveTable liftCurveTable =
-          generateProcessLiftCurve(flowRates, flowRateUnit, inletPressures, pressureUnit);
+      ProcessLiftCurveTable liftCurveTable = generateProcessLiftCurve(flowRates, flowRateUnit, inletPressures,
+          pressureUnit);
       result.setLiftCurveTable(liftCurveTable);
 
       // Count feasible points in lift curve table
@@ -3016,8 +2986,8 @@ public class FlowRateOptimizer implements Serializable {
       reportProgress(75, 100, "Generating performance table...");
 
       double midInletPressure = inletPressures[inletPressures.length / 2];
-      ProcessPerformanceTable perfTable =
-          generateProcessPerformanceTable(flowRates, flowRateUnit, midInletPressure, pressureUnit);
+      ProcessPerformanceTable perfTable = generateProcessPerformanceTable(flowRates, flowRateUnit, midInletPressure,
+          pressureUnit);
       result.setPerformanceTable(perfTable);
     }
 
@@ -3035,9 +3005,8 @@ public class FlowRateOptimizer implements Serializable {
    * Generates professional lift curves using default configuration.
    *
    * <p>
-   * This convenience method uses sensible defaults suitable for typical offshore gas compression
-   * applications. For customization, use
-   * {@link #generateProfessionalLiftCurves(LiftCurveConfiguration)} with a custom configuration.
+   * This convenience method uses sensible defaults suitable for typical offshore gas compression applications. For
+   * customization, use {@link #generateProfessionalLiftCurves(LiftCurveConfiguration)} with a custom configuration.
    * </p>
    *
    * @param minInletPressure minimum inlet pressure
@@ -3047,13 +3016,12 @@ public class FlowRateOptimizer implements Serializable {
    * @param pressureUnit pressure unit
    * @return the lift curve result
    */
-  public LiftCurveResult generateProfessionalLiftCurves(double minInletPressure,
-      double maxInletPressure, double minOutletPressure, double maxOutletPressure,
-      String pressureUnit) {
-    LiftCurveConfiguration config =
-        new LiftCurveConfiguration().withInletPressureRange(minInletPressure, maxInletPressure, 5)
-            .withOutletPressureRange(minOutletPressure, maxOutletPressure, 5).withSurgeMargin(0.15)
-            .withMaxUtilization(0.95).withPressureUnit(pressureUnit).withProgressLogging(true);
+  public LiftCurveResult generateProfessionalLiftCurves(double minInletPressure, double maxInletPressure,
+      double minOutletPressure, double maxOutletPressure, String pressureUnit) {
+    LiftCurveConfiguration config = new LiftCurveConfiguration()
+        .withInletPressureRange(minInletPressure, maxInletPressure, 5)
+        .withOutletPressureRange(minOutletPressure, maxOutletPressure, 5).withSurgeMargin(0.15).withMaxUtilization(0.95)
+        .withPressureUnit(pressureUnit).withProgressLogging(true);
 
     return generateProfessionalLiftCurves(config);
   }
@@ -3064,8 +3032,8 @@ public class FlowRateOptimizer implements Serializable {
    * Simple data class representing compressor operating state within a ProcessSystem.
    *
    * <p>
-   * This is a simplified compressor operating point used for tracking compressor performance within
-   * process system optimization. It stores the essential operating parameters.
+   * This is a simplified compressor operating point used for tracking compressor performance within process system
+   * optimization. It stores the essential operating parameters.
    * </p>
    *
    * @author ESOL
@@ -3090,7 +3058,8 @@ public class FlowRateOptimizer implements Serializable {
     private boolean feasible;
 
     /** Default constructor. */
-    public CompressorOperatingPoint() {}
+    public CompressorOperatingPoint() {
+    }
 
     /** @return the flowRate */
     public double getFlowRate() {
@@ -3240,8 +3209,8 @@ public class FlowRateOptimizer implements Serializable {
       return String.format(
           "CompressorOperatingPoint[flow=%.1f %s, Pin=%.2f %s, Pout=%.2f %s, "
               + "speed=%.0f RPM, power=%.1f kW, surgeMargin=%.1f%%, feasible=%s]",
-          flowRate, flowRateUnit, inletPressure, pressureUnit, outletPressure, pressureUnit, speed,
-          power, surgeMargin * 100, feasible);
+          flowRate, flowRateUnit, inletPressure, pressureUnit, outletPressure, pressureUnit, speed, power,
+          surgeMargin * 100, feasible);
     }
   }
 
@@ -3270,7 +3239,8 @@ public class FlowRateOptimizer implements Serializable {
     /**
      * Default constructor.
      */
-    public EquipmentUtilizationData() {}
+    public EquipmentUtilizationData() {
+    }
 
     /** @return the name */
     public String getName() {
@@ -3387,8 +3357,8 @@ public class FlowRateOptimizer implements Serializable {
    * Represents a complete process operating point with all equipment data.
    *
    * <p>
-   * This class encapsulates the complete operating state of a process system at a specific flow
-   * rate and inlet pressure. It includes:
+   * This class encapsulates the complete operating state of a process system at a specific flow rate and inlet
+   * pressure. It includes:
    * <ul>
    * <li>Overall process conditions (flow, pressures)</li>
    * <li>Total compressor power consumption</li>
@@ -3412,16 +3382,15 @@ public class FlowRateOptimizer implements Serializable {
     private double totalPower; // Total compressor power in kW
     private double maxUtilization;
     private boolean feasible;
-    private Map<String, CompressorOperatingPoint> compressorPoints =
-        new HashMap<String, CompressorOperatingPoint>();
-    private Map<String, EquipmentUtilizationData> equipmentData =
-        new HashMap<String, EquipmentUtilizationData>();
+    private Map<String, CompressorOperatingPoint> compressorPoints = new HashMap<String, CompressorOperatingPoint>();
+    private Map<String, EquipmentUtilizationData> equipmentData = new HashMap<String, EquipmentUtilizationData>();
     private List<ConstraintViolation> constraintViolations = new ArrayList<ConstraintViolation>();
 
     /**
      * Default constructor.
      */
-    public ProcessOperatingPoint() {}
+    public ProcessOperatingPoint() {
+    }
 
     /**
      * Adds a compressor operating point.
@@ -3590,8 +3559,8 @@ public class FlowRateOptimizer implements Serializable {
       return String.format(
           "ProcessOperatingPoint[flow=%.1f %s, Pin=%.2f %s, Pout=%.2f %s, "
               + "totalPower=%.1f kW, maxUtil=%.1f%%, feasible=%s]",
-          flowRate, flowRateUnit, inletPressure, pressureUnit, outletPressure, pressureUnit,
-          totalPower, maxUtilization * 100, feasible);
+          flowRate, flowRateUnit, inletPressure, pressureUnit, outletPressure, pressureUnit, totalPower,
+          maxUtilization * 100, feasible);
     }
 
     /**
@@ -3613,8 +3582,8 @@ public class FlowRateOptimizer implements Serializable {
       sb.append("--- Compressor Details ---\n");
       for (Map.Entry<String, CompressorOperatingPoint> entry : compressorPoints.entrySet()) {
         CompressorOperatingPoint cp = entry.getValue();
-        sb.append(String.format("%s: Power=%.1f kW, Speed=%.0f RPM, SurgeMargin=%.1f%%\n",
-            entry.getKey(), cp.getPower(), cp.getSpeed(), cp.getSurgeMargin() * 100));
+        sb.append(String.format("%s: Power=%.1f kW, Speed=%.0f RPM, SurgeMargin=%.1f%%\n", entry.getKey(),
+            cp.getPower(), cp.getSpeed(), cp.getSurgeMargin() * 100));
       }
 
       if (!constraintViolations.isEmpty()) {
@@ -3632,8 +3601,8 @@ public class FlowRateOptimizer implements Serializable {
    * Performance table for a process system at different flow rates.
    *
    * <p>
-   * Stores operating points for a range of flow rates at a fixed inlet pressure, providing methods
-   * to access and format process performance data.
+   * Stores operating points for a range of flow rates at a fixed inlet pressure, providing methods to access and format
+   * process performance data.
    * </p>
    *
    * @author ESOL
@@ -3658,8 +3627,7 @@ public class FlowRateOptimizer implements Serializable {
      * @param flowRates array of flow rates
      * @param compressorNames list of compressor names in the process
      */
-    public ProcessPerformanceTable(String tableName, double[] flowRates,
-        List<String> compressorNames) {
+    public ProcessPerformanceTable(String tableName, double[] flowRates, List<String> compressorNames) {
       this.tableName = tableName;
       this.flowRates = flowRates.clone();
       this.compressorNames = new ArrayList<String>(compressorNames);
@@ -3734,8 +3702,7 @@ public class FlowRateOptimizer implements Serializable {
     public String toFormattedString() {
       StringBuilder sb = new StringBuilder();
       sb.append("=== Process Performance Table: ").append(tableName).append(" ===\n");
-      sb.append("Inlet Pressure: ").append(inletPressure).append(" ").append(pressureUnit)
-          .append("\n\n");
+      sb.append("Inlet Pressure: ").append(inletPressure).append(" ").append(pressureUnit).append("\n\n");
 
       // Header
       sb.append(String.format("%-12s %-10s %-12s %-10s", "Flow", "Pout", "TotalPower", "MaxUtil"));
@@ -3755,8 +3722,8 @@ public class FlowRateOptimizer implements Serializable {
       for (int i = 0; i < flowRates.length; i++) {
         ProcessOperatingPoint point = operatingPoints[i];
         if (point != null) {
-          sb.append(String.format("%-12.1f %-10.2f %-12.1f %-10.1f", flowRates[i],
-              point.getOutletPressure(), point.getTotalPower(), point.getMaxUtilization() * 100));
+          sb.append(String.format("%-12.1f %-10.2f %-12.1f %-10.1f", flowRates[i], point.getOutletPressure(),
+              point.getTotalPower(), point.getMaxUtilization() * 100));
           for (String compName : compressorNames) {
             double compPower = point.getCompressorPower(compName);
             sb.append(String.format(" %-15.1f", compPower));
@@ -3775,8 +3742,7 @@ public class FlowRateOptimizer implements Serializable {
       ProcessOperatingPoint minPower = findMinimumPowerPoint();
       if (minPower != null) {
         sb.append("\nMinimum Power: ").append(String.format("%.1f kW", minPower.getTotalPower()));
-        sb.append(" at flow ")
-            .append(String.format("%.1f %s", minPower.getFlowRate(), flowRateUnit));
+        sb.append(" at flow ").append(String.format("%.1f %s", minPower.getFlowRate(), flowRateUnit));
         sb.append("\n");
       }
 
@@ -3834,8 +3800,8 @@ public class FlowRateOptimizer implements Serializable {
    * Process lift curve table for reservoir simulator integration.
    *
    * <p>
-   * Stores operating points for a grid of flow rates and inlet pressures, providing methods to
-   * access pressure, power, and utilization data. Output can be formatted for Eclipse VFP tables.
+   * Stores operating points for a grid of flow rates and inlet pressures, providing methods to access pressure, power,
+   * and utilization data. Output can be formatted for Eclipse VFP tables.
    * </p>
    *
    * @author ESOL
@@ -3902,8 +3868,7 @@ public class FlowRateOptimizer implements Serializable {
       for (int i = 0; i < flowRates.length; i++) {
         for (int j = 0; j < inletPressures.length; j++) {
           ProcessOperatingPoint point = operatingPoints[i][j];
-          pressure[i][j] =
-              (point != null && point.isFeasible()) ? point.getOutletPressure() : Double.NaN;
+          pressure[i][j] = (point != null && point.isFeasible()) ? point.getOutletPressure() : Double.NaN;
         }
       }
       return pressure;
@@ -3935,8 +3900,7 @@ public class FlowRateOptimizer implements Serializable {
       for (int i = 0; i < flowRates.length; i++) {
         for (int j = 0; j < inletPressures.length; j++) {
           ProcessOperatingPoint point = operatingPoints[i][j];
-          util[i][j] =
-              (point != null && point.isFeasible()) ? point.getMaxUtilization() : Double.NaN;
+          util[i][j] = (point != null && point.isFeasible()) ? point.getMaxUtilization() : Double.NaN;
         }
       }
       return util;
@@ -4040,9 +4004,8 @@ public class FlowRateOptimizer implements Serializable {
       if (minPower != null) {
         sb.append("\n--- Summary ---\n");
         sb.append(String.format("Minimum Power Point: %.1f kW\n", minPower.getTotalPower()));
-        sb.append(String.format("  At flow=%.1f %s, Pin=%.1f %s, Pout=%.1f %s\n",
-            minPower.getFlowRate(), flowRateUnit, minPower.getInletPressure(), pressureUnit,
-            minPower.getOutletPressure(), pressureUnit));
+        sb.append(String.format("  At flow=%.1f %s, Pin=%.1f %s, Pout=%.1f %s\n", minPower.getFlowRate(), flowRateUnit,
+            minPower.getInletPressure(), pressureUnit, minPower.getOutletPressure(), pressureUnit));
       }
 
       return sb.toString();
@@ -4237,25 +4200,23 @@ public class FlowRateOptimizer implements Serializable {
   }
 
   /**
-   * Represents a 2D capacity table showing maximum flow rates at different pressure boundary
-   * conditions.
+   * Represents a 2D capacity table showing maximum flow rates at different pressure boundary conditions.
    *
    * <p>
-   * This table maps inlet/outlet pressure combinations to maximum achievable flow rates while
-   * respecting equipment constraints. It is the inverse of the lift curve representation - instead
-   * of "flow vs outlet pressure at fixed inlet pressure", it shows "max flow for each pressure
-   * combination".
+   * This table maps inlet/outlet pressure combinations to maximum achievable flow rates while respecting equipment
+   * constraints. It is the inverse of the lift curve representation - instead of "flow vs outlet pressure at fixed
+   * inlet pressure", it shows "max flow for each pressure combination".
    * </p>
    *
    * <p>
-   * This format is particularly useful for reservoir simulators where pressures are known from
-   * deliverability curves and the question is "what flow rate can the production system handle?"
+   * This format is particularly useful for reservoir simulators where pressures are known from deliverability curves
+   * and the question is "what flow rate can the production system handle?"
    * </p>
    *
    * <p>
    * <strong>Table Structure</strong>
    * </p>
-   * 
+   *
    * <pre>
    *               Pout=130   Pout=140   Pout=150   Pout=160
    * Pin=60         12000      10500       8000       5000
@@ -4294,8 +4255,7 @@ public class FlowRateOptimizer implements Serializable {
       this.inletPressures = inletPressures.clone();
       this.outletPressures = outletPressures.clone();
       this.compressorNames = new ArrayList<String>(compressorNames);
-      this.operatingPoints =
-          new ProcessOperatingPoint[inletPressures.length][outletPressures.length];
+      this.operatingPoints = new ProcessOperatingPoint[inletPressures.length][outletPressures.length];
     }
 
     /**
@@ -4408,8 +4368,7 @@ public class FlowRateOptimizer implements Serializable {
       for (int i = 0; i < inletPressures.length; i++) {
         for (int j = 0; j < outletPressures.length; j++) {
           ProcessOperatingPoint point = operatingPoints[i][j];
-          if (point != null && point.isFeasible() && point.getTotalPower() < minPower
-              && point.getTotalPower() > 0) {
+          if (point != null && point.isFeasible() && point.getTotalPower() < minPower && point.getTotalPower() > 0) {
             minPower = point.getTotalPower();
             minPoint = point;
           }
@@ -4470,10 +4429,9 @@ public class FlowRateOptimizer implements Serializable {
       // Summary
       ProcessOperatingPoint maxFlow = findMaxFlowRatePoint();
       if (maxFlow != null) {
-        sb.append("\nMax Flow Rate: ").append(String.format("%.0f", maxFlow.getFlowRate()))
-            .append(" ").append(flowRateUnit).append(" at Pin=")
-            .append(String.format("%.1f", maxFlow.getInletPressure())).append(", Pout=")
-            .append(String.format("%.1f", maxFlow.getOutletPressure())).append(" ")
+        sb.append("\nMax Flow Rate: ").append(String.format("%.0f", maxFlow.getFlowRate())).append(" ")
+            .append(flowRateUnit).append(" at Pin=").append(String.format("%.1f", maxFlow.getInletPressure()))
+            .append(", Pout=").append(String.format("%.1f", maxFlow.getOutletPressure())).append(" ")
             .append(pressureUnit);
       }
 
@@ -4484,8 +4442,8 @@ public class FlowRateOptimizer implements Serializable {
      * Generates Eclipse VFP table format output.
      *
      * <p>
-     * This format is compatible with Eclipse 300 reservoir simulator lift tables. The output
-     * generates VFPPROD tables that can be directly included in Eclipse DATA files.
+     * This format is compatible with Eclipse 300 reservoir simulator lift tables. The output generates VFPPROD tables
+     * that can be directly included in Eclipse DATA files.
      * </p>
      *
      * <p>
@@ -4611,8 +4569,8 @@ public class FlowRateOptimizer implements Serializable {
           ProcessOperatingPoint pt = operatingPoints[i][j];
           sb.append(String.format("%.2f,%.2f,", inletPressures[i], outletPressures[j]));
           if (pt != null) {
-            sb.append(String.format("%.2f,%.2f,%.4f,%s\n", pt.getFlowRate(), pt.getTotalPower(),
-                pt.getMaxUtilization(), pt.isFeasible() ? "true" : "false"));
+            sb.append(String.format("%.2f,%.2f,%.4f,%s\n", pt.getFlowRate(), pt.getTotalPower(), pt.getMaxUtilization(),
+                pt.isFeasible() ? "true" : "false"));
           } else {
             sb.append(",,,,false\n");
           }
@@ -4736,8 +4694,7 @@ public class FlowRateOptimizer implements Serializable {
 
       // Summary statistics
       sb.append("  \"feasiblePoints\": ").append(countFeasiblePoints()).append(",\n");
-      sb.append("  \"totalPoints\": ").append(inletPressures.length * outletPressures.length)
-          .append(",\n");
+      sb.append("  \"totalPoints\": ").append(inletPressures.length * outletPressures.length).append(",\n");
 
       ProcessOperatingPoint maxFlow = findMaxFlowRatePoint();
       if (maxFlow != null) {

@@ -13,21 +13,25 @@ package neqsim.process.equipment.compressor.driver;
  * <li>Willans line efficiency characteristics</li>
  * </ul>
  *
- * <p><strong>Steam Turbine Types</strong></p>
+ * <p>
+ * <strong>Steam Turbine Types</strong>
+ * </p>
  * <ul>
  * <li><strong>Back-pressure:</strong> Exhaust at process steam pressure</li>
  * <li><strong>Condensing:</strong> Exhaust to condenser at vacuum</li>
  * <li><strong>Extraction:</strong> Steam taken from intermediate stage</li>
  * </ul>
  *
- * <p><strong>Example Usage</strong></p>
- * 
+ * <p>
+ * <strong>Example Usage</strong>
+ * </p>
+ *
  * <pre>
  * SteamTurbineDriver turbine = new SteamTurbineDriver(5000, 6000, 0.75);
  * turbine.setInletPressure(42.0); // 42 bara inlet
  * turbine.setInletTemperature(400.0); // 400°C inlet
  * turbine.setExhaustPressure(0.1); // 0.1 bara condensing
- * 
+ *
  * double power = turbine.getAvailablePower(6000);
  * double steamRate = turbine.getSteamConsumption(4000, 6000); // kg/hr
  * </pre>
@@ -76,7 +80,6 @@ public class SteamTurbineDriver extends DriverCurveBase {
    * Default constructor.
    */
   public SteamTurbineDriver() {
-    super();
   }
 
   /**

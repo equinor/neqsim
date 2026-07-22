@@ -2,15 +2,15 @@
  * Condition-Based Reliability Package.
  *
  * <p>
- * This package provides condition-based reliability monitoring and prognostics capabilities.
- * Instead of relying solely on generic failure rates (e.g., from OREDA), it integrates real-time
- * equipment condition data to provide dynamic reliability estimates.
+ * This package provides condition-based reliability monitoring and prognostics capabilities. Instead of relying solely
+ * on generic failure rates (e.g., from OREDA), it integrates real-time equipment condition data to provide dynamic
+ * reliability estimates.
  * </p>
  *
  * <h2>Key Classes</h2>
  * <ul>
- * <li>{@link neqsim.process.safety.risk.condition.ConditionBasedReliability} - Main class for
- * condition-based reliability monitoring</li>
+ * <li>{@link neqsim.process.safety.risk.condition.ConditionBasedReliability} - Main class for condition-based
+ * reliability monitoring</li>
  * </ul>
  *
  * <h2>Features</h2>
@@ -24,12 +24,12 @@
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * // Create model with base OREDA failure rate
- * ConditionBasedReliability pump =
- *     new ConditionBasedReliability("P-101", "Main Export Pump", 5e-5); // Base failure rate from
- *                                                                       // OREDA
+ * ConditionBasedReliability pump = new ConditionBasedReliability("P-101", "Main Export Pump", 5e-5); // Base failure
+ * // rate from
+ * // OREDA
  *
  * // Add condition indicators
  * pump.addVibrationIndicator("V1", "Drive End Bearing", 2.0, 4.0, 7.0); // mm/s RMS
@@ -51,10 +51,10 @@
  *
  * <h2>Integration with Risk Simulation</h2>
  * <p>
- * The adjusted failure rates from condition-based models can replace generic OREDA rates in the
- * operational risk simulator for more accurate, real-time risk assessment.
+ * The adjusted failure rates from condition-based models can replace generic OREDA rates in the operational risk
+ * simulator for more accurate, real-time risk assessment.
  * </p>
- * 
+ *
  * <pre>
  * // Use condition-based rates in risk simulation
  * EquipmentFailureMode mode = new EquipmentFailureMode();

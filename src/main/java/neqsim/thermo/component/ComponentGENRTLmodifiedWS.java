@@ -4,9 +4,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGENRTLmodifiedWS class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentGENRTLmodifiedWS.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -31,30 +27,14 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
 
   /** {@inheritDoc} */
   @Override
-  public double getlnGammadt() {
-    return dlngammadt;
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getlnGammadn(int k) {
-    return dlngammadn[k];
-  }
-
-  /** {@inheritDoc} */
-  @Override
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] WSalpha, double[][] WSgij, double[][] intparam,
-      String[][] mixRule) {
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt, double[][] WSalpha, double[][] WSgij, double[][] intparam, String[][] mixRule) {
     double[][] WSgijT = new double[numberOfComponents][numberOfComponents];
-    return getGamma(phase, numberOfComponents, temperature, pressure, pt, WSalpha, WSgij, WSgijT,
-        intparam, mixRule);
+    return getGamma(phase, numberOfComponents, temperature, pressure, pt, WSalpha, WSgij, WSgijT, intparam, mixRule);
   }
 
   /**
-   * <p>
    * getGamma.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -69,9 +49,8 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
    * @return a double
    */
   @SuppressWarnings("unused")
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] WSalpha, double[][] WSgij, double[][] WSgijT,
-      double[][] intparam, String[][] mixRule) {
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt, double[][] WSalpha, double[][] WSgij, double[][] WSgijT, double[][] intparam, String[][] mixRule) {
     double type = phase.getInitType();
     double A = 0;
     double B = 0;
@@ -217,21 +196,18 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
       dA6dTetter += dA6dT * dDdT / (C * C);
 
       if (mixRule[this.getComponentNumber()][j].equals("WS")) {
-        tau2 = WSgij[this.getComponentNumber()][j] / (temperature)
-            + WSgijT[this.getComponentNumber()][j];
+        tau2 = WSgij[this.getComponentNumber()][j] / (temperature) + WSgijT[this.getComponentNumber()][j];
       }
       dtau2dt = -tau2 / temperature + WSgijT[this.getComponentNumber()][j] / temperature;
 
       F += E / C * (tau2 - D / C);
-      dFdT += (dEdT / C - E / (C * C) * dCdT) * (tau2 - D / C)
-          + E / C * (dtau2dt - (dDdT / C - D / (C * C) * dCdT));
+      dFdT += (dEdT / C - E / (C * C) * dCdT) * (tau2 - D / C) + E / C * (dtau2dt - (dDdT / C - D / (C * C) * dCdT));
       // F2T = F2T - 2*2*A/Math.pow(C,2) + 2*2*E*D/Math.pow(C,3); // A til A2;
     }
 
     lngamma = A / B + F;
     // dlngammadt = dAdT/B - A/(B*B)*dBdT + dFdT;
-    dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter - dA5dTetter
-        - dA6dTetter);
+    dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter - dA5dTetter - dA6dTetter);
     /*
      * if(w==0){ dlngammadtold = dlngammadt; temperature +=0.0001; }
      *
@@ -280,12 +256,12 @@ public class ComponentGENRTLmodifiedWS extends ComponentGeNRTL {
             sum += comp_Array[g].getx() * Gmatrix[g][f];
             sum2 += comp_Array[g].getx() * Gmatrix[g][f] * tauMatrix[g][f];
           }
-          Dtemp += Gmatrix[p][f] * Gmatrix[this.getComponentNumber()][f]
-              * tauMatrix[this.getComponentNumber()][f] * comp_Array[f].getx() / (sum * sum);
-          Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2
-              * Gmatrix[this.getComponentNumber()][f] / (sum * sum * sum);
-          Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f]
-              * Gmatrix[this.getComponentNumber()][f] / (sum * sum);
+          Dtemp += Gmatrix[p][f] * Gmatrix[this.getComponentNumber()][f] * tauMatrix[this.getComponentNumber()][f]
+              * comp_Array[f].getx() / (sum * sum);
+          Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2 * Gmatrix[this.getComponentNumber()][f]
+              / (sum * sum * sum);
+          Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f] * Gmatrix[this.getComponentNumber()][f]
+              / (sum * sum);
         }
         dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
             - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;

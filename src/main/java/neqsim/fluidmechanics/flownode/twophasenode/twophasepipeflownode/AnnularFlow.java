@@ -16,9 +16,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * AnnularFlow class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -32,50 +30,39 @@ public class AnnularFlow extends TwoPhaseFlowNode {
   // double liquidFilmThickness=0;
 
   /**
-   * <p>
    * Constructor for AnnularFlow.
-   * </p>
    */
   public AnnularFlow() {
     this.flowNodeType = "annular";
   }
 
   /**
-   * <p>
    * Constructor for AnnularFlow.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public AnnularFlow(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "annular";
     this.interphaseTransportCoefficient = new InterphaseAnnularFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+        this);
   }
 
   /**
-   * <p>
    * Constructor for AnnularFlow.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
-  public AnnularFlow(SystemInterface system, SystemInterface interphaseSystem,
-      GeometryDefinitionInterface pipe) {
+  public AnnularFlow(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "annular";
     this.interphaseTransportCoefficient = new InterphaseAnnularFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+        this);
   }
 
   /** {@inheritDoc} */
@@ -113,8 +100,8 @@ public class AnnularFlow extends TwoPhaseFlowNode {
    * {@inheritDoc}
    *
    * <p>
-   * For annular flow, the interfacial area per unit volume is calculated from film geometry: a =
-   * 4/D * 1/(1-sqrt(1-α_L))
+   * For annular flow, the interfacial area per unit volume is calculated from film geometry: a = 4/D *
+   * 1/(1-sqrt(1-α_L))
    * </p>
    */
   @Override
@@ -140,8 +127,8 @@ public class AnnularFlow extends TwoPhaseFlowNode {
    * {@inheritDoc}
    *
    * <p>
-   * For annular flow, uses Hewitt and Hall-Taylor correlation accounting for wave amplitude and
-   * liquid entrainment effects.
+   * For annular flow, uses Hewitt and Hall-Taylor correlation accounting for wave amplitude and liquid entrainment
+   * effects.
    * </p>
    */
   @Override
@@ -174,9 +161,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -243,8 +228,7 @@ public class AnnularFlow extends TwoPhaseFlowNode {
     test.initFlowCalc();
     // test.display("testnode 0");
     // test.write("node 0", fileName, true);
-    System.out
-        .println("rate " + test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min"));
+    System.out.println("rate " + test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min"));
     double oldRate = test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min");
     for (int i = 0; i < 1; i++) {
       test.initFlowCalc();
@@ -262,10 +246,8 @@ public class AnnularFlow extends TwoPhaseFlowNode {
     }
     // test.display("testnode last");
 
-    System.out
-        .println("rate " + test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min"));
-    System.out.println("diff "
-        + (test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min") - oldRate));
+    System.out.println("rate " + test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min"));
+    System.out.println("diff " + (test.getBulkSystem().getPhase(0).getComponent(1).getRate("Nlitre/min") - oldRate));
     for (int i = 0; i < 1000; i++) {
       test.calcFluxes();
       test.update();

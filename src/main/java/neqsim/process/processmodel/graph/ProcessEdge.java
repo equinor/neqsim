@@ -5,8 +5,8 @@ import java.util.Objects;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * Represents a directed edge in the process flowsheet graph. Each edge corresponds to a stream
- * connection between two equipment units.
+ * Represents a directed edge in the process flowsheet graph. Each edge corresponds to a stream connection between two
+ * equipment units.
  *
  * <p>
  * This class provides:
@@ -70,8 +70,8 @@ public class ProcessEdge implements Serializable {
    * @param name edge name
    * @param edgeType type of edge
    */
-  public ProcessEdge(int index, ProcessNode source, ProcessNode target, StreamInterface stream,
-      String name, EdgeType edgeType) {
+  public ProcessEdge(int index, ProcessNode source, ProcessNode target, StreamInterface stream, String name,
+      EdgeType edgeType) {
     this.index = index;
     this.source = Objects.requireNonNull(source, "source cannot be null");
     this.target = Objects.requireNonNull(target, "target cannot be null");
@@ -102,8 +102,7 @@ public class ProcessEdge implements Serializable {
    * @param name edge name
    * @param edgeType type of edge
    */
-  public ProcessEdge(int index, ProcessNode source, ProcessNode target, String name,
-      EdgeType edgeType) {
+  public ProcessEdge(int index, ProcessNode source, ProcessNode target, String name, EdgeType edgeType) {
     this(index, source, target, null, name, edgeType);
   }
 
@@ -111,8 +110,7 @@ public class ProcessEdge implements Serializable {
     return source.getName() + " -> " + target.getName();
   }
 
-  private static EdgeType detectEdgeType(StreamInterface stream, ProcessNode source,
-      ProcessNode target) {
+  private static EdgeType detectEdgeType(StreamInterface stream, ProcessNode source, ProcessNode target) {
     if (stream == null) {
       return EdgeType.UNKNOWN;
     }
@@ -287,13 +285,13 @@ public class ProcessEdge implements Serializable {
    * @return array with [sourceIndex, targetIndex]
    */
   public int[] getIndexPair() {
-    return new int[] {source.getIndex(), target.getIndex()};
+    return new int[] { source.getIndex(), target.getIndex() };
   }
 
   @Override
   public String toString() {
-    return String.format("ProcessEdge[%d: %s -> %s (%s)%s]", index, source.getName(),
-        target.getName(), edgeType, isBackEdge ? " BACK" : "");
+    return String.format("ProcessEdge[%d: %s -> %s (%s)%s]", index, source.getName(), target.getName(), edgeType,
+        isBackEdge ? " BACK" : "");
   }
 
   @Override
@@ -305,8 +303,7 @@ public class ProcessEdge implements Serializable {
       return false;
     }
     ProcessEdge other = (ProcessEdge) obj;
-    return index == other.index && Objects.equals(source, other.source)
-        && Objects.equals(target, other.target);
+    return index == other.index && Objects.equals(source, other.source) && Objects.equals(target, other.target);
   }
 
   @Override

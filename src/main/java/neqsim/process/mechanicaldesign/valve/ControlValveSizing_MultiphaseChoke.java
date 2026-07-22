@@ -14,9 +14,9 @@ import neqsim.thermo.system.SystemInterface;
  * Valve sizing implementation using multiphase choke flow models.
  *
  * <p>
- * This class provides valve sizing calculations for production chokes using industry-standard
- * two-phase flow correlations. It implements the {@link ControlValveSizingInterface} to integrate
- * with the existing ThrottlingValve unit operation.
+ * This class provides valve sizing calculations for production chokes using industry-standard two-phase flow
+ * correlations. It implements the {@link ControlValveSizingInterface} to integrate with the existing ThrottlingValve
+ * unit operation.
  * </p>
  *
  * <p>
@@ -33,7 +33,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * <b>Usage Example:</b>
  * </p>
- * 
+ *
  * <pre>
  * // Configure valve to use Sachdeva multiphase model
  * ThrottlingValve choke = new ThrottlingValve("Production Choke", feed);
@@ -48,8 +48,7 @@ import neqsim.thermo.system.SystemInterface;
  * @see SachdevaChokeFlow
  * @see GilbertChokeFlow
  */
-public class ControlValveSizing_MultiphaseChoke
-    implements ControlValveSizingInterface, Serializable {
+public class ControlValveSizing_MultiphaseChoke implements ControlValveSizingInterface, Serializable {
   private static final long serialVersionUID = 1L;
 
   /** The valve mechanical design object. */
@@ -86,8 +85,7 @@ public class ControlValveSizing_MultiphaseChoke
    * @param valveMechanicalDesign the parent valve mechanical design
    * @param modelType model type: "Sachdeva", "Gilbert", "Baxendell", "Ros", or "Achong"
    */
-  public ControlValveSizing_MultiphaseChoke(ValveMechanicalDesign valveMechanicalDesign,
-      String modelType) {
+  public ControlValveSizing_MultiphaseChoke(ValveMechanicalDesign valveMechanicalDesign, String modelType) {
     this.valveMechanicalDesign = valveMechanicalDesign;
     this.modelType = modelType;
     setChokeModel(modelType);
@@ -172,19 +170,19 @@ public class ControlValveSizing_MultiphaseChoke
    */
   private double convertToMeters(double value, String unit) {
     switch (unit.toLowerCase()) {
-      case "m":
-        return value;
-      case "mm":
-        return value / 1000.0;
-      case "in":
-      case "inch":
-      case "inches":
-        return value * 0.0254;
-      case "64ths":
-      case "64th":
-        return value / 64.0 * 0.0254;
-      default:
-        return value;
+    case "m":
+      return value;
+    case "mm":
+      return value / 1000.0;
+    case "in":
+    case "inch":
+    case "inches":
+      return value * 0.0254;
+    case "64ths":
+    case "64th":
+      return value / 64.0 * 0.0254;
+    default:
+      return value;
     }
   }
 
@@ -274,8 +272,8 @@ public class ControlValveSizing_MultiphaseChoke
 
   /** {@inheritDoc} */
   @Override
-  public double calculateValveOpeningFromFlowRate(double Q, double actualKv,
-      StreamInterface inletStream, StreamInterface outletStream) {
+  public double calculateValveOpeningFromFlowRate(double Q, double actualKv, StreamInterface inletStream,
+      StreamInterface outletStream) {
     // Iterative solution to find opening that gives target flow
     double tolerance = 0.001;
     int maxIterations = 50;
@@ -417,8 +415,7 @@ public class ControlValveSizing_MultiphaseChoke
     StringBuilder sb = new StringBuilder();
     sb.append("=== Multiphase Choke Flow Report ===\n");
     sb.append(String.format("Model: %s\n", chokeModel.getModelName()));
-    sb.append(String.format("Choke Diameter: %.2f mm (%.3f in)\n", chokeDiameter * 1000,
-        chokeDiameter / 0.0254));
+    sb.append(String.format("Choke Diameter: %.2f mm (%.3f in)\n", chokeDiameter * 1000, chokeDiameter / 0.0254));
     sb.append(String.format("Discharge Coefficient: %.3f\n", chokeModel.getDischargeCoefficient()));
     sb.append("\n--- Operating Conditions ---\n");
     sb.append(String.format("Upstream Pressure: %.2f bara\n", P1 / 1e5));
@@ -429,8 +426,7 @@ public class ControlValveSizing_MultiphaseChoke
     sb.append(String.format("Gas Quality: %.3f\n", results.get("gasQuality")));
     sb.append(String.format("GLR: %.1f Sm3/Sm3\n", results.get("GLR")));
     sb.append(String.format("Flow Regime: %s\n", results.get("flowRegime")));
-    sb.append(
-        String.format("Critical Pressure Ratio: %.3f\n", results.get("criticalPressureRatio")));
+    sb.append(String.format("Critical Pressure Ratio: %.3f\n", results.get("criticalPressureRatio")));
     sb.append(String.format("Is Choked: %s\n", results.get("isChoked")));
 
     return sb.toString();

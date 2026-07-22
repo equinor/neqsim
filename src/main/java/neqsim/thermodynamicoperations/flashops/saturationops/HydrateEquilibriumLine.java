@@ -4,9 +4,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * HydrateEquilibriumLine class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class HydrateEquilibriumLine extends ConstantDutyTemperatureFlash {
   int numberOfPoints = 10;
 
   /**
-   * <p>
    * Constructor for HydrateEquilibriumLine.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param minPres a double
@@ -44,10 +40,21 @@ public class HydrateEquilibriumLine extends ConstantDutyTemperatureFlash {
 
     system.setPressure(minPressure);
     double dp = (maxPressure - minPressure) / (numberOfPoints - 1.0);
+
+    // Use previous temperature as initial guess for faster convergence
+    double previousTemp = system.getTemperature();
+
     for (int i = 0; i < numberOfPoints; i++) {
       system.setPressure(minPressure + dp * i);
+
+      // Set temperature to previous result as starting guess (hydrate T increases with P)
+      if (i > 0 && previousTemp > 0) {
+        system.setTemperature(previousTemp);
+      }
+
       try {
         ops.hydrateFormationTemperature();
+        previousTemp = system.getTemperature();
       } catch (Exception ex) {
         // logger.error(ex.getMessage(),e);
       }

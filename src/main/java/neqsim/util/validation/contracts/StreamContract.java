@@ -6,26 +6,26 @@ import neqsim.util.validation.ValidationResult;
 
 /**
  * Contract for process streams.
- * 
+ *
  * <p>
- * Defines requirements and guarantees for {@link StreamInterface} implementations. AI agents can
- * use this contract to validate stream setup before connecting to equipment.
+ * Defines requirements and guarantees for {@link StreamInterface} implementations. AI agents can use this contract to
+ * validate stream setup before connecting to equipment.
  * </p>
- * 
+ *
  * <h2>Preconditions (what the stream needs):</h2>
  * <ul>
  * <li>Valid thermodynamic system attached</li>
  * <li>Flow rate &gt; 0</li>
  * <li>Valid name for identification</li>
  * </ul>
- * 
+ *
  * <h2>Postconditions (what run() provides):</h2>
  * <ul>
  * <li>Calculated outlet conditions</li>
  * <li>Phase equilibrium (if flash performed)</li>
  * <li>Stream properties accessible via getFluid()</li>
  * </ul>
- * 
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -36,11 +36,12 @@ public class StreamContract implements ModuleContract<StreamInterface> {
   /** Minimum valid flow rate. */
   private static final double MIN_FLOW_RATE = 1e-12;
 
-  private StreamContract() {}
+  private StreamContract() {
+  }
 
   /**
    * Get the singleton instance.
-   * 
+   *
    * @return contract instance
    */
   public static StreamContract getInstance() {
@@ -75,11 +76,9 @@ public class StreamContract implements ModuleContract<StreamInterface> {
     ValidationResult thermoResult = thermoContract.checkPreconditions(fluid);
     for (ValidationResult.ValidationIssue issue : thermoResult.getIssues()) {
       if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
-        result.addError("stream.fluid." + issue.getCategory(), issue.getMessage(),
-            issue.getRemediation());
+        result.addError("stream.fluid." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
       } else if (issue.getSeverity() == ValidationResult.Severity.MAJOR) {
-        result.addWarning("stream.fluid." + issue.getCategory(), issue.getMessage(),
-            issue.getRemediation());
+        result.addWarning("stream.fluid." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
       }
     }
 
@@ -108,11 +107,9 @@ public class StreamContract implements ModuleContract<StreamInterface> {
     ValidationResult thermoResult = thermoContract.checkPostconditions(fluid);
     for (ValidationResult.ValidationIssue issue : thermoResult.getIssues()) {
       if (issue.getSeverity() == ValidationResult.Severity.CRITICAL) {
-        result.addError("stream.fluid." + issue.getCategory(), issue.getMessage(),
-            issue.getRemediation());
+        result.addError("stream.fluid." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
       } else if (issue.getSeverity() == ValidationResult.Severity.MAJOR) {
-        result.addWarning("stream.fluid." + issue.getCategory(), issue.getMessage(),
-            issue.getRemediation());
+        result.addWarning("stream.fluid." + issue.getCategory(), issue.getMessage(), issue.getRemediation());
       }
     }
 
@@ -121,16 +118,14 @@ public class StreamContract implements ModuleContract<StreamInterface> {
 
   @Override
   public String getRequirementsDescription() {
-    return "Stream Requirements:\n" + "- Valid name (non-empty string)\n"
-        + "- Thermodynamic system attached\n"
-        + "- Flow rate > 0 (via setFlowRate or component moles)\n"
-        + "- Valid temperature and pressure in fluid";
+    return "Stream Requirements:\n" + "- Valid name (non-empty string)\n" + "- Thermodynamic system attached\n"
+        + "- Flow rate > 0 (via setFlowRate or component moles)\n" + "- Valid temperature and pressure in fluid";
   }
 
   @Override
   public String getProvidesDescription() {
-    return "Stream Provides (after run()):\n" + "- Outlet temperature and pressure\n"
-        + "- Phase distribution\n" + "- Component mass/mole fractions\n"
-        + "- Enthalpy, entropy, density\n" + "- Can connect to downstream equipment";
+    return "Stream Provides (after run()):\n" + "- Outlet temperature and pressure\n" + "- Phase distribution\n"
+        + "- Component mass/mole fractions\n" + "- Enthalpy, entropy, density\n"
+        + "- Can connect to downstream equipment";
   }
 }

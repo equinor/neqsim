@@ -11,9 +11,7 @@ import neqsim.physicalproperties.methods.gasphysicalproperties.viscosity.ChungVi
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * NaturalGasPhysicalProperties class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class NaturalGasPhysicalProperties extends GasPhysicalProperties {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for NaturalGasPhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int
@@ -37,8 +33,7 @@ public class NaturalGasPhysicalProperties extends GasPhysicalProperties {
     conductivityCalc = new ChungConductivityMethod(this);
     viscosityCalc = new ChungViscosityMethod(this);
     // viscosityCalc = new PFCTViscosityMethodMod86(this);
-    diffusivityCalc =
-        new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
+    diffusivityCalc = new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
     // diffusivityCalc = new WilkeLeeDiffusivity(this);
 
     densityCalc = new neqsim.physicalproperties.methods.gasphysicalproperties.density.Density(this);

@@ -14,9 +14,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * pLoadingCurve2 class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -44,7 +42,7 @@ public class PloadingCurve2 extends BaseOperation {
   double[] lnOldK;
   double oldDeltalnK[];
   double deltalnK[];
-  double[] tm = {1, 1};
+  double[] tm = { 1, 1 };
   double beta = 1e-5;
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
   JProgressBar monitor;
@@ -62,9 +60,7 @@ public class PloadingCurve2 extends BaseOperation {
   int speceq = 0;
 
   /**
-   * <p>
    * Constructor for pLoadingCurve2.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -122,11 +118,10 @@ public class PloadingCurve2 extends BaseOperation {
 
       for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
         points[k + 3][i] = system.getPhases()[1].getComponent(k).getx();
-        points[k + 3 + system.getPhases()[1].getNumberOfComponents()][i] =
-            system.getPhase(1).getActivityCoefficient(k, 1); // ,1);
+        points[k + 3 + system.getPhases()[1].getNumberOfComponents()][i] = system.getPhase(1).getActivityCoefficient(k,
+            1); // ,1);
       }
-      logger.info(
-          "point: " + points[0][i] + " tot pres  " + points[1][i] + " CO2 pres  " + points[2][i]);
+      logger.info("point: " + points[0][i] + " tot pres  " + points[1][i] + " CO2 pres  " + points[2][i]);
       system.setPressure(points[1][i]);
       logger.info("ph: " + system.getPhases()[1].getpH());
       system.addComponent("CO2", inscr);
@@ -145,7 +140,7 @@ public class PloadingCurve2 extends BaseOperation {
     double TC = system.getTC();
     double PC = system.getPC();
     logger.info("tc : " + TC + "  PC : " + PC);
-    String[] navn = {"CO2 fugacity", "", "", ""};
+    String[] navn = { "CO2 fugacity", "", "", "" };
     String title = "CO2 vapour pressure";
 
     Graph2b graph2 = new Graph2b(points, navn, title, "loading [-]", "Fugacity CO2 [bar]");
@@ -166,13 +161,11 @@ public class PloadingCurve2 extends BaseOperation {
   }
 
   /*
-   * public void createNetCdfFile(String name) { NetCdf2D file = new NetCdf2D();
-   * file.setOutputFileName(name); file.setXvalues(points[0], "loading", "");
-   * file.setYvalues(points[1], "total pressure", ""); file.setYvalues(points[2], " CO2 pressure",
-   * ""); for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
-   * file.setYvalues(points[k + 3], "mol frac " +
-   * system.getPhases()[1].getComponent(k).getComponentName(), ""); file.setYvalues(points[k + 3 +
-   * system.getPhases()[1].getNumberOfComponents()], ("activity " +
+   * public void createNetCdfFile(String name) { NetCdf2D file = new NetCdf2D(); file.setOutputFileName(name);
+   * file.setXvalues(points[0], "loading", ""); file.setYvalues(points[1], "total pressure", "");
+   * file.setYvalues(points[2], " CO2 pressure", ""); for (int k = 0; k < system.getPhases()[1].getNumberOfComponents();
+   * k++) { file.setYvalues(points[k + 3], "mol frac " + system.getPhases()[1].getComponent(k).getComponentName(), "");
+   * file.setYvalues(points[k + 3 + system.getPhases()[1].getNumberOfComponents()], ("activity " +
    * system.getPhases()[1].getComponent(k).getComponentName()), ""); } file.createFile(); }
    */
 

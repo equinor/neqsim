@@ -2,6 +2,8 @@ package neqsim.process.equipment.separator;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.flare.Flare;
@@ -13,6 +15,7 @@ import neqsim.thermo.system.SystemSrkEos;
  * Test of separator heat input capabilities, including flare radiation integration.
  */
 public class SeparatorHeatInputTest {
+  private static final Logger logger = LogManager.getLogger(SeparatorHeatInputTest.class);
   ProcessSystem processOps;
   Separator separator;
   ThreePhaseSeparator threePhaseSeparator;
@@ -192,8 +195,9 @@ public class SeparatorHeatInputTest {
     assertTrue(radiationHeatInput >= 0.0); // Separator receives some radiation
 
     // Print results for verification
-    System.out.printf("Flare heat duty: %.2f kW%n", flareHeatDuty);
-    System.out.printf("Radiation flux at %sm: %.2f W/m²%n", distance, radiationFlux);
-    System.out.printf("Heat input to separator: %.2f kW%n", radiationHeatInput / 1000.0);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Flare heat duty: %.2f kW%n", flareHeatDuty);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Radiation flux at %sm: %.2f W/m²%n", distance, radiationFlux);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Heat input to separator: %.2f kW%n",
+        radiationHeatInput / 1000.0);
   }
 }

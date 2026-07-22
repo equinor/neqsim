@@ -2,8 +2,8 @@
  * Automatic differentiation and gradient computation for thermodynamic calculations.
  *
  * <p>
- * This package provides classes for computing and storing derivatives of thermodynamic properties
- * with respect to temperature, pressure, and composition. These gradients enable:
+ * This package provides classes for computing and storing derivatives of thermodynamic properties with respect to
+ * temperature, pressure, and composition. These gradients enable:
  * </p>
  * <ul>
  * <li>Gradient-based optimization of process conditions</li>
@@ -14,16 +14,15 @@
  *
  * <h2>Key Classes:</h2>
  * <ul>
- * <li>{@link neqsim.thermo.util.derivatives.PropertyGradient} - Gradients of scalar properties
- * (density, enthalpy, etc.)</li>
- * <li>{@link neqsim.thermo.util.derivatives.FlashGradients} - Gradients of flash calculation
- * results (K-values, phase fractions)</li>
- * <li>{@link neqsim.thermo.util.derivatives.FugacityJacobian} - Jacobian matrix of fugacity
- * coefficients</li>
+ * <li>{@link neqsim.thermo.util.derivatives.PropertyGradient} - Gradients of scalar properties (density, enthalpy,
+ * etc.)</li>
+ * <li>{@link neqsim.thermo.util.derivatives.FlashGradients} - Gradients of flash calculation results (K-values, phase
+ * fractions)</li>
+ * <li>{@link neqsim.thermo.util.derivatives.FugacityJacobian} - Jacobian matrix of fugacity coefficients</li>
  * </ul>
  *
  * <h2>Usage with Python/JAX:</h2>
- * 
+ *
  * <pre>
  * {@code
  * # Define custom VJP for JAX

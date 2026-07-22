@@ -7,8 +7,7 @@ import java.util.Arrays;
  * Container for gradients of flash calculation results with respect to input parameters.
  *
  * <p>
- * Stores sensitivities of flash outputs (K-values, phase fraction, phase compositions) with respect
- * to:
+ * Stores sensitivities of flash outputs (K-values, phase fraction, phase compositions) with respect to:
  * </p>
  * <ul>
  * <li>Temperature (T)</li>
@@ -17,19 +16,19 @@ import java.util.Arrays;
  * </ul>
  *
  * <p>
- * These gradients are computed using the implicit function theorem, which provides exact
- * derivatives without differentiating through the iterative flash solver.
+ * These gradients are computed using the implicit function theorem, which provides exact derivatives without
+ * differentiating through the iterative flash solver.
  * </p>
  *
  * <h2>Mathematical Background</h2>
  * <p>
- * At phase equilibrium, the residual equations F(y; θ) = 0 are satisfied, where y represents the
- * solution variables (K-values, β) and θ represents parameters (T, P, z).
+ * At phase equilibrium, the residual equations F(y; θ) = 0 are satisfied, where y represents the solution variables
+ * (K-values, β) and θ represents parameters (T, P, z).
  * </p>
  * <p>
  * By the implicit function theorem:
  * </p>
- * 
+ *
  * <pre>
  * dy/dθ = -(∂F/∂y)^(-1) * (∂F/∂θ)
  * </pre>
@@ -92,8 +91,8 @@ public class FlashGradients implements Serializable {
    * @param dBetadz vapor fraction composition derivatives
    * @param componentNames component names
    */
-  public FlashGradients(double[] kValues, double beta, double[] dKdT, double[] dKdP,
-      double[][] dKdz, double dBetadT, double dBetadP, double[] dBetadz, String[] componentNames) {
+  public FlashGradients(double[] kValues, double beta, double[] dKdT, double[] dKdP, double[][] dKdz, double dBetadT,
+      double dBetadP, double[] dBetadz, String[] componentNames) {
     this.numberOfComponents = kValues.length;
     this.numberOfPhases = 2;
     this.kValues = Arrays.copyOf(kValues, kValues.length);
@@ -107,9 +106,8 @@ public class FlashGradients implements Serializable {
     this.dBetadT = dBetadT;
     this.dBetadP = dBetadP;
     this.dBetadz = Arrays.copyOf(dBetadz, dBetadz.length);
-    this.componentNames =
-        componentNames != null ? Arrays.copyOf(componentNames, componentNames.length)
-            : new String[numberOfComponents];
+    this.componentNames = componentNames != null ? Arrays.copyOf(componentNames, componentNames.length)
+        : new String[numberOfComponents];
     this.valid = true;
     this.errorMessage = null;
   }
@@ -367,8 +365,7 @@ public class FlashGradients implements Serializable {
    * @return flattened gradient array
    */
   public double[] toFlatArray() {
-    int size =
-        2 * numberOfComponents + 2 + numberOfComponents * numberOfComponents + numberOfComponents;
+    int size = 2 * numberOfComponents + 2 + numberOfComponents * numberOfComponents + numberOfComponents;
     double[] result = new double[size];
     int idx = 0;
 

@@ -13,18 +13,17 @@ import neqsim.process.equipment.valve.ThrottlingValve;
  * Builder class for standardized equipment design specification.
  *
  * <p>
- * This class provides a fluent API for configuring equipment design parameters in a consistent way
- * across all equipment types. It integrates with company technical requirements (TR) documents and
- * design standards.
+ * This class provides a fluent API for configuring equipment design parameters in a consistent way across all equipment
+ * types. It integrates with company technical requirements (TR) documents and design standards.
  * </p>
  *
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
- * DesignSpecification.forSeparator("20-VA-01").setKFactor(0.08).setDiameter(3.0, "m")
- *     .setLength(8.0, "m").setMaterial("316L").setStandard("ASME-VIII").applyTo(separator);
+ * DesignSpecification.forSeparator("20-VA-01").setKFactor(0.08).setDiameter(3.0, "m").setLength(8.0, "m")
+ *     .setMaterial("316L").setStandard("ASME-VIII").applyTo(separator);
  * </pre>
  *
  * @author NeqSim Development Team
@@ -315,8 +314,8 @@ public class DesignSpecification {
    * Apply this specification to the given equipment.
    *
    * <p>
-   * This method configures the equipment with all the design parameters and operating limits
-   * defined in this specification.
+   * This method configures the equipment with all the design parameters and operating limits defined in this
+   * specification.
    * </p>
    *
    * @param equipment the equipment to configure

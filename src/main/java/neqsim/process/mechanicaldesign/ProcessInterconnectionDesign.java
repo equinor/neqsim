@@ -27,8 +27,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * </p>
  * <ul>
  * <li>ASME B31.3 - Process Piping</li>
- * <li>API RP 14E - Recommended Practice for Design and Installation of Offshore Production
- * Piping</li>
+ * <li>API RP 14E - Recommended Practice for Design and Installation of Offshore Production Piping</li>
  * </ul>
  *
  * @author NeqSim Development Team
@@ -64,12 +63,12 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
   private static final double CORROSION_ALLOWANCE = 3.0;
 
   /** Standard pipe sizes in inches (NPS). */
-  private static final double[] STANDARD_PIPE_SIZES = {0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0,
-      10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0};
+  private static final double[] STANDARD_PIPE_SIZES = { 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0,
+      16.0, 18.0, 20.0, 24.0, 30.0, 36.0, 42.0, 48.0 };
 
   /** Pipe outside diameters in mm corresponding to NPS. */
-  private static final double[] PIPE_OD_MM = {21.3, 26.7, 33.4, 48.3, 60.3, 88.9, 114.3, 168.3,
-      219.1, 273.1, 323.9, 355.6, 406.4, 457.2, 508.0, 609.6, 762.0, 914.4, 1066.8, 1219.2};
+  private static final double[] PIPE_OD_MM = { 21.3, 26.7, 33.4, 48.3, 60.3, 88.9, 114.3, 168.3, 219.1, 273.1, 323.9,
+      355.6, 406.4, 457.2, 508.0, 609.6, 762.0, 914.4, 1066.8, 1219.2 };
 
   // ============================================================================
   // Process System Reference
@@ -377,8 +376,8 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
 
     @Override
     public String toString() {
-      return String.format("%s -> %s: %.0f\" x %.1fmm x %.1fm = %.0fkg", fromEquipment, toEquipment,
-          nominalSizeInch, wallThicknessMm, lengthM, weightKg);
+      return String.format("%s -> %s: %.0f\" x %.1fmm x %.1fm = %.0fkg", fromEquipment, toEquipment, nominalSizeInch,
+          wallThicknessMm, lengthM, weightKg);
     }
   }
 
@@ -445,8 +444,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
     try {
       // Check if equipment has an outlet stream
       if (equipment instanceof neqsim.process.equipment.TwoPortEquipment) {
-        neqsim.process.equipment.TwoPortEquipment twoPort =
-            (neqsim.process.equipment.TwoPortEquipment) equipment;
+        neqsim.process.equipment.TwoPortEquipment twoPort = (neqsim.process.equipment.TwoPortEquipment) equipment;
         StreamInterface outStream = twoPort.getOutletStream();
         if (outStream != null && outStream.getThermoSystem() != null) {
           PipeSegment segment = createPipeSegment(equipment.getName(), "Downstream", outStream);
@@ -531,8 +529,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
 
       // Calculate weight
       double idMm = outsideDiameter - 2.0 * wallThickness;
-      double pipeAreaM2 =
-          Math.PI / 4.0 * (Math.pow(outsideDiameter / 1000.0, 2) - Math.pow(idMm / 1000.0, 2));
+      double pipeAreaM2 = Math.PI / 4.0 * (Math.pow(outsideDiameter / 1000.0, 2) - Math.pow(idMm / 1000.0, 2));
       double weight = pipeAreaM2 * estimatedLength * STEEL_DENSITY;
 
       // Create segment
@@ -794,8 +791,7 @@ public class ProcessInterconnectionDesign implements java.io.Serializable {
     sb.append(subSeparator).append("\n");
     sb.append(String.format("%-10s %15s %15s\n", "Size", "Length (m)", "Weight (kg)"));
     for (String size : weightBySize.keySet()) {
-      sb.append(String.format("%-10s %15.0f %15.0f\n", size, lengthBySize.get(size),
-          weightBySize.get(size)));
+      sb.append(String.format("%-10s %15.0f %15.0f\n", size, lengthBySize.get(size), weightBySize.get(size)));
     }
     sb.append("\n");
 

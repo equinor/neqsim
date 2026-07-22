@@ -9,9 +9,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SeparatorTest class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -28,9 +26,7 @@ public class SeparatorTest extends BasePVTsimulation {
   double oilVolumeStdCond = 0;
 
   /**
-   * <p>
    * Constructor for SeparatorTest.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -39,9 +35,7 @@ public class SeparatorTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * setSeparatorConditions.
-   * </p>
    *
    * @param temperature an array of type double
    * @param pressure an array of type double
@@ -52,9 +46,7 @@ public class SeparatorTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     Sm3gas = new double[pressure.length];
@@ -71,10 +63,8 @@ public class SeparatorTest extends BasePVTsimulation {
       } else {
         m3oil[i] = getThermoSystem().getVolume();
       }
-      if (getThermoSystem().getNumberOfPhases() > 1
-          && getThermoSystem().getPhase(0).getType() == PhaseType.GAS) {
-        getThermoSystem().getPhase(0)
-            .setPressure(ThermodynamicConstantsInterface.referencePressure);
+      if (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPhase(0).getType() == PhaseType.GAS) {
+        getThermoSystem().getPhase(0).setPressure(ThermodynamicConstantsInterface.referencePressure);
         getThermoSystem().getPhase(0).setTemperature(288.15);
         getThermoSystem().init(1);
         Sm3gas[i] = getThermoSystem().getPhase(0).getVolume();
@@ -96,9 +86,7 @@ public class SeparatorTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -134,17 +122,14 @@ public class SeparatorTest extends BasePVTsimulation {
     tempSystem.setMixingRule(2);
 
     SeparatorTest sepSim = new SeparatorTest(tempSystem);
-    double[] temps = {313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15};
-    double[] pres =
-        {500, 400, 200, 100, 50.0, 5.0, ThermodynamicConstantsInterface.referencePressure};
+    double[] temps = { 313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15 };
+    double[] pres = { 500, 400, 200, 100, 50.0, 5.0, ThermodynamicConstantsInterface.referencePressure };
     sepSim.setSeparatorConditions(temps, pres);
     sepSim.runCalc();
   }
 
   /**
-   * <p>
    * getGOR.
-   * </p>
    *
    * @return the GOR
    */
@@ -153,9 +138,7 @@ public class SeparatorTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getBofactor.
-   * </p>
    *
    * @return the Bofactor
    */

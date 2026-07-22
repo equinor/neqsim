@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PSFlashLeachman class.
- * </p>
  *
  * @author victorigi99
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class PSFlashLeachman extends QfuncFlash {
   double cP_Leachman = 0.0;
 
   /**
-   * <p>
    * Constructor for PSFlashLeachman.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Sspec a double

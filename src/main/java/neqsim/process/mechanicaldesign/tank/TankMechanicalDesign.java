@@ -5,21 +5,27 @@ import java.awt.Container;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import neqsim.process.costestimation.tank.TankCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.tank.Tank;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * Mechanical design calculations for storage tanks per API 650/620.
+ * Preliminary mechanical-design calculations for storage tanks.
  *
  * <p>
- * This class provides sizing and design calculations for storage tanks based on:
+ * This class provides storage-tank screening calculations informed by common API 650 design concepts:
  * </p>
  * <ul>
- * <li>API 650 - Welded Tanks for Oil Storage (atmospheric pressure)</li>
- * <li>API 620 - Design and Construction of Large, Welded, Low-pressure Storage Tanks</li>
+ * <li>shell-course hydrostatic sizing for atmospheric storage;</li>
+ * <li>preliminary bottom, roof, wind, seismic, weight, and foundation estimates.</li>
  * </ul>
+ *
+ * <p>
+ * The class is not an edition-specific API 650 or API 620 implementation and does not establish code conformity,
+ * fabrication readiness, or vendor acceptance. API 620 selections remain catalog-only in the strict standards registry.
+ * </p>
  *
  * <p>
  * Calculations include:
@@ -193,6 +199,7 @@ public class TankMechanicalDesign extends MechanicalDesign {
    */
   public TankMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new TankCostEstimate(this);
   }
 
   /** {@inheritDoc} */
@@ -208,8 +215,7 @@ public class TankMechanicalDesign extends MechanicalDesign {
     // Estimate liquid density if available
     if (tank.getLiquidOutStream() != null && tank.getLiquidOutStream().getThermoSystem() != null) {
       try {
-        designSpecificGravity =
-            tank.getLiquidOutStream().getThermoSystem().getDensity("kg/m3") / 1000.0;
+        designSpecificGravity = tank.getLiquidOutStream().getThermoSystem().getDensity("kg/m3") / 1000.0;
       } catch (Exception e) {
         designSpecificGravity = 0.85; // Default for oil
       }
@@ -244,8 +250,7 @@ public class TankMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * Size tank geometry (diameter and height) for given volume. Optimizes for minimum surface area
-   * (economic design).
+   * Size tank geometry (diameter and height) for given volume. Optimizes for minimum surface area (economic design).
    *
    * @param volumeM3 required volume in m³
    */
@@ -353,8 +358,8 @@ public class TankMechanicalDesign extends MechanicalDesign {
    * @return standard plate thickness
    */
   private double roundToStandardThickness(double thickness) {
-    double[] standardThicknesses = {5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 25.0,
-        28.0, 30.0, 32.0, 35.0, 38.0, 40.0, 45.0, 50.0};
+    double[] standardThicknesses = { 5.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 22.0, 25.0, 28.0, 30.0, 32.0,
+        35.0, 38.0, 40.0, 45.0, 50.0 };
 
     for (double std : standardThicknesses) {
       if (std >= thickness) {
@@ -428,8 +433,7 @@ public class TankMechanicalDesign extends MechanicalDesign {
     } else if (roofType == RoofType.DOME) {
       // Dome roof area
       double roofRadius = tankDiameter * 0.8;
-      double roofHeight =
-          roofRadius - Math.sqrt(roofRadius * roofRadius - tankDiameter * tankDiameter / 4.0);
+      double roofHeight = roofRadius - Math.sqrt(roofRadius * roofRadius - tankDiameter * tankDiameter / 4.0);
       roofArea = 2.0 * Math.PI * roofRadius * roofHeight;
     } else {
       // Flat or floating roof
@@ -449,8 +453,7 @@ public class TankMechanicalDesign extends MechanicalDesign {
     structuralWeight = estimateStructuralWeight();
 
     // Total weight
-    double emptyWeight =
-        shellWeight + bottomWeight + roofWeight + appurtenancesWeight + structuralWeight;
+    double emptyWeight = shellWeight + bottomWeight + roofWeight + appurtenancesWeight + structuralWeight;
 
     // Set base class weights
     weigthVesselShell = shellWeight;
@@ -727,25 +730,20 @@ public class TankMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] columnNames = {"Parameter", "Value", "Unit"};
-    String[][] data =
-        {{"Tank Type", tankType.toString(), ""}, {"Roof Type", roofType.toString(), ""},
-            {"Diameter", String.format("%.1f", tankDiameter), "m"},
-            {"Height", String.format("%.1f", tankHeight), "m"},
-            {"Number of Courses", String.valueOf(numberOfCourses), ""},
-            {"Bottom Course Thickness",
-                String.format("%.1f", shellThicknesses != null ? shellThicknesses[0] : 0), "mm"},
-            {"Top Course Thickness",
-                String.format("%.1f",
-                    shellThicknesses != null ? shellThicknesses[numberOfCourses - 1] : 0),
-                "mm"},
-            {"Bottom Thickness", String.format("%.1f", bottomThickness), "mm"},
-            {"Roof Thickness", String.format("%.1f", roofThickness), "mm"},
-            {"Nominal Capacity", String.format("%.0f", nominalCapacity), "m³"},
-            {"Working Capacity", String.format("%.0f", workingCapacity), "m³"},
-            {"Shell Weight", String.format("%.0f", shellWeight), "kg"},
-            {"Total Weight", String.format("%.0f", getWeightTotal()), "kg"},
-            {"Foundation Load", String.format("%.0f", foundationLoad), "kN"}};
+    String[] columnNames = { "Parameter", "Value", "Unit" };
+    String[][] data = { { "Tank Type", tankType.toString(), "" }, { "Roof Type", roofType.toString(), "" },
+        { "Diameter", String.format("%.1f", tankDiameter), "m" }, { "Height", String.format("%.1f", tankHeight), "m" },
+        { "Number of Courses", String.valueOf(numberOfCourses), "" },
+        { "Bottom Course Thickness", String.format("%.1f", shellThicknesses != null ? shellThicknesses[0] : 0), "mm" },
+        { "Top Course Thickness",
+            String.format("%.1f", shellThicknesses != null ? shellThicknesses[numberOfCourses - 1] : 0), "mm" },
+        { "Bottom Thickness", String.format("%.1f", bottomThickness), "mm" },
+        { "Roof Thickness", String.format("%.1f", roofThickness), "mm" },
+        { "Nominal Capacity", String.format("%.0f", nominalCapacity), "m³" },
+        { "Working Capacity", String.format("%.0f", workingCapacity), "m³" },
+        { "Shell Weight", String.format("%.0f", shellWeight), "kg" },
+        { "Total Weight", String.format("%.0f", getWeightTotal()), "kg" },
+        { "Foundation Load", String.format("%.0f", foundationLoad), "kN" } };
 
     JTable table = new JTable(data, columnNames);
     JScrollPane scrollPane = new JScrollPane(table);

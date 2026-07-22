@@ -2,14 +2,13 @@
  * Economics package for field development analysis.
  *
  * <p>
- * This package provides comprehensive economic modeling capabilities for oil and gas field
- * development, including:
+ * This package provides comprehensive economic modeling capabilities for oil and gas field development, including:
  * </p>
  * <ul>
- * <li>{@link neqsim.process.fielddevelopment.economics.NorwegianTaxModel} - Norwegian Continental
- * Shelf petroleum tax model with corporate tax, special petroleum tax, and uplift deductions</li>
- * <li>{@link neqsim.process.fielddevelopment.economics.CashFlowEngine} - Full-lifecycle cash flow
- * generation with NPV, IRR, and breakeven analysis</li>
+ * <li>{@link neqsim.process.fielddevelopment.economics.NorwegianTaxModel} - Norwegian Continental Shelf petroleum tax
+ * model with corporate tax, special petroleum tax, and uplift deductions</li>
+ * <li>{@link neqsim.process.fielddevelopment.economics.CashFlowEngine} - Full-lifecycle cash flow generation with NPV,
+ * IRR, and breakeven analysis</li>
  * </ul>
  *
  * <h2>Norwegian Petroleum Tax Model</h2>
@@ -36,7 +35,7 @@
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create tax model
  * NorwegianTaxModel taxModel = new NorwegianTaxModel();

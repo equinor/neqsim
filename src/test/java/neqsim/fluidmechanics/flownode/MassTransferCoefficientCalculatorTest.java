@@ -18,16 +18,16 @@ class MassTransferCoefficientCalculatorTest {
 
   @Test
   void testLiquidMassTransferCoefficientPositive() {
-    double kL = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(
-        FlowPattern.STRATIFIED, DIAMETER, 0.3, 5.0, 0.5, RHO_L, MU_L, DIFF_L);
+    double kL = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(FlowPattern.STRATIFIED,
+        DIAMETER, 0.3, 5.0, 0.5, RHO_L, MU_L, DIFF_L);
 
     assertTrue(kL > 0, "Liquid mass transfer coefficient should be positive");
   }
 
   @Test
   void testGasMassTransferCoefficientPositive() {
-    double kG = MassTransferCoefficientCalculator.calculateGasMassTransferCoefficient(
-        FlowPattern.STRATIFIED, DIAMETER, 0.3, 5.0, RHO_G, MU_G, DIFF_G);
+    double kG = MassTransferCoefficientCalculator.calculateGasMassTransferCoefficient(FlowPattern.STRATIFIED, DIAMETER,
+        0.3, 5.0, RHO_G, MU_G, DIFF_G);
 
     assertTrue(kG > 0, "Gas mass transfer coefficient should be positive");
   }
@@ -35,10 +35,10 @@ class MassTransferCoefficientCalculatorTest {
   @Test
   void testGasKLargerThanLiquidK() {
     // Gas-side mass transfer is typically faster due to higher diffusivity
-    double kL = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(
-        FlowPattern.STRATIFIED, DIAMETER, 0.3, 5.0, 0.5, RHO_L, MU_L, DIFF_L);
-    double kG = MassTransferCoefficientCalculator.calculateGasMassTransferCoefficient(
-        FlowPattern.STRATIFIED, DIAMETER, 0.3, 5.0, RHO_G, MU_G, DIFF_G);
+    double kL = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(FlowPattern.STRATIFIED,
+        DIAMETER, 0.3, 5.0, 0.5, RHO_L, MU_L, DIFF_L);
+    double kG = MassTransferCoefficientCalculator.calculateGasMassTransferCoefficient(FlowPattern.STRATIFIED, DIAMETER,
+        0.3, 5.0, RHO_G, MU_G, DIFF_G);
 
     assertTrue(kG > kL, "Gas-side k should be larger than liquid-side k");
   }
@@ -68,8 +68,8 @@ class MassTransferCoefficientCalculatorTest {
   @Test
   void testAllFlowPatternsGiveLiquidK() {
     for (FlowPattern pattern : FlowPattern.values()) {
-      double kL = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(pattern,
-          DIAMETER, 0.3, 5.0, 0.5, RHO_L, MU_L, DIFF_L);
+      double kL = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(pattern, DIAMETER, 0.3, 5.0,
+          0.5, RHO_L, MU_L, DIFF_L);
       assertTrue(kL > 0, "Liquid k should be positive for " + pattern);
     }
   }
@@ -77,18 +77,18 @@ class MassTransferCoefficientCalculatorTest {
   @Test
   void testAllFlowPatternsGiveGasK() {
     for (FlowPattern pattern : FlowPattern.values()) {
-      double kG = MassTransferCoefficientCalculator.calculateGasMassTransferCoefficient(pattern,
-          DIAMETER, 0.3, 5.0, RHO_G, MU_G, DIFF_G);
+      double kG = MassTransferCoefficientCalculator.calculateGasMassTransferCoefficient(pattern, DIAMETER, 0.3, 5.0,
+          RHO_G, MU_G, DIFF_G);
       assertTrue(kG > 0, "Gas k should be positive for " + pattern);
     }
   }
 
   @Test
   void testHigherVelocityGivesHigherK() {
-    double kL_low = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(
-        FlowPattern.ANNULAR, DIAMETER, 0.1, 5.0, 0.3, RHO_L, MU_L, DIFF_L);
-    double kL_high = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(
-        FlowPattern.ANNULAR, DIAMETER, 0.1, 5.0, 1.0, RHO_L, MU_L, DIFF_L);
+    double kL_low = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(FlowPattern.ANNULAR,
+        DIAMETER, 0.1, 5.0, 0.3, RHO_L, MU_L, DIFF_L);
+    double kL_high = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(FlowPattern.ANNULAR,
+        DIAMETER, 0.1, 5.0, 1.0, RHO_L, MU_L, DIFF_L);
 
     assertTrue(kL_high > kL_low, "Higher velocity should give higher mass transfer");
   }
@@ -96,8 +96,8 @@ class MassTransferCoefficientCalculatorTest {
   @Test
   void testTypicalMagnitudeOrder() {
     // Typical liquid-side mass transfer coefficients are 10^-5 to 10^-3 m/s
-    double kL = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(
-        FlowPattern.BUBBLE, DIAMETER, 0.9, 1.0, 1.0, RHO_L, MU_L, DIFF_L);
+    double kL = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(FlowPattern.BUBBLE, DIAMETER,
+        0.9, 1.0, 1.0, RHO_L, MU_L, DIFF_L);
 
     assertTrue(kL > 1e-6 && kL < 1e-2, "k_L should be in typical range 10^-6 to 10^-2 m/s");
   }
@@ -105,10 +105,10 @@ class MassTransferCoefficientCalculatorTest {
   @Test
   void testSlugFlowEnhancement() {
     // Slug flow typically has enhanced mass transfer due to mixing
-    double kL_strat = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(
-        FlowPattern.STRATIFIED, DIAMETER, 0.4, 3.0, 0.5, RHO_L, MU_L, DIFF_L);
-    double kL_slug = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(
-        FlowPattern.SLUG, DIAMETER, 0.4, 3.0, 0.5, RHO_L, MU_L, DIFF_L);
+    double kL_strat = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(FlowPattern.STRATIFIED,
+        DIAMETER, 0.4, 3.0, 0.5, RHO_L, MU_L, DIFF_L);
+    double kL_slug = MassTransferCoefficientCalculator.calculateLiquidMassTransferCoefficient(FlowPattern.SLUG,
+        DIAMETER, 0.4, 3.0, 0.5, RHO_L, MU_L, DIFF_L);
 
     // Slug may or may not be higher depending on conditions, but both should be positive
     assertTrue(kL_strat > 0 && kL_slug > 0, "Both should give positive values");

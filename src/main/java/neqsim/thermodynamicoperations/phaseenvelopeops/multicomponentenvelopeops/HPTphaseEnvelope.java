@@ -18,9 +18,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * HPTphaseEnvelope class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -43,9 +41,7 @@ public class HPTphaseEnvelope extends BaseOperation {
   double endTemperature = 0;
 
   /**
-   * <p>
    * Constructor for HPTphaseEnvelope.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -93,16 +89,16 @@ public class HPTphaseEnvelope extends BaseOperation {
   @ExcludeFromJacocoGeneratedReport
   public void displayResult() {
     /*
-     * try { mainFrame.setVisible(false); visAd3DPlot plot = new visAd3DPlot("pressure[bar]",
-     * "temperature[K]", "enthalpy[J/mol]"); plot.setXYvals(150, 160, 10, 10, 20, 10);
-     * plot.setZvals(points); plot.init(); } catch (Exception ex) { logger.error("plotting failed");
-     * }
+     * try { mainFrame.setVisible(false); visAd3DPlot plot = new visAd3DPlot("pressure[bar]", "temperature[K]",
+     * "enthalpy[J/mol]"); plot.setXYvals(150, 160, 10, 10, 20, 10); plot.setZvals(points); plot.init(); } catch
+     * (Exception ex) { logger.error("plotting failed"); }
      */
   }
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 
   /** {@inheritDoc} */
   @Override

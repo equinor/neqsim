@@ -1,10 +1,14 @@
 package neqsim.process.util.report;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class FluidReportTest {
+  private static final Logger logger = LogManager.getLogger(FluidReportTest.class);
+
   @Test
   void testWrite() {
     SystemSrkEos testSystem = new SystemSrkEos(298.0, 10.0);
@@ -15,10 +19,10 @@ public class FluidReportTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
     ops.TPflash();
 
-    String report = testSystem.toJson();
-    // System.out.println(report);
+    testSystem.toJson();
+    // logger.info(report);
     neqsim.util.unit.Units.activateFieldUnits();
-    report = testSystem.toJson();
-    // System.out.println(report);
+    testSystem.toJson();
+    // logger.info(report);
   }
 }

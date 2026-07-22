@@ -1,6 +1,10 @@
 package neqsim.process.measurementdevice;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
@@ -14,6 +18,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Unit tests for the {@link FlowInducedVibrationAnalyser} class.
  */
 public class FlowInducedVibrationAnalyserTest {
+  private static final Logger logger = LogManager.getLogger(FlowInducedVibrationAnalyserTest.class);
 
   @Test
   @DisplayName("Test LOF calculation method with Stiff support arrangement")
@@ -59,7 +64,7 @@ public class FlowInducedVibrationAnalyserTest {
     assertTrue(lofValue < 1.0, "LOF value should be less than 1.0 for this flow regime");
 
     // The actual value will depend on the simulation results, but we can check if it's reasonable
-    // System.out.println("LOF value (Stiff support): " + lofValue);
+    // logger.info("LOF value (Stiff support): " + lofValue);
   }
 
   @Test
@@ -92,20 +97,17 @@ public class FlowInducedVibrationAnalyserTest {
     process.add(pipe);
 
     // Test with different support arrangements
-    FlowInducedVibrationAnalyser stiffAnalyzer =
-        new FlowInducedVibrationAnalyser("Stiff analyzer", pipe);
+    FlowInducedVibrationAnalyser stiffAnalyzer = new FlowInducedVibrationAnalyser("Stiff analyzer", pipe);
     stiffAnalyzer.setMethod("LOF");
     stiffAnalyzer.setSupportArrangement("Stiff");
     process.add(stiffAnalyzer);
 
-    FlowInducedVibrationAnalyser mediumStiffAnalyzer =
-        new FlowInducedVibrationAnalyser("Medium stiff analyzer", pipe);
+    FlowInducedVibrationAnalyser mediumStiffAnalyzer = new FlowInducedVibrationAnalyser("Medium stiff analyzer", pipe);
     mediumStiffAnalyzer.setMethod("LOF");
     mediumStiffAnalyzer.setSupportArrangement("Medium stiff");
     process.add(mediumStiffAnalyzer);
 
-    FlowInducedVibrationAnalyser mediumAnalyzer =
-        new FlowInducedVibrationAnalyser("Medium analyzer", pipe);
+    FlowInducedVibrationAnalyser mediumAnalyzer = new FlowInducedVibrationAnalyser("Medium analyzer", pipe);
     mediumAnalyzer.setMethod("LOF");
     mediumAnalyzer.setSupportArrangement("Medium");
     process.add(mediumAnalyzer);
@@ -118,9 +120,9 @@ public class FlowInducedVibrationAnalyserTest {
     double mediumStiffValue = mediumStiffAnalyzer.getMeasuredValue();
     double mediumValue = mediumAnalyzer.getMeasuredValue();
 
-    // System.out.println("LOF value (Stiff support): " + stiffValue);
-    // System.out.println("LOF value (Medium stiff support): " + mediumStiffValue);
-    // System.out.println("LOF value (Medium support): " + mediumValue);
+    // logger.info("LOF value (Stiff support): " + stiffValue);
+    // logger.info("LOF value (Medium stiff support): " + mediumStiffValue);
+    // logger.info("LOF value (Medium support): " + mediumValue);
 
     // Different support arrangements should give different values
     // assertNotEquals(stiffValue, mediumStiffValue, DELTA);
@@ -159,8 +161,7 @@ public class FlowInducedVibrationAnalyserTest {
     pipe.setNumberOfIncrements(10);
 
     // Create flow induced vibration analyzer with FRMS method
-    FlowInducedVibrationAnalyser frmsAnalyzer =
-        new FlowInducedVibrationAnalyser("FRMS analyzer", pipe);
+    FlowInducedVibrationAnalyser frmsAnalyzer = new FlowInducedVibrationAnalyser("FRMS analyzer", pipe);
     frmsAnalyzer.setMethod("FRMS");
     frmsAnalyzer.setFRMSConstant(6.7); // Default constant
 
@@ -174,7 +175,7 @@ public class FlowInducedVibrationAnalyserTest {
     // Get measured FRMS value
     double frmsValue = frmsAnalyzer.getMeasuredValue();
 
-    System.out.println("FRMS value: " + frmsValue);
+    logger.info("FRMS value: " + frmsValue);
     // The result depends on GVF. If GVF > 0.8, it will be calculated with the formula.
     // If GVF < 0.8, it will return the GVF value directly.
     // assertTrue(frmsValue > 0.0, "FRMS value should be positive");
@@ -205,12 +206,11 @@ public class FlowInducedVibrationAnalyserTest {
     pipe.setNumberOfIncrements(10);
 
     // Create analyzers for different segments
-    FlowInducedVibrationAnalyser analyzerDefaultSegment =
-        new FlowInducedVibrationAnalyser("Default segment analyzer", pipe);
+    FlowInducedVibrationAnalyser analyzerDefaultSegment = new FlowInducedVibrationAnalyser("Default segment analyzer",
+        pipe);
     analyzerDefaultSegment.setMethod("LOF");
 
-    FlowInducedVibrationAnalyser analyzerSegment5 =
-        new FlowInducedVibrationAnalyser("Segment 5 analyzer", pipe);
+    FlowInducedVibrationAnalyser analyzerSegment5 = new FlowInducedVibrationAnalyser("Segment 5 analyzer", pipe);
     analyzerSegment5.setMethod("LOF");
     analyzerSegment5.setSegment(5); // Set to use segment 5
 
@@ -226,10 +226,78 @@ public class FlowInducedVibrationAnalyserTest {
     double defaultSegmentValue = analyzerDefaultSegment.getMeasuredValue();
     double segment5Value = analyzerSegment5.getMeasuredValue();
 
-    System.out.println("Default segment LOF value: " + defaultSegmentValue);
-    System.out.println("Segment 5 LOF value: " + segment5Value);
+    logger.info("Default segment LOF value: " + defaultSegmentValue);
+    logger.info("Segment 5 LOF value: " + segment5Value);
 
     // Due to pressure and density changes along the pipe, the values should be different
     // assertNotEquals(defaultSegmentValue, segment5Value, DELTA);
+  }
+
+  @Test
+  @DisplayName("LOF with zero wall thickness throws a clear exception instead of returning NaN")
+  public void testLOFRequiresPositiveWallThickness() {
+    SystemInterface thermoSystem = new SystemSrkEos(298.15, 70.0);
+    thermoSystem.addComponent("methane", 0.90);
+    thermoSystem.addComponent("ethane", 0.10);
+    thermoSystem.setMixingRule("classic");
+    thermoSystem.setTotalFlowRate(100.0, "kg/hr");
+
+    ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem);
+    ops.TPflash();
+    thermoSystem.initPhysicalProperties();
+
+    Stream stream = new Stream("test stream", thermoSystem);
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("test pipe", stream);
+    pipe.setDiameter(0.1);
+    // Intentionally leave the wall thickness unset (defaults to 0.0)
+    pipe.setLength(50.0);
+    pipe.setElevation(0.0);
+    pipe.setPipeWallRoughness(1.0e-5);
+    pipe.setNumberOfIncrements(10);
+
+    FlowInducedVibrationAnalyser analyzer = new FlowInducedVibrationAnalyser("LOF analyzer", pipe);
+    analyzer.setMethod("LOF");
+
+    ProcessSystem process = new ProcessSystem();
+    process.add(stream);
+    process.add(pipe);
+    process.add(analyzer);
+    process.run();
+
+    IllegalStateException ex = assertThrows(IllegalStateException.class, () -> analyzer.getMeasuredValue("any"));
+    assertTrue(ex.getMessage().contains("wall thickness"),
+        "Exception message should explain the missing wall thickness");
+  }
+
+  @Test
+  @DisplayName("Support arrangement is validated and normalised; getters expose state")
+  public void testSupportArrangementValidationAndGetters() {
+    SystemInterface thermoSystem = new SystemSrkEos(298.15, 70.0);
+    thermoSystem.addComponent("methane", 1.0);
+    thermoSystem.setMixingRule("classic");
+    Stream stream = new Stream("test stream", thermoSystem);
+    PipeBeggsAndBrills pipe = new PipeBeggsAndBrills("test pipe", stream);
+
+    FlowInducedVibrationAnalyser analyzer = new FlowInducedVibrationAnalyser("analyzer", pipe);
+
+    // Default is Stiff
+    assertEquals("Stiff", analyzer.getSupportArrangement());
+
+    // Case-insensitive input is normalised to the canonical spelling
+    analyzer.setSupportArrangement("medium STIFF");
+    assertEquals("Medium stiff", analyzer.getSupportArrangement());
+
+    analyzer.setSupportArrangement("Flexible");
+    assertEquals("Flexible", analyzer.getSupportArrangement());
+
+    // Invalid categories are rejected with a helpful message
+    IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+        () -> analyzer.setSupportArrangement("Very Stiff"));
+    assertTrue(ex.getMessage().contains("Valid values"));
+    assertThrows(IllegalArgumentException.class, () -> analyzer.setSupportArrangement(null));
+
+    // supportDistance is informational only but still round-trips
+    analyzer.setSupportDistance(6.0);
+    assertEquals(6.0, analyzer.getSupportDistance(), 1.0e-9);
   }
 }

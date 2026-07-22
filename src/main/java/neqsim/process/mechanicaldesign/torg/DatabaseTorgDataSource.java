@@ -6,21 +6,20 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import neqsim.process.mechanicaldesign.designstandards.StandardType;
-import neqsim.util.database.NeqSimProcessDesignDataBase;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.mechanicaldesign.designstandards.StandardType;
+import neqsim.util.database.NeqSimProcessDesignDataBase;
 
 /**
  * Database-based data source for loading Technical Requirements Documents (TORG).
  *
  * <p>
- * This implementation loads TORG data from the NeqSim process design database. It expects the
- * following tables:
+ * This implementation loads TORG data from the NeqSim process design database. It expects the following tables:
  * </p>
  *
  * <h2>TORG_Projects table</h2>
- * 
+ *
  * <pre>
  * CREATE TABLE TORG_Projects (
  *   PROJECT_ID VARCHAR(50) PRIMARY KEY,
@@ -40,7 +39,7 @@ import org.apache.logging.log4j.Logger;
  * </pre>
  *
  * <h2>TORG_Standards table</h2>
- * 
+ *
  * <pre>
  * CREATE TABLE TORG_Standards (
  *   PROJECT_ID VARCHAR(50),
@@ -53,8 +52,8 @@ import org.apache.logging.log4j.Logger;
  * </pre>
  *
  * <p>
- * Alternatively, this data source can also read from the existing TechnicalRequirements_Process
- * table for backward compatibility.
+ * Alternatively, this data source can also read from the existing TechnicalRequirements_Process table for backward
+ * compatibility.
  * </p>
  *
  * @author esol
@@ -65,19 +64,16 @@ public class DatabaseTorgDataSource implements TorgDataSource {
 
   private static final String QUERY_PROJECT = "SELECT * FROM TORG_Projects WHERE PROJECT_ID = '%s'";
 
-  private static final String QUERY_PROJECT_BY_COMPANY =
-      "SELECT * FROM TORG_Projects WHERE COMPANY = '%s' AND PROJECT_NAME = '%s'";
+  private static final String QUERY_PROJECT_BY_COMPANY = "SELECT * FROM TORG_Projects WHERE COMPANY = '%s' AND PROJECT_NAME = '%s'";
 
-  private static final String QUERY_STANDARDS =
-      "SELECT * FROM TORG_Standards WHERE PROJECT_ID = '%s' ORDER BY PRIORITY";
+  private static final String QUERY_STANDARDS = "SELECT * FROM TORG_Standards WHERE PROJECT_ID = '%s' ORDER BY PRIORITY";
 
   private static final String QUERY_ALL_PROJECTS = "SELECT PROJECT_ID FROM TORG_Projects";
 
   private static final String QUERY_ALL_COMPANIES = "SELECT DISTINCT COMPANY FROM TORG_Projects";
 
   // Fallback queries for legacy TechnicalRequirements_Process table
-  private static final String LEGACY_QUERY =
-      "SELECT * FROM TechnicalRequirements_Process WHERE Company = '%s'";
+  private static final String LEGACY_QUERY = "SELECT * FROM TechnicalRequirements_Process WHERE Company = '%s'";
 
   private boolean useLegacyTable = false;
 
@@ -142,8 +138,7 @@ public class DatabaseTorgDataSource implements TorgDataSource {
   }
 
   @Override
-  public Optional<TechnicalRequirementsDocument> loadByCompanyAndProject(String companyIdentifier,
-      String projectName) {
+  public Optional<TechnicalRequirementsDocument> loadByCompanyAndProject(String companyIdentifier, String projectName) {
     if (companyIdentifier == null || projectName == null) {
       return Optional.empty();
     }
@@ -211,8 +206,7 @@ public class DatabaseTorgDataSource implements TorgDataSource {
   public List<String> getAvailableCompanies() {
     List<String> companies = new ArrayList<>();
 
-    String query = useLegacyTable ? "SELECT DISTINCT Company FROM TechnicalRequirements_Process"
-        : QUERY_ALL_COMPANIES;
+    String query = useLegacyTable ? "SELECT DISTINCT Company FROM TechnicalRequirements_Process" : QUERY_ALL_COMPANIES;
 
     try (NeqSimProcessDesignDataBase database = new NeqSimProcessDesignDataBase();
         ResultSet rs = database.getResultSet(query)) {
@@ -240,9 +234,9 @@ public class DatabaseTorgDataSource implements TorgDataSource {
       String query = String.format(LEGACY_QUERY, companyIdentifier);
       ResultSet rs = database.getResultSet(query);
 
-      TechnicalRequirementsDocument.Builder builder =
-          TechnicalRequirementsDocument.builder().projectId(companyIdentifier)
-              .projectName("Legacy TR").companyIdentifier(companyIdentifier).revision("Legacy");
+      TechnicalRequirementsDocument.Builder builder = TechnicalRequirementsDocument.builder()
+          .projectId(companyIdentifier).projectName("Legacy TR").companyIdentifier(companyIdentifier)
+          .revision("Legacy");
 
       // Parse legacy data into design limits
       Map<String, DesignLimits> equipmentLimits = new HashMap<>();
@@ -299,8 +293,7 @@ public class DatabaseTorgDataSource implements TorgDataSource {
     }
   }
 
-  private TechnicalRequirementsDocument.Builder buildFromProjectResultSet(ResultSet rs)
-      throws java.sql.SQLException {
+  private TechnicalRequirementsDocument.Builder buildFromProjectResultSet(ResultSet rs) throws java.sql.SQLException {
     TechnicalRequirementsDocument.Builder builder = TechnicalRequirementsDocument.builder()
         .projectId(rs.getString("PROJECT_ID")).projectName(rs.getString("PROJECT_NAME"))
         .companyIdentifier(rs.getString("COMPANY")).revision(rs.getString("REVISION"));
@@ -317,27 +310,25 @@ public class DatabaseTorgDataSource implements TorgDataSource {
     String seismicZone = rs.getString("SEISMIC_ZONE");
 
     if (!rs.wasNull()) {
-      builder.environmentalConditions(new TechnicalRequirementsDocument.EnvironmentalConditions(
-          minAmbient, maxAmbient, seawaterTemp, seismicZone != null ? seismicZone : "0", 0, 0, ""));
+      builder.environmentalConditions(new TechnicalRequirementsDocument.EnvironmentalConditions(minAmbient, maxAmbient,
+          seawaterTemp, seismicZone != null ? seismicZone : "0", 0, 0, ""));
     }
 
     // Safety factors
     double corrosionAllowance = rs.getDouble("CORROSION_ALLOWANCE");
     double pressureSF = rs.getDouble("PRESSURE_SAFETY_FACTOR");
     if (!rs.wasNull()) {
-      builder.safetyFactors(new TechnicalRequirementsDocument.SafetyFactors(
-          Double.isNaN(pressureSF) ? 1.1 : pressureSF, 10.0,
-          Double.isNaN(corrosionAllowance) ? 3.0 : corrosionAllowance, 0.125, 1.0));
+      builder.safetyFactors(new TechnicalRequirementsDocument.SafetyFactors(Double.isNaN(pressureSF) ? 1.1 : pressureSF,
+          10.0, Double.isNaN(corrosionAllowance) ? 3.0 : corrosionAllowance, 0.125, 1.0));
     }
 
     // Material specs
     String plateMaterial = rs.getString("DEFAULT_PLATE_MATERIAL");
     String pipeMaterial = rs.getString("DEFAULT_PIPE_MATERIAL");
     if (plateMaterial != null || pipeMaterial != null) {
-      builder.materialSpecifications(new TechnicalRequirementsDocument.MaterialSpecifications(
-          plateMaterial != null ? plateMaterial : "A516-70",
-          pipeMaterial != null ? pipeMaterial : "A106-B", minAmbient, 300.0, minAmbient < -29,
-          "ASTM"));
+      builder.materialSpecifications(
+          new TechnicalRequirementsDocument.MaterialSpecifications(plateMaterial != null ? plateMaterial : "A516-70",
+              pipeMaterial != null ? pipeMaterial : "A106-B", minAmbient, 300.0, minAmbient < -29, "ASTM"));
     }
 
     return builder;

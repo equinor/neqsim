@@ -1,3 +1,8 @@
+---
+title: "Stream Fitters: GOR and MPFM Data Fitting"
+description: Utilities for adjusting stream compositions based on measured Gas-Oil Ratio (GOR) or Multiphase Flow Meter (MPFM) data.
+---
+
 # Stream Fitters: GOR and MPFM Data Fitting
 
 Utilities for adjusting stream compositions based on measured Gas-Oil Ratio (GOR) or Multiphase Flow Meter (MPFM) data.
@@ -257,7 +262,7 @@ Choose the appropriate mode based on your measurement:
 gorFitter.setFitAsGVF(false);
 gorFitter.setGOR(150.0);  // 150 Sm³ gas per Sm³ oil
 
-// GVF mode: Gas volume fraction (0-1)  
+// GVF mode: Gas volume fraction (0-1)
 gorFitter.setFitAsGVF(true);
 gorFitter.setGOR(0.40);   // 40% gas by volume
 ```
@@ -330,10 +335,10 @@ print(f"Result GVF: {gvf_fitter.getGFV() * 100:.1f}%")
 
 ## Related Documentation
 
-- [Well Allocation](well_allocation.md) - Production allocation methods
-- [Streams](streams.md) - Stream creation and manipulation
-- [Separators](separators.md) - Test separator modeling
-- [Digital Twin Integration](../digital-twin-integration.md) - Real-time calibration
+- [Well Allocation](../well_allocation) - Production allocation methods
+- [Streams](../streams) - Stream creation and manipulation
+- [Separators](../separators) - Test separator modeling
+- [Digital Twin Integration](../../digital-twin-integration) - Real-time calibration
 
 ---
 

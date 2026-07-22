@@ -9,32 +9,27 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * NeqSimFluidDataBase class.
- * </p>
  *
  * @author esol
- * @version The database is used for storing fluid info and recreating a fluid it uses the database
- *          neqsimfluiddatabase for storing fluid information
+ * @version The database is used for storing fluid info and recreating a fluid it uses the database neqsimfluiddatabase
+ * for storing fluid information
  */
-public class NeqSimFluidDataBase
-    implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
+public class NeqSimFluidDataBase implements neqsim.util.util.FileSystemSettings, java.io.Serializable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(NeqSimFluidDataBase.class);
 
   static boolean started = false;
-  protected Connection databaseConnection;
+  protected transient Connection databaseConnection;
   /** Constant <code>useOnlineBase=false</code>. */
   public static boolean useOnlineBase = false;
   static int numb = 0;
-  Statement statement = null;
+  transient Statement statement = null;
 
   /**
-   * <p>
    * Constructor for NeqSimFluidDataBase.
-   * </p>
    */
   public NeqSimFluidDataBase() {
     try {
@@ -55,9 +50,7 @@ public class NeqSimFluidDataBase
   }
 
   /**
-   * <p>
    * openConnection.
-   * </p>
    *
    * @param database a {@link java.lang.String} object
    * @return a Connection object
@@ -75,16 +68,14 @@ public class NeqSimFluidDataBase
       } else {
         dir = System.getProperty("NeqSim.home");
       }
-      return DriverManager.getConnection(
-          "jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\" + database);
+      return DriverManager
+          .getConnection("jdbc:odbc:DRIVER={Microsoft Access Driver (*.mdb)};DBQ=" + dir + "\\data\\" + database);
       // return DriverManager.getConnection("jdbc:odbc:FluidDatabase");
     }
   }
 
   /**
-   * <p>
    * getConnection.
-   * </p>
    *
    * @return a Connection object
    */
@@ -93,9 +84,7 @@ public class NeqSimFluidDataBase
   }
 
   /**
-   * <p>
    * getResultSet.
-   * </p>
    *
    * @param database a {@link java.lang.String} object
    * @param sqlString a {@link java.lang.String} object
@@ -113,9 +102,7 @@ public class NeqSimFluidDataBase
   }
 
   /**
-   * <p>
    * getResultSet.
-   * </p>
    *
    * @param sqlString a {@link java.lang.String} object
    * @return a ResultSet object
@@ -125,9 +112,7 @@ public class NeqSimFluidDataBase
   }
 
   /**
-   * <p>
    * execute.
-   * </p>
    *
    * @param sqlString a {@link java.lang.String} object
    */

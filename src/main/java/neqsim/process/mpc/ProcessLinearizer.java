@@ -8,15 +8,15 @@ import neqsim.process.processmodel.ProcessSystem;
  * Computes linearized process models from NeqSim ProcessSystem using finite differences.
  *
  * <p>
- * The ProcessLinearizer automatically calculates the Jacobian matrices (gain matrices) that
- * describe how controlled variables respond to changes in manipulated variables around an operating
- * point. These matrices are essential for linear MPC algorithms.
+ * The ProcessLinearizer automatically calculates the Jacobian matrices (gain matrices) that describe how controlled
+ * variables respond to changes in manipulated variables around an operating point. These matrices are essential for
+ * linear MPC algorithms.
  * </p>
  *
  * <p>
  * The linearization uses central finite differences for improved accuracy:
  * </p>
- * 
+ *
  * <pre>
  * ∂CV[i]/∂MV[j] ≈ (CV[i](MV[j]+δ) - CV[i](MV[j]-δ)) / (2δ)
  * </pre>
@@ -24,7 +24,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Create linearizer for a process
@@ -185,8 +185,7 @@ public class ProcessLinearizer {
   /**
    * Set whether to use central differences.
    *
-   * @param useCentral true for central differences (more accurate), false for forward differences
-   *        (faster)
+   * @param useCentral true for central differences (more accurate), false for forward differences (faster)
    * @return this linearizer for method chaining
    */
   public ProcessLinearizer setUseCentralDifferences(boolean useCentral) {
@@ -335,12 +334,11 @@ public class ProcessLinearizer {
 
       long computationTime = System.currentTimeMillis() - startTime;
 
-      return new LinearizationResult(gainMatrix, disturbanceGainMatrix, mvBaseline, cvBaseline,
-          dvBaseline, mvNames, cvNames, dvNames, perturbationSize, computationTime);
+      return new LinearizationResult(gainMatrix, disturbanceGainMatrix, mvBaseline, cvBaseline, dvBaseline, mvNames,
+          cvNames, dvNames, perturbationSize, computationTime);
 
     } catch (Exception e) {
-      return new LinearizationResult("Linearization failed: " + e.getMessage(),
-          System.currentTimeMillis() - startTime);
+      return new LinearizationResult("Linearization failed: " + e.getMessage(), System.currentTimeMillis() - startTime);
     }
   }
 
@@ -352,8 +350,7 @@ public class ProcessLinearizer {
    * @param perturbationFraction the perturbation as a fraction
    * @return the perturbation delta
    */
-  private double calculatePerturbation(ManipulatedVariable mv, double currentValue,
-      double perturbationFraction) {
+  private double calculatePerturbation(ManipulatedVariable mv, double currentValue, double perturbationFraction) {
     double range = mv.getMaxValue() - mv.getMinValue();
     double delta;
 
@@ -457,8 +454,7 @@ public class ProcessLinearizer {
    * @param tolerance acceptable relative difference in gains
    * @return true if gains are consistent (linear behavior)
    */
-  public boolean isApproximatelyLinear(double perturbationSize1, double perturbationSize2,
-      double tolerance) {
+  public boolean isApproximatelyLinear(double perturbationSize1, double perturbationSize2, double tolerance) {
     LinearizationResult result1 = linearize(perturbationSize1);
     LinearizationResult result2 = linearize(perturbationSize2);
 

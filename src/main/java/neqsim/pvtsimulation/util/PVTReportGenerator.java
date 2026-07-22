@@ -340,8 +340,7 @@ public class PVTReportGenerator {
    * @param unit Unit
    * @return this for chaining
    */
-  public PVTReportGenerator addLabCCEData(double pressure, String property, double value,
-      String unit) {
+  public PVTReportGenerator addLabCCEData(double pressure, String property, double value, String unit) {
     labCCE.add(new LabDataPoint(pressure, property, value, unit));
     return this;
   }
@@ -355,8 +354,7 @@ public class PVTReportGenerator {
    * @param unit Unit
    * @return this for chaining
    */
-  public PVTReportGenerator addLabDLEData(double pressure, String property, double value,
-      String unit) {
+  public PVTReportGenerator addLabDLEData(double pressure, String property, double value, String unit) {
     labDLE.add(new LabDataPoint(pressure, property, value, unit));
     return this;
   }
@@ -390,10 +388,8 @@ public class PVTReportGenerator {
     sb.append(String.format("| Property | Value | Unit |\n"));
     sb.append(String.format("|----------|-------|------|\n"));
     sb.append(String.format("| Reservoir Pressure | %.1f | bara |\n", reservoirPressure));
-    sb.append(
-        String.format("| Reservoir Temperature | %.1f | °C |\n", reservoirTemperature - 273.15));
-    sb.append(String.format("| %s Pressure | %.2f | bara |\n", saturationPressureType,
-        saturationPressure));
+    sb.append(String.format("| Reservoir Temperature | %.1f | °C |\n", reservoirTemperature - 273.15));
+    sb.append(String.format("| %s Pressure | %.2f | bara |\n", saturationPressureType, saturationPressure));
     sb.append("\n");
 
     // Fluid Composition
@@ -492,8 +488,8 @@ public class PVTReportGenerator {
 
     for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
       ComponentInterface comp = fluid.getPhase(0).getComponent(i);
-      sb.append(String.format(Locale.US, "| %s | %.6f | %.2f |\n", comp.getComponentName(),
-          comp.getz(), comp.getMolarMass() * 1000));
+      sb.append(String.format(Locale.US, "| %s | %.6f | %.2f |\n", comp.getComponentName(), comp.getz(),
+          comp.getMolarMass() * 1000));
     }
     sb.append("\n");
     return sb.toString();
@@ -514,10 +510,8 @@ public class PVTReportGenerator {
 
     for (int i = 0; i < pressures.length; i++) {
       String yStr = (yFactor != null && yFactor[i] > 0) ? String.format("%.4f", yFactor[i]) : "-";
-      String densStr =
-          (density != null && density[i] > 0) ? String.format("%.1f", density[i]) : "-";
-      sb.append(String.format(Locale.US, "| %.1f | %.4f | %s | %s |\n", pressures[i], relVol[i],
-          yStr, densStr));
+      String densStr = (density != null && density[i] > 0) ? String.format("%.1f", density[i]) : "-";
+      sb.append(String.format(Locale.US, "| %.1f | %.4f | %s | %s |\n", pressures[i], relVol[i], yStr, densStr));
     }
     sb.append("\n");
     return sb.toString();
@@ -540,11 +534,9 @@ public class PVTReportGenerator {
     for (int i = 0; i < pressures.length; i++) {
       String boStr = (bo != null && i < bo.length) ? String.format("%.4f", bo[i]) : "-";
       String rsStr = (rs != null && i < rs.length) ? String.format("%.1f", rs[i]) : "-";
-      String densStr =
-          (density != null && i < density.length) ? String.format("%.1f", density[i]) : "-";
+      String densStr = (density != null && i < density.length) ? String.format("%.1f", density[i]) : "-";
       String bgStr = (bg != null && i < bg.length) ? String.format("%.6f", bg[i]) : "-";
-      sb.append(String.format(Locale.US, "| %.1f | %s | %s | %s | %s |\n", pressures[i], boStr,
-          rsStr, densStr, bgStr));
+      sb.append(String.format(Locale.US, "| %.1f | %s | %s | %s | %s |\n", pressures[i], boStr, rsStr, densStr, bgStr));
     }
     sb.append("\n");
     return sb.toString();
@@ -564,14 +556,10 @@ public class PVTReportGenerator {
     double[] gasProd = cvdData.getCummulativeMolePercDepleted();
 
     for (int i = 0; i < pressures.length; i++) {
-      String liqStr =
-          (liquidVol != null && i < liquidVol.length) ? String.format("%.2f", liquidVol[i]) : "-";
-      String zStr =
-          (zFactor != null && i < zFactor.length) ? String.format("%.4f", zFactor[i]) : "-";
-      String gasStr =
-          (gasProd != null && i < gasProd.length) ? String.format("%.2f", gasProd[i]) : "-";
-      sb.append(String.format(Locale.US, "| %.1f | %s | %s | %s |\n", pressures[i], liqStr, zStr,
-          gasStr));
+      String liqStr = (liquidVol != null && i < liquidVol.length) ? String.format("%.2f", liquidVol[i]) : "-";
+      String zStr = (zFactor != null && i < zFactor.length) ? String.format("%.4f", zFactor[i]) : "-";
+      String gasStr = (gasProd != null && i < gasProd.length) ? String.format("%.2f", gasProd[i]) : "-";
+      sb.append(String.format(Locale.US, "| %.1f | %s | %s | %s |\n", pressures[i], liqStr, zStr, gasStr));
     }
     sb.append("\n");
     return sb.toString();
@@ -660,8 +648,7 @@ public class PVTReportGenerator {
     for (int i = 0; i < pressures.length; i++) {
       sb.append(String.format(Locale.US, "%.2f,%.6f,%.2f,%.2f,%.8f\n", pressures[i],
           (bo != null && i < bo.length) ? bo[i] : 0.0, (rs != null && i < rs.length) ? rs[i] : 0.0,
-          (density != null && i < density.length) ? density[i] : 0.0,
-          (bg != null && i < bg.length) ? bg[i] : 0.0));
+          (density != null && i < density.length) ? density[i] : 0.0, (bg != null && i < bg.length) ? bg[i] : 0.0));
     }
 
     return sb.toString();
@@ -681,8 +668,7 @@ public class PVTReportGenerator {
     double[] relVol = swellingData.getRelativeOilVolume();
 
     for (int i = 0; i < pressures.length; i++) {
-      String relVolStr =
-          (relVol != null && i < relVol.length) ? String.format("%.4f", relVol[i]) : "-";
+      String relVolStr = (relVol != null && i < relVol.length) ? String.format("%.4f", relVol[i]) : "-";
       sb.append(String.format(Locale.US, "| - | %.1f | %s |\n", pressures[i], relVolStr));
     }
     sb.append("\n");
@@ -734,8 +720,7 @@ public class PVTReportGenerator {
       String oilStr = (oilVisc != null && i < oilVisc.length && oilVisc[i] > 0)
           ? String.format("%.4f", oilVisc[i] * 1000)
           : "-";
-      String aqStr = (aqVisc != null && i < aqVisc.length && aqVisc[i] > 0)
-          ? String.format("%.4f", aqVisc[i] * 1000)
+      String aqStr = (aqVisc != null && i < aqVisc.length && aqVisc[i] > 0) ? String.format("%.4f", aqVisc[i] * 1000)
           : "-";
       sb.append(String.format(Locale.US, "| %d | %s | %s | %s |\n", i + 1, gasStr, oilStr, aqStr));
     }
@@ -760,15 +745,11 @@ public class PVTReportGenerator {
     int len = gasDens != null ? gasDens.length : (oilDens != null ? oilDens.length : 0);
 
     for (int i = 0; i < len; i++) {
-      String gasStr = (gasDens != null && i < gasDens.length && gasDens[i] > 0)
-          ? String.format("%.2f", gasDens[i])
+      String gasStr = (gasDens != null && i < gasDens.length && gasDens[i] > 0) ? String.format("%.2f", gasDens[i])
           : "-";
-      String oilStr = (oilDens != null && i < oilDens.length && oilDens[i] > 0)
-          ? String.format("%.2f", oilDens[i])
+      String oilStr = (oilDens != null && i < oilDens.length && oilDens[i] > 0) ? String.format("%.2f", oilDens[i])
           : "-";
-      String aqStr =
-          (aqDens != null && i < aqDens.length && aqDens[i] > 0) ? String.format("%.2f", aqDens[i])
-              : "-";
+      String aqStr = (aqDens != null && i < aqDens.length && aqDens[i] > 0) ? String.format("%.2f", aqDens[i]) : "-";
       sb.append(String.format(Locale.US, "| %d | %s | %s | %s |\n", i + 1, gasStr, oilStr, aqStr));
     }
     sb.append("\n");
@@ -785,8 +766,7 @@ public class PVTReportGenerator {
     sb.append("| Property | Value | Unit |\n");
     sb.append("|----------|-------|------|\n");
     sb.append(String.format(Locale.US, "| MMP | %.1f | bara |\n", mmpData.getMMP()));
-    sb.append(
-        String.format("| Miscibility Mechanism | %s | - |\n", mmpData.getMiscibilityMechanism()));
+    sb.append(String.format("| Miscibility Mechanism | %s | - |\n", mmpData.getMiscibilityMechanism()));
     sb.append("\n");
 
     double[] pressures = mmpData.getPressures();
@@ -816,8 +796,7 @@ public class PVTReportGenerator {
     sb.append("| Property | Value |\n");
     sb.append("|----------|-------|\n");
     sb.append(String.format("| Number of Nodes | %d |\n", slimTubeData.getNumberOfSlimTubeNodes()));
-    sb.append(String.format(Locale.US, "| Temperature | %.1f °C |\n",
-        slimTubeData.getTemperature() - 273.15));
+    sb.append(String.format(Locale.US, "| Temperature | %.1f °C |\n", slimTubeData.getTemperature() - 273.15));
     sb.append(String.format(Locale.US, "| Pressure | %.1f bara |\n", slimTubeData.getPressure()));
     sb.append("\n");
     return sb.toString();
@@ -834,8 +813,7 @@ public class PVTReportGenerator {
     sb.append("|----------|-------|------|\n");
     sb.append(String.format(Locale.US, "| Saturation Temperature | %.2f | °C |\n",
         satTempData.getThermoSystem().getTemperature() - 273.15));
-    sb.append(String.format(Locale.US, "| At Pressure | %.1f | bara |\n",
-        satTempData.getThermoSystem().getPressure()));
+    sb.append(String.format(Locale.US, "| At Pressure | %.1f | bara |\n", satTempData.getThermoSystem().getPressure()));
     sb.append("\n");
     return sb.toString();
   }
@@ -1070,8 +1048,8 @@ public class PVTReportGenerator {
       double simValue = interpolate(simPressures, simRelVol, lab.getPressure());
       if (!Double.isNaN(simValue) && lab.getProperty().equalsIgnoreCase("RelVol")) {
         double dev = Math.abs(simValue - lab.getValue()) / lab.getValue() * 100;
-        sb.append(String.format(Locale.US, "| %.1f | %s | %.4f | %.4f | %.2f |\n",
-            lab.getPressure(), lab.getProperty(), lab.getValue(), simValue, dev));
+        sb.append(String.format(Locale.US, "| %.1f | %s | %.4f | %.4f | %.2f |\n", lab.getPressure(), lab.getProperty(),
+            lab.getValue(), simValue, dev));
         sumAbsDev += Math.abs(simValue - lab.getValue());
         sumRelDev += dev;
         count++;
@@ -1117,8 +1095,8 @@ public class PVTReportGenerator {
 
       if (!Double.isNaN(simValue)) {
         double dev = Math.abs(simValue - lab.getValue()) / Math.abs(lab.getValue()) * 100;
-        sb.append(String.format(Locale.US, "| %.1f | %s | %.4f | %.4f | %.2f |\n",
-            lab.getPressure(), lab.getProperty(), lab.getValue(), simValue, dev));
+        sb.append(String.format(Locale.US, "| %.1f | %s | %.4f | %.4f | %.2f |\n", lab.getPressure(), lab.getProperty(),
+            lab.getValue(), simValue, dev));
         sumAbsDev += Math.abs(simValue - lab.getValue());
         sumRelDev += dev;
         count++;

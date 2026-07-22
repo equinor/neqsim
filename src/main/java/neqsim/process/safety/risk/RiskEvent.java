@@ -7,8 +7,8 @@ import neqsim.process.safety.ProcessSafetyScenario;
  * Represents a risk event for probabilistic safety analysis.
  *
  * <p>
- * A risk event combines an initiating event with its frequency (events per year) and conditional
- * probability. Events can be linked in event trees to model escalation sequences.
+ * A risk event combines an initiating event with its frequency (events per year) and conditional probability. Events
+ * can be linked in event trees to model escalation sequences.
  * </p>
  *
  * <p>
@@ -239,8 +239,8 @@ public class RiskEvent {
    * Calculates the absolute frequency considering parent event chain.
    *
    * <p>
-   * For events in an event tree, the absolute frequency is the product of the initiating event
-   * frequency and all conditional probabilities along the branch.
+   * For events in an event tree, the absolute frequency is the product of the initiating event frequency and all
+   * conditional probabilities along the branch.
    * </p>
    *
    * @return absolute frequency (events per year)
@@ -272,8 +272,7 @@ public class RiskEvent {
 
   @Override
   public String toString() {
-    return String.format("RiskEvent[%s, %s, freq=%.2e/yr, P=%.3f, %s]", name,
-        initiatingEvent.name(), getAbsoluteFrequency(), conditionalProbability,
-        consequenceCategory);
+    return String.format("RiskEvent[%s, %s, freq=%.2e/yr, P=%.3f, %s]", name, initiatingEvent.name(),
+        getAbsoluteFrequency(), conditionalProbability, consequenceCategory);
   }
 }

@@ -6,8 +6,8 @@ import java.io.Serializable;
  * Represents uncertainty bounds for a measured or calculated value.
  *
  * <p>
- * This class provides confidence intervals and standard deviation for values calculated by virtual
- * flow meters and soft sensors, enabling risk-aware decision making in production optimization.
+ * This class provides confidence intervals and standard deviation for values calculated by virtual flow meters and soft
+ * sensors, enabling risk-aware decision making in production optimization.
  * </p>
  *
  * @author ESOL
@@ -54,8 +54,8 @@ public class UncertaintyBounds implements Serializable {
    * @param upper99 upper bound of 99% CI
    * @param unit the engineering unit
    */
-  public UncertaintyBounds(double mean, double standardDeviation, double lower95, double upper95,
-      double lower99, double upper99, String unit) {
+  public UncertaintyBounds(double mean, double standardDeviation, double lower95, double upper95, double lower99,
+      double upper99, String unit) {
     this.mean = mean;
     this.standardDeviation = standardDeviation;
     this.lower95 = lower95;
@@ -177,8 +177,8 @@ public class UncertaintyBounds implements Serializable {
    */
   public UncertaintyBounds add(UncertaintyBounds other) {
     double newMean = this.mean + other.mean;
-    double newStd = Math.sqrt(this.standardDeviation * this.standardDeviation
-        + other.standardDeviation * other.standardDeviation);
+    double newStd = Math
+        .sqrt(this.standardDeviation * this.standardDeviation + other.standardDeviation * other.standardDeviation);
     return new UncertaintyBounds(newMean, newStd, this.unit);
   }
 
@@ -194,7 +194,6 @@ public class UncertaintyBounds implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("%.4f ± %.4f %s (95%% CI: [%.4f, %.4f])", mean, standardDeviation, unit,
-        lower95, upper95);
+    return String.format("%.4f ± %.4f %s (95%% CI: [%.4f, %.4f])", mean, standardDeviation, unit, lower95, upper95);
   }
 }

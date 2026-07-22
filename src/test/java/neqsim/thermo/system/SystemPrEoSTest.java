@@ -12,9 +12,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   static neqsim.thermo.ThermodynamicModelTest testModel = null;
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {
@@ -32,15 +30,12 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testMolarVolume.
-   * </p>
    */
   @Test
   @DisplayName("test molarVolume calculation as well as unit conerters")
   public void testMolarVolume() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(298.0, 1.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(298.0, 1.0);
     testSystem.addComponent("nitrogen", 0.01);
     testSystem.addComponent("CO2", 0.01);
     testSystem.addComponent("methane", 0.68);
@@ -55,9 +50,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testTPflash2.
-   * </p>
    */
   @Test
   @DisplayName("test a TPflash2")
@@ -66,9 +59,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testTPflash.
-   * </p>
    */
   @Test
   @DisplayName("test a TPflash of the fluid (should return two phases)")
@@ -77,9 +68,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testFugacityCoefficients.
-   * </p>
    */
   @Test
   @DisplayName("test the fugacity coefficients calculated")
@@ -88,9 +77,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDP.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to pressure")
@@ -99,9 +86,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDT.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to temperature")
@@ -110,9 +95,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDn.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition")
@@ -121,9 +104,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDn2.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition (2nd method)")
@@ -132,9 +113,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkCompressibility.
-   * </p>
    */
   @Test
   @DisplayName("calculate compressibility of gas phase")
@@ -143,9 +122,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * calcProperties.
-   * </p>
    */
   @Test
   @DisplayName("calculate properties when flow rate is 0")
@@ -154,14 +131,11 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     testOps.TPflash();
     testSystem.initProperties();
-    assertEquals(-165.60627184389855, testSystem.getEnthalpy("kJ/kg"),
-        Math.abs(-165.60627184389855 / 1000.0));
+    assertEquals(-165.60627184389855, testSystem.getEnthalpy("kJ/kg"), Math.abs(-165.60627184389855 / 1000.0));
   }
 
   /**
-   * <p>
    * checkKappa.
-   * </p>
    */
   @Test
   @DisplayName("check kappa of fluid and phase is the same")
@@ -185,9 +159,7 @@ public class SystemPrEoSTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checCompressibilityFunctions.
-   * </p>
    */
   @Test
   @DisplayName("check compressibility functions")

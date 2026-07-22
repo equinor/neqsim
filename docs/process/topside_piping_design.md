@@ -1,13 +1,18 @@
+---
+title: Topside Piping Mechanical Design
+description: Comprehensive documentation for topside (offshore platform and onshore facility) piping design in NeqSim, including velocity analysis, support spacing, vibration screening, and stress analysis per ind...
+---
+
 # Topside Piping Mechanical Design
 
 Comprehensive documentation for topside (offshore platform and onshore facility) piping design in NeqSim, including velocity analysis, support spacing, vibration screening, and stress analysis per industry standards.
 
 > **📘 Related Documentation**
 > 
-> - [Pipeline Mechanical Design](pipeline_mechanical_design.md) - Subsea/onshore pipeline design
-> - [Riser Mechanical Design](riser_mechanical_design.md) - Riser design with catenary and VIV
-> - [Mechanical Design Standards](mechanical_design_standards.md) - Standards database reference
-> - [Beggs and Brills Pipe Model](PipeBeggsAndBrills.md) - Flow modeling documentation
+> - [Pipeline Mechanical Design](pipeline_mechanical_design) - Subsea/onshore pipeline design
+> - [Riser Mechanical Design](riser_mechanical_design) - Riser design with catenary and VIV
+> - [Mechanical Design Standards](mechanical_design_standards) - Standards database reference
+> - [Beggs and Brills Pipe Model](PipeBeggsAndBrills) - Flow modeling documentation
 
 ## Table of Contents
 
@@ -278,7 +283,7 @@ Where:
 - $\Delta P$ = Pressure drop (Pa)
 - $T$ = Temperature (K)
 
-> **Note:** AIV is also available as a capacity constraint on `PipeBeggsAndBrills` and `ThrottlingValve` classes via `calculateAIV()` and `setMaxDesignAIV()` methods. See [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK.md#acoustic-induced-vibration-aiv-analysis) for details.
+> **Note:** AIV is also available as a capacity constraint on `PipeBeggsAndBrills` and `ThrottlingValve` classes via `calculateAIV()` and `setMaxDesignAIV()` methods. See [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK#acoustic-induced-vibration-aiv-analysis) for details.
 
 ### AIV Risk Levels (Acoustic Power Based)
 
@@ -768,8 +773,8 @@ dataSource.loadVibrationParameters(calc, "Equinor");
 
 ## See Also
 
-- [Pipeline Mechanical Design](pipeline_mechanical_design.md) - Subsea and onshore pipeline design
-- [Riser Mechanical Design](riser_mechanical_design.md) - Riser mechanical design
-- [Mechanical Design Standards](mechanical_design_standards.md) - Standards database
-- [PipeBeggsAndBrills](PipeBeggsAndBrills.md) - Flow modeling documentation
-- [Process Design Guide](process_design_guide.md) - Overall process design guide
+- [Pipeline Mechanical Design](pipeline_mechanical_design) - Subsea and onshore pipeline design
+- [Riser Mechanical Design](riser_mechanical_design) - Riser mechanical design
+- [Mechanical Design Standards](mechanical_design_standards) - Standards database
+- [PipeBeggsAndBrills](PipeBeggsAndBrills) - Flow modeling documentation
+- [Process Design Guide](process_design_guide) - Overall process design guide

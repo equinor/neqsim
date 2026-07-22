@@ -20,8 +20,8 @@ import neqsim.thermo.system.SystemInterface;
  * Eclipse reservoir simulator EOS/PVT keyword exporter.
  *
  * <p>
- * Exports NeqSim compositional fluids or Black-Oil PVT tables to Eclipse-compatible include files
- * containing PVTO, PVTG, PVTW, and DENSITY keywords.
+ * Exports NeqSim compositional fluids or Black-Oil PVT tables to Eclipse-compatible include files containing PVTO,
+ * PVTG, PVTW, and DENSITY keywords.
  * </p>
  *
  * <h2>Supported Eclipse Keywords</h2>
@@ -34,7 +34,7 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * {@code
  * SystemInterface fluid = new SystemSrkEos(373.15, 200.0);
@@ -215,8 +215,7 @@ public final class EclipseEOSExporter {
    * @param config export configuration
    * @throws IOException if writing fails
    */
-  public static void toFile(SystemInterface fluid, Path outputPath, ExportConfig config)
-      throws IOException {
+  public static void toFile(SystemInterface fluid, Path outputPath, ExportConfig config) throws IOException {
     Objects.requireNonNull(fluid, "fluid cannot be null");
     Objects.requireNonNull(outputPath, "outputPath cannot be null");
     Objects.requireNonNull(config, "config cannot be null");
@@ -266,8 +265,8 @@ public final class EclipseEOSExporter {
    * @param outputPath output file path
    * @throws IOException if writing fails
    */
-  public static void toFile(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc,
-      double rhoWaterSc, Path outputPath) throws IOException {
+  public static void toFile(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc, Path outputPath)
+      throws IOException {
     toFile(pvt, rhoOilSc, rhoGasSc, rhoWaterSc, outputPath, new ExportConfig());
   }
 
@@ -282,8 +281,8 @@ public final class EclipseEOSExporter {
    * @param config export configuration
    * @throws IOException if writing fails
    */
-  public static void toFile(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc,
-      double rhoWaterSc, Path outputPath, ExportConfig config) throws IOException {
+  public static void toFile(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc, Path outputPath,
+      ExportConfig config) throws IOException {
     Objects.requireNonNull(pvt, "pvt cannot be null");
     Objects.requireNonNull(outputPath, "outputPath cannot be null");
     Objects.requireNonNull(config, "config cannot be null");
@@ -302,8 +301,7 @@ public final class EclipseEOSExporter {
    * @param rhoWaterSc water density at standard conditions (kg/m³)
    * @return Eclipse include file content
    */
-  public static String toString(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc,
-      double rhoWaterSc) {
+  public static String toString(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc) {
     return toString(pvt, rhoOilSc, rhoGasSc, rhoWaterSc, new ExportConfig());
   }
 
@@ -317,8 +315,8 @@ public final class EclipseEOSExporter {
    * @param config export configuration
    * @return Eclipse include file content
    */
-  public static String toString(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc,
-      double rhoWaterSc, ExportConfig config) {
+  public static String toString(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc,
+      ExportConfig config) {
     Objects.requireNonNull(pvt, "pvt cannot be null");
     Objects.requireNonNull(config, "config cannot be null");
 
@@ -331,8 +329,7 @@ public final class EclipseEOSExporter {
     return sb.toString();
   }
 
-  private static void toWriter(SystemInterface fluid, Writer writer, ExportConfig config)
-      throws IOException {
+  private static void toWriter(SystemInterface fluid, Writer writer, ExportConfig config) throws IOException {
     // Generate pressure grid if not provided
     double[] pressures = config.pressureGrid;
     if (pressures == null || pressures.length < 2) {
@@ -340,16 +337,15 @@ public final class EclipseEOSExporter {
     }
 
     // Convert compositional fluid to Black-Oil
-    BlackOilConverter.Result result = BlackOilConverter.convert(fluid, config.referenceTemperature,
-        pressures, config.standardPressure, config.standardTemperature);
+    BlackOilConverter.Result result = BlackOilConverter.convert(fluid, config.referenceTemperature, pressures,
+        config.standardPressure, config.standardTemperature);
 
     writePVTTable(result.pvt, result.rho_o_sc, result.rho_g_sc, result.rho_w_sc, writer, config);
   }
 
-  private static void writePVTTable(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc,
-      double rhoWaterSc, Writer writer, ExportConfig config) throws IOException {
-    BufferedWriter bw =
-        (writer instanceof BufferedWriter) ? (BufferedWriter) writer : new BufferedWriter(writer);
+  private static void writePVTTable(BlackOilPVTTable pvt, double rhoOilSc, double rhoGasSc, double rhoWaterSc,
+      Writer writer, ExportConfig config) throws IOException {
+    BufferedWriter bw = (writer instanceof BufferedWriter) ? (BufferedWriter) writer : new BufferedWriter(writer);
 
     // Unit conversion factors
     double pFactor = 1.0; // bar
@@ -376,11 +372,11 @@ public final class EclipseEOSExporter {
     if (config.includeHeader) {
       bw.write("-- ============================================================\n");
       bw.write("-- Eclipse PVT Data Generated by NeqSim\n");
-      bw.write("-- Generated: "
-          + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\n");
+      bw.write(
+          "-- Generated: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + "\n");
       bw.write("-- Units: " + config.units.name() + "\n");
-      bw.write("-- Bubble Point: "
-          + String.format(Locale.US, "%.2f", pvt.getBubblePointP() * pFactor) + " " + pUnit + "\n");
+      bw.write(
+          "-- Bubble Point: " + String.format(Locale.US, "%.2f", pvt.getBubblePointP() * pFactor) + " " + pUnit + "\n");
       if (!config.comment.isEmpty()) {
         bw.write("-- " + config.comment.replace("\n", "\n-- ") + "\n");
       }
@@ -392,8 +388,8 @@ public final class EclipseEOSExporter {
       bw.write("-- Stock tank densities at standard conditions\n");
       bw.write("-- Oil density, Water density, Gas density (" + rhoUnit + ")\n");
       bw.write("DENSITY\n");
-      bw.write(String.format(Locale.US, "  %.4f  %.4f  %.6f /\n\n", rhoOilSc * rhoFactor,
-          rhoWaterSc * rhoFactor, rhoGasSc * rhoFactor));
+      bw.write(String.format(Locale.US, "  %.4f  %.4f  %.6f /\n\n", rhoOilSc * rhoFactor, rhoWaterSc * rhoFactor,
+          rhoGasSc * rhoFactor));
     }
 
     // Generate pressure points for table
@@ -403,8 +399,7 @@ public final class EclipseEOSExporter {
     // Write PVTO keyword (live oil table)
     if (config.includePVTO) {
       bw.write("-- Live Oil PVT Table\n");
-      bw.write("-- Rs (" + rsUnit + "), P (" + pUnit + "), Bo (RM3/SM3), Viscosity (" + viscUnit
-          + ")\n");
+      bw.write("-- Rs (" + rsUnit + "), P (" + pUnit + "), Bo (RM3/SM3), Viscosity (" + viscUnit + ")\n");
       bw.write("PVTO\n");
 
       // Group by Rs value - for each Rs, we have P, Bo, mu_o
@@ -424,16 +419,15 @@ public final class EclipseEOSExporter {
         double muO = pvt.mu_o(pSat) * viscFactor;
 
         // Write Rs header line with first data point (at bubble point for this Rs)
-        bw.write(
-            String.format(Locale.US, "  %.4f  %.4f  %.6f  %.6f\n", rs, pSat * pFactor, bo, muO));
+        bw.write(String.format(Locale.US, "  %.4f  %.4f  %.6f  %.6f\n", rs, pSat * pFactor, bo, muO));
 
         // Add undersaturated data points (P > pSat at constant Rs)
         for (Double pUndersat : pressurePoints) {
           if (pUndersat > pSat) {
             double boUndersat = pvt.Bo(pUndersat);
             double muOUndersat = pvt.mu_o(pUndersat) * viscFactor;
-            bw.write(String.format(Locale.US, "       %.4f  %.6f  %.6f\n", pUndersat * pFactor,
-                boUndersat, muOUndersat));
+            bw.write(
+                String.format(Locale.US, "       %.4f  %.6f  %.6f\n", pUndersat * pFactor, boUndersat, muOUndersat));
           }
         }
         bw.write("  /\n");
@@ -444,8 +438,7 @@ public final class EclipseEOSExporter {
     // Write PVTG keyword (wet gas table)
     if (config.includePVTG) {
       bw.write("-- Wet Gas PVT Table\n");
-      bw.write("-- P (" + pUnit + "), Rv (" + rsUnit + "), Bg (RM3/SM3), Viscosity (" + viscUnit
-          + ")\n");
+      bw.write("-- P (" + pUnit + "), Rv (" + rsUnit + "), Bg (RM3/SM3), Viscosity (" + viscUnit + ")\n");
       bw.write("PVTG\n");
 
       for (Double p : pressurePoints) {
@@ -454,8 +447,7 @@ public final class EclipseEOSExporter {
         double muG = pvt.mu_g(p) * viscFactor;
 
         if (!Double.isNaN(bg) && bg > 0) {
-          bw.write(
-              String.format(Locale.US, "  %.4f  %.8f  %.8f  %.8f /\n", p * pFactor, rv, bg, muG));
+          bw.write(String.format(Locale.US, "  %.4f  %.8f  %.8f  %.8f /\n", p * pFactor, rv, bg, muG));
         }
       }
       bw.write("/\n\n");
@@ -464,8 +456,8 @@ public final class EclipseEOSExporter {
     // Write PVTW keyword (water properties)
     if (config.includePVTW) {
       bw.write("-- Water PVT Properties\n");
-      bw.write("-- Pref (" + pUnit + "), Bw, Compressibility (1/" + pUnit + "), Viscosity ("
-          + viscUnit + "), Viscosibility (1/" + pUnit + ")\n");
+      bw.write("-- Pref (" + pUnit + "), Bw, Compressibility (1/" + pUnit + "), Viscosity (" + viscUnit
+          + "), Viscosibility (1/" + pUnit + ")\n");
       bw.write("PVTW\n");
 
       double pRef = bubblePoint;
@@ -482,8 +474,7 @@ public final class EclipseEOSExporter {
       }
 
       if (!Double.isNaN(bw_val) && bw_val > 0) {
-        bw.write(String.format(Locale.US, "  %.4f  %.6f  %.6e  %.6f  %.6e /\n", pRef * pFactor,
-            bw_val, cw, muW, cvw));
+        bw.write(String.format(Locale.US, "  %.4f  %.6f  %.6e  %.6f  %.6e /\n", pRef * pFactor, bw_val, cw, muW, cvw));
       } else {
         // Default water properties if not available
         bw.write(String.format(Locale.US, "  %.4f  1.02  %.6e  0.5  0.0 /\n", pRef * pFactor, cw));

@@ -17,9 +17,8 @@ import java.util.Map;
  * Ion parameters from the Maribo-Mogensen PhD thesis (Tables 6.6, 6.11).
  *
  * <p>
- * Contains temperature-dependent ion-solvent interaction parameters and Born radii for common ions
- * in multiple solvents. This class supports the Maribo-Mogensen e-CPA model for mixed solvent
- * electrolyte systems.
+ * Contains temperature-dependent ion-solvent interaction parameters and Born radii for common ions in multiple
+ * solvents. This class supports the Maribo-Mogensen e-CPA model for mixed solvent electrolyte systems.
  * </p>
  *
  * <h2>Ion-Solvent Interaction Energy</h2>
@@ -78,15 +77,13 @@ public final class IonParametersMM {
   public static final String MDEA = "MDEA";
 
   /** List of supported solvents. */
-  public static final List<String> SUPPORTED_SOLVENTS =
-      Arrays.asList(WATER, METHANOL, ETHANOL, MEG, DEG, TEG, MDEA);
+  public static final List<String> SUPPORTED_SOLVENTS = Arrays.asList(WATER, METHANOL, ETHANOL, MEG, DEG, TEG, MDEA);
 
   /** Map of ion name to parameters (water as default solvent). */
   private static final Map<String, IonData> ION_DATA = new HashMap<String, IonData>();
 
   /** Map of (ion + solvent) key to solvent-specific interaction parameters. */
-  private static final Map<String, SolventInteractionData> SOLVENT_SPECIFIC_DATA =
-      new HashMap<String, SolventInteractionData>();
+  private static final Map<String, SolventInteractionData> SOLVENT_SPECIFIC_DATA = new HashMap<String, SolventInteractionData>();
 
   static {
     // ===========================================================================
@@ -118,24 +115,36 @@ public final class IonParametersMM {
 
     // Divalent cations - Maribo-Mogensen Table 6.11
     ION_DATA.put("Mg2+", new IonData(2.100, 2800.0, -40.0, 2));
+    ION_DATA.put("Mg++", new IonData(2.100, 2800.0, -40.0, 2)); // NeqSim alias
     ION_DATA.put("Ca2+", new IonData(2.374, 3768.0, -33.13, 2));
+    ION_DATA.put("Ca++", new IonData(2.374, 3768.0, -33.13, 2)); // NeqSim alias
     ION_DATA.put("Sr2+", new IonData(2.680, 4200.0, -28.0, 2));
+    ION_DATA.put("Sr++", new IonData(2.680, 4200.0, -28.0, 2)); // NeqSim alias
     ION_DATA.put("Ba2+", new IonData(2.920, 4800.0, -25.0, 2));
+    ION_DATA.put("Ba++", new IonData(2.920, 4800.0, -25.0, 2)); // NeqSim alias
     ION_DATA.put("Fe2+", new IonData(2.280, 3200.0, -35.0, 2)); // Ferrous
+    ION_DATA.put("Fe++", new IonData(2.280, 3200.0, -35.0, 2)); // NeqSim alias
     ION_DATA.put("Zn2+", new IonData(2.200, 3400.0, -36.0, 2)); // Zinc
+    ION_DATA.put("Zn++", new IonData(2.200, 3400.0, -36.0, 2)); // NeqSim alias
 
     // Divalent anions
     ION_DATA.put("SO4-2", new IonData(3.800, -4500.0, 8.0, -2));
     ION_DATA.put("SO42-", new IonData(3.800, -4500.0, 8.0, -2)); // Alternative name
+    ION_DATA.put("SO4--", new IonData(3.800, -4500.0, 8.0, -2)); // NeqSim alias
     ION_DATA.put("CO3-2", new IonData(3.600, -5000.0, 9.0, -2));
     ION_DATA.put("CO32-", new IonData(3.600, -5000.0, 9.0, -2)); // Alternative name
+    ION_DATA.put("CO3--", new IonData(3.600, -5000.0, 9.0, -2)); // NeqSim alias
     ION_DATA.put("S2-", new IonData(3.500, -5200.0, 9.5, -2)); // Sulfide
+    ION_DATA.put("S--", new IonData(3.500, -5200.0, 9.5, -2)); // NeqSim alias
 
     // Trivalent ions
     ION_DATA.put("Fe3+", new IonData(2.000, 5500.0, -50.0, 3)); // Ferric
+    ION_DATA.put("Fe+++", new IonData(2.000, 5500.0, -50.0, 3)); // NeqSim alias
     ION_DATA.put("Al3+", new IonData(1.800, 6000.0, -55.0, 3)); // Aluminum
+    ION_DATA.put("Al+++", new IonData(1.800, 6000.0, -55.0, 3)); // NeqSim alias
     ION_DATA.put("PO4-3", new IonData(4.000, -6500.0, 12.0, -3)); // Phosphate
     ION_DATA.put("PO43-", new IonData(4.000, -6500.0, 12.0, -3)); // Alternative
+    ION_DATA.put("PO4---", new IonData(4.000, -6500.0, 12.0, -3)); // NeqSim alias
 
     // ===========================================================================
     // Solvent-specific ion interaction parameters (Maribo-Mogensen Table 6.12)
@@ -156,7 +165,9 @@ public final class IonParametersMM {
     SOLVENT_SPECIFIC_DATA.put("K+-MEG", new SolventInteractionData(1500.0, -9.0));
     SOLVENT_SPECIFIC_DATA.put("Li+-MEG", new SolventInteractionData(-800.0, -10.0));
     SOLVENT_SPECIFIC_DATA.put("Ca2+-MEG", new SolventInteractionData(4500.0, -40.0));
+    SOLVENT_SPECIFIC_DATA.put("Ca++-MEG", new SolventInteractionData(4500.0, -40.0));
     SOLVENT_SPECIFIC_DATA.put("Mg2+-MEG", new SolventInteractionData(3500.0, -45.0));
+    SOLVENT_SPECIFIC_DATA.put("Mg++-MEG", new SolventInteractionData(3500.0, -45.0));
     SOLVENT_SPECIFIC_DATA.put("Cl--MEG", new SolventInteractionData(-1600.0, 5.0));
     SOLVENT_SPECIFIC_DATA.put("Br--MEG", new SolventInteractionData(-1200.0, 4.0));
     SOLVENT_SPECIFIC_DATA.put("HCO3--MEG", new SolventInteractionData(-1300.0, 4.5));
@@ -186,7 +197,8 @@ public final class IonParametersMM {
   /**
    * Private constructor to prevent instantiation.
    */
-  private IonParametersMM() {}
+  private IonParametersMM() {
+  }
 
   /**
    * Get ion data for a given ion name.
@@ -250,8 +262,7 @@ public final class IonParametersMM {
    * @param temperature temperature in Kelvin
    * @return interaction energy in Kelvin, or 0 if not found
    */
-  public static double getInteractionEnergy(String ionName, String solventName,
-      double temperature) {
+  public static double getInteractionEnergy(String ionName, String solventName, double temperature) {
     // Check for solvent-specific parameters first
     String key = ionName + "-" + solventName;
     SolventInteractionData solventData = SOLVENT_SPECIFIC_DATA.get(key);

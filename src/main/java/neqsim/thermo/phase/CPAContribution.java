@@ -5,22 +5,20 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * CPAContribution provides utility methods for CPA (Cubic Plus Association) calculations that are
- * common across different cubic EOS implementations (SRK-CPA, PR-CPA, UMR-CPA, etc.).
- * 
+ * CPAContribution provides utility methods for CPA (Cubic Plus Association) calculations that are common across
+ * different cubic EOS implementations (SRK-CPA, PR-CPA, UMR-CPA, etc.).
+ *
  * <p>
- * In CPA theory, the radial distribution function at contact is based on the Carnahan-Starling
- * hard-sphere model and is the same for all cubic equations of state. The formulas depend only on
- * the co-volume parameter (b) and volume, not on the attraction parameter (a) which differs between
- * SRK and PR.
+ * In CPA theory, the radial distribution function at contact is based on the Carnahan-Starling hard-sphere model and is
+ * the same for all cubic equations of state. The formulas depend only on the co-volume parameter (b) and volume, not on
+ * the attraction parameter (a) which differs between SRK and PR.
  * </p>
- * 
+ *
  * <p>
- * This class provides methods for calculating the radial distribution function and its volume
- * derivatives, which can be used for verification and comparison between different CPA
- * implementations.
+ * This class provides methods for calculating the radial distribution function and its volume derivatives, which can be
+ * used for verification and comparison between different CPA implementations.
  * </p>
- * 
+ *
  * @author Even Solbraa
  * @version 1.0
  */
@@ -51,10 +49,10 @@ public class CPAContribution implements Serializable {
 
   /**
    * Calculate radial distribution function g at contact.
-   * 
+   *
    * <p>
-   * Uses the simplified Carnahan-Starling expression: g = (2 - η/2) / (2 * (1 - η/2)³) where η =
-   * b/(4V) is the packing fraction.
+   * Uses the simplified Carnahan-Starling expression: g = (2 - η/2) / (2 * (1 - η/2)³) where η = b/(4V) is the packing
+   * fraction.
    * </p>
    *
    * @return g value
@@ -119,8 +117,7 @@ public class CPAContribution implements Serializable {
     double b3 = b2 * b;
     double b4 = b3 * b;
     double b5 = b4 * b;
-    double term =
-        b5 + 17664.0 * t4 * b - 4192.0 * t3 * b2 + 528.0 * b3 * t2 - 36.0 * t * b4 - 30720.0 * t5;
+    double term = b5 + 17664.0 * t4 * b - 4192.0 * t3 * b2 + 528.0 * b3 * t2 - 36.0 * t * b4 - 30720.0 * t5;
     double denom1 = b - 8.0 * t;
     double denom1Cubed = denom1 * denom1 * denom1;
     double denom2 = b - 4.0 * t;
@@ -132,7 +129,7 @@ public class CPAContribution implements Serializable {
 
   /**
    * Calculate radial distribution function g given molar volume and molar b parameter.
-   * 
+   *
    * <p>
    * This is a static utility method for standalone calculations.
    * </p>

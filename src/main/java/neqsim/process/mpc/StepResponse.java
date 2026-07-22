@@ -6,8 +6,8 @@ import java.io.Serializable;
  * Represents a step response from a single input to a single output.
  *
  * <p>
- * A step response captures how a controlled variable responds over time to a step change in a
- * manipulated variable. This data is used for system identification and model-based control.
+ * A step response captures how a controlled variable responds over time to a step change in a manipulated variable.
+ * This data is used for system identification and model-based control.
  * </p>
  *
  * <p>
@@ -74,8 +74,8 @@ public class StepResponse implements Serializable {
    * @param mvUnit unit for MV
    * @param cvUnit unit for CV
    */
-  public StepResponse(String mvName, String cvName, double[] time, double[] response,
-      double stepSize, double baselineValue, double sampleTime, String mvUnit, String cvUnit) {
+  public StepResponse(String mvName, String cvName, double[] time, double[] response, double stepSize,
+      double baselineValue, double sampleTime, String mvUnit, String cvUnit) {
     this.mvName = mvName;
     this.cvName = cvName;
     this.time = time != null ? time.clone() : new double[0];
@@ -199,8 +199,8 @@ public class StepResponse implements Serializable {
    * Fit a first-order plus dead-time (FOPDT) model to the response.
    *
    * <p>
-   * The FOPDT model is: y(t) = K * (1 - exp(-(t-θ)/τ)) for t &gt; θ, else 0 where K is gain, τ is
-   * time constant, θ is dead time.
+   * The FOPDT model is: y(t) = K * (1 - exp(-(t-θ)/τ)) for t &gt; θ, else 0 where K is gain, τ is time constant, θ is
+   * dead time.
    * </p>
    *
    * @return this step response with fitted parameters
@@ -269,8 +269,7 @@ public class StepResponse implements Serializable {
         predicted = baselineValue;
       } else {
         double tEffective = t - fittedDeadTime;
-        predicted = baselineValue
-            + fittedGain * stepSize * (1.0 - Math.exp(-tEffective / fittedTimeConstant));
+        predicted = baselineValue + fittedGain * stepSize * (1.0 - Math.exp(-tEffective / fittedTimeConstant));
       }
       double error = response[i] - predicted;
       sumSquaredError += error * error;
@@ -320,8 +319,8 @@ public class StepResponse implements Serializable {
    * Get step response coefficients for DMC-style controllers.
    *
    * <p>
-   * Returns the normalized step response at each sample time, which can be used directly in Dynamic
-   * Matrix Control algorithms.
+   * Returns the normalized step response at each sample time, which can be used directly in Dynamic Matrix Control
+   * algorithms.
    * </p>
    *
    * @param numCoefficients number of coefficients to return

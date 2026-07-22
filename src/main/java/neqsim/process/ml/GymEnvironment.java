@@ -8,8 +8,8 @@ import java.util.Map;
  * Gymnasium (OpenAI Gym) compatible environment interface for NeqSim.
  *
  * <p>
- * This class provides a standardized interface compatible with Python's Gymnasium library, enabling
- * seamless integration with popular RL frameworks like stable-baselines3, RLlib, and CleanRL.
+ * This class provides a standardized interface compatible with Python's Gymnasium library, enabling seamless
+ * integration with popular RL frameworks like stable-baselines3, RLlib, and CleanRL.
  *
  * <h2>Python Usage via JPype:</h2>
  *

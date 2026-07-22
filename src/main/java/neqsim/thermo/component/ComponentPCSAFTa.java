@@ -4,9 +4,7 @@ import neqsim.thermo.phase.PhaseCPAInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentPCSAFTa class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   double[] xsitedT = new double[0];
 
   /**
-   * <p>
    * Constructor for ComponentPCSAFTa.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -50,9 +46,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   }
 
   /**
-   * <p>
    * Constructor for ComponentPCSAFTa.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -101,8 +95,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
 
   /** {@inheritDoc} */
   @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
     double Fcpa = 0.0;
     // if(phase.getPhaseType()==1) cpaon=0;
@@ -113,29 +106,24 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return super.dFdNdT(phase, numberOfComponents, temperature, pressure);
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return super.dFdNdV(phase, numberOfComponents, temperature, pressure);
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
   }
 
   /**
-   * <p>
    * dFCPAdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -143,8 +131,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
    * @param pressure a double
    * @return a double
    */
-  public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double xi = 0.0;
     for (int i = 0; i < numberOfAssociationSites; i++) {
       xi += Math.log(xsite[i]);
@@ -153,9 +140,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   }
 
   /**
-   * <p>
    * dFCPAdNdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -163,17 +148,14 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
    * @param pressure a double
    * @return a double
    */
-  public double dFCPAdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFCPAdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double xi = dFCPAdNdXidXdV(phase);
     double xi2 = -((PhaseCPAInterface) phase).getHcpatot() / 2.0 * calc_lngidV(phase);
     return xi + xi2;
   }
 
   /**
-   * <p>
    * calc_lngidV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -186,8 +168,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   @Override
   public double dFCPAdVdXi(int site, PhaseInterface phase) {
     return 1.0 / (2.0 * phase.getTotalVolume())
-        * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav())
-        * getNumberOfMolesInPhase();
+        * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
   }
 
   /** {@inheritDoc} */
@@ -212,9 +193,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   }
 
   /**
-   * <p>
    * calc_lngi.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -224,9 +203,7 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
   }
 
   /**
-   * <p>
    * dFCPAdNdXidXdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -313,7 +290,8 @@ public class ComponentPCSAFTa extends ComponentPCSAFT implements ComponentCPAInt
 
   /** {@inheritDoc} */
   @Override
-  public void setXsitedTdT(int i, double xsitedT) {}
+  public void setXsitedTdT(int i, double xsitedT) {
+  }
 
   /** {@inheritDoc} */
   @Override

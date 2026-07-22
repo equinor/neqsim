@@ -46,4 +46,3 @@ public interface BoundaryCurveInterface extends java.io.Serializable {
    */
   void setActive(boolean isActive);
 }
-

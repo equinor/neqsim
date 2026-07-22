@@ -16,8 +16,8 @@ import neqsim.thermo.system.SystemInterface;
  * Subsea Production Manifold equipment class.
  *
  * <p>
- * A subsea manifold gathers production from multiple wells and routes it to flowlines for transport
- * to the host facility. Key features include:
+ * A subsea manifold gathers production from multiple wells and routes it to flowlines for transport to the host
+ * facility. Key features include:
  * </p>
  * <ul>
  * <li>Production headers for well gathering</li>
@@ -218,7 +218,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
 
   // ============ Valve Skids ============
   /** Valve skids for each slot. */
-  private List<ValveSkid> valveSkids = new ArrayList<ValveSkid>();
+  private transient List<ValveSkid> valveSkids = new ArrayList<ValveSkid>();
 
   /** Map of well names to slot numbers. */
   private Map<String, Integer> wellSlotMap = new HashMap<String, Integer>();
@@ -331,15 +331,15 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
         skid.setActive(true);
 
         // Create production valve
-        ThrottlingValve prodValve =
-            new ThrottlingValve(getName() + " Slot " + skid.getSlotNumber() + " Prod", wellStream);
+        ThrottlingValve prodValve = new ThrottlingValve(getName() + " Slot " + skid.getSlotNumber() + " Prod",
+            wellStream);
         prodValve.setPercentValveOpening(100.0);
         skid.setProductionValve(prodValve);
 
         // Create test valve if test header exists
         if (hasTestHeader) {
-          ThrottlingValve testValve = new ThrottlingValve(
-              getName() + " Slot " + skid.getSlotNumber() + " Test", wellStream);
+          ThrottlingValve testValve = new ThrottlingValve(getName() + " Slot " + skid.getSlotNumber() + " Test",
+              wellStream);
           testValve.setPercentValveOpening(0.0); // Closed by default
           skid.setTestValve(testValve);
         }
@@ -428,8 +428,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
       if (skid.isActive() && skid.getConnectedStream() != null) {
         if ("production".equals(skid.getRouting())) {
           // Run through production valve
-          if (skid.getProductionValve() != null
-              && skid.getProductionValve().getPercentValveOpening() > 0) {
+          if (skid.getProductionValve() != null && skid.getProductionValve().getPercentValveOpening() > 0) {
             skid.getProductionValve().setInletStream(skid.getConnectedStream());
             skid.getProductionValve().run(id);
             productionMixer.addStream(skid.getProductionValve().getOutletStream());
@@ -516,6 +515,33 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
     return testStream;
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getInletStreams() {
+    java.util.List<StreamInterface> in = new java.util.ArrayList<>();
+    if (valveSkids != null) {
+      for (ValveSkid skid : valveSkids) {
+        if (skid != null && skid.getConnectedStream() != null) {
+          in.add(skid.getConnectedStream());
+        }
+      }
+    }
+    return in;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public java.util.List<StreamInterface> getOutletStreams() {
+    java.util.List<StreamInterface> out = new java.util.ArrayList<>();
+    if (productionStream != null) {
+      out.add(productionStream);
+    }
+    if (testStream != null) {
+      out.add(testStream);
+    }
+    return out;
+  }
+
   /**
    * Get number of active wells.
    *
@@ -536,6 +562,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
    *
    * @return mechanical design instance
    */
+  @Override
   public SubseaManifoldMechanicalDesign getMechanicalDesign() {
     if (mechanicalDesign == null) {
       mechanicalDesign = new SubseaManifoldMechanicalDesign(this);
@@ -546,6 +573,7 @@ public class SubseaManifold extends ProcessEquipmentBaseClass {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new SubseaManifoldMechanicalDesign(this);
   }

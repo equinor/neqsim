@@ -10,15 +10,12 @@ import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 import neqsim.thermo.mixingrule.MixingRuleTypeInterface;
 
 /**
- * <p>
  * PhaseElectrolyteCPAOld class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
-    implements PhaseCPAInterface {
+public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos implements PhaseCPAInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -46,11 +43,10 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   double dFCPAdTdT = 0.0;
 
   /**
-   * <p>
    * Constructor for PhaseElectrolyteCPAOld.
-   * </p>
    */
-  public PhaseElectrolyteCPAOld() {}
+  public PhaseElectrolyteCPAOld() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -68,8 +64,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     if (initType == 0) {
       selfAccociationScheme = new int[numberOfComponents][0][0];
       crossAccociationScheme = new int[numberOfComponents][numberOfComponents][0][0];
@@ -159,9 +154,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * FCPA.
-   * </p>
    *
    * @return a double
    */
@@ -180,9 +173,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * dFCPAdV.
-   * </p>
    *
    * @return a double
    */
@@ -191,36 +182,28 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * dFCPAdVdV.
-   * </p>
    *
    * @return a double
    */
   public double dFCPAdVdV() {
     return -1.0 / getTotalVolume() * dFCPAdV()
-        + hcpatot / (2.0 * getTotalVolume()) * (-getGcpav() - getTotalVolume() * gcpavv)
-        + getdFdVdXdXdVtotal();
+        + hcpatot / (2.0 * getTotalVolume()) * (-getGcpav() - getTotalVolume() * gcpavv) + getdFdVdXdXdVtotal();
   }
 
   /**
-   * <p>
    * dFCPAdVdVdV.
-   * </p>
    *
    * @return a double
    */
   public double dFCPAdVdVdV() {
     return -1.0 / getTotalVolume() * dFCPAdVdV() + 1.0 / Math.pow(getTotalVolume(), 2.0) * dFCPAdV()
-        - hcpatot / (2.0 * Math.pow(getTotalVolume(), 2.0))
-            * (-getGcpav() - getTotalVolume() * gcpavv)
+        - hcpatot / (2.0 * Math.pow(getTotalVolume(), 2.0)) * (-getGcpav() - getTotalVolume() * gcpavv)
         + hcpatot / (2.0 * getTotalVolume()) * (-gcpavv - getTotalVolume() * gcpavvv - gcpavv);
   }
 
   /**
-   * <p>
    * dFCPAdT.
-   * </p>
    *
    * @return a double
    */
@@ -231,9 +214,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * dFCPAdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -242,12 +223,11 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * calc_hCPA.
-   * </p>
    *
    * @return a double
    */
+  @Override
   public double calc_hCPA() {
     double htot = 0.0;
     double tot = 0.0;
@@ -263,9 +243,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * calc_hCPAdT.
-   * </p>
    *
    * @return a double
    */
@@ -283,8 +261,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
           }
         }
 
-        tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase()
-            * htot;
+        tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase() * htot;
       }
     }
     // System.out.println("tot " +tot );
@@ -292,9 +269,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * calc_hCPAdTdT.
-   * </p>
    *
    * @return a double
    */
@@ -312,8 +287,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
           }
         }
 
-        tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase()
-            * htot;
+        tot += getComponent(i).getNumberOfMolesInPhase() * getComponent(k).getNumberOfMolesInPhase() * htot;
       }
     }
     // System.out.println("tot " +tot );
@@ -321,12 +295,11 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * calc_g.
-   * </p>
    *
    * @return a double
    */
+  @Override
   public double calc_g() {
     double x = 1.9 / 4.0 * getB() / getTotalVolume();
     double g = 1.0 / (1.0 - x);
@@ -335,9 +308,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * calc_lngni.
-   * </p>
    *
    * @param comp a int
    * @return a double
@@ -350,12 +321,11 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * calc_lngV.
-   * </p>
    *
    * @return a double
    */
+  @Override
   public double calc_lngV() {
     double x = 1.9 / 4.0 * getB() / getTotalVolume();
     double gv = (x / getTotalVolume()) / (1.0 - x);
@@ -363,12 +333,11 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * calc_lngVV.
-   * </p>
    *
    * @return a double
    */
+  @Override
   public double calc_lngVV() {
     double x = 1.9 / 4.0 * getB() / getTotalVolume();
     double xV = -1.9 / 4.0 * getB() / Math.pow(getTotalVolume(), 2.0);
@@ -385,26 +354,22 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * calc_lngVVV.
-   * </p>
    *
    * @return a double
    */
+  @Override
   public double calc_lngVVV() {
-    double gvv = -0.21434375 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 3.0)
-        * Math.pow(getB(), 3.0) / (Math.pow(getTotalVolume(), 6.0))
-        - 0.135375E1 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 2.0)
-            * Math.pow(getB(), 2.0) / (Math.pow(getTotalVolume(), 5.0))
-        - 0.285E1 / (1.0 - 0.475 * getB() / getTotalVolume()) * getB()
-            / (Math.pow(getTotalVolume(), 4.0));
+    double gvv = -0.21434375 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 3.0) * Math.pow(getB(), 3.0)
+        / (Math.pow(getTotalVolume(), 6.0))
+        - 0.135375E1 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 2.0) * Math.pow(getB(), 2.0)
+            / (Math.pow(getTotalVolume(), 5.0))
+        - 0.285E1 / (1.0 - 0.475 * getB() / getTotalVolume()) * getB() / (Math.pow(getTotalVolume(), 4.0));
     return gvv;
   }
 
   /**
-   * <p>
    * setXsiteOld.
-   * </p>
    */
   public void setXsiteOld() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -416,9 +381,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * setXsitedV.
-   * </p>
    *
    * @param dV a double
    */
@@ -436,9 +399,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * calcXsitedT.
-   * </p>
    */
   public void calcXsitedT() {
     double dt = 0.01;
@@ -472,9 +433,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * Getter for the field <code>dFdVdXdXdVtotal</code>.
-   * </p>
    *
    * @return a double
    */
@@ -483,9 +442,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * solveX.
-   * </p>
    *
    * @return a boolean
    */
@@ -499,8 +456,8 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
       for (int i = 0; i < numberOfComponents; i++) {
         for (int j = 0; j < getComponent(i).getNumberOfAssociationSites(); j++) {
           double old = ((ComponentElectrolyteCPA) getComponent(i)).getXsite()[j];
-          double neeval = getCpaMixingRule().calcXi(selfAccociationScheme, crossAccociationScheme,
-              j, i, this, temperature, pressure, numberOfComponents);
+          double neeval = getCpaMixingRule().calcXi(selfAccociationScheme, crossAccociationScheme, j, i, this,
+              temperature, pressure, numberOfComponents);
           ((ComponentCPAInterface) getComponent(i)).setXsite(j, neeval);
           err += Math.abs((old - neeval) / neeval);
         }
@@ -533,9 +490,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * molarVolume3.
-   * </p>
    *
    * @param pressure a double
    * @param temperature a double
@@ -547,11 +502,9 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
    * @throws neqsim.util.exception.TooManyIterationsException if any.
    */
   public double molarVolume3(double pressure, double temperature, double A, double B, PhaseType pt)
-      throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
-    double BonV =
-        pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
-            : pressure * getB() / (numberOfMolesInPhase * temperature * R);
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
+    double BonV = pt == PhaseType.LIQUID ? 2.0 / (2.0 + temperature / getPseudoCriticalTemperature())
+        : pressure * getB() / (numberOfMolesInPhase * temperature * R);
 
     if (BonV < 0) {
       BonV = 1.0e-8;
@@ -587,12 +540,10 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
 
       iterations++;
       BonVold = BonV;
-      h = BonV - Btemp / numberOfMolesInPhase * dFdV()
-          - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
+      h = BonV - Btemp / numberOfMolesInPhase * dFdV() - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
       dh = 1.0 + Btemp / Math.pow(BonV, 2.0) * (Btemp / numberOfMolesInPhase * dFdVdV());
       dhh = -2.0 * Btemp / Math.pow(BonV, 3.0) * (Btemp / numberOfMolesInPhase * dFdVdV())
-          - Math.pow(Btemp, 2.0) / Math.pow(BonV, 4.0)
-              * (Btemp / numberOfMolesInPhase * dFdVdVdV());
+          - Math.pow(Btemp, 2.0) / Math.pow(BonV, 4.0) * (Btemp / numberOfMolesInPhase * dFdVdVdV());
 
       d1 = -h / dh;
       d2 = -dh / dhh;
@@ -641,8 +592,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
-      throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     double BonV = pt == PhaseType.GAS ? pressure * getB() / (numberOfMolesInPhase * temperature * R)
         : 2.0 / (2.0 + temperature / getPseudoCriticalTemperature());
     BonV = Math.max(1.0e-8, Math.min(1.0 - 1.0e-8, BonV));
@@ -690,12 +640,10 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
 
       iterations++;
       BonVold = BonV;
-      h = BonV - Btemp / numberOfMolesInPhase * dFdV()
-          - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
+      h = BonV - Btemp / numberOfMolesInPhase * dFdV() - pressure * Btemp / (numberOfMolesInPhase * R * temperature);
       dh = 1.0 + Btemp / Math.pow(BonV, 2.0) * (Btemp / numberOfMolesInPhase * dFdVdV());
       dhh = -2.0 * Btemp / Math.pow(BonV, 3.0) * (Btemp / numberOfMolesInPhase * dFdVdV())
-          - Math.pow(Btemp, 2.0) / Math.pow(BonV, 4.0)
-              * (Btemp / numberOfMolesInPhase * dFdVdVdV());
+          - Math.pow(Btemp, 2.0) / Math.pow(BonV, 4.0) * (Btemp / numberOfMolesInPhase * dFdVdVdV());
 
       d1 = -h / dh;
       d2 = -dh / dhh;
@@ -746,8 +694,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   /** {@inheritDoc} */
   @Override
   public double molarVolume2(double pressure, double temperature, double A, double B, PhaseType pt)
-      throws neqsim.util.exception.IsNaNException,
-      neqsim.util.exception.TooManyIterationsException {
+      throws neqsim.util.exception.IsNaNException, neqsim.util.exception.TooManyIterationsException {
     Z = pt == PhaseType.LIQUID ? 1.0 : 1.0e-5;
     setMolarVolume(Z * R * temperature / pressure);
     // super.molarVolume(pressure,temperature, A, B, phase);
@@ -768,8 +715,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
 
       logger.info("pressure " + -R * temperature * dFdV + " " + R * temperature / getMolarVolume());
       // -pressure;
-      dErrdV = -R * temperature * dFdVdV
-          - R * temperature * numberOfMolesInPhase / Math.pow(getVolume(), 2.0);
+      dErrdV = -R * temperature * dFdVdV - R * temperature * numberOfMolesInPhase / Math.pow(getVolume(), 2.0);
 
       logger.info("errdV " + dErrdV);
       logger.info("err " + err);
@@ -795,9 +741,7 @@ public class PhaseElectrolyteCPAOld extends PhaseModifiedFurstElectrolyteEos
   }
 
   /**
-   * <p>
    * Setter for the field <code>gcpav</code>.
-   * </p>
    *
    * @param gcpav a double
    */

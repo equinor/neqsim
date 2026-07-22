@@ -89,8 +89,7 @@ public class DETAILTest {
     doubleW G = new doubleW(0.0);
     doubleW JT = new doubleW(0.0);
     doubleW Kappa = new doubleW(0.0);
-    detail.PropertiesDetail(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
-        Kappa);
+    detail.PropertiesDetail(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa);
     assertTrue(P.val > 0);
     assertTrue(Z.val > 0);
     assertFalse(U.val > 0);

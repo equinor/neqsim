@@ -6,9 +6,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Fluid class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -19,17 +17,12 @@ public class FluidResponse {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(FluidResponse.class);
   public String name;
-  public HashMap<String, HashMap<String, Value>> properties =
-      new HashMap<String, HashMap<String, Value>>();
-  public HashMap<String, HashMap<String, Value>> composition =
-      new HashMap<String, HashMap<String, Value>>();
-  public HashMap<String, HashMap<String, Value>> conditions =
-      new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> properties = new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> composition = new HashMap<String, HashMap<String, Value>>();
+  public HashMap<String, HashMap<String, Value>> conditions = new HashMap<String, HashMap<String, Value>>();
 
   /**
-   * <p>
    * Constructor for Fluid. Sets name of inputFluid as name.
-   * </p>
    *
    * @param inputFluid a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -59,26 +52,20 @@ public class FluidResponse {
 
     HashMap<String, Value> newdata = new HashMap<String, Value>();
     newdata.put("temperature",
-        new Value(
-            Double.toString(
-                inputFluid.getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+        new Value(Double.toString(inputFluid.getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
             neqsim.util.unit.Units.getSymbol("temperature")));
     newdata.put("pressure",
-        new Value(
-            Double.toString(inputFluid.getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+        new Value(Double.toString(inputFluid.getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
             neqsim.util.unit.Units.getSymbol("pressure")));
     newdata.put("molar flow",
-        new Value(
-            Double.toString(inputFluid.getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
+        new Value(Double.toString(inputFluid.getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
             neqsim.util.unit.Units.getSymbol("molar flow")));
     newdata.put("mass flow",
-        new Value(
-            Double.toString(inputFluid.getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+        new Value(Double.toString(inputFluid.getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
             neqsim.util.unit.Units.getSymbol("mass flow")));
     newdata.put("fluid model", new Value(inputFluid.getModelName(), ""));
     newdata.put("enthalpy",
-        new Value(
-            Double.toString(inputFluid.getEnthalpy(neqsim.util.unit.Units.getSymbol("enthalpy"))),
+        new Value(Double.toString(inputFluid.getEnthalpy(neqsim.util.unit.Units.getSymbol("enthalpy"))),
             neqsim.util.unit.Units.getSymbol("enthalpy")));
     conditions.put("overall", newdata);
 
@@ -87,27 +74,26 @@ public class FluidResponse {
       newdata = new HashMap<String, Value>();
       newdata.put("temperature",
           new Value(
-              Double.toString(inputFluid.getPhase(name)
-                  .getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
+              Double
+                  .toString(inputFluid.getPhase(name).getTemperature(neqsim.util.unit.Units.getSymbol("temperature"))),
               neqsim.util.unit.Units.getSymbol("temperature")));
-      newdata.put("pressure", new Value(
-          Double.toString(
-              inputFluid.getPhase(name).getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
-          neqsim.util.unit.Units.getSymbol("pressure")));
+      newdata.put("pressure",
+          new Value(
+              Double.toString(inputFluid.getPhase(name).getPressure(neqsim.util.unit.Units.getSymbol("pressure"))),
+              neqsim.util.unit.Units.getSymbol("pressure")));
       newdata.put("molar flow",
           new Value(
-              Double.toString(inputFluid.getPhase(name)
-                  .getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
+              Double.toString(inputFluid.getPhase(name).getFlowRate(neqsim.util.unit.Units.getSymbol("molar flow"))),
               neqsim.util.unit.Units.getSymbol("molar flow")));
-      newdata.put("mass flow", new Value(
-          Double.toString(
-              inputFluid.getPhase(name).getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
-          neqsim.util.unit.Units.getSymbol("mass flow")));
+      newdata.put("mass flow",
+          new Value(
+              Double.toString(inputFluid.getPhase(name).getFlowRate(neqsim.util.unit.Units.getSymbol("mass flow"))),
+              neqsim.util.unit.Units.getSymbol("mass flow")));
       newdata.put("fluid model", new Value(inputFluid.getModelName(), ""));
-      newdata.put("enthalpy", new Value(
-          Double.toString(
-              inputFluid.getPhase(name).getEnthalpy(neqsim.util.unit.Units.getSymbol("enthalpy"))),
-          neqsim.util.unit.Units.getSymbol("enthalpy")));
+      newdata.put("enthalpy",
+          new Value(
+              Double.toString(inputFluid.getPhase(name).getEnthalpy(neqsim.util.unit.Units.getSymbol("enthalpy"))),
+              neqsim.util.unit.Units.getSymbol("enthalpy")));
       conditions.put(name, newdata);
     }
 
@@ -122,8 +108,8 @@ public class FluidResponse {
       newdata = new HashMap<String, Value>();
       HashMap<String, Value> newdata2 = new HashMap<String, Value>();
       for (int i = 0; i < inputFluid.getNumberOfComponents(); i++) {
-        newdata2.put(inputFluid.getPhase(j).getComponent(i).getComponentName(), new Value(
-            Double.toString(inputFluid.getPhase(j).getComponent(i).getx()), "mole fraction"));
+        newdata2.put(inputFluid.getPhase(j).getComponent(i).getComponentName(),
+            new Value(Double.toString(inputFluid.getPhase(j).getComponent(i).getx()), "mole fraction"));
         newdata.put(inputFluid.getPhase(j).getComponent(i).getComponentName(),
             new Value(Double.toString(inputFluid.getPhase(j).getWtFrac(i)), "weight fraction"));
       }
@@ -134,40 +120,41 @@ public class FluidResponse {
     newdata = new HashMap<String, Value>();
 
     newdata.put("density",
-        new Value(
-            Double.toString(inputFluid.getDensity(neqsim.util.unit.Units.getSymbol("density"))),
+        new Value(Double.toString(inputFluid.getDensity(neqsim.util.unit.Units.getSymbol("density"))),
             neqsim.util.unit.Units.getSymbol("density")));
 
     newdata.put("molar mass",
-        new Value(
-            Double
-                .toString(inputFluid.getMolarMass(neqsim.util.unit.Units.getSymbol("Molar Mass"))),
+        new Value(Double.toString(inputFluid.getMolarMass(neqsim.util.unit.Units.getSymbol("Molar Mass"))),
             neqsim.util.unit.Units.getSymbol("Molar Mass")));
 
     newdata.put("flow rate",
-        new Value(
-            Double
-                .toString(inputFluid.getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
+        new Value(Double.toString(inputFluid.getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
             neqsim.util.unit.Units.getSymbol("volume flow")));
     properties.put("overall", newdata);
     for (int i = 0; i < inputFluid.getNumberOfPhases(); i++) {
       newdata = new HashMap<String, Value>();
       String name = inputFluid.getPhase(i).getPhaseTypeName();
-      newdata.put("density", new Value(
-          Double.toString(
-              inputFluid.getPhase(name).getDensity(neqsim.util.unit.Units.getSymbol("density"))),
-          neqsim.util.unit.Units.getSymbol("density")));
+      newdata.put("density",
+          new Value(Double.toString(inputFluid.getPhase(name).getDensity(neqsim.util.unit.Units.getSymbol("density"))),
+              neqsim.util.unit.Units.getSymbol("density")));
       newdata.put("molar mass",
           new Value(
-              Double.toString(inputFluid.getPhase(name)
-                  .getMolarMass(neqsim.util.unit.Units.getSymbol("Molar Mass"))),
+              Double.toString(inputFluid.getPhase(name).getMolarMass(neqsim.util.unit.Units.getSymbol("Molar Mass"))),
               neqsim.util.unit.Units.getSymbol("Molar Mass")));
 
       newdata.put("flow rate",
           new Value(
-              Double.toString(inputFluid.getPhase(name)
-                  .getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
+              Double.toString(inputFluid.getPhase(name).getFlowRate(neqsim.util.unit.Units.getSymbol("volume flow"))),
               neqsim.util.unit.Units.getSymbol("volume flow")));
+      newdata.put("viscosity",
+          new Value(Double.toString(inputFluid.getPhase(name).getViscosity("kg/msec")), "kg/msec"));
+      newdata.put("thermalConductivity",
+          new Value(Double.toString(inputFluid.getPhase(name).getThermalConductivity("W/mK")), "W/mK"));
+      newdata.put("Cp", new Value(Double.toString(inputFluid.getPhase(name).getCp("J/kgK")), "J/kgK"));
+      newdata.put("Cv", new Value(Double.toString(inputFluid.getPhase(name).getCv("J/kgK")), "J/kgK"));
+      newdata.put("compressibilityFactor", new Value(Double.toString(inputFluid.getPhase(name).getZ()), "-"));
+      newdata.put("speedOfSound", new Value(Double.toString(inputFluid.getPhase(name).getSoundSpeed("m/s")), "m/s"));
+      newdata.put("entropy", new Value(Double.toString(inputFluid.getPhase(name).getEntropy("J/molK")), "J/molK"));
       properties.put(name, newdata);
     }
   }
@@ -191,9 +178,8 @@ public class FluidResponse {
   }
 
   /**
-   * <p>
    * print.
-   * </p>
    */
-  public void print() {}
+  public void print() {
+  }
 }

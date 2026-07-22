@@ -11,9 +11,7 @@ import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.splitter.Splitter;
 
 /**
- * <p>
  * Calculator class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -26,14 +24,31 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
   ArrayList<ProcessEquipmentInterface> inputVariable = new ArrayList<ProcessEquipmentInterface>();
   private ProcessEquipmentInterface outputVariable;
-  private BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> calculationMethod;
+  private transient BiConsumer<ArrayList<ProcessEquipmentInterface>, ProcessEquipmentInterface> calculationMethod;
   private Runnable simpleCalculationMethod;
   String type = "sumTEG";
 
+  /** Anti-surge: emit a warning if compressor stays below this fraction of surge after update. */
+  private static final double ANTI_SURGE_STUCK_THRESHOLD = 0.98;
+
   /**
-   * <p>
+   * Anti-surge: absolute upper bound on the recycle flow expressed as a multiple of the compressor surge flow. Holding
+   * a compressor on its surge line never requires recycling more than the surge flow itself (recycle = surgeFlow -
+   * freshFeed, and freshFeed &ge; 0), so this generous multiple caps the recycle setpoint. It breaks the pathological
+   * runaway where the per-iteration percentage step compounds geometrically and inflates the recycle to physically
+   * impossible values, which otherwise prevents the outer recycle loop from ever converging.
+   */
+  private static final double ANTI_SURGE_MAX_RECYCLE_FACTOR = 2.0;
+
+  /**
+   * Anti-surge: proportional (relaxation) gain applied to the surge-inlet flow gap when stepping the recycle setpoint.
+   * The default of 0.5 reproduces the legacy behaviour. Lowering it (e.g. 0.2-0.3) damps the recycle response and
+   * suppresses run-to-run oscillation at deep turndown at the cost of slower convergence.
+   */
+  private double antiSurgeProportionalGain = 0.5;
+
+  /**
    * Constructor for Calculator.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -42,9 +57,30 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
+   * Get the anti-surge proportional (relaxation) gain applied to the surge-inlet flow gap.
+   *
+   * @return the proportional gain (default 0.5)
+   */
+  public double getAntiSurgeProportionalGain() {
+    return antiSurgeProportionalGain;
+  }
+
+  /**
+   * Set the anti-surge proportional (relaxation) gain applied to the surge-inlet flow gap when stepping the recycle
+   * setpoint. Values in (0, 1]; the default 0.5 reproduces the legacy response, lower values damp run-to-run
+   * oscillation at deep turndown.
+   *
+   * @param antiSurgeProportionalGain the proportional gain, must be greater than 0 and not greater than 1
+   */
+  public void setAntiSurgeProportionalGain(double antiSurgeProportionalGain) {
+    if (antiSurgeProportionalGain <= 0.0 || antiSurgeProportionalGain > 1.0) {
+      throw new IllegalArgumentException("anti-surge proportional gain must be in the range (0, 1]");
+    }
+    this.antiSurgeProportionalGain = antiSurgeProportionalGain;
+  }
+
+  /**
    * addInputVariable.
-   * </p>
    *
    * @param unit a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -53,9 +89,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * addInputVariable.
-   * </p>
    *
    * @param units a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -66,9 +100,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>inputVariable</code>.
-   * </p>
    *
    * @return a {@link java.util.ArrayList} object
    */
@@ -77,9 +109,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outputVariable</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -88,9 +118,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * runAntiSurgeCalc.
-   * </p>
    *
    * @param id a {@link java.util.UUID} object
    */
@@ -99,21 +127,101 @@ public class Calculator extends ProcessEquipmentBaseClass {
 
     Splitter antiSurgeSplitter = (Splitter) outputVariable;
 
-    double inletFlow = compressor.getInletStream().getFlowRate("Sm3/hr");
-    double currentRecycleFlow = antiSurgeSplitter.getSplitStream(1).getFlowRate("MSm3/day");
-    if (!Double.isFinite(inletFlow) || !Double.isFinite(currentRecycleFlow)) {
-      logger.warn("Invalid flow rate detected during anti-surge calculation");
+    double inletFlow = compressor.getInletStream().getFlowRate("m3/hr");
+    double surgeFlow = compressor.getSurgeFlowRate();
+    double currentRecycle = antiSurgeSplitter.getSplitStream(1).getFlowRate("m3/hr");
+
+    // Guard against a surge flow extrapolated far beyond the surge curve data.
+    // The surge curve interpolates flow from the operating head; when the head
+    // falls outside the curve's fitted range (e.g. a surge curve assigned to a
+    // duty it was not measured for) the extrapolation can return a physically
+    // impossible surge flow orders of magnitude above the curve, which makes the
+    // proportional step below chase an unreachable target and the recycle grow
+    // without bound. Only a *gross* extrapolation is pathological: a modest
+    // extrapolation just below the lowest fitted head point is a legitimate
+    // anti-surge target and must be honoured (otherwise the compressor is held
+    // in surge). Clamp the surge flow to the surge curve's maximum defined flow
+    // only when it exceeds that maximum by more than ANTI_SURGE_MAX_RECYCLE_FACTOR,
+    // which keeps normal operation and reasonable extrapolation untouched while
+    // still breaking the runaway from a wildly off-range surge curve.
+    try {
+      double[] curveFlow = antiSurgeSplitter == null ? null
+          : compressor.getCompressorChart().getSurgeCurve().getSortedFlow();
+      if (curveFlow != null && curveFlow.length > 0) {
+        double maxCurveFlow = curveFlow[0];
+        for (int i = 1; i < curveFlow.length; i++) {
+          if (curveFlow[i] > maxCurveFlow) {
+            maxCurveFlow = curveFlow[i];
+          }
+        }
+        if (Double.isFinite(maxCurveFlow) && maxCurveFlow > 0.0
+            && surgeFlow > ANTI_SURGE_MAX_RECYCLE_FACTOR * maxCurveFlow) {
+          surgeFlow = maxCurveFlow;
+        }
+      }
+    } catch (Exception ex) {
+      logger.debug("Anti-surge: could not read surge curve flow range for clamping", ex);
+    }
+
+    // Guard against non-finite state coming from a failed compressor run or an
+    // inactive surge curve. Without this the proportional update below can
+    // propagate NaN into the splitter setpoint and deadlock the recycle loop.
+    if (!Double.isFinite(inletFlow) || !Double.isFinite(surgeFlow) || !Double.isFinite(currentRecycle)
+        || surgeFlow <= 0.0) {
+      logger.warn("Anti-surge calc skipped: non-finite input (inlet=" + inletFlow + " m3/hr" + ", surge=" + surgeFlow
+          + " m3/hr, current=" + currentRecycle + " m3/hr)");
+      setCalculationIdentifier(id);
       return;
     }
 
-    double flowAntiSurge = antiSurgeSplitter.getSplitStream(1).getFlowRate("Sm3/hr") + 0.5
-        * (compressor.getSurgeFlowRateStd() - compressor.getInletStream().getFlowRate("Sm3/hr"));
-    flowAntiSurge =
-        Math.max(flowAntiSurge, compressor.getInletStream().getFlowRate("Sm3/hr") / 1e6);
-    antiSurgeSplitter.setFlowRates(new double[] {-1, flowAntiSurge}, "Sm3/hr");
-    antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "Sm3/hr");
+    // If we are comfortably above the surge line, close the recycle valve to
+    // (effectively) zero. This short-circuit avoids the proportional step
+    // overshooting when the compressor is operating far from surge.
+    if (inletFlow > 1.2 * surgeFlow) {
+      double minRecycle = Math.max(inletFlow / 1.0e6, 1.0e-6);
+      antiSurgeSplitter.setFlowRates(new double[] { -1, minRecycle }, "m3/hr");
+      antiSurgeSplitter.getSplitStream(1).setFlowRate(minRecycle, "m3/hr");
+      antiSurgeSplitter.getSplitStream(1).run();
+      antiSurgeSplitter.setCalculationIdentifier(id);
+      return;
+    }
+
+    // Proportional anti-surge step with a per-iteration bound. The step is
+    // proportional to the surge-inlet gap (NOT to (gap - currentRecycle)) so
+    // the fixed point is inletFlow == surgeFlow regardless of the recycle
+    // path topology. This matches the legacy formula exactly while adding a
+    // 25%-of-max-flow per-iteration cap to prevent single-step overshoot.
+    double rawStep = antiSurgeProportionalGain * (surgeFlow - inletFlow);
+    double maxStep = 0.25 * Math.max(currentRecycle, Math.max(inletFlow, surgeFlow));
+    double cappedStep = Math.max(-maxStep, Math.min(maxStep, rawStep));
+    double flowAntiSurge = Math.max(currentRecycle + cappedStep, inletFlow / 1.0e6);
+
+    // Absolute upper bound on the recycle setpoint. The recycle required to hold
+    // the compressor on the surge line can never exceed the surge flow itself, so
+    // capping at a generous multiple of the surge flow leaves normal operation
+    // untouched while breaking the geometric runaway that otherwise inflates the
+    // recycle without bound (e.g. an injection-compressor recycle growing to tens
+    // of millions of m3/hr) and stops the outer recycle loop from converging.
+    double maxRecycle = ANTI_SURGE_MAX_RECYCLE_FACTOR * surgeFlow;
+    if (flowAntiSurge > maxRecycle) {
+      flowAntiSurge = maxRecycle;
+    }
+
+    antiSurgeSplitter.setFlowRates(new double[] { -1, flowAntiSurge }, "m3/hr");
+    antiSurgeSplitter.getSplitStream(1).setFlowRate(flowAntiSurge, "m3/hr");
     antiSurgeSplitter.getSplitStream(1).run();
     antiSurgeSplitter.setCalculationIdentifier(id);
+
+    // Diagnostic: if (inletFlow + flowAntiSurge) is still well below surge
+    // after this update, the loop is likely stuck (e.g. recycle path is not
+    // wired back into the compressor inlet, or outer iteration cap is too
+    // low). Surfacing this is much friendlier than a silent in-surge result.
+    double projected = inletFlow + flowAntiSurge;
+    if (projected < ANTI_SURGE_STUCK_THRESHOLD * surgeFlow) {
+      logger.warn("Anti-surge: compressor still below surge after recycle update " + "(projected total=" + projected
+          + " m3/hr, surge=" + surgeFlow + " m3/hr). Check that the recycle stream feeds back into the compressor "
+          + "inlet and that the outer recycle iteration cap is sufficient.");
+    }
   }
 
   /** {@inheritDoc} */
@@ -167,9 +275,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>outputVariable</code>.
-   * </p>
    *
    * @param outputVariable a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -178,9 +284,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>calculationMethod</code>.
-   * </p>
    *
    * @param calculationMethod a {@link java.util.function.BiConsumer} object
    */
@@ -190,9 +294,7 @@ public class Calculator extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>calculationMethod</code>.
-   * </p>
    *
    * @param calculationMethod a {@link java.lang.Runnable} object
    */

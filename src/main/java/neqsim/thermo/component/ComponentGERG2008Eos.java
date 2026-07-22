@@ -5,9 +5,7 @@ import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentGERG2008 class.
- * </p>
  *
  * @author victorigi
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentGERG2008.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -37,9 +33,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
   }
 
   /**
-   * <p>
    * Constructor for ComponentGERG2008.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -76,8 +70,8 @@ public class ComponentGERG2008Eos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles,
-      double beta, int numberOfComponents, int initType) {
+  public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles, double beta,
+      int numberOfComponents, int initType) {
     super.Finit(phase, T, p, totalNumberOfMoles, beta, numberOfComponents, initType);
 
     if (initType == 3) {
@@ -118,8 +112,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
     double logXi = Math.log(getx());
     double ideal = ph.getAlpha0() != null ? ph.getAlpha0()[0].val : 0.0;
@@ -129,8 +122,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double nTot = phase.getNumberOfMolesInPhase();
     double term = -1.0 / nTot;
     if (getComponentNumber() == i) {
@@ -148,8 +140,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
     double alphar = ph.getAlphaRes() != null ? ph.getAlphaRes()[0][1].val : 0.0;
     return -(1.0 + alphar) / phase.getVolume();
@@ -157,8 +148,7 @@ public class ComponentGERG2008Eos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseGERG2008Eos ph = (PhaseGERG2008Eos) phase;
     double a0T = ph.getAlpha0() != null ? ph.getAlpha0()[1].val : 0.0;
     double arT = ph.getAlphaRes() != null ? ph.getAlphaRes()[1][0].val : 0.0;
@@ -170,8 +160,8 @@ public class ComponentGERG2008Eos extends ComponentEos {
   public double fugcoef(PhaseInterface phase) {
     double temperature = phase.getTemperature();
     double pressure = phase.getPressure();
-    double logFugacityCoefficient =
-        dFdN(phase, phase.getNumberOfComponents(), temperature, pressure) - Math.log(phase.getZ());
+    double logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), temperature, pressure)
+        - Math.log(phase.getZ());
     double fugacityCoefficient = Math.exp(logFugacityCoefficient);
     return fugacityCoefficient;
   }

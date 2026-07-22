@@ -6,6 +6,8 @@
 
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkCPAstatoil;
@@ -13,26 +15,24 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ActivityCalc class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
  * @version $Id: $Id
  */
 public class ActivityCalc {
+  private static final Logger logger = LogManager.getLogger(ActivityCalc.class);
+
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    SystemInterface testSystem =
-        new SystemSrkCPAstatoil(273.15 + 42, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 + 42,
+        ThermodynamicConstantsInterface.referencePressure);
 
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
@@ -51,6 +51,6 @@ public class ActivityCalc {
     }
 
     // testSystem.display();
-    System.out.println("activity water " + testSystem.getPhase(1).getActivityCoefficient(1));
+    logger.info("activity water " + testSystem.getPhase(1).getActivityCoefficient(1));
   }
 }

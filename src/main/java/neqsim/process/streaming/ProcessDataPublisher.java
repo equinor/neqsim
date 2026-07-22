@@ -18,8 +18,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Implementation of StreamingDataInterface for publishing process simulation data.
  *
  * <p>
- * This class bridges NeqSim process simulations with AI-based production optimization platforms and
- * real-time digital twin systems.
+ * This class bridges NeqSim process simulations with AI-based production optimization platforms and real-time digital
+ * twin systems.
  * </p>
  *
  * <p>
@@ -38,8 +38,7 @@ import neqsim.process.processmodel.ProcessSystem;
 public class ProcessDataPublisher implements StreamingDataInterface {
   private static final int DEFAULT_HISTORY_SIZE = 10000;
 
-  private final Map<String, List<Consumer<TimestampedValue>>> subscribers =
-      new ConcurrentHashMap<>();
+  private final Map<String, List<Consumer<TimestampedValue>>> subscribers = new ConcurrentHashMap<>();
   private final Map<String, LinkedList<TimestampedValue>> history = new ConcurrentHashMap<>();
   private final Map<String, TimestampedValue> currentValues = new ConcurrentHashMap<>();
   private final List<String> stateVectorTags = new CopyOnWriteArrayList<>();
@@ -50,7 +49,8 @@ public class ProcessDataPublisher implements StreamingDataInterface {
   /**
    * Creates a new ProcessDataPublisher.
    */
-  public ProcessDataPublisher() {}
+  public ProcessDataPublisher() {
+  }
 
   /**
    * Creates a new ProcessDataPublisher linked to a ProcessSystem.
@@ -116,14 +116,13 @@ public class ProcessDataPublisher implements StreamingDataInterface {
       if (tagId != null) {
         // For streams, publish pressure and temperature
         if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
-          neqsim.process.equipment.stream.StreamInterface stream =
-              (neqsim.process.equipment.stream.StreamInterface) equipment;
-          batch.put(tagId + ".pressure", new TimestampedValue(stream.getPressure(), "bara", now,
-              TimestampedValue.Quality.SIMULATED));
-          batch.put(tagId + ".temperature", new TimestampedValue(stream.getTemperature() - 273.15,
-              "C", now, TimestampedValue.Quality.SIMULATED));
-          batch.put(tagId + ".flowrate", new TimestampedValue(stream.getFlowRate("kg/hr"), "kg/hr",
-              now, TimestampedValue.Quality.SIMULATED));
+          neqsim.process.equipment.stream.StreamInterface stream = (neqsim.process.equipment.stream.StreamInterface) equipment;
+          batch.put(tagId + ".pressure",
+              new TimestampedValue(stream.getPressure(), "bara", now, TimestampedValue.Quality.SIMULATED));
+          batch.put(tagId + ".temperature",
+              new TimestampedValue(stream.getTemperature() - 273.15, "C", now, TimestampedValue.Quality.SIMULATED));
+          batch.put(tagId + ".flowrate",
+              new TimestampedValue(stream.getFlowRate("kg/hr"), "kg/hr", now, TimestampedValue.Quality.SIMULATED));
         }
       }
     }
@@ -152,8 +151,7 @@ public class ProcessDataPublisher implements StreamingDataInterface {
       currentValues.put(tagId, value);
 
       // Add to history
-      LinkedList<TimestampedValue> tagHistory =
-          history.computeIfAbsent(tagId, k -> new LinkedList<>());
+      LinkedList<TimestampedValue> tagHistory = history.computeIfAbsent(tagId, k -> new LinkedList<>());
       synchronized (tagHistory) {
         tagHistory.addLast(value);
         while (tagHistory.size() > historyBufferSize) {
@@ -211,8 +209,7 @@ public class ProcessDataPublisher implements StreamingDataInterface {
   }
 
   @Override
-  public Map<String, List<TimestampedValue>> getHistoryBatch(List<String> tagIds,
-      Duration lookback) {
+  public Map<String, List<TimestampedValue>> getHistoryBatch(List<String> tagIds, Duration lookback) {
     Map<String, List<TimestampedValue>> result = new HashMap<>();
     for (String tagId : tagIds) {
       result.put(tagId, getHistory(tagId, lookback));

@@ -13,9 +13,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * Adjuster class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -58,9 +56,7 @@ public class FlowRateAdjuster extends TwoPortEquipment {
   double waterDensity;
 
   /**
-   * <p>
    * Constructor for FlowRateAdjuster.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -69,9 +65,7 @@ public class FlowRateAdjuster extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Constructor for FlowRateAdjuster.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -81,17 +75,14 @@ public class FlowRateAdjuster extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setAdjustedVariable.
-   * </p>
    *
    * @param desiredGasFlow a {@link java.lang.Double} object
    * @param desiredOilFlow a {@link java.lang.Double} object
    * @param desiredWaterFlow a {@link java.lang.Double} object
    * @param unit a {@link java.lang.String} object
    */
-  public void setAdjustedFlowRates(Double desiredGasFlow, Double desiredOilFlow,
-      Double desiredWaterFlow, String unit) {
+  public void setAdjustedFlowRates(Double desiredGasFlow, Double desiredOilFlow, Double desiredWaterFlow, String unit) {
     this.desiredGasFlow = desiredGasFlow;
     this.desiredOilFlow = desiredOilFlow;
     this.desiredWaterFlow = desiredWaterFlow;
@@ -99,9 +90,7 @@ public class FlowRateAdjuster extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setAdjustedVariable.
-   * </p>
    *
    * @param desiredGasFlow a {@link java.lang.Double} object
    * @param desiredOilFlow a {@link java.lang.Double} object

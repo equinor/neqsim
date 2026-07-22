@@ -67,20 +67,18 @@ class PseudoComponentCombinerTest {
     SystemInterface fluid1 = createFluid1();
     SystemInterface fluid2 = createFluid2();
 
-    SystemInterface combined =
-        PseudoComponentCombiner.combineReservoirFluids(2, Arrays.asList(fluid1, fluid2));
+    SystemInterface combined = PseudoComponentCombiner.combineReservoirFluids(2, Arrays.asList(fluid1, fluid2));
 
     assertEquals(1.0, combined.getComponent("methane").getNumberOfmoles(), TOLERANCE);
     assertEquals(0.1, combined.getComponent("ethane").getNumberOfmoles(), TOLERANCE);
     assertEquals(0.05, combined.getComponent("n-butane").getNumberOfmoles(), TOLERANCE);
 
-    List<ComponentInterface> pseudoComponents =
-        Arrays.stream(combined.getComponentNames()).map(combined::getComponent)
-            .filter(component -> component.isIsTBPfraction() || component.isIsPlusFraction())
-            .sorted((c1, c2) -> Double.compare(
-                c1.getNormalBoilingPoint() > 0.0 ? c1.getNormalBoilingPoint() : c1.getMolarMass(),
-                c2.getNormalBoilingPoint() > 0.0 ? c2.getNormalBoilingPoint() : c2.getMolarMass()))
-            .collect(Collectors.toList());
+    List<ComponentInterface> pseudoComponents = Arrays.stream(combined.getComponentNames()).map(combined::getComponent)
+        .filter(component -> component.isIsTBPfraction() || component.isIsPlusFraction())
+        .sorted((c1, c2) -> Double.compare(
+            c1.getNormalBoilingPoint() > 0.0 ? c1.getNormalBoilingPoint() : c1.getMolarMass(),
+            c2.getNormalBoilingPoint() > 0.0 ? c2.getNormalBoilingPoint() : c2.getMolarMass()))
+        .collect(Collectors.toList());
 
     assertEquals(2, pseudoComponents.size());
 
@@ -173,18 +171,17 @@ class PseudoComponentCombinerTest {
     SystemInterface source = createSourceFluid();
     SystemInterface reference = createReferenceFluid();
 
-    SystemInterface characterized =
-        PseudoComponentCombiner.characterizeToReference(source, reference);
+    SystemInterface characterized = PseudoComponentCombiner.characterizeToReference(source, reference);
 
     assertEquals(0.7, characterized.getComponent("methane").getNumberOfmoles(), TOLERANCE);
 
-    List<ComponentInterface> pseudoComponents =
-        Arrays.stream(characterized.getComponentNames()).map(characterized::getComponent)
-            .filter(component -> component.isIsTBPfraction() || component.isIsPlusFraction())
-            .sorted((c1, c2) -> Double.compare(
-                c1.getNormalBoilingPoint() > 0.0 ? c1.getNormalBoilingPoint() : c1.getMolarMass(),
-                c2.getNormalBoilingPoint() > 0.0 ? c2.getNormalBoilingPoint() : c2.getMolarMass()))
-            .collect(Collectors.toList());
+    List<ComponentInterface> pseudoComponents = Arrays.stream(characterized.getComponentNames())
+        .map(characterized::getComponent)
+        .filter(component -> component.isIsTBPfraction() || component.isIsPlusFraction())
+        .sorted((c1, c2) -> Double.compare(
+            c1.getNormalBoilingPoint() > 0.0 ? c1.getNormalBoilingPoint() : c1.getMolarMass(),
+            c2.getNormalBoilingPoint() > 0.0 ? c2.getNormalBoilingPoint() : c2.getMolarMass()))
+        .collect(Collectors.toList());
 
     assertEquals(3, pseudoComponents.size());
 
@@ -228,7 +225,6 @@ class PseudoComponentCombinerTest {
   void testInvalidInput() {
     assertThrows(IllegalArgumentException.class,
         () -> PseudoComponentCombiner.combineReservoirFluids(0, createFluid1()));
-    assertThrows(IllegalArgumentException.class,
-        () -> PseudoComponentCombiner.combineReservoirFluids(3));
+    assertThrows(IllegalArgumentException.class, () -> PseudoComponentCombiner.combineReservoirFluids(3));
   }
 }

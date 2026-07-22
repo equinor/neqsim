@@ -9,9 +9,7 @@ package neqsim.thermo.characterization;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * TBPCharacterize class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -29,16 +27,13 @@ public class TBPCharacterize extends PlusCharacterize {
   double[] TBP_M = null;
 
   /**
-   * <p>
    * Constructor for TBPCharacterize.
-   * </p>
    */
-  public TBPCharacterize() {}
+  public TBPCharacterize() {
+  }
 
   /**
-   * <p>
    * Constructor for TBPCharacterize.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -102,8 +97,7 @@ public class TBPCharacterize extends PlusCharacterize {
       }
       TBPmoles[numb] += system.getPhase(0).getComponent(i).getNumberOfmoles();
       TBPfractions[numb] += system.getPhase(0).getComponent(i).getz();
-      TBP_Mnom[numb] += system.getPhase(0).getComponent(i).getz()
-          * system.getPhase(0).getComponent(i).getMolarMass();
+      TBP_Mnom[numb] += system.getPhase(0).getComponent(i).getz() * system.getPhase(0).getComponent(i).getMolarMass();
       TBPdensDenom[numb] += system.getPhase(0).getComponent(i).getz()
           * system.getPhase(0).getComponent(i).getMolarMass()
           / system.getPhase(0).getComponent(i).getNormalLiquidDensity();
@@ -127,15 +121,12 @@ public class TBPCharacterize extends PlusCharacterize {
   public void addTBPFractions() {
     for (int i = 0; i < TBPdens.length; i++) {
       // System.out.println("Mi " + TBP_M[i] + " dens " + TBPdens[i]);
-      system.addTBPfraction("C" + Integer.toString(carbonNumberVector[i]), TBPmoles[i], TBP_M[i],
-          TBPdens[i]);
+      system.addTBPfraction("C" + Integer.toString(carbonNumberVector[i]), TBPmoles[i], TBP_M[i], TBPdens[i]);
     }
   }
 
   /**
-   * <p>
    * saveCharacterizedFluid.
-   * </p>
    *
    * @return a boolean
    */
@@ -163,9 +154,7 @@ public class TBPCharacterize extends PlusCharacterize {
   }
 
   /**
-   * <p>
    * getTBPfractions.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -191,9 +180,7 @@ public class TBPCharacterize extends PlusCharacterize {
   }
 
   /**
-   * <p>
    * solveAB.
-   * </p>
    */
   public void solveAB() {
     NewtonSolveAB solver = new NewtonSolveAB(system, this);
@@ -216,9 +203,7 @@ public class TBPCharacterize extends PlusCharacterize {
   }
 
   /**
-   * <p>
    * getTBPdens.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -327,11 +312,10 @@ public class TBPCharacterize extends PlusCharacterize {
   }
 
   /**
-   * <p>
    * addPlusFraction.
-   * </p>
    */
-  public void addPlusFraction() {}
+  public void addPlusFraction() {
+  }
 
   /** {@inheritDoc} */
   @Override

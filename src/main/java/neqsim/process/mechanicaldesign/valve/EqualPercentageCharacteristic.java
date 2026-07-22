@@ -2,21 +2,21 @@ package neqsim.process.mechanicaldesign.valve;
 
 /**
  * Represents a valve with an equal percentage flow characteristic.
- * 
+ *
  * <p>
- * For equal percentage valves, equal increments of valve travel produce equal percentage changes in
- * the existing flow coefficient. This provides a logarithmic relationship between stem position and
- * flow, making it ideal for processes where the pressure drop varies significantly with flow rate.
+ * For equal percentage valves, equal increments of valve travel produce equal percentage changes in the existing flow
+ * coefficient. This provides a logarithmic relationship between stem position and flow, making it ideal for processes
+ * where the pressure drop varies significantly with flow rate.
  * </p>
- * 
+ *
  * <p>
  * The characteristic follows the equation:
  * </p>
- * 
+ *
  * <pre>
  * Cv = Cv_max * R ^ (x - 1)
  * </pre>
- * 
+ *
  * <p>
  * where:
  * </p>
@@ -24,10 +24,10 @@ package neqsim.process.mechanicaldesign.valve;
  * <li>R = rangeability (typically 50:1, meaning Cv_max/Cv_min = 50)</li>
  * <li>x = fractional valve opening (0 to 1)</li>
  * </ul>
- * 
+ *
  * <p>
- * Equal percentage valves are the most commonly used characteristic for process control because
- * they provide consistent control loop gain across a wide range of operating conditions.
+ * Equal percentage valves are the most commonly used characteristic for process control because they provide consistent
+ * control loop gain across a wide range of operating conditions.
  * </p>
  *
  * @author esol
@@ -40,8 +40,8 @@ public class EqualPercentageCharacteristic implements ValveCharacteristic {
   private static final long serialVersionUID = 1000L;
 
   /**
-   * The rangeability of the valve, defined as Cv_max / Cv_min. Typical values are 50:1 for standard
-   * valves and up to 100:1 for high-performance valves.
+   * The rangeability of the valve, defined as Cv_max / Cv_min. Typical values are 50:1 for standard valves and up to
+   * 100:1 for high-performance valves.
    */
   private double rangeability = 50.0;
 
@@ -66,7 +66,7 @@ public class EqualPercentageCharacteristic implements ValveCharacteristic {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * <p>
    * Calculates the actual Kv based on equal percentage characteristic.
    * </p>
@@ -78,15 +78,15 @@ public class EqualPercentageCharacteristic implements ValveCharacteristic {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * <p>
    * Returns the opening factor for equal percentage characteristic using the formula:
    * </p>
-   * 
+   *
    * <pre>
    * factor = R ^ (x - 1)
    * </pre>
-   * 
+   *
    * <p>
    * where R is the rangeability and x is the fractional opening (0 to 1).
    * </p>

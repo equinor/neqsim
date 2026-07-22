@@ -6,7 +6,6 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
-import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -14,8 +13,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * WellSystem class - Integrated well model combining IPR (Inflow Performance Relationship) and VLP
- * (Vertical Lift Performance) for complete well modeling.
+ * WellSystem class - Integrated well model combining IPR (Inflow Performance Relationship) and VLP (Vertical Lift
+ * Performance) for complete well modeling.
  *
  * <p>
  * This class represents a complete producing well system including:
@@ -30,7 +29,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <h2>Architecture Overview</h2>
- * 
+ *
  * <pre>
  * ┌─────────────┐    ┌──────────┐    ┌─────────────────┐    ┌───────┐    ┌────────┐
  * │  Reservoir  │───►│ WellFlow │───►│TubingPerformance│───►│ Choke │───►│ Output │
@@ -40,7 +39,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </pre>
  *
  * <h2>Usage Example 1 - Basic Well Setup</h2>
- * 
+ *
  * <pre>{@code
  * // Create reservoir fluid at reservoir conditions
  * SystemInterface resFluid = new SystemSrkEos(373.15, 250.0);
@@ -80,11 +79,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * }</pre>
  *
  * <h2>Usage Example 2 - Lift Curve Generation for Reservoir Simulator</h2>
- * 
+ *
  * <pre>{@code
  * // Setup well as above, then generate lift curves
- * double[] whPressures = {30, 40, 50, 60, 70}; // bara
- * double[] waterCuts = {0.0, 0.2, 0.4, 0.6, 0.8};
+ * double[] whPressures = { 30, 40, 50, 60, 70 }; // bara
+ * double[] waterCuts = { 0.0, 0.2, 0.4, 0.6, 0.8 };
  *
  * // Generate lift curve table
  * LiftCurveTable liftTable = well.generateLiftCurves(whPressures, waterCuts);
@@ -94,7 +93,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * }</pre>
  *
  * <h2>Usage Example 3 - Multi-Layer Commingled Well</h2>
- * 
+ *
  * <pre>{@code
  * WellSystem multilayerWell = new WellSystem("Commingled-1");
  *
@@ -116,7 +115,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * }</pre>
  *
  * <h2>Integration with SimpleReservoir</h2>
- * 
+ *
  * <pre>{@code
  * // Create reservoir
  * SimpleReservoir reservoir = new SimpleReservoir("Field Reservoir");
@@ -239,8 +238,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
      * @param reservoirPressure initial reservoir pressure (bara)
      * @param pi productivity index
      */
-    public ReservoirLayer(String name, StreamInterface stream, double khFraction,
-        double reservoirPressure, double pi) {
+    public ReservoirLayer(String name, StreamInterface stream, double khFraction, double reservoirPressure, double pi) {
       this.name = name;
       this.stream = stream;
       this.khFraction = khFraction;
@@ -258,7 +256,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   private StreamInterface inletStream; // Alias for reservoirStream for ProcessSystem compatibility
 
   // Multi-layer support
-  private List<ReservoirLayer> layers = new ArrayList<>();
+  private transient List<ReservoirLayer> layers = new ArrayList<>();
   private boolean isMultiLayer = false;
 
   // IPR configuration
@@ -282,10 +280,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   private double tubingDiameter = 0.1016;
   private double tubingRoughness = 2.5e-5;
   private double tubingInclination = 90.0;
-  private TubingPerformance.PressureDropCorrelation pdCorrelation =
-      TubingPerformance.PressureDropCorrelation.BEGGS_BRILL;
-  private TubingPerformance.TemperatureModel tempModel =
-      TubingPerformance.TemperatureModel.LINEAR_GRADIENT;
+  private TubingPerformance.PressureDropCorrelation pdCorrelation = TubingPerformance.PressureDropCorrelation.BEGGS_BRILL;
+  private TubingPerformance.TemperatureModel tempModel = TubingPerformance.TemperatureModel.LINEAR_GRADIENT;
   private double bhTemperature = 373.15;
   private double whTemperature = 313.15;
 
@@ -305,10 +301,10 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Constructor for WellSystem with inlet stream.
-   * 
+   *
    * <p>
-   * This constructor allows WellSystem to be created like other process equipment, making it
-   * compatible with ProcessSystem sequential building.
+   * This constructor allows WellSystem to be created like other process equipment, making it compatible with
+   * ProcessSystem sequential building.
    * </p>
    *
    * @param name well name
@@ -345,7 +341,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Set the inlet stream (alias for setReservoirStream for ProcessSystem compatibility).
-   * 
+   *
    * <p>
    * This method allows WellSystem to be used in a ProcessSystem like other equipment.
    * </p>
@@ -382,15 +378,15 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    */
   public void setProductionIndex(double pi, String unit) {
     switch (unit.toLowerCase()) {
-      case "bbl/day/psi2":
-        this.productivityIndex = pi * 0.158987 * Math.pow(14.5038, 2);
-        break;
-      case "sm3/day/bar":
-        // Linear PI (for liquid wells)
-        this.productivityIndex = pi;
-        break;
-      default:
-        this.productivityIndex = pi;
+    case "bbl/day/psi2":
+      this.productivityIndex = pi * 0.158987 * Math.pow(14.5038, 2);
+      break;
+    case "sm3/day/bar":
+      // Linear PI (for liquid wells)
+      this.productivityIndex = pi;
+      break;
+    default:
+      this.productivityIndex = pi;
     }
   }
 
@@ -425,7 +421,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Set backpressure equation parameters with non-Darcy term.
-   * 
+   *
    * <p>
    * Equation: Pr² - Pwf² = a·q + b·q² where b captures turbulence.
    * </p>
@@ -463,14 +459,14 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    */
   public void setTubingDiameter(double diameter, String unit) {
     switch (unit.toLowerCase()) {
-      case "in":
-        this.tubingDiameter = diameter * 0.0254;
-        break;
-      case "mm":
-        this.tubingDiameter = diameter / 1000.0;
-        break;
-      default:
-        this.tubingDiameter = diameter;
+    case "in":
+      this.tubingDiameter = diameter * 0.0254;
+      break;
+    case "mm":
+      this.tubingDiameter = diameter / 1000.0;
+      break;
+    default:
+      this.tubingDiameter = diameter;
     }
   }
 
@@ -503,7 +499,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
   /**
    * Set the VLP solver mode.
-   * 
+   *
    * <p>
    * Available modes:
    * <ul>
@@ -521,24 +517,24 @@ public class WellSystem extends ProcessEquipmentBaseClass {
     this.vlpSolverMode = mode;
     // Map to TubingPerformance correlation when using full solver
     switch (mode) {
-      case BEGGS_BRILL:
-        this.pdCorrelation = TubingPerformance.PressureDropCorrelation.BEGGS_BRILL;
-        break;
-      case HAGEDORN_BROWN:
-        this.pdCorrelation = TubingPerformance.PressureDropCorrelation.HAGEDORN_BROWN;
-        break;
-      case GRAY:
-        this.pdCorrelation = TubingPerformance.PressureDropCorrelation.GRAY;
-        break;
-      case HASAN_KABIR:
-        this.pdCorrelation = TubingPerformance.PressureDropCorrelation.HASAN_KABIR;
-        break;
-      case DUNS_ROS:
-        this.pdCorrelation = TubingPerformance.PressureDropCorrelation.DUNS_ROS;
-        break;
-      default:
-        // SIMPLIFIED mode doesn't use TubingPerformance
-        break;
+    case BEGGS_BRILL:
+      this.pdCorrelation = TubingPerformance.PressureDropCorrelation.BEGGS_BRILL;
+      break;
+    case HAGEDORN_BROWN:
+      this.pdCorrelation = TubingPerformance.PressureDropCorrelation.HAGEDORN_BROWN;
+      break;
+    case GRAY:
+      this.pdCorrelation = TubingPerformance.PressureDropCorrelation.GRAY;
+      break;
+    case HASAN_KABIR:
+      this.pdCorrelation = TubingPerformance.PressureDropCorrelation.HASAN_KABIR;
+      break;
+    case DUNS_ROS:
+      this.pdCorrelation = TubingPerformance.PressureDropCorrelation.DUNS_ROS;
+      break;
+    default:
+      // SIMPLIFIED mode doesn't use TubingPerformance
+      break;
     }
   }
 
@@ -568,14 +564,14 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    */
   public void setBottomHoleTemperature(double temperature, String unit) {
     switch (unit.toUpperCase()) {
-      case "C":
-        this.bhTemperature = temperature + 273.15;
-        break;
-      case "F":
-        this.bhTemperature = (temperature - 32.0) / 1.8 + 273.15;
-        break;
-      default:
-        this.bhTemperature = temperature;
+    case "C":
+      this.bhTemperature = temperature + 273.15;
+      break;
+    case "F":
+      this.bhTemperature = (temperature - 32.0) / 1.8 + 273.15;
+      break;
+    default:
+      this.bhTemperature = temperature;
     }
   }
 
@@ -587,14 +583,14 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    */
   public void setWellheadTemperature(double temperature, String unit) {
     switch (unit.toUpperCase()) {
-      case "C":
-        this.whTemperature = temperature + 273.15;
-        break;
-      case "F":
-        this.whTemperature = (temperature - 32.0) / 1.8 + 273.15;
-        break;
-      default:
-        this.whTemperature = temperature;
+    case "C":
+      this.whTemperature = temperature + 273.15;
+      break;
+    case "F":
+      this.whTemperature = (temperature - 32.0) / 1.8 + 273.15;
+      break;
+    default:
+      this.whTemperature = temperature;
     }
   }
 
@@ -606,14 +602,14 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    */
   public void setWellheadPressure(double pressure, String unit) {
     switch (unit.toLowerCase()) {
-      case "psia":
-        this.targetWellheadPressure = pressure / 14.5038;
-        break;
-      case "barg":
-        this.targetWellheadPressure = pressure + 1.01325;
-        break;
-      default:
-        this.targetWellheadPressure = pressure;
+    case "psia":
+      this.targetWellheadPressure = pressure / 14.5038;
+      break;
+    case "barg":
+      this.targetWellheadPressure = pressure + 1.01325;
+      break;
+    default:
+      this.targetWellheadPressure = pressure;
     }
   }
 
@@ -635,18 +631,16 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * @param reservoirPressure initial reservoir pressure (bara)
    * @param pi productivity index
    */
-  public void addLayer(String name, StreamInterface stream, double khFraction,
-      double reservoirPressure, double pi) {
+  public void addLayer(String name, StreamInterface stream, double khFraction, double reservoirPressure, double pi) {
     layers.add(new ReservoirLayer(name, stream, khFraction, reservoirPressure, pi));
     isMultiLayer = true;
   }
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * <p>
-   * Solves for the operating point where IPR and VLP intersect at the specified wellhead pressure
-   * constraint.
+   * Solves for the operating point where IPR and VLP intersect at the specified wellhead pressure constraint.
    * </p>
    */
   @Override
@@ -729,8 +723,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
     if (!converged) {
       operatingFlowRate = Math.max(0.0, flowGuess);
       operatingBHP = bhpFromIPR > 0 ? bhpFromIPR : bhpFromVLP;
-      logger.warn(
-          "WellSystem {} did not converge after {} iterations. Using last values: Q={} Sm3/day, BHP={} bara",
+      logger.warn("WellSystem {} did not converge after {} iterations. Using last values: Q={} Sm3/day, BHP={} bara",
           getName(), maxIterations, operatingFlowRate, operatingBHP);
     }
 
@@ -754,13 +747,13 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    */
   private double estimateMaxFlowRate() {
     switch (iprModel) {
-      case VOGEL:
-        return vogelQmax;
-      case FETKOVICH:
-        return fetkovichC * Math.pow(Math.pow(reservoirPressure, 2), fetkovichN);
-      case PRODUCTION_INDEX:
-      default:
-        return productivityIndex * Math.pow(reservoirPressure, 2);
+    case VOGEL:
+      return vogelQmax;
+    case FETKOVICH:
+      return fetkovichC * Math.pow(Math.pow(reservoirPressure, 2), fetkovichN);
+    case PRODUCTION_INDEX:
+    default:
+      return productivityIndex * Math.pow(reservoirPressure, 2);
     }
   }
 
@@ -787,8 +780,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       // Calculate rate from each layer at common BHP
       totalRate = 0.0;
       for (ReservoirLayer layer : layers) {
-        double layerRate = layer.productivityIndex
-            * (Math.pow(layer.reservoirPressure, 2) - Math.pow(commonBHP, 2));
+        double layerRate = layer.productivityIndex * (Math.pow(layer.reservoirPressure, 2) - Math.pow(commonBHP, 2));
         if (layerRate < 0)
           layerRate = 0;
         layer.calculatedRate = layerRate;
@@ -834,42 +826,42 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    */
   private double calculateIPR_BHP(double flowRate) {
     switch (iprModel) {
-      case VOGEL:
-        // Vogel: q/qmax = 1 - 0.2*(Pwf/Pr) - 0.8*(Pwf/Pr)²
-        // Solve quadratic for Pwf
-        double ratio = flowRate / vogelQmax;
-        double a = 0.8;
-        double b = 0.2;
-        double c = ratio - 1.0;
-        double disc = b * b - 4 * a * c;
-        if (disc < 0)
-          return 0.0;
-        double x = (-b + Math.sqrt(disc)) / (2 * a);
-        return x * reservoirPressure;
+    case VOGEL:
+      // Vogel: q/qmax = 1 - 0.2*(Pwf/Pr) - 0.8*(Pwf/Pr)²
+      // Solve quadratic for Pwf
+      double ratio = flowRate / vogelQmax;
+      double a = 0.8;
+      double b = 0.2;
+      double c = ratio - 1.0;
+      double disc = b * b - 4 * a * c;
+      if (disc < 0)
+        return 0.0;
+      double x = (-b + Math.sqrt(disc)) / (2 * a);
+      return x * reservoirPressure;
 
-      case FETKOVICH:
-        // q = C * (Pr² - Pwf²)^n
-        double delta = Math.pow(flowRate / fetkovichC, 1.0 / fetkovichN);
-        double pwf2 = Math.pow(reservoirPressure, 2) - delta;
-        return pwf2 > 0 ? Math.sqrt(pwf2) : 0.0;
+    case FETKOVICH:
+      // q = C * (Pr² - Pwf²)^n
+      double delta = Math.pow(flowRate / fetkovichC, 1.0 / fetkovichN);
+      double pwf2 = Math.pow(reservoirPressure, 2) - delta;
+      return pwf2 > 0 ? Math.sqrt(pwf2) : 0.0;
 
-      case BACKPRESSURE:
-        // Pr² - Pwf² = a*q + b*q²
-        double drawdown = backpressureA * flowRate + backpressureB * Math.pow(flowRate, 2);
-        double pwf2bp = Math.pow(reservoirPressure, 2) - drawdown;
-        return pwf2bp > 0 ? Math.sqrt(pwf2bp) : 0.0;
+    case BACKPRESSURE:
+      // Pr² - Pwf² = a*q + b*q²
+      double drawdown = backpressureA * flowRate + backpressureB * Math.pow(flowRate, 2);
+      double pwf2bp = Math.pow(reservoirPressure, 2) - drawdown;
+      return pwf2bp > 0 ? Math.sqrt(pwf2bp) : 0.0;
 
-      case PRODUCTION_INDEX:
-      default:
-        // q = PI * (Pr² - Pwf²)
-        double pwf2pi = Math.pow(reservoirPressure, 2) - flowRate / productivityIndex;
-        return pwf2pi > 0 ? Math.sqrt(pwf2pi) : 0.0;
+    case PRODUCTION_INDEX:
+    default:
+      // q = PI * (Pr² - Pwf²)
+      double pwf2pi = Math.pow(reservoirPressure, 2) - flowRate / productivityIndex;
+      return pwf2pi > 0 ? Math.sqrt(pwf2pi) : 0.0;
     }
   }
 
   /**
-   * Calculate required bottom-hole pressure from VLP to achieve target WHP. Uses either simplified
-   * or full multiphase correlation based on vlpSolverMode.
+   * Calculate required bottom-hole pressure from VLP to achieve target WHP. Uses either simplified or full multiphase
+   * correlation based on vlpSolverMode.
    *
    * @param flowRate flow rate in Sm3/day
    * @return bottom-hole pressure in bara
@@ -879,21 +871,20 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       return targetWellheadPressure;
 
     switch (vlpSolverMode) {
-      case SIMPLIFIED:
-        return calculateVLP_BHP_Simplified(flowRate);
-      case DRIFT_FLUX:
-        return calculateVLP_BHP_DriftFlux(flowRate);
-      case TWO_FLUID:
-        return calculateVLP_BHP_TwoFluid(flowRate);
-      default:
-        // All TubingPerformance correlations use the full solver
-        return calculateVLP_BHP_Full(flowRate);
+    case SIMPLIFIED:
+      return calculateVLP_BHP_Simplified(flowRate);
+    case DRIFT_FLUX:
+      return calculateVLP_BHP_DriftFlux(flowRate);
+    case TWO_FLUID:
+      return calculateVLP_BHP_TwoFluid(flowRate);
+    default:
+      // All TubingPerformance correlations use the full solver
+      return calculateVLP_BHP_Full(flowRate);
     }
   }
 
   /**
-   * Simplified VLP calculation using hydrostatic + friction. Fast but less accurate for complex
-   * multiphase flow.
+   * Simplified VLP calculation using hydrostatic + friction. Fast but less accurate for complex multiphase flow.
    *
    * @param flowRate flow rate in Sm3/day
    * @return calculated bottom-hole pressure in bara
@@ -934,8 +925,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
     }
 
     // Friction pressure drop (bara)
-    double frictionPressure = frictionFactor * (tubingLength / tubingDiameter) * avgDensity
-        * Math.pow(velocity, 2) / (2.0 * 1e5);
+    double frictionPressure = frictionFactor * (tubingLength / tubingDiameter) * avgDensity * Math.pow(velocity, 2)
+        / (2.0 * 1e5);
 
     // Total BHP
     double bhp = targetWellheadPressure + hydrostaticPressure + frictionPressure;
@@ -945,8 +936,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Full VLP calculation using TubingPerformance with selected multiphase correlation. More
-   * accurate but slower.
+   * Full VLP calculation using TubingPerformance with selected multiphase correlation. More accurate but slower.
    *
    * @param flowRate flow rate in Sm3/day
    * @return calculated bottom-hole pressure in bara
@@ -1000,13 +990,13 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * Drift-flux VLP calculation.
    *
    * <p>
-   * Uses a drift-flux model that accounts for slip between phases. More accurate than homogeneous
-   * models for gas-liquid flow in vertical/inclined pipes.
+   * Uses a drift-flux model that accounts for slip between phases. More accurate than homogeneous models for gas-liquid
+   * flow in vertical/inclined pipes.
    * </p>
    *
    * <p>
-   * The drift-flux model uses: v_g = C_0 * v_m + v_d where C_0 is the distribution parameter and
-   * v_d is the drift velocity.
+   * The drift-flux model uses: v_g = C_0 * v_m + v_d where C_0 is the distribution parameter and v_d is the drift
+   * velocity.
    * </p>
    *
    * @param flowRate flow rate in Sm3/day
@@ -1051,8 +1041,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
 
     // Estimate gas void fraction using drift-flux relation iteratively
     double alpha = 0.5; // Initial guess
-    double gasVolumetricFraction =
-        tempFluid.hasPhaseType("gas") ? tempFluid.getPhase("gas").getBeta() : 0.0;
+    double gasVolumetricFraction = tempFluid.hasPhaseType("gas") ? tempFluid.getPhase("gas").getBeta() : 0.0;
 
     for (int iter = 0; iter < 10; iter++) {
       double vsg = gasVolumetricFraction * totalVelocity;
@@ -1083,8 +1072,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
     } else if (Re > 0) {
       frictionFactor = 64.0 / Re;
     }
-    double frictionPressure = frictionFactor * (tubingLength / tubingDiameter) * rhoMix
-        * Math.pow(mixVelocity, 2) / (2.0 * 1e5);
+    double frictionPressure = frictionFactor * (tubingLength / tubingDiameter) * rhoMix * Math.pow(mixVelocity, 2)
+        / (2.0 * 1e5);
 
     double bhp = targetWellheadPressure + hydrostaticPressure + frictionPressure;
     return Math.max(targetWellheadPressure, Math.min(bhp, reservoirPressure * 1.5));
@@ -1094,8 +1083,8 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    * Two-fluid VLP calculation.
    *
    * <p>
-   * Uses a simplified two-fluid model with separate momentum balances for each phase. This is the
-   * most accurate approach for complex flow patterns but also the slowest.
+   * Uses a simplified two-fluid model with separate momentum balances for each phase. This is the most accurate
+   * approach for complex flow patterns but also the slowest.
    * </p>
    *
    * <p>
@@ -1171,8 +1160,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       double gravityDP = rhoMix * 9.81 * sinTheta * segmentLength / 1e5;
 
       // Friction pressure drop
-      double frictionDP =
-          (alphaG * tauWG + alphaL * tauWL) * 4.0 / tubingDiameter * segmentLength / 1e5;
+      double frictionDP = (alphaG * tauWG + alphaL * tauWL) * 4.0 / tubingDiameter * segmentLength / 1e5;
 
       // Total pressure change for segment (bara)
       double dP = gravityDP + frictionDP;
@@ -1190,13 +1178,13 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    */
   private double estimateInitialFlowRate() {
     switch (iprModel) {
-      case VOGEL:
-        return vogelQmax * 0.5;
-      case FETKOVICH:
-        return fetkovichC * Math.pow(Math.pow(reservoirPressure, 2) * 0.5, fetkovichN);
-      case PRODUCTION_INDEX:
-      default:
-        return productivityIndex * Math.pow(reservoirPressure, 2) * 0.3;
+    case VOGEL:
+      return vogelQmax * 0.5;
+    case FETKOVICH:
+      return fetkovichC * Math.pow(Math.pow(reservoirPressure, 2) * 0.5, fetkovichN);
+    case PRODUCTION_INDEX:
+    default:
+      return productivityIndex * Math.pow(reservoirPressure, 2) * 0.3;
     }
   }
 
@@ -1216,7 +1204,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       flows[i] = calculateFlowFromIPR(bhp);
     }
 
-    return new double[][] {flows, bhps};
+    return new double[][] { flows, bhps };
   }
 
   /**
@@ -1227,21 +1215,21 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    */
   private double calculateFlowFromIPR(double bhp) {
     switch (iprModel) {
-      case VOGEL:
-        double ratio = bhp / reservoirPressure;
-        return vogelQmax * (1.0 - 0.2 * ratio - 0.8 * ratio * ratio);
-      case FETKOVICH:
-        return fetkovichC * Math.pow(Math.pow(reservoirPressure, 2) - Math.pow(bhp, 2), fetkovichN);
-      case BACKPRESSURE:
-        double drawdown = Math.pow(reservoirPressure, 2) - Math.pow(bhp, 2);
-        // Solve a*q + b*q² = drawdown
-        if (backpressureB == 0)
-          return drawdown / backpressureA;
-        double disc = Math.pow(backpressureA, 2) + 4 * backpressureB * drawdown;
-        return (-backpressureA + Math.sqrt(disc)) / (2 * backpressureB);
-      case PRODUCTION_INDEX:
-      default:
-        return productivityIndex * (Math.pow(reservoirPressure, 2) - Math.pow(bhp, 2));
+    case VOGEL:
+      double ratio = bhp / reservoirPressure;
+      return vogelQmax * (1.0 - 0.2 * ratio - 0.8 * ratio * ratio);
+    case FETKOVICH:
+      return fetkovichC * Math.pow(Math.pow(reservoirPressure, 2) - Math.pow(bhp, 2), fetkovichN);
+    case BACKPRESSURE:
+      double drawdown = Math.pow(reservoirPressure, 2) - Math.pow(bhp, 2);
+      // Solve a*q + b*q² = drawdown
+      if (backpressureB == 0)
+        return drawdown / backpressureA;
+      double disc = Math.pow(backpressureA, 2) + 4 * backpressureB * drawdown;
+      return (-backpressureA + Math.sqrt(disc)) / (2 * backpressureB);
+    case PRODUCTION_INDEX:
+    default:
+      return productivityIndex * (Math.pow(reservoirPressure, 2) - Math.pow(bhp, 2));
     }
   }
 
@@ -1258,7 +1246,7 @@ public class WellSystem extends ProcessEquipmentBaseClass {
       bhps[i] = calculateVLP_BHP(flowRates[i]);
     }
 
-    return new double[][] {flowRates, bhps};
+    return new double[][] { flowRates, bhps };
   }
 
   // Getters for results
@@ -1272,14 +1260,14 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   public double getOperatingFlowRate(String unit) {
     double sm3day = operatingFlowRate;
     switch (unit.toLowerCase()) {
-      case "bbl/day":
-        return sm3day / 0.158987;
-      case "msm3/day":
-        return sm3day / 1.0e6;
-      case "mscf/day":
-        return sm3day / 28.3168;
-      default:
-        return sm3day;
+    case "bbl/day":
+      return sm3day / 0.158987;
+    case "msm3/day":
+      return sm3day / 1.0e6;
+    case "mscf/day":
+      return sm3day / 28.3168;
+    default:
+      return sm3day;
     }
   }
 
@@ -1291,12 +1279,12 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    */
   public double getBottomHolePressure(String unit) {
     switch (unit.toLowerCase()) {
-      case "psia":
-        return operatingBHP * 14.5038;
-      case "barg":
-        return operatingBHP - 1.01325;
-      default:
-        return operatingBHP;
+    case "psia":
+      return operatingBHP * 14.5038;
+    case "barg":
+      return operatingBHP - 1.01325;
+    default:
+      return operatingBHP;
     }
   }
 
@@ -1308,12 +1296,12 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    */
   public double getWellheadPressure(String unit) {
     switch (unit.toLowerCase()) {
-      case "psia":
-        return targetWellheadPressure * 14.5038;
-      case "barg":
-        return targetWellheadPressure - 1.01325;
-      default:
-        return targetWellheadPressure;
+    case "psia":
+      return targetWellheadPressure * 14.5038;
+    case "barg":
+      return targetWellheadPressure - 1.01325;
+    default:
+      return targetWellheadPressure;
     }
   }
 
@@ -1325,12 +1313,12 @@ public class WellSystem extends ProcessEquipmentBaseClass {
    */
   public double getReservoirPressure(String unit) {
     switch (unit.toLowerCase()) {
-      case "psia":
-        return reservoirPressure * 14.5038;
-      case "barg":
-        return reservoirPressure - 1.01325;
-      default:
-        return reservoirPressure;
+    case "psia":
+      return reservoirPressure * 14.5038;
+    case "barg":
+      return reservoirPressure - 1.01325;
+    default:
+      return reservoirPressure;
     }
   }
 
@@ -1354,14 +1342,14 @@ public class WellSystem extends ProcessEquipmentBaseClass {
     for (int i = 0; i < layers.size(); i++) {
       double sm3day = layers.get(i).calculatedRate;
       switch (unit.toLowerCase()) {
-        case "bbl/day":
-          rates[i] = sm3day / 0.158987;
-          break;
-        case "msm3/day":
-          rates[i] = sm3day / 1.0e6;
-          break;
-        default:
-          rates[i] = sm3day;
+      case "bbl/day":
+        rates[i] = sm3day / 0.158987;
+        break;
+      case "msm3/day":
+        rates[i] = sm3day / 1.0e6;
+        break;
+      default:
+        rates[i] = sm3day;
       }
     }
     return rates;
@@ -1394,12 +1382,12 @@ public class WellSystem extends ProcessEquipmentBaseClass {
   public double getDrawdown(String unit) {
     double dd = Math.max(0.0, reservoirPressure - operatingBHP);
     switch (unit.toLowerCase()) {
-      case "psia":
-        return dd * 14.5038;
-      case "barg":
-        return dd;
-      default:
-        return dd;
+    case "psia":
+      return dd * 14.5038;
+    case "barg":
+      return dd;
+    default:
+      return dd;
     }
   }
 

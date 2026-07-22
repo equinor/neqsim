@@ -12,22 +12,22 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * Registry for equipment capacity strategies.
  *
  * <p>
- * This registry maintains a collection of {@link EquipmentCapacityStrategy} implementations and
- * provides lookup functionality to find the appropriate strategy for any given equipment. The
- * registry uses a priority-based selection when multiple strategies support the same equipment.
+ * This registry maintains a collection of {@link EquipmentCapacityStrategy} implementations and provides lookup
+ * functionality to find the appropriate strategy for any given equipment. The registry uses a priority-based selection
+ * when multiple strategies support the same equipment.
  * </p>
  *
  * <p>
  * <strong>Usage</strong>
  * </p>
- * 
+ *
  * <pre>
  * // Get the singleton instance
  * EquipmentCapacityStrategyRegistry registry = EquipmentCapacityStrategyRegistry.getInstance();
- * 
+ *
  * // Register a custom strategy
  * registry.register(new MyCustomCompressorStrategy());
- * 
+ *
  * // Find strategy for equipment
  * EquipmentCapacityStrategy strategy = registry.findStrategy(myCompressor);
  * if (strategy != null) {
@@ -91,6 +91,12 @@ public class EquipmentCapacityStrategyRegistry {
     register(new SplitterCapacityStrategy());
     register(new TankCapacityStrategy());
     register(new DistillationColumnCapacityStrategy());
+    register(new ReactorCapacityStrategy());
+    register(new PowerGenerationCapacityStrategy());
+    register(new SubseaEquipmentCapacityStrategy());
+    register(new FilterAdsorberCapacityStrategy());
+    register(new ElectrolyzerCapacityStrategy());
+    register(new WellFlowCapacityStrategy());
   }
 
   /**
@@ -112,8 +118,7 @@ public class EquipmentCapacityStrategyRegistry {
       strategies.removeIf(s -> s.getName().equals(strategy.getName()));
       strategies.add(strategy);
       // Sort by priority (highest first)
-      Collections.sort(strategies,
-          Comparator.comparingInt(EquipmentCapacityStrategy::getPriority).reversed());
+      Collections.sort(strategies, Comparator.comparingInt(EquipmentCapacityStrategy::getPriority).reversed());
       // Clear cache when strategies change
       strategyCache.clear();
     }
@@ -139,8 +144,7 @@ public class EquipmentCapacityStrategyRegistry {
    * Finds the best strategy for the given equipment.
    *
    * <p>
-   * Searches through registered strategies in priority order and returns the first one that
-   * supports the equipment.
+   * Searches through registered strategies in priority order and returns the first one that supports the equipment.
    * </p>
    *
    * @param equipment the equipment to find a strategy for

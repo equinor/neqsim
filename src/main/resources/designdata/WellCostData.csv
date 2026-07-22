@@ -1,0 +1,29 @@
+WellType,RigType,ParameterName,Value,Unit,Standard,Description
+OIL_PRODUCER,SEMI_SUBMERSIBLE,RigDayRate,540000,USD,Industry,Semi-sub day rate NCS
+OIL_PRODUCER,DRILLSHIP,RigDayRate,648000,USD,Industry,Drillship day rate NCS
+OIL_PRODUCER,JACK_UP,RigDayRate,378000,USD,Industry,Jack-up day rate NCS
+OIL_PRODUCER,PLATFORM_RIG,RigDayRate,324000,USD,Industry,Platform rig day rate NCS
+OIL_PRODUCER,ANY,CompletionBaseCost,7425000,USD,Industry,Producer completion base cost NCS
+OIL_PRODUCER,ANY,WellheadBaseCost,3375000,USD,Industry,Wellhead and tree NCS
+OIL_PRODUCER,ANY,LoggingDaysTypical,5.0,days,Industry,Typical logging days producer
+OIL_PRODUCER,ANY,WellTestDaysTypical,3.0,days,Industry,Typical well test days producer
+OIL_PRODUCER,ANY,DrillingDaysTypical,45.0,days,Industry,Typical drilling days oil producer
+OIL_PRODUCER,ANY,CompletionDaysTypical,25.0,days,Industry,Typical completion days oil producer
+GAS_PRODUCER,SEMI_SUBMERSIBLE,RigDayRate,540000,USD,Industry,Semi-sub day rate NCS
+GAS_PRODUCER,ANY,CompletionBaseCost,6750000,USD,Industry,Gas producer completion base cost NCS
+GAS_PRODUCER,ANY,DrillingDaysTypical,40.0,days,Industry,Typical drilling days gas producer
+GAS_PRODUCER,ANY,CompletionDaysTypical,20.0,days,Industry,Typical completion days gas producer
+WATER_INJECTOR,SEMI_SUBMERSIBLE,RigDayRate,540000,USD,Industry,Semi-sub day rate NCS
+WATER_INJECTOR,ANY,CompletionBaseCost,5400000,USD,Industry,Injector completion base cost NCS
+WATER_INJECTOR,ANY,WellheadBaseCost,3375000,USD,Industry,Wellhead and tree NCS
+WATER_INJECTOR,ANY,LoggingDaysTypical,3.0,days,Industry,Typical logging days injector
+WATER_INJECTOR,ANY,WellTestDaysTypical,1.0,days,Industry,Typical well test days injector
+WATER_INJECTOR,ANY,DrillingDaysTypical,35.0,days,Industry,Typical drilling days water injector
+WATER_INJECTOR,ANY,CompletionDaysTypical,15.0,days,Industry,Typical completion days injector
+GAS_INJECTOR,SEMI_SUBMERSIBLE,RigDayRate,540000,USD,Industry,Semi-sub day rate NCS
+GAS_INJECTOR,ANY,CompletionBaseCost,5400000,USD,Industry,Gas injector completion base cost NCS
+GAS_INJECTOR,ANY,DrillingDaysTypical,35.0,days,Industry,Typical drilling days gas injector
+OBSERVATION,SEMI_SUBMERSIBLE,RigDayRate,540000,USD,Industry,Semi-sub day rate NCS
+OBSERVATION,ANY,CompletionBaseCost,2700000,USD,Industry,Observation well completion NCS
+OBSERVATION,ANY,DrillingDaysTypical,25.0,days,Industry,Typical drilling days observation
+OBSERVATION,ANY,CompletionDaysTypical,5.0,days,Industry,Typical completion days observation

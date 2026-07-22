@@ -1,3 +1,8 @@
+---
+title: Integrated Field Development Framework
+description: This document describes how NeqSim integrates PVT, reservoir, well, and process simulations
+---
+
 # Integrated Field Development Framework
 
 ## Overview
@@ -1661,8 +1666,8 @@ each topic maps to NeqSim capabilities:
 
 ## See Also
 
-- [Economics Module](../process/economics/README.md) - NPV, tax models, cash flow
-- [Well Simulation Guide](../simulation/well_simulation_guide.md) - IPR/VLP details
-- [PVT Workflow](../pvtsimulation/pvt_workflow.md) - EOS tuning guide
-- [Reservoir Modeling](../process/equipment/reservoirs.md) - SimpleReservoir API
-- [Field Development Strategy](FIELD_DEVELOPMENT_STRATEGY.md) - Architecture overview
+- [Economics Module](../process/economics/) - NPV, tax models, cash flow
+- [Well Simulation Guide](../simulation/well_simulation_guide) - IPR/VLP details
+- [PVT Workflow](../pvtsimulation/pvt_workflow) - EOS tuning guide
+- [Reservoir Modeling](../process/equipment/reservoirs) - SimpleReservoir API
+- [Field Development Strategy](FIELD_DEVELOPMENT_STRATEGY) - Architecture overview

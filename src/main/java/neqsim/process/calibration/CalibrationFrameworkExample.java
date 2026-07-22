@@ -2,11 +2,11 @@ package neqsim.process.calibration;
 
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.pipeline.PipeBeggsAndBrills;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.Stream;
-import org.apache.commons.lang3.StringUtils;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -25,8 +25,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * </ol>
  *
  * <p>
- * The scenario involves a 4-well production system with pipes flowing to HP/LP manifolds. We
- * estimate the heat transfer coefficients of each pipe based on manifold temperature measurements.
+ * The scenario involves a 4-well production system with pipes flowing to HP/LP manifolds. We estimate the heat transfer
+ * coefficients of each pipe based on manifold temperature measurements.
  * </p>
  *
  * @author NeqSim Development Team
@@ -69,8 +69,8 @@ public class CalibrationFrameworkExample {
     double wellTemp = 70.0;
 
     // Well configurations: [pressure, flowRate, pipeLength]
-    double[][] configs = {{100.0, 50000.0, 8000.0}, {95.0, 45000.0, 8500.0},
-        {92.0, 55000.0, 7500.0}, {88.0, 48000.0, 9000.0}};
+    double[][] configs = { { 100.0, 50000.0, 8000.0 }, { 95.0, 45000.0, 8500.0 }, { 92.0, 55000.0, 7500.0 },
+        { 88.0, 48000.0, 9000.0 } };
 
     wellStreams = new Stream[NUM_WELLS];
     pipes = new PipeBeggsAndBrills[NUM_WELLS];
@@ -99,10 +99,10 @@ public class CalibrationFrameworkExample {
     }
 
     // Route wells 1-2 to HP, wells 3-4 to LP
-    splitters[0].setSplitFactors(new double[] {1.0, 0.0});
-    splitters[1].setSplitFactors(new double[] {1.0, 0.0});
-    splitters[2].setSplitFactors(new double[] {0.0, 1.0});
-    splitters[3].setSplitFactors(new double[] {0.0, 1.0});
+    splitters[0].setSplitFactors(new double[] { 1.0, 0.0 });
+    splitters[1].setSplitFactors(new double[] { 1.0, 0.0 });
+    splitters[2].setSplitFactors(new double[] { 0.0, 1.0 });
+    splitters[3].setSplitFactors(new double[] { 0.0, 1.0 });
 
     hpManifold = new Mixer("HPManifold");
     lpManifold = new Mixer("LPManifold");
@@ -126,8 +126,12 @@ public class CalibrationFrameworkExample {
 
     // Add tunable parameters (heat transfer coefficients)
     for (int i = 0; i < NUM_WELLS; i++) {
-      estimator.addTunableParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", "W/(m2·K)", 1.0,
-          100.0, 15.0); // Initial guess 15, bounds [1, 100]
+      estimator.addTunableParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", "W/(m2·K)", 1.0, 100.0, 15.0); // Initial
+      // guess
+      // 15,
+      // bounds
+      // [1,
+      // 100]
     }
 
     // Add measured variables (manifold temperatures)
@@ -147,18 +151,16 @@ public class CalibrationFrameworkExample {
   public void runValidationTests() {
     System.out.println("╔══════════════════════════════════════════════════════════════════════╗");
     System.out.println("║  PRE-DEPLOYMENT VALIDATION TESTS                                     ║");
-    System.out
-        .println("╚══════════════════════════════════════════════════════════════════════╝\n");
+    System.out.println("╚══════════════════════════════════════════════════════════════════════╝\n");
 
     // Create test harness
     EstimationTestHarness harness = new EstimationTestHarness(process);
     harness.setSeed(42);
 
     // Define true values (ground truth for testing)
-    double[] trueValues = {12.0, 18.0, 10.0, 22.0};
+    double[] trueValues = { 12.0, 18.0, 10.0, 22.0 };
     for (int i = 0; i < NUM_WELLS; i++) {
-      harness.addParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", trueValues[i], 1.0,
-          100.0);
+      harness.addParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", trueValues[i], 1.0, 100.0);
     }
 
     // Define measurements
@@ -179,17 +181,16 @@ public class CalibrationFrameworkExample {
 
     // Test 2: Noise Robustness
     System.out.println("\n=== TEST 2: Noise Robustness Test ===");
-    double[] noiseLevels = {0.5, 1.0, 2.0, 3.0};
+    double[] noiseLevels = { 0.5, 1.0, 2.0, 3.0 };
 
     for (double noise : noiseLevels) {
       estimator = createEstimator();
       estimator.initialize(50, 42);
 
-      EstimationTestHarness.TestReport noiseReport =
-          harness.runConvergenceTest(estimator, 30, noise, null);
+      EstimationTestHarness.TestReport noiseReport = harness.runConvergenceTest(estimator, 30, noise, null);
 
-      System.out.printf("Noise level %.1fx: RMSE=%.3f, Coverage=%.0f%%%n", noise,
-          noiseReport.getRMSE(), noiseReport.getCoverageRate() * 100);
+      System.out.printf("Noise level %.1fx: RMSE=%.3f, Coverage=%.0f%%%n", noise, noiseReport.getRMSE(),
+          noiseReport.getCoverageRate() * 100);
     }
 
     // Test 3: Drift Tracking
@@ -197,10 +198,8 @@ public class CalibrationFrameworkExample {
     estimator = createEstimator();
     estimator.initialize(50, 42);
 
-    EstimationTestHarness.TestReport driftReport =
-        harness.runDriftTrackingTest(estimator, 30, 0, 0.5);
-    System.out.printf("Drift tracking: Final estimate for drifting param: %.2f%n",
-        driftReport.getFinalEstimates()[0]);
+    EstimationTestHarness.TestReport driftReport = harness.runDriftTrackingTest(estimator, 30, 0, 0.5);
+    System.out.printf("Drift tracking: Final estimate for drifting param: %.2f%n", driftReport.getFinalEstimates()[0]);
     System.out.printf("True value after drift: %.2f%n", driftReport.getTrueValues()[0]);
     driftReport.printSummary();
 
@@ -218,14 +217,12 @@ public class CalibrationFrameworkExample {
    * Demonstrates live parameter estimation.
    */
   public void runLiveEstimation() {
-    System.out
-        .println("\n╔══════════════════════════════════════════════════════════════════════╗");
+    System.out.println("\n╔══════════════════════════════════════════════════════════════════════╗");
     System.out.println("║  LIVE PARAMETER ESTIMATION SIMULATION                                ║");
-    System.out
-        .println("╚══════════════════════════════════════════════════════════════════════╝\n");
+    System.out.println("╚══════════════════════════════════════════════════════════════════════╝\n");
 
     // True (unknown) coefficients
-    double[] trueCoeffs = {12.0, 18.0, 10.0, 22.0};
+    double[] trueCoeffs = { 12.0, 18.0, 10.0, 22.0 };
     System.out.println("True coefficients (unknown to estimator):");
     for (int i = 0; i < NUM_WELLS; i++) {
       System.out.printf("  Pipe%d: %.1f W/(m²·K)%n", i + 1, trueCoeffs[i]);
@@ -270,14 +267,13 @@ public class CalibrationFrameworkExample {
     double[] estimates = estimator.getEstimates();
     double[] uncertainties = estimator.getUncertainties();
 
-    System.out.printf("%-10s %10s %10s %10s %12s%n", "Parameter", "True", "Estimate", "±Uncert",
-        "Error%");
+    System.out.printf("%-10s %10s %10s %10s %12s%n", "Parameter", "True", "Estimate", "±Uncert", "Error%");
     System.out.println(StringUtils.repeat("-", 55));
 
     for (int i = 0; i < NUM_WELLS; i++) {
       double errorPct = 100 * Math.abs(estimates[i] - trueCoeffs[i]) / trueCoeffs[i];
-      System.out.printf("%-10s %10.2f %10.2f %10.2f %11.1f%%%n", "Pipe" + (i + 1), trueCoeffs[i],
-          estimates[i], uncertainties[i], errorPct);
+      System.out.printf("%-10s %10.2f %10.2f %10.2f %11.1f%%%n", "Pipe" + (i + 1), trueCoeffs[i], estimates[i],
+          uncertainties[i], errorPct);
     }
 
     // Convert to CalibrationResult for compatibility
@@ -295,8 +291,7 @@ public class CalibrationFrameworkExample {
     System.out.println("╔══════════════════════════════════════════════════════════════════════╗");
     System.out.println("║  NeqSim Calibration Framework Example                                ║");
     System.out.println("║  Demonstrating EnKF Parameter Estimation with Validation             ║");
-    System.out
-        .println("╚══════════════════════════════════════════════════════════════════════╝\n");
+    System.out.println("╚══════════════════════════════════════════════════════════════════════╝\n");
 
     CalibrationFrameworkExample example = new CalibrationFrameworkExample();
 

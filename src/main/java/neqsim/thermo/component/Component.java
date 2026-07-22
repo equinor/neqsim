@@ -18,9 +18,7 @@ import neqsim.util.unit.PressureUnit;
 import neqsim.util.unit.TemperatureUnit;
 
 /**
- * <p>
  * Abstract Component class.
- * </p>
  *
  * @author Even Solbraa
  */
@@ -32,7 +30,7 @@ public abstract class Component implements ComponentInterface {
   /** Conversion factor from mmHg to bar. */
   private static final double MMHG_TO_BAR = 1.0 / 750.061683;
 
-  double[] surfTensInfluenceParam = {0.28367, -0.05164, -0.81594, 1.06810, -1.1147};
+  double[] surfTensInfluenceParam = { 0.28367, -0.05164, -0.81594, 1.06810, -1.1147 };
   /** Index number of Component in database. */
   protected int index;
   /** Index number of Component in Phase object component array. */
@@ -42,8 +40,7 @@ public abstract class Component implements ComponentInterface {
 
   // TODO: what does "HC", "inert" and "Component" mean?
   /**
-   * Type of component. Can be "normal", "TBP", "plus", "ion", but what does "HC", "inert" and
-   * "Component?" do?
+   * Type of component. Can be "normal", "TBP", "plus", "ion", but what does "HC", "inert" and "Component?" do?
    */
   private String componentType = "Component";
 
@@ -52,11 +49,12 @@ public abstract class Component implements ComponentInterface {
   /** Mole fraction of Component in Phase. */
   protected double x = 0;
   /**
-   * Number of moles of Component in System. Ideally
-   * <code>numberOfMoles = totalNumberOfMoles * z</code>.
+   * Number of moles of Component in System. Ideally <code>numberOfMoles = totalNumberOfMoles * z</code>.
    */
   protected double numberOfMoles = 0.0;
-  /** Number of moles of Component in Phase. Ideally <code>totalNumberOfMoles * x * beta</code>. */
+  /**
+   * Number of moles of Component in Phase. Ideally <code>totalNumberOfMoles * x * beta</code>.
+   */
   protected double numberOfMolesInPhase = 0.0;
   protected double K;
 
@@ -105,6 +103,7 @@ public abstract class Component implements ComponentInterface {
   protected double debyeDipoleMoment = 0;
   protected double viscosityCorrectionFactor = 0;
   protected double criticalVolume = 0;
+  private double costaldCharacteristicVolume = 0.0;
   protected double racketZ = 0;
   protected double gibbsEnergyOfFormation = 0;
   protected double criticalViscosity = 0.0;
@@ -130,6 +129,28 @@ public abstract class Component implements ComponentInterface {
   protected double[] TwuCoonParams = new double[3];
   protected double[] matiascopemanSolidParams = new double[3];
   protected double[] matiascopemanParamsUMRPRU = new double[5];
+  protected double[] matiascopemanParamsUMRCPA = new double[5];
+  /** Dedicated UMR-CPA energy parameter a0 [bar*L^2/mol^2] (Tasios et al. 2025). */
+  protected double umrCpaA0 = 0.0;
+  /** Dedicated UMR-CPA co-volume b [L/mol] (Tasios et al. 2025). */
+  protected double umrCpaB = 0.0;
+  /** Dedicated UMR-CPA association energy [bar*L/mol] (Tasios et al. 2025). */
+  protected double umrCpaAssociationEnergy = 0.0;
+  /** Dedicated UMR-CPA association volume (dimensionless beta) (Tasios et al. 2025). */
+  protected double umrCpaAssociationVolume = 0.0;
+  /** Flag (1 = use dedicated UMR-CPA associating parameters) (Tasios et al. 2025). */
+  protected int umrCpaAssociating = 0;
+  /**
+   * Dedicated UMR-CPA Rackett Z used by the PR-based Peneloux volume translation (Tasios et al. 2025). Kept separate
+   * from the SRK-CPA {@code racketZCPA} because the Peneloux shift constants differ between the PR and SRK
+   * volume-translation relations.
+   */
+  protected double umrCpaRacketZ = 0.0;
+  /**
+   * Dedicated UMR-CPA temperature-dependent volume-correction term [1/K] used together with {@code umrCpaRacketZ}
+   * (Tasios et al. 2025).
+   */
+  protected double umrCpaVolumeCorrectionT = 0.0;
   protected double lennardJonesMolecularDiameter = 0;
   protected double lennardJonesEnergyParameter = 0;
   protected double stokesCationicDiameter = 0;
@@ -178,13 +199,22 @@ public abstract class Component implements ComponentInterface {
   protected double mSAFTi = 0;
   protected double sigmaSAFTi = 0;
   protected double epsikSAFT = 0;
+  protected double lambdaRSAFTVRMie = 12.0;
+  protected double lambdaASAFTVRMie = 6.0;
+  protected double mSAFTVRMie = 0;
+  protected double sigmaSAFTVRMie = 0;
+  protected double epsikSAFTVRMie = 0;
   private double associationVolumeSAFT;
   private double associationEnergySAFT = 0;
+  private double associationEnergySAFTVRMie = 0;
+  /**
+   * SAFT-VR Mie bond volume K_HB in m^3 (Lafitte 2013 Eq. 39). For water: 101.69 Angstrom^3 = 1.0169e-28 m^3. If zero,
+   * falls back to kappa * sigma^3 (PC-SAFT convention).
+   */
+  private double associationVolumeSAFTVRMie = 0;
 
   /**
-   * <p>
    * Constructor for Component.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -202,9 +232,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * Constructor for Component.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -219,12 +247,12 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void createComponent(String name, double moles, double molesInPhase, int compIndex) {
     if (name == null) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "createComponent", "name", "can not be null"));
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, "createComponent", "name", "can not be null"));
     }
     if (name.trim().isEmpty()) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "createComponent", "name", "can not be empty"));
+      throw new RuntimeException(
+          new neqsim.util.exception.InvalidInputException(this, "createComponent", "name", "can not be empty"));
     }
     name = ComponentInterface.getComponentNameFromAlias(name);
     componentName = name;
@@ -248,9 +276,28 @@ public abstract class Component implements ComponentInterface {
             // logger.info("no parameters in tempcomp -- trying comp.. " +
             // name);
             dataSet = database.getResultSet(("SELECT * FROM comp WHERE name='" + name + "'"));
-            dataSet.next();
+            if (!dataSet.next()) {
+              if (name.contains("_PC")) {
+                dataSet.close();
+                dataSet = database.getResultSet("SELECT * FROM comp WHERE name='default'");
+                if (!dataSet.next()) {
+                  throw new RuntimeException("Default component not found in database");
+                }
+              } else {
+                throw new RuntimeException("Component " + name + " not found in comp database table");
+              }
+            }
           } catch (Exception e2) {
-            throw new RuntimeException(e2);
+            if (name.contains("_PC")) {
+              try {
+                dataSet.close();
+              } catch (Exception ignored) {
+              }
+              dataSet = database.getResultSet("SELECT * FROM comp WHERE name='default'");
+              dataSet.next();
+            } else {
+              throw new RuntimeException(e2);
+            }
           }
         }
 
@@ -264,8 +311,8 @@ public abstract class Component implements ComponentInterface {
         criticalPressure = Double.parseDouble(dataSet.getString("PC")); // G
         acentricFactor = Double.parseDouble(dataSet.getString("acsfact")); // J
         criticalVolume = Double.parseDouble(dataSet.getString("critvol"));
-        criticalCompressibilityFactor = criticalPressure * criticalVolume
-            / ThermodynamicConstantsInterface.R / criticalTemperature / 10.0;
+        criticalCompressibilityFactor = criticalPressure * criticalVolume / ThermodynamicConstantsInterface.R
+            / criticalTemperature / 10.0;
         referenceEnthalpy = Double.parseDouble(dataSet.getString("Href"));
         setCpA(dataSet.getDouble("CPA")); // R //S
         setCpB(dataSet.getDouble("CPB")); // S
@@ -348,6 +395,61 @@ public abstract class Component implements ComponentInterface {
         matiascopemanParamsUMRPRU[3] = 0.0;
         matiascopemanParamsUMRPRU[4] = 0.0;
 
+        // Five-parameter Mathias-Copeman coefficients for the UMR-CPA model
+        // (Tasios et al., Fluid Phase Equilibria 2025, doi:10.1016/j.fluid.2024.114241).
+        // These are stored in dedicated columns so that the UMR-CPA fit is kept separate from
+        // the UMR-PRU MCPR1..MCPR3 columns. Wrapped in a guard because not every component
+        // database CSV provides these columns.
+        try {
+          matiascopemanParamsUMRCPA[0] = Double.parseDouble(dataSet.getString("UMRCPA_MC1"));
+          matiascopemanParamsUMRCPA[1] = Double.parseDouble(dataSet.getString("UMRCPA_MC2"));
+          matiascopemanParamsUMRCPA[2] = Double.parseDouble(dataSet.getString("UMRCPA_MC3"));
+          matiascopemanParamsUMRCPA[3] = Double.parseDouble(dataSet.getString("UMRCPA_MC4"));
+          matiascopemanParamsUMRCPA[4] = Double.parseDouble(dataSet.getString("UMRCPA_MC5"));
+        } catch (Exception umrcpaMcEx) {
+          matiascopemanParamsUMRCPA[0] = 0.0;
+          matiascopemanParamsUMRCPA[1] = 0.0;
+          matiascopemanParamsUMRCPA[2] = 0.0;
+          matiascopemanParamsUMRCPA[3] = 0.0;
+          matiascopemanParamsUMRCPA[4] = 0.0;
+        }
+
+        // Dedicated UMR-CPA pure-component parameters for associating compounds
+        // (Tasios et al., Fluid Phase Equilibria 2025). a0 is stored in [bar*L^2/mol^2], the
+        // co-volume b in [L/mol] and the association energy in [bar*L/mol]; the association
+        // volume is the dimensionless beta. These are kept in separate columns so the UMR-CPA
+        // water/glycol sub-model is not mixed with the generic PR-CPA aCPA_PR/bCPA_PR columns.
+        // Wrapped in a guard because not every component database CSV provides these columns.
+        try {
+          umrCpaA0 = Double.parseDouble(dataSet.getString("UMRCPA_a0"));
+          umrCpaB = Double.parseDouble(dataSet.getString("UMRCPA_b"));
+          umrCpaAssociationEnergy = Double.parseDouble(dataSet.getString("UMRCPA_assocEnergy"));
+          umrCpaAssociationVolume = Double.parseDouble(dataSet.getString("UMRCPA_assocVolume"));
+          umrCpaAssociating = Integer.parseInt(dataSet.getString("UMRCPA_associating").trim());
+        } catch (Exception umrcpaParamEx) {
+          umrCpaA0 = 0.0;
+          umrCpaB = 0.0;
+          umrCpaAssociationEnergy = 0.0;
+          umrCpaAssociationVolume = 0.0;
+          umrCpaAssociating = 0;
+        }
+
+        // Dedicated UMR-CPA Rackett Z and temperature-dependent volume-correction term for the
+        // PR-based Peneloux volume translation (Tasios et al., Fluid Phase Equilibria 2025).
+        // These
+        // live in separate columns from the SRK-CPA racketZCPA/volcorrCPA_T because the PR and
+        // SRK
+        // Peneloux shift relations differ. Wrapped in its own guard so that a database CSV
+        // without
+        // these columns (e.g. COMP_EXT.csv) simply falls back to the SRK-CPA racketZCPA.
+        try {
+          umrCpaRacketZ = Double.parseDouble(dataSet.getString("UMRCPA_racketZ"));
+          umrCpaVolumeCorrectionT = Double.parseDouble(dataSet.getString("UMRCPA_volcorr_T"));
+        } catch (Exception umrcpaVolEx) {
+          umrCpaRacketZ = 0.0;
+          umrCpaVolumeCorrectionT = 0.0;
+        }
+
         matiascopemanSolidParams[0] = Double.parseDouble(dataSet.getString("MC1Solid"));
         matiascopemanSolidParams[1] = Double.parseDouble(dataSet.getString("MC2Solid"));
         matiascopemanSolidParams[2] = Double.parseDouble(dataSet.getString("MC3Solid"));
@@ -356,12 +458,9 @@ public abstract class Component implements ComponentInterface {
         TwuCoonParams[1] = Double.parseDouble(dataSet.getString("TwuCoon2"));
         TwuCoonParams[2] = Double.parseDouble(dataSet.getString("TwuCoon3"));
 
-        liquidConductivityParameter[0] =
-            Double.parseDouble(dataSet.getString("liquidConductivity1"));
-        liquidConductivityParameter[1] =
-            Double.parseDouble(dataSet.getString("liquidConductivity2"));
-        liquidConductivityParameter[2] =
-            Double.parseDouble(dataSet.getString("liquidConductivity3"));
+        liquidConductivityParameter[0] = Double.parseDouble(dataSet.getString("liquidConductivity1"));
+        liquidConductivityParameter[1] = Double.parseDouble(dataSet.getString("liquidConductivity2"));
+        liquidConductivityParameter[2] = Double.parseDouble(dataSet.getString("liquidConductivity3"));
 
         if (this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPA")
             || this.getClass().getName().equals("neqsim.thermo.component.ComponentSrkCPAs")) {
@@ -379,22 +478,18 @@ public abstract class Component implements ComponentInterface {
 
         Hsub = Double.parseDouble(dataSet.getString("Hsub"));
 
-        setIdealGasEnthalpyOfFormation(
-            Double.parseDouble(dataSet.getString("EnthalpyOfFormation")));
+        setIdealGasEnthalpyOfFormation(Double.parseDouble(dataSet.getString("EnthalpyOfFormation")));
         idealGasGibbsEnergyOfFormation = gibbsEnergyOfFormation;
         idealGasAbsoluteEntropy = Double.parseDouble(dataSet.getString("AbsoluteEntropy"));
 
         for (int i = 0; i < 5; i++) {
-          solidDensityCoefs[i] =
-              Double.parseDouble((dataSet.getString("solidDensityCoefs" + (i + 1))));
+          solidDensityCoefs[i] = Double.parseDouble((dataSet.getString("solidDensityCoefs" + (i + 1))));
         }
         for (int i = 0; i < 5; i++) {
-          liquidDensityCoefs[i] =
-              Double.parseDouble((dataSet.getString("liquidDensityCoefs" + (i + 1))));
+          liquidDensityCoefs[i] = Double.parseDouble((dataSet.getString("liquidDensityCoefs" + (i + 1))));
         }
         for (int i = 0; i < 5; i++) {
-          heatOfVaporizationCoefs[i] =
-              Double.parseDouble((dataSet.getString("heatOfVaporizationCoefs" + (i + 1))));
+          heatOfVaporizationCoefs[i] = Double.parseDouble((dataSet.getString("heatOfVaporizationCoefs" + (i + 1))));
         }
         // disse maa settes inn fra database ssociationsites
         numberOfAssociationSites = Integer.parseInt(dataSet.getString("associationsites"));
@@ -408,7 +503,8 @@ public abstract class Component implements ComponentInterface {
         setVolumeCorrectionT_CPA(Double.parseDouble(dataSet.getString("volcorrCPA_T")));
         volumeCorrectionT = Double.parseDouble(dataSet.getString("volcorrSRK_T"));
 
-        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentPrCPA")) {
+        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentPrCPA")
+            || this.getClass().getName().equals("neqsim.thermo.component.ComponentUMRCPA")) {
           // System.out.println("pr-cpa");
           associationVolume = Double.parseDouble(dataSet.getString("associationboundingvolume_PR"));
           aCPA = Double.parseDouble(dataSet.getString("aCPA_PR"));
@@ -416,29 +512,79 @@ public abstract class Component implements ComponentInterface {
           mCPA = Double.parseDouble(dataSet.getString("mCPA_PR"));
         } else {
           // System.out.println("srk-cpa");
-          associationVolume =
-              Double.parseDouble(dataSet.getString("associationboundingvolume_SRK"));
+          associationVolume = Double.parseDouble(dataSet.getString("associationboundingvolume_SRK"));
           aCPA = Double.parseDouble(dataSet.getString("aCPA_SRK"));
           bCPA = Double.parseDouble(dataSet.getString("bCPA_SRK"));
           mCPA = Double.parseDouble(dataSet.getString("mCPA_SRK"));
         }
 
+        // For the UMR-CPA model, associating compounds (water, glycols, ...) use the dedicated
+        // PR-CPA parameter set regressed in Tasios et al. (Fluid Phase Equilibria 2025) instead
+        // of the legacy generic aCPA_PR/bCPA_PR columns. Unit conversion to NeqSim internal
+        // units:
+        // a0 [bar*L^2/mol^2] -> internal (x 1e4, same scale as SRK-CPA a0 in [Pa*m^6/mol^2] x
+        // 1e5),
+        // b [L/mol] -> internal (x 1e2), association energy [bar*L/mol] -> [J/mol] (x 1e2,
+        // since
+        // 1 bar*L = 100 J); the association volume is the dimensionless beta and is used
+        // directly.
+        // The Mathias-Copeman alpha for these compounds is supplied through the UMRCPA_MC
+        // columns
+        // and installed as attractive term 22 in ComponentUMRCPA.setAttractiveTerm.
+        if (this.getClass().getName().equals("neqsim.thermo.component.ComponentUMRCPA") && umrCpaAssociating == 1
+            && Math.abs(umrCpaA0) > 1e-20) {
+          aCPA = umrCpaA0 * 1.0e4;
+          bCPA = umrCpaB * 1.0e2;
+          associationVolume = umrCpaAssociationVolume;
+          associationEnergy = umrCpaAssociationEnergy * 1.0e2;
+        }
+
         criticalViscosity = Double.parseDouble(dataSet.getString("criticalViscosity"));
         if (criticalViscosity < 1e-20) {
-          criticalViscosity =
-              7.94830 * Math.sqrt(1e3 * molarMass) * Math.pow(criticalPressure, 2.0 / 3.0)
-                  / Math.pow(criticalTemperature, 1.0 / 6.0) * 1e-7;
+          criticalViscosity = 7.94830 * Math.sqrt(1e3 * molarMass) * Math.pow(criticalPressure, 2.0 / 3.0)
+              / Math.pow(criticalTemperature, 1.0 / 6.0) * 1e-7;
         }
         mSAFTi = Double.parseDouble(dataSet.getString("mSAFT"));
         sigmaSAFTi = Double.parseDouble(dataSet.getString("sigmaSAFT")) / 1.0e10;
         epsikSAFT = Double.parseDouble(dataSet.getString("epsikSAFT"));
-        setAssociationVolumeSAFT(
-            Double.parseDouble(dataSet.getString("associationboundingvolume_PCSAFT")));
+        try {
+          lambdaRSAFTVRMie = Double.parseDouble(dataSet.getString("lambdaRSAFTVRMie"));
+          lambdaASAFTVRMie = Double.parseDouble(dataSet.getString("lambdaASAFTVRMie"));
+        } catch (Exception ex) {
+          lambdaRSAFTVRMie = 12.0;
+          lambdaASAFTVRMie = 6.0;
+        }
+        try {
+          mSAFTVRMie = Double.parseDouble(dataSet.getString("mSAFTVRMie"));
+          sigmaSAFTVRMie = Double.parseDouble(dataSet.getString("sigmaSAFTVRMie")) / 1.0e10;
+          epsikSAFTVRMie = Double.parseDouble(dataSet.getString("epsikSAFTVRMie"));
+        } catch (Exception ex) {
+          mSAFTVRMie = mSAFTi;
+          sigmaSAFTVRMie = sigmaSAFTi;
+          epsikSAFTVRMie = epsikSAFT;
+        }
+        setAssociationVolumeSAFT(Double.parseDouble(dataSet.getString("associationboundingvolume_PCSAFT")));
         setAssociationEnergySAFT(Double.parseDouble(dataSet.getString("associationenergy_PCSAFT")));
+        try {
+          double epsVRMie = Double.parseDouble(dataSet.getString("associationenergy_SAFTVRMie"));
+          if (epsVRMie > 0) {
+            associationEnergySAFTVRMie = epsVRMie;
+          }
+        } catch (Exception ex) {
+          // Column not available or zero - will use PCSAFT value as fallback
+        }
+        try {
+          double kHB = Double.parseDouble(dataSet.getString("associationvolume_SAFTVRMie"));
+          if (kHB > 0) {
+            associationVolumeSAFTVRMie = kHB;
+          }
+        } catch (Exception ex) {
+          // Column not available or zero - will compute from PCSAFT kappa * sigma^3 as
+          // fallback
+        }
         if (Math.abs(criticalViscosity) < 1e-12) {
-          criticalViscosity =
-              7.94830 * Math.sqrt(molarMass * 1e3) * Math.pow(criticalPressure, 2.0 / 3.0)
-                  / Math.pow(criticalTemperature, 1.0 / 6.0) * 1e-7;
+          criticalViscosity = 7.94830 * Math.sqrt(molarMass * 1e3) * Math.pow(criticalPressure, 2.0 / 3.0)
+              / Math.pow(criticalTemperature, 1.0 / 6.0) * 1e-7;
         }
         // System.out.println("crit visc " + criticalViscosity);
         if (normalLiquidDensity == 0) {
@@ -455,8 +601,7 @@ public abstract class Component implements ComponentInterface {
       }
       componentNumber = compIndex;
     } catch (Exception ex) {
-      logger.error("error in adding new component. Check database arameters for component:  "
-          + ex.getMessage());
+      logger.error("error in adding new component. Check database arameters for component:  " + ex.getMessage());
       throw new RuntimeException(ex);
     }
 
@@ -476,18 +621,28 @@ public abstract class Component implements ComponentInterface {
       }
       index = 1000 + componentNumber;
       if (NeqSimDataBase.createTemporaryTables()) {
-        database.execute("insert into " + databaseName + " VALUES (" + (1000 + componentNumber)
-            + ", '" + componentName + "', '00-00-0','" + getComponentType() + "', " + index
-            + ", 'HC', " + (molarMass * 1000.0) + ", " + normalLiquidDensity + ", "
-            + (getTC() - 273.15) + ", " + getPC() + ", " + getAcentricFactor() + ","
-            + (getNormalBoilingPoint() - 273.15) + ", 39.948, 74.9, 'Classic', 0, " + getCpA()
-            + ", " + getCpB() + ", " + getCpC() + ", " + getCpD() + ", " + getCpE()
+        database.execute("insert into " + databaseName + " VALUES (" + (1000 + componentNumber) + ", '" + componentName
+            + "', '00-00-0','" + getComponentType() + "', " + index + ", 'HC', " + (molarMass * 1000.0) + ", "
+            + normalLiquidDensity + ", " + (getTC() - 273.15) + ", " + getPC() + ", " + getAcentricFactor() + ","
+            + (getNormalBoilingPoint() - 273.15) + ", 39.948, 74.9, 'Classic', 0, " + getCpA() + ", " + getCpB() + ", "
+            + getCpC() + ", " + getCpD() + ", " + getCpE()
             + ", 'log', 5.2012, 1936.281, -20.143, -1.23303, 1000, 1.8, 0.076, 0.0, 0.0, 2.52, 809.1, 0, 3, -24.71, 4210, 0.0453, -3.38e-005, -229000, -19.2905, 29814.5, -0.019678, 0.000132, -3.11e-007, 0, 'solvent', 0, 0, 0, 0, 0.0789, -1.16, 0, -0.384, 0.00525, -6.37e-006, 207, "
             + getHeatOfFusion() + ", 1000, 0.00611, " + getTriplePointTemperature() + ", "
             + getMeltingPointTemperature()
             + ", -242000, 189, 53, -0.00784, 0, 0, 0, 5.46, 0.305, 647, 0.081, 0, 52100000, 0.32, -0.212, 0.258, 0, 0.999, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 'no', "
-            + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT()
-            + ", 0, 0,0,0,0,0," + isW + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
+            + getmSAFTi() + ", " + (getSigmaSAFTi() * 1e10) + ", " + getEpsikSAFT() + ", 0, 0,0,0,0,0," + isW
+            + ",0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0" + ", 12.0, 6.0, 0, 0, 0, 0, 0"
+            // Trailing values for the UMR-CPA columns appended to COMP.csv
+            // (UMRCPA_MC1..5, UMRCPA_a0, UMRCPA_b, UMRCPA_assocEnergy,
+            // UMRCPA_assocVolume,
+            // UMRCPA_assocScheme, UMRCPA_associating, UMRCPA_racketZ,
+            // UMRCPA_volcorr_T).
+            // Pseudo-components are non-associating, so all are zero. These must be
+            // present
+            // because comptemp is created as "SELECT * FROM comp" and the
+            // positional INSERT must
+            // match the full column count.
+            + ", 0, 0, 0, 0, 0, 0, 0, 0, 0, '0', 0, 0, 0)");
       }
       CASnumber = "00-00-0";
     } catch (Exception ex) {
@@ -497,12 +652,12 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public synchronized Component clone() {
+  public Component clone() {
     Component clonedComponent = null;
     try {
       clonedComponent = (Component) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for Component", ex);
     }
 
     return clonedComponent;
@@ -516,9 +671,8 @@ public abstract class Component implements ComponentInterface {
     double tolerance = 1e-12;
 
     if (newTotal < -tolerance || newPhase < -tolerance) {
-      String msg = "will lead to negative number of moles of component in phase for component "
-          + getComponentName() + "  who has " + numberOfMolesInPhase
-          + " in phase  and change request was " + dn;
+      String msg = "will lead to negative number of moles of component in phase for component " + getComponentName()
+          + "  who has " + numberOfMolesInPhase + " in phase  and change request was " + dn;
       logger.debug(msg);
       if (newPhase < 0) {
         newPhase = 0;
@@ -551,11 +705,10 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta,
-      int initType) {
+  public void init(double temperature, double pressure, double totalNumberOfMoles, double beta, int initType) {
     if (totalNumberOfMoles < 0) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "init",
-          "totalNumberOfMoles", "must be larger than or equal to 0"));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "init", "totalNumberOfMoles",
+          "must be larger than or equal to 0"));
     }
     if (totalNumberOfMoles == 0) {
       K = 1.0;
@@ -569,8 +722,20 @@ public abstract class Component implements ComponentInterface {
       if (ionicCharge != 0 || isIsIon()) {
         K = 1.0e-40;
       } else {
-        K = Math.exp(Math.log(criticalPressure / pressure)
-            + 5.373 * (1.0 + srkacentricFactor) * (1.0 - criticalTemperature / temperature));
+        // Warm-start: preserve K if it's a non-default converged value.
+        // Opt-in via ThermodynamicModelSettings.setUseWarmStartKValues(true) or
+        // the system property -Dneqsim.warmStartK=true. Saves successive-
+        // substitution iterations in iterative flashes (PSflash, PHflash,
+        // dew/bubble point) and recycle loops by 2-3x, but may converge to
+        // numerically slightly different (physically equivalent) solutions.
+        // Default off preserves exact baseline reproducibility.
+        if (neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues() && Double.isFinite(K) && K > 1e-20
+            && Math.abs(K - 1.0) > 1e-3) {
+          // Keep existing K — warm start
+        } else {
+          K = Math.exp(Math.log(criticalPressure / pressure)
+              + 5.373 * (1.0 + srkacentricFactor) * (1.0 - criticalTemperature / temperature));
+        }
       }
       z = numberOfMoles / totalNumberOfMoles;
       x = z;
@@ -593,7 +758,8 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public void Finit(PhaseInterface phase, double temp, double pres, double totMoles, double beta,
-      int numberOfComponents, int initType) {}
+      int numberOfComponents, int initType) {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -640,13 +806,12 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getHeatOfVapourization(double temp) {
-    return heatOfVaporizationCoefs[0] + heatOfVaporizationCoefs[1] * temp
-        + heatOfVaporizationCoefs[2] * temp * temp + heatOfVaporizationCoefs[3] * temp * temp * temp
-            * heatOfVaporizationCoefs[4] * temp * temp * temp * temp; // maa
-                                                                      // settes
-                                                                      // paa
-                                                                      // rett
-                                                                      // form
+    return heatOfVaporizationCoefs[0] + heatOfVaporizationCoefs[1] * temp + heatOfVaporizationCoefs[2] * temp * temp
+        + heatOfVaporizationCoefs[3] * temp * temp * temp * heatOfVaporizationCoefs[4] * temp * temp * temp * temp; // maa
+    // settes
+    // paa
+    // rett
+    // form
   }
 
   /** {@inheritDoc} */
@@ -700,8 +865,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public final double getTC(String unit) {
-    neqsim.util.unit.TemperatureUnit tempConversion =
-        new neqsim.util.unit.TemperatureUnit(criticalTemperature, "K");
+    neqsim.util.unit.TemperatureUnit tempConversion = new neqsim.util.unit.TemperatureUnit(criticalTemperature, "K");
     return tempConversion.getValue(unit);
   }
 
@@ -752,8 +916,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public final double getPC(String unit) {
-    neqsim.util.unit.PressureUnit presConversion =
-        new neqsim.util.unit.PressureUnit(criticalPressure, "bara");
+    neqsim.util.unit.PressureUnit presConversion = new neqsim.util.unit.PressureUnit(criticalPressure, "bara");
     return presConversion.getValue(unit);
   }
 
@@ -765,23 +928,21 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double getDiElectricConstant(double temperature) {
-    return dielectricParameter[0] + dielectricParameter[1] / temperature
-        + dielectricParameter[2] * temperature + dielectricParameter[3] * temperature * temperature
-        + dielectricParameter[4] * Math.pow(temperature, 3.0);
+  public double getDielectricConstant(double temperature) {
+    return dielectricParameter[0] + dielectricParameter[1] / temperature + dielectricParameter[2] * temperature
+        + dielectricParameter[3] * temperature * temperature + dielectricParameter[4] * Math.pow(temperature, 3.0);
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getDiElectricConstantdT(double temperature) {
+  public double getDielectricConstantdT(double temperature) {
     return -dielectricParameter[1] / Math.pow(temperature, 2.0) + dielectricParameter[2]
-        + 2.0 * dielectricParameter[3] * temperature
-        + 3.0 * dielectricParameter[4] * Math.pow(temperature, 2.0);
+        + 2.0 * dielectricParameter[3] * temperature + 3.0 * dielectricParameter[4] * Math.pow(temperature, 2.0);
   }
 
   /** {@inheritDoc} */
   @Override
-  public double getDiElectricConstantdTdT(double temperature) {
+  public double getDielectricConstantdTdT(double temperature) {
     return 2.0 * dielectricParameter[1] / Math.pow(temperature, 3.0) + 2.0 * dielectricParameter[3]
         + 6.0 * dielectricParameter[4] * Math.pow(temperature, 1.0);
   }
@@ -790,6 +951,12 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double getDebyeDipoleMoment() {
     return debyeDipoleMoment;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setDebyeDipoleMoment(double debyeDipoleMoment) {
+    this.debyeDipoleMoment = debyeDipoleMoment;
   }
 
   /** {@inheritDoc} */
@@ -828,21 +995,20 @@ public abstract class Component implements ComponentInterface {
     double refDensity = normalLiquidDensity * 1e3; // density in kg/m3
     double conversionFactor = 1.0;
     switch (unit) {
-      case "kg/m3":
-        conversionFactor = 1.0;
-        break;
-      case "lb/ft3":
-        conversionFactor = 0.0624279606;
-        break;
-      case "kg/Sm3":
-        return getMolarMass() * ThermodynamicConstantsInterface.atm
-            / ThermodynamicConstantsInterface.R
-            / ThermodynamicConstantsInterface.standardStateTemperature;
-      case "mol/m3":
-        conversionFactor = 1.0 / getMolarMass();
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + unit);
+    case "kg/m3":
+      conversionFactor = 1.0;
+      break;
+    case "lb/ft3":
+      conversionFactor = 0.0624279606;
+      break;
+    case "kg/Sm3":
+      return getMolarMass() * ThermodynamicConstantsInterface.atm / ThermodynamicConstantsInterface.R
+          / ThermodynamicConstantsInterface.standardStateTemperature;
+    case "mol/m3":
+      conversionFactor = 1.0 / getMolarMass();
+      break;
+    default:
+      throw new RuntimeException("unit not supported " + unit);
     }
     return refDensity * conversionFactor;
   }
@@ -940,8 +1106,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getCCsolidVaporPressure(double temperature) {
-    return triplePointPressure
-        * (Math.exp(Hsub / R * (1.0 / getTriplePointTemperature() - 1.0 / temperature)));
+    return triplePointPressure * (Math.exp(Hsub / R * (1.0 / getTriplePointTemperature() - 1.0 / temperature)));
   }
 
   /** {@inheritDoc} */
@@ -956,8 +1121,7 @@ public abstract class Component implements ComponentInterface {
   public double getPureComponentSolidDensity(double temperature) {
     return molarMass * 1000.0
         * (solidDensityCoefs[0] + solidDensityCoefs[1] * Math.pow(temperature, 1.0)
-            + solidDensityCoefs[2] * Math.pow(temperature, 2.0)
-            + solidDensityCoefs[3] * Math.pow(temperature, 3.0)
+            + solidDensityCoefs[2] * Math.pow(temperature, 2.0) + solidDensityCoefs[3] * Math.pow(temperature, 3.0)
             + solidDensityCoefs[4] * Math.pow(temperature, 4.0));
   }
 
@@ -966,8 +1130,7 @@ public abstract class Component implements ComponentInterface {
   public double getPureComponentLiquidDensity(double temperature) {
     return molarMass * 1000.0
         * (liquidDensityCoefs[0] + liquidDensityCoefs[1] * Math.pow(temperature, 1.0)
-            + liquidDensityCoefs[2] * Math.pow(temperature, 2.0)
-            + liquidDensityCoefs[3] * Math.pow(temperature, 3.0)
+            + liquidDensityCoefs[2] * Math.pow(temperature, 2.0) + liquidDensityCoefs[3] * Math.pow(temperature, 3.0)
             + liquidDensityCoefs[4] * Math.pow(temperature, 4.0));
     // return Math.pow(liquidDensityCoefs[0] / liquidDensityCoefs[1], 1.0 +
     // Math.pow(1.0 - temperature / liquidDensityCoefs[2], liquidDensityCoefs[3]));
@@ -978,8 +1141,7 @@ public abstract class Component implements ComponentInterface {
   public double getPureComponentHeatOfVaporization(double temperature) {
     return 1.0e-3 * heatOfVaporizationCoefs[0]
         * Math.pow((1.0 - temperature / criticalTemperature),
-            heatOfVaporizationCoefs[1]
-                + heatOfVaporizationCoefs[2] * temperature / criticalTemperature
+            heatOfVaporizationCoefs[1] + heatOfVaporizationCoefs[2] * temperature / criticalTemperature
                 + heatOfVaporizationCoefs[3] * Math.pow(temperature / criticalTemperature, 2.0));
   }
 
@@ -1030,17 +1192,19 @@ public abstract class Component implements ComponentInterface {
     double refMolarMass = getMolarMass();
     double conversionFactor = 1.0;
     switch (unit) {
-      case "kg/mol":
-        conversionFactor = 1.0;
-        break;
-      case "gr/mol":
-        conversionFactor = 1000.0;
-        break;
-      case "lbm/lbmol":
-        conversionFactor = 1000.0;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + unit);
+    case "kg/mol":
+      conversionFactor = 1.0;
+      break;
+    case "g/mol":
+    case "gr/mol":
+    case "kg/kmol":
+      conversionFactor = 1000.0;
+      break;
+    case "lbm/lbmol":
+      conversionFactor = 1000.0;
+      break;
+    default:
+      throw new RuntimeException("unit not supported " + unit);
     }
     return refMolarMass * conversionFactor;
   }
@@ -1054,8 +1218,8 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getRate(String unitName) {
-    neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(numberOfMolesInPhase, "mol/sec",
-        molarMass, normalLiquidDensity, normalBoilingPoint);
+    neqsim.util.unit.Unit unit = new neqsim.util.unit.RateUnit(numberOfMolesInPhase, "mol/sec", molarMass,
+        normalLiquidDensity, normalBoilingPoint);
     double val = unit.getValue(unitName);
     return val;
   }
@@ -1085,7 +1249,8 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double logfugcoefdT(PhaseInterface phase) {
     dfugdt = 0.0;
-    // this.fugcoefDiffTemp(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    // this.fugcoefDiffTemp(phase, phase.getNumberOfComponents(),
+    // phase.getTemperature(),
     // phase.getPressure());
     return dfugdt;
   }
@@ -1094,7 +1259,8 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double logfugcoefdP(PhaseInterface phase) {
     dfugdp = 0.0;
-    // this.fugcoefDiffPres(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+    // this.fugcoefDiffPres(phase, phase.getNumberOfComponents(),
+    // phase.getTemperature(),
     // phase.getPressure());
     return dfugdp;
   }
@@ -1200,8 +1366,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public final double getChemicalPotentialIdealReference(PhaseInterface phase) {
-    return (getHID(phase.getTemperature())
-        - phase.getTemperature() * getIdEntropy(phase.getTemperature()));
+    return (getHID(phase.getTemperature()) - phase.getTemperature() * getIdEntropy(phase.getTemperature()));
   }
 
   /** {@inheritDoc} */
@@ -1218,9 +1383,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * getFugacitydN.
-   * </p>
    *
    * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -1237,8 +1400,7 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public final double getChemicalPotentialdNTV(int i, PhaseInterface phase) {
-    return getChemicalPotentialdN(i, phase)
-        - getVoli() * phase.getComponent(i).getVoli() * phase.getdPdVTn();
+    return getChemicalPotentialdN(i, phase) - getVoli() * phase.getComponent(i).getVoli() * phase.getdPdVTn();
   }
 
   /** {@inheritDoc} */
@@ -1254,9 +1416,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * getChemicalPotentialdP.
-   * </p>
    *
    * @param i a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -1298,12 +1458,14 @@ public abstract class Component implements ComponentInterface {
       // equation and parameter from properties o and gases (poling 5th ed)
       return Math.exp(AntoineA - (AntoineB / (temp + AntoineC)));
     } else if (Math.abs(AntoineE) > 1e-12) {
-      return Math.exp(AntoineA + AntoineB / temp + AntoineC * Math.log(temp)
-          + AntoineD * Math.pow(temp, AntoineE)) / 100000;
+      return Math.exp(AntoineA + AntoineB / temp + AntoineC * Math.log(temp) + AntoineD * Math.pow(temp, AntoineE))
+          / 100000;
     } else {
       double x = 1 - (temp / criticalTemperature);
-      return (Math.exp(Math.pow((1 - x), -1) * (AntoineA * x + AntoineB * Math.pow(x, 1.5)
-          + AntoineC * Math.pow(x, 3) + AntoineD * Math.pow(x, 6))) * criticalPressure);
+      return (Math
+          .exp(Math.pow((1 - x), -1)
+              * (AntoineA * x + AntoineB * Math.pow(x, 1.5) + AntoineC * Math.pow(x, 3) + AntoineD * Math.pow(x, 6)))
+          * criticalPressure);
     }
   }
 
@@ -1317,8 +1479,7 @@ public abstract class Component implements ComponentInterface {
       return pressure * AntoineB * Math.log(10.0) / (denom * denom);
     } else if (antoineLiqVapPresType.equals("exp") || antoineLiqVapPresType.equals("log")) {
       // (B*exp(A - B/(C + x)))/(C + x)^2
-      double ans = AntoineB * (Math.exp(AntoineA - AntoineB / (AntoineC + temp)))
-          / Math.pow((AntoineC + temp), 2.0);
+      double ans = AntoineB * (Math.exp(AntoineA - AntoineB / (AntoineC + temp))) / Math.pow((AntoineC + temp), 2.0);
       return ans;
     } else {
       return 0.0;
@@ -1384,15 +1545,15 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public final double getCp0(double temperature) {
-    return getCpA() + getCpB() * temperature + getCpC() * Math.pow(temperature, 2)
-        + getCpD() * Math.pow(temperature, 3) + getCpE() * Math.pow(temperature, 4);
+    return getCpA() + getCpB() * temperature + getCpC() * Math.pow(temperature, 2) + getCpD() * Math.pow(temperature, 3)
+        + getCpE() * Math.pow(temperature, 4);
   }
 
   /** {@inheritDoc} */
   @Override
   public final double getCv0(double temperature) {
-    return getCpA() + getCpB() * temperature + getCpC() * Math.pow(temperature, 2)
-        + getCpD() * Math.pow(temperature, 3) + getCpE() * Math.pow(temperature, 4) - R;
+    return getCpA() + getCpB() * temperature + getCpC() * Math.pow(temperature, 2) + getCpD() * Math.pow(temperature, 3)
+        + getCpE() * Math.pow(temperature, 4) - R;
   }
 
   // integralet av Cp0 mhp T
@@ -1400,38 +1561,33 @@ public abstract class Component implements ComponentInterface {
   @Override
   public final double getHID(double T) {
     return 0 * getIdealGasEnthalpyOfFormation()
-        + (getCpA() * T + 1.0 / 2.0 * getCpB() * T * T + 1.0 / 3.0 * getCpC() * T * T * T
-            + 1.0 / 4.0 * getCpD() * T * T * T * T)
+        + (getCpA() * T
+            + 1.0 / 2.0 * getCpB() * T * T + 1.0 / 3.0 * getCpC() * T * T * T + 1.0 / 4.0 * getCpD() * T * T * T * T)
         + 1.0 / 5.0 * getCpE() * T * T * T * T * T
-        - (getCpA() * referenceTemperature
-            + 1.0 / 2.0 * getCpB() * referenceTemperature * referenceTemperature
-            + 1.0 / 3.0 * getCpC() * referenceTemperature * referenceTemperature
+        - (getCpA() * referenceTemperature + 1.0 / 2.0 * getCpB() * referenceTemperature * referenceTemperature
+            + 1.0 / 3.0 * getCpC() * referenceTemperature * referenceTemperature * referenceTemperature
+            + 1.0 / 4.0 * getCpD() * referenceTemperature * referenceTemperature * referenceTemperature
                 * referenceTemperature
-            + 1.0 / 4.0 * getCpD() * referenceTemperature * referenceTemperature
-                * referenceTemperature * referenceTemperature
-            + 1.0 / 5.0 * getCpE() * referenceTemperature * referenceTemperature
-                * referenceTemperature * referenceTemperature * referenceTemperature);
+            + 1.0 / 5.0 * getCpE() * referenceTemperature * referenceTemperature * referenceTemperature
+                * referenceTemperature * referenceTemperature);
   }
 
   /** {@inheritDoc} */
   @Override
   public final double getEnthalpy(double temperature) {
-    return getHID(temperature) * numberOfMolesInPhase
-        + getHresTP(temperature) * numberOfMolesInPhase;
+    return getHID(temperature) * numberOfMolesInPhase + getHresTP(temperature) * numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getIdEntropy(double temperature) {
     return (getCpE() * temperature * temperature * temperature * temperature / 4.0
-        + getCpD() * temperature * temperature * temperature / 3.0
-        + getCpC() * temperature * temperature / 2.0 + getCpB() * temperature
-        + getCpA() * Math.log(temperature)
-        - getCpE() * referenceTemperature * referenceTemperature * referenceTemperature
-            * referenceTemperature / 4.0
+        + getCpD() * temperature * temperature * temperature / 3.0 + getCpC() * temperature * temperature / 2.0
+        + getCpB() * temperature + getCpA() * Math.log(temperature)
+        - getCpE() * referenceTemperature * referenceTemperature * referenceTemperature * referenceTemperature / 4.0
         - getCpD() * referenceTemperature * referenceTemperature * referenceTemperature / 3.0
-        - getCpC() * referenceTemperature * referenceTemperature / 2.0
-        - getCpB() * referenceTemperature - getCpA() * Math.log(referenceTemperature));
+        - getCpC() * referenceTemperature * referenceTemperature / 2.0 - getCpB() * referenceTemperature
+        - getCpA() * Math.log(referenceTemperature));
   }
 
   /** {@inheritDoc} */
@@ -1440,8 +1596,8 @@ public abstract class Component implements ComponentInterface {
     if (x < 1e-100) {
       return 0.0;
     }
-    return numberOfMolesInPhase * (getIdEntropy(temperature)
-        - (R * Math.log(pressure / referencePressure)) - R * Math.log(x))
+    return numberOfMolesInPhase
+        * (getIdEntropy(temperature) - (R * Math.log(pressure / referencePressure)) - R * Math.log(x))
         + getSresTP(temperature) * numberOfMolesInPhase; // 1 bor vaere Z
   }
 
@@ -1455,7 +1611,9 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void setAcentricFactor(double val) {
     acentricFactor = val;
-    getAttractiveTerm().init();
+    if (getAttractiveTerm() != null) {
+      getAttractiveTerm().init();
+    }
   }
 
   /** {@inheritDoc} */
@@ -1502,8 +1660,8 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure) {
+  public double fugcoefDiffPresNumeric(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure) {
     double dp = phase.getPressure() / 1.0e5;
     final double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setPressure(phase.getPressure() - dp);
@@ -1519,8 +1677,8 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
-  public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure) {
+  public double fugcoefDiffTempNumeric(PhaseInterface phase, int numberOfComponents, double temperature,
+      double pressure) {
     double dt = phase.getTemperature() / 1.0e6;
     final double temp1 = phase.getComponents()[componentNumber].getFugacityCoefficient();
     phase.setTemperature(phase.getTemperature() - dt);
@@ -1538,9 +1696,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * getIonicDiameter.
-   * </p>
    *
    * @return a double
    */
@@ -1594,9 +1750,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>voli</code>.
-   * </p>
    *
    * @param molarVol a double
    */
@@ -1621,9 +1775,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>matiascopemanParamsPR</code>.
-   * </p>
    *
    * @return an array of type double
    */
@@ -1632,9 +1784,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>matiascopemanParamsPR</code>.
-   * </p>
    *
    * @param index a int
    * @param matiascopemanParams a double
@@ -1718,8 +1868,8 @@ public abstract class Component implements ComponentInterface {
   /** {@inheritDoc} */
   @Override
   public double getNormalBoilingPoint(String unit) {
-    neqsim.util.unit.TemperatureUnit tempConversion =
-        new neqsim.util.unit.TemperatureUnit(getNormalBoilingPoint(), "K");
+    neqsim.util.unit.TemperatureUnit tempConversion = new neqsim.util.unit.TemperatureUnit(getNormalBoilingPoint(),
+        "K");
     return tempConversion.getValue(unit);
   }
 
@@ -1797,8 +1947,7 @@ public abstract class Component implements ComponentInterface {
   @Override
   public final double getSolidVaporPressuredT(double temperature) {
     if (Math.abs(AntoineCSolid) < 1e-10) {
-      return -AntoineBSolid / (temperature * temperature)
-          * Math.exp(AntoineASolid + AntoineBSolid / temperature);
+      return -AntoineBSolid / (temperature * temperature) * Math.exp(AntoineASolid + AntoineBSolid / temperature);
     } else {
       return AntoineBSolid * Math.log(10)
           * Math.pow((1 / 10), (AntoineASolid - AntoineBSolid / (temperature + AntoineCSolid)))
@@ -1862,9 +2011,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * setIsAllTypesFalse.
-   * </p>
    */
   protected void setIsAllTypesFalse() {
     this.isTBPfraction = false;
@@ -1939,17 +2086,17 @@ public abstract class Component implements ComponentInterface {
     double refMolarMass = value;
     double conversionFactor = 1.0;
     switch (unit) {
-      case "kg/mol":
-        conversionFactor = 1.0;
-        break;
-      case "gr/mol":
-        conversionFactor = 1000.0;
-        break;
-      case "lbm/lbmol":
-        conversionFactor = 1000.0;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + unit);
+    case "kg/mol":
+      conversionFactor = 1.0;
+      break;
+    case "gr/mol":
+      conversionFactor = 1000.0;
+      break;
+    case "lbm/lbmol":
+      conversionFactor = 1000.0;
+      break;
+    default:
+      throw new RuntimeException("unit not supported " + unit);
     }
     molarMass = refMolarMass * 1.0 / conversionFactor;
   }
@@ -1999,10 +2146,8 @@ public abstract class Component implements ComponentInterface {
     // System.out.println("henry " +
     // Math.exp(henryCoefParameter[0]+henryCoefParameter[1] /
     // temperature+henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature)*100*0.01802);
-    return Math
-        .exp(henryCoefParameter[0] + henryCoefParameter[1] / temperature
-            + henryCoefParameter[2] * Math.log(temperature) + henryCoefParameter[3] * temperature)
-        * 0.01802 * 100;
+    return Math.exp(henryCoefParameter[0] + henryCoefParameter[1] / temperature
+        + henryCoefParameter[2] * Math.log(temperature) + henryCoefParameter[3] * temperature) * 0.01802 * 100;
   }
 
   /** {@inheritDoc} */
@@ -2043,9 +2188,8 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double getPureComponentCpSolid(double temperature) {
     // unit J/mol*K DIPPR function
-    return 1. / 1000.0
-        * (CpSolid[0] + CpSolid[1] * temperature + CpSolid[2] * Math.pow(temperature, 2.0)
-            + CpSolid[3] * Math.pow(temperature, 3.0) + CpSolid[4] * Math.pow(temperature, 4.0));
+    return 1. / 1000.0 * (CpSolid[0] + CpSolid[1] * temperature + CpSolid[2] * Math.pow(temperature, 2.0)
+        + CpSolid[3] * Math.pow(temperature, 3.0) + CpSolid[4] * Math.pow(temperature, 4.0));
   }
 
   // A^2/(1-Tr)+B-2*A*C*(1-Tr)-A*D*(1-Tr)^2-C^2*(1-Tr)^3/3-C*D*(1-Tr)^4/2-D^2*(1-Tr)^5/5
@@ -2053,15 +2197,26 @@ public abstract class Component implements ComponentInterface {
   @Override
   public double getPureComponentCpLiquid(double temperature) {
     // unit J/mol*K DIPPR function
-    return 1. / 1000.0
-        * (CpLiquid[0] + CpLiquid[1] * temperature + CpLiquid[2] * Math.pow(temperature, 2.0)
-            + CpLiquid[3] * Math.pow(temperature, 3.0) + CpLiquid[4] * Math.pow(temperature, 4.0));
+    return 1. / 1000.0 * (CpLiquid[0] + CpLiquid[1] * temperature + CpLiquid[2] * Math.pow(temperature, 2.0)
+        + CpLiquid[3] * Math.pow(temperature, 3.0) + CpLiquid[4] * Math.pow(temperature, 4.0));
   }
 
   /** {@inheritDoc} */
   @Override
   public void setCriticalVolume(double criticalVolume) {
     this.criticalVolume = criticalVolume;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCostaldCharacteristicVolume() {
+    return costaldCharacteristicVolume;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setCostaldCharacteristicVolume(double costaldCharacteristicVolume) {
+    this.costaldCharacteristicVolume = costaldCharacteristicVolume;
   }
 
   /** {@inheritDoc} */
@@ -2140,6 +2295,66 @@ public abstract class Component implements ComponentInterface {
 
   /** {@inheritDoc} */
   @Override
+  public double getLambdaRSAFTVRMie() {
+    return lambdaRSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setLambdaRSAFTVRMie(double lambdaRSAFTVRMie) {
+    this.lambdaRSAFTVRMie = lambdaRSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getLambdaASAFTVRMie() {
+    return lambdaASAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setLambdaASAFTVRMie(double lambdaASAFTVRMie) {
+    this.lambdaASAFTVRMie = lambdaASAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getmSAFTVRMie() {
+    return mSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setmSAFTVRMie(double mSAFTVRMie) {
+    this.mSAFTVRMie = mSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getSigmaSAFTVRMie() {
+    return sigmaSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setSigmaSAFTVRMie(double sigmaSAFTVRMie) {
+    this.sigmaSAFTVRMie = sigmaSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getEpsikSAFTVRMie() {
+    return epsikSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setEpsikSAFTVRMie(double epsikSAFTVRMie) {
+    this.epsikSAFTVRMie = epsikSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getAssociationVolumeSAFT() {
     return associationVolumeSAFT;
   }
@@ -2160,6 +2375,30 @@ public abstract class Component implements ComponentInterface {
   @Override
   public void setAssociationEnergySAFT(double associationEnergySAFT) {
     this.associationEnergySAFT = associationEnergySAFT;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAssociationEnergySAFTVRMie() {
+    return associationEnergySAFTVRMie > 0 ? associationEnergySAFTVRMie : associationEnergySAFT;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAssociationEnergySAFTVRMie(double associationEnergySAFTVRMie) {
+    this.associationEnergySAFTVRMie = associationEnergySAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getAssociationVolumeSAFTVRMie() {
+    return associationVolumeSAFTVRMie;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setAssociationVolumeSAFTVRMie(double associationVolumeSAFTVRMie) {
+    this.associationVolumeSAFTVRMie = associationVolumeSAFTVRMie;
   }
 
   /** {@inheritDoc} */
@@ -2226,9 +2465,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * isIsHydrateFormer.
-   * </p>
    *
    * @return the isHydrateFormer
    */
@@ -2237,9 +2474,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>referenceEnthalpy</code>.
-   * </p>
    *
    * @return the referenceEnthalpy
    */
@@ -2248,9 +2483,7 @@ public abstract class Component implements ComponentInterface {
   }
 
   /**
-   * <p>
    * Setter for the field <code>referenceEnthalpy</code>.
-   * </p>
    *
    * @param referenceEnthalpy the referenceEnthalpy to set
    */
@@ -2441,14 +2674,31 @@ public abstract class Component implements ComponentInterface {
       return getVoli() / 1.0e5 * 60.0;
     } else if (flowunit.equals("m3/hr")) {
       return getVoli() / 1.0e5 * 3600.0;
-    } else if (flowunit.equals("mole/sec")) {
+    } else if (flowunit.equals("mole/sec") || flowunit.equals("mol/sec")) {
       return numberOfMolesInPhase;
-    } else if (flowunit.equals("mole/min")) {
+    } else if (flowunit.equals("mole/min") || flowunit.equals("mol/min")) {
       return numberOfMolesInPhase * 60.0;
-    } else if (flowunit.equals("mole/hr")) {
+    } else if (flowunit.equals("mole/hr") || flowunit.equals("mol/hr")) {
       return numberOfMolesInPhase * 3600.0;
+    } else if (flowunit.equals("kmole/sec") || flowunit.equals("kmol/sec")) {
+      return numberOfMolesInPhase / 1000.0;
+    } else if (flowunit.equals("kmole/min") || flowunit.equals("kmol/min")) {
+      return numberOfMolesInPhase * 60.0 / 1000.0;
+    } else if (flowunit.equals("kmole/hr") || flowunit.equals("kmol/hr")) {
+      return numberOfMolesInPhase * 3600.0 / 1000.0;
+    } else if (flowunit.equals("kmole/day") || flowunit.equals("kmol/day")) {
+      return numberOfMolesInPhase * 3600.0 * 24.0 / 1000.0;
+    } else if (flowunit.equals("lbmole/hr") || flowunit.equals("lbmol/hr")) {
+      return numberOfMolesInPhase * 3600.0 / 1000.0 * 2.20462262;
+    } else if (flowunit.equals("lb/hr")) {
+      return numberOfMolesInPhase * getMolarMass() * 3600.0 * 2.20462262;
+    } else if (flowunit.equals("barrel/day") || flowunit.equals("bbl/day")) {
+      return numberOfMolesInPhase * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
-      throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
+      throw new RuntimeException("failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
+          + "kg/hr, tonnes/year, m3/sec, m3/min, m3/hr, mole/sec, mol/sec, mole/min, "
+          + "mol/min, mole/hr, mol/hr, kmole/sec, kmol/sec, kmole/min, kmol/min, "
+          + "kmole/hr, kmol/hr, kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, " + "barrel/day, bbl/day");
     }
   }
 
@@ -2461,14 +2711,31 @@ public abstract class Component implements ComponentInterface {
       return numberOfMoles * getMolarMass() * 60.0;
     } else if (flowunit.equals("kg/hr")) {
       return numberOfMoles * getMolarMass() * 3600.0;
-    } else if (flowunit.equals("mole/sec")) {
+    } else if (flowunit.equals("mole/sec") || flowunit.equals("mol/sec")) {
       return numberOfMoles;
-    } else if (flowunit.equals("mole/min")) {
+    } else if (flowunit.equals("mole/min") || flowunit.equals("mol/min")) {
       return numberOfMoles * 60.0;
-    } else if (flowunit.equals("mole/hr")) {
+    } else if (flowunit.equals("mole/hr") || flowunit.equals("mol/hr")) {
       return numberOfMoles * 3600.0;
+    } else if (flowunit.equals("kmole/sec") || flowunit.equals("kmol/sec")) {
+      return numberOfMoles / 1000.0;
+    } else if (flowunit.equals("kmole/min") || flowunit.equals("kmol/min")) {
+      return numberOfMoles * 60.0 / 1000.0;
+    } else if (flowunit.equals("kmole/hr") || flowunit.equals("kmol/hr")) {
+      return numberOfMoles * 3600.0 / 1000.0;
+    } else if (flowunit.equals("kmole/day") || flowunit.equals("kmol/day")) {
+      return numberOfMoles * 3600.0 * 24.0 / 1000.0;
+    } else if (flowunit.equals("lbmole/hr") || flowunit.equals("lbmol/hr")) {
+      return numberOfMoles * 3600.0 / 1000.0 * 2.20462262;
+    } else if (flowunit.equals("lb/hr")) {
+      return numberOfMoles * getMolarMass() * 3600.0 * 2.20462262;
+    } else if (flowunit.equals("barrel/day") || flowunit.equals("bbl/day")) {
+      return numberOfMoles * getMolarMass() * 3600.0 * 24.0 * 2.20462262 * 0.068;
     } else {
-      throw new RuntimeException("failed.. unit: " + flowunit + " not supported");
+      throw new RuntimeException("failed.. unit: " + flowunit + " not supported. Supported units: kg/sec, kg/min, "
+          + "kg/hr, mole/sec, mol/sec, mole/min, mol/min, mole/hr, mol/hr, "
+          + "kmole/sec, kmol/sec, kmole/min, kmol/min, kmole/hr, kmol/hr, "
+          + "kmole/day, kmol/day, lbmole/hr, lbmol/hr, lb/hr, barrel/day, bbl/day");
     }
   }
 
@@ -2479,6 +2746,15 @@ public abstract class Component implements ComponentInterface {
    */
   public final double[] getMatiascopemanParamsUMRPRU() {
     return matiascopemanParamsUMRPRU;
+  }
+
+  /**
+   * Getter for the five-parameter Mathias-Copeman coefficients of the UMR-CPA model.
+   *
+   * @return array of five doubles with the UMR-CPA Mathias-Copeman coefficients c1..c5
+   */
+  public final double[] getMatiascopemanParamsUMRCPA() {
+    return matiascopemanParamsUMRCPA;
   }
 
   /** {@inheritDoc} */
@@ -2493,24 +2769,18 @@ public abstract class Component implements ComponentInterface {
     Component other = (Component) obj;
     return Double.compare(criticalPressure, other.criticalPressure) == 0
         && Double.compare(criticalTemperature, other.criticalTemperature) == 0
-        && Double.compare(molarMass, other.molarMass) == 0
-        && Double.compare(acentricFactor, other.acentricFactor) == 0
+        && Double.compare(molarMass, other.molarMass) == 0 && Double.compare(acentricFactor, other.acentricFactor) == 0
         && componentName.equals(other.componentName) && index == other.index
         && Double.compare(normalLiquidDensity, other.normalLiquidDensity) == 0
-        && Double.compare(criticalVolume, other.criticalVolume) == 0
-        && Double.compare(racketZ, other.racketZ) == 0 && Double.compare(K, other.K) == 0
-        && Double.compare(x, other.x) == 0 && Double.compare(z, other.z) == 0
+        && Double.compare(criticalVolume, other.criticalVolume) == 0 && Double.compare(racketZ, other.racketZ) == 0
+        && Double.compare(K, other.K) == 0 && Double.compare(x, other.x) == 0 && Double.compare(z, other.z) == 0
         && Double.compare(numberOfMoles, other.numberOfMoles) == 0
         && Double.compare(numberOfMolesInPhase, other.numberOfMolesInPhase) == 0
-        && componentType.equals(other.componentType)
-        && Double.compare(associationVolume, other.associationVolume) == 0
-        && Double.compare(associationEnergy, other.associationEnergy) == 0
-        && Double.compare(aCPA, other.aCPA) == 0 && Double.compare(bCPA, other.bCPA) == 0
-        && Double.compare(mCPA, other.mCPA) == 0
+        && componentType.equals(other.componentType) && Double.compare(associationVolume, other.associationVolume) == 0
+        && Double.compare(associationEnergy, other.associationEnergy) == 0 && Double.compare(aCPA, other.aCPA) == 0
+        && Double.compare(bCPA, other.bCPA) == 0 && Double.compare(mCPA, other.mCPA) == 0
         && Double.compare(srkacentricFactor, other.srkacentricFactor) == 0
-        && referenceStateType.equals(other.referenceStateType)
-        && associationScheme.equals(other.associationScheme)
-        && ((CASnumber == null && other.CASnumber == null)
-            || (CASnumber != null && CASnumber.equals(other.CASnumber)));
+        && referenceStateType.equals(other.referenceStateType) && associationScheme.equals(other.associationScheme)
+        && ((CASnumber == null && other.CASnumber == null) || (CASnumber != null && CASnumber.equals(other.CASnumber)));
   }
 }

@@ -4,9 +4,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGeNRTL class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class ComponentGeNRTL extends ComponentGE {
   double q = 0;
 
   /**
-   * <p>
    * Constructor for ComponentGeNRTL.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -35,9 +31,8 @@ public class ComponentGeNRTL extends ComponentGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
-      String[][] mixRule) {
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
     double E = 0;
     double tau = 0;
     double tau2 = 0;
@@ -148,8 +143,7 @@ public class ComponentGeNRTL extends ComponentGE {
 
       F += E / C * (tau2 - D / C);
       /*
-       * dFdT += (dEdT / C - E / (C * C) * dCdT) * (tau2 - D / C) + E / C * (dtau2dt - (dDdT / C - D
-       * / (C * C) * dCdT));
+       * dFdT += (dEdT / C - E / (C * C) * dCdT) * (tau2 - D / C) + E / C * (dtau2dt - (dDdT / C - D / (C * C) * dCdT));
        */
       // F2T = F2T - 2*2*A/Math.pow(C,2) + 2*2*E*D/Math.pow(C,3); // A til A2;
     }
@@ -158,8 +152,8 @@ public class ComponentGeNRTL extends ComponentGE {
     // dlngammadt = dAdT/B - A/(B*B)*dBdT + dFdT;
 
     /*
-     * double dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter -
-     * dA5dTetter - dA6dTetter);
+     * double dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter - dA5dTetter -
+     * dA6dTetter);
      */
 
     /*
@@ -210,12 +204,12 @@ public class ComponentGeNRTL extends ComponentGE {
             sum += comp_Array[g].getx() * Gmatrix[g][f];
             sum2 += comp_Array[g].getx() * Gmatrix[g][f] * tauMatrix[g][f];
           }
-          Dtemp += Gmatrix[p][f] * Gmatrix[this.getComponentNumber()][f]
-              * tauMatrix[this.getComponentNumber()][f] * comp_Array[f].getx() / (sum * sum);
-          Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2
-              * Gmatrix[this.getComponentNumber()][f] / (sum * sum * sum);
-          Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f]
-              * Gmatrix[this.getComponentNumber()][f] / (sum * sum);
+          Dtemp += Gmatrix[p][f] * Gmatrix[this.getComponentNumber()][f] * tauMatrix[this.getComponentNumber()][f]
+              * comp_Array[f].getx() / (sum * sum);
+          Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2 * Gmatrix[this.getComponentNumber()][f]
+              / (sum * sum * sum);
+          Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f] * Gmatrix[this.getComponentNumber()][f]
+              / (sum * sum);
         }
         dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
             - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;
@@ -230,21 +224,17 @@ public class ComponentGeNRTL extends ComponentGE {
   }
 
   /*
-   * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, PhaseType pt){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents,
-   * temperature, pressure+0.01, pt))-Math.log(fugcoef(phase, numberOfComponents, temperature,
-   * pressure-0.01, pt)))/0.02; return dfugdp; }
+   * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+   * PhaseType pt){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents, temperature, pressure+0.01,
+   * pt))-Math.log(fugcoef(phase, numberOfComponents, temperature, pressure-0.01, pt)))/0.02; return dfugdp; }
    *
-   * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, PhaseType pt){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents,
-   * temperature+0.01, pressure, pt))-Math.log(fugcoef(phase, numberOfComponents, temperature-0.01,
-   * pressure, pt)))/0.02; return dfugdt; }
+   * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+   * PhaseType pt){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents, temperature+0.01, pressure,
+   * pt))-Math.log(fugcoef(phase, numberOfComponents, temperature-0.01, pressure, pt)))/0.02; return dfugdt; }
    */
 
   /**
-   * <p>
    * Getter for the field <code>r</code>.
-   * </p>
    *
    * @return a double
    */
@@ -253,22 +243,11 @@ public class ComponentGeNRTL extends ComponentGE {
   }
 
   /**
-   * <p>
    * Getter for the field <code>q</code>.
-   * </p>
    *
    * @return a double
    */
   public double getq() {
     return q;
-  }
-
-  /**
-   * Getter for property lngamma.
-   *
-   * @return Value of property lngamma.
-   */
-  public double getLngamma() {
-    return lngamma;
   }
 }

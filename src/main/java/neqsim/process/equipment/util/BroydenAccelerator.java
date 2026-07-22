@@ -9,22 +9,20 @@ import org.apache.logging.log4j.Logger;
  * Broyden's quasi-Newton acceleration method for multi-variable recycle convergence.
  *
  * <p>
- * This class implements Broyden's "good" method for accelerating the convergence of multi-variable
- * fixed-point iteration problems, particularly suited for process simulations with multiple coupled
- * recycle streams.
+ * This class implements Broyden's "good" method for accelerating the convergence of multi-variable fixed-point
+ * iteration problems, particularly suited for process simulations with multiple coupled recycle streams.
  *
  * <p>
- * The method approximates the Jacobian matrix of the fixed-point function and updates it using
- * rank-one corrections based on the secant condition. This avoids the expensive computation of
- * numerical derivatives while still providing Newton-like convergence.
+ * The method approximates the Jacobian matrix of the fixed-point function and updates it using rank-one corrections
+ * based on the secant condition. This avoids the expensive computation of numerical derivatives while still providing
+ * Newton-like convergence.
  *
  * <p>
- * Broyden's update formula: B_{k+1} = B_k + (delta_f - B_k * delta_x) * delta_x^T / (delta_x^T *
- * delta_x)
+ * Broyden's update formula: B_{k+1} = B_k + (delta_f - B_k * delta_x) * delta_x^T / (delta_x^T * delta_x)
  *
  * <p>
- * Where: - B_k is the current Jacobian approximation (stored as inverse for efficiency) - delta_x =
- * x_k - x_{k-1} (change in input) - delta_f = f(x_k) - f(x_{k-1}) (change in residual)
+ * Where: - B_k is the current Jacobian approximation (stored as inverse for efficiency) - delta_x = x_k - x_{k-1}
+ * (change in input) - delta_f = f(x_k) - f(x_{k-1}) (change in residual)
  *
  * @author Even Solbraa
  * @version 1.0
@@ -83,8 +81,7 @@ public class BroydenAccelerator implements Serializable {
   }
 
   /**
-   * Initializes the accelerator for a given dimension. Must be called before first use or when
-   * dimension changes.
+   * Initializes the accelerator for a given dimension. Must be called before first use or when dimension changes.
    *
    * @param dim number of variables
    */
@@ -115,9 +112,8 @@ public class BroydenAccelerator implements Serializable {
    * Computes the accelerated next iterate using Broyden's method.
    *
    * <p>
-   * Given the current iterate x and the fixed-point function output g(x), this method computes an
-   * accelerated next iterate that should converge faster than direct substitution (x_{n+1} =
-   * g(x_n)).
+   * Given the current iterate x and the fixed-point function output g(x), this method computes an accelerated next
+   * iterate that should converge faster than direct substitution (x_{n+1} = g(x_n)).
    *
    * @param currentX current input values (x_n)
    * @param functionOutput output from fixed-point function (g(x_n))
@@ -196,9 +192,8 @@ public class BroydenAccelerator implements Serializable {
    * Updates the inverse Jacobian approximation using Broyden's "good" method.
    *
    * <p>
-   * Uses Sherman-Morrison formula for efficient rank-one update of the inverse: B^{-1}_{k+1} =
-   * B^{-1}_k + (delta_x - B^{-1}_k * delta_f) * delta_x^T * B^{-1}_k / (delta_x^T * B^{-1}_k *
-   * delta_f)
+   * Uses Sherman-Morrison formula for efficient rank-one update of the inverse: B^{-1}_{k+1} = B^{-1}_k + (delta_x -
+   * B^{-1}_k * delta_f) * delta_x^T * B^{-1}_k / (delta_x^T * B^{-1}_k * delta_f)
    *
    * @param deltaX change in input (x_k - x_{k-1})
    * @param deltaF change in residual (f_k - f_{k-1})
@@ -322,8 +317,8 @@ public class BroydenAccelerator implements Serializable {
   }
 
   /**
-   * Sets the relaxation factor for damping updates. Values less than 1.0 provide damping for
-   * difficult convergence cases.
+   * Sets the relaxation factor for damping updates. Values less than 1.0 provide damping for difficult convergence
+   * cases.
    *
    * @param relaxationFactor factor between 0 and 1
    */

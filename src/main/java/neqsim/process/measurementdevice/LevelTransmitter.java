@@ -4,9 +4,7 @@ import neqsim.process.equipment.separator.Separator;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * LevelTransmitter class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
   protected Separator separator = null;
 
   /**
-   * <p>
    * Constructor for LevelTransmitter.
-   * </p>
    *
    * @param separator a {@link neqsim.process.equipment.separator.Separator} object
    */
@@ -29,9 +25,7 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for LevelTransmitter.
-   * </p>
    *
    * @param name Name of LevelTransmitter
    * @param separator a {@link neqsim.process.equipment.separator.Separator} object
@@ -41,6 +35,15 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
     this.setMaximumValue(1);
     this.setMinimumValue(0);
     this.separator = separator;
+  }
+
+  /**
+   * Returns the separator whose liquid level this transmitter measures.
+   *
+   * @return the associated {@link neqsim.process.equipment.separator.Separator}, or {@code null} if none was set
+   */
+  public Separator getSeparator() {
+    return separator;
   }
 
   /** {@inheritDoc} */
@@ -54,8 +57,8 @@ public class LevelTransmitter extends MeasurementDeviceBaseClass {
   @Override
   public double getMeasuredValue(String unit) {
     if (!unit.equalsIgnoreCase("")) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "getMeasuredValue", "unit", "currently only supports \"\""));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
+          "currently only supports \"\""));
     }
     return separator.getLiquidLevel();
   }

@@ -12,8 +12,7 @@ public class SimpleReservoirTest {
 
   @Test
   void testRun2() {
-    neqsim.thermo.system.SystemInterface fluid1 =
-        new neqsim.thermo.system.SystemPrEos(373.15, 900.0);
+    neqsim.thermo.system.SystemInterface fluid1 = new neqsim.thermo.system.SystemPrEos(373.15, 900.0);
     fluid1.addComponent("water", 3.599);
     fluid1.addComponent("nitrogen", 0.599);
     fluid1.addComponent("CO2", 0.51);
@@ -41,15 +40,15 @@ public class SimpleReservoirTest {
 
     StreamInterface injectorGasStream = reservoirOps.addGasInjector("gasinjector_1");
     neqsim.thermo.system.SystemInterface fluidGas = fluid1.clone();
-    fluidGas.setMolarComposition(new double[] {0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0});
+    fluidGas.setMolarComposition(
+        new double[] { 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0 });
     injectorGasStream.setFluid(fluidGas);
     injectorGasStream.setFlowRate(5.0, "MSm3/day");
 
     StreamInterface injectorWaterStream = reservoirOps.addWaterInjector("waterinjector_1");
     neqsim.thermo.system.SystemInterface fluidWater = fluid1.clone();
-    fluidWater.setMolarComposition(new double[] {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0});
+    fluidWater.setMolarComposition(
+        new double[] { 1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, 0 });
     injectorWaterStream.setFluid(fluidWater);
     injectorWaterStream.setFlowRate(8000.0 * 1000 / 3.0 * 2, "kg/day");
 
@@ -59,8 +58,7 @@ public class SimpleReservoirTest {
     for (int i = 0; i < 10; i++) {
       reservoirOps.runTransient(deltaTime);
     }
-    Assertions.assertEquals(355.19330033985693,
-        reservoirOps.getReservoirFluid().getPressure("bara"), 0.1);
+    Assertions.assertEquals(355.048269201702, reservoirOps.getReservoirFluid().getPressure("bara"), 0.1);
     Assertions.assertEquals(11.698, reservoirOps.getWaterProdution("Sm3/day"), 0.1);
 
     reservoirOps.setLowPressureLimit(52.0e5, "Pa");

@@ -2,9 +2,8 @@
  * Screening tools for flow assurance, safety, emissions, and economics.
  *
  * <p>
- * This package provides rapid screening assessments for concept-level evaluation. All screeners are
- * designed for early-phase decision support, providing classifications and recommendations without
- * requiring detailed engineering.
+ * This package provides rapid screening assessments for concept-level evaluation. All screeners are designed for
+ * early-phase decision support, providing classifications and recommendations without requiring detailed engineering.
  * </p>
  *
  * <h2>Flow Assurance Screening</h2>
@@ -61,16 +60,16 @@
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * // Flow assurance screening
  * FlowAssuranceScreener faScreener = new FlowAssuranceScreener();
  * FlowAssuranceReport faReport = faScreener.screen(concept, 4.0, 150.0);
- * 
+ *
  * // Economics estimation
  * EconomicsEstimator econ = new EconomicsEstimator();
  * EconomicsEstimator.EconomicsReport econReport = econ.estimate(concept, facilityConfig);
- * 
+ *
  * // Emissions tracking
  * EmissionsTracker emissions = new EmissionsTracker();
  * EmissionsTracker.EmissionsReport emissionsReport = emissions.calculate(concept, facilityConfig);

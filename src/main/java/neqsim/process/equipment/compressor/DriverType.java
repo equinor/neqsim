@@ -17,8 +17,7 @@ public enum DriverType {
   ELECTRIC_MOTOR("Electric Motor", 0.95, 1.0, true),
 
   /**
-   * Variable frequency drive electric motor. Allows continuous speed variation with high
-   * efficiency.
+   * Variable frequency drive electric motor. Allows continuous speed variation with high efficiency.
    */
   VFD_MOTOR("VFD Electric Motor", 0.93, 5.0, true),
 
@@ -55,8 +54,7 @@ public enum DriverType {
    * @param typicalResponseTime typical response time in seconds
    * @param isElectric true if electrically driven
    */
-  DriverType(String displayName, double typicalEfficiency, double typicalResponseTime,
-      boolean isElectric) {
+  DriverType(String displayName, double typicalEfficiency, double typicalResponseTime, boolean isElectric) {
     this.displayName = displayName;
     this.typicalEfficiency = typicalEfficiency;
     this.typicalResponseTime = typicalResponseTime;
@@ -120,8 +118,7 @@ public enum DriverType {
     }
     String upperName = name.toUpperCase().replace(" ", "_").replace("-", "_");
     for (DriverType type : values()) {
-      if (type.name().equals(upperName)
-          || type.displayName.toUpperCase().replace(" ", "_").equals(upperName)) {
+      if (type.name().equals(upperName) || type.displayName.toUpperCase().replace(" ", "_").equals(upperName)) {
         return type;
       }
     }

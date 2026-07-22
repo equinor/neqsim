@@ -12,9 +12,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>
  * WaxFractionSim class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -35,9 +33,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   double oilVolumeStdCond = 0;
 
   /**
-   * <p>
    * Constructor for WaxFractionSim.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -50,9 +46,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * setTemperaturesAndPressures.
-   * </p>
    *
    * @param temperature an array of type double
    * @param pressure an array of type double
@@ -64,9 +58,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runTuning.
-   * </p>
    */
   public void runTuning() {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
@@ -98,11 +90,10 @@ public class WaxFractionSim extends BasePVTsimulation {
         tempSystem.setPressure(pressure[i]);
         thermoOps.TPflash();
         // tempSystem.display();
-        double[] sample1 = {temperature[i]};
+        double[] sample1 = { temperature[i] };
         double waxContent = experimentalData[0][i];
-        double[] standardDeviation1 = {1.5};
-        SampleValue sample =
-            new SampleValue(waxContent, waxContent / 10.0 + 0.1, sample1, standardDeviation1);
+        double[] standardDeviation1 = { 1.5 };
+        SampleValue sample = new SampleValue(waxContent, waxContent / 10.0 + 0.1, sample1, standardDeviation1);
         sample.setFunction(function);
         sample.setThermodynamicSystem(tempSystem);
         sampleList.add(sample);
@@ -120,9 +111,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     Sm3gas = new double[pressure.length];
@@ -137,24 +126,20 @@ public class WaxFractionSim extends BasePVTsimulation {
       thermoOps.TPflash();
       waxFraction[i] = 0.0;
       if (getThermoSystem().hasPhaseType("wax")) {
-        waxFraction[i] =
-            getThermoSystem().getWtFraction(getThermoSystem().getPhaseNumberOfPhase("wax"));
+        waxFraction[i] = getThermoSystem().getWtFraction(getThermoSystem().getPhaseNumberOfPhase("wax"));
       }
       // System.out.println("wax fraction " + waxFraction[i]);
     }
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    NeqSimDataBase.setConnectionString(
-        "jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
+    NeqSimDataBase.setConnectionString("jdbc:derby:C:/Users/esol/OneDrive - Equinor/temp/neqsimthermodatabase");
     NeqSimDataBase.setCreateTemporaryTables(true);
 
     SystemInterface tempSystem = new SystemSrkEos(298.0, 10.0);
@@ -174,13 +159,13 @@ public class WaxFractionSim extends BasePVTsimulation {
     tempSystem.init(1);
     NeqSimDataBase.setCreateTemporaryTables(false);
     WaxFractionSim sepSim = new WaxFractionSim(tempSystem);
-    double[] temps = {293.15, 283.15, 273.15, 264.15, 263, 262, 261};
-    double[] pres = {5, 5, 5.0, 5.0, 5.0, 5.0, 5.0};
+    double[] temps = { 293.15, 283.15, 273.15, 264.15, 263, 262, 261 };
+    double[] pres = { 5, 5, 5.0, 5.0, 5.0, 5.0, 5.0 };
     sepSim.setTemperaturesAndPressures(temps, pres);
 
     sepSim.runCalc();
     sepSim.getThermoSystem().display();
-    double[][] expData = {{4, 7, 9, 10, 11, 12, 13}};
+    double[][] expData = { { 4, 7, 9, 10, 11, 12, 13 } };
     sepSim.setExperimentalData(expData);
     // String[] params = {"Mplus", "waxParam1", "waxParam2"};
     // sepSim.getOptimizer().setTuningParameters("")
@@ -194,9 +179,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getGOR.
-   * </p>
    *
    * @return the GOR
    */
@@ -205,9 +188,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getBofactor.
-   * </p>
    *
    * @return the Bofactor
    */
@@ -216,9 +197,7 @@ public class WaxFractionSim extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>waxFraction</code>.
-   * </p>
    *
    * @return the waxFraction
    */

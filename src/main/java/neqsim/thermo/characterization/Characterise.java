@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Characterise class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -29,16 +27,13 @@ public class Characterise implements java.io.Serializable, Cloneable {
   protected TBPfractionModel TBPfractionModelSelector;
 
   /**
-   * <p>
    * Constructor for Characterise.
-   * </p>
    */
-  public Characterise() {}
+  public Characterise() {
+  }
 
   /**
-   * <p>
    * Constructor for Characterise.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -58,9 +53,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * setThermoSystem.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -83,9 +76,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * getTBPModel.
-   * </p>
    *
    * @return a {@link neqsim.thermo.characterization.TBPModelInterface} object
    */
@@ -94,9 +85,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * setTBPModel.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -105,9 +94,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>lumpingModel</code>.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -116,9 +103,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>plusFractionModel</code>.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -127,9 +112,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>plusFractionModel</code>.
-   * </p>
    *
    * @return a {@link neqsim.thermo.characterization.PlusFractionModelInterface} object
    */
@@ -138,8 +121,8 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * Set the gamma distribution shape parameter (alpha) for Whitson Gamma Model. Only applies when
-   * using "Whitson Gamma Model" as the plus fraction model.
+   * Set the gamma distribution shape parameter (alpha) for Whitson Gamma Model. Only applies when using "Whitson Gamma
+   * Model" as the plus fraction model.
    *
    * <p>
    * Typical values:
@@ -156,15 +139,15 @@ public class Characterise implements java.io.Serializable, Cloneable {
     if (plusFractionModel instanceof PlusFractionModel.WhitsonGammaModel) {
       ((PlusFractionModel.WhitsonGammaModel) plusFractionModel).setAlpha(alpha);
     } else {
-      logger.warn("setGammaShapeParameter only applies to Whitson Gamma Model. Current model: "
-          + plusFractionModel.getName());
+      logger.warn(
+          "setGammaShapeParameter only applies to Whitson Gamma Model. Current model: " + plusFractionModel.getName());
     }
     return this;
   }
 
   /**
-   * Set the minimum molecular weight (eta) for Whitson Gamma Model. Only applies when using
-   * "Whitson Gamma Model" as the plus fraction model.
+   * Set the minimum molecular weight (eta) for Whitson Gamma Model. Only applies when using "Whitson Gamma Model" as
+   * the plus fraction model.
    *
    * @param eta minimum molecular weight in g/mol (typically 84-90 for C7+)
    * @return this Characterise instance for method chaining
@@ -173,15 +156,14 @@ public class Characterise implements java.io.Serializable, Cloneable {
     if (plusFractionModel instanceof PlusFractionModel.WhitsonGammaModel) {
       ((PlusFractionModel.WhitsonGammaModel) plusFractionModel).setEta(eta);
     } else {
-      logger.warn("setGammaMinMW only applies to Whitson Gamma Model. Current model: "
-          + plusFractionModel.getName());
+      logger.warn("setGammaMinMW only applies to Whitson Gamma Model. Current model: " + plusFractionModel.getName());
     }
     return this;
   }
 
   /**
-   * Enable automatic estimation of the gamma shape parameter (alpha) based on fluid properties.
-   * Only applies when using "Whitson Gamma Model" as the plus fraction model.
+   * Enable automatic estimation of the gamma shape parameter (alpha) based on fluid properties. Only applies when using
+   * "Whitson Gamma Model" as the plus fraction model.
    *
    * @param autoEstimate true to enable auto-estimation
    * @return this Characterise instance for method chaining
@@ -197,27 +179,24 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * Set the density model for Whitson Gamma Model characterization. Only applies when using
-   * "Whitson Gamma Model" as the plus fraction model.
+   * Set the density model for Whitson Gamma Model characterization. Only applies when using "Whitson Gamma Model" as
+   * the plus fraction model.
    *
-   * @param densityModel "UOP" for Watson K-factor (default) or "Soreide" for Søreide (1989)
-   *        correlation
+   * @param densityModel "UOP" for Watson K-factor (default) or "Soreide" for Søreide (1989) correlation
    * @return this Characterise instance for method chaining
    */
   public Characterise setGammaDensityModel(String densityModel) {
     if (plusFractionModel instanceof PlusFractionModel.WhitsonGammaModel) {
       ((PlusFractionModel.WhitsonGammaModel) plusFractionModel).setDensityModel(densityModel);
     } else {
-      logger.warn("setGammaDensityModel only applies to Whitson Gamma Model. Current model: "
-          + plusFractionModel.getName());
+      logger.warn(
+          "setGammaDensityModel only applies to Whitson Gamma Model. Current model: " + plusFractionModel.getName());
     }
     return this;
   }
 
   /**
-   * <p>
    * Getter for the field <code>lumpingModel</code>.
-   * </p>
    *
    * @return a {@link neqsim.thermo.characterization.LumpingModelInterface} object
    */
@@ -229,8 +208,8 @@ public class Characterise implements java.io.Serializable, Cloneable {
    * Create a builder for configuring lumping settings with a fluent API.
    *
    * <p>
-   * This method provides a clear and intuitive way to configure lumping, avoiding confusion between
-   * the different parameter methods.
+   * This method provides a clear and intuitive way to configure lumping, avoiding confusion between the different
+   * parameter methods.
    * </p>
    *
    * <p>
@@ -239,12 +218,10 @@ public class Characterise implements java.io.Serializable, Cloneable {
    *
    * <pre>
    * // For PVTlumpingModel: keep C6-C9 separate, lump C10+ into 5 groups
-   * fluid.getCharacterization().configureLumping().model("PVTlumpingModel").plusFractionGroups(5)
-   *     .build();
+   * fluid.getCharacterization().configureLumping().model("PVTlumpingModel").plusFractionGroups(5).build();
    *
    * // For standard model: create exactly 6 total pseudo-components from C6+
-   * fluid.getCharacterization().configureLumping().model("standard").totalPseudoComponents(6)
-   *     .build();
+   * fluid.getCharacterization().configureLumping().model("standard").totalPseudoComponents(6).build();
    *
    * // No lumping: keep all individual SCN components
    * fluid.getCharacterization().configureLumping().noLumping().build();
@@ -257,9 +234,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * <p>
    * characterisePlusFraction.
-   * </p>
    */
   public void characterisePlusFraction() {
     system.init(0);
@@ -280,13 +255,12 @@ public class Characterise implements java.io.Serializable, Cloneable {
    * Characterize this fluid to match the pseudo-component structure of a reference fluid.
    *
    * <p>
-   * This method redistributes this fluid's pseudo-components to match the reference fluid's
-   * pseudo-component boundaries, enabling consistent compositional modeling across multiple fluid
-   * samples.
+   * This method redistributes this fluid's pseudo-components to match the reference fluid's pseudo-component
+   * boundaries, enabling consistent compositional modeling across multiple fluid samples.
    *
    * <p>
    * Example:
-   * 
+   *
    * <pre>
    * SystemInterface referenceFluid = ...;  // Fluid with "master" PC structure
    * SystemInterface myFluid = ...;         // Fluid to be matched
@@ -303,29 +277,26 @@ public class Characterise implements java.io.Serializable, Cloneable {
   }
 
   /**
-   * Characterize this fluid to match the pseudo-component structure of a reference fluid with
-   * options.
+   * Characterize this fluid to match the pseudo-component structure of a reference fluid with options.
    *
    * <p>
    * This method allows specifying options for BIP transfer, normalization, and validation.
    *
    * <p>
    * Example:
-   * 
-   * <pre>
-   * CharacterizationOptions options = CharacterizationOptions.builder()
-   *     .transferBinaryInteractionParameters(true).normalizeComposition(true).build();
    *
-   * SystemInterface matched =
-   *     myFluid.getCharacterization().characterizeToReference(referenceFluid, options);
+   * <pre>
+   * CharacterizationOptions options = CharacterizationOptions.builder().transferBinaryInteractionParameters(true)
+   *     .normalizeComposition(true).build();
+   *
+   * SystemInterface matched = myFluid.getCharacterization().characterizeToReference(referenceFluid, options);
    * </pre>
    *
    * @param referenceFluid the fluid defining the target pseudo-component structure
    * @param options characterization options
    * @return a new fluid with pseudo-components matching the reference
    */
-  public SystemInterface characterizeToReference(SystemInterface referenceFluid,
-      CharacterizationOptions options) {
+  public SystemInterface characterizeToReference(SystemInterface referenceFluid, CharacterizationOptions options) {
     return PseudoComponentCombiner.characterizeToReference(system, referenceFluid, options);
   }
 
@@ -333,8 +304,7 @@ public class Characterise implements java.io.Serializable, Cloneable {
    * Transfer binary interaction parameters from a reference fluid to this fluid.
    *
    * <p>
-   * This copies BIPs between components that exist in both fluids. For pseudo-components, it
-   * matches by position.
+   * This copies BIPs between components that exist in both fluids. For pseudo-components, it matches by position.
    *
    * @param referenceFluid the fluid containing BIPs to copy
    * @return this Characterise instance for method chaining

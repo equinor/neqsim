@@ -19,7 +19,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
   private static final double FRACTION_TOLERANCE = 1e-10;
   private static final double KELVIN_OFFSET = 273.15;
   private static final double WATER_DENSITY_60F_G_CC = 0.999016; // API definition reference
-                                                                 // density.
+  // density.
 
   private transient SystemInterface system;
   private double totalAssayMass = 1.0; // kg basis when converting mass fraction to moles.
@@ -95,8 +95,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
       double moles = totalAssayMass * massFraction / molarMass;
 
       if (moles <= 0.0 || Double.isNaN(moles) || Double.isInfinite(moles)) {
-        throw new IllegalStateException(
-            "Calculated mole amount for assay cut " + cut.getName() + " is not finite");
+        throw new IllegalStateException("Calculated mole amount for assay cut " + cut.getName() + " is not finite");
       }
 
       system.addTBPfraction(cut.getName(), moles, molarMass, density);
@@ -120,8 +119,7 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
         double density = cut.resolveDensity();
         volumeMass += cut.getVolumeFraction() * density;
       } else {
-        throw new IllegalStateException(
-            "Assay cut " + cut.getName() + " must define a mass or volume fraction");
+        throw new IllegalStateException("Assay cut " + cut.getName() + " must define a mass or volume fraction");
       }
     }
 
@@ -305,13 +303,11 @@ public class OilAssayCharacterisation implements Cloneable, Serializable {
         return molarMass;
       }
       if (!(density > 0.0) || !(boilingPointKelvin > 0.0)) {
-        throw new IllegalStateException(
-            "Cannot derive molar mass without density and boiling point");
+        throw new IllegalStateException("Cannot derive molar mass without density and boiling point");
       }
       double exponent = 2.3776;
       double densityExponent = 0.9371;
-      double molarMassKgPerMol =
-          5.805e-5 * Math.pow(boilingPointKelvin, exponent) / Math.pow(density, densityExponent);
+      double molarMassKgPerMol = 5.805e-5 * Math.pow(boilingPointKelvin, exponent) / Math.pow(density, densityExponent);
       return molarMassKgPerMol;
     }
 

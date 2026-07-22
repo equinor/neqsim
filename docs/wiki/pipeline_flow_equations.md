@@ -1,3 +1,8 @@
+---
+title: "Pipeline Flow Simulation: Governing Equations and Numerical Methods"
+description: "This document provides a comprehensive reference for single-phase pipeline flow simulation in NeqSim, including the governing equations, discretization schemes, and numerical solution methods."
+---
+
 # Pipeline Flow Simulation: Governing Equations and Numerical Methods
 
 This document provides a comprehensive reference for single-phase pipeline flow simulation in NeqSim, including the governing equations, discretization schemes, and numerical solution methods.

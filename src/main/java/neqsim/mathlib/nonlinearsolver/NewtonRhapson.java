@@ -9,9 +9,7 @@ package neqsim.mathlib.nonlinearsolver;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * newtonRhapson class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -39,16 +37,13 @@ public class NewtonRhapson implements java.io.Serializable {
   double x = 0;
 
   /**
-   * <p>
    * Constructor for newtonRhapson.
-   * </p>
    */
-  public NewtonRhapson() {}
+  public NewtonRhapson() {
+  }
 
   /**
-   * <p>
    * Setter for the field <code>order</code>.
-   * </p>
    *
    * @param o a int
    */
@@ -58,9 +53,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setConstants.
-   * </p>
    *
    * @param constants an array of type double
    */
@@ -69,9 +62,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * funkValue.
-   * </p>
    *
    * @param x a double
    * @return a double
@@ -86,9 +77,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * derivValue.
-   * </p>
    *
    * @param x a double
    * @return a double
@@ -113,9 +102,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * dubDerivValue.
-   * </p>
    *
    * @param x a double
    * @return a double
@@ -131,9 +118,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @param xin a double
    * @return a double
@@ -157,11 +142,9 @@ public class NewtonRhapson implements java.io.Serializable {
       }
       if (derivValue(x) * derivValue(x) - 2.0 * funkValue(x) * dubDerivValue(x) > 0) {
         xNew = x - derivValue(x) / dubDerivValue(x)
-            + Math.sqrt(derivValue(x) * derivValue(x) - 2 * funkValue(x) * dubDerivValue(x))
-                / dubDerivValue(x);
+            + Math.sqrt(derivValue(x) * derivValue(x) - 2 * funkValue(x) * dubDerivValue(x)) / dubDerivValue(x);
         xNew2 = x - derivValue(x) / dubDerivValue(x)
-            - Math.sqrt(derivValue(x) * derivValue(x) - 2 * funkValue(x) * dubDerivValue(x))
-                / dubDerivValue(x);
+            - Math.sqrt(derivValue(x) * derivValue(x) - 2 * funkValue(x) * dubDerivValue(x)) / dubDerivValue(x);
       } else {
         // System.out.println("using first order newton-rhapson...........");
         xNew = x - funkValue(x) / derivValue(x);
@@ -187,9 +170,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve1order.
-   * </p>
    *
    * @param xin a double
    * @return a double
@@ -217,9 +198,7 @@ public class NewtonRhapson implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -228,7 +207,7 @@ public class NewtonRhapson implements java.io.Serializable {
     NewtonRhapson test = new NewtonRhapson();
     test.setOrder(3);
 
-    double[] constants = new double[] {-0.003058, -0.01806, -0.266, -0.2999};
+    double[] constants = new double[] { -0.003058, -0.01806, -0.266, -0.2999 };
     test.setConstants(constants);
 
     System.out.println("val : " + test.funkValue(-0.0));

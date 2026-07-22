@@ -1,3 +1,8 @@
+---
+title: "Membrane separation"
+description: "This page outlines the basic model implemented in the `MembraneSeparator` unit. The unit is intended for simple simulations of gas separation membranes or pervaporation modules used in purification an..."
+---
+
 # Membrane separation
 
 This page outlines the basic model implemented in the `MembraneSeparator` unit. The unit is intended for simple simulations of gas separation membranes or pervaporation modules used in purification and CO2 capture.

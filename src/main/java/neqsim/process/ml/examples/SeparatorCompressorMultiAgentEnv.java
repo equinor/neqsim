@@ -145,8 +145,7 @@ public class SeparatorCompressorMultiAgentEnv extends MultiAgentEnvironment {
 
     // Pressure constraints
     globalConstraints.addHardRange("sep_pressure", "separator_pressure", 10.0, 50.0, "bar");
-    globalConstraints.addHardRange("comp_discharge", "compressor_discharge_pressure", 40.0, 80.0,
-        "bar");
+    globalConstraints.addHardRange("comp_discharge", "compressor_discharge_pressure", 40.0, 80.0, "bar");
 
     // Compressor surge protection
     globalConstraints.addHardRange("surge_margin", "surge_fraction", 1.1, 3.0, "fraction");
@@ -163,15 +162,12 @@ public class SeparatorCompressorMultiAgentEnv extends MultiAgentEnvironment {
     state.add("separator_pressure", separatorPressure, 0.0, 100.0, "bar");
 
     if (separator.getFluid() != null) {
-      state.add("separator_temperature", separator.getFluid().getTemperature("K"), 200.0, 400.0,
-          "K");
+      state.add("separator_temperature", separator.getFluid().getTemperature("K"), 200.0, 400.0, "K");
       if (separator.getFluid().getNumberOfPhases() > 0) {
-        state.add("gas_density", separator.getFluid().getPhase(0).getDensity("kg/m3"), 0.0, 100.0,
-            "kg/m3");
+        state.add("gas_density", separator.getFluid().getPhase(0).getDensity("kg/m3"), 0.0, 100.0, "kg/m3");
       }
       if (separator.getFluid().getNumberOfPhases() > 1) {
-        state.add("liquid_density", separator.getFluid().getPhase(1).getDensity("kg/m3"), 0.0,
-            900.0, "kg/m3");
+        state.add("liquid_density", separator.getFluid().getPhase(1).getDensity("kg/m3"), 0.0, 900.0, "kg/m3");
       }
     }
 
@@ -179,8 +175,7 @@ public class SeparatorCompressorMultiAgentEnv extends MultiAgentEnvironment {
     state.add("inlet_pressure", compressor.getInletStream().getPressure("bar"), 0.0, 100.0, "bar");
     state.add("outlet_pressure", compressor.getOutletPressure(), 0.0, 150.0, "bar");
     state.add("compression_ratio",
-        compressor.getOutletPressure() / Math.max(1.0, compressor.getInletStream().getPressure()),
-        1.0, 10.0, "");
+        compressor.getOutletPressure() / Math.max(1.0, compressor.getInletStream().getPressure()), 1.0, 10.0, "");
     state.add("speed", compressorSpeed, 0.0, 15000.0, "rpm");
     state.add("power", compressor.getPower("kW"), 0.0, 10000.0, "kW");
 

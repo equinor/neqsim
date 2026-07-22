@@ -5,12 +5,12 @@ import neqsim.util.validation.ValidationResult;
 
 /**
  * Contract for thermodynamic systems.
- * 
+ *
  * <p>
- * Defines requirements and guarantees for {@link SystemInterface} implementations. AI agents can
- * use this contract to validate fluid setup before running simulations.
+ * Defines requirements and guarantees for {@link SystemInterface} implementations. AI agents can use this contract to
+ * validate fluid setup before running simulations.
  * </p>
- * 
+ *
  * <h2>Preconditions (what the system needs):</h2>
  * <ul>
  * <li>At least one component defined</li>
@@ -19,14 +19,14 @@ import neqsim.util.validation.ValidationResult;
  * <li>Mixing rule set for multi-component systems</li>
  * <li>Total moles &gt; 0</li>
  * </ul>
- * 
+ *
  * <h2>Postconditions (what init() provides):</h2>
  * <ul>
  * <li>Valid phase fractions (sum to 1.0)</li>
  * <li>Finite compressibility factor</li>
  * <li>Finite enthalpy and entropy</li>
  * </ul>
- * 
+ *
  * @author NeqSim
  * @version 1.0
  */
@@ -40,11 +40,12 @@ public class ThermodynamicSystemContract implements ModuleContract<SystemInterfa
   /** Minimum valid pressure in bar. */
   private static final double MIN_PRESSURE_BAR = 1e-10;
 
-  private ThermodynamicSystemContract() {}
+  private ThermodynamicSystemContract() {
+  }
 
   /**
    * Get the singleton instance.
-   * 
+   *
    * @return contract instance
    */
   public static ThermodynamicSystemContract getInstance() {
@@ -68,17 +69,14 @@ public class ThermodynamicSystemContract implements ModuleContract<SystemInterfa
 
     // Check: Valid temperature
     if (system.getTemperature() < MIN_TEMPERATURE_K) {
-      result
-          .addError(
-              "thermo.temperature", "Temperature too low: " + system.getTemperature() + " K (min: "
-                  + MIN_TEMPERATURE_K + " K)",
-              "Set temperature: system.setTemperature(298.15, \"K\")");
+      result.addError("thermo.temperature",
+          "Temperature too low: " + system.getTemperature() + " K (min: " + MIN_TEMPERATURE_K + " K)",
+          "Set temperature: system.setTemperature(298.15, \"K\")");
     }
 
     // Check: Valid pressure
     if (system.getPressure() <= MIN_PRESSURE_BAR) {
-      result.addError("thermo.pressure",
-          "Pressure must be positive: " + system.getPressure() + " bar",
+      result.addError("thermo.pressure", "Pressure must be positive: " + system.getPressure() + " bar",
           "Set pressure: system.setPressure(1.0, \"bar\")");
     }
 
@@ -93,8 +91,7 @@ public class ThermodynamicSystemContract implements ModuleContract<SystemInterfa
 
     // Check: Total moles
     if (system.getTotalNumberOfMoles() <= 0) {
-      result.addError("thermo.moles",
-          "Total moles must be positive: " + system.getTotalNumberOfMoles(),
+      result.addError("thermo.moles", "Total moles must be positive: " + system.getTotalNumberOfMoles(),
           "Ensure addComponent() has positive mole values");
     }
 
@@ -103,8 +100,7 @@ public class ThermodynamicSystemContract implements ModuleContract<SystemInterfa
 
   @Override
   public ValidationResult checkPostconditions(SystemInterface system) {
-    ValidationResult result =
-        new ValidationResult("ThermodynamicSystem:" + system.getFluidName() + " (post-run)");
+    ValidationResult result = new ValidationResult("ThermodynamicSystem:" + system.getFluidName() + " (post-run)");
 
     // Check: Number of phases
     if (system.getNumberOfPhases() < 1) {
@@ -118,8 +114,7 @@ public class ThermodynamicSystemContract implements ModuleContract<SystemInterfa
       phaseSum += system.getBeta(i);
     }
     if (Math.abs(phaseSum - 1.0) > 0.01) {
-      result.addWarning("thermo.phaseFraction",
-          "Phase fractions sum to " + phaseSum + " (expected 1.0)",
+      result.addWarning("thermo.phaseFraction", "Phase fractions sum to " + phaseSum + " (expected 1.0)",
           "Check flash calculation convergence");
     }
 
@@ -131,8 +126,8 @@ public class ThermodynamicSystemContract implements ModuleContract<SystemInterfa
             "Check equation of state parameters or input conditions");
       }
     } catch (Exception e) {
-      result.addWarning("thermo.compressibility",
-          "Could not retrieve compressibility: " + e.getMessage(), "Ensure init() was called");
+      result.addWarning("thermo.compressibility", "Could not retrieve compressibility: " + e.getMessage(),
+          "Ensure init() was called");
     }
 
     return result;
@@ -140,15 +135,14 @@ public class ThermodynamicSystemContract implements ModuleContract<SystemInterfa
 
   @Override
   public String getRequirementsDescription() {
-    return "ThermodynamicSystem Requirements:\n" + "- At least 1 component (addComponent)\n"
-        + "- Temperature > 0 K\n" + "- Pressure > 0 bar\n"
-        + "- Mixing rule set for multi-component systems\n" + "- Total moles > 0";
+    return "ThermodynamicSystem Requirements:\n" + "- At least 1 component (addComponent)\n" + "- Temperature > 0 K\n"
+        + "- Pressure > 0 bar\n" + "- Mixing rule set for multi-component systems\n" + "- Total moles > 0";
   }
 
   @Override
   public String getProvidesDescription() {
     return "ThermodynamicSystem Provides (after init/TPflash):\n" + "- Phase fractions (getBeta)\n"
-        + "- Compressibility factor (getZ)\n" + "- Density, enthalpy, entropy\n"
-        + "- Fugacity coefficients\n" + "- Component properties in each phase";
+        + "- Compressibility factor (getZ)\n" + "- Density, enthalpy, entropy\n" + "- Fugacity coefficients\n"
+        + "- Component properties in each phase";
   }
 }

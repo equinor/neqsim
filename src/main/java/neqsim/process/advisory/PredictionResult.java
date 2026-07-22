@@ -12,8 +12,8 @@ import java.util.Map;
  * Represents the result of a look-ahead prediction for advisory systems.
  *
  * <p>
- * This class provides structured output for predictive simulations that support real-time advisory
- * systems. Key features:
+ * This class provides structured output for predictive simulations that support real-time advisory systems. Key
+ * features:
  * <ul>
  * <li><b>Time Horizon:</b> Predictions from minutes to days ahead</li>
  * <li><b>Uncertainty Bounds:</b> Confidence intervals for predicted values</li>
@@ -22,7 +22,7 @@ import java.util.Map;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * // Run look-ahead simulation
  * PredictionResult prediction = processSystem.predictAhead(Duration.ofHours(2));
@@ -34,8 +34,8 @@ import java.util.Map;
  *
  * // Get predicted values with uncertainty
  * PredictedValue pressure = prediction.getValue("separator.pressure");
- * System.out.println("Predicted pressure: " + pressure.getMean() + " ± "
- *     + pressure.getStandardDeviation() + " " + pressure.getUnit());
+ * System.out.println("Predicted pressure: " + pressure.getMean() + " ± " + pressure.getStandardDeviation() + " "
+ *     + pressure.getUnit());
  *
  * // Use in advisory system
  * String advice = prediction.getAdvisoryRecommendation();
@@ -156,8 +156,8 @@ public class PredictionResult implements Serializable {
     }
 
     StringBuilder sb = new StringBuilder();
-    sb.append(violations.size()).append(" potential violation(s) within ")
-        .append(formatDuration(horizon)).append(":\n");
+    sb.append(violations.size()).append(" potential violation(s) within ").append(formatDuration(horizon))
+        .append(":\n");
 
     for (ConstraintViolation v : violations) {
       sb.append("  - ").append(v.getDescription()).append("\n");
@@ -290,8 +290,7 @@ public class PredictionResult implements Serializable {
      * @param unit engineering unit
      * @param confidence overall confidence (0-1)
      */
-    public PredictedValue(double mean, double lower95, double upper95, String unit,
-        double confidence) {
+    public PredictedValue(double mean, double lower95, double upper95, String unit, double confidence) {
       this.mean = mean;
       this.lower95 = lower95;
       this.upper95 = upper95;
@@ -340,8 +339,7 @@ public class PredictionResult implements Serializable {
       if (standardDeviation < 1e-10) {
         return String.format("%.4f %s", mean, unit);
       }
-      return String.format("%.4f ± %.4f %s (95%% CI: [%.4f, %.4f])", mean, standardDeviation, unit,
-          lower95, upper95);
+      return String.format("%.4f ± %.4f %s (95%% CI: [%.4f, %.4f])", mean, standardDeviation, unit, lower95, upper95);
     }
   }
 
@@ -385,8 +383,8 @@ public class PredictionResult implements Serializable {
      * @param timeToViolation time until violation expected
      * @param severity severity level
      */
-    public ConstraintViolation(String constraintName, String variableName, double predictedValue,
-        double limitValue, String unit, Duration timeToViolation, Severity severity) {
+    public ConstraintViolation(String constraintName, String variableName, double predictedValue, double limitValue,
+        String unit, Duration timeToViolation, Severity severity) {
       this.constraintName = constraintName;
       this.variableName = variableName;
       this.predictedValue = predictedValue;
@@ -402,8 +400,8 @@ public class PredictionResult implements Serializable {
      * @return description string
      */
     public String getDescription() {
-      return String.format("%s: %s expected to reach %.2f %s (limit: %.2f) in %s", constraintName,
-          variableName, predictedValue, unit, limitValue, formatDurationShort(timeToViolation));
+      return String.format("%s: %s expected to reach %.2f %s (limit: %.2f) in %s", constraintName, variableName,
+          predictedValue, unit, limitValue, formatDurationShort(timeToViolation));
     }
 
     private String formatDurationShort(Duration d) {

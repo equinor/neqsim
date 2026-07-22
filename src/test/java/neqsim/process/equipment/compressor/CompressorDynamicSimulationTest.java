@@ -277,7 +277,7 @@ public class CompressorDynamicSimulationTest {
   @Test
   public void testEventListenerRegistration() {
     // Create a simple test listener that tracks calls
-    final int[] callCount = {0};
+    final int[] callCount = { 0 };
     CompressorEventListener listener = new CompressorEventListener() {
       @Override
       public void onSurgeApproach(Compressor compressor, double surgeMargin, boolean isCritical) {
@@ -300,14 +300,12 @@ public class CompressorDynamicSimulationTest {
       }
 
       @Override
-      public void onPowerLimitExceeded(Compressor compressor, double currentPower,
-          double maxPower) {
+      public void onPowerLimitExceeded(Compressor compressor, double currentPower, double maxPower) {
         callCount[0]++;
       }
 
       @Override
-      public void onStateChange(Compressor compressor, CompressorState oldState,
-          CompressorState newState) {
+      public void onStateChange(Compressor compressor, CompressorState oldState, CompressorState newState) {
         callCount[0]++;
       }
 

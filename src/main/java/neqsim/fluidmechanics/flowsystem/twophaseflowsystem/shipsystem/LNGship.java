@@ -14,15 +14,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * LNGship class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
-public class LNGship
-    extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem.TwoPhaseFlowSystem {
+public class LNGship extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem.TwoPhaseFlowSystem {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -74,16 +71,13 @@ public class LNGship
   public double endVolume = 0.0;
 
   /**
-   * <p>
    * Constructor for LNGship.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param totalTankVolume a double
    * @param dailyBoilOffRatio a double
    */
-  public LNGship(neqsim.thermo.system.SystemInterface thermoSystem, double totalTankVolume,
-      double dailyBoilOffRatio) {
+  public LNGship(neqsim.thermo.system.SystemInterface thermoSystem, double totalTankVolume, double dailyBoilOffRatio) {
     this.thermoSystem = thermoSystem;
     this.totalTankVolume = totalTankVolume;
     this.dailyBoilOffRatio = dailyBoilOffRatio;
@@ -92,9 +86,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * useStandardVersion.
-   * </p>
    *
    * @param isoName a {@link java.lang.String} object
    * @param version a {@link java.lang.String} object
@@ -136,20 +128,19 @@ public class LNGship
     dailyBoilOffVolume = totalTankVolume * dailyBoilOffRatio;
 
     logger.info("daily boiloff volume " + dailyBoilOffVolume);
-    initialNumberOffMoles =
-        totalTankVolume * getLiquidDensity() / getThermoSystem().getPhase(1).getMolarMass();
+    initialNumberOffMoles = totalTankVolume * getLiquidDensity() / getThermoSystem().getPhase(1).getMolarMass();
     double oldMoles = getThermoSystem().getTotalNumberOfMoles();
 
     for (int i = 0; i < getThermoSystem().getPhase(0).getNumberOfComponents(); i++) {
       getThermoSystem().addComponent(getThermoSystem().getPhase(0).getComponent(i).getName(),
-          (initialNumberOffMoles - oldMoles)
-              * getThermoSystem().getPhase(0).getComponent(i).getz());
+          (initialNumberOffMoles - oldMoles) * getThermoSystem().getPhase(0).getComponent(i).getz());
     }
   }
 
   /** {@inheritDoc} */
   @Override
-  public void init() {}
+  public void init() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -206,8 +197,8 @@ public class LNGship
       mulitplicator = -1.0;
     }
     endVolume = totalTankVolume - mulitplicator * dailyBoilOffVolume * getEndTime() / 24.0;
-    molarBoilOffRate = dailyBoilOffVolume * liquidDensity
-        / getThermoSystem().getPhase(1).getMolarMass() / 24.0 * timeStep;
+    molarBoilOffRate = dailyBoilOffVolume * liquidDensity / getThermoSystem().getPhase(1).getMolarMass() / 24.0
+        * timeStep;
     if (backCalculate) {
       molarBoilOffRate = -molarBoilOffRate;
     }
@@ -285,12 +276,10 @@ public class LNGship
         GCV[j] = getStandardISO6976().getValue("SuperiorCalorificValue");
 
         tankTemperature[j] = getThermoSystem().getTemperature();
-        volume[j] = getThermoSystem().getNumberOfMoles()
-            * getThermoSystem().getPhase(1).getMolarMass() / density[j]; // density[0];
+        volume[j] = getThermoSystem().getNumberOfMoles() * getThermoSystem().getPhase(1).getMolarMass() / density[j]; // density[0];
 
         this.standardISO6976.setReferenceType("mass");
-        totalEnergy[j] =
-            getStandardISO6976().getValue("SuperiorCalorificValue") * volume[j] * density[j];
+        totalEnergy[j] = getStandardISO6976().getValue("SuperiorCalorificValue") * volume[j] * density[j];
         GCVmass[j] = getStandardISO6976().getValue("SuperiorCalorificValue");
         this.standardISO6976.setReferenceType("volume");
 
@@ -327,9 +316,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Getter for the field <code>resultTable</code>.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -338,16 +325,14 @@ public class LNGship
   }
 
   /**
-   * <p>
    * getResults.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return an array of {@link java.lang.String} objects
    */
   public String[][] getResults(String name) {
     String[][] table = new String[numberOffTimeSteps + 1][26];
-    String[] names = {"Time", "temperature", "WI", "GCV", "density", "volume", "energy"};
+    String[] names = { "Time", "temperature", "WI", "GCV", "density", "volume", "energy" };
 
     for (int i = 0; i < 13; i++) {
       for (int j = 0; j < numberOffTimeSteps + 1; j++) {
@@ -401,9 +386,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -411,8 +394,8 @@ public class LNGship
   public static void main(String[] args) {
     // thermo.system.SystemInterface testSystem = new
     // thermo.system.SystemGERG2004Eos(273.15 - 161.4, 1.0);
-    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(
-        273.15 - 161.4, ThermodynamicConstantsInterface.referencePressure);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 - 161.4,
+        ThermodynamicConstantsInterface.referencePressure);
     /*
      * testSystem.addComponent("nitrogen", 0.0136); testSystem.addComponent("methane", 0.9186);
      * testSystem.addComponent("ethane", 0.0526); testSystem.addComponent("propane", 0.0115);
@@ -428,9 +411,8 @@ public class LNGship
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
 
-    neqsim.fluidmechanics.flowsystem.twophaseflowsystem.shipsystem.LNGship ship =
-        new neqsim.fluidmechanics.flowsystem.twophaseflowsystem.shipsystem.LNGship(testSystem,
-            140000, 0.0015);
+    neqsim.fluidmechanics.flowsystem.twophaseflowsystem.shipsystem.LNGship ship = new neqsim.fluidmechanics.flowsystem.twophaseflowsystem.shipsystem.LNGship(
+        testSystem, 140000, 0.0015);
     // ship.setInitialTemperature(111.0);
     // ship.useStandardVersion("","2016");
     ship.useStandardVersion("", "2016");
@@ -446,9 +428,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Setter for the field <code>resultTable</code>.
-   * </p>
    *
    * @param resultTable the resultTable to set
    */
@@ -457,9 +437,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidDensity</code>.
-   * </p>
    *
    * @return the liquidDensity
    */
@@ -468,9 +446,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Setter for the field <code>liquidDensity</code>.
-   * </p>
    *
    * @param liquidDensity the liquidDensity to set
    */
@@ -479,9 +455,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Getter for the field <code>endTime</code>.
-   * </p>
    *
    * @return the endTime
    */
@@ -490,9 +464,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Setter for the field <code>endTime</code>.
-   * </p>
    *
    * @param endTime the endTime to set
    */
@@ -501,9 +473,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Getter for the field <code>standardISO6976</code>.
-   * </p>
    *
    * @return the standardISO6976
    */
@@ -512,9 +482,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Setter for the field <code>standardISO6976</code>.
-   * </p>
    *
    * @param standardISO6976 the standardISO6976 to set
    */
@@ -523,9 +491,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * isBackCalculate.
-   * </p>
    *
    * @return the backCalculate
    */
@@ -534,9 +500,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Setter for the field <code>backCalculate</code>.
-   * </p>
    *
    * @param backCalculate the backCalculate to set
    */
@@ -545,9 +509,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Getter for the field <code>thermoSystem</code>.
-   * </p>
    *
    * @return the thermoSystem
    */
@@ -556,9 +518,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Setter for the field <code>thermoSystem</code>.
-   * </p>
    *
    * @param thermoSystem the thermoSystem to set
    */
@@ -567,9 +527,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * isSetInitialTemperature.
-   * </p>
    *
    * @return the setInitialTemperature
    */
@@ -578,9 +536,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Getter for the field <code>initialTemperature</code>.
-   * </p>
    *
    * @return the initialTemperature
    */
@@ -589,9 +545,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Setter for the field <code>initialTemperature</code>.
-   * </p>
    *
    * @param initialTemperature the initialTemperature to set
    */
@@ -601,9 +555,7 @@ public class LNGship
   }
 
   /**
-   * <p>
    * Setter for the field <code>initialTemperature</code>.
-   * </p>
    *
    * @param setInitialTemperature the setInitialTemperature to set
    */

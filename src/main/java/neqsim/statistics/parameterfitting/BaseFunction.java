@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * Abstract BaseFunction class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -23,11 +21,10 @@ public abstract class BaseFunction implements FunctionInterface {
   public ThermodynamicOperations thermoOps;
 
   /**
-   * <p>
    * Constructor for BaseFunction.
-   * </p>
    */
-  public BaseFunction() {}
+  public BaseFunction() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -79,7 +76,7 @@ public abstract class BaseFunction implements FunctionInterface {
   /** {@inheritDoc} */
   @Override
   public void setInitialGuess(double[] guess) {
-    System.out.println("start fitting " + guess.length + " parameter(s)...");
+    logger.debug("Start fitting {} parameter(s)", guess.length);
     params = new double[guess.length];
     System.arraycopy(guess, 0, params, 0, guess.length);
   }
@@ -100,7 +97,8 @@ public abstract class BaseFunction implements FunctionInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void setDatabaseParameters() {}
+  public void setDatabaseParameters() {
+  }
 
   /** {@inheritDoc} */
   @Override

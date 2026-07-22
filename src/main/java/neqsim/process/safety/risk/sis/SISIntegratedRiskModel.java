@@ -6,10 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.google.gson.GsonBuilder;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.risk.RiskEvent;
 import neqsim.process.safety.risk.RiskModel;
-import neqsim.process.safety.risk.RiskResult;
 
 /**
  * Risk model integrated with Safety Instrumented Systems (SIS).
@@ -25,7 +23,7 @@ import neqsim.process.safety.risk.RiskResult;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * SISIntegratedRiskModel model = new SISIntegratedRiskModel("Process Risk Study");
@@ -35,9 +33,8 @@ import neqsim.process.safety.risk.RiskResult;
  * model.addInitiatingEvent("Overpressure", 0.1, ConsequenceCategory.MAJOR);
  *
  * // Add SIFs
- * SafetyInstrumentedFunction hipps =
- *     SafetyInstrumentedFunction.builder().name("HIPPS-001").sil(3).pfd(0.001)
- *         .protectedEquipment(Arrays.asList("Pipeline")).initiatingEvent("Overpressure").build();
+ * SafetyInstrumentedFunction hipps = SafetyInstrumentedFunction.builder().name("HIPPS-001").sil(3).pfd(0.001)
+ *     .protectedEquipment(Arrays.asList("Pipeline")).initiatingEvent("Overpressure").build();
  * model.addSIF(hipps);
  *
  * // Calculate residual risk
@@ -146,16 +143,16 @@ public class SISIntegratedRiskModel extends RiskModel implements Serializable {
 
     public double getTolerableFrequency(ConsequenceType type) {
       switch (type) {
-        case FATALITY:
-          return tolerableFrequencyFatality;
-        case INJURY:
-          return tolerableFrequencyInjury;
-        case ENVIRONMENT:
-          return tolerableFrequencyEnvironment;
-        case ASSET:
-          return tolerableFrequencyAsset;
-        default:
-          return tolerableFrequencyAsset;
+      case FATALITY:
+        return tolerableFrequencyFatality;
+      case INJURY:
+        return tolerableFrequencyInjury;
+      case ENVIRONMENT:
+        return tolerableFrequencyEnvironment;
+      case ASSET:
+        return tolerableFrequencyAsset;
+      default:
+        return tolerableFrequencyAsset;
       }
     }
 
@@ -286,8 +283,7 @@ public class SISIntegratedRiskModel extends RiskModel implements Serializable {
 
       // Apply IPLs for this event
       for (IndependentProtectionLayer ipl : ipls) {
-        if (ipl.getApplicableEvents().contains(event.getName())
-            || ipl.getApplicableEvents().isEmpty()) {
+        if (ipl.getApplicableEvents().contains(event.getName()) || ipl.getApplicableEvents().isEmpty()) {
           mitigatedFreq *= ipl.getPfd();
         }
       }
@@ -335,8 +331,7 @@ public class SISIntegratedRiskModel extends RiskModel implements Serializable {
     // Add SIF layers
     for (SafetyInstrumentedFunction sif : getSIFsForEvent(eventName)) {
       double nextFreq = sif.getMitigatedFrequency(currentFreq);
-      lopa.addLayer(sif.getName() + " (SIL" + sif.getSil() + ")", sif.getPfdAvg(), currentFreq,
-          nextFreq);
+      lopa.addLayer(sif.getName() + " (SIL" + sif.getSil() + ")", sif.getPfdAvg(), currentFreq, nextFreq);
       currentFreq = nextFreq;
     }
 
@@ -448,7 +443,6 @@ public class SISIntegratedRiskModel extends RiskModel implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 }

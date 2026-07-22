@@ -28,9 +28,7 @@ public class BlackOilConverter {
   }
 
   /**
-   * <p>
    * convert.
-   * </p>
    *
    * @param eosFluid a {@link neqsim.thermo.system.SystemInterface} object
    * @param Tref a double
@@ -39,8 +37,7 @@ public class BlackOilConverter {
    * @param Tstd a double
    * @return a {@link neqsim.blackoil.BlackOilConverter.Result} object
    */
-  public static Result convert(SystemInterface eosFluid, double Tref, double[] pGrid, double Pstd,
-      double Tstd) {
+  public static Result convert(SystemInterface eosFluid, double Tref, double[] pGrid, double Pstd, double Tstd) {
     Objects.requireNonNull(eosFluid, "eosFluid == null");
     if (pGrid == null || pGrid.length < 2) {
       throw new IllegalArgumentException("pGrid must have >= 2 points");
@@ -68,8 +65,8 @@ public class BlackOilConverter {
       if (!Double.isNaN(props.rho_w_sc)) {
         rho_w_sc = props.rho_w_sc;
       }
-      recs.add(new BlackOilPVTTable.Record(p, props.Rs, props.Bo, props.mu_o, props.Bg, props.mu_g,
-          props.Rv, props.Bw, props.mu_w));
+      recs.add(new BlackOilPVTTable.Record(p, props.Rs, props.Bo, props.mu_o, props.Bg, props.mu_g, props.Rv, props.Bw,
+          props.mu_w));
       if (props.hasFreeGas) {
         lastRecWithGas = recs.get(recs.size() - 1);
       }
@@ -90,8 +87,7 @@ public class BlackOilConverter {
     for (int i = 0; i < recs.size(); i++) {
       BlackOilPVTTable.Record r = recs.get(i);
       if (r.p > bubblePoint) {
-        recs.set(i, new BlackOilPVTTable.Record(r.p, rsAtPb, r.Bo, r.mu_o, r.Bg, r.mu_g, r.Rv, r.Bw,
-            r.mu_w));
+        recs.set(i, new BlackOilPVTTable.Record(r.p, rsAtPb, r.Bo, r.mu_o, r.Bg, r.mu_g, r.Rv, r.Bw, r.mu_w));
       }
     }
 
@@ -102,8 +98,7 @@ public class BlackOilConverter {
       for (int i = 0; i < recs.size(); i++) {
         BlackOilPVTTable.Record r = recs.get(i);
         if (r.p > bubblePoint) {
-          recs.set(i, new BlackOilPVTTable.Record(r.p, r.Rs, r.Bo, r.mu_o, lastBg, lastMug, lastRv,
-              r.Bw, r.mu_w));
+          recs.set(i, new BlackOilPVTTable.Record(r.p, r.Rs, r.Bo, r.mu_o, lastBg, lastMug, lastRv, r.Bw, r.mu_w));
         }
       }
     }
@@ -145,8 +140,7 @@ public class BlackOilConverter {
     double rho_w_sc;
   }
 
-  private static StdTotals computeStdTotalsFromWhole(SystemInterface fluid, double Pstd,
-      double Tstd) {
+  private static StdTotals computeStdTotalsFromWhole(SystemInterface fluid, double Pstd, double Tstd) {
     try {
       SystemInterface f = fluid.clone();
       f.setPressure(Pstd);
@@ -195,8 +189,8 @@ public class BlackOilConverter {
     double rho_w_sc = Double.NaN;
   }
 
-  private static PerPressureProps evalAtPressure(SystemInterface base, double Tref, double p,
-      double Pstd, double Tstd) {
+  private static PerPressureProps evalAtPressure(SystemInterface base, double Tref, double p, double Pstd,
+      double Tstd) {
     try {
       SystemInterface f = base.clone();
       f.setTemperature(Tref);
@@ -214,6 +208,7 @@ public class BlackOilConverter {
         SystemInterface oilComp = phaseAsStandaloneSystem(base, oil, Tref, p);
         ThermodynamicOperations oilResOps = new ThermodynamicOperations(oilComp);
         oilResOps.TPflash();
+        oilComp.initProperties();
         PhaseInterface oilRes = findOilPhase(oilComp);
         double V_res_liq = (oilRes != null) ? phaseVolume(oilRes) : totalVolume(oilComp);
         double mu_o = (oilRes != null) ? oilRes.getViscosity() : Double.NaN;
@@ -247,6 +242,7 @@ public class BlackOilConverter {
 
         ThermodynamicOperations gasResOps = new ThermodynamicOperations(gasComp);
         gasResOps.TPflash();
+        gasComp.initProperties();
         PhaseInterface gasRes = findGasPhase(gasComp);
         double V_res_gas = (gasRes != null) ? phaseVolume(gasRes) : totalVolume(gasComp);
         double mu_g = (gasRes != null) ? gasRes.getViscosity() : Double.NaN;
@@ -277,6 +273,7 @@ public class BlackOilConverter {
         SystemInterface wRes = phaseAsStandaloneSystem(base, wat, Tref, p);
         ThermodynamicOperations wOps = new ThermodynamicOperations(wRes);
         wOps.TPflash();
+        wRes.initProperties();
         PhaseInterface wPhase = findWaterPhase(wRes);
         double rho_w_res = (wPhase != null) ? wPhase.getDensity() : Double.NaN;
         double mu_w = (wPhase != null) ? wPhase.getViscosity() : Double.NaN;
@@ -327,7 +324,7 @@ public class BlackOilConverter {
     for (int i = 0; i < s.getNumberOfPhases(); i++) {
       PhaseInterface p = s.getPhase(i);
       String type = safeTypeName(p);
-      if (type.contains("liquid") && hydrocarbonFraction(p) > 1e-6 && !isMostlyWater(p)) {
+      if ((type.contains("liquid") || type.equals("oil")) && hydrocarbonFraction(p) > 1e-6 && !isMostlyWater(p)) {
         return p;
       }
     }
@@ -402,8 +399,8 @@ public class BlackOilConverter {
     return (rho > 0) ? (mass / rho) : Double.NaN;
   }
 
-  private static SystemInterface phaseAsStandaloneSystem(SystemInterface base, PhaseInterface phase,
-      double T, double P) throws Exception {
+  private static SystemInterface phaseAsStandaloneSystem(SystemInterface base, PhaseInterface phase, double T, double P)
+      throws Exception {
     SystemInterface sys = base.clone();
     sys.setTemperature(T);
     sys.setPressure(P);

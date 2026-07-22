@@ -13,9 +13,8 @@ import neqsim.process.safety.risk.RiskMatrix;
  * Real-time Risk Assessment Result.
  *
  * <p>
- * Contains the results of a single real-time risk assessment, including overall risk metrics,
- * equipment-specific status, and trend information. Designed for integration with dashboards and
- * digital twin platforms.
+ * Contains the results of a single real-time risk assessment, including overall risk metrics, equipment-specific
+ * status, and trend information. Designed for integration with dashboards and digital twin platforms.
  * </p>
  *
  * @author NeqSim Development Team
@@ -365,8 +364,7 @@ public class RealTimeRiskAssessment implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**
@@ -390,8 +388,8 @@ public class RealTimeRiskAssessment implements Serializable {
     if (!getAlarmingVariables().isEmpty()) {
       sb.append("ALARMING VARIABLES:\n");
       for (ProcessVariableStatus pv : getAlarmingVariables()) {
-        sb.append(String.format("  • %s: %.1f%s (%.1f%% deviation)%n", pv.getVariableName(),
-            pv.getCurrentValue(), pv.getUnit(), pv.getDeviationPercent()));
+        sb.append(String.format("  • %s: %.1f%s (%.1f%% deviation)%n", pv.getVariableName(), pv.getCurrentValue(),
+            pv.getUnit(), pv.getDeviationPercent()));
       }
     }
 
@@ -400,7 +398,7 @@ public class RealTimeRiskAssessment implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("RealTimeRiskAssessment[%s: score=%.1f, category=%s, trend=%s]", timestamp,
-        overallRiskScore, riskCategory, riskTrend);
+    return String.format("RealTimeRiskAssessment[%s: score=%.1f, category=%s, trend=%s]", timestamp, overallRiskScore,
+        riskCategory, riskTrend);
   }
 }

@@ -9,9 +9,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * Cost estimation class for distillation and absorption columns.
  *
  * <p>
- * This class provides column-specific cost estimation methods using chemical engineering cost
- * correlations for trayed and packed columns. Includes costs for internals, reboiler, and
- * condenser.
+ * This class provides column-specific cost estimation methods using chemical engineering cost correlations for trayed
+ * and packed columns. Includes costs for internals, reboiler, and condenser.
  * </p>
  *
  * @author AGAS
@@ -228,11 +227,11 @@ public class ColumnCostEstimate extends UnitCostEstimateBaseClass {
    * @return shell cost in USD
    */
   private double calcColumnShellCost() {
-    // Calculate shell weight for cost estimation
-    double shellWeight = calcColumnWeight();
+    // Vessel internal volume (m3) is the correct Turton capacity basis for the
+    // vertical-vessel correlation (feeding shell weight over-estimates large columns).
+    double volume = Math.PI / 4.0 * columnDiameter * columnDiameter * columnHeight;
 
-    // Use vertical vessel correlation
-    double shellCost = getCostCalculator().calcVerticalVesselCost(shellWeight);
+    double shellCost = getCostCalculator().calcVerticalVesselCostByVolume(volume);
 
     // Apply pressure factor
     shellCost *= getPressureFactor();
@@ -376,8 +375,7 @@ public class ColumnCostEstimate extends UnitCostEstimateBaseClass {
     double shellWeight = shellArea * wallThickness * 7850.0;
 
     // Add heads (approximately 2x shell weight per head)
-    double headsWeight =
-        2 * Math.PI / 4.0 * columnDiameter * columnDiameter * wallThickness * 7850 * 2;
+    double headsWeight = 2 * Math.PI / 4.0 * columnDiameter * columnDiameter * wallThickness * 7850 * 2;
 
     return shellWeight + headsWeight;
   }
@@ -408,8 +406,7 @@ public class ColumnCostEstimate extends UnitCostEstimateBaseClass {
    * @param coolingWaterCostPerM3 cooling water cost in $/m3
    * @return annual utility cost in USD
    */
-  public double calcAnnualUtilityCost(double hoursPerYear, double steamCostPerTonne,
-      double coolingWaterCostPerM3) {
+  public double calcAnnualUtilityCost(double hoursPerYear, double steamCostPerTonne, double coolingWaterCostPerM3) {
     double totalCost = 0.0;
 
     // Reboiler steam cost

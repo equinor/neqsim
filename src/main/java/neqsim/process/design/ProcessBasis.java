@@ -25,13 +25,12 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
- * ProcessBasis basis = ProcessBasis.builder().setFeedFluid(gasCondensate)
- *     .setFeedFlowRate(100000.0, "kg/hr").setFeedPressure(100.0, "bara")
- *     .setFeedTemperature(80.0, "C").addStagePressure(1, 70.0, "bara")
- *     .addStagePressure(2, 20.0, "bara").addStagePressure(3, 2.0, "bara")
- *     .setCompanyStandard("Equinor", "TR2000").setSafetyFactor(1.2).build();
+ * ProcessBasis basis = ProcessBasis.builder().setFeedFluid(gasCondensate).setFeedFlowRate(100000.0, "kg/hr")
+ *     .setFeedPressure(100.0, "bara").setFeedTemperature(80.0, "C").addStagePressure(1, 70.0, "bara")
+ *     .addStagePressure(2, 20.0, "bara").addStagePressure(3, 2.0, "bara").setCompanyStandard("Equinor", "TR2000")
+ *     .setSafetyFactor(1.2).build();
  * </pre>
  *
  * @author NeqSim Development Team
@@ -63,7 +62,8 @@ public class ProcessBasis {
   /**
    * Default constructor - for direct instantiation.
    */
-  public ProcessBasis() {}
+  public ProcessBasis() {
+  }
 
   /**
    * Create a new builder for ProcessBasis.

@@ -9,7 +9,8 @@ import java.util.Set;
  * Shared constants describing the recommended DEXPI metadata handled by the reader and writer.
  */
 public final class DexpiMetadata {
-  private DexpiMetadata() {}
+  private DexpiMetadata() {
+  }
 
   /** Generic attribute containing the tag name of an equipment item. */
   public static final String TAG_NAME = "TagNameAssignmentClass";
@@ -50,11 +51,34 @@ public final class DexpiMetadata {
   /** Default volumetric flow unit written to DEXPI documents. */
   public static final String DEFAULT_FLOW_UNIT = "MSm3/day";
 
-  private static final Set<String> RECOMMENDED_STREAM_ATTRIBUTES =
-      Collections.unmodifiableSet(new LinkedHashSet<>(Arrays.asList(LINE_NUMBER, FLUID_CODE,
-          SEGMENT_NUMBER, OPERATING_PRESSURE_VALUE, OPERATING_PRESSURE_UNIT,
-          OPERATING_TEMPERATURE_VALUE, OPERATING_TEMPERATURE_UNIT, OPERATING_FLOW_VALUE,
-          OPERATING_FLOW_UNIT)));
+  /**
+   * Generic attribute containing the design (maximum allowable working) pressure of an equipment item.
+   */
+  public static final String DESIGN_PRESSURE = "DesignPressure";
+
+  /** Generic attribute containing the maximum design temperature of an equipment item. */
+  public static final String DESIGN_TEMPERATURE = "DesignTemperature";
+
+  /**
+   * Generic attribute containing the minimum design metal temperature (MDMT) of an equipment item.
+   */
+  public static final String MINIMUM_DESIGN_TEMPERATURE = "MinimumDesignTemperature";
+
+  /** Generic attribute containing the relief (PSV) set pressure protecting an equipment item. */
+  public static final String RELIEF_SET_PRESSURE = "ReliefSetPressure";
+
+  /** Generic attribute containing the corrosion allowance of an equipment item. */
+  public static final String CORROSION_ALLOWANCE = "CorrosionAllowance";
+
+  /** Generic attribute containing the construction material specification of an equipment item. */
+  public static final String CONSTRUCTION_MATERIAL = "ConstructionMaterial";
+
+  /** Generic attribute containing the fail-safe action of a valve actuator. */
+  public static final String FAILURE_ACTION = "FailureAction";
+
+  private static final Set<String> RECOMMENDED_STREAM_ATTRIBUTES = Collections.unmodifiableSet(new LinkedHashSet<>(
+      Arrays.asList(LINE_NUMBER, FLUID_CODE, SEGMENT_NUMBER, OPERATING_PRESSURE_VALUE, OPERATING_PRESSURE_UNIT,
+          OPERATING_TEMPERATURE_VALUE, OPERATING_TEMPERATURE_UNIT, OPERATING_FLOW_VALUE, OPERATING_FLOW_UNIT)));
 
   private static final Set<String> RECOMMENDED_EQUIPMENT_ATTRIBUTES = Collections
       .unmodifiableSet(new LinkedHashSet<>(Arrays.asList(TAG_NAME, LINE_NUMBER, FLUID_CODE)));

@@ -11,9 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * ChemicalReactionFactory class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -25,12 +23,11 @@ public final class ChemicalReactionFactory {
   /**
    * Dummy constructor, not for use. Class is to be considered static.
    */
-  private ChemicalReactionFactory() {}
+  private ChemicalReactionFactory() {
+  }
 
   /**
-   * <p>
    * getChemicalReaction.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link neqsim.chemicalreactions.chemicalreaction.ChemicalReaction} object
@@ -44,8 +41,7 @@ public final class ChemicalReactionFactory {
     double activationEnergy = 0;
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet =
-            database.getResultSet("SELECT * FROM reactiondata where name='" + name + "'")) {
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM reactiondata where name='" + name + "'")) {
       if (dataSet.next()) {
         String reacname = dataSet.getString("name");
         K[0] = Double.parseDouble(dataSet.getString("K1"));
@@ -56,28 +52,26 @@ public final class ChemicalReactionFactory {
         rateFactor = Double.parseDouble(dataSet.getString("r"));
 
         activationEnergy = Double.parseDouble(dataSet.getString("ACTENERGY"));
-        try (java.sql.ResultSet dataSet2 =
-            database.getResultSet("SELECT * FROM stoccoefdata where reacname='" + reacname + "'")) {
+        try (java.sql.ResultSet dataSet2 = database
+            .getResultSet("SELECT * FROM stoccoefdata where reacname='" + reacname + "'")) {
           while (dataSet2.next()) {
             names.add(dataSet2.getString("compname").trim());
             stocCoef.add((dataSet2.getString("stoccoef")).trim());
           }
         } finally {
           if (names.size() == 0) {
-            throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-                "ChemicalReactionFactory", "getChemicalReaction", "reacname",
-                "- found no data in table stoccoefdata for component named " + reacname));
+            throw new RuntimeException(
+                new neqsim.util.exception.InvalidInputException("ChemicalReactionFactory", "getChemicalReaction",
+                    "reacname", "- found no data in table stoccoefdata for component named " + reacname));
           }
         }
       } else {
-        throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-            "ChemicalReactionFactory", "getChemicalReaction", "reacname",
-            "- found no data in table REACTIONDATA for component named " + name));
+        throw new RuntimeException(new neqsim.util.exception.InvalidInputException("ChemicalReactionFactory",
+            "getChemicalReaction", "reacname", "- found no data in table REACTIONDATA for component named " + name));
       }
     } catch (Exception ex) {
       // TODO: improve warning message, probably table missing?
-      logger.error("Failed getting data from REACTIONDATA for component named " + name + ":\n\t"
-          + ex.getMessage());
+      logger.error("Failed getting data from REACTIONDATA for component named " + name + ":\n\t" + ex.getMessage());
     }
 
     String[] nameArray = new String[names.size()];
@@ -86,8 +80,7 @@ public final class ChemicalReactionFactory {
       nameArray[i] = names.get(i);
       stocCoefArray[i] = Double.parseDouble(stocCoef.get(i));
     }
-    return new ChemicalReaction(name, nameArray, stocCoefArray, K, rateFactor, activationEnergy,
-        refT);
+    return new ChemicalReaction(name, nameArray, stocCoefArray, K, rateFactor, activationEnergy, refT);
   }
 
   /**

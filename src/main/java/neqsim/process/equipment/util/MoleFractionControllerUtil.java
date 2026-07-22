@@ -9,9 +9,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * MoleFractionControllerUtil class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   boolean moleFractionReduction = false;
 
   /**
-   * <p>
    * Constructor for MoleFractionControllerUtil.
-   * </p>
    *
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -56,9 +52,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>molesChange</code>.
-   * </p>
    *
    * @return a double
    */
@@ -67,9 +61,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setMoleFraction.
-   * </p>
    *
    * @param compName a {@link java.lang.String} object
    * @param moleFrac a double
@@ -81,9 +73,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setComponentRate.
-   * </p>
    *
    * @param compName a {@link java.lang.String} object
    * @param rate a double
@@ -95,9 +85,8 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
     if (unit.equals("litre/MSm^3")) {
       // System.out.println("density .." +
       // thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity());
-      this.moleFrac =
-          rate * thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity()
-              / thermoSystem.getPhase(0).getComponent(compName).getMolarMass() / 42294896.67;
+      this.moleFrac = rate * thermoSystem.getPhase(0).getComponent(compName).getNormalLiquidDensity()
+          / thermoSystem.getPhase(0).getComponent(compName).getMolarMass() / 42294896.67;
     } else {
       // System.out.println("error ..unit not defined..");
     }
@@ -105,9 +94,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setRelativeMoleFractionReduction.
-   * </p>
    *
    * @param compName a {@link java.lang.String} object
    * @param moleFracRatio a double
@@ -128,8 +115,7 @@ public class MoleFractionControllerUtil extends TwoPortEquipment {
       thermoSystem.init(1);
       double deltaFrac = moleFrac - thermoSystem.getPhase(0).getComponent(compName).getz();
       if (moleFractionReduction) {
-        deltaFrac =
-            (moleFractionReductionRatio) * thermoSystem.getPhase(0).getComponent(compName).getz();
+        deltaFrac = (moleFractionReductionRatio) * thermoSystem.getPhase(0).getComponent(compName).getz();
       }
       double molesChange = deltaFrac * thermoSystem.getTotalNumberOfMoles();
       thermoSystem.addComponent(compName, molesChange); // deltaFrac*thermoSystem.getTotalNumberOfMoles());

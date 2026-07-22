@@ -11,9 +11,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * DropletFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -22,52 +20,42 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   private double averageDropletDiameter = 100.0e-6;
+  private double specifiedDispersedPhaseRelativeVelocity = Double.NaN;
 
   /**
-   * <p>
    * Constructor for DropletFlowNode.
-   * </p>
    */
   public DropletFlowNode() {
     this.flowNodeType = "droplet";
   }
 
   /**
-   * <p>
    * Constructor for DropletFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public DropletFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "droplet";
     this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+        this);
   }
 
   /**
-   * <p>
    * Constructor for DropletFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
-  public DropletFlowNode(SystemInterface system, SystemInterface interphaseSystem,
-      GeometryDefinitionInterface pipe) {
+  public DropletFlowNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "droplet";
     this.interphaseTransportCoefficient = new InterphaseDropletFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+        this);
   }
 
   /** {@inheritDoc} */
@@ -113,9 +101,8 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   /** {@inheritDoc} */
   @Override
   public double calcContactLength() {
-    double phaseAngel =
-        pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
-            + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
+    double phaseAngel = pi * phaseFraction[1] + Math.pow(3.0 * pi / 2.0, 1.0 / 3.0) * (1.0 - 2.0 * phaseFraction[1]
+        + Math.pow(phaseFraction[1], 1.0 / 3.0) - Math.pow(phaseFraction[0], 1.0 / 3.0));
     wallContactLength[1] = phaseAngel * pipe.getDiameter();
     wallContactLength[0] = pi * pipe.getDiameter() - wallContactLength[1];
     interphaseContactLength[0] = pipe.getDiameter() * Math.sin(phaseAngel);
@@ -125,7 +112,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
     double surfaceAreaOfDroplet = 4.0 * Math.PI * Math.pow(averageDropletDiameter / 2.0, 2.0);
 
     double numbDropletsPerTime = getBulkSystem().getPhase(1).getVolume("m3") / volumeOfDroplet;
-    interphaseContactLength[0] = numbDropletsPerTime * surfaceAreaOfDroplet / velocity[0];
+    interphaseContactLength[0] = numbDropletsPerTime * surfaceAreaOfDroplet / Math.max(1.0e-12, Math.abs(velocity[1]));
     interphaseContactLength[1] = interphaseContactLength[0];
 
     return wallContactLength[0];
@@ -135,8 +122,8 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
    * {@inheritDoc}
    *
    * <p>
-   * For droplet/mist flow, the interfacial area per unit volume is calculated using Sauter mean
-   * diameter: a = 6 * α_L / d_32
+   * For droplet/mist flow, the interfacial area per unit volume is calculated using Sauter mean diameter: a = 6 * α_L /
+   * d_32
    * </p>
    */
   @Override
@@ -152,8 +139,8 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
    * {@inheritDoc}
    *
    * <p>
-   * For droplet flow, uses critical Weber number to calculate maximum stable droplet size: d_max =
-   * We_crit * σ / (ρ_G * u_G²)
+   * For droplet flow, uses critical Weber number to calculate maximum stable droplet size: d_max = We_crit * σ / (ρ_G *
+   * u_G²)
    * </p>
    */
   @Override
@@ -191,9 +178,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * mainOld.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -275,9 +260,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -354,9 +337,7 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Getter for the field <code>averageDropletDiameter</code>.
-   * </p>
    *
    * @return a double
    */
@@ -365,13 +346,33 @@ public class DropletFlowNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Setter for the field <code>averageDropletDiameter</code>.
-   * </p>
    *
    * @param averageDropletDiameter a double
    */
   public void setAverageDropletDiameter(double averageDropletDiameter) {
     this.averageDropletDiameter = averageDropletDiameter;
+  }
+
+  /**
+   * Set a particle-relative speed for heat and mass transfer without changing axial phase velocities.
+   *
+   * @param relativeVelocity non-negative relative speed in m/s, or NaN to use the axial velocity difference
+   */
+  public void setSpecifiedDispersedPhaseRelativeVelocity(double relativeVelocity) {
+    if (!Double.isNaN(relativeVelocity) && (!Double.isFinite(relativeVelocity) || relativeVelocity < 0.0)) {
+      throw new IllegalArgumentException("relative velocity must be finite and non-negative, or NaN");
+    }
+    specifiedDispersedPhaseRelativeVelocity = relativeVelocity;
+  }
+
+  /**
+   * Get the relative speed used by dispersed-particle transfer correlations.
+   *
+   * @return specified speed, or the absolute axial gas-liquid velocity difference in m/s
+   */
+  public double getDispersedPhaseRelativeVelocity() {
+    return Double.isFinite(specifiedDispersedPhaseRelativeVelocity) ? specifiedDispersedPhaseRelativeVelocity
+        : Math.abs(getVelocity(0) - getVelocity(1));
   }
 }

@@ -3,14 +3,12 @@ package neqsim.fluidmechanics.flownode.fluidboundary.interphasetransportcoeffici
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 
 /**
- * <p>
  * InterphaseAnnularFlow class for annular two-phase pipe flow.
- * </p>
  *
  * <p>
- * Implements transport coefficient correlations specific to annular flow regime, where a liquid
- * film flows along the pipe wall with a gas core in the center. The correlations account for film
- * Reynolds number and wave effects on mass/heat transfer.
+ * Implements transport coefficient correlations specific to annular flow regime, where a liquid film flows along the
+ * pipe wall with a gas core in the center. The correlations account for film Reynolds number and wave effects on
+ * mass/heat transfer.
  * </p>
  *
  * @author esol
@@ -21,16 +19,13 @@ public class InterphaseAnnularFlow extends InterphaseStratifiedFlow {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for InterphaseAnnularFlow.
-   * </p>
    */
-  public InterphaseAnnularFlow() {}
+  public InterphaseAnnularFlow() {
+  }
 
   /**
-   * <p>
    * Constructor for InterphaseAnnularFlow.
-   * </p>
    *
    * @param node a {@link neqsim.fluidmechanics.flownode.FlowNodeInterface} object
    */
@@ -46,13 +41,12 @@ public class InterphaseAnnularFlow extends InterphaseStratifiedFlow {
    * </p>
    * <ul>
    * <li>Gas phase (core): Uses modified Dittus-Boelter correlation</li>
-   * <li>Liquid phase (film): Uses Hewitt &amp; Hall-Taylor correlations accounting for film
-   * Reynolds number and wave amplitude</li>
+   * <li>Liquid phase (film): Uses Hewitt &amp; Hall-Taylor correlations accounting for film Reynolds number and wave
+   * amplitude</li>
    * </ul>
    */
   @Override
-  public double calcSherwoodNumber(int phaseNum, double reynoldsNumber, double schmidtNumber,
-      FlowNodeInterface node) {
+  public double calcSherwoodNumber(int phaseNum, double reynoldsNumber, double schmidtNumber, FlowNodeInterface node) {
     if (phaseNum == 0) {
       // Gas core Sherwood number
       // Modified Dittus-Boelter for annular geometry

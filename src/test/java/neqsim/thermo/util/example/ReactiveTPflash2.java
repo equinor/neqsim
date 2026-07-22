@@ -15,22 +15,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ReactiveTPflash2 class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
  * @version $Id: $Id
  */
 public class ReactiveTPflash2 {
+  private static final Logger logger = LogManager.getLogger(ReactiveTPflash2.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(ReactiveTPflash2.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -41,10 +38,10 @@ public class ReactiveTPflash2 {
     try (FileWriter out = new FileWriter(new File("c:/temp/Wt50T25P10.txt"))) {
       out.write("wt% = 50, T = 40 C and P = 10 bar" + "\n");
       out.write("\n");
-      out.write("wt% MDEA" + "\t\t" + "x_H2O(l)" + "\t\t\t" + "x_MDEA(l)" + "\t\t\t" + "x_CO2(l)"
-          + "\t\t\t" + "x_CH4(l)" + "\t\t\t" + "x_MDEA+(l)" + "\t\t\t" + "x_HCO3-(l)" + "\t\t\t"
-          + "x_CO3--(l)" + "\t\t\t" + "x_OH-(l)" + "\t\t\t" + "x_H3O+(l)" + "\t\t\t" + "x_H2O(g)"
-          + "\t\t\t" + "x_MDEA(g)" + "\t\t\t" + "x_CO2(g)" + "\t\t\t" + "x_CH4(g)" + "\n");
+      out.write("wt% MDEA" + "\t\t" + "x_H2O(l)" + "\t\t\t" + "x_MDEA(l)" + "\t\t\t" + "x_CO2(l)" + "\t\t\t"
+          + "x_CH4(l)" + "\t\t\t" + "x_MDEA+(l)" + "\t\t\t" + "x_HCO3-(l)" + "\t\t\t" + "x_CO3--(l)" + "\t\t\t"
+          + "x_OH-(l)" + "\t\t\t" + "x_H3O+(l)" + "\t\t\t" + "x_H2O(g)" + "\t\t\t" + "x_MDEA(g)" + "\t\t\t" + "x_CO2(g)"
+          + "\t\t\t" + "x_CH4(g)" + "\n");
 
       int imax = 3;
       double max = 15;
@@ -55,8 +52,8 @@ public class ReactiveTPflash2 {
         double den = imax - 1.0;
         double methane = max - (max - min) / den * i;
         double co2 = min + (max - min) / den * i;
-        // System.out.println(methane);
-        // System.out.println(co2);
+        // logger.info(methane);
+        // logger.info(co2);
         testSystem.addComponent("methane", methane);
         testSystem.addComponent("CO2", co2);
         testSystem.addComponent("water", 50.0);
@@ -70,7 +67,7 @@ public class ReactiveTPflash2 {
         testSystem.setMixingRule(4);
         ThermodynamicOperations ops = new ThermodynamicOperations(testSystem);
         testSystem.init(0);
-        // System.out.println("wt% Piperazine " +
+        // logger.info("wt% Piperazine " +
         // testSystem.getPhase(1).getComponent("Piperazine").getx()*testSystem.getPhase(1).getComponent("Piperazine").getMolarMass()/testSystem.getPhase(1).getMolarMass());
 
         // Flash calculation
@@ -82,17 +79,16 @@ public class ReactiveTPflash2 {
 
         // Write to screen
         // testSystem.display();
-        // System.out.println("CO2 loading " +
+        // logger.info("CO2 loading " +
         // (testSystem.getPhase(1).getComponent("CO2").getx()+testSystem.getPhase(1).getComponent("HCO3-").getx()+testSystem.getPhase(1).getComponent("CO3--").getx())/(testSystem.getPhase(1).getComponent("MDEA+").getx()+testSystem.getPhase(1).getComponent("MDEA").getx()));
-        // System.out.println("Partial pressure CO2 " +
+        // logger.info("Partial pressure CO2 " +
         // testSystem.getPressure()*testSystem.getPhase(0).getComponent("CO2").getx());
-        // System.out.println("wt% MDEA " +
+        // logger.info("wt% MDEA " +
         // 100*(testSystem.getPhase(1).getComponent("MDEA+").getx()+testSystem.getPhase(1).getComponent("MDEA").getx())*testSystem.getPhase(1).getComponent("MDEA").getMolarMass()/((testSystem.getPhase(1).getComponent("water").getx()+testSystem.getPhase(1).getComponent("CO3--").getx()+testSystem.getPhase(1).getComponent("HCO3-").getx())*testSystem.getPhase(1).getComponent("water").getMolarMass()+(testSystem.getPhase(1).getComponent("MDEA+").getx()+testSystem.getPhase(1).getComponent("MDEA").getx())*testSystem.getPhase(1).getComponent("MDEA").getMolarMass()));
 
         // Writing to file
         out.write("" + 100
-            * (testSystem.getPhase(1).getComponent("MDEA+").getx()
-                + testSystem.getPhase(1).getComponent("MDEA").getx())
+            * (testSystem.getPhase(1).getComponent("MDEA+").getx() + testSystem.getPhase(1).getComponent("MDEA").getx())
             * testSystem.getPhase(1).getComponent("MDEA").getMolarMass()
             / ((testSystem.getPhase(1).getComponent("water").getx()
                 + testSystem.getPhase(1).getComponent("CO3--").getx()
@@ -128,7 +124,7 @@ public class ReactiveTPflash2 {
     // //ops.TPflash();
     // } catch(Exception ex){}
 
-    // System.out.println("loading " + (0.0005+0.05*i)+ " PCO2 " +
+    // logger.info("loading " + (0.0005+0.05*i)+ " PCO2 " +
     // testSystem.getPhase(0).getComponent("CO2").getx()*testSystem.getPressure());
     // testSystem.addComponent("CO2", 0.05*(6.45+1.78));
     // }

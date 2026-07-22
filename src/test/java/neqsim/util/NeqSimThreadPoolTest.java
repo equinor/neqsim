@@ -11,6 +11,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -24,6 +26,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for the NeqSimThreadPool utility class.
  */
 class NeqSimThreadPoolTest {
+  private static final Logger logger = LogManager.getLogger(NeqSimThreadPoolTest.class);
+
   @AfterEach
   void tearDown() {
     // Reset pool to default state after each test
@@ -117,8 +121,8 @@ class NeqSimThreadPoolTest {
   }
 
   /**
-   * Creates a process system with a feed stream, valve, and separator. Each process is independent
-   * with its own fluid system.
+   * Creates a process system with a feed stream, valve, and separator. Each process is independent with its own fluid
+   * system.
    *
    * @param id unique identifier for naming units
    * @param feedPressure inlet pressure in bara
@@ -157,8 +161,8 @@ class NeqSimThreadPoolTest {
   }
 
   /**
-   * Test running 20 real process simulations concurrently using the thread pool. Each process has a
-   * feed stream, valve, and separator with slightly different conditions.
+   * Test running 20 real process simulations concurrently using the thread pool. Each process has a feed stream, valve,
+   * and separator with slightly different conditions.
    */
   @Test
   void testRun20ConcurrentProcessSimulations() throws Exception {
@@ -198,14 +202,11 @@ class NeqSimThreadPoolTest {
       // Verify the separator has valid output
       Separator sep = (Separator) process.getUnit("Separator-" + i);
       assertNotNull(sep, "Separator-" + i + " should exist");
-      assertTrue(sep.getGasOutStream().getFlowRate("kg/hr") > 0,
-          "Separator-" + i + " gas flow should be > 0");
+      assertTrue(sep.getGasOutStream().getFlowRate("kg/hr") > 0, "Separator-" + i + " gas flow should be > 0");
     }
 
-    System.out.println("Successfully ran " + numProcesses + " concurrent process simulations in "
-        + duration + " ms");
-    System.out.println(
-        "Average time per process: " + (duration / numProcesses) + " ms (with parallelism)");
+    logger.info("Successfully ran " + numProcesses + " concurrent process simulations in " + duration + " ms");
+    logger.info("Average time per process: " + (duration / numProcesses) + " ms (with parallelism)");
   }
 
   /**
@@ -248,18 +249,16 @@ class NeqSimThreadPoolTest {
       assertTrue(process.solved());
     }
 
-    System.out.println("Sequential execution of " + numProcesses + " processes: " + seqDuration
-        + " ms (" + (seqDuration / numProcesses) + " ms/process)");
-    System.out.println("Parallel execution of " + numProcesses + " processes: " + parDuration
-        + " ms (using " + NeqSimThreadPool.getPoolSize() + " threads)");
-    System.out
-        .println("Speedup factor: " + String.format("%.2f", (double) seqDuration / parDuration));
+    logger.info("Sequential execution of " + numProcesses + " processes: " + seqDuration + " ms ("
+        + (seqDuration / numProcesses) + " ms/process)");
+    logger.info("Parallel execution of " + numProcesses + " processes: " + parDuration + " ms (using "
+        + NeqSimThreadPool.getPoolSize() + " threads)");
+    System.out.println("Speedup factor: " + String.format("%.2f", (double) seqDuration / parDuration));
   }
 
   /**
-   * Test reporting results in completion order using CompletionService. This is useful when you
-   * want to process results as soon as they become available, rather than waiting for all to
-   * complete.
+   * Test reporting results in completion order using CompletionService. This is useful when you want to process results
+   * as soon as they become available, rather than waiting for all to complete.
    */
   @Test
   void testReportResultsInCompletionOrder() throws Exception {
@@ -275,8 +274,7 @@ class NeqSimThreadPoolTest {
     }
 
     // Use the built-in newCompletionService() method
-    java.util.concurrent.CompletionService<Integer> completionService =
-        NeqSimThreadPool.newCompletionService();
+    java.util.concurrent.CompletionService<Integer> completionService = NeqSimThreadPool.newCompletionService();
 
     // Submit all processes, returning their index when done
     for (int i = 0; i < processes.size(); i++) {
@@ -288,7 +286,7 @@ class NeqSimThreadPoolTest {
       });
     }
 
-    System.out.println("\nResults in completion order:");
+    logger.info("\nResults in completion order:");
     List<Integer> completionOrder = new ArrayList<>();
 
     // Collect results as they complete
@@ -302,7 +300,8 @@ class NeqSimThreadPoolTest {
       Separator sep = (Separator) process.getUnit("Separator-" + completedIndex);
       double gasFlow = sep.getGasOutStream().getFlowRate("kg/hr");
 
-      System.out.printf("  Process %d completed: gas flow = %.2f kg/hr%n", completedIndex, gasFlow);
+      logger.printf(org.apache.logging.log4j.Level.INFO, "  Process %d completed: gas flow = %.2f kg/hr%n",
+          completedIndex, gasFlow);
     }
 
     // Verify all processes completed
@@ -311,12 +310,12 @@ class NeqSimThreadPoolTest {
       assertTrue(process.solved());
     }
 
-    System.out.println("Completion order: " + completionOrder);
+    logger.info("Completion order: " + completionOrder);
   }
 
   /**
-   * Test polling futures to report results as they complete without blocking. This approach allows
-   * you to do other work while waiting for results.
+   * Test polling futures to report results as they complete without blocking. This approach allows you to do other work
+   * while waiting for results.
    */
   @Test
   void testPollFuturesForCompletion() throws Exception {
@@ -336,7 +335,7 @@ class NeqSimThreadPoolTest {
     boolean[] reported = new boolean[numProcesses];
     int completedCount = 0;
 
-    System.out.println("\nPolling for completed processes:");
+    logger.info("\nPolling for completed processes:");
 
     // Poll until all complete
     while (completedCount < numProcesses) {
@@ -347,7 +346,7 @@ class NeqSimThreadPoolTest {
           Separator sep = (Separator) process.getUnit("Separator-" + i);
           double gasFlow = sep.getGasOutStream().getFlowRate("kg/hr");
 
-          System.out.printf("  Process %d done: gas flow = %.2f kg/hr%n", i, gasFlow);
+          logger.printf(org.apache.logging.log4j.Level.INFO, "  Process %d done: gas flow = %.2f kg/hr%n", i, gasFlow);
 
           reported[i] = true;
           completedCount++;
@@ -398,8 +397,8 @@ class NeqSimThreadPoolTest {
   }
 
   /**
-   * Test that exceptions in tasks are logged (via UncaughtExceptionHandler for direct Thread
-   * exceptions) and captured in Future for submitted tasks.
+   * Test that exceptions in tasks are logged (via UncaughtExceptionHandler for direct Thread exceptions) and captured
+   * in Future for submitted tasks.
    */
   @Test
   void testExceptionHandling() throws Exception {
@@ -449,16 +448,14 @@ class NeqSimThreadPoolTest {
   @Test
   void testKeepAliveTimeValidation() {
     assertThrows(IllegalArgumentException.class, () -> NeqSimThreadPool.setKeepAliveTimeSeconds(0));
-    assertThrows(IllegalArgumentException.class,
-        () -> NeqSimThreadPool.setKeepAliveTimeSeconds(-1));
+    assertThrows(IllegalArgumentException.class, () -> NeqSimThreadPool.setKeepAliveTimeSeconds(-1));
   }
 
   /**
    * Benchmark comparing old runAsThread() vs new runAsTask() approach.
-   * 
-   * This test demonstrates the performance difference between: - runAsThread(): Creates a new
-   * Thread for each process (unmanaged) - runAsTask(): Uses the managed thread pool (reuses
-   * threads)
+   *
+   * This test demonstrates the performance difference between: - runAsThread(): Creates a new Thread for each process
+   * (unmanaged) - runAsTask(): Uses the managed thread pool (reuses threads)
    */
   @Test
   @SuppressWarnings("deprecation")
@@ -466,9 +463,8 @@ class NeqSimThreadPoolTest {
     final int numProcesses = 20;
     final int numRuns = 3; // Run multiple times to warm up and get stable results
 
-    System.out.println("\n=== Benchmark: runAsThread() vs runAsTask() ===");
-    System.out.println(
-        "Running " + numProcesses + " process simulations, " + numRuns + " iterations each\n");
+    logger.info("\n=== Benchmark: runAsThread() vs runAsTask() ===");
+    logger.info("Running " + numProcesses + " process simulations, " + numRuns + " iterations each\n");
 
     long totalThreadTime = 0;
     long totalTaskTime = 0;
@@ -520,8 +516,7 @@ class NeqSimThreadPoolTest {
         assertTrue(process.solved(), "Task-based process should be solved");
       }
 
-      System.out.println("Run " + (run + 1) + ": runAsThread=" + threadDuration + "ms, runAsTask="
-          + taskDuration + "ms");
+      logger.info("Run " + (run + 1) + ": runAsThread=" + threadDuration + "ms, runAsTask=" + taskDuration + "ms");
     }
 
     // Calculate averages
@@ -529,22 +524,21 @@ class NeqSimThreadPoolTest {
     double avgTaskTime = (double) totalTaskTime / numRuns;
     double improvement = ((avgThreadTime - avgTaskTime) / avgThreadTime) * 100;
 
-    System.out.println("\n--- Results ---");
-    System.out
-        .println("Average runAsThread() time: " + String.format("%.1f", avgThreadTime) + " ms");
-    System.out.println("Average runAsTask() time:   " + String.format("%.1f", avgTaskTime) + " ms");
-    System.out.println("Pool size: " + NeqSimThreadPool.getPoolSize() + " threads");
+    logger.info("\n--- Results ---");
+    System.out.println("Average runAsThread() time: " + String.format("%.1f", avgThreadTime) + " ms");
+    logger.info("Average runAsTask() time:   " + String.format("%.1f", avgTaskTime) + " ms");
+    logger.info("Pool size: " + NeqSimThreadPool.getPoolSize() + " threads");
 
     if (avgTaskTime < avgThreadTime) {
-      System.out.println("runAsTask() is " + String.format("%.1f", improvement) + "% faster");
+      logger.info("runAsTask() is " + String.format("%.1f", improvement) + "% faster");
     } else if (avgTaskTime > avgThreadTime) {
-      System.out.println("runAsThread() is " + String.format("%.1f", -improvement) + "% faster");
+      logger.info("runAsThread() is " + String.format("%.1f", -improvement) + "% faster");
     } else {
-      System.out.println("Both methods performed equally");
+      logger.info("Both methods performed equally");
     }
 
-    System.out.println("\nNote: The main benefit of runAsTask() is resource management,");
-    System.out.println("      not raw speed. It prevents thread explosion and provides");
-    System.out.println("      Future API for cancellation, timeout, and exception handling.");
+    logger.info("\nNote: The main benefit of runAsTask() is resource management,");
+    logger.info("      not raw speed. It prevents thread explosion and provides");
+    logger.info("      Future API for cancellation, timeout, and exception handling.");
   }
 }

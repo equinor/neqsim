@@ -8,16 +8,14 @@ package neqsim.process.equipment.mixer;
 
 import java.util.UUID;
 import com.google.gson.GsonBuilder;
-import neqsim.thermo.system.SystemSoreideWhitson;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.process.util.monitor.MixerResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
+import neqsim.thermo.system.SystemSoreideWhitson;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * StaticMixer class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -27,9 +25,7 @@ public class StaticMixer extends Mixer {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for StaticMixer.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -43,25 +39,19 @@ public class StaticMixer extends Mixer {
     int index = 0;
     String compName = new String();
     for (int k = 1; k < streams.size(); k++) {
-      for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0]
-          .getNumberOfComponents(); i++) {
+      for (int i = 0; i < streams.get(k).getThermoSystem().getPhases()[0].getNumberOfComponents(); i++) {
         boolean gotComponent = false;
-        String componentName =
-            streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getName();
+        String componentName = streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getName();
         // System.out.println("adding: " + componentName);
-        double moles =
-            streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getNumberOfmoles();
+        double moles = streams.get(k).getThermoSystem().getPhases()[0].getComponent(i).getNumberOfmoles();
         // System.out.println("moles: " + moles + " " +
         // mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents());
-        for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0]
-            .getNumberOfComponents(); p++) {
-          if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName()
-              .equals(componentName)) {
+        for (int p = 0; p < mixedStream.getThermoSystem().getPhases()[0].getNumberOfComponents(); p++) {
+          if (mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getName().equals(componentName)) {
             gotComponent = true;
-            index = streams.get(0).getThermoSystem().getPhases()[0].getComponent(p)
-                .getComponentNumber();
-            compName =
-                streams.get(0).getThermoSystem().getPhases()[0].getComponent(p).getComponentName();
+            index = mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getComponentNumber();
+            compName = mixedStream.getThermoSystem().getPhases()[0].getComponent(p).getComponentName();
+            break;
           }
         }
 
@@ -83,8 +73,7 @@ public class StaticMixer extends Mixer {
   public double guessTemperature() {
     double gtemp = 0;
     for (int k = 0; k < streams.size(); k++) {
-      gtemp += streams.get(k).getThermoSystem().getTemperature()
-          * streams.get(k).getThermoSystem().getNumberOfMoles()
+      gtemp += streams.get(k).getThermoSystem().getTemperature() * streams.get(k).getThermoSystem().getNumberOfMoles()
           / mixedStream.getThermoSystem().getNumberOfMoles();
     }
     return gtemp;
@@ -131,8 +120,7 @@ public class StaticMixer extends Mixer {
     }
     // System.out.println("temp " + mixedStream.getThermoSystem().getTemperature());
     mixedStream.getThermoSystem().initProperties();
-    if (mixedStream.getFluid().getClass().getName()
-        .equals("neqsim.thermo.system.SystemSoreideWhitson")) {
+    if (mixedStream.getFluid().getClass().getName().equals("neqsim.thermo.system.SystemSoreideWhitson")) {
       ((SystemSoreideWhitson) mixedStream.getFluid()).setSalinity(getMixedSalinity(), "mole/sec");
       mixedStream.run();
     }
@@ -143,8 +131,7 @@ public class StaticMixer extends Mixer {
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new MixerResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(new MixerResponse(this));
   }
 
   /** {@inheritDoc} */

@@ -61,8 +61,7 @@ class RiserConfigurationTest {
 
   @Test
   void testCreateLazyWave() {
-    PipeBeggsAndBrills riser =
-        RiserConfiguration.createLazyWave("Lazy Wave", inletStream, 800.0, 300.0);
+    PipeBeggsAndBrills riser = RiserConfiguration.createLazyWave("Lazy Wave", inletStream, 800.0, 300.0);
 
     assertNotNull(riser);
 
@@ -74,8 +73,7 @@ class RiserConfigurationTest {
   @Test
   void testAllRiserTypes() {
     for (RiserType type : RiserType.values()) {
-      PipeBeggsAndBrills riser =
-          RiserConfiguration.createRiser(type, type.name() + " Riser", inletStream, 400.0);
+      PipeBeggsAndBrills riser = RiserConfiguration.createRiser(type, type.name() + " Riser", inletStream, 400.0);
 
       assertNotNull(riser, "Riser should be created for type: " + type);
 
@@ -88,8 +86,8 @@ class RiserConfigurationTest {
   @Test
   void testBuilderPattern() {
     RiserConfiguration config = new RiserConfiguration(RiserType.LAZY_WAVE).setWaterDepth(1000.0)
-        .setBuoyancyModuleDepth(400.0).setBuoyancyModuleLength(150.0).setTopAngle(15.0)
-        .setInnerDiameter(0.254).setNumberOfSections(80).setAmbientTemperature(5.0);
+        .setBuoyancyModuleDepth(400.0).setBuoyancyModuleLength(150.0).setTopAngle(15.0).setInnerDiameter(0.254)
+        .setNumberOfSections(80).setAmbientTemperature(5.0);
 
     assertEquals(RiserType.LAZY_WAVE, config.getRiserType());
     assertEquals(1000.0, config.getWaterDepth(), 0.01);
@@ -159,8 +157,8 @@ class RiserConfigurationTest {
 
   @Test
   void testDescription() {
-    RiserConfiguration config = new RiserConfiguration(RiserType.STEEL_CATENARY_RISER)
-        .setWaterDepth(500.0).setTopAngle(12.0).setDepartureAngle(18.0).setInnerDiameter(0.254);
+    RiserConfiguration config = new RiserConfiguration(RiserType.STEEL_CATENARY_RISER).setWaterDepth(500.0)
+        .setTopAngle(12.0).setDepartureAngle(18.0).setInnerDiameter(0.254);
 
     String description = config.getDescription();
 
@@ -173,9 +171,9 @@ class RiserConfigurationTest {
   @Test
   void testDeepwaterSCR() {
     // Test a deepwater SCR configuration
-    RiserConfiguration config = new RiserConfiguration(RiserType.STEEL_CATENARY_RISER)
-        .setWaterDepth(1500.0).setTopAngle(10.0).setDepartureAngle(20.0)
-        .setInnerDiameter(12, "inch").setNumberOfSections(100).setAmbientTemperature(4.0);
+    RiserConfiguration config = new RiserConfiguration(RiserType.STEEL_CATENARY_RISER).setWaterDepth(1500.0)
+        .setTopAngle(10.0).setDepartureAngle(20.0).setInnerDiameter(12, "inch").setNumberOfSections(100)
+        .setAmbientTemperature(4.0);
 
     PipeBeggsAndBrills riser = config.create("Deepwater SCR", inletStream);
 
@@ -194,8 +192,8 @@ class RiserConfigurationTest {
 
   @Test
   void testFlexibleRiser() {
-    PipeBeggsAndBrills riser = RiserConfiguration.createRiser(RiserType.FLEXIBLE_RISER,
-        "Flexible Riser", inletStream, 350.0);
+    PipeBeggsAndBrills riser = RiserConfiguration.createRiser(RiserType.FLEXIBLE_RISER, "Flexible Riser", inletStream,
+        350.0);
 
     assertNotNull(riser);
 
@@ -208,8 +206,8 @@ class RiserConfigurationTest {
 
   @Test
   void testHybridRiser() {
-    PipeBeggsAndBrills riser =
-        RiserConfiguration.createRiser(RiserType.HYBRID_RISER, "Hybrid Riser", inletStream, 600.0);
+    PipeBeggsAndBrills riser = RiserConfiguration.createRiser(RiserType.HYBRID_RISER, "Hybrid Riser", inletStream,
+        600.0);
 
     assertNotNull(riser);
 
@@ -222,8 +220,7 @@ class RiserConfigurationTest {
 
   @Test
   void testRiserWithMechanicalDesign() {
-    PipeBeggsAndBrills riser =
-        RiserConfiguration.createSCR("Riser for MechDesign", inletStream, 500.0);
+    PipeBeggsAndBrills riser = RiserConfiguration.createSCR("Riser for MechDesign", inletStream, 500.0);
     riser.run();
 
     // Initialize mechanical design

@@ -14,10 +14,8 @@ import neqsim.thermo.system.SystemInterface;
  * Integrates field development with multiphase pipeline hydraulics.
  *
  * <p>
- * Provides tight coupling between field development screening and detailed
- * multiphase flow
- * calculations. Used for tieback feasibility, pipeline sizing, and flow
- * assurance analysis.
+ * Provides tight coupling between field development screening and detailed multiphase flow calculations. Used for
+ * tieback feasibility, pipeline sizing, and flow assurance analysis.
  * </p>
  *
  * <h2>Capabilities</h2>
@@ -31,19 +29,19 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * MultiphaseFlowIntegrator integrator = new MultiphaseFlowIntegrator();
- * 
+ *
  * // Configure pipeline
  * integrator.setPipelineLength(25.0); // km
  * integrator.setPipelineDiameter(0.254); // 10 inch
  * integrator.setSeabedTemperature(4.0); // C
  * integrator.setOverallHeatTransferCoeff(5.0); // W/m2K
- * 
+ *
  * // Calculate hydraulics
  * PipelineResult result = integrator.calculateHydraulics(wellheadStream, 30.0);
- * 
+ *
  * System.out.println("Arrival pressure: " + result.getArrivalPressureBar() + " bara");
  * System.out.println("Arrival temperature: " + result.getArrivalTemperatureC() + " C");
  * System.out.println("Flow regime: " + result.getFlowRegime());
@@ -457,7 +455,7 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Calculate pipeline hydraulics using Beggs and Brill correlation.
    *
-   * @param inlet              inlet stream
+   * @param inlet inlet stream
    * @param arrivalPressureBar required arrival pressure (bara)
    * @return pipeline result
    */
@@ -482,6 +480,12 @@ public class MultiphaseFlowIntegrator implements Serializable {
       pipe.setDiameter(pipelineDiameterM);
       pipe.setAngle(Math.atan(elevationChangeM / (pipelineLengthKm * 1000)) * 180 / Math.PI);
       pipe.setNumberOfIncrements(numberOfSegments);
+      pipe.setConstantSurfaceTemperature(seabedTemperatureC, "C");
+      if (overallHtcWm2K > 0.0) {
+        pipe.setHeatTransferCoefficient(overallHtcWm2K);
+      } else {
+        pipe.setHeatTransferMode(PipeBeggsAndBrills.HeatTransferMode.ADIABATIC);
+      }
 
       // Run calculation
       pipe.run();
@@ -541,13 +545,13 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Calculate hydraulics for a range of flow rates.
    *
-   * @param baseFluid        base fluid composition
+   * @param baseFluid base fluid composition
    * @param inletPressureBar inlet pressure
-   * @param flowRatesKgHr    array of flow rates to evaluate
+   * @param flowRatesKgHr array of flow rates to evaluate
    * @return list of results for each flow rate
    */
-  public List<PipelineResult> calculateHydraulicsCurve(SystemInterface baseFluid,
-      double inletPressureBar, double[] flowRatesKgHr) {
+  public List<PipelineResult> calculateHydraulicsCurve(SystemInterface baseFluid, double inletPressureBar,
+      double[] flowRatesKgHr) {
     List<PipelineResult> results = new ArrayList<PipelineResult>();
 
     for (double flowRate : flowRatesKgHr) {
@@ -567,8 +571,8 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Size pipeline diameter for given constraints.
    *
-   * @param inlet            inlet stream
-   * @param minArrivalP      minimum arrival pressure (bara)
+   * @param inlet inlet stream
+   * @param minArrivalP minimum arrival pressure (bara)
    * @param maxVelocityRatio maximum erosional velocity ratio
    * @return recommended diameter in meters
    */
@@ -599,7 +603,7 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Estimate liquid holdup using simplified Beggs-Brill.
    *
-   * @param fluid  the fluid system
+   * @param fluid the fluid system
    * @param mixVel the mixture velocity in m/s
    * @return estimated liquid holdup as fraction (0-1)
    */
@@ -627,8 +631,8 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Identify flow regime.
    *
-   * @param fluid        the fluid system interface
-   * @param mixVel       mixture velocity in m/s
+   * @param fluid the fluid system interface
+   * @param mixVel mixture velocity in m/s
    * @param liquidHoldup liquid holdup fraction (0-1)
    * @return the identified flow regime
    */
@@ -667,7 +671,7 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Estimate slug frequency using Gregory correlation.
    *
-   * @param mixVel   mixture velocity in m/s
+   * @param mixVel mixture velocity in m/s
    * @param diameter pipe inner diameter in m
    * @return estimated slug frequency in slugs per minute
    */
@@ -681,7 +685,7 @@ public class MultiphaseFlowIntegrator implements Serializable {
   /**
    * Check feasibility against constraints.
    *
-   * @param result      the pipeline result to check and update
+   * @param result the pipeline result to check and update
    * @param minArrivalP minimum required arrival pressure in bar
    */
   private void checkFeasibility(PipelineResult result, double minArrivalP) {
@@ -690,25 +694,24 @@ public class MultiphaseFlowIntegrator implements Serializable {
     // Check arrival pressure
     if (result.getArrivalPressureBar() < minArrivalP) {
       result.setFeasible(false);
-      result.setInfeasibilityReason(String.format("Arrival pressure %.1f bar < minimum %.1f bar",
-          result.getArrivalPressureBar(), minArrivalP));
+      result.setInfeasibilityReason(
+          String.format("Arrival pressure %.1f bar < minimum %.1f bar", result.getArrivalPressureBar(), minArrivalP));
       return;
     }
 
     // Check erosional velocity
     if (result.getErosionalVelocityRatio() > 1.0) {
       result.setFeasible(false);
-      result.setInfeasibilityReason(
-          String.format("Velocity %.1f m/s exceeds erosional limit %.1f m/s",
-              result.getMixtureVelocityMs(), result.getErosionalVelocityMs()));
+      result.setInfeasibilityReason(String.format("Velocity %.1f m/s exceeds erosional limit %.1f m/s",
+          result.getMixtureVelocityMs(), result.getErosionalVelocityMs()));
       return;
     }
 
     // Check arrival temperature vs hydrate (simplified)
     if (result.getArrivalTemperatureC() < seabedTemperatureC + 5) {
       result.setFeasible(false);
-      result.setInfeasibilityReason(
-          String.format("Arrival temperature %.1f°C too close to seabed %.1f°C (hydrate risk)",
+      result
+          .setInfeasibilityReason(String.format("Arrival temperature %.1f°C too close to seabed %.1f°C (hydrate risk)",
               result.getArrivalTemperatureC(), seabedTemperatureC));
     }
   }

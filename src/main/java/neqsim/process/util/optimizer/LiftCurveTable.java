@@ -7,8 +7,8 @@ import java.util.Arrays;
  * Represents a lift curve table for reservoir simulator integration.
  *
  * <p>
- * This class stores flow rate vs. pressure data in a format compatible with Eclipse reservoir
- * simulators. The table contains:
+ * This class stores flow rate vs. pressure data in a format compatible with Eclipse reservoir simulators. The table
+ * contains:
  * </p>
  * <ul>
  * <li>THP (Tubing Head Pressure / outlet pressure) values as column headers</li>
@@ -18,7 +18,7 @@ import java.util.Arrays;
  * </ul>
  *
  * <h2>Eclipse Format Example</h2>
- * 
+ *
  * <pre>
  * THP
  * 20 40 60
@@ -68,7 +68,8 @@ public class LiftCurveTable implements Serializable {
   /**
    * Creates an empty lift curve table.
    */
-  public LiftCurveTable() {}
+  public LiftCurveTable() {
+  }
 
   /**
    * Creates a lift curve table with specified dimensions.
@@ -109,7 +110,7 @@ public class LiftCurveTable implements Serializable {
    * <p>
    * Format:
    * </p>
-   * 
+   *
    * <pre>
    * THP
    * thp1 thp2 thp3
@@ -401,6 +402,9 @@ public class LiftCurveTable implements Serializable {
 
   /**
    * Formats a number for output.
+   *
+   * @param value the number to format
+   * @return the formatted string representation
    */
   private String formatNumber(double value) {
     if (Math.abs(value) < 0.01 || Math.abs(value) >= 10000) {
@@ -539,7 +543,7 @@ public class LiftCurveTable implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("LiftCurveTable[%s]: %d flow rates x %d THP values (%.1f%% feasible)",
-        tableName, flowRates.length, thpValues.length, getFeasibilityPercent());
+    return String.format("LiftCurveTable[%s]: %d flow rates x %d THP values (%.1f%% feasible)", tableName,
+        flowRates.length, thpValues.length, getFeasibilityPercent());
   }
 }

@@ -2,23 +2,23 @@
  * Transient multiphase pipe flow models.
  *
  * <p>
- * This package provides classes for simulating transient two-phase (gas-liquid) flow in pipelines.
- * The models are based on the drift-flux formulation and include:
+ * This package provides classes for simulating transient two-phase (gas-liquid) flow in pipelines. The models are based
+ * on the drift-flux formulation and include:
  * </p>
  *
  * <ul>
- * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.TransientPipe} - Main transient
- * simulator using finite volume method with AUSM+ flux splitting</li>
- * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.PipeSection} - Represents a single
- * discretization cell with state variables</li>
- * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.FlowRegimeDetector} - Mechanistic flow
- * pattern detection based on Taitel-Dukler and Barnea models</li>
- * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.DriftFluxModel} - Drift-flux closure
- * relations for slip and holdup</li>
- * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker} - Tracks
- * liquid pooling at terrain low points</li>
- * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.SlugTracker} - Lagrangian slug tracking
- * for terrain-induced slugging</li>
+ * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.TransientPipe} - Main transient simulator using finite
+ * volume method with AUSM+ flux splitting</li>
+ * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.PipeSection} - Represents a single discretization cell with
+ * state variables</li>
+ * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.FlowRegimeDetector} - Mechanistic flow pattern detection
+ * based on Taitel-Dukler and Barnea models</li>
+ * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.DriftFluxModel} - Drift-flux closure relations for slip and
+ * holdup</li>
+ * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.LiquidAccumulationTracker} - Tracks liquid pooling at
+ * terrain low points</li>
+ * <li>{@link neqsim.process.equipment.pipeline.twophasepipe.SlugTracker} - Lagrangian slug tracking for terrain-induced
+ * slugging</li>
  * </ul>
  *
  * <h2>Physical Models</h2>
@@ -26,13 +26,13 @@
  * <p>
  * <b>Drift-Flux Model:</b> The core model uses the Zuber-Findlay drift-flux formulation:
  * </p>
- * 
+ *
  * <pre>
  * v_G = C_0 * v_m + v_d
  * </pre>
  * <p>
- * where C_0 is the distribution coefficient and v_d is the drift velocity. Flow-regime-dependent
- * correlations (Bendiksen, Harmathy) provide closure.
+ * where C_0 is the distribution coefficient and v_d is the drift velocity. Flow-regime-dependent correlations
+ * (Bendiksen, Harmathy) provide closure.
  * </p>
  *
  * <p>
@@ -44,12 +44,12 @@
  * </ul>
  *
  * <p>
- * <b>Numerical Method:</b> Explicit finite volume with AUSM+ flux splitting, adaptive CFL-based
- * time stepping, and periodic thermodynamic flash updates using NeqSim equations of state.
+ * <b>Numerical Method:</b> Explicit finite volume with AUSM+ flux splitting, adaptive CFL-based time stepping, and
+ * periodic thermodynamic flash updates using NeqSim equations of state.
  * </p>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * // Create fluid
  * SystemInterface fluid = new SystemSrkEos(300, 50);

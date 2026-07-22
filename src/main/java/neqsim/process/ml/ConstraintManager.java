@@ -26,7 +26,7 @@ public class ConstraintManager implements Serializable {
   private static final long serialVersionUID = 1000L;
 
   private final Map<String, Constraint> constraints;
-  private final List<ConstraintViolationListener> listeners;
+  private final transient List<ConstraintViolationListener> listeners;
 
   /**
    * Listener interface for constraint violation events.
@@ -68,8 +68,7 @@ public class ConstraintManager implements Serializable {
    * @param unit physical unit
    * @return this ConstraintManager for chaining
    */
-  public ConstraintManager addHardUpperBound(String name, String variableName, double maxValue,
-      String unit) {
+  public ConstraintManager addHardUpperBound(String name, String variableName, double maxValue, String unit) {
     return add(Constraint.upperBound(name, variableName, maxValue, unit, Constraint.Type.HARD));
   }
 
@@ -82,8 +81,7 @@ public class ConstraintManager implements Serializable {
    * @param unit physical unit
    * @return this ConstraintManager for chaining
    */
-  public ConstraintManager addHardLowerBound(String name, String variableName, double minValue,
-      String unit) {
+  public ConstraintManager addHardLowerBound(String name, String variableName, double minValue, String unit) {
     return add(Constraint.lowerBound(name, variableName, minValue, unit, Constraint.Type.HARD));
   }
 
@@ -97,10 +95,9 @@ public class ConstraintManager implements Serializable {
    * @param unit physical unit
    * @return this ConstraintManager for chaining
    */
-  public ConstraintManager addHardRange(String name, String variableName, double minValue,
-      double maxValue, String unit) {
-    return add(
-        Constraint.range(name, variableName, minValue, maxValue, unit, Constraint.Type.HARD));
+  public ConstraintManager addHardRange(String name, String variableName, double minValue, double maxValue,
+      String unit) {
+    return add(Constraint.range(name, variableName, minValue, maxValue, unit, Constraint.Type.HARD));
   }
 
   /**
@@ -113,10 +110,9 @@ public class ConstraintManager implements Serializable {
    * @param unit physical unit
    * @return this ConstraintManager for chaining
    */
-  public ConstraintManager addSoftRange(String name, String variableName, double minValue,
-      double maxValue, String unit) {
-    return add(
-        Constraint.range(name, variableName, minValue, maxValue, unit, Constraint.Type.SOFT));
+  public ConstraintManager addSoftRange(String name, String variableName, double minValue, double maxValue,
+      String unit) {
+    return add(Constraint.range(name, variableName, minValue, maxValue, unit, Constraint.Type.SOFT));
   }
 
   /**
@@ -185,8 +181,8 @@ public class ConstraintManager implements Serializable {
    * @return smallest margin (negative if violated)
    */
   public double getMinHardMargin() {
-    return constraints.values().stream().filter(Constraint::isHard)
-        .mapToDouble(Constraint::getMargin).min().orElse(Double.POSITIVE_INFINITY);
+    return constraints.values().stream().filter(Constraint::isHard).mapToDouble(Constraint::getMargin).min()
+        .orElse(Double.POSITIVE_INFINITY);
   }
 
   /**
@@ -195,8 +191,7 @@ public class ConstraintManager implements Serializable {
    * @return list of currently violated constraints
    */
   public List<Constraint> getViolations() {
-    return constraints.values().stream().filter(Constraint::isViolated)
-        .collect(Collectors.toList());
+    return constraints.values().stream().filter(Constraint::isViolated).collect(Collectors.toList());
   }
 
   /**

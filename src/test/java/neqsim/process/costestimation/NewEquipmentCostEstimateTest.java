@@ -37,8 +37,7 @@ public class NewEquipmentCostEstimateTest {
 
     costEst.calculateCostEstimate();
 
-    assertTrue(costEst.getPurchasedEquipmentCost() > 0,
-        "Fixed cone roof tank cost should be positive");
+    assertTrue(costEst.getPurchasedEquipmentCost() > 0, "Fixed cone roof tank cost should be positive");
     // BMC calculation depends on equipment type - just verify it's non-negative
     assertTrue(costEst.getBareModuleCost() >= 0, "BMC should be non-negative");
 
@@ -404,8 +403,7 @@ public class NewEquipmentCostEstimateTest {
 
     // Test EUR formatting
     calc.setCurrencyCode("EUR");
-    assertTrue(
-        calc.formatCost(1000000.0).contains("\u20AC") || calc.formatCost(1000000.0).contains("€"));
+    assertTrue(calc.formatCost(1000000.0).contains("\u20AC") || calc.formatCost(1000000.0).contains("€"));
 
     // Test NOK formatting
     calc.setCurrencyCode("NOK");
@@ -450,8 +448,7 @@ public class NewEquipmentCostEstimateTest {
 
     // Test payback period calculation
     double payback = costEst.calculatePaybackPeriod(5000000.0);
-    assertTrue(payback >= 0 || Double.isInfinite(payback),
-        "Payback should be positive or infinite");
+    assertTrue(payback >= 0 || Double.isInfinite(payback), "Payback should be positive or infinite");
 
     // Test ROI calculation
     double roi = costEst.calculateROI(5000000.0);

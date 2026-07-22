@@ -1,6 +1,6 @@
 /*
  * OptimizedVUflash.java
- * 
+ *
  * High-performance VU flash with optimized convergence for separator applications
  */
 
@@ -11,10 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
- * OptimizedVUflash class with enhanced performance for transient separator simulations. Key
- * optimizations:
- * </p>
+ * OptimizedVUflash class with enhanced performance for transient separator simulations. Key optimizations:
  * <ul>
  * <li>Adaptive convergence criteria based on system state</li>
  * <li>Smart initial guessing using previous state</li>
@@ -37,24 +34,28 @@ public class OptimizedVUflash extends Flash {
   Flash tpFlash;
 
   // Optimization parameters
-  private static final double MIN_PRESSURE = 0.1; // bar
-  private static final double MAX_PRESSURE = 1000.0; // bar
-  private static final double MIN_TEMPERATURE = 200.0; // K
-  private static final double MAX_TEMPERATURE = 1000.0; // K
+  private static final double MIN_PRESSURE = 0.01; // bar
+  private static final double MAX_PRESSURE = 2000.0; // bar
+  private static final double MIN_TEMPERATURE = 50.0; // K
+  private static final double MAX_TEMPERATURE = 5000.0; // K
   private static final double ADAPTIVE_TOL_FACTOR = 1e-8; // Base tolerance
   private static final double FAST_CONV_TOL = 1e-6; // Relaxed tolerance for fast convergence
   private static final double DERIVATIVE_THRESHOLD = 1e-12;
-  private static final int MAX_ITERATIONS = 50; // Reduced from 100
-  private static final double MIN_DAMPING = 0.1;
+  private static final int MAX_ITERATIONS = 100;
+  private static final double MIN_DAMPING = 0.05;
   private static final double MAX_DAMPING = 0.8;
 
-  // Performance tracking
-  private static double lastPressure = Double.NaN;
-  private static double lastTemperature = Double.NaN;
-  private static boolean isWellBehaved = true;
+  // Performance tracking - instance-level to avoid cross-contamination between different systems
+  private double lastPressure = Double.NaN;
+  private double lastTemperature = Double.NaN;
+  private boolean isWellBehaved = true;
 
   /**
    * Constructor for OptimizedVUflash.
+   *
+   * @param system thermodynamic system to flash
+   * @param Vspec specified total volume
+   * @param Uspec specified internal energy
    */
   public OptimizedVUflash(SystemInterface system, double Vspec, double Uspec) {
     this.system = system;
@@ -65,6 +66,8 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * Validates inputs with fast checks.
+   *
+   * @return true if specified volume and internal energy are finite and usable
    */
   private boolean validateInputs() {
     return Vspec > 0 && Double.isFinite(Uspec);
@@ -100,6 +103,8 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * Optimized derivative calculations with safety checks.
+   *
+   * @return derivative of the objective with respect to pressure
    */
   private double calcdQdP() {
     return system.getPressure() * (system.getVolume() - Vspec)
@@ -115,8 +120,7 @@ public class OptimizedVUflash extends Flash {
     double dVdP = system.getdVdPtn();
     double dQdVV = (system.getVolume() - Vspec)
         / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature())
-        + system.getPressure() * dVdP
-            / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
+        + system.getPressure() * dVdP / (neqsim.thermo.ThermodynamicConstantsInterface.R * system.getTemperature());
 
     // Ensure derivative is not too small
     if (Math.abs(dQdVV) < DERIVATIVE_THRESHOLD) {
@@ -127,8 +131,7 @@ public class OptimizedVUflash extends Flash {
 
   private double calcdQdTT() {
     double dQdT_val = calcdQdT();
-    double dQdTT = -system.getCp()
-        / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R)
+    double dQdTT = -system.getCp() / (system.getTemperature() * neqsim.thermo.ThermodynamicConstantsInterface.R)
         - dQdT_val / system.getTemperature();
 
     // Ensure derivative is not too small
@@ -140,6 +143,8 @@ public class OptimizedVUflash extends Flash {
 
   /**
    * High-performance solver with adaptive convergence and line search.
+   *
+   * @return converged pressure, or the current system pressure if input validation fails
    */
   public double solveQ() {
     if (!validateInputs()) {
@@ -202,13 +207,21 @@ public class OptimizedVUflash extends Flash {
         // Single TP flash per iteration
         tpFlash.run();
 
-        // Calculate convergence metrics
-        double presError = Math.abs((nyPres - oldPres) / nyPres);
-        double tempError = Math.abs((nyTemp - oldTemp) / nyTemp);
+        // Calculate convergence metrics - check BOTH iteration variable changes AND
+        // specification
+        // errors
+        double presError = Math.abs((nyPres - oldPres) / Math.max(nyPres, 0.1));
+        double tempError = Math.abs((nyTemp - oldTemp) / Math.max(nyTemp, 1.0));
         double totalError = presError + tempError;
 
-        // Early termination for excellent convergence
-        if (totalError < tolerance) {
+        // Also check actual volume and energy specification errors
+        double volErr = Math.abs((system.getVolume() - Vspec) / Vspec);
+        double hTarget = Uspec + system.getPressure() * Vspec;
+        double hErr = Math.abs((system.getEnthalpy() - hTarget) / Math.max(Math.abs(hTarget), 1.0));
+
+        // Early termination only if BOTH iteration convergence AND specification errors are
+        // small
+        if (totalError < tolerance && volErr < 1e-6 && hErr < 1e-5) {
           isWellBehaved = true;
           break;
         }
@@ -255,9 +268,18 @@ public class OptimizedVUflash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    // Minimal TP flash for initialization
-    tpFlash.run();
-    solveQ();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values;
+    // warm-start enabled only for subsequent iterations.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      // Minimal TP flash for initialization
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */

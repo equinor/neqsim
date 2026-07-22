@@ -1,0 +1,52 @@
+# NeqSim repository ownership
+#
+# @EvenSol is the current repository fallback owner. The subsystem ownership
+# table and the requirement to appoint independent backup maintainers are in
+# MAINTAINERS.md. Replace or extend these entries as Equinor GitHub teams are
+# formally assigned.
+
+* @EvenSol
+
+# Thermodynamics and physical properties
+/src/main/java/neqsim/thermo/ @EvenSol
+/src/main/java/neqsim/thermodynamicoperations/ @EvenSol
+/src/main/java/neqsim/physicalproperties/ @EvenSol
+/src/test/java/neqsim/thermo/ @EvenSol
+/src/test/java/neqsim/thermodynamicoperations/ @EvenSol
+/src/test/java/neqsim/physicalproperties/ @EvenSol
+
+# Process simulation
+/src/main/java/neqsim/process/ @EvenSol
+/src/test/java/neqsim/process/ @EvenSol
+/docs/process/ @EvenSol
+
+# Governed engineering workflows
+/src/main/java/neqsim/process/engineering/ @EvenSol
+/src/test/java/neqsim/process/engineering/ @EvenSol
+/src/main/resources/neqsim/process/engineering/ @EvenSol
+/docs/integration/process-to-engineering-simulator.md @EvenSol
+/docs/integration/engineering-production-vertical-slice.md @EvenSol
+
+# DEXPI and engineering exchange
+/src/main/java/neqsim/process/processmodel/dexpi/ @EvenSol
+/src/test/java/neqsim/process/processmodel/dexpi/ @EvenSol
+/docs/integration/dexpi-engineering-generation.md @EvenSol
+/docs/integration/dexpi-reader.md @EvenSol
+
+# Safety and risk
+/src/main/java/neqsim/process/safety/ @EvenSol
+/src/test/java/neqsim/process/safety/ @EvenSol
+/docs/safety/ @EvenSol
+
+# MCP and agent-facing API
+/src/main/java/neqsim/mcp/ @EvenSol
+/src/test/java/neqsim/mcp/ @EvenSol
+/neqsim-mcp-server/ @EvenSol
+/docs/integration/mcp_server_guide.md @EvenSol
+
+# Repository governance and release controls
+/.github/CODEOWNERS @EvenSol
+/GOVERNANCE.md @EvenSol
+/MAINTAINERS.md @EvenSol
+/CONTRIBUTING.md @EvenSol
+/pom.xml @EvenSol

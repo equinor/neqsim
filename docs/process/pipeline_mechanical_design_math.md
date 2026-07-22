@@ -1,3 +1,8 @@
+---
+title: Pipeline Mechanical Design - Mathematical Methods Reference
+description: Complete mathematical reference for pipeline mechanical design calculations in NeqSim.
+---
+
 # Pipeline Mechanical Design - Mathematical Methods Reference
 
 Complete mathematical reference for pipeline mechanical design calculations in NeqSim.

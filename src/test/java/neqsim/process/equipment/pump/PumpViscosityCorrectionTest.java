@@ -9,10 +9,9 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Tests for viscosity correction feature in PumpChart.
- * 
+ *
  * <p>
- * Tests the Hydraulic Institute (HI) method for correcting pump performance when pumping viscous
- * fluids.
+ * Tests the Hydraulic Institute (HI) method for correcting pump performance when pumping viscous fluids.
  * </p>
  */
 class PumpViscosityCorrectionTest {
@@ -28,11 +27,11 @@ class PumpViscosityCorrectionTest {
     chart = new PumpChart();
 
     // Set up a typical pump curve (tested with water at 998 kg/m³)
-    speed = new double[] {1000.0, 1500.0};
-    flow = new double[][] {{10, 20, 30, 40, 50}, {15, 30, 45, 60, 75}};
-    head = new double[][] {{100, 95, 88, 78, 65}, {225, 214, 198, 175, 146}};
-    efficiency = new double[][] {{60, 75, 82, 78, 68}, {62, 77, 84, 80, 70}};
-    chartConditions = new double[] {18.0, 298.15, 1.0, 1.0, 998.0}; // MW, T, P, Z, density
+    speed = new double[] { 1000.0, 1500.0 };
+    flow = new double[][] { { 10, 20, 30, 40, 50 }, { 15, 30, 45, 60, 75 } };
+    head = new double[][] { { 100, 95, 88, 78, 65 }, { 225, 214, 198, 175, 146 } };
+    efficiency = new double[][] { { 60, 75, 82, 78, 68 }, { 62, 77, 84, 80, 70 } };
+    chartConditions = new double[] { 18.0, 298.15, 1.0, 1.0, 998.0 }; // MW, T, P, Z, density
 
     chart.setCurves(chartConditions, speed, flow, head, efficiency);
     chart.setHeadUnit("meter");
@@ -72,14 +71,11 @@ class PumpViscosityCorrectionTest {
     // Correction factors should be less than 1.0
     assertTrue(chart.getFlowCorrectionFactor() < 1.0, "Flow correction should reduce capacity");
     assertTrue(chart.getHeadCorrectionFactor() < 1.0, "Head correction should reduce head");
-    assertTrue(chart.getEfficiencyCorrectionFactor() < 1.0,
-        "Efficiency correction should reduce efficiency");
+    assertTrue(chart.getEfficiencyCorrectionFactor() < 1.0, "Efficiency correction should reduce efficiency");
 
     // But not too severe for moderate viscosity
-    assertTrue(chart.getFlowCorrectionFactor() > 0.8,
-        "Flow correction should not be too severe at 50 cSt");
-    assertTrue(chart.getEfficiencyCorrectionFactor() > 0.7,
-        "Efficiency correction should not be too severe at 50 cSt");
+    assertTrue(chart.getFlowCorrectionFactor() > 0.8, "Flow correction should not be too severe at 50 cSt");
+    assertTrue(chart.getEfficiencyCorrectionFactor() > 0.7, "Efficiency correction should not be too severe at 50 cSt");
   }
 
   @Test
@@ -95,11 +91,9 @@ class PumpViscosityCorrectionTest {
 
     // Correction factors should be less than 1.0 for high viscosity
     assertTrue(chart.getFlowCorrectionFactor() < 1.0, "Flow should be reduced at 500 cSt");
-    assertTrue(chart.getEfficiencyCorrectionFactor() < 1.0,
-        "Efficiency should be reduced at 500 cSt");
+    assertTrue(chart.getEfficiencyCorrectionFactor() < 1.0, "Efficiency should be reduced at 500 cSt");
     // At very high viscosity, expect noticeable degradation
-    assertTrue(chart.getFlowCorrectionFactor() <= 0.9,
-        "Flow correction at 500 cSt should be <= 0.9");
+    assertTrue(chart.getFlowCorrectionFactor() <= 0.9, "Flow correction at 500 cSt should be <= 0.9");
   }
 
   @Test
@@ -115,8 +109,7 @@ class PumpViscosityCorrectionTest {
     double baseHead = chart.getHead(30.0, 1000.0);
     double correctedHead = chart.getViscosityCorrectedHead(baseHead);
 
-    assertTrue(correctedHead < baseHead,
-        "Corrected head should be less than base head for viscous fluid");
+    assertTrue(correctedHead < baseHead, "Corrected head should be less than base head for viscous fluid");
     assertTrue(correctedHead > 0, "Corrected head should be positive");
   }
 
@@ -133,8 +126,7 @@ class PumpViscosityCorrectionTest {
     double baseEfficiency = chart.getEfficiency(30.0, 1000.0);
     double correctedEfficiency = chart.getViscosityCorrectedEfficiency(baseEfficiency);
 
-    assertTrue(correctedEfficiency < baseEfficiency,
-        "Corrected efficiency should be less than base efficiency");
+    assertTrue(correctedEfficiency < baseEfficiency, "Corrected efficiency should be less than base efficiency");
     assertTrue(correctedEfficiency > 0, "Corrected efficiency should be positive");
   }
 
@@ -155,13 +147,11 @@ class PumpViscosityCorrectionTest {
     double baseHead = chart.getHead(30.0, 1000.0);
 
     // Density correction increases head (lighter fluid)
-    assertTrue(densityOnlyHead > baseHead,
-        "Density correction should increase head for lighter fluid");
+    assertTrue(densityOnlyHead > baseHead, "Density correction should increase head for lighter fluid");
 
     // Viscosity reduces head
     // The fully corrected head accounts for both effects
-    assertNotEquals(baseHead, fullyCorrectHead,
-        "Fully corrected head should differ from base head");
+    assertNotEquals(baseHead, fullyCorrectHead, "Fully corrected head should differ from base head");
   }
 
   @Test

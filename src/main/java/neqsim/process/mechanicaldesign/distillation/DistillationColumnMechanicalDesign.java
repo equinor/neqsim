@@ -1,9 +1,9 @@
 package neqsim.process.mechanicaldesign.distillation;
 
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.process.costestimation.column.ColumnCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.distillation.DistillationColumn;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
@@ -11,7 +11,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 
 /**
  * Mechanical design class for distillation columns.
- * 
+ *
  * <p>
  * Handles design calculations for tray-based and packed distillation columns including:
  * </p>
@@ -116,6 +116,67 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
    */
   public DistillationColumnMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new ColumnCostEstimate(this);
+  }
+
+  /**
+   * Optimize the tray configuration on annualized mechanical-design cost.
+   *
+   * <p>
+   * This is the mechanical-design entry point for column optimization. It delegates the rigorous tray-count/feed-tray
+   * search to the column, then evaluates CAPEX and utility OPEX using this design object's tray efficiency and the
+   * column cost-estimation correlations.
+   * </p>
+   *
+   * @param productSpec the target purity (mole fraction) of the key component
+   * @param componentName the name of the key component
+   * @param isTopProduct true if the spec is for the top product, false for the bottom product
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
+   * @return economic optimization result with process, mechanical design, and cost metrics
+   * @throws IllegalStateException if the associated equipment is not a distillation column
+   */
+  public DistillationColumn.EconomicTrayOptimizationResult optimizeEconomicTrayConfiguration(double productSpec,
+      String componentName, boolean isTopProduct, int maxTrays) {
+    return getColumnForEconomicOptimization().findEconomicOptimalTrayConfiguration(productSpec, componentName,
+        isTopProduct, maxTrays, 0.15, 8000.0, 25.0, 0.03, trayEfficiency);
+  }
+
+  /**
+   * Optimize the tray configuration on annualized cost using supplied economics and ratios.
+   *
+   * @param productSpec the target purity (mole fraction) of the key component
+   * @param componentName the name of the key component
+   * @param isTopProduct true if the spec is for the top product, false for the bottom product
+   * @param maxTrays the maximum total tray count to try including reboiler/condenser if present
+   * @param condenserRefluxRatios optional condenser reflux-ratio candidates to evaluate
+   * @param reboilerRatios optional reboiler boilup/reflux-ratio candidates to evaluate
+   * @param capitalChargeFactor annual capital charge factor in 1/year
+   * @param operatingHoursPerYear operating hours per year for utility costing
+   * @param steamCostPerTonne steam cost in USD/tonne for reboiler duty
+   * @param coolingWaterCostPerM3 cooling-water cost in USD/m3 for condenser duty
+   * @return economic optimization result with process, mechanical design, and cost metrics
+   * @throws IllegalStateException if the associated equipment is not a distillation column
+   */
+  public DistillationColumn.EconomicTrayOptimizationResult optimizeEconomicTrayConfiguration(double productSpec,
+      String componentName, boolean isTopProduct, int maxTrays, double[] condenserRefluxRatios, double[] reboilerRatios,
+      double capitalChargeFactor, double operatingHoursPerYear, double steamCostPerTonne,
+      double coolingWaterCostPerM3) {
+    return getColumnForEconomicOptimization().findEconomicOptimalTrayConfiguration(productSpec, componentName,
+        isTopProduct, maxTrays, condenserRefluxRatios, reboilerRatios, capitalChargeFactor, operatingHoursPerYear,
+        steamCostPerTonne, coolingWaterCostPerM3, trayEfficiency);
+  }
+
+  /**
+   * Get the associated column for economic optimization.
+   *
+   * @return associated distillation column
+   * @throws IllegalStateException if the associated equipment is not a distillation column
+   */
+  private DistillationColumn getColumnForEconomicOptimization() {
+    if (!(getProcessEquipment() instanceof DistillationColumn)) {
+      throw new IllegalStateException("Economic tray optimization requires a DistillationColumn.");
+    }
+    return (DistillationColumn) getProcessEquipment();
   }
 
   /** {@inheritDoc} */
@@ -170,6 +231,22 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
       // Use defaults if trays not accessible
     }
 
+    try {
+      if (vaporMolarFlow <= 0.0 && column.getGasOutStream() != null && column.getGasOutStream().getFluid() != null) {
+        vaporMolarFlow = column.getGasOutStream().getFlowRate("mol/hr");
+        vaporDensity = column.getGasOutStream().getFluid().getDensity("kg/m3");
+        vaporMW = column.getGasOutStream().getFluid().getMolarMass() * 1000;
+      }
+      if (liquidMolarFlow <= 0.0 && column.getLiquidOutStream() != null
+          && column.getLiquidOutStream().getFluid() != null) {
+        liquidMolarFlow = column.getLiquidOutStream().getFlowRate("mol/hr");
+        liquidDensity = column.getLiquidOutStream().getFluid().getDensity("kg/m3");
+        liquidMW = column.getLiquidOutStream().getFluid().getMolarMass() * 1000;
+      }
+    } catch (Exception ex) {
+      // Keep tray-based or default sizing inputs.
+    }
+
     // Calculate mass flow rates
     double vaporMassFlow = vaporMolarFlow * vaporMW / 1000.0; // kg/hr
     double liquidMassFlow = liquidMolarFlow * liquidMW / 1000.0; // kg/hr
@@ -189,18 +266,26 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
     }
 
     double uFlood = kFactor * Math.sqrt((liquidDensity - vaporDensity) / vaporDensity);
+    if (Double.isNaN(uFlood) || Double.isInfinite(uFlood) || uFlood <= 0.0) {
+      uFlood = kFactor;
+    }
     double uDesign = uFlood * maxFloodingFactor;
 
     // Calculate required vapor area
     double vaporVolumeFlowM3s = vaporVolumeFlow / 3600.0;
-    double requiredVaporArea = vaporVolumeFlowM3s / uDesign;
+    if (vaporVolumeFlowM3s <= 0.0 || Double.isNaN(vaporVolumeFlowM3s) || Double.isInfinite(vaporVolumeFlowM3s)
+        || uDesign <= 0.0) {
+      columnDiameter = roundToStandardDiameter(0.5);
+    } else {
+      double requiredVaporArea = vaporVolumeFlowM3s / uDesign;
 
-    // Account for downcomer area
-    double totalArea = requiredVaporArea / (1.0 - downcomberAreaFraction);
-    columnDiameter = Math.sqrt(4.0 * totalArea / Math.PI);
+      // Account for downcomer area
+      double totalArea = requiredVaporArea / (1.0 - downcomberAreaFraction);
+      columnDiameter = Math.sqrt(4.0 * totalArea / Math.PI);
 
-    // Round up to standard vessel diameter
-    columnDiameter = roundToStandardDiameter(columnDiameter);
+      // Round up to standard vessel diameter
+      columnDiameter = roundToStandardDiameter(columnDiameter);
+    }
 
     // Recalculate actual flooding factor
     double actualArea = Math.PI * Math.pow(columnDiameter / 2.0, 2);
@@ -265,8 +350,8 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
    */
   private double roundToStandardDiameter(double diameter) {
     // Standard vessel diameters in meters
-    double[] standardSizes = {0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2,
-        2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0, 9.0, 10.0};
+    double[] standardSizes = { 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.4, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0,
+        3.2, 3.4, 3.6, 3.8, 4.0, 4.5, 5.0, 5.5, 6.0, 7.0, 8.0, 9.0, 10.0 };
 
     for (double stdSize : standardSizes) {
       if (stdSize >= diameter) {
@@ -511,8 +596,7 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
    * Calculate equipment weight for cost estimation.
    *
    * <p>
-   * Calculates column shell weight, head weight, tray weight, and total weight based on dimensions
-   * and wall thickness.
+   * Calculates column shell weight, head weight, tray weight, and total weight based on dimensions and wall thickness.
    * </p>
    */
   public void calculateWeights() {
@@ -525,8 +609,7 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
 
     // Column shell weight
     double outerDiam = columnDiameter + 2.0 * columnWallThickness / 1000.0;
-    double shellCrossSectionArea =
-        Math.PI / 4.0 * (Math.pow(outerDiam, 2) - Math.pow(columnDiameter, 2));
+    double shellCrossSectionArea = Math.PI / 4.0 * (Math.pow(outerDiam, 2) - Math.pow(columnDiameter, 2));
     double shellWeight = shellCrossSectionArea * columnHeight * steelDensity;
 
     // Head weight (2:1 ellipsoidal, approximate as 15% of shell weight)
@@ -555,8 +638,7 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
     // Calculate weights first
     calculateWeights();
 
-    neqsim.process.costestimation.CostEstimationCalculator calc =
-        getCostEstimate().getCostCalculator();
+    neqsim.process.costestimation.CostEstimationCalculator calc = getCostEstimate().getCostCalculator();
 
     // Column shell cost
     double shellCost = calc.calcVerticalVesselCost(weigthVesselShell);
@@ -678,8 +760,6 @@ public class DistillationColumnMechanicalDesign extends MechanicalDesign {
     costData.addProperty("totalSystemCost_USD", calculateTotalSystemCost());
     jsonObj.add("costEstimation", costData);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 }
-

@@ -1,3 +1,8 @@
+---
+title: "Property flash workflows proven by tests"
+description: "When wrapping the API externally, mirror these assertions to guard against transport or serialization errors."
+---
+
 # Property flash workflows proven by tests
 
 `ThermodynamicOperationsTest` exercises NeqSim's property flash API across PT/TP orderings, unit handling, and online composition updates. This guide distills the tested patterns so you can set up property flashes with confidence.

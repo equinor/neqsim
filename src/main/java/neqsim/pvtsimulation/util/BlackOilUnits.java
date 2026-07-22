@@ -4,8 +4,7 @@ package neqsim.pvtsimulation.util;
  * Unit system enumeration for Black Oil correlations.
  *
  * <p>
- * Supports conversion between field units (US oilfield) and SI/metric units commonly used in
- * NeqSim.
+ * Supports conversion between field units (US oilfield) and SI/metric units commonly used in NeqSim.
  *
  * @author ESOL
  */
@@ -13,7 +12,7 @@ public enum BlackOilUnits {
 
   /**
    * Field units (US oilfield standard).
-   * 
+   *
    * <ul>
    * <li>Pressure: psia</li>
    * <li>Temperature: °F</li>
@@ -27,7 +26,7 @@ public enum BlackOilUnits {
 
   /**
    * SI/Metric units.
-   * 
+   *
    * <ul>
    * <li>Pressure: bara</li>
    * <li>Temperature: °C</li>
@@ -41,7 +40,7 @@ public enum BlackOilUnits {
 
   /**
    * NeqSim internal units.
-   * 
+   *
    * <ul>
    * <li>Pressure: bara</li>
    * <li>Temperature: K</li>
@@ -64,13 +63,13 @@ public enum BlackOilUnits {
    */
   public static double toPsia(double pressure, BlackOilUnits fromUnit) {
     switch (fromUnit) {
-      case FIELD:
-        return pressure; // Already psia
-      case SI:
-      case NEQSIM:
-        return pressure * 14.5038; // bara to psia
-      default:
-        return pressure;
+    case FIELD:
+      return pressure; // Already psia
+    case SI:
+    case NEQSIM:
+      return pressure * 14.5038; // bara to psia
+    default:
+      return pressure;
     }
   }
 
@@ -83,13 +82,13 @@ public enum BlackOilUnits {
    */
   public static double fromPsia(double psia, BlackOilUnits toUnit) {
     switch (toUnit) {
-      case FIELD:
-        return psia; // Already psia
-      case SI:
-      case NEQSIM:
-        return psia / 14.5038; // psia to bara
-      default:
-        return psia;
+    case FIELD:
+      return psia; // Already psia
+    case SI:
+    case NEQSIM:
+      return psia / 14.5038; // psia to bara
+    default:
+      return psia;
     }
   }
 
@@ -104,14 +103,14 @@ public enum BlackOilUnits {
    */
   public static double toFahrenheit(double temperature, BlackOilUnits fromUnit) {
     switch (fromUnit) {
-      case FIELD:
-        return temperature; // Already °F
-      case SI:
-        return temperature * 9.0 / 5.0 + 32.0; // °C to °F
-      case NEQSIM:
-        return (temperature - 273.15) * 9.0 / 5.0 + 32.0; // K to °F
-      default:
-        return temperature;
+    case FIELD:
+      return temperature; // Already °F
+    case SI:
+      return temperature * 9.0 / 5.0 + 32.0; // °C to °F
+    case NEQSIM:
+      return (temperature - 273.15) * 9.0 / 5.0 + 32.0; // K to °F
+    default:
+      return temperature;
     }
   }
 
@@ -124,14 +123,14 @@ public enum BlackOilUnits {
    */
   public static double fromFahrenheit(double fahrenheit, BlackOilUnits toUnit) {
     switch (toUnit) {
-      case FIELD:
-        return fahrenheit; // Already °F
-      case SI:
-        return (fahrenheit - 32.0) * 5.0 / 9.0; // °F to °C
-      case NEQSIM:
-        return (fahrenheit - 32.0) * 5.0 / 9.0 + 273.15; // °F to K
-      default:
-        return fahrenheit;
+    case FIELD:
+      return fahrenheit; // Already °F
+    case SI:
+      return (fahrenheit - 32.0) * 5.0 / 9.0; // °F to °C
+    case NEQSIM:
+      return (fahrenheit - 32.0) * 5.0 / 9.0 + 273.15; // °F to K
+    default:
+      return fahrenheit;
     }
   }
 
@@ -160,13 +159,13 @@ public enum BlackOilUnits {
    */
   public static double toScfPerStb(double gor, BlackOilUnits fromUnit) {
     switch (fromUnit) {
-      case FIELD:
-        return gor; // Already scf/STB
-      case SI:
-      case NEQSIM:
-        return gor / SCF_STB_TO_SM3_SM3; // Sm³/Sm³ to scf/STB
-      default:
-        return gor;
+    case FIELD:
+      return gor; // Already scf/STB
+    case SI:
+    case NEQSIM:
+      return gor / SCF_STB_TO_SM3_SM3; // Sm³/Sm³ to scf/STB
+    default:
+      return gor;
     }
   }
 
@@ -179,13 +178,13 @@ public enum BlackOilUnits {
    */
   public static double fromScfPerStb(double scfPerStb, BlackOilUnits toUnit) {
     switch (toUnit) {
-      case FIELD:
-        return scfPerStb; // Already scf/STB
-      case SI:
-      case NEQSIM:
-        return scfPerStb * SCF_STB_TO_SM3_SM3; // scf/STB to Sm³/Sm³
-      default:
-        return scfPerStb;
+    case FIELD:
+      return scfPerStb; // Already scf/STB
+    case SI:
+    case NEQSIM:
+      return scfPerStb * SCF_STB_TO_SM3_SM3; // scf/STB to Sm³/Sm³
+    default:
+      return scfPerStb;
     }
   }
 
@@ -203,13 +202,13 @@ public enum BlackOilUnits {
    */
   public static double toCentipoise(double viscosity, BlackOilUnits fromUnit) {
     switch (fromUnit) {
-      case FIELD:
-        return viscosity; // Already cP
-      case SI:
-      case NEQSIM:
-        return viscosity * 1000.0; // Pa·s to cP (1 Pa·s = 1000 cP)
-      default:
-        return viscosity;
+    case FIELD:
+      return viscosity; // Already cP
+    case SI:
+    case NEQSIM:
+      return viscosity * 1000.0; // Pa·s to cP (1 Pa·s = 1000 cP)
+    default:
+      return viscosity;
     }
   }
 
@@ -225,13 +224,13 @@ public enum BlackOilUnits {
    */
   public static double fromCentipoise(double centipoise, BlackOilUnits toUnit) {
     switch (toUnit) {
-      case FIELD:
-        return centipoise; // Already cP
-      case SI:
-      case NEQSIM:
-        return centipoise / 1000.0; // cP to Pa·s (1 cP = 0.001 Pa·s)
-      default:
-        return centipoise;
+    case FIELD:
+      return centipoise; // Already cP
+    case SI:
+    case NEQSIM:
+      return centipoise / 1000.0; // cP to Pa·s (1 cP = 0.001 Pa·s)
+    default:
+      return centipoise;
     }
   }
 
@@ -249,13 +248,13 @@ public enum BlackOilUnits {
    */
   public static double toLbPerFt3(double density, BlackOilUnits fromUnit) {
     switch (fromUnit) {
-      case FIELD:
-        return density; // Already lb/ft³
-      case SI:
-      case NEQSIM:
-        return density / LB_FT3_TO_KG_M3; // kg/m³ to lb/ft³
-      default:
-        return density;
+    case FIELD:
+      return density; // Already lb/ft³
+    case SI:
+    case NEQSIM:
+      return density / LB_FT3_TO_KG_M3; // kg/m³ to lb/ft³
+    default:
+      return density;
     }
   }
 
@@ -268,13 +267,13 @@ public enum BlackOilUnits {
    */
   public static double fromLbPerFt3(double lbPerFt3, BlackOilUnits toUnit) {
     switch (toUnit) {
-      case FIELD:
-        return lbPerFt3; // Already lb/ft³
-      case SI:
-      case NEQSIM:
-        return lbPerFt3 * LB_FT3_TO_KG_M3; // lb/ft³ to kg/m³
-      default:
-        return lbPerFt3;
+    case FIELD:
+      return lbPerFt3; // Already lb/ft³
+    case SI:
+    case NEQSIM:
+      return lbPerFt3 * LB_FT3_TO_KG_M3; // lb/ft³ to kg/m³
+    default:
+      return lbPerFt3;
     }
   }
 
@@ -316,13 +315,13 @@ public enum BlackOilUnits {
    */
   public static double toPerPsi(double compressibility, BlackOilUnits fromUnit) {
     switch (fromUnit) {
-      case FIELD:
-        return compressibility; // Already 1/psi
-      case SI:
-      case NEQSIM:
-        return compressibility / 14.5038; // 1/bar to 1/psi
-      default:
-        return compressibility;
+    case FIELD:
+      return compressibility; // Already 1/psi
+    case SI:
+    case NEQSIM:
+      return compressibility / 14.5038; // 1/bar to 1/psi
+    default:
+      return compressibility;
     }
   }
 
@@ -335,13 +334,13 @@ public enum BlackOilUnits {
    */
   public static double fromPerPsi(double perPsi, BlackOilUnits toUnit) {
     switch (toUnit) {
-      case FIELD:
-        return perPsi; // Already 1/psi
-      case SI:
-      case NEQSIM:
-        return perPsi * 14.5038; // 1/psi to 1/bar
-      default:
-        return perPsi;
+    case FIELD:
+      return perPsi; // Already 1/psi
+    case SI:
+    case NEQSIM:
+      return perPsi * 14.5038; // 1/psi to 1/bar
+    default:
+      return perPsi;
     }
   }
 }

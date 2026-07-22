@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:neqsim:schema:engineering-vertical-slice-qualification:v1",
+  "title": "NeqSim engineering vertical-slice qualification",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "schemaUri",
+    "projectId",
+    "projectRevision",
+    "policyId",
+    "policyRevision",
+    "gates",
+    "failedGates",
+    "qualifiedForControlledPilot",
+    "fitnessForConstruction",
+    "finalEngineeringApprovalGranted",
+    "engineeringApprovalRequired"
+  ],
+  "properties": {
+    "schemaVersion": { "const": "neqsim_engineering_vertical_slice_qualification.v1" },
+    "schemaUri": { "type": "string", "minLength": 1 },
+    "projectId": { "type": "string", "minLength": 1 },
+    "projectRevision": { "type": "string", "minLength": 1 },
+    "policyId": { "type": "string", "minLength": 1 },
+    "policyRevision": { "type": "string", "minLength": 1 },
+    "gates": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {
+        "type": "object",
+        "required": ["passed", "findings", "requiredAction"],
+        "properties": {
+          "passed": { "type": "boolean" },
+          "findings": { "type": "array", "items": { "type": "string" } },
+          "requiredAction": { "type": "string" }
+        },
+        "additionalProperties": false
+      }
+    },
+    "failedGates": { "type": "array", "items": { "type": "string" } },
+    "qualifiedForControlledPilot": { "type": "boolean" },
+    "qualifiedForFeedSupport": { "const": false },
+    "fitnessForConstruction": { "const": false },
+    "finalEngineeringApprovalGranted": { "const": false },
+    "engineeringApprovalRequired": { "const": true },
+    "governance": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": false
+}

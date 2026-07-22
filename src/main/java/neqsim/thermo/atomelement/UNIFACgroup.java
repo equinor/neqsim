@@ -10,9 +10,7 @@ import neqsim.thermo.component.ComponentGEUnifac;
 import neqsim.thermo.phase.PhaseGEUnifac;
 
 /**
- * <p>
  * UNIFACgroup class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -43,9 +41,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   int subGroup = 0;
 
   /**
-   * <p>
    * getQMixdN.
-   * </p>
    *
    * @return the QMixdN
    */
@@ -54,9 +50,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * setQMixdN.
-   * </p>
    *
    * @param QMixdN the QMixdN to set
    */
@@ -65,16 +59,13 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Constructor for UNIFACgroup.
-   * </p>
    */
-  public UNIFACgroup() {}
+  public UNIFACgroup() {
+  }
 
   /**
-   * <p>
    * Constructor for UNIFACgroup.
-   * </p>
    *
    * @param groupNumber a int
    * @param temp a int
@@ -83,14 +74,12 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
       java.sql.ResultSet dataSet = null;
       try {
-        dataSet = database
-            .getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
+        dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
         dataSet.next();
         dataSet.getClob("name");
       } catch (Exception ex) {
         dataSet.close();
-        dataSet = database
-            .getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
+        dataSet = database.getResultSet(("SELECT * FROM unifacgroupparam WHERE Secondary=" + groupNumber + ""));
         dataSet.next();
       }
       n = temp;
@@ -231,9 +220,8 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     int result = 1;
     result = prime * result + Arrays.hashCode(QMixdN);
     result = prime * result + Arrays.hashCode(lnGammaMixdn);
-    result = prime * result + Objects.hash(Q, QComp, QMix, R, groupIndex, groupName, lnGammaComp,
-        lnGammaCompdT, lnGammaCompdTdT, lnGammaMix, lnGammaMixdT, lnGammaMixdTdT, mainGroup, n,
-        subGroup, xComp);
+    result = prime * result + Objects.hash(Q, QComp, QMix, R, groupIndex, groupName, lnGammaComp, lnGammaCompdT,
+        lnGammaCompdTdT, lnGammaMix, lnGammaMixdT, lnGammaMixdTdT, mainGroup, n, subGroup, xComp);
     return result;
   }
 
@@ -253,20 +241,18 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
     UNIFACgroup other = (UNIFACgroup) obj;
     return subGroup == other.subGroup;
     /*
-     * Double.doubleToLongBits(Q) == Double.doubleToLongBits(other.Q) &&
-     * Double.doubleToLongBits(QComp) == Double.doubleToLongBits(other.QComp) &&
-     * Double.doubleToLongBits(QMix) == Double.doubleToLongBits(other.QMix) && Arrays.equals(QMixdN,
-     * other.QMixdN) && Double.doubleToLongBits(R) == Double.doubleToLongBits(other.R) && groupIndex
-     * == other.groupIndex && Objects.equals(groupName, other.groupName) &&
+     * Double.doubleToLongBits(Q) == Double.doubleToLongBits(other.Q) && Double.doubleToLongBits(QComp) ==
+     * Double.doubleToLongBits(other.QComp) && Double.doubleToLongBits(QMix) == Double.doubleToLongBits(other.QMix) &&
+     * Arrays.equals(QMixdN, other.QMixdN) && Double.doubleToLongBits(R) == Double.doubleToLongBits(other.R) &&
+     * groupIndex == other.groupIndex && Objects.equals(groupName, other.groupName) &&
      * Double.doubleToLongBits(lnGammaComp) == Double .doubleToLongBits(other.lnGammaComp) &&
      * Double.doubleToLongBits(lnGammaCompdT) == Double .doubleToLongBits(other.lnGammaCompdT) &&
-     * Double.doubleToLongBits(lnGammaCompdTdT) == Double .doubleToLongBits(other.lnGammaCompdTdT)
-     * && Double.doubleToLongBits(lnGammaMix) == Double.doubleToLongBits(other.lnGammaMix) &&
+     * Double.doubleToLongBits(lnGammaCompdTdT) == Double .doubleToLongBits(other.lnGammaCompdTdT) &&
+     * Double.doubleToLongBits(lnGammaMix) == Double.doubleToLongBits(other.lnGammaMix) &&
      * Double.doubleToLongBits(lnGammaMixdT) == Double .doubleToLongBits(other.lnGammaMixdT) &&
      * Double.doubleToLongBits(lnGammaMixdTdT) == Double .doubleToLongBits(other.lnGammaMixdTdT) &&
-     * Arrays.equals(lnGammaMixdn, other.lnGammaMixdn) && mainGroup == other.mainGroup && n ==
-     * other.n && subGroup == other.subGroup && Double.doubleToLongBits(xComp) ==
-     * Double.doubleToLongBits(other.xComp);
+     * Arrays.equals(lnGammaMixdn, other.lnGammaMixdn) && mainGroup == other.mainGroup && n == other.n && subGroup ==
+     * other.subGroup && Double.doubleToLongBits(xComp) == Double.doubleToLongBits(other.xComp);
      */
   }
 
@@ -288,18 +274,15 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   /*
    * public double calcXMix(PhaseGEUnifac phase) { double temp = 0.0, temp2 = 0.0, tempVal = 0.0;
    *
-   * for (int j = 0; j < phase.getNumberOfComponents(); j++) { for (int i = 0; i <
-   * ((ComponentGEUnifac) phase.getComponent(j)).getNumberOfUNIFACgroups(); i++) { tempVal =
-   * phase.getComponent(j).getNumberOfMolesInPhase() * ((ComponentGEUnifac)
-   * phase.getComponent(j)).getUnifacGroup(i).getN(); temp += tempVal; if (((ComponentGEUnifac)
-   * phase.getComponent(j)).getUnifacGroup(i).getSubGroup() == subGroup) { temp2 += tempVal; } } }
-   * xMix = temp2 / temp; return xMix; }
+   * for (int j = 0; j < phase.getNumberOfComponents(); j++) { for (int i = 0; i < ((ComponentGEUnifac)
+   * phase.getComponent(j)).getNumberOfUNIFACgroups(); i++) { tempVal = phase.getComponent(j).getNumberOfMolesInPhase()
+   * * ((ComponentGEUnifac) phase.getComponent(j)).getUnifacGroup(i).getN(); temp += tempVal; if (((ComponentGEUnifac)
+   * phase.getComponent(j)).getUnifacGroup(i).getSubGroup() == subGroup) { temp2 += tempVal; } } } xMix = temp2 / temp;
+   * return xMix; }
    */
 
   /**
-   * <p>
    * calcQComp.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentGEUnifac} object
    * @return a double
@@ -318,9 +301,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * calcQMix.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseGEUnifac} object
    * @return a double
@@ -352,9 +333,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * calcQMixdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseGEUnifac} object
    * @return an array of type double
@@ -400,9 +379,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * getQMixdN.
-   * </p>
    *
    * @param comp a int
    * @return a double
@@ -417,9 +394,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
    */
 
   /**
-   * <p>
    * Getter for the field <code>xComp</code>.
-   * </p>
    *
    * @return a double
    */
@@ -518,9 +493,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Getter for the field <code>lnGammaMixdn</code>.
-   * </p>
    *
    * @param compNumb a int
    * @return a double
@@ -530,9 +503,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Setter for the field <code>lnGammaMixdn</code>.
-   * </p>
    *
    * @param lnGammaMixdn1 a double
    * @param compNumb a int
@@ -587,9 +558,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Getter for the field <code>lnGammaCompdTdT</code>.
-   * </p>
    *
    * @return the lnGammaCompdTdT
    */
@@ -598,9 +567,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Setter for the field <code>lnGammaCompdTdT</code>.
-   * </p>
    *
    * @param lnGammaCompdTdT the lnGammaCompdTdT to set
    */
@@ -609,9 +576,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Getter for the field <code>lnGammaMixdTdT</code>.
-   * </p>
    *
    * @return the lnGammaMixdTdT
    */
@@ -620,9 +585,7 @@ public class UNIFACgroup implements ThermodynamicConstantsInterface, Comparable<
   }
 
   /**
-   * <p>
    * Setter for the field <code>lnGammaMixdTdT</code>.
-   * </p>
    *
    * @param lnGammaMixdTdT the lnGammaMixdTdT to set
    */

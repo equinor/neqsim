@@ -1,6 +1,8 @@
 package neqsim.process.equipment.compressor;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.CompressorWashing.FoulingType;
@@ -83,12 +85,12 @@ public class CompressorWashingTest {
   @Test
   public void testWashMethodEffectiveness() {
     // Offline soak should be more effective than online
-    assertTrue(WashingMethod.OFFLINE_SOAK.getRecoveryEffectiveness() > WashingMethod.ONLINE_WET
-        .getRecoveryEffectiveness());
+    assertTrue(
+        WashingMethod.OFFLINE_SOAK.getRecoveryEffectiveness() > WashingMethod.ONLINE_WET.getRecoveryEffectiveness());
 
     // Crank wash should be most effective
-    assertTrue(WashingMethod.CRANK_WASH.getRecoveryEffectiveness() > WashingMethod.OFFLINE_SOAK
-        .getRecoveryEffectiveness());
+    assertTrue(
+        WashingMethod.CRANK_WASH.getRecoveryEffectiveness() > WashingMethod.OFFLINE_SOAK.getRecoveryEffectiveness());
   }
 
   @Test
@@ -196,12 +198,10 @@ public class CompressorWashingTest {
   @Test
   public void testFoulingTypes() {
     // Salt has highest fouling rate among common types
-    assertTrue(
-        FoulingType.SALT.getFoulingRatePerHour() > FoulingType.PARTICULATE.getFoulingRatePerHour());
+    assertTrue(FoulingType.SALT.getFoulingRatePerHour() > FoulingType.PARTICULATE.getFoulingRatePerHour());
 
     // Corrosion is harder to wash
-    assertTrue(
-        FoulingType.SALT.getWashabilityFactor() > FoulingType.CORROSION.getWashabilityFactor());
+    assertTrue(FoulingType.SALT.getWashabilityFactor() > FoulingType.CORROSION.getWashabilityFactor());
   }
 
   @Test

@@ -12,7 +12,6 @@ import java.util.Set;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
-import neqsim.process.equipment.failure.EquipmentFailureMode;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProductionImpactAnalyzer;
 import neqsim.process.util.optimizer.ProductionImpactResult;
@@ -68,8 +67,7 @@ public class DependencyAnalyzer implements Serializable {
      * @param targetEquipment target equipment name
      * @param dependencyType type of dependency
      */
-    public CrossInstallationDependency(String sourceEquipment, String targetEquipment,
-        String dependencyType) {
+    public CrossInstallationDependency(String sourceEquipment, String targetEquipment, String dependencyType) {
       this.sourceEquipment = sourceEquipment;
       this.targetEquipment = targetEquipment;
       this.dependencyType = dependencyType;
@@ -431,10 +429,9 @@ public class DependencyAnalyzer implements Serializable {
    * @param targetInstallation name of target installation
    * @param dependencyType type (gas_export, oil_export, utility, etc.)
    */
-  public void addCrossInstallationDependency(String sourceEquipment, String targetEquipment,
-      String targetInstallation, String dependencyType) {
-    CrossInstallationDependency dep =
-        new CrossInstallationDependency(sourceEquipment, targetEquipment, dependencyType);
+  public void addCrossInstallationDependency(String sourceEquipment, String targetEquipment, String targetInstallation,
+      String dependencyType) {
+    CrossInstallationDependency dep = new CrossInstallationDependency(sourceEquipment, targetEquipment, dependencyType);
     dep.setTargetInstallation(targetInstallation);
 
     if (!crossDependencies.containsKey(sourceEquipment)) {
@@ -451,8 +448,8 @@ public class DependencyAnalyzer implements Serializable {
    * @param dependencyType type of dependency
    * @param impactFactor impact factor (0-1)
    */
-  public void addCrossInstallationDependency(FunctionalLocation sourceLocation,
-      FunctionalLocation targetLocation, String dependencyType, double impactFactor) {
+  public void addCrossInstallationDependency(FunctionalLocation sourceLocation, FunctionalLocation targetLocation,
+      String dependencyType, double impactFactor) {
     CrossInstallationDependency dep = new CrossInstallationDependency(sourceLocation.getFullTag(),
         targetLocation.getFullTag(), dependencyType);
     dep.setSourceLocation(sourceLocation);
@@ -508,8 +505,7 @@ public class DependencyAnalyzer implements Serializable {
     return criticalPaths;
   }
 
-  private void findPaths(String current, Set<String> endNodes, List<String> path,
-      List<List<String>> allPaths) {
+  private void findPaths(String current, Set<String> endNodes, List<String> path, List<List<String>> allPaths) {
     path.add(current);
 
     if (endNodes.contains(current)) {

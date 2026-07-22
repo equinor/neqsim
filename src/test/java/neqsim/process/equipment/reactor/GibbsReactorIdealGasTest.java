@@ -39,4 +39,3 @@ public class GibbsReactorIdealGasTest {
     Assertions.assertEquals(1.0, outlet.getComponent("water").getz(), 1e-6);
   }
 }
-

@@ -2,6 +2,8 @@ package neqsim.process.util.monitor;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import com.google.gson.JsonElement;
@@ -16,6 +18,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author esol
  */
 public class SplitterResponseTest {
+  private static final Logger logger = LogManager.getLogger(SplitterResponseTest.class);
+
   private Splitter splitter;
   private Stream inletStream;
 
@@ -33,7 +37,7 @@ public class SplitterResponseTest {
     inletStream.run();
 
     splitter = new Splitter("splitter", inletStream, 3);
-    splitter.setSplitFactors(new double[] {0.8, 0.15, 0.05});
+    splitter.setSplitFactors(new double[] { 0.8, 0.15, 0.05 });
     splitter.run();
   }
 
@@ -42,7 +46,7 @@ public class SplitterResponseTest {
     String json = splitter.toJson();
     assertNotNull(json, "JSON response should not be null");
     assertTrue(json.length() > 0, "JSON response should not be empty");
-    System.out.println("JSON output: " + json);
+    logger.info("JSON output: " + json);
 
     // Parse JSON to verify it's valid
     JsonElement element = JsonParser.parseString(json);
@@ -100,7 +104,6 @@ public class SplitterResponseTest {
     SplitterResponse response = new SplitterResponse(splitter);
     assertNotNull(response, "Response should be created");
     assertTrue(response.data.size() > 0, "Response should contain data");
-    assertTrue(response.data.containsKey("inlet mass flow"),
-        "Response should contain inlet mass flow");
+    assertTrue(response.data.containsKey("inlet mass flow"), "Response should contain inlet mass flow");
   }
 }

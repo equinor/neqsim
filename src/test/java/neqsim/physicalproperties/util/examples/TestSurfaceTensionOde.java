@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestSurfaceTensionOde class.
- * </p>
  *
  * @author oberg
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TestSurfaceTensionOde {
+  private static final Logger logger = LogManager.getLogger(TestSurfaceTensionOde.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestSurfaceTensionOde.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

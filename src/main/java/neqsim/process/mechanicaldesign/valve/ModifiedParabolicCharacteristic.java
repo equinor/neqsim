@@ -2,21 +2,20 @@ package neqsim.process.mechanicaldesign.valve;
 
 /**
  * Represents a valve with a modified parabolic (or parabolic) flow characteristic.
- * 
+ *
  * <p>
- * Modified parabolic valves provide a characteristic that falls between linear and equal
- * percentage. At low openings, it behaves more like equal percentage, and at high openings, it
- * approaches linear behavior.
+ * Modified parabolic valves provide a characteristic that falls between linear and equal percentage. At low openings,
+ * it behaves more like equal percentage, and at high openings, it approaches linear behavior.
  * </p>
- * 
+ *
  * <p>
  * The characteristic follows the equation:
  * </p>
- * 
+ *
  * <pre>
  * Cv = Cv_max * x ^ n
  * </pre>
- * 
+ *
  * <p>
  * where:
  * </p>
@@ -24,7 +23,7 @@ package neqsim.process.mechanicaldesign.valve;
  * <li>x = fractional valve opening (0 to 1)</li>
  * <li>n = exponent (default 2.0 for parabolic, can be adjusted)</li>
  * </ul>
- * 
+ *
  * <p>
  * Modified parabolic valves are used when:
  * </p>
@@ -44,8 +43,8 @@ public class ModifiedParabolicCharacteristic implements ValveCharacteristic {
   private static final long serialVersionUID = 1000L;
 
   /**
-   * The exponent for the parabolic curve. Default is 2.0 for standard parabolic. Values between 1.5
-   * and 2.5 are common for modified parabolic characteristics.
+   * The exponent for the parabolic curve. Default is 2.0 for standard parabolic. Values between 1.5 and 2.5 are common
+   * for modified parabolic characteristics.
    */
   private double exponent = 2.0;
 
@@ -70,7 +69,7 @@ public class ModifiedParabolicCharacteristic implements ValveCharacteristic {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * <p>
    * Calculates the actual Kv based on modified parabolic characteristic.
    * </p>
@@ -82,15 +81,15 @@ public class ModifiedParabolicCharacteristic implements ValveCharacteristic {
 
   /**
    * {@inheritDoc}
-   * 
+   *
    * <p>
    * Returns the opening factor for modified parabolic characteristic using the formula:
    * </p>
-   * 
+   *
    * <pre>
    * factor = x ^ n
    * </pre>
-   * 
+   *
    * <p>
    * where x is the fractional opening (0 to 1) and n is the exponent.
    * </p>

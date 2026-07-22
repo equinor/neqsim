@@ -5,10 +5,12 @@ import org.junit.jupiter.api.Test;
 
 public class PipeDesignTest {
   @Test
-  void testErosionalVelocity() {}
+  void testErosionalVelocity() {
+  }
 
   @Test
-  void testGaugeFromThickness() {}
+  void testGaugeFromThickness() {
+  }
 
   @Test
   void testNearestPipe() {
@@ -57,5 +59,6 @@ public class PipeDesignTest {
   }
 
   @Test
-  void testThicknessFromGauge() {}
+  void testThicknessFromGauge() {
+  }
 }

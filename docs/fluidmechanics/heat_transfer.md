@@ -1,6 +1,16 @@
+---
+title: Heat Transfer Modeling in NeqSim
+description: This document provides detailed documentation of the heat transfer models implemented in the NeqSim fluid mechanics package.
+---
+
 # Heat Transfer Modeling in NeqSim
 
 This document provides detailed documentation of the heat transfer models implemented in the NeqSim fluid mechanics package.
+
+**Related Documentation:**
+- [InterphaseHeatMassTransfer.md](InterphaseHeatMassTransfer) - Coupled heat-mass transfer theory
+- [mass_transfer.md](mass_transfer) - Mass transfer correlations
+- [TwoPhasePipeFlowModel.md](TwoPhasePipeFlowModel) - Two-phase flow governing equations
 
 ## Table of Contents
 - [Overview](#overview)
@@ -493,7 +503,7 @@ for (int i = 0; i < flow.getNumberOfNodes(); i++) {
 
 ## Related Documentation
 
-- [Mass Transfer Modeling](mass_transfer.md) - Companion mass transfer documentation
-- [Fluid Mechanics Overview](README.md) - Main fluid mechanics documentation
-- [Physical Properties](../physical_properties/README.md) - Thermal conductivity models
-- [Pipeline Simulation](../wiki/pipeline_transient_simulation.md) - Transient pipeline modeling
+- [Mass Transfer Modeling](mass_transfer) - Companion mass transfer documentation
+- [Fluid Mechanics Overview](./) - Main fluid mechanics documentation
+- [Physical Properties](../physical_properties/) - Thermal conductivity models
+- [Pipeline Simulation](../wiki/pipeline_transient_simulation) - Transient pipeline modeling

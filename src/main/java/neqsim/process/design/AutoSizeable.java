@@ -4,15 +4,15 @@ package neqsim.process.design;
  * Interface for process equipment that can be automatically sized based on design criteria.
  *
  * <p>
- * Equipment implementing this interface can calculate their dimensions and design parameters from
- * connected stream conditions and design safety factors. This enables automated process design
- * workflows where equipment is sized from specifications rather than manually configured.
+ * Equipment implementing this interface can calculate their dimensions and design parameters from connected stream
+ * conditions and design safety factors. This enables automated process design workflows where equipment is sized from
+ * specifications rather than manually configured.
  * </p>
  *
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * ThreePhaseSeparator separator = new ThreePhaseSeparator("HP-Sep", feedStream);
  * separator.autoSize(1.2); // Size with 20% safety factor
@@ -28,9 +28,8 @@ public interface AutoSizeable {
    * Automatically size the equipment based on connected stream conditions.
    *
    * <p>
-   * This method calculates dimensions and design parameters using the inlet stream properties and
-   * applies the specified safety factor. The equipment must have a valid inlet stream connected
-   * before calling this method.
+   * This method calculates dimensions and design parameters using the inlet stream properties and applies the specified
+   * safety factor. The equipment must have a valid inlet stream connected before calling this method.
    * </p>
    *
    * @param safetyFactor multiplier for design capacity, typically 1.1-1.3 (10-30% over design)
@@ -49,8 +48,8 @@ public interface AutoSizeable {
    * Automatically size using company-specific design standards.
    *
    * <p>
-   * This method applies design rules from the specified company's technical requirements (TR)
-   * documents. The standards are loaded from the NeqSim design database.
+   * This method applies design rules from the specified company's technical requirements (TR) documents. The standards
+   * are loaded from the NeqSim design database.
    * </p>
    *
    * @param companyStandard company name (e.g., "Equinor", "Shell", "TotalEnergies")

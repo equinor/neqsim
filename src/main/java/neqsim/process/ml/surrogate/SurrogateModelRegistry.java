@@ -17,8 +17,7 @@ import java.util.function.Function;
  * Registry for managing trained surrogate (machine learning) models.
  *
  * <p>
- * Surrogate models are fast approximations of computationally expensive physics models. This
- * registry provides:
+ * Surrogate models are fast approximations of computationally expensive physics models. This registry provides:
  * <ul>
  * <li><b>Model Caching:</b> Keep frequently-used models in memory</li>
  * <li><b>Persistence:</b> Save/load models to disk for reuse</li>
@@ -27,7 +26,7 @@ import java.util.function.Function;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * // Register a surrogate model for flash calculations
  * SurrogateModelRegistry registry = SurrogateModelRegistry.getInstance();
@@ -41,8 +40,7 @@ import java.util.function.Function;
  * });
  *
  * // Use with automatic fallback to physics
- * double[] result =
- *     registry.predictWithFallback("flash-separator-1", input, physicsModel::calculate);
+ * double[] result = registry.predictWithFallback("flash-separator-1", input, physicsModel::calculate);
  * </pre>
  *
  * @author ESOL
@@ -137,8 +135,7 @@ public class SurrogateModelRegistry implements Serializable {
    * Predicts using a surrogate model with automatic fallback.
    *
    * <p>
-   * If the surrogate model fails or is outside its validity range, the physics model will be used
-   * as a fallback.
+   * If the surrogate model fails or is outside its validity range, the physics model will be used as a fallback.
    * </p>
    *
    * @param modelId the surrogate model identifier
@@ -146,8 +143,7 @@ public class SurrogateModelRegistry implements Serializable {
    * @param physicsFallback fallback physics calculation
    * @return prediction result
    */
-  public double[] predictWithFallback(String modelId, double[] input,
-      Function<double[], double[]> physicsFallback) {
+  public double[] predictWithFallback(String modelId, double[] input, Function<double[], double[]> physicsFallback) {
     SurrogateModelEntry entry = models.get(modelId);
 
     if (entry == null) {
@@ -202,8 +198,7 @@ public class SurrogateModelRegistry implements Serializable {
    * @throws IOException if load fails
    * @throws ClassNotFoundException if model class not found
    */
-  public void loadModel(String modelId, String filePath)
-      throws IOException, ClassNotFoundException {
+  public void loadModel(String modelId, String filePath) throws IOException, ClassNotFoundException {
     try (ObjectInputStream in = new ObjectInputStream(new FileInputStream(filePath))) {
       SurrogateModelEntry entry = (SurrogateModelEntry) in.readObject();
       models.put(modelId, entry);

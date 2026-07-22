@@ -1,3 +1,9 @@
+---
+title: "Thermodynamic Models in NeqSim"
+description: "This document provides a comprehensive overview of the thermodynamic models available in NeqSim, their theoretical foundations, and practical guidance on when and how to use each model. Models are cla..."
+keywords: "thermodynamic model, SRK, Peng-Robinson, CPA, UMR-CPA, SystemUMRCPAEoS, TEG dehydration, GERG-2008, EOS-CG, UMR-PRU, electrolyte, cubic EOS, activity coefficient, NRTL, UNIFAC"
+---
+
 # Thermodynamic Models in NeqSim
 
 This document provides a comprehensive overview of the thermodynamic models available in NeqSim, their theoretical foundations, and practical guidance on when and how to use each model. Models are classified into categories based on their mathematical formulation and application domain.
@@ -213,6 +219,105 @@ ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
 ops.TPflash();
 ```
 
+### 4.5 UMR-CPA (`SystemUMRCPAEoS`)
+
+`SystemUMRCPAEoS` is a **fused UMR-CPA** model that combines three building blocks
+in a single equation of state:
+
+1. A **Peng-Robinson physical term** with a **3-parameter Mathias-Copeman** alpha
+   function (attractive term 13, `_umrmc` group-interaction tables).
+2. The **Universal Mixing Rule (UMR)** of Voutsas/Magoulas/Tassios, driven by
+   **UNIFAC group-contribution** activity coefficients (the same residual term as
+   `UMR-PRU`). The co-volume combining rule `bmixType = 1`,
+   $b_{ij} = \left(\tfrac{\sqrt{b_i}+\sqrt{b_j}}{2}\right)^2$, supplies the
+   combinatorial contribution so the Flory-Huggins r-term is deliberately omitted
+   from the gᴱ expression (it would otherwise be double-counted).
+3. The **CPA association term** for hydrogen-bonding compounds (water, glycols,
+   alcohols, alkanolamines), added to the reduced Helmholtz energy in
+   `PhaseUMRCPA.getF()`.
+
+The pressure is the sum of a physical and an association contribution:
+
+$$
+P = P_{\text{PR}}(\text{UMR mixing, MC alpha}) + P_{\text{association}}(\text{CPA})
+$$
+
+A key design principle is the **division of labour** between the terms:
+hydrogen bonding is captured by the **CPA association** term (not by dedicated
+UNIFAC super-groups), pure-component vapour pressure by the **Mathias-Copeman**
+alpha, and the residual physical non-ideality by **standard UNIFAC groups**. This
+follows the natural-gas dehydration model of Tasios, Louli, Skouras, Solbraa &
+Voutsas, *Fluid Phase Equilibria* **2025** (DOI 10.1016/j.fluid.2024.114241).
+
+**Selecting the model and mixing rule:**
+
+```java
+import neqsim.thermo.system.SystemUMRCPAEoS;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+SystemInterface fluid = new SystemUMRCPAEoS(298.15, 70.0);  // T [K], P [bara]
+fluid.addComponent("methane", 0.98);
+fluid.addComponent("water", 0.02);
+// UMR-CPA requires the Huron-Vidal / UNIFAC_UMRPRU mixing rule (NOT a numeric rule):
+fluid.setMixingRule("HV", "UNIFAC_UMRPRU");
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+fluid.initProperties();  // initialise transport properties before reading them
+```
+
+**Associating components with UNIFAC group assignments**
+
+The associating compounds below are described with **standard** UNIFAC secondary
+groups (CH₃, CH₂, OH, CH₂O, H₂O) plus a CPA association scheme — no dedicated
+glycol/alcohol super-group is introduced:
+
+| Component | UNIFAC groups (standard) | CPA scheme |
+|-----------|--------------------------|------------|
+| water     | 1 × H₂O                  | 4C |
+| methanol  | 1 × CH₃OH                | 2B |
+| ethanol   | 1 × CH₃ + 1 × CH₂ + 1 × OH | 2B |
+| MEG       | 2 × CH₂ + 2 × OH         | 4C |
+| DEG       | 3 × CH₂ + 1 × CH₂O + 2 × OH | 4C |
+| TEG       | 4 × CH₂ + 2 × CH₂O + 2 × OH | 4C |
+| MDEA      | 4 × CH₂ + 2 × OH + 1 × CH₃N | 4C |
+
+Non-associating gases (methane, ethane, propane, CO₂, N₂, …) use the paper's
+**5-parameter** Mathias-Copeman alpha (attractive term 22,
+`AttractiveTermMatCop5PRUMR`). Pure-component CPA and Mathias-Copeman parameters
+are read from the component database (`COMP.csv`), and the group-interaction
+parameters from the `UNIFAC*_UMRMC` resource tables.
+
+**Volume correction (liquid density)**
+
+UMR-CPA enables a **density-only Peneloux volume translation** (it does not enter
+the VLE/fugacity calculation). The correction is applied per component according
+to molecular type:
+
+- **Non-associating components** (hydrocarbons, N₂, CO₂) use the same standard
+  Peng-Robinson Peneloux shift as `SystemPrEos`,
+  $c = 0.50033\,(0.25969 - Z_{RA})\,RT_c/P_c$, with the Rackett compressibility
+  $Z_{RA} = 0.29056 - 0.08775\,\omega$ when no tabulated value exists. This brings
+  pure-hydrocarbon saturated-liquid densities to within ~1–2 % of experiment
+  (untranslated PR otherwise under-predicts by ~8–11 %).
+- **Associating components** (water, glycols, alcohols) use a Rackett $Z$ regressed
+  specifically for the UMR-CPA parameter set (`UMRCPA_racketZ` / `UMRCPA_volcorr_T`
+  columns in `COMP.csv`); those without a regressed value keep zero translation
+  because their fitted CPA co-volume $b$ already reproduces the liquid density.
+
+**Typical applications**
+
+- Natural-gas dehydration with TEG (water dew-point, glycol losses).
+- Water/hydrate-inhibitor (MEG, methanol) phase behaviour in wet-gas systems.
+- Water content of hydrocarbon gas as a function of temperature and pressure.
+
+> **Note on `init(3)`.** For some associating multicomponent mixtures the
+> single-phase gᴱ composition-derivative path (`dln γ/dn`) is not populated and
+> `init(3)` can throw. Use `init(2)` (phase compositions) or
+> `initProperties()` (transport properties) after `TPflash()` for those cases;
+> two-phase flash results and densities are unaffected.
+
 ---
 
 ## 5. Reference Equations (Helmholtz-Based)
@@ -241,8 +346,8 @@ These models provide superior accuracy for density, speed of sound, and heat cap
 
 ### 5.2 GERG-2008
 
-**Standard:** ISO 20765-2  
-**Application:** Natural gas custody transfer, fiscal metering  
+**Standard:** ISO 20765-2
+**Application:** Natural gas custody transfer, fiscal metering
 **Accuracy:** ±0.1% in density for typical natural gas
 
 **Supported Components (21):**
@@ -284,8 +389,8 @@ ops.TPflash();
 
 ### 5.4 EOS-CG
 
-**Application:** Carbon Capture and Storage (CCS), combustion gases  
-**Extension:** Includes SO2, NO, NO2, HCl, Cl2, COS in addition to GERG-2008 components
+**Application:** Carbon Capture and Storage (CCS), combustion gases
+**Extension:** EOS-CG-2021 CCS component set, including CO2, H2O, N2, O2, Ar, CO, H2, CH4, H2S, SO2, MEA, DEA, HCl, Cl2, NH3, and MDEA
 
 ```java
 import neqsim.thermo.system.SystemEOSCGEos;
@@ -421,25 +526,47 @@ double meanGamma = system.getPhase(0).getMeanIonicActivityCoefficient("Na+", "Cl
 
 ### 7.3 Søreide-Whitson Model
 
-**Application:** Sour gas systems with brine
+**Application:** Gas solubility in brine, produced water systems, sour gas with formation water
 
-Uses salinity-dependent binary interaction parameters for CO2-water, H2S-water, and hydrocarbon-water systems:
+The Søreide-Whitson model is a modified Peng-Robinson equation of state specifically designed for predicting gas solubility in aqueous systems containing dissolved salts. **This model is used in NeqSimLive for real-time emission calculations from produced water degassing on offshore platforms.**
+
+The key innovation is a modified alpha function for water that incorporates salinity:
 
 $$
-k_{ij,\text{CO}_2-\text{water}} = -0.31092(1 + 0.156 S^{0.75}) + 0.236(1 + 0.178 S^{0.98}) T_r - 21.26 e^{-6.72^{T_r} - S}
+\alpha = A^2
 $$
+
+where:
+
+$$
+A(T_r, c_s) = 1.0 + 0.453 \left[ 1.0 - T_r \left( 1.0 - 0.0103 \cdot c_s^{1.1} \right) \right] + 0.0034 \left( T_r^{-3} - 1.0 \right)
+$$
+
+- $T_r = T / T_c$ is the reduced temperature
+- $c_s$ is the salinity expressed as equivalent NaCl molality (mol/kg H₂O)
 
 ```java
 import neqsim.thermo.system.SystemSoreideWhitson;
 
-SystemSoreideWhitson fluid = new SystemSoreideWhitson(350.0, 200.0);
-fluid.addComponent("methane", 0.70);
-fluid.addComponent("CO2", 0.15);
-fluid.addComponent("H2S", 0.05);
-fluid.addComponent("water", 0.10);
-fluid.addSalinity(2.0, "mole/sec");  // Add NaCl salinity
-fluid.setMixingRule(11);  // Søreide-Whitson mixing rule
+// Create Søreide-Whitson system for produced water
+SystemSoreideWhitson fluid = new SystemSoreideWhitson(353.15, 30.0);  // 80°C, 30 bara
+fluid.addComponent("water", 0.92);
+fluid.addComponent("methane", 0.05);
+fluid.addComponent("CO2", 0.02);
+fluid.addComponent("ethane", 0.01);
+
+// Add formation water salinity
+fluid.addSalinity("NaCl", 1.2, "mole/sec");  // Dominant salt
+fluid.addSalinity("CaCl2", 0.08, "mole/sec");
+
+// Perform flash calculation
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
 ```
+
+> **📖 Detailed Documentation:** For complete mathematical formulation, salt type coefficients, validation data, and literature references, see [Søreide-Whitson Model Documentation](SoreideWhitsonModel).
+>
+> **Reference:** Søreide, I. & Whitson, C.H. (1992). "Peng-Robinson predictions for hydrocarbons, CO₂, N₂, and H₂S with pure water and NaCl brine". *Fluid Phase Equilibria*, 77, 217-240.
 
 ### 7.4 Other Electrolyte Models
 
@@ -598,13 +725,13 @@ The `autoSelectModel()` method follows this decision tree:
 public SystemInterface autoSelectModel() {
     if (hasComponent("MDEA") && hasComponent("water") && hasComponent("CO2")) {
         return setModel("Electrolyte-ScRK-EOS");  // Amine systems
-    } 
-    else if (hasComponent("water") || hasComponent("methanol") || 
-             hasComponent("MEG") || hasComponent("TEG") || 
+    }
+    else if (hasComponent("water") || hasComponent("methanol") ||
+             hasComponent("MEG") || hasComponent("TEG") ||
              hasComponent("ethanol") || hasComponent("DEG")) {
-        if (hasComponent("Na+") || hasComponent("K+") || 
-            hasComponent("Br-") || hasComponent("Mg++") || 
-            hasComponent("Cl-") || hasComponent("Ca++") || 
+        if (hasComponent("Na+") || hasComponent("K+") ||
+            hasComponent("Br-") || hasComponent("Mg++") ||
+            hasComponent("Cl-") || hasComponent("Ca++") ||
             hasComponent("Fe++") || hasComponent("SO4--")) {
             return setModel("Electrolyte-CPA-EOS-statoil");  // Electrolytes
         } else {
@@ -799,13 +926,15 @@ fluid.autoSelectMixingRule();  // Automatically sets appropriate mixing rule
 
 ## See Also
 
-- [Fluid Creation Guide](fluid_creation_guide.md) - Complete guide to creating fluids
-- [Mixing Rules Guide](mixing_rules_guide.md) - Detailed mixing rule documentation
-- [GERG-2008 and EOS-CG](gerg2008_eoscg.md) - Reference equation details
-- [Electrolyte CPA Model](ElectrolyteCPAModel.md) - Electrolyte model documentation
-- [Flash Calculations Guide](flash_calculations_guide.md) - Thermodynamic operations
-- [Mathematical Models](mathematical_models.md) - Equation derivations
+- [Fluid Creation Guide](fluid_creation_guide) - Complete guide to creating fluids
+- [Mixing Rules Guide](mixing_rules_guide) - Detailed mixing rule documentation
+- [GERG-2008 and EOS-CG](gerg2008_eoscg) - Reference equation details
+- [Electrolyte CPA Model](ElectrolyteCPAModel) - Electrolyte model documentation
+- [Søreide-Whitson Model](SoreideWhitsonModel) - Gas solubility in brine, produced water emissions
+- [Flash Calculations Guide](flash_calculations_guide) - Thermodynamic operations
+- [Mathematical Models](mathematical_models) - Equation derivations
+- [Offshore Emission Reporting](../emissions/OFFSHORE_EMISSION_REPORTING) - Emission calculations using Søreide-Whitson
 
 ---
 
-*Last updated: January 2026*
+*Last updated: February 2026*

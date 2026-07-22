@@ -2,6 +2,7 @@
 layout: default
 title: Equipment Failure Modeling
 parent: Risk Framework
+description: "Equipment failure modeling using MTBF, MTTR, failure rates, and Weibull distributions. Covers compressors, pumps, heat exchangers, separators, and valves."
 ---
 
 # Equipment Failure Modeling
@@ -127,9 +128,10 @@ double degradedEfficiency = normalEfficiency * fouling.getEfficiencyFactor();  /
 
 ## Reliability Data Source
 
-### OREDA-Based Data
+### Multi-Source Reliability Data
 
-The `ReliabilityDataSource` provides reliability data from OREDA (Offshore Reliability Data):
+The `ReliabilityDataSource` provides reliability data from multiple public databases
+(IOGP/SINTEF, CCPS 1989, IEEE 493-2007, Lees 2012, and optionally OREDA):
 
 ```java
 ReliabilityDataSource source = ReliabilityDataSource.getInstance();
@@ -307,7 +309,7 @@ System.out.println("Affected equipment: " + result.getAffectedEquipment());
 
 ## See Also
 
-- [Reliability Data Source](api-reference.md#reliabilitydatasource)
-- [Production Impact Analysis](production-impact.md)
-- [Monte Carlo Simulation](monte-carlo.md)
-- [Mathematical Reference](mathematical-reference.md)
+- [Reliability Data Source](api-reference#reliabilitydatasource)
+- [Production Impact Analysis](production-impact)
+- [Monte Carlo Simulation](monte-carlo)
+- [Mathematical Reference](mathematical-reference)

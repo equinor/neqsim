@@ -5,9 +5,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * VolumeFlowTransmitter class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
   private int measuredPhaseNumber = 0;
 
   /**
-   * <p>
    * Constructor for VolumeFlowTransmitter.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -30,9 +26,7 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for VolumeFlowTransmitter.
-   * </p>
    *
    * @param name Name of VolumeFlowTransmitter
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -56,31 +50,35 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
       return stream.getFlowRate(unit);
     } else if (unit.equals("m^3/hr")) {
       return stream.getThermoSystem().getPhase(measuredPhaseNumber).getNumberOfMolesInPhase()
-          * stream.getThermoSystem().getPhase(measuredPhaseNumber).getMolarMass() / stream
-              .getThermoSystem().getPhase(measuredPhaseNumber).getPhysicalProperties().getDensity()
-          * 3600.0;
+          * stream.getThermoSystem().getPhase(measuredPhaseNumber).getMolarMass()
+          / stream.getThermoSystem().getPhase(measuredPhaseNumber).getPhysicalProperties().getDensity() * 3600.0;
     } else if (unit.equals("Nm^3/day")) {
       return stream.getThermoSystem().getPhase(measuredPhaseNumber).getNumberOfMolesInPhase()
           * neqsim.thermo.ThermodynamicConstantsInterface.R
-          * neqsim.thermo.ThermodynamicConstantsInterface.normalStateTemperature
-          / ThermodynamicConstantsInterface.atm * 3600.0 * 24;
+          * neqsim.thermo.ThermodynamicConstantsInterface.normalStateTemperature / ThermodynamicConstantsInterface.atm
+          * 3600.0 * 24;
     } else if (unit.equals("Sm^3/day")) {
       return stream.getThermoSystem().getPhase(measuredPhaseNumber).getNumberOfMolesInPhase()
           * neqsim.thermo.ThermodynamicConstantsInterface.R
-          * neqsim.thermo.ThermodynamicConstantsInterface.standardStateTemperature
-          / ThermodynamicConstantsInterface.atm * 3600.0 * 24;
+          * neqsim.thermo.ThermodynamicConstantsInterface.standardStateTemperature / ThermodynamicConstantsInterface.atm
+          * 3600.0 * 24;
     } else {
       return stream.getThermoSystem().getPhase(measuredPhaseNumber).getNumberOfMolesInPhase()
-          * stream.getThermoSystem().getPhase(measuredPhaseNumber).getMolarMass() / stream
-              .getThermoSystem().getPhase(measuredPhaseNumber).getPhysicalProperties().getDensity()
-          * 3600.0;
+          * stream.getThermoSystem().getPhase(measuredPhaseNumber).getMolarMass()
+          / stream.getThermoSystem().getPhase(measuredPhaseNumber).getPhysicalProperties().getDensity() * 3600.0;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void applyFieldValue() {
+    if (getTagRole() == InstrumentTagRole.INPUT && hasFieldValue()) {
+      stream.setFlowRate(getFieldValue(), getUnit());
     }
   }
 
   /**
-   * <p>
    * Getter for the field <code>measuredPhaseNumber</code>.
-   * </p>
    *
    * @return a int
    */
@@ -89,9 +87,7 @@ public class VolumeFlowTransmitter extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>measuredPhaseNumber</code>.
-   * </p>
    *
    * @param measuredPhase a int
    */

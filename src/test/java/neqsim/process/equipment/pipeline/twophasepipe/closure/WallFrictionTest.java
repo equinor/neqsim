@@ -9,7 +9,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.WallFriction.WallF
 
 /**
  * Unit tests for WallFriction.
- * 
+ *
  * Tests wall shear stress calculations for various flow regimes.
  */
 public class WallFrictionTest {
@@ -40,22 +40,20 @@ public class WallFrictionTest {
         0.3, 0.1, 0.00005);
 
     assertTrue(result.gasWallShear > 0, "Gas wall shear should be positive for positive velocity");
-    assertTrue(result.liquidWallShear > 0,
-        "Liquid wall shear should be positive for positive velocity");
+    assertTrue(result.liquidWallShear > 0, "Liquid wall shear should be positive for positive velocity");
   }
 
   @Test
   void testFrictionIncreasesWithVelocity() {
     WallFrictionResult resultLow = wallFriction.calculate(FlowRegime.STRATIFIED_SMOOTH, 5.0, 0.5, // lower
-                                                                                                  // velocities
+        // velocities
         50.0, 800.0, 1.5e-5, 1e-3, 0.3, 0.1, 0.00005);
 
     WallFrictionResult resultHigh = wallFriction.calculate(FlowRegime.STRATIFIED_SMOOTH, 10.0, 1.0, // higher
-                                                                                                    // velocities
+        // velocities
         50.0, 800.0, 1.5e-5, 1e-3, 0.3, 0.1, 0.00005);
 
-    assertTrue(resultHigh.gasWallShear > resultLow.gasWallShear,
-        "Higher velocity should give higher gas friction");
+    assertTrue(resultHigh.gasWallShear > resultLow.gasWallShear, "Higher velocity should give higher gas friction");
     assertTrue(resultHigh.liquidWallShear > resultLow.liquidWallShear,
         "Higher velocity should give higher liquid friction");
   }
@@ -63,9 +61,9 @@ public class WallFrictionTest {
   @Test
   void testAnnularFlowRegime() {
     WallFrictionResult result = wallFriction.calculate(FlowRegime.ANNULAR, 25.0, 0.5, // high gas
-                                                                                      // velocity
-                                                                                      // typical for
-                                                                                      // annular
+        // velocity
+        // typical for
+        // annular
         50.0, 800.0, 1.5e-5, 1e-3, 0.1, 0.1, 0.00005 // low holdup typical for annular
     );
 
@@ -75,8 +73,8 @@ public class WallFrictionTest {
 
   @Test
   void testSlugFlowRegime() {
-    WallFrictionResult result = wallFriction.calculate(FlowRegime.SLUG, 5.0, 2.0, 50.0, 800.0,
-        1.5e-5, 1e-3, 0.5, 0.1, 0.00005);
+    WallFrictionResult result = wallFriction.calculate(FlowRegime.SLUG, 5.0, 2.0, 50.0, 800.0, 1.5e-5, 1e-3, 0.5, 0.1,
+        0.00005);
 
     assertTrue(result.gasWallShear >= 0, "Slug gas wall shear should be non-negative");
     assertTrue(result.liquidWallShear >= 0, "Slug liquid wall shear should be non-negative");
@@ -84,8 +82,8 @@ public class WallFrictionTest {
 
   @Test
   void testReynoldsNumbersCalculated() {
-    WallFrictionResult result = wallFriction.calculate(FlowRegime.STRATIFIED_SMOOTH, 10.0, 1.0,
-        50.0, 800.0, 1.5e-5, 1e-3, 0.3, 0.1, 0.00005);
+    WallFrictionResult result = wallFriction.calculate(FlowRegime.STRATIFIED_SMOOTH, 10.0, 1.0, 50.0, 800.0, 1.5e-5,
+        1e-3, 0.3, 0.1, 0.00005);
 
     assertTrue(result.gasReynolds > 0, "Gas Reynolds should be positive");
     assertTrue(result.liquidReynolds > 0, "Liquid Reynolds should be positive");
@@ -93,8 +91,8 @@ public class WallFrictionTest {
 
   @Test
   void testFrictionFactorsReasonable() {
-    WallFrictionResult result = wallFriction.calculate(FlowRegime.STRATIFIED_SMOOTH, 10.0, 1.0,
-        50.0, 800.0, 1.5e-5, 1e-3, 0.3, 0.1, 0.00005);
+    WallFrictionResult result = wallFriction.calculate(FlowRegime.STRATIFIED_SMOOTH, 10.0, 1.0, 50.0, 800.0, 1.5e-5,
+        1e-3, 0.3, 0.1, 0.00005);
 
     // Friction factors should be in physical range (0.001 to 0.1)
     assertTrue(result.gasFrictionFactor > 0.001 && result.gasFrictionFactor < 0.2,

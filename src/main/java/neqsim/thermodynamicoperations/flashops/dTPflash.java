@@ -11,9 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * dTPflash class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -27,9 +25,7 @@ public class dTPflash extends TPflash {
   String[] flashComp = null;
 
   /**
-   * <p>
    * Constructor for dTPflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param comps an array of {@link java.lang.String} objects
@@ -56,19 +52,14 @@ public class dTPflash extends TPflash {
         for (int j = 0; j < flashComp.length; j++) {
           if (flashComp[j].equals(system.getPhase(0).getComponent(i).getName())) {
             diff += Math.abs((system.getPhase(1).getComponent(i).getx()
-                * system.getPhase(1).getComponent(i).getFugacityCoefficient()
-                * system.getPhase(1).getPressure())
+                * system.getPhase(1).getComponent(i).getFugacityCoefficient() * system.getPhase(1).getPressure())
                 - (system.getPhase(0).getComponent(i).getx()
-                    * system.getPhase(0).getComponent(i).getFugacityCoefficient()
-                    * system.getPhase(0).getPressure()));
-            system.getPhase(1).getComponent(i)
-                .setx(system.getPhase(1).getComponent(i).getx()
-                    * (system.getPhase(0).getComponent(i).getx()
-                        * system.getPhase(0).getComponent(i).getFugacityCoefficient()
-                        * system.getPhase(0).getPressure())
-                    / (system.getPhase(1).getComponent(i).getx()
-                        * system.getPhase(1).getComponent(i).getFugacityCoefficient()
-                        * system.getPhase(1).getPressure()));
+                    * system.getPhase(0).getComponent(i).getFugacityCoefficient() * system.getPhase(0).getPressure()));
+            system.getPhase(1).getComponent(i).setx(system.getPhase(1).getComponent(i).getx()
+                * (system.getPhase(0).getComponent(i).getx()
+                    * system.getPhase(0).getComponent(i).getFugacityCoefficient() * system.getPhase(0).getPressure())
+                / (system.getPhase(1).getComponent(i).getx()
+                    * system.getPhase(1).getComponent(i).getFugacityCoefficient() * system.getPhase(1).getPressure()));
 
             // fracdiff += system.getPhase(1).getComponent(i).getz() -
             // system.getPhase(1).getComponent(i).getx();

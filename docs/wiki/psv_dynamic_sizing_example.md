@@ -1,3 +1,8 @@
+---
+title: "Pressure Safety Valve (PSV) Dynamic Sizing Example"
+description: "This example demonstrates how to perform a dynamic safety calculation for sizing a pressure safety valve (PSV) using NeqSim's transient simulation capabilities. The scenario simulates a blocked outlet..."
+---
+
 # Pressure Safety Valve (PSV) Dynamic Sizing Example
 
 ## Overview
@@ -23,7 +28,7 @@ The simulation models a sudden blocked outlet scenario:
 
 - **t = 0-50s**: Normal operation with PCV at 50% opening
 - **t = 50s**: PCV suddenly closes to 1% (simulating blocked outlet)
-- **t > 50s**: 
+- **t > 50s**:
   - Pressure in separator begins to rise
   - PSV opens when pressure exceeds 55 bara
   - PSV modulates to maintain pressure below catastrophic levels
@@ -60,7 +65,7 @@ gasSplitter.setCalculateSteadyState(false);
 The `SafetyValve` class now automatically controls its opening based on inlet pressure during dynamic simulations. When `runTransient()` is called, the valve:
 
 - **Closes** when pressure is below set pressure
-- **Opens proportionally** between set pressure and full open pressure  
+- **Opens proportionally** between set pressure and full open pressure
 - **Fully opens** at or above full open pressure
 
 ```java
@@ -80,12 +85,12 @@ pressureSafetyValve.setCalculateSteadyState(false);  // Enable dynamic mode
 double dt = 0.5; // Time step in seconds
 for (int i = 0; i < numSteps; i++) {
     currentTime = i * dt;
-    
+
     // Simulate blocked outlet at t=50s
     if (currentTime >= 50.0 && currentTime < 51.0) {
         pressureControlValve.setPercentValveOpening(1.0);
     }
-    
+
     // Run transient calculations
     // PSV automatically adjusts its opening based on inlet pressure
     separator.runTransient(dt, id);
@@ -158,9 +163,9 @@ You can modify the following parameters to study different scenarios:
 
 ## Related Examples
 
-- [Separator Test](../test/java/neqsim/process/equipment/separator/SeparatorTest.java)
-- [Throttling Valve Test](../test/java/neqsim/process/equipment/valve/ThrottlingValveTest.java)
-- [Process System Transient Test](../test/java/neqsim/process/processmodel/ProcessSystemRunTransientTest.java)
+- [Separator Test](../../src/test/java/neqsim/process/equipment/separator/SeparatorTest.java)
+- [Throttling Valve Test](../../src/test/java/neqsim/process/equipment/valve/ThrottlingValveTest.java)
+- [Process System Transient Test](../../src/test/java/neqsim/process/processmodel/ProcessSystemRunTransientTest.java)
 
 ## References
 

@@ -38,7 +38,8 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public PumpCapacityStrategy() {}
+  public PumpCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
@@ -86,7 +87,7 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
 
     // Check if pump implements CapacityConstrainedEquipment
     if (pump instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) pump).getMaxUtilization();
+      return pump.getMaxUtilization();
     }
 
     // Use power utilization as primary capacity indicator
@@ -126,9 +127,8 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
 
     if (maxPower > 0) {
       CapacityConstraint powerConstraint = new CapacityConstraint("power").setDesignValue(maxPower)
-          .setMaxValue(maxPower * maxPowerFactor).setUnit("kW")
-          .setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setWarningThreshold(0.9)
-          .setValueSupplier(() -> pump.getPower("kW"));
+          .setMaxValue(maxPower * maxPowerFactor).setUnit("kW").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+          .setWarningThreshold(0.9).setValueSupplier(() -> pump.getPower("kW"));
       constraints.put("power", powerConstraint);
     }
 
@@ -137,19 +137,17 @@ public class PumpCapacityStrategy implements EquipmentCapacityStrategy {
     double npshRequired = pump.getNPSHRequired();
     double npshMargin = npshAvailable - npshRequired;
     if (npshAvailable > 0 && npshRequired > 0) {
-      CapacityConstraint npshConstraint = new CapacityConstraint("npshMargin")
-          .setDesignValue(minNpshMargin).setMinValue(minNpshMargin).setUnit("m")
-          .setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
+      CapacityConstraint npshConstraint = new CapacityConstraint("npshMargin").setDesignValue(minNpshMargin)
+          .setMinValue(minNpshMargin).setUnit("m").setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
           .setValueSupplier(() -> pump.getNPSHAvailable() - pump.getNPSHRequired());
       constraints.put("npshMargin", npshConstraint);
     }
 
     // Flow rate constraint (using minimum flow as lower limit)
     double minFlow = pump.getMinimumFlow();
-    if (minFlow > 0 && pump.getInletStream() != null
-        && pump.getInletStream().getThermoSystem() != null) {
-      CapacityConstraint flowConstraint = new CapacityConstraint("flowRate").setMinValue(minFlow)
-          .setUnit("m3/hr").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+    if (minFlow > 0 && pump.getInletStream() != null && pump.getInletStream().getThermoSystem() != null) {
+      CapacityConstraint flowConstraint = new CapacityConstraint("flowRate").setMinValue(minFlow).setUnit("m3/hr")
+          .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
           .setValueSupplier(() -> pump.getInletStream().getFlowRate("m3/hr"));
       constraints.put("flowRate", flowConstraint);
     }

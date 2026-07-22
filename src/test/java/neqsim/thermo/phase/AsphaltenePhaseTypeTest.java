@@ -3,6 +3,8 @@ package neqsim.thermo.phase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
@@ -14,6 +16,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Tests demonstrating asphaltene phase type in multi-phase flash calculations.
  */
 public class AsphaltenePhaseTypeTest {
+  private static final Logger logger = LogManager.getLogger(AsphaltenePhaseTypeTest.class);
+
   /**
    * Test that PhaseType.ASPHALTENE exists and has correct properties.
    */
@@ -30,8 +34,8 @@ public class AsphaltenePhaseTypeTest {
   }
 
   /**
-   * Test TPflash with CPA system containing asphaltene that can precipitate. This demonstrates a
-   * three-phase equilibrium: gas + oil + asphaltene (solid).
+   * Test TPflash with CPA system containing asphaltene that can precipitate. This demonstrates a three-phase
+   * equilibrium: gas + oil + asphaltene (solid).
    */
   @Test
   @DisplayName("CPA TPflash with gas-oil-asphaltene three-phase equilibrium")
@@ -65,10 +69,10 @@ public class AsphaltenePhaseTypeTest {
     ops.TPflash();
 
     // Print results
-    System.out.println("\n=== Three-Phase Asphaltene Flash Results ===");
-    System.out.println("Temperature: " + (fluid.getTemperature() - 273.15) + " °C");
-    System.out.println("Pressure: " + fluid.getPressure() + " bar");
-    System.out.println("Number of phases: " + fluid.getNumberOfPhases());
+    logger.info("\n=== Three-Phase Asphaltene Flash Results ===");
+    logger.info("Temperature: " + (fluid.getTemperature() - 273.15) + " °C");
+    logger.info("Pressure: " + fluid.getPressure() + " bar");
+    logger.info("Number of phases: " + fluid.getNumberOfPhases());
 
     // Print phase information and update solid phase to ASPHALTENE if applicable
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
@@ -82,11 +86,11 @@ public class AsphaltenePhaseTypeTest {
         }
       }
 
-      System.out.println("\nPhase " + i + ":");
-      System.out.println("  Type: " + phase.getType());
-      System.out.println("  Type desc: " + phase.getType().getDesc());
-      System.out.println("  Beta (mole frac): " + phase.getBeta());
-      System.out.println("  Molar mass: " + phase.getMolarMass() * 1000 + " g/mol");
+      logger.info("\nPhase " + i + ":");
+      logger.info("  Type: " + phase.getType());
+      logger.info("  Type desc: " + phase.getType().getDesc());
+      logger.info("  Beta (mole frac): " + phase.getBeta());
+      logger.info("  Molar mass: " + phase.getMolarMass() * 1000 + " g/mol");
     }
 
     // Check if we have an asphaltene phase now
@@ -98,9 +102,9 @@ public class AsphaltenePhaseTypeTest {
       }
     }
 
-    System.out.println("\nHas ASPHALTENE phase type: " + hasAsphaltenePhase);
+    logger.info("\nHas ASPHALTENE phase type: " + hasAsphaltenePhase);
 
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // At low pressure with light gas + heavy oil + asphaltene, we expect multiple phases
     assertTrue(fluid.getNumberOfPhases() >= 2, "Should have at least 2 phases at these conditions");
@@ -143,16 +147,16 @@ public class AsphaltenePhaseTypeTest {
     // Initially, there should be no asphaltene phase
     // (This tests that the method exists and can be called)
     boolean hasAspPhase = fluid.hasPhaseType(PhaseType.ASPHALTENE);
-    System.out.println("Has asphaltene phase: " + hasAspPhase);
+    logger.info("Has asphaltene phase: " + hasAspPhase);
 
     // Also test string-based lookup
     boolean hasAspByString = fluid.hasPhaseType("asphaltene");
-    System.out.println("Has asphaltene phase (by string): " + hasAspByString);
+    logger.info("Has asphaltene phase (by string): " + hasAspByString);
   }
 
   /**
-   * Test TPflash with CPA system for two-phase oil-asphaltene equilibrium. At high pressure (no
-   * gas), we expect oil + asphaltene phases.
+   * Test TPflash with CPA system for two-phase oil-asphaltene equilibrium. At high pressure (no gas), we expect oil +
+   * asphaltene phases.
    */
   @Test
   @DisplayName("CPA TPflash with oil-asphaltene two-phase equilibrium")
@@ -182,19 +186,19 @@ public class AsphaltenePhaseTypeTest {
     ops.TPflash();
 
     // Print results
-    System.out.println("\n=== Two-Phase Oil-Asphaltene Flash Results ===");
-    System.out.println("Temperature: " + (fluid.getTemperature() - 273.15) + " °C");
-    System.out.println("Pressure: " + fluid.getPressure() + " bar");
-    System.out.println("Number of phases: " + fluid.getNumberOfPhases());
+    logger.info("\n=== Two-Phase Oil-Asphaltene Flash Results ===");
+    logger.info("Temperature: " + (fluid.getTemperature() - 273.15) + " °C");
+    logger.info("Pressure: " + fluid.getPressure() + " bar");
+    logger.info("Number of phases: " + fluid.getNumberOfPhases());
 
     // Print phase information
     for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
       PhaseInterface phase = fluid.getPhase(i);
-      System.out.println("\nPhase " + i + ":");
-      System.out.println("  Type: " + phase.getType());
-      System.out.println("  Type desc: " + phase.getType().getDesc());
-      System.out.println("  Beta (mole frac): " + phase.getBeta());
-      System.out.println("  Molar mass: " + phase.getMolarMass() * 1000 + " g/mol");
+      logger.info("\nPhase " + i + ":");
+      logger.info("  Type: " + phase.getType());
+      logger.info("  Type desc: " + phase.getType().getDesc());
+      logger.info("  Beta (mole frac): " + phase.getBeta());
+      logger.info("  Molar mass: " + phase.getMolarMass() * 1000 + " g/mol");
     }
 
     // Check phase types
@@ -202,11 +206,11 @@ public class AsphaltenePhaseTypeTest {
     boolean hasAsphaltenePhase = fluid.hasPhaseType(PhaseType.ASPHALTENE);
     boolean hasGasPhase = fluid.hasPhaseType(PhaseType.GAS);
 
-    System.out.println("\nHas OIL/LIQUID phase: " + hasOilPhase);
-    System.out.println("Has ASPHALTENE phase: " + hasAsphaltenePhase);
-    System.out.println("Has GAS phase: " + hasGasPhase);
+    logger.info("\nHas OIL/LIQUID phase: " + hasOilPhase);
+    logger.info("Has ASPHALTENE phase: " + hasAsphaltenePhase);
+    logger.info("Has GAS phase: " + hasGasPhase);
 
-    fluid.prettyPrint();
+    // fluid.prettyPrint();
 
     // At high pressure with heavy oil + asphaltene, we expect oil + asphaltene (no gas)
     assertTrue(fluid.getNumberOfPhases() >= 2, "Should have at least 2 phases");
@@ -249,11 +253,10 @@ public class AsphaltenePhaseTypeTest {
         if (solidPhase.isAsphaltenePhase()) {
           // Get default (literature-based) density
           double litDensity = solidPhase.getDensity("kg/m3");
-          System.out.println("Literature-based density: " + litDensity + " kg/m3");
+          logger.info("Literature-based density: " + litDensity + " kg/m3");
 
           // By default, useEosProperties should be false
-          assertFalse(solidPhase.isUseEosProperties(),
-              "Default should be literature-based properties");
+          assertFalse(solidPhase.isUseEosProperties(), "Default should be literature-based properties");
 
           // Enable EOS properties
           solidPhase.setUseEosProperties(true);
@@ -261,7 +264,7 @@ public class AsphaltenePhaseTypeTest {
 
           // The density should now use EOS calculation
           double eosDensity = solidPhase.getDensity("kg/m3");
-          System.out.println("EOS-based density: " + eosDensity + " kg/m3");
+          logger.info("EOS-based density: " + eosDensity + " kg/m3");
 
           // EOS density may differ from literature value
           // (Just verify it returns a valid value)
@@ -271,8 +274,7 @@ public class AsphaltenePhaseTypeTest {
           // Restore default behavior
           solidPhase.setUseEosProperties(false);
           double restoredDensity = solidPhase.getDensity("kg/m3");
-          assertEquals(litDensity, restoredDensity, 0.1,
-              "Should return to literature-based density");
+          assertEquals(litDensity, restoredDensity, 0.1, "Should return to literature-based density");
         }
       }
     }
@@ -289,10 +291,8 @@ public class AsphaltenePhaseTypeTest {
     assertEquals(PhaseType.LIQUID_ASPHALTENE, PhaseType.byDesc("asphaltene liquid"));
 
     // LIQUID_ASPHALTENE should be a liquid state of matter
-    assertTrue(StateOfMatter.isLiquid(PhaseType.LIQUID_ASPHALTENE),
-        "LIQUID_ASPHALTENE should be liquid");
-    assertFalse(StateOfMatter.isSolid(PhaseType.LIQUID_ASPHALTENE),
-        "LIQUID_ASPHALTENE should not be solid");
+    assertTrue(StateOfMatter.isLiquid(PhaseType.LIQUID_ASPHALTENE), "LIQUID_ASPHALTENE should be liquid");
+    assertFalse(StateOfMatter.isSolid(PhaseType.LIQUID_ASPHALTENE), "LIQUID_ASPHALTENE should not be solid");
 
     // Both ASPHALTENE and LIQUID_ASPHALTENE should be recognized by isAsphaltene
     assertTrue(StateOfMatter.isAsphaltene(PhaseType.ASPHALTENE));
@@ -320,8 +320,8 @@ public class AsphaltenePhaseTypeTest {
     PhaseInterface phase = fluid.getPhase(0);
 
     // If asphaltene fraction > 50%, it should be asphaltene-rich
-    System.out.println("Phase type: " + phase.getType());
-    System.out.println("Is asphaltene-rich: " + phase.isAsphalteneRich());
+    logger.info("Phase type: " + phase.getType());
+    logger.info("Is asphaltene-rich: " + phase.isAsphalteneRich());
 
     // The method should exist and return a boolean
     boolean isRich = phase.isAsphalteneRich();
@@ -337,8 +337,8 @@ public class AsphaltenePhaseTypeTest {
     fluid2.init(1);
 
     PhaseInterface phase2 = fluid2.getPhase(0);
-    System.out.println("Phase2 type: " + phase2.getType());
-    System.out.println("Phase2 is asphaltene-rich: " + phase2.isAsphalteneRich());
+    logger.info("Phase2 type: " + phase2.getType());
+    logger.info("Phase2 is asphaltene-rich: " + phase2.isAsphalteneRich());
 
     // With 80% asphaltene, it should be asphaltene-rich
     assertTrue(phase2.isAsphalteneRich(), "Phase with 80% asphaltene should be asphaltene-rich");

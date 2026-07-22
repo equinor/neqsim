@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * HydrateEquilibriumTemperatureAnalyser class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class HydrateEquilibriumTemperatureAnalyser extends StreamMeasurementDevi
   private double referencePressure = 0;
 
   /**
-   * <p>
    * Constructor for HydrateEquilibriumTemperatureAnalyser.
-   * </p>
    *
    * @param name Name of HydrateEquilibriumTemperatureAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -70,9 +66,7 @@ public class HydrateEquilibriumTemperatureAnalyser extends StreamMeasurementDevi
   }
 
   /**
-   * <p>
    * Getter for the field <code>referencePressure</code>.
-   * </p>
    *
    * @return Reference pressure in bara
    */
@@ -81,9 +75,7 @@ public class HydrateEquilibriumTemperatureAnalyser extends StreamMeasurementDevi
   }
 
   /**
-   * <p>
    * Setter for the field <code>referencePressure</code>.
-   * </p>
    *
    * @param referencePressure Reference pressure to set in in bara
    */

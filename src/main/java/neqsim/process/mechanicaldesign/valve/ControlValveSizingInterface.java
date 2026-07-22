@@ -4,9 +4,7 @@ import java.util.Map;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * <p>
  * ControlValveSizingInterface interface.
- * </p>
  *
  * @author esol
  */
@@ -21,9 +19,7 @@ public interface ControlValveSizingInterface {
   public Map<String, Object> calcValveSize(double percentOpening);
 
   /**
-   * <p>
    * calculateFlowRateFromValveOpening.
-   * </p>
    *
    * @param ActualKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -34,9 +30,7 @@ public interface ControlValveSizingInterface {
       StreamInterface outletStream);
 
   /**
-   * <p>
    * calculateValveOpeningFromFlowRate.
-   * </p>
    *
    * @param Q a double
    * @param ActualActualKv a double
@@ -44,13 +38,11 @@ public interface ControlValveSizingInterface {
    * @param outletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    * @return a double
    */
-  public double calculateValveOpeningFromFlowRate(double Q, double ActualActualKv,
-      StreamInterface inletStream, StreamInterface outletStream);
+  public double calculateValveOpeningFromFlowRate(double Q, double ActualActualKv, StreamInterface inletStream,
+      StreamInterface outletStream);
 
   /**
-   * <p>
    * findOutletPressureForFixedKv.
-   * </p>
    *
    * @param ActualKv a double
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -59,39 +51,30 @@ public interface ControlValveSizingInterface {
   public double findOutletPressureForFixedKv(double ActualKv, StreamInterface inletStream);
 
   /**
-   * <p>
    * isAllowChoked.
-   * </p>
    *
    * @return a boolean
    */
   public boolean isAllowChoked();
 
   /**
-   * <p>
    * setAllowChoked.
-   * </p>
    *
    * @param allowChoked a boolean
    */
   public void setAllowChoked(boolean allowChoked);
 
   /**
-   * <p>
    * getxT.
-   * </p>
    *
    * @return a double
    */
   public double getxT();
 
   /**
-   * <p>
    * setxT.
-   * </p>
    *
    * @param xT a double
    */
   public void setxT(double xT);
 }
-

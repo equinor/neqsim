@@ -6,8 +6,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * Configuration factory for creating risers with standard geometry profiles.
  *
  * <p>
- * This class provides factory methods to create pipeline objects configured as risers with
- * appropriate elevation profiles for different riser types (SCR, flexible, lazy-wave, etc.).
+ * This class provides factory methods to create pipeline objects configured as risers with appropriate elevation
+ * profiles for different riser types (SCR, flexible, lazy-wave, etc.).
  * </p>
  *
  * <p>
@@ -17,8 +17,8 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <pre>
  * {@code
  * // Create a Steel Catenary Riser
- * PipeBeggsAndBrills riser = RiserConfiguration.createRiser(RiserType.STEEL_CATENARY_RISER,
- *     "Production Riser", inletStream, 500.0);
+ * PipeBeggsAndBrills riser = RiserConfiguration.createRiser(RiserType.STEEL_CATENARY_RISER, "Production Riser",
+ *     inletStream, 500.0);
  * riser.run();
  *
  * // Create a lazy-wave riser with custom parameters
@@ -112,8 +112,7 @@ public class RiserConfiguration {
    * @param waterDepth water depth in meters
    * @return configured PipeBeggsAndBrills as a riser
    */
-  public static PipeBeggsAndBrills createRiser(RiserType type, String name, StreamInterface inlet,
-      double waterDepth) {
+  public static PipeBeggsAndBrills createRiser(RiserType type, String name, StreamInterface inlet, double waterDepth) {
     RiserConfiguration config = new RiserConfiguration(type);
     config.setWaterDepth(waterDepth);
     return config.create(name, inlet);
@@ -127,8 +126,7 @@ public class RiserConfiguration {
    * @param waterDepth water depth in meters
    * @return configured SCR
    */
-  public static PipeBeggsAndBrills createSCR(String name, StreamInterface inlet,
-      double waterDepth) {
+  public static PipeBeggsAndBrills createSCR(String name, StreamInterface inlet, double waterDepth) {
     return createRiser(RiserType.STEEL_CATENARY_RISER, name, inlet, waterDepth);
   }
 
@@ -140,8 +138,7 @@ public class RiserConfiguration {
    * @param waterDepth water depth in meters
    * @return configured TTR
    */
-  public static PipeBeggsAndBrills createTTR(String name, StreamInterface inlet,
-      double waterDepth) {
+  public static PipeBeggsAndBrills createTTR(String name, StreamInterface inlet, double waterDepth) {
     return createRiser(RiserType.TOP_TENSIONED_RISER, name, inlet, waterDepth);
   }
 
@@ -154,8 +151,8 @@ public class RiserConfiguration {
    * @param buoyancyDepth depth of buoyancy modules from surface
    * @return configured lazy-wave riser
    */
-  public static PipeBeggsAndBrills createLazyWave(String name, StreamInterface inlet,
-      double waterDepth, double buoyancyDepth) {
+  public static PipeBeggsAndBrills createLazyWave(String name, StreamInterface inlet, double waterDepth,
+      double buoyancyDepth) {
     RiserConfiguration config = new RiserConfiguration(RiserType.LAZY_WAVE);
     config.setWaterDepth(waterDepth);
     config.setBuoyancyModuleDepth(buoyancyDepth);
@@ -174,32 +171,32 @@ public class RiserConfiguration {
 
     // Configure geometry based on riser type
     switch (riserType) {
-      case STEEL_CATENARY_RISER:
-        configureSCR(riser);
-        break;
-      case FLEXIBLE_RISER:
-        configureFlexible(riser);
-        break;
-      case TOP_TENSIONED_RISER:
-        configureTTR(riser);
-        break;
-      case LAZY_WAVE:
-        configureLazyWave(riser);
-        break;
-      case STEEP_WAVE:
-        configureSteepWave(riser);
-        break;
-      case HYBRID_RISER:
-        configureHybrid(riser);
-        break;
-      case FREE_STANDING:
-        configureFreeStanding(riser);
-        break;
-      case VERTICAL:
-        configureVertical(riser);
-        break;
-      default:
-        configureSCR(riser);
+    case STEEL_CATENARY_RISER:
+      configureSCR(riser);
+      break;
+    case FLEXIBLE_RISER:
+      configureFlexible(riser);
+      break;
+    case TOP_TENSIONED_RISER:
+      configureTTR(riser);
+      break;
+    case LAZY_WAVE:
+      configureLazyWave(riser);
+      break;
+    case STEEP_WAVE:
+      configureSteepWave(riser);
+      break;
+    case HYBRID_RISER:
+      configureHybrid(riser);
+      break;
+    case FREE_STANDING:
+      configureFreeStanding(riser);
+      break;
+    case VERTICAL:
+      configureVertical(riser);
+      break;
+    default:
+      configureSCR(riser);
     }
 
     // Set common parameters
@@ -213,8 +210,8 @@ public class RiserConfiguration {
    * Configure as Steel Catenary Riser.
    *
    * <p>
-   * Catenary profile from seabed touchdown to platform hangoff. The catenary adds approximately
-   * 10-20% to the vertical depth for arc length.
+   * Catenary profile from seabed touchdown to platform hangoff. The catenary adds approximately 10-20% to the vertical
+   * depth for arc length.
    * </p>
    *
    * @param riser the pipe to configure
@@ -270,8 +267,8 @@ public class RiserConfiguration {
    * Configure as Lazy-Wave riser.
    *
    * <p>
-   * Profile: Seabed → Sag bend → Buoyancy section (rise) → Hog bend → Platform. Lazy-wave
-   * configuration reduces dynamic loads on the touchdown point.
+   * Profile: Seabed → Sag bend → Buoyancy section (rise) → Hog bend → Platform. Lazy-wave configuration reduces dynamic
+   * loads on the touchdown point.
    * </p>
    *
    * @param riser the pipe to configure
@@ -575,23 +572,23 @@ public class RiserConfiguration {
    */
   public double calculateRiserLength() {
     switch (riserType) {
-      case STEEL_CATENARY_RISER:
-        return waterDepth * 1.15;
-      case FLEXIBLE_RISER:
-        return waterDepth * 1.3;
-      case TOP_TENSIONED_RISER:
-      case VERTICAL:
-        return waterDepth;
-      case LAZY_WAVE:
-        return waterDepth * 1.8;
-      case STEEP_WAVE:
-        return waterDepth * 1.5;
-      case HYBRID_RISER:
-        return waterDepth * 1.4;
-      case FREE_STANDING:
-        return waterDepth * 1.2;
-      default:
-        return waterDepth * 1.15;
+    case STEEL_CATENARY_RISER:
+      return waterDepth * 1.15;
+    case FLEXIBLE_RISER:
+      return waterDepth * 1.3;
+    case TOP_TENSIONED_RISER:
+    case VERTICAL:
+      return waterDepth;
+    case LAZY_WAVE:
+      return waterDepth * 1.8;
+    case STEEP_WAVE:
+      return waterDepth * 1.5;
+    case HYBRID_RISER:
+      return waterDepth * 1.4;
+    case FREE_STANDING:
+      return waterDepth * 1.2;
+    default:
+      return waterDepth * 1.15;
     }
   }
 
@@ -604,8 +601,7 @@ public class RiserConfiguration {
     StringBuilder sb = new StringBuilder();
     sb.append("Riser Configuration: ").append(riserType.name()).append("\n");
     sb.append("  Water depth: ").append(waterDepth).append(" m\n");
-    sb.append("  Estimated length: ").append(String.format("%.1f", calculateRiserLength()))
-        .append(" m\n");
+    sb.append("  Estimated length: ").append(String.format("%.1f", calculateRiserLength())).append(" m\n");
     sb.append("  Inner diameter: ").append(innerDiameter * 1000).append(" mm\n");
     sb.append("  Sections: ").append(numberOfSections).append("\n");
 

@@ -1,3 +1,8 @@
+---
+title: Repository layout quick reference
+description: Use this guide to place new files consistently across the repository.
+---
+
 # Repository layout quick reference
 
 Use this guide to place new files consistently across the repository.

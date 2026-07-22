@@ -6,9 +6,7 @@ import org.netlib.util.intW;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * GERG2008 class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -17,8 +15,8 @@ public class GERG2008 {
   // Variables containing the common parameters in the GERG-2008 equations
   double RGERG;
   int NcGERG = 21;
-  int MaxFlds = 21;
-  int MaxMdl = 10;
+  int MaxFlds = 22;
+  int MaxMdl = 14;
   int MaxTrmM = 12;
   int MaxTrmP = 24;
   double epsilon = 1e-15;
@@ -68,9 +66,7 @@ public class GERG2008 {
   double dPdDsave;
 
   /**
-   * <p>
    * MolarMassGERG.
-   * </p>
    *
    * @param x an array of type double
    * @param Mm a {@link org.netlib.util.doubleW} object
@@ -98,9 +94,7 @@ public class GERG2008 {
   }
 
   /**
-   * <p>
    * PressureGERG.
-   * </p>
    *
    * @param T a double
    * @param D a double
@@ -145,9 +139,7 @@ public class GERG2008 {
   }
 
   /**
-   * <p>
    * DensityGERG.
-   * </p>
    *
    * @param iFlag a int
    * @param T a double
@@ -157,8 +149,7 @@ public class GERG2008 {
    * @param ierr a {@link org.netlib.util.intW} object
    * @param herr a {@link org.netlib.util.StringW} object
    */
-  public void DensityGERG(int iFlag, double T, double P, double[] x, doubleW D, intW ierr,
-      StringW herr) {
+  public void DensityGERG(int iFlag, double T, double P, double[] x, doubleW D, intW ierr, StringW herr) {
     // Sub DensityGERG(iFlag, T, P, x, D, ierr, herr)
 
     // Calculate density as a function of temperature and pressure. This is an
@@ -261,11 +252,11 @@ public class GERG2008 {
         nFail++;
         if (nFail == 1) {
           D.val = Dcx.val * 3; // If vapor phase search fails, look for root in liquid
-                               // region
+          // region
         } else if (nFail == 2) {
           D.val = Dcx.val * 2.5; // If liquid phase search fails, look for root between
-                                 // liquid and critical
-                                 // regions
+          // liquid and critical
+          // regions
         } else if (nFail == 3) {
           D.val = Dcx.val * 2; // If search fails, look for root in critical region
         }
@@ -302,16 +293,14 @@ public class GERG2008 {
 
             // If requested, check to see if point is possibly 2-phase
             if (iFlag > 0) {
-              PropertiesGERG(T, D.val, x, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G,
-                  JT, Kappa, A);
-              if ((PP.val <= 0 || dPdD.val <= 0 || d2PdTD.val <= 0)
-                  || (Cv.val <= 0 || Cp.val <= 0 || W.val <= 0)) {
-                // Iteration failed (above loop did find a solution or checks made
+              PropertiesGERG(T, D.val, x, PP, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
+              if ((PP.val <= 0 || dPdD.val <= 0 || d2PdTD.val <= 0) || (Cv.val <= 0 || Cp.val <= 0 || W.val <= 0)) {
+                // Iteration failed (above loop did find a solution or
+                // checks made
                 // below
                 // indicate possible 2-phase state)
                 ierr.val = 1;
-                herr.val =
-                    "Calculation failed to converge in GERG method, ideal gas density returned.";
+                herr.val = "Calculation failed to converge in GERG method, ideal gas density returned.";
                 D.val = P / RGERG / T;
               }
             }
@@ -328,9 +317,7 @@ public class GERG2008 {
   }
 
   /**
-   * <p>
    * PropertiesGERG.
-   * </p>
    *
    * @param T a double
    * @param D a double
@@ -352,9 +339,9 @@ public class GERG2008 {
    * @param Kappa a {@link org.netlib.util.doubleW} object
    * @param A a {@link org.netlib.util.doubleW} object
    */
-  public void PropertiesGERG(double T, double D, double[] x, doubleW P, doubleW Z, doubleW dPdD,
-      doubleW d2PdD2, doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv,
-      doubleW Cp, doubleW W, doubleW G, doubleW JT, doubleW Kappa, doubleW A) {
+  public void PropertiesGERG(double T, double D, double[] x, doubleW P, doubleW Z, doubleW dPdD, doubleW d2PdD2,
+      doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv, doubleW Cp, doubleW W, doubleW G,
+      doubleW JT, doubleW Kappa, doubleW A) {
     // Sub PropertiesGERG(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv,
     // Cp, W, G, JT, Kappa, A)
 
@@ -435,8 +422,8 @@ public class GERG2008 {
       Cp.val = Cv.val + T * (dPdT.val / D) * (dPdT.val / D) / dPdD.val;
       d2PdD2.val = RT * (2 * ar[0][1].val + 4 * ar[0][2].val + ar[0][3].val) / D;
       JT.val = (T / D * dPdT.val / dPdD.val - 1) / Cp.val / D; // '=(dB/dT*T-B)/Cp for an
-                                                               // ideal gas, but dB/dT is
-                                                               // not known
+      // ideal gas, but dB/dT is
+      // not known
     } else {
       Cp.val = Cv.val + R;
       d2PdD2.val = 0;
@@ -745,8 +732,7 @@ public class GERG2008 {
                   ar[2][0].val += ndtt * (tijk[mn][k] - 1);
                   ar[1][1].val += ndtt * ex;
                   ar[1][2].val += ndtt * ex2;
-                  ar[0][3].val +=
-                      ndt * (ex * (ex2 - 2 * (dijk[mn][k] - 2 * cij0)) + 2 * dijk[mn][k]);
+                  ar[0][3].val += ndt * (ex * (ex2 - 2 * (dijk[mn][k] - 2 * cij0)) + 2 * dijk[mn][k]);
                 }
               }
             }
@@ -829,9 +815,7 @@ public class GERG2008 {
 
   // The following routine must be called once before any other routine.
   /**
-   * <p>
    * SetupGERG.
-   * </p>
    */
   public void SetupGERG() {
     // Initialize all the constants and parameters in the GERG-2008 model.
@@ -960,7 +944,9 @@ public class GERG2008 {
 
     // Exponents in pure fluid equations
     for (int i = 1; i <= MaxFlds; ++i) {
-      Vc3[i] = 1 / Math.pow(Dc[i], o13) / 2;
+      if (Dc[i] > epsilon) {
+        Vc3[i] = 1 / Math.pow(Dc[i], o13) / 2;
+      }
       Tc2[i] = Math.sqrt(Tc[i]);
       coik[i][1] = 0;
       doik[i][1] = 1;
@@ -3163,12 +3149,12 @@ public class GERG2008 {
     btij[20][21] = 1;
     gtij[20][21] = 1; // He-Ar
 
-    for (int i = 1; i <= MaxFlds; ++i) {
+    for (int i = 1; i <= NcGERG; ++i) {
       bvij[i][i] = 1;
       btij[i][i] = 1;
       gvij[i][i] = 1 / Dc[i];
       gtij[i][i] = Tc[i];
-      for (int j = i + 1; j <= MaxFlds; ++j) {
+      for (int j = i + 1; j <= NcGERG; ++j) {
         gvij[i][j] = gvij[i][j] * bvij[i][j] * Math.pow(Vc3[i] + Vc3[j], 3);
         gtij[i][j] = gtij[i][j] * btij[i][j] * Tc2[i] * Tc2[j];
         bvij[i][j] = Math.pow(bvij[i][j], 2);
@@ -3187,7 +3173,7 @@ public class GERG2008 {
     // Ideal gas terms
     T0 = 298.15;
     d0 = 101.325 / RGERG / T0;
-    for (int i = 1; i <= MaxFlds; ++i) {
+    for (int i = 1; i <= NcGERG; ++i) {
       n0i[i][3] = n0i[i][3] - 1;
       n0i[i][2] = n0i[i][2] + T0;
       for (int j = 1; j <= 7; ++j) {
@@ -3224,9 +3210,7 @@ public class GERG2008 {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -3245,8 +3229,8 @@ public class GERG2008 {
     int iFlag = 0;
     StringW herr = new StringW("");
 
-    double[] x = {0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215,
-        0.00088, 0.00024, 0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001};
+    double[] x = { 0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
+        0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001 };
 
     test.MolarMassGERG(x, Mm);
 
@@ -3277,49 +3261,37 @@ public class GERG2008 {
     doubleW JT = new doubleW(0.0d);
     doubleW Kappa = new doubleW(0.0d);
     doubleW PP = new doubleW(0.0d);
-    test.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
-        Kappa, A);
+    test.PropertiesGERG(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa, A);
 
     /*
-     * // test.PressureGERG(400, 12.798286, x); String herr = ""; test.DensityGERG(0, T, P, x, ierr,
-     * herr); double pres = test.P; double molarmass = test.Mm;
+     * // test.PressureGERG(400, 12.798286, x); String herr = ""; test.DensityGERG(0, T, P, x, ierr, herr); double pres
+     * = test.P; double molarmass = test.Mm;
      *
-     * // double dPdD=0.0, dPdD2=0.0, d2PdTD=0.0, dPdT=0.0, U=0.0, H=0.0, S=0.0, // Cv=0.0, Cp=0.0,
-     * W=0.0, G=0.0, JT=0.0, Kappa=0.0, A=0.0;
+     * // double dPdD=0.0, dPdD2=0.0, d2PdTD=0.0, dPdT=0.0, U=0.0, H=0.0, S=0.0, // Cv=0.0, Cp=0.0, W=0.0, G=0.0,
+     * JT=0.0, Kappa=0.0, A=0.0;
      *
-     * // void DensityGERG(const int iFlag, const double T, const double P, const //
-     * std::vector<double> &x, double &D, int &ierr, std::string &herr) // test.DensityGERG(0, T, P,
-     * x, ierr, herr);
+     * // void DensityGERG(const int iFlag, const double T, const double P, const // std::vector<double> &x, double &D,
+     * int &ierr, std::string &herr) // test.DensityGERG(0, T, P, x, ierr, herr);
      *
-     * // Sub PropertiesGERG(T, D, x, P, Z, dPdD, dPdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, // W, G, JT,
-     * Kappa) // test.PropertiesGERG(T, test.D, x);
+     * // Sub PropertiesGERG(T, D, x, P, Z, dPdD, dPdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, // W, G, JT, Kappa) //
+     * test.PropertiesGERG(T, test.D, x);
      */
     System.out.println("Outputs-----\n");
-    System.out
-        .println("Molar mass [g/mol]:                 20.54274450160000 != %0.16g\n" + Mm.val);
+    System.out.println("Molar mass [g/mol]:                 20.54274450160000 != %0.16g\n" + Mm.val);
     System.out.println("Molar density [mol/l]:              12.79828626082062 != %0.16g\n" + D.val);
     System.out.println("Pressure [kPa]:                     50000.00000000001 != %0.16g\n" + P.val);
     System.out.println("Compressibility factor:             1.174690666383717 != %0.16g\n" + Z.val);
-    System.out
-        .println("d(P)/d(rho) [kPa/(mol/l)]:          7000.694030193327 != %0.16g\n" + dPdD.val);
-    System.out
-        .println("d^2(P)/d(rho)^2 [kPa/(mol/l)^2]:    1130.481239114938 != %0.16g\n" + d2PdD2.val);
-    System.out
-        .println("d(P)/d(T) [kPa/K]:                  235.9832292593096 != %0.16g\n" + dPdT.val);
-    System.out
-        .println("Energy [J/mol]:                     -2746.492901212530 != %0.16g\n" + U.val);
+    System.out.println("d(P)/d(rho) [kPa/(mol/l)]:          7000.694030193327 != %0.16g\n" + dPdD.val);
+    System.out.println("d^2(P)/d(rho)^2 [kPa/(mol/l)^2]:    1130.481239114938 != %0.16g\n" + d2PdD2.val);
+    System.out.println("d(P)/d(T) [kPa/K]:                  235.9832292593096 != %0.16g\n" + dPdT.val);
+    System.out.println("Energy [J/mol]:                     -2746.492901212530 != %0.16g\n" + U.val);
     System.out.println("Enthalpy [J/mol]:                   1160.280160510973 != %0.16g\n" + H.val);
-    System.out
-        .println("Entropy [J/mol-K]:                  -38.57590392409089 != %0.16g\n" + S.val);
-    System.out
-        .println("Isochoric heat capacity [J/mol-K]:  39.02948218156372 != %0.16g\n" + Cv.val);
-    System.out
-        .println("Isobaric heat capacity [J/mol-K]:   58.45522051000366 != %0.16g\n" + Cp.val);
+    System.out.println("Entropy [J/mol-K]:                  -38.57590392409089 != %0.16g\n" + S.val);
+    System.out.println("Isochoric heat capacity [J/mol-K]:  39.02948218156372 != %0.16g\n" + Cv.val);
+    System.out.println("Isobaric heat capacity [J/mol-K]:   58.45522051000366 != %0.16g\n" + Cp.val);
     System.out.println("Speed of sound [m/s]:               714.4248840596024 != %0.16g\n" + W.val);
     System.out.println("Gibbs energy [J/mol]:               16590.64173014733 != %0.16g\n" + G.val);
-    System.out
-        .println("Joule-Thomson coefficient [K/kPa]:  7.155629581480913E-05 != %0.16g\n" + JT.val);
-    System.out
-        .println("Isentropic exponent:                2.683820255058032 != %0.16g\n" + Kappa.val);
+    System.out.println("Joule-Thomson coefficient [K/kPa]:  7.155629581480913E-05 != %0.16g\n" + JT.val);
+    System.out.println("Isentropic exponent:                2.683820255058032 != %0.16g\n" + Kappa.val);
   }
 }

@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -17,11 +19,13 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Tests for PedersenAsphalteneCharacterization class.
  *
  * <p>
- * Validates the implementation of Pedersen's method for asphaltene characterization and
- * precipitation modeling using classical cubic EOS (SRK).
+ * Validates the implementation of Pedersen's method for asphaltene characterization and precipitation modeling using
+ * classical cubic EOS (SRK).
  * </p>
  */
 public class PedersenAsphalteneCharacterizationTest {
+  private static final Logger logger = LogManager.getLogger(PedersenAsphalteneCharacterizationTest.class);
+
   private PedersenAsphalteneCharacterization asphChar;
 
   @BeforeEach
@@ -33,18 +37,15 @@ public class PedersenAsphalteneCharacterizationTest {
   @DisplayName("Default constructor creates valid object")
   void testDefaultConstructor() {
     assertNotNull(asphChar);
-    assertEquals(PedersenAsphalteneCharacterization.DEFAULT_ASPHALTENE_MW,
-        asphChar.getAsphalteneMW(), 1e-6);
-    assertEquals(PedersenAsphalteneCharacterization.DEFAULT_ASPHALTENE_DENSITY,
-        asphChar.getAsphalteneDensity(), 1e-6);
+    assertEquals(PedersenAsphalteneCharacterization.DEFAULT_ASPHALTENE_MW, asphChar.getAsphalteneMW(), 1e-6);
+    assertEquals(PedersenAsphalteneCharacterization.DEFAULT_ASPHALTENE_DENSITY, asphChar.getAsphalteneDensity(), 1e-6);
     assertFalse(asphChar.isCharacterized());
   }
 
   @Test
   @DisplayName("Constructor with properties sets values correctly")
   void testPropertiesConstructor() {
-    PedersenAsphalteneCharacterization char2 =
-        new PedersenAsphalteneCharacterization(1000.0, 1.15, 0.08);
+    PedersenAsphalteneCharacterization char2 = new PedersenAsphalteneCharacterization(1000.0, 1.15, 0.08);
     assertEquals(1000.0, char2.getAsphalteneMW(), 1e-6);
     assertEquals(1.15, char2.getAsphalteneDensity(), 1e-6);
     assertEquals(0.08, char2.getAsphalteneWeightFraction(), 1e-6);
@@ -79,8 +80,8 @@ public class PedersenAsphalteneCharacterizationTest {
     assertTrue(Tb > 400.0, "Boiling point should be > 400 K, got " + Tb);
     assertTrue(Tb < Tc, "Boiling point should be < critical temperature");
 
-    System.out.println("Asphaltene characterization results:");
-    System.out.println(asphChar.toString());
+    logger.info("Asphaltene characterization results:");
+    logger.info(asphChar.toString());
   }
 
   @Test
@@ -99,21 +100,18 @@ public class PedersenAsphalteneCharacterizationTest {
     heavy.characterize();
 
     // Critical temperature should increase with MW
-    assertTrue(heavy.getCriticalTemperature() >= light.getCriticalTemperature(),
-        "Higher MW should have higher Tc");
+    assertTrue(heavy.getCriticalTemperature() >= light.getCriticalTemperature(), "Higher MW should have higher Tc");
 
     // Critical pressure should decrease with MW
-    assertTrue(heavy.getCriticalPressure() <= light.getCriticalPressure(),
-        "Higher MW should have lower Pc");
+    assertTrue(heavy.getCriticalPressure() <= light.getCriticalPressure(), "Higher MW should have lower Pc");
 
     // Acentric factor should increase with MW
-    assertTrue(heavy.getAcentricFactor() >= light.getAcentricFactor(),
-        "Higher MW should have higher omega");
+    assertTrue(heavy.getAcentricFactor() >= light.getAcentricFactor(), "Higher MW should have higher omega");
 
-    System.out.println("\nLight asphaltene (MW=500):");
-    System.out.println(light.toString());
-    System.out.println("Heavy asphaltene (MW=1500):");
-    System.out.println(heavy.toString());
+    logger.info("\nLight asphaltene (MW=500):");
+    logger.info(light.toString());
+    logger.info("Heavy asphaltene (MW=1500):");
+    logger.info(heavy.toString());
   }
 
   @Test
@@ -163,8 +161,8 @@ public class PedersenAsphalteneCharacterizationTest {
     assertTrue(Tc > 700.0, "Asphaltene Tc should be set correctly, got " + Tc);
     assertTrue(Pc > 5.0, "Asphaltene Pc should be set correctly, got " + Pc);
 
-    System.out.println("\nSystem with asphaltene:");
-    system.prettyPrint();
+    logger.info("\nSystem with asphaltene:");
+    // system.prettyPrint();
   }
 
   @Test
@@ -194,8 +192,8 @@ public class PedersenAsphalteneCharacterizationTest {
     assertTrue(comp4Name.startsWith("Asph_"), "Component 4 should be Asph_2, got: " + comp4Name);
     assertTrue(comp5Name.startsWith("Asph_"), "Component 5 should be Asph_3, got: " + comp5Name);
 
-    System.out.println("\nSystem with distributed asphaltene:");
-    system.prettyPrint();
+    logger.info("\nSystem with distributed asphaltene:");
+    // system.prettyPrint();
   }
 
   @Test
@@ -224,10 +222,10 @@ public class PedersenAsphalteneCharacterizationTest {
     // Should complete without error
     assertTrue(system.getNumberOfPhases() >= 1);
 
-    System.out.println("\nFlash results with asphaltene:");
-    System.out.println("Number of phases: " + system.getNumberOfPhases());
-    System.out.println("Gas fraction: " + system.getBeta());
-    system.prettyPrint();
+    logger.info("\nFlash results with asphaltene:");
+    logger.info("Number of phases: " + system.getNumberOfPhases());
+    logger.info("Gas fraction: " + system.getBeta());
+    // system.prettyPrint();
   }
 
   @Test
@@ -238,16 +236,15 @@ public class PedersenAsphalteneCharacterizationTest {
 
     // At 25°C
     double delta25 = asphChar.calculateSolubilityParameter(298.15);
-    assertTrue(delta25 > 18.0 && delta25 < 22.0,
-        "Asphaltene solubility parameter should be ~20 (MPa)^0.5");
+    assertTrue(delta25 > 18.0 && delta25 < 22.0, "Asphaltene solubility parameter should be ~20 (MPa)^0.5");
 
     // At higher temperature
     double delta100 = asphChar.calculateSolubilityParameter(373.15);
     assertTrue(delta100 < delta25, "Solubility parameter should decrease with temperature");
 
-    System.out.println("\nSolubility parameters:");
-    System.out.println("  At 25°C: " + delta25 + " (MPa)^0.5");
-    System.out.println("  At 100°C: " + delta100 + " (MPa)^0.5");
+    logger.info("\nSolubility parameters:");
+    logger.info("  At 25°C: " + delta25 + " (MPa)^0.5");
+    logger.info("  At 100°C: " + delta100 + " (MPa)^0.5");
   }
 
   @Test
@@ -265,11 +262,11 @@ public class PedersenAsphalteneCharacterizationTest {
     String unstableAssessment = asphChar.assessStability(15.0);
     assertTrue(unstableAssessment.contains("UNSTABLE"));
 
-    System.out.println("\nStability assessments:");
-    System.out.println("Aromatic oil (δ=19):");
-    System.out.println(stableAssessment);
-    System.out.println("Paraffinic oil (δ=15):");
-    System.out.println(unstableAssessment);
+    logger.info("\nStability assessments:");
+    logger.info("Aromatic oil (δ=19):");
+    logger.info(stableAssessment);
+    logger.info("Paraffinic oil (δ=15):");
+    logger.info(unstableAssessment);
   }
 
   @Test
@@ -287,7 +284,7 @@ public class PedersenAsphalteneCharacterizationTest {
     assertTrue(summary.contains("Acentric Factor"));
     assertTrue(summary.contains("Boiling Point"));
 
-    System.out.println(summary);
+    logger.info(summary);
   }
 
   @Test
@@ -311,18 +308,14 @@ public class PedersenAsphalteneCharacterizationTest {
     asphChar.setAsphalteneDensity(1.10);
     asphChar.characterize();
 
-    System.out.println("\nComparison: TBP vs Pedersen Asphaltene Characterization");
-    System.out.println("(MW=750 g/mol, ρ=1.10 g/cm³)");
-    System.out.println(
-        String.format("  Tc: TBP=%.1f K, Asph=%.1f K", TcTBP, asphChar.getCriticalTemperature()));
-    System.out.println(
-        String.format("  Pc: TBP=%.2f bar, Asph=%.2f bar", PcTBP, asphChar.getCriticalPressure()));
-    System.out
-        .println(String.format("  ω: TBP=%.4f, Asph=%.4f", omegaTBP, asphChar.getAcentricFactor()));
+    logger.info("\nComparison: TBP vs Pedersen Asphaltene Characterization");
+    logger.info("(MW=750 g/mol, ρ=1.10 g/cm³)");
+    logger.info(String.format("  Tc: TBP=%.1f K, Asph=%.1f K", TcTBP, asphChar.getCriticalTemperature()));
+    logger.info(String.format("  Pc: TBP=%.2f bar, Asph=%.2f bar", PcTBP, asphChar.getCriticalPressure()));
+    System.out.println(String.format("  ω: TBP=%.4f, Asph=%.4f", omegaTBP, asphChar.getAcentricFactor()));
 
     // Properties should be in similar range (using same underlying correlations)
-    assertTrue(Math.abs(TcTBP - asphChar.getCriticalTemperature()) < 200.0,
-        "Critical temperatures should be similar");
+    assertTrue(Math.abs(TcTBP - asphChar.getCriticalTemperature()) < 200.0, "Critical temperatures should be similar");
   }
 
   @Test
@@ -348,19 +341,18 @@ public class PedersenAsphalteneCharacterizationTest {
 
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
 
-    System.out.println("\nPressure Depletion Study (T=100°C):");
-    System.out.println(String.format("%-12s | %-8s | %-12s", "P [bar]", "Phases", "Gas frac"));
-    System.out.println(StringUtils.repeat("-", 40));
+    logger.info("\nPressure Depletion Study (T=100°C):");
+    logger.info(String.format("%-12s | %-8s | %-12s", "P [bar]", "Phases", "Gas frac"));
+    logger.info(StringUtils.repeat("-", 40));
 
-    double[] pressures = {300, 250, 200, 150, 100, 50, 20};
+    double[] pressures = { 300, 250, 200, 150, 100, 50, 20 };
     for (double p : pressures) {
       system.setPressure(p);
       try {
         ops.TPflash();
-        System.out.println(String.format("%12.0f | %8d | %12.4f", p, system.getNumberOfPhases(),
-            system.getBeta()));
+        logger.info(String.format("%12.0f | %8d | %12.4f", p, system.getNumberOfPhases(), system.getBeta()));
       } catch (Exception e) {
-        System.out.println(String.format("%12.0f | Error: %s", p, e.getMessage()));
+        logger.info(String.format("%12.0f | Error: %s", p, e.getMessage()));
       }
     }
   }
@@ -412,10 +404,10 @@ public class PedersenAsphalteneCharacterizationTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(oil);
     ops.TPflash();
 
-    System.out.println("\n=== TBP Characterized Oil with Asphaltene ===");
-    System.out.println("Number of components: " + oil.getPhase(0).getNumberOfComponents());
-    System.out.println("Number of phases: " + oil.getNumberOfPhases());
-    oil.prettyPrint();
+    logger.info("\n=== TBP Characterized Oil with Asphaltene ===");
+    logger.info("Number of components: " + oil.getPhase(0).getNumberOfComponents());
+    logger.info("Number of phases: " + oil.getNumberOfPhases());
+    // oil.prettyPrint();
 
     // Verify that characterization worked
     assertTrue(oil.getPhase(0).getNumberOfComponents() >= 18,
@@ -458,14 +450,13 @@ public class PedersenAsphalteneCharacterizationTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(heavyOil);
     ops.TPflash();
 
-    System.out.println("\n=== Heavy Oil with Distributed Asphaltene ===");
-    System.out.println("Number of components: " + heavyOil.getPhase(0).getNumberOfComponents());
-    System.out.println("Total asphaltene pseudo-components: 3");
-    heavyOil.prettyPrint();
+    logger.info("\n=== Heavy Oil with Distributed Asphaltene ===");
+    logger.info("Number of components: " + heavyOil.getPhase(0).getNumberOfComponents());
+    logger.info("Total asphaltene pseudo-components: 3");
+    // heavyOil.prettyPrint();
 
     // Verify distributed asphaltene was added
-    assertTrue(heavyOil.getPhase(0).getNumberOfComponents() >= 14,
-        "Should have at least 14 components");
+    assertTrue(heavyOil.getPhase(0).getNumberOfComponents() >= 14, "Should have at least 14 components");
   }
 
   @Test
@@ -504,10 +495,10 @@ public class PedersenAsphalteneCharacterizationTest {
     ThermodynamicOperations ops = new ThermodynamicOperations(volatileOil);
     ops.TPflash();
 
-    System.out.println("\n=== Volatile Oil with Light Asphaltene ===");
-    System.out.println("Pressure: 350 bar, Temperature: 120°C");
-    System.out.println("Number of phases: " + volatileOil.getNumberOfPhases());
-    System.out.println("Gas fraction: " + volatileOil.getBeta());
+    logger.info("\n=== Volatile Oil with Light Asphaltene ===");
+    logger.info("Pressure: 350 bar, Temperature: 120°C");
+    logger.info("Number of phases: " + volatileOil.getNumberOfPhases());
+    logger.info("Gas fraction: " + volatileOil.getBeta());
 
     assertTrue(volatileOil.getBeta() > 0.3, "Volatile oil should have significant gas fraction");
   }
@@ -540,19 +531,17 @@ public class PedersenAsphalteneCharacterizationTest {
     // Verify tuning effects
     assertEquals(baseTc * 1.05, tunedTc, baseTc * 0.001, "Tc should be multiplied by 1.05");
     assertEquals(basePc * 0.95, tunedPc, basePc * 0.001, "Pc should be multiplied by 0.95");
-    assertEquals(baseOmega * 1.10, tunedOmega, baseOmega * 0.001,
-        "Omega should be multiplied by 1.10");
+    assertEquals(baseOmega * 1.10, tunedOmega, baseOmega * 0.001, "Omega should be multiplied by 1.10");
 
-    System.out.println("\n=== Tuning Parameter Effects ===");
-    System.out.println(String.format("Tc: base=%.1f K, tuned=%.1f K (x1.05)", baseTc, tunedTc));
-    System.out.println(String.format("Pc: base=%.2f bar, tuned=%.2f bar (x0.95)", basePc, tunedPc));
-    System.out.println(String.format("ω: base=%.4f, tuned=%.4f (x1.10)", baseOmega, tunedOmega));
+    logger.info("\n=== Tuning Parameter Effects ===");
+    logger.info(String.format("Tc: base=%.1f K, tuned=%.1f K (x1.05)", baseTc, tunedTc));
+    logger.info(String.format("Pc: base=%.2f bar, tuned=%.2f bar (x0.95)", basePc, tunedPc));
+    logger.info(String.format("ω: base=%.4f, tuned=%.4f (x1.10)", baseOmega, tunedOmega));
 
     // Reset and verify
     asphChar.resetTuningParameters();
     asphChar.characterize();
-    assertEquals(baseTc, asphChar.getCriticalTemperature(), baseTc * 0.001,
-        "Tc should return to base after reset");
+    assertEquals(baseTc, asphChar.getCriticalTemperature(), baseTc * 0.001, "Tc should return to base after reset");
   }
 
   @Test
@@ -602,10 +591,10 @@ public class PedersenAsphalteneCharacterizationTest {
     assertEquals(asphChar.getCriticalTemperature(), systemTc, 0.1, "System should have tuned Tc");
     assertEquals(asphChar.getCriticalPressure(), systemPc, 0.01, "System should have tuned Pc");
 
-    System.out.println("\n=== Tuned Asphaltene in System ===");
-    System.out.println("Tuning: Tc x1.03, Pc x0.97");
-    System.out.println(String.format("Applied Tc: %.1f K", systemTc));
-    System.out.println(String.format("Applied Pc: %.2f bar", systemPc));
+    logger.info("\n=== Tuned Asphaltene in System ===");
+    logger.info("Tuning: Tc x1.03, Pc x0.97");
+    logger.info(String.format("Applied Tc: %.1f K", systemTc));
+    logger.info(String.format("Applied Pc: %.2f bar", systemPc));
   }
 
   // === Paper Validation Tests ===
@@ -630,10 +619,10 @@ public class PedersenAsphalteneCharacterizationTest {
     double Pc = asphChar.getCriticalPressure();
     double omega = asphChar.getAcentricFactor();
 
-    System.out.println("\n=== Pedersen Correlation Validation (MW=1000, ρ=1.15) ===");
-    System.out.println(String.format("Tc = %.1f K (expected: 900-1100 K)", Tc));
-    System.out.println(String.format("Pc = %.2f bar (expected: 5-15 bar)", Pc));
-    System.out.println(String.format("ω = %.4f (expected: >1.0)", omega));
+    logger.info("\n=== Pedersen Correlation Validation (MW=1000, ρ=1.15) ===");
+    logger.info(String.format("Tc = %.1f K (expected: 900-1100 K)", Tc));
+    logger.info(String.format("Pc = %.2f bar (expected: 5-15 bar)", Pc));
+    logger.info(String.format("ω = %.4f (expected: >1.0)", omega));
 
     assertTrue(Tc > 850.0 && Tc < 1200.0, "Tc should be in expected range for heavy asphaltene");
     assertTrue(Pc > 3.0 && Pc < 20.0, "Pc should be in expected range for heavy asphaltene");
@@ -648,15 +637,14 @@ public class PedersenAsphalteneCharacterizationTest {
     // - Pc decreases
     // - Acentric factor increases
 
-    double[] mwValues = {600, 800, 1000, 1500, 2000};
+    double[] mwValues = { 600, 800, 1000, 1500, 2000 };
     double[] tcValues = new double[mwValues.length];
     double[] pcValues = new double[mwValues.length];
     double[] omegaValues = new double[mwValues.length];
 
-    System.out.println("\n=== MW Sensitivity Analysis ===");
-    System.out.println(
-        String.format("%-8s | %-10s | %-10s | %-10s", "MW", "Tc [K]", "Pc [bar]", "omega"));
-    System.out.println(StringUtils.repeat("-", 45));
+    logger.info("\n=== MW Sensitivity Analysis ===");
+    logger.info(String.format("%-8s | %-10s | %-10s | %-10s", "MW", "Tc [K]", "Pc [bar]", "omega"));
+    logger.info(StringUtils.repeat("-", 45));
 
     for (int i = 0; i < mwValues.length; i++) {
       asphChar.setAsphalteneMW(mwValues[i]);
@@ -667,16 +655,15 @@ public class PedersenAsphalteneCharacterizationTest {
       pcValues[i] = asphChar.getCriticalPressure();
       omegaValues[i] = asphChar.getAcentricFactor();
 
-      System.out.println(String.format("%8.0f | %10.1f | %10.2f | %10.4f", mwValues[i], tcValues[i],
-          pcValues[i], omegaValues[i]));
+      logger.info(
+          String.format("%8.0f | %10.1f | %10.2f | %10.4f", mwValues[i], tcValues[i], pcValues[i], omegaValues[i]));
     }
 
     // Verify trends
     for (int i = 1; i < mwValues.length; i++) {
       assertTrue(tcValues[i] >= tcValues[i - 1] - 10, "Tc should generally increase with MW");
       assertTrue(pcValues[i] <= pcValues[i - 1] + 1, "Pc should generally decrease with MW");
-      assertTrue(omegaValues[i] >= omegaValues[i - 1] - 0.05,
-          "Omega should generally increase with MW");
+      assertTrue(omegaValues[i] >= omegaValues[i - 1] - 0.05, "Omega should generally increase with MW");
     }
   }
 
@@ -687,13 +674,12 @@ public class PedersenAsphalteneCharacterizationTest {
     // - Higher critical temperature
     // - Different acentric factor behavior
 
-    double[] densities = {1.00, 1.05, 1.10, 1.15, 1.20};
+    double[] densities = { 1.00, 1.05, 1.10, 1.15, 1.20 };
     double fixedMW = 800.0;
 
-    System.out.println("\n=== Density Effect Analysis (MW=800) ===");
-    System.out.println(
-        String.format("%-10s | %-10s | %-10s | %-10s", "Density", "Tc [K]", "Pc [bar]", "omega"));
-    System.out.println(StringUtils.repeat("-", 50));
+    logger.info("\n=== Density Effect Analysis (MW=800) ===");
+    logger.info(String.format("%-10s | %-10s | %-10s | %-10s", "Density", "Tc [K]", "Pc [bar]", "omega"));
+    logger.info(StringUtils.repeat("-", 50));
 
     double prevTc = 0;
     for (double density : densities) {
@@ -705,8 +691,7 @@ public class PedersenAsphalteneCharacterizationTest {
       double Pc = asphChar.getCriticalPressure();
       double omega = asphChar.getAcentricFactor();
 
-      System.out
-          .println(String.format("%10.2f | %10.1f | %10.2f | %10.4f", density, Tc, Pc, omega));
+      System.out.println(String.format("%10.2f | %10.1f | %10.2f | %10.4f", density, Tc, Pc, omega));
 
       // Tc should increase with density (more aromatic character)
       if (prevTc > 0) {

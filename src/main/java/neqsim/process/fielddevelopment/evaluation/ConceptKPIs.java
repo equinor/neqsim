@@ -14,8 +14,7 @@ import neqsim.process.fielddevelopment.screening.SafetyReport;
  * Key Performance Indicators from concept evaluation.
  *
  * <p>
- * Aggregates all screening results into a single, comparable KPI set for concept ranking and
- * decision support.
+ * Aggregates all screening results into a single, comparable KPI set for concept ranking and decision support.
  *
  * @author ESOL
  * @version 1.0
@@ -228,8 +227,7 @@ public final class ConceptKPIs implements Serializable {
    * @return true if showstoppers exist
    */
   public boolean hasBlockingIssues() {
-    return flowAssuranceOverall == FlowAssuranceResult.FAIL
-        || safetyLevel == SafetyReport.SafetyLevel.HIGH;
+    return flowAssuranceOverall == FlowAssuranceResult.FAIL || safetyLevel == SafetyReport.SafetyLevel.HIGH;
   }
 
   /**
@@ -238,9 +236,8 @@ public final class ConceptKPIs implements Serializable {
    * @return one-line summary
    */
   public String getOneLiner() {
-    return String.format("%s: CAPEX=%.0fM, CO2=%.1f kg/boe, FA=%s, Score=%.0f%%", conceptName,
-        totalCapexMUSD, co2IntensityKgPerBoe, flowAssuranceOverall.getDisplayName(),
-        overallScore * 100);
+    return String.format("%s: CAPEX=%.0fM, CO2=%.1f kg/boe, FA=%s, Score=%.0f%%", conceptName, totalCapexMUSD,
+        co2IntensityKgPerBoe, flowAssuranceOverall.getDisplayName(), overallScore * 100);
   }
 
   /**
@@ -468,8 +465,7 @@ public final class ConceptKPIs implements Serializable {
 
     public ConceptKPIs build() {
       // Calculate overall score if not set
-      if (overallScore == 0
-          && (technicalScore > 0 || economicScore > 0 || environmentalScore > 0)) {
+      if (overallScore == 0 && (technicalScore > 0 || economicScore > 0 || environmentalScore > 0)) {
         overallScore = (technicalScore + economicScore + environmentalScore) / 3.0;
       }
       return new ConceptKPIs(this);

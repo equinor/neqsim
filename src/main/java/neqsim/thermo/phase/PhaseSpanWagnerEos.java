@@ -27,9 +27,7 @@ public class PhaseSpanWagnerEos extends PhaseEos {
   private transient boolean propertiesCalculated = false;
 
   /**
-   * <p>
    * Constructor for PhaseSpanWagnerEos.
-   * </p>
    */
   public PhaseSpanWagnerEos() {
     thermoPropertyModelName = "Span-Wagner";
@@ -50,8 +48,7 @@ public class PhaseSpanWagnerEos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     if (initType >= 1) {
       // Check if we can skip Span-Wagner calculations (state unchanged)
@@ -212,17 +209,17 @@ public class PhaseSpanWagnerEos extends PhaseEos {
     double refDensity = molarDensity * getMolarMass(); // density in kg/m3
     double conversionFactor = 1.0;
     switch (unit) {
-      case "kg/m3":
-        conversionFactor = 1.0;
-        break;
-      case "mol/m3":
-        conversionFactor = 1.0 / getMolarMass();
-        break;
-      case "lb/ft3":
-        conversionFactor = 0.0624279606;
-        break;
-      default:
-        throw new RuntimeException("unit not supported " + unit);
+    case "kg/m3":
+      conversionFactor = 1.0;
+      break;
+    case "mol/m3":
+      conversionFactor = 1.0 / getMolarMass();
+      break;
+    case "lb/ft3":
+      conversionFactor = 0.0624279606;
+      break;
+    default:
+      throw new RuntimeException("unit not supported " + unit);
     }
     return refDensity * conversionFactor;
   }

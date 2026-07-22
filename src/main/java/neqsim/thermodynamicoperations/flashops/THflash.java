@@ -13,13 +13,13 @@ import neqsim.thermo.system.SystemInterface;
  * Temperature-Enthalpy (TH) flash calculation.
  *
  * <p>
- * Solves for pressure P given specified temperature T and enthalpy H. Uses Newton iteration with
- * the thermodynamic derivative (∂H/∂P)_T = V - T(∂V/∂T)_P.
+ * Solves for pressure P given specified temperature T and enthalpy H. Uses Newton iteration with the thermodynamic
+ * derivative (∂H/∂P)_T = V - T(∂V/∂T)_P.
  * </p>
  *
  * <p>
- * Applications include heat exchanger design at fixed temperature and process simulation where
- * temperature and enthalpy are specified independently.
+ * Applications include heat exchanger design at fixed temperature and process simulation where temperature and enthalpy
+ * are specified independently.
  * </p>
  *
  * @author Even Solbraa
@@ -60,8 +60,8 @@ public class THflash extends QfuncFlash {
    * Calculates the derivative d²Q/dP² = (∂H/∂P)_T.
    *
    * <p>
-   * Using thermodynamic relation: (∂H/∂P)_T = V - T(∂V/∂T)_P = V + T * dVdT where dVdT is defined
-   * as -dV/dT in NeqSim convention.
+   * Using thermodynamic relation: (∂H/∂P)_T = V - T(∂V/∂T)_P = V + T * dVdT where dVdT is defined as -dV/dT in NeqSim
+   * convention.
    * </p>
    *
    * @return derivative of enthalpy with respect to pressure at constant T
@@ -83,6 +83,7 @@ public class THflash extends QfuncFlash {
    *
    * @return converged pressure in bar
    */
+  @Override
   public double solveQ() {
     double oldPres = system.getPressure();
     double nyPres = system.getPressure();
@@ -131,7 +132,7 @@ public class THflash extends QfuncFlash {
       }
 
       // Newton step with damping
-      double factor = (double) iterations / (iterations + 5.0);
+      double factor = iterations / (iterations + 5.0);
       double deltaP = -factor * dH / dHdP;
 
       // Limit step size
@@ -164,8 +165,19 @@ public class THflash extends QfuncFlash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    solveQ();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values
+    // left by a previous unrelated flash. Warm-start is then enabled for the
+    // inner TPflash iterations within the outer TH-flash loop — safe because
+    // the outer loop converges on P via enthalpy residual.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */

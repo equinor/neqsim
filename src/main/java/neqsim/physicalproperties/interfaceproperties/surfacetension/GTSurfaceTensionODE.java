@@ -13,16 +13,14 @@ import org.ejml.interfaces.decomposition.SingularValueDecomposition_F64;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * GTSurfaceTensionODE class.
  *
- * ODE-system for integrating the surface tension in cases where the a reference component number
- * mole density can be used as integration variable.
+ * <p>
+ * ODE-system for integrating the surface tension in cases where the a reference component number mole density can be
+ * used as integration variable.
  *
- * This method can only be used when the reference component density varies monotonically over the
- * interface, and where there are no binary interaction parameters for the attractive parameter in
- * the EOS.
- * </p>
+ * This method can only be used when the reference component density varies monotonically over the interface, and where
+ * there are no binary interaction parameters for the attractive parameter in the EOS.
  *
  * @author Olaf Trygve Berglihn olaf.trygve.berglihn@sintef.no
  * @version $Id: $Id
@@ -53,9 +51,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
   public int maxit = 40;
 
   /**
-   * <p>
    * Constructor for GTSurfaceTensionODE.
-   * </p>
    *
    * @param flashedSystem a {@link neqsim.thermo.system.SystemInterface} object
    * @param phase1 a int
@@ -63,8 +59,8 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
    * @param referenceComponent a int
    * @param yscale a double
    */
-  public GTSurfaceTensionODE(SystemInterface flashedSystem, int phase1, int phase2,
-      int referenceComponent, double yscale) {
+  public GTSurfaceTensionODE(SystemInterface flashedSystem, int phase1, int phase2, int referenceComponent,
+      double yscale) {
     int i;
 
     int idx = 0;
@@ -94,10 +90,10 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
      */
     for (i = 0; i < this.ncomp; i++) {
       this.ci[i] = this.sys.getPhase(0).getComponent(i).getSurfaceTenisionInfluenceParameter(t);
-      this.rho_ph1[i] = this.sys.getPhase(phase1).getComponent(i).getx()
-          / this.sys.getPhase(phase1).getMolarVolume() / m3;
-      this.rho_ph2[i] = this.sys.getPhase(phase2).getComponent(i).getx()
-          / this.sys.getPhase(phase2).getMolarVolume() / m3;
+      this.rho_ph1[i] = this.sys.getPhase(phase1).getComponent(i).getx() / this.sys.getPhase(phase1).getMolarVolume()
+          / m3;
+      this.rho_ph2[i] = this.sys.getPhase(phase2).getComponent(i).getx() / this.sys.getPhase(phase2).getMolarVolume()
+          / m3;
       this.rho_k[i] = this.rho_ph1[i];
     }
     this.rhoref_span = Math.abs(this.rho_ph2[this.refcomp] - this.rho_ph1[this.refcomp]);
@@ -133,8 +129,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     double[] mueq2 = new double[this.ncomp];
     double[] p0 = new double[1];
 
-    GTSurfaceTensionUtils.mufun(this.sys, this.ncomp, this.t, this.rho_ph1, this.mueq, dmu_drho1,
-        this.p0);
+    GTSurfaceTensionUtils.mufun(this.sys, this.ncomp, this.t, this.rho_ph1, this.mueq, dmu_drho1, this.p0);
     GTSurfaceTensionUtils.mufun(this.sys, this.ncomp, this.t, this.rho_ph2, mueq2, dmu_drho2, p0);
 
     // Check flash equilibrium
@@ -142,8 +137,8 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
       maxerr = Math.max(maxerr, Math.abs(this.mueq[i] / mueq2[i] - 1.0));
     }
     if (maxerr > this.reltol) {
-      logger.error("Flash is not properly solved.  Maximum relative error in chemical potential:  "
-          + maxerr + " > " + reltol);
+      logger.error(
+          "Flash is not properly solved.  Maximum relative error in chemical potential:  " + maxerr + " > " + reltol);
       throw new RuntimeException("Flash not solved!");
     }
     this.initialized = true;
@@ -189,13 +184,12 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
 
     DMatrixRMaj df = new DMatrixRMaj(jac);
     DMatrixRMaj ms = new DMatrixRMaj(df.numRows, 1);
-    SingularValueDecomposition<DMatrixRMaj> svd =
-        DecompositionFactory_DDRM.svd(df.numRows, df.numCols, true, true, true);
+    SingularValueDecomposition<DMatrixRMaj> svd = DecompositionFactory_DDRM.svd(df.numRows, df.numCols, true, true,
+        true);
     if (!svd.decompose(df)) {
       throw new RuntimeException("Decomposition failed");
     }
-    dn_dnref =
-        SingularOps_DDRM.nullSpace((SingularValueDecomposition_F64<DMatrixRMaj>) svd, ms, 1e-12); // UtilEjml.EPS);
+    dn_dnref = SingularOps_DDRM.nullSpace((SingularValueDecomposition_F64<DMatrixRMaj>) svd, ms, 1e-12); // UtilEjml.EPS);
     CommonOps_DDRM.divide(dn_dnref.get(this.refcomp, 0), dn_dnref);
     delta_omega = -(p[0] - this.p0[0]);
     for (int i = 0; i < this.ncomp; i++) {
@@ -211,10 +205,10 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
     }
 
     /*
-     * If the discriminant becomes negative, this can be due to numerical problems when approaching
-     * bulk. Assume the profile is sufficiently flat if the reference density has exceeded 90% of
-     * the target bulk density. A better way is to use the approximations given by Davis,
-     * Statistical mechanics of surfaces and thin films, VHC Publishers Inc, 1996.
+     * If the discriminant becomes negative, this can be due to numerical problems when approaching bulk. Assume the
+     * profile is sufficiently flat if the reference density has exceeded 90% of the target bulk density. A better way
+     * is to use the approximations given by Davis, Statistical mechanics of surfaces and thin films, VHC Publishers
+     * Inc, 1996.
      */
     if (delta_omega * dsigma < 0.0) {
       if (t > 0.9) {
@@ -236,8 +230,8 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
   }
 
   /**
-   * SolveRho. Solve for the equilibrium density in the interface. Solves the equilibrium relations
-   * with the Newton-Raphson method.
+   * SolveRho. Solve for the equilibrium density in the interface. Solves the equilibrium relations with the
+   * Newton-Raphson method.
    *
    * @param rho Number density [mol/m3]
    * @param mu Chemical potential [J/mol]
@@ -246,8 +240,7 @@ public class GTSurfaceTensionODE implements FirstOrderDifferentialEquations {
    * @param f Residual of equilibrium relations.
    * @param jac Jacobian of the equilibrium relations.
    */
-  private void solveRho(double[] rho, double[] mu, double[][] dmu_drho, double[] p, double[] f,
-      double[][] jac) {
+  private void solveRho(double[] rho, double[] mu, double[][] dmu_drho, double[] p, double[] f, double[][] jac) {
     double normf;
     double norm0;
     double norm;

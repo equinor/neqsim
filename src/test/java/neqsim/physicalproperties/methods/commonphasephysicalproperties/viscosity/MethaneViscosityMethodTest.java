@@ -1,10 +1,14 @@
 package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class MethaneViscosityMethodTest {
+  private static final Logger logger = LogManager.getLogger(MethaneViscosityMethodTest.class);
+
   static neqsim.thermo.system.SystemInterface testSystem = null;
 
   @Test
@@ -17,9 +21,8 @@ public class MethaneViscosityMethodTest {
     testOps.TPflash();
     testSystem.getPhase("gas").getPhysicalProperties().setViscosityModel("MethaneModel");
     testSystem.initProperties();
-    assertEquals(2.1165726278971833E-5,
-        testSystem.getPhase(0).getPhysicalProperties().getViscosity(), 0.5e-10);
+    assertEquals(2.1165726278971833E-5, testSystem.getPhase(0).getPhysicalProperties().getViscosity(), 0.5e-10);
     // double viscosity = testSystem.getPhase(0).getPhysicalProperties().getViscosity();
-    // System.out.println("Viscosity_LBC_MethaneMod: " + viscosity + "[Pa*s]");
+    // logger.info("Viscosity_LBC_MethaneMod: " + viscosity + "[Pa*s]");
   }
 }

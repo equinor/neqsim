@@ -1,3 +1,8 @@
+---
+title: Subsea Equipment
+description: Documentation for subsea production equipment in NeqSim.
+---
+
 # Subsea Equipment
 
 Documentation for subsea production equipment in NeqSim.
@@ -355,7 +360,7 @@ System.out.println("Maximum rate at this back pressure: " + maxRate + " m³/d");
 
 ## See Also
 
-- [Pipelines](../pipeline/README.md) - General pipeline modeling
-- [Wells](../well/README.md) - Well modeling
-- [Flow Assurance](../../pvtsimulation/flow_assurance.md) - Hydrate and wax management
-- [Networks](../network/README.md) - Network modeling
+- [Pipelines](pipelines) - General pipeline modeling
+- [Wells](wells) - Well modeling
+- [Flow Assurance](../../pvtsimulation/flow_assurance_overview) - Hydrate and wax management
+- [Networks](networks) - Network modeling

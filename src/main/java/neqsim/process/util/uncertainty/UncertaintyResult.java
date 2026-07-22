@@ -9,8 +9,7 @@ import neqsim.process.measurementdevice.vfm.UncertaintyBounds;
  * Result of an uncertainty propagation analysis for a process simulation.
  *
  * <p>
- * Contains uncertainty bounds for all outputs along with the sensitivity matrix used for the
- * calculation.
+ * Contains uncertainty bounds for all outputs along with the sensitivity matrix used for the calculation.
  * </p>
  *
  * @author ESOL
@@ -30,8 +29,7 @@ public class UncertaintyResult implements Serializable {
    * @param outputUncertainties map of output names to uncertainty bounds
    * @param sensitivityMatrix the sensitivity matrix used
    */
-  public UncertaintyResult(Map<String, UncertaintyBounds> outputUncertainties,
-      SensitivityMatrix sensitivityMatrix) {
+  public UncertaintyResult(Map<String, UncertaintyBounds> outputUncertainties, SensitivityMatrix sensitivityMatrix) {
     this.outputUncertainties = new HashMap<>(outputUncertainties);
     this.sensitivityMatrix = sensitivityMatrix;
     this.monteCarloSamples = 0;
@@ -45,8 +43,8 @@ public class UncertaintyResult implements Serializable {
    * @param monteCarloSamples number of Monte Carlo samples used
    * @param convergenceMetric convergence metric (e.g., coefficient of variation of the mean)
    */
-  public UncertaintyResult(Map<String, UncertaintyBounds> outputUncertainties,
-      int monteCarloSamples, double convergenceMetric) {
+  public UncertaintyResult(Map<String, UncertaintyBounds> outputUncertainties, int monteCarloSamples,
+      double convergenceMetric) {
     this.outputUncertainties = new HashMap<>(outputUncertainties);
     this.sensitivityMatrix = null;
     this.monteCarloSamples = monteCarloSamples;

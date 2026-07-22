@@ -24,7 +24,8 @@ public interface Controller extends Serializable {
   /**
    * Reset controller state (for stateful controllers like PID).
    */
-  default void reset() {}
+  default void reset() {
+  }
 
   /**
    * Get controller name.

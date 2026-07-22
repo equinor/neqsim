@@ -4,9 +4,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PHflashSingleComp class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class PHflashSingleComp extends Flash {
   double Hspec = 0;
 
   /**
-   * <p>
    * Constructor for PHflashSingleComp.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec a double
@@ -34,8 +30,8 @@ public class PHflashSingleComp extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    neqsim.thermodynamicoperations.ThermodynamicOperations bubOps =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(system);
+    neqsim.thermodynamicoperations.ThermodynamicOperations bubOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+        system);
     double initTemp = system.getTemperature();
 
     if (system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
@@ -67,11 +63,11 @@ public class PHflashSingleComp extends Flash {
      * double solidEnthalpy = 0.0;
      *
      * if (system.doSolidPhaseCheck()) { system.init(3, 3); solidEnthalpy =
-     * system.getPhase(PhaseType.SOLID).getEnthalpy() /
-     * system.getPhase(PhaseType.SOLID).getNumberOfMolesInPhase() system.getTotalNumberOfMoles();
+     * system.getPhase(PhaseType.SOLID).getEnthalpy() / system.getPhase(PhaseType.SOLID).getNumberOfMolesInPhase()
+     * system.getTotalNumberOfMoles();
      *
-     * if (Hspec < liqEnthalpy && Hspec > solidEnthalpy) { double solidbeta = (Hspec - liqEnthalpy)
-     * / (gasEnthalpy - liqEnthalpy); } }
+     * if (Hspec < liqEnthalpy && Hspec > solidEnthalpy) { double solidbeta = (Hspec - liqEnthalpy) / (gasEnthalpy -
+     * liqEnthalpy); } }
      */
 
     if (Hspec < liqEnthalpy || Hspec > gasEnthalpy) {

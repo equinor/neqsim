@@ -9,17 +9,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * shtokman_MEG class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class shtokman_MEG {
+  private static final Logger logger = LogManager.getLogger(shtokman_MEG.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(shtokman_MEG.class);
 
   /**
    * This method is just meant to test the thermo package.
@@ -28,8 +27,8 @@ public class shtokman_MEG {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 42.0), 130.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil((273.15 + 42.0),
+        130.00);
     testSystem.addComponent("methane", 1.0);
     // testSystem.addComponent("ethane", 10.039);
     // testSystem.addComponent("propane", 5.858);
@@ -43,8 +42,7 @@ public class shtokman_MEG {
     Separator separator = new Separator("Separator 1", stream_1);
     StreamInterface stream_2 = separator.getGasOutStream();
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     try {
       operations.add(separator);
@@ -66,7 +64,7 @@ public class shtokman_MEG {
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
-    System.out.println("temp " + stream_2.getThermoSystem().getTemperature());
+    logger.info("temp " + stream_2.getThermoSystem().getTemperature());
     operations.displayResult();
   }
 }

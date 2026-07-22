@@ -5,9 +5,7 @@ import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMar
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * SaturationPressureFunction class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class SaturationPressureFunction extends LevenbergMarquardtFunction {
   double molarMass = 0.0;
 
   /**
-   * <p>
    * Constructor for SaturationPressureFunction.
-   * </p>
    */
   public SaturationPressureFunction() {
     params = new double[1];
@@ -48,7 +44,7 @@ public class SaturationPressureFunction extends LevenbergMarquardtFunction {
     tempSystem.setMixingRule(system.getMixingRule());
     tempSystem.init(0);
     tempSystem.init(1);
-    // \\tempSystem.display();
+    // tempSystem.display();
     SaturationPressure satCalc = new SaturationPressure(tempSystem);
     double satPres = satCalc.calcSaturationPressure();
     // tempSystem.display();

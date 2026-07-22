@@ -7,9 +7,7 @@
 package neqsim.thermo.phase;
 
 /**
- * <p>
  * PhaseGEUniquacmodifiedHV class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -19,11 +17,10 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PhaseGEUniquacmodifiedHV.
-   * </p>
    */
-  public PhaseGEUniquacmodifiedHV() {}
+  public PhaseGEUniquacmodifiedHV() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -37,8 +34,8 @@ public class PhaseGEUniquacmodifiedHV extends PhaseGEUniquac {
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType pt) {
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt) {
     double GE = 0;
 
     /*

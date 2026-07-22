@@ -13,10 +13,9 @@ import neqsim.process.fielddevelopment.facility.FacilityConfig;
  * Economics estimator for concept-level CAPEX/OPEX screening in field development.
  *
  * <p>
- * This class provides rapid, order-of-magnitude cost estimates for early-phase field development
- * concept screening. The estimates are based on parametric cost models calibrated to industry
- * benchmarks and are suitable for concept comparison and ranking, but NOT for project sanction or
- * detailed cost engineering.
+ * This class provides rapid, order-of-magnitude cost estimates for early-phase field development concept screening. The
+ * estimates are based on parametric cost models calibrated to industry benchmarks and are suitable for concept
+ * comparison and ranking, but NOT for project sanction or detailed cost engineering.
  * </p>
  *
  * <h2>Estimation Methodology</h2>
@@ -24,19 +23,18 @@ import neqsim.process.fielddevelopment.facility.FacilityConfig;
  * The estimator uses a bottom-up approach considering four main cost categories:
  * </p>
  * <ul>
- * <li><b>Facility CAPEX</b>: Base facility cost adjusted for water depth and type (platform, FPSO,
- * subsea, onshore)</li>
- * <li><b>Equipment CAPEX</b>: Process equipment costs based on block types and sizing (compression,
- * dehydration, CO2 removal, etc.)</li>
- * <li><b>Well CAPEX</b>: Drilling and completion costs scaled by well count and type (subsea vs
- * platform wells)</li>
+ * <li><b>Facility CAPEX</b>: Base facility cost adjusted for water depth and type (platform, FPSO, subsea,
+ * onshore)</li>
+ * <li><b>Equipment CAPEX</b>: Process equipment costs based on block types and sizing (compression, dehydration, CO2
+ * removal, etc.)</li>
+ * <li><b>Well CAPEX</b>: Drilling and completion costs scaled by well count and type (subsea vs platform wells)</li>
  * <li><b>Infrastructure CAPEX</b>: Pipeline and umbilical costs based on tieback distance</li>
  * </ul>
  *
  * <h2>Accuracy and Limitations</h2>
  * <p>
- * All estimates carry a ±40% accuracy range, typical for AACE Class 5 (concept screening)
- * estimates. Key limitations include:
+ * All estimates carry a ±40% accuracy range, typical for AACE Class 5 (concept screening) estimates. Key limitations
+ * include:
  * </p>
  * <ul>
  * <li>No consideration of market conditions or regional cost factors</li>
@@ -59,7 +57,7 @@ import neqsim.process.fielddevelopment.facility.FacilityConfig;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * // Create estimator
  * EconomicsEstimator estimator = new EconomicsEstimator();
@@ -77,16 +75,15 @@ import neqsim.process.fielddevelopment.facility.FacilityConfig;
  *
  * // Access breakdown
  * System.out.println(detailedReport.getSummary());
- * System.out.println("CAPEX range: " + detailedReport.getCapexLowMUSD() + " - "
- *     + detailedReport.getCapexHighMUSD() + " MUSD");
+ * System.out.println(
+ *     "CAPEX range: " + detailedReport.getCapexLowMUSD() + " - " + detailedReport.getCapexHighMUSD() + " MUSD");
  * }</pre>
  *
  * <h2>Integration with Concept Evaluation</h2>
  * <p>
- * This estimator is typically used as part of the
- * {@link neqsim.process.fielddevelopment.evaluation.ConceptEvaluator} workflow, which combines
- * economics with flow assurance, safety, and emissions screening to produce comprehensive concept
- * KPIs.
+ * This estimator is typically used as part of the {@link neqsim.process.fielddevelopment.evaluation.ConceptEvaluator}
+ * workflow, which combines economics with flow assurance, safety, and emissions screening to produce comprehensive
+ * concept KPIs.
  * </p>
  *
  * @author ESOL
@@ -102,20 +99,19 @@ public class EconomicsEstimator {
   // ============================================================================
 
   /**
-   * Base capital cost for a fixed platform facility in million USD. Assumes a typical North Sea
-   * platform with 4-slot capacity. Adjusted for water depth using depth factor in calculations.
+   * Base capital cost for a fixed platform facility in million USD. Assumes a typical North Sea platform with 4-slot
+   * capacity. Adjusted for water depth using depth factor in calculations.
    */
   private static final double PLATFORM_BASE_MUSD = 500.0;
 
   /**
-   * Base capital cost for an FPSO (Floating Production Storage and Offloading) in million USD.
-   * Higher than platform due to hull, mooring, and storage systems.
+   * Base capital cost for an FPSO (Floating Production Storage and Offloading) in million USD. Higher than platform due
+   * to hull, mooring, and storage systems.
    */
   private static final double FPSO_BASE_MUSD = 800.0;
 
   /**
-   * Capital cost per subsea template in million USD. Includes manifold, protection structure, and
-   * connection systems.
+   * Capital cost per subsea template in million USD. Includes manifold, protection structure, and connection systems.
    */
   private static final double SUBSEA_TEMPLATE_MUSD = 100.0;
 
@@ -124,32 +120,32 @@ public class EconomicsEstimator {
   // ============================================================================
 
   /**
-   * Capital cost per compression stage in million USD. Includes compressor, driver, cooler, and
-   * associated piping. Typical for 10-20 MW gas compressor train.
+   * Capital cost per compression stage in million USD. Includes compressor, driver, cooler, and associated piping.
+   * Typical for 10-20 MW gas compressor train.
    */
   private static final double COMPRESSION_PER_STAGE_MUSD = 50.0;
 
   /**
-   * Capital cost for a TEG (triethylene glycol) dehydration unit in million USD. Sized for typical
-   * offshore gas production rates (1-5 MSm3/d).
+   * Capital cost for a TEG (triethylene glycol) dehydration unit in million USD. Sized for typical offshore gas
+   * production rates (1-5 MSm3/d).
    */
   private static final double TEG_UNIT_MUSD = 30.0;
 
   /**
-   * Capital cost for an amine-based CO2 removal unit in million USD. Higher cost due to
-   * regeneration system and solvent handling. Suitable for CO2 content above 10%.
+   * Capital cost for an amine-based CO2 removal unit in million USD. Higher cost due to regeneration system and solvent
+   * handling. Suitable for CO2 content above 10%.
    */
   private static final double AMINE_UNIT_MUSD = 80.0;
 
   /**
-   * Capital cost for a membrane CO2 removal unit in million USD. Lower cost than amine but limited
-   * to moderate CO2 concentrations. Suitable for CO2 content 2-10%.
+   * Capital cost for a membrane CO2 removal unit in million USD. Lower cost than amine but limited to moderate CO2
+   * concentrations. Suitable for CO2 content 2-10%.
    */
   private static final double MEMBRANE_UNIT_MUSD = 40.0;
 
   /**
-   * Capital cost for inlet separation train in million USD. Includes slug catcher, inlet separator,
-   * and associated systems.
+   * Capital cost for inlet separation train in million USD. Includes slug catcher, inlet separator, and associated
+   * systems.
    */
   private static final double SEPARATION_TRAIN_MUSD = 40.0;
 
@@ -158,14 +154,14 @@ public class EconomicsEstimator {
   // ============================================================================
 
   /**
-   * Capital cost per subsea well in million USD. Higher than platform wells due to subsea tree,
-   * controls, and intervention costs. Includes drilling, completion, and subsea equipment.
+   * Capital cost per subsea well in million USD. Higher than platform wells due to subsea tree, controls, and
+   * intervention costs. Includes drilling, completion, and subsea equipment.
    */
   private static final double SUBSEA_WELL_MUSD = 80.0;
 
   /**
-   * Capital cost per platform well in million USD. Lower than subsea due to simpler completion and
-   * easier access. Includes drilling and completion only (platform already counted).
+   * Capital cost per platform well in million USD. Lower than subsea due to simpler completion and easier access.
+   * Includes drilling and completion only (platform already counted).
    */
   private static final double PLATFORM_WELL_MUSD = 40.0;
 
@@ -174,14 +170,13 @@ public class EconomicsEstimator {
   // ============================================================================
 
   /**
-   * Capital cost per kilometer of pipeline in million USD. Assumes typical 12-16" production
-   * flowline with insulation. Actual cost varies significantly with diameter and water depth.
+   * Capital cost per kilometer of pipeline in million USD. Assumes typical 12-16" production flowline with insulation.
+   * Actual cost varies significantly with diameter and water depth.
    */
   private static final double PIPELINE_MUSD_PER_KM = 2.0;
 
   /**
-   * Capital cost per kilometer of umbilical in million USD. Includes hydraulic, electrical, and
-   * fiber optic elements.
+   * Capital cost per kilometer of umbilical in million USD. Includes hydraulic, electrical, and fiber optic elements.
    */
   private static final double UMBILICAL_MUSD_PER_KM = 1.0;
 
@@ -190,14 +185,14 @@ public class EconomicsEstimator {
   // ============================================================================
 
   /**
-   * Annual operating expenditure as percentage of total CAPEX. Industry typical range is 3-5% for
-   * offshore oil and gas. Includes maintenance, insurance, and logistics.
+   * Annual operating expenditure as percentage of total CAPEX. Industry typical range is 3-5% for offshore oil and gas.
+   * Includes maintenance, insurance, and logistics.
    */
   private static final double OPEX_PERCENT_OF_CAPEX = 0.04;
 
   /**
-   * Annual power cost per MW in million USD. Based on gas turbine fuel consumption and typical fuel
-   * gas cost. For power from shore, this would be lower but offset by cable CAPEX.
+   * Annual power cost per MW in million USD. Based on gas turbine fuel consumption and typical fuel gas cost. For power
+   * from shore, this would be lower but offset by cable CAPEX.
    */
   private static final double POWER_COST_PER_MW_YEAR = 0.5;
 
@@ -216,9 +211,8 @@ public class EconomicsEstimator {
    * Creates a new economics estimator with NCS baseline costs.
    *
    * <p>
-   * The estimator uses built-in cost factors calibrated to Norwegian Continental Shelf benchmarks.
-   * Use {@link #EconomicsEstimator(String)} or {@link #setRegion(String)} to adjust for other
-   * regions.
+   * The estimator uses built-in cost factors calibrated to Norwegian Continental Shelf benchmarks. Use
+   * {@link #EconomicsEstimator(String)} or {@link #setRegion(String)} to adjust for other regions.
    * </p>
    */
   public EconomicsEstimator() {
@@ -245,8 +239,7 @@ public class EconomicsEstimator {
    * @param regionalFactors custom regional cost factors
    */
   public EconomicsEstimator(RegionalCostFactors regionalFactors) {
-    this.regionalFactors =
-        regionalFactors != null ? regionalFactors : RegionalCostFactors.forRegion("NO");
+    this.regionalFactors = regionalFactors != null ? regionalFactors : RegionalCostFactors.forRegion("NO");
   }
 
   // ============================================================================
@@ -267,13 +260,12 @@ public class EconomicsEstimator {
    * </ul>
    *
    * <p>
-   * The returned report includes CAPEX and OPEX breakdowns, unit costs ($/boe), and accuracy ranges
-   * for uncertainty assessment.
+   * The returned report includes CAPEX and OPEX breakdowns, unit costs ($/boe), and accuracy ranges for uncertainty
+   * assessment.
    * </p>
    *
    * @param concept the field concept containing reservoir, wells, and infrastructure data
-   * @param facilityConfig the facility configuration with specific process blocks, or null for
-   *        simplified estimation
+   * @param facilityConfig the facility configuration with specific process blocks, or null for simplified estimation
    * @return an economics report with CAPEX, OPEX, and derived metrics
    * @throws NullPointerException if concept is null
    */
@@ -336,8 +328,8 @@ public class EconomicsEstimator {
    * Provides a quick economics estimate without detailed facility configuration.
    *
    * <p>
-   * This convenience method estimates costs based solely on the concept definition, using
-   * simplified assumptions about required process equipment. It's useful for:
+   * This convenience method estimates costs based solely on the concept definition, using simplified assumptions about
+   * required process equipment. It's useful for:
    * </p>
    * <ul>
    * <li>Initial concept screening before facility design</li>
@@ -346,8 +338,8 @@ public class EconomicsEstimator {
    * </ul>
    *
    * <p>
-   * For more accurate estimates, use {@link #estimate(FieldConcept, FacilityConfig)} with a proper
-   * facility configuration.
+   * For more accurate estimates, use {@link #estimate(FieldConcept, FacilityConfig)} with a proper facility
+   * configuration.
    * </p>
    *
    * @param concept the field concept to estimate
@@ -409,8 +401,7 @@ public class EconomicsEstimator {
    * @return region name
    */
   public String getRegionName() {
-    return regionalFactors != null ? regionalFactors.getRegionName()
-        : "Norwegian Continental Shelf";
+    return regionalFactors != null ? regionalFactors.getRegionName() : "Norwegian Continental Shelf";
   }
 
   // ============================================================================
@@ -421,9 +412,9 @@ public class EconomicsEstimator {
    * Estimates facility base CAPEX based on facility type and water depth.
    *
    * <p>
-   * Applies depth factor to account for increased costs in deeper water: - Every 500m of water
-   * depth adds ~50% to base cost - Subsea facilities scale with number of templates needed -
-   * Onshore facilities are typically 60% of platform cost
+   * Applies depth factor to account for increased costs in deeper water: - Every 500m of water depth adds ~50% to base
+   * cost - Subsea facilities scale with number of templates needed - Onshore facilities are typically 60% of platform
+   * cost
    * </p>
    *
    * @param concept the field concept with infrastructure data
@@ -440,17 +431,17 @@ public class EconomicsEstimator {
     double depthFactor = 1.0 + (waterDepth / 500.0) * 0.5; // 50% increase per 500m
 
     switch (infra.getProcessingLocation()) {
-      case PLATFORM:
-        return PLATFORM_BASE_MUSD * depthFactor;
-      case FPSO:
-        return FPSO_BASE_MUSD * depthFactor;
-      case SUBSEA:
-        return SUBSEA_TEMPLATE_MUSD * Math.max(1,
-            concept.getWells() != null ? concept.getWells().getProducerCount() / 2 : 2);
-      case ONSHORE:
-        return PLATFORM_BASE_MUSD * 0.6; // Onshore typically cheaper
-      default:
-        return PLATFORM_BASE_MUSD;
+    case PLATFORM:
+      return PLATFORM_BASE_MUSD * depthFactor;
+    case FPSO:
+      return FPSO_BASE_MUSD * depthFactor;
+    case SUBSEA:
+      return SUBSEA_TEMPLATE_MUSD
+          * Math.max(1, concept.getWells() != null ? concept.getWells().getProducerCount() / 2 : 2);
+    case ONSHORE:
+      return PLATFORM_BASE_MUSD * 0.6; // Onshore typically cheaper
+    default:
+      return PLATFORM_BASE_MUSD;
     }
   }
 
@@ -458,8 +449,8 @@ public class EconomicsEstimator {
    * Estimates process equipment CAPEX based on facility blocks or concept requirements.
    *
    * <p>
-   * If a facility configuration is provided, costs are calculated for each specific block.
-   * Otherwise, equipment is estimated from concept requirements (CO2 removal, dehydration, etc.).
+   * If a facility configuration is provided, costs are calculated for each specific block. Otherwise, equipment is
+   * estimated from concept requirements (CO2 removal, dehydration, etc.).
    * </p>
    *
    * @param concept the field concept with processing requirements
@@ -518,35 +509,35 @@ public class EconomicsEstimator {
    */
   private double getBlockCAPEX(BlockConfig block) {
     switch (block.getType()) {
-      case COMPRESSION:
-        int stages = block.getIntParameter("stages", 1);
-        return stages * COMPRESSION_PER_STAGE_MUSD;
-      case TEG_DEHYDRATION:
-        return TEG_UNIT_MUSD;
-      case CO2_REMOVAL_AMINE:
-        return AMINE_UNIT_MUSD;
-      case CO2_REMOVAL_MEMBRANE:
-        return MEMBRANE_UNIT_MUSD;
-      case H2S_REMOVAL:
-        return 60.0;
-      case NGL_RECOVERY:
-        return 100.0;
-      case INLET_SEPARATION:
-      case TWO_PHASE_SEPARATOR:
-      case THREE_PHASE_SEPARATOR:
-        return 20.0;
-      case OIL_STABILIZATION:
-        return 30.0;
-      case WATER_TREATMENT:
-        return 25.0;
-      case SUBSEA_BOOSTING:
-        return 150.0;
-      case FLARE_SYSTEM:
-        return 20.0;
-      case POWER_GENERATION:
-        return 100.0;
-      default:
-        return 10.0;
+    case COMPRESSION:
+      int stages = block.getIntParameter("stages", 1);
+      return stages * COMPRESSION_PER_STAGE_MUSD;
+    case TEG_DEHYDRATION:
+      return TEG_UNIT_MUSD;
+    case CO2_REMOVAL_AMINE:
+      return AMINE_UNIT_MUSD;
+    case CO2_REMOVAL_MEMBRANE:
+      return MEMBRANE_UNIT_MUSD;
+    case H2S_REMOVAL:
+      return 60.0;
+    case NGL_RECOVERY:
+      return 100.0;
+    case INLET_SEPARATION:
+    case TWO_PHASE_SEPARATOR:
+    case THREE_PHASE_SEPARATOR:
+      return 20.0;
+    case OIL_STABILIZATION:
+      return 30.0;
+    case WATER_TREATMENT:
+      return 25.0;
+    case SUBSEA_BOOSTING:
+      return 150.0;
+    case FLARE_SYSTEM:
+      return 20.0;
+    case POWER_GENERATION:
+      return 100.0;
+    default:
+      return 10.0;
     }
   }
 
@@ -624,8 +615,8 @@ public class EconomicsEstimator {
    * Estimates annual power-related operating costs.
    *
    * <p>
-   * Power consumption is estimated based on process equipment, primarily compression. Base facility
-   * load is assumed at 10 MW, with additional power per compression stage.
+   * Power consumption is estimated based on process equipment, primarily compression. Base facility load is assumed at
+   * 10 MW, with additional power per compression stage.
    * </p>
    *
    * @param concept the field concept
@@ -650,8 +641,7 @@ public class EconomicsEstimator {
    * Calculates annual production in million barrels of oil equivalent (Mboe).
    *
    * <p>
-   * Conversion assumes 6000 Sm3 of gas per barrel of oil equivalent, which is a standard industry
-   * conversion factor.
+   * Conversion assumes 6000 Sm3 of gas per barrel of oil equivalent, which is a standard industry conversion factor.
    * </p>
    *
    * @param concept the field concept with production rates
@@ -688,8 +678,7 @@ public class EconomicsEstimator {
    * <b>Accuracy Considerations</b>
    * </p>
    * <p>
-   * All estimates carry a ±40% accuracy range (AACE Class 5). The actual costs can vary
-   * significantly based on:
+   * All estimates carry a ±40% accuracy range (AACE Class 5). The actual costs can vary significantly based on:
    * </p>
    * <ul>
    * <li>Market conditions and contractor availability</li>
@@ -702,8 +691,7 @@ public class EconomicsEstimator {
    * <b>Thread Safety</b>
    * </p>
    * <p>
-   * This class is immutable and thread-safe. All collections returned by getter methods are
-   * defensive copies.
+   * This class is immutable and thread-safe. All collections returned by getter methods are defensive copies.
    * </p>
    *
    * <p>
@@ -788,8 +776,7 @@ public class EconomicsEstimator {
      * Gets the process equipment CAPEX in million USD.
      *
      * <p>
-     * Includes all topside or subsea process equipment: separation, compression, dehydration, gas
-     * treatment, etc.
+     * Includes all topside or subsea process equipment: separation, compression, dehydration, gas treatment, etc.
      * </p>
      *
      * @return equipment CAPEX in MUSD
@@ -828,8 +815,7 @@ public class EconomicsEstimator {
      * Gets the total CAPEX in million USD.
      *
      * <p>
-     * Sum of facility, equipment, wells, and infrastructure CAPEX. This is the headline number for
-     * concept comparison.
+     * Sum of facility, equipment, wells, and infrastructure CAPEX. This is the headline number for concept comparison.
      * </p>
      *
      * @return total CAPEX in MUSD
@@ -846,8 +832,8 @@ public class EconomicsEstimator {
      * Gets the annual OPEX in million USD per year.
      *
      * <p>
-     * Includes maintenance, power, logistics, and other recurring costs. Based on percentage of
-     * CAPEX plus power-specific costs.
+     * Includes maintenance, power, logistics, and other recurring costs. Based on percentage of CAPEX plus
+     * power-specific costs.
      * </p>
      *
      * @return annual OPEX in MUSD/year
@@ -860,8 +846,8 @@ public class EconomicsEstimator {
      * Gets the CAPEX per barrel of oil equivalent in USD.
      *
      * <p>
-     * Useful for comparing capital intensity across different concept sizes. Calculated as: Total
-     * CAPEX / Annual Production (first year).
+     * Useful for comparing capital intensity across different concept sizes. Calculated as: Total CAPEX / Annual
+     * Production (first year).
      * </p>
      *
      * @return CAPEX per boe in USD
@@ -874,8 +860,7 @@ public class EconomicsEstimator {
      * Gets the OPEX per barrel of oil equivalent in USD.
      *
      * <p>
-     * Useful for comparing operating efficiency across concepts. Calculated as: Annual OPEX /
-     * Annual Production.
+     * Useful for comparing operating efficiency across concepts. Calculated as: Annual OPEX / Annual Production.
      * </p>
      *
      * @return OPEX per boe in USD
@@ -888,8 +873,8 @@ public class EconomicsEstimator {
      * Gets the accuracy range as a percentage.
      *
      * <p>
-     * For screening estimates, this is typically ±40% (AACE Class 5). Use
-     * {@link #getCapexLowMUSD()} and {@link #getCapexHighMUSD()} for range bounds.
+     * For screening estimates, this is typically ±40% (AACE Class 5). Use {@link #getCapexLowMUSD()} and
+     * {@link #getCapexHighMUSD()} for range bounds.
      * </p>
      *
      * @return accuracy range in percent (e.g., 40 means ±40%)
@@ -906,8 +891,7 @@ public class EconomicsEstimator {
      * Gets the CAPEX breakdown by category.
      *
      * <p>
-     * Returns a defensive copy of the internal map. Keys include: "facility", "equipment", "wells",
-     * "infrastructure".
+     * Returns a defensive copy of the internal map. Keys include: "facility", "equipment", "wells", "infrastructure".
      * </p>
      *
      * @return map of category name to cost in MUSD
@@ -958,48 +942,41 @@ public class EconomicsEstimator {
      */
     public String getSummary() {
       StringBuilder sb = new StringBuilder();
-      sb.append("Economics Assessment (±").append(String.format("%.0f", accuracyRangePercent))
-          .append("%):\n");
+      sb.append("Economics Assessment (±").append(String.format("%.0f", accuracyRangePercent)).append("%):\n");
       sb.append("  CAPEX: ").append(String.format("%.0f", totalCapexMUSD)).append(" MUSD");
       sb.append(" (range: ").append(String.format("%.0f", getCapexLowMUSD()));
       sb.append(" - ").append(String.format("%.0f", getCapexHighMUSD())).append(")\n");
-      sb.append("    - Facility: ").append(String.format("%.0f", facilityCapexMUSD))
-          .append(" MUSD\n");
-      sb.append("    - Equipment: ").append(String.format("%.0f", equipmentCapexMUSD))
-          .append(" MUSD\n");
+      sb.append("    - Facility: ").append(String.format("%.0f", facilityCapexMUSD)).append(" MUSD\n");
+      sb.append("    - Equipment: ").append(String.format("%.0f", equipmentCapexMUSD)).append(" MUSD\n");
       sb.append("    - Wells: ").append(String.format("%.0f", wellCapexMUSD)).append(" MUSD\n");
-      sb.append("    - Infrastructure: ").append(String.format("%.0f", infrastructureCapexMUSD))
-          .append(" MUSD\n");
+      sb.append("    - Infrastructure: ").append(String.format("%.0f", infrastructureCapexMUSD)).append(" MUSD\n");
       sb.append("  OPEX: ").append(String.format("%.1f", annualOpexMUSD)).append(" MUSD/year\n");
       sb.append("  Unit costs: ").append(String.format("%.1f", capexPerBoeUSD)).append(" $/boe");
-      sb.append(" (CAPEX), ").append(String.format("%.1f", opexPerBoeUSD))
-          .append(" $/boe (OPEX)\n");
+      sb.append(" (CAPEX), ").append(String.format("%.1f", opexPerBoeUSD)).append(" $/boe (OPEX)\n");
       return sb.toString();
     }
 
     @Override
     public String toString() {
-      return String.format("EconomicsReport[CAPEX=%.0f MUSD, OPEX=%.1f MUSD/yr]", totalCapexMUSD,
-          annualOpexMUSD);
+      return String.format("EconomicsReport[CAPEX=%.0f MUSD, OPEX=%.1f MUSD/yr]", totalCapexMUSD, annualOpexMUSD);
     }
 
     /**
      * Builder for constructing {@link EconomicsReport} instances.
      *
      * <p>
-     * Uses the builder pattern for flexible and readable construction of economics reports. All
-     * monetary values are in million USD unless otherwise specified.
+     * Uses the builder pattern for flexible and readable construction of economics reports. All monetary values are in
+     * million USD unless otherwise specified.
      * </p>
      *
      * <p>
      * <b>Usage Example</b>
      * </p>
-     * 
+     *
      * <pre>
-     * EconomicsReport report = EconomicsReport.builder().facilityCapexMUSD(400).equipmentCapexMUSD(150)
-     *     .wellCapexMUSD(200).infrastructureCapexMUSD(50).totalCapexMUSD(800).annualOpexMUSD(80)
-     *     .capexPerBoeUSD(53.0).opexPerBoeUSD(5.3).accuracyRangePercent(40.0)
-     *     .addCapexItem("facility", 400.0).addCapexItem("equipment", 150.0)
+     * EconomicsReport report = EconomicsReport.builder().facilityCapexMUSD(400).equipmentCapexMUSD(150).wellCapexMUSD(200)
+     *     .infrastructureCapexMUSD(50).totalCapexMUSD(800).annualOpexMUSD(80).capexPerBoeUSD(53.0).opexPerBoeUSD(5.3)
+     *     .accuracyRangePercent(40.0).addCapexItem("facility", 400.0).addCapexItem("equipment", 150.0)
      *     .addOpexItem("maintenance", 60.0).addOpexItem("power", 20.0).build();
      * </pre>
      */

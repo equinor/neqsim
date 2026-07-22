@@ -4,8 +4,8 @@ package neqsim.pvtsimulation.util;
  * Saturation pressure (bubble point) correlations per Whitson wiki methodology.
  *
  * <p>
- * This class provides empirical correlations for estimating bubble point pressure from easily
- * measured field data such as GOR, API gravity, gas specific gravity, and temperature.
+ * This class provides empirical correlations for estimating bubble point pressure from easily measured field data such
+ * as GOR, API gravity, gas specific gravity, and temperature.
  * </p>
  *
  * <p>
@@ -40,14 +40,14 @@ package neqsim.pvtsimulation.util;
 public final class SaturationPressureCorrelation {
 
   /** Private constructor to prevent instantiation. */
-  private SaturationPressureCorrelation() {}
+  private SaturationPressureCorrelation() {
+  }
 
   /**
    * Standing (1947) bubble point correlation.
    *
    * <p>
-   * One of the most widely used correlations for estimating bubble point pressure. Developed for
-   * California crude oils.
+   * One of the most widely used correlations for estimating bubble point pressure. Developed for California crude oils.
    * </p>
    *
    * <p>
@@ -76,8 +76,7 @@ public final class SaturationPressureCorrelation {
    * Vasquez-Beggs (1980) bubble point correlation.
    *
    * <p>
-   * Improved correlation that accounts for separator conditions. Uses temperature-corrected gas
-   * gravity.
+   * Improved correlation that accounts for separator conditions. Uses temperature-corrected gas gravity.
    * </p>
    *
    * @param Rs solution gas-oil ratio at Pb (scf/STB)
@@ -114,8 +113,7 @@ public final class SaturationPressureCorrelation {
    * Glaso (1980) bubble point correlation.
    *
    * <p>
-   * Developed for North Sea crude oils. Includes a two-step correlation with a characteristic
-   * function.
+   * Developed for North Sea crude oils. Includes a two-step correlation with a characteristic function.
    * </p>
    *
    * @param Rs solution gas-oil ratio at Pb (scf/STB)
@@ -149,8 +147,7 @@ public final class SaturationPressureCorrelation {
    * Petrosky-Farshad (1993) bubble point correlation.
    *
    * <p>
-   * Developed for Gulf of Mexico oils. Provides improved accuracy for offshore Gulf Coast crude
-   * oils.
+   * Developed for Gulf of Mexico oils. Provides improved accuracy for offshore Gulf Coast crude oils.
    * </p>
    *
    * @param Rs solution gas-oil ratio at Pb (scf/STB)
@@ -286,8 +283,7 @@ public final class SaturationPressureCorrelation {
    * Estimate bubble point using all correlations and return average.
    *
    * <p>
-   * This method calculates bubble point using multiple correlations and returns statistics to help
-   * assess uncertainty.
+   * This method calculates bubble point using multiple correlations and returns statistics to help assess uncertainty.
    * </p>
    *
    * @param Rs solution gas-oil ratio at Pb (scf/STB)
@@ -320,7 +316,7 @@ public final class SaturationPressureCorrelation {
     }
 
     if (validCount == 0) {
-      return new double[] {Double.NaN, Double.NaN, Double.NaN, Double.NaN};
+      return new double[] { Double.NaN, Double.NaN, Double.NaN, Double.NaN };
     }
 
     double avg = sum / validCount;
@@ -334,7 +330,7 @@ public final class SaturationPressureCorrelation {
     }
     double stdDev = Math.sqrt(sumSq / validCount);
 
-    return new double[] {avg, min, max, stdDev};
+    return new double[] { avg, min, max, stdDev };
   }
 
   /**
@@ -356,14 +352,14 @@ public final class SaturationPressureCorrelation {
     sb.append(String.format("  T = %.1f °F (%.1f °C)\n\n", T, fahrenheitToCelsius(T)));
 
     sb.append("Correlation Results:\n");
-    sb.append(String.format("  Standing (1947):        %.1f psia (%.2f bar)\n",
-        standing(Rs, gammaG, API, T), psiaToBar(standing(Rs, gammaG, API, T))));
-    sb.append(String.format("  Vasquez-Beggs (1980):   %.1f psia (%.2f bar)\n",
-        vasquezBeggs(Rs, gammaG, API, T), psiaToBar(vasquezBeggs(Rs, gammaG, API, T))));
-    sb.append(String.format("  Glaso (1980):           %.1f psia (%.2f bar)\n",
-        glaso(Rs, gammaG, API, T), psiaToBar(glaso(Rs, gammaG, API, T))));
-    sb.append(String.format("  Petrosky-Farshad (1993):%.1f psia (%.2f bar)\n",
-        petroskyFarshad(Rs, gammaG, API, T), psiaToBar(petroskyFarshad(Rs, gammaG, API, T))));
+    sb.append(String.format("  Standing (1947):        %.1f psia (%.2f bar)\n", standing(Rs, gammaG, API, T),
+        psiaToBar(standing(Rs, gammaG, API, T))));
+    sb.append(String.format("  Vasquez-Beggs (1980):   %.1f psia (%.2f bar)\n", vasquezBeggs(Rs, gammaG, API, T),
+        psiaToBar(vasquezBeggs(Rs, gammaG, API, T))));
+    sb.append(String.format("  Glaso (1980):           %.1f psia (%.2f bar)\n", glaso(Rs, gammaG, API, T),
+        psiaToBar(glaso(Rs, gammaG, API, T))));
+    sb.append(String.format("  Petrosky-Farshad (1993):%.1f psia (%.2f bar)\n", petroskyFarshad(Rs, gammaG, API, T),
+        psiaToBar(petroskyFarshad(Rs, gammaG, API, T))));
 
     double[] stats = estimateWithStatistics(Rs, gammaG, API, T);
     sb.append(String.format("\nStatistics:\n"));

@@ -1,3 +1,8 @@
+---
+title: "PSD Valve with High-High Alarm Trip"
+description: "The `PSDValve` (Process Shutdown Valve) is a safety isolation valve that automatically closes when a High-High (HIHI) pressure alarm is triggered. It provides emergency shutdown protection by monitori..."
+---
+
 # PSD Valve with High-High Alarm Trip
 
 ## Overview
@@ -273,7 +278,7 @@ The PSD valve integrates with NeqSim's process safety features:
 
 ## See Also
 
-- [Safety Valve Dynamic Sizing](../safety/psv_dynamic_sizing_example.md)
-- [Rupture Disk Behavior](../safety/rupture_disk_dynamic_behavior.md)
-- [Process Control Overview](process_control.md)
-- [Alarm System Documentation](../safety/alarm_system_guide.md)
+- [Safety Valve Dynamic Sizing](../safety/psv_dynamic_sizing_example)
+- [Rupture Disk Behavior](../safety/rupture_disk_dynamic_behavior)
+- [Process Control Overview](process_control)
+- [Alarm System Documentation](../safety/alarm_system_guide)

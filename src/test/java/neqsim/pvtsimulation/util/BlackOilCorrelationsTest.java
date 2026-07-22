@@ -92,8 +92,7 @@ class BlackOilCorrelationsTest {
     double muOD = BlackOilCorrelations.deadOilViscosityBeggsRobinson(api, T);
 
     // Dead oil viscosity typically 1-10 cP for light oil at reservoir temp
-    assertTrue(muOD > 0.1 && muOD < 50,
-        "Dead oil viscosity should be between 0.1-50 cP, got " + muOD);
+    assertTrue(muOD > 0.1 && muOD < 50, "Dead oil viscosity should be between 0.1-50 cP, got " + muOD);
   }
 
   @Test
@@ -104,8 +103,7 @@ class BlackOilCorrelationsTest {
     double muO = BlackOilCorrelations.saturatedOilViscosityBeggsRobinson(muOD, Rs);
 
     // Saturated oil viscosity should be less than dead oil
-    assertTrue(muO < muOD,
-        "Saturated viscosity should be less than dead oil, got " + muO + " vs " + muOD);
+    assertTrue(muO < muOD, "Saturated viscosity should be less than dead oil, got " + muO + " vs " + muOD);
     assertTrue(muO > 0.1, "Saturated viscosity should be positive, got " + muO);
   }
 
@@ -118,8 +116,7 @@ class BlackOilCorrelationsTest {
     double muG = BlackOilCorrelations.gasViscosityLeeGonzalezEakin(T, rhoG, Mg);
 
     // Gas viscosity typically 0.01-0.03 cP
-    assertTrue(muG > 0.005 && muG < 0.1,
-        "Gas viscosity should be between 0.005-0.1 cP, got " + muG);
+    assertTrue(muG > 0.005 && muG < 0.1, "Gas viscosity should be between 0.005-0.1 cP, got " + muG);
   }
 
   @Test
@@ -150,8 +147,7 @@ class BlackOilCorrelationsTest {
     double co = BlackOilCorrelations.oilCompressibilityVasquezBeggs(Rs, gammaG, api, T, p);
 
     // Oil compressibility typically 1e-5 to 3e-5 1/psi
-    assertTrue(co > 1e-6 && co < 1e-4,
-        "Oil compressibility should be between 1e-6 and 1e-4, got " + co);
+    assertTrue(co > 1e-6 && co < 1e-4, "Oil compressibility should be between 1e-6 and 1e-4, got " + co);
   }
 
   @Test
@@ -191,8 +187,7 @@ class BlackOilCorrelationsTest {
     double T_field = 200; // °F
 
     // Calculate in field units
-    double Pb_field =
-        BlackOilCorrelations.bubblePointStanding(Rs_field, gammaG, api, T_field, true);
+    double Pb_field = BlackOilCorrelations.bubblePointStanding(Rs_field, gammaG, api, T_field, true);
 
     // Convert inputs to SI
     double Rs_si = Rs_field * 0.178108; // Sm³/Sm³
@@ -220,11 +215,9 @@ class BlackOilCorrelationsTest {
 
     // Using NEQSIM enum (Kelvin input)
     double T_kelvin = T + 273.15;
-    double Pb_neqsim =
-        BlackOilCorrelations.bubblePointStanding(Rs, gammaG, api, T_kelvin, BlackOilUnits.NEQSIM);
+    double Pb_neqsim = BlackOilCorrelations.bubblePointStanding(Rs, gammaG, api, T_kelvin, BlackOilUnits.NEQSIM);
 
-    assertEquals(Pb_si, Pb_neqsim, Pb_si * 0.001,
-        "SI and NEQSIM results should be identical (both return bara)");
+    assertEquals(Pb_si, Pb_neqsim, Pb_si * 0.001, "SI and NEQSIM results should be identical (both return bara)");
   }
 
   @Test
@@ -246,8 +239,7 @@ class BlackOilCorrelationsTest {
     // Convert field result to Sm³/Sm³
     double Rs_field_to_sm3 = Rs_field * 0.178108;
 
-    assertEquals(Rs_field_to_sm3, Rs_si, Rs_field_to_sm3 * 0.001,
-        "SI and field GOR results should match");
+    assertEquals(Rs_field_to_sm3, Rs_si, Rs_field_to_sm3 * 0.001, "SI and field GOR results should match");
   }
 
   @Test
@@ -283,8 +275,7 @@ class BlackOilCorrelationsTest {
     // Convert field cP to SI Pa·s
     double mu_field_to_pas = mu_field * 0.001;
 
-    assertEquals(mu_field_to_pas, mu_si, mu_field_to_pas * 0.01,
-        "Viscosity conversion should be accurate");
+    assertEquals(mu_field_to_pas, mu_si, mu_field_to_pas * 0.01, "Viscosity conversion should be accurate");
   }
 
   @Test
@@ -304,8 +295,7 @@ class BlackOilCorrelationsTest {
     // Convert field cP to SI Pa·s
     double mu_field_to_pas = mu_field * 0.001;
 
-    assertEquals(mu_field_to_pas, mu_si, mu_field_to_pas * 0.01,
-        "Gas viscosity SI conversion should be accurate");
+    assertEquals(mu_field_to_pas, mu_si, mu_field_to_pas * 0.01, "Gas viscosity SI conversion should be accurate");
   }
 
   @Test
@@ -363,21 +353,18 @@ class BlackOilCorrelationsTest {
     double T_field = 200; // °F
     double p_field = 3000; // psia
 
-    double co_field = BlackOilCorrelations.oilCompressibilityVasquezBeggs(Rs_field, gammaG, api,
-        T_field, p_field);
+    double co_field = BlackOilCorrelations.oilCompressibilityVasquezBeggs(Rs_field, gammaG, api, T_field, p_field);
 
     // SI inputs
     double Rs_si = Rs_field * 0.178108;
     double T_si = (T_field - 32.0) * 5.0 / 9.0;
     double p_si = p_field / 14.5038;
 
-    double co_si =
-        BlackOilCorrelations.oilCompressibilityVasquesBeggsS(Rs_si, gammaG, api, T_si, p_si);
+    double co_si = BlackOilCorrelations.oilCompressibilityVasquesBeggsS(Rs_si, gammaG, api, T_si, p_si);
 
     // Convert field 1/psi to SI 1/bara
     double co_field_to_si = co_field * 14.5038;
 
-    assertEquals(co_field_to_si, co_si, co_field_to_si * 0.01,
-        "Compressibility conversion should be accurate");
+    assertEquals(co_field_to_si, co_si, co_field_to_si * 0.01, "Compressibility conversion should be accurate");
   }
 }

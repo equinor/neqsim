@@ -8,8 +8,8 @@ import java.util.List;
  * Defines a startup profile for compressor startup sequences.
  *
  * <p>
- * This class defines the sequence of speed/time points that define how a compressor should be
- * started. It includes safety checks and holds during the startup process.
+ * This class defines the sequence of speed/time points that define how a compressor should be started. It includes
+ * safety checks and holds during the startup process.
  * </p>
  *
  * @author esol
@@ -48,8 +48,7 @@ public class StartupProfile implements Serializable {
      * @param holdDuration time to hold at this speed in seconds
      * @param checkDescription description of checks to perform
      */
-    public ProfilePoint(double time, double targetSpeed, double holdDuration,
-        String checkDescription) {
+    public ProfilePoint(double time, double targetSpeed, double holdDuration, String checkDescription) {
       this.time = time;
       this.targetSpeed = targetSpeed;
       this.holdDuration = holdDuration;
@@ -116,14 +115,12 @@ public class StartupProfile implements Serializable {
   private void createDefaultProfile() {
     profile.clear();
     // Standard startup sequence
-    profile.add(new ProfilePoint(0.0, 0.0, antisurgeOpeningDuration,
-        "Open antisurge valve, check oil pressure"));
+    profile.add(new ProfilePoint(0.0, 0.0, antisurgeOpeningDuration, "Open antisurge valve, check oil pressure"));
     profile.add(new ProfilePoint(antisurgeOpeningDuration, minimumIdleSpeed * 0.5, 10.0,
         "Initial rotation, check for vibration"));
     profile.add(new ProfilePoint(antisurgeOpeningDuration + 10.0, minimumIdleSpeed, idleHoldTime,
         "Idle speed, check bearing temperatures"));
-    profile.add(new ProfilePoint(antisurgeOpeningDuration + 10.0 + idleHoldTime, -1.0, 0.0,
-        "Ramp to operating speed"));
+    profile.add(new ProfilePoint(antisurgeOpeningDuration + 10.0 + idleHoldTime, -1.0, 0.0, "Ramp to operating speed"));
   }
 
   /**
@@ -134,8 +131,7 @@ public class StartupProfile implements Serializable {
    * @param holdDuration time to hold at this speed in seconds
    * @param checkDescription description of checks
    */
-  public void addProfilePoint(double time, double targetSpeed, double holdDuration,
-      String checkDescription) {
+  public void addProfilePoint(double time, double targetSpeed, double holdDuration, String checkDescription) {
     profile.add(new ProfilePoint(time, targetSpeed, holdDuration, checkDescription));
   }
 
@@ -245,8 +241,7 @@ public class StartupProfile implements Serializable {
    * @param tolerance speed tolerance in RPM
    * @return true if startup is complete
    */
-  public boolean isStartupComplete(double elapsedTime, double currentSpeed, double targetSpeed,
-      double tolerance) {
+  public boolean isStartupComplete(double elapsedTime, double currentSpeed, double targetSpeed, double tolerance) {
     double expectedSpeed = getTargetSpeedAtTime(elapsedTime, targetSpeed);
     return Math.abs(currentSpeed - targetSpeed) < tolerance && expectedSpeed >= targetSpeed * 0.99;
   }

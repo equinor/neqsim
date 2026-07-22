@@ -6,8 +6,7 @@ import java.io.Serializable;
  * AUSM+ (Advection Upstream Splitting Method Plus) flux calculator for two-fluid model.
  *
  * <p>
- * Implements the AUSM+ scheme of Liou (1996) adapted for multiphase flow. This scheme is
- * particularly well-suited for:
+ * Implements the AUSM+ scheme of Liou (1996) adapted for multiphase flow. This scheme is particularly well-suited for:
  * </p>
  * <ul>
  * <li>Large density ratios (gas/liquid ~100-1000x)</li>
@@ -83,8 +82,8 @@ public class AUSMPlusFluxCalculator implements Serializable {
      * @param enthalpy specific enthalpy (J/kg)
      * @param holdup volume fraction (0-1)
      */
-    public PhaseState(double density, double velocity, double pressure, double soundSpeed,
-        double enthalpy, double holdup) {
+    public PhaseState(double density, double velocity, double pressure, double soundSpeed, double enthalpy,
+        double holdup) {
       this.density = density;
       this.velocity = velocity;
       this.pressure = pressure;
@@ -96,7 +95,8 @@ public class AUSMPlusFluxCalculator implements Serializable {
     /**
      * Default constructor.
      */
-    public PhaseState() {}
+    public PhaseState() {
+    }
   }
 
   /**
@@ -145,7 +145,8 @@ public class AUSMPlusFluxCalculator implements Serializable {
   /**
    * Constructor.
    */
-  public AUSMPlusFluxCalculator() {}
+  public AUSMPlusFluxCalculator() {
+  }
 
   /**
    * Calculate AUSM+ flux for a single phase.
@@ -218,8 +219,8 @@ public class AUSMPlusFluxCalculator implements Serializable {
    * @param area Cross-sectional area (m²)
    * @return Combined flux for both phases
    */
-  public TwoFluidFlux calcTwoFluidFlux(PhaseState gasLeft, PhaseState gasRight,
-      PhaseState liquidLeft, PhaseState liquidRight, double area) {
+  public TwoFluidFlux calcTwoFluidFlux(PhaseState gasLeft, PhaseState gasRight, PhaseState liquidLeft,
+      PhaseState liquidRight, double area) {
     TwoFluidFlux result = new TwoFluidFlux();
 
     // Calculate flux for each phase independently
@@ -227,8 +228,7 @@ public class AUSMPlusFluxCalculator implements Serializable {
     result.liquidFlux = calcPhaseFlux(liquidLeft, liquidRight, area);
 
     // Store interface Mach for diagnostics (use gas phase)
-    double cHalf = 0.5 * (Math.max(gasLeft.soundSpeed, minSoundSpeed)
-        + Math.max(gasRight.soundSpeed, minSoundSpeed));
+    double cHalf = 0.5 * (Math.max(gasLeft.soundSpeed, minSoundSpeed) + Math.max(gasRight.soundSpeed, minSoundSpeed));
     double ML = gasLeft.velocity / cHalf;
     double MR = gasRight.velocity / cHalf;
     result.interfaceMach = calcMachPlus(ML) + calcMachMinus(MR);
@@ -361,8 +361,7 @@ public class AUSMPlusFluxCalculator implements Serializable {
     PhaseFlux flux = new PhaseFlux();
 
     // Maximum wave speed
-    double sMax = Math.max(Math.abs(left.velocity) + left.soundSpeed,
-        Math.abs(right.velocity) + right.soundSpeed);
+    double sMax = Math.max(Math.abs(left.velocity) + left.soundSpeed, Math.abs(right.velocity) + right.soundSpeed);
 
     // Conservative variables
     double UL_mass = left.holdup * left.density;

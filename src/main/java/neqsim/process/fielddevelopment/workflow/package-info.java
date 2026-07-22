@@ -2,19 +2,18 @@
  * Field development workflow orchestration.
  *
  * <p>
- * This package provides unified workflow orchestration for field development studies, integrating
- * PVT, reservoir, well, and process simulations with economics. The framework supports the complete
- * field lifecycle from discovery through operations.
+ * This package provides unified workflow orchestration for field development studies, integrating PVT, reservoir, well,
+ * and process simulations with economics. The framework supports the complete field lifecycle from discovery through
+ * operations.
  * </p>
  *
  * <h2>TPG4230 Course Topic Coverage</h2>
  * <p>
- * This package is designed to support education aligned with NTNU's TPG4230 course "Underground
- * reservoirs fluid production and injection":
+ * This package is designed to support education aligned with NTNU's TPG4230 course "Underground reservoirs fluid
+ * production and injection":
  * </p>
  * <ul>
- * <li><b>Field Lifecycle Management</b> - Discovery → Feasibility → Concept → FEED →
- * Operations</li>
+ * <li><b>Field Lifecycle Management</b> - Discovery → Feasibility → Concept → FEED → Operations</li>
  * <li><b>PVT Characterization</b> - EOS selection and tuning</li>
  * <li><b>Reservoir Material Balance</b> - Tank models with injection</li>
  * <li><b>Well Performance (IPR/VLP)</b> - Nodal analysis</li>
@@ -25,8 +24,7 @@
  *
  * <h2>Main Classes</h2>
  * <ul>
- * <li>{@link neqsim.process.fielddevelopment.workflow.FieldDevelopmentWorkflow} - Main
- * orchestrator</li>
+ * <li>{@link neqsim.process.fielddevelopment.workflow.FieldDevelopmentWorkflow} - Main orchestrator</li>
  * <li>{@link neqsim.process.fielddevelopment.workflow.WorkflowResult} - Result container</li>
  * </ul>
  *

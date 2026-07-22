@@ -70,8 +70,7 @@ public class AsphalteneMethodComparison {
    * @param reservoirPressure reservoir pressure (bara)
    * @param reservoirTemperature reservoir temperature (K)
    */
-  public AsphalteneMethodComparison(SystemInterface system, double reservoirPressure,
-      double reservoirTemperature) {
+  public AsphalteneMethodComparison(SystemInterface system, double reservoirPressure, double reservoirTemperature) {
     this.system = system.clone();
     this.reservoirPressure = reservoirPressure;
     this.reservoirTemperature = reservoirTemperature;
@@ -89,8 +88,7 @@ public class AsphalteneMethodComparison {
    * @param resins weight fraction of resins
    * @param asphaltenes weight fraction of asphaltenes
    */
-  public void setSARAFractions(double saturates, double aromatics, double resins,
-      double asphaltenes) {
+  public void setSARAFractions(double saturates, double aromatics, double resins, double asphaltenes) {
     saraData.setSARAFractions(saturates, aromatics, resins, asphaltenes);
     cpaAnalyzer.setSARAFractions(saturates, aromatics, resins, asphaltenes);
     deBoerScreening.setAsphalteneContent(asphaltenes);
@@ -114,16 +112,14 @@ public class AsphalteneMethodComparison {
     report.append("┌────────────────────────────────────────────────────────────────┐\n");
     report.append("│ INPUT CONDITIONS                                               │\n");
     report.append("├────────────────────────────────────────────────────────────────┤\n");
-    report.append(String.format("│ Reservoir Pressure:     %8.1f bara                         │%n",
-        reservoirPressure));
+    report.append(String.format("│ Reservoir Pressure:     %8.1f bara                         │%n", reservoirPressure));
     report.append(String.format("│ Reservoir Temperature:  %8.1f K (%.1f °C)                  │%n",
         reservoirTemperature, reservoirTemperature - 273.15));
-    report.append(String.format("│ Bubble Point Pressure:  %8.1f bara                         │%n",
-        bubblePointPressure));
+    report
+        .append(String.format("│ Bubble Point Pressure:  %8.1f bara                         │%n", bubblePointPressure));
     report.append(String.format("│ Undersaturation:        %8.1f bar                          │%n",
         reservoirPressure - bubblePointPressure));
-    report.append(String.format("│ In-situ Density:        %8.1f kg/m³                        │%n",
-        inSituDensity));
+    report.append(String.format("│ In-situ Density:        %8.1f kg/m³                        │%n", inSituDensity));
     report.append(String.format("│ API Gravity:            %8.1f                              │%n",
         deBoerScreening.getAPIGravity()));
     report.append("└────────────────────────────────────────────────────────────────┘\n\n");
@@ -135,10 +131,8 @@ public class AsphalteneMethodComparison {
     double cii = saraData.getColloidalInstabilityIndex();
     double ra = saraData.getResinToAsphalteneRatio();
     if (!Double.isNaN(cii) && !Double.isInfinite(cii)) {
-      report.append(
-          String.format("│ Colloidal Instability Index (CII): %.3f                      │%n", cii));
-      report.append(
-          String.format("│ Resin/Asphaltene Ratio (R/A):      %.3f                      │%n", ra));
+      report.append(String.format("│ Colloidal Instability Index (CII): %.3f                      │%n", cii));
+      report.append(String.format("│ Resin/Asphaltene Ratio (R/A):      %.3f                      │%n", ra));
       report.append("│                                                                │\n");
       if (cii < 0.7) {
         report.append("│ SARA Verdict: STABLE (CII < 0.7)                               │\n");
@@ -159,10 +153,8 @@ public class AsphalteneMethodComparison {
     DeBoerAsphalteneScreening.DeBoerRisk deBoerRisk = deBoerScreening.evaluateRisk();
     double deBoerIndex = deBoerScreening.calculateRiskIndex();
     report.append(String.format("│ Risk Level:  %-48s │%n", deBoerRisk.name()));
-    report.append(String.format(
-        "│ Risk Index:  %.2f                                              │%n", deBoerIndex));
-    report.append(
-        String.format("│ Description: %-48s │%n", truncate(deBoerRisk.getDescription(), 48)));
+    report.append(String.format("│ Risk Index:  %.2f                                              │%n", deBoerIndex));
+    report.append(String.format("│ Description: %-48s │%n", truncate(deBoerRisk.getDescription(), 48)));
     report.append("│                                                                │\n");
     report.append("│ Basis: Field experience correlation (de Boer et al., 1995)    │\n");
     report.append("│ Inputs: Undersaturation pressure + in-situ density            │\n");
@@ -177,11 +169,10 @@ public class AsphalteneMethodComparison {
     AsphalteneStabilityAnalyzer.AsphalteneRisk cpaRisk = cpaAnalyzer.evaluateSARAStability();
 
     if (!Double.isNaN(cpaOnsetPressure)) {
-      report.append(String.format(
-          "│ Onset Pressure: %.1f bara                                     │%n", cpaOnsetPressure));
+      report.append(
+          String.format("│ Onset Pressure: %.1f bara                                     │%n", cpaOnsetPressure));
       double margin = reservoirPressure - cpaOnsetPressure;
-      report.append(String
-          .format("│ Safety Margin:  %.1f bar (reservoir - onset)                 │%n", margin));
+      report.append(String.format("│ Safety Margin:  %.1f bar (reservoir - onset)                 │%n", margin));
       if (margin > 50) {
         report.append("│ Status: SAFE - Operating well above onset                     │\n");
       } else if (margin > 0) {
@@ -229,8 +220,7 @@ public class AsphalteneMethodComparison {
       report.append("│ ⚡ METHODS DISAGREE - FURTHER ANALYSIS NEEDED                 │\n");
       report.append("│                                                                │\n");
       report.append(String.format("│   De Boer: %-8s  CPA: %-8s  SARA: %-8s          │%n",
-          deBoerProblem ? "PROBLEM" : "OK", cpaProblem ? "PROBLEM" : "OK",
-          saraProblem ? "PROBLEM" : "OK"));
+          deBoerProblem ? "PROBLEM" : "OK", cpaProblem ? "PROBLEM" : "OK", saraProblem ? "PROBLEM" : "OK"));
       report.append("│                                                                │\n");
       report.append("│ Confidence: MODERATE                                          │\n");
       report.append("│ Recommendation:                                               │\n");
@@ -292,12 +282,16 @@ public class AsphalteneMethodComparison {
     DeBoerAsphalteneScreening.DeBoerRisk deBoerRisk = deBoerScreening.evaluateRisk();
     AsphalteneStabilityAnalyzer.AsphalteneRisk cpaRisk = cpaAnalyzer.evaluateSARAStability();
 
-    return String.format("De Boer: %s | CPA/SARA: %s | Onset P: %.1f bara", deBoerRisk.name(),
-        cpaRisk.name(), Double.isNaN(cpaOnsetPressure) ? -1 : cpaOnsetPressure);
+    return String.format("De Boer: %s | CPA/SARA: %s | Onset P: %.1f bara", deBoerRisk.name(), cpaRisk.name(),
+        Double.isNaN(cpaOnsetPressure) ? -1 : cpaOnsetPressure);
   }
 
   /**
    * Truncates a string to specified length.
+   *
+   * @param s string to truncate, or null
+   * @param maxLength maximum returned string length; must be at least 3 when truncation is needed
+   * @return truncated string, original string if short enough, or an empty string when input is null
    */
   private String truncate(String s, int maxLength) {
     if (s == null) {

@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * PhaseEnvelope2 class.
- * </p>
  *
  * @author evensolbraa
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class PhaseEnvelope2 {
+  private static final Logger logger = LogManager.getLogger(PhaseEnvelope2.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(PhaseEnvelope2.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

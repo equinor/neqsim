@@ -1,15 +1,13 @@
 package neqsim.thermo.phase;
 
 import org.netlib.util.doubleW;
-import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.thermo.component.ComponentAmmoniaEos;
 import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.util.referenceequations.Ammonia2023;
 
 /**
- * Phase implementation for the Ammonia2023 reference equation of state based on a multiparameter
- * Helmholtz energy formulation. Thermodynamic properties are evaluated from ideal and residual
- * Helmholtz energy derivatives provided by
+ * Phase implementation for the Ammonia2023 reference equation of state based on a multiparameter Helmholtz energy
+ * formulation. Thermodynamic properties are evaluated from ideal and residual Helmholtz energy derivatives provided by
  * {@link neqsim.thermo.util.referenceequations.Ammonia2023}.
  *
  * @author esol
@@ -28,13 +26,11 @@ public class PhaseAmmoniaEos extends PhaseEos {
   private double JTcoef;
   private double kappa;
   private double W;
-  private doubleW[] a0;
-  private doubleW[][] ar;
+  private transient doubleW[] a0;
+  private transient doubleW[][] ar;
 
   /**
-   * <p>
    * Constructor for PhaseAmmoniaEos.
-   * </p>
    */
   public PhaseAmmoniaEos() {
     thermoPropertyModelName = "Ammonia Reference Eos";
@@ -61,8 +57,7 @@ public class PhaseAmmoniaEos extends PhaseEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     setType(pt);
     ammoniaUtil.setPhase(this);
     double[] props = ammoniaUtil.properties();
@@ -167,29 +162,26 @@ public class PhaseAmmoniaEos extends PhaseEos {
   /** {@inheritDoc} */
   @Override
   public double dFdN(int i) {
-    return ((ComponentEosInterface) getComponent(i)).dFdN(this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdN(this, this.getNumberOfComponents(), temperature, pressure);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdN(int i, int j) {
-    return ((ComponentEosInterface) getComponent(i)).dFdNdN(j, this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdNdN(j, this, this.getNumberOfComponents(), temperature,
+        pressure);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdV(int i) {
-    return ((ComponentEosInterface) getComponent(i)).dFdNdV(this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdNdV(this, this.getNumberOfComponents(), temperature, pressure);
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFdNdT(int i) {
-    return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(),
-        temperature, pressure);
+    return ((ComponentEosInterface) getComponent(i)).dFdNdT(this, this.getNumberOfComponents(), temperature, pressure);
   }
 
   /** {@inheritDoc} */
@@ -200,9 +192,7 @@ public class PhaseAmmoniaEos extends PhaseEos {
   }
 
   /**
-   * <p>
    * getAlpha0.
-   * </p>
    *
    * @return an array of {@link org.netlib.util.doubleW} objects
    */
@@ -211,9 +201,7 @@ public class PhaseAmmoniaEos extends PhaseEos {
   }
 
   /**
-   * <p>
    * getAlphares.
-   * </p>
    *
    * @return an array of {@link org.netlib.util.doubleW} objects
    */
@@ -222,12 +210,11 @@ public class PhaseAmmoniaEos extends PhaseEos {
   }
 
   /**
-   * <p>
    * getHresTP.
-   * </p>
    *
    * @return a double
    */
+  @Override
   public double getHresTP() {
     return numberOfMolesInPhase * R * temperature * (ar[1][0].val + ar[0][1].val);
   }
@@ -250,8 +237,8 @@ public class PhaseAmmoniaEos extends PhaseEos {
    *
    * @return isothermal compressibility (1/Pa)
    */
+  @Override
   public double getIsothermalCompressibility() {
     return kappa;
   }
 }
-

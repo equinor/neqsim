@@ -13,9 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * StirredCellNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -26,55 +24,44 @@ public class StirredCellNode extends TwoPhaseFlowNode {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(StirredCellNode.class);
 
-  private double[] stirrerRate = {1.0, 1.0};
-  private double[] stirrerDiameter = {1.0, 1.0};
+  private double[] stirrerRate = { 1.0, 1.0 };
+  private double[] stirrerDiameter = { 1.0, 1.0 };
   private double dt = 1.0;
 
   /**
-   * <p>
    * Constructor for StirredCellNode.
-   * </p>
    */
   public StirredCellNode() {
     this.flowNodeType = "stirred cell";
   }
 
   /**
-   * <p>
    * Constructor for StirredCellNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public StirredCellNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "stirred cell";
     this.interphaseTransportCoefficient = new InterphaseStirredCellFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+        this);
   }
 
   /**
-   * <p>
    * Constructor for StirredCellNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
-  public StirredCellNode(SystemInterface system, SystemInterface interphaseSystem,
-      GeometryDefinitionInterface pipe) {
+  public StirredCellNode(SystemInterface system, SystemInterface interphaseSystem, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "stirred cell";
     this.interphaseTransportCoefficient = new InterphaseStirredCellFlow(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+        this);
   }
 
   /** {@inheritDoc} */
@@ -144,10 +131,10 @@ public class StirredCellNode extends TwoPhaseFlowNode {
   public void update() {
     for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
         .getNumberOfComponents(); componentNumber++) {
-      double liquidMolarRate = getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-          * getInterphaseContactArea() * getDt();
-      double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber)
-          * getInterphaseContactArea() * getDt();
+      double liquidMolarRate = getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea()
+          * getDt();
+      double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea()
+          * getDt();
       // System.out.println("liquidMolarRate" + liquidMolarRate);
       getBulkSystem().getPhases()[0].addMoles(componentNumber, gasMolarRate);
       getBulkSystem().getPhases()[1].addMoles(componentNumber, liquidMolarRate);
@@ -194,9 +181,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * setStirrerSpeed.
-   * </p>
    *
    * @param stirrerRate a double
    */
@@ -224,9 +209,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -280,9 +263,7 @@ public class StirredCellNode extends TwoPhaseFlowNode {
   }
 
   /**
-   * <p>
    * Setter for the field <code>stirrerDiameter</code>.
-   * </p>
    *
    * @param stirrerDiameter a double
    */

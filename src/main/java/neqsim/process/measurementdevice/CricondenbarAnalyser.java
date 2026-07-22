@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * CricondenbarAnalyser class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
   static Logger logger = LogManager.getLogger(CricondenbarAnalyser.class);
 
   /**
-   * <p>
    * Constructor for CricondenbarAnalyser.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -33,9 +29,7 @@ public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for CricondenbarAnalyser.
-   * </p>
    *
    * @param name Name of CricondenbarAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -75,9 +69,7 @@ public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * getMeasuredValue2.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @param temp a double
@@ -90,8 +82,8 @@ public class CricondenbarAnalyser extends StreamMeasurementDeviceBaseClass {
     if (tempFluid.getPhase(0).hasComponent("water")) {
       tempFluid.removeComponent("water");
     }
-    neqsim.pvtsimulation.simulation.SaturationPressure thermoOps =
-        new neqsim.pvtsimulation.simulation.SaturationPressure(tempFluid);
+    neqsim.pvtsimulation.simulation.SaturationPressure thermoOps = new neqsim.pvtsimulation.simulation.SaturationPressure(
+        tempFluid);
     try {
       thermoOps.run();
     } catch (Exception ex) {

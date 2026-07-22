@@ -14,8 +14,7 @@ import java.util.Map;
  * Training data collector for surrogate model development.
  *
  * <p>
- * Collects input-output pairs from NeqSim simulations for training neural network surrogates.
- * Supports:
+ * Collects input-output pairs from NeqSim simulations for training neural network surrogates. Supports:
  * <ul>
  * <li>CSV export for scikit-learn, PyTorch, TensorFlow</li>
  * <li>JSON export for flexible data handling</li>
@@ -130,8 +129,7 @@ public class TrainingDataCollector implements Serializable {
    * @param maxBound expected maximum value
    * @return this collector for chaining
    */
-  public TrainingDataCollector defineInput(String name, String unit, double minBound,
-      double maxBound) {
+  public TrainingDataCollector defineInput(String name, String unit, double minBound, double maxBound) {
     inputDefs.put(name, new FeatureDefinition(name, unit, minBound, maxBound));
     inputStats.put(name, new RunningStats());
     return this;
@@ -146,8 +144,7 @@ public class TrainingDataCollector implements Serializable {
    * @param maxBound expected maximum value
    * @return this collector for chaining
    */
-  public TrainingDataCollector defineOutput(String name, String unit, double minBound,
-      double maxBound) {
+  public TrainingDataCollector defineOutput(String name, String unit, double minBound, double maxBound) {
     outputDefs.put(name, new FeatureDefinition(name, unit, minBound, maxBound));
     outputStats.put(name, new RunningStats());
     return this;
@@ -373,16 +370,16 @@ public class TrainingDataCollector implements Serializable {
     for (String name : inputDefs.keySet()) {
       FeatureDefinition def = inputDefs.get(name);
       RunningStats stats = inputStats.get(name);
-      sb.append(String.format("  %s [%s]: mean=%.4f, std=%.4f, range=[%.4f, %.4f]\n", name,
-          def.unit, stats.mean, stats.getStd(), stats.min, stats.max));
+      sb.append(String.format("  %s [%s]: mean=%.4f, std=%.4f, range=[%.4f, %.4f]\n", name, def.unit, stats.mean,
+          stats.getStd(), stats.min, stats.max));
     }
 
     sb.append("\nOutputs:\n");
     for (String name : outputDefs.keySet()) {
       FeatureDefinition def = outputDefs.get(name);
       RunningStats stats = outputStats.get(name);
-      sb.append(String.format("  %s [%s]: mean=%.4f, std=%.4f, range=[%.4f, %.4f]\n", name,
-          def.unit, stats.mean, stats.getStd(), stats.min, stats.max));
+      sb.append(String.format("  %s [%s]: mean=%.4f, std=%.4f, range=[%.4f, %.4f]\n", name, def.unit, stats.mean,
+          stats.getStd(), stats.min, stats.max));
     }
 
     return sb.toString();
@@ -390,7 +387,7 @@ public class TrainingDataCollector implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("TrainingDataCollector[%s, %d inputs, %d outputs, %d samples]", name,
-        inputDefs.size(), outputDefs.size(), samples.size());
+    return String.format("TrainingDataCollector[%s, %d inputs, %d outputs, %d samples]", name, inputDefs.size(),
+        outputDefs.size(), samples.size());
   }
 }

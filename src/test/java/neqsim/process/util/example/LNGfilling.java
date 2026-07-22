@@ -6,38 +6,36 @@
 
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * LNGfilling class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class LNGfilling {
+  private static final Logger logger = LogManager.getLogger(LNGfilling.class);
+
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 - 163.0), 1.000);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 - 163.0), 1.000);
     testSystem.addComponent("methane", 0.6);
     testSystem.addComponent("nitrogen", 1.0e-10);
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
 
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 1.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 20.0), 1.00);
     testSystem2.addComponent("methane", 1.0e-10);
     testSystem2.addComponent("nitrogen", 1.6e2);
     testSystem2.createDatabase(true);
@@ -50,17 +48,15 @@ public class LNGfilling {
     mixer.addStream(stream_1);
     mixer.addStream(stream_2);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(stream_2);
     operations.add(mixer);
     operations.run();
     operations.displayResult();
 
-    System.out.println("Volume Methane " + stream_1.getThermoSystem().getVolume());
-    System.out.println("Volume Nitrogen " + stream_2.getThermoSystem().getVolume());
-    System.out
-        .println("Mixer Cooled Nitrogen " + mixer.getOutletStream().getThermoSystem().getVolume());
+    logger.info("Volume Methane " + stream_1.getThermoSystem().getVolume());
+    logger.info("Volume Nitrogen " + stream_2.getThermoSystem().getVolume());
+    logger.info("Mixer Cooled Nitrogen " + mixer.getOutletStream().getThermoSystem().getVolume());
   }
 }

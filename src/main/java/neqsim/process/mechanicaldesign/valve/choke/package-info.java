@@ -2,8 +2,8 @@
  * Multiphase choke flow correlations for production operations.
  *
  * <p>
- * This package provides models for calculating two-phase (gas-liquid) flow through production
- * chokes. These models are essential for:
+ * This package provides models for calculating two-phase (gas-liquid) flow through production chokes. These models are
+ * essential for:
  * </p>
  * <ul>
  * <li>Wellhead choke sizing and performance prediction</li>
@@ -16,18 +16,18 @@
  *
  * <h3>Mechanistic Models</h3>
  * <ul>
- * <li>{@link neqsim.process.mechanicaldesign.valve.choke.SachdevaChokeFlow} - Industry standard,
- * handles critical and subcritical flow</li>
+ * <li>{@link neqsim.process.mechanicaldesign.valve.choke.SachdevaChokeFlow} - Industry standard, handles critical and
+ * subcritical flow</li>
  * </ul>
  *
  * <h3>Empirical Correlations</h3>
  * <ul>
- * <li>{@link neqsim.process.mechanicaldesign.valve.choke.GilbertChokeFlow} - Classic correlation
- * with variants (Gilbert, Baxendell, Ros, Achong)</li>
+ * <li>{@link neqsim.process.mechanicaldesign.valve.choke.GilbertChokeFlow} - Classic correlation with variants
+ * (Gilbert, Baxendell, Ros, Achong)</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * // Create a two-phase fluid
  * SystemInterface fluid = new SystemSrkEos(300.0, 100.0);
@@ -55,10 +55,10 @@
  * <h2>Integration with ThrottlingValve</h2>
  *
  * <p>
- * These models integrate with the {@link neqsim.process.equipment.valve.ThrottlingValve} unit
- * operation for process simulation:
+ * These models integrate with the {@link neqsim.process.equipment.valve.ThrottlingValve} unit operation for process
+ * simulation:
  * </p>
- * 
+ *
  * <pre>
  * // Create production choke using ThrottlingValve
  * ThrottlingValve choke = new ThrottlingValve("Production Choke", wellStream);

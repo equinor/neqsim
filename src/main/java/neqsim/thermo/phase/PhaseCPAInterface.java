@@ -4,15 +4,12 @@ import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
 
 /**
- * <p>
  * PhaseCPAInterface interface.
- * </p>
- * 
+ *
  * <p>
- * This interface defines the contract for CPA (Cubic Plus Association) phase implementations. It
- * provides default implementations for the radial distribution function and its derivatives, which
- * are the same for all cubic equations of state (SRK, PR, UMR) based on the simplified
- * Carnahan-Starling hard-sphere model.
+ * This interface defines the contract for CPA (Cubic Plus Association) phase implementations. It provides default
+ * implementations for the radial distribution function and its derivatives, which are the same for all cubic equations
+ * of state (SRK, PR, UMR) based on the simplified Carnahan-Starling hard-sphere model.
  * </p>
  *
  * @author Even Solbraa
@@ -20,18 +17,14 @@ import neqsim.thermo.mixingrule.CPAMixingRulesInterface;
  */
 public interface PhaseCPAInterface extends PhaseEosInterface {
   /**
-   * <p>
    * Getter for property hcpatot.
-   * </p>
    *
    * @return a double
    */
   double getHcpatot();
 
   /**
-   * <p>
    * getCrossAssosiationScheme.
-   * </p>
    *
    * @param comp1 a int
    * @param comp2 a int
@@ -42,45 +35,35 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
   int getCrossAssosiationScheme(int comp1, int comp2, int site1, int site2);
 
   /**
-   * <p>
    * getGcpa.
-   * </p>
    *
    * @return a double
    */
   public double getGcpa();
 
   /**
-   * <p>
    * getGcpav.
-   * </p>
    *
    * @return a double
    */
   public double getGcpav();
 
   /**
-   * <p>
    * getTotalNumberOfAccociationSites.
-   * </p>
    *
    * @return a int
    */
   public int getTotalNumberOfAccociationSites();
 
   /**
-   * <p>
    * setTotalNumberOfAccociationSites.
-   * </p>
    *
    * @param totalNumberOfAccociationSites a int
    */
   public void setTotalNumberOfAccociationSites(int totalNumberOfAccociationSites);
 
   /**
-   * <p>
    * getCpaMixingRule.
-   * </p>
    *
    * @return a {@link neqsim.thermo.mixingrule.CPAMixingRulesInterface} object
    */
@@ -91,8 +74,8 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
   // based on the simplified Carnahan-Starling hard-sphere model.
 
   /**
-   * Calculate the sum of (1 - X_i) over all association sites, weighted by moles. This is used in
-   * the CPA contribution to Helmholtz energy.
+   * Calculate the sum of (1 - X_i) over all association sites, weighted by moles. This is used in the CPA contribution
+   * to Helmholtz energy.
    *
    * @return hCPA value
    */
@@ -111,14 +94,14 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
 
   /**
    * Calculate radial distribution function g at contact using simplified Carnahan-Starling.
-   * 
+   *
    * <p>
    * g = (2 - b/4V) / (2 * (1 - b/4V)³)
    * </p>
-   * 
+   *
    * <p>
-   * This formula is the same for all cubic EOS (SRK, PR, UMR) since it depends only on the
-   * co-volume parameter b, not on the attraction parameter a.
+   * This formula is the same for all cubic EOS (SRK, PR, UMR) since it depends only on the co-volume parameter b, not
+   * on the attraction parameter a.
    * </p>
    *
    * @return g value
@@ -134,7 +117,7 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
 
   /**
    * Calculate first volume derivative of ln(g).
-   * 
+   *
    * <p>
    * d(ln g)/dV
    * </p>
@@ -153,7 +136,7 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
 
   /**
    * Calculate second volume derivative of ln(g).
-   * 
+   *
    * <p>
    * d²(ln g)/dV²
    * </p>
@@ -178,7 +161,7 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
 
   /**
    * Calculate third volume derivative of ln(g).
-   * 
+   *
    * <p>
    * d³(ln g)/dV³
    * </p>
@@ -197,8 +180,7 @@ public interface PhaseCPAInterface extends PhaseEosInterface {
     double b3 = b2 * B;
     double b4 = b3 * B;
     double b5 = b4 * B;
-    double term =
-        b5 + 17664.0 * t4 * B - 4192.0 * t3 * b2 + 528.0 * b3 * t2 - 36.0 * t * b4 - 30720.0 * t5;
+    double term = b5 + 17664.0 * t4 * B - 4192.0 * t3 * b2 + 528.0 * b3 * t2 - 36.0 * t * b4 - 30720.0 * t5;
     double denom1 = B - 8.0 * t;
     double denom1Cubed = denom1 * denom1 * denom1;
     double denom2 = B - 4.0 * t;

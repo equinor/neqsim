@@ -9,12 +9,12 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 
 /**
  * High Integrity Pressure Protection System (HIPPS) Valve.
- * 
+ *
  * <p>
- * HIPPS is a Safety Instrumented System (SIS) designed to prevent overpressure by shutting down the
- * source of pressure rather than relieving it. It provides an alternative or complement to
- * traditional pressure relief devices (PSVs/rupture disks).
- * 
+ * HIPPS is a Safety Instrumented System (SIS) designed to prevent overpressure by shutting down the source of pressure
+ * rather than relieving it. It provides an alternative or complement to traditional pressure relief devices
+ * (PSVs/rupture disks).
+ *
  * <p>
  * <b>Key Features:</b>
  * <ul>
@@ -25,7 +25,7 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * <li>Prevents loss of containment and flaring/venting</li>
  * <li>Diagnostic monitoring with proof testing support</li>
  * </ul>
- * 
+ *
  * <p>
  * <b>HIPPS vs. PSV:</b>
  * <table border="1">
@@ -66,7 +66,7 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * <td>Instantaneous (spring)</td>
  * </tr>
  * </table>
- * 
+ *
  * <p>
  * <b>Typical Applications:</b>
  * <ul>
@@ -76,34 +76,33 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * <li>High-pressure gas injection systems</li>
  * <li>Where flaring is environmentally/economically undesirable</li>
  * </ul>
- * 
+ *
  * <p>
  * <b>Voting Logic:</b>
  * <ul>
  * <li><b>1oo1</b> (1 out of 1): Single transmitter trips (simple, lower SIL)</li>
  * <li><b>1oo2</b> (1 out of 2): Any one of two transmitters trips (high availability)</li>
  * <li><b>2oo2</b> (2 out of 2): Both transmitters must trip (low spurious trips)</li>
- * <li><b>2oo3</b> (2 out of 3): Any two of three transmitters trip (balanced, common for SIL
- * 3)</li>
+ * <li><b>2oo3</b> (2 out of 3): Any two of three transmitters trip (balanced, common for SIL 3)</li>
  * </ul>
- * 
+ *
  * <p>
  * <b>Usage Example:</b>
- * 
+ *
  * <pre>
  * // Create redundant pressure transmitters with alarm configuration
  * PressureTransmitter PT1 = new PressureTransmitter("PT-101A", upstreamStream);
  * PressureTransmitter PT2 = new PressureTransmitter("PT-101B", upstreamStream);
  * PressureTransmitter PT3 = new PressureTransmitter("PT-101C", upstreamStream);
- * 
+ *
  * AlarmConfig alarmConfig = AlarmConfig.builder().highHighLimit(90.0) // HIPPS trip at 90 bara
- *                                                                     // (below 100 bara MAWP)
+ *     // (below 100 bara MAWP)
  *     .deadband(2.0).delay(0.5).unit("bara").build();
- * 
+ *
  * PT1.setAlarmConfig(alarmConfig);
  * PT2.setAlarmConfig(alarmConfig);
  * PT3.setAlarmConfig(alarmConfig);
- * 
+ *
  * // Create HIPPS valve with 2oo3 voting (SIL 3 typical)
  * HIPPSValve hippsValve = new HIPPSValve("HIPPS-XV-101", feedStream);
  * hippsValve.addPressureTransmitter(PT1);
@@ -112,21 +111,21 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
  * hippsValve.setVotingLogic(HIPPSValve.VotingLogic.TWO_OUT_OF_THREE);
  * hippsValve.setClosureTime(3.0); // 3 seconds SIL-rated actuator
  * hippsValve.setSILRating(3); // SIL 3 system
- * 
+ *
  * // In dynamic simulation
  * system.runTransient(dt, UUID.randomUUID());
  * // Valve automatically closes when 2 out of 3 transmitters reach HIHI
- * 
+ *
  * // Check status
  * if (hippsValve.hasTripped()) {
  *   System.out.println("HIPPS activated - pressure source isolated");
  *   System.out.println("Active transmitters: " + hippsValve.getActiveTransmitterCount());
  * }
- * 
+ *
  * // Perform partial stroke test (required for SIL validation)
  * hippsValve.performPartialStrokeTest(0.15); // 15% stroke test
  * </pre>
- * 
+ *
  * <p>
  * <b>Safety Simulation Considerations:</b>
  * <ul>
@@ -363,7 +362,7 @@ public class HIPPSValve extends ThrottlingValve {
 
   /**
    * Resets the trip state, allowing valve to be reopened.
-   * 
+   *
    * <p>
    * In real operations, this requires:
    * <ul>
@@ -372,10 +371,9 @@ public class HIPPSValve extends ThrottlingValve {
    * <li>Safety system approval</li>
    * <li>Documentation of trip cause</li>
    * </ul>
-   * 
+   *
    * <p>
-   * The valve will not automatically reopen after reset - it must be manually opened via
-   * setPercentValveOpening().
+   * The valve will not automatically reopen after reset - it must be manually opened via setPercentValveOpening().
    */
   public void reset() {
     hasTripped = false;
@@ -444,10 +442,10 @@ public class HIPPSValve extends ThrottlingValve {
 
   /**
    * Initiates a partial stroke test (required for SIL validation).
-   * 
+   *
    * <p>
-   * Partial stroke testing verifies valve operation without full closure, allowing testing during
-   * operation. Typical test strokes: 10-20% of full travel.
+   * Partial stroke testing verifies valve operation without full closure, allowing testing during operation. Typical
+   * test strokes: 10-20% of full travel.
    *
    * @param strokeFraction fraction of full stroke to test (0.0-0.9, e.g., 0.15 for 15%)
    */
@@ -502,24 +500,24 @@ public class HIPPSValve extends ThrottlingValve {
     }
 
     switch (votingLogic) {
-      case ONE_OUT_OF_ONE:
-        return totalCount >= 1 && activeCount >= 1;
-      case ONE_OUT_OF_TWO:
-        return totalCount >= 2 && activeCount >= 1;
-      case TWO_OUT_OF_TWO:
-        return totalCount >= 2 && activeCount >= 2;
-      case TWO_OUT_OF_THREE:
-        return totalCount >= 3 && activeCount >= 2;
-      case TWO_OUT_OF_FOUR:
-        return totalCount >= 4 && activeCount >= 2;
-      default:
-        return false;
+    case ONE_OUT_OF_ONE:
+      return totalCount >= 1 && activeCount >= 1;
+    case ONE_OUT_OF_TWO:
+      return totalCount >= 2 && activeCount >= 1;
+    case TWO_OUT_OF_TWO:
+      return totalCount >= 2 && activeCount >= 2;
+    case TWO_OUT_OF_THREE:
+      return totalCount >= 3 && activeCount >= 2;
+    case TWO_OUT_OF_FOUR:
+      return totalCount >= 4 && activeCount >= 2;
+    default:
+      return false;
     }
   }
 
   /**
    * Performs dynamic simulation step with HIPPS logic.
-   * 
+   *
    * <p>
    * This method implements:
    * <ul>
@@ -576,10 +574,10 @@ public class HIPPSValve extends ThrottlingValve {
 
   /**
    * Overrides setPercentValveOpening to prevent opening when tripped.
-   * 
+   *
    * <p>
-   * If HIPPS has tripped, it cannot be opened until reset() is called. This prevents inadvertent
-   * reopening during an alarm condition.
+   * If HIPPS has tripped, it cannot be opened until reset() is called. This prevents inadvertent reopening during an
+   * alarm condition.
    *
    * @param opening desired valve opening percentage (0-100)
    */
@@ -612,8 +610,8 @@ public class HIPPSValve extends ThrottlingValve {
     sb.append("  Closure Time: ").append(String.format("%.1f", closureTime)).append(" s\n");
     sb.append("  Spurious Trips: ").append(spuriousTripCount).append("\n");
     sb.append("  Proof Test Due: ").append(isProofTestDue() ? "YES" : "NO").append(" (")
-        .append(String.format("%.1f", timeSinceProofTest)).append("/")
-        .append(String.format("%.1f", proofTestInterval)).append(" hrs)\n");
+        .append(String.format("%.1f", timeSinceProofTest)).append("/").append(String.format("%.1f", proofTestInterval))
+        .append(" hrs)\n");
     if (partialStrokeTestActive) {
       sb.append("  PARTIAL STROKE TEST IN PROGRESS\n");
     }
@@ -643,14 +641,11 @@ public class HIPPSValve extends ThrottlingValve {
     sb.append("\nOperational History:\n");
     sb.append("  Total Trips: ").append(hasTripped ? 1 : 0).append("\n");
     sb.append("  Spurious Trips: ").append(spuriousTripCount).append("\n");
-    sb.append("  Last Trip: ")
-        .append(lastTripTime > 0 ? String.format("%.1f s", lastTripTime) : "Never").append("\n");
+    sb.append("  Last Trip: ").append(lastTripTime > 0 ? String.format("%.1f s", lastTripTime) : "Never").append("\n");
     sb.append("  Runtime: ").append(String.format("%.1f", cumulativeTime)).append(" s\n");
     sb.append("\nMaintenance:\n");
-    sb.append("  Proof Test Interval: ").append(String.format("%.0f", proofTestInterval))
-        .append(" hrs\n");
-    sb.append("  Time Since Proof Test: ").append(String.format("%.1f", timeSinceProofTest))
-        .append(" hrs\n");
+    sb.append("  Proof Test Interval: ").append(String.format("%.0f", proofTestInterval)).append(" hrs\n");
+    sb.append("  Time Since Proof Test: ").append(String.format("%.1f", timeSinceProofTest)).append(" hrs\n");
     sb.append("  Status: ").append(isProofTestDue() ? "OVERDUE" : "OK").append("\n");
     return sb.toString();
   }

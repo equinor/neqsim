@@ -93,8 +93,7 @@ class DesignPhaseTest {
     @Test
     @DisplayName("Later phases should have tighter accuracy")
     void laterPhasesShouldHaveTighterAccuracy() {
-      assertTrue(
-          DesignPhase.DETAIL_DESIGN.getMaxAccuracy() < DesignPhase.SCREENING.getMaxAccuracy());
+      assertTrue(DesignPhase.DETAIL_DESIGN.getMaxAccuracy() < DesignPhase.SCREENING.getMaxAccuracy());
       assertTrue(DesignPhase.FEED.getMaxAccuracy() < DesignPhase.CONCEPT_SELECT.getMaxAccuracy());
     }
 

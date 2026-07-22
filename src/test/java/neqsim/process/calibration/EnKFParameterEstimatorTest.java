@@ -21,8 +21,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests for EnKFParameterEstimator based on multi-well routing estimation scenario.
  *
  * <p>
- * This test validates that the EnKF estimator can recover heat transfer coefficients from a
- * simplified 4-well production network using synthetic measurements.
+ * This test validates that the EnKF estimator can recover heat transfer coefficients from a simplified 4-well
+ * production network using synthetic measurements.
  * </p>
  */
 @Tag("slow")
@@ -31,7 +31,7 @@ class EnKFParameterEstimatorTest {
   private static final double SEA_TEMPERATURE = 4.0;
   private static final double WELL_TEMPERATURE = 70.0;
   private static final double MEASUREMENT_NOISE_STD = 0.5;
-  private static final double[] TRUE_HTC = {12.0, 15.0, 18.0, 14.0};
+  private static final double[] TRUE_HTC = { 12.0, 15.0, 18.0, 14.0 };
 
   private ProcessSystem process;
   private PipeBeggsAndBrills[] pipes;
@@ -61,9 +61,9 @@ class EnKFParameterEstimatorTest {
     pipes = new PipeBeggsAndBrills[NUM_WELLS];
     splitters = new Splitter[NUM_WELLS];
 
-    double[] pressures = {100.0, 95.0, 92.0, 88.0};
-    double[] flowRates = {50000.0, 45000.0, 55000.0, 48000.0};
-    double[] pipeLengths = {8000.0, 8500.0, 7500.0, 9000.0};
+    double[] pressures = { 100.0, 95.0, 92.0, 88.0 };
+    double[] flowRates = { 50000.0, 45000.0, 55000.0, 48000.0 };
+    double[] pipeLengths = { 8000.0, 8500.0, 7500.0, 9000.0 };
 
     for (int i = 0; i < NUM_WELLS; i++) {
       SystemInterface fluid = createWellFluid(WELL_TEMPERATURE, pressures[i]);
@@ -97,15 +97,15 @@ class EnKFParameterEstimatorTest {
     process.add(lpManifold);
 
     // Default routing: wells 0,1 to HP, wells 2,3 to LP
-    setRouting(new int[] {0, 0, 1, 1});
+    setRouting(new int[] { 0, 0, 1, 1 });
   }
 
   private void setRouting(int[] routing) {
     for (int i = 0; i < NUM_WELLS; i++) {
       if (routing[i] == 0) {
-        splitters[i].setSplitFactors(new double[] {1.0, 0.0});
+        splitters[i].setSplitFactors(new double[] { 1.0, 0.0 });
       } else {
-        splitters[i].setSplitFactors(new double[] {0.0, 1.0});
+        splitters[i].setSplitFactors(new double[] { 0.0, 1.0 });
       }
     }
   }
@@ -141,8 +141,7 @@ class EnKFParameterEstimatorTest {
   @Test
   void testAddMeasuredVariable() {
     EnKFParameterEstimator estimator = new EnKFParameterEstimator(process);
-    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C",
-        MEASUREMENT_NOISE_STD);
+    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C", MEASUREMENT_NOISE_STD);
     // No exception means success
   }
 
@@ -150,13 +149,10 @@ class EnKFParameterEstimatorTest {
   void testInitialize() {
     EnKFParameterEstimator estimator = new EnKFParameterEstimator(process);
     for (int i = 0; i < NUM_WELLS; i++) {
-      estimator.addTunableParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", "W/(m2·K)", 1.0,
-          100.0, 15.0);
+      estimator.addTunableParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", "W/(m2·K)", 1.0, 100.0, 15.0);
     }
-    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C",
-        MEASUREMENT_NOISE_STD);
-    estimator.addMeasuredVariable("LP Manifold.outletStream.temperature", "C",
-        MEASUREMENT_NOISE_STD);
+    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C", MEASUREMENT_NOISE_STD);
+    estimator.addMeasuredVariable("LP Manifold.outletStream.temperature", "C", MEASUREMENT_NOISE_STD);
 
     estimator.initialize(30, 42);
 
@@ -169,13 +165,10 @@ class EnKFParameterEstimatorTest {
   void testUpdateWithMeasurements() {
     EnKFParameterEstimator estimator = new EnKFParameterEstimator(process);
     for (int i = 0; i < NUM_WELLS; i++) {
-      estimator.addTunableParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", "W/(m2·K)", 1.0,
-          100.0, 15.0);
+      estimator.addTunableParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", "W/(m2·K)", 1.0, 100.0, 15.0);
     }
-    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C",
-        MEASUREMENT_NOISE_STD);
-    estimator.addMeasuredVariable("LP Manifold.outletStream.temperature", "C",
-        MEASUREMENT_NOISE_STD);
+    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C", MEASUREMENT_NOISE_STD);
+    estimator.addMeasuredVariable("LP Manifold.outletStream.temperature", "C", MEASUREMENT_NOISE_STD);
     estimator.initialize(30, 42);
 
     Map<String, Double> measurements = getMeasurementsWithNoise();
@@ -191,26 +184,23 @@ class EnKFParameterEstimatorTest {
   void testConvergenceWithDynamicRouting() {
     EnKFParameterEstimator estimator = new EnKFParameterEstimator(process);
     for (int i = 0; i < NUM_WELLS; i++) {
-      estimator.addTunableParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", "W/(m2·K)", 1.0,
-          100.0, 15.0);
+      estimator.addTunableParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", "W/(m2·K)", 1.0, 100.0, 15.0);
     }
-    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C",
-        MEASUREMENT_NOISE_STD);
-    estimator.addMeasuredVariable("LP Manifold.outletStream.temperature", "C",
-        MEASUREMENT_NOISE_STD);
+    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C", MEASUREMENT_NOISE_STD);
+    estimator.addMeasuredVariable("LP Manifold.outletStream.temperature", "C", MEASUREMENT_NOISE_STD);
     estimator.setProcessNoise(0.2);
     estimator.setMaxChangePerUpdate(3.0);
     estimator.initialize(50, 42);
 
     // Routing schedule for observability
-    int[][] routingSchedule = {{0, 0, 1, 1}, // Wells 1-2 HP, 3-4 LP
-        {1, 1, 0, 0}, // Inverse
-        {0, 1, 0, 1}, // Alternating
-        {1, 0, 1, 0}, // Inverse alternating
-        {0, 1, 1, 1}, // Only Well 1 at HP
-        {1, 0, 1, 1}, // Only Well 2 at HP
-        {1, 1, 0, 1}, // Only Well 3 at HP
-        {1, 1, 1, 0} // Only Well 4 at HP
+    int[][] routingSchedule = { { 0, 0, 1, 1 }, // Wells 1-2 HP, 3-4 LP
+        { 1, 1, 0, 0 }, // Inverse
+        { 0, 1, 0, 1 }, // Alternating
+        { 1, 0, 1, 0 }, // Inverse alternating
+        { 0, 1, 1, 1 }, // Only Well 1 at HP
+        { 1, 0, 1, 1 }, // Only Well 2 at HP
+        { 1, 1, 0, 1 }, // Only Well 3 at HP
+        { 1, 1, 1, 0 } // Only Well 4 at HP
     };
 
     // Run estimation with routing changes
@@ -242,19 +232,16 @@ class EnKFParameterEstimatorTest {
         break;
       }
     }
-    assertTrue(hasUpdated,
-        "EnKF should update estimates from initial values after routing changes");
+    assertTrue(hasUpdated, "EnKF should update estimates from initial values after routing changes");
   }
 
   @Test
   void testGetEstimatesAndUncertainties() {
     EnKFParameterEstimator estimator = new EnKFParameterEstimator(process);
     for (int i = 0; i < NUM_WELLS; i++) {
-      estimator.addTunableParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", "W/(m2·K)", 1.0,
-          100.0, 15.0);
+      estimator.addTunableParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", "W/(m2·K)", 1.0, 100.0, 15.0);
     }
-    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C",
-        MEASUREMENT_NOISE_STD);
+    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C", MEASUREMENT_NOISE_STD);
     estimator.initialize(30, 42);
 
     double[] estimates = estimator.getEstimates();
@@ -274,8 +261,7 @@ class EnKFParameterEstimatorTest {
   void testReset() {
     EnKFParameterEstimator estimator = new EnKFParameterEstimator(process);
     estimator.addTunableParameter("Pipe1.heatTransferCoefficient", "W/(m2·K)", 1.0, 100.0, 15.0);
-    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C",
-        MEASUREMENT_NOISE_STD);
+    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C", MEASUREMENT_NOISE_STD);
     estimator.initialize(30, 42);
 
     // Run some updates

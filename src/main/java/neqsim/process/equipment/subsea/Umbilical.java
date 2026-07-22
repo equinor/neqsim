@@ -154,8 +154,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
      * @param innerDiameterMm inner diameter in mm
      * @param designPressureBar design pressure in bar
      */
-    public UmbilicalElement(String elementType, String name, double innerDiameterMm,
-        double designPressureBar) {
+    public UmbilicalElement(String elementType, String name, double innerDiameterMm, double designPressureBar) {
       this.elementType = elementType;
       this.name = name;
       this.innerDiameterMm = innerDiameterMm;
@@ -244,7 +243,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
 
   // ============ Functional Elements ============
   /** List of umbilical elements. */
-  private List<UmbilicalElement> elements = new ArrayList<UmbilicalElement>();
+  private transient List<UmbilicalElement> elements = new ArrayList<UmbilicalElement>();
 
   /** Number of hydraulic lines. */
   private int hydraulicLineCount = 0;
@@ -318,8 +317,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
    * @param designPressureBar design pressure in bar
    */
   public void addHydraulicLine(String name, double innerDiameterMm, double designPressureBar) {
-    UmbilicalElement element =
-        new UmbilicalElement("hydraulic", name, innerDiameterMm, designPressureBar);
+    UmbilicalElement element = new UmbilicalElement("hydraulic", name, innerDiameterMm, designPressureBar);
     element.setMaterial(umbilicalType == UmbilicalType.STEEL_TUBE ? "Super Duplex" : "Nylon PA11");
     elements.add(element);
     hydraulicLineCount++;
@@ -333,8 +331,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
    * @param designPressureBar design pressure in bar
    */
   public void addChemicalLine(String name, double innerDiameterMm, double designPressureBar) {
-    UmbilicalElement element =
-        new UmbilicalElement("chemical", name, innerDiameterMm, designPressureBar);
+    UmbilicalElement element = new UmbilicalElement("chemical", name, innerDiameterMm, designPressureBar);
     element.setMaterial(umbilicalType == UmbilicalType.STEEL_TUBE ? "Super Duplex" : "PVDF");
     elements.add(element);
     chemicalLineCount++;
@@ -439,8 +436,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
 
     // Steel tubes/armor
     for (UmbilicalElement element : elements) {
-      if ("hydraulic".equals(element.getElementType())
-          || "chemical".equals(element.getElementType())) {
+      if ("hydraulic".equals(element.getElementType()) || "chemical".equals(element.getElementType())) {
         if (umbilicalType == UmbilicalType.STEEL_TUBE) {
           // Steel tube weight
           double od = element.getOuterDiameterMm() > 0 ? element.getOuterDiameterMm()
@@ -477,6 +473,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
    *
    * @return mechanical design instance
    */
+  @Override
   public UmbilicalMechanicalDesign getMechanicalDesign() {
     if (mechanicalDesign == null) {
       mechanicalDesign = new UmbilicalMechanicalDesign(this);
@@ -487,6 +484,7 @@ public class Umbilical extends ProcessEquipmentBaseClass {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new UmbilicalMechanicalDesign(this);
   }

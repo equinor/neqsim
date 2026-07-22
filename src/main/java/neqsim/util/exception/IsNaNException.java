@@ -1,9 +1,7 @@
 package neqsim.util.exception;
 
 /**
- * <p>
  * IsNaNException class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -39,18 +37,17 @@ public class IsNaNException extends neqsim.util.exception.ThermoException {
 
   /**
    * Get remediation advice for this exception.
-   * 
+   *
    * <p>
    * Returns a hint on how to fix NaN calculation issues. AI agents can use this to self-correct.
    * </p>
-   * 
+   *
    * @return remediation advice string
    */
   public String getRemediation() {
     return "Calculation produced NaN for: " + paramName + ". Try:\n"
         + "1. Check for division by zero (ensure non-zero denominators)\n"
-        + "2. Verify input values are physically reasonable\n"
-        + "3. Check temperature > 0 K and pressure > 0\n" + "4. Ensure mole fractions sum to 1.0\n"
-        + "5. Use a more stable equation of state for extreme conditions";
+        + "2. Verify input values are physically reasonable\n" + "3. Check temperature > 0 K and pressure > 0\n"
+        + "4. Ensure mole fractions sum to 1.0\n" + "5. Use a more stable equation of state for extreme conditions";
   }
 }

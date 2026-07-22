@@ -18,29 +18,23 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * FluidBoundarySystemReactive class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class FluidBoundarySystemReactive extends FluidBoundarySystem {
   /**
-   * <p>
    * Constructor for FluidBoundarySystemReactive.
-   * </p>
    */
-  public FluidBoundarySystemReactive() {}
+  public FluidBoundarySystemReactive() {
+  }
 
   /**
-   * <p>
    * Constructor for FluidBoundarySystemReactive.
-   * </p>
    *
-   * @param boundary a
-   *        {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *        object
+   * @param boundary a {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
+   * object
    */
   public FluidBoundarySystemReactive(FluidBoundaryInterface boundary) {
     super(boundary);
@@ -60,16 +54,14 @@ public class FluidBoundarySystemReactive extends FluidBoundarySystem {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    SystemInterface testSystem =
-        new SystemFurstElectrolyteEos(275.3, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3,
+        ThermodynamicConstantsInterface.referencePressure);
     PipeData pipe1 = new PipeData(10.0, 0.025);
 
     testSystem.addComponent("methane", 0.061152181, 0);
@@ -88,10 +80,8 @@ public class FluidBoundarySystemReactive extends FluidBoundarySystem {
     test.calcFluxes();
     /*
      * test.getFluidBoundary().getEnhancementFactor().getNumericInterface(). createSystem();
-     * test.getFluidBoundary().getEnhancementFactor().getNumericInterface().solve();
-     * System.out.println("enhancement " +
-     * test.getFluidBoundary().getEnhancementFactor().getNumericInterface().
-     * getEnhancementFactor(0));
+     * test.getFluidBoundary().getEnhancementFactor().getNumericInterface().solve(); System.out.println("enhancement " +
+     * test.getFluidBoundary().getEnhancementFactor().getNumericInterface(). getEnhancementFactor(0));
      **/
   }
 }

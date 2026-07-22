@@ -10,9 +10,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * NeqSimLeachman class.
- * </p>
  *
  * @author victorigi99
  */
@@ -23,11 +21,12 @@ public class NeqSimLeachman {
   /**
    * Constructor for NeqSimLeachman.
    */
-  public NeqSimLeachman() {}
+  public NeqSimLeachman() {
+  }
 
   /**
-   * Constructor for NeqSimLeachman. If hydrogenType is provided (non-empty), it uses that;
-   * otherwise, it auto-detects based on the phase's component name.
+   * Constructor for NeqSimLeachman. If hydrogenType is provided (non-empty), it uses that; otherwise, it auto-detects
+   * based on the phase's component name.
    *
    * @param phase a PhaseInterface representing the stream.
    * @param hydrogenType a String representing the desired hydrogen type; can be empty.
@@ -119,8 +118,7 @@ public class NeqSimLeachman {
    * Get specific thermodynamic properties of the specified phase.
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
-   * @param properties an array of {@link java.lang.String} objects representing the properties to
-   *        retrieve
+   * @param properties an array of {@link java.lang.String} objects representing the properties to retrieve
    * @return an array of type double representing the requested properties
    */
   public double[] getProperties(PhaseInterface phase, String[] properties) {
@@ -129,20 +127,20 @@ public class NeqSimLeachman {
 
     for (int i = 0; i < properties.length; i++) {
       switch (properties[i]) {
-        case "density":
-          returnProperties[i] = allProperties[0];
-          break;
-        case "Cp":
-          returnProperties[i] = allProperties[1];
-          break;
-        case "Cv":
-          returnProperties[i] = allProperties[2];
-          break;
-        case "soundSpeed":
-          returnProperties[i] = allProperties[3];
-          break;
-        default:
-          break;
+      case "density":
+        returnProperties[i] = allProperties[0];
+        break;
+      case "Cp":
+        returnProperties[i] = allProperties[1];
+        break;
+      case "Cv":
+        returnProperties[i] = allProperties[2];
+        break;
+      case "soundSpeed":
+        returnProperties[i] = allProperties[3];
+        break;
+      default:
+        break;
       }
     }
     return returnProperties;
@@ -171,10 +169,10 @@ public class NeqSimLeachman {
     doubleW kappa = new doubleW(0.0);
     doubleW A = new doubleW(0.0);
     double dens = getMolarDensity();
-    Leachman.propertiesLeachman(phase.getTemperature(), dens, p, z, dpdd, d2pdd2, d2pdtd, dpdt, u,
-        h, s, cv, cp, w, g, jt, kappa, A);
-    double[] properties = new double[] {p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val,
-        u.val, h.val, s.val, cv.val, cp.val, w.val, g.val, jt.val, kappa.val};
+    Leachman.propertiesLeachman(phase.getTemperature(), dens, p, z, dpdd, d2pdd2, d2pdtd, dpdt, u, h, s, cv, cp, w, g,
+        jt, kappa, A);
+    double[] properties = new double[] { p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val,
+        cv.val, cp.val, w.val, g.val, jt.val, kappa.val };
     return properties;
   }
 
@@ -186,18 +184,15 @@ public class NeqSimLeachman {
   public void setPhase(PhaseInterface phase) {
     // 1) Check if the phase contains ONLY hydrogen
     if (phase.getNumberOfComponents() != 1) {
-      throw new IllegalArgumentException(
-          "Leachman model requires exactly one component (hydrogen). " + "Found "
-              + phase.getNumberOfComponents() + " components.");
+      throw new IllegalArgumentException("Leachman model requires exactly one component (hydrogen). " + "Found "
+          + phase.getNumberOfComponents() + " components.");
     }
 
     // 2) Check the name of that single component
     String componentName = phase.getComponent(0).getComponentName();
-    if (!"hydrogen".equalsIgnoreCase(componentName)
-        && !"para-hydrogen".equalsIgnoreCase(componentName)
+    if (!"hydrogen".equalsIgnoreCase(componentName) && !"para-hydrogen".equalsIgnoreCase(componentName)
         && !"ortho-hydrogen".equalsIgnoreCase(componentName)) {
-      throw new IllegalArgumentException(
-          "Leachman model requires 'hydrogen'. Found: " + componentName);
+      throw new IllegalArgumentException("Leachman model requires 'hydrogen'. Found: " + componentName);
     }
 
     // If everything checks out, we can safely set 'this.phase'
@@ -205,9 +200,7 @@ public class NeqSimLeachman {
   }
 
   /**
-   * <p>
    * getAlpha0_Leachman.
-   * </p>
    *
    * @return an array of {@link org.netlib.util.doubleW} objects
    */
@@ -235,8 +228,7 @@ public class NeqSimLeachman {
   }
 
   /**
-   * Get reduced residual helmholtz free energy and its derivatives. The returned array has the
-   * following structure:
+   * Get reduced residual helmholtz free energy and its derivatives. The returned array has the following structure:
    * <ul>
    * <li>ar(0,0) - Residual Helmholtz energy (dimensionless, =a/RT)</li>
    * <li>ar(0,1) - delta*partial (ar)/partial(delta)</li>

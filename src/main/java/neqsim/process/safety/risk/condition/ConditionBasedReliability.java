@@ -13,9 +13,8 @@ import com.google.gson.GsonBuilder;
  * Condition-Based Reliability Model.
  *
  * <p>
- * Provides dynamic reliability estimation based on real-time equipment condition data. Integrates
- * with process monitoring to update failure probabilities based on actual operating conditions
- * rather than generic OREDA data.
+ * Provides dynamic reliability estimation based on real-time equipment condition data. Integrates with process
+ * monitoring to update failure probabilities based on actual operating conditions rather than generic OREDA data.
  * </p>
  *
  * @author NeqSim Development Team
@@ -101,10 +100,8 @@ public class ConditionBasedReliability implements Serializable {
 
     public void updateValue(double value) {
       this.currentValue = value;
-      this.alarming = (criticalThreshold > normalValue) ? (value > warningThreshold)
-          : (value < warningThreshold);
-      this.critical = (criticalThreshold > normalValue) ? (value > criticalThreshold)
-          : (value < criticalThreshold);
+      this.alarming = (criticalThreshold > normalValue) ? (value > warningThreshold) : (value < warningThreshold);
+      this.critical = (criticalThreshold > normalValue) ? (value > criticalThreshold) : (value < criticalThreshold);
     }
 
     /**
@@ -239,8 +236,7 @@ public class ConditionBasedReliability implements Serializable {
    * @param equipmentName equipment name
    * @param baseFailureRate base failure rate (failures/hour)
    */
-  public ConditionBasedReliability(String equipmentId, String equipmentName,
-      double baseFailureRate) {
+  public ConditionBasedReliability(String equipmentId, String equipmentName, double baseFailureRate) {
     this.equipmentId = equipmentId;
     this.equipmentName = equipmentName;
     this.baseFailureRate = baseFailureRate;
@@ -269,10 +265,9 @@ public class ConditionBasedReliability implements Serializable {
    * @param critical critical threshold
    * @return created indicator
    */
-  public ConditionIndicator addVibrationIndicator(String id, String name, double normal,
-      double warning, double critical) {
-    ConditionIndicator indicator =
-        new ConditionIndicator(id, name, ConditionIndicator.IndicatorType.VIBRATION);
+  public ConditionIndicator addVibrationIndicator(String id, String name, double normal, double warning,
+      double critical) {
+    ConditionIndicator indicator = new ConditionIndicator(id, name, ConditionIndicator.IndicatorType.VIBRATION);
     indicator.setThresholds(normal, warning, critical);
     indicators.add(indicator);
     return indicator;
@@ -288,10 +283,9 @@ public class ConditionBasedReliability implements Serializable {
    * @param critical critical threshold
    * @return created indicator
    */
-  public ConditionIndicator addTemperatureIndicator(String id, String name, double normal,
-      double warning, double critical) {
-    ConditionIndicator indicator =
-        new ConditionIndicator(id, name, ConditionIndicator.IndicatorType.TEMPERATURE);
+  public ConditionIndicator addTemperatureIndicator(String id, String name, double normal, double warning,
+      double critical) {
+    ConditionIndicator indicator = new ConditionIndicator(id, name, ConditionIndicator.IndicatorType.TEMPERATURE);
     indicator.setThresholds(normal, warning, critical);
     indicators.add(indicator);
     return indicator;
@@ -380,21 +374,21 @@ public class ConditionBasedReliability implements Serializable {
 
   private double calculateFailureRateMultiplier(double health) {
     switch (degradationModel) {
-      case LINEAR:
-        // Linear increase as health decreases
-        return 1.0 + (1.0 - health) * 4.0; // 1x at health=1, 5x at health=0
-      case EXPONENTIAL:
-        // Exponential increase at low health
-        return Math.exp((1.0 - health) * 2.0);
-      case WEIBULL:
-        // Weibull-like behavior (bathtub curve)
-        double beta = 2.0; // Shape parameter
-        return Math.pow(1.0 / Math.max(health, 0.01), beta);
-      case MACHINE_LEARNING:
-        // Placeholder - would use ML model in production
-        return 1.0 + (1.0 - health) * 3.0;
-      default:
-        return 1.0;
+    case LINEAR:
+      // Linear increase as health decreases
+      return 1.0 + (1.0 - health) * 4.0; // 1x at health=1, 5x at health=0
+    case EXPONENTIAL:
+      // Exponential increase at low health
+      return Math.exp((1.0 - health) * 2.0);
+    case WEIBULL:
+      // Weibull-like behavior (bathtub curve)
+      double beta = 2.0; // Shape parameter
+      return Math.pow(1.0 / Math.max(health, 0.01), beta);
+    case MACHINE_LEARNING:
+      // Placeholder - would use ML model in production
+      return 1.0 + (1.0 - health) * 3.0;
+    default:
+      return 1.0;
     }
   }
 
@@ -407,8 +401,7 @@ public class ConditionBasedReliability implements Serializable {
 
     // Simple linear extrapolation of health trend
     int n = Math.min(100, healthHistory.size());
-    List<HealthRecord> recent =
-        healthHistory.subList(healthHistory.size() - n, healthHistory.size());
+    List<HealthRecord> recent = healthHistory.subList(healthHistory.size() - n, healthHistory.size());
 
     double sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
     for (int i = 0; i < n; i++) {
@@ -558,8 +551,8 @@ public class ConditionBasedReliability implements Serializable {
     // Health summary
     Map<String, Object> health = new HashMap<>();
     health.put("healthIndex", healthIndex);
-    health.put("status", healthIndex > 0.8 ? "GOOD"
-        : healthIndex > 0.5 ? "FAIR" : healthIndex > 0.2 ? "POOR" : "CRITICAL");
+    health.put("status",
+        healthIndex > 0.8 ? "GOOD" : healthIndex > 0.5 ? "FAIR" : healthIndex > 0.2 ? "POOR" : "CRITICAL");
     map.put("health", health);
 
     // Reliability metrics
@@ -601,8 +594,7 @@ public class ConditionBasedReliability implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**
@@ -630,12 +622,9 @@ public class ConditionBasedReliability implements Serializable {
     sb.append(String.format("  Base Failure Rate:     %.2e /hour%n", baseFailureRate));
     sb.append(String.format("  Adjusted Failure Rate: %.2e /hour (%.1fx)%n", adjustedFailureRate,
         getFailureRateMultiplier()));
-    sb.append(String.format("  MTTF:                  %.0f hours (%.1f days)%n", getMTTF(),
-        getMTTF() / 24));
-    sb.append(
-        String.format("  P(fail in 24h):        %.2f%%%n", getProbabilityOfFailure(24) * 100));
-    sb.append(
-        String.format("  P(fail in 30d):        %.2f%%%n", getProbabilityOfFailure(720) * 100));
+    sb.append(String.format("  MTTF:                  %.0f hours (%.1f days)%n", getMTTF(), getMTTF() / 24));
+    sb.append(String.format("  P(fail in 24h):        %.2f%%%n", getProbabilityOfFailure(24) * 100));
+    sb.append(String.format("  P(fail in 30d):        %.2f%%%n", getProbabilityOfFailure(720) * 100));
     sb.append("\n");
 
     // RUL
@@ -648,15 +637,13 @@ public class ConditionBasedReliability implements Serializable {
     // Indicators
     sb.append("CONDITION INDICATORS\n");
     sb.append(StringUtils.repeat("─", 60)).append("\n");
-    sb.append(String.format("%-20s %10s %10s %10s %8s%n", "Indicator", "Current", "Normal",
-        "Critical", "Health"));
+    sb.append(String.format("%-20s %10s %10s %10s %8s%n", "Indicator", "Current", "Normal", "Critical", "Health"));
     sb.append(StringUtils.repeat("─", 60)).append("\n");
 
     for (ConditionIndicator ind : indicators) {
       String flag = ind.isCritical() ? "✗" : ind.isAlarming() ? "!" : "✓";
-      sb.append(String.format("%-20s %10.2f %10.2f %10.2f %7.0f%% %s%n", ind.getName(),
-          ind.getCurrentValue(), ind.getNormalValue(), ind.getCriticalThreshold(),
-          ind.getHealthContribution() * 100, flag));
+      sb.append(String.format("%-20s %10.2f %10.2f %10.2f %7.0f%% %s%n", ind.getName(), ind.getCurrentValue(),
+          ind.getNormalValue(), ind.getCriticalThreshold(), ind.getHealthContribution() * 100, flag));
     }
 
     return sb.toString();
@@ -664,7 +651,7 @@ public class ConditionBasedReliability implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("ConditionBasedReliability[%s: health=%.0f%%, λ=%.2e]", equipmentName,
-        healthIndex * 100, adjustedFailureRate);
+    return String.format("ConditionBasedReliability[%s: health=%.0f%%, λ=%.2e]", equipmentName, healthIndex * 100,
+        adjustedFailureRate);
   }
 }

@@ -19,8 +19,8 @@ import neqsim.process.util.optimizer.ProductionImpactResult;
  * Risk Matrix for equipment failure analysis.
  *
  * <p>
- * Combines probability (from reliability data) with consequence (from NeqSim simulation) to create
- * a visual risk matrix. Calculates economic cost of different failure scenarios.
+ * Combines probability (from reliability data) with consequence (from NeqSim simulation) to create a visual risk
+ * matrix. Calculates economic cost of different failure scenarios.
  * </p>
  *
  * <h2>Risk Categories</h2>
@@ -31,21 +31,21 @@ import neqsim.process.util.optimizer.ProductionImpactResult;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * RiskMatrix matrix = new RiskMatrix(processSystem);
  * matrix.setProductPrice(500.0, "USD/tonne");
  * matrix.setDowntimeCostPerHour(10000.0);
- * 
+ *
  * // Build risk matrix for all equipment
  * matrix.buildRiskMatrix();
- * 
+ *
  * // Get risk assessment for specific equipment
  * RiskAssessment risk = matrix.getRiskAssessment("HP Compressor");
  * System.out.println("Risk Level: " + risk.getRiskLevel());
  * System.out.println("Annual Cost: $" + risk.getAnnualRiskCost());
- * 
+ *
  * // Get matrix data for visualization
  * String json = matrix.toJson();
  * }
@@ -414,8 +414,7 @@ public class RiskMatrix implements Serializable {
     @Override
     public String toString() {
       return String.format("%s: P=%s, C=%s, Risk=%s (score=%d), Annual Cost=$%.0f", equipmentName,
-          probabilityCategory.getName(), consequenceCategory.getName(), riskLevel.getName(),
-          riskScore, annualRiskCost);
+          probabilityCategory.getName(), consequenceCategory.getName(), riskLevel.getName(), riskScore, annualRiskCost);
     }
   }
 
@@ -570,11 +569,9 @@ public class RiskMatrix implements Serializable {
 
     // Get probability data from reliability database (if not already set)
     if (assessment.getMtbf() == 0) {
-      ReliabilityDataSource.ReliabilityData relData =
-          reliabilitySource.getReliabilityData(equipmentType, "General");
+      ReliabilityDataSource.ReliabilityData relData = reliabilitySource.getReliabilityData(equipmentType, "General");
       if (relData != null) {
-        assessment.setProbabilityData(relData.getFailuresPerYear(), relData.getMtbf(),
-            relData.getMttr());
+        assessment.setProbabilityData(relData.getFailuresPerYear(), relData.getMtbf(), relData.getMttr());
       } else {
         // Default values
         assessment.setProbabilityData(0.5, 17520, 48);
@@ -599,8 +596,7 @@ public class RiskMatrix implements Serializable {
 
   private void calculateCost(RiskAssessment assessment) {
     // Cost per failure = (lost production during repair) + (fixed downtime costs)
-    double lostProductionCost =
-        assessment.getProductionLossKgHr() * assessment.getMttr() * productPricePerKg;
+    double lostProductionCost = assessment.getProductionLossKgHr() * assessment.getMttr() * productPricePerKg;
     double fixedDowntimeCost = assessment.getMttr() * downtimeCostPerHour;
     double costPerFailure = lostProductionCost + fixedDowntimeCost;
 
@@ -618,8 +614,7 @@ public class RiskMatrix implements Serializable {
       return "Pump";
     } else if (className.contains("separator") || className.contains("scrubber")) {
       return "Separator";
-    } else if (className.contains("heat") || className.contains("cooler")
-        || className.contains("heater")) {
+    } else if (className.contains("heat") || className.contains("cooler") || className.contains("heater")) {
       return "HeatExchanger";
     } else if (className.contains("valve")) {
       return "Valve";
@@ -783,8 +778,7 @@ public class RiskMatrix implements Serializable {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   @Override
@@ -795,10 +789,8 @@ public class RiskMatrix implements Serializable {
     sb.append("╠══════════════════════════════════════════════════════════════════╣\n");
     sb.append(String.format("║ Total Annual Risk Cost: $%,.0f%n", getTotalAnnualRiskCost()));
     sb.append(String.format("║ Critical Risk: %d  High: %d  Medium: %d  Low: %d%n",
-        getEquipmentByRiskLevel(RiskLevel.CRITICAL).size(),
-        getEquipmentByRiskLevel(RiskLevel.HIGH).size(),
-        getEquipmentByRiskLevel(RiskLevel.MEDIUM).size(),
-        getEquipmentByRiskLevel(RiskLevel.LOW).size()));
+        getEquipmentByRiskLevel(RiskLevel.CRITICAL).size(), getEquipmentByRiskLevel(RiskLevel.HIGH).size(),
+        getEquipmentByRiskLevel(RiskLevel.MEDIUM).size(), getEquipmentByRiskLevel(RiskLevel.LOW).size()));
     sb.append("╠══════════════════════════════════════════════════════════════════╣\n");
     sb.append("║ Equipment Risk Ranking (by score):                              ║\n");
     sb.append("╟──────────────────────────────────────────────────────────────────╢\n");
@@ -806,22 +798,21 @@ public class RiskMatrix implements Serializable {
     for (RiskAssessment assessment : getRiskAssessmentsSortedByRisk()) {
       String marker;
       switch (assessment.getRiskLevel()) {
-        case CRITICAL:
-          marker = "🔴";
-          break;
-        case HIGH:
-          marker = "🟠";
-          break;
-        case MEDIUM:
-          marker = "🟡";
-          break;
-        default:
-          marker = "🟢";
+      case CRITICAL:
+        marker = "🔴";
+        break;
+      case HIGH:
+        marker = "🟠";
+        break;
+      case MEDIUM:
+        marker = "🟡";
+        break;
+      default:
+        marker = "🟢";
       }
-      sb.append(String.format("║ %s %-25s P:%d C:%d Score:%-2d Cost:$%,.0f%n", marker,
-          assessment.getEquipmentName(), assessment.getProbabilityCategory().getLevel(),
-          assessment.getConsequenceCategory().getLevel(), assessment.getRiskScore(),
-          assessment.getAnnualRiskCost()));
+      sb.append(String.format("║ %s %-25s P:%d C:%d Score:%-2d Cost:$%,.0f%n", marker, assessment.getEquipmentName(),
+          assessment.getProbabilityCategory().getLevel(), assessment.getConsequenceCategory().getLevel(),
+          assessment.getRiskScore(), assessment.getAnnualRiskCost()));
     }
     sb.append("╚══════════════════════════════════════════════════════════════════╝\n");
     return sb.toString();

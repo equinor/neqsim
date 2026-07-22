@@ -6,16 +6,16 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * Hayduk-Minhas diffusivity model for liquid hydrocarbon systems.
  *
  * <p>
- * This model is more accurate for oil/gas applications than Siddiqi-Lucas, particularly for
- * hydrocarbon solvents. It provides separate correlations for paraffin and aqueous solvents.
+ * This model is more accurate for oil/gas applications than Siddiqi-Lucas, particularly for hydrocarbon solvents. It
+ * provides separate correlations for paraffin and aqueous solvents.
  * </p>
  *
  * <p>
  * References:
  * </p>
  * <ul>
- * <li>Hayduk, W. and Minhas, B.S. (1982). "Correlations for prediction of molecular diffusivities
- * in liquids." Can. J. Chem. Eng., 60, 295-299.</li>
+ * <li>Hayduk, W. and Minhas, B.S. (1982). "Correlations for prediction of molecular diffusivities in liquids." Can. J.
+ * Chem. Eng., 60, 295-299.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -120,7 +120,7 @@ public class HaydukMinhasDiffusivity extends Diffusivity {
     // Use Le Bas method or stored value
     // V_b ≈ V_c / 0.285 or from normal liquid density
     double molarMass = liquidPhase.getPhase().getComponent(i).getMolarMass() * 1000; // kg/mol ->
-                                                                                     // g/mol
+    // g/mol
     // normalLiquidDensity is in g/cm³
     double normalLiquidDensity = liquidPhase.getPhase().getComponent(i).getNormalLiquidDensity();
 
@@ -129,11 +129,11 @@ public class HaydukMinhasDiffusivity extends Diffusivity {
       return molarMass / normalLiquidDensity;
     }
 
-    // Fallback: estimate from critical volume
-    double Vc = liquidPhase.getPhase().getComponent(i).getCriticalVolume(); // m³/mol
+    // Fallback: estimate from critical volume using Tyn-Calus method
+    // getCriticalVolume() returns cm³/mol
+    double Vc = liquidPhase.getPhase().getComponent(i).getCriticalVolume();
     if (Vc > 0) {
-      // Convert m³/mol to cm³/mol and apply Rackett-type factor
-      return Vc * 1e6 / 0.285;
+      return 0.285 * Math.pow(Vc, 1.048);
     }
 
     // Default estimate based on molar mass (rough approximation)
@@ -210,12 +210,10 @@ public class HaydukMinhasDiffusivity extends Diffusivity {
 
   /** {@inheritDoc} */
   @Override
-  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod,
-      int multicomponentDiffusionMethod) {
+  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
-        binaryDiffusionCoefficients[i][j] =
-            calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
+        binaryDiffusionCoefficients[i][j] = calcBinaryDiffusionCoefficient(i, j, binaryDiffusionCoefficientMethod);
       }
     }
 

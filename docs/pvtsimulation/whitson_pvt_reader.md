@@ -1,3 +1,8 @@
+---
+title: Whitson PVT Parameter File Reader
+description: The `WhitsonPVTReader` class enables NeqSim to read PVT parameter files exported from Whitson+ and similar PVT software, creating fully configured fluid systems with accurate thermodynamic properties....
+---
+
 # Whitson PVT Parameter File Reader
 
 The `WhitsonPVTReader` class enables NeqSim to read PVT parameter files exported from Whitson+ and similar PVT software, creating fully configured fluid systems with accurate thermodynamic properties.
@@ -238,7 +243,7 @@ double apiGravity = sepTest.getStockTankAPIGravity();
 double stockTankDensity = sepTest.getStockTankOilDensity();  // kg/m³
 
 // Get oil properties at each separator stage
-for (var stage : sepTest.getStageResults()) {
+for (SeparatorStageResult stage : sepTest.getStageResults()) {
     double oilDensity = stage.getOilDensity();     // kg/m³
     double oilViscosity = stage.getOilViscosity(); // cP
 }
@@ -417,6 +422,6 @@ For gas condensates, an oil (condensate) phase forms below the dew point pressur
 
 ## See Also
 
-- [Fluid Characterization](fluid_characterization_mathematics.md) - Mathematical background for C7+ characterization
-- [PVT Workflow](pvt_workflow.md) - End-to-end PVT workflow
-- [Viscosity Models](../physical_properties/viscosity_models.md) - LBC and other viscosity model documentation
+- [Fluid Characterization](fluid_characterization_mathematics) - Mathematical background for C7+ characterization
+- [PVT Workflow](pvt_workflow) - End-to-end PVT workflow
+- [Viscosity Models](../physical_properties/viscosity_models) - LBC and other viscosity model documentation

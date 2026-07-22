@@ -2,10 +2,10 @@
  * Model Predictive Control (MPC) integration package for NeqSim ProcessSystem.
  *
  * <p>
- * This package provides seamless integration between NeqSim's rigorous thermodynamic process
- * simulation and industrial Model Predictive Control (MPC) systems. It bridges the gap between the
- * physical simulation in {@link neqsim.process.processmodel.ProcessSystem} and the control
- * algorithms in {@link neqsim.process.controllerdevice.ModelPredictiveController}.
+ * This package provides seamless integration between NeqSim's rigorous thermodynamic process simulation and industrial
+ * Model Predictive Control (MPC) systems. It bridges the gap between the physical simulation in
+ * {@link neqsim.process.processmodel.ProcessSystem} and the control algorithms in
+ * {@link neqsim.process.controllerdevice.ModelPredictiveController}.
  * </p>
  *
  * <h2>Key Classes</h2>
@@ -13,56 +13,48 @@
  * <h3>Variable Definitions</h3>
  * <ul>
  * <li>{@link neqsim.process.mpc.MPCVariable} - Base class for MPC variables</li>
- * <li>{@link neqsim.process.mpc.ManipulatedVariable} - Manipulated Variables (MVs) - what the
- * controller adjusts</li>
- * <li>{@link neqsim.process.mpc.ControlledVariable} - Controlled Variables (CVs) - what we want to
- * control</li>
- * <li>{@link neqsim.process.mpc.DisturbanceVariable} - Disturbance Variables (DVs) - measured but
- * uncontrolled</li>
+ * <li>{@link neqsim.process.mpc.ManipulatedVariable} - Manipulated Variables (MVs) - what the controller adjusts</li>
+ * <li>{@link neqsim.process.mpc.ControlledVariable} - Controlled Variables (CVs) - what we want to control</li>
+ * <li>{@link neqsim.process.mpc.DisturbanceVariable} - Disturbance Variables (DVs) - measured but uncontrolled</li>
  * </ul>
  *
  * <h3>Model Identification</h3>
  * <ul>
- * <li>{@link neqsim.process.mpc.ProcessLinearizer} - Automatic Jacobian calculation using finite
- * differences</li>
- * <li>{@link neqsim.process.mpc.LinearizationResult} - Container for gain matrices and operating
- * point data</li>
+ * <li>{@link neqsim.process.mpc.ProcessLinearizer} - Automatic Jacobian calculation using finite differences</li>
+ * <li>{@link neqsim.process.mpc.LinearizationResult} - Container for gain matrices and operating point data</li>
  * <li>{@link neqsim.process.mpc.StepResponseGenerator} - Automated step testing framework</li>
  * <li>{@link neqsim.process.mpc.StepResponse} - Single MV-CV step response with FOPDT fitting</li>
  * </ul>
  *
  * <h3>Prediction and Control</h3>
  * <ul>
- * <li>{@link neqsim.process.mpc.NonlinearPredictor} - Multi-step prediction using full NeqSim
- * simulation</li>
- * <li>{@link neqsim.process.mpc.ProcessLinkedMPC} - Bridge class connecting ProcessSystem to
- * MPC</li>
+ * <li>{@link neqsim.process.mpc.NonlinearPredictor} - Multi-step prediction using full NeqSim simulation</li>
+ * <li>{@link neqsim.process.mpc.ProcessLinkedMPC} - Bridge class connecting ProcessSystem to MPC</li>
  * </ul>
  *
  * <h3>Export and Integration</h3>
  * <ul>
- * <li>{@link neqsim.process.mpc.StateSpaceExporter} - Export models to JSON/CSV/MATLAB for external
- * MPC</li>
+ * <li>{@link neqsim.process.mpc.StateSpaceExporter} - Export models to JSON/CSV/MATLAB for external MPC</li>
  * </ul>
  *
  * <h3>Industrial Control System Integration</h3>
  * <ul>
- * <li>{@link neqsim.process.mpc.IndustrialMPCExporter} - Export step-response models, gain
- * matrices, and configurations in formats compatible with industrial MPC platforms</li>
- * <li>{@link neqsim.process.mpc.ControllerDataExchange} - Real-time bidirectional data exchange
- * interface with quality flags and execution status for PCS integration</li>
- * <li>{@link neqsim.process.mpc.SoftSensorExporter} - Export soft-sensor and estimator
- * configurations for industrial calculation engines</li>
- * <li>{@link neqsim.process.mpc.SubrModlExporter} - Export nonlinear models in SubrModl format with
- * SubrXvr definitions and DtaIx mappings</li>
- * <li>{@link neqsim.process.mpc.StateVariable} - State variable (SVR) for nonlinear MPC with bias
- * tracking and prediction</li>
+ * <li>{@link neqsim.process.mpc.IndustrialMPCExporter} - Export step-response models, gain matrices, and configurations
+ * in formats compatible with industrial MPC platforms</li>
+ * <li>{@link neqsim.process.mpc.ControllerDataExchange} - Real-time bidirectional data exchange interface with quality
+ * flags and execution status for PCS integration</li>
+ * <li>{@link neqsim.process.mpc.SoftSensorExporter} - Export soft-sensor and estimator configurations for industrial
+ * calculation engines</li>
+ * <li>{@link neqsim.process.mpc.SubrModlExporter} - Export nonlinear models in SubrModl format with SubrXvr definitions
+ * and DtaIx mappings</li>
+ * <li>{@link neqsim.process.mpc.StateVariable} - State variable (SVR) for nonlinear MPC with bias tracking and
+ * prediction</li>
  * </ul>
  *
  * <h2>Usage Patterns</h2>
  *
  * <h3>Basic MPC Setup</h3>
- * 
+ *
  * <pre>
  * {@code
  * // Build process system
@@ -99,7 +91,7 @@
  * </pre>
  *
  * <h3>Model Export for External MPC</h3>
- * 
+ *
  * <pre>
  * {@code
  * // After linearization
@@ -114,7 +106,7 @@
  * </pre>
  *
  * <h3>Advanced: Nonlinear Prediction</h3>
- * 
+ *
  * <pre>
  * {@code
  * // Enable nonlinear prediction for highly nonlinear processes
@@ -129,17 +121,16 @@
  * <h2>Integration with Existing MPC</h2>
  *
  * <p>
- * This package is designed to work with the existing
- * {@link neqsim.process.controllerdevice.ModelPredictiveController}. The
- * {@link neqsim.process.mpc.ProcessLinkedMPC} class automatically configures the underlying MPC
- * from the ProcessSystem linearization.
+ * This package is designed to work with the existing {@link neqsim.process.controllerdevice.ModelPredictiveController}.
+ * The {@link neqsim.process.mpc.ProcessLinkedMPC} class automatically configures the underlying MPC from the
+ * ProcessSystem linearization.
  * </p>
  *
  * <h2>AI Platform Integration</h2>
  *
  * <p>
- * The package is designed for integration with AI/ML platforms that require process models for
- * optimization and control. Key integration points:
+ * The package is designed for integration with AI/ML platforms that require process models for optimization and
+ * control. Key integration points:
  * </p>
  * <ul>
  * <li>JSON export for Python-based MPC implementations</li>
@@ -151,8 +142,8 @@
  * <h2>Industrial MPC Integration</h2>
  *
  * <p>
- * The package provides seamless integration with industrial control systems through standard
- * interfaces and export formats:
+ * The package provides seamless integration with industrial control systems through standard interfaces and export
+ * formats:
  * </p>
  *
  * <h3>Step Response Model Export</h3>
@@ -215,7 +206,7 @@
  * softExporter.addViscositySensor("sep_oil_visc", "separator", "oil outlet");
  * softExporter.addPhaseFractionSensor("sep_gas_frac", "separator");
  * softExporter.addCompositionEstimator("sep_comp", "separator", "gas outlet",
- *     new String[] {"methane", "ethane", "propane"});
+ *     new String[] { "methane", "ethane", "propane" });
  *
  * // Export in JSON and CVT formats
  * softExporter.exportConfiguration("soft_sensors.json");

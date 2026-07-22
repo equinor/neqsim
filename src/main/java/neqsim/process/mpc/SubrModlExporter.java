@@ -8,17 +8,16 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.processmodel.ProcessSystem;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Exports NeqSim process models in SubrModl format for nonlinear MPC integration.
  *
  * <p>
- * This class generates configuration files compatible with industrial nonlinear MPC systems that
- * use programmed model objects (SubrModl). The export includes:
+ * This class generates configuration files compatible with industrial nonlinear MPC systems that use programmed model
+ * objects (SubrModl). The export includes:
  * </p>
  * <ul>
  * <li>Model parameters (constants like volume, height, density)</li>
@@ -28,28 +27,28 @@ import com.google.gson.GsonBuilder;
  * </ul>
  *
  * <p>
- * The SubrModl format supports nonlinear dynamic equations with commands like INIT, STEP, STDSTEP
- * for steady-state, UPDT for state updates, and SAVE for persistence.
+ * The SubrModl format supports nonlinear dynamic equations with commands like INIT, STEP, STDSTEP for steady-state,
+ * UPDT for state updates, and SAVE for persistence.
  * </p>
  *
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * ProcessSystem process = new ProcessSystem();
  * // ... add equipment ...
- * 
+ *
  * SubrModlExporter exporter = new SubrModlExporter(process);
  * exporter.setModelName("WellModel");
  * exporter.addParameter("Volume", 100.0, "m3");
  * exporter.addParameter("Height", 2000.0, "m");
- * 
+ *
  * // Add SubrXvr definitions
  * exporter.addSubrXvr("Pdownhole", "pdh", "Downhole pressure", 147.7);
  * exporter.addSubrXvr("Pwellhead", "pwh", "Wellhead pressure", 10.4);
- * 
+ *
  * // Export configuration
  * exporter.exportConfiguration("wellmodel_config.txt");
  * }
@@ -353,8 +352,7 @@ public class SubrModlExporter implements Serializable {
    * @param modelValue initial model value
    * @return this exporter for chaining
    */
-  public SubrModlExporter addStateVariable(String name, String dtaIx, String description,
-      double modelValue) {
+  public SubrModlExporter addStateVariable(String name, String dtaIx, String description, double modelValue) {
     stateVariables.add(new StateVariable(name, dtaIx, description, modelValue));
     if (!indexTable.contains(dtaIx)) {
       indexTable.add(dtaIx);
@@ -379,8 +377,8 @@ public class SubrModlExporter implements Serializable {
    * Export the model configuration in SubrModl format.
    *
    * <p>
-   * This generates a configuration file compatible with industrial nonlinear MPC systems using the
-   * SubrProc/SubrModl pattern.
+   * This generates a configuration file compatible with industrial nonlinear MPC systems using the SubrProc/SubrModl
+   * pattern.
    * </p>
    *
    * @param filename the output filename
@@ -621,8 +619,7 @@ public class SubrModlExporter implements Serializable {
     // Index table
     model.put("indexTable", indexTable);
 
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
     try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
       writer.write(gson.toJson(model));
     }
@@ -632,8 +629,7 @@ public class SubrModlExporter implements Serializable {
    * Auto-populate from ProcessLinkedMPC controller.
    *
    * <p>
-   * This automatically extracts MVs, CVs, DVs from the MPC controller and creates corresponding
-   * SubrXvr definitions.
+   * This automatically extracts MVs, CVs, DVs from the MPC controller and creates corresponding SubrXvr definitions.
    * </p>
    *
    * @param controller the MPC controller

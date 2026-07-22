@@ -12,8 +12,8 @@ import java.util.Objects;
  * Represents a single solution on the Pareto front.
  *
  * <p>
- * A Pareto solution contains the objective values at a specific decision point (e.g., flow rate)
- * and can be compared to other solutions for dominance.
+ * A Pareto solution contains the objective values at a specific decision point (e.g., flow rate) and can be compared to
+ * other solutions for dominance.
  * </p>
  *
  * @author ASMF
@@ -54,9 +54,8 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
    * @param decisionVariables decision variable values
    * @param feasible whether solution is feasible
    */
-  public ParetoSolution(double[] objectiveValues, double[] rawObjectiveValues,
-      String[] objectiveNames, String[] objectiveUnits, Map<String, Double> decisionVariables,
-      boolean feasible) {
+  public ParetoSolution(double[] objectiveValues, double[] rawObjectiveValues, String[] objectiveNames,
+      String[] objectiveUnits, Map<String, Double> decisionVariables, boolean feasible) {
     this.objectiveValues = Arrays.copyOf(objectiveValues, objectiveValues.length);
     this.rawObjectiveValues = Arrays.copyOf(rawObjectiveValues, rawObjectiveValues.length);
     this.objectiveNames = Arrays.copyOf(objectiveNames, objectiveNames.length);
@@ -175,8 +174,7 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
    * Check if this solution dominates another solution.
    *
    * <p>
-   * Solution A dominates B if A is at least as good as B on all objectives and strictly better on
-   * at least one.
+   * Solution A dominates B if A is at least as good as B on all objectives and strictly better on at least one.
    * </p>
    *
    * @param other the other solution to compare
@@ -227,16 +225,15 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
    * @param objectiveRange total range of objective values
    * @return crowding distance contribution
    */
-  public double crowdingDistance(ParetoSolution leftNeighbor, ParetoSolution rightNeighbor,
-      int objectiveIndex, double objectiveRange) {
+  public double crowdingDistance(ParetoSolution leftNeighbor, ParetoSolution rightNeighbor, int objectiveIndex,
+      double objectiveRange) {
     if (objectiveRange <= 0) {
       return 0.0;
     }
     if (leftNeighbor == null || rightNeighbor == null) {
       return Double.POSITIVE_INFINITY; // Boundary solutions
     }
-    double distance = rightNeighbor.objectiveValues[objectiveIndex]
-        - leftNeighbor.objectiveValues[objectiveIndex];
+    double distance = rightNeighbor.objectiveValues[objectiveIndex] - leftNeighbor.objectiveValues[objectiveIndex];
     return distance / objectiveRange;
   }
 
@@ -261,8 +258,7 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
       return false;
     }
     ParetoSolution other = (ParetoSolution) obj;
-    return Arrays.equals(objectiveValues, other.objectiveValues)
-        && decisionVariables.equals(other.decisionVariables);
+    return Arrays.equals(objectiveValues, other.objectiveValues) && decisionVariables.equals(other.decisionVariables);
   }
 
   @Override
@@ -277,8 +273,8 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
       if (i > 0) {
         sb.append(", ");
       }
-      sb.append(objectiveNames[i]).append("=").append(String.format("%.2f", rawObjectiveValues[i]))
-          .append(" ").append(objectiveUnits[i]);
+      sb.append(objectiveNames[i]).append("=").append(String.format("%.2f", rawObjectiveValues[i])).append(" ")
+          .append(objectiveUnits[i]);
     }
     sb.append(", feasible=").append(feasible);
     if (!decisionVariables.isEmpty()) {
@@ -360,13 +356,10 @@ public class ParetoSolution implements Serializable, Comparable<ParetoSolution> 
         names[i] = obj.getName();
         units[i] = obj.getUnit();
         // Normalize: higher is always better
-        normalizedValues[i] =
-            obj.getDirection() == ObjectiveFunction.Direction.MAXIMIZE ? rawValues[i]
-                : -rawValues[i];
+        normalizedValues[i] = obj.getDirection() == ObjectiveFunction.Direction.MAXIMIZE ? rawValues[i] : -rawValues[i];
       }
 
-      return new ParetoSolution(normalizedValues, rawValues, names, units, decisionVariables,
-          feasible);
+      return new ParetoSolution(normalizedValues, rawValues, names, units, decisionVariables, feasible);
     }
   }
 }

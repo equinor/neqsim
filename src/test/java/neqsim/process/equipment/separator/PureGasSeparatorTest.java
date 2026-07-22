@@ -13,8 +13,8 @@ import neqsim.thermo.system.SystemSrkEos;
  */
 class PureGasSeparatorTest extends neqsim.NeqSimTest {
   /**
-   * Test that separator works with pure gas input (no liquid phase). This tests both steady-state
-   * and transient operation.
+   * Test that separator works with pure gas input (no liquid phase). This tests both steady-state and transient
+   * operation.
    */
   @Test
   void testPureGasSeparatorSteadyState() {
@@ -40,18 +40,16 @@ class PureGasSeparatorTest extends neqsim.NeqSimTest {
     separator1.run();
 
     // Should have gas but no liquid
-    org.junit.jupiter.api.Assertions.assertTrue(
-        separator1.getGasOutStream().getFlowRate("kg/hr") > 0, "Gas flow should be positive");
-    org.junit.jupiter.api.Assertions.assertEquals(0.0,
-        separator1.getLiquidOutStream().getFlowRate("kg/hr"), 1e-6,
+    org.junit.jupiter.api.Assertions.assertTrue(separator1.getGasOutStream().getFlowRate("kg/hr") > 0,
+        "Gas flow should be positive");
+    org.junit.jupiter.api.Assertions.assertEquals(0.0, separator1.getLiquidOutStream().getFlowRate("kg/hr"), 1e-6,
         "Liquid flow should be zero for pure gas");
     org.junit.jupiter.api.Assertions.assertEquals(0.0, separator1.getLiquidLevel(), 1e-6,
         "Liquid level should be zero for pure gas");
 
     // Verify mass balance
     double massBalance = separator1.getMassBalance("kg/hr");
-    org.junit.jupiter.api.Assertions.assertEquals(0.0, massBalance, 1.0,
-        "Mass balance should be close to zero");
+    org.junit.jupiter.api.Assertions.assertEquals(0.0, massBalance, 1.0, "Mass balance should be close to zero");
   }
 
   /**
@@ -88,8 +86,7 @@ class PureGasSeparatorTest extends neqsim.NeqSimTest {
     compressor1.setOutletPressure(5.0, "bara");
     compressor1.run();
 
-    ThrottlingValve liquidValve1 =
-        new ThrottlingValve("liq valve 1", separator1.getLiquidOutStream());
+    ThrottlingValve liquidValve1 = new ThrottlingValve("liq valve 1", separator1.getLiquidOutStream());
     liquidValve1.setOutletPressure(1.01325, "bara");
     liquidValve1.run();
 
@@ -112,8 +109,7 @@ class PureGasSeparatorTest extends neqsim.NeqSimTest {
     for (int i = 0; i < 10; i++) {
       process1.runTransient();
       // Verify gas flow exists but no liquid
-      org.junit.jupiter.api.Assertions
-          .assertTrue(gasValve1.getOutletStream().getFlowRate("kg/hr") > 0);
+      org.junit.jupiter.api.Assertions.assertTrue(gasValve1.getOutletStream().getFlowRate("kg/hr") > 0);
       org.junit.jupiter.api.Assertions.assertEquals(0.0, separator1.getLiquidLevel(), 1e-6);
     }
 
@@ -123,8 +119,7 @@ class PureGasSeparatorTest extends neqsim.NeqSimTest {
     for (int i = 0; i < 10; i++) {
       process1.runTransient();
       // Should still work without crashing
-      org.junit.jupiter.api.Assertions
-          .assertTrue(gasValve1.getOutletStream().getFlowRate("kg/hr") >= 0);
+      org.junit.jupiter.api.Assertions.assertTrue(gasValve1.getOutletStream().getFlowRate("kg/hr") >= 0);
     }
   }
 }

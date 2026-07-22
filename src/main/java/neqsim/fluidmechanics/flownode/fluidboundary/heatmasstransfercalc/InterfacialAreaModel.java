@@ -4,8 +4,8 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc;
  * Enum for selecting interfacial area models in two-phase pipe flow simulations.
  *
  * <p>
- * The interfacial area per unit volume (a) is critical for mass transfer calculations as it
- * directly affects the mass transfer rate: N_i = k_L * a * ΔC_i
+ * The interfacial area per unit volume (a) is critical for mass transfer calculations as it directly affects the mass
+ * transfer rate: N_i = k_L * a * ΔC_i
  * </p>
  *
  * <p>
@@ -21,8 +21,8 @@ package neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc;
  */
 public enum InterfacialAreaModel {
   /**
-   * Geometric model based on flow geometry. Calculates interfacial area from liquid holdup, pipe
-   * diameter, and flow pattern geometry.
+   * Geometric model based on flow geometry. Calculates interfacial area from liquid holdup, pipe diameter, and flow
+   * pattern geometry.
    *
    * <p>
    * For stratified flow: a = S_i / A (interface chord length / cross-sectional area)
@@ -37,14 +37,14 @@ public enum InterfacialAreaModel {
   GEOMETRIC("Geometric Model", "Based on flow geometry"),
 
   /**
-   * Empirical correlation model using literature correlations. Uses flow pattern-specific
-   * correlations from published sources.
+   * Empirical correlation model using literature correlations. Uses flow pattern-specific correlations from published
+   * sources.
    */
   EMPIRICAL_CORRELATION("Empirical Correlation", "Literature correlations"),
 
   /**
-   * User-defined model allowing custom interfacial area specification. The user provides the
-   * interfacial area value directly.
+   * User-defined model allowing custom interfacial area specification. The user provides the interfacial area value
+   * directly.
    */
   USER_DEFINED("User Defined", "Custom model");
 

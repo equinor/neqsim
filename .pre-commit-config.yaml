@@ -1,0 +1,33 @@
+repos:
+  - repo: local
+    hooks:
+      - id: spotless-apply
+        name: Spotless Format (Java)
+        entry: bash devtools/run_spotless.sh apply
+        language: system
+        files: \.(java)$
+        pass_filenames: false
+        stages: [pre-commit]
+        verbose: false
+
+  - repo: local
+    hooks:
+      - id: spotless-check
+        name: Spotless Check (Java)
+        entry: bash devtools/run_spotless.sh check
+        language: system
+        files: \.(java)$
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: false
+
+  - repo: local
+    hooks:
+      - id: documentation-search-check
+        name: Documentation Search Coverage
+        entry: python devtools/check_documentation_search.py
+        language: system
+        files: ^(docs/|devtools/check_documentation_search\.py|\.github/workflows/documentation-search\.yml|\.pre-commit-config\.yaml)
+        pass_filenames: false
+        stages: [pre-push]
+        verbose: true

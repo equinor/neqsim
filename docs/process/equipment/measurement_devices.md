@@ -1,3 +1,8 @@
+---
+title: Measurement Devices and Analysers
+description: NeqSim provides a comprehensive set of measurement devices and process analysers for monitoring fluid properties, compositions, and process conditions.
+---
+
 # Measurement Devices and Analysers
 
 NeqSim provides a comprehensive set of measurement devices and process analysers for monitoring fluid properties, compositions, and process conditions.
@@ -410,7 +415,7 @@ Base class for stream-based measurement devices.
 
 ## See Also
 
-- [Process Simulation](../wiki/process_simulation.md)
-- [Safety Systems](../safety/README.md)
-- [Pipeline Simulation](../fluidmechanics/README.md)
-- [Capacity Constraints](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md) - FIV/AIV limits
+- [Process Simulation](../../wiki/process_simulation)
+- [Safety Systems](../safety/)
+- [Pipeline Simulation](../../fluidmechanics/)
+- [Capacity Constraints](../CAPACITY_CONSTRAINT_FRAMEWORK) - FIV/AIV limits

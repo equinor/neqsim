@@ -1,3 +1,8 @@
+---
+title: Integrated Safety Systems Example
+description: The `IntegratedSafetySystemExample` demonstrates a comprehensive safety system implementation for process facilities, incorporating multiple layers of protection following the principles of **Safety I...
+---
+
 # Integrated Safety Systems Example
 
 ## Overview
@@ -248,7 +253,7 @@ Multiple independent protection layers ensure safety even if individual layers f
 
 ```java
 // Run the integrated safety system example
-java neqsim.process.util.example.IntegratedSafetySystemExample
+./mvnw -Dexec.classpathScope=test -Dexec.mainClass="neqsim.process.util.example.IntegratedSafetySystemExample" exec:java
 
 // Expected output:
 // - System configuration summary
@@ -301,10 +306,10 @@ The example tracks and reports:
 
 ## Related Documentation
 
-- [ESD Blowdown System](./ESD_BLOWDOWN_SYSTEM.md)
-- [HIPPS Implementation](./HIPPS_SUMMARY.md)
-- [PSV Dynamic Sizing](./psv_dynamic_sizing_example.md)
-- [Pressure Monitoring](./PRESSURE_MONITORING_ESD.md)
+- [ESD Blowdown System](./ESD_BLOWDOWN_SYSTEM)
+- [HIPPS Implementation](./HIPPS_SUMMARY)
+- [PSV Dynamic Sizing](./psv_dynamic_sizing_example)
+- [Pressure Monitoring](./PRESSURE_MONITORING_ESD)
 
 ## API Reference
 

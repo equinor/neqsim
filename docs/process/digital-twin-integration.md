@@ -1,3 +1,8 @@
+---
+title: Digital Twin Integration Guide
+description: This guide demonstrates how to integrate NeqSim's process simulation capabilities with digital twin architectures for real-time operations.
+---
+
 # Digital Twin Integration Guide
 
 This guide demonstrates how to integrate NeqSim's process simulation capabilities with digital twin architectures for real-time operations.
@@ -350,7 +355,7 @@ public class KafkaStreamProcessor {
 
 ## Related Documentation
 
-- [Lifecycle Management](lifecycle/README.md) - State management and versioning
-- [ML Integration](ml/README.md) - Surrogate models and physics validation
-- [Advisory Systems](advisory/README.md) - Prediction results
-- [Sustainability](sustainability/README.md) - Emissions tracking
+- [Lifecycle Management](lifecycle/) - State management and versioning
+- [ML Integration](ml/) - Surrogate models and physics validation
+- [Advisory Systems](advisory/) - Prediction results
+- [Sustainability](sustainability/) - Emissions tracking

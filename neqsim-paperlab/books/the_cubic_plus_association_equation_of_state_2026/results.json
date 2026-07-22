@@ -1,0 +1,76 @@
+{
+  "key_results": {
+    "book_chapter_count": 12,
+    "frontmatter_file_count": 4,
+    "backmatter_file_count": 2,
+    "figure_count": 78,
+    "missing_figure_files": 0,
+    "figure_discussion_warning_count": 78,
+    "weak_caption_count": 38,
+    "evidence_issue_count": 116,
+    "reference_database": "refs.bib"
+  },
+  "validation": {
+    "book_yaml_present": true,
+    "nomenclature_present": true,
+    "refs_bib_present": true,
+    "figure_dossier_present": true,
+    "evidence_report_present": true,
+    "all_figures_exist": true,
+    "replication_scope": "artifact_inventory"
+  },
+  "approach": "The root PaperLab results summarize the CPA book artifact inventory and quality-audit outputs. Chapter-level figures and examples are tracked through figure_dossier.json and evidence_report.json; explicit numerical experiment replay is intentionally empty until chapter notebooks are registered in plan.json.",
+  "conclusions": "The CPA book contains 12 configured chapters, complete front matter and back matter entries, 78 tracked figures with no missing image files, and committed evidence and figure dossiers for traceability. Remaining quality work is concentrated on adding nearby figure discussions and strengthening weak captions before final publication.",
+  "figure_captions": {},
+  "tables": [
+    {
+      "title": "CPA Book Artifact Summary",
+      "headers": [
+        "Artifact",
+        "Value",
+        "Source"
+      ],
+      "rows": [
+        [
+          "Configured chapters",
+          12,
+          "book.yaml"
+        ],
+        [
+          "Tracked figures",
+          78,
+          "figure_dossier.json"
+        ],
+        [
+          "Missing figure files",
+          0,
+          "figure_dossier.json"
+        ],
+        [
+          "Evidence issues",
+          116,
+          "evidence_report.json"
+        ],
+        [
+          "Weak captions",
+          38,
+          "figure_dossier.json"
+        ]
+      ]
+    }
+  ],
+  "references": [
+    {
+      "id": "book_yaml",
+      "text": "Book structure and chapter inventory are defined in book.yaml."
+    },
+    {
+      "id": "figure_dossier",
+      "text": "Figure inventory and figure-quality metadata are defined in figure_dossier.json."
+    },
+    {
+      "id": "evidence_report",
+      "text": "Traceability and figure-discussion audit findings are defined in evidence_report.json."
+    }
+  ]
+}

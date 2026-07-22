@@ -1,11 +1,14 @@
 package neqsim.integration;
 
+import neqsim.integration.ValidationFramework.CommonErrors;
+import neqsim.integration.ValidationFramework.ValidationBuilder;
+import neqsim.integration.ValidationFramework.ValidationError;
+import neqsim.integration.ValidationFramework.ValidationResult;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.integration.ValidationFramework.*;
 
 /**
  * Validators for thermodynamic systems (SystemInterface implementations).
- * 
+ *
  * <p>
  * Checks:
  * <ul>
@@ -20,13 +23,12 @@ public class ThermoValidator {
 
   /**
    * Validate a thermodynamic system before use in equipment.
-   * 
+   *
    * @param system The system to validate
    * @return ValidationResult with errors and warnings
    */
   public static ValidationResult validateSystem(SystemInterface system) {
-    ValidationBuilder builder =
-        new ValidationBuilder("SystemInterface: " + system.getClass().getSimpleName());
+    ValidationBuilder builder = new ValidationBuilder("SystemInterface: " + system.getClass().getSimpleName());
 
     // Check: Has components
     if (system.getPhase(0).getNumberOfComponents() == 0) {
@@ -47,14 +49,12 @@ public class ThermoValidator {
 
     // Check: Temperature valid
     if (system.getTemperature() < 1.0) {
-      builder.checkTrue(false, CommonErrors.INVALID_TEMPERATURE,
-          CommonErrors.REMEDIATION_INVALID_TEMPERATURE);
+      builder.checkTrue(false, CommonErrors.INVALID_TEMPERATURE, CommonErrors.REMEDIATION_INVALID_TEMPERATURE);
     }
 
     // Check: Pressure valid
     if (system.getPressure() <= 0) {
-      builder.checkTrue(false, CommonErrors.INVALID_PRESSURE,
-          CommonErrors.REMEDIATION_INVALID_PRESSURE);
+      builder.checkTrue(false, CommonErrors.INVALID_PRESSURE, CommonErrors.REMEDIATION_INVALID_PRESSURE);
     }
 
     // Check: Composition normalized
@@ -67,15 +67,13 @@ public class ThermoValidator {
       }
     }
     if (moleSum > 0 && Math.abs(moleSum - 1.0) > 0.05) {
-      builder.addWarning("thermo",
-          "Composition does not sum to 1.0 (sum=" + String.format("%.4f", moleSum) + ")",
+      builder.addWarning("thermo", "Composition does not sum to 1.0 (sum=" + String.format("%.4f", moleSum) + ")",
           "Normalize component mole fractions");
     }
 
     // Check: Phase type expectations
     if (system.getNumberOfPhases() > 3) {
-      builder.addWarning("thermo",
-          "System has more than 3 phases (" + system.getNumberOfPhases() + ")",
+      builder.addWarning("thermo", "System has more than 3 phases (" + system.getNumberOfPhases() + ")",
           "Verify multi-phase handling in your equipment");
     }
 

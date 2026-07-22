@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestUMRPRU class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TestUMRPRU {
+  private static final Logger logger = LogManager.getLogger(TestUMRPRU.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestUMRPRU.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -103,8 +100,8 @@ public class TestUMRPRU {
 
     double numCp = (ent1 - ent2) / 0.002;
 
-    // System.out.println("Cp " + cp + " numCp " + numCp);
-    // System.out.println("entropy " + testSystem.getPhase(1).getEntropy());
+    // logger.info("Cp " + cp + " numCp " + numCp);
+    // logger.info("entropy " + testSystem.getPhase(1).getEntropy());
 
     // thermo.ThermodynamicModelTest testModel = new
     // thermo.ThermodynamicModelTest(testSystem);

@@ -12,8 +12,8 @@ import neqsim.thermo.system.SystemInterface;
  * Subsea Booster equipment class.
  *
  * <p>
- * A subsea booster is a subsea-installed pump or compressor used to enhance production from subsea
- * wells. Key applications include:
+ * A subsea booster is a subsea-installed pump or compressor used to enhance production from subsea wells. Key
+ * applications include:
  * </p>
  * <ul>
  * <li>Subsea boosting (multiphase pumping)</li>
@@ -347,8 +347,7 @@ public class SubseaBooster extends TwoPortEquipment {
    * @param outletPressure target outlet pressure in bara
    * @return configured booster
    */
-  public static SubseaBooster createMultiphasePump(String name, StreamInterface inStream,
-      double outletPressure) {
+  public static SubseaBooster createMultiphasePump(String name, StreamInterface inStream, double outletPressure) {
     SubseaBooster booster = new SubseaBooster(name, inStream);
     booster.setBoosterType(BoosterType.MULTIPHASE_PUMP);
     booster.setPumpType(PumpType.HELICO_AXIAL);
@@ -364,8 +363,7 @@ public class SubseaBooster extends TwoPortEquipment {
    * @param pressureRatio pressure ratio
    * @return configured booster
    */
-  public static SubseaBooster createWetGasCompressor(String name, StreamInterface inStream,
-      double pressureRatio) {
+  public static SubseaBooster createWetGasCompressor(String name, StreamInterface inStream, double pressureRatio) {
     SubseaBooster booster = new SubseaBooster(name, inStream);
     booster.setBoosterType(BoosterType.WET_GAS_COMPRESSOR);
     booster.setCompressorType(CompressorType.CENTRIFUGAL);
@@ -424,8 +422,7 @@ public class SubseaBooster extends TwoPortEquipment {
    * @return true if compressor
    */
   public boolean isCompressor() {
-    return boosterType == BoosterType.WET_GAS_COMPRESSOR
-        || boosterType == BoosterType.DRY_GAS_COMPRESSOR;
+    return boosterType == BoosterType.WET_GAS_COMPRESSOR || boosterType == BoosterType.DRY_GAS_COMPRESSOR;
   }
 
   /**
@@ -437,8 +434,7 @@ public class SubseaBooster extends TwoPortEquipment {
     if (isCompressor()) {
       // Adiabatic compression temperature rise
       double gamma = 1.3; // Approximate for hydrocarbon gas
-      double tempRise = inStream.getTemperature()
-          * (Math.pow(pressureRatio, (gamma - 1) / gamma) - 1) / efficiency;
+      double tempRise = inStream.getTemperature() * (Math.pow(pressureRatio, (gamma - 1) / gamma) - 1) / efficiency;
       return tempRise;
     } else {
       // Pump temperature rise is minimal
@@ -489,6 +485,7 @@ public class SubseaBooster extends TwoPortEquipment {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new SubseaBoosterMechanicalDesign(this);
   }
@@ -590,6 +587,7 @@ public class SubseaBooster extends TwoPortEquipment {
    *
    * @return outlet pressure in bara
    */
+  @Override
   public double getOutletPressure() {
     return outletPressure;
   }
@@ -599,6 +597,7 @@ public class SubseaBooster extends TwoPortEquipment {
    *
    * @param outletPressure outlet pressure in bara
    */
+  @Override
   public void setOutletPressure(double outletPressure) {
     this.outletPressure = outletPressure;
   }

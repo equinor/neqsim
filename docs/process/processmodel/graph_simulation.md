@@ -1,3 +1,8 @@
+---
+title: Graph-Based Process Simulation
+description: Documentation for graph-based execution in NeqSim.
+---
+
 # Graph-Based Process Simulation
 
 Documentation for graph-based execution in NeqSim.
@@ -208,7 +213,7 @@ Execution levels:
   Level 0 [PARALLEL]: feed TP setter, first stage oil reflux, export oil
   Level 1 [PARALLEL]: 1st stage separator
   Level 2 [PARALLEL]: oil depres valve
-  Level 3 [PARALLEL]: 
+  Level 3 [PARALLEL]:
   --- Recycle Section Start (iterative) ---
   Level 4: oil heater second stage [RECYCLE]
   Level 5: 2nd stage separator [RECYCLE]
@@ -419,7 +424,7 @@ System.out.println("  Independent sections: " + sections.size());
 for (ProcessEquipmentInterface node : graph.getNodes()) {
     int inDegree = graph.getInDegree(node);
     if (inDegree > 2) {
-        System.out.println("  Potential bottleneck: " + node.getName() + 
+        System.out.println("  Potential bottleneck: " + node.getName() +
             " (" + inDegree + " inputs)");
     }
 }
@@ -440,7 +445,7 @@ for (int i = 0; i < cycles.size(); i++) {
     for (ProcessEquipmentInterface node : cycle) {
         System.out.println("  -> " + node.getName());
     }
-    
+
     // Suggest tear stream (node with lowest "impact")
     ProcessEquipmentInterface tearStream = graph.suggestTearStream(cycle);
     System.out.println("  Suggested tear stream: " + tearStream.getName());
@@ -466,7 +471,7 @@ for (List<ProcessEquipmentInterface> level : levels) {
 }
 
 System.out.println("Parallel execution opportunities: " + parallelOps);
-System.out.println("Potential speedup: " + 
+System.out.println("Potential speedup: " +
     (double)graph.getNodeCount() / levels.size() + "x");
 ```
 
@@ -487,10 +492,10 @@ compressionGraph.execute();
 
 ## Related Documentation
 
-- [ProcessSystem](process_system.md) - Process system management
-- [ProcessModel](process_model.md) - Multi-process model management
-- [ProcessModule](process_module.md) - Modular process units
-- [Parallel Simulation](../../simulation/parallel_process_simulation.md) - Parallel execution guide
+- [ProcessSystem](process_system) - Process system management
+- [ProcessModel](process_model) - Multi-process model management
+- [ProcessModule](process_module) - Modular process units
+- [Parallel Simulation](../../simulation/parallel_process_simulation) - Parallel execution guide
 
 ---
 
@@ -529,6 +534,11 @@ model.run();
 model.setRunStep(true);
 model.run();  // One step for each ProcessSystem
 model.run();  // Next step...
+
+// Step mode with per-area override - fully solve one area each step
+compressionSystem.setSolveFullyInModelStep(true);
+model.setRunStep(true);
+model.run();  // compressionSystem converges fully, other areas single-step
 
 // Asynchronous execution
 Future<?> task = model.runAsTask();

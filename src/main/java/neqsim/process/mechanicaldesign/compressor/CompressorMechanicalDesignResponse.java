@@ -1,13 +1,14 @@
 package neqsim.process.mechanicaldesign.compressor;
 
+import java.util.Map;
 import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 
 /**
  * Response class for compressor mechanical design JSON export.
  *
  * <p>
- * Extends {@link MechanicalDesignResponse} with compressor-specific parameters including staging,
- * driver sizing, and rotordynamic data per API 617.
+ * Extends {@link MechanicalDesignResponse} with compressor-specific parameters including staging, driver sizing, and
+ * rotordynamic data per API 617.
  * </p>
  *
  * @author esol
@@ -122,6 +123,13 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
   private double maxVibrationUnfiltered;
 
   // ============================================================================
+  // Casing Design Parameters (API 617 / ASME VIII)
+  // ============================================================================
+
+  /** Casing design results from CompressorCasingDesignCalculator. */
+  private Map<String, Object> casingDesign;
+
+  // ============================================================================
   // Constructors
   // ============================================================================
 
@@ -129,7 +137,6 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
    * Default constructor.
    */
   public CompressorMechanicalDesignResponse() {
-    super();
     setEquipmentType("Compressor");
     setDesignStandard("API 617");
   }
@@ -193,6 +200,12 @@ public class CompressorMechanicalDesignResponse extends MechanicalDesignResponse
     this.maxDischargeTemperature = mecDesign.getMaxDischargeTemperatureC();
     this.maxPressureRatioPerStage = mecDesign.getMaxPressureRatioPerStage();
     this.maxVibrationUnfiltered = mecDesign.getMaxVibrationMmPerSec();
+
+    // Populate casing design calculation results
+    CompressorCasingDesignCalculator casingCalc = mecDesign.getCasingDesignCalculator();
+    if (casingCalc != null) {
+      this.casingDesign = casingCalc.toMap();
+    }
   }
 
   // ============================================================================

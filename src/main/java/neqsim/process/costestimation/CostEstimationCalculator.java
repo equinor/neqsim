@@ -10,13 +10,12 @@ import com.google.gson.GsonBuilder;
  * Cost estimation calculator for process equipment.
  *
  * <p>
- * This class provides standardized cost estimation methods based on chemical engineering cost
- * correlations from standard references including:
+ * This class provides standardized cost estimation methods based on chemical engineering cost correlations from
+ * standard references including:
  * </p>
  * <ul>
  * <li>Peters, Timmerhaus &amp; West - Plant Design and Economics for Chemical Engineers</li>
- * <li>Turton, Bailie, Whiting &amp; Shaeiwitz - Analysis, Synthesis and Design of Chemical
- * Processes</li>
+ * <li>Turton, Bailie, Whiting &amp; Shaeiwitz - Analysis, Synthesis and Design of Chemical Processes</li>
  * <li>Ulrich &amp; Vasudevan - Chemical Engineering Process Design and Economics</li>
  * <li>Seider, Seader &amp; Lewin - Product and Process Design Principles</li>
  * </ul>
@@ -260,8 +259,8 @@ public class CostEstimationCalculator implements java.io.Serializable {
    * Calculate purchased equipment cost for vertical pressure vessel.
    *
    * <p>
-   * Based on Turton et al. correlation (2018): log10(Cp) = K1 + K2*log10(W) + K3*(log10(W))^2 where
-   * W is shell weight in kg. For vertical vessels: K1 = 3.4974, K2 = 0.4485, K3 = 0.1074
+   * Based on Turton et al. correlation (2018): log10(Cp) = K1 + K2*log10(W) + K3*(log10(W))^2 where W is shell weight
+   * in kg. For vertical vessels: K1 = 3.4974, K2 = 0.4485, K3 = 0.1074
    * </p>
    *
    * @param shellWeight vessel shell weight in kg
@@ -276,11 +275,40 @@ public class CostEstimationCalculator implements java.io.Serializable {
     double k2 = 0.4485;
     double k3 = 0.1074;
 
-    double logW = Math.log10(Math.max(shellWeight, 250.0)); // min 250 kg
+    double logW = Math.log10(Math.max(shellWeight, 250.0));
     double logCp = k1 + k2 * logW + k3 * logW * logW;
     double baseCost = Math.pow(10, logCp);
 
-    // Apply CEPCI escalation
+    return baseCost * (currentCepci / referenceCepci);
+  }
+
+  /**
+   * Calculate purchased equipment cost for a vertical pressure vessel from its internal volume.
+   *
+   * <p>
+   * Uses the Turton et al. (2018) process-vessel correlation log10(Cp) = K1 + K2*log10(V) + K3*(log10(V))^2 where V is
+   * the vessel volume in m3 and K1 = 3.4974, K2 = 0.4485, K3 = 0.1074. This is the physically correct capacity basis
+   * for the vertical-vessel coefficients (the legacy {@link #calcVerticalVesselCost(double)} historically passed shell
+   * weight into the same coefficients, which over-estimates large vessels). The volume is clamped to the correlation
+   * validity range 0.3-520 m3.
+   * </p>
+   *
+   * @param volumeM3 vessel internal volume in m3 (values &le; 0 return 0.0)
+   * @return purchased equipment cost in USD (current CEPCI basis, bare carbon-steel shop cost)
+   */
+  public double calcVerticalVesselCostByVolume(double volumeM3) {
+    if (volumeM3 <= 0) {
+      return 0.0;
+    }
+    double k1 = 3.4974;
+    double k2 = 0.4485;
+    double k3 = 0.1074;
+
+    double v = Math.min(Math.max(volumeM3, 0.3), 520.0);
+    double logV = Math.log10(v);
+    double logCp = k1 + k2 * logV + k3 * logV * logV;
+    double baseCost = Math.pow(10, logCp);
+
     return baseCost * (currentCepci / referenceCepci);
   }
 
@@ -306,9 +334,33 @@ public class CostEstimationCalculator implements java.io.Serializable {
     return baseCost * (currentCepci / referenceCepci);
   }
 
-  // ============================================================================
-  // Equipment Cost Methods - Heat Exchangers
-  // ============================================================================
+  /**
+   * Calculate purchased equipment cost for a horizontal pressure vessel from its internal volume.
+   *
+   * <p>
+   * Uses the Turton et al. (2018) process-vessel correlation log10(Cp) = K1 + K2*log10(V) + K3*(log10(V))^2 where V is
+   * the vessel volume in m3 and K1 = 3.5565, K2 = 0.3776, K3 = 0.0905. This is the physically correct capacity basis
+   * for the horizontal-vessel coefficients. The volume is clamped to the correlation validity range 0.1-628 m3.
+   * </p>
+   *
+   * @param volumeM3 vessel internal volume in m3 (values &le; 0 return 0.0)
+   * @return purchased equipment cost in USD (current CEPCI basis, bare carbon-steel shop cost)
+   */
+  public double calcHorizontalVesselCostByVolume(double volumeM3) {
+    if (volumeM3 <= 0) {
+      return 0.0;
+    }
+    double k1 = 3.5565;
+    double k2 = 0.3776;
+    double k3 = 0.0905;
+
+    double v = Math.min(Math.max(volumeM3, 0.1), 628.0);
+    double logV = Math.log10(v);
+    double logCp = k1 + k2 * logV + k3 * logV * logV;
+    double baseCost = Math.pow(10, logCp);
+
+    return baseCost * (currentCepci / referenceCepci);
+  }
 
   /**
    * Calculate purchased equipment cost for shell and tube heat exchanger.
@@ -551,8 +603,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
       scheduleFactor = 2.5;
     }
 
-    return baseCostPerMeter * length * scheduleFactor * materialFactor
-        * (currentCepci / referenceCepci);
+    return baseCostPerMeter * length * scheduleFactor * materialFactor * (currentCepci / referenceCepci);
   }
 
   /**
@@ -682,8 +733,8 @@ public class CostEstimationCalculator implements java.io.Serializable {
    * @param internalsWeight internals weight in kg
    * @return list of BOM items as maps
    */
-  public List<Map<String, Object>> generateVesselBOM(double shellWeight, double headsWeight,
-      int nozzleCount, double internalsWeight) {
+  public List<Map<String, Object>> generateVesselBOM(double shellWeight, double headsWeight, int nozzleCount,
+      double internalsWeight) {
     List<Map<String, Object>> bom = new ArrayList<Map<String, Object>>();
 
     if (shellWeight > 0) {
@@ -789,8 +840,7 @@ public class CostEstimationCalculator implements java.io.Serializable {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   // ============================================================================
@@ -1088,9 +1138,8 @@ public class CostEstimationCalculator implements java.io.Serializable {
     } else if (regionLower.contains("western europe") || regionLower.contains("uk")
         || regionLower.contains("netherlands") || regionLower.contains("germany")) {
       this.locationFactor = LOC_WESTERN_EUROPE;
-    } else if (regionLower.contains("middle east") || regionLower.contains("qatar")
-        || regionLower.contains("saudi") || regionLower.contains("uae")
-        || regionLower.contains("abu dhabi")) {
+    } else if (regionLower.contains("middle east") || regionLower.contains("qatar") || regionLower.contains("saudi")
+        || regionLower.contains("uae") || regionLower.contains("abu dhabi")) {
       this.locationFactor = LOC_MIDDLE_EAST;
     } else if (regionLower.contains("southeast asia") || regionLower.contains("singapore")
         || regionLower.contains("malaysia") || regionLower.contains("indonesia")) {

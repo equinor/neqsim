@@ -10,9 +10,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGENRTLmodifiedHV class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentGENRTLmodifiedHV.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -37,18 +33,14 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
 
   /** {@inheritDoc} */
   @Override
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
-      String[][] mixRule) {
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
     double[][] HVgijT = new double[numberOfComponents][numberOfComponents];
-    return getGamma(phase, numberOfComponents, temperature, pressure, pt, HValpha, HVgij, HVgijT,
-        intparam, mixRule);
+    return getGamma(phase, numberOfComponents, temperature, pressure, pt, HValpha, HVgij, HVgijT, intparam, mixRule);
   }
 
   /**
-   * <p>
    * getGamma.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -62,9 +54,8 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
    * @param mixRule an array of {@link java.lang.String} objects
    * @return a double
    */
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] HVgijT,
-      double[][] intparam, String[][] mixRule) {
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] HVgijT, double[][] intparam, String[][] mixRule) {
     int type = phase.getInitType();
     double A = 0;
     double B = 0;
@@ -142,10 +133,8 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
     double dA5dTdT = 0;
     double dA6dT = 0;
     double dA6dTdT = 0.0;
-    double deltaEOS =
-        1.0 / (comp_Array[0].getDeltaEosParameters()[1] - comp_Array[0].getDeltaEosParameters()[0])
-            * Math.log((1.0 + comp_Array[0].getDeltaEosParameters()[1])
-                / (1.0 + comp_Array[0].getDeltaEosParameters()[0]));
+    double deltaEOS = 1.0 / (comp_Array[0].getDeltaEosParameters()[1] - comp_Array[0].getDeltaEosParameters()[0])
+        * Math.log((1.0 + comp_Array[0].getDeltaEosParameters()[1]) / (1.0 + comp_Array[0].getDeltaEosParameters()[0]));
     // PhaseGEEosInterface phaseny = (PhaseGEEosInterface) phase.getPhase();
     // PhaseGEInterface GEPhase = phaseny.getGEphase();
 
@@ -174,8 +163,7 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
         dtau2dtdt = 2.0 * Dij / (temperature * temperature * temperature);
         // System.out.println("method GE1" + tau);
       } else {
-        gii = -deltaEOS * comp_Array[componentNumber].aT(temperature)
-            / comp_Array[componentNumber].getb();
+        gii = -deltaEOS * comp_Array[componentNumber].aT(temperature) / comp_Array[componentNumber].getb();
         double dgiidt = -deltaEOS * comp_Array[componentNumber].diffaT(temperature)
             / comp_Array[componentNumber].getb();
         double dgiidtdt = -deltaEOS * comp_Array[componentNumber].diffdiffaT(temperature)
@@ -196,51 +184,39 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
         tau2 = (gij - gjj) / (R * temperature);
 
         if (phase.getInitType() > 1) {
-          double dgijdt =
-              -2.0 * Math.sqrt(comp_Array[componentNumber].getb() * comp_Array[j].getb())
-                  / (comp_Array[componentNumber].getb() + comp_Array[j].getb()) * 1.0
-                  / Math.sqrt(gii * gjj) * (1.0 - intparam[j][componentNumber])
-                  * (dgiidt * gjj + dgjjdt * gii) * 0.5;
-          double dgijdtdt =
-              -2.0 * Math.sqrt(comp_Array[componentNumber].getb() * comp_Array[j].getb())
-                  / (comp_Array[componentNumber].getb() + comp_Array[j].getb())
-                  * ((1.0 / Math.pow(gii * gjj, 1.5) * (1.0 - intparam[j][componentNumber])
-                      * Math.pow((dgiidt * gjj + dgjjdt * gii), 2.0) * 0.5 * -0.5)
-                      + (1.0 / Math.sqrt(gii * gjj) * (1.0 - intparam[j][componentNumber])
-                          * (dgiidtdt * gjj + dgiidt * dgjjdt + dgjjdtdt * gii + dgjjdt * dgiidt)
-                          * 0.5));
+          double dgijdt = -2.0 * Math.sqrt(comp_Array[componentNumber].getb() * comp_Array[j].getb())
+              / (comp_Array[componentNumber].getb() + comp_Array[j].getb()) * 1.0 / Math.sqrt(gii * gjj)
+              * (1.0 - intparam[j][componentNumber]) * (dgiidt * gjj + dgjjdt * gii) * 0.5;
+          double dgijdtdt = -2.0 * Math.sqrt(comp_Array[componentNumber].getb() * comp_Array[j].getb())
+              / (comp_Array[componentNumber].getb() + comp_Array[j].getb())
+              * ((1.0 / Math.pow(gii * gjj, 1.5) * (1.0 - intparam[j][componentNumber])
+                  * Math.pow((dgiidt * gjj + dgjjdt * gii), 2.0) * 0.5 * -0.5)
+                  + (1.0 / Math.sqrt(gii * gjj) * (1.0 - intparam[j][componentNumber])
+                      * (dgiidtdt * gjj + dgiidt * dgjjdt + dgjjdtdt * gii + dgjjdt * dgiidt) * 0.5));
 
-          double dgjidt =
-              -2.0 * Math.sqrt(comp_Array[j].getb() * comp_Array[componentNumber].getb())
-                  / (comp_Array[j].getb() + comp_Array[componentNumber].getb()) * 1.0
-                  / Math.sqrt(gii * gjj) * (1.0 - intparam[j][componentNumber])
-                  * (dgiidt * gjj + dgjjdt * gii) * 0.5;
+          double dgjidt = -2.0 * Math.sqrt(comp_Array[j].getb() * comp_Array[componentNumber].getb())
+              / (comp_Array[j].getb() + comp_Array[componentNumber].getb()) * 1.0 / Math.sqrt(gii * gjj)
+              * (1.0 - intparam[j][componentNumber]) * (dgiidt * gjj + dgjjdt * gii) * 0.5;
 
-          double dgjidtdt =
-              -2.0 * Math.pow(comp_Array[j].getb() * comp_Array[componentNumber].getb(), 0.5)
-                  / (comp_Array[j].getb() + comp_Array[componentNumber].getb())
-                  * ((1.0 / Math.pow(gii * gjj, 1.5) * (1.0 - intparam[j][componentNumber])
-                      * Math.pow(dgiidt * gjj + dgjjdt * gii, 2.0) * 0.5 * -0.5)
-                      + (1.0 / Math.sqrt(gii * gjj) * (1.0 - intparam[j][componentNumber])
-                          * (dgiidtdt * gjj + dgiidt * dgjjdt + dgjjdtdt * gii + dgjjdt * dgiidt)
-                          * 0.5));
+          double dgjidtdt = -2.0 * Math.pow(comp_Array[j].getb() * comp_Array[componentNumber].getb(), 0.5)
+              / (comp_Array[j].getb() + comp_Array[componentNumber].getb())
+              * ((1.0 / Math.pow(gii * gjj, 1.5) * (1.0 - intparam[j][componentNumber])
+                  * Math.pow(dgiidt * gjj + dgjjdt * gii, 2.0) * 0.5 * -0.5)
+                  + (1.0 / Math.sqrt(gii * gjj) * (1.0 - intparam[j][componentNumber])
+                      * (dgiidtdt * gjj + dgiidt * dgjjdt + dgjjdtdt * gii + dgjjdt * dgiidt) * 0.5));
 
-          dtaudt = -dgiidt / (R * temperature) + gii / (R * temperature * temperature)
-              + dgjidt / (R * temperature) - gji / (R * temperature * temperature);
+          dtaudt = -dgiidt / (R * temperature) + gii / (R * temperature * temperature) + dgjidt / (R * temperature)
+              - gji / (R * temperature * temperature);
           dtaudtdt = -dgiidtdt / (R * temperature) + dgiidt / (R * temperature * temperature)
-              + dgiidt / (R * temperature * temperature)
-              - 2.0 * gii / (R * temperature * temperature * temperature)
+              + dgiidt / (R * temperature * temperature) - 2.0 * gii / (R * temperature * temperature * temperature)
               + dgjidtdt / (R * temperature) - dgjidt / (R * temperature * temperature)
-              - dgjidt / (R * temperature * temperature)
-              + 2 * gji / (R * temperature * temperature * temperature);
-          dtau2dt = -dgjjdt / (R * temperature) + gjj / (R * temperature * temperature)
-              + dgijdt / (R * temperature) - gij / (R * temperature * temperature);
+              - dgjidt / (R * temperature * temperature) + 2 * gji / (R * temperature * temperature * temperature);
+          dtau2dt = -dgjjdt / (R * temperature) + gjj / (R * temperature * temperature) + dgijdt / (R * temperature)
+              - gij / (R * temperature * temperature);
           dtau2dtdt = -dgjjdtdt / (R * temperature) + dgjjdt / (R * temperature * temperature)
-              + dgjjdt / (R * temperature * temperature)
-              - 2 * gjj / (R * temperature * temperature * temperature)
+              + dgjjdt / (R * temperature * temperature) - 2 * gjj / (R * temperature * temperature * temperature)
               + dgijdtdt / (R * temperature) - dgijdt / (R * temperature * temperature)
-              - dgijdt / (R * temperature * temperature)
-              + 2 * gij / (R * temperature * temperature * temperature);
+              - dgijdt / (R * temperature * temperature) + 2 * gij / (R * temperature * temperature * temperature);
         }
       }
 
@@ -294,38 +270,32 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
           gjj = -deltaEOS * comp_Array[j].aT(temperature) / comp_Array[j].getb();
           gii = -deltaEOS * comp_Array[l].aT(temperature) / comp_Array[l].getb();
           gij = -2.0 * Math.sqrt(comp_Array[l].getb() * comp_Array[j].getb())
-              / (comp_Array[l].getb() + comp_Array[j].getb()) * Math.sqrt(gii * gjj)
-              * (1.0 - intparam[l][j]);
+              / (comp_Array[l].getb() + comp_Array[j].getb()) * Math.sqrt(gii * gjj) * (1.0 - intparam[l][j]);
           tau = (gij - gjj) / (R * temperature);
 
           if (phase.getInitType() > 1) {
             double dgjjdt = -deltaEOS * comp_Array[j].diffaT(temperature) / comp_Array[j].getb();
-            double dgjjdtdt =
-                -deltaEOS * comp_Array[j].diffdiffaT(temperature) / comp_Array[j].getb();
+            double dgjjdtdt = -deltaEOS * comp_Array[j].diffdiffaT(temperature) / comp_Array[j].getb();
             double dgiidt = -deltaEOS * comp_Array[l].diffaT(temperature) / comp_Array[l].getb();
-            double dgiidtdt =
-                -deltaEOS * comp_Array[l].diffdiffaT(temperature) / comp_Array[l].getb();
+            double dgiidtdt = -deltaEOS * comp_Array[l].diffdiffaT(temperature) / comp_Array[l].getb();
 
             double dgijdt = -2.0 * Math.sqrt(comp_Array[l].getb() * comp_Array[j].getb())
-                / (comp_Array[l].getb() + comp_Array[j].getb()) * 1.0 / Math.sqrt(gii * gjj)
-                * (1.0 - intparam[l][j]) * (dgiidt * gjj + dgjjdt * gii) * 0.5;
+                / (comp_Array[l].getb() + comp_Array[j].getb()) * 1.0 / Math.sqrt(gii * gjj) * (1.0 - intparam[l][j])
+                * (dgiidt * gjj + dgjjdt * gii) * 0.5;
             double dgijdtdt = -2.0 * Math.pow(comp_Array[l].getb() * comp_Array[j].getb(), 0.5)
                 / (comp_Array[l].getb() + comp_Array[j].getb())
-                * ((1.0 / Math.pow(gii * gjj, 1.5) * (1.0 - intparam[l][j])
-                    * Math.pow(dgiidt * gjj + dgjjdt * gii, 2.0) * 0.5 * -0.5)
+                * ((1.0 / Math.pow(gii * gjj, 1.5) * (1.0 - intparam[l][j]) * Math.pow(dgiidt * gjj + dgjjdt * gii, 2.0)
+                    * 0.5 * -0.5)
                     + (1.0 / Math.sqrt(gii * gjj) * (1.0 - intparam[l][j])
-                        * (dgiidtdt * gjj + dgiidt * dgjjdt + dgjjdtdt * gii + dgjjdt * dgiidt)
-                        * 0.5));
+                        * (dgiidtdt * gjj + dgiidt * dgjjdt + dgjjdtdt * gii + dgjjdt * dgiidt) * 0.5));
             alpha = 0.0;
 
-            dtaudt = -dgjjdt / (R * temperature) + gjj / (R * temperature * temperature)
-                + dgijdt / (R * temperature) - gij / (R * temperature * temperature);
+            dtaudt = -dgjjdt / (R * temperature) + gjj / (R * temperature * temperature) + dgijdt / (R * temperature)
+                - gij / (R * temperature * temperature);
             dtaudtdt = -dgjjdtdt / (R * temperature) + dgjjdt / (R * temperature * temperature)
-                + dgjjdt / (R * temperature * temperature)
-                - 2 * dgjjdt / (R * temperature * temperature * temperature)
+                + dgjjdt / (R * temperature * temperature) - 2 * dgjjdt / (R * temperature * temperature * temperature)
                 + dgijdtdt / (R * temperature) - dgijdt / (R * temperature * temperature)
-                - dgijdt / (R * temperature * temperature)
-                + 2 * gij / (R * temperature * temperature * temperature);
+                - dgijdt / (R * temperature * temperature) + 2 * gij / (R * temperature * temperature * temperature);
           }
         }
 
@@ -349,24 +319,20 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
         dA2dTetter += dA2dT / C;
         dA2dTdTetter += dA2dTdT / C - dA2dT / Math.pow(C, 2.0) * dCdT;
         dA3dTetter += dA3dT * dCdT / (C * C);
-        dA3dTdTetter += dA3dTdT * dCdT / (C * C) + dA3dT * dCdTdT / (C * C)
-            - 2 * dA3dT * dCdT * dCdT / (C * C * C);
+        dA3dTdTetter += dA3dTdT * dCdT / (C * C) + dA3dT * dCdTdT / (C * C) - 2 * dA3dT * dCdT * dCdT / (C * C * C);
         dA4dTetter += dA4dT * dCdT * D / (C * C * C);
         dA4dTdTetter += dA4dTdT * dCdT * D / (C * C * C) + dA4dT * dCdTdT * D / (C * C * C)
             + dA4dT * dCdT * dDdT / (C * C * C) - 3.0 * dA4dT * dCdT * D / (C * C * C * C) * dCdT;
         dA5dTetter += dA5dT * D / (C * C);
-        dA5dTdTetter +=
-            dA5dTdT * D / (C * C) + dA5dT * dDdT / (C * C) - 2 * dA5dT * D / (C * C) * dCdT;
+        dA5dTdTetter += dA5dTdT * D / (C * C) + dA5dT * dDdT / (C * C) - 2 * dA5dT * D / (C * C) * dCdT;
         dA6dTetter += dA6dT * dDdT / (C * C);
-        dA6dTdTetter += dA6dTdT * dDdT / (C * C) + dA6dT * dDdTdT / (C * C)
-            - 2 * dA6dT * dDdT / (C * C * C) * dCdT;
+        dA6dTdTetter += dA6dTdT * dDdT / (C * C) + dA6dT * dDdTdT / (C * C) - 2 * dA6dT * dDdT / (C * C * C) * dCdT;
       }
       if (mixRule[componentNumber][j].equals("HV")) {
         tau2 = HVgij[componentNumber][j] / (temperature) + HVgijT[componentNumber][j];
         dtau2dt = -HVgij[componentNumber][j] / (temperature * temperature);
       } else {
-        gii = -deltaEOS * comp_Array[componentNumber].aT(temperature)
-            / comp_Array[componentNumber].getb();
+        gii = -deltaEOS * comp_Array[componentNumber].aT(temperature) / comp_Array[componentNumber].getb();
         double dgiidt = -deltaEOS * comp_Array[componentNumber].diffaT(temperature)
             / comp_Array[componentNumber].getb();
         gjj = -deltaEOS * comp_Array[j].aT(temperature) / comp_Array[j].getb();
@@ -377,11 +343,10 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
         tau2 = (gij - gjj) / (R * temperature);
 
         double dgijdt = -2.0 * Math.sqrt(comp_Array[componentNumber].getb() * comp_Array[j].getb())
-            / (comp_Array[componentNumber].getb() + comp_Array[j].getb()) * 1.0
-            / Math.sqrt(gii * gjj) * (1.0 - intparam[componentNumber][j])
-            * (dgiidt * gjj + dgjjdt * gii) * 0.5;
-        dtau2dt = -dgjjdt / (R * temperature) + gjj / (R * temperature * temperature)
-            + dgijdt / (R * temperature) - gij / (R * temperature * temperature);
+            / (comp_Array[componentNumber].getb() + comp_Array[j].getb()) * 1.0 / Math.sqrt(gii * gjj)
+            * (1.0 - intparam[componentNumber][j]) * (dgiidt * gjj + dgjjdt * gii) * 0.5;
+        dtau2dt = -dgjjdt / (R * temperature) + gjj / (R * temperature * temperature) + dgijdt / (R * temperature)
+            - gij / (R * temperature * temperature);
       }
 
       F += E / C * (tau2 - D / C);
@@ -392,11 +357,10 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
 
     lngamma = A / B + F;
     if (phase.getInitType() > 1) {
-      dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter
-          - dA5dTetter - dA6dTetter);
+      dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter - dA5dTetter - dA6dTetter);
       dlngammadtdt = dAdTdT / B - dBdT * dAdT / Math.pow(B, 2.0) - dAdT / (B * B) * dBdT
-          + 2 * dBdT * A / Math.pow(B, 3.0) * dBdT - A / (B * B) * dBdTdT + 0 * dA2dTdTetter
-          - 0 * dA3dTdTetter + 0 * dA4dTdTetter - 0 * dA5dTdTetter - 0 * dA6dTdTetter;
+          + 2 * dBdT * A / Math.pow(B, 3.0) * dBdT - A / (B * B) * dBdTdT + 0 * dA2dTdTetter - 0 * dA3dTdTetter
+          + 0 * dA4dTdTetter - 0 * dA5dTdTetter - 0 * dA6dTdTetter;
     }
 
     gamma = Math.exp(lngamma);
@@ -434,12 +398,10 @@ public class ComponentGENRTLmodifiedHV extends ComponentGeNRTL {
             sum += comp_Array[g].getx() * Gmatrix[g][f];
             sum2 += comp_Array[g].getx() * Gmatrix[g][f] * tauMatrix[g][f];
           }
-          Dtemp += Gmatrix[p][f] * Gmatrix[componentNumber][f] * tauMatrix[componentNumber][f]
-              * comp_Array[f].getx() / (sum * sum);
-          Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2 * Gmatrix[componentNumber][f]
-              / (sum * sum * sum);
-          Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f]
-              * Gmatrix[componentNumber][f] / (sum * sum);
+          Dtemp += Gmatrix[p][f] * Gmatrix[componentNumber][f] * tauMatrix[componentNumber][f] * comp_Array[f].getx()
+              / (sum * sum);
+          Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2 * Gmatrix[componentNumber][f] / (sum * sum * sum);
+          Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f] * Gmatrix[componentNumber][f] / (sum * sum);
         }
         dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
             - Etemp * Gmatrix[componentNumber][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;

@@ -9,22 +9,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestPCSAFT class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TestPCSAFT {
+  private static final Logger logger = LogManager.getLogger(TestPCSAFT.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestPCSAFT.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -70,7 +67,7 @@ public class TestPCSAFT {
       logger.error(ex.getMessage(), ex);
     }
     testSystem.display();
-    // System.out.println("enthalpy " + (testSystem.getEnthalpy() - oldEnthalpy));
+    // logger.info("enthalpy " + (testSystem.getEnthalpy() - oldEnthalpy));
     logger.info("fugacity gas" + testSystem.getPhase(0).getFugacity(0));
     logger.info("fugacity liquid" + testSystem.getPhase(1).getFugacity(0));
     logger.info("K " + testSystem.getPhase(1).getComponent(0).getFugacityCoefficient()

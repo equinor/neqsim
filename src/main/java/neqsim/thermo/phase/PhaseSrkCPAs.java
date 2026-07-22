@@ -6,9 +6,7 @@ import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.component.ComponentSrkCPAs;
 
 /**
- * <p>
  * PhaseSrkCPAs class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,11 +16,10 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PhaseSrkCPAs.
-   * </p>
    */
-  public PhaseSrkCPAs() {}
+  public PhaseSrkCPAs() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -90,10 +87,8 @@ public class PhaseSrkCPAs extends PhaseSrkCPA {
     double totVol5 = totVol4 * totVol;
 
     double temp1 = 1.0 - 0.475 * getB() / getTotalVolume();
-    double gvv =
-        -0.21434375 / (temp1 * temp1 * temp1) * getB() * getB() * getB() / (totVol5 * totVol)
-            - 0.135375E1 / (temp1 * temp1) * getB() * getB() / (totVol5)
-            - 0.285E1 / (temp1) * getB() / (totVol4);
+    double gvv = -0.21434375 / (temp1 * temp1 * temp1) * getB() * getB() * getB() / (totVol5 * totVol)
+        - 0.135375E1 / (temp1 * temp1) * getB() * getB() / (totVol5) - 0.285E1 / (temp1) * getB() / (totVol4);
     return gvv;
   }
 }

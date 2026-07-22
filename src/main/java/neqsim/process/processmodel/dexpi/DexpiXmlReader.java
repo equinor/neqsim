@@ -35,9 +35,9 @@ import neqsim.thermo.system.SystemSrkEos;
  * Utility for reading DEXPI XML files and converting them into NeqSim process models.
  *
  * <p>
- * This reader recognises major equipment such as pumps, heat exchangers, tanks and control valves
- * as well as complex reactors, compressors and inline analysers. Piping segments are imported as
- * runnable {@link DexpiStream} units tagged with the source line number.
+ * This reader recognises major equipment such as pumps, heat exchangers, tanks and control valves as well as complex
+ * reactors, compressors and inline analysers. Piping segments are imported as runnable {@link DexpiStream} units tagged
+ * with the source line number.
  * </p>
  *
  * @author NeqSim
@@ -51,49 +51,62 @@ public final class DexpiXmlReader {
   private static final Map<String, EquipmentEnum> PIPING_COMPONENT_MAP;
 
   static {
-    Map<String, EquipmentEnum> equipmentMap = new HashMap<>();
-    equipmentMap.put("PlateHeatExchanger", EquipmentEnum.HeatExchanger);
-    equipmentMap.put("ShellAndTubeHeatExchanger", EquipmentEnum.HeatExchanger);
-    equipmentMap.put("TubularHeatExchanger", EquipmentEnum.HeatExchanger);
-    equipmentMap.put("AirCooledHeatExchanger", EquipmentEnum.HeatExchanger);
-    equipmentMap.put("CentrifugalPump", EquipmentEnum.Pump);
-    equipmentMap.put("ReciprocatingPump", EquipmentEnum.Pump);
-    equipmentMap.put("CentrifugalCompressor", EquipmentEnum.Compressor);
-    equipmentMap.put("ReciprocatingCompressor", EquipmentEnum.Compressor);
-    equipmentMap.put("Tank", EquipmentEnum.Tank);
-    equipmentMap.put("StirredTankReactor", EquipmentEnum.Reactor);
-    equipmentMap.put("PlugFlowReactor", EquipmentEnum.Reactor);
-    equipmentMap.put("PackedBedReactor", EquipmentEnum.Reactor);
-    equipmentMap.put("Column", EquipmentEnum.Column);
-    equipmentMap.put("Agitator", EquipmentEnum.Mixer);
-    equipmentMap.put("Boiler", EquipmentEnum.Heater);
-    equipmentMap.put("Filter", EquipmentEnum.Separator);
-    equipmentMap.put("Cyclone", EquipmentEnum.Separator);
-    equipmentMap.put("InlineAnalyzer", EquipmentEnum.Calculator);
-    equipmentMap.put("GasAnalyzer", EquipmentEnum.Calculator);
-    equipmentMap.put("Spectrometer", EquipmentEnum.Calculator);
-    EQUIPMENT_CLASS_MAP = Collections.unmodifiableMap(equipmentMap);
+    // Load from properties files; fall back to built-in defaults if load fails
+    Map<String, EquipmentEnum> equipFromProps = DexpiMappingLoader.loadEquipmentMapping();
+    Map<String, EquipmentEnum> pipingFromProps = DexpiMappingLoader.loadPipingComponentMapping();
 
-    Map<String, EquipmentEnum> pipingMap = new HashMap<>();
-    pipingMap.put("GlobeValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("ButterflyValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("CheckValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("ControlValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("PressureSafetyValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("PressureReliefValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("PressureReducingValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("BallValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("GateValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("PlugValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("DiaphragmValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("NeedleValve", EquipmentEnum.ThrottlingValve);
-    pipingMap.put("OrificePlate", EquipmentEnum.Calculator);
-    pipingMap.put("FlowMeter", EquipmentEnum.Calculator);
-    pipingMap.put("RuptureDisk", EquipmentEnum.ThrottlingValve);
-    PIPING_COMPONENT_MAP = Collections.unmodifiableMap(pipingMap);
+    if (equipFromProps.isEmpty()) {
+      Map<String, EquipmentEnum> equipmentMap = new HashMap<>();
+      equipmentMap.put("PlateHeatExchanger", EquipmentEnum.HeatExchanger);
+      equipmentMap.put("ShellAndTubeHeatExchanger", EquipmentEnum.HeatExchanger);
+      equipmentMap.put("TubularHeatExchanger", EquipmentEnum.HeatExchanger);
+      equipmentMap.put("AirCooledHeatExchanger", EquipmentEnum.HeatExchanger);
+      equipmentMap.put("CentrifugalPump", EquipmentEnum.Pump);
+      equipmentMap.put("ReciprocatingPump", EquipmentEnum.Pump);
+      equipmentMap.put("CentrifugalCompressor", EquipmentEnum.Compressor);
+      equipmentMap.put("ReciprocatingCompressor", EquipmentEnum.Compressor);
+      equipmentMap.put("Tank", EquipmentEnum.Tank);
+      equipmentMap.put("StirredTankReactor", EquipmentEnum.Reactor);
+      equipmentMap.put("PlugFlowReactor", EquipmentEnum.Reactor);
+      equipmentMap.put("PackedBedReactor", EquipmentEnum.Reactor);
+      equipmentMap.put("Column", EquipmentEnum.Column);
+      equipmentMap.put("Agitator", EquipmentEnum.Mixer);
+      equipmentMap.put("Boiler", EquipmentEnum.Heater);
+      equipmentMap.put("Filter", EquipmentEnum.Separator);
+      equipmentMap.put("Cyclone", EquipmentEnum.Separator);
+      equipmentMap.put("InlineAnalyzer", EquipmentEnum.Calculator);
+      equipmentMap.put("GasAnalyzer", EquipmentEnum.Calculator);
+      equipmentMap.put("Spectrometer", EquipmentEnum.Calculator);
+      EQUIPMENT_CLASS_MAP = Collections.unmodifiableMap(equipmentMap);
+    } else {
+      EQUIPMENT_CLASS_MAP = equipFromProps;
+    }
+
+    if (pipingFromProps.isEmpty()) {
+      Map<String, EquipmentEnum> pipingMap = new HashMap<>();
+      pipingMap.put("GlobeValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("ButterflyValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("CheckValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("ControlValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("PressureSafetyValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("PressureReliefValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("PressureReducingValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("BallValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("GateValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("PlugValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("DiaphragmValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("NeedleValve", EquipmentEnum.ThrottlingValve);
+      pipingMap.put("OrificePlate", EquipmentEnum.Calculator);
+      pipingMap.put("FlowMeter", EquipmentEnum.Calculator);
+      pipingMap.put("RuptureDisk", EquipmentEnum.ThrottlingValve);
+      PIPING_COMPONENT_MAP = Collections.unmodifiableMap(pipingMap);
+    } else {
+      PIPING_COMPONENT_MAP = pipingFromProps;
+    }
   }
 
-  private DexpiXmlReader() {}
+  private DexpiXmlReader() {
+  }
 
   /**
    * Reads the provided DEXPI XML file and returns a populated {@link ProcessSystem}.
@@ -108,18 +121,17 @@ public final class DexpiXmlReader {
   }
 
   /**
-   * Reads the provided DEXPI XML file and returns a populated {@link ProcessSystem} using a
-   * template {@link Stream} for generated piping segments.
+   * Reads the provided DEXPI XML file and returns a populated {@link ProcessSystem} using a template {@link Stream} for
+   * generated piping segments.
    *
    * @param file DEXPI XML file
-   * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for
-   *        generated piping segments. If {@code null}, a methane/ethane default is used.
+   * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for generated piping
+   * segments. If {@code null}, a methane/ethane default is used.
    * @return a process system populated with units found in the XML
    * @throws IOException if the file cannot be read
    * @throws DexpiXmlReaderException if the file cannot be parsed
    */
-  public static ProcessSystem read(File file, Stream templateStream)
-      throws IOException, DexpiXmlReaderException {
+  public static ProcessSystem read(File file, Stream templateStream) throws IOException, DexpiXmlReaderException {
     Objects.requireNonNull(file, "file");
     logger.info("Reading DEXPI XML file: {}", file.getAbsolutePath());
     try (InputStream inputStream = new FileInputStream(file)) {
@@ -135,18 +147,17 @@ public final class DexpiXmlReader {
    * @throws IOException if the stream cannot be read
    * @throws DexpiXmlReaderException if the stream cannot be parsed
    */
-  public static ProcessSystem read(InputStream inputStream)
-      throws IOException, DexpiXmlReaderException {
+  public static ProcessSystem read(InputStream inputStream) throws IOException, DexpiXmlReaderException {
     return read(inputStream, null);
   }
 
   /**
-   * Reads the provided DEXPI XML stream and returns a populated {@link ProcessSystem} using a
-   * template {@link Stream} for any generated piping segments.
+   * Reads the provided DEXPI XML stream and returns a populated {@link ProcessSystem} using a template {@link Stream}
+   * for any generated piping segments.
    *
    * @param inputStream stream containing DEXPI XML data
-   * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for
-   *        generated piping segments. If {@code null}, a methane/ethane default is used.
+   * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for generated piping
+   * segments. If {@code null}, a methane/ethane default is used.
    * @return a process system populated with units found in the XML
    * @throws IOException if the stream cannot be read
    * @throws DexpiXmlReaderException if the stream cannot be parsed
@@ -166,8 +177,7 @@ public final class DexpiXmlReader {
    * @throws IOException if reading fails
    * @throws DexpiXmlReaderException if the file cannot be parsed
    */
-  public static void load(File file, ProcessSystem processSystem)
-      throws IOException, DexpiXmlReaderException {
+  public static void load(File file, ProcessSystem processSystem) throws IOException, DexpiXmlReaderException {
     load(file, processSystem, null);
   }
 
@@ -176,8 +186,8 @@ public final class DexpiXmlReader {
    *
    * @param file XML file to parse
    * @param processSystem target process system
-   * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for
-   *        generated piping segments. If {@code null}, a methane/ethane default is used.
+   * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for generated piping
+   * segments. If {@code null}, a methane/ethane default is used.
    * @throws IOException if reading fails
    * @throws DexpiXmlReaderException if the file cannot be parsed
    */
@@ -208,17 +218,33 @@ public final class DexpiXmlReader {
    *
    * @param inputStream XML input stream
    * @param processSystem target process system
-   * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for
-   *        generated piping segments. If {@code null}, a methane/ethane default is used.
+   * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for generated piping
+   * segments. If {@code null}, a methane/ethane default is used.
    * @throws IOException if reading fails
    * @throws DexpiXmlReaderException if the stream cannot be parsed
    */
-  public static void load(InputStream inputStream, ProcessSystem processSystem,
-      Stream templateStream) throws IOException, DexpiXmlReaderException {
+  public static void load(InputStream inputStream, ProcessSystem processSystem, Stream templateStream)
+      throws IOException, DexpiXmlReaderException {
+    load(inputStream, processSystem, templateStream, false);
+  }
+
+  /**
+   * Populates an existing {@link ProcessSystem} with units parsed from a DEXPI XML stream.
+   *
+   * @param inputStream XML input stream
+   * @param processSystem target process system
+   * @param templateStream stream providing default fluid, temperature, pressure, and flow rate for generated piping
+   * segments. If {@code null}, a methane/ethane default is used.
+   * @param namespaceAware whether to enable namespace-aware XML parsing
+   * @throws IOException if reading fails
+   * @throws DexpiXmlReaderException if the stream cannot be parsed
+   */
+  public static void load(InputStream inputStream, ProcessSystem processSystem, Stream templateStream,
+      boolean namespaceAware) throws IOException, DexpiXmlReaderException {
     Objects.requireNonNull(inputStream, "inputStream");
     Objects.requireNonNull(processSystem, "processSystem");
 
-    Document document = parseDocument(inputStream);
+    Document document = parseDocument(inputStream, namespaceAware);
     if (document == null) {
       return;
     }
@@ -226,12 +252,153 @@ public final class DexpiXmlReader {
     Stream streamTemplate = templateOrDefault(templateStream);
 
     addUnits(document, processSystem, "Equipment", EQUIPMENT_CLASS_MAP, DexpiMetadata.TAG_NAME);
-    addUnits(document, processSystem, "PipingComponent", PIPING_COMPONENT_MAP,
-        "PipingComponentNumberAssignmentClass");
+    addUnits(document, processSystem, "PipingComponent", PIPING_COMPONENT_MAP, "PipingComponentNumberAssignmentClass");
     addPipingSegments(document, processSystem, streamTemplate);
   }
 
-  private static Document parseDocument(InputStream inputStream) throws DexpiXmlReaderException {
+  /**
+   * Reads instrument metadata from a DEXPI XML file. This returns structured {@link DexpiInstrumentInfo} records that
+   * describe the P&amp;ID instrumentation without creating live transmitter/controller objects (which require connected
+   * streams).
+   *
+   * @param file DEXPI XML file
+   * @return list of instrument info records parsed from the file
+   * @throws IOException if the file cannot be read
+   * @throws DexpiXmlReaderException if the file cannot be parsed
+   */
+  public static List<DexpiInstrumentInfo> readInstruments(File file) throws IOException, DexpiXmlReaderException {
+    Objects.requireNonNull(file, "file");
+    try (InputStream inputStream = new FileInputStream(file)) {
+      return readInstruments(inputStream);
+    }
+  }
+
+  /**
+   * Reads instrument metadata from a DEXPI XML stream.
+   *
+   * @param inputStream stream containing DEXPI XML data
+   * @return list of instrument info records parsed from the stream
+   * @throws IOException if the stream cannot be read
+   * @throws DexpiXmlReaderException if the stream cannot be parsed
+   */
+  public static List<DexpiInstrumentInfo> readInstruments(InputStream inputStream)
+      throws IOException, DexpiXmlReaderException {
+    Objects.requireNonNull(inputStream, "inputStream");
+    Document document = parseDocument(inputStream, false);
+    if (document == null) {
+      return Collections.emptyList();
+    }
+    return parseInstruments(document);
+  }
+
+  /**
+   * Parses instruments from an already-parsed DEXPI XML Document. Package-visible for use by
+   * {@link DexpiSimulationBuilder}.
+   *
+   * @param document the parsed XML document
+   * @return list of instrument info records
+   */
+  static List<DexpiInstrumentInfo> parseInstrumentsFromDocument(Document document) {
+    return parseInstruments(document);
+  }
+
+  /**
+   * Parses all ProcessInstrumentationFunction elements from the document, resolving loop and actuator associations.
+   *
+   * @param document the parsed XML document
+   * @return list of instrument info records
+   */
+  private static List<DexpiInstrumentInfo> parseInstruments(Document document) {
+    // Build a map of loop ID -> loop element for association resolution
+    Map<String, String> loopNumbers = new HashMap<>();
+    NodeList loopNodes = document.getElementsByTagName("InstrumentationLoopFunction");
+    for (int i = 0; i < loopNodes.getLength(); i++) {
+      Node node = loopNodes.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE) {
+        continue;
+      }
+      Element loopElement = (Element) node;
+      String loopId = loopElement.getAttribute("ID");
+      String loopNum = getGenericAttribute(loopElement, DexpiMetadata.LOOP_NUMBER);
+      if (loopNum == null) {
+        loopNum = loopId;
+      }
+      // Find which instrument IDs are in this loop via Association elements
+      List<Element> associations = directChildElements(loopElement, "Association");
+      for (Element assoc : associations) {
+        String itemId = assoc.getAttribute("ItemID");
+        if (!isBlank(itemId)) {
+          loopNumbers.put(itemId, loopNum);
+        }
+      }
+    }
+
+    // Build a map of instrument ID -> actuating function tag
+    Map<String, String> actuatingTags = new HashMap<>();
+    NodeList allElements = document.getElementsByTagName("*");
+    for (int i = 0; i < allElements.getLength(); i++) {
+      Node node = allElements.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE) {
+        continue;
+      }
+      Element element = (Element) node;
+      if ("ActuatingFunction".equals(element.getTagName())
+          || "ActuatingFunction".equals(element.getAttribute("ComponentClass"))) {
+        String afId = element.getAttribute("ID");
+        String afNumber = getGenericAttribute(element, DexpiMetadata.ACTUATING_FUNCTION_NUMBER);
+        if (afNumber == null) {
+          afNumber = afId;
+        }
+        // Find parent instrument via traversal
+        Node parentNode = element.getParentNode();
+        while (parentNode != null && parentNode.getNodeType() == Node.ELEMENT_NODE) {
+          Element parentEl = (Element) parentNode;
+          if ("ProcessInstrumentationFunction".equals(parentEl.getTagName())) {
+            actuatingTags.put(parentEl.getAttribute("ID"), afNumber);
+            break;
+          }
+          parentNode = parentNode.getParentNode();
+        }
+      }
+    }
+
+    // Parse all ProcessInstrumentationFunction elements
+    List<DexpiInstrumentInfo> instruments = new ArrayList<>();
+    NodeList pifNodes = document.getElementsByTagName("ProcessInstrumentationFunction");
+    for (int i = 0; i < pifNodes.getLength(); i++) {
+      Node node = pifNodes.item(i);
+      if (node.getNodeType() != Node.ELEMENT_NODE) {
+        continue;
+      }
+      // Skip shape definitions inside ShapeCatalogue
+      if (isInsideShapeCatalogue(node)) {
+        continue;
+      }
+      Element pif = (Element) node;
+      String id = pif.getAttribute("ID");
+      String category = getGenericAttribute(pif, DexpiMetadata.INSTRUMENTATION_CATEGORY);
+      String functions = getGenericAttribute(pif, DexpiMetadata.INSTRUMENTATION_FUNCTIONS);
+      String number = getGenericAttribute(pif, DexpiMetadata.INSTRUMENTATION_NUMBER);
+      String tagName = getGenericAttribute(pif, DexpiMetadata.TAG_NAME);
+      String unit = getGenericAttribute(pif, "MeasurementUnit");
+
+      if (tagName == null) {
+        tagName = (category != null ? category : "") + (functions != null ? functions : "") + " "
+            + (number != null ? number : id);
+      }
+
+      String loopNum = loopNumbers.get(id);
+      String actuator = actuatingTags.get(id);
+
+      instruments
+          .add(new DexpiInstrumentInfo(id, tagName.trim(), category, functions, number, loopNum, unit, actuator));
+    }
+
+    logger.info("Parsed {} instruments from DEXPI XML", instruments.size());
+    return instruments;
+  }
+
+  private static Document parseDocument(InputStream inputStream, boolean nsAware) throws DexpiXmlReaderException {
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -240,7 +407,7 @@ public final class DexpiXmlReader {
       factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
       factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_DTD, "");
       factory.setAttribute(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
-      factory.setNamespaceAware(false);
+      factory.setNamespaceAware(nsAware);
       factory.setExpandEntityReferences(false);
       factory.setXIncludeAware(false);
       DocumentBuilder builder = factory.newDocumentBuilder();
@@ -263,8 +430,7 @@ public final class DexpiXmlReader {
       Document document = builder.parse(inputStream);
       document.getDocumentElement().normalize();
       return document;
-    } catch (ParserConfigurationException | SAXException | IOException
-        | IllegalArgumentException e) {
+    } catch (ParserConfigurationException | SAXException | IOException | IllegalArgumentException e) {
       throw new DexpiXmlReaderException("Unable to parse DEXPI XML", e);
     }
   }
@@ -299,16 +465,14 @@ public final class DexpiXmlReader {
 
         String baseName = firstNonEmpty(attributeValue(element, nameAttribute),
             attributeValue(element, DexpiMetadata.TAG_NAME), element.getAttribute("ID"));
-        addDexpiUnit(processSystem, element, equipmentEnum, baseName,
-            element.getAttribute("ComponentClass"));
+        addDexpiUnit(processSystem, element, equipmentEnum, baseName, element.getAttribute("ComponentClass"));
         totalUnits++;
       }
     }
     logger.info("Added {} units from {} elements", totalUnits, tagName);
   }
 
-  private static void addPipingSegments(Document document, ProcessSystem processSystem,
-      Stream templateStream) {
+  private static void addPipingSegments(Document document, ProcessSystem processSystem, Stream templateStream) {
     NodeList segmentNodes = document.getElementsByTagName("PipingNetworkSegment");
     logger.info("Found {} PipingNetworkSegments", segmentNodes.getLength());
     for (int i = 0; i < segmentNodes.getLength(); i++) {
@@ -323,8 +487,8 @@ public final class DexpiXmlReader {
     }
   }
 
-  private static void addDexpiStream(ProcessSystem processSystem, Element element,
-      Stream templateStream, String baseName) {
+  private static void addDexpiStream(ProcessSystem processSystem, Element element, Stream templateStream,
+      String baseName) {
     String contextualName = prependLineOrFluid(element, baseName);
     String uniqueName = ensureUniqueName(processSystem, contextualName);
     String lineNumber = attributeValue(element, DexpiMetadata.LINE_NUMBER);
@@ -333,28 +497,36 @@ public final class DexpiXmlReader {
     SystemInterface baseFluid = templateStream.getThermoSystem();
     SystemInterface fluid = baseFluid == null ? createDefaultFluid() : baseFluid.clone();
 
-    DexpiStream stream = new DexpiStream(uniqueName, fluid, element.getAttribute("ComponentClass"),
-        lineNumber, fluidCode);
+    DexpiStream stream = new DexpiStream(uniqueName, fluid, element.getAttribute("ComponentClass"), lineNumber,
+        fluidCode);
     stream.setSpecification(templateStream.getSpecification());
     stream.setPressure(templateStream.getPressure(DexpiMetadata.DEFAULT_PRESSURE_UNIT),
         DexpiMetadata.DEFAULT_PRESSURE_UNIT);
     stream.setTemperature(templateStream.getTemperature(DexpiMetadata.DEFAULT_TEMPERATURE_UNIT),
         DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
-    stream.setFlowRate(templateStream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT),
-        DexpiMetadata.DEFAULT_FLOW_UNIT);
+    stream.setFlowRate(templateStream.getFlowRate(DexpiMetadata.DEFAULT_FLOW_UNIT), DexpiMetadata.DEFAULT_FLOW_UNIT);
 
     applyStreamMetadata(element, stream);
     processSystem.addUnit(uniqueName, stream);
   }
 
-  private static void addDexpiUnit(ProcessSystem processSystem, Element element,
-      EquipmentEnum equipmentEnum, String baseName, String componentClass) {
+  private static void addDexpiUnit(ProcessSystem processSystem, Element element, EquipmentEnum equipmentEnum,
+      String baseName, String componentClass) {
     String contextualName = prependLineOrFluid(element, baseName);
     String uniqueName = ensureUniqueName(processSystem, contextualName);
     String lineNumber = attributeValue(element, DexpiMetadata.LINE_NUMBER);
     String fluidCode = attributeValue(element, DexpiMetadata.FLUID_CODE);
-    DexpiProcessUnit unit =
-        new DexpiProcessUnit(uniqueName, componentClass, equipmentEnum, lineNumber, fluidCode);
+    DexpiProcessUnit unit = new DexpiProcessUnit(uniqueName, componentClass, equipmentEnum, lineNumber, fluidCode);
+    unit.setDexpiId(element.getAttribute("ID"));
+
+    // Extract sizing attributes from GenericAttributes
+    for (String sizingAttr : DexpiMetadata.sizingAttributes()) {
+      String value = attributeValue(element, sizingAttr);
+      if (value != null) {
+        unit.setSizingAttribute(sizingAttr, value);
+      }
+    }
+
     processSystem.addUnit(uniqueName, unit);
   }
 
@@ -437,23 +609,20 @@ public final class DexpiXmlReader {
   }
 
   private static String attributeValue(Element element, String attributeName) {
-    return firstNonEmpty(getGenericAttribute(element, attributeName),
-        findAttributeInAncestors(element, attributeName));
+    return firstNonEmpty(getGenericAttribute(element, attributeName), findAttributeInAncestors(element, attributeName));
   }
 
   private static void applyStreamMetadata(Element element, DexpiStream stream) {
-    applyNumericAttribute(element, DexpiMetadata.OPERATING_PRESSURE_VALUE,
-        DexpiMetadata.OPERATING_PRESSURE_UNIT, stream::setPressure,
-        DexpiMetadata.DEFAULT_PRESSURE_UNIT);
-    applyNumericAttribute(element, DexpiMetadata.OPERATING_TEMPERATURE_VALUE,
-        DexpiMetadata.OPERATING_TEMPERATURE_UNIT, stream::setTemperature,
-        DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
-    applyNumericAttribute(element, DexpiMetadata.OPERATING_FLOW_VALUE,
-        DexpiMetadata.OPERATING_FLOW_UNIT, stream::setFlowRate, DexpiMetadata.DEFAULT_FLOW_UNIT);
+    applyNumericAttribute(element, DexpiMetadata.OPERATING_PRESSURE_VALUE, DexpiMetadata.OPERATING_PRESSURE_UNIT,
+        stream::setPressure, DexpiMetadata.DEFAULT_PRESSURE_UNIT);
+    applyNumericAttribute(element, DexpiMetadata.OPERATING_TEMPERATURE_VALUE, DexpiMetadata.OPERATING_TEMPERATURE_UNIT,
+        stream::setTemperature, DexpiMetadata.DEFAULT_TEMPERATURE_UNIT);
+    applyNumericAttribute(element, DexpiMetadata.OPERATING_FLOW_VALUE, DexpiMetadata.OPERATING_FLOW_UNIT,
+        stream::setFlowRate, DexpiMetadata.DEFAULT_FLOW_UNIT);
   }
 
-  private static void applyNumericAttribute(Element element, String valueAttribute,
-      String unitAttribute, BiConsumer<Double, String> consumer, String defaultUnit) {
+  private static void applyNumericAttribute(Element element, String valueAttribute, String unitAttribute,
+      BiConsumer<Double, String> consumer, String defaultUnit) {
     String valueText = firstNonEmpty(getGenericAttribute(element, valueAttribute),
         findAttributeInAncestors(element, valueAttribute));
     Double value = parseNumeric(valueText);
@@ -479,7 +648,6 @@ public final class DexpiXmlReader {
         try {
           return Double.parseDouble(candidate);
         } catch (NumberFormatException ignored) {
-          return null;
         }
       }
       return null;
@@ -494,8 +662,7 @@ public final class DexpiXmlReader {
     List<Element> result = new ArrayList<>();
     for (int i = 0; i < children.getLength(); i++) {
       Node child = children.item(i);
-      if (child.getNodeType() == Node.ELEMENT_NODE
-          && tagName.equals(((Element) child).getTagName())) {
+      if (child.getNodeType() == Node.ELEMENT_NODE && tagName.equals(((Element) child).getTagName())) {
         result.add((Element) child);
       }
     }
@@ -525,6 +692,23 @@ public final class DexpiXmlReader {
       }
     }
     return null;
+  }
+
+  /**
+   * Checks whether the given node is inside a ShapeCatalogue element.
+   *
+   * @param node the XML node to check
+   * @return true if the node has a ShapeCatalogue ancestor
+   */
+  private static boolean isInsideShapeCatalogue(Node node) {
+    Node parent = node.getParentNode();
+    while (parent != null && parent.getNodeType() == Node.ELEMENT_NODE) {
+      if ("ShapeCatalogue".equals(((Element) parent).getTagName())) {
+        return true;
+      }
+      parent = parent.getParentNode();
+    }
+    return false;
   }
 
   private static boolean isBlank(String value) {

@@ -9,9 +9,7 @@ package neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisuali
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * PipeFlowVisualization class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -26,29 +24,24 @@ public class PipeFlowVisualization extends
   double[] timeArray = new double[10];
 
   /**
-   * <p>
    * Constructor for PipeFlowVisualization.
-   * </p>
    */
-  public PipeFlowVisualization() {}
+  public PipeFlowVisualization() {
+  }
 
   /**
-   * <p>
    * Constructor for PipeFlowVisualization.
-   * </p>
    *
    * @param nodes a int
    * @param timeSteps a int
    */
   public PipeFlowVisualization(int nodes, int timeSteps) {
     flowSystem = new neqsim.fluidmechanics.flowsystem.FlowSystemInterface[timeSteps];
-    flowNodes =
-        new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization.onephaseflownodevisualization.onephasepipeflownodevisualization.OnePhasePipeFlowNodeVisualization[timeSteps][nodes];
+    flowNodes = new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization.onephaseflownodevisualization.onephasepipeflownodevisualization.OnePhasePipeFlowNodeVisualization[timeSteps][nodes];
     absTime = new double[timeSteps];
     for (int i = 0; i < timeSteps; i++) {
       for (int j = 0; j < nodes; j++) {
-        flowNodes[i][j] =
-            new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization.onephaseflownodevisualization.onephasepipeflownodevisualization.OnePhasePipeFlowNodeVisualization();
+        flowNodes[i][j] = new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualization.onephaseflownodevisualization.onephasepipeflownodevisualization.OnePhasePipeFlowNodeVisualization();
       }
     }
     // System.out.println("nodes " + nodes);
@@ -63,8 +56,7 @@ public class PipeFlowVisualization extends
     velocityPoint = new double[time][flowNodes[0].length];
     xPlace = new double[flowNodes[0].length];
     timeArray = new double[time];
-    bulkComposition =
-        new double[flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
+    bulkComposition = new double[flowNodes[0][0].getNumberOfComponents()][time][flowNodes[0].length];
 
     for (int j = 0; j < time; j++) {
       timeArray[j] = absTime[j];
@@ -81,9 +73,7 @@ public class PipeFlowVisualization extends
   }
 
   /**
-   * <p>
    * calcPoints.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -108,15 +98,12 @@ public class PipeFlowVisualization extends
      *
      * if (pressurePoint.length > 1) { System.out.println("3D plot "); plot = new
      * neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot("title[0]", "title[1]", "title[2]");
-     * ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setXYvals(150, 160,
-     * points[0].length, 10, 20, points.length);
-     * ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setZvals(points); } else {
-     * System.out.println("2D plot "); plot = new
-     * neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass("title[1]", "title[2]");
-     * ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot) .setLineXYVals(xPlace,
-     * points[0]); ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot).setXYVals(xPlace,
-     * points[0]); } } catch (Exception ex) { System.out.println(ex.toString());
-     * System.out.println("plotting failed"); }
+     * ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setXYvals(150, 160, points[0].length, 10, 20,
+     * points.length); ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setZvals(points); } else {
+     * System.out.println("2D plot "); plot = new neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass("title[1]",
+     * "title[2]"); ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot) .setLineXYVals(xPlace, points[0]);
+     * ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot).setXYVals(xPlace, points[0]); } } catch
+     * (Exception ex) { System.out.println(ex.toString()); System.out.println("plotting failed"); }
      */
   }
 
@@ -144,27 +131,23 @@ public class PipeFlowVisualization extends
      *
      * if (pressurePoint.length > 1) { System.out.println("3D plot "); plot = new
      * neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot("title[0]", "title[1]", "title[2]");
-     * ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setXYvals(150, 160,
-     * points[0].length, 10, 20, points.length);
-     * ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setZvals(points); } else {
-     * System.out.println("2D plot "); plot = new
-     * neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass("title[1]", "title[2]");
-     * ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot) .setLineXYVals(xPlace,
-     * points[0]); ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot).setXYVals(xPlace,
-     * points[0]); } plot.init(); } catch (Exception ex) { System.out.println(ex.toString());
-     * System.out.println("plotting failed"); }
+     * ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setXYvals(150, 160, points[0].length, 10, 20,
+     * points.length); ((neqsim.dataPresentation.visAD.visAd3D.visAd3DPlot) plot).setZvals(points); } else {
+     * System.out.println("2D plot "); plot = new neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass("title[1]",
+     * "title[2]"); ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot) .setLineXYVals(xPlace, points[0]);
+     * ((neqsim.dataPresentation.visAD.visAd2D.visAd2dBaseClass) plot).setXYVals(xPlace, points[0]); } plot.init(); }
+     * catch (Exception ex) { System.out.println(ex.toString()); System.out.println("plotting failed"); }
      */
   }
 
   /*
    * public void createNetCdfFile(String name) { calcPoints(name);
    * neqsim.dataPresentation.filehandling.createNetCDF.netCDF3D.NetCdf3D file = new
-   * neqsim.dataPresentation.filehandling.createNetCDF.netCDF3D.NetCdf3D();
-   * file.setOutputFileName(name); file.setXvalues(timeArray, "time", "sec");
-   * file.setYvalues(xPlace, "length", "meter"); file.setZvalues(temperaturePoint,
-   * "temperature [K]", "sec"); file.setZvalues(pressurePoint, "pressure [bar]", "sec");
-   * file.setZvalues(velocityPoint, "velocity [m/sec]", "sec"); if (absTime.length > 1) { for (int p
-   * = 0; p < flowNodes[0][0].getNumberOfComponents(); p++) { file.setZvalues(bulkComposition[p],
-   * ("comp " + p), "sec"); } } file.createFile(); }
+   * neqsim.dataPresentation.filehandling.createNetCDF.netCDF3D.NetCdf3D(); file.setOutputFileName(name);
+   * file.setXvalues(timeArray, "time", "sec"); file.setYvalues(xPlace, "length", "meter");
+   * file.setZvalues(temperaturePoint, "temperature [K]", "sec"); file.setZvalues(pressurePoint, "pressure [bar]",
+   * "sec"); file.setZvalues(velocityPoint, "velocity [m/sec]", "sec"); if (absTime.length > 1) { for (int p = 0; p <
+   * flowNodes[0][0].getNumberOfComponents(); p++) { file.setZvalues(bulkComposition[p], ("comp " + p), "sec"); } }
+   * file.createFile(); }
    */
 }

@@ -8,8 +8,8 @@ import java.util.List;
  * Tracks liquid accumulation in low points and riser bases.
  *
  * <p>
- * Models liquid pooling at low points, terrain-induced slugging, and riser-base accumulation
- * phenomena. Handles drainage, filling, and surge-out events.
+ * Models liquid pooling at low points, terrain-induced slugging, and riser-base accumulation phenomena. Handles
+ * drainage, filling, and surge-out events.
  * </p>
  *
  * @author Even Solbraa
@@ -196,8 +196,8 @@ public class LiquidAccumulationTracker implements Serializable {
       // and slower on uphill (creating a dam effect)
       // Rate = (rho_L - rho_G) * g * sin(theta) * holdup * A * settling_factor
       double settlingFactor = 0.01; // Empirical factor for accumulation rate
-      double gravitySettling = -rho_diff * GRAVITY * Math.sin(inclination) * holdup * gasHoldup * A
-          * settlingFactor / Math.max(rho_L, 100.0);
+      double gravitySettling = -rho_diff * GRAVITY * Math.sin(inclination) * holdup * gasHoldup * A * settlingFactor
+          / Math.max(rho_L, 100.0);
 
       // Positive settling = liquid accumulates (downhill sections or stagnant uphill)
       if (inclination < 0) {
@@ -219,8 +219,7 @@ public class LiquidAccumulationTracker implements Serializable {
       double A = upstream.getArea();
 
       double liquidIn = upstream.getLiquidHoldup() * Math.max(upstream.getLiquidVelocity(), 0) * A;
-      double liquidOut =
-          downstream.getLiquidHoldup() * Math.max(downstream.getLiquidVelocity(), 0) * A;
+      double liquidOut = downstream.getLiquidHoldup() * Math.max(downstream.getLiquidVelocity(), 0) * A;
 
       zone.netInflowRate = liquidIn - liquidOut;
       accumulationRate += Math.max(0, zone.netInflowRate); // Only accumulate, don't drain this way
@@ -265,10 +264,10 @@ public class LiquidAccumulationTracker implements Serializable {
 
   /**
    * Distribute accumulated liquid among sections in the zone.
-   * 
+   *
    * <p>
-   * This method now ACTUALLY updates the section holdups, not just a separate tracking variable.
-   * This is critical for terrain-induced slug formation.
+   * This method now ACTUALLY updates the section holdups, not just a separate tracking variable. This is critical for
+   * terrain-induced slug formation.
    * </p>
    *
    * @param zone the accumulation zone to process
@@ -318,8 +317,7 @@ public class LiquidAccumulationTracker implements Serializable {
       section.setGasHoldup(1.0 - newHoldup);
 
       // Store for tracking
-      section
-          .setAccumulatedLiquidVolume(additionalHoldup * section.getArea() * section.getLength());
+      section.setAccumulatedLiquidVolume(additionalHoldup * section.getArea() * section.getLength());
 
       // Reduce liquid velocity in accumulation zones (liquid is pooling)
       double velocityReduction = 1.0 - 0.5 * (additionalHoldup / 0.5);
@@ -440,8 +438,7 @@ public class LiquidAccumulationTracker implements Serializable {
    * @param pressureDrop Pressure drop across zone (Pa)
    * @return Drainage rate (m³/s)
    */
-  public double calculateDrainageRate(AccumulationZone zone, PipeSection[] sections,
-      double pressureDrop) {
+  public double calculateDrainageRate(AccumulationZone zone, PipeSection[] sections, double pressureDrop) {
     if (zone.liquidVolume <= 0 || zone.sectionIndices.isEmpty()) {
       return 0;
     }
@@ -550,8 +547,8 @@ public class LiquidAccumulationTracker implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("Slug[front=%.1fm, length=%.1fm, vel=%.2fm/s, vol=%.3fm³]",
-          frontPosition, length, velocity, volume);
+      return String.format("Slug[front=%.1fm, length=%.1fm, vel=%.2fm/s, vol=%.3fm³]", frontPosition, length, velocity,
+          volume);
     }
   }
 }

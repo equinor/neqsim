@@ -4,9 +4,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 /**
- * <p>
  * CompressorCurve class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -21,29 +19,24 @@ public class CompressorCurve implements java.io.Serializable {
   public double speed = 1000.0;
 
   /**
-   * <p>
    * Constructor for CompressorCurve.
-   * </p>
    */
   public CompressorCurve() {
-    flow = new double[] {453.2, 600.0, 750.0};
+    flow = new double[] { 453.2, 600.0, 750.0 };
     flowPolytropicEfficiency = Arrays.copyOf(flow, flow.length);
-    head = new double[] {1000.0, 900.0, 800.0};
-    polytropicEfficiency = new double[] {78.0, 79.0, 78.0};
+    head = new double[] { 1000.0, 900.0, 800.0 };
+    polytropicEfficiency = new double[] { 78.0, 79.0, 78.0 };
   }
 
   /**
-   * <p>
    * Constructor for CompressorCurve.
-   * </p>
    *
    * @param speed a double
    * @param flow an array of type double
    * @param head an array of type double
    * @param polytropicEfficiency an array of type double
    */
-  public CompressorCurve(double speed, double[] flow, double[] head,
-      double[] polytropicEfficiency) {
+  public CompressorCurve(double speed, double[] flow, double[] head, double[] polytropicEfficiency) {
     this.speed = speed;
     this.flow = flow;
     flowPolytropicEfficiency = Arrays.copyOf(flow, flow.length);
@@ -52,9 +45,7 @@ public class CompressorCurve implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Constructor for CompressorCurve.
-   * </p>
    *
    * @param speed a double
    * @param flow an array of type double
@@ -62,8 +53,8 @@ public class CompressorCurve implements java.io.Serializable {
    * @param flowPolytropicEfficiency an array of type double
    * @param polytropicEfficiency an array of type double
    */
-  public CompressorCurve(double speed, double[] flow, double[] head,
-      double[] flowPolytropicEfficiency, double[] polytropicEfficiency) {
+  public CompressorCurve(double speed, double[] flow, double[] head, double[] flowPolytropicEfficiency,
+      double[] polytropicEfficiency) {
     this.speed = speed;
     this.flow = flow;
     this.flowPolytropicEfficiency = flowPolytropicEfficiency;

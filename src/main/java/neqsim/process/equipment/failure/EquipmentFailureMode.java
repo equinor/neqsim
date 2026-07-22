@@ -6,19 +6,18 @@ import java.io.Serializable;
  * Represents a failure mode for process equipment.
  *
  * <p>
- * Equipment failure modes define how equipment can fail and the consequences of that failure on
- * process operations. This class supports both complete failures (trips) and degraded operation
- * modes.
+ * Equipment failure modes define how equipment can fail and the consequences of that failure on process operations.
+ * This class supports both complete failures (trips) and degraded operation modes.
  * </p>
  *
  * <p>
  * <b>Typical Usage:</b>
  * </p>
- * 
+ *
  * <pre>
  * {@code
- * EquipmentFailureMode tripMode = EquipmentFailureMode.builder().name("Compressor Trip")
- *     .type(FailureType.TRIP).capacityFactor(0.0) // Complete loss
+ * EquipmentFailureMode tripMode = EquipmentFailureMode.builder().name("Compressor Trip").type(FailureType.TRIP)
+ *     .capacityFactor(0.0) // Complete loss
  *     .mttr(24.0) // 24 hours to repair
  *     .build();
  *
@@ -235,9 +234,8 @@ public class EquipmentFailureMode implements Serializable {
    */
   public static EquipmentFailureMode trip(String equipmentType) {
     double mttr = estimateMttr(equipmentType, FailureType.TRIP);
-    return builder().name("Trip").description("Equipment trip - complete shutdown")
-        .type(FailureType.TRIP).capacityFactor(0.0).mttr(mttr).requiresImmediateAction(true)
-        .build();
+    return builder().name("Trip").description("Equipment trip - complete shutdown").type(FailureType.TRIP)
+        .capacityFactor(0.0).mttr(mttr).requiresImmediateAction(true).build();
   }
 
   /**
@@ -247,8 +245,8 @@ public class EquipmentFailureMode implements Serializable {
    * @return degraded failure mode
    */
   public static EquipmentFailureMode degraded(double capacityPercent) {
-    return builder().name("Degraded").description("Operating at reduced capacity")
-        .type(FailureType.DEGRADED).capacityFactor(capacityPercent / 100.0).mttr(8.0).build();
+    return builder().name("Degraded").description("Operating at reduced capacity").type(FailureType.DEGRADED)
+        .capacityFactor(capacityPercent / 100.0).mttr(8.0).build();
   }
 
   /**
@@ -257,8 +255,8 @@ public class EquipmentFailureMode implements Serializable {
    * @return bypass failure mode
    */
   public static EquipmentFailureMode bypassed() {
-    return builder().name("Bypassed").description("Equipment bypassed - flow routed around")
-        .type(FailureType.BYPASSED).capacityFactor(0.0).mttr(0.0).build();
+    return builder().name("Bypassed").description("Equipment bypassed - flow routed around").type(FailureType.BYPASSED)
+        .capacityFactor(0.0).mttr(0.0).build();
   }
 
   /**
@@ -268,8 +266,8 @@ public class EquipmentFailureMode implements Serializable {
    * @return maintenance failure mode
    */
   public static EquipmentFailureMode maintenance(double durationHours) {
-    return builder().name("Maintenance").description("Planned maintenance shutdown")
-        .type(FailureType.MAINTENANCE).capacityFactor(0.0).mttr(durationHours).build();
+    return builder().name("Maintenance").description("Planned maintenance shutdown").type(FailureType.MAINTENANCE)
+        .capacityFactor(0.0).mttr(durationHours).build();
   }
 
   private static double estimateMttr(String equipmentType, FailureType type) {
@@ -304,8 +302,8 @@ public class EquipmentFailureMode implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("FailureMode[%s, type=%s, capacity=%.0f%%, MTTR=%.1fh]", name, type,
-        capacityFactor * 100, mttr);
+    return String.format("FailureMode[%s, type=%s, capacity=%.0f%%, MTTR=%.1fh]", name, type, capacityFactor * 100,
+        mttr);
   }
 
   /**

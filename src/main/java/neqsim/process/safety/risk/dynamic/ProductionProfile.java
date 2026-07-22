@@ -20,7 +20,7 @@ import com.google.gson.GsonBuilder;
  * </ul>
  *
  * <h2>Production Profile Phases</h2>
- * 
+ *
  * <pre>
  * Production
  *     ^
@@ -451,8 +451,7 @@ public class ProductionProfile implements Serializable {
       int steadySteps = Math.max(1, (int) (steadyStateDuration / dt));
       for (int i = 0; i <= steadySteps; i++) {
         double progress = (double) i / steadySteps;
-        timeSeries
-            .add(new TimePoint(t + progress * steadyStateDuration, degradedProduction, "degraded"));
+        timeSeries.add(new TimePoint(t + progress * steadyStateDuration, degradedProduction, "degraded"));
       }
       t += steadyStateDuration;
     }
@@ -521,13 +520,12 @@ public class ProductionProfile implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   @Override
   public String toString() {
-    return String.format("ProductionProfile[%s: %.1f%% loss, %.1f hrs, transient=%.1f%%]",
-        equipmentName, getProductionLossPercent(), repairDuration, transientLossFraction * 100);
+    return String.format("ProductionProfile[%s: %.1f%% loss, %.1f hrs, transient=%.1f%%]", equipmentName,
+        getProductionLossPercent(), repairDuration, transientLossFraction * 100);
   }
 }

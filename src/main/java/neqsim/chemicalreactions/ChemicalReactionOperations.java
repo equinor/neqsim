@@ -20,15 +20,12 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * ChemicalReactionOperations class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class ChemicalReactionOperations
-    implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
+public class ChemicalReactionOperations implements neqsim.thermo.ThermodynamicConstantsInterface, Cloneable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -58,9 +55,8 @@ public class ChemicalReactionOperations
    * Chemical reactions are only solved in the aqueous phase.
    *
    * <p>
-   * Chemical equilibrium calculations (e.g., water dissociation for pH) are only meaningful in an
-   * aqueous phase. This method returns the index of the aqueous phase if one exists, or -1 if no
-   * aqueous phase is present.
+   * Chemical equilibrium calculations (e.g., water dissociation for pH) are only meaningful in an aqueous phase. This
+   * method returns the index of the aqueous phase if one exists, or -1 if no aqueous phase is present.
    * </p>
    *
    * @return index of the reactive (aqueous) phase, or -1 if no aqueous phase exists
@@ -93,8 +89,8 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * Check if a phase is actually aqueous (not just liquid). This is stricter than
-   * getReactivePhaseIndex() which also accepts liquid.
+   * Check if a phase is actually aqueous (not just liquid). This is stricter than getReactivePhaseIndex() which also
+   * accepts liquid.
    *
    * @param phaseNum the phase number to check
    * @return true if the phase is aqueous, false otherwise
@@ -111,9 +107,9 @@ public class ChemicalReactionOperations
    * Re-initialize equilibrium helpers for the selected reactive phase.
    *
    * <p>
-   * The internal matrices (A, b, initial-estimate solver) depend on which phase is treated as the
-   * reactive phase. When the system changes between 1/2/3-phase configurations during a flash, the
-   * reactive phase index can change and we must rebuild these structures.
+   * The internal matrices (A, b, initial-estimate solver) depend on which phase is treated as the reactive phase. When
+   * the system changes between 1/2/3-phase configurations during a flash, the reactive phase index can change and we
+   * must rebuild these structures.
    * </p>
    *
    * @param phaseNum phase index to use as reactive phase
@@ -128,8 +124,7 @@ public class ChemicalReactionOperations
     initCalc = null;
     Amatrix = null;
     try {
-      initCalc =
-          new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, phase);
+      initCalc = new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, phase);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -141,9 +136,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * Constructor for ChemicalReactionOperations.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -185,8 +178,7 @@ public class ChemicalReactionOperations
       elements = getAllElements();
 
       try {
-        initCalc =
-            new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, phase);
+        initCalc = new LinearProgrammingChemicalEquilibrium(chemRefPot, components, elements, this, phase);
       } catch (Exception ex) {
         logger.error(ex.getMessage(), ex);
       }
@@ -201,9 +193,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * Setter for the field <code>system</code>.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -224,9 +214,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * Setter for the field <code>components</code>.
-   * </p>
    */
   public void setComponents() {
     int reactivePhase = getReactivePhaseIndex();
@@ -240,9 +228,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * Setter for the field <code>components</code>.
-   * </p>
    *
    * @param phaseNum a int
    */
@@ -253,9 +239,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * setReactiveComponents.
-   * </p>
    *
    * @param phaseNum a int
    */
@@ -267,9 +251,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * setReactiveComponents.
-   * </p>
    */
   public void setReactiveComponents() {
     int reactivePhase = getReactivePhaseIndex();
@@ -293,9 +275,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * calcInertMoles.
-   * </p>
    *
    * @param phaseNum a int
    * @return a double
@@ -314,9 +294,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * sortReactiveComponents.
-   * </p>
    */
   public void sortReactiveComponents() {
     ComponentInterface tempComp;
@@ -333,16 +311,13 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * addNewComponents.
-   * </p>
-   * 
+   *
    * <p>
-   * Adds new reactive components (typically ionic species from chemical reactions) to the system.
-   * Components are initialized with a small but numerically reasonable amount to enable the
-   * chemical equilibrium solver to converge. Ionic species are initialized with a higher minimum to
-   * provide a reasonable starting point for acid-base equilibria and help the Newton solver find
-   * physically meaningful solutions.
+   * Adds new reactive components (typically ionic species from chemical reactions) to the system. Components are
+   * initialized with a small but numerically reasonable amount to enable the chemical equilibrium solver to converge.
+   * Ionic species are initialized with a higher minimum to provide a reasonable starting point for acid-base equilibria
+   * and help the Newton solver find physically meaningful solutions.
    * </p>
    */
   public void addNewComponents() {
@@ -370,9 +345,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * getAllElements.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -399,9 +372,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * hasRections.
-   * </p>
    *
    * @return a boolean
    */
@@ -410,14 +381,11 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * calcNVector.
-   * </p>
-   * 
+   *
    * <p>
-   * Calculate the mole vector for reactive species in the reactive phase. This reads from the
-   * current phase state to get the actual moles in the aqueous/reactive phase where chemical
-   * equilibrium takes place.
+   * Calculate the mole vector for reactive species in the reactive phase. This reads from the current phase state to
+   * get the actual moles in the aqueous/reactive phase where chemical equilibrium takes place.
    * </p>
    *
    * @return an array of type double containing moles of each reactive species in reactive phase
@@ -436,9 +404,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * calcBVector.
-   * </p>
    *
    * @return an array of type double
    */
@@ -454,18 +420,16 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * calcAmatrix.
-   * </p>
-   * 
+   *
    * <p>
-   * Calculates the stoichiometry matrix (A) based on the components and elements in the system.
-   * This matrix includes an additional row for ionic charge balance (electroneutrality constraint),
-   * which ensures that the sum of positive and negative charges in the solution equals zero.
+   * Calculates the stoichiometry matrix (A) based on the components and elements in the system. This matrix includes an
+   * additional row for ionic charge balance (electroneutrality constraint), which ensures that the sum of positive and
+   * negative charges in the solution equals zero.
    * </p>
    *
-   * @return the stoichiometry matrix A (elements + 1 x components), where the last row contains
-   *         ionic charges for electroneutrality
+   * @return the stoichiometry matrix A (elements + 1 x components), where the last row contains ionic charges for
+   * electroneutrality
    */
   public double[][] calcAmatrix() {
     if (components == null || elements == null) {
@@ -494,15 +458,12 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * calcChemRefPot.
-   * </p>
    *
    * <p>
-   * Calculates reference potentials for the chemical equilibrium solver. The reference potentials
-   * are derived from reaction equilibrium constants (via -RT*ln(K)) and determine the equilibrium
-   * composition. For components not appearing in any reaction, Gibbs energy of formation is used as
-   * a fallback.
+   * Calculates reference potentials for the chemical equilibrium solver. The reference potentials are derived from
+   * reaction equilibrium constants (via -RT*ln(K)) and determine the equilibrium composition. For components not
+   * appearing in any reaction, Gibbs energy of formation is used as a fallback.
    * </p>
    *
    * @param phaseNum a int
@@ -511,8 +472,7 @@ public class ChemicalReactionOperations
   public double[] calcChemRefPot(int phaseNum) {
     // Delegate to ChemicalReactionList to calculate consistent reference potentials
     // using matrix algebra (solving sum(nu_i * mu_i) = -RT*ln(K)).
-    double[] potentials =
-        reactionList.updateReferencePotentials(system.getPhase(phaseNum), components);
+    double[] potentials = reactionList.updateReferencePotentials(system.getPhase(phaseNum), components);
 
     // Fallback if calculation failed (e.g. rank deficiency)
     if (potentials == null) {
@@ -531,14 +491,11 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * updateMoles.
-   * </p>
-   * 
+   *
    * <p>
-   * Updates moles in the reactive phase based on the LP solver solution. Uses
-   * Phase.addMolesChemReac with totdn=0 to only affect phase moles without corrupting the total
-   * system moles (which would violate element conservation).
+   * Updates moles in the reactive phase based on the LP solver solution. Uses Phase.addMolesChemReac with totdn=0 to
+   * only affect phase moles without corrupting the total system moles (which would violate element conservation).
    * </p>
    *
    * @param phaseNum a int
@@ -551,11 +508,10 @@ public class ChemicalReactionOperations
     }
 
     for (int i = 0; i < components.length; i++) {
-      double currentMoles =
-          system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
-              .getNumberOfMolesInPhase();
+      double currentMoles = system.getPhase(phaseNum).getComponents()[components[i].getComponentNumber()]
+          .getNumberOfMolesInPhase();
       double targetMoles = Math.max(newMoles[i], 1e-45); // Ensure small positive value for
-                                                         // numerical stability
+      // numerical stability
       double delta = targetMoles - currentMoles;
 
       // Use addMolesChemReac(component, dn, 0) to ONLY change phase moles
@@ -576,9 +532,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * solveChemEq.
-   * </p>
    *
    * @param type a int
    * @return a boolean
@@ -593,9 +547,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * solveChemEq.
-   * </p>
    *
    * @param phaseNum a int
    * @param type a int
@@ -643,7 +595,8 @@ public class ChemicalReactionOperations
         if (newMoles != null) {
           updateMoles(phaseNum);
           firsttime = false;
-          // LP provides initial estimate - now fall through to Newton solver for refinement
+          // LP provides initial estimate - now fall through to Newton solver for
+          // refinement
         } else {
           // LP solver failed - fall through to Newton solver
           logger.debug("LP initial estimate failed, falling back to Newton solver");
@@ -665,9 +618,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * solveKinetics.
-   * </p>
    *
    * @param phaseNum a int
    * @param interPhase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -679,9 +630,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * getKinetics.
-   * </p>
    *
    * @return a {@link neqsim.chemicalreactions.kinetics.Kinetics} object
    */
@@ -690,9 +639,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * Getter for the field <code>reactionList</code>.
-   * </p>
    *
    * @return a {@link neqsim.chemicalreactions.chemicalreaction.ChemicalReactionList} object
    */
@@ -701,9 +648,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * getComponents.
-   * </p>
    *
    * @return an array of {@link neqsim.thermo.component.ComponentInterface} objects
    */
@@ -712,14 +657,12 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * getAmatrix.
-   * </p>
-   * 
+   *
    * <p>
-   * Returns the stoichiometry matrix (A) that relates components to elements. The matrix has
-   * dimensions (elements.length + 1) x components.length, where the last row contains ionic charges
-   * for the electroneutrality constraint.
+   * Returns the stoichiometry matrix (A) that relates components to elements. The matrix has dimensions
+   * (elements.length + 1) x components.length, where the last row contains ionic charges for the electroneutrality
+   * constraint.
    * </p>
    *
    * @return the stoichiometry matrix A
@@ -729,9 +672,7 @@ public class ChemicalReactionOperations
   }
 
   /**
-   * <p>
    * reacHeat.
-   * </p>
    *
    * @param phaseNum a int
    * @param component a {@link java.lang.String} object

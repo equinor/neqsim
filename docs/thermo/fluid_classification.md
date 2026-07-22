@@ -1,3 +1,8 @@
+---
+title: "Reservoir Fluid Classification"
+description: "This document describes NeqSim's reservoir fluid classification capabilities using the `FluidClassifier` utility class based on the Whitson methodology."
+---
+
 # Reservoir Fluid Classification
 
 This document describes NeqSim's reservoir fluid classification capabilities using the `FluidClassifier` utility class based on the Whitson methodology.
@@ -272,7 +277,7 @@ The `classifyWithPhaseEnvelope` method refines composition-based classification 
 
 ## See Also
 
-- [Fluid Creation Guide](fluid_creation_guide.md)
-- [PVT Characterization](pvt_fluid_characterization.md)
-- [Fluid Characterization](../wiki/fluid_characterization.md)
-- [Black Oil Models](../blackoil/README.md)
+- [Fluid Creation Guide](fluid_creation_guide)
+- [PVT Characterization](pvt_fluid_characterization)
+- [Fluid Characterization](../wiki/fluid_characterization)
+- [Black Oil Models](../blackoil/)

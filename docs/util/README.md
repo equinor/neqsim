@@ -1,3 +1,8 @@
+---
+title: "Utilities Package"
+description: "The `util` package provides common utilities for database access, unit conversion, serialization, exceptions, and threading."
+---
+
 # Utilities Package
 
 The `util` package provides common utilities for database access, unit conversion, serialization, exceptions, and threading.
@@ -125,7 +130,7 @@ NeqSimExperimentDatabase.getExperimentData("VLE_CH4_CO2");
 
 ## Unit Conversion
 
-For comprehensive unit conversion documentation, see **[Unit Conversion Guide](unit_conversion.md)**.
+For comprehensive unit conversion documentation, see **[Unit Conversion Guide](unit_conversion)**.
 
 ### Quick Reference
 
@@ -230,7 +235,7 @@ SystemInterface clone = fluid.clone();
 ProcessEquipmentInterface copy = equipment.copy();
 ```
 
-**For full documentation:** See [Process Serialization Guide](../simulation/process_serialization.md)
+**For full documentation:** See [Process Serialization Guide](../simulation/process_serialization)
 
 ---
 
@@ -433,5 +438,5 @@ eq.setName("E-101");
 
 ## Related Documentation
 
-- [Developer Setup](../development/DEVELOPER_SETUP.md) - Environment configuration
-- [Component Database Guide](../thermo/component_database_guide.md) - Database tables
+- [Developer Setup](../development/DEVELOPER_SETUP) - Environment configuration
+- [Component Database Guide](../thermo/component_database_guide) - Database tables

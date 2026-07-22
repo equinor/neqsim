@@ -5,13 +5,16 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.compressor.Compressor;
+import neqsim.process.equipment.pump.Pump;
+import neqsim.process.equipment.reservoir.SimpleReservoir;
+import neqsim.process.equipment.reservoir.WellSystem;
 import neqsim.process.fielddevelopment.concept.FieldConcept;
 import neqsim.process.fielddevelopment.economics.CashFlowEngine;
 import neqsim.process.fielddevelopment.economics.ProductionProfileGenerator;
 import neqsim.process.fielddevelopment.economics.SensitivityAnalyzer;
 import neqsim.process.fielddevelopment.evaluation.ConceptEvaluator;
-import neqsim.process.fielddevelopment.evaluation.ConceptKPIs;
-import neqsim.process.fielddevelopment.facility.FacilityBuilder;
 import neqsim.process.fielddevelopment.facility.FacilityConfig;
 import neqsim.process.fielddevelopment.screening.EconomicsEstimator;
 import neqsim.process.fielddevelopment.screening.EmissionsTracker;
@@ -20,12 +23,6 @@ import neqsim.process.fielddevelopment.subsea.SubseaProductionSystem;
 import neqsim.process.fielddevelopment.tieback.HostFacility;
 import neqsim.process.fielddevelopment.tieback.TiebackAnalyzer;
 import neqsim.process.fielddevelopment.tieback.TiebackReport;
-import neqsim.process.equipment.compressor.Compressor;
-import neqsim.process.equipment.ProcessEquipmentInterface;
-import neqsim.process.equipment.pump.Pump;
-import neqsim.process.equipment.reservoir.SimpleReservoir;
-import neqsim.process.equipment.reservoir.WellSystem;
-import neqsim.process.mechanicaldesign.FieldDevelopmentDesignOrchestrator;
 import neqsim.process.mechanicaldesign.SystemMechanicalDesign;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
@@ -34,10 +31,10 @@ import neqsim.thermo.system.SystemInterface;
  * Unified field development workflow orchestrator.
  *
  * <p>
- * This class provides a single entry point for running field development studies at different
- * fidelity levels, from early screening through detailed design. The workflow is designed to
- * support education and industry applications aligned with academic programs such as NTNU's
- * <b>TPG4230 - Underground reservoirs fluid production and injection</b> course.
+ * This class provides a single entry point for running field development studies at different fidelity levels, from
+ * early screening through detailed design. The workflow is designed to support education and industry applications
+ * aligned with academic programs such as NTNU's <b>TPG4230 - Underground reservoirs fluid production and injection</b>
+ * course.
  * </p>
  *
  * <h2>TPG4230 Course Topic Coverage</h2>
@@ -45,8 +42,7 @@ import neqsim.thermo.system.SystemInterface;
  * This framework addresses key topics from the course:
  * </p>
  * <ul>
- * <li><b>Field Lifecycle Management</b> - Discovery through operations with progressive
- * refinement</li>
+ * <li><b>Field Lifecycle Management</b> - Discovery through operations with progressive refinement</li>
  * <li><b>PVT Characterization</b> - EOS selection and tuning to laboratory data</li>
  * <li><b>Reservoir Material Balance</b> - Tank models with production/injection tracking</li>
  * <li><b>Well Performance (IPR/VLP)</b> - Inflow performance and vertical lift modeling</li>
@@ -70,28 +66,25 @@ import neqsim.thermo.system.SystemInterface;
  *
  * <h2>Fidelity Levels</h2>
  * <ul>
- * <li><b>SCREENING</b> - Analog-based correlations, ±50% accuracy, suitable for portfolio
- * screening</li>
- * <li><b>CONCEPTUAL</b> - EOS fluid, IPR/VLP models, ±30% accuracy, suitable for concept
- * selection</li>
- * <li><b>DETAILED</b> - Tuned EOS, full process simulation, Monte Carlo economics, ±20%
- * accuracy</li>
+ * <li><b>SCREENING</b> - Analog-based correlations, ±50% accuracy, suitable for portfolio screening</li>
+ * <li><b>CONCEPTUAL</b> - EOS fluid, IPR/VLP models, ±30% accuracy, suitable for concept selection</li>
+ * <li><b>DETAILED</b> - Tuned EOS, full process simulation, Monte Carlo economics, ±20% accuracy</li>
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Quick screening study for gas tieback
- * FieldDevelopmentWorkflow workflow =
- *     FieldDevelopmentWorkflow.quickGasTieback("Satellite Discovery", 50.0, 25.0, 4, 2.0, "NO");
+ * FieldDevelopmentWorkflow workflow = FieldDevelopmentWorkflow.quickGasTieback("Satellite Discovery", 50.0, 25.0, 4,
+ *     2.0, "NO");
  * WorkflowResult result = workflow.run();
  * System.out.println(result.getSummary());
- * 
+ *
  * // Progress to conceptual with EOS-tuned fluid
  * workflow.setFidelityLevel(FidelityLevel.CONCEPTUAL);
  * workflow.setFluid(tunedFluid); // From PVT regression
  * result = workflow.run();
- * 
+ *
  * // Full detailed study with Monte Carlo
  * workflow.setFidelityLevel(FidelityLevel.DETAILED);
  * workflow.setMonteCarloIterations(1000);
@@ -160,8 +153,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
   private boolean runSubseaAnalysis = true;
   private double waterDepthM = 350.0;
   private double tiebackDistanceKm = 25.0;
-  private SubseaProductionSystem.SubseaArchitecture subseaArchitecture =
-      SubseaProductionSystem.SubseaArchitecture.MANIFOLD_CLUSTER;
+  private SubseaProductionSystem.SubseaArchitecture subseaArchitecture = SubseaProductionSystem.SubseaArchitecture.MANIFOLD_CLUSTER;
 
   // Production parameters
   private int firstProductionYear = 2027;
@@ -230,21 +222,21 @@ public class FieldDevelopmentWorkflow implements Serializable {
     this.studyPhase = phase;
     // Auto-adjust fidelity based on phase
     switch (phase) {
-      case DISCOVERY:
-      case FEASIBILITY:
-        if (fidelityLevel == FidelityLevel.DETAILED) {
-          fidelityLevel = FidelityLevel.SCREENING;
-        }
-        break;
-      case CONCEPT_SELECT:
-        if (fidelityLevel == FidelityLevel.SCREENING) {
-          fidelityLevel = FidelityLevel.CONCEPTUAL;
-        }
-        break;
-      case FEED:
-      case OPERATIONS:
-        fidelityLevel = FidelityLevel.DETAILED;
-        break;
+    case DISCOVERY:
+    case FEASIBILITY:
+      if (fidelityLevel == FidelityLevel.DETAILED) {
+        fidelityLevel = FidelityLevel.SCREENING;
+      }
+      break;
+    case CONCEPT_SELECT:
+      if (fidelityLevel == FidelityLevel.SCREENING) {
+        fidelityLevel = FidelityLevel.CONCEPTUAL;
+      }
+      break;
+    case FEED:
+    case OPERATIONS:
+      fidelityLevel = FidelityLevel.DETAILED;
+      break;
     }
     return this;
   }
@@ -479,8 +471,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
    * @param arch subsea architecture (DIRECT_TIEBACK, MANIFOLD_CLUSTER, etc.)
    * @return this for chaining
    */
-  public FieldDevelopmentWorkflow setSubseaArchitecture(
-      SubseaProductionSystem.SubseaArchitecture arch) {
+  public FieldDevelopmentWorkflow setSubseaArchitecture(SubseaProductionSystem.SubseaArchitecture arch) {
     this.subseaArchitecture = arch;
     return this;
   }
@@ -489,8 +480,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
    * Configures subsea parameters from concept.
    *
    * <p>
-   * Extracts subsea-relevant parameters from the field concept and sets up subsea system
-   * automatically.
+   * Extracts subsea-relevant parameters from the field concept and sets up subsea system automatically.
    * </p>
    *
    * @return this for chaining
@@ -529,8 +519,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
    * @param decline annual decline rate after plateau
    * @return this for chaining
    */
-  public FieldDevelopmentWorkflow setProductionTiming(int firstYear, int fieldLife, double plateau,
-      double decline) {
+  public FieldDevelopmentWorkflow setProductionTiming(int firstYear, int fieldLife, double plateau, double decline) {
     this.firstProductionYear = firstYear;
     this.fieldLifeYears = fieldLife;
     this.plateauYears = plateau;
@@ -566,17 +555,17 @@ public class FieldDevelopmentWorkflow implements Serializable {
     validateInputs();
 
     switch (fidelityLevel) {
-      case SCREENING:
-        lastResult = runScreening();
-        break;
-      case CONCEPTUAL:
-        lastResult = runConceptual();
-        break;
-      case DETAILED:
-        lastResult = runDetailed();
-        break;
-      default:
-        lastResult = runScreening();
+    case SCREENING:
+      lastResult = runScreening();
+      break;
+    case CONCEPTUAL:
+      lastResult = runConceptual();
+      break;
+    case DETAILED:
+      lastResult = runDetailed();
+      break;
+    default:
+      lastResult = runScreening();
     }
 
     return lastResult;
@@ -656,8 +645,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
       // Enhanced flow assurance with actual fluid - use default operating conditions
       FlowAssuranceScreener faScreener = new FlowAssuranceScreener();
       double minTemp = concept.isSubseaTieback() ? 4.0 : 15.0;
-      double pressure =
-          concept.getWells() != null ? concept.getWells().getTubeheadPressure() : 80.0;
+      double pressure = concept.getWells() != null ? concept.getWells().getTubeheadPressure() : 80.0;
       result.flowAssuranceResult = faScreener.screen(concept, minTemp, pressure);
     }
 
@@ -878,8 +866,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
     } else if (concept.isSubseaTieback()) {
       // Auto-create subsea system from concept for cost estimation
       SubseaProductionSystem autoSubsea = new SubseaProductionSystem(projectName + " Auto Subsea");
-      autoSubsea.setArchitecture(subseaArchitecture).setWaterDepthM(waterDepthM)
-          .setTiebackDistanceKm(tiebackDistanceKm)
+      autoSubsea.setArchitecture(subseaArchitecture).setWaterDepthM(waterDepthM).setTiebackDistanceKm(tiebackDistanceKm)
           .setWellCount(concept.getWells() != null ? concept.getWells().getProducerCount() : 2);
 
       // Get cost estimate (without running hydraulics)
@@ -925,8 +912,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
    * @param wellList the list of wells producing from the reservoir
    * @return map of year to annual production rate in Sm3/day
    */
-  private Map<Integer, Double> runReservoirDepletion(SimpleReservoir res,
-      List<WellSystem> wellList) {
+  private Map<Integer, Double> runReservoirDepletion(SimpleReservoir res, List<WellSystem> wellList) {
     Map<Integer, Double> profile = new HashMap<>();
 
     // Simple implementation - can be enhanced
@@ -963,8 +949,8 @@ public class FieldDevelopmentWorkflow implements Serializable {
    * @param countryCode tax jurisdiction
    * @return configured workflow
    */
-  public static FieldDevelopmentWorkflow quickGasTieback(String name, double giipGSm3,
-      double tiebackKm, int wellCount, double ratePerWellMSm3d, String countryCode) {
+  public static FieldDevelopmentWorkflow quickGasTieback(String name, double giipGSm3, double tiebackKm, int wellCount,
+      double ratePerWellMSm3d, String countryCode) {
     FieldConcept concept = FieldConcept.gasTieback(name, tiebackKm, wellCount, ratePerWellMSm3d);
     return new FieldDevelopmentWorkflow(name, concept).setCountryCode(countryCode)
         .setFidelityLevel(FidelityLevel.SCREENING);
@@ -980,8 +966,8 @@ public class FieldDevelopmentWorkflow implements Serializable {
    * @param countryCode tax jurisdiction
    * @return configured workflow
    */
-  public static FieldDevelopmentWorkflow quickOilDevelopment(String name, double stoiipMMbbl,
-      int wellCount, double ratePerWellBopd, String countryCode) {
+  public static FieldDevelopmentWorkflow quickOilDevelopment(String name, double stoiipMMbbl, int wellCount,
+      double ratePerWellBopd, String countryCode) {
     FieldConcept concept = FieldConcept.oilDevelopment(name, wellCount, ratePerWellBopd, 0.1);
     return new FieldDevelopmentWorkflow(name, concept).setCountryCode(countryCode)
         .setFidelityLevel(FidelityLevel.SCREENING);
@@ -1001,11 +987,9 @@ public class FieldDevelopmentWorkflow implements Serializable {
 
     for (FieldDevelopmentWorkflow wf : workflows) {
       WorkflowResult r = wf.run();
-      String risk =
-          r.flowAssuranceResult != null ? r.flowAssuranceResult.getOverallResult().toString()
-              : "N/A";
-      sb.append(String.format("| %s | %.0f | %.1f | %.1f | %.0f | %s |\n", wf.projectName, r.npv,
-          r.irr * 100, r.paybackYears, r.economicsReport.getTotalCapexMUSD(), risk));
+      String risk = r.flowAssuranceResult != null ? r.flowAssuranceResult.getOverallResult().toString() : "N/A";
+      sb.append(String.format("| %s | %.0f | %.1f | %.1f | %.0f | %s |\n", wf.projectName, r.npv, r.irr * 100,
+          r.paybackYears, r.economicsReport.getTotalCapexMUSD(), risk));
     }
 
     return sb.toString();
@@ -1121,8 +1105,7 @@ public class FieldDevelopmentWorkflow implements Serializable {
     // Calculate CO2 intensity (kg/boe)
     // Use gas production from profile if available
     if (result.gasProfile != null && !result.gasProfile.isEmpty()) {
-      double peakRateSm3d =
-          result.gasProfile.values().stream().mapToDouble(Double::doubleValue).max().orElse(0);
+      double peakRateSm3d = result.gasProfile.values().stream().mapToDouble(Double::doubleValue).max().orElse(0);
       double annualGasSm3 = peakRateSm3d * 365;
       double annualBoe = annualGasSm3 / 163.0; // 163 Sm3 gas = 1 boe
       if (annualBoe > 0) {
@@ -1169,16 +1152,16 @@ public class FieldDevelopmentWorkflow implements Serializable {
       return 500.0; // Default gas turbine
     }
     switch (supplyType.toUpperCase()) {
-      case "POWER_FROM_SHORE":
-        return gridEmissionFactor * 1000.0; // Convert from kg/kWh to kg/MWh
-      case "GAS_TURBINE":
-        return 500.0;
-      case "COMBINED_CYCLE":
-        return 350.0;
-      case "DIESEL":
-        return 600.0;
-      default:
-        return 500.0;
+    case "POWER_FROM_SHORE":
+      return gridEmissionFactor * 1000.0; // Convert from kg/kWh to kg/MWh
+    case "GAS_TURBINE":
+      return 500.0;
+    case "COMBINED_CYCLE":
+      return 350.0;
+    case "DIESEL":
+      return 600.0;
+    default:
+      return 500.0;
     }
   }
 }

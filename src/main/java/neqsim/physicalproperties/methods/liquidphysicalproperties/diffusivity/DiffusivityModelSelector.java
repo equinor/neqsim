@@ -9,8 +9,8 @@ import neqsim.thermo.phase.PhaseInterface;
  * Automatic diffusivity model selector for liquid phases.
  *
  * <p>
- * This class analyzes the fluid composition and conditions to select the most appropriate
- * diffusivity correlation. It considers:
+ * This class analyzes the fluid composition and conditions to select the most appropriate diffusivity correlation. It
+ * considers:
  * </p>
  * <ul>
  * <li>Pressure level (high pressure requires correction)</li>
@@ -46,6 +46,10 @@ public class DiffusivityModelSelector {
     SIDDIQI_LUCAS,
     /** Hayduk-Minhas for hydrocarbon systems. */
     HAYDUK_MINHAS,
+    /** Wilke-Chang for general liquid systems. */
+    WILKE_CHANG,
+    /** Tyn-Calus for non-polar / hydrocarbon systems. */
+    TYN_CALUS,
     /** High-pressure corrected model. */
     HIGH_PRESSURE_CORRECTED,
     /** Specialized amine diffusivity. */
@@ -59,7 +63,8 @@ public class DiffusivityModelSelector {
   /**
    * Private constructor to prevent instantiation.
    */
-  private DiffusivityModelSelector() {}
+  private DiffusivityModelSelector() {
+  }
 
   /**
    * Select the optimal diffusivity model based on phase composition and conditions.
@@ -73,8 +78,8 @@ public class DiffusivityModelSelector {
 
     // Validate temperature range
     if (temperature < T_MIN || temperature > T_MAX) {
-      logger.warn("Temperature {} K is outside validated range [{}-{}] for diffusivity models",
-          temperature, T_MIN, T_MAX);
+      logger.warn("Temperature {} K is outside validated range [{}-{}] for diffusivity models", temperature, T_MIN,
+          T_MAX);
     }
 
     // Check for special components
@@ -116,22 +121,25 @@ public class DiffusivityModelSelector {
    * @param modelType the model type to create
    * @return the diffusivity model instance
    */
-  public static Diffusivity createModel(PhysicalProperties liquidPhase,
-      DiffusivityModelType modelType) {
+  public static Diffusivity createModel(PhysicalProperties liquidPhase, DiffusivityModelType modelType) {
     switch (modelType) {
-      case SIDDIQI_LUCAS:
-        return new SiddiqiLucasMethod(liquidPhase);
-      case HAYDUK_MINHAS:
-        return new HaydukMinhasDiffusivity(liquidPhase);
-      case HIGH_PRESSURE_CORRECTED:
-        return new HighPressureDiffusivity(liquidPhase);
-      case AMINE:
-        return new AmineDiffusivity(liquidPhase);
-      case CO2_WATER:
-        return new CO2water(liquidPhase);
-      case CORRESPONDING_STATES:
-      default:
-        return new SiddiqiLucasMethod(liquidPhase);
+    case SIDDIQI_LUCAS:
+      return new SiddiqiLucasMethod(liquidPhase);
+    case HAYDUK_MINHAS:
+      return new HaydukMinhasDiffusivity(liquidPhase);
+    case WILKE_CHANG:
+      return new WilkeChangDiffusivity(liquidPhase);
+    case TYN_CALUS:
+      return new TynCalusDiffusivity(liquidPhase);
+    case HIGH_PRESSURE_CORRECTED:
+      return new HighPressureDiffusivity(liquidPhase);
+    case AMINE:
+      return new AmineDiffusivity(liquidPhase);
+    case CO2_WATER:
+      return new CO2water(liquidPhase);
+    case CORRESPONDING_STATES:
+    default:
+      return new SiddiqiLucasMethod(liquidPhase);
     }
   }
 
@@ -187,7 +195,7 @@ public class DiffusivityModelSelector {
    * @return true if amines are present
    */
   private static boolean hasAmineComponents(PhaseInterface phase) {
-    String[] amineNames = {"MDEA", "MDEA+", "MEA", "MEA+", "DEA", "DEA+", "MAPA", "Piperazine"};
+    String[] amineNames = { "MDEA", "MDEA+", "MEA", "MEA+", "DEA", "DEA+", "MAPA", "Piperazine" };
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       String name = phase.getComponent(i).getComponentName();
       for (String amine : amineNames) {
@@ -210,20 +218,20 @@ public class DiffusivityModelSelector {
     double pressure = phase.getPressure();
 
     switch (modelType) {
-      case AMINE:
-        return "Amine diffusivity model selected due to presence of amine components with CO2.";
-      case CO2_WATER:
-        return "CO2-water model selected for CO2 dissolution in aqueous phase.";
-      case HIGH_PRESSURE_CORRECTED:
-        return String.format(
-            "High-pressure corrected model selected due to pressure (%.1f bar) exceeding %.1f bar threshold.",
-            pressure, HIGH_PRESSURE_THRESHOLD);
-      case SIDDIQI_LUCAS:
-        return "Siddiqi-Lucas model selected for aqueous liquid phase (water > 50 mol%).";
-      case HAYDUK_MINHAS:
-        return "Hayduk-Minhas model selected for hydrocarbon liquid phase.";
-      default:
-        return "Default corresponding states model selected.";
+    case AMINE:
+      return "Amine diffusivity model selected due to presence of amine components with CO2.";
+    case CO2_WATER:
+      return "CO2-water model selected for CO2 dissolution in aqueous phase.";
+    case HIGH_PRESSURE_CORRECTED:
+      return String.format(
+          "High-pressure corrected model selected due to pressure (%.1f bar) exceeding %.1f bar threshold.", pressure,
+          HIGH_PRESSURE_THRESHOLD);
+    case SIDDIQI_LUCAS:
+      return "Siddiqi-Lucas model selected for aqueous liquid phase (water > 50 mol%).";
+    case HAYDUK_MINHAS:
+      return "Hayduk-Minhas model selected for hydrocarbon liquid phase.";
+    default:
+      return "Default corresponding states model selected.";
     }
   }
 }

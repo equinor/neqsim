@@ -4,8 +4,8 @@ package neqsim.process.mechanicaldesign;
  * Enumeration of design cases for process equipment sizing.
  *
  * <p>
- * Different operating scenarios require different sizing considerations. This enum defines standard
- * design cases used in field development projects.
+ * Different operating scenarios require different sizing considerations. This enum defines standard design cases used
+ * in field development projects.
  * </p>
  *
  * @author esol

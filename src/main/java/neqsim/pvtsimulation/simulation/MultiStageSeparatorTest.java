@@ -22,14 +22,14 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <p>
  * Typical usage:
- * 
+ *
  * <pre>
  * MultiStageSeparatorTest sepTest = new MultiStageSeparatorTest(reservoirFluid);
  * sepTest.addSeparatorStage(50.0, 40.0); // HP separator: 50 bara, 40°C
  * sepTest.addSeparatorStage(10.0, 30.0); // LP separator: 10 bara, 30°C
  * sepTest.addSeparatorStage(1.01325, 15.0); // Stock tank: 1 atm, 15°C
  * sepTest.run();
- * 
+ *
  * System.out.println("Total GOR: " + sepTest.getTotalGOR() + " Sm3/Sm3");
  * System.out.println("Bo: " + sepTest.getBo() + " m3/Sm3");
  * System.out.println("API: " + sepTest.getStockTankAPIGravity());
@@ -122,8 +122,7 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
      * @param pressure Stage pressure (bara)
      * @param temperature Stage temperature (°C)
      */
-    public SeparatorStageResult(int stageNumber, String stageName, double pressure,
-        double temperature) {
+    public SeparatorStageResult(int stageNumber, String stageName, double pressure, double temperature) {
       this.stageNumber = stageNumber;
       this.stageName = stageName;
       this.pressure = pressure;
@@ -188,8 +187,7 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
 
     @Override
     public String toString() {
-      return String.format(
-          "Stage %d (%s): P=%.1f bara, T=%.1f°C, GOR=%.1f Sm3/Sm3, ρ_oil=%.1f kg/m3", stageNumber,
+      return String.format("Stage %d (%s): P=%.1f bara, T=%.1f°C, GOR=%.1f Sm3/Sm3, ρ_oil=%.1f kg/m3", stageNumber,
           stageName, pressure, temperature, stageGOR, oilDensity);
     }
   }
@@ -258,8 +256,7 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
    * @param lpPressure LP separator pressure (bara)
    * @param lpTemperature LP separator temperature (°C)
    */
-  public void setTypicalThreeStage(double hpPressure, double hpTemperature, double lpPressure,
-      double lpTemperature) {
+  public void setTypicalThreeStage(double hpPressure, double hpTemperature, double lpPressure, double lpTemperature) {
     clearStages();
     addSeparatorStage(hpPressure, hpTemperature, "HP Separator");
     addSeparatorStage(lpPressure, lpTemperature, "LP Separator");
@@ -300,8 +297,8 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
     // Process each separator stage
     for (int i = 0; i < stages.size(); i++) {
       SeparatorStage stage = stages.get(i);
-      SeparatorStageResult result = new SeparatorStageResult(i + 1, stage.getName(),
-          stage.getPressure(), stage.getTemperature());
+      SeparatorStageResult result = new SeparatorStageResult(i + 1, stage.getName(), stage.getPressure(),
+          stage.getTemperature());
 
       // Flash to stage conditions
       currentFluid.setPressure(stage.getPressure());
@@ -340,8 +337,7 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
           result.oilMW = currentFluid.getMolarMass() * 1000;
           // Calculate oil viscosity (convert from Pa.s to cP by multiplying by 1000)
           currentFluid.initPhysicalProperties();
-          result.oilViscosity =
-              currentFluid.getPhase(0).getPhysicalProperties().getViscosity() * 1000.0;
+          result.oilViscosity = currentFluid.getPhase(0).getPhysicalProperties().getViscosity() * 1000.0;
         } else if (currentFluid.getNumberOfPhases() > 1) {
           // For gas condensates: liquid may not be labeled as "oil"
           // Get the non-gas phase (liquid/condensate)
@@ -351,10 +347,10 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
               ops = new ThermodynamicOperations(currentFluid);
               result.oilDensity = currentFluid.getDensity("kg/m3");
               result.oilMW = currentFluid.getMolarMass() * 1000;
-              // Calculate oil viscosity (convert from Pa.s to cP by multiplying by 1000)
+              // Calculate oil viscosity (convert from Pa.s to cP by
+              // multiplying by 1000)
               currentFluid.initPhysicalProperties();
-              result.oilViscosity =
-                  currentFluid.getPhase(0).getPhysicalProperties().getViscosity() * 1000.0;
+              result.oilViscosity = currentFluid.getPhase(0).getPhysicalProperties().getViscosity() * 1000.0;
               break;
             }
           }
@@ -383,8 +379,7 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
         result.oilMW = currentFluid.getMolarMass() * 1000;
         // Calculate oil viscosity (convert from Pa.s to cP by multiplying by 1000)
         currentFluid.initPhysicalProperties();
-        result.oilViscosity =
-            currentFluid.getPhase(0).getPhysicalProperties().getViscosity() * 1000.0;
+        result.oilViscosity = currentFluid.getPhase(0).getPhysicalProperties().getViscosity() * 1000.0;
       }
 
       // For last stage (stock tank), calculate stock tank oil volume and properties
@@ -523,16 +518,14 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
     sb.append(String.format("Number of Stages: %d\n\n", stages.size()));
 
     sb.append("Stage-by-Stage Results:\n");
-    sb.append(String.format("%-20s %10s %10s %12s %12s %12s\n", "Stage", "P (bara)", "T (°C)",
-        "GOR", "Cum GOR", "ρ_oil"));
-    sb.append(String.format("%-20s %10s %10s %12s %12s %12s\n", "", "", "", "(Sm3/Sm3)",
-        "(Sm3/Sm3)", "(kg/m3)"));
+    sb.append(
+        String.format("%-20s %10s %10s %12s %12s %12s\n", "Stage", "P (bara)", "T (°C)", "GOR", "Cum GOR", "ρ_oil"));
+    sb.append(String.format("%-20s %10s %10s %12s %12s %12s\n", "", "", "", "(Sm3/Sm3)", "(Sm3/Sm3)", "(kg/m3)"));
     sb.append(StringUtils.repeat("-", 78) + "\n");
 
     for (SeparatorStageResult r : results) {
-      sb.append(String.format("%-20s %10.1f %10.1f %12.1f %12.1f %12.1f\n", r.getStageName(),
-          r.getPressure(), r.getTemperature(), r.getStageGOR(), r.getCumulativeGOR(),
-          r.getOilDensity()));
+      sb.append(String.format("%-20s %10.1f %10.1f %12.1f %12.1f %12.1f\n", r.getStageName(), r.getPressure(),
+          r.getTemperature(), r.getStageGOR(), r.getCumulativeGOR(), r.getOilDensity()));
     }
 
     sb.append("\nOverall Results:\n");
@@ -565,8 +558,8 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
      * @param bo Bo at optimum conditions
      * @param api API gravity at optimum conditions
      */
-    public OptimizationResult(double optPressure, double optTemp, double maxRecovery, double gor,
-        double bo, double api) {
+    public OptimizationResult(double optPressure, double optTemp, double maxRecovery, double gor, double bo,
+        double api) {
       this.optimalPressure = optPressure;
       this.optimalTemperature = optTemp;
       this.maximumOilRecovery = maxRecovery;
@@ -601,10 +594,8 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
 
     @Override
     public String toString() {
-      return String.format(
-          "Optimal P=%.1f bara, T=%.1f°C, Recovery=%.4f, GOR=%.1f, Bo=%.4f, API=%.1f",
-          optimalPressure, optimalTemperature, maximumOilRecovery, gorAtOptimum, boAtOptimum,
-          apiAtOptimum);
+      return String.format("Optimal P=%.1f bara, T=%.1f°C, Recovery=%.4f, GOR=%.1f, Bo=%.4f, API=%.1f", optimalPressure,
+          optimalTemperature, maximumOilRecovery, gorAtOptimum, boAtOptimum, apiAtOptimum);
     }
   }
 
@@ -612,9 +603,9 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
    * Find optimal first-stage separator conditions to maximize stock tank oil recovery.
    *
    * <p>
-   * This method performs a grid search over pressure and temperature ranges to find the separator
-   * conditions that maximize stock tank oil volume (minimize shrinkage). The optimization uses the
-   * current multi-stage configuration with the first stage conditions varied.
+   * This method performs a grid search over pressure and temperature ranges to find the separator conditions that
+   * maximize stock tank oil volume (minimize shrinkage). The optimization uses the current multi-stage configuration
+   * with the first stage conditions varied.
    * </p>
    *
    * @param minPressure Minimum separator pressure to search (bara)
@@ -625,8 +616,8 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
    * @param temperatureSteps Number of temperature steps in search grid
    * @return OptimizationResult containing optimal conditions and corresponding properties
    */
-  public OptimizationResult optimizeFirstStageSeparator(double minPressure, double maxPressure,
-      int pressureSteps, double minTemperature, double maxTemperature, int temperatureSteps) {
+  public OptimizationResult optimizeFirstStageSeparator(double minPressure, double maxPressure, int pressureSteps,
+      double minTemperature, double maxTemperature, int temperatureSteps) {
     if (stages.isEmpty()) {
       throw new IllegalStateException("No separator stages defined. Add at least one stage first.");
     }
@@ -652,8 +643,7 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
         double testTemperature = minTemperature + ti * dT;
 
         // Replace first stage with test conditions
-        stages.set(0,
-            new SeparatorStage(testPressure, testTemperature, originalFirstStage.getName()));
+        stages.set(0, new SeparatorStage(testPressure, testTemperature, originalFirstStage.getName()));
 
         // Reset fluid and run separator test
         setThermoSystem(originalFluid.clone());
@@ -681,8 +671,7 @@ public class MultiStageSeparatorTest extends BasePVTsimulation {
 
     double recoveryFactor = 1.0 / bestBo; // Sm3 stock tank oil per rm3 reservoir oil
 
-    return new OptimizationResult(bestPressure, bestTemperature, recoveryFactor, bestGOR, bestBo,
-        bestAPI);
+    return new OptimizationResult(bestPressure, bestTemperature, recoveryFactor, bestGOR, bestBo, bestAPI);
   }
 
   /**

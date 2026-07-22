@@ -9,8 +9,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Calculates the asphaltene onset temperature at a given pressure.
  *
  * <p>
- * The asphaltene onset temperature (AOT) is the temperature at which asphaltenes begin to
- * precipitate from the oil phase at a fixed pressure. This is useful for:
+ * The asphaltene onset temperature (AOT) is the temperature at which asphaltenes begin to precipitate from the oil
+ * phase at a fixed pressure. This is useful for:
  * </p>
  * <ul>
  * <li>Cold flow scenarios where temperature drops during production</li>
@@ -19,8 +19,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <p>
- * Note: Asphaltene precipitation is primarily pressure-driven (near bubble point), but temperature
- * effects can be significant in some fluids, particularly heavy oils.
+ * Note: Asphaltene precipitation is primarily pressure-driven (near bubble point), but temperature effects can be
+ * significant in some fluids, particularly heavy oils.
  * </p>
  *
  * @author ASMF
@@ -78,8 +78,8 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
    * @param minTemperature minimum temperature to search to (K)
    * @param maxTemperature maximum temperature to search to (K)
    */
-  public AsphalteneOnsetTemperatureFlash(SystemInterface system, double startTemperature,
-      double minTemperature, double maxTemperature) {
+  public AsphalteneOnsetTemperatureFlash(SystemInterface system, double startTemperature, double minTemperature,
+      double maxTemperature) {
     super(system);
     this.startTemperature = startTemperature;
     this.minTemperature = minTemperature;
@@ -113,8 +113,7 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
     double direction = searchDecreasing ? -1.0 : 1.0;
     double limitTemp = searchDecreasing ? minTemperature : maxTemperature;
 
-    while ((searchDecreasing ? currentTemp > limitTemp : currentTemp < limitTemp)
-        && iteration < MAX_ITERATIONS) {
+    while ((searchDecreasing ? currentTemp > limitTemp : currentTemp < limitTemp) && iteration < MAX_ITERATIONS) {
       iteration++;
       system.setTemperature(currentTemp);
 
@@ -146,8 +145,7 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
     }
 
     if (!onsetFound) {
-      logger.info("No asphaltene onset found in temperature range {} to {} K", startTemperature,
-          limitTemp);
+      logger.info("No asphaltene onset found in temperature range {} to {} K", startTemperature, limitTemp);
       onsetTemperature = Double.NaN;
     } else {
       logger.info("Asphaltene onset temperature: {} K ({} C) at P = {} bara", onsetTemperature,
@@ -254,20 +252,20 @@ public class AsphalteneOnsetTemperatureFlash extends ConstantDutyFlash {
     }
 
     switch (unit.toUpperCase()) {
-      case "K":
-      case "KELVIN":
-        return onsetTemperature;
-      case "C":
-      case "CELSIUS":
-        return onsetTemperature - 273.15;
-      case "F":
-      case "FAHRENHEIT":
-        return (onsetTemperature - 273.15) * 9.0 / 5.0 + 32.0;
-      case "R":
-      case "RANKINE":
-        return onsetTemperature * 1.8;
-      default:
-        return onsetTemperature;
+    case "K":
+    case "KELVIN":
+      return onsetTemperature;
+    case "C":
+    case "CELSIUS":
+      return onsetTemperature - 273.15;
+    case "F":
+    case "FAHRENHEIT":
+      return (onsetTemperature - 273.15) * 9.0 / 5.0 + 32.0;
+    case "R":
+    case "RANKINE":
+      return onsetTemperature * 1.8;
+    default:
+      return onsetTemperature;
     }
   }
 

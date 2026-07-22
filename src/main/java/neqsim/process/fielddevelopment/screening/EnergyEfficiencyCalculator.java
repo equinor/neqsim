@@ -53,7 +53,7 @@ import neqsim.process.fielddevelopment.facility.FacilityConfig;
  * </table>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * EnergyEfficiencyCalculator calc = new EnergyEfficiencyCalculator();
  * calc.setOilProduction(10000, "bbl/day");
@@ -63,9 +63,9 @@ import neqsim.process.fielddevelopment.facility.FacilityConfig;
  * calc.setPumpPower(1000, "kW");
  * calc.setHeatingDuty(8000, "kW");
  * calc.setFlaringRate(0.05, "MMSm3/day");
- * 
+ *
  * EnergyReport report = calc.calculate();
- * 
+ *
  * System.out.println("SEC: " + report.getSpecificEnergyConsumption() + " kWh/boe");
  * System.out.println("EEI: " + report.getEnergyEfficiencyIndex());
  * System.out.println("Potential savings: " + report.getPotentialSavings() + " MW");
@@ -169,8 +169,7 @@ public class EnergyEfficiencyCalculator implements Serializable {
     report.totalProductionBoePerDay = totalProductionBoe;
 
     // Total power consumption
-    double totalPowerKW =
-        compressorPowerKW + pumpPowerKW + rotatingEquipmentPowerKW + electricalLoadKW;
+    double totalPowerKW = compressorPowerKW + pumpPowerKW + rotatingEquipmentPowerKW + electricalLoadKW;
     report.totalElectricPowerKW = totalPowerKW;
 
     // Total thermal load
@@ -196,8 +195,7 @@ public class EnergyEfficiencyCalculator implements Serializable {
     report.powerBreakdown.put("Electrical Load", electricalLoadKW);
 
     // Fuel consumption (if gas turbine driven)
-    if (primaryDriverType == DriverType.GAS_TURBINE
-        || primaryDriverType == DriverType.COMBINED_CYCLE) {
+    if (primaryDriverType == DriverType.GAS_TURBINE || primaryDriverType == DriverType.COMBINED_CYCLE) {
       double turbineEfficiency = primaryDriverType == DriverType.COMBINED_CYCLE ? 0.50 : 0.35;
       double fuelEnergyKW = totalPowerKW / turbineEfficiency;
       // Natural gas: ~35 MJ/Sm3
@@ -264,23 +262,21 @@ public class EnergyEfficiencyCalculator implements Serializable {
     }
 
     // Set facility type from processing location
-    if (concept.getInfrastructure() != null
-        && concept.getInfrastructure().getProcessingLocation() != null) {
-      InfrastructureInput.ProcessingLocation location =
-          concept.getInfrastructure().getProcessingLocation();
+    if (concept.getInfrastructure() != null && concept.getInfrastructure().getProcessingLocation() != null) {
+      InfrastructureInput.ProcessingLocation location = concept.getInfrastructure().getProcessingLocation();
       switch (location) {
-        case FPSO:
-          this.facilityType = FacilityType.FPSO;
-          break;
-        case SUBSEA:
-          this.facilityType = FacilityType.SUBSEA;
-          break;
-        case ONSHORE:
-          this.facilityType = FacilityType.ONSHORE;
-          break;
-        default:
-          this.facilityType = FacilityType.PLATFORM;
-          break;
+      case FPSO:
+        this.facilityType = FacilityType.FPSO;
+        break;
+      case SUBSEA:
+        this.facilityType = FacilityType.SUBSEA;
+        break;
+      case ONSHORE:
+        this.facilityType = FacilityType.ONSHORE;
+        break;
+      default:
+        this.facilityType = FacilityType.PLATFORM;
+        break;
       }
     }
 
@@ -312,15 +308,15 @@ public class EnergyEfficiencyCalculator implements Serializable {
    */
   private double getReferenceSEC() {
     switch (facilityType) {
-      case FPSO:
-        return REFERENCE_SEC_FPSO;
-      case SUBSEA:
-        return REFERENCE_SEC_SUBSEA;
-      case ONSHORE:
-        return REFERENCE_SEC_PLATFORM * 0.8; // Onshore typically more efficient
-      case PLATFORM:
-      default:
-        return REFERENCE_SEC_PLATFORM;
+    case FPSO:
+      return REFERENCE_SEC_FPSO;
+    case SUBSEA:
+      return REFERENCE_SEC_SUBSEA;
+    case ONSHORE:
+      return REFERENCE_SEC_PLATFORM * 0.8; // Onshore typically more efficient
+    case PLATFORM:
+    default:
+      return REFERENCE_SEC_PLATFORM;
     }
   }
 
@@ -394,8 +390,7 @@ public class EnergyEfficiencyCalculator implements Serializable {
 
     // Potential heat recovery
     double recoverableFraction = hasWasteHeatRecovery ? wasteHeatRecoveryEfficiency : 0.5;
-    report.potentialHeatRecoveryKW =
-        Math.min(totalWasteHeat * recoverableFraction, totalHeatDemand);
+    report.potentialHeatRecoveryKW = Math.min(totalWasteHeat * recoverableFraction, totalHeatDemand);
   }
 
   /**
@@ -406,8 +401,8 @@ public class EnergyEfficiencyCalculator implements Serializable {
   private void generateRecommendations(EnergyReport report) {
     // Compressor upgrade potential
     if (compressorEfficiency < REFERENCE_COMPRESSOR_EFFICIENCY) {
-      double potentialSavings = compressorPowerKW
-          * (REFERENCE_COMPRESSOR_EFFICIENCY - compressorEfficiency) / compressorEfficiency;
+      double potentialSavings = compressorPowerKW * (REFERENCE_COMPRESSOR_EFFICIENCY - compressorEfficiency)
+          / compressorEfficiency;
       Recommendation rec = new Recommendation();
       rec.category = "Compression";
       rec.description = "Upgrade compressors to higher efficiency";
@@ -419,8 +414,7 @@ public class EnergyEfficiencyCalculator implements Serializable {
 
     // Pump upgrade potential
     if (pumpEfficiency < REFERENCE_PUMP_EFFICIENCY) {
-      double potentialSavings =
-          pumpPowerKW * (REFERENCE_PUMP_EFFICIENCY - pumpEfficiency) / pumpEfficiency;
+      double potentialSavings = pumpPowerKW * (REFERENCE_PUMP_EFFICIENCY - pumpEfficiency) / pumpEfficiency;
       Recommendation rec = new Recommendation();
       rec.category = "Pumping";
       rec.description = "Upgrade pumps to higher efficiency";
@@ -793,12 +787,9 @@ public class EnergyEfficiencyCalculator implements Serializable {
       sb.append("Energy Efficiency Report\n");
       sb.append("========================\n");
       sb.append(String.format("Production: %.0f boe/day%n", totalProductionBoePerDay));
-      sb.append(String.format("Total Power: %.0f kW (%.1f MW)%n", totalElectricPowerKW,
-          totalElectricPowerKW / 1000));
-      sb.append(String.format("SEC: %.1f kWh/boe (Reference: %.1f)%n", specificEnergyConsumption,
-          referenceSEC));
-      sb.append(
-          String.format("EEI: %.2f (Rating: %s)%n", energyEfficiencyIndex, getEfficiencyRating()));
+      sb.append(String.format("Total Power: %.0f kW (%.1f MW)%n", totalElectricPowerKW, totalElectricPowerKW / 1000));
+      sb.append(String.format("SEC: %.1f kWh/boe (Reference: %.1f)%n", specificEnergyConsumption, referenceSEC));
+      sb.append(String.format("EEI: %.2f (Rating: %s)%n", energyEfficiencyIndex, getEfficiencyRating()));
       sb.append(String.format("Flaring Intensity: %.2f Sm3/boe%n", flaringIntensity));
       sb.append(String.format("Energy Losses: %.0f kW%n", totalEnergyLossKW));
       sb.append(String.format("Potential Savings: %.0f kW%n", totalPotentialSavingsKW));

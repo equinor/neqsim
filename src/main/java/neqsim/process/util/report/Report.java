@@ -18,9 +18,7 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Report class.
- * </p>
  *
  * @author even
  * @version $Id: $Id
@@ -34,9 +32,7 @@ public class Report {
   SystemInterface fluid = null;
 
   /**
-   * <p>
    * Constructor for Report.
-   * </p>
    *
    * @param process a {@link neqsim.process.processmodel.ProcessSystem} object
    */
@@ -45,9 +41,7 @@ public class Report {
   }
 
   /**
-   * <p>
    * Constructor for Report.
-   * </p>
    *
    * @param processmodel a {@link neqsim.process.processmodel.ProcessModel} object
    */
@@ -56,9 +50,7 @@ public class Report {
   }
 
   /**
-   * <p>
    * Constructor for Report.
-   * </p>
    *
    * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -67,21 +59,16 @@ public class Report {
   }
 
   /**
-   * <p>
    * Constructor for Report.
-   * </p>
    *
-   * @param processEquipmentBaseClass a {@link neqsim.process.equipment.ProcessEquipmentBaseClass}
-   *        object
+   * @param processEquipmentBaseClass a {@link neqsim.process.equipment.ProcessEquipmentBaseClass} object
    */
   public Report(ProcessEquipmentBaseClass processEquipmentBaseClass) {
     processEquipment = processEquipmentBaseClass;
   }
 
   /**
-   * <p>
    * Constructor for Report.
-   * </p>
    *
    * @param processModule a {@link neqsim.process.processmodel.ProcessModule} object
    */
@@ -90,21 +77,16 @@ public class Report {
   }
 
   /**
-   * <p>
    * Constructor for Report.
-   * </p>
    *
-   * @param processModuleBaseClass a {@link neqsim.process.processmodel.ProcessModuleBaseClass}
-   *        object
+   * @param processModuleBaseClass a {@link neqsim.process.processmodel.ProcessModuleBaseClass} object
    */
   public Report(ProcessModuleBaseClass processModuleBaseClass) {
     // TODO Auto-generated constructor stub
   }
 
   /**
-   * <p>
    * generateJsonReport.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -123,9 +105,16 @@ public class Report {
 
     if (process != null) {
       for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
-        String unitJson = unit.toJson(cfg);
-        if (unitJson != null) {
-          json_reports.put(unit.getName(), unitJson);
+        // Guard per unit: a single unit that fails to serialize (e.g. a
+        // zero-mass stream that cannot be converted to J/kg) must not abort the
+        // whole report. Skip it with a log warning and continue.
+        try {
+          String unitJson = unit.toJson(cfg);
+          if (unitJson != null) {
+            json_reports.put(unit.getName(), unitJson);
+          }
+        } catch (Exception unitEx) {
+          logger.warn("Skipping report for unit '" + unit.getName() + "': " + unitEx.getMessage());
         }
       }
     }
@@ -169,14 +158,12 @@ public class Report {
 
         // Safely serialize the JSON using Gson with support for NaN and Infinity
         try {
-          Gson prettyGson =
-              new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+          Gson prettyGson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
 
           String jsonString = prettyGson.toJson(processJson);
           json_reports.put(process.getName(), jsonString);
         } catch (Exception ex) {
-          logger.error(
-              "Error converting final JSON object to string for process: " + process.getName(), ex);
+          logger.error("Error converting final JSON object to string for process: " + process.getName(), ex);
         }
       }
     }
@@ -203,8 +190,7 @@ public class Report {
     }
 
     // Convert the final JsonObject to a JSON string with pretty printing
-    Gson prettyGson =
-        new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+    Gson prettyGson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
     return prettyGson.toJson(finalJsonObject);
   }
 }

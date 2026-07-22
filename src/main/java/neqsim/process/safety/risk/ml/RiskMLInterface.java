@@ -12,8 +12,8 @@ import com.google.gson.GsonBuilder;
  * Machine Learning Integration Interface for Risk Assessment.
  *
  * <p>
- * Provides a standardized interface for integrating external machine learning models with the
- * NeqSim risk framework. Supports various ML use cases including:
+ * Provides a standardized interface for integrating external machine learning models with the NeqSim risk framework.
+ * Supports various ML use cases including:
  * </p>
  * <ul>
  * <li>Failure prediction models</li>
@@ -36,7 +36,7 @@ public class RiskMLInterface implements Serializable {
   private Map<String, MLModel> models;
 
   /** Feature extractors. */
-  private Map<String, FeatureExtractor> featureExtractors;
+  private transient Map<String, FeatureExtractor> featureExtractors;
 
   /** Prediction history. */
   private List<PredictionRecord> predictionHistory;
@@ -316,8 +316,7 @@ public class RiskMLInterface implements Serializable {
      * @param prediction predicted value
      * @param timestamp timestamp of prediction
      */
-    public PredictionRecord(String modelId, Map<String, Double> features, double prediction,
-        Instant timestamp) {
+    public PredictionRecord(String modelId, Map<String, Double> features, double prediction, Instant timestamp) {
       this.modelId = modelId;
       this.timestamp = timestamp;
       this.features = new HashMap<>(features);
@@ -467,8 +466,7 @@ public class RiskMLInterface implements Serializable {
    * @param processData raw process data
    * @return prediction result
    */
-  public MLPrediction predictWithExtraction(String modelId, String extractorName,
-      Map<String, Object> processData) {
+  public MLPrediction predictWithExtraction(String modelId, String extractorName, Map<String, Object> processData) {
     FeatureExtractor extractor = featureExtractors.get(extractorName);
     if (extractor == null) {
       throw new IllegalArgumentException("Feature extractor not found: " + extractorName);
@@ -633,13 +631,11 @@ public class RiskMLInterface implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   @Override
   public String toString() {
-    return String.format("RiskMLInterface[%s, models=%d, active=%d]", name, models.size(),
-        getActiveModels().size());
+    return String.format("RiskMLInterface[%s, models=%d, active=%d]", name, models.size(), getActiveModels().size());
   }
 }

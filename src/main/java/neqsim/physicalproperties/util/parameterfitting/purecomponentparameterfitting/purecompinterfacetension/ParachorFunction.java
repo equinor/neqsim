@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
 /**
- * <p>
  * ParachorFunction class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class ParachorFunction extends LevenbergMarquardtFunction {
   static Logger logger = LogManager.getLogger(ParachorFunction.class);
 
   /**
-   * <p>
    * Constructor for ParachorFunction.
-   * </p>
    */
   public ParachorFunction() {
     params = new double[1];

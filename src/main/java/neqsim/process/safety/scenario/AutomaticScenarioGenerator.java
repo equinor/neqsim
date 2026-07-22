@@ -32,7 +32,7 @@ import neqsim.process.safety.ProcessSafetyScenario;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * ProcessSystem process = new ProcessSystem();
  * // ... configure process ...
@@ -40,8 +40,8 @@ import neqsim.process.safety.ProcessSafetyScenario;
  * AutomaticScenarioGenerator generator = new AutomaticScenarioGenerator(process);
  *
  * // Generate all single-failure scenarios
- * List&lt;ProcessSafetyScenario&gt; scenarios = generator
- *     .addFailureModes(FailureMode.COOLING_LOSS, FailureMode.VALVE_STUCK).generateSingleFailures();
+ * List&lt;ProcessSafetyScenario&gt; scenarios = generator.addFailureModes(FailureMode.COOLING_LOSS, FailureMode.VALVE_STUCK)
+ *     .generateSingleFailures();
  *
  * // Generate combination scenarios (up to 2 simultaneous failures)
  * List&lt;ProcessSafetyScenario&gt; combinations = generator.generateCombinations(2);
@@ -132,7 +132,8 @@ public class AutomaticScenarioGenerator implements Serializable {
    * Standard HAZOP deviation types.
    */
   public enum HazopDeviation {
-    NO_FLOW, LESS_FLOW, MORE_FLOW, REVERSE_FLOW, HIGH_PRESSURE, LOW_PRESSURE, LESS_PRESSURE, HIGH_TEMPERATURE, LOW_TEMPERATURE, HIGH_LEVEL, LOW_LEVEL, CONTAMINATION, CORROSION, OTHER
+    NO_FLOW, LESS_FLOW, MORE_FLOW, REVERSE_FLOW, HIGH_PRESSURE, LOW_PRESSURE, LESS_PRESSURE, HIGH_TEMPERATURE,
+    LOW_TEMPERATURE, HIGH_LEVEL, LOW_LEVEL, CONTAMINATION, CORROSION, OTHER
   }
 
   /**
@@ -211,8 +212,7 @@ public class AutomaticScenarioGenerator implements Serializable {
     if (maxCombinationSize >= 2) {
       for (int i = 0; i < enabledFailures.size(); i++) {
         for (int j = i + 1; j < enabledFailures.size(); j++) {
-          ProcessSafetyScenario combo =
-              createCombinationScenario(enabledFailures.get(i), enabledFailures.get(j));
+          ProcessSafetyScenario combo = createCombinationScenario(enabledFailures.get(i), enabledFailures.get(j));
           if (combo != null) {
             scenarios.add(combo);
           }
@@ -225,8 +225,8 @@ public class AutomaticScenarioGenerator implements Serializable {
       for (int i = 0; i < enabledFailures.size(); i++) {
         for (int j = i + 1; j < enabledFailures.size(); j++) {
           for (int k = j + 1; k < enabledFailures.size(); k++) {
-            ProcessSafetyScenario combo = createCombinationScenario(enabledFailures.get(i),
-                enabledFailures.get(j), enabledFailures.get(k));
+            ProcessSafetyScenario combo = createCombinationScenario(enabledFailures.get(i), enabledFailures.get(j),
+                enabledFailures.get(k));
             if (combo != null) {
               scenarios.add(combo);
             }
@@ -266,8 +266,7 @@ public class AutomaticScenarioGenerator implements Serializable {
 
     sb.append("By Equipment Type:\n");
     for (Map.Entry<String, Integer> entry : countByType.entrySet()) {
-      sb.append("  ").append(entry.getKey()).append(": ").append(entry.getValue())
-          .append(" failure modes\n");
+      sb.append("  ").append(entry.getKey()).append(": ").append(entry.getValue()).append(" failure modes\n");
     }
 
     return sb.toString();
@@ -329,49 +328,49 @@ public class AutomaticScenarioGenerator implements Serializable {
 
     // Add appropriate manipulator based on failure mode
     switch (failure.mode) {
-      case VALVE_STUCK_CLOSED:
-        builder.customManipulator(failure.equipmentName, eq -> {
-          if (eq instanceof ValveInterface) {
-            ((ValveInterface) eq).setPercentValveOpening(0.0);
-          }
-        });
-        break;
+    case VALVE_STUCK_CLOSED:
+      builder.customManipulator(failure.equipmentName, eq -> {
+        if (eq instanceof ValveInterface) {
+          ((ValveInterface) eq).setPercentValveOpening(0.0);
+        }
+      });
+      break;
 
-      case VALVE_STUCK_OPEN:
-        builder.customManipulator(failure.equipmentName, eq -> {
-          if (eq instanceof ValveInterface) {
-            ((ValveInterface) eq).setPercentValveOpening(100.0);
-          }
-        });
-        break;
+    case VALVE_STUCK_OPEN:
+      builder.customManipulator(failure.equipmentName, eq -> {
+        if (eq instanceof ValveInterface) {
+          ((ValveInterface) eq).setPercentValveOpening(100.0);
+        }
+      });
+      break;
 
-      case COOLING_LOSS:
-        builder.customManipulator(failure.equipmentName, eq -> {
-          if (eq instanceof Cooler) {
-            ((Cooler) eq).setDuty(0.0);
-          }
-        });
-        break;
+    case COOLING_LOSS:
+      builder.customManipulator(failure.equipmentName, eq -> {
+        if (eq instanceof Cooler) {
+          ((Cooler) eq).setDuty(0.0);
+        }
+      });
+      break;
 
-      case HEATING_LOSS:
-        builder.customManipulator(failure.equipmentName, eq -> {
-          if (eq instanceof Heater) {
-            ((Heater) eq).setDuty(0.0);
-          }
-        });
-        break;
+    case HEATING_LOSS:
+      builder.customManipulator(failure.equipmentName, eq -> {
+        if (eq instanceof Heater) {
+          ((Heater) eq).setDuty(0.0);
+        }
+      });
+      break;
 
-      case COMPRESSOR_TRIP:
-        // Compressor trip would require flow bypass or shutdown logic
-        break;
+    case COMPRESSOR_TRIP:
+      // Compressor trip would require flow bypass or shutdown logic
+      break;
 
-      case PUMP_TRIP:
-        // Pump trip would require flow bypass or shutdown logic
-        break;
+    case PUMP_TRIP:
+      // Pump trip would require flow bypass or shutdown logic
+      break;
 
-      default:
-        // Other failure modes may need custom handling
-        break;
+    default:
+      // Other failure modes may need custom handling
+      break;
     }
 
     return builder.build();
@@ -383,8 +382,7 @@ public class AutomaticScenarioGenerator implements Serializable {
       if (i > 0) {
         nameBuilder.append(" + ");
       }
-      nameBuilder.append(failures[i].equipmentName).append(" ")
-          .append(failures[i].mode.getDescription());
+      nameBuilder.append(failures[i].equipmentName).append(" ").append(failures[i].mode.getDescription());
     }
 
     ProcessSafetyScenario.Builder builder = ProcessSafetyScenario.builder(nameBuilder.toString());
@@ -450,8 +448,7 @@ public class AutomaticScenarioGenerator implements Serializable {
      * @param resultValues key result values captured
      * @param executionTimeMs execution time in milliseconds
      */
-    public ScenarioRunResult(ProcessSafetyScenario scenario, Map<String, Double> resultValues,
-        long executionTimeMs) {
+    public ScenarioRunResult(ProcessSafetyScenario scenario, Map<String, Double> resultValues, long executionTimeMs) {
       this.scenario = scenario;
       this.successful = true;
       this.errorMessage = null;
@@ -466,8 +463,7 @@ public class AutomaticScenarioGenerator implements Serializable {
      * @param errorMessage the error that occurred
      * @param executionTimeMs execution time in milliseconds
      */
-    public ScenarioRunResult(ProcessSafetyScenario scenario, String errorMessage,
-        long executionTimeMs) {
+    public ScenarioRunResult(ProcessSafetyScenario scenario, String errorMessage, long executionTimeMs) {
       this.scenario = scenario;
       this.successful = false;
       this.errorMessage = errorMessage;
@@ -500,8 +496,8 @@ public class AutomaticScenarioGenerator implements Serializable {
    * Runs all generated scenarios and collects results.
    *
    * <p>
-   * This method runs each scenario on a copy of the process system and captures key result values.
-   * Scenarios that fail to converge are recorded with their error messages.
+   * This method runs each scenario on a copy of the process system and captures key result values. Scenarios that fail
+   * to converge are recorded with their error messages.
    *
    * @param scenarios list of scenarios to run
    * @return list of results for each scenario
@@ -594,8 +590,8 @@ public class AutomaticScenarioGenerator implements Serializable {
       sb.append("Failed Scenarios:\n");
       for (ScenarioRunResult result : results) {
         if (!result.isSuccessful()) {
-          sb.append("  - ").append(result.getScenario().getName()).append(": ")
-              .append(result.getErrorMessage()).append("\n");
+          sb.append("  - ").append(result.getScenario().getName()).append(": ").append(result.getErrorMessage())
+              .append("\n");
         }
       }
     }

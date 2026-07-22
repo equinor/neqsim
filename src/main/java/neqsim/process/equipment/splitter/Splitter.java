@@ -1,10 +1,15 @@
 package neqsim.process.equipment.splitter;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.UUID;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
 import com.google.gson.GsonBuilder;
+
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.mixer.Mixer;
@@ -12,34 +17,36 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.splitter.SplitterMechanicalDesign;
-import neqsim.thermo.system.SystemInterface;
 import neqsim.process.util.monitor.SplitterResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Splitter class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Splitter extends ProcessEquipmentBaseClass
-    implements SplitterInterface, CapacityConstrainedEquipment {
+public class Splitter extends ProcessEquipmentBaseClass implements SplitterInterface, CapacityConstrainedEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(Splitter.class);
 
+  /**
+   * Sentinel value for {@link #setFlowRates(double[], String)} marking an outlet that receives the remaining
+   * (undetermined) inlet flow after the fixed outlets are met.
+   */
+  public static final double REMAINDER = -1.0;
+
   /** Mechanical design for the splitter. */
   private SplitterMechanicalDesign mechanicalDesign;
 
   /** Splitter capacity constraints map. */
-  private java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> splitterCapacityConstraints =
-      new java.util.LinkedHashMap<String, neqsim.process.equipment.capacity.CapacityConstraint>();
+  private java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> splitterCapacityConstraints = new java.util.LinkedHashMap<String, neqsim.process.equipment.capacity.CapacityConstraint>();
 
   /** Whether capacity analysis is enabled. */
   private boolean splitterCapacityAnalysisEnabled = false;
@@ -101,9 +108,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>inletStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -112,9 +117,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Constructor for Splitter.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -138,9 +141,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * setSplitFactors.
-   * </p>
    *
    * @param splitFact an array of type double
    */
@@ -162,9 +163,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * setFlowRates.
-   * </p>
    *
    * @param flowRates an array of type double
    * @param flowUnit a {@link java.lang.String} object
@@ -183,31 +182,118 @@ public class Splitter extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
+   * Gets the configured outlet flow rates used to calculate split factors.
+   *
+   * @return a copy of the configured flow rates, or null if the splitter uses fixed split factors
+   */
+  public double[] getFlowRates() {
+    return flowRates == null ? null : Arrays.copyOf(flowRates, flowRates.length);
+  }
+
+  /**
+   * Gets the unit used for configured outlet flow rates.
+   *
+   * @return the flow-rate unit string used by {@link #setFlowRates(double[], String)}
+   */
+  public String getFlowUnit() {
+    return flowUnit;
+  }
+
+  /**
+   * Checks whether a configured outlet flow rate is the {@link #REMAINDER} sentinel.
+   *
+   * @param flowRate the configured outlet flow rate to test
+   * @return {@code true} if the value marks a remainder outlet, {@code false} otherwise
+   */
+  private static boolean isRemainderMarker(double flowRate) {
+    return Math.abs(flowRate - REMAINDER) < 1e-6;
+  }
+
+  /**
    * calcSplitFactors.
-   * </p>
    */
   public void calcSplitFactors() {
-    double sum = 0.0;
+    // Sanitize the configured flow rates before deriving split factors. Only the
+    // REMAINDER sentinel (-1) marks an outlet as taking the remaining (undetermined)
+    // flow. Any other negative value is physically invalid - for example a faulty
+    // sensor reading fed through as a fixed setpoint - and is clamped to zero. Without
+    // this, a negative fixed flow collided with the remainder detection and was itself
+    // treated as a remainder stream, silently driving the real remainder outlet to zero
+    // and producing a split that did not conserve mass.
+    double[] fixedFlowRates = new double[flowRates.length];
     for (int i = 0; i < flowRates.length; i++) {
-      if (flowRates[i] > 0.0) {
-        sum += flowRates[i];
+      if (isRemainderMarker(flowRates[i])) {
+        fixedFlowRates[i] = REMAINDER;
+      } else if (flowRates[i] < 0.0) {
+        logger.warn(
+            "Splitter {} received a negative fixed outlet flow {} on outlet {}; clamping to "
+                + "zero. Use {} to mark an outlet as taking the remaining flow.",
+            getName(), flowRates[i], i, REMAINDER);
+        fixedFlowRates[i] = 0.0;
+      } else {
+        fixedFlowRates[i] = flowRates[i];
+      }
+    }
+
+    double sum = 0.0;
+    for (int i = 0; i < fixedFlowRates.length; i++) {
+      if (fixedFlowRates[i] > 0.0) {
+        sum += fixedFlowRates[i];
+      }
+    }
+
+    double inletFlow = inletStream.getFlowRate(flowUnit);
+
+    // Guard against fixed positive split flows exceeding the available inlet flow.
+    // Without this, the remainder ("-1") stream would receive a negative flow and
+    // the split would not conserve mass. Scale the fixed flows down proportionally
+    // so their sum does not exceed the inlet and the remainder stream(s) get zero
+    // flow. This makes, for example, a deep-turndown anti-surge recycle (recycle
+    // demand larger than the compressor throughput) converge to a mass-consistent
+    // full-recycle state instead of producing an oscillating mass imbalance.
+    double scale = 1.0;
+    if (sum > inletFlow && sum > 0.0) {
+      scale = inletFlow / sum;
+    }
+
+    double effectiveSum = 0.0;
+    for (int i = 0; i < fixedFlowRates.length; i++) {
+      if (fixedFlowRates[i] > 0.0) {
+        effectiveSum += fixedFlowRates[i] * scale;
+      }
+    }
+
+    // Count the remainder outlets so the leftover inlet flow can be shared among all of
+    // them. Computing the leftover once (rather than per marker) is essential: when more
+    // than one outlet is set to REMAINDER, recomputing inletFlow - effectiveSum inside the
+    // loop drove every remainder outlet after the first to zero flow, breaking mass
+    // conservation and silently forcing outlet 0 to absorb the mismatch in run().
+    int remainderCount = 0;
+    for (int i = 0; i < fixedFlowRates.length; i++) {
+      if (isRemainderMarker(fixedFlowRates[i])) {
+        remainderCount++;
       }
     }
 
     double missingFlowRate = 0.0;
-    for (int i = 0; i < flowRates.length; i++) {
-      if (flowRates[i] < -0.1) {
-        missingFlowRate = inletStream.getFlowRate(flowUnit) - sum;
-        sum += missingFlowRate;
+    if (remainderCount > 0) {
+      missingFlowRate = inletFlow - effectiveSum;
+      if (missingFlowRate < 0.0) {
+        missingFlowRate = 0.0;
       }
+      effectiveSum += missingFlowRate;
     }
 
-    splitFactor = new double[flowRates.length];
-    for (int i = 0; i < flowRates.length; i++) {
-      splitFactor[i] = flowRates[i] / sum;
-      if (flowRates[i] < -0.1) {
-        splitFactor[i] = missingFlowRate / sum;
+    // Distribute the leftover flow equally among all remainder outlets so multiple
+    // REMAINDER markers each receive a deterministic, mass-conserving share.
+    double perRemainderFlow = remainderCount > 0 ? missingFlowRate / remainderCount : 0.0;
+
+    splitFactor = new double[fixedFlowRates.length];
+    for (int i = 0; i < fixedFlowRates.length; i++) {
+      if (isRemainderMarker(fixedFlowRates[i])) {
+        splitFactor[i] = effectiveSum > 0.0 ? perRemainderFlow / effectiveSum : 0.0;
+      } else {
+        splitFactor[i] = effectiveSum > 0.0 ? (fixedFlowRates[i] * scale) / effectiveSum : 0.0;
       }
     }
   }
@@ -236,16 +322,38 @@ public class Splitter extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public List<StreamInterface> getInletStreams() {
+    if (inletStream != null) {
+      return Collections.singletonList(inletStream);
+    }
+    return Collections.emptyList();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    if (splitStream != null) {
+      return Collections.unmodifiableList(Arrays.asList(splitStream));
+    }
+    return Collections.emptyList();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public boolean needRecalculation() {
     // Check if inlet stream needs recalculation first
     if (inletStream.needRecalculation()) {
+      return true;
+    }
+    if (lastComposition == null || inletStream.getFluid().getFlowRate("kg/hr") <= 0.0 || lastFlowRate <= 0.0) {
       return true;
     }
     if (inletStream.getFluid().getTemperature() == lastTemperature
         && inletStream.getFluid().getPressure() == lastPressure
         && Math.abs(inletStream.getFluid().getFlowRate("kg/hr") - lastFlowRate)
             / inletStream.getFluid().getFlowRate("kg/hr") < 1e-6
-        && Arrays.equals(splitFactor, oldSplitFactor)) {
+        && Arrays.equals(splitFactor, oldSplitFactor)
+        && Arrays.equals(inletStream.getFluid().getMolarComposition(), lastComposition)) {
       return false;
     } else {
       return true;
@@ -255,6 +363,11 @@ public class Splitter extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (checkAndHandleLowFlow(inletStream, id)) {
+      // Propagate zero flow to all split outlets so downstream equipment also auto-bypasses.
+      propagateZeroFlow(id, splitStream);
+      return;
+    }
     double totSplit = 0.0;
 
     if (flowRates != null) {
@@ -284,8 +397,7 @@ public class Splitter extends ProcessEquipmentBaseClass
         double change = (moles * splitFactor[i] - moles > 0) ? 0.0 : moles * splitFactor[i] - moles;
         splitStream[i].getThermoSystem().addComponent(index, change);
       }
-      ThermodynamicOperations thermoOps =
-          new ThermodynamicOperations(splitStream[i].getThermoSystem());
+      ThermodynamicOperations thermoOps = new ThermodynamicOperations(splitStream[i].getThermoSystem());
       thermoOps.TPflash();
     }
 
@@ -293,7 +405,7 @@ public class Splitter extends ProcessEquipmentBaseClass
     lastFlowRate = inletStream.getFluid().getFlowRate("kg/hr");
     lastTemperature = inletStream.getFluid().getTemperature();
     lastPressure = inletStream.getFluid().getPressure();
-    lastComposition = inletStream.getFluid().getMolarComposition();
+    lastComposition = inletStream.getFluid().getMolarComposition().clone();
     oldSplitFactor = Arrays.copyOf(splitFactor, splitFactor.length);
 
     setCalculationIdentifier(id);
@@ -339,9 +451,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>splitFactor</code>.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -351,9 +461,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getSplitFactors.
-   * </p>
    *
    * @return an array of type double
    */
@@ -362,9 +470,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getSplitNumber.
-   * </p>
    *
    * @return number of split outlets
    */
@@ -386,8 +492,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new SplitterResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(new SplitterResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -404,7 +509,8 @@ public class Splitter extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {}
+  public void displayResult() {
+  }
 
   /**
    * {@inheritDoc}
@@ -422,8 +528,7 @@ public class Splitter extends ProcessEquipmentBaseClass
    */
   @Override
   public neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
+    neqsim.util.validation.ValidationResult result = new neqsim.util.validation.ValidationResult(getName());
 
     // Check: Equipment has a valid name
     if (getName() == null || getName().trim().isEmpty()) {
@@ -489,9 +594,8 @@ public class Splitter extends ProcessEquipmentBaseClass
 
     // Pressure drop constraint
     if (designPressureDrop > 0) {
-      neqsim.process.equipment.capacity.CapacityConstraint dpConstraint =
-          new neqsim.process.equipment.capacity.CapacityConstraint("pressureDrop", "bar",
-              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      neqsim.process.equipment.capacity.CapacityConstraint dpConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
+          "pressureDrop", "bar", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
       dpConstraint.setDesignValue(designPressureDrop);
       dpConstraint.setDescription("Pressure drop across splitter");
       dpConstraint.setValueSupplier(() -> {
@@ -504,9 +608,8 @@ public class Splitter extends ProcessEquipmentBaseClass
 
     // Velocity constraint (if mechanical design available)
     if (mechanicalDesign != null && maxDesignVelocity > 0) {
-      neqsim.process.equipment.capacity.CapacityConstraint velConstraint =
-          new neqsim.process.equipment.capacity.CapacityConstraint("velocity", "m/s",
-              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      neqsim.process.equipment.capacity.CapacityConstraint velConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
+          "velocity", "m/s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
       velConstraint.setDesignValue(maxDesignVelocity);
       velConstraint.setDescription("Velocity in distribution header");
       velConstraint.setValueSupplier(() -> {
@@ -585,8 +688,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   public neqsim.process.equipment.capacity.CapacityConstraint getBottleneckConstraint() {
     neqsim.process.equipment.capacity.CapacityConstraint bottleneck = null;
     double maxUtil = 0.0;
-    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints.values()) {
       if (constraint.isEnabled()) {
         double util = constraint.getUtilization();
         if (util > maxUtil) {
@@ -601,8 +703,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public boolean isCapacityExceeded() {
-    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints.values()) {
       if (constraint.isEnabled() && constraint.getUtilization() > 1.0) {
         return true;
       }
@@ -613,11 +714,9 @@ public class Splitter extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public boolean isHardLimitExceeded() {
-    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints.values()) {
       if (constraint.isEnabled()
-          && constraint
-              .getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
+          && constraint.getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
           && constraint.getUtilization() > 1.0) {
         return true;
       }
@@ -629,8 +728,7 @@ public class Splitter extends ProcessEquipmentBaseClass
   @Override
   public double getMaxUtilization() {
     double maxUtil = 0.0;
-    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : splitterCapacityConstraints.values()) {
       if (constraint.isEnabled()) {
         maxUtil = Math.max(maxUtil, constraint.getUtilization());
       }
@@ -640,8 +738,7 @@ public class Splitter extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void addCapacityConstraint(
-      neqsim.process.equipment.capacity.CapacityConstraint constraint) {
+  public void addCapacityConstraint(neqsim.process.equipment.capacity.CapacityConstraint constraint) {
     splitterCapacityConstraints.put(constraint.getName(), constraint);
   }
 

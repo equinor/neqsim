@@ -6,9 +6,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * simpleGasScrubber class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -22,8 +20,7 @@ public class simpleGasScrubber {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 20.00);
     testSystem.addComponent("methane", 1200.00);
     testSystem.addComponent("water", 1200.0);
     testSystem.createDatabase(true);
@@ -39,8 +36,7 @@ public class simpleGasScrubber {
     Stream stream_2 = new Stream("gas from scrubber", gasScrubber.getGasOutStream());
     Stream stream_3 = new Stream("liquid from scrubber", gasScrubber.getLiquidOutStream());
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(gasScrubber);
     operations.add(stream_2);

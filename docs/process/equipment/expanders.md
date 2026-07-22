@@ -1,3 +1,8 @@
+---
+title: Expanders and Turbines
+description: Documentation for expansion equipment in NeqSim.
+---
+
 # Expanders and Turbines
 
 Documentation for expansion equipment in NeqSim.
@@ -17,11 +22,11 @@ Documentation for expansion equipment in NeqSim.
 **Location:** `neqsim.process.equipment.expander`
 
 **Classes:**
-| Class | Description |
-|-------|-------------|
-| `Expander` | General gas expander |
-| `TurboExpander` | Turboexpander with shaft coupling |
-| `ExpanderCompressorModule` | Compander unit |
+| Class                      | Description                       |
+| -------------------------- | --------------------------------- |
+| `Expander`                 | General gas expander              |
+| `TurboExpander`            | Turboexpander with shaft coupling |
+| `ExpanderCompressorModule` | Compander unit                    |
 
 Gas expanders are used for:
 - Power recovery from high-pressure gas
@@ -129,6 +134,31 @@ double deltaT_JT = T_in - T_out_JT;
 System.out.println("Expander cooling: " + deltaT + " C");
 System.out.println("JT cooling: " + deltaT_JT + " C");
 ```
+
+### Capacity Utilization
+
+`Expander` extends `Compressor`, but the inherited consumed-power capacity logic does not fit a
+machine that *produces* shaft power and *cools* the gas. `Expander` therefore overrides the capacity
+behaviour:
+
+- **`isSimulationValid()`** is expander-correct — negative shaft power, an outlet colder than the
+  inlet, and a pressure ratio below 1 are all treated as valid (only `NaN` or an outlet hotter than
+  the inlet flags the run invalid).
+- **`initializeCapacityConstraints()`** removes the inherited `power` / `ratedPower` constraints and,
+  when a rating is set, adds a single `recoveredPower` HARD constraint sourced from `|getPower|` with
+  `dataSource = "equipment"`.
+
+This removes the previously spurious **~150 % utilization** that an expander used to report through
+`getMaxUtilization()` / `getUtilizationSnapshotJson()`. Provide a rating to get a meaningful number:
+
+```java
+expander.setRatedRecoveredPower(5000.0);     // kW — rebuilds the recoveredPower constraint
+double util = expander.getMaxUtilization();  // |getPower| / 5000 kW
+```
+
+Without a rating the expander simply reports no spurious limit instead of a fabricated one. See
+[Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK#expanders-turbo-expanders) for the
+full snapshot/RL context.
 
 ---
 
@@ -261,7 +291,7 @@ System.out.println("Power recovered: " + expander.getPower("kW") + " kW");
 
 ## Related Documentation
 
-- [Equipment Index](README.md) - All equipment
-- [Compressors](compressors.md) - Gas compression
-- [Valves](valves.md) - JT valves
-- [Heat Exchangers](heat_exchangers.md) - Heat integration
+- [Equipment Index](index.md) - All equipment
+- [Compressors](compressors) - Gas compression
+- [Valves](valves) - JT valves
+- [Heat Exchangers](heat_exchangers) - Heat integration

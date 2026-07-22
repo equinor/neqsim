@@ -11,8 +11,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Generates step response models by running NeqSim simulations.
  *
  * <p>
- * The StepResponseGenerator automates the process of system identification by performing step tests
- * on a ProcessSystem. For each MV-CV pair, it:
+ * The StepResponseGenerator automates the process of system identification by performing step tests on a ProcessSystem.
+ * For each MV-CV pair, it:
  * </p>
  * <ol>
  * <li>Records the baseline CV value</li>
@@ -33,14 +33,13 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * StepResponseGenerator generator = new StepResponseGenerator(processSystem);
  *
  * // Add MVs and CVs
- * generator.addMV(
- *     new ManipulatedVariable("Valve", valve, "opening").setBounds(0.0, 1.0).setInitialValue(0.5));
+ * generator.addMV(new ManipulatedVariable("Valve", valve, "opening").setBounds(0.0, 1.0).setInitialValue(0.5));
  * generator.addCV(new ControlledVariable("Pressure", separator, "pressure", "bara"));
  *
  * // Configure step test
@@ -194,19 +193,19 @@ public class StepResponseGenerator implements Serializable {
       return value;
     }
     switch (unit.toLowerCase()) {
-      case "s":
-      case "sec":
-      case "seconds":
-        return value;
-      case "min":
-      case "minutes":
-        return value * 60.0;
-      case "hr":
-      case "hour":
-      case "hours":
-        return value * 3600.0;
-      default:
-        return value;
+    case "s":
+    case "sec":
+    case "seconds":
+      return value;
+    case "min":
+    case "minutes":
+      return value * 60.0;
+    case "hr":
+    case "hour":
+    case "hours":
+      return value * 3600.0;
+    default:
+      return value;
     }
   }
 
@@ -292,8 +291,7 @@ public class StepResponseGenerator implements Serializable {
    * @param stepSize the step magnitude (can be negative)
    * @return list of step responses for all CVs
    */
-  private List<StepResponse> runSingleStep(ManipulatedVariable mv, double baseValue,
-      double stepSize) {
+  private List<StepResponse> runSingleStep(ManipulatedVariable mv, double baseValue, double stepSize) {
     List<StepResponse> responses = new ArrayList<>();
 
     int numSamples = (int) Math.ceil(settlingTimeSeconds / sampleIntervalSeconds) + 1;
@@ -351,8 +349,8 @@ public class StepResponseGenerator implements Serializable {
     // Create step response objects
     for (int i = 0; i < controlledVariables.size(); i++) {
       ControlledVariable cv = controlledVariables.get(i);
-      StepResponse response = new StepResponse(mv.getName(), cv.getName(), time, cvData[i],
-          actualStep, cvBaseline[i], sampleIntervalSeconds, mv.getUnit(), cv.getUnit());
+      StepResponse response = new StepResponse(mv.getName(), cv.getName(), time, cvData[i], actualStep, cvBaseline[i],
+          sampleIntervalSeconds, mv.getUnit(), cv.getUnit());
       response.fitFOPDT();
       responses.add(response);
     }
@@ -405,8 +403,8 @@ public class StepResponseGenerator implements Serializable {
       avgResponse[i] = pos.getBaselineValue() + avgNorm * avgStepSize;
     }
 
-    StepResponse avg = new StepResponse(pos.getMvName(), pos.getCvName(), time, avgResponse,
-        avgStepSize, pos.getBaselineValue(), pos.getSampleTime(), null, null);
+    StepResponse avg = new StepResponse(pos.getMvName(), pos.getCvName(), time, avgResponse, avgStepSize,
+        pos.getBaselineValue(), pos.getSampleTime(), null, null);
     avg.fitFOPDT();
     return avg;
   }
@@ -466,8 +464,7 @@ public class StepResponseGenerator implements Serializable {
      * @param mvNames ordered MV names
      * @param cvNames ordered CV names
      */
-    public StepResponseMatrix(Map<String, Map<String, StepResponse>> responses, String[] mvNames,
-        String[] cvNames) {
+    public StepResponseMatrix(Map<String, Map<String, StepResponse>> responses, String[] mvNames, String[] cvNames) {
       this.responses = responses;
       this.mvNames = mvNames != null ? mvNames.clone() : new String[0];
       this.cvNames = cvNames != null ? cvNames.clone() : new String[0];

@@ -1,8 +1,7 @@
 package neqsim.process.util.report.safety;
 
 /**
- * Configuration object containing threshold values that drive severity grading for safety
- * reporting.
+ * Configuration object containing threshold values that drive severity grading for safety reporting.
  */
 public class ProcessSafetyThresholds {
   private double entropyChangeWarning = 5.0; // kJ/K
@@ -17,7 +16,8 @@ public class ProcessSafetyThresholds {
   /**
    * Create an instance with default thresholds.
    */
-  public ProcessSafetyThresholds() {}
+  public ProcessSafetyThresholds() {
+  }
 
   /**
    * Copy constructor.

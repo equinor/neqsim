@@ -7,6 +7,8 @@
 package neqsim.process.equipment.separator;
 
 import java.util.UUID;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.separator.GasScrubberMechanicalDesign;
@@ -14,18 +16,27 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * GasScrubberSimple class.
- * </p>
  *
  * <p>
- * A simplified gas scrubber model that is a vertical separator designed
- * primarily
- * for removing liquid droplets from gas streams. Unlike standard separators,
- * the
- * key performance metric is the K-value (Souders-Brown factor) rather than
- * liquid
- * retention time.
+ * A simplified gas scrubber model that is a vertical separator designed primarily for removing liquid droplets from gas
+ * streams. Unlike standard separators, the key performance metric is the K-value (Souders-Brown factor) rather than
+ * liquid retention time.
+ * </p>
+ *
+ * <h2>Capacity Utilization Setup</h2>
+ *
+ * <p>
+ * To get meaningful capacity utilization from {@link #getCapacityUtilization()}, set:
+ * </p>
+ * <ol>
+ * <li>{@link #setInternalDiameter(double)} — scrubber inner diameter [m]</li>
+ * <li>{@link #setDesignGasLoadFactor(double)} — design K-factor [m/s], typically 0.04–0.10 for vertical scrubbers</li>
+ * </ol>
+ *
+ * <p>
+ * The orientation is automatically set to "vertical" and the design liquid level fraction defaults to 0.1 (10%). For
+ * dry gas (no liquid phase), a default liquid density of 1000 kg/m³ is used.
  * </p>
  *
  * @author Even Solbraa
@@ -34,6 +45,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class GasScrubberSimple extends Separator {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  static Logger logger = LogManager.getLogger(GasScrubberSimple.class);
 
   SystemInterface gasSystem;
   SystemInterface waterSystem;
@@ -52,29 +65,54 @@ public class GasScrubberSimple extends Separator {
   public GasScrubberSimple(String name) {
     super(name);
     this.setOrientation("vertical");
+    this.setDesignLiquidLevelFraction(0.1);
     // Use only K-value constraint for gas scrubbers
     useGasScrubberConstraints();
   }
 
   /**
-   * <p>
    * Constructor for GasScrubberSimple.
-   * </p>
    *
-   * @param name        a {@link java.lang.String} object
+   * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
    */
   public GasScrubberSimple(String name, StreamInterface inletStream) {
     super(name, inletStream);
     this.setOrientation("vertical");
+    this.setDesignLiquidLevelFraction(0.1);
     // Use only K-value constraint for gas scrubbers
     useGasScrubberConstraints();
   }
 
   /** {@inheritDoc} */
   @Override
+  public void initMechanicalDesign() {
+    // Preserve existing geometry when re-initializing
+    double prevDiameter = getInternalDiameter();
+    double prevLength = getSeparatorLength();
+    separatorMechanicalDesign = new GasScrubberMechanicalDesign(this);
+    if (prevDiameter > 0) {
+      separatorMechanicalDesign.setInnerDiameter(prevDiameter);
+    }
+    if (prevLength > 0) {
+      separatorMechanicalDesign.setTantanLength(prevLength);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public GasScrubberMechanicalDesign getMechanicalDesign() {
-    return new GasScrubberMechanicalDesign(this);
+    // Deserialized or otherwise externally-constructed instances can end up with a
+    // separatorMechanicalDesign field typed as the base SeparatorMechanicalDesign
+    // (e.g. XStream restores the field using the type recorded at save time, which
+    // may predate a conversion to GasScrubberSimple). Re-initialize rather than
+    // throwing a ClassCastException; initMechanicalDesign() preserves the current
+    // diameter and length (read from this equipment, not from the stale design
+    // object).
+    if (!(separatorMechanicalDesign instanceof GasScrubberMechanicalDesign)) {
+      initMechanicalDesign();
+    }
+    return (GasScrubberMechanicalDesign) separatorMechanicalDesign;
   }
 
   /**
@@ -148,9 +186,7 @@ public class GasScrubberSimple extends Separator {
   }
 
   /**
-   * <p>
    * calcLiquidCarryoverFraction.
-   * </p>
    *
    * @return a double
    */
@@ -160,7 +196,7 @@ public class GasScrubberSimple extends Separator {
     for (int i = 0; i < separatorSection.size(); i++) {
       ktotal *= (1.0 - separatorSection.get(i).getEfficiency());
     }
-    System.out.println("Ktot " + (1.0 - ktotal));
+    logger.debug("Ktot {}", (1.0 - ktotal));
     double area = getInternalDiameter() * getInternalDiameter() / 4.0 * 3.14;
     double gasVel = thermoSystem.getTotalNumberOfMoles() * thermoSystem.getMolarVolume() / 1e5 / area;
     setLiquidCarryoverFraction(ktotal);

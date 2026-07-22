@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * CompGradientFlash class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class CompGradientFlash {
+  private static final Logger logger = LogManager.getLogger(CompGradientFlash.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(CompGradientFlash.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -8,13 +8,11 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Soft sensor for calculating derived properties from primary measurements and thermodynamic
- * models.
+ * Soft sensor for calculating derived properties from primary measurements and thermodynamic models.
  *
  * <p>
- * Soft sensors provide real-time estimates of properties that cannot be directly measured, using a
- * combination of available measurements and physics-based models. This is essential for
- * AI-augmented production optimization.
+ * Soft sensors provide real-time estimates of properties that cannot be directly measured, using a combination of
+ * available measurements and physics-based models. This is essential for AI-augmented production optimization.
  * </p>
  *
  * <p>
@@ -91,29 +89,29 @@ public class SoftSensor extends StreamMeasurementDeviceBaseClass {
    */
   private static String getUnitForProperty(PropertyType type) {
     switch (type) {
-      case GOR:
-        return "Sm3/Sm3";
-      case WATER_CUT:
-        return "%";
-      case DENSITY:
-        return "kg/m3";
-      case OIL_VISCOSITY:
-      case GAS_VISCOSITY:
-        return "cP";
-      case Z_FACTOR:
-        return "-";
-      case HEATING_VALUE:
-        return "MJ/Sm3";
-      case BUBBLE_POINT:
-      case DEW_POINT:
-        return "bara";
-      case OIL_FVF:
-      case GAS_FVF:
-        return "m3/Sm3";
-      case SOLUTION_GOR:
-        return "Sm3/Sm3";
-      default:
-        return "-";
+    case GOR:
+      return "Sm3/Sm3";
+    case WATER_CUT:
+      return "%";
+    case DENSITY:
+      return "kg/m3";
+    case OIL_VISCOSITY:
+    case GAS_VISCOSITY:
+      return "cP";
+    case Z_FACTOR:
+      return "-";
+    case HEATING_VALUE:
+      return "MJ/Sm3";
+    case BUBBLE_POINT:
+    case DEW_POINT:
+      return "bara";
+    case OIL_FVF:
+    case GAS_FVF:
+      return "m3/Sm3";
+    case SOLUTION_GOR:
+      return "Sm3/Sm3";
+    default:
+      return "-";
     }
   }
 
@@ -187,32 +185,32 @@ public class SoftSensor extends StreamMeasurementDeviceBaseClass {
    */
   private double calculateProperty(SystemInterface fluid) {
     switch (propertyType) {
-      case GOR:
-        return calculateGOR(fluid);
-      case WATER_CUT:
-        return calculateWaterCut(fluid);
-      case DENSITY:
-        return fluid.getDensity("kg/m3");
-      case OIL_VISCOSITY:
-        return fluid.hasPhaseType("oil") ? fluid.getPhase("oil").getViscosity("cP") : Double.NaN;
-      case GAS_VISCOSITY:
-        return fluid.hasPhaseType("gas") ? fluid.getPhase("gas").getViscosity("cP") : Double.NaN;
-      case Z_FACTOR:
-        return fluid.hasPhaseType("gas") ? fluid.getPhase("gas").getZ() : Double.NaN;
-      case HEATING_VALUE:
-        return calculateHeatingValue(fluid);
-      case BUBBLE_POINT:
-        return calculateBubblePoint(fluid);
-      case DEW_POINT:
-        return calculateDewPoint(fluid);
-      case OIL_FVF:
-        return calculateOilFVF(fluid);
-      case GAS_FVF:
-        return calculateGasFVF(fluid);
-      case SOLUTION_GOR:
-        return calculateSolutionGOR(fluid);
-      default:
-        return Double.NaN;
+    case GOR:
+      return calculateGOR(fluid);
+    case WATER_CUT:
+      return calculateWaterCut(fluid);
+    case DENSITY:
+      return fluid.getDensity("kg/m3");
+    case OIL_VISCOSITY:
+      return fluid.hasPhaseType("oil") ? fluid.getPhase("oil").getViscosity("cP") : Double.NaN;
+    case GAS_VISCOSITY:
+      return fluid.hasPhaseType("gas") ? fluid.getPhase("gas").getViscosity("cP") : Double.NaN;
+    case Z_FACTOR:
+      return fluid.hasPhaseType("gas") ? fluid.getPhase("gas").getZ() : Double.NaN;
+    case HEATING_VALUE:
+      return calculateHeatingValue(fluid);
+    case BUBBLE_POINT:
+      return calculateBubblePoint(fluid);
+    case DEW_POINT:
+      return calculateDewPoint(fluid);
+    case OIL_FVF:
+      return calculateOilFVF(fluid);
+    case GAS_FVF:
+      return calculateGasFVF(fluid);
+    case SOLUTION_GOR:
+      return calculateSolutionGOR(fluid);
+    default:
+      return Double.NaN;
     }
   }
 
@@ -223,8 +221,7 @@ public class SoftSensor extends StreamMeasurementDeviceBaseClass {
   }
 
   private double calculateWaterCut(SystemInterface fluid) {
-    double waterRate =
-        fluid.hasPhaseType("aqueous") ? fluid.getPhase("aqueous").getFlowRate("Sm3/day") : 0.0;
+    double waterRate = fluid.hasPhaseType("aqueous") ? fluid.getPhase("aqueous").getFlowRate("Sm3/day") : 0.0;
     double oilRate = fluid.hasPhaseType("oil") ? fluid.getPhase("oil").getFlowRate("Sm3/day") : 0.0;
     double totalLiquid = waterRate + oilRate;
     return (totalLiquid > 0) ? (waterRate / totalLiquid) * 100.0 : 0.0;
@@ -337,8 +334,7 @@ public class SoftSensor extends StreamMeasurementDeviceBaseClass {
    * @param temperatureUncertainty temperature measurement uncertainty in K
    * @return uncertainty bounds for the estimated property
    */
-  public UncertaintyBounds getUncertaintyBounds(double pressureUncertainty,
-      double temperatureUncertainty) {
+  public UncertaintyBounds getUncertaintyBounds(double pressureUncertainty, double temperatureUncertainty) {
     if (Double.isNaN(lastEstimate)) {
       estimate();
     }
@@ -346,8 +342,7 @@ public class SoftSensor extends StreamMeasurementDeviceBaseClass {
     double[] sens = getSensitivity();
 
     // Error propagation: sigma_y = sqrt(sum((dy/dx_i * sigma_x_i)^2))
-    double variance =
-        Math.pow(sens[0] * pressureUncertainty, 2) + Math.pow(sens[1] * temperatureUncertainty, 2);
+    double variance = Math.pow(sens[0] * pressureUncertainty, 2) + Math.pow(sens[1] * temperatureUncertainty, 2);
 
     return new UncertaintyBounds(lastEstimate, Math.sqrt(variance), getUnit());
   }

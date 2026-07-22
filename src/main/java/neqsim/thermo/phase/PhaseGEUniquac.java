@@ -13,9 +13,7 @@ import neqsim.util.exception.IsNaNException;
 import neqsim.util.exception.TooManyIterationsException;
 
 /**
- * <p>
  * PhaseGEUniquac class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -31,18 +29,14 @@ public class PhaseGEUniquac extends PhaseGE {
   double GE = 0.0;
 
   /**
-   * <p>
    * Constructor for PhaseGEUniquac.
-   * </p>
    */
   public PhaseGEUniquac() {
     componentArray = new ComponentGEInterface[ThermodynamicModelSettings.MAX_NUMBER_OF_COMPONENTS];
   }
 
   /**
-   * <p>
    * Constructor for PhaseGEUniquac.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param alpha an array of type double
@@ -109,13 +103,12 @@ public class PhaseGEUniquac extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType pt) {
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponent(i).getx()
-          * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase, numberOfComponents,
-              temperature, pressure, pt, alpha, Dij, intparam, mixRule));
+      GE += phase.getComponent(i).getx() * Math.log(((ComponentGEInterface) componentArray[i]).getGamma(phase,
+          numberOfComponents, temperature, pressure, pt, alpha, Dij, intparam, mixRule));
     }
 
     return R * temperature * numberOfMolesInPhase * GE;

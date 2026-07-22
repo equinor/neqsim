@@ -5,9 +5,7 @@ import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
- * <p>
  * CompressorResponse class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -31,16 +29,13 @@ public class CompressorResponse extends BaseResponse {
   public Double speed;
 
   /**
-   * <p>
    * Constructor for CompressorResponse.
-   * </p>
    */
-  public CompressorResponse() {}
+  public CompressorResponse() {
+  }
 
   /**
-   * <p>
    * Constructor for CompressorResponse.
-   * </p>
    *
    * @param inputCompressor a {@link neqsim.process.equipment.compressor.Compressor} object
    */
@@ -62,8 +57,7 @@ public class CompressorResponse extends BaseResponse {
     power = inputCompressor.getPower("kW");
     speed = inputCompressor.getSpeed();
     if (inputCompressor.getAntiSurge().isActive()) {
-      internalVolumeFlow =
-          inputCompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
+      internalVolumeFlow = inputCompressor.getCompressorChart().getSurgeCurve().getSurgeFlow(polytropicHead);
     }
   }
 

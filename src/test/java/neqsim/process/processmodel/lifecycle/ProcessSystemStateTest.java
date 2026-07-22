@@ -228,8 +228,7 @@ public class ProcessSystemStateTest {
 
   @Test
   void testLoadNonExistentCompressedFile() {
-    ProcessSystemState loaded =
-        ProcessSystemState.loadFromCompressedFile("/non/existent/path.neqsim");
+    ProcessSystemState loaded = ProcessSystemState.loadFromCompressedFile("/non/existent/path.neqsim");
 
     assertNull(loaded);
   }
@@ -303,16 +302,14 @@ public class ProcessSystemStateTest {
 
     state.setVersion("new-version");
 
-    assertTrue(state.getLastModifiedAt().isAfter(initialModified)
-        || state.getLastModifiedAt().equals(initialModified));
+    assertTrue(state.getLastModifiedAt().isAfter(initialModified) || state.getLastModifiedAt().equals(initialModified));
   }
 
   @Test
   void testEquipmentStateFromEquipment() {
     Stream feed = (Stream) process.getUnit("feed");
 
-    ProcessSystemState.EquipmentState eqState =
-        ProcessSystemState.EquipmentState.fromEquipment(feed);
+    ProcessSystemState.EquipmentState eqState = ProcessSystemState.EquipmentState.fromEquipment(feed);
 
     assertNotNull(eqState);
     assertEquals("feed", eqState.getName());
@@ -374,5 +371,35 @@ public class ProcessSystemStateTest {
     ProcessSystemState.FluidState fluidState = ProcessSystemState.FluidState.fromFluid(fluid);
 
     assertTrue(fluidState.getNumberOfPhases() >= 1);
+  }
+
+  @Test
+  void testLowFlowBypassFieldsRoundTrip(@TempDir File tempDir) {
+    // Configure bypass settings on the original process.
+    process.getUnit("separator").setMinimumFlow(50.0);
+    process.getUnit("separator").setLockedInactive(true);
+
+    // Capture, save, reload.
+    ProcessSystemState state = ProcessSystemState.fromProcessSystem(process);
+    String file = new File(tempDir, "bypass.json").getAbsolutePath();
+    state.saveToFile(file);
+    ProcessSystemState loaded = ProcessSystemState.loadFromFile(file);
+
+    // Build a fresh process with the same equipment names and apply the loaded state.
+    SystemInterface fluid2 = new SystemSrkEos(298.15, 20.0);
+    fluid2.addComponent("methane", 1.0);
+    fluid2.setMixingRule("classic");
+    Stream feed2 = new Stream("feed", fluid2);
+    feed2.setFlowRate(100.0, "kg/hr");
+    Separator sep2 = new Separator("separator", feed2);
+    ProcessSystem fresh = new ProcessSystem();
+    fresh.setName("TestProcess");
+    fresh.add(feed2);
+    fresh.add(sep2);
+
+    loaded.applyTo(fresh);
+
+    assertEquals(50.0, fresh.getUnit("separator").getMinimumFlow(), 1e-12);
+    assertTrue(fresh.getUnit("separator").isLockedInactive());
   }
 }

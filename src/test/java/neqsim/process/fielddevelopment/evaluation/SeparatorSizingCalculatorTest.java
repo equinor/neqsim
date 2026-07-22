@@ -54,19 +54,16 @@ public class SeparatorSizingCalculatorTest {
 
   @Test
   void testSeparatorSizing() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(288.15, 50.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(288.15, 50.0);
     fluid.addComponent("methane", 0.85);
     fluid.addComponent("nC10", 0.15);
     fluid.setMixingRule("classic");
 
-    neqsim.process.equipment.stream.Stream feed =
-        new neqsim.process.equipment.stream.Stream("Feed", fluid);
+    neqsim.process.equipment.stream.Stream feed = new neqsim.process.equipment.stream.Stream("Feed", fluid);
     feed.setFlowRate(50000, "kg/hr");
     feed.run();
 
-    SeparatorSizingResult result =
-        calculator.sizeSeparator(feed, SeparatorType.HORIZONTAL, DesignStandard.API_12J);
+    SeparatorSizingResult result = calculator.sizeSeparator(feed, SeparatorType.HORIZONTAL, DesignStandard.API_12J);
 
     assertNotNull(result, "Sizing result should not be null");
     assertTrue(result.internalDiameter > 0, "Diameter should be positive");

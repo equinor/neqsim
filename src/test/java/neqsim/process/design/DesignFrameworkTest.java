@@ -54,9 +54,8 @@ class DesignFrameworkTest {
   @Test
   void testDesignSpecificationBuilder() {
     // Test creating a design specification
-    DesignSpecification spec =
-        DesignSpecification.forSeparator("Test-Sep").setKFactor(0.08).setDiameter(2.5, "m")
-            .setLength(7.0, "m").setMaterial("316L").setStandard("ASME-VIII").setSafetyFactor(1.25);
+    DesignSpecification spec = DesignSpecification.forSeparator("Test-Sep").setKFactor(0.08).setDiameter(2.5, "m")
+        .setLength(7.0, "m").setMaterial("316L").setStandard("ASME-VIII").setSafetyFactor(1.25);
 
     assertEquals("Test-Sep", spec.getEquipmentName());
     assertEquals("Separator", spec.getEquipmentType());
@@ -78,8 +77,8 @@ class DesignFrameworkTest {
 
     Separator sep = new Separator("Spec-Test-Sep", feed);
 
-    DesignSpecification spec = DesignSpecification.forSeparator("Spec-Test-Sep").setKFactor(0.10)
-        .setDiameter(3.0, "m").setLength(9.0, "m");
+    DesignSpecification spec = DesignSpecification.forSeparator("Spec-Test-Sep").setKFactor(0.10).setDiameter(3.0, "m")
+        .setLength(9.0, "m");
 
     spec.applyTo(sep);
 
@@ -125,32 +124,28 @@ class DesignFrameworkTest {
     EquipmentConstraintRegistry registry = EquipmentConstraintRegistry.getInstance();
 
     // Check separator constraints
-    List<EquipmentConstraintRegistry.ConstraintTemplate> sepConstraints =
-        registry.getConstraintTemplates("Separator");
+    List<EquipmentConstraintRegistry.ConstraintTemplate> sepConstraints = registry.getConstraintTemplates("Separator");
     assertFalse(sepConstraints.isEmpty());
     assertTrue(sepConstraints.stream().anyMatch(c -> c.getType().equals("gasLoadFactor")));
 
     // Check compressor constraints
-    List<EquipmentConstraintRegistry.ConstraintTemplate> compConstraints =
-        registry.getConstraintTemplates("Compressor");
+    List<EquipmentConstraintRegistry.ConstraintTemplate> compConstraints = registry
+        .getConstraintTemplates("Compressor");
     assertFalse(compConstraints.isEmpty());
     assertTrue(compConstraints.stream().anyMatch(c -> c.getType().equals("surgeLine")));
 
     // Check pipeline constraints
-    List<EquipmentConstraintRegistry.ConstraintTemplate> pipeConstraints =
-        registry.getConstraintTemplates("Pipeline");
+    List<EquipmentConstraintRegistry.ConstraintTemplate> pipeConstraints = registry.getConstraintTemplates("Pipeline");
     assertFalse(pipeConstraints.isEmpty());
     assertTrue(pipeConstraints.stream().anyMatch(c -> c.getType().equals("maxVelocity")));
   }
 
   @Test
   void testProcessBasisBuilder() {
-    ProcessBasis basis =
-        ProcessBasis.builder().setFeedFluid(testFluid).setFeedFlowRate(50000.0, "kg/hr")
-            .setFeedPressure(80.0, "bara").setFeedTemperature(40.0, "C")
-            .addStagePressure(1, 50.0, "bara").addStagePressure(2, 20.0, "bara")
-            .addStagePressure(3, 5.0, "bara").setCompanyStandard("Equinor", "TR2000")
-            .setSafetyFactor(1.15).setAmbientTemperature(15.0, "C").build();
+    ProcessBasis basis = ProcessBasis.builder().setFeedFluid(testFluid).setFeedFlowRate(50000.0, "kg/hr")
+        .setFeedPressure(80.0, "bara").setFeedTemperature(40.0, "C").addStagePressure(1, 50.0, "bara")
+        .addStagePressure(2, 20.0, "bara").addStagePressure(3, 5.0, "bara").setCompanyStandard("Equinor", "TR2000")
+        .setSafetyFactor(1.15).setAmbientTemperature(15.0, "C").build();
 
     assertEquals(50000.0, basis.getFeedFlowRate(), 0.1);
     assertEquals(80.0, basis.getFeedPressure(), 0.001);
@@ -219,8 +214,8 @@ class DesignFrameworkTest {
     process.add(valve);
 
     // Test the workflow
-    DesignOptimizer optimizer = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2)
-        .applyDefaultConstraints().setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION);
+    DesignOptimizer optimizer = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2).applyDefaultConstraints()
+        .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION);
 
     // Just run validation (full optimization would require more setup)
     DesignResult result = optimizer.validate();
@@ -240,8 +235,7 @@ class DesignFrameworkTest {
     ThrottlingValve valve = new ThrottlingValve("Test-Valve", feed);
     valve.setOutletPressure(30.0, "bara");
 
-    DesignSpecification spec =
-        DesignSpecification.forValve("Test-Valve").setCv(150.0).setMaxValveOpening(90.0);
+    DesignSpecification spec = DesignSpecification.forValve("Test-Valve").setCv(150.0).setMaxValveOpening(90.0);
 
     spec.applyTo(valve);
 
@@ -317,8 +311,8 @@ class DesignFrameworkTest {
     feed.setTemperature(25.0, "C");
     feed.run();
 
-    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline =
-        new neqsim.process.equipment.pipeline.PipeBeggsAndBrills("AutoSize-Pipeline", feed);
+    neqsim.process.equipment.pipeline.PipeBeggsAndBrills pipeline = new neqsim.process.equipment.pipeline.PipeBeggsAndBrills(
+        "AutoSize-Pipeline", feed);
     pipeline.setLength(10000.0); // 10 km
     pipeline.setElevation(0.0);
     pipeline.setDiameter(0.2); // Initial diameter 200mm
@@ -359,14 +353,12 @@ class DesignFrameworkTest {
     oilGasFluid.setMixingRule("classic");
 
     // Create process basis
-    ProcessBasis basis = ProcessBasis.builder().setFeedFluid(oilGasFluid)
-        .setFeedFlowRate(50000.0, "kg/hr").setFeedPressure(85.0, "bara")
-        .setFeedTemperature(50.0, "C").addStagePressure(1, 80.0, "bara")
+    ProcessBasis basis = ProcessBasis.builder().setFeedFluid(oilGasFluid).setFeedFlowRate(50000.0, "kg/hr")
+        .setFeedPressure(85.0, "bara").setFeedTemperature(50.0, "C").addStagePressure(1, 80.0, "bara")
         .addStagePressure(2, 20.0, "bara").addStagePressure(3, 2.0, "bara").build();
 
     // Create template
-    neqsim.process.design.template.ThreeStageSeparationTemplate template =
-        new neqsim.process.design.template.ThreeStageSeparationTemplate();
+    neqsim.process.design.template.ThreeStageSeparationTemplate template = new neqsim.process.design.template.ThreeStageSeparationTemplate();
 
     // Check applicability
     assertTrue(template.isApplicable(oilGasFluid));
@@ -412,14 +404,12 @@ class DesignFrameworkTest {
     oilGasFluid.setMixingRule("classic");
 
     // Create process basis
-    ProcessBasis basis = ProcessBasis.builder().setFeedFluid(oilGasFluid)
-        .setFeedFlowRate(30000.0, "kg/hr").setFeedPressure(85.0, "bara")
-        .setFeedTemperature(50.0, "C").addStagePressure(1, 80.0, "bara")
+    ProcessBasis basis = ProcessBasis.builder().setFeedFluid(oilGasFluid).setFeedFlowRate(30000.0, "kg/hr")
+        .setFeedPressure(85.0, "bara").setFeedTemperature(50.0, "C").addStagePressure(1, 80.0, "bara")
         .addStagePressure(2, 20.0, "bara").addStagePressure(3, 2.0, "bara").build();
 
     // Create process using template through DesignOptimizer
-    neqsim.process.design.template.ThreeStageSeparationTemplate template =
-        new neqsim.process.design.template.ThreeStageSeparationTemplate();
+    neqsim.process.design.template.ThreeStageSeparationTemplate template = new neqsim.process.design.template.ThreeStageSeparationTemplate();
 
     DesignOptimizer optimizer = DesignOptimizer.fromTemplate(template, basis);
 
@@ -452,9 +442,8 @@ class DesignFrameworkTest {
     inletSep.setInternalDiameter(1.5);
     inletSep.setSeparatorLength(4.0);
 
-    neqsim.process.equipment.compressor.Compressor compressor =
-        new neqsim.process.equipment.compressor.Compressor("Export-Comp",
-            inletSep.getGasOutStream());
+    neqsim.process.equipment.compressor.Compressor compressor = new neqsim.process.equipment.compressor.Compressor(
+        "Export-Comp", inletSep.getGasOutStream());
     compressor.setOutletPressure(80.0);
     compressor.setPolytropicEfficiency(0.77);
     compressor.setSpeed(8500);
@@ -471,26 +460,65 @@ class DesignFrameworkTest {
     assertFalse(compressor.isSolveSpeed());
 
     // Use DesignOptimizer to auto-size all equipment
-    DesignOptimizer optimizer = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2)
-        .applyDefaultConstraints().setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION);
+    DesignOptimizer optimizer = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2).applyDefaultConstraints()
+        .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION);
 
     DesignResult result = optimizer.optimize();
 
     // Verify auto-sizing was performed
     assertTrue(inletSep.isAutoSized(), "Separator should be auto-sized");
     assertTrue(compressor.isAutoSized(), "Compressor should be auto-sized");
-    assertTrue(compressor.isSolveSpeed(),
-        "Compressor should have solveSpeed=true after auto-sizing");
+    assertTrue(compressor.isSolveSpeed(), "Compressor should have solveSpeed=true after auto-sizing");
     assertTrue(compressor.getCompressorChart().isUseCompressorChart(),
         "Compressor should have curves enabled after auto-sizing");
 
     // Verify result
     assertNotNull(result);
-    assertTrue(result.isConverged());
+    assertEquals(DesignResult.ExecutionStatus.AUTO_SIZED, result.getExecutionStatus());
+    assertFalse(result.isConverged());
+    assertTrue(result.getWarnings().get(0).contains("No optimization search was performed"));
+  }
 
-    // Print sizing reports
-    System.out.println("\n=== Process System Auto-Sizing Results ===\n");
-    System.out.println(inletSep.getSizingReport());
-    System.out.println(compressor.getSizingReport());
+  @Test
+  void configuredDesignOptimizerRunsBoundedSearchAndRestoresSelectedPoint() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+    Stream feed = new Stream("Optimization feed", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    process.add(feed);
+
+    DesignResult result = DesignOptimizer.forProcess(process)
+        .configureFeedRateOptimization("Optimization feed", 1000.0, 2000.0, "kg/hr").setSearchConvergence(1.0, 20)
+        .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION).optimize();
+
+    assertEquals(DesignResult.ExecutionStatus.OPTIMIZED, result.getExecutionStatus());
+    assertTrue(result.isConverged());
+    assertTrue(result.getIterations() > 1);
+    assertTrue(result.getOptimizedFlowRate("Optimization feed") > 1998.0);
+    assertEquals(result.getOptimizedFlowRate("Optimization feed"), feed.getFlowRate("kg/hr"), 1.0e-9);
+    assertTrue(result.getDecisionVariables().containsKey("Optimization feed"));
+  }
+
+  @Test
+  void phaseObjectiveFailsClosedWithoutExplicitProductStream() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 20.0);
+    fluid.addComponent("methane", 1.0);
+    fluid.setMixingRule("classic");
+
+    ProcessSystem process = new ProcessSystem();
+    Stream feed = new Stream("Feed without product", fluid);
+    feed.setFlowRate(1000.0, "kg/hr");
+    process.add(feed);
+
+    DesignResult result = DesignOptimizer.forProcess(process)
+        .configureFeedRateOptimization("Feed without product", 500.0, 1500.0, "kg/hr")
+        .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_GAS).optimize();
+
+    assertEquals(DesignResult.ExecutionStatus.FAILED, result.getExecutionStatus());
+    assertFalse(result.isConverged());
+    assertTrue(result.getViolations().get(0).contains("setProductStream"));
   }
 }

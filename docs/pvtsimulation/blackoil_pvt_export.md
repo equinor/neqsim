@@ -1,3 +1,8 @@
+---
+title: Black Oil PVT and Reservoir Simulator Export
+description: This document describes NeqSim's black oil implementation and the ability to export PVT data to reservoir simulators like Eclipse and CMG.
+---
+
 # Black Oil PVT and Reservoir Simulator Export
 
 This document describes NeqSim's black oil implementation and the ability to export PVT data to reservoir simulators like Eclipse and CMG.
@@ -254,7 +259,7 @@ import java.nio.file.Path;
 public class PVTExportExample {
     public static void main(String[] args) {
         // 1. Create compositional fluid model
-        var fluid = new SystemSrkEos(373.15, 250.0);
+        SystemSrkEos fluid = new SystemSrkEos(373.15, 250.0);
         fluid.addComponent("methane", 0.60);
         fluid.addComponent("ethane", 0.08);
         fluid.addComponent("propane", 0.05);
@@ -265,13 +270,13 @@ public class PVTExportExample {
         fluid.setMixingRule("classic");
         
         // 2. Export to Eclipse (METRIC units)
-        var eclipseConfig = new EclipseEOSExporter.ExportConfig()
+        EclipseEOSExporter.ExportConfig eclipseConfig = new EclipseEOSExporter.ExportConfig()
             .setUnits(EclipseEOSExporter.Units.METRIC)
             .setComment("Light oil reservoir - Block A");
         EclipseEOSExporter.toFile(fluid, Path.of("eclipse_pvt.inc"), eclipseConfig);
         
         // 3. Export to CMG IMEX (FIELD units)
-        var cmgConfig = new CMGEOSExporter.ExportConfig()
+        CMGEOSExporter.ExportConfig cmgConfig = new CMGEOSExporter.ExportConfig()
             .setSimulator(CMGEOSExporter.Simulator.IMEX)
             .setUnits(CMGEOSExporter.Units.FIELD)
             .setModelName("BLOCK_A_FLUID");
@@ -358,6 +363,93 @@ importedFluid.setTemperature(100.0, "C");
 new ThermodynamicOperations(importedFluid).TPflash();
 ```
 
+### Reading E300 Files with Water
+
+Many E300 files exported from PVTsim or other tools do **not** include a water component. NeqSim can automatically add water during import so that three-phase (gas + oil + aqueous) flash calculations are possible without having to maintain a separate water-augmented file.
+
+#### Automatic Water Addition
+
+Pass `addWater = true` to any `read()` overload. The default water–hydrocarbon binary interaction parameter (kij) is **0.5**, matching PVTsim conventions:
+
+```java
+import neqsim.thermo.util.readwrite.EclipseFluidReadWrite;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
+// Read E300 file and add water automatically
+SystemInterface fluid = EclipseFluidReadWrite.read("fluid.e300", true);
+
+// Three-phase flash is now possible
+fluid.setPressure(100.0, "bara");
+fluid.setTemperature(80.0, "C");
+new ThermodynamicOperations(fluid).TPflash();
+
+System.out.println("Phases: " + fluid.getNumberOfPhases());
+// Phases: 3  (gas + oil + aqueous)
+```
+
+#### Custom Water kij
+
+If your EOS model requires a different water kij value you can specify it explicitly:
+
+```java
+// Read with custom kij = 0.3
+SystemInterface fluid = EclipseFluidReadWrite.read("fluid.e300", true, 0.3);
+```
+
+#### Pseudo-Name Variants
+
+Both pseudo-name overloads accept the water flag:
+
+```java
+// With pseudo-component suffix
+SystemInterface fluid = EclipseFluidReadWrite.read("fluid.e300", "_A", true);
+SystemInterface fluid = EclipseFluidReadWrite.read("fluid.e300", "_A", true, 0.4);
+```
+
+#### Standalone Utility: `addWaterToFluid`
+
+You can also add water to a fluid that was already loaded or created programmatically:
+
+```java
+SystemInterface fluid = EclipseFluidReadWrite.read("fluid.e300");
+// ... inspect or modify the fluid ...
+
+// Add water later
+EclipseFluidReadWrite.addWaterToFluid(fluid, 0.5);
+```
+
+#### What `addWaterToFluid` Does
+
+When called, the method performs the following steps (matching PVTsim water parameterization):
+
+1. **No-op check** – if the fluid already contains a `"water"` component, returns immediately.
+2. **Save kij matrix** – the existing binary interaction coefficients are captured so the original hydrocarbon kij values are preserved after re-initialization.
+3. **Add water** – `water` is added with **zero mole fraction** (compositional placeholder).
+4. **Set water properties** – volume correction constant = **0.084004**, parachor = **10.0**.
+5. **Re-initialize mixing rule** – required after adding a new component.
+6. **Restore original kij** – the saved hydrocarbon kij values are written back.
+7. **Set water kij** – the specified kij is applied between water and every other component on all phases.
+8. **Enable multi-phase check** – `setMultiPhaseCheck(true)` so the aqueous phase is detected.
+
+#### Python Usage (with Water)
+
+```python
+from neqsim import jneqsim
+
+EclipseFluidReadWrite = jneqsim.thermo.util.readwrite.EclipseFluidReadWrite
+
+# Read E300 file with automatic water addition
+fluid = EclipseFluidReadWrite.read("fluid.e300", True)
+
+# Or with custom kij
+fluid = EclipseFluidReadWrite.read("fluid.e300", True, 0.3)
+
+# Standalone water addition
+fluid = EclipseFluidReadWrite.read("fluid.e300")
+EclipseFluidReadWrite.addWaterToFluid(fluid, 0.5)
+```
+
 ### Optional E300 Keywords
 
 Some E300 files include additional keywords that are handled by NeqSim:
@@ -413,15 +505,18 @@ These are written automatically when exporting E300 files.
 ### Python Usage
 
 ```python
-from jpype import JClass
+from neqsim import jneqsim
 
-EclipseFluidReadWrite = JClass('neqsim.thermo.util.readwrite.EclipseFluidReadWrite')
+EclipseFluidReadWrite = jneqsim.thermo.util.readwrite.EclipseFluidReadWrite
 
 # Export to E300 file
 EclipseFluidReadWrite.write(fluid, "tuned_fluid.e300", 100.0)
 
 # Read back
 imported_fluid = EclipseFluidReadWrite.read("tuned_fluid.e300")
+
+# Read back with water added (kij = 0.5)
+imported_fluid_w = EclipseFluidReadWrite.read("tuned_fluid.e300", True)
 ```
 
 ## Integration with Whitson PVT Workflows
@@ -447,6 +542,11 @@ EclipseEOSExporter.toFile(tunedFluid, Path.of("TUNED_PVT.INC"));
 | Method | Description |
 |--------|-------------|
 | `read(String)` | Read E300 file into NeqSim fluid |
+| `read(String, boolean)` | Read E300 file, optionally add water (kij = 0.5) |
+| `read(String, boolean, double)` | Read E300 file, optionally add water with custom kij |
+| `read(String, String, boolean)` | Read with pseudo-name suffix, optionally add water |
+| `read(String, String, boolean, double)` | Read with pseudo-name, optionally add water with custom kij |
+| `addWaterToFluid(SystemInterface, double)` | Add water component to an existing fluid with given kij |
 | `write(SystemInterface, String)` | Write fluid to E300 file |
 | `write(SystemInterface, String, double)` | Write with reservoir temp (°C) |
 | `toE300String(SystemInterface)` | Export to E300 format string |
@@ -474,6 +574,6 @@ EclipseEOSExporter.toFile(tunedFluid, Path.of("TUNED_PVT.INC"));
 
 ## See Also
 
-- [PVT Workflow](pvt_workflow.md) - CCE, CVD, DLE simulations
-- [Fluid Characterization](fluid_characterization_mathematics.md) - Plus-fraction modeling
-- [Thermodynamic Models](../modules.md) - EOS and mixing rules
+- [PVT Workflow](pvt_workflow) - CCE, CVD, DLE simulations
+- [Fluid Characterization](fluid_characterization_mathematics) - Plus-fraction modeling
+- [Thermodynamic Models](../modules) - EOS and mixing rules

@@ -9,9 +9,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentSolid;
 
 /**
- * <p>
  * Abstract PhaseSolid class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -24,22 +22,20 @@ public abstract class PhaseSolid extends PhaseSrkEos {
    * Flag to control whether EOS-based properties should be used instead of literature-based values.
    *
    * <p>
-   * When true, thermodynamic properties (density, entropy, enthalpy, heat capacities) are
-   * calculated using the underlying equation of state (SRK EOS). This is useful for Pedersen's
-   * approach where asphaltene is modeled as a heavy liquid phase with EOS-calculable properties.
+   * When true, thermodynamic properties (density, entropy, enthalpy, heat capacities) are calculated using the
+   * underlying equation of state (SRK EOS). This is useful for Pedersen's approach where asphaltene is modeled as a
+   * heavy liquid phase with EOS-calculable properties.
    * </p>
    *
    * <p>
-   * When false (default), solid-specific literature values are used for properties like density
-   * (e.g., 1150 kg/m³ for asphaltene), and residual properties return 0 as is typical for solids.
+   * When false (default), solid-specific literature values are used for properties like density (e.g., 1150 kg/m³ for
+   * asphaltene), and residual properties return 0 as is typical for solids.
    * </p>
    */
   private boolean useEosProperties = false;
 
   /**
-   * <p>
    * Constructor for PhaseSolid.
-   * </p>
    */
   public PhaseSolid() {
     setType(PhaseType.SOLID);
@@ -61,8 +57,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     try {
       super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
       getDensityTemp();
@@ -95,9 +90,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * setSolidRefFluidPhase.
-   * </p>
    *
    * @param refPhase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -115,8 +108,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
   public double getDensityTemp() {
     double density = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      density += getWtFrac(i)
-          * ((ComponentSolid) componentArray[i]).getPureComponentSolidDensity(getTemperature())
+      density += getWtFrac(i) * ((ComponentSolid) componentArray[i]).getPureComponentSolidDensity(getTemperature())
           * 1000.0;
     }
     molarVolume = density / getMolarMass() * 1e-5;
@@ -140,8 +132,8 @@ public abstract class PhaseSolid extends PhaseSrkEos {
   }
 
   /**
-   * Updates the phase type to ASPHALTENE if this phase is predominantly asphaltene. Call this after
-   * flash calculations to properly identify asphaltene-rich solid phases.
+   * Updates the phase type to ASPHALTENE if this phase is predominantly asphaltene. Call this after flash calculations
+   * to properly identify asphaltene-rich solid phases.
    */
   public void updatePhaseTypeForAsphaltene() {
     if (isAsphaltenePhase()) {
@@ -150,8 +142,7 @@ public abstract class PhaseSolid extends PhaseSrkEos {
   }
 
   /**
-   * Get asphaltene density based on literature values. Asphaltene density is typically 1100-1200
-   * kg/m³.
+   * Get asphaltene density based on literature values. Asphaltene density is typically 1100-1200 kg/m³.
    *
    * @return asphaltene density in kg/m3
    */
@@ -168,13 +159,10 @@ public abstract class PhaseSolid extends PhaseSrkEos {
         compDensity = 1080.0; // Typical resin density kg/m3
       } else {
         // Try database value for other components
-        compDensity =
-            ((ComponentSolid) componentArray[i]).getPureComponentSolidDensity(getTemperature())
-                * 1000.0;
+        compDensity = ((ComponentSolid) componentArray[i]).getPureComponentSolidDensity(getTemperature()) * 1000.0;
 
         // Check for invalid values
-        if (compDensity <= 0.0 || Double.isNaN(compDensity) || compDensity > 2000.0
-            || compDensity < 500.0) {
+        if (compDensity <= 0.0 || Double.isNaN(compDensity) || compDensity > 2000.0 || compDensity < 500.0) {
           compDensity = 1100.0; // Default
         }
       }
@@ -200,9 +188,9 @@ public abstract class PhaseSolid extends PhaseSrkEos {
    * Set whether to use EOS-based properties for this solid phase.
    *
    * <p>
-   * When enabled, thermodynamic properties (density, entropy, enthalpy, heat capacities) are
-   * calculated using the underlying equation of state. This is useful for Pedersen's approach where
-   * asphaltene behaves more like a heavy liquid phase.
+   * When enabled, thermodynamic properties (density, entropy, enthalpy, heat capacities) are calculated using the
+   * underlying equation of state. This is useful for Pedersen's approach where asphaltene behaves more like a heavy
+   * liquid phase.
    * </p>
    *
    * @param useEosProperties true to use EOS properties, false to use literature-based values
@@ -215,9 +203,8 @@ public abstract class PhaseSolid extends PhaseSrkEos {
    * {@inheritDoc}
    *
    * <p>
-   * For solids, the residual entropy is approximated as zero since there is no PVT contribution for
-   * incompressible solids at their reference state. When {@link #isUseEosProperties()} is true,
-   * EOS-based calculation is used instead.
+   * For solids, the residual entropy is approximated as zero since there is no PVT contribution for incompressible
+   * solids at their reference state. When {@link #isUseEosProperties()} is true, EOS-based calculation is used instead.
    * </p>
    */
   @Override
@@ -232,9 +219,8 @@ public abstract class PhaseSolid extends PhaseSrkEos {
    * {@inheritDoc}
    *
    * <p>
-   * For solids, the residual enthalpy is approximated as zero since the PVT contribution for
-   * incompressible solids is negligible. When {@link #isUseEosProperties()} is true, EOS-based
-   * calculation is used instead.
+   * For solids, the residual enthalpy is approximated as zero since the PVT contribution for incompressible solids is
+   * negligible. When {@link #isUseEosProperties()} is true, EOS-based calculation is used instead.
    * </p>
    */
   @Override
@@ -334,9 +320,8 @@ public abstract class PhaseSolid extends PhaseSrkEos {
    * {@inheritDoc}
    *
    * <p>
-   * For solids, the Joule-Thomson coefficient is typically very small since solids are nearly
-   * incompressible. When {@link #isUseEosProperties()} is true, EOS-based calculation is used
-   * instead.
+   * For solids, the Joule-Thomson coefficient is typically very small since solids are nearly incompressible. When
+   * {@link #isUseEosProperties()} is true, EOS-based calculation is used instead.
    * </p>
    */
   @Override
@@ -351,9 +336,9 @@ public abstract class PhaseSolid extends PhaseSrkEos {
    * {@inheritDoc}
    *
    * <p>
-   * For asphaltene phases, returns a realistic density based on literature values. For other solid
-   * phases, uses the standard EOS-based calculation. When {@link #isUseEosProperties()} is true,
-   * always uses EOS-based calculation regardless of phase type.
+   * For asphaltene phases, returns a realistic density based on literature values. For other solid phases, uses the
+   * standard EOS-based calculation. When {@link #isUseEosProperties()} is true, always uses EOS-based calculation
+   * regardless of phase type.
    * </p>
    */
   @Override

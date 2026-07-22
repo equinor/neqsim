@@ -42,7 +42,8 @@ public class EjectorCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public EjectorCapacityStrategy() {}
+  public EjectorCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
@@ -51,8 +52,7 @@ public class EjectorCapacityStrategy implements EquipmentCapacityStrategy {
    * @param minSuctionPressure minimum suction pressure in bara
    * @param maxMotiveFlowRate maximum motive flow rate in kg/hr
    */
-  public EjectorCapacityStrategy(double maxEntrainmentRatio, double minSuctionPressure,
-      double maxMotiveFlowRate) {
+  public EjectorCapacityStrategy(double maxEntrainmentRatio, double minSuctionPressure, double maxMotiveFlowRate) {
     this.maxEntrainmentRatio = maxEntrainmentRatio;
     this.minSuctionPressure = minSuctionPressure;
     this.maxMotiveFlowRate = maxMotiveFlowRate;
@@ -93,7 +93,7 @@ public class EjectorCapacityStrategy implements EquipmentCapacityStrategy {
 
     // Check if ejector implements CapacityConstrainedEquipment
     if (ejector instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) ejector).getMaxUtilization();
+      return ejector.getMaxUtilization();
     }
 
     // Calculate entrainment ratio as primary capacity indicator
@@ -133,41 +133,37 @@ public class EjectorCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If ejector already implements CapacityConstrainedEquipment, use its constraints
     if (ejector instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) ejector).getCapacityConstraints();
+      return ejector.getCapacityConstraints();
     }
 
     // Entrainment ratio constraint
-    CapacityConstraint entrainmentConstraint =
-        new CapacityConstraint("entrainmentRatio", "ratio", CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxEntrainmentRatio * 0.9).setMaxValue(maxEntrainmentRatio)
-            .setDescription("Suction to motive mass flow ratio")
-            .setValueSupplier(() -> ejector.getEntrainmentRatio());
+    CapacityConstraint entrainmentConstraint = new CapacityConstraint("entrainmentRatio", "ratio",
+        CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxEntrainmentRatio * 0.9)
+        .setMaxValue(maxEntrainmentRatio).setDescription("Suction to motive mass flow ratio")
+        .setValueSupplier(() -> ejector.getEntrainmentRatio());
     constraints.put("entrainmentRatio", entrainmentConstraint);
 
     // Efficiency constraint (informational)
-    CapacityConstraint efficiencyConstraint =
-        new CapacityConstraint("efficiency", "fraction", CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(0.75).setMaxValue(1.0).setDescription("Isentropic efficiency")
-            .setValueSupplier(() -> ejector.getEfficiencyIsentropic());
+    CapacityConstraint efficiencyConstraint = new CapacityConstraint("efficiency", "fraction",
+        CapacityConstraint.ConstraintType.SOFT).setDesignValue(0.75).setMaxValue(1.0)
+        .setDescription("Isentropic efficiency").setValueSupplier(() -> ejector.getEfficiencyIsentropic());
     constraints.put("efficiency", efficiencyConstraint);
 
     // Suction pressure constraint (minimum)
     if (ejector.getSuctionStream() != null) {
-      CapacityConstraint suctionPressureConstraint =
-          new CapacityConstraint("suctionPressure", "bara", CapacityConstraint.ConstraintType.HARD)
-              .setMinValue(minSuctionPressure).setDesignValue(minSuctionPressure * 2)
-              .setMaxValue(Double.MAX_VALUE).setDescription("Minimum suction pressure")
-              .setValueSupplier(() -> ejector.getSuctionStream().getPressure("bara"));
+      CapacityConstraint suctionPressureConstraint = new CapacityConstraint("suctionPressure", "bara",
+          CapacityConstraint.ConstraintType.HARD).setMinValue(minSuctionPressure).setDesignValue(minSuctionPressure * 2)
+          .setMaxValue(Double.MAX_VALUE).setDescription("Minimum suction pressure")
+          .setValueSupplier(() -> ejector.getSuctionStream().getPressure("bara"));
       constraints.put("suctionPressure", suctionPressureConstraint);
     }
 
     // Motive flow rate constraint
     if (ejector.getMotiveStream() != null) {
-      CapacityConstraint motiveFlowConstraint =
-          new CapacityConstraint("motiveFlowRate", "kg/hr", CapacityConstraint.ConstraintType.SOFT)
-              .setDesignValue(maxMotiveFlowRate * 0.9).setMaxValue(maxMotiveFlowRate)
-              .setDescription("Motive stream flow rate")
-              .setValueSupplier(() -> ejector.getMotiveStream().getFlowRate("kg/hr"));
+      CapacityConstraint motiveFlowConstraint = new CapacityConstraint("motiveFlowRate", "kg/hr",
+          CapacityConstraint.ConstraintType.SOFT).setDesignValue(maxMotiveFlowRate * 0.9).setMaxValue(maxMotiveFlowRate)
+          .setDescription("Motive stream flow rate")
+          .setValueSupplier(() -> ejector.getMotiveStream().getFlowRate("kg/hr"));
       constraints.put("motiveFlowRate", motiveFlowConstraint);
     }
 

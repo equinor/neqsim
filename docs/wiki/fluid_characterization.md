@@ -1,9 +1,14 @@
+---
+title: "Fluid Characterization in NeqSim"
+description: "Real reservoir fluids often contain a complex mixture of heavy hydrocarbons (C7+) that cannot be represented by standard pure components. NeqSim provides a robust characterization framework to model t..."
+---
+
 # Fluid Characterization in NeqSim
 
 Real reservoir fluids often contain a complex mixture of heavy hydrocarbons (C7+) that cannot be represented by standard pure components. NeqSim provides a robust characterization framework to model these fluids using TBP (True Boiling Point) fractions and Plus fractions.
 
 > **Related Documentation:**
-> - [TBP Fraction Models](tbp_fraction_models.md) - Detailed guide on all available TBP models (Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing), model selection, and mathematical correlations
+> - [TBP Fraction Models](tbp_fraction_models) - Detailed guide on all available TBP models (Pedersen, Lee-Kesler, Riazi-Daubert, Twu, Cavett, Standing), model selection, and mathematical correlations
 
 ## 1. Adding Heavy Fractions
 
@@ -57,33 +62,33 @@ NeqSim provides 10 TBP models for estimating critical properties (Tc, Pc, ω) fr
 | `Cavett` | Refining industry, API gravity corrections |
 | `Standing` | Reservoir engineering |
 
-See [TBP Fraction Models](tbp_fraction_models.md) for detailed mathematical correlations and model selection guidelines.
+See [TBP Fraction Models](tbp_fraction_models) for detailed mathematical correlations and model selection guidelines.
 
 #### Available Plus Fraction Models
 
 ##### Pedersen Model
 The standard Pedersen model assumes an exponential distribution for the mole fraction $z_i$ of each carbon number fraction $i$:
 
-\[
+$
 z_i = \exp(A + B \cdot i)
-\]
+$
 
 where $i$ is the carbon number, and $A$ and $B$ are coefficients determined to match the total mole fraction and average molar mass of the plus fraction.
 
 The density $\rho_i$ is modeled as a logarithmic function of the carbon number:
 
-\[
+$
 \rho_i = C + D \cdot \ln(i)
-\]
+$
 
 where $C$ and $D$ are fitted coefficients.
 
 ##### Whitson Gamma Model
 The Whitson Gamma model uses a three-parameter Gamma probability density function (PDF) to describe the molar mass distribution:
 
-\[
+$
 p(M) = \frac{(M - \eta)^{\alpha - 1} \exp\left(-\frac{M - \eta}{\beta}\right)}{\beta^\alpha \Gamma(\alpha)}
-\]
+$
 
 where:
 *   $M$ is the molar mass.
@@ -94,19 +99,19 @@ where:
 
 The mole fraction $z_i$ for a pseudo-component covering the molar mass range $[M_{L}, M_{U}]$ is obtained by integrating the PDF:
 
-\[
+$
 z_i = z_{plus} \int_{M_{L}}^{M_{U}} p(M) \, dM
-\]
+$
 
 The density of each pseudo-component is calculated using the Watson UOP characterization factor $K_w$:
 
-\[
+$
 K_w = 4.5579 \cdot (M_{plus})^{0.15178} \cdot \rho_{plus}^{-1.18241}
-\]
+$
 
-\[
+$
 \rho_i = 6.0108 \cdot M_i^{0.17947} \cdot K_w^{-1.18241}
-\]
+$
 
 (Note: Molar masses are in g/mol and densities in g/cm³ for these correlations).
 
@@ -433,6 +438,7 @@ fluid1.setTemperature(80.0, 'C')
 fluid1.setPressure(30.0, 'bara')
 
 TPflash(fluid1)
+fluid1.initProperties()
 printFrame(fluid1)
 ```
 

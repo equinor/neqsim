@@ -17,8 +17,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  *
  * @author Even Solbraa
  */
-public abstract class Conductivity extends GasPhysicalPropertyMethod
-    implements ConductivityInterface {
+public abstract class Conductivity extends GasPhysicalPropertyMethod implements ConductivityInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -27,9 +26,7 @@ public abstract class Conductivity extends GasPhysicalPropertyMethod
   double conductivity = 0;
 
   /**
-   * <p>
    * Constructor for Conductivity.
-   * </p>
    *
    * @param gasPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

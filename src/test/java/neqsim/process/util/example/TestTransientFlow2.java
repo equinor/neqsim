@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.separator.Separator;
@@ -9,26 +11,23 @@ import neqsim.process.measurementdevice.VolumeFlowTransmitter;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestTransientFlow2 class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TestTransientFlow2 {
+  private static final Logger logger = LogManager.getLogger(TestTransientFlow2.class);
+
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem.addComponent("methane", 0.900);
     testSystem.addComponent("ethane", 0.100);
     testSystem.addComponent("n-heptane", 1.00);
@@ -63,8 +62,7 @@ public class TestTransientFlow2 {
     flowController.setControllerSetPoint(1.0);
     flowController.setControllerParameters(0.7, 300.0, 0.0);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(valve_1);
     operations.add(separator_1);
@@ -81,14 +79,14 @@ public class TestTransientFlow2 {
     // transient behaviour
     operations.setTimeStep(5.0);
     for (int i = 0; i < 460; i++) {
-      // System.out.println("volume flow " + flowTransmitter.getMeasuredValue()
+      // logger.info("volume flow " + flowTransmitter.getMeasuredValue()
       // + " valve opening " + valve_1.getPercentValveOpening() + " pressure "
       // + separator_1.getGasOutStream().getPressure());
       operations.runTransient();
     }
 
     operations.displayResult();
-    // System.out.println("volume flow " + flowTransmitter.getMeasuredValue() + " valve opening "
+    // logger.info("volume flow " + flowTransmitter.getMeasuredValue() + " valve opening "
     // + valve_1.getPercentValveOpening());
 
     // operations.displayResult();

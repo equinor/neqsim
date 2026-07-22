@@ -1,12 +1,18 @@
 package neqsim.blackoil;
 
+import java.io.Serializable;
+
 /**
- * Lightweight Black-Oil "system/stream" with standard totals and P/T. Not a full NeqSim
- * SystemInterface (by design, to keep it minimal).
+ * Lightweight Black-Oil "system/stream" with standard totals and P/T. Not a full NeqSim SystemInterface (by design, to
+ * keep it minimal).
  *
  * @author esol
+ * @version 1.0
  */
-public class SystemBlackOil {
+public class SystemBlackOil implements Serializable {
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000L;
+
   private final BlackOilPVTTable pvt;
   private final BlackOilFlash flash;
   private double P;
@@ -17,9 +23,7 @@ public class SystemBlackOil {
   private BlackOilFlashResult last;
 
   /**
-   * <p>
    * Constructor for SystemBlackOil.
-   * </p>
    *
    * @param pvt a {@link neqsim.blackoil.BlackOilPVTTable} object
    * @param rho_o_sc a double
@@ -32,9 +36,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * copyShallow.
-   * </p>
    *
    * @return a {@link neqsim.blackoil.SystemBlackOil} object
    */
@@ -50,9 +52,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * setPressure.
-   * </p>
    *
    * @param P a double
    */
@@ -62,9 +62,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * setTemperature.
-   * </p>
    *
    * @param T a double
    */
@@ -74,9 +72,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * setStdTotals.
-   * </p>
    *
    * @param Otot_std a double
    * @param Gtot_std a double
@@ -90,9 +86,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getPressure.
-   * </p>
    *
    * @return a double
    */
@@ -101,9 +95,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getTemperature.
-   * </p>
    *
    * @return a double
    */
@@ -112,9 +104,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getOilStdTotal.
-   * </p>
    *
    * @return a double
    */
@@ -123,9 +113,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getGasStdTotal.
-   * </p>
    *
    * @return a double
    */
@@ -134,9 +122,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getWaterStd.
-   * </p>
    *
    * @return a double
    */
@@ -145,9 +131,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * flash.
-   * </p>
    *
    * @return a {@link neqsim.blackoil.BlackOilFlashResult} object
    */
@@ -159,9 +143,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getBo.
-   * </p>
    *
    * @return a double
    */
@@ -170,9 +152,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getBg.
-   * </p>
    *
    * @return a double
    */
@@ -181,9 +161,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getBw.
-   * </p>
    *
    * @return a double
    */
@@ -192,9 +170,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getRs.
-   * </p>
    *
    * @return a double
    */
@@ -203,9 +179,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getRv.
-   * </p>
    *
    * @return a double
    */
@@ -214,9 +188,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getOilDensity.
-   * </p>
    *
    * @return a double
    */
@@ -225,9 +197,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getGasDensity.
-   * </p>
    *
    * @return a double
    */
@@ -236,9 +206,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getWaterDensity.
-   * </p>
    *
    * @return a double
    */
@@ -247,9 +215,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getOilViscosity.
-   * </p>
    *
    * @return a double
    */
@@ -258,9 +224,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getGasViscosity.
-   * </p>
    *
    * @return a double
    */
@@ -269,9 +233,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getWaterViscosity.
-   * </p>
    *
    * @return a double
    */
@@ -280,9 +242,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getOilReservoirVolume.
-   * </p>
    *
    * @return a double
    */
@@ -291,9 +251,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getGasReservoirVolume.
-   * </p>
    *
    * @return a double
    */
@@ -302,9 +260,7 @@ public class SystemBlackOil {
   }
 
   /**
-   * <p>
    * getWaterReservoirVolume.
-   * </p>
    *
    * @return a double
    */

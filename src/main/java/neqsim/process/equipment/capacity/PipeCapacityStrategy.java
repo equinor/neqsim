@@ -46,7 +46,8 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public PipeCapacityStrategy() {}
+  public PipeCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom velocity limits.
@@ -55,8 +56,7 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
    * @param maxLiquidVelocity maximum liquid velocity in m/s
    * @param maxMultiphaseVelocity maximum multiphase velocity in m/s
    */
-  public PipeCapacityStrategy(double maxGasVelocity, double maxLiquidVelocity,
-      double maxMultiphaseVelocity) {
+  public PipeCapacityStrategy(double maxGasVelocity, double maxLiquidVelocity, double maxMultiphaseVelocity) {
     this.maxGasVelocity = maxGasVelocity;
     this.maxLiquidVelocity = maxLiquidVelocity;
     this.maxMultiphaseVelocity = maxMultiphaseVelocity;
@@ -173,8 +173,8 @@ public class PipeCapacityStrategy implements EquipmentCapacityStrategy {
       // Assume 10% of inlet pressure as allowable DP
       double maxDP = inletP * 0.1;
       CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop").setDesignValue(maxDP)
-          .setMaxValue(maxDP * 1.5).setUnit("bar")
-          .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setValueSupplier(() -> {
+          .setMaxValue(maxDP * 1.5).setUnit("bar").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+          .setValueSupplier(() -> {
             double inP = pipe.getInletStream().getPressure("bara");
             double outP = pipe.getOutletStream().getPressure("bara");
             return inP - outP;

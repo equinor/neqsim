@@ -1,3 +1,8 @@
+---
+title: "Process Logic Framework for NeqSim"
+description: "This document describes the proposed process logic framework for NeqSim, enabling complex automation sequences including ESD, startup, shutdown, and general process control logic."
+---
+
 # Process Logic Framework for NeqSim
 
 ## Overview

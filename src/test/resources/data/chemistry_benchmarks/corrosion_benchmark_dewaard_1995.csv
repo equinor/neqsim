@@ -1,0 +1,9 @@
+# De Waard-Milliams 1995 (NORSOK M-506 baseline) — published reference points
+# Columns: case,T_C,pCO2_bar,pH,velocity_mps,pipeDiameter_m,reference_mmYr,tolerance_mmYr
+case,T_C,pCO2_bar,pH,velocity_mps,pipeDiameter_m,reference_mmYr,tolerance_mmYr
+DW1995_A,20,1.0,4.0,1.0,0.1,1.50,0.5
+DW1995_B,40,1.0,4.0,1.0,0.1,3.50,1.0
+DW1995_C,60,1.0,4.0,1.0,0.1,5.50,1.5
+DW1995_D,80,1.0,4.5,1.0,0.1,4.50,1.5
+DW1995_E,40,3.0,4.0,1.0,0.1,7.00,2.0
+DW1995_F,60,3.0,4.0,2.0,0.1,11.0,3.0

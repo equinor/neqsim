@@ -11,8 +11,9 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class AmmoniaTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(AmmoniaTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(AmmoniaTest.class);
   static SystemInterface thermoSystem = null;
 
   /**

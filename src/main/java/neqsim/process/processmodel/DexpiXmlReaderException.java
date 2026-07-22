@@ -5,13 +5,13 @@ package neqsim.process.processmodel;
  */
 public class DexpiXmlReaderException extends Exception {
 
-    private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 1L;
 
-    public DexpiXmlReaderException(String message) {
-        super(message);
-    }
+  public DexpiXmlReaderException(String message) {
+    super(message);
+  }
 
-    public DexpiXmlReaderException(String message, Throwable cause) {
-        super(message, cause);
-    }
+  public DexpiXmlReaderException(String message, Throwable cause) {
+    super(message, cause);
+  }
 }

@@ -34,8 +34,8 @@ public class CalibrationResult implements Serializable {
    * @param samplesUsed number of samples used
    * @param errorMessage error message if failed
    */
-  private CalibrationResult(boolean success, Map<String, Double> parameters, double rmse,
-      int iterations, int samplesUsed, String errorMessage) {
+  private CalibrationResult(boolean success, Map<String, Double> parameters, double rmse, int iterations,
+      int samplesUsed, String errorMessage) {
     this.success = success;
     this.parameters = parameters != null ? Collections.unmodifiableMap(parameters) : null;
     this.rmse = rmse;
@@ -53,8 +53,8 @@ public class CalibrationResult implements Serializable {
    * @param samplesUsed number of samples used
    * @return successful calibration result
    */
-  public static CalibrationResult success(Map<String, Double> parameters, double rmse,
-      int iterations, int samplesUsed) {
+  public static CalibrationResult success(Map<String, Double> parameters, double rmse, int iterations,
+      int samplesUsed) {
     return new CalibrationResult(true, parameters, rmse, iterations, samplesUsed, null);
   }
 

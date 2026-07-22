@@ -16,18 +16,18 @@
  * <p>
  * Example workflow:
  * </p>
- * 
+ *
  * <pre>
  * // 1. Configure equipment with specifications
- * DesignSpecification.forSeparator("HP-Separator").setKFactor(0.08).setDiameter(3.0, "m")
- *     .applyTo(separator);
+ * DesignSpecification.forSeparator("HP-Separator").setKFactor(0.08).setDiameter(3.0, "m").applyTo(separator);
  *
  * // 2. Run integrated design-optimization
- * DesignResult result = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2)
- *     .applyDefaultConstraints().setObjective(ObjectiveType.MAXIMIZE_PRODUCTION).optimize();
+ * DesignResult result = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2).applyDefaultConstraints()
+ *     .configureFeedRateOptimization("Feed", 25000.0, 80000.0, "kg/hr").setObjective(ObjectiveType.MAXIMIZE_PRODUCTION)
+ *     .optimize();
  *
  * // 3. Check results
- * System.out.println(result.getSummary());
+ * logger.info(result.getSummary());
  * </pre>
  *
  * @author NeqSim Development Team

@@ -8,9 +8,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessModuleBaseClass;
 
 /**
- * <p>
  * CO2RemovalModule class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -21,15 +19,12 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(CO2RemovalModule.class);
 
-  protected StreamInterface streamToAbsorber = null, streamFromAbsorber = null,
-      gasFromCO2Stripper = null;
+  protected StreamInterface streamToAbsorber = null, streamFromAbsorber = null, gasFromCO2Stripper = null;
 
   protected Separator inletSeparator = null;
 
   /**
-   * <p>
    * Constructor for CO2RemovalModule.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -67,10 +62,10 @@ public class CO2RemovalModule extends ProcessModuleBaseClass {
     getOperations().run(id);
 
     streamFromAbsorber = inletSeparator.getGasOutStream().clone();
-    streamFromAbsorber.getThermoSystem().addComponent("CO2", -streamFromAbsorber.getThermoSystem()
-        .getPhase(0).getComponent("CO2").getNumberOfMolesInPhase() * 0.99);
-    streamFromAbsorber.getThermoSystem().addComponent("MEG", -streamFromAbsorber.getThermoSystem()
-        .getPhase(0).getComponent("MEG").getNumberOfMolesInPhase() * 0.99);
+    streamFromAbsorber.getThermoSystem().addComponent("CO2",
+        -streamFromAbsorber.getThermoSystem().getPhase(0).getComponent("CO2").getNumberOfMolesInPhase() * 0.99);
+    streamFromAbsorber.getThermoSystem().addComponent("MEG",
+        -streamFromAbsorber.getThermoSystem().getPhase(0).getComponent("MEG").getNumberOfMolesInPhase() * 0.99);
     streamFromAbsorber.getThermoSystem().init(1);
     setCalculationIdentifier(id);
   }

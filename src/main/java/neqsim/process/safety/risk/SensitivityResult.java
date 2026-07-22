@@ -11,8 +11,8 @@ import java.util.Map;
  * Container for sensitivity analysis results.
  *
  * <p>
- * Stores the results of varying one or more parameters and observing the effect on risk metrics.
- * Supports tornado diagrams, spider plots, and one-way sensitivity charts.
+ * Stores the results of varying one or more parameters and observing the effect on risk metrics. Supports tornado
+ * diagrams, spider plots, and one-way sensitivity charts.
  * </p>
  *
  * @author NeqSim team
@@ -77,7 +77,7 @@ public class SensitivityResult {
     // Also compute tornado data (min, base, max)
     double minRisk = Arrays.stream(risks).min().orElse(0);
     double maxRisk = Arrays.stream(risks).max().orElse(0);
-    tornadoData.put(parameterName, new double[] {minRisk, baseRiskIndex, maxRisk});
+    tornadoData.put(parameterName, new double[] { minRisk, baseRiskIndex, maxRisk });
   }
 
   // Public getters
@@ -131,8 +131,8 @@ public class SensitivityResult {
    * Gets tornado chart data for all parameters.
    *
    * <p>
-   * Returns a map of parameter names to [low_risk, base_risk, high_risk] arrays. Parameters are
-   * ordered by swing (high - low) in descending order for proper tornado display.
+   * Returns a map of parameter names to [low_risk, base_risk, high_risk] arrays. Parameters are ordered by swing (high
+   * - low) in descending order for proper tornado display.
    * </p>
    *
    * @return ordered map of tornado data
@@ -142,8 +142,8 @@ public class SensitivityResult {
     return tornadoData.entrySet().stream()
         .sorted((a, b) -> Double.compare(Math.abs(b.getValue()[2] - b.getValue()[0]),
             Math.abs(a.getValue()[2] - a.getValue()[0])))
-        .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue,
-            (e1, e2) -> e1, LinkedHashMap::new));
+        .collect(java.util.stream.Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e1,
+            LinkedHashMap::new));
   }
 
   /**
@@ -195,8 +195,7 @@ public class SensitivityResult {
         double[] data = entry.getValue();
         double swing = data[2] - data[0];
         double sensitivity = getSensitivityIndex(entry.getKey());
-        writer.printf("%s,%.6e,%.6e,%.6e,%.6e,%.4f%n", entry.getKey(), data[0], data[1], data[2],
-            swing, sensitivity);
+        writer.printf("%s,%.6e,%.6e,%.6e,%.6e,%.4f%n", entry.getKey(), data[0], data[1], data[2], swing, sensitivity);
       }
       writer.println();
 
@@ -233,8 +232,8 @@ public class SensitivityResult {
       for (int i = 0; i < params.length; i++) {
         double[] data = tornadoData.get(params[i]);
         String comma = (i < params.length - 1) ? "," : "";
-        writer.printf("    \"%s\": {\"low\": %.6e, \"base\": %.6e, \"high\": %.6e}%s%n", params[i],
-            data[0], data[1], data[2], comma);
+        writer.printf("    \"%s\": {\"low\": %.6e, \"base\": %.6e, \"high\": %.6e}%s%n", params[i], data[0], data[1],
+            data[2], comma);
       }
       writer.println("  },");
 

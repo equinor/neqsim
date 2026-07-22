@@ -22,9 +22,9 @@ import neqsim.process.util.report.safety.ProcessSafetyReport.SafetyMarginAssessm
 import neqsim.process.util.report.safety.ProcessSafetyReport.SystemKpiSnapshot;
 
 /**
- * Builder that collects safety information for a {@link ProcessSystem}. The builder aggregates
- * condition monitoring messages, equipment safety margins, relief valve diagnostics and
- * thermodynamic KPIs before serializing the result using the familiar {@link Report} utilities.
+ * Builder that collects safety information for a {@link ProcessSystem}. The builder aggregates condition monitoring
+ * messages, equipment safety margins, relief valve diagnostics and thermodynamic KPIs before serializing the result
+ * using the familiar {@link Report} utilities.
  */
 public class ProcessSafetyReportBuilder {
   private static final Logger logger = LogManager.getLogger(ProcessSafetyReportBuilder.class);
@@ -45,8 +45,8 @@ public class ProcessSafetyReportBuilder {
   }
 
   /**
-   * Provide a pre-configured {@link ConditionMonitor}. If not supplied the builder will instantiate
-   * one based on the process itself.
+   * Provide a pre-configured {@link ConditionMonitor}. If not supplied the builder will instantiate one based on the
+   * process itself.
    *
    * @param monitor monitor instance
    * @return this builder
@@ -90,8 +90,8 @@ public class ProcessSafetyReportBuilder {
   }
 
   /**
-   * Build the {@link ProcessSafetyReport}. The method is thread-safe but will copy internal data to
-   * avoid exposing mutable state.
+   * Build the {@link ProcessSafetyReport}. The method is thread-safe but will copy internal data to avoid exposing
+   * mutable state.
    *
    * @return built report
    */
@@ -113,8 +113,8 @@ public class ProcessSafetyReportBuilder {
     SystemKpiSnapshot kpis = collectSystemKpis(appliedThresholds);
     String equipmentJson = generateEquipmentJson();
 
-    return new ProcessSafetyReport(scenarioLabel, appliedThresholds, findings, safetyMargins, reliefs,
-        kpis, equipmentJson);
+    return new ProcessSafetyReport(scenarioLabel, appliedThresholds, findings, safetyMargins, reliefs, kpis,
+        equipmentJson);
   }
 
   private List<ConditionFinding> collectConditionFindings(ConditionMonitor monitor) {
@@ -151,13 +151,11 @@ public class ProcessSafetyReportBuilder {
     if (messageLower == null) {
       return SeverityLevel.NORMAL;
     }
-    if (messageLower.contains("critical") || messageLower.contains("too high")
-        || messageLower.contains("error") || messageLower.contains("fail")) {
+    if (messageLower.contains("critical") || messageLower.contains("too high") || messageLower.contains("error")
+        || messageLower.contains("fail")) {
       return SeverityLevel.CRITICAL;
     }
-    if (messageLower.contains("warn") || messageLower.contains("deviation")
-        || messageLower.contains("monitor")) {
-      return SeverityLevel.WARNING;
+    if (messageLower.contains("warn") || messageLower.contains("deviation") || messageLower.contains("monitor")) {
     }
     return SeverityLevel.WARNING;
   }
@@ -190,8 +188,8 @@ public class ProcessSafetyReportBuilder {
       double marginFraction = (designPressure - operatingPressure) / designPressure;
       SeverityLevel severity = gradeSafetyMargin(appliedThresholds, marginFraction);
       String notes = marginFraction < 0 ? "Operating pressure above design" : null;
-      margins.add(new SafetyMarginAssessment(unit.getName(), designPressure, operatingPressure,
-          marginFraction, severity, notes));
+      margins.add(new SafetyMarginAssessment(unit.getName(), designPressure, operatingPressure, marginFraction,
+          severity, notes));
     }
     return margins;
   }
@@ -209,8 +207,7 @@ public class ProcessSafetyReportBuilder {
     return SeverityLevel.NORMAL;
   }
 
-  private List<ReliefDeviceAssessment> collectReliefAssessments(
-      ProcessSafetyThresholds appliedThresholds) {
+  private List<ReliefDeviceAssessment> collectReliefAssessments(ProcessSafetyThresholds appliedThresholds) {
     List<ReliefDeviceAssessment> reliefs = new ArrayList<>();
     for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
       if (unit instanceof SafetyReliefValve) {
@@ -222,28 +219,26 @@ public class ProcessSafetyReportBuilder {
     return reliefs;
   }
 
-  private ReliefDeviceAssessment buildReliefAssessment(SafetyReliefValve valve,
-      ProcessSafetyThresholds thresholds) {
+  private ReliefDeviceAssessment buildReliefAssessment(SafetyReliefValve valve, ProcessSafetyThresholds thresholds) {
     double setPressure = valve.getSetPressureBar();
     double relievingPressure = safeDouble(valve::getRelievingPressureBar);
     double upstreamPressure = safeDouble(valve::getInletPressure);
     double massFlow = extractMassFlow(valve.getInletStream());
     double utilisation = normalizeOpenFraction(valve);
     SeverityLevel severity = gradeUtilisation(thresholds, utilisation);
-    return new ReliefDeviceAssessment(valve.getName(), setPressure, relievingPressure,
-        upstreamPressure, massFlow, utilisation, severity);
+    return new ReliefDeviceAssessment(valve.getName(), setPressure, relievingPressure, upstreamPressure, massFlow,
+        utilisation, severity);
   }
 
-  private ReliefDeviceAssessment buildReliefAssessment(SafetyValve valve,
-      ProcessSafetyThresholds thresholds) {
+  private ReliefDeviceAssessment buildReliefAssessment(SafetyValve valve, ProcessSafetyThresholds thresholds) {
     double setPressure = valve.getPressureSpec();
     double relievingPressure = setPressure;
     double upstreamPressure = safeDouble(valve::getInletPressure);
     double massFlow = extractMassFlow(valve.getInletStream());
     double utilisation = normalizeOpenFraction(valve);
     SeverityLevel severity = gradeUtilisation(thresholds, utilisation);
-    return new ReliefDeviceAssessment(valve.getName(), setPressure, relievingPressure,
-        upstreamPressure, massFlow, utilisation, severity);
+    return new ReliefDeviceAssessment(valve.getName(), setPressure, relievingPressure, upstreamPressure, massFlow,
+        utilisation, severity);
   }
 
   private double safeDouble(DoubleSupplier supplier) {
@@ -308,8 +303,7 @@ public class ProcessSafetyReportBuilder {
     return new SystemKpiSnapshot(entropy, exergy, entropySeverity, exergySeverity);
   }
 
-  private SeverityLevel gradeHighIsBad(double warningThreshold, double criticalThreshold,
-      double value) {
+  private SeverityLevel gradeHighIsBad(double warningThreshold, double criticalThreshold, double value) {
     if (Double.isNaN(value)) {
       return SeverityLevel.NORMAL;
     }

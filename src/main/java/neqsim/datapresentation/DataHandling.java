@@ -9,9 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
- * <p>
  * DataHandling class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,11 +19,10 @@ public class DataHandling {
   static Logger logger = LogManager.getLogger(DataHandling.class);
 
   /**
-   * <p>
    * Constructor for DataHandling.
-   * </p>
    */
-  public DataHandling() {}
+  public DataHandling() {
+  }
 
   /**
    * Returns the number of items in the specified series.
@@ -38,9 +35,7 @@ public class DataHandling {
   }
 
   /**
-   * <p>
    * getLegendItemCount.
-   * </p>
    *
    * @return a int
    */
@@ -49,9 +44,7 @@ public class DataHandling {
   }
 
   /**
-   * <p>
    * getLegendItemLabels.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -88,9 +81,7 @@ public class DataHandling {
   }
 
   /**
-   * <p>
    * getXValue.
-   * </p>
    *
    * @param series a int
    * @param item a int
@@ -116,9 +107,7 @@ public class DataHandling {
   }
 
   /**
-   * <p>
    * printToFile.
-   * </p>
    *
    * @param points an array of type double
    * @param filename a {@link java.lang.String} object

@@ -11,18 +11,14 @@ public class SystemPrMathiasCopeman extends SystemPrEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemPrMathiasCopeman.
-   * </p>
    */
   public SystemPrMathiasCopeman() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemPrMathiasCopeman.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -32,9 +28,7 @@ public class SystemPrMathiasCopeman extends SystemPrEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemPrMathiasCopeman.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

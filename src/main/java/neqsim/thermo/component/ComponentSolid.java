@@ -11,9 +11,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>
  * ComponentSolid class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -36,9 +34,7 @@ public class ComponentSolid extends ComponentSrk {
   PhaseInterface refPhase = null;
 
   /**
-   * <p>
    * Constructor for ComponentSolid.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -74,9 +70,7 @@ public class ComponentSolid extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Calculate, set and return fugacity coefficient.
-   * </p>
    *
    * @param temp a double
    * @param pres a double
@@ -132,12 +126,9 @@ public class ComponentSolid extends ComponentSrk {
   }
 
   /**
-   * <p>
    * Calculate, set and return fugacity coefficient.
-   * </p>
    *
-   * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient
-   *        of.
+   * @param phase1 a {@link neqsim.thermo.phase.PhaseInterface} object to get fugacity coefficient of.
    * @return Fugacity coefficient
    */
   public double fugcoef2(PhaseInterface phase1) {
@@ -150,8 +141,7 @@ public class ComponentSolid extends ComponentSrk {
     }
     refPhase.getComponent(0).fugcoef(refPhase);
 
-    double liquidPhaseFugacity =
-        refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
+    double liquidPhaseFugacity = refPhase.getComponent(0).getFugacityCoefficient() * refPhase.getPressure();
 
     // Calculates delta Cp solid-liquid
     double deltaCpSL = -(getPureComponentCpSolid(getTriplePointTemperature())
@@ -184,8 +174,7 @@ public class ComponentSolid extends ComponentSrk {
     SolidFug = getx() * liquidPhaseFugacity
         * Math.exp(-getHeatOfFusion() / (R * phase1.getTemperature())
             * (1.0 - phase1.getTemperature() / getTriplePointTemperature())
-            + deltaCpSL / (R * phase1.getTemperature())
-                * (getTriplePointTemperature() - phase1.getTemperature())
+            + deltaCpSL / (R * phase1.getTemperature()) * (getTriplePointTemperature() - phase1.getTemperature())
             - deltaCpSL / R * Math.log(getTriplePointTemperature() / phase1.getTemperature())
             - deltaSolVol * (1.0 - phase1.getPressure()) / (R * phase1.getTemperature()));
 
@@ -219,9 +208,7 @@ public class ComponentSolid extends ComponentSrk {
   // return dpdt;
   // }
   /**
-   * <p>
    * getMolarVolumeSolid.
-   * </p>
    *
    * @return a double
    */
@@ -230,9 +217,7 @@ public class ComponentSolid extends ComponentSrk {
   }
 
   /**
-   * <p>
    * setSolidRefFluidPhase.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -244,8 +229,7 @@ public class ComponentSolid extends ComponentSrk {
       refPhase.setTemperature(273.0);
       refPhase.setPressure(1.0);
       try {
-        if (NeqSimDataBase.hasComponent(componentName)
-            || NeqSimDataBase.hasTempComponent(componentName)) {
+        if (NeqSimDataBase.hasComponent(componentName) || NeqSimDataBase.hasTempComponent(componentName)) {
           refPhase.addComponent(componentName, 10.0, 10.0, 0);
         } else {
           refPhase.addComponent("methane", 10.0, 10.0, 0);
@@ -267,9 +251,7 @@ public class ComponentSolid extends ComponentSrk {
   }
 
   /**
-   * <p>
    * getVolumeCorrection2.
-   * </p>
    *
    * @return a double
    */

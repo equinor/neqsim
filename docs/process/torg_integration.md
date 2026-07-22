@@ -1,3 +1,8 @@
+---
+title: TORG (Technical Requirements Document) Integration
+description: A TORG (Technical Requirements Document, also known as TR or Technical Requirements Governing Document) defines the standards, methods, and requirements to be used in process design for a specific pro...
+---
+
 # TORG (Technical Requirements Document) Integration
 
 ## Overview
@@ -446,6 +451,6 @@ logger.warn("Deviation from TORG: Using ASME VIII Div 2 instead of Div 1 for {}"
 
 ## See Also
 
-- [Mechanical Design Standards](mechanical_design_standards.md) - Standard types and categories
-- [Mechanical Design Database](mechanical_design_database.md) - Data source configuration
-- [Field Development Orchestration](field_development_orchestration.md) - Complete design workflows
+- [Mechanical Design Standards](mechanical_design_standards) - Standard types and categories
+- [Mechanical Design Database](mechanical_design_database) - Data source configuration
+- [Field Development Orchestration](field_development_orchestration) - Complete design workflows

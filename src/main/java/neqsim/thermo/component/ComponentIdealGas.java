@@ -12,18 +12,14 @@ public class ComponentIdealGas extends Component {
   private static final long serialVersionUID = 1000L;
 
   /**
-   * <p>
    * Constructor for ComponentIdealGas.
-   * </p>
    */
   public ComponentIdealGas() {
     this("default", 0.0, 0.0, 0);
   }
 
   /**
-   * <p>
    * Constructor for ComponentIdealGas.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param moles a double
@@ -83,4 +79,3 @@ public class ComponentIdealGas extends Component {
     return 0.0;
   }
 }
-

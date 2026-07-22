@@ -2,6 +2,7 @@ package neqsim.process.costestimation.tank;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import neqsim.process.costestimation.CostEstimationCalculator;
 import neqsim.process.costestimation.UnitCostEstimateBaseClass;
 import neqsim.process.mechanicaldesign.tank.TankMechanicalDesign;
 
@@ -9,8 +10,8 @@ import neqsim.process.mechanicaldesign.tank.TankMechanicalDesign;
  * Cost estimation class for storage tanks.
  *
  * <p>
- * This class provides tank-specific cost estimation methods using chemical engineering cost
- * correlations for atmospheric and low-pressure storage tanks per API 650/620 standards.
+ * This class provides tank-specific cost estimation methods using chemical engineering cost correlations for
+ * atmospheric and low-pressure storage tanks per API 650/620 standards.
  * </p>
  *
  * <p>
@@ -73,8 +74,7 @@ public class TankCostEstimate extends UnitCostEstimateBaseClass {
   /**
    * Set tank type.
    *
-   * @param type tank type ("fixed-cone-roof", "fixed-dome-roof", "floating-roof", "spherical",
-   *        "horizontal")
+   * @param type tank type ("fixed-cone-roof", "fixed-dome-roof", "floating-roof", "spherical", "horizontal")
    */
   public void setTankType(String type) {
     this.tankType = type;
@@ -294,7 +294,8 @@ public class TankCostEstimate extends UnitCostEstimateBaseClass {
 
     // Apply pressure factor
     if (designPressure > 0) {
-      baseCost *= getCostCalculator().getPressureFactor(designPressure);
+      getCostCalculator();
+      baseCost *= CostEstimationCalculator.getPressureFactor(designPressure);
     }
 
     return baseCost * (getCostCalculator().getCurrentCepci() / 607.5);
@@ -338,8 +339,7 @@ public class TankCostEstimate extends UnitCostEstimateBaseClass {
    */
   private double calcInsulationCost() {
     // Surface area of tank
-    double surfaceArea =
-        Math.PI * tankDiameter * tankHeight + 2 * Math.PI / 4.0 * tankDiameter * tankDiameter;
+    double surfaceArea = Math.PI * tankDiameter * tankHeight + 2 * Math.PI / 4.0 * tankDiameter * tankDiameter;
 
     // Insulation cost: ~$80/m2 for mineral wool with cladding
     double baseCost = surfaceArea * 80.0;

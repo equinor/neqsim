@@ -28,16 +28,13 @@ public class ReportConfig {
   private Map<String, DetailLevel> unitDetailLevel = new HashMap<>();
 
   /**
-   * <p>
    * Constructor for ReportConfig.
-   * </p>
    */
-  public ReportConfig() {}
+  public ReportConfig() {
+  }
 
   /**
-   * <p>
    * Constructor for ReportConfig.
-   * </p>
    *
    * @param detailLevel a {@link neqsim.process.util.report.ReportConfig.DetailLevel} object
    */

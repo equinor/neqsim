@@ -1,9 +1,7 @@
 package neqsim.util.exception;
 
 /**
- * <p>
  * NotInitializedException class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -31,8 +29,7 @@ public class NotInitializedException extends neqsim.util.exception.ThermoExcepti
    * @param parameter Parameter not initialized
    * @param initMethod Method to call to initialize parameter
    */
-  public NotInitializedException(String className, String methodName, String parameter,
-      String initMethod) {
+  public NotInitializedException(String className, String methodName, String parameter, String initMethod) {
     this(className, methodName,
         "Parameter " + parameter + " not initialized. Method " + initMethod + " must be called.");
   }
@@ -56,19 +53,17 @@ public class NotInitializedException extends neqsim.util.exception.ThermoExcepti
    * @param parameter Parameter not initialized
    * @param initMethod Method to call to initialize parameter
    */
-  public NotInitializedException(Object obj, String methodName, String parameter,
-      String initMethod) {
+  public NotInitializedException(Object obj, String methodName, String parameter, String initMethod) {
     this(obj.getClass().getSimpleName(), methodName, parameter, initMethod);
   }
 
   /**
    * Get remediation advice for this exception.
-   * 
+   *
    * <p>
-   * Returns a hint on how to properly initialize the system. AI agents can use this to
-   * self-correct.
+   * Returns a hint on how to properly initialize the system. AI agents can use this to self-correct.
    * </p>
-   * 
+   *
    * @return remediation advice string
    */
   public String getRemediation() {
@@ -77,14 +72,12 @@ public class NotInitializedException extends neqsim.util.exception.ThermoExcepti
       // Extract the method name from the message
       int methodIdx = msg.indexOf("Method ");
       String initMethod = msg.substring(methodIdx + 7).replace(" must be called.", "");
-      return "System is not properly initialized. Call: " + initMethod
-          + "\n\nCommon initialization sequence:\n"
+      return "System is not properly initialized. Call: " + initMethod + "\n\nCommon initialization sequence:\n"
           + "1. system.setMixingRule(\"classic\") or system.setMixingRule(2)\n"
           + "2. ThermodynamicOperations ops = new ThermodynamicOperations(system)\n"
           + "3. ops.TPflash() or ops.PVTsimulation()";
     }
-    return "System is not properly initialized. Try:\n"
-        + "1. Ensure all components are added with addComponent()\n"
+    return "System is not properly initialized. Try:\n" + "1. Ensure all components are added with addComponent()\n"
         + "2. Call setMixingRule() before calculations\n"
         + "3. Call init(0) then init(1) for thermodynamic properties\n"
         + "4. For streams: call run() before accessing properties";

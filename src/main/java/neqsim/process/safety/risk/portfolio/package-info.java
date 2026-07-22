@@ -2,17 +2,16 @@
  * Multi-Asset Portfolio Risk Analysis Package.
  *
  * <p>
- * This package provides portfolio-level risk analysis capabilities for multiple oil and gas assets,
- * including common cause failure modeling, correlated events, and diversification analysis.
- * Essential for corporate risk management and insurance negotiations.
+ * This package provides portfolio-level risk analysis capabilities for multiple oil and gas assets, including common
+ * cause failure modeling, correlated events, and diversification analysis. Essential for corporate risk management and
+ * insurance negotiations.
  * </p>
  *
  * <h2>Key Classes</h2>
  * <ul>
- * <li>{@link neqsim.process.safety.risk.portfolio.PortfolioRiskAnalyzer} - Main analyzer for
- * multi-asset simulation</li>
- * <li>{@link neqsim.process.safety.risk.portfolio.PortfolioRiskResult} - Aggregated portfolio
- * results with VaR</li>
+ * <li>{@link neqsim.process.safety.risk.portfolio.PortfolioRiskAnalyzer} - Main analyzer for multi-asset
+ * simulation</li>
+ * <li>{@link neqsim.process.safety.risk.portfolio.PortfolioRiskResult} - Aggregated portfolio results with VaR</li>
  * </ul>
  *
  * <h2>Features</h2>
@@ -25,7 +24,7 @@
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * PortfolioRiskAnalyzer analyzer = new PortfolioRiskAnalyzer("North Sea Portfolio");
  *

@@ -57,8 +57,7 @@ public class StateVector implements Serializable {
    * @param unit unit string (e.g., "K", "bar", "kg/s")
    * @return this StateVector for chaining
    */
-  public StateVector add(String name, double value, double lowerBound, double upperBound,
-      String unit) {
+  public StateVector add(String name, double value, double lowerBound, double upperBound, String unit) {
     values.put(name, value);
     lowerBounds.put(name, lowerBound);
     upperBounds.put(name, upperBound);

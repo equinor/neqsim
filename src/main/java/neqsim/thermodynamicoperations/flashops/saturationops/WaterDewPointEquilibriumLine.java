@@ -4,9 +4,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * WaterDewPointEquilibriumLine class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class WaterDewPointEquilibriumLine extends ConstantDutyTemperatureFlash {
   int numberOfPoints = 10;
 
   /**
-   * <p>
    * Constructor for WaterDewPointEquilibriumLine.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param minPres a double

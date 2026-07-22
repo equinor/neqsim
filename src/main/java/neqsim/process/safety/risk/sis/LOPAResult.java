@@ -12,8 +12,8 @@ import com.google.gson.GsonBuilder;
  * Layer of Protection Analysis (LOPA) result.
  *
  * <p>
- * LOPA is a semi-quantitative risk assessment method that analyzes independent protection layers
- * (IPLs) to determine if the risk from a specific scenario is adequately mitigated.
+ * LOPA is a semi-quantitative risk assessment method that analyzes independent protection layers (IPLs) to determine if
+ * the risk from a specific scenario is adequately mitigated.
  * </p>
  *
  * @author NeqSim Development Team
@@ -43,6 +43,18 @@ public class LOPAResult implements Serializable {
 
   /** Gap to target (positive = shortfall). */
   private double gapToTarget;
+
+  /** STS0131 overpressure target categories. */
+  public enum STS0131PressureCategory {
+    /** Event pressure is at or below design pressure. */
+    BELOW_OR_AT_DESIGN_PRESSURE,
+    /** Event pressure is above design pressure and at or below test pressure. */
+    ABOVE_DESIGN_TO_TEST_PRESSURE,
+    /** Event pressure is above test pressure and at or below twice design pressure. */
+    ABOVE_TEST_TO_TWO_TIMES_DESIGN_PRESSURE,
+    /** Event pressure is above twice design pressure. */
+    ABOVE_TWO_TIMES_DESIGN_PRESSURE
+  }
 
   /**
    * Individual protection layer in LOPA.
@@ -97,6 +109,75 @@ public class LOPAResult implements Serializable {
   public LOPAResult(String scenarioName) {
     this.scenarioName = scenarioName;
     this.layers = new ArrayList<>();
+  }
+
+  /**
+   * Gets STS0131 overpressure target frequency from pressure severity.
+   *
+   * @param eventPressureBara maximum event pressure in bara
+   * @param designPressureBara design pressure in bara
+   * @param testPressureBara test pressure in bara
+   * @return target frequency per year
+   * @throws IllegalArgumentException if pressure inputs are non-positive or test pressure is below design pressure
+   */
+  public static double getSTS0131OverpressureTargetFrequency(double eventPressureBara, double designPressureBara,
+      double testPressureBara) {
+    STS0131PressureCategory category = getSTS0131PressureCategory(eventPressureBara, designPressureBara,
+        testPressureBara);
+    if (category == STS0131PressureCategory.ABOVE_TWO_TIMES_DESIGN_PRESSURE) {
+      return 1.0e-5;
+    }
+    if (category == STS0131PressureCategory.ABOVE_TEST_TO_TWO_TIMES_DESIGN_PRESSURE) {
+      return 1.0e-4;
+    }
+    if (category == STS0131PressureCategory.ABOVE_DESIGN_TO_TEST_PRESSURE) {
+      return 1.0e-3;
+    }
+    return 1.0e-2;
+  }
+
+  /**
+   * Classifies overpressure severity using STS0131 pressure bands.
+   *
+   * @param eventPressureBara maximum event pressure in bara
+   * @param designPressureBara design pressure in bara
+   * @param testPressureBara test pressure in bara
+   * @return pressure severity category
+   * @throws IllegalArgumentException if pressure inputs are non-positive or test pressure is below design pressure
+   */
+  public static STS0131PressureCategory getSTS0131PressureCategory(double eventPressureBara, double designPressureBara,
+      double testPressureBara) {
+    if (eventPressureBara <= 0.0 || designPressureBara <= 0.0 || testPressureBara <= 0.0) {
+      throw new IllegalArgumentException("pressure inputs must be positive");
+    }
+    if (testPressureBara < designPressureBara) {
+      throw new IllegalArgumentException("test pressure must be greater than or equal to design pressure");
+    }
+    if (eventPressureBara > 2.0 * designPressureBara) {
+      return STS0131PressureCategory.ABOVE_TWO_TIMES_DESIGN_PRESSURE;
+    }
+    if (eventPressureBara > testPressureBara) {
+      return STS0131PressureCategory.ABOVE_TEST_TO_TWO_TIMES_DESIGN_PRESSURE;
+    }
+    if (eventPressureBara > designPressureBara) {
+      return STS0131PressureCategory.ABOVE_DESIGN_TO_TEST_PRESSURE;
+    }
+    return STS0131PressureCategory.BELOW_OR_AT_DESIGN_PRESSURE;
+  }
+
+  /**
+   * Sets this LOPA target frequency from STS0131 overpressure severity.
+   *
+   * @param eventPressureBara maximum event pressure in bara
+   * @param designPressureBara design pressure in bara
+   * @param testPressureBara test pressure in bara
+   * @return this LOPA result for chaining
+   * @throws IllegalArgumentException if pressure inputs are invalid
+   */
+  public LOPAResult setTargetFrequencyFromSTS0131Overpressure(double eventPressureBara, double designPressureBara,
+      double testPressureBara) {
+    setTargetFrequency(getSTS0131OverpressureTargetFrequency(eventPressureBara, designPressureBara, testPressureBara));
+    return this;
   }
 
   /**
@@ -254,8 +335,7 @@ public class LOPAResult implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   /**
@@ -282,16 +362,16 @@ public class LOPAResult implements Serializable {
     }
 
     sb.append(StringUtils.repeat("─", 60)).append("\n");
-    sb.append(String.format("%-25s %10s %15s %15.2e%n", "TOTAL",
-        String.format("%.0fx", getTotalRRF()), "", mitigatedFrequency));
+    sb.append(String.format("%-25s %10s %15s %15.2e%n", "TOTAL", String.format("%.0fx", getTotalRRF()), "",
+        mitigatedFrequency));
     sb.append("\n");
 
     sb.append(String.format("Target Frequency: %.2e /year%n", targetFrequency));
     sb.append(String.format("Status: %s%n", targetMet ? "✓ TARGET MET" : "✗ GAP EXISTS"));
 
     if (!targetMet) {
-      sb.append(String.format("Required Additional RRF: %.0f (SIL %d)%n",
-          getRequiredAdditionalRRF(), getRequiredAdditionalSIL()));
+      sb.append(String.format("Required Additional RRF: %.0f (SIL %d)%n", getRequiredAdditionalRRF(),
+          getRequiredAdditionalSIL()));
     }
 
     return sb.toString();
@@ -299,7 +379,7 @@ public class LOPAResult implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("LOPAResult[%s: %.2e → %.2e, target=%.2e, %s]", scenarioName,
-        initiatingEventFrequency, mitigatedFrequency, targetFrequency, targetMet ? "MET" : "GAP");
+    return String.format("LOPAResult[%s: %.2e → %.2e, target=%.2e, %s]", scenarioName, initiatingEventFrequency,
+        mitigatedFrequency, targetFrequency, targetMet ? "MET" : "GAP");
   }
 }

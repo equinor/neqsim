@@ -117,8 +117,7 @@ public class DeBoerAsphalteneScreeningTest {
     screening.setAsphalteneContent(0.10); // 10% asphaltenes
     double riskWithAsphaltenes = screening.calculateRiskIndex();
 
-    assertTrue(riskWithAsphaltenes > riskWithoutAsphaltenes,
-        "Higher asphaltene content should increase risk index");
+    assertTrue(riskWithAsphaltenes > riskWithoutAsphaltenes, "Higher asphaltene content should increase risk index");
   }
 
   @Test
@@ -164,8 +163,7 @@ public class DeBoerAsphalteneScreeningTest {
 
   @Test
   void testRiskDescription() {
-    DeBoerAsphalteneScreening.DeBoerRisk risk =
-        DeBoerAsphalteneScreening.DeBoerRisk.MODERATE_PROBLEM;
+    DeBoerAsphalteneScreening.DeBoerRisk risk = DeBoerAsphalteneScreening.DeBoerRisk.MODERATE_PROBLEM;
 
     assertNotNull(risk.getDescription());
     assertTrue(risk.getDescription().length() > 0);

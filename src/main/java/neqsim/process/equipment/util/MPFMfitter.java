@@ -11,9 +11,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * GORfitter class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -38,18 +36,14 @@ public class MPFMfitter extends TwoPortEquipment {
 
   @Deprecated
   /**
-   * <p>
    * Constructor for MPFMfitter.
-   * </p>
    */
   public MPFMfitter() {
     super("MPFMfitter fitter");
   }
 
   /**
-   * <p>
    * Constructor for MPFMfitter.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -59,9 +53,7 @@ public class MPFMfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Constructor for MPFMfitter.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -71,9 +63,7 @@ public class MPFMfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * getGFV.
-   * </p>
    *
    * @return a double
    */
@@ -92,7 +82,7 @@ public class MPFMfitter extends TwoPortEquipment {
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
     try {
-      this.outStream = inletStream.clone();
+      this.outStream = inletStream.clone(this.getName() + " out stream");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -105,9 +95,7 @@ public class MPFMfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressure</code>.
-   * </p>
    *
    * @param pressure a double
    * @param unitP a {@link java.lang.String} object
@@ -124,9 +112,7 @@ public class MPFMfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>temperature</code>.
-   * </p>
    *
    * @param temperature a double
    * @param unitT a {@link java.lang.String} object
@@ -178,13 +164,11 @@ public class MPFMfitter extends TwoPortEquipment {
       return;
     }
     tempFluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-    double currGOR = tempFluid.getPhase("gas").getCorrectedVolume()
-        / tempFluid.getPhase("oil").getCorrectedVolume();
+    double currGOR = tempFluid.getPhase("gas").getCorrectedVolume() / tempFluid.getPhase("oil").getCorrectedVolume();
 
     if (fitAsGVF) {
-      GOR = tempFluid.getPhase("oil").getCorrectedVolume() * getGOR()
-          / (tempFluid.getPhase("oil").getCorrectedVolume()
-              - tempFluid.getPhase("oil").getCorrectedVolume() * getGOR());
+      GOR = tempFluid.getPhase("oil").getCorrectedVolume() * getGOR() / (tempFluid.getPhase("oil").getCorrectedVolume()
+          - tempFluid.getPhase("oil").getCorrectedVolume() * getGOR());
       // GVF*Vo/(Vo-GVF*Vo)
       // currGOR = tempFluid.getPhase("gas").getCorrectedVolume()
       // / (tempFluid.getPhase("oil").getCorrectedVolume() +
@@ -196,8 +180,7 @@ public class MPFMfitter extends TwoPortEquipment {
 
     double[] moleChange = new double[tempFluid.getNumberOfComponents()];
     for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
-      moleChange[i] =
-          (dev - 1.0) * tempFluid.getPhase("gas").getComponent(i).getNumberOfMolesInPhase();
+      moleChange[i] = (dev - 1.0) * tempFluid.getPhase("gas").getComponent(i).getNumberOfMolesInPhase();
     }
     tempFluid.init(0);
     for (int i = 0; i < tempFluid.getNumberOfComponents(); i++) {
@@ -217,8 +200,7 @@ public class MPFMfitter extends TwoPortEquipment {
       GVF = 0.0;
     } else if (tempFluid.hasPhaseType("gas") && tempFluid.hasPhaseType("oil")) {
       GVF = tempFluid.getPhase("gas").getCorrectedVolume()
-          / (tempFluid.getPhase("oil").getCorrectedVolume()
-              + tempFluid.getPhase("gas").getCorrectedVolume());
+          / (tempFluid.getPhase("oil").getCorrectedVolume() + tempFluid.getPhase("gas").getCorrectedVolume());
     } else {
       GVF = Double.NaN;
     }
@@ -228,9 +210,7 @@ public class MPFMfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * getGOR.
-   * </p>
    *
    * @return a double
    */
@@ -239,9 +219,7 @@ public class MPFMfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setGOR.
-   * </p>
    *
    * @param gOR a double
    */
@@ -251,9 +229,7 @@ public class MPFMfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * setGVF.
-   * </p>
    *
    * @param gvf a double
    */
@@ -263,9 +239,7 @@ public class MPFMfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>referenceConditions</code>.
-   * </p>
    *
    * @return the referenceConditions
    */
@@ -274,9 +248,7 @@ public class MPFMfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>referenceConditions</code>.
-   * </p>
    *
    * @param referenceConditions the referenceConditions to set
    */
@@ -285,9 +257,7 @@ public class MPFMfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * isFitAsGVF.
-   * </p>
    *
    * @return the fitAsGVF
    */
@@ -296,9 +266,7 @@ public class MPFMfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fitAsGVF</code>.
-   * </p>
    *
    * @param fitAsGVF the fitAsGVF to set
    */
@@ -307,9 +275,7 @@ public class MPFMfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>referenceFluidPackage</code>.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -318,9 +284,7 @@ public class MPFMfitter extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Setter for the field <code>referenceFluidPackage</code>.
-   * </p>
    *
    * @param referenceFluidPackage a {@link neqsim.thermo.system.SystemInterface} object
    */

@@ -2,6 +2,8 @@ package neqsim.thermodynamicoperations.flashops;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
@@ -14,16 +16,17 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class SingleComponentFlash {
+  private static final Logger logger = LogManager.getLogger(SingleComponentFlash.class);
+
   @Test
   void testConstantPhaseFractionPressureFlash() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(273.15 + 50.0, 15.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(273.15 + 50.0, 15.0);
     testSystem.addComponent("propane", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.constantPhaseFractionPressureFlash(0.5);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(323.15, testSystem.getTemperature(), 1e-2);
     assertEquals(17.19579859, testSystem.getPressure(), 1e-2);
@@ -31,14 +34,13 @@ public class SingleComponentFlash {
 
   @Test
   void testonConstantPhaseFractionTemperatureFlash() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(283.15, 10.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(283.15, 10.0);
     testSystem.addComponent("propane", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.constantPhaseFractionTemperatureFlash(0.9);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(300.08299597, testSystem.getTemperature(), 1e-2);
     assertEquals(10.0, testSystem.getPressure(), 1e-2);
@@ -47,15 +49,14 @@ public class SingleComponentFlash {
 
   @Test
   void testonConstantPhaseFractionTemperatureFlash2() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(293.15, 10.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(293.15, 10.0);
     testSystem.addComponent("ethane", 1.0);
     testSystem.addComponent("propane", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.constantPhaseFractionTemperatureFlash(0.591);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(279.767487894, testSystem.getTemperature(), 1e-2);
     assertEquals(10.0, testSystem.getPressure(), 1e-2);
@@ -64,15 +65,14 @@ public class SingleComponentFlash {
 
   @Test
   void testonConstantPhaseFractionPressureFlash2() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(279.7674878, 10.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(279.7674878, 10.0);
     testSystem.addComponent("ethane", 1.0);
     testSystem.addComponent("propane", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.constantPhaseFractionPressureFlash(0.591);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(279.767487894, testSystem.getTemperature(), 1e-2);
     assertEquals(11.95267803, testSystem.getPressure(), 1e-2);
@@ -81,15 +81,14 @@ public class SingleComponentFlash {
 
   @Test
   void testonConstantPhaseFractionPressureFlash4() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(279.7674878, 1.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(279.7674878, 1.0);
     testSystem.addComponent("ethane", 1.0);
     testSystem.addComponent("n-heptane", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.constantPhaseFractionPressureFlash(0.99591);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(279.767487894, testSystem.getTemperature(), 1e-2);
     assertEquals(0.047926652566, testSystem.getPressure(), 1e-2);
@@ -98,15 +97,14 @@ public class SingleComponentFlash {
 
   @Test
   void testonConstantPhaseFractionTemperatureFlash4() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(299.7674878, 0.047926652566);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(299.7674878, 0.047926652566);
     testSystem.addComponent("ethane", 1.0);
     testSystem.addComponent("n-heptane", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.constantPhaseFractionTemperatureFlash(0.99591);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(301.23082803, testSystem.getTemperature(), 1e-2);
     assertEquals(0.047926652566, testSystem.getPressure(), 1e-2);
@@ -115,14 +113,13 @@ public class SingleComponentFlash {
 
   @Test
   void testConstantPhaseFractionPressureFlash3() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos(273.15 - 150.0, 15.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos(273.15 - 150.0, 15.0);
     testSystem.addComponent("nitrogen", 1.0);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.constantPhaseFractionPressureFlash(0.5);
     } catch (Exception ex) {
-      System.out.println("error" + ex.toString());
+      logger.info("error" + ex.toString());
     }
     assertEquals(123.1499999, testSystem.getTemperature(), 1e-2);
     assertEquals(36.58179680, testSystem.getPressure(), 1e-2);
@@ -153,8 +150,7 @@ public class SingleComponentFlash {
     compressor1.setOutletPressure(10.0);
     compressor1.run();
 
-    ThrottlingValve liquid_valve1 =
-        new ThrottlingValve("liq valve 1", separator1.getLiquidOutStream());
+    ThrottlingValve liquid_valve1 = new ThrottlingValve("liq valve 1", separator1.getLiquidOutStream());
     liquid_valve1.setOutletPressure(1.4);
     liquid_valve1.run();
 
@@ -208,8 +204,7 @@ public class SingleComponentFlash {
     gasValve.setOutletPressure(1.0);
     gasValve.setPercentValveOpening(50.0);
 
-    ThrottlingValve liquidValve =
-        new ThrottlingValve("liquid valve", separator.getLiquidOutStream());
+    ThrottlingValve liquidValve = new ThrottlingValve("liquid valve", separator.getLiquidOutStream());
     liquidValve.setOutletPressure(1.0);
     liquidValve.setPercentValveOpening(50.0);
 
@@ -248,11 +243,9 @@ public class SingleComponentFlash {
       process.runTransient();
       time[i] = process.getTime();
       temp[i] = separator.getThermoSystem().getTemperature("C");
-      System.out.println(
-          "time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel()
-              + " flow rate " + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure "
-              + feedValve.getOutletStream().getPressure() + " temp_out "
-              + liquidValve.getOutletStream().getTemperature("C"));
+      logger.info("time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel() + " flow rate "
+          + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure " + feedValve.getOutletStream().getPressure()
+          + " temp_out " + liquidValve.getOutletStream().getTemperature("C"));
     }
 
     feedValve.setPercentValveOpening(50.0);
@@ -260,14 +253,12 @@ public class SingleComponentFlash {
       process.runTransient();
       time[i] = process.getTime();
       temp[i] = separator.getThermoSystem().getTemperature("C");
-      System.out.println(
-          "time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel()
-              + " flow rate " + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure "
-              + feedValve.getOutletStream().getPressure() + " temp_out "
-              + liquidValve.getOutletStream().getTemperature("C"));
+      logger.info("time " + time[i] + " temp " + temp[i] + " sep height " + separator.getLiquidLevel() + " flow rate "
+          + feedValve.getOutletStream().getFlowRate("kg/hr") + " pressure " + feedValve.getOutletStream().getPressure()
+          + " temp_out " + liquidValve.getOutletStream().getTemperature("C"));
     }
 
-    liquidValve.getOutletStream().getFluid().prettyPrint();
+    // liquidValve.getOutletStream().getFluid().prettyPrint();
     double finalOut = gasValve.getOutletStream().getFlowRate("kg/hr")
         + liquidValve.getOutletStream().getFlowRate("kg/hr");
     // assertTrue(finalOut < initialOut);

@@ -14,9 +14,7 @@ import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * Conductivity class for solids.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class Conductivity extends SolidPhysicalPropertyMethod implements Conduct
   double conductivity = 0;
 
   /**
-   * <p>
    * Constructor for Conductivity.
-   * </p>
    *
    * @param solidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -58,9 +54,8 @@ public class Conductivity extends SolidPhysicalPropertyMethod implements Conduct
    * {@inheritDoc}
    *
    * <p>
-   * Thermal conductivity of organic solids is typically 0.15-0.35 W/mK. Values based on: -
-   * Asphaltene: ~0.17-0.22 W/mK (similar to bitumen) - Wax/Paraffin: ~0.20-0.25 W/mK - Hydrate:
-   * ~0.50-0.60 W/mK (ice-like structure)
+   * Thermal conductivity of organic solids is typically 0.15-0.35 W/mK. Values based on: - Asphaltene: ~0.17-0.22 W/mK
+   * (similar to bitumen) - Wax/Paraffin: ~0.20-0.25 W/mK - Hydrate: ~0.50-0.60 W/mK (ice-like structure)
    * </p>
    */
   @Override

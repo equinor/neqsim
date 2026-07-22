@@ -4,8 +4,8 @@ package neqsim.process.integration.ml;
  * Interface for integrating machine learning corrections with physics-based models.
  *
  * <p>
- * This interface enables hybrid AI approaches where ML models augment first-principles physics
- * predictions. It is designed for integration with AI-based production optimization platforms.
+ * This interface enables hybrid AI approaches where ML models augment first-principles physics predictions. It is
+ * designed for integration with AI-based production optimization platforms.
  * </p>
  *
  * <p>
@@ -71,8 +71,7 @@ public interface MLCorrectionInterface {
    * Updates the ML model with new weights/parameters.
    *
    * <p>
-   * This method is called when an external AI platform pushes updated model parameters after
-   * retraining.
+   * This method is called when an external AI platform pushes updated model parameters after retraining.
    * </p>
    *
    * @param modelPayload serialized model parameters

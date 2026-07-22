@@ -6,9 +6,7 @@ import org.netlib.util.intW;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * DETAIL class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -81,9 +79,7 @@ public class DETAIL {
   double dPdDsave;
 
   /**
-   * <p>
    * sq.
-   * </p>
    *
    * @param x a double
    * @return a double
@@ -93,9 +89,7 @@ public class DETAIL {
   }
 
   /**
-   * <p>
    * MolarMassDetail.
-   * </p>
    *
    * @param x an array of type double
    * @param Mm a {@link org.netlib.util.doubleW} object
@@ -121,9 +115,7 @@ public class DETAIL {
   }
 
   /**
-   * <p>
    * PressureDetail.
-   * </p>
    *
    * @param T a double
    * @param D a double
@@ -163,16 +155,14 @@ public class DETAIL {
     xTermsDetail(x);
     AlpharDetail(0, 2, T, D, ar);
     Z.val = 1 + ar[0][1].val / RDetail / T; // ar(0,1) is the first derivative of alpha(r) with
-                                            // respect to density
+    // respect to density
     P.val = D * RDetail * T * Z.val;
     dPdDsave = RDetail * T + 2 * ar[0][1].val + ar[0][2].val; // d(P)/d(D) for use in density
-                                                              // iteration
+    // iteration
   }
 
   /**
-   * <p>
    * DensityDetail.
-   * </p>
    *
    * @param T a double
    * @param P a double
@@ -255,9 +245,7 @@ public class DETAIL {
   }
 
   /**
-   * <p>
    * PropertiesDetail.
-   * </p>
    *
    * @param T a double
    * @param D a double
@@ -278,9 +266,9 @@ public class DETAIL {
    * @param JT a {@link org.netlib.util.doubleW} object
    * @param Kappa a {@link org.netlib.util.doubleW} object
    */
-  public void PropertiesDetail(double T, double D, double[] x, doubleW P, doubleW Z, doubleW dPdD,
-      doubleW d2PdD2, doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv,
-      doubleW Cp, doubleW W, doubleW G, doubleW JT, doubleW Kappa) {
+  public void PropertiesDetail(double T, double D, double[] x, doubleW P, doubleW Z, doubleW dPdD, doubleW d2PdD2,
+      doubleW d2PdTD, doubleW dPdT, doubleW U, doubleW H, doubleW S, doubleW Cv, doubleW Cp, doubleW W, doubleW G,
+      doubleW JT, doubleW Kappa) {
     // Sub Properties(T, D, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W,
     // G, JT, Kappa)
 
@@ -414,7 +402,7 @@ public class DETAIL {
         F += xi2 * Fi[i];
         for (int n = 1; n <= 18; ++n) {
           Bs[n] = Bs[n] + xi2 * Bsnij2[i][i][n]; // Pure fluid contributions to second
-                                                 // virial coefficient
+          // virial coefficient
         }
       }
     }
@@ -431,8 +419,9 @@ public class DETAIL {
             U = U + xij * Uij5[i][j];
             G = G + xij * Gij5[i][j];
             for (int n = 1; n <= 18; ++n) {
-              Bs[n] = Bs[n] + xij * Bsnij2[i][j][n]; // Second virial coefficients of
-                                                     // mixture
+              Bs[n] = Bs[n] + xij * Bsnij2[i][j][n]; // Second virial
+                                                     // coefficients of
+              // mixture
             }
           }
         }
@@ -660,9 +649,7 @@ public class DETAIL {
 
   // The following routine must be called once before any other routine.
   /**
-   * <p>
    * SetupDetail.
-   * </p>
    */
   public void SetupDetail() {
     // Initialize all the constants and parameters in the DETAIL model.
@@ -1466,8 +1453,8 @@ public class DETAIL {
           if (wn[n] == 1) {
             Bsnij = Bsnij * Wi[i] * Wi[j];
           }
-          Bsnij2[i][j][n] = an[n] * Math.pow(Eij[i][j] * Math.sqrt(Ei[i] * Ei[j]), un[n])
-              * Math.pow(Ki[i] * Ki[j], 1.5) * Bsnij;
+          Bsnij2[i][j][n] = an[n] * Math.pow(Eij[i][j] * Math.sqrt(Ei[i] * Ei[j]), un[n]) * Math.pow(Ki[i] * Ki[j], 1.5)
+              * Bsnij;
         }
         Kij5[i][j] = (Math.pow(Kij[i][j], 5) - 1) * Ki25[i] * Ki25[j];
         Uij5[i][j] = (Math.pow(Uij[i][j], 5) - 1) * Ei25[i] * Ei25[j];
@@ -1503,9 +1490,7 @@ public class DETAIL {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -1524,8 +1509,8 @@ public class DETAIL {
     int iFlag = 0;
     StringW herr = new StringW("");
 
-    double x[] = {0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215,
-        0.00088, 0.00024, 0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001};
+    double x[] = { 0.0, 0.77824, 0.02, 0.06, 0.08, 0.03, 0.0015, 0.003, 0.0005, 0.00165, 0.00215, 0.00088, 0.00024,
+        0.00015, 0.00009, 0.004, 0.005, 0.002, 0.0001, 0.0025, 0.007, 0.001 };
 
     test.MolarMassDetail(x, Mm);
 
@@ -1537,15 +1522,13 @@ public class DETAIL {
     System.out.println("pressure " + P.val);
     System.out.println("Z " + Z.val);
 
-    doubleW dPdD = new doubleW(0.0d), d2PdD2 = new doubleW(0.0d), d2PdTD = new doubleW(0.0d),
-        dPdT = new doubleW(0.0d), U = new doubleW(0.0d), H = new doubleW(0.0d),
-        S = new doubleW(0.0d), A = new doubleW(0.0d), P2 = new doubleW(0.0d);
-    doubleW Cv = new doubleW(0.0d), Cp = new doubleW(0.0d), W = new doubleW(0.0d),
-        G = new doubleW(0.0d), JT = new doubleW(0.0d), Kappa = new doubleW(0.0d),
-        PP = new doubleW(0.0d);
+    doubleW dPdD = new doubleW(0.0d), d2PdD2 = new doubleW(0.0d), d2PdTD = new doubleW(0.0d), dPdT = new doubleW(0.0d),
+        U = new doubleW(0.0d), H = new doubleW(0.0d), S = new doubleW(0.0d), A = new doubleW(0.0d),
+        P2 = new doubleW(0.0d);
+    doubleW Cv = new doubleW(0.0d), Cp = new doubleW(0.0d), W = new doubleW(0.0d), G = new doubleW(0.0d),
+        JT = new doubleW(0.0d), Kappa = new doubleW(0.0d), PP = new doubleW(0.0d);
 
-    test.PropertiesDetail(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT,
-        Kappa);
+    test.PropertiesDetail(T, D.val, x, P, Z, dPdD, d2PdD2, d2PdTD, dPdT, U, H, S, Cv, Cp, W, G, JT, Kappa);
 
     System.out.println("JT " + JT.val);
     System.out.println("Kappa " + Kappa.val);

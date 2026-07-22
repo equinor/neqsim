@@ -13,9 +13,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OLGApropertyTableGenerator class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -54,9 +52,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
   double PC;
 
   /**
-   * <p>
    * Constructor for OLGApropertyTableGenerator.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -66,9 +62,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
   }
 
   /**
-   * <p>
    * setPressureRange.
-   * </p>
    *
    * @param minPressure a double
    * @param maxPressure a double
@@ -85,9 +79,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
   }
 
   /**
-   * <p>
    * setTemperatureRange.
-   * </p>
    *
    * @param minTemperature a double
    * @param maxTemperature a double
@@ -104,9 +96,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
   }
 
   /**
-   * <p>
    * calcPhaseEnvelope.
-   * </p>
    */
   public void calcPhaseEnvelope() {
     try {
@@ -165,8 +155,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
         }
 
         if (!thermoSystem.hasPhaseType("gas")) {
-          thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.OIL),
-              PhaseType.GAS);
+          thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.OIL), PhaseType.GAS);
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
 
@@ -175,8 +164,7 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
         }
 
         if (!thermoSystem.hasPhaseType("oil")) {
-          thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.GAS),
-              PhaseType.GAS);
+          thermoSystem.setPhaseType(thermoSystem.getPhaseNumberOfPhase(PhaseType.GAS), PhaseType.GAS);
           thermoSystem.init(3);
           thermoSystem.initPhysicalProperties();
 
@@ -225,17 +213,15 @@ public class OLGApropertyTableGenerator extends neqsim.thermodynamicoperations.B
     for (int i = 0; i < pressures.length; i++) {
       thermoSystem.setPressure(pressures[i]);
       for (int j = 0; j < temperatures.length; j++) {
-        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j] + " ROG "
-            + ROG[i][j] + " ROL " + ROL[i][j]);
+        logger.info("pressure " + pressureLOG[i] + " temperature " + temperatureLOG[j] + " ROG " + ROG[i][j] + " ROL "
+            + ROL[i][j]);
       }
     }
     writeOLGAinpFile("");
   }
 
   /**
-   * <p>
    * writeOLGAinpFile.
-   * </p>
    *
    * @param filename a {@link java.lang.String} object
    */

@@ -65,8 +65,7 @@ class LeakModelTest {
   @DisplayName("Test BoundaryConditions builder")
   void testBoundaryConditions() {
     BoundaryConditions conditions = BoundaryConditions.builder().ambientTemperature(278.15) // 5°C
-        .windSpeed(10.0).relativeHumidity(0.80).pasquillStabilityClass('D').isOffshore(true)
-        .build();
+        .windSpeed(10.0).relativeHumidity(0.80).pasquillStabilityClass('D').isOffshore(true).build();
 
     assertEquals(278.15, conditions.getAmbientTemperature(), 0.01);
     assertEquals(5.0, conditions.getAmbientTemperature("C"), 0.01);
@@ -127,8 +126,7 @@ class LeakModelTest {
   @Test
   @DisplayName("Test LeakModel jet velocity")
   void testLeakModelJetVelocity() {
-    LeakModel leak =
-        LeakModel.builder().fluid(methaneGas).holeDiameter(0.01).vesselVolume(1.0).build();
+    LeakModel leak = LeakModel.builder().fluid(methaneGas).holeDiameter(0.01).vesselVolume(1.0).build();
 
     double velocity = leak.calculateJetVelocity(methaneGas);
 
@@ -136,15 +134,13 @@ class LeakModelTest {
     assertTrue(velocity > 0, "Velocity should be positive");
 
     // Speed of sound in methane at 300K is roughly 450 m/s, allow up to 600 for numerical reasons
-    assertTrue(velocity <= 600,
-        "Velocity should not greatly exceed speed of sound, got: " + velocity);
+    assertTrue(velocity <= 600, "Velocity should not greatly exceed speed of sound, got: " + velocity);
   }
 
   @Test
   @DisplayName("Test LeakModel jet momentum")
   void testLeakModelJetMomentum() {
-    LeakModel leak =
-        LeakModel.builder().fluid(methaneGas).holeDiameter(0.01).vesselVolume(1.0).build();
+    LeakModel leak = LeakModel.builder().fluid(methaneGas).holeDiameter(0.01).vesselVolume(1.0).build();
 
     double momentum = leak.calculateJetMomentum(methaneGas);
 
@@ -196,8 +192,7 @@ class LeakModelTest {
     assertNotNull(str);
     assertTrue(str.contains("Export Test"), "Should contain scenario name");
     // Check for hole diameter in locale-independent way (20.0 or 20,0 depending on locale)
-    assertTrue(str.contains("20") && str.contains("mm"),
-        "Should contain hole diameter 20mm: " + str);
+    assertTrue(str.contains("20") && str.contains("mm"), "Should contain hole diameter 20mm: " + str);
     assertTrue(str.contains("Horizontal"), "Should contain orientation");
     assertTrue(str.contains("kg/s"), "Should contain mass flow rate units");
   }

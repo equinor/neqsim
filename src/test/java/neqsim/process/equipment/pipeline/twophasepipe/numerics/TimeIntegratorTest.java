@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 /**
  * Unit tests for TimeIntegrator.
- * 
+ *
  * Tests RK4 time integration and CFL-based time step calculation.
  */
 public class TimeIntegratorTest {
@@ -83,7 +83,7 @@ public class TimeIntegratorTest {
   @Test
   void testStepConstantRHS() {
     // Test stepping with constant RHS (linear solution)
-    double[][] U0 = {{1.0, 2.0}, {3.0, 4.0}};
+    double[][] U0 = { { 1.0, 2.0 }, { 3.0, 4.0 } };
     double dt = 0.1;
 
     // RHS that returns zeros - solution should stay constant
@@ -104,10 +104,10 @@ public class TimeIntegratorTest {
   @Test
   void testStepLinearRHS() {
     // Test stepping with constant RHS = 1 (linear growth)
-    double[][] U0 = {{0.0}};
+    double[][] U0 = { { 0.0 } };
     double dt = 0.1;
 
-    TimeIntegrator.RHSFunction constantRHS = (U, t) -> new double[][] {{1.0}};
+    TimeIntegrator.RHSFunction constantRHS = (U, t) -> new double[][] { { 1.0 } };
 
     double[][] U1 = integrator.step(U0, constantRHS, dt);
 
@@ -120,8 +120,8 @@ public class TimeIntegratorTest {
     double initialTime = 0.0;
     integrator.setCurrentTime(initialTime);
 
-    double[][] U = {{1.0}};
-    TimeIntegrator.RHSFunction rhs = (state, t) -> new double[][] {{0.0}};
+    double[][] U = { { 1.0 } };
+    TimeIntegrator.RHSFunction rhs = (state, t) -> new double[][] { { 0.0 } };
 
     double dt = 0.5;
     integrator.step(U, rhs, dt);
@@ -133,9 +133,9 @@ public class TimeIntegratorTest {
   @Test
   void testMultipleVariables() {
     // Test with multiple cells and variables
-    double[][] U0 = {{1.0, 2.0, 3.0, 4.0}, // Cell 0: 4 conservative vars
-        {5.0, 6.0, 7.0, 8.0}, // Cell 1
-        {9.0, 10.0, 11.0, 12.0} // Cell 2
+    double[][] U0 = { { 1.0, 2.0, 3.0, 4.0 }, // Cell 0: 4 conservative vars
+        { 5.0, 6.0, 7.0, 8.0 }, // Cell 1
+        { 9.0, 10.0, 11.0, 12.0 } // Cell 2
     };
     double dt = 0.01;
 

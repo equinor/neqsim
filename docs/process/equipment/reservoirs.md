@@ -1,3 +1,8 @@
+---
+title: Reservoir Modeling
+description: Documentation for reservoir modeling equipment in NeqSim, enabling coupled reservoir-process simulations.
+---
+
 # Reservoir Modeling
 
 Documentation for reservoir modeling equipment in NeqSim, enabling coupled reservoir-process simulations.
@@ -337,8 +342,8 @@ The reservoir can be integrated with surface facilities:
 
 ## Related Documentation
 
-- [Wells](wells.md) - Well modeling
-- [Separators](separators.md) - Production separators
-- [Pipelines](pipelines.md) - Export pipelines
-- [Compressors](compressors.md) - Gas compression
-- [Subsea Systems](subsea_systems.md) - Subsea production
+- [Wells](wells) - Well modeling
+- [Separators](separators) - Production separators
+- [Pipelines](pipelines) - Export pipelines
+- [Compressors](compressors) - Gas compression
+- [Subsea Systems](subsea_systems) - Subsea production

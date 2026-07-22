@@ -20,7 +20,6 @@ public class CostEstimationCalculatorTest {
     // Turton correlation for vertical vessels (CEPCI 2025 escalated)
     // These are PURCHASED EQUIPMENT COSTS for industrial-grade vessels
     double cost = calc.calcVerticalVesselCost(1000.0);
-    System.out.println("1 tonne vessel cost (2025 USD): " + cost);
     assertTrue(cost > 0, "Vessel cost should be positive");
     assertTrue(cost > 100000, "1 tonne industrial vessel should cost > $100k");
     assertTrue(cost < 2000000, "1 tonne vessel should cost less than $2M (sanity check)");
@@ -117,16 +116,13 @@ public class CostEstimationCalculatorTest {
 
     assertTrue(totalModuleCost > bareModuleCost, "TMC should be greater than BMC");
     // With 15% contingency and 10% engineering
-    assertEquals(bareModuleCost * 1.25, totalModuleCost, 0.01,
-        "TMC should be 1.25x BMC with default factors");
+    assertEquals(bareModuleCost * 1.25, totalModuleCost, 0.01, "TMC should be 1.25x BMC with default factors");
   }
 
   @Test
   void testCepciScaling() {
-    CostEstimationCalculator calc2019 =
-        new CostEstimationCalculator(CostEstimationCalculator.CEPCI_2019);
-    CostEstimationCalculator calc2025 =
-        new CostEstimationCalculator(CostEstimationCalculator.CEPCI_2025);
+    CostEstimationCalculator calc2019 = new CostEstimationCalculator(CostEstimationCalculator.CEPCI_2019);
+    CostEstimationCalculator calc2025 = new CostEstimationCalculator(CostEstimationCalculator.CEPCI_2025);
 
     double cost2019 = calc2019.calcVerticalVesselCost(1000.0);
     double cost2025 = calc2025.calcVerticalVesselCost(1000.0);

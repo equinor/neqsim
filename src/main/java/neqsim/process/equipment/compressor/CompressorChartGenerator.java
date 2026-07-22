@@ -4,15 +4,15 @@ package neqsim.process.equipment.compressor;
  * Compressor chart generator.
  *
  * <p>
- * This class generates a compressor chart based on the provided compressor and the specified
- * generation option. Supports generating curves for single-speed or multi-speed compressors using
- * either simple fan law scaling or predefined curve templates.
+ * This class generates a compressor chart based on the provided compressor and the specified generation option.
+ * Supports generating curves for single-speed or multi-speed compressors using either simple fan law scaling or
+ * predefined curve templates.
  * </p>
  *
  * <p>
  * Usage examples:
  * </p>
- * 
+ *
  * <pre>
  * // Single speed (uses compressor's current speed)
  * CompressorChart chart = generator.generateCompressorChart("normal");
@@ -21,7 +21,7 @@ package neqsim.process.equipment.compressor;
  * CompressorChart chart = generator.generateCompressorChart("normal", 5);
  *
  * // Multi-speed with specific speeds
- * double[] speeds = {7000, 8000, 9000, 10000};
+ * double[] speeds = { 7000, 8000, 9000, 10000 };
  * CompressorChart chart = generator.generateCompressorChart("normal", speeds);
  *
  * // Using a predefined curve template
@@ -70,8 +70,7 @@ public class CompressorChartGenerator {
    * <ul>
    * <li>"simple" or "fan law" - Basic CompressorChart with fan law calculations</li>
    * <li>"interpolate" - CompressorChartAlternativeMapLookup with interpolation</li>
-   * <li>"interpolate and extrapolate" - CompressorChartAlternativeMapLookupExtrapolate
-   * (default)</li>
+   * <li>"interpolate and extrapolate" - CompressorChartAlternativeMapLookupExtrapolate (default)</li>
    * </ul>
    *
    * @param type The chart type to use
@@ -86,8 +85,8 @@ public class CompressorChartGenerator {
    * Enable or disable Reynolds number correction for efficiency.
    *
    * <p>
-   * When enabled, efficiency values are adjusted based on the Reynolds number at each operating
-   * point. This accounts for viscous losses that vary with gas properties and speed.
+   * When enabled, efficiency values are adjusted based on the Reynolds number at each operating point. This accounts
+   * for viscous losses that vary with gas properties and speed.
    * </p>
    *
    * @param enable true to enable Reynolds correction
@@ -102,8 +101,8 @@ public class CompressorChartGenerator {
    * Enable or disable Mach number limitation for stonewall flow.
    *
    * <p>
-   * When enabled, the stonewall flow is calculated based on sonic velocity, accounting for gas
-   * composition effects on choke conditions.
+   * When enabled, the stonewall flow is calculated based on sonic velocity, accounting for gas composition effects on
+   * choke conditions.
    * </p>
    *
    * @param enable true to enable Mach number correction
@@ -118,8 +117,8 @@ public class CompressorChartGenerator {
    * Enable or disable multistage surge correction.
    *
    * <p>
-   * When enabled, the surge line is adjusted to account for stage mismatching at reduced speeds in
-   * multistage compressors. This typically shifts the surge line to higher flows at lower speeds.
+   * When enabled, the surge line is adjusted to account for stage mismatching at reduced speeds in multistage
+   * compressors. This typically shifts the surge line to higher flows at lower speeds.
    * </p>
    *
    * @param enable true to enable multistage surge correction
@@ -134,8 +133,7 @@ public class CompressorChartGenerator {
    * Set the number of compression stages.
    *
    * <p>
-   * This is used for multistage surge correction. More stages result in larger corrections at
-   * reduced speeds.
+   * This is used for multistage surge correction. More stages result in larger corrections at reduced speeds.
    * </p>
    *
    * @param stages Number of compression stages (must be at least 1)
@@ -161,8 +159,7 @@ public class CompressorChartGenerator {
    * Enable all advanced corrections.
    *
    * <p>
-   * This is a convenience method that enables Reynolds correction, Mach correction, and multistage
-   * surge correction.
+   * This is a convenience method that enables Reynolds correction, Mach correction, and multistage surge correction.
    * </p>
    *
    * @param numberOfStages Number of compression stages
@@ -188,12 +185,11 @@ public class CompressorChartGenerator {
   /**
    * Generates a single-speed compressor chart using the compressor's current speed.
    *
-   * @param generationOption Specifies how to generate the compressor chart. Options: "normal
-   *        curves" or other types.
+   * @param generationOption Specifies how to generate the compressor chart. Options: "normal curves" or other types.
    * @return A {@link neqsim.process.equipment.compressor.CompressorChartInterface} object.
    */
   public CompressorChartInterface generateCompressorChart(String generationOption) {
-    double[] speeds = {compressor.getSpeed()};
+    double[] speeds = { compressor.getSpeed() };
     return generateCompressorChart(generationOption, speeds);
   }
 
@@ -201,17 +197,15 @@ public class CompressorChartGenerator {
    * Generates a multi-speed compressor chart with automatic speed range.
    *
    * <p>
-   * The speeds are distributed evenly from 75% to 105% of the compressor's current speed for
-   * "normal" curves, or from 50% to 200% for other curve types.
+   * The speeds are distributed evenly from 75% to 105% of the compressor's current speed for "normal" curves, or from
+   * 50% to 200% for other curve types.
    * </p>
    *
-   * @param generationOption Specifies how to generate the compressor chart. Options: "normal
-   *        curves" or other types.
+   * @param generationOption Specifies how to generate the compressor chart. Options: "normal curves" or other types.
    * @param numberOfSpeeds The number of speed curves to generate (must be at least 1).
    * @return A {@link neqsim.process.equipment.compressor.CompressorChartInterface} object.
    */
-  public CompressorChartInterface generateCompressorChart(String generationOption,
-      int numberOfSpeeds) {
+  public CompressorChartInterface generateCompressorChart(String generationOption, int numberOfSpeeds) {
     if (numberOfSpeeds < 1) {
       numberOfSpeeds = 1;
     }
@@ -239,8 +233,8 @@ public class CompressorChartGenerator {
    * Generates a compressor chart from a predefined curve template.
    *
    * <p>
-   * This method uses realistic compressor curve shapes from predefined templates and scales them to
-   * match the compressor's current operating point. Available templates:
+   * This method uses realistic compressor curve shapes from predefined templates and scales them to match the
+   * compressor's current operating point. Available templates:
    * </p>
    * <ul>
    * <li>"CENTRIFUGAL_STANDARD" - Standard centrifugal compressor (default)</li>
@@ -264,8 +258,7 @@ public class CompressorChartGenerator {
    * @param numberOfSpeeds Number of speed curves to generate
    * @return A {@link neqsim.process.equipment.compressor.CompressorChartInterface} object
    */
-  public CompressorChartInterface generateFromTemplate(CompressorCurveTemplate template,
-      int numberOfSpeeds) {
+  public CompressorChartInterface generateFromTemplate(CompressorCurveTemplate template, int numberOfSpeeds) {
     if (numberOfSpeeds < 1) {
       numberOfSpeeds = 1;
     }
@@ -274,8 +267,7 @@ public class CompressorChartGenerator {
     double designFlow = compressor.getInletStream().getFlowRate("m3/hr");
     double designHead = compressor.getPolytropicFluidHead();
 
-    return template.scaleToDesignPoint(designSpeed, designFlow, designHead, numberOfSpeeds,
-        chartType);
+    return template.scaleToDesignPoint(designSpeed, designFlow, designHead, numberOfSpeeds, chartType);
   }
 
   /**
@@ -306,8 +298,8 @@ public class CompressorChartGenerator {
    * @param targetSpeeds array of target speeds
    * @return the scaled compressor chart
    */
-  private CompressorChartInterface scaleTemplateWithSpeeds(CompressorCurveTemplate template,
-      double designSpeed, double designFlow, double designHead, double[] targetSpeeds) {
+  private CompressorChartInterface scaleTemplateWithSpeeds(CompressorCurveTemplate template, double designSpeed,
+      double designFlow, double designHead, double[] targetSpeeds) {
     // Get template's speed ratios to find the design point
     double[] templateRatios = template.getSpeedRatios();
     double refRatio = 1.0;
@@ -322,8 +314,8 @@ public class CompressorChartGenerator {
     }
 
     // Scale the template to match design point, then use the specified speeds
-    CompressorChartInterface baseChart = template.scaleToDesignPoint(designSpeed, designFlow,
-        designHead, targetSpeeds.length, chartType);
+    CompressorChartInterface baseChart = template.scaleToDesignPoint(designSpeed, designFlow, designHead,
+        targetSpeeds.length, chartType);
 
     // If the number of speeds matches, return directly
     // Otherwise, generate new curves at specified speeds using fan laws from the base
@@ -334,13 +326,12 @@ public class CompressorChartGenerator {
    * Get the original (unscaled) chart from a template.
    *
    * <p>
-   * This returns the exact curve data stored in the template without any scaling. Useful for
-   * recreating reference curves or when you want to use the template data directly.
+   * This returns the exact curve data stored in the template without any scaling. Useful for recreating reference
+   * curves or when you want to use the template data directly.
    * </p>
    *
    * @param templateName Name of the template to use
-   * @return A {@link neqsim.process.equipment.compressor.CompressorChartInterface} object with
-   *         original data
+   * @return A {@link neqsim.process.equipment.compressor.CompressorChartInterface} object with original data
    */
   public static CompressorChartInterface getOriginalTemplateChart(String templateName) {
     CompressorCurveTemplate template = CompressorCurveTemplate.getTemplate(templateName);
@@ -360,62 +351,120 @@ public class CompressorChartGenerator {
    * Generates a compressor chart with specified speed values.
    *
    * <p>
-   * This method allows full control over which speeds to include in the chart. When advanced
-   * corrections are enabled, the following adjustments are applied:
+   * This method allows full control over which speeds to include in the chart. When advanced corrections are enabled,
+   * the following adjustments are applied:
    * </p>
    * <ul>
-   * <li><b>Reynolds correction:</b> Efficiency adjusted for viscous effects at different
-   * speeds</li>
+   * <li><b>Reynolds correction:</b> Efficiency adjusted for viscous effects at different speeds</li>
    * <li><b>Mach correction:</b> Stonewall flow limited by sonic velocity</li>
-   * <li><b>Multistage surge correction:</b> Surge line adjusted for stage mismatching at reduced
-   * speeds</li>
+   * <li><b>Multistage surge correction:</b> Surge line adjusted for stage mismatching at reduced speeds</li>
    * </ul>
    *
-   * @param generationOption Specifies how to generate the compressor chart. Options: "normal
-   *        curves" or other types.
+   * @param generationOption Specifies how to generate the compressor chart. Options: "normal curves" or other types.
    * @param speeds An array of speed values in RPM to generate curves for.
    * @return A {@link neqsim.process.equipment.compressor.CompressorChartInterface} object.
    */
-  public CompressorChartInterface generateCompressorChart(String generationOption,
-      double[] speeds) {
+  public CompressorChartInterface generateCompressorChart(String generationOption, double[] speeds) {
     if (speeds == null || speeds.length == 0) {
-      speeds = new double[] {compressor.getSpeed()};
+      speeds = new double[] { compressor.getSpeed() };
     }
+    return generateChartCore(generationOption, speeds, compressor.getSpeed(),
+        compressor.getInletStream().getFlowRate("m3/hr"), compressor.getPolytropicFluidHead(),
+        compressor.getPolytropicEfficiency());
+  }
 
+  /**
+   * Generate a compressor chart anchored to an EXPLICIT design point (e.g. read from a vendor datasheet or performance
+   * map) instead of the compressor's current converged operating point.
+   *
+   * <p>
+   * The compressor's inlet stream still supplies the reference gas properties (molar mass, temperature, density,
+   * compressibility), so the inlet stream must have been run; but the compressor itself does not need to have been run
+   * at the design point. This makes it possible to build a realistic chart directly from vendor rated data.
+   * </p>
+   *
+   * @param designSpeed design shaft speed in RPM (the 100% speed line)
+   * @param designFlowM3hr design actual inlet volumetric flow in m3/hr
+   * @param designHeadKJkg design polytropic head in kJ/kg
+   * @param designPolyEff design polytropic efficiency as a fraction between 0 and 1
+   * @param generationOption the generation option ("normal curves" or "mid range")
+   * @param numberOfSpeeds the number of speed lines to generate (must be at least 1)
+   * @return the generated {@link neqsim.process.equipment.compressor.CompressorChartInterface} anchored at the design
+   * point
+   */
+  public CompressorChartInterface generateChartFromDesignPoint(double designSpeed, double designFlowM3hr,
+      double designHeadKJkg, double designPolyEff, String generationOption, int numberOfSpeeds) {
+    if (numberOfSpeeds < 1) {
+      numberOfSpeeds = 1;
+    }
+    boolean isNormalCurvesLocal = generationOption.toLowerCase().contains("normal");
+    double minSpeedRatio = isNormalCurvesLocal ? 0.75 : 0.50;
+    double maxSpeedRatio = isNormalCurvesLocal ? 1.05 : 2.00;
+    double[] speeds = new double[numberOfSpeeds];
+    if (numberOfSpeeds == 1) {
+      speeds[0] = designSpeed;
+    } else {
+      for (int i = 0; i < numberOfSpeeds; i++) {
+        double ratio = minSpeedRatio + (maxSpeedRatio - minSpeedRatio) * i / (numberOfSpeeds - 1);
+        speeds[i] = designSpeed * ratio;
+      }
+      // Ensure the design speed is one of the generated speed lines so the chart
+      // reproduces the design head/efficiency exactly at the design point (otherwise
+      // the lookup interpolates between neighbouring speed lines and undershoots).
+      int nearest = 0;
+      double bestDiff = Double.MAX_VALUE;
+      for (int i = 0; i < numberOfSpeeds; i++) {
+        double diff = Math.abs(speeds[i] - designSpeed);
+        if (diff < bestDiff) {
+          bestDiff = diff;
+          nearest = i;
+        }
+      }
+      speeds[nearest] = designSpeed;
+    }
+    return generateChartCore(generationOption, speeds, designSpeed, designFlowM3hr, designHeadKJkg, designPolyEff);
+  }
+
+  /**
+   * Core chart builder shared by the operating-point and explicit design-point generators. Uses the supplied reference
+   * speed, flow, head and efficiency for the fan-law curve shape, while reading gas properties from the compressor
+   * inlet stream for the chart reference conditions.
+   *
+   * @param generationOption the generation option ("normal curves" or other)
+   * @param speeds the target speed lines in RPM
+   * @param refSpeed the reference (design) speed in RPM
+   * @param refFlow the reference (design) actual inlet flow in m3/hr
+   * @param refHead the reference (design) polytropic head in kJ/kg
+   * @param refEfficiency the reference (design) polytropic efficiency as a fraction between 0 and 1
+   * @return the generated compressor chart
+   */
+  private CompressorChartInterface generateChartCore(String generationOption, double[] speeds, double refSpeed,
+      double refFlow, double refHead, double refEfficiency) {
     CompressorChartInterface compChart = createChart();
     boolean isNormalCurves = generationOption.toLowerCase().contains("normal");
 
     // Initialize chart conditions
-    double[] chartConditions = {compressor.getOutletStream().getFluid().getMolarMass("kg/mol")};
-
-    // Reference values at current operating point
-    double refSpeed = compressor.getSpeed();
-    double refFlow = compressor.getInletStream().getFlowRate("m3/hr");
-    double refHead = compressor.getPolytropicFluidHead();
-    double refEfficiency = compressor.getPolytropicEfficiency();
+    double[] chartConditions = { compressor.getInletStream().getFluid().getMolarMass("kg/mol") };
 
     // Get gas properties for corrections
     double molarMass = compressor.getInletStream().getFluid().getMolarMass("kg/mol") * 1000.0; // kg/kmol
     double kappa = compressor.getInletStream().getFluid().getGamma();
     double temperature = compressor.getInletStream().getTemperature("K");
     double zFactor = compressor.getInletStream().getFluid().getZ();
-    double kinematicViscosity =
-        compressor.getInletStream().getFluid().getKinematicViscosity("m2/sec");
+    double kinematicViscosity = compressor.getInletStream().getFluid().getKinematicViscosity("m2/sec");
 
     // Calculate reference Reynolds number
     double refTipSpeed = CompressorCurveCorrections.calculateTipSpeed(refSpeed, impellerDiameter);
-    double refReynolds = CompressorCurveCorrections.calculateReynoldsNumber(refTipSpeed,
-        impellerDiameter, kinematicViscosity);
+    double refReynolds = CompressorCurveCorrections.calculateReynoldsNumber(refTipSpeed, impellerDiameter,
+        kinematicViscosity);
 
     // Calculate sonic velocity for Mach correction
-    double sonicVelocity =
-        CompressorCurveCorrections.calculateSonicVelocity(kappa, temperature, molarMass, zFactor);
+    double sonicVelocity = CompressorCurveCorrections.calculateSonicVelocity(kappa, temperature, molarMass, zFactor);
 
     // Estimate design Mach number (assuming typical inlet velocity = flow / area)
     double inletArea = Math.PI * Math.pow(impellerDiameter / 2, 2) * 0.5; // Approximate inlet area
     double designVelocity = refFlow / 3600.0 / inletArea; // m/s
-    double designMach =
-        CompressorCurveCorrections.calculateMachNumber(designVelocity, sonicVelocity);
+    double designMach = CompressorCurveCorrections.calculateMachNumber(designVelocity, sonicVelocity);
 
     int numSpeeds = speeds.length;
     int pointsPerCurve = isNormalCurves ? 5 : 3;
@@ -438,28 +487,26 @@ public class CompressorChartGenerator {
       double surgeFlowMultiplier = 0.70;
       if (useMultistageSurgeCorrection && numberOfStages > 1) {
         double surgeFanLawFlow = scaledFlow * 0.70;
-        double correctedSurgeFlow = CompressorCurveCorrections
-            .calculateMultistageSurgeCorrection(surgeFanLawFlow, speedRatio, numberOfStages);
+        double correctedSurgeFlow = CompressorCurveCorrections.calculateMultistageSurgeCorrection(surgeFanLawFlow,
+            speedRatio, numberOfStages);
         surgeFlowMultiplier = correctedSurgeFlow / scaledFlow;
       }
 
       // Apply Mach correction to stonewall flow if enabled
       double stonewallFlowMultiplier = isNormalCurves ? 1.40 : 1.43;
       if (useMachCorrection && designMach > 0.1) {
-        double stonewallFlow = CompressorCurveCorrections.calculateStonewallFlow(scaledFlow,
-            sonicVelocity, designMach);
+        double stonewallFlow = CompressorCurveCorrections.calculateStonewallFlow(scaledFlow, sonicVelocity, designMach);
         stonewallFlowMultiplier = stonewallFlow / scaledFlow;
       }
 
       // Calculate Reynolds correction for efficiency if enabled
       double reynoldsEfficiencyCorrection = 1.0;
       if (useReynoldsCorrection) {
-        double actualTipSpeed =
-            CompressorCurveCorrections.calculateTipSpeed(speeds[i], impellerDiameter);
-        double actualReynolds = CompressorCurveCorrections.calculateReynoldsNumber(actualTipSpeed,
-            impellerDiameter, kinematicViscosity);
-        reynoldsEfficiencyCorrection = CompressorCurveCorrections
-            .calculateReynoldsEfficiencyCorrection(actualReynolds, refReynolds);
+        double actualTipSpeed = CompressorCurveCorrections.calculateTipSpeed(speeds[i], impellerDiameter);
+        double actualReynolds = CompressorCurveCorrections.calculateReynoldsNumber(actualTipSpeed, impellerDiameter,
+            kinematicViscosity);
+        reynoldsEfficiencyCorrection = CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(actualReynolds,
+            refReynolds);
       }
 
       if (isNormalCurves) {
@@ -473,9 +520,8 @@ public class CompressorChartGenerator {
         // Apply multistage head correction at surge if enabled
         double surgeHeadMultiplier = 1.10;
         if (useMultistageSurgeCorrection && numberOfStages > 1) {
-          double correctedSurgeHead =
-              CompressorCurveCorrections.calculateMultistageSurgeHeadCorrection(scaledHead * 1.10,
-                  speedRatio, numberOfStages);
+          double correctedSurgeHead = CompressorCurveCorrections
+              .calculateMultistageSurgeHeadCorrection(scaledHead * 1.10, speedRatio, numberOfStages);
           surgeHeadMultiplier = correctedSurgeHead / scaledHead;
         }
 
@@ -533,8 +579,8 @@ public class CompressorChartGenerator {
     double maxSpeedForSurge = isNormalCurves ? refSpeed * 1.05 : refSpeed * 2.0;
     double minFlowForSurge = refFlow / 2.0;
     double maxFlowForSurge = refFlow * 2.0;
-    SafeSplineSurgeCurve surgeCurve = createSurgeCurve(compChart, refFlow, refSpeed,
-        minFlowForSurge, maxFlowForSurge, minSpeedForSurge, maxSpeedForSurge, isNormalCurves);
+    SafeSplineSurgeCurve surgeCurve = createSurgeCurve(compChart, refFlow, refSpeed, minFlowForSurge, maxFlowForSurge,
+        minSpeedForSurge, maxSpeedForSurge, isNormalCurves);
     compChart.setSurgeCurve(surgeCurve);
 
     // Generate stonewall curve from the chart data
@@ -601,9 +647,9 @@ public class CompressorChartGenerator {
    * Creates a surge curve with proper interpolation points.
    *
    * <p>
-   * This method generates a 3-point surge curve that represents the relationship between surge flow
-   * and head across different operating conditions. This allows for meaningful interpolation when
-   * querying surge flow at different head values.
+   * This method generates a 3-point surge curve that represents the relationship between surge flow and head across
+   * different operating conditions. This allows for meaningful interpolation when querying surge flow at different head
+   * values.
    * </p>
    *
    * @param compChart the compressor chart object
@@ -616,9 +662,8 @@ public class CompressorChartGenerator {
    * @param isNormalCurves whether to generate normal curves
    * @return a {@link SafeSplineSurgeCurve} object representing the surge curve
    */
-  private SafeSplineSurgeCurve createSurgeCurve(CompressorChartInterface compChart, double refFlow,
-      double refSpeed, double minFlow, double maxFlow, double minSpeed, double maxSpeed,
-      boolean isNormalCurves) {
+  private SafeSplineSurgeCurve createSurgeCurve(CompressorChartInterface compChart, double refFlow, double refSpeed,
+      double minFlow, double maxFlow, double minSpeed, double maxSpeed, boolean isNormalCurves) {
     double minSurgeFlow = 0.7 * refFlow;
     double refSurgeFlow = isNormalCurves ? refFlow / 1.3 : 0.8 * refFlow;
     double maxSurgeFlow = 0.9 * refFlow;
@@ -629,9 +674,8 @@ public class CompressorChartGenerator {
     double headSurgeMax = compChart.getPolytropicHead(maxSurgeFlow, maxSpeed);
 
     SafeSplineSurgeCurve surgeCurve = new SafeSplineSurgeCurve();
-    surgeCurve.setCurve(new double[3], new double[] {minSurgeFlow, refSurgeFlow, maxSurgeFlow},
-        new double[] {headSurgeMin, headSurgeRef, headSurgeMax});
+    surgeCurve.setCurve(new double[3], new double[] { minSurgeFlow, refSurgeFlow, maxSurgeFlow },
+        new double[] { headSurgeMin, headSurgeRef, headSurgeMax });
     return surgeCurve;
   }
 }
-

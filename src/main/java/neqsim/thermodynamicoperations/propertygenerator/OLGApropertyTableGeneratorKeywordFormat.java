@@ -13,15 +13,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OLGApropertyTableGeneratorKeywordFormat class.
- * </p>
  *
  * @author Kjetil Raul
  * @version $Id: $Id
  */
-public class OLGApropertyTableGeneratorKeywordFormat
-    extends neqsim.thermodynamicoperations.BaseOperation {
+public class OLGApropertyTableGeneratorKeywordFormat extends neqsim.thermodynamicoperations.BaseOperation {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -75,9 +72,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
   String[] namesKeyword;
 
   /**
-   * <p>
    * Constructor for OLGApropertyTableGeneratorKeywordFormat.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -87,9 +82,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
   }
 
   /**
-   * <p>
    * setPressureRange.
-   * </p>
    *
    * @param minPressure a double
    * @param maxPressure a double
@@ -106,9 +99,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
   }
 
   /**
-   * <p>
    * setTemperatureRange.
-   * </p>
    *
    * @param minTemperature a double
    * @param maxTemperature a double
@@ -125,9 +116,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
   }
 
   /**
-   * <p>
    * calcPhaseEnvelope.
-   * </p>
    */
   public void calcPhaseEnvelope() {
     try {
@@ -144,9 +133,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
   }
 
   /**
-   * <p>
    * calcBubP.
-   * </p>
    *
    * @param temperatures an array of type double
    * @return an array of type double
@@ -169,9 +156,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
   }
 
   /**
-   * <p>
    * calcDewP.
-   * </p>
    *
    * @param temperatures an array of type double
    * @return an array of type double
@@ -194,9 +179,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
   }
 
   /**
-   * <p>
    * calcBubT.
-   * </p>
    *
    * @param pressures an array of type double
    * @return an array of type double
@@ -219,9 +202,7 @@ public class OLGApropertyTableGeneratorKeywordFormat
   }
 
   /**
-   * <p>
    * initCalc.
-   * </p>
    */
   public void initCalc() {
     molfracs = new double[thermoSystem.getPhase(0).getNumberOfComponents()];
@@ -261,24 +242,17 @@ public class OLGApropertyTableGeneratorKeywordFormat
     namesKeyword = new String[nProps];
     calcPhaseEnvelope();
     /*
-     * ROG = new double[pressures.length][temperatures.length]; ROL = new
-     * double[pressures.length][temperatures.length]; CPG = new
-     * double[pressures.length][temperatures.length]; CPHL = new
-     * double[pressures.length][temperatures.length]; HG = new
-     * double[pressures.length][temperatures.length]; HHL = new
-     * double[pressures.length][temperatures.length]; VISG = new
-     * double[pressures.length][temperatures.length]; VISHL = new
-     * double[pressures.length][temperatures.length]; TCG = new
-     * double[pressures.length][temperatures.length]; TCHL = new
-     * double[pressures.length][temperatures.length]; // SIGGHL = new
-     * double[pressures.length][temperatures.length]; SEG = new
-     * double[pressures.length][temperatures.length]; SEHL = new
-     * double[pressures.length][temperatures.length]; RS = new
-     * double[pressures.length][temperatures.length]; // DROGDP = new
-     * double[pressures.length][temperatures.length]; // DROHLDP = new
-     * double[pressures.length][temperatures.length]; // DROGDT = new
-     * double[pressures.length][temperatures.length]; // DROHLDT = new
-     * double[pressures.length][temperatures.length];
+     * ROG = new double[pressures.length][temperatures.length]; ROL = new double[pressures.length][temperatures.length];
+     * CPG = new double[pressures.length][temperatures.length]; CPHL = new
+     * double[pressures.length][temperatures.length]; HG = new double[pressures.length][temperatures.length]; HHL = new
+     * double[pressures.length][temperatures.length]; VISG = new double[pressures.length][temperatures.length]; VISHL =
+     * new double[pressures.length][temperatures.length]; TCG = new double[pressures.length][temperatures.length]; TCHL
+     * = new double[pressures.length][temperatures.length]; // SIGGHL = new
+     * double[pressures.length][temperatures.length]; SEG = new double[pressures.length][temperatures.length]; SEHL =
+     * new double[pressures.length][temperatures.length]; RS = new double[pressures.length][temperatures.length]; //
+     * DROGDP = new double[pressures.length][temperatures.length]; // DROHLDP = new
+     * double[pressures.length][temperatures.length]; // DROGDT = new double[pressures.length][temperatures.length]; //
+     * DROHLDT = new double[pressures.length][temperatures.length];
      */
 
     for (int i = 0; i < pressures.length; i++) {
@@ -295,20 +269,17 @@ public class OLGApropertyTableGeneratorKeywordFormat
         /*
          * ROG[i][j] = thermoSystem.getPhase(0).getPhysicalProperties().getDensity(); ROL[i][j] =
          * thermoSystem.getPhase(1).getPhysicalProperties().getDensity(); DROGDP[i][j] =
-         * thermoSystem.getPhase(0).getdrhodP(); // DROHLDP[i][j] =
-         * thermoSystem.getPhase(1).getdrhodP(); // DROGDT[i][j] =
-         * thermoSystem.getPhase(0).getdrhodT(); // DROHLDT[i][j] =
-         * thermoSystem.getPhase(1).getdrhodT(); CPG[i][j] = thermoSystem.getPhase(0).getCp();
-         * CPHL[i][j] = thermoSystem.getPhase(1).getCp(); HG[i][j] =
-         * thermoSystem.getPhase(0).getEnthalpy(); HHL[i][j] =
-         * thermoSystem.getPhase(1).getEnthalpy(); TCG[i][j] =
+         * thermoSystem.getPhase(0).getdrhodP(); // DROHLDP[i][j] = thermoSystem.getPhase(1).getdrhodP(); //
+         * DROGDT[i][j] = thermoSystem.getPhase(0).getdrhodT(); // DROHLDT[i][j] = thermoSystem.getPhase(1).getdrhodT();
+         * CPG[i][j] = thermoSystem.getPhase(0).getCp(); CPHL[i][j] = thermoSystem.getPhase(1).getCp(); HG[i][j] =
+         * thermoSystem.getPhase(0).getEnthalpy(); HHL[i][j] = thermoSystem.getPhase(1).getEnthalpy(); TCG[i][j] =
          * thermoSystem.getPhase(0).getPhysicalProperties().getConductivity(); TCHL[i][j] =
          * thermoSystem.getPhase(1).getPhysicalProperties().getConductivity(); VISG[i][j] =
          * thermoSystem.getPhase(0).getPhysicalProperties().getViscosity(); VISHL[i][j] =
          * thermoSystem.getPhase(1).getPhysicalProperties().getViscosity(); // SIGGHL[i][j] =
          * thermoSystem.getInterphaseProperties().getSurfaceTension(0, 1); SEG[i][j] =
-         * thermoSystem.getPhase(0).getEntropy(); SEHL[i][j] =
-         * thermoSystem.getPhase(1).getEntropy(); RS[i][j] = thermoSystem.getPhase(0).getBeta();
+         * thermoSystem.getPhase(0).getEntropy(); SEHL[i][j] = thermoSystem.getPhase(1).getEntropy(); RS[i][j] =
+         * thermoSystem.getPhase(0).getBeta();
          */
 
         int k = 0;
@@ -342,8 +313,8 @@ public class OLGApropertyTableGeneratorKeywordFormat
         units[k] = "KG/M3-K";
         namesKeyword[k] = "DROHLDT";
         k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getBeta()
-            * thermoSystem.getPhase(0).getMolarMass() / thermoSystem.getMolarMass();
+        props[k][i][j] = thermoSystem.getPhase(0).getBeta() * thermoSystem.getPhase(0).getMolarMass()
+            / thermoSystem.getMolarMass();
         names[k] = "GAS MASS FRACTION";
         units[k] = "-";
         namesKeyword[k] = "RS";
@@ -358,29 +329,25 @@ public class OLGApropertyTableGeneratorKeywordFormat
         units[k] = "NS/M2";
         namesKeyword[k] = "VISHL";
         k++;
-        props[k][i][j] =
-            thermoSystem.getPhase(0).getCp() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
-                / thermoSystem.getPhase(0).getMolarMass();
+        props[k][i][j] = thermoSystem.getPhase(0).getCp() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
+            / thermoSystem.getPhase(0).getMolarMass();
         names[k] = "GAS HEAT CAPACITY";
         units[k] = "J/KG-K";
         namesKeyword[k] = "CPG";
         k++;
-        props[k][i][j] =
-            thermoSystem.getPhase(1).getCp() / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
-                / thermoSystem.getPhase(1).getMolarMass();
+        props[k][i][j] = thermoSystem.getPhase(1).getCp() / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
+            / thermoSystem.getPhase(1).getMolarMass();
         names[k] = "LIQUID HEAT CAPACITY";
         units[k] = "J/KG-K";
         namesKeyword[k] = "CPHL";
         k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getEnthalpy()
-            / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
+        props[k][i][j] = thermoSystem.getPhase(0).getEnthalpy() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
             / thermoSystem.getPhase(0).getMolarMass();
         names[k] = "GAS ENTHALPY";
         units[k] = "J/KG";
         namesKeyword[k] = "HG";
         k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getEnthalpy()
-            / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
+        props[k][i][j] = thermoSystem.getPhase(1).getEnthalpy() / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
             / thermoSystem.getPhase(1).getMolarMass();
         names[k] = "LIQUD ENTHALPY";
         units[k] = "J/KG";
@@ -401,15 +368,13 @@ public class OLGApropertyTableGeneratorKeywordFormat
         units[k] = "N/M";
         namesKeyword[k] = "SIGGHL";
         k++;
-        props[k][i][j] = thermoSystem.getPhase(0).getEntropy()
-            / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
+        props[k][i][j] = thermoSystem.getPhase(0).getEntropy() / thermoSystem.getPhase(0).getNumberOfMolesInPhase()
             / thermoSystem.getPhase(0).getMolarMass();
         names[k] = "GAS ENTROPY";
         units[k] = "J/KG-K";
         namesKeyword[k] = "SEG";
         k++;
-        props[k][i][j] = thermoSystem.getPhase(1).getEntropy()
-            / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
+        props[k][i][j] = thermoSystem.getPhase(1).getEntropy() / thermoSystem.getPhase(1).getNumberOfMolesInPhase()
             / thermoSystem.getPhase(1).getMolarMass();
         names[k] = "LIQUID ENTROPY";
         units[k] = "J/KG-K";
@@ -440,19 +405,15 @@ public class OLGApropertyTableGeneratorKeywordFormat
   }
 
   /**
-   * <p>
    * writeOLGAinpFile.
-   * </p>
    *
    * @param filename a {@link java.lang.String} object
    */
   public void writeOLGAinpFile(String filename) {
     try (Writer writer = new BufferedWriter(new OutputStreamWriter(
-        new FileOutputStream(
-            "C:/Users/Kjetil Raul/Documents/Master KRB/2phaseTables/testFluidKeyCPAExtra.tab"),
+        new FileOutputStream("C:/Users/Kjetil Raul/Documents/Master KRB/2phaseTables/testFluidKeyCPAExtra.tab"),
         "utf-8"))) {
-      writer.write(
-          "PVTTABLE LABEL = " + "\"" + "NewFluid" + "\"" + "," + "PHASE = TWO" + ",\\" + "\n");
+      writer.write("PVTTABLE LABEL = " + "\"" + "NewFluid" + "\"" + "," + "PHASE = TWO" + ",\\" + "\n");
       writer.write("EOS = " + "\"" + "Equation" + "\"" + ",\\" + "\n");
 
       writer.write("COMPONENTS = (");

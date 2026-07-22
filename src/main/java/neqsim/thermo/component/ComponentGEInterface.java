@@ -10,18 +10,14 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGEInterface interface.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
 public interface ComponentGEInterface extends ComponentInterface {
   /**
-   * <p>
    * getGamma.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -34,72 +30,57 @@ public interface ComponentGEInterface extends ComponentInterface {
    * @param mixRule an array of {@link java.lang.String} objects
    * @return a double
    */
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
-      String[][] mixRule);
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule);
 
   /**
-   * <p>
    * getGamma.
-   * </p>
    *
    * @return a double
    */
   public double getGamma();
 
   /**
-   * <p>
-   * getlnGamma.
-   * </p>
+   * getLnGamma.
    *
    * @return a double
    */
-  public double getlnGamma();
+  public double getLnGamma();
 
   /**
-   * <p>
    * getGammaRefCor.
-   * </p>
    *
    * @return a double
    */
   public double getGammaRefCor();
 
   /**
-   * <p>
-   * getlnGammadt.
-   * </p>
+   * getLnGammadt.
    *
    * @return a double
    */
-  public double getlnGammadt();
+  public double getLnGammadt();
 
   /**
-   * <p>
-   * getlnGammadtdt.
-   * </p>
+   * getLnGammadtdt.
    *
    * @return a double
    */
-  public double getlnGammadtdt();
+  public double getLnGammadtdt();
 
   /**
-   * <p>
-   * getlnGammadn.
-   * </p>
+   * getLnGammadn.
    *
    * @param k a int
    * @return a double
    */
-  public double getlnGammadn(int k);
+  public double getLnGammadn(int k);
 
   /**
-   * <p>
-   * setlnGammadn.
-   * </p>
+   * setLnGammadn.
    *
    * @param k a int
    * @param val a double
    */
-  public void setlnGammadn(int k, double val);
+  public void setLnGammadn(int k, double val);
 }

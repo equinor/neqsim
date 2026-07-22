@@ -6,14 +6,14 @@ import java.util.Arrays;
  * Transient 1-D heat conduction through vessel walls.
  *
  * <p>
- * This class implements a finite difference solution for transient heat conduction through single
- * or composite (multi-layer) vessel walls. It is designed for modeling Type III/IV hydrogen storage
- * vessels with low thermal conductivity liners, but is applicable to any cylindrical vessel wall.
+ * This class implements a finite difference solution for transient heat conduction through single or composite
+ * (multi-layer) vessel walls. It is designed for modeling Type III/IV hydrogen storage vessels with low thermal
+ * conductivity liners, but is applicable to any cylindrical vessel wall.
  * </p>
  *
  * <p>
  * The model solves the 1-D heat equation:
- * 
+ *
  * <pre>
  * rho * Cp * dT/dt = k * d2T/dx2
  * </pre>
@@ -21,8 +21,8 @@ import java.util.Arrays;
  * using an explicit finite difference scheme with configurable boundary conditions.
  *
  * <p>
- * Reference: Andreasen, A. (2021). HydDown: A Python package for calculation of hydrogen (or other
- * gas) pressure vessel filling and discharge. Journal of Open Source Software, 6(66), 3695.
+ * Reference: Andreasen, A. (2021). HydDown: A Python package for calculation of hydrogen (or other gas) pressure vessel
+ * filling and discharge. Journal of Open Source Software, 6(66), 3695.
  * </p>
  *
  * @author ESOL
@@ -64,8 +64,8 @@ public class TransientWallHeatTransfer {
    * @param initialTemperatureK Initial uniform temperature [K]
    * @param numNodes Number of spatial nodes (minimum 3)
    */
-  public TransientWallHeatTransfer(double thickness, double thermalConductivity, double density,
-      double heatCapacity, double initialTemperatureK, int numNodes) {
+  public TransientWallHeatTransfer(double thickness, double thermalConductivity, double density, double heatCapacity,
+      double initialTemperatureK, int numNodes) {
     if (thickness <= 0.0 || thermalConductivity <= 0.0 || density <= 0.0 || heatCapacity <= 0.0) {
       throw new IllegalArgumentException("Wall properties must be positive");
     }
@@ -115,9 +115,9 @@ public class TransientWallHeatTransfer {
    * @param initialTemperatureK Initial uniform temperature [K]
    * @param numNodes Total number of spatial nodes (minimum 5)
    */
-  public TransientWallHeatTransfer(double linerThickness, double linerK, double linerDensity,
-      double linerCp, double shellThickness, double shellK, double shellDensity, double shellCp,
-      double initialTemperatureK, int numNodes) {
+  public TransientWallHeatTransfer(double linerThickness, double linerK, double linerDensity, double linerCp,
+      double shellThickness, double shellK, double shellDensity, double shellCp, double initialTemperatureK,
+      int numNodes) {
     if (linerThickness <= 0.0 || shellThickness <= 0.0) {
       throw new IllegalArgumentException("Layer thicknesses must be positive");
     }
@@ -152,8 +152,7 @@ public class TransientWallHeatTransfer {
         this.density[i] = shellDensity;
         this.heatCapacity[i] = shellCp;
       }
-      this.thermalDiffusivity[i] =
-          this.thermalConductivity[i] / (this.density[i] * this.heatCapacity[i]);
+      this.thermalDiffusivity[i] = this.thermalConductivity[i] / (this.density[i] * this.heatCapacity[i]);
     }
   }
 
@@ -162,7 +161,7 @@ public class TransientWallHeatTransfer {
    *
    * <p>
    * Uses convective (Robin) boundary conditions at both surfaces:
-   * 
+   *
    * <pre>
    * -k * dT/dx = h_inner * (T_inner - T_fluid_inner) at x = 0
    * -k * dT/dx = h_outer * (T_outer - T_ambient) at x = L
@@ -174,9 +173,39 @@ public class TransientWallHeatTransfer {
    * @param outerAmbientTemperatureK Ambient/fire temperature [K]
    * @param outerFilmCoefficientWPerM2K External film coefficient [W/(m^2*K)]
    */
-  public void advanceTimeStep(double dt, double innerFluidTemperatureK,
-      double innerFilmCoefficientWPerM2K, double outerAmbientTemperatureK,
-      double outerFilmCoefficientWPerM2K) {
+  public void advanceTimeStep(double dt, double innerFluidTemperatureK, double innerFilmCoefficientWPerM2K,
+      double outerAmbientTemperatureK, double outerFilmCoefficientWPerM2K) {
+    advanceTimeStep(dt, innerFluidTemperatureK, innerFilmCoefficientWPerM2K, outerAmbientTemperatureK,
+        outerFilmCoefficientWPerM2K, 0.0);
+  }
+
+  /**
+   * Advances the temperature profile by one time step with additional outer heat flux.
+   *
+   * <p>
+   * This overload adds an additional heat flux at the outer boundary, which is used for Stefan-Boltzmann fire models
+   * where the fire heat is applied to the outer wall surface rather than directly to the gas.
+   * </p>
+   *
+   * <p>
+   * The outer boundary condition becomes:
+   *
+   * <pre>
+   * -k * dT/dx = h_outer * (T_outer - T_ambient) - additionalOuterFlux
+   * </pre>
+   *
+   * where additionalOuterFlux is positive into the wall (e.g., fire radiation + convection).
+   *
+   * @param dt Time step [s]
+   * @param innerFluidTemperatureK Process fluid temperature [K]
+   * @param innerFilmCoefficientWPerM2K Internal film coefficient [W/(m^2*K)]
+   * @param outerAmbientTemperatureK Ambient temperature [K]
+   * @param outerFilmCoefficientWPerM2K External film coefficient [W/(m^2*K)]
+   * @param additionalOuterFluxWPerM2 Additional heat flux at outer boundary [W/m^2], positive into wall (e.g., fire
+   * heat flux)
+   */
+  public void advanceTimeStep(double dt, double innerFluidTemperatureK, double innerFilmCoefficientWPerM2K,
+      double outerAmbientTemperatureK, double outerFilmCoefficientWPerM2K, double additionalOuterFluxWPerM2) {
     if (dt <= 0.0) {
       throw new IllegalArgumentException("Time step must be positive");
     }
@@ -189,21 +218,27 @@ public class TransientWallHeatTransfer {
       int subSteps = (int) Math.ceil(dt / maxDt) + 1;
       double subDt = dt / subSteps;
       for (int s = 0; s < subSteps; s++) {
-        advanceTimeStepInternal(subDt, innerFluidTemperatureK, innerFilmCoefficientWPerM2K,
-            outerAmbientTemperatureK, outerFilmCoefficientWPerM2K);
+        advanceTimeStepInternal(subDt, innerFluidTemperatureK, innerFilmCoefficientWPerM2K, outerAmbientTemperatureK,
+            outerFilmCoefficientWPerM2K, additionalOuterFluxWPerM2);
       }
     } else {
-      advanceTimeStepInternal(dt, innerFluidTemperatureK, innerFilmCoefficientWPerM2K,
-          outerAmbientTemperatureK, outerFilmCoefficientWPerM2K);
+      advanceTimeStepInternal(dt, innerFluidTemperatureK, innerFilmCoefficientWPerM2K, outerAmbientTemperatureK,
+          outerFilmCoefficientWPerM2K, additionalOuterFluxWPerM2);
     }
   }
 
   /**
    * Internal time step advancement (assumes stability is already checked).
+   *
+   * @param dt Time step [s]
+   * @param innerFluidTemperatureK Process fluid temperature [K]
+   * @param innerFilmCoefficientWPerM2K Internal film coefficient [W/(m^2*K)]
+   * @param outerAmbientTemperatureK Ambient temperature [K]
+   * @param outerFilmCoefficientWPerM2K External film coefficient [W/(m^2*K)]
+   * @param additionalOuterFluxWPerM2 Additional heat flux at outer boundary [W/m^2]
    */
-  private void advanceTimeStepInternal(double dt, double innerFluidTemperatureK,
-      double innerFilmCoefficientWPerM2K, double outerAmbientTemperatureK,
-      double outerFilmCoefficientWPerM2K) {
+  private void advanceTimeStepInternal(double dt, double innerFluidTemperatureK, double innerFilmCoefficientWPerM2K,
+      double outerAmbientTemperatureK, double outerFilmCoefficientWPerM2K, double additionalOuterFluxWPerM2) {
     double[] newTemp = new double[numNodes];
 
     // Interior nodes - explicit finite difference
@@ -221,8 +256,8 @@ public class TransientWallHeatTransfer {
       double alphaEff = kEff / (density[i] * heatCapacity[i]);
       Fo = alphaEff * dt / (dx * dx);
 
-      newTemp[i] = temperatureProfile[i] + Fo
-          * (temperatureProfile[i - 1] - 2.0 * temperatureProfile[i] + temperatureProfile[i + 1]);
+      newTemp[i] = temperatureProfile[i]
+          + Fo * (temperatureProfile[i - 1] - 2.0 * temperatureProfile[i] + temperatureProfile[i + 1]);
     }
 
     // Inner boundary (x = 0): convective BC with process fluid
@@ -231,18 +266,21 @@ public class TransientWallHeatTransfer {
     double alphaInner = thermalDiffusivity[0];
     double FoInner = alphaInner * dt / (dx * dx);
 
-    newTemp[0] = temperatureProfile[0] + 2.0 * FoInner * (temperatureProfile[1]
-        - temperatureProfile[0] + BiInner * (innerFluidTemperatureK - temperatureProfile[0]));
+    newTemp[0] = temperatureProfile[0] + 2.0 * FoInner
+        * (temperatureProfile[1] - temperatureProfile[0] + BiInner * (innerFluidTemperatureK - temperatureProfile[0]));
 
-    // Outer boundary (x = L): convective BC with ambient/fire
+    // Outer boundary (x = L): convective BC with ambient/fire + additional flux
     int n = numNodes - 1;
     double kOuter = thermalConductivity[n];
     double BiOuter = outerFilmCoefficientWPerM2K * dx / kOuter;
     double alphaOuter = thermalDiffusivity[n];
     double FoOuter = alphaOuter * dt / (dx * dx);
 
-    newTemp[n] = temperatureProfile[n] + 2.0 * FoOuter * (temperatureProfile[n - 1]
-        - temperatureProfile[n] + BiOuter * (outerAmbientTemperatureK - temperatureProfile[n]));
+    // Additional flux term: q_additional * dx / k converts flux to temperature equivalent
+    double fluxTerm = additionalOuterFluxWPerM2 * dx / kOuter;
+
+    newTemp[n] = temperatureProfile[n] + 2.0 * FoOuter * (temperatureProfile[n - 1] - temperatureProfile[n]
+        + BiOuter * (outerAmbientTemperatureK - temperatureProfile[n]) + fluxTerm);
 
     // Update temperature profile
     temperatureProfile = newTemp;

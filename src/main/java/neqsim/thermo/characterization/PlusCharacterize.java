@@ -6,9 +6,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PlusCharacterize class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -31,23 +29,20 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   int lastPlusFractionNumber = 80;
   int numberOfPseudocomponents = 5; // (lastPlusFractionNumber-firstPlusFractionNumber)*50;
   int length = 0;
-  double[] coefs = {4.4660105006, -1.1266303727, 0.80, 0.0408709562};
-  double[] SRKcoefs = {4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785};
-  double[] PRcoefs = {4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785};
-  double[] plusCoefs = {0.0007774204804, -0.02390179};
+  double[] coefs = { 4.4660105006, -1.1266303727, 0.80, 0.0408709562 };
+  double[] SRKcoefs = { 4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785 };
+  double[] PRcoefs = { 4.4660105006, -1.1266303727, 8.1927423578, -3.4668277785 };
+  double[] plusCoefs = { 0.0007774204804, -0.02390179 };
   SystemInterface system = null;
 
   /**
-   * <p>
    * Constructor for PlusCharacterize.
-   * </p>
    */
-  public PlusCharacterize() {}
+  public PlusCharacterize() {
+  }
 
   /**
-   * <p>
    * Constructor for PlusCharacterize.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -67,9 +62,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   }
 
   /**
-   * <p>
    * setHeavyTBPtoPlus.
-   * </p>
    */
   public void setHeavyTBPtoPlus() {
     int plusCompNumber = 0;
@@ -79,11 +72,9 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         if (system.getPhase(0).getComponent(i).isIsTBPfraction()) {
           Integer firstPlusNumber = Integer.valueOf(0);
           if (system.getPhase(0).getComponent(i).getComponentName().substring(3, 4).equals("_")) {
-            firstPlusNumber = Integer
-                .valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 3));
+            firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 3));
           } else {
-            firstPlusNumber = Integer
-                .valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 2));
+            firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 2));
           }
           if (plusCompNumber < firstPlusNumber.intValue()) {
             plusCompNumber = firstPlusNumber.intValue();
@@ -114,11 +105,9 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
         if (system.getPhase(0).getComponent(i).isIsPlusFraction()) {
           Integer firstPlusNumber = Integer.valueOf(0);
           if (system.getPhase(0).getComponent(i).getComponentName().substring(3, 4).equals("_")) {
-            firstPlusNumber = Integer
-                .valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 3));
+            firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 3));
           } else {
-            firstPlusNumber = Integer
-                .valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 2));
+            firstPlusNumber = Integer.valueOf(system.getPhase(0).getComponent(i).getComponentName().substring(1, 2));
           }
           if (firstPlusFractionNumber < firstPlusNumber.intValue()) {
             firstPlusFractionNumber = firstPlusNumber.intValue();
@@ -209,15 +198,18 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
 
   /** {@inheritDoc} */
   @Override
-  public void generatePlusFractions(int start, int end, double zplus, double Mplus) {}
+  public void generatePlusFractions(int start, int end, double zplus, double Mplus) {
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void addHeavyEnd() {}
+  public void addHeavyEnd() {
+  }
 
   /** {@inheritDoc} */
   @Override
-  public void generateTBPFractions() {}
+  public void generateTBPFractions() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -257,12 +249,10 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
       Maverage += Math.exp(getCoef(0) + getCoef(1) * i) * PVTsimMolarMass[i - 6] / 1000.0;
       weightFrac += Math.exp(getCoef(0) + getCoef(1) * i) * PVTsimMolarMass[i - 6] / 1000.0;
       // System.out.println("weigth " + weightFrac + " i" + i);
-      if (weightFrac >= meanWeightFrac || !pseudocomponents
-          || i == getLastPlusFractionNumber() - 1) {
+      if (weightFrac >= meanWeightFrac || !pseudocomponents || i == getLastPlusFractionNumber() - 1) {
         String name = (i == firstPS) ? "PC" + Integer.toString(firstPS)
             : "PC" + Integer.toString(firstPS) + "-" + Integer.toString(i);
-        system.addTBPfraction(name, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k],
-            denstemp1 / denstemp2);
+        system.addTBPfraction(name, totalNumberOfMoles * zPlus[k], Maverage / zPlus[k], denstemp1 / denstemp2);
         denstemp1 = 0.0;
         denstemp2 = 0.0;
         weightFrac = 0.0;
@@ -281,14 +271,13 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   }
 
   /**
-   * <p>
    * addPseudoTBPfraction.
-   * </p>
    *
    * @param start a int
    * @param end a int
    */
-  public void addPseudoTBPfraction(int start, int end) {}
+  public void addPseudoTBPfraction(int start, int end) {
+  }
 
   /**
    * Getter for property carbonNumberVector.
@@ -452,7 +441,8 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
 
   /** {@inheritDoc} */
   @Override
-  public void addTBPFractions() {}
+  public void addTBPFractions() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -467,9 +457,7 @@ public class PlusCharacterize implements java.io.Serializable, CharacteriseInter
   }
 
   /**
-   * <p>
    * characterizePlusFraction.
-   * </p>
    */
   public void characterizePlusFraction() {
     system.init(0);

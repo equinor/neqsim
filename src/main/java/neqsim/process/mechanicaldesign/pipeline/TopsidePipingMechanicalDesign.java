@@ -11,15 +11,17 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 /**
  * Mechanical design class for topside (offshore platform and onshore facility) piping.
  *
- * &lt;p&gt; This class provides mechanical design capabilities for topside process piping
- * including: &lt;/p&gt; &lt;ul&gt; &lt;li&gt;Wall thickness per ASME B31.3 Process
- * Piping&lt;/li&gt; &lt;li&gt;Erosional velocity per API RP 14E&lt;/li&gt; &lt;li&gt;Pipe support
- * spacing per NORSOK L-002&lt;/li&gt; &lt;li&gt;Flow-induced vibration (FIV) screening&lt;/li&gt;
- * &lt;li&gt;Acoustic-induced vibration (AIV) analysis&lt;/li&gt; &lt;li&gt;Thermal expansion stress
- * analysis&lt;/li&gt; &lt;/ul&gt;
+ * <p>
+ * &lt;p&gt; This class provides mechanical design capabilities for topside process piping including: &lt;/p&gt;
+ * &lt;ul&gt; &lt;li&gt;Wall thickness per ASME B31.3 Process Piping&lt;/li&gt; &lt;li&gt;Erosional velocity per API RP
+ * 14E&lt;/li&gt; &lt;li&gt;Pipe support spacing per NORSOK L-002&lt;/li&gt; &lt;li&gt;Flow-induced vibration (FIV)
+ * screening&lt;/li&gt; &lt;li&gt;Acoustic-induced vibration (AIV) analysis&lt;/li&gt; &lt;li&gt;Thermal expansion
+ * stress analysis&lt;/li&gt; &lt;/ul&gt;
  *
+ * <p>
  * &lt;h2&gt;Usage Example&lt;/h2&gt;
  *
+ * <p>
  * &lt;pre&gt;{@code
  * // Create topside piping
  * TopsidePiping pipe = new TopsidePiping("HP Gas Header", stream);
@@ -147,8 +149,7 @@ public class TopsidePipingMechanicalDesign extends PipelineMechanicalDesign {
 
           // Get phase fractions
           if (pipe.getInletStream().getFluid().hasPhaseType("gas")) {
-            double gasDensity =
-                pipe.getInletStream().getFluid().getPhase("gas").getDensity("kg/m3");
+            double gasDensity = pipe.getInletStream().getFluid().getPhase("gas").getDensity("kg/m3");
             topsideCalculator.setGasDensity(gasDensity);
           }
           if (pipe.getInletStream().getFluid().hasPhaseType("oil")
@@ -186,12 +187,11 @@ public class TopsidePipingMechanicalDesign extends PipelineMechanicalDesign {
     }
 
     // Load topside-specific parameters from database
-    dataSource.loadIntoCalculator(topsideCalculator, getCompanySpecificDesignStandards(),
-        getDesignStandardCode(), serviceType);
+    dataSource.loadIntoCalculator(topsideCalculator, getCompanySpecificDesignStandards(), getDesignStandardCode(),
+        serviceType);
 
     // Load velocity limits
-    dataSource.loadVelocityLimits(topsideCalculator, getCompanySpecificDesignStandards(),
-        serviceType);
+    dataSource.loadVelocityLimits(topsideCalculator, getCompanySpecificDesignStandards(), serviceType);
 
     // Load vibration parameters
     dataSource.loadVibrationParameters(topsideCalculator, getCompanySpecificDesignStandards());
@@ -244,8 +244,7 @@ public class TopsidePipingMechanicalDesign extends PipelineMechanicalDesign {
 
     // 3. Support spacing
     calculatedSupportSpacing = topsideCalculator.calculateSupportSpacing();
-    numberOfSupports =
-        topsideCalculator.calculateNumberOfSupports(topsideCalculator.getPipelineLength());
+    numberOfSupports = topsideCalculator.calculateNumberOfSupports(topsideCalculator.getPipelineLength());
 
     // 4. Stress analysis
     topsideCalculator.calculateAllowableStress();
@@ -303,8 +302,7 @@ public class TopsidePipingMechanicalDesign extends PipelineMechanicalDesign {
       jsonObj.add("calculatorResults", calcObj);
     }
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 
   // ============================================================================
@@ -352,6 +350,7 @@ public class TopsidePipingMechanicalDesign extends PipelineMechanicalDesign {
    *
    * @return minimum operation temperature in Kelvin
    */
+  @Override
   public double getMinOperationTemperature() {
     return minOperationTemperature;
   }
@@ -361,6 +360,7 @@ public class TopsidePipingMechanicalDesign extends PipelineMechanicalDesign {
    *
    * @param minOperationTemperature minimum operation temperature in Kelvin
    */
+  @Override
   public void setMinOperationTemperature(double minOperationTemperature) {
     this.minOperationTemperature = minOperationTemperature;
   }

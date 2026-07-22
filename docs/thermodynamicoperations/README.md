@@ -1,381 +1,189 @@
-# Thermodynamic Operations Package
-
-The `thermodynamicoperations` package provides flash calculations, phase envelope construction, and chemical equilibrium solvers.
-
-## Table of Contents
-- [Overview](#overview)
-- [Package Structure](#package-structure)
-- [Flash Calculations](#flash-calculations)
-- [Phase Envelope Operations](#phase-envelope-operations)
-- [Property Generators](#property-generators)
-- [Usage Examples](#usage-examples)
-
+---
+title: "Thermodynamic Operations Package"
+description: "Verified NeqSim Java examples for TP, PH, PS, reactive, saturation, solid-aware, and phase-envelope thermodynamic operations."
 ---
 
-## Overview
+`ThermodynamicOperations` is the public facade for equilibrium calculations on a
+NeqSim `SystemInterface`. It changes the attached fluid in place: set the known
+state variables on the fluid, call an operation, and then read the solved state
+from that same fluid.
 
-**Location:** `neqsim.thermodynamicoperations`
+## Units and initialization
 
-**Purpose:**
-- Perform phase equilibrium calculations (flash operations)
-- Calculate phase envelopes and critical points
-- Generate property tables
-- Handle chemical equilibrium
+- Constructors use kelvin for temperature and bara for pressure.
+- Prefer unit-qualified setters such as `setPressure(30.0, "bara")`.
+- Add all components and set the mixing rule before constructing the operations
+  facade.
+- Call `initProperties()` after an equilibrium calculation before reading
+  transport properties such as viscosity or thermal conductivity.
+- Extensive properties such as enthalpy and entropy depend on the amount of
+  fluid in the system. Preserve the same system amount when using them as PH or
+  PS flash targets.
 
-**Main Entry Point:** `ThermodynamicOperations`
+## Verified state-flash example
+
+The following Java 8 program exercises TP, PH, and PS flashes. The residual
+checks demonstrate the constraints imposed by the PH and PS operations.
 
 ```java
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();  // Temperature-Pressure flash
+public final class StateFlashExample {
+  private StateFlashExample() {}
+
+  public static void main(String[] args) {
+    SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.07);
+    fluid.addComponent("propane", 0.03);
+    fluid.setMixingRule("classic");
+
+    ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+    operations.TPflash();
+    fluid.initProperties();
+
+    double initialEnthalpy = fluid.getEnthalpy();
+    fluid.setPressure(30.0, "bara");
+    operations.PHflash(initialEnthalpy);
+    if (Math.abs(fluid.getEnthalpy() - initialEnthalpy) > 1.0e-3) {
+      throw new IllegalStateException("PH flash did not preserve enthalpy");
+    }
+
+    double initialEntropy = fluid.getEntropy();
+    fluid.setPressure(70.0, "bara");
+    operations.PSflash(initialEntropy);
+    if (Math.abs(fluid.getEntropy() - initialEntropy) > 1.0e-6) {
+      throw new IllegalStateException("PS flash did not preserve entropy");
+    }
+  }
+}
 ```
 
----
+Common state flashes exposed by the facade include:
 
-## Package Structure
+| Method | Fixed variables | Typical use |
+| --- | --- | --- |
+| `TPflash()` | Temperature, pressure | Equilibrium state at specified conditions |
+| `PHflash(H)` | Pressure, total enthalpy | Throttling and heat-duty calculations |
+| `PSflash(S)` | Pressure, total entropy | Isentropic compression or expansion |
+| `PUflash(U)` | Pressure, total internal energy | Pressure-constrained energy balance |
+| `TVflash(V)` | Temperature, volume | Rigid-volume state calculation |
+| `VUflash(V, U)` | Volume, total internal energy | Closed-vessel dynamic update |
 
-```
-thermodynamicoperations/
-├── ThermodynamicOperations.java     # Main facade class
-├── BaseOperation.java               # Base class for operations
-├── OperationInterface.java          # Operation interface
-│
-├── flashops/                        # Flash calculations
-│   ├── TPflash.java                 # Temperature-Pressure flash
-│   ├── PHflash.java                 # Pressure-Enthalpy flash
-│   ├── PSFlash.java                 # Pressure-Entropy flash
-│   ├── TVflash.java                 # Temperature-Volume flash
-│   ├── TSFlash.java                 # Temperature-Entropy flash (Q-function)
-│   ├── THflash.java                 # Temperature-Enthalpy flash (Q-function)
-│   ├── TUflash.java                 # Temperature-Internal Energy flash (Q-function)
-│   ├── PVflash.java                 # Pressure-Volume flash (Q-function)
-│   ├── VUflash.java                 # Volume-Internal Energy flash (Q-function)
-│   ├── VHflash.java                 # Volume-Enthalpy flash (Q-function)
-│   ├── VSflash.java                 # Volume-Entropy flash (Q-function)
-│   ├── PUflash.java                 # Pressure-Internal Energy flash
-│   ├── TVfractionFlash.java         # Temperature-Vapor fraction flash
-│   ├── dTPflash.java                # Dual temperature flash
-│   ├── TPmultiflash.java            # Multiphase TP flash
-│   ├── SolidFlash.java              # Flash with solids
-│   ├── CriticalPointFlash.java      # Critical point calculation
-│   ├── QfuncFlash.java              # Base class for Q-function flashes
-│   ├── RachfordRice.java            # Rachford-Rice solver
-│   └── saturationops/               # Saturation calculations
-│       ├── BubblePointPressureFlash.java
-│       ├── BubblePointTemperatureFlash.java
-│       ├── DewPointPressureFlash.java
-│       ├── DewPointTemperatureFlash.java
-│       ├── WaterDewPointFlash.java
-│       └── HydrateEquilibrium.java
-│
-├── phaseenvelopeops/                # Phase envelope calculations
-│   ├── multicomponentenvelopeops/
-│   │   ├── PTPhaseEnvelope.java
-│   │   └── PHPhaseEnvelope.java
-│   └── reactivecurves/
-│       └── ReactivePhaseEnvelope.java
-│
-├── chemicalequilibrium/             # Chemical equilibrium
-│   └── ChemicalEquilibrium.java
-│
-└── propertygenerator/               # Property tables
-    └── OLGApropertyTableGenerator.java
-```
+`TVfractionFlash(fraction)` constrains the volume fraction of the first,
+lightest phase. It is not a general molar vapour-fraction specification; inspect
+the resulting phase types before interpreting the fraction.
 
----
+## Saturation and phase-aware operations
 
-## Flash Calculations
+The same facade provides the following public operations:
 
-### Flash Types
+| Purpose | Method or setup |
+| --- | --- |
+| Bubble pressure at current temperature | `bubblePointPressureFlash(false)` |
+| Bubble temperature at current pressure | `bubblePointTemperatureFlash()` |
+| Dew pressure at current temperature | `dewPointPressureFlash()` |
+| Dew temperature at current pressure | `dewPointTemperatureFlash()` |
+| Water dew temperature | `waterDewPointTemperatureFlash()` |
+| Hydrate formation temperature | `hydrateFormationTemperature()` |
+| Hydrate formation pressure | `hydrateFormationPressure()` |
+| Multiliquid equilibrium | Enable `setMultiPhaseCheck(true)`, then call `TPflash()` |
+| Wax or other configured solid | Call `setSolidPhaseCheck(name)`, then `TPflash()` |
 
-| Flash Type | Method | Known Variables | Solved Variables |
-|------------|--------|-----------------|------------------|
-| TP | `TPflash()` | T, P | Phase amounts, compositions |
-| PH | `PHflash(H)` | P, H | T, phase amounts, compositions |
-| PS | `PSflash(S)` | P, S | T, phase amounts, compositions |
-| PU | `PUflash(U)` | P, U | T, phase amounts, compositions |
-| TV | `TVflash(V)` | T, V | P, phase amounts, compositions |
-| TS | `TSflash(S)` | T, S | P, phase amounts, compositions |
-| TH | `THflash(H)` | T, H | P, phase amounts, compositions |
-| TU | `TUflash(U)` | T, U | P, phase amounts, compositions |
-| PV | `PVflash(V)` | P, V | T, phase amounts, compositions |
-| VU | `VUflash(V, U)` | V, U | T, P, phase amounts |
-| VH | `VHflash(V, H)` | V, H | T, P, phase amounts |
-| VS | `VSflash(V, S)` | V, S | T, P, phase amounts |
+Solid checking is a fluid configuration used by `TPflash()`; there is no public
+`TPsolidflash()` method on `ThermodynamicOperations`. Hydrate calculations also
+require a fluid model and components suitable for hydrate equilibrium. See the
+[thermodynamic model guide](../thermo/thermodynamic_models.md) before selecting an
+equation of state.
 
-### TP Flash
+## PT phase envelope
 
-The most common flash calculation - given temperature and pressure, find equilibrium phases.
+`calcPTphaseEnvelope()` calculates the pressure-temperature phase boundary. Use
+the facade's named result accessor for the extrema; the internal operation
+interface does not expose `getCricondenbar()` or `getCricondentherm()` methods.
 
 ```java
-SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
-fluid.addComponent("methane", 0.9);
-fluid.addComponent("ethane", 0.1);
+SystemInterface fluid = new SystemSrkEos(280.0, 10.0);
+fluid.addComponent("methane", 0.75);
+fluid.addComponent("ethane", 0.12);
+fluid.addComponent("propane", 0.08);
+fluid.addComponent("n-butane", 0.05);
 fluid.setMixingRule("classic");
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
+ThermodynamicOperations operations = new ThermodynamicOperations(fluid);
+operations.calcPTphaseEnvelope();
 
-System.out.println("Number of phases: " + fluid.getNumberOfPhases());
-System.out.println("Vapor fraction: " + fluid.getBeta());
+double[] cricondenbar = operations.get("cricondenbar");
+double[] cricondentherm = operations.get("cricondentherm");
+double cricondenbarPressureBara = cricondenbar[1];
+double cricondenthermTemperatureK = cricondentherm[0];
 ```
 
-### PH Flash (Adiabatic)
+Each named extremum is returned as `[temperature K, pressure bara]`. Phase
+envelopes are iterative and may be sensitive near critical conditions. Validate
+the returned curve and extrema rather than relying only on successful method
+completion. The facade does not currently expose a public PH-envelope method.
 
-Find temperature given pressure and enthalpy - essential for adiabatic processes.
+## Reactive TP flash
 
-```java
-// Initial state
-double H = fluid.getEnthalpy();
-
-// Change pressure
-fluid.setPressure(20.0);
-
-// Find new temperature at same enthalpy
-ops.PHflash(H);
-
-System.out.println("New temperature: " + fluid.getTemperature("C") + " °C");
-```
-
-### PS Flash (Isentropic)
-
-Find temperature given pressure and entropy - for isentropic compression/expansion.
+Use `reactiveTPflash()` for a system containing components registered in
+NeqSim's chemical-reaction data. The example below uses a single vapour phase for
+the water-gas-shift system.
 
 ```java
-double S = fluid.getEntropy();
-fluid.setPressure(100.0);
-ops.PSflash(S);
+SystemInterface reactive = new SystemSrkEos(600.0, 1.0);
+reactive.addComponent("CO", 0.25);
+reactive.addComponent("water", 0.25);
+reactive.addComponent("CO2", 0.25);
+reactive.addComponent("hydrogen", 0.25);
+reactive.setMixingRule("classic");
+reactive.setMaxNumberOfPhases(1);
+reactive.setNumberOfPhases(1);
+reactive.init(0);
+reactive.init(1);
 
-System.out.println("Isentropic temperature: " + fluid.getTemperature("C") + " °C");
-```
+ThermodynamicOperations operations = new ThermodynamicOperations(reactive);
+operations.reactiveTPflash();
 
-### VU Flash (Dynamic)
-
-For dynamic simulations - given volume and internal energy, find T and P.
-
-```java
-double V = fluid.getVolume();
-double U = fluid.getInternalEnergy();
-
-// Simulate heat addition
-double Unew = U + 10000.0;  // Add 10 kJ
-
-ops.VUflash(V, Unew);
-System.out.println("New T: " + fluid.getTemperature("C") + " °C");
-System.out.println("New P: " + fluid.getPressure() + " bar");
-```
-
-### TV Fraction Flash
-
-Find pressure at given vapor/liquid fraction.
-
-```java
-// Find pressure where vapor fraction = 0.5
-ops.TVfractionFlash(0.5);
-System.out.println("Pressure at 50% vapor: " + fluid.getPressure() + " bar");
-```
-
----
-
-## Saturation Operations
-
-### Bubble Point
-
-```java
-// Bubble point pressure at current temperature
-ops.bubblePointPressureFlash(false);
-double Pbub = fluid.getPressure();
-
-// Bubble point temperature at current pressure  
-ops.bubblePointTemperatureFlash();
-double Tbub = fluid.getTemperature();
-```
-
-### Dew Point
-
-```java
-// Dew point pressure at current temperature
-ops.dewPointPressureFlash();
-double Pdew = fluid.getPressure();
-
-// Dew point temperature at current pressure
-ops.dewPointTemperatureFlash();
-double Tdew = fluid.getTemperature();
-```
-
-### Water Dew Point
-
-```java
-// Water dew point temperature at given pressure
-ops.waterDewPointTemperatureFlash();
-double TwaterDew = fluid.getTemperature();
-```
-
-### Hydrate Equilibrium
-
-> **📚 See [Hydrate Flash Operations](hydrate_flash_operations.md) for complete documentation**
-
-```java
-// Hydrate formation temperature
-ops.hydrateFormationTemperature();
-double Thyd = fluid.getTemperature();
-
-// Hydrate formation pressure
-fluid.setTemperature(278.15);
-ops.hydrateFormationPressure();
-double Phyd = fluid.getPressure();
-
-// Hydrate TPflash (phase equilibrium with hydrate)
-ops.hydrateTPflash();
-
-// Gas-Hydrate equilibrium (no aqueous phase)
-ops.gasHydrateTPflash();
-```
-
----
-
-## Phase Envelope Operations
-
-### PT Phase Envelope
-
-```java
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.calcPTphaseEnvelope();
-
-
-// Get results
-double[][] envelope = ops.getOperation().get2DData();
-// envelope[0] = temperatures (K)
-// envelope[1] = pressures (bar)
-
-// Get cricondenbar and cricondentherm
-double cricondenbar = ops.getOperation().getCricondenbar();
-double cricondentherm = ops.getOperation().getCricondentherm();
-```
-
-### PH Phase Envelope
-
-```java
-ops.calcPHenveloppe();
-double[][] phEnvelope = ops.getOperation().get2DData();
-```
-
----
-
-## Property Generators
-
-### OLGA Property Tables
-
-Generate property tables for multiphase flow simulators.
-
-```java
-import neqsim.thermodynamicoperations.propertygenerator.OLGApropertyTableGenerator;
-
-OLGApropertyTableGenerator generator = new OLGApropertyTableGenerator(fluid);
-generator.setFileName("fluid_properties");
-
-// Set ranges
-generator.setPressureRange(1.0, 200.0, 50);   // 1-200 bar, 50 points
-generator.setTemperatureRange(250.0, 400.0, 30); // 250-400 K, 30 points
-generator.setWaterCutRange(0.0, 1.0, 5);      // 0-100% water cut, 5 points
-
-generator.run();
-```
-
----
-
-## Chemical Equilibrium
-
-For reactive systems, calculate equilibrium composition considering reactions.
-
-```java
-// Set up reactive system
-SystemInterface reactive = new SystemSrkEos(700.0, 10.0);
-reactive.addComponent("methane", 1.0);
-reactive.addComponent("water", 2.0);
-reactive.addComponent("CO2", 0.0);
-reactive.addComponent("hydrogen", 0.0);
-
-// Enable chemical reactions
-reactive.setChemicalReactions(true);
-
-ThermodynamicOperations ops = new ThermodynamicOperations(reactive);
-ops.calcChemicalEquilibrium();
-
-// Get equilibrium composition
-for (int i = 0; i < reactive.getNumberOfComponents(); i++) {
-    System.out.println(reactive.getComponent(i).getName() + 
-        ": " + reactive.getComponent(i).getx() + " mol/mol");
+double compositionSum = 0.0;
+for (int i = 0; i < reactive.getPhase(0).getNumberOfComponents(); i++) {
+  compositionSum += reactive.getPhase(0).getComponent(i).getx();
+}
+if (Math.abs(compositionSum - 1.0) > 1.0e-10) {
+  throw new IllegalStateException("Reactive composition does not close");
 }
 ```
 
----
+There are no `setChemicalReactions(true)` or `calcChemicalEquilibrium()` methods
+on these public interfaces. For reaction selection, phase constraints, and
+reactive PH/PS operations, see the [reactive flash guide](../thermo/reactive_flash.md).
 
-## Multi-Phase Flash
+## Convergence and result checks
 
-Handle systems with multiple liquid phases, solids, or hydrates.
+`ThermodynamicOperations` does not provide generic `setMaxIterations(...)` or
+`setTolerance(...)` methods. Solver controls are operation-specific and are not
+interchangeable across all flash types. Prefer physical validation of each
+result:
 
-```java
-SystemInterface fluid = new SystemSrkCPAstatoil(273.15 + 5, 100.0);
-fluid.addComponent("methane", 0.90);
-fluid.addComponent("water", 0.10);
-fluid.setMixingRule("CPA_Statoil");
-fluid.setMultiPhaseCheck(true);  // Enable multi-phase check
+1. Check that temperature, pressure, phase count, and phase types are plausible.
+2. Check that phase compositions and phase fractions close to one.
+3. For PH, PS, PU, or VU flashes, compare the solved extensive-property residual
+   with a tolerance appropriate to the system amount and application.
+4. Test nearby states to detect branch switching or critical-region sensitivity.
+5. Treat non-convergence as a model, initialization, or state-specification issue;
+   do not silently accept the last iterate.
 
-ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
-ops.TPflash();
+The legacy `OLGApropertyTableGenerator` is not a portable general-purpose export
+API: it does not expose filename or water-cut setters and its current writer has
+platform-specific behavior. Do not build new workflows around the obsolete
+example previously shown on this page.
 
-System.out.println("Number of phases: " + fluid.getNumberOfPhases());
-for (int i = 0; i < fluid.getNumberOfPhases(); i++) {
-    System.out.println("Phase " + i + ": " + fluid.getPhase(i).getPhaseTypeName());
-}
-```
+## Related documentation
 
-### Solid Flash (Wax, Ice)
-
-```java
-fluid.setSolidPhaseCheck("wax");
-ops.TPsolidflash();
-```
-
----
-
-## Advanced Options
-
-### Calculation Identifiers
-
-Track calculations with UUIDs for parallel processing.
-
-```java
-UUID calcId = UUID.randomUUID();
-ops.TPflash(calcId);
-```
-
-### Flash Settings
-
-```java
-// Set maximum iterations
-ops.setMaxIterations(100);
-
-// Set convergence tolerance
-ops.setTolerance(1e-10);
-```
-
----
-
-## Best Practices
-
-1. **Always set mixing rule** before flash calculations
-2. **Initialize fluid** with `createDatabase(true)` for new components
-3. **Use multi-phase check** when expecting multiple liquid phases
-4. **Check convergence** after flash - verify `getNumberOfPhases()` makes sense
-5. **Handle exceptions** for failed convergence
-
----
-
-## Related Documentation
-
-- [Flash Calculations Guide](../thermo/flash_calculations_guide.md) - Detailed flash examples
-- [Fluid Creation Guide](../thermo/fluid_creation_guide.md) - Setting up fluids
-- [Mathematical Models](../thermo/mathematical_models.md) - EoS formulations
+- [Thermodynamics overview](../thermo/README.md)
+- [Reading fluid properties](../thermo/reading_fluid_properties.md)
+- [Thermodynamic model selection](../thermo/thermodynamic_models.md)
+- [Reactive flash calculations](../thermo/reactive_flash.md)
+- [Thermodynamics cookbook recipes](../cookbook/thermodynamics-recipes.md)

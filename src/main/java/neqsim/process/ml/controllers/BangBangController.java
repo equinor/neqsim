@@ -31,8 +31,8 @@ public class BangBangController implements Controller {
    * @param lowAction action when below setpoint
    * @param highAction action when above setpoint
    */
-  public BangBangController(String name, int valueIndex, double setpoint, double deadband,
-      double lowAction, double highAction) {
+  public BangBangController(String name, int valueIndex, double setpoint, double deadband, double lowAction,
+      double highAction) {
     this.name = name;
     this.valueIndex = valueIndex;
     this.setpoint = setpoint;
@@ -53,7 +53,7 @@ public class BangBangController implements Controller {
     }
     // Within deadband: maintain previous action
 
-    return new double[] {currentAction};
+    return new double[] { currentAction };
   }
 
   @Override

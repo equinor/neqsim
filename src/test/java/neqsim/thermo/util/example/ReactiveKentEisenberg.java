@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ReactiveKentEisenberg class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
  * @version $Id: $Id
  */
 public class ReactiveKentEisenberg {
+  private static final Logger logger = LogManager.getLogger(ReactiveKentEisenberg.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(ReactiveKentEisenberg.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -49,8 +46,7 @@ public class ReactiveKentEisenberg {
       for (int i = 0; i < 1; i++) {
         testSystem.addComponent("H2S", 0.01);
         ops.bubblePointPressureFlash(false);
-        logger.info("pres H2S "
-            + testSystem.getPressure() * testSystem.getPhase(0).getComponent("H2S").getx());
+        logger.info("pres H2S " + testSystem.getPressure() * testSystem.getPhase(0).getComponent("H2S").getx());
       }
       // ops.TPflash();
     } catch (Exception ex) {

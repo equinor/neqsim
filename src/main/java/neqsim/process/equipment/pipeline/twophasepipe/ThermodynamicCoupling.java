@@ -8,9 +8,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Thermodynamic coupling for the two-fluid transient pipe model.
  *
  * <p>
- * Provides interface between the two-fluid hydrodynamic solver and NeqSim's thermodynamic
- * calculations. Handles flash calculations to update phase properties and compositions along the
- * pipeline.
+ * Provides interface between the two-fluid hydrodynamic solver and NeqSim's thermodynamic calculations. Handles flash
+ * calculations to update phase properties and compositions along the pipeline.
  * </p>
  *
  * <h2>Key Functions</h2>
@@ -23,8 +22,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  *
  * <h2>Performance Considerations</h2>
  * <p>
- * Flash calculations are computationally expensive. For transient simulations with many time steps
- * and grid cells, consider using {@link FlashTable} for pre-computed property interpolation.
+ * Flash calculations are computationally expensive. For transient simulations with many time steps and grid cells,
+ * consider using {@link FlashTable} for pre-computed property interpolation.
  * </p>
  *
  * @author Even Solbraa
@@ -147,7 +146,8 @@ public class ThermodynamicCoupling implements Serializable {
   /**
    * Default constructor.
    */
-  public ThermodynamicCoupling() {}
+  public ThermodynamicCoupling() {
+  }
 
   /**
    * Constructor with reference fluid.
@@ -411,8 +411,7 @@ public class ThermodynamicCoupling implements Serializable {
       // Calculate equilibrium liquid holdup from vapor fraction
       // Vapor fraction is mole-based, convert to volume-based
       double eqGasVolFrac = eqProps.gasVaporFraction * eqProps.gasMolarMass / eqProps.gasDensity;
-      double eqLiqVolFrac =
-          eqProps.liquidFraction * eqProps.liquidMolarMass / eqProps.liquidDensity;
+      double eqLiqVolFrac = eqProps.liquidFraction * eqProps.liquidMolarMass / eqProps.liquidDensity;
       double totalVolFrac = eqGasVolFrac + eqLiqVolFrac;
 
       if (totalVolFrac < 1e-10) {
@@ -431,6 +430,57 @@ public class ThermodynamicCoupling implements Serializable {
     } catch (Exception e) {
       return 0.0;
     }
+  }
+
+  /**
+   * Calculate a conservative flash-driven gas/liquid mass transfer source per pipe length.
+   *
+   * <p>
+   * Positive values mean evaporation from liquid to gas. The target is the equilibrium liquid inventory from the local
+   * PT flash, expressed on the section area. The method returns kg/(m*s), which can be split conservatively into gas,
+   * oil, and water equations by the hydrodynamic solver.
+   * </p>
+   *
+   * @param section current pipe section
+   * @param relaxationTime relaxation time toward flash equilibrium (s)
+   * @return gas mass source per length, kg/(m*s)
+   */
+  public double calcMassTransferRatePerLength(TwoFluidSection section, double relaxationTime) {
+    if (referenceFluid == null || relaxationTime <= 0.0 || !Double.isFinite(relaxationTime)) {
+      return 0.0;
+    }
+
+    ThermoProperties eqProps = flashPT(section.getPressure(), section.getTemperature());
+    if (!eqProps.converged) {
+      return 0.0;
+    }
+
+    double gasDensity = Math.max(eqProps.gasDensity, 0.1);
+    double liquidDensity = Math.max(eqProps.liquidDensity, 100.0);
+    double gasMolarMass = Math.max(eqProps.gasMolarMass, 1e-6);
+    double liquidMolarMass = Math.max(eqProps.liquidMolarMass, 1e-6);
+
+    double eqGasVolume = Math.max(eqProps.gasVaporFraction, 0.0) * gasMolarMass / gasDensity;
+    double eqLiquidVolume = Math.max(eqProps.liquidFraction, 0.0) * liquidMolarMass / liquidDensity;
+    double totalEquilibriumVolume = eqGasVolume + eqLiquidVolume;
+    if (totalEquilibriumVolume <= 1e-20) {
+      return 0.0;
+    }
+
+    double equilibriumLiquidHoldup = eqLiquidVolume / totalEquilibriumVolume;
+    equilibriumLiquidHoldup = Math.max(0.0, Math.min(1.0, equilibriumLiquidHoldup));
+
+    double currentLiquidMassPerLength = Math.max(0.0, section.getLiquidMassPerLength());
+    if (currentLiquidMassPerLength <= 0.0) {
+      currentLiquidMassPerLength = Math.max(0.0, section.getOilMassPerLength() + section.getWaterMassPerLength());
+    }
+    double equilibriumLiquidMassPerLength = equilibriumLiquidHoldup * liquidDensity * section.getArea();
+
+    double source = (currentLiquidMassPerLength - equilibriumLiquidMassPerLength) / relaxationTime;
+    source = Math.min(source, currentLiquidMassPerLength / relaxationTime);
+    source = Math.max(source, -Math.max(0.0, section.getGasMassPerLength()) / relaxationTime);
+
+    return Double.isFinite(source) ? source : 0.0;
   }
 
   /**

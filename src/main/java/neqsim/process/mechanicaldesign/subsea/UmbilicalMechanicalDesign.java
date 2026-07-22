@@ -4,7 +4,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import neqsim.process.equipment.ProcessEquipmentInterface;
@@ -183,8 +182,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     double od = umbilical.getOverallDiameterMm();
 
     // MBR typically 6-8 times OD for steel tube umbilicals
-    double mbrFactor =
-        umbilical.getUmbilicalType() == Umbilical.UmbilicalType.STEEL_TUBE ? 8.0 : 6.0;
+    double mbrFactor = umbilical.getUmbilicalType() == Umbilical.UmbilicalType.STEEL_TUBE ? 8.0 : 6.0;
 
     calculatedMinBendRadius = od * mbrFactor / 1000; // meters
 
@@ -228,6 +226,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate cost estimate for the umbilical.
    */
+  @Override
   public void calculateCostEstimate() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
@@ -273,12 +272,13 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
     }
-    return costEstimator.generateBOM("Umbilical",
-        umbilical.getDryWeightPerMeter() * umbilical.getLength() / 1000, umbilical.getWaterDepth());
+    return costEstimator.generateBOM("Umbilical", umbilical.getDryWeightPerMeter() * umbilical.getLength() / 1000,
+        umbilical.getWaterDepth());
   }
 
   /**
@@ -375,8 +375,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     JsonObject weight = new JsonObject();
     weight.addProperty("dryWeightPerMeterKgM", umbilical.getDryWeightPerMeter());
     weight.addProperty("submergedWeightPerMeterKgM", umbilical.getSubmergedWeightPerMeter());
-    weight.addProperty("totalDryWeightTonnes",
-        umbilical.getDryWeightPerMeter() * umbilical.getLength() / 1000);
+    weight.addProperty("totalDryWeightTonnes", umbilical.getDryWeightPerMeter() * umbilical.getLength() / 1000);
     jsonObj.add("weight", weight);
 
     // Cost estimation
@@ -392,8 +391,7 @@ public class UmbilicalMechanicalDesign extends MechanicalDesign {
     }
     jsonObj.add("costEstimation", cost);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 
   /**

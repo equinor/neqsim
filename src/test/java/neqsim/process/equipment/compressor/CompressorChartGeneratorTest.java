@@ -11,8 +11,8 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Test class for CompressorChartGenerator, verifying that generated curves work correctly with
- * different chart types including "interpolate and extrapolate".
+ * Test class for CompressorChartGenerator, verifying that generated curves work correctly with different chart types
+ * including "interpolate and extrapolate".
  *
  * @author AGAS
  * @version 1.0
@@ -111,6 +111,31 @@ public class CompressorChartGeneratorTest {
 
     // Verify compressor runs without errors
     assertTrue(compressor.getPolytropicFluidHead() > 0, "Polytropic head should be positive");
+  }
+
+  /**
+   * Test that the compressor chart JSON exposes the surge curve flow/head arrays so consumers do not have to
+   * reconstruct the surge line from the lowest-flow point of each speed curve.
+   */
+  @Test
+  public void testCompressorChartJsonIncludesSurgeCurveArrays() {
+    CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
+    CompressorChartInterface chart = generator.generateCompressorChart("normal curves", 5);
+    compressor.setCompressorChart(chart);
+    compressor.getCompressorChart().setUseCompressorChart(true);
+
+    double[] surgeFlow = { 5000.0, 6000.0, 7000.0 };
+    double[] surgeHead = { 90.0, 100.0, 110.0 };
+    compressor.getCompressorChart().getSurgeCurve().setCurve(null, surgeFlow, surgeHead);
+
+    String json = compressor.getCompressorChartAsJson();
+
+    int surgeIdx = json.indexOf("\"surgeCurve\"");
+    assertTrue(surgeIdx >= 0, "JSON should contain a surgeCurve object");
+    String surgeSection = json.substring(surgeIdx, json.indexOf("}", surgeIdx));
+    assertTrue(surgeSection.contains("\"flow_m3h\""), "surge curve section should expose a flow array");
+    assertTrue(surgeSection.contains("\"head_kJkg\""), "surge curve section should expose a head array");
+    assertTrue(surgeSection.contains("5000.00"), "surge curve flow array should contain the fitted flow values");
   }
 
   /**
@@ -261,8 +286,7 @@ public class CompressorChartGeneratorTest {
       assertTrue(effs[i].length > 0, "Efficiency curve " + i + " should have data points");
 
       // Verify dimensions match within each speed
-      assertEquals(flows[i].length, heads[i].length,
-          "Flow and head curve " + i + " should have same number of points");
+      assertEquals(flows[i].length, heads[i].length, "Flow and head curve " + i + " should have same number of points");
       assertEquals(flows[i].length, effs[i].length,
           "Flow and efficiency curve " + i + " should have same number of points");
     }
@@ -295,8 +319,7 @@ public class CompressorChartGeneratorTest {
     // Test no-arg version
     compressor.generateCompressorChart();
     assertNotNull(compressor.getCompressorChart(), "Chart should not be null after generation");
-    assertTrue(compressor.getCompressorChart().isUseCompressorChart(),
-        "Chart should be active after generation");
+    assertTrue(compressor.getCompressorChart().isUseCompressorChart(), "Chart should be active after generation");
 
     // Test with number of speeds
     compressor.generateCompressorChart(5);
@@ -310,8 +333,7 @@ public class CompressorChartGeneratorTest {
 
     // Test with generation option and number of speeds
     compressor.generateCompressorChart("mid range", 3);
-    assertEquals(3, compressor.getCompressorChart().getSpeeds().length,
-        "Should have 3 speed curves");
+    assertEquals(3, compressor.getCompressorChart().getSpeeds().length, "Should have 3 speed curves");
   }
 
   /**
@@ -326,8 +348,7 @@ public class CompressorChartGeneratorTest {
 
     CompressorChartInterface chart = compressor.getCompressorChart();
     assertNotNull(chart, "Chart should not be null");
-    assertTrue(chart instanceof CompressorChartAlternativeMapLookupExtrapolate,
-        "Should be correct chart type");
+    assertTrue(chart instanceof CompressorChartAlternativeMapLookupExtrapolate, "Should be correct chart type");
 
     double[] speeds = chart.getSpeeds();
     assertEquals(5, speeds.length, "Should have 5 speed curves");
@@ -345,7 +366,7 @@ public class CompressorChartGeneratorTest {
     compressor.setCompressorChartType("interpolate and extrapolate");
     compressor.run();
 
-    double[] speeds = {8000, 9000, 10000, 11000, 12000};
+    double[] speeds = { 8000, 9000, 10000, 11000, 12000 };
     compressor.generateCompressorChart("normal curves", speeds);
 
     CompressorChartInterface chart = compressor.getCompressorChart();
@@ -376,8 +397,8 @@ public class CompressorChartGeneratorTest {
    * Test that power curves are generated correctly.
    *
    * <p>
-   * Power is calculated as: P = mass_flow * head / efficiency. This is critical for driver
-   * selection and energy analysis.
+   * Power is calculated as: P = mass_flow * head / efficiency. This is critical for driver selection and energy
+   * analysis.
    * </p>
    */
   @Test
@@ -417,8 +438,8 @@ public class CompressorChartGeneratorTest {
    * Test that pressure ratio curves are generated correctly.
    *
    * <p>
-   * Pressure ratio is calculated from polytropic head using thermodynamic relations. Useful for
-   * process design and control system configuration.
+   * Pressure ratio is calculated from polytropic head using thermodynamic relations. Useful for process design and
+   * control system configuration.
    * </p>
    */
   @Test
@@ -442,8 +463,7 @@ public class CompressorChartGeneratorTest {
 
       // Verify all pressure ratios are >= 1.0
       for (int j = 0; j < pressureRatios[i].length; j++) {
-        assertTrue(pressureRatios[i][j] >= 1.0,
-            "Pressure ratio at speed " + i + " point " + j + " should be >= 1.0");
+        assertTrue(pressureRatios[i][j] >= 1.0, "Pressure ratio at speed " + i + " point " + j + " should be >= 1.0");
       }
     }
 
@@ -484,8 +504,7 @@ public class CompressorChartGeneratorTest {
    * Test power and pressure ratio calculations consistency.
    *
    * <p>
-   * Verifies that power follows P = mass_flow * head / efficiency and pressure ratio follows
-   * polytropic relations.
+   * Verifies that power follows P = mass_flow * head / efficiency and pressure ratio follows polytropic relations.
    * </p>
    */
   @Test
@@ -523,8 +542,8 @@ public class CompressorChartGeneratorTest {
    * Test that discharge temperature curves are generated correctly.
    *
    * <p>
-   * Discharge temperature is calculated from inlet temperature and pressure ratio using polytropic
-   * relations. This is critical for downstream equipment design and material temperature limits.
+   * Discharge temperature is calculated from inlet temperature and pressure ratio using polytropic relations. This is
+   * critical for downstream equipment design and material temperature limits.
    * </p>
    */
   @Test
@@ -538,8 +557,7 @@ public class CompressorChartGeneratorTest {
     double[][] dischargeTemps = chart.getDischargeTemperatures();
 
     assertNotNull(dischargeTemps, "Discharge temperature curves should not be null");
-    assertEquals(3, dischargeTemps.length,
-        "Should have 3 discharge temperature curves (one per speed)");
+    assertEquals(3, dischargeTemps.length, "Should have 3 discharge temperature curves (one per speed)");
 
     // Verify discharge temperature curves have correct dimensions
     double[][] flows = chart.getFlows();
@@ -550,8 +568,8 @@ public class CompressorChartGeneratorTest {
       // Verify all temperatures are above inlet temperature (compression heats the gas)
       double inletTemp = chart.getInletTemperature();
       for (int j = 0; j < dischargeTemps[i].length; j++) {
-        assertTrue(dischargeTemps[i][j] >= inletTemp, "Discharge temp at speed " + i + " point " + j
-            + " should be >= inlet temp (compression heats gas)");
+        assertTrue(dischargeTemps[i][j] >= inletTemp,
+            "Discharge temp at speed " + i + " point " + j + " should be >= inlet temp (compression heats gas)");
       }
     }
 
@@ -582,8 +600,7 @@ public class CompressorChartGeneratorTest {
 
     assertTrue(inletTemp > 200 && inletTemp < 500,
         "Inlet temperature should be reasonable (200-500 K), got: " + inletTemp);
-    assertTrue(gamma > 1.0 && gamma < 2.0,
-        "Gamma should be between 1 and 2 for typical gases, got: " + gamma);
+    assertTrue(gamma > 1.0 && gamma < 2.0, "Gamma should be between 1 and 2 for typical gases, got: " + gamma);
   }
 
   /**
@@ -616,5 +633,53 @@ public class CompressorChartGeneratorTest {
       assertEquals(expectedT2, t2, expectedT2 * 0.05,
           "Discharge temperature should follow polytropic relation at speed " + i);
     }
+  }
+
+  /**
+   * Test that a chart generated from an EXPLICIT design point reproduces that design point: at the design speed and
+   * design flow the chart returns the design head and efficiency, independent of the compressor's own run state.
+   */
+  @Test
+  public void testGenerateChartFromDesignPoint() {
+    double designSpeed = 7551.0;
+    double designFlow = 7540.0; // m3/hr
+    double designHead = 97.0; // kJ/kg
+    double designEff = 0.80; // fraction
+
+    CompressorChartGenerator generator = new CompressorChartGenerator(compressor);
+    generator.setChartType("interpolate and extrapolate");
+    CompressorChartInterface chart = generator.generateChartFromDesignPoint(designSpeed, designFlow, designHead,
+        designEff, "normal curves", 5);
+
+    assertNotNull(chart, "Design-point chart should not be null");
+    // At the design speed and design flow the chart must return the design head (kJ/kg).
+    double headAtDesign = chart.getPolytropicHead(designFlow, designSpeed);
+    assertEquals(designHead, headAtDesign, designHead * 0.02,
+        "Chart head at design point should match the design head");
+    // And the design polytropic efficiency (percent).
+    double effAtDesign = chart.getPolytropicEfficiency(designFlow, designSpeed);
+    assertEquals(designEff * 100.0, effAtDesign, 1.0,
+        "Chart efficiency at design point should match the design efficiency");
+  }
+
+  /**
+   * Test the Compressor convenience wrapper: after attaching a design-point chart and running at the design speed, the
+   * compressor reproduces the design head.
+   */
+  @Test
+  public void testCompressorGenerateChartFromDesignPoint() {
+    double designSpeed = 7551.0;
+    double designFlow = compressor.getInletStream().getFlowRate("m3/hr");
+    double designHead = compressor.getPolytropicFluidHead();
+    double designEff = compressor.getPolytropicEfficiency();
+
+    compressor.generateCompressorChartFromDesignPoint(designSpeed, designFlow, designHead, designEff, 5);
+
+    assertNotNull(compressor.getCompressorChart(), "Compressor should have a chart");
+    assertTrue(compressor.getCompressorChart().isUseCompressorChart(), "Compressor chart should be active");
+    assertEquals(designSpeed, compressor.getSpeed(), 1.0, "Compressor speed should be set to the design speed");
+    double headAtDesign = compressor.getCompressorChart().getPolytropicHead(designFlow, designSpeed);
+    assertEquals(designHead, headAtDesign, Math.abs(designHead) * 0.02,
+        "Chart head at design point should match the design head");
   }
 }

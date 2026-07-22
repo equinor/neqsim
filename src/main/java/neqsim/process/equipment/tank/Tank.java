@@ -19,15 +19,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Tank class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public class Tank extends ProcessEquipmentBaseClass
-    implements AutoSizeable, CapacityConstrainedEquipment {
+public class Tank extends ProcessEquipmentBaseClass implements AutoSizeable, CapacityConstrainedEquipment {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -58,8 +55,7 @@ public class Tank extends ProcessEquipmentBaseClass
   private double minLiquidLevel = 0.1;
 
   /** Tank capacity constraints map. */
-  private java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> tankCapacityConstraints =
-      new java.util.LinkedHashMap<String, neqsim.process.equipment.capacity.CapacityConstraint>();
+  private java.util.Map<String, neqsim.process.equipment.capacity.CapacityConstraint> tankCapacityConstraints = new java.util.LinkedHashMap<String, neqsim.process.equipment.capacity.CapacityConstraint>();
 
   /** Whether capacity analysis is enabled. */
   private boolean tankCapacityAnalysisEnabled = false;
@@ -102,9 +98,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Constructor for Tank.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -127,9 +121,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * setInletStream.
-   * </p>
    *
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -145,9 +137,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * addStream.
-   * </p>
    *
    * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -161,9 +151,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidOutStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -172,9 +160,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasOutStream</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -183,9 +169,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getGas.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -194,9 +178,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * getLiquid.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.Stream} object
    */
@@ -226,8 +208,7 @@ public class Tank extends ProcessEquipmentBaseClass
     SystemInterface thermoSystem2 = inletStreamMixer.getOutletStream().getThermoSystem().clone();
     ThermodynamicOperations ops = new ThermodynamicOperations(thermoSystem2);
     ops.VUflash(thermoSystem2.getVolume(), thermoSystem2.getInternalEnergy());
-    logger.info("Volume " + thermoSystem2.getVolume() + " internalEnergy "
-        + thermoSystem2.getInternalEnergy());
+    logger.info("Volume " + thermoSystem2.getVolume() + " internalEnergy " + thermoSystem2.getInternalEnergy());
     steelWallTemperature = thermoSystem2.getTemperature();
     if (thermoSystem2.hasPhaseType("gas")) {
       gasOutStream.setThermoSystemFromPhase(thermoSystem2, "gas");
@@ -272,10 +253,8 @@ public class Tank extends ProcessEquipmentBaseClass
     } else {
       liquidLevel = 1e-10;
     }
-    liquidVolume =
-        getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
-    gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
-        * separatorLength;
+    liquidVolume = getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
+    gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
     logger.info("moles out" + liquidOutStream.getThermoSystem().getTotalNumberOfMoles());
 
     setCalculationIdentifier(id);
@@ -311,8 +290,7 @@ public class Tank extends ProcessEquipmentBaseClass
     double volume1 = thermoSystem.getVolume();
     System.out.println("volume1 " + volume1);
     double deltaEnergy = inletStreamMixer.getOutletStream().getThermoSystem().getEnthalpy()
-        - gasOutStream.getThermoSystem().getEnthalpy()
-        - liquidOutStream.getThermoSystem().getEnthalpy();
+        - gasOutStream.getThermoSystem().getEnthalpy() - liquidOutStream.getThermoSystem().getEnthalpy();
     System.out.println("enthalph delta " + deltaEnergy);
     double wallHeatTransfer = heatTransferNumber * steelWallArea
         * (steelWallTemperature - thermoSystem.getTemperature()) * dt;
@@ -327,22 +305,19 @@ public class Tank extends ProcessEquipmentBaseClass
 
     for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
       double dn = 0.0;
-      for (int k = 0; k < inletStreamMixer.getOutletStream().getThermoSystem()
-          .getNumberOfPhases(); k++) {
+      for (int k = 0; k < inletStreamMixer.getOutletStream().getThermoSystem().getNumberOfPhases(); k++) {
         dn += inletStreamMixer.getOutletStream().getThermoSystem().getPhase(k).getComponent(i)
             .getNumberOfMolesInPhase();
       }
       dn = dn - gasOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase()
           - liquidOutStream.getThermoSystem().getPhase(0).getComponent(i).getNumberOfMolesInPhase();
       System.out.println("dn " + dn);
-      thermoSystem.addComponent(inletStreamMixer.getOutletStream().getThermoSystem().getPhase(0)
-          .getComponent(i).getComponentName(), dn * dt);
+      thermoSystem.addComponent(
+          inletStreamMixer.getOutletStream().getThermoSystem().getPhase(0).getComponent(i).getComponentName(), dn * dt);
     }
     System.out.println("liquid level " + liquidLevel);
-    liquidVolume =
-        getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
-    gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
-        * separatorLength;
+    liquidVolume = getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
+    gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
 
     System.out.println("total moles " + thermoSystem.getTotalNumberOfMoles());
 
@@ -358,37 +333,31 @@ public class Tank extends ProcessEquipmentBaseClass
       liquidLevel = 1e-10;
     }
     System.out.println("liquid level " + liquidLevel);
-    liquidVolume =
-        getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
-    gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter
-        * separatorLength;
+    liquidVolume = getLiquidLevel() * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
+    gasVolume = (1.0 - getLiquidLevel()) * 3.14 / 4.0 * separatorDiameter * separatorDiameter * separatorLength;
     setCalculationIdentifier(id);
   }
 
   /**
-   * <p>
    * setOutComposition.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
   public void setOutComposition(SystemInterface thermoSystem) {
     for (int i = 0; i < thermoSystem.getPhase(0).getNumberOfComponents(); i++) {
       if (thermoSystem.hasPhaseType("gas")) {
-        getGasOutStream().getThermoSystem().getPhase(0).getComponent(i).setx(thermoSystem
-            .getPhase(thermoSystem.getPhaseNumberOfPhase("gas")).getComponent(i).getx());
+        getGasOutStream().getThermoSystem().getPhase(0).getComponent(i)
+            .setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("gas")).getComponent(i).getx());
       }
       if (thermoSystem.hasPhaseType("oil")) {
-        getLiquidOutStream().getThermoSystem().getPhase(0).getComponent(i).setx(thermoSystem
-            .getPhase(thermoSystem.getPhaseNumberOfPhase("oil")).getComponent(i).getx());
+        getLiquidOutStream().getThermoSystem().getPhase(0).getComponent(i)
+            .setx(thermoSystem.getPhase(thermoSystem.getPhaseNumberOfPhase("oil")).getComponent(i).getx());
       }
     }
   }
 
   /**
-   * <p>
    * setTempPres.
-   * </p>
    *
    * @param temp a double
    * @param pres a double
@@ -408,9 +377,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>efficiency</code>.
-   * </p>
    *
    * @return a double
    */
@@ -419,9 +386,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>efficiency</code>.
-   * </p>
    *
    * @param efficiency a double
    */
@@ -430,9 +395,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidCarryoverFraction</code>.
-   * </p>
    *
    * @return a double
    */
@@ -441,9 +404,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>liquidCarryoverFraction</code>.
-   * </p>
    *
    * @param liquidCarryoverFraction a double
    */
@@ -452,9 +413,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasCarryunderFraction</code>.
-   * </p>
    *
    * @return a double
    */
@@ -463,9 +422,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>gasCarryunderFraction</code>.
-   * </p>
    *
    * @param gasCarryunderFraction a double
    */
@@ -474,9 +431,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidLevel</code>.
-   * </p>
    *
    * @return a double
    */
@@ -485,9 +440,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Getter for the field <code>volume</code>.
-   * </p>
    *
    * @return a double
    */
@@ -496,9 +449,7 @@ public class Tank extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * Setter for the field <code>volume</code>.
-   * </p>
    *
    * @param volume a double
    */
@@ -522,8 +473,7 @@ public class Tank extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new TankResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(new TankResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -553,13 +503,11 @@ public class Tank extends ProcessEquipmentBaseClass
    */
   @Override
   public neqsim.util.validation.ValidationResult validateSetup() {
-    neqsim.util.validation.ValidationResult result =
-        new neqsim.util.validation.ValidationResult(getName());
+    neqsim.util.validation.ValidationResult result = new neqsim.util.validation.ValidationResult(getName());
 
     // Check: Equipment has a valid name
     if (getName() == null || getName().trim().isEmpty()) {
-      result.addError("equipment", "Tank has no name",
-          "Set tank name in constructor: new Tank(\"MyTank\")");
+      result.addError("equipment", "Tank has no name", "Set tank name in constructor: new Tank(\"MyTank\")");
     }
 
     // Check: At least one inlet stream is connected (via addStream or setInletStream)
@@ -583,8 +531,7 @@ public class Tank extends ProcessEquipmentBaseClass
 
     // Check: Efficiency is in valid range
     if (efficiency < 0 || efficiency > 1) {
-      result.addError("efficiency", "Efficiency must be between 0 and 1: " + efficiency,
-          "Set valid efficiency value");
+      result.addError("efficiency", "Efficiency must be between 0 and 1: " + efficiency, "Set valid efficiency value");
     }
 
     return result;
@@ -625,8 +572,7 @@ public class Tank extends ProcessEquipmentBaseClass
     initializeTankCapacityConstraints();
 
     autoSized = true;
-    logger.info("Tank '{}' auto-sized: volume={:.1f} m3, liquid volume={:.1f} m3", getName(),
-        volume, liquidVolume);
+    logger.info("Tank '{}' auto-sized: volume={:.1f} m3, liquid volume={:.1f} m3", getName(), volume, liquidVolume);
   }
 
   /** {@inheritDoc} */
@@ -664,8 +610,7 @@ public class Tank extends ProcessEquipmentBaseClass
     sb.append("Liquid Volume: ").append(String.format("%.1f m3", liquidVolume)).append("\n");
     sb.append("Gas Volume: ").append(String.format("%.1f m3", gasVolume)).append("\n");
     sb.append("Separator Length: ").append(String.format("%.2f m", separatorLength)).append("\n");
-    sb.append("Separator Diameter: ").append(String.format("%.2f m", separatorDiameter))
-        .append("\n");
+    sb.append("Separator Diameter: ").append(String.format("%.2f m", separatorDiameter)).append("\n");
 
     sb.append("\n--- Operating Conditions ---\n");
     sb.append("Liquid Level: ").append(String.format("%.1f%%", liquidLevel * 100)).append("\n");
@@ -675,18 +620,15 @@ public class Tank extends ProcessEquipmentBaseClass
       double liquidFlowRate = liquidSystem.getFlowRate("m3/hr") / 3600.0;
       double actualResidenceTime = liquidFlowRate > 0 ? liquidVolume / liquidFlowRate : 0;
       sb.append("Actual Residence Time: ")
-          .append(String.format("%.0f s (%.1f min)", actualResidenceTime, actualResidenceTime / 60))
-          .append("\n");
+          .append(String.format("%.0f s (%.1f min)", actualResidenceTime, actualResidenceTime / 60)).append("\n");
     }
 
     if (isAutoSized()) {
       sb.append("\n--- Design Values ---\n");
       sb.append("Design Volume: ").append(String.format("%.1f m3", designVolume)).append("\n");
-      sb.append("Design Liquid Level: ").append(String.format("%.1f%%", designLiquidLevel * 100))
-          .append("\n");
+      sb.append("Design Liquid Level: ").append(String.format("%.1f%%", designLiquidLevel * 100)).append("\n");
       sb.append("Design Residence Time: ")
-          .append(String.format("%.0f s (%.1f min)", designResidenceTime, designResidenceTime / 60))
-          .append("\n");
+          .append(String.format("%.0f s (%.1f min)", designResidenceTime, designResidenceTime / 60)).append("\n");
     }
 
     return sb.toString();
@@ -714,8 +656,7 @@ public class Tank extends ProcessEquipmentBaseClass
     if (liquidSystem != null) {
       double liquidFlowRate = liquidSystem.getFlowRate("m3/hr") / 3600.0;
       operating.put("liquidFlowRate_m3_s", liquidFlowRate);
-      operating.put("actualResidenceTime_s",
-          liquidFlowRate > 0 ? liquidVolume / liquidFlowRate : 0);
+      operating.put("actualResidenceTime_s", liquidFlowRate > 0 ? liquidVolume / liquidFlowRate : 0);
     }
     report.put("operatingConditions", operating);
 
@@ -727,8 +668,7 @@ public class Tank extends ProcessEquipmentBaseClass
       report.put("designValues", design);
     }
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(report);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(report);
   }
 
   // ============================================================================
@@ -742,9 +682,8 @@ public class Tank extends ProcessEquipmentBaseClass
     tankCapacityConstraints.clear();
 
     // Liquid level constraint
-    neqsim.process.equipment.capacity.CapacityConstraint levelConstraint =
-        new neqsim.process.equipment.capacity.CapacityConstraint("liquidLevel", "-",
-            neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD);
+    neqsim.process.equipment.capacity.CapacityConstraint levelConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
+        "liquidLevel", "-", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD);
     levelConstraint.setDesignValue(designLiquidLevel);
     levelConstraint.setMinValue(minLiquidLevel);
     levelConstraint.setMaxValue(maxLiquidLevel);
@@ -754,9 +693,8 @@ public class Tank extends ProcessEquipmentBaseClass
     tankCapacityConstraints.put("liquidLevel", levelConstraint);
 
     // Residence time constraint
-    neqsim.process.equipment.capacity.CapacityConstraint residenceConstraint =
-        new neqsim.process.equipment.capacity.CapacityConstraint("residenceTime", "s",
-            neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+    neqsim.process.equipment.capacity.CapacityConstraint residenceConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
+        "residenceTime", "s", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
     residenceConstraint.setDesignValue(designResidenceTime);
     residenceConstraint.setMinValue(minResidenceTime);
     residenceConstraint.setUnit("s");
@@ -772,9 +710,8 @@ public class Tank extends ProcessEquipmentBaseClass
 
     // Volume utilization constraint
     if (designVolume > 0) {
-      neqsim.process.equipment.capacity.CapacityConstraint volumeConstraint =
-          new neqsim.process.equipment.capacity.CapacityConstraint("volumeUtilization", "m3",
-              neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
+      neqsim.process.equipment.capacity.CapacityConstraint volumeConstraint = new neqsim.process.equipment.capacity.CapacityConstraint(
+          "volumeUtilization", "m3", neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.SOFT);
       volumeConstraint.setDesignValue(designVolume);
       volumeConstraint.setMaxValue(designVolume);
       volumeConstraint.setUnit("m3");
@@ -905,8 +842,7 @@ public class Tank extends ProcessEquipmentBaseClass
   public neqsim.process.equipment.capacity.CapacityConstraint getBottleneckConstraint() {
     neqsim.process.equipment.capacity.CapacityConstraint bottleneck = null;
     double maxUtil = 0.0;
-    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints.values()) {
       if (constraint.isEnabled()) {
         double util = constraint.getUtilization();
         if (util > maxUtil) {
@@ -921,8 +857,7 @@ public class Tank extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public boolean isCapacityExceeded() {
-    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints.values()) {
       if (constraint.isEnabled() && constraint.getUtilization() > 1.0) {
         return true;
       }
@@ -933,11 +868,9 @@ public class Tank extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public boolean isHardLimitExceeded() {
-    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints.values()) {
       if (constraint.isEnabled()
-          && constraint
-              .getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
+          && constraint.getType() == neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType.HARD
           && constraint.getUtilization() > 1.0) {
         return true;
       }
@@ -949,8 +882,7 @@ public class Tank extends ProcessEquipmentBaseClass
   @Override
   public double getMaxUtilization() {
     double maxUtil = 0.0;
-    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints
-        .values()) {
+    for (neqsim.process.equipment.capacity.CapacityConstraint constraint : tankCapacityConstraints.values()) {
       if (constraint.isEnabled()) {
         maxUtil = Math.max(maxUtil, constraint.getUtilization());
       }
@@ -960,8 +892,7 @@ public class Tank extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
-  public void addCapacityConstraint(
-      neqsim.process.equipment.capacity.CapacityConstraint constraint) {
+  public void addCapacityConstraint(neqsim.process.equipment.capacity.CapacityConstraint constraint) {
     tankCapacityConstraints.put(constraint.getName(), constraint);
   }
 

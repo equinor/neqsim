@@ -9,10 +9,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
- * PressureDrop class.
- * </p>
- * The pressure drop unit is used to simulate pressure drops in process plant. The proessure drop is
+ * PressureDrop class. The pressure drop unit is used to simulate pressure drops in process plant. The proessure drop is
  * simulated using a constant enthalpy flash.
  *
  * @author esol
@@ -28,9 +25,7 @@ public class PressureDrop extends ThrottlingValve {
   double pressureDrop = 0.1;
 
   /**
-   * <p>
    * Constructor for PressureDrop.
-   * </p>
    *
    * @param name the name of the pressure drop unit
    */
@@ -39,9 +34,7 @@ public class PressureDrop extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressureDrop</code>.
-   * </p>
    *
    * @param pressureDrop a double
    * @param unit a {@link java.lang.String} object
@@ -57,9 +50,7 @@ public class PressureDrop extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Constructor for PressureDropUnit.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -77,8 +68,19 @@ public class PressureDrop extends ThrottlingValve {
     thermoSystem.init(3);
     double enthalpy = thermoSystem.getEnthalpy();
 
-    thermoSystem.setPressure(thermoSystem.getPressure() - pressureDrop);
-    thermoOps.PHflash(enthalpy);
+    // A zero (or negligible) pressure drop leaves the fluid state unchanged, so the
+    // constant-enthalpy flash is unnecessary and is skipped.
+    if (Math.abs(pressureDrop) > 1e-10) {
+      double outletPressure = thermoSystem.getPressure() - pressureDrop;
+      if (outletPressure <= 0.0) {
+        throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "run", "pressureDrop",
+            "results in a non-physical outlet pressure (" + outletPressure
+                + " bara). The pressure drop must be smaller than the inlet pressure (" + thermoSystem.getPressure()
+                + " bara)."));
+      }
+      thermoSystem.setPressure(outletPressure);
+      thermoOps.PHflash(enthalpy);
+    }
 
     outStream.setFluid(thermoSystem);
   }

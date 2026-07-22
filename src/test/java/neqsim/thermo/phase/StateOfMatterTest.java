@@ -10,11 +10,9 @@ public class StateOfMatterTest {
     Assertions.assertEquals(StateOfMatter.LIQUID, StateOfMatter.fromPhaseType(PhaseType.LIQUID));
     Assertions.assertEquals(StateOfMatter.LIQUID, StateOfMatter.fromPhaseType(PhaseType.OIL));
     Assertions.assertEquals(StateOfMatter.LIQUID, StateOfMatter.fromPhaseType(PhaseType.AQUEOUS));
-    Assertions.assertEquals(StateOfMatter.LIQUID,
-        StateOfMatter.fromPhaseType(PhaseType.LIQUID_ASPHALTENE));
+    Assertions.assertEquals(StateOfMatter.LIQUID, StateOfMatter.fromPhaseType(PhaseType.LIQUID_ASPHALTENE));
     Assertions.assertEquals(StateOfMatter.SOLID, StateOfMatter.fromPhaseType(PhaseType.SOLID));
-    Assertions.assertEquals(StateOfMatter.SOLID,
-        StateOfMatter.fromPhaseType(PhaseType.SOLIDCOMPLEX));
+    Assertions.assertEquals(StateOfMatter.SOLID, StateOfMatter.fromPhaseType(PhaseType.SOLIDCOMPLEX));
     Assertions.assertEquals(StateOfMatter.SOLID, StateOfMatter.fromPhaseType(PhaseType.HYDRATE));
     Assertions.assertEquals(StateOfMatter.SOLID, StateOfMatter.fromPhaseType(PhaseType.WAX));
     Assertions.assertEquals(StateOfMatter.SOLID, StateOfMatter.fromPhaseType(PhaseType.ASPHALTENE));

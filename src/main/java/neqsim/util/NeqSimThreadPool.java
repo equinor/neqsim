@@ -19,14 +19,14 @@ import org.apache.logging.log4j.Logger;
  * A global thread pool for NeqSim concurrent operations.
  *
  * <p>
- * This class provides a centralized, managed thread pool for executing tasks asynchronously. It is
- * designed to replace direct {@code new Thread(...)} calls throughout the codebase, providing
- * better resource management and control over concurrent execution.
+ * This class provides a centralized, managed thread pool for executing tasks asynchronously. It is designed to replace
+ * direct {@code new Thread(...)} calls throughout the codebase, providing better resource management and control over
+ * concurrent execution.
  * </p>
  *
  * <p>
- * The thread pool size defaults to the number of available processors but can be configured. The
- * pool uses daemon threads so it won't prevent JVM shutdown.
+ * The thread pool size defaults to the number of available processors but can be configured. The pool uses daemon
+ * threads so it won't prevent JVM shutdown.
  * </p>
  *
  * @author esol
@@ -55,20 +55,18 @@ public final class NeqSimThreadPool {
   private static final ThreadFactory DEFAULT_FACTORY = Executors.defaultThreadFactory();
 
   /**
-   * Maximum queue capacity for bounded queue mode. Set to 0 or negative for unbounded queue
-   * (default).
+   * Maximum queue capacity for bounded queue mode. Set to 0 or negative for unbounded queue (default).
    */
   private static int maxQueueCapacity = 0;
 
   /**
-   * Whether to allow core threads to time out and terminate when idle. Default is false (threads
-   * stay alive forever).
+   * Whether to allow core threads to time out and terminate when idle. Default is false (threads stay alive forever).
    */
   private static boolean allowCoreThreadTimeout = false;
 
   /**
-   * Keep-alive time for idle threads in seconds. Only applies when allowCoreThreadTimeout is true.
-   * Default is 60 seconds.
+   * Keep-alive time for idle threads in seconds. Only applies when allowCoreThreadTimeout is true. Default is 60
+   * seconds.
    */
   private static long keepAliveTimeSeconds = 600;
 
@@ -153,8 +151,8 @@ public final class NeqSimThreadPool {
    * Submits a Callable task for execution and returns a Future representing the pending result.
    *
    * <p>
-   * This overload allows tasks to return results directly, which is useful for integration with
-   * external systems like Python via JPype.
+   * This overload allows tasks to return results directly, which is useful for integration with external systems like
+   * Python via JPype.
    * </p>
    *
    * @param <T> the type of the result
@@ -178,15 +176,15 @@ public final class NeqSimThreadPool {
    * Creates a new {@link CompletionService} backed by the shared thread pool.
    *
    * <p>
-   * A CompletionService allows you to submit multiple tasks and retrieve their results in
-   * completion order (i.e., as each task finishes) rather than submission order. This is useful
-   * when you want to process results as soon as they become available.
+   * A CompletionService allows you to submit multiple tasks and retrieve their results in completion order (i.e., as
+   * each task finishes) rather than submission order. This is useful when you want to process results as soon as they
+   * become available.
    * </p>
    *
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * CompletionService<Double> cs = NeqSimThreadPool.newCompletionService();
@@ -211,9 +209,8 @@ public final class NeqSimThreadPool {
   }
 
   /**
-   * Sets the pool size. This must be called before the pool is first accessed. If called after the
-   * pool has been created, it will recreate the pool with the new size (existing tasks will
-   * complete).
+   * Sets the pool size. This must be called before the pool is first accessed. If called after the pool has been
+   * created, it will recreate the pool with the new size (existing tasks will complete).
    *
    * @param size the desired pool size (must be greater than 0)
    * @throws IllegalArgumentException if size is less than 1
@@ -246,14 +243,13 @@ public final class NeqSimThreadPool {
    * Sets the maximum queue capacity for bounded queue mode.
    *
    * <p>
-   * For HPC or extreme load scenarios, you can limit the queue size to prevent memory exhaustion.
-   * When the queue is full, new task submissions will be rejected with a
-   * {@link java.util.concurrent.RejectedExecutionException}.
+   * For HPC or extreme load scenarios, you can limit the queue size to prevent memory exhaustion. When the queue is
+   * full, new task submissions will be rejected with a {@link java.util.concurrent.RejectedExecutionException}.
    * </p>
    *
    * <p>
-   * Set to 0 or negative to use unbounded queue (default). This must be called before the pool is
-   * first accessed, or the pool will be recreated.
+   * Set to 0 or negative to use unbounded queue (default). This must be called before the pool is first accessed, or
+   * the pool will be recreated.
    * </p>
    *
    * @param capacity the maximum number of tasks that can wait in the queue (0 = unbounded)
@@ -264,8 +260,7 @@ public final class NeqSimThreadPool {
       if (pool != null && !pool.isShutdown()) {
         shutdownAndAwait(5, TimeUnit.SECONDS);
         pool = createPool();
-        logger.info("NeqSim thread pool queue capacity set to {}",
-            capacity > 0 ? capacity : "unbounded");
+        logger.info("NeqSim thread pool queue capacity set to {}", capacity > 0 ? capacity : "unbounded");
       }
     }
   }
@@ -283,13 +278,13 @@ public final class NeqSimThreadPool {
    * Enables or disables core thread timeout.
    *
    * <p>
-   * When enabled, idle core threads will be terminated after the keep-alive time. This is useful
-   * for long-running Python processes or when memory efficiency is important.
+   * When enabled, idle core threads will be terminated after the keep-alive time. This is useful for long-running
+   * Python processes or when memory efficiency is important.
    * </p>
    *
    * <p>
-   * By default, core threads stay alive forever. When enabled with the default keep-alive time of
-   * 60 seconds, idle threads will be freed after 60 seconds of inactivity.
+   * By default, core threads stay alive forever. When enabled with the default keep-alive time of 60 seconds, idle
+   * threads will be freed after 60 seconds of inactivity.
    * </p>
    *
    * @param allow true to allow core threads to timeout, false to keep them alive forever
@@ -318,8 +313,7 @@ public final class NeqSimThreadPool {
    * Sets the keep-alive time for idle threads.
    *
    * <p>
-   * This only takes effect when core thread timeout is enabled via
-   * {@link #setAllowCoreThreadTimeout(boolean)}.
+   * This only takes effect when core thread timeout is enabled via {@link #setAllowCoreThreadTimeout(boolean)}.
    * </p>
    *
    * @param seconds the time in seconds that idle threads should wait before terminating
@@ -327,8 +321,7 @@ public final class NeqSimThreadPool {
    */
   public static void setKeepAliveTimeSeconds(long seconds) {
     if (seconds < 1) {
-      throw new IllegalArgumentException(
-          "Keep-alive time must be at least 1 second, was: " + seconds);
+      throw new IllegalArgumentException("Keep-alive time must be at least 1 second, was: " + seconds);
     }
     synchronized (LOCK) {
       keepAliveTimeSeconds = seconds;
@@ -366,8 +359,8 @@ public final class NeqSimThreadPool {
   }
 
   /**
-   * Initiates an orderly shutdown of the thread pool. Previously submitted tasks are executed, but
-   * no new tasks will be accepted.
+   * Initiates an orderly shutdown of the thread pool. Previously submitted tasks are executed, but no new tasks will be
+   * accepted.
    */
   public static void shutdown() {
     synchronized (LOCK) {

@@ -43,8 +43,7 @@ public class TransientWellModelTest {
 
     assertNotNull(result, "DrawdownResult should not be null");
     assertTrue(result.flowingPressure > 0, "Bottomhole pressure should be positive");
-    assertTrue(result.flowingPressure < 300.0,
-        "Bottomhole pressure should be less than reservoir pressure");
+    assertTrue(result.flowingPressure < 300.0, "Bottomhole pressure should be less than reservoir pressure");
     assertTrue(result.drawdown > 0, "Pressure drawdown should be positive");
     assertTrue(result.radiusOfInvestigation > 0, "Radius of investigation should be positive");
     assertTrue(result.productivityIndex > 0, "PI should be positive");
@@ -93,8 +92,7 @@ public class TransientWellModelTest {
 
     assertNotNull(result, "BuildupResult should not be null");
     assertTrue(result.shutInPressure > 0, "Shut-in pressure should be positive");
-    assertTrue(result.shutInPressure <= 300.0,
-        "Shut-in pressure should not exceed reservoir pressure");
+    assertTrue(result.shutInPressure <= 300.0, "Shut-in pressure should not exceed reservoir pressure");
     assertTrue(result.permeabilityFromSlope > 0, "Estimated permeability should be positive");
   }
 
@@ -116,10 +114,8 @@ public class TransientWellModelTest {
     model.addRateChange(100.0, 0.0);
     TransientWellModel.BuildupResult result3 = model.calculateBuildup(100.0);
 
-    assertTrue(result1.shutInPressure < result2.shutInPressure,
-        "Pressure should build up with time");
-    assertTrue(result2.shutInPressure < result3.shutInPressure,
-        "Pressure should build up with time");
+    assertTrue(result1.shutInPressure < result2.shutInPressure, "Pressure should build up with time");
+    assertTrue(result2.shutInPressure < result3.shutInPressure, "Pressure should build up with time");
   }
 
   @Test
@@ -142,7 +138,7 @@ public class TransientWellModelTest {
   void testPressureProfile() {
     model.addRateChange(0.0, 100.0);
 
-    double[] timePoints = {1.0, 5.0, 10.0, 24.0, 48.0, 72.0};
+    double[] timePoints = { 1.0, 5.0, 10.0, 24.0, 48.0, 72.0 };
     List<TransientWellModel.PressurePoint> profile = model.generatePressureProfile(timePoints);
 
     assertEquals(timePoints.length, profile.size(), "Should have correct number of points");
@@ -215,7 +211,7 @@ public class TransientWellModelTest {
     TransientWellModel highSkin = new TransientWellModel();
 
     // Configure identical wells except skin
-    for (TransientWellModel m : new TransientWellModel[] {lowSkin, highSkin}) {
+    for (TransientWellModel m : new TransientWellModel[] { lowSkin, highSkin }) {
       m.setReservoirPressure(300.0, "bara");
       m.setPermeability(100.0, "mD");
       m.setFormationThickness(20.0, "m");
@@ -232,8 +228,7 @@ public class TransientWellModelTest {
     TransientWellModel.DrawdownResult resultLow = lowSkin.calculateDrawdown(100.0, 24.0);
     TransientWellModel.DrawdownResult resultHigh = highSkin.calculateDrawdown(100.0, 24.0);
 
-    assertTrue(resultHigh.drawdown > resultLow.drawdown,
-        "Higher skin should cause more pressure drop");
+    assertTrue(resultHigh.drawdown > resultLow.drawdown, "Higher skin should cause more pressure drop");
     assertTrue(resultHigh.flowingPressure < resultLow.flowingPressure,
         "Higher skin should result in lower bottomhole pressure");
   }
@@ -245,7 +240,7 @@ public class TransientWellModelTest {
     TransientWellModel highPerm = new TransientWellModel();
 
     // Configure wells
-    for (TransientWellModel m : new TransientWellModel[] {lowPerm, highPerm}) {
+    for (TransientWellModel m : new TransientWellModel[] { lowPerm, highPerm }) {
       m.setReservoirPressure(300.0, "bara");
       m.setFormationThickness(20.0, "m");
       m.setPorosity(0.20);
@@ -262,8 +257,7 @@ public class TransientWellModelTest {
     TransientWellModel.DrawdownResult resultLow = lowPerm.calculateDrawdown(100.0, 24.0);
     TransientWellModel.DrawdownResult resultHigh = highPerm.calculateDrawdown(100.0, 24.0);
 
-    assertTrue(resultLow.drawdown > resultHigh.drawdown,
-        "Lower permeability should cause more pressure drop");
+    assertTrue(resultLow.drawdown > resultHigh.drawdown, "Lower permeability should cause more pressure drop");
   }
 
   @Test

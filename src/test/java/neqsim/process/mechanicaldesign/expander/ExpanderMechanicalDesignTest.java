@@ -2,6 +2,8 @@ package neqsim.process.mechanicaldesign.expander;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.expander.Expander;
@@ -19,6 +21,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * @author NeqSim Development Team
  */
 public class ExpanderMechanicalDesignTest {
+  private static final Logger logger = LogManager.getLogger(ExpanderMechanicalDesignTest.class);
+
   private Expander expander;
   private ExpanderMechanicalDesign mechDesign;
 
@@ -56,7 +60,7 @@ public class ExpanderMechanicalDesignTest {
     double wheelDiam = mechDesign.getWheelDiameter();
     assertTrue(wheelDiam > 0, "Wheel diameter should be positive");
     assertTrue(wheelDiam < 2000, "Wheel diameter should be reasonable (< 2m)");
-    System.out.println("Wheel diameter: " + wheelDiam + " mm");
+    logger.info("Wheel diameter: " + wheelDiam + " mm");
   }
 
   @Test
@@ -64,7 +68,7 @@ public class ExpanderMechanicalDesignTest {
     double speed = mechDesign.getRatedSpeed();
     assertTrue(speed > 0, "Rated speed should be positive");
     assertTrue(speed < 100000, "Rated speed should be reasonable (< 100,000 rpm)");
-    System.out.println("Rated speed: " + speed + " rpm");
+    logger.info("Rated speed: " + speed + " rpm");
   }
 
   @Test
@@ -72,21 +76,21 @@ public class ExpanderMechanicalDesignTest {
     double tipSpeed = mechDesign.getTipSpeed();
     assertTrue(tipSpeed > 0, "Tip speed should be positive");
     assertTrue(tipSpeed <= 450, "Tip speed should be <= 450 m/s per API 617");
-    System.out.println("Tip speed: " + tipSpeed + " m/s");
+    logger.info("Tip speed: " + tipSpeed + " m/s");
   }
 
   @Test
   public void testRecoveredPower() {
     double power = mechDesign.getRecoveredPower();
     assertTrue(power > 0, "Recovered power should be positive");
-    System.out.println("Recovered power: " + power + " kW");
+    logger.info("Recovered power: " + power + " kW");
   }
 
   @Test
   public void testShaftDiameter() {
     double shaftDiam = mechDesign.getShaftDiameter();
     assertTrue(shaftDiam > 0, "Shaft diameter should be positive");
-    System.out.println("Shaft diameter: " + shaftDiam + " mm");
+    logger.info("Shaft diameter: " + shaftDiam + " mm");
   }
 
   @Test
@@ -94,28 +98,28 @@ public class ExpanderMechanicalDesignTest {
     // Total weight is calculated internally - check recovered power indicates calculation ran
     double power = mechDesign.getRecoveredPower();
     assertTrue(power > 0, "Recovered power should be positive, indicating design was calculated");
-    System.out.println("Recovered power: " + power + " kW");
+    logger.info("Recovered power: " + power + " kW");
   }
 
   @Test
   public void testExpanderType() {
     ExpanderMechanicalDesign.ExpanderType expType = mechDesign.getExpanderType();
     assertNotNull(expType, "Expander type should be set");
-    System.out.println("Expander type: " + expType);
+    logger.info("Expander type: " + expType);
   }
 
   @Test
   public void testLoadType() {
     ExpanderMechanicalDesign.LoadType loadType = mechDesign.getLoadType();
     assertNotNull(loadType, "Load type should be set");
-    System.out.println("Load type: " + loadType);
+    logger.info("Load type: " + loadType);
   }
 
   @Test
   public void testRecoveredPowerPositive() {
     double power = mechDesign.getRecoveredPower();
     assertTrue(power > 0, "Recovered power should be positive");
-    System.out.println("Recovered power: " + power + " kW");
+    logger.info("Recovered power: " + power + " kW");
   }
 
   @Test
@@ -123,7 +127,7 @@ public class ExpanderMechanicalDesignTest {
     double designPressure = mechDesign.getCasingDesignPressure();
     double inletPressure = 50.0; // bara from setup
     assertTrue(designPressure >= inletPressure, "Design pressure should be >= inlet pressure");
-    System.out.println("Design pressure: " + designPressure + " bara");
+    logger.info("Design pressure: " + designPressure + " bara");
   }
 
   @Test
@@ -131,6 +135,6 @@ public class ExpanderMechanicalDesignTest {
     double designTemp = mechDesign.getCasingDesignTemperature();
     double inletTemp = 80.0; // C from setup
     assertTrue(designTemp >= inletTemp, "Design temperature should be >= inlet temperature");
-    System.out.println("Design temperature: " + designTemp + " C");
+    logger.info("Design temperature: " + designTemp + " C");
   }
 }

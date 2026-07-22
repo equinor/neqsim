@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OLGApropGeneratorPH class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class OLGApropGeneratorPH {
+  private static final Logger logger = LogManager.getLogger(OLGApropGeneratorPH.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(OLGApropGeneratorPH.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -51,8 +48,7 @@ public class OLGApropGeneratorPH {
 
       // testOps.PHflash(maxEnthalpy + 49560, 0);
       String fileName = "c:/Appl/OLGAneqsim.tab";
-      testOps.OLGApropTablePH(minEnthalpy, maxEnthalpy, 41, testSystem.getPressure(), 2, 41,
-          fileName, 0);
+      testOps.OLGApropTablePH(minEnthalpy, maxEnthalpy, 41, testSystem.getPressure(), 2, 41, fileName, 0);
       testOps.displayResult();
     } catch (Exception ex) {
       testSystem.display();

@@ -9,9 +9,8 @@ import java.util.Arrays;
  * Container for safety envelope data points.
  *
  * <p>
- * Stores P-T curves for various safety limits including hydrate formation, wax appearance, CO2
- * freezing, and minimum design metal temperature (MDMT). Provides export capabilities for DCS/SCADA
- * integration.
+ * Stores P-T curves for various safety limits including hydrate formation, wax appearance, CO2 freezing, and minimum
+ * design metal temperature (MDMT). Provides export capabilities for DCS/SCADA integration.
  * </p>
  *
  * @author NeqSim team
@@ -212,18 +211,18 @@ public class SafetyEnvelope {
     // For hydrate, WAT, MDMT: operating temp must be ABOVE the limit
     // For phase envelope: depends on context (bubble vs dew point)
     switch (type) {
-      case HYDRATE:
-      case WAX:
-      case MDMT:
-      case BRITTLE_FRACTURE:
-      case CO2_FREEZING:
-        return temperatureK > limitTemp;
-      case PHASE_ENVELOPE:
-        // For phase envelope, we're checking if inside two-phase region
-        // This is simplified - full implementation would check both bubble and dew
-        return true;
-      default:
-        return true;
+    case HYDRATE:
+    case WAX:
+    case MDMT:
+    case BRITTLE_FRACTURE:
+    case CO2_FREEZING:
+      return temperatureK > limitTemp;
+    case PHASE_ENVELOPE:
+      // For phase envelope, we're checking if inside two-phase region
+      // This is simplified - full implementation would check both bubble and dew
+      return true;
+    default:
+      return true;
     }
   }
 
@@ -241,14 +240,14 @@ public class SafetyEnvelope {
     }
 
     switch (type) {
-      case HYDRATE:
-      case WAX:
-      case MDMT:
-      case BRITTLE_FRACTURE:
-      case CO2_FREEZING:
-        return temperatureK - limitTemp;
-      default:
-        return temperatureK - limitTemp;
+    case HYDRATE:
+    case WAX:
+    case MDMT:
+    case BRITTLE_FRACTURE:
+    case CO2_FREEZING:
+      return temperatureK - limitTemp;
+    default:
+      return temperatureK - limitTemp;
     }
   }
 
@@ -266,8 +265,7 @@ public class SafetyEnvelope {
       writer.println("Pressure_bara,Temperature_K,Temperature_C,Margin_K");
 
       for (int i = 0; i < pressure.length; i++) {
-        writer.printf("%.4f,%.4f,%.4f,%.4f%n", pressure[i], temperature[i], temperature[i] - 273.15,
-            margin[i]);
+        writer.printf("%.4f,%.4f,%.4f,%.4f%n", pressure[i], temperature[i], temperature[i] - 273.15, margin[i]);
       }
     } catch (IOException e) {
       throw new RuntimeException("Failed to export safety envelope: " + e.getMessage(), e);
@@ -290,8 +288,7 @@ public class SafetyEnvelope {
 
       for (int i = 0; i < pressure.length; i++) {
         String comma = (i < pressure.length - 1) ? "," : "";
-        writer.printf(
-            "    {\"pressure\": %.4f, \"temperature\": %.4f, \"temperatureC\": %.4f, \"margin\": %.4f}%s%n",
+        writer.printf("    {\"pressure\": %.4f, \"temperature\": %.4f, \"temperatureC\": %.4f, \"margin\": %.4f}%s%n",
             pressure[i], temperature[i], temperature[i] - 273.15, margin[i], comma);
       }
 

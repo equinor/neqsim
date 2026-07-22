@@ -24,7 +24,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * <b>Stokes Settling Velocity:</b>
  * </p>
- * 
+ *
  * <pre>
  * v_s = g × d² × (ρ_L - ρ_G) / (18 × μ)
  * </pre>
@@ -32,7 +32,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * <b>Souders-Brown Gas Velocity:</b>
  * </p>
- * 
+ *
  * <pre>
  * V_max = K × sqrt((ρ_L - ρ_G) / ρ_G)
  * </pre>
@@ -40,7 +40,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * <b>Residence Time Criterion:</b>
  * </p>
- * 
+ *
  * <pre>
  * t_residence &gt; t_separation
  * </pre>
@@ -152,7 +152,7 @@ public class SeparatorSizingCalculator implements Serializable {
    * <p>
    * Stokes Law applies to laminar flow around spherical particles (Re &lt; 1):
    * </p>
-   * 
+   *
    * <pre>
    * v_s = g × d² × (ρ_heavy - ρ_light) / (18 × μ)
    * </pre>
@@ -174,8 +174,8 @@ public class SeparatorSizingCalculator implements Serializable {
    * @param continuousPhaseViscosity viscosity of continuous phase (Pa·s)
    * @return settling velocity (m/s), positive = downward for droplets
    */
-  public double stokesSettlingVelocity(double dropletDiameterM, double heavyPhaseDensity,
-      double lightPhaseDensity, double continuousPhaseViscosity) {
+  public double stokesSettlingVelocity(double dropletDiameterM, double heavyPhaseDensity, double lightPhaseDensity,
+      double continuousPhaseViscosity) {
     if (continuousPhaseViscosity <= 0) {
       throw new IllegalArgumentException("Viscosity must be positive");
     }
@@ -197,8 +197,8 @@ public class SeparatorSizingCalculator implements Serializable {
    * @param gasViscosity gas viscosity (Pa·s)
    * @return settling velocity (m/s)
    */
-  public double oilDropletSettlingInGas(double dropletDiameterMicrons, double oilDensity,
-      double gasDensity, double gasViscosity) {
+  public double oilDropletSettlingInGas(double dropletDiameterMicrons, double oilDensity, double gasDensity,
+      double gasViscosity) {
     double diameterM = dropletDiameterMicrons * 1e-6;
     return stokesSettlingVelocity(diameterM, oilDensity, gasDensity, gasViscosity);
   }
@@ -212,8 +212,8 @@ public class SeparatorSizingCalculator implements Serializable {
    * @param liquidViscosity liquid viscosity (Pa·s)
    * @return rise velocity (m/s)
    */
-  public double gasBubbleRiseInLiquid(double bubbleDiameterMm, double liquidDensity,
-      double gasDensity, double liquidViscosity) {
+  public double gasBubbleRiseInLiquid(double bubbleDiameterMm, double liquidDensity, double gasDensity,
+      double liquidViscosity) {
     double diameterM = bubbleDiameterMm * 1e-3;
     return stokesSettlingVelocity(diameterM, liquidDensity, gasDensity, liquidViscosity);
   }
@@ -240,10 +240,9 @@ public class SeparatorSizingCalculator implements Serializable {
    * Calculates maximum gas velocity using Souders-Brown equation.
    *
    * <p>
-   * The Souders-Brown equation determines the maximum allowable gas velocity to prevent liquid
-   * entrainment:
+   * The Souders-Brown equation determines the maximum allowable gas velocity to prevent liquid entrainment:
    * </p>
-   * 
+   *
    * <pre>
    * V_max = K × sqrt((ρ_L - ρ_G) / ρ_G)
    * </pre>
@@ -309,8 +308,7 @@ public class SeparatorSizingCalculator implements Serializable {
    * @param standard design standard to apply
    * @return sizing result with dimensions and constraints
    */
-  public SeparatorSizingResult sizeSeparator(StreamInterface feed, SeparatorType type,
-      DesignStandard standard) {
+  public SeparatorSizingResult sizeSeparator(StreamInterface feed, SeparatorType type, DesignStandard standard) {
     // Run the feed to get properties
     if (feed.getFluid() == null) {
       throw new IllegalArgumentException("Feed stream must have a fluid");
@@ -420,8 +418,7 @@ public class SeparatorSizingCalculator implements Serializable {
    * @param result sizing result
    * @return configured Separator
    */
-  public Separator createSeparator(String name, StreamInterface feed,
-      SeparatorSizingResult result) {
+  public Separator createSeparator(String name, StreamInterface feed, SeparatorSizingResult result) {
     Separator sep = new Separator(name, feed);
     sep.setInternalDiameter(result.internalDiameter);
     sep.setSeparatorLength(result.tanTanLength);
@@ -533,10 +530,8 @@ public class SeparatorSizingCalculator implements Serializable {
 
     @Override
     public String toString() {
-      return String.format(
-          "SeparatorSizingResult[type=%s, D=%.2fm, L=%.2fm, L/D=%.1f, K=%.3f, t_ret=%.0fs]",
-          separatorType, internalDiameter, tanTanLength, slendernessRatio, kFactor,
-          requiredRetentionTime);
+      return String.format("SeparatorSizingResult[type=%s, D=%.2fm, L=%.2fm, L/D=%.1f, K=%.3f, t_ret=%.0fs]",
+          separatorType, internalDiameter, tanTanLength, slendernessRatio, kFactor, requiredRetentionTime);
     }
   }
 }

@@ -11,9 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.util.NamedBaseClass;
 
 /**
- * <p>
  * Packing class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -29,19 +27,16 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
   double surfaceAreaPrVolume = 112.6;
 
   /**
-   * <p>
    * Constructor for Packing.
-   * </p>
    *
    * @param name Name of packing
    */
   public Packing(String name) {
     super(name);
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       // System.out.println("init packing");
-      java.sql.ResultSet dataSet =
-          database.getResultSet(("SELECT * FROM packing WHERE name='" + name + "'"));
+      java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM packing WHERE name='" + name + "'"));
       dataSet.next();
       size = 1e-3 * Double.parseDouble(dataSet.getString("size")); // C
       surfaceAreaPrVolume = Double.parseDouble(dataSet.getString("surfaceAreaPrVolume"));
@@ -53,9 +48,7 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
   }
 
   /**
-   * <p>
    * Constructor for Packing.
-   * </p>
    *
    * @param name Name of packing
    * @param material Name of material
@@ -63,11 +56,11 @@ public abstract class Packing extends NamedBaseClass implements PackingInterface
    */
   public Packing(String name, String material, int size) {
     super(name);
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase()) {
       System.out.println("init packing");
-      java.sql.ResultSet dataSet = database.getResultSet(("SELECT * FROM packing WHERE name='"
-          + name + "' AND size=" + size + " AND material='" + material + "'"));
+      java.sql.ResultSet dataSet = database.getResultSet(
+          ("SELECT * FROM packing WHERE name='" + name + "' AND size=" + size + " AND material='" + material + "'"));
       dataSet.next();
       this.size = 1e-3 * Double.parseDouble(dataSet.getString("size")); // C
       surfaceAreaPrVolume = Double.parseDouble(dataSet.getString("surfaceAreaPrVolume"));

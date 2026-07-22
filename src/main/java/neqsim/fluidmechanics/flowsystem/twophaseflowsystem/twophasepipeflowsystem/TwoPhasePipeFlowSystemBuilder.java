@@ -17,12 +17,11 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
- * TwoPhasePipeFlowSystem pipe =
- *     TwoPhasePipeFlowSystemBuilder.create().withFluid(thermoSystem).withDiameter(0.1, "m")
- *         .withLength(1000, "m").withNodes(100).withFlowPattern(FlowPattern.STRATIFIED)
- *         .withWallTemperature(278, "K").enableNonEquilibriumMassTransfer().build();
+ * TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystemBuilder.create().withFluid(thermoSystem).withDiameter(0.1, "m")
+ *     .withLength(1000, "m").withNodes(100).withFlowPattern(FlowPattern.STRATIFIED).withWallTemperature(278, "K")
+ *     .enableNonEquilibriumMassTransfer().build();
  * </pre>
  *
  * @author ASMF
@@ -54,7 +53,8 @@ public class TwoPhasePipeFlowSystemBuilder {
   /**
    * Private constructor - use create() method.
    */
-  private TwoPhasePipeFlowSystemBuilder() {}
+  private TwoPhasePipeFlowSystemBuilder() {
+  }
 
   /**
    * Creates a new builder instance.
@@ -194,8 +194,8 @@ public class TwoPhasePipeFlowSystemBuilder {
    * @param uValue the overall heat transfer coefficient in W/(m²·K)
    * @return this builder
    */
-  public TwoPhasePipeFlowSystemBuilder withConvectiveBoundary(double ambientTemperature,
-      String tempUnit, double uValue) {
+  public TwoPhasePipeFlowSystemBuilder withConvectiveBoundary(double ambientTemperature, String tempUnit,
+      double uValue) {
     this.ambientTemperature = convertTemperature(ambientTemperature, tempUnit);
     this.overallHeatTransferCoefficient = uValue;
     this.wallHeatTransferModel = WallHeatTransferModel.CONVECTIVE_BOUNDARY;
@@ -241,17 +241,18 @@ public class TwoPhasePipeFlowSystemBuilder {
    */
   public TwoPhasePipeFlowSystemBuilder withRoughness(double roughness, String unit) {
     switch (unit.toLowerCase()) {
-      case "mm":
-        this.roughness = roughness * 1e-3;
-        break;
-      case "um":
-      case "µm":
-        this.roughness = roughness * 1e-6;
-        break;
-      case "m":
-      default:
-        this.roughness = roughness;
-        break;
+    case "mm":
+      this.roughness = roughness * 1e-3;
+      break;
+    case "um":
+    case "µm":
+      this.roughness = roughness * 1e-6;
+      break;
+    case "m":
+      this.roughness = roughness;
+      break;
+    default:
+      throw new IllegalArgumentException("Unsupported roughness unit: " + unit);
     }
     return this;
   }
@@ -260,8 +261,8 @@ public class TwoPhasePipeFlowSystemBuilder {
    * Sets the pipe inclination angle.
    *
    * <p>
-   * Positive angles indicate upward flow (against gravity), negative angles indicate downward flow.
-   * This automatically calculates leg heights based on the length and inclination.
+   * Positive angles indicate upward flow (against gravity), negative angles indicate downward flow. This automatically
+   * calculates leg heights based on the length and inclination.
    * </p>
    *
    * @param angle the inclination angle
@@ -270,15 +271,16 @@ public class TwoPhasePipeFlowSystemBuilder {
    */
   public TwoPhasePipeFlowSystemBuilder withInclination(double angle, String unit) {
     switch (unit.toLowerCase()) {
-      case "deg":
-      case "degrees":
-        this.inclination = Math.toRadians(angle);
-        break;
-      case "rad":
-      case "radians":
-      default:
-        this.inclination = angle;
-        break;
+    case "deg":
+    case "degrees":
+      this.inclination = Math.toRadians(angle);
+      break;
+    case "rad":
+    case "radians":
+      this.inclination = angle;
+      break;
+    default:
+      throw new IllegalArgumentException("Unsupported inclination unit: " + unit);
     }
     return this;
   }
@@ -397,8 +399,7 @@ public class TwoPhasePipeFlowSystemBuilder {
     double[] outerHeatCoeffs = new double[numberOfLegs + 1];
     double[] wallHeatCoeffs = new double[numberOfLegs + 1];
     for (int i = 0; i <= numberOfLegs; i++) {
-      outerHeatCoeffs[i] =
-          overallHeatTransferCoefficient > 0 ? overallHeatTransferCoefficient : 5.0;
+      outerHeatCoeffs[i] = overallHeatTransferCoefficient > 0 ? overallHeatTransferCoefficient : 5.0;
       wallHeatCoeffs[i] = 50.0; // Default wall heat transfer coefficient W/(m2·K)
     }
     pipe.setLegOuterHeatTransferCoefficients(outerHeatCoeffs);
@@ -445,9 +446,8 @@ public class TwoPhasePipeFlowSystemBuilder {
 
     // Provide helpful message if fluid might not be properly initialized
     if (fluid.getNumberOfComponents() == 0) {
-      throw new IllegalStateException(
-          "Fluid system has no components. Add components before building the pipe. "
-              + "Example: fluid.addComponent(\"methane\", 0.1, 0);");
+      throw new IllegalStateException("Fluid system has no components. Add components before building the pipe. "
+          + "Example: fluid.addComponent(\"methane\", 0.1, 0);");
     }
 
     // Check geometry parameters
@@ -457,13 +457,12 @@ public class TwoPhasePipeFlowSystemBuilder {
     }
 
     if (length <= 0) {
-      throw new IllegalStateException("Pipe length must be positive. Got: " + length + " m. "
-          + "Set length using withLength(value, unit).");
+      throw new IllegalStateException(
+          "Pipe length must be positive. Got: " + length + " m. " + "Set length using withLength(value, unit).");
     }
 
     if (numberOfLegs < 1) {
-      throw new IllegalStateException(
-          "Number of legs must be at least 1. Got: " + numberOfLegs + ".");
+      throw new IllegalStateException("Number of legs must be at least 1. Got: " + numberOfLegs + ".");
     }
 
     if (nodesPerLeg < 1) {
@@ -502,21 +501,22 @@ public class TwoPhasePipeFlowSystemBuilder {
    */
   private double convertLength(double value, String unit) {
     switch (unit.toLowerCase()) {
-      case "mm":
-        return value * 1e-3;
-      case "cm":
-        return value * 1e-2;
-      case "km":
-        return value * 1e3;
-      case "in":
-        return value * 0.0254;
-      case "ft":
-        return value * 0.3048;
-      case "mi":
-        return value * 1609.34;
-      case "m":
-      default:
-        return value;
+    case "mm":
+      return value * 1e-3;
+    case "cm":
+      return value * 1e-2;
+    case "km":
+      return value * 1e3;
+    case "in":
+      return value * 0.0254;
+    case "ft":
+      return value * 0.3048;
+    case "mi":
+      return value * 1609.34;
+    case "m":
+      return value;
+    default:
+      throw new IllegalArgumentException("Unsupported length unit: " + unit);
     }
   }
 
@@ -529,13 +529,14 @@ public class TwoPhasePipeFlowSystemBuilder {
    */
   private double convertTemperature(double value, String unit) {
     switch (unit.toUpperCase()) {
-      case "C":
-        return value + 273.15;
-      case "F":
-        return (value - 32) * 5.0 / 9.0 + 273.15;
-      case "K":
-      default:
-        return value;
+    case "C":
+      return value + 273.15;
+    case "F":
+      return (value - 32) * 5.0 / 9.0 + 273.15;
+    case "K":
+      return value;
+    default:
+      throw new IllegalArgumentException("Unsupported temperature unit: " + unit);
     }
   }
 }

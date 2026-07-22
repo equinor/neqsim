@@ -4,9 +4,7 @@ import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
 
 /**
- * <p>
  * ViscosityFunction class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -16,18 +14,14 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
   boolean includeWaxEmulsionViscosity = true;
 
   /**
-   * <p>
    * Constructor for ViscosityFunction.
-   * </p>
    */
   public ViscosityFunction() {
     params = new double[1];
   }
 
   /**
-   * <p>
    * Constructor for ViscosityFunction.
-   * </p>
    *
    * @param includeWax a boolean
    */
@@ -44,8 +38,7 @@ public class ViscosityFunction extends LevenbergMarquardtFunction {
     double waxFraction = 0.0;
     if (system.hasPhaseType("wax") && includeWaxEmulsionViscosity) {
       waxFraction = system.getWtFraction(system.getPhaseNumberOfPhase("wax"));
-      return system.getPhase(0).getPhysicalProperties().getViscosityOfWaxyOil(waxFraction,
-          dependentValues[0]); // %wax
+      return system.getPhase(0).getPhysicalProperties().getViscosityOfWaxyOil(waxFraction, dependentValues[0]); // %wax
     }
     // system.display();
     return system.getPhase(0).getPhysicalProperties().getViscosity(); // %wax

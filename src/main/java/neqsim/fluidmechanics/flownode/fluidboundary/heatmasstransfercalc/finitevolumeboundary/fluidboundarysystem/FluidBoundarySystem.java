@@ -6,9 +6,7 @@ import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitev
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.finitevolumeboundary.fluidboundarysolver.FluidBoundarySolverInterface;
 
 /**
- * <p>
  * FluidBoundarySystem class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -22,20 +20,16 @@ public class FluidBoundarySystem implements FluidBoundarySystemInterface {
   protected FluidBoundarySolverInterface solver;
 
   /**
-   * <p>
    * Constructor for FluidBoundarySystem.
-   * </p>
    */
-  public FluidBoundarySystem() {}
+  public FluidBoundarySystem() {
+  }
 
   /**
-   * <p>
    * Constructor for FluidBoundarySystem.
-   * </p>
    *
-   * @param boundary a
-   *        {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *        object
+   * @param boundary a {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
+   * object
    */
   public FluidBoundarySystem(FluidBoundaryInterface boundary) {
     this.boundary = boundary;
@@ -92,7 +86,8 @@ public class FluidBoundarySystem implements FluidBoundarySystemInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void createSystem() {}
+  public void createSystem() {
+  }
 
   /** {@inheritDoc} */
   @Override

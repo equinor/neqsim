@@ -11,9 +11,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestWaxTuning class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class TestWaxTuning {
   static Logger logger = LogManager.getLogger(TestWaxTuning.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -39,7 +35,7 @@ public class TestWaxTuning {
       while (iterations < 1) {
         iterations = iterations + 1;
         WaxFunction function = new WaxFunction();
-        double[] guess = {1.074, 6.584e-4, 0.1915};
+        double[] guess = { 1.074, 6.584e-4, 0.1915 };
         function.setInitialGuess(guess);
 
         SystemInterface tempSystem = new SystemSrkEos(273.15 + 20, 10.0);
@@ -55,11 +51,10 @@ public class TestWaxTuning {
         tempSystem.init(0);
         tempSystem.init(1);
 
-        double[] sample1 = {273.15 + 20.0};
+        double[] sample1 = { 273.15 + 20.0 };
         double waxContent = 2.0;
-        double[] standardDeviation1 = {1.5};
-        SampleValue sample =
-            new SampleValue(waxContent, waxContent / 100.0, sample1, standardDeviation1);
+        double[] standardDeviation1 = { 1.5 };
+        SampleValue sample = new SampleValue(waxContent, waxContent / 100.0, sample1, standardDeviation1);
         sample.setFunction(function);
         function.setInitialGuess(guess);
         sample.setThermodynamicSystem(tempSystem);

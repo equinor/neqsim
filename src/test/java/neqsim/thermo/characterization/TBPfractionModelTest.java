@@ -3,6 +3,8 @@ package neqsim.thermo.characterization;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
@@ -12,11 +14,13 @@ import neqsim.thermo.system.SystemSrkEos;
  * Unit tests for TBP fraction models.
  *
  * <p>
- * Tests verify that each TBP model correctly calculates critical properties (Tc, Pc, ω, Vc) for
- * petroleum pseudo-components.
+ * Tests verify that each TBP model correctly calculates critical properties (Tc, Pc, ω, Vc) for petroleum
+ * pseudo-components.
  * </p>
  */
 public class TBPfractionModelTest {
+  private static final Logger logger = LogManager.getLogger(TBPfractionModelTest.class);
+
   @Test
   void testTwuModel() {
     SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
@@ -66,9 +70,8 @@ public class TBPfractionModelTest {
   }
 
   /**
-   * Test Cavett (1962) model for critical property estimation. Note: The Cavett model is highly
-   * sensitive to the boiling point correlation used and may give less accurate results for certain
-   * fraction types.
+   * Test Cavett (1962) model for critical property estimation. Note: The Cavett model is highly sensitive to the
+   * boiling point correlation used and may give less accurate results for certain fraction types.
    */
   @Test
   void testCavettModel() {
@@ -224,8 +227,8 @@ public class TBPfractionModelTest {
   }
 
   /**
-   * Compare core models for the same C10 fraction to understand differences. Note: Excludes Cavett
-   * model from strict validation as it has known sensitivity issues.
+   * Compare core models for the same C10 fraction to understand differences. Note: Excludes Cavett model from strict
+   * validation as it has known sensitivity issues.
    */
   @Test
   void testModelComparison() {
@@ -233,13 +236,13 @@ public class TBPfractionModelTest {
     double density = 0.78; // g/cm³
 
     // Core models with good accuracy
-    String[] coreModels = {"PedersenSRK", "Lee-Kesler", "Twu", "Standing"};
+    String[] coreModels = { "PedersenSRK", "Lee-Kesler", "Twu", "Standing" };
     // Models with known limitations
-    String[] allModels = {"PedersenSRK", "Lee-Kesler", "RiaziDaubert", "Twu", "Cavett", "Standing"};
+    String[] allModels = { "PedersenSRK", "Lee-Kesler", "RiaziDaubert", "Twu", "Cavett", "Standing" };
 
-    System.out.println("\n=== TBP Model Comparison for C10 (MW=142 g/mol, SG=0.78) ===");
-    System.out.println(String.format("%-15s %10s %10s %10s", "Model", "Tc (K)", "Pc (bar)", "ω"));
-    System.out.println("--------------------------------------------------");
+    logger.info("\n=== TBP Model Comparison for C10 (MW=142 g/mol, SG=0.78) ===");
+    logger.info(String.format("%-15s %10s %10s %10s", "Model", "Tc (K)", "Pc (bar)", "ω"));
+    logger.info("--------------------------------------------------");
 
     for (String modelName : allModels) {
       SystemInterface thermoSystem = new SystemSrkEos(298.0, 10.0);
@@ -250,7 +253,7 @@ public class TBPfractionModelTest {
       double Pc = thermoSystem.getComponent(0).getPC();
       double omega = thermoSystem.getComponent(0).getAcentricFactor();
 
-      System.out.println(String.format("%-15s %10.2f %10.2f %10.4f", modelName, Tc, Pc, omega));
+      logger.info(String.format("%-15s %10.2f %10.2f %10.4f", modelName, Tc, Pc, omega));
     }
 
     // Strict validation only for core models

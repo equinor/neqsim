@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermPr1978 class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class AttractiveTermPr1978 extends AttractiveTermPr {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for AttractiveTermPr1978.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -37,13 +33,12 @@ public class AttractiveTermPr1978 extends AttractiveTermPr {
   @Override
   public void setm(double val) {
     this.m = val;
-    neqsim.mathlib.nonlinearsolver.NewtonRhapson solve =
-        new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
+    neqsim.mathlib.nonlinearsolver.NewtonRhapson solve = new neqsim.mathlib.nonlinearsolver.NewtonRhapson();
     solve.setOrder(2);
-    double[] acentricConstants = {-0.26992, 1.54226, (0.37464 - this.m)};
+    double[] acentricConstants = { -0.26992, 1.54226, (0.37464 - this.m) };
     if (this.m > 0.49) {
       solve.setOrder(3);
-      acentricConstants = new double[] {0.01666, -0.164423, 1.48503, (0.379642 - this.m)};
+      acentricConstants = new double[] { 0.01666, -0.164423, 1.48503, (0.379642 - this.m) };
     }
     solve.setConstants(acentricConstants);
     getComponent().setAcentricFactor(solve.solve(0.2));

@@ -15,9 +15,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Ensemble Kalman Filter (EnKF) estimator for online calibration of process parameters.
  *
  * <p>
- * This estimator uses the Ensemble Kalman Filter algorithm to estimate unknown process parameters
- * (such as heat transfer coefficients, valve coefficients, fouling factors) by matching simulation
- * outputs to measured plant data.
+ * This estimator uses the Ensemble Kalman Filter algorithm to estimate unknown process parameters (such as heat
+ * transfer coefficients, valve coefficients, fouling factors) by matching simulation outputs to measured plant data.
  * </p>
  *
  * <p>
@@ -34,27 +33,27 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <b>Usage Example:</b>
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Create estimator for a process system
  * EnKFParameterEstimator estimator = new EnKFParameterEstimator(processSystem);
- * 
+ *
  * // Define tunable parameters (what we want to estimate)
  * estimator.addTunableParameter("Pipe1.heatTransferCoefficient", "W/(m2·K)", 1.0, 100.0, 15.0);
  * estimator.addTunableParameter("Pipe2.heatTransferCoefficient", "W/(m2·K)", 1.0, 100.0, 15.0);
- * 
+ *
  * // Define measurements (what we observe)
  * estimator.addMeasuredVariable("HPManifold.temperature", "C", 0.5); // 0.5°C noise std
  * estimator.addMeasuredVariable("LPManifold.temperature", "C", 0.5);
- * 
+ *
  * // Initialize the filter
  * estimator.initialize(50, 42); // 50 ensemble members, seed 42
- * 
+ *
  * // In live loop:
  * Map<String, Double> measurements = getMeasurementsFromPlant();
  * EnKFResult result = estimator.update(measurements);
- * 
+ *
  * System.out.println("Estimates: " + Arrays.toString(result.getEstimates()));
  * System.out.println("Uncertainties: " + Arrays.toString(result.getUncertainties()));
  * }
@@ -142,8 +141,8 @@ public class EnKFParameterEstimator implements Serializable {
      * @param initialValue starting value
      * @param initialUncertainty initial std dev
      */
-    public TunableParameterSpec(String path, String unit, double minValue, double maxValue,
-        double initialValue, double initialUncertainty) {
+    public TunableParameterSpec(String path, String unit, double minValue, double maxValue, double initialValue,
+        double initialUncertainty) {
       this.path = path;
       this.unit = unit;
       this.minValue = minValue;
@@ -206,8 +205,8 @@ public class EnKFParameterEstimator implements Serializable {
      * @param predictions model predictions
      * @param anomalyDetected whether anomaly was detected
      */
-    public EnKFResult(int step, double[] estimates, double[] uncertainties, double[] measurements,
-        double[] predictions, boolean anomalyDetected) {
+    public EnKFResult(int step, double[] estimates, double[] uncertainties, double[] measurements, double[] predictions,
+        boolean anomalyDetected) {
       this.step = step;
       this.estimates = estimates.clone();
       this.uncertainties = uncertainties.clone();
@@ -348,11 +347,10 @@ public class EnKFParameterEstimator implements Serializable {
    * @param initialValue initial/prior value
    * @return this estimator for chaining
    */
-  public EnKFParameterEstimator addTunableParameter(String path, String unit, double minValue,
-      double maxValue, double initialValue) {
+  public EnKFParameterEstimator addTunableParameter(String path, String unit, double minValue, double maxValue,
+      double initialValue) {
     double initialUncertainty = (maxValue - minValue) / 6.0; // ~99% within bounds
-    tunableParameters.add(
-        new TunableParameterSpec(path, unit, minValue, maxValue, initialValue, initialUncertainty));
+    tunableParameters.add(new TunableParameterSpec(path, unit, minValue, maxValue, initialValue, initialUncertainty));
     return this;
   }
 
@@ -367,10 +365,9 @@ public class EnKFParameterEstimator implements Serializable {
    * @param initialUncertainty initial standard deviation
    * @return this estimator for chaining
    */
-  public EnKFParameterEstimator addTunableParameter(String path, String unit, double minValue,
-      double maxValue, double initialValue, double initialUncertainty) {
-    tunableParameters.add(
-        new TunableParameterSpec(path, unit, minValue, maxValue, initialValue, initialUncertainty));
+  public EnKFParameterEstimator addTunableParameter(String path, String unit, double minValue, double maxValue,
+      double initialValue, double initialUncertainty) {
+    tunableParameters.add(new TunableParameterSpec(path, unit, minValue, maxValue, initialValue, initialUncertainty));
     return this;
   }
 
@@ -639,8 +636,8 @@ public class EnKFParameterEstimator implements Serializable {
     boolean anomaly = maxError > 3.0; // > 3 sigma
 
     // Create result
-    EnKFResult result = new EnKFResult(updateCount, ensembleMean.clone(), ensembleStd.clone(),
-        measArray, lastPrediction.clone(), anomaly);
+    EnKFResult result = new EnKFResult(updateCount, ensembleMean.clone(), ensembleStd.clone(), measArray,
+        lastPrediction.clone(), anomaly);
     history.add(result);
 
     return result;
@@ -655,7 +652,7 @@ public class EnKFParameterEstimator implements Serializable {
   private double[][] invertMatrix(double[][] matrix) {
     int n = matrix.length;
     if (n == 1) {
-      return new double[][] {{1.0 / matrix[0][0]}};
+      return new double[][] { { 1.0 / matrix[0][0] } };
     }
     if (n == 2) {
       double det = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
@@ -663,13 +660,12 @@ public class EnKFParameterEstimator implements Serializable {
         // Regularize
         det = 1e-10;
       }
-      return new double[][] {{matrix[1][1] / det, -matrix[0][1] / det},
-          {-matrix[1][0] / det, matrix[0][0] / det}};
+      return new double[][] { { matrix[1][1] / det, -matrix[0][1] / det },
+          { -matrix[1][0] / det, matrix[0][0] / det } };
     }
     // For larger matrices, use Gaussian elimination or external library
     // This is a simplified implementation for small matrices
-    throw new UnsupportedOperationException(
-        "Matrix inversion for n>" + n + " not implemented. Use external library.");
+    throw new UnsupportedOperationException("Matrix inversion for n>" + n + " not implemented. Use external library.");
   }
 
   /**

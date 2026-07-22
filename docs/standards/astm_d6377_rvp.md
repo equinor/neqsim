@@ -1,3 +1,8 @@
+---
+title: "ASTM D6377 - Reid Vapor Pressure"
+description: "ASTM D6377 provides methods for determining vapor pressure of crude oil and petroleum products."
+---
+
 # ASTM D6377 - Reid Vapor Pressure
 
 ASTM D6377 provides methods for determining vapor pressure of crude oil and petroleum products.
@@ -82,6 +87,71 @@ Standard_ASTM_D6377 rvpStandard = new Standard_ASTM_D6377(thermoSystem);
 | `getValue("VPCR4", "bara")` | Get VPCR4 |
 | `setMethodRVP(method)` | Select RVP calculation method |
 | `getMethodRVP()` | Get current method |
+
+### Type-Safe Method Selection and Structured Result
+
+In addition to the legacy string-based API, an `RvpMethod` enum and an immutable `RvpResult`
+are available for type-safe selection and robust result handling. The enum and the string
+labels are interchangeable — each constant carries its legacy label.
+
+```java
+import neqsim.standards.oilquality.Standard_ASTM_D6377;
+import neqsim.standards.oilquality.Standard_ASTM_D6377.RvpMethod;
+import neqsim.standards.oilquality.Standard_ASTM_D6377.RvpResult;
+
+Standard_ASTM_D6377 rvp = new Standard_ASTM_D6377(crude);
+
+// Type-safe method selection (equivalent to setMethodRVP("VPCR4"))
+rvp.setMethodRVP(RvpMethod.VPCR4);
+rvp.calculate();
+
+// Structured result for the current method
+RvpResult result = rvp.getRvpResult();
+if (result.isValid()) {
+  System.out.printf("RVP = %.4f bara (%s)%n",
+      result.getValue(), result.getMethod().getLabel());
+}
+
+// Or request a specific method directly
+RvpResult d6377 = rvp.getRvpResult(RvpMethod.RVP_ASTM_D6377);
+```
+
+#### RvpMethod constants
+
+| Constant | Legacy label | Description |
+|----------|--------------|-------------|
+| `RVP_ASTM_D6377` | `RVP_ASTM_D6377` | ASTM D6377 RVPE (RVP equivalent), derived from VPCR4 |
+| `RVP_ASTM_D323_73_79` | `RVP_ASTM_D323_73_79` | ASTM D323-73/79 dry method (water removed before flash) |
+| `RVP_ASTM_D323_82` | `RVP_ASTM_D323_82` | ASTM D323-82 correlation |
+| `VPCR4` | `VPCR4` | Vapor pressure at V/L = 4 (default) |
+| `VPCR4_NO_WATER` | `VPCR4_no_water` | VPCR4 with water removed |
+
+`RvpMethod.fromLabel(label)` resolves a constant from either its legacy string label or its
+enum name, throwing `IllegalArgumentException` for an unknown label.
+
+#### RvpResult fields
+
+`RvpResult` bundles the computed value with its context so callers — especially agentic
+workflows — can detect a failed calculation instead of silently receiving `0` or `NaN`.
+A result is **valid** only when its value is a finite positive number.
+
+| Method | Description |
+|--------|-------------|
+| `getValue()` | Computed RVP value in bara |
+| `getMethod()` | The `RvpMethod` used |
+| `getReferenceTemperatureC()` | Reference temperature in °C |
+| `isValid()` | True if the value is finite and positive |
+| `toJson()` | JSON representation (`value`, `unit`, `method`, `referenceTemperatureC`, `valid`) |
+
+```json
+{
+  "value": 0.4521,
+  "unit": "bara",
+  "method": "VPCR4",
+  "referenceTemperatureC": 37.8,
+  "valid": true
+}
+```
 
 ---
 

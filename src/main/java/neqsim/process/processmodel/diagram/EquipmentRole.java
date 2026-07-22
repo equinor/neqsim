@@ -4,8 +4,8 @@ package neqsim.process.processmodel.diagram;
  * Classifies process equipment by its functional role in the process.
  *
  * <p>
- * This classification is used by the layout intelligence layer to determine optimal positioning in
- * professional PFD diagrams. Equipment role follows oil &amp; gas industry conventions:
+ * This classification is used by the layout intelligence layer to determine optimal positioning in professional PFD
+ * diagrams. Equipment role follows oil &amp; gas industry conventions:
  * </p>
  * <ul>
  * <li><b>GAS</b> - Equipment handling predominantly gas phase (compressors, gas coolers)</li>

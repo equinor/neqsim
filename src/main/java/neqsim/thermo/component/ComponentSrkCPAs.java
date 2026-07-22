@@ -3,9 +3,7 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentSrkCPAs class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentSrkCPAs.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -25,15 +21,12 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
    * @param compIndex Index number of component in phase object component array.
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
-  public ComponentSrkCPAs(String name, double moles, double molesInPhase, int compIndex,
-      PhaseInterface phase) {
+  public ComponentSrkCPAs(String name, double moles, double molesInPhase, int compIndex, PhaseInterface phase) {
     super(name, moles, molesInPhase, compIndex, phase);
   }
 
   /**
-   * <p>
    * Constructor for ComponentSrkCPAs.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -43,8 +36,7 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
    * @param moles Total number of moles of component.
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
-  public ComponentSrkCPAs(int number, double TC, double PC, double M, double a, double moles,
-      PhaseInterface phase) {
+  public ComponentSrkCPAs(int number, double TC, double PC, double M, double a, double moles, PhaseInterface phase) {
     super(number, TC, PC, M, a, moles, phase);
   }
 
@@ -71,9 +63,8 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
     return 0.475 * getBi() / (phase.getTotalVolume() - 0.475 * phase.getB());
   }
   /*
-   * public double calc_lngi(PhaseInterface phase) { double nbet = phase.getB() / 4.0 /
-   * phase.getVolume(); double dlngdb = 1.9 / (1.0 - 1.9 * nbet); double nbeti = nbet / phase.getB()
-   * * getBi(); return dlngdb * nbeti; }
+   * public double calc_lngi(PhaseInterface phase) { double nbet = phase.getB() / 4.0 / phase.getVolume(); double dlngdb
+   * = 1.9 / (1.0 - 1.9 * nbet); double nbeti = nbet / phase.getB() * getBi(); return dlngdb * nbeti; }
    */
 
   /** {@inheritDoc} */
@@ -97,7 +88,6 @@ public class ComponentSrkCPAs extends ComponentSrkCPA {
     // * (-0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi())
     // akis
     return (0.475 * getBij(j) * temp
-        + 0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi() * 0.475 * getBi())
-        / temp2;
+        + 0.475 * ((ComponentEosInterface) phase.getComponent(j)).getBi() * 0.475 * getBi()) / temp2;
   }
 }

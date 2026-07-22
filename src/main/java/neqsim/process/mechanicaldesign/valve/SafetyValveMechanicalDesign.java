@@ -25,12 +25,10 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
   private double controllingOrificeArea = 0.0;
   private String controllingScenarioName;
   private final Map<FluidService, SafetyValveSizingStrategy> strategies;
-  private Map<String, SafetyValveScenarioResult> scenarioResults = new LinkedHashMap<>();
+  private transient Map<String, SafetyValveScenarioResult> scenarioResults = new LinkedHashMap<>();
 
   /**
-   * <p>
    * Constructor for SafetyValveMechanicalDesign.
-   * </p>
    *
    * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -57,9 +55,8 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
    * @param kw installation correction factor [-]
    * @return required flow area [m^2]
    */
-  public double calcGasOrificeAreaAPI520(double massFlow, double relievingPressure,
-      double relievingTemperature, double z, double molecularWeight, double k, double kd, double kb,
-      double kw) {
+  public double calcGasOrificeAreaAPI520(double massFlow, double relievingPressure, double relievingTemperature,
+      double z, double molecularWeight, double k, double kd, double kb, double kw) {
     double R = 8.314; // J/(mol K)
     double C = Math.sqrt(k) * Math.pow(2.0 / (k + 1.0), (k + 1.0) / (2.0 * (k - 1.0)));
     double numerator = massFlow * Math.sqrt(z * R * relievingTemperature / molecularWeight);
@@ -67,24 +64,23 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
     return numerator / denominator;
   }
 
-  private double calcGasOrificeAreaISO4126(double massFlow, double relievingPressure,
-      double relievingTemperature, double z, double molecularWeight, double k, double kd, double kb,
-      double kw) {
+  private double calcGasOrificeAreaISO4126(double massFlow, double relievingPressure, double relievingTemperature,
+      double z, double molecularWeight, double k, double kd, double kb, double kw) {
     // ISO 4126 uses the same base expression as API 520 but typically with a lower discharge
     // coefficient.
-    return calcGasOrificeAreaAPI520(massFlow, relievingPressure, relievingTemperature, z,
-        molecularWeight, k, kd, kb, kw);
+    return calcGasOrificeAreaAPI520(massFlow, relievingPressure, relievingTemperature, z, molecularWeight, k, kd, kb,
+        kw);
   }
 
-  private double calcLiquidOrificeArea(double massFlow, double relievingPressure, double backPressure,
-      double density, double kd, double kb, double kw) {
+  private double calcLiquidOrificeArea(double massFlow, double relievingPressure, double backPressure, double density,
+      double kd, double kb, double kw) {
     double deltaP = Math.max(relievingPressure - backPressure, 1.0);
     double denominator = kd * kb * kw * Math.sqrt(2.0 * density * deltaP);
     return massFlow / denominator;
   }
 
-  private double calcHemMultiphaseOrificeArea(double massFlow, double relievingPressure,
-      double backPressure, double density, double kd, double kb, double kw) {
+  private double calcHemMultiphaseOrificeArea(double massFlow, double relievingPressure, double backPressure,
+      double density, double kd, double kb, double kw) {
     double deltaP = Math.max(relievingPressure - backPressure, 1.0);
     double denominator = kd * kb * kw * Math.sqrt(density * deltaP);
     return massFlow / denominator;
@@ -104,8 +100,8 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
 
     for (RelievingScenario scenario : valve.getRelievingScenarios()) {
       SizingContext context = buildContext(valve, scenario);
-      SafetyValveSizingStrategy strategy = strategies
-          .getOrDefault(scenario.getFluidService(), strategies.get(FluidService.GAS));
+      SafetyValveSizingStrategy strategy = strategies.getOrDefault(scenario.getFluidService(),
+          strategies.get(FluidService.GAS));
       double area = strategy.calculateOrificeArea(context);
       boolean isActive = scenario.getName().equals(activeScenarioName)
           || (activeScenarioName == null && newResults.isEmpty());
@@ -119,10 +115,9 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
         maxScenario = scenario.getName();
       }
 
-      SafetyValveScenarioResult result = new SafetyValveScenarioResult(scenario.getName(),
-          scenario.getFluidService(), scenario.getSizingStandard(), area, context.setPressurePa,
-          context.relievingPressurePa, context.overpressureMarginPa, context.backPressurePa,
-          isActive, false);
+      SafetyValveScenarioResult result = new SafetyValveScenarioResult(scenario.getName(), scenario.getFluidService(),
+          scenario.getSizingStandard(), area, context.setPressurePa, context.relievingPressurePa,
+          context.overpressureMarginPa, context.backPressurePa, isActive, false);
       newResults.put(scenario.getName(), result);
     }
 
@@ -130,8 +125,7 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
     if (maxScenario != null) {
       SafetyValveScenarioResult controlling = newResults.get(maxScenario);
       if (controlling != null) {
-        newResults.put(maxScenario,
-            controlling.markControlling(true));
+        newResults.put(maxScenario, controlling.markControlling(true));
       }
     }
 
@@ -187,8 +181,7 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
   }
 
   private SizingContext buildContext(SafetyValve valve, RelievingScenario scenario) {
-    StreamInterface stream = Optional.ofNullable(scenario.getRelievingStream())
-        .orElse(valve.getInletStream());
+    StreamInterface stream = Optional.ofNullable(scenario.getRelievingStream()).orElse(valve.getInletStream());
     if (stream == null) {
       throw new IllegalStateException("Safety valve requires a stream for sizing calculations");
     }
@@ -207,18 +200,16 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
     double overpressureMarginPa = relievingPressurePa - setPressurePa;
     double backPressurePa = scenario.getBackPressure() * 1.0e5;
 
-    double kd = scenario.getDischargeCoefficient()
-        .orElseGet(() -> defaultDischargeCoefficient(scenario));
+    double kd = scenario.getDischargeCoefficient().orElseGet(() -> defaultDischargeCoefficient(scenario));
     double kb = scenario.getBackPressureCorrection().orElse(1.0);
     double kw = scenario.getInstallationCorrection().orElse(1.0);
 
-    return new SizingContext(scenario, stream, massFlow, relievingTemperature, z, mw, k, density,
-        setPressurePa, relievingPressurePa, overpressureMarginPa, backPressurePa, kd, kb, kw);
+    return new SizingContext(scenario, stream, massFlow, relievingTemperature, z, mw, k, density, setPressurePa,
+        relievingPressurePa, overpressureMarginPa, backPressurePa, kd, kb, kw);
   }
 
   private double defaultDischargeCoefficient(RelievingScenario scenario) {
-    if (scenario.getFluidService() == FluidService.GAS
-        || scenario.getFluidService() == FluidService.FIRE) {
+    if (scenario.getFluidService() == FluidService.GAS || scenario.getFluidService() == FluidService.FIRE) {
       return scenario.getSizingStandard() == SizingStandard.ISO_4126 ? 0.9 : 0.975;
     }
     if (scenario.getFluidService() == FluidService.MULTIPHASE) {
@@ -246,10 +237,9 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
     final double backPressureCorrection;
     final double installationCorrection;
 
-    SizingContext(RelievingScenario scenario, StreamInterface stream, double massFlow,
-        double relievingTemperature, double z, double molecularWeight, double k, double density,
-        double setPressurePa, double relievingPressurePa, double overpressureMarginPa,
-        double backPressurePa, double dischargeCoefficient, double backPressureCorrection,
+    SizingContext(RelievingScenario scenario, StreamInterface stream, double massFlow, double relievingTemperature,
+        double z, double molecularWeight, double k, double density, double setPressurePa, double relievingPressurePa,
+        double overpressureMarginPa, double backPressurePa, double dischargeCoefficient, double backPressureCorrection,
         double installationCorrection) {
       this.scenario = scenario;
       this.stream = stream;
@@ -274,44 +264,49 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
   }
 
   private class GasSizingStrategy implements SafetyValveSizingStrategy {
+    private static final long serialVersionUID = 1L;
+
     @Override
     public double calculateOrificeArea(SizingContext context) {
       if (context.scenario.getSizingStandard() == SizingStandard.ISO_4126) {
-        return calcGasOrificeAreaISO4126(context.massFlow, context.relievingPressurePa,
-            context.relievingTemperature, context.z, context.molecularWeight, context.k,
-            context.dischargeCoefficient, context.backPressureCorrection,
+        return calcGasOrificeAreaISO4126(context.massFlow, context.relievingPressurePa, context.relievingTemperature,
+            context.z, context.molecularWeight, context.k, context.dischargeCoefficient, context.backPressureCorrection,
             context.installationCorrection);
       }
-      return calcGasOrificeAreaAPI520(context.massFlow, context.relievingPressurePa,
-          context.relievingTemperature, context.z, context.molecularWeight, context.k,
-          context.dischargeCoefficient, context.backPressureCorrection,
+      return calcGasOrificeAreaAPI520(context.massFlow, context.relievingPressurePa, context.relievingTemperature,
+          context.z, context.molecularWeight, context.k, context.dischargeCoefficient, context.backPressureCorrection,
           context.installationCorrection);
     }
   }
 
   private class LiquidSizingStrategy implements SafetyValveSizingStrategy {
+    private static final long serialVersionUID = 1L;
+
     @Override
     public double calculateOrificeArea(SizingContext context) {
       double kd = context.dischargeCoefficient;
       double kb = context.backPressureCorrection;
       double kw = context.installationCorrection;
-      return calcLiquidOrificeArea(context.massFlow, context.relievingPressurePa,
-          context.backPressurePa, context.density, kd, kb, kw);
+      return calcLiquidOrificeArea(context.massFlow, context.relievingPressurePa, context.backPressurePa,
+          context.density, kd, kb, kw);
     }
   }
 
   private class MultiphaseSizingStrategy implements SafetyValveSizingStrategy {
+    private static final long serialVersionUID = 1L;
+
     @Override
     public double calculateOrificeArea(SizingContext context) {
       double kd = context.dischargeCoefficient;
       double kb = context.backPressureCorrection;
       double kw = context.installationCorrection;
-      return calcHemMultiphaseOrificeArea(context.massFlow, context.relievingPressurePa,
-          context.backPressurePa, context.density, kd, kb, kw);
+      return calcHemMultiphaseOrificeArea(context.massFlow, context.relievingPressurePa, context.backPressurePa,
+          context.density, kd, kb, kw);
     }
   }
 
   private class FireCaseSizingStrategy extends GasSizingStrategy {
+    private static final long serialVersionUID = 1L;
     private static final double FIRE_MARGIN_FACTOR = 1.1;
 
     @Override
@@ -336,10 +331,9 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
     private final boolean activeScenario;
     private final boolean controllingScenario;
 
-    SafetyValveScenarioResult(String scenarioName, FluidService fluidService,
-        SizingStandard sizingStandard, double requiredOrificeArea, double setPressurePa,
-        double relievingPressurePa, double overpressureMarginPa, double backPressurePa,
-        boolean activeScenario, boolean controllingScenario) {
+    SafetyValveScenarioResult(String scenarioName, FluidService fluidService, SizingStandard sizingStandard,
+        double requiredOrificeArea, double setPressurePa, double relievingPressurePa, double overpressureMarginPa,
+        double backPressurePa, boolean activeScenario, boolean controllingScenario) {
       this.scenarioName = scenarioName;
       this.fluidService = fluidService;
       this.sizingStandard = sizingStandard;
@@ -353,9 +347,8 @@ public class SafetyValveMechanicalDesign extends ValveMechanicalDesign {
     }
 
     SafetyValveScenarioResult markControlling(boolean controlling) {
-      return new SafetyValveScenarioResult(scenarioName, fluidService, sizingStandard,
-          requiredOrificeArea, setPressurePa, relievingPressurePa, overpressureMarginPa,
-          backPressurePa, activeScenario, controlling);
+      return new SafetyValveScenarioResult(scenarioName, fluidService, sizingStandard, requiredOrificeArea,
+          setPressurePa, relievingPressurePa, overpressureMarginPa, backPressurePa, activeScenario, controlling);
     }
 
     public String getScenarioName() {

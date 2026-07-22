@@ -6,9 +6,8 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * Represents a state variable (SVR) in a nonlinear MPC system.
  *
  * <p>
- * State variables are internal model states that evolve according to dynamic equations. Unlike CVs
- * (controlled variables), SVRs are not directly controlled but are essential for model accuracy.
- * Examples include:
+ * State variables are internal model states that evolve according to dynamic equations. Unlike CVs (controlled
+ * variables), SVRs are not directly controlled but are essential for model accuracy. Examples include:
  * </p>
  * <ul>
  * <li>Flow rates (qin, qout)</li>
@@ -18,8 +17,8 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * </ul>
  *
  * <p>
- * In nonlinear MPC, state variables track the difference between model predictions and
- * measurements, enabling bias correction and model updates.
+ * In nonlinear MPC, state variables track the difference between model predictions and measurements, enabling bias
+ * correction and model updates.
  * </p>
  *
  * <p>
@@ -299,7 +298,7 @@ public class StateVariable extends MPCVariable {
 
   @Override
   public String toString() {
-    return String.format("StateVariable[name=%s, model=%.4f, meas=%.4f, bias=%.4f, dtaIx=%s]",
-        getName(), modelValue, getMeasuredValue(), bias, dtaIx);
+    return String.format("StateVariable[name=%s, model=%.4f, meas=%.4f, bias=%.4f, dtaIx=%s]", getName(), modelValue,
+        getMeasuredValue(), bias, dtaIx);
   }
 }

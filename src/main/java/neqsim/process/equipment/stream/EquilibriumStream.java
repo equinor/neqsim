@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * EquilibriumStream class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -31,9 +29,7 @@ public class EquilibriumStream extends Stream {
   }
 
   /**
-   * <p>
    * Constructor for EquilibriumStream.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -53,16 +49,17 @@ public class EquilibriumStream extends Stream {
       logger.error(ex.getMessage());
     }
 
-    thermoSystem = thermoSystem.clone();
+    if (clonedStream != null && thermoSystem != null) {
+      clonedStream.thermoSystem = thermoSystem.clone();
+    }
     return clonedStream;
   }
 
   /** {@inheritDoc} */
   @Override
   public EquilibriumStream clone(String name) {
-    if (this.getName() == name) {
-      throw new RuntimeException(
-          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+    if (this.getName().equals(name)) {
+      throw new RuntimeException(new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
     }
     EquilibriumStream s = this.clone();
     s.setName(name);

@@ -9,9 +9,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Performs multi-step ahead prediction using full NeqSim nonlinear simulation.
  *
  * <p>
- * The NonlinearPredictor uses the actual NeqSim ProcessSystem to predict future CV trajectories
- * given a sequence of MV moves. Unlike linear prediction which uses gain matrices, this approach
- * captures all nonlinear process behavior.
+ * The NonlinearPredictor uses the actual NeqSim ProcessSystem to predict future CV trajectories given a sequence of MV
+ * moves. Unlike linear prediction which uses gain matrices, this approach captures all nonlinear process behavior.
  * </p>
  *
  * <p>
@@ -27,7 +26,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * NonlinearPredictor predictor = new NonlinearPredictor(processSystem);
@@ -247,8 +246,7 @@ public class NonlinearPredictor implements Serializable {
       mvNames[j] = manipulatedVariables.get(j).getName();
     }
 
-    return new PredictionResult(cvTrajectories, mvTrajectories, time, cvNames, mvNames,
-        sampleTimeSeconds);
+    return new PredictionResult(cvTrajectories, mvTrajectories, time, cvNames, mvNames, sampleTimeSeconds);
   }
 
   /**
@@ -403,8 +401,8 @@ public class NonlinearPredictor implements Serializable {
      * @param mvNames MV names
      * @param sampleTime sample interval
      */
-    public PredictionResult(double[][] cvTrajectories, double[][] mvTrajectories, double[] time,
-        String[] cvNames, String[] mvNames, double sampleTime) {
+    public PredictionResult(double[][] cvTrajectories, double[][] mvTrajectories, double[] time, String[] cvNames,
+        String[] mvNames, double sampleTime) {
       this.cvTrajectories = cvTrajectories;
       this.mvTrajectories = mvTrajectories;
       this.time = time != null ? time.clone() : new double[0];

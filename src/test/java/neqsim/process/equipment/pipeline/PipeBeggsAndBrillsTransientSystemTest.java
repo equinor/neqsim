@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.separator.Separator;
@@ -18,12 +20,13 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * Integration-style tests exercising the dynamic Beggs & Brill pipeline together with a throttling
- * valve and separator across a variety of fluid conditions. Each test verifies that a valve opening
- * change results in a delayed separator response, illustrating the finite propagation speed
- * introduced by the transient pipeline model.
+ * Integration-style tests exercising the dynamic Beggs & Brill pipeline together with a throttling valve and separator
+ * across a variety of fluid conditions. Each test verifies that a valve opening change results in a delayed separator
+ * response, illustrating the finite propagation speed introduced by the transient pipeline model.
  */
 public class PipeBeggsAndBrillsTransientSystemTest {
+  private static final Logger logger = LogManager.getLogger(PipeBeggsAndBrillsTransientSystemTest.class);
+
   private static final double PIPELINE_LENGTH_METERS = 100.0;
   private static final double PIPELINE_DIAMETER_METERS = 0.3;
   private static final double PIPELINE_ROUGHNESS_METERS = 5e-6;
@@ -87,12 +90,12 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     Assertions.assertTrue(fluid.hasPhaseType("oil"));
     Assertions.assertTrue(fluid.hasPhaseType("aqueous"));
 
-    assertDelayedSeparatorResponse("three-phase gas-oil-aqueous",
-        this::createThreePhaseGasOilWaterFluid, Arrays.asList(gasFlowProbe(), liquidFlowProbe()));
+    assertDelayedSeparatorResponse("three-phase gas-oil-aqueous", this::createThreePhaseGasOilWaterFluid,
+        Arrays.asList(gasFlowProbe(), liquidFlowProbe()));
   }
 
-  private void assertDelayedSeparatorResponse(String scenarioDescription,
-      Supplier<SystemInterface> fluidSupplier, List<FlowProbe> probes) {
+  private void assertDelayedSeparatorResponse(String scenarioDescription, Supplier<SystemInterface> fluidSupplier,
+      List<FlowProbe> probes) {
     ProcessComponents dynamic = buildProcess(fluidSupplier.get(), INITIAL_VALVE_OPENING);
     dynamic.process.run();
 
@@ -154,7 +157,7 @@ public class PipeBeggsAndBrillsTransientSystemTest {
       // the response is essentially instantaneous (which may indicate a model limitation).
       // This is a soft check since the transient model may not always show ideal delay behavior.
       if (firstStepChange >= 0.95 * totalChange) {
-        System.out.println("Note: " + scenarioDescription + " " + probe.description()
+        logger.info("Note: " + scenarioDescription + " " + probe.description()
             + " showed near-instant response (first step captured "
             + String.format("%.1f%%", 100.0 * firstStepChange / totalChange)
             + " of total change). Pipeline transient delay may not be working as expected.");
@@ -190,8 +193,8 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     // Soft check: transient simulation should ideally require multiple steps
     // This may not always hold depending on the pipeline model behavior
     if (additionalSteps == 0) {
-      System.out.println("Note: " + scenarioDescription
-          + " converged in first step. Pipeline transient delay may not be active.");
+      logger.info(
+          "Note: " + scenarioDescription + " converged in first step. Pipeline transient delay may not be active.");
     }
 
     for (FlowProbe probe : probes) {
@@ -200,22 +203,19 @@ public class PipeBeggsAndBrillsTransientSystemTest {
       double firstStepChange = firstStepDeltas.get(probe);
       double finalFlow = latestFlows.get(probe);
 
-      Assertions.assertTrue(Math.abs(finalFlow - baseline) > firstStepChange,
-          scenarioDescription + " " + probe.description()
-              + " should continue moving away from the original steady flow");
+      Assertions.assertTrue(Math.abs(finalFlow - baseline) > firstStepChange, scenarioDescription + " "
+          + probe.description() + " should continue moving away from the original steady flow");
       double totalChange = Math.abs(target - baseline);
       double finalDelta = Math.abs(finalFlow - baseline);
-      Assertions.assertTrue(finalDelta >= Math.max(0.02 * totalChange, 0.01),
-          scenarioDescription + " " + probe.description()
-              + " should reflect a significant change after multiple steps");
+      Assertions.assertTrue(finalDelta >= Math.max(0.02 * totalChange, 0.01), scenarioDescription + " "
+          + probe.description() + " should reflect a significant change after multiple steps");
       double initialTargetGap = Math.abs(baseline - target);
       double finalTargetGap = Math.abs(finalFlow - target);
-      Assertions.assertTrue(finalTargetGap < initialTargetGap, scenarioDescription + " "
-          + probe.description() + " should move closer to the final steady value over time");
+      Assertions.assertTrue(finalTargetGap < initialTargetGap,
+          scenarioDescription + " " + probe.description() + " should move closer to the final steady value over time");
       Assertions.assertTrue(Math.abs(firstStepFlows.get(probe) - target) > finalTargetGap,
           scenarioDescription + " " + probe.description()
-              + " should be closer to the final value after the additional steps than after the"
-              + " first step");
+              + " should be closer to the final value after the additional steps than after the" + " first step");
     }
   }
 
@@ -321,13 +321,11 @@ public class PipeBeggsAndBrillsTransientSystemTest {
   }
 
   private static FlowProbe gasFlowProbe() {
-    return new FlowProbe("gas outlet",
-        separator -> separator.getGasOutStream().getFlowRate("kg/sec"));
+    return new FlowProbe("gas outlet", separator -> separator.getGasOutStream().getFlowRate("kg/sec"));
   }
 
   private static FlowProbe liquidFlowProbe() {
-    return new FlowProbe("liquid outlet",
-        separator -> separator.getLiquidOutStream().getFlowRate("kg/sec"));
+    return new FlowProbe("liquid outlet", separator -> separator.getLiquidOutStream().getFlowRate("kg/sec"));
   }
 
   private static final class FlowProbe {
@@ -354,8 +352,8 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     private final PipeBeggsAndBrills pipeline;
     private final Separator separator;
 
-    private ProcessComponents(ProcessSystem process, ThrottlingValve valve,
-        PipeBeggsAndBrills pipeline, Separator separator) {
+    private ProcessComponents(ProcessSystem process, ThrottlingValve valve, PipeBeggsAndBrills pipeline,
+        Separator separator) {
       this.process = process;
       this.valve = valve;
       this.pipeline = pipeline;
@@ -363,4 +361,3 @@ public class PipeBeggsAndBrillsTransientSystemTest {
     }
   }
 }
-

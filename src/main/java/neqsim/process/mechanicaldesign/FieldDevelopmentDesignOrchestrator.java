@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.mechanicaldesign.StudyClass.DeliverableType;
 import neqsim.process.mechanicaldesign.torg.TechnicalRequirementsDocument;
 import neqsim.process.mechanicaldesign.torg.TorgDataSource;
 import neqsim.process.mechanicaldesign.torg.TorgManager;
@@ -19,8 +20,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Orchestrator for field development design workflows.
  *
  * <p>
- * This class provides a unified, coordinated workflow for process simulation and mechanical design
- * in field development projects. It manages:
+ * This class provides a unified, coordinated workflow for process simulation and mechanical design in field development
+ * projects. It manages:
  * </p>
  * <ul>
  * <li>Design phase management (Concept, FEED, Detail)</li>
@@ -31,7 +32,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Create process system
@@ -40,8 +41,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * process.add(compressor);
  *
  * // Create orchestrator
- * FieldDevelopmentDesignOrchestrator orchestrator =
- *     new FieldDevelopmentDesignOrchestrator(process, "MyProject");
+ * FieldDevelopmentDesignOrchestrator orchestrator = new FieldDevelopmentDesignOrchestrator(process, "MyProject");
  *
  * // Configure for FEED phase
  * orchestrator.setDesignPhase(DesignPhase.FEED);
@@ -66,8 +66,7 @@ import neqsim.process.processmodel.ProcessSystem;
 public class FieldDevelopmentDesignOrchestrator implements Serializable {
 
   private static final long serialVersionUID = 1L;
-  private static final Logger logger =
-      LogManager.getLogger(FieldDevelopmentDesignOrchestrator.class);
+  private static final Logger logger = LogManager.getLogger(FieldDevelopmentDesignOrchestrator.class);
 
   /** The process system being designed. */
   private final ProcessSystem processSystem;
@@ -82,7 +81,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
   private final List<DesignCase> designCases = new ArrayList<DesignCase>();
 
   /** TORG manager for standards management. */
-  private final TorgManager torgManager = new TorgManager();
+  private final transient TorgManager torgManager = new TorgManager();
 
   /** System mechanical design instance. */
   private SystemMechanicalDesign systemMechanicalDesign;
@@ -91,14 +90,19 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
   private DesignValidationResult validationResult;
 
   /** Design case results. */
-  private final Map<DesignCase, DesignCaseResult> caseResults =
-      new LinkedHashMap<DesignCase, DesignCaseResult>();
+  private final Map<DesignCase, DesignCaseResult> caseResults = new LinkedHashMap<DesignCase, DesignCaseResult>();
 
   /** Workflow execution history. */
   private final List<WorkflowStep> workflowHistory = new ArrayList<WorkflowStep>();
 
   /** Unique run identifier. */
   private UUID runId;
+
+  /** Study class for engineering deliverables (null = no deliverables). */
+  private StudyClass studyClass;
+
+  /** Generated engineering deliverables package. */
+  private EngineeringDeliverablesPackage deliverablesPackage;
 
   /**
    * Represents a single workflow step.
@@ -457,10 +461,15 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
       return false;
     }
 
-    // Step 5: Validate design
+    // Step 5: Generate engineering deliverables
+    if (studyClass != null) {
+      generateEngineeringDeliverables();
+    }
+
+    // Step 6: Validate design
     validateDesign();
 
-    // Step 6: Generate summary
+    // Step 7: Generate summary
     generateResultsSummary();
 
     logger.info("Design workflow completed for project {} (Run: {})", projectId, runId);
@@ -477,8 +486,8 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     caseResults.clear();
     validationResult = new DesignValidationResult();
 
-    step.complete(true, String.format("Initialized for phase %s with %d design cases", designPhase,
-        designCases.size()));
+    step.complete(true,
+        String.format("Initialized for phase %s with %d design cases", designPhase, designCases.size()));
   }
 
   /**
@@ -506,8 +515,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     } catch (Exception e) {
       step.complete(false, "Simulation failed: " + e.getMessage());
       logger.error("Process simulation failed", e);
-      validationResult.addCritical("Simulation", "ProcessSystem",
-          "Process simulation failed: " + e.getMessage(),
+      validationResult.addCritical("Simulation", "ProcessSystem", "Process simulation failed: " + e.getMessage(),
           "Check feed conditions and equipment setup");
       return false;
     }
@@ -533,8 +541,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     } catch (Exception e) {
       step.complete(false, "Error applying TORG: " + e.getMessage());
       logger.error("Error applying TORG", e);
-      validationResult.addWarning("TORG", "ProcessSystem",
-          "Failed to apply TORG: " + e.getMessage(),
+      validationResult.addWarning("TORG", "ProcessSystem", "Failed to apply TORG: " + e.getMessage(),
           "Check TORG configuration and equipment compatibility");
     }
   }
@@ -558,8 +565,8 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
         caseResult.setTotalVolume(systemMechanicalDesign.getTotalVolume());
       }
 
-      step.complete(true, String.format("Mechanical design completed. Total weight: %.0f kg",
-          systemMechanicalDesign.getTotalWeight()));
+      step.complete(true,
+          String.format("Mechanical design completed. Total weight: %.0f kg", systemMechanicalDesign.getTotalWeight()));
       return true;
     } catch (Exception e) {
       step.complete(false, "Mechanical design failed: " + e.getMessage());
@@ -568,6 +575,36 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
           "Mechanical design calculation failed: " + e.getMessage(),
           "Check equipment configuration and input parameters");
       return false;
+    }
+  }
+
+  /**
+   * Generate engineering deliverables package.
+   */
+  private void generateEngineeringDeliverables() {
+    WorkflowStep step = new WorkflowStep("Generate Engineering Deliverables");
+    workflowHistory.add(step);
+
+    try {
+      deliverablesPackage = new EngineeringDeliverablesPackage(processSystem, studyClass);
+      deliverablesPackage.generate();
+
+      int success = deliverablesPackage.getSuccessCount();
+      int total = deliverablesPackage.getStatusMap().size();
+      step.complete(deliverablesPackage.isComplete(),
+          String.format("Generated %d/%d deliverables for %s", success, total, studyClass));
+
+      // Record any failures as validation warnings
+      for (DeliverableType failed : deliverablesPackage.getFailedDeliverables()) {
+        validationResult.addWarning("Deliverables", failed.getDisplayName(),
+            "Failed to generate: " + deliverablesPackage.getStatusMap().get(failed).getMessage(),
+            "Check process system setup and re-run");
+      }
+    } catch (Exception e) {
+      step.complete(false, "Deliverable generation failed: " + e.getMessage());
+      logger.error("Deliverable generation failed", e);
+      validationResult.addWarning("Deliverables", "EngineeringDeliverablesPackage",
+          "Deliverable generation failed: " + e.getMessage(), "Check process system configuration");
     }
   }
 
@@ -639,8 +676,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
    * @param equipment the equipment
    * @param mechDesign the mechanical design
    */
-  private void validateDetailedDesign(ProcessEquipmentInterface equipment,
-      MechanicalDesign mechDesign) {
+  private void validateDetailedDesign(ProcessEquipmentInterface equipment, MechanicalDesign mechDesign) {
     String name = equipment.getName();
 
     // Check weight is calculated
@@ -655,8 +691,8 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     if (designPressure > 0 && operatingPressure > 0) {
       double margin = (designPressure - operatingPressure) / operatingPressure;
       if (margin < 0.1) {
-        validationResult.addWarning("Pressure", name,
-            String.format("Low design margin: %.1f%% (design=%.1f, operating=%.1f barg)",
+        validationResult.addWarning(
+            "Pressure", name, String.format("Low design margin: %.1f%% (design=%.1f, operating=%.1f barg)",
                 margin * 100, designPressure, operatingPressure),
             "Review design pressure and consider increasing margin per standards");
       }
@@ -692,9 +728,8 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     TechnicalRequirementsDocument.EnvironmentalConditions env = torg.getEnvironmentalConditions();
     if (env != null) {
       // Validate temperature ranges, etc.
-      validationResult.addInfo("ProcessSystem",
-          String.format("TORG environmental conditions: %.1f°C to %.1f°C ambient",
-              env.getMinAmbientTemperature(), env.getMaxAmbientTemperature()));
+      validationResult.addInfo("ProcessSystem", String.format("TORG environmental conditions: %.1f°C to %.1f°C ambient",
+          env.getMinAmbientTemperature(), env.getMaxAmbientTemperature()));
     }
 
     // Check safety factors
@@ -719,15 +754,12 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     summary.append(String.format("Run ID: %s\n\n", runId));
 
     if (systemMechanicalDesign != null) {
-      summary.append(
-          String.format("Total Weight: %.0f kg\n", systemMechanicalDesign.getTotalWeight()));
-      summary.append(
-          String.format("Total Volume: %.1f m³\n", systemMechanicalDesign.getTotalVolume()));
+      summary.append(String.format("Total Weight: %.0f kg\n", systemMechanicalDesign.getTotalWeight()));
+      summary.append(String.format("Total Volume: %.1f m³\n", systemMechanicalDesign.getTotalVolume()));
       summary.append(String.format("Equipment Count: %d\n", processSystem.size()));
     }
 
-    summary.append(
-        String.format("\nValidation: %s\n", validationResult.isValid() ? "PASSED" : "FAILED"));
+    summary.append(String.format("\nValidation: %s\n", validationResult.isValid() ? "PASSED" : "FAILED"));
 
     step.complete(true, "Summary generated");
     logger.info("Design Summary:\n{}", summary.toString());
@@ -797,6 +829,40 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
   }
 
   /**
+   * Set the study class for engineering deliverables generation.
+   *
+   * <p>
+   * When set, the workflow will generate the deliverables package appropriate for the study class (Class A = full set,
+   * Class B = reduced set, Class C = minimal). Set to {@code null} to skip deliverable generation.
+   * </p>
+   *
+   * @param studyClass the study class, or null to skip deliverable generation
+   * @return this instance for chaining
+   */
+  public FieldDevelopmentDesignOrchestrator setStudyClass(StudyClass studyClass) {
+    this.studyClass = studyClass;
+    return this;
+  }
+
+  /**
+   * Get the configured study class.
+   *
+   * @return study class or null if not set
+   */
+  public StudyClass getStudyClass() {
+    return studyClass;
+  }
+
+  /**
+   * Get the generated engineering deliverables package.
+   *
+   * @return deliverables package or null if not generated
+   */
+  public EngineeringDeliverablesPackage getEngineeringDeliverables() {
+    return deliverablesPackage;
+  }
+
+  /**
    * Generate a design report.
    *
    * @return formatted design report
@@ -844,19 +910,15 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
       report.append("EQUIPMENT SUMMARY\n");
       report.append(singleLine).append("\n");
       report.append(String.format("Total Equipment:  %d units\n", processSystem.size()));
-      report.append(
-          String.format("Total Weight:     %.0f kg\n", systemMechanicalDesign.getTotalWeight()));
-      report.append(
-          String.format("Total Volume:     %.1f m³\n", systemMechanicalDesign.getTotalVolume()));
-      report.append(
-          String.format("Total Plot Space: %.1f m²\n", systemMechanicalDesign.getTotalPlotSpace()));
+      report.append(String.format("Total Weight:     %.0f kg\n", systemMechanicalDesign.getTotalWeight()));
+      report.append(String.format("Total Volume:     %.1f m³\n", systemMechanicalDesign.getTotalVolume()));
+      report.append(String.format("Total Plot Space: %.1f m²\n", systemMechanicalDesign.getTotalPlotSpace()));
       report.append("\n");
 
       // Weight breakdown
       report.append("WEIGHT BY EQUIPMENT TYPE\n");
       report.append(singleLine).append("\n");
-      for (Map.Entry<String, Double> entry : systemMechanicalDesign.getWeightByEquipmentType()
-          .entrySet()) {
+      for (Map.Entry<String, Double> entry : systemMechanicalDesign.getWeightByEquipmentType().entrySet()) {
         report.append(String.format("  %-25s %10.0f kg\n", entry.getKey(), entry.getValue()));
       }
       report.append("\n");
@@ -878,12 +940,29 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
       report.append(singleLine).append("\n");
       for (DesignValidationResult.ValidationMessage msg : validationResult.getMessages()) {
         if (msg.getSeverity() != DesignValidationResult.Severity.INFO) {
-          report.append(String.format("[%s] %s: %s\n", msg.getSeverity(), msg.getEquipmentName(),
-              msg.getMessage()));
+          report.append(String.format("[%s] %s: %s\n", msg.getSeverity(), msg.getEquipmentName(), msg.getMessage()));
           if (msg.getRemediation() != null && !msg.getRemediation().isEmpty()) {
             report.append(String.format("  Fix: %s\n", msg.getRemediation()));
           }
         }
+      }
+      report.append("\n");
+    }
+
+    // Engineering Deliverables Summary
+    if (deliverablesPackage != null && deliverablesPackage.isGenerated()) {
+      report.append("ENGINEERING DELIVERABLES\n");
+      report.append(singleLine).append("\n");
+      report.append(String.format("Study Class:   %s\n", studyClass.getDisplayName()));
+      report.append(String.format("Generated:     %d/%d deliverables\n", deliverablesPackage.getSuccessCount(),
+          deliverablesPackage.getStatusMap().size()));
+      report.append(String.format("Status:        %s\n", deliverablesPackage.isComplete() ? "COMPLETE" : "INCOMPLETE"));
+      report.append("\n");
+      for (Map.Entry<DeliverableType, EngineeringDeliverablesPackage.DeliverableStatus> entry : deliverablesPackage
+          .getStatusMap().entrySet()) {
+        String dStatus = entry.getValue().isSuccess() ? "OK" : "FAIL";
+        report.append(String.format("  %s %-30s %5d ms\n", dStatus, entry.getKey().getDisplayName(),
+            entry.getValue().getDurationMs()));
       }
       report.append("\n");
     }
@@ -893,8 +972,7 @@ public class FieldDevelopmentDesignOrchestrator implements Serializable {
     report.append(singleLine).append("\n");
     for (WorkflowStep step : workflowHistory) {
       String status = step.isSuccess() ? "OK" : "FAIL";
-      report.append(
-          String.format("  %s %-30s %5d ms\n", status, step.getStepName(), step.getDurationMs()));
+      report.append(String.format("  %s %-30s %5d ms\n", status, step.getStepName(), step.getDurationMs()));
     }
     report.append("\n");
 

@@ -3,20 +3,19 @@ package neqsim.process.calibration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.sensitivity.ProcessSensitivityAnalyzer;
 import neqsim.process.util.uncertainty.SensitivityMatrix;
 import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMarquardtFunction;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Objective function that bridges process simulation with the Levenberg-Marquardt optimizer.
  *
  * <p>
- * This class extends {@link LevenbergMarquardtFunction} to enable batch parameter estimation for
- * process simulations. It wraps a {@link ProcessSystem} and provides the objective function
- * interface expected by the L-M optimizer.
+ * This class extends {@link LevenbergMarquardtFunction} to enable batch parameter estimation for process simulations.
+ * It wraps a {@link ProcessSystem} and provides the objective function interface expected by the L-M optimizer.
  * </p>
  *
  * <p>
@@ -30,13 +29,13 @@ import org.apache.logging.log4j.Logger;
  * </ul>
  *
  * <h2>Usage:</h2>
- * 
+ *
  * <pre>
  * {@code
  * ProcessSimulationFunction function = new ProcessSimulationFunction(process);
  * function.addParameter("Pipe1.heatTransferCoefficient", 1.0, 100.0);
  * function.addMeasurement("Manifold.outletStream.temperature");
- * function.setInitialGuess(new double[] {15.0});
+ * function.setInitialGuess(new double[] { 15.0 });
  * }
  * </pre>
  *
@@ -83,7 +82,6 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
    * @param processSystem the process system to wrap
    */
   public ProcessSimulationFunction(ProcessSystem processSystem) {
-    super();
     this.processSystem = processSystem;
     this.parameterPaths = new ArrayList<>();
     this.measurementPaths = new ArrayList<>();
@@ -159,8 +157,8 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
    * Enables or disables analytical Jacobian computation.
    *
    * <p>
-   * When enabled, uses {@link ProcessSensitivityAnalyzer} to compute the Jacobian more efficiently,
-   * potentially reusing Broyden Jacobians from recycle convergence.
+   * When enabled, uses {@link ProcessSensitivityAnalyzer} to compute the Jacobian more efficiently, potentially reusing
+   * Broyden Jacobians from recycle convergence.
    * </p>
    *
    * @param useAnalytical true to use analytical Jacobian
@@ -202,18 +200,18 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
   private String[] splitPath(String path) {
     int dotIndex = path.indexOf('.');
     if (dotIndex < 0) {
-      throw new IllegalArgumentException("Invalid path format: " + path
-          + ". Expected 'Equipment.property' or 'Equipment.stream.property'");
+      throw new IllegalArgumentException(
+          "Invalid path format: " + path + ". Expected 'Equipment.property' or 'Equipment.stream.property'");
     }
-    return new String[] {path.substring(0, dotIndex), path.substring(dotIndex + 1)};
+    return new String[] { path.substring(0, dotIndex), path.substring(dotIndex + 1) };
   }
 
   /**
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the model prediction for the current data point and measurement. The dependentValues
-   * array encodes [dataPointIndex, measurementIndex] to identify which prediction is requested.
+   * Calculates the model prediction for the current data point and measurement. The dependentValues array encodes
+   * [dataPointIndex, measurementIndex] to identify which prediction is requested.
    * </p>
    */
   @Override
@@ -420,8 +418,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
    * Computes the Jacobian using ProcessSensitivityAnalyzer if enabled.
    *
    * <p>
-   * This method is called by the L-M optimizer when analytical Jacobian is preferred over numerical
-   * differentiation.
+   * This method is called by the L-M optimizer when analytical Jacobian is preferred over numerical differentiation.
    * </p>
    *
    * @return the sensitivity matrix, or null if analytical Jacobian is disabled
@@ -455,8 +452,7 @@ public class ProcessSimulationFunction extends LevenbergMarquardtFunction {
     String[] outParts = splitPath(outputPath);
     String[] inParts = splitPath(inputPath);
 
-    return cachedJacobian.getSensitivity(outParts[0] + "." + outParts[1],
-        inParts[0] + "." + inParts[1]);
+    return cachedJacobian.getSensitivity(outParts[0] + "." + outParts[1], inParts[0] + "." + inParts[1]);
   }
 
   /**

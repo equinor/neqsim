@@ -9,84 +9,82 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>SrkOilCharacterizationTest class.</p>
+ * SrkOilCharacterizationTest class.
  *
  * @author ESOL
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class SrkOilCharacterizationTest {
-    static SystemInterface thermoSystem = null;
+  static SystemInterface thermoSystem = null;
 
-    /**
-     * <p>setUp.</p>
-     */
-    @BeforeAll
-    public static void setUp() {
-        thermoSystem = new SystemSrkEos(298.0, 10.0);
-        thermoSystem.addComponent("methane", 90.0);
-        thermoSystem.addComponent("ethane", 10.0);
-        thermoSystem.addComponent("propane", 4.0);
-        thermoSystem.addComponent("i-butane", 4.0);
-        thermoSystem.addComponent("n-butane", 4.0);
-        thermoSystem.addTBPfraction("C7", 5.0, 93.30 / 1000.0, 0.73);
-        thermoSystem.addTBPfraction("C8", 2.0, 106.60 / 1000.0, 0.7533);
-        thermoSystem.addTBPfraction("C9", 1.0, 119.60 / 1000.0, 0.7653);
-        thermoSystem.addPlusFraction("C10", 5.62, 281.0 / 1000.0, 0.882888);
-        thermoSystem.getCharacterization().characterisePlusFraction();
-        thermoSystem.addComponent("water", 1.0);
-        thermoSystem.createDatabase(true);
-        thermoSystem.setMixingRule(2);
-    }
+  /**
+   * setUp.
+   */
+  @BeforeAll
+  public static void setUp() {
+    thermoSystem = new SystemSrkEos(298.0, 10.0);
+    thermoSystem.addComponent("methane", 90.0);
+    thermoSystem.addComponent("ethane", 10.0);
+    thermoSystem.addComponent("propane", 4.0);
+    thermoSystem.addComponent("i-butane", 4.0);
+    thermoSystem.addComponent("n-butane", 4.0);
+    thermoSystem.addTBPfraction("C7", 5.0, 93.30 / 1000.0, 0.73);
+    thermoSystem.addTBPfraction("C8", 2.0, 106.60 / 1000.0, 0.7533);
+    thermoSystem.addTBPfraction("C9", 1.0, 119.60 / 1000.0, 0.7653);
+    thermoSystem.addPlusFraction("C10", 5.62, 281.0 / 1000.0, 0.882888);
+    thermoSystem.getCharacterization().characterisePlusFraction();
+    thermoSystem.addComponent("water", 1.0);
+    thermoSystem.createDatabase(true);
+    thermoSystem.setMixingRule(2);
+  }
 
-    /**
-     * <p>testTPflash.</p>
-     */
-    @Test
-    public void testTPflash() {
-        ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
-        testOps.TPflash();
-        assertEquals(2, thermoSystem.getNumberOfPhases());
-    }
+  /**
+   * testTPflash.
+   */
+  @Test
+  public void testTPflash() {
+    ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
+    testOps.TPflash();
+    assertEquals(2, thermoSystem.getNumberOfPhases());
+  }
 
-    /**
-     * <p>
-     * testinitPhysicalProperties.
-     * </p>
-     */
-    @Test
-    public void testinitPhysicalProperties() {
-        thermoSystem.initPhysicalProperties();
-        assertEquals(thermoSystem.getPhase(0).getPhysicalProperties().getDensity(),
-                thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
-    }
+  /**
+   * testinitPhysicalProperties.
+   */
+  @Test
+  public void testinitPhysicalProperties() {
+    thermoSystem.initPhysicalProperties();
+    assertEquals(thermoSystem.getPhase(0).getPhysicalProperties().getDensity(),
+        thermoSystem.getPhase(0).getPhysicalProperties().getDensity());
+  }
 
-    /**
-     * <p>testPHflash.</p>
-     */
-    @Test
-    public void testPHflash() {
-        ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
-        testOps.TPflash();
-        thermoSystem.init(3);
-        double enthalpy = thermoSystem.getEnthalpy();
-        testOps.PHflash(enthalpy + 10.0);
-        thermoSystem.init(3);
+  /**
+   * testPHflash.
+   */
+  @Test
+  public void testPHflash() {
+    ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
+    testOps.TPflash();
+    thermoSystem.init(3);
+    double enthalpy = thermoSystem.getEnthalpy();
+    testOps.PHflash(enthalpy + 10.0);
+    thermoSystem.init(3);
 
-        assertEquals(Math.round(enthalpy + 10.0), Math.round(thermoSystem.getEnthalpy()));
-    }
+    assertEquals(Math.round(enthalpy + 10.0), Math.round(thermoSystem.getEnthalpy()));
+  }
 
-    /**
-     * <p>testPSflash.</p>
-     */
-    @Test
-    public void testPSflash() {
-        ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
-        testOps.TPflash();
-        thermoSystem.init(3);
-        double entropy = thermoSystem.getEntropy();
-        testOps.PSflash(entropy + 10.0);
-        thermoSystem.init(3);
-        assertEquals(Math.round(entropy + 10.0), Math.round(thermoSystem.getEntropy()));
-    }
+  /**
+   * testPSflash.
+   */
+  @Test
+  public void testPSflash() {
+    ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem);
+    testOps.TPflash();
+    thermoSystem.init(3);
+    double entropy = thermoSystem.getEntropy();
+    testOps.PSflash(entropy + 10.0);
+    thermoSystem.init(3);
+    assertEquals(Math.round(entropy + 10.0), Math.round(thermoSystem.getEntropy()));
+  }
 }

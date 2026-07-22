@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * SwellingTest class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class SwellingTest extends BasePVTsimulation {
   SystemInterface injectionGas;
 
   /**
-   * <p>
    * Constructor for SwellingTest.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -35,9 +31,7 @@ public class SwellingTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Setter for the field <code>injectionGas</code>.
-   * </p>
    *
    * @param injectionGas a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -46,9 +40,7 @@ public class SwellingTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * setCummulativeMolePercentGasInjected.
-   * </p>
    *
    * @param gasInjected an array of type double
    */
@@ -59,9 +51,7 @@ public class SwellingTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     double oldInjected = 0.0;
@@ -99,15 +89,12 @@ public class SwellingTest extends BasePVTsimulation {
     }
 
     for (int i = 0; i < getPressures().length; i++) {
-      logger.info(
-          "pressure " + getPressures()[i] + " relativeOil volume " + getRelativeOilVolume()[i]);
+      logger.info("pressure " + getPressures()[i] + " relativeOil volume " + getRelativeOilVolume()[i]);
     }
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -131,16 +118,14 @@ public class SwellingTest extends BasePVTsimulation {
     test.setInjectionGas(gasSystem);
     test.setTemperature(298.15);
     test.setCummulativeMolePercentGasInjected(
-        new double[] {0.0, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.4, 0.5, 1.0, 10.3, 22.0});
+        new double[] { 0.0, 0.01, 0.02, 0.03, 0.05, 0.1, 0.2, 0.4, 0.5, 1.0, 10.3, 22.0 });
     test.runCalc();
 
     test.getThermoSystem().display();
   }
 
   /**
-   * <p>
    * Getter for the field <code>relativeOilVolume</code>.
-   * </p>
    *
    * @return the relativeOilVolume
    */
@@ -149,9 +134,7 @@ public class SwellingTest extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Setter for the field <code>relativeOilVolume</code>.
-   * </p>
    *
    * @param relativeOilVolume the relativeOilVolume to set
    */

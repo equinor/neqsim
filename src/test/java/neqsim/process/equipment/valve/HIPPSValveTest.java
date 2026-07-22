@@ -15,7 +15,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Test class for HIPPSValve functionality.
- * 
+ *
  * <p>
  * Tests cover:
  * <ul>
@@ -82,8 +82,7 @@ class HIPPSValveTest {
     hippsValve.setSILRating(1);
 
     PressureTransmitter PT1 = new PressureTransmitter("PT-101", feedStream);
-    AlarmConfig alarmConfig =
-        AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
+    AlarmConfig alarmConfig = AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
     PT1.setAlarmConfig(alarmConfig);
 
     hippsValve.addPressureTransmitter(PT1);
@@ -115,8 +114,7 @@ class HIPPSValveTest {
     PressureTransmitter PT1 = new PressureTransmitter("PT-101A", feedStream);
     PressureTransmitter PT2 = new PressureTransmitter("PT-101B", feedStream);
 
-    AlarmConfig alarmConfig =
-        AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
+    AlarmConfig alarmConfig = AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
     PT1.setAlarmConfig(alarmConfig);
     PT2.setAlarmConfig(alarmConfig);
 
@@ -150,8 +148,7 @@ class HIPPSValveTest {
     PressureTransmitter PT1 = new PressureTransmitter("PT-101A", feedStream);
     PressureTransmitter PT2 = new PressureTransmitter("PT-101B", feedStream);
 
-    AlarmConfig alarmConfig =
-        AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
+    AlarmConfig alarmConfig = AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
     PT1.setAlarmConfig(alarmConfig);
     PT2.setAlarmConfig(alarmConfig);
 
@@ -190,8 +187,7 @@ class HIPPSValveTest {
     PressureTransmitter PT2 = new PressureTransmitter("PT-101B", feedStream);
     PressureTransmitter PT3 = new PressureTransmitter("PT-101C", feedStream);
 
-    AlarmConfig alarmConfig =
-        AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
+    AlarmConfig alarmConfig = AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
     PT1.setAlarmConfig(alarmConfig);
     PT2.setAlarmConfig(alarmConfig);
     PT3.setAlarmConfig(alarmConfig);
@@ -238,8 +234,7 @@ class HIPPSValveTest {
     hippsValve.setVotingLogic(HIPPSValve.VotingLogic.ONE_OUT_OF_ONE);
 
     PressureTransmitter PT1 = new PressureTransmitter("PT-101", feedStream);
-    AlarmConfig alarmConfig =
-        AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
+    AlarmConfig alarmConfig = AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
     PT1.setAlarmConfig(alarmConfig);
     hippsValve.addPressureTransmitter(PT1);
 
@@ -273,8 +268,7 @@ class HIPPSValveTest {
     hippsValve.setVotingLogic(HIPPSValve.VotingLogic.ONE_OUT_OF_ONE);
 
     PressureTransmitter PT1 = new PressureTransmitter("PT-101", feedStream);
-    AlarmConfig alarmConfig =
-        AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
+    AlarmConfig alarmConfig = AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
     PT1.setAlarmConfig(alarmConfig);
     hippsValve.addPressureTransmitter(PT1);
 
@@ -380,8 +374,7 @@ class HIPPSValveTest {
     PressureTransmitter PT3 = new PressureTransmitter("PT-101C", feedStream);
 
     // No delay for immediate trip when pressure exceeds 90 bara
-    AlarmConfig hippsAlarm =
-        AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.0).unit("bara").build();
+    AlarmConfig hippsAlarm = AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.0).unit("bara").build();
 
     PT1.setAlarmConfig(hippsAlarm);
     PT2.setAlarmConfig(hippsAlarm);
@@ -405,8 +398,7 @@ class HIPPSValveTest {
 
     // Verify HIPPS tripped
     assertTrue(hippsValve.hasTripped(), "HIPPS should trip at 92 bara (above 90 bara trip point)");
-    assertEquals(0.0, hippsValve.getPercentValveOpening(), 0.01,
-        "HIPPS valve should be fully closed after trip");
+    assertEquals(0.0, hippsValve.getPercentValveOpening(), 0.01, "HIPPS valve should be fully closed after trip");
 
     // Verify pressure is still below typical PSV setpoint (100 bara)
     assertTrue(feedStream.getPressure() < 100.0,
@@ -466,8 +458,7 @@ class HIPPSValveTest {
     PressureTransmitter PT2 = new PressureTransmitter("PT-101B", feedStream);
     PressureTransmitter PT3 = new PressureTransmitter("PT-101C", feedStream);
 
-    AlarmConfig alarmConfig =
-        AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
+    AlarmConfig alarmConfig = AlarmConfig.builder().highHighLimit(90.0).deadband(2.0).delay(0.5).unit("bara").build();
 
     PT1.setAlarmConfig(alarmConfig);
     PT2.setAlarmConfig(alarmConfig);

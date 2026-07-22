@@ -3,9 +3,7 @@ package neqsim.process.measurementdevice;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * <p>
  * WellAllocator class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
   protected StreamInterface exportOilStream = null;
 
   /**
-   * <p>
    * Constructor for WellAllocator.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -28,9 +24,7 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for WellAllocator.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -40,9 +34,7 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>exportGasStream</code>.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -51,9 +43,7 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>exportOilStream</code>.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -68,8 +58,7 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * Get specific measurement type. Supports "gas export rate", "oil export rate" and "total export
-   * rate".
+   * Get specific measurement type. Supports "gas export rate", "oil export rate" and "total export rate".
    *
    * @param measurement Measurement value to get
    * @param unit Unit to get value in
@@ -85,8 +74,7 @@ public class WellAllocator extends StreamMeasurementDeviceBaseClass {
           / (exportGasStream.getFluid().getComponent(i).getFlowRate("kg/hr")
               + exportOilStream.getFluid().getComponent(i).getFlowRate("kg/hr"));
       gasExportFlow += stream.getFluid().getComponent(i).getTotalFlowRate(unit) * splitFactors[i];
-      oilExportFlow +=
-          stream.getFluid().getComponent(i).getTotalFlowRate(unit) * (1.0 - splitFactors[i]);
+      oilExportFlow += stream.getFluid().getComponent(i).getTotalFlowRate(unit) * (1.0 - splitFactors[i]);
     }
 
     if (measurement.equals("gas export rate")) {

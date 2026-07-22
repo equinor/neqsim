@@ -2,8 +2,8 @@
  * Enhanced reservoir modeling package for field development.
  *
  * <p>
- * This package provides classes for injection strategy calculations and reservoir material balance.
- * It supports the "Reservoir Material Balance with Injection" topic from NTNU's TPG4230 course.
+ * This package provides classes for injection strategy calculations and reservoir material balance. It supports the
+ * "Reservoir Material Balance with Injection" topic from NTNU's TPG4230 course.
  * </p>
  *
  * <h2>TPG4230 Topic: Reservoir Material Balance with Injection</h2>
@@ -19,8 +19,8 @@
  *
  * <h2>Key Classes</h2>
  * <ul>
- * <li>{@link neqsim.process.fielddevelopment.reservoir.InjectionStrategy} - Calculates injection
- * rates for voidage replacement</li>
+ * <li>{@link neqsim.process.fielddevelopment.reservoir.InjectionStrategy} - Calculates injection rates for voidage
+ * replacement</li>
  * </ul>
  *
  * <h2>Injection Strategies</h2>
@@ -33,7 +33,7 @@
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Calculate water injection for full voidage replacement
  * InjectionStrategy strategy = InjectionStrategy.waterInjection(1.0); // VRR = 1.0

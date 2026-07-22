@@ -36,7 +36,8 @@ public class SeparatorCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public SeparatorCapacityStrategy() {}
+  public SeparatorCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
@@ -84,7 +85,7 @@ public class SeparatorCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If separator implements CapacityConstrainedEquipment, use its max utilization
     if (sep instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) sep).getMaxUtilization();
+      return sep.getMaxUtilization();
     }
 
     // Fallback: use liquid level as primary capacity indicator
@@ -121,27 +122,26 @@ public class SeparatorCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If separator already implements CapacityConstrainedEquipment, use its constraints
     if (sep instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) sep).getCapacityConstraints();
+      return sep.getCapacityConstraints();
     }
 
     // Liquid level constraint
-    CapacityConstraint levelConstraint =
-        new CapacityConstraint("liquidLevel").setDesignValue(maxLiquidLevel).setMaxValue(0.95)
-            .setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-            .setWarningThreshold(0.9).setValueSupplier(() -> sep.getLiquidLevel());
+    CapacityConstraint levelConstraint = new CapacityConstraint("liquidLevel").setDesignValue(maxLiquidLevel)
+        .setMaxValue(0.95).setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+        .setWarningThreshold(0.9).setValueSupplier(() -> sep.getLiquidLevel());
     constraints.put("liquidLevel", levelConstraint);
 
     // Gas load factor constraint (if separator has gas handling)
     try {
       if (sep.getGasOutStream() != null && sep.getGasOutStream().getThermoSystem() != null) {
         // Calculate gas load factor (Souders-Brown equation approximation)
-        CapacityConstraint gasConstraint =
-            new CapacityConstraint("gasLoadFactor").setDesignValue(maxGasLoadFactor)
-                .setMaxValue(maxGasLoadFactor * 1.2).setUnit("m/s*sqrt(kg/m3)")
-                .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setValueSupplier(() -> {
-                  double gasFlowRate = sep.getGasOutStream().getFlowRate("m3/hr");
-                  return gasFlowRate / 3600.0 / 100.0; // Simplified - actual would use Fs factor
-                });
+        CapacityConstraint gasConstraint = new CapacityConstraint("gasLoadFactor").setDesignValue(maxGasLoadFactor)
+            .setMaxValue(maxGasLoadFactor * 1.2).setUnit("m/s*sqrt(kg/m3)")
+            .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setValueSupplier(() -> {
+              double gasFlowRate = sep.getGasOutStream().getFlowRate("m3/hr");
+              return gasFlowRate / 3600.0 / 100.0; // Simplified - actual
+                                                   // would use Fs factor
+            });
         constraints.put("gasLoadFactor", gasConstraint);
       }
     } catch (Exception e) {

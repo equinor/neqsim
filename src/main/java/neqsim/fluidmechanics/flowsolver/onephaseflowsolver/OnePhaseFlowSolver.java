@@ -7,9 +7,7 @@
 package neqsim.fluidmechanics.flowsolver.onephaseflowsolver;
 
 /**
- * <p>
  * Abstract OnePhaseFlowSolver class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -19,9 +17,8 @@ public abstract class OnePhaseFlowSolver extends neqsim.fluidmechanics.flowsolve
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for OnePhaseFlowSolver.
-   * </p>
    */
-  public OnePhaseFlowSolver() {}
+  public OnePhaseFlowSolver() {
+  }
 }

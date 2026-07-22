@@ -7,9 +7,7 @@
 package neqsim.mathlib.generalmath;
 
 /**
- * <p>
  * TDMAsolve class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,12 +16,11 @@ public final class TDMAsolve {
   /**
    * Dummy constructor, not for use. Class is to be considered static.
    */
-  private TDMAsolve() {}
+  private TDMAsolve() {
+  }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @param a an array of type double
    * @param b an array of type double

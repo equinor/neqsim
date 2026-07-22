@@ -3,9 +3,7 @@ package neqsim.thermo.component;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * ComponentKentEisenberg class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentKentEisenberg.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -33,8 +29,7 @@ public class ComponentKentEisenberg extends ComponentGeNRTL {
   public double fugcoef(PhaseInterface phase) {
     double gamma = 1.0;
     if (referenceStateType.equals("solvent")) {
-      fugacityCoefficient =
-          gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
+      fugacityCoefficient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
       gammaRefCor = gamma;
     } else {
       double activinf = 1.0;

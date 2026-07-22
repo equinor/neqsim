@@ -73,8 +73,7 @@ public class WaterDewPointTest {
     double dewPointTemperature = testSystem.getTemperature("C");
 
     // Assert the expected value (this value should be adjusted based on expected results)
-    assertEquals(-24.71094269, dewPointTemperature, 0.1,
-        "Dew point temperature is not as expected");
+    assertEquals(-24.71094269, dewPointTemperature, 0.1, "Dew point temperature is not as expected");
   }
 
   @Test
@@ -106,8 +105,7 @@ public class WaterDewPointTest {
     double dewPointTemperature = testSystem.getTemperature("C");
 
     // Assert the expected value (this value should be adjusted based on expected results)
-    assertEquals(-17.6585425817, dewPointTemperature, 0.1,
-        "Dew point temperature is not as expected");
+    assertEquals(-17.6585425817, dewPointTemperature, 0.1, "Dew point temperature is not as expected");
   }
 
   @Test
@@ -167,8 +165,7 @@ public class WaterDewPointTest {
     double dewPointTemperature = analyser.getMeasuredValue("C");
 
     // Assert the expected value (this value should be adjusted based on expected results)
-    assertEquals(-15.307572714, dewPointTemperature, 0.1,
-        "Dew point temperature is not as expected");
+    assertEquals(-15.307572714, dewPointTemperature, 0.1, "Dew point temperature is not as expected");
 
     analyser.setMethod("CPA");
     // Get the calculated dew point temperature
@@ -215,6 +212,9 @@ public class WaterDewPointTest {
       e.printStackTrace();
     }
     double waterContent = testSystem.getPhase("gas").getComponent("water").getx() * 1e6;
-    assertEquals(22.0, waterContent, 0.1, "Water content is not as expected");
+    // The direct-equilibrium saturator returns the true saturated water content (21.82 ppm at these
+    // conditions), verified against an independent flood-and-flash oracle. The previous iterative
+    // algorithm stopped slightly oversaturated at 22.0 ppm.
+    assertEquals(21.82, waterContent, 0.1, "Water content is not as expected");
   }
 }

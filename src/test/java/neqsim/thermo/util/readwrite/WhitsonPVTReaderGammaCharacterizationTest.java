@@ -6,6 +6,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import neqsim.thermo.system.SystemInterface;
@@ -17,6 +19,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  */
 public class WhitsonPVTReaderGammaCharacterizationTest {
+  private static final Logger logger = LogManager.getLogger(WhitsonPVTReaderGammaCharacterizationTest.class);
+
   @TempDir
   Path tempDir;
 
@@ -38,8 +42,7 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
     sb.append("Omega A, ΩA\t0.457236\n");
     sb.append("Omega B, ΩB\t0.0777961\n");
     sb.append("\n\n\n");
-    sb.append(
-        "Component\tMW\tPc\tTc\tAF, ω\tVolume Shift, s\tZcVisc\tVcVisc\tVc\tZc\tPchor\tSG\tTb\tLMW\n");
+    sb.append("Component\tMW\tPc\tTc\tAF, ω\tVolume Shift, s\tZcVisc\tVcVisc\tVc\tZc\tPchor\tSG\tTb\tLMW\n");
     sb.append("-\t-\tbara\tC\t-\t-\t-\tm3/kmol\tm3/kmol\t-\t-\t-\tC\t-\n");
     sb.append("CO2\t44.01000\t73.74000\t30.97000\t0.225000\t0.001910\t0.274330\t");
     sb.append("0.09407\t0.09407\t0.274330\t80.00\t0.76193\t-88.266\t\n");
@@ -85,8 +88,7 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
     sb.append("Omega A, ΩA\t0.4274802\n");
     sb.append("Omega B, ΩB\t0.08664035\n");
     sb.append("\n\n\n");
-    sb.append(
-        "Component\tMW\tPc\tTc\tAF, ω\tVolume Shift, s\tZcVisc\tVcVisc\tVc\tZc\tPchor\tSG\tTb\tLMW\n");
+    sb.append("Component\tMW\tPc\tTc\tAF, ω\tVolume Shift, s\tZcVisc\tVcVisc\tVc\tZc\tPchor\tSG\tTb\tLMW\n");
     sb.append("-\t-\tbara\tC\t-\t-\t-\tm3/kmol\tm3/kmol\t-\t-\t-\tC\t-\n");
     sb.append("N2\t28.01400\t33.98000\t-146.95000\t0.037000\t-0.167580\t0.291780\t");
     sb.append("0.09010\t0.09010\t0.291780\t59.10\t0.28339\t-195.903\t\n");
@@ -120,7 +122,7 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
     }
 
     // Read the fluid with composition using static read method
-    double[] composition = {0.005, 0.02, 0.70, 0.08, 0.05, 0.02, 0.03, 0.02, 0.075};
+    double[] composition = { 0.005, 0.02, 0.70, 0.08, 0.05, 0.02, 0.03, 0.02, 0.075 };
     SystemInterface fluid = WhitsonPVTReader.read(tempFile.getAbsolutePath(), composition);
 
     assertNotNull(fluid, "Fluid should be created");
@@ -151,16 +153,14 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
     fluid.initPhysicalProperties();
 
     // Verify characterization produced expected results
-    assertTrue(fluid.getNumberOfComponents() >= 7,
-        "Should have at least 7 components after characterization");
+    assertTrue(fluid.getNumberOfComponents() >= 7, "Should have at least 7 components after characterization");
 
     // Print fluid composition for debugging
     // fluid.prettyPrint();
 
-    System.out.println("Number of components after Whitson Gamma characterization: "
-        + fluid.getNumberOfComponents());
-    System.out.println("Vapor fraction: " + fluid.getBeta());
-    fluid.prettyPrint();
+    logger.info("Number of components after Whitson Gamma characterization: " + fluid.getNumberOfComponents());
+    logger.info("Vapor fraction: " + fluid.getBeta());
+    // fluid.prettyPrint();
   }
 
   /**
@@ -174,7 +174,7 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
     }
 
     // Read the fluid
-    double[] composition = {0.005, 0.02, 0.70, 0.08, 0.05, 0.02, 0.03, 0.02, 0.075};
+    double[] composition = { 0.005, 0.02, 0.70, 0.08, 0.05, 0.02, 0.03, 0.02, 0.075 };
     SystemInterface fluid = WhitsonPVTReader.read(tempFile.getAbsolutePath(), composition);
 
     assertNotNull(fluid, "Fluid should be created");
@@ -206,14 +206,14 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
 
     assertTrue(fluid.getNumberOfComponents() >= 7, "Should have components after characterization");
 
-    System.out.println("Components after fluent API config: " + fluid.getNumberOfComponents());
-    fluid.prettyPrint();
+    logger.info("Components after fluent API config: " + fluid.getNumberOfComponents());
+    // fluid.prettyPrint();
   }
 
   /**
-   * Test that gamma parameters from WhitsonPVTReader are correctly parsed. Note: The
-   * getGammaParameters() method is available on instances but requires parsing the file first.
-   * Since parseFile is private, we verify via the static read method.
+   * Test that gamma parameters from WhitsonPVTReader are correctly parsed. Note: The getGammaParameters() method is
+   * available on instances but requires parsing the file first. Since parseFile is private, we verify via the static
+   * read method.
    */
   @Test
   void testGammaParametersParsing() throws IOException {
@@ -246,7 +246,7 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
       writer.write(createFileWithPlusFraction());
     }
 
-    double[] composition = {0.005, 0.02, 0.70, 0.08, 0.05, 0.02, 0.03, 0.02, 0.075};
+    double[] composition = { 0.005, 0.02, 0.70, 0.08, 0.05, 0.02, 0.03, 0.02, 0.075 };
 
     // Create fluid with Pedersen characterization
     SystemInterface fluidPedersen = WhitsonPVTReader.read(tempFile.getAbsolutePath(), composition);
@@ -270,20 +270,19 @@ public class WhitsonPVTReaderGammaCharacterizationTest {
     fluidGamma.init(3);
     ThermodynamicOperations opsGamma = new ThermodynamicOperations(fluidGamma);
     opsGamma.TPflash();
-    fluidGamma.prettyPrint();
+    // fluidGamma.prettyPrint();
 
     // Both should produce valid results
-    assertTrue(fluidPedersen.getNumberOfComponents() >= 7,
-        "Pedersen should have at least 7 components");
+    assertTrue(fluidPedersen.getNumberOfComponents() >= 7, "Pedersen should have at least 7 components");
     assertTrue(fluidGamma.getNumberOfComponents() >= 7, "Gamma should have at least 7 components");
 
-    System.out.println("\n=== Characterization Comparison ===");
-    System.out.println("Pedersen model:");
-    System.out.println("  Components: " + fluidPedersen.getNumberOfComponents());
-    System.out.println("  Vapor fraction: " + String.format("%.6f", fluidPedersen.getBeta()));
+    logger.info("\n=== Characterization Comparison ===");
+    logger.info("Pedersen model:");
+    logger.info("  Components: " + fluidPedersen.getNumberOfComponents());
+    logger.info("  Vapor fraction: " + String.format("%.6f", fluidPedersen.getBeta()));
 
-    System.out.println("Whitson Gamma model:");
-    System.out.println("  Components: " + fluidGamma.getNumberOfComponents());
-    System.out.println("  Vapor fraction: " + String.format("%.6f", fluidGamma.getBeta()));
+    logger.info("Whitson Gamma model:");
+    logger.info("  Components: " + fluidGamma.getNumberOfComponents());
+    logger.info("  Vapor fraction: " + String.format("%.6f", fluidGamma.getBeta()));
   }
 }

@@ -1,10 +1,14 @@
 package neqsim.thermo.phase;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class PhaseSrkEosTest {
+  private static final Logger logger = LogManager.getLogger(PhaseSrkEosTest.class);
+
   static PhaseSrkEos p;
 
   @BeforeEach
@@ -48,7 +52,7 @@ public class PhaseSrkEosTest {
     PhaseSrkEos p2 = null;
 
     for (PhaseType pt : PhaseType.values()) {
-      // System.out.println("Set phase type to " + pt);
+      // logger.info("Set phase type to " + pt);
       p.setType(pt);
       p2 = p.clone();
       Assertions.assertEquals(p.getType(), p2.getType());

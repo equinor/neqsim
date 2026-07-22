@@ -5,8 +5,8 @@ import neqsim.thermo.phase.PhaseInterface;
 /**
  * Component class for the IAPWS-IF97 water model.
  * <p>
- * This component uses an ideal reference fugacity coefficient since the thermodynamic properties
- * are handled directly by the phase model.
+ * This component uses an ideal reference fugacity coefficient since the thermodynamic properties are handled directly
+ * by the phase model.
  * </p>
  *
  * @author esol
@@ -28,8 +28,7 @@ public class ComponentWater extends ComponentEos {
   }
 
   /**
-   * Constructor with basic critical properties – not used in the IF97 model but provided for
-   * completeness.
+   * Constructor with basic critical properties – not used in the IF97 model but provided for completeness.
    *
    * @param number a int
    * @param tc a double
@@ -65,8 +64,8 @@ public class ComponentWater extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles,
-      double beta, int numberOfComponents, int initType) {
+  public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles, double beta,
+      int numberOfComponents, int initType) {
     // Ideal behaviour – simply set fugacity coefficient to 1.0
     if (initType == 3) {
       phase.getComponent(getComponentNumber()).setFugacityCoefficient(1.0);
@@ -105,29 +104,25 @@ public class ComponentWater extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return 0.0;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return 0.0;
   }
 

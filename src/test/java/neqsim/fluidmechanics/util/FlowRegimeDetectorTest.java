@@ -13,8 +13,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Unit tests for FlowRegimeDetector class.
  *
  * <p>
- * Tests verify that the flow regime detection correctly identifies different two-phase flow
- * patterns based on Taitel-Dukler criteria.
+ * Tests verify that the flow regime detection correctly identifies different two-phase flow patterns based on
+ * Taitel-Dukler criteria.
  * </p>
  *
  * @author esol
@@ -43,12 +43,10 @@ public class FlowRegimeDetectorTest {
     double diameter = 0.1; // 10 cm pipe
     double inclination = 0.0; // Horizontal
 
-    FlowRegime regime =
-        FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
+    FlowRegime regime = FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
 
     assertTrue(
-        regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY
-            || regime == FlowRegime.SLUG,
+        regime == FlowRegime.STRATIFIED_SMOOTH || regime == FlowRegime.STRATIFIED_WAVY || regime == FlowRegime.SLUG,
         "Low velocities in horizontal pipe should give stratified or slug flow, got: " + regime);
   }
 
@@ -60,8 +58,7 @@ public class FlowRegimeDetectorTest {
     double diameter = 0.1;
     double inclination = 0.0;
 
-    FlowRegime regime =
-        FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
+    FlowRegime regime = FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
 
     assertTrue(regime == FlowRegime.ANNULAR || regime == FlowRegime.DROPLET,
         "Very high gas velocity should give annular or droplet flow, got: " + regime);
@@ -75,8 +72,7 @@ public class FlowRegimeDetectorTest {
     double diameter = 0.1;
     double inclination = 0.0;
 
-    FlowRegime regime =
-        FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
+    FlowRegime regime = FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
 
     // High liquid rates tend towards bubble flow
     assertNotNull(regime);
@@ -90,8 +86,7 @@ public class FlowRegimeDetectorTest {
     double diameter = 0.1;
     double inclination = 0.0;
 
-    FlowRegime regime =
-        FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
+    FlowRegime regime = FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
 
     assertNotNull(regime);
     // Intermediate conditions often lead to slug flow
@@ -110,8 +105,8 @@ public class FlowRegimeDetectorTest {
     double muL = 1e-3; // Pa.s
     double sigma = 0.02; // N/m
 
-    FlowRegime regime = FlowRegimeDetector.detectFlowRegime(uSG, uSL, diameter, inclination, rhoG,
-        rhoL, muG, muL, sigma);
+    FlowRegime regime = FlowRegimeDetector.detectFlowRegime(uSG, uSL, diameter, inclination, rhoG, rhoL, muG, muL,
+        sigma);
 
     assertNotNull(regime);
   }
@@ -124,8 +119,7 @@ public class FlowRegimeDetectorTest {
     double diameter = 0.1;
     double inclination = 30.0; // 30 degrees uphill
 
-    FlowRegime regime =
-        FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
+    FlowRegime regime = FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
 
     assertTrue(regime == FlowRegime.SLUG || regime == FlowRegime.ANNULAR,
         "Uphill flow should give slug or annular, got: " + regime);
@@ -139,8 +133,7 @@ public class FlowRegimeDetectorTest {
     double diameter = 0.1;
     double inclination = -15.0; // 15 degrees downhill
 
-    FlowRegime regime =
-        FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
+    FlowRegime regime = FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
 
     assertNotNull(regime);
     // Downhill typically favors stratified flow
@@ -153,16 +146,14 @@ public class FlowRegimeDetectorTest {
     double diameter = 0.1;
     double inclination = 0.0;
 
-    String patternName =
-        FlowRegimeDetector.detectFlowPatternName(testSystem, uSG, uSL, diameter, inclination);
+    String patternName = FlowRegimeDetector.detectFlowPatternName(testSystem, uSG, uSL, diameter, inclination);
 
     assertNotNull(patternName);
     assertTrue(patternName.length() > 0, "Pattern name should not be empty");
     // Pattern name should be one of the valid node types
     assertTrue(
-        patternName.equals("stratified") || patternName.equals("slug")
-            || patternName.equals("annular") || patternName.equals("bubble")
-            || patternName.equals("droplet"),
+        patternName.equals("stratified") || patternName.equals("slug") || patternName.equals("annular")
+            || patternName.equals("bubble") || patternName.equals("droplet"),
         "Pattern name should be a valid flow node type, got: " + patternName);
   }
 
@@ -185,8 +176,7 @@ public class FlowRegimeDetectorTest {
     double inclination = 0.0;
 
     // Should not throw exception
-    FlowRegime regime =
-        FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
+    FlowRegime regime = FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
     assertNotNull(regime);
   }
 
@@ -198,8 +188,7 @@ public class FlowRegimeDetectorTest {
     double diameter = 1.0; // 1 meter pipe
     double inclination = 0.0;
 
-    FlowRegime regime =
-        FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
+    FlowRegime regime = FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
     assertNotNull(regime);
   }
 
@@ -211,8 +200,7 @@ public class FlowRegimeDetectorTest {
     double diameter = 0.01; // 1 cm pipe
     double inclination = 0.0;
 
-    FlowRegime regime =
-        FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
+    FlowRegime regime = FlowRegimeDetector.detectFlowRegime(testSystem, uSG, uSL, diameter, inclination);
     assertNotNull(regime);
   }
 }

@@ -9,9 +9,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentElectrolyteCPAstatoil;
 
 /**
- * <p>
  * PhaseElectrolyteCPAstatoil class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,18 +19,16 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PhaseElectrolyteCPAstatoil.
-   * </p>
    */
-  public PhaseElectrolyteCPAstatoil() {}
+  public PhaseElectrolyteCPAstatoil() {
+  }
 
   /** {@inheritDoc} */
   @Override
   public void addComponent(String name, double moles, double molesInPhase, int compNumber) {
     super.addComponent(name, moles, molesInPhase, compNumber);
-    componentArray[compNumber] =
-        new ComponentElectrolyteCPAstatoil(name, moles, molesInPhase, compNumber);
+    componentArray[compNumber] = new ComponentElectrolyteCPAstatoil(name, moles, molesInPhase, compNumber);
   }
 
   /** {@inheritDoc} */
@@ -84,12 +80,11 @@ public class PhaseElectrolyteCPAstatoil extends PhaseElectrolyteCPA {
   /** {@inheritDoc} */
   @Override
   public double calc_lngVVV() {
-    double gvv = -0.21434375 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 3.0)
-        * Math.pow(getB(), 3.0) / (Math.pow(getTotalVolume(), 6.0))
-        - 0.135375E1 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 2.0)
-            * Math.pow(getB(), 2.0) / (Math.pow(getTotalVolume(), 5.0))
-        - 0.285E1 / (1.0 - 0.475 * getB() / getTotalVolume()) * getB()
-            / (Math.pow(getTotalVolume(), 4.0));
+    double gvv = -0.21434375 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 3.0) * Math.pow(getB(), 3.0)
+        / (Math.pow(getTotalVolume(), 6.0))
+        - 0.135375E1 / Math.pow(1.0 - 0.475 * getB() / getTotalVolume(), 2.0) * Math.pow(getB(), 2.0)
+            / (Math.pow(getTotalVolume(), 5.0))
+        - 0.285E1 / (1.0 - 0.475 * getB() / getTotalVolume()) * getB() / (Math.pow(getTotalVolume(), 4.0));
     return gvv;
   }
 }

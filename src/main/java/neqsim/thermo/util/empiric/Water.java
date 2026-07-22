@@ -3,18 +3,14 @@ package neqsim.thermo.util.empiric;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * Water class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
 public class Water {
   /**
-   * <p>
    * waterDensity. Correlation of Kell (1975) for density of air free water at 1 atmosphere.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -29,9 +25,7 @@ public class Water {
   }
 
   /**
-   * <p>
    * density.
-   * </p>
    *
    * @return a double
    */
@@ -40,9 +34,7 @@ public class Water {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

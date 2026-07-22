@@ -20,8 +20,8 @@ digraph process {
   "gas mixer 0" -> "VG-23-002" [label="gas mixer 0 mixed stream"];
   "VG-23-002" -> "23-KA-004" [label="gasOutStream"];
   "VG-23-002" -> "stream to closed drain" [label="liquidOutStream"];
-  "23-KA-004" -> "1st stage anti surge splitter" [label="gasOutStream"];
-  "anti surge calculator_1" -> "1st stage anti surge splitter" [label="gasOutStream"];
+  "23-KA-004" -> "1st stage anti surge splitter" [label="23-KA-004 out stream"];
+  "anti surge calculator_1" -> "1st stage anti surge splitter" [label="23-KA-004 out stream"];
   "1st stage anti surge splitter" -> "anti surge valve" [label="Split Stream_1"];
   "anti surge calculator_1" -> "anti surge valve" [label="Split Stream_1"];
   "anti surge valve" -> "anti surge cooler" [label="anti surge valve out stream"];

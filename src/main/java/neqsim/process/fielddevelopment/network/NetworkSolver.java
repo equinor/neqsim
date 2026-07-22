@@ -14,9 +14,8 @@ import neqsim.thermo.system.SystemInterface;
  * Production network solver for multi-well gathering systems.
  *
  * <p>
- * This class solves the pressure-flow equilibrium in a gathering network
- * connecting multiple wells
- * to a common manifold or host facility. It supports:
+ * This class solves the pressure-flow equilibrium in a gathering network connecting multiple wells to a common manifold
+ * or host facility. It supports:
  * </p>
  * <ul>
  * <li>Multiple production wells with IPR+VLP models</li>
@@ -27,7 +26,7 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Network Topology</h2>
- * 
+ *
  * <pre>
  * Well-1 (IPR+VLP) ──┬─ Flowline-1 ──┐
  * Well-2 (IPR+VLP) ──┼─ Flowline-2 ──┼── Manifold ── Export
@@ -47,19 +46,19 @@ import neqsim.thermo.system.SystemInterface;
  * </ol>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * NetworkSolver network = new NetworkSolver("Subsea Gathering");
- * 
+ *
  * // Add wells
  * network.addWell(well1, 5.0); // 5 km flowline
  * network.addWell(well2, 8.0); // 8 km flowline
  * network.addWell(well3, 3.0); // 3 km flowline
- * 
+ *
  * // Set constraints
  * network.setManifoldPressure(50.0, "bara");
  * network.setMaxTotalRate(15.0e6, "Sm3/day");
- * 
+ *
  * // Solve
  * NetworkResult result = network.solve();
  * System.out.println("Total rate: " + result.getTotalRate("MSm3/day"));
@@ -145,7 +144,7 @@ public class NetworkSolver implements Serializable {
   /**
    * Adds a well to the network.
    *
-   * @param well             integrated well system
+   * @param well integrated well system
    * @param flowlineLengthKm flowline length in km
    * @return this for chaining
    */
@@ -157,8 +156,8 @@ public class NetworkSolver implements Serializable {
   /**
    * Adds a well with flowline specifications.
    *
-   * @param well              integrated well system
-   * @param flowlineLengthKm  flowline length in km
+   * @param well integrated well system
+   * @param flowlineLengthKm flowline length in km
    * @param flowlineDiameterM flowline inner diameter in meters
    * @return this for chaining
    */
@@ -184,7 +183,7 @@ public class NetworkSolver implements Serializable {
    * Sets the manifold pressure constraint.
    *
    * @param pressure manifold pressure
-   * @param unit     pressure unit
+   * @param unit pressure unit
    * @return this for chaining
    */
   public NetworkSolver setManifoldPressure(double pressure, String unit) {
@@ -238,7 +237,7 @@ public class NetworkSolver implements Serializable {
    * Enables or disables a well.
    *
    * @param wellName well name
-   * @param enabled  true to enable, false to shut in
+   * @param enabled true to enable, false to shut in
    * @return this for chaining
    */
   public NetworkSolver setWellEnabled(String wellName, boolean enabled) {
@@ -255,7 +254,7 @@ public class NetworkSolver implements Serializable {
    * Sets the choke opening for a well.
    *
    * @param wellName well name
-   * @param opening  choke opening (0-1)
+   * @param opening choke opening (0-1)
    * @return this for chaining
    */
   public NetworkSolver setChokeOpening(String wellName, double opening) {
@@ -271,8 +270,8 @@ public class NetworkSolver implements Serializable {
   /**
    * Sets solver parameters.
    *
-   * @param tolerance  convergence tolerance (fraction)
-   * @param maxIter    maximum iterations
+   * @param tolerance convergence tolerance (fraction)
+   * @param maxIter maximum iterations
    * @param relaxation under-relaxation factor
    * @return this for chaining
    */
@@ -300,15 +299,15 @@ public class NetworkSolver implements Serializable {
     solved = false;
 
     switch (solutionMode) {
-      case FIXED_MANIFOLD_PRESSURE:
-        solveFixedManifoldPressure();
-        break;
-      case FIXED_TOTAL_RATE:
-        solveFixedTotalRate();
-        break;
-      case OPTIMIZE_ALLOCATION:
-        solveOptimizeAllocation();
-        break;
+    case FIXED_MANIFOLD_PRESSURE:
+      solveFixedManifoldPressure();
+      break;
+    case FIXED_TOTAL_RATE:
+      solveFixedTotalRate();
+      break;
+    case OPTIMIZE_ALLOCATION:
+      solveOptimizeAllocation();
+      break;
     }
 
     solved = true;
@@ -476,7 +475,7 @@ public class NetworkSolver implements Serializable {
   /**
    * Finds wellhead pressure required to achieve target rate.
    *
-   * @param node       the well node
+   * @param node the well node
    * @param targetRate target production rate in Sm3/day
    * @return wellhead pressure in bara required to achieve target rate
    */
@@ -536,7 +535,6 @@ public class NetworkSolver implements Serializable {
 
   private double convertRateToSm3PerDay(double rate, String unit) {
     if (unit.equalsIgnoreCase("Sm3/day") || unit.equalsIgnoreCase("Sm3/d")) {
-      return rate;
     } else if (unit.equalsIgnoreCase("MSm3/day") || unit.equalsIgnoreCase("MSm3/d")) {
       return rate * 1e6;
     } else if (unit.equalsIgnoreCase("bbl/day") || unit.equalsIgnoreCase("bpd")) {

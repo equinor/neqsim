@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * LNGfreezingTestSolid1 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class LNGfreezingTestSolid1 {
+  private static final Logger logger = LogManager.getLogger(LNGfreezingTestSolid1.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(LNGfreezingTestSolid1.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -57,11 +54,11 @@ public class LNGfreezingTestSolid1 {
 
     testSystem.getPhase(3).getComponent("benzene").setHeatOfFusion(6000);
     try {
-      // System.out.println("heat of fusion " +
+      // logger.info("heat of fusion " +
       // testSystem.getPhase(3).getComponent("benzene").getHeatOfFusion());
 
       testOps.TPSolidflash();
-      // System.out.println("heat of fusion " +
+      // logger.info("heat of fusion " +
       // testSystem.getPhase(3).getComponent("benzene").getHeatOfFusion());
       // testOps.displayResult();
       // testOps.freezingPointTemperatureFlash();

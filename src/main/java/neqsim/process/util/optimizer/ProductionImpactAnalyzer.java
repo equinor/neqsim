@@ -15,7 +15,6 @@ import neqsim.process.equipment.failure.EquipmentFailureMode;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pump.Pump;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.util.optimizer.ProductionImpactResult.RecommendedAction;
@@ -24,8 +23,8 @@ import neqsim.process.util.optimizer.ProductionImpactResult.RecommendedAction;
  * Analyzer for assessing production impact of equipment failures.
  *
  * <p>
- * This class provides comprehensive analysis of how equipment failures affect production rates and
- * helps determine optimal operating strategies during degraded conditions.
+ * This class provides comprehensive analysis of how equipment failures affect production rates and helps determine
+ * optimal operating strategies during degraded conditions.
  * </p>
  *
  * <h2>Key Capabilities</h2>
@@ -38,7 +37,7 @@ import neqsim.process.util.optimizer.ProductionImpactResult.RecommendedAction;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Create analyzer
@@ -110,8 +109,7 @@ public class ProductionImpactAnalyzer implements Serializable {
    * @param feedStreamName name of the feed stream
    * @param productStreamName name of the product stream
    */
-  public ProductionImpactAnalyzer(ProcessSystem processSystem, String feedStreamName,
-      String productStreamName) {
+  public ProductionImpactAnalyzer(ProcessSystem processSystem, String feedStreamName, String productStreamName) {
     this.processSystem = processSystem;
     this.feedStreamName = feedStreamName;
     this.productStreamName = productStreamName;
@@ -133,8 +131,7 @@ public class ProductionImpactAnalyzer implements Serializable {
       }
     }
 
-    logger.debug("Auto-detected feed stream: {}, product stream: {}", feedStreamName,
-        productStreamName);
+    logger.debug("Auto-detected feed stream: {}, product stream: {}", feedStreamName, productStreamName);
   }
 
   // Configuration methods
@@ -212,8 +209,7 @@ public class ProductionImpactAnalyzer implements Serializable {
    * @param failureMode the failure mode to simulate
    * @return production impact result
    */
-  public ProductionImpactResult analyzeFailureImpact(String equipmentName,
-      EquipmentFailureMode failureMode) {
+  public ProductionImpactResult analyzeFailureImpact(String equipmentName, EquipmentFailureMode failureMode) {
     long startTime = System.currentTimeMillis();
 
     ProductionImpactResult result = new ProductionImpactResult(equipmentName, failureMode);
@@ -292,6 +288,8 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Calculates baseline (normal operation) values.
+   *
+   * @param result the result object to populate with baseline values
    */
   private void calculateBaseline(ProductionImpactResult result) {
     if (cachedBaselineProduction == null) {
@@ -317,9 +315,14 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Applies a failure mode to equipment in the process.
+   *
+   * @param process the process system containing the equipment
+   * @param equipmentName the name of the equipment to fail
+   * @param failureMode the failure mode to apply
+   * @param result the result object to populate with failure details
    */
-  private void applyFailure(ProcessSystem process, String equipmentName,
-      EquipmentFailureMode failureMode, ProductionImpactResult result) {
+  private void applyFailure(ProcessSystem process, String equipmentName, EquipmentFailureMode failureMode,
+      ProductionImpactResult result) {
 
     ProcessEquipmentInterface equipment = process.getUnit(equipmentName);
     if (equipment == null) {
@@ -337,8 +340,7 @@ public class ProductionImpactAnalyzer implements Serializable {
 
       // Disable capacity analysis to avoid including in bottleneck detection
       if (equipment instanceof neqsim.process.equipment.ProcessEquipmentBaseClass) {
-        ((neqsim.process.equipment.ProcessEquipmentBaseClass) equipment)
-            .setCapacityAnalysisEnabled(false);
+        ((neqsim.process.equipment.ProcessEquipmentBaseClass) equipment).setCapacityAnalysisEnabled(false);
       }
 
       // For compressors, set to bypass mode (no pressure increase)
@@ -355,12 +357,10 @@ public class ProductionImpactAnalyzer implements Serializable {
 
       // For heaters/coolers, set to no heat transfer
       if (equipment instanceof Heater) {
-        ((Heater) equipment)
-            .setOutTemperature(((Heater) equipment).getInletStream().getTemperature());
+        ((Heater) equipment).setOutTemperature(((Heater) equipment).getInletStream().getTemperature());
       }
       if (equipment instanceof Cooler) {
-        ((Cooler) equipment)
-            .setOutTemperature(((Cooler) equipment).getInletStream().getTemperature());
+        ((Cooler) equipment).setOutTemperature(((Cooler) equipment).getInletStream().getTemperature());
       }
 
       result.addAffectedEquipment(equipmentName);
@@ -377,9 +377,12 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Identifies equipment affected by the failure.
+   *
+   * @param process the process system to analyze
+   * @param failedEquipment the name of the failed equipment
+   * @param result the result object to populate with affected equipment
    */
-  private void identifyAffectedEquipment(ProcessSystem process, String failedEquipment,
-      ProductionImpactResult result) {
+  private void identifyAffectedEquipment(ProcessSystem process, String failedEquipment, ProductionImpactResult result) {
 
     // Simple approach: mark all equipment downstream as potentially affected
     boolean foundFailed = false;
@@ -396,6 +399,10 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Optimizes operation with failed equipment.
+   *
+   * @param failedProcess the process system with the failed equipment
+   * @param failedEquipment the name of the failed equipment
+   * @param result the production impact result to update with optimized values
    */
   private void optimizeDegradedOperation(ProcessSystem failedProcess, String failedEquipment,
       ProductionImpactResult result) {
@@ -414,7 +421,7 @@ public class ProductionImpactAnalyzer implements Serializable {
       double maxProduction = result.getProductionWithFailure();
 
       // Simple optimization: try reducing flow in steps
-      double[] flowFactors = {1.0, 0.9, 0.8, 0.7, 0.6, 0.5};
+      double[] flowFactors = { 1.0, 0.9, 0.8, 0.7, 0.6, 0.5 };
 
       for (double factor : flowFactors) {
         double testFlow = currentFlow * factor;
@@ -451,6 +458,9 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Gets the production rate from a process system.
+   *
+   * @param process the process system to get production rate from
+   * @return the production rate in kg/hr, or 0.0 if unavailable
    */
   private double getProductionRate(ProcessSystem process) {
     if (productStreamName == null) {
@@ -465,8 +475,7 @@ public class ProductionImpactAnalyzer implements Serializable {
     // Try to get outlet stream via TwoPortInterface
     try {
       if (unit instanceof neqsim.process.equipment.TwoPortInterface) {
-        StreamInterface outlet =
-            ((neqsim.process.equipment.TwoPortInterface) unit).getOutletStream();
+        StreamInterface outlet = ((neqsim.process.equipment.TwoPortInterface) unit).getOutletStream();
         if (outlet != null) {
           return outlet.getFlowRate("kg/hr");
         }
@@ -480,6 +489,9 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Gets the total power consumption from a process system.
+   *
+   * @param process the process system to get total power from
+   * @return the total power consumption in kW
    */
   private double getTotalPower(ProcessSystem process) {
     double totalPower = 0.0;
@@ -497,6 +509,9 @@ public class ProductionImpactAnalyzer implements Serializable {
 
   /**
    * Finds the current bottleneck in the process.
+   *
+   * @param process the process system to analyze
+   * @return the bottleneck result
    */
   private BottleneckResult findBottleneck(ProcessSystem process) {
     ProcessEquipmentInterface bottleneckEquip = null;
@@ -545,9 +560,8 @@ public class ProductionImpactAnalyzer implements Serializable {
 
       if (lostProductionDegraded < lostProductionShutdown) {
         result.setRecommendedAction(RecommendedAction.REDUCE_THROUGHPUT);
-        result.setRecommendationReason(
-            String.format("Degraded operation saves %.0f kg over %.1f hours vs shutdown",
-                lostProductionShutdown - lostProductionDegraded, hoursToRecover));
+        result.setRecommendationReason(String.format("Degraded operation saves %.0f kg over %.1f hours vs shutdown",
+            lostProductionShutdown - lostProductionDegraded, hoursToRecover));
       } else {
         result.setRecommendedAction(RecommendedAction.FULL_SHUTDOWN);
         result.setRecommendationReason("Shutdown and repair is more economical");
@@ -616,8 +630,7 @@ public class ProductionImpactAnalyzer implements Serializable {
       ProcessSystem failedProcess = processSystem.copy();
 
       for (String equipmentName : equipmentNames) {
-        applyFailure(failedProcess, equipmentName, EquipmentFailureMode.trip(equipmentName),
-            result);
+        applyFailure(failedProcess, equipmentName, EquipmentFailureMode.trip(equipmentName), result);
       }
 
       // Run the multi-failed process

@@ -135,22 +135,19 @@ class DesignCaseTest {
     @Test
     @DisplayName("Upset should have higher load than normal")
     void upsetShouldHaveHigherLoad() {
-      assertTrue(
-          DesignCase.UPSET.getTypicalLoadFactor() > DesignCase.NORMAL.getTypicalLoadFactor());
+      assertTrue(DesignCase.UPSET.getTypicalLoadFactor() > DesignCase.NORMAL.getTypicalLoadFactor());
     }
 
     @Test
     @DisplayName("Emergency should have highest load")
     void emergencyShouldHaveHighestLoad() {
-      assertTrue(
-          DesignCase.EMERGENCY.getTypicalLoadFactor() >= DesignCase.UPSET.getTypicalLoadFactor());
+      assertTrue(DesignCase.EMERGENCY.getTypicalLoadFactor() >= DesignCase.UPSET.getTypicalLoadFactor());
     }
 
     @Test
     @DisplayName("Late life should have lower load than normal")
     void lateLifeShouldHaveLowerLoad() {
-      assertTrue(
-          DesignCase.LATE_LIFE.getTypicalLoadFactor() < DesignCase.NORMAL.getTypicalLoadFactor());
+      assertTrue(DesignCase.LATE_LIFE.getTypicalLoadFactor() < DesignCase.NORMAL.getTypicalLoadFactor());
     }
   }
 

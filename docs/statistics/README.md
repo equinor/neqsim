@@ -1,3 +1,8 @@
+---
+title: "Statistics Package"
+description: "The NeqSim statistics package provides tools for parameter fitting, uncertainty quantification, and data analysis for thermodynamic model development and validation."
+---
+
 # Statistics Package
 
 The NeqSim statistics package provides tools for parameter fitting, uncertainty quantification, and data analysis for thermodynamic model development and validation.
@@ -16,7 +21,7 @@ The NeqSim statistics package provides tools for parameter fitting, uncertainty 
 
 The statistics package supports:
 
-1. **Parameter Fitting** - Nonlinear regression using Levenberg-Marquardt algorithm
+1. **Parameter Fitting** - Nonlinear regression using Levenberg-Marquardt, robust objectives, reusable specs, and CSV/YAML experimental data sets
 2. **Monte Carlo Simulation** - Uncertainty propagation and confidence intervals
 3. **Data Analysis** - Smoothing, filtering, and statistical analysis
 4. **Experimental Data Management** - Sample sets and experimental equipment modeling
@@ -40,6 +45,18 @@ statistics/
 │   ├── StatisticsInterface.java        # Interface definition
 │   ├── SampleSet.java                  # Collection of experimental points
 │   ├── SampleValue.java                # Single experimental data point
+│   ├── ExperimentalDataPoint.java      # Metadata-rich immutable data point
+│   ├── ExperimentalDataSet.java        # Data set with units and conversion to SampleSet
+│   ├── ExperimentalDataReader.java     # CSV, JSON, YAML readers with unit conversion
+│   ├── ExperimentalDataDownloader.java # Cached URL download helper for data files
+│   ├── FittingParameter.java           # Named parameter with bounds, unit, transform, prior
+│   ├── ParameterTransform.java         # LINEAR, LOG, LOG10, LOGISTIC parameter spaces
+│   ├── ParameterFittingSpec.java       # Serializable fitting setup in JSON/YAML
+│   ├── ObjectiveFunctionType.java      # Weighted and robust objective choices
+│   ├── ParameterFittingStudy.java      # High-level fitting workflow and result metrics
+│   ├── ParameterFittingReport.java     # JSON and Markdown fit report
+│   ├── ParameterUpdateAdapter.java     # Bridge from fitted values to model parameters
+│   ├── BinaryInteractionParameterAdapter.java # SystemInterface kij adapter
 │   ├── BaseFunction.java               # Abstract objective function
 │   ├── FunctionInterface.java          # Function interface
 │   ├── NumericalDerivative.java        # Numerical differentiation
@@ -75,9 +92,9 @@ Detailed guides for each major subsystem:
 
 | Guide | Description |
 |-------|-------------|
-| [Parameter Fitting](parameter_fitting.md) | Levenberg-Marquardt optimization, creating objective functions, bounds |
-| [Monte Carlo Simulation](monte_carlo_simulation.md) | Uncertainty propagation, confidence intervals, distribution sampling |
-| [Data Analysis](data_analysis.md) | Data smoothing, filtering, statistical measures |
+| [Parameter Fitting](parameter_fitting) | Levenberg-Marquardt optimization, experimental data workflow, CSV/YAML files, robust objectives, specs, bounds, validation, and reports |
+| [Monte Carlo Simulation](monte_carlo_simulation) | Uncertainty propagation, confidence intervals, distribution sampling |
+| [Data Analysis](data_analysis) | Data smoothing, filtering, statistical measures |
 
 ---
 
@@ -94,8 +111,8 @@ double standardDeviation = 0.05;  // Experimental uncertainty
 double[] independentVariables = {300.0, 0.1};  // e.g., temperature, composition
 
 SampleValue sample = new SampleValue(
-    experimentalValue, 
-    standardDeviation, 
+    experimentalValue,
+    standardDeviation,
     independentVariables
 );
 ```
@@ -115,27 +132,46 @@ SampleValue[] samples = {sample1, sample2, sample3};
 SampleSet sampleSet = new SampleSet(samples);
 ```
 
+### Experimental Data Sets
+
+`ExperimentalDataSet` adds names, units, references, and a direct path into the optimizer:
+
+```java
+ExperimentalDataSet dataSet = new ExperimentalDataSet(
+    "linear calibration",
+    "response",
+    "-",
+    new String[] {"x"},
+    new String[] {"-"});
+dataSet.addPoint(1.0, 0.1, new double[] {1.0});
+dataSet.addPoint(3.0, 0.1, new double[] {2.0});
+```
+
+### Fitting Specifications
+
+`ParameterFittingSpec` stores parameter definitions, bounds, transforms, robust objective choices, multi-start settings, and optional validation split configuration in Java, JSON, or YAML. Example files are provided in `docs/statistics/examples/` and are verified by unit tests.
+
 ### Objective Functions
 
 Functions extend `BaseFunction` or `LevenbergMarquardtFunction`:
 
 ```java
 public class MyObjectiveFunction extends LevenbergMarquardtFunction {
-    
+
     @Override
     public double calcValue(double[] dependentValues) {
         // params[0], params[1], ... are the fitting parameters
         // dependentValues are the independent variables (T, P, x, ...)
-        
+
         double T = dependentValues[0];
         double x = dependentValues[1];
-        
+
         // Calculate model prediction
         double predicted = params[0] * Math.exp(-params[1] / T) * x;
-        
+
         return predicted;
     }
-    
+
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -193,6 +229,19 @@ optimizer.displayCurveFit();
 optimizer.displayResult();
 ```
 
+### Higher-Level Experimental Workflow
+
+```java
+ParameterFittingStudy.Result result = new ParameterFittingStudy(dataSet, function)
+    .setInitialGuess(new double[] {0.5, 0.0})
+    .setParameterNames(new String[] {"slope", "intercept"})
+    .setMaxNumberOfIterations(30)
+    .run();
+
+double slope = result.getFittedParameter("slope");
+double rmse = result.getRootMeanSquareError();
+```
+
 ### With Monte Carlo Uncertainty
 
 ```java
@@ -211,30 +260,30 @@ optimizer.runMonteCarloSimulation(100);  // 100 Monte Carlo runs
 
 ```java
 public class KijFittingFunction extends LevenbergMarquardtFunction {
-    
+
     @Override
     public double calcValue(double[] dependentValues) {
         double temperature = dependentValues[0];
         double pressure = dependentValues[1];
         double x_exp = dependentValues[2];  // Experimental composition
-        
+
         // Set up thermodynamic system
         system.setTemperature(temperature);
         system.setPressure(pressure);
-        
+
         // Set kij from fitting parameters
         ((PhaseEos) system.getPhase(0)).getMixingRule()
             .setBinaryInteractionParameter(0, 1, params[0]);
         ((PhaseEos) system.getPhase(1)).getMixingRule()
             .setBinaryInteractionParameter(0, 1, params[0]);
-        
+
         // Flash calculation
         thermoOps.TPflash();
-        
+
         // Return calculated liquid composition
         return system.getPhase(1).getComponent(0).getx();
     }
-    
+
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;
@@ -246,23 +295,24 @@ public class KijFittingFunction extends LevenbergMarquardtFunction {
 
 ```java
 public class CPAFittingFunction extends LevenbergMarquardtFunction {
-    
+
     @Override
     public double calcValue(double[] dependentValues) {
         double T = dependentValues[0];
         double P = dependentValues[1];
-        
+
         // params[0] = epsilon (association energy)
         // params[1] = beta (association volume)
-        
+
         system.getComponent("water").setAssociationEnergy(params[0]);
         system.getComponent("water").setAssociationVolume(params[1]);
-        
+
         thermoOps.TPflash();
-        
+        system.initProperties();
+
         return system.getPhase(1).getDensity("kg/m3");
     }
-    
+
     @Override
     public void setFittingParams(int i, double value) {
         params[i] = value;

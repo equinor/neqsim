@@ -11,10 +11,9 @@ import java.util.Map;
  * Provides a real-time data exchange interface between NeqSim MPC and external control systems.
  *
  * <p>
- * This class enables bidirectional communication with industrial control systems by providing a
- * standardized interface for reading process values, writing setpoints and constraints, and
- * exchanging model data. The interface is designed to work with common industrial protocols and
- * data historians.
+ * This class enables bidirectional communication with industrial control systems by providing a standardized interface
+ * for reading process values, writing setpoints and constraints, and exchanging model data. The interface is designed
+ * to work with common industrial protocols and data historians.
  * </p>
  *
  * <p>
@@ -32,15 +31,14 @@ import java.util.Map;
  * The data exchange pattern supports both push and pull models:
  * </p>
  * <ul>
- * <li><b>Push:</b> Call {@link #updateInputs(double[], double[], double[])} to provide new process
- * data</li>
+ * <li><b>Push:</b> Call {@link #updateInputs(double[], double[], double[])} to provide new process data</li>
  * <li><b>Pull:</b> Call {@link #getOutputs()} to retrieve calculated control moves</li>
  * </ul>
  *
  * <p>
  * Example integration with an external control system:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Create data exchange interface
@@ -357,8 +355,7 @@ public class ControllerDataExchange implements Serializable {
    * @return a ControllerOutput object with targets and status
    */
   public ControllerOutput getOutputs() {
-    return new ControllerOutput(mvTargets.clone(), cvPredictions, executionStatus, executionMessage,
-        lastExecution);
+    return new ControllerOutput(mvTargets.clone(), cvPredictions, executionStatus, executionMessage, lastExecution);
   }
 
   /**
@@ -497,8 +494,8 @@ public class ControllerDataExchange implements Serializable {
      * @param message the execution message
      * @param timestamp the execution timestamp
      */
-    public ControllerOutput(double[] mvTargets, double[][] cvPredictions, ExecutionStatus status,
-        String message, Instant timestamp) {
+    public ControllerOutput(double[] mvTargets, double[][] cvPredictions, ExecutionStatus status, String message,
+        Instant timestamp) {
       this.mvTargets = mvTargets;
       this.cvPredictions = cvPredictions;
       this.status = status;

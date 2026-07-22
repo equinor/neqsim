@@ -1,3 +1,8 @@
+---
+title: ESD Blowdown System Implementation
+description: "This implementation adds a complete Emergency Shutdown (ESD) blowdown system to NeqSim."
+---
+
 # ESD Blowdown System Implementation
 
 ## Overview
@@ -135,7 +140,7 @@ bdOrifice.runTransient(timeStep, uuid);
 7. Flare tracks heat release and emissions
 
 ### 5. Demonstration Example
-**Location:** `src/main/java/neqsim/process/util/example/ESDBlowdownSystemExample.java`
+**Location:** `src/test/java/neqsim/process/util/example/ESDBlowdownSystemExample.java`
 
 A standalone runnable example showing:
 - System configuration
@@ -234,7 +239,7 @@ This demonstrates realistic depressurization behavior where:
 
 ### Via Main Method:
 ```bash
-mvn exec:java -Dexec.mainClass="neqsim.process.util.example.ESDBlowdownSystemExample"
+./mvnw -Dexec.classpathScope=test -Dexec.mainClass="neqsim.process.util.example.ESDBlowdownSystemExample" exec:java
 ```
 
 ### Via Test:

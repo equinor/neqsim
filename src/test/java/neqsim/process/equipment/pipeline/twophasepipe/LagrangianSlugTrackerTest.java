@@ -92,15 +92,13 @@ class LagrangianSlugTrackerTest {
     tracker.advanceTimeStep(sections, dt);
 
     // Should have generated at least one slug
-    assertTrue(tracker.getTotalSlugsGenerated() >= 0,
-        "Slugs should be generated based on frequency");
+    assertTrue(tracker.getTotalSlugsGenerated() >= 0, "Slugs should be generated based on frequency");
   }
 
   @Test
   void testTerrainSlugInitialization() {
     // Create terrain slug characteristics
-    LiquidAccumulationTracker.SlugCharacteristics chars =
-        new LiquidAccumulationTracker.SlugCharacteristics();
+    LiquidAccumulationTracker.SlugCharacteristics chars = new LiquidAccumulationTracker.SlugCharacteristics();
     chars.frontPosition = 30.0;
     chars.tailPosition = 28.0;
     chars.length = 2.0;
@@ -124,8 +122,7 @@ class LagrangianSlugTrackerTest {
   @Test
   void testSlugPropagation() {
     // Create initial slug
-    LiquidAccumulationTracker.SlugCharacteristics chars =
-        new LiquidAccumulationTracker.SlugCharacteristics();
+    LiquidAccumulationTracker.SlugCharacteristics chars = new LiquidAccumulationTracker.SlugCharacteristics();
     chars.frontPosition = 20.0;
     chars.tailPosition = 18.0;
     chars.length = 2.0;
@@ -164,8 +161,7 @@ class LagrangianSlugTrackerTest {
   @Test
   void testSlugMerging() {
     // Create two slugs close together
-    LiquidAccumulationTracker.SlugCharacteristics chars1 =
-        new LiquidAccumulationTracker.SlugCharacteristics();
+    LiquidAccumulationTracker.SlugCharacteristics chars1 = new LiquidAccumulationTracker.SlugCharacteristics();
     chars1.frontPosition = 25.0;
     chars1.tailPosition = 23.0;
     chars1.length = 2.0;
@@ -173,8 +169,7 @@ class LagrangianSlugTrackerTest {
     chars1.holdup = 0.85;
     chars1.volume = 0.01;
 
-    LiquidAccumulationTracker.SlugCharacteristics chars2 =
-        new LiquidAccumulationTracker.SlugCharacteristics();
+    LiquidAccumulationTracker.SlugCharacteristics chars2 = new LiquidAccumulationTracker.SlugCharacteristics();
     chars2.frontPosition = 22.5; // Close behind first slug
     chars2.tailPosition = 20.5;
     chars2.length = 2.0;
@@ -210,8 +205,7 @@ class LagrangianSlugTrackerTest {
     tracker.setEnableWakeEffects(true);
 
     // Create leading slug
-    LiquidAccumulationTracker.SlugCharacteristics chars1 =
-        new LiquidAccumulationTracker.SlugCharacteristics();
+    LiquidAccumulationTracker.SlugCharacteristics chars1 = new LiquidAccumulationTracker.SlugCharacteristics();
     chars1.frontPosition = 30.0;
     chars1.tailPosition = 27.0;
     chars1.length = 3.0;
@@ -220,8 +214,7 @@ class LagrangianSlugTrackerTest {
     chars1.volume = 0.02;
 
     // Create following slug in wake region
-    LiquidAccumulationTracker.SlugCharacteristics chars2 =
-        new LiquidAccumulationTracker.SlugCharacteristics();
+    LiquidAccumulationTracker.SlugCharacteristics chars2 = new LiquidAccumulationTracker.SlugCharacteristics();
     chars2.frontPosition = 25.0; // Behind first slug
     chars2.tailPosition = 22.0;
     chars2.length = 3.0;
@@ -252,8 +245,7 @@ class LagrangianSlugTrackerTest {
   @Test
   void testMassConservation() {
     // Create slug
-    LiquidAccumulationTracker.SlugCharacteristics chars =
-        new LiquidAccumulationTracker.SlugCharacteristics();
+    LiquidAccumulationTracker.SlugCharacteristics chars = new LiquidAccumulationTracker.SlugCharacteristics();
     chars.frontPosition = 20.0;
     chars.tailPosition = 18.0;
     chars.length = 2.0;
@@ -297,8 +289,7 @@ class LagrangianSlugTrackerTest {
 
     // Create multiple slugs
     for (int i = 0; i < 5; i++) {
-      LiquidAccumulationTracker.SlugCharacteristics chars =
-          new LiquidAccumulationTracker.SlugCharacteristics();
+      LiquidAccumulationTracker.SlugCharacteristics chars = new LiquidAccumulationTracker.SlugCharacteristics();
       chars.frontPosition = 10.0 + i * 15.0;
       chars.tailPosition = 8.0 + i * 15.0;
       chars.length = 2.0;
@@ -315,8 +306,7 @@ class LagrangianSlugTrackerTest {
     tracker.advanceTimeStep(sections, 1.0);
 
     assertTrue(tracker.getAverageSlugLength() > 0, "Average slug length should be positive");
-    assertTrue(tracker.getMaxSlugLength() >= tracker.getAverageSlugLength(),
-        "Max length should be >= average");
+    assertTrue(tracker.getMaxSlugLength() >= tracker.getAverageSlugLength(), "Max length should be >= average");
   }
 
   @Test
@@ -354,8 +344,7 @@ class LagrangianSlugTrackerTest {
   void testReset() {
     // Create some slugs
     for (int i = 0; i < 3; i++) {
-      LiquidAccumulationTracker.SlugCharacteristics chars =
-          new LiquidAccumulationTracker.SlugCharacteristics();
+      LiquidAccumulationTracker.SlugCharacteristics chars = new LiquidAccumulationTracker.SlugCharacteristics();
       chars.frontPosition = 20.0 + i * 10.0;
       chars.tailPosition = 18.0 + i * 10.0;
       chars.length = 2.0;
@@ -383,8 +372,7 @@ class LagrangianSlugTrackerTest {
   @Test
   void testJsonOutput() {
     // Create slug
-    LiquidAccumulationTracker.SlugCharacteristics chars =
-        new LiquidAccumulationTracker.SlugCharacteristics();
+    LiquidAccumulationTracker.SlugCharacteristics chars = new LiquidAccumulationTracker.SlugCharacteristics();
     chars.frontPosition = 20.0;
     chars.tailPosition = 18.0;
     chars.length = 2.0;
@@ -405,8 +393,7 @@ class LagrangianSlugTrackerTest {
   @Test
   void testStatisticsString() {
     // Create slug
-    LiquidAccumulationTracker.SlugCharacteristics chars =
-        new LiquidAccumulationTracker.SlugCharacteristics();
+    LiquidAccumulationTracker.SlugCharacteristics chars = new LiquidAccumulationTracker.SlugCharacteristics();
     chars.frontPosition = 20.0;
     chars.tailPosition = 18.0;
     chars.length = 2.0;
@@ -454,8 +441,7 @@ class LagrangianSlugTrackerTest {
   @Test
   void testZeroTimeStep() {
     // Create slug
-    LiquidAccumulationTracker.SlugCharacteristics chars =
-        new LiquidAccumulationTracker.SlugCharacteristics();
+    LiquidAccumulationTracker.SlugCharacteristics chars = new LiquidAccumulationTracker.SlugCharacteristics();
     chars.frontPosition = 20.0;
     chars.tailPosition = 18.0;
     chars.length = 2.0;

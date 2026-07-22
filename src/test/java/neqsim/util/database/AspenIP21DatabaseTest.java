@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class AspenIP21DatabaseTest {
-  Logger logger = LogManager.getFormatterLogger(NeqSimFluidDataBaseTest.class);
+  private static final Logger logger = LogManager.getLogger(AspenIP21DatabaseTest.class);
 
   @Disabled
   @Test
@@ -17,12 +17,12 @@ public class AspenIP21DatabaseTest {
     AspenIP21Database database = new AspenIP21Database();
     try (ResultSet dataSet = database.getResultSet("Karsto", "....'")) {
       while (dataSet.next()) {
-        // System.out.println("dataset " + dataSet.getString(4));
-        // System.out.println("dataset value " + dataSet.getDouble("..."));
+        // logger.info("dataset " + dataSet.getString(4));
+        // logger.info("dataset value " + dataSet.getDouble("..."));
       }
       failed = false;
     } catch (Exception ex) {
-      System.out.println("failed ");
+      logger.info("failed ");
     }
     Assertions.assertFalse(failed, "Failed getting properties from FluidDatabase");
   }

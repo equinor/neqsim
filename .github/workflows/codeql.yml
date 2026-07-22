@@ -20,13 +20,13 @@ jobs:
     timeout-minutes: 90
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Setup Java
         uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: '11'
+          java-version: '21'
           cache: maven
 
       - name: Initialize CodeQL
@@ -38,7 +38,7 @@ jobs:
 
       - name: Build with Maven (no tests)
         run: >
-          ./mvnw -B -V -e -ntp
+          ./mvnw -B -V -e -ntp -q
           -DskipTests -Dmaven.test.skip=true
           -Dfindbugs.skip=true -Dcheckstyle.skip=true -Dpmd.skip=true -Dspotbugs.skip=true
           -Denforcer.skip=true -Dmaven.javadoc.skip=true -Dlicense.skip=true -Drat.skip=true
@@ -57,7 +57,7 @@ jobs:
           output: codeql-results
 
       - name: Upload CodeQL SARIF (artifact)
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: codeql-sarif
           path: codeql-results/**/*.sarif

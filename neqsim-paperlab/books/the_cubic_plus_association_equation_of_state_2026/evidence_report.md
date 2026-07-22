@@ -1,0 +1,128 @@
+# Evidence Report
+
+Generated: 2026-05-05T14:20:10+00:00
+
+## Summary
+
+- Issues: 116
+- info: 38
+- warning: 78
+
+## Issues
+
+- **warning / figure_discussion**: ch01_introduction:337: non-cover figure lacks nearby discussion: fig_ch01_01_eos_timeline.png
+- **info / caption_quality**: ch01_introduction:337: caption should be reviewed: Figure 1.1: 01 Eos Timeline
+- **warning / figure_discussion**: ch01_introduction:341: non-cover figure lacks nearby discussion: fig_ch01_02_water_density_comparison.png
+- **warning / figure_discussion**: ch01_introduction:345: non-cover figure lacks nearby discussion: fig_ch01_03_industrial_systems.png
+- **warning / figure_discussion**: ch01_introduction:349: non-cover figure lacks nearby discussion: fig_ch01_ex01_Z_methane.png
+- **info / caption_quality**: ch01_introduction:349: caption should be reviewed: Figure 1.4: Ex01 Z Methane
+- **warning / figure_discussion**: ch02_thermodynamic_foundations:480: non-cover figure lacks nearby discussion: fig_ch02_01_gibbs_mixing_phase_diagram.png
+- **warning / figure_discussion**: ch02_thermodynamic_foundations:484: non-cover figure lacks nearby discussion: fig_ch02_02_fugacity_coefficient.png
+- **warning / figure_discussion**: ch02_thermodynamic_foundations:488: non-cover figure lacks nearby discussion: fig_ch02_03_helmholtz_decomposition.png
+- **warning / figure_discussion**: ch02_thermodynamic_foundations:492: non-cover figure lacks nearby discussion: fig_ch02_ex01_fugacity.png
+- **info / caption_quality**: ch02_thermodynamic_foundations:492: caption should be reviewed: Figure 2.4: Ex01 Fugacity
+- **warning / figure_discussion**: ch02_thermodynamic_foundations:496: non-cover figure lacks nearby discussion: fig_ch02_ex03_gibbs_mixing.png
+- **info / caption_quality**: ch02_thermodynamic_foundations:496: caption should be reviewed: Figure 2.5: Ex03 Gibbs Mixing
+- **warning / figure_discussion**: ch03_cubic_equations_of_state:418: non-cover figure lacks nearby discussion: fig_ch03_01_vdw_isotherms.png
+- **info / caption_quality**: ch03_cubic_equations_of_state:418: caption should be reviewed: Figure 3.1: 01 Vdw Isotherms
+- **warning / figure_discussion**: ch03_cubic_equations_of_state:422: non-cover figure lacks nearby discussion: fig_ch03_02_alpha_functions.png
+- **info / caption_quality**: ch03_cubic_equations_of_state:422: caption should be reviewed: Figure 3.2: 02 Alpha Functions
+- **warning / figure_discussion**: ch03_cubic_equations_of_state:426: non-cover figure lacks nearby discussion: fig_ch03_03_srk_pr_methane_density.png
+- **warning / figure_discussion**: ch03_cubic_equations_of_state:430: non-cover figure lacks nearby discussion: fig_ch03_04_volume_translation.png
+- **warning / figure_discussion**: ch04_association_theory:564: non-cover figure lacks nearby discussion: fig_ch04_01_site_fraction_vs_density.png
+- **warning / figure_discussion**: ch04_association_theory:568: non-cover figure lacks nearby discussion: fig_ch04_02_delta_vs_temperature.png
+- **warning / figure_discussion**: ch04_association_theory:572: non-cover figure lacks nearby discussion: fig_ch04_03_cpa_vs_srk_water.png
+- **info / caption_quality**: ch04_association_theory:572: caption should be reviewed: Figure 4.3: 03 Cpa Vs Srk Water
+- **warning / figure_discussion**: ch04_association_theory:576: non-cover figure lacks nearby discussion: fig_ch04_04_rdf_vs_packing.png
+- **info / caption_quality**: ch04_association_theory:576: caption should be reviewed: Figure 4.4: 04 Rdf Vs Packing
+- **warning / figure_discussion**: ch04_association_theory:580: non-cover figure lacks nearby discussion: fig_ch04_05_helmholtz_assoc_vs_T.png
+- **warning / figure_discussion**: ch04_association_theory:584: non-cover figure lacks nearby discussion: fig_ch04_06_association_schemes.png
+- **warning / figure_discussion**: ch04_association_theory:588: non-cover figure lacks nearby discussion: fig_ch04_07_solver_speedup_paperlab.png
+- **warning / figure_discussion**: ch04_association_theory:592: non-cover figure lacks nearby discussion: fig_ch04_08_site_reduction_jacobian.png
+- **warning / figure_discussion**: ch04_association_theory:596: non-cover figure lacks nearby discussion: fig_ch04_ex01_XA_vs_rho.png
+- **info / caption_quality**: ch04_association_theory:596: caption should be reviewed: Figure 4.9: Ex01 Xa Vs Rho
+- **warning / figure_discussion**: ch04_association_theory:600: non-cover figure lacks nearby discussion: fig_ch04_ex02_2B_vs_4C.png
+- **info / caption_quality**: ch04_association_theory:600: caption should be reviewed: Figure 4.10: Ex02 2B Vs 4C
+- **warning / figure_discussion**: ch04_association_theory:604: non-cover figure lacks nearby discussion: fig_ch04_ex04_helmholtz_and_bonding.png
+- **warning / figure_discussion**: ch05_cpa_formulation:580: non-cover figure lacks nearby discussion: fig_ch05_01_cpa_pressure_decomposition.png
+- **warning / figure_discussion**: ch05_cpa_formulation:584: non-cover figure lacks nearby discussion: fig_ch05_02_compressibility_cpa_vs_srk.png
+- **warning / figure_discussion**: ch05_cpa_formulation:588: non-cover figure lacks nearby discussion: fig_ch05_03_original_vs_scpa.png
+- **info / caption_quality**: ch05_cpa_formulation:588: caption should be reviewed: Figure 5.3: 03 Original Vs Scpa
+- **warning / figure_discussion**: ch05_cpa_formulation:592: non-cover figure lacks nearby discussion: fig_ch05_ex01_pressure_decomp.png
+- **info / caption_quality**: ch05_cpa_formulation:592: caption should be reviewed: Figure 5.4: Ex01 Pressure Decomp
+- **warning / figure_discussion**: ch05_cpa_formulation:596: non-cover figure lacks nearby discussion: fig_ch05_ex02_water_density.png
+- **info / caption_quality**: ch05_cpa_formulation:596: caption should be reviewed: Figure 5.5: Ex02 Water Density
+- **warning / figure_discussion**: ch05_cpa_formulation:600: non-cover figure lacks nearby discussion: fig_ch05_ex03_eps_sensitivity.png
+- **info / caption_quality**: ch05_cpa_formulation:600: caption should be reviewed: Figure 5.6: Ex03 Eps Sensitivity
+- **warning / figure_discussion**: ch06_pure_component_parameters:509: non-cover figure lacks nearby discussion: fig_ch06_01_parameter_comparison.png
+- **warning / figure_discussion**: ch06_pure_component_parameters:513: non-cover figure lacks nearby discussion: fig_ch06_02_parameter_landscape.png
+- **warning / figure_discussion**: ch06_pure_component_parameters:517: non-cover figure lacks nearby discussion: fig_ch06_03_cpa_water_pvap_accuracy.png
+- **warning / figure_discussion**: ch06_pure_component_parameters:521: non-cover figure lacks nearby discussion: fig_ch06_ex01_regression_landscape.png
+- **warning / figure_discussion**: ch06_pure_component_parameters:525: non-cover figure lacks nearby discussion: fig_ch06_ex03_compensating_params.png
+- **warning / figure_discussion**: ch07_mixing_rules:514: non-cover figure lacks nearby discussion: fig_ch07_01_combining_rules.png
+- **info / caption_quality**: ch07_mixing_rules:514: caption should be reviewed: Figure 7.1: 01 Combining Rules
+- **warning / figure_discussion**: ch07_mixing_rules:518: non-cover figure lacks nearby discussion: fig_ch07_02_water_methanol_vle.png
+- **warning / figure_discussion**: ch07_mixing_rules:522: non-cover figure lacks nearby discussion: fig_ch07_03_kij_sensitivity.png
+- **info / caption_quality**: ch07_mixing_rules:522: caption should be reviewed: Figure 7.3: 03 Kij Sensitivity
+- **warning / figure_discussion**: ch08_numerical_implementation:757: non-cover figure lacks nearby discussion: fig_ch08_01_convergence_XA.png
+- **info / caption_quality**: ch08_numerical_implementation:757: caption should be reviewed: Figure 8.1: 01 Convergence Xa
+- **warning / figure_discussion**: ch08_numerical_implementation:761: non-cover figure lacks nearby discussion: fig_ch08_02_benchmark_implicit_cpa.png
+- **warning / figure_discussion**: ch08_numerical_implementation:765: non-cover figure lacks nearby discussion: fig_ch08_03_speedup_heatmap.png
+- **info / caption_quality**: ch08_numerical_implementation:765: caption should be reviewed: Figure 8.3: 03 Speedup Heatmap
+- **warning / figure_discussion**: ch08_numerical_implementation:769: non-cover figure lacks nearby discussion: fig_ch08_04_multi_system_benchmark.png
+- **warning / figure_discussion**: ch08_numerical_implementation:773: non-cover figure lacks nearby discussion: fig_ch08_05_implicit_speedup_bar.png
+- **warning / figure_discussion**: ch08_numerical_implementation:777: non-cover figure lacks nearby discussion: fig_ch08_06_implicit_heatmap_water.png
+- **warning / figure_discussion**: ch08_numerical_implementation:781: non-cover figure lacks nearby discussion: fig_ch08_07_implicit_heatmap_oil_gas.png
+- **warning / figure_discussion**: ch08_numerical_implementation:785: non-cover figure lacks nearby discussion: fig_ch08_08_speedup_vs_sites.png
+- **warning / figure_discussion**: ch08_numerical_implementation:789: non-cover figure lacks nearby discussion: fig_ch08_09_ratio_distribution.png
+- **warning / figure_discussion**: ch08_numerical_implementation:793: non-cover figure lacks nearby discussion: fig_ch08_10_speedup_vs_ncomp.png
+- **warning / figure_discussion**: ch08_numerical_implementation:797: non-cover figure lacks nearby discussion: fig_ch08_11_accel_speedup_barchart.png
+- **warning / figure_discussion**: ch08_numerical_implementation:801: non-cover figure lacks nearby discussion: fig_ch08_12_convergence_trace.png
+- **warning / figure_discussion**: ch08_numerical_implementation:805: non-cover figure lacks nearby discussion: fig_ch08_13_site_type_mapping.png
+- **warning / figure_discussion**: ch09_water_hydrocarbons:576: non-cover figure lacks nearby discussion: fig_ch09_01_water_content_methane.png
+- **warning / figure_discussion**: ch09_water_hydrocarbons:580: non-cover figure lacks nearby discussion: fig_ch09_02_methane_solubility_water.png
+- **warning / figure_discussion**: ch09_water_hydrocarbons:584: non-cover figure lacks nearby discussion: fig_ch09_03_natgas_water_content.png
+- **warning / figure_discussion**: ch09_water_hydrocarbons:588: non-cover figure lacks nearby discussion: fig_ch09_ex01_water_content.png
+- **info / caption_quality**: ch09_water_hydrocarbons:588: caption should be reviewed: Figure 9.4: Ex01 Water Content
+- **warning / figure_discussion**: ch09_water_hydrocarbons:592: non-cover figure lacks nearby discussion: fig_ch09_ex02_ch4_solubility.png
+- **info / caption_quality**: ch09_water_hydrocarbons:592: caption should be reviewed: Figure 9.5: Ex02 Solubility
+- **warning / figure_discussion**: ch10_gas_processing:724: non-cover figure lacks nearby discussion: fig_ch10_01_teg_water_vle.png
+- **info / caption_quality**: ch10_gas_processing:724: caption should be reviewed: Figure 10.1: 01 Teg Water Vle
+- **warning / figure_discussion**: ch10_gas_processing:728: non-cover figure lacks nearby discussion: fig_ch10_02_dew_point_teg.png
+- **info / caption_quality**: ch10_gas_processing:728: caption should be reviewed: Figure 10.2: 02 Dew Point Teg
+- **warning / figure_discussion**: ch10_gas_processing:732: non-cover figure lacks nearby discussion: fig_ch10_03_meg_water_gamma.png
+- **info / caption_quality**: ch10_gas_processing:732: caption should be reviewed: Figure 10.3: 03 Meg Water Gamma
+- **warning / figure_discussion**: ch10_gas_processing:736: non-cover figure lacks nearby discussion: fig_ch10_ex01_teg_water_bp.png
+- **info / caption_quality**: ch10_gas_processing:736: caption should be reviewed: Figure 10.4: Ex01 Teg Water Bp
+- **warning / figure_discussion**: ch10_gas_processing:740: non-cover figure lacks nearby discussion: fig_ch10_ex02_water_dewpoint.png
+- **info / caption_quality**: ch10_gas_processing:740: caption should be reviewed: Figure 10.5: Ex02 Water Dewpoint
+- **warning / figure_discussion**: ch10_gas_processing:744: non-cover figure lacks nearby discussion: fig_ch10_ex03_meg_activity.png
+- **info / caption_quality**: ch10_gas_processing:744: caption should be reviewed: Figure 10.6: Ex03 Meg Activity
+- **warning / figure_discussion**: ch11_co2_capture_storage:562: non-cover figure lacks nearby discussion: fig_ch11_01_co2_solubility_water.png
+- **warning / figure_discussion**: ch11_co2_capture_storage:566: non-cover figure lacks nearby discussion: fig_ch11_02_co2_phase_envelope.png
+- **warning / figure_discussion**: ch11_co2_capture_storage:570: non-cover figure lacks nearby discussion: fig_ch11_03_co2_density.png
+- **info / caption_quality**: ch11_co2_capture_storage:570: caption should be reviewed: Figure 11.3: 03 Co2 Density
+- **warning / figure_discussion**: ch11_co2_capture_storage:574: non-cover figure lacks nearby discussion: fig_ch11_ex01_co2_density.png
+- **info / caption_quality**: ch11_co2_capture_storage:574: caption should be reviewed: Figure 11.4: Ex01 Co2 Density
+- **warning / figure_discussion**: ch11_co2_capture_storage:578: non-cover figure lacks nearby discussion: fig_ch11_ex02_co2_solubility.png
+- **info / caption_quality**: ch11_co2_capture_storage:578: caption should be reviewed: Figure 11.5: Ex02 Co2 Solubility
+- **warning / figure_discussion**: ch11_co2_capture_storage:582: non-cover figure lacks nearby discussion: fig_ch11_ex03_n2_impurity.png
+- **info / caption_quality**: ch11_co2_capture_storage:582: caption should be reviewed: Figure 11.6: Ex03 N2 Impurity
+- **warning / figure_discussion**: ch12_advanced_topics:733: non-cover figure lacks nearby discussion: fig_ch12_01_cpa_vs_pcsaft.png
+- **info / caption_quality**: ch12_advanced_topics:733: caption should be reviewed: Figure 12.1: 01 Cpa Vs Pcsaft
+- **warning / figure_discussion**: ch12_advanced_topics:737: non-cover figure lacks nearby discussion: fig_ch12_02_ecpa_nacl.png
+- **info / caption_quality**: ch12_advanced_topics:737: caption should be reviewed: Figure 12.2: 02 Ecpa Nacl
+- **warning / figure_discussion**: ch12_advanced_topics:741: non-cover figure lacks nearby discussion: fig_ch12_03_gc_cpa_concept.png
+- **info / caption_quality**: ch12_advanced_topics:741: caption should be reviewed: Figure 12.3: 03 Gc Cpa Concept
+- **warning / figure_discussion**: ch12_advanced_topics:745: non-cover figure lacks nearby discussion: fig_ch12_04_model_timeline.png
+- **info / caption_quality**: ch12_advanced_topics:745: caption should be reviewed: Figure 12.4: 04 Model Timeline
+- **warning / figure_discussion**: ch12_advanced_topics:749: non-cover figure lacks nearby discussion: fig_ch12_ex01_meoh_hexane.png
+- **info / caption_quality**: ch12_advanced_topics:749: caption should be reviewed: Figure 12.5: Ex01 Meoh Hexane
+- **warning / figure_discussion**: ch12_advanced_topics:753: non-cover figure lacks nearby discussion: fig_ch12_ex02_nacl_activity.png
+- **info / caption_quality**: ch12_advanced_topics:753: caption should be reviewed: Figure 12.6: Ex02 Nacl Activity
+- **warning / figure_discussion**: ch12_advanced_topics:757: non-cover figure lacks nearby discussion: fig_ch12_ex03_model_selection.png
+- **info / caption_quality**: ch12_advanced_topics:757: caption should be reviewed: Figure 12.7: Ex03 Model Selection
+- **warning / figure_discussion**: ch12_advanced_topics:761: non-cover figure lacks nearby discussion: fig_ch12_08_all_salts_gamma_comparison.png
+- **warning / figure_discussion**: ch12_advanced_topics:765: non-cover figure lacks nearby discussion: fig_ch12_09_corrected_parity_plot.png
+- **warning / figure_discussion**: ch12_advanced_topics:769: non-cover figure lacks nearby discussion: fig_ch12_10_parity_plot_gamma.png
+- **info / caption_quality**: ch12_advanced_topics:769: caption should be reviewed: Figure 12.10: Parity plot gamma

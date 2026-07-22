@@ -4,13 +4,13 @@ import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * Level control valve (LCV) for automatic level regulation in vessels.
- * 
+ *
  * <p>
- * LevelControlValve automatically modulates its opening to maintain a vessel level setpoint. It
- * extends ControlValve and adds level control logic with proportional control action. This is
- * essential for separator level control and liquid discharge applications.
+ * LevelControlValve automatically modulates its opening to maintain a vessel level setpoint. It extends ControlValve
+ * and adds level control logic with proportional control action. This is essential for separator level control and
+ * liquid discharge applications.
  * </p>
- * 
+ *
  * <p>
  * Key features:
  * <ul>
@@ -20,15 +20,14 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Configurable control gain</li>
  * <li>Fail-open or fail-closed configurations</li>
  * </ul>
- * 
+ *
  * <p>
  * Control action:
  * <ul>
- * <li>DIRECT: Increase opening increases outflow, decreases level (most common for liquid
- * discharge)</li>
+ * <li>DIRECT: Increase opening increases outflow, decreases level (most common for liquid discharge)</li>
  * <li>REVERSE: Increase opening decreases outflow, increases level (rare)</li>
  * </ul>
- * 
+ *
  * <p>
  * Common applications:
  * <ul>
@@ -38,15 +37,15 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Tank level regulation</li>
  * <li>Interface level control</li>
  * </ul>
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * // Create separator with liquid outlet
  * Separator separator = new Separator("V-101", feedStream);
  * Stream liquidOut = new Stream("Liquid Out", separator.getLiquidOutStream());
- * 
+ *
  * // Create level control valve
  * LevelControlValve lcv = new LevelControlValve("LCV-101", liquidOut);
  * lcv.setLevelSetpoint(50.0); // Control to 50% level
@@ -54,7 +53,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * lcv.setMeasuredLevel(45.0); // Current level from transmitter
  * lcv.setCv(150.0);
  * lcv.run();
- * 
+ *
  * System.out.println("Valve opening: " + lcv.getPercentValveOpening() + "%");
  * System.out.println("Level error: " + lcv.getControlError() + "%");
  * </pre>
@@ -69,8 +68,7 @@ public class LevelControlValve extends ControlValve {
   /** Control action enumeration. */
   public enum ControlAction {
     /**
-     * Direct action: increase opening increases outflow, decreases level (normal for discharge
-     * valves).
+     * Direct action: increase opening increases outflow, decreases level (normal for discharge valves).
      */
     DIRECT,
     /** Reverse action: increase opening decreases outflow, increases level. */
@@ -285,7 +283,7 @@ public class LevelControlValve extends ControlValve {
   public String toString() {
     return String.format(
         "%s [Level Control Valve] - Mode: %s, Action: %s, SP: %.1f%%, PV: %.1f%%, Error: %.1f%%, Opening: %.1f%%",
-        getName(), autoMode ? "AUTO" : "MANUAL", controlAction, levelSetpoint, measuredLevel,
-        controlError, getPercentValveOpening());
+        getName(), autoMode ? "AUTO" : "MANUAL", controlAction, levelSetpoint, measuredLevel, controlError,
+        getPercentValveOpening());
   }
 }

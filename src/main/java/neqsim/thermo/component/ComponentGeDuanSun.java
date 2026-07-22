@@ -5,9 +5,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * ComponentGeDuanSun class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class ComponentGeDuanSun extends ComponentGE {
   double q = 0;
 
   /**
-   * <p>
    * Constructor for ComponentGeDuanSun.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -35,9 +31,7 @@ public class ComponentGeDuanSun extends ComponentGE {
   }
 
   /**
-   * <p>
    * getGamma.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -48,8 +42,8 @@ public class ComponentGeDuanSun extends ComponentGE {
    * @param HVgij an array of type double
    * @return a double
    */
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij) {
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt, double[][] HValpha, double[][] HVgij) {
     if (componentName.equals("CO2")) {
       return 0.9;
     } else if (componentName.equals("water")) {
@@ -61,16 +55,13 @@ public class ComponentGeDuanSun extends ComponentGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam,
-      String[][] mixRule) {
+  public double getGamma(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt, double[][] HValpha, double[][] HVgij, double[][] intparam, String[][] mixRule) {
     return getGamma(phase, numberOfComponents, temperature, pressure, pt, HValpha, HVgij);
   }
 
   /**
-   * <p>
    * getGammaNRTL.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -81,8 +72,8 @@ public class ComponentGeDuanSun extends ComponentGE {
    * @param HVgij an array of type double
    * @return a double
    */
-  public double getGammaNRTL(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double[][] HValpha, double[][] HVgij) {
+  public double getGammaNRTL(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt, double[][] HValpha, double[][] HVgij) {
     // double ny = 0, Djj = 0, Dii = 0, gij = 0, gjj = 0, gji = 0, gii = 0, F2T = 0, tot2 = 0;
     double A = 0;
     double B = 0;
@@ -218,8 +209,7 @@ public class ComponentGeDuanSun extends ComponentGE {
 
     lngamma = A / B + F;
     // dlngammadt = dAdT/B - A/(B*B)*dBdT + dFdT;
-    dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter - dA5dTetter
-        - dA6dTetter);
+    dlngammadt = (dAdT / B - A / (B * B) * dBdT + dA2dTetter - dA3dTetter + dA4dTetter - dA5dTetter - dA6dTetter);
     /*
      * if(w==0){ dlngammadtold = dlngammadt; temperature +=0.0001; }
      *
@@ -268,12 +258,12 @@ public class ComponentGeDuanSun extends ComponentGE {
             sum += comp_Array[g].getx() * Gmatrix[g][f];
             sum2 += comp_Array[g].getx() * Gmatrix[g][f] * tauMatrix[g][f];
           }
-          Dtemp += Gmatrix[p][f] * Gmatrix[this.getComponentNumber()][f]
-              * tauMatrix[this.getComponentNumber()][f] * comp_Array[f].getx() / (sum * sum);
-          Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2
-              * Gmatrix[this.getComponentNumber()][f] / (sum * sum * sum);
-          Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f]
-              * Gmatrix[this.getComponentNumber()][f] / (sum * sum);
+          Dtemp += Gmatrix[p][f] * Gmatrix[this.getComponentNumber()][f] * tauMatrix[this.getComponentNumber()][f]
+              * comp_Array[f].getx() / (sum * sum);
+          Ftemp += comp_Array[f].getx() * Gmatrix[p][f] * sum2 * Gmatrix[this.getComponentNumber()][f]
+              / (sum * sum * sum);
+          Gtemp += comp_Array[f].getx() * Gmatrix[p][f] * tauMatrix[p][f] * Gmatrix[this.getComponentNumber()][f]
+              / (sum * sum);
         }
         dlngammadn[p] = (dAdn / B - A / (B * B) * dBdn) + dEdn / Ctemp - Dtemp
             - Etemp * Gmatrix[this.getComponentNumber()][p] / (Ctemp * Ctemp) + 2.0 * Ftemp - Gtemp;
@@ -290,25 +280,22 @@ public class ComponentGeDuanSun extends ComponentGE {
   /*
    * public double getHenryCoef(double temperature) { // System.out.println("henry " + //
    * Math.exp(henryCoefParameter[0]+henryCoefParameter[1]/temperature+
-   * henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature )*100*0.01802);
-   * if (componentName.equals("CO2")) { // return } return super.getHenryCoef(temperature); }
+   * henryCoefParameter[2]*Math.log(temperature)+henryCoefParameter[3]*temperature )*100*0.01802); if
+   * (componentName.equals("CO2")) { // return } return super.getHenryCoef(temperature); }
    */
 
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
-    logger.info("fug coef "
-        + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
+    logger.info("fug coef " + gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure());
     if (referenceStateType.equals("solvent")) {
-      fugacityCoefficient =
-          gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
+      fugacityCoefficient = gamma * getAntoineVaporPressure(phase.getTemperature()) / phase.getPressure();
       gammaRefCor = gamma;
     } else {
       double activinf = 1.0;
       if (phase.hasComponent("water")) {
         int waternumb = phase.getComponent("water").getComponentNumber();
-        activinf =
-            gamma / ((PhaseGE) phase).getActivityCoefficientInfDilWater(componentNumber, waternumb);
+        activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDilWater(componentNumber, waternumb);
       } else {
         activinf = gamma / ((PhaseGE) phase).getActivityCoefficientInfDil(componentNumber);
       }
@@ -320,43 +307,33 @@ public class ComponentGeDuanSun extends ComponentGE {
       double EPS1000 = 0.0;
       double CB = 0.0;
       double BB = 0.0;
-      EPS1000 = 3.4279 * Math.pow(10.0, 2.0)
-          * Math.exp((-5.0866 * Math.pow(10.0, -3.0) * phase.getTemperature()
-              + 9.469 * Math.pow(10.0, -7.0) * Math.pow(phase.getTemperature(), 2.0)));
-      CB = -2.0525
-          + 3.1159 * Math.pow(10.0, 3.0) / (phase.getTemperature() - 1.8289 * Math.pow(10.0, 2.0));
+      EPS1000 = 3.4279 * Math.pow(10.0, 2.0) * Math.exp((-5.0866 * Math.pow(10.0, -3.0) * phase.getTemperature()
+          + 9.469 * Math.pow(10.0, -7.0) * Math.pow(phase.getTemperature(), 2.0)));
+      CB = -2.0525 + 3.1159 * Math.pow(10.0, 3.0) / (phase.getTemperature() - 1.8289 * Math.pow(10.0, 2.0));
       BB = -8.0325 * Math.pow(10.0, -3.0) + 4.21452 * Math.pow(10.0, 6.0) / phase.getTemperature()
           + 2.1417 * phase.getTemperature();
       EPS = EPS1000 + CB * Math.log((BB + phase.getPressure()) / BB + 1000.0);
-      BORN = (1.0 / EPS) * (CB / ((phase.getPressure() + BB)
-          * (CB * Math.log((phase.getPressure() + BB) / (BB + 1000.0)) + EPS)));
+      BORN = (1.0 / EPS)
+          * (CB / ((phase.getPressure() + BB) * (CB * Math.log((phase.getPressure() + BB) / (BB + 1000.0)) + EPS)));
 
       // Average partial molar volume
-      double[] Vm = {0.0, 0.0, 0.0};
-      Vm[0] =
-          41.84
-              * (0.1 * 7.29 + (100 * 0.92) / (2600 + phase.getPressure())
-                  + 2.07 / (phase.getTemperature() - 288.0)
-                  - 1.23 * Math.pow(10.0, 4.0)
-                      / ((2600 + phase.getPressure()) * (phase.getTemperature() - 288.0))
-                  + 1.6 * BORN);
+      double[] Vm = { 0.0, 0.0, 0.0 };
+      Vm[0] = 41.84
+          * (0.1 * 7.29 + (100 * 0.92) / (2600 + phase.getPressure()) + 2.07 / (phase.getTemperature() - 288.0)
+              - 1.23 * Math.pow(10.0, 4.0) / ((2600 + phase.getPressure()) * (phase.getTemperature() - 288.0))
+              + 1.6 * BORN);
       Vm[1] = 41.84 * (0.1 * 7.0);
-      Vm[2] =
-          41.84 * (0.1 * 5.7889 + (100 * 6.3536) / (2600 + phase.getPressure())
-              + 3.2528 / (phase.getTemperature() - 288.0)
-              - 3.0417 * Math.pow(10.0, 4.0)
-                  / ((2600 + phase.getPressure()) * (phase.getTemperature() - 288.0))
+      Vm[2] = 41.84
+          * (0.1 * 5.7889 + (100 * 6.3536) / (2600 + phase.getPressure()) + 3.2528 / (phase.getTemperature() - 288.0)
+              - 3.0417 * Math.pow(10.0, 4.0) / ((2600 + phase.getPressure()) * (phase.getTemperature() - 288.0))
               + 0.3943 * BORN);
 
-      double[] Poynteff = {0.0, 0.0, 0.0};
-      Poynteff[0] =
-          Vm[0] * (phase.getPressure() - 1.0) / (1000.0 * (R / 100.0) * phase.getTemperature());
-      Poynteff[1] =
-          Vm[1] * (phase.getPressure() - 1.0) / (1000.0 * (R / 100.0) * phase.getTemperature());
-      Poynteff[2] =
-          Vm[2] * (phase.getPressure() - 1.0) / (1000.0 * (R / 100.0) * phase.getTemperature());
+      double[] Poynteff = { 0.0, 0.0, 0.0 };
+      Poynteff[0] = Vm[0] * (phase.getPressure() - 1.0) / (1000.0 * (R / 100.0) * phase.getTemperature());
+      Poynteff[1] = Vm[1] * (phase.getPressure() - 1.0) / (1000.0 * (R / 100.0) * phase.getTemperature());
+      Poynteff[2] = Vm[2] * (phase.getPressure() - 1.0) / (1000.0 * (R / 100.0) * phase.getTemperature());
 
-      double[] K = {0.0, 0.0, 0.0, 0.0};
+      double[] K = { 0.0, 0.0, 0.0, 0.0 };
       double a1 = 0.0;
       double a2 = 0.0;
       double a3 = 0.0;
@@ -403,20 +380,17 @@ public class ComponentGeDuanSun extends ComponentGE {
 
       K[0] = Math.pow(10.0,
           (ACO20 + ACO21 * phase.getTemperature() + ACO22 / phase.getTemperature()
-              + ACO23 * Math.log10(phase.getTemperature())
-              + ACO24 / (Math.pow(phase.getTemperature(), 2.0))
+              + ACO23 * Math.log10(phase.getTemperature()) + ACO24 / (Math.pow(phase.getTemperature(), 2.0))
               + ACO25 * Math.pow(phase.getTemperature(), 2.0)))
           * Math.exp(Poynteff[0]);
       K[1] = Math.pow(10.0,
           (AN20 + AN21 * phase.getTemperature() + AN22 / phase.getTemperature()
-              + AN23 * Math.log10(phase.getTemperature())
-              + AN24 / (Math.pow(phase.getTemperature(), 2.0))
+              + AN23 * Math.log10(phase.getTemperature()) + AN24 / (Math.pow(phase.getTemperature(), 2.0))
               + AN25 * Math.pow(phase.getTemperature(), 2.0)))
           * Math.exp(Poynteff[1]);
       K[2] = Math.pow(10.0,
           (AO20 + AO21 * phase.getTemperature() + AO22 / phase.getTemperature()
-              + AO23 * Math.log10(phase.getTemperature())
-              + AO24 / (Math.pow(phase.getTemperature(), 2.0))
+              + AO23 * Math.log10(phase.getTemperature()) + AO24 / (Math.pow(phase.getTemperature(), 2.0))
               + AO25 * Math.pow(phase.getTemperature(), 2.0)))
           * Math.exp(Poynteff[2]);
       K[3] = (a1 + a2 * phase.getTemperature() + a3 * Math.pow(phase.getTemperature(), 2.0)
@@ -448,9 +422,7 @@ public class ComponentGeDuanSun extends ComponentGE {
 
   /////////////////////////////////////////////////////
   /**
-   * <p>
    * getGammaPitzer.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -460,8 +432,8 @@ public class ComponentGeDuanSun extends ComponentGE {
    * @param salinity a double
    * @return a double
    */
-  public double getGammaPitzer(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure, PhaseType pt, double salinity) {
+  public double getGammaPitzer(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt, double salinity) {
     double P = pressure;
     double T = temperature;
     double S = salinity;
@@ -515,21 +487,17 @@ public class ComponentGeDuanSun extends ComponentGE {
   }
   /////////////////////////////////////////////////////
   /*
-   * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, PhaseType pt){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents,
-   * temperature, pressure+0.01, pt))-Math.log(fugcoef(phase, numberOfComponents, temperature,
-   * pressure-0.01, pt)))/0.02; return dfugdp; }
+   * public double fugcoefDiffPres(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+   * PhaseType pt){ dfugdp = (Math.log(fugcoef(phase, numberOfComponents, temperature, pressure+0.01,
+   * pt))-Math.log(fugcoef(phase, numberOfComponents, temperature, pressure-0.01, pt)))/0.02; return dfugdp; }
    *
-   * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature,
-   * double pressure, PhaseType pt){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents,
-   * temperature+0.01, pressure, pt))-Math.log(fugcoef(phase, numberOfComponents, temperature-0.01,
-   * pressure, pt)))/0.02; return dfugdt; }
+   * public double fugcoefDiffTemp(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+   * PhaseType pt){ dfugdt = (Math.log(fugcoef(phase, numberOfComponents, temperature+0.01, pressure,
+   * pt))-Math.log(fugcoef(phase, numberOfComponents, temperature-0.01, pressure, pt)))/0.02; return dfugdt; }
    */
 
   /**
-   * <p>
    * Getter for the field <code>r</code>.
-   * </p>
    *
    * @return a double
    */
@@ -538,22 +506,11 @@ public class ComponentGeDuanSun extends ComponentGE {
   }
 
   /**
-   * <p>
    * Getter for the field <code>q</code>.
-   * </p>
    *
    * @return a double
    */
   public double getq() {
     return q;
-  }
-
-  /**
-   * Getter for property lngamma.
-   *
-   * @return Value of property lngamma.
-   */
-  public double getLngamma() {
-    return lngamma;
   }
 }

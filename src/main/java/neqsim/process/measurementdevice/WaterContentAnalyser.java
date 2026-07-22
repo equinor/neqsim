@@ -4,9 +4,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * WaterContentAnalyser class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -16,9 +14,7 @@ public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for WaterContentAnalyser.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -27,9 +23,7 @@ public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for WaterContentAnalyser.
-   * </p>
    *
    * @param name Name of WaterContentAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -45,10 +39,9 @@ public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass {
     try {
       System.out.println("total water production [kg/dag]"
           + stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
-              * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600
-              * 24);
-      System.out.println("water in phase 1 (ppm) "
-          + stream.getThermoSystem().getPhase(0).getComponent("water").getx() * 1e6);
+              * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600 * 24);
+      System.out
+          .println("water in phase 1 (ppm) " + stream.getThermoSystem().getPhase(0).getComponent("water").getx() * 1e6);
     } finally {
     }
   }
@@ -56,10 +49,8 @@ public class WaterContentAnalyser extends StreamMeasurementDeviceBaseClass {
   /** {@inheritDoc} */
   @Override
   public double getMeasuredValue(String unit) {
-    double raw =
-        stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
-            * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600
-            * 24;
+    double raw = stream.getThermoSystem().getPhase(0).getComponent("water").getNumberOfmoles()
+        * stream.getThermoSystem().getPhase(0).getComponent("water").getMolarMass() * 3600 * 24;
     return applySignalModifiers(raw);
   }
 }

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>com.equinor.neqsim</groupId>
+    <artifactId>neqsim-mcp-server</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+    <name>NeqSim MCP Server</name>
+    <description>Model Context Protocol (MCP) server exposing NeqSim thermodynamic calculations and process simulation to LLMs</description>
+
+    <properties>
+        <quarkus.version>3.37.0</quarkus.version>
+        <mcp-server.version>1.13.0</mcp-server.version>
+        <!-- Keep in sync with ../pom.xml <revision> property until a parent/module build is used. -->
+        <revision>3.16.0</revision>
+        <neqsim.version>${revision}</neqsim.version>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <!-- Use -Plocal-dev when iterating against the workspace build:
+         mvn package -Plocal-dev
+         This resolves the same revision property that should first be installed from the parent. -->
+    <profiles>
+        <profile>
+            <id>local-dev</id>
+            <properties>
+                <neqsim.version>${revision}</neqsim.version>
+            </properties>
+        </profile>
+    </profiles>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>io.quarkus.platform</groupId>
+                <artifactId>quarkus-bom</artifactId>
+                <version>${quarkus.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <!-- MCP Server STDIO transport (default — used with Claude Desktop, VS Code, etc.) -->
+        <dependency>
+            <groupId>io.quarkiverse.mcp</groupId>
+            <artifactId>quarkus-mcp-server-stdio</artifactId>
+            <version>${mcp-server.version}</version>
+        </dependency>
+
+        <!-- MCP Server Streamable HTTP transport (also exposes legacy HTTP/SSE at /mcp/sse) -->
+        <dependency>
+            <groupId>io.quarkiverse.mcp</groupId>
+            <artifactId>quarkus-mcp-server-http</artifactId>
+            <version>${mcp-server.version}</version>
+        </dependency>
+
+        <!-- NeqSim core library (installed to local Maven repo) -->
+        <dependency>
+            <groupId>com.equinor.neqsim</groupId>
+            <artifactId>neqsim</artifactId>
+            <version>${neqsim.version}</version>
+        </dependency>
+
+        <!-- OpenTelemetry tracing — distributed observability/governance for the
+             HTTP transport. Tool invocations are traced and exportable to an OTLP
+             collector. Disabled by default (see application.properties) so STDIO /
+             desktop use has zero overhead; enabled for DIGITAL_TWIN / ENTERPRISE. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-opentelemetry</artifactId>
+        </dependency>
+
+        <!-- OIDC — bearer-token authentication for the HTTP transport, backing the
+             ENTERPRISE deployment profile's governance gates. The tenant is disabled
+             by default (see application.properties) so STDIO and single-user HTTP work
+             with no identity provider; enable it for enterprise deployments. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-oidc</artifactId>
+        </dependency>
+
+        <!-- SmallRye Health — Kubernetes-style liveness/readiness endpoints
+             (/q/health, /q/health/live, /q/health/ready) for hosted deployments
+             (e.g. Equinor Radix probes). Zero effect on STDIO / desktop use. -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-smallrye-health</artifactId>
+        </dependency>
+
+        <!-- Test dependencies -->
+        <dependency>
+            <groupId>io.quarkus</groupId>
+            <artifactId>quarkus-junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>io.quarkus</groupId>
+                <artifactId>quarkus-maven-plugin</artifactId>
+                <version>${quarkus.version}</version>
+                <extensions>true</extensions>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build</goal>
+                            <goal>generate-code</goal>
+                            <goal>generate-code-tests</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.15.0</version>
+                <configuration>
+                    <release>21</release>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.5.6</version>
+                <configuration>
+                    <systemPropertyVariables>
+                        <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

@@ -16,18 +16,14 @@ public class SystemVegaEos extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemVegaEos.
-   * </p>
    */
   public SystemVegaEos() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemVegaEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -37,9 +33,7 @@ public class SystemVegaEos extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemVegaEos.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -93,9 +87,7 @@ public class SystemVegaEos extends SystemEos {
   }
 
   /**
-   * <p>
    * commonInitialization.
-   * </p>
    */
   public void commonInitialization() {
     setImplementedCompositionDeriativesofFugacity(false);

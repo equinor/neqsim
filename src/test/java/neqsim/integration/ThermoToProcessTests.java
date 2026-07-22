@@ -11,7 +11,7 @@ import neqsim.thermo.system.SystemSrkEos;
 
 /**
  * Integration tests validating thermo module integration with process equipment.
- * 
+ *
  * <p>
  * These tests demonstrate how thermodynamic systems couple with process unit operations.
  */
@@ -38,8 +38,7 @@ public class ThermoToProcessTests {
 
     // Validate thermo system is ready
     ValidationFramework.ValidationResult thermoResult = ThermoValidator.validateSystem(gas);
-    assertTrue(thermoResult.isReady(),
-        "Thermo system should be valid: " + thermoResult.getErrorsSummary());
+    assertTrue(thermoResult.isReady(), "Thermo system should be valid: " + thermoResult.getErrorsSummary());
 
     // Create separator
     Separator separator = new Separator("HP Separator", feed);
@@ -53,8 +52,7 @@ public class ThermoToProcessTests {
     double feedMass = feed.getFluid().getFlowRate("kg/hr");
     double gasMass = separator.getGasOutStream().getFluid().getFlowRate("kg/hr");
     double liquidMass = separator.getLiquidOutStream().getFluid().getFlowRate("kg/hr");
-    assertEquals(feedMass, gasMass + liquidMass, feedMass * 0.01,
-        "Mass balance should close within 1%");
+    assertEquals(feedMass, gasMass + liquidMass, feedMass * 0.01, "Mass balance should close within 1%");
   }
 
   /**

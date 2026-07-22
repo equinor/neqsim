@@ -8,9 +8,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * sysNewtonRhapsonPHflash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -59,16 +57,13 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   double dPdT = 0;
 
   /**
-   * <p>
    * Constructor for sysNewtonRhapsonPHflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param numberOfPhases a int
    * @param numberOfComponents a int
    */
-  public SysNewtonRhapsonPHflash(SystemInterface system, int numberOfPhases,
-      int numberOfComponents) {
+  public SysNewtonRhapsonPHflash(SystemInterface system, int numberOfPhases, int numberOfComponents) {
     this.system = system;
     this.numberOfComponents = numberOfComponents;
     neq = numberOfComponents;
@@ -86,25 +81,20 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   }
 
   /**
-   * <p>
    * Constructor for sysNewtonRhapsonPHflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param numberOfPhases a int
    * @param numberOfComponents a int
    * @param type a int
    */
-  public SysNewtonRhapsonPHflash(SystemInterface system, int numberOfPhases, int numberOfComponents,
-      int type) {
+  public SysNewtonRhapsonPHflash(SystemInterface system, int numberOfPhases, int numberOfComponents, int type) {
     this(system, numberOfPhases, numberOfComponents);
     this.type = type;
   }
 
   /**
-   * <p>
    * setSpec.
-   * </p>
    *
    * @param spec a double
    */
@@ -113,9 +103,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvec</code>.
-   * </p>
    */
   public void setfvec() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -141,9 +129,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   }
 
   /**
-   * <p>
    * setJac.
-   * </p>
    */
   public void setJac() {
     Jac.timesEquals(0.0);
@@ -156,8 +142,8 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
         tempJ = 1.0 / system.getBeta()
             * (dij / system.getPhases()[0].getComponent(i).getx() - 1.0
                 + system.getPhases()[0].getComponent(i).getdfugdx(j))
-            + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhases()[1].getComponent(i).getx()
-                - 1.0 + system.getPhases()[1].getComponent(i).getdfugdx(j));
+            + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhases()[1].getComponent(i).getx() - 1.0
+                + system.getPhases()[1].getComponent(i).getdfugdx(j));
         Jac.set(i, j, tempJ);
       }
     }
@@ -166,10 +152,10 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     double[] gP = new double[numberOfComponents];
 
     for (int i = 0; i < numberOfComponents; i++) {
-      gT[i] = system.getTemperature() * (system.getPhases()[0].getComponent(i).getdfugdt()
-          - system.getPhases()[1].getComponent(i).getdfugdt());
-      gP[i] = system.getPressure() * (system.getPhases()[0].getComponent(i).getdfugdp()
-          - system.getPhases()[1].getComponent(i).getdfugdp());
+      gT[i] = system.getTemperature()
+          * (system.getPhases()[0].getComponent(i).getdfugdt() - system.getPhases()[1].getComponent(i).getdfugdt());
+      gP[i] = system.getPressure()
+          * (system.getPhases()[0].getComponent(i).getdfugdp() - system.getPhases()[1].getComponent(i).getdfugdp());
 
       Jac.set(numberOfComponents, i, gT[i]);
       Jac.set(i, numberOfComponents, gT[i]);
@@ -183,8 +169,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
     double Etp = system.getPressure() / R * system.getdVdTpn();
     Jac.set(numberOfComponents, numberOfComponents + 1, Etp);
     Jac.set(numberOfComponents + 1, numberOfComponents, Etp);
-    double Epp =
-        Math.pow(system.getPressure(), 2.0) / (R * system.getTemperature()) * system.getdVdPtn();
+    double Epp = Math.pow(system.getPressure(), 2.0) / (R * system.getTemperature()) * system.getdVdPtn();
     Jac.set(numberOfComponents + 1, numberOfComponents + 1, Epp);
 
     // Force pressure to be constant by setting the last row to [0...0 1] and residual to 0
@@ -195,9 +180,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   }
 
   /**
-   * <p>
    * Setter for the field <code>u</code>.
-   * </p>
    */
   public void setu() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -208,9 +191,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    */
   public void init() {
     double oldBeta = system.getBeta();
@@ -244,8 +225,8 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
 
       system.getPhases()[0].getComponent(i).setx(v / system.getBeta());
       system.getPhases()[1].getComponent(i).setx(l / (1.0 - system.getBeta()));
-      system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getx()
-          / system.getPhases()[1].getComponent(i).getx());
+      system.getPhases()[1].getComponent(i)
+          .setK(system.getPhases()[0].getComponent(i).getx() / system.getPhases()[1].getComponent(i).getx());
       system.getPhases()[0].getComponent(i).setK(system.getPhases()[1].getComponent(i).getK());
     }
 
@@ -275,9 +256,7 @@ public class SysNewtonRhapsonPHflash implements ThermodynamicConstantsInterface 
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @param np a int
    * @return a int

@@ -12,14 +12,13 @@ import neqsim.process.costestimation.compressor.CompressorCostEstimate;
 import neqsim.process.costestimation.pipe.PipeCostEstimate;
 import neqsim.process.costestimation.pump.PumpCostEstimate;
 import neqsim.process.costestimation.valve.ValveCostEstimate;
-import neqsim.process.mechanicaldesign.MechanicalDesign;
-import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
-import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
-import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.pump.Pump;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.mechanicaldesign.compressor.CompressorMechanicalDesign;
+import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
+import neqsim.process.mechanicaldesign.valve.ValveMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
@@ -61,8 +60,7 @@ public class EquipmentCostEstimateTest {
     compressor.run();
 
     compressor.initMechanicalDesign();
-    CompressorMechanicalDesign mecDesign =
-        (CompressorMechanicalDesign) compressor.getMechanicalDesign();
+    CompressorMechanicalDesign mecDesign = (CompressorMechanicalDesign) compressor.getMechanicalDesign();
 
     // Set design power for cost estimation
     double power = compressor.getPower("kW");
@@ -75,15 +73,13 @@ public class EquipmentCostEstimateTest {
 
     costEstimate.calculateCostEstimate();
 
-    assertTrue(costEstimate.getPurchasedEquipmentCost() > 0,
-        "Purchased equipment cost should be positive");
+    assertTrue(costEstimate.getPurchasedEquipmentCost() > 0, "Purchased equipment cost should be positive");
     assertTrue(costEstimate.getBareModuleCost() > costEstimate.getPurchasedEquipmentCost(),
         "Bare module cost should exceed PEC");
     assertTrue(costEstimate.getTotalModuleCost() > costEstimate.getBareModuleCost(),
         "Total module cost should exceed bare module cost");
     // Man-hours may be zero if weight is not calculated by mechanical design
-    assertTrue(costEstimate.getInstallationManHours() >= 0,
-        "Installation man-hours should not be negative");
+    assertTrue(costEstimate.getInstallationManHours() >= 0, "Installation man-hours should not be negative");
 
     Map<String, Object> breakdown = costEstimate.getCostBreakdown();
     assertNotNull(breakdown);
@@ -103,8 +99,7 @@ public class EquipmentCostEstimateTest {
     compressor.run();
 
     compressor.initMechanicalDesign();
-    CompressorMechanicalDesign mecDesign =
-        (CompressorMechanicalDesign) compressor.getMechanicalDesign();
+    CompressorMechanicalDesign mecDesign = (CompressorMechanicalDesign) compressor.getMechanicalDesign();
     mecDesign.setMaxDesignPower(compressor.getPower("kW"));
 
     CompressorCostEstimate centrifugalCost = new CompressorCostEstimate(mecDesign);
@@ -143,8 +138,7 @@ public class EquipmentCostEstimateTest {
 
     costEstimate.calculateCostEstimate();
 
-    assertTrue(costEstimate.getPurchasedEquipmentCost() > 0,
-        "Control valve cost should be positive");
+    assertTrue(costEstimate.getPurchasedEquipmentCost() > 0, "Control valve cost should be positive");
     assertTrue(costEstimate.getBareModuleCost() > 0, "Bare module cost should be positive");
 
     Map<String, Object> breakdown = costEstimate.getCostBreakdown();
@@ -239,8 +233,7 @@ public class EquipmentCostEstimateTest {
     // Schedule 80 should cost more
     assertTrue(sch80.getPurchasedEquipmentCost() > sch40.getPurchasedEquipmentCost(),
         "Schedule 80 pipe should cost more than schedule 40");
-    assertTrue(sch80.calcPipeWeight() > sch40.calcPipeWeight(),
-        "Schedule 80 pipe should weigh more than schedule 40");
+    assertTrue(sch80.calcPipeWeight() > sch40.calcPipeWeight(), "Schedule 80 pipe should weigh more than schedule 40");
   }
 
   @Test
@@ -364,13 +357,10 @@ public class EquipmentCostEstimateTest {
     stainlessColumn.setMaterialOfConstruction("SS316");
     stainlessColumn.calculateCostEstimate();
 
-    assertTrue(
-        stainlessColumn.getPurchasedEquipmentCost() > carbonSteelColumn.getPurchasedEquipmentCost(),
+    assertTrue(stainlessColumn.getPurchasedEquipmentCost() > carbonSteelColumn.getPurchasedEquipmentCost(),
         "Stainless steel column should cost more than carbon steel");
-    assertEquals(1.0, carbonSteelColumn.getMaterialFactor(), 0.01,
-        "Carbon steel material factor should be 1.0");
-    assertTrue(stainlessColumn.getMaterialFactor() > 1.5,
-        "Stainless steel material factor should be > 1.5");
+    assertEquals(1.0, carbonSteelColumn.getMaterialFactor(), 0.01, "Carbon steel material factor should be 1.0");
+    assertTrue(stainlessColumn.getMaterialFactor() > 1.5, "Stainless steel material factor should be > 1.5");
   }
 
   @Test
@@ -386,8 +376,7 @@ public class EquipmentCostEstimateTest {
     compressor.run();
 
     compressor.initMechanicalDesign();
-    CompressorMechanicalDesign mecDesign =
-        (CompressorMechanicalDesign) compressor.getMechanicalDesign();
+    CompressorMechanicalDesign mecDesign = (CompressorMechanicalDesign) compressor.getMechanicalDesign();
     mecDesign.setMaxDesignPower(compressor.getPower("kW"));
 
     CompressorCostEstimate costEstimate = new CompressorCostEstimate(mecDesign);
@@ -396,13 +385,12 @@ public class EquipmentCostEstimateTest {
     costEstimate.calculateCostEstimate();
 
     double annualOperatingCost = costEstimate.calcAnnualOperatingCost(8000, 0.10, 5.0); // 8000 hrs,
-                                                                                        // $0.10/kWh
+    // $0.10/kWh
     double maintenanceCost = costEstimate.calcAnnualMaintenanceCost();
 
     assertTrue(annualOperatingCost > 0, "Annual operating cost should be positive");
     assertTrue(maintenanceCost > 0, "Annual maintenance cost should be positive");
-    assertTrue(maintenanceCost < costEstimate.getPurchasedEquipmentCost(),
-        "Maintenance cost should be less than PEC");
+    assertTrue(maintenanceCost < costEstimate.getPurchasedEquipmentCost(), "Maintenance cost should be less than PEC");
   }
 
   @Test
@@ -419,7 +407,7 @@ public class EquipmentCostEstimateTest {
     columnCost.calculateCostEstimate();
 
     double utilityCost = columnCost.calcAnnualUtilityCost(8000, 15.0, 0.05); // 8000 hrs, $15/tonne
-                                                                             // steam, $0.05/m3 CW
+    // steam, $0.05/m3 CW
 
     assertTrue(utilityCost > 0, "Annual utility cost should be positive");
   }

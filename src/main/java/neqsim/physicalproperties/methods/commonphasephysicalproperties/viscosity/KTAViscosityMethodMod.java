@@ -3,9 +3,7 @@ package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosit
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * KTAViscosityMethodMod class.
- * </p>
  *
  * @author akselrs
  */
@@ -14,9 +12,7 @@ public class KTAViscosityMethodMod extends Viscosity {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for KTAViscosityMethodMod.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

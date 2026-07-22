@@ -13,23 +13,21 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * Complete example demonstrating multi-well heat transfer coefficient estimation using the
- * EnKFParameterEstimator with dynamic routing for improved observability.
+ * Complete example demonstrating multi-well heat transfer coefficient estimation using the EnKFParameterEstimator with
+ * dynamic routing for improved observability.
  *
  * <h2>Problem Description</h2>
  * <p>
- * A production network consists of 8 subsea wells connected via pipelines to 2 manifolds (HP and
- * LP). Each pipeline has an unknown heat transfer coefficient that affects the temperature drop
- * along the pipe. The goal is to estimate all 8 heat transfer coefficients using only 2 temperature
- * measurements (one at each manifold outlet).
+ * A production network consists of 8 subsea wells connected via pipelines to 2 manifolds (HP and LP). Each pipeline has
+ * an unknown heat transfer coefficient that affects the temperature drop along the pipe. The goal is to estimate all 8
+ * heat transfer coefficients using only 2 temperature measurements (one at each manifold outlet).
  * </p>
  *
  * <h2>Observability Challenge</h2>
  * <p>
- * With 8 unknowns and only 2 measurements, the system is severely underdetermined in any single
- * configuration. However, by dynamically changing which wells route to which manifold, we
- * accumulate different measurement equations over time, eventually making all parameters
- * observable.
+ * With 8 unknowns and only 2 measurements, the system is severely underdetermined in any single configuration. However,
+ * by dynamically changing which wells route to which manifold, we accumulate different measurement equations over time,
+ * eventually making all parameters observable.
  * </p>
  *
  * <h2>Solution Approach</h2>
@@ -63,13 +61,12 @@ public class WellRoutingEstimationExample {
   private static final double MAX_CHANGE_PER_UPDATE = 3.0;
 
   // ============ True values (for synthetic testing) ============
-  private static final double[] TRUE_HEAT_TRANSFER_COEFFS =
-      {12.0, 15.0, 18.0, 14.0, 16.0, 20.0, 13.0, 17.0};
+  private static final double[] TRUE_HEAT_TRANSFER_COEFFS = { 12.0, 15.0, 18.0, 14.0, 16.0, 20.0, 13.0, 17.0 };
 
   // Well configurations: [pressure bar-a, flowrate kg/hr, pipe length m]
-  private static final double[][] WELL_CONFIGS = {{100.0, 50000.0, 8000.0}, {95.0, 45000.0, 8500.0},
-      {92.0, 55000.0, 7500.0}, {88.0, 48000.0, 9000.0}, {96.0, 52000.0, 7800.0},
-      {90.0, 46000.0, 8200.0}, {94.0, 51000.0, 8800.0}, {86.0, 44000.0, 9200.0}};
+  private static final double[][] WELL_CONFIGS = { { 100.0, 50000.0, 8000.0 }, { 95.0, 45000.0, 8500.0 },
+      { 92.0, 55000.0, 7500.0 }, { 88.0, 48000.0, 9000.0 }, { 96.0, 52000.0, 7800.0 }, { 90.0, 46000.0, 8200.0 },
+      { 94.0, 51000.0, 8800.0 }, { 86.0, 44000.0, 9200.0 } };
 
   // ============ Process equipment ============
   private ProcessSystem process;
@@ -109,15 +106,15 @@ public class WellRoutingEstimationExample {
    * <p>
    * Network topology:
    * </p>
-   * 
+   *
    * <pre>
    * Well1 ─── Pipe1 ─── Splitter1 ──┬── HP Manifold ─── HP Outlet
-   * Well2 ─── Pipe2 ─── Splitter2 ──┤                     
-   * Well3 ─── Pipe3 ─── Splitter3 ──┤                     
-   * Well4 ─── Pipe4 ─── Splitter4 ──┤                     
-   * Well5 ─── Pipe5 ─── Splitter5 ──┤                     
-   * Well6 ─── Pipe6 ─── Splitter6 ──┤                     
-   * Well7 ─── Pipe7 ─── Splitter7 ──┤                     
+   * Well2 ─── Pipe2 ─── Splitter2 ──┤
+   * Well3 ─── Pipe3 ─── Splitter3 ──┤
+   * Well4 ─── Pipe4 ─── Splitter4 ──┤
+   * Well5 ─── Pipe5 ─── Splitter5 ──┤
+   * Well6 ─── Pipe6 ─── Splitter6 ──┤
+   * Well7 ─── Pipe7 ─── Splitter7 ──┤
    * Well8 ─── Pipe8 ─── Splitter8 ──┴── LP Manifold ─── LP Outlet
    * </pre>
    */
@@ -164,7 +161,7 @@ public class WellRoutingEstimationExample {
     process.add(lpManifold);
 
     // Initialize with default routing (all to HP)
-    setRouting(new int[] {0, 0, 0, 0, 0, 0, 0, 0});
+    setRouting(new int[] { 0, 0, 0, 0, 0, 0, 0, 0 });
   }
 
   /**
@@ -176,10 +173,10 @@ public class WellRoutingEstimationExample {
     for (int i = 0; i < NUM_WELLS; i++) {
       if (routing[i] == 0) {
         // Route to HP manifold
-        splitters[i].setSplitFactors(new double[] {1.0, 0.0});
+        splitters[i].setSplitFactors(new double[] { 1.0, 0.0 });
       } else {
         // Route to LP manifold
-        splitters[i].setSplitFactors(new double[] {0.0, 1.0});
+        splitters[i].setSplitFactors(new double[] { 0.0, 1.0 });
       }
       currentRouting[i] = routing[i];
     }
@@ -227,10 +224,8 @@ public class WellRoutingEstimationExample {
     }
 
     // Add manifold temperature measurements
-    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C",
-        MEASUREMENT_NOISE_STD);
-    estimator.addMeasuredVariable("LP Manifold.outletStream.temperature", "C",
-        MEASUREMENT_NOISE_STD);
+    estimator.addMeasuredVariable("HP Manifold.outletStream.temperature", "C", MEASUREMENT_NOISE_STD);
+    estimator.addMeasuredVariable("LP Manifold.outletStream.temperature", "C", MEASUREMENT_NOISE_STD);
 
     // Configure filter parameters
     estimator.setProcessNoise(PROCESS_NOISE);
@@ -250,8 +245,7 @@ public class WellRoutingEstimationExample {
 
     // Add parameters with true values
     for (int i = 0; i < NUM_WELLS; i++) {
-      harness.addParameter("Pipe" + (i + 1) + ".heatTransferCoefficient",
-          TRUE_HEAT_TRANSFER_COEFFS[i], 1.0, 100.0);
+      harness.addParameter("Pipe" + (i + 1) + ".heatTransferCoefficient", TRUE_HEAT_TRANSFER_COEFFS[i], 1.0, 100.0);
     }
 
     // Add measurements
@@ -278,25 +272,25 @@ public class WellRoutingEstimationExample {
   public int[][] getRoutingSchedule() {
     return new int[][] {
         // Block patterns
-        {0, 0, 0, 0, 1, 1, 1, 1}, // Wells 1-4 HP, 5-8 LP
-        {1, 1, 1, 1, 0, 0, 0, 0}, // Inverse
+        { 0, 0, 0, 0, 1, 1, 1, 1 }, // Wells 1-4 HP, 5-8 LP
+        { 1, 1, 1, 1, 0, 0, 0, 0 }, // Inverse
 
         // Alternating patterns
-        {0, 1, 0, 1, 0, 1, 0, 1}, // Odd to HP, even to LP
-        {1, 0, 1, 0, 1, 0, 1, 0}, // Inverse
+        { 0, 1, 0, 1, 0, 1, 0, 1 }, // Odd to HP, even to LP
+        { 1, 0, 1, 0, 1, 0, 1, 0 }, // Inverse
 
         // Pairs patterns
-        {0, 0, 1, 1, 0, 0, 1, 1}, {1, 1, 0, 0, 1, 1, 0, 0},
+        { 0, 0, 1, 1, 0, 0, 1, 1 }, { 1, 1, 0, 0, 1, 1, 0, 0 },
 
         // Single-well isolation (most informative)
-        {0, 1, 1, 1, 1, 1, 1, 1}, // Only Well 1 at HP
-        {1, 0, 1, 1, 1, 1, 1, 1}, // Only Well 2 at HP
-        {1, 1, 0, 1, 1, 1, 1, 1}, // Only Well 3 at HP
-        {1, 1, 1, 0, 1, 1, 1, 1}, // Only Well 4 at HP
-        {1, 1, 1, 1, 0, 1, 1, 1}, // Only Well 5 at HP
-        {1, 1, 1, 1, 1, 0, 1, 1}, // Only Well 6 at HP
-        {1, 1, 1, 1, 1, 1, 0, 1}, // Only Well 7 at HP
-        {1, 1, 1, 1, 1, 1, 1, 0}, // Only Well 8 at HP
+        { 0, 1, 1, 1, 1, 1, 1, 1 }, // Only Well 1 at HP
+        { 1, 0, 1, 1, 1, 1, 1, 1 }, // Only Well 2 at HP
+        { 1, 1, 0, 1, 1, 1, 1, 1 }, // Only Well 3 at HP
+        { 1, 1, 1, 0, 1, 1, 1, 1 }, // Only Well 4 at HP
+        { 1, 1, 1, 1, 0, 1, 1, 1 }, // Only Well 5 at HP
+        { 1, 1, 1, 1, 1, 0, 1, 1 }, // Only Well 6 at HP
+        { 1, 1, 1, 1, 1, 1, 0, 1 }, // Only Well 7 at HP
+        { 1, 1, 1, 1, 1, 1, 1, 0 }, // Only Well 8 at HP
     };
   }
 
@@ -340,8 +334,8 @@ public class WellRoutingEstimationExample {
     int inCI = 0;
 
     System.out.println();
-    System.out.printf("%-15s %10s %10s %10s %10s %10s%n", "Parameter", "True", "Estimate", "Error%",
-        "Std Dev", "In 95%CI?");
+    System.out.printf("%-15s %10s %10s %10s %10s %10s%n", "Parameter", "True", "Estimate", "Error%", "Std Dev",
+        "In 95%CI?");
     System.out.println(createSeparator(70));
 
     for (int i = 0; i < NUM_WELLS; i++) {
@@ -355,9 +349,8 @@ public class WellRoutingEstimationExample {
         inCI++;
       }
 
-      System.out.printf("Pipe%d HTC      %10.2f %10.2f %9.1f%% %10.2f %10s%n", i + 1,
-          TRUE_HEAT_TRANSFER_COEFFS[i], estimates[i], errorPct, uncertainties[i],
-          withinCI ? "Yes" : "No");
+      System.out.printf("Pipe%d HTC      %10.2f %10.2f %9.1f%% %10.2f %10s%n", i + 1, TRUE_HEAT_TRANSFER_COEFFS[i],
+          estimates[i], errorPct, uncertainties[i], withinCI ? "Yes" : "No");
     }
 
     double rmse = Math.sqrt(sumSqError / NUM_WELLS);
@@ -376,8 +369,7 @@ public class WellRoutingEstimationExample {
       System.out.println("✓ VALIDATION PASSED - Ready for deployment");
     } else {
       System.out.println("✗ VALIDATION FAILED - Needs tuning");
-      System.out.printf("  RMSE: %.2f (max: %.2f) %s%n", rmse, maxRMSE,
-          rmse <= maxRMSE ? "✓" : "✗");
+      System.out.printf("  RMSE: %.2f (max: %.2f) %s%n", rmse, maxRMSE, rmse <= maxRMSE ? "✓" : "✗");
       System.out.printf("  Coverage: %.1f%% (min: %.1f%%) %s%n", coverage * 100, minCoverage * 100,
           coverage >= minCoverage ? "✓" : "✗");
     }
@@ -472,8 +464,7 @@ public class WellRoutingEstimationExample {
     double[] estimates = estimator.getEstimates();
     double[] uncertainties = estimator.getUncertainties();
 
-    System.out.printf("%-10s %12s %12s %10s %15s%n", "Well", "True Value", "Estimate", "Error%",
-        "95% CI");
+    System.out.printf("%-10s %12s %12s %10s %15s%n", "Well", "True Value", "Estimate", "Error%", "95% CI");
     System.out.println(createSeparator(65));
 
     double sumAbsError = 0;
@@ -497,8 +488,8 @@ public class WellRoutingEstimationExample {
         inCI++;
       }
 
-      System.out.printf("Well %-5d %12.2f %12.2f %9.1f%% %7.1f - %-7.1f%n", i + 1, trueVal,
-          estimate, errorPct, ciLower, ciUpper);
+      System.out.printf("Well %-5d %12.2f %12.2f %9.1f%% %7.1f - %-7.1f%n", i + 1, trueVal, estimate, errorPct, ciLower,
+          ciUpper);
     }
 
     System.out.println(createSeparator(65));

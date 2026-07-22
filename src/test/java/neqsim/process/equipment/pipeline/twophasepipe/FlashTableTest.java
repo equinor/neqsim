@@ -193,7 +193,6 @@ class FlashTableTest {
 
     // Density should be similar (within 5%)
     double densityRatio = props2.gasDensity / props1.gasDensity;
-    assertTrue(densityRatio > 0.95 && densityRatio < 1.05,
-        "Properties at nearby points should be similar");
+    assertTrue(densityRatio > 0.95 && densityRatio < 1.05, "Properties at nearby points should be similar");
   }
 }

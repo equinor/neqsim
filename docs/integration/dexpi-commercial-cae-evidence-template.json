@@ -1,0 +1,9 @@
+{
+  "status": "PASSED",
+  "tool": "REPLACE_WITH_CAE_PRODUCT",
+  "version": "REPLACE_WITH_VERSION",
+  "importStatus": "PASSED",
+  "roundTripStatus": "PASSED",
+  "evidenceReference": "REPLACE_WITH_CONTROLLED_TEST_RECORD",
+  "reviewedDifferences": []
+}

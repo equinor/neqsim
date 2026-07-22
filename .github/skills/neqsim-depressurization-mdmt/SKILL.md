@@ -1,0 +1,371 @@
+---
+name: neqsim-depressurization-mdmt
+version: "1.0.0"
+description: "Emergency depressurization (blowdown) per API 521 §5.20 and minimum design metal temperature (MDMT) assessment per ASME UCS-66 / API 579 / EN 13445 — VU-flash transient inventory model, time-to-target-pressure, low-temperature embrittlement screening, and integration with PSV/flare loads. USE WHEN: a task requires sizing a blowdown valve, generating a P-vs-time curve for a vessel under fire / depressurization, checking MDMT against blowdown end-temperature, providing source terms for relief and flare networks, or distinguishing blowdown from trapped-liquid fire rupture screening. Anchors on neqsim.process.safety.depressurization.DepressurizationSimulator and neqsim.process.safety.mdmt.MDMTCalculator."
+last_verified: "2026-04-26"
+requires:
+  java_packages:
+    - neqsim.process.safety.depressurization
+    - neqsim.process.safety.mdmt
+---
+
+# NeqSim Depressurization & MDMT Skill
+
+Transient blowdown / depressurization for inventory release on fire or
+controlled emergency, plus the minimum design metal temperature (MDMT) check
+that drives material selection. The two are linked: blowdown end-temperatures
+(often −80 to −120 °C for hydrocarbon gas) usually drive MDMT, which in turn
+drives whether LTCS, low-temperature carbon-Mn, 3.5 % Ni or 9 % Ni / 304L is
+required.
+
+## When to Use
+
+- Sizing a blowdown / depressurization valve to reach 50 % pressure in 15 min
+  (API 521 §5.20 fire case) or 7 bar in some operator standards
+- Generating P(t), T(t), m(t) curves for the relief / flare load case
+- Screening MDMT against end-of-blowdown vessel-wall temperature
+- Producing source terms for the flare network (`neqsim-relief-flare-network`)
+- Distinguishing depressurization cases from blocked-in liquid fire rupture cases,
+  where `neqsim-trapped-liquid-fire-rupture` is the primary workflow
+
+Distinct from `neqsim-relief-flare-network` (steady-state PSV sizing) and
+`neqsim-dynamic-simulation` (continuous-process transients) — this skill is the
+specific blowdown + MDMT pair.
+
+## Standards
+
+- **API 521** 7th ed. — Pressure-relieving and depressuring systems (§5.20 blowdown)
+- **API STD 520** — PSV sizing, used for choke check at the BDV
+- **ASME UCS-66 / UCS-66.1** — MDMT impact-test exemption curves (carbon steel)
+- **ASME UHA-51** — austenitic stainless steel low-temperature service
+- **API 579 / FFS-1 §3** — fitness-for-service, MDMT for in-service vessels
+- **EN 13445-2 Annex B** — European MDMT and impact-test approach
+- **NORSOK L-002** — piping system design (low-temperature operation)
+
+## Method 1 — Blowdown Simulation (VU-flash)
+
+```java
+import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.process.safety.depressurization.DepressurizationSimulator;
+
+SystemInterface gas = new SystemSrkEos(273.15 + 50.0, 100.0);
+gas.addComponent("methane", 0.92);
+gas.addComponent("ethane",  0.05);
+gas.addComponent("propane", 0.03);
+gas.setMixingRule("classic");
+gas.setTotalNumberOfMoles(5000.0); // mol — representative of vessel inventory
+
+DepressurizationSimulator sim = new DepressurizationSimulator(gas);
+sim.setVesselVolume(50.0);     // m³
+sim.setOrificeArea(5.0e-4);    // m² — BDV equivalent area
+sim.setBackPressure(1.5);      // bara — flare KO drum
+sim.setHeatInput(0.0);         // adiabatic; > 0 for fire case
+sim.run(900.0, 1.0);           // 15 min, 1 s timestep
+
+double[] t = sim.timeSeries();
+double[] p = sim.pressureSeries();
+double[] T = sim.temperatureSeries();
+double[] m = sim.massFlowSeries();
+double pEnd = p[p.length - 1];
+double tEnd = T[T.length - 1];
+double t50  = sim.timeToPressure(50.0);  // s, time to 50 bar
+```
+
+The simulator uses the U–V flash (`ops.VUflash(V, U)`) at every step — internal
+energy decreases by `h_out · ṁ · Δt` and volume is held constant by the vessel,
+so each step is a fully consistent thermodynamic state. Joule-Thomson cooling
+across the BDV is captured via an isenthalpic flash to the back pressure for the
+exit-temperature output.
+
+### Fire case
+
+```java
+sim.setHeatInput(60_000.0); // W — API 521 fire heat input
+```
+
+API 521 fire heat input on uninsulated vessels:
+
+`Q = 43.2 · F · A^0.82  [W]`
+
+with environment factor F (= 1.0 for un-insulated, 0.30 for fireproof
+insulation, 0.075 for water-spray) and wetted area A in m². The simulator
+accepts the value directly so any of the API 521, NFPA 30 or NORSOK
+correlations can be used upstream.
+
+## Method 2 — BDV Sizing Iteration
+
+Typical workflow:
+
+1. Start from a target such as 50 % of design pressure in 15 min (API 521), 7 bar in 15 min, or the relevant company/project criterion from the private basis.
+2. Guess BDV `Cd · A`, run `sim.run(...)`, read `sim.timeToPressure(target)`.
+3. Iterate area until target is met without choking the flare header.
+4. Verify the *minimum* T(t) is above the vessel MDMT.
+
+A reference iteration loop is available as
+`DepressurizationSimulator.sizeForTargetPressure(targetBar, targetTimeS)`.
+
+## Method 3 — MDMT Assessment
+
+```java
+import neqsim.process.safety.mdmt.MDMTCalculator;
+
+MDMTCalculator mdmt = new MDMTCalculator();
+mdmt.setMaterial("SA-516-70N");      // normalised CMn, common for CS vessels
+mdmt.setThicknessMM(50.0);
+mdmt.setStressRatio(0.35);           // operating / allowable stress ratio
+double mdmtC = mdmt.computeUCS66();  // °C — ASME UCS-66 + UCS-66.1 reduction
+```
+
+The calculator implements:
+
+- **UCS-66 Curve A / B / C / D** lookup vs material specification
+- **UCS-66.1** stress-ratio reduction (lower stress → lower MDMT)
+- **API 579 §3** Fitness-for-Service path for in-service vessels with crack
+  reassessment factors
+- **EN 13445-2** Annex B alternative if requested
+
+### Pass / fail check
+
+```java
+double bdvEndTemp = sim.minTemperatureC();  // °C from blowdown sim
+boolean acceptable = bdvEndTemp >= mdmtC;
+if (!acceptable) {
+    // Either:  thicker vessel, lower stress ratio, LTCS / 3.5%Ni material,
+    //          slower BDV, or accept impact testing per UG-84.
+}
+```
+
+Many company practices add a 5-10 °C margin between blowdown end-temperature
+and MDMT. Record the actual project or operator margin in the private task
+basis instead of hard-coding it in public guidance.
+
+## Method 4 — Source Term to Flare Network
+
+```java
+double[] mdot = sim.massFlowSeries();
+double[] T    = sim.temperatureSeries();
+double[] P    = sim.pressureSeries();
+// Pass to ReliefValveSizing peak-load aggregator or to
+// FlareStack.estimateRadiationHeatFlux at peak ṁ.
+double mdotPeak = sim.peakMassFlow();
+```
+
+This is the standard handoff between the depressurization model and the flare
+network sizing skill (`neqsim-relief-flare-network`).
+
+## Method 5 — Coupled Multi-Vessel Blowdown to a Shared Header (API 521 §7)
+
+When several vessels blow down simultaneously into one flare/disposal header, the
+**combined** load — not any single vessel — sizes the header. `MultiVesselBlowdownStudy`
+superimposes each source on a common time grid and checks the header Mach at the peak.
+
+```java
+import neqsim.process.safety.depressurization.MultiVesselBlowdownStudy;
+import neqsim.process.safety.depressurization.MultiVesselBlowdownStudy.MultiVesselBlowdownResult;
+
+MultiVesselBlowdownResult res = new MultiVesselBlowdownStudy()
+    .addSource("V-100", bdvSim100)        // configured DepressurizationSimulator
+    .addSource("V-200", bdvSim200)
+    .addSourceResult("V-300", precomputed) // or a pre-computed DepressurizationResult
+    .setHeader(0.6, 1.5, 288.15, 0.020, 1.30) // D[m], P[bara], T[K], M[kg/mol], gamma
+    .setMaxAllowableMach(0.70)             // API 521 §7 / NORSOK P-002
+    .run();
+
+double peak   = res.getPeakTotalMassFlowKgPerS();
+double tPeak  = res.getPeakTimeS();
+double mach   = res.getHeaderMach();
+boolean okMach = res.isHeaderMachAcceptable();
+String report  = res.summary();
+```
+
+Use `addSourceResult(...)` with a pre-computed `DepressurizationResult` to avoid
+re-running the (slow) VU-flash transient for vessels already simulated.
+
+## Method 5b — Governed STID/TR2000 Dynamic Blowdown + Flare Handoff
+
+For agentic engineering studies that start from STID/P&ID drawings, line lists,
+equipment lists, and TR2000 pipe/valve/material evidence, use the governed data
+source and runner instead of stitching transient notebooks together by hand.
+
+Key classes:
+
+- `LineEquipmentListEvidence` — reviewed line-list and equipment-list rows used
+  to build the dynamic model.
+- `DynamicBlowdownFlareStudyDataSource` — source-traceable package with one
+  `BlowdownSource` per protected equipment item plus header, flare, PSV, fire,
+  topology, and evidence status.
+- `DynamicBlowdownFlareStudyRunner` — runs `DepressurizationSimulator`, aggregates
+  loads with `MultiVesselBlowdownStudy`, sizes PSV orifices through
+  `ReliefValveSizing`, and estimates peak/cumulative flare heat, emissions,
+  radiation distance, and capacity utilization.
+- `DynamicBlowdownFlareStudyHandoff` — versioned JSON package containing
+  `dynamic_blowdown_flare_result.v1` and `dynamic_blowdown_flare_load_handoff.v1`.
+
+```java
+LineEquipmentListEvidence lineEq = LineEquipmentListEvidence.builder("line-eq-001")
+    .lineListReviewed(true)
+    .equipmentListReviewed(true)
+    .addEquipment("V-100", "separator", 50.0, 85.0, 70.0, 313.15)
+    .addLine("BD-100", "V-100", "FLARE-HDR", 6.0, 0.154, 0.007, 45.0, "DD100", "API 5L X52")
+    .build();
+
+DynamicBlowdownFlareStudyDataSource.BlowdownSource source =
+    DynamicBlowdownFlareStudyDataSource.BlowdownSource.builder("V-100", gas)
+        .equipmentTag("V-100")
+        .vesselVolumeM3(50.0)
+        .orificeDiameterM(0.035)
+        .dischargeCoefficient(0.72)
+        .backPressureBara(1.5)
+        .api521FireCase(120.0, true, true)
+        .psvBasis(85.0, 0.21, false, false)
+        .build();
+
+DynamicBlowdownFlareStudyDataSource data = DynamicBlowdownFlareStudyDataSource.builder("BD-FLARE-001")
+    .lineEquipmentListEvidence(lineEq)
+    .addSource(source)
+    .flareHeader(0.6, 1.5, 288.15, 0.020, 1.30)
+    .flareGeometry(0.8, 50.0, 0.20)
+    .stidDiagramReviewed(true)
+    .lineEquipmentListsReviewed(true)
+    .vesselInventoryReviewed(true)
+    .valveSizingBasisReviewed(true)
+    .psvBasisReviewed(true)
+    .flareSystemBasisReviewed(true)
+    .fireCaseReviewed(true)
+    .standardsReviewed(false)
+    .build();
+
+DynamicBlowdownFlareStudyHandoff handoff = DynamicBlowdownFlareStudyRunner.builder()
+    .timeStepSeconds(1.0)
+    .maxTimeSeconds(900.0)
+    .build()
+    .run(data);
+```
+
+Readiness semantics mirror the pipe-fire runner: missing source fluid, volume,
+BDV/orifice diameter, discharge coefficient, or flare backpressure blocks the
+calculation; missing reviewed topology, TR2000, PSV, fire, or flare capacity
+evidence keeps the result at screening level.
+
+## Method 6 — ESD Response-Time Budget (NOG 070 / IEC 61511)
+
+The blowdown / isolation only mitigates the relief load if the ESD valve actually
+closes in time. `EsdResponseTimeSimulator` sums the SIF loop contributions and
+compares against the allowable budget.
+
+```java
+import neqsim.process.safety.esd.EsdResponseTimeSimulator;
+import neqsim.process.safety.esd.EsdResponseTimeSimulator.EsdResponseTimeResult;
+
+EsdResponseTimeResult esd = new EsdResponseTimeSimulator()
+    .setSifTag("SIF-2001 ESDV closure")
+    .addDetection("PT-2001 detection", 2.0)        // s
+    .addLogic("Logic solver scan + 2oo3 vote", 0.5)
+    .addValve("ESDV-2001 close", 1.0, 18.0)        // solenoid delay, valve stroke
+    .setAllowableResponseTimeS(45.0)
+    .evaluate();
+
+double total  = esd.getTotalResponseTimeS();
+double margin = esd.getMarginS();
+boolean ok    = esd.isWithinBudget();
+```
+
+This is a budgeting tool — it does not replace certified SIS proof testing or
+FAT/SAT. Pair with `neqsim-process-safety` for the SIL determination of the SIF.
+
+## Method 7 — Vessel Thermomechanical Safety Models
+
+When a single-temperature lumped model is not enough — gas/liquid temperature
+bifurcation in a fire, transient PSV sizing conservatism, fast filling, cryogenic
+boil-off, through-wall thermal lag, or wall rupture — use the dedicated
+thermomechanical classes. They reproduce the application cases of Andreasen
+(2026), *J. Loss Prev. Process Ind.* 103, 106088, and are covered by committed
+regression tests. See `docs/safety/vessel_thermomechanical_safety.md` for the
+full guide.
+
+```java
+// Two-temperature (non-equilibrium) fire blowdown — gas superheats, liquid stays cold
+import neqsim.process.safety.depressurization.NonEquilibriumBlowdownModel;
+import neqsim.process.safety.depressurization.NonEquilibriumBlowdownModel.NemResult;
+NonEquilibriumBlowdownModel nem =
+    new NonEquilibriumBlowdownModel(fluid, 10.0, 0.025, 0.72, 1.0e5);
+nem.setFireExposure(0.9, 1100.0, 30.0, 25.0).setWall(8000.0, 470.0);
+nem.setTimeStep(1.0).setMaxTime(600.0).setStopPressure(1.5e5);
+NemResult bd = nem.run();
+double bifurcationK = bd.maxTemperatureBifurcationK;
+
+// Dynamic PSV sizing — quantify API 521 steady-state oversizing (§4.1)
+import neqsim.process.safety.depressurization.DynamicPsvSizingStudy;
+DynamicPsvSizingStudy.SizingComparison cmp =
+    new DynamicPsvSizingStudy(gas, 1.0, 150000.0, 11.0e5, 0.21, 1.0e5)
+        .setBlowdownFraction(0.1).setDischargeCoefficient(0.975).run();
+double oversizing = cmp.oversizingRatio; // > 1 => steady-state conservative
+
+// Fast filling of a Type IV hydrogen cylinder — liner temperature limits (§4.2)
+import neqsim.process.safety.depressurization.VesselFillingSimulator;
+VesselFillingSimulator.VesselFillingResult fill =
+    new VesselFillingSimulator(h2, 0.06)
+        .setInletConditions(283.15, 360.0, 0.015)
+        .setTargetPressure(351.0)
+        .setLinerTemperatureLimits(233.15, 338.15)
+        .setTimeStep(1.0).setMaxTime(4000.0).run();
+boolean linerOk = fill.linerLimitsMet;
+
+// Cryogenic boil-off vs insulation thickness (§4.3)
+import neqsim.process.util.heattransfer.BoilOffCalculator;
+double boilOff = new BoilOffCalculator()
+    .setSurfaceArea(150.0).setOuterFilmCoefficient(10.0)
+    .setInsulationConductivity(0.025).setAmbientTemperatureK(288.15)
+    .setFluidTemperatureK(253.15).setLatentHeat(320000.0)
+    .boilOffRateKgPerH(0.30);
+
+// Fire/blowdown wall rupture vs temperature-derated strength (§4.4)
+import neqsim.process.safety.rupture.VesselRuptureAnalyzer;
+import neqsim.process.safety.rupture.MaterialStrengthCurve;
+MaterialStrengthCurve steel = MaterialStrengthCurve.carbonSteel("CS", 245.0e6, 415.0e6);
+VesselRuptureAnalyzer.VesselRuptureResult rup =
+    new VesselRuptureAnalyzer(0.5, 0.012, steel).analyze(timeS, pressurePa, metalTempK);
+boolean ruptured = rup.ruptured; // bare LPG vessel ruptures in minutes; PFP prevents it
+```
+
+Supporting classes: `CompositeWallConduction` (1D transient multi-layer wall,
+Crank-Nicolson; use the static `biotNumber(...)` helper — lumped is fine for
+`Bi < 0.1`), `VesselHeatTransferCorrelations` (Woodfield filling Nusselt,
+Rohsenow nucleate boiling), and `BlockedOutletOverpressureAnalyzer` (blocked-in
+charging overpressure with relief-demand flag).
+
+## Common Pitfalls
+
+- **Adiabatic vs fire case** — running adiabatic blowdown gives the *coldest*
+  end-temperature (worst for MDMT). Running fire case gives the *highest peak
+  flow* (worst for flare network). Both must be checked separately.
+- **Single component vs multi-component** — MDMT is driven by the
+  end-of-blowdown temperature, which depends on JT coefficient and is sensitive
+  to ethane / propane content. Always use a representative composition, not a
+  pure-methane simplification.
+- **Ignoring liquid level** — vessels with liquid have huge thermal mass; the
+  gas phase cools quickly while the liquid holds temperature. The simulator
+  handles two-phase systems automatically.
+- **Choked vs sub-critical flow** — the BDV chokes for most of the blowdown.
+  Make sure the simulator's flow model uses choked-flow correlations until
+  P_vessel / P_back < 1/r_critical.
+- **Stress ratio = 1** — using 1.0 for stress ratio gives the most conservative
+  MDMT. Operating-pressure stress ratio (0.30–0.40) usually relaxes MDMT by
+  10–30 °C.
+
+## Verification Tests
+
+```bash
+./mvnw test -Dtest=DepressurizationSimulatorTest,MDMTCalculatorTest,MultiVesselBlowdownStudyTest,EsdResponseTimeSimulatorTest
+./mvnw test -Dtest=DynamicPsvSizingStudyTest,VesselFillingSimulatorTest,VesselRuptureAnalyzerTest,BoilOffCalculatorTest
+```
+
+## See Also
+
+- `neqsim-relief-flare-network` — PSV sizing, flare radiation, header back-pressure
+- `neqsim-trapped-liquid-fire-rupture` — blocked-in liquid thermal expansion, PFP demand, and rupture source-term handoff
+- `neqsim-dynamic-simulation` — continuous-process transients with controllers
+- `neqsim-consequence-analysis` — what happens after the released gas ignites
+- `neqsim-flow-assurance` — JT cooling and hydrate formation in blowdown
+- `neqsim-process-safety` — LOPA / SIL for the blowdown SIF (BDV-SIF)

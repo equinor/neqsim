@@ -9,34 +9,30 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * FreezingPoint class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
  * @version $Id: $Id
  */
 public class FreezingPoint {
+  private static final Logger logger = LogManager.getLogger(FreezingPoint.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(FreezingPoint.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
     // SystemInterface testSystem = new SystemSrkSchwartzentruberEos(260.15,19.00);
-    SystemInterface testSystem =
-        new SystemSrkCPAstatoil(273.15 - 1, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem = new SystemSrkCPAstatoil(273.15 - 1, ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
-    SystemInterface testSystem2 =
-        new SystemSrkCPAstatoil(273.15 + 100, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem2 = new SystemSrkCPAstatoil(273.15 + 100,
+        ThermodynamicConstantsInterface.referencePressure);
     ThermodynamicOperations testOps2 = new ThermodynamicOperations(testSystem2);
 
     testSystem.addComponent("methane", 0.00882);
@@ -64,8 +60,7 @@ public class FreezingPoint {
     testSystem2.init(0);
     testSystem2.init(1);
 
-    logger.info(
-        "activity coefficient water in teg " + testSystem.getPhase(1).getActivityCoefficient(1));
+    logger.info("activity coefficient water in teg " + testSystem.getPhase(1).getActivityCoefficient(1));
     try {
       // testOps.freezingPointTemperatureFlash();
       // testOps.waterDewPointTemperatureFlash();

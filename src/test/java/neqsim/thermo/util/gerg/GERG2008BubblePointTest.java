@@ -36,8 +36,8 @@ public class GERG2008BubblePointTest {
     doubleW D = new doubleW(0.0);
     intW ierr = new intW(0);
     StringW herr = new StringW("");
-    lib.DensityGERG(2, fluid.getTemperature(), fluid.getPressure() * 100.0,
-        gerg.normalizedGERGComposition, D, ierr, herr);
+    lib.DensityGERG(2, fluid.getTemperature(), fluid.getPressure() * 100.0, gerg.normalizedGERGComposition, D, ierr,
+        herr);
     double expected = D.val * fluid.getMolarMass() * 1000.0;
 
     assertEquals(expected, density, expected * 1e-6);

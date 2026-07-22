@@ -14,9 +14,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ConstantMassExpansion class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -44,9 +42,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   double[] temperatures = null;
 
   /**
-   * <p>
    * Constructor for ConstantMassExpansion.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -55,9 +51,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * calcSaturationConditions.
-   * </p>
    */
   public void calcSaturationConditions() {
     getThermoSystem().setPressure(1.0);
@@ -65,8 +59,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
       thermoOps.TPflash();
       // System.out.println("pressure "+ getThermoSystem().getPressure() );
-    } while (getThermoSystem().getNumberOfPhases() == 1
-        && getThermoSystem().getPressure() < 1000.0);
+    } while (getThermoSystem().getNumberOfPhases() == 1 && getThermoSystem().getPressure() < 1000.0);
     do {
       getThermoSystem().setPressure(getThermoSystem().getPressure() + 10.0);
       thermoOps.TPflash();
@@ -83,8 +76,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
     /*
-     * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) {
-     * logger.error(ex.getMessage(), ex); }
+     * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) { logger.error(ex.getMessage(), ex); }
      */
     saturationVolume = getThermoSystem().getVolume();
     saturationPressure = getThermoSystem().getPressure();
@@ -106,9 +98,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     saturationConditionFound = false;
@@ -164,10 +154,9 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       density[i] = getThermoSystem().getPhase(0).getDensity("kg/m3");
       gasVolume[i] = getThermoSystem().getPhase(0).getNumberOfMolesInPhase()
           * getThermoSystem().getPhase(0).getMolarMass() / density[i]; // getThermoSystem().getPhase(0).getVolume();
-      gasStandardVolume[i] =
-          getThermoSystem().getPhase(0).getVolume() * getThermoSystem().getPhase(0).getPressure()
-              / ThermodynamicConstantsInterface.referencePressure
-              / getThermoSystem().getPhase(0).getZ() * 288.15 / getThermoSystem().getTemperature();
+      gasStandardVolume[i] = getThermoSystem().getPhase(0).getVolume() * getThermoSystem().getPhase(0).getPressure()
+          / ThermodynamicConstantsInterface.referencePressure / getThermoSystem().getPhase(0).getZ() * 288.15
+          / getThermoSystem().getTemperature();
       Bg[i] = gasVolume[i] * 1e5 / gasStandardVolume[i];
       Zgas[i] = getThermoSystem().getPhase(0).getZ();
       if (getThermoSystem().getNumberOfPhases() == 1) {
@@ -178,8 +167,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         liquidRelativeVolume[i] = Double.NaN;
       }
       if (getThermoSystem().getNumberOfPhases() > 1) {
-        liquidRelativeVolume[i] =
-            getThermoSystem().getPhase("oil").getVolume() / saturationVolume * 100;
+        liquidRelativeVolume[i] = getThermoSystem().getPhase("oil").getVolume() / saturationVolume * 100;
         Yfactor[i] = ((saturationPressure - pressures[i]) / pressures[i])
             / ((totalVolume[i] - saturationVolume) / saturationVolume);
         viscosity[i] = Double.NaN;
@@ -195,9 +183,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runTuning.
-   * </p>
    */
   public void runTuning() {
     ArrayList<SampleValue> sampleList = new ArrayList<SampleValue>();
@@ -208,7 +194,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       for (int i = 0; i < experimentalData[0].length; i++) {
         CMEFunction function = new CMEFunction();
         double[] guess = new double[] {
-            getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus() / 1000.0};
+            getThermoSystem().getCharacterization().getPlusFractionModel().getMPlus() / 1000.0 };
         function.setInitialGuess(guess);
 
         SystemInterface tempSystem = getThermoSystem(); // getThermoSystem().clone();
@@ -217,11 +203,10 @@ public class ConstantMassExpansion extends BasePVTsimulation {
         tempSystem.setPressure(pressures[i]);
         // thermoOps.TPflash();
         // tempSystem.display();
-        double[] sample1 = {temperature, pressures[i]};
+        double[] sample1 = { temperature, pressures[i] };
         double relativeVolume = experimentalData[0][i];
-        double[] standardDeviation1 = {1.5};
-        SampleValue sample =
-            new SampleValue(relativeVolume, relativeVolume / 50.0, sample1, standardDeviation1);
+        double[] standardDeviation1 = { 1.5 };
+        SampleValue sample = new SampleValue(relativeVolume, relativeVolume / 50.0, sample1, standardDeviation1);
         sample.setFunction(function);
         sample.setThermodynamicSystem(tempSystem);
         sampleList.add(sample);
@@ -242,9 +227,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -279,8 +262,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
      * tempSystem.addComponent("propane", 4.15); tempSystem.addComponent("i-butane", 0.71);
      * tempSystem.addComponent("n-butane", 0.71); tempSystem.addComponent("i-pentane", 0.66);
      * tempSystem.addComponent("n-pentane", 0.66); tempSystem.addComponent("n-hexane", 0.81);
-     * tempSystem.addTBPfraction("C7", 1.2, 91.0 / 1000.0, 0.746); tempSystem.addTBPfraction("C8",
-     * 1.15, 104.0 / 1000.0, 0.770); tempSystem.addTBPfraction("C9", 5.15, 125.0 / 1000.0, 0.8);
+     * tempSystem.addTBPfraction("C7", 1.2, 91.0 / 1000.0, 0.746); tempSystem.addTBPfraction("C8", 1.15, 104.0 / 1000.0,
+     * 0.770); tempSystem.addTBPfraction("C9", 5.15, 125.0 / 1000.0, 0.8);
      */
 
     ConstantMassExpansion CMEsim = new ConstantMassExpansion(tempSystem);
@@ -288,18 +271,16 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     // double a = CMEsim.getSaturationPressure();
 
     CMEsim.setTemperaturesAndPressures(
-        new double[] {273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9},
-        new double[] {400, 300.0, 250.0, 200.0, 100.0});
-    double[][] expData = {{0.95, 0.99, 1.12, 1.9}};
+        new double[] { 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9, 273.15 + 73.9 },
+        new double[] { 400, 300.0, 250.0, 200.0, 100.0 });
+    double[][] expData = { { 0.95, 0.99, 1.12, 1.9 } };
     CMEsim.setExperimentalData(expData);
     // CMEsim.runTuning();
     CMEsim.runCalc();
   }
 
   /**
-   * <p>
    * Getter for the field <code>relativeVolume</code>.
-   * </p>
    *
    * @return the relativeVolume
    */
@@ -308,9 +289,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>liquidRelativeVolume</code>.
-   * </p>
    *
    * @return the liquidRelativeVolume
    */
@@ -319,9 +298,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getZgas.
-   * </p>
    *
    * @return the Zgas
    */
@@ -330,9 +307,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getYfactor.
-   * </p>
    *
    * @return the Yfactor
    */
@@ -341,9 +316,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>density</code>.
-   * </p>
    *
    * @return the density
    */
@@ -352,9 +325,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>viscosity</code>.
-   * </p>
    *
    * @return the gas viscosity
    */
@@ -363,9 +334,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getBg.
-   * </p>
    *
    * @return the gas volume formation factor
    */
@@ -374,9 +343,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>isoThermalCompressibility</code>.
-   * </p>
    *
    * @return the isoThermalCompressibility
    */
@@ -385,9 +352,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * Getter for the field <code>saturationIsoThermalCompressibility</code>.
-   * </p>
    *
    * @return the saturationIsoThermalCompressibility
    */
@@ -396,9 +361,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * setTemperaturesAndPressures.
-   * </p>
    *
    * @param temperature an array of type double
    * @param pressure an array of type double
@@ -417,9 +380,8 @@ public class ConstantMassExpansion extends BasePVTsimulation {
    * Validate mass balance consistency in CCE data.
    *
    * <p>
-   * Per Whitson methodology, the total mass in the CCE cell should remain constant throughout the
-   * experiment. This QC check verifies that mass = density × volume is consistent at each pressure
-   * step.
+   * Per Whitson methodology, the total mass in the CCE cell should remain constant throughout the experiment. This QC
+   * check verifies that mass = density × volume is consistent at each pressure step.
    * </p>
    *
    * @param tolerance acceptable relative error (e.g., 0.01 for 1%)
@@ -453,8 +415,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
       if (mass[i] > 0) {
         double relativeError = Math.abs(mass[i] - referenceMass) / referenceMass;
         if (relativeError > tolerance) {
-          logger.warn("CCE QC: Mass balance error at step " + i + ": " + (relativeError * 100)
-              + "% deviation");
+          logger.warn("CCE QC: Mass balance error at step " + i + ": " + (relativeError * 100) + "% deviation");
           return false;
         }
       }
@@ -501,16 +462,15 @@ public class ConstantMassExpansion extends BasePVTsimulation {
    * Compare experimental and simulated relative volumes.
    *
    * <p>
-   * This QC method calculates the deviation between experimental and simulated relative volumes,
-   * useful for EOS model tuning assessment.
+   * This QC method calculates the deviation between experimental and simulated relative volumes, useful for EOS model
+   * tuning assessment.
    * </p>
    *
    * @param experimentalRelVol array of experimental relative volume values
    * @return array of deviations (simulated - experimental)
    */
   public double[] calculateRelativeVolumeDeviation(double[] experimentalRelVol) {
-    if (relativeVolume == null || experimentalRelVol == null
-        || relativeVolume.length != experimentalRelVol.length) {
+    if (relativeVolume == null || experimentalRelVol == null || relativeVolume.length != experimentalRelVol.length) {
       return null;
     }
 
@@ -529,8 +489,7 @@ public class ConstantMassExpansion extends BasePVTsimulation {
    * @return average absolute deviation as percentage
    */
   public double calculateAAD(double[] experimentalRelVol) {
-    if (relativeVolume == null || experimentalRelVol == null
-        || relativeVolume.length != experimentalRelVol.length) {
+    if (relativeVolume == null || experimentalRelVol == null || relativeVolume.length != experimentalRelVol.length) {
       return Double.NaN;
     }
 
@@ -569,28 +528,24 @@ public class ConstantMassExpansion extends BasePVTsimulation {
     sb.append(String.format("  Saturation Pressure: %.2f bar\n", saturationPressure));
     sb.append(String.format("  Saturation Volume: %.4f L\n", saturationVolume));
     sb.append(String.format("  Z at Saturation: %.4f\n", Zsaturation));
-    sb.append(String.format("  Iso. Compressibility at Sat.: %.6f 1/bar\n",
-        saturationIsoThermalCompressibility));
+    sb.append(String.format("  Iso. Compressibility at Sat.: %.6f 1/bar\n", saturationIsoThermalCompressibility));
     sb.append("\n");
 
     // Results table
     sb.append("Pressure Step Results:\n");
-    sb.append(String.format("%10s %12s %12s %12s %12s\n", "P (bar)", "Vrel", "Density", "Z-gas",
-        "Compress."));
+    sb.append(String.format("%10s %12s %12s %12s %12s\n", "P (bar)", "Vrel", "Density", "Z-gas", "Compress."));
     sb.append(StringUtils.repeat("-", 60) + "\n");
 
     if (pressures != null) {
       for (int i = 0; i < pressures.length; i++) {
-        double vrel =
-            (relativeVolume != null && i < relativeVolume.length) ? relativeVolume[i] : Double.NaN;
+        double vrel = (relativeVolume != null && i < relativeVolume.length) ? relativeVolume[i] : Double.NaN;
         double dens = (density != null && i < density.length) ? density[i] : Double.NaN;
         double zg = (Zgas != null && i < Zgas.length) ? Zgas[i] : Double.NaN;
         double comp = (isoThermalCompressibility != null && i < isoThermalCompressibility.length)
             ? isoThermalCompressibility[i]
             : Double.NaN;
 
-        sb.append(String.format("%10.2f %12.4f %12.2f %12.4f %12.6f\n", pressures[i], vrel, dens,
-            zg, comp));
+        sb.append(String.format("%10.2f %12.4f %12.2f %12.4f %12.6f\n", pressures[i], vrel, dens, zg, comp));
       }
     }
     sb.append("\n");

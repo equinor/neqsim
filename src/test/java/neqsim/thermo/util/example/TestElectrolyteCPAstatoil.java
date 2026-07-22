@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestElectrolyteCPAstatoil class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TestElectrolyteCPAstatoil {
+  private static final Logger logger = LogManager.getLogger(TestElectrolyteCPAstatoil.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestElectrolyteCPAstatoil.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -64,12 +61,11 @@ public class TestElectrolyteCPAstatoil {
       logger.error(ex.getMessage(), ex);
     }
     logger.info("pH" + testSystem.getPhase(1).getpH());
-    // System.out.println("Mean ionic activity coefficient Na+Cl- " +
+    // logger.info("Mean ionic activity coefficient Na+Cl- " +
     // testSystem.getPhase(1).getMeanIonicActivity(2, 3));
-    // System.out.println("Osmotic coefficient " +
+    // logger.info("Osmotic coefficient " +
     // testSystem.getPhase(1).getOsmoticCoefficientOfWater());
     logger.info("water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1));
-    logger
-        .info("water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1, 2));
+    logger.info("water activity coefficient " + testSystem.getPhase(1).getActivityCoefficient(1, 2));
   }
 }

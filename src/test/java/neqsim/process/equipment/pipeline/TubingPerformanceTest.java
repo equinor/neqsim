@@ -157,7 +157,7 @@ class TubingPerformanceTest {
     tubing.setWellheadPressure(50.0);
     tubing.setCorrelationType(TubingPerformance.CorrelationType.BEGGS_BRILL);
 
-    double[] flowRates = {0.5, 1.0, 2.0, 3.0, 4.0};
+    double[] flowRates = { 0.5, 1.0, 2.0, 3.0, 4.0 };
     double[][] vlpCurve = tubing.generateVLPCurve(flowRates);
 
     assertNotNull(vlpCurve);
@@ -249,8 +249,7 @@ class TubingPerformanceTest {
     assertTrue(dp90 > 0, "Vertical tubing should have positive pressure drop");
     // The relationship between dp60 and dp90 depends on flow regime
     // Just verify both calculations complete successfully
-    assertNotEquals(dp60, dp90, 0.01,
-        "Different inclinations should give different pressure drops");
+    assertNotEquals(dp60, dp90, 0.01, "Different inclinations should give different pressure drops");
   }
 
   @Test

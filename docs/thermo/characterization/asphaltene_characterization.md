@@ -1,3 +1,8 @@
+---
+title: "Asphaltene Characterization"
+description: "Documentation for asphaltene modeling using SARA analysis in NeqSim."
+---
+
 # Asphaltene Characterization
 
 Documentation for asphaltene modeling using SARA analysis in NeqSim.
@@ -376,7 +381,6 @@ System.out.println("Risk: " + risk);
 
 ## See Also
 
-- [Wax Characterization](wax_characterization.md) - Wax modeling
-- [Flow Assurance](../../pvtsimulation/flow_assurance.md) - Complete guide
-- [Electrolyte CPA](../ElectrolyteCPAModel.md) - CPA model details
-- [De Boer Screening](../../pvtsimulation/de_boer_screening.md) - Detailed screening method
+- [Wax Characterization](wax_characterization) - Wax modeling
+- [Flow Assurance](../../pvtsimulation/flow_assurance_overview) - Complete guide
+- [Electrolyte CPA](../ElectrolyteCPAModel) - CPA model details

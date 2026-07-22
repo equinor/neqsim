@@ -1,24 +1,24 @@
 package neqsim.thermo.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemElectrolyteCPA;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * HenryConstantCalc class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
  * @version $Id: $Id
  */
 public class HenryConstantCalc {
+  private static final Logger logger = LogManager.getLogger(HenryConstantCalc.class);
+
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -43,16 +43,16 @@ public class HenryConstantCalc {
     }
 
     // testSystem.getChemicalReactionOperations().solveChemEq(1);
-    // System.out.println("Henrys Constant " +
+    // logger.info("Henrys Constant " +
     // testSystem.getPhase(0).getComponent("CO2").getx()/testSystem.getPhase(1).getComponent("CO2").getx()*testSystem.getPressure());
-    // System.out.println("Henrys Constant2 " +
+    // logger.info("Henrys Constant2 " +
     // testSystem.calcHenrysConstant("CO2"));
-    // System.out.println("activity MDEA " +
+    // logger.info("activity MDEA " +
     // testSystem.getPhase(1).getActivityCoefficient(0));
     // double meanact2 = testSystem.getPhase(1).getMeanIonicActivity(0,1);
-    // System.out.println("mean ionic-activity: " + meanact2);
+    // logger.info("mean ionic-activity: " + meanact2);
     // double osm = testSystem.getPhase(1).getOsmoticCoefficientOfWater();
-    // System.out.println("osm: " + osm);
+    // logger.info("osm: " + osm);
     testSystem.display();
   }
 }

@@ -1,3 +1,8 @@
+---
+title: "Bottleneck Analysis and Capacity Utilization"
+description: "NeqSim provides functionality to analyze capacity utilization and identify bottlenecks in a process simulation. This feature is useful for production optimization and debottlenecking studies."
+---
+
 # Bottleneck Analysis and Capacity Utilization
 
 NeqSim provides functionality to analyze capacity utilization and identify bottlenecks in a process simulation. This feature is useful for production optimization and debottlenecking studies.
@@ -59,7 +64,7 @@ Currently, the following equipment types support capacity analysis:
 | Equipment | Duty Metric | Capacity Metric | How to Set Capacity | Override After autoSize |
 |-----------|-------------|-----------------|---------------------|------------------------|
 | **Separator** | Gas flow (m³/s) | Max allowable gas flow | `setDesignGasLoadFactor()`, `setInternalDiameter()` | `separator.setDesignGasLoadFactor(0.15)` |
-| **Compressor** | Power (W) | Max design power | `setMaximumPower()`, `setMaximumSpeed()` | `compressor.setMaximumPower(5000.0)` |
+| **Compressor** | Power (W) | Max design power | `initMechanicalDesign()` + `getMechanicalDesign().setMaxDesignPower()`, `setMaximumSpeed()` | `compressor.getMechanicalDesign().setMaxDesignPower(5000.0)` |
 | **Pump** | Power (W) | Max design power | `getMechanicalDesign().setMaxDesignPower()` | `pump.getMechanicalDesign().setMaxDesignPower(100000)` |
 | **Heater/Cooler** | Duty (W) | Max design duty | `getMechanicalDesign().setMaxDesignDuty()` | `heater.getMechanicalDesign().setMaxDesignDuty(1e6)` |
 | **ThrottlingValve** | Volume flow (m³/hr) | Max volume flow | `setDesignCv()`, `setDesignVolumeFlow()` | `valve.setDesignCv(200.0)` |
@@ -80,7 +85,7 @@ Override K-factor with `setDesignGasLoadFactor()` to change capacity.
 ```
 Utilization = ShaftPower / MaxDesignPower
 ```
-MaxDesignPower comes from: (1) driver speed-power curve, (2) `setMaximumPower()`, or (3) mechanical design.
+MaxDesignPower comes from: (1) driver speed-power curve, (2) `getMechanicalDesign().setMaxDesignPower()`, or (3) mechanical design.
 
 **Pump:** Uses power-based utilization:
 ```
@@ -132,12 +137,12 @@ public class BottleneckExample {
         // 2. Create Equipment and Set Capacities
         Separator separator = new Separator("separator", inletStream);
         // Set Separator Capacity (e.g., 200 m3/hr)
-        separator.getMechanicalDesign().setMaxDesignGassVolumeFlow(200.0); 
+        separator.getMechanicalDesign().setMaxDesignGassVolumeFlow(200.0);
 
         Compressor compressor = new Compressor("compressor", separator.getGasOutStream());
         compressor.setOutletPressure(50.0);
         // Set Compressor Capacity (e.g., 5 MW)
-        compressor.getMechanicalDesign().maxDesignPower = 5000000.0; 
+        compressor.getMechanicalDesign().maxDesignPower = 5000000.0;
 
         // 3. Run Simulation
         ProcessSystem process = new ProcessSystem();
@@ -159,7 +164,7 @@ public class BottleneckExample {
         } else {
             System.out.println("No bottleneck found (or capacity not set)");
         }
-        
+
         System.out.println("Compressor Rest Capacity: " + compressor.getRestCapacity());
     }
 }
@@ -214,7 +219,7 @@ if (!result.isEmpty()) {
 Compressor comp = (Compressor) process.getUnit("compressor");
 for (CapacityConstraint c : comp.getCapacityConstraints().values()) {
     System.out.printf("  %s: %.1f / %.1f %s (%.1f%%)%n",
-        c.getName(), c.getCurrentValue(), c.getDesignValue(), 
+        c.getName(), c.getCurrentValue(), c.getDesignValue(),
         c.getUnit(), c.getUtilizationPercent());
 }
 
@@ -234,7 +239,7 @@ if (process.isAnyEquipmentOverloaded()) {
 | **Separator** | Gas load factor (vs design K-factor) |
 | **Compressor** | Speed, Power, Surge margin |
 
-For detailed documentation on extending to other equipment, see [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK.md).
+For detailed documentation on extending to other equipment, see [Capacity Constraint Framework](../process/CAPACITY_CONSTRAINT_FRAMEWORK).
 
 ## Production Optimization
 
@@ -298,7 +303,7 @@ config.equipmentConstraintRule(new EquipmentConstraintRule(Compressor.class, "pr
     "Keep pressure ratio within design"));
 
 OptimizationResult result = optimizer.optimize(process, inletStream, config,
-    List.of(objective), List.of(keepPowerLow));
+    Arrays.asList(objective), Arrays.asList(keepPowerLow));
 
 System.out.println("Optimal rate: " + result.getOptimalRate() + " " + result.getRateUnit());
 System.out.println("Bottleneck: " + result.getBottleneck().getName());
@@ -335,9 +340,9 @@ ManipulatedVariable feedSouth = new ManipulatedVariable("south", 100.0, 800.0, "
 ManipulatedVariable compressorSetPoint = new ManipulatedVariable("compressor pressure", 40.0,
     80.0, "bara", (proc, value) -> compressor.setOutletPressure(value));
 
-OptimizationResult multiVar = optimizer.optimize(process, List.of(feedNorth, feedSouth,
-    compressorSetPoint), config.searchMode(SearchMode.PARTICLE_SWARM_SCORE), List.of(objective),
-    List.of(keepPowerLow));
+OptimizationResult multiVar = optimizer.optimize(process, Arrays.asList(feedNorth, feedSouth,
+    compressorSetPoint), config.searchMode(SearchMode.PARTICLE_SWARM_SCORE), Arrays.asList(objective),
+    Arrays.asList(keepPowerLow));
 ```
 
 ### Multi-Variable Optimization with `ManipulatedVariable`
@@ -362,7 +367,7 @@ public class ManipulatedVariable {
      */
     public ManipulatedVariable(String name, double lowerBound, double upperBound,
             String unit, BiConsumer<ProcessSystem, Double> setter);
-    
+
     public String getName();
     public double getLowerBound();
     public double getUpperBound();
@@ -511,13 +516,13 @@ report-ready table:
 
 ```java
 ScenarioRequest baseCase = new ScenarioRequest("base", baseProcess, baseFeed, baseConfig,
-    List.of(objective), List.of(keepPowerLow));
+    Arrays.asList(objective), Arrays.asList(keepPowerLow));
 ScenarioRequest upgradeCase = new ScenarioRequest("upgrade", upgradedProcess, upgradedFeed,
-    baseConfig, List.of(objective), List.of(keepPowerLow));
+    baseConfig, Arrays.asList(objective), Arrays.asList(keepPowerLow));
 
-List<ScenarioKpi> kpis = List.of(ScenarioKpi.optimalRate("kg/hr"), ScenarioKpi.score());
+List<ScenarioKpi> kpis = Arrays.asList(ScenarioKpi.optimalRate("kg/hr"), ScenarioKpi.score());
 ScenarioComparisonResult comparison = optimizer.compareScenarios(
-    List.of(baseCase, upgradeCase), kpis);
+    Arrays.asList(baseCase, upgradeCase), kpis);
 
 System.out.println(ProductionOptimizer.formatScenarioComparisonTable(comparison, kpis));
 ```

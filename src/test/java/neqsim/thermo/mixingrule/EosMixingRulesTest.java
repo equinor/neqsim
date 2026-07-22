@@ -6,8 +6,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseEos;
 
 /**
- * Test class for verifying the behavior of EOS (Equation of State) mixing rules in the NeqSim
- * library.
+ * Test class for verifying the behavior of EOS (Equation of State) mixing rules in the NeqSim library.
  */
 public class EosMixingRulesTest {
   @Test
@@ -29,10 +28,8 @@ public class EosMixingRulesTest {
 
     testSystem.setMixingRule("classic");
 
-    double kij =
-        ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(0, 1);
-    double kij2 =
-        ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(3, 0);
+    double kij = ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(0, 1);
+    double kij2 = ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(3, 0);
 
     // Print kij
     assertEquals(-0.019997, kij, 1e-5);
@@ -41,15 +38,13 @@ public class EosMixingRulesTest {
 
   @Test
   void testMEGOil() {
-    neqsim.thermo.system.SystemSrkCPAstatoil testSystem =
-        new neqsim.thermo.system.SystemSrkCPAstatoil(298.0, 10.0);
+    neqsim.thermo.system.SystemSrkCPAstatoil testSystem = new neqsim.thermo.system.SystemSrkCPAstatoil(298.0, 10.0);
     testSystem.addTBPfraction("C8", 0.01, 90.9 / 1000.0, 0.9);
     testSystem.addComponent("ethanol", 0.01);
 
     testSystem.setMixingRule("classic");
 
-    double kij =
-        ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(0, 1);
+    double kij = ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(0, 1);
 
     // Print kij
     assertEquals(-0.05, kij, 1e-5);
@@ -74,13 +69,32 @@ public class EosMixingRulesTest {
 
     testSystem.setMixingRule("classic");
 
-    double kij =
-        ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(0, 1);
-    double kij2 =
-        ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(3, 0);
+    double kij = ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(0, 1);
+    double kij2 = ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(3, 0);
 
     // Print kij
     assertEquals(0.1, kij, 1e-5);
     assertTrue(kij == kij2);
+  }
+
+  @Test
+  void testCalculatedInteractionParametersUseCriticalVolumes() {
+    neqsim.thermo.system.SystemPrEos testSystem = new neqsim.thermo.system.SystemPrEos(298.0, 10.0);
+    testSystem.addComponent("methane", 1.0);
+    testSystem.addComponent("n-heptane", 1.0);
+
+    try {
+      testSystem.calcKIJ(true);
+      testSystem.setMixingRule("classic");
+
+      double kij = ((PhaseEos) testSystem.getPhase(0)).getEosMixingRule().getBinaryInteractionParameter(0, 1);
+      double expected = BIPEstimator.estimateChuehPrausnitz(testSystem.getComponent("methane"),
+          testSystem.getComponent("n-heptane"));
+
+      assertEquals(expected, kij, 1e-12);
+      assertTrue(kij > 0.0, "Calculated critical-volume kij should not collapse to zero");
+    } finally {
+      testSystem.calcKIJ(false);
+    }
   }
 }

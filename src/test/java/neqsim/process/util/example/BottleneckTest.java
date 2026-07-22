@@ -1,7 +1,9 @@
 package neqsim.process.util.example;
 
-import org.junit.jupiter.api.Test;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.Stream;
@@ -9,6 +11,8 @@ import neqsim.process.processmodel.ProcessSystem;
 import neqsim.thermo.system.SystemSrkEos;
 
 public class BottleneckTest {
+  private static final Logger logger = LogManager.getLogger(BottleneckTest.class);
+
   @Test
   public void testBottleneck() {
     SystemSrkEos testSystem = new SystemSrkEos(298.15, 10.0);
@@ -34,14 +38,12 @@ public class BottleneckTest {
     processSystem.run();
 
     // Check utilization
-    System.out.println(
-        "Compressor utilization: " + compressor.getCapacityDuty() / compressor.getCapacityMax());
-    System.out.println(
-        "Separator utilization: " + separator.getCapacityDuty() / separator.getCapacityMax());
+    logger.info("Compressor utilization: " + compressor.getCapacityDuty() / compressor.getCapacityMax());
+    logger.info("Separator utilization: " + separator.getCapacityDuty() / separator.getCapacityMax());
 
     // The compressor should be the bottleneck because we set a very low max power
     neqsim.process.equipment.ProcessEquipmentInterface bottleneck = processSystem.getBottleneck();
-    System.out.println("Bottleneck: " + bottleneck.getName());
+    logger.info("Bottleneck: " + bottleneck.getName());
 
     Assertions.assertEquals("Test Compressor", bottleneck.getName());
   }

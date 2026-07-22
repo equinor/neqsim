@@ -14,9 +14,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * WellFluidModule class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -42,9 +40,7 @@ public class WellFluidModule extends ProcessModuleBaseClass {
   double exportOilTemperature = 273.15 + 30;
 
   /**
-   * <p>
    * Constructor for WellFluidModule.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -77,10 +73,9 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     }
     getOperations().run(id);
 
-    double volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutletStream()
+    double volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutletStream().getThermoSystem().getVolume();
+    double volOil = ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator")).getOilOutStream()
         .getThermoSystem().getVolume();
-    double volOil = ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator"))
-        .getOilOutStream().getThermoSystem().getVolume();
 
     double GOR = volGas / volOil;
     System.out.println("GOR " + GOR);
@@ -88,22 +83,19 @@ public class WellFluidModule extends ProcessModuleBaseClass {
 
     // ((Heater) getOperations().getUnit("gas heater")).displayResult();
 
-    Stream gasStream =
-        (Stream) ((Heater) getOperations().getUnit("gas heater")).getOutletStream().clone();
+    Stream gasStream = (Stream) ((Heater) getOperations().getUnit("gas heater")).getOutletStream().clone();
     gasStream.getThermoSystem().setPressure(inletPressure);
-    Stream oilStream =
-        (Stream) ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator"))
-            .getOilOutStream().clone();
+    Stream oilStream = (Stream) ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator")).getOilOutStream()
+        .clone();
     oilStream.getThermoSystem().setPressure(inletPressure);
 
     ((Separator) getOperations().getUnit("Inlet separator")).addStream(gasStream);
     ((Separator) getOperations().getUnit("Inlet separator")).addStream(oilStream);
     getOperations().run(id);
 
-    volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutletStream().getThermoSystem()
+    volGas = ((Mixer) getOperations().getUnit("gas mixer")).getOutletStream().getThermoSystem().getVolume();
+    volOil = ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator")).getOilOutStream().getThermoSystem()
         .getVolume();
-    volOil = ((ThreePhaseSeparator) getOperations().getUnit("3rd stage Separator"))
-        .getOilOutStream().getThermoSystem().getVolume();
 
     GOR = volGas / volOil;
     System.out.println("GOR " + GOR);
@@ -123,28 +115,27 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     Heater liquidOutHeater = new Heater("oil/water heater", inletSeparator.getLiquidOutStream());
     liquidOutHeater.setOutTemperature(separationTemperature);
 
-    ThreePhaseSeparator firstStageSeparator =
-        new ThreePhaseSeparator("1st stage separator", liquidOutHeater.getOutletStream());
+    ThreePhaseSeparator firstStageSeparator = new ThreePhaseSeparator("1st stage separator",
+        liquidOutHeater.getOutletStream());
 
-    ThrottlingValve valve1 =
-        new ThrottlingValve("1stTo2ndStageOilValve", firstStageSeparator.getOilOutStream());
+    ThrottlingValve valve1 = new ThrottlingValve("1stTo2ndStageOilValve", firstStageSeparator.getOilOutStream());
     valve1.setOutletPressure(secondstagePressure);
 
     Heater liquidOutHeater2 = new Heater("oil/water heater2", valve1.getOutletStream());
     liquidOutHeater2.setOutTemperature(separationTemperature);
 
-    ThreePhaseSeparator secondStageSeparator =
-        new ThreePhaseSeparator("2nd stage Separator", liquidOutHeater2.getOutletStream());
+    ThreePhaseSeparator secondStageSeparator = new ThreePhaseSeparator("2nd stage Separator",
+        liquidOutHeater2.getOutletStream());
 
-    ThrottlingValve thirdStageValve =
-        new ThrottlingValve("2-3stageOilValve", secondStageSeparator.getLiquidOutStream());
+    ThrottlingValve thirdStageValve = new ThrottlingValve("2-3stageOilValve",
+        secondStageSeparator.getLiquidOutStream());
     thirdStageValve.setOutletPressure(thirdstagePressure);
 
     Heater liquidOutHeater3 = new Heater("oil/water heater3", thirdStageValve.getOutletStream());
     liquidOutHeater3.setOutTemperature(separationTemperature);
 
-    ThreePhaseSeparator thirdStageSeparator =
-        new ThreePhaseSeparator("3rd stage Separator", liquidOutHeater3.getOutletStream());
+    ThreePhaseSeparator thirdStageSeparator = new ThreePhaseSeparator("3rd stage Separator",
+        liquidOutHeater3.getOutletStream());
 
     Mixer gasMixer = new Mixer("gas mixer");
 
@@ -210,17 +201,14 @@ public class WellFluidModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @SuppressWarnings("unused")
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(273.15 + 50, 65);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(273.15 + 50, 65);
 
     // testSystem.addComponent("CO2", 1);
     // testSystem.addComponent("nitrogen", 1);
@@ -249,11 +237,9 @@ public class WellFluidModule extends ProcessModuleBaseClass {
     separationModule.addInputStream("feed stream", wellStream);
     separationModule.setSpecification("Second stage pressure", 15.0);
     separationModule.setSpecification("separation temperature", 273.15 + 15.0);
-    separationModule.setSpecification("Third stage pressure",
-        ThermodynamicConstantsInterface.referencePressure);
+    separationModule.setSpecification("Third stage pressure", ThermodynamicConstantsInterface.referencePressure);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
 
     operations.add(wellStream);
     operations.add(separationModule);

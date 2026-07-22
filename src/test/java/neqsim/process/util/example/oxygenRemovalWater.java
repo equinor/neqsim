@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.separator.Separator;
@@ -9,19 +11,17 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * oxygenRemovalWater class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class oxygenRemovalWater {
+  private static final Logger logger = LogManager.getLogger(oxygenRemovalWater.class);
+
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -54,8 +54,7 @@ public class oxygenRemovalWater {
     ThrottlingValve LP_valve = new ThrottlingValve("LPventil", heater1.getOutletStream());
     LP_valve.setOutletPressure(30.0e-3);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_air);
     operations.add(stream_water);
     operations.add(mix);
@@ -68,6 +67,6 @@ public class oxygenRemovalWater {
     LP_valve.getThermoSystem().display();
 
     double wtFracO2 = LP_valve.getThermoSystem().getPhase("aqueous").getWtFrac("oxygen") * 1e9;
-    System.out.println("oxygen ppb " + wtFracO2);
+    logger.info("oxygen ppb " + wtFracO2);
   }
 }

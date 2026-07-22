@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
+
 /**
  * @author victorigi99
  */
@@ -33,7 +34,7 @@ public class PHFlashVegaTest {
     VegaProps = testSystem.getPhase(0).getProperties_Vega();
     double VegaEnthalpy2 = VegaProps[7] * testSystem.getPhase(0).getNumberOfMolesInPhase();
     assertEquals(VegaEnthalpy, VegaEnthalpy2, Math.abs(VegaEnthalpy2) / 1000.0);
-  
+
     testOps.PHflashVega(VegaEnthalpy + 100.0);
     VegaProps = testSystem.getPhase(0).getProperties_Vega();
     double VegaEnthalpy3 = VegaProps[7] * testSystem.getPhase(0).getNumberOfMolesInPhase();

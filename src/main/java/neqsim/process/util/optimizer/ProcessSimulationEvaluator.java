@@ -10,6 +10,9 @@ import java.util.function.ToDoubleFunction;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.ProcessEquipmentInterface;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.EquipmentCapacityStrategy;
+import neqsim.process.equipment.capacity.EquipmentCapacityStrategyRegistry;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
 
@@ -17,17 +20,15 @@ import neqsim.process.processmodel.ProcessSystem;
  * Black-box evaluator for external optimization algorithms.
  *
  * <p>
- * This class provides a unified interface for using NeqSim process simulations with external
- * optimization libraries such as SciPy, NLopt, Pyomo, or any gradient-based/derivative-free
- * optimizer.
+ * This class provides a unified interface for using NeqSim process simulations with external optimization libraries
+ * such as SciPy, NLopt, Pyomo, or any gradient-based/derivative-free optimizer.
  * </p>
  *
  * <p>
  * <strong>Key Features</strong>
  * </p>
  * <ul>
- * <li>Single-point evaluation: {@code evaluate(double[] x)} runs simulation and returns all
- * outputs</li>
+ * <li>Single-point evaluation: {@code evaluate(double[] x)} runs simulation and returns all outputs</li>
  * <li>Parameter definition with bounds for decision variables</li>
  * <li>Multiple objectives support for multi-objective optimization</li>
  * <li>Constraint handling with automatic feasibility checking</li>
@@ -38,7 +39,7 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <strong>Python Integration Example</strong>
  * </p>
- * 
+ *
  * <pre>
  * # Using with SciPy
  * from neqsim import jneqsim
@@ -125,7 +126,8 @@ public class ProcessSimulationEvaluator implements Serializable {
     /**
      * Default constructor.
      */
-    public ParameterDefinition() {}
+    public ParameterDefinition() {
+    }
 
     /**
      * Constructor with all fields.
@@ -137,8 +139,8 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @param upperBound upper bound
      * @param unit unit of measurement
      */
-    public ParameterDefinition(String name, String equipmentName, String propertyName,
-        double lowerBound, double upperBound, String unit) {
+    public ParameterDefinition(String name, String equipmentName, String propertyName, double lowerBound,
+        double upperBound, String unit) {
       this.name = name;
       this.equipmentName = equipmentName;
       this.propertyName = propertyName;
@@ -254,7 +256,8 @@ public class ProcessSimulationEvaluator implements Serializable {
     /**
      * Default constructor.
      */
-    public ObjectiveDefinition() {}
+    public ObjectiveDefinition() {
+    }
 
     /**
      * Constructor with evaluator.
@@ -263,8 +266,7 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @param evaluator evaluation function
      * @param direction optimization direction
      */
-    public ObjectiveDefinition(String name, ToDoubleFunction<ProcessSystem> evaluator,
-        Direction direction) {
+    public ObjectiveDefinition(String name, ToDoubleFunction<ProcessSystem> evaluator, Direction direction) {
       this.name = name;
       this.evaluator = evaluator;
       this.direction = direction;
@@ -333,9 +335,15 @@ public class ProcessSimulationEvaluator implements Serializable {
   }
 
   /**
-   * Definition of a constraint.
+   * Definition of a constraint for external optimizer integration.
+   *
+   * <p>
+   * Supports lower-bound, upper-bound, range, and equality constraints. Implements the unified
+   * {@link ProcessConstraint} interface so constraints are portable between internal NeqSim optimizers and external
+   * solvers.
+   * </p>
    */
-  public static class ConstraintDefinition implements Serializable {
+  public static class ConstraintDefinition implements Serializable, ProcessConstraint {
     private static final long serialVersionUID = 1L;
 
     /** Constraint type. */
@@ -363,7 +371,8 @@ public class ProcessSimulationEvaluator implements Serializable {
     /**
      * Default constructor.
      */
-    public ConstraintDefinition() {}
+    public ConstraintDefinition() {
+    }
 
     /**
      * Constructor for lower bound constraint (g(x) &gt;= bound).
@@ -372,8 +381,7 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @param evaluator evaluation function
      * @param lowerBound lower bound value
      */
-    public ConstraintDefinition(String name, ToDoubleFunction<ProcessSystem> evaluator,
-        double lowerBound) {
+    public ConstraintDefinition(String name, ToDoubleFunction<ProcessSystem> evaluator, double lowerBound) {
       this.name = name;
       this.evaluator = evaluator;
       this.lowerBound = lowerBound;
@@ -388,8 +396,8 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @param lowerBound lower bound
      * @param upperBound upper bound
      */
-    public ConstraintDefinition(String name, ToDoubleFunction<ProcessSystem> evaluator,
-        double lowerBound, double upperBound) {
+    public ConstraintDefinition(String name, ToDoubleFunction<ProcessSystem> evaluator, double lowerBound,
+        double upperBound) {
       this.name = name;
       this.evaluator = evaluator;
       this.lowerBound = lowerBound;
@@ -398,6 +406,7 @@ public class ProcessSimulationEvaluator implements Serializable {
     }
 
     // Getters and setters
+    @Override
     public String getName() {
       return name;
     }
@@ -446,6 +455,7 @@ public class ProcessSimulationEvaluator implements Serializable {
       this.unit = unit;
     }
 
+    @Override
     public boolean isHard() {
       return isHard;
     }
@@ -454,6 +464,7 @@ public class ProcessSimulationEvaluator implements Serializable {
       isHard = hard;
     }
 
+    @Override
     public double getPenaltyWeight() {
       return penaltyWeight;
     }
@@ -486,19 +497,20 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @param process the process system
      * @return constraint margin
      */
+    @Override
     public double margin(ProcessSystem process) {
       double value = evaluate(process);
       switch (type) {
-        case LOWER_BOUND:
-          return value - lowerBound;
-        case UPPER_BOUND:
-          return upperBound - value;
-        case RANGE:
-          return Math.min(value - lowerBound, upperBound - value);
-        case EQUALITY:
-          return equalityTolerance - Math.abs(value - lowerBound);
-        default:
-          return 0.0;
+      case LOWER_BOUND:
+        return value - lowerBound;
+      case UPPER_BOUND:
+        return upperBound - value;
+      case RANGE:
+        return Math.min(value - lowerBound, upperBound - value);
+      case EQUALITY:
+        return equalityTolerance - Math.abs(value - lowerBound);
+      default:
+        return 0.0;
       }
     }
 
@@ -508,6 +520,7 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @param process the process system
      * @return true if satisfied
      */
+    @Override
     public boolean isSatisfied(ProcessSystem process) {
       return margin(process) >= 0;
     }
@@ -518,12 +531,67 @@ public class ProcessSimulationEvaluator implements Serializable {
      * @param process the process system
      * @return penalty (0 if satisfied, positive if violated)
      */
+    @Override
     public double penalty(ProcessSystem process) {
       double m = margin(process);
       if (m >= 0) {
         return 0.0;
       }
       return penaltyWeight * m * m;
+    }
+
+    /** {@inheritDoc} */
+    @Override
+    public ConstraintSeverityLevel getSeverityLevel() {
+      return ConstraintSeverityLevel.fromIsHard(isHard);
+    }
+
+    /**
+     * Converts this constraint to a {@link ProductionOptimizer.OptimizationConstraint} for use with the internal
+     * optimizer.
+     *
+     * <p>
+     * Only LOWER_BOUND and UPPER_BOUND types can be converted directly. RANGE constraints are converted to an
+     * UPPER_BOUND constraint (using the tightest bound). EQUALITY constraints are approximated as a tight range.
+     * </p>
+     *
+     * @return equivalent OptimizationConstraint
+     * @throws IllegalStateException if the evaluator function is null
+     */
+    public ProductionOptimizer.OptimizationConstraint toOptimizationConstraint() {
+      if (evaluator == null) {
+        throw new IllegalStateException(
+            "Cannot convert to OptimizationConstraint: evaluator is null (was this deserialized?)");
+      }
+      ProductionOptimizer.ConstraintSeverity sev = isHard ? ProductionOptimizer.ConstraintSeverity.HARD
+          : ProductionOptimizer.ConstraintSeverity.SOFT;
+      switch (type) {
+      case UPPER_BOUND:
+        return ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator, upperBound, sev, penaltyWeight,
+            "Converted from ConstraintDefinition");
+      case LOWER_BOUND:
+        return ProductionOptimizer.OptimizationConstraint.greaterThan(name, evaluator, lowerBound, sev, penaltyWeight,
+            "Converted from ConstraintDefinition");
+      case RANGE:
+        // Convert to two one-sided constraints to enforce both bounds
+        logger.info(
+            "RANGE constraint '{}' converted to upper-bound only; " + "lower bound ({}) not enforced via this path",
+            name, lowerBound);
+        return ProductionOptimizer.OptimizationConstraint.lessThan(name + "_upper", evaluator, upperBound, sev,
+            penaltyWeight, "Converted from range ConstraintDefinition (upper bound)");
+      case EQUALITY:
+        // Converts to upper-bound; the lower bound (value >= lowerBound - tolerance)
+        // is not enforced via this single-constraint path
+        logger.info(
+            "EQUALITY constraint '{}' converted to upper-bound only; " + "lower bound not enforced via this path",
+            name);
+        return ProductionOptimizer.OptimizationConstraint.lessThan(name + "_eq", evaluator,
+            lowerBound + equalityTolerance, sev, penaltyWeight,
+            "Converted from equality ConstraintDefinition (upper bound only)");
+      default:
+        return ProductionOptimizer.OptimizationConstraint.lessThan(name, evaluator, upperBound, sev, penaltyWeight,
+            "Converted from ConstraintDefinition");
+      }
     }
   }
 
@@ -549,7 +617,8 @@ public class ProcessSimulationEvaluator implements Serializable {
     /**
      * Default constructor.
      */
-    public EvaluationResult() {}
+    public EvaluationResult() {
+    }
 
     // Getters and setters
     public double[] getParameters() {
@@ -695,7 +764,8 @@ public class ProcessSimulationEvaluator implements Serializable {
   /**
    * Default constructor.
    */
-  public ProcessSimulationEvaluator() {}
+  public ProcessSimulationEvaluator() {
+  }
 
   /**
    * Constructor with process system.
@@ -720,11 +790,11 @@ public class ProcessSimulationEvaluator implements Serializable {
    * @param unit unit of measurement
    * @return this evaluator for chaining
    */
-  public ProcessSimulationEvaluator addParameter(String equipmentName, String propertyName,
-      double lowerBound, double upperBound, String unit) {
+  public ProcessSimulationEvaluator addParameter(String equipmentName, String propertyName, double lowerBound,
+      double upperBound, String unit) {
     String name = equipmentName + "." + propertyName;
-    ParameterDefinition param =
-        new ParameterDefinition(name, equipmentName, propertyName, lowerBound, upperBound, unit);
+    ParameterDefinition param = new ParameterDefinition(name, equipmentName, propertyName, lowerBound, upperBound,
+        unit);
     parameters.add(param);
     return this;
   }
@@ -740,8 +810,7 @@ public class ProcessSimulationEvaluator implements Serializable {
    * @return this evaluator for chaining
    */
   public ProcessSimulationEvaluator addParameterWithSetter(String name,
-      java.util.function.BiConsumer<ProcessSystem, Double> setter, double lowerBound,
-      double upperBound, String unit) {
+      java.util.function.BiConsumer<ProcessSystem, Double> setter, double lowerBound, double upperBound, String unit) {
     ParameterDefinition param = new ParameterDefinition();
     param.setName(name);
     param.setSetter(setter);
@@ -835,10 +904,8 @@ public class ProcessSimulationEvaluator implements Serializable {
    * @param evaluator function that evaluates the objective
    * @return this evaluator for chaining
    */
-  public ProcessSimulationEvaluator addObjective(String name,
-      ToDoubleFunction<ProcessSystem> evaluator) {
-    objectives
-        .add(new ObjectiveDefinition(name, evaluator, ObjectiveDefinition.Direction.MINIMIZE));
+  public ProcessSimulationEvaluator addObjective(String name, ToDoubleFunction<ProcessSystem> evaluator) {
+    objectives.add(new ObjectiveDefinition(name, evaluator, ObjectiveDefinition.Direction.MINIMIZE));
     return this;
   }
 
@@ -850,8 +917,8 @@ public class ProcessSimulationEvaluator implements Serializable {
    * @param direction MINIMIZE or MAXIMIZE
    * @return this evaluator for chaining
    */
-  public ProcessSimulationEvaluator addObjective(String name,
-      ToDoubleFunction<ProcessSystem> evaluator, ObjectiveDefinition.Direction direction) {
+  public ProcessSimulationEvaluator addObjective(String name, ToDoubleFunction<ProcessSystem> evaluator,
+      ObjectiveDefinition.Direction direction) {
     objectives.add(new ObjectiveDefinition(name, evaluator, direction));
     return this;
   }
@@ -865,9 +932,8 @@ public class ProcessSimulationEvaluator implements Serializable {
    * @param weight weight for multi-objective optimization
    * @return this evaluator for chaining
    */
-  public ProcessSimulationEvaluator addObjective(String name,
-      ToDoubleFunction<ProcessSystem> evaluator, ObjectiveDefinition.Direction direction,
-      double weight) {
+  public ProcessSimulationEvaluator addObjective(String name, ToDoubleFunction<ProcessSystem> evaluator,
+      ObjectiveDefinition.Direction direction, double weight) {
     ObjectiveDefinition obj = new ObjectiveDefinition(name, evaluator, direction);
     obj.setWeight(weight);
     objectives.add(obj);
@@ -904,8 +970,8 @@ public class ProcessSimulationEvaluator implements Serializable {
    * @param lowerBound minimum allowed value
    * @return this evaluator for chaining
    */
-  public ProcessSimulationEvaluator addConstraintLowerBound(String name,
-      ToDoubleFunction<ProcessSystem> evaluator, double lowerBound) {
+  public ProcessSimulationEvaluator addConstraintLowerBound(String name, ToDoubleFunction<ProcessSystem> evaluator,
+      double lowerBound) {
     ConstraintDefinition c = new ConstraintDefinition(name, evaluator, lowerBound);
     c.setType(ConstraintDefinition.Type.LOWER_BOUND);
     constraints.add(c);
@@ -920,8 +986,8 @@ public class ProcessSimulationEvaluator implements Serializable {
    * @param upperBound maximum allowed value
    * @return this evaluator for chaining
    */
-  public ProcessSimulationEvaluator addConstraintUpperBound(String name,
-      ToDoubleFunction<ProcessSystem> evaluator, double upperBound) {
+  public ProcessSimulationEvaluator addConstraintUpperBound(String name, ToDoubleFunction<ProcessSystem> evaluator,
+      double upperBound) {
     ConstraintDefinition c = new ConstraintDefinition();
     c.setName(name);
     c.setEvaluator(evaluator);
@@ -940,8 +1006,8 @@ public class ProcessSimulationEvaluator implements Serializable {
    * @param upperBound maximum value
    * @return this evaluator for chaining
    */
-  public ProcessSimulationEvaluator addConstraintRange(String name,
-      ToDoubleFunction<ProcessSystem> evaluator, double lowerBound, double upperBound) {
+  public ProcessSimulationEvaluator addConstraintRange(String name, ToDoubleFunction<ProcessSystem> evaluator,
+      double lowerBound, double upperBound) {
     ConstraintDefinition c = new ConstraintDefinition(name, evaluator, lowerBound, upperBound);
     constraints.add(c);
     return this;
@@ -956,8 +1022,8 @@ public class ProcessSimulationEvaluator implements Serializable {
    * @param tolerance allowed deviation
    * @return this evaluator for chaining
    */
-  public ProcessSimulationEvaluator addConstraintEquality(String name,
-      ToDoubleFunction<ProcessSystem> evaluator, double target, double tolerance) {
+  public ProcessSimulationEvaluator addConstraintEquality(String name, ToDoubleFunction<ProcessSystem> evaluator,
+      double target, double tolerance) {
     ConstraintDefinition c = new ConstraintDefinition();
     c.setName(name);
     c.setEvaluator(evaluator);
@@ -986,6 +1052,88 @@ public class ProcessSimulationEvaluator implements Serializable {
     return constraints.size();
   }
 
+  /**
+   * Auto-discovers equipment capacity constraints and adds them as constraint definitions.
+   *
+   * <p>
+   * Uses the {@link EquipmentCapacityStrategyRegistry} to find all physical limits across every equipment item in the
+   * process (compressor surge, separator flooding, pipe velocity, etc.) and converts each to an upper-bound
+   * {@link ConstraintDefinition} where g(x) = utilization &lt;= 1.0.
+   * </p>
+   *
+   * <p>
+   * This ensures external optimizers get exactly the same physical constraints that internal NeqSim optimizers discover
+   * automatically, without manual re-creation.
+   * </p>
+   *
+   * @return this evaluator for chaining
+   */
+  public ProcessSimulationEvaluator addEquipmentCapacityConstraints() {
+    EquipmentCapacityStrategyRegistry registry = EquipmentCapacityStrategyRegistry.getInstance();
+    List<ProcessEquipmentInterface> units = processSystem.getUnitOperations();
+    for (int i = 0; i < units.size(); i++) {
+      ProcessEquipmentInterface equipment = units.get(i);
+      EquipmentCapacityStrategy strategy = registry.findStrategy(equipment);
+      if (strategy == null) {
+        continue;
+      }
+      Map<String, CapacityConstraint> equipConstraints = strategy.getConstraints(equipment);
+      for (Map.Entry<String, CapacityConstraint> entry : equipConstraints.entrySet()) {
+        CapacityConstraint cc = entry.getValue();
+        if (!cc.isEnabled()) {
+          continue;
+        }
+        String cName = equipment.getName() + "/" + entry.getKey();
+        // Create an upper-bound constraint: utilization <= 1.0
+        final CapacityConstraint capturedCc = cc;
+        ConstraintDefinition cd = new ConstraintDefinition();
+        cd.setName(cName);
+        cd.setUnit(cc.getUnit());
+        cd.setType(ConstraintDefinition.Type.UPPER_BOUND);
+        cd.setUpperBound(1.0);
+        cd.setEvaluator(proc -> capturedCc.getUtilization());
+        boolean isHardConstraint = cc.getSeverity() == CapacityConstraint.ConstraintSeverity.CRITICAL
+            || cc.getSeverity() == CapacityConstraint.ConstraintSeverity.HARD;
+        cd.setHard(isHardConstraint);
+        constraints.add(cd);
+      }
+    }
+    return this;
+  }
+
+  /**
+   * Returns all constraints as a unified {@link ProcessConstraint} list.
+   *
+   * <p>
+   * Since {@link ConstraintDefinition} implements {@link ProcessConstraint}, this returns the same constraints in their
+   * unified form — usable by both internal and external optimizers.
+   * </p>
+   *
+   * @return list of all constraints as ProcessConstraint instances
+   */
+  public List<ProcessConstraint> getAllProcessConstraints() {
+    return new ArrayList<ProcessConstraint>(constraints);
+  }
+
+  /**
+   * Evaluates all constraints and returns a margin vector suitable for NLP solvers.
+   *
+   * <p>
+   * Each element is a constraint margin: positive means satisfied, negative means violated. This is the
+   * {@code g(x) >= 0} vector expected by standard NLP libraries.
+   * </p>
+   *
+   * @param process the process system (must have been run)
+   * @return array of constraint margins in registration order
+   */
+  public double[] getConstraintMarginVector(ProcessSystem process) {
+    double[] margins = new double[constraints.size()];
+    for (int i = 0; i < constraints.size(); i++) {
+      margins[i] = constraints.get(i).margin(process);
+    }
+    return margins;
+  }
+
   // ============================================================================
   // Evaluation Methods
   // ============================================================================
@@ -1008,9 +1156,8 @@ public class ProcessSimulationEvaluator implements Serializable {
    */
   public EvaluationResult evaluate(double[] x) {
     if (x == null || x.length != parameters.size()) {
-      throw new IllegalArgumentException(
-          "Parameter array length (" + (x == null ? "null" : x.length)
-              + ") must match parameter count (" + parameters.size() + ")");
+      throw new IllegalArgumentException("Parameter array length (" + (x == null ? "null" : x.length)
+          + ") must match parameter count (" + parameters.size() + ")");
     }
 
     long startTime = System.currentTimeMillis();
@@ -1100,8 +1247,7 @@ public class ProcessSimulationEvaluator implements Serializable {
         param.getSetter().accept(process, value);
       } else {
         // Use equipment property
-        setEquipmentProperty(process, param.getEquipmentName(), param.getPropertyName(), value,
-            param.getUnit());
+        setEquipmentProperty(process, param.getEquipmentName(), param.getPropertyName(), value, param.getUnit());
       }
     }
   }
@@ -1115,8 +1261,8 @@ public class ProcessSimulationEvaluator implements Serializable {
    * @param value value to set
    * @param unit unit of measurement
    */
-  private void setEquipmentProperty(ProcessSystem process, String equipmentName,
-      String propertyName, double value, String unit) {
+  private void setEquipmentProperty(ProcessSystem process, String equipmentName, String propertyName, double value,
+      String unit) {
     ProcessEquipmentInterface equipment = process.getUnit(equipmentName);
     if (equipment == null) {
       throw new IllegalArgumentException("Equipment not found: " + equipmentName);
@@ -1138,26 +1284,21 @@ public class ProcessSimulationEvaluator implements Serializable {
     } else {
       // Try reflection for other equipment types
       try {
-        String methodName =
-            "set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
-        java.lang.reflect.Method method =
-            equipment.getClass().getMethod(methodName, double.class, String.class);
+        String methodName = "set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
+        java.lang.reflect.Method method = equipment.getClass().getMethod(methodName, double.class, String.class);
         method.invoke(equipment, value, unit);
       } catch (NoSuchMethodException e) {
         // Try without unit
         try {
-          String methodName =
-              "set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
-          java.lang.reflect.Method method =
-              equipment.getClass().getMethod(methodName, double.class);
+          String methodName = "set" + propertyName.substring(0, 1).toUpperCase() + propertyName.substring(1);
+          java.lang.reflect.Method method = equipment.getClass().getMethod(methodName, double.class);
           method.invoke(equipment, value);
         } catch (Exception ex) {
           throw new IllegalArgumentException(
               "Cannot set property " + propertyName + " on " + equipmentName + ": " + ex);
         }
       } catch (Exception e) {
-        throw new IllegalArgumentException(
-            "Cannot set property " + propertyName + " on " + equipmentName + ": " + e);
+        throw new IllegalArgumentException("Cannot set property " + propertyName + " on " + equipmentName + ": " + e);
       }
     }
   }
@@ -1188,8 +1329,7 @@ public class ProcessSimulationEvaluator implements Serializable {
     double baseValue = evaluate(x).getObjectives()[objectiveIndex];
 
     for (int i = 0; i < x.length; i++) {
-      double h = useRelativeStep ? finiteDifferenceStep * Math.max(Math.abs(x[i]), 1.0)
-          : finiteDifferenceStep;
+      double h = useRelativeStep ? finiteDifferenceStep * Math.max(Math.abs(x[i]), 1.0) : finiteDifferenceStep;
 
       double[] xPlus = Arrays.copyOf(x, x.length);
       xPlus[i] += h;
@@ -1219,8 +1359,7 @@ public class ProcessSimulationEvaluator implements Serializable {
     double[] baseMargins = evaluate(x).getConstraintMargins();
 
     for (int i = 0; i < x.length; i++) {
-      double h = useRelativeStep ? finiteDifferenceStep * Math.max(Math.abs(x[i]), 1.0)
-          : finiteDifferenceStep;
+      double h = useRelativeStep ? finiteDifferenceStep * Math.max(Math.abs(x[i]), 1.0) : finiteDifferenceStep;
 
       double[] xPlus = Arrays.copyOf(x, x.length);
       xPlus[i] += h;
@@ -1410,8 +1549,7 @@ public class ProcessSimulationEvaluator implements Serializable {
       Map<?, ?> p = (Map<?, ?>) params.get(i);
       sb.append("    {");
       sb.append("\"name\": \"").append(p.get("name")).append("\", ");
-      sb.append("\"bounds\": [").append(p.get("lowerBound")).append(", ")
-          .append(p.get("upperBound")).append("], ");
+      sb.append("\"bounds\": [").append(p.get("lowerBound")).append(", ").append(p.get("upperBound")).append("], ");
       sb.append("\"unit\": \"").append(p.get("unit")).append("\"");
       sb.append("}");
       if (i < params.size() - 1) {

@@ -1,0 +1,88 @@
+name: Execute complete P&ID synthesis notebook
+
+on:
+  pull_request:
+    paths:
+      - "examples/notebooks/complete_pid_design_synthesis.ipynb"
+      - "src/main/java/neqsim/process/engineering/pid/**"
+      - "src/test/java/neqsim/process/engineering/pid/**"
+      - ".github/workflows/execute-complete-pid-notebook.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  execute-notebook:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: "17"
+          cache: maven
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Build workspace classes
+        run: ./mvnw -Dmaven.test.skip=true package
+
+      - name: Check Java formatting and focused P&ID tests
+        run: |
+          ./mvnw spotless:check
+          ./mvnw -Dtest='PidDesignModelTest,ControlInstrumentationPidSynthesisTest,SafeguardingPidSynthesisTest,PidCompletenessAndDexpiTest' test
+
+      - name: Install notebook and independent DEXPI runtime
+        run: python -m pip install --upgrade nbconvert nbclient nbformat ipykernel jpype1 pydexpi==1.2.0
+
+      - name: Execute notebook
+        env:
+          MPLBACKEND: Agg
+          NEQSIM_PROJECT_ROOT: ${{ github.workspace }}
+        run: |
+          mkdir -p build/executed-notebooks
+          python -m jupyter nbconvert \
+            --to notebook \
+            --execute examples/notebooks/complete_pid_design_synthesis.ipynb \
+            --ExecutePreprocessor.timeout=2700 \
+            --ExecutePreprocessor.kernel_name=python3 \
+            --output complete_pid_design_synthesis.ipynb \
+            --output-dir build/executed-notebooks
+
+      - name: Verify generated P&ID package
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          notebook = json.loads(Path("build/executed-notebooks/complete_pid_design_synthesis.ipynb").read_text(encoding="utf-8"))
+          code = [cell for cell in notebook["cells"] if cell["cell_type"] == "code"]
+          assert code and all(cell.get("execution_count") is not None for cell in code)
+          assert not any(output.get("output_type") == "error" for cell in code for output in cell.get("outputs", []))
+          package = Path("build/complete-pid-design-synthesis")
+          for name in ("plant.dexpi.xml", "plant-proteus.xml", "plant-pydexpi.xml",
+                       "pid-design-model.json", "pid-completeness-report.json",
+                       "complete-pid-pydexpi.svg", "pydexpi-render-report.json"):
+              assert (package / name).is_file(), name
+          proposal = json.loads((package / "pid-design-model.json").read_text(encoding="utf-8"))
+          completeness = json.loads((package / "pid-completeness-report.json").read_text(encoding="utf-8"))
+          render = json.loads((package / "pydexpi-render-report.json").read_text(encoding="utf-8"))
+          assert len(proposal["elements"]) >= 50
+          assert completeness["structurallyComplete"] is True
+          assert completeness["readyForApproval"] is False
+          assert render["status"] == "IMPORT_AND_RENDER_PASSED"
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: complete-pid-notebook-and-package
+          path: |
+            build/executed-notebooks/complete_pid_design_synthesis.ipynb
+            build/complete-pid-design-synthesis
+          if-no-files-found: error
+          retention-days: 14

@@ -15,18 +15,14 @@ public class SystemPCSAFTa extends SystemSrkEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemPCSAFTa.
-   * </p>
    */
   public SystemPCSAFTa() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemPCSAFTa.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -36,9 +32,7 @@ public class SystemPCSAFTa extends SystemSrkEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemPCSAFTa.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -71,6 +65,17 @@ public class SystemPCSAFTa extends SystemSrkEos {
       phaseArray[numberOfPhases - 1].setRefPhase(phaseArray[1].getRefPhase());
     }
     this.useVolumeCorrection(false);
+    commonInitialization();
+  }
+
+  /**
+   * Common initialization for PC-SAFT with association. Enables fugacity derivative flags for Newton-Raphson flash
+   * convergence.
+   */
+  private void commonInitialization() {
+    setImplementedCompositionDeriativesofFugacity(true);
+    setImplementedPressureDeriativesofFugacity(true);
+    setImplementedTemperatureDeriativesofFugacity(true);
   }
 
   /** {@inheritDoc} */

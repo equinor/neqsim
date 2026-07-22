@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -21,9 +22,11 @@ import neqsim.process.processmodel.ProcessSystem;
 /**
  * Immutable description of a process safety scenario.
  *
- * <p>The scenario captures a set of perturbations such as blocked outlets or loss of utilities
- * along with optional custom manipulators. The perturbations are applied to a scenario specific
- * copy of a {@link ProcessSystem} prior to execution.</p>
+ * <p>
+ * The scenario captures a set of perturbations such as blocked outlets or loss of utilities along with optional custom
+ * manipulators. The perturbations are applied to a scenario specific copy of a {@link ProcessSystem} prior to
+ * execution.
+ * </p>
  */
 public final class ProcessSafetyScenario implements Serializable {
   private static final long serialVersionUID = 1L;
@@ -33,14 +36,14 @@ public final class ProcessSafetyScenario implements Serializable {
   private final List<String> blockedOutletUnits;
   private final List<String> utilityLossUnits;
   private final Map<String, Double> controllerSetPointOverrides;
-  private final Map<String, Consumer<ProcessEquipmentInterface>> customManipulators;
+  private final transient Map<String, Consumer<ProcessEquipmentInterface>> customManipulators;
 
   private ProcessSafetyScenario(Builder builder) {
     this.name = builder.name;
     this.blockedOutletUnits = Collections.unmodifiableList(new ArrayList<>(builder.blockedOutletUnits));
     this.utilityLossUnits = Collections.unmodifiableList(new ArrayList<>(builder.utilityLossUnits));
-    this.controllerSetPointOverrides =
-        Collections.unmodifiableMap(new LinkedHashMap<>(builder.controllerSetPointOverrides));
+    this.controllerSetPointOverrides = Collections
+        .unmodifiableMap(new LinkedHashMap<>(builder.controllerSetPointOverrides));
     this.customManipulators = Collections.unmodifiableMap(new LinkedHashMap<>(builder.customManipulators));
   }
 
@@ -75,8 +78,7 @@ public final class ProcessSafetyScenario implements Serializable {
     for (String unitName : blockedOutletUnits) {
       ProcessEquipmentInterface unit = processSystem.getUnit(unitName);
       if (unit == null) {
-        logger.warn("Unable to block outlet for unit '{}' because it was not found in scenario '{}'.",
-            unitName, name);
+        logger.warn("Unable to block outlet for unit '{}' because it was not found in scenario '{}'.", unitName, name);
         continue;
       }
       unit.setSpecification("BLOCKED_OUTLET");
@@ -88,8 +90,8 @@ public final class ProcessSafetyScenario implements Serializable {
     for (String unitName : utilityLossUnits) {
       ProcessEquipmentInterface unit = processSystem.getUnit(unitName);
       if (unit == null) {
-        logger.warn("Unable to mark utility loss for unit '{}' because it was not found in scenario '{}'.",
-            unitName, name);
+        logger.warn("Unable to mark utility loss for unit '{}' because it was not found in scenario '{}'.", unitName,
+            name);
         continue;
       }
       unit.setSpecification("UTILITY_LOSS");
@@ -116,8 +118,9 @@ public final class ProcessSafetyScenario implements Serializable {
     customManipulators.forEach((unitName, manipulator) -> {
       ProcessEquipmentInterface unit = processSystem.getUnit(unitName);
       if (unit == null) {
-        logger.warn("Unable to apply custom manipulator for unit '{}' in scenario '{}' because the unit"
-            + " was not found.", unitName, name);
+        logger.warn(
+            "Unable to apply custom manipulator for unit '{}' in scenario '{}' because the unit" + " was not found.",
+            unitName, name);
         return;
       }
       manipulator.accept(unit);
@@ -155,14 +158,57 @@ public final class ProcessSafetyScenario implements Serializable {
     return new Builder(name);
   }
 
+  /**
+   * Generate a first-pass set of process safety scenarios directly from a flowsheet topology.
+   *
+   * <p>
+   * One screening scenario is created per relevant unit operation: pressure vessels (separators, scrubbers, tanks)
+   * yield a blocked-outlet / overpressure scenario; rotating equipment (compressors, pumps, expanders) and
+   * heat-transfer duty units (coolers, heaters, exchangers, reboilers, condensers) yield a loss-of-drive /
+   * loss-of-utility scenario; valves yield a stuck-closed / blocked-flow scenario. The result is a <b>screening /
+   * preparation</b> artefact for a competent engineer to review and complete; it does not replace a structured HAZOP or
+   * relief study.
+   * </p>
+   *
+   * @param processSystem the flowsheet to walk (must not be null)
+   * @return a list of candidate {@link ProcessSafetyScenario} objects, in flowsheet order
+   * @throws IllegalArgumentException if {@code processSystem} is null
+   */
+  public static List<ProcessSafetyScenario> generateFromTopology(ProcessSystem processSystem) {
+    if (processSystem == null) {
+      throw new IllegalArgumentException("processSystem must not be null");
+    }
+    List<ProcessSafetyScenario> scenarios = new ArrayList<>();
+    for (ProcessEquipmentInterface unit : processSystem.getUnitOperations()) {
+      if (unit == null) {
+        continue;
+      }
+      String name = unit.getName();
+      if (name == null || name.trim().isEmpty()) {
+        continue;
+      }
+      String t = unit.getClass().getSimpleName().toLowerCase(Locale.ROOT);
+      if (t.contains("separator") || t.contains("scrubber") || t.contains("vessel") || t.contains("tank")) {
+        scenarios.add(builder("Blocked outlet / overpressure: " + name).blockOutlet(name).build());
+      } else if (t.contains("compressor") || t.contains("pump") || t.contains("expander")) {
+        scenarios.add(builder("Trip / loss of drive: " + name).utilityLoss(name).build());
+      } else if (t.contains("cooler") || t.contains("heater") || t.contains("heatexchanger") || t.contains("reboiler")
+          || t.contains("condenser")) {
+        scenarios.add(builder("Loss of utility duty: " + name).utilityLoss(name).build());
+      } else if (t.contains("valve")) {
+        scenarios.add(builder("Stuck closed / blocked flow: " + name).blockOutlet(name).build());
+      }
+    }
+    return scenarios;
+  }
+
   /** Builder for {@link ProcessSafetyScenario}. */
   public static final class Builder {
     private final String name;
     private final Set<String> blockedOutletUnits = new LinkedHashSet<>();
     private final Set<String> utilityLossUnits = new LinkedHashSet<>();
     private final Map<String, Double> controllerSetPointOverrides = new LinkedHashMap<>();
-    private final Map<String, Consumer<ProcessEquipmentInterface>> customManipulators =
-        new LinkedHashMap<>();
+    private final Map<String, Consumer<ProcessEquipmentInterface>> customManipulators = new LinkedHashMap<>();
 
     private Builder(String name) {
       this.name = Objects.requireNonNull(name, "name");

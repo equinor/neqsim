@@ -7,15 +7,14 @@ import neqsim.thermo.system.SystemInterface;
  * Interface for process templates that define standard configurations.
  *
  * <p>
- * Process templates encapsulate common process configurations (e.g., three-stage separation,
- * compression trains, fractionation systems) with standardized equipment sizing rules and operating
- * limits.
+ * Process templates encapsulate common process configurations (e.g., three-stage separation, compression trains,
+ * fractionation systems) with standardized equipment sizing rules and operating limits.
  * </p>
  *
  * <p>
  * Example implementation:
  * </p>
- * 
+ *
  * <pre>
  * public class ThreeStageSeparationTemplate implements ProcessTemplate {
  *   &#64;Override

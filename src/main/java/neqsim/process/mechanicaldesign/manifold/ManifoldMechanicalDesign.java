@@ -3,6 +3,7 @@ package neqsim.process.mechanicaldesign.manifold;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.process.costestimation.manifold.ManifoldCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
@@ -23,8 +24,8 @@ import neqsim.process.mechanicaldesign.manifold.ManifoldMechanicalDesignCalculat
  * </ul>
  *
  * <p>
- * Design includes wall thickness, velocity limits, branch reinforcement, support design, and
- * vibration analysis per applicable codes.
+ * Design includes wall thickness, velocity limits, branch reinforcement, support design, and vibration analysis per
+ * applicable codes.
  * </p>
  *
  * @author ASMF
@@ -76,6 +77,7 @@ public class ManifoldMechanicalDesign extends MechanicalDesign {
     super(equipment);
     this.calculator = new ManifoldMechanicalDesignCalculator();
     this.dataSource = new ManifoldMechanicalDesignDataSource();
+    costEstimate = new ManifoldCostEstimate(this);
   }
 
   /** {@inheritDoc} */
@@ -113,8 +115,7 @@ public class ManifoldMechanicalDesign extends MechanicalDesign {
     }
 
     // Load database parameters
-    dataSource.loadIntoCalculator(calculator, getCompanySpecificDesignStandards(),
-        designStandardCode, "Manifold");
+    dataSource.loadIntoCalculator(calculator, getCompanySpecificDesignStandards(), designStandardCode, "Manifold");
   }
 
   /** {@inheritDoc} */
@@ -154,8 +155,7 @@ public class ManifoldMechanicalDesign extends MechanicalDesign {
       JsonObject calcObj = JsonParser.parseString(calculator.toJson()).getAsJsonObject();
       jsonObj.add("designCalculations", calcObj);
 
-      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-          .toJson(jsonObj);
+      return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
     } catch (Exception e) {
       return "{\"error\": \"" + e.getMessage() + "\"}";
     }

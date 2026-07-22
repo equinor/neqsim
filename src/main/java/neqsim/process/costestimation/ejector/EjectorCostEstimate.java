@@ -9,8 +9,8 @@ import neqsim.process.mechanicaldesign.ejector.EjectorMechanicalDesign;
  * Cost estimation class for ejectors.
  *
  * <p>
- * This class provides ejector-specific cost estimation methods for steam ejectors, gas ejectors,
- * and vacuum systems used in process applications.
+ * This class provides ejector-specific cost estimation methods for steam ejectors, gas ejectors, and vacuum systems
+ * used in process applications.
  * </p>
  *
  * <p>
@@ -199,8 +199,8 @@ public class EjectorCostEstimate extends UnitCostEstimateBaseClass {
     // Adjust for number of stages
     double stageFactor = 1.0 + (numberOfStages - 1) * 0.7;
 
-    double baseCost = k * Math.pow(Math.max(suctionCapacity, 10.0), 0.6)
-        * Math.pow(compressionRatio, 0.3) * stageFactor;
+    double baseCost = k * Math.pow(Math.max(suctionCapacity, 10.0), 0.6) * Math.pow(compressionRatio, 0.3)
+        * stageFactor;
 
     return baseCost * (getCostCalculator().getCurrentCepci() / 607.5);
   }

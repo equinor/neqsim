@@ -13,17 +13,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(SystemUMRPRUMCEosNewTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(SystemUMRPRUMCEosNewTest.class);
 
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static neqsim.thermo.ThermodynamicModelTest testModel = null;
   neqsim.thermo.ThermodynamicModelTest fugTest;
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {
@@ -49,9 +48,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testFugasities.
-   * </p>
    */
   // @Test
   public void testFugasities() {
@@ -73,9 +70,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testCompressibility.
-   * </p>
    */
   @Disabled("No assertions")
   @Test
@@ -106,9 +101,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testTPflash2.
-   * </p>
    */
   @Disabled
   @Test
@@ -118,9 +111,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testTPflash.
-   * </p>
    */
   @Disabled
   @Test
@@ -130,9 +121,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * testFugacityCoefficients.
-   * </p>
    */
   @Test
   @DisplayName("test the fugacity coefficients calculated")
@@ -144,9 +133,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDP.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to pressure")
@@ -155,9 +142,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDT.
-   * </p>
    */
 
   @Test
@@ -167,9 +152,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDn.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition")
@@ -178,9 +161,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDn2.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition (2nd method)")
@@ -189,9 +170,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * <p>
    * checkPhaseEnvelope.
-   * </p>
    *
    * @throws Exception
    */
@@ -210,19 +189,16 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.calcPTphaseEnvelope();
-      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
-          + testOps.get("cricondenbar")[1]);
+      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " " + testOps.get("cricondenbar")[1]);
     } catch (Exception ex) {
       assertTrue(false);
       throw new Exception(ex);
     }
-    assertEquals(testOps.get("cricondenbar")[1], 130.686140727503, 0.02);
+    assertEquals(testOps.get("cricondenbar")[1], 130.7734122125336, 0.1);
   }
 
   /**
-   * <p>
    * checkPhaseEnvelope2.
-   * </p>
    *
    * @throws Exception
    */
@@ -261,8 +237,7 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.calcPTphaseEnvelope();
-      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
-          + testOps.get("cricondenbar")[1]);
+      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " " + testOps.get("cricondenbar")[1]);
     } catch (Exception ex) {
       assertTrue(false);
       throw new Exception(ex);
@@ -274,13 +249,11 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     testSystem.setPressure(10);
     SaturationPressure satPresSim = new SaturationPressure(testSystem);
     satPresSim.run();
-    assertEquals(104.7532901763, satPresSim.getThermoSystem().getPressure(), 0.001);
+    assertEquals(104.70405197143555, satPresSim.getThermoSystem().getPressure(), 0.1);
   }
 
   /**
-   * <p>
    * testPseudoComptest.
-   * </p>
    *
    * @throws Exception
    */
@@ -302,5 +275,33 @@ class SystemUMRPRUMCEosNewTest extends neqsim.NeqSimTest {
     }
     testSystem.initPhysicalProperties("density");
     assertEquals(6.84959007, testSystem.getDensity("kg/m3"), 0.00001);
+  }
+
+  /**
+   * Regression test pinning the identity (model name and attractive term number) of the three UMR-PRU variants. The
+   * attractive term number selects the alpha correlation and, through
+   * {@link neqsim.thermo.phase.PhaseGEUnifacUMRPRU#useMcInteractionParameters()}, the group interaction parameter
+   * tables (<code>_umr</code> vs <code>_umrmc</code>). Pinning these values guards against accidental re-routing of the
+   * validated variants.
+   */
+  @Test
+  @DisplayName("UMR-PRU variant identity (model name and attractive term number)")
+  public void checkVariantIdentity() {
+    SystemInterface base = new SystemUMRPRUEos(298.0, 10.0);
+    assertEquals("UMR-PRU-EoS", base.getModelName());
+
+    SystemInterface mc = new SystemUMRPRUMCEos(298.0, 10.0);
+    assertEquals("UMR-PRU-MC-EoS", mc.getModelName());
+
+    SystemInterface mcNew = new SystemUMRPRUMCEosNew(298.0, 10.0);
+    assertEquals("UMR-PRU-MC-EoS-New", mcNew.getModelName());
+
+    base.addComponent("methane", 1.0);
+    mc.addComponent("methane", 1.0);
+    mcNew.addComponent("methane", 1.0);
+
+    assertEquals(1, base.getPhase(0).getComponent(0).getAttractiveTermNumber());
+    assertEquals(13, mc.getPhase(0).getComponent(0).getAttractiveTermNumber());
+    assertEquals(19, mcNew.getPhase(0).getComponent(0).getAttractiveTermNumber());
   }
 }

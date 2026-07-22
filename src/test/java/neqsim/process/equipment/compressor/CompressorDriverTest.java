@@ -135,8 +135,7 @@ public class CompressorDriverTest {
 
     // At half speed (2500 RPM), max power = 550 kW
     assertTrue(driver.canDeliverPowerAtSpeed(500.0, 2500.0), "Should deliver 500 kW at half speed");
-    assertFalse(driver.canDeliverPowerAtSpeed(600.0, 2500.0),
-        "Cannot deliver 600 kW at half speed");
+    assertFalse(driver.canDeliverPowerAtSpeed(600.0, 2500.0), "Cannot deliver 600 kW at half speed");
   }
 
   @Test

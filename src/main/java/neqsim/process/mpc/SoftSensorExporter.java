@@ -15,13 +15,11 @@ import com.google.gson.GsonBuilder;
 import neqsim.process.processmodel.ProcessSystem;
 
 /**
- * Exports soft-sensor and estimator configurations for integration with external calculation
- * engines.
+ * Exports soft-sensor and estimator configurations for integration with external calculation engines.
  *
  * <p>
- * This class provides export capabilities for soft-sensors (calculated values derived from
- * thermodynamic models) that can be used by external control and optimization systems. Common
- * soft-sensors include:
+ * This class provides export capabilities for soft-sensors (calculated values derived from thermodynamic models) that
+ * can be used by external control and optimization systems. Common soft-sensors include:
  * </p>
  * <ul>
  * <li>Composition estimators based on pressure, temperature, and flow measurements</li>
@@ -31,14 +29,14 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <p>
- * The exports include input/output mappings, calculation parameters, and model coefficients that
- * can be loaded into external calculation engines for real-time estimation.
+ * The exports include input/output mappings, calculation parameters, and model coefficients that can be loaded into
+ * external calculation engines for real-time estimation.
  * </p>
  *
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // Create soft-sensor exporter
@@ -169,8 +167,7 @@ public class SoftSensorExporter implements Serializable {
    * @param componentName component to estimate
    * @return this exporter for method chaining
    */
-  public SoftSensorExporter addCompositionEstimator(String name, String equipmentName,
-      String componentName) {
+  public SoftSensorExporter addCompositionEstimator(String name, String equipmentName, String componentName) {
     SoftSensorDefinition sensor = new SoftSensorDefinition(name, SensorType.COMPOSITION);
     sensor.setEquipmentName(equipmentName);
     sensor.setComponentName(componentName);
@@ -242,8 +239,8 @@ public class SoftSensorExporter implements Serializable {
    * @param outputUnit the output unit
    * @return the created sensor definition for further configuration
    */
-  public SoftSensorDefinition addCustomSensor(String name, String equipmentName,
-      SensorType sensorType, String outputUnit) {
+  public SoftSensorDefinition addCustomSensor(String name, String equipmentName, SensorType sensorType,
+      String outputUnit) {
     SoftSensorDefinition sensor = new SoftSensorDefinition(name, sensorType);
     sensor.setEquipmentName(equipmentName);
     sensor.setOutputUnit(outputUnit);
@@ -287,8 +284,8 @@ public class SoftSensorExporter implements Serializable {
    * Export soft-sensor configurations as CVT (Calculated Value Table) format.
    *
    * <p>
-   * CVT format is a tabular format commonly used by industrial control systems for defining
-   * calculated values and their update schedules.
+   * CVT format is a tabular format commonly used by industrial control systems for defining calculated values and their
+   * update schedules.
    * </p>
    *
    * @param filename the output filename
@@ -319,8 +316,7 @@ public class SoftSensorExporter implements Serializable {
 
         writer.write("," + sensor.getOutputUnit());
         writer.write("," + sensor.getUpdateRateSeconds());
-        writer
-            .write(",\"" + (sensor.getDescription() != null ? sensor.getDescription() : "") + "\"");
+        writer.write(",\"" + (sensor.getDescription() != null ? sensor.getDescription() : "") + "\"");
         writer.newLine();
       }
     }

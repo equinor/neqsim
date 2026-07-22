@@ -7,15 +7,16 @@ import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.util.combustion.CombustionCalculator;
 import neqsim.process.util.monitor.FurnaceBurnerResponse;
 import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * FurnaceBurner mixes a fuel gas stream with combustion air and evaluates combustion using the
- * {@link GibbsReactor}. The unit supports adiabatic and cooled designs, returning the reacted
- * outlet stream together with emission estimates and heat release.
+ * FurnaceBurner mixes a fuel gas stream with combustion air and evaluates combustion using the {@link GibbsReactor}.
+ * The unit supports adiabatic and cooled designs, returning the reacted outlet stream together with emission estimates
+ * and heat release.
  */
 public class FurnaceBurner extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1L;
@@ -42,6 +43,10 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   private double flameTemperature = Double.NaN;
   private double heatReleasekW = Double.NaN;
   private final Map<String, Double> emissionRatesKgPerHr = new HashMap<>();
+
+  private boolean useEmissionFactorPollutants = false;
+  private double noxFactorGPerGJ = 130.0;
+  private double coFactorGPerGJ = 30.0;
 
   /**
    * Create a furnace burner with the provided name.
@@ -80,9 +85,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Provide a cooling factor (0-1) that pulls the flame temperature towards the surroundings. A
-   * value of 0.0 keeps adiabatic operation, while 1.0 forces the products to the surroundings
-   * temperature.
+   * Provide a cooling factor (0-1) that pulls the flame temperature towards the surroundings. A value of 0.0 keeps
+   * adiabatic operation, while 1.0 forces the products to the surroundings temperature.
    *
    * @param factor cooling factor between 0 and 1
    */
@@ -109,8 +113,8 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Set the air-fuel ratio on a mass basis. When set, the air flow rate will be calculated from the
-   * fuel flow rate and this ratio during execution.
+   * Set the air-fuel ratio on a mass basis. When set, the air flow rate will be calculated from the fuel flow rate and
+   * this ratio during execution.
    *
    * @param ratio air-fuel ratio (mass air / mass fuel)
    */
@@ -181,6 +185,59 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     return new HashMap<>(emissionRatesKgPerHr);
   }
 
+  /**
+   * Enable EMEP/EEA emission-factor NOx and CO instead of the Gibbs-equilibrium NO/NO2 estimate.
+   *
+   * <p>
+   * NOx and CO are kinetically frozen, not equilibrium products, so a Gibbs reactor over-predicts NO at flame
+   * temperature and under-predicts it at stack temperature. When this flag is set, the burner derives NOx (as NO2) and
+   * CO from the fuel energy using {@link CombustionCalculator} emission factors, overwriting the {@code "NOx"} and
+   * {@code "CO"} entries of the emission map. The equilibrium {@code "NO"} / {@code "NO2"} species remain for
+   * reference. Disabled by default.
+   * </p>
+   *
+   * @param enabled true to use emission-factor NOx/CO
+   */
+  public void setUseEmissionFactorPollutants(boolean enabled) {
+    this.useEmissionFactorPollutants = enabled;
+  }
+
+  /**
+   * Set the NOx emission factor (grams NOx as NO2 per GJ fuel lower heating value). Only used when emission-factor
+   * pollutants are enabled. EMEP/EEA gas-turbine default is 130 g/GJ.
+   *
+   * @param gPerGJ NOx emission factor in g/GJ
+   */
+  public void setNoxFactorGPerGJ(double gPerGJ) {
+    this.noxFactorGPerGJ = gPerGJ;
+  }
+
+  /**
+   * Set the CO emission factor (grams CO per GJ fuel lower heating value). Only used when emission-factor pollutants
+   * are enabled. Typical default is 30 g/GJ.
+   *
+   * @param gPerGJ CO emission factor in g/GJ
+   */
+  public void setCoFactorGPerGJ(double gPerGJ) {
+    this.coFactorGPerGJ = gPerGJ;
+  }
+
+  /**
+   * Select a burner technology (e.g. low-NOx) from the {@link CombustionCalculator} database. This enables
+   * emission-factor NOx/CO and sets the NOx and CO factors to that technology's typical values. Call
+   * {@link #setNoxFactorGPerGJ(double)} / {@link #setCoFactorGPerGJ(double)} afterwards to override with a vendor
+   * guarantee or CEMS value.
+   *
+   * @param type burner technology (e.g. {@link CombustionCalculator.BurnerType#LOW_NOX})
+   */
+  public void setBurnerType(CombustionCalculator.BurnerType type) {
+    if (type != null) {
+      this.useEmissionFactorPollutants = true;
+      this.noxFactorGPerGJ = type.getNoxGPerGJ();
+      this.coFactorGPerGJ = type.getCoGPerGJ();
+    }
+  }
+
   @Override
   public void run(UUID id) {
     if (fuelInlet == null || airInlet == null) {
@@ -206,8 +263,7 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
 
     fuelSystem.addFluid(airSystem);
     fuelSystem.createDatabase(true);
-    String[] tracked =
-        {"CO2", "CO", "NO", "NO2", "SO2", "SO3", "H2S", "oxygen", "water", "nitrogen"};
+    String[] tracked = { "CO2", "CO", "NO", "NO2", "SO2", "SO3", "H2S", "oxygen", "water", "nitrogen" };
     for (String compName : tracked) {
       if (!fuelSystem.hasComponent(compName)) {
         fuelSystem.addComponent(compName, 0.0, "mole/sec");
@@ -230,8 +286,7 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     }
     reactor.setUseAllDatabaseSpecies(false);
     reactor.setDampingComposition(1e-4);
-    
-  
+
     reactor.setEnergyMode(GibbsReactor.EnergyMode.ADIABATIC);
     reactor.run(id);
 
@@ -246,8 +301,7 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
     if (applyCooling) {
       double ambientTemp = Double.isNaN(surroundingsTemperatureK) ? airSystem.getTemperature()
           : surroundingsTemperatureK;
-      double cooledTemperature =
-          ambientTemp + (flameTemperature - ambientTemp) * (1.0 - coolingFactor);
+      double cooledTemperature = ambientTemp + (flameTemperature - ambientTemp) * (1.0 - coolingFactor);
 
       SystemInterface cooledFeed = mixedStream.getThermoSystem().clone();
       cooledFeed.setTemperature(cooledTemperature);
@@ -256,8 +310,7 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
       Stream cooledStream = new Stream(getName() + " cooled mixture", cooledFeed);
       cooledStream.run(id);
 
-      GibbsReactor cooledReactor =
-          new GibbsReactor(getName() + " cooled Gibbs reactor", cooledStream);
+      GibbsReactor cooledReactor = new GibbsReactor(getName() + " cooled Gibbs reactor", cooledStream);
       cooledReactor.setUseAllDatabaseSpecies(false);
       cooledReactor.setEnergyMode(GibbsReactor.EnergyMode.ISOTHERMAL);
       cooledReactor.run(id);
@@ -280,9 +333,24 @@ public class FurnaceBurner extends ProcessEquipmentBaseClass {
       }
     }
     if (emissionRatesKgPerHr.containsKey("NO") || emissionRatesKgPerHr.containsKey("NO2")) {
-      double nox = emissionRatesKgPerHr.getOrDefault("NO", 0.0)
-          + emissionRatesKgPerHr.getOrDefault("NO2", 0.0);
+      double nox = emissionRatesKgPerHr.getOrDefault("NO", 0.0) + emissionRatesKgPerHr.getOrDefault("NO2", 0.0);
       emissionRatesKgPerHr.put("NOx", nox);
+    }
+
+    if (useEmissionFactorPollutants) {
+      // NOx and CO are kinetically frozen, not equilibrium products. Derive them from the fuel
+      // energy using EMEP/EEA emission factors instead of the Gibbs NO/NO2 equilibrium.
+      double fuelFlowKgPerHr = fuelInlet.getFlowRate("kg/hr");
+      double lambda = 1.0 + excessAirFraction;
+      if (lambda < 1.0) {
+        lambda = 1.0;
+      }
+      CombustionCalculator pollutantCalc = new CombustionCalculator(fuelInlet.getThermoSystem())
+          .setFuelFlowRate(fuelFlowKgPerHr).setExcessAirRatio(lambda).setNoxFactorGPerGJ(noxFactorGPerGJ)
+          .setCoFactorGPerGJ(coFactorGPerGJ);
+      CombustionCalculator.CombustionResult pollutants = pollutantCalc.calculate();
+      emissionRatesKgPerHr.put("NOx", pollutants.getMassRateKgPerHr("NOx_as_NO2"));
+      emissionRatesKgPerHr.put("CO", pollutants.getMassRateKgPerHr("CO"));
     }
 
     setCalculationIdentifier(id);

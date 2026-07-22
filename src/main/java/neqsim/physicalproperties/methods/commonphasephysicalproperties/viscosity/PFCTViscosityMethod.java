@@ -13,9 +13,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
- * <p>
  * PFCTViscosityMethod class.
- * </p>
  *
  * @author esol
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -24,10 +22,9 @@ public class PFCTViscosityMethod extends Viscosity {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  SystemInterface referenceSystem =
-      new SystemSrkEos(273.0, ThermodynamicConstantsInterface.referencePressure);
-  double[] GVcoef = {-2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3, 1.219979e3,
-      -9.627993e1, 4.274152, -8.141531e-2};
+  SystemInterface referenceSystem = new SystemSrkEos(273.0, ThermodynamicConstantsInterface.referencePressure);
+  double[] GVcoef = { -2.090975e5, 2.647269e5, -1.472818e5, 4.716740e4, -9.491872e3, 1.219979e3, -9.627993e1, 4.274152,
+      -8.141531e-2 };
   double visRefA = 1.696985927;
 
   double visRefB = -0.133372346;
@@ -38,13 +35,17 @@ public class PFCTViscosityMethod extends Viscosity {
 
   double visRefE = 1.0;
 
-  double[] viscRefJ = {-1.035060586e1, 1.7571599671e1, -3.0193918656e3, 1.8873011594e2,
-      4.2903609488e-2, 1.4529023444e2, 6.1276818706e3};
+  double[] viscRefJ = { -1.035060586e1, 1.7571599671e1, -3.0193918656e3, 1.8873011594e2, 4.2903609488e-2,
+      1.4529023444e2, 6.1276818706e3 };
+
+  /** Number of CSP viscosity correction factors. */
+  private static final int CSP_VISCOSITY_CORRECTION_FACTOR_COUNT = 4;
+
+  /** CSP viscosity correction factors for temperature, pressure, molar mass and alpha terms. */
+  private double[] cspViscosityCorrectionFactors = { 1.0, 1.0, 1.0, 1.0 };
 
   /**
-   * <p>
    * Constructor for PFCTViscosityMethod.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -73,32 +74,29 @@ public class PFCTViscosityMethod extends Viscosity {
     double Mmtemp = 0.0;
     for (int i = 0; i < phase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < phase.getPhase().getNumberOfComponents(); j++) {
-        double tempVar =
-            phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(j).getx()
-                * Math.pow(Math
-                    .pow(phase.getPhase().getComponent(i).getTC()
-                        / phase.getPhase().getComponent(i).getPC(), 1.0 / 3.0)
-                    + Math.pow(phase.getPhase().getComponent(j).getTC()
-                        / phase.getPhase().getComponent(j).getPC(), 1.0 / 3.0),
-                    3.0);
-        tempTC1 += tempVar * Math.sqrt(
-            phase.getPhase().getComponent(i).getTC() * phase.getPhase().getComponent(j).getTC());
+        double tempVar = phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(j).getx()
+            * Math.pow(
+                Math.pow(phase.getPhase().getComponent(i).getTC() / phase.getPhase().getComponent(i).getPC(), 1.0 / 3.0)
+                    + Math.pow(phase.getPhase().getComponent(j).getTC() / phase.getPhase().getComponent(j).getPC(),
+                        1.0 / 3.0),
+                3.0);
+        tempTC1 += tempVar
+            * Math.sqrt(phase.getPhase().getComponent(i).getTC() * phase.getPhase().getComponent(j).getTC());
         tempTC2 += tempVar;
       }
       Mwtemp += phase.getPhase().getComponent(i).getx()
           * Math.pow(phase.getPhase().getComponent(i).getMolarMass(), 2.0);
-      Mmtemp +=
-          phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(i).getMolarMass();
+      Mmtemp += phase.getPhase().getComponent(i).getx() * phase.getPhase().getComponent(i).getMolarMass();
     }
 
     PCmix = 8.0 * tempTC1 / (tempTC2 * tempTC2);
     TCmix = tempTC1 / tempTC2;
     Mmix = (Mmtemp + 0.291 * (Mwtemp / Mmtemp - Mmtemp)) * 1e3; // phase.getPhase().getMolarMass();
 
-    referenceSystem.setTemperature(phase.getPhase().getTemperature()
-        * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix);
-    referenceSystem.setPressure(phase.getPhase().getPressure()
-        * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
+    referenceSystem.setTemperature(
+        phase.getPhase().getTemperature() * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix);
+    referenceSystem
+        .setPressure(phase.getPhase().getPressure() * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix);
     referenceSystem.init(1);
 
     PhaseType phaseType = phase.getPhase().getType();
@@ -112,17 +110,105 @@ public class PFCTViscosityMethod extends Viscosity {
     alfaMix = 1.0 + 7.475e-5 * Math.pow(redDens, 4.265) * Math.pow(Mmix, 0.8579);
     alfa0 = 1.0 + 8.374e-4 * Math.pow(redDens, 4.265);
     // System.out.println("func " + 7.475e-5*Math.pow(16.043, 0.8579));
-    double T0 = phase.getPhase().getTemperature()
-        * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix * alfa0 / alfaMix;
-    double P0 = phase.getPhase().getPressure() * referenceSystem.getPhase(0).getComponent(0).getPC()
-        / PCmix * alfa0 / alfaMix;
+    double T0 = phase.getPhase().getTemperature() * referenceSystem.getPhase(0).getComponent(0).getTC() / TCmix * alfa0
+        / alfaMix;
+    double P0 = phase.getPhase().getPressure() * referenceSystem.getPhase(0).getComponent(0).getPC() / PCmix * alfa0
+        / alfaMix;
 
     double refVisosity = getRefComponentViscosity(T0, P0);
     // System.out.println("m/mix " + Mmix/M0);
     // System.out.println("a/amix " + alfaMix/alfa0);
-    double viscosity = refVisosity * Math.pow(TCmix / Tc0, -1.0 / 6.0)
-        * Math.pow(PCmix / Pc0, 2.0 / 3.0) * Math.pow(Mmix / M0, 0.5) * alfaMix / alfa0;
+    double viscosity = calculateCorrespondingStatesViscosity(refVisosity, TCmix, Tc0, PCmix, Pc0, Mmix, M0, alfaMix,
+        alfa0);
     return viscosity;
+  }
+
+  /**
+   * Calculates the CSP viscosity from the reference component and four correction factors.
+   *
+   * @param referenceViscosity methane reference viscosity in Pa s
+   * @param mixtureCriticalTemperature mixture critical temperature in K
+   * @param referenceCriticalTemperature reference critical temperature in K
+   * @param mixtureCriticalPressure mixture critical pressure in bara
+   * @param referenceCriticalPressure reference critical pressure in bara
+   * @param mixtureMolarMass mixture molar mass in g/mol
+   * @param referenceMolarMass reference molar mass in g/mol
+   * @param mixtureAlpha mixture alpha correction
+   * @param referenceAlpha reference alpha correction
+   * @return calculated CSP viscosity in Pa s
+   */
+  private double calculateCorrespondingStatesViscosity(double referenceViscosity, double mixtureCriticalTemperature,
+      double referenceCriticalTemperature, double mixtureCriticalPressure, double referenceCriticalPressure,
+      double mixtureMolarMass, double referenceMolarMass, double mixtureAlpha, double referenceAlpha) {
+    return referenceViscosity
+        * Math.pow(mixtureCriticalTemperature / referenceCriticalTemperature,
+            -1.0 / 6.0 * cspViscosityCorrectionFactors[0])
+        * Math.pow(mixtureCriticalPressure / referenceCriticalPressure, 2.0 / 3.0 * cspViscosityCorrectionFactors[1])
+        * Math.pow(mixtureMolarMass / referenceMolarMass, 0.5 * cspViscosityCorrectionFactors[2])
+        * Math.pow(mixtureAlpha / referenceAlpha, cspViscosityCorrectionFactors[3]);
+  }
+
+  /**
+   * Sets the four CSP viscosity correction factors.
+   *
+   * @param correctionFactors correction factors for temperature, pressure, molar mass and alpha terms
+   * @throws IllegalArgumentException if the array does not contain four finite values
+   */
+  public void setCspViscosityCorrectionFactors(double[] correctionFactors) {
+    validateCspViscosityCorrectionFactors(correctionFactors);
+    cspViscosityCorrectionFactors = correctionFactors.clone();
+  }
+
+  /**
+   * Sets one CSP viscosity correction factor.
+   *
+   * @param index correction factor index, from 0 to 3
+   * @param value finite correction factor value
+   * @throws IllegalArgumentException if the index is outside 0 to 3 or the value is not finite
+   */
+  public void setCspViscosityCorrectionFactor(int index, double value) {
+    validateCspViscosityCorrectionFactor(index, value);
+    cspViscosityCorrectionFactors[index] = value;
+  }
+
+  /**
+   * Gets the four CSP viscosity correction factors.
+   *
+   * @return copy of the correction factors for temperature, pressure, molar mass and alpha terms
+   */
+  public double[] getCspViscosityCorrectionFactors() {
+    return cspViscosityCorrectionFactors.clone();
+  }
+
+  /**
+   * Validates an array of CSP viscosity correction factors.
+   *
+   * @param correctionFactors correction factors to validate
+   * @throws IllegalArgumentException if the array does not contain four finite values
+   */
+  private void validateCspViscosityCorrectionFactors(double[] correctionFactors) {
+    if (correctionFactors == null || correctionFactors.length != CSP_VISCOSITY_CORRECTION_FACTOR_COUNT) {
+      throw new IllegalArgumentException("CSP viscosity requires exactly four correction factors");
+    }
+    for (int i = 0; i < correctionFactors.length; i++) {
+      validateCspViscosityCorrectionFactor(i, correctionFactors[i]);
+    }
+  }
+
+  /**
+   * Validates one CSP viscosity correction factor.
+   *
+   * @param index correction factor index, from 0 to 3
+   * @param value correction factor value
+   * @throws IllegalArgumentException if the index is outside 0 to 3 or the value is not finite
+   */
+  private void validateCspViscosityCorrectionFactor(int index, double value) {
+    if (index < 0 || index >= CSP_VISCOSITY_CORRECTION_FACTOR_COUNT) {
+      throw new IllegalArgumentException("CSP viscosity correction factor index must be 0 to 3");
+    }
+    if (Double.isNaN(value) || Double.isInfinite(value)) {
+      throw new IllegalArgumentException("CSP viscosity correction factor must be finite");
+    }
   }
 
   /** {@inheritDoc} */
@@ -132,9 +218,7 @@ public class PFCTViscosityMethod extends Viscosity {
   }
 
   /**
-   * <p>
    * getRefComponentViscosity.
-   * </p>
    *
    * @param temp a double
    * @param pres a double
@@ -160,13 +244,12 @@ public class PFCTViscosityMethod extends Viscosity {
 
     double viscRefO = GVcoef[0] * Math.pow(temp, -1.0) + GVcoef[1] * Math.pow(temp, -2.0 / 3.0)
         + GVcoef[2] * Math.pow(temp, -1.0 / 3.0) + GVcoef[3] + GVcoef[4] * Math.pow(temp, 1.0 / 3.0)
-        + GVcoef[5] * Math.pow(temp, 2.0 / 3.0) + GVcoef[6] * temp
-        + GVcoef[7] * Math.pow(temp, 4.0 / 3.0) + GVcoef[8] * Math.pow(temp, 5.0 / 3.0);
+        + GVcoef[5] * Math.pow(temp, 2.0 / 3.0) + GVcoef[6] * temp + GVcoef[7] * Math.pow(temp, 4.0 / 3.0)
+        + GVcoef[8] * Math.pow(temp, 5.0 / 3.0);
 
     // System.out.println("ref visc0 " + viscRefO);
 
-    double viscRef1 =
-        (visRefA + visRefB * Math.pow(visRefC - Math.log(temp / visRefF), 2.0)) * molDens;
+    double viscRef1 = (visRefA + visRefB * Math.pow(visRefC - Math.log(temp / visRefF), 2.0)) * molDens;
     // System.out.println("ref visc1 " + viscRef1);
 
     double temp1 = Math.pow(molDens, 0.1) * (viscRefJ[1] + viscRefJ[2] / Math.pow(temp, 3.0 / 2.0));
@@ -178,5 +261,13 @@ public class PFCTViscosityMethod extends Viscosity {
     double refVisc = (viscRefO + viscRef1 + viscRef2) / 1.0e7;
     // System.out.println("ref visc " + refVisc);
     return refVisc;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public PFCTViscosityMethod clone() {
+    PFCTViscosityMethod method = (PFCTViscosityMethod) super.clone();
+    method.cspViscosityCorrectionFactors = cspViscosityCorrectionFactors.clone();
+    return method;
   }
 }

@@ -3,6 +3,8 @@ package neqsim.process.equipment.pipeline;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
@@ -15,6 +17,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * Test class for TopsidePiping and its mechanical design.
  */
 public class TopsidePipingTest {
+  private static final Logger logger = LogManager.getLogger(TopsidePipingTest.class);
+
   private SystemInterface gasSystem;
   private Stream gasStream;
   private TopsidePiping gasHeader;
@@ -150,7 +154,7 @@ public class TopsidePipingTest {
 
     calc.calculateActualVelocity();
     calc.calculateErosionalVelocity();
-    boolean passed = calc.checkVelocityLimits();
+    calc.checkVelocityLimits();
 
     assertTrue(calc.getActualVelocity() > 0);
     assertTrue(calc.getErosionalVelocity() > 0);
@@ -169,13 +173,13 @@ public class TopsidePipingTest {
 
     double supportSpacing = calc.calculateSupportSpacing();
 
-    System.out.println("Support spacing: " + supportSpacing);
-    System.out.println("Moment of inertia: " + calc.calculateMomentOfInertia());
-    System.out.println("Allowable stress: " + calc.getAllowableStress());
+    logger.info("Support spacing: " + supportSpacing);
+    logger.info("Moment of inertia: " + calc.calculateMomentOfInertia());
+    logger.info("Allowable stress: " + calc.getAllowableStress());
 
     // Typical 8" pipe: 3.7-4.5m span, but use ASME simplified method
     double asmeSpacing = calc.calculateSupportSpacingASME();
-    System.out.println("ASME support spacing: " + asmeSpacing);
+    logger.info("ASME support spacing: " + asmeSpacing);
     assertTrue(asmeSpacing > 2.0);
     assertTrue(asmeSpacing < 6.0);
   }
@@ -291,7 +295,7 @@ public class TopsidePipingTest {
     calc.setLiquidFraction(0.0);
     calc.setMaterialGrade("A106-B");
 
-    boolean passed = calc.performDesignVerification();
+    calc.performDesignVerification();
 
     // Should pass for reasonable design
     assertTrue(calc.getSupportSpacing() > 0);

@@ -8,8 +8,8 @@ import java.util.Map;
  * Standardized action vector for RL control integration.
  *
  * <p>
- * Represents control actions that can be applied to process equipment. Actions are defined with
- * physical bounds to ensure safe operation.
+ * Represents control actions that can be applied to process equipment. Actions are defined with physical bounds to
+ * ensure safe operation.
  *
  * @author ESOL
  * @version 1.0

@@ -39,10 +39,10 @@ public class PumpAffinityLawTest extends neqsim.NeqSimTest {
     pump = new Pump("TestPump", feedStream);
 
     // Set up pump curve at reference speed
-    double[] speed = new double[] {1000.0};
-    double[][] flow = new double[][] {{10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0}};
-    double[][] head = new double[][] {{120.0, 118.0, 115.0, 110.0, 103.0, 94.0, 83.0, 70.0}};
-    double[][] efficiency = new double[][] {{60.0, 70.0, 78.0, 82.0, 81.0, 76.0, 68.0, 55.0}};
+    double[] speed = new double[] { 1000.0 };
+    double[][] flow = new double[][] { { 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0 } };
+    double[][] head = new double[][] { { 120.0, 118.0, 115.0, 110.0, 103.0, 94.0, 83.0, 70.0 } };
+    double[][] efficiency = new double[][] { { 60.0, 70.0, 78.0, 82.0, 81.0, 76.0, 68.0, 55.0 } };
 
     pump.getPumpChart().setCurves(new double[] {}, speed, flow, head, efficiency);
     pump.getPumpChart().setHeadUnit("meter");
@@ -137,8 +137,7 @@ public class PumpAffinityLawTest extends neqsim.NeqSimTest {
     double eff2 = pump.getPumpChart().getEfficiency(flow2, speed2);
 
     // Efficiency should be nearly constant (within a few percent)
-    Assertions.assertEquals(eff1, eff2, 3.0,
-        "Efficiency should remain relatively constant at same reduced flow");
+    Assertions.assertEquals(eff1, eff2, 3.0, "Efficiency should remain relatively constant at same reduced flow");
   }
 
   @Test
@@ -150,8 +149,16 @@ public class PumpAffinityLawTest extends neqsim.NeqSimTest {
         "BEP flow should be in the range where efficiency is highest");
 
     double bepEfficiency = pump.getPumpChart().getEfficiency(bepFlow, 1000.0);
-    Assertions.assertTrue(bepEfficiency > 80.0,
-        "BEP efficiency should be above 80% based on input data");
+    Assertions.assertTrue(bepEfficiency > 80.0, "BEP efficiency should be above 80% based on input data");
+  }
+
+  @Test
+  void testBestEfficiencyPointScalesWithRequestedSpeed() {
+    double bepAtReferenceSpeed = pump.getPumpChart().getBestEfficiencyFlowRate(1000.0);
+    double bepAtHigherSpeed = pump.getPumpChart().getBestEfficiencyFlowRate(1500.0);
+
+    Assertions.assertEquals(1.5, bepAtHigherSpeed / bepAtReferenceSpeed, 0.01,
+        "BEP flow should scale linearly with speed");
   }
 
   @Test
@@ -162,7 +169,6 @@ public class PumpAffinityLawTest extends neqsim.NeqSimTest {
     // For typical centrifugal pumps: 500 < Ns < 4000 in normal operation
     // Our test setup has minimal flow from init(), so specific speed will be very low (~3)
     // This is expected and just validates the calculation works
-    Assertions.assertTrue(ns > 0 && ns < 10000,
-        "Specific speed should be positive and reasonable, got: " + ns);
+    Assertions.assertTrue(ns > 0 && ns < 10000, "Specific speed should be positive and reasonable, got: " + ns);
   }
 }

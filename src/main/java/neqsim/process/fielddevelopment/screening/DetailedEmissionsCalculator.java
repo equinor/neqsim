@@ -58,29 +58,29 @@ import java.util.Map;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * DetailedEmissionsCalculator calc = new DetailedEmissionsCalculator();
- * 
+ *
  * // Set production
  * calc.setOilProduction(10000, "bbl/day");
  * calc.setGasProduction(5.0, "MMSm3/day");
- * 
+ *
  * // Set combustion sources
  * calc.addGasTurbine("GT-1", 25.0, "MW"); // 25 MW gas turbine
  * calc.addGasTurbine("GT-2", 25.0, "MW");
  * calc.addHeater("Reboiler", 5.0, "MW");
- * 
+ *
  * // Set flaring
  * calc.setFlaringRate(0.02, "MMSm3/day");
  * calc.setFlareEfficiency(0.98);
- * 
+ *
  * // Set fugitives
  * calc.setFugitiveRate(0.01); // 0.01% of throughput
- * 
+ *
  * // Calculate
  * DetailedEmissionsReport report = calc.calculate();
- * 
+ *
  * System.out.println("Scope 1: " + report.getScope1Emissions() + " tCO2e/yr");
  * System.out.println("Scope 2: " + report.getScope2Emissions() + " tCO2e/yr");
  * System.out.println("Intensity: " + report.getIntensity() + " kg CO2e/boe");
@@ -210,8 +210,7 @@ public class DetailedEmissionsCalculator implements Serializable {
 
     // Calculate intensity
     if (report.totalProductionBoePerYear > 0) {
-      report.intensityKgCO2PerBoe =
-          report.totalEmissions * 1000.0 / report.totalProductionBoePerYear;
+      report.intensityKgCO2PerBoe = report.totalEmissions * 1000.0 / report.totalProductionBoePerYear;
     }
 
     // Assign rating
@@ -353,8 +352,7 @@ public class DetailedEmissionsCalculator implements Serializable {
     double pumpSealRate = 5.0; // kg/yr per pump
 
     double componentEmissions = (flangeCount * flangeLeakRate + valveCount * valveLeakRate
-        + compressorSealCount * compressorSealRate + pumpSealCount * pumpSealRate) / 1000.0
-        * GWP_CH4;
+        + compressorSealCount * compressorSealRate + pumpSealCount * pumpSealRate) / 1000.0 * GWP_CH4;
 
     // Use higher of the two methods
     totalFugitive = Math.max(ch4CO2e, componentEmissions);
@@ -567,8 +565,7 @@ public class DetailedEmissionsCalculator implements Serializable {
    * @param pumpSeals number of pump seals
    * @return this for chaining
    */
-  public DetailedEmissionsCalculator setComponentCounts(int flanges, int valves,
-      int compressorSeals, int pumpSeals) {
+  public DetailedEmissionsCalculator setComponentCounts(int flanges, int valves, int compressorSeals, int pumpSeals) {
     this.flangeCount = flanges;
     this.valveCount = valves;
     this.compressorSealCount = compressorSeals;
@@ -664,19 +661,19 @@ public class DetailedEmissionsCalculator implements Serializable {
 
     double calculateAnnualFuelConsumption(double operatingHours) {
       switch (type) {
-        case GAS_TURBINE_SIMPLE:
-          return powerMW * operatingHours * GT_FUEL_SM3_PER_MWH_SIMPLE;
-        case GAS_TURBINE_COMBINED:
-          return powerMW * operatingHours * GT_FUEL_SM3_PER_MWH_COMBINED;
-        case FIRED_HEATER:
-          // Assume 85% efficiency, gas: 35 MJ/Sm³
-          double heatMJ = powerMW * operatingHours * 3600.0; // MWh to MJ
-          return heatMJ / 35.0 / 0.85;
-        case DIESEL_ENGINE:
-          // Convert liters to Sm³ equivalent
-          return fuelRateLPerHour * operatingHours * DIESEL_CO2_KG_PER_L / NG_CO2_KG_PER_SM3;
-        default:
-          return 0;
+      case GAS_TURBINE_SIMPLE:
+        return powerMW * operatingHours * GT_FUEL_SM3_PER_MWH_SIMPLE;
+      case GAS_TURBINE_COMBINED:
+        return powerMW * operatingHours * GT_FUEL_SM3_PER_MWH_COMBINED;
+      case FIRED_HEATER:
+        // Assume 85% efficiency, gas: 35 MJ/Sm³
+        double heatMJ = powerMW * operatingHours * 3600.0; // MWh to MJ
+        return heatMJ / 35.0 / 0.85;
+      case DIESEL_ENGINE:
+        // Convert liters to Sm³ equivalent
+        return fuelRateLPerHour * operatingHours * DIESEL_CO2_KG_PER_L / NG_CO2_KG_PER_SM3;
+      default:
+        return 0;
       }
     }
   }

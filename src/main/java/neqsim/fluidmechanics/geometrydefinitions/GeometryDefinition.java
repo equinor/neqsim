@@ -14,9 +14,7 @@ import neqsim.fluidmechanics.geometrydefinitions.surrounding.SurroundingEnvironm
 import neqsim.fluidmechanics.geometrydefinitions.surrounding.SurroundingEnvironmentBaseClass;
 
 /**
- * <p>
  * Abstract GeometryDefinition class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -41,9 +39,7 @@ public abstract class GeometryDefinition
   }
 
   /**
-   * <p>
    * Getter for the field <code>wall</code>.
-   * </p>
    *
    * @return the wall
    */
@@ -52,9 +48,7 @@ public abstract class GeometryDefinition
   }
 
   /**
-   * <p>
    * Setter for the field <code>wall</code>.
-   * </p>
    *
    * @param wall the wall to set
    */
@@ -79,16 +73,13 @@ public abstract class GeometryDefinition
   private SurroundingEnvironment surroundingEnvironment = new SurroundingEnvironmentBaseClass();
 
   /**
-   * <p>
    * Constructor for GeometryDefinition.
-   * </p>
    */
-  public GeometryDefinition() {}
+  public GeometryDefinition() {
+  }
 
   /**
-   * <p>
    * Constructor for GeometryDefinition.
-   * </p>
    *
    * @param diameter a double
    */
@@ -99,9 +90,7 @@ public abstract class GeometryDefinition
   }
 
   /**
-   * <p>
    * Constructor for GeometryDefinition.
-   * </p>
    *
    * @param diameter a double
    * @param roughness a double
@@ -215,7 +204,8 @@ public abstract class GeometryDefinition
 
   /** {@inheritDoc} */
   @Override
-  public void setPackingType(int i) {}
+  public void setPackingType(int i) {
+  }
 
   /** {@inheritDoc} */
   @Override

@@ -5,9 +5,9 @@ import neqsim.thermo.phase.PhaseAmmoniaEos;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * Component implementation for the ammonia reference equation of state. The formulation mirrors the
- * style of the Leachman hydrogen model where chemical potential derivatives are expressed through
- * reduced Helmholtz-energy derivatives returned from {@link neqsim.thermo.phase.PhaseAmmoniaEos}.
+ * Component implementation for the ammonia reference equation of state. The formulation mirrors the style of the
+ * Leachman hydrogen model where chemical potential derivatives are expressed through reduced Helmholtz-energy
+ * derivatives returned from {@link neqsim.thermo.phase.PhaseAmmoniaEos}.
  *
  * @author esol
  */
@@ -15,9 +15,7 @@ public class ComponentAmmoniaEos extends ComponentEos {
   private static final long serialVersionUID = 1000L;
 
   /**
-   * <p>
    * Constructor for ComponentAmmoniaEos.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param moles a double
@@ -29,9 +27,7 @@ public class ComponentAmmoniaEos extends ComponentEos {
   }
 
   /**
-   * <p>
    * Constructor for ComponentAmmoniaEos.
-   * </p>
    *
    * @param number a int
    * @param TC a double
@@ -67,8 +63,8 @@ public class ComponentAmmoniaEos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles,
-      double beta, int numberOfComponents, int initType) {
+  public void Finit(PhaseInterface phase, double T, double p, double totalNumberOfMoles, double beta,
+      int numberOfComponents, int initType) {
     super.Finit(phase, T, p, totalNumberOfMoles, beta, numberOfComponents, initType);
     if (initType == 3) {
       double phi = fugcoef(phase);
@@ -108,16 +104,14 @@ public class ComponentAmmoniaEos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseAmmoniaEos ph = (PhaseAmmoniaEos) phase;
     return ph.getAlphares()[0][0].val + ph.getAlphares()[0][1].val;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdN(int i, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseAmmoniaEos ph = (PhaseAmmoniaEos) phase;
     double nTot = phase.getNumberOfMolesInPhase();
     return (2.0 * ph.getAlphares()[0][1].val + ph.getAlphares()[0][2].val) / nTot;
@@ -125,16 +119,14 @@ public class ComponentAmmoniaEos extends ComponentEos {
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseAmmoniaEos ph = (PhaseAmmoniaEos) phase;
     return -(2.0 * ph.getAlphares()[0][1].val + ph.getAlphares()[0][2].val) / phase.getVolume();
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     PhaseAmmoniaEos ph = (PhaseAmmoniaEos) phase;
     return -(ph.getAlphares()[1][0].val + ph.getAlphares()[1][1].val) / temperature;
   }
@@ -142,9 +134,8 @@ public class ComponentAmmoniaEos extends ComponentEos {
   /** {@inheritDoc} */
   @Override
   public double fugcoef(PhaseInterface phase) {
-    double logFugacityCoefficient =
-        dFdN(phase, phase.getNumberOfComponents(), phase.getTemperature(), phase.getPressure())
-            - Math.log(phase.getZ());
+    double logFugacityCoefficient = dFdN(phase, phase.getNumberOfComponents(), phase.getTemperature(),
+        phase.getPressure()) - Math.log(phase.getZ());
     return Math.exp(logFugacityCoefficient);
   }
 
@@ -201,4 +192,3 @@ public class ComponentAmmoniaEos extends ComponentEos {
     return dfugdn;
   }
 }
-

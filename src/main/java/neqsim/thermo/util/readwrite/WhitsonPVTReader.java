@@ -19,8 +19,8 @@ import neqsim.thermo.system.SystemInterface;
  * Whitson PVT parameter file reader.
  *
  * <p>
- * This class reads Whitson-style PVT parameter files (e.g., from Whitson+ or similar PVT software)
- * and creates a fully configured NeqSim fluid with:
+ * This class reads Whitson-style PVT parameter files (e.g., from Whitson+ or similar PVT software) and creates a fully
+ * configured NeqSim fluid with:
  * </p>
  * <ul>
  * <li>Correct EOS type (PR, SRK)</li>
@@ -38,8 +38,7 @@ import neqsim.thermo.system.SystemInterface;
  * <ol>
  * <li><b>Parameters section</b>: EOS type, LBC coefficients, Gamma parameters, Omega values</li>
  * <li><b>Component table</b>: Component properties with header row</li>
- * <li><b>BIP matrix</b>: Binary interaction parameters with component names as row/column
- * headers</li>
+ * <li><b>BIP matrix</b>: Binary interaction parameters with component names as row/column headers</li>
  * </ol>
  *
  * <h2>Usage Example:</h2>
@@ -107,8 +106,7 @@ public class WhitsonPVTReader {
    * @return configured SystemInterface fluid
    * @throws IOException if file cannot be read
    */
-  public static SystemInterface read(String filePath, double[] molarComposition)
-      throws IOException {
+  public static SystemInterface read(String filePath, double[] molarComposition) throws IOException {
     WhitsonPVTReader reader = new WhitsonPVTReader();
     reader.parseFile(filePath);
     return reader.createFluid(molarComposition);
@@ -193,42 +191,42 @@ public class WhitsonPVTReader {
     String value = parts[1].trim();
 
     switch (key) {
-      case "EOS Type":
-        eosType = value;
-        break;
-      case "LBC P0":
-        lbcP0 = parseDouble(value);
-        break;
-      case "LBC P1":
-        lbcP1 = parseDouble(value);
-        break;
-      case "LBC P2":
-        lbcP2 = parseDouble(value);
-        break;
-      case "LBC P3":
-        lbcP3 = parseDouble(value);
-        break;
-      case "LBC P4":
-        lbcP4 = parseDouble(value);
-        break;
-      case "LBC F0":
-        lbcF0 = parseDouble(value);
-        break;
-      case "C7+ Gamma Shape":
-        gammaShape = parseDouble(value);
-        break;
-      case "C7+ Gamma Bound":
-        gammaBound = parseDouble(value);
-        break;
-      case "Omega A, ΩA":
-        omegaA = parseDouble(value);
-        break;
-      case "Omega B, ΩB":
-        omegaB = parseDouble(value);
-        break;
-      default:
-        // Ignore unknown parameters
-        break;
+    case "EOS Type":
+      eosType = value;
+      break;
+    case "LBC P0":
+      lbcP0 = parseDouble(value);
+      break;
+    case "LBC P1":
+      lbcP1 = parseDouble(value);
+      break;
+    case "LBC P2":
+      lbcP2 = parseDouble(value);
+      break;
+    case "LBC P3":
+      lbcP3 = parseDouble(value);
+      break;
+    case "LBC P4":
+      lbcP4 = parseDouble(value);
+      break;
+    case "LBC F0":
+      lbcF0 = parseDouble(value);
+      break;
+    case "C7+ Gamma Shape":
+      gammaShape = parseDouble(value);
+      break;
+    case "C7+ Gamma Bound":
+      gammaBound = parseDouble(value);
+      break;
+    case "Omega A, ΩA":
+      omegaA = parseDouble(value);
+      break;
+    case "Omega B, ΩB":
+      omegaB = parseDouble(value);
+      break;
+    default:
+      // Ignore unknown parameters
+      break;
     }
   }
 
@@ -356,7 +354,7 @@ public class WhitsonPVTReader {
    */
   private void applyLBCViscosityModel(SystemInterface fluid) {
     // LBC parameters array: [P0, P1, P2, P3, P4]
-    double[] lbcParams = new double[] {lbcP0, lbcP1, lbcP2, lbcP3, lbcP4};
+    double[] lbcParams = new double[] { lbcP0, lbcP1, lbcP2, lbcP3, lbcP4 };
 
     // Set LBC viscosity model for all phases
     for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
@@ -390,6 +388,10 @@ public class WhitsonPVTReader {
 
   /**
    * Add a component to the fluid with all properties from the parameter file.
+   *
+   * @param fluid target fluid system
+   * @param comp component data parsed from the Whitson PVT file
+   * @param moles moles of the component to add
    */
   private void addComponentToFluid(SystemInterface fluid, ComponentData comp, double moles) {
     String name = comp.name;
@@ -439,8 +441,8 @@ public class WhitsonPVTReader {
    * @param tcKelvin Critical temperature in Kelvin
    * @param tbKelvin Normal boiling point in Kelvin
    */
-  private void setComponentProperties(SystemInterface fluid, int phase, String name,
-      ComponentData comp, double tcKelvin, double tbKelvin) {
+  private void setComponentProperties(SystemInterface fluid, int phase, String name, ComponentData comp,
+      double tcKelvin, double tbKelvin) {
     try {
       ComponentInterface component = fluid.getPhase(phase).getComponent(name);
       if (component == null) {
@@ -472,6 +474,8 @@ public class WhitsonPVTReader {
 
   /**
    * Set binary interaction parameters from the parsed BIP matrix.
+   *
+   * @param fluid the thermodynamic system to set BIPs on
    */
   private void setBinaryInteractionParameters(SystemInterface fluid) {
     if (bipMatrix == null) {
@@ -493,10 +497,8 @@ public class WhitsonPVTReader {
 
         for (int phase = 0; phase < fluid.getMaxNumberOfPhases(); phase++) {
           try {
-            ((PhaseEosInterface) fluid.getPhase(phase)).getEosMixingRule()
-                .setBinaryInteractionParameter(i, j, kij);
-            ((PhaseEosInterface) fluid.getPhase(phase)).getEosMixingRule()
-                .setBinaryInteractionParameter(j, i, kij);
+            ((PhaseEosInterface) fluid.getPhase(phase)).getEosMixingRule().setBinaryInteractionParameter(i, j, kij);
+            ((PhaseEosInterface) fluid.getPhase(phase)).getEosMixingRule().setBinaryInteractionParameter(j, i, kij);
           } catch (Exception e) {
             logger.warn("Failed to set BIP for components " + i + ", " + j, e);
           }
@@ -507,6 +509,9 @@ public class WhitsonPVTReader {
 
   /**
    * Check if component name indicates a C7+ fraction.
+   *
+   * @param name the component name to check
+   * @return true if the name indicates a C7+ fraction
    */
   private boolean isC7PlusFraction(String name) {
     if (name.matches("C\\d+.*")) {
@@ -522,41 +527,44 @@ public class WhitsonPVTReader {
 
   /**
    * Map Whitson component names to NeqSim standard names.
+   *
+   * @param name Whitson component name (e.g. {@code "C1"}, {@code "I-C4"})
+   * @return NeqSim standard component name, or the original name when no mapping exists
    */
   private String mapToStandardName(String name) {
     switch (name.toUpperCase()) {
-      case "C1":
-        return "methane";
-      case "C2":
-        return "ethane";
-      case "C3":
-        return "propane";
-      case "I-C4":
-        return "i-butane";
-      case "N-C4":
-        return "n-butane";
-      case "NEO-C5":
-        return "22-dim-C3";
-      case "I-C5":
-        return "i-pentane";
-      case "N-C5":
-        return "n-pentane";
-      case "C6":
-        return "n-hexane";
-      case "CO2":
-        return "CO2";
-      case "H2S":
-        return "H2S";
-      case "N2":
-        return "nitrogen";
-      case "H2O":
-        return "water";
-      case "HE":
-        return "helium";
-      case "AR":
-        return "argon";
-      default:
-        return name;
+    case "C1":
+      return "methane";
+    case "C2":
+      return "ethane";
+    case "C3":
+      return "propane";
+    case "I-C4":
+      return "i-butane";
+    case "N-C4":
+      return "n-butane";
+    case "NEO-C5":
+      return "22-dim-C3";
+    case "I-C5":
+      return "i-pentane";
+    case "N-C5":
+      return "n-pentane";
+    case "C6":
+      return "n-hexane";
+    case "CO2":
+      return "CO2";
+    case "H2S":
+      return "H2S";
+    case "N2":
+      return "nitrogen";
+    case "H2O":
+      return "water";
+    case "HE":
+      return "helium";
+    case "AR":
+      return "argon";
+    default:
+      return name;
     }
   }
 
@@ -566,7 +574,7 @@ public class WhitsonPVTReader {
    * @return array of [P0, P1, P2, P3, P4, F0]
    */
   public double[] getLBCParameters() {
-    return new double[] {lbcP0, lbcP1, lbcP2, lbcP3, lbcP4, lbcF0};
+    return new double[] { lbcP0, lbcP1, lbcP2, lbcP3, lbcP4, lbcF0 };
   }
 
   /**
@@ -575,7 +583,7 @@ public class WhitsonPVTReader {
    * @return array of [shape, bound]
    */
   public double[] getGammaParameters() {
-    return new double[] {gammaShape, gammaBound};
+    return new double[] { gammaShape, gammaBound };
   }
 
   /**

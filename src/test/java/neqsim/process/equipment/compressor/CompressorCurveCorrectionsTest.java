@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
  * Unit tests for CompressorCurveCorrections.
  *
  * <p>
- * Tests the correction methods for centrifugal compressor performance curves including Reynolds
- * correction, Mach number calculations, and multistage surge correction.
+ * Tests the correction methods for centrifugal compressor performance curves including Reynolds correction, Mach number
+ * calculations, and multistage surge correction.
  * </p>
  *
  * @author Even Solbraa
@@ -25,8 +25,7 @@ class CompressorCurveCorrectionsTest {
     // Higher Reynolds number should give slight efficiency improvement
     double actualRe = 2.0e7;
     double refRe = 1.0e7;
-    double correction =
-        CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(actualRe, refRe);
+    double correction = CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(actualRe, refRe);
 
     // With exponent 0.1: (2)^0.1 ≈ 1.072
     assertTrue(correction > 1.0, "Higher Re should give correction > 1");
@@ -38,8 +37,7 @@ class CompressorCurveCorrectionsTest {
     // Lower Reynolds number should reduce efficiency
     double actualRe = 5.0e6;
     double refRe = 1.0e7;
-    double correction =
-        CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(actualRe, refRe);
+    double correction = CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(actualRe, refRe);
 
     // With exponent 0.1: (0.5)^0.1 ≈ 0.933
     assertTrue(correction < 1.0, "Lower Re should give correction < 1");
@@ -49,16 +47,14 @@ class CompressorCurveCorrectionsTest {
   @Test
   void testReynoldsEfficiencyCorrection_sameReynolds() {
     // Same Reynolds should give correction of 1.0
-    double correction =
-        CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(1.0e7, 1.0e7);
+    double correction = CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(1.0e7, 1.0e7);
     assertEquals(1.0, correction, TOLERANCE);
   }
 
   @Test
   void testReynoldsEfficiencyCorrection_invalidInput() {
     // Invalid inputs should return 1.0 (no correction)
-    assertEquals(1.0,
-        CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(-1.0, 1.0e7));
+    assertEquals(1.0, CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(-1.0, 1.0e7));
     assertEquals(1.0, CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(1.0e7, 0));
     assertEquals(1.0, CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(0, 0));
   }
@@ -79,8 +75,7 @@ class CompressorCurveCorrectionsTest {
     double diameter = 0.4; // m
     double kinematicViscosity = 1.5e-5; // m²/s (typical for air/gas at ~300K)
 
-    double reynolds =
-        CompressorCurveCorrections.calculateReynoldsNumber(tipSpeed, diameter, kinematicViscosity);
+    double reynolds = CompressorCurveCorrections.calculateReynoldsNumber(tipSpeed, diameter, kinematicViscosity);
 
     // Re = v * D / ν = 300 * 0.4 / 1.5e-5 = 8e6
     assertEquals(8.0e6, reynolds, 1.0e4, "Reynolds number calculation");
@@ -143,8 +138,7 @@ class CompressorCurveCorrectionsTest {
     double molarMass = 16.04; // kg/kmol
     double zFactor = 0.998; // Near ideal
 
-    double sonicVelocity =
-        CompressorCurveCorrections.calculateSonicVelocity(kappa, temperature, molarMass, zFactor);
+    double sonicVelocity = CompressorCurveCorrections.calculateSonicVelocity(kappa, temperature, molarMass, zFactor);
 
     // c = sqrt(κ * Z * R * T / M)
     // c = sqrt(1.31 * 0.998 * 8314 * 300 / 16.04) ≈ 450 m/s
@@ -160,8 +154,7 @@ class CompressorCurveCorrectionsTest {
     double molarMass = 28.97; // kg/kmol
     double zFactor = 1.0;
 
-    double sonicVelocity =
-        CompressorCurveCorrections.calculateSonicVelocity(kappa, temperature, molarMass, zFactor);
+    double sonicVelocity = CompressorCurveCorrections.calculateSonicVelocity(kappa, temperature, molarMass, zFactor);
 
     // Expected ~347 m/s for air at 300 K
     assertTrue(sonicVelocity > 340 && sonicVelocity < 360,
@@ -184,14 +177,12 @@ class CompressorCurveCorrectionsTest {
     double sonicVelocity = 400.0; // m/s
     double designMach = 0.5;
 
-    double stonewallFlow =
-        CompressorCurveCorrections.calculateStonewallFlow(designFlow, sonicVelocity, designMach);
+    double stonewallFlow = CompressorCurveCorrections.calculateStonewallFlow(designFlow, sonicVelocity, designMach);
 
     // At design Mach 0.5, stonewall at Mach ~0.9
     // Flow ratio ≈ 0.9/0.5 = 1.8, so stonewall ≈ 1800 m³/hr
     assertTrue(stonewallFlow > designFlow, "Stonewall flow should be greater than design flow");
-    assertTrue(stonewallFlow < designFlow * 2.0,
-        "Stonewall flow should be reasonable for subsonic design");
+    assertTrue(stonewallFlow < designFlow * 2.0, "Stonewall flow should be reasonable for subsonic design");
   }
 
   @Test
@@ -200,8 +191,7 @@ class CompressorCurveCorrectionsTest {
     double sonicVelocity = 400.0;
     double designMach = 0.85; // Already near stonewall
 
-    double stonewallFlow =
-        CompressorCurveCorrections.calculateStonewallFlow(designFlow, sonicVelocity, designMach);
+    double stonewallFlow = CompressorCurveCorrections.calculateStonewallFlow(designFlow, sonicVelocity, designMach);
 
     // Near stonewall, not much flow increase possible
     assertTrue(stonewallFlow >= designFlow, "Stonewall should be at least design flow");
@@ -217,8 +207,8 @@ class CompressorCurveCorrectionsTest {
     double speedRatio = 1.0;
     int stages = 4;
 
-    double correctedFlow = CompressorCurveCorrections
-        .calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio, stages);
+    double correctedFlow = CompressorCurveCorrections.calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio,
+        stages);
 
     assertEquals(baseSurgeFlow, correctedFlow, TOLERANCE, "No surge correction at full speed");
   }
@@ -230,11 +220,10 @@ class CompressorCurveCorrectionsTest {
     double speedRatio = 0.7;
     int stages = 4;
 
-    double correctedFlow = CompressorCurveCorrections
-        .calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio, stages);
+    double correctedFlow = CompressorCurveCorrections.calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio,
+        stages);
 
-    assertTrue(correctedFlow > baseSurgeFlow,
-        "Multistage surge at reduced speed should shift to higher flow");
+    assertTrue(correctedFlow > baseSurgeFlow, "Multistage surge at reduced speed should shift to higher flow");
   }
 
   @Test
@@ -243,13 +232,12 @@ class CompressorCurveCorrectionsTest {
     double baseSurgeFlow = 500.0;
     double speedRatio = 0.7;
 
-    double corrected4Stage =
-        CompressorCurveCorrections.calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio, 4);
-    double corrected8Stage =
-        CompressorCurveCorrections.calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio, 8);
+    double corrected4Stage = CompressorCurveCorrections.calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio,
+        4);
+    double corrected8Stage = CompressorCurveCorrections.calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio,
+        8);
 
-    assertTrue(corrected8Stage > corrected4Stage,
-        "More stages should result in larger surge correction");
+    assertTrue(corrected8Stage > corrected4Stage, "More stages should result in larger surge correction");
   }
 
   @Test
@@ -258,8 +246,7 @@ class CompressorCurveCorrectionsTest {
     double baseSurgeFlow = 500.0;
     double speedRatio = 0.7;
 
-    double correctedFlow =
-        CompressorCurveCorrections.calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio, 1);
+    double correctedFlow = CompressorCurveCorrections.calculateMultistageSurgeCorrection(baseSurgeFlow, speedRatio, 1);
 
     assertEquals(baseSurgeFlow, correctedFlow, TOLERANCE,
         "Single stage compressor should have no multistage correction");
@@ -273,8 +260,8 @@ class CompressorCurveCorrectionsTest {
     double speedRatio = 1.0;
     int stages = 4;
 
-    double correctedHead = CompressorCurveCorrections
-        .calculateMultistageSurgeHeadCorrection(baseSurgeHead, speedRatio, stages);
+    double correctedHead = CompressorCurveCorrections.calculateMultistageSurgeHeadCorrection(baseSurgeHead, speedRatio,
+        stages);
 
     assertEquals(baseSurgeHead, correctedHead, TOLERANCE, "No head correction at full speed");
   }
@@ -286,8 +273,8 @@ class CompressorCurveCorrectionsTest {
     double speedRatio = 0.7;
     int stages = 4;
 
-    double correctedHead = CompressorCurveCorrections
-        .calculateMultistageSurgeHeadCorrection(baseSurgeHead, speedRatio, stages);
+    double correctedHead = CompressorCurveCorrections.calculateMultistageSurgeHeadCorrection(baseSurgeHead, speedRatio,
+        stages);
 
     // Just verify that correction produces a reasonable value
     assertTrue(correctedHead > 0, "Surge head should be positive");
@@ -308,15 +295,12 @@ class CompressorCurveCorrectionsTest {
     assertTrue(tipSpeed > 200, "Tip speed should be reasonable");
 
     // Calculate Reynolds number
-    double reynolds =
-        CompressorCurveCorrections.calculateReynoldsNumber(tipSpeed, diameter, kinematicViscosity);
+    double reynolds = CompressorCurveCorrections.calculateReynoldsNumber(tipSpeed, diameter, kinematicViscosity);
     assertTrue(reynolds > 1e6, "Reynolds should be high for industrial compressor");
 
     // Calculate efficiency correction
-    double effCorrection =
-        CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(reynolds);
-    assertTrue(effCorrection >= 0.9 && effCorrection <= 1.05,
-        "Efficiency correction should be in valid range");
+    double effCorrection = CompressorCurveCorrections.calculateReynoldsEfficiencyCorrection(reynolds);
+    assertTrue(effCorrection >= 0.9 && effCorrection <= 1.05, "Efficiency correction should be in valid range");
 
     // Calculate sonic velocity for natural gas
     double sonicVelocity = CompressorCurveCorrections.calculateSonicVelocity(1.3, 310, 18.5, 0.95);

@@ -2,6 +2,7 @@
 layout: default
 title: Framework Overview
 parent: Risk Framework
+description: "Overview of the NeqSim risk and reliability framework. Architecture, capabilities, supported analysis types, and integration with process simulation."
 ---
 
 # Risk Simulation Framework Overview
@@ -75,7 +76,7 @@ Understanding topology enables:
 - Define failure types (trip, degraded, partial, etc.)
 - Capacity reduction factors
 - Auto-recovery behavior
-- OREDA-based reliability data
+- Multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA)
 
 ### ✅ Production Impact Analysis
 
@@ -171,7 +172,7 @@ This framework follows industry standards:
 
 ## Mathematical Foundation
 
-See [Mathematical Reference](mathematical-reference.md) for detailed formulas covering:
+See [Mathematical Reference](mathematical-reference) for detailed formulas covering:
 
 - Failure probability distributions
 - Availability calculations
@@ -183,7 +184,7 @@ See [Mathematical Reference](mathematical-reference.md) for detailed formulas co
 
 ## Next Steps
 
-- [Equipment Failure Modeling](equipment-failure.md) - Define failure modes
-- [Risk Matrix](risk-matrix.md) - Build visual risk assessment
-- [Monte Carlo Simulation](monte-carlo.md) - Run stochastic analysis
-- [Topology Analysis](topology.md) - Extract process structure
+- [Equipment Failure Modeling](equipment-failure) - Define failure modes
+- [Risk Matrix](risk-matrix) - Build visual risk assessment
+- [Monte Carlo Simulation](monte-carlo) - Run stochastic analysis
+- [Topology Analysis](topology) - Extract process structure

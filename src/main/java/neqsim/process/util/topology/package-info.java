@@ -21,7 +21,7 @@
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Build topology
  * ProcessTopologyAnalyzer topology = new ProcessTopologyAnalyzer(process);

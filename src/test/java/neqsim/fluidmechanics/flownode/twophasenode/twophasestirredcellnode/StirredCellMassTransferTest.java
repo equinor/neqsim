@@ -9,12 +9,12 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * Test class demonstrating mass transfer in a stirred PVT cell.
- * 
+ *
  * <p>
- * Based on the example notebook: masstransferMeOH.ipynb This demonstrates mass transfer between oil
- * and gas in a constant pressure/variable volume stirred PVT cell.
+ * Based on the example notebook: masstransferMeOH.ipynb This demonstrates mass transfer between oil and gas in a
+ * constant pressure/variable volume stirred PVT cell.
  * </p>
- * 
+ *
  * <p>
  * The test simulates:
  * <ul>
@@ -27,10 +27,10 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class StirredCellMassTransferTest {
   /**
    * Test basic stirred cell mass transfer calculation.
-   * 
+   *
    * <p>
-   * Creates a synthetic hydrocarbon fluid at high pressure and simulates depressurization to
-   * atmospheric pressure in a stirred cell.
+   * Creates a synthetic hydrocarbon fluid at high pressure and simulates depressurization to atmospheric pressure in a
+   * stirred cell.
    * </p>
    */
   @Test
@@ -82,10 +82,10 @@ public class StirredCellMassTransferTest {
 
   /**
    * Test mass transfer evolution over multiple time steps.
-   * 
+   *
    * <p>
-   * Simulates mass transfer in the stirred cell over multiple iterations to verify that the system
-   * evolves towards equilibrium.
+   * Simulates mass transfer in the stirred cell over multiple iterations to verify that the system evolves towards
+   * equilibrium.
    * </p>
    */
   @Test
@@ -108,8 +108,7 @@ public class StirredCellMassTransferTest {
 
     // Store initial conditions
     double initialBeta = testSystem.getBeta();
-    assertTrue(initialBeta >= 0 && initialBeta <= 1,
-        "Initial gas fraction should be between 0 and 1");
+    assertTrue(initialBeta >= 0 && initialBeta <= 1, "Initial gas fraction should be between 0 and 1");
 
     // Depressurize
     testSystem.setPressure(1.0, "atm");
@@ -185,8 +184,7 @@ public class StirredCellMassTransferTest {
     // Contact area should be related to cell diameter (pi*D^2/4 for horizontal interface)
     double expectedArea = Math.PI * Math.pow(0.5, 2) / 4.0;
     // Allow some tolerance as the actual calculation may differ
-    assertTrue(Math.abs(contactArea - expectedArea) < expectedArea * 0.5,
-        "Contact area should be roughly pi*D^2/4");
+    assertTrue(Math.abs(contactArea - expectedArea) < expectedArea * 0.5, "Contact area should be roughly pi*D^2/4");
   }
 
   /**
@@ -210,7 +208,7 @@ public class StirredCellMassTransferTest {
     testSystem.init(1);
 
     // Test with different stirrer speeds
-    double[] stirrerSpeeds = {0.5, 1.0, 2.0};
+    double[] stirrerSpeeds = { 0.5, 1.0, 2.0 };
 
     for (double speed : stirrerSpeeds) {
       StirredCellNode node = new StirredCellNode(testSystem.clone(), cell);
@@ -222,8 +220,7 @@ public class StirredCellMassTransferTest {
       node.calcFluxes();
 
       // Verify system is valid at each speed
-      assertTrue(node.getInterphaseSystem() != null,
-          "Interphase system should exist at stirrer speed " + speed);
+      assertTrue(node.getInterphaseSystem() != null, "Interphase system should exist at stirrer speed " + speed);
     }
   }
 
@@ -286,8 +283,8 @@ public class StirredCellMassTransferTest {
     node.initFlowCalc();
 
     // Get diffusion coefficient in gas phase
-    double diffCoeff = node.getBulkSystem().getPhase(0).getPhysicalProperties()
-        .getDiffusionCoefficient("methane", "propane");
+    double diffCoeff = node.getBulkSystem().getPhase(0).getPhysicalProperties().getDiffusionCoefficient("methane",
+        "propane");
 
     assertTrue(diffCoeff > 0, "Diffusion coefficient should be positive");
     assertTrue(Double.isFinite(diffCoeff), "Diffusion coefficient should be finite");

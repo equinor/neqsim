@@ -31,7 +31,7 @@ class PHFlashGERG2008Test {
   void testRun() {
     double[] gergProps = testSystem.getPhase(0).getProperties_GERG2008();
     double gergEnthalpy = gergProps[7] * testSystem.getPhase(0).getNumberOfMolesInPhase(); // J/mol
-                                                                                           // K
+    // K
     testSystem.setPressure(10.0);
     testOps.PHflashGERG2008(gergEnthalpy);
     gergProps = testSystem.getPhase(0).getProperties_GERG2008();

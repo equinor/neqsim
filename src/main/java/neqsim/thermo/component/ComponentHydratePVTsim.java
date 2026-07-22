@@ -7,9 +7,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.util.database.NeqSimDataBase;
 
 /**
- * <p>
  * ComponentHydratePVTsim class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
   double[][] Bk = new double[2][2]; // [structure][cavitytype]
 
   /**
-   * <p>
    * Constructor for ComponentHydratePVTsim.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -39,8 +35,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
     java.sql.ResultSet dataSet = null;
 
     if (!name.equals("default")) {
-      try (neqsim.util.database.NeqSimDataBase database =
-          new neqsim.util.database.NeqSimDataBase()) {
+      try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase()) {
         logger.info("reading hydrate parameters ..............");
         try {
           if (NeqSimDataBase.createTemporaryTables()) {
@@ -105,8 +100,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
       double K2 = 3.4619E-7;
 
       double K3 = -0.2637E-10;
-      VM = 1E-6 * 19.6522 * (1 + K1 * (temp - tmi) + K2 * Math.pow((temp - tmi), 2)
-          + K3 * Math.pow((temp - tmi), 3));
+      VM = 1E-6 * 19.6522 * (1 + K1 * (temp - tmi) + K2 * Math.pow((temp - tmi), 2) + K3 * Math.pow((temp - tmi), 3));
 
       double LNFUG_ICE = LNFUG_ICEREF + (VM * 100000 * (pres - 1.0) / (R * temp));
       fugacityCoefficient = Math.exp(LNFUG_ICE);
@@ -124,8 +118,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
           double alphaWater = reffug[getComponentNumber()];
 
           double wateralphaRef = Math.log(refWaterFugacity / alphaWater);
-          logger.info("wateralphaRef " + wateralphaRef + " refFUgalpha " + alphaWater + " refFug "
-              + refWaterFugacity);
+          logger.info("wateralphaRef " + wateralphaRef + " refFUgalpha " + alphaWater + " refFug " + refWaterFugacity);
 
           double val = 0.0;
 
@@ -135,20 +128,17 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
             tempy = 0.0;
 
             for (int j = 0; j < phase.getNumberOfComponents(); j++) {
-              double tee = ((ComponentHydrate) phase.getComponent(j)).calcYKI(hydrateStructure,
-                  cavType, phase);
+              double tee = ((ComponentHydrate) phase.getComponent(j)).calcYKI(hydrateStructure, cavType, phase);
               tempy += tee;
             }
             val += getCavprwat()[hydrateStructure][cavType] * Math.log(1.0 - tempy);
           }
           logger.info("val " + val + " structure " + hydrateStructure);
-          logger
-              .info("emty " + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure));
+          logger.info("emty " + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure));
           // tempfugcoef = refWaterFugacity * Math.exp(val + calcDeltaChemPot(phase,
           // numberOfComps, temp, pres, hydrateStruct) + wateralphaRef) / (pres);
           fugacityCoefficient = alphaWater
-              * Math.exp(val + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure)
-                  + wateralphaRef)
+              * Math.exp(val + calcDeltaChemPot(phase, numberOfComps, temp, pres, hydrateStructure) + wateralphaRef)
               / pres;
 
           if (fugacityCoefficient < maxFug) {
@@ -179,8 +169,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
 
     for (int i = 0; i < phase.getNumberOfComponents(); i++) {
       if (phase.getComponent(i).isHydrateFormer()) {
-        temp += ((ComponentHydrate) phase.getComponent(i)).calcCKI(stucture, cavityType, phase)
-            * reffug[i];
+        temp += ((ComponentHydrate) phase.getComponent(i)).calcCKI(stucture, cavityType, phase) * reffug[i];
       }
       // System.out.println("reffug " + reffug[i]);
       // System.out.println("temp " + temp);
@@ -204,9 +193,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
   }
 
   /**
-   * <p>
    * calcDeltaChemPot.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComps a int
@@ -215,8 +202,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
    * @param hydrateStruct a int
    * @return a double
    */
-  public double calcDeltaChemPot(PhaseInterface phase, int numberOfComps, double temp, double pres,
-      int hydrateStruct) {
+  public double calcDeltaChemPot(PhaseInterface phase, int numberOfComps, double temp, double pres, int hydrateStruct) {
     double dGf = 0.0;
 
     double dHf = 0.0;
@@ -238,8 +224,7 @@ public class ComponentHydratePVTsim extends ComponentHydrate {
     double T0 = 273.15;
 
     // dHf -= Cp * (temp - T0);
-    return dGf / R / T0 - (-1.0 * dHf * (1.0 / R / temp - 1.0 / R / T0)
-        + Cp / R * Math.log(temp / T0) + Cp * T0 / R * (1.0 / temp - 1.0 / T0))
-        + deltaMolarVolume / R / (temp) * (pres * 1e5);
+    return dGf / R / T0 - (-1.0 * dHf * (1.0 / R / temp - 1.0 / R / T0) + Cp / R * Math.log(temp / T0)
+        + Cp * T0 / R * (1.0 / temp - 1.0 / T0)) + deltaMolarVolume / R / (temp) * (pres * 1e5);
   }
 }

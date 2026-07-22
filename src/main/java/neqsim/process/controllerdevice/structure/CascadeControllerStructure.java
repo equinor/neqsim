@@ -3,9 +3,8 @@ package neqsim.process.controllerdevice.structure;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 
 /**
- * Cascade control structure where a primary controller sets the set-point of a secondary
- * controller. The output from the secondary controller becomes the final control signal applied to
- * the process.
+ * Cascade control structure where a primary controller sets the set-point of a secondary controller. The output from
+ * the secondary controller becomes the final control signal applied to the process.
  *
  * @author esol
  */

@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestUNIFAC_1 class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TestUNIFAC_1 {
+  private static final Logger logger = LogManager.getLogger(TestUNIFAC_1.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestUNIFAC_1.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -57,17 +54,13 @@ public class TestUNIFAC_1 {
     testSystem.init(1);
 
     logger.info("wt% TEG " + (testSystem.getPhase(1).getComponent(0).getx()
-        * testSystem.getPhase(1).getComponent(0).getMolarMass()
-        / testSystem.getPhase(1).getMolarMass() * 100.0));
+        * testSystem.getPhase(1).getComponent(0).getMolarMass() / testSystem.getPhase(1).getMolarMass() * 100.0));
     logger.info("wt% MDEA " + (testSystem.getPhase(1).getComponent(1).getx()
-        * testSystem.getPhase(1).getComponent(1).getMolarMass()
-        / testSystem.getPhase(1).getMolarMass() * 100.0));
+        * testSystem.getPhase(1).getComponent(1).getMolarMass() / testSystem.getPhase(1).getMolarMass() * 100.0));
     logger.info("wt% Piperazine " + (testSystem.getPhase(1).getComponent(2).getx()
-        * testSystem.getPhase(1).getComponent(2).getMolarMass()
-        / testSystem.getPhase(1).getMolarMass() * 100.0));
+        * testSystem.getPhase(1).getComponent(2).getMolarMass() / testSystem.getPhase(1).getMolarMass() * 100.0));
     logger.info("wt% water " + (testSystem.getPhase(1).getComponent(3).getx()
-        * testSystem.getPhase(1).getComponent(3).getMolarMass()
-        / testSystem.getPhase(1).getMolarMass() * 100.0));
+        * testSystem.getPhase(1).getComponent(3).getMolarMass() / testSystem.getPhase(1).getMolarMass() * 100.0));
 
     logger.info(testSystem.getPhase(1).getActivityCoefficient(0));
     logger.info("gibbs " + testSystem.getPhase(1).getExcessGibbsEnergy());
@@ -77,13 +70,11 @@ public class TestUNIFAC_1 {
         testOps.bubblePointPressureFlash(false);
         testSystem2.addComponent("TEG", testSystem.getPhase(0).getComponent(0).getx() / 2.0e3);
         testSystem2.addComponent("MDEA", testSystem.getPhase(0).getComponent(1).getx() / 2.0e3);
-        testSystem2.addComponent("Piperazine",
-            testSystem.getPhase(0).getComponent(2).getx() / 2.0e3);
+        testSystem2.addComponent("Piperazine", testSystem.getPhase(0).getComponent(2).getx() / 2.0e3);
         testSystem2.addComponent("water", testSystem.getPhase(0).getComponent(3).getx() / 2.0e3);
         testSystem.addComponent("TEG", -testSystem.getPhase(0).getComponent(0).getx() / 2.0e3);
         testSystem.addComponent("MDEA", -testSystem.getPhase(0).getComponent(1).getx() / 2.0e3);
-        testSystem.addComponent("Piperazine",
-            -testSystem.getPhase(0).getComponent(2).getx() / 2.0e3);
+        testSystem.addComponent("Piperazine", -testSystem.getPhase(0).getComponent(2).getx() / 2.0e3);
         testSystem.addComponent("water", -testSystem.getPhase(0).getComponent(3).getx() / 2.0e3);
         testSystem2.init(0);
         testSystem2.init(1);
@@ -92,12 +83,9 @@ public class TestUNIFAC_1 {
         logger.info("MDEA act " + testSystem.getPhase(1).getActivityCoefficient(1));
         logger.info("Piperazine act " + testSystem.getPhase(1).getActivityCoefficient(2));
         logger.info("water act " + testSystem.getPhase(1).getActivityCoefficient(3));
-        double percentBack =
-            (testSystem2.getPhase(0).getComponent(1).getNumberOfmoles()) / 0.1 * 100.0;
-        double percentBackPip =
-            (testSystem2.getPhase(0).getComponent(2).getNumberOfmoles()) / 0.015 * 100.0;
-        double percentBackWater =
-            (testSystem2.getPhase(0).getComponent(3).getNumberOfmoles()) / 0.765 * 100.0;
+        double percentBack = (testSystem2.getPhase(0).getComponent(1).getNumberOfmoles()) / 0.1 * 100.0;
+        double percentBackPip = (testSystem2.getPhase(0).getComponent(2).getNumberOfmoles()) / 0.015 * 100.0;
+        double percentBackWater = (testSystem2.getPhase(0).getComponent(3).getNumberOfmoles()) / 0.765 * 100.0;
 
         // logger.info("Pressure " + testSystem.getPressure() + " " +
         // (testSystem.getPhase(1).getComponent(0).getx()*testSystem.getPhase(1).getComponent(0).getMolarMass()/testSystem.getPhase(1).getMolarMass()*100.0)

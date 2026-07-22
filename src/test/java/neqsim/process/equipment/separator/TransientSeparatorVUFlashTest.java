@@ -4,6 +4,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,10 +20,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemPrEos;
 
 /**
- * Test class for transient separator simulation using improved VU flash calculations. This test
- * replicates a complex oil processing scenario with control systems.
+ * Test class for transient separator simulation using improved VU flash calculations. This test replicates a complex
+ * oil processing scenario with control systems.
  */
 public class TransientSeparatorVUFlashTest {
+  private static final Logger logger = LogManager.getLogger(TransientSeparatorVUFlashTest.class);
+
   // Process parameters
   private static final double TIME_STEP = 10.0; // seconds
   private static final double TOTAL_TIME = 300.0; // seconds (reduced for testing)
@@ -180,8 +184,8 @@ public class TransientSeparatorVUFlashTest {
     double initialLevel = v001.getLiquidLevel();
     double initialPressure = v001.getThermoSystem().getPressure();
 
-    System.out.printf("Initial conditions: Level=%.3f, Pressure=%.3f bar%n", initialLevel,
-        initialPressure);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Initial conditions: Level=%.3f, Pressure=%.3f bar%n",
+        initialLevel, initialPressure);
 
     // Data collection for monitoring
     List<Double> timeData = new ArrayList<>();
@@ -213,19 +217,16 @@ public class TransientSeparatorVUFlashTest {
 
         // Print progress every 5 steps
         if (i % 5 == 0) {
-          System.out.printf(
-              "Step %d: Time=%.1f s, Level=%.3f, Pressure=%.3f bar, "
-                  + "LiqVol=%.3f m³, ValveOpening=%.1f%%%n",
-              i, currentTime, currentLevel, currentPressure, liquidVolume, valveOpening);
+          logger.printf(org.apache.logging.log4j.Level.INFO,
+              "Step %d: Time=%.1f s, Level=%.3f, Pressure=%.3f bar, " + "LiqVol=%.3f m³, ValveOpening=%.1f%%%n", i,
+              currentTime, currentLevel, currentPressure, liquidVolume, valveOpening);
         }
 
         // Assertions to verify physical consistency
-        assertTrue(currentLevel >= 0.0 && currentLevel <= 1.0,
-            "Liquid level must be between 0 and 1");
+        assertTrue(currentLevel >= 0.0 && currentLevel <= 1.0, "Liquid level must be between 0 and 1");
         assertTrue(currentPressure > 0.0, "Pressure must be positive");
         assertTrue(liquidVolume >= 0.0, "Liquid volume must be non-negative");
-        assertTrue(valveOpening >= 0.0 && valveOpening <= 100.0,
-            "Valve opening must be between 0 and 100%");
+        assertTrue(valveOpening >= 0.0 && valveOpening <= 100.0, "Valve opening must be between 0 and 100%");
 
         // Run next time step
         oilProcess.runTransient(TIME_STEP);
@@ -243,32 +244,30 @@ public class TransientSeparatorVUFlashTest {
     // Check for numerical stability - values should be finite and within reasonable bounds
     for (int i = 0; i < levelData.size(); i++) {
       assertTrue(Double.isFinite(levelData.get(i)), "Level at step " + i + " should be finite");
-      assertTrue(Double.isFinite(pressureData.get(i)),
-          "Pressure at step " + i + " should be finite");
-      assertTrue(Double.isFinite(liquidVolumeData.get(i)),
-          "Liquid volume at step " + i + " should be finite");
+      assertTrue(Double.isFinite(pressureData.get(i)), "Pressure at step " + i + " should be finite");
+      assertTrue(Double.isFinite(liquidVolumeData.get(i)), "Liquid volume at step " + i + " should be finite");
     }
 
     // Verify the simulation ran for the expected duration
     double finalTime = timeData.get(timeData.size() - 1);
-    assertTrue(Math.abs(finalTime - TOTAL_TIME) < TIME_STEP,
-        "Simulation should run for approximately the total time");
+    assertTrue(Math.abs(finalTime - TOTAL_TIME) < TIME_STEP, "Simulation should run for approximately the total time");
 
     // Print summary
     double finalLevel = levelData.get(levelData.size() - 1);
     double finalPressure = pressureData.get(pressureData.size() - 1);
     double finalVolume = liquidVolumeData.get(liquidVolumeData.size() - 1);
 
-    System.out.printf("%nSimulation completed successfully:%n");
-    System.out.printf("Final conditions: Level=%.3f, Pressure=%.3f bar, LiqVol=%.3f m³%n",
-        finalLevel, finalPressure, finalVolume);
-    System.out.printf("Total simulation time: %.1f seconds (%d steps)%n", finalTime, steps);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "%nSimulation completed successfully:%n");
+    logger.printf(org.apache.logging.log4j.Level.INFO,
+        "Final conditions: Level=%.3f, Pressure=%.3f bar, LiqVol=%.3f m³%n", finalLevel, finalPressure, finalVolume);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Total simulation time: %.1f seconds (%d steps)%n", finalTime,
+        steps);
 
     // Test that the enhanced VU flash provided stable results
     double levelVariance = calculateVariance(levelData);
     double pressureVariance = calculateVariance(pressureData);
 
-    System.out.printf("Level variance: %.6f, Pressure variance: %.6f%n", levelVariance,
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Level variance: %.6f, Pressure variance: %.6f%n", levelVariance,
         pressureVariance);
 
     // The enhanced VU flash should provide stable results with reasonable variance
@@ -323,7 +322,7 @@ public class TransientSeparatorVUFlashTest {
       testProcess.runTransient(5.0);
     }
 
-    System.out.println("VU flash convergence test completed successfully");
+    logger.info("VU flash convergence test completed successfully");
   }
 
   /**
@@ -335,8 +334,7 @@ public class TransientSeparatorVUFlashTest {
     }
 
     double mean = values.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
-    double variance =
-        values.stream().mapToDouble(val -> Math.pow(val - mean, 2)).average().orElse(0.0);
+    double variance = values.stream().mapToDouble(val -> Math.pow(val - mean, 2)).average().orElse(0.0);
     return variance;
   }
 }

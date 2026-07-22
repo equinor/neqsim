@@ -10,9 +10,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * NeqSimVega class.
- * </p>
  *
  * @author [author]
  */
@@ -21,16 +19,13 @@ public class NeqSimVega {
   Vega Vega = new Vega();
 
   /**
-   * <p>
    * Constructor for NeqSimGERG2008.
-   * </p>
    */
-  public NeqSimVega() {}
+  public NeqSimVega() {
+  }
 
   /**
-   * <p>
    * Constructor for NeqSimGERG2008.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
@@ -42,9 +37,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getMolarDensity.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -55,9 +48,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getDensity.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -69,9 +60,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getDensity.
-   * </p>
    *
    * @return a double
    */
@@ -81,9 +70,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getPressure.
-   * </p>
    *
    * @return a double
    */
@@ -96,9 +83,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getMolarMass.
-   * </p>
    *
    * @return a double
    */
@@ -109,9 +94,7 @@ public class NeqSimVega {
   // }
 
   /**
-   * <p>
    * getMolarDensity.
-   * </p>
    *
    * @return a double
    */
@@ -126,9 +109,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getAlpha0_Vega.
-   * </p>
    *
    * @return an array of {@link org.netlib.util.doubleW} objects
    */
@@ -156,8 +137,7 @@ public class NeqSimVega {
   }
 
   /**
-   * Get reduced residual helmholtz free energy and its derivatives. The returned array has the
-   * following structure:
+   * Get reduced residual helmholtz free energy and its derivatives. The returned array has the following structure:
    * <ul>
    * <li>ar(0,0) - Residual Helmholtz energy (dimensionless, =a/RT)</li>
    * <li>ar(0,1) - delta*partial (ar)/partial(delta)</li>
@@ -196,9 +176,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * propertiesGERG.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return an array of type double
@@ -209,9 +187,7 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * getProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param properties an array of {@link java.lang.String} objects
@@ -223,29 +199,27 @@ public class NeqSimVega {
 
     for (int i = 0; i < properties.length; i++) {
       switch (properties[i]) {
-        case "density":
-          returnProperties[i] = allProperties[0];
-          break;
-        case "Cp":
-          returnProperties[i] = allProperties[1];
-          break;
-        case "Cv":
-          returnProperties[i] = allProperties[2];
-          break;
-        case "soundSpeed":
-          returnProperties[i] = allProperties[3];
-          break;
-        default:
-          break;
+      case "density":
+        returnProperties[i] = allProperties[0];
+        break;
+      case "Cp":
+        returnProperties[i] = allProperties[1];
+        break;
+      case "Cv":
+        returnProperties[i] = allProperties[2];
+        break;
+      case "soundSpeed":
+        returnProperties[i] = allProperties[3];
+        break;
+      default:
+        break;
       }
     }
     return returnProperties;
   }
 
   /**
-   * <p>
    * propertiesGERG.
-   * </p>
    *
    * @return an array of type double
    */
@@ -269,25 +243,23 @@ public class NeqSimVega {
     double dens = getMolarDensity();
     // neqsim.thermo.GERG.Densitygerg.densitygerg(0, 0, 0, arg3, 0, arg5, arg6,
     // arg7);
-    Vega.propertiesVega(phase.getTemperature(), dens, p, z, dpdd, d2pdd2, d2pdtd, dpdt, u, h, s, cv,
-        cp, w, g, jt, kappa, A);
-    double[] properties = new double[] {p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val,
-        u.val, h.val, s.val, cv.val, cp.val, w.val, g.val, jt.val, kappa.val};
+    Vega.propertiesVega(phase.getTemperature(), dens, p, z, dpdd, d2pdd2, d2pdtd, dpdt, u, h, s, cv, cp, w, g, jt,
+        kappa, A);
+    double[] properties = new double[] { p.val, z.val, dpdd.val, d2pdd2.val, d2pdtd.val, dpdt.val, u.val, h.val, s.val,
+        cv.val, cp.val, w.val, g.val, jt.val, kappa.val };
     return properties;
   }
 
   /**
-   * <p>
    * Setter for the field <code>phase</code>.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
   public void setPhase(PhaseInterface phase) {
     // 1) Check if the phase contains ONLY hydrogen
     if (phase.getNumberOfComponents() != 1) {
-      throw new IllegalArgumentException("Vega model requires exactly one component (helium). "
-          + "Found " + phase.getNumberOfComponents() + " components.");
+      throw new IllegalArgumentException("Vega model requires exactly one component (helium). " + "Found "
+          + phase.getNumberOfComponents() + " components.");
     }
 
     // 2) Check the name of that single component
@@ -301,21 +273,16 @@ public class NeqSimVega {
   }
 
   /**
-   * <p>
    * normalizeComposition.
-   * </p>
    */
   /*
-   * public void normalizeComposition() { double result = 0; for (double value :
-   * notNormalizedGERGComposition) { result += value; } for (int k = 0; k <
-   * normalizedGERGComposition.length; k++) { normalizedGERGComposition[k] =
+   * public void normalizeComposition() { double result = 0; for (double value : notNormalizedGERGComposition) { result
+   * += value; } for (int k = 0; k < normalizedGERGComposition.length; k++) { normalizedGERGComposition[k] =
    * notNormalizedGERGComposition[k] / result; } }
    */
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

@@ -172,7 +172,6 @@ public final class WellsInput implements Serializable {
    */
   public double getRatePerWellSm3d() {
     if ("Sm3/d".equals(rateUnit) || "Sm3/day".equals(rateUnit)) {
-      return ratePerWell;
     } else if ("MSm3/d".equals(rateUnit)) {
       return ratePerWell * 1e6;
     } else if ("bbl/d".equals(rateUnit) || "bopd".equals(rateUnit)) {
@@ -192,8 +191,8 @@ public final class WellsInput implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("WellsInput[producers=%d, injectors=%d, THP=%.0f bara, rate=%.0f %s/well]",
-        producerCount, injectorCount, thp, ratePerWell, rateUnit);
+    return String.format("WellsInput[producers=%d, injectors=%d, THP=%.0f bara, rate=%.0f %s/well]", producerCount,
+        injectorCount, thp, ratePerWell, rateUnit);
   }
 
   /**
@@ -214,7 +213,8 @@ public final class WellsInput implements Serializable {
     private double gasLiftRate = 0.0;
     private String gasLiftUnit = "MSm3/d";
 
-    private Builder() {}
+    private Builder() {
+    }
 
     public Builder producerCount(int count) {
       if (count < 0) {

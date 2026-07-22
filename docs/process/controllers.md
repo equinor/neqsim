@@ -1,9 +1,15 @@
+---
+title: Process Controllers and Logic
+description: Documentation for controllers, adjusters, recycles, and process logic in NeqSim.
+---
+
 # Process Controllers and Logic
 
 Documentation for controllers, adjusters, recycles, and process logic in NeqSim.
 
 ## Table of Contents
 - [Overview](#overview)
+- [Named Controller Map](#named-controller-map)
 - [Adjusters](#adjusters)
 - [Recycles](#recycles)
 - [Setters](#setters)
@@ -27,6 +33,61 @@ Documentation for controllers, adjusters, recycles, and process logic in NeqSim.
 
 ---
 
+## Named Controller Map
+
+Equipment now supports **multiple named controllers** through a tag-based map, alongside the legacy single-controller API.
+
+### Attaching Multiple Controllers
+
+```java
+// Attach a level controller and a pressure controller to the same valve
+valve.addController("LC-100", levelController);
+valve.addController("PC-200", pressureController);
+```
+
+### Retrieving by Tag
+
+```java
+ControllerDeviceInterface lc = valve.getController("LC-100");
+ControllerDeviceInterface pc = valve.getController("PC-200");
+
+// Get all controllers on this equipment
+Collection<ControllerDeviceInterface> all = valve.getControllers();
+```
+
+### Backward Compatibility
+
+The legacy `setController()` method still works. When called, it also registers the controller in the named map using the controller's name as the key:
+
+```java
+// Old code — unchanged behavior
+valve.setController(myController);
+
+// Controller is also available via the named map
+valve.getController(myController.getName()); // returns myController
+```
+
+### System-Level Controller Registration
+
+Controllers can also be registered on the `ProcessSystem` itself. During transient simulation, `runTransient()` automatically scans and executes all system-level controllers after the equipment loop:
+
+```java
+ProcessSystem process = new ProcessSystem();
+process.add(feed);
+process.add(separator);
+process.add(valve);
+
+// Register controller at system level
+process.add(levelController);
+
+// During runTransient(), the controller is executed automatically
+process.runTransient(1.0, calcId);
+```
+
+This is in addition to controllers embedded on individual equipment, which continue to work as before.
+
+---
+
 ## Adjusters
 
 Adjusters modify one variable to achieve a target specification.
@@ -45,24 +106,24 @@ process.add(tempControl);
 
 ### Adjustable Variables
 
-| Equipment | Variable | Description |
-|-----------|----------|-------------|
-| Heater/Cooler | `"duty"` | Heat duty |
+| Equipment     | Variable           | Description        |
+| ------------- | ------------------ | ------------------ |
+| Heater/Cooler | `"duty"`           | Heat duty          |
 | Heater/Cooler | `"outTemperature"` | Outlet temperature |
-| Compressor | `"outletPressure"` | Discharge pressure |
-| Valve | `"outletPressure"` | Outlet pressure |
-| Splitter | `"splitFactor"` | Split ratio |
-| Stream | `"flowRate"` | Flow rate |
+| Compressor    | `"outletPressure"` | Discharge pressure |
+| Valve         | `"outletPressure"` | Outlet pressure    |
+| Splitter      | `"splitFactor"`    | Split ratio        |
+| Stream        | `"flowRate"`       | Flow rate          |
 
 ### Target Variables
 
-| Equipment | Variable | Description |
-|-----------|----------|-------------|
-| Stream | `"temperature"` | Temperature |
-| Stream | `"pressure"` | Pressure |
-| Stream | `"flowRate"` | Flow rate |
-| Stream | `"moleFraction"` | Component mole fraction |
-| Separator | `"liquidLevel"` | Liquid level |
+| Equipment | Variable         | Description             |
+| --------- | ---------------- | ----------------------- |
+| Stream    | `"temperature"`  | Temperature             |
+| Stream    | `"pressure"`     | Pressure                |
+| Stream    | `"flowRate"`     | Flow rate               |
+| Stream    | `"moleFraction"` | Component mole fraction |
+| Separator | `"liquidLevel"`  | Liquid level            |
 
 ### Example: Dew Point Control
 
@@ -139,13 +200,42 @@ process.run();
 ### Convergence Settings
 
 ```java
+import neqsim.process.equipment.util.AccelerationMethod;
+
 recycle.setTolerance(1e-6);
 recycle.setMaximumIterations(100);
 
-// Acceleration methods
-recycle.setAccelerationMethod("wegstein");
-// Options: "direct", "wegstein", "broyden"
+// Acceleration methods (default is DIRECT_SUBSTITUTION)
+recycle.setAccelerationMethod(AccelerationMethod.WEGSTEIN);
 ```
+
+### Choosing an Acceleration Method
+
+| Method | When to use | Typical speedup | Risk |
+|---|---|---|---|
+| `DIRECT_SUBSTITUTION` *(default)* | Short loops (≤ 5 iterations), well-damped systems, debugging | baseline | none |
+| `WEGSTEIN` | Single-variable recycle loops, slowly converging composition loops | 2–3× fewer outer iterations | bounded; may under-relax when slope ≈ 1 |
+| `BROYDEN` | Tightly coupled multi-recycle systems, absorber/regenerator trains | 3–5× on hard cases | higher memory, needs stable first 2–3 iterations |
+
+**Default behaviour.** Recycles use `DIRECT_SUBSTITUTION` out of the box — acceleration is opt-in. For existing models validated against a specific convergence trace, leave the default.
+
+**What Wegstein accelerates.** The current implementation accelerates **composition only**. Temperature, pressure, and flow are handled by the normal mixing/flash logic. For recycles where T or P is the slowly-converging variable, Wegstein provides little benefit.
+
+**Safety bounds.** Wegstein's q-factor is clamped to `[-5, 0]` and applied only after a 2-iteration warm-up (`wegsteinDelayIterations`). This prevents oscillation but means Wegstein has no effect on loops that converge in ≤ 2 iterations.
+
+### Applying to a Whole Flowsheet
+
+Instead of setting acceleration per `Recycle`, use the bulk setters:
+
+```java
+// All Recycle units in a single ProcessSystem
+int updated = process.setRecycleAccelerationMethod(AccelerationMethod.WEGSTEIN);
+
+// All Recycle units across all areas of a ProcessModel
+int total = plant.setRecycleAccelerationMethod(AccelerationMethod.WEGSTEIN);
+```
+
+Both methods return the count of `Recycle` units updated. Safe to call before or after `run()`; takes effect on the next iteration.
 
 ---
 
@@ -240,11 +330,11 @@ levelControl.setAntiWindup(true);
 // Run transient with controllers
 for (double t = 0; t < 3600; t += 1.0) {
     process.runTransient();
-    
+
     double pv = levelControl.getProcessVariable();
     double sp = levelControl.getSetPoint();
     double out = levelControl.getOutput();
-    
+
     System.out.printf("%.1f, %.3f, %.3f, %.1f%n", t, pv, sp, out);
 }
 ```
@@ -354,7 +444,7 @@ for (double t = 0; t < 3600; t += 1.0) {
     if (Math.abs(t - 600) < 0.5) {
         feed.setFlowRate(1200.0, "kg/hr");
     }
-    
+
     process.runTransient();
 }
 ```
@@ -363,7 +453,10 @@ for (double t = 0; t < 3600; t += 1.0) {
 
 ## Related Documentation
 
-- [Process Package](README.md) - Package overview
-- [Equipment](equipment/README.md) - Process equipment
-- [Alarm System](../safety/alarm_system_guide.md) - Alarms
-- [Process Logic Framework](../simulation/process_logic_framework.md) - Advanced logic
+- [ProcessSystem](processmodel/process_system) - Process system with named controllers and connections
+- [Dynamic Simulation Guide](../simulation/dynamic_simulation_guide) - Transient simulation with controller scan
+- [Dynamic Simulation Helper](dynamic-simulation) - Auto-instrument a process for dynamic simulation
+- [Process Package](index.md) - Package overview
+- [Equipment](equipment/) - Process equipment
+- [Alarm System](../safety/alarm_system_guide) - Alarms
+- [Process Logic Framework](../simulation/process_logic_framework) - Advanced logic

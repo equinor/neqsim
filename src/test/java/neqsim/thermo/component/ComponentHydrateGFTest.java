@@ -14,8 +14,9 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * @author ESOL
  */
 class ComponentHydrateGFTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(ComponentHydrateGFTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(ComponentHydrateGFTest.class);
 
   static SystemInterface thermoSystem = null;
 

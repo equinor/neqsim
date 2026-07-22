@@ -10,8 +10,8 @@ import neqsim.thermo.system.SystemInterface;
  * Flexible Pipe equipment class.
  *
  * <p>
- * A flexible pipe is an assembly of concentric layers of polymers and metal wires that provides
- * flexibility while maintaining pressure containment. Used for:
+ * A flexible pipe is an assembly of concentric layers of polymers and metal wires that provides flexibility while
+ * maintaining pressure containment. Used for:
  * </p>
  * <ul>
  * <li>Dynamic risers (floating production systems)</li>
@@ -373,8 +373,7 @@ public class FlexiblePipe extends TwoPortEquipment {
    * @param lengthMeters length in meters
    * @return configured flexible pipe
    */
-  public static FlexiblePipe createStaticFlowline(String name, StreamInterface inStream,
-      double lengthMeters) {
+  public static FlexiblePipe createStaticFlowline(String name, StreamInterface inStream, double lengthMeters) {
     FlexiblePipe flowline = new FlexiblePipe(name, inStream);
     flowline.setApplication(Application.FLOWLINE);
     flowline.setLength(lengthMeters);
@@ -444,11 +443,10 @@ public class FlexiblePipe extends TwoPortEquipment {
       }
 
       // Darcy-Weisbach pressure drop
-      frictionDrop =
-          frictionFactor * (length / innerDiameter) * (density * velocity * velocity / 2) / 100000; // Convert
-                                                                                                    // Pa
-                                                                                                    // to
-                                                                                                    // bar
+      frictionDrop = frictionFactor * (length / innerDiameter) * (density * velocity * velocity / 2) / 100000; // Convert
+      // Pa
+      // to
+      // bar
 
       // Add elevation change for risers
       if (application == Application.DYNAMIC_RISER || application == Application.STATIC_RISER) {
@@ -501,6 +499,7 @@ public class FlexiblePipe extends TwoPortEquipment {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new FlexiblePipeMechanicalDesign(this);
   }

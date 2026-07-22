@@ -21,8 +21,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Optimizer for finding optimal operating conditions during degraded operation.
  *
  * <p>
- * When equipment fails or operates at reduced capacity, this optimizer finds the best operating
- * point for the remaining plant to maximize production while respecting constraints.
+ * When equipment fails or operates at reduced capacity, this optimizer finds the best operating point for the remaining
+ * plant to maximize production while respecting constraints.
  * </p>
  *
  * <h2>Key Capabilities</h2>
@@ -34,15 +34,15 @@ import neqsim.process.processmodel.ProcessSystem;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * DegradedOperationOptimizer optimizer = new DegradedOperationOptimizer(processSystem);
  * optimizer.setFeedStreamName("Well Feed");
- * 
+ *
  * // Optimize with compressor down
  * DegradedOperationResult result = optimizer.optimizeWithEquipmentDown("HP Compressor");
- * 
+ *
  * // Get recommended setpoints
  * Map<String, Double> setpoints = result.getOptimizedSetpoints();
  * }
@@ -126,8 +126,7 @@ public class DegradedOperationOptimizer implements Serializable {
    * @param feedStreamName name of the feed stream
    * @param productStreamName name of the product stream
    */
-  public DegradedOperationOptimizer(ProcessSystem processSystem, String feedStreamName,
-      String productStreamName) {
+  public DegradedOperationOptimizer(ProcessSystem processSystem, String feedStreamName, String productStreamName) {
     this.processSystem = processSystem;
     this.feedStreamName = feedStreamName;
     this.productStreamName = productStreamName;
@@ -207,8 +206,7 @@ public class DegradedOperationOptimizer implements Serializable {
    * @param failureMode the failure mode
    * @return optimization result
    */
-  public DegradedOperationResult optimizeWithEquipmentDown(String equipmentName,
-      EquipmentFailureMode failureMode) {
+  public DegradedOperationResult optimizeWithEquipmentDown(String equipmentName, EquipmentFailureMode failureMode) {
     long startTime = System.currentTimeMillis();
 
     DegradedOperationResult result = new DegradedOperationResult();
@@ -320,8 +318,7 @@ public class DegradedOperationOptimizer implements Serializable {
     modes.put(OperatingMode.REDUCED_CAPACITY, reduced.getOptimalProduction());
 
     // Try bypass mode (if applicable)
-    DegradedOperationResult bypass =
-        optimizeWithEquipmentDown(failedEquipment, EquipmentFailureMode.bypassed());
+    DegradedOperationResult bypass = optimizeWithEquipmentDown(failedEquipment, EquipmentFailureMode.bypassed());
     modes.put(OperatingMode.BYPASS_MODE, bypass.getOptimalProduction());
 
     return modes;
@@ -341,8 +338,7 @@ public class DegradedOperationOptimizer implements Serializable {
 
     // Add immediate actions
     plan.addAction(new RecoveryAction(RecoveryAction.Phase.IMMEDIATE,
-        "Reduce feed rate to " + String.format("%.0f", optimized.getOptimalFlowRate()) + " kg/hr",
-        0.0));
+        "Reduce feed rate to " + String.format("%.0f", optimized.getOptimalFlowRate()) + " kg/hr", 0.0));
 
     // Add setpoint changes
     for (Map.Entry<String, Double> entry : optimized.getOptimizedSetpoints().entrySet()) {
@@ -351,8 +347,8 @@ public class DegradedOperationOptimizer implements Serializable {
     }
 
     // Add monitoring actions
-    plan.addAction(new RecoveryAction(RecoveryAction.Phase.STABILIZATION,
-        "Monitor process stability for 30 minutes", 0.5));
+    plan.addAction(
+        new RecoveryAction(RecoveryAction.Phase.STABILIZATION, "Monitor process stability for 30 minutes", 0.5));
 
     // Add repair actions
     EquipmentFailureMode mode = EquipmentFailureMode.trip(failedEquipment);
@@ -360,8 +356,8 @@ public class DegradedOperationOptimizer implements Serializable {
         "Repair " + failedEquipment + " (estimated " + mode.getMttr() + " hours)", mode.getMttr()));
 
     // Add restoration actions
-    plan.addAction(new RecoveryAction(RecoveryAction.Phase.RESTORATION,
-        "Gradually increase feed rate to baseline", 1.0));
+    plan.addAction(
+        new RecoveryAction(RecoveryAction.Phase.RESTORATION, "Gradually increase feed rate to baseline", 1.0));
 
     plan.setExpectedProductionDuringRecovery(optimized.getOptimalProduction());
     plan.setEstimatedRecoveryTime(mode.getMttr() + 2.0); // Add buffer
@@ -371,8 +367,7 @@ public class DegradedOperationOptimizer implements Serializable {
 
   // Private helper methods
 
-  private void applyFailure(ProcessSystem process, String equipmentName,
-      EquipmentFailureMode mode) {
+  private void applyFailure(ProcessSystem process, String equipmentName, EquipmentFailureMode mode) {
     ProcessEquipmentInterface equipment = process.getUnit(equipmentName);
     if (equipment == null) {
       return;
@@ -383,8 +378,7 @@ public class DegradedOperationOptimizer implements Serializable {
 
       if (equipment instanceof neqsim.process.equipment.ProcessEquipmentBaseClass) {
         ((neqsim.process.equipment.ProcessEquipmentBaseClass) equipment).isActive(false);
-        ((neqsim.process.equipment.ProcessEquipmentBaseClass) equipment)
-            .setCapacityAnalysisEnabled(false);
+        ((neqsim.process.equipment.ProcessEquipmentBaseClass) equipment).setCapacityAnalysisEnabled(false);
       }
 
       // Equipment-specific handling
@@ -395,11 +389,9 @@ public class DegradedOperationOptimizer implements Serializable {
         Pump pump = (Pump) equipment;
         pump.setOutletPressure(pump.getInletStream().getPressure());
       } else if (equipment instanceof Heater) {
-        ((Heater) equipment)
-            .setOutTemperature(((Heater) equipment).getInletStream().getTemperature());
+        ((Heater) equipment).setOutTemperature(((Heater) equipment).getInletStream().getTemperature());
       } else if (equipment instanceof Cooler) {
-        ((Cooler) equipment)
-            .setOutTemperature(((Cooler) equipment).getInletStream().getTemperature());
+        ((Cooler) equipment).setOutTemperature(((Cooler) equipment).getInletStream().getTemperature());
       }
     }
   }
@@ -417,7 +409,7 @@ public class DegradedOperationOptimizer implements Serializable {
     StreamInterface feed = (StreamInterface) feedUnit;
 
     // Search from high to low flow rates
-    double[] flowFactors = {1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1};
+    double[] flowFactors = { 1.0, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1 };
 
     for (double factor : flowFactors) {
       double testFlow = baselineFlow * factor;
@@ -448,16 +440,13 @@ public class DegradedOperationOptimizer implements Serializable {
 
     for (ProcessEquipmentInterface unit : process.getUnitOperations()) {
       if (unit instanceof StreamInterface) {
-        setpoints.put(unit.getName() + " flow (kg/hr)",
-            ((StreamInterface) unit).getFlowRate("kg/hr"));
+        setpoints.put(unit.getName() + " flow (kg/hr)", ((StreamInterface) unit).getFlowRate("kg/hr"));
       } else if (unit instanceof Compressor) {
         Compressor comp = (Compressor) unit;
-        setpoints.put(unit.getName() + " outlet pressure (bara)",
-            comp.getOutletStream().getPressure("bara"));
+        setpoints.put(unit.getName() + " outlet pressure (bara)", comp.getOutletStream().getPressure("bara"));
       } else if (unit instanceof ThrottlingValve) {
         ThrottlingValve valve = (ThrottlingValve) unit;
-        setpoints.put(unit.getName() + " outlet pressure (bara)",
-            valve.getOutletStream().getPressure("bara"));
+        setpoints.put(unit.getName() + " outlet pressure (bara)", valve.getOutletStream().getPressure("bara"));
       }
     }
 
@@ -615,8 +604,7 @@ public class DegradedOperationOptimizer implements Serializable {
     public String toString() {
       StringBuilder sb = new StringBuilder();
       sb.append("=== Recovery Plan for ").append(failedEquipment).append(" ===\n");
-      sb.append(
-          String.format("Expected Production: %.0f kg/hr%n", expectedProductionDuringRecovery));
+      sb.append(String.format("Expected Production: %.0f kg/hr%n", expectedProductionDuringRecovery));
       sb.append(String.format("Estimated Recovery Time: %.1f hours%n%n", estimatedRecoveryTime));
       sb.append("Actions:\n");
       for (RecoveryAction action : actions) {

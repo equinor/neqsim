@@ -1,3 +1,8 @@
+---
+title: TEMA Standard Heat Exchanger Design
+description: The `neqsim.process.mechanicaldesign.heatexchanger` package includes comprehensive TEMA (Tubular Exchanger Manufacturers Association) standard support for shell and tube heat exchanger design.
+---
+
 # TEMA Standard Heat Exchanger Design
 
 The `neqsim.process.mechanicaldesign.heatexchanger` package includes comprehensive TEMA (Tubular Exchanger Manufacturers Association) standard support for shell and tube heat exchanger design.
@@ -443,6 +448,6 @@ System.out.println("Cost factor: " + tema.getCostFactor());
 
 ## See Also
 
-- [Heat Exchanger Equipment](../equipment/heat_exchangers.md)
-- [Process Design Guide](../process_design_guide.md)
-- [Standards Overview](../../standards/README.md)
+- [Heat Exchanger Equipment](../equipment/heat_exchangers)
+- [Process Design Guide](../process_design_guide)
+- [Standards Overview](../../standards/)

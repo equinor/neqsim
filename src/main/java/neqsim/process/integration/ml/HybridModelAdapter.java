@@ -7,8 +7,8 @@ import java.util.Arrays;
  * Adapter for integrating external ML models with NeqSim hybrid physics simulations.
  *
  * <p>
- * This class provides a bridge between NeqSim's physics-based models and external ML frameworks. It
- * supports various correction strategies and can be extended for specific ML platforms.
+ * This class provides a bridge between NeqSim's physics-based models and external ML frameworks. It supports various
+ * correction strategies and can be extended for specific ML platforms.
  * </p>
  *
  * @author ESOL
@@ -87,23 +87,23 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
     double confidence = getConfidence(features);
 
     switch (strategy) {
-      case ADDITIVE:
-        return physicsPrediction + mlOutput;
+    case ADDITIVE:
+      return physicsPrediction + mlOutput;
 
-      case MULTIPLICATIVE:
-        return physicsPrediction * (1.0 + mlOutput);
+    case MULTIPLICATIVE:
+      return physicsPrediction * (1.0 + mlOutput);
 
-      case REPLACEMENT:
-        if (confidence >= confidenceThreshold) {
-          return mlOutput;
-        }
-        return physicsPrediction;
+    case REPLACEMENT:
+      if (confidence >= confidenceThreshold) {
+        return mlOutput;
+      }
+      return physicsPrediction;
 
-      case WEIGHTED_AVERAGE:
-        return confidence * mlOutput + (1.0 - confidence) * physicsPrediction;
+    case WEIGHTED_AVERAGE:
+      return confidence * mlOutput + (1.0 - confidence) * physicsPrediction;
 
-      default:
-        return physicsPrediction;
+    default:
+      return physicsPrediction;
     }
   }
 
@@ -237,8 +237,8 @@ public class HybridModelAdapter implements MLCorrectionInterface, Serializable {
    * Trains the linear model on provided data.
    *
    * <p>
-   * This is a simple least-squares regression for demonstration. Production implementations should
-   * use proper ML libraries.
+   * This is a simple least-squares regression for demonstration. Production implementations should use proper ML
+   * libraries.
    * </p>
    *
    * @param featureMatrix training features (samples x features)

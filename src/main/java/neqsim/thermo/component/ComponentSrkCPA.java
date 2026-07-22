@@ -5,9 +5,7 @@ import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseSrkCPA;
 
 /**
- * <p>
  * ComponentSrkCPA class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   double[] xsitedTdT = new double[0];
 
   /**
-   * <p>
    * Constructor for ComponentSrkCPA.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -35,8 +31,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * @param compIndex Index number of component in phase object component array.
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
-  public ComponentSrkCPA(String name, double moles, double molesInPhase, int compIndex,
-      PhaseInterface phase) {
+  public ComponentSrkCPA(String name, double moles, double molesInPhase, int compIndex, PhaseInterface phase) {
     super(name, moles, molesInPhase, compIndex);
     xsite = new double[numberOfAssociationSites];
     xsitedni = new double[numberOfAssociationSites][phase.getNumberOfComponents()];
@@ -66,9 +61,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   }
 
   /**
-   * <p>
    * Constructor for ComponentSrkCPA.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -78,8 +71,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * @param moles Total number of moles of component.
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    */
-  public ComponentSrkCPA(int number, double TC, double PC, double M, double a, double moles,
-      PhaseInterface phase) {
+  public ComponentSrkCPA(int number, double TC, double PC, double M, double a, double moles, PhaseInterface phase) {
     super(number, TC, PC, M, a, moles);
     xsite = new double[numberOfAssociationSites];
     xsitedni = new double[numberOfAssociationSites][phase.getNumberOfComponents()];
@@ -185,8 +177,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
 
   /** {@inheritDoc} */
   @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
     double Fcpa = 0.0;
     // if(phase.getPhaseType()==1) cpaon=0;
@@ -200,8 +191,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     if (((PhaseCPAInterface) phase).getTotalNumberOfAccociationSites() > 0) {
       return super.dFdNdT(phase, numberOfComponents, temperature, pressure)
           + dFCPAdNdT(phase, numberOfComponents, temperature, pressure);
@@ -212,8 +202,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     // System.out.println("dQdndV " + dFCPAdNdV(phase, numberOfComponents,
     // temperature, pressure) + " dFdndV " + super.dFdNdV(phase, numberOfComponents,
     // temperature, pressure));
@@ -227,8 +216,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     // System.out.println("ij " + componentNumber + " " + j + " dQCPAdndn " +
     // dFCPAdNdN(j, phase, numberOfComponents, temperature, pressure)+ " dQsrkdndn "
     // + super.dFdNdN(j, phase, numberOfComponents, temperature, pressure));
@@ -244,9 +232,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   }
 
   /**
-   * <p>
    * dFCPAdNdN.
-   * </p>
    *
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -255,8 +241,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * @param pressure a double
    * @return a double
    */
-  public double dFCPAdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFCPAdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double temp1 = 0;
     for (int i = 0; i < numberOfAssociationSites; i++) {
       temp1 += 1.0 / getXsite()[i] * getXsitedni(i, j);
@@ -283,9 +268,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   }
 
   /**
-   * <p>
    * dFCPAdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -293,8 +276,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * @param pressure a double
    * @return a double
    */
-  public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double xi = 0.0;
     for (int i = 0; i < numberOfAssociationSites; i++) {
       xi += Math.log(xsite[i]);
@@ -305,9 +287,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   }
 
   /**
-   * <p>
    * dFCPAdNdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -315,8 +295,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * @param pressure a double
    * @return a double
    */
-  public double dFCPAdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFCPAdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double xi = 0.0;
     for (int i = 0; i < numberOfAssociationSites; i++) {
       xi += (1.0 / xsite[i]) * xsitedV[i];
@@ -327,22 +306,19 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     // double temp2 = calc_lngidV(phase);
     /*
      * double tot1 = 0.0, tot2 = 0.0, tot3 = 0.0, tot4 = 0.0, temp, temp2; for (int k = 0; k <
-     * phase.getNumberOfComponents(); k++) { tot2 = 0.0; tot3 = 0.0; temp = calc_lngi(phase); temp2
-     * = calc_lngidV(phase); for (int i = 0; i <
-     * phase.getComponent(k).getNumberOfAssociationSites(); i++) { tot2 -= temp * ((ComponentSrkCPA)
-     * phase.getComponent(k)).getXsitedV()[i]; tot3 += (1.0 - ((ComponentSrkCPA)
+     * phase.getNumberOfComponents(); k++) { tot2 = 0.0; tot3 = 0.0; temp = calc_lngi(phase); temp2 =
+     * calc_lngidV(phase); for (int i = 0; i < phase.getComponent(k).getNumberOfAssociationSites(); i++) { tot2 -= temp
+     * * ((ComponentSrkCPA) phase.getComponent(k)).getXsitedV()[i]; tot3 += (1.0 - ((ComponentSrkCPA)
      * phase.getComponent(k)).getXsite()[i]) * temp2; } tot1 += 1.0 / 2.0 * tot2 *
-     * phase.getComponent(k).getNumberOfMolesInPhase(); tot4 += 0.5 *
-     * phase.getComponent(k).getNumberOfMolesInPhase() * tot3; }
+     * phase.getComponent(k).getNumberOfMolesInPhase(); tot4 += 0.5 * phase.getComponent(k).getNumberOfMolesInPhase() *
+     * tot3; }
      */
     // System.out.println("dFCPAdndV " + (xi - tot1 - tot4));
     return xi + tempar[0] * calc_lngi(phase) + tempar[1] * calc_lngidV(phase); // - tot1 - tot4;
   }
 
   /**
-   * <p>
    * dFCPAdNdT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -350,8 +326,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
    * @param pressure a double
    * @return a double
    */
-  public double dFCPAdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFCPAdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double xi = 0.0;
     for (int i = 0; i < numberOfAssociationSites; i++) {
       xi += 1.0 / xsite[i] * xsitedT[i];
@@ -373,9 +348,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   }
 
   /**
-   * <p>
    * calc_hCPAdn.
-   * </p>
    *
    * @return a double
    */
@@ -394,9 +367,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   }
 
   /**
-   * <p>
    * dFCPAdXidni.
-   * </p>
    *
    * @param site a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -415,17 +386,15 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
     }
     return -getNumberOfMolesInPhase() / Math.pow(xsite[sitei], 2.0) * fact
         - getNumberOfMolesInPhase() * phase.getComponent(compj).getNumberOfMolesInPhase()
-            * ((PhaseCPAInterface) phase).getCpaMixingRule().calcDelta(sitei, sitej,
-                componentNumber, compj, phase, phase.getTemperature(), phase.getPressure(),
-                phase.getNumberOfComponents());
+            * ((PhaseCPAInterface) phase).getCpaMixingRule().calcDelta(sitei, sitej, componentNumber, compj, phase,
+                phase.getTemperature(), phase.getPressure(), phase.getNumberOfComponents());
   }
 
   /** {@inheritDoc} */
   @Override
   public double dFCPAdVdXi(int site, PhaseInterface phase) {
     return -1.0 / (2.0 * phase.getTotalVolume())
-        * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav())
-        * getNumberOfMolesInPhase();
+        * (1.0 - phase.getTotalVolume() * ((PhaseCPAInterface) phase).getGcpav()) * getNumberOfMolesInPhase();
   }
 
   /** {@inheritDoc} */
@@ -438,9 +407,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   }
 
   /**
-   * <p>
    * dFCPAdNdXidXdV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
@@ -454,41 +421,32 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   }
 
   /**
-   * <p>
    * calc_lngi.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
   public double calc_lngi(PhaseInterface phase) {
     return 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-        / ((8.0 * phase.getTotalVolume() - phase.getB())
-            * (4.0 * phase.getTotalVolume() - phase.getB()));
+        / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
   }
 
   /**
-   * <p>
    * calc_lngidV.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
   public double calc_lngidV(PhaseInterface phase) {
     return 2.0 * getBi() * (10.0)
-        / ((8.0 * phase.getTotalVolume() - phase.getB())
-            * (4.0 * phase.getTotalVolume() - phase.getB()))
+        / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()))
         - 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-            * (2.0 * 32.0 * phase.getTotalVolume() - 12.0 * phase.getB())
-            / Math.pow(((8.0 * phase.getTotalVolume() - phase.getB())
-                * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
+            * (2.0 * 32.0 * phase.getTotalVolume() - 12.0 * phase.getB()) / Math.pow(
+                ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB())), 2.0);
   }
 
   /**
-   * <p>
    * calc_lngij.
-   * </p>
    *
    * @param j a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -587,9 +545,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   }
 
   /**
-   * <p>
    * Getter for the field <code>xsitedni</code>.
-   * </p>
    *
    * @return the xsitedni
    */
@@ -598,9 +554,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   }
 
   /**
-   * <p>
    * Getter for the field <code>xsitedni</code>.
-   * </p>
    *
    * @param xNumb a int
    * @param compNumbi a int
@@ -611,9 +565,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
   }
 
   /**
-   * <p>
    * Setter for the field <code>xsitedni</code>.
-   * </p>
    *
    * @param xsitedni the xsitedni to set
    */
@@ -637,8 +589,7 @@ public class ComponentSrkCPA extends ComponentSrk implements ComponentCPAInterfa
       xsitedni = new double[0][0];
       return;
     }
-    if (xsitedni.length != numberOfAssociationSites
-        || (xsitedni.length > 0 && xsitedni[0].length != numComp)) {
+    if (xsitedni.length != numberOfAssociationSites || (xsitedni.length > 0 && xsitedni[0].length != numComp)) {
       double[][] newArr = new double[numberOfAssociationSites][numComp];
       for (int i = 0; i < Math.min(xsitedni.length, numberOfAssociationSites); i++) {
         System.arraycopy(xsitedni[i], 0, newArr[i], 0, Math.min(xsitedni[i].length, numComp));

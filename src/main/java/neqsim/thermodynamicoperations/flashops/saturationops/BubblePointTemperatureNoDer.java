@@ -6,9 +6,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * bubblePointTemperatureNoDer class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
   static Logger logger = LogManager.getLogger(BubblePointTemperatureNoDer.class);
 
   /**
-   * <p>
    * Constructor for bubblePointTemperatureNoDer.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -49,17 +45,11 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
     // need to fix this close to critical point
     if (system.getPhase(0).getNumberOfComponents() == 1
         && system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
-      double tGuess =
-          system.getPhase(0).getComponent(0).getAntoineVaporTemperature(system.getPressure());
+      double tGuess = system.getPhase(0).getComponent(0).getAntoineVaporTemperature(system.getPressure());
       ComponentInterface comp = system.getPhase(0).getComponent(0);
-      if (Double.isNaN(tGuess) || tGuess < comp.getTriplePointTemperature()
-          || tGuess > comp.getTC()) {
-        double tTrip = comp.getTriplePointTemperature();
-        double tCrit = comp.getTC();
-        double pTrip = comp.getTriplePointPressure();
-        double pCrit = comp.getPC();
-        double frac = (system.getPressure() - pTrip) / (pCrit - pTrip);
-        tGuess = tTrip + frac * (tCrit - tTrip);
+      if (Double.isNaN(tGuess) || tGuess < comp.getTriplePointTemperature() || tGuess >= comp.getTC()) {
+        tGuess = comp.getTC()
+            / (1.0 - Math.log(system.getPressure() / comp.getPC()) / (5.373 * (1.0 + comp.getAcentricFactor())));
       }
       system.setTemperature(tGuess);
     }
@@ -74,8 +64,8 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
       if (system.getPhases()[0].getComponent(i).getIonicCharge() != 0) {
         system.getPhases()[0].getComponent(i).setx(1e-40);
       } else {
-        system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getK()
-            * system.getPhases()[1].getComponent(i).getz());
+        system.getPhases()[0].getComponent(i)
+            .setx(system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getz());
       }
     }
     ytotal = 0.0;
@@ -88,8 +78,7 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
     do {
       iterations++;
       for (int i = 0; i < system.getPhases()[0].getNumberOfComponents(); i++) {
-        system.getPhases()[0].getComponent(i)
-            .setx(system.getPhases()[0].getComponent(i).getx() / ytotal);
+        system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getx() / ytotal);
       }
       if (system.isChemicalSystem() && (iterations % 2) == 0) {
         system.getChemicalReactionOperations().solveChemEq(1);
@@ -104,13 +93,13 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
               || system.getPhase(0).getComponent(i).isIsIon()) {
             system.getPhases()[0].getComponent(i).setK(1e-40);
           } else {
-            system.getPhases()[0].getComponent(i).setK(
-                Math.exp(Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient())
+            system.getPhases()[0].getComponent(i)
+                .setK(Math.exp(Math.log(system.getPhases()[1].getComponent(i).getFugacityCoefficient())
                     - Math.log(system.getPhases()[0].getComponent(i).getFugacityCoefficient())));
           }
           system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
-          system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getK()
-              * system.getPhases()[1].getComponent(i).getz());
+          system.getPhases()[0].getComponent(i)
+              .setx(system.getPhases()[0].getComponent(i).getK() * system.getPhases()[1].getComponent(i).getz());
           // logger.info("y err " +
           // Math.abs(system.getPhases()[0].getComponent(i).getx()-yold));
         } while (Math.abs(system.getPhases()[0].getComponent(i).getx() - yold) > 1e-4);
@@ -131,8 +120,7 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
 
       // system.setTemperature(system.getTemperature() +
       // 0.05*(1.0/ytotal*system.getTemperature()-system.getTemperature()));
-      system
-          .setTemperature(system.getTemperature() + 0.1 * system.getTemperature() * (1.0 - ytotal));
+      system.setTemperature(system.getTemperature() + 0.1 * system.getTemperature() * (1.0 - ytotal));
       // for (int i=0;i<system.getPhases()[1].getNumberOfComponents();i++){
       // system.getPhases()[0].getComponent(i).setx(system.getPhases()[0].getComponent(i).getx()
       // + 0.5 *
@@ -140,12 +128,10 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
       // * 1.0 / ytotal-system.getPhases()[0].getComponent(i).getx()));
       // }
       // logger.info("temperature " + system.getTemperature());
-    } while ((((Math.abs(ytotal) - 1.0) > 1e-9)
-        || Math.abs(oldTemp - system.getTemperature()) / oldTemp > 1e-8)
+    } while ((((Math.abs(ytotal) - 1.0) > 1e-9) || Math.abs(oldTemp - system.getTemperature()) / oldTemp > 1e-8)
         && (iterations < maxNumberOfIterations));
     // logger.info("iter " + iterations + " ktot " + ktot);
-    if (Math.abs(ytotal - 1.0) >= 1e-5
-        || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
+    if (Math.abs(ytotal - 1.0) >= 1e-5 || ktot < 1e-3 && system.getPhase(0).getNumberOfComponents() > 1) {
       setSuperCritical(true);
     }
     if (system.getPhase(0).getNumberOfComponents() == 1) {
@@ -161,5 +147,6 @@ public class BubblePointTemperatureNoDer extends ConstantDutyTemperatureFlash {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 }

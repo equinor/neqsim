@@ -1,0 +1,62 @@
+name: Publish package to the Maven Central Repository
+permissions:
+  contents: read
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Determine release version
+        id: release_version
+        run: |
+          TAG="${{ github.event.release.tag_name || '' }}"
+
+          # Use release tag when valid, otherwise fall back to pom.xml revision for manual runs.
+          if [[ -n "$TAG" && "$TAG" =~ ^v?[0-9]+(\.[0-9]+){1,3}([-.][0-9A-Za-z]+)?$ ]]; then
+            VERSION="${TAG#v}"
+            echo "Using version from tag: $VERSION"
+          else
+            VERSION="$(awk -F'[<>]' '/<revision>/{print $3; exit}' pom.xml)"
+            if [[ -z "$VERSION" ]]; then
+              echo "Failed to resolve version from tag or pom.xml"
+              exit 1
+            fi
+            echo "Tag missing/invalid ('$TAG'). Using version from pom.xml: $VERSION"
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      - name: Set up Maven Central Repository
+        uses: actions/setup-java@v5
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          server-id: central
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+          cache: 'maven'
+      # Clean Maven cache for critical dependencies to avoid stale class issues
+      - name: Clean dependency cache for EJML
+        run: |
+          rm -rf ~/.m2/repository/org/ejml
+          echo "Cleaned EJML from Maven cache to ensure fresh download"
+      # --- Java 8 artifact ---
+      - name: Publish package (Java 8)
+        run: ./mvnw -f pomJava8.xml -P release --batch-mode clean deploy -Dmaven.deploy.skip=true -DskipTests -Djacoco.skip=true -Drevision=${{ steps.release_version.outputs.version }} -ntp
+        env:
+          MAVEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+      # --- Java 17 artifact ---
+      - name: Publish package
+        run: ./mvnw -P release --batch-mode clean deploy -Dmaven.deploy.skip=true -DskipTests -Djacoco.skip=true -Drevision=${{ steps.release_version.outputs.version }} -ntp
+        env:
+          MAVEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+

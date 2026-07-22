@@ -2,8 +2,8 @@
  * Technical Requirements Document (TORG) framework for process design.
  *
  * <p>
- * This package provides a structured approach to managing Technical Requirements Documents (TORG)
- * that specify design standards and methods to be used in process design. A TORG typically defines:
+ * This package provides a structured approach to managing Technical Requirements Documents (TORG) that specify design
+ * standards and methods to be used in process design. A TORG typically defines:
  * </p>
  * <ul>
  * <li>Project identification and metadata</li>
@@ -18,8 +18,8 @@
  *
  * <h3>{@link neqsim.process.mechanicaldesign.torg.TechnicalRequirementsDocument}</h3>
  * <p>
- * The main data class representing a TORG. Built using the builder pattern for flexible
- * construction. Supports defining standards per category or per equipment type.
+ * The main data class representing a TORG. Built using the builder pattern for flexible construction. Supports defining
+ * standards per category or per equipment type.
  * </p>
  *
  * <h3>{@link neqsim.process.mechanicaldesign.torg.TorgDataSource}</h3>
@@ -43,15 +43,14 @@
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * // Create TORG manually
- * TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder()
- *     .projectId("PROJECT-001").projectName("Offshore Gas Platform").companyIdentifier("Equinor")
+ * TechnicalRequirementsDocument torg = TechnicalRequirementsDocument.builder().projectId("PROJECT-001")
+ *     .projectName("Offshore Gas Platform").companyIdentifier("Equinor")
  *     .addStandard("pressure vessel design code", StandardType.ASME_VIII_DIV1)
  *     .addStandard("separator process design", StandardType.API_12J)
- *     .addStandard("pipeline design codes", StandardType.NORSOK_L_001)
- *     .environmentalConditions(-40.0, 45.0).build();
+ *     .addStandard("pipeline design codes", StandardType.NORSOK_L_001).environmentalConditions(-40.0, 45.0).build();
  *
  * // Apply to process system
  * TorgManager manager = new TorgManager();
@@ -64,10 +63,9 @@
  *
  * <h2>CSV File Format</h2>
  * <p>
- * The CSV data source supports a standards-focused format where each row defines one standard
- * assignment:
+ * The CSV data source supports a standards-focused format where each row defines one standard assignment:
  * </p>
- * 
+ *
  * <pre>
  * PROJECT_ID,PROJECT_NAME,COMPANY,DESIGN_CATEGORY,STANDARD_CODE,VERSION
  * PROJ-001,Platform A,Equinor,pressure vessel design code,ASME-VIII-Div1,2021

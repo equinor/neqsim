@@ -10,8 +10,8 @@ import java.util.Map;
  * Represents validation results from design calculations.
  *
  * <p>
- * Collects warnings, errors, and info messages during design validation. Provides methods to check
- * overall status and generate reports.
+ * Collects warnings, errors, and info messages during design validation. Provides methods to check overall status and
+ * generate reports.
  * </p>
  *
  * @author esol
@@ -56,8 +56,8 @@ public class DesignValidationResult implements Serializable {
      * @param message the validation message
      * @param remediation suggested fix or action
      */
-    public ValidationMessage(Severity severity, String category, String equipmentName,
-        String message, String remediation) {
+    public ValidationMessage(Severity severity, String category, String equipmentName, String message,
+        String remediation) {
       this.severity = severity;
       this.category = category;
       this.equipmentName = equipmentName;
@@ -137,8 +137,8 @@ public class DesignValidationResult implements Serializable {
    * @param remediation suggested fix
    * @return this instance for chaining
    */
-  public DesignValidationResult addMessage(Severity severity, String category, String equipmentName,
-      String message, String remediation) {
+  public DesignValidationResult addMessage(Severity severity, String category, String equipmentName, String message,
+      String remediation) {
     messages.add(new ValidationMessage(severity, category, equipmentName, message, remediation));
     hasRun = true;
     return this;
@@ -164,8 +164,7 @@ public class DesignValidationResult implements Serializable {
    * @param remediation suggested fix
    * @return this instance for chaining
    */
-  public DesignValidationResult addWarning(String category, String equipmentName, String message,
-      String remediation) {
+  public DesignValidationResult addWarning(String category, String equipmentName, String message, String remediation) {
     return addMessage(Severity.WARNING, category, equipmentName, message, remediation);
   }
 
@@ -178,8 +177,7 @@ public class DesignValidationResult implements Serializable {
    * @param remediation suggested fix
    * @return this instance for chaining
    */
-  public DesignValidationResult addError(String category, String equipmentName, String message,
-      String remediation) {
+  public DesignValidationResult addError(String category, String equipmentName, String message, String remediation) {
     return addMessage(Severity.ERROR, category, equipmentName, message, remediation);
   }
 
@@ -192,8 +190,7 @@ public class DesignValidationResult implements Serializable {
    * @param remediation suggested fix
    * @return this instance for chaining
    */
-  public DesignValidationResult addCritical(String category, String equipmentName, String message,
-      String remediation) {
+  public DesignValidationResult addCritical(String category, String equipmentName, String message, String remediation) {
     return addMessage(Severity.CRITICAL, category, equipmentName, message, remediation);
   }
 
@@ -349,9 +346,8 @@ public class DesignValidationResult implements Serializable {
     StringBuilder sb = new StringBuilder();
     sb.append("Design Validation Results:\n");
     sb.append(String.format("  Status: %s\n", isValid() ? "VALID" : "INVALID"));
-    sb.append(String.format("  Critical: %d, Errors: %d, Warnings: %d, Info: %d\n",
-        getCount(Severity.CRITICAL), getCount(Severity.ERROR), getCount(Severity.WARNING),
-        getCount(Severity.INFO)));
+    sb.append(String.format("  Critical: %d, Errors: %d, Warnings: %d, Info: %d\n", getCount(Severity.CRITICAL),
+        getCount(Severity.ERROR), getCount(Severity.WARNING), getCount(Severity.INFO)));
     return sb.toString();
   }
 

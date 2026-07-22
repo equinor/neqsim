@@ -13,9 +13,8 @@ import com.google.gson.JsonParser;
  * Response class for mechanical design JSON export.
  *
  * <p>
- * This class provides a structured representation of mechanical design data that can be easily
- * serialized to JSON format. It supports both individual equipment mechanical design and
- * system-wide aggregated data.
+ * This class provides a structured representation of mechanical design data that can be easily serialized to JSON
+ * format. It supports both individual equipment mechanical design and system-wide aggregated data.
  * </p>
  *
  * <p>
@@ -33,7 +32,7 @@ import com.google.gson.JsonParser;
  * <p>
  * Usage example:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * // For individual equipment
@@ -326,7 +325,8 @@ public class MechanicalDesignResponse implements java.io.Serializable {
   /**
    * Default constructor.
    */
-  public MechanicalDesignResponse() {}
+  public MechanicalDesignResponse() {
+  }
 
   /**
    * Constructor from individual MechanicalDesign.
@@ -379,10 +379,10 @@ public class MechanicalDesignResponse implements java.io.Serializable {
 
     // Design conditions
     this.maxDesignPressure = mecDesign.getMaxDesignPressure();
-    this.maxDesignTemperature = mecDesign.getDesignMaxTemperatureLimit();
-    this.minDesignTemperature = mecDesign.getDesignMinTemperatureLimit();
+    this.maxDesignTemperature = mecDesign.getDesignMaxTemperatureLimit("C");
+    this.minDesignTemperature = mecDesign.getDesignMinTemperatureLimit("C");
     this.maxOperatingPressure = mecDesign.getMaxOperationPressure();
-    this.maxOperatingTemperature = mecDesign.getMaxOperationTemperature();
+    this.maxOperatingTemperature = mecDesign.getMaxOperationTemperature("C");
 
     // Dimensions
     this.innerDiameter = mecDesign.getInnerDiameter();
@@ -436,8 +436,7 @@ public class MechanicalDesignResponse implements java.io.Serializable {
     // Breakdowns
     this.weightByType = new LinkedHashMap<String, Double>(sysMecDesign.getWeightByEquipmentType());
     this.countByType = new LinkedHashMap<String, Integer>(sysMecDesign.getEquipmentCountByType());
-    this.weightByDiscipline =
-        new LinkedHashMap<String, Double>(sysMecDesign.getWeightByDiscipline());
+    this.weightByDiscipline = new LinkedHashMap<String, Double>(sysMecDesign.getWeightByDiscipline());
 
     // Equipment list
     for (SystemMechanicalDesign.EquipmentDesignSummary eds : sysMecDesign.getEquipmentList()) {
@@ -462,8 +461,7 @@ public class MechanicalDesignResponse implements java.io.Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting()
-        .serializeNulls().create();
+    Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().serializeNulls().create();
     return gson.toJson(this);
   }
 
@@ -500,8 +498,7 @@ public class MechanicalDesignResponse implements java.io.Serializable {
     }
 
     try {
-      Gson gson =
-          new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
+      Gson gson = new GsonBuilder().serializeSpecialFloatingPointValues().setPrettyPrinting().create();
 
       // Parse both JSONs
       JsonObject mecDesignJson = JsonParser.parseString(toJson()).getAsJsonObject();

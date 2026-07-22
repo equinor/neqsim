@@ -69,11 +69,10 @@ public class SystemBnsEos extends SystemEos {
    * @return volume shift parameter
    */
   private static double calcVshift(double ciField, double omegaB, double tc, double pc) {
-    // TODO: Review this implementation - appears to be incomplete
-    // Original implementation was commented out:
-    // double b = omegaB * ThermodynamicConstantsInterface.R * tc / pc;
-    // The volume shift should likely be: ciField * b
-    return ciField; // * b;
+    // Return the dimensionless volume shift coefficient.
+    // ComponentPR.getVolumeCorrection() multiplies by b internally,
+    // so we must NOT pre-multiply here to avoid double-b correction.
+    return ciField;
   }
 
   private static double[] pseudoCritical(double sgHc, boolean ag) {
@@ -88,7 +87,7 @@ public class SystemBnsEos extends SystemEos {
       slope = 0.170931432 * 0.0283168466 / 453.59237;
     }
     double ppc = pcFn(x, slope, tpc);
-    return new double[] {tpc, ppc};
+    return new double[] { tpc, ppc };
   }
 
   private static double hydrocarbonSg(double sg, double[] zf, double[] mws) {
@@ -106,16 +105,16 @@ public class SystemBnsEos extends SystemEos {
 
   private static String compName(int i) {
     switch (i) {
-      case 0:
-        return "CO2";
-      case 1:
-        return "H2S";
-      case 2:
-        return "N2";
-      case 3:
-        return "H2";
-      default:
-        return "HC";
+    case 0:
+      return "CO2";
+    case 1:
+      return "H2S";
+    case 2:
+      return "N2";
+    case 3:
+      return "H2";
+    default:
+      return "HC";
     }
   }
 
@@ -128,18 +127,14 @@ public class SystemBnsEos extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemBnsEos.
-   * </p>
    */
   public SystemBnsEos() {
     this(288.15, 1.0);
   }
 
   /**
-   * <p>
    * Constructor for SystemBnsEos.
-   * </p>
    *
    * @param T a double
    * @param P a double
@@ -149,14 +144,13 @@ public class SystemBnsEos extends SystemEos {
     modelName = "BNS-PR";
     attractiveTermNumber = 1;
 
-    tcs = new double[] {degRToK(547.416), degRToK(672.120), degRToK(227.160), degRToK(47.430), 1.0};
-    pcs = new double[] {psiaToBar(1069.51), psiaToBar(1299.97), psiaToBar(492.84),
-        psiaToBar(187.53), 1.0};
-    mws = new double[] {44.01 / 1000.0, 34.082 / 1000.0, 28.014 / 1000.0, 2.016 / 1000.0, 0.0};
-    acfs = new double[] {0.12253, 0.04909, 0.037, -0.217, -0.03899};
-    omegaA = new double[] {0.427671, 0.436725, 0.457236, 0.457236, 0.457236};
-    omegaB = new double[] {0.0696397, 0.0724345, 0.0777961, 0.0777961, 0.0777961};
-    vshiftField = new double[] {-0.27607, -0.22901, -0.21066, -0.36270, -0.19076};
+    tcs = new double[] { degRToK(547.416), degRToK(672.120), degRToK(227.160), degRToK(47.430), 1.0 };
+    pcs = new double[] { psiaToBar(1069.51), psiaToBar(1299.97), psiaToBar(492.84), psiaToBar(187.53), 1.0 };
+    mws = new double[] { 44.01 / 1000.0, 34.082 / 1000.0, 28.014 / 1000.0, 2.016 / 1000.0, 0.0 };
+    acfs = new double[] { 0.12253, 0.04909, 0.037, -0.217, -0.03899 };
+    omegaA = new double[] { 0.427671, 0.436725, 0.457236, 0.457236, 0.457236 };
+    omegaB = new double[] { 0.0696397, 0.0724345, 0.0777961, 0.0777961, 0.0777961 };
+    vshiftField = new double[] { -0.27607, -0.22901, -0.21066, -0.36270, -0.19076 };
     vshift = new double[NUM_BNS_COMPONENTS];
     for (int i = 0; i < vshift.length; i++) {
       vshift[i] = calcVshift(vshiftField[i], omegaB[i], tcs[i], pcs[i]);
@@ -183,8 +177,8 @@ public class SystemBnsEos extends SystemEos {
    * @param yH2 a double
    * @param associatedGas a boolean
    */
-  public SystemBnsEos(double T, double P, double sg, double yCO2, double yH2S, double yN2,
-      double yH2, boolean associatedGas) {
+  public SystemBnsEos(double T, double P, double sg, double yCO2, double yH2S, double yN2, double yH2,
+      boolean associatedGas) {
     this(T, P);
     this.associatedGas = associatedGas;
     this.relativeDensity = sg;
@@ -192,8 +186,8 @@ public class SystemBnsEos extends SystemEos {
   }
 
   /**
-   * Sets the composition using BNS-specific parameters matching the Python interface. This method
-   * matches the Python call: setComposition(sg, yCO2, yH2S, yN2, yH2, associatedGas)
+   * Sets the composition using BNS-specific parameters matching the Python interface. This method matches the Python
+   * call: setComposition(sg, yCO2, yH2S, yN2, yH2, associatedGas)
    *
    * @param sg relative density (specific gravity)
    * @param yCO2 mole fraction of CO2 (must be &gt;= 0)
@@ -203,8 +197,7 @@ public class SystemBnsEos extends SystemEos {
    * @param associatedGas true for associated gas, false for gas condensate
    * @throws java.lang.IllegalArgumentException if any mole fraction is negative or sum exceeds 1.0
    */
-  public void setComposition(double sg, double yCO2, double yH2S, double yN2, double yH2,
-      boolean associatedGas) {
+  public void setComposition(double sg, double yCO2, double yH2S, double yN2, double yH2, boolean associatedGas) {
     this.relativeDensity = sg;
     this.associatedGas = associatedGas;
     setComposition(yCO2, yH2S, yN2, yH2);
@@ -227,8 +220,7 @@ public class SystemBnsEos extends SystemEos {
 
     double sum = yCO2 + yH2S + yN2 + yH2;
     if (sum > 1.0) {
-      throw new IllegalArgumentException(
-          String.format("Sum of mole fractions (%.4f) exceeds 1.0", sum));
+      throw new IllegalArgumentException(String.format("Sum of mole fractions (%.4f) exceeds 1.0", sum));
     }
 
     zfractions[0] = yCO2;
@@ -240,9 +232,7 @@ public class SystemBnsEos extends SystemEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>relativeDensity</code>.
-   * </p>
    *
    * @param sg a double (relative density, must be positive)
    * @throws java.lang.IllegalArgumentException if relative density is not positive
@@ -258,9 +248,7 @@ public class SystemBnsEos extends SystemEos {
   }
 
   /**
-   * <p>
    * Setter for the field <code>associatedGas</code>.
-   * </p>
    *
    * @param ag a boolean
    */
@@ -276,8 +264,7 @@ public class SystemBnsEos extends SystemEos {
    */
   private void updateHydrocarbonProperties() {
     double[] zf = zfractions;
-    double sgHc =
-        hydrocarbonSg(relativeDensity, zf, new double[] {44.01, 34.082, 28.014, 2.016, 0.0});
+    double sgHc = hydrocarbonSg(relativeDensity, zf, new double[] { 44.01, 34.082, 28.014, 2.016, 0.0 });
     double[] tcpc = pseudoCritical(sgHc, associatedGas);
     tcs[4] = tcpc[0];
     pcs[4] = tcpc[1];
@@ -290,17 +277,17 @@ public class SystemBnsEos extends SystemEos {
    */
   private void updateHeatCapacityCoefficients() {
     // Base heat capacity coefficients for CO2, H2S, N2, H2, HC
-    double[][] cp = {{2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11},
-        {4.446031265, -0.005296052, 2.0533e-5, -2.58993e-8, 1.25555e-11},
-        {3.423811591, 0.001007461, -4.58491e-6, 8.4252e-9, -4.38083e-12},
-        {1.421468418, 0.018192108, -6.04285e-5, 9.08033e-8, -5.18972e-11},
-        {5.369051342, -0.014851371, 4.86358e-5, -3.70187e-8, 1.80641e-12}};
+    double[][] cp = { { 2.725473196, 0.004103751, 1.5602e-5, -4.19321e-8, 3.10542e-11 },
+        { 4.446031265, -0.005296052, 2.0533e-5, -2.58993e-8, 1.25555e-11 },
+        { 3.423811591, 0.001007461, -4.58491e-6, 8.4252e-9, -4.38083e-12 },
+        { 1.421468418, 0.018192108, -6.04285e-5, 9.08033e-8, -5.18972e-11 },
+        { 5.369051342, -0.014851371, 4.86358e-5, -3.70187e-8, 1.80641e-12 } };
 
     // Apply scaling for hydrocarbon component based on molecular weight
     double hcMw = mws[4] * 1000.0;
     double x = hcMw - MW_CH4;
-    double[] a0 = {7.8570e-4, 1.3123e-3, 9.8133e-4, 1.6463e-3, 1.7306e-2};
-    double[] a1 = {-8.1649e-3, 5.5485e-3, 8.3258e-2, 2.0635e-1, 2.5551};
+    double[] a0 = { 7.8570e-4, 1.3123e-3, 9.8133e-4, 1.6463e-3, 1.7306e-2 };
+    double[] a1 = { -8.1649e-3, 5.5485e-3, 8.3258e-2, 2.0635e-1, 2.5551 };
     for (int k = 0; k < NUM_BNS_COMPONENTS; k++) {
       double scale = a0[k] * x * x + a1[k] * x + 1.0;
       cp[4][k] *= scale;
@@ -367,9 +354,8 @@ public class SystemBnsEos extends SystemEos {
     }
     for (int i = 0; i < getMaxNumberOfPhases(); i++) {
       if (phaseArray[i] != null) {
-        ComponentBNS comp = new ComponentBNS(name, moles, moles, compIndex, tcs[compIndex],
-            pcs[compIndex], mws[compIndex], acfs[compIndex], omegaA[compIndex], omegaB[compIndex],
-            vshift[compIndex]);
+        ComponentBNS comp = new ComponentBNS(name, moles, moles, compIndex, tcs[compIndex], pcs[compIndex],
+            mws[compIndex], acfs[compIndex], omegaA[compIndex], omegaB[compIndex], vshift[compIndex]);
         comp.setCpA(cpCoeffs[compIndex][0]);
         comp.setCpB(cpCoeffs[compIndex][1]);
         comp.setCpC(cpCoeffs[compIndex][2]);

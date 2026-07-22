@@ -6,9 +6,8 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * High-pressure corrected diffusivity model for liquid systems.
  *
  * <p>
- * This model applies pressure corrections to low-pressure diffusion coefficients using the
- * Mathur-Thodos correlation. It is essential for accurate predictions at reservoir conditions
- * (pressures &gt; 100 bar).
+ * This model applies pressure corrections to low-pressure diffusion coefficients using the Mathur-Thodos correlation.
+ * It is essential for accurate predictions at reservoir conditions (pressures &gt; 100 bar).
  * </p>
  *
  * <p>
@@ -23,10 +22,10 @@ import neqsim.physicalproperties.system.PhysicalProperties;
  * References:
  * </p>
  * <ul>
- * <li>Mathur, G.P. and Thodos, G. (1965). "The self-diffusivity of substances in the gaseous and
- * liquid states." AIChE J., 11, 613-616.</li>
- * <li>Riazi, M.R. and Whitson, C.H. (1993). "Estimating diffusion coefficients of dense fluids."
- * Ind. Eng. Chem. Res., 32, 3081-3088.</li>
+ * <li>Mathur, G.P. and Thodos, G. (1965). "The self-diffusivity of substances in the gaseous and liquid states." AIChE
+ * J., 11, 613-616.</li>
+ * <li>Riazi, M.R. and Whitson, C.H. (1993). "Estimating diffusion coefficients of dense fluids." Ind. Eng. Chem. Res.,
+ * 32, 3081-3088.</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -187,20 +186,17 @@ public class HighPressureDiffusivity extends Diffusivity {
 
   /** {@inheritDoc} */
   @Override
-  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod,
-      int multicomponentDiffusionMethod) {
+  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod) {
     // First calculate base diffusion coefficients
-    baseDiffusivityModel.calcDiffusionCoefficients(binaryDiffusionCoefficientMethod,
-        multicomponentDiffusionMethod);
+    baseDiffusivityModel.calcDiffusionCoefficients(binaryDiffusionCoefficientMethod, multicomponentDiffusionMethod);
 
     // Then apply pressure correction to all
     double correctionFactor = calculatePressureCorrectionFactor();
 
     for (int i = 0; i < liquidPhase.getPhase().getNumberOfComponents(); i++) {
       for (int j = 0; j < liquidPhase.getPhase().getNumberOfComponents(); j++) {
-        binaryDiffusionCoefficients[i][j] =
-            baseDiffusivityModel.getMaxwellStefanBinaryDiffusionCoefficient(i, j)
-                * correctionFactor;
+        binaryDiffusionCoefficients[i][j] = baseDiffusivityModel.getMaxwellStefanBinaryDiffusionCoefficient(i, j)
+            * correctionFactor;
       }
     }
 

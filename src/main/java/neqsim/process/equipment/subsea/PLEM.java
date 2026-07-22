@@ -6,7 +6,6 @@ import java.util.UUID;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.splitter.Splitter;
-import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.process.mechanicaldesign.subsea.PLEMMechanicalDesign;
@@ -16,8 +15,7 @@ import neqsim.thermo.system.SystemInterface;
  * Pipeline End Manifold (PLEM) equipment class.
  *
  * <p>
- * A PLEM is a subsea structure that provides multiple pipeline terminations and connections,
- * typically used to:
+ * A PLEM is a subsea structure that provides multiple pipeline terminations and connections, typically used to:
  * </p>
  * <ul>
  * <li>Connect multiple flowlines to a single export line</li>
@@ -200,15 +198,13 @@ public class PLEM extends ProcessEquipmentBaseClass {
    */
   public void addInletStream(StreamInterface stream) {
     if (inletStreams.size() >= numberOfSlots) {
-      throw new IllegalStateException(
-          "Cannot add more streams than available slots (" + numberOfSlots + ")");
+      throw new IllegalStateException("Cannot add more streams than available slots (" + numberOfSlots + ")");
     }
     inletStreams.add(stream);
 
     // Add corresponding isolation valve
     if (branchIsolationValves) {
-      ThrottlingValve valve =
-          new ThrottlingValve(getName() + " Branch Valve " + inletStreams.size(), stream);
+      ThrottlingValve valve = new ThrottlingValve(getName() + " Branch Valve " + inletStreams.size(), stream);
       valve.setPercentValveOpening(100.0);
       branchValves.add(valve);
     }
@@ -312,6 +308,7 @@ public class PLEM extends ProcessEquipmentBaseClass {
    *
    * @return mechanical design instance
    */
+  @Override
   public PLEMMechanicalDesign getMechanicalDesign() {
     if (mechanicalDesign == null) {
       mechanicalDesign = new PLEMMechanicalDesign(this);
@@ -322,6 +319,7 @@ public class PLEM extends ProcessEquipmentBaseClass {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new PLEMMechanicalDesign(this);
   }
@@ -495,6 +493,7 @@ public class PLEM extends ProcessEquipmentBaseClass {
    *
    * @return list of inlet streams
    */
+  @Override
   public List<StreamInterface> getInletStreams() {
     return inletStreams;
   }

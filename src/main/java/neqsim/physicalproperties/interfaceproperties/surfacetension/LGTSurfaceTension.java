@@ -3,9 +3,7 @@ package neqsim.physicalproperties.interfaceproperties.surfacetension;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * LGTSurfaceTension class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -21,16 +19,13 @@ public class LGTSurfaceTension extends SurfaceTension {
   double[] pressure_interface = null;
 
   /**
-   * <p>
    * Constructor for LGTSurfaceTension.
-   * </p>
    */
-  public LGTSurfaceTension() {}
+  public LGTSurfaceTension() {
+  }
 
   /**
-   * <p>
    * Constructor for LGTSurfaceTension.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -62,8 +57,8 @@ public class LGTSurfaceTension extends SurfaceTension {
     double[] del_den_interface_old = new double[localSystem.getPhase(0).getNumberOfComponents()];
 
     double[] mu_equi = new double[localSystem.getPhase(0).getNumberOfComponents()];
-    double[][][] dmudn = new double[ite_step][localSystem.getPhase(0)
-        .getNumberOfComponents()][localSystem.getPhase(0).getNumberOfComponents()];
+    double[][][] dmudn = new double[ite_step][localSystem.getPhase(0).getNumberOfComponents()][localSystem.getPhase(0)
+        .getNumberOfComponents()];
 
     double[][] mu_inter = new double[ite_step][localSystem.getPhase(0).getNumberOfComponents()];
     // double[][][] dmudn_equi = new
@@ -73,23 +68,20 @@ public class LGTSurfaceTension extends SurfaceTension {
     z_step = new double[ite_step];
 
     for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
-      mu_equi[i] = system.getPhase(interface1).getComponent(i)
-          .getChemicalPotential(system.getPhase(interface1));
+      mu_equi[i] = system.getPhase(interface1).getComponent(i).getChemicalPotential(system.getPhase(interface1));
       den_interface[0][i] = 1e5 * system.getPhase(interface1).getComponent(i).getx()
           / system.getPhase(interface1).getMolarVolume();
       den_interface[ite_step - 1][i] = 1e5 * system.getPhase(interface2).getComponent(i).getx()
           / system.getPhase(interface2).getMolarVolume();
       del_den_interface[i] = (1e5 * system.getPhase(interface2).getComponent(i).getx()
           / system.getPhase(interface2).getMolarVolume()
-          - 1e5 * system.getPhase(interface1).getComponent(i).getx()
-              / system.getPhase(interface1).getMolarVolume())
+          - 1e5 * system.getPhase(interface1).getComponent(i).getx() / system.getPhase(interface1).getMolarVolume())
           / (ite_step * 1.0);
       del_den_interface_old[i] = 0.0;
       localSystem.addComponent(localSystem.getPhase(0).getComponent(i).getName(),
           -system.getPhase(0).getComponent(i).getNumberOfmoles());
       localSystem.addComponent(localSystem.getPhase(0).getComponent(i).getName(),
-          system.getPhase(interface1).getComponent(i).getx()
-              / system.getPhase(interface1).getMolarVolume());
+          system.getPhase(interface1).getComponent(i).getx() / system.getPhase(interface1).getMolarVolume());
     }
 
     localSystem.init(0);
@@ -109,8 +101,7 @@ public class LGTSurfaceTension extends SurfaceTension {
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
         del_den_interface[i] = (1e5 * system.getPhase(interface2).getComponent(i).getx()
             / system.getPhase(interface2).getMolarVolume()
-            - 1e5 * system.getPhase(interface1).getComponent(i).getx()
-                / system.getPhase(interface1).getMolarVolume())
+            - 1e5 * system.getPhase(interface1).getComponent(i).getx() / system.getPhase(interface1).getMolarVolume())
             / (ite_step * 1.0);
         del_den_interface_old[i] = 0.0;
       }
@@ -127,11 +118,9 @@ public class LGTSurfaceTension extends SurfaceTension {
       // localSystem.init(3); //need to be fixed
       // System.out.println("pressure " + localSystem.getPressure());
       for (int i = 0; i < localSystem.getPhase(0).getNumberOfComponents(); i++) {
-        mu_inter[j][i] =
-            localSystem.getPhase(0).getComponent(i).getChemicalPotential(localSystem.getPhase(0));
+        mu_inter[j][i] = localSystem.getPhase(0).getComponent(i).getChemicalPotential(localSystem.getPhase(0));
         for (int k = 0; k < localSystem.getPhase(0).getNumberOfComponents(); k++) {
-          dmudn[j][i][k] = localSystem.getPhase(0).getComponent(i).getChemicalPotentialdNTV(k,
-              localSystem.getPhase(0));
+          dmudn[j][i][k] = localSystem.getPhase(0).getComponent(i).getChemicalPotentialdNTV(k, localSystem.getPhase(0));
         }
       }
 
@@ -179,13 +168,12 @@ public class LGTSurfaceTension extends SurfaceTension {
         }
       }
       mu_times_den[j] += -(pressure_interface[j] - pressure_equi);
-      z_step[j] = z_step[j - 1] + Math.sqrt(kappa / (2.0 * mu_times_den[j]))
-          * del_den_interface[referenceComponentNumber];
+      z_step[j] = z_step[j - 1]
+          + Math.sqrt(kappa / (2.0 * mu_times_den[j])) * del_den_interface[referenceComponentNumber];
       if (Double.isNaN(z_step[j])) {
         break;
       }
-      surdenstemp +=
-          Math.sqrt(2.0 * kappa * mu_times_den[j]) * del_den_interface[referenceComponentNumber];
+      surdenstemp += Math.sqrt(2.0 * kappa * mu_times_den[j]) * del_den_interface[referenceComponentNumber];
       // thermo.ThermodynamicConstantsInterface.avagadroNumber;
       // System.out.println("surdenstemp " + surdenstemp + " kappa " + kappa + "
       // mu_times_den[j] " + mu_times_den[j] + " z " + z_step[j]);
@@ -201,9 +189,7 @@ public class LGTSurfaceTension extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getMolarDensity.
-   * </p>
    *
    * @param compnum a int
    * @return an array of type double
@@ -217,9 +203,7 @@ public class LGTSurfaceTension extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getMolarDensityTotal.
-   * </p>
    *
    * @return an array of type double
    */
@@ -234,9 +218,7 @@ public class LGTSurfaceTension extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getz.
-   * </p>
    *
    * @return an array of type double
    */
@@ -245,9 +227,7 @@ public class LGTSurfaceTension extends SurfaceTension {
   }
 
   /**
-   * <p>
    * getPressure.
-   * </p>
    *
    * @return an array of type double
    */

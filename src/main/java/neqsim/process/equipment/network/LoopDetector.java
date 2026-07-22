@@ -15,10 +15,9 @@ import java.util.Set;
  * Detects independent loops in a pipeline network using graph theory algorithms.
  *
  * <p>
- * Uses Depth-First Search (DFS) to build a spanning tree of the network graph. Non-tree edges
- * (chords) each define exactly one independent loop. The number of independent loops equals: E - V
- * + 1 (for a connected graph) where E is the number of edges (pipelines) and V is the number of
- * vertices (nodes).
+ * Uses Depth-First Search (DFS) to build a spanning tree of the network graph. Non-tree edges (chords) each define
+ * exactly one independent loop. The number of independent loops equals: E - V + 1 (for a connected graph) where E is
+ * the number of edges (pipelines) and V is the number of vertices (nodes).
  * </p>
  *
  * <h2>Algorithm</h2>
@@ -294,8 +293,8 @@ public class LoopDetector implements Serializable {
    * Trace the fundamental cycle created by a chord edge.
    *
    * <p>
-   * The fundamental cycle consists of the chord edge plus the unique path in the spanning tree
-   * between the chord's endpoints.
+   * The fundamental cycle consists of the chord edge plus the unique path in the spanning tree between the chord's
+   * endpoints.
    * </p>
    *
    * @param chord the chord edge

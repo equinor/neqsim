@@ -13,18 +13,14 @@ public class SystemSpanWagnerEos extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemSpanWagnerEos.
-   * </p>
    */
   public SystemSpanWagnerEos() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemSpanWagnerEos.
-   * </p>
    *
    * @param T a double
    * @param P a double
@@ -34,9 +30,7 @@ public class SystemSpanWagnerEos extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemSpanWagnerEos.
-   * </p>
    *
    * @param T a double
    * @param P a double

@@ -67,8 +67,8 @@ public class FugacityJacobian implements Serializable {
    * @param dlnPhidn derivatives w.r.t. moles (Jacobian matrix)
    * @param componentNames component names
    */
-  public FugacityJacobian(int phaseIndex, String phaseType, double[] lnPhi, double[] dlnPhidT,
-      double[] dlnPhidP, double[][] dlnPhidn, String[] componentNames) {
+  public FugacityJacobian(int phaseIndex, String phaseType, double[] lnPhi, double[] dlnPhidT, double[] dlnPhidP,
+      double[][] dlnPhidn, String[] componentNames) {
     this.phaseIndex = phaseIndex;
     this.phaseType = phaseType;
     this.numberOfComponents = lnPhi.length;
@@ -79,9 +79,8 @@ public class FugacityJacobian implements Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       this.dlnPhidn[i] = Arrays.copyOf(dlnPhidn[i], numberOfComponents);
     }
-    this.componentNames =
-        componentNames != null ? Arrays.copyOf(componentNames, componentNames.length)
-            : new String[numberOfComponents];
+    this.componentNames = componentNames != null ? Arrays.copyOf(componentNames, componentNames.length)
+        : new String[numberOfComponents];
   }
 
   /**
@@ -246,8 +245,7 @@ public class FugacityJacobian implements Serializable {
    * @param deltaN mole perturbations
    * @return directional derivative of ln(φ_i)
    */
-  public double directionalDerivative(int componentIndex, double deltaT, double deltaP,
-      double[] deltaN) {
+  public double directionalDerivative(int componentIndex, double deltaT, double deltaP, double[] deltaN) {
     double result = dlnPhidT[componentIndex] * deltaT + dlnPhidP[componentIndex] * deltaP;
     if (deltaN != null) {
       for (int j = 0; j < Math.min(numberOfComponents, deltaN.length); j++) {

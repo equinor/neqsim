@@ -14,9 +14,7 @@ import neqsim.process.processmodel.ProcessModuleBaseClass;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * MEGReclaimerModule class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -42,9 +40,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
   double reclaimerPressure = 0.17;
 
   /**
-   * <p>
    * Constructor for MEGReclaimerModule.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -79,8 +75,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
     isInitializedStreams = true;
     try {
       this.streamToWaterRemoval = this.streamToReclaimer.clone("Desalted MEG stream");
-      this.streamFromBoosterCompressor =
-          this.streamToReclaimer.clone("Stream from Booster Compressor");
+      this.streamFromBoosterCompressor = this.streamToReclaimer.clone("Stream from Booster Compressor");
       this.streamWithWaste = this.streamToReclaimer.clone("Reclaimer Waste Stream");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
@@ -135,8 +130,8 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
     for (int i = 0; i < 2; i++) {
       getOperations().run(id);
       flashSeparator.displayResult();
-      System.out.println("flow to vacuum separator "
-          + inletMixer.getOutletStream().getThermoSystem().getTotalNumberOfMoles());
+      System.out.println(
+          "flow to vacuum separator " + inletMixer.getOutletStream().getThermoSystem().getTotalNumberOfMoles());
     }
 
     streamToWaterRemoval = flashSeparator.getGasOutStream();
@@ -144,9 +139,7 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * setOperationPressure.
-   * </p>
    *
    * @param pressure a double
    */
@@ -155,16 +148,13 @@ public class MEGReclaimerModule extends ProcessModuleBaseClass {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 30.0), 10.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 30.0), 10.0);
 
     testSystem.addComponent("methane", 0.001);
     testSystem.addComponent("CO2", 0.001);

@@ -8,8 +8,7 @@ import java.util.List;
  * Gas lift design and optimization calculator.
  *
  * <p>
- * This class implements comprehensive gas lift calculations for artificial lift screening and
- * design, including:
+ * This class implements comprehensive gas lift calculations for artificial lift screening and design, including:
  * <ul>
  * <li><b>GLR optimization:</b> Optimal gas-liquid ratio for maximum production</li>
  * <li><b>Valve spacing:</b> Unloading and operating valve depths</li>
@@ -20,25 +19,24 @@ import java.util.List;
  *
  * <h2>Gas Lift Theory</h2>
  * <p>
- * Gas lift reduces the hydrostatic head in the production tubing by injecting gas to lighten the
- * fluid column. The pressure balance is:
+ * Gas lift reduces the hydrostatic head in the production tubing by injecting gas to lighten the fluid column. The
+ * pressure balance is:
  * </p>
  * <p>
  * <code>P_reservoir = P_wellhead + ΔP_friction + ΔP_hydrostatic</code>
  * </p>
  * <p>
- * where the hydrostatic term depends on the average mixture density, which decreases with
- * increasing GLR.
+ * where the hydrostatic term depends on the average mixture density, which decreases with increasing GLR.
  * </p>
  *
  * <h2>Optimal GLR</h2>
  * <p>
- * Production increases with gas injection until friction losses dominate. The optimal GLR
- * represents the economic balance between increased production and compression costs.
+ * Production increases with gas injection until friction losses dominate. The optimal GLR represents the economic
+ * balance between increased production and compression costs.
  * </p>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * GasLiftCalculator calc = new GasLiftCalculator();
  * calc.setReservoirPressure(250.0, "bara");
@@ -50,7 +48,7 @@ import java.util.List;
  * calc.setOilGravity(35.0, "API");
  * calc.setWaterCut(0.3);
  * calc.setFormationGOR(100.0); // Sm3/Sm3
- * 
+ *
  * GasLiftResult result = calc.calculate();
  * System.out.println("Optimal GLR: " + result.getOptimalGLR() + " Sm3/Sm3");
  * System.out.println("Oil rate: " + result.getOilRate() + " Sm3/day");
@@ -143,8 +141,7 @@ public class GasLiftCalculator implements Serializable {
     result.compressionPower = this.compressionPower;
     result.valvePositions = new ArrayList<>(this.valvePositions);
     result.performanceCurve = new ArrayList<>(this.performanceCurve);
-    result.liftIncrease = naturalFlowRate > 0 ? (maxProductionRate / naturalFlowRate - 1.0) * 100.0
-        : Double.MAX_VALUE;
+    result.liftIncrease = naturalFlowRate > 0 ? (maxProductionRate / naturalFlowRate - 1.0) * 100.0 : Double.MAX_VALUE;
     result.feasible = maxProductionRate > naturalFlowRate && injectionRateAtOptimal > 0;
 
     return result;
@@ -245,8 +242,7 @@ public class GasLiftCalculator implements Serializable {
    * Calculates bottom-hole pressure from VLP (vertical lift performance).
    *
    * <p>
-   * Uses simplified multiphase flow correlation based on Hagedorn-Brown with modifications for gas
-   * lift.
+   * Uses simplified multiphase flow correlation based on Hagedorn-Brown with modifications for gas lift.
    * </p>
    *
    * @param liquidRate liquid rate (Sm3/day)
@@ -268,8 +264,7 @@ public class GasLiftCalculator implements Serializable {
 
       // Calculate mixture properties at segment conditions
       double avgDensity = calculateMixtureDensity(pressure, temperature, totalGLR);
-      double frictionGradient =
-          calculateFrictionGradient(liquidRate, totalGLR, pressure, temperature);
+      double frictionGradient = calculateFrictionGradient(liquidRate, totalGLR, pressure, temperature);
 
       // Pressure increase = hydrostatic + friction
       double dP = (avgDensity * GRAVITY + frictionGradient) * segmentLength / 1e5; // bar
@@ -293,12 +288,10 @@ public class GasLiftCalculator implements Serializable {
 
     // Gas density from ideal gas law with Z-factor
     double zFactor = calculateZfactor(pressure, temperature);
-    double gasDensity =
-        pressure * 1e5 * gasMolecularWeight / (zFactor * GAS_CONSTANT * temperature * 1000.0);
+    double gasDensity = pressure * 1e5 * gasMolecularWeight / (zFactor * GAS_CONSTANT * temperature * 1000.0);
 
     // In-situ GLR (gas expands at lower pressure)
-    double gasVolumeRatio =
-        STANDARD_PRESSURE / pressure * temperature / STANDARD_TEMPERATURE * zFactor;
+    double gasVolumeRatio = STANDARD_PRESSURE / pressure * temperature / STANDARD_TEMPERATURE * zFactor;
     double insituGLR = totalGLR * gasVolumeRatio;
 
     // Liquid holdup (simplified correlation)
@@ -357,8 +350,8 @@ public class GasLiftCalculator implements Serializable {
           + (90.7 * t - 242.2 * t * t + 42.4 * t * t * t) * Math.pow(y, 2.18 + 2.82 * t);
 
       double df = (1 + 4 * y + 4 * y * y - 4 * y * y * y + y * y * y * y) / Math.pow(1 - y, 4)
-          - 2 * (14.76 * t - 9.76 * t * t + 4.58 * t * t * t) * y + (2.18 + 2.82 * t)
-              * (90.7 * t - 242.2 * t * t + 42.4 * t * t * t) * Math.pow(y, 1.18 + 2.82 * t);
+          - 2 * (14.76 * t - 9.76 * t * t + 4.58 * t * t * t) * y
+          + (2.18 + 2.82 * t) * (90.7 * t - 242.2 * t * t + 42.4 * t * t * t) * Math.pow(y, 1.18 + 2.82 * t);
 
       if (Math.abs(df) < 1e-10) {
         break;
@@ -398,8 +391,7 @@ public class GasLiftCalculator implements Serializable {
    * @param temperature temperature (K)
    * @return friction gradient (Pa/m)
    */
-  private double calculateFrictionGradient(double liquidRate, double totalGLR, double pressure,
-      double temperature) {
+  private double calculateFrictionGradient(double liquidRate, double totalGLR, double pressure, double temperature) {
     // Convert to m³/s
     double qLiquid = liquidRate / 86400.0;
 
@@ -518,12 +510,10 @@ public class GasLiftCalculator implements Serializable {
       } else {
         // Subsequent valves: spaced based on production gradient
         double productionGradient = calculateAverageFluidDensity(formationGOR) * GRAVITY / 1e5;
-        double availablePressure =
-            surfaceInjPressure * safetyFactor - valvePressureDrop * (valveNumber - 1);
+        double availablePressure = surfaceInjPressure * safetyFactor - valvePressureDrop * (valveNumber - 1);
 
         double nextValveDepth = currentDepth
-            + (availablePressure - wellheadPressure - productionGradient * currentDepth)
-                / productionGradient;
+            + (availablePressure - wellheadPressure - productionGradient * currentDepth) / productionGradient;
 
         nextValveDepth = Math.min(nextValveDepth, wellDepth);
         nextValveDepth = Math.max(nextValveDepth, currentDepth + 50); // Min 50m spacing
@@ -535,9 +525,9 @@ public class GasLiftCalculator implements Serializable {
       valve.valveNumber = valveNumber;
       valve.depth = currentDepth;
       valve.openingPressure = surfaceInjPressure * safetyFactor - (valveNumber - 1) * 1.5; // Decrease
-                                                                                           // for
-                                                                                           // each
-                                                                                           // valve
+      // for
+      // each
+      // valve
       valve.closingPressure = valve.openingPressure - 0.5;
       valve.isOperatingValve = (currentDepth >= wellDepth * 0.95);
 
@@ -741,17 +731,17 @@ public class GasLiftCalculator implements Serializable {
       return value;
     }
     switch (unit.toLowerCase()) {
-      case "bara":
-      case "bar":
-        return value;
-      case "psia":
-        return value * 0.0689476;
-      case "kpa":
-        return value / 100.0;
-      case "mpa":
-        return value * 10.0;
-      default:
-        return value;
+    case "bara":
+    case "bar":
+      return value;
+    case "psia":
+      return value * 0.0689476;
+    case "kpa":
+      return value / 100.0;
+    case "mpa":
+      return value * 10.0;
+    default:
+      return value;
     }
   }
 
@@ -760,14 +750,14 @@ public class GasLiftCalculator implements Serializable {
       return value;
     }
     switch (unit.toUpperCase()) {
-      case "K":
-        return value;
-      case "C":
-        return value + 273.15;
-      case "F":
-        return (value - 32) * 5.0 / 9.0 + 273.15;
-      default:
-        return value;
+    case "K":
+      return value;
+    case "C":
+      return value + 273.15;
+    case "F":
+      return (value - 32) * 5.0 / 9.0 + 273.15;
+    default:
+      return value;
     }
   }
 
@@ -776,16 +766,16 @@ public class GasLiftCalculator implements Serializable {
       return value;
     }
     switch (unit.toLowerCase()) {
-      case "m":
-        return value;
-      case "ft":
-        return value * 0.3048;
-      case "in":
-        return value * 0.0254;
-      case "mm":
-        return value / 1000.0;
-      default:
-        return value;
+    case "m":
+      return value;
+    case "ft":
+      return value * 0.3048;
+    case "in":
+      return value * 0.0254;
+    case "mm":
+      return value / 1000.0;
+    default:
+      return value;
     }
   }
 
@@ -909,8 +899,8 @@ public class GasLiftCalculator implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("Valve %d: %.1f m, Open: %.1f bara, Close: %.1f bara%s", valveNumber,
-          depth, openingPressure, closingPressure, isOperatingValve ? " [OPERATING]" : "");
+      return String.format("Valve %d: %.1f m, Open: %.1f bara, Close: %.1f bara%s", valveNumber, depth, openingPressure,
+          closingPressure, isOperatingValve ? " [OPERATING]" : "");
     }
   }
 

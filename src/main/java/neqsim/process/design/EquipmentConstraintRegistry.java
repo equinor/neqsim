@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.compressor.Compressor;
@@ -16,21 +17,20 @@ import neqsim.process.equipment.valve.ThrottlingValve;
  * Registry for default equipment capacity constraints.
  *
  * <p>
- * This class manages default constraint configurations for different equipment types and provides
- * factory methods for creating constraints. It enables consistent constraint handling across the
- * optimization framework.
+ * This class manages default constraint configurations for different equipment types and provides factory methods for
+ * creating constraints. It enables consistent constraint handling across the optimization framework.
  * </p>
  *
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * EquipmentConstraintRegistry registry = EquipmentConstraintRegistry.getInstance();
- * 
+ *
  * // Get default constraints for a separator
  * List&lt;CapacityConstraint&gt; constraints = registry.getDefaultConstraints(separator);
- * 
+ *
  * // Register custom constraint
  * registry.registerCustomConstraint("Separator", new CapacityConstraint(...));
  * </pre>
@@ -40,10 +40,10 @@ import neqsim.process.equipment.valve.ThrottlingValve;
  */
 public class EquipmentConstraintRegistry {
 
-  private static EquipmentConstraintRegistry instance;
+  private static volatile EquipmentConstraintRegistry instance;
 
   private Map<String, List<ConstraintTemplate>> defaultConstraints = new HashMap<>();
-  private Map<String, List<CapacityConstraint>> customConstraints = new HashMap<>();
+  private Map<String, List<CapacityConstraint>> customConstraints = new ConcurrentHashMap<>();
 
   /**
    * Private constructor for singleton pattern.
@@ -72,28 +72,28 @@ public class EquipmentConstraintRegistry {
     List<ConstraintTemplate> separatorConstraints = new ArrayList<>();
     separatorConstraints.add(new ConstraintTemplate("gasLoadFactor", "Gas Load Factor (K)", "m/s",
         "Current gas load factor must be below design K-factor"));
-    separatorConstraints.add(new ConstraintTemplate("liquidResidenceTime", "Liquid Residence Time",
-        "min", "Liquid residence time must meet minimum requirement"));
+    separatorConstraints.add(new ConstraintTemplate("liquidResidenceTime", "Liquid Residence Time", "min",
+        "Liquid residence time must meet minimum requirement"));
     defaultConstraints.put("Separator", separatorConstraints);
 
     // Compressor defaults
     List<ConstraintTemplate> compressorConstraints = new ArrayList<>();
-    compressorConstraints.add(new ConstraintTemplate("surgeLine", "Surge Margin", "%",
-        "Operating point must be above surge line"));
+    compressorConstraints
+        .add(new ConstraintTemplate("surgeLine", "Surge Margin", "%", "Operating point must be above surge line"));
     compressorConstraints.add(new ConstraintTemplate("stonewallLine", "Stonewall Margin", "%",
         "Operating point must be below stonewall line"));
-    compressorConstraints.add(new ConstraintTemplate("maxSpeed", "Maximum Speed", "rpm",
-        "Speed must be below maximum design speed"));
-    compressorConstraints.add(new ConstraintTemplate("maxPower", "Maximum Power", "kW",
-        "Power must be below driver capacity"));
+    compressorConstraints
+        .add(new ConstraintTemplate("maxSpeed", "Maximum Speed", "rpm", "Speed must be below maximum design speed"));
+    compressorConstraints
+        .add(new ConstraintTemplate("maxPower", "Maximum Power", "kW", "Power must be below driver capacity"));
     defaultConstraints.put("Compressor", compressorConstraints);
 
     // Valve defaults
     List<ConstraintTemplate> valveConstraints = new ArrayList<>();
     valveConstraints.add(new ConstraintTemplate("maxOpening", "Max Valve Opening", "%",
         "Valve opening must be below maximum design opening"));
-    valveConstraints.add(new ConstraintTemplate("maxCv", "Max Cv Capacity", "",
-        "Required Cv must be below valve rated Cv"));
+    valveConstraints
+        .add(new ConstraintTemplate("maxCv", "Max Cv Capacity", "", "Required Cv must be below valve rated Cv"));
     defaultConstraints.put("Valve", valveConstraints);
 
     // Pipeline defaults
@@ -108,10 +108,10 @@ public class EquipmentConstraintRegistry {
 
     // Heater defaults
     List<ConstraintTemplate> heaterConstraints = new ArrayList<>();
-    heaterConstraints.add(new ConstraintTemplate("maxDuty", "Max Duty", "MW",
-        "Heat duty must be below design capacity"));
-    heaterConstraints.add(new ConstraintTemplate("maxOutletTemperature", "Max Outlet Temperature",
-        "°C", "Outlet temperature must be below metallurgy limit"));
+    heaterConstraints
+        .add(new ConstraintTemplate("maxDuty", "Max Duty", "MW", "Heat duty must be below design capacity"));
+    heaterConstraints.add(new ConstraintTemplate("maxOutletTemperature", "Max Outlet Temperature", "°C",
+        "Outlet temperature must be below metallurgy limit"));
     defaultConstraints.put("Heater", heaterConstraints);
   }
 
@@ -164,8 +164,8 @@ public class EquipmentConstraintRegistry {
    * @param maxValue the maximum allowed value
    * @return the capacity constraint
    */
-  public CapacityConstraint createConstraint(ProcessEquipmentInterface equipment,
-      String constraintType, double maxValue) {
+  public CapacityConstraint createConstraint(ProcessEquipmentInterface equipment, String constraintType,
+      double maxValue) {
     // Find the template
     String equipmentType = getEquipmentType(equipment);
     ConstraintTemplate template = findTemplate(equipmentType, constraintType);
@@ -174,8 +174,8 @@ public class EquipmentConstraintRegistry {
     String description = template != null ? template.getDescription() : "";
 
     // Use builder pattern
-    return new CapacityConstraint(constraintType, unit, CapacityConstraint.ConstraintType.SOFT)
-        .setMaxValue(maxValue).setDescription(description);
+    return new CapacityConstraint(constraintType, unit, CapacityConstraint.ConstraintType.SOFT).setMaxValue(maxValue)
+        .setDescription(description);
   }
 
   /**
@@ -185,7 +185,8 @@ public class EquipmentConstraintRegistry {
    * @param constraint the custom constraint
    */
   public void registerCustomConstraint(String equipmentType, CapacityConstraint constraint) {
-    customConstraints.computeIfAbsent(equipmentType, k -> new ArrayList<>()).add(constraint);
+    customConstraints.computeIfAbsent(equipmentType, k -> new java.util.concurrent.CopyOnWriteArrayList<>())
+        .add(constraint);
   }
 
   /**

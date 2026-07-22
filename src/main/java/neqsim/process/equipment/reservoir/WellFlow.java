@@ -10,34 +10,33 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.capacity.CapacityConstraint;
+import neqsim.process.equipment.capacity.CapacityConstraint.ConstraintType;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
+import neqsim.process.mechanicaldesign.well.WellFlowMechanicalDesign;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * WellFlow class - Inflow Performance Relationship (IPR) model for reservoir-to-wellbore flow.
- * </p>
  *
  * <p>
- * This class models the reservoir inflow into the wellbore using various IPR correlations. It
- * calculates either the bottom-hole flowing pressure (Pwf) from a specified flow rate, or the flow
- * rate from a specified Pwf, depending on the operating mode.
+ * This class models the reservoir inflow into the wellbore using various IPR correlations. It calculates either the
+ * bottom-hole flowing pressure (Pwf) from a specified flow rate, or the flow rate from a specified Pwf, depending on
+ * the operating mode.
  * </p>
  *
  * <h2>Supported IPR Models</h2>
  * <ul>
- * <li><b>PRODUCTION_INDEX</b> - Constant PI using squared-pressure drawdown: q = PI × (Pr² -
- * Pwf²)</li>
- * <li><b>VOGEL</b> - Solution gas drive oil wells (1968): q/qmax = 1 - 0.2(Pwf/Pr) -
- * 0.8(Pwf/Pr)²</li>
+ * <li><b>PRODUCTION_INDEX</b> - Constant PI using squared-pressure drawdown: q = PI × (Pr² - Pwf²)</li>
+ * <li><b>VOGEL</b> - Solution gas drive oil wells (1968): q/qmax = 1 - 0.2(Pwf/Pr) - 0.8(Pwf/Pr)²</li>
  * <li><b>FETKOVICH</b> - Gas well deliverability (1973): q = C × (Pr² - Pwf²)ⁿ</li>
  * <li><b>BACKPRESSURE</b> - Non-Darcy/turbulence effects: Pr² - Pwf² = a×q + b×q²</li>
  * <li><b>TABLE</b> - Tabulated IPR from well tests</li>
  * </ul>
  *
  * <h2>Usage Example 1 - Basic Gas Well</h2>
- * 
+ *
  * <pre>{@code
  * // Create reservoir stream at reservoir conditions
  * Stream reservoirStream = new Stream("reservoir", reservoirFluid);
@@ -54,7 +53,7 @@ import neqsim.thermo.system.SystemInterface;
  * }</pre>
  *
  * <h2>Usage Example 2 - Vogel IPR for Oil Well</h2>
- * 
+ *
  * <pre>{@code
  * WellFlow oilWell = new WellFlow("oil producer");
  * oilWell.setInletStream(reservoirStream);
@@ -66,7 +65,7 @@ import neqsim.thermo.system.SystemInterface;
  * }</pre>
  *
  * <h2>Usage Example 3 - Multi-Layer Commingled Well</h2>
- * 
+ *
  * <pre>{@code
  * WellFlow commingledWell = new WellFlow("commingled producer");
  * commingledWell.setInletStream(mainReservoirStream);
@@ -86,7 +85,7 @@ import neqsim.thermo.system.SystemInterface;
  * }</pre>
  *
  * <h2>Integration with Process Simulation</h2>
- * 
+ *
  * <pre>{@code
  * // Create reservoir
  * SimpleReservoir reservoir = new SimpleReservoir("Field");
@@ -131,6 +130,33 @@ public class WellFlow extends TwoPortEquipment {
   boolean useWellProductionIndex = false;
   boolean calcpressure = true;
 
+  /** Mechanical design carrying the rough well CAPEX. */
+  private WellFlowMechanicalDesign wellFlowMechanicalDesign = null;
+
+  // ----------------------------------------------------------------
+  // Subsurface capacity-constraint support (drawdown / min BHP)
+  // ----------------------------------------------------------------
+  /** Default maximum allowable reservoir drawdown (Pr - Pwf), bar. */
+  private static final double DEFAULT_MAX_DRAWDOWN_BAR = 9999.0;
+  /** Maximum allowable reservoir drawdown (Pr - Pwf), bar. */
+  private double maxDrawdownBar = DEFAULT_MAX_DRAWDOWN_BAR;
+  /**
+   * Minimum allowable flowing bottom-hole pressure (Pwf), bara. A value of 0 disables the minimum BHP constraint.
+   */
+  private double minBottomHolePressureBara = 0.0;
+  /** Whether the subsurface capacity constraints participate in capacity analysis. */
+  private boolean wellConstraintsEnabled = false;
+
+  /**
+   * Flow direction mode for the well.
+   */
+  public enum FlowMode {
+    /** Standard production mode (fluid flows from reservoir to wellbore). */
+    PRODUCTION,
+    /** Injection mode (fluid flows from wellbore to reservoir). */
+    INJECTION
+  }
+
   /** Inflow performance models supported by the well. */
   public enum InflowPerformanceModel {
     /** Constant production index. */
@@ -160,11 +186,13 @@ public class WellFlow extends TwoPortEquipment {
   double[] inflowTableRate = new double[0];
 
   // Multi-layer support
-  private List<ReservoirLayer> layers = new ArrayList<>();
+  private transient List<ReservoirLayer> layers = new ArrayList<>();
   private boolean isMultiLayer = false;
+  private FlowMode flowMode = FlowMode.PRODUCTION;
+  private String targetZoneName = null;
 
   /**
-   * Represents a single reservoir layer for commingled well production.
+   * Represents a single reservoir layer for commingled well production or injection.
    */
   public static class ReservoirLayer {
     /** Layer name. */
@@ -173,10 +201,16 @@ public class WellFlow extends TwoPortEquipment {
     public StreamInterface stream;
     /** Reservoir pressure for this layer (bara). */
     public double reservoirPressure;
-    /** Productivity index for this layer. */
+    /** Productivity/Injectivity index for this layer. */
     public double productivityIndex;
     /** Calculated flow rate from this layer. */
     public double calculatedRate;
+    /** Fracture pressure for this layer (bara). -1 means not set. */
+    public double fracturePressure = -1.0;
+    /** Stress contrast at caprock/barrier boundary (bar). */
+    public double barrierStressContrast = 0.0;
+    /** Whether this is the target zone for injection. */
+    public boolean isTargetZone = false;
 
     /**
      * Create a reservoir layer.
@@ -186,19 +220,79 @@ public class WellFlow extends TwoPortEquipment {
      * @param reservoirPressure layer reservoir pressure (bara)
      * @param pi layer productivity index
      */
-    public ReservoirLayer(String name, StreamInterface stream, double reservoirPressure,
-        double pi) {
+    public ReservoirLayer(String name, StreamInterface stream, double reservoirPressure, double pi) {
       this.name = name;
       this.stream = stream;
       this.reservoirPressure = reservoirPressure;
       this.productivityIndex = pi;
     }
+
+    /**
+     * Set the fracture pressure for this layer.
+     *
+     * @param pressure fracture pressure
+     * @param unit pressure unit ("bara", "psia")
+     */
+    public void setFracturePressure(double pressure, String unit) {
+      if ("psia".equalsIgnoreCase(unit)) {
+        this.fracturePressure = pressure * 0.0689476;
+      } else {
+        this.fracturePressure = pressure;
+      }
+    }
+
+    /**
+     * Set the stress contrast at the barrier/caprock boundary of this layer.
+     *
+     * @param contrast stress contrast value
+     * @param unit stress unit ("bar", "psi", "MPa")
+     */
+    public void setBarrierStressContrast(double contrast, String unit) {
+      if ("psi".equalsIgnoreCase(unit)) {
+        this.barrierStressContrast = contrast * 0.0689476;
+      } else if ("MPa".equalsIgnoreCase(unit)) {
+        this.barrierStressContrast = contrast * 10.0;
+      } else {
+        this.barrierStressContrast = contrast;
+      }
+    }
+
+    /**
+     * Check whether an induced fracture at the given BHP would be contained within this zone.
+     *
+     * <p>
+     * Containment condition: net pressure must be below the stress contrast at zone boundary plus any tensile strength
+     * of the barrier rock.
+     * </p>
+     *
+     * @param bhp bottom-hole pressure (bara)
+     * @return true if fracture is expected to remain contained
+     */
+    public boolean isFractureContained(double bhp) {
+      if (fracturePressure < 0) {
+        return true; // No fracture data set - assume contained
+      }
+      double netPressure = bhp - fracturePressure;
+      return netPressure < barrierStressContrast;
+    }
+
+    /**
+     * Get the fracture containment safety margin at the given BHP.
+     *
+     * @param bhp bottom-hole pressure (bara)
+     * @return margin (bar); positive means contained, negative means breach risk
+     */
+    public double getFractureContainmentMargin(double bhp) {
+      if (fracturePressure < 0) {
+        return Double.MAX_VALUE;
+      }
+      double netPressure = bhp - fracturePressure;
+      return barrierStressContrast - netPressure;
+    }
   }
 
   /**
-   * <p>
    * Constructor for WellFlow.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -206,13 +300,45 @@ public class WellFlow extends TwoPortEquipment {
     super(name);
   }
 
+  /** {@inheritDoc} */
+  @Override
+  public WellFlowMechanicalDesign getMechanicalDesign() {
+    if (wellFlowMechanicalDesign == null) {
+      initMechanicalDesign();
+    }
+    return wellFlowMechanicalDesign;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void initMechanicalDesign() {
+    wellFlowMechanicalDesign = new WellFlowMechanicalDesign(this);
+  }
+
+  /**
+   * Set the rough all-in well CAPEX (drilling + completion + wellhead) used by the cost rollups.
+   *
+   * @param wellCapexUsd well CAPEX in USD
+   */
+  public void setWellCapex(double wellCapexUsd) {
+    getMechanicalDesign().setWellCapexUsd(wellCapexUsd);
+  }
+
+  /**
+   * Get the rough all-in well CAPEX (drilling + completion + wellhead).
+   *
+   * @return well CAPEX in USD
+   */
+  public double getWellCapex() {
+    return getMechanicalDesign().getWellCapexUsd();
+  }
+
   /**
    * Add a reservoir layer for commingled production.
-   * 
+   *
    * <p>
-   * Multiple layers can contribute to the total well flow. Each layer has its own reservoir
-   * pressure and productivity index. The flow from each layer is calculated based on the common
-   * bottom-hole pressure.
+   * Multiple layers can contribute to the total well flow. Each layer has its own reservoir pressure and productivity
+   * index. The flow from each layer is calculated based on the common bottom-hole pressure.
    * </p>
    *
    * @param name layer identifier
@@ -223,6 +349,133 @@ public class WellFlow extends TwoPortEquipment {
   public void addLayer(String name, StreamInterface stream, double reservoirPressure, double pi) {
     layers.add(new ReservoirLayer(name, stream, reservoirPressure, pi));
     isMultiLayer = true;
+  }
+
+  /**
+   * Add an injection zone with fracture pressure limit.
+   *
+   * <p>
+   * For injection wells, each zone has a reservoir pressure, injectivity index, and a fracture pressure that limits the
+   * maximum allowable BHP. The injectivity index follows: q_i = II_i * (Pwf - Pres_i)
+   * </p>
+   *
+   * @param name zone identifier
+   * @param zoneFluid stream representing the zone fluid
+   * @param reservoirPressure zone reservoir pressure (bara)
+   * @param injectivityIndex zone injectivity index (Sm3/day/bar for liquid, Sm3/day/bar² for gas)
+   * @param fracturePressure zone fracture pressure (bara)
+   */
+  public void addInjectionZone(String name, StreamInterface zoneFluid, double reservoirPressure,
+      double injectivityIndex, double fracturePressure) {
+    ReservoirLayer layer = new ReservoirLayer(name, zoneFluid, reservoirPressure, injectivityIndex);
+    layer.fracturePressure = fracturePressure;
+    layers.add(layer);
+    isMultiLayer = true;
+    flowMode = FlowMode.INJECTION;
+  }
+
+  /**
+   * Set the flow mode (production or injection).
+   *
+   * @param mode flow mode
+   */
+  public void setFlowMode(FlowMode mode) {
+    this.flowMode = mode;
+  }
+
+  /**
+   * Get the current flow mode.
+   *
+   * @return current flow mode
+   */
+  public FlowMode getFlowMode() {
+    return flowMode;
+  }
+
+  /**
+   * Set the name of the target zone for injection efficiency calculation.
+   *
+   * @param name target zone name
+   */
+  public void setTargetZone(String name) {
+    this.targetZoneName = name;
+    for (ReservoirLayer layer : layers) {
+      layer.isTargetZone = layer.name.equals(name);
+    }
+  }
+
+  /**
+   * Get allocation fractions showing how injected fluid distributes across zones.
+   *
+   * @return array of zone allocation fractions (sum to 1.0)
+   */
+  public double[] getZoneAllocationFractions() {
+    if (layers.isEmpty()) {
+      return new double[0];
+    }
+    double totalRate = 0.0;
+    for (ReservoirLayer layer : layers) {
+      totalRate += Math.abs(layer.calculatedRate);
+    }
+    double[] fractions = new double[layers.size()];
+    for (int i = 0; i < layers.size(); i++) {
+      fractions[i] = totalRate > 0 ? Math.abs(layers.get(i).calculatedRate) / totalRate : 0.0;
+    }
+    return fractions;
+  }
+
+  /**
+   * Check fracture risk for each zone at the current BHP.
+   *
+   * @return array of booleans; true if BHP exceeds fracture pressure for that zone
+   */
+  public boolean[] getZoneFractureRisk() {
+    boolean[] risks = new boolean[layers.size()];
+    double bhp = pressureOut;
+    for (int i = 0; i < layers.size(); i++) {
+      ReservoirLayer layer = layers.get(i);
+      if (layer.fracturePressure > 0) {
+        risks[i] = bhp > layer.fracturePressure;
+      }
+    }
+    return risks;
+  }
+
+  /**
+   * Get injection efficiency: fraction of total rate entering the target zone.
+   *
+   * @return injection efficiency (0.0 to 1.0); 1.0 means all fluid enters target
+   */
+  public double getInjectionEfficiency() {
+    double totalRate = 0.0;
+    double targetRate = 0.0;
+    for (ReservoirLayer layer : layers) {
+      double absRate = Math.abs(layer.calculatedRate);
+      totalRate += absRate;
+      if (layer.isTargetZone) {
+        targetRate += absRate;
+      }
+    }
+    return totalRate > 0 ? targetRate / totalRate : 0.0;
+  }
+
+  /**
+   * Get total out-of-zone injection rate (sum of rates into non-target zones).
+   *
+   * @param unit flow rate unit ("Sm3/day", "MSm3/day")
+   * @return out-of-zone rate
+   */
+  public double getOutOfZoneRate(String unit) {
+    double oozRate = 0.0;
+    for (ReservoirLayer layer : layers) {
+      if (!layer.isTargetZone && layer.calculatedRate > 0) {
+        oozRate += layer.calculatedRate;
+      }
+    }
+    if ("MSm3/day".equalsIgnoreCase(unit)) {
+      oozRate /= 1.0e6;
+    }
+    return oozRate;
   }
 
   /**
@@ -277,141 +530,178 @@ public class WellFlow extends TwoPortEquipment {
     double presRes = getInletStream().getPressure("bara");
 
     switch (inflowModel) {
-      case VOGEL:
-        if (calcpressure) {
-          double q = getInletStream().getFlowRate("MSm3/day");
-          double term = q / vogelQmax;
-          double a = 0.8;
-          double b = 0.2;
-          double c = term - 1.0;
-          double disc = b * b - 4.0 * a * c;
-          if (disc < 0) {
-            logger.error("pressure lower that 0");
-            throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-                "run:calcOutletPressure", "pressure",
-                "- Outlet pressure is negative" + pressureOut));
-          }
-          double x = (-b + Math.sqrt(disc)) / (2.0 * a);
-          outStream.setPressure(presRes * x, "bara");
-        } else {
-          double pwf = thermoSystem.getPressure("bara");
-          double term = 1.0 - 0.2 * (pwf / presRes) - 0.8 * Math.pow(pwf / presRes, 2.0);
-          double flow = vogelQmax * term;
-          outStream.setFlowRate(flow, "MSm3/day");
-        }
-        break;
-      case FETKOVICH:
-        if (calcpressure) {
-          double q = getInletStream().getFlowRate("MSm3/day");
-          double delta = Math.pow(q / fetkovichC, 1.0 / fetkovichN);
-          if (Math.pow(presRes, 2.0) - delta < 0) {
-            logger.error("pressure lower that 0");
-            throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-                "run:calcOutletPressure", "pressure",
-                "- Outlet pressure is negative" + pressureOut));
-          }
-          outStream.setPressure(Math.sqrt(Math.pow(presRes, 2.0) - delta), "bara");
-        } else {
-          double pwf = thermoSystem.getPressure("bara");
-          double flow =
-              fetkovichC * Math.pow(Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0), fetkovichN);
-          outStream.setFlowRate(flow, "MSm3/day");
-        }
-        break;
-      case BACKPRESSURE:
-        if (calcpressure) {
-          double q = getInletStream().getFlowRate("MSm3/day");
-          double delta = backpressureA * q + backpressureB * Math.pow(q, 2.0);
-          if (Math.pow(presRes, 2.0) - delta < 0) {
-            logger.error("pressure lower that 0");
-            throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-                "run:calcOutletPressure", "pressure",
-                "- Outlet pressure is negative" + pressureOut));
-          }
-          outStream.setPressure(Math.sqrt(Math.pow(presRes, 2.0) - delta), "bara");
-        } else {
-          double pwf = thermoSystem.getPressure("bara");
-          double delta = Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0);
-          double flow = computeBackpressureFlow(delta);
-          outStream.setFlowRate(flow, "MSm3/day");
-        }
-        break;
-      case TABLE:
-        if (inflowTablePwf.length < 2 || inflowTableRate.length < 2) {
+    case VOGEL:
+      if (calcpressure) {
+        double q = getInletStream().getFlowRate("MSm3/day");
+        double term = q / vogelQmax;
+        double a = 0.8;
+        double b = 0.2;
+        double c = term - 1.0;
+        double disc = b * b - 4.0 * a * c;
+        if (disc < 0) {
+          logger.error("pressure lower that 0");
           throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-              "run", "table", "- Table-driven inflow requires at least two points"));
+              "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
         }
+        double x = (-b + Math.sqrt(disc)) / (2.0 * a);
+        outStream.setPressure(presRes * x, "bara");
+      } else {
+        double pwf = thermoSystem.getPressure("bara");
+        double term = 1.0 - 0.2 * (pwf / presRes) - 0.8 * Math.pow(pwf / presRes, 2.0);
+        double flow = vogelQmax * term;
+        outStream.setFlowRate(flow, "MSm3/day");
+      }
+      break;
+    case FETKOVICH:
+      if (calcpressure) {
+        double q = getInletStream().getFlowRate("MSm3/day");
+        double delta = Math.pow(q / fetkovichC, 1.0 / fetkovichN);
+        if (Math.pow(presRes, 2.0) - delta < 0) {
+          logger.error("pressure lower that 0");
+          throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
+              "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
+        }
+        outStream.setPressure(Math.sqrt(Math.pow(presRes, 2.0) - delta), "bara");
+      } else {
+        double pwf = thermoSystem.getPressure("bara");
+        double flow = fetkovichC * Math.pow(Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0), fetkovichN);
+        outStream.setFlowRate(flow, "MSm3/day");
+      }
+      break;
+    case BACKPRESSURE:
+      if (calcpressure) {
+        double q = getInletStream().getFlowRate("MSm3/day");
+        double delta = backpressureA * q + backpressureB * Math.pow(q, 2.0);
+        if (Math.pow(presRes, 2.0) - delta < 0) {
+          logger.error("pressure lower that 0");
+          throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
+              "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
+        }
+        outStream.setPressure(Math.sqrt(Math.pow(presRes, 2.0) - delta), "bara");
+      } else {
+        double pwf = thermoSystem.getPressure("bara");
+        double delta = Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0);
+        double flow = computeBackpressureFlow(delta);
+        outStream.setFlowRate(flow, "MSm3/day");
+      }
+      break;
+    case TABLE:
+      if (inflowTablePwf.length < 2 || inflowTableRate.length < 2) {
+        throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow", "run", "table",
+            "- Table-driven inflow requires at least two points"));
+      }
+      if (calcpressure) {
+        double q = getInletStream().getFlowRate("MSm3/day");
+        outStream.setPressure(interpolatePressureForFlow(q), "bara");
+      } else {
+        double pwf = thermoSystem.getPressure("bara");
+        outStream.setFlowRate(interpolateFlowForPressure(pwf), "MSm3/day");
+      }
+      break;
+    case PRODUCTION_INDEX:
+    default:
+      if (useWellProductionIndex) {
         if (calcpressure) {
-          double q = getInletStream().getFlowRate("MSm3/day");
-          outStream.setPressure(interpolatePressureForFlow(q), "bara");
-        } else {
-          double pwf = thermoSystem.getPressure("bara");
-          outStream.setFlowRate(interpolateFlowForPressure(pwf), "MSm3/day");
-        }
-        break;
-      case PRODUCTION_INDEX:
-      default:
-        if (useWellProductionIndex) {
-          if (calcpressure) {
-            double presout;
-            if (Math.pow(presRes, 2.0)
-                - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex > 0) {
-              presout = Math.sqrt(Math.pow(presRes, 2.0)
-                  - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex);
-            } else {
-              logger.error("pressure lower that 0");
-              throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-                  "run:calcOutletPressure", "pressure",
-                  "- Outlet pressure is negative" + pressureOut));
-            }
-            outStream.setPressure(presout, "bara");
+          double presout;
+          if (Math.pow(presRes, 2.0) - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex > 0) {
+            presout = Math
+                .sqrt(Math.pow(presRes, 2.0) - getInletStream().getFlowRate("MSm3/day") / wellProductionIndex);
           } else {
-            double flow = wellProductionIndex
-                * (Math.pow(presRes, 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
-            outStream.setFlowRate(flow, "MSm3/day");
+            logger.error("pressure lower that 0");
+            throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
+                "run:calcOutletPressure", "pressure", "- Outlet pressure is negative" + pressureOut));
           }
+          outStream.setPressure(presout, "bara");
         } else {
-          wellProductionIndex = getInletStream().getFlowRate("MSm3/day")
-              / (Math.pow(presRes, 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
+          double flow = wellProductionIndex
+              * (Math.pow(presRes, 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
+          outStream.setFlowRate(flow, "MSm3/day");
         }
-        break;
+      } else {
+        wellProductionIndex = getInletStream().getFlowRate("MSm3/day")
+            / (Math.pow(presRes, 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
+      }
+      break;
     }
     outStream.run();
   }
 
   /**
-   * Run multi-layer commingled production calculation.
-   * 
+   * Run multi-layer commingled production or injection calculation.
+   *
    * <p>
-   * For commingled wells, the flow from each layer is calculated based on the common bottom-hole
-   * pressure. The total flow is the sum of individual layer contributions.
+   * For commingled wells, the flow from each layer is calculated based on the common bottom-hole pressure. In
+   * production mode: q = PI * (Pres² - Pwf²). In injection mode: q = II * (Pwf - Pres) for liquid or q = II * (Pwf² -
+   * Pres²) for gas.
    * </p>
    *
    * @param id calculation UUID
    */
   private void runMultiLayer(UUID id) {
     if (layers.isEmpty()) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-          "runMultiLayer", "layers", "- No layers defined for multi-layer well"));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow", "runMultiLayer", "layers",
+          "- No layers defined for multi-layer well"));
     }
 
     double pwf = pressureOut; // Common bottom-hole pressure
 
-    // Calculate flow from each layer
+    if (flowMode == FlowMode.INJECTION) {
+      runMultiLayerInjection(pwf);
+    } else {
+      runMultiLayerProduction(pwf);
+    }
+  }
+
+  /**
+   * Run multi-layer production calculation.
+   *
+   * @param pwf common bottom-hole pressure (bara)
+   */
+  private void runMultiLayerProduction(double pwf) {
     double totalFlow = 0.0;
     for (ReservoirLayer layer : layers) {
       double presRes = layer.reservoirPressure;
       double pi = layer.productivityIndex;
-      // Using production index equation: q = PI * (Pres² - Pwf²)
       double layerFlow = pi * (Math.pow(presRes, 2.0) - Math.pow(pwf, 2.0));
       if (layerFlow < 0) {
-        layerFlow = 0.0; // Layer may not contribute if PWF > reservoir pressure
+        layerFlow = 0.0;
       }
       layer.calculatedRate = layerFlow;
       totalFlow += layerFlow;
     }
 
-    // Set up output stream with blended composition (using first layer as base)
+    thermoSystem = layers.get(0).stream.getThermoSystem().clone();
+    thermoSystem.setPressure(pwf, "bara");
+    outStream.setThermoSystem(thermoSystem);
+    outStream.setFlowRate(totalFlow, "MSm3/day");
+    outStream.run();
+  }
+
+  /**
+   * Run multi-layer injection allocation calculation.
+   *
+   * <p>
+   * For injection, fluid enters the wellbore from the surface and distributes across open zones based on each zone's
+   * injectivity and pressure differential. The injection rate into zone i is: q_i = II_i * (Pwf² - Pres_i²) for gas, or
+   * q_i = II_i * (Pwf - Pres_i) for liquid.
+   * </p>
+   *
+   * @param pwf common bottom-hole pressure (bara)
+   */
+  private void runMultiLayerInjection(double pwf) {
+    double totalFlow = 0.0;
+    for (ReservoirLayer layer : layers) {
+      double presRes = layer.reservoirPressure;
+      double ii = layer.productivityIndex;
+      // Injection: flow from wellbore into reservoir (Pwf > Pres)
+      double layerFlow = ii * (Math.pow(pwf, 2.0) - Math.pow(presRes, 2.0));
+      if (layerFlow < 0) {
+        layerFlow = 0.0; // Zone not accepting fluid if Pres > Pwf
+      }
+      layer.calculatedRate = layerFlow;
+      totalFlow += layerFlow;
+    }
+
     thermoSystem = layers.get(0).stream.getThermoSystem().clone();
     thermoSystem.setPressure(pwf, "bara");
     outStream.setThermoSystem(thermoSystem);
@@ -427,17 +717,15 @@ public class WellFlow extends TwoPortEquipment {
       increaseTime(dt);
       return;
     }
-    double flow = wellProductionIndex * (Math.pow(getInletStream().getPressure("bara"), 2.0)
-        - Math.pow(thermoSystem.getPressure("bara"), 2.0));
+    double flow = wellProductionIndex
+        * (Math.pow(getInletStream().getPressure("bara"), 2.0) - Math.pow(thermoSystem.getPressure("bara"), 2.0));
 
     outStream.setFlowRate(flow, "MSm3/day");
     outStream.run();
   }
 
   /**
-   * <p>
    * Getter for the field <code>wellProductionIndex</code>.
-   * </p>
    *
    * @return a double
    */
@@ -445,10 +733,179 @@ public class WellFlow extends TwoPortEquipment {
     return wellProductionIndex;
   }
 
+  // ================================================================
+  // Subsurface capacity constraints (drawdown / minimum BHP)
+  // ================================================================
+
   /**
+   * Returns the live reservoir drawdown across the well inflow.
+   *
    * <p>
-   * Setter for the field <code>wellProductionIndex</code>.
+   * Drawdown is defined as the difference between the reservoir pressure at the inlet (Pr) and the flowing bottom-hole
+   * pressure at the outlet (Pwf): {@code drawdown = Pr - Pwf}. Excessive drawdown can cause sand production, water/gas
+   * coning and near-wellbore damage, so it is a fundamental subsurface deliverability limit.
    * </p>
+   *
+   * @return the current drawdown in bar, or 0.0 if the streams are not yet available
+   */
+  public double getDrawdown() {
+    try {
+      double pr = getInletStream().getPressure("bara");
+      double pwf = getOutletStream().getPressure("bara");
+      double dd = pr - pwf;
+      return dd > 0.0 ? dd : 0.0;
+    } catch (RuntimeException ex) {
+      return 0.0;
+    }
+  }
+
+  /**
+   * Returns the live flowing bottom-hole pressure (Pwf) at the well outlet.
+   *
+   * @return the current bottom-hole pressure in bara, or a large value if not yet available
+   */
+  public double getBottomHolePressure() {
+    try {
+      return getOutletStream().getPressure("bara");
+    } catch (RuntimeException ex) {
+      return Double.MAX_VALUE;
+    }
+  }
+
+  /**
+   * Sets the maximum allowable reservoir drawdown (Pr - Pwf) for this well.
+   *
+   * <p>
+   * When the subsurface constraints are enabled (see {@link #useWellConstraints()}), the {@code "well drawdown"}
+   * capacity constraint reports a utilization of {@code drawdown / maxDrawdown} so the well participates in
+   * {@code findBottleneck()} and utilization analysis.
+   * </p>
+   *
+   * @param maxDrawdown the maximum allowable drawdown
+   * @param unit the pressure unit ("bara", "bar" or "psia")
+   */
+  public void setMaxDrawdown(double maxDrawdown, String unit) {
+    if ("psia".equalsIgnoreCase(unit) || "psi".equalsIgnoreCase(unit)) {
+      this.maxDrawdownBar = maxDrawdown * 0.0689476;
+    } else {
+      this.maxDrawdownBar = maxDrawdown;
+    }
+    refreshWellCapacityConstraints();
+  }
+
+  /**
+   * Gets the maximum allowable reservoir drawdown (Pr - Pwf).
+   *
+   * @return the maximum drawdown in bar
+   */
+  public double getMaxDrawdown() {
+    return maxDrawdownBar;
+  }
+
+  /**
+   * Sets the minimum allowable flowing bottom-hole pressure (Pwf) for this well.
+   *
+   * <p>
+   * A minimum BHP is commonly imposed to avoid liquid loading, to stay above the reservoir bubble point, or to respect
+   * artificial-lift envelopes. When enabled, the {@code "min BHP"} constraint reports a utilization of
+   * {@code minBHP / Pwf} (a minimum-type constraint) so approaching the lower limit drives utilization toward 100%.
+   * </p>
+   *
+   * @param minPressure the minimum bottom-hole pressure (use 0 to disable)
+   * @param unit the pressure unit ("bara", "bar" or "psia")
+   */
+  public void setMinBottomHolePressure(double minPressure, String unit) {
+    if ("psia".equalsIgnoreCase(unit) || "psi".equalsIgnoreCase(unit)) {
+      this.minBottomHolePressureBara = minPressure * 0.0689476;
+    } else {
+      this.minBottomHolePressureBara = minPressure;
+    }
+    refreshWellCapacityConstraints();
+  }
+
+  /**
+   * Gets the minimum allowable flowing bottom-hole pressure (Pwf).
+   *
+   * @return the minimum bottom-hole pressure in bara
+   */
+  public double getMinBottomHolePressure() {
+    return minBottomHolePressureBara;
+  }
+
+  /**
+   * Enables the subsurface capacity constraints (drawdown and minimum BHP) for this well.
+   *
+   * <p>
+   * The constraints are disabled by default so existing behaviour is unchanged. Call this method (typically together
+   * with {@link #setMaxDrawdown(double, String)} and/or {@link #setMinBottomHolePressure(double, String)}) to make the
+   * well a first-class participant in {@code findBottleneck()} and capacity-utilization analysis, mirroring the
+   * constraint support already available on separators, compressors, pipes and valves.
+   * </p>
+   *
+   * @return this well for method chaining
+   */
+  public WellFlow useWellConstraints() {
+    this.wellConstraintsEnabled = true;
+    refreshWellCapacityConstraints();
+    return this;
+  }
+
+  /**
+   * Indicates whether the subsurface capacity constraints are enabled for this well.
+   *
+   * @return true if the drawdown and minimum-BHP constraints participate in capacity analysis
+   */
+  public boolean isWellConstraintsEnabled() {
+    return wellConstraintsEnabled;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  protected void initializeDefaultConstraints() {
+    addWellCapacityConstraints();
+  }
+
+  /**
+   * (Re)builds and registers the subsurface capacity constraints with the current limits and enabled state. Re-adding a
+   * constraint with the same name overwrites the previous definition, so this method is idempotent and safe to call
+   * from setters.
+   */
+  private void refreshWellCapacityConstraints() {
+    // getCapacityConstraints() lazily triggers initializeDefaultConstraints(); calling the helper
+    // directly here keeps the constraint design values and enabled flags in sync with the setters.
+    addWellCapacityConstraints();
+  }
+
+  /**
+   * Adds the drawdown and minimum-BHP capacity constraints using live stream suppliers.
+   */
+  private void addWellCapacityConstraints() {
+    // Reservoir drawdown constraint (Pr - Pwf). Maximum-type: utilization = drawdown / maxDrawdown.
+    addCapacityConstraint(new CapacityConstraint("well drawdown", "bar", ConstraintType.SOFT)
+        .setDesignValue(maxDrawdownBar).setWarningThreshold(0.9).setDataSource("equipment")
+        .setDescription("Reservoir drawdown Pr - Pwf (sand/coning deliverability limit)")
+        .setEnabled(wellConstraintsEnabled).setValueSupplier(new java.util.function.DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getDrawdown();
+          }
+        }));
+
+    // Minimum bottom-hole pressure constraint. Minimum-type: utilization = minBHP / Pwf.
+    addCapacityConstraint(new CapacityConstraint("min BHP", "bara", ConstraintType.SOFT)
+        .setMinValue(minBottomHolePressureBara).setWarningThreshold(1.1).setDataSource("equipment")
+        .setDescription("Minimum flowing bottom-hole pressure (liquid loading / bubble point limit)")
+        .setEnabled(wellConstraintsEnabled && minBottomHolePressureBara > 0.0)
+        .setValueSupplier(new java.util.function.DoubleSupplier() {
+          @Override
+          public double getAsDouble() {
+            return getBottomHolePressure();
+          }
+        }));
+  }
+
+  /**
+   * Setter for the field <code>wellProductionIndex</code>.
    *
    * @param wellProductionIndex a double
    */
@@ -464,14 +921,15 @@ public class WellFlow extends TwoPortEquipment {
    * @param pressure outlet pressure
    * @param unit pressure unit
    */
+  @Override
   public void setOutletPressure(double pressure, String unit) {
     this.pressureOut = pressure;
     this.pressureUnit = unit;
   }
 
   /**
-   * Enable solving for flow rate from a specified outlet pressure instead of solving for outlet
-   * pressure from a specified flow rate.
+   * Enable solving for flow rate from a specified outlet pressure instead of solving for outlet pressure from a
+   * specified flow rate.
    *
    * @param solve true to compute flow from the set outlet pressure
    */
@@ -499,8 +957,8 @@ public class WellFlow extends TwoPortEquipment {
     this.inflowModel = InflowPerformanceModel.VOGEL;
     this.useWellProductionIndex = false;
     this.vogelRefPres = reservoirPressure;
-    this.vogelQmax = qTest / (1.0 - 0.2 * (pwfTest / reservoirPressure)
-        - 0.8 * Math.pow(pwfTest / reservoirPressure, 2.0));
+    this.vogelQmax = qTest
+        / (1.0 - 0.2 * (pwfTest / reservoirPressure) - 0.8 * Math.pow(pwfTest / reservoirPressure, 2.0));
   }
 
   /**
@@ -519,9 +977,8 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * Use backpressure equation for gas wells: p<sub>res</sub><sup>2</sup> -
-   * p<sub>wf</sub><sup>2</sup> = a·q + b·q². Parameter {@code b} captures non-Darcy (turbulence)
-   * effects.
+   * Use backpressure equation for gas wells: p<sub>res</sub><sup>2</sup> - p<sub>wf</sub><sup>2</sup> = a·q + b·q².
+   * Parameter {@code b} captures non-Darcy (turbulence) effects.
    *
    * @param a deliverability coefficient a
    * @param b deliverability coefficient b (non-Darcy component)
@@ -536,18 +993,17 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * Provide tabulated inflow data (flow rate vs. bottom-hole pressure). Arrays are sorted by
-   * pressure internally to allow monotonic interpolation.
+   * Provide tabulated inflow data (flow rate vs. bottom-hole pressure). Arrays are sorted by pressure internally to
+   * allow monotonic interpolation.
    *
    * @param bottomHolePressures bottom-hole flowing pressures in bara
    * @param flowRates flow rates corresponding to each pressure point (same unit as stream)
    */
   public void setTableInflow(double[] bottomHolePressures, double[] flowRates) {
-    if (bottomHolePressures == null || flowRates == null
-        || bottomHolePressures.length != flowRates.length || bottomHolePressures.length < 2) {
-      throw new RuntimeException(
-          new neqsim.util.exception.InvalidInputException("WellFlow", "setTableInflow", "table",
-              "- Provide matching pressure/flow arrays with at least two entries"));
+    if (bottomHolePressures == null || flowRates == null || bottomHolePressures.length != flowRates.length
+        || bottomHolePressures.length < 2) {
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow", "setTableInflow", "table",
+          "- Provide matching pressure/flow arrays with at least two entries"));
     }
 
     this.inflowModel = InflowPerformanceModel.TABLE;
@@ -560,8 +1016,8 @@ public class WellFlow extends TwoPortEquipment {
   }
 
   /**
-   * Estimate well production index from Darcy law parameters. Units: permeability in mD, viscosity
-   * in cP and lengths in meter.
+   * Estimate well production index from Darcy law parameters. Units: permeability in mD, viscosity in cP and lengths in
+   * meter.
    *
    * @param permeability reservoir permeability
    * @param thickness reservoir thickness
@@ -570,8 +1026,8 @@ public class WellFlow extends TwoPortEquipment {
    * @param wellRadius wellbore radius
    * @param skinFactor skin factor
    */
-  public void setDarcyLawParameters(double permeability, double thickness, double viscosity,
-      double reservoirRadius, double wellRadius, double skinFactor) {
+  public void setDarcyLawParameters(double permeability, double thickness, double viscosity, double reservoirRadius,
+      double wellRadius, double skinFactor) {
     double numerator = 0.00708 * permeability * thickness;
     double denominator = viscosity * (Math.log(reservoirRadius / wellRadius) + skinFactor);
     setWellProductionIndex(numerator / denominator);
@@ -579,8 +1035,8 @@ public class WellFlow extends TwoPortEquipment {
 
   private double computeBackpressureFlow(double drawdown) {
     if (backpressureA == 0.0 && backpressureB == 0.0) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-          "run:calcFlow", "flow", "- Backpressure parameters a and b must be specified"));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow", "run:calcFlow", "flow",
+          "- Backpressure parameters a and b must be specified"));
     }
     if (backpressureB == 0.0) {
       return drawdown / backpressureA;
@@ -588,8 +1044,8 @@ public class WellFlow extends TwoPortEquipment {
     double discriminant = Math.pow(backpressureA, 2.0) + 4.0 * backpressureB * drawdown;
     if (discriminant < 0) {
       logger.error("pressure lower that 0");
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow",
-          "run:calcFlow", "flow", "- Drawdown is insufficient for backpressure calculation"));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException("WellFlow", "run:calcFlow", "flow",
+          "- Drawdown is insufficient for backpressure calculation"));
     }
     return (-backpressureA + Math.sqrt(discriminant)) / (2.0 * backpressureB);
   }
@@ -652,15 +1108,14 @@ public class WellFlow extends TwoPortEquipment {
    * Load IPR curve from a CSV file.
    *
    * <p>
-   * The CSV file should have two columns: bottom-hole pressure (bara) and flow rate. The first row
-   * can be a header (will be skipped if non-numeric). Columns can be separated by comma, semicolon,
-   * or tab.
+   * The CSV file should have two columns: bottom-hole pressure (bara) and flow rate. The first row can be a header
+   * (will be skipped if non-numeric). Columns can be separated by comma, semicolon, or tab.
    * </p>
    *
    * <p>
    * Example CSV format:
    * </p>
-   * 
+   *
    * <pre>
    * Pwf(bara),Rate(MSm3/day)
    * 50,5.2

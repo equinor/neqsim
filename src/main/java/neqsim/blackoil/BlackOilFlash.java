@@ -1,26 +1,33 @@
 package neqsim.blackoil;
 
+import java.io.Serializable;
+
 /**
- * Core Black-Oil flash calculator. Temperature dependence is assumed to be captured by the PVT
- * table (single Tref) unless you extend it.
+ * Core Black-Oil flash calculator. Temperature dependence is assumed to be captured by the PVT table (single Tref)
+ * unless you extend it.
  *
  * @author esol
+ * @version 1.0
  */
-public final class BlackOilFlash {
+public final class BlackOilFlash implements Serializable {
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000L;
+
   private final BlackOilPVTTable pvt;
+  /* Density oil at standard conditions (kg/m3) */
   private final double rho_o_sc;
+  /* Density gas at standard conditions (kg/m3) */
   private final double rho_g_sc;
+  /* Density water at standard conditions (kg/m3) */
   private final double rho_w_sc;
 
   /**
-   * <p>
    * Constructor for BlackOilFlash.
-   * </p>
    *
    * @param pvt a {@link neqsim.blackoil.BlackOilPVTTable} object
-   * @param rho_o_sc a double
-   * @param rho_g_sc a double
-   * @param rho_w_sc a double
+   * @param rho_o_sc density of oil at standard conditions (kg/m3)
+   * @param rho_g_sc density of gas at standard conditions (kg/m3)
+   * @param rho_w_sc density of water at standard conditions (kg/m3)
    */
   public BlackOilFlash(BlackOilPVTTable pvt, double rho_o_sc, double rho_g_sc, double rho_w_sc) {
     this.pvt = pvt;
@@ -30,9 +37,7 @@ public final class BlackOilFlash {
   }
 
   /**
-   * <p>
    * flash.
-   * </p>
    *
    * @param P a double
    * @param T a double
@@ -41,8 +46,7 @@ public final class BlackOilFlash {
    * @param W_std a double
    * @return a {@link neqsim.blackoil.BlackOilFlashResult} object
    */
-  public BlackOilFlashResult flash(double P, double T, double Otot_std, double Gtot_std,
-      double W_std) {
+  public BlackOilFlashResult flash(double P, double T, double Otot_std, double Gtot_std, double W_std) {
     BlackOilFlashResult r = new BlackOilFlashResult();
     double Rs = pvt.RsEffective(P);
     double Rv = pvt.Rv(P); // set to 0.0 if you don't model oil-in-gas

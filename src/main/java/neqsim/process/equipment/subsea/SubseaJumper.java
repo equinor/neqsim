@@ -246,8 +246,7 @@ public class SubseaJumper extends TwoPortEquipment {
    * @param length jumper length in meters
    * @return configured jumper
    */
-  public static SubseaJumper createRigidMShape(String name, StreamInterface inStream,
-      double length) {
+  public static SubseaJumper createRigidMShape(String name, StreamInterface inStream, double length) {
     SubseaJumper jumper = new SubseaJumper(name, inStream);
     jumper.setJumperType(JumperType.RIGID_M_SHAPE);
     jumper.setLength(length);
@@ -263,8 +262,7 @@ public class SubseaJumper extends TwoPortEquipment {
    * @param length jumper length in meters
    * @return configured jumper
    */
-  public static SubseaJumper createFlexibleStatic(String name, StreamInterface inStream,
-      double length) {
+  public static SubseaJumper createFlexibleStatic(String name, StreamInterface inStream, double length) {
     SubseaJumper jumper = new SubseaJumper(name, inStream);
     jumper.setJumperType(JumperType.FLEXIBLE_STATIC);
     jumper.setLength(length);
@@ -326,16 +324,14 @@ public class SubseaJumper extends TwoPortEquipment {
       }
 
       // Darcy-Weisbach pressure drop
-      frictionDrop =
-          frictionFactor * (length / innerDiameter) * (density * velocity * velocity / 2) / 100000; // Convert
-                                                                                                    // Pa
-                                                                                                    // to
-                                                                                                    // bar
+      frictionDrop = frictionFactor * (length / innerDiameter) * (density * velocity * velocity / 2) / 100000; // Convert
+      // Pa
+      // to
+      // bar
 
       // Add losses for bends
       double bendLossCoeff = 0.3; // Per bend
-      double bendDrop =
-          numberOfBends * bendLossCoeff * (density * velocity * velocity / 2) / 100000;
+      double bendDrop = numberOfBends * bendLossCoeff * (density * velocity * velocity / 2) / 100000;
       frictionDrop += bendDrop;
 
       // Add connection losses
@@ -381,6 +377,7 @@ public class SubseaJumper extends TwoPortEquipment {
   /**
    * Initialize mechanical design.
    */
+  @Override
   public void initMechanicalDesign() {
     mechanicalDesign = new SubseaJumperMechanicalDesign(this);
   }
@@ -858,7 +855,7 @@ public class SubseaJumper extends TwoPortEquipment {
       jsonObj.add("processConditions", process);
     }
 
-    return new com.google.gson.GsonBuilder().setPrettyPrinting()
-        .serializeSpecialFloatingPointValues().create().toJson(jsonObj);
+    return new com.google.gson.GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
+        .toJson(jsonObj);
   }
 }

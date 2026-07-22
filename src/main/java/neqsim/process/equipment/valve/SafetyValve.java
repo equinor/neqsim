@@ -9,9 +9,7 @@ import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.mechanicaldesign.valve.SafetyValveMechanicalDesign;
 
 /**
- * <p>
  * SafetyValve class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -37,9 +35,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Constructor for SafetyValve.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.Stream} object
@@ -101,8 +97,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * Sets the active relieving scenario by name. If the scenario does not exist the active
-   * definition is not changed.
+   * Sets the active relieving scenario by name. If the scenario does not exist the active definition is not changed.
    *
    * @param name scenario identifier
    */
@@ -132,28 +127,25 @@ public class SafetyValve extends ThrottlingValve {
     if (activeScenarioName == null) {
       return Optional.empty();
     }
-    return relievingScenarios.stream().filter(s -> s.getName().equals(activeScenarioName))
-        .findFirst();
+    return relievingScenarios.stream().filter(s -> s.getName().equals(activeScenarioName)).findFirst();
   }
 
   /**
-   * Ensures that at least one scenario exists by creating a default vapor relieving scenario when
-   * no user supplied definitions are present.
+   * Ensures that at least one scenario exists by creating a default vapor relieving scenario when no user supplied
+   * definitions are present.
    */
   public void ensureDefaultScenario() {
     if (!relievingScenarios.isEmpty()) {
       return;
     }
-    RelievingScenario scenario = new RelievingScenario.Builder("default")
-        .fluidService(FluidService.GAS).relievingStream(getInletStream()).setPressure(pressureSpec)
-        .overpressureFraction(0.1).backPressure(0.0).build();
+    RelievingScenario scenario = new RelievingScenario.Builder("default").fluidService(FluidService.GAS)
+        .relievingStream(getInletStream()).setPressure(pressureSpec).overpressureFraction(0.1).backPressure(0.0)
+        .build();
     addScenario(scenario);
   }
 
   /**
-   * <p>
    * Getter for the field <code>pressureSpec</code>.
-   * </p>
    *
    * @return the pressureSpec
    */
@@ -162,9 +154,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>pressureSpec</code>.
-   * </p>
    *
    * @param pressureSpec the pressureSpec to set
    */
@@ -177,9 +167,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>fullOpenPressure</code>.
-   * </p>
    *
    * @return the fullOpenPressure
    */
@@ -188,9 +176,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fullOpenPressure</code>.
-   * </p>
    *
    * @param fullOpenPressure the fullOpenPressure to set
    */
@@ -199,9 +185,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>blowdownPressure</code>.
-   * </p>
    *
    * @return the blowdownPressure
    */
@@ -210,9 +194,7 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>blowdownPressure</code>.
-   * </p>
    *
    * @param blowdownPressure the blowdownPressure to set (pressure at which PSV reseats)
    */
@@ -221,8 +203,8 @@ public class SafetyValve extends ThrottlingValve {
   }
 
   /**
-   * Sets the blowdown as a percentage of set pressure. Typical values: 7-10% for gas service,
-   * 10-20% for liquid service.
+   * Sets the blowdown as a percentage of set pressure. Typical values: 7-10% for gas service, 10-20% for liquid
+   * service.
    *
    * @param blowdownPercent percentage below set pressure (e.g., 10.0 for 10% blowdown)
    */

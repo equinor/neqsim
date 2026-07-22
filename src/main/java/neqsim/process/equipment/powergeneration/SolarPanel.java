@@ -95,4 +95,3 @@ public class SolarPanel extends ProcessEquipmentBaseClass {
     setCalculationIdentifier(id);
   }
 }
-

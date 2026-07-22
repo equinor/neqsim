@@ -23,16 +23,14 @@ public class ReliefValveSizingTest {
     double Z = 0.95;
     double gamma = 1.3;
 
-    ReliefValveSizing.PSVSizingResult result =
-        ReliefValveSizing.calculateRequiredArea(massFlowRate, setPressure, overpressure,
-            backPressure, temperature, molecularWeight, Z, gamma, false, false);
+    ReliefValveSizing.PSVSizingResult result = ReliefValveSizing.calculateRequiredArea(massFlowRate, setPressure,
+        overpressure, backPressure, temperature, molecularWeight, Z, gamma, false, false);
 
     assertNotNull(result);
     assertTrue(result.getRequiredArea() > 0, "Area should be positive");
     assertTrue(result.getRequiredAreaIn2() > 0, "Area in in² should be positive");
     assertNotNull(result.getRecommendedOrifice(), "Should recommend an orifice");
-    assertTrue(result.getSelectedArea() >= result.getRequiredArea(),
-        "Selected area should be >= required");
+    assertTrue(result.getSelectedArea() >= result.getRequiredArea(), "Selected area should be >= required");
   }
 
   @Test
@@ -47,9 +45,8 @@ public class ReliefValveSizingTest {
     double Z = 1.0;
     double gamma = 1.4;
 
-    ReliefValveSizing.PSVSizingResult result =
-        ReliefValveSizing.calculateRequiredArea(massFlowRate, setPressure, overpressure,
-            backPressure, temperature, molecularWeight, Z, gamma, false, false);
+    ReliefValveSizing.PSVSizingResult result = ReliefValveSizing.calculateRequiredArea(massFlowRate, setPressure,
+        overpressure, backPressure, temperature, molecularWeight, Z, gamma, false, false);
 
     assertEquals(0.21, result.getOverpressureFraction(), 0.001);
     assertTrue(result.getBackPressureFraction() < 0.1, "Back pressure ratio should be low");
@@ -68,18 +65,15 @@ public class ReliefValveSizingTest {
     double gamma = 1.28;
 
     // With balanced bellows
-    ReliefValveSizing.PSVSizingResult resultBalanced =
-        ReliefValveSizing.calculateRequiredArea(massFlowRate, setPressure, overpressure,
-            backPressure, temperature, molecularWeight, Z, gamma, true, false);
+    ReliefValveSizing.PSVSizingResult resultBalanced = ReliefValveSizing.calculateRequiredArea(massFlowRate,
+        setPressure, overpressure, backPressure, temperature, molecularWeight, Z, gamma, true, false);
 
     // Without balanced bellows (conventional)
-    ReliefValveSizing.PSVSizingResult resultConventional =
-        ReliefValveSizing.calculateRequiredArea(massFlowRate, setPressure, overpressure,
-            backPressure, temperature, molecularWeight, Z, gamma, false, false);
+    ReliefValveSizing.PSVSizingResult resultConventional = ReliefValveSizing.calculateRequiredArea(massFlowRate,
+        setPressure, overpressure, backPressure, temperature, molecularWeight, Z, gamma, false, false);
 
     // Balanced bellows should have better Kb factor
-    assertTrue(resultBalanced.getBackPressureCorrectionFactor() >= 0.9,
-        "Balanced bellows should maintain capacity");
+    assertTrue(resultBalanced.getBackPressureCorrectionFactor() >= 0.9, "Balanced bellows should maintain capacity");
   }
 
   @Test
@@ -94,14 +88,12 @@ public class ReliefValveSizingTest {
     double gamma = 1.4;
 
     // Without rupture disk
-    ReliefValveSizing.PSVSizingResult resultPSVOnly =
-        ReliefValveSizing.calculateRequiredArea(massFlowRate, setPressure, overpressure,
-            backPressure, temperature, molecularWeight, Z, gamma, false, false);
+    ReliefValveSizing.PSVSizingResult resultPSVOnly = ReliefValveSizing.calculateRequiredArea(massFlowRate, setPressure,
+        overpressure, backPressure, temperature, molecularWeight, Z, gamma, false, false);
 
     // With rupture disk
-    ReliefValveSizing.PSVSizingResult resultWithDisk =
-        ReliefValveSizing.calculateRequiredArea(massFlowRate, setPressure, overpressure,
-            backPressure, temperature, molecularWeight, Z, gamma, false, true);
+    ReliefValveSizing.PSVSizingResult resultWithDisk = ReliefValveSizing.calculateRequiredArea(massFlowRate,
+        setPressure, overpressure, backPressure, temperature, molecularWeight, Z, gamma, false, true);
 
     assertEquals(1.0, resultPSVOnly.getCombinationCorrectionFactor(), 0.001);
     assertEquals(0.9, resultWithDisk.getCombinationCorrectionFactor(), 0.001);
@@ -121,8 +113,8 @@ public class ReliefValveSizingTest {
     double gamma = 1.3;
     double Kd = 0.975;
 
-    double capacity = ReliefValveSizing.calculateMassFlowCapacity(orificeArea, setPressure,
-        overpressure, backPressure, temperature, molecularWeight, Z, gamma, Kd);
+    double capacity = ReliefValveSizing.calculateMassFlowCapacity(orificeArea, setPressure, overpressure, backPressure,
+        temperature, molecularWeight, Z, gamma, Kd);
 
     assertTrue(capacity > 0, "Capacity should be positive");
     assertTrue(capacity > 0.1, "Should have reasonable flow capacity for this size");
@@ -141,12 +133,12 @@ public class ReliefValveSizingTest {
     double Kd = 0.975;
 
     // Low back pressure (choked)
-    double chokedCapacity = ReliefValveSizing.calculateMassFlowCapacity(orificeArea, setPressure,
-        overpressure, 1e5, temperature, molecularWeight, Z, gamma, Kd);
+    double chokedCapacity = ReliefValveSizing.calculateMassFlowCapacity(orificeArea, setPressure, overpressure, 1e5,
+        temperature, molecularWeight, Z, gamma, Kd);
 
     // High back pressure (subsonic) - 90% of relieving pressure
-    double subsonicCapacity = ReliefValveSizing.calculateMassFlowCapacity(orificeArea, setPressure,
-        overpressure, 0.9 * setPressure * 1.1, temperature, molecularWeight, Z, gamma, Kd);
+    double subsonicCapacity = ReliefValveSizing.calculateMassFlowCapacity(orificeArea, setPressure, overpressure,
+        0.9 * setPressure * 1.1, temperature, molecularWeight, Z, gamma, Kd);
 
     assertTrue(chokedCapacity > subsonicCapacity, "Choked flow should have higher capacity");
   }
@@ -165,9 +157,8 @@ public class ReliefValveSizingTest {
     double Cp = 14000.0; // J/(kg*K) for hydrogen
     double blowdownTime = 900.0; // 15 minutes
 
-    ReliefValveSizing.PSVSizingResult result = ReliefValveSizing.dynamicFireSizing(initialMass,
-        initialPressure, setPressure, initialTemperature, fireHeatInput, vesselVolume,
-        molecularWeight, gamma, Z, Cp, blowdownTime);
+    ReliefValveSizing.PSVSizingResult result = ReliefValveSizing.dynamicFireSizing(initialMass, initialPressure,
+        setPressure, initialTemperature, fireHeatInput, vesselVolume, molecularWeight, gamma, Z, Cp, blowdownTime);
 
     assertNotNull(result);
     assertEquals(0.21, result.getOverpressureFraction(), 0.001, "Fire case uses 21% overpressure");
@@ -179,8 +170,7 @@ public class ReliefValveSizingTest {
     double setPressure = 20e5;
     double blowdownPercent = 7.0; // Typical PSV blowdown
 
-    double reseatPressure =
-        ReliefValveSizing.calculateBlowdownPressure(setPressure, blowdownPercent);
+    double reseatPressure = ReliefValveSizing.calculateBlowdownPressure(setPressure, blowdownPercent);
 
     assertEquals(setPressure * 0.93, reseatPressure, 100.0);
   }
@@ -227,14 +217,12 @@ public class ReliefValveSizingTest {
     double Z = 0.95;
     double gamma = 1.3;
 
-    ReliefValveSizing.PSVSizingResult result =
-        ReliefValveSizing.calculateRequiredArea(massFlowRate, setPressure, overpressure,
-            backPressure, temperature, molecularWeight, Z, gamma, false, false);
+    ReliefValveSizing.PSVSizingResult result = ReliefValveSizing.calculateRequiredArea(massFlowRate, setPressure,
+        overpressure, backPressure, temperature, molecularWeight, Z, gamma, false, false);
 
     String issues = ReliefValveSizing.validateSizing(result, true);
 
-    assertTrue(issues.isEmpty() || !issues.contains("21%"),
-        "Should not flag overpressure issue for 21%");
+    assertTrue(issues.isEmpty() || !issues.contains("21%"), "Should not flag overpressure issue for 21%");
   }
 
   @Test
@@ -249,9 +237,8 @@ public class ReliefValveSizingTest {
     double Z = 0.95;
     double gamma = 1.3;
 
-    ReliefValveSizing.PSVSizingResult result =
-        ReliefValveSizing.calculateRequiredArea(massFlowRate, setPressure, overpressure,
-            backPressure, temperature, molecularWeight, Z, gamma, false, false);
+    ReliefValveSizing.PSVSizingResult result = ReliefValveSizing.calculateRequiredArea(massFlowRate, setPressure,
+        overpressure, backPressure, temperature, molecularWeight, Z, gamma, false, false);
 
     String issues = ReliefValveSizing.validateSizing(result, true);
 

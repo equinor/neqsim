@@ -9,9 +9,7 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * simpleTopSideProcess2 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -35,8 +33,7 @@ public class simpleTopSideProcess2 {
     Mixer mixer_inlet = new neqsim.process.equipment.mixer.StaticMixer("Mixer HP");
     mixer_inlet.addStream(stream_inlet);
 
-    ThreePhaseSeparator separator_inlet =
-        new ThreePhaseSeparator("Separator 1", mixer_inlet.getOutletStream());
+    ThreePhaseSeparator separator_inlet = new ThreePhaseSeparator("Separator 1", mixer_inlet.getOutletStream());
 
     Stream stream_gasFromSep = new Stream("stream_gasFromSep", separator_inlet.getGasOutStream());
 
@@ -49,8 +46,7 @@ public class simpleTopSideProcess2 {
     recyleOp.addStream(scrubber.getLiquidOutStream());
     mixer_inlet.addStream(recyleOp.getOutletStream());
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_inlet);
     operations.add(mixer_inlet);
     operations.add(separator_inlet);

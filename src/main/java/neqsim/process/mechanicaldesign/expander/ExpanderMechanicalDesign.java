@@ -5,6 +5,7 @@ import java.awt.Container;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import neqsim.process.costestimation.expander.ExpanderCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
@@ -14,9 +15,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Mechanical design calculations for turboexpanders per API 617.
  *
  * <p>
- * This class provides sizing and design calculations for turboexpanders (power recovery turbines)
- * based on API 617 (Axial and Centrifugal Compressors and Expander-compressors). Calculations
- * include:
+ * This class provides sizing and design calculations for turboexpanders (power recovery turbines) based on API 617
+ * (Axial and Centrifugal Compressors and Expander-compressors). Calculations include:
  * </p>
  * <ul>
  * <li>Wheel diameter sizing based on flow and enthalpy drop</li>
@@ -179,6 +179,7 @@ public class ExpanderMechanicalDesign extends MechanicalDesign {
    */
   public ExpanderMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new ExpanderCostEstimate(this);
   }
 
   /** {@inheritDoc} */
@@ -225,8 +226,7 @@ public class ExpanderMechanicalDesign extends MechanicalDesign {
 
     // Casing design with margins
     casingDesignPressure = inletPressure * DESIGN_PRESSURE_MARGIN;
-    casingDesignTemperature =
-        Math.max(inletTemperature, outletTemperature) + DESIGN_TEMPERATURE_MARGIN;
+    casingDesignTemperature = Math.max(inletTemperature, outletTemperature) + DESIGN_TEMPERATURE_MARGIN;
 
     // Select expander type
     selectExpanderType(volumeFlowRateInlet, enthalpyDropKJkg);
@@ -416,8 +416,7 @@ public class ExpanderMechanicalDesign extends MechanicalDesign {
 
     double jointEfficiency = 0.85;
 
-    casingWallThickness =
-        (pressureMPa * casingID) / (2.0 * allowableStress * jointEfficiency - 0.6 * pressureMPa);
+    casingWallThickness = (pressureMPa * casingID) / (2.0 * allowableStress * jointEfficiency - 0.6 * pressureMPa);
 
     // Add corrosion allowance
     casingWallThickness += 3.0;
@@ -494,8 +493,8 @@ public class ExpanderMechanicalDesign extends MechanicalDesign {
     weightElectroInstrument = electricalWeight;
     weightStructualSteel = structuralWeight + baseplateWeight;
 
-    double totalWeight = equipmentWeight + lubeSystemWeight + sealSystemWeight + baseplateWeight
-        + pipingWeight + electricalWeight + structuralWeight;
+    double totalWeight = equipmentWeight + lubeSystemWeight + sealSystemWeight + baseplateWeight + pipingWeight
+        + electricalWeight + structuralWeight;
 
     setWeightTotal(totalWeight);
 
@@ -508,8 +507,7 @@ public class ExpanderMechanicalDesign extends MechanicalDesign {
   private void calculateModuleDimensions() {
     // Module based on expander + generator layout
     double expanderLength = bearingSpan / 1000.0 * 2.5;
-    double generatorLength =
-        loadType == LoadType.GENERATOR ? 1.0 + Math.sqrt(recoveredPower) * 0.03 : 0.5;
+    double generatorLength = loadType == LoadType.GENERATOR ? 1.0 + Math.sqrt(recoveredPower) * 0.03 : 0.5;
 
     moduleLength = expanderLength + generatorLength + 2.0; // + access
     moduleWidth = Math.max(2.0, outerDiameter / 1000.0 * 2.0 + 1.0);
@@ -654,20 +652,19 @@ public class ExpanderMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] columnNames = {"Parameter", "Value", "Unit"};
-    String[][] data =
-        {{"Expander Type", expanderType.toString(), ""}, {"Load Type", loadType.toString(), ""},
-            {"Number of Stages", String.valueOf(numberOfStages), ""},
-            {"Wheel Diameter", String.format("%.1f", wheelDiameter), "mm"},
-            {"Rated Speed", String.format("%.0f", ratedSpeed), "rpm"},
-            {"Tip Speed", String.format("%.1f", tipSpeed), "m/s"},
-            {"Shaft Diameter", String.format("%.1f", shaftDiameter), "mm"},
-            {"Recovered Power", String.format("%.1f", recoveredPower), "kW"},
-            {"Isentropic Efficiency", String.format("%.1f", isentropicEfficiency * 100), "%"},
-            {"Design Inlet Pressure", String.format("%.1f", designInletPressure), "bara"},
-            {"Design Outlet Pressure", String.format("%.1f", designOutletPressure), "bara"},
-            {"Bearing Type", bearingType, ""}, {"Seal Type", sealType, ""},
-            {"Total Weight", String.format("%.0f", getWeightTotal()), "kg"}};
+    String[] columnNames = { "Parameter", "Value", "Unit" };
+    String[][] data = { { "Expander Type", expanderType.toString(), "" }, { "Load Type", loadType.toString(), "" },
+        { "Number of Stages", String.valueOf(numberOfStages), "" },
+        { "Wheel Diameter", String.format("%.1f", wheelDiameter), "mm" },
+        { "Rated Speed", String.format("%.0f", ratedSpeed), "rpm" },
+        { "Tip Speed", String.format("%.1f", tipSpeed), "m/s" },
+        { "Shaft Diameter", String.format("%.1f", shaftDiameter), "mm" },
+        { "Recovered Power", String.format("%.1f", recoveredPower), "kW" },
+        { "Isentropic Efficiency", String.format("%.1f", isentropicEfficiency * 100), "%" },
+        { "Design Inlet Pressure", String.format("%.1f", designInletPressure), "bara" },
+        { "Design Outlet Pressure", String.format("%.1f", designOutletPressure), "bara" },
+        { "Bearing Type", bearingType, "" }, { "Seal Type", sealType, "" },
+        { "Total Weight", String.format("%.0f", getWeightTotal()), "kg" } };
 
     JTable table = new JTable(data, columnNames);
     JScrollPane scrollPane = new JScrollPane(table);

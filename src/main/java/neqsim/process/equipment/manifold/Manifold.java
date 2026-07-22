@@ -2,14 +2,15 @@ package neqsim.process.equipment.manifold;
 
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
-import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
+import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.mixer.Mixer;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -19,11 +20,8 @@ import neqsim.process.util.report.ReportConfig;
 import neqsim.process.util.report.ReportConfig.DetailLevel;
 
 /**
- * <p>
- * Manifold class.
- * </p>
- * A manifold is a process unit that can take in any number of streams and distribute them into a
- * number of output streams. In NeqSim it is created as a combination of a mixer and a splitter.
+ * Manifold class. A manifold is a process unit that can take in any number of streams and distribute them into a number
+ * of output streams. In NeqSim it is created as a combination of a mixer and a splitter.
  *
  * <p>
  * The manifold supports mechanical design calculations including:
@@ -79,9 +77,7 @@ public class Manifold extends ProcessEquipmentBaseClass
   private String supportArrangement = "Stiff";
 
   /**
-   * <p>
    * Constructor for Manifold with name as input.
-   * </p>
    *
    * @param name name of manifold
    */
@@ -91,45 +87,62 @@ public class Manifold extends ProcessEquipmentBaseClass
   }
 
   /**
-   * <p>
    * addStream.
-   * </p>
    *
    * @param newStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public void addStream(StreamInterface newStream) {
     localmixer.addStream(newStream);
+    refreshLocalSplitter();
   }
 
   /**
-   * <p>
+   * Replaces one inlet stream in the manifold mixer and refreshes the local splitter.
+   *
+   * @param index zero-based inlet stream index
+   * @param newStream replacement inlet stream
+   */
+  public void replaceStream(int index, StreamInterface newStream) {
+    localmixer.replaceStream(index, newStream);
+    refreshLocalSplitter();
+  }
+
+  /**
    * setSplitFactors.
-   * </p>
    *
    * @param splitFact an array of type double
    */
   public void setSplitFactors(double[] splitFact) {
     splitFactors = splitFact;
-    localsplitter.setInletStream(localmixer.getOutletStream());
-    localsplitter.setSplitFactors(splitFactors);
+    refreshLocalSplitter();
   }
 
   /**
-   * <p>
+   * Gets the manifold outlet split factors.
+   *
+   * @return split factor array
+   */
+  public double[] getSplitFactors() {
+    return splitFactors;
+  }
+
+  /**
    * getSplitStream.
-   * </p>
    *
    * @param i a int
    * @return a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public StreamInterface getSplitStream(int i) {
-    return localsplitter.getSplitStream(i);
+    refreshLocalSplitter();
+    List<StreamInterface> outletStreams = localsplitter.getOutletStreams();
+    if (i < 0 || i >= outletStreams.size()) {
+      return null;
+    }
+    return outletStreams.get(i);
   }
 
   /**
-   * <p>
    * getMixedStream.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.stream.StreamInterface}
    */
@@ -139,10 +152,35 @@ public class Manifold extends ProcessEquipmentBaseClass
 
   /** {@inheritDoc} */
   @Override
+  public List<StreamInterface> getInletStreams() {
+    return localmixer.getInletStreams();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public List<StreamInterface> getOutletStreams() {
+    refreshLocalSplitter();
+    return localsplitter.getOutletStreams();
+  }
+
+  /**
+   * Reconnects the local splitter to the current mixer outlet when the mixer has at least one feed.
+   */
+  private void refreshLocalSplitter() {
+    StreamInterface mixedStream = localmixer.getOutletStream();
+    if (mixedStream == null || splitFactors == null || splitFactors.length == 0) {
+      return;
+    }
+    localsplitter.setInletStream(mixedStream);
+    localsplitter.setSplitFactors(splitFactors);
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void run(UUID id) {
     localmixer.run(id);
-    localsplitter.setInletStream(localmixer.getOutletStream());
-    localsplitter.run();
+    refreshLocalSplitter();
+    localsplitter.run(id);
   }
 
   /** {@inheritDoc} */
@@ -159,7 +197,7 @@ public class Manifold extends ProcessEquipmentBaseClass
    * @return number of split streams
    */
   public int getNumberOfOutputStreams() {
-    return localsplitter.getSplitFactors().length;
+    return splitFactors.length;
   }
 
   // ============================================================================
@@ -455,8 +493,7 @@ public class Manifold extends ProcessEquipmentBaseClass
     double alpha;
     double beta;
     if (supportArrangement.equals("Stiff")) {
-      alpha = 446187 + 646 * externalDiameter
-          + 9.17E-4 * externalDiameter * externalDiameter * externalDiameter;
+      alpha = 446187 + 646 * externalDiameter + 9.17E-4 * externalDiameter * externalDiameter * externalDiameter;
       beta = 0.1 * Math.log(externalDiameter) - 1.3739;
     } else if (supportArrangement.equals("Medium stiff")) {
       alpha = 283921 + 370 * externalDiameter;
@@ -518,8 +555,7 @@ public class Manifold extends ProcessEquipmentBaseClass
     }
 
     double C = Math.min(Math.min(1, 5 * (1 - GVF)), 5 * GVF) * frmsConstant;
-    return C * Math.pow(headerInnerDiameter, 1.6) * Math.pow(liquidDensity, 0.6)
-        * Math.pow(mixVelocity, 1.2);
+    return C * Math.pow(headerInnerDiameter, 1.6) * Math.pow(liquidDensity, 0.6) * Math.pow(mixVelocity, 1.2);
   }
 
   /**
@@ -565,8 +601,7 @@ public class Manifold extends ProcessEquipmentBaseClass
     double alpha;
     double beta;
     if (supportArrangement.equals("Stiff")) {
-      alpha = 446187 + 646 * externalDiameter
-          + 9.17E-4 * externalDiameter * externalDiameter * externalDiameter;
+      alpha = 446187 + 646 * externalDiameter + 9.17E-4 * externalDiameter * externalDiameter * externalDiameter;
       beta = 0.1 * Math.log(externalDiameter) - 1.3739;
     } else if (supportArrangement.equals("Medium stiff")) {
       alpha = 283921 + 370 * externalDiameter;
@@ -628,8 +663,7 @@ public class Manifold extends ProcessEquipmentBaseClass
     }
 
     double C = Math.min(Math.min(1, 5 * (1 - GVF)), 5 * GVF) * frmsConstant;
-    return C * Math.pow(branchInnerDiameter, 1.6) * Math.pow(liquidDensity, 0.6)
-        * Math.pow(mixVelocity, 1.2);
+    return C * Math.pow(branchInnerDiameter, 1.6) * Math.pow(liquidDensity, 0.6) * Math.pow(mixVelocity, 1.2);
   }
 
   /**
@@ -719,8 +753,7 @@ public class Manifold extends ProcessEquipmentBaseClass
   /** {@inheritDoc} */
   @Override
   public String toJson() {
-    return new GsonBuilder().serializeSpecialFloatingPointValues().create()
-        .toJson(new ManifoldResponse(this));
+    return new GsonBuilder().serializeSpecialFloatingPointValues().create().toJson(new ManifoldResponse(this));
   }
 
   /** {@inheritDoc} */
@@ -762,7 +795,7 @@ public class Manifold extends ProcessEquipmentBaseClass
   private static final double TARGET_BRANCH_VELOCITY = 18.0;
 
   /** Standard pipe inner diameters in meters (Schedule 40 approximate). */
-  private static final double[] STANDARD_PIPE_IDS = {0.0269, // 1"
+  private static final double[] STANDARD_PIPE_IDS = { 0.0269, // 1"
       0.0409, // 1.5"
       0.0525, // 2"
       0.0779, // 3"
@@ -781,7 +814,7 @@ public class Manifold extends ProcessEquipmentBaseClass
   };
 
   /** Standard pipe wall thicknesses in meters (Schedule 40 approximate). */
-  private static final double[] STANDARD_PIPE_WALLS = {0.00338, // 1"
+  private static final double[] STANDARD_PIPE_WALLS = { 0.00338, // 1"
       0.00368, // 1.5"
       0.00391, // 2"
       0.00549, // 3"
@@ -846,9 +879,9 @@ public class Manifold extends ProcessEquipmentBaseClass
       setBranchInnerDiameter(selectedBranchID);
       setBranchWallThickness(selectedBranchWall);
 
-      logger.info("Manifold '{}' sized: Header ID={} mm, Branch ID={} mm for flow={} m3/hr",
-          getName(), String.format("%.1f", selectedHeaderID * 1000),
-          String.format("%.1f", selectedBranchID * 1000), String.format("%.1f", totalVolumeFlow));
+      logger.info("Manifold '{}' sized: Header ID={} mm, Branch ID={} mm for flow={} m3/hr", getName(),
+          String.format("%.1f", selectedHeaderID * 1000), String.format("%.1f", selectedBranchID * 1000),
+          String.format("%.1f", totalVolumeFlow));
     }
 
     // Apply safety factor to design capacity
@@ -898,12 +931,9 @@ public class Manifold extends ProcessEquipmentBaseClass
     initializeCapacityConstraints();
 
     autoSized = true;
-    logger.info(
-        "Manifold '{}' auto-sized: headerVel={} m/s (design={}), branchVel={} m/s (design={})",
-        getName(), String.format("%.1f", currentHeaderVelocity),
-        String.format("%.1f", maxHeaderVelocityDesign),
-        String.format("%.1f", currentBranchVelocity),
-        String.format("%.1f", maxBranchVelocityDesign));
+    logger.info("Manifold '{}' auto-sized: headerVel={} m/s (design={}), branchVel={} m/s (design={})", getName(),
+        String.format("%.1f", currentHeaderVelocity), String.format("%.1f", maxHeaderVelocityDesign),
+        String.format("%.1f", currentBranchVelocity), String.format("%.1f", maxBranchVelocityDesign));
   }
 
   /**
@@ -970,34 +1000,22 @@ public class Manifold extends ProcessEquipmentBaseClass
     StreamInterface mixedStream = getMixedStream();
     if (mixedStream != null && mixedStream.getThermoSystem() != null) {
       sb.append("\n--- Operating Conditions ---\n");
-      sb.append("Total Flow Rate: ")
-          .append(String.format("%.2f m3/hr", mixedStream.getFlowRate("m3/hr"))).append("\n");
-      sb.append("Mass Flow Rate: ")
-          .append(String.format("%.2f kg/hr", mixedStream.getFlowRate("kg/hr"))).append("\n");
-      sb.append("Pressure: ").append(String.format("%.2f bara", mixedStream.getPressure("bara")))
-          .append("\n");
-      sb.append("Temperature: ").append(String.format("%.2f C", mixedStream.getTemperature("C")))
-          .append("\n");
+      sb.append("Total Flow Rate: ").append(String.format("%.2f m3/hr", mixedStream.getFlowRate("m3/hr"))).append("\n");
+      sb.append("Mass Flow Rate: ").append(String.format("%.2f kg/hr", mixedStream.getFlowRate("kg/hr"))).append("\n");
+      sb.append("Pressure: ").append(String.format("%.2f bara", mixedStream.getPressure("bara"))).append("\n");
+      sb.append("Temperature: ").append(String.format("%.2f C", mixedStream.getTemperature("C"))).append("\n");
 
       sb.append("\n--- Geometry ---\n");
-      sb.append("Header ID: ").append(String.format("%.1f mm", headerInnerDiameter * 1000))
-          .append("\n");
-      sb.append("Header OD: ").append(String.format("%.1f mm", getHeaderOuterDiameter() * 1000))
-          .append("\n");
-      sb.append("Header Wall: ").append(String.format("%.2f mm", headerWallThickness * 1000))
-          .append("\n");
-      sb.append("Branch ID: ").append(String.format("%.1f mm", branchInnerDiameter * 1000))
-          .append("\n");
-      sb.append("Branch OD: ").append(String.format("%.1f mm", getBranchOuterDiameter() * 1000))
-          .append("\n");
+      sb.append("Header ID: ").append(String.format("%.1f mm", headerInnerDiameter * 1000)).append("\n");
+      sb.append("Header OD: ").append(String.format("%.1f mm", getHeaderOuterDiameter() * 1000)).append("\n");
+      sb.append("Header Wall: ").append(String.format("%.2f mm", headerWallThickness * 1000)).append("\n");
+      sb.append("Branch ID: ").append(String.format("%.1f mm", branchInnerDiameter * 1000)).append("\n");
+      sb.append("Branch OD: ").append(String.format("%.1f mm", getBranchOuterDiameter() * 1000)).append("\n");
 
       sb.append("\n--- Velocities ---\n");
-      sb.append("Header Velocity: ").append(String.format("%.2f m/s", getHeaderVelocity()))
-          .append("\n");
-      sb.append("Branch Velocity: ").append(String.format("%.2f m/s", getBranchVelocity()))
-          .append("\n");
-      sb.append("Erosional Velocity: ").append(String.format("%.2f m/s", getErosionalVelocity()))
-          .append("\n");
+      sb.append("Header Velocity: ").append(String.format("%.2f m/s", getHeaderVelocity())).append("\n");
+      sb.append("Branch Velocity: ").append(String.format("%.2f m/s", getBranchVelocity())).append("\n");
+      sb.append("Erosional Velocity: ").append(String.format("%.2f m/s", getErosionalVelocity())).append("\n");
 
       sb.append("\n--- FIV Analysis ---\n");
       sb.append("Support Arrangement: ").append(supportArrangement).append("\n");
@@ -1094,52 +1112,42 @@ public class Manifold extends ProcessEquipmentBaseClass
    * Initialize capacity constraints based on design limits and FIV analysis.
    *
    * <p>
-   * NOTE: All constraints are disabled by default for backwards compatibility. Enable specific
-   * constraints when manifold capacity analysis is needed (e.g., after sizing).
+   * NOTE: All constraints are disabled by default for backwards compatibility. Enable specific constraints when
+   * manifold capacity analysis is needed (e.g., after sizing).
    * </p>
    */
   protected void initializeCapacityConstraints() {
     // Header velocity constraint
-    addCapacityConstraint(
-        new CapacityConstraint("headerVelocity", "m/s", CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxHeaderVelocityDesign).setMaxValue(getErosionalVelocity())
-            .setWarningThreshold(0.9).setDescription("Header pipe velocity vs erosional limit")
-            .setValueSupplier(() -> getHeaderVelocity()));
+    addCapacityConstraint(new CapacityConstraint("headerVelocity", "m/s", CapacityConstraint.ConstraintType.SOFT)
+        .setDesignValue(maxHeaderVelocityDesign).setMaxValue(getErosionalVelocity()).setWarningThreshold(0.9)
+        .setDescription("Header pipe velocity vs erosional limit").setValueSupplier(() -> getHeaderVelocity()));
 
     // Branch velocity constraint
-    addCapacityConstraint(
-        new CapacityConstraint("branchVelocity", "m/s", CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxBranchVelocityDesign).setMaxValue(getErosionalVelocity())
-            .setWarningThreshold(0.9).setDescription("Branch pipe velocity vs erosional limit")
-            .setValueSupplier(() -> getBranchVelocity()));
+    addCapacityConstraint(new CapacityConstraint("branchVelocity", "m/s", CapacityConstraint.ConstraintType.SOFT)
+        .setDesignValue(maxBranchVelocityDesign).setMaxValue(getErosionalVelocity()).setWarningThreshold(0.9)
+        .setDescription("Branch pipe velocity vs erosional limit").setValueSupplier(() -> getBranchVelocity()));
 
     // Header LOF (Likelihood of Failure) - FIV constraint
-    addCapacityConstraint(
-        new CapacityConstraint("headerLOF", "-", CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxLOFDesign).setMaxValue(1.5).setWarningThreshold(0.5)
-            .setDescription("Header LOF for flow-induced vibration (>1.0 = high risk)")
-            .setValueSupplier(() -> calculateHeaderLOF()));
+    addCapacityConstraint(new CapacityConstraint("headerLOF", "-", CapacityConstraint.ConstraintType.SOFT)
+        .setDesignValue(maxLOFDesign).setMaxValue(1.5).setWarningThreshold(0.5)
+        .setDescription("Header LOF for flow-induced vibration (>1.0 = high risk)")
+        .setValueSupplier(() -> calculateHeaderLOF()));
 
     // Header FRMS (Flow-induced vibration RMS)
-    addCapacityConstraint(
-        new CapacityConstraint("headerFRMS", "-", CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxFRMSDesign).setMaxValue(750.0).setWarningThreshold(0.8)
-            .setDescription("Header FRMS vibration intensity")
-            .setValueSupplier(() -> calculateHeaderFRMS()));
+    addCapacityConstraint(new CapacityConstraint("headerFRMS", "-", CapacityConstraint.ConstraintType.SOFT)
+        .setDesignValue(maxFRMSDesign).setMaxValue(750.0).setWarningThreshold(0.8)
+        .setDescription("Header FRMS vibration intensity").setValueSupplier(() -> calculateHeaderFRMS()));
 
     // Branch LOF - FIV constraint
-    addCapacityConstraint(
-        new CapacityConstraint("branchLOF", "-", CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxLOFDesign).setMaxValue(1.5).setWarningThreshold(0.5)
-            .setDescription("Branch LOF for flow-induced vibration (>1.0 = high risk)")
-            .setValueSupplier(() -> calculateBranchLOF()));
+    addCapacityConstraint(new CapacityConstraint("branchLOF", "-", CapacityConstraint.ConstraintType.SOFT)
+        .setDesignValue(maxLOFDesign).setMaxValue(1.5).setWarningThreshold(0.5)
+        .setDescription("Branch LOF for flow-induced vibration (>1.0 = high risk)")
+        .setValueSupplier(() -> calculateBranchLOF()));
 
     // Branch FRMS (Flow-induced vibration RMS)
-    addCapacityConstraint(
-        new CapacityConstraint("branchFRMS", "-", CapacityConstraint.ConstraintType.SOFT)
-            .setDesignValue(maxFRMSDesign).setMaxValue(750.0).setWarningThreshold(0.8)
-            .setDescription("Branch FRMS vibration intensity")
-            .setValueSupplier(() -> calculateBranchFRMS()));
+    addCapacityConstraint(new CapacityConstraint("branchFRMS", "-", CapacityConstraint.ConstraintType.SOFT)
+        .setDesignValue(maxFRMSDesign).setMaxValue(750.0).setWarningThreshold(0.8)
+        .setDescription("Branch FRMS vibration intensity").setValueSupplier(() -> calculateBranchFRMS()));
   }
 
   /** {@inheritDoc} */

@@ -24,7 +24,7 @@ import neqsim.thermodynamicoperations.flashops.saturationops.AsphalteneOnsetTemp
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * SystemInterface fluid = new SystemSrkCPA(373.15, 300.0);
  * // Add components...
@@ -135,8 +135,7 @@ public class AsphalteneStabilityAnalyzer {
    * @param oilDensity in-situ oil density (kg/m3)
    * @return asphaltene risk assessment
    */
-  public AsphalteneRisk deBoerScreening(double reservoirPressure, double saturationPressure,
-      double oilDensity) {
+  public AsphalteneRisk deBoerScreening(double reservoirPressure, double saturationPressure, double oilDensity) {
     double undersaturation = reservoirPressure - saturationPressure;
 
     // De Boer correlation boundaries (approximate)
@@ -182,8 +181,7 @@ public class AsphalteneStabilityAnalyzer {
    * @param resins weight fraction of resins (0-1)
    * @param asphaltenes weight fraction of asphaltenes (0-1)
    */
-  public void setSARAFractions(double saturates, double aromatics, double resins,
-      double asphaltenes) {
+  public void setSARAFractions(double saturates, double aromatics, double resins, double asphaltenes) {
     saraData.setSARAFractions(saturates, aromatics, resins, asphaltenes);
   }
 
@@ -233,8 +231,7 @@ public class AsphalteneStabilityAnalyzer {
    * Calculates the asphaltene onset pressure at a given temperature.
    *
    * <p>
-   * This uses the thermodynamic solid phase model to find the pressure at which asphaltenes
-   * precipitate.
+   * This uses the thermodynamic solid phase model to find the pressure at which asphaltenes precipitate.
    * </p>
    *
    * @param temperature temperature in Kelvin
@@ -312,8 +309,8 @@ public class AsphalteneStabilityAnalyzer {
    * Generates an asphaltene precipitation envelope.
    *
    * <p>
-   * Returns arrays of [temperature, onset pressure upper, onset pressure lower] defining the
-   * asphaltene precipitation region.
+   * Returns arrays of [temperature, onset pressure upper, onset pressure lower] defining the asphaltene precipitation
+   * region.
    * </p>
    *
    * @param minTemp minimum temperature (K)
@@ -352,8 +349,8 @@ public class AsphalteneStabilityAnalyzer {
    * @param wellheadTemperature wellhead temperature (K)
    * @return comprehensive assessment report
    */
-  public String comprehensiveAssessment(double reservoirPressure, double reservoirTemperature,
-      double wellheadPressure, double wellheadTemperature) {
+  public String comprehensiveAssessment(double reservoirPressure, double reservoirTemperature, double wellheadPressure,
+      double wellheadTemperature) {
     StringBuilder report = new StringBuilder();
     report.append("=== ASPHALTENE STABILITY ASSESSMENT ===\n\n");
 
@@ -371,12 +368,11 @@ public class AsphalteneStabilityAnalyzer {
 
     // 2. Operating conditions
     report.append("2. Operating Conditions:\n");
-    report.append(String.format("   Reservoir: %.1f bara, %.1f K (%.1f C)%n", reservoirPressure,
-        reservoirTemperature, reservoirTemperature - 273.15));
-    report.append(String.format("   Wellhead: %.1f bara, %.1f K (%.1f C)%n", wellheadPressure,
-        wellheadTemperature, wellheadTemperature - 273.15));
-    report.append(
-        String.format("   Pressure drop: %.1f bar%n", reservoirPressure - wellheadPressure));
+    report.append(String.format("   Reservoir: %.1f bara, %.1f K (%.1f C)%n", reservoirPressure, reservoirTemperature,
+        reservoirTemperature - 273.15));
+    report.append(String.format("   Wellhead: %.1f bara, %.1f K (%.1f C)%n", wellheadPressure, wellheadTemperature,
+        wellheadTemperature - 273.15));
+    report.append(String.format("   Pressure drop: %.1f bar%n", reservoirPressure - wellheadPressure));
     report.append("\n");
 
     // 3. Thermodynamic calculations (if system available)
@@ -407,30 +403,30 @@ public class AsphalteneStabilityAnalyzer {
     report.append("4. Recommendations:\n");
     AsphalteneRisk overallRisk = evaluateSARAStability();
     switch (overallRisk) {
-      case STABLE:
-        report.append("   - No special measures required\n");
-        report.append("   - Routine monitoring recommended\n");
-        break;
-      case LOW_RISK:
-        report.append("   - Monitor downhole and surface for deposits\n");
-        report.append("   - Consider periodic sampling\n");
-        break;
-      case MODERATE_RISK:
-        report.append("   - Install asphaltene monitoring system\n");
-        report.append("   - Consider chemical inhibitor injection\n");
-        report.append("   - Plan for periodic intervention\n");
-        break;
-      case HIGH_RISK:
-        report.append("   - Continuous inhibitor injection recommended\n");
-        report.append("   - Frequent well interventions may be needed\n");
-        report.append("   - Consider production rate optimization\n");
-        break;
-      case SEVERE_RISK:
-        report.append("   - Comprehensive asphaltene management program required\n");
-        report.append("   - May need pressure maintenance strategy\n");
-        report.append("   - Consider downhole/surface heating\n");
-        report.append("   - Extensive chemical treatment program\n");
-        break;
+    case STABLE:
+      report.append("   - No special measures required\n");
+      report.append("   - Routine monitoring recommended\n");
+      break;
+    case LOW_RISK:
+      report.append("   - Monitor downhole and surface for deposits\n");
+      report.append("   - Consider periodic sampling\n");
+      break;
+    case MODERATE_RISK:
+      report.append("   - Install asphaltene monitoring system\n");
+      report.append("   - Consider chemical inhibitor injection\n");
+      report.append("   - Plan for periodic intervention\n");
+      break;
+    case HIGH_RISK:
+      report.append("   - Continuous inhibitor injection recommended\n");
+      report.append("   - Frequent well interventions may be needed\n");
+      report.append("   - Consider production rate optimization\n");
+      break;
+    case SEVERE_RISK:
+      report.append("   - Comprehensive asphaltene management program required\n");
+      report.append("   - May need pressure maintenance strategy\n");
+      report.append("   - Consider downhole/surface heating\n");
+      report.append("   - Extensive chemical treatment program\n");
+      break;
     }
 
     return report.toString();

@@ -13,17 +13,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.database.NeqSimDataBase;
 
 public class SoreideWhitsonSystemThermoTest {
+  private static final Logger logger = LogManager.getLogger(SoreideWhitsonSystemThermoTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(SoreideWhitsonSystemThermoTest.class);
 
   static neqsim.thermo.system.SystemInterface testSystem = null;
   static neqsim.thermo.ThermodynamicModelTest testModel = null;
   neqsim.thermo.ThermodynamicModelTest fugTest;
 
   /**
-   * <p>
    * setUp.
-   * </p>
    */
   @BeforeAll
   public static void setUp() {
@@ -40,9 +39,7 @@ public class SoreideWhitsonSystemThermoTest {
   }
 
   /**
-   * <p>
    * testFugasities.
-   * </p>
    */
   // @Test
   public void testFugasities() {
@@ -64,9 +61,7 @@ public class SoreideWhitsonSystemThermoTest {
   }
 
   /**
-   * <p>
    * testCompressibility.
-   * </p>
    */
   @Disabled("No assertions")
   @Test
@@ -84,9 +79,7 @@ public class SoreideWhitsonSystemThermoTest {
   }
 
   /**
-   * <p>
    * testTPflash2.
-   * </p>
    */
   @Disabled
   @Test
@@ -96,9 +89,7 @@ public class SoreideWhitsonSystemThermoTest {
   }
 
   /**
-   * <p>
    * testTPflash.
-   * </p>
    */
   @Disabled
   @Test
@@ -108,9 +99,7 @@ public class SoreideWhitsonSystemThermoTest {
   }
 
   /**
-   * <p>
    * testFugacityCoefficients.
-   * </p>
    */
   @Test
   @DisplayName("test the fugacity coefficients calculated")
@@ -119,9 +108,7 @@ public class SoreideWhitsonSystemThermoTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDP.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to pressure")
@@ -130,9 +117,7 @@ public class SoreideWhitsonSystemThermoTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDT.
-   * </p>
    */
 
   @Test
@@ -142,9 +127,7 @@ public class SoreideWhitsonSystemThermoTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDn.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition")
@@ -153,9 +136,7 @@ public class SoreideWhitsonSystemThermoTest {
   }
 
   /**
-   * <p>
    * checkFugacityCoefficientsDn2.
-   * </p>
    */
   @Test
   @DisplayName("test derivative of fugacity coefficients with respect to composition (2nd method)")
@@ -164,9 +145,7 @@ public class SoreideWhitsonSystemThermoTest {
   }
 
   /**
-   * <p>
    * checkPhaseEnvelope.
-   * </p>
    *
    * @throws Exception
    */
@@ -185,15 +164,12 @@ public class SoreideWhitsonSystemThermoTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
 
     testOps.calcPTphaseEnvelope();
-    logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
-        + testOps.get("cricondenbar")[1]);
+    logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " " + testOps.get("cricondenbar")[1]);
     assertEquals(testOps.get("cricondenbar")[1], 130.686140727503, 0.02);
   }
 
   /**
-   * <p>
    * checkPhaseEnvelope2.
-   * </p>
    *
    * @throws Exception
    */
@@ -232,8 +208,7 @@ public class SoreideWhitsonSystemThermoTest {
     ThermodynamicOperations testOps = new ThermodynamicOperations(testSystem);
     try {
       testOps.calcPTphaseEnvelope();
-      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " "
-          + testOps.get("cricondenbar")[1]);
+      logger.info("Cricondenbar " + (testOps.get("cricondenbar")[0] - 273.15) + " " + testOps.get("cricondenbar")[1]);
     } catch (Exception ex) {
       assertTrue(false);
       throw new Exception(ex);
@@ -249,9 +224,7 @@ public class SoreideWhitsonSystemThermoTest {
   }
 
   /**
-   * <p>
    * testPseudoComptest.
-   * </p>
    *
    * @throws Exception
    */

@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * NeqStream class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -40,9 +38,7 @@ public class NeqStream extends Stream {
   }
 
   /**
-   * <p>
    * Constructor for NeqStream.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -62,7 +58,9 @@ public class NeqStream extends Stream {
       logger.error(ex.getMessage());
     }
 
-    thermoSystem = thermoSystem.clone();
+    if (clonedStream != null && thermoSystem != null) {
+      clonedStream.thermoSystem = thermoSystem.clone();
+    }
 
     return clonedStream;
   }
@@ -70,9 +68,8 @@ public class NeqStream extends Stream {
   /** {@inheritDoc} */
   @Override
   public NeqStream clone(String name) {
-    if (this.getName() == name) {
-      throw new RuntimeException(
-          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+    if (this.getName().equals(name)) {
+      throw new RuntimeException(new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
     }
     NeqStream s = this.clone();
     s.setName(name);

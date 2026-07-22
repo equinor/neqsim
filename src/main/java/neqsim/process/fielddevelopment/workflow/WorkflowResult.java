@@ -16,8 +16,8 @@ import neqsim.process.mechanicaldesign.SystemMechanicalDesign;
  * Result container for field development workflow execution.
  *
  * <p>
- * Contains all outputs from a workflow run including flow assurance screening, economics, cash flow
- * analysis, and (for detailed studies) Monte Carlo results.
+ * Contains all outputs from a workflow run including flow assurance screening, economics, cash flow analysis, and (for
+ * detailed studies) Monte Carlo results.
  * </p>
  *
  * @author ESOL
@@ -199,16 +199,14 @@ public class WorkflowResult implements Serializable {
       sb.append(String.format("| Hydrate | %s |\n", flowAssuranceResult.getHydrateResult()));
       sb.append(String.format("| Wax | %s |\n", flowAssuranceResult.getWaxResult()));
       sb.append(String.format("| Corrosion | %s |\n", flowAssuranceResult.getCorrosionResult()));
-      sb.append(
-          String.format("| **Overall** | **%s** |\n", flowAssuranceResult.getOverallResult()));
+      sb.append(String.format("| **Overall** | **%s** |\n", flowAssuranceResult.getOverallResult()));
       sb.append("\n");
     }
 
     // Production summary
     if (gasProfile != null && !gasProfile.isEmpty()) {
       sb.append("## Production Profile\n\n");
-      double peakRate =
-          gasProfile.values().stream().mapToDouble(Double::doubleValue).max().orElse(0);
+      double peakRate = gasProfile.values().stream().mapToDouble(Double::doubleValue).max().orElse(0);
       double cumulative = gasProfile.values().stream().mapToDouble(d -> d * 365).sum() / 1e9; // GSm3
       sb.append(String.format("- Peak rate: %.1f MSm3/day\n", peakRate / 1e6));
       sb.append(String.format("- Cumulative: %.1f GSm3\n", cumulative));
@@ -219,8 +217,7 @@ public class WorkflowResult implements Serializable {
     // Monte Carlo summary
     if (monteCarloResult != null) {
       sb.append("## Uncertainty Analysis\n\n");
-      sb.append(String.format("- P(NPV > 0): %.1f%%\n",
-          monteCarloResult.getProbabilityPositiveNpv() * 100));
+      sb.append(String.format("- P(NPV > 0): %.1f%%\n", monteCarloResult.getProbabilityPositiveNpv() * 100));
       sb.append(String.format("- NPV range: %.0f to %.0f MUSD\n", npvP10, npvP90));
       sb.append("\n");
     }
@@ -231,8 +228,7 @@ public class WorkflowResult implements Serializable {
       sb.append("| Parameter | Value |\n");
       sb.append("|-----------|-------|\n");
       if (totalEquipmentWeightTonnes > 0) {
-        sb.append(
-            String.format("| Equipment Weight | %.0f tonnes |\n", totalEquipmentWeightTonnes));
+        sb.append(String.format("| Equipment Weight | %.0f tonnes |\n", totalEquipmentWeightTonnes));
       }
       if (totalFootprintM2 > 0) {
         sb.append(String.format("| Module Footprint | %.0f m² |\n", totalFootprintM2));
@@ -248,8 +244,7 @@ public class WorkflowResult implements Serializable {
       sb.append("## CO2 Emissions\n\n");
       sb.append("| Metric | Value |\n");
       sb.append("|--------|-------|\n");
-      sb.append(String.format("| Power Supply | %s |\n",
-          powerSupplyType != null ? powerSupplyType : "N/A"));
+      sb.append(String.format("| Power Supply | %s |\n", powerSupplyType != null ? powerSupplyType : "N/A"));
       sb.append(String.format("| Annual CO2e | %.1f ktonnes/yr |\n", annualCO2eKtonnes));
       sb.append(String.format("| CO2 Intensity | %.1f kg/boe |\n", co2IntensityKgPerBoe));
       sb.append("\n");
@@ -262,14 +257,10 @@ public class WorkflowResult implements Serializable {
       sb.append("|-----------|-------|\n");
 
       if (subseaSystemResult != null) {
-        sb.append(String.format("| Architecture | %s |\n",
-            subseaSystemResult.getClass().getSimpleName()));
-        sb.append(String.format("| Arrival Pressure | %.1f bara |\n",
-            subseaSystemResult.getArrivalPressureBara()));
-        sb.append(String.format("| Arrival Temperature | %.1f °C |\n",
-            subseaSystemResult.getArrivalTemperatureC()));
-        sb.append(String.format("| Subsea CAPEX | %.0f MUSD |\n",
-            subseaSystemResult.getTotalSubseaCapexMusd()));
+        sb.append(String.format("| Architecture | %s |\n", subseaSystemResult.getClass().getSimpleName()));
+        sb.append(String.format("| Arrival Pressure | %.1f bara |\n", subseaSystemResult.getArrivalPressureBara()));
+        sb.append(String.format("| Arrival Temperature | %.1f °C |\n", subseaSystemResult.getArrivalTemperatureC()));
+        sb.append(String.format("| Subsea CAPEX | %.0f MUSD |\n", subseaSystemResult.getTotalSubseaCapexMusd()));
       } else {
         if (arrivalPressureBara > 0) {
           sb.append(String.format("| Arrival Pressure | %.1f bara |\n", arrivalPressureBara));
@@ -284,8 +275,7 @@ public class WorkflowResult implements Serializable {
 
       if (selectedTiebackOption != null) {
         sb.append(String.format("| Selected Host | %s |\n", selectedTiebackOption.getHostName()));
-        sb.append(String.format("| Tieback Distance | %.1f km |\n",
-            selectedTiebackOption.getDistanceKm()));
+        sb.append(String.format("| Tieback Distance | %.1f km |\n", selectedTiebackOption.getDistanceKm()));
       }
 
       sb.append("\n");
@@ -303,8 +293,8 @@ public class WorkflowResult implements Serializable {
       sb.append("|------|---------------|------------|----------|\n");
 
       for (TiebackOption opt : tiebackReport.getOptions()) {
-        sb.append(String.format("| %s | %.1f | %.0f | %s |\n", opt.getHostName(),
-            opt.getDistanceKm(), opt.getNpvMusd(), opt.isFeasible() ? "✓" : "✗"));
+        sb.append(String.format("| %s | %.1f | %.0f | %s |\n", opt.getHostName(), opt.getDistanceKm(), opt.getNpvMusd(),
+            opt.isFeasible() ? "✓" : "✗"));
       }
       sb.append("\n");
     }
@@ -330,8 +320,7 @@ public class WorkflowResult implements Serializable {
     for (Map.Entry<Integer, Double> entry : gasProfile.entrySet()) {
       double annualGSm3 = entry.getValue() * 365 / 1e9;
       cumulative += annualGSm3;
-      sb.append(String.format("| %d | %.2f | %.2f |\n", entry.getKey(), entry.getValue() / 1e6,
-          cumulative));
+      sb.append(String.format("| %d | %.2f | %.2f |\n", entry.getKey(), entry.getValue() / 1e6, cumulative));
     }
 
     return sb.toString();
@@ -373,7 +362,7 @@ public class WorkflowResult implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("WorkflowResult[%s, NPV=%.0f MUSD, IRR=%.1f%%, Viable=%s]", projectName,
-        npv, irr * 100, isViable());
+    return String.format("WorkflowResult[%s, NPV=%.0f MUSD, IRR=%.1f%%, Viable=%s]", projectName, npv, irr * 100,
+        isViable());
   }
 }

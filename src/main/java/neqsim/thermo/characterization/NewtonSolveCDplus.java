@@ -6,9 +6,7 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * NewtonSolveCDplus class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -29,16 +27,13 @@ public class NewtonSolveCDplus implements java.io.Serializable {
   // SystemInterface system = null;
 
   /**
-   * <p>
    * Constructor for NewtonSolveCDplus.
-   * </p>
    */
-  public NewtonSolveCDplus() {}
+  public NewtonSolveCDplus() {
+  }
 
   /**
-   * <p>
    * Constructor for NewtonSolveCDplus.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param characterizeClass a {@link neqsim.thermo.characterization.PlusCharacterize} object
@@ -59,9 +54,7 @@ public class NewtonSolveCDplus implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvec</code>.
-   * </p>
    */
   public void setfvec() {
     double zSum = 0.0;
@@ -77,8 +70,7 @@ public class NewtonSolveCDplus implements java.io.Serializable {
       densSum += (ztemp * M / dens);
     }
     densSum = mSum / densSum;
-    double lengthPlus = characterizeClass.getLastPlusFractionNumber()
-        - characterizeClass.getFirstPlusFractionNumber();
+    double lengthPlus = characterizeClass.getLastPlusFractionNumber() - characterizeClass.getFirstPlusFractionNumber();
     logger.info("diff " + lengthPlus);
     // Dtot /= lengthPlus;
     // System.out.println("Dtot "+ Dtot);
@@ -92,9 +84,7 @@ public class NewtonSolveCDplus implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setJac.
-   * </p>
    */
   public void setJac() {
     Jac.timesEquals(0.0);
@@ -131,8 +121,7 @@ public class NewtonSolveCDplus implements java.io.Serializable {
             * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
         mTot2 += i * (CharacteriseInterface.PVTsimMolarMass[i - 6] / 1000.0)
             * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
-        zSum2 += Math.pow(Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i),
-            2.0);
+        zSum2 += Math.pow(Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i), 2.0);
         zSum += Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
         zSum3 += i * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
       }
@@ -162,21 +151,15 @@ public class NewtonSolveCDplus implements java.io.Serializable {
         double dens = characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i);
         A += M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
         B += M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) / dens;
-        Bpow2 += Math.pow(
-            M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) / dens,
-            2.0);
+        Bpow2 += Math.pow(M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) / dens, 2.0);
         Ader1 = A;
-        Bder1 +=
-            Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) * M / dens;
+        Bder1 += Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) * M / dens;
         Ader2 += i * M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i);
-        Bder2 += i * M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i)
-            / dens;
-        Bder3 += -Math
-            .pow(characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i), -2.0)
+        Bder2 += i * M * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) / dens;
+        Bder3 += -Math.pow(characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i), -2.0)
             * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) * M;
         Bder4 += -Math.log(i)
-            * Math.pow(characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i),
-                -2.0)
+            * Math.pow(characterizeClass.getCoef(2) + characterizeClass.getCoef(3) * Math.log(i), -2.0)
             * Math.exp(characterizeClass.getCoef(0) + characterizeClass.getCoef(1) * i) * M;
       }
       if (j == 0) {
@@ -193,9 +176,7 @@ public class NewtonSolveCDplus implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    */
   public void solve() {
     iter = 0;

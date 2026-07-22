@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * GOR class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -23,9 +21,7 @@ public class GOR extends BasePVTsimulation {
   double oilVolumeStdCond = 0;
 
   /**
-   * <p>
    * Constructor for GOR.
-   * </p>
    *
    * @param tempSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -38,9 +34,7 @@ public class GOR extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * setTemperaturesAndPressures.
-   * </p>
    *
    * @param temperature an array of type double
    * @param pressure an array of type double
@@ -51,9 +45,7 @@ public class GOR extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * runCalc.
-   * </p>
    */
   public void runCalc() {
     Sm3gas = new double[pressure.length];
@@ -70,10 +62,8 @@ public class GOR extends BasePVTsimulation {
       } else {
         m3oil[i] = getThermoSystem().getVolume();
       }
-      if (getThermoSystem().getNumberOfPhases() > 1
-          && getThermoSystem().getPhase(0).getType() == PhaseType.GAS) {
-        getThermoSystem().getPhase(0)
-            .setPressure(ThermodynamicConstantsInterface.referencePressure);
+      if (getThermoSystem().getNumberOfPhases() > 1 && getThermoSystem().getPhase(0).getType() == PhaseType.GAS) {
+        getThermoSystem().getPhase(0).setPressure(ThermodynamicConstantsInterface.referencePressure);
         getThermoSystem().getPhase(0).setTemperature(288.15);
         getThermoSystem().init(1);
         Sm3gas[i] = getThermoSystem().getPhase(0).getVolume();
@@ -95,9 +85,7 @@ public class GOR extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -133,17 +121,14 @@ public class GOR extends BasePVTsimulation {
     tempSystem.setMixingRule(2);
 
     GOR sepSim = new GOR(tempSystem);
-    double[] temps = {313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15};
-    double[] pres =
-        {500, 400, 200, 100, 50.0, 5.0, ThermodynamicConstantsInterface.referencePressure};
+    double[] temps = { 313.15, 313.15, 313.15, 313.15, 313.15, 313.15, 313.15 };
+    double[] pres = { 500, 400, 200, 100, 50.0, 5.0, ThermodynamicConstantsInterface.referencePressure };
     sepSim.setTemperaturesAndPressures(temps, pres);
     sepSim.runCalc();
   }
 
   /**
-   * <p>
    * getGOR.
-   * </p>
    *
    * @return the GOR
    */
@@ -152,9 +137,7 @@ public class GOR extends BasePVTsimulation {
   }
 
   /**
-   * <p>
    * getBofactor.
-   * </p>
    *
    * @return the Bofactor
    */

@@ -2,32 +2,29 @@
  * Equipment capacity constraint framework for process optimization.
  *
  * <p>
- * This package provides a standardized framework for defining, tracking, and querying capacity
- * constraints on process equipment. It enables automated bottleneck detection and optimization
- * across entire process systems.
+ * This package provides a standardized framework for defining, tracking, and querying capacity constraints on process
+ * equipment. It enables automated bottleneck detection and optimization across entire process systems.
  * </p>
  *
  * <h2>Key Components</h2>
  * <ul>
- * <li>{@link neqsim.process.equipment.capacity.CapacityConstraint} - Defines a single capacity
- * limit with design value, max value, current value supplier, and utilization calculations</li>
- * <li>{@link neqsim.process.equipment.capacity.CapacityConstrainedEquipment} - Interface for
- * equipment that has capacity limits (separators, compressors, pumps, etc.)</li>
- * <li>{@link neqsim.process.equipment.capacity.StandardConstraintType} - Predefined constraint
- * types with standard names and units</li>
+ * <li>{@link neqsim.process.equipment.capacity.CapacityConstraint} - Defines a single capacity limit with design value,
+ * max value, current value supplier, and utilization calculations</li>
+ * <li>{@link neqsim.process.equipment.capacity.CapacityConstrainedEquipment} - Interface for equipment that has
+ * capacity limits (separators, compressors, pumps, etc.)</li>
+ * <li>{@link neqsim.process.equipment.capacity.StandardConstraintType} - Predefined constraint types with standard
+ * names and units</li>
  * </ul>
  *
  * <h2>Constraint Types</h2>
  * <ul>
- * <li><b>HARD</b> - Cannot be exceeded (e.g., max speed, surge limit). Exceeding causes trip or
- * damage.</li>
- * <li><b>SOFT</b> - Can be temporarily exceeded (e.g., design flow). Reduces efficiency or
- * life.</li>
+ * <li><b>HARD</b> - Cannot be exceeded (e.g., max speed, surge limit). Exceeding causes trip or damage.</li>
+ * <li><b>SOFT</b> - Can be temporarily exceeded (e.g., design flow). Reduces efficiency or life.</li>
  * <li><b>DESIGN</b> - Informational only. Used for reporting and optimization guidance.</li>
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * // In equipment class (e.g., Compressor)
  * public class Compressor implements CapacityConstrainedEquipment {

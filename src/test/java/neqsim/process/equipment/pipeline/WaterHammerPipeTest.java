@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import neqsim.process.equipment.EquipmentFactory;
 import neqsim.process.equipment.pipeline.WaterHammerPipe.BoundaryType;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.thermo.system.SystemInterface;
@@ -46,8 +47,7 @@ public class WaterHammerPipeTest {
     // Check wave speed is positive and reasonable
     // Note: SRK EOS may give different values than pure water correlations
     double waveSpeed = pipe.getWaveSpeed();
-    assertTrue(waveSpeed > 100 && waveSpeed < 5000,
-        "Wave speed should be positive and reasonable, got: " + waveSpeed);
+    assertTrue(waveSpeed > 100 && waveSpeed < 5000, "Wave speed should be positive and reasonable, got: " + waveSpeed);
 
     // Check pressure profile exists
     double[] pressures = pipe.getPressureProfile();
@@ -132,8 +132,7 @@ public class WaterHammerPipeTest {
 
     // Should reach steady state (outlet pressure stable)
     double finalOutletPressure = pipe.getPressureProfile("bar")[49];
-    assertEquals(initialOutletPressure, finalOutletPressure, 0.5,
-        "Pressure should be stable with constant BCs");
+    assertEquals(initialOutletPressure, finalOutletPressure, 0.5, "Pressure should be stable with constant BCs");
 
     // Check time history was recorded
     List<Double> history = pipe.getPressureHistory();
@@ -172,8 +171,7 @@ public class WaterHammerPipeTest {
 
     // Maximum pressure should exceed steady state due to water hammer
     double maxPressure = pipe.getMaxPressure("bar");
-    assertTrue(maxPressure > steadyStatePressure,
-        "Max pressure should exceed steady state after valve closure");
+    assertTrue(maxPressure > steadyStatePressure, "Max pressure should exceed steady state after valve closure");
 
     // Valve should be closed
     assertEquals(0.0, pipe.getValveOpening(), 0.001);
@@ -234,6 +232,29 @@ public class WaterHammerPipeTest {
 
     pipe.setDiameter(8, "in");
     assertEquals(0.2032, pipe.getDiameter(), 0.001);
+  }
+
+  @Test
+  void testFactoryAndJsonFriendlyProperties() {
+    assertTrue(EquipmentFactory.createEquipment("hammer", "waterHammer") instanceof WaterHammerPipe);
+
+    pipe.setUpstreamBoundary("closed end");
+    pipe.setDownstreamBoundary("constant-flow");
+    assertEquals(BoundaryType.CLOSED_END, pipe.getUpstreamBoundary());
+    assertEquals(BoundaryType.CONSTANT_FLOW, pipe.getDownstreamBoundary());
+
+    pipe.setNumberOfIncrements(12);
+    assertEquals(12, pipe.getNumberOfNodes());
+
+    pipe.setPipeWallRoughness(3.0e-5);
+    pipe.setElevation(7.5);
+    pipe.setWallThickness(0.012);
+    assertEquals(3.0e-5, pipe.getPipeWallRoughness(), 1.0e-12);
+    assertEquals(7.5, pipe.getElevation(), 1.0e-12);
+    assertEquals(0.012, pipe.getWallThickness(), 1.0e-12);
+
+    pipe.setValveOpeningPercent(25.0);
+    assertEquals(0.25, pipe.getValveOpening(), 1.0e-12);
   }
 
   @Test
@@ -316,14 +337,12 @@ public class WaterHammerPipeTest {
 
     // Gas wave speed should be lower than liquid (~400 m/s)
     double waveSpeed = gasPipe.getWaveSpeed();
-    assertTrue(waveSpeed > 100 && waveSpeed < 600,
-        "Gas wave speed should be 100-600 m/s, got: " + waveSpeed);
+    assertTrue(waveSpeed > 100 && waveSpeed < 600, "Gas wave speed should be 100-600 m/s, got: " + waveSpeed);
 
     // Joukowsky surge is lower for gas (lower density)
     double surgePa = gasPipe.calcJoukowskyPressureSurge(10); // 10 m/s change
     double surgeBar = surgePa / 1e5;
     // Gas density ~50 kg/m3, c ~400, dv=10: dP ~ 200 kPa = 2 bar
-    assertTrue(surgeBar > 0.5 && surgeBar < 10,
-        "Gas surge should be 0.5-10 bar for 10 m/s, got: " + surgeBar);
+    assertTrue(surgeBar > 0.5 && surgeBar < 10, "Gas surge should be 0.5-10 bar for 10 m/s, got: " + surgeBar);
   }
 }

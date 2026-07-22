@@ -8,9 +8,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator
  * Wall friction correlations for two-fluid multiphase pipe flow.
  *
  * <p>
- * Provides separate wall friction calculations for gas and liquid phases based on flow regime. The
- * wall shear stress is calculated as: τ_w = 0.5 * f * ρ * v² where f is the Fanning friction
- * factor.
+ * Provides separate wall friction calculations for gas and liquid phases based on flow regime. The wall shear stress is
+ * calculated as: τ_w = 0.5 * f * ρ * v² where f is the Fanning friction factor.
  * </p>
  *
  * <h2>Correlations by Flow Regime</h2>
@@ -81,45 +80,43 @@ public class WallFriction implements Serializable {
    * @param roughness Pipe wall roughness (m)
    * @return Wall friction results for both phases
    */
-  public WallFrictionResult calculate(FlowRegime flowRegime, double gasVelocity,
-      double liquidVelocity, double gasDensity, double liquidDensity, double gasViscosity,
-      double liquidViscosity, double liquidHoldup, double diameter, double roughness) {
+  public WallFrictionResult calculate(FlowRegime flowRegime, double gasVelocity, double liquidVelocity,
+      double gasDensity, double liquidDensity, double gasViscosity, double liquidViscosity, double liquidHoldup,
+      double diameter, double roughness) {
     switch (flowRegime) {
-      case STRATIFIED_SMOOTH:
-      case STRATIFIED_WAVY:
-        return calcStratifiedFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity,
-            gasViscosity, liquidViscosity, liquidHoldup, diameter, roughness);
+    case STRATIFIED_SMOOTH:
+    case STRATIFIED_WAVY:
+      return calcStratifiedFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
+          liquidViscosity, liquidHoldup, diameter, roughness);
 
-      case SLUG:
-        return calcSlugFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity,
-            gasViscosity, liquidViscosity, liquidHoldup, diameter, roughness);
+    case SLUG:
+      return calcSlugFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+          liquidHoldup, diameter, roughness);
 
-      case ANNULAR:
-      case MIST:
-        return calcAnnularFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity,
-            gasViscosity, liquidViscosity, liquidHoldup, diameter, roughness);
+    case ANNULAR:
+    case MIST:
+      return calcAnnularFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+          liquidHoldup, diameter, roughness);
 
-      case BUBBLE:
-      case DISPERSED_BUBBLE:
-        return calcBubbleFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity,
-            gasViscosity, liquidViscosity, liquidHoldup, diameter, roughness);
+    case BUBBLE:
+    case DISPERSED_BUBBLE:
+      return calcBubbleFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+          liquidHoldup, diameter, roughness);
 
-      case CHURN:
-        return calcChurnFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity,
-            gasViscosity, liquidViscosity, liquidHoldup, diameter, roughness);
+    case CHURN:
+      return calcChurnFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity, liquidViscosity,
+          liquidHoldup, diameter, roughness);
 
-      case SINGLE_PHASE_GAS:
-        return calcSinglePhaseGasFriction(gasVelocity, gasDensity, gasViscosity, diameter,
-            roughness);
+    case SINGLE_PHASE_GAS:
+      return calcSinglePhaseGasFriction(gasVelocity, gasDensity, gasViscosity, diameter, roughness);
 
-      case SINGLE_PHASE_LIQUID:
-        return calcSinglePhaseLiquidFriction(liquidVelocity, liquidDensity, liquidViscosity,
-            diameter, roughness);
+    case SINGLE_PHASE_LIQUID:
+      return calcSinglePhaseLiquidFriction(liquidVelocity, liquidDensity, liquidViscosity, diameter, roughness);
 
-      default:
-        // Default to stratified
-        return calcStratifiedFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity,
-            gasViscosity, liquidViscosity, liquidHoldup, diameter, roughness);
+    default:
+      // Default to stratified
+      return calcStratifiedFriction(gasVelocity, liquidVelocity, gasDensity, liquidDensity, gasViscosity,
+          liquidViscosity, liquidHoldup, diameter, roughness);
     }
   }
 
@@ -141,8 +138,8 @@ public class WallFriction implements Serializable {
    * @param eps pipe wall roughness [m]
    * @return wall friction result containing shear stresses and friction factors
    */
-  private WallFrictionResult calcStratifiedFriction(double vG, double vL, double rhoG, double rhoL,
-      double muG, double muL, double alphaL, double D, double eps) {
+  private WallFrictionResult calcStratifiedFriction(double vG, double vL, double rhoG, double rhoL, double muG,
+      double muL, double alphaL, double D, double eps) {
     WallFrictionResult result = new WallFrictionResult();
 
     // Get geometry
@@ -185,8 +182,8 @@ public class WallFriction implements Serializable {
    * @param eps pipe wall roughness [m]
    * @return wall friction result containing shear stresses and friction factors
    */
-  private WallFrictionResult calcSlugFriction(double vG, double vL, double rhoG, double rhoL,
-      double muG, double muL, double alphaL, double D, double eps) {
+  private WallFrictionResult calcSlugFriction(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
+      double alphaL, double D, double eps) {
     WallFrictionResult result = new WallFrictionResult();
 
     // Slug body: treat as homogeneous mixture
@@ -231,8 +228,8 @@ public class WallFriction implements Serializable {
    * @param eps pipe roughness [m]
    * @return wall friction result containing friction factors and shear stresses
    */
-  private WallFrictionResult calcAnnularFriction(double vG, double vL, double rhoG, double rhoL,
-      double muG, double muL, double alphaL, double D, double eps) {
+  private WallFrictionResult calcAnnularFriction(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
+      double alphaL, double D, double eps) {
     WallFrictionResult result = new WallFrictionResult();
 
     // Film thickness
@@ -283,8 +280,8 @@ public class WallFriction implements Serializable {
    * @param eps pipe roughness (m)
    * @return wall friction result
    */
-  private WallFrictionResult calcBubbleFriction(double vG, double vL, double rhoG, double rhoL,
-      double muG, double muL, double alphaL, double D, double eps) {
+  private WallFrictionResult calcBubbleFriction(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
+      double alphaL, double D, double eps) {
     WallFrictionResult result = new WallFrictionResult();
 
     // Mixture velocity and density (liquid-continuous)
@@ -325,8 +322,8 @@ public class WallFriction implements Serializable {
    * @param eps pipe roughness (m)
    * @return wall friction result
    */
-  private WallFrictionResult calcChurnFriction(double vG, double vL, double rhoG, double rhoL,
-      double muG, double muL, double alphaL, double D, double eps) {
+  private WallFrictionResult calcChurnFriction(double vG, double vL, double rhoG, double rhoL, double muG, double muL,
+      double alphaL, double D, double eps) {
     // Treat similar to slug
     return calcSlugFriction(vG, vL, rhoG, rhoL, muG, muL, alphaL, D, eps);
   }
@@ -341,8 +338,7 @@ public class WallFriction implements Serializable {
    * @param eps pipe roughness (m)
    * @return wall friction result
    */
-  private WallFrictionResult calcSinglePhaseGasFriction(double vG, double rhoG, double muG,
-      double D, double eps) {
+  private WallFrictionResult calcSinglePhaseGasFriction(double vG, double rhoG, double muG, double D, double eps) {
     WallFrictionResult result = new WallFrictionResult();
 
     if (Math.abs(vG) > 1e-10) {
@@ -364,8 +360,7 @@ public class WallFriction implements Serializable {
    * @param eps pipe roughness (m)
    * @return wall friction result
    */
-  private WallFrictionResult calcSinglePhaseLiquidFriction(double vL, double rhoL, double muL,
-      double D, double eps) {
+  private WallFrictionResult calcSinglePhaseLiquidFriction(double vL, double rhoL, double muL, double D, double eps) {
     WallFrictionResult result = new WallFrictionResult();
 
     if (Math.abs(vL) > 1e-10) {
@@ -381,8 +376,8 @@ public class WallFriction implements Serializable {
    * Calculate Fanning friction factor using Haaland equation.
    *
    * <p>
-   * Explicit approximation to Colebrook-White equation, valid for turbulent flow. For laminar flow
-   * (Re &lt; 2300), uses f = 16/Re.
+   * Explicit approximation to Colebrook-White equation, valid for turbulent flow. For laminar flow (Re &lt; 2300), uses
+   * f = 16/Re.
    * </p>
    *
    * @param reynolds Reynolds number

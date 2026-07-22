@@ -18,9 +18,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * TPmultiflash class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -43,14 +41,14 @@ public class TPmultiflash extends TPflash {
   boolean secondTime = false;
   boolean aqueousPhaseSeedAttempted = false;
   boolean postFlashStabilityChecked = false;
+  boolean enhancedStabilityChecked = false;
+  private int rerunDepth = 0;
 
   double[] multTerm;
   double[] multTerm2;
 
   /**
-   * <p>
    * Constructor for TPmultiflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -60,9 +58,7 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * Constructor for TPmultiflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param checkForSolids Set true to do solid phase check and calculations
@@ -75,16 +71,13 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * calcMultiPhaseBeta.
-   * </p>
    */
-  public void calcMultiPhaseBeta() {}
+  public void calcMultiPhaseBeta() {
+  }
 
   /**
-   * <p>
    * setDoubleArrays.
-   * </p>
    */
   public void setDoubleArrays() {
     dQdbeta = new double[system.getNumberOfPhases()][1];
@@ -92,9 +85,7 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * setXY.
-   * </p>
    */
   public void setXY() {
     // Check for ions directly - ions must be handled specially regardless of whether
@@ -139,20 +130,18 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * calcE.
-   * </p>
    */
   public void calcE() {
     // E = new double[system.getPhase(0).getNumberOfComponents()];
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       Erow[i] = 0.0;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
-        Erow[i] += system.getPhase(k).getBeta()
-            / system.getPhase(k).getComponent(i).getFugacityCoefficient();
+        Erow[i] += system.getPhase(k).getBeta() / system.getPhase(k).getComponent(i).getFugacityCoefficient();
       }
-      if (Erow[i] < 1e-100)
+      if (Erow[i] < 1e-100) {
         Erow[i] = 1e-100;
+      }
       if (Double.isNaN(Erow[i])) {
         logger.error("Erow is NaN for component " + system.getPhase(0).getComponent(i).getName());
         Erow[i] = 1e-100;
@@ -161,9 +150,7 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * calcQ.
-   * </p>
    *
    * @return a double
    */
@@ -194,12 +181,21 @@ public class TPmultiflash extends TPflash {
       for (int j = 0; j < system.getNumberOfPhases(); j++) {
         Qmatrix[i][j] = 0.0;
         for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
-          Qmatrix[i][j] +=
-              multTerm2[k] / (system.getPhase(j).getComponent(k).getFugacityCoefficient()
-                  * system.getPhase(i).getComponent(k).getFugacityCoefficient());
+          Qmatrix[i][j] += multTerm2[k] / (system.getPhase(j).getComponent(k).getFugacityCoefficient()
+              * system.getPhase(i).getComponent(k).getFugacityCoefficient());
         }
         if (i == j) {
-          Qmatrix[i][j] += 1.0e-3;
+          double reg = 1.0e-3;
+          if (shouldApplyEnhancedMultiPhaseCheck()) {
+            double absDiag = Math.abs(Qmatrix[i][j]);
+            double beta = Math.abs(system.getPhase(i).getBeta());
+            // Keep strong regularization for near-singular small-beta phases,
+            // but reduce bias in well-conditioned enhanced-mode cases.
+            if (beta > 1.0e-8 && absDiag > 1.0e-8) {
+              reg = Math.max(1.0e-12, absDiag * 1.0e-8);
+            }
+          }
+          Qmatrix[i][j] += reg;
         }
       }
     }
@@ -207,9 +203,7 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * solveBeta.
-   * </p>
    *
    * @return a double
    */
@@ -217,6 +211,7 @@ public class TPmultiflash extends TPflash {
     SimpleMatrix betaMatrix = new SimpleMatrix(1, system.getNumberOfPhases());
     SimpleMatrix ans = null;
     double err = 1.0;
+    double gradResidual = 1.0;
     int iter = 1;
     do {
       iter++;
@@ -226,13 +221,28 @@ public class TPmultiflash extends TPflash {
 
       calcQ();
       SimpleMatrix dQM = new SimpleMatrix(dQdbeta);
+      gradResidual = dQM.normF();
       SimpleMatrix dQdBM = new SimpleMatrix(Qmatrix);
       try {
         ans = dQdBM.solve(dQM).transpose();
       } catch (Exception ex) {
-        logger.error(ex.getMessage());
-        break;
+        if (shouldApplyEnhancedMultiPhaseCheck()) {
+          for (int kk = 0; kk < system.getNumberOfPhases(); kk++) {
+            Qmatrix[kk][kk] += 1.0e-2;
+          }
+          dQdBM = new SimpleMatrix(Qmatrix);
+          try {
+            ans = dQdBM.solve(dQM).transpose();
+          } catch (Exception ex2) {
+            logger.error(ex2.getMessage());
+            break;
+          }
+        } else {
+          logger.error(ex.getMessage());
+          break;
+        }
       }
+
       betaMatrix = betaMatrix.minus(ans.scale(iter / (iter + 3.0)));
       removePhase = false;
       for (int k = 0; k < system.getNumberOfPhases(); k++) {
@@ -259,17 +269,51 @@ public class TPmultiflash extends TPflash {
       setXY();
       system.init(1);
       err = ans.normF();
-    } while ((err > 1e-12 && iter < 50) || iter < 3);
+    } while (((err > 1e-12 || gradResidual > 1e-10) && iter < 50) || iter < 3);
     // logger.info("iterations " + iter);
     return err;
+  }
+
+  /**
+   * Execute a bounded recursive rerun request to avoid unbounded recursion in difficult cases.
+   */
+  private void requestBoundedRerun() {
+    if (rerunDepth >= 4) {
+      logger.warn("TPmultiflash rerun depth limit reached, skipping additional rerun");
+      return;
+    }
+    rerunDepth++;
+    try {
+      run();
+    } finally {
+      rerunDepth--;
+    }
+  }
+
+  /**
+   * Remove a duplicate phase while conserving its mass by merging its phase fraction into the surviving
+   * (near-identical) phase before removal. Two phases flagged as numerical duplicates have essentially identical
+   * mole-fraction vectors, so the merged phase fraction is simply the sum of the two betas. Without this merge the
+   * removed phase's mass leaks into the remaining phases through {@code normalizeBeta()}, which halves trace liquid
+   * dropout (see UMR-PRU trace oil regression).
+   *
+   * @param keepPhase index of the phase to keep
+   * @param removePhase2 index of the duplicate phase to remove
+   */
+  private void mergeAndRemoveDuplicatePhase(int keepPhase, int removePhase2) {
+    double mergedBeta = system.getBeta(keepPhase) + system.getBeta(removePhase2);
+    system.removePhaseKeepTotalComposition(removePhase2);
+    // After removing removePhase2, indices above it shift down by one.
+    int newKeepIndex = keepPhase > removePhase2 ? keepPhase - 1 : keepPhase;
+    system.setBeta(newKeepIndex, mergedBeta);
+    system.normalizeBeta();
   }
 
   /** {@inheritDoc} */
   @Override
   public void stabilityAnalysis() {
     double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
+    double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0).getNumberOfComponents()];
 
     double[] deltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
     double[] oldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -279,8 +323,7 @@ public class TPmultiflash extends TPflash {
     double[] oldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
     double[] oldoldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
     double[] d = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] x = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
+    double[][] x = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0).getNumberOfComponents()];
     tm = new double[system.getPhase(0).getNumberOfComponents()];
 
     double[] alpha = null;
@@ -293,37 +336,32 @@ public class TPmultiflash extends TPflash {
     clonedSystem.add(system.clone());
     /*
      * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { if
-     * (system.getPhase(0).getComponent(i).getx() < 1e-100) { clonedSystem.add(null); continue; }
-     * double numb = 0; clonedSystem.add(system.clone());
+     * (system.getPhase(0).getComponent(i).getx() < 1e-100) { clonedSystem.add(null); continue; } double numb = 0;
+     * clonedSystem.add(system.clone());
      *
      * // (clonedSystem.get(i)).init(0); commented out sept 2005, Even S. for (int j = 0; j <
-     * system.getPhase(0).getNumberOfComponents(); j++) { numb = i == j ? 1.0 : 1.0e-12; // set to 0
-     * by Even Solbraa 23.01.2013 - chaged back to 1.0e-12 27.04.13 if
-     * (system.getPhase(0).getComponent(j).getz() < 1e-100) { numb = 0; } (
-     * clonedSystem.get(i)).getPhase(1).getComponent(j).setx(numb); } if
-     * (system.getPhase(0).getComponent(i).getIonicCharge() == 0) { ( clonedSystem.get(i)).init(1);
-     * } }
+     * system.getPhase(0).getNumberOfComponents(); j++) { numb = i == j ? 1.0 : 1.0e-12; // set to 0 by Even Solbraa
+     * 23.01.2013 - chaged back to 1.0e-12 27.04.13 if (system.getPhase(0).getComponent(j).getz() < 1e-100) { numb = 0;
+     * } ( clonedSystem.get(i)).getPhase(1).getComponent(j).setx(numb); } if
+     * (system.getPhase(0).getComponent(i).getIonicCharge() == 0) { ( clonedSystem.get(i)).init(1); } }
      */
 
     lowestGibbsEnergyPhase = 0;
     /*
      * // logger.info("low gibbs phase " + lowestGibbsEnergyPhase); for (int k = 0; k <
      * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) { for (int i = 0; i <
-     * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!((
-     * clonedSystem.get(k)) == null)) { sumw[k] += (
-     * clonedSystem.get(k)).getPhase(1).getComponent(i).getx(); } } }
+     * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!(( clonedSystem.get(k)) == null)) {
+     * sumw[k] += ( clonedSystem.get(k)).getPhase(1).getComponent(i).getx(); } } }
      *
-     * for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) { for
-     * (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!((
-     * clonedSystem.get(k)) == null) && system.getPhase(0).getComponent(k).getx() > 1e-100) { (
-     * clonedSystem.get(k)).getPhase(1).getComponent(i).setx((
+     * for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) { for (int i = 0; i <
+     * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!(( clonedSystem.get(k)) == null) &&
+     * system.getPhase(0).getComponent(k).getx() > 1e-100) { ( clonedSystem.get(k)).getPhase(1).getComponent(i).setx((
      * clonedSystem.get(k)).getPhase(1).getComponent(i).getx() / sumw[k]); } logger.info("x: " + (
-     * clonedSystem.get(k)).getPhase(0).getComponent(i).getx()); } if
-     * (system.getPhase(0).getComponent(k).getx() > 1e-100) { d[k] =
-     * Math.log(system.getPhase(0).getComponent(k).getx()) +
+     * clonedSystem.get(k)).getPhase(0).getComponent(i).getx()); } if (system.getPhase(0).getComponent(k).getx() >
+     * 1e-100) { d[k] = Math.log(system.getPhase(0).getComponent(k).getx()) +
      * system.getPhase(0).getComponent(k).getLogFugacityCoefficient();
-     * if(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents
-     * ()[k].getIonicCharge()!=0) d[k]=0; } //logger.info("dk: " + d[k]); }
+     * if(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents ()[k].getIonicCharge()!=0) d[k]=0;
+     * } //logger.info("dk: " + d[k]); }
      */
 
     // Calculate reference fugacities d[k] = ln(x_k) + ln(phi_k) for feed phase
@@ -336,7 +374,7 @@ public class TPmultiflash extends TPflash {
       }
     }
 
-    // Initialize logWi array (will be overwritten for each pure component trial)
+    // Initialize logWi array (will be overwritten for each trial)
     for (int j = 0; j < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); j++) {
       if (system.getPhase(0).getComponent(j).getz() > 1e-100) {
         logWi[j] = 0.0;
@@ -345,6 +383,188 @@ public class TPmultiflash extends TPflash {
       }
     }
 
+    // --- O2: Wilson K early exit + O3: K-value based trial phases ---
+    int numComp = system.getPhase(0).getNumberOfComponents();
+    double tempK = system.getTemperature();
+    double presBar = system.getPressure();
+    double[] wilsonK = new double[numComp];
+    double maxAbsLogK = 0.0;
+    boolean[] validComp = new boolean[numComp];
+
+    for (int i = 0; i < numComp; i++) {
+      double z = system.getPhase(0).getComponent(i).getz();
+      boolean isIon = system.getPhase(0).getComponent(i).getIonicCharge() != 0
+          || system.getPhase(0).getComponent(i).isIsIon();
+      validComp[i] = z > 1e-100 && !isIon;
+      if (validComp[i]) {
+        double tc = system.getPhase(0).getComponent(i).getTC();
+        double pc = system.getPhase(0).getComponent(i).getPC();
+        double omega = system.getPhase(0).getComponent(i).getAcentricFactor();
+        double kVal = (pc / presBar) * Math.exp(5.373 * (1.0 + omega) * (1.0 - tc / tempK));
+        wilsonK[i] = Math.max(kVal, 1e-20);
+        double absLogK = Math.abs(Math.log(wilsonK[i]));
+        if (absLogK > maxAbsLogK) {
+          maxAbsLogK = absLogK;
+        }
+      } else {
+        wilsonK[i] = 1.0;
+      }
+    }
+
+    // O2: Early exit — if all K ≈ 1.0 the system is near/above critical.
+    // Only skip Wilson K-based trials; still fall through to pure-component trials
+    // which use independent initial guesses not affected by K ≈ 1.
+    boolean skipWilsonKTrials = (maxAbsLogK < 0.01);
+
+    // O3: Wilson K-based trial phases — liquid-like (z/K) first, then vapor-like (K·z)
+    // Liquid-like trial runs first because most multi-phase systems have liquid-driven
+    // instability (water dropout, heavy end fallout). Heavy components have K << 1,
+    // so z/K heavily enriches them, creating a trial similar to pure-component heavy trials.
+    // Skip when all Wilson K ≈ 1 (near-critical) — these trials produce trivial initial
+    // guesses. The pure-component trials below still run and provide independent checks.
+    for (int trial = 0; !skipWilsonKTrials && trial < 2; trial++) {
+      // Initialize trial composition from Wilson K
+      for (int i = 0; i < numComp; i++) {
+        if (validComp[i]) {
+          double z = system.getPhase(0).getComponent(i).getz();
+          // trial 0 = liquid-like (z/K), trial 1 = vapor-like (K*z)
+          double wVal = (trial == 0) ? z / wilsonK[i] : wilsonK[i] * z;
+          logWi[i] = Math.log(Math.max(wVal, 1e-100));
+        } else {
+          logWi[i] = -10000.0;
+        }
+      }
+      // Set trial phase composition (unnormalized, same as pure-component trials)
+      for (int i = 0; i < numComp; i++) {
+        if (clonedSystem.get(0).isPhase(1)) {
+          clonedSystem.get(0).getPhase(1).getComponent(i).setx(validComp[i] ? safeExp(logWi[i]) : 1e-50);
+        }
+      }
+
+      // Successive substitution with Wegstein acceleration (same as pure-component trials)
+      int iter = 0;
+      err = 1.0e10;
+      double errOld = 1.0e100;
+      boolean useAccel = true;
+      boolean trialInitFailed = false;
+      int maxiter = 50;
+      do {
+        errOld = err;
+        iter++;
+        err = 0;
+
+        for (int i = 0; i < numComp; i++) {
+          oldoldoldlogw[i] = oldoldlogw[i];
+          oldoldlogw[i] = oldlogw[i];
+          oldlogw[i] = logWi[i];
+          oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
+          oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
+        }
+        try {
+          clonedSystem.get(0).init(1, 1);
+        } catch (Exception ex) {
+          trialInitFailed = true;
+          break;
+        }
+        for (int i = 0; i < numComp; i++) {
+          if (validComp[i]
+              && !Double.isInfinite(clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())) {
+            logWi[i] = d[i] - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
+          }
+          deltalogWi[i] = logWi[i] - oldlogw[i];
+          err += Math.abs(deltalogWi[i]);
+        }
+
+        // Wegstein acceleration every 7th iteration
+        if (iter % 7 == 0 && iter > 7 && useAccel && err < errOld) {
+          double prod1 = 0.0;
+          double prod2 = 0.0;
+          for (int i = 0; i < numComp; i++) {
+            if (validComp[i]) {
+              prod1 += deltalogWi[i] * oldDeltalogWi[i];
+              prod2 += oldDeltalogWi[i] * oldDeltalogWi[i];
+            }
+          }
+          if (prod2 > 1e-20) {
+            double lambda = prod1 / prod2;
+            if (lambda > 0.0 && lambda < 1.0) {
+              double accelFactor = lambda / (1.0 - lambda);
+              for (int i = 0; i < numComp; i++) {
+                if (validComp[i]) {
+                  logWi[i] += accelFactor * deltalogWi[i];
+                }
+              }
+            }
+          }
+        }
+        if (iter > 2 && err > errOld) {
+          useAccel = false;
+        }
+
+        // Update trial phase composition
+        for (int i = 0; i < numComp; i++) {
+          clonedSystem.get(0).getPhase(1).getComponent(i).setx(validComp[i] ? safeExp(logWi[i]) : 1e-50);
+        }
+      } while (!trialInitFailed && (Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
+
+      if (trialInitFailed) {
+        continue;
+      }
+
+      // Calculate tangent plane distance and check for instability
+      double tmVal = 1.0;
+      double xTrivialCheck0 = 0.0;
+      double xTrivialCheck1 = 0.0;
+      double[] xTrial = new double[numComp];
+      for (int i = 0; i < numComp; i++) {
+        if (validComp[i]) {
+          tmVal -= safeExp(logWi[i]);
+        }
+        xTrial[i] = clonedSystem.get(0).getPhase(1).getComponent(i).getx();
+        xTrivialCheck0 += Math.abs(xTrial[i] - system.getPhase(0).getComponent(i).getx());
+        xTrivialCheck1 += Math.abs(xTrial[i] - system.getPhase(1).getComponent(i).getx());
+      }
+
+      boolean isTrivial = Math.abs(xTrivialCheck0) < 1e-4 || Math.abs(xTrivialCheck1) < 1e-4;
+
+      if (!isTrivial && tmVal < -1e-8 && iter < maxiter) {
+        // Unstable — add new phase and return
+        system.addPhase();
+        int newPhaseIdx = system.getNumberOfPhases() - 1;
+        for (int i = 0; i < numComp; i++) {
+          system.getPhase(newPhaseIdx).getComponent(i).setx(xTrial[i]);
+        }
+        system.getPhases()[newPhaseIdx].normalize();
+        multiPhaseTest = true;
+        int dominantComp = 0;
+        double maxX = 0;
+        for (int i = 0; i < numComp; i++) {
+          if (xTrial[i] > maxX) {
+            maxX = xTrial[i];
+            dominantComp = i;
+          }
+        }
+        system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
+        try {
+          system.init(1);
+        } catch (Exception ex) {
+          logger.warn("K-value trial addPhase init failed: " + ex.getMessage());
+          system.removePhaseKeepTotalComposition(newPhaseIdx);
+          multiPhaseTest = false;
+          return;
+        }
+        system.normalizeBeta();
+        return;
+      }
+    }
+
+    // Wilson K trial phases can report a comfortable positive TPD while pure-component
+    // trial phases still find hydrocarbon liquid-liquid splits. Always keep the
+    // pure-component fallback in TPmultiflash so ordinary multiphase scans retain the
+    // same LLE coverage as the 3.7.x flash implementation.
+
+    // --- Fallback: Pure-component trials for cases Wilson K trials miss ---
+    // (e.g., LLE detection where K-values don't capture polarity-driven splits)
     int hydrocarbonTestCompNumb = 0;
     int lightTestCompNumb = 0;
     double Mmax = 0;
@@ -362,8 +582,7 @@ public class TPmultiflash extends TPflash {
     for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()
           && minimumGibbsEnergySystem.getPhase(0).getComponent(i).getz() > 1e-50) {
-        if (Math.abs(
-            (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmax) < 1e-5) {
+        if (Math.abs((minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmax) < 1e-5) {
           hydrocarbonTestCompNumb = i;
           // logger.info("CHECKING heavy component " + hydrocarbonTestCompNumb);
         }
@@ -371,8 +590,7 @@ public class TPmultiflash extends TPflash {
 
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()
           && minimumGibbsEnergySystem.getPhase(0).getComponent(i).getz() > 1e-50) {
-        if (Math.abs(
-            (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmin) < 1e-5) {
+        if (Math.abs((minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmin) < 1e-5) {
           lightTestCompNumb = i;
           // logger.info("CHECKING light component " + lightTestCompNumb);
         }
@@ -382,8 +600,8 @@ public class TPmultiflash extends TPflash {
     for (int j = system.getPhase(0).getNumberOfComponents() - 1; j >= 0; j--) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getx() < 1e-100
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getIonicCharge() != 0)
-          || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).isHydrocarbon()
-              && j != hydrocarbonTestCompNumb && j != lightTestCompNumb)) {
+          || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).isHydrocarbon() && j != hydrocarbonTestCompNumb
+              && j != lightTestCompNumb)) {
         continue;
       }
       double nomb = 0.0;
@@ -431,50 +649,67 @@ public class TPmultiflash extends TPflash {
       int iter = 0;
       double errOld = 1.0e100;
       boolean useaccsubst = true;
+      boolean pureTrialInitFailed = false;
       int maxsucssubiter = 150;
       int maxiter = 200;
+
+      // Pre-allocate Newton matrices outside the iteration loop to avoid GC pressure
+      int nc = system.getPhase(0).getNumberOfComponents();
+      DMatrixRMaj newtonF = new DMatrixRMaj(nc, 1);
+      DMatrixRMaj newtonJ = new DMatrixRMaj(nc, nc);
+      DMatrixRMaj newtonDx = new DMatrixRMaj(nc, 1);
+
       do {
         errOld = err;
         iter++;
         err = 0;
 
         if (iter <= maxsucssubiter || !system.isImplementedCompositionDeriativesofFugacity()) {
-          if (iter % 7 == 0 && useaccsubst) {
-            double vec1 = 0.0;
-
-            double vec2 = 0.0;
+          // DEM acceleration every 5th iteration (Michelsen 1982b, Risnes et al. 1981)
+          // Uses dominant eigenvalue estimate: λ = (Δg_n · Δg_{n-1}) / (Δg_{n-1} ·
+          // Δg_{n-1})
+          if (iter % 5 == 0 && iter > 5 && useaccsubst) {
             double prod1 = 0.0;
             double prod2 = 0.0;
-            for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              vec1 = oldDeltalogWi[i] * oldoldDeltalogWi[i];
-              vec2 = Math.pow(oldoldDeltalogWi[i], 2.0);
-              prod1 += vec1 * vec2;
-              prod2 += vec2 * vec2;
+            for (int i = 0; i < nc; i++) {
+              // Correct DEM formula: λ = Σ(Δg_n · Δg_{n-1}) / Σ(Δg_{n-1}²)
+              prod1 += deltalogWi[i] * oldDeltalogWi[i];
+              prod2 += oldDeltalogWi[i] * oldDeltalogWi[i];
             }
 
-            double lambda = prod1 / prod2;
-            // logger.info("lambda " + lambda);
-            for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              logWi[i] += lambda / (1.0 - lambda) * deltalogWi[i];
-              err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
-              Wi[j][i] = safeExp(logWi[i]);
+            if (prod2 > 1e-20) {
+              double lambda = prod1 / prod2;
+              // Only accelerate if 0 < λ < 1 (convergent regime)
+              if (lambda > 0.0 && lambda < 1.0) {
+                double accelFactor = lambda / (1.0 - lambda);
+                for (int i = 0; i < nc; i++) {
+                  logWi[i] += accelFactor * deltalogWi[i];
+                  Wi[j][i] = safeExp(logWi[i]);
+                }
+              }
+            }
+            // Must still update compositions after acceleration
+            for (int i = 0; i < nc; i++) {
+              err += Math.abs(logWi[i] - oldlogw[i]);
             }
           } else {
-            for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+            for (int i = 0; i < nc; i++) {
               oldoldoldlogw[i] = oldoldlogw[i];
               oldoldlogw[i] = oldlogw[i];
               oldlogw[i] = logWi[i];
               oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
               oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
             }
-            clonedSystem.get(0).init(1, 1);
-            for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              // oldlogw[i] = logWi[i];
-              if (!Double.isInfinite(
-                  clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())
-                  && system.getPhase(0).getComponent(i).getx() > 1e-100) {
-                logWi[i] = d[i]
-                    - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
+            try {
+              clonedSystem.get(0).init(1, 1);
+            } catch (Exception ex) {
+              pureTrialInitFailed = true;
+              break;
+            }
+            for (int i = 0; i < nc; i++) {
+              if (!Double.isInfinite(clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())
+                  && system.getPhase(0).getComponent(i).getz() > 1e-100) {
+                logWi[i] = d[i] - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
                 if (clonedSystem.get(0).getPhase(1).getComponent(i).getIonicCharge() != 0) {
                   logWi[i] = -1000.0;
                 }
@@ -482,113 +717,80 @@ public class TPmultiflash extends TPflash {
               deltalogWi[i] = logWi[i] - oldlogw[i];
               err += Math.abs(logWi[i] - oldlogw[i]);
               Wi[j][i] = safeExp(logWi[i]);
-              useaccsubst = true;
             }
             if (iter > 2 && err > errOld) {
               useaccsubst = false;
             }
           }
         } else {
-          SimpleMatrix f = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(), 1);
-          SimpleMatrix df = null;
-          SimpleMatrix identitytimesConst = null;
-          // if (!secondOrderStabilityAnalysis) {
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+          // Second-order (Newton) method using Michelsen's α-substitution
+          // α_i = 2√(W_i), which ensures W_i ≥ 0 (Michelsen 1982a)
+          for (int i = 0; i < nc; i++) {
             oldoldoldlogw[i] = oldoldlogw[i];
             oldoldlogw[i] = oldlogw[i];
             oldlogw[i] = logWi[i];
-            oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
-            oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
           }
-          clonedSystem.get(0).init(3, 1);
-          alpha = new double[clonedSystem.get(0).getPhases()[0].getNumberOfComponents()];
-          df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
-              system.getPhases()[0].getNumberOfComponents());
-          identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents());
-          // ,
-          // system.getPhases()[0].getNumberOfComponents());
-          // secondOrderStabilityAnalysis = true;
-          // }
+          // Newton needs fugcoef + composition derivatives
+          try {
+            clonedSystem.get(0).init(3, 1);
+          } catch (Exception ex) {
+            pureTrialInitFailed = true;
+            break;
+          }
+          alpha = new double[nc];
 
-          for (int i = 0; i < clonedSystem.get(0).getPhases()[0].getNumberOfComponents(); i++) {
+          for (int i = 0; i < nc; i++) {
             alpha[i] = 2.0 * Math.sqrt(Wi[j][i]);
           }
 
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+          // Build gradient and Jacobian using raw EJML (no SimpleMatrix allocation)
+          for (int i = 0; i < nc; i++) {
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-              f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
-                  + clonedSystem.get(0).getPhases()[1].getComponent(i).getLogFugacityCoefficient()
-                  - d[i]));
+              newtonF.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
+                  + clonedSystem.get(0).getPhases()[1].getComponent(i).getLogFugacityCoefficient() - d[i]));
+            } else {
+              newtonF.set(i, 0, 0.0);
             }
-            for (int k = 0; k < clonedSystem.get(0).getPhases()[0].getNumberOfComponents(); k++) {
+            for (int k = 0; k < nc; k++) {
               double kronDelt = (i == k) ? 1.0 : 0.0;
               if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-                df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
-                    * clonedSystem.get(0).getPhases()[1].getComponent(i).getdfugdn(k));
-                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                newtonJ.set(i, k, kronDelt
+                    + Math.sqrt(Wi[j][k] * Wi[j][i]) * clonedSystem.get(0).getPhases()[1].getComponent(i).getdfugdn(k));
               } else {
-                df.set(i, k, 0);
-                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                newtonJ.set(i, k, 0.0);
               }
             }
           }
 
-          // f.print(10, 10);
-          // df.print(10, 10);
-          SimpleMatrix dx = null;
-          try {
-            // Check if the determinant is close to zero
-            double determinant = df.determinant();
-            if (Math.abs(determinant) < 1e-10) {
-              logger.warn("Matrix is nearly singular. Determinant: " + determinant);
-              // Add a small regularization term to stabilize the solution
-              dx = df.plus(identitytimesConst.scale(1e-6)).solve(f).negative();
-            } else {
-              dx = df.plus(identitytimesConst).solve(f).negative();
+          // Solve J·dx = -f using raw EJML
+          boolean solved = CommonOps_DDRM.solve(newtonJ, newtonF, newtonDx);
+          if (!solved) {
+            // Regularize: add small diagonal and retry
+            for (int i = 0; i < nc; i++) {
+              newtonJ.add(i, i, 0.1);
             }
-          } catch (Exception e) {
-            logger.error("Error solving matrix equation: " + e.getMessage());
-            logger.debug("Attempting fallback with scaled regularization...");
-            try {
-              // Fallback: Add a larger regularization term and retry
-              dx = df.plus(identitytimesConst.scale(0.2)).solve(f).negative();
-            } catch (Exception ex) {
-              logger.error("Fallback matrix solve failed: " + ex.getMessage());
-              logger.debug("Attempting pseudo-inverse fallback...");
-              try {
-                DMatrixRMaj pinv = new DMatrixRMaj(df.numCols(), df.numRows());
-                CommonOps_DDRM.pinv(df.getDDRM(), pinv);
-                DMatrixRMaj result = new DMatrixRMaj(df.numCols(), 1);
-                CommonOps_DDRM.mult(pinv, f.getDDRM(), result);
-                dx = SimpleMatrix.wrap(result).negative();
-                logger.warn("Used pseudo-inverse matrix solve.");
-              } catch (Exception ex2) {
-                logger.error("Pseudo-inverse fallback failed: " + ex2.getMessage());
-                logger.warn("Setting dx to zero matrix as a last resort.");
-                dx = new SimpleMatrix(f.numRows(), f.numCols());
+            solved = CommonOps_DDRM.solve(newtonJ, newtonF, newtonDx);
+          }
+
+          if (solved) {
+            for (int i = 0; i < nc; i++) {
+              double alphaNew = alpha[i] - newtonDx.get(i, 0);
+              Wi[j][i] = Math.pow(alphaNew / 2.0, 2.0);
+              if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
+                logWi[i] = Math.log(Wi[j][i]);
               }
+              if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
+                  || system.getPhase(0).getComponent(i).isIsIon()) {
+                logWi[i] = -1000.0;
+              }
+              err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
             }
           }
-
-          for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-            double alphaNew = alpha[i] + dx.get(i, 0);
-            Wi[j][i] = Math.pow(alphaNew / 2.0, 2.0);
-            if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-              logWi[i] = Math.log(Wi[j][i]);
-            }
-            if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-                || system.getPhase(0).getComponent(i).isIsIon()) {
-              logWi[i] = -1000.0;
-            }
-            err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
-          }
-
-          // logger.info("err newton " + err);
         }
         // logger.info("err: " + err);
 
         for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-          if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
+          if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(safeExp(logWi[i]));
           }
           if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
@@ -596,7 +798,13 @@ public class TPmultiflash extends TPflash {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(1e-50);
           }
         }
-      } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
+      } while (!pureTrialInitFailed && (Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
+
+      if (pureTrialInitFailed) {
+        tm[j] = 10.0;
+        continue;
+      }
+
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
       double xTrivialCheck1 = 0.0;
@@ -604,7 +812,8 @@ public class TPmultiflash extends TPflash {
       tm[j] = 1.0;
 
       for (int i = 0; i < system.getPhase(1).getNumberOfComponents(); i++) {
-        if (system.getPhase(0).getComponent(i).getx() > 1e-100) {
+        // Use getz() so heavy HCs (with near-zero x in gas phase 0) still contribute to tm
+        if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
           tm[j] -= safeExp(logWi[i]);
         }
         x[j][i] = clonedSystem.get(0).getPhase(1).getComponent(i).getx();
@@ -638,9 +847,15 @@ public class TPmultiflash extends TPflash {
         }
         system.getPhases()[system.getNumberOfPhases() - 1].normalize();
         multiPhaseTest = true;
-        system.setBeta(system.getNumberOfPhases() - 1,
-            system.getPhase(0).getComponent(unstabcomp).getz());
-        system.init(1);
+        system.setBeta(system.getNumberOfPhases() - 1, system.getPhase(0).getComponent(unstabcomp).getz());
+        try {
+          system.init(1);
+        } catch (Exception ex) {
+          logger.warn("stabilityAnalysis addPhase init failed: " + ex.getMessage());
+          system.removePhaseKeepTotalComposition(system.getNumberOfPhases() - 1);
+          multiPhaseTest = false;
+          return;
+        }
         system.normalizeBeta();
 
         // logger.info("STABILITY ANALYSIS: ");
@@ -657,9 +872,9 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * Enhanced stability analysis that uses Wilson K-values for initial guesses and tests multiple
-   * trial phase compositions. This method is more robust for detecting liquid-liquid equilibria and
-   * three-phase systems (e.g., CO2/H2S/hydrocarbon mixtures).
+   * Enhanced stability analysis that uses Wilson K-values for initial guesses and tests multiple trial phase
+   * compositions. This method is more robust for detecting liquid-liquid equilibria and three-phase systems (e.g.,
+   * CO2/H2S/hydrocarbon mixtures).
    *
    * <p>
    * Key improvements over basic stabilityAnalysis():
@@ -667,9 +882,8 @@ public class TPmultiflash extends TPflash {
    * <ul>
    * <li>Uses Wilson K-value correlation for vapor-liquid equilibrium (VLE) detection</li>
    * <li>Tests vapor-like trial (K), liquid-like trial (1/K), and LLE-specific trial phases</li>
-   * <li>LLE trial uses acentric factor-based perturbation (polarity proxy) since Wilson K-values
-   * are derived from vapor pressure correlations and may not capture activity coefficient-driven
-   * liquid-liquid splits</li>
+   * <li>LLE trial uses acentric factor-based perturbation (polarity proxy) since Wilson K-values are derived from vapor
+   * pressure correlations and may not capture activity coefficient-driven liquid-liquid splits</li>
    * <li>Does not skip non-hydrocarbon components (important for CO2, H2S systems)</li>
    * <li>Tests stability against all existing phases, not just phase 0</li>
    * <li>Includes Wegstein acceleration for faster convergence</li>
@@ -736,8 +950,7 @@ public class TPmultiflash extends TPflash {
       for (int k = 0; k < numComponents; k++) {
         double xk = system.getPhase(refPhase).getComponent(k).getx();
         if (xk > 1e-100) {
-          dRef[refPhase][k] =
-              Math.log(xk) + system.getPhase(refPhase).getComponent(k).getLogFugacityCoefficient();
+          dRef[refPhase][k] = Math.log(xk) + system.getPhase(refPhase).getComponent(k).getLogFugacityCoefficient();
         }
       }
     }
@@ -768,14 +981,13 @@ public class TPmultiflash extends TPflash {
             logWi[j] = -logWilsonK[j];
             Wi[j] = Math.exp(logWi[j]);
           } else {
-            // LLE trial (trialType == 0): perturb based on polarity/activity
-            // Use component properties to create polar vs non-polar split
-            // Components with high acentric factor or polar nature go one way
-            double omega = system.getPhase(0).getComponent(j).getAcentricFactor();
+            // LLE trial (trialType == 0): perturb based on hydrocarbon vs non-HC
+            // nature
+            // Non-HCs (water, CO2, H2S, MEG) are enriched; HCs are depleted in the
+            // polar-rich trial phase — physically correct for aqueous LLE
+            // detection.
             double z = system.getPhase(0).getComponent(j).getz();
-            // Alternate enrichment based on acentric factor (proxy for polarity)
-            // Higher omega -> more polar/associating -> enrich in one liquid phase
-            double perturbFactor = (omega > 0.15) ? 2.0 : 0.5;
+            double perturbFactor = system.getPhase(0).getComponent(j).isHydrocarbon() ? 0.5 : 2.0;
             Wi[j] = z * perturbFactor;
             logWi[j] = Math.log(Math.max(Wi[j], 1e-100));
           }
@@ -783,6 +995,14 @@ public class TPmultiflash extends TPflash {
           oldoldlogw[j] = logWi[j];
           deltalogWi[j] = 0.0;
           oldDeltalogWi[j] = 0.0;
+        }
+
+        // Force correct EOS root for the trial phase type before evaluating fugacities.
+        // Without this, a clone inheriting a GAS phase type would pick the vapor root
+        // even for liquid-like and LLE trials, giving wrong fugacity coefficients.
+        if (clonedSystem.isPhase(1)) {
+          PhaseType trialPhaseType = (trialType == 1) ? PhaseType.GAS : PhaseType.LIQUID;
+          clonedSystem.setPhaseType(1, trialPhaseType);
         }
 
         // Set initial trial phase composition
@@ -811,13 +1031,19 @@ public class TPmultiflash extends TPflash {
             oldDeltalogWi[i] = deltalogWi[i];
           }
 
-          clonedSystem.init(1, 1);
+          try {
+            clonedSystem.init(1, 1);
+          } catch (RuntimeException ex) {
+            // Molar volume calculation failed for this trial phase composition
+            // Skip this trial - it's not a physically meaningful phase
+            logger.debug("Enhanced stability trial init failed: " + ex.getMessage());
+            break;
+          }
 
           // Update logWi from fugacity coefficients
           for (int i = 0; i < numComponents; i++) {
             if (validComponent[i]) {
-              double logFugCoeff =
-                  clonedSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient();
+              double logFugCoeff = clonedSystem.getPhase(1).getComponent(i).getLogFugacityCoefficient();
               if (!Double.isInfinite(logFugCoeff)) {
                 logWi[i] = d[i] - logFugCoeff;
               }
@@ -906,7 +1132,14 @@ public class TPmultiflash extends TPflash {
             }
           }
           system.setBeta(newPhaseIdx, system.getPhase(0).getComponent(dominantComp).getz());
-          system.init(1);
+          try {
+            system.init(1);
+          } catch (Exception ex) {
+            logger.warn("Enhanced K-value trial addPhase init failed: " + ex.getMessage());
+            system.removePhaseKeepTotalComposition(newPhaseIdx);
+            multiPhaseTest = false;
+            return;
+          }
           system.normalizeBeta();
           return;
         }
@@ -917,14 +1150,11 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * stabilityAnalysis3.
-   * </p>
    */
   public void stabilityAnalysis3() {
     double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
+    double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0).getNumberOfComponents()];
 
     double[] deltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
     double[] oldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -935,8 +1165,7 @@ public class TPmultiflash extends TPflash {
     double[] oldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
     double[] oldoldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
     double[] d = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] x = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
+    double[][] x = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0).getNumberOfComponents()];
     tm = new double[system.getPhase(0).getNumberOfComponents()];
 
     double[] alpha = null;
@@ -949,37 +1178,32 @@ public class TPmultiflash extends TPflash {
     clonedSystem.add(system.clone());
     /*
      * for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) { if
-     * (system.getPhase(0).getComponent(i).getx() < 1e-100) { clonedSystem.add(null); continue; }
-     * double numb = 0; clonedSystem.add(system.clone());
+     * (system.getPhase(0).getComponent(i).getx() < 1e-100) { clonedSystem.add(null); continue; } double numb = 0;
+     * clonedSystem.add(system.clone());
      *
      * // (clonedSystem.get(i)).init(0); commented out sept 2005, Even S. for (int j = 0; j <
-     * system.getPhase(0).getNumberOfComponents(); j++) { numb = i == j ? 1.0 : 1.0e-12; // set to 0
-     * by Even Solbraa 23.01.2013 - chaged back to 1.0e-12 27.04.13 if
-     * (system.getPhase(0).getComponent(j).getz() < 1e-100) { numb = 0; } (
-     * clonedSystem.get(i)).getPhase(1).getComponent(j).setx(numb); } if
-     * (system.getPhase(0).getComponent(i).getIonicCharge() == 0) { ( clonedSystem.get(i)).init(1);
-     * } }
+     * system.getPhase(0).getNumberOfComponents(); j++) { numb = i == j ? 1.0 : 1.0e-12; // set to 0 by Even Solbraa
+     * 23.01.2013 - chaged back to 1.0e-12 27.04.13 if (system.getPhase(0).getComponent(j).getz() < 1e-100) { numb = 0;
+     * } ( clonedSystem.get(i)).getPhase(1).getComponent(j).setx(numb); } if
+     * (system.getPhase(0).getComponent(i).getIonicCharge() == 0) { ( clonedSystem.get(i)).init(1); } }
      */
 
     lowestGibbsEnergyPhase = 0;
     /*
      * // logger.info("low gibbs phase " + lowestGibbsEnergyPhase); for (int k = 0; k <
      * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) { for (int i = 0; i <
-     * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!((
-     * clonedSystem.get(k)) == null)) { sumw[k] += (
-     * clonedSystem.get(k)).getPhase(1).getComponent(i).getx(); } } }
+     * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!(( clonedSystem.get(k)) == null)) {
+     * sumw[k] += ( clonedSystem.get(k)).getPhase(1).getComponent(i).getx(); } } }
      *
-     * for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) { for
-     * (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!((
-     * clonedSystem.get(k)) == null) && system.getPhase(0).getComponent(k).getx() > 1e-100) { (
-     * clonedSystem.get(k)).getPhase(1).getComponent(i).setx((
+     * for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) { for (int i = 0; i <
+     * minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) { if (!(( clonedSystem.get(k)) == null) &&
+     * system.getPhase(0).getComponent(k).getx() > 1e-100) { ( clonedSystem.get(k)).getPhase(1).getComponent(i).setx((
      * clonedSystem.get(k)).getPhase(1).getComponent(i).getx() / sumw[k]); } logger.info("x: " + (
-     * clonedSystem.get(k)).getPhase(0).getComponent(i).getx()); } if
-     * (system.getPhase(0).getComponent(k).getx() > 1e-100) { d[k] =
-     * Math.log(system.getPhase(0).getComponent(k).getx()) +
+     * clonedSystem.get(k)).getPhase(0).getComponent(i).getx()); } if (system.getPhase(0).getComponent(k).getx() >
+     * 1e-100) { d[k] = Math.log(system.getPhase(0).getComponent(k).getx()) +
      * system.getPhase(0).getComponent(k).getLogFugacityCoefficient();
-     * if(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents
-     * ()[k].getIonicCharge()!=0) d[k]=0; } //logger.info("dk: " + d[k]); }
+     * if(minimumGibbsEnergySystem.getPhases()[lowestGibbsEnergyPhase].getComponents ()[k].getIonicCharge()!=0) d[k]=0;
+     * } //logger.info("dk: " + d[k]); }
      */
     for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
       if (system.getPhase(0).getComponent(k).getx() > 1e-100) {
@@ -1016,8 +1240,7 @@ public class TPmultiflash extends TPflash {
     for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()
           && minimumGibbsEnergySystem.getPhase(0).getComponent(i).getz() > 1e-50) {
-        if (Math.abs(
-            (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmax) < 1e-5) {
+        if (Math.abs((minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmax) < 1e-5) {
           hydrocarbonTestCompNumb = i;
           // logger.info("CHECKING heavy component " + hydrocarbonTestCompNumb);
         }
@@ -1025,8 +1248,7 @@ public class TPmultiflash extends TPflash {
 
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()
           && minimumGibbsEnergySystem.getPhase(0).getComponent(i).getz() > 1e-50) {
-        if (Math.abs(
-            (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmin) < 1e-5) {
+        if (Math.abs((minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmin) < 1e-5) {
           lightTestCompNumb = i;
           // logger.info("CHECKING light component " + lightTestCompNumb);
         }
@@ -1036,8 +1258,8 @@ public class TPmultiflash extends TPflash {
     for (int j = 0; j < system.getNumberOfComponents(); j++) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getx() < 1e-100
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getIonicCharge() != 0)
-          || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).isHydrocarbon()
-              && j != hydrocarbonTestCompNumb && j != lightTestCompNumb)) {
+          || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).isHydrocarbon() && j != hydrocarbonTestCompNumb
+              && j != lightTestCompNumb)) {
         continue;
       }
 
@@ -1064,6 +1286,7 @@ public class TPmultiflash extends TPflash {
       int iter = 0;
       double errOld = 1.0e100;
       boolean useaccsubst = true;
+      boolean enhancedTrialInitFailed = false;
       int maxsucssubiter = 150;
       int maxiter = 200;
       do {
@@ -1100,14 +1323,17 @@ public class TPmultiflash extends TPflash {
               oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
               oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
             }
-            clonedSystem.get(0).init(1, 1);
+            try {
+              clonedSystem.get(0).init(1, 1);
+            } catch (Exception ex) {
+              enhancedTrialInitFailed = true;
+              break;
+            }
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
               // oldlogw[i] = logWi[i];
-              if (!Double.isInfinite(
-                  clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())
+              if (!Double.isInfinite(clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient())
                   && system.getPhase(0).getComponent(i).getx() > 1e-100) {
-                logWi[i] = d[i]
-                    - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
+                logWi[i] = d[i] - clonedSystem.get(0).getPhase(1).getComponent(i).getLogFugacityCoefficient();
                 if (clonedSystem.get(0).getPhase(1).getComponent(i).getIonicCharge() != 0) {
                   logWi[i] = -1000.0;
                 }
@@ -1133,15 +1359,16 @@ public class TPmultiflash extends TPflash {
             oldoldDeltalogWi[i] = oldoldlogw[i] - oldoldoldlogw[i];
             oldDeltalogWi[i] = oldlogw[i] - oldoldlogw[i];
           }
-          clonedSystem.get(0).init(3, 1);
+          try {
+            clonedSystem.get(0).init(3, 1);
+          } catch (Exception ex) {
+            enhancedTrialInitFailed = true;
+            break;
+          }
           alpha = new double[clonedSystem.get(0).getPhases()[0].getNumberOfComponents()];
           df = new SimpleMatrix(system.getPhases()[0].getNumberOfComponents(),
               system.getPhases()[0].getNumberOfComponents());
           identitytimesConst = SimpleMatrix.identity(system.getPhases()[0].getNumberOfComponents());
-          // ,
-          // system.getPhases()[0].getNumberOfComponents());
-          // secondOrderStabilityAnalysis = true;
-          // }
 
           for (int i = 0; i < clonedSystem.get(0).getPhases()[0].getNumberOfComponents(); i++) {
             alpha[i] = 2.0 * Math.sqrt(Wi[j][i]);
@@ -1150,24 +1377,19 @@ public class TPmultiflash extends TPflash {
           for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
               f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
-                  + clonedSystem.get(0).getPhases()[1].getComponent(i).getLogFugacityCoefficient()
-                  - d[i]));
+                  + clonedSystem.get(0).getPhases()[1].getComponent(i).getLogFugacityCoefficient() - d[i]));
             }
             for (int k = 0; k < clonedSystem.get(0).getPhases()[0].getNumberOfComponents(); k++) {
               double kronDelt = (i == k) ? 1.0 : 0.0;
               if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
-                df.set(i, k, kronDelt + Math.sqrt(Wi[j][k] * Wi[j][i])
-                    * clonedSystem.get(0).getPhases()[1].getComponent(i).getdfugdn(k));
-                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
+                df.set(i, k, kronDelt
+                    + Math.sqrt(Wi[j][k] * Wi[j][i]) * clonedSystem.get(0).getPhases()[1].getComponent(i).getdfugdn(k));
               } else {
                 df.set(i, k, 0);
-                // * clonedSystem.getPhases()[j].getNumberOfMolesInPhase());
               }
             }
           }
 
-          // f.print(10, 10);
-          // df.print(10, 10);
           SimpleMatrix dx = null;
           try {
             // Check if the determinant is close to zero
@@ -1203,8 +1425,6 @@ public class TPmultiflash extends TPflash {
             }
           }
 
-          // dx.print(10, 10);
-
           for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             double alphaNew = alpha[i] + dx.get(i, 0);
             Wi[j][i] = Math.pow(alphaNew / 2.0, 2.0);
@@ -1217,8 +1437,6 @@ public class TPmultiflash extends TPflash {
             }
             err += Math.abs((logWi[i] - oldlogw[i]) / oldlogw[i]);
           }
-
-          // logger.info("err newton " + err);
         }
         // logger.info("err: " + err);
         sumw[j] = 0;
@@ -1236,7 +1454,13 @@ public class TPmultiflash extends TPflash {
             clonedSystem.get(0).getPhase(1).getComponent(i).setx(1e-50);
           }
         }
-      } while ((Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
+      } while (!enhancedTrialInitFailed && (Math.abs(err) > 1e-9 || err > errOld) && iter < maxiter);
+
+      if (enhancedTrialInitFailed) {
+        tm[j] = 10.0;
+        continue;
+      }
+
       // logger.info("err: " + err + " ITER " + iter);
       double xTrivialCheck0 = 0.0;
       double xTrivialCheck1 = 0.0;
@@ -1278,9 +1502,15 @@ public class TPmultiflash extends TPflash {
         }
         system.getPhases()[system.getNumberOfPhases() - 1].normalize();
         multiPhaseTest = true;
-        system.setBeta(system.getNumberOfPhases() - 1,
-            system.getPhase(0).getComponent(unstabcomp).getz());
-        system.init(1);
+        system.setBeta(system.getNumberOfPhases() - 1, system.getPhase(0).getComponent(unstabcomp).getz());
+        try {
+          system.init(1);
+        } catch (Exception ex) {
+          logger.warn("stabilityAnalysisEnhanced pure-comp addPhase init failed: " + ex.getMessage());
+          system.removePhaseKeepTotalComposition(system.getNumberOfPhases() - 1);
+          multiPhaseTest = false;
+          return;
+        }
         system.normalizeBeta();
 
         // logger.info("STABILITY ANALYSIS: ");
@@ -1297,14 +1527,11 @@ public class TPmultiflash extends TPflash {
   }
 
   /**
-   * <p>
    * stabilityAnalysis2.
-   * </p>
    */
   public void stabilityAnalysis2() {
     double[] logWi = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
+    double[][] Wi = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0).getNumberOfComponents()];
 
     double[] deltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
     double[] oldDeltalogWi = new double[system.getPhases()[0].getNumberOfComponents()];
@@ -1315,8 +1542,7 @@ public class TPmultiflash extends TPflash {
     double[] oldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
     double[] oldoldoldlogw = new double[system.getPhases()[0].getNumberOfComponents()];
     double[] d = new double[system.getPhase(0).getNumberOfComponents()];
-    double[][] x = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0)
-        .getNumberOfComponents()];
+    double[][] x = new double[system.getPhase(0).getNumberOfComponents()][system.getPhase(0).getNumberOfComponents()];
     tm = new double[system.getPhase(0).getNumberOfComponents()];
 
     double[] alpha = null;
@@ -1360,8 +1586,7 @@ public class TPmultiflash extends TPflash {
 
     for (int k = 0; k < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); k++) {
       for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
-        if (!((clonedSystem.get(k)) == null)
-            && system.getPhase(0).getComponent(k).getx() > 1e-100) {
+        if (!((clonedSystem.get(k)) == null) && system.getPhase(0).getComponent(k).getx() > 1e-100) {
           (clonedSystem.get(k)).getPhase(1).getComponent(i)
               .setx((clonedSystem.get(k)).getPhase(1).getComponent(i).getx() / sumw[k]);
         }
@@ -1402,8 +1627,7 @@ public class TPmultiflash extends TPflash {
     for (int i = 0; i < minimumGibbsEnergySystem.getPhase(0).getNumberOfComponents(); i++) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()
           && minimumGibbsEnergySystem.getPhase(0).getComponent(i).getz() > 1e-50) {
-        if (Math.abs(
-            (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmax) < 1e-5) {
+        if (Math.abs((minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmax) < 1e-5) {
           hydrocarbonTestCompNumb = i;
           // logger.info("CHECKING heavy component " + hydrocarbonTestCompNumb);
         }
@@ -1411,8 +1635,7 @@ public class TPmultiflash extends TPflash {
 
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(i).isHydrocarbon()
           && minimumGibbsEnergySystem.getPhase(0).getComponent(i).getz() > 1e-50) {
-        if (Math.abs(
-            (minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmin) < 1e-5) {
+        if (Math.abs((minimumGibbsEnergySystem.getPhase(0).getComponent(i).getMolarMass()) - Mmin) < 1e-5) {
           lightTestCompNumb = i;
           // logger.info("CHECKING light component " + lightTestCompNumb);
         }
@@ -1422,8 +1645,8 @@ public class TPmultiflash extends TPflash {
     for (int j = system.getPhase(0).getNumberOfComponents() - 1; j >= 0; j--) {
       if (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getx() < 1e-100
           || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).getIonicCharge() != 0)
-          || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).isHydrocarbon()
-              && j != hydrocarbonTestCompNumb && j != lightTestCompNumb)) {
+          || (minimumGibbsEnergySystem.getPhase(0).getComponent(j).isHydrocarbon() && j != hydrocarbonTestCompNumb
+              && j != lightTestCompNumb)) {
         continue;
       }
       // if(minimumGibbsEnergySystem.getPhase(0).getComponent(j).getName().equals("water")
@@ -1470,11 +1693,9 @@ public class TPmultiflash extends TPflash {
             (clonedSystem.get(j)).init(1, 1);
             for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
               // oldlogw[i] = logWi[i];
-              if (!Double.isInfinite(
-                  (clonedSystem.get(j)).getPhase(1).getComponent(i).getLogFugacityCoefficient())
+              if (!Double.isInfinite((clonedSystem.get(j)).getPhase(1).getComponent(i).getLogFugacityCoefficient())
                   && system.getPhase(0).getComponent(i).getx() > 1e-100) {
-                logWi[i] = d[i]
-                    - (clonedSystem.get(j)).getPhase(1).getComponent(i).getLogFugacityCoefficient();
+                logWi[i] = d[i] - (clonedSystem.get(j)).getPhase(1).getComponent(i).getLogFugacityCoefficient();
                 if ((clonedSystem.get(j)).getPhase(1).getComponent(i).getIonicCharge() != 0) {
                   logWi[i] = -1000.0;
                 }
@@ -1512,8 +1733,7 @@ public class TPmultiflash extends TPflash {
           for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
             if (system.getPhase(0).getComponent(i).getz() > 1e-100) {
               f.set(i, 0, Math.sqrt(Wi[j][i]) * (Math.log(Wi[j][i])
-                  + (clonedSystem.get(j)).getPhases()[1].getComponent(i).getLogFugacityCoefficient()
-                  - d[i]));
+                  + (clonedSystem.get(j)).getPhases()[1].getComponent(i).getLogFugacityCoefficient() - d[i]));
             }
             for (int k = 0; k < (clonedSystem.get(j)).getPhases()[0].getNumberOfComponents(); k++) {
               double kronDelt = (i == k) ? 1.0 : 0.0;
@@ -1635,9 +1855,15 @@ public class TPmultiflash extends TPflash {
         }
         system.getPhases()[system.getNumberOfPhases() - 1].normalize();
         multiPhaseTest = true;
-        system.setBeta(system.getNumberOfPhases() - 1,
-            system.getPhase(0).getComponent(unstabcomp).getz());
-        system.init(1);
+        system.setBeta(system.getNumberOfPhases() - 1, system.getPhase(0).getComponent(unstabcomp).getz());
+        try {
+          system.init(1);
+        } catch (Exception ex) {
+          logger.warn("stabilityAnalysis3 addPhase init failed: " + ex.getMessage());
+          system.removePhaseKeepTotalComposition(system.getNumberOfPhases() - 1);
+          multiPhaseTest = false;
+          return;
+        }
         system.normalizeBeta();
 
         // logger.info("STABILITY ANALYSIS: ");
@@ -1708,16 +1934,21 @@ public class TPmultiflash extends TPflash {
     double initialBeta = Math.max(1.0e-3, 1000.0 * phaseFractionMinimumLimit);
     system.setBeta(phaseIndex, initialBeta);
     system.normalizeBeta();
-    system.init(1);
+    try {
+      system.init(1);
+    } catch (Exception ex) {
+      logger.warn("seedGasPhase init failed: " + ex.getMessage());
+      return false;
+    }
     return true;
   }
 
   /**
-   * Ensures only one aqueous phase exists in the system. The aqueous phase is the one with the
-   * highest aqueous component content (water, MEG, TEG, DEG, methanol, ethanol, and ions). Other
-   * liquid phases are reclassified as OIL by moving their aqueous components (water, glycols, ions)
-   * to the true aqueous phase and keeping hydrocarbons in the oil phase. This method applies to
-   * systems with ions (where ions must be confined to the aqueous phase) or chemical systems.
+   * Ensures only one aqueous phase exists in the system. The aqueous phase is the one with the highest aqueous
+   * component content (water, MEG, TEG, DEG, methanol, ethanol, and ions). Other liquid phases are reclassified as OIL
+   * by moving their aqueous components (water, glycols, ions) to the true aqueous phase and keeping hydrocarbons in the
+   * oil phase. This method applies to systems with ions (where ions must be confined to the aqueous phase) or chemical
+   * systems.
    */
   private void ensureSingleAqueousPhase() {
     // Only needed for systems with ions or chemical systems - skip for simple molecular systems
@@ -1789,8 +2020,8 @@ public class TPmultiflash extends TPflash {
           } else if (name.equals("water")) {
             // Reduce water significantly but keep trace for solubility
             component.setx(Math.min(component.getx() * 0.01, 1e-4));
-          } else if (name.equals("meg") || name.equals("teg") || name.equals("deg")
-              || name.equals("methanol") || name.equals("ethanol")) {
+          } else if (name.equals("meg") || name.equals("teg") || name.equals("deg") || name.equals("methanol")
+              || name.equals("ethanol")) {
             // Reduce glycols/alcohols
             component.setx(Math.min(component.getx() * 0.1, 1e-3));
           }
@@ -1801,7 +2032,11 @@ public class TPmultiflash extends TPflash {
     }
 
     // Reinitialize - phase types will be recalculated based on new compositions
-    system.init(1);
+    try {
+      system.init(1);
+    } catch (Exception ex) {
+      logger.warn("ensureSingleAqueousPhase init failed: " + ex.getMessage());
+    }
   }
 
   private boolean seedHydrocarbonLiquidFromFeed() {
@@ -1832,8 +2067,7 @@ public class TPmultiflash extends TPflash {
     double heavyHydrocarbonTotal = 0.0;
     for (int comp = 0; comp < system.getPhase(0).getNumberOfComponents(); comp++) {
       ComponentInterface component = system.getPhase(0).getComponent(comp);
-      if (component.isHydrocarbon() && component.getz() > 1.0e-6
-          && component.getMolarMass() > 0.045) {
+      if (component.isHydrocarbon() && component.getz() > 1.0e-6 && component.getMolarMass() > 0.045) {
         heavyHydrocarbonTotal += component.getz();
       }
     }
@@ -1849,7 +2083,7 @@ public class TPmultiflash extends TPflash {
       return false;
     }
 
-    system.addPhase();;
+    system.addPhase();
     int phaseIndex = system.getNumberOfPhases() - 1;
     system.setPhaseType(phaseIndex, PhaseType.OIL);
 
@@ -1875,7 +2109,12 @@ public class TPmultiflash extends TPflash {
     double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
     system.setBeta(phaseIndex, initialBeta);
     system.normalizeBeta();
-    system.init(1);
+    try {
+      system.init(1);
+    } catch (Exception ex) {
+      logger.warn("seedAqueousPhase init failed: " + ex.getMessage());
+      return false;
+    }
     return true;
   }
 
@@ -1883,6 +2122,7 @@ public class TPmultiflash extends TPflash {
   @Override
   public void run() {
     int aqueousPhaseNumber = 0;
+    enhancedStabilityChecked = false;
     // logger.info("Starting multiphase-flash....");
 
     // For systems with ions, temporarily remove ions before stability analysis
@@ -1896,8 +2136,7 @@ public class TPmultiflash extends TPflash {
     if (hasIons) {
       ionicZ = new double[system.getPhase(0).getNumberOfComponents()];
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        if (system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            || system.getPhase(0).getComponent(i).isIsIon()) {
+        if (system.getPhase(0).getComponent(i).getIonicCharge() != 0 || system.getPhase(0).getComponent(i).isIsIon()) {
           ionicZ[i] = system.getPhase(0).getComponent(i).getz();
           // Temporarily set ion z to near-zero for stability analysis
           for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
@@ -1905,7 +2144,11 @@ public class TPmultiflash extends TPflash {
           }
         }
       }
-      system.init(1);
+      try {
+        system.init(1);
+      } catch (Exception ex) {
+        logger.warn("Ion-stripping init failed: " + ex.getMessage());
+      }
     }
 
     // system.setNumberOfPhases(system.getNumberOfPhases()+1);
@@ -1915,8 +2158,71 @@ public class TPmultiflash extends TPflash {
       // phases, try enhanced version which uses Wilson K-value initial guesses and tests both
       // vapor-like and liquid-like trial phases for more robust detection of liquid-liquid
       // equilibria (e.g., sour gas, CO2 systems)
-      if (system.doEnhancedMultiPhaseCheck() && !multiPhaseTest && system.getNumberOfPhases() < 3) {
+      if (shouldApplyEnhancedMultiPhaseCheck() && !multiPhaseTest && system.getNumberOfPhases() < 3) {
+        enhancedStabilityChecked = true;
         stabilityAnalysisEnhanced();
+      }
+    }
+
+    // For ionic systems: stability analysis ran on the ion-free system and may have
+    // introduced a spurious third phase that is essentially a duplicate of an existing
+    // aqueous phase. Stripping ions removes the Debye-Hückel / Born / short-range
+    // stabilisation that keeps the aqueous phase distinct, so the algorithm finds a
+    // near-identical water-rich trial phase that passes the trivial-solution check
+    // (threshold 1e-4). This leads to two nearly-identical aqueous phases that cause
+    // solveBeta to diverge, destroying mass balance.
+    // Fix: reject the new phase if its non-ionic composition is very similar to an
+    // existing water-rich phase — this means it's a spurious duplicate caused by ion
+    // stripping, not a genuine new phase. We compare only non-ionic component mole
+    // fractions and reject if max |Δx| < 0.05 (true duplicates differ by < 0.01).
+    if (hasIons && multiPhaseTest && system.getNumberOfPhases() > 2) {
+      int newestPhase = system.getNumberOfPhases() - 1;
+      double newestWaterX = 0;
+      try {
+        newestWaterX = system.getPhase(newestPhase).getComponent("water").getx();
+      } catch (Exception ex) {
+        // no water component
+      }
+      boolean isDuplicate = false;
+      if (newestWaterX > 0.5) {
+        for (int pp = 0; pp < newestPhase && !isDuplicate; pp++) {
+          double existingWaterX = 0;
+          try {
+            existingWaterX = system.getPhase(pp).getComponent("water").getx();
+          } catch (Exception ex) {
+            continue;
+          }
+          if (existingWaterX <= 0.5) {
+            continue;
+          }
+          // Both phases are water-dominated — compare non-ionic compositions
+          double maxAbsDiff = 0;
+          for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
+            if (system.getPhase(0).getComponent(k).getIonicCharge() != 0) {
+              continue;
+            }
+            double diff = Math
+                .abs(system.getPhase(newestPhase).getComponent(k).getx() - system.getPhase(pp).getComponent(k).getx());
+            if (diff > maxAbsDiff) {
+              maxAbsDiff = diff;
+            }
+          }
+          if (maxAbsDiff < 0.05) {
+            isDuplicate = true;
+          }
+        }
+      }
+      if (isDuplicate) {
+        // Spurious duplicate — revert to pre-stability state
+        logger.debug("Rejecting spurious aqueous duplicate phase from ion-stripped stability analysis");
+        system.removePhaseKeepTotalComposition(newestPhase);
+        system.normalizeBeta();
+        try {
+          system.init(1);
+        } catch (Exception ex) {
+          logger.warn("init after spurious phase rejection failed: " + ex.getMessage());
+        }
+        multiPhaseTest = false;
       }
     }
     if (!multiPhaseTest && seedAdditionalPhaseFromFeed()) {
@@ -1932,8 +2238,7 @@ public class TPmultiflash extends TPflash {
 
     // Debug: Check phases after stability analysis (before ion restoration)
     if (hasIons) {
-      logger.debug("After stability analysis (ions removed): {} phases",
-          system.getNumberOfPhases());
+      logger.debug("After stability analysis (ions removed): {} phases", system.getNumberOfPhases());
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         logger.debug("  Phase {} type: {}", phase, system.getPhase(phase).getType());
       }
@@ -1941,11 +2246,10 @@ public class TPmultiflash extends TPflash {
 
     // Restore ions to aqueous phase(s) after stability analysis
     if (hasIons && ionicZ != null) {
-      aqueousPhaseNumber =
-          system.hasPhaseType(PhaseType.AQUEOUS) ? system.getPhaseNumberOfPhase("aqueous") : -1;
+      aqueousPhaseNumber = system.hasPhaseType(PhaseType.AQUEOUS) ? system.getPhaseNumberOfPhase("aqueous") : -1;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        if ((system.getPhase(0).getComponent(i).getIonicCharge() != 0
-            || system.getPhase(0).getComponent(i).isIsIon()) && ionicZ[i] > 1e-100) {
+        if ((system.getPhase(0).getComponent(i).getIonicCharge() != 0 || system.getPhase(0).getComponent(i).isIsIon())
+            && ionicZ[i] > 1e-100) {
           // Restore z values
           for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
             system.getPhase(phase).getComponent(i).setz(ionicZ[i]);
@@ -1962,13 +2266,16 @@ public class TPmultiflash extends TPflash {
       for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
         system.getPhase(phase).normalize();
       }
-      system.init(1);
+      try {
+        system.init(1);
+      } catch (Exception ex) {
+        logger.warn("Ion-restore init failed: " + ex.getMessage());
+      }
     }
 
     // system.init(1);
     // system.display();
-    aqueousPhaseNumber =
-        system.hasPhaseType(PhaseType.AQUEOUS) ? system.getPhaseNumberOfPhase("aqueous") : -1;
+    aqueousPhaseNumber = system.hasPhaseType(PhaseType.AQUEOUS) ? system.getPhaseNumberOfPhase("aqueous") : -1;
     if (system.isChemicalSystem() && aqueousPhaseNumber >= 0) {
       system.getChemicalReactionOperations().solveChemEq(aqueousPhaseNumber, 0);
       system.getChemicalReactionOperations().solveChemEq(aqueousPhaseNumber, 1);
@@ -1994,19 +2301,22 @@ public class TPmultiflash extends TPflash {
 
           if (aqueousPhaseNumber >= 0 && aqueousPhaseNumber < system.getNumberOfPhases()) {
             chemdev = 0.0;
-            double[] xchem =
-                new double[system.getPhase(aqueousPhaseNumber).getNumberOfComponents()];
+            double[] xchem = new double[system.getPhase(aqueousPhaseNumber).getNumberOfComponents()];
 
             for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
               xchem[i] = system.getPhase(aqueousPhaseNumber).getComponent(i).getx();
             }
 
-            system.init(1);
-            system.getChemicalReactionOperations().solveChemEq(aqueousPhaseNumber, 1);
+            try {
+              system.init(1);
+              system.getChemicalReactionOperations().solveChemEq(aqueousPhaseNumber, 1);
 
-            for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-              chemdev +=
-                  Math.abs(xchem[i] - system.getPhase(aqueousPhaseNumber).getComponent(i).getx());
+              for (i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
+                chemdev += Math.abs(xchem[i] - system.getPhase(aqueousPhaseNumber).getComponent(i).getx());
+              }
+            } catch (Exception ex) {
+              logger.warn("Chemical equilibrium init failed: " + ex.getMessage());
+              chemdev = 0.0;
             }
           }
         }
@@ -2024,13 +2334,12 @@ public class TPmultiflash extends TPflash {
           if (iterations % 50 == 0) {
             maxerr *= 100.0;
           }
-        } while (diff > maxerr && !removePhase && (diff < oldDiff || iterations < 50)
-            && iterations < 200);
+        } while (diff > maxerr && !removePhase && (diff < oldDiff || iterations < 50) && iterations < 200);
         // this.solveBeta(true);
         if (iterations >= 199) {
           logger.error("error in multiphase flash..did not solve in 200 iterations");
-          logger.error("diff " + diff + " temperaure " + system.getTemperature("C") + " pressure "
-              + system.getPressure("bara"));
+          logger.error(
+              "diff " + diff + " temperaure " + system.getTemperature("C") + " pressure " + system.getPressure("bara"));
           diff = this.solveBeta();
         }
       } while ((Math.abs(chemdev) > 1e-10 && iterOut < 100)
@@ -2039,16 +2348,17 @@ public class TPmultiflash extends TPflash {
       // After flash converges, check for additional phases (three-phase detection)
       // This is particularly important for systems like CO2/H2S/hydrocarbon mixtures
       // that may exhibit vapor-liquid-liquid equilibrium
-      if (system.doMultiPhaseCheck() && system.getNumberOfPhases() >= 2
-          && system.getNumberOfPhases() < 3 && !postFlashStabilityChecked) {
+      if (system.doMultiPhaseCheck() && system.getNumberOfPhases() >= 2 && system.getNumberOfPhases() < 3
+          && !postFlashStabilityChecked && !enhancedStabilityChecked) {
         postFlashStabilityChecked = true;
         int oldNumPhases = system.getNumberOfPhases();
+        enhancedStabilityChecked = true;
         stabilityAnalysisEnhanced();
         if (system.getNumberOfPhases() > oldNumPhases) {
           // Found a third phase - re-run the flash calculation
           multiPhaseTest = true;
           doStabilityAnalysis = false;
-          run();
+          requestBoundedRerun();
         }
       }
 
@@ -2100,7 +2410,12 @@ public class TPmultiflash extends TPflash {
           double initialBeta = Math.max(1.0e-5, 10.0 * phaseFractionMinimumLimit);
           system.setBeta(aquPhaseIndex, initialBeta);
           system.normalizeBeta();
-          system.init(1);
+          try {
+            system.init(1);
+          } catch (Exception ex) {
+            logger.warn("Aqueous phase seeding init failed, removing phase: " + ex.getMessage());
+            system.removePhaseKeepTotalComposition(aquPhaseIndex);
+          }
           multiPhaseTest = true;
           doStabilityAnalysis = false;
         }
@@ -2114,17 +2429,61 @@ public class TPmultiflash extends TPflash {
       boolean hasRemovedPhase = false;
       for (int i = 0; i < system.getNumberOfPhases(); i++) {
         if (system.getBeta(i) < 1.1 * phaseFractionMinimumLimit) {
+          // For systems with ions, never remove the only AQUEOUS phase — ions can only
+          // exist in aqueous phases. Removing it causes mass balance violations because
+          // setXY() forces ion x = 1e-50 in all non-aqueous phases.
+          if (hasIons && system.getPhase(i).getType() == PhaseType.AQUEOUS) {
+            logger.debug("Protecting aqueous phase {} from removal (beta={}) — ions require aqueous phase", i,
+                system.getBeta(i));
+            continue;
+          }
           system.removePhaseKeepTotalComposition(i);
           doStabilityAnalysis = false;
           hasRemovedPhase = true;
+          i--; // indices shift after removal — re-check the (new) phase at i
+        }
+      }
+
+      // For ionic systems: if the aqueous phase survived with near-zero beta but a
+      // non-aqueous phase was introduced by stability analysis (done on the ion-free
+      // system) and is also marginal, that third phase is likely spurious. Remove it
+      // to let the system settle back to the 2-phase result (gas + aqueous) that the
+      // initial TPflash found correctly.
+      if (hasIons && !hasRemovedPhase && system.getNumberOfPhases() > 2) {
+        int aqIdx = system.hasPhaseType(PhaseType.AQUEOUS) ? system.getPhaseNumberOfPhase("aqueous") : -1;
+        if (aqIdx >= 0 && system.getBeta(aqIdx) < 10.0 * phaseFractionMinimumLimit) {
+          // Aqueous phase beta is very low — the 3-phase result is not converging
+          // properly. Remove the non-aqueous phase with the smallest beta instead.
+          int removeIdx = -1;
+          double minBeta = Double.MAX_VALUE;
+          for (int i = 0; i < system.getNumberOfPhases(); i++) {
+            if (i != aqIdx && system.getBeta(i) < minBeta) {
+              minBeta = system.getBeta(i);
+              removeIdx = i;
+            }
+          }
+          if (removeIdx >= 0) {
+            logger.debug("Removing spurious non-aqueous phase {} (beta={}) to preserve ionic aqueous phase", removeIdx,
+                minBeta);
+            system.removePhaseKeepTotalComposition(removeIdx);
+            doStabilityAnalysis = false;
+            hasRemovedPhase = true;
+            // Re-run beta solver with the 2-phase system to ensure convergence
+            setDoubleArrays();
+            for (int iter2 = 0; iter2 < 50; iter2++) {
+              double d = this.solveBeta();
+              if (d < 1e-10) {
+                break;
+              }
+            }
+          }
         }
       }
 
       boolean trivialSolution = false;
       for (int i = 0; i < system.getNumberOfPhases(); i++) {
         for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
-          if (Math
-              .abs(system.getPhase(i).getDensity() - system.getPhase(j).getDensity()) < 1.1e-5) {
+          if (Math.abs(system.getPhase(i).getDensity() - system.getPhase(j).getDensity()) < 1.1e-5) {
             trivialSolution = true;
             break;
           }
@@ -2137,9 +2496,61 @@ public class TPmultiflash extends TPflash {
       if (trivialSolution && !hasRemovedPhase) {
         for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
           for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
-            if (Math
-                .abs(system.getPhase(i).getDensity() - system.getPhase(j).getDensity()) < 1.1e-5) {
-              system.removePhaseKeepTotalComposition(j);
+            if (Math.abs(system.getPhase(i).getDensity() - system.getPhase(j).getDensity()) < 1.1e-5) {
+              // Determine whether the two near-equal-density phases are
+              // genuine numerical
+              // duplicates (identical composition) or a legitimate
+              // near-critical V/L pair that
+              // merely shares a similar density. Only genuine duplicates may
+              // have their phase
+              // fractions merged; merging a real V/L pair would collapse the
+              // flash to a single
+              // phase (e.g. TPFlashTest.testRun5).
+              double maxCompDiffDup = 0.0;
+              for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
+                maxCompDiffDup = Math.max(maxCompDiffDup,
+                    Math.abs(system.getPhase(i).getComponent(k).getx() - system.getPhase(j).getComponent(k).getx()));
+              }
+              // Merge the phase fractions (mass-conserving) only when the two
+              // phases are genuine
+              // composition duplicates AND the system still contains a
+              // genuine vapour (GAS) phase.
+              // A redundant duplicate that appears alongside a dominant
+              // vapour phase (e.g. the
+              // trace oil at a dew point in the UMR-PR-UMC trace oil-dropout
+              // regression) must have
+              // its mass merged back into its twin so the trace liquid is not
+              // halved. When NO gas
+              // phase is present the multiphase flash has collapsed to a
+              // vapour-less trivial
+              // solution (e.g. three identical liquid phases in
+              // TPFlashTest.testRun5); in that
+              // case discard one duplicate and let the bounded rerun
+              // re-separate the genuine
+              // phases.
+              boolean systemHasGasPhase = false;
+              for (int p = 0; p < system.getNumberOfPhases(); p++) {
+                if (system.getPhase(p).getType() == PhaseType.GAS) {
+                  systemHasGasPhase = true;
+                  break;
+                }
+              }
+              boolean genuineDuplicate = maxCompDiffDup < 1.0e-4 && systemHasGasPhase;
+              // Protect aqueous phase in ionic systems from trivial-solution
+              // removal
+              if (hasIons && system.getPhase(j).getType() == PhaseType.AQUEOUS) {
+                if (genuineDuplicate) {
+                  // Remove the non-aqueous duplicate, merging its
+                  // mass into the aqueous phase
+                  mergeAndRemoveDuplicatePhase(j, i);
+                } else {
+                  system.removePhaseKeepTotalComposition(i);
+                }
+              } else if (genuineDuplicate) {
+                mergeAndRemoveDuplicatePhase(i, j);
+              } else {
+                system.removePhaseKeepTotalComposition(j);
+              }
               doStabilityAnalysis = false;
               hasRemovedPhase = true;
             }
@@ -2147,16 +2558,49 @@ public class TPmultiflash extends TPflash {
         }
       }
 
+      // Composition-based trivial solution detection: two phases of the SAME
+      // PhaseType with essentially identical mole-fraction vectors are
+      // non-converged numerical duplicates. Restricting to same PhaseType
+      // avoids removing legitimate near-critical V/L pairs (issue #1980).
+      //
+      // Restricted to CPA-family models only (issue #2117): for non-CPA EOS
+      // (PR, SRK, UMR-PR-UMC, ...) near-critical V/L and multi-liquid systems
+      // can transiently look like duplicates during stability iteration but
+      // later separate physically (e.g. SimpleReservoirTest.testRun2 with
+      // SystemPrEos, TPFlashTest.testRun5 with SystemUMRPRUMCEos). The
+      // duplicate-phase symptom is specific to CPA association in TEG/MEG
+      // /water-rich flowsheets.
+      String modelName = system.getModelName();
+      boolean isCpaModel = modelName != null && modelName.contains("CPA");
+      if (isCpaModel) {
+        for (int i = 0; i < system.getNumberOfPhases() - 1; i++) {
+          for (int j = i + 1; j < system.getNumberOfPhases(); j++) {
+            if (system.getPhase(i).getType() != system.getPhase(j).getType()) {
+              continue;
+            }
+            double maxCompDiff = 0.0;
+            for (int k = 0; k < system.getPhase(0).getNumberOfComponents(); k++) {
+              maxCompDiff = Math.max(maxCompDiff,
+                  Math.abs(system.getPhase(i).getComponent(k).getx() - system.getPhase(j).getComponent(k).getx()));
+            }
+            if (maxCompDiff < 1.0e-6) {
+              mergeAndRemoveDuplicatePhase(i, j);
+              doStabilityAnalysis = false;
+              hasRemovedPhase = true;
+              j--; // adjust index after removal
+            }
+          }
+        }
+      }
       /*
        * for (int i = 0; i < system.getNumberOfPhases()-1; i++) { if
-       * (Math.abs(system.getPhase(i).getDensity()-system.getPhase(i+1).getDensity())< 1e-6 &&
-       * !hasRemovedPhase) { system.removePhase(i+1); doStabilityAnalysis=false; hasRemovedPhase =
-       * true; } }
+       * (Math.abs(system.getPhase(i).getDensity()-system.getPhase(i+1).getDensity())< 1e-6 && !hasRemovedPhase) {
+       * system.removePhase(i+1); doStabilityAnalysis=false; hasRemovedPhase = true; } }
        */
       if (hasRemovedPhase && !secondTime) {
         secondTime = true;
         stabilityAnalysis3();
-        run();
+        requestBoundedRerun();
       }
 
       /*

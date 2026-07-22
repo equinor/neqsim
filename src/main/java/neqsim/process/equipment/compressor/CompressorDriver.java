@@ -1,14 +1,20 @@
 package neqsim.process.equipment.compressor;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
  * Models the driver (motor, turbine, engine) for a compressor.
  *
  * <p>
- * The driver model includes power limits, efficiency curves, and dynamic response characteristics
- * that affect compressor operation during transient simulations.
+ * The driver model includes power limits, efficiency curves, and dynamic response characteristics that affect
+ * compressor operation during transient simulations.
  * </p>
  *
  * @author esol
@@ -38,8 +44,8 @@ public class CompressorDriver implements Serializable {
   private double ratedSpeed = 5000.0; // RPM
 
   // For VFD motors - efficiency vs speed curve coefficients
-  private double[] vfdEfficiencyCoeffs = {0.90, 0.05, -0.02}; // η = a + b*(N/Nrated) +
-                                                              // c*(N/Nrated)²
+  private double[] vfdEfficiencyCoeffs = { 0.90, 0.05, -0.02 }; // η = a + b*(N/Nrated) +
+  // c*(N/Nrated)²
 
   // For gas turbines - ambient temperature derating
   private double isoTemperature = 288.15; // K (ISO conditions)
@@ -58,7 +64,8 @@ public class CompressorDriver implements Serializable {
   /**
    * Default constructor.
    */
-  public CompressorDriver() {}
+  public CompressorDriver() {
+  }
 
   /**
    * Constructor with driver type.
@@ -87,8 +94,7 @@ public class CompressorDriver implements Serializable {
    * Get the available power at current conditions.
    *
    * <p>
-   * For gas turbines, this accounts for ambient temperature derating. For electric motors, this
-   * returns rated power.
+   * For gas turbines, this accounts for ambient temperature derating. For electric motors, this returns rated power.
    * </p>
    *
    * @return available power in kW
@@ -106,8 +112,8 @@ public class CompressorDriver implements Serializable {
    * Get the maximum available power at current conditions.
    *
    * <p>
-   * This method returns a constant max power. Use {@link #getMaxAvailablePowerAtSpeed(double)} if a
-   * speed-dependent max power curve has been configured.
+   * This method returns a constant max power. Use {@link #getMaxAvailablePowerAtSpeed(double)} if a speed-dependent max
+   * power curve has been configured.
    * </p>
    *
    * @return maximum power in kW
@@ -125,15 +131,14 @@ public class CompressorDriver implements Serializable {
    * Get the maximum available power at a specific speed.
    *
    * <p>
-   * If a tabular max power curve has been set using
-   * {@link #setMaxPowerSpeedCurve(double[], double[], String)}, the power will be linearly
-   * interpolated from the curve data.
+   * If a tabular max power curve has been set using {@link #setMaxPowerSpeedCurve(double[], double[], String)}, the
+   * power will be linearly interpolated from the curve data.
    * </p>
    *
    * <p>
    * Alternatively, if polynomial coefficients have been configured using
-   * {@link #setMaxPowerCurveCoefficients(double, double, double)}, the max power will vary with
-   * speed according to: P_max(N) = maxPower * (a + b*(N/N_rated) + c*(N/N_rated)²)
+   * {@link #setMaxPowerCurveCoefficients(double, double, double)}, the max power will vary with speed according to:
+   * P_max(N) = maxPower * (a + b*(N/N_rated) + c*(N/N_rated)²)
    * </p>
    *
    * <p>
@@ -190,10 +195,8 @@ public class CompressorDriver implements Serializable {
     // Find the interval containing speed and interpolate
     for (int i = 0; i < n - 1; i++) {
       if (speed >= maxPowerCurveSpeeds[i] && speed <= maxPowerCurveSpeeds[i + 1]) {
-        double fraction = (speed - maxPowerCurveSpeeds[i])
-            / (maxPowerCurveSpeeds[i + 1] - maxPowerCurveSpeeds[i]);
-        return maxPowerCurvePowers[i]
-            + fraction * (maxPowerCurvePowers[i + 1] - maxPowerCurvePowers[i]);
+        double fraction = (speed - maxPowerCurveSpeeds[i]) / (maxPowerCurveSpeeds[i + 1] - maxPowerCurveSpeeds[i]);
+        return maxPowerCurvePowers[i] + fraction * (maxPowerCurvePowers[i + 1] - maxPowerCurvePowers[i]);
       }
     }
 
@@ -319,8 +322,7 @@ public class CompressorDriver implements Serializable {
    * @param timeStep time step in seconds
    * @return new speed in RPM
    */
-  public double calculateSpeedChange(double currentSpeed, double targetSpeed, double currentPower,
-      double timeStep) {
+  public double calculateSpeedChange(double currentSpeed, double targetSpeed, double currentPower, double timeStep) {
     double speedDiff = targetSpeed - currentSpeed;
 
     if (Math.abs(speedDiff) < 0.1) {
@@ -687,7 +689,16 @@ public class CompressorDriver implements Serializable {
    * @param c quadratic term coefficient
    */
   public void setVfdEfficiencyCoefficients(double a, double b, double c) {
-    this.vfdEfficiencyCoeffs = new double[] {a, b, c};
+    this.vfdEfficiencyCoeffs = new double[] { a, b, c };
+  }
+
+  /**
+   * Get VFD efficiency curve coefficients.
+   *
+   * @return copy of coefficients [a, b, c] for the VFD efficiency curve
+   */
+  public double[] getVfdEfficiencyCoefficients() {
+    return Arrays.copyOf(vfdEfficiencyCoeffs, vfdEfficiencyCoeffs.length);
   }
 
   /**
@@ -700,11 +711,19 @@ public class CompressorDriver implements Serializable {
   }
 
   /**
+   * Get gas turbine temperature derate factor.
+   *
+   * @return power reduction per Kelvin above ISO temperature
+   */
+  public double getTemperatureDerateFactor() {
+    return temperatureDerateFactor;
+  }
+
+  /**
    * Set max power curve coefficients for speed-dependent max power.
    *
    * <p>
-   * The max power at a given speed is calculated as: P_max(N) = maxPower * (a + b*(N/N_rated) +
-   * c*(N/N_rated)²)
+   * The max power at a given speed is calculated as: P_max(N) = maxPower * (a + b*(N/N_rated) + c*(N/N_rated)²)
    *
    * <p>
    * Example coefficients:
@@ -721,7 +740,7 @@ public class CompressorDriver implements Serializable {
    * @param c quadratic term coefficient (dimensionless)
    */
   public void setMaxPowerCurveCoefficients(double a, double b, double c) {
-    this.maxPowerCurveCoeffs = new double[] {a, b, c};
+    this.maxPowerCurveCoeffs = new double[] { a, b, c };
     this.useMaxPowerCurve = true;
   }
 
@@ -732,7 +751,7 @@ public class CompressorDriver implements Serializable {
    */
   public double[] getMaxPowerCurveCoefficients() {
     if (maxPowerCurveCoeffs != null) {
-      return new double[] {maxPowerCurveCoeffs[0], maxPowerCurveCoeffs[1], maxPowerCurveCoeffs[2]};
+      return new double[] { maxPowerCurveCoeffs[0], maxPowerCurveCoeffs[1], maxPowerCurveCoeffs[2] };
     }
     return null;
   }
@@ -750,8 +769,8 @@ public class CompressorDriver implements Serializable {
    * Disable the speed-dependent max power curve.
    *
    * <p>
-   * After calling this method, {@link #getMaxAvailablePowerAtSpeed(double)} will return constant
-   * max power regardless of speed.
+   * After calling this method, {@link #getMaxAvailablePowerAtSpeed(double)} will return constant max power regardless
+   * of speed.
    * </p>
    */
   public void disableMaxPowerCurve() {
@@ -776,18 +795,17 @@ public class CompressorDriver implements Serializable {
    * Set the max power vs speed curve using tabular data with linear interpolation.
    *
    * <p>
-   * This method allows specifying discrete data points for the max power curve. The power at any
-   * speed is determined by linear interpolation between the provided points. For speeds outside the
-   * data range, the boundary values are used.
+   * This method allows specifying discrete data points for the max power curve. The power at any speed is determined by
+   * linear interpolation between the provided points. For speeds outside the data range, the boundary values are used.
    * </p>
    *
    * <p>
    * Example usage for a typical VFD electric motor:
    * </p>
-   * 
+   *
    * <pre>
-   * double[] speeds = {4922, 5500, 6000, 6500, 7000, 7383}; // RPM
-   * double[] powers = {21.8, 27.5, 32.0, 37.0, 42.0, 44.4}; // MW
+   * double[] speeds = { 4922, 5500, 6000, 6500, 7000, 7383 }; // RPM
+   * double[] powers = { 21.8, 27.5, 32.0, 37.0, 42.0, 44.4 }; // MW
    * driver.setMaxPowerSpeedCurve(speeds, powers, "MW");
    * </pre>
    *
@@ -849,16 +867,179 @@ public class CompressorDriver implements Serializable {
   }
 
   /**
+   * Get the tabular max-power curve speed points.
+   *
+   * @return copy of speed points in RPM, or null if no table is configured
+   */
+  public double[] getMaxPowerCurveSpeeds() {
+    if (maxPowerCurveSpeeds == null) {
+      return null;
+    }
+    return Arrays.copyOf(maxPowerCurveSpeeds, maxPowerCurveSpeeds.length);
+  }
+
+  /**
+   * Get the tabular max-power curve power points.
+   *
+   * @return copy of power points in kW, or null if no table is configured
+   */
+  public double[] getMaxPowerCurvePowers() {
+    if (maxPowerCurvePowers == null) {
+      return null;
+    }
+    return Arrays.copyOf(maxPowerCurvePowers, maxPowerCurvePowers.length);
+  }
+
+  /**
    * Disable the tabular max power curve.
    */
   public void disableMaxPowerCurveTable() {
     this.useMaxPowerCurveTable = false;
   }
 
+  /**
+   * Load a max power speed curve from a CSV file.
+   *
+   * <p>
+   * The CSV file must have two columns: speed (RPM) and power. The first line is treated as a header and is skipped.
+   * Lines starting with '#' are treated as comments. The file is parsed with comma as the delimiter.
+   * </p>
+   *
+   * <p>
+   * Example CSV:
+   * </p>
+   *
+   * <pre>
+   * speed_rpm,power_MW
+   * 4922,21.8
+   * 5500,27.5
+   * 6000,32.0
+   * 6500,37.0
+   * 7000,42.0
+   * 7383,44.4
+   * </pre>
+   *
+   * @param filePath path to the CSV file
+   * @param powerUnit unit of power values in the CSV: "kW", "MW", or "W"
+   * @throws IOException if the file cannot be read
+   * @throws IllegalArgumentException if the file has invalid format or insufficient data
+   */
+  public void loadMaxPowerCurveFromCsv(String filePath, String powerUnit) throws IOException {
+    ArrayList<Double> speedList = new ArrayList<Double>();
+    ArrayList<Double> powerList = new ArrayList<Double>();
+
+    BufferedReader reader = new BufferedReader(new FileReader(filePath));
+    try {
+      String line;
+      boolean headerSkipped = false;
+      while ((line = reader.readLine()) != null) {
+        line = line.trim();
+        if (line.isEmpty() || line.startsWith("#")) {
+          continue;
+        }
+        if (!headerSkipped) {
+          headerSkipped = true;
+          // Try to parse the first line — if it fails, it's a header
+          try {
+            String[] parts = line.split(",");
+            Double.parseDouble(parts[0].trim());
+            // It parsed, so this is data, not a header — process it below
+          } catch (NumberFormatException e) {
+            continue; // Skip header line
+          }
+        }
+        String[] parts = line.split(",");
+        if (parts.length < 2) {
+          continue;
+        }
+        speedList.add(Double.parseDouble(parts[0].trim()));
+        powerList.add(Double.parseDouble(parts[1].trim()));
+      }
+    } finally {
+      reader.close();
+    }
+
+    if (speedList.size() < 2) {
+      throw new IllegalArgumentException("CSV file must contain at least 2 data points. Found: " + speedList.size());
+    }
+
+    double[] speeds = new double[speedList.size()];
+    double[] powers = new double[powerList.size()];
+    for (int i = 0; i < speedList.size(); i++) {
+      speeds[i] = speedList.get(i);
+      powers[i] = powerList.get(i);
+    }
+
+    setMaxPowerSpeedCurve(speeds, powers, powerUnit);
+  }
+
+  /**
+   * Load a max power speed curve from a resource on the classpath.
+   *
+   * <p>
+   * Same format as {@link #loadMaxPowerCurveFromCsv(String, String)} but loads from a classpath resource (e.g., bundled
+   * in a JAR).
+   * </p>
+   *
+   * @param resourcePath classpath resource path (e.g., "/compressor_data/driver_curve.csv")
+   * @param powerUnit unit of power values: "kW", "MW", or "W"
+   * @throws IOException if the resource cannot be read
+   * @throws IllegalArgumentException if the resource has invalid format or insufficient data
+   */
+  public void loadMaxPowerCurveFromResource(String resourcePath, String powerUnit) throws IOException {
+    InputStream is = getClass().getResourceAsStream(resourcePath);
+    if (is == null) {
+      throw new IOException("Resource not found on classpath: " + resourcePath);
+    }
+    ArrayList<Double> speedList = new ArrayList<Double>();
+    ArrayList<Double> powerList = new ArrayList<Double>();
+
+    BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+    try {
+      String line;
+      boolean headerSkipped = false;
+      while ((line = reader.readLine()) != null) {
+        line = line.trim();
+        if (line.isEmpty() || line.startsWith("#")) {
+          continue;
+        }
+        if (!headerSkipped) {
+          headerSkipped = true;
+          try {
+            String[] parts = line.split(",");
+            Double.parseDouble(parts[0].trim());
+          } catch (NumberFormatException e) {
+            continue;
+          }
+        }
+        String[] parts = line.split(",");
+        if (parts.length < 2) {
+          continue;
+        }
+        speedList.add(Double.parseDouble(parts[0].trim()));
+        powerList.add(Double.parseDouble(parts[1].trim()));
+      }
+    } finally {
+      reader.close();
+    }
+
+    if (speedList.size() < 2) {
+      throw new IllegalArgumentException("Resource must contain at least 2 data points. Found: " + speedList.size());
+    }
+
+    double[] speeds = new double[speedList.size()];
+    double[] powers = new double[powerList.size()];
+    for (int i = 0; i < speedList.size(); i++) {
+      speeds[i] = speedList.get(i);
+      powers[i] = powerList.get(i);
+    }
+
+    setMaxPowerSpeedCurve(speeds, powers, powerUnit);
+  }
+
   @Override
   public String toString() {
-    return String.format(
-        "CompressorDriver[%s, rated=%.0f kW, max=%.0f kW, η=%.1f%%, response=%.1f s]",
+    return String.format("CompressorDriver[%s, rated=%.0f kW, max=%.0f kW, η=%.1f%%, response=%.1f s]",
         driverType.getDisplayName(), ratedPower, maxPower, driverEfficiency * 100, responseTime);
   }
 }

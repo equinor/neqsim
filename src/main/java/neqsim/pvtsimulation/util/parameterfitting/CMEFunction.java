@@ -4,9 +4,7 @@ import neqsim.statistics.parameterfitting.nonlinearparameterfitting.LevenbergMar
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * CMEFunction class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,18 +16,14 @@ public class CMEFunction extends LevenbergMarquardtFunction {
   double Zsaturation = 0;
 
   /**
-   * <p>
    * Constructor for CMEFunction.
-   * </p>
    */
   public CMEFunction() {
     params = new double[3];
   }
 
   /**
-   * <p>
    * calcSaturationConditions.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -50,8 +44,7 @@ public class CMEFunction extends LevenbergMarquardtFunction {
       }
     } while (Math.abs(maxPres - minPres) > 1e-5);
     /*
-     * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) {
-     * logger.error(ex.getMessage(), ex); }
+     * try { thermoOps.dewPointPressureFlash(); } catch (Exception ex) { logger.error(ex.getMessage(), ex); }
      */
     saturationVolume = system.getVolume();
     saturationPressure = system.getPressure();

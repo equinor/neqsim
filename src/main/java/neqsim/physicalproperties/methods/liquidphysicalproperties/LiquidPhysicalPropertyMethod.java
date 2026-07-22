@@ -4,9 +4,7 @@ import neqsim.physicalproperties.methods.PhysicalPropertyMethod;
 import neqsim.physicalproperties.system.PhysicalProperties;
 
 /**
- * <p>
  * LiquidPhysicalPropertyMethod class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public abstract class LiquidPhysicalPropertyMethod extends PhysicalPropertyMetho
   protected PhysicalProperties liquidPhase;
 
   /**
-   * <p>
    * Constructor for LiquidPhysicalPropertyMethod.
-   * </p>
    *
    * @param liquidPhase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */

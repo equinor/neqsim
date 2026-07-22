@@ -5,12 +5,11 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.pump.Pump;
-import neqsim.process.equipment.separator.Separator;
 import neqsim.process.equipment.stream.StreamInterface;
+import neqsim.process.processmodel.ProcessSystem;
 
 /**
  * Scenario analyzer for production scheduling and what-if analysis.
@@ -26,7 +25,7 @@ import neqsim.process.equipment.stream.StreamInterface;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * ScenarioAnalyzer analyzer = new ScenarioAnalyzer(processSystem);
  * analyzer.addScenario("Base Case", new ScenarioParameters().setOilRate(10000.0).setGOR(150.0));
@@ -266,15 +265,13 @@ public class ScenarioAnalyzer implements Serializable {
     StringBuilder sb = new StringBuilder();
     sb.append("=== SCENARIO COMPARISON REPORT ===\n\n");
 
-    sb.append(String.format("%-20s %-12s %-12s %-12s %-12s %-10s%n", "Scenario", "Power (MW)",
-        "CO2 (t/d)", "Heat (MW)", "Cool (MW)", "Converged"));
-    sb.append(
-        "-------------------- ------------ ------------ ------------ ------------ ----------\n");
+    sb.append(String.format("%-20s %-12s %-12s %-12s %-12s %-10s%n", "Scenario", "Power (MW)", "CO2 (t/d)", "Heat (MW)",
+        "Cool (MW)", "Converged"));
+    sb.append("-------------------- ------------ ------------ ------------ ------------ ----------\n");
 
     for (ScenarioResult r : results) {
-      sb.append(String.format("%-20s %-12.2f %-12.2f %-12.2f %-12.2f %-10s%n", r.getName(),
-          r.getPowerMW(), r.getCO2TonnesPerDay(), r.getHeatingDutyMW(), r.getCoolingDutyMW(),
-          r.isConverged() ? "Yes" : "No"));
+      sb.append(String.format("%-20s %-12.2f %-12.2f %-12.2f %-12.2f %-10s%n", r.getName(), r.getPowerMW(),
+          r.getCO2TonnesPerDay(), r.getHeatingDutyMW(), r.getCoolingDutyMW(), r.isConverged() ? "Yes" : "No"));
     }
 
     return sb.toString();
@@ -301,7 +298,8 @@ public class ScenarioAnalyzer implements Serializable {
     /**
      * Creates empty scenario parameters.
      */
-    public ScenarioParameters() {}
+    public ScenarioParameters() {
+    }
 
     /**
      * Sets oil production rate.

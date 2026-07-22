@@ -8,12 +8,12 @@ import neqsim.thermo.system.SystemInterface;
  * Pre-computed flash property table for fast interpolation.
  *
  * <p>
- * Stores thermodynamic properties on a P-T grid for rapid lookup during transient simulations.
- * Avoids expensive flash calculations at each time step by using bilinear interpolation.
+ * Stores thermodynamic properties on a P-T grid for rapid lookup during transient simulations. Avoids expensive flash
+ * calculations at each time step by using bilinear interpolation.
  * </p>
  *
  * <h2>Usage</h2>
- * 
+ *
  * <pre>
  * FlashTable table = new FlashTable();
  * table.build(referenceFluid, 1e5, 100e5, 50, 250.0, 400.0, 40);
@@ -85,7 +85,8 @@ public class FlashTable implements Serializable {
   /**
    * Default constructor.
    */
-  public FlashTable() {}
+  public FlashTable() {
+  }
 
   /**
    * Build the flash table from a reference fluid.
@@ -98,9 +99,8 @@ public class FlashTable implements Serializable {
    * @param temperatureMax Maximum temperature (K)
    * @param numTemperaturePoints Number of temperature grid points
    */
-  public void build(SystemInterface referenceFluid, double pressureMin, double pressureMax,
-      int numPressurePoints, double temperatureMin, double temperatureMax,
-      int numTemperaturePoints) {
+  public void build(SystemInterface referenceFluid, double pressureMin, double pressureMax, int numPressurePoints,
+      double temperatureMin, double temperatureMax, int numTemperaturePoints) {
     this.pMin = pressureMin;
     this.pMax = pressureMax;
     this.tMin = temperatureMin;
@@ -259,28 +259,28 @@ public class FlashTable implements Serializable {
     ThermoProperties props = interpolate(pressure, temperature);
 
     switch (property.toLowerCase()) {
-      case "gasdensity":
-        return props.gasDensity;
-      case "liquiddensity":
-        return props.liquidDensity;
-      case "gasviscosity":
-        return props.gasViscosity;
-      case "liquidviscosity":
-        return props.liquidViscosity;
-      case "gasenthalpy":
-        return props.gasEnthalpy;
-      case "liquidenthalpy":
-        return props.liquidEnthalpy;
-      case "gassoundspeed":
-        return props.gasSoundSpeed;
-      case "liquidsoundspeed":
-        return props.liquidSoundSpeed;
-      case "surfacetension":
-        return props.surfaceTension;
-      case "gasvaporfraction":
-        return props.gasVaporFraction;
-      default:
-        return Double.NaN;
+    case "gasdensity":
+      return props.gasDensity;
+    case "liquiddensity":
+      return props.liquidDensity;
+    case "gasviscosity":
+      return props.gasViscosity;
+    case "liquidviscosity":
+      return props.liquidViscosity;
+    case "gasenthalpy":
+      return props.gasEnthalpy;
+    case "liquidenthalpy":
+      return props.liquidEnthalpy;
+    case "gassoundspeed":
+      return props.gasSoundSpeed;
+    case "liquidsoundspeed":
+      return props.liquidSoundSpeed;
+    case "surfacetension":
+      return props.surfaceTension;
+    case "gasvaporfraction":
+      return props.gasVaporFraction;
+    default:
+      return Double.NaN;
     }
   }
 

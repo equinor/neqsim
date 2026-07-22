@@ -13,20 +13,18 @@ import neqsim.thermo.phase.PhaseHydrate;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
-import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
  * TPHydrateFlash performs a TP flash that includes hydrate phase equilibrium calculation.
  *
  * <p>
- * This class extends TPflash to calculate the fraction of hydrate at given temperature and pressure
- * conditions. It uses the CPA EOS approach (Statoil/Equinor model) for hydrate fugacity calculation
- * with proper cavity occupancy.
+ * This class extends TPflash to calculate the fraction of hydrate at given temperature and pressure conditions. It uses
+ * the CPA EOS approach (Statoil/Equinor model) for hydrate fugacity calculation with proper cavity occupancy.
  * </p>
  *
  * <p>
- * The hydrate model supports both Structure I and Structure II hydrates, automatically selecting
- * the most stable structure based on fugacity minimization.
+ * The hydrate model supports both Structure I and Structure II hydrates, automatically selecting the most stable
+ * structure based on fugacity minimization.
  * </p>
  *
  * @author NeqSim development team
@@ -57,8 +55,8 @@ public class TPHydrateFlash extends TPflash {
   private int stableHydrateStructure = 1;
 
   /**
-   * Flag to enable gas-hydrate only mode. When true, the algorithm will try to achieve gas-hydrate
-   * equilibrium without an aqueous phase if all water can be consumed by hydrate.
+   * Flag to enable gas-hydrate only mode. When true, the algorithm will try to achieve gas-hydrate equilibrium without
+   * an aqueous phase if all water can be consumed by hydrate.
    */
   private boolean gasHydrateOnlyMode = false;
 
@@ -100,9 +98,9 @@ public class TPHydrateFlash extends TPflash {
    * Calculate hydrate phase equilibrium after the regular TP flash.
    *
    * <p>
-   * This method checks if hydrate would form at the current T,P conditions and calculates the
-   * hydrate fraction if formation occurs. When gasHydrateOnlyMode is enabled and water content is
-   * low enough, it will calculate gas-hydrate equilibrium without an aqueous phase.
+   * This method checks if hydrate would form at the current T,P conditions and calculates the hydrate fraction if
+   * formation occurs. When gasHydrateOnlyMode is enabled and water content is low enough, it will calculate gas-hydrate
+   * equilibrium without an aqueous phase.
    * </p>
    */
   private void calculateHydrateEquilibrium() {
@@ -211,8 +209,7 @@ public class TPHydrateFlash extends TPflash {
     // Set reference fugacities for each component
     for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
       for (int j = 0; j < hydratePhase.getNumberOfComponents(); j++) {
-        if (hydratePhase.getComponent(j).isHydrateFormer()
-            || hydratePhase.getComponent(j).getName().equals("water")) {
+        if (hydratePhase.getComponent(j).isHydrateFormer() || hydratePhase.getComponent(j).getName().equals("water")) {
           double refFugacity = system.getPhase(refPhaseIndex).getFugacity(j);
           ((ComponentHydrate) hydratePhase.getComponent(i)).setRefFug(j, refFugacity);
         } else {
@@ -225,8 +222,8 @@ public class TPHydrateFlash extends TPflash {
     hydratePhase.getComponent("water").setx(1.0);
 
     // Initialize the hydrate phase with updated fugacities
-    hydratePhase.init(hydratePhase.getNumberOfMolesInPhase(), hydratePhase.getNumberOfComponents(),
-        1, PhaseType.HYDRATE, 1.0);
+    hydratePhase.init(hydratePhase.getNumberOfMolesInPhase(), hydratePhase.getNumberOfComponents(), 1,
+        PhaseType.HYDRATE, 1.0);
   }
 
   /**
@@ -272,8 +269,7 @@ public class TPHydrateFlash extends TPflash {
    */
   private int findGasPhaseWithWater() {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
-      if (system.getPhase(i).getType() == PhaseType.GAS
-          && system.getPhase(i).hasComponent("water")) {
+      if (system.getPhase(i).getType() == PhaseType.GAS && system.getPhase(i).hasComponent("water")) {
         return i;
       }
     }
@@ -284,8 +280,8 @@ public class TPHydrateFlash extends TPflash {
    * Check if gas-hydrate-only equilibrium should be attempted.
    *
    * <p>
-   * This returns true when water content is low enough that all water can potentially be consumed
-   * by hydrate formation, allowing for gas-hydrate equilibrium without an aqueous phase.
+   * This returns true when water content is low enough that all water can potentially be consumed by hydrate formation,
+   * allowing for gas-hydrate equilibrium without an aqueous phase.
    * </p>
    *
    * @param waterZFraction the total water mole fraction in the system
@@ -306,9 +302,8 @@ public class TPHydrateFlash extends TPflash {
    * Attempt to remove the aqueous phase when all water is consumed by hydrate.
    *
    * <p>
-   * When water content is very low and hydrate has formed, this method checks if the aqueous phase
-   * fraction is negligible (smaller than the hydrate fraction) and removes it to achieve true
-   * gas-hydrate equilibrium.
+   * When water content is very low and hydrate has formed, this method checks if the aqueous phase fraction is
+   * negligible (smaller than the hydrate fraction) and removes it to achieve true gas-hydrate equilibrium.
    * </p>
    *
    * @param waterIndex the component index of water
@@ -588,8 +583,8 @@ public class TPHydrateFlash extends TPflash {
     for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
       if (hydratePhase.getComponent(i).isHydrateFormer()) {
         // Get cavity occupancy (YKI) for this component
-        double yki = ((ComponentHydrate) hydratePhase.getComponent(i))
-            .calcYKI(stableHydrateStructure - 1, 0, hydratePhase);
+        double yki = ((ComponentHydrate) hydratePhase.getComponent(i)).calcYKI(stableHydrateStructure - 1, 0,
+            hydratePhase);
         totalOccupancy += yki;
       }
     }
@@ -597,8 +592,8 @@ public class TPHydrateFlash extends TPflash {
     if (totalOccupancy > 0) {
       for (int i = 0; i < hydratePhase.getNumberOfComponents(); i++) {
         if (hydratePhase.getComponent(i).isHydrateFormer()) {
-          double yki = ((ComponentHydrate) hydratePhase.getComponent(i))
-              .calcYKI(stableHydrateStructure - 1, 0, hydratePhase);
+          double yki = ((ComponentHydrate) hydratePhase.getComponent(i)).calcYKI(stableHydrateStructure - 1, 0,
+              hydratePhase);
           moleFractions[i] = guestFraction * (yki / totalOccupancy);
         }
       }
@@ -668,8 +663,8 @@ public class TPHydrateFlash extends TPflash {
    * Check if gas-hydrate only mode is enabled.
    *
    * <p>
-   * When enabled, the algorithm will try to achieve gas-hydrate equilibrium without an aqueous
-   * phase when water content is low enough.
+   * When enabled, the algorithm will try to achieve gas-hydrate equilibrium without an aqueous phase when water content
+   * is low enough.
    * </p>
    *
    * @return true if gas-hydrate only mode is enabled
@@ -682,8 +677,8 @@ public class TPHydrateFlash extends TPflash {
    * Enable or disable gas-hydrate only mode.
    *
    * <p>
-   * When enabled, the algorithm will try to achieve gas-hydrate equilibrium without an aqueous
-   * phase when water content is low enough for all water to be consumed by hydrate formation.
+   * When enabled, the algorithm will try to achieve gas-hydrate equilibrium without an aqueous phase when water content
+   * is low enough for all water to be consumed by hydrate formation.
    * </p>
    *
    * @param gasHydrateOnlyMode true to enable gas-hydrate only mode

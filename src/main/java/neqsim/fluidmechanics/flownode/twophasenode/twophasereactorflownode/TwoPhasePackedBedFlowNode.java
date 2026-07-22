@@ -14,9 +14,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TwoPhasePackedBedFlowNode class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -28,50 +26,40 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
   static Logger logger = LogManager.getLogger(TwoPhasePackedBedFlowNode.class);
 
   /**
-   * <p>
    * Constructor for TwoPhasePackedBedFlowNode.
-   * </p>
    */
   public TwoPhasePackedBedFlowNode() {
     this.flowNodeType = "packed bed";
   }
 
   /**
-   * <p>
    * Constructor for TwoPhasePackedBedFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public TwoPhasePackedBedFlowNode(SystemInterface system, GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "packed bed";
     this.interphaseTransportCoefficient = new InterphasePackedBed(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+        this);
   }
 
   /**
-   * <p>
    * Constructor for TwoPhasePackedBedFlowNode.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param interphaseSystem a {@link neqsim.thermo.system.SystemInterface} object
-   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface}
-   *        object
+   * @param pipe a {@link neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface} object
    */
   public TwoPhasePackedBedFlowNode(SystemInterface system, SystemInterface interphaseSystem,
       GeometryDefinitionInterface pipe) {
     super(system, pipe);
     this.flowNodeType = "packed bed";
     this.interphaseTransportCoefficient = new InterphasePackedBed(this);
-    this.fluidBoundary =
-        new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
-            this);
+    this.fluidBoundary = new neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.nonequilibriumfluidboundary.filmmodelboundary.KrishnaStandartFilmModel(
+        this);
   }
 
   /** {@inheritDoc} */
@@ -113,14 +101,12 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
   /** {@inheritDoc} */
   @Override
   public double calcReynoldNumber() {
-    reynoldsNumber[1] =
-        getSuperficialVelocity(1) / getGeometry().getPacking().getSurfaceAreaPrVolume()
-            * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
-            / bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
-    reynoldsNumber[0] =
-        getSuperficialVelocity(0) / getGeometry().getPacking().getSurfaceAreaPrVolume()
-            * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
-            / bulkSystem.getPhases()[0].getPhysicalProperties().getViscosity();
+    reynoldsNumber[1] = getSuperficialVelocity(1) / getGeometry().getPacking().getSurfaceAreaPrVolume()
+        * bulkSystem.getPhases()[1].getPhysicalProperties().getDensity()
+        / bulkSystem.getPhases()[1].getPhysicalProperties().getViscosity();
+    reynoldsNumber[0] = getSuperficialVelocity(0) / getGeometry().getPacking().getSurfaceAreaPrVolume()
+        * bulkSystem.getPhases()[0].getPhysicalProperties().getDensity()
+        / bulkSystem.getPhases()[0].getPhysicalProperties().getViscosity();
     System.out.println("rey liq " + reynoldsNumber[1]);
     System.out.println("rey gas " + reynoldsNumber[0]);
     return reynoldsNumber[1];
@@ -129,8 +115,7 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
   /** {@inheritDoc} */
   @Override
   public double calcContactLength() {
-    interphaseContactArea =
-        pipe.getPacking().getSurfaceAreaPrVolume() * getLengthOfNode() * pipe.getArea();
+    interphaseContactArea = pipe.getPacking().getSurfaceAreaPrVolume() * getLengthOfNode() * pipe.getArea();
     return wallContactLength[0];
   }
 
@@ -159,16 +144,14 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
     for (int componentNumber = 0; componentNumber < getBulkSystem().getPhases()[0]
         .getNumberOfComponents(); componentNumber++) {
       if (componentNumber == 1) {
-        double liquidMolarRate =
-            getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
-        double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber)
+        double liquidMolarRate = getFluidBoundary().getInterphaseMolarFlux(componentNumber)
             * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
+        double gasMolarRate = -getFluidBoundary().getInterphaseMolarFlux(componentNumber) * getInterphaseContactArea(); // getInterphaseContactLength(0)*getGeometry().getNodeLength();
         System.out.println("liquidMolarRate" + liquidMolarRate);
         // getBulkSystem().getPhase(0).addMoles(componentNumber,
         // this.flowDirection[0]*gasMolarRate);
         getBulkSystem().addComponent(componentNumber, this.flowDirection[0] * gasMolarRate, 0);
-        getBulkSystem().getPhase(1).addMolesChemReac(componentNumber,
-            this.flowDirection[1] * liquidMolarRate);
+        getBulkSystem().getPhase(1).addMolesChemReac(componentNumber, this.flowDirection[1] * liquidMolarRate);
       }
     }
 
@@ -180,12 +163,9 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
       getOperations().chemicalEquilibrium();
     }
     getBulkSystem().init(3);
-    System.out.println(
-        "reac heat " + getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat());
-    double heatFlux = getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(0,
-        getPrandtlNumber(0), this)
-        * (getBulkSystem().getPhase(1).getTemperature()
-            - getBulkSystem().getPhase(0).getTemperature())
+    System.out.println("reac heat " + getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat());
+    double heatFlux = getInterphaseTransportCoefficient().calcInterphaseHeatTransferCoefficient(0, getPrandtlNumber(0),
+        this) * (getBulkSystem().getPhase(1).getTemperature() - getBulkSystem().getPhase(0).getTemperature())
         * getInterphaseContactArea();
     double liquid_dT = -this.flowDirection[1] * heatFlux / getBulkSystem().getPhase(1).getCp();
     double gas_dT = this.flowDirection[0] * heatFlux / getBulkSystem().getPhase(0).getCp();
@@ -201,24 +181,19 @@ public class TwoPhasePackedBedFlowNode extends TwoPhaseFlowNode {
     // getWallContactLength(0) *
     // getGeometry().getNodeLength()/getBulkSystem().getPhase(0).getCp();
     System.out.println("liq dT1 " + liquid_dT);
-    liquid_dT += this.flowDirection[1]
-        * getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat()
+    liquid_dT += this.flowDirection[1] * getBulkSystem().getChemicalReactionOperations().getDeltaReactionHeat()
         / getBulkSystem().getPhase(1).getCp();
     System.out.println("Cp " + getBulkSystem().getPhase(1).getCp());
     System.out.println("liq dT2 " + liquid_dT);
     System.out.println("gas dT " + gas_dT);
-    getBulkSystem().getPhase(1)
-        .setTemperature(getBulkSystem().getPhase(1).getTemperature() + liquid_dT);
-    getBulkSystem().getPhase(0)
-        .setTemperature(getBulkSystem().getPhase(0).getTemperature() + gas_dT);
+    getBulkSystem().getPhase(1).setTemperature(getBulkSystem().getPhase(1).getTemperature() + liquid_dT);
+    getBulkSystem().getPhase(0).setTemperature(getBulkSystem().getPhase(0).getTemperature() + gas_dT);
 
     getBulkSystem().init(3);
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

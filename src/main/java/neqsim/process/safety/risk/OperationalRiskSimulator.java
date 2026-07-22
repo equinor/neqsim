@@ -28,20 +28,20 @@ import neqsim.process.util.optimizer.ProductionImpactResult;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * OperationalRiskSimulator simulator = new OperationalRiskSimulator(processSystem);
  * simulator.setFeedStreamName("Well Feed");
  * simulator.setProductStreamName("Export Gas");
- * 
+ *
  * // Add equipment with failure rates
  * simulator.addEquipmentReliability("HP Compressor", 0.02, 24.0); // 2% failures/year, 24hr MTTR
  * simulator.addEquipmentReliability("LP Compressor", 0.02, 24.0);
- * 
+ *
  * // Run simulation
  * OperationalRiskResult result = simulator.runSimulation(1000, 365.0); // 1000 iterations, 1 year
- * 
+ *
  * System.out.println("Expected Availability: " + result.getAvailability() + "%");
  * System.out.println("P50 Production: " + result.getP50Production() + " kg");
  * }
@@ -206,10 +206,8 @@ public class OperationalRiskSimulator implements Serializable {
    * @param mttr mean time to repair in hours
    * @return this simulator for chaining
    */
-  public OperationalRiskSimulator addEquipmentReliability(String equipmentName, double failureRate,
-      double mttr) {
-    equipmentReliability.put(equipmentName,
-        new EquipmentReliability(equipmentName, failureRate, mttr));
+  public OperationalRiskSimulator addEquipmentReliability(String equipmentName, double failureRate, double mttr) {
+    equipmentReliability.put(equipmentName, new EquipmentReliability(equipmentName, failureRate, mttr));
     return this;
   }
 
@@ -280,8 +278,7 @@ public class OperationalRiskSimulator implements Serializable {
 
     // Run Monte Carlo iterations
     for (int iter = 0; iter < iterations; iter++) {
-      SimulationState state =
-          simulateIteration(random, timeHorizonHours, baselineProduction, productionWithFailure);
+      SimulationState state = simulateIteration(random, timeHorizonHours, baselineProduction, productionWithFailure);
 
       totalProductions[iter] = state.totalProduction;
       availabilities[iter] = state.uptimeHours / timeHorizonHours;
@@ -307,8 +304,8 @@ public class OperationalRiskSimulator implements Serializable {
     return result;
   }
 
-  private SimulationState simulateIteration(Random random, double timeHorizonHours,
-      double baselineProduction, Map<String, Double> productionWithFailure) {
+  private SimulationState simulateIteration(Random random, double timeHorizonHours, double baselineProduction,
+      Map<String, Double> productionWithFailure) {
 
     SimulationState state = new SimulationState();
     double currentTime = 0.0;
@@ -401,8 +398,8 @@ public class OperationalRiskSimulator implements Serializable {
     // Run simulation for each day
     for (int day = 1; day <= days; day++) {
       OperationalRiskResult result = runSimulation(iterations, day);
-      forecast.addDataPoint(day, result.getMeanProduction(), result.getP10Production(),
-          result.getP50Production(), result.getP90Production());
+      forecast.addDataPoint(day, result.getMeanProduction(), result.getP10Production(), result.getP50Production(),
+          result.getP90Production());
     }
 
     return forecast;

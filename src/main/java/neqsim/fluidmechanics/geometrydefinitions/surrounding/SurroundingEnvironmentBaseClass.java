@@ -1,9 +1,7 @@
 package neqsim.fluidmechanics.geometrydefinitions.surrounding;
 
 /**
- * <p>
  * SurroundingEnvironmentBaseClass class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -13,11 +11,10 @@ public class SurroundingEnvironmentBaseClass implements SurroundingEnvironment {
   private double temperature = 298.15;
 
   /**
-   * <p>
    * Constructor for SurroundingEnvironmentBaseClass.
-   * </p>
    */
-  public SurroundingEnvironmentBaseClass() {}
+  public SurroundingEnvironmentBaseClass() {
+  }
 
   /** {@inheritDoc} */
   @Override

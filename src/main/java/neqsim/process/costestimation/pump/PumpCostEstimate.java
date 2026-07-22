@@ -9,8 +9,8 @@ import neqsim.process.mechanicaldesign.pump.PumpMechanicalDesign;
  * Cost estimation class for pumps.
  *
  * <p>
- * This class provides pump-specific cost estimation methods using chemical engineering cost
- * correlations for centrifugal, positive displacement, and specialty pumps.
+ * This class provides pump-specific cost estimation methods using chemical engineering cost correlations for
+ * centrifugal, positive displacement, and specialty pumps.
  * </p>
  *
  * @author AGAS
@@ -206,8 +206,7 @@ public class PumpCostEstimate extends UnitCostEstimateBaseClass {
       return 1.3; // Double mechanical seals
     } else if ("packed".equalsIgnoreCase(sealType)) {
       return 0.8; // Packed glands (cheapest)
-    } else if ("mag-drive".equalsIgnoreCase(sealType)
-        || "magnetic-drive".equalsIgnoreCase(sealType)) {
+    } else if ("mag-drive".equalsIgnoreCase(sealType) || "magnetic-drive".equalsIgnoreCase(sealType)) {
       return 2.0; // Magnetic drive (sealless)
     } else if ("canned".equalsIgnoreCase(sealType)) {
       return 2.5; // Canned motor pump

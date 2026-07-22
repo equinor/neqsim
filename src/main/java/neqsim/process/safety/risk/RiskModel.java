@@ -12,21 +12,20 @@ import neqsim.process.safety.risk.RiskResult.EventResult;
  * Probabilistic risk model for process safety analysis.
  *
  * <p>
- * Provides Monte Carlo simulation, event tree analysis, and sensitivity analysis capabilities for
- * quantitative risk assessment (QRA). Integrates with NeqSim's process simulation and safety
- * scenario framework.
+ * Provides Monte Carlo simulation, event tree analysis, and sensitivity analysis capabilities for quantitative risk
+ * assessment (QRA). Integrates with NeqSim's process simulation and safety scenario framework.
  *
  * <p>
  * <b>Typical Usage:</b>
- * 
+ *
  * <pre>
  * {@code
  * RiskModel model = new RiskModel("HP Separator Study");
  * model.setProcessSystem(processSystem);
  *
  * // Add initiating events with frequencies (per year)
- * model.addEvent(RiskEvent.builder().name("Small Leak").initiatingEvent(InitiatingEvent.LEAK_SMALL)
- *     .frequency(1e-3).consequenceCategory(ConsequenceCategory.MINOR).build());
+ * model.addEvent(RiskEvent.builder().name("Small Leak").initiatingEvent(InitiatingEvent.LEAK_SMALL).frequency(1e-3)
+ *     .consequenceCategory(ConsequenceCategory.MINOR).build());
  *
  * // Run Monte Carlo analysis
  * RiskResult result = model.runMonteCarloAnalysis(10000);
@@ -157,8 +156,7 @@ public class RiskModel {
    * @return the created event
    */
   public RiskEvent addInitiatingEvent(String name, double frequency, ConsequenceCategory category) {
-    RiskEvent event =
-        RiskEvent.builder().name(name).frequency(frequency).consequenceCategory(category).build();
+    RiskEvent event = RiskEvent.builder().name(name).frequency(frequency).consequenceCategory(category).build();
     events.add(event);
     return event;
   }
@@ -174,8 +172,8 @@ public class RiskModel {
    */
   public RiskEvent addConditionalEvent(String name, RiskEvent parentEvent, double probability,
       ConsequenceCategory category) {
-    RiskEvent event = RiskEvent.builder().name(name).parentEvent(parentEvent)
-        .conditionalProbability(probability).consequenceCategory(category).build();
+    RiskEvent event = RiskEvent.builder().name(name).parentEvent(parentEvent).conditionalProbability(probability)
+        .consequenceCategory(category).build();
     events.add(event);
     return event;
   }
@@ -234,8 +232,8 @@ public class RiskModel {
       result.setCategoryFrequency(event.getConsequenceCategory(), catFreq + freq);
 
       // Add event result
-      result.addEventResult(new EventResult(event.getName(), freq,
-          event.getConditionalProbability(), risk, event.getConsequenceCategory()));
+      result.addEventResult(new EventResult(event.getName(), freq, event.getConditionalProbability(), risk,
+          event.getConsequenceCategory()));
     }
 
     result.setTotalRiskIndex(totalRisk);
@@ -251,8 +249,8 @@ public class RiskModel {
    * Runs Monte Carlo simulation with uncertainty propagation.
    *
    * <p>
-   * Frequencies are sampled from log-normal distributions. Probabilities are sampled from truncated
-   * normal distributions.
+   * Frequencies are sampled from log-normal distributions. Probabilities are sampled from truncated normal
+   * distributions.
    * </p>
    *
    * @param iterations number of Monte Carlo iterations
@@ -274,8 +272,7 @@ public class RiskModel {
 
       for (RiskEvent event : events) {
         // Sample frequency from log-normal
-        double sampledFreq =
-            sampleLogNormal(random, event.getFrequency(), frequencyUncertaintyFactor);
+        double sampledFreq = sampleLogNormal(random, event.getFrequency(), frequencyUncertaintyFactor);
 
         // Sample probability from truncated normal
         double sampledProb = sampleTruncatedNormal(random, event.getConditionalProbability(),
@@ -325,8 +322,8 @@ public class RiskModel {
     for (RiskEvent event : events) {
       double freq = event.getAbsoluteFrequency();
       double risk = freq * event.getConsequenceCategory().getSeverity();
-      result.addEventResult(new EventResult(event.getName(), freq,
-          event.getConditionalProbability(), risk, event.getConsequenceCategory()));
+      result.addEventResult(new EventResult(event.getName(), freq, event.getConditionalProbability(), risk,
+          event.getConsequenceCategory()));
     }
 
     if (storeMonteCarloSamples) {
@@ -359,8 +356,7 @@ public class RiskModel {
    * @param numPoints number of points between low and high (including endpoints)
    * @return sensitivity analysis result
    */
-  public SensitivityResult runSensitivityAnalysis(double lowFactor, double highFactor,
-      int numPoints) {
+  public SensitivityResult runSensitivityAnalysis(double lowFactor, double highFactor, int numPoints) {
     SensitivityResult result = new SensitivityResult(name + " Sensitivity", "Base Case");
 
     // Calculate base case risk
@@ -406,8 +402,8 @@ public class RiskModel {
    * Runs simulation-based analysis for events with attached scenarios.
    *
    * <p>
-   * For events that have ProcessSafetyScenario attached, uses the scenario consequence category.
-   * Future implementation could integrate with ProcessScenarioRunner for dynamic simulation.
+   * For events that have ProcessSafetyScenario attached, uses the scenario consequence category. Future implementation
+   * could integrate with ProcessScenarioRunner for dynamic simulation.
    * </p>
    *
    * @return risk result with scenario-based consequences
@@ -435,8 +431,8 @@ public class RiskModel {
       double catFreq = result.getCategoryFrequency(event.getConsequenceCategory());
       result.setCategoryFrequency(event.getConsequenceCategory(), catFreq + freq);
 
-      result.addEventResult(new EventResult(event.getName(), freq,
-          event.getConditionalProbability(), risk, event.getConsequenceCategory()));
+      result.addEventResult(new EventResult(event.getName(), freq, event.getConditionalProbability(), risk,
+          event.getConsequenceCategory()));
     }
 
     result.setTotalRiskIndex(totalRisk);
@@ -484,7 +480,6 @@ public class RiskModel {
 
   @Override
   public String toString() {
-    return String.format("RiskModel[%s, %d events, total risk=%.4e]", name, events.size(),
-        calculateTotalRisk());
+    return String.format("RiskModel[%s, %d events, total risk=%.4e]", name, events.size(), calculateTotalRisk());
   }
 }

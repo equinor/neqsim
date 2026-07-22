@@ -9,9 +9,9 @@ import java.util.Map;
  * Regional cost adjustment factors for field development economics.
  *
  * <p>
- * This class provides location-specific multipliers to adjust base cost estimates for different
- * regions worldwide. The base costs in {@link EconomicsEstimator} are calibrated for the Norwegian
- * Continental Shelf (NCS). Use these factors to adjust estimates for other regions.
+ * This class provides location-specific multipliers to adjust base cost estimates for different regions worldwide. The
+ * base costs in {@link EconomicsEstimator} are calibrated for the Norwegian Continental Shelf (NCS). Use these factors
+ * to adjust estimates for other regions.
  * </p>
  *
  * <h2>Factor Categories</h2>
@@ -36,15 +36,15 @@ import java.util.Map;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Get factors for Brazil
  * RegionalCostFactors brazilFactors = RegionalCostFactors.forRegion("BR");
- * 
+ *
  * // Apply to NCS-based estimate
  * double ncsCAPEX = 800; // MUSD
  * double brazilCAPEX = ncsCAPEX * brazilFactors.getCapexFactor();
- * 
+ *
  * // Use with EconomicsEstimator
  * EconomicsEstimator estimator = new EconomicsEstimator();
  * EconomicsReport ncsReport = estimator.estimate(concept, facility);
@@ -53,9 +53,8 @@ import java.util.Map;
  *
  * <h2>Data Sources</h2>
  * <p>
- * Cost factors are based on industry benchmarks and public data. They represent typical ratios
- * relative to NCS costs and should be validated against project-specific data for detailed
- * estimates.
+ * Cost factors are based on industry benchmarks and public data. They represent typical ratios relative to NCS costs
+ * and should be validated against project-specific data for detailed estimates.
  * </p>
  *
  * @author ESOL
@@ -69,8 +68,7 @@ public final class RegionalCostFactors implements Serializable {
   // PREDEFINED REGIONS
   // ============================================================================
 
-  private static final Map<String, RegionalCostFactors> REGISTRY =
-      new LinkedHashMap<String, RegionalCostFactors>();
+  private static final Map<String, RegionalCostFactors> REGISTRY = new LinkedHashMap<String, RegionalCostFactors>();
 
   static {
     // Norwegian Continental Shelf (baseline)
@@ -130,16 +128,15 @@ public final class RegionalCostFactors implements Serializable {
         "State-supported infrastructure, lower costs"));
 
     // Qatar
-    register(new RegionalCostFactors("QA", "Qatar Offshore", 0.75, 0.70, 0.80, 0.70,
-        "Mature gas infrastructure"));
+    register(new RegionalCostFactors("QA", "Qatar Offshore", 0.75, 0.70, 0.80, 0.70, "Mature gas infrastructure"));
 
     // Canada - Atlantic
     register(new RegionalCostFactors("CA-ATL", "Canada Atlantic", 1.10, 1.05, 1.05, 1.00,
         "Harsh environment, mature infrastructure"));
 
     // Canada - Alberta
-    register(new RegionalCostFactors("CA-AB", "Canada Alberta", 0.75, 0.70, 0.65, 0.90,
-        "Onshore with competitive market"));
+    register(
+        new RegionalCostFactors("CA-AB", "Canada Alberta", 0.75, 0.70, 0.65, 0.90, "Onshore with competitive market"));
 
     // Guyana
     register(new RegionalCostFactors("GY", "Guyana Offshore", 0.95, 0.90, 1.00, 0.50,
@@ -193,8 +190,8 @@ public final class RegionalCostFactors implements Serializable {
    * @param laborFactor labor cost multiplier relative to NCS
    * @param notes additional notes about the region
    */
-  public RegionalCostFactors(String regionCode, String regionName, double capexFactor,
-      double opexFactor, double wellCostFactor, double laborFactor, String notes) {
+  public RegionalCostFactors(String regionCode, String regionName, double capexFactor, double opexFactor,
+      double wellCostFactor, double laborFactor, String notes) {
     this.regionCode = regionCode;
     this.regionName = regionName;
     this.capexFactor = capexFactor;
@@ -400,14 +397,13 @@ public final class RegionalCostFactors implements Serializable {
    */
   public static String getSummaryTable() {
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("%-10s %-25s %8s %8s %8s %8s%n", "Code", "Region", "CAPEX", "OPEX",
-        "Well", "Labor"));
+    sb.append(String.format("%-10s %-25s %8s %8s %8s %8s%n", "Code", "Region", "CAPEX", "OPEX", "Well", "Labor"));
     sb.append(repeatChar('-', 75)).append("\n");
 
     for (RegionalCostFactors f : REGISTRY.values()) {
-      sb.append(String.format("%-10s %-25s %8.2f %8.2f %8.2f %8.2f%n", f.getRegionCode(),
-          truncate(f.getRegionName(), 25), f.getCapexFactor(), f.getOpexFactor(),
-          f.getWellCostFactor(), f.getLaborFactor()));
+      sb.append(
+          String.format("%-10s %-25s %8.2f %8.2f %8.2f %8.2f%n", f.getRegionCode(), truncate(f.getRegionName(), 25),
+              f.getCapexFactor(), f.getOpexFactor(), f.getWellCostFactor(), f.getLaborFactor()));
     }
 
     return sb.toString();
@@ -430,7 +426,7 @@ public final class RegionalCostFactors implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("RegionalCostFactors[%s: CAPEX=%.2f, OPEX=%.2f, Wells=%.2f]", regionCode,
-        capexFactor, opexFactor, wellCostFactor);
+    return String.format("RegionalCostFactors[%s: CAPEX=%.2f, OPEX=%.2f, Wells=%.2f]", regionCode, capexFactor,
+        opexFactor, wellCostFactor);
   }
 }

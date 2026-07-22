@@ -10,15 +10,12 @@ import neqsim.thermo.system.SystemSrkSchwartzentruberEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * FugTestConstP class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
-public class FugTestConstP extends ConstantDutyTemperatureFlash
-    implements ThermodynamicConstantsInterface {
+public class FugTestConstP extends ConstantDutyTemperatureFlash implements ThermodynamicConstantsInterface {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -35,9 +32,7 @@ public class FugTestConstP extends ConstantDutyTemperatureFlash
   public boolean compNameGiven = false;
 
   /**
-   * <p>
    * Constructor for FugTestConstP.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -48,9 +43,7 @@ public class FugTestConstP extends ConstantDutyTemperatureFlash
   }
 
   /**
-   * <p>
    * Constructor for FugTestConstP.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param pres a double
@@ -63,9 +56,7 @@ public class FugTestConstP extends ConstantDutyTemperatureFlash
 
   // initializing reference system for pure vapor fugacity
   /**
-   * <p>
    * initTestSystem2.
-   * </p>
    *
    * @param K a int
    */
@@ -117,8 +108,7 @@ public class FugTestConstP extends ConstantDutyTemperatureFlash
             Pvapsolid = testSystem.getPhase(0).getComponent(k).getSolidVaporPressure(temp);
             logger.info("pvap solid Antonie " + Pvapsolid);
           }
-          soldens =
-              testSystem.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp) * 1000;
+          soldens = testSystem.getPhase(0).getComponent(k).getPureComponentSolidDensity(temp) * 1000;
           if (soldens > 2000) {
             soldens = 1000;
           }
@@ -149,27 +139,26 @@ public class FugTestConstP extends ConstantDutyTemperatureFlash
         title[0] = "Solid Fugacity";
         title[1] = "Fluid Fugacity";
 
-        Graph2b graffug = new Graph2b(Fug, title, compName + " Fugacity  VS T, constant P= " + pres,
-            "Temperature [K]", "Fugacity [bar]");
+        Graph2b graffug = new Graph2b(Fug, title, compName + " Fugacity  VS T, constant P= " + pres, "Temperature [K]",
+            "Fugacity [bar]");
         graffug.setVisible(true);
         String[] title2 = new String[1];
         title2[0] = "Solid/Fluid";
 
-        Graph2b grafvapor = new Graph2b(Fugrel, title2, compName + " Fugacity Ratio",
-            "Temperature [K]", "Fsolid/Ffluid");
+        Graph2b grafvapor = new Graph2b(Fugrel, title2, compName + " Fugacity Ratio", "Temperature [K]",
+            "Fsolid/Ffluid");
         grafvapor.setVisible(true);
       } // end solidcheck lokke
     } // end komponent lokke
   } // end run
 
   /**
-   * <p>
-   * PrintToFile.
-   * </p>
+   * printToFile.
    *
    * @param FileName a {@link java.lang.String} object
    */
-  public void PrintToFile(String FileName) {
+  @Override
+  public void printToFile(String FileName) {
     // String myFile = "/java/fugcoeff_C02_ N2.dat";
     // try (PrintWriter pr_writer = new PrintWriter(new FileWriter(myFile, true))){
     // // print line to output file

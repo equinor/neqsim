@@ -1,8 +1,8 @@
 package neqsim.pvtsimulation.simulation;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.commons.lang3.StringUtils;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -18,18 +18,18 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <p>
- * MMP is defined as the pressure at which the oil recovery in a slim-tube experiment reaches a
- * specified threshold (typically 90-95% at 1.2 PV injected).
+ * MMP is defined as the pressure at which the oil recovery in a slim-tube experiment reaches a specified threshold
+ * (typically 90-95% at 1.2 PV injected).
  *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * MMPCalculator mmp = new MMPCalculator(reservoirOil, injectionGas);
  * mmp.setTemperature(100.0); // 100°C
  * mmp.setRecoveryThreshold(0.90); // 90% recovery
  * mmp.run();
- * 
+ *
  * System.out.println("MMP: " + mmp.getMMP() + " bara");
  * System.out.println("Miscibility mechanism: " + mmp.getMiscibilityMechanism());
  * </pre>
@@ -102,6 +102,7 @@ public class MMPCalculator extends BasePVTsimulation {
    *
    * @param temperatureCelsius Temperature in Celsius
    */
+  @Override
   public void setTemperature(double temperatureCelsius) {
     this.temperature = temperatureCelsius + 273.15;
   }
@@ -158,15 +159,15 @@ public class MMPCalculator extends BasePVTsimulation {
   @Override
   public void run() {
     switch (method) {
-      case SLIM_TUBE:
-        runSlimTubeMethod();
-        break;
-      case KEY_TIE_LINE:
-        runKeyTieLineMethod();
-        break;
-      case RISING_BUBBLE:
-        runRisingBubbleMethod();
-        break;
+    case SLIM_TUBE:
+      runSlimTubeMethod();
+      break;
+    case KEY_TIE_LINE:
+      runKeyTieLineMethod();
+      break;
+    case RISING_BUBBLE:
+      runRisingBubbleMethod();
+      break;
     }
   }
 
@@ -472,6 +473,7 @@ public class MMPCalculator extends BasePVTsimulation {
    *
    * @return Array of pressures (bara)
    */
+  @Override
   public double[] getPressures() {
     return pressures;
   }

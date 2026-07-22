@@ -1,11 +1,17 @@
 package neqsim.blackoil;
 
+import java.io.Serializable;
+
 /**
  * DTO for Black-Oil flash results at (P,T).
  *
  * @author esol
+ * @version 1.0
  */
-public final class BlackOilFlashResult {
+public final class BlackOilFlashResult implements Serializable {
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000L;
+
   // Standard-condition amounts (Sm3)
   public double O_std; // oil remaining at std (after vaporization)
   public double Gf_std; // free gas at std

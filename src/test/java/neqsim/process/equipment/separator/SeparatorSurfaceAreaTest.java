@@ -27,4 +27,3 @@ public class SeparatorSurfaceAreaTest {
     assertEquals(totalArea, wettedArea + unwettedArea, 1.0e-6);
   }
 }
-

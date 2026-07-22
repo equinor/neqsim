@@ -16,9 +16,7 @@ public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPA
   double[] xsite;
 
   /**
-   * <p>
    * Constructor for ComponentPrCPA.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -42,9 +40,7 @@ public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPA
   }
 
   /**
-   * <p>
    * Constructor for ComponentPrCPA.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -118,8 +114,7 @@ public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPA
 
   /** {@inheritDoc} */
   @Override
-  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double Fsup = super.dFdN(phase, numberOfComponents, temperature, pressure);
     double Fcpa = 0.0;
     // if(phase.getPhaseType()==1) cpaon=0;
@@ -130,29 +125,24 @@ public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPA
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdT(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return super.dFdNdT(phase, numberOfComponents, temperature, pressure);
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdV(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return super.dFdNdV(phase, numberOfComponents, temperature, pressure);
   }
 
   /** {@inheritDoc} */
   @Override
-  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFdNdN(int j, PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     return super.dFdNdN(j, phase, numberOfComponents, temperature, pressure);
   }
 
   /**
-   * <p>
    * dFCPAdN.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param numberOfComponents a int
@@ -160,8 +150,7 @@ public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPA
    * @param pressure a double
    * @return a double
    */
-  public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature,
-      double pressure) {
+  public double dFCPAdN(PhaseInterface phase, int numberOfComponents, double temperature, double pressure) {
     double xi = 0.0;
     for (int i = 0; i < numberOfAssociationSites; i++) {
       xi += Math.log(xsite[i]);
@@ -170,30 +159,24 @@ public abstract class ComponentPrCPA extends ComponentPR implements ComponentCPA
   }
 
   /**
-   * <p>
    * calc_lngi.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
   public double calc_lngi(PhaseInterface phase) {
-    return 0.475 / (1.0 - 0.475 * phase.getB() / phase.getTotalVolume()) * getBi()
-        / phase.getTotalVolume();
+    return 0.475 / (1.0 - 0.475 * phase.getB() / phase.getTotalVolume()) * getBi() / phase.getTotalVolume();
   }
 
   /**
-   * <p>
    * calc_lngi2.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @return a double
    */
   public double calc_lngi2(PhaseInterface phase) {
     return 2.0 * getBi() * (10.0 * phase.getTotalVolume() - phase.getB())
-        / ((8.0 * phase.getTotalVolume() - phase.getB())
-            * (4.0 * phase.getTotalVolume() - phase.getB()));
+        / ((8.0 * phase.getTotalVolume() - phase.getB()) * (4.0 * phase.getTotalVolume() - phase.getB()));
   }
 
   /** {@inheritDoc} */

@@ -32,7 +32,8 @@ public class TPgradientFlash extends Flash {
   /**
    * Default constructor for TPgradientFlash.
    */
-  public TPgradientFlash() {}
+  public TPgradientFlash() {
+  }
 
   /**
    * Constructor for TPgradientFlash with system, height, and temperature.
@@ -70,11 +71,8 @@ public class TPgradientFlash extends Flash {
       double molarMassTerm = component.getMolarMass() * gravity * deltaHeight
           / (gasConstant * tempSystem.getPhase(0).getTemperature());
 
-      fvec.set(i, 0,
-          logTerm
-              - Math.log(tempSystem.getPhases()[0].getComponent(i).getFugacityCoefficient()
-                  * tempSystem.getPhases()[0].getComponent(i).getx() * tempSystem.getPressure())
-              - molarMassTerm);
+      fvec.set(i, 0, logTerm - Math.log(tempSystem.getPhases()[0].getComponent(i).getFugacityCoefficient()
+          * tempSystem.getPhases()[0].getComponent(i).getx() * tempSystem.getPressure()) - molarMassTerm);
       sumx += componentX;
     }
 
@@ -95,9 +93,8 @@ public class TPgradientFlash extends Flash {
         double componentX = localSystem.getPhases()[0].getComponent(i).getx();
         double pressure = localSystem.getPressure();
 
-        double tempJ =
-            1.0 / (fugacityCoeff * componentX * pressure) * (fugacityCoeff * dij * pressure
-                + localSystem.getPhases()[0].getComponent(i).getdfugdx(j) * componentX * pressure);
+        double tempJ = 1.0 / (fugacityCoeff * componentX * pressure) * (fugacityCoeff * dij * pressure
+            + localSystem.getPhases()[0].getComponent(i).getdfugdx(j) * componentX * pressure);
         Jac.set(i, j, tempJ);
       }
     }
@@ -186,4 +183,3 @@ public class TPgradientFlash extends Flash {
     return localSystem;
   }
 }
-

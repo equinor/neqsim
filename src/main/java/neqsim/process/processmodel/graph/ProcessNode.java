@@ -8,8 +8,8 @@ import java.util.Objects;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 
 /**
- * Represents a node in the process flowsheet graph. Each node corresponds to a
- * {@link ProcessEquipmentInterface} unit operation.
+ * Represents a node in the process flowsheet graph. Each node corresponds to a {@link ProcessEquipmentInterface} unit
+ * operation.
  *
  * <p>
  * This class provides:
@@ -303,8 +303,8 @@ public class ProcessNode implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("ProcessNode[%d: %s (%s), in=%d, out=%d]", index, getName(),
-        getEquipmentType(), getInDegree(), getOutDegree());
+    return String.format("ProcessNode[%d: %s (%s), in=%d, out=%d]", index, getName(), getEquipmentType(), getInDegree(),
+        getOutDegree());
   }
 
   @Override

@@ -8,9 +8,7 @@ import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.LoggerConfig;
 
 /**
- * <p>
  * NeqSimLogging class.
- * </p>
  *
  * @author esol
  */
@@ -75,4 +73,3 @@ public class NeqSimLogging {
     }
   }
 }
-

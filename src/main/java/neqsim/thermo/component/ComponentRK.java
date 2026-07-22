@@ -3,9 +3,7 @@ package neqsim.thermo.component;
 import neqsim.thermo.component.attractiveeosterm.AttractiveTermRk;
 
 /**
- * <p>
  * ComponentRK class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class ComponentRK extends ComponentEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for ComponentRK.
-   * </p>
    *
    * @param name Name of component.
    * @param moles Total number of moles of component.
@@ -27,8 +23,8 @@ public class ComponentRK extends ComponentEos {
   public ComponentRK(String name, double moles, double molesInPhase, int compIndex) {
     super(name, moles, molesInPhase, compIndex);
 
-    a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature
-        * criticalTemperature / criticalPressure;
+    a = 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
+        / criticalPressure;
     b = (Math.pow(2.0, 1.0 / 3.0) - 1.0) / 3.0 * R * criticalTemperature / criticalPressure;
     delta1 = 1.0;
     delta2 = 0.0;
@@ -36,9 +32,7 @@ public class ComponentRK extends ComponentEos {
   }
 
   /**
-   * <p>
    * Constructor for ComponentRK.
-   * </p>
    *
    * @param number a int. Not used.
    * @param TC Critical temperature [K]
@@ -67,8 +61,8 @@ public class ComponentRK extends ComponentEos {
   /** {@inheritDoc} */
   @Override
   public double calca() {
-    return 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature
-        * criticalTemperature / criticalPressure;
+    return 1.0 / (9.0 * (Math.pow(2.0, 1.0 / 3.0) - 1.0)) * R * R * criticalTemperature * criticalTemperature
+        / criticalPressure;
   }
 
   /** {@inheritDoc} */
@@ -87,9 +81,7 @@ public class ComponentRK extends ComponentEos {
   }
 
   /**
-   * <p>
    * getQpure.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -99,9 +91,7 @@ public class ComponentRK extends ComponentEos {
   }
 
   /**
-   * <p>
    * getdQpuredT.
-   * </p>
    *
    * @param temperature a double
    * @return a double
@@ -111,9 +101,7 @@ public class ComponentRK extends ComponentEos {
   }
 
   /**
-   * <p>
    * getdQpuredTdT.
-   * </p>
    *
    * @param temperature a double
    * @return a double

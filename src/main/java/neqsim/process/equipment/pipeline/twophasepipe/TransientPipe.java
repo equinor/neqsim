@@ -16,36 +16,29 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 /**
  * Transient multiphase pipe model using drift-flux formulation.
  *
- * 
- * Implements a 1D transient multiphase flow simulator for gas-liquid flow in
- * pipelines. The model
- * is suitable for analyzing terrain-induced slugging, liquid accumulation, and
- * transient pressure
- * behavior in production pipelines, risers, and flowlines.
+ * <p>
+ * Implements a 1D transient multiphase flow simulator for gas-liquid flow in pipelines. The model is suitable for
+ * analyzing terrain-induced slugging, liquid accumulation, and transient pressure behavior in production pipelines,
+ * risers, and flowlines.
  *
- * <b>Three-Phase Flow Support:</b> When both oil and aqueous (water) phases are
- * present, the model
- * automatically calculates volume-weighted average liquid properties (density,
- * viscosity, enthalpy,
- * sound speed) based on the individual phase volumes from the thermodynamic
- * flash. This maintains
- * the drift-flux framework while properly accounting for oil-water mixtures.
+ * <b>Three-Phase Flow Support:</b> When both oil and aqueous (water) phases are present, the model automatically
+ * calculates volume-weighted average liquid properties (density, viscosity, enthalpy, sound speed) based on the
+ * individual phase volumes from the thermodynamic flash. This maintains the drift-flux framework while properly
+ * accounting for oil-water mixtures.
  *
  * <h2>Features</h2>
  * <ul>
  * <li>Drift-flux model for gas-liquid slip (Zuber-Findlay formulation)</li>
  * <li>Mechanistic flow regime detection (Taitel-Dukler, Barnea)</li>
- * <li>Three-phase gas-oil-water flow with volume-weighted liquid property
- * averaging</li>
+ * <li>Three-phase gas-oil-water flow with volume-weighted liquid property averaging</li>
  * <li>Liquid accumulation tracking at terrain low points</li>
  * <li>Lagrangian slug tracking for terrain-induced slugging</li>
- * <li>Integration with NeqSim thermodynamics (SRK, PR, CPA equations of
- * state)</li>
+ * <li>Integration with NeqSim thermodynamics (SRK, PR, CPA equations of state)</li>
  * <li>AUSM+ numerical flux scheme with adaptive CFL-based time stepping</li>
  * </ul>
  *
  * <h2>Basic Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Create two-phase fluid
  * SystemInterface fluid = new SystemSrkEos(300, 50);
@@ -75,7 +68,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * }</pre>
  *
  * <h2>Terrain Pipeline Example</h2>
- * 
+ *
  * <pre>{@code
  * TransientPipe pipe = new TransientPipe("TerrainPipe", inlet);
  * pipe.setLength(2000);
@@ -107,24 +100,23 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * }</pre>
  *
  * <h2>Physical Model</h2>
- * 
+ *
+ * <p>
  * The drift-flux model relates gas velocity to mixture velocity:
- * 
+ *
  * <pre>
  * v_G = C₀ · v_m + v_d
  * </pre>
- * 
- * where C₀ is the distribution coefficient (typically 1.0-1.2) and v_d is the
- * drift velocity. Flow
- * regime-dependent correlations from Bendiksen (1984) and Harmathy (1960)
- * provide closure.
+ *
+ * <p>
+ * where C₀ is the distribution coefficient (typically 1.0-1.2) and v_d is the drift velocity. Flow regime-dependent
+ * correlations from Bendiksen (1984) and Harmathy (1960) provide closure.
  *
  * <h2>Numerical Method</h2>
- * 
- * The model solves conservation equations using an explicit finite volume
- * scheme with AUSM+ flux
- * splitting. Time stepping is adaptive based on CFL condition for numerical
- * stability.
+ *
+ * <p>
+ * The model solves conservation equations using an explicit finite volume scheme with AUSM+ flux splitting. Time
+ * stepping is adaptive based on CFL condition for numerical stability.
  *
  * <h2>References</h2>
  * <ul>
@@ -226,9 +218,9 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Boundary condition types for inlet and outlet.
    *
-   * 
-   * Specifies how the boundary conditions are handled at the pipe inlet and
-   * outlet.
+   *
+   * <p>
+   * Specifies how the boundary conditions are handled at the pipe inlet and outlet.
    *
    * <ul>
    * <li>{@link #CONSTANT_PRESSURE} - Fixed pressure (typical for outlet)</li>
@@ -239,9 +231,9 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * <li>{@link #TRANSIENT_FLOW} - Time-varying flow rate</li>
    * </ul>
    *
-   * 
+   *
    * <b>Example:</b>
-   * 
+   *
    * <pre>{@code
    * pipe.setInletBoundaryCondition(BoundaryCondition.CONSTANT_FLOW);
    * pipe.setOutletBoundaryCondition(BoundaryCondition.CONSTANT_PRESSURE);
@@ -265,8 +257,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   }
 
   /**
-   * Default constructor. Creates a TransientPipe with default name
-   * "TransientPipe".
+   * Default constructor. Creates a TransientPipe with default name "TransientPipe".
    */
   public TransientPipe() {
     super("TransientPipe");
@@ -286,16 +277,14 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Constructor with name and inlet stream.
    *
-   * 
-   * This is the recommended constructor for typical usage. The inlet stream
-   * provides initial
-   * conditions (composition, temperature, pressure, flow rate) for the
-   * simulation.
+   *
+   * <p>
+   * This is the recommended constructor for typical usage. The inlet stream provides initial conditions (composition,
+   * temperature, pressure, flow rate) for the simulation.
    *
    *
-   * @param name        Pipe name used for identification in process systems
-   * @param inletStream Inlet stream containing fluid properties and flow
-   *                    conditions
+   * @param name Pipe name used for identification in process systems
+   * @param inletStream Inlet stream containing fluid properties and flow conditions
    */
   public TransientPipe(String name, StreamInterface inletStream) {
     super(name, inletStream);
@@ -303,8 +292,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   }
 
   /**
-   * Initialize sub-models for flow regime detection, drift-flux, and slug
-   * tracking.
+   * Initialize sub-models for flow regime detection, drift-flux, and slug tracking.
    */
   private void initializeSubModels() {
     flowRegimeDetector = new FlowRegimeDetector();
@@ -316,23 +304,21 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Initialize the discretized pipe sections.
    *
-   * 
-   * Creates the computational mesh based on pipe length and number of sections.
-   * Also initializes
-   * elevation/inclination profiles and identifies low points for liquid
-   * accumulation tracking.
+   *
+   * <p>
+   * Creates the computational mesh based on pipe length and number of sections. Also initializes elevation/inclination
+   * profiles and identifies low points for liquid accumulation tracking.
    *
    *
-   * 
-   * This method is called automatically by {@link #run()} if sections have not
-   * been initialized. It
-   * can also be called explicitly to inspect the mesh before running.
+   *
+   * <p>
+   * This method is called automatically by {@link #run()} if sections have not been initialized. It can also be called
+   * explicitly to inspect the mesh before running.
    *
    *
-   * 
-   * <b>Note:</b> The number of sections determines spatial resolution. For
-   * accurate slug tracking,
-   * use at least 20 sections. Typical guideline: dx ≈ 10-50 pipe diameters.
+   *
+   * <b>Note:</b> The number of sections determines spatial resolution. For accurate slug tracking, use at least 20
+   * sections. Typical guideline: dx ≈ 10-50 pipe diameters.
    *
    */
   public void initializePipe() {
@@ -444,20 +430,15 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
             + w_aq * fluid.getPhase("aqueous").getDensity("kg/m3");
         mu_L = w_oil * fluid.getPhase("oil").getViscosity("kg/msec")
             + w_aq * fluid.getPhase("aqueous").getViscosity("kg/msec");
-        H_L = w_oil
-            * (fluid.getPhase("oil").getEnthalpy("J/mol") / fluid.getPhase("oil").getMolarMass()
-                * 1000)
-            + w_aq * (fluid.getPhase("aqueous").getEnthalpy("J/mol")
-                / fluid.getPhase("aqueous").getMolarMass() * 1000);
-        c_L = w_oil * fluid.getPhase("oil").getSoundSpeed()
-            + w_aq * fluid.getPhase("aqueous").getSoundSpeed();
+        H_L = w_oil * (fluid.getPhase("oil").getEnthalpy("J/mol") / fluid.getPhase("oil").getMolarMass() * 1000)
+            + w_aq * (fluid.getPhase("aqueous").getEnthalpy("J/mol") / fluid.getPhase("aqueous").getMolarMass() * 1000);
+        c_L = w_oil * fluid.getPhase("oil").getSoundSpeed() + w_aq * fluid.getPhase("aqueous").getSoundSpeed();
       } else {
         // Two-phase: use the single liquid phase
         String liqPhase = fluid.hasPhaseType("oil") ? "oil" : "aqueous";
         rho_L = fluid.getPhase(liqPhase).getDensity("kg/m3");
         mu_L = fluid.getPhase(liqPhase).getViscosity("kg/msec");
-        H_L = fluid.getPhase(liqPhase).getEnthalpy("J/mol")
-            / fluid.getPhase(liqPhase).getMolarMass() * 1000;
+        H_L = fluid.getPhase(liqPhase).getEnthalpy("J/mol") / fluid.getPhase(liqPhase).getMolarMass() * 1000;
         c_L = fluid.getPhase(liqPhase).getSoundSpeed();
       }
 
@@ -486,9 +467,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     }
     if (sigma <= 0) {
       sigma = defaultSigma;
-      logger.warn(
-          "Interfacial tension calculation returned invalid value. Using default IFT: {} N/m ({})",
-          sigma, hasWater && !hasOil ? "gas-water" : "gas-oil");
+      logger.warn("Interfacial tension calculation returned invalid value. Using default IFT: {} N/m ({})", sigma,
+          hasWater && !hasOil ? "gas-water" : "gas-oil");
     }
 
     // Calculate outlet pressure from hydrostatic and friction
@@ -650,31 +630,25 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Run transient simulation for a specified time step.
    *
-   * 
-   * This method advances the pipe simulation by the specified time step
-   * {@code dt}, making it
-   * suitable for use within a
-   * {@link neqsim.process.processmodel.ProcessSystem#runTransient(double, java.util.UUID)}
-   * loop.
-   * Unlike {@link #run()}, which runs the complete simulation to
-   * {@code maxSimulationTime}, this
-   * method performs incremental time-stepping that can be coordinated with other
-   * equipment.
+   *
+   * <p>
+   * This method advances the pipe simulation by the specified time step {@code dt}, making it suitable for use within a
+   * {@link neqsim.process.processmodel.ProcessSystem#runTransient(double, java.util.UUID)} loop. Unlike {@link #run()},
+   * which runs the complete simulation to {@code maxSimulationTime}, this method performs incremental time-stepping
+   * that can be coordinated with other equipment.
    *
    *
-   * 
-   * On the first call, the pipe is initialized from the inlet stream. Subsequent
-   * calls advance the
-   * simulation state incrementally. The method uses adaptive sub-stepping
-   * internally to maintain
-   * numerical stability (CFL condition) while advancing by the requested
-   * {@code dt}.
+   *
+   * <p>
+   * On the first call, the pipe is initialized from the inlet stream. Subsequent calls advance the simulation state
+   * incrementally. The method uses adaptive sub-stepping internally to maintain numerical stability (CFL condition)
+   * while advancing by the requested {@code dt}.
    *
    *
-   * 
+   *
    * <b>Usage Example:</b>
    *
-   * 
+   *
    * <pre>{@code
    * ProcessSystem process = new ProcessSystem();
    * process.add(inlet);
@@ -690,17 +664,13 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * }
    * }</pre>
    *
-   * 
-   * <b>Note:</b> The inlet stream conditions are re-read at each call, allowing
-   * dynamic boundary
-   * conditions. If the inlet flow rate or composition changes, the pipe
-   * simulation will respond
-   * accordingly.
+   *
+   * <b>Note:</b> The inlet stream conditions are re-read at each call, allowing dynamic boundary conditions. If the
+   * inlet flow rate or composition changes, the pipe simulation will respond accordingly.
    *
    *
-   * @param dt Time step to advance in seconds. The method will use internal
-   *           sub-stepping if
-   *           required for numerical stability.
+   * @param dt Time step to advance in seconds. The method will use internal sub-stepping if required for numerical
+   * stability.
    * @param id Calculation identifier for tracking
    * @see #run(UUID)
    * @see neqsim.process.processmodel.ProcessSystem#runTransient(double, UUID)
@@ -782,12 +752,10 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Update inlet boundary conditions from the current inlet stream state.
    *
-   * 
-   * This method is called during {@link #runTransient(double, UUID)} to capture
-   * any changes in the
-   * inlet stream conditions (flow rate, pressure, composition) that may have
-   * occurred since the
-   * last time step.
+   *
+   * <p>
+   * This method is called during {@link #runTransient(double, UUID)} to capture any changes in the inlet stream
+   * conditions (flow rate, pressure, composition) that may have occurred since the last time step.
    *
    */
   private void updateInletFromStream() {
@@ -825,8 +793,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
           double w_oil = V_oil / V_total;
           double w_aq = V_aq / V_total;
 
-          inletSection.setLiquidDensity(w_oil * fluid.getPhase("oil").getDensity("kg/m3")
-              + w_aq * fluid.getPhase("aqueous").getDensity("kg/m3"));
+          inletSection.setLiquidDensity(
+              w_oil * fluid.getPhase("oil").getDensity("kg/m3") + w_aq * fluid.getPhase("aqueous").getDensity("kg/m3"));
           inletSection.setLiquidViscosity(w_oil * fluid.getPhase("oil").getViscosity("kg/msec")
               + w_aq * fluid.getPhase("aqueous").getViscosity("kg/msec"));
         } else {
@@ -840,14 +808,11 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
   /**
    * Updates the outlet boundary conditions from the current outlet stream state.
-   * 
-   * This method is called during {@link #runTransient(double, UUID)} to capture
-   * any changes in the
-   * outlet stream conditions when using CONSTANT_FLOW outlet boundary condition.
-   * This allows
-   * external controllers or other process equipment to set the outlet flow rate
-   * on the outlet
-   * stream, which is then read back into the pipe model.
+   *
+   * <p>
+   * This method is called during {@link #runTransient(double, UUID)} to capture any changes in the outlet stream
+   * conditions when using CONSTANT_FLOW outlet boundary condition. This allows external controllers or other process
+   * equipment to set the outlet flow rate on the outlet stream, which is then read back into the pipe model.
    *
    */
   private void updateOutletFromStream() {
@@ -874,13 +839,10 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Calculate adaptive time step based on CFL condition.
    *
    * <p>
-   * Uses the full eigenvalue structure for hyperbolic systems. The characteristic
-   * wave speeds for
-   * multiphase flow are approximately |u ± c| where u is the mixture velocity and
-   * c is the mixture
-   * sound speed. We take the maximum of all four wave speeds: |u_G + c|, |u_G -
-   * c|, |u_L + c|, |u_L
-   * - c| to ensure stability for both forward and backward propagating waves.
+   * Uses the full eigenvalue structure for hyperbolic systems. The characteristic wave speeds for multiphase flow are
+   * approximately |u ± c| where u is the mixture velocity and c is the mixture sound speed. We take the maximum of all
+   * four wave speeds: |u_G + c|, |u_G - c|, |u_L + c|, |u_L - c| to ensure stability for both forward and backward
+   * propagating waves.
    * </p>
    *
    * @return time step (s)
@@ -897,8 +859,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       double pressure = section.getPressure();
 
       // Handle NaN velocities and detect unstable state
-      if (Double.isNaN(v_gas) || Double.isNaN(v_liq) || Double.isNaN(pressure)
-          || Double.isNaN(c_mix)) {
+      if (Double.isNaN(v_gas) || Double.isNaN(v_liq) || Double.isNaN(pressure) || Double.isNaN(c_mix)) {
         nanCount++;
         continue; // Skip this section for wave speed calculation
       }
@@ -979,8 +940,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       // Convert back to primitive variables, passing flux info for pressure update
       double momentumFluxLeft = fluxes[i][2];
       double momentumFluxRight = fluxes[i + 1][2];
-      updatePrimitiveVariables(sections[i], oldSections[i], U_new, i, dt, momentumFluxLeft,
-          momentumFluxRight);
+      updatePrimitiveVariables(sections[i], oldSections[i], U_new, i, dt, momentumFluxLeft, momentumFluxRight);
     }
 
     // Apply boundary conditions again to enforce them on the new state
@@ -994,8 +954,9 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
   /**
    * Get the controlling mass flow rate for pressure profile calculation.
-   * 
-   * 
+   *
+   *
+   * <p>
    * Returns the appropriate mass flow rate based on boundary conditions:
    * <ul>
    * <li>CONSTANT_FLOW inlet: use inlet mass flow</li>
@@ -1024,15 +985,11 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   }
 
   /**
-   * Update pressure at boundary sections only to maintain boundary condition
-   * consistency.
-   * 
+   * Update pressure at boundary sections only to maintain boundary condition consistency.
+   *
    * <p>
-   * Interior section pressures are computed from the momentum equation to
-   * preserve momentum
-   * conservation. Only boundary-adjacent sections are updated to ensure proper
-   * pressure gradient at
-   * boundaries.
+   * Interior section pressures are computed from the momentum equation to preserve momentum conservation. Only
+   * boundary-adjacent sections are updated to ensure proper pressure gradient at boundaries.
    * </p>
    */
   private void updateBoundaryPressures() {
@@ -1069,22 +1026,16 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
   /**
    * Update pressure profile based on friction and gravity pressure gradients.
-   * 
+   *
    * <p>
-   * <b>Legacy method:</b> Marches from inlet to outlet (or outlet to inlet),
-   * computing pressure
-   * drop in each cell based on the local friction and gravity gradients. This
-   * ensures the pressure
-   * profile is consistent with the flow. For single-phase flow, uses the direct
-   * Darcy-Weisbach
-   * calculation.
+   * <b>Legacy method:</b> Marches from inlet to outlet (or outlet to inlet), computing pressure drop in each cell based
+   * on the local friction and gravity gradients. This ensures the pressure profile is consistent with the flow. For
+   * single-phase flow, uses the direct Darcy-Weisbach calculation.
    * </p>
-   * 
+   *
    * <p>
-   * <b>Note:</b> This method is preserved for compatibility but is no longer
-   * called in transient
-   * mode to avoid overriding momentum-conserving pressure from the conservative
-   * solver.
+   * <b>Note:</b> This method is preserved for compatibility but is no longer called in transient mode to avoid
+   * overriding momentum-conserving pressure from the conservative solver.
    * </p>
    */
   private void updatePressureProfile() {
@@ -1093,8 +1044,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
     // For CONSTANT_FLOW inlet + CONSTANT_PRESSURE outlet: march from outlet to
     // inlet
-    if (inletBCType == BoundaryCondition.CONSTANT_FLOW
-        && outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
+    if (inletBCType == BoundaryCondition.CONSTANT_FLOW && outletBCType == BoundaryCondition.CONSTANT_PRESSURE) {
       double P = outletPressureValue;
       sections[numberOfSections - 1].setPressure(P);
 
@@ -1138,8 +1088,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
         P -= dP;
         sections[i].setPressure(P);
       }
-    } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE
-        && outletBCType == BoundaryCondition.CONSTANT_FLOW) {
+    } else if (inletBCType == BoundaryCondition.CONSTANT_PRESSURE && outletBCType == BoundaryCondition.CONSTANT_FLOW) {
       // CONSTANT_PRESSURE inlet + CONSTANT_FLOW outlet: march from inlet to outlet
       double P = inletPressureValue;
       sections[0].setPressure(P);
@@ -1221,11 +1170,10 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Calculate fluxes at cell interfaces using AUSM+ scheme.
    *
-   * 
-   * For interior interfaces, the AUSM+ upwind scheme is used. For boundary
-   * interfaces, the fluxes
-   * are set according to the boundary conditions to ensure mass and momentum
-   * conservation:
+   *
+   * <p>
+   * For interior interfaces, the AUSM+ upwind scheme is used. For boundary interfaces, the fluxes are set according to
+   * the boundary conditions to ensure mass and momentum conservation:
    * <ul>
    * <li>CONSTANT_FLOW: Flux is set to the specified mass flow rate</li>
    * <li>CONSTANT_PRESSURE: Flux is computed from the AUSM scheme</li>
@@ -1260,22 +1208,19 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
       if (fluid.hasPhaseType("gas")) {
         rho_G_in = fluid.getPhase("gas").getDensity("kg/m3");
-        h_G_in = fluid.getPhase("gas").getEnthalpy("J/mol") / fluid.getPhase("gas").getMolarMass()
-            * 1000;
+        h_G_in = fluid.getPhase("gas").getEnthalpy("J/mol") / fluid.getPhase("gas").getMolarMass() * 1000;
         alpha_G_in = fluid.getPhase("gas").getVolume() / fluid.getVolume();
       }
 
       if (fluid.hasPhaseType("oil")) {
         rho_L_in = fluid.getPhase("oil").getDensity("kg/m3");
-        h_L_in = fluid.getPhase("oil").getEnthalpy("J/mol") / fluid.getPhase("oil").getMolarMass()
-            * 1000;
+        h_L_in = fluid.getPhase("oil").getEnthalpy("J/mol") / fluid.getPhase("oil").getMolarMass() * 1000;
         alpha_L_in += fluid.getPhase("oil").getVolume() / fluid.getVolume();
       }
       if (fluid.hasPhaseType("aqueous")) {
         // Simplified: treat aqueous as liquid or mix with oil
         double rho_aq = fluid.getPhase("aqueous").getDensity("kg/m3");
-        double h_aq = fluid.getPhase("aqueous").getEnthalpy("J/mol")
-            / fluid.getPhase("aqueous").getMolarMass() * 1000;
+        double h_aq = fluid.getPhase("aqueous").getEnthalpy("J/mol") / fluid.getPhase("aqueous").getMolarMass() * 1000;
         double alpha_aq = fluid.getPhase("aqueous").getVolume() / fluid.getVolume();
 
         // Weighted average for liquid properties if both exist
@@ -1357,7 +1302,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Calculate AUSM+ numerical flux at interface.
    *
-   * @param left  left pipe section
+   * @param left left pipe section
    * @param right right pipe section
    * @return flux array [mass_L, mass_G, momentum_L, momentum_G]
    */
@@ -1488,27 +1433,30 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Add source terms (gravity and friction) to the momentum equation.
    *
-   * 
+   *
+   * <p>
    * The momentum equation in conservative form is:
    *
-   * 
+   *
    * <pre>
    * ∂(ρu)/∂t + ∂(ρu² + p)/∂x = -ρg sin(θ) - τ_w/A
    * </pre>
    *
-   * 
+   *
+   * <p>
    * Where the source terms are:
    *
    * <ul>
    * <li>Gravity: S_g = -ρ_m · g · sin(θ) [kg/(m²·s²)]</li>
    * <li>Friction: S_f = -dP/dx_friction [kg/(m²·s²)]</li>
    * </ul>
-   * 
+   *
+   * <p>
    * These are integrated as: U[2]_new = U[2]_old + S × dt
    *
-   * @param U       conserved variable array to be modified in-place
+   * @param U conserved variable array to be modified in-place
    * @param section pipe section for which to calculate source terms
-   * @param dt      time step size in seconds
+   * @param dt time step size in seconds
    */
   private void addSourceTerms(double[] U, PipeSection section, double dt) {
     double rho_m = section.getMixtureDensity();
@@ -1562,25 +1510,21 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Update primitive variables from conservative variables.
    *
    * <p>
-   * This method converts from conservative variables (densities, momentum,
-   * energy) back to
-   * primitive variables (holdups, velocities, temperature, pressure). Interior
-   * cell pressures are
-   * computed from the momentum equation residual to properly capture acoustic
-   * wave propagation.
+   * This method converts from conservative variables (densities, momentum, energy) back to primitive variables
+   * (holdups, velocities, temperature, pressure). Interior cell pressures are computed from the momentum equation
+   * residual to properly capture acoustic wave propagation.
    * </p>
    *
-   * @param section           Current section to update
-   * @param oldSection        Previous time step section state
-   * @param U                 Conservative variables [ρ_G·α_G, ρ_L·α_L, ρ_m·u,
-   *                          ρ_m·E]
-   * @param sectionIndex      Index of this section (0 to numberOfSections-1)
-   * @param dt                Time step (s)
-   * @param momentumFluxLeft  Momentum flux at left face (Pa)
+   * @param section Current section to update
+   * @param oldSection Previous time step section state
+   * @param U Conservative variables [ρ_G·α_G, ρ_L·α_L, ρ_m·u, ρ_m·E]
+   * @param sectionIndex Index of this section (0 to numberOfSections-1)
+   * @param dt Time step (s)
+   * @param momentumFluxLeft Momentum flux at left face (Pa)
    * @param momentumFluxRight Momentum flux at right face (Pa)
    */
-  private void updatePrimitiveVariables(PipeSection section, PipeSection oldSection, double[] U,
-      int sectionIndex, double dt, double momentumFluxLeft, double momentumFluxRight) {
+  private void updatePrimitiveVariables(PipeSection section, PipeSection oldSection, double[] U, int sectionIndex,
+      double dt, double momentumFluxLeft, double momentumFluxRight) {
     // U = [rho_G * alpha_G, rho_L * alpha_L, rho_m * u, rho_m * E]
 
     double massConc_G = Math.max(U[0], 1e-10);
@@ -1718,8 +1662,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
       DriftFluxParameters energyParams = driftFluxModel.calculateDriftFlux(section);
       // JT coefficient is calculated from gas phase thermodynamics
       DriftFluxModel.EnergyEquationResult energyResult = driftFluxModel.calculateEnergyEquation(section, energyParams,
-          dt, dx, ambientTemperature,
-          overallHeatTransferCoeff, jouleThomsonCoeff);
+          dt, dx, ambientTemperature, overallHeatTransferCoeff, jouleThomsonCoeff);
       section.setTemperature(energyResult.newTemperature);
     } else {
       // Keep isothermal when heat transfer is disabled
@@ -1794,70 +1737,70 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
     // Inlet boundary
     switch (inletBCType) {
-      case CONSTANT_PRESSURE:
-        sections[0].setPressure(inletPressureValue);
-        break;
-      case CONSTANT_FLOW:
-        // Maintain inlet velocity based on mass flow using drift-flux relation
-        PipeSection inlet = sections[0];
-        double rho_m = inlet.getMixtureDensity();
-        double A = inlet.getArea();
-        double u_m = inletMassFlow / (rho_m * A);
+    case CONSTANT_PRESSURE:
+      sections[0].setPressure(inletPressureValue);
+      break;
+    case CONSTANT_FLOW:
+      // Maintain inlet velocity based on mass flow using drift-flux relation
+      PipeSection inlet = sections[0];
+      double rho_m = inlet.getMixtureDensity();
+      double A = inlet.getArea();
+      double u_m = inletMassFlow / (rho_m * A);
 
-        double alpha_G = inlet.getGasHoldup();
-        double alpha_L = inlet.getLiquidHoldup();
+      double alpha_G = inlet.getGasHoldup();
+      double alpha_L = inlet.getLiquidHoldup();
 
-        if (alpha_L < 0.001 || alpha_G < 0.001) {
-          // Single phase - both velocities equal mixture velocity
-          inlet.setGasVelocity(u_m);
-          inlet.setLiquidVelocity(u_m);
-        } else {
-          // Two-phase: use drift-flux to split velocities properly
-          inlet.setGasVelocity(u_m);
-          inlet.setLiquidVelocity(u_m);
-          inlet.updateDerivedQuantities();
+      if (alpha_L < 0.001 || alpha_G < 0.001) {
+        // Single phase - both velocities equal mixture velocity
+        inlet.setGasVelocity(u_m);
+        inlet.setLiquidVelocity(u_m);
+      } else {
+        // Two-phase: use drift-flux to split velocities properly
+        inlet.setGasVelocity(u_m);
+        inlet.setLiquidVelocity(u_m);
+        inlet.updateDerivedQuantities();
 
-          DriftFluxParameters params = driftFluxModel.calculateDriftFlux(inlet);
-          double C0 = params.C0;
-          double v_d = params.driftVelocity;
-          double rho_G = inlet.getGasDensity();
-          double rho_L = inlet.getLiquidDensity();
+        DriftFluxParameters params = driftFluxModel.calculateDriftFlux(inlet);
+        double C0 = params.C0;
+        double v_d = params.driftVelocity;
+        double rho_G = inlet.getGasDensity();
+        double rho_L = inlet.getLiquidDensity();
 
-          // Solve: v_G = C0*v_m + v_d and momentum conservation
-          double v_G = C0 * u_m + v_d;
-          double v_L = (rho_m * u_m - rho_G * alpha_G * v_G) / (rho_L * alpha_L);
+        // Solve: v_G = C0*v_m + v_d and momentum conservation
+        double v_G = C0 * u_m + v_d;
+        double v_L = (rho_m * u_m - rho_G * alpha_G * v_G) / (rho_L * alpha_L);
 
-          inlet.setGasVelocity(v_G);
-          inlet.setLiquidVelocity(v_L);
-        }
-        break;
-      case CLOSED:
-        sections[0].setGasVelocity(0);
-        sections[0].setLiquidVelocity(0);
-        break;
-      default:
-        break;
+        inlet.setGasVelocity(v_G);
+        inlet.setLiquidVelocity(v_L);
+      }
+      break;
+    case CLOSED:
+      sections[0].setGasVelocity(0);
+      sections[0].setLiquidVelocity(0);
+      break;
+    default:
+      break;
     }
 
     // Outlet boundary
     switch (outletBCType) {
-      case CONSTANT_PRESSURE:
-        sections[numberOfSections - 1].setPressure(outletPressureValue);
-        break;
-      case CONSTANT_FLOW:
-        // Set outlet velocity based on mass flow
-        double rho_m = sections[numberOfSections - 1].getMixtureDensity();
-        double A = sections[numberOfSections - 1].getArea();
-        double u_outlet = outletMassFlow / (rho_m * A);
-        sections[numberOfSections - 1].setGasVelocity(u_outlet);
-        sections[numberOfSections - 1].setLiquidVelocity(u_outlet);
-        break;
-      case CLOSED:
-        sections[numberOfSections - 1].setGasVelocity(0);
-        sections[numberOfSections - 1].setLiquidVelocity(0);
-        break;
-      default:
-        break;
+    case CONSTANT_PRESSURE:
+      sections[numberOfSections - 1].setPressure(outletPressureValue);
+      break;
+    case CONSTANT_FLOW:
+      // Set outlet velocity based on mass flow
+      double rho_m = sections[numberOfSections - 1].getMixtureDensity();
+      double A = sections[numberOfSections - 1].getArea();
+      double u_outlet = outletMassFlow / (rho_m * A);
+      sections[numberOfSections - 1].setGasVelocity(u_outlet);
+      sections[numberOfSections - 1].setLiquidVelocity(u_outlet);
+      break;
+    case CLOSED:
+      sections[numberOfSections - 1].setGasVelocity(0);
+      sections[numberOfSections - 1].setLiquidVelocity(0);
+      break;
+    default:
+      break;
     }
   }
 
@@ -1875,8 +1818,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Check for terrain-induced slugging.
    */
   private void checkTerrainSlugging() {
-    for (LiquidAccumulationTracker.AccumulationZone zone : accumulationTracker
-        .getOverflowingZones()) {
+    for (LiquidAccumulationTracker.AccumulationZone zone : accumulationTracker.getOverflowingZones()) {
       SlugCharacteristics slugChar = accumulationTracker.checkForSlugRelease(zone, sections);
       if (slugChar != null) {
         slugTracker.initializeTerrainSlug(slugChar, sections);
@@ -1905,8 +1847,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
         if (fluid.hasPhaseType("gas")) {
           section.setGasDensity(fluid.getPhase("gas").getDensity("kg/m3"));
           section.setGasViscosity(fluid.getPhase("gas").getViscosity("kg/msec"));
-          section.setGasEnthalpy(fluid.getPhase("gas").getEnthalpy("J/mol")
-              / fluid.getPhase("gas").getMolarMass() * 1000);
+          section
+              .setGasEnthalpy(fluid.getPhase("gas").getEnthalpy("J/mol") / fluid.getPhase("gas").getMolarMass() * 1000);
           section.setGasSoundSpeed(fluid.getPhase("gas").getSoundSpeed());
 
           // Calculate Joule-Thomson coefficient from gas phase thermodynamics
@@ -1936,20 +1878,19 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
                 + w_aq * fluid.getPhase("aqueous").getDensity("kg/m3"));
             section.setLiquidViscosity(w_oil * fluid.getPhase("oil").getViscosity("kg/msec")
                 + w_aq * fluid.getPhase("aqueous").getViscosity("kg/msec"));
-            section.setLiquidEnthalpy(w_oil
-                * (fluid.getPhase("oil").getEnthalpy("J/mol") / fluid.getPhase("oil").getMolarMass()
-                    * 1000)
-                + w_aq * (fluid.getPhase("aqueous").getEnthalpy("J/mol")
-                    / fluid.getPhase("aqueous").getMolarMass() * 1000));
-            section.setLiquidSoundSpeed(w_oil * fluid.getPhase("oil").getSoundSpeed()
-                + w_aq * fluid.getPhase("aqueous").getSoundSpeed());
+            section.setLiquidEnthalpy(
+                w_oil * (fluid.getPhase("oil").getEnthalpy("J/mol") / fluid.getPhase("oil").getMolarMass() * 1000)
+                    + w_aq * (fluid.getPhase("aqueous").getEnthalpy("J/mol") / fluid.getPhase("aqueous").getMolarMass()
+                        * 1000));
+            section.setLiquidSoundSpeed(
+                w_oil * fluid.getPhase("oil").getSoundSpeed() + w_aq * fluid.getPhase("aqueous").getSoundSpeed());
           } else {
             // Two-phase: use the single liquid phase
             String liqPhase = fluid.hasPhaseType("oil") ? "oil" : "aqueous";
             section.setLiquidDensity(fluid.getPhase(liqPhase).getDensity("kg/m3"));
             section.setLiquidViscosity(fluid.getPhase(liqPhase).getViscosity("kg/msec"));
-            section.setLiquidEnthalpy(fluid.getPhase(liqPhase).getEnthalpy("J/mol")
-                / fluid.getPhase(liqPhase).getMolarMass() * 1000);
+            section.setLiquidEnthalpy(
+                fluid.getPhase(liqPhase).getEnthalpy("J/mol") / fluid.getPhase(liqPhase).getMolarMass() * 1000);
             section.setLiquidSoundSpeed(fluid.getPhase(liqPhase).getSoundSpeed());
           }
         }
@@ -2035,7 +1976,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Update outlet stream with final conditions including flow rate.
    *
-   * 
+   *
+   * <p>
    * This method updates the outlet stream with:
    *
    * <ul>
@@ -2043,12 +1985,10 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * <li>Temperature from the outlet pipe section</li>
    * <li>Mass flow rate calculated from outlet section velocity and density</li>
    * </ul>
-   * 
-   * The flow rate is computed directly from the conservation equations to
-   * maintain mass balance.
-   * During slug flow, the increased liquid holdup naturally increases the outlet
-   * density, which is
-   * reflected in the mass flow calculation.
+   *
+   * <p>
+   * The flow rate is computed directly from the conservation equations to maintain mass balance. During slug flow, the
+   * increased liquid holdup naturally increases the outlet density, which is reflected in the mass flow calculation.
    *
    */
   private void updateOutletStream() {
@@ -2149,6 +2089,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    * @param length Pipe length in meters
    */
+  @Override
   public void setLength(double length) {
     this.length = length;
   }
@@ -2168,6 +2109,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    * @param diameter Inner diameter in meters
    */
+  @Override
   public void setDiameter(double diameter) {
     this.diameter = diameter;
   }
@@ -2223,9 +2165,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Enable or disable heat transfer calculations.
    *
    * <p>
-   * When enabled, the energy equation is solved to calculate temperature changes
-   * along the pipe due
-   * to:
+   * When enabled, the energy equation is solved to calculate temperature changes along the pipe due to:
    * </p>
    * <ul>
    * <li>Heat transfer to/from surroundings (ambient)</li>
@@ -2265,9 +2205,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Set overall heat transfer coefficient.
    *
    * <p>
-   * The overall heat transfer coefficient U accounts for all heat transfer
-   * resistances between the
-   * fluid and surroundings. Typical values:
+   * The overall heat transfer coefficient U accounts for all heat transfer resistances between the fluid and
+   * surroundings. Typical values:
    * </p>
    * <ul>
    * <li>Bare steel pipe in still air: 5-10 W/(m²·K)</li>
@@ -2286,11 +2225,10 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    * Get Joule-Thomson coefficient for temperature change during gas expansion.
    *
    * <p>
-   * Returns the JT coefficient calculated from gas phase thermodynamics. This is
-   * automatically
-   * updated during simulation based on the fluid properties.
+   * Returns the JT coefficient calculated from gas phase thermodynamics. This is automatically updated during
+   * simulation based on the fluid properties.
    * </p>
-   * 
+   *
    * <p>
    * Typical values (at ~300K, 50 bar):
    * </p>
@@ -2338,7 +2276,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Set pipe wall roughness.
    *
-   * 
+   *
+   * <p>
    * Used for friction factor calculation. Typical values:
    *
    * <ul>
@@ -2356,10 +2295,10 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Set number of computational cells (sections).
    *
-   * 
-   * More sections provide higher spatial resolution but require more computation.
-   * Guideline: dx ≈
-   * 10-50 pipe diameters. For slug tracking, use at least 20 sections.
+   *
+   * <p>
+   * More sections provide higher spatial resolution but require more computation. Guideline: dx ≈ 10-50 pipe diameters.
+   * For slug tracking, use at least 20 sections.
    *
    *
    * @param n Number of sections
@@ -2371,16 +2310,16 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Set elevation profile along the pipe.
    *
-   * 
-   * Array of elevations (meters) at each section node. The array length should
-   * match the number of
-   * sections. Positive values indicate upward elevation.
+   *
+   * <p>
+   * Array of elevations (meters) at each section node. The array length should match the number of sections. Positive
+   * values indicate upward elevation.
    *
    *
-   * 
+   *
    * <b>Example:</b>
    *
-   * 
+   *
    * <pre>{@code
    * double[] elevations = new double[50];
    * for (int i = 0; i < 50; i++) {
@@ -2398,11 +2337,10 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Set inclination profile along the pipe.
    *
-   * 
-   * Array of inclination angles (radians) at each section. Positive values
-   * indicate upward
-   * inclination. Use this instead of elevation profile for constant-inclination
-   * sections.
+   *
+   * <p>
+   * Array of inclination angles (radians) at each section. Positive values indicate upward inclination. Use this
+   * instead of elevation profile for constant-inclination sections.
    *
    *
    * @param profile Array of inclination angles in radians
@@ -2414,7 +2352,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Set maximum simulation time.
    *
-   * 
+   *
+   * <p>
    * The simulation runs until this time is reached or steady-state is achieved.
    *
    *
@@ -2463,6 +2402,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    * @param pressure Inlet pressure in bara (bar absolute)
    */
+  @Override
   public void setInletPressure(double pressure) {
     this.inletPressureValue = pressure * 1e5; // bara to Pa
   }
@@ -2484,6 +2424,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
    *
    * @param pressure Outlet pressure in bara (bar absolute)
    */
+  @Override
   public void setOutletPressure(double pressure) {
     this.outletPressureValue = pressure * 1e5; // bara to Pa
     this.outletPressureExplicitlySet = true;
@@ -2495,19 +2436,16 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
 
   /**
    * Set the outlet mass flow rate.
-   * 
-   * 
-   * Use this when the outlet flow is controlled by downstream equipment (e.g., a
-   * valve). When using
-   * CONSTANT_FLOW outlet boundary condition, this value is used to calculate the
-   * pressure profile
-   * and outlet stream properties.
    *
-   * 
-   * 
-   * This can be called before each runTransient() call to update the outlet flow
-   * from downstream
-   * valve Cv calculations.
+   *
+   * <p>
+   * Use this when the outlet flow is controlled by downstream equipment (e.g., a valve). When using CONSTANT_FLOW
+   * outlet boundary condition, this value is used to calculate the pressure profile and outlet stream properties.
+   *
+   *
+   *
+   * <p>
+   * This can be called before each runTransient() call to update the outlet flow from downstream valve Cv calculations.
    *
    *
    * @param flow Outlet mass flow rate in kg/s
@@ -2539,6 +2477,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
     return outStream;
   }
 
+  @Override
   public void setOutletStream(StreamInterface stream) {
     this.outStream = stream;
   }
@@ -2562,13 +2501,12 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Get liquid holdup profile at end of simulation.
    *
-   * 
-   * Liquid holdup (α_L) is the fraction of pipe cross-section occupied by liquid.
-   * Values range from
-   * 0 (all gas) to 1 (all liquid).
    *
-   * @return Array of liquid holdups (dimensionless) at each section, or null if
-   *         not run
+   * <p>
+   * Liquid holdup (α_L) is the fraction of pipe cross-section occupied by liquid. Values range from 0 (all gas) to 1
+   * (all liquid).
+   *
+   * @return Array of liquid holdups (dimensionless) at each section, or null if not run
    */
   @Override
   public double[] getLiquidHoldupProfile() {
@@ -2596,9 +2534,9 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Get pressure history over simulation time.
    *
-   * 
-   * The history is stored at intervals specified by historyInterval. The array
-   * dimensions are
+   *
+   * <p>
+   * The history is stored at intervals specified by historyInterval. The array dimensions are
    * [time_index][position_index].
    *
    * @return 2D array of pressures (Pa), or null if not run
@@ -2610,10 +2548,10 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Get all pipe sections with their state variables.
    *
-   * 
-   * Each section contains detailed state information including pressure,
-   * temperature, holdups,
-   * velocities, flow regime, and other properties.
+   *
+   * <p>
+   * Each section contains detailed state information including pressure, temperature, holdups, velocities, flow regime,
+   * and other properties.
    *
    * @return Array of PipeSection objects
    */
@@ -2624,12 +2562,12 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Get the slug tracker for detailed slug analysis.
    *
-   * 
-   * The slug tracker contains information about active slugs, slug statistics,
-   * and slug history.
+   *
+   * <p>
+   * The slug tracker contains information about active slugs, slug statistics, and slug history.
    *
    * <b>Example:</b>
-   * 
+   *
    * <pre>{@code
    * SlugTracker tracker = pipe.getSlugTracker();
    * int slugCount = tracker.getSlugCount();
@@ -2646,13 +2584,13 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Get the liquid accumulation tracker.
    *
-   * 
-   * Tracks liquid pooling at terrain low points. Useful for identifying potential
-   * liquid loading
-   * and slug initiation locations.
+   *
+   * <p>
+   * Tracks liquid pooling at terrain low points. Useful for identifying potential liquid loading and slug initiation
+   * locations.
    *
    * <b>Example:</b>
-   * 
+   *
    * <pre>{@code
    * LiquidAccumulationTracker tracker = pipe.getAccumulationTracker();
    * for (AccumulationZone zone : tracker.getAccumulationZones()) {
@@ -2679,12 +2617,11 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Set CFL number for adaptive time stepping.
    *
-   * 
-   * The CFL (Courant-Friedrichs-Lewy) number controls the time step size relative
-   * to the grid
-   * spacing and wave speeds. Lower values (0.3-0.5) provide more stability but
-   * slower simulation.
-   * Higher values (0.7-0.9) are faster but may become unstable.
+   *
+   * <p>
+   * The CFL (Courant-Friedrichs-Lewy) number controls the time step size relative to the grid spacing and wave speeds.
+   * Lower values (0.3-0.5) provide more stability but slower simulation. Higher values (0.7-0.9) are faster but may
+   * become unstable.
    *
    * @param cfl CFL number, clamped to range [0.1, 1.0]
    */
@@ -2695,12 +2632,10 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Set interval for thermodynamic property updates.
    *
-   * 
-   * Flash calculations are computationally expensive. This setting controls how
-   * often phase
-   * properties are recalculated. Higher values improve performance but may reduce
-   * accuracy for
-   * rapidly changing conditions.
+   *
+   * <p>
+   * Flash calculations are computationally expensive. This setting controls how often phase properties are
+   * recalculated. Higher values improve performance but may reduce accuracy for rapidly changing conditions.
    *
    * @param interval Update interval (number of time steps), minimum 1
    */
@@ -2711,10 +2646,10 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * Enable or disable thermodynamic updates during simulation.
    *
-   * 
-   * When disabled, phase properties remain constant at initial values. This is
-   * appropriate for
-   * isothermal simulations or when temperature/pressure changes are small.
+   *
+   * <p>
+   * When disabled, phase properties remain constant at initial values. This is appropriate for isothermal simulations
+   * or when temperature/pressure changes are small.
    *
    * @param update true to enable updates, false to disable
    */
@@ -2738,7 +2673,8 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /**
    * {@inheritDoc}
    *
-   * 
+   *
+   * <p>
    * This transient model uses internal discretization, not FlowSystemInterface.
    */
   @Override
@@ -2880,8 +2816,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   /** {@inheritDoc} */
   @Override
   public double getOutletElevation() {
-    return (elevationProfile != null && elevationProfile.length > 0)
-        ? elevationProfile[elevationProfile.length - 1]
+    return (elevationProfile != null && elevationProfile.length > 0) ? elevationProfile[elevationProfile.length - 1]
         : 0;
   }
 
@@ -2956,8 +2891,7 @@ public class TransientPipe extends TwoPortEquipment implements PipeLineInterface
   public double getSuperficialVelocity(int phaseNumber) {
     if (phaseNumber == 0 && gasVelocityProfile != null && gasVelocityProfile.length > 0) {
       return gasVelocityProfile[gasVelocityProfile.length - 1];
-    } else if (phaseNumber == 1 && liquidVelocityProfile != null
-        && liquidVelocityProfile.length > 0) {
+    } else if (phaseNumber == 1 && liquidVelocityProfile != null && liquidVelocityProfile.length > 0) {
       return liquidVelocityProfile[liquidVelocityProfile.length - 1];
     }
     return 0;

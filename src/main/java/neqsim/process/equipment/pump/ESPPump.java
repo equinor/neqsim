@@ -12,9 +12,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Electric Submersible Pump (ESP) simulation model for multiphase flow.
  *
  * <p>
- * This class extends the standard Pump model to handle gas-liquid mixtures typical in oil
- * production systems. ESP pumps experience performance degradation when gas is present at the pump
- * intake.
+ * This class extends the standard Pump model to handle gas-liquid mixtures typical in oil production systems. ESP pumps
+ * experience performance degradation when gas is present at the pump intake.
  * </p>
  *
  * <h2>Key Features</h2>
@@ -37,7 +36,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * // Create ESP pump for oil well
  * ESPPump esp = new ESPPump("ESP-1", wellStream);
@@ -46,7 +45,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * esp.setHeadPerStage(10.0); // meters per stage at zero GVF
  * esp.setMaxGVF(0.30); // Maximum tolerable GVF
  * esp.run();
- * 
+ *
  * // Check operating status
  * double gvf = esp.getGasVoidFraction();
  * boolean surging = esp.isSurging();
@@ -124,8 +123,7 @@ public class ESPPump extends Pump {
     double effectiveGVF = gasVoidFraction;
     if (hasGasSeparator && gasSeparatorEfficiency > 0) {
       effectiveGVF = gasVoidFraction * (1.0 - gasSeparatorEfficiency);
-      logger.debug("Gas separator reduces GVF from {} to {}",
-          String.format("%.1f%%", gasVoidFraction * 100),
+      logger.debug("Gas separator reduces GVF from {} to {}", String.format("%.1f%%", gasVoidFraction * 100),
           String.format("%.1f%%", effectiveGVF * 100));
     }
 
@@ -252,8 +250,8 @@ public class ESPPump extends Pump {
       headDegradationFactor = 1.0;
     }
 
-    logger.debug("ESP head degradation factor: {} at GVF={}%",
-        String.format("%.3f", headDegradationFactor), String.format("%.1f", gvf * 100));
+    logger.debug("ESP head degradation factor: {} at GVF={}%", String.format("%.3f", headDegradationFactor),
+        String.format("%.1f", gvf * 100));
   }
 
   /**

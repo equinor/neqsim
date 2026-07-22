@@ -1,12 +1,14 @@
 package neqsim.process.mechanicaldesign.valve;
 
 /**
- * Represents a valve with a linear flow characteristic. For linear characteristics, the flow is
- * directly proportional to the opening.
+ * Represents a valve with a linear flow characteristic. For linear characteristics, the flow is directly proportional
+ * to the opening.
  *
  * @author esol
  */
 public class LinearCharacteristic implements ValveCharacteristic {
+
+  private static final long serialVersionUID = 1L;
 
   /** {@inheritDoc} */
   @Override

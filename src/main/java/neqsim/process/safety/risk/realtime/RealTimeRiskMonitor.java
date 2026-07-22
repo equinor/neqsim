@@ -22,8 +22,8 @@ import neqsim.process.safety.risk.RiskMatrix;
  * Real-time Risk Monitor for Digital Twin Integration.
  *
  * <p>
- * Provides continuous risk monitoring for process systems, enabling integration with digital twin
- * platforms, SCADA systems, and control room displays. Features include:
+ * Provides continuous risk monitoring for process systems, enabling integration with digital twin platforms, SCADA
+ * systems, and control room displays. Features include:
  * </p>
  * <ul>
  * <li>Continuous risk assessment with configurable update intervals</li>
@@ -439,8 +439,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
     RealTimeRiskAssessment assessment = new RealTimeRiskAssessment();
     assessment.setTimestamp(Instant.now());
     assessment.setOverallRiskScore(calculateOverallRiskScore(result));
-    assessment
-        .setExpectedProductionLoss(result.getMaxPossibleProduction() - result.getMeanProduction());
+    assessment.setExpectedProductionLoss(result.getMaxPossibleProduction() - result.getMeanProduction());
     assessment.setAvailability(result.getMeanAvailability());
 
     // Update equipment status from simulation
@@ -464,8 +463,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
     return assessment;
   }
 
-  private double calculateOverallRiskScore(
-      neqsim.process.safety.risk.OperationalRiskResult result) {
+  private double calculateOverallRiskScore(neqsim.process.safety.risk.OperationalRiskResult result) {
     // Simple scoring based on availability - lower availability means higher risk
     double availability = result.getMeanAvailability();
     // Convert to 0-10 scale: 100% availability = 0 risk, 0% availability = 10 risk
@@ -488,32 +486,29 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
 
     // Check threshold breaches
     if (riskScore >= alertThresholds.getCriticalRiskLevel()) {
-      generateAlert(RiskAlert.AlertSeverity.CRITICAL, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED,
-          "System", "Critical risk level exceeded", riskScore,
-          alertThresholds.getCriticalRiskLevel());
+      generateAlert(RiskAlert.AlertSeverity.CRITICAL, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED, "System",
+          "Critical risk level exceeded", riskScore, alertThresholds.getCriticalRiskLevel());
     } else if (riskScore >= alertThresholds.getHighRiskLevel()) {
-      generateAlert(RiskAlert.AlertSeverity.HIGH, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED,
-          "System", "High risk level exceeded", riskScore, alertThresholds.getHighRiskLevel());
+      generateAlert(RiskAlert.AlertSeverity.HIGH, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED, "System",
+          "High risk level exceeded", riskScore, alertThresholds.getHighRiskLevel());
     } else if (riskScore >= alertThresholds.getWarningRiskLevel()) {
-      generateAlert(RiskAlert.AlertSeverity.WARNING, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED,
-          "System", "Warning risk level exceeded", riskScore,
-          alertThresholds.getWarningRiskLevel());
+      generateAlert(RiskAlert.AlertSeverity.WARNING, RiskAlert.AlertType.RISK_THRESHOLD_EXCEEDED, "System",
+          "Warning risk level exceeded", riskScore, alertThresholds.getWarningRiskLevel());
     }
 
     // Check for anomalies
     if (baselineRiskLevel > 0 && baselineStdDev > 0) {
       double deviation = Math.abs(riskScore - baselineRiskLevel) / baselineStdDev;
       if (deviation > alertThresholds.getAnomalyStdDevs()) {
-        generateAlert(RiskAlert.AlertSeverity.WARNING, RiskAlert.AlertType.ANOMALY_DETECTED,
-            "System",
-            String.format("Risk level anomaly detected (%.1f std devs from baseline)", deviation),
-            riskScore, baselineRiskLevel);
+        generateAlert(RiskAlert.AlertSeverity.WARNING, RiskAlert.AlertType.ANOMALY_DETECTED, "System",
+            String.format("Risk level anomaly detected (%.1f std devs from baseline)", deviation), riskScore,
+            baselineRiskLevel);
       }
     }
   }
 
-  private void generateAlert(RiskAlert.AlertSeverity severity, RiskAlert.AlertType type,
-      String source, String message, double current, double threshold) {
+  private void generateAlert(RiskAlert.AlertSeverity severity, RiskAlert.AlertType type, String source, String message,
+      double current, double threshold) {
     RiskAlert alert = new RiskAlert(severity, type, source, message);
     alert.setCurrentValue(current);
     alert.setThresholdValue(threshold);
@@ -552,8 +547,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
         sumX2 += i * i;
       }
       double slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
-      assessment
-          .setRiskTrend(slope > 0.01 ? "INCREASING" : slope < -0.01 ? "DECREASING" : "STABLE");
+      assessment.setRiskTrend(slope > 0.01 ? "INCREASING" : slope < -0.01 ? "DECREASING" : "STABLE");
       assessment.setTrendSlope(slope);
     }
   }
@@ -686,8 +680,7 @@ public class RealTimeRiskMonitor implements Serializable, Runnable {
     thresholds.put("critical", alertThresholds.getCriticalRiskLevel());
     map.put("thresholds", thresholds);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(map);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(map);
   }
 
   @Override

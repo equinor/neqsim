@@ -30,18 +30,18 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * <strong>Example Usage</strong>
  * </p>
- * 
+ *
  * <pre>
  * ProcessConstraintEvaluator evaluator = new ProcessConstraintEvaluator(processSystem);
- * 
+ *
  * // Evaluate all constraints
  * ConstraintEvaluationResult result = evaluator.evaluate();
  * System.out.println("Bottleneck: " + result.getBottleneckEquipment());
  * System.out.println("Utilization: " + result.getOverallUtilization());
- * 
+ *
  * // Calculate sensitivities
  * Map&lt;String, Double&gt; sensitivities = evaluator.calculateFlowSensitivities(5000.0, "kg/hr");
- * 
+ *
  * // Estimate max flow
  * double maxFlow = evaluator.estimateMaxFlow(5000.0, "kg/hr");
  * </pre>
@@ -88,8 +88,7 @@ public class ProcessConstraintEvaluator implements Serializable {
     long timestamp;
     int processRunCount;
 
-    CachedConstraintsInternal(Map<String, CapacityConstraint> constraints, double utilization,
-        int processRunCount) {
+    CachedConstraintsInternal(Map<String, CapacityConstraint> constraints, double utilization, int processRunCount) {
       this.constraints = constraints;
       this.utilization = utilization;
       this.timestamp = System.currentTimeMillis();
@@ -97,8 +96,7 @@ public class ProcessConstraintEvaluator implements Serializable {
     }
 
     boolean isValid(long timeoutMs, int currentRunCount) {
-      return (System.currentTimeMillis() - timestamp) < timeoutMs
-          && processRunCount == currentRunCount;
+      return (System.currentTimeMillis() - timestamp) < timeoutMs && processRunCount == currentRunCount;
     }
   }
 
@@ -114,7 +112,8 @@ public class ProcessConstraintEvaluator implements Serializable {
     private Map<String, Double> cachedResults = new HashMap<String, Double>();
 
     /** Default constructor. */
-    public CachedConstraints() {}
+    public CachedConstraints() {
+    }
 
     /**
      * Checks if cache is valid.
@@ -228,12 +227,12 @@ public class ProcessConstraintEvaluator implements Serializable {
     private int totalViolationCount = 0;
     private boolean allHardConstraintsSatisfied = true;
     private boolean allSoftConstraintsSatisfied = true;
-    private Map<String, EquipmentConstraintSummary> equipmentSummaries =
-        new HashMap<String, EquipmentConstraintSummary>();
+    private Map<String, EquipmentConstraintSummary> equipmentSummaries = new HashMap<String, EquipmentConstraintSummary>();
     private Map<String, Double> normalizedUtilizations = new HashMap<String, Double>();
 
     /** Default constructor. */
-    public ConstraintEvaluationResult() {}
+    public ConstraintEvaluationResult() {
+    }
 
     /**
      * Gets the overall utilization.
@@ -443,7 +442,8 @@ public class ProcessConstraintEvaluator implements Serializable {
     private Map<String, Double> constraintDetails = new HashMap<String, Double>();
 
     /** Default constructor. */
-    public EquipmentConstraintSummary() {}
+    public EquipmentConstraintSummary() {
+    }
 
     /**
      * Gets equipment name.
@@ -679,8 +679,7 @@ public class ProcessConstraintEvaluator implements Serializable {
       }
 
       // Get constraints (possibly from cache)
-      Map<String, CapacityConstraint> constraints =
-          getConstraintsWithCaching(equipment, strategy, processRunCount);
+      Map<String, CapacityConstraint> constraints = getConstraintsWithCaching(equipment, strategy, processRunCount);
 
       // Calculate equipment summary
       EquipmentConstraintSummary summary = new EquipmentConstraintSummary();
@@ -772,8 +771,7 @@ public class ProcessConstraintEvaluator implements Serializable {
    * @param flowRateKgPerHr current flow rate in kg/hr
    * @return map of constraint name to sensitivity (d_utilization / d_flow)
    */
-  public Map<String, Double> calculateFlowSensitivities(ProcessSystem processSystem,
-      double flowRateKgPerHr) {
+  public Map<String, Double> calculateFlowSensitivities(ProcessSystem processSystem, double flowRateKgPerHr) {
     Map<String, Double> sensitivities = new HashMap<String, Double>();
 
     if (processSystem == null || processSystem.getUnitOperations().isEmpty()) {
@@ -864,10 +862,14 @@ public class ProcessConstraintEvaluator implements Serializable {
 
   /**
    * Gets constraints with caching support.
+   *
+   * @param equipment the process equipment to get constraints for
+   * @param strategy the capacity strategy to use
+   * @param processRunCount the current process run count for cache validation
+   * @return map of constraint name to capacity constraint
    */
-  private Map<String, CapacityConstraint> getConstraintsWithCaching(
-      ProcessEquipmentInterface equipment, EquipmentCapacityStrategy strategy,
-      int processRunCount) {
+  private Map<String, CapacityConstraint> getConstraintsWithCaching(ProcessEquipmentInterface equipment,
+      EquipmentCapacityStrategy strategy, int processRunCount) {
     if (!cachingEnabled) {
       return strategy.getConstraints(equipment);
     }
@@ -884,14 +886,16 @@ public class ProcessConstraintEvaluator implements Serializable {
     double utilization = strategy.evaluateCapacity(equipment);
 
     // Cache it
-    constraintCache.put(cacheKey,
-        new CachedConstraintsInternal(constraints, utilization, processRunCount));
+    constraintCache.put(cacheKey, new CachedConstraintsInternal(constraints, utilization, processRunCount));
 
     return constraints;
   }
 
   /**
    * Gets process run count (approximate) for cache invalidation.
+   *
+   * @param processSystem the process system to get run count for
+   * @return an approximate run count based on the system hash code
    */
   private int getProcessRunCount(ProcessSystem processSystem) {
     return processSystem.hashCode();
@@ -899,6 +903,9 @@ public class ProcessConstraintEvaluator implements Serializable {
 
   /**
    * Sets the feed flow rate on the process system.
+   *
+   * @param processSystem the process system to modify
+   * @param flowKgPerHr the feed flow rate in kg/hr
    */
   private void setFeedFlowRate(ProcessSystem processSystem, double flowKgPerHr) {
     if (processSystem == null || processSystem.getUnitOperations().isEmpty()) {

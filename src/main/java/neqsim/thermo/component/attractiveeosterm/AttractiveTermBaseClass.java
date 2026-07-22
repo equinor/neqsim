@@ -11,9 +11,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermBaseClass class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public abstract class AttractiveTermBaseClass implements AttractiveTermInterface
   protected double[] parametersSolid = new double[3];
 
   /**
-   * <p>
    * Constructor for AttractiveTermBaseClass.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -160,8 +156,8 @@ public abstract class AttractiveTermBaseClass implements AttractiveTermInterface
         return false;
       }
     } /*
-       * else if (!component.equals(other.component)) { // Typically equality is checked from
-       * component so this will infinitely recursive return false; }
+       * else if (!component.equals(other.component)) { // Typically equality is checked from component so this will
+       * infinitely recursive return false; }
        */
     return true;
   }

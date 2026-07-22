@@ -4,9 +4,8 @@ package neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall;
  * Represents a single material layer in a pipe wall or vessel wall.
  *
  * <p>
- * Each layer has thermal properties (conductivity, density, heat capacity) and geometric properties
- * (thickness). Layers can be created from predefined {@link PipeMaterial} types or with custom
- * properties.
+ * Each layer has thermal properties (conductivity, density, heat capacity) and geometric properties (thickness). Layers
+ * can be created from predefined {@link PipeMaterial} types or with custom properties.
  * </p>
  *
  * <p>
@@ -52,7 +51,8 @@ public class MaterialLayer {
   /**
    * Default constructor with generic material properties.
    */
-  public MaterialLayer() {}
+  public MaterialLayer() {
+  }
 
   /**
    * Constructor for MaterialLayer with material name and thickness.
@@ -414,7 +414,7 @@ public class MaterialLayer {
 
   @Override
   public String toString() {
-    return String.format("MaterialLayer[%s: t=%.4f m, k=%.3f W/(m·K), ρ=%.0f kg/m³]", materialName,
-        thickness, conductivity, density);
+    return String.format("MaterialLayer[%s: t=%.4f m, k=%.3f W/(m·K), ρ=%.0f kg/m³]", materialName, thickness,
+        conductivity, density);
   }
 }

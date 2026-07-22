@@ -3,9 +3,7 @@ package neqsim.process.equipment.separator;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * <p>
  * TwoPhaseSeparator class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class TwoPhaseSeparator extends Separator {
   }
 
   /**
-   * <p>
    * Constructor for TwoPhaseSeparator.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object

@@ -35,8 +35,8 @@ public class TwoPhasePipeFlowSystemMassTransferTest {
     testFluid.setMixingRule(2);
 
     // Create a simple pipe system using builder
-    pipe = TwoPhasePipeFlowSystem.builder().withFluid(testFluid).withDiameter(0.1, "m")
-        .withLength(100, "m").withNodes(10).withFlowPattern(FlowPattern.STRATIFIED).build();
+    pipe = TwoPhasePipeFlowSystem.builder().withFluid(testFluid).withDiameter(0.1, "m").withLength(100, "m")
+        .withNodes(10).withFlowPattern(FlowPattern.STRATIFIED).build();
   }
 
   @Test
@@ -51,8 +51,7 @@ public class TwoPhasePipeFlowSystemMassTransferTest {
     double[] areas = pipe.getSpecificInterfacialAreaProfile();
 
     // Should have same number of elements as nodes
-    assertEquals(pipe.getTotalNumberOfNodes(), areas.length,
-        "Profile array should match number of nodes");
+    assertEquals(pipe.getTotalNumberOfNodes(), areas.length, "Profile array should match number of nodes");
   }
 
   @Test
@@ -72,8 +71,7 @@ public class TwoPhasePipeFlowSystemMassTransferTest {
     double diffusivity = 1.0e-9; // typical liquid diffusivity
     double[] kLProfile = pipe.getLiquidMassTransferCoefficientProfile(diffusivity);
 
-    assertEquals(pipe.getTotalNumberOfNodes(), kLProfile.length,
-        "Profile array should match number of nodes");
+    assertEquals(pipe.getTotalNumberOfNodes(), kLProfile.length, "Profile array should match number of nodes");
   }
 
   @Test
@@ -81,8 +79,7 @@ public class TwoPhasePipeFlowSystemMassTransferTest {
     double diffusivity = 1.0e-5; // typical gas diffusivity
     double[] kGProfile = pipe.getGasMassTransferCoefficientProfile(diffusivity);
 
-    assertEquals(pipe.getTotalNumberOfNodes(), kGProfile.length,
-        "Profile array should match number of nodes");
+    assertEquals(pipe.getTotalNumberOfNodes(), kGProfile.length, "Profile array should match number of nodes");
   }
 
   @Test
@@ -96,8 +93,7 @@ public class TwoPhasePipeFlowSystemMassTransferTest {
     double diffusivity = 1.0e-9;
     double[] kLaProfile = pipe.getVolumetricMassTransferCoefficientProfile(diffusivity);
 
-    assertEquals(pipe.getTotalNumberOfNodes(), kLaProfile.length,
-        "Profile array should match number of nodes");
+    assertEquals(pipe.getTotalNumberOfNodes(), kLaProfile.length, "Profile array should match number of nodes");
   }
 
   @Test
@@ -119,8 +115,7 @@ public class TwoPhasePipeFlowSystemMassTransferTest {
 
     for (int i = 0; i < areas.length; i++) {
       assertTrue(areas[i] >= 0.0,
-          "Specific interfacial area should be non-negative at all nodes, was " + areas[i]
-              + " at node " + i);
+          "Specific interfacial area should be non-negative at all nodes, was " + areas[i] + " at node " + i);
     }
   }
 
@@ -133,13 +128,11 @@ public class TwoPhasePipeFlowSystemMassTransferTest {
     double[] kGProfile = pipe.getGasMassTransferCoefficientProfile(diffusivityG);
 
     for (int i = 0; i < kLProfile.length; i++) {
-      assertTrue(kLProfile[i] >= 0.0,
-          "Liquid mass transfer coefficient should be non-negative at all nodes");
+      assertTrue(kLProfile[i] >= 0.0, "Liquid mass transfer coefficient should be non-negative at all nodes");
     }
 
     for (int i = 0; i < kGProfile.length; i++) {
-      assertTrue(kGProfile[i] >= 0.0,
-          "Gas mass transfer coefficient should be non-negative at all nodes");
+      assertTrue(kGProfile[i] >= 0.0, "Gas mass transfer coefficient should be non-negative at all nodes");
     }
   }
 }

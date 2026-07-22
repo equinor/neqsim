@@ -11,8 +11,8 @@ import neqsim.process.processmodel.ProcessSystem;
  * Efficient derivative calculator for NeqSim process simulations.
  *
  * <p>
- * Calculates numerical derivatives (gradients, Jacobians, Hessians) of process outputs with respect
- * to process inputs. Designed for use in MPC, optimization, and AI/ML applications.
+ * Calculates numerical derivatives (gradients, Jacobians, Hessians) of process outputs with respect to process inputs.
+ * Designed for use in MPC, optimization, and AI/ML applications.
  * </p>
  *
  * <p>
@@ -29,23 +29,22 @@ import neqsim.process.processmodel.ProcessSystem;
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * {@code
  * ProcessDerivativeCalculator calc = new ProcessDerivativeCalculator(process);
- * 
+ *
  * // Define variables
  * calc.addInputVariable("Feed.flowRate", "kg/hr");
  * calc.addInputVariable("Feed.pressure", "bara");
  * calc.addOutputVariable("Separator.gasOutStream.flowRate", "kg/hr");
  * calc.addOutputVariable("Separator.liquidLevel", "fraction");
- * 
+ *
  * // Calculate Jacobian
  * double[][] jacobian = calc.calculateJacobian();
- * 
+ *
  * // Or get single derivative
- * double dGasFlow_dFeedFlow =
- *     calc.getDerivative("Separator.gasOutStream.flowRate", "Feed.flowRate");
+ * double dGasFlow_dFeedFlow = calc.getDerivative("Separator.gasOutStream.flowRate", "Feed.flowRate");
  * }
  * </pre>
  *
@@ -149,8 +148,7 @@ public class ProcessDerivativeCalculator {
       if (lowerPath.contains("flow")) {
         return VariableType.FLOW_RATE;
       }
-      if (lowerPath.contains("composition") || lowerPath.contains("fraction")
-          || lowerPath.contains("mole")) {
+      if (lowerPath.contains("composition") || lowerPath.contains("fraction") || lowerPath.contains("mole")) {
         return VariableType.COMPOSITION;
       }
       if (lowerPath.contains("level")) {
@@ -426,18 +424,18 @@ public class ProcessDerivativeCalculator {
     double[] gradient = new double[numOutputs];
 
     switch (method) {
-      case FORWARD_DIFFERENCE:
-        gradient = calculateForwardDifference(inputSpec, baseValue, step);
-        break;
+    case FORWARD_DIFFERENCE:
+      gradient = calculateForwardDifference(inputSpec, baseValue, step);
+      break;
 
-      case CENTRAL_DIFFERENCE:
-      default:
-        gradient = calculateCentralDifference(inputSpec, baseValue, step);
-        break;
+    case CENTRAL_DIFFERENCE:
+    default:
+      gradient = calculateCentralDifference(inputSpec, baseValue, step);
+      break;
 
-      case CENTRAL_DIFFERENCE_SECOND_ORDER:
-        gradient = calculateCentralDifferenceSecondOrder(inputSpec, baseValue, step);
-        break;
+    case CENTRAL_DIFFERENCE_SECOND_ORDER:
+      gradient = calculateCentralDifferenceSecondOrder(inputSpec, baseValue, step);
+      break;
     }
 
     return gradient;
@@ -451,8 +449,7 @@ public class ProcessDerivativeCalculator {
    * @param step the perturbation step size
    * @return gradient array with derivatives for each output variable
    */
-  private double[] calculateForwardDifference(VariableSpec inputSpec, double baseValue,
-      double step) {
+  private double[] calculateForwardDifference(VariableSpec inputSpec, double baseValue, double step) {
     int numOutputs = outputVariables.size();
     double[] gradient = new double[numOutputs];
 
@@ -481,8 +478,7 @@ public class ProcessDerivativeCalculator {
    * @param step the perturbation step size
    * @return gradient array with derivatives for each output variable
    */
-  private double[] calculateCentralDifference(VariableSpec inputSpec, double baseValue,
-      double step) {
+  private double[] calculateCentralDifference(VariableSpec inputSpec, double baseValue, double step) {
     int numOutputs = outputVariables.size();
     double[] gradient = new double[numOutputs];
 
@@ -516,8 +512,7 @@ public class ProcessDerivativeCalculator {
    * @param step the perturbation step size
    * @return gradient array with derivatives for each output variable
    */
-  private double[] calculateCentralDifferenceSecondOrder(VariableSpec inputSpec, double baseValue,
-      double step) {
+  private double[] calculateCentralDifferenceSecondOrder(VariableSpec inputSpec, double baseValue, double step) {
     int numOutputs = outputVariables.size();
     double[] gradient = new double[numOutputs];
 
@@ -533,8 +528,7 @@ public class ProcessDerivativeCalculator {
 
     // Five-point stencil formula: (-f(x+2h) + 8f(x+h) - 8f(x-h) + f(x-2h)) / 12h
     for (int i = 0; i < numOutputs; i++) {
-      gradient[i] = (-outputs_p2h[i] + 8 * outputs_p1h[i] - 8 * outputs_m1h[i] + outputs_m2h[i])
-          / (12.0 * step);
+      gradient[i] = (-outputs_p2h[i] + 8 * outputs_p1h[i] - 8 * outputs_m1h[i] + outputs_m2h[i]) / (12.0 * step);
     }
 
     return gradient;
@@ -694,23 +688,23 @@ public class ProcessDerivativeCalculator {
     // Type-specific minimum steps
     double minStep;
     switch (spec.type) {
-      case PRESSURE:
-        minStep = 0.01; // 0.01 bar minimum
-        break;
-      case TEMPERATURE:
-        minStep = 0.1; // 0.1 K minimum
-        break;
-      case FLOW_RATE:
-        minStep = 0.001; // 0.001 kg/hr minimum
-        break;
-      case COMPOSITION:
-        minStep = 1e-6; // Very small for mole fractions
-        break;
-      case LEVEL:
-        minStep = 0.001; // 0.1% of level range
-        break;
-      default:
-        minStep = minAbsoluteStep;
+    case PRESSURE:
+      minStep = 0.01; // 0.01 bar minimum
+      break;
+    case TEMPERATURE:
+      minStep = 0.1; // 0.1 K minimum
+      break;
+    case FLOW_RATE:
+      minStep = 0.001; // 0.001 kg/hr minimum
+      break;
+    case COMPOSITION:
+      minStep = 1e-6; // Very small for mole fractions
+      break;
+    case LEVEL:
+      minStep = 0.001; // 0.1% of level range
+      break;
+    default:
+      minStep = minAbsoluteStep;
     }
 
     // Relative step with minimum floor

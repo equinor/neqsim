@@ -1,3 +1,8 @@
+---
+title: "Recycle Convergence Acceleration Guide"
+description: "This guide explains the recycle system in NeqSim, the available convergence acceleration methods, and best practices for optimizing process simulations."
+---
+
 # Recycle Convergence Acceleration Guide
 
 This guide explains the recycle system in NeqSim, the available convergence acceleration methods, and best practices for optimizing process simulations.
@@ -598,7 +603,7 @@ SensitivityMatrix result = analyzer
 String report = analyzer.generateReport(result);
 ```
 
-See [Graph-Based Process Simulation - Process Sensitivity Analysis](graph_based_process_simulation.md#process-sensitivity-analysis) for full documentation.
+See [Graph-Based Process Simulation - Process Sensitivity Analysis](graph_based_process_simulation#process-sensitivity-analysis) for full documentation.
 
 ---
 
@@ -683,8 +688,8 @@ List<String> getTearStreamVariableNames()
 
 ## See Also
 
-- [Graph-Based Process Simulation](graph_based_process_simulation.md) - Detailed guide on graph algorithms and sensitivity analysis
-- 📓 [GraphBasedProcessSimulation.ipynb](../notebooks/GraphBasedProcessSimulation.ipynb) - Interactive Jupyter notebook example
+- [Graph-Based Process Simulation](graph_based_process_simulation) - Detailed guide on graph algorithms and sensitivity analysis
+- 📓 [GraphBasedProcessSimulation.ipynb](../examples/GraphBasedProcessSimulation.ipynb) - Interactive Jupyter notebook example
 
 ---
 

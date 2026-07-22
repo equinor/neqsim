@@ -12,11 +12,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.junit.jupiter.api.Test;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.heatexchanger.Heater;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.util.FlowRateAdjuster;
@@ -25,11 +27,13 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(JcaFrmsWorkflowTest.class);
+
   private static final JsonObject FLUID_DATA = loadFluidData();
 
   private static JsonObject loadFluidData() {
-    try (InputStream resourceStream = JcaFrmsWorkflowTest.class.getResourceAsStream(
-        "/neqsim/process/measurementdevice/jca_frms_fluid_characterisation.json")) {
+    try (InputStream resourceStream = JcaFrmsWorkflowTest.class
+        .getResourceAsStream("/neqsim/process/measurementdevice/jca_frms_fluid_characterisation.json")) {
       Objects.requireNonNull(resourceStream, "Missing FRMS fluid data resource");
       try (Reader reader = new InputStreamReader(resourceStream, StandardCharsets.UTF_8)) {
         return JsonParser.parseReader(reader).getAsJsonObject();
@@ -53,8 +57,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
 
       if (molarMassElement != null && !molarMassElement.isJsonNull() && densityElement != null
           && !densityElement.isJsonNull() && Math.abs(densityElement.getAsDouble()) > 1.0e-12) {
-        fluidSystem.addTBPfraction(name, amount, molarMassElement.getAsDouble() / 1000.0,
-            densityElement.getAsDouble());
+        fluidSystem.addTBPfraction(name, amount, molarMassElement.getAsDouble() / 1000.0, densityElement.getAsDouble());
       } else {
         fluidSystem.addComponent(name, amount);
       }
@@ -114,7 +117,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
     bubbleFluid.removeComponent("water");
     ThermodynamicOperations bubbleOps = new ThermodynamicOperations(bubbleFluid);
     bubbleOps.bubblePointPressureFlash();
-    // System.out.println("Havis mixture bubble point at " + temperature + " C = "
+    // logger.info("Havis mixture bubble point at " + temperature + " C = "
     // + bubbleFluid.getPressure("bara") + " bara");
 
     assertEquals(temperature, multiphaseFluid.getTemperature("C"), 1e-6);
@@ -154,7 +157,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
 
     for (int i = 0; i < iterations; i++) {
       try {
-        // System.out.println("Starting iteration " + (i + 1));
+        // logger.info("Starting iteration " + (i + 1));
         // Apply 10% random variation to each parameter
         double gasFlow = baseGasFlow * (1.0 + (random.nextGaussian() * 0.1));
         double oilFlow = baseOilFlow * (1.0 + (random.nextGaussian() * 0.1));
@@ -162,7 +165,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
         double pressure = basePressure * (1.0 + (random.nextGaussian() * 0.1));
         double temperature = baseTemperature * (1.0 + (random.nextGaussian() * 0.1));
 
-        // System.out.printf(
+        // logger.printf(org.apache.logging.log4j.Level.INFO,
         // "Iteration %d: gasFlow=%.12f, oilFlow=%.12f, waterFlow=%.12f, "
         // + "pressure=%.12f, temperature=%.12f%n",
         // i, gasFlow, oilFlow, waterFlow, pressure, temperature);
@@ -191,8 +194,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
         multiphaseHeater.setOutTemperature(temperature, "C");
         multiphaseHeater.run();
 
-        Stream multiphaseStream =
-            new Stream("multiphase stream", multiphaseHeater.getOutletStream());
+        Stream multiphaseStream = new Stream("multiphase stream", multiphaseHeater.getOutletStream());
         multiphaseStream.setPressure(pressure, "barg");
         multiphaseStream.setTemperature(temperature, "C");
         multiphaseStream.run();
@@ -200,10 +202,11 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
         SystemInterface multiphaseFluid = multiphaseStream.getFluid();
         // multiphaseFluid.prettyPrint();
         // Same assertions as original test
-        assertEquals(temperature, multiphaseFluid.getTemperature("C"), 1e-3); // Slightly relaxed
-                                                                              // tolerance
+        assertEquals(temperature, multiphaseFluid.getTemperature("C"), 1e-3); // Slightly
+                                                                              // relaxed
+        // tolerance
         assertEquals(pressure, multiphaseFluid.getPressure("barg"), 1e-3); // Slightly relaxed
-                                                                           // tolerance
+        // tolerance
         assertTrue(multiphaseFluid.hasPhaseType("gas"));
         assertTrue(multiphaseFluid.hasPhaseType("oil"));
         assertTrue(multiphaseFluid.hasPhaseType("aqueous"));
@@ -221,7 +224,7 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
         successfulRuns++;
       } catch (Exception | AssertionError e) {
         // Log failed iteration but continue with others
-        System.out.println("Iteration " + i + " failed: " + e.getMessage());
+        logger.info("Iteration " + i + " failed: " + e.getMessage());
       }
     }
 
@@ -342,9 +345,9 @@ public class JcaFrmsWorkflowTest extends neqsim.NeqSimTest {
   }
 
   /**
-   * Creates a deterministic, insertion-order map of fluid type indices to names. Java 8-compatible
-   * replacement for Map.of used to maintain compatibility with older runtime environments. Returns
-   * an unmodifiable view to discourage accidental mutation.
+   * Creates a deterministic, insertion-order map of fluid type indices to names. Java 8-compatible replacement for
+   * Map.of used to maintain compatibility with older runtime environments. Returns an unmodifiable view to discourage
+   * accidental mutation.
    */
   private static Map<Integer, String> createFluidMap() {
     LinkedHashMap<Integer, String> map = new LinkedHashMap<>();

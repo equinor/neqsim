@@ -7,6 +7,8 @@ import java.util.Map;
 import javax.swing.JFrame;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.costestimation.valve.ValveCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.valve.ThrottlingValve;
@@ -16,13 +18,11 @@ import neqsim.process.mechanicaldesign.designstandards.ValveDesignStandard;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ValveMechanicalDesign class provides mechanical design calculations for control valves.
- * </p>
  *
  * <p>
- * This class calculates valve sizing, weight, dimensions, and actuator requirements based on
- * industry standards including ANSI/ISA-75, IEC 60534, and API 6D.
+ * This class calculates valve sizing, weight, dimensions, and actuator requirements based on industry standards
+ * including ANSI/ISA-75, IEC 60534, and API 6D.
  * </p>
  *
  * <p>
@@ -41,6 +41,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @version $Id: $Id
  */
 public class ValveMechanicalDesign extends MechanicalDesign {
+  private static final Logger logger = LogManager.getLogger(ValveMechanicalDesign.class);
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -132,9 +133,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   private String flangeType = "RF"; // Raised Face
 
   /**
-   * <p>
    * Getter for the field <code>valveCharacterization</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -143,9 +142,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * <p>
    * Getter for the field <code>valveCharacterizationMethod</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.mechanicaldesign.valve.ValveCharacteristic} object
    */
@@ -154,21 +151,16 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * <p>
    * Setter for the field <code>valveCharacterizationMethod</code>.
-   * </p>
    *
-   * @param valveCharacterizationMethod a
-   *        {@link neqsim.process.mechanicaldesign.valve.ValveCharacteristic} object
+   * @param valveCharacterizationMethod a {@link neqsim.process.mechanicaldesign.valve.ValveCharacteristic} object
    */
   public void setValveCharacterizationMethod(ValveCharacteristic valveCharacterizationMethod) {
     this.valveCharacterizationMethod = valveCharacterizationMethod;
   }
 
   /**
-   * <p>
    * Getter for the field <code>valveSizingStandard</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -177,9 +169,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * <p>
    * Setter for the field <code>valveSizingStandard</code>.
-   * </p>
    *
    * <p>
    * Available sizing standards:
@@ -223,22 +213,20 @@ public class ValveMechanicalDesign extends MechanicalDesign {
 
   /**
    * Sets the valve characterization type.
-   * 
+   *
    * <p>
    * Available valve characteristics:
    * </p>
    * <ul>
-   * <li><b>linear</b> - Flow is directly proportional to valve opening. Best when pressure drop is
-   * constant.</li>
-   * <li><b>equal percentage</b> - Equal increments produce equal percentage changes in flow. Most
-   * common for process control.</li>
-   * <li><b>quick opening</b> - Large flow change at small openings. Used for on/off and safety
-   * applications.</li>
+   * <li><b>linear</b> - Flow is directly proportional to valve opening. Best when pressure drop is constant.</li>
+   * <li><b>equal percentage</b> - Equal increments produce equal percentage changes in flow. Most common for process
+   * control.</li>
+   * <li><b>quick opening</b> - Large flow change at small openings. Used for on/off and safety applications.</li>
    * <li><b>modified parabolic</b> - Compromise between linear and equal percentage.</li>
    * </ul>
    *
-   * @param valveCharacterization the characterization type: "linear", "equal percentage", "quick
-   *        opening", or "modified parabolic"
+   * @param valveCharacterization the characterization type: "linear", "equal percentage", "quick opening", or "modified
+   * parabolic"
    */
   public void setValveCharacterization(String valveCharacterization) {
     this.valveCharacterization = valveCharacterization;
@@ -259,8 +247,8 @@ public class ValveMechanicalDesign extends MechanicalDesign {
    * Sets the choke diameter for multiphase choke models.
    *
    * <p>
-   * This method is only applicable when using multiphase choke sizing methods (Sachdeva, Gilbert,
-   * Baxendell, Ros, or Achong). For other sizing methods, this has no effect.
+   * This method is only applicable when using multiphase choke sizing methods (Sachdeva, Gilbert, Baxendell, Ros, or
+   * Achong). For other sizing methods, this has no effect.
    * </p>
    *
    * @param diameter the choke diameter value
@@ -302,9 +290,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   ControlValveSizingInterface valveSizingMethod = null;
 
   /**
-   * <p>
    * Constructor for ValveMechanicalDesign.
-   * </p>
    *
    * @param equipment a {@link neqsim.process.equipment.ProcessEquipmentInterface} object
    */
@@ -316,9 +302,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   }
 
   /**
-   * <p>
    * getValveSizingMethod.
-   * </p>
    *
    * @return a {@link neqsim.process.mechanicaldesign.valve.ControlValveSizingInterface} object
    */
@@ -329,14 +313,13 @@ public class ValveMechanicalDesign extends MechanicalDesign {
   /**
    * Calculates the valve size based on the fluid properties and operating conditions.
    *
-   * @return a map containing the calculated valve size and related parameters. If fullOutput is
-   *         false, the map will be null.
+   * @return a map containing the calculated valve size and related parameters. If fullOutput is false, the map will be
+   * null.
    */
   public Map<String, Object> calcValveSize() {
     Map<String, Object> result = fullOutput ? new HashMap<>() : null;
 
-    result = valveSizingMethod
-        .calcValveSize(((ValveInterface) getProcessEquipment()).getPercentValveOpening());
+    result = valveSizingMethod.calcValveSize(((ValveInterface) getProcessEquipment()).getPercentValveOpening());
 
     return result;
   }
@@ -347,12 +330,10 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     super.readDesignSpecifications();
 
     if (getDesignStandard().containsKey("valve design codes")) {
-      System.out.println("valve code standard: "
-          + getDesignStandard().get("valve design codes").getStandardName());
-      valveCvMax =
-          ((ValveDesignStandard) getDesignStandard().get("valve design codes")).getValveCvMax();
+      logger.info("valve code standard: {}", getDesignStandard().get("valve design codes").getStandardName());
+      valveCvMax = ((ValveDesignStandard) getDesignStandard().get("valve design codes")).getValveCvMax();
     } else {
-      System.out.println("no valve code standard specified......using default");
+      logger.info("no valve code standard specified; using default");
     }
   }
 
@@ -440,8 +421,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     double calculatedSize = Math.sqrt(cv / 10.0);
 
     // Round to standard pipe sizes
-    double[] standardSizes =
-        {0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 24.0};
+    double[] standardSizes = { 0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0, 8.0, 10.0, 12.0, 14.0, 16.0, 18.0, 20.0, 24.0 };
 
     nominalSizeInches = standardSizes[0];
     for (double size : standardSizes) {
@@ -510,8 +490,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     double allowableStressMPa = 138.0; // Typical for carbon steel at ambient
     double jointEfficiency = 1.0;
 
-    bodyWallThickness =
-        (pressureMPa * innerRadiusMm) / (allowableStressMPa * jointEfficiency - 0.6 * pressureMPa);
+    bodyWallThickness = (pressureMPa * innerRadiusMm) / (allowableStressMPa * jointEfficiency - 0.6 * pressureMPa);
 
     // Add corrosion allowance
     bodyWallThickness += getCorrosionAllowance();
@@ -775,7 +754,7 @@ public class ValveMechanicalDesign extends MechanicalDesign {
     Container dialogContentPane = dialog.getContentPane();
     dialogContentPane.setLayout(new BorderLayout());
 
-    String[] names = {"Name", "Value", "Unit"};
+    String[] names = { "Name", "Value", "Unit" };
 
     String[][] table = new String[20][3];
 
@@ -870,8 +849,8 @@ public class ValveMechanicalDesign extends MechanicalDesign {
    * {@inheritDoc}
    *
    * <p>
-   * Returns a valve-specific response with additional fields for sizing data, actuator
-   * requirements, and flow characteristics.
+   * Returns a valve-specific response with additional fields for sizing data, actuator requirements, and flow
+   * characteristics.
    * </p>
    */
   @Override

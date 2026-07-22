@@ -15,8 +15,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
  * Mechanical design class for PLET (Pipeline End Termination) equipment.
  *
  * <p>
- * Calculates structural design, foundation requirements, and connection sizing for PLET structures
- * per applicable standards:
+ * Calculates structural design, foundation requirements, and connection sizing for PLET structures per applicable
+ * standards:
  * </p>
  * <ul>
  * <li>DNV-ST-F101 - Submarine Pipeline Systems</li>
@@ -69,7 +69,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
 
   // ============ Cost Estimation ============
   /** Cost estimator instance. */
-  private SubseaCostEstimator costEstimator;
+  private transient SubseaCostEstimator costEstimator;
 
   /** Total project cost in USD. */
   private double totalCostUSD = 0.0;
@@ -148,8 +148,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     // Wall thickness calculation (Barlow's formula modified per DNV)
     // t = P * D / (2 * SMYS * DF * JF * TF)
     double pressureMPa = designPressure / 10.0; // Convert bar to MPa
-    hubWallThickness = (pressureMPa * outerDiameter)
-        / (2 * smys * designFactor * jointFactor * tempDeratingFactor);
+    hubWallThickness = (pressureMPa * outerDiameter) / (2 * smys * designFactor * jointFactor * tempDeratingFactor);
 
     // Add corrosion allowance (3mm typical)
     hubWallThickness += 3.0;
@@ -217,8 +216,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     double projectedArea = plet.getStructureLength() * plet.getStructureWidth() * 0.5; // m²
 
     // Drag force
-    double currentLoad = 0.5 * seawaterDensity * currentVelocity * currentVelocity * dragCoeff
-        * projectedArea / 1000; // kN
+    double currentLoad = 0.5 * seawaterDensity * currentVelocity * currentVelocity * dragCoeff * projectedArea / 1000; // kN
 
     // Add wave load if shallow water (simplified)
     double waveLoad = 0.0;
@@ -271,8 +269,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     double Nc = 9.0; // Bearing capacity factor
 
     // D = sqrt(requiredCapacity / (π * Su * (L/D * α + Nc/4)))
-    suctionAnchorDiameter =
-        Math.sqrt(requiredCapacity / (Math.PI * soilUndrained * (ld_ratio * alpha + Nc / 4.0)));
+    suctionAnchorDiameter = Math.sqrt(requiredCapacity / (Math.PI * soilUndrained * (ld_ratio * alpha + Nc / 4.0)));
 
     // Minimum diameter
     suctionAnchorDiameter = Math.max(suctionAnchorDiameter, 2.0);
@@ -287,22 +284,22 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     // Connector capacity depends on hub size and type
     // Values based on typical hub capacities
     switch (plet.getConnectionType()) {
-      case VERTICAL_HUB:
-      case HORIZONTAL_HUB:
-        // Cameron/Vetco type hubs
-        connectorLoadCapacity = hubSize * 100; // Approximate kN per inch
-        break;
-      case CLAMP_CONNECTOR:
-        connectorLoadCapacity = hubSize * 80;
-        break;
-      case COLLET_CONNECTOR:
-        connectorLoadCapacity = hubSize * 120;
-        break;
-      case DIVER_FLANGE:
-        connectorLoadCapacity = hubSize * 60;
-        break;
-      default:
-        connectorLoadCapacity = hubSize * 80;
+    case VERTICAL_HUB:
+    case HORIZONTAL_HUB:
+      // Cameron/Vetco type hubs
+      connectorLoadCapacity = hubSize * 100; // Approximate kN per inch
+      break;
+    case CLAMP_CONNECTOR:
+      connectorLoadCapacity = hubSize * 80;
+      break;
+    case COLLET_CONNECTOR:
+      connectorLoadCapacity = hubSize * 120;
+      break;
+    case DIVER_FLANGE:
+      connectorLoadCapacity = hubSize * 60;
+      break;
+    default:
+      connectorLoadCapacity = hubSize * 80;
     }
   }
 
@@ -344,11 +341,12 @@ public class PLETMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate cost estimate for PLET.
    */
+  @Override
   public void calculateCostEstimate() {
     costEstimator = new SubseaCostEstimator(SubseaCostEstimator.Region.NORWAY);
 
-    costEstimator.calculatePLETCost(plet.getDryWeight(), plet.getNominalBoreInches(),
-        plet.getWaterDepth(), plet.hasIsolationValve(), plet.hasPiggingFacility());
+    costEstimator.calculatePLETCost(plet.getDryWeight(), plet.getNominalBoreInches(), plet.getWaterDepth(),
+        plet.hasIsolationValve(), plet.hasPiggingFacility());
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();
@@ -374,6 +372,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     if (costEstimator == null) {
       calculateCostEstimate();
@@ -491,8 +490,7 @@ public class PLETMechanicalDesign extends MechanicalDesign {
     }
     jsonObj.add("costEstimation", cost);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 
   /**

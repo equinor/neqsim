@@ -2,15 +2,14 @@
  * Sustainability and emissions tracking for process systems.
  *
  * <p>
- * This package provides tools for environmental impact assessment, emissions accounting, and
- * regulatory compliance. Key capabilities:
+ * This package provides tools for environmental impact assessment, emissions accounting, and regulatory compliance. Key
+ * capabilities:
  * </p>
  *
  * <ul>
  * <li><b>CO2e Emissions:</b> Calculate greenhouse gas emissions per equipment and system-wide</li>
  * <li><b>Energy Tracking:</b> Monitor power consumption and heat integration opportunities</li>
- * <li><b>Flaring Minimization:</b> Track and report flaring emissions for reduction
- * initiatives</li>
+ * <li><b>Flaring Minimization:</b> Track and report flaring emissions for reduction initiatives</li>
  * <li><b>Regulatory Export:</b> Generate reports for EU ETS, EPA, and other frameworks</li>
  * </ul>
  *
@@ -21,7 +20,7 @@
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * ProcessSystem process = new ProcessSystem();
  * // ... configure process with compressors, heaters, flares, etc. ...

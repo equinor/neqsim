@@ -1,21 +1,20 @@
 package neqsim.thermo.util.derivatives;
 
 import java.io.Serializable;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.thermo.phase.PhaseInterface;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 /**
  * Computes gradients of flash calculation results using the implicit function theorem.
  *
  * <p>
- * This class provides exact derivatives of phase equilibrium results without differentiating
- * through the iterative flash solver. At equilibrium, the residual equations F(y; θ) = 0 are
- * satisfied. The implicit function theorem gives:
+ * This class provides exact derivatives of phase equilibrium results without differentiating through the iterative
+ * flash solver. At equilibrium, the residual equations F(y; θ) = 0 are satisfied. The implicit function theorem gives:
  * </p>
- * 
+ *
  * <pre>
  * dy/dθ = -(∂F/∂y)^(-1) * (∂F/∂θ)
  * </pre>
@@ -25,7 +24,7 @@ import org.apache.logging.log4j.Logger;
  * </p>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * {@code
  * // Run flash calculation
@@ -124,8 +123,7 @@ public class DifferentiableFlash implements Serializable {
     }
 
     String phaseType = phase.getType().toString();
-    return new FugacityJacobian(phaseIndex, phaseType, lnPhi, dlnPhidT, dlnPhidP, dlnPhidn,
-        componentNames);
+    return new FugacityJacobian(phaseIndex, phaseType, lnPhi, dlnPhidT, dlnPhidP, dlnPhidn, componentNames);
   }
 
   /**
@@ -150,8 +148,7 @@ public class DifferentiableFlash implements Serializable {
 
     // Check if we have two phases
     if (system.getNumberOfPhases() < 2) {
-      cachedFlashGradients =
-          new FlashGradients(nc, "Single phase - no meaningful K-value gradients");
+      cachedFlashGradients = new FlashGradients(nc, "Single phase - no meaningful K-value gradients");
       return cachedFlashGradients;
     }
 
@@ -190,7 +187,7 @@ public class DifferentiableFlash implements Serializable {
       FugacityJacobian jacL = extractFugacityJacobian(liquidPhaseIndex);
       FugacityJacobian jacV = extractFugacityJacobian(vaporPhaseIndex);
 
-      cachedFugacityJacobians = new FugacityJacobian[] {jacL, jacV};
+      cachedFugacityJacobians = new FugacityJacobian[] { jacL, jacV };
 
       // Get current state
       double[] kValues = new double[nc];
@@ -247,7 +244,8 @@ public class DifferentiableFlash implements Serializable {
           double dxj_dKj = computeDxDK(j, z, kValues, beta);
           double dyj_dKj = computeDyDK(j, z, kValues, beta);
 
-          // Convert to molar derivatives: ∂n_j/∂K_j = n_phase * ∂x_j/∂K_j (at constant total moles)
+          // Convert to molar derivatives: ∂n_j/∂K_j = n_phase * ∂x_j/∂K_j (at constant
+          // total moles)
           double dnLj_dKj = nLiquid * dxj_dKj;
           double dnVj_dKj = nVapor * dyj_dKj;
 
@@ -354,8 +352,8 @@ public class DifferentiableFlash implements Serializable {
         }
       }
 
-      cachedFlashGradients = new FlashGradients(kValues, beta, dKdT, dKdP, dKdz, dBetadT, dBetadP,
-          dBetadz, componentNames);
+      cachedFlashGradients = new FlashGradients(kValues, beta, dKdT, dKdP, dKdz, dBetadT, dBetadP, dBetadz,
+          componentNames);
       gradientsComputed = true;
 
       return cachedFlashGradients;
@@ -440,86 +438,86 @@ public class DifferentiableFlash implements Serializable {
 
   private double getPropertyValue(String propertyName) {
     switch (propertyName.toLowerCase()) {
-      case "density":
-        return system.getDensity("kg/m3");
-      case "enthalpy":
-        return system.getEnthalpy("J/mol");
-      case "entropy":
-        return system.getEntropy("J/molK");
-      case "cp":
-        return system.getCp("J/molK");
-      case "cv":
-        return system.getCv("J/molK");
-      case "compressibility":
-      case "z":
-        return system.getZ();
-      case "molarvolume":
-        return system.getMolarVolume();
-      case "molarmass":
-        return system.getMolarMass("kg/mol");
-      case "viscosity":
-        return system.getViscosity("kg/msec");
-      case "thermalconductivity":
-        return system.getThermalConductivity("W/mK");
-      case "soundspeed":
-        return system.getSoundSpeed("m/s");
-      case "joulethomson":
-        return system.getJouleThomsonCoefficient("K/bar");
-      case "kappa":
-      case "cpcvratio":
-        return system.getKappa();
-      case "gamma":
-        return system.getGamma();
-      case "gibbsenergy":
-        return system.getGibbsEnergy();
-      case "internalenergy":
-        return system.getInternalEnergy("J/mol");
-      case "beta":
-      case "vaporfraction":
-        return system.getBeta();
-      default:
-        throw new IllegalArgumentException("Unknown property: " + propertyName
-            + ". Supported: density, enthalpy, entropy, cp, cv, compressibility, molarvolume, "
-            + "molarmass, viscosity, thermalconductivity, soundspeed, joulethomson, kappa, "
-            + "gamma, gibbsenergy, internalenergy, beta");
+    case "density":
+      return system.getDensity("kg/m3");
+    case "enthalpy":
+      return system.getEnthalpy("J/mol");
+    case "entropy":
+      return system.getEntropy("J/molK");
+    case "cp":
+      return system.getCp("J/molK");
+    case "cv":
+      return system.getCv("J/molK");
+    case "compressibility":
+    case "z":
+      return system.getZ();
+    case "molarvolume":
+      return system.getMolarVolume();
+    case "molarmass":
+      return system.getMolarMass("kg/mol");
+    case "viscosity":
+      return system.getViscosity("kg/msec");
+    case "thermalconductivity":
+      return system.getThermalConductivity("W/mK");
+    case "soundspeed":
+      return system.getSoundSpeed("m/s");
+    case "joulethomson":
+      return system.getJouleThomsonCoefficient("K/bar");
+    case "kappa":
+    case "cpcvratio":
+      return system.getKappa();
+    case "gamma":
+      return system.getGamma();
+    case "gibbsenergy":
+      return system.getGibbsEnergy();
+    case "internalenergy":
+      return system.getInternalEnergy("J/mol");
+    case "beta":
+    case "vaporfraction":
+      return system.getBeta();
+    default:
+      throw new IllegalArgumentException("Unknown property: " + propertyName
+          + ". Supported: density, enthalpy, entropy, cp, cv, compressibility, molarvolume, "
+          + "molarmass, viscosity, thermalconductivity, soundspeed, joulethomson, kappa, "
+          + "gamma, gibbsenergy, internalenergy, beta");
     }
   }
 
   private String getPropertyUnit(String propertyName) {
     switch (propertyName.toLowerCase()) {
-      case "density":
-        return "kg/m3";
-      case "enthalpy":
-        return "J/mol";
-      case "entropy":
-      case "cp":
-      case "cv":
-        return "J/mol/K";
-      case "compressibility":
-      case "z":
-      case "kappa":
-      case "cpcvratio":
-      case "gamma":
-      case "beta":
-      case "vaporfraction":
-        return "-";
-      case "molarvolume":
-        return "m3/mol";
-      case "molarmass":
-        return "kg/mol";
-      case "viscosity":
-        return "kg/m/s";
-      case "thermalconductivity":
-        return "W/m/K";
-      case "soundspeed":
-        return "m/s";
-      case "joulethomson":
-        return "K/bar";
-      case "gibbsenergy":
-      case "internalenergy":
-        return "J/mol";
-      default:
-        return "";
+    case "density":
+      return "kg/m3";
+    case "enthalpy":
+      return "J/mol";
+    case "entropy":
+    case "cp":
+    case "cv":
+      return "J/mol/K";
+    case "compressibility":
+    case "z":
+    case "kappa":
+    case "cpcvratio":
+    case "gamma":
+    case "beta":
+    case "vaporfraction":
+      return "-";
+    case "molarvolume":
+      return "m3/mol";
+    case "molarmass":
+      return "kg/mol";
+    case "viscosity":
+      return "kg/m/s";
+    case "thermalconductivity":
+      return "W/m/K";
+    case "soundspeed":
+      return "m/s";
+    case "joulethomson":
+      return "K/bar";
+    case "gibbsenergy":
+    case "internalenergy":
+      return "J/mol";
+    default:
+      return "";
     }
   }
 

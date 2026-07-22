@@ -43,8 +43,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <li>Bendiksen, K.H. et al. (1991) - The Dynamic Two-Fluid Model OLGA</li>
  * <li>Nydal, O.J. and Banerjee, S. (1996) - Dynamic Slug Tracking Simulations</li>
  * <li>Kjølaas, J. et al. (2013) - Lagrangian slug flow modeling and sensitivity</li>
- * <li>Issa, R.I. and Kempf, M.H.W. (2003) - Simulation of slug flow in horizontal and nearly
- * horizontal pipes</li>
+ * <li>Issa, R.I. and Kempf, M.H.W. (2003) - Simulation of slug flow in horizontal and nearly horizontal pipes</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -168,8 +167,8 @@ public class LagrangianSlugTracker implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("Slug#%d[pos=%.1fm, Ls=%.1fm, Lb=%.1fm, vf=%.2fm/s, H=%.2f, %s]", id,
-          frontPosition, slugLength, bubbleLength, frontVelocity, slugHoldup,
+      return String.format("Slug#%d[pos=%.1fm, Ls=%.1fm, Lb=%.1fm, vf=%.2fm/s, H=%.2f, %s]", id, frontPosition,
+          slugLength, bubbleLength, frontVelocity, slugHoldup,
           isGrowing ? "GROWING" : (isDecaying ? "DECAYING" : "STABLE"));
     }
   }
@@ -413,8 +412,8 @@ public class LagrangianSlugTracker implements Serializable {
    * Check for inlet slug generation based on frequency correlation.
    *
    * <p>
-   * Uses the Zabaras (2000) frequency correlation modified for inclination. Slugs are generated
-   * probabilistically based on expected frequency.
+   * Uses the Zabaras (2000) frequency correlation modified for inclination. Slugs are generated probabilistically based
+   * on expected frequency.
    * </p>
    *
    * @param sections pipe sections
@@ -532,16 +531,15 @@ public class LagrangianSlugTracker implements Serializable {
    * Initialize slug from terrain-induced accumulation.
    *
    * <p>
-   * Called externally when liquid accumulation tracker detects slug-out conditions at a terrain low
-   * point.
+   * Called externally when liquid accumulation tracker detects slug-out conditions at a terrain low point.
    * </p>
    *
    * @param characteristics slug characteristics from accumulation tracker
    * @param sections pipe sections
    * @return new slug unit
    */
-  public SlugBubbleUnit initializeTerrainSlug(
-      LiquidAccumulationTracker.SlugCharacteristics characteristics, PipeSection[] sections) {
+  public SlugBubbleUnit initializeTerrainSlug(LiquidAccumulationTracker.SlugCharacteristics characteristics,
+      PipeSection[] sections) {
 
     if (!enableTerrainSlugGeneration) {
       return null;
@@ -634,8 +632,8 @@ public class LagrangianSlugTracker implements Serializable {
 
       // Critical velocity difference for instability
       double sigma = 0.03; // Surface tension N/m (approximate)
-      double deltaU_crit = Math.sqrt(
-          (rhoL - rhoG) * GRAVITY * h_L / (rhoG * rhoL / (rhoG + rhoL)) + sigma / (rhoG * h_L));
+      double deltaU_crit = Math
+          .sqrt((rhoL - rhoG) * GRAVITY * h_L / (rhoG * rhoL / (rhoG + rhoL)) + sigma / (rhoG * h_L));
 
       double deltaU = Math.abs(U_G - U_L);
 
@@ -659,8 +657,7 @@ public class LagrangianSlugTracker implements Serializable {
    * @param sections all pipe sections
    * @return new slug unit
    */
-  private SlugBubbleUnit generateInstabilitySlug(PipeSection section, int sectionIndex,
-      PipeSection[] sections) {
+  private SlugBubbleUnit generateInstabilitySlug(PipeSection section, int sectionIndex, PipeSection[] sections) {
 
     SlugBubbleUnit slug = new SlugBubbleUnit();
     slug.id = ++slugIdCounter;
@@ -810,8 +807,7 @@ public class LagrangianSlugTracker implements Serializable {
    * The slug front moves at the Taylor bubble velocity: V_front = C0 * U_m + U_drift
    * </p>
    * <p>
-   * The tail velocity is determined by mass balance: V_tail = V_front - (pickup - shedding) / (A *
-   * (H_slug - H_film))
+   * The tail velocity is determined by mass balance: V_tail = V_front - (pickup - shedding) / (A * (H_slug - H_film))
    * </p>
    *
    * @param slug the slug unit
@@ -933,8 +929,8 @@ public class LagrangianSlugTracker implements Serializable {
    * Calculate mass exchange at slug front and tail.
    *
    * <p>
-   * Pickup rate at front: liquid is scooped from stratified film Shedding rate at tail: liquid is
-   * shed into film behind slug
+   * Pickup rate at front: liquid is scooped from stratified film Shedding rate at tail: liquid is shed into film behind
+   * slug
    * </p>
    *
    * @param slug the slug unit
@@ -1059,8 +1055,8 @@ public class LagrangianSlugTracker implements Serializable {
    * Update wake effects between consecutive slugs.
    *
    * <p>
-   * OLGA wake model: A slug following closely behind another experiences accelerated motion due to
-   * reduced liquid hold-up in the wake region.
+   * OLGA wake model: A slug following closely behind another experiences accelerated motion due to reduced liquid
+   * hold-up in the wake region.
    * </p>
    *
    * @param sections pipe sections
@@ -1089,8 +1085,7 @@ public class LagrangianSlugTracker implements Serializable {
         // Wake coefficient increases as slug gets closer
         // Linear interpolation: 1.0 at wake edge, maxWakeAcceleration at zero distance
         double normalizedDistance = distance / wakeLength;
-        current.wakeCoefficient =
-            maxWakeAcceleration - (maxWakeAcceleration - 1.0) * normalizedDistance;
+        current.wakeCoefficient = maxWakeAcceleration - (maxWakeAcceleration - 1.0) * normalizedDistance;
       } else {
         current.inWakeRegion = false;
         current.wakeCoefficient = 1.0;
@@ -1138,8 +1133,7 @@ public class LagrangianSlugTracker implements Serializable {
    * @param absorbed the absorbed slug (preceding)
    * @param sections pipe sections
    */
-  private void mergeSlugPair(SlugBubbleUnit survivor, SlugBubbleUnit absorbed,
-      PipeSection[] sections) {
+  private void mergeSlugPair(SlugBubbleUnit survivor, SlugBubbleUnit absorbed, PipeSection[] sections) {
 
     // Extend survivor to include absorbed slug
     survivor.frontPosition = absorbed.frontPosition;
@@ -1157,9 +1151,8 @@ public class LagrangianSlugTracker implements Serializable {
 
     // Update holdup (weighted average)
     double totalLength = survivor.slugLength + absorbed.slugLength;
-    survivor.slugHoldup =
-        (survivor.slugHoldup * survivor.slugLength + absorbed.slugHoldup * absorbed.slugLength)
-            / totalLength;
+    survivor.slugHoldup = (survivor.slugHoldup * survivor.slugLength + absorbed.slugHoldup * absorbed.slugLength)
+        / totalLength;
 
     // Bubble length from absorbed slug
     survivor.bubbleLength = absorbed.bubbleLength;

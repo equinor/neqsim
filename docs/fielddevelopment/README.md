@@ -1,3 +1,8 @@
+---
+title: Field Development Framework Documentation
+description: This folder contains comprehensive documentation for NeqSim's field development capabilities, enabling the creation of **digital field twins** that provide consistency from exploration through decommi...
+---
+
 # Field Development Framework Documentation
 
 This folder contains comprehensive documentation for NeqSim's field development capabilities, enabling the creation of **digital field twins** that provide consistency from exploration through decommissioning.
@@ -8,9 +13,13 @@ This folder contains comprehensive documentation for NeqSim's field development 
 
 | Document | Description |
 |----------|-------------|
-| [DIGITAL_FIELD_TWIN.md](DIGITAL_FIELD_TWIN.md) | **Start here!** Architecture showing how NeqSim integrates all lifecycle phases |
-| [MATHEMATICAL_REFERENCE.md](MATHEMATICAL_REFERENCE.md) | Mathematical foundations for all calculations (EoS, economics, flow) |
-| [API_GUIDE.md](API_GUIDE.md) | Detailed usage examples for every class and method |
+| [DIGITAL_FIELD_TWIN.md](DIGITAL_FIELD_TWIN) | **Start here!** Architecture showing how NeqSim integrates all lifecycle phases |
+| [MATHEMATICAL_REFERENCE.md](MATHEMATICAL_REFERENCE) | Mathematical foundations for all calculations (EoS, economics, flow) |
+| [API_GUIDE.md](API_GUIDE) | Detailed usage examples for every class and method |
+| [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS) | Decision-engine workflows for tiebacks, greenfield concepts, portfolios, process coupling, reservoir exports, and report-ready tables |
+| [HOST_TIE_IN_CAPACITY.md](HOST_TIE_IN_CAPACITY) | Host capacity, holdback, process-equipment bottlenecks, and debottleneck decisions for brownfield tiebacks |
+| [INTEGRATED_PRODUCTION_MODELLING.md](INTEGRATED_PRODUCTION_MODELLING) | **Reservoir-to-market IPM** &mdash; reservoir drives, well deliverability curves, network solver, gas-lift allocation, well-test matching, artificial-lift pumps, and choke optimisation (GAP/PROSPER/MBAL + Pipesim style) |
+| [FIELD_LIFECYCLE_SIMULATION.md](FIELD_LIFECYCLE_SIMULATION) | Time-marching field and area concepts with multi-host routing, facility sizing, product specifications, NPV and break-even |
 
 ---
 
@@ -87,6 +96,8 @@ ConceptKPIs kpis = evaluator.evaluate(concept);
 ```
 neqsim.process.fielddevelopment/
 ├── concept/           # Core data structures (FieldConcept, ReservoirInput, etc.)
+│   ├── GreenfieldConceptFactory
+│   └── DevelopmentCaseTemplate
 ├── economics/         # NPV, tax, portfolio optimization
 │   ├── CashFlowEngine
 │   ├── NorwegianTaxModel
@@ -98,6 +109,15 @@ neqsim.process.fielddevelopment/
 ├── facility/          # Process generation
 │   ├── ConceptToProcessLinker
 │   └── FacilityBuilder
+├── lifecycle/         # Executable reservoir-to-market lifetime and area concepts
+│   ├── AreaDevelopmentPortfolio
+│   ├── FieldLifecycleSimulator
+│   ├── FieldLifecycleModel (ProcessSystem/ProcessModel + existing SURF)
+│   ├── FacilityLifecycleStrategy
+│   ├── FacilityCapacityAllocator
+│   ├── FacilityModificationPlanner
+│   ├── FieldProductSpecifications
+│   └── NorwegianOilFieldCase (greenfield + multi-host area portfolio)
 ├── network/           # Pipeline network
 │   ├── MultiphaseFlowIntegrator
 │   └── NetworkSolver
@@ -112,7 +132,11 @@ neqsim.process.fielddevelopment/
 │   └── SubseaProductionSystem
 └── tieback/           # Tieback analysis
     ├── TiebackAnalyzer
-    └── HostFacility
+    ├── HostFacility
+    └── capacity/      # Host tie-in capacity and holdback planning
+        ├── TieInCapacityPlanner
+        ├── ProductionProfileSeries
+        └── HostTieInPoint
 ```
 
 ---
@@ -124,14 +148,26 @@ neqsim.process.fielddevelopment/
 import neqsim.process.fielddevelopment.concept.*;
 import neqsim.process.fielddevelopment.evaluation.*;
 
-FieldConcept concept = FieldConcept.oilDevelopment("My Field", 100.0, 8, 5000.0);
+FieldConcept concept = FieldConcept.oilDevelopment("My Field", 8, 5000.0, 0.20);
 ConceptEvaluator evaluator = new ConceptEvaluator();
-evaluator.setOilPrice(75.0);
 ConceptKPIs kpis = evaluator.evaluate(concept);
 
-System.out.println("NPV: " + kpis.getNpv() + " MUSD");
-System.out.println("IRR: " + kpis.getIrr() * 100 + "%");
-System.out.println("CO2 Intensity: " + kpis.getCo2Intensity() + " kg/boe");
+System.out.println("CAPEX: " + kpis.getTotalCapexMUSD() + " MUSD");
+System.out.println("Field life: " + kpis.getFieldLifeYears() + " years");
+System.out.println("Recovery: " + kpis.getEstimatedRecoveryPercent() + "%");
+System.out.println("CO2 Intensity: " + kpis.getCo2IntensityKgPerBoe() + " kg/boe");
+```
+
+### Compare Standard Development Templates
+```java
+import neqsim.process.fielddevelopment.concept.*;
+
+DevelopmentCaseTemplate tieback = GreenfieldConceptFactory.subseaTieback("Book Tieback");
+DevelopmentCaseTemplate fpso = GreenfieldConceptFactory.standaloneFpso("Book FPSO");
+
+System.out.println(tieback.getSummary());
+System.out.println(fpso.getSummary());
+System.out.println("Tieback process blocks: " + tieback.getFacilityConfig().getBlocks().size());
 ```
 
 ### Compare Development Options
@@ -151,6 +187,30 @@ tieback.setScore(Criterion.CO2_INTENSITY, 7.0);
 ranker.setWeightProfile("balanced");
 RankingResult result = ranker.rank();
 System.out.println("Recommended: " + result.getRankedOptions().get(0).getName());
+```
+
+### Check Host Tie-In Capacity and Holdback
+```java
+import neqsim.process.fielddevelopment.tieback.HostFacility;
+import neqsim.process.fielddevelopment.tieback.capacity.*;
+
+HostFacility host = HostFacility.builder("Brownfield Host")
+    .gasCapacity(10.0)
+    .build();
+
+ProductionProfileSeries base = new ProductionProfileSeries("base")
+    .addPeriod(2028, 7.0, 0.0, 0.0, 0.0);
+ProductionProfileSeries satellite = new ProductionProfileSeries("satellite")
+    .addPeriod(2028, 4.0, 0.0, 0.0, 0.0);
+
+TieInCapacityResult capacity = new TieInCapacityPlanner(host)
+    .setHostProductionProfile(base)
+    .setSatelliteProductionProfile(satellite)
+    .setAllocationPolicy(CapacityAllocationPolicy.BASE_FIRST)
+    .setHoldbackPolicy(HoldbackPolicy.DEFER_TO_LATER_YEARS)
+    .run();
+
+System.out.println(capacity.toMarkdownTable());
 ```
 
 ### Generate Process Model from Concept
@@ -210,7 +270,7 @@ Each equipment type has a dedicated mechanical design class with:
 - Bill of materials generation
 - JSON export for reporting
 
-See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT.md) for detailed documentation.
+See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT) for detailed documentation.
 
 ---
 
@@ -218,16 +278,46 @@ See [SURF Subsea Equipment Guide](../process/SURF_SUBSEA_EQUIPMENT.md) for detai
 
 | Topic | Document |
 |-------|----------|
-| SURF Subsea Equipment | [SURF_SUBSEA_EQUIPMENT.md](../process/SURF_SUBSEA_EQUIPMENT.md) |
-| Late-Life Operations | [LATE_LIFE_OPERATIONS.md](LATE_LIFE_OPERATIONS.md) |
-| Field Development Strategy | [FIELD_DEVELOPMENT_STRATEGY.md](FIELD_DEVELOPMENT_STRATEGY.md) |
-| Integrated Framework | [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md) |
+| Integrated Field Lifecycle Simulation | [FIELD_LIFECYCLE_SIMULATION.md](FIELD_LIFECYCLE_SIMULATION) — detailed wells/SURF/process lifetime, multi-host area routing, product specifications, bottlenecks, NPV and break-even |
+| SURF Subsea Equipment | [SURF_SUBSEA_EQUIPMENT.md](../process/SURF_SUBSEA_EQUIPMENT) |
+| Late-Life Operations | [LATE_LIFE_OPERATIONS.md](LATE_LIFE_OPERATIONS) |
+| Field Development Strategy | [FIELD_DEVELOPMENT_STRATEGY.md](FIELD_DEVELOPMENT_STRATEGY) |
+| Integrated Framework | [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK) |
+| Decision Engine Workflows | [DECISION_ENGINE_WORKFLOWS.md](DECISION_ENGINE_WORKFLOWS) |
+| **Multi-Scenario Production Optimization** | [MULTI_SCENARIO_PRODUCTION_OPTIMIZATION.md](MULTI_SCENARIO_PRODUCTION_OPTIMIZATION) |
+
+---
+
+## Executable Notebook Examples
+
+The following developer notebooks import NeqSim Java classes from the workspace through `devtools/neqsim_dev_setup.py`, making them suitable for unreleased field-development APIs:
+
+| Notebook | Description |
+|----------|-------------|
+| [field_development_decision_engine.ipynb](../../examples/notebooks/field_development_decision_engine.ipynb) | Standardized concept templates, lifecycle emissions, MCDA ranking, portfolio optimization, and report-ready tables |
+| [field_development_process_reservoir_coupling.ipynb](../../examples/notebooks/field_development_process_reservoir_coupling.ipynb) | Tieback route networks, multi-well gathering allocation, concept-to-process linking, and VFP/schedule export |
 
 ---
 
 ## See Also
 
-- [Process Simulation Guide](../wiki/process_simulation.md)
-- [Thermodynamic Models](../thermo/thermodynamic_models.md)
-- [Economics Module](../process/economics/README.md)
-- [Reference Manual Index](../REFERENCE_MANUAL_INDEX.md)
+- [Process Simulation Guide](../wiki/process_simulation)
+- [Thermodynamic Models](../thermo/thermodynamic_models)
+- [Economics Module](../process/economics/)
+- [Reference Manual Index](../REFERENCE_MANUAL_INDEX)
+
+---
+
+## AI Agent & Skills
+
+Use `@field.development` in VS Code Copilot Chat for AI-assisted field development workflows.
+This agent automatically loads the following skills:
+
+| Skill | Scope |
+|-------|-------|
+| `neqsim-field-development` | Lifecycle workflows, concept selection, reservoir/well/facility APIs |
+| `neqsim-field-economics` | NPV, IRR, cash flow, tax regimes (Norwegian NCS, UK), cost estimation |
+| `neqsim-subsea-and-wells` | Subsea systems, casing design (API 5C3), SURF costs, tieback analysis |
+| `neqsim-production-optimization` | Decline curves, bottleneck analysis, gas lift, IOR/EOR screening |
+
+See [AI Agents Reference](../integration/ai_agents_reference) for the full catalog.

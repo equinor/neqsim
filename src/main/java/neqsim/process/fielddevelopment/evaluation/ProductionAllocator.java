@@ -12,9 +12,8 @@ import neqsim.thermo.phase.PhaseType;
  * Production allocation and metering calculations.
  *
  * <p>
- * Handles production allocation when multiple wells or sources are commingled, accounting for
- * measurement uncertainty. Key tool for fiscal metering, production reporting, and revenue
- * allocation.
+ * Handles production allocation when multiple wells or sources are commingled, accounting for measurement uncertainty.
+ * Key tool for fiscal metering, production reporting, and revenue allocation.
  * </p>
  *
  * <h2>Metering Technologies Supported</h2>
@@ -27,14 +26,14 @@ import neqsim.thermo.phase.PhaseType;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
  * ProductionAllocator allocator = new ProductionAllocator();
  * allocator.addSource("Well-A", wellAStream, MeteringType.MULTIPHASE);
  * allocator.addSource("Well-B", wellBStream, MeteringType.MULTIPHASE);
  * allocator.setExportMeter("Export", exportStream, MeteringType.ULTRASONIC);
- * 
+ *
  * Map<String, Double> allocation = allocator.allocateByOil();
  * }
  * </pre>
@@ -117,8 +116,7 @@ public class ProductionAllocator implements Serializable {
    * @param meterType metering technology
    * @return this for chaining
    */
-  public ProductionAllocator addSource(String name, StreamInterface stream,
-      MeteringType meterType) {
+  public ProductionAllocator addSource(String name, StreamInterface stream, MeteringType meterType) {
     sources.add(new ProductionSource(name, stream, meterType));
     return this;
   }
@@ -142,8 +140,7 @@ public class ProductionAllocator implements Serializable {
    * @param meterType metering technology
    * @return this for chaining
    */
-  public ProductionAllocator setExportMeter(String name, StreamInterface stream,
-      MeteringType meterType) {
+  public ProductionAllocator setExportMeter(String name, StreamInterface stream, MeteringType meterType) {
     this.exportMeter = new ProductionSource(name, stream, meterType);
     return this;
   }
@@ -156,8 +153,8 @@ public class ProductionAllocator implements Serializable {
    * Allocates production by oil contribution.
    *
    * <p>
-   * Oil-based allocation is common for commingled oil production. Each source is allocated a
-   * fraction of the export based on its oil flow rate contribution.
+   * Oil-based allocation is common for commingled oil production. Each source is allocated a fraction of the export
+   * based on its oil flow rate contribution.
    * </p>
    *
    * @return map of source name to allocation fraction
@@ -367,14 +364,14 @@ public class ProductionAllocator implements Serializable {
     Map<String, Double> allocation = allocateByOil();
     Double fraction = allocation.get(sourceName);
     if (fraction == null) {
-      return new double[] {0, 0, 0};
+      return new double[] { 0, 0, 0 };
     }
 
     double allocated = fraction * exportVolume;
     double uncertainty = getSourceUncertainty(sourceName);
     double range = allocated * uncertainty;
 
-    return new double[] {allocated, allocated - range, allocated + range};
+    return new double[] { allocated, allocated - range, allocated + range };
   }
 
   // ============================================================================
@@ -433,9 +430,8 @@ public class ProductionAllocator implements Serializable {
     sb.append("| Source | Meter Type | Uncertainty | Oil (m³/h) | Gas (m³/h) |\n");
     sb.append("|--------|------------|-------------|------------|------------|\n");
     for (ProductionSource source : sources) {
-      sb.append(String.format("| %s | %s | ±%.1f%% | %.1f | %.1f |\n", source.name,
-          source.meterType.getDisplayName(), source.meterType.getUncertainty() * 100,
-          getOilFlowRate(source.stream), getGasFlowRate(source.stream)));
+      sb.append(String.format("| %s | %s | ±%.1f%% | %.1f | %.1f |\n", source.name, source.meterType.getDisplayName(),
+          source.meterType.getUncertainty() * 100, getOilFlowRate(source.stream), getGasFlowRate(source.stream)));
     }
 
     sb.append("\n## Allocation Fractions\n\n");
@@ -447,8 +443,8 @@ public class ProductionAllocator implements Serializable {
     for (ProductionSource source : sources) {
       Double oilFrac = oilAlloc.get(source.name);
       Double gasFrac = gasAlloc.get(source.name);
-      sb.append(String.format("| %s | %.1f%% | %.1f%% |\n", source.name,
-          (oilFrac != null ? oilFrac : 0) * 100, (gasFrac != null ? gasFrac : 0) * 100));
+      sb.append(String.format("| %s | %.1f%% | %.1f%% |\n", source.name, (oilFrac != null ? oilFrac : 0) * 100,
+          (gasFrac != null ? gasFrac : 0) * 100));
     }
 
     // Uncertainty
@@ -457,8 +453,7 @@ public class ProductionAllocator implements Serializable {
     // Imbalance
     if (exportMeter != null) {
       sb.append(String.format("**Mass Imbalance:** %.2f%%\n", getMassImbalance() * 100));
-      sb.append(String.format("**Balance Status:** %s\n",
-          isBalanceAcceptable(0.02) ? "✓ OK" : "⚠️ Exceeds 2%"));
+      sb.append(String.format("**Balance Status:** %s\n", isBalanceAcceptable(0.02) ? "✓ OK" : "⚠️ Exceeds 2%"));
     }
 
     return sb.toString();

@@ -43,4 +43,3 @@ public class WaterCoolerTest {
     assertEquals(expectedFlow, cooler.getCoolingWaterFlowRate("kg/sec"), 1e-2);
   }
 }
-

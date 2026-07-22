@@ -25,8 +25,8 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
   private transient UnivariateFunction flowFromHead; // flow = f(head)
 
   /**
-   * Flag indicating single-point surge (for single-speed compressors). When true, surge flow is
-   * constant regardless of head.
+   * Flag indicating single-point surge (for single-speed compressors). When true, surge flow is constant regardless of
+   * head.
    */
   private boolean isSinglePoint = false;
 
@@ -39,7 +39,8 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
   /**
    * Default constructor.
    */
-  public SafeSplineSurgeCurve() {}
+  public SafeSplineSurgeCurve() {
+  }
 
   /**
    * Create a spline based surge curve from flow and head arrays.
@@ -52,9 +53,7 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>sortedHead</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -63,9 +62,7 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>sortedFlow</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -88,12 +85,11 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
       this.isSinglePoint = true;
       this.singleSurgeFlow = flow[0];
       this.singleSurgeHead = head[0];
-      this.flow = new double[] {flow[0]};
-      this.head = new double[] {head[0]};
-      this.sortedFlow = new double[] {flow[0]};
-      this.sortedHead = new double[] {head[0]};
-      this.chartConditions =
-          chartConditions == null ? null : Arrays.copyOf(chartConditions, chartConditions.length);
+      this.flow = new double[] { flow[0] };
+      this.head = new double[] { head[0] };
+      this.sortedFlow = new double[] { flow[0] };
+      this.sortedHead = new double[] { head[0] };
+      this.chartConditions = chartConditions == null ? null : Arrays.copyOf(chartConditions, chartConditions.length);
       this.headFromFlow = null;
       this.flowFromHead = null;
       setActive(true);
@@ -117,8 +113,7 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
       this.head[i] = flowHeadPairs[i][1];
     }
 
-    this.chartConditions =
-        chartConditions == null ? null : Arrays.copyOf(chartConditions, chartConditions.length);
+    this.chartConditions = chartConditions == null ? null : Arrays.copyOf(chartConditions, chartConditions.length);
 
     SplineInterpolator interpolator = new SplineInterpolator();
     this.headFromFlow = interpolator.interpolate(this.flow, this.head);
@@ -140,8 +135,7 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
     }
 
     if (m < 2) {
-      throw new IllegalArgumentException(
-          "Not enough distinct head values for spline interpolation.");
+      throw new IllegalArgumentException("Not enough distinct head values for spline interpolation.");
     }
 
     this.flowFromHead = interpolator.interpolate(this.sortedHead, this.sortedFlow);
@@ -180,8 +174,7 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
       } else {
         slope = (sortedFlow[sortedFlow.length - 1] - sortedFlow[sortedFlow.length - 2])
             / (sortedHead[sortedHead.length - 1] - sortedHead[sortedHead.length - 2]);
-        extrapolated = sortedFlow[sortedFlow.length - 1]
-            + slope * (headValue - sortedHead[sortedHead.length - 1]);
+        extrapolated = sortedFlow[sortedFlow.length - 1] + slope * (headValue - sortedHead[sortedHead.length - 1]);
       }
 
       return Math.max(0.0, extrapolated);
@@ -198,6 +191,7 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
    * Wrapper retaining old API.
    * </p>
    */
+  @Override
   public double getSurgeFlow(double headValue) {
     return getFlow(headValue);
   }
@@ -241,8 +235,7 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
         slope = (head[1] - head[0]) / (flow[1] - flow[0]);
         extrapolated = head[0] + slope * (flowValue - flow[0]);
       } else {
-        slope = (head[head.length - 1] - head[head.length - 2])
-            / (flow[flow.length - 1] - flow[flow.length - 2]);
+        slope = (head[head.length - 1] - head[head.length - 2]) / (flow[flow.length - 1] - flow[flow.length - 2]);
         extrapolated = head[head.length - 1] + slope * (flowValue - flow[flow.length - 1]);
       }
 
@@ -260,6 +253,7 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
    * Wrapper retaining old API.
    * </p>
    */
+  @Override
   public boolean isSurge(double headValue, double flowValue) {
     return isLimit(headValue, flowValue);
   }
@@ -291,4 +285,3 @@ public class SafeSplineSurgeCurve extends SurgeCurve {
     return singleSurgeHead;
   }
 }
-

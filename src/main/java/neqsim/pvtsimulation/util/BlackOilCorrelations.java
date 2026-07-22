@@ -28,9 +28,9 @@ package neqsim.pvtsimulation.util;
  * </ul>
  *
  * <p>
- * <b>Unit Support:</b> All core methods use field units (psia, °F, scf/STB, cP). For SI/NeqSim
- * units, use the overloaded methods that accept a {@link BlackOilUnits} parameter, or use the
- * convenience "SI" suffix methods (e.g., {@code bubblePointStandingSI}).
+ * <b>Unit Support:</b> All core methods use field units (psia, °F, scf/STB, cP). For SI/NeqSim units, use the
+ * overloaded methods that accept a {@link BlackOilUnits} parameter, or use the convenience "SI" suffix methods (e.g.,
+ * {@code bubblePointStandingSI}).
  *
  * @author ESOL
  * @see BlackOilUnits
@@ -38,7 +38,7 @@ package neqsim.pvtsimulation.util;
 public final class BlackOilCorrelations {
 
   /** Default unit system for new calculations. */
-  private static BlackOilUnits defaultUnits = BlackOilUnits.FIELD;
+  private static volatile BlackOilUnits defaultUnits = BlackOilUnits.FIELD;
 
   private BlackOilCorrelations() {
     // Utility class
@@ -74,8 +74,7 @@ public final class BlackOilCorrelations {
    * @param useAPI If true, gammaO is treated as API gravity
    * @return Bubble point pressure (psia)
    */
-  public static double bubblePointStanding(double Rs, double gammaG, double gammaO, double T,
-      boolean useAPI) {
+  public static double bubblePointStanding(double Rs, double gammaG, double gammaO, double T, boolean useAPI) {
     double api = useAPI ? gammaO : apiFromSpecificGravity(gammaO);
     double a = 0.00091 * T - 0.0125 * api;
     double pb = 18.2 * (Math.pow(Rs / gammaG, 0.83) * Math.pow(10, a) - 1.4);
@@ -138,8 +137,7 @@ public final class BlackOilCorrelations {
    * @param inputUnits Unit system for inputs and outputs
    * @return Bubble point pressure (in inputUnits)
    */
-  public static double bubblePointStanding(double Rs, double gammaG, double api, double T,
-      BlackOilUnits inputUnits) {
+  public static double bubblePointStanding(double Rs, double gammaG, double api, double T, BlackOilUnits inputUnits) {
     double rsField = BlackOilUnits.toScfPerStb(Rs, inputUnits);
     double tField = BlackOilUnits.toFahrenheit(T, inputUnits);
     double pbField = bubblePointStanding(rsField, gammaG, api, tField, true);
@@ -200,8 +198,7 @@ public final class BlackOilCorrelations {
    * @param inputUnits Unit system for inputs and outputs
    * @return Bubble point pressure (in inputUnits)
    */
-  public static double bubblePointGlaso(double Rs, double gammaG, double api, double T,
-      BlackOilUnits inputUnits) {
+  public static double bubblePointGlaso(double Rs, double gammaG, double api, double T, BlackOilUnits inputUnits) {
     double rsField = BlackOilUnits.toScfPerStb(Rs, inputUnits);
     double tField = BlackOilUnits.toFahrenheit(T, inputUnits);
     double pbField = bubblePointGlaso(rsField, gammaG, api, tField);
@@ -277,8 +274,7 @@ public final class BlackOilCorrelations {
    * @param inputUnits Unit system for inputs and outputs
    * @return Rs (in inputUnits)
    */
-  public static double solutionGORStanding(double p, double gammaG, double api, double T,
-      BlackOilUnits inputUnits) {
+  public static double solutionGORStanding(double p, double gammaG, double api, double T, BlackOilUnits inputUnits) {
     double pField = BlackOilUnits.toPsia(p, inputUnits);
     double tField = BlackOilUnits.toFahrenheit(T, inputUnits);
     double rsField = solutionGORStanding(pField, gammaG, api, tField);
@@ -398,8 +394,7 @@ public final class BlackOilCorrelations {
    * @param inputUnits Unit system for inputs
    * @return Bo in bbl/STB (dimensionless ratio, same in all units)
    */
-  public static double oilFVFStanding(double Rs, double gammaG, double gammaO, double T,
-      BlackOilUnits inputUnits) {
+  public static double oilFVFStanding(double Rs, double gammaG, double gammaO, double T, BlackOilUnits inputUnits) {
     double rsField = BlackOilUnits.toScfPerStb(Rs, inputUnits);
     double tField = BlackOilUnits.toFahrenheit(T, inputUnits);
     return oilFVFStanding(rsField, gammaG, gammaO, tField);
@@ -428,8 +423,7 @@ public final class BlackOilCorrelations {
    * @param inputUnits Unit system for inputs
    * @return Bo in bbl/STB (dimensionless ratio, same in all units)
    */
-  public static double oilFVFVasquezBeggs(double Rs, double gammaG, double api, double T,
-      BlackOilUnits inputUnits) {
+  public static double oilFVFVasquezBeggs(double Rs, double gammaG, double api, double T, BlackOilUnits inputUnits) {
     double rsField = BlackOilUnits.toScfPerStb(Rs, inputUnits);
     double tField = BlackOilUnits.toFahrenheit(T, inputUnits);
     return oilFVFVasquezBeggs(rsField, gammaG, api, tField);
@@ -458,8 +452,7 @@ public final class BlackOilCorrelations {
    * @param inputUnits Unit system for inputs
    * @return Bo (dimensionless)
    */
-  public static double oilFVFUndersaturated(double Bob, double co, double p, double pb,
-      BlackOilUnits inputUnits) {
+  public static double oilFVFUndersaturated(double Bob, double co, double p, double pb, BlackOilUnits inputUnits) {
     double pField = BlackOilUnits.toPsia(p, inputUnits);
     double pbField = BlackOilUnits.toPsia(pb, inputUnits);
     double coField = BlackOilUnits.toPerPsi(co, inputUnits);
@@ -478,8 +471,7 @@ public final class BlackOilCorrelations {
    * @param p Pressure (psia)
    * @return Oil compressibility (1/psi)
    */
-  public static double oilCompressibilityVasquezBeggs(double Rs, double gammaG, double api,
-      double T, double p) {
+  public static double oilCompressibilityVasquezBeggs(double Rs, double gammaG, double api, double T, double p) {
     double co = (-1433 + 5 * Rs + 17.2 * T - 1180 * gammaG + 12.61 * api) / (1e5 * p);
     return co;
   }
@@ -495,8 +487,8 @@ public final class BlackOilCorrelations {
    * @param inputUnits Unit system for inputs and outputs
    * @return Oil compressibility (in inputUnits: 1/psi for FIELD, 1/bara for SI/NEQSIM)
    */
-  public static double oilCompressibilityVasquezBeggs(double Rs, double gammaG, double api,
-      double T, double p, BlackOilUnits inputUnits) {
+  public static double oilCompressibilityVasquezBeggs(double Rs, double gammaG, double api, double T, double p,
+      BlackOilUnits inputUnits) {
     double rsField = BlackOilUnits.toScfPerStb(Rs, inputUnits);
     double tField = BlackOilUnits.toFahrenheit(T, inputUnits);
     double pField = BlackOilUnits.toPsia(p, inputUnits);
@@ -514,8 +506,7 @@ public final class BlackOilCorrelations {
    * @param p Pressure (bara)
    * @return Oil compressibility (1/bara)
    */
-  public static double oilCompressibilityVasquesBeggsS(double Rs, double gammaG, double api,
-      double T, double p) {
+  public static double oilCompressibilityVasquesBeggsS(double Rs, double gammaG, double api, double T, double p) {
     return oilCompressibilityVasquezBeggs(Rs, gammaG, api, T, p, BlackOilUnits.SI);
   }
 
@@ -572,8 +563,7 @@ public final class BlackOilCorrelations {
    * @param inputUnits Unit system for inputs and outputs
    * @return Dead oil viscosity (in inputUnits: cP for FIELD, Pa·s for SI/NEQSIM)
    */
-  public static double deadOilViscosityBeggsRobinson(double api, double T,
-      BlackOilUnits inputUnits) {
+  public static double deadOilViscosityBeggsRobinson(double api, double T, BlackOilUnits inputUnits) {
     double tField = BlackOilUnits.toFahrenheit(T, inputUnits);
     double muField = deadOilViscosityBeggsRobinson(api, tField);
     return BlackOilUnits.fromCentipoise(muField, inputUnits);
@@ -623,8 +613,7 @@ public final class BlackOilCorrelations {
    * @param inputUnits Unit system for inputs and outputs
    * @return Dead oil viscosity (in inputUnits: cP for FIELD, Pa·s for SI/NEQSIM)
    */
-  public static double deadOilViscosityKartoatmodjo(double api, double T,
-      BlackOilUnits inputUnits) {
+  public static double deadOilViscosityKartoatmodjo(double api, double T, BlackOilUnits inputUnits) {
     double tField = BlackOilUnits.toFahrenheit(T, inputUnits);
     double muField = deadOilViscosityKartoatmodjo(api, tField);
     return BlackOilUnits.fromCentipoise(muField, inputUnits);
@@ -681,8 +670,7 @@ public final class BlackOilCorrelations {
    * @param inputUnits Unit system for inputs and outputs
    * @return Saturated oil viscosity (in inputUnits)
    */
-  public static double saturatedOilViscosityBeggsRobinson(double muOD, double Rs,
-      BlackOilUnits inputUnits) {
+  public static double saturatedOilViscosityBeggsRobinson(double muOD, double Rs, BlackOilUnits inputUnits) {
     double muField = BlackOilUnits.toCentipoise(muOD, inputUnits);
     double rsField = BlackOilUnits.toScfPerStb(Rs, inputUnits);
     double result = saturatedOilViscosityBeggsRobinson(muField, rsField);
@@ -708,8 +696,7 @@ public final class BlackOilCorrelations {
    * @param inputUnits Unit system for inputs and outputs
    * @return Saturated oil viscosity (in inputUnits)
    */
-  public static double saturatedOilViscosityKartoatmodjo(double muOD, double Rs,
-      BlackOilUnits inputUnits) {
+  public static double saturatedOilViscosityKartoatmodjo(double muOD, double Rs, BlackOilUnits inputUnits) {
     double muField = BlackOilUnits.toCentipoise(muOD, inputUnits);
     double rsField = BlackOilUnits.toScfPerStb(Rs, inputUnits);
     double result = saturatedOilViscosityKartoatmodjo(muField, rsField);
@@ -752,8 +739,7 @@ public final class BlackOilCorrelations {
    * @return Undersaturated oil viscosity (cP)
    */
   public static double undersaturatedOilViscosityBergmanSutton(double muOb, double p, double pb) {
-    double a =
-        6.5698e-7 * Math.log(muOb) * Math.log(muOb) - 1.48211e-5 * Math.log(muOb) + 2.27877e-4;
+    double a = 6.5698e-7 * Math.log(muOb) * Math.log(muOb) - 1.48211e-5 * Math.log(muOb) + 2.27877e-4;
     double b = 2.24623e-2 * Math.log(muOb) + 0.873204;
     double muO = muOb * Math.exp(a * Math.pow(p - pb, b));
     return muO;
@@ -906,8 +892,7 @@ public final class BlackOilCorrelations {
    * @param inputUnits Unit system for inputs and outputs
    * @return Gas viscosity (in inputUnits: cP for FIELD, Pa·s for SI/NEQSIM)
    */
-  public static double gasViscosityLeeGonzalezEakin(double T, double rhoG, double Mg,
-      BlackOilUnits inputUnits) {
+  public static double gasViscosityLeeGonzalezEakin(double T, double rhoG, double Mg, BlackOilUnits inputUnits) {
     double tRankine = BlackOilUnits.toRankine(T, inputUnits);
     double rhoField = BlackOilUnits.toLbPerFt3(rhoG, inputUnits);
     double muField = gasViscosityLeeGonzalezEakin(tRankine, rhoField, Mg);

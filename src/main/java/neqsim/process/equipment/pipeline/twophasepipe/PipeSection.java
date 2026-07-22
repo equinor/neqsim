@@ -6,8 +6,8 @@ import java.io.Serializable;
  * Represents the state of a single section/cell in the multiphase pipe.
  *
  * <p>
- * Stores both conservative variables (for numerical integration) and primitive variables (for
- * physical interpretation and closure relations).
+ * Stores both conservative variables (for numerical integration) and primitive variables (for physical interpretation
+ * and closure relations).
  * </p>
  *
  * @author Even Solbraa
@@ -320,7 +320,7 @@ public class PipeSection implements Cloneable, Serializable {
 
   /**
    * Get effective liquid holdup, considering slug overlay when in a slug.
-   * 
+   *
    * @return Effective liquid holdup (dimensionless, 0-1)
    */
   public double getEffectiveLiquidHoldup() {
@@ -336,7 +336,7 @@ public class PipeSection implements Cloneable, Serializable {
 
   /**
    * Get effective mixture density, considering slug overlay when in a slug.
-   * 
+   *
    * @return Effective mixture density (kg/m³)
    */
   public double getEffectiveMixtureDensity() {
@@ -561,11 +561,8 @@ public class PipeSection implements Cloneable, Serializable {
    */
   public double getWallisSoundSpeed() {
     double rho_m = getMixtureDensity();
-    double termG =
-        (gasHoldup > 1e-6) ? gasHoldup / (gasDensity * gasSoundSpeed * gasSoundSpeed) : 0;
-    double termL =
-        (liquidHoldup > 1e-6) ? liquidHoldup / (liquidDensity * liquidSoundSpeed * liquidSoundSpeed)
-            : 0;
+    double termG = (gasHoldup > 1e-6) ? gasHoldup / (gasDensity * gasSoundSpeed * gasSoundSpeed) : 0;
+    double termL = (liquidHoldup > 1e-6) ? liquidHoldup / (liquidDensity * liquidSoundSpeed * liquidSoundSpeed) : 0;
 
     double compressibility = termG + termL;
     if (compressibility <= 0 || rho_m <= 0) {

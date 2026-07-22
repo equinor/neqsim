@@ -15,8 +15,8 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
  * </ul>
  *
  * <p>
- * Values are loaded from the TechnicalRequirements_Process database table based on equipment type
- * and company-specific standards.
+ * Values are loaded from the TechnicalRequirements_Process database table based on equipment type and company-specific
+ * standards.
  *
  * @author NeqSim Development Team
  * @version 1.0
@@ -68,7 +68,6 @@ public class ProcessDesignStandard extends DesignStandard {
    * Constructs a ProcessDesignStandard with default values.
    */
   public ProcessDesignStandard() {
-    super();
   }
 
   /**
@@ -115,13 +114,11 @@ public class ProcessDesignStandard extends DesignStandard {
     }
 
     // Load from TechnicalRequirements_Process table
-    try {
-      neqsim.util.database.NeqSimProcessDesignDataBase database =
-          new neqsim.util.database.NeqSimProcessDesignDataBase();
-      java.sql.ResultSet dataSet =
-          database.getResultSet("SELECT * FROM technicalrequirements_process WHERE "
-              + "EQUIPMENTTYPE='" + equipmentType + "' AND Company='"
-              + getMechanicalDesign().getCompanySpecificDesignStandards() + "'");
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet = database
+            .getResultSet("SELECT * FROM technicalrequirements_process WHERE " + "EQUIPMENTTYPE='" + equipmentType
+                + "' AND Company='" + getMechanicalDesign().getCompanySpecificDesignStandards() + "'")) {
 
       while (dataSet.next()) {
         String spec = dataSet.getString("SPECIFICATION");
@@ -135,17 +132,14 @@ public class ProcessDesignStandard extends DesignStandard {
           this.designTemperatureMarginC = value;
         } else if (spec.equalsIgnoreCase("MinDesignTemperature")) {
           this.minDesignTemperatureC = value;
-        } else if (spec.equalsIgnoreCase("FlowDesignFactor")
-            || spec.equalsIgnoreCase("VolumetricDesignFactor")) {
+        } else if (spec.equalsIgnoreCase("FlowDesignFactor") || spec.equalsIgnoreCase("VolumetricDesignFactor")) {
           this.flowSafetyFactor = value;
-        } else if (spec.equalsIgnoreCase("DesignDutyMargin")
-            || spec.equalsIgnoreCase("DutyMargin")) {
+        } else if (spec.equalsIgnoreCase("DesignDutyMargin") || spec.equalsIgnoreCase("DutyMargin")) {
           this.dutyMargin = value;
         } else if (spec.equalsIgnoreCase("AreaMargin")) {
           this.areaMargin = value;
         }
       }
-      dataSet.close();
     } catch (Exception ex) {
       // Use default values if database lookup fails
     }

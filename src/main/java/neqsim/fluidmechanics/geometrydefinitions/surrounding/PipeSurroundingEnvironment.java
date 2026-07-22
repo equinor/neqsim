@@ -16,8 +16,8 @@ import neqsim.fluidmechanics.geometrydefinitions.internalgeometry.wall.PipeMater
  *
  * <h2>Buried Pipe Heat Transfer</h2>
  * <p>
- * For buried pipes, the soil thermal resistance depends on burial depth and soil conductivity.
- * Using the shape factor method:
+ * For buried pipes, the soil thermal resistance depends on burial depth and soil conductivity. Using the shape factor
+ * method:
  * </p>
  *
  * <pre>
@@ -72,7 +72,6 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * Default constructor for exposed pipe in air.
    */
   public PipeSurroundingEnvironment() {
-    super();
     setForAir(0.0);
   }
 
@@ -82,7 +81,6 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * @param typeName Environment type name (AIR, SEAWATER, BURIED, CUSTOM)
    */
   public PipeSurroundingEnvironment(String typeName) {
-    super();
     try {
       this.environmentType = EnvironmentType.valueOf(typeName.toUpperCase());
     } catch (IllegalArgumentException e) {
@@ -99,8 +97,7 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * @param windVelocityMs Wind velocity in m/s
    * @return Configured PipeSurroundingEnvironment
    */
-  public static PipeSurroundingEnvironment exposedToAir(double airTemperatureK,
-      double windVelocityMs) {
+  public static PipeSurroundingEnvironment exposedToAir(double airTemperatureK, double windVelocityMs) {
     PipeSurroundingEnvironment env = new PipeSurroundingEnvironment();
     env.setForAir(windVelocityMs);
     env.setTemperature(airTemperatureK);
@@ -114,8 +111,7 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * @param currentVelocityMs Current velocity in m/s
    * @return Configured PipeSurroundingEnvironment
    */
-  public static PipeSurroundingEnvironment subseaPipe(double seawaterTemperatureK,
-      double currentVelocityMs) {
+  public static PipeSurroundingEnvironment subseaPipe(double seawaterTemperatureK, double currentVelocityMs) {
     PipeSurroundingEnvironment env = new PipeSurroundingEnvironment();
     env.setForSeawater(currentVelocityMs);
     env.setTemperature(seawaterTemperatureK);
@@ -131,8 +127,8 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * @param soilMaterial Type of soil
    * @return Configured PipeSurroundingEnvironment
    */
-  public static PipeSurroundingEnvironment buriedPipe(double groundTemperatureK,
-      double burialDepthM, double pipeOuterRadiusM, PipeMaterial soilMaterial) {
+  public static PipeSurroundingEnvironment buriedPipe(double groundTemperatureK, double burialDepthM,
+      double pipeOuterRadiusM, PipeMaterial soilMaterial) {
     PipeSurroundingEnvironment env = new PipeSurroundingEnvironment();
     env.setForBuried(burialDepthM, pipeOuterRadiusM, soilMaterial);
     env.setTemperature(groundTemperatureK);
@@ -169,8 +165,7 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * Configures for seawater exposure.
    *
    * <p>
-   * Seawater has much higher heat transfer coefficients than air due to its higher thermal
-   * conductivity and density.
+   * Seawater has much higher heat transfer coefficients than air due to its higher thermal conductivity and density.
    * </p>
    *
    * @param currentVelocityMs Seawater current velocity in m/s
@@ -191,8 +186,8 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * Configures for buried pipe.
    *
    * <p>
-   * Calculates the soil thermal resistance using the shape factor method and converts to an
-   * equivalent heat transfer coefficient.
+   * Calculates the soil thermal resistance using the shape factor method and converts to an equivalent heat transfer
+   * coefficient.
    * </p>
    *
    * @param depthM Burial depth to pipe centerline in meters
@@ -235,8 +230,7 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * @param kSoil Soil thermal conductivity in W/(m·K)
    * @return Equivalent heat transfer coefficient in W/(m²·K)
    */
-  public static double calcBuriedPipeHeatTransferCoefficient(double depthM, double outerRadiusM,
-      double kSoil) {
+  public static double calcBuriedPipeHeatTransferCoefficient(double depthM, double outerRadiusM, double kSoil) {
     if (depthM <= outerRadiusM) {
       // Pipe is at or above ground surface
       throw new IllegalArgumentException("Burial depth must be greater than pipe outer radius");
@@ -258,8 +252,7 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
    * @param kSoil Soil thermal conductivity in W/(m·K)
    * @return Thermal resistance in K·m/W
    */
-  public static double calcBuriedPipeThermalResistance(double depthM, double outerRadiusM,
-      double kSoil) {
+  public static double calcBuriedPipeThermalResistance(double depthM, double outerRadiusM, double kSoil) {
     if (depthM <= outerRadiusM) {
       throw new IllegalArgumentException("Burial depth must be greater than pipe outer radius");
     }
@@ -336,12 +329,11 @@ public class PipeSurroundingEnvironment extends SurroundingEnvironmentBaseClass 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append(String.format("PipeSurroundingEnvironment[type=%s, T=%.1f K, h=%.1f W/(m²·K)]",
-        environmentType, getTemperature(), getHeatTransferCoefficient()));
+    sb.append(String.format("PipeSurroundingEnvironment[type=%s, T=%.1f K, h=%.1f W/(m²·K)]", environmentType,
+        getTemperature(), getHeatTransferCoefficient()));
 
     if (environmentType == EnvironmentType.BURIED) {
-      sb.append(
-          String.format(" (depth=%.2f m, soil=%s)", burialDepth, soilMaterial.getDisplayName()));
+      sb.append(String.format(" (depth=%.2f m, soil=%s)", burialDepth, soilMaterial.getDisplayName()));
     } else if (environmentType == EnvironmentType.SEAWATER) {
       sb.append(String.format(" (velocity=%.2f m/s)", seawaterVelocity));
     } else if (environmentType == EnvironmentType.AIR) {

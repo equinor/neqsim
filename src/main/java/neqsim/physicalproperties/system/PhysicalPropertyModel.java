@@ -3,9 +3,8 @@ package neqsim.physicalproperties.system;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * Types of PhysicalPropertyModel, relating to different kind of phaseTypes. This is used when
- * initializing PhysicalPropertyhandler. Available types are DEFAULT, WATER, GLYCOL, AMINE,
- * CO2WATER, BASIC
+ * Types of PhysicalPropertyModel, relating to different kind of phaseTypes. This is used when initializing
+ * PhysicalPropertyhandler. Available types are DEFAULT, WATER, GLYCOL, AMINE, CO2WATER, BASIC
  *
  * @author ASMF
  */
@@ -51,8 +50,7 @@ public enum PhysicalPropertyModel {
         return pt;
       }
     }
-    throw new RuntimeException(
-        new InvalidInputException("PhysicalPropertyModel", "byName", "name", "is not valid."));
+    throw new RuntimeException(new InvalidInputException("PhysicalPropertyModel", "byName", "name", "is not valid."));
   }
 
   /**
@@ -67,7 +65,6 @@ public enum PhysicalPropertyModel {
         return pt;
       }
     }
-    throw new RuntimeException(
-        new InvalidInputException("PhysicalPropertyModel", "byValue", "value", "is not valid."));
+    throw new RuntimeException(new InvalidInputException("PhysicalPropertyModel", "byValue", "value", "is not valid."));
   }
 }

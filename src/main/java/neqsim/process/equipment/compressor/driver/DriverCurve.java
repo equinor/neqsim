@@ -1,28 +1,33 @@
 package neqsim.process.equipment.compressor.driver;
 
+import java.io.Serializable;
+
 /**
  * Interface for compressor and pump driver performance curves.
  *
  * <p>
- * This interface defines the contract for modeling driver characteristics including power
- * availability, torque limits, and efficiency at various operating conditions. Driver curves are
- * used to determine if a compressor or pump can achieve the required duty within the mechanical
- * constraints of its driver.
+ * This interface defines the contract for modeling driver characteristics including power availability, torque limits,
+ * and efficiency at various operating conditions. Driver curves are used to determine if a compressor or pump can
+ * achieve the required duty within the mechanical constraints of its driver.
  * </p>
  *
- * <p><strong>Supported Driver Types</strong></p>
+ * <p>
+ * <strong>Supported Driver Types</strong>
+ * </p>
  * <ul>
  * <li>Gas Turbines - Power varies with ambient temperature, altitude, and speed</li>
  * <li>Electric Motors - Constant torque (VFD) or fixed speed characteristics</li>
  * <li>Steam Turbines - Power varies with steam conditions and extraction</li>
  * </ul>
  *
- * <p><strong>Example Usage</strong></p>
- * 
+ * <p>
+ * <strong>Example Usage</strong>
+ * </p>
+ *
  * <pre>
  * DriverCurve driver = new GasTurbineDriver(10000, 0.35); // 10 MW, 35% efficiency
  * driver.setAmbientTemperature(35.0); // 35°C ambient
- * 
+ *
  * double availablePower = driver.getAvailablePower(8000); // at 8000 RPM
  * double efficiency = driver.getEfficiency(8000, 0.8); // at 80% load
  * </pre>
@@ -30,7 +35,7 @@ package neqsim.process.equipment.compressor.driver;
  * @author NeqSim Development Team
  * @version 1.0
  */
-public interface DriverCurve {
+public interface DriverCurve extends Serializable {
 
   /**
    * Gets the type of driver.
@@ -57,8 +62,8 @@ public interface DriverCurve {
    * Gets the available power at the specified speed.
    *
    * <p>
-   * For gas turbines, this accounts for ambient temperature derating. For electric motors with VFD,
-   * this may be constant torque (power proportional to speed) or constant power.
+   * For gas turbines, this accounts for ambient temperature derating. For electric motors with VFD, this may be
+   * constant torque (power proportional to speed) or constant power.
    * </p>
    *
    * @param speed operating speed in RPM
@@ -110,8 +115,8 @@ public interface DriverCurve {
    * Gets the fuel or energy consumption for the given power output.
    *
    * <p>
-   * For gas turbines, returns fuel gas consumption in kg/hr or kW. For electric motors, returns
-   * electrical power input in kW.
+   * For gas turbines, returns fuel gas consumption in kg/hr or kW. For electric motors, returns electrical power input
+   * in kW.
    * </p>
    *
    * @param powerOutput power output in kW
@@ -152,8 +157,8 @@ public interface DriverCurve {
    * Gets the power derating factor due to ambient conditions.
    *
    * <p>
-   * Returns a factor between 0 and 1 that is applied to the rated power to get the available power
-   * at current ambient conditions.
+   * Returns a factor between 0 and 1 that is applied to the rated power to get the available power at current ambient
+   * conditions.
    * </p>
    *
    * @return derating factor (0-1)
@@ -164,8 +169,7 @@ public interface DriverCurve {
    * Gets the current power margin.
    *
    * <p>
-   * Returns the difference between available power and current load as a fraction of available
-   * power.
+   * Returns the difference between available power and current load as a fraction of available power.
    * </p>
    *
    * @param currentLoad current power load in kW

@@ -8,8 +8,8 @@ import java.util.List;
  * Defines a shutdown profile for compressor shutdown sequences.
  *
  * <p>
- * This class defines the sequence of speed/time points that define how a compressor should be
- * stopped. It includes safety considerations for normal and emergency shutdowns.
+ * This class defines the sequence of speed/time points that define how a compressor should be stopped. It includes
+ * safety considerations for normal and emergency shutdowns.
  * </p>
  *
  * @author esol
@@ -124,21 +124,21 @@ public class ShutdownProfile implements Serializable {
     profile.clear();
 
     switch (type) {
-      case NORMAL:
-        createNormalProfile(currentSpeed);
-        break;
-      case RAPID:
-        createRapidProfile(currentSpeed);
-        break;
-      case EMERGENCY:
-        createEmergencyProfile(currentSpeed);
-        break;
-      case COASTDOWN:
-        createCoastdownProfile(currentSpeed);
-        break;
-      default:
-        createNormalProfile(currentSpeed);
-        break;
+    case NORMAL:
+      createNormalProfile(currentSpeed);
+      break;
+    case RAPID:
+      createRapidProfile(currentSpeed);
+      break;
+    case EMERGENCY:
+      createEmergencyProfile(currentSpeed);
+      break;
+    case COASTDOWN:
+      createCoastdownProfile(currentSpeed);
+      break;
+    default:
+      createNormalProfile(currentSpeed);
+      break;
     }
   }
 
@@ -152,12 +152,11 @@ public class ShutdownProfile implements Serializable {
 
     profile.add(new ProfilePoint(0.0, currentSpeed, "Initiate shutdown, open antisurge valve"));
     profile.add(new ProfilePoint(antisurgeOpenDelay, currentSpeed * 0.9, "Begin ramp down"));
-    profile.add(new ProfilePoint(antisurgeOpenDelay + rampDownTime * 0.5, minimumIdleSpeed * 1.5,
-        "Intermediate speed check"));
-    profile.add(new ProfilePoint(antisurgeOpenDelay + rampDownTime, minimumIdleSpeed,
-        "Idle speed reached, begin rundown"));
-    profile.add(new ProfilePoint(antisurgeOpenDelay + rampDownTime + idleRundownTime, 0.0,
-        "Stop complete"));
+    profile.add(
+        new ProfilePoint(antisurgeOpenDelay + rampDownTime * 0.5, minimumIdleSpeed * 1.5, "Intermediate speed check"));
+    profile.add(
+        new ProfilePoint(antisurgeOpenDelay + rampDownTime, minimumIdleSpeed, "Idle speed reached, begin rundown"));
+    profile.add(new ProfilePoint(antisurgeOpenDelay + rampDownTime + idleRundownTime, 0.0, "Stop complete"));
   }
 
   /**
@@ -181,8 +180,7 @@ public class ShutdownProfile implements Serializable {
   private void createEmergencyProfile(double currentSpeed) {
     double rampDownTime = currentSpeed / emergencyRampRate;
 
-    profile
-        .add(new ProfilePoint(0.0, currentSpeed, "EMERGENCY SHUTDOWN - Trip all, open antisurge"));
+    profile.add(new ProfilePoint(0.0, currentSpeed, "EMERGENCY SHUTDOWN - Trip all, open antisurge"));
     profile.add(new ProfilePoint(rampDownTime, 0.0, "Emergency stop complete"));
   }
 

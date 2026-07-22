@@ -8,8 +8,8 @@ import java.util.Map;
  * Represents a sensitivity matrix for uncertainty propagation in process simulations.
  *
  * <p>
- * The sensitivity matrix contains partial derivatives of output variables with respect to input
- * variables, enabling uncertainty propagation and sensitivity analysis for optimization.
+ * The sensitivity matrix contains partial derivatives of output variables with respect to input variables, enabling
+ * uncertainty propagation and sensitivity analysis for optimization.
  * </p>
  *
  * @author ESOL

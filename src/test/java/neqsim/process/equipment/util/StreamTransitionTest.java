@@ -13,8 +13,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermo.system.SystemUMRPRUMCEosNew;
 
 /**
- * Tests for the StreamTransition class which transfers fluid properties between streams with
- * potentially different thermodynamic models.
+ * Tests for the StreamTransition class which transfers fluid properties between streams with potentially different
+ * thermodynamic models.
  */
 public class StreamTransitionTest {
   private StreamInterface inletStream;
@@ -39,8 +39,8 @@ public class StreamTransitionTest {
   }
 
   /**
-   * Tests stream transition where outlet system uses automatically selected model but contains the
-   * same components as the inlet stream.
+   * Tests stream transition where outlet system uses automatically selected model but contains the same components as
+   * the inlet stream.
    */
   @Test
   void testTransitionWithAutoSelectedModel() {
@@ -61,9 +61,9 @@ public class StreamTransitionTest {
   }
 
   /**
-   * Tests stream transition where outlet system uses a different thermodynamic model (SRK-CPA) and
-   * includes a component (TEG) that doesn't exist in the inlet stream. Can be useful when modelling
-   * main process with eg. SRK/PR and TEG process with CPA.
+   * Tests stream transition where outlet system uses a different thermodynamic model (SRK-CPA) and includes a component
+   * (TEG) that doesn't exist in the inlet stream. Can be useful when modelling main process with eg. SRK/PR and TEG
+   * process with CPA.
    */
   @Test
   void testTransitionWithDifferentModel() {
@@ -89,8 +89,8 @@ public class StreamTransitionTest {
   }
 
   /**
-   * Tests stream transition where inlet system contains more components than the outlet system.
-   * This verifies that only matching components are transferred correctly.
+   * Tests stream transition where inlet system contains more components than the outlet system. This verifies that only
+   * matching components are transferred correctly.
    */
   @Test
   void testTransitionWithFewerOutletComponents() {
@@ -116,13 +116,11 @@ public class StreamTransitionTest {
     SystemInterface outSystem = outletStream.getFluid();
 
     // Verify that ethane is not present in the outlet system
-    assertFalse(outSystem.getPhase(0).hasComponent("ethane"),
-        "Ethane should not be present in outlet system");
+    assertFalse(outSystem.getPhase(0).hasComponent("ethane"), "Ethane should not be present in outlet system");
   }
 
   /**
-   * Helper method to verify that the stream transition correctly transferred properties from inlet
-   * to outlet stream.
+   * Helper method to verify that the stream transition correctly transferred properties from inlet to outlet stream.
    */
   private void verifyTransitionResults() {
     // Verify temperature and pressure were transferred
@@ -140,7 +138,7 @@ public class StreamTransitionTest {
       String componentName = inSystem.getComponent(i).getName();
       if (outSystem.getPhase(0).hasComponent(componentName)) {
         assertEquals(inSystem.getComponent(i).getNumberOfmoles(),
-            outSystem.getComponent(componentName).getNumberOfmoles(),
+            outSystem.getComponent(componentName).getNumberOfmoles(), 1e-10,
             "Moles of " + componentName + " should match between systems");
       }
     }

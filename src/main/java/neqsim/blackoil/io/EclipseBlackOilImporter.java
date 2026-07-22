@@ -36,9 +36,7 @@ public class EclipseBlackOilImporter {
   }
 
   /**
-   * <p>
    * fromFile.
-   * </p>
    *
    * @param deckPath a {@link java.nio.file.Path} object
    * @return a {@link neqsim.blackoil.io.EclipseBlackOilImporter.Result} object
@@ -51,9 +49,7 @@ public class EclipseBlackOilImporter {
   }
 
   /**
-   * <p>
    * fromReader.
-   * </p>
    *
    * @param reader a {@link java.io.Reader} object
    * @return a {@link neqsim.blackoil.io.EclipseBlackOilImporter.Result} object
@@ -73,6 +69,7 @@ public class EclipseBlackOilImporter {
       double mu;
     }
   }
+
   private static class PVTGCurve {
     double Rv;
     final List<Row> rows = new ArrayList<>();
@@ -83,6 +80,7 @@ public class EclipseBlackOilImporter {
       double mu;
     }
   }
+
   private static class PVTWRow {
     double P;
     double Bw;
@@ -414,11 +412,10 @@ public class EclipseBlackOilImporter {
       }
     }
 
-    java.util.ArrayList<BlackOilPVTTable.Record> recs =
-        new java.util.ArrayList<BlackOilPVTTable.Record>();
+    java.util.ArrayList<BlackOilPVTTable.Record> recs = new java.util.ArrayList<BlackOilPVTTable.Record>();
     for (int i = 0; i < Pg.size(); i++) {
-      recs.add(new BlackOilPVTTable.Record(Pg.get(i), RsOfP.get(i), BoOfP.get(i), muoOfP.get(i),
-          BgOfP.get(i), mugOfP.get(i), 0.0, BwOfP.get(i), muwOfP.get(i)));
+      recs.add(new BlackOilPVTTable.Record(Pg.get(i), RsOfP.get(i), BoOfP.get(i), muoOfP.get(i), BgOfP.get(i),
+          mugOfP.get(i), 0.0, BwOfP.get(i), muwOfP.get(i)));
     }
 
     BlackOilPVTTable table = new BlackOilPVTTable(recs, Pb);
@@ -468,8 +465,7 @@ public class EclipseBlackOilImporter {
     return out;
   }
 
-  private static void sortParallel(List<Double> P, List<Double> Rs, List<Double> Bo,
-      List<Double> mu) {
+  private static void sortParallel(List<Double> P, List<Double> Rs, List<Double> Bo, List<Double> mu) {
     java.util.ArrayList<Integer> idx = new java.util.ArrayList<Integer>();
     for (int i = 0; i < P.size(); i++) {
       idx.add(i);
@@ -510,14 +506,14 @@ public class EclipseBlackOilImporter {
   private static double[] interpBgMu(PVTGCurve curve, double p) {
     List<PVTGCurve.Row> rows = curve.rows;
     if (rows.isEmpty()) {
-      return new double[] {0.005, 1e-5};
+      return new double[] { 0.005, 1e-5 };
     }
     rows.sort(Comparator.comparingDouble(r -> r.P));
     if (p <= rows.get(0).P) {
-      return new double[] {rows.get(0).Bg, rows.get(0).mu};
+      return new double[] { rows.get(0).Bg, rows.get(0).mu };
     }
     if (p >= rows.get(rows.size() - 1).P) {
-      return new double[] {rows.get(rows.size() - 1).Bg, rows.get(rows.size() - 1).mu};
+      return new double[] { rows.get(rows.size() - 1).Bg, rows.get(rows.size() - 1).mu };
     }
     for (int i = 0; i < rows.size() - 1; i++) {
       PVTGCurve.Row a = rows.get(i);
@@ -526,19 +522,19 @@ public class EclipseBlackOilImporter {
         double t = (p - a.P) / (b.P - a.P);
         double Bg = a.Bg * (1.0 - t) + b.Bg * t;
         double mu = a.mu * (1.0 - t) + b.mu * t;
-        return new double[] {Bg, mu};
+        return new double[] { Bg, mu };
       }
     }
-    return new double[] {rows.get(rows.size() - 1).Bg, rows.get(rows.size() - 1).mu};
+    return new double[] { rows.get(rows.size() - 1).Bg, rows.get(rows.size() - 1).mu };
   }
 
   private static double[] interpBwMu(List<PVTWRow> rows, double p) {
     rows.sort(Comparator.comparingDouble(r -> r.P));
     if (p <= rows.get(0).P) {
-      return new double[] {rows.get(0).Bw, rows.get(0).mu};
+      return new double[] { rows.get(0).Bw, rows.get(0).mu };
     }
     if (p >= rows.get(rows.size() - 1).P) {
-      return new double[] {rows.get(rows.size() - 1).Bw, rows.get(rows.size() - 1).mu};
+      return new double[] { rows.get(rows.size() - 1).Bw, rows.get(rows.size() - 1).mu };
     }
     for (int i = 0; i < rows.size() - 1; i++) {
       PVTWRow a = rows.get(i);
@@ -547,9 +543,9 @@ public class EclipseBlackOilImporter {
         double t = (p - a.P) / (b.P - a.P);
         double Bw = a.Bw * (1.0 - t) + b.Bw * t;
         double mu = a.mu * (1.0 - t) + b.mu * t;
-        return new double[] {Bw, mu};
+        return new double[] { Bw, mu };
       }
     }
-    return new double[] {rows.get(rows.size() - 1).Bw, rows.get(rows.size() - 1).mu};
+    return new double[] { rows.get(rows.size() - 1).Bw, rows.get(rows.size() - 1).mu };
   }
 }

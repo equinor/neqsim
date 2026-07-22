@@ -1,0 +1,117 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/equinor/neqsim/master/docs/integration/schemas/agent-manifest.schema.json",
+  "title": "NeqSim Agent Manifest",
+  "description": "Canonical schema for an agent package `agent.yaml` across the NeqSim community and enterprise agent catalogs. This is the single source of truth; the community and enterprise agent repositories vendor an identical copy under their own schemas/ folder and validate against it in CI. Keep the vendored copies byte-for-byte identical to this file (checked by devtools/verify_agent_schema_sync.py in the core repo).",
+  "type": "object",
+  "required": [
+    "name",
+    "description",
+    "required_skills",
+    "supported_domains",
+    "inputs",
+    "outputs",
+    "human_review_required"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "Stable agent id, kebab-case. Matches the package folder name and the catalog entry name. An enterprise overlay of a community/core agent should either reuse the base id and declare `extends`, or use a distinct `enterprise-`-prefixed id; it must not silently duplicate a base agent's id without `extends`."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 10
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Semantic version. Recommended for every agent; required by the enterprise catalog integrity checks."
+    },
+    "required_skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(neqsim|enterprise)-[a-z0-9]+(-[a-z0-9]+)*$",
+        "description": "Canonical skill id. Community/core skills use the neqsim- namespace; internal skills use the enterprise- namespace."
+      },
+      "description": "The overlay's own declared skills. For an agent that declares `extends`, the effective skill set is the union of the base agent's required_skills and this list; this list MUST be a superset of the base's required_skills."
+    },
+    "context_skills": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(neqsim|enterprise)-[a-z0-9]+(-[a-z0-9]+)*$",
+        "description": "Canonical skill id. Community/core skills use the neqsim- namespace; internal skills use the enterprise- namespace."
+      },
+      "description": "Optional, as-relevant skills the agent may load depending on the task, in addition to required_skills. Declaring them here \u2014 rather than only naming them in AGENT.md prose \u2014 keeps the agent<->skill linkage machine-checkable: validators existence-check them, the agent<->skill map includes them, and an AGENT.md cross-check can verify that every skill named in the prose is declared in required_skills or context_skills. Not inherited through extends."
+    },
+    "coordinated_agents": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+        "description": "Agent id (kebab-case) of a specialist agent this agent delegates to."
+      },
+      "description": "The other agents this agent delegates to (horizontal composition / orchestration edges), as opposed to `extends` which is a vertical policy overlay of a single base agent. Declaring delegation here \u2014 rather than only naming agents in AGENT.md prose or an @mention table \u2014 makes the orchestration graph machine-checkable: validators existence-check each id against the catalogs, the orchestration map is generated from it, and an agent whose `agent_type` is a coordinator/orchestrator is expected to declare a non-empty list. Front-door routers and multi-agent coordinators SHOULD populate this."
+    },
+    "supported_domains": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1
+    },
+    "inputs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "outputs": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "human_review_required": {
+      "type": "boolean"
+    },
+    "agent_type": {
+      "type": "string",
+      "enum": [
+        "community-agent",
+        "community-coordinator",
+        "enterprise-agent",
+        "enterprise-coordinator",
+        "enterprise-orchestrator"
+      ],
+      "description": "Orchestration role. Skill-less enterprise agents (pure coordinators) MUST declare enterprise-coordinator or enterprise-orchestrator."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "review", "stable", "deprecated"]
+    },
+    "trust_level": {
+      "type": "string",
+      "enum": ["core", "community", "internal", "private", "experimental"]
+    },
+    "requires_mcp_tools": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "extends": {
+      "type": "object",
+      "description": "Declares that this agent is an overlay of a base agent in another catalog. The base agent's required_skills, inputs and outputs are inherited; this agent adds a company policy overlay (extra skills, governance) on top. Used to remove the community<->enterprise near-duplication and to make the linkage machine-checkable.",
+      "required": ["agent", "repo"],
+      "additionalProperties": false,
+      "properties": {
+        "agent": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+          "description": "Base agent id to extend."
+        },
+        "repo": {
+          "type": "string",
+          "enum": ["core", "community", "enterprise"],
+          "description": "Catalog that hosts the base agent."
+        }
+      }
+    }
+  }
+}

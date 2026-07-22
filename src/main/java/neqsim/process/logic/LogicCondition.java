@@ -4,7 +4,7 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
 
 /**
  * Interface for defining conditions that must be met for logic to proceed.
- * 
+ *
  * <p>
  * Conditions are used for:
  * <ul>
@@ -13,14 +13,14 @@ import neqsim.process.equipment.ProcessEquipmentInterface;
  * <li>Safety interlocks (e.g., verify pump stopped before opening drain)</li>
  * <li>Process state verification (e.g., check all equipment ready)</li>
  * </ul>
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * LogicCondition tempReady = new TemperatureCondition(heater, 80.0, "&gt;=");
  * LogicCondition pressureOK = new PressureCondition(vessel, 5.0, "&gt;");
- * 
+ *
  * StartupLogic startup = new StartupLogic("Startup Sequence");
  * startup.addPermissive(tempReady);
  * startup.addPermissive(pressureOK);

@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermRk class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -15,9 +13,7 @@ public class AttractiveTermRk extends AttractiveTermBaseClass {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for AttractiveTermRk.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -27,7 +23,8 @@ public class AttractiveTermRk extends AttractiveTermBaseClass {
 
   /** {@inheritDoc} */
   @Override
-  public void init() {}
+  public void init() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -66,8 +63,7 @@ public class AttractiveTermRk extends AttractiveTermBaseClass {
   public double diffdiffalphaT(double temperature) {
     return -0.25 * getComponent().getTC() * getComponent().getTC()
         / (Math.pow(getComponent().getTC() / temperature, 3.0 / 2.0) * Math.pow(temperature, 4.0))
-        + getComponent().getTC()
-            / (Math.sqrt(getComponent().getTC() / temperature) * Math.pow(temperature, 3.0));
+        + getComponent().getTC() / (Math.sqrt(getComponent().getTC() / temperature) * Math.pow(temperature, 3.0));
   }
 
   /** {@inheritDoc} */

@@ -43,9 +43,9 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
  *
  * <h2>Facility Constraint Integration</h2>
  * <p>
- * When a {@link ProcessSystem} is provided, the production forecast respects facility constraints
- * by using {@link ProductionOptimizer} to determine the maximum sustainable rate at each time step.
- * This enables realistic forecasts where:
+ * When a {@link ProcessSystem} is provided, the production forecast respects facility constraints by using
+ * {@link ProductionOptimizer} to determine the maximum sustainable rate at each time step. This enables realistic
+ * forecasts where:
  * <ul>
  * <li>Plateau rate is limited by the tightest facility bottleneck</li>
  * <li>Bottleneck equipment shifts as production declines</li>
@@ -53,7 +53,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.OptimizationResult;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Basic decline curve calculation
  * DeclineParameters params = new DeclineParameters(10000.0, // initial rate: 10,000 Sm3/day
@@ -119,16 +119,16 @@ public class ProductionProfile implements Serializable {
     /**
      * Hyperbolic decline: q(t) = q_i / (1 + b*D*t)^(1/b).
      * <p>
-     * Most commonly observed in oil and gas wells. The exponent b typically ranges from 0.3 to 0.7
-     * for oil wells and 0.4 to 0.8 for gas wells.
+     * Most commonly observed in oil and gas wells. The exponent b typically ranges from 0.3 to 0.7 for oil wells and
+     * 0.4 to 0.8 for gas wells.
      */
     HYPERBOLIC,
 
     /**
      * Harmonic decline: q(t) = q_i / (1 + D*t).
      * <p>
-     * Special case of hyperbolic decline with b=1. Represents the slowest possible decline rate and
-     * is rarely observed in practice without enhanced recovery.
+     * Special case of hyperbolic decline with b=1. Represents the slowest possible decline rate and is rarely observed
+     * in practice without enhanced recovery.
      */
     HARMONIC
   }
@@ -137,8 +137,8 @@ public class ProductionProfile implements Serializable {
    * Container for decline curve parameters.
    *
    * <p>
-   * Immutable class that holds all parameters needed to calculate production rate at any point in
-   * time using Arps decline curve equations.
+   * Immutable class that holds all parameters needed to calculate production rate at any point in time using Arps
+   * decline curve equations.
    * </p>
    *
    * <p>
@@ -196,8 +196,7 @@ public class ProductionProfile implements Serializable {
      * @param type decline curve type
      * @param rateUnit engineering unit for rate (e.g., "Sm3/day", "kg/hr")
      */
-    public DeclineParameters(double initialRate, double declineRate, DeclineType type,
-        String rateUnit) {
+    public DeclineParameters(double initialRate, double declineRate, DeclineType type, String rateUnit) {
       this(initialRate, declineRate, 0.5, type, rateUnit, "year");
     }
 
@@ -206,13 +205,12 @@ public class ProductionProfile implements Serializable {
      *
      * @param initialRate initial production rate (q_i)
      * @param declineRate nominal decline rate (D)
-     * @param hyperbolicExponent Arps b-factor (0 &lt; b &lt; 1 for hyperbolic, ignored for
-     *        exponential)
+     * @param hyperbolicExponent Arps b-factor (0 &lt; b &lt; 1 for hyperbolic, ignored for exponential)
      * @param type decline curve type
      * @param rateUnit engineering unit for rate (e.g., "Sm3/day", "kg/hr")
      */
-    public DeclineParameters(double initialRate, double declineRate, double hyperbolicExponent,
-        DeclineType type, String rateUnit) {
+    public DeclineParameters(double initialRate, double declineRate, double hyperbolicExponent, DeclineType type,
+        String rateUnit) {
       this(initialRate, declineRate, hyperbolicExponent, type, rateUnit, "year");
     }
 
@@ -227,8 +225,8 @@ public class ProductionProfile implements Serializable {
      * @param timeUnit time unit for decline rate (e.g., "year", "day")
      * @throws IllegalArgumentException if parameters are invalid
      */
-    public DeclineParameters(double initialRate, double declineRate, double hyperbolicExponent,
-        DeclineType type, String rateUnit, String timeUnit) {
+    public DeclineParameters(double initialRate, double declineRate, double hyperbolicExponent, DeclineType type,
+        String rateUnit, String timeUnit) {
       if (initialRate <= 0) {
         throw new IllegalArgumentException("Initial rate must be positive: " + initialRate);
       }
@@ -236,8 +234,7 @@ public class ProductionProfile implements Serializable {
         throw new IllegalArgumentException("Decline rate cannot be negative: " + declineRate);
       }
       if (type == DeclineType.HYPERBOLIC && (hyperbolicExponent <= 0 || hyperbolicExponent > 1)) {
-        throw new IllegalArgumentException(
-            "Hyperbolic exponent must be in (0, 1]: " + hyperbolicExponent);
+        throw new IllegalArgumentException("Hyperbolic exponent must be in (0, 1]: " + hyperbolicExponent);
       }
       this.initialRate = initialRate;
       this.declineRate = declineRate;
@@ -308,14 +305,13 @@ public class ProductionProfile implements Serializable {
      * @return new DeclineParameters with updated initial rate
      */
     public DeclineParameters withInitialRate(double newInitialRate) {
-      return new DeclineParameters(newInitialRate, declineRate, hyperbolicExponent, type, rateUnit,
-          timeUnit);
+      return new DeclineParameters(newInitialRate, declineRate, hyperbolicExponent, type, rateUnit, timeUnit);
     }
 
     @Override
     public String toString() {
-      return String.format("DeclineParameters[type=%s, qi=%.2f %s, D=%.4f/%s, b=%.2f]", type,
-          initialRate, rateUnit, declineRate, timeUnit, hyperbolicExponent);
+      return String.format("DeclineParameters[type=%s, qi=%.2f %s, D=%.4f/%s, b=%.2f]", type, initialRate, rateUnit,
+          declineRate, timeUnit, hyperbolicExponent);
     }
   }
 
@@ -323,8 +319,8 @@ public class ProductionProfile implements Serializable {
    * Production forecast result at a single time point.
    *
    * <p>
-   * Contains the production rate, cumulative production, and facility status at a specific point in
-   * time during the forecast.
+   * Contains the production rate, cumulative production, and facility status at a specific point in time during the
+   * forecast.
    */
   public static final class ProductionPoint implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -352,9 +348,8 @@ public class ProductionProfile implements Serializable {
      * @param isOnPlateau true if still in plateau phase
      * @param isAboveEconomicLimit true if rate exceeds economic limit
      */
-    public ProductionPoint(double time, String timeUnit, double rate, double cumulativeProduction,
-        String rateUnit, String bottleneckEquipment, double facilityUtilization,
-        boolean isOnPlateau, boolean isAboveEconomicLimit) {
+    public ProductionPoint(double time, String timeUnit, double rate, double cumulativeProduction, String rateUnit,
+        String bottleneckEquipment, double facilityUtilization, boolean isOnPlateau, boolean isAboveEconomicLimit) {
       this.time = time;
       this.timeUnit = timeUnit;
       this.rate = rate;
@@ -452,8 +447,8 @@ public class ProductionProfile implements Serializable {
    * Complete production forecast with plateau and decline phases.
    *
    * <p>
-   * Contains the full time series of production points along with summary statistics and the
-   * parameters used to generate the forecast.
+   * Contains the full time series of production points along with summary statistics and the parameters used to
+   * generate the forecast.
    */
   public static final class ProductionForecast implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -481,10 +476,9 @@ public class ProductionProfile implements Serializable {
      * @param economicLifeYears years until economic limit reached
      * @param declineParams decline parameters used
      */
-    public ProductionForecast(List<ProductionPoint> profile, double plateauRate,
-        double actualPlateauRate, double plateauDuration, double actualPlateauDuration,
-        double economicLimit, double totalRecovery, double economicLifeYears,
-        DeclineParameters declineParams) {
+    public ProductionForecast(List<ProductionPoint> profile, double plateauRate, double actualPlateauRate,
+        double plateauDuration, double actualPlateauDuration, double economicLimit, double totalRecovery,
+        double economicLifeYears, DeclineParameters declineParams) {
       this.profile = new ArrayList<>(profile);
       this.plateauRate = plateauRate;
       this.actualPlateauRate = actualPlateauRate;
@@ -585,12 +579,11 @@ public class ProductionProfile implements Serializable {
     public String toMarkdownTable() {
       StringBuilder sb = new StringBuilder();
       sb.append("## Production Forecast\n\n");
-      sb.append(String.format("- **Plateau Rate**: %.2f %s (actual: %.2f)\n", plateauRate,
-          declineParams.getRateUnit(), actualPlateauRate));
-      sb.append(String.format("- **Plateau Duration**: %.1f years (actual: %.1f)\n",
-          plateauDuration, actualPlateauDuration));
-      sb.append(String.format("- **Economic Limit**: %.2f %s\n", economicLimit,
-          declineParams.getRateUnit()));
+      sb.append(String.format("- **Plateau Rate**: %.2f %s (actual: %.2f)\n", plateauRate, declineParams.getRateUnit(),
+          actualPlateauRate));
+      sb.append(
+          String.format("- **Plateau Duration**: %.1f years (actual: %.1f)\n", plateauDuration, actualPlateauDuration));
+      sb.append(String.format("- **Economic Limit**: %.2f %s\n", economicLimit, declineParams.getRateUnit()));
       sb.append(String.format("- **Total Recovery**: %.2f\n", totalRecovery));
       sb.append(String.format("- **Economic Life**: %.1f years\n\n", economicLifeYears));
 
@@ -602,8 +595,8 @@ public class ProductionProfile implements Serializable {
         if (!point.isAboveEconomicLimit()) {
           phase = "Below Limit";
         }
-        sb.append(String.format("| %.2f | %.2f | %.2f | %s | %s | %.1f%% |\n", point.getTime(),
-            point.getRate(), point.getCumulativeProduction(), phase,
+        sb.append(String.format("| %.2f | %.2f | %.2f | %s | %s | %.1f%% |\n", point.getTime(), point.getRate(),
+            point.getCumulativeProduction(), phase,
             point.getBottleneckEquipment() != null ? point.getBottleneckEquipment() : "-",
             point.getFacilityUtilization() * 100));
       }
@@ -636,8 +629,7 @@ public class ProductionProfile implements Serializable {
    * Creates a ProductionProfile without facility constraints.
    *
    * <p>
-   * Use this constructor for simple decline curve calculations that don't need to consider facility
-   * bottlenecks.
+   * Use this constructor for simple decline curve calculations that don't need to consider facility bottlenecks.
    */
   public ProductionProfile() {
     this.facility = null;
@@ -648,8 +640,8 @@ public class ProductionProfile implements Serializable {
    * Creates a ProductionProfile with facility constraint analysis.
    *
    * <p>
-   * When a ProcessSystem is provided, the forecast will use {@link ProductionOptimizer} to
-   * determine the maximum sustainable rate considering all equipment capacities.
+   * When a ProcessSystem is provided, the forecast will use {@link ProductionOptimizer} to determine the maximum
+   * sustainable rate considering all equipment capacities.
    *
    * @param facility process system representing the surface facility
    */
@@ -684,9 +676,8 @@ public class ProductionProfile implements Serializable {
    * @param timeStepDays time step for forecast points in days
    * @return complete production forecast
    */
-  public ProductionForecast forecast(StreamInterface feedStream, DeclineParameters decline,
-      double plateauRate, double plateauDurationYears, double economicLimit, double forecastYears,
-      double timeStepDays) {
+  public ProductionForecast forecast(StreamInterface feedStream, DeclineParameters decline, double plateauRate,
+      double plateauDurationYears, double economicLimit, double forecastYears, double timeStepDays) {
     Objects.requireNonNull(decline, "Decline parameters are required");
 
     List<ProductionPoint> points = new ArrayList<>();
@@ -704,8 +695,8 @@ public class ProductionProfile implements Serializable {
       try {
         OptimizationConfig config = new OptimizationConfig(economicLimit, decline.getInitialRate())
             .rateUnit(decline.getRateUnit()).tolerance(economicLimit * 0.01);
-        OptimizationResult result = optimizer.optimize(facility, feedStream, config,
-            Collections.emptyList(), Collections.emptyList());
+        OptimizationResult result = optimizer.optimize(facility, feedStream, config, Collections.emptyList(),
+            Collections.emptyList());
         if (result.isFeasible()) {
           facilityMaxRate = result.getOptimalRate();
         }
@@ -763,8 +754,8 @@ public class ProductionProfile implements Serializable {
         cumulativeProduction += avgRate * timeStepDays; // rate is per day
       }
 
-      points.add(new ProductionPoint(t, "years", rate, cumulativeProduction, decline.getRateUnit(),
-          bottleneck, utilization, onPlateau && t <= plateauDurationYears, aboveLimit));
+      points.add(new ProductionPoint(t, "years", rate, cumulativeProduction, decline.getRateUnit(), bottleneck,
+          utilization, onPlateau && t <= plateauDurationYears, aboveLimit));
 
       // Stop if below economic limit
       if (!aboveLimit) {
@@ -772,16 +763,16 @@ public class ProductionProfile implements Serializable {
       }
     }
 
-    return new ProductionForecast(points, plateauRate, actualPlateauRate, plateauDurationYears,
-        actualPlateauDuration, economicLimit, cumulativeProduction, economicLifeYears, decline);
+    return new ProductionForecast(points, plateauRate, actualPlateauRate, plateauDurationYears, actualPlateauDuration,
+        economicLimit, cumulativeProduction, economicLifeYears, decline);
   }
 
   /**
    * Calculates production rate at a given time using decline curve equations.
    *
    * <p>
-   * This is a static utility method that can be used without instantiating the class. Time should
-   * be in the same units as the decline rate.
+   * This is a static utility method that can be used without instantiating the class. Time should be in the same units
+   * as the decline rate.
    *
    * @param params decline curve parameters
    * @param time time from start of decline
@@ -802,21 +793,21 @@ public class ProductionProfile implements Serializable {
     double b = params.getHyperbolicExponent();
 
     switch (params.getType()) {
-      case EXPONENTIAL:
-        return qi * Math.exp(-d * time);
+    case EXPONENTIAL:
+      return qi * Math.exp(-d * time);
 
-      case HYPERBOLIC:
-        double denom = 1.0 + b * d * time;
-        if (denom <= 0) {
-          return 0.0; // Prevent negative rates
-        }
-        return qi / Math.pow(denom, 1.0 / b);
+    case HYPERBOLIC:
+      double denom = 1.0 + b * d * time;
+      if (denom <= 0) {
+        return 0.0; // Prevent negative rates
+      }
+      return qi / Math.pow(denom, 1.0 / b);
 
-      case HARMONIC:
-        return qi / (1.0 + d * time);
+    case HARMONIC:
+      return qi / (1.0 + d * time);
 
-      default:
-        return qi;
+    default:
+      return qi;
     }
   }
 
@@ -852,22 +843,22 @@ public class ProductionProfile implements Serializable {
     }
 
     switch (params.getType()) {
-      case EXPONENTIAL:
-        return (qi / d) * (1.0 - Math.exp(-d * time));
+    case EXPONENTIAL:
+      return (qi / d) * (1.0 - Math.exp(-d * time));
 
-      case HYPERBOLIC:
-        if (Math.abs(b - 1.0) < 1e-12) {
-          // b ≈ 1: harmonic case
-          return (qi / d) * Math.log(1.0 + d * time);
-        }
-        double exponent = 1.0 - 1.0 / b;
-        return (qi / (d * (1.0 - b))) * (1.0 - Math.pow(1.0 + b * d * time, exponent));
-
-      case HARMONIC:
+    case HYPERBOLIC:
+      if (Math.abs(b - 1.0) < 1e-12) {
+        // b ≈ 1: harmonic case
         return (qi / d) * Math.log(1.0 + d * time);
+      }
+      double exponent = 1.0 - 1.0 / b;
+      return (qi / (d * (1.0 - b))) * (1.0 - Math.pow(1.0 + b * d * time, exponent));
 
-      default:
-        return qi * time;
+    case HARMONIC:
+      return (qi / d) * Math.log(1.0 + d * time);
+
+    default:
+      return qi * time;
     }
   }
 
@@ -875,9 +866,8 @@ public class ProductionProfile implements Serializable {
    * Fits decline parameters from historical production data.
    *
    * <p>
-   * Uses least-squares regression to determine the best-fit decline parameters for the specified
-   * decline type. For exponential decline, this uses linear regression on ln(q) vs t. For
-   * hyperbolic, it uses iterative optimization.
+   * Uses least-squares regression to determine the best-fit decline parameters for the specified decline type. For
+   * exponential decline, this uses linear regression on ln(q) vs t. For hyperbolic, it uses iterative optimization.
    *
    * @param times list of time points
    * @param rates list of corresponding production rates
@@ -886,8 +876,7 @@ public class ProductionProfile implements Serializable {
    * @return fitted decline parameters
    * @throws IllegalArgumentException if data is insufficient or invalid
    */
-  public DeclineParameters fitDecline(List<Double> times, List<Double> rates, DeclineType type,
-      String rateUnit) {
+  public DeclineParameters fitDecline(List<Double> times, List<Double> rates, DeclineType type, String rateUnit) {
     Objects.requireNonNull(times, "Times list is required");
     Objects.requireNonNull(rates, "Rates list is required");
     Objects.requireNonNull(type, "Decline type is required");
@@ -917,35 +906,39 @@ public class ProductionProfile implements Serializable {
     double d;
 
     switch (type) {
-      case EXPONENTIAL:
-        // Linear regression on ln(q) = ln(qi) - D*t
-        double[] expFit = fitExponentialDecline(validTimes, validRates);
-        qi = expFit[0];
-        d = expFit[1];
-        return new DeclineParameters(qi, d, type, rateUnit);
+    case EXPONENTIAL:
+      // Linear regression on ln(q) = ln(qi) - D*t
+      double[] expFit = fitExponentialDecline(validTimes, validRates);
+      qi = expFit[0];
+      d = expFit[1];
+      return new DeclineParameters(qi, d, type, rateUnit);
 
-      case HYPERBOLIC:
-        // Iterative fitting for hyperbolic
-        double[] hypFit = fitHyperbolicDecline(validTimes, validRates);
-        qi = hypFit[0];
-        d = hypFit[1];
-        double b = hypFit[2];
-        return new DeclineParameters(qi, d, b, type, rateUnit);
+    case HYPERBOLIC:
+      // Iterative fitting for hyperbolic
+      double[] hypFit = fitHyperbolicDecline(validTimes, validRates);
+      qi = hypFit[0];
+      d = hypFit[1];
+      double b = hypFit[2];
+      return new DeclineParameters(qi, d, b, type, rateUnit);
 
-      case HARMONIC:
-        // Regression on 1/q = 1/qi + (D/qi)*t
-        double[] harmFit = fitHarmonicDecline(validTimes, validRates);
-        qi = harmFit[0];
-        d = harmFit[1];
-        return new DeclineParameters(qi, d, 1.0, type, rateUnit);
+    case HARMONIC:
+      // Regression on 1/q = 1/qi + (D/qi)*t
+      double[] harmFit = fitHarmonicDecline(validTimes, validRates);
+      qi = harmFit[0];
+      d = harmFit[1];
+      return new DeclineParameters(qi, d, 1.0, type, rateUnit);
 
-      default:
-        return new DeclineParameters(qi, 0.0, type, rateUnit);
+    default:
+      return new DeclineParameters(qi, 0.0, type, rateUnit);
     }
   }
 
   /**
    * Fits exponential decline using linear regression on ln(q) vs t.
+   *
+   * @param times the time values for the production data
+   * @param rates the production rate values
+   * @return array of [qi, d] where qi is initial rate and d is decline rate
    */
   private double[] fitExponentialDecline(List<Double> times, List<Double> rates) {
     int n = times.size();
@@ -967,11 +960,15 @@ public class ProductionProfile implements Serializable {
     double qi = Math.exp(intercept);
     double d = -slope;
 
-    return new double[] {qi, Math.max(0, d)};
+    return new double[] { qi, Math.max(0, d) };
   }
 
   /**
    * Fits hyperbolic decline using grid search over b values.
+   *
+   * @param times the time values for the production data
+   * @param rates the production rate values
+   * @return array of [qi, d, b] where qi is initial rate, d is decline rate, and b is exponent
    */
   private double[] fitHyperbolicDecline(List<Double> times, List<Double> rates) {
     double bestError = Double.MAX_VALUE;
@@ -1002,11 +999,16 @@ public class ProductionProfile implements Serializable {
       }
     }
 
-    return new double[] {bestQi, bestD, bestB};
+    return new double[] { bestQi, bestD, bestB };
   }
 
   /**
    * Fits hyperbolic decline for a fixed b value.
+   *
+   * @param times the time values for the production data
+   * @param rates the production rate values
+   * @param b the fixed hyperbolic exponent
+   * @return array of [qi, d] where qi is initial rate and d is decline rate
    */
   private double[] fitHyperbolicForB(List<Double> times, List<Double> rates, double b) {
     // Linearize: q^(-b) = qi^(-b) + (b*D/qi^b) * t
@@ -1028,11 +1030,15 @@ public class ProductionProfile implements Serializable {
     double qi = Math.pow(intercept, -1.0 / b);
     double d = slope * qi / (b * Math.pow(qi, -b));
 
-    return new double[] {Math.max(qi, 1), Math.max(0, d)};
+    return new double[] { Math.max(qi, 1), Math.max(0, d) };
   }
 
   /**
    * Fits harmonic decline using linear regression on 1/q vs t.
+   *
+   * @param times the time values for the decline data points
+   * @param rates the production rate values corresponding to each time point
+   * @return a two-element array containing the initial rate and decline rate
    */
   private double[] fitHarmonicDecline(List<Double> times, List<Double> rates) {
     int n = times.size();
@@ -1054,11 +1060,13 @@ public class ProductionProfile implements Serializable {
     double qi = 1.0 / intercept;
     double d = slope * qi;
 
-    return new double[] {Math.max(qi, 1), Math.max(0, d)};
+    return new double[] { Math.max(qi, 1), Math.max(0, d) };
   }
 
   /**
    * Gets the name of the current facility bottleneck.
+   *
+   * @return the bottleneck equipment name, or null if no facility or bottleneck
    */
   private String getFacilityBottleneckName() {
     if (facility == null) {
@@ -1077,4 +1085,3 @@ public class ProductionProfile implements Serializable {
     return facility;
   }
 }
-

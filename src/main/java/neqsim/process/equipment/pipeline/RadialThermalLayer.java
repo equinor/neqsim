@@ -158,8 +158,7 @@ public class RadialThermalLayer implements Serializable {
    * @param thickness Layer thickness [m]
    * @param material Material type preset
    */
-  public RadialThermalLayer(String name, double innerRadius, double thickness,
-      MaterialType material) {
+  public RadialThermalLayer(String name, double innerRadius, double thickness, MaterialType material) {
     this.name = name;
     this.materialType = material;
     this.innerRadius = innerRadius;
@@ -179,8 +178,7 @@ public class RadialThermalLayer implements Serializable {
    * @param rho Density [kg/m³]
    * @param cp Specific heat [J/(kg·K)]
    */
-  public RadialThermalLayer(String name, double innerRadius, double thickness, double k, double rho,
-      double cp) {
+  public RadialThermalLayer(String name, double innerRadius, double thickness, double k, double rho, double cp) {
     this.name = name;
     this.materialType = MaterialType.CUSTOM;
     this.innerRadius = innerRadius;
@@ -430,8 +428,8 @@ public class RadialThermalLayer implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("RadialThermalLayer[%s: ri=%.4f m, ro=%.4f m, k=%.3f W/(m·K), T=%.1f K]",
-        name, innerRadius, outerRadius, thermalConductivity, temperature);
+    return String.format("RadialThermalLayer[%s: ri=%.4f m, ro=%.4f m, k=%.3f W/(m·K), T=%.1f K]", name, innerRadius,
+        outerRadius, thermalConductivity, temperature);
   }
 
   /**
@@ -440,8 +438,8 @@ public class RadialThermalLayer implements Serializable {
    * @return Deep copy of the layer
    */
   public RadialThermalLayer copy() {
-    RadialThermalLayer copy = new RadialThermalLayer(name, innerRadius, getThickness(),
-        thermalConductivity, density, specificHeat);
+    RadialThermalLayer copy = new RadialThermalLayer(name, innerRadius, getThickness(), thermalConductivity, density,
+        specificHeat);
     copy.materialType = this.materialType;
     copy.temperature = this.temperature;
     copy.previousTemperature = this.previousTemperature;

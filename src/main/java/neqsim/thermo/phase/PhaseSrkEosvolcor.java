@@ -10,9 +10,7 @@ import neqsim.thermo.component.ComponentEosInterface;
 import neqsim.thermo.component.ComponentSrkvolcor;
 
 /**
- * <p>
  * PhasePrEosvolcor class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -37,8 +35,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     cachedCi = null;
     cachedCiT = null;
@@ -57,9 +54,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getCT.
-   * </p>
    *
    * @return a double
    */
@@ -68,9 +63,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getCTT.
-   * </p>
    *
    * @return a double
    */
@@ -87,9 +80,8 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public double calcf() {
-    return (1.0 / (R * getB() * (delta1 - delta2))
-        * Math.log((1.0 + (delta1 * getb() + getc()) / molarVolume)
-            / (1.0 + (delta2 * getb() + getc()) / (molarVolume))));
+    return (1.0 / (R * getB() * (delta1 - delta2)) * Math
+        .log((1.0 + (delta1 * getb() + getc()) / molarVolume) / (1.0 + (delta2 * getb() + getc()) / (molarVolume))));
   }
 
   /** {@inheritDoc} */
@@ -103,37 +95,29 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   // the translation
 
   /**
-   * <p>
    * getcij.
-   * </p>
    *
    * @param compArray a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param compArray2 a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @return a double
    */
   public double getcij(ComponentEosInterface compArray, ComponentEosInterface compArray2) {
-    return ((((ComponentSrkvolcor) compArray).getc()) + (((ComponentSrkvolcor) compArray2).getc()))
-        * 0.5;
+    return ((((ComponentSrkvolcor) compArray).getc()) + (((ComponentSrkvolcor) compArray2).getc())) * 0.5;
   }
 
   /**
-   * <p>
    * getcijT.
-   * </p>
    *
    * @param compArray a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @param compArray2 a {@link neqsim.thermo.component.ComponentEosInterface} object
    * @return a double
    */
   public double getcijT(ComponentEosInterface compArray, ComponentEosInterface compArray2) {
-    return (((ComponentSrkvolcor) compArray).getcT() + ((ComponentSrkvolcor) compArray2).getcT())
-        * 0.5;
+    return (((ComponentSrkvolcor) compArray).getcT() + ((ComponentSrkvolcor) compArray2).getcT()) * 0.5;
   }
 
   /**
-   * <p>
    * getcijTT.
-   * </p>
    *
    * @param compi a {@link neqsim.thermo.component.ComponentSrkvolcor} object
    * @param compj a {@link neqsim.thermo.component.ComponentSrkvolcor} object
@@ -146,9 +130,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // @Override
   /**
-   * <p>
    * calcCi.
-   * </p>
    *
    * @param compNumb a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -157,16 +139,13 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
    * @param numbcomp a int
    * @return a double
    */
-  public double calcCi(int compNumb, PhaseInterface phase, double temperature, double pressure,
-      int numbcomp) {
+  public double calcCi(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
     ensureCiCache(numbcomp);
     return cachedCi[compNumb];
   }
 
   /**
-   * <p>
    * calcCij.
-   * </p>
    *
    * @param compNumb a int
    * @param compNumbj a int
@@ -176,16 +155,14 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
    * @param numbcomp a int
    * @return a double
    */
-  public double calcCij(int compNumb, int compNumbj, PhaseInterface phase, double temperature,
-      double pressure, int numbcomp) {
+  public double calcCij(int compNumb, int compNumbj, PhaseInterface phase, double temperature, double pressure,
+      int numbcomp) {
     ensureCijCache(numbcomp);
     return cachedCij[compNumb][compNumbj];
   }
 
   /**
-   * <p>
    * calcCiT.
-   * </p>
    *
    * @param compNumb a int
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
@@ -194,8 +171,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
    * @param numbcomp a int
    * @return a double
    */
-  public double calcCiT(int compNumb, PhaseInterface phase, double temperature, double pressure,
-      int numbcomp) {
+  public double calcCiT(int compNumb, PhaseInterface phase, double temperature, double pressure, int numbcomp) {
     ensureCiTCache(numbcomp);
     return cachedCiT[compNumb];
   }
@@ -252,9 +228,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcCT.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
@@ -277,9 +251,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * calcC.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param temperature a double
@@ -308,9 +280,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getc.
-   * </p>
    *
    * @return a double
    */
@@ -319,9 +289,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * getC.
-   * </p>
    *
    * @return a double
    */
@@ -332,8 +300,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public double gV() {
-    return (getb() - getc())
-        / (molarVolume * (numberOfMolesInPhase * molarVolume + loc_C() - getB()));
+    return (getb() - getc()) / (molarVolume * (numberOfMolesInPhase * molarVolume + loc_C() - getB()));
     // molarvolume is m^3/mol/10^5
     // old is-->return getb() / (molarVolume * (numberOfMolesInPhase * molarVolume - loc_B));
     // aks Dr. Soolbra whats the difference between getb and loc_B and
@@ -388,8 +355,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   public double fVVV() {
     double val1 = numberOfMolesInPhase * molarVolume + getB() * delta1 + getC();
     double val2 = numberOfMolesInPhase * molarVolume + getB() * delta2 + getC();
-    return 1.0 / (R * getB() * (delta1 - delta2))
-        * (2.0 / (val1 * val1 * val1) - 2.0 / (val2 * val2 * val2));
+    return 1.0 / (R * getB() * (delta1 - delta2)) * (2.0 / (val1 * val1 * val1) - 2.0 / (val2 * val2 * val2));
 
     // old is -->double val1 = numberOfMolesInPhase * molarVolume + getB() * delta1;
     // double val2 = numberOfMolesInPhase * molarVolume + getB() * delta2;
@@ -411,9 +377,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // derivative of small g with regards to c
   /**
-   * <p>
    * gc.
-   * </p>
    *
    * @return a double
    */
@@ -424,9 +388,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // derivative of small f with regards to c-->equal to fv
   /**
-   * <p>
    * fc.
-   * </p>
    *
    * @return a double
    */
@@ -443,9 +405,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // second derivative of small f with regards to cc-->equal to fvv
   /**
-   * <p>
    * fcc.
-   * </p>
    *
    * @return a double
    */
@@ -455,9 +415,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // second derivative of small f with regards to bc-->equal to fvv
   /**
-   * <p>
    * fbc.
-   * </p>
    *
    * @return a double
    */
@@ -467,9 +425,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // second derivative of small f with regards to cv-->equal to fvv
   /**
-   * <p>
    * fcv.
-   * </p>
    *
    * @return a double
    */
@@ -509,9 +465,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // second derivative of small g with regards to bc-->
   /**
-   * <p>
    * gBC.
-   * </p>
    *
    * @return a double
    */
@@ -522,9 +476,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // second derivative of small g with regards to cv-->
   /**
-   * <p>
    * gCV.
-   * </p>
    *
    * @return a double
    */
@@ -535,9 +487,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
 
   // second derivative of small g with regards to cc-->
   /**
-   * <p>
    * gCC.
-   * </p>
    *
    * @return a double
    */
@@ -557,9 +507,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   // derivative of big F with regards to C
   // @Override
   /**
-   * <p>
    * FC.
-   * </p>
    *
    * @return a double
    */
@@ -568,9 +516,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * FnC.
-   * </p>
    *
    * @return a double
    */
@@ -579,9 +525,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * FTC.
-   * </p>
    *
    * @return a double
    */
@@ -590,9 +534,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * FBC.
-   * </p>
    *
    * @return a double
    */
@@ -601,9 +543,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * FCV.
-   * </p>
    *
    * @return a double
    */
@@ -612,9 +552,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * FCC.
-   * </p>
    *
    * @return a double
    */
@@ -623,9 +561,7 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   }
 
   /**
-   * <p>
    * FCD.
-   * </p>
    *
    * @return a double
    */
@@ -660,8 +596,8 @@ public class PhaseSrkEosvolcor extends PhaseSrkEos {
   /** {@inheritDoc} */
   @Override
   public double dFdTdT() {
-    return FTT() + 2.0 * FDT() * getAT() + FD() * getATT() + 2 * FTC() * getCT()
-        + FCC() * getCT() * getCT() + FC() * getCTT() + 2 * FCD() * getCT() * getAT();
+    return FTT() + 2.0 * FDT() * getAT() + FD() * getATT() + 2 * FTC() * getCT() + FCC() * getCT() * getCT()
+        + FC() * getCTT() + 2 * FCD() * getCT() * getAT();
   }
 
   /** {@inheritDoc} */

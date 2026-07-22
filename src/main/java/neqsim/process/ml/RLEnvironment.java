@@ -85,8 +85,7 @@ public class RLEnvironment implements Serializable {
      * @param truncated time limit reached
      * @param info additional info
      */
-    public StepResult(StateVector observation, double reward, boolean done, boolean truncated,
-        StepInfo info) {
+    public StepResult(StateVector observation, double reward, boolean done, boolean truncated, StepInfo info) {
       this.observation = observation;
       this.reward = reward;
       this.done = done;
@@ -135,8 +134,7 @@ public class RLEnvironment implements Serializable {
    * @param unit physical unit
    * @return this environment for chaining
    */
-  public RLEnvironment defineAction(String name, double lowerBound, double upperBound,
-      String unit) {
+  public RLEnvironment defineAction(String name, double lowerBound, double upperBound, String unit) {
     actionSpace.define(name, lowerBound, upperBound, unit);
     return this;
   }
@@ -151,8 +149,7 @@ public class RLEnvironment implements Serializable {
    * @param unit physical unit
    * @return this environment for chaining
    */
-  public RLEnvironment addConstraint(String name, String variableName, double minValue,
-      double maxValue, String unit) {
+  public RLEnvironment addConstraint(String name, String variableName, double minValue, double maxValue, String unit) {
     constraintManager.addHardRange(name, variableName, minValue, maxValue, unit);
     return this;
   }
@@ -166,8 +163,8 @@ public class RLEnvironment implements Serializable {
    * @param throughput weight for production throughput (positive reward)
    * @return this environment for chaining
    */
-  public RLEnvironment setRewardWeights(double energy, double setpointError,
-      double constraintViolation, double throughput) {
+  public RLEnvironment setRewardWeights(double energy, double setpointError, double constraintViolation,
+      double throughput) {
     this.weightEnergy = energy;
     this.weightSetpointError = setpointError;
     this.weightConstraintViolation = constraintViolation;

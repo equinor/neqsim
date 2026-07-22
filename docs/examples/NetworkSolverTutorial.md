@@ -8,9 +8,9 @@ nav_order: 1
 
 # NetworkSolverTutorial
 
-> **Note:** This is an auto-generated Markdown version of the Jupyter notebook 
+> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`NetworkSolverTutorial.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/NetworkSolverTutorial.ipynb).
-> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/NetworkSolverTutorial.ipynb) 
+> You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/NetworkSolverTutorial.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/NetworkSolverTutorial.ipynb).
 
 ---
@@ -28,18 +28,17 @@ The `NetworkSolver` solves pressure-flow equilibrium in gathering networks:
 - Rate allocation optimization
 
 ```python
-import jpype
-import jpype.imports
-from jpype.types import *
+# Import NeqSim - Direct Java Access via jneqsim
+from neqsim import jneqsim
 
-# Start JVM with NeqSim
-if not jpype.isJVMStarted():
-    jpype.startJVM(classpath=['path/to/neqsim.jar'])
+# Import Java classes through the jneqsim gateway
+SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
+WellSystem = jneqsim.process.equipment.reservoir.WellSystem
+SimpleReservoir = jneqsim.process.equipment.reservoir.SimpleReservoir
+NetworkSolver = jneqsim.process.fielddevelopment.network.NetworkSolver
+NetworkResult = jneqsim.process.fielddevelopment.network.NetworkResult
 
-# Import NeqSim classes
-from neqsim.thermo.system import SystemSrkEos
-from neqsim.process.equipment.reservoir import WellSystem, SimpleReservoir
-from neqsim.process.fielddevelopment.network import NetworkSolver, NetworkResult
+print("NeqSim Network Solver loaded successfully!")
 ```
 
 ## 1. Setting Up the Reservoir and Wells

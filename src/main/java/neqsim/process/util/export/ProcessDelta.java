@@ -9,8 +9,8 @@ import java.util.Set;
  * Represents the difference between two process snapshots.
  *
  * <p>
- * Process deltas enable efficient synchronization of state changes between NeqSim and external
- * systems, transmitting only changed values rather than full state.
+ * Process deltas enable efficient synchronization of state changes between NeqSim and external systems, transmitting
+ * only changed values rather than full state.
  * </p>
  *
  * @author ESOL
@@ -195,7 +195,6 @@ public class ProcessDelta implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("ProcessDelta[%s -> %s, %d changes]", fromSnapshotId, toSnapshotId,
-        changedValues.size());
+    return String.format("ProcessDelta[%s -> %s, %d changes]", fromSnapshotId, toSnapshotId, changedValues.size());
   }
 }

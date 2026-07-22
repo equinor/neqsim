@@ -1,3 +1,8 @@
+---
+title: Equipment Design Parameters Guide
+description: This guide describes how to manually set design parameters for process equipment in NeqSim when not using `autoSizeEquipment()`. Understanding these parameters is essential for accurate capacity utili...
+---
+
 # Equipment Design Parameters Guide
 
 This guide describes how to manually set design parameters for process equipment in NeqSim when not using `autoSizeEquipment()`. Understanding these parameters is essential for accurate capacity utilization tracking and bottleneck analysis.
@@ -6,10 +11,10 @@ This guide describes how to manually set design parameters for process equipment
 >
 > | Topic | Documentation |
 > |-------|---------------|
-> | **Mechanical Design** | [mechanical_design.md](mechanical_design.md) - Equipment sizing, weights, JSON export |
-> | **Constraints & Optimization** | [optimization/OPTIMIZATION_AND_CONSTRAINTS.md](optimization/OPTIMIZATION_AND_CONSTRAINTS.md) - Complete optimization guide |
-> | **Capacity Constraints** | [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK.md) - Multi-constraint bottleneck detection |
-> | **Cost Estimation** | [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK.md) - CAPEX, OPEX, financial metrics |
+> | **Mechanical Design** | [mechanical_design.md](mechanical_design) - Equipment sizing, weights, JSON export |
+> | **Constraints & Optimization** | [optimization/OPTIMIZATION_AND_CONSTRAINTS.md](optimization/OPTIMIZATION_AND_CONSTRAINTS) - Complete optimization guide |
+> | **Capacity Constraints** | [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK) - Multi-constraint bottleneck detection |
+> | **Cost Estimation** | [COST_ESTIMATION_FRAMEWORK.md](COST_ESTIMATION_FRAMEWORK) - CAPEX, OPEX, financial metrics |
 
 ## Table of Contents
 
@@ -57,7 +62,7 @@ This table summarizes how capacity utilization is calculated for each equipment 
 | Equipment | Utilization Formula | Duty Metric | Capacity Metric | Override Design Methods |
 |-----------|--------------------|--------------|-----------------|-----------------------|
 | **Separator** | `gasFlow / maxAllowableGasFlow` | Gas volumetric flow (m³/s) | K-factor × area × density function | `setDesignGasLoadFactor()`, `setInternalDiameter()` |
-| **Compressor** | `power / maxPower` | Shaft power (W) | Driver power or design power | `setMaximumPower()`, `setMaximumSpeed()` |
+| **Compressor** | `power / maxPower` | Shaft power (W) | Driver power or design power | `getMechanicalDesign().setMaxDesignPower()`, `setMaximumSpeed()` |
 | **Pump** | `power / maxPower` | Shaft power (W) | Design power | `getMechanicalDesign().setMaxDesignVolumeFlow()` |
 | **ThrottlingValve** | `volumeFlow / maxVolumeFlow` | Outlet flow (m³/hr) | Design Cv × conditions | `setDesignCv()`, `setDesignVolumeFlow()` |
 | **Heater/Cooler** | `duty / maxDuty` | Heat duty (W) | Max design duty | `getMechanicalDesign().setMaxDesignDuty()` |
@@ -133,7 +138,8 @@ separator.setSeparatorLength(7.0);
 ```java
 compressor.autoSize(1.2);
 // Override power limits
-compressor.setMaximumPower(5000.0);  // kW - overrides driver power
+compressor.initMechanicalDesign();
+compressor.getMechanicalDesign().setMaxDesignPower(5000.0);  // kW - overrides driver power
 compressor.setMaximumSpeed(12000.0); // RPM - sets speed limit
 // Or disable auto-generated curves and use manual efficiency
 compressor.setUsePolytropicCalc(true);
@@ -669,7 +675,7 @@ process.run();
 
 // 5. Check utilization (should be ~83% with 1.2 safety factor)
 Map<String, Double> utilization = process.getCapacityUtilizationSummary();
-utilization.forEach((name, util) -> 
+utilization.forEach((name, util) ->
     System.out.println(name + ": " + util + "% utilized")
 );
 ```
@@ -813,9 +819,9 @@ StringBuilder report = new StringBuilder();
 for (ProcessEquipmentInterface equip : process.getEquipmentList()) {
     MechanicalDesign design = equip.getMechanicalDesign();
     design.calcDesign();
-    
+
     if (design instanceof SeparatorMechanicalDesign) {
-        SeparatorMechanicalDesign.SeparatorValidationResult result = 
+        SeparatorMechanicalDesign.SeparatorValidationResult result =
             ((SeparatorMechanicalDesign) design).validateDesignComprehensive();
         if (!result.isValid()) {
             allValid = false;
@@ -859,7 +865,7 @@ pipe.setMaxDesignVelocity(15.0);  // Max 15 m/s
 // After running, check constraints
 Map<String, CapacityConstraint> constraints = separator.getCapacityConstraints();
 for (CapacityConstraint c : constraints.values()) {
-    System.out.println(c.getName() + ": " + 
+    System.out.println(c.getName() + ": " +
         (c.getUtilization() * 100) + "% of design");
 }
 ```
@@ -901,8 +907,8 @@ List<String> nearLimit = process.getEquipmentNearCapacityLimit();
 
 ## See Also
 
-- [AutoSizeable Interface](../src/main/java/neqsim/process/design/AutoSizeable.java)
-- [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK.md)
-- [Mechanical Design Framework](mechanical_design.md)
-- [Optimization & Constraints Guide](optimization/OPTIMIZATION_AND_CONSTRAINTS.md)
-- [Cost Estimation Framework](COST_ESTIMATION_FRAMEWORK.md)
+- [AutoSizeable Interface](https://github.com/equinor/neqsim/blob/master/src/main/java/neqsim/process/design/AutoSizeable.java)
+- [Capacity Constraint Framework](CAPACITY_CONSTRAINT_FRAMEWORK)
+- [Mechanical Design Framework](mechanical_design)
+- [Optimization & Constraints Guide](optimization/OPTIMIZATION_AND_CONSTRAINTS)
+- [Cost Estimation Framework](COST_ESTIMATION_FRAMEWORK)

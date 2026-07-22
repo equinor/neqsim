@@ -18,9 +18,8 @@ import neqsim.thermo.system.SystemInterface;
  * Multiphase pipe flow simulation model using non-equilibrium two-phase flow.
  *
  * <p>
- * This class provides a process equipment wrapper around {@link TwoPhasePipeFlowSystem}, making it
- * compatible with the standard NeqSim process simulation framework through the
- * {@link PipeLineInterface}.
+ * This class provides a process equipment wrapper around {@link TwoPhasePipeFlowSystem}, making it compatible with the
+ * standard NeqSim process simulation framework through the {@link PipeLineInterface}.
  * </p>
  *
  * <h2>Features</h2>
@@ -34,7 +33,7 @@ import neqsim.thermo.system.SystemInterface;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * // Create a multiphase fluid
  * SystemInterface fluid = new SystemSrkEos(295.0, 50.0);
@@ -43,11 +42,11 @@ import neqsim.thermo.system.SystemInterface;
  * fluid.addComponent("nC10", 0.1);
  * fluid.createDatabase(true);
  * fluid.setMixingRule(2);
- * 
+ *
  * Stream inlet = new Stream("inlet", fluid);
  * inlet.setFlowRate(50000, "kg/hr");
  * inlet.run();
- * 
+ *
  * // Create multiphase pipe
  * MultiphasePipe pipe = new MultiphasePipe("pipeline", inlet);
  * pipe.setLength(5000.0); // 5 km
@@ -57,7 +56,7 @@ import neqsim.thermo.system.SystemInterface;
  * pipe.setInsulationThickness(0.05);
  * pipe.setAmbientTemperature(278.0);
  * pipe.run();
- * 
+ *
  * double pressureDrop = pipe.getPressureDrop();
  * String flowRegime = pipe.getFlowRegime();
  * }</pre>
@@ -112,8 +111,8 @@ public class MultiphasePipe extends Pipeline {
    * Enable non-equilibrium mass transfer between phases.
    *
    * <p>
-   * When enabled, mass transfer is calculated using the Krishna-Standart film model, which accounts
-   * for finite-rate mass transfer at the gas-liquid interface.
+   * When enabled, mass transfer is calculated using the Krishna-Standart film model, which accounts for finite-rate
+   * mass transfer at the gas-liquid interface.
    * </p>
    */
   public void enableNonEquilibriumMassTransfer() {
@@ -274,8 +273,7 @@ public class MultiphasePipe extends Pipeline {
     GeometryDefinitionInterface[] pipeGeometry = new PipeData[numberOfLegs + 1];
     for (int i = 0; i < pipeGeometry.length; i++) {
       double d = (pipeDiameters != null && i < pipeDiameters.length) ? pipeDiameters[i] : diameter;
-      double r = (pipeWallRoughness != null && i < pipeWallRoughness.length) ? pipeWallRoughness[i]
-          : roughness;
+      double r = (pipeWallRoughness != null && i < pipeWallRoughness.length) ? pipeWallRoughness[i] : roughness;
       pipeGeometry[i] = new PipeData(d, r);
     }
     flowSystem.setEquipmentGeometry(pipeGeometry);

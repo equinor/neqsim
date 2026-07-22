@@ -13,15 +13,14 @@ import java.util.Map;
  * <p>
  * This class supports:
  * <ul>
- * <li><b>Lifecycle Phase Tracking:</b> Concept → Design → Commissioning → Operation →
- * Late-life</li>
+ * <li><b>Lifecycle Phase Tracking:</b> Concept → Design → Commissioning → Operation → Late-life</li>
  * <li><b>Validation History:</b> Track when and how the model was validated</li>
  * <li><b>Audit Trail:</b> Record model modifications for compliance and knowledge preservation</li>
  * <li><b>Quality Metrics:</b> Track model accuracy and calibration state</li>
  * </ul>
  *
  * <h2>Usage Example:</h2>
- * 
+ *
  * <pre>
  * ModelMetadata metadata = new ModelMetadata();
  * metadata.setAssetId("PLATFORM-A-TRAIN-1");
@@ -91,7 +90,8 @@ public class ModelMetadata implements Serializable {
   /**
    * Default constructor.
    */
-  public ModelMetadata() {}
+  public ModelMetadata() {
+  }
 
   /**
    * Records a validation event.

@@ -3,6 +3,7 @@ package neqsim.process.mechanicaldesign.splitter;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import neqsim.process.costestimation.splitter.SplitterCostEstimate;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.splitter.Splitter;
 import neqsim.process.equipment.stream.StreamInterface;
@@ -11,10 +12,10 @@ import neqsim.process.mechanicaldesign.MechanicalDesignResponse;
 
 /**
  * Mechanical design class for splitter equipment.
- * 
+ *
  * <p>
- * Handles design calculations for flow splitters, distribution headers, and manifolds including
- * header sizing, branch connections, and pressure drop calculations.
+ * Handles design calculations for flow splitters, distribution headers, and manifolds including header sizing, branch
+ * connections, and pressure drop calculations.
  * </p>
  *
  * @author AGAS
@@ -70,6 +71,7 @@ public class SplitterMechanicalDesign extends MechanicalDesign {
    */
   public SplitterMechanicalDesign(ProcessEquipmentInterface equipment) {
     super(equipment);
+    costEstimate = new SplitterCostEstimate(this);
   }
 
   /** {@inheritDoc} */
@@ -161,6 +163,7 @@ public class SplitterMechanicalDesign extends MechanicalDesign {
     outerDiameter = headerDiameter + 2.0 * headerWallThickness / 1000.0;
     innerDiameter = headerDiameter;
     setWallThickness(headerWallThickness);
+    calculateWeights();
   }
 
   /**
@@ -171,7 +174,7 @@ public class SplitterMechanicalDesign extends MechanicalDesign {
    */
   private double roundToStandardPipeSize(double diameter) {
     // Standard pipe sizes in meters (NPS in inches converted)
-    double[] standardSizes = {0.0127, // 0.5"
+    double[] standardSizes = { 0.0127, // 0.5"
         0.0254, // 1"
         0.0381, // 1.5"
         0.0508, // 2"
@@ -399,8 +402,7 @@ public class SplitterMechanicalDesign extends MechanicalDesign {
    * Calculate equipment weight for cost estimation.
    *
    * <p>
-   * Calculates header weight, branch weight, and total piping weight based on dimensions and wall
-   * thickness.
+   * Calculates header weight, branch weight, and total piping weight based on dimensions and wall thickness.
    * </p>
    */
   public void calculateWeights() {
@@ -413,15 +415,13 @@ public class SplitterMechanicalDesign extends MechanicalDesign {
 
     // Header weight
     double headerOD = headerDiameter + 2.0 * headerWallThickness / 1000.0;
-    double headerCrossSectionArea =
-        Math.PI / 4.0 * (Math.pow(headerOD, 2) - Math.pow(headerDiameter, 2));
+    double headerCrossSectionArea = Math.PI / 4.0 * (Math.pow(headerOD, 2) - Math.pow(headerDiameter, 2));
     double headerWeight = headerCrossSectionArea * headerLength * steelDensity;
 
     // Branch weight (simplified - assume same wall thickness)
     double branchLength = 0.5; // Assume 0.5m per branch
     double branchOD = branchDiameter + 2.0 * headerWallThickness / 1000.0;
-    double branchCrossSectionArea =
-        Math.PI / 4.0 * (Math.pow(branchOD, 2) - Math.pow(branchDiameter, 2));
+    double branchCrossSectionArea = Math.PI / 4.0 * (Math.pow(branchOD, 2) - Math.pow(branchDiameter, 2));
     double branchWeight = branchCrossSectionArea * branchLength * steelDensity * numberOfBranches;
 
     // Set weights
@@ -444,15 +444,13 @@ public class SplitterMechanicalDesign extends MechanicalDesign {
     calculateWeights();
 
     // Use piping cost correlation
-    double pipeCostPerMeter =
-        getCostEstimate().getCostCalculator().calcPipingCost(headerDiameter, 1.0, 40);
+    double pipeCostPerMeter = getCostEstimate().getCostCalculator().calcPipingCost(headerDiameter, 1.0, 40);
 
     // Header cost
     double headerCost = pipeCostPerMeter * headerLength;
 
     // Branch costs (assume 0.5m per branch)
-    double branchCostPerMeter =
-        getCostEstimate().getCostCalculator().calcPipingCost(branchDiameter, 1.0, 40);
+    double branchCostPerMeter = getCostEstimate().getCostCalculator().calcPipingCost(branchDiameter, 1.0, 40);
     double branchCost = branchCostPerMeter * 0.5 * numberOfBranches;
 
     // Fittings and fabrication (50% of pipe cost)
@@ -501,8 +499,6 @@ public class SplitterMechanicalDesign extends MechanicalDesign {
     costData.addProperty("estimatedCost_USD", calculateSplitterCost());
     jsonObj.add("costEstimation", costData);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 }
-

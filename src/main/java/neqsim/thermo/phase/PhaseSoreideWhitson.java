@@ -3,8 +3,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentSoreideWhitson;
 
 /**
- * PhaseSoreideWhitson implements the Søreide-Whitson Peng-Robinson EoS with modified alpha and
- * mixing rule.
+ * PhaseSoreideWhitson implements the Søreide-Whitson Peng-Robinson EoS with modified alpha and mixing rule.
  *
  * @author sviat
  */
@@ -17,7 +16,6 @@ public class PhaseSoreideWhitson extends PhasePrEos {
    * Constructs a PhaseSoreideWhitson object and initializes EoS parameters.
    */
   public PhaseSoreideWhitson() {
-    super();
     thermoPropertyModelName = "Soreide-Whitson-PR-EoS";
   }
 
@@ -42,9 +40,7 @@ public class PhaseSoreideWhitson extends PhasePrEos {
 
   // Set salinity for the phase (mol/kg or as used in Soreide-Whitson)
   /**
-   * <p>
    * Setter for the field <code>salinityConcentration</code>.
-   * </p>
    *
    * @param salinityConcentration a double
    */
@@ -53,9 +49,7 @@ public class PhaseSoreideWhitson extends PhasePrEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>salinityConcentration</code>.
-   * </p>
    *
    * @return a double
    */
@@ -64,9 +58,7 @@ public class PhaseSoreideWhitson extends PhasePrEos {
   }
 
   /**
-   * <p>
    * addSalinity.
-   * </p>
    *
    * @param salinity a double
    */
@@ -75,9 +67,7 @@ public class PhaseSoreideWhitson extends PhasePrEos {
   }
 
   /**
-   * <p>
    * Getter for the field <code>salinity</code>.
-   * </p>
    *
    * @param salinity a double
    * @return a double

@@ -4,13 +4,12 @@ import neqsim.process.equipment.stream.StreamInterface;
 
 /**
  * Control valve for process flow control.
- * 
+ *
  * <p>
- * ControlValve is a specialized throttling valve used for automatic or manual flow control in
- * process systems. It provides the same functionality as ThrottlingValve but with clearer semantic
- * meaning in process control applications.
+ * ControlValve is a specialized throttling valve used for automatic or manual flow control in process systems. It
+ * provides the same functionality as ThrottlingValve but with clearer semantic meaning in process control applications.
  * </p>
- * 
+ *
  * <p>
  * Typical applications include:
  * <ul>
@@ -19,10 +18,10 @@ import neqsim.process.equipment.stream.StreamInterface;
  * <li>Temperature control valves (TCV)</li>
  * <li>Level control valves (LCV)</li>
  * </ul>
- * 
+ *
  * <p>
  * Example usage:
- * 
+ *
  * <pre>
  * ControlValve flowControlValve = new ControlValve("FCV-101", inletStream);
  * flowControlValve.setPercentValveOpening(50.0); // 50% open
@@ -65,7 +64,7 @@ public class ControlValve extends ThrottlingValve {
    */
   @Override
   public String toString() {
-    return String.format("%s [Control Valve] - Opening: %.1f%%, Cv: %.1f", getName(),
-        getPercentValveOpening(), getCv());
+    return String.format("%s [Control Valve] - Opening: %.1f%%, Cv: %.1f", getName(), getPercentValveOpening(),
+        getCv());
   }
 }

@@ -5,9 +5,7 @@ import neqsim.process.mechanicaldesign.MechanicalDesign;
 import neqsim.process.mechanicaldesign.MechanicalDesignMarginResult;
 
 /**
- * <p>
  * DesignStandard class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -20,16 +18,13 @@ public class DesignStandard implements java.io.Serializable {
   public String standardName = "";
 
   /**
-   * <p>
    * Constructor for DesignStandard.
-   * </p>
    */
-  public DesignStandard() {}
+  public DesignStandard() {
+  }
 
   /**
-   * <p>
    * Constructor for DesignStandard.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
@@ -40,9 +35,7 @@ public class DesignStandard implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setDesignStandardName.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -51,9 +44,7 @@ public class DesignStandard implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>equipment</code>.
-   * </p>
    *
    * @return the equipment
    */
@@ -62,9 +53,7 @@ public class DesignStandard implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>equipment</code>.
-   * </p>
    *
    * @param equipment the equipment to set
    */
@@ -73,9 +62,7 @@ public class DesignStandard implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>standardName</code>.
-   * </p>
    *
    * @return the standardName
    */
@@ -84,9 +71,7 @@ public class DesignStandard implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>standardName</code>.
-   * </p>
    *
    * @param standardName the standardName to set
    */
@@ -125,7 +110,6 @@ public class DesignStandard implements java.io.Serializable {
       return false;
     }
     DesignStandard other = (DesignStandard) obj;
-    return Objects.equals(equipment, other.equipment)
-        && Objects.equals(standardName, other.standardName);
+    return Objects.equals(equipment, other.equipment) && Objects.equals(standardName, other.standardName);
   }
 }

@@ -3,9 +3,7 @@ package neqsim.thermo.phase;
 import neqsim.thermo.component.ComponentKentEisenberg;
 
 /**
- * <p>
  * PhaseKentEisenberg class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -15,11 +13,10 @@ public class PhaseKentEisenberg extends PhaseGENRTL {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for PhaseKentEisenberg.
-   * </p>
    */
-  public PhaseKentEisenberg() {}
+  public PhaseKentEisenberg() {
+  }
 
   /** {@inheritDoc} */
   @Override

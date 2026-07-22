@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * NeqHeater class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id

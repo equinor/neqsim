@@ -106,8 +106,7 @@ public class GasLiftOptimizerTest {
     GasLiftOptimizer.AllocationResult result = optimizer.optimize();
 
     assertTrue(result.totalIncrementalOil > 0, "Total incremental oil should be positive");
-    assertTrue(result.totalOilRate > result.totalNaturalFlow,
-        "Oil with gas lift should exceed natural flow");
+    assertTrue(result.totalOilRate > result.totalNaturalFlow, "Oil with gas lift should exceed natural flow");
 
     for (GasLiftOptimizer.WellAllocation alloc : result.allocations) {
       assertTrue(alloc.incrementalOil >= 0, "Incremental oil should be non-negative");
@@ -185,8 +184,7 @@ public class GasLiftOptimizerTest {
     GasLiftOptimizer.AllocationResult result = optimizer.optimize();
 
     double expectedUtilization = result.totalGasAllocated / result.availableGas;
-    assertEquals(expectedUtilization, result.gasUtilization, 0.001,
-        "Gas utilization should be correctly calculated");
+    assertEquals(expectedUtilization, result.gasUtilization, 0.001, "Gas utilization should be correctly calculated");
   }
 
   @Test
@@ -198,18 +196,16 @@ public class GasLiftOptimizerTest {
     optimizer.setAvailableGas(100000.0, "Sm3/d");
     GasLiftOptimizer.AllocationResult result2 = optimizer.optimize();
 
-    assertTrue(result2.totalOilRate >= result1.totalOilRate,
-        "More available gas should enable more production");
+    assertTrue(result2.totalOilRate >= result1.totalOilRate, "More available gas should enable more production");
   }
 
   @Test
   @DisplayName("Test performance curve interpolation")
   void testPerformanceCurveInterpolation() {
-    double[] gasRates = {0, 10000, 20000, 30000, 40000};
-    double[] oilRates = {50, 100, 130, 145, 150};
+    double[] gasRates = { 0, 10000, 20000, 30000, 40000 };
+    double[] oilRates = { 50, 100, 130, 145, 150 };
 
-    GasLiftOptimizer.PerformanceCurve curve =
-        new GasLiftOptimizer.PerformanceCurve(gasRates, oilRates);
+    GasLiftOptimizer.PerformanceCurve curve = new GasLiftOptimizer.PerformanceCurve(gasRates, oilRates);
 
     // Test interpolation
     assertEquals(50.0, curve.getOilRate(0), 0.1, "Should return first point at 0");
@@ -222,11 +218,10 @@ public class GasLiftOptimizerTest {
   @Test
   @DisplayName("Test marginal response decreases with gas")
   void testMarginalResponseDecreases() {
-    double[] gasRates = {0, 10000, 20000, 30000, 40000, 50000};
-    double[] oilRates = {50, 100, 130, 145, 150, 148}; // Decline at high GLR
+    double[] gasRates = { 0, 10000, 20000, 30000, 40000, 50000 };
+    double[] oilRates = { 50, 100, 130, 145, 150, 148 }; // Decline at high GLR
 
-    GasLiftOptimizer.PerformanceCurve curve =
-        new GasLiftOptimizer.PerformanceCurve(gasRates, oilRates);
+    GasLiftOptimizer.PerformanceCurve curve = new GasLiftOptimizer.PerformanceCurve(gasRates, oilRates);
 
     double response1 = curve.getMarginalResponse(5000);
     double response2 = curve.getMarginalResponse(25000);
@@ -240,8 +235,7 @@ public class GasLiftOptimizerTest {
   @DisplayName("Test empty optimizer throws exception")
   void testEmptyOptimizerThrows() {
     GasLiftOptimizer emptyOptimizer = new GasLiftOptimizer();
-    assertThrows(IllegalStateException.class, () -> emptyOptimizer.optimize(),
-        "Should throw for no wells");
+    assertThrows(IllegalStateException.class, () -> emptyOptimizer.optimize(), "Should throw for no wells");
   }
 
   @Test
@@ -297,8 +291,7 @@ public class GasLiftOptimizerTest {
   @DisplayName("Test parametric curve model")
   void testParametricCurveModel() {
     // Create curve using parametric model
-    GasLiftOptimizer.PerformanceCurve curve =
-        new GasLiftOptimizer.PerformanceCurve(50.0, 150.0, 30000.0);
+    GasLiftOptimizer.PerformanceCurve curve = new GasLiftOptimizer.PerformanceCurve(50.0, 150.0, 30000.0);
 
     assertEquals(50.0, curve.naturalFlowRate, 0.1, "Natural flow rate should be set");
     assertTrue(curve.gasRates.length > 0, "Should generate gas rate points");
@@ -352,9 +345,8 @@ public class GasLiftOptimizerTest {
   @DisplayName("Test chained configuration methods")
   void testChainedConfiguration() {
     GasLiftOptimizer opt = new GasLiftOptimizer().addWell("W1", 30.0, 100.0, 20000.0, 40000.0)
-        .addWell("W2", 25.0, 80.0, 15000.0, 35000.0).setAvailableGas(50000.0, "Sm3/d")
-        .setMaxCompressionPower(5000.0).setCompressionEfficiency(0.75)
-        .setOptimizationMethod(GasLiftOptimizer.OptimizationMethod.EQUAL_SLOPE);
+        .addWell("W2", 25.0, 80.0, 15000.0, 35000.0).setAvailableGas(50000.0, "Sm3/d").setMaxCompressionPower(5000.0)
+        .setCompressionEfficiency(0.75).setOptimizationMethod(GasLiftOptimizer.OptimizationMethod.EQUAL_SLOPE);
 
     assertEquals(2, opt.getWellCount(), "Should have 2 wells from chained calls");
   }

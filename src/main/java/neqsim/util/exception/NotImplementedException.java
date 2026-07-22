@@ -1,9 +1,7 @@
 package neqsim.util.exception;
 
 /**
- * <p>
  * NotImplementedException class.
- * </p>
  *
  * @author Åsmund Våge Fannemel
  */

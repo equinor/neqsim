@@ -25,8 +25,8 @@ public class PropertyGeneratorTest {
     fluid.useVolumeCorrection(true);
     fluid.setMultiPhaseCheck(true);
 
-    double[] temps = new double[] {280.0, 290.0};
-    double[] pres = new double[] {10.0, 20.0};
+    double[] temps = new double[] { 280.0, 290.0 };
+    double[] pres = new double[] { 10.0, 20.0 };
     PropertyGenerator generator = new PropertyGenerator(fluid, temps, pres);
     generator.calculate();
   }

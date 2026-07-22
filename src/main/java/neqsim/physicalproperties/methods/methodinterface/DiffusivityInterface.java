@@ -4,19 +4,14 @@ import neqsim.physicalproperties.methods.PhysicalPropertyMethodInterface;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
- * <p>
  * DiffusivityInterface interface.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
  */
-public interface DiffusivityInterface
-    extends ThermodynamicConstantsInterface, PhysicalPropertyMethodInterface {
+public interface DiffusivityInterface extends ThermodynamicConstantsInterface, PhysicalPropertyMethodInterface {
   /**
-   * <p>
    * calcBinaryDiffusionCoefficient.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -26,21 +21,16 @@ public interface DiffusivityInterface
   public double calcBinaryDiffusionCoefficient(int i, int j, int method);
 
   /**
-   * <p>
    * calcDiffusionCoefficients.
-   * </p>
    *
    * @param binaryDiffusionCoefficientMethod a int
    * @param multicomponentDiffusionMethod a int
    * @return an array of type double
    */
-  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod,
-      int multicomponentDiffusionMethod);
+  public double[][] calcDiffusionCoefficients(int binaryDiffusionCoefficientMethod, int multicomponentDiffusionMethod);
 
   /**
-   * <p>
    * getFickBinaryDiffusionCoefficient.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -49,9 +39,7 @@ public interface DiffusivityInterface
   public double getFickBinaryDiffusionCoefficient(int i, int j);
 
   /**
-   * <p>
    * getMaxwellStefanBinaryDiffusionCoefficient.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -60,9 +48,7 @@ public interface DiffusivityInterface
   public double getMaxwellStefanBinaryDiffusionCoefficient(int i, int j);
 
   /**
-   * <p>
    * getEffectiveDiffusionCoefficient.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -70,9 +56,7 @@ public interface DiffusivityInterface
   public double getEffectiveDiffusionCoefficient(int i);
 
   /**
-   * <p>
    * calcEffectiveDiffusionCoefficients.
-   * </p>
    */
   public void calcEffectiveDiffusionCoefficients();
 

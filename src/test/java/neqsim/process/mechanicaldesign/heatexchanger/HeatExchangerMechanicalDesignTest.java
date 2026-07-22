@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Comparator;
 import java.util.Optional;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.heatexchanger.HeatExchanger;
 import neqsim.process.equipment.stream.Stream;
@@ -19,6 +21,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Tests for HeatExchanger mechanical design calculations.
  */
 public class HeatExchangerMechanicalDesignTest {
+  private static final Logger logger = LogManager.getLogger(HeatExchangerMechanicalDesignTest.class);
+
   @Test
   void testCalcDesign() {
     HeatExchanger hx = createHeatExchanger(1000.0);
@@ -65,9 +69,8 @@ public class HeatExchangerMechanicalDesignTest {
 
     HeatExchangerSizingResult selected = design.getSelectedSizingResult();
     assertNotNull(selected);
-    double minArea =
-        design.getSizingResults().stream().mapToDouble(HeatExchangerSizingResult::getRequiredArea)
-            .min().orElseThrow(() -> new IllegalStateException("No sizing results available"));
+    double minArea = design.getSizingResults().stream().mapToDouble(HeatExchangerSizingResult::getRequiredArea).min()
+        .orElseThrow(() -> new IllegalStateException("No sizing results available"));
     assertEquals(minArea, selected.getRequiredArea(), 1e-6);
 
     // Switch criterion to evaluate another automatic decision
@@ -133,8 +136,8 @@ public class HeatExchangerMechanicalDesignTest {
 
     assertTrue(shellFouling > 0, "Shell fouling resistance should be positive");
     assertTrue(tubeFouling > 0, "Tube fouling resistance should be positive");
-    System.out.println("Shell fouling resistance (HC): " + shellFouling + " m²K/W");
-    System.out.println("Tube fouling resistance (HC): " + tubeFouling + " m²K/W");
+    logger.info("Shell fouling resistance (HC): " + shellFouling + " m²K/W");
+    logger.info("Tube fouling resistance (HC): " + tubeFouling + " m²K/W");
   }
 
   @Test
@@ -148,7 +151,7 @@ public class HeatExchangerMechanicalDesignTest {
     assertNotNull(temaClass, "TEMA class should not be null");
     assertTrue(temaClass.equals("R") || temaClass.equals("C") || temaClass.equals("B"),
         "TEMA class should be R, C, or B");
-    System.out.println("TEMA class: " + temaClass);
+    logger.info("TEMA class: " + temaClass);
   }
 
   @Test
@@ -163,8 +166,8 @@ public class HeatExchangerMechanicalDesignTest {
 
     assertTrue(maxTubeVel > 0, "Max tube velocity should be positive");
     assertTrue(maxShellVel > 0, "Max shell velocity should be positive");
-    System.out.println("Max tube velocity: " + maxTubeVel + " m/s");
-    System.out.println("Max shell velocity: " + maxShellVel + " m/s");
+    logger.info("Max tube velocity: " + maxTubeVel + " m/s");
+    logger.info("Max shell velocity: " + maxShellVel + " m/s");
   }
 
   @Test
@@ -177,7 +180,7 @@ public class HeatExchangerMechanicalDesignTest {
     double minApproach = design.getMinApproachTemperatureC();
     assertTrue(minApproach > 0, "Min approach temperature should be positive");
     assertTrue(minApproach <= 30, "Min approach temperature should be reasonable (<= 30 C)");
-    System.out.println("Min approach temperature: " + minApproach + " C");
+    logger.info("Min approach temperature: " + minApproach + " C");
   }
 
   // ============================================================================
@@ -226,12 +229,10 @@ public class HeatExchangerMechanicalDesignTest {
     double minApproach = design.getMinApproachTemperatureC();
 
     // Test with adequate approach
-    assertTrue(design.validateApproachTemperature(minApproach * 2),
-        "Approach 2x minimum should pass");
+    assertTrue(design.validateApproachTemperature(minApproach * 2), "Approach 2x minimum should pass");
 
     // Test with inadequate approach
-    assertFalse(design.validateApproachTemperature(minApproach * 0.5),
-        "Approach 0.5x minimum should fail");
+    assertFalse(design.validateApproachTemperature(minApproach * 0.5), "Approach 0.5x minimum should fail");
   }
 
   @Test
@@ -246,11 +247,158 @@ public class HeatExchangerMechanicalDesignTest {
     assertNotNull(result, "Validation result should not be null");
     assertNotNull(result.getIssues(), "Issues list should not be null");
 
-    System.out.println("Heat exchanger validation valid: " + result.isValid());
+    logger.info("Heat exchanger validation valid: " + result.isValid());
     if (!result.isValid()) {
       for (String issue : result.getIssues()) {
-        System.out.println("  Issue: " + issue);
+        logger.info("  Issue: " + issue);
       }
     }
+  }
+
+  // ============================================================================
+  // ASME VIII Design Tests
+  // ============================================================================
+
+  @Test
+  void testShellAndTubeCalculatorWithASME() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.setShellMaterialGrade("SA-516-70");
+    design.setTubeMaterialGrade("SA-179");
+    design.calcDesign();
+
+    ShellAndTubeDesignCalculator calc = design.getShellAndTubeCalculator();
+    assertNotNull(calc, "Calculator should not be null after calcDesign");
+
+    // MAWP should be positive
+    assertTrue(calc.getMawpShellSide() > 0, "Shell MAWP should be positive");
+    assertTrue(calc.getMawpTubeSide() > 0, "Tube MAWP should be positive");
+    logger.info("MAWP shell: " + calc.getMawpShellSide() + " bara");
+    logger.info("MAWP tube: " + calc.getMawpTubeSide() + " bara");
+
+    // Hydro test pressure should exceed MAWP
+    assertTrue(calc.getHydroTestPressureShell() > calc.getMawpShellSide(),
+        "Hydro test pressure shell should exceed MAWP");
+    assertTrue(calc.getHydroTestPressureTube() > calc.getMawpTubeSide(), "Hydro test pressure tube should exceed MAWP");
+    logger.info("Hydro test pressure shell: " + calc.getHydroTestPressureShell() + " bara");
+
+    // Tubesheet thickness from UHX should be positive
+    assertTrue(calc.getTubesheetThicknessUHX() > 0, "Tubesheet thickness should be positive");
+    logger.info("Tubesheet thickness UHX: " + calc.getTubesheetThicknessUHX() + " mm");
+
+    // Nozzle reinforcement check should have been performed
+    assertTrue(calc.getNozzleReinforcementArea() >= 0, "Nozzle reinforcement area should be non-negative");
+    logger.info("Nozzle reinforcement adequate: " + calc.isNozzleReinforcementAdequate());
+
+    // Applied standards should contain ASME entries
+    assertFalse(calc.getAppliedStandards().isEmpty(), "Applied standards should not be empty");
+    logger.info("Applied standards: " + calc.getAppliedStandards());
+  }
+
+  @Test
+  void testMaterialGradeLookup() {
+    HeatExchanger hx = createHeatExchanger(800.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.setShellMaterialGrade("SA-516-70");
+    design.setTubeMaterialGrade("SA-213-TP316");
+    design.calcDesign();
+
+    ShellAndTubeDesignCalculator calc = design.getShellAndTubeCalculator();
+    assertNotNull(calc);
+
+    // Tube thermal conductivity for stainless steel should be much lower than CS
+    double thermalCond = calc.getTubeThermalConductivity();
+    assertTrue(thermalCond > 0, "Tube thermal conductivity should be positive");
+    logger.info("Tube thermal conductivity: " + thermalCond + " W/mK");
+  }
+
+  @Test
+  void testJointEfficiency() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+
+    // Full RT joint efficiency
+    design.setShellJointEfficiency(1.0);
+    design.calcDesign();
+    double mawpFull = design.getShellAndTubeCalculator().getMawpShellSide();
+
+    // Spot RT joint efficiency
+    design.setShellJointEfficiency(0.85);
+    design.calcDesign();
+    double mawpSpot = design.getShellAndTubeCalculator().getMawpShellSide();
+
+    // Higher joint efficiency should give higher MAWP
+    assertTrue(mawpFull > mawpSpot, "Full RT MAWP should exceed spot RT MAWP");
+    logger.info("MAWP full RT: " + mawpFull + ", MAWP spot RT: " + mawpSpot);
+  }
+
+  // ============================================================================
+  // NACE / Sour Service Tests
+  // ============================================================================
+
+  @Test
+  void testNACESourServiceBelow() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.setSourServiceAssessment(true);
+    design.setH2sPartialPressure(0.001); // Below 0.003 bar threshold
+    design.calcDesign();
+
+    ShellAndTubeDesignCalculator calc = design.getShellAndTubeCalculator();
+    assertFalse(calc.isSourServiceRequired(), "Sour service should not be required below threshold");
+    assertTrue(calc.getNaceIssues().isEmpty(), "No NACE issues expected below threshold");
+  }
+
+  @Test
+  void testNACESourServiceAbove() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.setSourServiceAssessment(true);
+    design.setH2sPartialPressure(0.05); // Above threshold
+    design.calcDesign();
+
+    ShellAndTubeDesignCalculator calc = design.getShellAndTubeCalculator();
+    assertTrue(calc.isSourServiceRequired(), "Sour service should be required above threshold");
+    logger.info("NACE issues: " + calc.getNaceIssues());
+  }
+
+  @Test
+  void testCalculatorJsonOutput() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.setSourServiceAssessment(true);
+    design.setH2sPartialPressure(0.01);
+    design.calcDesign();
+
+    ShellAndTubeDesignCalculator calc = design.getShellAndTubeCalculator();
+    String json = calc.toJson();
+    assertNotNull(json, "JSON output should not be null");
+    assertTrue(json.contains("pressureDesign"), "JSON should contain pressure design section");
+    assertTrue(json.contains("mawpShellSide_bara"), "JSON should contain MAWP");
+    assertTrue(json.contains("appliedStandards"), "JSON should contain applied standards");
+    assertTrue(json.contains("naceAssessment"), "JSON should contain NACE assessment");
+    logger.info("JSON length: " + json.length() + " chars");
+  }
+
+  @Test
+  void testResponseIncludesNewFields() {
+    HeatExchanger hx = createHeatExchanger(1000.0);
+    hx.initMechanicalDesign();
+    HeatExchangerMechanicalDesign design = hx.getMechanicalDesign();
+    design.setShellMaterialGrade("SA-516-70");
+    design.setTubeMaterialGrade("SA-179");
+    design.calcDesign();
+
+    HeatExchangerMechanicalDesignResponse response = new HeatExchangerMechanicalDesignResponse(design);
+    assertEquals("SA-516-70", response.getShellMaterialGrade());
+    assertEquals("SA-179", response.getTubeMaterialGrade());
+    assertTrue(response.getMawpShellSide() > 0);
+    assertTrue(response.getHydroTestPressureShell() > 0);
   }
 }

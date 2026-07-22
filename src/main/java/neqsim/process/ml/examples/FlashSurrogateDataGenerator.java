@@ -9,8 +9,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Example: Generate training data for a flash calculation surrogate model.
  *
  * <p>
- * This demonstrates how to collect training data for neural network surrogates that can replace
- * expensive thermodynamic calculations during RL training or real-time control.
+ * This demonstrates how to collect training data for neural network surrogates that can replace expensive thermodynamic
+ * calculations during RL training or real-time control.
  *
  * <p>
  * The surrogate predicts:

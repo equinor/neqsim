@@ -1,7 +1,6 @@
 package neqsim.process.safety.risk.condition;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.HashMap;
@@ -42,8 +41,7 @@ class ConditionBasedReliabilityTest {
     ConditionBasedReliability.ConditionIndicator vibration = indicators.get(0);
     assertEquals("V1", vibration.getIndicatorId());
     assertEquals("Drive End Bearing", vibration.getName());
-    assertEquals(ConditionBasedReliability.ConditionIndicator.IndicatorType.VIBRATION,
-        vibration.getType());
+    assertEquals(ConditionBasedReliability.ConditionIndicator.IndicatorType.VIBRATION, vibration.getType());
   }
 
   @Test
@@ -63,8 +61,7 @@ class ConditionBasedReliabilityTest {
     pump.updateIndicator("T1", 60.0); // Elevated but below warning
 
     assertTrue(pump.getHealthIndex() < 1.0, "Health should decrease with elevated conditions");
-    assertTrue(pump.getAdjustedFailureRate() > pump.getBaseFailureRate(),
-        "Failure rate should increase");
+    assertTrue(pump.getAdjustedFailureRate() > pump.getBaseFailureRate(), "Failure rate should increase");
   }
 
   @Test
@@ -225,9 +222,8 @@ class ConditionBasedReliabilityTest {
 
   @Test
   void testAddCustomIndicator() {
-    ConditionBasedReliability.ConditionIndicator efficiency =
-        new ConditionBasedReliability.ConditionIndicator("E1", "Pump Efficiency",
-            ConditionBasedReliability.ConditionIndicator.IndicatorType.EFFICIENCY);
+    ConditionBasedReliability.ConditionIndicator efficiency = new ConditionBasedReliability.ConditionIndicator("E1",
+        "Pump Efficiency", ConditionBasedReliability.ConditionIndicator.IndicatorType.EFFICIENCY);
     efficiency.setThresholds(85.0, 75.0, 65.0); // Lower is worse for efficiency
 
     pump.addIndicator(efficiency);

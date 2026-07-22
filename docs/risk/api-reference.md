@@ -2,6 +2,7 @@
 layout: default
 title: API Reference
 parent: Risk Framework
+description: "Complete API reference for NeqSim risk and reliability classes including RiskMatrix, BowTieModel, EquipmentReliability, MonteCarloReliability, and SIS integration."
 ---
 
 # API Reference
@@ -79,7 +80,7 @@ EquipmentFailureMode.builder()
 
 ### ReliabilityDataSource
 
-Singleton providing OREDA-based reliability data.
+Singleton providing multi-source reliability data (IOGP/SINTEF, CCPS, IEEE 493, Lees, OREDA).
 
 ```java
 public class ReliabilityDataSource
@@ -552,6 +553,7 @@ DegradedOperationResult optResult = opt.optimizeWithEquipmentDown(failure);
 
 ## See Also
 
-- [Overview](overview.md)
-- [Mathematical Reference](mathematical-reference.md)
-- [Jupyter Notebook Examples](../../examples/notebooks/)
+- [Overview](overview)
+- [Mathematical Reference](mathematical-reference)
+- [Advanced Risk Framework Tutorial](../examples/AdvancedRiskFramework_Tutorial.ipynb)
+- [Examples Index](../examples/index)

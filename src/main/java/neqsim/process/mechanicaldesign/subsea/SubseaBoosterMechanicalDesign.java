@@ -122,7 +122,7 @@ public class SubseaBoosterMechanicalDesign extends MechanicalDesign {
     requiredMotorPower *= margin;
 
     // Round up to next standard size
-    double[] standardSizes = {0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 15.0};
+    double[] standardSizes = { 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 4.0, 5.0, 6.0, 8.0, 10.0, 12.0, 15.0 };
     for (double size : standardSizes) {
       if (size >= requiredMotorPower) {
         requiredMotorPower = size;
@@ -145,8 +145,7 @@ public class SubseaBoosterMechanicalDesign extends MechanicalDesign {
    * Calculate pressure containment.
    */
   private void calculatePressureContainment() {
-    double designPressure =
-        Math.max(booster.getDesignInletPressure(), booster.getOutletPressure()) * 1.1;
+    double designPressure = Math.max(booster.getDesignInletPressure(), booster.getOutletPressure()) * 1.1;
 
     // Housing OD based on impeller/stage count
     double housingOD = 500.0; // mm baseline
@@ -234,6 +233,7 @@ public class SubseaBoosterMechanicalDesign extends MechanicalDesign {
   /**
    * Calculate cost estimate for the booster.
    */
+  @Override
   public void calculateCostEstimate() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
@@ -242,8 +242,8 @@ public class SubseaBoosterMechanicalDesign extends MechanicalDesign {
     boolean isCompressor = booster.getBoosterType() == SubseaBooster.BoosterType.WET_GAS_COMPRESSOR;
     boolean hasRedundancy = booster.hasRedundantMotor();
 
-    costEstimator.calculateBoosterCost(requiredMotorPower / 1000.0, isCompressor,
-        booster.getWaterDepth(), hasRedundancy);
+    costEstimator.calculateBoosterCost(requiredMotorPower / 1000.0, isCompressor, booster.getWaterDepth(),
+        hasRedundancy);
 
     totalCostUSD = costEstimator.getTotalCost();
     equipmentCostUSD = costEstimator.getEquipmentCost();
@@ -275,12 +275,12 @@ public class SubseaBoosterMechanicalDesign extends MechanicalDesign {
    *
    * @return list of BOM items
    */
+  @Override
   public List<Map<String, Object>> generateBillOfMaterials() {
     if (costEstimator == null) {
       costEstimator = new SubseaCostEstimator();
     }
-    return costEstimator.generateBOM("SubseaBooster", booster.getModuleDryWeight(),
-        booster.getWaterDepth());
+    return costEstimator.generateBOM("SubseaBooster", booster.getModuleDryWeight(), booster.getWaterDepth());
   }
 
   /**
@@ -405,8 +405,7 @@ public class SubseaBoosterMechanicalDesign extends MechanicalDesign {
     }
     jsonObj.add("costEstimation", cost);
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(jsonObj);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(jsonObj);
   }
 
   /**

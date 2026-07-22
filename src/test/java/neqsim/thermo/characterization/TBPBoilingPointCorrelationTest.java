@@ -66,8 +66,7 @@ public class TBPBoilingPointCorrelationTest {
         "Component should have been added to system");
 
     // Verify the component has the correct properties
-    ComponentInterface addedComponent =
-        testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
+    ComponentInterface addedComponent = testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
     assertEquals("TestFraction_PC", addedComponent.getName(), "Component name should match");
     assertEquals(moles, addedComponent.getNumberOfmoles(), 1e-10, "Moles should match");
     assertEquals(molarMass, addedComponent.getMolarMass(), 1e-10, "Molar mass should match");
@@ -80,8 +79,7 @@ public class TBPBoilingPointCorrelationTest {
     double density = 0.83; // kg/mol
 
     // Calculate density using TBP boiling point correlation
-    double calculatedMolarmass =
-        testSystem.calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
+    double calculatedMolarmass = testSystem.calculateMolarMassFromDensityAndBoilingPoint(density, boilingPoint);
 
     // Verify density is in reasonable range for petroleum fractions
     assertTrue(calculatedMolarmass > 0.07, "");
@@ -105,8 +103,7 @@ public class TBPBoilingPointCorrelationTest {
         "Component should have been added to system");
 
     // Verify the component has the correct properties
-    ComponentInterface addedComponent =
-        testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
+    ComponentInterface addedComponent = testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
     assertEquals("TestFraction3_PC", addedComponent.getName(), "Component name should match");
     assertEquals(moles, addedComponent.getNumberOfmoles(), 1e-10, "Moles should match");
     // Optionally check molar mass is reasonable
@@ -147,8 +144,7 @@ public class TBPBoilingPointCorrelationTest {
         "Component should have been added to system");
 
     // Verify the component has the correct properties
-    ComponentInterface addedComponent =
-        testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
+    ComponentInterface addedComponent = testSystem.getComponent(testSystem.getNumberOfComponents() - 1);
     assertEquals("TestFraction_PC", addedComponent.getName(), "Component name should match");
     assertEquals(moles, addedComponent.getNumberOfmoles(), 1e-10, "Moles should match");
     assertEquals(molarMass, addedComponent.getMolarMass(), 1e-10, "Molar mass should match");

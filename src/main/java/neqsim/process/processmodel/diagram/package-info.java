@@ -2,8 +2,8 @@
  * Professional Process Flow Diagram (PFD) generation for NeqSim.
  *
  * <p>
- * This package provides a layout intelligence layer for generating oil &amp; gas industry-standard
- * process flow diagrams from NeqSim process simulations.
+ * This package provides a layout intelligence layer for generating oil &amp; gas industry-standard process flow
+ * diagrams from NeqSim process simulations.
  * </p>
  *
  * <h2>Key Features</h2>
@@ -25,8 +25,7 @@
  * ProcessDiagramExporter exporter = new ProcessDiagramExporter(processSystem);
  *
  * // Configure (optional)
- * exporter.setTitle("Gas Processing Plant").setDetailLevel(DiagramDetailLevel.STANDARD)
- *     .setShowStreamValues(true);
+ * exporter.setTitle("Gas Processing Plant").setDetailLevel(DiagramDetailLevel.STANDARD).setShowStreamValues(true);
  *
  * // Export to DOT format (text)
  * String dot = exporter.toDOT();
@@ -42,26 +41,21 @@
  *
  * <pre>
  * // Import DEXPI P&amp;ID and create diagram
- * ProcessDiagramExporter exporter =
- *     DexpiDiagramBridge.importAndCreateExporter(Paths.get("plant.xml"));
+ * ProcessDiagramExporter exporter = DexpiDiagramBridge.importAndCreateExporter(Paths.get("plant.xml"));
  * exporter.exportDOT(Paths.get("diagram.dot"));
  *
  * // Full round-trip: DEXPI to simulate to diagram to DEXPI
- * DexpiDiagramBridge.roundTrip(Paths.get("input.xml"), Paths.get("diagram.dot"),
- *     Paths.get("output.xml"));
+ * DexpiDiagramBridge.roundTrip(Paths.get("input.xml"), Paths.get("diagram.dot"), Paths.get("output.xml"));
  * </pre>
  *
  * <h2>Architecture</h2>
  * <ul>
  * <li>{@link neqsim.process.processmodel.diagram.ProcessDiagramExporter} - Main exporter class</li>
  * <li>{@link neqsim.process.processmodel.diagram.PFDLayoutPolicy} - Layout intelligence layer</li>
- * <li>{@link neqsim.process.processmodel.diagram.EquipmentRole} - Equipment role
- * classification</li>
- * <li>{@link neqsim.process.processmodel.diagram.DiagramDetailLevel} - Detail level
- * enumeration</li>
+ * <li>{@link neqsim.process.processmodel.diagram.EquipmentRole} - Equipment role classification</li>
+ * <li>{@link neqsim.process.processmodel.diagram.DiagramDetailLevel} - Detail level enumeration</li>
  * <li>{@link neqsim.process.processmodel.diagram.EquipmentVisualStyle} - Visual styling</li>
- * <li>{@link neqsim.process.processmodel.diagram.DexpiDiagramBridge} - DEXPI integration
- * bridge</li>
+ * <li>{@link neqsim.process.processmodel.diagram.DexpiDiagramBridge} - DEXPI integration bridge</li>
  * </ul>
  *
  * <h2>Layout Philosophy</h2>

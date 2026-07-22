@@ -39,14 +39,12 @@ public class RiserMechanicalDesignDataSource {
   private static final Logger logger = LogManager.getLogger(RiserMechanicalDesignDataSource.class);
 
   /** Query template for company-specific riser design factors. */
-  private static final String RISER_DESIGN_FACTORS_QUERY =
-      "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT, DOCUMENTID, DESCRIPTION "
-          + "FROM TechnicalRequirements_Process WHERE EQUIPMENTTYPE='Riser' AND Company='%s'";
+  private static final String RISER_DESIGN_FACTORS_QUERY = "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT, DOCUMENTID, DESCRIPTION "
+      + "FROM TechnicalRequirements_Process WHERE EQUIPMENTTYPE='Riser' AND Company='%s'";
 
   /** Query template for riser standards. */
-  private static final String RISER_STANDARDS_QUERY =
-      "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT, DESCRIPTION "
-          + "FROM dnv_iso_en_standards WHERE EQUIPMENTTYPE='Riser' AND STANDARD_CODE='%s'";
+  private static final String RISER_STANDARDS_QUERY = "SELECT SPECIFICATION, MINVALUE, MAXVALUE, UNIT, DESCRIPTION "
+      + "FROM dnv_iso_en_standards WHERE EQUIPMENTTYPE='Riser' AND STANDARD_CODE='%s'";
 
   /**
    * Riser design parameters holder.
@@ -131,8 +129,8 @@ public class RiserMechanicalDesignDataSource {
         applyParameter(params, spec, minValue, maxValue, documentId);
       }
     } catch (Exception e) {
-      logger.warn("Failed to load riser design parameters for company '{}', using defaults: {}",
-          company, e.getMessage());
+      logger.warn("Failed to load riser design parameters for company '{}', using defaults: {}", company,
+          e.getMessage());
     }
 
     return params;
@@ -170,8 +168,7 @@ public class RiserMechanicalDesignDataSource {
    * @param company company name for TR-specific values
    * @param designCode the design standard code
    */
-  public void loadIntoCalculator(RiserMechanicalDesignCalculator calculator, String company,
-      String designCode) {
+  public void loadIntoCalculator(RiserMechanicalDesignCalculator calculator, String company, String designCode) {
     // Load company-specific parameters
     RiserDesignParameters params = loadDesignParameters(company);
 
@@ -204,8 +201,7 @@ public class RiserMechanicalDesignDataSource {
       }
     }
 
-    logger.debug("Loaded riser design parameters for company '{}' with standard '{}'", company,
-        designCode);
+    logger.debug("Loaded riser design parameters for company '{}' with standard '{}'", company, designCode);
   }
 
   /**
@@ -233,61 +229,61 @@ public class RiserMechanicalDesignDataSource {
    * @param maxValue maximum value
    * @param documentId the source document ID
    */
-  private void applyParameter(RiserDesignParameters params, String specification, double minValue,
-      double maxValue, String documentId) {
+  private void applyParameter(RiserDesignParameters params, String specification, double minValue, double maxValue,
+      String documentId) {
     String specLower = specification.toLowerCase(Locale.ROOT);
 
     switch (specLower) {
-      case "designfactor":
-        params.designFactor = maxValue;
-        break;
-      case "usagefactor":
-        params.usageFactor = maxValue;
-        break;
-      case "corrosionallowance":
-        params.corrosionAllowance = maxValue;
-        break;
-      case "minwallthickness":
-        params.minWallThickness = maxValue;
-        break;
-      case "fatiguedesignfactor":
-        params.fatigueDesignFactor = maxValue;
-        break;
-      case "dynamicamplificationfactor":
-        params.dynamicAmplificationFactor = maxValue;
-        break;
-      case "strouhalnumber":
-        params.strouhalNumber = maxValue;
-        break;
-      case "dragcoefficient":
-        params.dragCoefficient = maxValue;
-        break;
-      case "addedmasscoefficient":
-        params.addedMassCoefficient = maxValue;
-        break;
-      case "liftcoefficient":
-        params.liftCoefficient = maxValue;
-        break;
-      case "snparameterseawater":
-        params.snParameterSeawater = maxValue;
-        break;
-      case "snslopeparameter":
-        params.snSlopeParameter = maxValue;
-        break;
-      case "toptensionsafetyfactor":
-        params.topTensionSafetyFactor = maxValue;
-        break;
-      case "maxutilization":
-        params.maxUtilization = maxValue;
-        break;
-      case "stressconcentrationfactor":
-        params.stressConcentrationFactor = maxValue;
-        break;
-      case "seabedfrictioncoefficient":
-        params.seabedFrictionCoefficient = maxValue;
-        break;
-      default:
-        logger.trace("Unknown riser parameter: {}", specification);
+    case "designfactor":
+      params.designFactor = maxValue;
+      break;
+    case "usagefactor":
+      params.usageFactor = maxValue;
+      break;
+    case "corrosionallowance":
+      params.corrosionAllowance = maxValue;
+      break;
+    case "minwallthickness":
+      params.minWallThickness = maxValue;
+      break;
+    case "fatiguedesignfactor":
+      params.fatigueDesignFactor = maxValue;
+      break;
+    case "dynamicamplificationfactor":
+      params.dynamicAmplificationFactor = maxValue;
+      break;
+    case "strouhalnumber":
+      params.strouhalNumber = maxValue;
+      break;
+    case "dragcoefficient":
+      params.dragCoefficient = maxValue;
+      break;
+    case "addedmasscoefficient":
+      params.addedMassCoefficient = maxValue;
+      break;
+    case "liftcoefficient":
+      params.liftCoefficient = maxValue;
+      break;
+    case "snparameterseawater":
+      params.snParameterSeawater = maxValue;
+      break;
+    case "snslopeparameter":
+      params.snSlopeParameter = maxValue;
+      break;
+    case "toptensionsafetyfactor":
+      params.topTensionSafetyFactor = maxValue;
+      break;
+    case "maxutilization":
+      params.maxUtilization = maxValue;
+      break;
+    case "stressconcentrationfactor":
+      params.stressConcentrationFactor = maxValue;
+      break;
+    case "seabedfrictioncoefficient":
+      params.seabedFrictionCoefficient = maxValue;
+      break;
+    default:
+      logger.trace("Unknown riser parameter: {}", specification);
     }
 
     if (documentId != null && !documentId.isEmpty()) {

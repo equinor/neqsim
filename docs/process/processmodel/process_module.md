@@ -1,3 +1,8 @@
+---
+title: ProcessModule Class
+description: Documentation for modular process units in NeqSim.
+---
+
 # ProcessModule Class
 
 Documentation for modular process units in NeqSim.
@@ -401,7 +406,7 @@ List<CapacityConstrainedEquipment> allConstrained = facilityModule.getConstraine
 BottleneckResult bottleneck = facilityModule.findBottleneck();
 ```
 
-For detailed constraint management, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md).
+For detailed constraint management, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK).
 
 ---
 
@@ -462,16 +467,18 @@ if (optimizer.isModuleMode()) {
     System.out.println("Optimizing module: " + optimizer.getModule().getName());
 }
 
-// Configure and run
+// Configure validation and auto-sizing across the module
 optimizer
     .autoSizeEquipment(1.2)
-    .applyDefaultConstraints()
-    .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION);
+    .applyDefaultConstraints();
 
 DesignResult result = optimizer.optimize();
 ```
 
-Constraints are evaluated across **all nested ProcessSystems** in the module hierarchy.
+Constraints are evaluated across **all nested ProcessSystems** in the module hierarchy. The result
+status is `AUTO_SIZED`, not `OPTIMIZED`, because no search was performed. Configured bounded search
+through `DesignOptimizer` currently requires a single `ProcessSystem`; use
+`ProductionOptimizer` with `ProcessModelOptimizationView` for whole-module optimization.
 
 ---
 
@@ -487,6 +494,6 @@ Constraints are evaluated across **all nested ProcessSystems** in the module hie
 
 ## Related Documentation
 
-- [ProcessSystem](process_system.md) - Process system management
-- [Graph Simulation](graph_simulation.md) - Graph-based execution
-- [Equipment Overview](../equipment/README.md) - Process equipment
+- [ProcessSystem](process_system) - Process system management
+- [Graph Simulation](graph_simulation) - Graph-based execution
+- [Equipment Overview](../equipment/) - Process equipment

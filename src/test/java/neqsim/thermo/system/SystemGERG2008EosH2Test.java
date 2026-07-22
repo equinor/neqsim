@@ -3,6 +3,8 @@ package neqsim.thermo.system;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermo.phase.PhaseGERG2008Eos;
 import neqsim.thermo.util.gerg.GERG2008Type;
@@ -12,6 +14,8 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Tests for SystemGERG2008Eos with GERG-2008-H2 model selection.
  */
 class SystemGERG2008EosH2Test {
+  private static final Logger logger = LogManager.getLogger(SystemGERG2008EosH2Test.class);
+
   /**
    * Test that the default model type is STANDARD.
    */
@@ -91,9 +95,9 @@ class SystemGERG2008EosH2Test {
     assertTrue(relativeDifference > 0.01, "Density difference should be measurable");
     assertTrue(relativeDifference < 5.0, "Density difference should be within reasonable range");
 
-    System.out.println("GERG-2008 density: " + densityStandard + " kg/m3");
-    System.out.println("GERG-2008-H2 density: " + densityH2 + " kg/m3");
-    System.out.println("Relative difference: " + relativeDifference + "%");
+    logger.info("GERG-2008 density: " + densityStandard + " kg/m3");
+    logger.info("GERG-2008-H2 density: " + densityH2 + " kg/m3");
+    logger.info("Relative difference: " + relativeDifference + "%");
   }
 
   /**
@@ -127,10 +131,10 @@ class SystemGERG2008EosH2Test {
     double relativeDifference = Math.abs(densityStandard - densityH2) / densityStandard * 100;
     assertTrue(relativeDifference > 0.1, "CO2-H2 should show significant differences");
 
-    System.out.println("CO2-H2 Mixture at " + temperature + " K, " + pressure + " bar:");
-    System.out.println("  GERG-2008 density: " + densityStandard + " kg/m3");
-    System.out.println("  GERG-2008-H2 density: " + densityH2 + " kg/m3");
-    System.out.println("  Relative difference: " + relativeDifference + "%");
+    logger.info("CO2-H2 Mixture at " + temperature + " K, " + pressure + " bar:");
+    logger.info("  GERG-2008 density: " + densityStandard + " kg/m3");
+    logger.info("  GERG-2008-H2 density: " + densityH2 + " kg/m3");
+    logger.info("  Relative difference: " + relativeDifference + "%");
   }
 
   /**

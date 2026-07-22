@@ -7,8 +7,8 @@ import java.time.Instant;
  * Represents a value with an associated timestamp for real-time data streaming.
  *
  * <p>
- * This class is designed for high-frequency data exchange with AI-based production optimization
- * platforms and real-time digital twin systems.
+ * This class is designed for high-frequency data exchange with AI-based production optimization platforms and real-time
+ * digital twin systems.
  * </p>
  *
  * @author ESOL

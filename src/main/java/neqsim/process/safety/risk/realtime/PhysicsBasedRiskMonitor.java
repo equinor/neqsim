@@ -8,8 +8,6 @@ import java.util.List;
 import java.util.Map;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.capacity.BottleneckResult;
-import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
-import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.processmodel.ProcessSystem;
 import neqsim.process.safety.risk.condition.ProcessEquipmentMonitor;
 
@@ -27,22 +25,22 @@ import neqsim.process.safety.risk.condition.ProcessEquipmentMonitor;
  * </ul>
  *
  * <p>
- * Unlike generic risk frameworks, this class leverages NeqSim's built-in physics calculations to
- * provide more accurate and meaningful risk assessments.
+ * Unlike generic risk frameworks, this class leverages NeqSim's built-in physics calculations to provide more accurate
+ * and meaningful risk assessments.
  * </p>
  *
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <pre>
  * ProcessSystem process = new ProcessSystem();
  * // ... add equipment and configure process ...
  * process.run();
- * 
+ *
  * PhysicsBasedRiskMonitor monitor = new PhysicsBasedRiskMonitor(process);
  * monitor.setBaseFailureRates("Compressor1", 0.0001); // failures/hour
- * 
+ *
  * PhysicsBasedRiskAssessment assessment = monitor.assess();
  * System.out.println("Overall risk score: " + assessment.getOverallRiskScore());
  * System.out.println("Bottleneck: " + assessment.getBottleneckEquipment());
@@ -330,8 +328,8 @@ public class PhysicsBasedRiskMonitor implements Serializable {
       assessment.setSystemCapacityMargin(margin);
 
       if (margin < 0.1) {
-        assessment.getWarnings().add("System near capacity limit - bottleneck at "
-            + bottleneck.getEquipment().getName() + " (" + bottleneck.getConstraintName() + ")");
+        assessment.getWarnings().add("System near capacity limit - bottleneck at " + bottleneck.getEquipment().getName()
+            + " (" + bottleneck.getConstraintName() + ")");
       }
     } else {
       assessment.setSystemCapacityMargin(1.0);
@@ -347,11 +345,19 @@ public class PhysicsBasedRiskMonitor implements Serializable {
     Map<String, Double> utilizations = processSystem.getCapacityUtilizationSummary();
     assessment.getEquipmentUtilizations().putAll(utilizations);
 
+    // Also include utilizations from equipment monitors for equipment not already covered
+    for (Map.Entry<String, ProcessEquipmentMonitor> entry : equipmentMonitors.entrySet()) {
+      if (!assessment.getEquipmentUtilizations().containsKey(entry.getKey())) {
+        double monitorUtil = entry.getValue().getCurrentCapacityUtilization();
+        assessment.getEquipmentUtilizations().put(entry.getKey(), monitorUtil);
+      }
+    }
+
     // Check for equipment near capacity
-    for (Map.Entry<String, Double> entry : utilizations.entrySet()) {
+    for (Map.Entry<String, Double> entry : assessment.getEquipmentUtilizations().entrySet()) {
       if (entry.getValue() > 0.9) {
-        assessment.getWarnings().add(entry.getKey() + " at "
-            + String.format("%.1f%%", entry.getValue() * 100) + " utilization");
+        assessment.getWarnings()
+            .add(entry.getKey() + " at " + String.format("%.1f%%", entry.getValue() * 100) + " utilization");
       }
     }
   }
@@ -420,8 +426,8 @@ public class PhysicsBasedRiskMonitor implements Serializable {
 
     double capacityRisk = assessment.getBottleneckUtilization() * 3; // 0-3 scale
 
-    double avgHealth = assessment.getEquipmentHealthIndices().values().stream()
-        .mapToDouble(Double::doubleValue).average().orElse(1.0);
+    double avgHealth = assessment.getEquipmentHealthIndices().values().stream().mapToDouble(Double::doubleValue)
+        .average().orElse(1.0);
     double healthRisk = (1.0 - avgHealth) * 4; // 0-4 scale
 
     double maxEquipmentRisk = assessment.getHighestRiskScore() * 0.3; // 0-3 scale

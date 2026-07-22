@@ -1,3 +1,8 @@
+---
+title: MPC Integration for NeqSim Process Systems
+description: This document describes the Model Predictive Control (MPC) integration package for NeqSim, which bridges the gap between rigorous process simulation and advanced control systems.
+---
+
 # MPC Integration for NeqSim Process Systems
 
 This document describes the Model Predictive Control (MPC) integration package for NeqSim, which bridges the gap between rigorous process simulation and advanced control systems.
@@ -122,7 +127,7 @@ mpc.identifyModel(60.0);
 // Control loop
 for (int step = 0; step < 100; step++) {
     double[] moves = mpc.step();
-    System.out.printf("Step %d: MV=%.3f CV=%.2f%n", 
+    System.out.printf("Step %d: MV=%.3f CV=%.2f%n",
         step, moves[0], mpc.getCurrentCVs()[0]);
 }
 ```
@@ -428,10 +433,10 @@ executor.scheduleAtFixedRate(() -> {
     try {
         // Read current measurements (from OPC, etc.)
         updateProcessMeasurements(process);
-        
+
         // Calculate and apply control
         mpc.step();
-        
+
         // Write outputs (to OPC, etc.)
         writeProcessOutputs(mpc.getLastMoves());
     } catch (Exception e) {
@@ -640,6 +645,6 @@ ProductionIndex=  8
 
 ## See Also
 
-- [ModelPredictiveController](../controllerdevice) - Underlying MPC implementation
-- [ProcessSystem](../processmodel) - NeqSim process simulation
-- [AI Platform Integration](ai_platform_integration.md) - Broader AI integration guide
+- [ModelPredictiveController](../process/controllers) - Underlying MPC implementation
+- [ProcessSystem](../process/processmodel/index.md) - NeqSim process simulation
+- [AI Platform Integration](ai_platform_integration) - Broader AI integration guide

@@ -24,8 +24,8 @@ import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord;
  * Extended facility capacity analysis for field development planning.
  *
  * <p>
- * This class builds on {@link ProductionOptimizer} to provide comprehensive facility capacity
- * assessment capabilities including:
+ * This class builds on {@link ProductionOptimizer} to provide comprehensive facility capacity assessment capabilities
+ * including:
  * <ul>
  * <li>Current bottleneck identification and utilization analysis</li>
  * <li>Near-bottleneck equipment detection (approaching capacity)</li>
@@ -38,14 +38,13 @@ import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord;
  * <h2>Bottleneck Analysis Concepts</h2>
  * <p>
  * The facility capacity is limited by the equipment with the highest utilization ratio:
- * 
+ *
  * <pre>
  * Utilization = Current Duty / Maximum Capacity
  * </pre>
- * 
- * The equipment with the highest utilization is the "bottleneck". Equipment with utilization above
- * a threshold (typically 80%) are "near-bottlenecks" that may become constraints if the current
- * bottleneck is relieved.
+ *
+ * The equipment with the highest utilization is the "bottleneck". Equipment with utilization above a threshold
+ * (typically 80%) are "near-bottlenecks" that may become constraints if the current bottleneck is relieved.
  *
  * <h2>Debottleneck Option Generation</h2>
  * <p>
@@ -67,7 +66,7 @@ import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * FacilityCapacity capacity = new FacilityCapacity(facilityProcess);
  *
@@ -81,9 +80,8 @@ import neqsim.process.util.optimizer.ProductionOptimizer.UtilizationRecord;
  *
  * // Review debottleneck options
  * for (DebottleneckOption option : assessment.getDebottleneckOptions()) {
- *   System.out.printf("%s: +%.0f kg/hr for $%.0f M (payback: %.1f years)%n",
- *       option.getEquipmentName(), option.getIncrementalProduction(), option.getCapex() / 1e6,
- *       option.getPaybackYears());
+ *   System.out.printf("%s: +%.0f kg/hr for $%.0f M (payback: %.1f years)%n", option.getEquipmentName(),
+ *       option.getIncrementalProduction(), option.getCapex() / 1e6, option.getPaybackYears());
  * }
  *
  * // Compare debottleneck scenarios
@@ -129,8 +127,8 @@ public class FacilityCapacity implements Serializable {
    * Capacity assessment period for time-varying analysis.
    *
    * <p>
-   * Represents the facility capacity status at a specific point in field life, capturing the
-   * current bottleneck, equipment utilizations, and headroom.
+   * Represents the facility capacity status at a specific point in field life, capturing the current bottleneck,
+   * equipment utilizations, and headroom.
    */
   public static final class CapacityPeriod implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -160,10 +158,9 @@ public class FacilityCapacity implements Serializable {
      * @param nearBottlenecks list of near-bottleneck equipment names
      * @param isFacilityConstrained true if facility limits production
      */
-    public CapacityPeriod(String periodName, double time, String timeUnit, double maxFacilityRate,
-        String rateUnit, String bottleneckEquipment, double bottleneckUtilization,
-        Map<String, Double> equipmentUtilizations, List<String> nearBottlenecks,
-        boolean isFacilityConstrained) {
+    public CapacityPeriod(String periodName, double time, String timeUnit, double maxFacilityRate, String rateUnit,
+        String bottleneckEquipment, double bottleneckUtilization, Map<String, Double> equipmentUtilizations,
+        List<String> nearBottlenecks, boolean isFacilityConstrained) {
       this.periodName = periodName;
       this.time = time;
       this.timeUnit = timeUnit;
@@ -271,11 +268,10 @@ public class FacilityCapacity implements Serializable {
    * Debottleneck option with cost-benefit analysis.
    *
    * <p>
-   * Represents a potential capacity upgrade for a piece of equipment, including the expected
-   * production benefit and associated costs.
+   * Represents a potential capacity upgrade for a piece of equipment, including the expected production benefit and
+   * associated costs.
    */
-  public static final class DebottleneckOption
-      implements Serializable, Comparable<DebottleneckOption> {
+  public static final class DebottleneckOption implements Serializable, Comparable<DebottleneckOption> {
     private static final long serialVersionUID = 1000L;
 
     private final String equipmentName;
@@ -307,10 +303,9 @@ public class FacilityCapacity implements Serializable {
      * @param paybackYears simple payback period
      * @param npv net present value of upgrade
      */
-    public DebottleneckOption(String equipmentName, Class<?> equipmentType, String description,
-        double currentCapacity, double upgradedCapacity, double currentUtilization,
-        double incrementalProduction, String rateUnit, double capex, String currency,
-        double paybackYears, double npv) {
+    public DebottleneckOption(String equipmentName, Class<?> equipmentType, String description, double currentCapacity,
+        double upgradedCapacity, double currentUtilization, double incrementalProduction, String rateUnit, double capex,
+        String currency, double paybackYears, double npv) {
       this.equipmentName = equipmentName;
       this.equipmentType = equipmentType;
       this.description = description;
@@ -450,10 +445,8 @@ public class FacilityCapacity implements Serializable {
 
     @Override
     public String toString() {
-      return String.format(
-          "DebottleneckOption[%s: +%.1f%% capacity, +%.0f %s, CAPEX=%.0f %s, payback=%.1f yr]",
-          equipmentName, getCapacityIncreasePercent(), incrementalProduction, rateUnit, capex,
-          currency, paybackYears);
+      return String.format("DebottleneckOption[%s: +%.1f%% capacity, +%.0f %s, CAPEX=%.0f %s, payback=%.1f yr]",
+          equipmentName, getCapacityIncreasePercent(), incrementalProduction, rateUnit, capex, currency, paybackYears);
     }
   }
 
@@ -461,8 +454,8 @@ public class FacilityCapacity implements Serializable {
    * Complete facility capacity assessment result.
    *
    * <p>
-   * Contains the full capacity analysis including current bottleneck, near-bottlenecks,
-   * debottleneck options, and equipment headroom.
+   * Contains the full capacity analysis including current bottleneck, near-bottlenecks, debottleneck options, and
+   * equipment headroom.
    */
   public static final class CapacityAssessment implements Serializable {
     private static final long serialVersionUID = 1000L;
@@ -471,7 +464,7 @@ public class FacilityCapacity implements Serializable {
     private final String rateUnit;
     private final String currentBottleneck;
     private final double bottleneckUtilization;
-    private final List<UtilizationRecord> utilizationRecords;
+    private final transient List<UtilizationRecord> utilizationRecords;
     private final List<String> nearBottlenecks;
     private final List<DebottleneckOption> debottleneckOptions;
     private final Map<String, Double> equipmentHeadroom;
@@ -491,9 +484,8 @@ public class FacilityCapacity implements Serializable {
      * @param feasible true if a feasible operating point was found
      */
     public CapacityAssessment(double currentMaxRate, String rateUnit, String currentBottleneck,
-        double bottleneckUtilization, List<UtilizationRecord> utilizationRecords,
-        List<String> nearBottlenecks, List<DebottleneckOption> debottleneckOptions,
-        Map<String, Double> equipmentHeadroom, boolean feasible) {
+        double bottleneckUtilization, List<UtilizationRecord> utilizationRecords, List<String> nearBottlenecks,
+        List<DebottleneckOption> debottleneckOptions, Map<String, Double> equipmentHeadroom, boolean feasible) {
       this.currentMaxRate = currentMaxRate;
       this.rateUnit = rateUnit;
       this.currentBottleneck = currentBottleneck;
@@ -592,8 +584,7 @@ public class FacilityCapacity implements Serializable {
      * @return sum of incremental production from all options
      */
     public double getTotalPotentialGain() {
-      return debottleneckOptions.stream().mapToDouble(DebottleneckOption::getIncrementalProduction)
-          .sum();
+      return debottleneckOptions.stream().mapToDouble(DebottleneckOption::getIncrementalProduction).sum();
     }
 
     /**
@@ -623,8 +614,7 @@ public class FacilityCapacity implements Serializable {
         sb.append("### Near-Bottlenecks (>80% utilization)\n\n");
         for (String name : nearBottlenecks) {
           Double headroom = equipmentHeadroom.get(name);
-          sb.append(
-              String.format("- %s (headroom: %.2f)\n", name, headroom != null ? headroom : 0.0));
+          sb.append(String.format("- %s (headroom: %.2f)\n", name, headroom != null ? headroom : 0.0));
         }
         sb.append("\n");
       }
@@ -635,21 +625,18 @@ public class FacilityCapacity implements Serializable {
       for (UtilizationRecord record : utilizationRecords) {
         double headroom = equipmentHeadroom.getOrDefault(record.getEquipmentName(), 0.0);
         sb.append(String.format("| %s | %.2f | %.2f | %.1f%% | %.2f |\n", record.getEquipmentName(),
-            record.getCapacityDuty(), record.getCapacityMax(), record.getUtilization() * 100,
-            headroom));
+            record.getCapacityDuty(), record.getCapacityMax(), record.getUtilization() * 100, headroom));
       }
       sb.append("\n");
 
       if (!debottleneckOptions.isEmpty()) {
         sb.append("### Debottleneck Options\n\n");
-        sb.append(
-            "| Equipment | Current Cap | Upgraded Cap | Incremental Prod | CAPEX | Payback |\n");
+        sb.append("| Equipment | Current Cap | Upgraded Cap | Incremental Prod | CAPEX | Payback |\n");
         sb.append("|---|---|---|---|---|---|\n");
         for (DebottleneckOption option : debottleneckOptions) {
-          sb.append(String.format("| %s | %.2f | %.2f | +%.2f %s | %.0f %s | %.1f yr |\n",
-              option.getEquipmentName(), option.getCurrentCapacity(), option.getUpgradedCapacity(),
-              option.getIncrementalProduction(), option.getRateUnit(), option.getCapex(),
-              option.getCurrency(), option.getPaybackYears()));
+          sb.append(String.format("| %s | %.2f | %.2f | +%.2f %s | %.0f %s | %.1f yr |\n", option.getEquipmentName(),
+              option.getCurrentCapacity(), option.getUpgradedCapacity(), option.getIncrementalProduction(),
+              option.getRateUnit(), option.getCapex(), option.getCurrency(), option.getPaybackYears()));
         }
       }
 
@@ -686,20 +673,18 @@ public class FacilityCapacity implements Serializable {
    * @param rateUnit rate unit
    * @return comprehensive capacity assessment
    */
-  public CapacityAssessment assess(StreamInterface feedStream, double lowerBound, double upperBound,
-      String rateUnit) {
+  public CapacityAssessment assess(StreamInterface feedStream, double lowerBound, double upperBound, String rateUnit) {
     Objects.requireNonNull(feedStream, "Feed stream is required");
 
     // Run optimization to find max rate
     OptimizationConfig config = new OptimizationConfig(lowerBound, upperBound).rateUnit(rateUnit)
         .tolerance(lowerBound * 0.001);
 
-    OptimizationResult result = getOptimizer().optimize(facility, feedStream, config,
-        Collections.emptyList(), Collections.emptyList());
+    OptimizationResult result = getOptimizer().optimize(facility, feedStream, config, Collections.emptyList(),
+        Collections.emptyList());
 
     // Extract bottleneck info
-    String bottleneckName =
-        result.getBottleneck() != null ? result.getBottleneck().getName() : null;
+    String bottleneckName = result.getBottleneck() != null ? result.getBottleneck().getName() : null;
     double bottleneckUtilization = result.getBottleneckUtilization();
 
     // Find near-bottlenecks
@@ -710,19 +695,17 @@ public class FacilityCapacity implements Serializable {
       double headroom = record.getCapacityMax() - record.getCapacityDuty();
       equipmentHeadroom.put(record.getEquipmentName(), headroom);
 
-      if (record.getUtilization() >= nearBottleneckThreshold
-          && !record.getEquipmentName().equals(bottleneckName)) {
+      if (record.getUtilization() >= nearBottleneckThreshold && !record.getEquipmentName().equals(bottleneckName)) {
         nearBottlenecks.add(record.getEquipmentName());
       }
     }
 
     // Generate debottleneck options
-    List<DebottleneckOption> options =
-        generateDebottleneckOptions(result, feedStream, lowerBound, upperBound, rateUnit);
+    List<DebottleneckOption> options = generateDebottleneckOptions(result, feedStream, lowerBound, upperBound,
+        rateUnit);
 
-    return new CapacityAssessment(result.getOptimalRate(), rateUnit, bottleneckName,
-        bottleneckUtilization, result.getUtilizationRecords(), nearBottlenecks, options,
-        equipmentHeadroom, result.isFeasible());
+    return new CapacityAssessment(result.getOptimalRate(), rateUnit, bottleneckName, bottleneckUtilization,
+        result.getUtilizationRecords(), nearBottlenecks, options, equipmentHeadroom, result.isFeasible());
   }
 
   /**
@@ -741,8 +724,8 @@ public class FacilityCapacity implements Serializable {
 
     // Start with bottleneck
     if (baseResult.getBottleneck() != null) {
-      DebottleneckOption bottleneckOption = createDebottleneckOption(baseResult.getBottleneck(),
-          baseResult, feedStream, lowerBound, upperBound, rateUnit);
+      DebottleneckOption bottleneckOption = createDebottleneckOption(baseResult.getBottleneck(), baseResult, feedStream,
+          lowerBound, upperBound, rateUnit);
       if (bottleneckOption != null) {
         options.add(bottleneckOption);
       }
@@ -752,10 +735,10 @@ public class FacilityCapacity implements Serializable {
     for (UtilizationRecord record : baseResult.getUtilizationRecords()) {
       if (record.getUtilization() >= nearBottleneckThreshold) {
         ProcessEquipmentInterface equipment = findEquipment(record.getEquipmentName());
-        if (equipment != null && !equipment.getName().equals(
-            baseResult.getBottleneck() != null ? baseResult.getBottleneck().getName() : "")) {
-          DebottleneckOption option = createDebottleneckOption(equipment, baseResult, feedStream,
-              lowerBound, upperBound, rateUnit);
+        if (equipment != null && !equipment.getName()
+            .equals(baseResult.getBottleneck() != null ? baseResult.getBottleneck().getName() : "")) {
+          DebottleneckOption option = createDebottleneckOption(equipment, baseResult, feedStream, lowerBound,
+              upperBound, rateUnit);
           if (option != null) {
             options.add(option);
           }
@@ -781,8 +764,8 @@ public class FacilityCapacity implements Serializable {
    * @return the debottleneck option, or null if not applicable
    */
   private DebottleneckOption createDebottleneckOption(ProcessEquipmentInterface equipment,
-      OptimizationResult baseResult, StreamInterface feedStream, double lowerBound,
-      double upperBound, String rateUnit) {
+      OptimizationResult baseResult, StreamInterface feedStream, double lowerBound, double upperBound,
+      String rateUnit) {
     double currentCapacity = equipment.getCapacityMax();
     double currentDuty = equipment.getCapacityDuty();
     double currentUtilization = currentCapacity > 0 ? currentDuty / currentCapacity : 0;
@@ -797,14 +780,12 @@ public class FacilityCapacity implements Serializable {
     // Estimate incremental production
     // Simple estimate: proportional to capacity increase if this is the bottleneck
     double incrementalProduction = 0;
-    if (baseResult.getBottleneck() != null
-        && baseResult.getBottleneck().getName().equals(equipment.getName())) {
+    if (baseResult.getBottleneck() != null && baseResult.getBottleneck().getName().equals(equipment.getName())) {
       // This is the bottleneck - increasing its capacity directly increases throughput
       double capacityRatio = upgradedCapacity / currentCapacity;
       incrementalProduction = baseResult.getOptimalRate() * (capacityRatio - 1);
       // Cap at the potential of the next bottleneck
-      incrementalProduction =
-          Math.min(incrementalProduction, upperBound - baseResult.getOptimalRate());
+      incrementalProduction = Math.min(incrementalProduction, upperBound - baseResult.getOptimalRate());
     } else {
       // Not the bottleneck - may enable future debottlenecking
       incrementalProduction = 0;
@@ -823,15 +804,13 @@ public class FacilityCapacity implements Serializable {
     // Calculate NPV (simplified)
     double discountRate = 0.10;
     int years = 10;
-    double npv =
-        calculateSimpleNPV(incrementalProduction, revenuePerUnit, capex, discountRate, years);
+    double npv = calculateSimpleNPV(incrementalProduction, revenuePerUnit, capex, discountRate, years);
 
-    String description = String.format("Increase %s capacity from %.0f to %.0f",
-        equipment.getName(), currentCapacity, upgradedCapacity);
+    String description = String.format("Increase %s capacity from %.0f to %.0f", equipment.getName(), currentCapacity,
+        upgradedCapacity);
 
-    return new DebottleneckOption(equipment.getName(), equipment.getClass(), description,
-        currentCapacity, upgradedCapacity, currentUtilization, incrementalProduction, rateUnit,
-        capex, currency, paybackYears, npv);
+    return new DebottleneckOption(equipment.getName(), equipment.getClass(), description, currentCapacity,
+        upgradedCapacity, currentUtilization, incrementalProduction, rateUnit, capex, currency, paybackYears, npv);
   }
 
   /**
@@ -842,8 +821,7 @@ public class FacilityCapacity implements Serializable {
    * @param upgradedCapacity the target upgraded capacity
    * @return the estimated capital expenditure in currency units
    */
-  private double estimateCapex(ProcessEquipmentInterface equipment, double currentCapacity,
-      double upgradedCapacity) {
+  private double estimateCapex(ProcessEquipmentInterface equipment, double currentCapacity, double upgradedCapacity) {
     // Check for configured cost factors
     Double costFactor = costFactorsByName.get(equipment.getName());
     if (costFactor == null) {
@@ -868,8 +846,8 @@ public class FacilityCapacity implements Serializable {
    * @param years number of years for NPV calculation
    * @return the net present value of the investment
    */
-  private double calculateSimpleNPV(double dailyIncrementalProduction, double revenuePerUnit,
-      double capex, double discountRate, int years) {
+  private double calculateSimpleNPV(double dailyIncrementalProduction, double revenuePerUnit, double capex,
+      double discountRate, int years) {
     double annualRevenue = dailyIncrementalProduction * 365.25 * revenuePerUnit;
     double npv = -capex;
 
@@ -882,6 +860,9 @@ public class FacilityCapacity implements Serializable {
 
   /**
    * Finds equipment by name in the facility.
+   *
+   * @param name the equipment name to search for
+   * @return the matching equipment, or null if not found
    */
   private ProcessEquipmentInterface findEquipment(String name) {
     for (ProcessEquipmentInterface equipment : facility.getUnitOperations()) {
@@ -896,8 +877,8 @@ public class FacilityCapacity implements Serializable {
    * Compares multiple debottleneck scenarios.
    *
    * <p>
-   * Creates and runs optimization scenarios for each debottleneck option, allowing direct
-   * comparison of production gains and costs.
+   * Creates and runs optimization scenarios for each debottleneck option, allowing direct comparison of production
+   * gains and costs.
    *
    * @param feedStream feed stream for optimization
    * @param options debottleneck options to compare
@@ -914,18 +895,17 @@ public class FacilityCapacity implements Serializable {
     List<ScenarioRequest> scenarios = new ArrayList<>();
 
     // Base case
-    OptimizationConfig baseConfig =
-        new OptimizationConfig(lowerBound, upperBound).rateUnit(rateUnit);
-    scenarios.add(new ScenarioRequest("Base Case", facility, feedStream, baseConfig,
-        Collections.emptyList(), Collections.emptyList()));
+    OptimizationConfig baseConfig = new OptimizationConfig(lowerBound, upperBound).rateUnit(rateUnit);
+    scenarios.add(new ScenarioRequest("Base Case", facility, feedStream, baseConfig, Collections.emptyList(),
+        Collections.emptyList()));
 
     // Note: In a full implementation, each scenario would clone the facility
     // and modify the equipment capacity. For now, we just set up the scenario structure.
     for (DebottleneckOption option : options) {
       String scenarioName = "Debottleneck " + option.getEquipmentName();
       // Would need to clone facility and modify equipment capacity
-      scenarios.add(new ScenarioRequest(scenarioName, facility, feedStream, baseConfig,
-          Collections.emptyList(), Collections.emptyList()));
+      scenarios.add(new ScenarioRequest(scenarioName, facility, feedStream, baseConfig, Collections.emptyList(),
+          Collections.emptyList()));
     }
 
     // Define KPIs
@@ -939,8 +919,7 @@ public class FacilityCapacity implements Serializable {
    * Analyzes capacity evolution over field life.
    *
    * <p>
-   * Tracks how the bottleneck shifts as production declines, identifying when the facility becomes
-   * unconstrained.
+   * Tracks how the bottleneck shifts as production declines, identifying when the facility becomes unconstrained.
    *
    * @param forecast production forecast from {@link ProductionProfile}
    * @param feedStream feed stream for facility analysis
@@ -985,14 +964,13 @@ public class FacilityCapacity implements Serializable {
 
         boolean constrained = bottleneckUtil >= nearBottleneckThreshold;
 
-        periods.add(new CapacityPeriod(String.format("Year %.1f", point.getTime()), point.getTime(),
-            "years", point.getRate(), forecast.getDeclineParams().getRateUnit(), bottleneckName,
-            bottleneckUtil, utilizations, nearBottlenecks, constrained));
+        periods.add(new CapacityPeriod(String.format("Year %.1f", point.getTime()), point.getTime(), "years",
+            point.getRate(), forecast.getDeclineParams().getRateUnit(), bottleneckName, bottleneckUtil, utilizations,
+            nearBottlenecks, constrained));
 
       } catch (Exception e) {
         // Log and continue
-        System.err.println(
-            "Failed to analyze capacity at time " + point.getTime() + ": " + e.getMessage());
+        System.err.println("Failed to analyze capacity at time " + point.getTime() + ": " + e.getMessage());
       }
     }
 
@@ -1018,8 +996,8 @@ public class FacilityCapacity implements Serializable {
    * @param yearsOfBenefit number of years to realize benefit
    * @return net present value
    */
-  public double calculateDebottleneckNPV(DebottleneckOption option, double productPrice,
-      double opexPerUnit, double discountRate, int yearsOfBenefit) {
+  public double calculateDebottleneckNPV(DebottleneckOption option, double productPrice, double opexPerUnit,
+      double discountRate, int yearsOfBenefit) {
     Objects.requireNonNull(option, "Option is required");
 
     double annualProduction = option.getIncrementalProduction() * 365.25;
@@ -1108,4 +1086,3 @@ public class FacilityCapacity implements Serializable {
     costFactorsByName.put(equipmentName, costPerUnit);
   }
 }
-

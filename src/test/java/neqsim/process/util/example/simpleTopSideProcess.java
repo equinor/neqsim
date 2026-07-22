@@ -10,9 +10,7 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * simpleTopSideProcess class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -26,8 +24,7 @@ public class simpleTopSideProcess {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 50.0), 50.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 50.0), 50.00);
     testSystem.addComponent("methane", 900.00);
     testSystem.addComponent("ethane", 200.00);
     testSystem.addComponent("n-hexane", 200.0);
@@ -69,8 +66,7 @@ public class simpleTopSideProcess {
     Compressor HPcompressor = new Compressor("HPcompressor", mixer.getOutletStream());
     HPcompressor.setOutletPressure(200.0);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(mixerHP);
     operations.add(separator);

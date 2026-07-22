@@ -13,9 +13,7 @@ import neqsim.thermodynamicoperations.OperationInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * pLoadingCurve class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -43,7 +41,7 @@ public class PloadingCurve implements OperationInterface {
   double[] lnOldK;
   double oldDeltalnK[];
   double deltalnK[];
-  double[] tm = {1, 1};
+  double[] tm = { 1, 1 };
   double beta = 1e-5;
   int lowestGibbsEnergyPhase = 0; // lowestGibbsEnergyPhase
   JProgressBar monitor;
@@ -60,16 +58,13 @@ public class PloadingCurve implements OperationInterface {
   int speceq = 0;
 
   /**
-   * <p>
    * Constructor for pLoadingCurve.
-   * </p>
    */
-  public PloadingCurve() {}
+  public PloadingCurve() {
+  }
 
   /**
-   * <p>
    * Constructor for pLoadingCurve.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -120,8 +115,8 @@ public class PloadingCurve implements OperationInterface {
 
       for (int k = 0; k < system.getPhases()[1].getNumberOfComponents(); k++) {
         points[k + 2][i] = system.getPhases()[1].getComponent(k).getx();
-        points[k + 2 + system.getPhases()[1].getNumberOfComponents()][i] =
-            system.getPhases()[1].getActivityCoefficient(k, 1);
+        points[k + 2 + system.getPhases()[1].getNumberOfComponents()][i] = system.getPhases()[1]
+            .getActivityCoefficient(k, 1);
       }
       logger.info("point: " + points[0][i] + "  " + points[1][i]);
       system.setPressure(points[1][i]);
@@ -142,7 +137,7 @@ public class PloadingCurve implements OperationInterface {
     double TC = system.getTC();
     double PC = system.getPC();
     logger.info("tc : " + TC + "  PC : " + PC);
-    String[] navn = {"CO2 fugacity", "", "", ""};
+    String[] navn = { "CO2 fugacity", "", "", "" };
     String title = "CO2 vapour pressure";
 
     Graph2b graph2 = new Graph2b(points, navn, title, "loading [-]", "Fugacity CO2 [bar]");
@@ -188,5 +183,6 @@ public class PloadingCurve implements OperationInterface {
 
   /** {@inheritDoc} */
   @Override
-  public void addData(String name, double[][] data) {}
+  public void addData(String name, double[][] data) {
+  }
 }

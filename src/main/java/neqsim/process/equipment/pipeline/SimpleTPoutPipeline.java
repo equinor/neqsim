@@ -10,9 +10,8 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Simple pipeline model with specified outlet temperature and pressure.
  *
  * <p>
- * This class provides a simple pipeline model where outlet conditions are directly specified rather
- * than calculated from flow correlations. Useful for preliminary calculations or when detailed
- * pressure drop modeling is not required.
+ * This class provides a simple pipeline model where outlet conditions are directly specified rather than calculated
+ * from flow correlations. Useful for preliminary calculations or when detailed pressure drop modeling is not required.
  * </p>
  *
  * <h2>Example Usage</h2>
@@ -59,13 +58,13 @@ public class SimpleTPoutPipeline extends Pipeline {
 
   /** {@inheritDoc} */
   @Override
-  public void setOutTemperature(double temperature) {
+  public void setOutletTemperature(double temperature) {
     this.temperatureOutValue = temperature;
   }
 
   /** {@inheritDoc} */
   @Override
-  public void setOutPressure(double pressure) {
+  public void setOutletPressure(double pressure) {
     this.pressureOutValue = pressure;
   }
 

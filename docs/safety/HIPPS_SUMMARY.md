@@ -1,3 +1,8 @@
+---
+title: HIPPS Implementation Summary for NeqSim
+description: A complete **HIPPS (High Integrity Pressure Protection System)** implementation has been added to NeqSim for safety simulation and analysis. HIPPS is a Safety Instrumented System (SIS) that prevents o...
+---
+
 # HIPPS Implementation Summary for NeqSim
 
 ## Executive Summary
@@ -59,7 +64,7 @@ A complete **HIPPS (High Integrity Pressure Protection System)** implementation 
 - ✅ SIL requirements table
 
 ### 4. Example Code
-**File:** `src/main/java/neqsim/process/util/example/HIPPSExample.java`
+**File:** `src/test/java/neqsim/process/util/example/HIPPSExample.java`
 - ~300 lines of runnable demonstration code
 - Shows complete blocked outlet scenario
 
@@ -218,8 +223,8 @@ if (hipps.hasTripped()) {
 
 ### Run Example
 ```bash
-# Compile and run
-.\mvnw exec:java -Dexec.mainClass="neqsim.process.util.example.HIPPSExample"
+# Run example main() from test sources
+./mvnw -Dexec.classpathScope=test -Dexec.mainClass="neqsim.process.util.example.HIPPSExample" exec:java
 ```
 
 ## Integration with Existing NeqSim Components
@@ -352,6 +357,7 @@ boolean trippedCorrectly = hipps.hasTripped();
 - Consider pressure surge effects
 
 ### 2. Voting Logic Selection
+
 | Application | Recommended Voting | SIL Level |
 |-------------|-------------------|-----------|
 | Low risk, simple | 1oo1 | SIL 1 |

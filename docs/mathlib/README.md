@@ -1,3 +1,8 @@
+---
+title: Mathematical Library Package
+description: The `mathlib` package provides mathematical utilities, nonlinear solvers, and numerical methods.
+---
+
 # Mathematical Library Package
 
 The `mathlib` package provides mathematical utilities, nonlinear solvers, and numerical methods.
@@ -322,5 +327,5 @@ $$|f(x_n)| < \epsilon$$
 
 ## Related Documentation
 
-- [Flash Calculations](../thermo/flash_calculations_guide.md) - Flash solver internals
-- [Physical Properties](../physical_properties/README.md) - Property correlations
+- [Flash Calculations](../thermo/flash_calculations_guide) - Flash solver internals
+- [Physical Properties](../physical_properties/) - Property correlations

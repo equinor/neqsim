@@ -58,8 +58,7 @@ public class OptimizerPluginArchitectureTest {
   void testStrategyRegistryInitialization() {
     EquipmentCapacityStrategyRegistry registry = EquipmentCapacityStrategyRegistry.getInstance();
     assertNotNull(registry, "Registry should not be null");
-    assertTrue(registry.getAllStrategies().size() >= 6,
-        "Should have at least 6 default strategies");
+    assertTrue(registry.getAllStrategies().size() >= 6, "Should have at least 6 default strategies");
   }
 
   @Test
@@ -140,8 +139,7 @@ public class OptimizerPluginArchitectureTest {
 
     // Test fixed speed operation
     assertEquals(5000.0, motor.getAvailablePower(3600), 10.0, "Power at rated speed");
-    assertEquals(0.0, motor.getAvailablePower(1800), 0.1,
-        "No power at wrong speed for fixed motor");
+    assertEquals(0.0, motor.getAvailablePower(1800), 0.1, "No power at wrong speed for fixed motor");
 
     // Test VFD operation
     motor.setHasVFD(true);
@@ -188,12 +186,10 @@ public class OptimizerPluginArchitectureTest {
 
     // Test factory methods
     CompressorConstraintConfig aggressive = CompressorConstraintConfig.createAggressiveConfig();
-    assertTrue(aggressive.getMinSurgeMargin() < 0.10,
-        "Aggressive config should have smaller margin");
+    assertTrue(aggressive.getMinSurgeMargin() < 0.10, "Aggressive config should have smaller margin");
 
     CompressorConstraintConfig conservative = CompressorConstraintConfig.createConservativeConfig();
-    assertTrue(conservative.getMinSurgeMargin() > 0.10,
-        "Conservative config should have larger margin");
+    assertTrue(conservative.getMinSurgeMargin() > 0.10, "Conservative config should have larger margin");
   }
 
   @Test
@@ -202,9 +198,9 @@ public class OptimizerPluginArchitectureTest {
     envelope.setRatedSpeed(10000);
 
     // Set surge line
-    double[] surgeFlows = {1000, 1500, 2000, 2500};
-    double[] surgeHeads = {150, 120, 90, 60};
-    double[] surgeSpeeds = {10000, 10000, 10000, 10000};
+    double[] surgeFlows = { 1000, 1500, 2000, 2500 };
+    double[] surgeHeads = { 150, 120, 90, 60 };
+    double[] surgeSpeeds = { 10000, 10000, 10000, 10000 };
     envelope.setSurgeLine(surgeFlows, surgeHeads, surgeSpeeds);
 
     // Test within envelope
@@ -268,10 +264,10 @@ public class OptimizerPluginArchitectureTest {
   void testEclipseVFPExporter() {
     EclipseVFPExporter exporter = new EclipseVFPExporter(1);
     exporter.setDatumDepth(2500.0);
-    exporter.setFlowRates(new double[] {100, 500, 1000, 2000, 5000});
-    exporter.setTHPs(new double[] {10, 20, 30, 50, 70});
-    exporter.setWaterCuts(new double[] {0, 0.2, 0.5, 0.8});
-    exporter.setGORs(new double[] {50, 100, 200, 500});
+    exporter.setFlowRates(new double[] { 100, 500, 1000, 2000, 5000 });
+    exporter.setTHPs(new double[] { 10, 20, 30, 50, 70 });
+    exporter.setWaterCuts(new double[] { 0, 0.2, 0.5, 0.8 });
+    exporter.setGORs(new double[] { 50, 100, 200, 500 });
     exporter.setTableTitle("Test VFP Table");
 
     String vfpString = exporter.getVFPPRODString();
@@ -286,8 +282,8 @@ public class OptimizerPluginArchitectureTest {
   void testVFPINJExport() {
     EclipseVFPExporter exporter = new EclipseVFPExporter(2);
     exporter.setFlowRateType("WAT");
-    exporter.setFlowRates(new double[] {1000, 5000, 10000, 20000});
-    exporter.setTHPs(new double[] {50, 100, 150, 200});
+    exporter.setFlowRates(new double[] { 1000, 5000, 10000, 20000 });
+    exporter.setTHPs(new double[] { 50, 100, 150, 200 });
 
     String vfpString = exporter.getVFPINJString();
 
@@ -300,8 +296,8 @@ public class OptimizerPluginArchitectureTest {
 
   @Test
   void testCapacityConstraint() {
-    CapacityConstraint constraint =
-        new CapacityConstraint("Test Constraint", "kW", CapacityConstraint.ConstraintType.SOFT);
+    CapacityConstraint constraint = new CapacityConstraint("Test Constraint", "kW",
+        CapacityConstraint.ConstraintType.SOFT);
     constraint.setMinValue(100.0);
     constraint.setMaxValue(1000.0);
     constraint.setDesignValue(800.0);
@@ -316,21 +312,16 @@ public class OptimizerPluginArchitectureTest {
     assertTrue(margin > 0 || margin <= 0, "Should calculate margin");
 
     // Test not violated
-    assertTrue(!constraint.isViolated() || constraint.isViolated(),
-        "Should check violation status");
+    assertTrue(!constraint.isViolated() || constraint.isViolated(), "Should check violation status");
   }
 
   @Test
   void testCapacityConstraintTypes() {
-    CapacityConstraint hardConstraint =
-        new CapacityConstraint("Hard", "", CapacityConstraint.ConstraintType.HARD);
-    assertEquals(CapacityConstraint.ConstraintType.HARD, hardConstraint.getType(),
-        "Should be hard constraint");
+    CapacityConstraint hardConstraint = new CapacityConstraint("Hard", "", CapacityConstraint.ConstraintType.HARD);
+    assertEquals(CapacityConstraint.ConstraintType.HARD, hardConstraint.getType(), "Should be hard constraint");
 
-    CapacityConstraint softConstraint =
-        new CapacityConstraint("Soft", "", CapacityConstraint.ConstraintType.SOFT);
-    assertEquals(CapacityConstraint.ConstraintType.SOFT, softConstraint.getType(),
-        "Should be soft constraint");
+    CapacityConstraint softConstraint = new CapacityConstraint("Soft", "", CapacityConstraint.ConstraintType.SOFT);
+    assertEquals(CapacityConstraint.ConstraintType.SOFT, softConstraint.getType(), "Should be soft constraint");
   }
 
   // ============ Integration Tests ============
@@ -361,16 +352,20 @@ public class OptimizerPluginArchitectureTest {
     fullProcess.add(compressor);
     fullProcess.run();
 
+    // The compressor runs chartless, so the chart-dependent constraints (surge, speed,
+    // stonewall) are disabled and utilization is power-driven. Give the power constraint a
+    // basis so it reports a meaningful, non-zero utilization for bottleneck identification.
+    compressor.getMechanicalDesign().setMaxDesignPower(compressor.getPower("kW") / 0.8);
+    compressor.reinitializeCapacityConstraints();
+
     // Evaluate with optimization engine
     ProcessOptimizationEngine engine = new ProcessOptimizationEngine(fullProcess);
     ProcessOptimizationEngine.ConstraintReport report = engine.evaluateAllConstraints();
 
-    assertTrue(report.getEquipmentStatuses().size() >= 2,
-        "Should have status for separator and compressor");
+    assertTrue(report.getEquipmentStatuses().size() >= 2, "Should have status for separator and compressor");
 
     // Find bottleneck
     String bottleneck = engine.findBottleneckEquipment();
     assertNotNull(bottleneck, "Should identify a bottleneck");
   }
 }
-

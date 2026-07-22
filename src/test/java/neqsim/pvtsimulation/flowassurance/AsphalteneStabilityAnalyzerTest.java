@@ -93,15 +93,13 @@ public class AsphalteneStabilityAnalyzerTest {
 
     assertNotNull(risk);
     // Large undersaturation with light oil should give higher risk
-    assertTrue(
-        risk.ordinal() >= AsphalteneStabilityAnalyzer.AsphalteneRisk.MODERATE_RISK.ordinal());
+    assertTrue(risk.ordinal() >= AsphalteneStabilityAnalyzer.AsphalteneRisk.MODERATE_RISK.ordinal());
   }
 
   @Test
   void testAsphalteneRiskEnum() {
     // Verify AsphalteneRisk enum values exist and are ordered
-    AsphalteneStabilityAnalyzer.AsphalteneRisk[] levels =
-        AsphalteneStabilityAnalyzer.AsphalteneRisk.values();
+    AsphalteneStabilityAnalyzer.AsphalteneRisk[] levels = AsphalteneStabilityAnalyzer.AsphalteneRisk.values();
 
     assertEquals(5, levels.length);
     assertEquals(AsphalteneStabilityAnalyzer.AsphalteneRisk.STABLE, levels[0]);

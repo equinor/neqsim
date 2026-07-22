@@ -8,7 +8,7 @@ import neqsim.process.equipment.pipeline.twophasepipe.closure.GeometryCalculator
 
 /**
  * Unit tests for GeometryCalculator.
- * 
+ *
  * Tests stratified flow geometry calculations for circular pipes.
  */
 public class GeometryCalculatorTest {

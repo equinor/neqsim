@@ -21,8 +21,8 @@ public class RegressionParameterConfig {
    * @param upperBound upper bound
    * @param initialGuess initial guess
    */
-  public RegressionParameterConfig(RegressionParameter parameter, double lowerBound,
-      double upperBound, double initialGuess) {
+  public RegressionParameterConfig(RegressionParameter parameter, double lowerBound, double upperBound,
+      double initialGuess) {
     this.parameter = parameter;
     this.lowerBound = lowerBound;
     this.upperBound = upperBound;

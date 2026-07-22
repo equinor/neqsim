@@ -56,8 +56,7 @@ public class MPFMfitterTest {
     multiPhaseMeter2.setTemperature(90.0, "C");
     multiPhaseMeter2.setPressure(60.0, "bara");
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(MPFMfitter);
     operations.add(stream_2);

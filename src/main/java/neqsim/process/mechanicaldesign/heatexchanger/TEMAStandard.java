@@ -7,8 +7,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * TEMA (Tubular Exchanger Manufacturers Association) standard designations for shell and tube heat
- * exchangers.
+ * TEMA (Tubular Exchanger Manufacturers Association) standard designations for shell and tube heat exchangers.
  *
  * <p>
  * TEMA uses a three-letter designation to specify heat exchanger configuration:
@@ -63,13 +62,11 @@ public class TEMAStandard {
    */
   public enum FrontHeadType {
     /** Channel and removable cover - Most common, easy tube access. */
-    A("Channel and Removable Cover",
-        "Bolted cover allows individual tube access without disturbing piping"),
+    A("Channel and Removable Cover", "Bolted cover allows individual tube access without disturbing piping"),
     /** Bonnet (integral cover) - More economical, requires breaking piping for access. */
     B("Bonnet (Integral Cover)", "More economical than A, must break piping to access tubes"),
     /** Channel integral with tubesheet and removable cover. */
-    C("Channel Integral with Tubesheet",
-        "Tubesheet serves as backing flange, good for high pressure"),
+    C("Channel Integral with Tubesheet", "Tubesheet serves as backing flange, good for high pressure"),
     /** Channel integral with tubesheet and removable cover (large bore). */
     N("Channel Integral with Tubesheet (Large)", "Similar to C but for larger sizes"),
     /** Special high-pressure closure. */
@@ -109,8 +106,7 @@ public class TEMAStandard {
     /** One-pass shell - Most common. */
     E("One-Pass Shell", "Most common, simplest design", 1.0),
     /** Two-pass shell with longitudinal baffle. */
-    F("Two-Pass Shell with Longitudinal Baffle", "Better temperature approach, complex baffle",
-        0.8),
+    F("Two-Pass Shell with Longitudinal Baffle", "Better temperature approach, complex baffle", 0.8),
     /** Split flow - Shell fluid enters at center. */
     G("Split Flow", "Lower shell-side pressure drop", 0.6),
     /** Double split flow - Two inlets. */
@@ -296,15 +292,15 @@ public class TEMAStandard {
    */
   public enum StandardTubeSize {
     /** 3/8 inch OD. */
-    TUBE_3_8_INCH(9.525, new double[] {0.711, 0.889, 1.245}),
+    TUBE_3_8_INCH(9.525, new double[] { 0.711, 0.889, 1.245 }),
     /** 1/2 inch OD. */
-    TUBE_1_2_INCH(12.7, new double[] {0.889, 1.245, 1.651}),
+    TUBE_1_2_INCH(12.7, new double[] { 0.889, 1.245, 1.651 }),
     /** 5/8 inch OD. */
-    TUBE_5_8_INCH(15.875, new double[] {1.245, 1.651, 2.108}),
+    TUBE_5_8_INCH(15.875, new double[] { 1.245, 1.651, 2.108 }),
     /** 3/4 inch OD. */
-    TUBE_3_4_INCH(19.05, new double[] {1.245, 1.651, 2.108, 2.769}),
+    TUBE_3_4_INCH(19.05, new double[] { 1.245, 1.651, 2.108, 2.769 }),
     /** 1 inch OD. */
-    TUBE_1_INCH(25.4, new double[] {1.245, 1.651, 2.108, 2.769, 3.404});
+    TUBE_1_INCH(25.4, new double[] { 1.245, 1.651, 2.108, 2.769, 3.404 });
 
     private final double outerDiameterMm;
     private final double[] availableWallThicknessesMm;
@@ -360,8 +356,7 @@ public class TEMAStandard {
     private final double minPitchRatio;
     private final double heatTransferFactor;
 
-    TubePitchPattern(String description, int layoutAngle, double minPitchRatio,
-        double heatTransferFactor) {
+    TubePitchPattern(String description, int layoutAngle, double minPitchRatio, double heatTransferFactor) {
       this.description = description;
       this.layoutAngle = layoutAngle;
       this.minPitchRatio = minPitchRatio;
@@ -519,8 +514,8 @@ public class TEMAStandard {
      * @param description configuration description
      * @param applicableClasses applicable TEMA classes
      */
-    public TEMAConfiguration(FrontHeadType frontHead, ShellType shell, RearHeadType rearHead,
-        String description, Set<TEMAClass> applicableClasses) {
+    public TEMAConfiguration(FrontHeadType frontHead, ShellType shell, RearHeadType rearHead, String description,
+        Set<TEMAClass> applicableClasses) {
       this.frontHead = frontHead;
       this.shell = shell;
       this.rearHead = rearHead;
@@ -670,8 +665,7 @@ public class TEMAStandard {
     ShellType shellType = ShellType.valueOf(String.valueOf(shell));
     RearHeadType rear = RearHeadType.valueOf(String.valueOf(rearHead));
 
-    return new TEMAConfiguration(front, shellType, rear, "Custom configuration",
-        EnumSet.allOf(TEMAClass.class));
+    return new TEMAConfiguration(front, shellType, rear, "Custom configuration", EnumSet.allOf(TEMAClass.class));
   }
 
   /**
@@ -683,8 +677,8 @@ public class TEMAStandard {
    * @param isHazardous true if hazardous fluid involved
    * @return recommended TEMA designation
    */
-  public static String recommendConfiguration(boolean needsCleanable,
-      boolean hasLargeTemperatureDifference, boolean isHighPressure, boolean isHazardous) {
+  public static String recommendConfiguration(boolean needsCleanable, boolean hasLargeTemperatureDifference,
+      boolean isHighPressure, boolean isHazardous) {
     if (isHazardous) {
       if (hasLargeTemperatureDifference) {
         return "AEW"; // Sealed floating head
@@ -734,8 +728,8 @@ public class TEMAStandard {
    * @param tubePasses number of tube passes
    * @return estimated tube count
    */
-  public static int estimateTubeCount(double shellID, double tubeOD, double tubePitch,
-      TubePitchPattern pattern, int tubePasses) {
+  public static int estimateTubeCount(double shellID, double tubeOD, double tubePitch, TubePitchPattern pattern,
+      int tubePasses) {
     // Effective shell area (accounting for pass lanes and bundle clearance)
     double effectiveDiameter = shellID - 2.0 * tubeOD; // Bundle clearance
     double passLaneFactor = 1.0 - 0.05 * (tubePasses - 1); // Pass lane reduction

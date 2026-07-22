@@ -12,10 +12,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * Non-equilibrium two-phase pipe flow simulation system.
  *
  * <p>
- * This class implements steady-state and transient two-phase pipe flow simulation based on the
- * non-equilibrium thermodynamics approach described in Solbraa (2002). It supports multiple flow
- * patterns including stratified, annular, slug, droplet/mist, and bubble flow. The Krishna-Standart
- * film model is used for mass and heat transfer calculations at the gas-liquid interface.
+ * This class implements steady-state and transient two-phase pipe flow simulation based on the non-equilibrium
+ * thermodynamics approach described in Solbraa (2002). It supports multiple flow patterns including stratified,
+ * annular, slug, droplet/mist, and bubble flow. The Krishna-Standart film model is used for mass and heat transfer
+ * calculations at the gas-liquid interface.
  * </p>
  *
  * <h2>Key Features</h2>
@@ -70,7 +70,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * </table>
  *
  * <h2>Usage Example (Traditional API)</h2>
- * 
+ *
  * <pre>{@code
  * // Create two-phase fluid
  * SystemInterface fluid = new SystemSrkEos(295.3, 5.0);
@@ -87,9 +87,9 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * pipe.setNumberOfNodesInLeg(10);
  *
  * // Set leg geometry
- * double[] height = {0, 0, 0, 0};
- * double[] length = {0.0, 100.0, 200.0, 300.0};
- * double[] outerTemp = {288.0, 288.0, 288.0, 288.0};
+ * double[] height = { 0, 0, 0, 0 };
+ * double[] length = { 0.0, 100.0, 200.0, 300.0 };
+ * double[] outerTemp = { 288.0, 288.0, 288.0, 288.0 };
  * pipe.setLegHeights(height);
  * pipe.setLegPositions(length);
  * pipe.setLegOuterTemperatures(outerTemp);
@@ -113,11 +113,10 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * }</pre>
  *
  * <h2>Usage Example (Builder API)</h2>
- * 
+ *
  * <pre>{@code
- * TwoPhasePipeFlowSystem pipe =
- *     TwoPhasePipeFlowSystem.builder().withFluid(thermoSystem).withDiameter(0.1, "m")
- *         .withLength(1000, "m").withNodes(100).withFlowPattern(FlowPattern.STRATIFIED).build();
+ * TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder().withFluid(thermoSystem).withDiameter(0.1, "m")
+ *     .withLength(1000, "m").withNodes(100).withFlowPattern(FlowPattern.STRATIFIED).build();
  *
  * pipe.solveSteadyState(UUID.randomUUID());
  * double[] pressures = pipe.getPressureProfile();
@@ -128,17 +127,17 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * The solver type controls which conservation equations are solved:
  * </p>
  * <ul>
- * <li><b>SIMPLE</b> - Only mass and heat transfer via initProfiles(). Fast but no pressure drop
- * calculation. Use for quick phase equilibrium estimates.</li>
- * <li><b>DEFAULT</b> - Momentum (pressure drop), phase fraction, and energy equations. Includes
- * interphase mass and heat transfer. Good balance of completeness and performance.</li>
- * <li><b>FULL</b> - All equations including composition changes. Complete solution but slower. Use
- * when composition gradients along the pipe are important.</li>
+ * <li><b>SIMPLE</b> - Only mass and heat transfer via initProfiles(). Fast but no pressure drop calculation. Use for
+ * quick phase equilibrium estimates.</li>
+ * <li><b>DEFAULT</b> - Momentum (pressure drop), phase fraction, and energy equations. Includes interphase mass and
+ * heat transfer. Good balance of completeness and performance.</li>
+ * <li><b>FULL</b> - All equations including composition changes. Complete solution but slower. Use when composition
+ * gradients along the pipe are important.</li>
  * </ul>
  * <p>
  * Set the solver type before calling solveSteadyState():
  * </p>
- * 
+ *
  * <pre>{@code
  * pipeSystem.setSolverType(TwoPhaseFixedStaggeredGridSolver.SolverType.DEFAULT);
  * pipeSystem.solveSteadyState(UUID.randomUUID());
@@ -146,12 +145,12 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  *
  * <h2>References</h2>
  * <ul>
- * <li>Solbraa, E. (2002) - Measurement and Modelling of Absorption of Carbon Dioxide into
- * Methyldiethanolamine Solutions at High Pressures. PhD Thesis, NTNU.</li>
- * <li>Krishna, R. and Standart, G.L. (1976) - A multicomponent film model incorporating a general
- * matrix method of solution to the Maxwell-Stefan equations.</li>
- * <li>Taitel, Y. and Dukler, A.E. (1976) - A model for predicting flow regime transitions in
- * horizontal and near horizontal gas-liquid flow.</li>
+ * <li>Solbraa, E. (2002) - Measurement and Modelling of Absorption of Carbon Dioxide into Methyldiethanolamine
+ * Solutions at High Pressures. PhD Thesis, NTNU.</li>
+ * <li>Krishna, R. and Standart, G.L. (1976) - A multicomponent film model incorporating a general matrix method of
+ * solution to the Maxwell-Stefan equations.</li>
+ * <li>Taitel, Y. and Dukler, A.E. (1976) - A model for predicting flow regime transitions in horizontal and near
+ * horizontal gas-liquid flow.</li>
  * </ul>
  *
  * @author asmund
@@ -159,8 +158,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
  * @see neqsim.process.equipment.pipeline.TwoFluidPipe
  * @see neqsim.process.equipment.pipeline.PipeBeggsAndBrills
  */
-public class TwoPhasePipeFlowSystem
-    extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem.TwoPhaseFlowSystem {
+public class TwoPhasePipeFlowSystem extends neqsim.fluidmechanics.flowsystem.twophaseflowsystem.TwoPhaseFlowSystem {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
@@ -212,38 +210,32 @@ public class TwoPhasePipeFlowSystem
   // ==================== MASS TRANSFER MODE ====================
 
   /** Mass transfer mode for non-equilibrium calculations. */
-  private neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode massTransferMode =
-      neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode.BIDIRECTIONAL;
+  private neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode massTransferMode = neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.MassTransferMode.BIDIRECTIONAL;
 
   // ==================== SOLVER TYPE ====================
 
   /**
-   * Solver type controlling which equations are solved. Default includes momentum (pressure drop),
-   * phase fraction, and energy equations.
+   * Solver type controlling which equations are solved. Default includes momentum (pressure drop), phase fraction, and
+   * energy equations.
    */
-  private neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.SolverType solverTypeEnum =
-      neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.SolverType.DEFAULT;
+  private neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.SolverType solverTypeEnum = neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver.SolverType.DEFAULT;
 
   /**
-   * <p>
    * Constructor for TwoPhasePipeFlowSystem.
-   * </p>
    */
-  public TwoPhasePipeFlowSystem() {}
+  public TwoPhasePipeFlowSystem() {
+  }
 
   /**
-   * <p>
    * Creates a new builder for configuring a TwoPhasePipeFlowSystem.
-   * </p>
    *
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
-   * TwoPhasePipeFlowSystem pipe =
-   *     TwoPhasePipeFlowSystem.builder().withFluid(thermoSystem).withDiameter(0.1, "m")
-   *         .withLength(1000, "m").withNodes(100).withFlowPattern(FlowPattern.STRATIFIED).build();
+   * TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.builder().withFluid(thermoSystem).withDiameter(0.1, "m")
+   *     .withLength(1000, "m").withNodes(100).withFlowPattern(FlowPattern.STRATIFIED).build();
    * </pre>
    *
    * @return a new TwoPhasePipeFlowSystemBuilder
@@ -258,14 +250,14 @@ public class TwoPhasePipeFlowSystem
    * Creates a horizontal pipe with default settings.
    *
    * <p>
-   * This is a convenience factory method for the most common use case: a horizontal pipe with
-   * stratified flow pattern. The pipe is created, initialized, and ready for solving.
+   * This is a convenience factory method for the most common use case: a horizontal pipe with stratified flow pattern.
+   * The pipe is created, initialized, and ready for solving.
    * </p>
    *
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.horizontalPipe(fluid, 0.1, 1000, 100);
    * pipe.enableNonEquilibriumMassTransfer();
@@ -279,22 +271,20 @@ public class TwoPhasePipeFlowSystem
    * @return a configured and initialized TwoPhasePipeFlowSystem
    * @throws IllegalArgumentException if fluid is null or parameters are invalid
    */
-  public static TwoPhasePipeFlowSystem horizontalPipe(neqsim.thermo.system.SystemInterface fluid,
-      double diameterMeters, double lengthMeters, int nodes) {
+  public static TwoPhasePipeFlowSystem horizontalPipe(neqsim.thermo.system.SystemInterface fluid, double diameterMeters,
+      double lengthMeters, int nodes) {
     validateFluid(fluid);
     validateGeometry(diameterMeters, lengthMeters, nodes);
 
-    return builder().withFluid(fluid).withDiameter(diameterMeters, "m")
-        .withLength(lengthMeters, "m").withNodes(nodes).horizontal()
-        .withFlowPattern(FlowPattern.STRATIFIED).build();
+    return builder().withFluid(fluid).withDiameter(diameterMeters, "m").withLength(lengthMeters, "m").withNodes(nodes)
+        .horizontal().withFlowPattern(FlowPattern.STRATIFIED).build();
   }
 
   /**
    * Creates a vertical pipe with specified flow direction.
    *
    * <p>
-   * For vertical pipes, the flow pattern defaults to BUBBLE for upward flow and ANNULAR for
-   * downward flow.
+   * For vertical pipes, the flow pattern defaults to BUBBLE for upward flow and ANNULAR for downward flow.
    * </p>
    *
    * @param fluid the thermodynamic system (must have 2 phases)
@@ -305,16 +295,15 @@ public class TwoPhasePipeFlowSystem
    * @return a configured and initialized TwoPhasePipeFlowSystem
    * @throws IllegalArgumentException if fluid is null or parameters are invalid
    */
-  public static TwoPhasePipeFlowSystem verticalPipe(neqsim.thermo.system.SystemInterface fluid,
-      double diameterMeters, double lengthMeters, int nodes, boolean upwardFlow) {
+  public static TwoPhasePipeFlowSystem verticalPipe(neqsim.thermo.system.SystemInterface fluid, double diameterMeters,
+      double lengthMeters, int nodes, boolean upwardFlow) {
     validateFluid(fluid);
     validateGeometry(diameterMeters, lengthMeters, nodes);
 
     FlowPattern defaultPattern = upwardFlow ? FlowPattern.BUBBLE : FlowPattern.ANNULAR;
 
-    return builder().withFluid(fluid).withDiameter(diameterMeters, "m")
-        .withLength(lengthMeters, "m").withNodes(nodes).vertical(upwardFlow)
-        .withFlowPattern(defaultPattern).build();
+    return builder().withFluid(fluid).withDiameter(diameterMeters, "m").withLength(lengthMeters, "m").withNodes(nodes)
+        .vertical(upwardFlow).withFlowPattern(defaultPattern).build();
   }
 
   /**
@@ -328,23 +317,21 @@ public class TwoPhasePipeFlowSystem
    * @return a configured and initialized TwoPhasePipeFlowSystem
    * @throws IllegalArgumentException if fluid is null or parameters are invalid
    */
-  public static TwoPhasePipeFlowSystem inclinedPipe(neqsim.thermo.system.SystemInterface fluid,
-      double diameterMeters, double lengthMeters, int nodes, double inclinationDegrees) {
+  public static TwoPhasePipeFlowSystem inclinedPipe(neqsim.thermo.system.SystemInterface fluid, double diameterMeters,
+      double lengthMeters, int nodes, double inclinationDegrees) {
     validateFluid(fluid);
     validateGeometry(diameterMeters, lengthMeters, nodes);
 
-    return builder().withFluid(fluid).withDiameter(diameterMeters, "m")
-        .withLength(lengthMeters, "m").withNodes(nodes)
-        .withInclination(inclinationDegrees, "degrees").withFlowPattern(FlowPattern.STRATIFIED)
-        .build();
+    return builder().withFluid(fluid).withDiameter(diameterMeters, "m").withLength(lengthMeters, "m").withNodes(nodes)
+        .withInclination(inclinationDegrees, "degrees").withFlowPattern(FlowPattern.STRATIFIED).build();
   }
 
   /**
    * Creates a subsea pipeline with typical seawater cooling conditions.
    *
    * <p>
-   * This factory method sets up a horizontal pipe with convective boundary conditions typical of
-   * subsea pipelines: seawater temperature and high external heat transfer coefficient.
+   * This factory method sets up a horizontal pipe with convective boundary conditions typical of subsea pipelines:
+   * seawater temperature and high external heat transfer coefficient.
    * </p>
    *
    * @param fluid the thermodynamic system (must have 2 phases)
@@ -355,17 +342,16 @@ public class TwoPhasePipeFlowSystem
    * @return a configured and initialized TwoPhasePipeFlowSystem
    * @throws IllegalArgumentException if fluid is null or parameters are invalid
    */
-  public static TwoPhasePipeFlowSystem subseaPipe(neqsim.thermo.system.SystemInterface fluid,
-      double diameterMeters, double lengthMeters, int nodes, double seawaterTempCelsius) {
+  public static TwoPhasePipeFlowSystem subseaPipe(neqsim.thermo.system.SystemInterface fluid, double diameterMeters,
+      double lengthMeters, int nodes, double seawaterTempCelsius) {
     validateFluid(fluid);
     validateGeometry(diameterMeters, lengthMeters, nodes);
 
     // Typical subsea pipeline: high external heat transfer due to seawater convection
     double seawaterHeatTransferCoeff = 500.0; // W/(m²·K) - typical for flowing seawater
 
-    return builder().withFluid(fluid).withDiameter(diameterMeters, "m")
-        .withLength(lengthMeters, "m").withNodes(nodes).horizontal()
-        .withFlowPattern(FlowPattern.STRATIFIED)
+    return builder().withFluid(fluid).withDiameter(diameterMeters, "m").withLength(lengthMeters, "m").withNodes(nodes)
+        .horizontal().withFlowPattern(FlowPattern.STRATIFIED)
         .withConvectiveBoundary(seawaterTempCelsius, "C", seawaterHeatTransferCoeff).build();
   }
 
@@ -373,8 +359,8 @@ public class TwoPhasePipeFlowSystem
    * Creates a buried onshore pipeline with soil thermal conditions.
    *
    * <p>
-   * This factory method sets up a horizontal pipe with convective boundary conditions typical of
-   * buried onshore pipelines: ground temperature and low external heat transfer coefficient.
+   * This factory method sets up a horizontal pipe with convective boundary conditions typical of buried onshore
+   * pipelines: ground temperature and low external heat transfer coefficient.
    * </p>
    *
    * @param fluid the thermodynamic system (must have 2 phases)
@@ -385,17 +371,16 @@ public class TwoPhasePipeFlowSystem
    * @return a configured and initialized TwoPhasePipeFlowSystem
    * @throws IllegalArgumentException if fluid is null or parameters are invalid
    */
-  public static TwoPhasePipeFlowSystem buriedPipe(neqsim.thermo.system.SystemInterface fluid,
-      double diameterMeters, double lengthMeters, int nodes, double groundTempCelsius) {
+  public static TwoPhasePipeFlowSystem buriedPipe(neqsim.thermo.system.SystemInterface fluid, double diameterMeters,
+      double lengthMeters, int nodes, double groundTempCelsius) {
     validateFluid(fluid);
     validateGeometry(diameterMeters, lengthMeters, nodes);
 
     // Typical buried pipeline: low external heat transfer due to soil conduction
     double soilHeatTransferCoeff = 5.0; // W/(m²·K) - typical for buried pipe in soil
 
-    return builder().withFluid(fluid).withDiameter(diameterMeters, "m")
-        .withLength(lengthMeters, "m").withNodes(nodes).horizontal()
-        .withFlowPattern(FlowPattern.STRATIFIED)
+    return builder().withFluid(fluid).withDiameter(diameterMeters, "m").withLength(lengthMeters, "m").withNodes(nodes)
+        .horizontal().withFlowPattern(FlowPattern.STRATIFIED)
         .withConvectiveBoundary(groundTempCelsius, "C", soilHeatTransferCoeff).build();
   }
 
@@ -443,29 +428,23 @@ public class TwoPhasePipeFlowSystem
 
     flowNode = new neqsim.fluidmechanics.flownode.FlowNodeInterface[totalNumberOfNodes];
     if (initFlowPattern.equals("stratified")) {
-      flowNode[0] =
-          new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode(
-              thermoSystem, equipmentGeometry[0]);
+      flowNode[0] = new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode(
+          thermoSystem, equipmentGeometry[0]);
     } else if (initFlowPattern.equals("annular")) {
-      flowNode[0] =
-          new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow(
-              thermoSystem, equipmentGeometry[0]);
+      flowNode[0] = new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow(thermoSystem,
+          equipmentGeometry[0]);
     } else if (initFlowPattern.equals("slug")) {
-      flowNode[0] =
-          new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.SlugFlowNode(
-              thermoSystem, equipmentGeometry[0]);
+      flowNode[0] = new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.SlugFlowNode(thermoSystem,
+          equipmentGeometry[0]);
     } else if (initFlowPattern.equals("droplet") || initFlowPattern.equals("mist")) {
-      flowNode[0] =
-          new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.DropletFlowNode(
-              thermoSystem, equipmentGeometry[0]);
+      flowNode[0] = new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.DropletFlowNode(thermoSystem,
+          equipmentGeometry[0]);
     } else if (initFlowPattern.equals("bubble")) {
-      flowNode[0] =
-          new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.BubbleFlowNode(
-              thermoSystem, equipmentGeometry[0]);
+      flowNode[0] = new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.BubbleFlowNode(thermoSystem,
+          equipmentGeometry[0]);
     } else {
-      flowNode[0] =
-          new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode(
-              thermoSystem, equipmentGeometry[0]);
+      flowNode[0] = new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode(
+          thermoSystem, equipmentGeometry[0]);
     }
     flowNode[totalNumberOfNodes - 1] = flowNode[0].getNextNode();
 
@@ -497,20 +476,18 @@ public class TwoPhasePipeFlowSystem
   /** {@inheritDoc} */
   @Override
   public void solveSteadyState(int type, UUID id) {
-    double[] times = {0.0};
-    display =
-        new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.twophaseflowvisualization.twophasepipeflowvisualization.TwoPhasePipeFlowVisualization(
-            this.getTotalNumberOfNodes(), 1);
+    double[] times = { 0.0 };
+    display = new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.twophaseflowvisualization.twophasepipeflowvisualization.TwoPhasePipeFlowVisualization(
+        this.getTotalNumberOfNodes(), 1);
     getTimeSeries().setTimes(times);
-    neqsim.thermo.system.SystemInterface[] systems = {flowNode[0].getBulkSystem()};
+    neqsim.thermo.system.SystemInterface[] systems = { flowNode[0].getBulkSystem() };
     getTimeSeries().setInletThermoSystems(systems);
     getTimeSeries().setNumberOfTimeStepsInInterval(1);
-    double[] outletFlowRates = {0.0, 0.0};
+    double[] outletFlowRates = { 0.0, 0.0 };
     getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
 
-    neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver solver =
-        new neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver(
-            this, getSystemLength(), this.getTotalNumberOfNodes(), false);
+    neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver solver = new neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver(
+        this, getSystemLength(), this.getTotalNumberOfNodes(), false);
     solver.setMassTransferMode(massTransferMode);
     // Use the stored enum solver type (ignoring the legacy int type parameter)
     solver.setSolverType(solverTypeEnum);
@@ -523,9 +500,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Solve steady state using the configured solver type enum.
-   * </p>
    *
    * @param id a {@link java.util.UUID} object
    */
@@ -539,14 +514,14 @@ public class TwoPhasePipeFlowSystem
    * Solves the pipe flow system and returns a structured result object.
    *
    * <p>
-   * This is the recommended method for new code. It solves the system using the configured solver
-   * type and returns all results in a convenient {@link PipeFlowResult} container.
+   * This is the recommended method for new code. It solves the system using the configured solver type and returns all
+   * results in a convenient {@link PipeFlowResult} container.
    * </p>
    *
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * TwoPhasePipeFlowSystem pipe = TwoPhasePipeFlowSystem.horizontalPipe(fluid, 0.1, 1000, 100);
    * pipe.enableNonEquilibriumMassTransfer();
@@ -567,10 +542,10 @@ public class TwoPhasePipeFlowSystem
    * Solves the pipe flow system with non-equilibrium mass transfer enabled.
    *
    * <p>
-   * This is a convenience method that enables non-equilibrium mass transfer, solves the system, and
-   * returns the results. Equivalent to calling:
+   * This is a convenience method that enables non-equilibrium mass transfer, solves the system, and returns the
+   * results. Equivalent to calling:
    * </p>
-   * 
+   *
    * <pre>
    * pipe.enableNonEquilibriumMassTransfer();
    * return pipe.solve();
@@ -587,8 +562,8 @@ public class TwoPhasePipeFlowSystem
    * Solves the pipe flow system with non-equilibrium heat and mass transfer enabled.
    *
    * <p>
-   * This is a convenience method that enables both non-equilibrium mass and heat transfer, solves
-   * the system, and returns the results.
+   * This is a convenience method that enables both non-equilibrium mass and heat transfer, solves the system, and
+   * returns the results.
    * </p>
    *
    * @return a {@link PipeFlowResult} containing all simulation results
@@ -603,10 +578,11 @@ public class TwoPhasePipeFlowSystem
    * Solves the pipe flow system using legacy integer type parameter.
    *
    * @param type the solver type (deprecated - use {@link #setSolverType} instead)
-   * @deprecated Use {@link #solve()} or {@link #solveSteadyState(UUID)} instead. Set the solver
-   *             type using {@link #setSolverType} before calling. This method ignores the type
-   *             parameter and uses the configured solver type enum.
+   * @deprecated Use {@link #solve()} or {@link #solveSteadyState(UUID)} instead. Set the solver type using
+   * {@link #setSolverType} before calling. This method ignores the type parameter and uses the configured solver type
+   * enum.
    */
+  @Override
   @Deprecated
   public void solveSteadyState(int type) {
     solveSteadyState(type, UUID.randomUUID());
@@ -621,20 +597,18 @@ public class TwoPhasePipeFlowSystem
       times[i] = i * timeStep;
     }
 
-    display =
-        new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.twophaseflowvisualization.twophasepipeflowvisualization.TwoPhasePipeFlowVisualization(
-            this.getTotalNumberOfNodes(), times.length);
+    display = new neqsim.fluidmechanics.util.fluidmechanicsvisualization.flowsystemvisualization.twophaseflowvisualization.twophasepipeflowvisualization.TwoPhasePipeFlowVisualization(
+        this.getTotalNumberOfNodes(), times.length);
     getTimeSeries().setTimes(times);
-    neqsim.thermo.system.SystemInterface[] systems = {flowNode[0].getBulkSystem()};
+    neqsim.thermo.system.SystemInterface[] systems = { flowNode[0].getBulkSystem() };
     getTimeSeries().setInletThermoSystems(systems);
     getTimeSeries().setNumberOfTimeStepsInInterval(times.length);
-    double[] outletFlowRates = {0.0, 0.0};
+    double[] outletFlowRates = { 0.0, 0.0 };
     getTimeSeries().setOutletMolarFlowRate(outletFlowRates);
 
     // Create solver in dynamic mode
-    neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver solver =
-        new neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver(
-            this, getSystemLength(), this.getTotalNumberOfNodes(), true);
+    neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver solver = new neqsim.fluidmechanics.flowsolver.twophaseflowsolver.twophasepipeflowsolver.TwoPhaseFixedStaggeredGridSolver(
+        this, getSystemLength(), this.getTotalNumberOfNodes(), true);
     solver.setMassTransferMode(massTransferMode);
     // Use the stored enum solver type (ignoring the legacy int type parameter)
     solver.setSolverType(solverTypeEnum);
@@ -663,9 +637,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Solve transient using the configured solver type enum.
-   * </p>
    *
    * @param id a {@link java.util.UUID} object
    */
@@ -674,9 +646,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Sets the time step for transient simulations.
-   * </p>
    *
    * @param timeStep the time step in seconds
    */
@@ -685,9 +655,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the time step for transient simulations.
-   * </p>
    *
    * @return the time step in seconds
    */
@@ -696,9 +664,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Sets the total simulation time for transient simulations.
-   * </p>
    *
    * @param simulationTime the total simulation time in seconds
    */
@@ -707,9 +673,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the total simulation time for transient simulations.
-   * </p>
    *
    * @return the total simulation time in seconds
    */
@@ -718,9 +682,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the number of time steps completed.
-   * </p>
    *
    * @return the number of time steps
    */
@@ -729,9 +691,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the current simulation time.
-   * </p>
    *
    * @return the current time in seconds
    */
@@ -740,30 +700,24 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
-   * Enables non-equilibrium mass transfer calculation using the Krishna-Standart film model. When
-   * enabled, mass transfer fluxes are calculated based on driving forces (chemical potential
-   * differences) and mass transfer coefficients.
-   * </p>
+   * Enables non-equilibrium mass transfer calculation using the Krishna-Standart film model. When enabled, mass
+   * transfer fluxes are calculated based on driving forces (chemical potential differences) and mass transfer
+   * coefficients.
    */
   public void enableNonEquilibriumMassTransfer() {
     setEquilibriumMassTransfer(false);
   }
 
   /**
-   * <p>
-   * Enables non-equilibrium heat transfer calculation. When enabled, heat transfer between phases
-   * is calculated using heat transfer coefficients and temperature differences.
-   * </p>
+   * Enables non-equilibrium heat transfer calculation. When enabled, heat transfer between phases is calculated using
+   * heat transfer coefficients and temperature differences.
    */
   public void enableNonEquilibriumHeatTransfer() {
     setEquilibriumHeatTransfer(false);
   }
 
   /**
-   * <p>
    * Calculates the total mass transfer rate for a component along the pipe.
-   * </p>
    *
    * @param componentIndex the component index
    * @return the total molar mass transfer rate in mol/s
@@ -773,9 +727,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Calculates the total heat transfer rate from the pipe to surroundings.
-   * </p>
    *
    * @return the total heat transfer rate in W
    */
@@ -786,8 +738,7 @@ public class TwoPhasePipeFlowSystem
       double diameter = flowNode[i].getGeometry().getDiameter();
       double wallArea = Math.PI * diameter * nodeLength;
       double fluidTemp = flowNode[i].getBulkSystem().getTemperature();
-      double surroundingTemp =
-          flowNode[i].getGeometry().getSurroundingEnvironment().getTemperature();
+      double surroundingTemp = flowNode[i].getGeometry().getSurroundingEnvironment().getTemperature();
       // Approximate overall heat transfer coefficient
       double uValue = 10.0; // W/(m²·K) - simplified
       totalHeatLoss += uValue * wallArea * (fluidTemp - surroundingTemp);
@@ -798,9 +749,7 @@ public class TwoPhasePipeFlowSystem
   // ==================== PROFILE OUTPUT METHODS ====================
 
   /**
-   * <p>
    * Gets the temperature profile along the pipe.
-   * </p>
    *
    * @return an array of temperatures in Kelvin at each node
    */
@@ -813,9 +762,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the pressure profile along the pipe.
-   * </p>
    *
    * @return an array of pressures in bar at each node
    */
@@ -828,9 +775,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the position profile along the pipe.
-   * </p>
    *
    * @return an array of positions in meters from the inlet
    */
@@ -845,9 +790,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the void fraction (gas volume fraction) profile along the pipe.
-   * </p>
    *
    * @return an array of void fractions at each node
    */
@@ -860,9 +803,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the liquid holdup profile along the pipe.
-   * </p>
    *
    * @return an array of liquid holdups at each node
    */
@@ -875,9 +816,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the velocity profile for a specific phase along the pipe.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of velocities in m/s at each node
@@ -891,9 +830,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the superficial velocity profile for a specific phase along the pipe.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of superficial velocities in m/s at each node
@@ -907,9 +844,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the gas phase composition profile for all components.
-   * </p>
    *
    * @return a 2D array [componentIndex][nodeIndex] of mole fractions
    */
@@ -925,9 +860,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the liquid phase composition profile for all components.
-   * </p>
    *
    * @return a 2D array [componentIndex][nodeIndex] of mole fractions
    */
@@ -943,9 +876,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the interfacial area profile along the pipe.
-   * </p>
    *
    * @return an array of interfacial areas in m² at each node
    */
@@ -958,9 +889,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the density profile for a specific phase along the pipe.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of densities in kg/m³ at each node
@@ -968,16 +897,13 @@ public class TwoPhasePipeFlowSystem
   public double[] getDensityProfile(int phaseIndex) {
     double[] densities = new double[getTotalNumberOfNodes()];
     for (int i = 0; i < getTotalNumberOfNodes(); i++) {
-      densities[i] =
-          flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getDensity();
+      densities[i] = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getDensity();
     }
     return densities;
   }
 
   /**
-   * <p>
    * Gets the viscosity profile for a specific phase along the pipe.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of dynamic viscosities in Pa·s at each node
@@ -985,30 +911,24 @@ public class TwoPhasePipeFlowSystem
   public double[] getViscosityProfile(int phaseIndex) {
     double[] viscosities = new double[getTotalNumberOfNodes()];
     for (int i = 0; i < getTotalNumberOfNodes(); i++) {
-      viscosities[i] =
-          flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getViscosity();
+      viscosities[i] = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getViscosity();
     }
     return viscosities;
   }
 
   /**
-   * <p>
    * Gets the mass transfer profile for a specific component.
-   * </p>
    *
    * @param componentName the name of the component
    * @return an array of cumulative mass transfer rates in mol/s at each node
    */
   public double[] getMassTransferProfile(String componentName) {
-    int componentIndex =
-        flowNode[0].getBulkSystem().getPhase(0).getComponent(componentName).getComponentNumber();
+    int componentIndex = flowNode[0].getBulkSystem().getPhase(0).getComponent(componentName).getComponentNumber();
     return getMassTransferProfile(componentIndex);
   }
 
   /**
-   * <p>
    * Gets the mass transfer profile for a specific component.
-   * </p>
    *
    * @param componentIndex the component index
    * @return an array of cumulative mass transfer rates in mol/s at each node
@@ -1026,16 +946,13 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Calculates the component mass balance error.
-   * </p>
    *
    * @param componentName the name of the component
    * @return the relative mass balance error (0 = perfect balance)
    */
   public double getComponentMassBalance(String componentName) {
-    int compIndex =
-        flowNode[0].getBulkSystem().getPhase(0).getComponent(componentName).getComponentNumber();
+    int compIndex = flowNode[0].getBulkSystem().getPhase(0).getComponent(componentName).getComponentNumber();
 
     // Inlet moles (use getNumberOfMolesInPhase since it represents molar flow in the flow node)
     double inletMoles = flowNode[0].getBulkSystem().getPhase(0).getComponent(compIndex).getx()
@@ -1045,11 +962,10 @@ public class TwoPhasePipeFlowSystem
 
     // Outlet moles
     int lastNode = getTotalNumberOfNodes() - 1;
-    double outletMoles =
-        flowNode[lastNode].getBulkSystem().getPhase(0).getComponent(compIndex).getx()
-            * flowNode[lastNode].getBulkSystem().getPhase(0).getNumberOfMolesInPhase()
-            + flowNode[lastNode].getBulkSystem().getPhase(1).getComponent(compIndex).getx()
-                * flowNode[lastNode].getBulkSystem().getPhase(1).getNumberOfMolesInPhase();
+    double outletMoles = flowNode[lastNode].getBulkSystem().getPhase(0).getComponent(compIndex).getx()
+        * flowNode[lastNode].getBulkSystem().getPhase(0).getNumberOfMolesInPhase()
+        + flowNode[lastNode].getBulkSystem().getPhase(1).getComponent(compIndex).getx()
+            * flowNode[lastNode].getBulkSystem().getPhase(1).getNumberOfMolesInPhase();
 
     if (Math.abs(inletMoles) > 1e-20) {
       return (inletMoles - outletMoles) / inletMoles;
@@ -1058,9 +974,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the Reynolds number profile for a specific phase.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of Reynolds numbers at each node
@@ -1074,9 +988,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the enthalpy profile for a specific phase along the pipe.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of specific enthalpies in J/kg at each node
@@ -1097,9 +1009,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the total mixture enthalpy profile along the pipe.
-   * </p>
    *
    * @return an array of total enthalpies in J at each node
    */
@@ -1112,9 +1022,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the heat capacity (Cp) profile for a specific phase along the pipe.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of heat capacities in J/(mol·K) at each node
@@ -1128,9 +1036,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the flow pattern at each node along the pipe.
-   * </p>
    *
    * @return an array of FlowPattern enums at each node
    */
@@ -1143,9 +1049,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the flow pattern names at each node along the pipe.
-   * </p>
    *
    * @return an array of flow pattern names at each node
    */
@@ -1160,9 +1064,7 @@ public class TwoPhasePipeFlowSystem
   // ==================== FLOW PATTERN DETECTION METHODS ====================
 
   /**
-   * <p>
    * Enables automatic flow pattern detection using the specified model.
-   * </p>
    *
    * @param enabled true to enable automatic detection, false to use manual specification
    */
@@ -1174,9 +1076,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Sets the flow pattern prediction model.
-   * </p>
    *
    * @param model the flow pattern model to use
    */
@@ -1188,9 +1088,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the current flow pattern model.
-   * </p>
    *
    * @return the flow pattern model
    */
@@ -1199,9 +1097,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Detects and updates flow patterns at all nodes.
-   * </p>
    */
   public void detectFlowPatterns() {
     if (nodeFlowPatterns == null) {
@@ -1214,9 +1110,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Detects the flow pattern at a specific node.
-   * </p>
    *
    * @param nodeIndex the node index
    * @return the detected flow pattern
@@ -1229,28 +1123,21 @@ public class TwoPhasePipeFlowSystem
     // Get properties from node
     double usg = flowNode[nodeIndex].getSuperficialVelocity(0);
     double usl = flowNode[nodeIndex].getSuperficialVelocity(1);
-    double rhoG =
-        flowNode[nodeIndex].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
-    double rhoL =
-        flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
-    double muG =
-        flowNode[nodeIndex].getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
-    double muL =
-        flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
-    double sigma =
-        flowNode[nodeIndex].getBulkSystem().getInterphaseProperties().getSurfaceTension(0, 1);
+    double rhoG = flowNode[nodeIndex].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double rhoL = flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+    double muG = flowNode[nodeIndex].getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
+    double muL = flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
+    double sigma = flowNode[nodeIndex].getBulkSystem().getInterphaseProperties().getSurfaceTension(0, 1);
     double diameter = flowNode[nodeIndex].getGeometry().getDiameter();
     // Use horizontal pipe assumption (0 inclination) - leg heights can be used to estimate later
     double inclination = 0.0;
 
-    return FlowPatternDetector.detectFlowPattern(flowPatternModel, usg, usl, rhoG, rhoL, muG, muL,
-        sigma, diameter, inclination);
+    return FlowPatternDetector.detectFlowPattern(flowPatternModel, usg, usl, rhoG, rhoL, muG, muL, sigma, diameter,
+        inclination);
   }
 
   /**
-   * <p>
    * Gets the flow pattern at a specific node.
-   * </p>
    *
    * @param nodeIndex the node index
    * @return the flow pattern at the node
@@ -1265,9 +1152,7 @@ public class TwoPhasePipeFlowSystem
   // ==================== WALL HEAT TRANSFER METHODS ====================
 
   /**
-   * <p>
    * Sets the wall heat transfer model.
-   * </p>
    *
    * @param model the wall heat transfer model
    */
@@ -1276,9 +1161,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the wall heat transfer model.
-   * </p>
    *
    * @return the wall heat transfer model
    */
@@ -1287,9 +1170,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Sets the constant wall temperature for CONSTANT_WALL_TEMPERATURE model.
-   * </p>
    *
    * @param temperature the wall temperature in Kelvin
    */
@@ -1298,32 +1179,28 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Sets the constant wall temperature with unit.
-   * </p>
    *
    * @param temperature the wall temperature
    * @param unit the temperature unit ("K", "C", or "F")
    */
   public void setConstantWallTemperature(double temperature, String unit) {
     switch (unit.toUpperCase()) {
-      case "C":
-        this.constantWallTemperature = temperature + 273.15;
-        break;
-      case "F":
-        this.constantWallTemperature = (temperature - 32) * 5.0 / 9.0 + 273.15;
-        break;
-      case "K":
-      default:
-        this.constantWallTemperature = temperature;
-        break;
+    case "C":
+      this.constantWallTemperature = temperature + 273.15;
+      break;
+    case "F":
+      this.constantWallTemperature = (temperature - 32) * 5.0 / 9.0 + 273.15;
+      break;
+    case "K":
+    default:
+      this.constantWallTemperature = temperature;
+      break;
     }
   }
 
   /**
-   * <p>
    * Gets the constant wall temperature.
-   * </p>
    *
    * @return the wall temperature in Kelvin
    */
@@ -1332,9 +1209,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Sets the constant heat flux for CONSTANT_HEAT_FLUX model.
-   * </p>
    *
    * @param heatFlux the heat flux in W/m² (positive = heat into fluid)
    */
@@ -1343,9 +1218,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the constant heat flux.
-   * </p>
    *
    * @return the heat flux in W/m²
    */
@@ -1354,9 +1227,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Sets the overall heat transfer coefficient for CONVECTIVE_BOUNDARY model.
-   * </p>
    *
    * @param coefficient the overall U-value in W/(m²·K)
    */
@@ -1365,9 +1236,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the overall heat transfer coefficient.
-   * </p>
    *
    * @return the U-value in W/(m²·K)
    */
@@ -1376,9 +1245,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Sets the ambient temperature for CONVECTIVE_BOUNDARY model.
-   * </p>
    *
    * @param temperature the ambient temperature in Kelvin
    */
@@ -1387,32 +1254,28 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Sets the ambient temperature with unit.
-   * </p>
    *
    * @param temperature the ambient temperature
    * @param unit the temperature unit ("K", "C", or "F")
    */
   public void setAmbientTemperature(double temperature, String unit) {
     switch (unit.toUpperCase()) {
-      case "C":
-        this.ambientTemperature = temperature + 273.15;
-        break;
-      case "F":
-        this.ambientTemperature = (temperature - 32) * 5.0 / 9.0 + 273.15;
-        break;
-      case "K":
-      default:
-        this.ambientTemperature = temperature;
-        break;
+    case "C":
+      this.ambientTemperature = temperature + 273.15;
+      break;
+    case "F":
+      this.ambientTemperature = (temperature - 32) * 5.0 / 9.0 + 273.15;
+      break;
+    case "K":
+    default:
+      this.ambientTemperature = temperature;
+      break;
     }
   }
 
   /**
-   * <p>
    * Gets the ambient temperature.
-   * </p>
    *
    * @return the ambient temperature in Kelvin
    */
@@ -1421,9 +1284,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Sets the mass transfer mode for non-equilibrium calculations.
-   * </p>
    *
    * @param mode the mass transfer mode to use
    */
@@ -1433,9 +1294,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the current mass transfer mode.
-   * </p>
    *
    * @return the current mass transfer mode
    */
@@ -1444,17 +1303,14 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Sets the solver type using the SolverType enum.
-   * </p>
    *
    * <p>
    * Available solver types:
    * </p>
    * <ul>
    * <li>SIMPLE - Only mass and heat transfer via initProfiles(). Fast but no pressure drop.</li>
-   * <li>DEFAULT - Momentum, phase fraction, and energy equations. Good balance of completeness and
-   * performance.</li>
+   * <li>DEFAULT - Momentum, phase fraction, and energy equations. Good balance of completeness and performance.</li>
    * <li>FULL - All equations including composition. Complete solution but slower.</li>
    * </ul>
    *
@@ -1466,9 +1322,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the current solver type enum.
-   * </p>
    *
    * @return the current solver type
    */
@@ -1477,38 +1331,34 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Calculates the wall heat flux at a specific node based on the heat transfer model.
-   * </p>
    *
    * @param nodeIndex the node index
    * @return the heat flux in W/m² (positive = heat into fluid)
    */
   public double calculateWallHeatFlux(int nodeIndex) {
     switch (wallHeatTransferModel) {
-      case ADIABATIC:
-        return 0.0;
+    case ADIABATIC:
+      return 0.0;
 
-      case CONSTANT_HEAT_FLUX:
-        return constantHeatFlux;
+    case CONSTANT_HEAT_FLUX:
+      return constantHeatFlux;
 
-      case CONSTANT_WALL_TEMPERATURE:
-        // Use internal heat transfer coefficient
-        double hInternal = estimateInternalHeatTransferCoefficient(nodeIndex);
-        double tFluid = flowNode[nodeIndex].getBulkSystem().getTemperature();
-        return hInternal * (constantWallTemperature - tFluid);
+    case CONSTANT_WALL_TEMPERATURE:
+      // Use internal heat transfer coefficient
+      double hInternal = estimateInternalHeatTransferCoefficient(nodeIndex);
+      double tFluid = flowNode[nodeIndex].getBulkSystem().getTemperature();
+      return hInternal * (constantWallTemperature - tFluid);
 
-      case CONVECTIVE_BOUNDARY:
-      default:
-        double tFluid2 = flowNode[nodeIndex].getBulkSystem().getTemperature();
-        return overallHeatTransferCoefficient * (ambientTemperature - tFluid2);
+    case CONVECTIVE_BOUNDARY:
+    default:
+      double tFluid2 = flowNode[nodeIndex].getBulkSystem().getTemperature();
+      return overallHeatTransferCoefficient * (ambientTemperature - tFluid2);
     }
   }
 
   /**
-   * <p>
    * Estimates the internal heat transfer coefficient at a node using Nusselt correlations.
-   * </p>
    *
    * @param nodeIndex the node index
    * @return the heat transfer coefficient in W/(m²·K)
@@ -1521,10 +1371,8 @@ public class TwoPhasePipeFlowSystem
     double re = Math.max(reL, reG);
 
     double cpL = flowNode[nodeIndex].getBulkSystem().getPhase(1).getCp();
-    double muL =
-        flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
-    double kL =
-        flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getConductivity();
+    double muL = flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
+    double kL = flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getConductivity();
 
     double pr = cpL * muL / kL;
     pr = Math.max(0.5, Math.min(pr, 2000)); // Limit Prandtl number
@@ -1551,15 +1399,12 @@ public class TwoPhasePipeFlowSystem
   // ==================== INTERFACIAL AREA AND MASS TRANSFER ====================
 
   /**
-   * <p>
-   * Calculates the specific interfacial area (per unit volume) at a specific node using
-   * flow-pattern-specific correlations.
-   * </p>
+   * Calculates the specific interfacial area (per unit volume) at a specific node using flow-pattern-specific
+   * correlations.
    *
    * <p>
-   * This differs from {@link #getInterfacialAreaProfile()} which returns the absolute interfacial
-   * area in m². This method returns the interfacial area per unit volume (a = A/V) which is useful
-   * for mass transfer calculations.
+   * This differs from {@link #getInterfacialAreaProfile()} which returns the absolute interfacial area in m². This
+   * method returns the interfacial area per unit volume (a = A/V) which is useful for mass transfer calculations.
    * </p>
    *
    * @param nodeNumber the node index
@@ -1588,18 +1433,16 @@ public class TwoPhasePipeFlowSystem
       sigma = 0.03; // Default 30 mN/m for hydrocarbon systems
     }
 
-    return neqsim.fluidmechanics.flownode.InterfacialAreaCalculator
-        .calculateInterfacialArea(pattern, diameter, holdup, rhoG, rhoL, usg, usl, sigma);
+    return neqsim.fluidmechanics.flownode.InterfacialAreaCalculator.calculateInterfacialArea(pattern, diameter, holdup,
+        rhoG, rhoL, usg, usl, sigma);
   }
 
   /**
-   * <p>
    * Gets the specific interfacial area (per unit volume) profile along the pipe.
-   * </p>
    *
    * <p>
-   * This differs from {@link #getInterfacialAreaProfile()} which returns absolute areas in m². This
-   * method returns specific interfacial areas (1/m) useful for mass transfer calculations.
+   * This differs from {@link #getInterfacialAreaProfile()} which returns absolute areas in m². This method returns
+   * specific interfacial areas (1/m) useful for mass transfer calculations.
    * </p>
    *
    * @return an array of specific interfacial areas (1/m) at each node
@@ -1613,9 +1456,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Calculates the liquid-side mass transfer coefficient at a specific node.
-   * </p>
    *
    * @param nodeNumber the node index
    * @param diffusivity liquid diffusivity in m²/s
@@ -1632,10 +1473,8 @@ public class TwoPhasePipeFlowSystem
 
     double usg = flowNode[nodeNumber].getSuperficialVelocity(0);
     double usl = flowNode[nodeNumber].getSuperficialVelocity(1);
-    double rhoL =
-        flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
-    double muL =
-        flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
+    double rhoL = flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+    double muL = flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
 
     // Protect against invalid values
     if (Double.isNaN(rhoL) || rhoL <= 0 || Double.isNaN(muL) || muL <= 0) {
@@ -1643,14 +1482,11 @@ public class TwoPhasePipeFlowSystem
     }
 
     return neqsim.fluidmechanics.flownode.MassTransferCoefficientCalculator
-        .calculateLiquidMassTransferCoefficient(pattern, diameter, holdup, usg, usl, rhoL, muL,
-            diffusivity);
+        .calculateLiquidMassTransferCoefficient(pattern, diameter, holdup, usg, usl, rhoL, muL, diffusivity);
   }
 
   /**
-   * <p>
    * Calculates the gas-side mass transfer coefficient at a specific node.
-   * </p>
    *
    * @param nodeNumber the node index
    * @param diffusivity gas diffusivity in m²/s
@@ -1666,25 +1502,20 @@ public class TwoPhasePipeFlowSystem
     double holdup = flowNode[nodeNumber].getPhaseFraction(1);
 
     double usg = flowNode[nodeNumber].getSuperficialVelocity(0);
-    double rhoG =
-        flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
-    double muG =
-        flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
+    double rhoG = flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double muG = flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
 
     // Protect against invalid values
     if (Double.isNaN(rhoG) || rhoG <= 0 || Double.isNaN(muG) || muG <= 0) {
       return 0.0;
     }
 
-    return neqsim.fluidmechanics.flownode.MassTransferCoefficientCalculator
-        .calculateGasMassTransferCoefficient(pattern, diameter, holdup, usg, rhoG, muG,
-            diffusivity);
+    return neqsim.fluidmechanics.flownode.MassTransferCoefficientCalculator.calculateGasMassTransferCoefficient(pattern,
+        diameter, holdup, usg, rhoG, muG, diffusivity);
   }
 
   /**
-   * <p>
    * Gets the liquid-side mass transfer coefficient profile along the pipe.
-   * </p>
    *
    * @param diffusivity liquid diffusivity in m²/s
    * @return an array of k_L values (m/s) at each node
@@ -1698,9 +1529,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the gas-side mass transfer coefficient profile along the pipe.
-   * </p>
    *
    * @param diffusivity gas diffusivity in m²/s
    * @return an array of k_G values (m/s) at each node
@@ -1714,13 +1543,11 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Calculates the overall volumetric mass transfer coefficient k_L·a at a node.
-   * </p>
    *
    * <p>
-   * This is the product of the liquid-side mass transfer coefficient and the interfacial area per
-   * unit volume, commonly used in mass transfer calculations:
+   * This is the product of the liquid-side mass transfer coefficient and the interfacial area per unit volume, commonly
+   * used in mass transfer calculations:
    * </p>
    *
    * <pre>
@@ -1738,9 +1565,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the volumetric mass transfer coefficient (k_L·a) profile along the pipe.
-   * </p>
    *
    * @param diffusivity liquid diffusivity in m²/s
    * @return an array of k_L·a values (1/s) at each node
@@ -1754,9 +1579,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the wall heat flux profile along the pipe.
-   * </p>
    *
    * @return an array of heat fluxes in W/m² at each node
    */
@@ -1771,9 +1594,7 @@ public class TwoPhasePipeFlowSystem
   // ==================== INTERPHASE HEAT TRANSFER ====================
 
   /**
-   * <p>
    * Calculates the liquid-side interphase heat transfer coefficient at a specific node.
-   * </p>
    *
    * @param nodeNumber the node index
    * @return liquid-side heat transfer coefficient h_L (W/(m²·K))
@@ -1789,29 +1610,24 @@ public class TwoPhasePipeFlowSystem
 
     double usg = flowNode[nodeNumber].getSuperficialVelocity(0);
     double usl = flowNode[nodeNumber].getSuperficialVelocity(1);
-    double rhoL =
-        flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
-    double muL =
-        flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
+    double rhoL = flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+    double muL = flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
     double cpL = flowNode[nodeNumber].getBulkSystem().getPhase(1).getCp()
         / flowNode[nodeNumber].getBulkSystem().getPhase(1).getNumberOfMolesInPhase()
         / flowNode[nodeNumber].getBulkSystem().getPhase(1).getMolarMass();
-    double kL =
-        flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getConductivity();
+    double kL = flowNode[nodeNumber].getBulkSystem().getPhase(1).getPhysicalProperties().getConductivity();
 
     // Protect against invalid values
     if (Double.isNaN(rhoL) || rhoL <= 0 || Double.isNaN(muL) || muL <= 0) {
       return 0.0;
     }
 
-    return HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(pattern,
-        diameter, holdup, usg, usl, rhoL, muL, cpL, kL);
+    return HeatTransferCoefficientCalculator.calculateLiquidHeatTransferCoefficient(pattern, diameter, holdup, usg, usl,
+        rhoL, muL, cpL, kL);
   }
 
   /**
-   * <p>
    * Calculates the gas-side interphase heat transfer coefficient at a specific node.
-   * </p>
    *
    * @param nodeNumber the node index
    * @return gas-side heat transfer coefficient h_G (W/(m²·K))
@@ -1826,29 +1642,24 @@ public class TwoPhasePipeFlowSystem
     double holdup = flowNode[nodeNumber].getPhaseFraction(1);
 
     double usg = flowNode[nodeNumber].getSuperficialVelocity(0);
-    double rhoG =
-        flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
-    double muG =
-        flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
+    double rhoG = flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double muG = flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
     double cpG = flowNode[nodeNumber].getBulkSystem().getPhase(0).getCp()
         / flowNode[nodeNumber].getBulkSystem().getPhase(0).getNumberOfMolesInPhase()
         / flowNode[nodeNumber].getBulkSystem().getPhase(0).getMolarMass();
-    double kG =
-        flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getConductivity();
+    double kG = flowNode[nodeNumber].getBulkSystem().getPhase(0).getPhysicalProperties().getConductivity();
 
     // Protect against invalid values
     if (Double.isNaN(rhoG) || rhoG <= 0 || Double.isNaN(muG) || muG <= 0) {
       return 0.0;
     }
 
-    return HeatTransferCoefficientCalculator.calculateGasHeatTransferCoefficient(pattern, diameter,
-        holdup, usg, rhoG, muG, cpG, kG);
+    return HeatTransferCoefficientCalculator.calculateGasHeatTransferCoefficient(pattern, diameter, holdup, usg, rhoG,
+        muG, cpG, kG);
   }
 
   /**
-   * <p>
    * Calculates the overall interphase heat transfer coefficient at a specific node.
-   * </p>
    *
    * <p>
    * Uses the resistance in series model: 1/U = 1/h_L + 1/h_G
@@ -1864,9 +1675,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the liquid-side heat transfer coefficient profile along the pipe.
-   * </p>
    *
    * @return an array of h_L values (W/(m²·K)) at each node
    */
@@ -1879,9 +1688,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the gas-side heat transfer coefficient profile along the pipe.
-   * </p>
    *
    * @return an array of h_G values (W/(m²·K)) at each node
    */
@@ -1894,9 +1701,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the overall interphase heat transfer coefficient profile.
-   * </p>
    *
    * @return an array of overall U values (W/(m²·K)) at each node
    */
@@ -1909,9 +1714,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Calculates the interphase heat flux at a specific node.
-   * </p>
    *
    * <p>
    * q = U_interphase * (T_gas - T_liquid) in W/m²
@@ -1933,9 +1736,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the interphase heat flux profile along the pipe.
-   * </p>
    *
    * @return an array of interphase heat fluxes in W/m² at each node
    */
@@ -1948,13 +1749,11 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Calculates the volumetric interphase heat transfer coefficient (U·a) at a node.
-   * </p>
    *
    * <p>
-   * This is the product of the interphase heat transfer coefficient and the interfacial area per
-   * unit volume: U·a in W/(m³·K)
+   * This is the product of the interphase heat transfer coefficient and the interfacial area per unit volume: U·a in
+   * W/(m³·K)
    * </p>
    *
    * @param nodeNumber the node index
@@ -1967,9 +1766,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the volumetric heat transfer coefficient (U·a) profile along the pipe.
-   * </p>
    *
    * @return an array of U·a values (W/(m³·K)) at each node
    */
@@ -1984,9 +1781,7 @@ public class TwoPhasePipeFlowSystem
   // ==================== DIMENSIONLESS NUMBERS ====================
 
   /**
-   * <p>
    * Gets the Prandtl number profile for a specific phase.
-   * </p>
    *
    * <p>
    * Pr = μ·Cp / k = ν / α (momentum diffusivity / thermal diffusivity)
@@ -1998,13 +1793,11 @@ public class TwoPhasePipeFlowSystem
   public double[] getPrandtlNumberProfile(int phaseIndex) {
     double[] pr = new double[getTotalNumberOfNodes()];
     for (int i = 0; i < getTotalNumberOfNodes(); i++) {
-      double mu =
-          flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getViscosity();
+      double mu = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getViscosity();
       double cp = flowNode[i].getBulkSystem().getPhase(phaseIndex).getCp()
           / flowNode[i].getBulkSystem().getPhase(phaseIndex).getNumberOfMolesInPhase()
           / flowNode[i].getBulkSystem().getPhase(phaseIndex).getMolarMass();
-      double k = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties()
-          .getConductivity();
+      double k = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getConductivity();
       if (k > 0) {
         pr[i] = mu * cp / k;
       }
@@ -2013,9 +1806,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the Nusselt number profile for a specific phase.
-   * </p>
    *
    * <p>
    * Nu = h·L / k (convective / conductive heat transfer)
@@ -2027,11 +1818,9 @@ public class TwoPhasePipeFlowSystem
   public double[] getNusseltNumberProfile(int phaseIndex) {
     double[] nu = new double[getTotalNumberOfNodes()];
     for (int i = 0; i < getTotalNumberOfNodes(); i++) {
-      double h = (phaseIndex == 0) ? getGasHeatTransferCoefficientAtNode(i)
-          : getLiquidHeatTransferCoefficientAtNode(i);
+      double h = (phaseIndex == 0) ? getGasHeatTransferCoefficientAtNode(i) : getLiquidHeatTransferCoefficientAtNode(i);
       double diameter = flowNode[i].getGeometry().getDiameter();
-      double k = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties()
-          .getConductivity();
+      double k = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getConductivity();
       if (k > 0) {
         nu[i] = h * diameter / k;
       }
@@ -2040,9 +1829,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the Schmidt number profile for a specific phase.
-   * </p>
    *
    * <p>
    * Sc = μ / (ρ·D) = ν / D (momentum diffusivity / mass diffusivity)
@@ -2055,10 +1842,8 @@ public class TwoPhasePipeFlowSystem
   public double[] getSchmidtNumberProfile(int phaseIndex, double diffusivity) {
     double[] sc = new double[getTotalNumberOfNodes()];
     for (int i = 0; i < getTotalNumberOfNodes(); i++) {
-      double mu =
-          flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getViscosity();
-      double rho =
-          flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getDensity();
+      double mu = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getViscosity();
+      double rho = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getDensity();
       if (diffusivity > 0 && rho > 0) {
         sc[i] = mu / (rho * diffusivity);
       }
@@ -2067,9 +1852,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the Sherwood number profile for a specific phase.
-   * </p>
    *
    * <p>
    * Sh = k·L / D (convective / diffusive mass transfer)
@@ -2093,9 +1876,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the Stanton number (heat) profile for a specific phase.
-   * </p>
    *
    * <p>
    * St = Nu / (Re·Pr) = h / (ρ·u·Cp)
@@ -2107,10 +1888,8 @@ public class TwoPhasePipeFlowSystem
   public double[] getStantonNumberHeatProfile(int phaseIndex) {
     double[] st = new double[getTotalNumberOfNodes()];
     for (int i = 0; i < getTotalNumberOfNodes(); i++) {
-      double h = (phaseIndex == 0) ? getGasHeatTransferCoefficientAtNode(i)
-          : getLiquidHeatTransferCoefficientAtNode(i);
-      double rho =
-          flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getDensity();
+      double h = (phaseIndex == 0) ? getGasHeatTransferCoefficientAtNode(i) : getLiquidHeatTransferCoefficientAtNode(i);
+      double rho = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getDensity();
       double u = flowNode[i].getVelocity(phaseIndex);
       double cp = flowNode[i].getBulkSystem().getPhase(phaseIndex).getCp()
           / flowNode[i].getBulkSystem().getPhase(phaseIndex).getNumberOfMolesInPhase()
@@ -2122,9 +1901,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the Lewis number profile for a specific phase.
-   * </p>
    *
    * <p>
    * Le = Sc / Pr = α / D (thermal diffusivity / mass diffusivity)
@@ -2149,9 +1926,7 @@ public class TwoPhasePipeFlowSystem
   // ==================== ENERGY BALANCE AND PHASE CHANGE ====================
 
   /**
-   * <p>
    * Calculates the total interphase heat transfer rate along the pipe.
-   * </p>
    *
    * @return total interphase heat transfer rate in W
    */
@@ -2166,9 +1941,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Calculates the overall energy balance for the pipe system.
-   * </p>
    *
    * <p>
    * Returns the relative energy imbalance: (H_in - H_out - Q_wall) / H_in
@@ -2194,9 +1967,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the cumulative energy loss profile along the pipe.
-   * </p>
    *
    * @return an array of cumulative energy losses in J at each node
    */
@@ -2213,9 +1984,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Estimates the condensation rate at a specific node.
-   * </p>
    *
    * <p>
    * Condensation rate = Q_interphase / h_fg (kg/s per unit area)
@@ -2249,9 +2018,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the condensation rate profile along the pipe.
-   * </p>
    *
    * @return an array of condensation rates in kg/(m²·s) at each node
    */
@@ -2264,9 +2031,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Calculates the total condensation rate along the entire pipe.
-   * </p>
    *
    * @return total condensation rate in kg/s
    */
@@ -2281,9 +2046,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the thermal conductivity profile for a specific phase.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of thermal conductivities in W/(m·K) at each node
@@ -2291,16 +2054,13 @@ public class TwoPhasePipeFlowSystem
   public double[] getThermalConductivityProfile(int phaseIndex) {
     double[] k = new double[getTotalNumberOfNodes()];
     for (int i = 0; i < getTotalNumberOfNodes(); i++) {
-      k[i] = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties()
-          .getConductivity();
+      k[i] = flowNode[i].getBulkSystem().getPhase(phaseIndex).getPhysicalProperties().getConductivity();
     }
     return k;
   }
 
   /**
-   * <p>
    * Gets the surface tension profile along the pipe.
-   * </p>
    *
    * @return an array of surface tensions in N/m at each node
    */
@@ -2315,9 +2075,7 @@ public class TwoPhasePipeFlowSystem
   // ==================== MASS BALANCE ====================
 
   /**
-   * <p>
    * Calculates the overall mass balance error for the pipe system.
-   * </p>
    *
    * @return relative mass balance error (0 = perfect balance)
    */
@@ -2342,9 +2100,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the mass flow rate profile for a specific phase.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of mass flow rates in kg/s at each node
@@ -2358,9 +2114,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the total (gas + liquid) mass flow rate profile.
-   * </p>
    *
    * @return an array of total mass flow rates in kg/s at each node
    */
@@ -2373,9 +2127,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the gas quality (vapor mass fraction) profile along the pipe.
-   * </p>
    *
    * @return an array of gas quality values (0-1) at each node
    */
@@ -2393,9 +2145,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the mixture density profile along the pipe.
-   * </p>
    *
    * <p>
    * ρ_mix = α·ρ_G + (1-α)·ρ_L
@@ -2415,9 +2165,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the mixture velocity profile along the pipe.
-   * </p>
    *
    * @return an array of mixture velocities in m/s at each node
    */
@@ -2430,9 +2178,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the slip ratio profile along the pipe.
-   * </p>
    *
    * <p>
    * Slip ratio S = u_G / u_L
@@ -2457,9 +2203,7 @@ public class TwoPhasePipeFlowSystem
   // ==================== FRICTION AND PRESSURE DROP ====================
 
   /**
-   * <p>
    * Gets the wall friction factor profile for a specific phase.
-   * </p>
    *
    * @param phaseIndex 0 for gas phase, 1 for liquid phase
    * @return an array of friction factors at each node
@@ -2473,9 +2217,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the interphase friction factor profile.
-   * </p>
    *
    * @return an array of interphase friction factors at each node
    */
@@ -2488,9 +2230,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the pressure gradient profile along the pipe.
-   * </p>
    *
    * @return an array of pressure gradients in Pa/m at each node
    */
@@ -2511,9 +2251,7 @@ public class TwoPhasePipeFlowSystem
   // ==================== FLOW PATTERN TRANSITION LOGIC ====================
 
   /**
-   * <p>
    * Updates flow patterns at all nodes based on current conditions.
-   * </p>
    *
    * <p>
    * When automatic flow pattern detection is enabled, this method:
@@ -2542,13 +2280,11 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Transitions a flow node to a new flow pattern type.
-   * </p>
    *
    * <p>
-   * This method creates a new flow node of the appropriate type and transfers all relevant state
-   * including temperature, pressure, composition, velocities, and phase fractions.
+   * This method creates a new flow node of the appropriate type and transfers all relevant state including temperature,
+   * pressure, composition, velocities, and phase fractions.
    * </p>
    *
    * @param nodeIndex the node index to transition
@@ -2557,8 +2293,7 @@ public class TwoPhasePipeFlowSystem
   protected void transitionFlowNodeType(int nodeIndex, FlowPattern newPattern) {
     // Store current state
     neqsim.thermo.system.SystemInterface currentSystem = flowNode[nodeIndex].getBulkSystem();
-    neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface geometry =
-        flowNode[nodeIndex].getGeometry();
+    neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface geometry = flowNode[nodeIndex].getGeometry();
     double[] velocities = new double[2];
     double[] phaseFractions = new double[2];
 
@@ -2568,8 +2303,8 @@ public class TwoPhasePipeFlowSystem
     }
 
     // Create new node of appropriate type
-    neqsim.fluidmechanics.flownode.FlowNodeInterface newNode =
-        createFlowNode(newPattern, currentSystem.clone(), geometry);
+    neqsim.fluidmechanics.flownode.FlowNodeInterface newNode = createFlowNode(newPattern, currentSystem.clone(),
+        geometry);
 
     // Transfer state to new node
     for (int p = 0; p < 2; p++) {
@@ -2585,9 +2320,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Creates a flow node of the specified flow pattern type.
-   * </p>
    *
    * @param pattern the flow pattern
    * @param system the thermodynamic system
@@ -2598,32 +2331,25 @@ public class TwoPhasePipeFlowSystem
       neqsim.thermo.system.SystemInterface system,
       neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface geometry) {
     switch (pattern) {
-      case ANNULAR:
-        return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow(
-            system, geometry);
-      case SLUG:
-        return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.SlugFlowNode(
-            system, geometry);
-      case BUBBLE:
-      case DISPERSED_BUBBLE:
-        return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.BubbleFlowNode(
-            system, geometry);
-      case DROPLET:
-        return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.DropletFlowNode(
-            system, geometry);
-      case STRATIFIED:
-      case STRATIFIED_WAVY:
-      case CHURN:
-      default:
-        return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode(
-            system, geometry);
+    case ANNULAR:
+      return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.AnnularFlow(system, geometry);
+    case SLUG:
+      return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.SlugFlowNode(system, geometry);
+    case BUBBLE:
+    case DISPERSED_BUBBLE:
+      return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.BubbleFlowNode(system, geometry);
+    case DROPLET:
+      return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.DropletFlowNode(system, geometry);
+    case STRATIFIED:
+    case STRATIFIED_WAVY:
+    case CHURN:
+    default:
+      return new neqsim.fluidmechanics.flownode.twophasenode.twophasepipeflownode.StratifiedFlowNode(system, geometry);
     }
   }
 
   /**
-   * <p>
    * Gets the count of flow pattern transitions along the pipe.
-   * </p>
    *
    * @return the number of transitions
    */
@@ -2642,9 +2368,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the positions where flow pattern transitions occur.
-   * </p>
    *
    * @return an array of node indices where transitions occur
    */
@@ -2665,12 +2389,11 @@ public class TwoPhasePipeFlowSystem
   // ==================== PRESSURE DROP CORRELATIONS ====================
 
   /**
-   * <p>
    * Calculates the total pressure drop along the pipe.
-   * </p>
    *
    * @return the total pressure drop in bar
    */
+  @Override
   public double getTotalPressureDrop() {
     double inletPressure = flowNode[0].getBulkSystem().getPressure();
     double outletPressure = flowNode[getTotalNumberOfNodes() - 1].getBulkSystem().getPressure();
@@ -2678,9 +2401,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Calculates the frictional pressure drop component.
-   * </p>
    *
    * @return the frictional pressure drop in bar
    */
@@ -2712,9 +2433,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Calculates the gravitational pressure drop component.
-   * </p>
    *
    * @return the gravitational pressure drop in bar
    */
@@ -2741,9 +2460,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Calculates the acceleration pressure drop component.
-   * </p>
    *
    * @return the acceleration pressure drop in bar
    */
@@ -2756,26 +2473,21 @@ public class TwoPhasePipeFlowSystem
     double alpha_in = flowNode[0].getPhaseFraction(0);
 
     int lastNode = getTotalNumberOfNodes() - 1;
-    double rhoG_out =
-        flowNode[lastNode].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
-    double rhoL_out =
-        flowNode[lastNode].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+    double rhoG_out = flowNode[lastNode].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double rhoL_out = flowNode[lastNode].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
     double uG_out = flowNode[lastNode].getVelocity(0);
     double uL_out = flowNode[lastNode].getVelocity(1);
     double alpha_out = flowNode[lastNode].getPhaseFraction(0);
 
     // Momentum flux = ρ * u² * A * phase fraction
     double momIn = alpha_in * rhoG_in * uG_in * uG_in + (1 - alpha_in) * rhoL_in * uL_in * uL_in;
-    double momOut =
-        alpha_out * rhoG_out * uG_out * uG_out + (1 - alpha_out) * rhoL_out * uL_out * uL_out;
+    double momOut = alpha_out * rhoG_out * uG_out * uG_out + (1 - alpha_out) * rhoL_out * uL_out * uL_out;
 
     return (momOut - momIn) / 1e5; // Convert Pa to bar
   }
 
   /**
-   * <p>
    * Gets the pressure drop breakdown as a formatted string.
-   * </p>
    *
    * @return a string describing the pressure drop components
    */
@@ -2785,35 +2497,26 @@ public class TwoPhasePipeFlowSystem
     double gravDP = getGravitationalPressureDrop();
     double accelDP = getAccelerationPressureDrop();
 
-    return String.format(
-        "Pressure Drop Breakdown:%n" + "  Total:        %.4f bar%n" + "  Frictional:   %.4f bar%n"
-            + "  Gravitational: %.4f bar%n" + "  Acceleration: %.4f bar%n",
-        totalDP, fricDP, gravDP, accelDP);
+    return String.format("Pressure Drop Breakdown:%n" + "  Total:        %.4f bar%n" + "  Frictional:   %.4f bar%n"
+        + "  Gravitational: %.4f bar%n" + "  Acceleration: %.4f bar%n", totalDP, fricDP, gravDP, accelDP);
   }
 
   /**
-   * <p>
    * Calculates the two-phase pressure drop using Lockhart-Martinelli correlation.
-   * </p>
    *
    * <p>
-   * Reference: Lockhart, R.W. and Martinelli, R.C. (1949). "Proposed Correlation of Data for
-   * Isothermal Two-Phase, Two-Component Flow in Pipes." Chemical Engineering Progress, 45(1),
-   * 39-48.
+   * Reference: Lockhart, R.W. and Martinelli, R.C. (1949). "Proposed Correlation of Data for Isothermal Two-Phase,
+   * Two-Component Flow in Pipes." Chemical Engineering Progress, 45(1), 39-48.
    * </p>
    *
    * @param nodeIndex the node index
    * @return the two-phase pressure gradient in Pa/m
    */
   public double getLockhartMartinelliPressureGradient(int nodeIndex) {
-    double rhoG =
-        flowNode[nodeIndex].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
-    double rhoL =
-        flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
-    double muG =
-        flowNode[nodeIndex].getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
-    double muL =
-        flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
+    double rhoG = flowNode[nodeIndex].getBulkSystem().getPhase(0).getPhysicalProperties().getDensity();
+    double rhoL = flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getDensity();
+    double muG = flowNode[nodeIndex].getBulkSystem().getPhase(0).getPhysicalProperties().getViscosity();
+    double muL = flowNode[nodeIndex].getBulkSystem().getPhase(1).getPhysicalProperties().getViscosity();
     double usgVal = flowNode[nodeIndex].getSuperficialVelocity(0);
     double uslVal = flowNode[nodeIndex].getSuperficialVelocity(1);
     double diameter = flowNode[nodeIndex].getGeometry().getDiameter();
@@ -2841,9 +2544,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * Gets the Lockhart-Martinelli pressure gradient profile.
-   * </p>
    *
    * @return an array of pressure gradients in Pa/m at each node
    */
@@ -2874,15 +2575,15 @@ public class TwoPhasePipeFlowSystem
    */
   public void setInclination(double angle, String unit) {
     switch (unit.toLowerCase()) {
-      case "deg":
-      case "degrees":
-        this.inclination = Math.toRadians(angle);
-        break;
-      case "rad":
-      case "radians":
-      default:
-        this.inclination = angle;
-        break;
+    case "deg":
+    case "degrees":
+      this.inclination = Math.toRadians(angle);
+      break;
+    case "rad":
+    case "radians":
+    default:
+      this.inclination = angle;
+      break;
     }
   }
 
@@ -2979,8 +2680,8 @@ public class TwoPhasePipeFlowSystem
    * Exports all simulation results to a CSV file.
    *
    * <p>
-   * The CSV file contains columns for position, temperature, pressure, velocity (gas/liquid), void
-   * fraction, density, and other calculated properties.
+   * The CSV file contains columns for position, temperature, pressure, velocity (gas/liquid), void fraction, density,
+   * and other calculated properties.
    * </p>
    *
    * @param filePath the path to the output CSV file
@@ -2998,15 +2699,14 @@ public class TwoPhasePipeFlowSystem
    * @throws java.io.IOException if file writing fails
    */
   public void exportToCSV(String filePath, String delimiter) throws java.io.IOException {
-    try (java.io.PrintWriter writer =
-        new java.io.PrintWriter(new java.io.BufferedWriter(new java.io.FileWriter(filePath)))) {
+    try (java.io.PrintWriter writer = new java.io.PrintWriter(
+        new java.io.BufferedWriter(new java.io.FileWriter(filePath)))) {
       // Write header
-      String[] headers = {"Position [m]", "Elevation [m]", "Temperature [K]", "Pressure [Pa]",
-          "Gas Velocity [m/s]", "Liquid Velocity [m/s]", "Superficial Gas Velocity [m/s]",
-          "Superficial Liquid Velocity [m/s]", "Void Fraction [-]", "Liquid Holdup [-]",
-          "Gas Density [kg/m3]", "Liquid Density [kg/m3]", "Mixture Density [kg/m3]",
-          "Gas Viscosity [Pa.s]", "Liquid Viscosity [Pa.s]", "Reynolds Gas [-]",
-          "Reynolds Liquid [-]", "Pressure Gradient [Pa/m]", "Flow Pattern"};
+      String[] headers = { "Position [m]", "Elevation [m]", "Temperature [K]", "Pressure [Pa]", "Gas Velocity [m/s]",
+          "Liquid Velocity [m/s]", "Superficial Gas Velocity [m/s]", "Superficial Liquid Velocity [m/s]",
+          "Void Fraction [-]", "Liquid Holdup [-]", "Gas Density [kg/m3]", "Liquid Density [kg/m3]",
+          "Mixture Density [kg/m3]", "Gas Viscosity [Pa.s]", "Liquid Viscosity [Pa.s]", "Reynolds Gas [-]",
+          "Reynolds Liquid [-]", "Pressure Gradient [Pa/m]", "Flow Pattern" };
       writer.println(String.join(delimiter, headers));
 
       // Get all profiles
@@ -3032,16 +2732,15 @@ public class TwoPhasePipeFlowSystem
 
       // Write data rows
       for (int i = 0; i < getTotalNumberOfNodes(); i++) {
-        String[] values = {String.format("%.6f", position[i]), String.format("%.6f", elevation[i]),
+        String[] values = { String.format("%.6f", position[i]), String.format("%.6f", elevation[i]),
             String.format("%.4f", temperature[i]), String.format("%.2f", pressure[i]),
             String.format("%.6f", gasVelocity[i]), String.format("%.6f", liquidVelocity[i]),
-            String.format("%.6f", usg[i]), String.format("%.6f", usl[i]),
-            String.format("%.6f", voidFraction[i]), String.format("%.6f", liquidHoldup[i]),
-            String.format("%.4f", gasDensity[i]), String.format("%.4f", liquidDensity[i]),
-            String.format("%.4f", mixtureDensity[i]), String.format("%.8e", gasViscosity[i]),
-            String.format("%.8e", liquidViscosity[i]), String.format("%.2f", reGas[i]),
-            String.format("%.2f", reLiquid[i]), String.format("%.4f", pressureGradient[i]),
-            patterns[i] != null ? patterns[i].getName() : "unknown"};
+            String.format("%.6f", usg[i]), String.format("%.6f", usl[i]), String.format("%.6f", voidFraction[i]),
+            String.format("%.6f", liquidHoldup[i]), String.format("%.4f", gasDensity[i]),
+            String.format("%.4f", liquidDensity[i]), String.format("%.4f", mixtureDensity[i]),
+            String.format("%.8e", gasViscosity[i]), String.format("%.8e", liquidViscosity[i]),
+            String.format("%.2f", reGas[i]), String.format("%.2f", reLiquid[i]),
+            String.format("%.4f", pressureGradient[i]), patterns[i] != null ? patterns[i].getName() : "unknown" };
         writer.println(String.join(delimiter, values));
       }
     }
@@ -3066,75 +2765,74 @@ public class TwoPhasePipeFlowSystem
    * @param delimiter the column delimiter
    * @throws java.io.IOException if file writing fails
    */
-  public void exportProfilesToCSV(String filePath, String[] profiles, String delimiter)
-      throws java.io.IOException {
-    try (java.io.PrintWriter writer =
-        new java.io.PrintWriter(new java.io.BufferedWriter(new java.io.FileWriter(filePath)))) {
+  public void exportProfilesToCSV(String filePath, String[] profiles, String delimiter) throws java.io.IOException {
+    try (java.io.PrintWriter writer = new java.io.PrintWriter(
+        new java.io.BufferedWriter(new java.io.FileWriter(filePath)))) {
       // Build header and collect data
       java.util.List<String> headers = new java.util.ArrayList<>();
       java.util.List<double[]> data = new java.util.ArrayList<>();
 
       for (String profile : profiles) {
         switch (profile.toLowerCase()) {
-          case "position":
-            headers.add("Position [m]");
-            data.add(getPositionProfile());
-            break;
-          case "elevation":
-            headers.add("Elevation [m]");
-            data.add(getElevationProfile());
-            break;
-          case "temperature":
-            headers.add("Temperature [K]");
-            data.add(getTemperatureProfile());
-            break;
-          case "pressure":
-            headers.add("Pressure [Pa]");
-            data.add(getPressureProfile());
-            break;
-          case "gasvelocity":
-          case "gas_velocity":
-            headers.add("Gas Velocity [m/s]");
-            data.add(getVelocityProfile(0));
-            break;
-          case "liquidvelocity":
-          case "liquid_velocity":
-            headers.add("Liquid Velocity [m/s]");
-            data.add(getVelocityProfile(1));
-            break;
-          case "voidfraction":
-          case "void_fraction":
-            headers.add("Void Fraction [-]");
-            data.add(getVoidFractionProfile());
-            break;
-          case "liquidholdup":
-          case "liquid_holdup":
-            headers.add("Liquid Holdup [-]");
-            data.add(getLiquidHoldupProfile());
-            break;
-          case "gasdensity":
-          case "gas_density":
-            headers.add("Gas Density [kg/m3]");
-            data.add(getDensityProfile(0));
-            break;
-          case "liquiddensity":
-          case "liquid_density":
-            headers.add("Liquid Density [kg/m3]");
-            data.add(getDensityProfile(1));
-            break;
-          case "mixturedensity":
-          case "mixture_density":
-            headers.add("Mixture Density [kg/m3]");
-            data.add(getMixtureDensityProfile());
-            break;
-          case "pressuregradient":
-          case "pressure_gradient":
-            headers.add("Pressure Gradient [Pa/m]");
-            data.add(getPressureGradientProfile());
-            break;
-          default:
-            // Unknown profile, skip
-            break;
+        case "position":
+          headers.add("Position [m]");
+          data.add(getPositionProfile());
+          break;
+        case "elevation":
+          headers.add("Elevation [m]");
+          data.add(getElevationProfile());
+          break;
+        case "temperature":
+          headers.add("Temperature [K]");
+          data.add(getTemperatureProfile());
+          break;
+        case "pressure":
+          headers.add("Pressure [Pa]");
+          data.add(getPressureProfile());
+          break;
+        case "gasvelocity":
+        case "gas_velocity":
+          headers.add("Gas Velocity [m/s]");
+          data.add(getVelocityProfile(0));
+          break;
+        case "liquidvelocity":
+        case "liquid_velocity":
+          headers.add("Liquid Velocity [m/s]");
+          data.add(getVelocityProfile(1));
+          break;
+        case "voidfraction":
+        case "void_fraction":
+          headers.add("Void Fraction [-]");
+          data.add(getVoidFractionProfile());
+          break;
+        case "liquidholdup":
+        case "liquid_holdup":
+          headers.add("Liquid Holdup [-]");
+          data.add(getLiquidHoldupProfile());
+          break;
+        case "gasdensity":
+        case "gas_density":
+          headers.add("Gas Density [kg/m3]");
+          data.add(getDensityProfile(0));
+          break;
+        case "liquiddensity":
+        case "liquid_density":
+          headers.add("Liquid Density [kg/m3]");
+          data.add(getDensityProfile(1));
+          break;
+        case "mixturedensity":
+        case "mixture_density":
+          headers.add("Mixture Density [kg/m3]");
+          data.add(getMixtureDensityProfile());
+          break;
+        case "pressuregradient":
+        case "pressure_gradient":
+          headers.add("Pressure Gradient [Pa/m]");
+          data.add(getPressureGradientProfile());
+          break;
+        default:
+          // Unknown profile, skip
+          break;
         }
       }
 
@@ -3200,8 +2898,7 @@ public class TwoPhasePipeFlowSystem
     sb.append("PRESSURE DROP:\n");
     double totalDp = pres[0] - pres[n];
     sb.append(String.format("  Total Pressure Drop: %.2f Pa (%.4f bar)\n", totalDp, totalDp / 1e5));
-    sb.append(
-        String.format("  Average Pressure Gradient: %.2f Pa/m\n", totalDp / getSystemLength()));
+    sb.append(String.format("  Average Pressure Gradient: %.2f Pa/m\n", totalDp / getSystemLength()));
     sb.append("\n");
 
     // Temperature change
@@ -3227,9 +2924,7 @@ public class TwoPhasePipeFlowSystem
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -3240,12 +2935,11 @@ public class TwoPhasePipeFlowSystem
     neqsim.fluidmechanics.flowsystem.FlowSystemInterface pipe = new TwoPhasePipeFlowSystem();
 
     // Definerer termodyanmikken5 - initierer et system som benytter SRK tilstandsligning
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos(295.3, 5.0);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos(295.3, 5.0);
 
     // med trykk 305.3 K og 125 bar - // gjor termodynamiske Flash rutiner tilgjengelige
-    neqsim.thermodynamicoperations.ThermodynamicOperations testOps =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(testSystem);
+    neqsim.thermodynamicoperations.ThermodynamicOperations testOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+        testSystem);
     testSystem.addComponent("methane", 0.11152181, 0);
     // testSystem.addComponent("ethane", 0.0011152181, 0);
     testSystem.addComponent("water", 0.04962204876, 1);
@@ -3256,15 +2950,15 @@ public class TwoPhasePipeFlowSystem
     pipe.setInletThermoSystem(testSystem); // setter termodyanmikken for rorsystemet
     pipe.setNumberOfLegs(5); // deler inn roret i et gitt antall legger
     pipe.setNumberOfNodesInLeg(10); // setter antall nodepunkter (beregningspunkter/grid) pr.
-                                    // leg
-    double[] height = {0, 0, 0, 0, 0, 0};
-    double[] length = {0.0, 1.7, 3.5, 5.0, 7.5, 10.4};
-    double[] outerTemperature = {278.0, 278.0, 278.0, 278.0, 278.0, 278.0}; // , 278.0, 275.0,
-                                                                            // 275.0, 275.0,
-                                                                            // 275.0};
-    double[] roughness = {1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5};
-    double[] outHeatCoef = {5.0, 5.0, 5.0, 5.0, 5.0, 5.0};
-    double[] wallHeacCoef = {15.0, 15.0, 15.0, 15.0, 15.0, 15.0};
+    // leg
+    double[] height = { 0, 0, 0, 0, 0, 0 };
+    double[] length = { 0.0, 1.7, 3.5, 5.0, 7.5, 10.4 };
+    double[] outerTemperature = { 278.0, 278.0, 278.0, 278.0, 278.0, 278.0 }; // , 278.0, 275.0,
+    // 275.0, 275.0,
+    // 275.0};
+    double[] roughness = { 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5, 1.0e-5 };
+    double[] outHeatCoef = { 5.0, 5.0, 5.0, 5.0, 5.0, 5.0 };
+    double[] wallHeacCoef = { 15.0, 15.0, 15.0, 15.0, 15.0, 15.0 };
 
     pipe.setLegHeights(height); // setter inn hoyde for hver leg-ende
     pipe.setLegPositions(length); // setter avstand til hver leg-ende
@@ -3273,12 +2967,10 @@ public class TwoPhasePipeFlowSystem
     pipe.setLegOuterHeatTransferCoefficients(outHeatCoef);
 
     // Definerer geometrien for roret
-    neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface[] pipeGemometry =
-        new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData[6];
-    double[] pipeDiameter = {0.02588, 0.02588, 0.02588, 0.02588, 0.02588, 0.02588};
+    neqsim.fluidmechanics.geometrydefinitions.GeometryDefinitionInterface[] pipeGemometry = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData[6];
+    double[] pipeDiameter = { 0.02588, 0.02588, 0.02588, 0.02588, 0.02588, 0.02588 };
     for (int i = 0; i < pipeDiameter.length; i++) {
-      pipeGemometry[i] =
-          new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData(pipeDiameter[i]);
+      pipeGemometry[i] = new neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData(pipeDiameter[i]);
     }
     pipe.setEquipmentGeometry(pipeGemometry); // setter inn rorgeometrien for hver leg
     // utforer beregninger

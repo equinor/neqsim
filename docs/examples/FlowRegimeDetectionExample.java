@@ -31,19 +31,19 @@ public class FlowRegimeDetectionExample {
     System.out.println("============================================================");
     System.out.println("  PURE GAS (Single Phase)");
     System.out.println("============================================================");
-    testFlowRegimes(createPureGasFluid(temperature, pressure), 20.0, length, diameter, roughness,
-        temperature, pressure);
+    testFlowRegimes(createPureGasFluid(temperature, pressure), 20.0, length, diameter, roughness, temperature,
+        pressure);
 
     // Test two-phase at different flow rates
     System.out.println("\n============================================================");
     System.out.println("  TWO-PHASE (Gas + Oil) at Various Flow Rates");
     System.out.println("============================================================");
-    double[] flowRates = {1.0, 5.0, 20.0, 60.0, 100.0};
+    double[] flowRates = { 1.0, 5.0, 20.0, 60.0, 100.0 };
     for (double flowRate : flowRates) {
       System.out.printf("%nFlow Rate: %.0f kg/s%n", flowRate);
       System.out.println("----------------------------");
-      testFlowRegimes(createTwoPhaseFluid(temperature, pressure), flowRate, length, diameter,
-          roughness, temperature, pressure);
+      testFlowRegimes(createTwoPhaseFluid(temperature, pressure), flowRate, length, diameter, roughness, temperature,
+          pressure);
     }
 
     // Test three-phase
@@ -53,13 +53,13 @@ public class FlowRegimeDetectionExample {
     for (double flowRate : flowRates) {
       System.out.printf("%nFlow Rate: %.0f kg/s%n", flowRate);
       System.out.println("----------------------------");
-      testFlowRegimes(createThreePhaseFluid(temperature, pressure), flowRate, length, diameter,
-          roughness, temperature, pressure);
+      testFlowRegimes(createThreePhaseFluid(temperature, pressure), flowRate, length, diameter, roughness, temperature,
+          pressure);
     }
   }
 
-  private static void testFlowRegimes(SystemInterface fluid, double flowRate, double length,
-      double diameter, double roughness, double tempC, double pressure) {
+  private static void testFlowRegimes(SystemInterface fluid, double flowRate, double length, double diameter,
+      double roughness, double tempC, double pressure) {
     // Beggs & Brill
     try {
       Stream inlet = new Stream("BB_inlet", fluid.clone());

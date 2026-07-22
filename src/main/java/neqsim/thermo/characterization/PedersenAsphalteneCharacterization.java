@@ -4,8 +4,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
-import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.phase.PhaseSolid;
+import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
@@ -13,18 +13,16 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * Pedersen's method for asphaltene precipitation using classical cubic equation of state.
  *
  * <p>
- * This class implements asphaltene characterization and precipitation modeling based on the
- * methodology described by K.S. Pedersen (SPE-224534-MS, 2025). The key principle is that
- * asphaltene precipitation can be successfully modeled using a classical cubic equation of state
- * (SRK or PR) without requiring association terms.
+ * This class implements asphaltene characterization and precipitation modeling based on the methodology described by
+ * K.S. Pedersen (SPE-224534-MS, 2025). The key principle is that asphaltene precipitation can be successfully modeled
+ * using a classical cubic equation of state (SRK or PR) without requiring association terms.
  * </p>
  *
  * <h2>Theoretical Background</h2>
  * <p>
- * Asphaltenes are characterized as heavy pseudo-components with specific critical properties
- * derived from the same correlations used for C7+ characterization. The precipitation mechanism is
- * modeled as a liquid-liquid phase split between an asphaltene-rich heavy phase and an
- * asphaltene-lean light phase.
+ * Asphaltenes are characterized as heavy pseudo-components with specific critical properties derived from the same
+ * correlations used for C7+ characterization. The precipitation mechanism is modeled as a liquid-liquid phase split
+ * between an asphaltene-rich heavy phase and an asphaltene-lean light phase.
  * </p>
  *
  * <h2>Key Features</h2>
@@ -50,12 +48,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
  * References:
  * </p>
  * <ul>
- * <li>Pedersen, K.S. (2025). "The Mechanisms Behind Asphaltene Precipitation – Successfully Handled
- * by a Classical Cubic Equation of State." SPE-224534-MS, GOTECH, Dubai.</li>
- * <li>Pedersen, K.S., Christensen, P.L. (2007). "Phase Behavior of Petroleum Reservoir Fluids." CRC
- * Press.</li>
- * <li>Pedersen, K.S., Fredenslund, A., Thomassen, P. (1989). "Properties of Oils and Natural
- * Gases." Gulf Publishing.</li>
+ * <li>Pedersen, K.S. (2025). "The Mechanisms Behind Asphaltene Precipitation – Successfully Handled by a Classical
+ * Cubic Equation of State." SPE-224534-MS, GOTECH, Dubai.</li>
+ * <li>Pedersen, K.S., Christensen, P.L. (2007). "Phase Behavior of Petroleum Reservoir Fluids." CRC Press.</li>
+ * <li>Pedersen, K.S., Fredenslund, A., Thomassen, P. (1989). "Properties of Oils and Natural Gases." Gulf
+ * Publishing.</li>
  * </ul>
  *
  * @author ESOL
@@ -64,8 +61,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 public class PedersenAsphalteneCharacterization {
 
   /** Logger object for class. */
-  private static final Logger logger =
-      LogManager.getLogger(PedersenAsphalteneCharacterization.class);
+  private static final Logger logger = LogManager.getLogger(PedersenAsphalteneCharacterization.class);
 
   /** Default asphaltene molecular weight (g/mol). */
   public static final double DEFAULT_ASPHALTENE_MW = 750.0;
@@ -134,7 +130,8 @@ public class PedersenAsphalteneCharacterization {
   /**
    * Default constructor.
    */
-  public PedersenAsphalteneCharacterization() {}
+  public PedersenAsphalteneCharacterization() {
+  }
 
   /**
    * Constructor with system reference.
@@ -163,8 +160,8 @@ public class PedersenAsphalteneCharacterization {
    * Characterizes the asphaltene component using Pedersen correlations.
    *
    * <p>
-   * Calculates critical temperature, critical pressure, acentric factor, and boiling point using
-   * the same correlations as for heavy petroleum fractions.
+   * Calculates critical temperature, critical pressure, acentric factor, and boiling point using the same correlations
+   * as for heavy petroleum fractions.
    * </p>
    */
   public void characterize() {
@@ -173,16 +170,16 @@ public class PedersenAsphalteneCharacterization {
     calculateCriticalPressure();
     calculateAcentricFactor();
     isCharacterized = true;
-    logger.info("Asphaltene characterized: Tc={} K, Pc={} bar, omega={}", criticalTemperature,
-        criticalPressure, acentricFactor);
+    logger.info("Asphaltene characterized: Tc={} K, Pc={} bar, omega={}", criticalTemperature, criticalPressure,
+        acentricFactor);
   }
 
   /**
    * Calculates the boiling point using Søreide correlation.
    *
    * <p>
-   * The Søreide correlation is suitable for heavy petroleum fractions and is used consistently with
-   * other Pedersen characterization methods in NeqSim.
+   * The Søreide correlation is suitable for heavy petroleum fractions and is used consistently with other Pedersen
+   * characterization methods in NeqSim.
    * </p>
    */
   private void calculateBoilingPoint() {
@@ -277,39 +274,43 @@ public class PedersenAsphalteneCharacterization {
   }
 
   /**
-   * Calculates the acentric factor using Pedersen correlation.
+   * Calculates the acentric factor using Kesler-Lee correlation for heavy fractions.
    *
    * <p>
-   * For heavy components, uses the correlation: ω = c0 + c1*M + c2*ρ + c3/M
+   * For heavy components (MW &gt; 500), the standard Pedersen linear correlation extrapolates poorly, giving negative
+   * values. The Kesler-Lee correlation, which uses the reduced boiling point (Tbr = Tb/Tc), is more reliable for
+   * asphaltene-range molecular weights.
    * </p>
    */
   private void calculateAcentricFactor() {
     double M = asphalteneMW;
     double rho = asphalteneDensity;
 
-    // Pedersen correlation for acentric factor
-    // ω = c0 + c1*ρ + c2*M + c3/M
-    double c0 = -2.3838e-1;
-    double c1 = 6.10147e-2;
-    double c2 = 1.32349;
-    double c3 = -6.52067e-3;
-
-    acentricFactor = c0 + c1 * Math.log(M) + c2 * rho + c3 * M;
-
-    // Alternative: Kesler-Lee correlation
+    // Use Kesler-Lee correlation based on reduced boiling point (primary for heavy components)
     if (boilingPoint > 0 && criticalTemperature > 0 && criticalPressure > 0) {
       double Tbr = boilingPoint / criticalTemperature;
-      double Pbr = ThermodynamicConstantsInterface.referencePressure / criticalPressure;
+      double lnPbr = Math.log(ThermodynamicConstantsInterface.referencePressure / criticalPressure);
 
-      if (Tbr < 0.8) {
-        acentricFactor = (Math.log(Pbr) - 5.92714 + 6.09649 / Tbr + 1.28862 * Math.log(Tbr)
-            - 0.169347 * Math.pow(Tbr, 6.0))
-            / (15.2518 - 15.6875 / Tbr - 13.4721 * Math.log(Tbr) + 0.43577 * Math.pow(Tbr, 6.0));
+      if (Tbr > 0.0 && Tbr < 1.0) {
+        if (Tbr < 0.8) {
+          acentricFactor = (lnPbr - 5.92714 + 6.09649 / Tbr + 1.28862 * Math.log(Tbr) - 0.169347 * Math.pow(Tbr, 6.0))
+              / (15.2518 - 15.6875 / Tbr - 13.4721 * Math.log(Tbr) + 0.43577 * Math.pow(Tbr, 6.0));
+        } else {
+          // Edmister correlation for high Tbr
+          acentricFactor = (3.0 / 7.0)
+              * (Math.log(criticalPressure / 1.01325) / (criticalTemperature / boilingPoint - 1.0)) - 1.0;
+        }
       }
     }
 
+    // Fallback to density-based estimate for asphaltenes (condensed polycyclic aromatics)
+    if (Double.isNaN(acentricFactor) || acentricFactor < 0) {
+      // Empirical estimate: asphaltene omega scales with MW and compactness
+      acentricFactor = 0.8 + 0.3 * (M - 500.0) / 1000.0 + 0.4 * (rho - 1.0);
+    }
+
     // Ensure acentric factor is reasonable for heavy aromatics
-    // Asphaltenes typically have ω > 1.0
+    // Asphaltenes typically have ω in range 1.0-2.0
     if (acentricFactor < 0.8) {
       acentricFactor = 0.8 + 0.0005 * (M - 500.0);
     }
@@ -325,14 +326,13 @@ public class PedersenAsphalteneCharacterization {
    * Adds the asphaltene component to the thermodynamic system.
    *
    * <p>
-   * Creates a pseudo-component with the characterized properties and adds it to the system. The
-   * component is named "Asphaltene_PC" (following TBP naming convention) and is configured with the
-   * calculated critical properties.
+   * Creates a pseudo-component with the characterized properties and adds it to the system. The component is named
+   * "Asphaltene_PC" (following TBP naming convention) and is configured with the calculated critical properties.
    * </p>
    *
    * <p>
-   * Note: The mixing rule should be set AFTER calling this method, and init(0) should be called
-   * after setting the mixing rule.
+   * Note: The mixing rule should be set AFTER calling this method, and init(0) should be called after setting the
+   * mixing rule.
    * </p>
    *
    * @param system the thermodynamic system to add asphaltene to
@@ -360,31 +360,86 @@ public class PedersenAsphalteneCharacterization {
       system.getPhase(i).getComponent(aspIndex).setNormalBoilingPoint(boilingPoint);
     }
 
-    logger.info("Added asphaltene to system: {} mol, MW={} g/mol, name={}", moles, asphalteneMW,
-        componentName);
+    logger.info("Added asphaltene to system: {} mol, MW={} g/mol, name={}", moles, asphalteneMW, componentName);
     return componentName;
+  }
+
+  /**
+   * Applies binary interaction parameters between the asphaltene pseudo-component and all lighter components in the
+   * system.
+   *
+   * <p>
+   * This method MUST be called AFTER setting the mixing rule and calling init(0), because it modifies the mixing rule's
+   * kij matrix. The kij values between asphaltene and light components (methane, ethane, etc.) are typically 0.05-0.15
+   * and are critical for correctly predicting the liquid-liquid phase split.
+   * </p>
+   *
+   * @param system the thermodynamic system with asphaltene already added and mixing rule set
+   * @param defaultKij default kij value for asphaltene-light component pairs (typical: 0.05-0.12)
+   */
+  public void applyAsphalteneKij(SystemInterface system, double defaultKij) {
+    int nComp = system.getPhase(0).getNumberOfComponents();
+    int aspIndex = -1;
+
+    // Find asphaltene component index
+    for (int i = 0; i < nComp; i++) {
+      String name = system.getPhase(0).getComponent(i).getComponentName().toLowerCase();
+      if (name.contains("asphaltene")) {
+        aspIndex = i;
+        break;
+      }
+    }
+
+    if (aspIndex < 0) {
+      logger.warn("Asphaltene component not found in system - cannot set kij");
+      return;
+    }
+
+    double totalKijAdj = defaultKij + kijAdjustment;
+
+    for (int phase = 0; phase < system.getNumberOfPhases(); phase++) {
+      neqsim.thermo.phase.PhaseInterface phaseObj = system.getPhase(phase);
+      if (phaseObj instanceof neqsim.thermo.phase.PhaseEosInterface) {
+        neqsim.thermo.phase.PhaseEosInterface eosPhase = (neqsim.thermo.phase.PhaseEosInterface) phaseObj;
+        for (int j = 0; j < nComp; j++) {
+          if (j != aspIndex) {
+            double mwJ = system.getPhase(0).getComponent(j).getMolarMass() * 1000.0;
+            // Scale kij: larger for light components, smaller for heavy
+            double kijVal = totalKijAdj;
+            if (mwJ < 50.0) {
+              kijVal = totalKijAdj * 1.5; // Methane-asphaltene
+            } else if (mwJ < 100.0) {
+              kijVal = totalKijAdj * 1.2; // Ethane/propane-asphaltene
+            } else if (mwJ > 200.0) {
+              kijVal = totalKijAdj * 0.5; // Heavy-asphaltene
+            }
+            eosPhase.getEosMixingRule().setBinaryInteractionParameter(aspIndex, j, kijVal);
+            eosPhase.getEosMixingRule().setBinaryInteractionParameter(j, aspIndex, kijVal);
+          }
+        }
+      }
+    }
+    logger.info("Applied asphaltene kij={} (base) to {} components", totalKijAdj, nComp - 1);
   }
 
   /**
    * Adds multiple asphaltene pseudo-components with distributed molecular weights.
    *
    * <p>
-   * For more accurate modeling, the asphaltene can be represented as multiple pseudo-components
-   * with a distribution of molecular weights. This follows the same principle as C7+
-   * characterization.
+   * For more accurate modeling, the asphaltene can be represented as multiple pseudo-components with a distribution of
+   * molecular weights. This follows the same principle as C7+ characterization.
    * </p>
    *
    * <p>
-   * Note: The mixing rule should be set AFTER calling this method, and init(0) should be called
-   * after setting the mixing rule.
+   * Note: The mixing rule should be set AFTER calling this method, and init(0) should be called after setting the
+   * mixing rule.
    * </p>
    *
    * @param system the thermodynamic system
    * @param totalMoles total moles of asphaltene
    * @param numberOfComponents number of pseudo-components (typically 2-5)
    */
-  public void addDistributedAsphaltene(SystemInterface system, double totalMoles,
-      int numberOfComponents) {
+  public void addDistributedAsphaltene(SystemInterface system, double totalMoles, int numberOfComponents) {
     if (numberOfComponents < 1) {
       numberOfComponents = 1;
     }
@@ -420,14 +475,12 @@ public class PedersenAsphalteneCharacterization {
       // Create characterization for this pseudo-component
       PedersenAsphalteneCharacterization compChar = new PedersenAsphalteneCharacterization();
       compChar.setAsphalteneMW(componentMW[i]);
-      compChar.setAsphalteneDensity(
-          asphalteneDensity + 0.05 * (componentMW[i] - asphalteneMW) / asphalteneMW);
+      compChar.setAsphalteneDensity(asphalteneDensity + 0.05 * (componentMW[i] - asphalteneMW) / asphalteneMW);
       compChar.characterize();
 
       // Add to system with unique name (will get _PC suffix from addTBPfraction)
       String compName = "Asph_" + (i + 1);
-      system.addTBPfraction(compName, componentMoles[i], componentMW[i] / 1000.0,
-          compChar.getAsphalteneDensity());
+      system.addTBPfraction(compName, componentMoles[i], componentMW[i] / 1000.0, compChar.getAsphalteneDensity());
 
       // Set characterized properties (component was just added, so it's the last one)
       int compIndex = system.getPhase(0).getNumberOfComponents() - 1;
@@ -438,16 +491,15 @@ public class PedersenAsphalteneCharacterization {
       }
     }
 
-    logger.info("Added {} asphaltene pseudo-components, total {} mol", numberOfComponents,
-        totalMoles);
+    logger.info("Added {} asphaltene pseudo-components, total {} mol", numberOfComponents, totalMoles);
   }
 
   /**
    * Calculates the asphaltene onset pressure at the given temperature.
    *
    * <p>
-   * Uses the Pedersen approach of searching for liquid-liquid phase split conditions. The onset
-   * pressure is where a second liquid phase (asphaltene-rich) becomes stable.
+   * Uses the Pedersen approach of searching for liquid-liquid phase split conditions. The onset pressure is where a
+   * second liquid phase (asphaltene-rich) becomes stable.
    * </p>
    *
    * @param system the thermodynamic system with asphaltene component
@@ -455,8 +507,7 @@ public class PedersenAsphalteneCharacterization {
    * @param endPressure ending pressure for search (bar)
    * @return onset pressure in bar, or NaN if not found
    */
-  public double calculateOnsetPressure(SystemInterface system, double startPressure,
-      double endPressure) {
+  public double calculateOnsetPressure(SystemInterface system, double startPressure, double endPressure) {
     ThermodynamicOperations ops = new ThermodynamicOperations(system);
 
     double pressureStep = (startPressure - endPressure) / 50.0;
@@ -474,7 +525,9 @@ public class PedersenAsphalteneCharacterization {
 
         if (liquidPhases >= 2 && wasOnePhase) {
           // Found onset - refine with bisection
-          return refineOnsetPressure(system, ops, currentPressure + pressureStep, currentPressure);
+          // Cap upper bound at startPressure to prevent reporting onset above P_res
+          double upperBound = Math.min(currentPressure + pressureStep, startPressure);
+          return refineOnsetPressure(system, ops, upperBound, currentPressure);
         }
 
         wasOnePhase = (liquidPhases <= 1);
@@ -485,8 +538,7 @@ public class PedersenAsphalteneCharacterization {
       currentPressure -= pressureStep;
     }
 
-    logger.info("No asphaltene onset found in pressure range {} to {} bar", startPressure,
-        endPressure);
+    logger.info("No asphaltene onset found in pressure range {} to {} bar", startPressure, endPressure);
     return Double.NaN;
   }
 
@@ -512,15 +564,15 @@ public class PedersenAsphalteneCharacterization {
    * Performs a TPflash and automatically marks asphaltene-rich liquid phases.
    *
    * <p>
-   * This is a convenience method that combines the TPflash operation with automatic detection and
-   * marking of asphaltene-rich liquid phases (PhaseType.LIQUID_ASPHALTENE). Use this method instead
-   * of calling TPflash directly when working with Pedersen's liquid-liquid asphaltene approach.
+   * This is a convenience method that combines the TPflash operation with automatic detection and marking of
+   * asphaltene-rich liquid phases (PhaseType.LIQUID_ASPHALTENE). Use this method instead of calling TPflash directly
+   * when working with Pedersen's liquid-liquid asphaltene approach.
    * </p>
    *
    * <p>
    * Example usage:
    * </p>
-   * 
+   *
    * <pre>
    * {@code
    * // Setup fluid with asphaltene
@@ -550,8 +602,8 @@ public class PedersenAsphalteneCharacterization {
    * Performs a TPflash at specified conditions and automatically marks asphaltene-rich phases.
    *
    * <p>
-   * This is a convenience method that sets the temperature and pressure, performs a TPflash, and
-   * automatically marks asphaltene-rich liquid phases.
+   * This is a convenience method that sets the temperature and pressure, performs a TPflash, and automatically marks
+   * asphaltene-rich liquid phases.
    * </p>
    *
    * @param system the thermodynamic system to flash
@@ -569,10 +621,9 @@ public class PedersenAsphalteneCharacterization {
    * Marks asphaltene-rich liquid phases with PhaseType.LIQUID_ASPHALTENE.
    *
    * <p>
-   * This method should be called after a flash calculation to identify and mark liquid phases that
-   * are rich in asphaltene components (&gt; 50 mol% asphaltene). This is useful for the Pedersen
-   * liquid-liquid approach where asphaltene precipitation is modeled as a phase split between light
-   * and heavy liquid phases.
+   * This method should be called after a flash calculation to identify and mark liquid phases that are rich in
+   * asphaltene components (&gt; 50 mol% asphaltene). This is useful for the Pedersen liquid-liquid approach where
+   * asphaltene precipitation is modeled as a phase split between light and heavy liquid phases.
    * </p>
    *
    * @param system the thermodynamic system to update
@@ -605,8 +656,8 @@ public class PedersenAsphalteneCharacterization {
    * @param lowerP lower pressure bound (two phases)
    * @return refined onset pressure
    */
-  private double refineOnsetPressure(SystemInterface system, ThermodynamicOperations ops,
-      double upperP, double lowerP) {
+  private double refineOnsetPressure(SystemInterface system, ThermodynamicOperations ops, double upperP,
+      double lowerP) {
     double tolerance = 0.1; // bar
     int maxIterations = 20;
 
@@ -639,9 +690,8 @@ public class PedersenAsphalteneCharacterization {
    * Estimates asphaltene solubility parameter at given conditions.
    *
    * <p>
-   * The solubility parameter approach provides insight into asphaltene stability. Precipitation
-   * occurs when the difference between asphaltene and oil solubility parameters exceeds a critical
-   * value.
+   * The solubility parameter approach provides insight into asphaltene stability. Precipitation occurs when the
+   * difference between asphaltene and oil solubility parameters exceeds a critical value.
    * </p>
    *
    * @param temperature temperature in Kelvin
@@ -701,12 +751,10 @@ public class PedersenAsphalteneCharacterization {
    */
   public void setAsphalteneMW(double asphalteneMW) {
     if (asphalteneMW < MIN_ASPHALTENE_MW) {
-      logger.warn("Asphaltene MW {} is below minimum {}, setting to minimum", asphalteneMW,
-          MIN_ASPHALTENE_MW);
+      logger.warn("Asphaltene MW {} is below minimum {}, setting to minimum", asphalteneMW, MIN_ASPHALTENE_MW);
       this.asphalteneMW = MIN_ASPHALTENE_MW;
     } else if (asphalteneMW > MAX_ASPHALTENE_MW) {
-      logger.warn("Asphaltene MW {} exceeds maximum {}, setting to maximum", asphalteneMW,
-          MAX_ASPHALTENE_MW);
+      logger.warn("Asphaltene MW {} exceeds maximum {}, setting to maximum", asphalteneMW, MAX_ASPHALTENE_MW);
       this.asphalteneMW = MAX_ASPHALTENE_MW;
     } else {
       this.asphalteneMW = asphalteneMW;
@@ -853,8 +901,8 @@ public class PedersenAsphalteneCharacterization {
    * Sets the critical temperature tuning multiplier.
    *
    * <p>
-   * Use this to adjust the calculated critical temperature to match experimental onset pressures.
-   * Values typically range from 0.9 to 1.1.
+   * Use this to adjust the calculated critical temperature to match experimental onset pressures. Values typically
+   * range from 0.9 to 1.1.
    * </p>
    *
    * @param tcMultiplier multiplier for critical temperature
@@ -877,8 +925,8 @@ public class PedersenAsphalteneCharacterization {
    * Sets the critical pressure tuning multiplier.
    *
    * <p>
-   * Use this to adjust the calculated critical pressure to match experimental data. Values
-   * typically range from 0.8 to 1.2.
+   * Use this to adjust the calculated critical pressure to match experimental data. Values typically range from 0.8 to
+   * 1.2.
    * </p>
    *
    * @param pcMultiplier multiplier for critical pressure
@@ -901,8 +949,8 @@ public class PedersenAsphalteneCharacterization {
    * Sets the acentric factor tuning multiplier.
    *
    * <p>
-   * Use this to adjust the calculated acentric factor to match experimental data. The acentric
-   * factor strongly influences phase behavior predictions.
+   * Use this to adjust the calculated acentric factor to match experimental data. The acentric factor strongly
+   * influences phase behavior predictions.
    * </p>
    *
    * @param omegaMultiplier multiplier for acentric factor
@@ -944,9 +992,8 @@ public class PedersenAsphalteneCharacterization {
    * Sets the binary interaction parameter adjustment for asphaltene-light component pairs.
    *
    * <p>
-   * This adjustment is added to the default calculated binary interaction parameters between the
-   * asphaltene and lighter components. Positive values increase kij (reduce attraction), which can
-   * shift onset pressure to higher values.
+   * This adjustment is added to the default calculated binary interaction parameters between the asphaltene and lighter
+   * components. Positive values increase kij (reduce attraction), which can shift onset pressure to higher values.
    * </p>
    *
    * @param kijAdjustment adjustment to add to binary interaction parameters
@@ -966,8 +1013,7 @@ public class PedersenAsphalteneCharacterization {
    * @param pcMultiplier critical pressure multiplier
    * @param omegaMultiplier acentric factor multiplier
    */
-  public void setTuningParameters(double tcMultiplier, double pcMultiplier,
-      double omegaMultiplier) {
+  public void setTuningParameters(double tcMultiplier, double pcMultiplier, double omegaMultiplier) {
     this.tcMultiplier = tcMultiplier;
     this.pcMultiplier = pcMultiplier;
     this.omegaMultiplier = omegaMultiplier;
@@ -1001,14 +1047,12 @@ public class PedersenAsphalteneCharacterization {
     sb.append("Pedersen Asphaltene Characterization:\n");
     sb.append(String.format("  Molecular Weight: %.1f g/mol%n", asphalteneMW));
     sb.append(String.format("  Density: %.3f g/cm³%n", asphalteneDensity));
-    sb.append(String.format("  Critical Temperature: %.1f K (%.1f °C)%n", criticalTemperature,
-        criticalTemperature - 273.15));
+    sb.append(
+        String.format("  Critical Temperature: %.1f K (%.1f °C)%n", criticalTemperature, criticalTemperature - 273.15));
     sb.append(String.format("  Critical Pressure: %.2f bar%n", criticalPressure));
     sb.append(String.format("  Acentric Factor: %.4f%n", acentricFactor));
-    sb.append(
-        String.format("  Boiling Point: %.1f K (%.1f °C)%n", boilingPoint, boilingPoint - 273.15));
-    if (tcMultiplier != 1.0 || pcMultiplier != 1.0 || omegaMultiplier != 1.0
-        || tbMultiplier != 1.0) {
+    sb.append(String.format("  Boiling Point: %.1f K (%.1f °C)%n", boilingPoint, boilingPoint - 273.15));
+    if (tcMultiplier != 1.0 || pcMultiplier != 1.0 || omegaMultiplier != 1.0 || tbMultiplier != 1.0) {
       sb.append("  Tuning Parameters:\n");
       sb.append(String.format("    Tc multiplier: %.4f%n", tcMultiplier));
       sb.append(String.format("    Pc multiplier: %.4f%n", pcMultiplier));
@@ -1028,8 +1072,9 @@ public class PedersenAsphalteneCharacterization {
    */
   public static void main(String[] args) {
     // Create SRK system - liquid conditions (high pressure, moderate temp)
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(323.15, 200.0); // 50°C, 200 bar
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(323.15, 200.0); // 50°C,
+                                                                                                       // 200
+                                                                                                       // bar
 
     // Add light oil and precipitant components
     fluid.addComponent("methane", 0.30); // Gas dissolved in oil
@@ -1073,10 +1118,9 @@ public class PedersenAsphalteneCharacterization {
       if (fluid.getPhase(i).hasComponent("Asphaltene_PC")) {
         asphMoleFrac = fluid.getPhase(i).getComponent("Asphaltene_PC").getx();
       }
-      System.out.println("Phase " + i + ": " + fluid.getPhase(i).getType().getDesc().toUpperCase()
-          + " (beta=" + String.format("%.4f", fluid.getPhase(i).getBeta()) + ", asph.x="
-          + String.format("%.4f", asphMoleFrac) + ", density="
-          + String.format("%.1f", fluid.getPhase(i).getDensity("kg/m3")) + " kg/m3)");
+      System.out.println("Phase " + i + ": " + fluid.getPhase(i).getType().getDesc().toUpperCase() + " (beta="
+          + String.format("%.4f", fluid.getPhase(i).getBeta()) + ", asph.x=" + String.format("%.4f", asphMoleFrac)
+          + ", density=" + String.format("%.1f", fluid.getPhase(i).getDensity("kg/m3")) + " kg/m3)");
     }
 
     System.out.println("\n=== Detailed Results ===");

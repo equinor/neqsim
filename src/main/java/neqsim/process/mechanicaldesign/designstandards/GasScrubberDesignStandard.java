@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.process.mechanicaldesign.MechanicalDesign;
 
 /**
- * <p>
  * GasScrubberDesignStandard class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -25,9 +23,7 @@ public class GasScrubberDesignStandard extends DesignStandard {
   double lengthMeshPadToDemistingCyclone = 550.0; // unit: mm
 
   /**
-   * <p>
    * Constructor for GasScrubberDesignStandard.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param equipmentInn a {@link neqsim.process.mechanicaldesign.MechanicalDesign} object
@@ -35,49 +31,30 @@ public class GasScrubberDesignStandard extends DesignStandard {
   public GasScrubberDesignStandard(String name, MechanicalDesign equipmentInn) {
     super(name, equipmentInn);
 
-    try (neqsim.util.database.NeqSimProcessDesignDataBase database =
-        new neqsim.util.database.NeqSimProcessDesignDataBase()) {
-      java.sql.ResultSet dataSet = null;
-      try {
-        dataSet = database.getResultSet(
+    try (
+        neqsim.util.database.NeqSimProcessDesignDataBase database = new neqsim.util.database.NeqSimProcessDesignDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet(
             ("SELECT * FROM technicalrequirements_process WHERE EQUIPMENTTYPE='Gas scrubber' AND Company='"
-                + standardName + "'"));
-        while (dataSet.next()) {
-          String specName = dataSet.getString("SPECIFICATION");
-          if (specName.equals("GasLoadFactor")) {
-            gasLoadFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
-          } else if (specName.equals("FlowDesignFactor")) {
-            designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MAXVALUE"));
-          } else if (specName.equals("LengthGasInetToHHLL")) {
-            designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
-          } else if (specName.equals("LengthMeshPadToDemistingCyclone")) {
-            designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
-          }
-        }
-
-        // gasLoadFactor = Double.parseDouble(dataSet.getString("gasloadfactor"));
-      } catch (Exception ex) {
-        logger.error(ex.getMessage(), ex);
-      } finally {
-        try {
-          if (dataSet != null) {
-            dataSet.close();
-          }
-        } catch (Exception ex) {
-          System.out.println("error closing database.....GasScrubberDesignStandard");
-          logger.error(ex.getMessage(), ex);
+                + standardName + "'"))) {
+      while (dataSet.next()) {
+        String specName = dataSet.getString("SPECIFICATION");
+        if (specName.equals("GasLoadFactor")) {
+          gasLoadFactor = Double.parseDouble(dataSet.getString("MAXVALUE"));
+        } else if (specName.equals("FlowDesignFactor")) {
+          designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MAXVALUE"));
+        } else if (specName.equals("LengthGasInetToHHLL")) {
+          designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
+        } else if (specName.equals("LengthMeshPadToDemistingCyclone")) {
+          designFactorVolumeFlow = Double.parseDouble(dataSet.getString("MINVALUE"));
         }
       }
-    } catch (Exception e) {
-      // TODO Auto-generated catch block
-      logger.error(e.getMessage());
+    } catch (Exception ex) {
+      logger.error(ex.getMessage(), ex);
     }
   }
 
   /**
-   * <p>
    * Getter for the field <code>gasLoadFactor</code>.
-   * </p>
    *
    * @return a double
    */
@@ -86,9 +63,7 @@ public class GasScrubberDesignStandard extends DesignStandard {
   }
 
   /**
-   * <p>
    * getVolumetricDesignFactor.
-   * </p>
    *
    * @return a double
    */

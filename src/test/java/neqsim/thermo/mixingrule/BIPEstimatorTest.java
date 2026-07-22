@@ -20,8 +20,7 @@ class BIPEstimatorTest {
     fluid.setMixingRule("classic");
 
     // Calculate BIP using Chueh-Prausnitz
-    double kij = BIPEstimator.estimateChuehPrausnitz(fluid.getComponent("methane"),
-        fluid.getComponent("n-heptane"));
+    double kij = BIPEstimator.estimateChuehPrausnitz(fluid.getComponent("methane"), fluid.getComponent("n-heptane"));
 
     // BIP should be positive and reasonably small (typically 0-0.1 for HC-HC)
     assertTrue(kij > 0.0, "Chueh-Prausnitz BIP should be positive");
@@ -35,10 +34,8 @@ class BIPEstimatorTest {
     fluid.addComponent("propane", 1.0);
     fluid.createDatabase(true);
 
-    double kij = BIPEstimator.estimateChuehPrausnitz(fluid.getComponent("ethane"),
-        fluid.getComponent("propane"));
-    double kji = BIPEstimator.estimateChuehPrausnitz(fluid.getComponent("propane"),
-        fluid.getComponent("ethane"));
+    double kij = BIPEstimator.estimateChuehPrausnitz(fluid.getComponent("ethane"), fluid.getComponent("propane"));
+    double kji = BIPEstimator.estimateChuehPrausnitz(fluid.getComponent("propane"), fluid.getComponent("ethane"));
 
     assertEquals(kij, kji, 1e-10, "BIP should be symmetric: kij = kji");
   }
@@ -49,8 +46,7 @@ class BIPEstimatorTest {
     fluid.addComponent("methane", 1.0);
     fluid.createDatabase(true);
 
-    double kii = BIPEstimator.estimateChuehPrausnitz(fluid.getComponent("methane"),
-        fluid.getComponent("methane"));
+    double kii = BIPEstimator.estimateChuehPrausnitz(fluid.getComponent("methane"), fluid.getComponent("methane"));
 
     assertEquals(0.0, kii, 1e-10, "BIP for same component should be zero");
   }
@@ -80,13 +76,10 @@ class BIPEstimatorTest {
     fluid.createDatabase(true);
 
     // For light components (MW < 86), should fall back to Chueh-Prausnitz
-    double kijKF = BIPEstimator.estimateKatzFiroozabadi(fluid.getComponent("methane"),
-        fluid.getComponent("propane"));
-    double kijCP = BIPEstimator.estimateChuehPrausnitz(fluid.getComponent("methane"),
-        fluid.getComponent("propane"));
+    double kijKF = BIPEstimator.estimateKatzFiroozabadi(fluid.getComponent("methane"), fluid.getComponent("propane"));
+    double kijCP = BIPEstimator.estimateChuehPrausnitz(fluid.getComponent("methane"), fluid.getComponent("propane"));
 
-    assertEquals(kijCP, kijKF, 1e-10,
-        "For light components, Katz-Firoozabadi should equal Chueh-Prausnitz");
+    assertEquals(kijCP, kijKF, 1e-10, "For light components, Katz-Firoozabadi should equal Chueh-Prausnitz");
   }
 
   @Test
@@ -98,8 +91,7 @@ class BIPEstimatorTest {
     fluid.createDatabase(true);
     fluid.setMixingRule("classic");
 
-    double[][] bipMatrix =
-        BIPEstimator.calculateBIPMatrix(fluid, BIPEstimationMethod.CHUEH_PRAUSNITZ);
+    double[][] bipMatrix = BIPEstimator.calculateBIPMatrix(fluid, BIPEstimationMethod.CHUEH_PRAUSNITZ);
 
     assertEquals(3, bipMatrix.length, "Matrix should have 3 rows");
     assertEquals(3, bipMatrix[0].length, "Matrix should have 3 columns");
@@ -130,17 +122,61 @@ class BIPEstimatorTest {
     fluid.addComponent("n-heptane", 0.1);
     fluid.createDatabase(true);
 
-    double kipCP = BIPEstimator.estimate(fluid.getComponent("methane"),
-        fluid.getComponent("n-heptane"), BIPEstimationMethod.CHUEH_PRAUSNITZ);
+    double kipCP = BIPEstimator.estimate(fluid.getComponent("methane"), fluid.getComponent("n-heptane"),
+        BIPEstimationMethod.CHUEH_PRAUSNITZ);
 
-    double kipKF = BIPEstimator.estimate(fluid.getComponent("methane"),
-        fluid.getComponent("n-heptane"), BIPEstimationMethod.KATZ_FIROOZABADI);
+    double kipKF = BIPEstimator.estimate(fluid.getComponent("methane"), fluid.getComponent("n-heptane"),
+        BIPEstimationMethod.KATZ_FIROOZABADI);
 
-    double kipDefault = BIPEstimator.estimate(fluid.getComponent("methane"),
-        fluid.getComponent("n-heptane"), BIPEstimationMethod.DEFAULT);
+    double kipDefault = BIPEstimator.estimate(fluid.getComponent("methane"), fluid.getComponent("n-heptane"),
+        BIPEstimationMethod.DEFAULT);
 
     assertTrue(kipCP > 0.0);
     assertTrue(kipKF > 0.0);
     assertEquals(0.0, kipDefault, 1e-10);
+  }
+
+  @Test
+  void testMercuryPseudoKijEstimateFromTbMwFormula() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("mercury", 1.0e-6);
+    fluid.addTBPfraction("C10", 0.1, 140.0 / 1000.0, 0.78);
+    fluid.createDatabase(true);
+
+    // Access TBP fraction by index because TBP naming may be adjusted internally
+    double tb = fluid.getPhase(0).getComponent(1).getNormalBoilingPoint();
+    double mw = fluid.getPhase(0).getComponent(1).getMolarMass() * 1000.0;
+
+    double expectedSrk = -0.00041 * tb - 0.00025 * mw + 0.17611;
+    double expectedPr = -0.00041 * tb - 0.00038 * mw + 0.17513;
+
+    assertTrue(BIPEstimator.canEstimateMercuryHydrocarbonKij(fluid.getPhase(0).getComponent(0),
+        fluid.getPhase(0).getComponent(1)), "Mercury-TBP pair should be eligible for Tb/MW estimation");
+
+    assertEquals(
+        expectedSrk, BIPEstimator.estimateMercuryHydrocarbonKij(fluid.getPhase(0).getComponent(0),
+            fluid.getPhase(0).getComponent(1), false),
+        1e-12, "SRK mercury-pseudo kij should follow Table 7.3 paraffinic formula");
+
+    assertEquals(
+        expectedPr, BIPEstimator.estimateMercuryHydrocarbonKij(fluid.getPhase(0).getComponent(0),
+            fluid.getPhase(0).getComponent(1), true),
+        1e-12, "PR mercury-pseudo kij should follow Table 7.3 paraffinic formula");
+  }
+
+  @Test
+  void testMercuryHydrocarbonTypeClassification() {
+    SystemInterface fluid = new SystemSrkEos(298.15, 10.0);
+    fluid.addComponent("benzene", 0.3);
+    fluid.addComponent("c-hexane", 0.3);
+    fluid.addComponent("n-heptane", 0.4);
+    fluid.createDatabase(true);
+
+    assertEquals(BIPEstimator.MercuryHydrocarbonType.AROMATIC,
+        BIPEstimator.classifyHydrocarbonType(fluid.getComponent("benzene")));
+    assertEquals(BIPEstimator.MercuryHydrocarbonType.NAPHTHENIC,
+        BIPEstimator.classifyHydrocarbonType(fluid.getComponent("c-hexane")));
+    assertEquals(BIPEstimator.MercuryHydrocarbonType.PARAFFINIC,
+        BIPEstimator.classifyHydrocarbonType(fluid.getComponent("n-heptane")));
   }
 }

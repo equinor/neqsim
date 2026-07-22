@@ -1,6 +1,6 @@
 package neqsim.pvtsimulation.regression;
 
-import neqsim.thermo.mixingrule.EosMixingRulesInterface;
+import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -51,10 +51,9 @@ public enum RegressionParameter {
       // Find C2-C6 components
       for (int i = 0; i < fluid.getPhase(0).getNumberOfComponents(); i++) {
         String name = fluid.getPhase(0).getComponent(i).getComponentName().toLowerCase();
-        boolean isC2C6 = name.equals("ethane") || name.equals("c2") || name.equals("propane")
-            || name.equals("c3") || name.contains("butane") || name.equals("c4")
-            || name.contains("pentane") || name.equals("c5") || name.contains("hexane")
-            || name.equals("c6");
+        boolean isC2C6 = name.equals("ethane") || name.equals("c2") || name.equals("propane") || name.equals("c3")
+            || name.contains("butane") || name.equals("c4") || name.contains("pentane") || name.equals("c5")
+            || name.contains("hexane") || name.equals("c6");
 
         if (isC2C6) {
           String c2c6Name = fluid.getPhase(0).getComponent(i).getComponentName();
@@ -238,8 +237,8 @@ public enum RegressionParameter {
   },
 
   /**
-   * Lohrenz-Bray-Clark viscosity correlation parameter A for heavy fraction. This multiplier
-   * adjusts the viscosity contribution of C7+ components.
+   * Lohrenz-Bray-Clark viscosity correlation parameter A for heavy fraction. This multiplier adjusts the viscosity
+   * contribution of C7+ components.
    */
   VISCOSITY_LBC_MULTIPLIER(0.8, 1.5, 1.0) {
     @Override
@@ -258,8 +257,8 @@ public enum RegressionParameter {
   },
 
   /**
-   * Pedersen corresponding states viscosity correlation parameter. Adjusts the alpha parameter in
-   * the Pedersen viscosity model.
+   * Pedersen corresponding states viscosity correlation parameter. Adjusts the alpha parameter in the Pedersen
+   * viscosity model.
    */
   VISCOSITY_PEDERSEN_ALPHA(0.5, 2.0, 1.0) {
     @Override
@@ -274,6 +273,50 @@ public enum RegressionParameter {
           }
         }
       }
+    }
+  },
+
+  /**
+   * First CSP viscosity correction factor. Multiplies the critical-temperature scaling exponent in the PFCT/Pedersen
+   * corresponding-states viscosity model.
+   */
+  VISCOSITY_CSP_1(0.2, 2.0, 1.0) {
+    @Override
+    public void applyToFluid(SystemInterface fluid, double value) {
+      applyCspViscosityCorrectionFactor(fluid, 0, value);
+    }
+  },
+
+  /**
+   * Second CSP viscosity correction factor. Multiplies the critical-pressure scaling exponent in the PFCT/Pedersen
+   * corresponding-states viscosity model.
+   */
+  VISCOSITY_CSP_2(0.2, 2.0, 1.0) {
+    @Override
+    public void applyToFluid(SystemInterface fluid, double value) {
+      applyCspViscosityCorrectionFactor(fluid, 1, value);
+    }
+  },
+
+  /**
+   * Third CSP viscosity correction factor. Multiplies the molar-mass scaling exponent in the PFCT/Pedersen
+   * corresponding-states viscosity model.
+   */
+  VISCOSITY_CSP_3(0.2, 2.0, 1.0) {
+    @Override
+    public void applyToFluid(SystemInterface fluid, double value) {
+      applyCspViscosityCorrectionFactor(fluid, 2, value);
+    }
+  },
+
+  /**
+   * Fourth CSP viscosity correction factor. Multiplies the alpha-density correction exponent in the PFCT/Pedersen
+   * corresponding-states viscosity model.
+   */
+  VISCOSITY_CSP_4(0.2, 2.0, 1.0) {
+    @Override
+    public void applyToFluid(SystemInterface fluid, double value) {
+      applyCspViscosityCorrectionFactor(fluid, 3, value);
     }
   };
 
@@ -293,7 +336,7 @@ public enum RegressionParameter {
    * @return array [lowerBound, upperBound, initialGuess]
    */
   public double[] getDefaultBounds() {
-    return new double[] {lowerBound, upperBound, initialGuess};
+    return new double[] { lowerBound, upperBound, initialGuess };
   }
 
   /**
@@ -303,4 +346,21 @@ public enum RegressionParameter {
    * @param value the parameter value to apply
    */
   public abstract void applyToFluid(SystemInterface fluid, double value);
+
+  /**
+   * Applies one CSP viscosity correction factor to every initialized phase.
+   *
+   * @param fluid thermodynamic system to modify
+   * @param index correction factor index, from 0 to 3
+   * @param value correction factor value
+   */
+  private static void applyCspViscosityCorrectionFactor(SystemInterface fluid, int index, double value) {
+    for (int phaseIndex = 0; phaseIndex < fluid.getMaxNumberOfPhases(); phaseIndex++) {
+      PhysicalProperties physicalProperties = fluid.getPhase(phaseIndex).getPhysicalProperties();
+      if (!physicalProperties.isPFCTViscosityModel()) {
+        physicalProperties.setViscosityModel("PFCT");
+      }
+      physicalProperties.setCspViscosityCorrectionFactor(index, value);
+    }
+  }
 }

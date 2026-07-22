@@ -5,9 +5,7 @@ import java.util.Map;
 import neqsim.process.equipment.stream.StreamInterface;
 
 /**
- * <p>
  * CombustionEmissionsCalculator class.
- * </p>
  *
  * @author Even Solbraa
  */
@@ -40,9 +38,7 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
   }
 
   /**
-   * <p>
    * Constructor for CombustionEmissionsCalculator.
-   * </p>
    *
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
@@ -51,9 +47,7 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
   }
 
   /**
-   * <p>
    * Constructor for CombustionEmissionsCalculator.
-   * </p>
    *
    * @param name Name of WaterDewPointAnalyser
    * @param stream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -63,9 +57,7 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
   }
 
   /**
-   * <p>
    * setComponents.
-   * </p>
    */
   public void setComponents() {
     NATURAL_GAS_COMPOSITION.clear();
@@ -117,21 +109,17 @@ public class CombustionEmissionsCalculator extends StreamMeasurementDeviceBaseCl
   @Override
   public double getMeasuredValue(String unit) {
     setComponents();
-    return calculateCO2Emissions(NATURAL_GAS_COMPOSITION, CO2_EMISSIONS_FACTORS)
-        * stream.getFluid().getFlowRate(unit);
+    return calculateCO2Emissions(NATURAL_GAS_COMPOSITION, CO2_EMISSIONS_FACTORS) * stream.getFluid().getFlowRate(unit);
   }
 
   /**
-   * <p>
    * calculateCO2Emissions.
-   * </p>
    *
    * @param composition a {@link java.util.Map} object with mole fractions
    * @param emissionsFactors a {@link java.util.Map} object in kg CO2 per kg of component
    * @return a double
    */
-  public static double calculateCO2Emissions(Map<String, Double> composition,
-      Map<String, Double> emissionsFactors) {
+  public static double calculateCO2Emissions(Map<String, Double> composition, Map<String, Double> emissionsFactors) {
     double totalEmissions = 0.0;
 
     // First, calculate total mass

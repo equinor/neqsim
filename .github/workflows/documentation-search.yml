@@ -1,0 +1,43 @@
+name: Documentation search coverage
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+  pull_request:
+    branches:
+      - master
+    paths:
+      - "docs/**"
+      - "devtools/check_documentation_search.py"
+      - ".pre-commit-config.yaml"
+      - ".github/workflows/documentation-search.yml"
+
+concurrency:
+  group: documentation-search-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    name: Build and verify complete search index
+    runs-on: ubuntu-latest
+    env:
+      BUNDLE_GEMFILE: ${{ github.workspace }}/docs/Gemfile
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.13"
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: true
+      - name: Check search source contracts
+        run: python devtools/check_documentation_search.py
+      - name: Build documentation
+        run: bundle exec jekyll build --source docs --destination _site
+      - name: Verify generated search coverage
+        run: python devtools/check_documentation_search.py --site _site
+      - name: Check search JavaScript syntax
+        run: node --check docs/assets/js/search.js

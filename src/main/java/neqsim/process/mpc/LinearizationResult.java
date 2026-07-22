@@ -6,14 +6,14 @@ import java.io.Serializable;
  * Result of a linearization operation containing the gain matrix and metadata.
  *
  * <p>
- * The linearization result captures the sensitivity of controlled variables (CVs) to manipulated
- * variables (MVs) and disturbance variables (DVs) around an operating point. These sensitivities
- * form the gain matrices used by linear MPC algorithms.
+ * The linearization result captures the sensitivity of controlled variables (CVs) to manipulated variables (MVs) and
+ * disturbance variables (DVs) around an operating point. These sensitivities form the gain matrices used by linear MPC
+ * algorithms.
  * </p>
  *
  * <p>
- * The gain matrix G[i][j] represents ∂CV[i]/∂MV[j], the change in CV[i] per unit change in MV[j].
- * Similarly, the disturbance gain matrix D[i][k] represents ∂CV[i]/∂DV[k].
+ * The gain matrix G[i][j] represents ∂CV[i]/∂MV[j], the change in CV[i] per unit change in MV[j]. Similarly, the
+ * disturbance gain matrix D[i][k] represents ∂CV[i]/∂DV[k].
  * </p>
  *
  * @author Even Solbraa
@@ -73,10 +73,9 @@ public class LinearizationResult implements Serializable {
    * @param perturbationSize perturbation used
    * @param computationTimeMs time taken
    */
-  public LinearizationResult(double[][] gainMatrix, double[][] disturbanceGainMatrix,
-      double[] mvOperatingPoint, double[] cvOperatingPoint, double[] dvOperatingPoint,
-      String[] mvNames, String[] cvNames, String[] dvNames, double perturbationSize,
-      long computationTimeMs) {
+  public LinearizationResult(double[][] gainMatrix, double[][] disturbanceGainMatrix, double[] mvOperatingPoint,
+      double[] cvOperatingPoint, double[] dvOperatingPoint, String[] mvNames, String[] cvNames, String[] dvNames,
+      double perturbationSize, long computationTimeMs) {
     this.gainMatrix = deepCopy(gainMatrix);
     this.disturbanceGainMatrix = deepCopy(disturbanceGainMatrix);
     this.mvOperatingPoint = mvOperatingPoint != null ? mvOperatingPoint.clone() : new double[0];

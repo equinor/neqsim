@@ -1,14 +1,17 @@
 package neqsim.process.equipment.pipeline;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 
 public class AdiabaticTwoPhasePipeTest {
+  private static final Logger logger = LogManager.getLogger(AdiabaticTwoPhasePipeTest.class);
+
   @Test
   public void testMain() {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 200.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 5.0), 200.00);
     testSystem.addComponent("methane", 75, "MSm^3/day");
     testSystem.addComponent("n-heptane", 0.0000001, "MSm^3/day");
     testSystem.createDatabase(true);
@@ -28,21 +31,19 @@ public class AdiabaticTwoPhasePipeTest {
     pipe2.setPipeWallRoughness(5e-6);
     // pipe.setOutPressure(112.0);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(pipe);
     operations.add(pipe2);
     operations.run();
     // pipe.displayResult();
-    // System.out.println("flow " + pipe2.getOutletStream().getFluid().getFlowRate("MSm3/day"));
-    // System.out.println("out pressure " + pipe.getOutletStream().getPressure("bara"));
-    // System.out.println("velocity " + pipe.getSuperficialVelocity());
-    // System.out.println("out pressure " + pipe2.getOutletStream().getPressure("bara"));
-    // System.out.println("velocity " + pipe2.getSuperficialVelocity());
+    // logger.info("flow " + pipe2.getOutletStream().getFluid().getFlowRate("MSm3/day"));
+    // logger.info("out pressure " + pipe.getOutletStream().getPressure("bara"));
+    // logger.info("velocity " + pipe.getSuperficialVelocity());
+    // logger.info("out pressure " + pipe2.getOutletStream().getPressure("bara"));
+    // logger.info("velocity " + pipe2.getSuperficialVelocity());
 
-    Assertions.assertEquals(75.0000001, pipe2.getOutletStream().getFluid().getFlowRate("MSm3/day"),
-        1e-5);
+    Assertions.assertEquals(75.0000001, pipe2.getOutletStream().getFluid().getFlowRate("MSm3/day"), 1e-5);
     Assertions.assertEquals(153.58741116226855, pipe.getOutletStream().getPressure("bara"), 1e-6);
     Assertions.assertEquals(4.207400548548574, pipe.getSuperficialVelocity(), 1e-6);
     Assertions.assertEquals(146.28492500260614, pipe2.getOutletStream().getPressure("bara"), 0.001);

@@ -17,9 +17,8 @@ import neqsim.process.equipment.util.Recycle;
 import neqsim.process.util.report.Report;
 
 /**
- * A class representing a process module class that can contain unit operations and other modules.
- * Module will be runnning until all recycles in this module are solved. If no recycle in the module
- * then run only once.
+ * A class representing a process module class that can contain unit operations and other modules. Module will be
+ * runnning until all recycles in this module are solved. If no recycle in the module then run only once.
  *
  * @author [seros]
  * @version 1.0
@@ -80,8 +79,7 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * Get the list of operations index. The operations index is used to follow the correct order of
-   * calculations.
+   * Get the list of operations index. The operations index is used to follow the correct order of calculations.
    *
    * @return the list of operations index
    */
@@ -118,8 +116,7 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * Get the list of module index. The module index is used to follow the correct order of
-   * calculations.
+   * Get the list of module index. The module index is used to follow the correct order of calculations.
    *
    * @return the list of module index
    */
@@ -133,8 +130,8 @@ public class ProcessModule extends SimulationBaseClass {
   private transient ProcessSystem.SimulationProgressListener progressListener = null;
 
   /**
-   * Set a listener to receive progress updates during simulation. The listener is propagated to all
-   * contained ProcessSystem instances.
+   * Set a listener to receive progress updates during simulation. The listener is propagated to all contained
+   * ProcessSystem instances.
    *
    * @param listener the progress listener, or null to disable callbacks
    */
@@ -160,8 +157,8 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * Run module with a simple callback for each completed unit operation. This is a convenience
-   * method for Python/Jupyter integration.
+   * Run module with a simple callback for each completed unit operation. This is a convenience method for
+   * Python/Jupyter integration.
    *
    * @param callback Consumer function called with each completed unit operation
    */
@@ -171,8 +168,7 @@ public class ProcessModule extends SimulationBaseClass {
     if (callback != null) {
       listenerWrapper = new ProcessSystem.SimulationProgressListener() {
         @Override
-        public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits,
-            int iterationNumber) {
+        public void onUnitComplete(ProcessEquipmentInterface unit, int unitIndex, int totalUnits, int iterationNumber) {
           callback.accept(unit);
         }
       };
@@ -195,30 +191,53 @@ public class ProcessModule extends SimulationBaseClass {
   public void run(UUID id) {
     logger.info("Running module " + getName());
     checkModulesRecycles();
-    int iteration = 0;
-    do {
+
+    if (recycleModules.isEmpty()) {
+      // No recycles - each ProcessSystem can use its own optimized execution
+      // (parallel for feed-forward, sequential with recycle handling, etc.)
       for (int i = 0; i < unitIndex; i++) {
         if (operationsIndex.contains(i)) {
           int index = operationsIndex.indexOf(i);
           ProcessSystem processSystem = addedUnitOperations.get(index);
-          // Use runWithProgress if a listener is set, otherwise run units directly
+          // Use runWithProgress if a listener is set, otherwise run normally
           if (processSystem.getProgressListener() != null) {
             processSystem.runWithProgress(id);
           } else {
-            for (ProcessEquipmentInterface unitOperation : processSystem.getUnitOperations()) {
-              if (iteration == 0 || unitOperation.needRecalculation()) {
-                unitOperation.run(id);
-              }
-            }
+            processSystem.run(id);
           }
         } else if (modulesIndex.contains(i)) {
           int index = modulesIndex.indexOf(i);
           addedModules.get(index).run(id);
         }
       }
-      iteration++;
-      logger.info("Iteration : " + iteration + "  module : " + getName() + " ");
-    } while (!recyclesSolved() && iteration <= 100);
+    } else {
+      // Has recycles - use flat unit-by-unit iteration for module-level convergence
+      int iteration = 0;
+      do {
+        for (int i = 0; i < unitIndex; i++) {
+          if (operationsIndex.contains(i)) {
+            int index = operationsIndex.indexOf(i);
+            ProcessSystem processSystem = addedUnitOperations.get(index);
+            // Use runWithProgress if a listener is set, otherwise run units
+            // directly
+            if (processSystem.getProgressListener() != null) {
+              processSystem.runWithProgress(id);
+            } else {
+              for (ProcessEquipmentInterface unitOperation : processSystem.getUnitOperations()) {
+                if (iteration == 0 || unitOperation.needRecalculation()) {
+                  unitOperation.run(id);
+                }
+              }
+            }
+          } else if (modulesIndex.contains(i)) {
+            int index = modulesIndex.indexOf(i);
+            addedModules.get(index).run(id);
+          }
+        }
+        iteration++;
+        logger.info("Iteration : " + iteration + "  module : " + getName() + " ");
+      } while (!recyclesSolved() && iteration <= 100);
+    }
     logger.info("Finished running module " + getName());
     solved = true;
   }
@@ -262,8 +281,8 @@ public class ProcessModule extends SimulationBaseClass {
    *
    * <p>
    * This method submits the module to the shared {@link neqsim.util.NeqSimThreadPool} and returns a
-   * {@link java.util.concurrent.Future} that can be used to monitor completion, cancel the task, or
-   * retrieve any exceptions that occurred.
+   * {@link java.util.concurrent.Future} that can be used to monitor completion, cancel the task, or retrieve any
+   * exceptions that occurred.
    * </p>
    *
    * @return a {@link java.util.concurrent.Future} representing the pending completion of the task
@@ -274,13 +293,11 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * runAsThread.
-   * </p>
    *
    * @return a {@link java.lang.Thread} object
-   * @deprecated Use {@link #runAsTask()} instead for better resource management. This method
-   *             creates a new unmanaged thread directly.
+   * @deprecated Use {@link #runAsTask()} instead for better resource management. This method creates a new unmanaged
+   * thread directly.
    */
   @Deprecated
   public Thread runAsThread() {
@@ -290,8 +307,7 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * Returns the unit with the given name from the list of added unit operations and list of added
-   * modules.
+   * Returns the unit with the given name from the list of added unit operations and list of added modules.
    *
    * @param name the name of the unit to retrieve
    * @return the unit with the given name, or {@code null} if no such unit is found
@@ -314,8 +330,7 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * Returns the unit with the given name from the list of added unit operations and list of added
-   * modules.
+   * Returns the unit with the given name from the list of added unit operations and list of added modules.
    *
    * @param name the name of the unit to retrieve
    * @return the unit with the given name, or {@code null} if no such unit is found
@@ -338,9 +353,7 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * Create deep copy.
-   * </p>
    *
    * @return a {@link neqsim.process.processmodel.ProcessModule} object
    */
@@ -359,9 +372,7 @@ public class ProcessModule extends SimulationBaseClass {
   }
 
   /**
-   * <p>
    * getReport.
-   * </p>
    *
    * @return a {@link java.util.ArrayList} object
    */
@@ -380,8 +391,7 @@ public class ProcessModule extends SimulationBaseClass {
 
     // Check mass balance for all process systems
     for (ProcessSystem processSystem : addedUnitOperations) {
-      Map<String, ProcessSystem.MassBalanceResult> systemResults =
-          processSystem.checkMassBalance(unit);
+      Map<String, ProcessSystem.MassBalanceResult> systemResults = processSystem.checkMassBalance(unit);
       allResults.putAll(systemResults);
     }
 
@@ -410,15 +420,13 @@ public class ProcessModule extends SimulationBaseClass {
    * @param percentThreshold percentage error threshold (default: 0.1%)
    * @return a map with failed unit operation names and their mass balance results
    */
-  public Map<String, ProcessSystem.MassBalanceResult> getFailedMassBalance(String unit,
-      double percentThreshold) {
+  public Map<String, ProcessSystem.MassBalanceResult> getFailedMassBalance(String unit, double percentThreshold) {
     Map<String, ProcessSystem.MassBalanceResult> allResults = checkMassBalance(unit);
     Map<String, ProcessSystem.MassBalanceResult> failedUnits = new HashMap<>();
 
     for (Map.Entry<String, ProcessSystem.MassBalanceResult> entry : allResults.entrySet()) {
       ProcessSystem.MassBalanceResult result = entry.getValue();
-      if (Double.isNaN(result.getPercentError())
-          || Math.abs(result.getPercentError()) > percentThreshold) {
+      if (Double.isNaN(result.getPercentError()) || Math.abs(result.getPercentError()) > percentThreshold) {
         failedUnits.put(entry.getKey(), result);
       }
     }
@@ -440,8 +448,7 @@ public class ProcessModule extends SimulationBaseClass {
    * @param percentThreshold percentage error threshold
    * @return a map with failed unit operation names and their mass balance results in kg/sec
    */
-  public Map<String, ProcessSystem.MassBalanceResult> getFailedMassBalance(
-      double percentThreshold) {
+  public Map<String, ProcessSystem.MassBalanceResult> getFailedMassBalance(double percentThreshold) {
     return getFailedMassBalance("kg/sec", percentThreshold);
   }
 
@@ -535,8 +542,7 @@ public class ProcessModule extends SimulationBaseClass {
     }
 
     if (modelGraph.hasCycles()) {
-      neqsim.process.processmodel.graph.ProcessGraph.CycleAnalysisResult cycles =
-          modelGraph.analyzeCycles();
+      neqsim.process.processmodel.graph.ProcessGraph.CycleAnalysisResult cycles = modelGraph.analyzeCycles();
       issues.add("Module contains " + cycles.getCycleCount()
           + " cycle(s) - ensure recycle operations are properly configured");
     }
@@ -557,15 +563,14 @@ public class ProcessModule extends SimulationBaseClass {
    * Gets all capacity-constrained equipment in this module and all nested modules/systems.
    *
    * <p>
-   * Returns equipment that implements the CapacityConstrainedEquipment interface, such as
-   * separators, compressors, pumps, pipelines, manifolds, etc.
+   * Returns equipment that implements the CapacityConstrainedEquipment interface, such as separators, compressors,
+   * pumps, pipelines, manifolds, etc.
    * </p>
    *
    * @return list of capacity-constrained equipment from all systems in this module
    */
   public java.util.List<neqsim.process.equipment.capacity.CapacityConstrainedEquipment> getConstrainedEquipment() {
-    java.util.List<neqsim.process.equipment.capacity.CapacityConstrainedEquipment> result =
-        new java.util.ArrayList<>();
+    java.util.List<neqsim.process.equipment.capacity.CapacityConstrainedEquipment> result = new java.util.ArrayList<>();
 
     // Get from all process systems
     for (ProcessSystem processSystem : addedUnitOperations) {
@@ -584,12 +589,12 @@ public class ProcessModule extends SimulationBaseClass {
    * Finds the process bottleneck with detailed constraint information across all systems.
    *
    * <p>
-   * This method searches all ProcessSystems and nested ProcessModules to find the equipment with
-   * the highest capacity utilization.
+   * This method searches all ProcessSystems and nested ProcessModules to find the equipment with the highest capacity
+   * utilization.
    * </p>
    *
-   * @return BottleneckResult containing the bottleneck equipment, limiting constraint, and
-   *         utilization; returns empty result if no constrained equipment found
+   * @return BottleneckResult containing the bottleneck equipment, limiting constraint, and utilization; returns empty
+   * result if no constrained equipment found
    */
   public neqsim.process.equipment.capacity.BottleneckResult findBottleneck() {
     neqsim.process.equipment.capacity.CapacityConstrainedEquipment bottleneckEquipment = null;
@@ -597,8 +602,7 @@ public class ProcessModule extends SimulationBaseClass {
     double maxUtil = 0.0;
 
     for (neqsim.process.equipment.capacity.CapacityConstrainedEquipment equip : getConstrainedEquipment()) {
-      neqsim.process.equipment.capacity.CapacityConstraint constraint =
-          equip.getBottleneckConstraint();
+      neqsim.process.equipment.capacity.CapacityConstraint constraint = equip.getBottleneckConstraint();
       if (constraint != null) {
         double util = constraint.getUtilization();
         if (!Double.isNaN(util) && util > maxUtil) {
@@ -612,8 +616,8 @@ public class ProcessModule extends SimulationBaseClass {
     if (bottleneckEquipment == null) {
       return neqsim.process.equipment.capacity.BottleneckResult.empty();
     }
-    return new neqsim.process.equipment.capacity.BottleneckResult(
-        (ProcessEquipmentInterface) bottleneckEquipment, limitingConstraint, maxUtil);
+    return new neqsim.process.equipment.capacity.BottleneckResult((ProcessEquipmentInterface) bottleneckEquipment,
+        limitingConstraint, maxUtil);
   }
 
   /**
@@ -634,8 +638,8 @@ public class ProcessModule extends SimulationBaseClass {
    * Checks if any equipment exceeds a HARD capacity limit.
    *
    * <p>
-   * HARD limits represent absolute equipment limits that cannot be exceeded without trip or damage,
-   * such as maximum compressor speed or surge limits.
+   * HARD limits represent absolute equipment limits that cannot be exceeded without trip or damage, such as maximum
+   * compressor speed or surge limits.
    * </p>
    *
    * @return true if any HARD constraint is exceeded
@@ -653,8 +657,8 @@ public class ProcessModule extends SimulationBaseClass {
    * Gets a summary of capacity utilization for all constrained equipment in this module.
    *
    * <p>
-   * Returns a map of equipment names to their maximum constraint utilization. Useful for displaying
-   * overall module capacity status.
+   * Returns a map of equipment names to their maximum constraint utilization. Useful for displaying overall module
+   * capacity status.
    * </p>
    *
    * @return map of equipment name to utilization percentage
@@ -675,8 +679,8 @@ public class ProcessModule extends SimulationBaseClass {
    * Gets equipment that is near its capacity limit (above warning threshold).
    *
    * <p>
-   * Returns equipment where at least one constraint is above its warning threshold (typically 90%
-   * of design). Useful for identifying potential future bottlenecks.
+   * Returns equipment where at least one constraint is above its warning threshold (typically 90% of design). Useful
+   * for identifying potential future bottlenecks.
    * </p>
    *
    * @return list of equipment names that are near capacity limits

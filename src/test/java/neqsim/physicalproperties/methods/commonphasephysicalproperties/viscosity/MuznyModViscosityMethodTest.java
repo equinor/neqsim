@@ -1,10 +1,14 @@
 package neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class MuznyModViscosityMethodTest {
+  private static final Logger logger = LogManager.getLogger(MuznyModViscosityMethodTest.class);
+
   static neqsim.thermo.system.SystemInterface testSystem = null;
 
   @Test
@@ -17,9 +21,8 @@ public class MuznyModViscosityMethodTest {
     testOps.TPflash();
     testSystem.getPhase("gas").getPhysicalProperties().setViscosityModel("Muzny_mod");
     testSystem.initProperties();
-    assertEquals(8.792308805913915E-6,
-        testSystem.getPhase(0).getPhysicalProperties().getViscosity(), 0.5e-10);
+    assertEquals(8.792308805913915E-6, testSystem.getPhase(0).getPhysicalProperties().getViscosity(), 0.5e-10);
     // double viscosity = testSystem.getPhase(0).getPhysicalProperties().getViscosity();
-    // System.out.println("Viscosity_Muzny: " + viscosity);
+    // logger.info("Viscosity_Muzny: " + viscosity);
   }
 }

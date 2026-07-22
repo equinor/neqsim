@@ -15,12 +15,11 @@ import neqsim.process.processmodel.ProcessSystem;
  * Multi-agent environment for coordinated process control.
  *
  * <p>
- * Manages multiple agents that each control a subset of process equipment while respecting global
- * constraints. Supports various multi-agent paradigms:
+ * Manages multiple agents that each control a subset of process equipment while respecting global constraints. Supports
+ * various multi-agent paradigms:
  * <ul>
  * <li><b>Independent</b> - Agents act independently with local observations</li>
- * <li><b>Centralized Training Decentralized Execution (CTDE)</b> - Shared critic during
- * training</li>
+ * <li><b>Centralized Training Decentralized Execution (CTDE)</b> - Shared critic during training</li>
  * <li><b>Communicating</b> - Agents exchange messages before acting</li>
  * </ul>
  *
@@ -107,9 +106,8 @@ public class MultiAgentEnvironment implements Serializable {
      * @param infos agent infos
      * @param globalState global state
      */
-    public MultiAgentStepResult(Map<String, double[]> observations, Map<String, Double> rewards,
-        boolean terminated, boolean truncated, Map<String, Map<String, Object>> infos,
-        StateVector globalState) {
+    public MultiAgentStepResult(Map<String, double[]> observations, Map<String, Double> rewards, boolean terminated,
+        boolean truncated, Map<String, Map<String, Object>> infos, StateVector globalState) {
       this.observations = observations;
       this.rewards = rewards;
       this.terminated = terminated;
@@ -294,8 +292,7 @@ public class MultiAgentEnvironment implements Serializable {
       infos.put(agentId, info);
     }
 
-    return new MultiAgentStepResult(observations, rewards, terminated, truncated, infos,
-        currentGlobalState);
+    return new MultiAgentStepResult(observations, rewards, terminated, truncated, infos, currentGlobalState);
   }
 
   /**

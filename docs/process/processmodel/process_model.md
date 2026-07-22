@@ -1,3 +1,8 @@
+---
+title: ProcessModel Class
+description: Documentation for the ProcessModel class in NeqSim.
+---
+
 # ProcessModel Class
 
 Documentation for the ProcessModel class in NeqSim.
@@ -99,6 +104,31 @@ model.setRunStep(true);
 model.run();  // Runs one step for each process
 ```
 
+#### Per-area control: fully solve selected areas in step mode
+
+By default every `ProcessSystem` advances a single pass per model step when the
+model is in step mode. You can override this for individual areas so that a
+selected area is solved to full convergence on each model step while the others
+still advance only one pass. This is useful for fast inner loops (for example an
+anti-surge recycle) that should settle within each step.
+
+```java
+ProcessModel model = new ProcessModel();
+model.add("Compression", compressionSystem); // contains an anti-surge recycle
+model.add("Export", exportSystem);
+
+// Fully solve the compression area on every model step; Export still single-steps
+compressionSystem.setSolveFullyInModelStep(true);
+
+model.setRunStep(true);
+model.run();  // Compression converges fully, Export advances one pass
+```
+
+The flag is read by `ProcessModel` when it runs each child area: areas with
+`isSolveFullyInModelStep() == true` are executed with `run()` (run to
+convergence), all others with `run_step()` (single pass). The setting is
+preserved across `ProcessSystem.copy()`.
+
 ### Optimized Execution
 
 ```java
@@ -158,6 +188,67 @@ double maxErr = model.getError();
 System.out.println(model.getConvergenceSummary());
 ```
 
+### Run Until Converged (Agent-Friendly)
+
+`runUntilConverged(maxIterations, tolerance)` is an explicit wrapper around `run()` that
+guarantees iterating (multi-area) mode and applies the iteration limit and tolerance in one
+call — so you do not need to manually configure `setRunStep(false)`, `setMaxIterations(...)`,
+`setTolerance(...)` and write your own outer loop.
+
+```java
+boolean converged = model.runUntilConverged(100, 1e-5);
+if (!converged) {
+  System.out.println("Model did not converge: " + model.getConvergenceReportJson());
+}
+```
+
+It throws `IllegalArgumentException` if `maxIterations < 1` or `tolerance` is not a finite
+positive number.
+
+### Structured Convergence Report (JSON)
+
+`getConvergenceReportJson()` is the machine-readable counterpart to `getConvergenceSummary()`.
+It is schema-versioned and includes the per-area solved status and the names of any unsolved
+units, so an agent can pinpoint exactly where a large multi-area model failed to converge.
+
+```java
+String json = model.getConvergenceReportJson();
+```
+
+```json
+{
+  "schemaVersion": "1.0",
+  "converged": false,
+  "iterations": 100,
+  "maxIterations": 100,
+  "boundaryStreamCount": 2,
+  "boundaryValuesConverged": false,
+  "allProcessesSolved": false,
+  "maxError": 0.0042,
+  "errors": {
+    "flow":        { "value": 0.0042, "tolerance": 1e-5, "converged": false },
+    "temperature": { "value": 8.0e-6, "tolerance": 1e-5, "converged": true },
+    "pressure":    { "value": 1.2e-6, "tolerance": 1e-5, "converged": true }
+  },
+  "areas": [
+    { "name": "Separation",  "solved": true,  "unsolvedUnits": [] },
+    { "name": "Compression", "solved": false, "unsolvedUnits": ["Recycle"] }
+  ]
+}
+```
+
+| Field | Description |
+|-------|-------------|
+| `schemaVersion` | JSON schema version (`"1.0"`) |
+| `converged` | Whether the model converged on the last run |
+| `iterations` / `maxIterations` | Outer iterations performed / the configured limit |
+| `boundaryStreamCount` | Number of cross-area boundary (tear) streams |
+| `boundaryValuesConverged` | Whether all boundary stream values converged |
+| `allProcessesSolved` | Whether every contained process reported solved |
+| `maxError` | Largest relative error across flow/temperature/pressure |
+| `errors` | Per-variable `value` / `tolerance` / `converged` for flow, temperature, pressure |
+| `areas` | One entry per area with `name`, `solved`, and `unsolvedUnits` |
+
 ---
 
 ## Validation
@@ -195,7 +286,7 @@ Map<String, ValidationResult> allResults = model.validateAll();
 for (Map.Entry<String, ValidationResult> entry : allResults.entrySet()) {
     String processName = entry.getKey();
     ValidationResult processResult = entry.getValue();
-    
+
     if (!processResult.isValid()) {
         System.out.println(processName + " has issues:");
         processResult.getErrors().forEach(System.out::println);
@@ -240,11 +331,11 @@ Ready to run: NO
 
 ```java
 // Get mass balance for all processes
-Map<String, Map<String, ProcessSystem.MassBalanceResult>> results = 
+Map<String, Map<String, ProcessSystem.MassBalanceResult>> results =
     model.checkMassBalance("kg/hr");
 
 // Get failed mass balance checks
-Map<String, Map<String, ProcessSystem.MassBalanceResult>> failed = 
+Map<String, Map<String, ProcessSystem.MassBalanceResult>> failed =
     model.getFailedMassBalance(0.1);  // 0.1% threshold
 
 // Get formatted reports
@@ -268,7 +359,7 @@ gasProcess.add(gasIn);
 gasProcess.add(scrubber);
 gasProcess.add(comp);
 
-// Create oil processing system  
+// Create oil processing system
 ProcessSystem oilProcess = new ProcessSystem("Oil Train");
 Stream oilIn = new Stream("Oil Feed", oilFluid);
 Heater heater = new Heater("Oil Heater", oilIn);
@@ -285,7 +376,7 @@ model.add("Oil Train", oilProcess);
 // Validate before running
 if (model.isReadyToRun()) {
     model.run();
-    
+
     if (model.isModelConverged()) {
         System.out.println("Model converged!");
         System.out.println(model.getConvergenceSummary());
@@ -318,13 +409,13 @@ state.setVersion("1.0.0");
 state.saveToFile("field_model_v1.0.0.json");
 ```
 
-For full documentation on serialization options, see [Process Serialization Guide](../../simulation/process_serialization.md).
+For full documentation on serialization options, see [Process Serialization Guide](../../simulation/process_serialization).
 
 ---
 
 ## Related Documentation
 
-- [ProcessSystem](process_system.md) - Individual process flowsheets
-- [ProcessModule](process_module.md) - Modular process units
-- [Process Serialization](../../simulation/process_serialization.md) - Save/load processes
-- [AI Validation Framework](../../integration/ai_validation_framework.md) - Validation integration
+- [ProcessSystem](process_system) - Individual process flowsheets
+- [ProcessModule](process_module) - Modular process units
+- [Process Serialization](../../simulation/process_serialization) - Save/load processes
+- [AI Validation Framework](../../integration/ai_validation_framework) - Validation integration

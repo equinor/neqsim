@@ -16,22 +16,22 @@ public enum StateOfMatter {
    */
   public static StateOfMatter fromPhaseType(PhaseType pt) {
     switch (pt) {
-      case GAS:
-        return StateOfMatter.GAS;
-      case LIQUID:
-      case OIL:
-      case AQUEOUS:
-      case LIQUID_ASPHALTENE:
-        return StateOfMatter.LIQUID;
-      case SOLID:
-      case SOLIDCOMPLEX:
-      case WAX:
-      case HYDRATE:
-      case ASPHALTENE:
-        return StateOfMatter.SOLID;
-      default:
-        throw new RuntimeException(new neqsim.util.exception.InvalidInputException(
-            StateOfMatter.class, "fromPhaseType", "pt", "Conversion not configured for"));
+    case GAS:
+      return StateOfMatter.GAS;
+    case LIQUID:
+    case OIL:
+    case AQUEOUS:
+    case LIQUID_ASPHALTENE:
+      return StateOfMatter.LIQUID;
+    case SOLID:
+    case SOLIDCOMPLEX:
+    case WAX:
+    case HYDRATE:
+    case ASPHALTENE:
+      return StateOfMatter.SOLID;
+    default:
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(StateOfMatter.class, "fromPhaseType",
+          "pt", "Conversion not configured for"));
     }
   }
 
@@ -69,8 +69,8 @@ public enum StateOfMatter {
    * Check if PhaseType object is an asphaltene phase (either solid or liquid).
    *
    * <p>
-   * Returns true for both ASPHALTENE (solid asphaltene precipitate) and LIQUID_ASPHALTENE
-   * (asphaltene-rich heavy liquid phase in Pedersen's approach).
+   * Returns true for both ASPHALTENE (solid asphaltene precipitate) and LIQUID_ASPHALTENE (asphaltene-rich heavy liquid
+   * phase in Pedersen's approach).
    * </p>
    *
    * @param pt PhaseType object to check.

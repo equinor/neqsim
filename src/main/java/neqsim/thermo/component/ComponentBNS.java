@@ -27,8 +27,8 @@ public class ComponentBNS extends ComponentPR {
    * @param omegaB PR constant OmegaB
    * @param vShift volume shift constant
    */
-  public ComponentBNS(String name, double moles, double molesInPhase, int compIndex, double tc,
-      double pc, double mw, double acf, double omegaA, double omegaB, double vShift) {
+  public ComponentBNS(String name, double moles, double molesInPhase, int compIndex, double tc, double pc, double mw,
+      double acf, double omegaA, double omegaB, double vShift) {
     super(compIndex, tc, pc, mw, acf, moles);
     this.componentName = name;
     this.index = compIndex;

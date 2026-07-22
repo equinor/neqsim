@@ -13,16 +13,15 @@ import neqsim.thermo.system.SystemInterface;
  * Fits CPA asphaltene model parameters to measured asphaltene onset points.
  *
  * <p>
- * This class provides a convenient interface for tuning asphaltene CPA parameters to match
- * experimental onset pressure data at various temperatures. The fitting uses the
- * Levenberg-Marquardt algorithm to minimize the difference between calculated and measured onset
- * pressures.
+ * This class provides a convenient interface for tuning asphaltene CPA parameters to match experimental onset pressure
+ * data at various temperatures. The fitting uses the Levenberg-Marquardt algorithm to minimize the difference between
+ * calculated and measured onset pressures.
  * </p>
  *
  * <p>
  * Typical usage:
  * </p>
- * 
+ *
  * <pre>
  * // Create fluid system with asphaltene
  * SystemInterface fluid = new SystemSrkCPAstatoil(373.15, 200.0);
@@ -173,7 +172,7 @@ public class AsphalteneOnsetFitting {
    * @param kappa association volume (dimensionless)
    */
   public void setInitialGuess(double epsilonOverR, double kappa) {
-    double[] guess = {epsilonOverR, kappa};
+    double[] guess = { epsilonOverR, kappa };
     function.setInitialGuess(guess);
   }
 
@@ -183,7 +182,7 @@ public class AsphalteneOnsetFitting {
    * @param value initial guess value
    */
   public void setInitialGuess(double value) {
-    double[] guess = {value};
+    double[] guess = { value };
     function.setInitialGuess(guess);
   }
 
@@ -236,11 +235,10 @@ public class AsphalteneOnsetFitting {
     ArrayList<SampleValue> sampleList = new ArrayList<>();
 
     for (OnsetDataPoint point : onsetData) {
-      double[] independentVars = {point.temperatureK};
-      double[] stdDevs = {0.1}; // Temperature uncertainty
+      double[] independentVars = { point.temperatureK };
+      double[] stdDevs = { 0.1 }; // Temperature uncertainty
 
-      SampleValue sample =
-          new SampleValue(point.pressureBara, point.stdDev, independentVars, stdDevs);
+      SampleValue sample = new SampleValue(point.pressureBara, point.stdDev, independentVars, stdDevs);
       sample.setFunction(function);
       sample.setThermodynamicSystem(system.clone());
       sampleList.add(sample);
@@ -289,14 +287,14 @@ public class AsphalteneOnsetFitting {
     int n = 0;
 
     for (OnsetDataPoint point : onsetData) {
-      double[] temp = {point.temperatureK};
+      double[] temp = { point.temperatureK };
       double calcPressure = function.calcValue(temp);
       double error = 100.0 * (calcPressure - point.pressureBara) / point.pressureBara;
       totalError += Math.abs(error);
       n++;
 
-      System.out.printf("%9.2f | %11.1f | %12.1f | %+7.2f%%%n", point.temperatureK,
-          point.pressureBara, calcPressure, error);
+      System.out.printf("%9.2f | %11.1f | %12.1f | %+7.2f%%%n", point.temperatureK, point.pressureBara, calcPressure,
+          error);
     }
 
     System.out.println("----------|-------------|--------------|----------");
@@ -356,7 +354,7 @@ public class AsphalteneOnsetFitting {
     if (!solved) {
       logger.warn("Parameters not fitted yet. Using initial guess.");
     }
-    double[] temp = {temperatureK};
+    double[] temp = { temperatureK };
     return function.calcValue(temp);
   }
 

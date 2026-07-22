@@ -15,9 +15,7 @@ import neqsim.util.ExcludeFromJacocoGeneratedReport;
 import neqsim.util.exception.InvalidInputException;
 
 /**
- * <p>
  * IronIonSaturationStream class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -50,9 +48,7 @@ public class IronIonSaturationStream extends Stream {
   }
 
   /**
-   * <p>
    * Constructor for IronIonSaturationStream.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
@@ -77,8 +73,7 @@ public class IronIonSaturationStream extends Stream {
   @Override
   public IronIonSaturationStream clone(String name) {
     if (this.getName() == name) {
-      throw new RuntimeException(
-          new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
+      throw new RuntimeException(new InvalidInputException(this, "clone", "name", "- Same name as in original object"));
     }
     IronIonSaturationStream s = this.clone();
     s.setName(name);
@@ -106,8 +101,7 @@ public class IronIonSaturationStream extends Stream {
     // reactiveThermoSystem.display();
     try {
       logger.info("aqueous phase number " + reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"));
-      thermoOps.addIonToScaleSaturation(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"),
-          "FeCO3", "Fe++");
+      thermoOps.addIonToScaleSaturation(reactiveThermoSystem.getPhaseNumberOfPhase("aqueous"), "FeCO3", "Fe++");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }

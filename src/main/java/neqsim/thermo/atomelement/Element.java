@@ -12,9 +12,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.ThermodynamicConstantsInterface;
 
 /**
- * <p>
  * Element class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -30,9 +28,7 @@ public class Element implements ThermodynamicConstantsInterface {
   private double[] coefArray;
 
   /**
-   * <p>
    * Constructor for Element.
-   * </p>
    *
    * @param name Name of component.
    */
@@ -43,8 +39,8 @@ public class Element implements ThermodynamicConstantsInterface {
     ArrayList<String> stocCoef = new ArrayList<String>();
 
     try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
-        java.sql.ResultSet dataSet =
-            database.getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"))) {
+        java.sql.ResultSet dataSet = database
+            .getResultSet(("SELECT * FROM element WHERE componentname='" + name + "'"))) {
       if (!dataSet.next()) {
         return;
       }
@@ -91,8 +87,8 @@ public class Element implements ThermodynamicConstantsInterface {
    */
   public double getNumberOfElements(String elementName) {
     if (nameArray == null) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "getNumberOfElements", elementName, "component not in element database.."));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getNumberOfElements",
+          elementName, "component not in element database.."));
     }
     for (int i = 0; i < nameArray.length; i++) {
       if (nameArray[i].equals(elementName)) {

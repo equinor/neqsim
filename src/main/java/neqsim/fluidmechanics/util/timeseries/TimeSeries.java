@@ -10,10 +10,7 @@ import neqsim.fluidmechanics.flowsystem.FlowSystemInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
- * TimeSeries class for managing time-varying boundary conditions in transient pipe flow
- * simulations.
- * </p>
+ * TimeSeries class for managing time-varying boundary conditions in transient pipe flow simulations.
  *
  * <p>
  * This class supports three types of outlet boundary conditions:
@@ -65,18 +62,14 @@ public class TimeSeries implements java.io.Serializable {
   protected double[] outletPressures;
 
   /**
-   * <p>
    * Constructor for TimeSeries.
-   * </p>
    */
   public TimeSeries() {
     this.timeSeries = new double[1];
   }
 
   /**
-   * <p>
    * Setter for the field <code>times</code>.
-   * </p>
    *
    * @param times an array of type double
    */
@@ -85,9 +78,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setInletThermoSystems.
-   * </p>
    *
    * @param inletThermoSystem an array of {@link neqsim.thermo.system.SystemInterface} objects
    */
@@ -96,9 +87,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>outletMolarFlowRate</code>.
-   * </p>
    *
    * @param outletMolarFlowRate an array of type double
    */
@@ -107,9 +96,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>outletMolarFlowRates</code>.
-   * </p>
    *
    * @return an array of type double
    */
@@ -118,9 +105,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>numberOfTimeStepsInInterval</code>.
-   * </p>
    *
    * @param numberOfTimeStepsInInterval a int
    */
@@ -129,9 +114,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    *
    * @param flowSystem a {@link neqsim.fluidmechanics.flowsystem.FlowSystemInterface} object
    */
@@ -146,8 +129,8 @@ public class TimeSeries implements java.io.Serializable {
     outletPressures = new double[totalSteps];
 
     // Get default outlet pressure from initial flow system state
-    double defaultOutletPressure =
-        flowSystem.getNode(flowSystem.getTotalNumberOfNodes() - 1).getBulkSystem().getPressure();
+    double defaultOutletPressure = flowSystem.getNode(flowSystem.getTotalNumberOfNodes() - 1).getBulkSystem()
+        .getPressure();
 
     double temp = 0;
     for (int k = 0; k < timeSeries.length - 1; k++) {
@@ -183,9 +166,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getThermoSystem.
-   * </p>
    *
    * @return an array of {@link neqsim.thermo.system.SystemInterface} objects
    */
@@ -194,9 +175,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getTimeStep.
-   * </p>
    *
    * @return an array of type double
    */
@@ -205,9 +184,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getTime.
-   * </p>
    *
    * @return an array of type double
    */
@@ -216,9 +193,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getTime.
-   * </p>
    *
    * @param i a int
    * @return a double
@@ -228,9 +203,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Getter for the outlet boundary type.
-   * </p>
    *
    * @return the outlet boundary type
    */
@@ -239,9 +212,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the outlet boundary type.
-   * </p>
    *
    * @param outletBoundaryType the outlet boundary type to set
    */
@@ -250,18 +221,14 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Sets the outlet as closed (blocked pipe, zero velocity boundary).
-   * </p>
    */
   public void setOutletClosed() {
     this.outletBoundaryType = OutletBoundaryType.CLOSED;
   }
 
   /**
-   * <p>
    * Sets controlled outlet velocities for each time interval.
-   * </p>
    *
    * @param outletVelocity velocity values for each time interval in m/s
    */
@@ -271,9 +238,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Gets the outlet velocity for a specific time step.
-   * </p>
    *
    * @param timeStep the time step index
    * @return the outlet velocity in m/s, or NaN if not specified
@@ -286,9 +251,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Gets the expanded outlet velocities array.
-   * </p>
    *
    * @return array of outlet velocities for each time step
    */
@@ -297,9 +260,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Sets outlet pressures for each time interval (for pressure-controlled boundary).
-   * </p>
    *
    * @param outletPressure pressure values for each time interval in bar
    */
@@ -309,9 +270,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Gets the outlet pressure for a specific time step.
-   * </p>
    *
    * @param timeStep the time step index
    * @return the outlet pressure in bar
@@ -324,9 +283,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Gets the expanded outlet pressures array.
-   * </p>
    *
    * @return array of outlet pressures for each time step
    */
@@ -335,9 +292,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Checks if the outlet is closed.
-   * </p>
    *
    * @return true if the outlet is closed, false otherwise
    */
@@ -346,9 +301,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Checks if outlet flow is controlled.
-   * </p>
    *
    * @return true if outlet flow is specified, false otherwise
    */
@@ -357,9 +310,7 @@ public class TimeSeries implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Checks if outlet pressure is controlled.
-   * </p>
    *
    * @return true if outlet pressure is specified, false otherwise
    */

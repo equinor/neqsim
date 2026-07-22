@@ -11,9 +11,7 @@ import neqsim.statistics.parameterfitting.StatisticsBaseClass;
 import neqsim.statistics.parameterfitting.StatisticsInterface;
 
 /**
- * <p>
  * MonteCarloSimulation class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -25,16 +23,13 @@ public class MonteCarloSimulation {
   int numberOfRuns = 50;
 
   /**
-   * <p>
    * Constructor for MonteCarloSimulation.
-   * </p>
    */
-  public MonteCarloSimulation() {}
+  public MonteCarloSimulation() {
+  }
 
   /**
-   * <p>
    * Constructor for MonteCarloSimulation.
-   * </p>
    *
    * @param baseStatClass a {@link neqsim.statistics.parameterfitting.StatisticsInterface} object
    */
@@ -43,9 +38,7 @@ public class MonteCarloSimulation {
   }
 
   /**
-   * <p>
    * Constructor for MonteCarloSimulation.
-   * </p>
    *
    * @param baseStatClass a {@link neqsim.statistics.parameterfitting.StatisticsBaseClass} object
    * @param numberOfRuns a int
@@ -56,9 +49,7 @@ public class MonteCarloSimulation {
   }
 
   /**
-   * <p>
    * Setter for the field <code>numberOfRuns</code>.
-   * </p>
    *
    * @param numberOfRuns a int
    */
@@ -67,9 +58,7 @@ public class MonteCarloSimulation {
   }
 
   /**
-   * <p>
    * runSimulation.
-   * </p>
    */
   public void runSimulation() {
     baseStatClass.init();
@@ -82,19 +71,15 @@ public class MonteCarloSimulation {
   }
 
   /**
-   * <p>
    * createReportMatrix.
-   * </p>
    */
   public void createReportMatrix() {
     reportMatrix = new double[10][numberOfRuns];
     for (int i = 0; i < numberOfRuns; i++) {
       reportMatrix[0][i] = i;
 
-      for (int j = 0; j < statClasses[0].getSampleSet().getSample(0).getFunction()
-          .getNumberOfFittingParams(); j++) {
-        reportMatrix[j + 1][i] =
-            statClasses[i].getSampleSet().getSample(0).getFunction().getFittingParams(j);
+      for (int j = 0; j < statClasses[0].getSampleSet().getSample(0).getFunction().getNumberOfFittingParams(); j++) {
+        reportMatrix[j + 1][i] = statClasses[i].getSampleSet().getSample(0).getFunction().getFittingParams(j);
       }
     }
 

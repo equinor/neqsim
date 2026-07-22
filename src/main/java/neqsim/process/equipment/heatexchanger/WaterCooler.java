@@ -19,9 +19,7 @@ public class WaterCooler extends Cooler {
   private double coolingWaterFlowRate = 0.0; // kg/s
 
   /**
-   * <p>
    * Constructor for WaterCooler.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -30,9 +28,7 @@ public class WaterCooler extends Cooler {
   }
 
   /**
-   * <p>
    * Constructor for WaterCooler.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -49,8 +45,7 @@ public class WaterCooler extends Cooler {
    * @param unit the unit of temperature
    */
   public void setWaterInletTemperature(double temperature, String unit) {
-    this.waterInletTemperature =
-        new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
+    this.waterInletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
   /**
@@ -60,8 +55,7 @@ public class WaterCooler extends Cooler {
    * @param unit the unit of temperature
    */
   public void setWaterOutletTemperature(double temperature, String unit) {
-    this.waterOutletTemperature =
-        new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
+    this.waterOutletTemperature = new neqsim.util.unit.TemperatureUnit(temperature, unit).getValue("K");
   }
 
   /**
@@ -75,16 +69,13 @@ public class WaterCooler extends Cooler {
   }
 
   /**
-   * <p>
    * Getter for the field <code>coolingWaterFlowRate</code>.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
    */
   public double getCoolingWaterFlowRate(String unit) {
-    return new neqsim.util.unit.RateUnit(coolingWaterFlowRate, "kg/sec", 1.0, 1.0, 0.0)
-        .getValue(unit);
+    return new neqsim.util.unit.RateUnit(coolingWaterFlowRate, "kg/sec", 1.0, 1.0, 0.0).getValue(unit);
   }
 
   private void setWaterModel() {

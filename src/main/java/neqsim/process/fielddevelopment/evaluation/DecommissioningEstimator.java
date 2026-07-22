@@ -8,8 +8,8 @@ import java.util.List;
  * Decommissioning cost estimation for offshore oil and gas facilities.
  *
  * <p>
- * Provides order-of-magnitude cost estimates for late-life planning and abandonment liability
- * calculations. Based on Norwegian Continental Shelf (NCS) experience and industry benchmarks.
+ * Provides order-of-magnitude cost estimates for late-life planning and abandonment liability calculations. Based on
+ * Norwegian Continental Shelf (NCS) experience and industry benchmarks.
  * </p>
  *
  * <h2>Cost Categories</h2>
@@ -29,13 +29,12 @@ import java.util.List;
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>
  * {@code
- * DecommissioningEstimator estimator =
- *     new DecommissioningEstimator().setFacilityType(FacilityType.FIXED_JACKET).setWaterDepth(120)
- *         .setTopsideWeight(15000).setNumberOfWells(12).setPipelineLength(45);
- * 
+ * DecommissioningEstimator estimator = new DecommissioningEstimator().setFacilityType(FacilityType.FIXED_JACKET)
+ *     .setWaterDepth(120).setTopsideWeight(15000).setNumberOfWells(12).setPipelineLength(45);
+ *
  * double totalCost = estimator.getTotalCostMUSD();
  * System.out.println("Decom cost: $" + totalCost + "M");
  * }

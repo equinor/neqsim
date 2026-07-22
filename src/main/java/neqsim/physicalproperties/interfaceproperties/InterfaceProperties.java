@@ -9,7 +9,13 @@ package neqsim.physicalproperties.interfaceproperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.interfaceproperties.solidadsorption.AdsorptionInterface;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.BETAdsorption;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.FreundlichAdsorption;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.IsothermType;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.LangmuirAdsorption;
 import neqsim.physicalproperties.interfaceproperties.solidadsorption.PotentialTheoryAdsorption;
+import neqsim.physicalproperties.interfaceproperties.solidadsorption.SipsAdsorption;
+import neqsim.physicalproperties.interfaceproperties.surfacetension.CDFTSurfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.FirozabadiRamleyInterfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.GTSurfaceTension;
 import neqsim.physicalproperties.interfaceproperties.surfacetension.GTSurfaceTensionSimple;
@@ -20,9 +26,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * InterfaceProperties class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -43,16 +47,13 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   private int interfacialTensionModel = 0;
 
   /**
-   * <p>
    * Constructor for InterfaceProperties.
-   * </p>
    */
-  public InterfaceProperties() {}
+  public InterfaceProperties() {
+  }
 
   /**
-   * <p>
    * Constructor for InterfaceProperties.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -70,13 +71,10 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   public InterfaceProperties clone() {
     InterfaceProperties clonedSystem = null;
     try {
-      // clonedSystem = (InterfaceProperties) suclone();
-      // clonedSystem.chemicalReactionOperations = (ChemicalReactionOperations)
-      // chemicalReactionOperations.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+      clonedSystem = (InterfaceProperties) super.clone();
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for InterfaceProperties", ex);
     }
-    // clonedSystem.system = system;
     return clonedSystem;
   }
 
@@ -113,6 +111,39 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
 
   /** {@inheritDoc} */
   @Override
+  public void initAdsorption(IsothermType type) {
+    setAdsorptionCalc(new AdsorptionInterface[system.getNumberOfPhases()]);
+
+    for (int i = 0; i < system.getNumberOfPhases(); i++) {
+      getAdsorptionCalc()[i] = createAdsorptionModel(type);
+    }
+  }
+
+  /**
+   * Create an adsorption model instance for the given isotherm type.
+   *
+   * @param type the isotherm type
+   * @return a new adsorption model instance
+   */
+  private AdsorptionInterface createAdsorptionModel(IsothermType type) {
+    switch (type) {
+    case LANGMUIR:
+    case EXTENDED_LANGMUIR:
+      return new LangmuirAdsorption(system);
+    case BET:
+      return new BETAdsorption(system);
+    case FREUNDLICH:
+      return new FreundlichAdsorption(system);
+    case SIPS:
+      return new SipsAdsorption(system);
+    case DRA:
+    default:
+      return new PotentialTheoryAdsorption(system);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public void setSolidAdsorbentMaterial(String material) {
     for (int i = 0; i < system.getNumberOfPhases(); i++) {
       getAdsorptionCalc()[i].setSolidMaterial(material);
@@ -128,15 +159,14 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
   }
 
   /*
-   * public double getSurfaceTension(int numb) { if (numb >= numberOfInterfaces) { return 0.0; }
-   * else { return surfaceTension[numb]; } }
+   * public double getSurfaceTension(int numb) { if (numb >= numberOfInterfaces) { return 0.0; } else { return
+   * surfaceTension[numb]; } }
    */
 
   /** {@inheritDoc} */
   @Override
   public double getSurfaceTension(int numb1, int numb2) {
-    if (system.getPhase(numb1).getType() == PhaseType.GAS
-        && system.getPhase(numb2).getType() == PhaseType.OIL) {
+    if (system.getPhase(numb1).getType() == PhaseType.GAS && system.getPhase(numb2).getType() == PhaseType.OIL) {
       return gasLiquidSurfaceTensionCalc.calcSurfaceTension(numb1, numb2);
     } else if (system.getPhase(numb1).getType() == PhaseType.GAS
         && system.getPhase(numb2).getType() == PhaseType.AQUEOUS) {
@@ -181,6 +211,8 @@ public class InterfaceProperties implements InterphasePropertiesInterface, java.
       surfTensModel = new GTSurfaceTensionSimple(system);
     } else if ("Full Gradient Theory".equals(model)) {
       surfTensModel = new GTSurfaceTension(system);
+    } else if ("cDFT".equals(model) || "Classical DFT".equals(model)) {
+      surfTensModel = new CDFTSurfaceTension(system);
     } else if ("Firozabadi Ramley".equals(model)) {
       surfTensModel = new FirozabadiRamleyInterfaceTension(system);
     } else if ("Parachor".equals(model) || "Weinaug-Katz".equals(model)) {

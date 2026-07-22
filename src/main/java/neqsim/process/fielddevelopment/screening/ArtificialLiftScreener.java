@@ -9,8 +9,8 @@ import java.util.List;
  * Artificial lift screening and selection tool.
  *
  * <p>
- * This class provides comprehensive artificial lift method comparison and selection based on
- * reservoir and well conditions. Supported methods include:
+ * This class provides comprehensive artificial lift method comparison and selection based on reservoir and well
+ * conditions. Supported methods include:
  * <ul>
  * <li><b>Natural Flow:</b> Baseline case with no artificial lift</li>
  * <li><b>Gas Lift:</b> Continuous or intermittent gas injection</li>
@@ -85,7 +85,7 @@ import java.util.List;
  * </table>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>{@code
  * ArtificialLiftScreener screener = new ArtificialLiftScreener();
  * screener.setReservoirPressure(250.0, "bara");
@@ -99,9 +99,9 @@ import java.util.List;
  * screener.setOilViscosity(5.0, "cP");
  * screener.setGasLiftAvailable(true);
  * screener.setElectricityAvailable(true);
- * 
+ *
  * ScreeningResult result = screener.screen();
- * 
+ *
  * System.out.println("Recommended: " + result.getRecommendedMethod());
  * for (MethodResult method : result.getAllMethods()) {
  *   System.out.println(method);
@@ -347,14 +347,14 @@ public class ArtificialLiftScreener implements Serializable {
 
     // Economics
     result.capex = LiftMethod.GAS_LIFT.getTypicalCapex() + glResult.getValveCount() * 5000; // $5000
-                                                                                            // per
-                                                                                            // valve
+    // per
+    // valve
     double gasConsumption = glResult.injectionRateAtOptimal * 1e6; // Sm3/day
     result.opex = LiftMethod.GAS_LIFT.getTypicalOpex() + gasConsumption * gasCost
         + glResult.compressionPower * 24 * electricityCost;
 
-    result.additionalInfo = String.format("GLR=%.0f Sm3/Sm3, Inj=%.2f MSm3/d, Valves=%d",
-        glResult.optimalGLR, glResult.injectionRateAtOptimal, glResult.getValveCount());
+    result.additionalInfo = String.format("GLR=%.0f Sm3/Sm3, Inj=%.2f MSm3/d, Valves=%d", glResult.optimalGLR,
+        glResult.injectionRateAtOptimal, glResult.getValveCount());
 
     result.calculateEconomics(oilPrice, discountRate, economicLife);
 
@@ -468,8 +468,7 @@ public class ArtificialLiftScreener implements Serializable {
 
     // Economics - lower CAPEX but higher maintenance
     result.capex = LiftMethod.ROD_PUMP.getTypicalCapex();
-    result.opex =
-        LiftMethod.ROD_PUMP.getTypicalOpex() + result.powerConsumption * 24 * electricityCost;
+    result.opex = LiftMethod.ROD_PUMP.getTypicalOpex() + result.powerConsumption * 24 * electricityCost;
 
     result.additionalInfo = String.format("Rate limited to %.0f Sm3/d", result.productionRate);
 
@@ -565,8 +564,7 @@ public class ArtificialLiftScreener implements Serializable {
     result.powerConsumption = result.productionRate * 0.35; // Higher power due to low efficiency
 
     result.capex = LiftMethod.JET_PUMP.getTypicalCapex();
-    result.opex =
-        LiftMethod.JET_PUMP.getTypicalOpex() + result.powerConsumption * 24 * electricityCost;
+    result.opex = LiftMethod.JET_PUMP.getTypicalOpex() + result.powerConsumption * 24 * electricityCost;
 
     result.additionalInfo = "Good for deviated wells, no moving parts downhole";
 
@@ -1031,8 +1029,8 @@ public class ArtificialLiftScreener implements Serializable {
         return String.format("%s: INFEASIBLE - %s", method.getDisplayName(), infeasibilityReason);
       }
 
-      return String.format("#%d %s: %.0f Sm3/d, %.0f kW, NPV=%.0f MUSD %s", rank,
-          method.getDisplayName(), productionRate, powerConsumption, npv / 1e6, additionalInfo);
+      return String.format("#%d %s: %.0f Sm3/d, %.0f kW, NPV=%.0f MUSD %s", rank, method.getDisplayName(),
+          productionRate, powerConsumption, npv / 1e6, additionalInfo);
     }
   }
 }

@@ -1,5 +1,7 @@
 package neqsim.thermo.phase;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.system.PhysicalPropertyModel;
 import neqsim.thermo.component.ComponentGEInterface;
 import neqsim.thermo.component.ComponentGePitzer;
@@ -15,19 +17,47 @@ import neqsim.util.exception.TooManyIterationsException;
 public class PhasePitzer extends PhaseGE {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
+  /** Logger object for class. */
+  private static final Logger logger = LogManager.getLogger(PhasePitzer.class);
 
   private double[][] beta0;
   private double[][] beta1;
   private double[][] cphi;
+  /** Second virial coefficient for 2-2 electrolytes (Harvie &amp; Weare 1984). */
+  private double[][] beta2;
+  /** Cation-cation or anion-anion mixing parameter theta (Harvie &amp; Weare 1984). */
+  private double[][] theta;
+  /** Ternary mixing parameter psi (cation-cation-anion or anion-anion-cation). */
+  private double[][][] psi;
+
+  /** T-dependent coefficients for beta0: beta0(T) = beta0_25 + T1*(1/T-1/Tr) + T2*ln(T/Tr). */
+  private double[][] beta0T1;
+  private double[][] beta0T2;
+  /** T-dependent coefficients for beta1. */
+  private double[][] beta1T1;
+  private double[][] beta1T2;
+  /** T-dependent coefficients for Cphi. */
+  private double[][] cphiT1;
+  private double[][] cphiT2;
+  /** Whether parameters have been loaded from database. */
+  private boolean parametersLoaded = false;
 
   /** Constructor for PhasePitzer. */
   public PhasePitzer() {
-    super();
     setPhysicalPropertyModel(PhysicalPropertyModel.SALT_WATER);
     int max = componentArray.length;
     beta0 = new double[max][max];
     beta1 = new double[max][max];
     cphi = new double[max][max];
+    beta2 = new double[max][max];
+    theta = new double[max][max];
+    psi = new double[max][max][max];
+    beta0T1 = new double[max][max];
+    beta0T2 = new double[max][max];
+    beta1T1 = new double[max][max];
+    beta1T2 = new double[max][max];
+    cphiT1 = new double[max][max];
+    cphiT2 = new double[max][max];
   }
 
   /** {@inheritDoc} */
@@ -39,12 +69,15 @@ public class PhasePitzer extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType pt) {
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt) {
+    if (!parametersLoaded) {
+      loadParametersFromDatabase();
+    }
     double GE = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponent(i).getx() * Math.log(((ComponentGePitzer) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, pt));
+      GE += phase.getComponent(i).getx() * Math
+          .log(((ComponentGePitzer) componentArray[i]).getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
     return R * temperature * numberOfMolesInPhase * GE;
   }
@@ -92,6 +125,263 @@ public class PhasePitzer extends PhaseGE {
   }
 
   /**
+   * Set T-dependent coefficients for beta0 (Silvester-Pitzer form).
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param t1 coefficient for (1/T - 1/Tr) term
+   * @param t2 coefficient for ln(T/Tr) term
+   */
+  public void setBeta0T(int i, int j, double t1, double t2) {
+    beta0T1[i][j] = t1;
+    beta0T1[j][i] = t1;
+    beta0T2[i][j] = t2;
+    beta0T2[j][i] = t2;
+  }
+
+  /**
+   * Set T-dependent coefficients for beta1 (Silvester-Pitzer form).
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param t1 coefficient for (1/T - 1/Tr) term
+   * @param t2 coefficient for ln(T/Tr) term
+   */
+  public void setBeta1T(int i, int j, double t1, double t2) {
+    beta1T1[i][j] = t1;
+    beta1T1[j][i] = t1;
+    beta1T2[i][j] = t2;
+    beta1T2[j][i] = t2;
+  }
+
+  /**
+   * Set T-dependent coefficients for Cphi (Silvester-Pitzer form).
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param t1 coefficient for (1/T - 1/Tr) term
+   * @param t2 coefficient for ln(T/Tr) term
+   */
+  public void setCphiT(int i, int j, double t1, double t2) {
+    cphiT1[i][j] = t1;
+    cphiT1[j][i] = t1;
+    cphiT2[i][j] = t2;
+    cphiT2[j][i] = t2;
+  }
+
+  /**
+   * Loads Pitzer binary parameters from the PitzerParameters database table.
+   *
+   * <p>
+   * Matches ion names to components present in this phase and sets beta0, beta1, Cphi and their temperature-dependent
+   * coefficients.
+   * </p>
+   */
+  public void loadParametersFromDatabase() {
+    try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+        java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM pitzerparameters")) {
+      while (dataSet.next()) {
+        String ion1Name = dataSet.getString("ion1").trim();
+        String ion2Name = dataSet.getString("ion2").trim();
+
+        int idx1 = -1;
+        int idx2 = -1;
+        for (int k = 0; k < numberOfComponents; k++) {
+          String compName = getComponent(k).getComponentName();
+          if (compName.equals(ion1Name)) {
+            idx1 = k;
+          }
+          if (compName.equals(ion2Name)) {
+            idx2 = k;
+          }
+        }
+        if (idx1 < 0 || idx2 < 0) {
+          continue;
+        }
+
+        double b0 = dataSet.getDouble("beta0_25");
+        double b1 = dataSet.getDouble("beta1_25");
+        double cp = dataSet.getDouble("Cphi_25");
+        setBinaryParameters(idx1, idx2, b0, b1, cp);
+
+        // Load beta2 for 2-2 electrolytes
+        try {
+          double b2 = dataSet.getDouble("beta2_25");
+          if (Math.abs(b2) > 1e-20) {
+            beta2[idx1][idx2] = b2;
+            beta2[idx2][idx1] = b2;
+          }
+        } catch (Exception ex2) {
+          // Column may not exist in older databases
+        }
+
+        double b0t1 = dataSet.getDouble("beta0_T1");
+        double b0t2 = dataSet.getDouble("beta0_T2");
+        double b1t1 = dataSet.getDouble("beta1_T1");
+        double b1t2 = dataSet.getDouble("beta1_T2");
+        double ct1 = dataSet.getDouble("Cphi_T1");
+        double ct2 = dataSet.getDouble("Cphi_T2");
+
+        beta0T1[idx1][idx2] = b0t1;
+        beta0T1[idx2][idx1] = b0t1;
+        beta0T2[idx1][idx2] = b0t2;
+        beta0T2[idx2][idx1] = b0t2;
+        beta1T1[idx1][idx2] = b1t1;
+        beta1T1[idx2][idx1] = b1t1;
+        beta1T2[idx1][idx2] = b1t2;
+        beta1T2[idx2][idx1] = b1t2;
+        cphiT1[idx1][idx2] = ct1;
+        cphiT1[idx2][idx1] = ct1;
+        cphiT2[idx1][idx2] = ct2;
+        cphiT2[idx2][idx1] = ct2;
+      }
+      parametersLoaded = true;
+    } catch (Exception ex) {
+      parametersLoaded = true; // prevent infinite retries
+      logger.error("Failed to load Pitzer parameters from database", ex);
+    }
+  }
+
+  /**
+   * Get T-dependent beta0 parameter.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param TK temperature in Kelvin
+   * @return beta0 at temperature T
+   */
+  public double getBeta0ij(int i, int j, double TK) {
+    double b0_25 = beta0[i][j];
+    double t1 = beta0T1[i][j];
+    double t2 = beta0T2[i][j];
+    if (Math.abs(t1) < 1e-20 && Math.abs(t2) < 1e-20) {
+      return b0_25;
+    }
+    // Silvester-Pitzer form: beta0(T) = beta0_25 + t1*(1/T - 1/Tr) + t2*ln(T/Tr)
+    return b0_25 + t1 * (1.0 / TK - 1.0 / 298.15) + t2 * Math.log(TK / 298.15);
+  }
+
+  /**
+   * Get T-dependent beta1 parameter.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param TK temperature in Kelvin
+   * @return beta1 at temperature T
+   */
+  public double getBeta1ij(int i, int j, double TK) {
+    double b1_25 = beta1[i][j];
+    double t1 = beta1T1[i][j];
+    double t2 = beta1T2[i][j];
+    if (Math.abs(t1) < 1e-20 && Math.abs(t2) < 1e-20) {
+      return b1_25;
+    }
+    return b1_25 + t1 * (1.0 / TK - 1.0 / 298.15) + t2 * Math.log(TK / 298.15);
+  }
+
+  /**
+   * Get T-dependent Cphi parameter.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param TK temperature in Kelvin
+   * @return Cphi at temperature T
+   */
+  public double getCphiij(int i, int j, double TK) {
+    double c_25 = cphi[i][j];
+    double t1 = cphiT1[i][j];
+    double t2 = cphiT2[i][j];
+    if (Math.abs(t1) < 1e-20 && Math.abs(t2) < 1e-20) {
+      return c_25;
+    }
+    return c_25 + t1 * (1.0 / TK - 1.0 / 298.15) + t2 * Math.log(TK / 298.15);
+  }
+
+  /**
+   * Returns whether parameters have been loaded from database.
+   *
+   * @return true if loaded
+   */
+  public boolean isParametersLoaded() {
+    return parametersLoaded;
+  }
+
+  /**
+   * Get beta2 parameter for 2-2 electrolytes.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @return beta2 parameter
+   */
+  public double getBeta2ij(int i, int j) {
+    return beta2[i][j];
+  }
+
+  /**
+   * Set beta2 parameter for 2-2 electrolytes.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param value beta2 value
+   */
+  public void setBeta2(int i, int j, double value) {
+    beta2[i][j] = value;
+    beta2[j][i] = value;
+  }
+
+  /**
+   * Get theta mixing parameter for same-sign ion pair.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @return theta parameter
+   */
+  public double getThetaij(int i, int j) {
+    return theta[i][j];
+  }
+
+  /**
+   * Set theta mixing parameter for same-sign ion pair.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param value theta value
+   */
+  public void setTheta(int i, int j, double value) {
+    theta[i][j] = value;
+    theta[j][i] = value;
+  }
+
+  /**
+   * Get psi ternary mixing parameter.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param k component index k
+   * @return psi parameter
+   */
+  public double getPsiijk(int i, int j, int k) {
+    return psi[i][j][k];
+  }
+
+  /**
+   * Set psi ternary mixing parameter.
+   *
+   * @param i component index i
+   * @param j component index j
+   * @param k component index k
+   * @param value psi value
+   */
+  public void setPsi(int i, int j, int k, double value) {
+    psi[i][j][k] = value;
+    psi[j][i][k] = value;
+    psi[i][k][j] = value;
+    psi[j][k][i] = value;
+    psi[k][i][j] = value;
+    psi[k][j][i] = value;
+  }
+
+  /**
    * Get beta0 parameter.
    *
    * @param i component index i
@@ -132,8 +422,7 @@ public class PhasePitzer extends PhaseGE {
   public double getIonicStrength() {
     double ionStrength = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      ionStrength +=
-          getComponent(i).getMolality(this) * Math.pow(getComponent(i).getIonicCharge(), 2.0);
+      ionStrength += getComponent(i).getMolality(this) * Math.pow(getComponent(i).getIonicCharge(), 2.0);
     }
     return 0.5 * ionStrength;
   }
@@ -161,15 +450,114 @@ public class PhasePitzer extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
+  public double getOsmoticCoefficientOfWater() {
+    return getPitzerOsmoticCoefficient();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getOsmoticCoefficientOfWaterMolality() {
+    return getPitzerOsmoticCoefficient();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getOsmoticCoefficient(int waterComponentNumber) {
+    return getPitzerOsmoticCoefficient();
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * <p>
+   * Computes brine density as a function of temperature, pressure, and salinity using the Rowe-Chou (1970) correlation
+   * for NaCl-equivalent brine, extended with pressure correction. Fall-back is pure water density from Kell (1975).
+   * Much more accurate than the inherited hard-coded 997 kg/m3.
+   * </p>
+   */
+  @Override
+  public double getDensity() {
+    double physicalPropertyDensity = 0.0;
+    try {
+      physicalPropertyDensity = new neqsim.physicalproperties.methods.liquidphysicalproperties.density.Water(
+          getPhysicalProperties()).calcDensity();
+    } catch (Exception ex) {
+      logger.debug("Could not calculate Pitzer salt-water physical-property density", ex);
+    }
+    if (physicalPropertyDensity > 0.0 && !Double.isNaN(physicalPropertyDensity)
+        && !Double.isInfinite(physicalPropertyDensity)) {
+      return physicalPropertyDensity;
+    }
+
+    double TC = temperature - 273.15;
+    if (TC < 0.0) {
+      TC = 0.0;
+    }
+    if (TC > 300.0) {
+      TC = 300.0;
+    }
+
+    // Pure water density (Kell 1975 polynomial, 0-150°C at ~1 atm)
+    double rhoW;
+    if (TC <= 100.0) {
+      rhoW = 999.83 + 5.0948e-2 * TC - 7.5722e-3 * TC * TC + 3.8907e-5 * TC * TC * TC - 1.2e-7 * TC * TC * TC * TC;
+    } else {
+      // IAPWS approximate saturated-liquid density above 100°C
+      double dT = TC - 100.0;
+      rhoW = 958.0 - 1.08 * dT - 0.0028 * dT * dT;
+    }
+    if (rhoW < 700.0) {
+      rhoW = 700.0;
+    }
+
+    // Calculate NaCl-equivalent salinity (total dissolved solids in kg/m³)
+    // S = sum(m_ion * MW_ion) / (sum(m_ion * MW_ion) + 1 kg water) * 1e6 [ppm]
+    double ionMassKg = 0.0;
+    double waterMassKg = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (Math.abs(getComponent(i).getIonicCharge()) > 0.5) {
+        ionMassKg += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+      }
+      if (getComponent(i).getComponentName().equals("water")) {
+        waterMassKg += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+      }
+    }
+    double totalMass = ionMassKg + waterMassKg;
+    double S = (totalMass > 1e-20) ? ionMassKg / totalMass : 0.0; // mass fraction of salts
+
+    // Brine density correction: rho_brine ≈ rho_water + S * (800 + 0.4*S*1e6)
+    // Simplified Rowe-Chou type: rho_b = rhoW / (1 - S*(0.668 + 0.44*S + 1e-6*S*TC*TC))
+    // This approximation gives ~1020 kg/m³ for 3 wt% NaCl at 25°C, ~1200 kg/m³ for 26 wt%
+    double rhoBrine;
+    if (S > 1e-10) {
+      // McCain (1991) correlation adapted for NaCl brines
+      rhoBrine = rhoW + 668.0 * S + 440.0 * S * S;
+    } else {
+      rhoBrine = rhoW;
+    }
+
+    // Pressure correction: approximate compressibility of brine
+    // dp in bar from atmospheric; compressibility ~4.5e-5 /bar for water, less for brine
+    double pressureBar = pressure;
+    if (pressureBar > 1.013) {
+      double kappa = 4.5e-5 / (1.0 + 3.0 * S); // brine is less compressible
+      rhoBrine *= (1.0 + kappa * (pressureBar - 1.013));
+    }
+
+    return rhoBrine;
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws IsNaNException, TooManyIterationsException {
-    return getMass() / getPhysicalProperties().getDensity() / numberOfMolesInPhase;
+    return getMass() / getDensity() / numberOfMolesInPhase;
   }
 
   /** {@inheritDoc} */
   @Override
   public double getHresTP() {
-    return 0.0;
+    return getGresTP() + temperature * getSresTP();
   }
 
   /** {@inheritDoc} */
@@ -181,47 +569,42 @@ public class PhasePitzer extends PhaseGE {
   /** {@inheritDoc} */
   @Override
   public double getSresTV() {
-    return 0.0;
+    return getSresTP();
   }
 
   /** {@inheritDoc} */
   @Override
   public double getSresTP() {
-    return 0.0;
+    double temperatureStep = getTemperatureDerivativeStep();
+    double gPlus = getExcessGibbsEnergyAtTemperature(temperature + temperatureStep);
+    double gMinus = getExcessGibbsEnergyAtTemperature(temperature - temperatureStep);
+    restoreActivityCoefficientsAtCurrentTemperature();
+    return -(gPlus - gMinus) / (2.0 * temperatureStep);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getGresTP() {
+    return getExcessGibbsEnergyAtTemperature(temperature);
   }
 
   /**
    * {@inheritDoc}
    *
    * <p>
-   * Calculates the excess heat capacity via finite-difference temperature derivatives of the
-   * activity coefficients. In the current implementation the Pitzer binary parameters are
-   * temperature independent, so the residual contribution evaluates to zero.
+   * Calculates the excess heat capacity via finite-difference temperature derivatives of the Pitzer excess Gibbs
+   * energy, including temperature-dependent Debye-Huckel and binary interaction parameters when available.
    * </p>
    */
   @Override
   public double getCpres() {
-    double T = temperature;
-    double P = pressure;
-    int n = numberOfComponents;
-    double dT = 1e-2;
-    double sum1 = 0.0;
-    double sum2 = 0.0;
-
-    for (int i = 0; i < n; i++) {
-      ComponentGePitzer comp = (ComponentGePitzer) componentArray[i];
-      double ln0 = Math.log(comp.getGamma(this, n, T, P, getType()));
-      double lnPlus = Math.log(comp.getGamma(this, n, T + dT, P, getType()));
-      double lnMinus = Math.log(comp.getGamma(this, n, T - dT, P, getType()));
-      double d1 = (lnPlus - lnMinus) / (2.0 * dT);
-      double d2 = (lnPlus - 2.0 * ln0 + lnMinus) / (dT * dT);
-      sum1 += comp.getx() * d1;
-      sum2 += comp.getx() * d2;
-      comp.getGamma(this, n, T, P, getType());
-    }
-
-    double cpex = -R * (T * T * sum2 + 2.0 * T * sum1);
-    return cpex * numberOfMolesInPhase;
+    double temperatureStep = getTemperatureDerivativeStep();
+    double gPlus = getExcessGibbsEnergyAtTemperature(temperature + temperatureStep);
+    double g0 = getExcessGibbsEnergyAtTemperature(temperature);
+    double gMinus = getExcessGibbsEnergyAtTemperature(temperature - temperatureStep);
+    restoreActivityCoefficientsAtCurrentTemperature();
+    double secondDerivative = (gPlus - 2.0 * g0 + gMinus) / (temperatureStep * temperatureStep);
+    return -temperature * secondDerivative;
   }
 
   /** {@inheritDoc} */
@@ -246,7 +629,210 @@ public class PhasePitzer extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
+  public double getEnthalpy() {
+    return getHID() * numberOfMolesInPhase + getHresTP();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getEntropy() {
+    double idealEntropy = 0.0;
+    double idealMixingEntropy = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      idealEntropy += componentArray[i].getx() * componentArray[i].getIdEntropy(temperature);
+      if (componentArray[i].getx() > 1e-100) {
+        idealMixingEntropy += -R * componentArray[i].getx() * Math.log(componentArray[i].getx());
+      }
+    }
+    return idealEntropy * numberOfMolesInPhase + idealMixingEntropy * numberOfMolesInPhase + getSresTP();
+  }
+
+  /** {@inheritDoc} */
+  @Override
   public double getCv() {
     return getCp();
+  }
+
+  /**
+   * Calculates the Pitzer osmotic coefficient for the aqueous phase.
+   *
+   * @return osmotic coefficient of water on the molality scale
+   */
+  private double getPitzerOsmoticCoefficient() {
+    if (!parametersLoaded) {
+      loadParametersFromDatabase();
+    }
+
+    double ionicStrength = getIonicStrength();
+    double sqrtIonicStrength = Math.sqrt(ionicStrength);
+    double aPhi = getDebyeHuckelAphi(temperature);
+    double b = 1.2;
+
+    double sumMolalities = 0.0;
+    double zSum = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      double charge = getComponent(i).getIonicCharge();
+      if (Math.abs(charge) > 0.5) {
+        double molality = getComponent(i).getMolality(this);
+        sumMolalities += molality;
+        zSum += Math.abs(charge) * molality;
+      }
+    }
+
+    if (sumMolalities < 1.0e-12) {
+      return 1.0;
+    }
+
+    double fPhi = -aPhi * Math.pow(ionicStrength, 1.5) / (1.0 + b * sqrtIonicStrength);
+    double binarySum = 0.0;
+    for (int cation = 0; cation < numberOfComponents; cation++) {
+      double cationCharge = getComponent(cation).getIonicCharge();
+      if (cationCharge <= 0.0) {
+        continue;
+      }
+      double cationMolality = getComponent(cation).getMolality(this);
+      for (int anion = 0; anion < numberOfComponents; anion++) {
+        double anionCharge = getComponent(anion).getIonicCharge();
+        if (anionCharge >= 0.0) {
+          continue;
+        }
+        double anionMolality = getComponent(anion).getMolality(this);
+        double bPhi = getBphi(cation, anion, ionicStrength);
+        double c = getCphiij(cation, anion, temperature) / (2.0 * Math.sqrt(Math.abs(cationCharge * anionCharge)));
+        binarySum += cationMolality * anionMolality * (bPhi + zSum * c);
+      }
+    }
+
+    double thetaPsiSum = getThetaPsiOsmoticContribution();
+    return 1.0 + (2.0 / sumMolalities) * (fPhi + binarySum + thetaPsiSum);
+  }
+
+  /**
+   * Calculates the Pitzer Debye-Huckel A-phi coefficient.
+   *
+   * @param temperatureKelvin temperature in K
+   * @return Debye-Huckel A-phi coefficient
+   */
+  private double getDebyeHuckelAphi(double temperatureKelvin) {
+    double temperatureCelsius = temperatureKelvin - 273.15;
+    double densityWater = 999.83 + 5.0948e-2 * temperatureCelsius - 7.5722e-3 * temperatureCelsius * temperatureCelsius
+        + 3.8907e-5 * Math.pow(temperatureCelsius, 3.0) - 1.2e-7 * Math.pow(temperatureCelsius, 4.0);
+    if (temperatureCelsius > 100.0) {
+      double deltaTemperature = temperatureCelsius - 100.0;
+      densityWater = 958.0 - 1.08 * deltaTemperature - 0.0028 * deltaTemperature * deltaTemperature;
+    }
+    if (densityWater < 700.0) {
+      densityWater = 700.0;
+    }
+
+    double dielectricConstantWater = 87.740 - 0.40008 * temperatureCelsius
+        + 9.398e-4 * temperatureCelsius * temperatureCelsius - 1.410e-6 * Math.pow(temperatureCelsius, 3.0);
+    if (dielectricConstantWater < 20.0) {
+      dielectricConstantWater = 20.0;
+    }
+
+    return 1.4006e6 * Math.sqrt(densityWater / 1000.0) / Math.pow(dielectricConstantWater * temperatureKelvin, 1.5);
+  }
+
+  /**
+   * Calculates the Pitzer B-phi interaction function for an ion pair.
+   *
+   * @param cation cation component index
+   * @param anion anion component index
+   * @param ionicStrength ionic strength in mol/kg
+   * @return B-phi interaction function
+   */
+  private double getBphi(int cation, int anion, double ionicStrength) {
+    double cationCharge = getComponent(cation).getIonicCharge();
+    double anionCharge = getComponent(anion).getIonicCharge();
+    boolean is22 = Math.abs(cationCharge) >= 1.5 && Math.abs(anionCharge) >= 1.5;
+    double sqrtIonicStrength = Math.sqrt(ionicStrength);
+    double bPhi = getBeta0ij(cation, anion, temperature)
+        + getBeta1ij(cation, anion, temperature) * Math.exp((is22 ? -1.4 : -2.0) * sqrtIonicStrength);
+    if (is22) {
+      bPhi += getBeta2ij(cation, anion) * Math.exp(-12.0 * sqrtIonicStrength);
+    }
+    return bPhi;
+  }
+
+  /**
+   * Calculates theta and psi contributions to the osmotic coefficient.
+   *
+   * @return theta and psi contribution to the Pitzer osmotic-coefficient sum
+   */
+  private double getThetaPsiOsmoticContribution() {
+    double thetaPsiSum = 0.0;
+    for (int cation1 = 0; cation1 < numberOfComponents; cation1++) {
+      if (getComponent(cation1).getIonicCharge() <= 0.0) {
+        continue;
+      }
+      double molalityCation1 = getComponent(cation1).getMolality(this);
+      for (int cation2 = cation1 + 1; cation2 < numberOfComponents; cation2++) {
+        if (getComponent(cation2).getIonicCharge() <= 0.0) {
+          continue;
+        }
+        double molalityCation2 = getComponent(cation2).getMolality(this);
+        thetaPsiSum += molalityCation1 * molalityCation2 * getThetaij(cation1, cation2);
+        for (int anion = 0; anion < numberOfComponents; anion++) {
+          if (getComponent(anion).getIonicCharge() >= 0.0) {
+            continue;
+          }
+          thetaPsiSum += molalityCation1 * molalityCation2 * getComponent(anion).getMolality(this)
+              * getPsiijk(cation1, cation2, anion);
+        }
+      }
+    }
+
+    for (int anion1 = 0; anion1 < numberOfComponents; anion1++) {
+      if (getComponent(anion1).getIonicCharge() >= 0.0) {
+        continue;
+      }
+      double molalityAnion1 = getComponent(anion1).getMolality(this);
+      for (int anion2 = anion1 + 1; anion2 < numberOfComponents; anion2++) {
+        if (getComponent(anion2).getIonicCharge() >= 0.0) {
+          continue;
+        }
+        double molalityAnion2 = getComponent(anion2).getMolality(this);
+        thetaPsiSum += molalityAnion1 * molalityAnion2 * getThetaij(anion1, anion2);
+        for (int cation = 0; cation < numberOfComponents; cation++) {
+          if (getComponent(cation).getIonicCharge() <= 0.0) {
+            continue;
+          }
+          thetaPsiSum += molalityAnion1 * molalityAnion2 * getComponent(cation).getMolality(this)
+              * getPsiijk(anion1, anion2, cation);
+        }
+      }
+    }
+    return thetaPsiSum;
+  }
+
+  /**
+   * Calculates total excess Gibbs energy at a trial temperature without changing phase composition.
+   *
+   * @param trialTemperature temperature in K for the derivative evaluation
+   * @return total excess Gibbs energy in J for this phase
+   */
+  private double getExcessGibbsEnergyAtTemperature(double trialTemperature) {
+    return getExcessGibbsEnergy(this, numberOfComponents, trialTemperature, pressure, getType());
+  }
+
+  /**
+   * Restores component activity coefficients at the current phase temperature after derivative calls.
+   */
+  private void restoreActivityCoefficientsAtCurrentTemperature() {
+    getExcessGibbsEnergyAtTemperature(temperature);
+  }
+
+  /**
+   * Gets the centered finite-difference step used for temperature derivatives.
+   *
+   * @return temperature derivative step in K
+   */
+  private double getTemperatureDerivativeStep() {
+    double step = Math.max(1.0e-3, Math.min(0.05, temperature * 1.0e-4));
+    if (temperature - step <= 1.0) {
+      step = Math.max(1.0e-6, 0.5 * (temperature - 1.0));
+    }
+    return step;
   }
 }

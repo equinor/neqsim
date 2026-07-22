@@ -1,16 +1,32 @@
+---
+title: NeqSim Design Framework
+description: The Design Framework provides an integrated workflow for automated equipment sizing, process template-based design, and production optimization. This document describes the key components and usage pa...
+---
+
 # NeqSim Design Framework
 
 The Design Framework provides an integrated workflow for automated equipment sizing, process template-based design, and production optimization. This document describes the key components and usage patterns.
+
+## Compatibility
+
+The typed process-design additions retain the legacy public source entry points, so callers can
+migrate incrementally. They are not a promise of identical behavior: validation-only optimizer runs
+no longer report false convergence, configured mechanical-design objects are preserved, invalid or
+ambiguous engineering inputs fail earlier, and corrected standard editions/applicability can change
+selection results. Java object deserialization across NeqSim versions is not part of this
+compatibility contract.
+
+See [Migrate process design to typed standard kernels](standard_design_kernel_migration) for the
+complete compatibility boundary and staged migration path.
 
 ## Related Documentation
 
 | Document | Description |
 |----------|-------------|
-| [OPTIMIZATION_IMPROVEMENT_PROPOSAL.md](OPTIMIZATION_IMPROVEMENT_PROPOSAL.md) | Implementation roadmap and status |
-| [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE.md) | Production optimization examples |
-| [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK.md) | Multi-constraint equipment framework |
-| [process_design_guide.md](process_design_guide.md) | Complete process design workflow |
-| [mechanical_design.md](mechanical_design.md) | Mechanical design integration |
+| [PRODUCTION_OPTIMIZATION_GUIDE.md](../examples/PRODUCTION_OPTIMIZATION_GUIDE) | Production optimization examples |
+| [CAPACITY_CONSTRAINT_FRAMEWORK.md](CAPACITY_CONSTRAINT_FRAMEWORK) | Multi-constraint equipment framework |
+| [process_design_guide.md](process_design_guide) | Complete process design workflow |
+| [mechanical_design.md](mechanical_design) | Mechanical design integration |
 
 ## Overview
 
@@ -25,6 +41,27 @@ The design framework consists of several integrated components:
 | `EquipmentConstraintRegistry` | Registry of default constraint templates |
 | `DesignOptimizer` | Integrated design-to-optimization workflow |
 | `DesignResult` | Container for optimization results |
+| `EquipmentDesignKernel` | Readiness-gated, standard-specific calculation adapter |
+
+Standard-specific equipment calculations are registered explicitly. The current registry exposes
+screening kernels for API 617 compressor-casing checks, API 610 pump checks, API 521 relief-scenario
+evaluation, API 526 standard-orifice selection, and API 12J separator-performance checks.
+Unsupported editions, inapplicable equipment types, and incomplete inputs return blocked results.
+All remain preliminary engineering screens and do not claim certification or construction
+readiness.
+
+The executable `StandardDesignKernelVerificationSuite.evaluateRegression()` runs every registered
+kernel against deterministic numeric baselines. It includes SI/customary equivalence at the API 526
+orifice boundary and metre/micrometre equivalence for API 12J. Inspect
+`report.areAllBenchmarksPassed()` for regression health and `report.getFailedBenchmarkIds()` for
+diagnosis. The records are deliberately classified as `REGRESSION_BASELINE`; therefore
+`report.isPassed()` remains false until separately controlled, independently reviewed evidence is
+provided for the exact method versions.
+
+`EquipmentDesignKernelRegistry.getRegisteredStandards()` provides an immutable, deterministic
+registry snapshot for API and serialization regression checks. A registered kernel must identify the
+same standard as its lookup key, support the catalogued default edition, expose a unique
+`method@version`, use a maturity above `CATALOGUED`, and remain serializable.
 
 ## Quick Start
 
@@ -96,12 +133,13 @@ process.run();
 DesignOptimizer optimizer = DesignOptimizer.fromTemplate(template, basis)
     .autoSizeEquipment(1.2)
     .applyDefaultConstraints()
+    .configureFeedRateOptimization("Feed", 25000.0, 80000.0, "kg/hr")
     .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION);
 
 DesignResult result = optimizer.optimize();
 
-if (result.isConverged()) {
-    System.out.println(result.getSummary());
+if (result.getExecutionStatus() == DesignResult.ExecutionStatus.OPTIMIZED) {
+    logger.info(result.getSummary());
 }
 ```
 
@@ -229,7 +267,7 @@ spec.setKFactor(0.08);
 spec.setDiameter(2.5, "m");
 spec.setLength(7.5, "m");
 
-// Valve  
+// Valve
 spec.setCv(150.0);
 spec.setMaxValveOpening(90.0);
 
@@ -256,19 +294,19 @@ ProcessBasis basis = ProcessBasis.builder()
     .setFeedFlowRate(50000.0, "kg/hr")
     .setFeedPressure(85.0, "bara")
     .setFeedTemperature(50.0, "C")
-    
+
     // Stage pressures
     .addStagePressure(1, 80.0, "bara")
     .addStagePressure(2, 20.0, "bara")
     .addStagePressure(3, 2.0, "bara")
-    
+
     // Company standards
     .setCompanyStandard("Equinor", "TR2000")
     .setSafetyFactor(1.15)
-    
+
     // Ambient conditions
     .setAmbientTemperature(15.0, "C")
-    
+
     .build();
 ```
 
@@ -325,18 +363,21 @@ DesignOptimizer optimizer = DesignOptimizer.fromTemplate(template, basis);
 optimizer
     .autoSizeEquipment(1.2)       // Auto-size all AutoSizeable equipment
     .applyDefaultConstraints()     // Apply registry constraints
+    .configureFeedRateOptimization("Feed", 25000.0, 80000.0, "kg/hr")
     .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION);
 
 // Run
 DesignResult result = optimizer.validate();  // Just validate
-DesignResult result = optimizer.optimize();  // Full optimization
+DesignResult result = optimizer.optimize();  // Bounded search only when explicitly configured
 ```
 
 **ProcessModule Support:**
 - Use `forProcess(ProcessModule)` for modular process structures
-- Check mode with `optimizer.isModuleMode()` 
+- Check mode with `optimizer.isModuleMode()`
 - Access the module with `optimizer.getModule()`
-- All child ProcessSystems are automatically evaluated for constraints
+- Baseline validation, constraint reporting, and auto-sizing cover all child `ProcessSystem` objects
+- Bounded search through `DesignOptimizer` currently requires one `ProcessSystem`; use the whole-plant
+  `ProductionOptimizer`/`ProcessModelOptimizationView` APIs for multi-system optimization
 
 **Objective Types:**
 - `MAXIMIZE_PRODUCTION` - Maximize total hydrocarbon production
@@ -345,6 +386,11 @@ DesignResult result = optimizer.optimize();  // Full optimization
 - `MINIMIZE_ENERGY` - Minimize energy consumption
 - `CUSTOM` - Custom objective function
 
+Optimization is fail-closed. Without `configureFeedRateOptimization(...)`, `optimize()` runs only the
+baseline, optional auto-sizing, and validation; the result status is `VALIDATED` or `AUTO_SIZED`,
+`isConverged()` is false, and no optimized flow is reported. Oil and gas objectives additionally
+require `setProductStream(...)`. A custom objective requires `setCustomObjective(...)`.
+
 ### DesignResult
 
 Container for design and optimization results.
@@ -352,23 +398,26 @@ Container for design and optimization results.
 ```java
 DesignResult result = optimizer.optimize();
 
-// Check convergence
-if (result.isConverged()) {
+// First distinguish validation/sizing from a real bounded search
+if (result.getExecutionStatus() == DesignResult.ExecutionStatus.OPTIMIZED) {
+    // isConverged() means the configured interval search can reach its decision-variable tolerance
+    boolean toleranceReached = result.isConverged();
+
     // Get metrics
     int iterations = result.getIterations();
     double objective = result.getObjectiveValue();
-    
+
     // Get optimized values
     double gasFlow = result.getOptimizedFlowRate("Export Gas");
-    
+
     // Get equipment sizes
     Map<String, Double> sizes = result.getEquipmentSizes("HP-Separator");
     double diameter = sizes.get("diameter");
-    
+
     // Check constraints
     boolean violated = result.hasViolations();
     List<String> warnings = result.getWarnings();
-    
+
     // Get summary report
     String summary = result.getSummary();
 }
@@ -518,8 +567,8 @@ sep.autoSize("Equinor", "NORSOK-P-001");
 **Example query flow:**
 ```java
 // When Separator.autoSize("Equinor", "NORSOK-P-001") is called:
-SELECT SPECIFICATION, MAXVALUE, MINVALUE 
-FROM TechnicalRequirements_Process 
+SELECT SPECIFICATION, MAXVALUE, MINVALUE
+FROM TechnicalRequirements_Process
 WHERE EQUIPMENTTYPE='Separator' AND Company='Equinor'
 
 // Returns: GasLoadFactor = 0.12-0.15, LiquidRetentionTime = 2-5 min, etc.
@@ -568,6 +617,7 @@ The design framework integrates with existing NeqSim capabilities:
 DesignOptimizer designOpt = DesignOptimizer.forProcess(process)
     .autoSizeEquipment()
     .applyDefaultConstraints()
+    .configureFeedRateOptimization("Feed", 25000.0, 80000.0, "kg/hr")
     .setObjective(ObjectiveType.MAXIMIZE_PRODUCTION);
 
 // The underlying ProductionOptimizer handles the mathematical optimization
@@ -720,7 +770,7 @@ System.out.println("Bottleneck equipment: " + bottleneck.getName());
 if (bottleneck instanceof CapacityConstrainedEquipment) {
     CapacityConstrainedEquipment constrained = (CapacityConstrainedEquipment) bottleneck;
     CapacityConstraint activeConstraint = constrained.getBottleneckConstraint();
-    
+
     System.out.println("Active constraint: " + activeConstraint.getName());
     System.out.println("Current value: " + activeConstraint.getCurrentValue());
     System.out.println("Design limit: " + activeConstraint.getDesignValue());
@@ -746,8 +796,10 @@ sep.autoSize(1.2);  // Sets gasLoadFactor constraint based on design K-factor
 // Method 2: Manual constraint setup
 Compressor comp = new Compressor("Export Comp", gasStream);
 comp.setMaximumSpeed(11000.0);   // Sets HARD speed constraint
-comp.setMaximumPower(2000.0);    // Sets HARD power constraint
-comp.setSurgeMargin(10.0);       // Sets SOFT surge margin constraint
+comp.initMechanicalDesign();
+comp.getMechanicalDesign().setMaxDesignPower(2000.0);  // kW power limit (HARD)
+// Surge / stonewall margins come from the compressor performance curve
+// (set via autoSize() or setCompressorChart())
 
 // Method 3: Programmatic constraint addition
 Pipeline pipe = new Pipeline("Export Line", compOutput);
@@ -768,15 +820,15 @@ pipe.addCapacityConstraint(new CapacityConstraint("velocity", "m/s", ConstraintT
 
 ```java
 // Setting constraint types
-CapacityConstraint speedLimit = new CapacityConstraint("speed", ConstraintType.HARD)
+CapacityConstraint speedLimit = new CapacityConstraint("speed", "rpm", ConstraintType.HARD)
     .setDesignValue(10000.0)   // Normal operating speed
     .setMaxValue(11000.0);      // Trip point - HARD limit
 
-CapacityConstraint surgeMargin = new CapacityConstraint("surgeMargin", ConstraintType.SOFT)
+CapacityConstraint surgeMargin = new CapacityConstraint("surgeMargin", "%", ConstraintType.SOFT)
     .setDesignValue(10.0)      // 10% margin from surge
     .setMinValue(5.0);         // Absolute minimum - warning
 
-CapacityConstraint kFactor = new CapacityConstraint("gasLoadFactor", ConstraintType.DESIGN)
+CapacityConstraint kFactor = new CapacityConstraint("gasLoadFactor", "m/s", ConstraintType.DESIGN)
     .setDesignValue(0.08)      // Design basis
     .setWarningThreshold(0.9); // Warn at 90% utilization
 ```
@@ -818,11 +870,12 @@ process.add(pipe);
 OptimizationConfig config = new OptimizationConfig(1000.0, 50000.0)
     .defaultUtilizationLimit(0.95);
 
-OptimizationResult result = ProductionOptimizer.optimize(process, feed, config);
+OptimizationResult result = new ProductionOptimizer().optimize(process, feed, config, null, null);
 
 // The bottleneck could be ANY of: separator, valve, compressor, or pipeline
 System.out.println("Bottleneck: " + result.getBottleneck().getName());
-System.out.println("Active constraint: " + result.getActiveConstraintName());
+System.out.println("Bottleneck utilization: "
+    + String.format("%.1f%%", result.getBottleneckUtilization() * 100));
 System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
 ```
 
@@ -832,9 +885,9 @@ System.out.println("Optimal rate: " + result.getOptimalRate() + " kg/hr");
 // Get all constrained equipment
 for (CapacityConstrainedEquipment equip : process.getConstrainedEquipment()) {
     System.out.println("\n" + equip.getName() + ":");
-    
+
     for (CapacityConstraint c : equip.getCapacityConstraints().values()) {
-        String status = c.isViolated() ? "⚠️ EXCEEDED" : 
+        String status = c.isViolated() ? "⚠️ EXCEEDED" :
                        c.isNearLimit() ? "⚡ NEAR LIMIT" : "✓ OK";
         System.out.printf("  %-20s: %6.1f / %6.1f %s (%5.1f%%) %s%n",
             c.getName(),
@@ -876,5 +929,3 @@ Export Pipeline:
 4. **Optimization** finds the maximum flow rate that respects ALL constraints across ALL equipment
 5. The **Active Constraint** is the specific limit currently preventing higher production
 6. The **Bottleneck** is the equipment where that active constraint exists
-
-

@@ -8,14 +8,13 @@ import java.util.Map;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import neqsim.process.processmodel.ProcessSystem;
-import neqsim.process.streaming.TimestampedValue;
 
 /**
  * Exports process simulation data as time series for external ML/AI platforms.
  *
  * <p>
- * This class provides standardized export formats compatible with AI-based production optimization
- * platforms and digital twin systems.
+ * This class provides standardized export formats compatible with AI-based production optimization platforms and
+ * digital twin systems.
  * </p>
  *
  * @author ESOL
@@ -84,8 +83,7 @@ public class TimeSeriesExporter {
     TimeSeriesPoint point = new TimeSeriesPoint(Instant.now());
 
     // Collect from streams and other equipment
-    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
-        .getUnitOperations()) {
+    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       String tag = equipment.getName();
       if (tag == null) {
         continue;
@@ -93,8 +91,7 @@ public class TimeSeriesExporter {
 
       // For streams, collect key values
       if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
-        neqsim.process.equipment.stream.StreamInterface stream =
-            (neqsim.process.equipment.stream.StreamInterface) equipment;
+        neqsim.process.equipment.stream.StreamInterface stream = (neqsim.process.equipment.stream.StreamInterface) equipment;
         point.addValue(tag + ".pressure", stream.getPressure(), "bara", "GOOD");
         point.addValue(tag + ".temperature", stream.getTemperature() - 273.15, "C", "GOOD");
         point.addValue(tag + ".flowrate", stream.getFlowRate("kg/hr"), "kg/hr", "GOOD");
@@ -237,8 +234,7 @@ public class TimeSeriesExporter {
           Map<String, String> qualities = (Map<String, String>) dp.get("qualities");
 
           for (String tag : values.keySet()) {
-            point.addValue(tag, values.get(tag), units.getOrDefault(tag, ""),
-                qualities.getOrDefault(tag, "GOOD"));
+            point.addValue(tag, values.get(tag), units.getOrDefault(tag, ""), qualities.getOrDefault(tag, "GOOD"));
           }
 
           collectedData.add(point);
@@ -259,16 +255,14 @@ public class TimeSeriesExporter {
     ProcessSnapshot snapshot = new ProcessSnapshot(snapshotId);
 
     // Create snapshot from streams and other equipment
-    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem
-        .getUnitOperations()) {
+    for (neqsim.process.equipment.ProcessEquipmentInterface equipment : processSystem.getUnitOperations()) {
       String name = equipment.getName();
       if (name == null) {
         continue;
       }
 
       if (equipment instanceof neqsim.process.equipment.stream.StreamInterface) {
-        neqsim.process.equipment.stream.StreamInterface stream =
-            (neqsim.process.equipment.stream.StreamInterface) equipment;
+        neqsim.process.equipment.stream.StreamInterface stream = (neqsim.process.equipment.stream.StreamInterface) equipment;
         snapshot.setMeasurement(name + ".pressure", stream.getPressure(), "bara");
         snapshot.setMeasurement(name + ".temperature", stream.getTemperature() - 273.15, "C");
         snapshot.setMeasurement(name + ".flowrate", stream.getFlowRate("kg/hr"), "kg/hr");

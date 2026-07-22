@@ -12,29 +12,23 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * FluidBoundarySystemNonReactive class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  */
 public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
   /**
-   * <p>
    * Constructor for FluidBoundarySystemNonReactive.
-   * </p>
    */
-  public FluidBoundarySystemNonReactive() {}
+  public FluidBoundarySystemNonReactive() {
+  }
 
   /**
-   * <p>
    * Constructor for FluidBoundarySystemNonReactive.
-   * </p>
    *
-   * @param boundary a
-   *        {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
-   *        object
+   * @param boundary a {@link neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.FluidBoundaryInterface}
+   * object
    */
   public FluidBoundarySystemNonReactive(FluidBoundaryInterface boundary) {
     super(boundary);
@@ -53,16 +47,14 @@ public class FluidBoundarySystemNonReactive extends FluidBoundarySystem {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String[] args) {
-    SystemInterface testSystem =
-        new SystemFurstElectrolyteEos(275.3, ThermodynamicConstantsInterface.referencePressure);
+    SystemInterface testSystem = new SystemFurstElectrolyteEos(275.3,
+        ThermodynamicConstantsInterface.referencePressure);
     PipeData pipe1 = new PipeData(10.0, 0.025);
 
     testSystem.addComponent("methane", 0.061152181, 0);

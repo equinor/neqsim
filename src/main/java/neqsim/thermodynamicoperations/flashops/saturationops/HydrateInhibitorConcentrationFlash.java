@@ -8,9 +8,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * HydrateInhibitorConcentrationFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -25,25 +23,20 @@ public class HydrateInhibitorConcentrationFlash extends ConstantDutyTemperatureF
   String inhibitor = "MEG";
 
   /**
-   * <p>
    * Constructor for HydrateInhibitorConcentrationFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param inhibitor a {@link java.lang.String} object
    * @param hydrateTemperature a double
    */
-  public HydrateInhibitorConcentrationFlash(SystemInterface system, String inhibitor,
-      double hydrateTemperature) {
+  public HydrateInhibitorConcentrationFlash(SystemInterface system, String inhibitor, double hydrateTemperature) {
     super(system);
     hydT = hydrateTemperature;
     this.inhibitor = inhibitor;
   }
 
   /**
-   * <p>
    * stop.
-   * </p>
    */
   public void stop() {
     system = null;
@@ -61,8 +54,7 @@ public class HydrateInhibitorConcentrationFlash extends ConstantDutyTemperatureF
     do {
       iter++;
       try {
-        derrordC = (error - oldError)
-            / (system.getPhase(0).getComponent(inhibitor).getNumberOfmoles() - oldC);
+        derrordC = (error - oldError) / (system.getPhase(0).getComponent(inhibitor).getNumberOfmoles() - oldC);
         oldError = error;
         oldC = system.getPhase(0).getComponent(inhibitor).getNumberOfmoles();
 
@@ -89,12 +81,11 @@ public class HydrateInhibitorConcentrationFlash extends ConstantDutyTemperatureF
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

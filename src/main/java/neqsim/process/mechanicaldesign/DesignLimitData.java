@@ -12,10 +12,15 @@ public final class DesignLimitData implements Serializable {
   /** Empty data set with undefined limits. */
   public static final DesignLimitData EMPTY = DesignLimitData.builder().build();
 
+  /** Maximum pressure limit in bara. */
   private final double maxPressure;
+  /** Minimum pressure limit in bara. */
   private final double minPressure;
+  /** Maximum temperature limit in kelvin. */
   private final double maxTemperature;
+  /** Minimum temperature limit in kelvin. */
   private final double minTemperature;
+  /** Corrosion allowance in millimetres. */
   private final double corrosionAllowance;
   private final double jointEfficiency;
 
@@ -65,7 +70,8 @@ public final class DesignLimitData implements Serializable {
     private double corrosionAllowance = Double.NaN;
     private double jointEfficiency = Double.NaN;
 
-    private Builder() {}
+    private Builder() {
+    }
 
     public Builder maxPressure(double value) {
       this.maxPressure = value;
@@ -104,8 +110,7 @@ public final class DesignLimitData implements Serializable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(maxPressure, minPressure, maxTemperature, minTemperature, corrosionAllowance,
-        jointEfficiency);
+    return Objects.hash(maxPressure, minPressure, maxTemperature, minTemperature, corrosionAllowance, jointEfficiency);
   }
 
   @Override
@@ -127,9 +132,8 @@ public final class DesignLimitData implements Serializable {
 
   @Override
   public String toString() {
-    return "DesignLimitData{" + "maxPressure=" + maxPressure + ", minPressure=" + minPressure
-        + ", maxTemperature=" + maxTemperature + ", minTemperature=" + minTemperature
-        + ", corrosionAllowance=" + corrosionAllowance + ", jointEfficiency=" + jointEfficiency
-        + '}';
+    return "DesignLimitData{" + "maxPressure=" + maxPressure + ", minPressure=" + minPressure + ", maxTemperature="
+        + maxTemperature + ", minTemperature=" + minTemperature + ", corrosionAllowance=" + corrosionAllowance
+        + ", jointEfficiency=" + jointEfficiency + '}';
   }
 }

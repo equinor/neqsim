@@ -8,9 +8,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * UKspecifications_ICF_SI class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -27,9 +25,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
   double propaneNumber = 0.0;
 
   /**
-   * <p>
    * Constructor for UKspecifications_ICF_SI.
-   * </p>
    *
    * @param thermoSystem a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -52,8 +48,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
       return propaneNumber;
     }
     if (returnParameter.equals("IncompleteCombustionFactor")) {
-      return (iso6976.getValue("SuperiorWobbeIndex") / 1000.0 - 50.73 + 0.03 * propaneNumber)
-          / 1.56;
+      return (iso6976.getValue("SuperiorWobbeIndex") / 1000.0 - 50.73 + 0.03 * propaneNumber) / 1.56;
     }
     if (returnParameter.equals("SootIndex")) {
       return 0.896 * Math.atan(0.0255 * thermoSystem.getPhase(0).getComponent("propane").getz()
@@ -82,24 +77,21 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
   }
 
   /**
-   * <p>
    * calcPropaneNumber.
-   * </p>
    *
    * @return a double
    */
   public double calcPropaneNumber() {
     double avgCarbon = iso6976.getAverageCarbonNumber();
 
-    double[][] Amatrix = {{1.0, 1.0}, {1.0, 3.0}};
+    double[][] Amatrix = { { 1.0, 1.0 }, { 1.0, 3.0 } };
     // {thermoSystem.getNumberOfMoles(), //
     // thermoSystem.getNumberOfMoles()*iso6976.getAverageCarbonNumber()}};
-    double[] bmatrix = {(thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts()),
-        avgCarbon * (thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts())};
+    double[] bmatrix = { (thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts()),
+        avgCarbon * (thermoSystem.getTotalNumberOfMoles() - iso6976.getTotalMolesOfInerts()) };
 
     RealMatrix fmatrixJama = new Array2DRowRealMatrix(Amatrix);
-    DecompositionSolver solver1 =
-        new org.apache.commons.math3.linear.LUDecomposition(fmatrixJama).getSolver();
+    DecompositionSolver solver1 = new org.apache.commons.math3.linear.LUDecomposition(fmatrixJama).getSolver();
     RealMatrix ans2 = solver1.solve(new Array2DRowRealMatrix(bmatrix));
 
     double nitrogenCalc = calcWithNitrogenAsInert();
@@ -108,8 +100,8 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
 
     System.out.println("propane content pn " + ans2.getEntry(1, 0));
     try {
-      System.out.println("propane number "
-          + (nitrogenCalc + ans2.getEntry(1, 0)) / thermoSystem.getTotalNumberOfMoles() * 100.0);
+      System.out.println(
+          "propane number " + (nitrogenCalc + ans2.getEntry(1, 0)) / thermoSystem.getTotalNumberOfMoles() * 100.0);
       return nitrogenCalc + ans2.getEntry(1, 0);
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
@@ -118,9 +110,7 @@ public class UKspecifications_ICF_SI extends neqsim.standards.Standard {
   }
 
   /**
-   * <p>
    * calcWithNitrogenAsInert.
-   * </p>
    *
    * @return a double
    */

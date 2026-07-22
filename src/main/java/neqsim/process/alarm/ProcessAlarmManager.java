@@ -9,10 +9,9 @@ import neqsim.process.measurementdevice.MeasurementDeviceInterface;
 
 /**
  * Coordinates alarm evaluation across all measurement devices in a process system.
- * 
+ *
  * <p>
- * Supports automatic alarm-triggered actions through registered {@link AlarmActionHandler}
- * instances.
+ * Supports automatic alarm-triggered actions through registered {@link AlarmActionHandler} instances.
  */
 public class ProcessAlarmManager implements Serializable {
   private static final long serialVersionUID = 1000L;
@@ -55,8 +54,8 @@ public class ProcessAlarmManager implements Serializable {
    * @param time current simulation time
    * @return events generated during evaluation
    */
-  public List<AlarmEvent> evaluateMeasurement(MeasurementDeviceInterface device,
-      double measuredValue, double dt, double time) {
+  public List<AlarmEvent> evaluateMeasurement(MeasurementDeviceInterface device, double measuredValue, double dt,
+      double time) {
     if (device == null) {
       return Collections.emptyList();
     }
@@ -71,7 +70,7 @@ public class ProcessAlarmManager implements Serializable {
 
   /**
    * Registers an action handler to respond to alarm events.
-   * 
+   *
    * @param handler the action handler to register
    */
   public void registerActionHandler(AlarmActionHandler handler) {
@@ -84,7 +83,7 @@ public class ProcessAlarmManager implements Serializable {
 
   /**
    * Removes an action handler.
-   * 
+   *
    * @param handler the action handler to remove
    */
   public void removeActionHandler(AlarmActionHandler handler) {
@@ -93,7 +92,7 @@ public class ProcessAlarmManager implements Serializable {
 
   /**
    * Gets all registered action handlers.
-   * 
+   *
    * @return immutable list of action handlers
    */
   public List<AlarmActionHandler> getActionHandlers() {
@@ -102,7 +101,7 @@ public class ProcessAlarmManager implements Serializable {
 
   /**
    * Executes all registered action handlers for the given events.
-   * 
+   *
    * @param events alarm events to process
    */
   private void executeActionHandlers(List<AlarmEvent> events) {
@@ -177,8 +176,7 @@ public class ProcessAlarmManager implements Serializable {
    * @param source source manager to copy from
    * @param measurementDevices devices that should be supervised by this manager
    */
-  public void applyFrom(ProcessAlarmManager source,
-      List<MeasurementDeviceInterface> measurementDevices) {
+  public void applyFrom(ProcessAlarmManager source, List<MeasurementDeviceInterface> measurementDevices) {
     history.clear();
     if (source != null) {
       history.addAll(source.history);

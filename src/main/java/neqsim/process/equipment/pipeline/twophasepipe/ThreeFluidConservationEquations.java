@@ -118,8 +118,8 @@ public class ThreeFluidConservationEquations implements Serializable {
    * @param downstreamSection Downstream section (for fluxes)
    * @return ThreeFluidRHS with all source terms
    */
-  public ThreeFluidRHS calcRHS(ThreeFluidSection section, double dPdx,
-      ThreeFluidSection upstreamSection, ThreeFluidSection downstreamSection) {
+  public ThreeFluidRHS calcRHS(ThreeFluidSection section, double dPdx, ThreeFluidSection upstreamSection,
+      ThreeFluidSection downstreamSection) {
     ThreeFluidRHS rhs = new ThreeFluidRHS();
 
     double diameter = section.getDiameter();
@@ -148,8 +148,7 @@ public class ThreeFluidConservationEquations implements Serializable {
     section.updateThreeLayerGeometry();
 
     // Get geometry values
-    double sWallG =
-        Math.PI * diameter - section.getOilWettedPerimeter() - section.getWaterWettedPerimeter();
+    double sWallG = Math.PI * diameter - section.getOilWettedPerimeter() - section.getWaterWettedPerimeter();
     double sWallO = section.getOilWettedPerimeter();
     double sWallW = section.getWaterWettedPerimeter();
     double sIntGO = section.getGasOilInterfacialWidth();
@@ -268,8 +267,8 @@ public class ThreeFluidConservationEquations implements Serializable {
    * @param surfaceTension surface tension (N/m)
    * @return interfacial friction factor (dimensionless)
    */
-  private double calculateInterfacialFrictionFactor(double alpha1, double alpha2, double rho1,
-      double rho2, double relVel, double diameter, double surfaceTension) {
+  private double calculateInterfacialFrictionFactor(double alpha1, double alpha2, double rho1, double rho2,
+      double relVel, double diameter, double surfaceTension) {
     if (alpha1 < 1e-6 || alpha2 < 1e-6) {
       return 0.0;
     }
@@ -295,12 +294,11 @@ public class ThreeFluidConservationEquations implements Serializable {
    * @return State vector [gasMass, oilMass, waterMass, gasMom, oilMom, waterMom, energy]
    */
   public double[] getStateVector(ThreeFluidSection section) {
-    return new double[] {section.getGasMassPerLength(), section.getOilMassPerLength(),
-        section.getWaterMassPerLength(), section.getGasMomentumPerLength(),
-        section.getOilMomentumPerLength(), section.getWaterMomentumPerLength(),
+    return new double[] { section.getGasMassPerLength(), section.getOilMassPerLength(), section.getWaterMassPerLength(),
+        section.getGasMomentumPerLength(), section.getOilMomentumPerLength(), section.getWaterMomentumPerLength(),
         section.getGasEnthalpy() * section.getGasMassPerLength()
             + section.getOilEnthalpy() * section.getOilMassPerLength()
-            + section.getWaterEnthalpy() * section.getWaterMassPerLength()};
+            + section.getWaterEnthalpy() * section.getWaterMassPerLength() };
   }
 
   /**

@@ -39,6 +39,8 @@ class MechanicalDesignDataSourceTest {
     assertEquals(10.0, design.getDesignMinPressureLimit(), 1e-8);
     assertEquals(410.0, design.getDesignMaxTemperatureLimit(), 1e-8);
     assertEquals(250.0, design.getDesignMinTemperatureLimit(), 1e-8);
+    assertEquals(136.85, design.getDesignMaxTemperatureLimit("C"), 1e-8);
+    assertEquals(-23.15, design.getDesignMinTemperatureLimit("C"), 1e-8);
     assertEquals(3.0, design.getDesignCorrosionAllowance(), 1e-8);
     assertEquals(0.95, design.getDesignJointEfficiency(), 1e-8);
 

@@ -9,9 +9,7 @@ import neqsim.util.exception.IsNaNException;
 import neqsim.util.exception.TooManyIterationsException;
 
 /**
- * <p>
  * PhaseDesmukhMather class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -27,11 +25,10 @@ public class PhaseDesmukhMather extends PhaseGE {
   double[][] bij;
 
   /**
-   * <p>
    * Constructor for PhaseDesmukhMather.
-   * </p>
    */
-  public PhaseDesmukhMather() {}
+  public PhaseDesmukhMather() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -42,13 +39,12 @@ public class PhaseDesmukhMather extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt,
-      double beta) {
+  public void init(double totalNumberOfMoles, int numberOfComponents, int initType, PhaseType pt, double beta) {
     super.init(totalNumberOfMoles, numberOfComponents, initType, pt, beta);
     if (initType != 0) {
       setType(pt);
     }
-    setMolarVolume(0.980e-3 * getMolarMass() * 1e5);
+    setMolarVolume(getMass() / getDensity() / numberOfMolesInPhase * 1e5);
     Z = pressure * getMolarVolume() / (R * temperature);
   }
 
@@ -70,15 +66,14 @@ public class PhaseDesmukhMather extends PhaseGE {
               this.aij[l][k] = this.aij[k][l];
             }
           } else {
-            try (java.sql.ResultSet dataSet =
-                database.getResultSet("SELECT * FROM inter WHERE (comp1='" + component_name
-                    + "' AND comp2='" + getComponent(l).getComponentName() + "') OR (comp1='"
-                    + getComponent(l).getComponentName() + "' AND comp2='" + component_name
-                    + "')");) {
+            try (java.sql.ResultSet dataSet = database.getResultSet("SELECT * FROM inter WHERE (comp1='"
+                + component_name + "' AND comp2='" + getComponent(l).getComponentName() + "') OR (comp1='"
+                + getComponent(l).getComponentName() + "' AND comp2='" + component_name + "')");) {
               dataSet.next();
 
               // if
-              // (dataSet.getString("comp1").trim().equals(getComponent(l).getComponentName())) {
+              // (dataSet.getString("comp1").trim().equals(getComponent(l).getComponentName()))
+              // {
               // templ = k;
               // tempk = l;
               // }
@@ -105,9 +100,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * Getter for the field <code>aij</code>.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -118,28 +111,24 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * Setter for the field <code>aij</code>.
-   * </p>
    *
    * @param alpha an array of type double
    */
   public void setAij(double[][] alpha) {
     for (int i = 0; i < alpha.length; i++) {
-      System.arraycopy(aij[i], 0, this.aij[i], 0, alpha[0].length);
+      System.arraycopy(alpha[i], 0, this.aij[i], 0, alpha[0].length);
     }
   }
 
   /**
-   * <p>
    * Setter for the field <code>bij</code>.
-   * </p>
    *
    * @param Bij an array of type double
    */
   public void setBij(double[][] Bij) {
     for (int i = 0; i < Bij.length; i++) {
-      System.arraycopy(bij[i], 0, this.bij[i], 0, Bij[0].length);
+      System.arraycopy(Bij[i], 0, this.bij[i], 0, Bij[0].length);
     }
   }
 
@@ -156,9 +145,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * getBetaDesMatij.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -169,9 +156,7 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * Getter for the field <code>bij</code>.
-   * </p>
    *
    * @param i a int
    * @param j a int
@@ -197,12 +182,12 @@ public class PhaseDesmukhMather extends PhaseGE {
 
   /** {@inheritDoc} */
   @Override
-  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents,
-      double temperature, double pressure, PhaseType pt) {
+  public double getExcessGibbsEnergy(PhaseInterface phase, int numberOfComponents, double temperature, double pressure,
+      PhaseType pt) {
     GE = 0;
     for (int i = 0; i < numberOfComponents; i++) {
-      GE += phase.getComponent(i).getx() * Math.log(((ComponentDesmukhMather) componentArray[i])
-          .getGamma(phase, numberOfComponents, temperature, pressure, pt));
+      GE += phase.getComponent(i).getx() * Math.log(
+          ((ComponentDesmukhMather) componentArray[i]).getGamma(phase, numberOfComponents, temperature, pressure, pt));
     }
     return R * temperature * numberOfMolesInPhase * GE;
   }
@@ -220,26 +205,21 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * getIonicStrength.
-   * </p>
    *
    * @return a double
    */
   public double getIonicStrength() {
     double ionStrength = 0.0;
     for (int i = 0; i < numberOfComponents; i++) {
-      ionStrength +=
-          getComponent(i).getMolality(this) * Math.pow(getComponent(i).getIonicCharge(), 2.0);
+      ionStrength += getComponent(i).getMolality(this) * Math.pow(getComponent(i).getIonicCharge(), 2.0);
       // getComponent(i).getMolarity(this)*Math.pow(getComponent(i).getIonicCharge(),2.0);
     }
     return 0.5 * ionStrength;
   }
 
   /**
-   * <p>
    * getSolventWeight.
-   * </p>
    *
    * @return a double
    */
@@ -254,20 +234,29 @@ public class PhaseDesmukhMather extends PhaseGE {
   }
 
   /**
-   * <p>
    * getSolventDensity.
-   * </p>
    *
    * @return a double
    */
   public double getSolventDensity() {
-    return 1020.0;
+    double solventMass = 0.0;
+    double solventVolume = 0.0;
+    for (int i = 0; i < numberOfComponents; i++) {
+      if (getComponent(i).getReferenceStateType().equals("solvent")) {
+        double mass = getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+        double density = getComponent(i).getNormalLiquidDensity();
+        if (!Double.isFinite(density) || density < 500.0) {
+          density = getComponent(i).getComponentName().equals("water") ? 997.0 : 1020.0;
+        }
+        solventMass += mass;
+        solventVolume += mass / density;
+      }
+    }
+    return solventVolume > 0.0 ? solventMass / solventVolume : 1020.0;
   }
 
   /**
-   * <p>
    * getSolventMolarMass.
-   * </p>
    *
    * @return a double
    */
@@ -277,16 +266,37 @@ public class PhaseDesmukhMather extends PhaseGE {
     for (int i = 0; i < numberOfComponents; i++) {
       if (getComponent(i).getReferenceStateType().equals("solvent")) {
         molesMass += getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
-        moles = getComponent(i).getNumberOfMolesInPhase();
+        moles += getComponent(i).getNumberOfMolesInPhase();
       }
     }
-    return molesMass / moles;
+    return moles > 0.0 ? molesMass / moles : getMolarMass();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getDensity() {
+    double mass = getMass();
+    double volume = 0.0;
+    double solventDensity = getSolventDensity();
+    for (int i = 0; i < numberOfComponents; i++) {
+      double componentMass = getComponent(i).getNumberOfMolesInPhase() * getComponent(i).getMolarMass();
+      if (getComponent(i).isIsIon()) {
+        volume += componentMass / solventDensity;
+      } else {
+        double density = getComponent(i).getNormalLiquidDensity();
+        if (!Double.isFinite(density) || density < 500.0) {
+          density = getComponent(i).getReferenceStateType().equals("solvent") ? solventDensity : 1000.0;
+        }
+        volume += componentMass / density;
+      }
+    }
+    return volume > 0.0 ? mass / volume : solventDensity;
   }
 
   /** {@inheritDoc} */
   @Override
   public double molarVolume(double pressure, double temperature, double A, double B, PhaseType pt)
       throws IsNaNException, TooManyIterationsException {
-    throw new UnsupportedOperationException("Unimplemented method 'molarVolume'");
+    return getMass() / getDensity() / numberOfMolesInPhase;
   }
 }

@@ -23,13 +23,11 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * MultiStreamHeatExchanger class.
- * </p>
  *
  * <p>
- * Extends the Heater class to support multiple input and output streams, enabling the simulation of
- * complex heat exchange processes such as those found in LNG heat exchangers.
+ * Extends the Heater class to support multiple input and output streams, enabling the simulation of complex heat
+ * exchange processes such as those found in LNG heat exchangers.
  * </p>
  *
  * @author ESOL
@@ -151,8 +149,19 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
 
   /** {@inheritDoc} */
   @Override
-  public void setOutTemperature(double temperature) {
+  public void setOutletTemperature(double temperature) {
     this.temperatureOut = temperature;
+  }
+
+  /**
+   * {@inheritDoc}
+   *
+   * @deprecated use {@link #setOutletTemperature(double)} instead
+   */
+  @Override
+  @Deprecated
+  public void setOutTemperature(double temperature) {
+    setOutletTemperature(temperature);
   }
 
   /** {@inheritDoc} */
@@ -235,9 +244,8 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     if (inStreams.size() >= 2) {
       int hotStream = 0;
       int coldStream = inStreams.size() - 1;
-      double heatTransferEntropyProd =
-          Math.abs(getDuty()) * (1.0 / inStreams.get(coldStream).getTemperature()
-              - 1.0 / inStreams.get(hotStream).getTemperature());
+      double heatTransferEntropyProd = Math.abs(getDuty())
+          * (1.0 / inStreams.get(coldStream).getTemperature() - 1.0 / inStreams.get(hotStream).getTemperature());
       entropyProduction += heatTransferEntropyProd;
     }
 
@@ -282,8 +290,9 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
       }
     }
 
-    heatBalanceError = heatBalanceError / (outStreams.get(0).getThermoSystem().getEnthalpy()
-        - inStreams.get(0).getThermoSystem().getEnthalpy()) * 100.0;
+    heatBalanceError = heatBalanceError
+        / (outStreams.get(0).getThermoSystem().getEnthalpy() - inStreams.get(0).getThermoSystem().getEnthalpy())
+        * 100.0;
 
     if (Math.abs(heatBalanceError) > 10.0) {
       String error = "Heat balance not fulfilled. Error: " + heatBalanceError + " ";
@@ -298,14 +307,14 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
     // Calculate thermal effectiveness and duty
     double totalDuty = 0.0;
     for (int i = 0; i < inStreams.size(); i++) {
-      double dutyStream = Math.abs(outStreams.get(i).getThermoSystem().getEnthalpy()
-          - inStreams.get(i).getThermoSystem().getEnthalpy());
+      double dutyStream = Math
+          .abs(outStreams.get(i).getThermoSystem().getEnthalpy() - inStreams.get(i).getThermoSystem().getEnthalpy());
       totalDuty += dutyStream;
     }
 
     double referenceDuty = Math.abs(((MultiStreamHeatExchanger) refExchanger).getDuty());
-    thermalEffectiveness = ((MultiStreamHeatExchanger) refExchanger).getThermalEffectiveness()
-        * (totalDuty) / referenceDuty;
+    thermalEffectiveness = ((MultiStreamHeatExchanger) refExchanger).getThermalEffectiveness() * (totalDuty)
+        / referenceDuty;
 
     // Optionally, calculate duty balance among streams
     // This can be customized based on specific requirements
@@ -345,24 +354,24 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   @Override
   public double calcThermalEffectiveness(double NTU, double Cr) {
     switch (flowArrangement.toLowerCase()) {
-      case "counterflow":
-        if (Cr == 1.0) {
-          return NTU / (1.0 + NTU);
-        } else {
-          return (1.0 - Math.exp(-NTU * (1 - Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 - Cr)));
-        }
-      case "parallelflow":
-        return (1.0 - Math.exp(-NTU * (1 + Cr))) / (1.0 + Cr);
-      case "crossflow":
-        // Simplified model for crossflow; more complex models can be implemented
-        return 1 - Math.exp(-NTU * Math.pow(1 + Cr, 0.22));
-      default:
-        // Default to counterflow if arrangement is unrecognized
-        if (Cr == 1.0) {
-          return NTU / (1.0 + NTU);
-        } else {
-          return (1.0 - Math.exp(-NTU * (1 - Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 - Cr)));
-        }
+    case "counterflow":
+      if (Cr == 1.0) {
+        return NTU / (1.0 + NTU);
+      } else {
+        return (1.0 - Math.exp(-NTU * (1 - Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 - Cr)));
+      }
+    case "parallelflow":
+      return (1.0 - Math.exp(-NTU * (1 + Cr))) / (1.0 + Cr);
+    case "crossflow":
+      // Simplified model for crossflow; more complex models can be implemented
+      return 1 - Math.exp(-NTU * Math.pow(1 + Cr, 0.22));
+    default:
+      // Default to counterflow if arrangement is unrecognized
+      if (Cr == 1.0) {
+        return NTU / (1.0 + NTU);
+      } else {
+        return (1.0 - Math.exp(-NTU * (1 - Cr))) / (1.0 - Cr * Math.exp(-NTU * (1 - Cr)));
+      }
     }
   }
 
@@ -456,10 +465,12 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
         outStream.setThermoSystem(systemOut);
 
         if (i == hottestIndex) {
-          // Set the outlet temperature of the hottest inlet stream to the coldest inlet temperature
+          // Set the outlet temperature of the hottest inlet stream to the coldest inlet
+          // temperature
           outStream.getThermoSystem().setTemperature(coldestTemperature + temperatureApproach, "K");
         } else if (i == coldestIndex) {
-          // Set the outlet temperature of the coldest inlet stream to the hottest inlet temperature
+          // Set the outlet temperature of the coldest inlet stream to the hottest inlet
+          // temperature
           outStream.getThermoSystem().setTemperature(hottestTemperature - temperatureApproach, "K");
         } else {
           // Set the outlet temperature of other streams to the hottest inlet temperature
@@ -522,17 +533,18 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
         logger.debug("Limiting side: Cooling");
       }
 
-      // Calculate scaling factors for each side
-      double scalingFactor = 1.0;
+      // Calculate scaling factors for each side.
+      double cooledStreamScalingFactor = 1.0;
+      double heatedStreamScalingFactor = 1.0;
 
-      if (heatingIsLimiting) {
+      if (heatingIsLimiting && totalHeatLost > 0.0) {
         // Scale down the heat lost by cooled streams
-        scalingFactor = limitingHeat / totalHeatLost;
-        logger.debug("Scaling factor for cooled streams: " + scalingFactor);
-      } else {
+        cooledStreamScalingFactor = limitingHeat / totalHeatLost;
+        logger.debug("Scaling factor for cooled streams: " + cooledStreamScalingFactor);
+      } else if (!heatingIsLimiting && totalHeatGained > 0.0) {
         // Scale down the heat gained by heated streams
-        scalingFactor = limitingHeat / totalHeatGained;
-        logger.debug("Scaling factor for heated streams: " + scalingFactor);
+        heatedStreamScalingFactor = limitingHeat / totalHeatGained;
+        logger.debug("Scaling factor for heated streams: " + heatedStreamScalingFactor);
       }
 
       // Apply scaling factors to adjust outlet enthalpies
@@ -543,8 +555,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
         StreamInterface outStream = outStreams.get(i);
 
         double enthalpyIn = inStream.getThermoSystem().getEnthalpy();
-        double targetDeltaH =
-            -(outStream.getThermoSystem().getEnthalpy() - enthalpyIn) * scalingFactor;
+        double targetDeltaH = -(outStream.getThermoSystem().getEnthalpy() - enthalpyIn) * cooledStreamScalingFactor;
 
         // Adjust the outlet enthalpy
         double adjustedEnthalpyOut = enthalpyIn - (Math.abs(targetDeltaH));
@@ -563,14 +574,12 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
         logger.debug("Adjusted cooled stream " + i + ": ΔH = " + targetDeltaH);
       }
 
-      scalingFactor = 1.0;
       for (int i : heatedStreamIndices) {
         StreamInterface inStream = inStreams.get(i);
         StreamInterface outStream = outStreams.get(i);
 
         double enthalpyIn = inStream.getThermoSystem().getEnthalpy();
-        double targetDeltaH =
-            (outStream.getThermoSystem().getEnthalpy() - enthalpyIn) * scalingFactor;
+        double targetDeltaH = (outStream.getThermoSystem().getEnthalpy() - enthalpyIn) * heatedStreamScalingFactor;
 
         // Adjust the outlet enthalpy
         double adjustedEnthalpyOut = enthalpyIn + (Math.abs(targetDeltaH));
@@ -614,8 +623,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
 
       // Ensure valid indices
       if (adjustedHottestIndex == -1 || adjustedColdestIndex == -1) {
-        throw new IllegalStateException(
-            "Unable to determine adjusted hottest or coldest inlet streams.");
+        throw new IllegalStateException("Unable to determine adjusted hottest or coldest inlet streams.");
       }
 
       // Outlet temperatures after adjustment
@@ -655,8 +663,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
       logger.info("Overall LMTD: " + LMTD + " K");
       logger.info("Overall UA: " + UA + " W/K");
 
-      if (UAvalueIsSet && Math.abs((UA - getUAvalue()) / getUAvalue()) > 0.001
-          && iterations < MAX_ITERATIONS) {
+      if (UAvalueIsSet && Math.abs((UA - getUAvalue()) / getUAvalue()) > 0.001 && iterations < MAX_ITERATIONS) {
         iterations++;
         setTemperatureApproach(getTemperatureApproach() * UA / getUAvalue());
         firstTime = true;
@@ -684,9 +691,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * <p>
    * Getter for the field <code>temperatureApproach</code>.
-   * </p>
    *
    * @return a double
    */
@@ -695,9 +700,7 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * <p>
    * Setter for the field <code>temperatureApproach</code>.
-   * </p>
    *
    * @param temperatureApproach a double
    */
@@ -715,12 +718,11 @@ public class MultiStreamHeatExchanger extends Heater implements MultiStreamHeatE
   }
 
   /**
-   * Calculates the heat duty for a specified stream in the multi-stream heat exchanger. The heat
-   * duty is determined as the difference in enthalpy between the outlet and inlet streams for the
-   * given stream index.
+   * Calculates the heat duty for a specified stream in the multi-stream heat exchanger. The heat duty is determined as
+   * the difference in enthalpy between the outlet and inlet streams for the given stream index.
    *
-   * @param streamNumber the index of the stream for which the heat duty is to be calculated. Must
-   *        be less than the total number of input streams.
+   * @param streamNumber the index of the stream for which the heat duty is to be calculated. Must be less than the
+   * total number of input streams.
    * @return the heat duty (in appropriate energy units) for the specified stream in W
    * @throws java.lang.IndexOutOfBoundsException if the specified stream index is out of bounds.
    */

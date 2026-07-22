@@ -1,5 +1,7 @@
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.heatexchanger.Cooler;
 import neqsim.process.equipment.heatexchanger.Heater;
@@ -11,26 +13,23 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * propaneTwoStageCoolingCycle class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class propaneTwoStageCoolingCycle {
+  private static final Logger logger = LogManager.getLogger(propaneTwoStageCoolingCycle.class);
+
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.79);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemPrEos((273.15 + 30.0), 10.79);
     // testSystem.addComponent("ethane", 10.0, "kg/hr");
     testSystem.addComponent("propane", 4759.0, "kg/hr");
     testSystem.createDatabase(true);
@@ -74,8 +73,7 @@ public class propaneTwoStageCoolingCycle {
     cooler3.setSpecification("out stream");
     cooler3.setOutletStream(stream_1);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(JTvalve1);
     operations.add(medPresSep);
@@ -120,21 +118,19 @@ public class propaneTwoStageCoolingCycle {
     // compressor1.displayResult();
     // stream_2.displayResult();
     // operations.displayResult();
-    System.out.println("compressor1 work" + compressor1.getEnergy() / 1.0e3 + " kW");
-    System.out.println("compressor2 work" + compressor2.getEnergy() / 1.0e3 + " kW");
+    logger.info("compressor1 work" + compressor1.getEnergy() / 1.0e3 + " kW");
+    logger.info("compressor2 work" + compressor2.getEnergy() / 1.0e3 + " kW");
 
-    // System.out.println("compressor isentropic ef " +
+    // logger.info("compressor isentropic ef " +
     // compressor1.getIsentropicEfficiency());
-    System.out.println("cooler2 mass flow "
-        + cooler2.getOutletStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
-    System.out.println("cooler3 mass flow "
-        + cooler3.getOutletStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
+    logger.info("cooler2 mass flow " + cooler2.getOutletStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
+    logger.info("cooler3 mass flow " + cooler3.getOutletStream().getFluid().getFlowRate("kg/hr") + " kg/hr");
 
-    System.out.println("delta enthalpy " + (stream_3.getFluid().getEnthalpy()
-        - JTvalve2.getOutletStream().getFluid().getEnthalpy()));
+    logger.info(
+        "delta enthalpy " + (stream_3.getFluid().getEnthalpy() - JTvalve2.getOutletStream().getFluid().getEnthalpy()));
 
-    System.out.println("cooler2 duty " + cooler2.getEnergyInput() / 1.0e3 + " kW");
-    System.out.println("cooler3 duty " + cooler3.getEnergyInput() / 1.0e3 + " kW");
-    // System.out.println("heater duty " + heater.getEnergyInput());
+    logger.info("cooler2 duty " + cooler2.getEnergyInput() / 1.0e3 + " kW");
+    logger.info("cooler3 duty " + cooler3.getEnergyInput() / 1.0e3 + " kW");
+    // logger.info("heater duty " + heater.getEnergyInput());
   }
 }

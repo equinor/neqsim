@@ -1,9 +1,7 @@
 package neqsim.process.equipment.pump;
 
 /**
- * <p>
  * PumpChartInterface interface.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -28,8 +26,7 @@ public interface PumpChartInterface extends Cloneable {
    * @param head an array of type double
    * @param polyEff an array of type double
    */
-  public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head,
-      double[][] polyEff);
+  public void setCurves(double[] chartConditions, double[] speed, double[][] flow, double[][] head, double[][] polyEff);
 
   /**
    * Get method for polytropic head from reference curves.
@@ -57,12 +54,10 @@ public interface PumpChartInterface extends Cloneable {
    * @param refPressure a double
    * @param refZ a double
    */
-  public void setReferenceConditions(double refMW, double refTemperature, double refPressure,
-      double refZ);
+  public void setReferenceConditions(double refMW, double refTemperature, double refPressure, double refZ);
 
   /**
-   * Checks if set to use compressor chart for compressor calculations (chart is set for
-   * compressor).
+   * Checks if set to use compressor chart for compressor calculations (chart is set for compressor).
    *
    * @return a boolean
    */
@@ -104,9 +99,7 @@ public interface PumpChartInterface extends Cloneable {
   public void setUseRealKappa(boolean useRealKappa);
 
   /**
-   * <p>
    * getSpeed.
-   * </p>
    *
    * @param flow a double
    * @param head a double
@@ -115,9 +108,7 @@ public interface PumpChartInterface extends Cloneable {
   public int getSpeed(double flow, double head);
 
   /**
-   * <p>
    * plot.
-   * </p>
    */
   public void plot();
 
@@ -127,6 +118,21 @@ public interface PumpChartInterface extends Cloneable {
    * @return flow rate at BEP in m³/hr
    */
   public double getBestEfficiencyFlowRate();
+
+  /**
+   * Get the flow rate at best efficiency point (BEP) at a specified speed.
+   *
+   * <p>
+   * Implementations with reduced performance curves should scale BEP flow with speed according to the affinity laws.
+   * The default preserves compatibility with chart implementations that only expose a reference-speed BEP.
+   * </p>
+   *
+   * @param speed pump speed in rpm
+   * @return flow rate at BEP in m3/hr at the specified speed
+   */
+  public default double getBestEfficiencyFlowRate(double speed) {
+    return getBestEfficiencyFlowRate();
+  }
 
   /**
    * Calculate pump specific speed at BEP.
@@ -178,8 +184,8 @@ public interface PumpChartInterface extends Cloneable {
    * Set the reference density for density correction.
    *
    * <p>
-   * Pump curves are typically measured with water (~998 kg/m³). When pumping fluids with different
-   * densities, the head must be corrected: H_actual = H_chart × (ρ_chart / ρ_actual)
+   * Pump curves are typically measured with water (~998 kg/m³). When pumping fluids with different densities, the head
+   * must be corrected: H_actual = H_chart × (ρ_chart / ρ_actual)
    * </p>
    *
    * @param referenceDensity reference fluid density in kg/m³ (use -1.0 to disable correction)
@@ -213,8 +219,7 @@ public interface PumpChartInterface extends Cloneable {
    * @param headBEP head at best efficiency point in meters
    * @param speed pump speed in rpm
    */
-  public void calculateViscosityCorrection(double viscosity, double flowBEP, double headBEP,
-      double speed);
+  public void calculateViscosityCorrection(double viscosity, double flowBEP, double headBEP, double speed);
 
   /**
    * Get head with both viscosity and density corrections applied.
@@ -225,8 +230,7 @@ public interface PumpChartInterface extends Cloneable {
    * @param actualViscosity actual kinematic viscosity in cSt
    * @return fully corrected head
    */
-  public double getFullyCorrectedHead(double flow, double speed, double actualDensity,
-      double actualViscosity);
+  public double getFullyCorrectedHead(double flow, double speed, double actualDensity, double actualViscosity);
 
   /**
    * Get efficiency with viscosity correction applied.

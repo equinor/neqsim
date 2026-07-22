@@ -6,8 +6,8 @@ import neqsim.thermo.system.SystemInterface;
  * Sachdeva et al. (1986) mechanistic model for two-phase choke flow.
  *
  * <p>
- * This is the industry-standard mechanistic model for calculating two-phase flow through production
- * chokes. It handles both critical (choked) and subcritical flow regimes.
+ * This is the industry-standard mechanistic model for calculating two-phase flow through production chokes. It handles
+ * both critical (choked) and subcritical flow regimes.
  * </p>
  *
  * <p>
@@ -24,10 +24,10 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * <b>Mass Flow Rate Equation:</b>
  * </p>
- * 
+ *
  * <pre>
  * m_dot = Cd * A2 * sqrt(2 * P1 * rho1 / denominator)
- * 
+ *
  * where denominator accounts for:
  * - Kinetic energy change (velocity change through restriction)
  * - Polytropic gas expansion work
@@ -37,7 +37,7 @@ import neqsim.thermo.system.SystemInterface;
  * <p>
  * <b>Critical Pressure Ratio Correlation:</b>
  * </p>
- * 
+ *
  * <pre>
  * y_critical = 0.5847 - 0.0227 * ln(x_g)
  * </pre>
@@ -47,9 +47,8 @@ import neqsim.thermo.system.SystemInterface;
  * </p>
  *
  * <p>
- * <b>Reference:</b> Sachdeva, R., Schmidt, Z., Brill, J.P., and Blais, R.M. (1986). "Two-Phase Flow
- * Through Chokes." SPE 15657, presented at the 61st Annual Technical Conference, New Orleans, LA,
- * October 5-8.
+ * <b>Reference:</b> Sachdeva, R., Schmidt, Z., Brill, J.P., and Blais, R.M. (1986). "Two-Phase Flow Through Chokes."
+ * SPE 15657, presented at the 61st Annual Technical Conference, New Orleans, LA, October 5-8.
  * </p>
  *
  * @author esol
@@ -68,7 +67,6 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
    * Default constructor for SachdevaChokeFlow.
    */
   public SachdevaChokeFlow() {
-    super();
     this.dischargeCoefficient = 0.84;
   }
 
@@ -84,8 +82,7 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
 
   /** {@inheritDoc} */
   @Override
-  public double calculateMassFlowRate(SystemInterface fluid, double upstreamPressure,
-      double downstreamPressure) {
+  public double calculateMassFlowRate(SystemInterface fluid, double upstreamPressure, double downstreamPressure) {
     // Get fluid properties
     double gasQuality = calculateGasQuality(fluid);
     double gamma = fluid.getGamma2();
@@ -123,8 +120,7 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
     double areaRatioSq = Math.pow(chokeDiameter / upstreamDiameter, 4);
 
     // Kinetic energy term
-    double kineticTerm =
-        (1.0 / (y * y) - areaRatioSq) * (xg / (rhoGas2 * rhoGas2) + xL / (rhoLiquid * rhoLiquid));
+    double kineticTerm = (1.0 / (y * y) - areaRatioSq) * (xg / (rhoGas2 * rhoGas2) + xL / (rhoLiquid * rhoLiquid));
 
     // Work terms
     double liquidWorkTerm = 2.0 * xL / rhoLiquid * (1.0 - y);
@@ -140,16 +136,14 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
 
     // Mass flow rate
     double A2 = getChokeArea();
-    double massFlowRate =
-        dischargeCoefficient * A2 * Math.sqrt(2.0 * upstreamPressure * rhoMix1 / denominator);
+    double massFlowRate = dischargeCoefficient * A2 * Math.sqrt(2.0 * upstreamPressure * rhoMix1 / denominator);
 
     return massFlowRate;
   }
 
   /** {@inheritDoc} */
   @Override
-  public double calculateDownstreamPressure(SystemInterface fluid, double upstreamPressure,
-      double massFlowRate) {
+  public double calculateDownstreamPressure(SystemInterface fluid, double upstreamPressure, double massFlowRate) {
     // Use bisection method to find downstream pressure
     double gasQuality = calculateGasQuality(fluid);
     double gamma = fluid.getGamma2();
@@ -206,8 +200,7 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
     }
     if (gasQuality >= MAX_GAS_QUALITY) {
       // Near-gas: use isentropic gas critical ratio
-      return Math.pow(2.0 / (specificHeatRatio + 1.0),
-          specificHeatRatio / (specificHeatRatio - 1.0));
+      return Math.pow(2.0 / (specificHeatRatio + 1.0), specificHeatRatio / (specificHeatRatio - 1.0));
     }
 
     // Clamp gas quality for correlation validity
@@ -286,8 +279,7 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
    * @param rhoLiquid liquid density in kg/m3
    * @return mass flow rate in kg/s
    */
-  private double calculateLiquidOnlyFlow(SystemInterface fluid, double P1, double P2,
-      double rhoLiquid) {
+  private double calculateLiquidOnlyFlow(SystemInterface fluid, double P1, double P2, double rhoLiquid) {
     double deltaP = P1 - P2;
     if (deltaP <= 0) {
       return 0.0;
@@ -306,8 +298,7 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
    * @param gamma specific heat ratio
    * @return mass flow rate in kg/s
    */
-  private double calculateGasOnlyFlow(SystemInterface fluid, double P1, double P2, double rhoGas1,
-      double gamma) {
+  private double calculateGasOnlyFlow(SystemInterface fluid, double P1, double P2, double rhoGas1, double gamma) {
     double A2 = getChokeArea();
 
     // Critical pressure ratio for gas
@@ -321,8 +312,7 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
     } else {
       // Subcritical flow
       double term1 = 2.0 * gamma / (gamma - 1.0);
-      double term2 =
-          Math.pow(pressureRatio, 2.0 / gamma) - Math.pow(pressureRatio, (gamma + 1.0) / gamma);
+      double term2 = Math.pow(pressureRatio, 2.0 / gamma) - Math.pow(pressureRatio, (gamma + 1.0) / gamma);
       return dischargeCoefficient * A2 * Math.sqrt(term1 * P1 * rhoGas1 * term2);
     }
   }
@@ -338,8 +328,7 @@ public class SachdevaChokeFlow extends MultiphaseChokeFlow {
    * @param gasVoidFraction volumetric gas fraction at throat
    * @return adjusted discharge coefficient
    */
-  public double calculateVariableDischargeCoefficient(double reynoldsNumber,
-      double gasVoidFraction) {
+  public double calculateVariableDischargeCoefficient(double reynoldsNumber, double gasVoidFraction) {
     double Cd_base = 0.84;
 
     // Reynolds number correction (turbulent flow assumed for Re > 10000)

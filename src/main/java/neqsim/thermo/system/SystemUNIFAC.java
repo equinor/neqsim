@@ -5,8 +5,7 @@ import neqsim.thermo.phase.PhasePureComponentSolid;
 import neqsim.thermo.phase.PhaseSrkEos;
 
 /**
- * This class defines a thermodynamic system using the Unifac for liquids with SRK equation of state
- * for gas.
+ * This class defines a thermodynamic system using the Unifac for liquids with SRK equation of state for gas.
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -16,18 +15,14 @@ public class SystemUNIFAC extends SystemEos {
   private static final long serialVersionUID = 1000;
 
   /**
-   * <p>
    * Constructor for SystemUNIFAC.
-   * </p>
    */
   public SystemUNIFAC() {
     this(273.15, 0);
   }
 
   /**
-   * <p>
    * Constructor for SystemUNIFAC.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -37,9 +32,7 @@ public class SystemUNIFAC extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemUNIFAC.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

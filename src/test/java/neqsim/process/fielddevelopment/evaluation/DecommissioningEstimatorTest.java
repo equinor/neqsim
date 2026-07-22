@@ -114,8 +114,8 @@ public class DecommissioningEstimatorTest {
 
   @Test
   void testSubseaTiebackCosts() {
-    estimator.setFacilityType(FacilityType.SUBSEA_TIEBACK).setNumberOfWells(4)
-        .setNumberOfSubseaStructures(2).setPipelineLength(15);
+    estimator.setFacilityType(FacilityType.SUBSEA_TIEBACK).setNumberOfWells(4).setNumberOfSubseaStructures(2)
+        .setPipelineLength(15);
 
     double subseaTotal = estimator.getTotalCostMUSD();
 
@@ -171,8 +171,7 @@ public class DecommissioningEstimatorTest {
 
   @Test
   void testScheduleEstimation() {
-    estimator.setFacilityType(FacilityType.FIXED_JACKET).setNumberOfWells(8)
-        .setTopsideWeight(15000);
+    estimator.setFacilityType(FacilityType.FIXED_JACKET).setNumberOfWells(8).setTopsideWeight(15000);
 
     int months = estimator.getEstimatedDurationMonths();
 
@@ -195,8 +194,8 @@ public class DecommissioningEstimatorTest {
 
   @Test
   void testReportGeneration() {
-    estimator.setFacilityType(FacilityType.FIXED_JACKET).setWaterDepth(120).setNumberOfWells(10)
-        .setTopsideWeight(18000).setPipelineLength(40);
+    estimator.setFacilityType(FacilityType.FIXED_JACKET).setWaterDepth(120).setNumberOfWells(10).setTopsideWeight(18000)
+        .setPipelineLength(40);
 
     String report = estimator.generateReport();
 
@@ -247,8 +246,8 @@ public class DecommissioningEstimatorTest {
   void testTypicalNCSPlatform() {
     // Typical medium-sized NCS platform
     estimator.setFacilityType(FacilityType.FIXED_JACKET).setWaterDepth(120).setTopsideWeight(20000)
-        .setSubstructureWeight(15000).setNumberOfWells(15).setAverageWellDepth(3500)
-        .setPipelineLength(50).setPipelineDiameter(20).setNumberOfRisers(4);
+        .setSubstructureWeight(15000).setNumberOfWells(15).setAverageWellDepth(3500).setPipelineLength(50)
+        .setPipelineDiameter(20).setNumberOfRisers(4);
 
     double totalCost = estimator.getTotalCostMUSD();
 

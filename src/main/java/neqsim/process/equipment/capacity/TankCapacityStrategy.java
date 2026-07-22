@@ -36,7 +36,8 @@ public class TankCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public TankCapacityStrategy() {}
+  public TankCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
@@ -83,7 +84,7 @@ public class TankCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If equipment implements CapacityConstrainedEquipment, use its constraints
     if (tank instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) tank).getMaxUtilization();
+      return tank.getMaxUtilization();
     }
 
     // Fall back to basic evaluation
@@ -130,22 +131,20 @@ public class TankCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If tank implements CapacityConstrainedEquipment, use its constraints
     if (tank instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) tank).getCapacityConstraints();
+      return tank.getCapacityConstraints();
     }
 
     // Liquid level constraint
-    CapacityConstraint levelConstraint =
-        new CapacityConstraint("liquidLevel").setDesignValue(maxLiquidLevel * 0.7)
-            .setMaxValue(maxLiquidLevel).setMinValue(minLiquidLevel).setUnit("fraction")
-            .setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setWarningThreshold(0.9)
-            .setDescription("Liquid level fraction").setValueSupplier(tank::getLiquidLevel);
+    CapacityConstraint levelConstraint = new CapacityConstraint("liquidLevel").setDesignValue(maxLiquidLevel * 0.7)
+        .setMaxValue(maxLiquidLevel).setMinValue(minLiquidLevel).setUnit("fraction")
+        .setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setWarningThreshold(0.9)
+        .setDescription("Liquid level fraction").setValueSupplier(tank::getLiquidLevel);
     constraints.put("liquidLevel", levelConstraint);
 
     // Volume utilization constraint
-    CapacityConstraint volConstraint =
-        new CapacityConstraint("volumeUtilization").setDesignValue(0.7).setMaxValue(0.85)
-            .setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-            .setDescription("Tank volume utilization");
+    CapacityConstraint volConstraint = new CapacityConstraint("volumeUtilization").setDesignValue(0.7).setMaxValue(0.85)
+        .setUnit("fraction").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+        .setDescription("Tank volume utilization");
     constraints.put("volumeUtilization", volConstraint);
 
     return constraints;

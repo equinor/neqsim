@@ -4,12 +4,13 @@ import java.util.Objects;
 import neqsim.process.equipment.separator.Separator;
 
 /**
- * Convenience wrapper that wires separator geometry and process conditions into the fire
- * calculators so they can be used directly from NeqSim process simulations.
+ * Convenience wrapper that wires separator geometry and process conditions into the fire calculators so they can be
+ * used directly from NeqSim process simulations.
  */
 public final class SeparatorFireExposure {
 
-  private SeparatorFireExposure() {}
+  private SeparatorFireExposure() {
+  }
 
   /**
    * Fire scenario configuration with sensible defaults so callers only override what they need.
@@ -66,8 +67,7 @@ public final class SeparatorFireExposure {
       return externalFilmCoefficientWPerM2K;
     }
 
-    public FireScenarioConfig setExternalFilmCoefficientWPerM2K(
-        double externalFilmCoefficientWPerM2K) {
+    public FireScenarioConfig setExternalFilmCoefficientWPerM2K(double externalFilmCoefficientWPerM2K) {
       this.externalFilmCoefficientWPerM2K = externalFilmCoefficientWPerM2K;
       return this;
     }
@@ -76,8 +76,7 @@ public final class SeparatorFireExposure {
       return wettedInternalFilmCoefficientWPerM2K;
     }
 
-    public FireScenarioConfig setWettedInternalFilmCoefficientWPerM2K(
-        double wettedInternalFilmCoefficientWPerM2K) {
+    public FireScenarioConfig setWettedInternalFilmCoefficientWPerM2K(double wettedInternalFilmCoefficientWPerM2K) {
       this.wettedInternalFilmCoefficientWPerM2K = wettedInternalFilmCoefficientWPerM2K;
       return this;
     }
@@ -86,8 +85,7 @@ public final class SeparatorFireExposure {
       return unwettedInternalFilmCoefficientWPerM2K;
     }
 
-    public FireScenarioConfig setUnwettedInternalFilmCoefficientWPerM2K(
-        double unwettedInternalFilmCoefficientWPerM2K) {
+    public FireScenarioConfig setUnwettedInternalFilmCoefficientWPerM2K(double unwettedInternalFilmCoefficientWPerM2K) {
       this.unwettedInternalFilmCoefficientWPerM2K = unwettedInternalFilmCoefficientWPerM2K;
       return this;
     }
@@ -138,9 +136,8 @@ public final class SeparatorFireExposure {
     private final double ruptureMarginPa;
     private final boolean ruptureLikely;
 
-    public FireExposureResult(double wettedArea, double unwettedArea, double poolFireHeatLoad,
-        double radiativeHeatFlux, double unwettedRadiativeHeat, double flareRadiativeFlux,
-        double flareRadiativeHeat, double totalFireHeat,
+    public FireExposureResult(double wettedArea, double unwettedArea, double poolFireHeatLoad, double radiativeHeatFlux,
+        double unwettedRadiativeHeat, double flareRadiativeFlux, double flareRadiativeHeat, double totalFireHeat,
         FireHeatTransferCalculator.SurfaceTemperatureResult wettedWall,
         FireHeatTransferCalculator.SurfaceTemperatureResult unwettedWall, double vonMisesStressPa,
         double ruptureMarginPa, boolean ruptureLikely) {
@@ -189,8 +186,10 @@ public final class SeparatorFireExposure {
     }
 
     /**
-     * Heat from flare radiation incident on the separator shell using the inner surface area as the
-     * exposure area approximation (W).
+     * Heat from flare radiation incident on the separator shell using the inner surface area as the exposure area
+     * approximation (W).
+     *
+     * @return flare radiative heat in watts
      */
     public double flareRadiativeHeat() {
       return flareRadiativeHeat;
@@ -227,11 +226,10 @@ public final class SeparatorFireExposure {
   }
 
   /**
-   * Aggregates fire heat-load, wall-temperature, and rupture calculations for a separator timestep
-   * using only the separator and a simple configuration object.
+   * Aggregates fire heat-load, wall-temperature, and rupture calculations for a separator timestep using only the
+   * separator and a simple configuration object.
    *
-   * @param separator separator instance that already reflects the current
-   *        level/pressure/temperature
+   * @param separator separator instance that already reflects the current level/pressure/temperature
    * @param config fire scenario configuration; defaults match typical API 521 pool fire settings
    * @return populated {@link FireExposureResult}
    */
@@ -240,11 +238,10 @@ public final class SeparatorFireExposure {
   }
 
   /**
-   * Aggregates fire heat-load, wall-temperature, and rupture calculations including optional flare
-   * radiation based on the actual flaring heat duty.
+   * Aggregates fire heat-load, wall-temperature, and rupture calculations including optional flare radiation based on
+   * the actual flaring heat duty.
    *
-   * @param separator separator instance that already reflects the current
-   *        level/pressure/temperature
+   * @param separator separator instance that already reflects the current level/pressure/temperature
    * @param config fire scenario configuration; defaults match typical API 521 pool fire settings
    * @param flare flare instance supplying real-time heat duty and radiation parameters; may be null
    * @param flareGroundDistanceM horizontal distance from flare base to separator [m]
@@ -262,23 +259,20 @@ public final class SeparatorFireExposure {
     double wettedArea = separator.getWettedArea();
     double unwettedArea = separator.getUnwettedArea();
 
-    double poolFireHeatLoad =
-        FireHeatLoadCalculator.api521PoolFireHeatLoad(wettedArea, config.environmentalFactor());
+    double poolFireHeatLoad = FireHeatLoadCalculator.api521PoolFireHeatLoad(wettedArea, config.environmentalFactor());
 
     FireHeatTransferCalculator.SurfaceTemperatureResult wettedWall = FireHeatTransferCalculator
-        .calculateWallTemperatures(processTemperatureK, config.fireTemperatureK(),
-            config.wallThicknessM(), config.thermalConductivityWPerMPerK(),
-            config.wettedInternalFilmCoefficientWPerM2K(), config.externalFilmCoefficientWPerM2K());
+        .calculateWallTemperatures(processTemperatureK, config.fireTemperatureK(), config.wallThicknessM(),
+            config.thermalConductivityWPerMPerK(), config.wettedInternalFilmCoefficientWPerM2K(),
+            config.externalFilmCoefficientWPerM2K());
 
-    FireHeatTransferCalculator.SurfaceTemperatureResult unwettedWall =
-        FireHeatTransferCalculator.calculateWallTemperatures(processTemperatureK,
-            config.fireTemperatureK(), config.wallThicknessM(),
+    FireHeatTransferCalculator.SurfaceTemperatureResult unwettedWall = FireHeatTransferCalculator
+        .calculateWallTemperatures(processTemperatureK, config.fireTemperatureK(), config.wallThicknessM(),
             config.thermalConductivityWPerMPerK(), config.unwettedInternalFilmCoefficientWPerM2K(),
             config.externalFilmCoefficientWPerM2K());
 
-    double radiativeHeatFlux =
-        FireHeatLoadCalculator.generalizedStefanBoltzmannHeatFlux(config.emissivity(),
-            config.viewFactor(), config.fireTemperatureK(), unwettedWall.outerWallTemperatureK());
+    double radiativeHeatFlux = FireHeatLoadCalculator.generalizedStefanBoltzmannHeatFlux(config.emissivity(),
+        config.viewFactor(), config.fireTemperatureK(), unwettedWall.outerWallTemperatureK());
 
     double unwettedRadiativeHeat = radiativeHeatFlux * unwettedArea;
     double flareRadiativeFlux = 0.0;
@@ -291,31 +285,26 @@ public final class SeparatorFireExposure {
 
     double totalFireHeat = poolFireHeatLoad + unwettedRadiativeHeat + flareRadiativeHeat;
 
-    double vonMises = VesselRuptureCalculator.vonMisesStress(separatorPressurePa, innerRadius,
-        config.wallThicknessM());
-    double ruptureMargin =
-        VesselRuptureCalculator.ruptureMargin(vonMises, config.allowableTensileStrengthPa());
-    boolean ruptureLikely =
-        VesselRuptureCalculator.isRuptureLikely(vonMises, config.allowableTensileStrengthPa());
+    double vonMises = VesselRuptureCalculator.vonMisesStress(separatorPressurePa, innerRadius, config.wallThicknessM());
+    double ruptureMargin = VesselRuptureCalculator.ruptureMargin(vonMises, config.allowableTensileStrengthPa());
+    boolean ruptureLikely = VesselRuptureCalculator.isRuptureLikely(vonMises, config.allowableTensileStrengthPa());
 
-    return new FireExposureResult(wettedArea, unwettedArea, poolFireHeatLoad, radiativeHeatFlux,
-        unwettedRadiativeHeat, flareRadiativeFlux, flareRadiativeHeat, totalFireHeat, wettedWall,
-        unwettedWall, vonMises, ruptureMargin, ruptureLikely);
+    return new FireExposureResult(wettedArea, unwettedArea, poolFireHeatLoad, radiativeHeatFlux, unwettedRadiativeHeat,
+        flareRadiativeFlux, flareRadiativeHeat, totalFireHeat, wettedWall, unwettedWall, vonMises, ruptureMargin,
+        ruptureLikely);
   }
 
   /**
-   * Applies the calculated fire heat by setting the separator duty. The temperature change is then
-   * handled by {@link Separator#runTransient(double, java.util.UUID)}, which consumes the heat
-   * input when performing the energy balance.
+   * Applies the calculated fire heat by setting the separator duty. The temperature change is then handled by
+   * {@link Separator#runTransient(double, java.util.UUID)}, which consumes the heat input when performing the energy
+   * balance.
    *
    * @param separator separator to update
-   * @param fireState fire heat-load bundle produced by
-   *        {@link #evaluate(Separator, FireScenarioConfig)}
+   * @param fireState fire heat-load bundle produced by {@link #evaluate(Separator, FireScenarioConfig)}
    * @param timeStepSeconds timestep duration in seconds (retained for backward compatibility)
    * @return heat duty applied to the separator in watts
    */
-  public static double applyFireHeating(Separator separator, FireExposureResult fireState,
-      double timeStepSeconds) {
+  public static double applyFireHeating(Separator separator, FireExposureResult fireState, double timeStepSeconds) {
     Objects.requireNonNull(separator, "separator");
     Objects.requireNonNull(fireState, "fireState");
 

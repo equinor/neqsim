@@ -1,3 +1,8 @@
+---
+title: "TwoFluidPipe Model: Detailed Review and OLGA Comparison"
+description: "The `TwoFluidPipe` class in NeqSim implements a transient two-fluid model for 1D multiphase pipeline flow. This document provides a detailed review of the model, identifies bugs found and fixed, and c..."
+---
+
 # TwoFluidPipe Model: Detailed Review and OLGA Comparison
 
 ## Overview

@@ -87,8 +87,7 @@ class WellFlowlineNetworkTest {
     WellFlowlineNetwork network = new WellFlowlineNetwork("template network");
 
     WellFlowlineNetwork.ManifoldNode twoWellManifold = network.createManifold("two-well manifold");
-    WellFlowlineNetwork.ManifoldNode threeWellManifold =
-        network.createManifold("three-well manifold");
+    WellFlowlineNetwork.ManifoldNode threeWellManifold = network.createManifold("three-well manifold");
     WellFlowlineNetwork.ManifoldNode centralManifold = network.createManifold("central manifold");
 
     // Create wells and add branches to manifolds FIRST before connecting manifolds
@@ -167,8 +166,7 @@ class WellFlowlineNetworkTest {
     commonPipeline.setElevation(0.0);
     commonPipeline.setDiameter(0.55);
     commonPipeline.setPipeWallRoughness(4.5e-5);
-    WellFlowlineNetwork.ManifoldNode endManifold =
-        network.addManifold("end manifold", commonPipeline);
+    WellFlowlineNetwork.ManifoldNode endManifold = network.addManifold("end manifold", commonPipeline);
 
     network.setTargetEndpointPressure(55.0, "bara");
 
@@ -179,10 +177,8 @@ class WellFlowlineNetworkTest {
 
     double arrivalFlow = network.getArrivalStream().getFlowRate("MSm3/day");
     double expectedFlow = pipe1.getOutletStream().getFlowRate("MSm3/day")
-        + pipe2.getOutletStream().getFlowRate("MSm3/day")
-        + pipe3.getOutletStream().getFlowRate("MSm3/day")
-        + pipe4.getOutletStream().getFlowRate("MSm3/day")
-        + pipe5.getOutletStream().getFlowRate("MSm3/day");
+        + pipe2.getOutletStream().getFlowRate("MSm3/day") + pipe3.getOutletStream().getFlowRate("MSm3/day")
+        + pipe4.getOutletStream().getFlowRate("MSm3/day") + pipe5.getOutletStream().getFlowRate("MSm3/day");
     assertEquals(expectedFlow, arrivalFlow, 1e-4);
 
     double twoManifoldPressure = twoToCentral.getOutletStream().getPressure("bara");
@@ -207,6 +203,59 @@ class WellFlowlineNetworkTest {
   }
 
   @Test
+  void facilityPipelineEndpointConvergesToTargetPressure() {
+    ProcessSystem process = new ProcessSystem();
+    SimpleReservoir reservoir = createGasReservoir(process, "endpoint gas reservoir");
+    StreamInterface producer1 = addGasProducer(reservoir, "endpoint branch 1", 1.2);
+    StreamInterface producer2 = addGasProducer(reservoir, "endpoint branch 2", 1.0);
+
+    WellFlowlineNetwork network = new WellFlowlineNetwork("endpoint convergence network");
+
+    WellFlow well1 = new WellFlow("endpoint well 1");
+    well1.setInletStream(producer1);
+    well1.setWellProductionIndex(5.5e-4);
+    PipeBeggsAndBrills pipe1 = new PipeBeggsAndBrills("endpoint pipe 1", well1.getOutletStream());
+    pipe1.setLength(500.0);
+    pipe1.setElevation(0.0);
+    pipe1.setDiameter(0.34);
+    pipe1.setPipeWallRoughness(4.5e-5);
+    network.addBranch("endpoint branch 1", well1, pipe1, null, network.getManifolds().get(0));
+
+    WellFlow well2 = new WellFlow("endpoint well 2");
+    well2.setInletStream(producer2);
+    well2.setWellProductionIndex(5.0e-4);
+    PipeBeggsAndBrills pipe2 = new PipeBeggsAndBrills("endpoint pipe 2", well2.getOutletStream());
+    pipe2.setLength(520.0);
+    pipe2.setElevation(0.0);
+    pipe2.setDiameter(0.32);
+    pipe2.setPipeWallRoughness(4.5e-5);
+    network.addBranch("endpoint branch 2", well2, pipe2, null, network.getManifolds().get(0));
+
+    // A facility pipeline with a flow-dependent pressure drop sits between the terminal manifold
+    // and the endpoint, so the endpoint sensitivity to manifold pressure is not 1.0. The secant
+    // solver should still drive the facility outlet to the target.
+    PipeBeggsAndBrills facilityLine = new PipeBeggsAndBrills("endpoint facility line",
+        network.getArrivalMixer().getOutletStream());
+    facilityLine.setLength(1500.0);
+    facilityLine.setElevation(0.0);
+    facilityLine.setDiameter(0.5);
+    facilityLine.setPipeWallRoughness(4.5e-5);
+    network.setFacilityPipeline(facilityLine);
+
+    network.setTargetEndpointPressure(50.0, "bara");
+    network.setIterationTolerance(1.0e-3);
+
+    process.add(network);
+    process.run();
+
+    double endpointPressure = facilityLine.getOutletStream().getPressure("bara");
+    assertEquals(50.0, endpointPressure, 1.0e-2);
+    // With a facility pipeline present the terminal manifold pressure must exceed the endpoint
+    // target to overcome the line pressure drop.
+    assertTrue(network.getTerminalManifoldPressure("bara") > 50.0);
+  }
+
+  @Test
   void chokeValvePositionChangesBranchFlow() {
     ProcessSystem process = new ProcessSystem();
     SimpleReservoir reservoir = createGasReservoir(process, "gas reservoir");
@@ -222,8 +271,7 @@ class WellFlowlineNetworkTest {
     choke.setKv(15.0);
     choke.setPercentValveOpening(100.0);
 
-    PipeBeggsAndBrills pipeline =
-        new PipeBeggsAndBrills("branch pipeline", choke.getOutletStream());
+    PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills("branch pipeline", choke.getOutletStream());
     pipeline.setLength(300.0);
     pipeline.setElevation(0.0);
     pipeline.setDiameter(0.32);
@@ -280,8 +328,7 @@ class WellFlowlineNetworkTest {
     pipe2.setPipeWallRoughness(4.5e-5);
     network.addBranch("oil branch 2", well2, pipe2, choke2, network.getManifolds().get(0));
 
-    PipeBeggsAndBrills exportLine =
-        new PipeBeggsAndBrills("export line", network.getArrivalMixer().getOutletStream());
+    PipeBeggsAndBrills exportLine = new PipeBeggsAndBrills("export line", network.getArrivalMixer().getOutletStream());
     exportLine.setLength(1000.0);
     exportLine.setElevation(0.0);
     exportLine.setDiameter(0.5);
@@ -291,7 +338,7 @@ class WellFlowlineNetworkTest {
     network.setTargetEndpointPressure(60.0, "bara");
     process.add(network);
 
-    double[] openings = new double[] {40.0, 70.0, 100.0};
+    double[] openings = new double[] { 40.0, 70.0, 100.0 };
     double bestOilRate = -1.0;
     double bestChoke1 = 0.0;
     double bestChoke2 = 0.0;
@@ -302,8 +349,7 @@ class WellFlowlineNetworkTest {
         choke2.setPercentValveOpening(opening2);
         process.run();
 
-        double oilRate =
-            network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
+        double oilRate = network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
 
         if (oilRate > bestOilRate || (Math.abs(oilRate - bestOilRate) < 1e-6
             && (opening1 > bestChoke1 || (opening1 == bestChoke1 && opening2 > bestChoke2)))) {
@@ -319,14 +365,12 @@ class WellFlowlineNetworkTest {
 
     process.run();
 
-    double throttledOilRate =
-        network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
+    double throttledOilRate = network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
 
     choke1.setPercentValveOpening(30.0);
     choke2.setPercentValveOpening(30.0);
     process.run();
-    double tightOilRate =
-        network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
+    double tightOilRate = network.getArrivalStream().getFluid().getComponent("nC12").getFlowRate("kg/hr");
 
     assertTrue(throttledOilRate >= tightOilRate - 1e-3);
     assertEquals(100.0, bestChoke1, 1e-6);

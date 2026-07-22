@@ -1,22 +1,30 @@
 package neqsim.blackoil;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.function.ToDoubleFunction;
 
 /**
- * Black-Oil PVT table with linear interpolation in pressure. Units (recommended): P: bar (or Pa,
- * but be consistent across inputs!) Rs: Sm3 gas / Sm3 oil Rv: Sm3 oil / Sm3 gas (often 0.0) Bo, Bg,
- * Bw: reservoir m3 per standard m3 (rm3 / Sm3) mu_*: Pa·s
+ * Black-Oil PVT table with linear interpolation in pressure. Units (recommended): P: bar (or Pa, but be consistent
+ * across inputs!) Rs: Sm3 gas / Sm3 oil Rv: Sm3 oil / Sm3 gas (often 0.0) Bo, Bg, Bw: reservoir m3 per standard m3 (rm3
+ * / Sm3) mu_*: Pa·s
  *
  * @author esol
+ * @version 1.0
  */
-public class BlackOilPVTTable {
+public class BlackOilPVTTable implements Serializable {
+  /** Serialization version UID. */
+  private static final long serialVersionUID = 1000L;
+
   /**
    * Record class to hold PVT data for a specific pressure.
    */
-  public static final class Record {
+  public static final class Record implements Serializable {
+    /** Serialization version UID. */
+    private static final long serialVersionUID = 1000L;
+
     public final double p;
     public final double Rs;
     public final double Bo;
@@ -40,8 +48,8 @@ public class BlackOilPVTTable {
      * @param Bw a double
      * @param mu_w a double
      */
-    public Record(double p, double Rs, double Bo, double mu_o, double Bg, double mu_g, double Rv,
-        double Bw, double mu_w) {
+    public Record(double p, double Rs, double Bo, double mu_o, double Bg, double mu_g, double Rv, double Bw,
+        double mu_w) {
       this.p = p;
       this.Rs = Rs;
       this.Bo = Bo;
@@ -58,9 +66,7 @@ public class BlackOilPVTTable {
   private final double bubblePointP;
 
   /**
-   * <p>
    * Constructor for BlackOilPVTTable.
-   * </p>
    *
    * @param records a {@link java.util.List} object
    * @param bubblePointP a double
@@ -75,9 +81,7 @@ public class BlackOilPVTTable {
   }
 
   /**
-   * <p>
    * Getter for the field <code>bubblePointP</code>.
-   * </p>
    *
    * @return a double
    */
@@ -85,6 +89,13 @@ public class BlackOilPVTTable {
     return bubblePointP;
   }
 
+  /**
+   * Getter for the field <code>recs</code>.
+   *
+   * @param p
+   * @param f
+   * @return
+   */
   private double lin(double p, ToDoubleFunction<Record> f) {
     if (p <= recs.get(0).p) {
       return f.applyAsDouble(recs.get(0));
@@ -104,9 +115,7 @@ public class BlackOilPVTTable {
   }
 
   /**
-   * <p>
    * Rs.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -116,9 +125,7 @@ public class BlackOilPVTTable {
   }
 
   /**
-   * <p>
    * Bo.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -128,9 +135,7 @@ public class BlackOilPVTTable {
   }
 
   /**
-   * <p>
    * mu_o.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -140,9 +145,7 @@ public class BlackOilPVTTable {
   }
 
   /**
-   * <p>
    * Bg.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -152,9 +155,7 @@ public class BlackOilPVTTable {
   }
 
   /**
-   * <p>
    * mu_g.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -164,9 +165,7 @@ public class BlackOilPVTTable {
   }
 
   /**
-   * <p>
    * Rv.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -176,9 +175,7 @@ public class BlackOilPVTTable {
   }
 
   /**
-   * <p>
    * Bw.
-   * </p>
    *
    * @param p a double
    * @return a double
@@ -188,9 +185,7 @@ public class BlackOilPVTTable {
   }
 
   /**
-   * <p>
    * mu_w.
-   * </p>
    *
    * @param p a double
    * @return a double

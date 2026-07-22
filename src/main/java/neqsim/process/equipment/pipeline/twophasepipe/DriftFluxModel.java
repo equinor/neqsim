@@ -7,8 +7,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * Drift-flux model for two-phase pipe flow.
  *
  * <p>
- * Implements the drift-flux model equations for calculating slip between phases, pressure drop, and
- * holdup. The model uses flow-regime-dependent closure relations.
+ * Implements the drift-flux model equations for calculating slip between phases, pressure drop, and holdup. The model
+ * uses flow-regime-dependent closure relations.
  *
  * <p>
  * Key equations:
@@ -21,10 +21,8 @@ import neqsim.process.equipment.pipeline.twophasepipe.PipeSection.FlowRegime;
  * <p>
  * References:
  * <ul>
- * <li>Zuber, N. and Findlay, J.A. (1965) - Average Volumetric Concentration in Two-Phase Flow
- * Systems</li>
- * <li>Bendiksen, K.H. (1984) - An Experimental Investigation of the Motion of Long Bubbles in
- * Inclined Tubes</li>
+ * <li>Zuber, N. and Findlay, J.A. (1965) - Average Volumetric Concentration in Two-Phase Flow Systems</li>
+ * <li>Bendiksen, K.H. (1984) - An Experimental Investigation of the Motion of Long Bubbles in Inclined Tubes</li>
  * </ul>
  *
  * @author Even Solbraa
@@ -81,30 +79,30 @@ public class DriftFluxModel implements Serializable {
 
     // Calculate C0 and drift velocity based on flow regime
     switch (regime) {
-      case BUBBLE:
-      case DISPERSED_BUBBLE:
-        calculateBubbleFlowParameters(params, U_M, D, theta, rho_L, rho_G, sigma);
-        break;
+    case BUBBLE:
+    case DISPERSED_BUBBLE:
+      calculateBubbleFlowParameters(params, U_M, D, theta, rho_L, rho_G, sigma);
+      break;
 
-      case SLUG:
-        calculateSlugFlowParameters(params, U_M, D, theta, rho_L, rho_G, sigma, mu_L);
-        break;
+    case SLUG:
+      calculateSlugFlowParameters(params, U_M, D, theta, rho_L, rho_G, sigma, mu_L);
+      break;
 
-      case ANNULAR:
-      case CHURN:
-        calculateAnnularFlowParameters(params, U_M, D, theta, rho_L, rho_G, sigma);
-        break;
+    case ANNULAR:
+    case CHURN:
+      calculateAnnularFlowParameters(params, U_M, D, theta, rho_L, rho_G, sigma);
+      break;
 
-      case STRATIFIED_SMOOTH:
-      case STRATIFIED_WAVY:
-        calculateStratifiedFlowParameters(params, U_SL, U_SG, D, theta, rho_L, rho_G, mu_L);
-        break;
+    case STRATIFIED_SMOOTH:
+    case STRATIFIED_WAVY:
+      calculateStratifiedFlowParameters(params, U_SL, U_SG, D, theta, rho_L, rho_G, mu_L);
+      break;
 
-      default:
-        // Default drift-flux parameters
-        params.C0 = 1.0;
-        params.driftVelocity = 0;
-        break;
+    default:
+      // Default drift-flux parameters
+      params.C0 = 1.0;
+      params.driftVelocity = 0;
+      break;
     }
 
     // Calculate actual velocities and holdup from drift-flux relation
@@ -149,8 +147,8 @@ public class DriftFluxModel implements Serializable {
    * @param rho_G gas density [kg/m³]
    * @param sigma surface tension [N/m]
    */
-  private void calculateBubbleFlowParameters(DriftFluxParameters params, double U_M, double D,
-      double theta, double rho_L, double rho_G, double sigma) {
+  private void calculateBubbleFlowParameters(DriftFluxParameters params, double U_M, double D, double theta,
+      double rho_L, double rho_G, double sigma) {
     // Zuber-Findlay (1965) for bubble flow
     // C0 depends on void fraction and velocity profile
     // C0 = 1.2 for turbulent pipe flow, 1.0-1.1 for low void fraction
@@ -192,8 +190,8 @@ public class DriftFluxModel implements Serializable {
    * @param sigma surface tension [N/m]
    * @param mu_L liquid viscosity [Pa.s]
    */
-  private void calculateSlugFlowParameters(DriftFluxParameters params, double U_M, double D,
-      double theta, double rho_L, double rho_G, double sigma, double mu_L) {
+  private void calculateSlugFlowParameters(DriftFluxParameters params, double U_M, double D, double theta, double rho_L,
+      double rho_G, double sigma, double mu_L) {
     // Bendiksen (1984) distribution coefficient
     double Fr_M = U_M / Math.sqrt(GRAVITY * D);
 
@@ -238,16 +236,15 @@ public class DriftFluxModel implements Serializable {
    * @param rho_G gas density
    * @param sigma surface tension
    */
-  private void calculateAnnularFlowParameters(DriftFluxParameters params, double U_M, double D,
-      double theta, double rho_L, double rho_G, double sigma) {
+  private void calculateAnnularFlowParameters(DriftFluxParameters params, double U_M, double D, double theta,
+      double rho_L, double rho_G, double sigma) {
     // Annular flow: thin liquid film, gas core
     // Less slip, more homogeneous
     params.C0 = 1.0;
 
     // Drift velocity based on film drainage
     double deltaRho = rho_L - rho_G;
-    params.driftVelocity =
-        0.2 * Math.sqrt(GRAVITY * D * Math.abs(deltaRho) / rho_L) * Math.sin(theta);
+    params.driftVelocity = 0.2 * Math.sqrt(GRAVITY * D * Math.abs(deltaRho) / rho_L) * Math.sin(theta);
   }
 
   /**
@@ -266,8 +263,8 @@ public class DriftFluxModel implements Serializable {
    * @param rho_G gas density
    * @param mu_L liquid viscosity
    */
-  private void calculateStratifiedFlowParameters(DriftFluxParameters params, double U_SL,
-      double U_SG, double D, double theta, double rho_L, double rho_G, double mu_L) {
+  private void calculateStratifiedFlowParameters(DriftFluxParameters params, double U_SL, double U_SG, double D,
+      double theta, double rho_L, double rho_G, double mu_L) {
     // For stratified flow, C0 and drift velocity concept doesn't apply directly
     // Instead, calculate holdup from momentum balance
 
@@ -294,7 +291,7 @@ public class DriftFluxModel implements Serializable {
 
   /**
    * Estimate liquid level in stratified flow.
-   * 
+   *
    * @param U_SL superficial liquid velocity (m/s)
    * @param U_SG superficial gas velocity (m/s)
    * @param D pipe diameter (m)
@@ -304,8 +301,8 @@ public class DriftFluxModel implements Serializable {
    * @param mu_L liquid viscosity (Pa·s)
    * @return liquid level height (m)
    */
-  private double estimateStratifiedLevel(double U_SL, double U_SG, double D, double theta,
-      double rho_L, double rho_G, double mu_L) {
+  private double estimateStratifiedLevel(double U_SL, double U_SG, double D, double theta, double rho_L, double rho_G,
+      double mu_L) {
     // Iterative solution of momentum balance
     double h = 0.5 * D;
 
@@ -326,8 +323,7 @@ public class DriftFluxModel implements Serializable {
 
       // Simplified momentum balance
       double tau_ratio = (rho_G * U_G * U_G) / (rho_L * U_L * U_L + 1e-10);
-      double gravity_effect =
-          (rho_L - rho_G) * GRAVITY * Math.sin(theta) * D / (rho_L * U_L * U_L + 1e-10);
+      double gravity_effect = (rho_L - rho_G) * GRAVITY * Math.sin(theta) * D / (rho_L * U_L * U_L + 1e-10);
 
       // Adjust level based on balance
       double adjustment = 0.05 * D * (tau_ratio - 1.0 - gravity_effect);
@@ -401,8 +397,7 @@ public class DriftFluxModel implements Serializable {
    * @param roughness pipe wall roughness (m)
    * @return friction pressure gradient (Pa/m)
    */
-  private double calculateFrictionGradient(PipeSection section, DriftFluxParameters params,
-      double roughness) {
+  private double calculateFrictionGradient(PipeSection section, DriftFluxParameters params, double roughness) {
     double D = section.getDiameter();
     double rho_L = section.getLiquidDensity();
     double rho_G = section.getGasDensity();
@@ -416,24 +411,24 @@ public class DriftFluxModel implements Serializable {
     FlowRegime regime = section.getFlowRegime();
 
     switch (regime) {
-      case SINGLE_PHASE_GAS:
-        // Pure gas flow - use Darcy-Weisbach with gas properties
-        return calculateSinglePhaseGasFriction(section, roughness);
+    case SINGLE_PHASE_GAS:
+      // Pure gas flow - use Darcy-Weisbach with gas properties
+      return calculateSinglePhaseGasFriction(section, roughness);
 
-      case SINGLE_PHASE_LIQUID:
-        // Pure liquid flow - use Darcy-Weisbach with liquid properties
-        return calculateSinglePhaseLiquidFriction(section, roughness);
+    case SINGLE_PHASE_LIQUID:
+      // Pure liquid flow - use Darcy-Weisbach with liquid properties
+      return calculateSinglePhaseLiquidFriction(section, roughness);
 
-      case STRATIFIED_SMOOTH:
-      case STRATIFIED_WAVY:
-        return calculateStratifiedFriction(section, params, roughness);
+    case STRATIFIED_SMOOTH:
+    case STRATIFIED_WAVY:
+      return calculateStratifiedFriction(section, params, roughness);
 
-      case ANNULAR:
-        return calculateAnnularFriction(section, params, roughness);
+    case ANNULAR:
+      return calculateAnnularFriction(section, params, roughness);
 
-      default:
-        // Use homogeneous model as default
-        return calculateHomogeneousFriction(section, params, roughness);
+    default:
+      // Use homogeneous model as default
+      return calculateHomogeneousFriction(section, params, roughness);
     }
   }
 
@@ -501,8 +496,7 @@ public class DriftFluxModel implements Serializable {
    * @param roughness Pipe roughness (m)
    * @return Friction factor
    */
-  private double calculateHomogeneousFriction(PipeSection section, DriftFluxParameters params,
-      double roughness) {
+  private double calculateHomogeneousFriction(PipeSection section, DriftFluxParameters params, double roughness) {
     double D = section.getDiameter();
     double U_M = section.getSuperficialGasVelocity() + section.getSuperficialLiquidVelocity();
 
@@ -531,8 +525,7 @@ public class DriftFluxModel implements Serializable {
    * @param roughness Pipe roughness (m)
    * @return Friction factor
    */
-  private double calculateStratifiedFriction(PipeSection section, DriftFluxParameters params,
-      double roughness) {
+  private double calculateStratifiedFriction(PipeSection section, DriftFluxParameters params, double roughness) {
     double D = section.getDiameter();
     double h_L = params.liquidHoldup * D; // Approximate
 
@@ -582,8 +575,7 @@ public class DriftFluxModel implements Serializable {
    * @param roughness Pipe roughness (m)
    * @return Friction factor
    */
-  private double calculateAnnularFriction(PipeSection section, DriftFluxParameters params,
-      double roughness) {
+  private double calculateAnnularFriction(PipeSection section, DriftFluxParameters params, double roughness) {
     double D = section.getDiameter();
     double alpha_L = params.liquidHoldup;
 
@@ -665,7 +657,7 @@ public class DriftFluxModel implements Serializable {
    * <p>
    * The energy equation for steady-state pipe flow is:
    * </p>
-   * 
+   *
    * <pre>
    * ṁ·Cp·dT/dx = Q̇_wall + Q̇_friction - ṁ·μ_JT·Cp·dP/dx - ṁ·g·sin(θ)·dz/dx
    * </pre>
@@ -693,9 +685,8 @@ public class DriftFluxModel implements Serializable {
    * @param jouleThomsonCoeff Joule-Thomson coefficient (K/Pa), typically ~2e-6 for gas
    * @return EnergyEquationResult containing temperature change components
    */
-  public EnergyEquationResult calculateEnergyEquation(PipeSection section,
-      DriftFluxParameters params, double dt, double dx, double ambientTemperature,
-      double overallHeatTransferCoeff, double jouleThomsonCoeff) {
+  public EnergyEquationResult calculateEnergyEquation(PipeSection section, DriftFluxParameters params, double dt,
+      double dx, double ambientTemperature, double overallHeatTransferCoeff, double jouleThomsonCoeff) {
     EnergyEquationResult result = new EnergyEquationResult();
 
     double T = section.getTemperature();
@@ -768,8 +759,8 @@ public class DriftFluxModel implements Serializable {
     result.elevationWorkDeltaT = -GRAVITY * Math.sin(theta) * dx / Cp_mix * (dt / dx * U_M);
 
     // Total temperature change
-    double totalDeltaT = result.heatTransferDeltaT + result.jouleThomsonDeltaT
-        + result.frictionHeatingDeltaT + result.elevationWorkDeltaT;
+    double totalDeltaT = result.heatTransferDeltaT + result.jouleThomsonDeltaT + result.frictionHeatingDeltaT
+        + result.elevationWorkDeltaT;
 
     // Limit temperature change per time step for stability
     double maxDeltaT = 10.0; // Maximum 10K change per step
@@ -789,8 +780,7 @@ public class DriftFluxModel implements Serializable {
    * Simplified energy equation for steady-state temperature profile calculation.
    *
    * <p>
-   * This method calculates the temperature at each section by marching from inlet to outlet,
-   * considering:
+   * This method calculates the temperature at each section by marching from inlet to outlet, considering:
    * </p>
    * <ul>
    * <li>Heat loss to surroundings (dominant effect for subsea/buried pipelines)</li>
@@ -807,9 +797,8 @@ public class DriftFluxModel implements Serializable {
    * @param jouleThomsonCoeff Joule-Thomson coefficient (K/Pa)
    * @return New temperature at this section (K)
    */
-  public double calculateSteadyStateTemperature(PipeSection section, double upstreamTemperature,
-      double dx, double ambientTemperature, double overallHeatTransferCoeff, double massFlowRate,
-      double jouleThomsonCoeff) {
+  public double calculateSteadyStateTemperature(PipeSection section, double upstreamTemperature, double dx,
+      double ambientTemperature, double overallHeatTransferCoeff, double massFlowRate, double jouleThomsonCoeff) {
     if (massFlowRate < 1e-10) {
       return upstreamTemperature;
     }
@@ -827,8 +816,7 @@ public class DriftFluxModel implements Serializable {
     // Exponential temperature decay toward ambient
     // T(x) = T_ambient + (T_inlet - T_ambient) · exp(-x/L)
     double decayFactor = Math.exp(-dx / lengthConstant);
-    double T_afterHeatTransfer =
-        ambientTemperature + (upstreamTemperature - ambientTemperature) * decayFactor;
+    double T_afterHeatTransfer = ambientTemperature + (upstreamTemperature - ambientTemperature) * decayFactor;
 
     // Add Joule-Thomson effect
     DriftFluxParameters params = calculateDriftFlux(section);
@@ -866,8 +854,7 @@ public class DriftFluxModel implements Serializable {
    * @param gasMolWeight Gas molecular weight (g/mol)
    * @return Estimated Joule-Thomson coefficient (K/Pa)
    */
-  public double estimateJouleThomsonCoefficient(double temperature, double pressure,
-      double gasMolWeight) {
+  public double estimateJouleThomsonCoefficient(double temperature, double pressure, double gasMolWeight) {
     // Approximate correlation for hydrocarbon gases
     // μ_JT ≈ (2a/RT - b) / Cp where a, b are van der Waals constants
     // Simplified empirical correlation for natural gas:
@@ -897,8 +884,8 @@ public class DriftFluxModel implements Serializable {
    * @param Cp_liquid Liquid heat capacity (J/(kg·K))
    * @return Mixture heat capacity (J/(kg·K))
    */
-  public double calculateMixtureHeatCapacity(PipeSection section, DriftFluxParameters params,
-      double Cp_gas, double Cp_liquid) {
+  public double calculateMixtureHeatCapacity(PipeSection section, DriftFluxParameters params, double Cp_gas,
+      double Cp_liquid) {
     double rho_G = section.getGasDensity();
     double rho_L = section.getLiquidDensity();
     double alpha_G = params.voidFraction;

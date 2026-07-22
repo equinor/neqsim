@@ -14,8 +14,8 @@ import neqsim.process.equipment.valve.ThrottlingValve;
 import neqsim.util.unit.PressureUnit;
 
 /**
- * Network wrapper that links {@link WellFlow} inflow models with {@link PipeBeggsAndBrills}
- * hydraulics and gathers the outlets into configurable manifolds.
+ * Network wrapper that links {@link WellFlow} inflow models with {@link PipeBeggsAndBrills} hydraulics and gathers the
+ * outlets into configurable manifolds.
  */
 public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   private static final long serialVersionUID = 1000L;
@@ -98,8 +98,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Represents a manifold that mixes incoming branches (and optional upstream pipeline) before
-   * optionally sending flow further downstream through a connecting pipeline.
+   * Represents a manifold that mixes incoming branches (and optional upstream pipeline) before optionally sending flow
+   * further downstream through a connecting pipeline.
    */
   public static class ManifoldNode {
     private final String name;
@@ -150,7 +150,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     }
   }
 
-  private final List<ManifoldNode> manifolds = new ArrayList<>();
+  private final transient List<ManifoldNode> manifolds = new ArrayList<>();
   private PipeBeggsAndBrills facilityPipeline;
   private boolean propagateArrivalPressureToWells = true;
   private boolean forceFlowFromPressureSolve = true;
@@ -183,8 +183,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Add a branch to the network using preconfigured well and pipeline units. The pipeline inlet is
-   * forced to the well outlet and its outlet is attached to the terminal manifold by default.
+   * Add a branch to the network using preconfigured well and pipeline units. The pipeline inlet is forced to the well
+   * outlet and its outlet is attached to the terminal manifold by default.
    *
    * @param branchName branch identifier
    * @param well configured {@link WellFlow}
@@ -204,8 +204,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * @param manifold manifold that should receive the branch outlet
    * @return the added {@link Branch}
    */
-  public Branch addBranch(String branchName, WellFlow well, PipeBeggsAndBrills pipeline,
-      ManifoldNode manifold) {
+  public Branch addBranch(String branchName, WellFlow well, PipeBeggsAndBrills pipeline, ManifoldNode manifold) {
     return addBranch(branchName, well, pipeline, null, manifold);
   }
 
@@ -219,8 +218,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * @param manifold manifold that should receive the branch outlet
    * @return the added {@link Branch}
    */
-  public Branch addBranch(String branchName, WellFlow well, PipeBeggsAndBrills pipeline,
-      ThrottlingValve choke, ManifoldNode manifold) {
+  public Branch addBranch(String branchName, WellFlow well, PipeBeggsAndBrills pipeline, ThrottlingValve choke,
+      ManifoldNode manifold) {
     Objects.requireNonNull(well, "well cannot be null");
     Objects.requireNonNull(pipeline, "pipeline cannot be null");
     Objects.requireNonNull(manifold, "manifold cannot be null");
@@ -230,8 +229,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Convenience helper that creates a branch from a reservoir stream by instantiating a
-   * {@link WellFlow} and {@link PipeBeggsAndBrills} pair and attaching it to the terminal manifold.
+   * Convenience helper that creates a branch from a reservoir stream by instantiating a {@link WellFlow} and
+   * {@link PipeBeggsAndBrills} pair and attaching it to the terminal manifold.
    *
    * @param branchName branch identifier
    * @param reservoirStream stream representing reservoir inflow
@@ -249,12 +248,10 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * @param manifold manifold that should receive the branch outlet
    * @return the created {@link Branch}
    */
-  public Branch addBranch(String branchName, StreamInterface reservoirStream,
-      ManifoldNode manifold) {
+  public Branch addBranch(String branchName, StreamInterface reservoirStream, ManifoldNode manifold) {
     WellFlow well = new WellFlow(branchName + " well");
     well.setInletStream(reservoirStream);
-    PipeBeggsAndBrills pipeline =
-        new PipeBeggsAndBrills(branchName + " pipeline", well.getOutletStream());
+    PipeBeggsAndBrills pipeline = new PipeBeggsAndBrills(branchName + " pipeline", well.getOutletStream());
     return addBranch(branchName, well, pipeline, null, manifold);
   }
 
@@ -290,8 +287,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Attach a common pipeline from the arrival manifold to the receiving facility. The pipeline
-   * inlet is automatically wired to the terminal manifold outlet.
+   * Attach a common pipeline from the arrival manifold to the receiving facility. The pipeline inlet is automatically
+   * wired to the terminal manifold outlet.
    *
    * @param pipeline configured {@link PipeBeggsAndBrills} representing the shared pipeline
    */
@@ -303,8 +300,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Add an additional manifold downstream of the current endpoint, connecting it with the supplied
-   * pipeline. The pipeline inlet is automatically wired to the current terminal manifold outlet.
+   * Add an additional manifold downstream of the current endpoint, connecting it with the supplied pipeline. The
+   * pipeline inlet is automatically wired to the current terminal manifold outlet.
    *
    * @param name manifold name
    * @param connectionPipeline pipeline from the current endpoint manifold to the new manifold
@@ -330,8 +327,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
    * @param downstream downstream manifold that should receive the pipeline outlet
    * @param connectionPipeline pipeline from upstream to downstream
    */
-  public void connectManifolds(ManifoldNode upstream, ManifoldNode downstream,
-      PipeBeggsAndBrills connectionPipeline) {
+  public void connectManifolds(ManifoldNode upstream, ManifoldNode downstream, PipeBeggsAndBrills connectionPipeline) {
     Objects.requireNonNull(upstream, "upstream manifold cannot be null");
     Objects.requireNonNull(downstream, "downstream manifold cannot be null");
     Objects.requireNonNull(connectionPipeline, "connectionPipeline cannot be null");
@@ -342,9 +338,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Control whether the arrival pressure should be pushed back to wells that are configured to
-   * compute flow from outlet pressure (production-index, Vogel, or Fetkovich modes with
-   * {@code solveFlowFromOutletPressure(true)}).
+   * Control whether the arrival pressure should be pushed back to wells that are configured to compute flow from outlet
+   * pressure (production-index, Vogel, or Fetkovich modes with {@code solveFlowFromOutletPressure(true)}).
    *
    * @param propagate true to push arrival pressure back to wells
    */
@@ -353,8 +348,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Automatically switch wells to solve for flow from outlet pressure when running with a specified
-   * target endpoint pressure.
+   * Automatically switch wells to solve for flow from outlet pressure when running with a specified target endpoint
+   * pressure.
    *
    * @param enable true to force wells to solve for flow from pressure
    */
@@ -363,9 +358,9 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Specify the desired pressure at the network endpoint (arrival manifold if no facility pipeline,
-   * otherwise the facility pipeline outlet). The network will iterate manifold pressure to match
-   * this target while solving individual well rates from backpressure.
+   * Specify the desired pressure at the network endpoint (arrival manifold if no facility pipeline, otherwise the
+   * facility pipeline outlet). The network will iterate manifold pressure to match this target while solving individual
+   * well rates from backpressure.
    *
    * @param pressure target endpoint pressure
    * @param unit pressure unit
@@ -376,8 +371,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Configure convergence tolerance when iterating manifold pressure to reach the target endpoint
-   * pressure.
+   * Configure convergence tolerance when iterating manifold pressure to reach the target endpoint pressure.
    *
    * @param tolerance absolute pressure tolerance in bara
    */
@@ -419,8 +413,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Report the most recent pressure enforced at the terminal manifold while solving toward a target
-   * endpoint pressure.
+   * Report the most recent pressure enforced at the terminal manifold while solving toward a target endpoint pressure.
    *
    * @param unit requested unit
    * @return terminal manifold pressure, or {@code null} if the network has not been run
@@ -461,7 +454,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
         for (Branch branch : manifold.getBranches()) {
           branch.runTransient(dt, id);
         }
-        // Mixer has no dedicated transient API; recompute arrival conditions after transient steps.
+        // Mixer has no dedicated transient API; recompute arrival conditions after transient
+        // steps.
         manifold.getMixer().run(id);
         if (manifold.getPipelineToNext() != null) {
           manifold.getPipelineToNext().setInletStream(manifold.getMixer().getOutletStream());
@@ -494,8 +488,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Force a single pressure at each manifold outlet and optionally push that backpressure to wells
-   * that solve for flow from outlet pressure.
+   * Force a single pressure at each manifold outlet and optionally push that backpressure to wells that solve for flow
+   * from outlet pressure.
    *
    * @param id calculation identifier
    */
@@ -531,8 +525,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Iteratively adjust terminal manifold pressure so that the endpoint (arrival or facility outlet)
-   * pressure matches the configured target.
+   * Iteratively adjust terminal manifold pressure so that the endpoint (arrival or facility outlet) pressure matches
+   * the configured target.
    *
    * @param id calculation identifier
    */
@@ -540,11 +534,38 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     double manifoldGuess = targetEndpointPressure;
     double achievedPressure = runWithEndpointPressure(manifoldGuess, id);
 
+    double prevGuess = manifoldGuess;
+    double prevAchieved = achievedPressure;
+    boolean haveSecantPoint = false;
+
     for (int i = 0; i < maxIterations
         && Math.abs(achievedPressure - targetEndpointPressure) > iterationTolerance; i++) {
       double error = achievedPressure - targetEndpointPressure;
-      manifoldGuess = Math.max(0.1, manifoldGuess - error);
+
+      double nextGuess;
+      if (haveSecantPoint) {
+        // Estimate the local endpoint sensitivity dP_endpoint/dP_manifold from the last two
+        // evaluations and take a secant (Newton-like) step. This converges far faster and more
+        // robustly than the unity-slope assumption when a facility pipeline with a flow-dependent
+        // pressure drop sits between the terminal manifold and the endpoint, where the true slope
+        // is not 1.0.
+        double slope = (achievedPressure - prevAchieved) / (manifoldGuess - prevGuess);
+        if (Double.isFinite(slope) && Math.abs(slope) > 1.0e-6) {
+          nextGuess = manifoldGuess - error / slope;
+        } else {
+          nextGuess = manifoldGuess - error;
+        }
+      } else {
+        // First correction: only one evaluation available, fall back to the unity-slope step.
+        nextGuess = manifoldGuess - error;
+      }
+      nextGuess = Math.max(0.1, nextGuess);
+
+      prevGuess = manifoldGuess;
+      prevAchieved = achievedPressure;
+      manifoldGuess = nextGuess;
       achievedPressure = runWithEndpointPressure(manifoldGuess, id);
+      haveSecantPoint = true;
     }
 
     // Harmonize pressures after the final iteration to keep branch and manifold streams aligned
@@ -553,13 +574,11 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Execute branch runs and facility pipeline while enforcing a specified terminal manifold
-   * pressure.
+   * Execute branch runs and facility pipeline while enforcing a specified terminal manifold pressure.
    *
    * @param manifoldPressure pressure in bara at the terminal manifold
    * @param id calculation identifier
-   * @return pressure achieved at the endpoint (arrival if no facility pipeline, otherwise facility
-   *         pipeline outlet)
+   * @return pressure achieved at the endpoint (arrival if no facility pipeline, otherwise facility pipeline outlet)
    */
   private double runWithEndpointPressure(double manifoldPressure, UUID id) {
     lastTerminalManifoldPressure = manifoldPressure;
@@ -590,8 +609,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     }
   }
 
-  private void runManifold(ManifoldNode manifold, UUID id, boolean overridePressure,
-      Double forcedPressure) {
+  private void runManifold(ManifoldNode manifold, UUID id, boolean overridePressure, Double forcedPressure) {
     // Step 1: Run all inbound pipelines and add their outlet streams to the mixer
     for (PipeBeggsAndBrills inbound : manifold.getInboundPipelines()) {
       // Wire inlet stream if it's a pipelineToNext from an upstream manifold
@@ -700,9 +718,8 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
   }
 
   /**
-   * Determine a topologically sorted list of manifolds that feed the tail manifold. Manifolds that
-   * are not connected to the terminal chain are ignored to avoid null arrival streams interfering
-   * with calculations.
+   * Determine a topologically sorted list of manifolds that feed the tail manifold. Manifolds that are not connected to
+   * the terminal chain are ignored to avoid null arrival streams interfering with calculations.
    *
    * @return list of manifolds in flow order
    */
@@ -710,8 +727,7 @@ public class WellFlowlineNetwork extends ProcessEquipmentBaseClass {
     List<ManifoldNode> ordered = new ArrayList<>();
     ManifoldNode tail = getTailManifold();
     for (ManifoldNode manifold : manifolds) {
-      if (!manifold.getBranches().isEmpty() || !manifold.getInboundPipelines().isEmpty()
-          || manifold == tail) {
+      if (!manifold.getBranches().isEmpty() || !manifold.getInboundPipelines().isEmpty() || manifold == tail) {
         ordered.add(manifold);
       }
     }

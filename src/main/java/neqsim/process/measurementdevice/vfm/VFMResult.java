@@ -9,8 +9,7 @@ import java.util.Map;
  * Result from a Virtual Flow Meter calculation.
  *
  * <p>
- * Contains calculated flow rates for oil, gas, and water phases along with uncertainty bounds and
- * quality indicators.
+ * Contains calculated flow rates for oil, gas, and water phases along with uncertainty bounds and quality indicators.
  * </p>
  *
  * @author ESOL
@@ -124,8 +123,7 @@ public class VFMResult implements Serializable {
     this.waterFlowRate = builder.waterFlowRate;
     this.totalLiquidFlowRate = builder.oilFlowRate + builder.waterFlowRate;
     this.gasOilRatio = (builder.oilFlowRate > 0) ? builder.gasFlowRate / builder.oilFlowRate : 0;
-    this.waterCut =
-        (totalLiquidFlowRate > 0) ? builder.waterFlowRate / totalLiquidFlowRate * 100.0 : 0;
+    this.waterCut = (totalLiquidFlowRate > 0) ? builder.waterFlowRate / totalLiquidFlowRate * 100.0 : 0;
     this.oilUncertainty = builder.oilUncertainty;
     this.gasUncertainty = builder.gasUncertainty;
     this.waterUncertainty = builder.waterUncertainty;
@@ -266,8 +264,7 @@ public class VFMResult implements Serializable {
 
   @Override
   public String toString() {
-    return String.format(
-        "VFMResult{oil=%.1f, gas=%.1f, water=%.1f Sm3/d, GOR=%.1f, WC=%.1f%%, quality=%s}",
+    return String.format("VFMResult{oil=%.1f, gas=%.1f, water=%.1f Sm3/d, GOR=%.1f, WC=%.1f%%, quality=%s}",
         oilFlowRate, gasFlowRate, waterFlowRate, gasOilRatio, waterCut, quality);
   }
 }

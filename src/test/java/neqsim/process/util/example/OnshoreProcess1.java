@@ -19,17 +19,16 @@ import neqsim.process.measurementdevice.WaterContentAnalyser;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OnshoreProcess1 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class OnshoreProcess1 {
+  private static final Logger logger = LogManager.getLogger(OnshoreProcess1.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(OnshoreProcess1.class);
 
   /**
    * This method is just meant to test the thermo package.
@@ -53,9 +52,9 @@ public class OnshoreProcess1 {
       // Snohvit reservoir system
       double reservoirGasMolarMassSnohvit = 0.02186; // kg/mol
       double reservoirGasFlowSnohvit = productionSplit * totalProductionRate; // kg/time
-                                                                              // Designbasis:
-                                                                              // 223.04
-                                                                              // kg/sek
+      // Designbasis:
+      // 223.04
+      // kg/sek
       double reservoirTemperatureSnohvit = 273.15 + 91.4; // K
       double reservoirPressureSnohvit = 264.4; // bar
       double snohvitFormationWaterFlowRate = formationWater * 1000.0 / 3600.0 / 0.018 / 24.0;
@@ -164,87 +163,63 @@ public class OnshoreProcess1 {
           reservoirTemperatureAlbatross, reservoirPressureAlbatross);
       neqsim.thermo.system.SystemInterface testSystem4 = new neqsim.thermo.system.SystemSrkEos(
           reservoirTemperatureAlbatross, reservoirPressureAlbatross);
-      neqsim.thermo.system.SystemInterface snohvitFormationWater =
-          new neqsim.thermo.system.SystemSrkEos(reservoirTemperatureSnohvit,
-              reservoirPressureSnohvit);
+      neqsim.thermo.system.SystemInterface snohvitFormationWater = new neqsim.thermo.system.SystemSrkEos(
+          reservoirTemperatureSnohvit, reservoirPressureSnohvit);
 
       testSystem.addComponent("nitrogen",
           nitrogen_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
-      testSystem.addComponent("CO2",
-          CO2_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
-      testSystem.addComponent("methane",
-          methane_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
-      testSystem.addComponent("ethane",
-          ethane_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
-      testSystem.addComponent("propane",
-          propane_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
+      testSystem.addComponent("CO2", CO2_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
+      testSystem.addComponent("methane", methane_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
+      testSystem.addComponent("ethane", ethane_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
+      testSystem.addComponent("propane", propane_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
       testSystem.addComponent("i-butane",
           ibutane_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
       testSystem.addComponent("n-butane",
           nbutane_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
-      testSystem.addComponent("benzene",
-          benzene_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
-      testSystem.addComponent("toluene",
-          toluene_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
+      testSystem.addComponent("benzene", benzene_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
+      testSystem.addComponent("toluene", toluene_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
       testSystem.addComponent("m-Xylene",
           mXylene_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
 
-      testSystem.addTBPfraction("C6",
-          C6_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit, C6_M_s / 1000.0,
-          C6_d_s);
-      testSystem.addTBPfraction("C7",
-          C7_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit, C7_M_s / 1000.0,
-          C7_d_s);
-      testSystem.addTBPfraction("C8",
-          C8_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit, C8_M_s / 1000.0,
-          C8_d_s);
-      testSystem.addTBPfraction("C9",
-          C9_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit, C9_M_s / 1000.0,
-          C9_d_s);
-      testSystem.addTBPfraction("C10",
-          C10_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+      testSystem.addTBPfraction("C6", C6_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+          C6_M_s / 1000.0, C6_d_s);
+      testSystem.addTBPfraction("C7", C7_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+          C7_M_s / 1000.0, C7_d_s);
+      testSystem.addTBPfraction("C8", C8_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+          C8_M_s / 1000.0, C8_d_s);
+      testSystem.addTBPfraction("C9", C9_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+          C9_M_s / 1000.0, C9_d_s);
+      testSystem.addTBPfraction("C10", C10_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
           C10_M_s / 1000.0, C10_d_s);
-      testSystem.addTBPfraction("C11",
-          C11_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+      testSystem.addTBPfraction("C11", C11_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
           C11_M_s / 1000.0, C11_d_s);
-      testSystem.addTBPfraction("C12",
-          C12_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+      testSystem.addTBPfraction("C12", C12_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
           C12_M_s / 1000.0, C12_d_s);
-      testSystem.addTBPfraction("C13",
-          C13_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+      testSystem.addTBPfraction("C13", C13_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
           C13_M_s / 1000.0, C13_d_s);
-      testSystem.addTBPfraction("C14",
-          C14_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+      testSystem.addTBPfraction("C14", C14_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
           C14_M_s / 1000.0, C14_d_s);
-      testSystem.addTBPfraction("C15",
-          C15_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+      testSystem.addTBPfraction("C15", C15_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
           C15_M_s / 1000.0, C15_d_s);
-      testSystem.addTBPfraction("C16",
-          C16_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+      testSystem.addTBPfraction("C16", C16_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
           C16_M_s / 1000.0, C16_d_s);
-      testSystem.addTBPfraction("C17",
-          C17_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+      testSystem.addTBPfraction("C17", C17_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
           C17_M_s / 1000.0, C17_d_s);
-      testSystem.addTBPfraction("C18",
-          C18_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+      testSystem.addTBPfraction("C18", C18_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
           C18_M_s / 1000.0, C18_d_s);
-      testSystem.addTBPfraction("C19",
-          C19_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+      testSystem.addTBPfraction("C19", C19_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
           C19_M_s / 1000.0, C19_d_s);
-      testSystem.addTBPfraction("C20",
-          C20plus_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
+      testSystem.addTBPfraction("C20", C20plus_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit,
           C20plus_M_s / 1000.0, C20plus_d_s);
 
-      testSystem.addComponent("water",
-          water_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
+      testSystem.addComponent("water", water_s * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
       // //testSystem.addComponent("Fe++",
       // 1e-10*reservoirGasFlowSnohvit/360000.0/reservoirGasMolarMassSnohvit);
       // //testSystem.addComponent("Na+",
       // 1e-10*reservoirGasFlowSnohvit/360000.0/reservoirGasMolarMassSnohvit);
       // //testSystem.addComponent("OH-",
       // 3e-10*reservoirGasFlowSnohvit/360000.0/reservoirGasMolarMassSnohvit);
-      testSystem.addComponent("MEG",
-          1e-10 * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
+      testSystem.addComponent("MEG", 1e-10 * reservoirGasFlowSnohvit / 360000.0 / reservoirGasMolarMassSnohvit);
 
       // if(testSystem.characterizePlusFraction()){
       // testSystem.getCharacterization().setPseudocomponents(true);
@@ -257,8 +232,7 @@ public class OnshoreProcess1 {
 
       testSystem2.addComponent("nitrogen",
           nitrogen_a * reservoirGasFlowAlbatross / 360000.0 / reservoirGasMolarMassAlbatross);
-      testSystem2.addComponent("CO2",
-          CO2_a * reservoirGasFlowAlbatross / 360000.0 / reservoirGasMolarMassAlbatross);
+      testSystem2.addComponent("CO2", CO2_a * reservoirGasFlowAlbatross / 360000.0 / reservoirGasMolarMassAlbatross);
       testSystem2.addComponent("methane",
           methane_a * reservoirGasFlowAlbatross / 360000.0 / reservoirGasMolarMassAlbatross);
       testSystem2.addComponent("ethane",
@@ -284,8 +258,7 @@ public class OnshoreProcess1 {
       // 1e-10*reservoirGasFlowAlbatross/360000.0/reservoirGasMolarMassAlbatross);
       // testSystem2.addComponent("OH-",
       // 3e-10*reservoirGasFlowAlbatross/360000.0/reservoirGasMolarMassAlbatross);
-      testSystem2.addComponent("MEG",
-          1e-10 * reservoirGasFlowAlbatross / 360000.0 / reservoirGasMolarMassAlbatross);
+      testSystem2.addComponent("MEG", 1e-10 * reservoirGasFlowAlbatross / 360000.0 / reservoirGasMolarMassAlbatross);
       testSystem2.setMixingRule(2);
 
       testSystem3.addComponent("water", molwater);
@@ -300,19 +273,17 @@ public class OnshoreProcess1 {
       StreamInterface stream_1 = new Stream("Stream1", testSystem);
 
       ThreePhaseSeparator separator = new ThreePhaseSeparator("Separator 1", stream_1);
-      MeasurementDeviceInterface reservoirTemperaturTransmitter =
-          new TemperatureTransmitter(stream_1);
+      MeasurementDeviceInterface reservoirTemperaturTransmitter = new TemperatureTransmitter(stream_1);
       MeasurementDeviceInterface reservoirPressureTransmitter = new PressureTransmitter(stream_1);
-      WaterContentAnalyser waterAnalyser =
-          new WaterContentAnalyser("Snohvit Total Water Analyser", separator.getGasOutStream());
-      MolarMassAnalyser molarMassAnalyser =
-          new MolarMassAnalyser("Snohvit molar mass analyser", separator.getGasOutStream());
+      WaterContentAnalyser waterAnalyser = new WaterContentAnalyser("Snohvit Total Water Analyser",
+          separator.getGasOutStream());
+      MolarMassAnalyser molarMassAnalyser = new MolarMassAnalyser("Snohvit molar mass analyser",
+          separator.getGasOutStream());
       StreamInterface stream_2 = separator.getGasOutStream();
       stream_2.setName("Gas From Snohvit Reservoir");
 
       StreamInterface MEGstream_1 = new Stream("MEG Stream1", testSystem3);
-      StreamInterface snohvitFormationWaterStream =
-          new Stream("snohvitFormationWaterStream", snohvitFormationWater);
+      StreamInterface snohvitFormationWaterStream = new Stream("snohvitFormationWaterStream", snohvitFormationWater);
 
       Mixer MEGmixer1 = new Mixer("MEG Mixer 1");
       MEGmixer1.addStream(stream_2);
@@ -325,10 +296,10 @@ public class OnshoreProcess1 {
       // Albatross reservoir stream
       Stream stream_3 = new Stream("Stream2", testSystem2);
       Separator separator2 = new Separator("Separator 2", stream_3);
-      WaterContentAnalyser waterAnalyser2 =
-          new WaterContentAnalyser("Albatross Total Water Analyser", separator2.getGasOutStream());
-      MolarMassAnalyser molarMassAnalyser2 =
-          new MolarMassAnalyser("Albatross molar mass analyser", separator2.getGasOutStream());
+      WaterContentAnalyser waterAnalyser2 = new WaterContentAnalyser("Albatross Total Water Analyser",
+          separator2.getGasOutStream());
+      MolarMassAnalyser molarMassAnalyser2 = new MolarMassAnalyser("Albatross molar mass analyser",
+          separator2.getGasOutStream());
 
       StreamInterface stream_4 = separator2.getGasOutStream();
       stream_4.setName("Gas From Albatross Reservoir");
@@ -341,36 +312,33 @@ public class OnshoreProcess1 {
       mixer1.addStream(valve1.getOutletStream());
       mixer1.addStream(valve2.getOutletStream());
 
-      WaterContentAnalyser waterAnalyser3 =
-          new WaterContentAnalyser("Total Water Analyser", mixer1.getOutletStream());
+      WaterContentAnalyser waterAnalyser3 = new WaterContentAnalyser("Total Water Analyser", mixer1.getOutletStream());
 
       // Pipeline
-      SimpleTPoutPipeline pipeLine1 =
-          new SimpleTPoutPipeline("snohvit pipeline", mixer1.getOutletStream());
+      SimpleTPoutPipeline pipeLine1 = new SimpleTPoutPipeline("snohvit pipeline", mixer1.getOutletStream());
       pipeLine1.setOutPressure(55.0);
       pipeLine1.setOutTemperature(273.15 + 5.0);
       pipeLine1.setNumberOfLegs(1);
-      pipeLine1.setPipeDiameters(new double[] {1.2, 1.2});
-      pipeLine1.setLegPositions(new double[] {0, 150000.0});
-      pipeLine1.setOuterTemperatures(new double[] {0.0, 0.0});
+      pipeLine1.setPipeDiameters(new double[] { 1.2, 1.2 });
+      pipeLine1.setLegPositions(new double[] { 0, 150000.0 });
+      pipeLine1.setOuterTemperatures(new double[] { 0.0, 0.0 });
 
       // IronIonSaturationStream ironSatStream = new
       // IronIonSaturationStream(pipeLine1.getOutStream());
 
       // // Land plant
-      ThreePhaseSeparator slugCatcher =
-          new ThreePhaseSeparator("slugCatcher", pipeLine1.getOutletStream());
+      ThreePhaseSeparator slugCatcher = new ThreePhaseSeparator("slugCatcher", pipeLine1.getOutletStream());
 
-      VolumeFlowTransmitter volumeTransmitter2 = new VolumeFlowTransmitter(
-          "Condensate Volume Flow From Slug Catcher", slugCatcher.getOilOutStream());
+      VolumeFlowTransmitter volumeTransmitter2 = new VolumeFlowTransmitter("Condensate Volume Flow From Slug Catcher",
+          slugCatcher.getOilOutStream());
       volumeTransmitter2.setMeasuredPhaseNumber(0);
 
-      VolumeFlowTransmitter volumeTransmitter1 = new VolumeFlowTransmitter(
-          "MEG Volume FLow From Slug Catcher", slugCatcher.getWaterOutStream());
+      VolumeFlowTransmitter volumeTransmitter1 = new VolumeFlowTransmitter("MEG Volume FLow From Slug Catcher",
+          slugCatcher.getWaterOutStream());
       volumeTransmitter1.setMeasuredPhaseNumber(0);
 
-      VolumeFlowTransmitter volumeTransmitter3 = new VolumeFlowTransmitter(
-          "Gas Volume FLow From Slug Catcher", slugCatcher.getGasOutStream());
+      VolumeFlowTransmitter volumeTransmitter3 = new VolumeFlowTransmitter("Gas Volume FLow From Slug Catcher",
+          slugCatcher.getGasOutStream());
       volumeTransmitter3.setMeasuredPhaseNumber(0);
 
       // Stream stream_5 = new Stream("MEG stream from
@@ -383,8 +351,8 @@ public class OnshoreProcess1 {
       // slugCatcher.getGasOutStream());
       // gasHeater.setdT(30.0);
 
-      ThreePhaseSeparator condensateSeparator =
-          new ThreePhaseSeparator("condensateSeparator", condensateheater1.getOutletStream());
+      ThreePhaseSeparator condensateSeparator = new ThreePhaseSeparator("condensateSeparator",
+          condensateheater1.getOutletStream());
 
       // Heater MEGheater1 = new Heater("MEG heater1",stream_5);
       // MEGheater1.setdT(23.4);
@@ -432,8 +400,7 @@ public class OnshoreProcess1 {
       // VolumeFlowTransmitter("Stream to CO2 removal Volume FLow",streamToCO2removal);
       // volumeTransmitter_StreamToCO2removal.setUnit("Nm^3/day");
 
-      neqsim.process.processmodel.ProcessSystem operations =
-          new neqsim.process.processmodel.ProcessSystem();
+      neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
       operations.add(stream_1);
       operations.add(reservoirTemperaturTransmitter);
       operations.add(reservoirPressureTransmitter);
@@ -490,74 +457,54 @@ public class OnshoreProcess1 {
       operations.displayResult();
       operations.reportMeasuredValues();
 
-      double wateraqphase =
-          slugCatcher.getWaterOutStream().getThermoSystem().getTotalNumberOfMoles()
-              * slugCatcher.getWaterOutStream().getThermoSystem().getPhase(0).getComponent("water")
-                  .getMolarMass()
-              * slugCatcher.getWaterOutStream().getThermoSystem().getPhase(0).getComponent("water")
-                  .getx()
-              * 3600.0;
+      double wateraqphase = slugCatcher.getWaterOutStream().getThermoSystem().getTotalNumberOfMoles()
+          * slugCatcher.getWaterOutStream().getThermoSystem().getPhase(0).getComponent("water").getMolarMass()
+          * slugCatcher.getWaterOutStream().getThermoSystem().getPhase(0).getComponent("water").getx() * 3600.0;
 
-      System.out.println("kg water in gas phase from slug catcher "
+      logger.info("kg water in gas phase from slug catcher "
           + slugCatcher.getGasOutStream().getThermoSystem().getTotalNumberOfMoles()
-              * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("water")
-                  .getMolarMass()
-              * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("water")
-                  .getx()
-              * 3600.0
+              * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("water").getMolarMass()
+              * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("water").getx() * 3600.0
           + " kg/hr");
-      System.out.println("kg water in condensate phase from slug catcher "
+      logger.info("kg water in condensate phase from slug catcher "
           + slugCatcher.getOilOutStream().getThermoSystem().getTotalNumberOfMoles()
-              * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0).getComponent("water")
-                  .getMolarMass()
-              * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0).getComponent("water")
-                  .getx()
-              * 3600.0
+              * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0).getComponent("water").getMolarMass()
+              * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0).getComponent("water").getx() * 3600.0
           + " kg/hr");
-      System.out.println("kg water in aqueous phase from slug catcher " + wateraqphase + " kg/hr");
+      logger.info("kg water in aqueous phase from slug catcher " + wateraqphase + " kg/hr");
 
       double MEGaqphase = slugCatcher.getWaterOutStream().getThermoSystem().getTotalNumberOfMoles()
-          * slugCatcher.getWaterOutStream().getThermoSystem().getPhase(0).getComponent("MEG")
-              .getMolarMass()
-          * slugCatcher.getWaterOutStream().getThermoSystem().getPhase(0).getComponent("MEG").getx()
-          * 3600.0;
-      System.out.println("kg MEG in gas phase from slug catcher "
+          * slugCatcher.getWaterOutStream().getThermoSystem().getPhase(0).getComponent("MEG").getMolarMass()
+          * slugCatcher.getWaterOutStream().getThermoSystem().getPhase(0).getComponent("MEG").getx() * 3600.0;
+      logger.info("kg MEG in gas phase from slug catcher "
           + slugCatcher.getGasOutStream().getThermoSystem().getTotalNumberOfMoles()
-              * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("MEG")
-                  .getMolarMass()
-              * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("MEG")
-                  .getx()
-              * 3600.0
+              * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("MEG").getMolarMass()
+              * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("MEG").getx() * 3600.0
           + " kg/hr");
-      System.out.println("kg MEG in condensate phase from slug catcher "
+      logger.info("kg MEG in condensate phase from slug catcher "
           + slugCatcher.getOilOutStream().getThermoSystem().getTotalNumberOfMoles()
-              * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0).getComponent("MEG")
-                  .getMolarMass()
-              * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0).getComponent("MEG")
-                  .getx()
-              * 3600.0
+              * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0).getComponent("MEG").getMolarMass()
+              * slugCatcher.getOilOutStream().getThermoSystem().getPhase(0).getComponent("MEG").getx() * 3600.0
           + " kg/hr");
-      System.out.println("kg MEG in aqueous phase from slug catcher " + MEGaqphase + " kg/hr");
+      logger.info("kg MEG in aqueous phase from slug catcher " + MEGaqphase + " kg/hr");
 
-      System.out.println("wt% MEG " + MEGaqphase / (wateraqphase + MEGaqphase) * 100);
+      logger.info("wt% MEG " + MEGaqphase / (wateraqphase + MEGaqphase) * 100);
 
       volumeTransmitter3.setUnit("Sm^3/day");
-      System.out.println("gas rate from slug catcher "
-          + volumeTransmitter3.getMeasuredValue() / 1.0e6 + " MSm^3/day");
-      System.out.println("gas rate from slug catcher "
-          + volumeTransmitter3.getMeasuredValue() / 1.0e6 + " MSm^3/day");
-      System.out.println("water in gas phase from slug catcher "
+      logger.info("gas rate from slug catcher " + volumeTransmitter3.getMeasuredValue() / 1.0e6 + " MSm^3/day");
+      logger.info("gas rate from slug catcher " + volumeTransmitter3.getMeasuredValue() / 1.0e6 + " MSm^3/day");
+      logger.info("water in gas phase from slug catcher "
           + slugCatcher.getGasOutStream().getThermoSystem().getTotalNumberOfMoles()
-              * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("water")
-                  .getMolarMass()
-              * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("water")
-                  .getx()
-              * 3600.0 / (volumeTransmitter3.getMeasuredValue() / 24.0) * 1000.0
+              * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("water").getMolarMass()
+              * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getComponent("water").getx() * 3600.0
+              / (volumeTransmitter3.getMeasuredValue() / 24.0) * 1000.0
           + " gr water/Sm^3 gas");
-      System.out.println("gas rate "
-          + slugCatcher.getGasOutStream().getThermoSystem().getTotalNumberOfMoles()
-              * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getMolarMass() * 3600.0
-          + " kg gas/hr");
+      logger
+          .info(
+              "gas rate "
+                  + slugCatcher.getGasOutStream().getThermoSystem().getTotalNumberOfMoles()
+                      * slugCatcher.getGasOutStream().getThermoSystem().getPhase(0).getMolarMass() * 3600.0
+                  + " kg gas/hr");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }

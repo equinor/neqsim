@@ -15,9 +15,9 @@ import neqsim.process.safety.risk.OperationalRiskSimulator;
  * Portfolio Risk Analyzer for multi-asset analysis.
  *
  * <p>
- * Performs Monte Carlo simulation across multiple assets to analyze portfolio-level risk, including
- * common cause failures, correlated events, and aggregated production impact. Essential for
- * corporate risk management and insurance/contract negotiations.
+ * Performs Monte Carlo simulation across multiple assets to analyze portfolio-level risk, including common cause
+ * failures, correlated events, and aggregated production impact. Essential for corporate risk management and
+ * insurance/contract negotiations.
  * </p>
  *
  * @author NeqSim Development Team
@@ -181,8 +181,7 @@ public class PortfolioRiskAnalyzer implements Serializable {
       WEATHER, REGIONAL_INFRASTRUCTURE, SUPPLY_CHAIN, MARKET, CYBER, PANDEMIC, GEOPOLITICAL
     }
 
-    public CommonCauseScenario(String id, String description, CommonCauseType type,
-        double frequency) {
+    public CommonCauseScenario(String id, String description, CommonCauseType type, double frequency) {
       this.scenarioId = id;
       this.description = description;
       this.type = type;
@@ -298,11 +297,9 @@ public class PortfolioRiskAnalyzer implements Serializable {
    * @param duration duration in days
    * @return created scenario
    */
-  public CommonCauseScenario createRegionalWeatherScenario(String region, double frequency,
-      double duration) {
-    CommonCauseScenario scenario =
-        new CommonCauseScenario("WEATHER-" + region, "Severe weather event in " + region,
-            CommonCauseScenario.CommonCauseType.WEATHER, frequency);
+  public CommonCauseScenario createRegionalWeatherScenario(String region, double frequency, double duration) {
+    CommonCauseScenario scenario = new CommonCauseScenario("WEATHER-" + region, "Severe weather event in " + region,
+        CommonCauseScenario.CommonCauseType.WEATHER, frequency);
     scenario.setDuration(duration);
 
     // Add all assets in region
@@ -366,8 +363,8 @@ public class PortfolioRiskAnalyzer implements Serializable {
 
       // Initialize asset losses from individual availability
       for (Asset asset : assets) {
-        double individualLoss = asset.getMaxProduction() * (1 - asset.getSystemAvailability())
-            * simulationPeriodYears * 365;
+        double individualLoss = asset.getMaxProduction() * (1 - asset.getSystemAvailability()) * simulationPeriodYears
+            * 365;
         simAssetLoss.put(asset.getAssetId(), individualLoss);
         totalPortfolioLoss += individualLoss;
       }
@@ -555,8 +552,7 @@ public class PortfolioRiskAnalyzer implements Serializable {
       map.put("result", lastResult.toMap());
     }
 
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(map);
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(map);
   }
 
   @Override

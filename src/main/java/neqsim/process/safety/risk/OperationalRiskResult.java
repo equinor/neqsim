@@ -71,8 +71,8 @@ public class OperationalRiskResult implements Serializable {
    * @param failureCounts array of failure counts
    * @param downtimes array of downtime hours
    */
-  public void calculateStatistics(double[] productions, double[] availabilities,
-      int[] failureCounts, double[] downtimes) {
+  public void calculateStatistics(double[] productions, double[] availabilities, int[] failureCounts,
+      double[] downtimes) {
 
     // Sort for percentile calculation
     double[] sortedProductions = productions.clone();
@@ -418,26 +418,23 @@ public class OperationalRiskResult implements Serializable {
    * @return JSON string
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
     sb.append("=== Operational Risk Simulation Results ===\n");
-    sb.append(
-        String.format("Iterations: %d, Time Horizon: %.0f days%n", iterations, timeHorizonDays));
+    sb.append(String.format("Iterations: %d, Time Horizon: %.0f days%n", iterations, timeHorizonDays));
     sb.append(String.format("%nProduction Statistics:%n"));
     sb.append(String.format("  Baseline Rate: %.2f kg/hr%n", baselineProductionRate));
     sb.append(String.format("  Max Possible:  %.2f kg%n", maxPossibleProduction));
     sb.append(String.format("  Mean:          %.2f kg%n", meanProduction));
-    sb.append(String.format("  P10/P50/P90:   %.2f / %.2f / %.2f kg%n", p10Production,
-        p50Production, p90Production));
+    sb.append(String.format("  P10/P50/P90:   %.2f / %.2f / %.2f kg%n", p10Production, p50Production, p90Production));
     sb.append(String.format("  Efficiency:    %.1f%%%n", getProductionEfficiency()));
     sb.append(String.format("%nAvailability:%n"));
-    sb.append(String.format("  Mean: %.2f%%, Range: %.2f%% - %.2f%%%n", meanAvailability,
-        minAvailability, maxAvailability));
+    sb.append(
+        String.format("  Mean: %.2f%%, Range: %.2f%% - %.2f%%%n", meanAvailability, minAvailability, maxAvailability));
     sb.append(String.format("%nFailure Events:%n"));
     sb.append(String.format("  Mean Count:    %.1f%n", meanFailureCount));
     sb.append(String.format("  Mean Downtime: %.1f hours%n", meanDowntimeHours));

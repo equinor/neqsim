@@ -138,7 +138,8 @@ public class SubseaCostEstimator {
   /**
    * Default constructor.
    */
-  public SubseaCostEstimator() {}
+  public SubseaCostEstimator() {
+  }
 
   /**
    * Constructor with region.
@@ -156,21 +157,21 @@ public class SubseaCostEstimator {
   private void applyRegionFactor() {
     double factor = 1.0;
     switch (region) {
-      case NORWAY:
-        factor = 1.35;
-        break;
-      case UK:
-        factor = 1.25;
-        break;
-      case GOM:
-        factor = 1.0;
-        break;
-      case BRAZIL:
-        factor = 0.85;
-        break;
-      case WEST_AFRICA:
-        factor = 1.1;
-        break;
+    case NORWAY:
+      factor = 1.35;
+      break;
+    case UK:
+      factor = 1.25;
+      break;
+    case GOM:
+      factor = 1.0;
+      break;
+    case BRAZIL:
+      factor = 0.85;
+      break;
+    case WEST_AFRICA:
+      factor = 1.1;
+      break;
     }
 
     engineeringRate *= factor;
@@ -335,8 +336,7 @@ public class SubseaCostEstimator {
    * @param isRigid is rigid jumper
    * @param waterDepthM water depth in meters
    */
-  public void calculateJumperCost(double lengthM, double diameterInches, boolean isRigid,
-      double waterDepthM) {
+  public void calculateJumperCost(double lengthM, double diameterInches, boolean isRigid, double waterDepthM) {
     if (isRigid) {
       // Rigid jumper cost
       double baseCost;
@@ -409,9 +409,8 @@ public class SubseaCostEstimator {
    * @param waterDepthM water depth in meters
    * @param isDynamic is dynamic section
    */
-  public void calculateUmbilicalCost(double lengthKm, int numberOfHydraulicLines,
-      int numberOfChemicalLines, int numberOfElectricalCables, double waterDepthM,
-      boolean isDynamic) {
+  public void calculateUmbilicalCost(double lengthKm, int numberOfHydraulicLines, int numberOfChemicalLines,
+      int numberOfElectricalCables, double waterDepthM, boolean isDynamic) {
     // Base cost per km
     double baseCostPerKm = isDynamic ? 3500000 : 2000000;
 
@@ -459,8 +458,8 @@ public class SubseaCostEstimator {
    * @param isDynamic is dynamic riser
    * @param hasBuoyancy has buoyancy modules
    */
-  public void calculateFlexiblePipeCost(double lengthM, double innerDiameterInches,
-      double waterDepthM, boolean isDynamic, boolean hasBuoyancy) {
+  public void calculateFlexiblePipeCost(double lengthM, double innerDiameterInches, double waterDepthM,
+      boolean isDynamic, boolean hasBuoyancy) {
     // Price per meter by size
     double pricePerMeter;
     if (innerDiameterInches <= 4) {
@@ -522,8 +521,7 @@ public class SubseaCostEstimator {
    * @param waterDepthM water depth in meters
    * @param hasRedundancy has redundant motor
    */
-  public void calculateBoosterCost(double powerMW, boolean isCompressor, double waterDepthM,
-      boolean hasRedundancy) {
+  public void calculateBoosterCost(double powerMW, boolean isCompressor, double waterDepthM, boolean hasRedundancy) {
     // Base cost by power and type
     double baseCost;
     if (isCompressor) {
@@ -589,8 +587,7 @@ public class SubseaCostEstimator {
    * @param waterDepthM water depth in meters
    * @param requiresPrecision requires precision landing
    */
-  private void calculateSubseaInstallation(double weightTonnes, double waterDepthM,
-      boolean requiresPrecision) {
+  private void calculateSubseaInstallation(double weightTonnes, double waterDepthM, boolean requiresPrecision) {
     // Vessel selection based on weight
     if (weightTonnes > 500) {
       vesselDayRate = 600000; // Heavy lift vessel
@@ -622,8 +619,7 @@ public class SubseaCostEstimator {
    * Calculate total costs.
    */
   private void calculateTotals() {
-    double subtotal = equipmentCost + fabricationCost + installationCost + engineeringCost
-        + projectManagementCost;
+    double subtotal = equipmentCost + fabricationCost + installationCost + engineeringCost + projectManagementCost;
     contingency = subtotal * contingencyPct;
     totalCost = subtotal + contingency;
 
@@ -691,8 +687,7 @@ public class SubseaCostEstimator {
    * @param details equipment details
    * @return list of BOM items
    */
-  public List<Map<String, Object>> generateBillOfMaterials(String equipmentType,
-      Map<String, Object> details) {
+  public List<Map<String, Object>> generateBillOfMaterials(String equipmentType, Map<String, Object> details) {
     List<Map<String, Object>> bom = new ArrayList<Map<String, Object>>();
 
     // Main equipment
@@ -882,17 +877,17 @@ public class SubseaCostEstimator {
     this.currency = currency;
     // Update conversion rate based on currency
     switch (currency) {
-      case EUR:
-        currencyRate = 0.92;
-        break;
-      case GBP:
-        currencyRate = 0.79;
-        break;
-      case NOK:
-        currencyRate = 10.5;
-        break;
-      default:
-        currencyRate = 1.0;
+    case EUR:
+      currencyRate = 0.92;
+      break;
+    case GBP:
+      currencyRate = 0.79;
+      break;
+    case NOK:
+      currencyRate = 10.5;
+      break;
+    default:
+      currencyRate = 1.0;
     }
   }
 
@@ -904,8 +899,7 @@ public class SubseaCostEstimator {
    * @param waterDepth water depth in meters
    * @return list of BOM items
    */
-  public List<Map<String, Object>> generateBOM(String equipmentType, double weightTonnes,
-      double waterDepth) {
+  public List<Map<String, Object>> generateBOM(String equipmentType, double weightTonnes, double waterDepth) {
     List<Map<String, Object>> bom = new ArrayList<Map<String, Object>>();
 
     // Steel structure

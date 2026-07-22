@@ -24,8 +24,7 @@ public class DLEDataPoint {
    * @param oilDensity oil density (kg/m³)
    * @param temperature temperature in K
    */
-  public DLEDataPoint(double pressure, double rs, double bo, double oilDensity,
-      double temperature) {
+  public DLEDataPoint(double pressure, double rs, double bo, double oilDensity, double temperature) {
     this.pressure = pressure;
     this.rs = rs;
     this.bo = bo;

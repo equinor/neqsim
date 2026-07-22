@@ -79,8 +79,7 @@ public class FurnaceBurnerTest {
 
     Assertions.assertTrue(cooledBurner.getFlameTemperature() < adiabaticTemp,
         "Cooling should reduce flame temperature");
-    Assertions.assertTrue(cooledBurner.getHeatReleasekW() > 0.0,
-        "Heat release should remain positive when cooled");
+    Assertions.assertTrue(cooledBurner.getHeatReleasekW() > 0.0, "Heat release should remain positive when cooled");
   }
 
   @Test
@@ -142,15 +141,13 @@ public class FurnaceBurnerTest {
     // Expected air rate = 10.0 kg/sec * 17.2 = 172.0 kg/sec
     double actualAirRate = burner.getOutletStream().getThermoSystem().getFlowRate("kg/sec")
         - fuelStream.getThermoSystem().getFlowRate("kg/sec");
-    Assertions.assertEquals(172.0, actualAirRate, 1.0,
-        "Air flow rate should be calculated from fuel rate and AFR");
+    Assertions.assertEquals(172.0, actualAirRate, 1.0, "Air flow rate should be calculated from fuel rate and AFR");
 
     Assertions.assertTrue(burner.getFlameTemperature() > 500.0, "Flame temperature is set");
     Assertions.assertTrue(burner.getHeatReleasekW() > 0.0, "Heat release should be positive");
 
     // Verify getter
-    Assertions.assertEquals(17.2, burner.getAirFuelRatioMass(), 0.001,
-        "AFR getter should return set value");
+    Assertions.assertEquals(17.2, burner.getAirFuelRatioMass(), 0.001, "AFR getter should return set value");
   }
 
   @Test
@@ -181,11 +178,9 @@ public class FurnaceBurnerTest {
     // Expected air rate = 5.0 kg/sec * 17.2 * 1.1 = 94.6 kg/sec
     double actualAirRate = burner.getOutletStream().getThermoSystem().getFlowRate("kg/sec")
         - fuelStream.getThermoSystem().getFlowRate("kg/sec");
-    Assertions.assertEquals(94.6, actualAirRate, 1.0,
-        "Air flow rate should include excess air fraction");
+    Assertions.assertEquals(94.6, actualAirRate, 1.0, "Air flow rate should include excess air fraction");
 
     Map<String, Double> emissions = burner.getEmissionRatesKgPerHr();
-    Assertions.assertTrue(emissions.getOrDefault("oxygen", 0.0) > 0.0,
-        "Excess air should result in remaining O2");
+    Assertions.assertTrue(emissions.getOrDefault("oxygen", 0.0) > 0.0, "Excess air should result in remaining O2");
   }
 }

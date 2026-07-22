@@ -7,13 +7,12 @@ import neqsim.process.mechanicaldesign.valve.SafetyValveMechanicalDesign;
  * Safety/Relief Valve built on top of ThrottlingValve.
  *
  * <p>
- * Features: - Set pressure, overpressure (relieving threshold), blowdown (reseat). - Opening laws:
- * SNAP (pop) or MODULATING, with hysteresis. - Backpressure de-rating: Conventional, Balanced
- * Bellows, Pilot Modulating. - Transient anti-chatter: first-order inertia, min open/close dwell,
- * lift rate limit.
+ * Features: - Set pressure, overpressure (relieving threshold), blowdown (reseat). - Opening laws: SNAP (pop) or
+ * MODULATING, with hysteresis. - Backpressure de-rating: Conventional, Balanced Bellows, Pilot Modulating. - Transient
+ * anti-chatter: first-order inertia, min open/close dwell, lift rate limit.
  *
- * Assumptions: - Pressures in bar(a) as typically used in NeqSim SystemInterface. - Cv mapping is
- * linear w.r.t. opening; replace with vendor lift curve if available.
+ * Assumptions: - Pressures in bar(a) as typically used in NeqSim SystemInterface. - Cv mapping is linear w.r.t.
+ * opening; replace with vendor lift curve if available.
  * </p>
  *
  * @author esol
@@ -28,6 +27,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   public enum ValveType {
     CONVENTIONAL, BALANCED_BELLOWS, PILOT_MODULATING
   }
+
   public enum OpeningLaw {
     SNAP, MODULATING
   }
@@ -59,18 +59,14 @@ public class SafetyReliefValve extends ThrottlingValve {
   private double maxLiftRatePerSec = 3.0; // |d(lift)/dt| limit [1/s]
 
   /**
-   * <p>
    * Constructor for SafetyReliefValve.
-   * </p>
    */
   public SafetyReliefValve() {
     super("SafetyReliefValve");
   }
 
   /**
-   * <p>
    * Constructor for SafetyReliefValve.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
@@ -88,9 +84,7 @@ public class SafetyReliefValve extends ThrottlingValve {
 
   // ---------------- Getters / Setters ----------------
   /**
-   * <p>
    * Getter for the field <code>setPressureBar</code>.
-   * </p>
    *
    * @return a double
    */
@@ -99,9 +93,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>setPressureBar</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -110,9 +102,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>overpressureFrac</code>.
-   * </p>
    *
    * @return a double
    */
@@ -121,9 +111,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>overpressureFrac</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -132,9 +120,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>blowdownFrac</code>.
-   * </p>
    *
    * @return a double
    */
@@ -143,9 +129,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>blowdownFrac</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -154,9 +138,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>ratedCv</code>.
-   * </p>
    *
    * @return a double
    */
@@ -165,9 +147,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>ratedCv</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -176,9 +156,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>kd</code>.
-   * </p>
    *
    * @return a double
    */
@@ -187,9 +165,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>kd</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -198,9 +174,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>kbMax</code>.
-   * </p>
    *
    * @return a double
    */
@@ -209,9 +183,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>kbMax</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -220,9 +192,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>backpressureSensitivity</code>.
-   * </p>
    *
    * @return a double
    */
@@ -231,9 +201,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>backpressureSensitivity</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -242,9 +210,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>minStableOpenFrac</code>.
-   * </p>
    *
    * @return a double
    */
@@ -253,9 +219,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>minStableOpenFrac</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -264,9 +228,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>valveType</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.valve.SafetyReliefValve.ValveType} object
    */
@@ -275,9 +237,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>valveType</code>.
-   * </p>
    *
    * @param t a {@link neqsim.process.equipment.valve.SafetyReliefValve.ValveType} object
    */
@@ -286,9 +246,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>openingLaw</code>.
-   * </p>
    *
    * @return a {@link neqsim.process.equipment.valve.SafetyReliefValve.OpeningLaw} object
    */
@@ -297,9 +255,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>openingLaw</code>.
-   * </p>
    *
    * @param law a {@link neqsim.process.equipment.valve.SafetyReliefValve.OpeningLaw} object
    */
@@ -308,9 +264,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Getter for the field <code>openFraction</code>.
-   * </p>
    *
    * @return a double
    */
@@ -319,9 +273,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>tauOpenSec</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -330,9 +282,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>tauCloseSec</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -341,9 +291,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>minOpenTimeSec</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -352,9 +300,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>minCloseTimeSec</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -363,9 +309,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * Setter for the field <code>maxLiftRatePerSec</code>.
-   * </p>
    *
    * @param v a double
    */
@@ -388,30 +332,30 @@ public class SafetyReliefValve extends ThrottlingValve {
 
     double frac;
     switch (openingLaw) {
-      case SNAP:
-        if (pUpBar >= pRel) {
-          frac = 1.0;
-        } else if (wasOpenLastStep && pUpBar > pReseat) {
-          // Ramp within band to reduce numerical jerk
-          frac = (pUpBar - setPressureBar) / Math.max(EPS, (pRel - setPressureBar));
-          frac = Math.max(frac, minStableOpenFrac);
-        } else if (pUpBar <= pReseat) {
-          frac = 0.0;
-        } else {
-          frac = 0.0; // not previously open → stay closed until pRel
-        }
-        break;
-
-      case MODULATING:
-      default:
-        if (wasOpenLastStep && pUpBar <= pReseat)
-          return 0.0;
-        if (pUpBar <= setPressureBar)
-          return 0.0;
-        if (pUpBar >= pRel)
-          return 1.0;
+    case SNAP:
+      if (pUpBar >= pRel) {
+        frac = 1.0;
+      } else if (wasOpenLastStep && pUpBar > pReseat) {
+        // Ramp within band to reduce numerical jerk
         frac = (pUpBar - setPressureBar) / Math.max(EPS, (pRel - setPressureBar));
-        break;
+        frac = Math.max(frac, minStableOpenFrac);
+      } else if (pUpBar <= pReseat) {
+        frac = 0.0;
+      } else {
+        frac = 0.0; // not previously open → stay closed until pRel
+      }
+      break;
+
+    case MODULATING:
+    default:
+      if (wasOpenLastStep && pUpBar <= pReseat)
+        return 0.0;
+      if (pUpBar <= setPressureBar)
+        return 0.0;
+      if (pUpBar >= pRel)
+        return 1.0;
+      frac = (pUpBar - setPressureBar) / Math.max(EPS, (pRel - setPressureBar));
+      break;
     }
 
     return Math.max(0.0, Math.min(1.0, frac));
@@ -423,16 +367,16 @@ public class SafetyReliefValve extends ThrottlingValve {
     double ratio = Math.max(0.0, Math.min(1.0, pDownBar / pUpBar));
     double kb;
     switch (valveType) {
-      case CONVENTIONAL:
-        kb = 1.0 - backpressureSensitivity * ratio;
-        break;
-      case BALANCED_BELLOWS:
-        kb = 1.0 - 0.05 * backpressureSensitivity * ratio; // tiny effect
-        break;
-      case PILOT_MODULATING:
-      default:
-        kb = 1.0 - 0.5 * backpressureSensitivity * ratio;
-        break;
+    case CONVENTIONAL:
+      kb = 1.0 - backpressureSensitivity * ratio;
+      break;
+    case BALANCED_BELLOWS:
+      kb = 1.0 - 0.05 * backpressureSensitivity * ratio; // tiny effect
+      break;
+    case PILOT_MODULATING:
+    default:
+      kb = 1.0 - 0.5 * backpressureSensitivity * ratio;
+      break;
     }
     kb = Math.max(0.0, Math.min(kbMax, kb));
     return kb;
@@ -457,8 +401,7 @@ public class SafetyReliefValve extends ThrottlingValve {
     StreamInterface out = getOutletStream();
 
     double pUpBar = ensureBar(in.getThermoSystem().getPressure());
-    double pDownBar =
-        out != null ? ensureBar(out.getThermoSystem().getPressure()) : ATM_PRESSURE_BAR;
+    double pDownBar = out != null ? ensureBar(out.getThermoSystem().getPressure()) : ATM_PRESSURE_BAR;
 
     double newCmd = computeOpeningFraction(pUpBar);
     if (newCmd > 0.0)
@@ -488,8 +431,7 @@ public class SafetyReliefValve extends ThrottlingValve {
     StreamInterface out = getOutletStream();
 
     double pUpBar = ensureBar(in.getThermoSystem().getPressure());
-    double pDownBar =
-        out != null ? ensureBar(out.getThermoSystem().getPressure()) : ATM_PRESSURE_BAR;
+    double pDownBar = out != null ? ensureBar(out.getThermoSystem().getPressure()) : ATM_PRESSURE_BAR;
 
     // Raw commanded lift from pressure + hysteresis
     double cmd = computeOpeningFraction(pUpBar);
@@ -551,9 +493,7 @@ public class SafetyReliefValve extends ThrottlingValve {
 
   // ---------------- Quick configurators ----------------
   /**
-   * <p>
    * configureConventionalSnap.
-   * </p>
    *
    * @param psetBar a double
    * @param overFrac a double
@@ -561,8 +501,7 @@ public class SafetyReliefValve extends ThrottlingValve {
    * @param cvRated a double
    * @return a {@link neqsim.process.equipment.valve.SafetyReliefValve} object
    */
-  public SafetyReliefValve configureConventionalSnap(double psetBar, double overFrac,
-      double blowFrac, double cvRated) {
+  public SafetyReliefValve configureConventionalSnap(double psetBar, double overFrac, double blowFrac, double cvRated) {
     setValveType(ValveType.CONVENTIONAL);
     setOpeningLaw(OpeningLaw.SNAP);
     setSetPressureBar(psetBar);
@@ -575,9 +514,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * configureBalancedModulating.
-   * </p>
    *
    * @param psetBar a double
    * @param overFrac a double
@@ -585,8 +522,8 @@ public class SafetyReliefValve extends ThrottlingValve {
    * @param cvRated a double
    * @return a {@link neqsim.process.equipment.valve.SafetyReliefValve} object
    */
-  public SafetyReliefValve configureBalancedModulating(double psetBar, double overFrac,
-      double blowFrac, double cvRated) {
+  public SafetyReliefValve configureBalancedModulating(double psetBar, double overFrac, double blowFrac,
+      double cvRated) {
     setValveType(ValveType.BALANCED_BELLOWS);
     setOpeningLaw(OpeningLaw.MODULATING);
     setSetPressureBar(psetBar);
@@ -601,9 +538,7 @@ public class SafetyReliefValve extends ThrottlingValve {
 
   // Handy monitors
   /**
-   * <p>
    * getRelievingPressureBar.
-   * </p>
    *
    * @return a double
    */
@@ -612,9 +547,7 @@ public class SafetyReliefValve extends ThrottlingValve {
   }
 
   /**
-   * <p>
    * getReseatPressureBar.
-   * </p>
    *
    * @return a double
    */
@@ -622,4 +555,3 @@ public class SafetyReliefValve extends ThrottlingValve {
     return reseatPressureBar();
   }
 }
-

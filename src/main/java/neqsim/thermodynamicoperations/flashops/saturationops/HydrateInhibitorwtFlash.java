@@ -7,9 +7,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * HydrateInhibitorwtFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -24,9 +22,7 @@ public class HydrateInhibitorwtFlash extends ConstantDutyTemperatureFlash {
   String inhibitor = "MEG";
 
   /**
-   * <p>
    * Constructor for HydrateInhibitorwtFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param inhibitor a {@link java.lang.String} object
@@ -39,9 +35,7 @@ public class HydrateInhibitorwtFlash extends ConstantDutyTemperatureFlash {
   }
 
   /**
-   * <p>
    * stop.
-   * </p>
    */
   public void stop() {
     system = null;
@@ -59,8 +53,7 @@ public class HydrateInhibitorwtFlash extends ConstantDutyTemperatureFlash {
     do {
       iter++;
       try {
-        derrordC = (error - oldError)
-            / (system.getPhase(0).getComponent(inhibitor).getNumberOfmoles() - oldC);
+        derrordC = (error - oldError) / (system.getPhase(0).getComponent(inhibitor).getNumberOfmoles() - oldC);
         oldError = error;
         oldC = system.getPhase(0).getComponent(inhibitor).getNumberOfmoles();
 
@@ -105,5 +98,6 @@ public class HydrateInhibitorwtFlash extends ConstantDutyTemperatureFlash {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 }

@@ -15,22 +15,17 @@ public class SystemDuanSun extends SystemEos {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
 
-  protected String[] CapeOpenProperties11 =
-      {"molecularWeight", "fugacityCoefficient", "logFugacityCoefficient"};
+  protected String[] CapeOpenProperties11 = { "molecularWeight", "fugacityCoefficient", "logFugacityCoefficient" };
 
   /**
-   * <p>
    * Constructor for SystemDuanSun.
-   * </p>
    */
   public SystemDuanSun() {
     this(298.15, 1.0, false);
   }
 
   /**
-   * <p>
    * Constructor for SystemDuanSun.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)
@@ -40,9 +35,7 @@ public class SystemDuanSun extends SystemEos {
   }
 
   /**
-   * <p>
    * Constructor for SystemDuanSun.
-   * </p>
    *
    * @param T The temperature in unit Kelvin
    * @param P The pressure in unit bara (absolute pressure)

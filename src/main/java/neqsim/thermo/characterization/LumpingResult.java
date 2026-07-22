@@ -210,11 +210,9 @@ public class LumpingResult implements Serializable {
     StringBuilder sb = new StringBuilder();
     sb.append("LumpingResult {\n");
     sb.append("  model: ").append(modelName).append("\n");
-    sb.append("  components: ").append(originalComponentCount).append(" -> ")
-        .append(lumpedComponentCount).append("\n");
+    sb.append("  components: ").append(originalComponentCount).append(" -> ").append(lumpedComponentCount).append("\n");
     sb.append("  MW error: ").append(String.format("%.4f%%", getMWError() * 100)).append("\n");
-    sb.append("  Density error: ").append(String.format("%.4f%%", getDensityError() * 100))
-        .append("\n");
+    sb.append("  Density error: ").append(String.format("%.4f%%", getDensityError() * 100)).append("\n");
     if (!warnings.isEmpty()) {
       sb.append("  warnings: ").append(warnings).append("\n");
     }

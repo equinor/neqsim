@@ -6,9 +6,7 @@ import Jama.Matrix;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * NewtonSolveABCD class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -29,16 +27,13 @@ public class NewtonSolveABCD implements java.io.Serializable {
   double[] calcTPBfraction = null;
 
   /**
-   * <p>
    * Constructor for NewtonSolveABCD.
-   * </p>
    */
-  public NewtonSolveABCD() {}
+  public NewtonSolveABCD() {
+  }
 
   /**
-   * <p>
    * Constructor for NewtonSolveABCD.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param characterizeClass a {@link neqsim.thermo.characterization.TBPCharacterize} object
@@ -58,9 +53,7 @@ public class NewtonSolveABCD implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvec</code>.
-   * </p>
    */
   public void setfvec() {
     for (int i = 0; i < characterizeClass.getLength(); i++) {
@@ -69,9 +62,10 @@ public class NewtonSolveABCD implements java.io.Serializable {
     }
 
     for (int i = characterizeClass.getLength(); i < 2 * characterizeClass.getLength(); i++) {
-      fvec.set(i, 0, characterizeClass.getTBPdens(i - characterizeClass.getLength())
-          - characterizeClass.getCoef(2) - characterizeClass.getCoef(3) * Math.log((i
-              + characterizeClass.getFirstPlusFractionNumber() - characterizeClass.getLength())));
+      fvec.set(i, 0,
+          characterizeClass.getTBPdens(i - characterizeClass.getLength()) - characterizeClass.getCoef(2)
+              - characterizeClass.getCoef(3)
+                  * Math.log((i + characterizeClass.getFirstPlusFractionNumber() - characterizeClass.getLength())));
     }
 
     for (int i = 0; i < characterizeClass.getLength(); i++) {
@@ -82,9 +76,7 @@ public class NewtonSolveABCD implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setJac.
-   * </p>
    */
   public void setJac() {
     Jac.timesEquals(0.0);
@@ -109,8 +101,7 @@ public class NewtonSolveABCD implements java.io.Serializable {
         if (j == 2) {
           tempJ = -1.0;
         } else if (j == 3) {
-          tempJ = -Math.log(
-              i + characterizeClass.getFirstPlusFractionNumber() - characterizeClass.getLength());
+          tempJ = -Math.log(i + characterizeClass.getFirstPlusFractionNumber() - characterizeClass.getLength());
         } else {
           tempJ = 0.0;
         }
@@ -120,9 +111,7 @@ public class NewtonSolveABCD implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    */
   public void solve() {
     do {

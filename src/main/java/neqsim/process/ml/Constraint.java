@@ -70,8 +70,8 @@ public class Constraint implements Serializable {
    * @param upperBound upper limit
    * @param unit physical unit
    */
-  public Constraint(String name, String description, Type type, Category category,
-      String variableName, double lowerBound, double upperBound, String unit) {
+  public Constraint(String name, String description, Type type, Category category, String variableName,
+      double lowerBound, double upperBound, String unit) {
     this.name = name;
     this.description = description;
     this.type = type;
@@ -94,10 +94,9 @@ public class Constraint implements Serializable {
    * @param type constraint type
    * @return new Constraint
    */
-  public static Constraint upperBound(String name, String variableName, double maxValue,
-      String unit, Type type) {
-    return new Constraint(name, name + " upper limit", type, Category.PHYSICAL, variableName,
-        Double.NEGATIVE_INFINITY, maxValue, unit);
+  public static Constraint upperBound(String name, String variableName, double maxValue, String unit, Type type) {
+    return new Constraint(name, name + " upper limit", type, Category.PHYSICAL, variableName, Double.NEGATIVE_INFINITY,
+        maxValue, unit);
   }
 
   /**
@@ -110,10 +109,9 @@ public class Constraint implements Serializable {
    * @param type constraint type
    * @return new Constraint
    */
-  public static Constraint lowerBound(String name, String variableName, double minValue,
-      String unit, Type type) {
-    return new Constraint(name, name + " lower limit", type, Category.PHYSICAL, variableName,
-        minValue, Double.POSITIVE_INFINITY, unit);
+  public static Constraint lowerBound(String name, String variableName, double minValue, String unit, Type type) {
+    return new Constraint(name, name + " lower limit", type, Category.PHYSICAL, variableName, minValue,
+        Double.POSITIVE_INFINITY, unit);
   }
 
   /**
@@ -127,10 +125,9 @@ public class Constraint implements Serializable {
    * @param type constraint type
    * @return new Constraint
    */
-  public static Constraint range(String name, String variableName, double minValue, double maxValue,
-      String unit, Type type) {
-    return new Constraint(name, name + " range limit", type, Category.PHYSICAL, variableName,
-        minValue, maxValue, unit);
+  public static Constraint range(String name, String variableName, double minValue, double maxValue, String unit,
+      Type type) {
+    return new Constraint(name, name + " range limit", type, Category.PHYSICAL, variableName, minValue, maxValue, unit);
   }
 
   /**
@@ -189,10 +186,8 @@ public class Constraint implements Serializable {
     if (Double.isNaN(currentValue)) {
       return Double.POSITIVE_INFINITY;
     }
-    double marginLower =
-        Double.isInfinite(lowerBound) ? Double.POSITIVE_INFINITY : currentValue - lowerBound;
-    double marginUpper =
-        Double.isInfinite(upperBound) ? Double.POSITIVE_INFINITY : upperBound - currentValue;
+    double marginLower = Double.isInfinite(lowerBound) ? Double.POSITIVE_INFINITY : currentValue - lowerBound;
+    double marginUpper = Double.isInfinite(upperBound) ? Double.POSITIVE_INFINITY : upperBound - currentValue;
     return Math.min(marginLower, marginUpper);
   }
 
@@ -261,7 +256,7 @@ public class Constraint implements Serializable {
   @Override
   public String toString() {
     String status = violated ? "VIOLATED" : "OK";
-    return String.format("Constraint[%s: %s in [%.2f, %.2f] %s = %.2f (%s)]", name, variableName,
-        lowerBound, upperBound, unit, currentValue, status);
+    return String.format("Constraint[%s: %s in [%.2f, %.2f] %s = %.2f (%s)]", name, variableName, lowerBound,
+        upperBound, unit, currentValue, status);
   }
 }

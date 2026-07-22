@@ -12,23 +12,20 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 
 /**
- * <p>
  * SerializationManager class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  */
 public class SerializationManager {
   /**
-   * <p>Constructor for SerializationManager.</p>
+   * Constructor for SerializationManager.
    */
-  public SerializationManager() {}
+  public SerializationManager() {
+  }
 
   /**
-   * <p>
    * save.
-   * </p>
    *
    * @param obj a {@link java.lang.Object} object
    * @param name a {@link java.lang.String} object
@@ -42,9 +39,7 @@ public class SerializationManager {
   }
 
   /**
-   * <p>
    * open.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link java.lang.Object} object

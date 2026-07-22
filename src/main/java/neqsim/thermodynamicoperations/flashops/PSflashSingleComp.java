@@ -4,9 +4,7 @@ import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PSflashSingleComp class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class PSflashSingleComp extends Flash {
   double Sspec = 0;
 
   /**
-   * <p>
    * Constructor for PSflashSingleComp.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Sspec a double
@@ -34,8 +30,8 @@ public class PSflashSingleComp extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    neqsim.thermodynamicoperations.ThermodynamicOperations bubOps =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(system);
+    neqsim.thermodynamicoperations.ThermodynamicOperations bubOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+        system);
     double initTemp = system.getTemperature();
 
     if (system.getPressure() < system.getPhase(0).getComponent(0).getPC()) {
@@ -56,10 +52,10 @@ public class PSflashSingleComp extends Flash {
     }
 
     system.init(3);
-    double gasEntropy = system.getPhase(0).getEntropy()
-        / system.getPhase(0).getNumberOfMolesInPhase() * system.getTotalNumberOfMoles();
-    double liqEntropy = system.getPhase(1).getEntropy()
-        / system.getPhase(1).getNumberOfMolesInPhase() * system.getTotalNumberOfMoles();
+    double gasEntropy = system.getPhase(0).getEntropy() / system.getPhase(0).getNumberOfMolesInPhase()
+        * system.getTotalNumberOfMoles();
+    double liqEntropy = system.getPhase(1).getEntropy() / system.getPhase(1).getNumberOfMolesInPhase()
+        * system.getTotalNumberOfMoles();
 
     if (Sspec < liqEntropy || Sspec > gasEntropy) {
       system.setTemperature(initTemp);

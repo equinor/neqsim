@@ -9,17 +9,17 @@ package neqsim.physicalproperties.system.gasphysicalproperties;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.CO2ConductivityMethod;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.HydrogenConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.PFCTConductivityMethodMod86;
+import neqsim.physicalproperties.methods.commonphasephysicalproperties.conductivity.WaterConductivityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.CO2ViscosityMethod;
 import neqsim.physicalproperties.methods.commonphasephysicalproperties.viscosity.PFCTViscosityMethodHeavyOil;
-import neqsim.thermo.phase.PhaseSpanWagnerEos;
 import neqsim.physicalproperties.system.PhysicalProperties;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseSpanWagnerEos;
 
 /**
- * <p>
  * GasPhysicalProperties class.
- * </p>
  *
  * @author Even Solbraa
  * @version $Id: $Id
@@ -31,9 +31,7 @@ public class GasPhysicalProperties extends PhysicalProperties {
   static Logger logger = LogManager.getLogger(GasPhysicalProperties.class);
 
   /**
-   * <p>
    * Constructor for GasPhysicalProperties.
-   * </p>
    *
    * @param phase a {@link neqsim.thermo.phase.PhaseInterface} object
    * @param binaryDiffusionCoefficientMethod a int
@@ -45,6 +43,12 @@ public class GasPhysicalProperties extends PhysicalProperties {
     if (phase instanceof PhaseSpanWagnerEos) {
       conductivityCalc = new CO2ConductivityMethod(this);
       viscosityCalc = new CO2ViscosityMethod(this);
+    } else if (phase.getNumberOfComponents() == 1 && "hydrogen".equalsIgnoreCase(phase.getComponent(0).getName())) {
+      conductivityCalc = new HydrogenConductivityMethod(this);
+      viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
+    } else if (phase.getNumberOfComponents() == 1 && "water".equalsIgnoreCase(phase.getComponent(0).getName())) {
+      conductivityCalc = new WaterConductivityMethod(this);
+      viscosityCalc = new PFCTViscosityMethodHeavyOil(this);
     } else {
       // conductivityCalc = new ChungConductivityMethod(this);
       conductivityCalc = new PFCTConductivityMethodMod86(this);
@@ -55,8 +59,7 @@ public class GasPhysicalProperties extends PhysicalProperties {
     }
 
     // viscosityCalc = new LBCViscosityMethod(this);
-    diffusivityCalc =
-        new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
+    diffusivityCalc = new neqsim.physicalproperties.methods.gasphysicalproperties.diffusivity.Diffusivity(this);
     // diffusivityCalc = new WilkeLeeDiffusivity(this);
     densityCalc = new neqsim.physicalproperties.methods.gasphysicalproperties.density.Density(this);
   }

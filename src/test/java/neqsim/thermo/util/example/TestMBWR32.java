@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestMBWR32 class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TestMBWR32 {
+  private static final Logger logger = LogManager.getLogger(TestMBWR32.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TestMBWR32.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

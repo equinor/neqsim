@@ -1,3 +1,8 @@
+---
+title: Manifolds
+description: Documentation for manifold equipment that combines stream mixing and splitting in NeqSim.
+---
+
 # Manifolds
 
 Documentation for manifold equipment that combines stream mixing and splitting in NeqSim.
@@ -284,7 +289,7 @@ manifold.autoSize(1.2);  // 20% safety factor
 System.out.println(manifold.getSizingReport());
 ```
 
-For detailed FIV documentation, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md#flow-induced-vibration-fiv-analysis).
+For detailed FIV documentation, see [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK#flow-induced-vibration-fiv-analysis).
 
 ---
 
@@ -314,9 +319,9 @@ The mixed composition is the flow-weighted average of all inlet compositions.
 
 ## Related Documentation
 
-- [Mixers and Splitters](mixers_splitters.md) - Stream mixing and splitting
-- [Streams](streams.md) - Process streams
-- [Subsea Systems](subsea_systems.md) - Subsea manifold applications
-- [Manifold Mechanical Design](manifold_design.md) - Detailed manifold mechanical design
-- [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK.md) - Capacity limits and FIV analysis
-- [Pipelines](pipelines.md) - Pipeline equipment with FIV support
+- [Mixers and Splitters](mixers_splitters) - Stream mixing and splitting
+- [Streams](streams) - Process streams
+- [Subsea Systems](subsea_systems) - Subsea manifold applications
+- [Manifold Mechanical Design](manifold_design) - Detailed manifold mechanical design
+- [Capacity Constraint Framework](../CAPACITY_CONSTRAINT_FRAMEWORK) - Capacity limits and FIV analysis
+- [Pipelines](pipelines) - Pipeline equipment with FIV support

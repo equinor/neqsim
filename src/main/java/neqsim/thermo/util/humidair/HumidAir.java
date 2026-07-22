@@ -5,9 +5,8 @@ package neqsim.thermo.util.humidair;
  *
  * <p>
  * The methods are adapted from the ASHRAE Handbook Fundamentals (2017) and the
- * <a href="https://github.com/CoolProp/CoolProp">CoolProp</a> implementation
- * {@code HumidAirProp.cpp}. Saturation vapour pressures are calculated from the IAPWS formulation
- * of Wagner and Pruss (2002).
+ * <a href="https://github.com/CoolProp/CoolProp">CoolProp</a> implementation {@code HumidAirProp.cpp}. Saturation
+ * vapour pressures are calculated from the IAPWS formulation of Wagner and Pruss (2002).
  * </p>
  *
  * @author esol
@@ -17,15 +16,15 @@ public final class HumidAir {
   /** Ratio of molar masses M_w/M_da. */
   private static final double EPSILON = 0.621945;
 
-  private HumidAir() {}
+  private HumidAir() {
+  }
 
   /**
    * Saturation vapour pressure of water.
    *
    * <p>
-   * Implementation of the IAPWS equation for the vapour pressure of water valid above the triple
-   * point. For temperatures below the triple point, a simplified sublimation correlation is
-   * applied.
+   * Implementation of the IAPWS equation for the vapour pressure of water valid above the triple point. For
+   * temperatures below the triple point, a simplified sublimation correlation is applied.
    * </p>
    *
    * @param temperature Temperature in K
@@ -43,15 +42,13 @@ public final class HumidAir {
       double a4 = 22.6807411;
       double a5 = -15.9618719;
       double a6 = 1.80122502;
-      double lnP =
-          Tc / temperature * (a1 * theta + a2 * Math.pow(theta, 1.5) + a3 * Math.pow(theta, 3)
-              + a4 * Math.pow(theta, 3.5) + a5 * Math.pow(theta, 4) + a6 * Math.pow(theta, 7.5));
+      double lnP = Tc / temperature * (a1 * theta + a2 * Math.pow(theta, 1.5) + a3 * Math.pow(theta, 3)
+          + a4 * Math.pow(theta, 3.5) + a5 * Math.pow(theta, 4) + a6 * Math.pow(theta, 7.5));
       return Pc * Math.exp(lnP);
     }
     // Sublimation pressure over ice, IAPWS formulation
     double theta = temperature / 273.16;
-    double lnP = -13.928169 * (1 - Math.pow(theta, -1.5)) - 34.7078238 * (1 - Math.pow(theta, 1.5))
-        + Math.log(611.657);
+    double lnP = -13.928169 * (1 - Math.pow(theta, -1.5)) - 34.7078238 * (1 - Math.pow(theta, 1.5)) + Math.log(611.657);
     return Math.exp(lnP);
   }
 
@@ -67,8 +64,7 @@ public final class HumidAir {
    * @param relativeHumidity relative humidity [-]
    * @return humidity ratio (kg water/kg dry air)
    */
-  public static double humidityRatioFromRH(double temperature, double pressure,
-      double relativeHumidity) {
+  public static double humidityRatioFromRH(double temperature, double pressure, double relativeHumidity) {
     double pws = saturationPressureWater(temperature);
     double pw = relativeHumidity * pws;
     return EPSILON * pw / (pressure - pw);

@@ -6,6 +6,8 @@
 
 package neqsim.process.util.example;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import neqsim.process.controllerdevice.ControllerDeviceBaseClass;
 import neqsim.process.controllerdevice.ControllerDeviceInterface;
 import neqsim.process.equipment.separator.Separator;
@@ -16,34 +18,30 @@ import neqsim.process.measurementdevice.PressureTransmitter;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TestTransientFlow class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TestTransientFlow {
+  private static final Logger logger = LogManager.getLogger(TestTransientFlow.class);
+
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem.addComponent("methane", 0.900);
     testSystem.addComponent("ethane", 0.100);
     testSystem.addComponent("n-heptane", 1.00);
     testSystem.createDatabase(true);
     testSystem.setMixingRule(2);
 
-    neqsim.thermo.system.SystemInterface testSystem2 =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
+    neqsim.thermo.system.SystemInterface testSystem2 = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 10.00);
     testSystem2.addComponent("methane", 1.1);
     testSystem2.addComponent("ethane", 0.10001);
     testSystem2.addComponent("n-heptane", 0.001);
@@ -73,8 +71,7 @@ public class TestTransientFlow {
     valve_3.setPercentValveOpening(50);
     // valve_3.setCv(10.0);
 
-    LevelTransmitter separatorLevelTransmitter =
-        new LevelTransmitter("separatorLevelTransmitter1", separator_1);
+    LevelTransmitter separatorLevelTransmitter = new LevelTransmitter("separatorLevelTransmitter1", separator_1);
     separatorLevelTransmitter.setMaximumValue(1.0);
     separatorLevelTransmitter.setMinimumValue(0.0);
 
@@ -84,8 +81,7 @@ public class TestTransientFlow {
     separatorLevelController.setControllerSetPoint(0.3);
     separatorLevelController.setControllerParameters(1.0, 300.0, 10.0);
 
-    PressureTransmitter separatorPressureTransmitter =
-        new PressureTransmitter(separator_1.getGasOutStream());
+    PressureTransmitter separatorPressureTransmitter = new PressureTransmitter(separator_1.getGasOutStream());
     separatorPressureTransmitter.setUnit("bar");
     separatorPressureTransmitter.setMaximumValue(10.0);
     separatorPressureTransmitter.setMinimumValue(1.0);
@@ -96,8 +92,7 @@ public class TestTransientFlow {
     separatorPressureController.setControllerSetPoint(7.0);
     separatorPressureController.setControllerParameters(1.0, 300.0, 10.0);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(valve_1);
 
@@ -121,13 +116,13 @@ public class TestTransientFlow {
     operations.runTransient();
 
     /*
-     * // transient behaviour operations.setTimeStep(1.1); for(int i=0;i<50;i++){
-     * operations.runTransient(); System.out.println("liquid level " + separator_1.getLiquidLevel()+
-     * " PRESSURE " + separator_1.getGasOutStream().getPressure()); }
+     * // transient behaviour operations.setTimeStep(1.1); for(int i=0;i<50;i++){ operations.runTransient();
+     * logger.info("liquid level " + separator_1.getLiquidLevel()+ " PRESSURE " +
+     * separator_1.getGasOutStream().getPressure()); }
      *
-     * operations.setTimeStep(30.0); for(int i=0;i<2000;i++){ operations.runTransient();
-     * System.out.println("liquid level " + separator_1.getLiquidLevel()+ " PRESSURE " +
-     * separator_1.getGasOutStream().getPressure()); } operations.displayResult();
+     * operations.setTimeStep(30.0); for(int i=0;i<2000;i++){ operations.runTransient(); logger.info("liquid level " +
+     * separator_1.getLiquidLevel()+ " PRESSURE " + separator_1.getGasOutStream().getPressure()); }
+     * operations.displayResult();
      *
      * operations.displayResult();
      */

@@ -9,9 +9,7 @@ package neqsim.fluidmechanics.util.fluidmechanicsvisualization.flownodevisualiza
 import neqsim.fluidmechanics.flownode.FlowNodeInterface;
 
 /**
- * <p>
  * FlowNodeVisualization class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -24,19 +22,17 @@ public class FlowNodeVisualization implements FlowNodeVisualizationInterface {
   public double[] velocity = new double[2];
   public double[] phaseFraction = new double[2];
   public double[] wallContactLength = new double[2];
-  public double[][] bulkComposition, interfaceComposition, effectiveMassTransferCoefficient,
-      effectiveSchmidtNumber;
+  public double[][] bulkComposition, interfaceComposition, effectiveMassTransferCoefficient, effectiveSchmidtNumber;
   public double[][] molarFlux;
   public double interphaseContactLength = 0.0;
   public double nodeCenter;
   public int numberOfComponents = 0;
 
   /**
-   * <p>
    * Constructor for FlowNodeVisualization.
-   * </p>
    */
-  public FlowNodeVisualization() {}
+  public FlowNodeVisualization() {
+  }
 
   /** {@inheritDoc} */
   @Override

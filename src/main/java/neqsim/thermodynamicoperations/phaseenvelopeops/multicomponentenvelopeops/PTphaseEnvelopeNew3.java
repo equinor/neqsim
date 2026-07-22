@@ -5,13 +5,12 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.OperationInterface;
 
 /**
- * <p>
  * PTphaseEnvelopeNew3 class.
- * </p>
  *
  * @author esol
  */
 public class PTphaseEnvelopeNew3 implements OperationInterface {
+  private static final long serialVersionUID = 1L;
   // Fields
   private final SystemInterface system;
   private double[][] betta;
@@ -37,9 +36,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   private double tempStep;
 
   /**
-   * <p>
    * Constructor for PTphaseEnvelopeNew3.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param minPressure a double
@@ -49,8 +46,8 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
    * @param pressureStep a double
    * @param tempStep a double
    */
-  public PTphaseEnvelopeNew3(SystemInterface system, double minPressure, double maxPressure,
-      double minTemp, double maxTemp, double pressureStep, double tempStep) {
+  public PTphaseEnvelopeNew3(SystemInterface system, double minPressure, double maxPressure, double minTemp,
+      double maxTemp, double pressureStep, double tempStep) {
     this.system = system;
     this.minPressure = minPressure;
     this.maxPressure = maxPressure;
@@ -62,10 +59,9 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
 
   // Main calculation method
   /**
-   * <p>
    * run.
-   * </p>
    */
+  @Override
   public void run() {
     coarse();
     findBettaTransitionsAndRefine();
@@ -73,13 +69,11 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
 
   // Coarse grid calculation
   /**
-   * <p>
    * coarse.
-   * </p>
    */
   public void coarse() {
-    neqsim.thermodynamicoperations.ThermodynamicOperations testOps =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(system);
+    neqsim.thermodynamicoperations.ThermodynamicOperations testOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+        system);
     int nP = (int) Math.round((maxPressure - minPressure) / pressureStep) + 1;
     int nT = (int) Math.round((maxTemp - minTemp) / tempStep) + 1;
     betta = new double[nT][nP];
@@ -101,7 +95,8 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
           testOps.TPflash();
         } catch (Exception e) {
           // System.err
-          // .println("Flash failed at P=" + pressures[i] + " bara, T=" + temperatures[j] + " C");
+          // .println("Flash failed at P=" + pressures[i] + " bara, T=" + temperatures[j]
+          // + " C");
           betta[j][i] = Double.NaN;
           continue;
         }
@@ -114,12 +109,11 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   }
 
   /**
-   * Scan each pressure for betta transitions, refine with smaller step and bisection, and store all
-   * transition points.
+   * Scan each pressure for betta transitions, refine with smaller step and bisection, and store all transition points.
    */
   public void findBettaTransitionsAndRefine() {
-    neqsim.thermodynamicoperations.ThermodynamicOperations testOps =
-        new neqsim.thermodynamicoperations.ThermodynamicOperations(system);
+    neqsim.thermodynamicoperations.ThermodynamicOperations testOps = new neqsim.thermodynamicoperations.ThermodynamicOperations(
+        system);
     for (int i = 0; i < pressures.length; i++) {
       for (int j = 1; j < temperatures.length; j++) {
         double bettaPrev = betta[j - 1][i];
@@ -137,8 +131,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
           double tEnd = tHigh;
           // Bisection method to find transition temperature at this pressure
           double p = pressures[i];
-          double tTransition =
-              bisectionBettaTransition(testOps, p, tStart, tEnd, 0.9999999, 1e-8, 5);
+          double tTransition = bisectionBettaTransition(testOps, p, tStart, tEnd, 0.9999999, 1e-8, 5);
           // System.out.println("Found transition at P=" + p + " bara, T=" + tTransition);
 
           if (!Double.isNaN(tTransition)) {
@@ -151,7 +144,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
             } catch (Exception e) {
               bettaVal = Double.NaN;
             }
-            refinedTransitionPoints.add(new double[] {p, tTransition, bettaVal});
+            refinedTransitionPoints.add(new double[] { p, tTransition, bettaVal });
             pressurePhaseEnvelope.add(p);
             temperaturePhaseEnvelope.add(tTransition);
           }
@@ -161,9 +154,8 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   }
 
   // Bisection method to find temperature where betta crosses 1.0 at given pressure
-  private double bisectionBettaTransition(
-      neqsim.thermodynamicoperations.ThermodynamicOperations testOps, double pressure, double tLow,
-      double tHigh, double target, double tol, int maxIter) {
+  private double bisectionBettaTransition(neqsim.thermodynamicoperations.ThermodynamicOperations testOps,
+      double pressure, double tLow, double tHigh, double target, double tol, int maxIter) {
     double fLow = getBettaAt(testOps, pressure, tLow) - target;
     double fHigh = getBettaAt(testOps, pressure, tHigh) - target;
     if (Double.isNaN(fLow) || Double.isNaN(fHigh) || fLow * fHigh > 0) {
@@ -190,8 +182,8 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   }
 
   // Helper to get betta at given P, T
-  private double getBettaAt(neqsim.thermodynamicoperations.ThermodynamicOperations testOps,
-      double pressure, double temperature) {
+  private double getBettaAt(neqsim.thermodynamicoperations.ThermodynamicOperations testOps, double pressure,
+      double temperature) {
     system.setPressure(pressure, "bara");
     system.setTemperature(temperature, "C");
     try {
@@ -204,9 +196,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
 
   // Accessor for refined transition points
   /**
-   * <p>
    * Getter for the field <code>refinedTransitionPoints</code>.
-   * </p>
    *
    * @return a {@link java.util.List} object
    */
@@ -215,9 +205,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>pressures</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -226,9 +214,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>temperatures</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -292,9 +278,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   // Accessors
 
   /**
-   * <p>
    * getPhaseMatrix.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -304,9 +288,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
 
   // Accessor for bettaTransitionRegion
   /**
-   * <p>
    * Getter for the field <code>bettaTransitionRegion</code>.
-   * </p>
    *
    * @return an array of boolean objects
    */
@@ -316,9 +298,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
 
   // For clarity, also provide getBettaMatrix() as an alias
   /**
-   * <p>
    * getBettaMatrix.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -327,9 +307,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dewPointTemperatures</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -338,9 +316,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>dewPointPressures</code>.
-   * </p>
    *
    * @return an array of double objects
    */
@@ -352,9 +328,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
 
   // Accessors for phase envelope lists
   /**
-   * <p>
    * Getter for the field <code>pressurePhaseEnvelope</code>.
-   * </p>
    *
    * @return a {@link java.util.List} object
    */
@@ -363,9 +337,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
   }
 
   /**
-   * <p>
    * Getter for the field <code>temperaturePhaseEnvelope</code>.
-   * </p>
    *
    * @return a {@link java.util.List} object
    */
@@ -375,9 +347,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
 
   // Returns the maximum pressure in the phase envelope (cricondenbar)
   /**
-   * <p>
    * getCricondenbar.
-   * </p>
    *
    * @return a double
    */
@@ -390,9 +360,7 @@ public class PTphaseEnvelopeNew3 implements OperationInterface {
 
   // Returns the maximum temperature in the phase envelope (cricondentherm)
   /**
-   * <p>
    * getCricondentherm.
-   * </p>
    *
    * @return a double
    */

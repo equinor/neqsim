@@ -28,7 +28,7 @@ public class RandomController implements Controller {
    * @param actionMax maximum action value
    */
   public RandomController(String name, double actionMin, double actionMax) {
-    this(name, new double[] {actionMin}, new double[] {actionMax}, System.currentTimeMillis());
+    this(name, new double[] { actionMin }, new double[] { actionMax }, System.currentTimeMillis());
   }
 
   /**

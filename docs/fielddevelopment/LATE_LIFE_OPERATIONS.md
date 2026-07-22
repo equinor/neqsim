@@ -1,3 +1,8 @@
+---
+title: Late-Life Operations Support in NeqSim
+description: This document describes how NeqSim supports analysis of late-life field operations, a key topic in TPG4230 and critical for maximizing economic recovery from mature fields.
+---
+
 # Late-Life Operations Support in NeqSim
 
 This document describes how NeqSim supports analysis of late-life field operations, a key topic in TPG4230 and critical for maximizing economic recovery from mature fields.
@@ -385,5 +390,5 @@ System.out.println("\nOptimal abandonment year: " + optimalYear);
 
 ## See Also
 
-- [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md) - Full API reference
-- [NeqSim Examples](../examples/index.md) - Code examples
+- [INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK.md](INTEGRATED_FIELD_DEVELOPMENT_FRAMEWORK) - Full API reference
+- [NeqSim Examples](../examples/index) - Code examples

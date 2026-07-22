@@ -9,8 +9,8 @@ import java.util.Map;
  * Represents an event in the process simulation.
  *
  * <p>
- * Events can represent state changes, alarms, threshold crossings, or any significant occurrence
- * that external systems may want to react to.
+ * Events can represent state changes, alarms, threshold crossings, or any significant occurrence that external systems
+ * may want to react to.
  * </p>
  *
  * @author ESOL
@@ -69,8 +69,7 @@ public class ProcessEvent implements Serializable {
    * @param description human-readable description
    * @param severity event severity
    */
-  public ProcessEvent(String eventId, EventType type, String source, String description,
-      Severity severity) {
+  public ProcessEvent(String eventId, EventType type, String source, String description, Severity severity) {
     this.eventId = eventId;
     this.type = type;
     this.source = source;
@@ -123,13 +122,12 @@ public class ProcessEvent implements Serializable {
    * @param above true if crossed above threshold
    * @return threshold event
    */
-  public static ProcessEvent thresholdCrossed(String source, String variable, double value,
-      double threshold, boolean above) {
-    ProcessEvent event =
-        new ProcessEvent(generateId(), EventType.THRESHOLD_CROSSED, source,
-            String.format("%s %s threshold: %.4f %s %.4f", variable,
-                above ? "exceeded" : "fell below", value, above ? ">" : "<", threshold),
-            above ? Severity.WARNING : Severity.INFO);
+  public static ProcessEvent thresholdCrossed(String source, String variable, double value, double threshold,
+      boolean above) {
+    ProcessEvent event = new ProcessEvent(
+        generateId(), EventType.THRESHOLD_CROSSED, source, String.format("%s %s threshold: %.4f %s %.4f", variable,
+            above ? "exceeded" : "fell below", value, above ? ">" : "<", threshold),
+        above ? Severity.WARNING : Severity.INFO);
     event.setProperty("variable", variable);
     event.setProperty("value", value);
     event.setProperty("threshold", threshold);
@@ -146,13 +144,11 @@ public class ProcessEvent implements Serializable {
    * @param predicted predicted value
    * @return deviation event
    */
-  public static ProcessEvent modelDeviation(String source, String variable, double measured,
-      double predicted) {
-    double deviation =
-        (Math.abs(measured) > 1e-10) ? Math.abs(measured - predicted) / Math.abs(measured) : 0;
+  public static ProcessEvent modelDeviation(String source, String variable, double measured, double predicted) {
+    double deviation = (Math.abs(measured) > 1e-10) ? Math.abs(measured - predicted) / Math.abs(measured) : 0;
     ProcessEvent event = new ProcessEvent(generateId(), EventType.MODEL_DEVIATION, source,
-        String.format("Model deviation for %s: %.2f%% (measured=%.4f, predicted=%.4f)", variable,
-            deviation * 100, measured, predicted),
+        String.format("Model deviation for %s: %.2f%% (measured=%.4f, predicted=%.4f)", variable, deviation * 100,
+            measured, predicted),
         deviation > 0.1 ? Severity.WARNING : Severity.INFO);
     event.setProperty("variable", variable);
     event.setProperty("measured", measured);
@@ -161,7 +157,12 @@ public class ProcessEvent implements Serializable {
     return event;
   }
 
-  private static String generateId() {
+  /**
+   * Generates a unique event ID.
+   *
+   * @return unique event identifier string
+   */
+  public static String generateId() {
     return "EVT-" + System.currentTimeMillis() + "-" + (int) (Math.random() * 1000);
   }
 

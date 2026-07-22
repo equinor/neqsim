@@ -1,3 +1,8 @@
+---
+title: "Electrolyte CPA Model Documentation"
+description: "The electrolyte CPA (Cubic Plus Association) model in NeqSim extends the standard CPA equation of state to handle aqueous electrolyte solutions. The model is based on the work of Solbraa (2002) and co..."
+---
+
 # Electrolyte CPA Model Documentation
 
 ## Overview
@@ -107,7 +112,7 @@ Where:
 The electrostatic contribution follows the Fürst model, which combines:
 
 1. **Mean Spherical Approximation (MSA)** for ion-ion interactions
-2. **Born solvation term** for ion-solvent interactions  
+2. **Born solvation term** for ion-solvent interactions
 3. **Short-range Wij terms** for specific ion interactions
 
 $$A^{elec} = A^{MSA} + A^{Born} + A^{SR}$$
@@ -306,6 +311,99 @@ The model supports mixed solvent systems including:
 
 Separate Wij parameters are available for each solvent system.
 
+## Gas-Ion Interaction Parameters (Salting-Out Effect)
+
+The electrolyte CPA model includes gas-ion interaction parameters to correctly predict the salting-out effect. The salting-out coefficient (k_s) determines how much dissolved gas solubility decreases with salt concentration.
+
+### Setschenow Equation
+
+$$\log\left(\frac{S_0}{S}\right) = k_s \cdot c_{salt}$$
+
+Where:
+- $S_0$ = gas solubility in pure water
+- $S$ = gas solubility in salt solution
+- $k_s$ = Setschenow (salting-out) coefficient (L/mol)
+- $c_{salt}$ = salt concentration (mol/L)
+
+### Fitted Gas-Ion Parameters
+
+| Gas | k_s (L/mol) | W_cation | W_anion | Notes |
+|-----|-------------|----------|---------|-------|
+| CO₂ | 0.10 | 1.05e-4 | 1.05e-4 | Polar, acidic gas |
+| CH₄ | 0.12 | 1.10e-4 | 1.10e-4 | Reference hydrocarbon |
+| C₂H₆ | 0.13 | 1.13e-4 | 1.13e-4 | Slightly larger |
+| C₃H₈ | 0.14 | 1.15e-4 | 1.15e-4 | Larger hydrocarbon |
+| C₄ (butanes) | 0.15 | 1.20e-4 | 1.20e-4 | Heavier hydrocarbon |
+| C₅+ | 0.16 | 1.25e-4 | 1.25e-4 | Heaviest fractions |
+| N₂ | 0.10-0.12 | 1.05e-4 | 1.05e-4 | Similar to CH₄ |
+| H₂S | 0.06-0.08 | 1.10e-4 | 1.10e-4 | Polar, acidic |
+| H₂ | 0.10 | 1.30e-4 | 1.30e-4 | Very small molecule |
+
+**Usage Example - Methane Solubility with Salt:**
+```java
+SystemInterface fluid = new SystemElectrolyteCPAstatoil(298.15, 50.0);
+fluid.addComponent("methane", 0.1);
+fluid.addComponent("water", 10.0);
+fluid.addComponent("Na+", 0.5);
+fluid.addComponent("Cl-", 0.5);
+fluid.setMixingRule(10);
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.TPflash();
+
+// Methane solubility decreases with salt (salting-out effect)
+double ch4InAqueous = fluid.getPhase(PhaseType.AQUEOUS).getComponent("methane").getx();
+```
+
+## Organic Inhibitor-Ion Interaction Parameters
+
+### Hu-Lee-Sum Correlation for Hydrate Inhibition
+
+For hydrate equilibrium calculations with combined salt + organic inhibitor systems, the Hu-Lee-Sum universal correlation (AIChE Journal 2017, 2018) states that water activity effects should be **additive**:
+
+$$\ln(a_w^{combined}) = \ln(a_w^{salt}) + \ln(a_w^{OI})$$
+
+This is critical for accurate hydrate inhibitor dosing calculations when both thermodynamic inhibitors (MEG, methanol) and formation water salts are present.
+
+### OI-Ion Interaction Parameters
+
+Without explicit organic inhibitor-ion (OI-ion) parameters, the combined effect may not be additive. The following parameters ensure correct additive behavior:
+
+| Inhibitor | W_MeOH-cation | W_MeOH-anion | Purpose |
+|-----------|---------------|--------------|---------|
+| Methanol | 1.5e-4 | 1.5e-4 | Ensures MEG+salt gives more inhibition |
+| MEG | 0.0 | 0.0 | Default calculation works correctly |
+| Ethanol | 1.3e-4 | 1.3e-4 | Interpolated value |
+
+### Validation Results
+
+| System | Hydrate T (°C) | Validation |
+|--------|---------------|------------|
+| Pure gas + water | +20.0 | Baseline |
+| With NaCl only | +10.8 | ✅ Salt inhibition |
+| With MEG only | -2.3 | ✅ MEG inhibition |
+| With methanol only | -4.6 | ✅ Methanol inhibition |
+| MEG + NaCl | -18.9 | ✅ ~16°C additional depression |
+| Methanol + NaCl | -5.4 | ✅ ~0.8°C additional depression |
+
+**Example - Combined Inhibitor Hydrate Calculation:**
+```java
+SystemInterface fluid = new SystemElectrolyteCPAstatoil(273.15 + 10.0, 100.0);
+fluid.addComponent("methane", 0.85);
+fluid.addComponent("water", 0.12);
+fluid.addComponent("methanol", 0.03);
+fluid.addComponent("Na+", 0.01);
+fluid.addComponent("Cl-", 0.01);
+fluid.setMixingRule(10);
+fluid.setHydrateCheck(true);
+
+ThermodynamicOperations ops = new ThermodynamicOperations(fluid);
+ops.hydrateFormationTemperature();
+
+// Combined effect is additive per Hu-Lee-Sum correlation
+System.out.println("Hydrate T: " + fluid.getTemperature("C") + " °C");
+```
+
 ## Known Limitations
 
 1. **Divalent anions (SO₄²⁻)**: Higher errors for 1:2 electrolytes like Na₂SO₄ (~20%)
@@ -362,6 +460,65 @@ int aq = system.getPhaseNumberOfPhase("aqueous");
 double pH = -Math.log10(system.getPhase(aq).getComponent("H3O+").getx() * 55.5);
 ```
 
+### In-situ pH — `getpH()` and the acid-gas fallback
+
+The recommended way to read the aqueous pH is `getpH()` on the aqueous phase (or
+`SystemInterface.getpH()`, which delegates to it). It supports several scales:
+
+| Method | Definition | Notes |
+|--------|-----------|-------|
+| `getpH()` / `getpH("activity")` | `-log10(γ_x · x_H3O+)` | default; mole-fraction activity, consistent with NeqSim's reaction K's |
+| `getpH("molality")` | `-log10(γ_m · m_H3O+)` | IUPAC standard (mol H₃O⁺ / kg water) |
+| `getpH("molarity")` | `-log10([H3O+])` | mol/L, ignores activity coefficient |
+| `getpH("acidgas")` | carbonic/hydrosulfuric acid dissociation estimate | screening in-situ pH from dissolved CO₂/H₂S |
+
+**Acid-gas fallback (no `chemicalReactionInit()` required).** The rigorous
+`activity`/`molality`/`molarity` scales need explicit `H3O+` species, which only
+exist after `chemicalReactionInit()` has solved the water/carbonic dissociation
+equilibria. If those reactions were **not** initialised (or the electrolyte
+solver is numerically unstable and yields no/NaN `H3O+`, e.g. at low pressure),
+`getpH()` now falls back to an acid-gas dissociation estimate whenever the
+aqueous phase contains water together with dissolved CO₂ and/or H₂S — instead of
+silently returning a flat, unphysical `7.0`.
+
+The fallback uses the first-dissociation equilibria of carbonic and
+hydrosulfuric acid and an electroneutrality balance dominated by the conjugate
+bases (HCO₃⁻, HS⁻):
+
+$$[\mathrm{H}^+] = \sqrt{K_1^{\mathrm{CO_2}}\,C_{\mathrm{CO_2}} + K_1^{\mathrm{H_2S}}\,C_{\mathrm{H_2S}} + K_w}, \qquad \mathrm{pH} = -\log_{10}[\mathrm{H}^+]$$
+
+where $C_i$ are aqueous molar concentrations (mol/L) obtained from the aqueous
+phase density and molar mass. The constants are temperature-dependent:
+$K_1^{\mathrm{CO_2}}$ from Plummer &amp; Busenberg (1982), $K_1^{\mathrm{H_2S}}$
+from a van't Hoff fit anchored at pK₁ = 7.05 (25 °C), and $K_w$ from a van't Hoff
+fit anchored at 1.0×10⁻¹⁴ (25 °C). For CO₂-saturated water at ambient conditions
+this reproduces the textbook value **pH ≈ 3.9**; acid-gas-free water returns
+≈ 7.0.
+
+```java
+// Plain electrolyte fluid — NO chemicalReactionInit(), excess CO2 over water
+SystemInterface system = new SystemElectrolyteCPAstatoil(298.15, 1.01325);
+system.addComponent("CO2", 5.0);
+system.addComponent("water", 10.0);
+system.createDatabase(true);
+system.setMixingRule(10);
+system.setMultiPhaseCheck(true);
+
+ThermodynamicOperations ops = new ThermodynamicOperations(system);
+ops.TPflash();
+system.initProperties();
+
+double pH = system.getpH();   // ≈ 3.9 for CO2-saturated water (acidic)
+```
+
+> **Screening scope.** The acid-gas fallback ignores alkalinity from other ions
+> (bicarbonate buffering, dissolved salts) and the second dissociation steps. It
+> is intended for acid-gas corrosion screening (e.g. NORSOK M-506), not for
+> buffered-brine speciation. For a fully rigorous speciated pH in a buffered
+> brine, run `chemicalReactionInit()` so explicit `H3O+`/`HCO3-`/`OH-` species
+> are solved. For corrosion work that must always return a finite, source-tagged
+> value, see `neqsim.process.corrosion.RobustAqueousPH`.
+
 ### Gas-Liquid Equilibrium with Electrolytes
 
 ```java
@@ -395,6 +552,10 @@ for (int i = 0; i < system.getNumberOfPhases(); i++) {
 
 5. Michelsen, M.L., & Mollerup, J.M. (2007). "Thermodynamic Models: Fundamentals & Computational Aspects." Tie-Line Publications.
 
+6. Hu, Y., Lee, B.R., Sum, A.K. (2017). "Universal correlation for gas hydrates suppression temperature of inhibited systems: I. Single salts." *AIChE Journal*, 63(11), 5111-5124. DOI: 10.1002/aic.15868
+
+7. Hu, Y., Lee, B.R., Sum, A.K. (2018). "Universal correlation for gas hydrates suppression temperature of inhibited systems: II. Mixed salts and structure type." *AIChE Journal*, 64(6), 2240-2250. DOI: 10.1002/aic.16generalized
+
 ## Parameter History
 
 | Date | Change | Impact |
@@ -403,6 +564,9 @@ for (int i = 0; i < system.getNumberOfPhases(); i++) {
 | 2024 | Refitted monovalent parameters to Robinson & Stokes | γ± error: 2.8% |
 | Dec 2024 | Refitted divalent cation parameters [6-9] | CaCl₂: 16%→7%, MgCl₂: 22%→10% |
 | Dec 2024 | Updated chemical equilibrium solver | Improved pH accuracy |
+| Dec 2024 | Added gas-ion parameters for C2-C5+, N₂, H₂S, H₂ | Correct salting-out for all gases |
+| Feb 2026 | Added OI-ion parameters for Hu-Lee-Sum compliance | Additive hydrate inhibition with combined inhibitors |
+| Jul 2026 | `getpH()` acid-gas dissociation fallback | Acidic in-situ pH for CO₂/H₂S water without `chemicalReactionInit()`; no more silent 7.0 |
 
 ## Source Code References
 
@@ -411,7 +575,7 @@ for (int i = 0; i < system.getNumberOfPhases(); i++) {
 - `SystemElectrolyteCPA.java` - Generic electrolyte CPA system
 - `SystemSrkCPAstatoil.java` - Non-electrolyte CPA (for comparison)
 
-### Phase Classes  
+### Phase Classes
 - `PhaseElectrolyteCPAstatoil.java` - Phase calculations (Statoil g-function)
 - `PhaseElectrolyteCPA.java` - Base electrolyte CPA phase
 - `PhaseModifiedFurstElectrolyteEos.java` - Fürst electrostatic contributions
@@ -421,7 +585,7 @@ for (int i = 0; i < system.getNumberOfPhases(); i++) {
 - `ComponentElectrolyteCPA.java` - Base electrolyte CPA component
 
 ### Mixing Rules
-- `EosMixingRuleHandler.java` - Mixing rule selection (line 552 for rule 10)
+- `EosMixingRuleHandler.java` - Mixing rule selection and Wij calculations
 - `CPAMixingRuleHandler.java` - CPA association mixing rules
 
 ### Parameters

@@ -1,9 +1,17 @@
 package neqsim.process.equipment.powergeneration;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import neqsim.process.design.AutoSizeable;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
+import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.compressor.Compressor;
 import neqsim.process.equipment.expander.Expander;
 import neqsim.process.equipment.heatexchanger.Cooler;
@@ -15,14 +23,17 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.system.SystemInterface;
 
 /**
+ * Gas turbine model with integrated air compression, combustion, and expansion.
+ *
  * <p>
- * GasTurbine class.
+ * Implements {@link CapacityConstrainedEquipment} and {@link AutoSizeable} for integration with the production
+ * optimization framework. Capacity constraints track power output vs rated capacity and thermal efficiency.
  * </p>
  *
  * @author asmund
  * @version $Id: $Id
  */
-public class GasTurbine extends TwoPortEquipment {
+public class GasTurbine extends TwoPortEquipment implements CapacityConstrainedEquipment, AutoSizeable {
   /** Serialization version UID. */
   private static final long serialVersionUID = 1000;
   /** Logger object for class. */
@@ -33,25 +44,63 @@ public class GasTurbine extends TwoPortEquipment {
   public Compressor airCompressor;
   public double combustionpressure = 2.5;
   double airGasRatio = 2.8;
+  /**
+   * Excess-air factor applied on top of the stoichiometric air demand. Gas turbines run with large excess air
+   * (typically 2-3x stoichiometric) to limit the turbine inlet temperature.
+   */
+  private double excessAirFactor = 2.5;
   double expanderPower = 0.0;
   double compressorPower = 0.0;
   private double heat = 0.0;
 
+  /**
+   * Optional simple-cycle thermal efficiency (net shaft power / fuel lower heating value). When set to a value in (0,
+   * 1], {@link #run(UUID)} reports {@link #getPower()} directly from the fuel LHV, giving a realistic driver power for
+   * screening studies independent of the detailed air-compressor / expander pressure-ratio assumptions. The default of
+   * 0 keeps the detailed Brayton-cycle power balance.
+   */
+  private double thermalEfficiency = 0.0;
+
   public double power = 0.0;
 
   /**
-   * <p>
+   * Required net shaft/electric power in Watts for the inverse (power-demand) mode. When {@link #powerDemandMode} is
+   * {@code true}, {@link #run(UUID)} sizes the fuel flow to deliver this power from the fuel lower heating value and
+   * {@link #thermalEfficiency}, so the fuel-gas consumption always matches the driven load as the process solves.
+   */
+  private double requiredPower = 0.0;
+
+  /** When {@code true} the turbine runs in inverse (power-demand) mode; see {@link #requiredPower}. */
+  private boolean powerDemandMode = false;
+
+  /**
+   * Shaft loads (compressors) driven by this turbine. In power-demand mode their {@link Compressor#getPower()} is
+   * summed with {@link #auxiliaryPowerW} to size the required power, so the fuel gas automatically tracks the driven
+   * duty as the process solves. The loads must be run before this turbine.
+   */
+  private final List<Compressor> drivenLoads = new ArrayList<Compressor>();
+
+  /** Fixed auxiliary (generator / utility / pump) load in Watts added to the driven-load sum. */
+  private double auxiliaryPowerW = 0.0;
+
+  /** Rated (maximum) power output in Watts. Used for capacity constraint calculations. */
+  private double ratedPowerW = 0.0;
+
+  /** Whether this equipment has been auto-sized. */
+  private boolean autoSized = false;
+
+  /** Storage for capacity constraints. */
+  private final Map<String, CapacityConstraint> capacityConstraints = new LinkedHashMap<String, CapacityConstraint>();
+
+  /**
    * Constructor for GasTurbine.
-   * </p>
    */
   public GasTurbine() {
     this("GasTurbine");
   }
 
   /**
-   * <p>
    * Constructor for GasTurbine.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
@@ -68,15 +117,14 @@ public class GasTurbine extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Constructor for GasTurbine.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param inletStream a {@link neqsim.process.equipment.stream.StreamInterface} object
    */
   public GasTurbine(String name, StreamInterface inletStream) {
-    super(name, inletStream);
+    this(name);
+    setInletStream(inletStream);
   }
 
   /** {@inheritDoc} */
@@ -86,22 +134,27 @@ public class GasTurbine extends TwoPortEquipment {
   }
 
   /**
-   * <p>
    * Getter for the field <code>heat</code>.
+   *
+   * <p>
+   * Returns the exhaust heat rejected by the turbine cooler (the energy a HRSG or bottoming cycle could recover).
    * </p>
    *
-   * @return a double
+   * @return exhaust heat duty in watts (W)
    */
   public double getHeat() {
     return heat;
   }
 
   /**
-   * <p>
    * Getter for the field <code>power</code>.
+   *
+   * <p>
+   * Returns the net shaft power available to the load, computed as the expander work minus the internal air-compressor
+   * work. A positive value means the turbine delivers net power.
    * </p>
    *
-   * @return a double
+   * @return net shaft power in watts (W)
    */
   public double getPower() {
     return power;
@@ -118,7 +171,7 @@ public class GasTurbine extends TwoPortEquipment {
   public void setInletStream(StreamInterface inletStream) {
     this.inStream = inletStream;
     try {
-      this.outStream = inletStream.clone();
+      this.outStream = inletStream.clone(this.getName() + " out stream");
     } catch (Exception ex) {
       logger.error(ex.getMessage(), ex);
     }
@@ -127,7 +180,22 @@ public class GasTurbine extends TwoPortEquipment {
   /** {@inheritDoc} */
   @Override
   public void run(UUID id) {
+    if (powerDemandMode || !drivenLoads.isEmpty() || auxiliaryPowerW > 0.0) {
+      runPowerDemand(id);
+      return;
+    }
     thermoSystem = inStream.getThermoSystem().clone();
+
+    // Size the combustion-air flow from the fuel's stoichiometric oxygen demand plus excess air so
+    // there is always enough oxygen for complete combustion. A fixed air/gas ratio (the legacy
+    // default of 2.8) is sub-stoichiometric for methane and drives the oxygen inventory negative.
+    double o2FractionInAir = getOxygenMoleFractionInAir();
+    double o2PerMolFuel = calcStoichiometricOxygenDemand();
+    if (o2FractionInAir > 0.0 && o2PerMolFuel > 0.0) {
+      double requiredAirGasRatio = o2PerMolFuel / o2FractionInAir * excessAirFactor;
+      this.airGasRatio = Math.max(this.airGasRatio, requiredAirGasRatio);
+    }
+
     airStream.setFlowRate(thermoSystem.getFlowRate("mole/sec") * airGasRatio, "mole/sec");
     airStream.setPressure(ThermodynamicConstantsInterface.referencePressure);
     airStream.run(id);
@@ -138,9 +206,6 @@ public class GasTurbine extends TwoPortEquipment {
     compressorPower = airCompressor.getPower();
     StreamInterface outStreamAir = airCompressor.getOutletStream().clone();
     outStreamAir.getFluid().addFluid(thermoSystem);
-    // outStreamAir.getFluid().setTemperature(800.0);
-    // outStreamAir.getFluid().createDatabase(true);
-
     outStreamAir.run(id);
 
     double heatOfCombustion = inStream.LCV() * inStream.getFlowRate("mole/sec");
@@ -148,20 +213,10 @@ public class GasTurbine extends TwoPortEquipment {
     locHeater.setEnergyInput(heatOfCombustion);
     locHeater.run(id);
 
-    double moleMethane = outStreamAir.getFluid().getComponent("methane").getNumberOfmoles();
-    // double moleEthane =
-    // outStreamAir.getFluid().getComponent("ethane").getNumberOfmoles();
-    // double molePropane =
-    // outStreamAir.getFluid().getComponent("propane").getNumberOfmoles();
-    locHeater.getOutletStream().getFluid().addComponent("CO2", moleMethane);
-    locHeater.getOutletStream().getFluid().addComponent("water", moleMethane * 2.0);
-    locHeater.getOutletStream().getFluid().addComponent("methane", -moleMethane);
-    locHeater.getOutletStream().getFluid().addComponent("oxygen", -moleMethane * 2.0);
+    // Apply combustion stoichiometry for all hydrocarbon components, limited by available oxygen.
+    combustFuel(locHeater.getOutletStream().getFluid());
 
-    // TODO: Init fails because there is less than moleMethane of oxygen
     locHeater.getOutletStream().getFluid().init(3);
-    // locHeater.getOutStream().run(id);
-    locHeater.displayResult();
 
     Expander expander = new Expander("expander", locHeater.getOutletStream());
     expander.setOutletPressure(ThermodynamicConstantsInterface.referencePressure);
@@ -173,15 +228,343 @@ public class GasTurbine extends TwoPortEquipment {
 
     expanderPower = expander.getPower();
 
-    power = expanderPower - compressorPower;
+    // Expander.getPower() follows the compressor work convention (dH = hout - hinn), so it is
+    // negative for the work the hot gas delivers to the shaft. The net shaft power available to
+    // the load is therefore the magnitude of the expander work minus the air-compressor work:
+    // (-expanderPower) - compressorPower.
+    power = -expanderPower - compressorPower;
     this.heat = cooler1.getDuty();
+
+    // Simple-cycle override: when a thermal efficiency (or heat rate) is set, report the net shaft
+    // power directly from the fuel lower heating value and treat the remainder as exhaust heat. This
+    // gives a realistic driver power out of the box for screening studies, independent of the
+    // detailed air-compressor / expander pressure-ratio assumptions of the Brayton cycle above.
+    // Stream.LCV() is a volumetric heating value (J/Sm3), so it must be multiplied by the volumetric
+    // standard flow (Sm3/s) to obtain the combustion heat in watts.
+    if (thermalEfficiency > 0.0) {
+      double fuelHeat = inStream.LCV() * inStream.getFlowRate("Sm3/sec");
+      power = thermalEfficiency * fuelHeat;
+      this.heat = fuelHeat - power;
+    }
     setCalculationIdentifier(id);
   }
 
   /**
+   * Inverse (power-demand) run: size the fuel flow so the turbine delivers {@link #requiredPower}.
+   *
    * <p>
-   * Calculates ideal air fuel ratio [kg air/kg fuel].
+   * The fuel volumetric flow is computed from the fuel lower heating value (LCV, J/Sm3) and the simple-cycle
+   * {@link #thermalEfficiency}: fuelHeat = requiredPower / efficiency and fuelFlow[Sm3/s] = fuelHeat / LCV. The inlet
+   * fuel stream flow is set to this value, so the fuel consumption always matches the required load. The remaining fuel
+   * heat is reported as exhaust heat.
    * </p>
+   *
+   * @param id the calculation identifier
+   */
+  private void runPowerDemand(UUID id) {
+    if (thermalEfficiency <= 0.0) {
+      throw new RuntimeException("GasTurbine " + getName()
+          + ": power-demand mode requires a positive thermalEfficiency; call setThermalEfficiency.");
+    }
+    // When shaft loads are attached, the required power is the sum of their shaft power plus the
+    // fixed auxiliary load, so the fuel gas automatically tracks the driven duty each solve.
+    if (!drivenLoads.isEmpty() || auxiliaryPowerW > 0.0) {
+      this.requiredPower = getAggregatedLoadPowerW();
+    }
+    if (inStream.getFlowRate("mole/sec") <= 0.0) {
+      inStream.setFlowRate(1.0, "mole/sec");
+    }
+    inStream.run(id);
+    double lcvVolumetric = inStream.LCV(); // J/Sm3
+    double fuelHeat = requiredPower / thermalEfficiency; // W
+    double reqStdFlow = lcvVolumetric > 0.0 ? fuelHeat / lcvVolumetric : 0.0; // Sm3/s
+    inStream.setFlowRate(reqStdFlow, "Sm3/sec");
+    inStream.run(id);
+    thermoSystem = inStream.getThermoSystem().clone();
+    power = requiredPower;
+    heat = fuelHeat - requiredPower;
+    outStream.setThermoSystem(thermoSystem.clone());
+    outStream.setCalculationIdentifier(id);
+    setCalculationIdentifier(id);
+  }
+
+  /**
+   * Put the turbine in inverse (power-demand) mode and set the required net power. Requires a positive
+   * {@link #setThermalEfficiency(double) thermal efficiency}. Set to zero to return to the normal fuel-to-power mode.
+   *
+   * @param requiredPowerValue required net shaft/electric power (must be &gt;= 0)
+   * @param unit power unit: "W", "kW" or "MW"
+   */
+  public void setRequiredPower(double requiredPowerValue, String unit) {
+    double factor;
+    if ("W".equals(unit)) {
+      factor = 1.0;
+    } else if ("kW".equals(unit)) {
+      factor = 1.0e3;
+    } else if ("MW".equals(unit)) {
+      factor = 1.0e6;
+    } else {
+      throw new RuntimeException(
+          "GasTurbine " + getName() + ": unsupported power unit '" + unit + "' (use W, kW or MW).");
+    }
+    this.requiredPower = requiredPowerValue * factor;
+    this.powerDemandMode = requiredPowerValue > 0.0;
+  }
+
+  /**
+   * Get the required net power used in inverse (power-demand) mode.
+   *
+   * @return required net power in Watts
+   */
+  public double getRequiredPower() {
+    return requiredPower;
+  }
+
+  /**
+   * Check whether the turbine is running in inverse (power-demand) mode.
+   *
+   * @return {@code true} if in power-demand mode
+   */
+  public boolean isPowerDemandMode() {
+    return powerDemandMode;
+  }
+
+  /**
+   * Get the fuel-gas consumption computed by the turbine (the inlet fuel stream flow).
+   *
+   * @param unit flow-rate unit (e.g. "Sm3/sec", "Sm3/day", "kg/sec", "mole/sec")
+   * @return fuel-gas flow rate in the requested unit
+   */
+  public double getFuelFlowRate(String unit) {
+    return inStream.getFlowRate(unit);
+  }
+
+  /**
+   * Attach a shaft load (compressor) driven by this turbine. In power-demand mode the sum of all driven-load shaft
+   * powers plus the auxiliary load sizes the fuel gas, so it automatically tracks the driven duty. The loads must be
+   * run before this turbine each solve.
+   *
+   * @param load the driven compressor to add (must not be {@code null})
+   */
+  public void addDrivenLoad(Compressor load) {
+    if (load == null) {
+      throw new IllegalArgumentException("GasTurbine " + getName() + ": driven load must not be null.");
+    }
+    drivenLoads.add(load);
+    powerDemandMode = true;
+  }
+
+  /**
+   * Get the shaft loads driven by this turbine.
+   *
+   * @return the list of driven compressors (never {@code null})
+   */
+  public List<Compressor> getDrivenLoads() {
+    return drivenLoads;
+  }
+
+  /**
+   * Set a fixed auxiliary (generator / utility / pump) load added to the driven-load sum in power-demand mode.
+   *
+   * @param auxiliaryLoad the auxiliary load value (must be &gt;= 0)
+   * @param unit power unit: "W", "kW" or "MW"
+   */
+  public void setAuxiliaryLoad(double auxiliaryLoad, String unit) {
+    double factor;
+    if ("W".equals(unit)) {
+      factor = 1.0;
+    } else if ("kW".equals(unit)) {
+      factor = 1.0e3;
+    } else if ("MW".equals(unit)) {
+      factor = 1.0e6;
+    } else {
+      throw new RuntimeException(
+          "GasTurbine " + getName() + ": unsupported power unit '" + unit + "' (use W, kW or MW).");
+    }
+    this.auxiliaryPowerW = auxiliaryLoad * factor;
+    powerDemandMode = true;
+  }
+
+  /**
+   * Get the fixed auxiliary load in Watts.
+   *
+   * @return auxiliary load in watts (W)
+   */
+  public double getAuxiliaryLoad() {
+    return auxiliaryPowerW;
+  }
+
+  /**
+   * Get the aggregated driven power: the sum of all driven-load shaft powers plus the auxiliary load.
+   *
+   * @return aggregated driven power in watts (W)
+   */
+  public double getAggregatedLoadPowerW() {
+    double sum = auxiliaryPowerW;
+    for (Compressor load : drivenLoads) {
+      sum += load.getPower();
+    }
+    return sum;
+  }
+
+  /**
+   * Get the oxygen mole fraction of the combustion-air fluid.
+   *
+   * @return oxygen mole fraction (0-1)
+   */
+  private double getOxygenMoleFractionInAir() {
+    SystemInterface air = airStream.getThermoSystem();
+    for (int i = 0; i < air.getNumberOfComponents(); i++) {
+      if ("oxygen".equals(air.getComponent(i).getName())) {
+        return air.getComponent(i).getz();
+      }
+    }
+    return 0.0;
+  }
+
+  /**
+   * Calculate the stoichiometric oxygen demand of the fuel for complete combustion.
+   *
+   * <p>
+   * For each hydrocarbon with C carbon and H hydrogen atoms the demand is (C + H/4) mol O2 per mol of that component,
+   * weighted by its mole fraction.
+   * </p>
+   *
+   * @return stoichiometric oxygen demand in mol O2 per mol fuel
+   */
+  private double calcStoichiometricOxygenDemand() {
+    double o2 = 0.0;
+    for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
+      if (thermoSystem.getComponent(i).isHydrocarbon()) {
+        double c = thermoSystem.getComponent(i).getElements().getNumberOfElements("C");
+        double h = thermoSystem.getComponent(i).getElements().getNumberOfElements("H");
+        o2 += thermoSystem.getComponent(i).getz() * (c + h / 4.0);
+      }
+    }
+    return o2;
+  }
+
+  /**
+   * Apply combustion stoichiometry to a combined air + fuel fluid.
+   *
+   * <p>
+   * Every hydrocarbon component is oxidised to CO2 and water, consuming oxygen. The burned fraction is limited by the
+   * oxygen available in the fluid so the oxygen inventory never goes negative.
+   * </p>
+   *
+   * @param fluid the combined combustion fluid to modify in place
+   */
+  private void combustFuel(SystemInterface fluid) {
+    double requiredO2 = 0.0;
+    double availableO2 = 0.0;
+    int n = fluid.getNumberOfComponents();
+    for (int i = 0; i < n; i++) {
+      if ("oxygen".equals(fluid.getComponent(i).getName())) {
+        availableO2 = fluid.getComponent(i).getNumberOfmoles();
+      }
+      if (fluid.getComponent(i).isHydrocarbon()) {
+        double moles = fluid.getComponent(i).getNumberOfmoles();
+        double c = fluid.getComponent(i).getElements().getNumberOfElements("C");
+        double h = fluid.getComponent(i).getElements().getNumberOfElements("H");
+        requiredO2 += moles * (c + h / 4.0);
+      }
+    }
+    if (requiredO2 <= 0.0) {
+      return;
+    }
+    double burnFraction = Math.min(1.0, availableO2 / requiredO2);
+
+    double totalCO2 = 0.0;
+    double totalH2O = 0.0;
+    double totalO2Consumed = 0.0;
+    List<String> hcNames = new ArrayList<String>();
+    List<Double> hcBurn = new ArrayList<Double>();
+    for (int i = 0; i < n; i++) {
+      if (fluid.getComponent(i).isHydrocarbon()) {
+        double moles = fluid.getComponent(i).getNumberOfmoles();
+        double c = fluid.getComponent(i).getElements().getNumberOfElements("C");
+        double h = fluid.getComponent(i).getElements().getNumberOfElements("H");
+        double burned = moles * burnFraction;
+        totalCO2 += burned * c;
+        totalH2O += burned * h / 2.0;
+        totalO2Consumed += burned * (c + h / 4.0);
+        hcNames.add(fluid.getComponent(i).getName());
+        hcBurn.add(burned);
+      }
+    }
+    for (int k = 0; k < hcNames.size(); k++) {
+      fluid.addComponent(hcNames.get(k), -hcBurn.get(k));
+    }
+    fluid.addComponent("CO2", totalCO2);
+    fluid.addComponent("water", totalH2O);
+    fluid.addComponent("oxygen", -totalO2Consumed);
+  }
+
+  /**
+   * Get the excess-air factor applied on top of the stoichiometric air demand.
+   *
+   * @return excess-air factor (1.0 = stoichiometric)
+   */
+  public double getExcessAirFactor() {
+    return excessAirFactor;
+  }
+
+  /**
+   * Set the excess-air factor applied on top of the stoichiometric air demand.
+   *
+   * @param excessAirFactor excess-air factor (must be &ge; 1.0 for complete combustion)
+   */
+  public void setExcessAirFactor(double excessAirFactor) {
+    this.excessAirFactor = excessAirFactor;
+  }
+
+  /**
+   * Get the simple-cycle thermal efficiency used to report net shaft power.
+   *
+   * @return thermal efficiency (0 = disabled, detailed Brayton-cycle balance used)
+   */
+  public double getThermalEfficiency() {
+    return thermalEfficiency;
+  }
+
+  /**
+   * Set a simple-cycle thermal efficiency so {@link #getPower()} is reported directly from the fuel lower heating
+   * value. Typical simple-cycle gas turbines are 0.30-0.42 (aeroderivative up to ~0.42). Set to 0 to restore the
+   * detailed Brayton-cycle power balance.
+   *
+   * @param thermalEfficiency net shaft power divided by fuel lower heating value, in the range [0, 1]
+   */
+  public void setThermalEfficiency(double thermalEfficiency) {
+    if (thermalEfficiency < 0.0 || thermalEfficiency > 1.0) {
+      throw new IllegalArgumentException("thermal efficiency must be between 0 and 1");
+    }
+    this.thermalEfficiency = thermalEfficiency;
+  }
+
+  /**
+   * Get the heat rate implied by the current simple-cycle thermal efficiency.
+   *
+   * @return heat rate in kJ of fuel (LHV) per kWh of net shaft power, or {@link Double#NaN} when no efficiency is set
+   */
+  public double getHeatRate() {
+    return thermalEfficiency > 0.0 ? 3600.0 / thermalEfficiency : Double.NaN;
+  }
+
+  /**
+   * Set the simple-cycle heat rate. This is an alternative to {@link #setThermalEfficiency(double)}; the two are
+   * related by efficiency = 3600 / heatRate. For example 10286 kJ/kWh corresponds to 35 % efficiency.
+   *
+   * @param heatRateKJperKWh heat rate in kJ of fuel (LHV) per kWh of net shaft power (must be positive)
+   */
+  public void setHeatRate(double heatRateKJperKWh) {
+    if (heatRateKJperKWh <= 0.0) {
+      throw new IllegalArgumentException("heat rate must be positive");
+    }
+    this.thermalEfficiency = 3600.0 / heatRateKJperKWh;
+  }
+
+  /**
+   * Calculates ideal air fuel ratio [kg air/kg fuel].
    *
    * @return ideal air fuel ratio [kg air/kg fuel]
    */
@@ -195,8 +578,7 @@ public class GasTurbine extends TwoPortEquipment {
     for (int i = 0; i < thermoSystem.getNumberOfComponents(); i++) {
       if (thermoSystem.getComponent(i).isHydrocarbon()) {
         sumHC += thermoSystem.getComponent(i).getz();
-        molMassHC +=
-            thermoSystem.getComponent(i).getz() * thermoSystem.getComponent(i).getMolarMass();
+        molMassHC += thermoSystem.getComponent(i).getz() * thermoSystem.getComponent(i).getMolarMass();
         elementsC += thermoSystem.getComponent(i).getz()
             * thermoSystem.getComponent(i).getElements().getNumberOfElements("C");
         elementsH += thermoSystem.getComponent(i).getz()
@@ -216,5 +598,218 @@ public class GasTurbine extends TwoPortEquipment {
 
     double AFR = A * (32.0 + 3.76 * 28.0) / 1000.0 / molMassHC * wtFracHC;
     return AFR;
+  }
+
+  /**
+   * Get power output in specified unit.
+   *
+   * @param unit power unit ("W", "kW", "MW", "hp")
+   * @return power output in specified unit
+   */
+  public double getPower(String unit) {
+    switch (unit) {
+    case "kW":
+      return power / 1000.0;
+    case "MW":
+      return power / 1.0e6;
+    case "hp":
+      return power / 745.7;
+    default:
+      return power;
+    }
+  }
+
+  /**
+   * Get the rated (maximum) power output.
+   *
+   * @return rated power in Watts
+   */
+  public double getRatedPower() {
+    return ratedPowerW;
+  }
+
+  /**
+   * Get the rated (maximum) power output in specified unit.
+   *
+   * @param unit power unit ("W", "kW", "MW", "hp")
+   * @return rated power in specified unit
+   */
+  public double getRatedPower(String unit) {
+    switch (unit) {
+    case "kW":
+      return ratedPowerW / 1000.0;
+    case "MW":
+      return ratedPowerW / 1.0e6;
+    case "hp":
+      return ratedPowerW / 745.7;
+    default:
+      return ratedPowerW;
+    }
+  }
+
+  /**
+   * Set the rated (maximum) power output.
+   *
+   * @param ratedPower rated power in Watts
+   */
+  public void setRatedPower(double ratedPower) {
+    this.ratedPowerW = ratedPower;
+    initializeCapacityConstraints();
+  }
+
+  /**
+   * Set the rated (maximum) power output with unit.
+   *
+   * @param ratedPower rated power value
+   * @param unit power unit ("W", "kW", "MW", "hp")
+   */
+  public void setRatedPower(double ratedPower, String unit) {
+    switch (unit) {
+    case "kW":
+      this.ratedPowerW = ratedPower * 1000.0;
+      break;
+    case "MW":
+      this.ratedPowerW = ratedPower * 1.0e6;
+      break;
+    case "hp":
+      this.ratedPowerW = ratedPower * 745.7;
+      break;
+    default:
+      this.ratedPowerW = ratedPower;
+    }
+    initializeCapacityConstraints();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityDuty() {
+    return Math.abs(power);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getCapacityMax() {
+    return ratedPowerW > 0 ? ratedPowerW : Math.abs(power) * 1.2;
+  }
+
+  /**
+   * Initialize capacity constraints for the gas turbine.
+   */
+  private void initializeCapacityConstraints() {
+    capacityConstraints.clear();
+    if (ratedPowerW > 0) {
+      addCapacityConstraint(new CapacityConstraint("power", "kW", CapacityConstraint.ConstraintType.HARD)
+          .setDesignValue(ratedPowerW / 1000.0).setMaxValue(ratedPowerW / 1000.0 * 1.1).setWarningThreshold(0.9)
+          .setDescription("Gas turbine power output vs rated capacity")
+          .setValueSupplier(() -> Math.abs(this.power) / 1000.0));
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public Map<String, CapacityConstraint> getCapacityConstraints() {
+    return Collections.unmodifiableMap(capacityConstraints);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public CapacityConstraint getBottleneckConstraint() {
+    CapacityConstraint bottleneck = null;
+    double maxUtil = 0.0;
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      double util = c.getUtilization();
+      if (!Double.isNaN(util) && util > maxUtil) {
+        maxUtil = util;
+        bottleneck = c;
+      }
+    }
+    return bottleneck;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isCapacityExceeded() {
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isViolated()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isHardLimitExceeded() {
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      if (c.isHardLimitExceeded()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public double getMaxUtilization() {
+    double maxUtil = 0.0;
+    for (CapacityConstraint c : capacityConstraints.values()) {
+      double util = c.getUtilization();
+      if (!Double.isNaN(util)) {
+        maxUtil = Math.max(maxUtil, util);
+      }
+    }
+    return maxUtil;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void addCapacityConstraint(CapacityConstraint constraint) {
+    if (constraint != null) {
+      capacityConstraints.put(constraint.getName(), constraint);
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean removeCapacityConstraint(String constraintName) {
+    return capacityConstraints.remove(constraintName) != null;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void clearCapacityConstraints() {
+    capacityConstraints.clear();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void autoSize(double safetyFactor) {
+    if (power > 0) {
+      this.ratedPowerW = Math.abs(power) * safetyFactor;
+      initializeCapacityConstraints();
+      autoSized = true;
+    }
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getSizingReport() {
+    StringBuilder sb = new StringBuilder();
+    sb.append("=== Gas Turbine Auto-Sizing Report ===\n");
+    sb.append("Equipment: ").append(getName()).append("\n");
+    sb.append("Auto-sized: ").append(autoSized).append("\n");
+    sb.append("\n--- Operating Conditions ---\n");
+    sb.append("Power Output: ").append(String.format("%.2f kW", Math.abs(power) / 1000.0)).append("\n");
+    if (ratedPowerW > 0) {
+      sb.append("Rated Power: ").append(String.format("%.2f kW", ratedPowerW / 1000.0)).append("\n");
+      sb.append("Utilization: ").append(String.format("%.1f%%", Math.abs(power) / ratedPowerW * 100)).append("\n");
+    }
+    return sb.toString();
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public boolean isAutoSized() {
+    return autoSized;
   }
 }

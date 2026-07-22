@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TPflashMethanolWaterPropane class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TPflashMethanolWaterPropane {
+  private static final Logger logger = LogManager.getLogger(TPflashMethanolWaterPropane.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TPflashMethanolWaterPropane.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -36,8 +33,7 @@ public class TPflashMethanolWaterPropane {
      * testSystem.addComponent("methane", 150.0e-2); testSystem.addComponent("propane", 150.0e-3);
      * testSystem.addComponent("methanol", 0.5); testSystem.addComponent("water", 0.5);
      *
-     * testSystem.createDatabase(true); testSystem.setMixingRule(10);
-     * testSystem.setMultiPhaseCheck(true);
+     * testSystem.createDatabase(true); testSystem.setMixingRule(10); testSystem.setMultiPhaseCheck(true);
      */
     testSystem = testSystem.readObject(100);
     testOps = new ThermodynamicOperations(testSystem);

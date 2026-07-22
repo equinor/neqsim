@@ -3,9 +3,7 @@ package neqsim.thermo.characterization;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * Recombine class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -17,19 +15,16 @@ public class Recombine {
   private double oilDesnity = 0.8;
 
   /**
-   * <p>
    * Constructor for Recombine.
-   * </p>
    *
    * @param gas a {@link neqsim.thermo.system.SystemInterface} object
    * @param oil a {@link neqsim.thermo.system.SystemInterface} object
    */
-  public Recombine(SystemInterface gas, SystemInterface oil) {}
+  public Recombine(SystemInterface gas, SystemInterface oil) {
+  }
 
   /**
-   * <p>
    * runRecombination.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -38,9 +33,7 @@ public class Recombine {
   }
 
   /**
-   * <p>
    * getGOR.
-   * </p>
    *
    * @return the GOR
    */
@@ -49,9 +42,7 @@ public class Recombine {
   }
 
   /**
-   * <p>
    * setGOR.
-   * </p>
    *
    * @param GOR the GOR to set
    */
@@ -60,9 +51,7 @@ public class Recombine {
   }
 
   /**
-   * <p>
    * Getter for the field <code>oilDesnity</code>.
-   * </p>
    *
    * @return the oilDesnity
    */
@@ -71,9 +60,7 @@ public class Recombine {
   }
 
   /**
-   * <p>
    * Setter for the field <code>oilDesnity</code>.
-   * </p>
    *
    * @param oilDesnity the oilDesnity to set
    */
@@ -82,9 +69,7 @@ public class Recombine {
   }
 
   /**
-   * <p>
    * Getter for the field <code>recombinedSystem</code>.
-   * </p>
    *
    * @return the recombinedSystem
    */

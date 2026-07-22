@@ -4,8 +4,8 @@ package neqsim.fluidmechanics.flownode;
  * Utility class for calculating mass transfer coefficients in two-phase pipe flow.
  *
  * <p>
- * Implements flow pattern-specific Sherwood number correlations for calculating liquid-side and
- * gas-side mass transfer coefficients.
+ * Implements flow pattern-specific Sherwood number correlations for calculating liquid-side and gas-side mass transfer
+ * coefficients.
  * </p>
  *
  * <p>
@@ -27,7 +27,8 @@ public class MassTransferCoefficientCalculator {
   /**
    * Private constructor to prevent instantiation.
    */
-  private MassTransferCoefficientCalculator() {}
+  private MassTransferCoefficientCalculator() {
+  }
 
   /**
    * Calculates the liquid-side mass transfer coefficient.
@@ -42,9 +43,8 @@ public class MassTransferCoefficientCalculator {
    * @param diffL liquid diffusivity (m²/s)
    * @return liquid-side mass transfer coefficient k_L (m/s), always non-negative
    */
-  public static double calculateLiquidMassTransferCoefficient(FlowPattern flowPattern,
-      double diameter, double liquidHoldup, double usg, double usl, double rhoL, double muL,
-      double diffL) {
+  public static double calculateLiquidMassTransferCoefficient(FlowPattern flowPattern, double diameter,
+      double liquidHoldup, double usg, double usl, double rhoL, double muL, double diffL) {
     // Validate inputs - return 0 for invalid values
     if (diameter <= 0 || diffL <= 0 || rhoL <= 0 || muL <= 0) {
       return 0.0;
@@ -58,28 +58,28 @@ public class MassTransferCoefficientCalculator {
 
     double kL;
     switch (flowPattern) {
-      case STRATIFIED:
-      case STRATIFIED_WAVY:
-        kL = calculateStratifiedKL(diameter, liquidHoldup, usl, rhoL, muL, diffL, scL);
-        break;
-      case ANNULAR:
-        kL = calculateAnnularKL(diameter, liquidHoldup, usl, rhoL, muL, diffL, scL);
-        break;
-      case SLUG:
-        kL = calculateSlugKL(diameter, liquidHoldup, usg, usl, rhoL, muL, diffL, scL);
-        break;
-      case BUBBLE:
-      case DISPERSED_BUBBLE:
-        kL = calculateBubbleKL(diameter, liquidHoldup, usg, usl, rhoL, muL, diffL, scL);
-        break;
-      case DROPLET:
-        kL = calculateDropletKL(diameter, usg, rhoL, muL, diffL, scL);
-        break;
-      case CHURN:
-        kL = calculateChurnKL(diameter, liquidHoldup, usg, usl, rhoL, muL, diffL, scL);
-        break;
-      default:
-        kL = calculateStratifiedKL(diameter, liquidHoldup, usl, rhoL, muL, diffL, scL);
+    case STRATIFIED:
+    case STRATIFIED_WAVY:
+      kL = calculateStratifiedKL(diameter, liquidHoldup, usl, rhoL, muL, diffL, scL);
+      break;
+    case ANNULAR:
+      kL = calculateAnnularKL(diameter, liquidHoldup, usl, rhoL, muL, diffL, scL);
+      break;
+    case SLUG:
+      kL = calculateSlugKL(diameter, liquidHoldup, usg, usl, rhoL, muL, diffL, scL);
+      break;
+    case BUBBLE:
+    case DISPERSED_BUBBLE:
+      kL = calculateBubbleKL(diameter, liquidHoldup, usg, usl, rhoL, muL, diffL, scL);
+      break;
+    case DROPLET:
+      kL = calculateDropletKL(diameter, usg, rhoL, muL, diffL, scL);
+      break;
+    case CHURN:
+      kL = calculateChurnKL(diameter, liquidHoldup, usg, usl, rhoL, muL, diffL, scL);
+      break;
+    default:
+      kL = calculateStratifiedKL(diameter, liquidHoldup, usl, rhoL, muL, diffL, scL);
     }
 
     return Math.max(0.0, kL);
@@ -118,26 +118,26 @@ public class MassTransferCoefficientCalculator {
 
     double kG;
     switch (flowPattern) {
-      case STRATIFIED:
-      case STRATIFIED_WAVY:
-        kG = calculateStratifiedKG(diameter, voidFraction, uG, rhoG, muG, diffG, scG);
-        break;
-      case ANNULAR:
-        kG = calculateAnnularKG(diameter, voidFraction, uG, rhoG, muG, diffG, scG);
-        break;
-      case BUBBLE:
-      case DISPERSED_BUBBLE:
-      case SLUG:
-        kG = calculateBubbleKG(diameter, uG, rhoG, muG, diffG, scG);
-        break;
-      case DROPLET:
-        kG = calculateDropletKG(diameter, uG, rhoG, muG, diffG, scG);
-        break;
-      case CHURN:
-        kG = calculateChurnKG(diameter, uG, rhoG, muG, diffG, scG);
-        break;
-      default:
-        kG = calculateStratifiedKG(diameter, voidFraction, uG, rhoG, muG, diffG, scG);
+    case STRATIFIED:
+    case STRATIFIED_WAVY:
+      kG = calculateStratifiedKG(diameter, voidFraction, uG, rhoG, muG, diffG, scG);
+      break;
+    case ANNULAR:
+      kG = calculateAnnularKG(diameter, voidFraction, uG, rhoG, muG, diffG, scG);
+      break;
+    case BUBBLE:
+    case DISPERSED_BUBBLE:
+    case SLUG:
+      kG = calculateBubbleKG(diameter, uG, rhoG, muG, diffG, scG);
+      break;
+    case DROPLET:
+      kG = calculateDropletKG(diameter, uG, rhoG, muG, diffG, scG);
+      break;
+    case CHURN:
+      kG = calculateChurnKG(diameter, uG, rhoG, muG, diffG, scG);
+      break;
+    default:
+      kG = calculateStratifiedKG(diameter, voidFraction, uG, rhoG, muG, diffG, scG);
     }
 
     return Math.max(0.0, kG);
@@ -193,8 +193,8 @@ public class MassTransferCoefficientCalculator {
    * @param scL liquid Schmidt number [-]
    * @return liquid-side mass transfer coefficient [m/s]
    */
-  private static double calculateStratifiedKL(double diameter, double liquidHoldup, double usl,
-      double rhoL, double muL, double diffL, double scL) {
+  private static double calculateStratifiedKL(double diameter, double liquidHoldup, double usl, double rhoL, double muL,
+      double diffL, double scL) {
     // Hydraulic diameter for liquid phase
     double dh = calculateLiquidHydraulicDiameter(diameter, liquidHoldup);
 
@@ -227,8 +227,8 @@ public class MassTransferCoefficientCalculator {
    * @param scL liquid Schmidt number [-]
    * @return liquid-side mass transfer coefficient [m/s]
    */
-  private static double calculateAnnularKL(double diameter, double liquidHoldup, double usl,
-      double rhoL, double muL, double diffL, double scL) {
+  private static double calculateAnnularKL(double diameter, double liquidHoldup, double usl, double rhoL, double muL,
+      double diffL, double scL) {
     // Film thickness
     double delta = diameter / 2.0 * (1.0 - Math.sqrt(1.0 - liquidHoldup));
 
@@ -262,8 +262,8 @@ public class MassTransferCoefficientCalculator {
    * @param scL liquid Schmidt number [-]
    * @return liquid-side mass transfer coefficient [m/s]
    */
-  private static double calculateSlugKL(double diameter, double liquidHoldup, double usg,
-      double usl, double rhoL, double muL, double diffL, double scL) {
+  private static double calculateSlugKL(double diameter, double liquidHoldup, double usg, double usl, double rhoL,
+      double muL, double diffL, double scL) {
     // Slug flow is combination of film (in Taylor bubble region) and mixed (in slug)
     double voidFraction = 1.0 - liquidHoldup;
     double bubbleFraction = Math.min(0.8, voidFraction / 0.7);
@@ -294,8 +294,8 @@ public class MassTransferCoefficientCalculator {
    * @param scL liquid Schmidt number [-]
    * @return liquid-side mass transfer coefficient [m/s]
    */
-  private static double calculateBubbleKL(double diameter, double liquidHoldup, double usg,
-      double usl, double rhoL, double muL, double diffL, double scL) {
+  private static double calculateBubbleKL(double diameter, double liquidHoldup, double usg, double usl, double rhoL,
+      double muL, double diffL, double scL) {
     // For bubble flow, use Ranz-Marshall with bubble slip velocity
     double voidFraction = 1.0 - liquidHoldup;
 
@@ -326,8 +326,8 @@ public class MassTransferCoefficientCalculator {
    * @param scL liquid Schmidt number [-]
    * @return liquid-side mass transfer coefficient [m/s]
    */
-  private static double calculateDropletKL(double diameter, double usg, double rhoL, double muL,
-      double diffL, double scL) {
+  private static double calculateDropletKL(double diameter, double usg, double rhoL, double muL, double diffL,
+      double scL) {
     // Internal circulation in droplets enhances mass transfer
     // Use Kronig-Brink for circulating drops: Sh ≈ 17.9
 
@@ -357,8 +357,8 @@ public class MassTransferCoefficientCalculator {
    * @param scL liquid Schmidt number [-]
    * @return liquid-side mass transfer coefficient [m/s]
    */
-  private static double calculateChurnKL(double diameter, double liquidHoldup, double usg,
-      double usl, double rhoL, double muL, double diffL, double scL) {
+  private static double calculateChurnKL(double diameter, double liquidHoldup, double usg, double usl, double rhoL,
+      double muL, double diffL, double scL) {
     // Churn flow has high turbulence - use enhanced turbulent correlation
     double uMix = usg + usl;
     double reMix = rhoL * uMix * diameter / muL;
@@ -383,8 +383,8 @@ public class MassTransferCoefficientCalculator {
    * @param scG gas Schmidt number [-]
    * @return gas-side mass transfer coefficient [m/s]
    */
-  private static double calculateStratifiedKG(double diameter, double voidFraction, double uG,
-      double rhoG, double muG, double diffG, double scG) {
+  private static double calculateStratifiedKG(double diameter, double voidFraction, double uG, double rhoG, double muG,
+      double diffG, double scG) {
     // Hydraulic diameter for gas phase
     double dh = calculateGasHydraulicDiameter(diameter, voidFraction);
 
@@ -409,8 +409,8 @@ public class MassTransferCoefficientCalculator {
    * @param scG gas Schmidt number [-]
    * @return gas-side mass transfer coefficient [m/s]
    */
-  private static double calculateAnnularKG(double diameter, double voidFraction, double uG,
-      double rhoG, double muG, double diffG, double scG) {
+  private static double calculateAnnularKG(double diameter, double voidFraction, double uG, double rhoG, double muG,
+      double diffG, double scG) {
     // Core diameter
     double dCore = diameter * Math.sqrt(voidFraction);
 
@@ -434,8 +434,8 @@ public class MassTransferCoefficientCalculator {
    * @param scG gas Schmidt number [-]
    * @return gas-side mass transfer coefficient [m/s]
    */
-  private static double calculateBubbleKG(double diameter, double uG, double rhoG, double muG,
-      double diffG, double scG) {
+  private static double calculateBubbleKG(double diameter, double uG, double rhoG, double muG, double diffG,
+      double scG) {
     // For gas side in bubbles, diffusion in stagnant bubble interior
     double dBubble = 0.01 * diameter;
 
@@ -457,8 +457,8 @@ public class MassTransferCoefficientCalculator {
    * @param scG gas Schmidt number [-]
    * @return gas-side mass transfer coefficient [m/s]
    */
-  private static double calculateDropletKG(double diameter, double uG, double rhoG, double muG,
-      double diffG, double scG) {
+  private static double calculateDropletKG(double diameter, double uG, double rhoG, double muG, double diffG,
+      double scG) {
     // Droplets in gas stream - use Ranz-Marshall
     double dDrop = 0.001;
     double uRel = uG * 0.1;
@@ -480,8 +480,8 @@ public class MassTransferCoefficientCalculator {
    * @param scG gas Schmidt number [-]
    * @return gas-side mass transfer coefficient [m/s]
    */
-  private static double calculateChurnKG(double diameter, double uG, double rhoG, double muG,
-      double diffG, double scG) {
+  private static double calculateChurnKG(double diameter, double uG, double rhoG, double muG, double diffG,
+      double scG) {
     double reG = rhoG * uG * diameter / muG;
     double sh = 0.04 * Math.pow(reG, 0.8) * Math.pow(scG, 0.33);
 
@@ -520,5 +520,273 @@ public class MassTransferCoefficientCalculator {
    */
   private static double calculateGasHydraulicDiameter(double diameter, double voidFraction) {
     return calculateLiquidHydraulicDiameter(diameter, 1.0 - voidFraction);
+  }
+
+  // ==================== ENHANCED MODELS ====================
+
+  /**
+   * Calculates the liquid-side mass transfer coefficient with turbulence enhancement.
+   *
+   * <p>
+   * Applies a turbulence correction factor based on the turbulent intensity, which increases mass transfer in highly
+   * turbulent conditions.
+   * </p>
+   *
+   * <p>
+   * Reference: Lamont, J.C., Scott, D.S. (1970). An eddy cell model of mass transfer into the surface of a turbulent
+   * liquid. AIChE Journal, 16(4), 513-519.
+   * </p>
+   *
+   * @param flowPattern the flow pattern
+   * @param diameter pipe diameter (m)
+   * @param liquidHoldup liquid holdup
+   * @param usg superficial gas velocity (m/s)
+   * @param usl superficial liquid velocity (m/s)
+   * @param rhoL liquid density (kg/m³)
+   * @param muL liquid viscosity (Pa·s)
+   * @param diffL liquid diffusivity (m²/s)
+   * @param turbulentIntensity turbulent intensity (0-1, typical 0.05-0.2)
+   * @return enhanced liquid-side mass transfer coefficient (m/s)
+   */
+  public static double calculateLiquidMassTransferCoefficientWithTurbulence(FlowPattern flowPattern, double diameter,
+      double liquidHoldup, double usg, double usl, double rhoL, double muL, double diffL, double turbulentIntensity) {
+
+    // Get base coefficient
+    double kLBase = calculateLiquidMassTransferCoefficient(flowPattern, diameter, liquidHoldup, usg, usl, rhoL, muL,
+        diffL);
+
+    if (kLBase <= 0 || turbulentIntensity <= 0) {
+      return Math.max(0.0, kLBase);
+    }
+
+    // Calculate liquid Reynolds number
+    double hydraulicDiam = calculateLiquidHydraulicDiameter(diameter, liquidHoldup);
+    double uL = usl / Math.max(liquidHoldup, 0.01);
+    double reL = rhoL * uL * hydraulicDiam / muL;
+
+    // Turbulence enhancement factor (Lamont & Scott, 1970)
+    // Enhancement proportional to (turbulent diffusivity / molecular diffusivity)^n
+    // Simplified: enhancement = 1 + C * Tu * sqrt(Re)
+    double enhancement = 1.0 + 2.5 * turbulentIntensity * Math.sqrt(Math.max(0, reL));
+
+    // Cap enhancement at reasonable limit
+    enhancement = Math.min(enhancement, 5.0);
+
+    return kLBase * enhancement;
+  }
+
+  /**
+   * Applies Marangoni correction to mass transfer coefficient.
+   *
+   * <p>
+   * The Marangoni effect occurs when surface-active components create surface tension gradients that oppose interfacial
+   * motion, reducing mass transfer rates.
+   * </p>
+   *
+   * <p>
+   * Reference: Springer, T.G., Pigford, R.L. (1970). Influence of surface turbulence and surfactants on gas transport
+   * through liquid interfaces. Ind. Eng. Chem. Fundam., 9(3), 458-465.
+   * </p>
+   *
+   * @param kLBase base mass transfer coefficient (m/s)
+   * @param surfaceTensionGradient gradient of surface tension with concentration (N·m/mol)
+   * @param diffL liquid diffusivity (m²/s)
+   * @param muL liquid viscosity (Pa·s)
+   * @return corrected mass transfer coefficient (m/s)
+   */
+  public static double applyMarangoniCorrection(double kLBase, double surfaceTensionGradient, double diffL,
+      double muL) {
+
+    if (kLBase <= 0 || Math.abs(surfaceTensionGradient) < 1e-10) {
+      return Math.max(0.0, kLBase);
+    }
+
+    // Marangoni number: Ma = (dσ/dc) * D / (μ * k²)
+    double ma = Math.abs(surfaceTensionGradient) * diffL / (muL * kLBase * kLBase + 1e-20);
+
+    // Correction factor (Springer & Pigford, 1970)
+    // k_corrected = k_base / (1 + 0.35 * sqrt(|Ma|))
+    double correctionFactor = 1.0 / (1.0 + 0.35 * Math.sqrt(ma));
+
+    // Correction should not reduce kL by more than 90%
+    correctionFactor = Math.max(correctionFactor, 0.1);
+
+    return kLBase * correctionFactor;
+  }
+
+  /**
+   * Calculates the enhanced mass transfer coefficient incorporating multiple effects.
+   *
+   * <p>
+   * This method combines turbulence enhancement and Marangoni correction for a comprehensive mass transfer coefficient
+   * calculation.
+   * </p>
+   *
+   * @param flowPattern the flow pattern
+   * @param diameter pipe diameter (m)
+   * @param liquidHoldup liquid holdup
+   * @param usg superficial gas velocity (m/s)
+   * @param usl superficial liquid velocity (m/s)
+   * @param rhoL liquid density (kg/m³)
+   * @param muL liquid viscosity (Pa·s)
+   * @param diffL liquid diffusivity (m²/s)
+   * @param turbulentIntensity turbulent intensity (0-1)
+   * @param surfaceTensionGradient surface tension gradient (N·m/mol), 0 to disable
+   * @param includeTurbulence whether to include turbulence effects
+   * @param includeMarangoni whether to include Marangoni correction
+   * @return enhanced mass transfer coefficient (m/s)
+   */
+  public static double calculateEnhancedLiquidMassTransferCoefficient(FlowPattern flowPattern, double diameter,
+      double liquidHoldup, double usg, double usl, double rhoL, double muL, double diffL, double turbulentIntensity,
+      double surfaceTensionGradient, boolean includeTurbulence, boolean includeMarangoni) {
+
+    double kL;
+
+    // Apply turbulence enhancement if enabled
+    if (includeTurbulence && turbulentIntensity > 0) {
+      kL = calculateLiquidMassTransferCoefficientWithTurbulence(flowPattern, diameter, liquidHoldup, usg, usl, rhoL,
+          muL, diffL, turbulentIntensity);
+    } else {
+      kL = calculateLiquidMassTransferCoefficient(flowPattern, diameter, liquidHoldup, usg, usl, rhoL, muL, diffL);
+    }
+
+    // Apply Marangoni correction if enabled
+    if (includeMarangoni && Math.abs(surfaceTensionGradient) > 1e-10) {
+      kL = applyMarangoniCorrection(kL, surfaceTensionGradient, diffL, muL);
+    }
+
+    return Math.max(0.0, kL);
+  }
+
+  /**
+   * Estimates turbulent intensity based on flow pattern and Reynolds number.
+   *
+   * <p>
+   * Provides a reasonable estimate when turbulent intensity is not directly available.
+   * </p>
+   *
+   * @param flowPattern the flow pattern
+   * @param re Reynolds number
+   * @return estimated turbulent intensity (0-1)
+   */
+  public static double estimateTurbulentIntensity(FlowPattern flowPattern, double re) {
+    // Base turbulent intensity from pipe flow correlation
+    // Tu ≈ 0.16 * Re^(-1/8) for developed turbulent flow
+    double tuBase = 0.0;
+    if (re > 2300) {
+      tuBase = 0.16 * Math.pow(re, -0.125);
+    }
+
+    // Adjust based on flow pattern
+    switch (flowPattern) {
+    case STRATIFIED:
+      return tuBase * 0.8;
+    case STRATIFIED_WAVY:
+      return tuBase * 1.2;
+    case ANNULAR:
+      return tuBase * 1.5;
+    case SLUG:
+      return tuBase * 2.0; // High turbulence in slug mixing
+    case CHURN:
+      return tuBase * 2.5; // Very high turbulence
+    case BUBBLE:
+    case DISPERSED_BUBBLE:
+      return tuBase * 1.8;
+    case DROPLET:
+      return tuBase * 1.0;
+    default:
+      return tuBase;
+    }
+  }
+
+  // ==================== LITERATURE VALIDATION ====================
+
+  /**
+   * Returns expected mass transfer coefficient ranges for validation against literature data.
+   *
+   * <p>
+   * Based on experimental data from multiple sources including:
+   * </p>
+   * <ul>
+   * <li>Solbraa, E. (2002). PhD thesis, NTNU - CO2 absorption data</li>
+   * <li>Hewitt, G.F. (1998). Heat Exchanger Design Handbook</li>
+   * <li>Perry's Chemical Engineers' Handbook, 8th Ed.</li>
+   * </ul>
+   *
+   * @param flowPattern the flow pattern
+   * @param phase 0 for gas, 1 for liquid
+   * @return array containing [min, typical, max] mass transfer coefficient (m/s)
+   */
+  public static double[] getExpectedMassTransferCoefficientRange(FlowPattern flowPattern, int phase) {
+    double[] range = new double[3]; // [min, typical, max]
+
+    if (phase == 1) { // Liquid side
+      switch (flowPattern) {
+      case STRATIFIED:
+      case STRATIFIED_WAVY:
+        // kL typically 10^-5 to 10^-4 m/s
+        range[0] = 1e-6;
+        range[1] = 5e-5;
+        range[2] = 2e-4;
+        break;
+      case ANNULAR:
+        // Higher due to thin film
+        range[0] = 5e-5;
+        range[1] = 2e-4;
+        range[2] = 1e-3;
+        break;
+      case SLUG:
+        // Variable but often high
+        range[0] = 1e-5;
+        range[1] = 1e-4;
+        range[2] = 5e-4;
+        break;
+      case BUBBLE:
+      case DISPERSED_BUBBLE:
+        // Depends on bubble size
+        range[0] = 1e-5;
+        range[1] = 5e-5;
+        range[2] = 3e-4;
+        break;
+      default:
+        range[0] = 1e-6;
+        range[1] = 1e-5;
+        range[2] = 1e-4;
+      }
+    } else { // Gas side
+      switch (flowPattern) {
+      case STRATIFIED:
+      case STRATIFIED_WAVY:
+        // kG typically 10^-3 to 10^-2 m/s
+        range[0] = 1e-4;
+        range[1] = 5e-3;
+        range[2] = 5e-2;
+        break;
+      case ANNULAR:
+        range[0] = 1e-3;
+        range[1] = 1e-2;
+        range[2] = 1e-1;
+        break;
+      default:
+        range[0] = 1e-4;
+        range[1] = 5e-3;
+        range[2] = 5e-2;
+      }
+    }
+
+    return range;
+  }
+
+  /**
+   * Validates calculated mass transfer coefficient against literature correlations.
+   *
+   * @param calculated calculated kL or kG value (m/s)
+   * @param flowPattern the flow pattern
+   * @param phase 0 for gas, 1 for liquid
+   * @return true if within expected range, false otherwise
+   */
+  public static boolean validateAgainstLiterature(double calculated, FlowPattern flowPattern, int phase) {
+    double[] range = getExpectedMassTransferCoefficientRange(flowPattern, phase);
+    return calculated >= range[0] && calculated <= range[2];
   }
 }

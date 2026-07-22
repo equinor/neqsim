@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * ModelTest class.
- * </p>
  *
  * @author esol
  * @since 2.2.3
  * @version $Id: $Id
  */
 public class ModelTest {
+  private static final Logger logger = LogManager.getLogger(ModelTest.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(ModelTest.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -70,8 +67,7 @@ public class ModelTest {
     testOps.TPflash();
     testSystem.init(3);
 
-    neqsim.thermo.ThermodynamicModelTest testModel =
-        new neqsim.thermo.ThermodynamicModelTest(testSystem);
+    neqsim.thermo.ThermodynamicModelTest testModel = new neqsim.thermo.ThermodynamicModelTest(testSystem);
     testModel.runTest();
     // testSystem.display();
 

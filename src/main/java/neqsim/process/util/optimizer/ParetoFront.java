@@ -13,8 +13,8 @@ import com.google.gson.GsonBuilder;
  * Collection of Pareto-optimal solutions forming the Pareto front.
  *
  * <p>
- * The Pareto front contains all non-dominated solutions found during multi-objective optimization.
- * It automatically maintains the non-dominated property when solutions are added.
+ * The Pareto front contains all non-dominated solutions found during multi-objective optimization. It automatically
+ * maintains the non-dominated property when solutions are added.
  * </p>
  *
  * @author ASMF
@@ -25,8 +25,8 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
   private static final long serialVersionUID = 1L;
 
   /** Logger for this class. */
-  private static final org.apache.logging.log4j.Logger logger =
-      org.apache.logging.log4j.LogManager.getLogger(ParetoFront.class);
+  private static final org.apache.logging.log4j.Logger logger = org.apache.logging.log4j.LogManager
+      .getLogger(ParetoFront.class);
 
   /** The non-dominated solutions. */
   private final List<ParetoSolution> solutions;
@@ -55,8 +55,8 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
    * Add a candidate solution to the front.
    *
    * <p>
-   * If the candidate dominates any existing solutions, those are removed. If the candidate is
-   * dominated by any existing solution, it is not added. This method is thread-safe.
+   * If the candidate dominates any existing solutions, those are removed. If the candidate is dominated by any existing
+   * solution, it is not added. This method is thread-safe.
    * </p>
    *
    * @param candidate the solution to add
@@ -154,8 +154,8 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
    * Find the "knee" point on the Pareto front.
    *
    * <p>
-   * The knee point is the solution with maximum distance from the line connecting the extreme
-   * points. This often represents a good trade-off between objectives.
+   * The knee point is the solution with maximum distance from the line connecting the extreme points. This often
+   * represents a good trade-off between objectives.
    * </p>
    *
    * @return the knee point solution, or null if front is empty
@@ -249,8 +249,7 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
    * @return solution with minimum value for that objective
    */
   public ParetoSolution findMinimum(int objectiveIndex) {
-    return solutions.stream().min(Comparator.comparingDouble(s -> s.getRawValue(objectiveIndex)))
-        .orElse(null);
+    return solutions.stream().min(Comparator.comparingDouble(s -> s.getRawValue(objectiveIndex))).orElse(null);
   }
 
   /**
@@ -260,16 +259,15 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
    * @return solution with maximum value for that objective
    */
   public ParetoSolution findMaximum(int objectiveIndex) {
-    return solutions.stream().max(Comparator.comparingDouble(s -> s.getRawValue(objectiveIndex)))
-        .orElse(null);
+    return solutions.stream().max(Comparator.comparingDouble(s -> s.getRawValue(objectiveIndex))).orElse(null);
   }
 
   /**
    * Calculate hypervolume indicator (2D case).
    *
    * <p>
-   * The hypervolume is the area/volume dominated by the front with respect to a reference point.
-   * Higher values indicate better convergence and diversity.
+   * The hypervolume is the area/volume dominated by the front with respect to a reference point. Higher values indicate
+   * better convergence and diversity.
    * </p>
    *
    * @param referencePoint reference point (nadir point)
@@ -323,8 +321,7 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
 
     // Calculate mean and standard deviation
     double mean = minDistances.stream().mapToDouble(d -> d).average().orElse(0);
-    double variance =
-        minDistances.stream().mapToDouble(d -> (d - mean) * (d - mean)).average().orElse(0);
+    double variance = minDistances.stream().mapToDouble(d -> (d - mean) * (d - mean)).average().orElse(0);
     return Math.sqrt(variance);
   }
 
@@ -334,8 +331,7 @@ public class ParetoFront implements Serializable, Iterable<ParetoSolution> {
    * @return JSON string representation
    */
   public String toJson() {
-    Gson gson =
-        new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
+    Gson gson = new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create();
 
     List<Object> jsonSolutions = new ArrayList<>();
     for (ParetoSolution sol : solutions) {

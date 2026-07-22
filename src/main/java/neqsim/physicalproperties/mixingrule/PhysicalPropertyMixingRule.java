@@ -12,9 +12,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.phase.PhaseInterface;
 
 /**
- * <p>
  * PhysicalPropertyMixingRule class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -29,11 +27,10 @@ public class PhysicalPropertyMixingRule
   public double[][] Gij;
 
   /**
-   * <p>
    * Constructor for PhysicalPropertyMixingRule.
-   * </p>
    */
-  public PhysicalPropertyMixingRule() {}
+  public PhysicalPropertyMixingRule() {
+  }
 
   /** {@inheritDoc} */
   @Override
@@ -42,8 +39,8 @@ public class PhysicalPropertyMixingRule
 
     try {
       mixRule = (PhysicalPropertyMixingRule) super.clone();
-    } catch (Exception ex) {
-      logger.error("Cloning failed.", ex);
+    } catch (CloneNotSupportedException ex) {
+      throw new AssertionError("Clone failed for PhysicalPropertyMixingRule", ex);
     }
 
     double[][] Gij2 = Gij.clone();
@@ -67,12 +64,9 @@ public class PhysicalPropertyMixingRule
   }
 
   /**
-   * <p>
    * getPhysicalPropertyMixingRule.
-   * </p>
    *
-   * @return a {@link neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface}
-   *         object
+   * @return a {@link neqsim.physicalproperties.mixingrule.PhysicalPropertyMixingRuleInterface} object
    */
   public PhysicalPropertyMixingRuleInterface getPhysicalPropertyMixingRule() {
     return this;
@@ -89,18 +83,13 @@ public class PhysicalPropertyMixingRule
       }
       String component_name = phase.getComponent(l).getComponentName();
       for (int k = l; k < phase.getNumberOfComponents(); k++) {
-        if (k == l || phase.getComponent(k).getIonicCharge() != 0
-            || phase.getComponent(k).isIsTBPfraction()) {
+        if (k == l || phase.getComponent(k).getIonicCharge() != 0 || phase.getComponent(k).isIsTBPfraction()) {
           break;
         } else {
-          try (
-              neqsim.util.database.NeqSimDataBase database =
-                  new neqsim.util.database.NeqSimDataBase();
-              java.sql.ResultSet dataSet =
-                  database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='" + component_name
-                      + "' AND COMP2='" + phase.getComponent(k).getComponentName()
-                      + "') OR (COMP1='" + phase.getComponent(k).getComponentName()
-                      + "' AND COMP2='" + component_name + "')")) {
+          try (neqsim.util.database.NeqSimDataBase database = new neqsim.util.database.NeqSimDataBase();
+              java.sql.ResultSet dataSet = database.getResultSet("SELECT gijvisc FROM inter WHERE (COMP1='"
+                  + component_name + "' AND COMP2='" + phase.getComponent(k).getComponentName() + "') OR (COMP1='"
+                  + phase.getComponent(k).getComponentName() + "' AND COMP2='" + component_name + "')")) {
             if (dataSet.next()) {
               Gij[l][k] = Double.parseDouble(dataSet.getString("gijvisc"));
             } else {

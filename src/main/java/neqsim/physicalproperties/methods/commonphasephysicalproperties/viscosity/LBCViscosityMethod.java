@@ -8,9 +8,7 @@ import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * <p>
  * LBCViscosityMethod class.
- * </p>
  *
  * @author esol
  * @version Method was checked on 2.8.2001 - seems to be correct - Even Solbraa
@@ -21,15 +19,13 @@ public class LBCViscosityMethod extends Viscosity {
   /** Logger object for class. */
   static Logger logger = LogManager.getLogger(LBCViscosityMethod.class);
   private static final double FT3_PER_LBMOL_TO_CM3_PER_MOL = 62.42796;
-  private static final double[] DEFAULT_DENSE_CONTRIBUTION_PARAMETERS =
-      {0.10230, 0.023364, 0.058533, -0.040758, 0.0093324};
+  private static final double[] DEFAULT_DENSE_CONTRIBUTION_PARAMETERS = { 0.10230, 0.023364, 0.058533, -0.040758,
+      0.0093324 };
 
   double[] denseContributionParameters = DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.clone();
 
   /**
-   * <p>
    * Constructor for LBCViscosityMethod.
-   * </p>
    *
    * @param phase a {@link neqsim.physicalproperties.system.PhysicalProperties} object
    */
@@ -55,13 +51,11 @@ public class LBCViscosityMethod extends Viscosity {
       double tr = phase.getPhase().getTemperature() / tc;
       double pc = component.getPC(); // bar
       double pcAtm = pc / 1.01325;
-      double temp2Epsilon =
-          Math.pow(tc, 1.0 / 6.0) / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcAtm, 2.0 / 3.0));
+      double temp2Epsilon = Math.pow(tc, 1.0 / 6.0) / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcAtm, 2.0 / 3.0));
 
       epsilonMixSum += component.getx() * Math.pow(temp2Epsilon, 6.0);
 
-      double temp2Gas =
-          Math.pow(tc, 1.0 / 6.0) / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcAtm, 2.0 / 3.0));
+      double temp2Gas = Math.pow(tc, 1.0 / 6.0) / (Math.pow(molarMass, 1.0 / 2.0) * Math.pow(pcAtm, 2.0 / 3.0));
       double lowPressureCorrelation = tr < 1.5 ? 34.0e-5 / temp2Gas * Math.pow(tr, 0.94)
           : 17.78e-5 / temp2Gas * Math.pow(4.58 * tr - 1.67, 5.0 / 8.0);
       lowPressureCorrelation *= 1.0e4; // cP -> micropoise
@@ -77,11 +71,9 @@ public class LBCViscosityMethod extends Viscosity {
     double pseudoCriticalVolume = volumeMixSum; // cm3/mol
     double critDens = pseudoCriticalVolume > 0.0 ? 1.0 / pseudoCriticalVolume : 0.0; // mol/cm3
     double epsilonMix = Math.pow(epsilonMixSum, 1.0 / 6.0);
-    double reducedDensity =
-        critDens > 0.0
-            ? phase.getPhase().getPhysicalProperties().getDensity()
-                / phase.getPhase().getMolarMass() / critDens / 1.0e6
-            : 0.0;
+    double reducedDensity = critDens > 0.0
+        ? phase.getPhase().getPhysicalProperties().getDensity() / phase.getPhase().getMolarMass() / critDens / 1.0e6
+        : 0.0;
 
     PhaseType phaseType = phase.getPhase().getType();
     double denseContribution = 0.0;
@@ -97,8 +89,7 @@ public class LBCViscosityMethod extends Viscosity {
     return (denseContribution + lowPressureViscosityMicropoise) / 1.0e7;
   }
 
-  private double selectReferenceViscosity(double weightedGasViscosity,
-      double mixtureMolarMassSqrt) {
+  private double selectReferenceViscosity(double weightedGasViscosity, double mixtureMolarMassSqrt) {
     PhaseType phaseType = phase.getPhase().getType();
     if (phaseType == PhaseType.AQUEOUS) {
       return waterViscosityMicropoise();
@@ -108,16 +99,15 @@ public class LBCViscosityMethod extends Viscosity {
   }
 
   /**
-   * The Lee-Gonzalez-Eakin dilute-gas correlation returns viscosity in micropoise when critical
-   * pressure is supplied in bar. This weighted mixture estimate stays in micropoise to match the
-   * units expected by the LBC dense-fluid correction.
+   * The Lee-Gonzalez-Eakin dilute-gas correlation returns viscosity in micropoise when critical pressure is supplied in
+   * bar. This weighted mixture estimate stays in micropoise to match the units expected by the LBC dense-fluid
+   * correction.
    *
    * @param weightedGasViscosity weighted gas viscosity in micropoise
    * @param mixtureMolarMassSqrt square root of mixture molar mass
    * @return gas viscosity in micropoise
    */
-  private double leeGonzalezEakinGasViscosityMicropoise(double weightedGasViscosity,
-      double mixtureMolarMassSqrt) {
+  private double leeGonzalezEakinGasViscosityMicropoise(double weightedGasViscosity, double mixtureMolarMassSqrt) {
     if (mixtureMolarMassSqrt <= 0.0) {
       return 0.0;
     }
@@ -146,8 +136,8 @@ public class LBCViscosityMethod extends Viscosity {
    */
   public void setDenseContributionParameters(double[] parameters) {
     if (parameters == null || parameters.length != DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.length) {
-      throw new IllegalArgumentException("LBC dense contribution requires exactly "
-          + DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.length + " parameters");
+      throw new IllegalArgumentException(
+          "LBC dense contribution requires exactly " + DEFAULT_DENSE_CONTRIBUTION_PARAMETERS.length + " parameters");
     }
     denseContributionParameters = parameters.clone();
   }
@@ -161,8 +151,7 @@ public class LBCViscosityMethod extends Viscosity {
   public void setDenseContributionParameter(int index, double value) {
     if (index < 0 || index >= denseContributionParameters.length) {
       throw new IllegalArgumentException(
-          "LBC dense contribution parameter index must be between 0 and "
-              + (denseContributionParameters.length - 1));
+          "LBC dense contribution parameter index must be between 0 and " + (denseContributionParameters.length - 1));
     }
     denseContributionParameters[index] = value;
   }
@@ -180,11 +169,10 @@ public class LBCViscosityMethod extends Viscosity {
    * Estimate the critical volume when it is missing from component data.
    *
    * <p>
-   * The LBC method requires critical volume in cm^3/mol. For pseudo components this property is
-   * rarely tabulated, so we fall back to the Racket compressibility if available, or the widely
-   * used Lee-Kesler style correlation (Zc = 0.29 - 0.087·ω) described by Twu (1984) for petroleum
-   * fractions. The correlation keeps Zc within physically reasonable bounds for heavy oils while
-   * allowing the viscosity model to operate without bespoke input data.
+   * The LBC method requires critical volume in cm^3/mol. For pseudo components this property is rarely tabulated, so we
+   * fall back to the Racket compressibility if available, or the widely used Lee-Kesler style correlation (Zc = 0.29 -
+   * 0.087·ω) described by Twu (1984) for petroleum fractions. The correlation keeps Zc within physically reasonable
+   * bounds for heavy oils while allowing the viscosity model to operate without bespoke input data.
    * </p>
    *
    * @param component the component to evaluate
@@ -213,14 +201,12 @@ public class LBCViscosityMethod extends Viscosity {
 
     double tc = component.getTC();
     double pc = component.getPC();
-    criticalVolume =
-        criticalCompressibility * ThermodynamicConstantsInterface.R * tc / (pc * 1.0e5);
+    criticalVolume = criticalCompressibility * ThermodynamicConstantsInterface.R * tc / (pc * 1.0e5);
     return convertToCm3PerMol(criticalVolume);
   }
 
   /**
-   * Estimate critical volume for TBP fractions using the Whitson correlation (ft3/lbmol) converted
-   * to cm3/mol.
+   * Estimate critical volume for TBP fractions using the Whitson correlation (ft3/lbmol) converted to cm3/mol.
    *
    * @param component the component to estimate critical volume for
    * @return critical volume in cm3/mol, or -1.0 if not applicable

@@ -131,16 +131,14 @@ class InjectionWellModelTest {
     model.setMaxBHP(300.0, "bara");
 
     // Calculate with nearby producers
-    double[] producerDistances = {300.0, 400.0}; // m
-    double[] producerRates = {5000.0, 6000.0}; // Sm3/day
+    double[] producerDistances = { 300.0, 400.0 }; // m
+    double[] producerRates = { 5000.0, 6000.0 }; // Sm3/day
 
-    InjectionWellResult result =
-        model.calculateWithInterference(10000.0, producerDistances, producerRates);
+    InjectionWellResult result = model.calculateWithInterference(10000.0, producerDistances, producerRates);
 
     // Interference should reduce effective reservoir pressure
     assertTrue(result.interferencePressure >= 0, "Should have interference pressure");
-    assertTrue(result.effectiveReservoirPressure <= 250.0,
-        "Effective pressure should be lower or equal");
+    assertTrue(result.effectiveReservoirPressure <= 250.0, "Effective pressure should be lower or equal");
   }
 
   @Test

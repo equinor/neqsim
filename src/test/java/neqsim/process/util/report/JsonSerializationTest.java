@@ -3,6 +3,8 @@ package neqsim.process.util.report;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -35,14 +37,15 @@ import neqsim.thermo.system.SystemSrkEos;
  * Tests JSON serialization capability for all process equipment types.
  *
  * <p>
- * This test ensures that all equipment classes can be properly serialized to JSON for reporting and
- * export purposes.
+ * This test ensures that all equipment classes can be properly serialized to JSON for reporting and export purposes.
  * </p>
  *
  * @author esol
  */
 @Disabled
 public class JsonSerializationTest {
+  private static final Logger logger = LogManager.getLogger(JsonSerializationTest.class);
+
   private static SystemSrkEos testFluid;
   private static Stream feedStream;
 
@@ -74,8 +77,7 @@ public class JsonSerializationTest {
 
     String json = stream.toJson();
     assertNotNull(json, "Stream.toJson() should not return null");
-    assertTrue(json.contains("test stream") || json.contains("tagName"),
-        "JSON should contain stream name or tagName");
+    assertTrue(json.contains("test stream") || json.contains("tagName"), "JSON should contain stream name or tagName");
   }
 
   @Test
@@ -233,7 +235,7 @@ public class JsonSerializationTest {
     inlet.run();
 
     Splitter splitter = new Splitter("test splitter", inlet, 2);
-    splitter.setSplitFactors(new double[] {0.5, 0.5});
+    splitter.setSplitFactors(new double[] { 0.5, 0.5 });
     splitter.run();
 
     String json = splitter.toJson();
@@ -386,8 +388,8 @@ public class JsonSerializationTest {
       // Note: Some equipment may return null if toJson() is not implemented
       // This test documents which equipment types need toJson() implementations
       if (equipmentJson == null) {
-        System.out.println("WARNING: " + equipment.getClass().getSimpleName() + " ("
-            + equipment.getName() + ") returns null from toJson()");
+        logger.info("WARNING: " + equipment.getClass().getSimpleName() + " (" + equipment.getName()
+            + ") returns null from toJson()");
       }
     }
   }
@@ -567,12 +569,10 @@ public class JsonSerializationTest {
     afterCooler.setOutTemperature(35.0, "C");
 
     // High pressure separator
-    ThreePhaseSeparator hpSeparator =
-        new ThreePhaseSeparator("HP separator", afterCooler.getOutletStream());
+    ThreePhaseSeparator hpSeparator = new ThreePhaseSeparator("HP separator", afterCooler.getOutletStream());
 
     // Liquid handling - valve
-    ThrottlingValve liquidValve =
-        new ThrottlingValve("liquid valve", inletSeparator.getLiquidOutStream());
+    ThrottlingValve liquidValve = new ThrottlingValve("liquid valve", inletSeparator.getLiquidOutStream());
     liquidValve.setOutletPressure(10.0, "bara");
 
     // Storage tank
@@ -584,7 +584,7 @@ public class JsonSerializationTest {
 
     // Splitter for gas distribution
     Splitter gasSplitter = new Splitter("gas splitter", hpSeparator.getGasOutStream(), 2);
-    gasSplitter.setSplitFactors(new double[] {0.7, 0.3});
+    gasSplitter.setSplitFactors(new double[] { 0.7, 0.3 });
 
     // Add all equipment to process
     process.add(feed);
@@ -622,10 +622,8 @@ public class JsonSerializationTest {
       }
     }
 
-    System.out.println("ProcessSystem JSON serialization: " + successCount + " successful, "
-        + nullCount + " returned null");
-    assertTrue(successCount >= 8,
-        "At least 8 equipment types should serialize (got " + successCount + ")");
+    logger.info("ProcessSystem JSON serialization: " + successCount + " successful, " + nullCount + " returned null");
+    assertTrue(successCount >= 8, "At least 8 equipment types should serialize (got " + successCount + ")");
   }
 
   @Test
@@ -683,8 +681,7 @@ public class JsonSerializationTest {
     Heater liquidHeater = new Heater("liquid heater", liquidFeed);
     liquidHeater.setOutTemperature(80.0, "C");
 
-    ThrottlingValve pressureValve =
-        new ThrottlingValve("pressure valve", liquidHeater.getOutletStream());
+    ThrottlingValve pressureValve = new ThrottlingValve("pressure valve", liquidHeater.getOutletStream());
     pressureValve.setOutletPressure(5.0, "bara");
 
     Cooler liquidCooler = new Cooler("liquid cooler", pressureValve.getOutletStream());
@@ -714,15 +711,14 @@ public class JsonSerializationTest {
     assertTrue(modelJson.contains("GasProcessing") || modelJson.contains("gas"),
         "JSON should contain gas processing data");
 
-    System.out.println("ProcessModel JSON length: " + modelJson.length() + " characters");
-    System.out.println("ProcessModel contains " + model.getAllProcesses().size() + " processes");
+    logger.info("ProcessModel JSON length: " + modelJson.length() + " characters");
+    logger.info("ProcessModel contains " + model.getAllProcesses().size() + " processes");
 
     // Verify all processes can be individually serialized
     for (ProcessSystem process : model.getAllProcesses()) {
       String processJson = process.getReport_json();
       assertNotNull(processJson, "Individual ProcessSystem JSON should not be null");
-      assertTrue(!processJson.isEmpty(),
-          "Individual ProcessSystem JSON should not be empty for " + process.getName());
+      assertTrue(!processJson.isEmpty(), "Individual ProcessSystem JSON should not be empty for " + process.getName());
     }
   }
 
@@ -750,7 +746,7 @@ public class JsonSerializationTest {
 
     // Verify equipment count matches
     int equipmentCount = process.getUnitOperations().size();
-    System.out.println("ProcessSystem has " + equipmentCount + " units");
+    logger.info("ProcessSystem has " + equipmentCount + " units");
 
     // Parse and check equipment presence in JSON
     // Note: Equipment returning null from toJson() won't appear in the report
@@ -761,9 +757,8 @@ public class JsonSerializationTest {
       }
     }
 
-    System.out.println("Equipment with JSON support: " + jsonEquipmentCount);
-    assertTrue(jsonEquipmentCount == equipmentCount,
-        "All equipment in this test should have JSON support");
+    logger.info("Equipment with JSON support: " + jsonEquipmentCount);
+    assertTrue(jsonEquipmentCount == equipmentCount, "All equipment in this test should have JSON support");
   }
 
   @Test
@@ -796,14 +791,13 @@ public class JsonSerializationTest {
     assertNotNull(json, "ProcessModel JSON should not be null");
 
     // Check mass balance
-    Map<String, Map<String, ProcessSystem.MassBalanceResult>> massBalanceResults =
-        model.checkMassBalance("kg/hr");
+    Map<String, Map<String, ProcessSystem.MassBalanceResult>> massBalanceResults = model.checkMassBalance("kg/hr");
     assertNotNull(massBalanceResults, "Mass balance results should not be null");
 
     // Get mass balance report
     String massBalanceReport = model.getMassBalanceReport("kg/hr");
     assertNotNull(massBalanceReport, "Mass balance report should not be null");
-    System.out.println("Mass balance report:\n" + massBalanceReport);
+    logger.info("Mass balance report:\n" + massBalanceReport);
   }
 
   @Test
@@ -815,15 +809,13 @@ public class JsonSerializationTest {
     inlet.setFlowRate(1000.0, "kg/hr");
     inlet.run();
 
-    neqsim.process.equipment.filter.Filter filter =
-        new neqsim.process.equipment.filter.Filter("test filter", inlet);
+    neqsim.process.equipment.filter.Filter filter = new neqsim.process.equipment.filter.Filter("test filter", inlet);
     filter.setDeltaP(0.5);
     filter.run();
 
     String json = filter.toJson();
     assertNotNull(json, "Filter.toJson() should not return null");
-    assertTrue(json.contains("filter") || json.contains("pressure"),
-        "JSON should contain filter data");
+    assertTrue(json.contains("filter") || json.contains("pressure"), "JSON should contain filter data");
   }
 
   @Test
@@ -841,15 +833,14 @@ public class JsonSerializationTest {
     suctionStream.setFlowRate(300.0, "kg/hr");
     suctionStream.run();
 
-    neqsim.process.equipment.ejector.Ejector ejector =
-        new neqsim.process.equipment.ejector.Ejector("test ejector", motiveStream, suctionStream);
+    neqsim.process.equipment.ejector.Ejector ejector = new neqsim.process.equipment.ejector.Ejector("test ejector",
+        motiveStream, suctionStream);
     ejector.setDischargePressure(15.0);
     ejector.run();
 
     String json = ejector.toJson();
     assertNotNull(json, "Ejector.toJson() should not return null");
-    assertTrue(json.contains("ejector") || json.contains("efficiency"),
-        "JSON should contain ejector data");
+    assertTrue(json.contains("ejector") || json.contains("efficiency"), "JSON should contain ejector data");
   }
 
   @Test
@@ -861,8 +852,7 @@ public class JsonSerializationTest {
     inlet.setFlowRate(100.0, "kg/hr");
     inlet.run();
 
-    neqsim.process.equipment.flare.Flare flare =
-        new neqsim.process.equipment.flare.Flare("test flare", inlet);
+    neqsim.process.equipment.flare.Flare flare = new neqsim.process.equipment.flare.Flare("test flare", inlet);
     // Note: Not running the flare as it requires element database for CO2 calculation
     // Just testing that toJson() works without throwing an exception
 
@@ -880,13 +870,12 @@ public class JsonSerializationTest {
     inlet.setFlowRate(1000.0, "kg/hr");
     inlet.run();
 
-    neqsim.process.equipment.pipeline.Pipeline pipeline =
-        new neqsim.process.equipment.pipeline.Pipeline("test pipeline", inlet);
+    neqsim.process.equipment.pipeline.Pipeline pipeline = new neqsim.process.equipment.pipeline.Pipeline(
+        "test pipeline", inlet);
     // Note: Pipeline needs more setup for full run, just test basic serialization
 
     String json = pipeline.toJson();
     assertNotNull(json, "Pipeline.toJson() should not return null");
-    assertTrue(json.contains("pipeline") || json.contains("inlet"),
-        "JSON should contain pipeline data");
+    assertTrue(json.contains("pipeline") || json.contains("inlet"), "JSON should contain pipeline data");
   }
 }

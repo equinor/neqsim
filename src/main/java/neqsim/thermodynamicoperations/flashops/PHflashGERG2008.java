@@ -9,9 +9,7 @@ package neqsim.thermodynamicoperations.flashops;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * PHflashGERG2008 class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -26,9 +24,7 @@ public class PHflashGERG2008 extends Flash {
   double cP_GERG2008 = 0.0;
 
   /**
-   * <p>
    * Constructor for PHflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Hspec a double
@@ -40,9 +36,7 @@ public class PHflashGERG2008 extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdTT.
-   * </p>
    *
    * @return a double
    */
@@ -52,9 +46,7 @@ public class PHflashGERG2008 extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdT.
-   * </p>
    *
    * @return a double
    */
@@ -64,9 +56,7 @@ public class PHflashGERG2008 extends Flash {
   }
 
   /**
-   * <p>
    * solveQ.
-   * </p>
    *
    * @return a double
    */
@@ -97,8 +87,7 @@ public class PHflashGERG2008 extends Flash {
       newCorr = factor * calcdQdT() / calcdQdTT();
       nyTemp = oldTemp - newCorr;
       if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-        nyTemp = 1.0 / (system.getTemperature()
-            - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+        nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
         correctFactor = false;
       } else if (nyTemp < 0) {
         nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));
@@ -125,13 +114,12 @@ public class PHflashGERG2008 extends Flash {
       }
 
       /*
-       * if (false && error * errorOld < 0) { system.setTemperature( (Math.abs(errorOld) * 1.0 /
-       * oldTemp + Math.abs(error) * 1.0 / nyTemp) / (Math.abs(errorOld) + Math.abs(error)));
-       * errorOld = error; error = calcdQdT(); System.out.println("reset temperature -- new temp " +
-       * system.getTemperature() + " error " + error + " iter " + iterations); } // error =
-       * Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp)); // System.out.println("temp " +
-       * system.getTemperature() + " iter "+ iterations + // " error "+ error + " correction " +
-       * newCorr + " factor "+ factor);
+       * if (false && error * errorOld < 0) { system.setTemperature( (Math.abs(errorOld) * 1.0 / oldTemp +
+       * Math.abs(error) * 1.0 / nyTemp) / (Math.abs(errorOld) + Math.abs(error))); errorOld = error; error =
+       * calcdQdT(); System.out.println("reset temperature -- new temp " + system.getTemperature() + " error " + error +
+       * " iter " + iterations); } // error = Math.abs((1.0 / nyTemp - 1.0 / oldTemp) / (1.0 / oldTemp)); //
+       * System.out.println("temp " + system.getTemperature() + " iter "+ iterations + // " error "+ error +
+       * " correction " + newCorr + " factor "+ factor);
        */
     } while (((Math.abs(error) + Math.abs(errorOld)) > 1e-8 || iterations < 3) && iterations < 200);
     // System.out.println("temp " + system.getTemperature() + " iter " + iterations
@@ -140,9 +128,7 @@ public class PHflashGERG2008 extends Flash {
   }
 
   /**
-   * <p>
    * solveQ2.
-   * </p>
    *
    * @return a double
    */
@@ -168,13 +154,12 @@ public class PHflashGERG2008 extends Flash {
       double[] gergProps = system.getPhase(0).getProperties_GERG2008();
       cP_GERG2008 = gergProps[10] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol K
       enthalpy_GERG2008 = gergProps[7] * system.getPhase(0).getNumberOfMolesInPhase(); // J/mol
-                                                                                       // K
+      // K
 
       newCorr = factor * calcdQdT() / calcdQdTT();
       nyTemp = oldTemp - newCorr;
       if (Math.abs(system.getTemperature() - 1.0 / nyTemp) > 10.0) {
-        nyTemp = 1.0 / (system.getTemperature()
-            - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
+        nyTemp = 1.0 / (system.getTemperature() - Math.signum(system.getTemperature() - 1.0 / nyTemp) * 10.0);
         correctFactor = false;
       } else if (nyTemp < 0) {
         nyTemp = Math.abs(1.0 / (system.getTemperature() + 10.0));

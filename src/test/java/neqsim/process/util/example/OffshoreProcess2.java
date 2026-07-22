@@ -11,9 +11,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * OffshoreProcess2 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -78,8 +76,7 @@ public class OffshoreProcess2 {
     mixer.addStream(stream_2);
     mixer.addStream(stream_4);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(separator);
     operations.add(stream_2);

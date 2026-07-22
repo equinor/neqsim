@@ -8,22 +8,19 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * TPflashWater class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
  * @since 2.2.3
  */
 public class TPflashWater {
+  private static final Logger logger = LogManager.getLogger(TPflashWater.class);
+
   /** Logger object for class. */
-  static Logger logger = LogManager.getLogger(TPflashWater.class);
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */
@@ -48,10 +45,10 @@ public class TPflashWater {
       logger.error(ex.getMessage(), ex);
     }
     testSystem.initPhysicalProperties();
-    // System.out.println("viscosity " + testSystem.getViscosity());
-    System.out.println("viscosity " + testSystem.getPhase("aqueous").getViscosity());
+    // logger.info("viscosity " + testSystem.getViscosity());
+    logger.info("viscosity " + testSystem.getPhase("aqueous").getViscosity());
     testSystem.display();
-    // System.out.println("surftens 0-2 " +
+    // logger.info("surftens 0-2 " +
     // testSystem.getInterphaseProperties().getSurfaceTension(0,2));
   }
 }

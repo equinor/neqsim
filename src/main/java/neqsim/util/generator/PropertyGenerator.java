@@ -5,9 +5,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * PropertyGenerator class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -18,9 +16,7 @@ public class PropertyGenerator {
   HashMap<String, double[]> properties = new HashMap<String, double[]>();
 
   /**
-   * <p>
    * Constructor for PropertyGenerator.
-   * </p>
    *
    * @param fluid a {@link neqsim.thermo.system.SystemInterface} object
    * @param temperatures an array of type double
@@ -33,9 +29,7 @@ public class PropertyGenerator {
   }
 
   /**
-   * <p>
    * calculate.
-   * </p>
    *
    * @return a {@link java.util.HashMap} object
    */
@@ -158,8 +152,7 @@ public class PropertyGenerator {
         molarvolumeGas[i] = 1.0 / fluid.getPhase(phasenumb).getDensity("mol/m3");
         volumefractionGas[i] = fluid.getCorrectedVolumeFraction(phasenumb);
         gammaGas[i] = fluid.getPhase(phasenumb).getKappa();
-        joulethomsoncoefficientGas[i] =
-            fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
+        joulethomsoncoefficientGas[i] = fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
         thermalconductivitygas[i] = fluid.getPhase(phasenumb).getThermalConductivity("W/mK");
       } else {
         molarmassGas[i] = Double.NaN;
@@ -197,8 +190,7 @@ public class PropertyGenerator {
         molarvolumeOil[i] = 1.0 / fluid.getPhase(phasenumb).getDensity("mol/m3");
         volumefractionOil[i] = fluid.getCorrectedVolumeFraction(phasenumb);
         gammaOil[i] = fluid.getPhase(phasenumb).getKappa();
-        joulethomsoncoefficientOil[i] =
-            fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
+        joulethomsoncoefficientOil[i] = fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
         thermalconductivityOil[i] = fluid.getPhase(phasenumb).getThermalConductivity("W/mK");
       } else {
         molarmassOil[i] = Double.NaN;
@@ -236,8 +228,7 @@ public class PropertyGenerator {
         molarvolumeAqueous[i] = 1.0 / fluid.getPhase(phasenumb).getDensity("mol/m3");
         volumefractionAqueous[i] = fluid.getCorrectedVolumeFraction(phasenumb);
         gammaAqueous[i] = fluid.getPhase(phasenumb).getKappa();
-        joulethomsoncoefficientAqueous[i] =
-            fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
+        joulethomsoncoefficientAqueous[i] = fluid.getPhase(phasenumb).getJouleThomsonCoefficient() / 1e5;
         thermalconductivityAqueous[i] = fluid.getPhase(phasenumb).getThermalConductivity("W/mK");
       } else {
         molarmassAqueous[i] = Double.NaN;
@@ -330,16 +321,13 @@ public class PropertyGenerator {
 
   /*
    * public void test(Dataset<Row> teenagersDF){ SparkSession spark = SparkSession .builder()
-   * .appName("Java Spark SQL basic example") .config("spark.some.config.option", "some-value")
-   * .getOrCreate(); // Dataset<Row> df =
-   * spark.read().json("examples/src/main/resources/people.json"); Dataset<Row> df = teenagersDF; //
+   * .appName("Java Spark SQL basic example") .config("spark.some.config.option", "some-value") .getOrCreate(); //
+   * Dataset<Row> df = spark.read().json("examples/src/main/resources/people.json"); Dataset<Row> df = teenagersDF; //
    * Displays the content of the DataFrame to stdout df.show(); }
    */
 
   /**
-   * <p>
    * getValue.
-   * </p>
    *
    * @param propertyName a {@link java.lang.String} object
    * @return a double

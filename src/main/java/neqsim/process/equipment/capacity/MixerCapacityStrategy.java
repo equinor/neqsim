@@ -36,7 +36,8 @@ public class MixerCapacityStrategy implements EquipmentCapacityStrategy {
   /**
    * Default constructor.
    */
-  public MixerCapacityStrategy() {}
+  public MixerCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
@@ -83,7 +84,7 @@ public class MixerCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If equipment implements CapacityConstrainedEquipment, use its constraints
     if (mixer instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) mixer).getMaxUtilization();
+      return mixer.getMaxUtilization();
     }
 
     // Fall back to basic evaluation
@@ -141,22 +142,19 @@ public class MixerCapacityStrategy implements EquipmentCapacityStrategy {
 
     // If mixer implements CapacityConstrainedEquipment, use its constraints
     if (mixer instanceof CapacityConstrainedEquipment) {
-      return ((CapacityConstrainedEquipment) mixer).getCapacityConstraints();
+      return mixer.getCapacityConstraints();
     }
 
     // Pressure drop constraint
-    CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop")
-        .setDesignValue(maxPressureDrop).setMaxValue(maxPressureDrop * 1.2).setUnit("bar")
-        .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+    CapacityConstraint dpConstraint = new CapacityConstraint("pressureDrop").setDesignValue(maxPressureDrop)
+        .setMaxValue(maxPressureDrop * 1.2).setUnit("bar").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
         .setDescription("Pressure drop across mixer").setValueSupplier(() -> {
           if (mixer.getOutletStream() != null && mixer.getNumberOfInputStreams() > 0) {
             double minInletP = Double.MAX_VALUE;
             for (int i = 0; i < mixer.getNumberOfInputStreams(); i++) {
               minInletP = Math.min(minInletP, mixer.getStream(i).getPressure("bara"));
             }
-            return minInletP < Double.MAX_VALUE
-                ? minInletP - mixer.getOutletStream().getPressure("bara")
-                : 0.0;
+            return minInletP < Double.MAX_VALUE ? minInletP - mixer.getOutletStream().getPressure("bara") : 0.0;
           }
           return 0.0;
         });

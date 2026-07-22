@@ -4,7 +4,7 @@ import java.util.List;
 
 /**
  * Utility class for formatting and displaying alarm information.
- * 
+ *
  * <p>
  * Provides consistent formatting for:
  * <ul>
@@ -25,7 +25,7 @@ public final class AlarmReporter {
 
   /**
    * Displays current alarm status in a formatted box.
-   * 
+   *
    * @param alarmManager the alarm manager
    * @param context description of current context
    */
@@ -43,8 +43,8 @@ public final class AlarmReporter {
       System.out.println("  ├─────────────────────────────────────────────────────────┤");
       for (AlarmStatusSnapshot alarm : activeAlarms) {
         String ackStatus = alarm.isAcknowledged() ? "[ACK]" : "[NEW]";
-        String info = String.format("%s %-4s - %-15s: %.2f", ackStatus, alarm.getLevel().toString(),
-            alarm.getSource(), alarm.getValue());
+        String info = String.format("%s %-4s - %-15s: %.2f", ackStatus, alarm.getLevel().toString(), alarm.getSource(),
+            alarm.getValue());
         System.out.println("  │ " + String.format("%-55s", info) + "│");
       }
     }
@@ -54,7 +54,7 @@ public final class AlarmReporter {
 
   /**
    * Displays complete alarm history in a formatted report.
-   * 
+   *
    * @param alarmManager the alarm manager
    */
   public static void displayAlarmHistory(ProcessAlarmManager alarmManager) {
@@ -63,7 +63,7 @@ public final class AlarmReporter {
 
   /**
    * Displays complete alarm history in a formatted report.
-   * 
+   *
    * @param alarmManager the alarm manager
    * @param maxRecentEvents maximum number of recent events to display
    */
@@ -82,8 +82,8 @@ public final class AlarmReporter {
 
       // Display recent events
       int displayCount = Math.min(maxRecentEvents, history.size());
-      System.out.println("║  Recent Events (last " + String.format("%-2d", displayCount)
-          + "):                                  ║");
+      System.out.println(
+          "║  Recent Events (last " + String.format("%-2d", displayCount) + "):                                  ║");
 
       for (int i = history.size() - displayCount; i < history.size(); i++) {
         AlarmEvent event = history.get(i);
@@ -97,7 +97,7 @@ public final class AlarmReporter {
 
   /**
    * Displays alarm statistics aggregated by type and level.
-   * 
+   *
    * @param alarmManager the alarm manager
    */
   public static void displayAlarmStatistics(ProcessAlarmManager alarmManager) {
@@ -105,8 +105,7 @@ public final class AlarmReporter {
 
     long activated = history.stream().filter(e -> e.getType() == AlarmEventType.ACTIVATED).count();
     long cleared = history.stream().filter(e -> e.getType() == AlarmEventType.CLEARED).count();
-    long acknowledged =
-        history.stream().filter(e -> e.getType() == AlarmEventType.ACKNOWLEDGED).count();
+    long acknowledged = history.stream().filter(e -> e.getType() == AlarmEventType.ACKNOWLEDGED).count();
 
     System.out.println("\n╔════════════════════════════════════════════════════════════════╗");
     System.out.println("║                    ALARM STATISTICS                            ║");
@@ -117,17 +116,13 @@ public final class AlarmReporter {
     System.out.println("║                                                                ║");
 
     // Count by level
-    long hihi = history.stream()
-        .filter(e -> e.getType() == AlarmEventType.ACTIVATED && e.getLevel() == AlarmLevel.HIHI)
+    long hihi = history.stream().filter(e -> e.getType() == AlarmEventType.ACTIVATED && e.getLevel() == AlarmLevel.HIHI)
         .count();
-    long hi = history.stream()
-        .filter(e -> e.getType() == AlarmEventType.ACTIVATED && e.getLevel() == AlarmLevel.HI)
+    long hi = history.stream().filter(e -> e.getType() == AlarmEventType.ACTIVATED && e.getLevel() == AlarmLevel.HI)
         .count();
-    long lo = history.stream()
-        .filter(e -> e.getType() == AlarmEventType.ACTIVATED && e.getLevel() == AlarmLevel.LO)
+    long lo = history.stream().filter(e -> e.getType() == AlarmEventType.ACTIVATED && e.getLevel() == AlarmLevel.LO)
         .count();
-    long lolo = history.stream()
-        .filter(e -> e.getType() == AlarmEventType.ACTIVATED && e.getLevel() == AlarmLevel.LOLO)
+    long lolo = history.stream().filter(e -> e.getType() == AlarmEventType.ACTIVATED && e.getLevel() == AlarmLevel.LOLO)
         .count();
 
     System.out.println("║  By Level:                                                     ║");
@@ -140,52 +135,52 @@ public final class AlarmReporter {
 
   /**
    * Formats an alarm event for display with full details.
-   * 
+   *
    * @param event the alarm event
    * @return formatted string
    */
   public static String formatAlarmEvent(AlarmEvent event) {
     String typeIcon = getEventTypeIcon(event.getType());
 
-    return String.format("%s [t=%.1fs] %s %-15s %-4s: %.2f", typeIcon, event.getTimestamp(),
-        event.getType(), event.getSource(), event.getLevel(), event.getValue());
+    return String.format("%s [t=%.1fs] %s %-15s %-4s: %.2f", typeIcon, event.getTimestamp(), event.getType(),
+        event.getSource(), event.getLevel(), event.getValue());
   }
 
   /**
    * Formats alarm event in compact form for reports.
-   * 
+   *
    * @param event the alarm event
    * @return formatted string
    */
   public static String formatAlarmEventCompact(AlarmEvent event) {
     String typeIcon = getEventTypeIcon(event.getType());
 
-    return String.format("%s %.1fs %-12s %-15s %-4s %.2f", typeIcon, event.getTimestamp(),
-        event.getType(), event.getSource(), event.getLevel(), event.getValue());
+    return String.format("%s %.1fs %-12s %-15s %-4s %.2f", typeIcon, event.getTimestamp(), event.getType(),
+        event.getSource(), event.getLevel(), event.getValue());
   }
 
   /**
    * Gets an icon representing the event type.
-   * 
+   *
    * @param type the event type
    * @return icon character
    */
   private static String getEventTypeIcon(AlarmEventType type) {
     switch (type) {
-      case ACTIVATED:
-        return "⚠";
-      case CLEARED:
-        return "✓";
-      case ACKNOWLEDGED:
-        return "✋";
-      default:
-        return "?";
+    case ACTIVATED:
+      return "⚠";
+    case CLEARED:
+      return "✓";
+    case ACKNOWLEDGED:
+      return "✋";
+    default:
+      return "?";
     }
   }
 
   /**
    * Prints a formatted scenario header.
-   * 
+   *
    * @param title the scenario title
    */
   public static void printScenarioHeader(String title) {
@@ -196,7 +191,7 @@ public final class AlarmReporter {
 
   /**
    * Displays alarm events in a formatted box.
-   * 
+   *
    * @param events the alarm events to display
    */
   public static void displayAlarmEvents(List<AlarmEvent> events) {

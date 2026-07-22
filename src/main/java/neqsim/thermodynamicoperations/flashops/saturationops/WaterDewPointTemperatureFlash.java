@@ -5,9 +5,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * waterDewPointTemperatureFlash class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -19,9 +17,7 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
   static Logger logger = LogManager.getLogger(WaterDewPointTemperatureFlash.class);
 
   /**
-   * <p>
    * Constructor for waterDewPointTemperatureFlash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -63,17 +59,14 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
           system.init(3);
           funk = system.getPhases()[0].getComponent(k).getz();
 
-          funk -= system.getPhases()[0].getBeta()
-              * system.getPhases()[1].getComponent(k).getFugacityCoefficient()
+          funk -= system.getPhases()[0].getBeta() * system.getPhases()[1].getComponent(k).getFugacityCoefficient()
               / system.getPhases()[0].getComponent(k).getFugacityCoefficient();
 
           // logger.info("funk " + funk);
           /*
-           * deriv -= system.getPhases()[0].getBeta()
-           * (system.getPhases()[1].getComponent(k).getFugacityCoefficient()
-           * system.getPhases()[0].getComponent(k).getdfugdt() * -1.0 /
-           * Math.pow(system.getPhases()[0].getComponent(k) .getFugacityCoefficient(), 2.0) +
-           * system.getPhases()[1].getComponent(k).getdfugdt() /
+           * deriv -= system.getPhases()[0].getBeta() (system.getPhases()[1].getComponent(k).getFugacityCoefficient()
+           * system.getPhases()[0].getComponent(k).getdfugdt() * -1.0 / Math.pow(system.getPhases()[0].getComponent(k)
+           * .getFugacityCoefficient(), 2.0) + system.getPhases()[1].getComponent(k).getdfugdt() /
            * system.getPhases()[i].getComponent(k) .getFugacityCoefficient());
            *
            * system.setTemperature(system.getTemperature() - funk/deriv);
@@ -102,5 +95,6 @@ public class WaterDewPointTemperatureFlash extends ConstantDutyTemperatureFlash 
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 }

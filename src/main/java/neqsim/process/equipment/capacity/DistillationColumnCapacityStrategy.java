@@ -42,7 +42,8 @@ public class DistillationColumnCapacityStrategy implements EquipmentCapacityStra
   /**
    * Default constructor.
    */
-  public DistillationColumnCapacityStrategy() {}
+  public DistillationColumnCapacityStrategy() {
+  }
 
   /**
    * Constructor with custom constraints.
@@ -155,29 +156,25 @@ public class DistillationColumnCapacityStrategy implements EquipmentCapacityStra
     // Flooding factor constraint
     CapacityConstraint floodConstraint = new CapacityConstraint("floodingFactor")
         .setDesignValue(maxFloodingFactor * 0.8).setMaxValue(maxFloodingFactor).setUnit("-")
-        .setSeverity(CapacityConstraint.ConstraintSeverity.HARD)
-        .setDescription("Tray flooding factor");
+        .setSeverity(CapacityConstraint.ConstraintSeverity.HARD).setDescription("Tray flooding factor");
     constraints.put("floodingFactor", floodConstraint);
 
     // Weir loading constraint
-    CapacityConstraint weirConstraint = new CapacityConstraint("weirLoading")
-        .setDesignValue(maxWeirLoading * 0.7).setMaxValue(maxWeirLoading).setUnit("m3/hr/m")
-        .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
+    CapacityConstraint weirConstraint = new CapacityConstraint("weirLoading").setDesignValue(maxWeirLoading * 0.7)
+        .setMaxValue(maxWeirLoading).setUnit("m3/hr/m").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
         .setDescription("Liquid weir loading");
     constraints.put("weirLoading", weirConstraint);
 
     // Tray pressure drop constraint
     CapacityConstraint dpConstraint = new CapacityConstraint("trayPressureDrop")
-        .setDesignValue(maxTrayPressureDrop * 0.7).setMaxValue(maxTrayPressureDrop)
-        .setUnit("mbar/tray").setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-        .setDescription("Tray pressure drop");
+        .setDesignValue(maxTrayPressureDrop * 0.7).setMaxValue(maxTrayPressureDrop).setUnit("mbar/tray")
+        .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setDescription("Tray pressure drop");
     constraints.put("trayPressureDrop", dpConstraint);
 
     // Reboiler duty constraint
     if (column.getReboiler() != null) {
       CapacityConstraint reboilerConstraint = new CapacityConstraint("reboilerDuty").setUnit("kW")
-          .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-          .setDescription("Reboiler heat duty")
+          .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setDescription("Reboiler heat duty")
           .setValueSupplier(() -> column.getReboiler().getDuty());
       constraints.put("reboilerDuty", reboilerConstraint);
     }
@@ -185,8 +182,7 @@ public class DistillationColumnCapacityStrategy implements EquipmentCapacityStra
     // Condenser duty constraint
     if (column.getCondenser() != null) {
       CapacityConstraint condenserConstraint = new CapacityConstraint("condenserDuty").setUnit("kW")
-          .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT)
-          .setDescription("Condenser heat duty")
+          .setSeverity(CapacityConstraint.ConstraintSeverity.SOFT).setDescription("Condenser heat duty")
           .setValueSupplier(() -> column.getCondenser().getDuty());
       constraints.put("condenserDuty", condenserConstraint);
     }

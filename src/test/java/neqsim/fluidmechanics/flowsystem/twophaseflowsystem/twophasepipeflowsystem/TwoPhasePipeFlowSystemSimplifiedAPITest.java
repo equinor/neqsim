@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Map;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flownode.FlowPattern;
 import neqsim.thermo.system.SystemInterface;
@@ -18,6 +20,8 @@ import neqsim.thermo.system.SystemSrkEos;
  * </p>
  */
 class TwoPhasePipeFlowSystemSimplifiedAPITest {
+  private static final Logger logger = LogManager.getLogger(TwoPhasePipeFlowSystemSimplifiedAPITest.class);
+
   /**
    * Creates a test fluid with proper two-phase conditions.
    */
@@ -47,8 +51,7 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     SystemInterface fluid = createTestFluid();
 
     TwoPhasePipeFlowSystem pipeUp = TwoPhasePipeFlowSystem.verticalPipe(fluid, 0.1, 100, 10, true);
-    TwoPhasePipeFlowSystem pipeDown =
-        TwoPhasePipeFlowSystem.verticalPipe(fluid, 0.1, 100, 10, false);
+    TwoPhasePipeFlowSystem pipeDown = TwoPhasePipeFlowSystem.verticalPipe(fluid, 0.1, 100, 10, false);
 
     assertNotNull(pipeUp, "Upward pipe should be created");
     assertNotNull(pipeDown, "Downward pipe should be created");
@@ -164,8 +167,7 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     assertEquals(numNodes, result.getLiquidHoldupProfile().length, "Liquid holdup profile size");
     assertEquals(numNodes, result.getVoidFractionProfile().length, "Void fraction profile size");
     assertEquals(numNodes, result.getGasVelocityProfile().length, "Gas velocity profile size");
-    assertEquals(numNodes, result.getLiquidVelocityProfile().length,
-        "Liquid velocity profile size");
+    assertEquals(numNodes, result.getLiquidVelocityProfile().length, "Liquid velocity profile size");
   }
 
   @Test
@@ -177,8 +179,7 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     // Check summary values are consistent
     double[] pressures = result.getPressureProfile();
     assertEquals(pressures[0], result.getInletPressure(), 1e-10, "Inlet pressure consistency");
-    assertEquals(pressures[pressures.length - 1], result.getOutletPressure(), 1e-10,
-        "Outlet pressure consistency");
+    assertEquals(pressures[pressures.length - 1], result.getOutletPressure(), 1e-10, "Outlet pressure consistency");
 
     double expectedDrop = result.getInletPressure() - result.getOutletPressure();
     assertEquals(expectedDrop, result.getTotalPressureDrop(), 1e-10, "Pressure drop consistency");
@@ -277,8 +278,7 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
   @Test
   void testBuilderValidatesFluid() {
     assertThrows(IllegalStateException.class, () -> {
-      TwoPhasePipeFlowSystem.builder().withDiameter(0.1, "m").withLength(100, "m").withNodes(10)
-          .build();
+      TwoPhasePipeFlowSystem.builder().withDiameter(0.1, "m").withLength(100, "m").withNodes(10).build();
     });
   }
 
@@ -288,8 +288,8 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     // No components added
 
     assertThrows(IllegalStateException.class, () -> {
-      TwoPhasePipeFlowSystem.builder().withFluid(emptyFluid).withDiameter(0.1, "m")
-          .withLength(100, "m").withNodes(10).build();
+      TwoPhasePipeFlowSystem.builder().withFluid(emptyFluid).withDiameter(0.1, "m").withLength(100, "m").withNodes(10)
+          .build();
     });
   }
 
@@ -311,14 +311,14 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     PipeFlowResult result = pipe.solve();
 
     // Access results - all in one place
-    System.out.println("=== Simplified API Test ===");
-    System.out.println(result);
+    logger.info("=== Simplified API Test ===");
+    logger.info(result);
 
     double dP = result.getTotalPressureDrop();
     double dT = result.getTemperatureChange();
 
-    System.out.printf("Pressure drop: %.4f bar%n", dP);
-    System.out.printf("Temperature change: %.2f K%n", dT);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Pressure drop: %.4f bar%n", dP);
+    logger.printf(org.apache.logging.log4j.Level.INFO, "Temperature change: %.2f K%n", dT);
 
     // Verify results are reasonable
     assertTrue(dP >= 0, "Pressure should drop along flow");
@@ -334,9 +334,8 @@ class TwoPhasePipeFlowSystemSimplifiedAPITest {
     PipeFlowResult resultFactory = pipeFactory.solve();
 
     // Using builder with same parameters
-    TwoPhasePipeFlowSystem pipeBuilder = TwoPhasePipeFlowSystem.builder().withFluid(fluid)
-        .withDiameter(0.025, "m").withLength(3, "m").withNodes(10).horizontal()
-        .withFlowPattern(FlowPattern.STRATIFIED).build();
+    TwoPhasePipeFlowSystem pipeBuilder = TwoPhasePipeFlowSystem.builder().withFluid(fluid).withDiameter(0.025, "m")
+        .withLength(3, "m").withNodes(10).horizontal().withFlowPattern(FlowPattern.STRATIFIED).build();
     PipeFlowResult resultBuilder = pipeBuilder.solve();
 
     // Results should be very similar

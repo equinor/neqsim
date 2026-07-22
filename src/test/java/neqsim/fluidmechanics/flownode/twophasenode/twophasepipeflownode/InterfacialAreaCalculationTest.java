@@ -5,7 +5,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.fluidmechanics.flownode.fluidboundary.heatmasstransfercalc.InterfacialAreaModel;
-import neqsim.fluidmechanics.flownode.twophasenode.TwoPhaseFlowNode;
 import neqsim.fluidmechanics.geometrydefinitions.pipe.PipeData;
 import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
@@ -119,8 +118,7 @@ public class InterfacialAreaCalculationTest {
     node.initFlowCalc();
     double areaSmallBubbles = node.calcInterfacialAreaPerVolume();
 
-    assertTrue(areaSmallBubbles > areaLargeBubbles,
-        "Smaller bubbles should have larger interfacial area per volume");
+    assertTrue(areaSmallBubbles > areaLargeBubbles, "Smaller bubbles should have larger interfacial area per volume");
   }
 
   @Test

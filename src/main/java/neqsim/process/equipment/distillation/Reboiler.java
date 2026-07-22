@@ -5,9 +5,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * Reboiler class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -21,9 +19,7 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   double duty = 0.0;
 
   /**
-   * <p>
    * Constructor for Reboiler.
-   * </p>
    *
    * @param name name of unit operation
    */
@@ -32,9 +28,7 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   }
 
   /**
-   * <p>
    * Getter for the field <code>refluxRatio</code>.
-   * </p>
    *
    * @return the refluxRatio
    */
@@ -43,9 +37,7 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   }
 
   /**
-   * <p>
    * Setter for the field <code>refluxRatio</code>.
-   * </p>
    *
    * @param refluxRatio the refluxRatio to set
    */
@@ -55,9 +47,23 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   }
 
   /**
-   * <p>
+   * Clear the explicit vapor boilup/reflux ratio and return to equilibrium operation.
+   */
+  public void clearRefluxRatio() {
+    refluxIsSet = false;
+  }
+
+  /**
+   * Checks whether an explicit vapor boilup/reflux ratio is configured.
+   *
+   * @return {@code true} when an explicit ratio is active, otherwise {@code false}
+   */
+  public boolean isRefluxSet() {
+    return refluxIsSet;
+  }
+
+  /**
    * Getter for the field <code>duty</code>.
-   * </p>
    *
    * @return a double
    */
@@ -67,9 +73,7 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
   }
 
   /**
-   * <p>
    * getDuty.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    * @return a double
@@ -88,11 +92,8 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
       mixedStream.setCalculationIdentifier(oldid);
       setCalculationIdentifier(oldid);
     } else {
-      SystemInterface thermoSystem2 = streams.get(0).getThermoSystem().clone();
-      // System.out.println("total number of moles " +
-      // thermoSystem2.getTotalNumberOfMoles());
-      mixedStream.setThermoSystem(thermoSystem2);
-      ThermodynamicOperations testOps = new ThermodynamicOperations(thermoSystem2);
+      prepareMixedStreamForRefluxFlash();
+      ThermodynamicOperations testOps = new ThermodynamicOperations(mixedStream.getThermoSystem());
       testOps.PVrefluxFlash(refluxRatio, 1);
     }
     // System.out.println("enthalpy: " +
@@ -106,5 +107,21 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
 
     mixedStream.setCalculationIdentifier(id);
     setCalculationIdentifier(id);
+  }
+
+  /**
+   * Prepare the mixed stream before a reboiler reflux flash.
+   *
+   * @throws IllegalStateException if no inlet streams are connected
+   */
+  private void prepareMixedStreamForRefluxFlash() {
+    if (streams.isEmpty()) {
+      throw new IllegalStateException("Reboiler has no inlet streams");
+    }
+    SystemInterface thermoSystem = streams.get(0).getThermoSystem().clone();
+    mixedStream.setThermoSystem(thermoSystem);
+    mixedStream.getThermoSystem().setNumberOfPhases(2);
+    mixedStream.getThermoSystem().init(0);
+    mixStream();
   }
 }

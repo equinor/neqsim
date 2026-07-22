@@ -10,8 +10,8 @@ public final class MechanicalDesignMarginResult implements Serializable {
   private static final long serialVersionUID = 1L;
 
   /** Empty result with undefined margins. */
-  public static final MechanicalDesignMarginResult EMPTY = new MechanicalDesignMarginResult(
-      Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN, Double.NaN);
+  public static final MechanicalDesignMarginResult EMPTY = new MechanicalDesignMarginResult(Double.NaN, Double.NaN,
+      Double.NaN, Double.NaN, Double.NaN, Double.NaN);
 
   private final double maxPressureMargin;
   private final double minPressureMargin;
@@ -20,9 +20,8 @@ public final class MechanicalDesignMarginResult implements Serializable {
   private final double corrosionAllowanceMargin;
   private final double jointEfficiencyMargin;
 
-  public MechanicalDesignMarginResult(double maxPressureMargin, double minPressureMargin,
-      double maxTemperatureMargin, double minTemperatureMargin, double corrosionAllowanceMargin,
-      double jointEfficiencyMargin) {
+  public MechanicalDesignMarginResult(double maxPressureMargin, double minPressureMargin, double maxTemperatureMargin,
+      double minTemperatureMargin, double corrosionAllowanceMargin, double jointEfficiencyMargin) {
     this.maxPressureMargin = maxPressureMargin;
     this.minPressureMargin = minPressureMargin;
     this.maxTemperatureMargin = maxTemperatureMargin;
@@ -61,8 +60,7 @@ public final class MechanicalDesignMarginResult implements Serializable {
   public boolean isWithinDesignEnvelope() {
     return isNonNegativeOrNaN(maxPressureMargin) && isNonNegativeOrNaN(minPressureMargin)
         && isNonNegativeOrNaN(maxTemperatureMargin) && isNonNegativeOrNaN(minTemperatureMargin)
-        && isNonNegativeOrNaN(corrosionAllowanceMargin)
-        && isNonNegativeOrNaN(jointEfficiencyMargin);
+        && isNonNegativeOrNaN(corrosionAllowanceMargin) && isNonNegativeOrNaN(jointEfficiencyMargin);
   }
 
   private boolean isNonNegativeOrNaN(double value) {
@@ -71,8 +69,8 @@ public final class MechanicalDesignMarginResult implements Serializable {
 
   @Override
   public int hashCode() {
-    return Objects.hash(maxPressureMargin, minPressureMargin, maxTemperatureMargin,
-        minTemperatureMargin, corrosionAllowanceMargin, jointEfficiencyMargin);
+    return Objects.hash(maxPressureMargin, minPressureMargin, maxTemperatureMargin, minTemperatureMargin,
+        corrosionAllowanceMargin, jointEfficiencyMargin);
   }
 
   @Override
@@ -94,10 +92,9 @@ public final class MechanicalDesignMarginResult implements Serializable {
 
   @Override
   public String toString() {
-    return "MechanicalDesignMarginResult{" + "maxPressureMargin=" + maxPressureMargin
-        + ", minPressureMargin=" + minPressureMargin + ", maxTemperatureMargin="
-        + maxTemperatureMargin + ", minTemperatureMargin=" + minTemperatureMargin
-        + ", corrosionAllowanceMargin=" + corrosionAllowanceMargin + ", jointEfficiencyMargin="
+    return "MechanicalDesignMarginResult{" + "maxPressureMargin=" + maxPressureMargin + ", minPressureMargin="
+        + minPressureMargin + ", maxTemperatureMargin=" + maxTemperatureMargin + ", minTemperatureMargin="
+        + minTemperatureMargin + ", corrosionAllowanceMargin=" + corrosionAllowanceMargin + ", jointEfficiencyMargin="
         + jointEfficiencyMargin + '}';
   }
 }

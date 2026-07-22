@@ -5,42 +5,43 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
  * Sensitivity and uncertainty analysis for field development economics.
  *
  * <p>
- * This class provides tools for analyzing the uncertainty in economic metrics (NPV, IRR, payback)
- * through sensitivity analysis, scenario analysis, and Monte Carlo simulation.
+ * This class provides tools for analyzing the uncertainty in economic metrics (NPV, IRR, payback) through sensitivity
+ * analysis, scenario analysis, and Monte Carlo simulation.
  * </p>
  *
  * <h2>Analysis Types</h2>
  * <ul>
- * <li><b>Sensitivity Analysis</b>: Varies one parameter at a time to understand individual impact
- * (tornado diagrams)</li>
+ * <li><b>Sensitivity Analysis</b>: Varies one parameter at a time to understand individual impact (tornado
+ * diagrams)</li>
  * <li><b>Scenario Analysis</b>: Evaluates discrete scenarios (low, base, high cases)</li>
- * <li><b>Monte Carlo Simulation</b>: Probabilistic analysis with random sampling from
- * distributions</li>
+ * <li><b>Monte Carlo Simulation</b>: Probabilistic analysis with random sampling from distributions</li>
  * </ul>
  *
  * <h2>Example Usage</h2>
- * 
+ *
  * <pre>{@code
  * // Set up base case engine
  * CashFlowEngine baseCase = new CashFlowEngine("NO");
  * baseCase.setCapex(800, 2025);
  * baseCase.setOilPrice(75.0);
  * // ... configure production, etc.
- * 
+ *
  * // Create analyzer
  * SensitivityAnalyzer analyzer = new SensitivityAnalyzer(baseCase, 0.08);
- * 
- * // Tornado analysis (±20% variation)
+ *
+ * // Tornado analysis (+/-20% variation)
  * TornadoResult tornado = analyzer.tornadoAnalysis(0.20);
  * System.out.println(tornado.toMarkdownTable());
- * 
+ *
  * // Monte Carlo simulation
  * analyzer.setOilPriceDistribution(60.0, 90.0); // Uniform distribution
  * analyzer.setCapexDistribution(700, 900);
@@ -130,11 +131,11 @@ public class SensitivityAnalyzer implements Serializable {
    * Performs tornado analysis by varying each parameter by the specified percentage.
    *
    * <p>
-   * Each parameter is varied independently while holding others constant. Results show the NPV
-   * impact of low and high cases for each parameter.
+   * Each parameter is varied independently while holding others constant. Results show the NPV impact of low and high
+   * cases for each parameter.
    * </p>
    *
-   * @param variationPercent variation as fraction (e.g., 0.20 for ±20%)
+   * @param variationPercent variation as fraction (e.g., 0.20 for +/-20%)
    * @return tornado analysis result
    */
   public TornadoResult tornadoAnalysis(double variationPercent) {
@@ -144,7 +145,7 @@ public class SensitivityAnalyzer implements Serializable {
     items.add(analyzeParameter("Oil Price (USD/bbl)", variationPercent, new ParameterSetter() {
       @Override
       public void set(CashFlowEngine engine, double factor) {
-        engine.setOilPrice(75.0 * factor); // Assumes base price of 75
+        engine.setOilPrice(baseCase.getOilPrice() * factor);
       }
     }));
 
@@ -152,17 +153,15 @@ public class SensitivityAnalyzer implements Serializable {
     items.add(analyzeParameter("Gas Price (USD/Sm3)", variationPercent, new ParameterSetter() {
       @Override
       public void set(CashFlowEngine engine, double factor) {
-        engine.setGasPrice(0.25 * factor); // Assumes base price of 0.25
+        engine.setGasPrice(baseCase.getGasPrice() * factor);
       }
     }));
 
     // CAPEX sensitivity
-    double baseCAPEX = baseCase.getTotalCapex();
     items.add(analyzeParameter("CAPEX (MUSD)", variationPercent, new ParameterSetter() {
       @Override
       public void set(CashFlowEngine engine, double factor) {
-        // Note: This is simplified - actual implementation would need to scale CAPEX schedule
-        engine.setCapex(baseCAPEX * factor, 2025);
+        scaleCapexSchedule(engine, factor);
       }
     }));
 
@@ -170,7 +169,7 @@ public class SensitivityAnalyzer implements Serializable {
     items.add(analyzeParameter("OPEX (%CAPEX)", variationPercent, new ParameterSetter() {
       @Override
       public void set(CashFlowEngine engine, double factor) {
-        engine.setOpexPercentOfCapex(0.04 * factor);
+        engine.setOpexPercentOfCapex(baseCase.getOpexPercentOfCapex() * factor);
       }
     }));
 
@@ -193,8 +192,7 @@ public class SensitivityAnalyzer implements Serializable {
    * @param setter parameter setter function
    * @return tornado item with low/high NPV values
    */
-  private TornadoItem analyzeParameter(String name, double variationPercent,
-      ParameterSetter setter) {
+  private TornadoItem analyzeParameter(String name, double variationPercent, ParameterSetter setter) {
     // Low case
     CashFlowEngine lowCase = cloneEngine();
     setter.set(lowCase, 1.0 - variationPercent);
@@ -222,13 +220,13 @@ public class SensitivityAnalyzer implements Serializable {
    * @param capexContingency additional CAPEX for low case (e.g., 0.20 for 20% overrun)
    * @return scenario analysis result
    */
-  public ScenarioResult scenarioAnalysis(double lowOilPrice, double highOilPrice,
-      double lowGasPrice, double highGasPrice, double capexContingency) {
+  public ScenarioResult scenarioAnalysis(double lowOilPrice, double highOilPrice, double lowGasPrice,
+      double highGasPrice, double capexContingency) {
     // Low case: low prices, high CAPEX
     CashFlowEngine lowCase = cloneEngine();
     lowCase.setOilPrice(lowOilPrice);
     lowCase.setGasPrice(lowGasPrice);
-    lowCase.setCapex(baseCase.getTotalCapex() * (1 + capexContingency), 2025);
+    scaleCapexSchedule(lowCase, 1.0 + capexContingency);
     double lowNpv = lowCase.calculateNPV(discountRate);
     CashFlowEngine.CashFlowResult lowResult = lowCase.calculate(discountRate);
 
@@ -340,11 +338,18 @@ public class SensitivityAnalyzer implements Serializable {
         trial.setGasPrice(uniformRandom(gasPriceMin, gasPriceMax));
       }
       if (capexMax > capexMin) {
-        trial.setCapex(uniformRandom(capexMin, capexMax), 2025);
+        double sampledCapex = uniformRandom(capexMin, capexMax);
+        double baseCapex = baseCase.getTotalCapex();
+        if (baseCapex > 0.0) {
+          scaleCapexSchedule(trial, sampledCapex / baseCapex);
+        }
       }
       if (opexFactorMax > opexFactorMin) {
         double factor = uniformRandom(opexFactorMin, opexFactorMax);
-        trial.setOpexPercentOfCapex(0.04 * factor);
+        trial.setOpexPercentOfCapex(baseCase.getOpexPercentOfCapex() * factor);
+      }
+      if (productionFactorMax > productionFactorMin) {
+        scaleProductionProfile(trial, uniformRandom(productionFactorMin, productionFactorMax));
       }
 
       // Calculate NPV and IRR
@@ -380,8 +385,8 @@ public class SensitivityAnalyzer implements Serializable {
 
     double probabilityPositiveNpv = (double) positiveNpvCount / iterations;
 
-    return new MonteCarloResult(iterations, npvMean, npvStdDev, npvP10, npvP50, npvP90, irrMean,
-        irrP10, irrP50, irrP90, probabilityPositiveNpv, npvValues);
+    return new MonteCarloResult(iterations, npvMean, npvStdDev, npvP10, npvP50, npvP90, irrMean, irrP10, irrP50, irrP90,
+        probabilityPositiveNpv, npvValues);
   }
 
   // ============================================================================
@@ -410,14 +415,52 @@ public class SensitivityAnalyzer implements Serializable {
    * @return a new CashFlowEngine instance with copied settings
    */
   private CashFlowEngine cloneEngine() {
-    // Note: This is a simplified clone - production profiles are not copied
-    // For full implementation, use Java serialization or deep copy
-    CashFlowEngine clone = new CashFlowEngine(baseCase.getTaxModel());
-    clone.setOilPrice(75.0);
-    clone.setGasPrice(0.25);
-    clone.setOpexPercentOfCapex(0.04);
-    clone.setCapex(baseCase.getTotalCapex(), 2025);
-    return clone;
+    return baseCase.copy();
+  }
+
+  /**
+   * Scales the copied engine CAPEX schedule while preserving calendar timing.
+   *
+   * @param engine engine to update
+   * @param factor multiplier applied to every CAPEX year
+   */
+  private void scaleCapexSchedule(CashFlowEngine engine, double factor) {
+    Map<Integer, Double> scaled = new LinkedHashMap<Integer, Double>();
+    for (Map.Entry<Integer, Double> entry : baseCase.getCapexSchedule().entrySet()) {
+      scaled.put(entry.getKey(), entry.getValue() * factor);
+    }
+    if (scaled.isEmpty()) {
+      engine.setCapex(baseCase.getTotalCapex() * factor, 2025);
+    } else {
+      engine.setCapexSchedule(scaled);
+    }
+  }
+
+  /**
+   * Scales the copied engine production profiles while preserving annual timing.
+   *
+   * @param engine engine to update
+   * @param factor multiplier applied to oil, gas, and NGL production
+   */
+  private void scaleProductionProfile(CashFlowEngine engine, double factor) {
+    engine.setProductionProfile(scaleProfile(baseCase.getOilProductionProfile(), factor),
+        scaleProfile(baseCase.getGasProductionProfile(), factor),
+        scaleProfile(baseCase.getNglProductionProfile(), factor));
+  }
+
+  /**
+   * Scales one annual profile.
+   *
+   * @param profile year-to-volume profile
+   * @param factor multiplier to apply
+   * @return scaled profile
+   */
+  private Map<Integer, Double> scaleProfile(Map<Integer, Double> profile, double factor) {
+    Map<Integer, Double> scaled = new LinkedHashMap<Integer, Double>();
+    for (Map.Entry<Integer, Double> entry : profile.entrySet()) {
+      scaled.put(entry.getKey(), entry.getValue() * factor);
+    }
+    return scaled;
   }
 
   private double uniformRandom(double min, double max) {
@@ -505,14 +548,14 @@ public class SensitivityAnalyzer implements Serializable {
      */
     public String toMarkdownTable() {
       StringBuilder sb = new StringBuilder();
-      sb.append(String.format("## Tornado Analysis (±%.0f%% variation)%n", variationPercent * 100));
+      sb.append(String.format("## Tornado Analysis (+/-%.0f%% variation)%n", variationPercent * 100));
       sb.append(String.format("Base Case NPV: %.1f MUSD%n%n", baseCaseNpv));
       sb.append("| Parameter | Low NPV | High NPV | Swing | Impact |\n");
       sb.append("|-----------|---------|----------|-------|--------|\n");
 
       for (TornadoItem item : items) {
-        sb.append(String.format("| %s | %.1f | %.1f | %.1f | %s |\n", item.getParameterName(),
-            item.getLowNpv(), item.getHighNpv(), item.getSwing(), item.getImpactLevel()));
+        sb.append(String.format("| %s | %.1f | %.1f | %.1f | %s |\n", item.getParameterName(), item.getLowNpv(),
+            item.getHighNpv(), item.getSwing(), item.getImpactLevel()));
       }
 
       return sb.toString();
@@ -596,8 +639,7 @@ public class SensitivityAnalyzer implements Serializable {
     private final double highNpv;
     private final double highIrr;
 
-    ScenarioResult(double lowNpv, double lowIrr, double baseNpv, double baseIrr, double highNpv,
-        double highIrr) {
+    ScenarioResult(double lowNpv, double lowIrr, double baseNpv, double baseIrr, double highNpv, double highIrr) {
       this.lowNpv = lowNpv;
       this.lowIrr = lowIrr;
       this.baseNpv = baseNpv;
@@ -669,9 +711,9 @@ public class SensitivityAnalyzer implements Serializable {
     private final double probabilityPositiveNpv;
     private final double[] npvDistribution;
 
-    MonteCarloResult(int iterations, double npvMean, double npvStdDev, double npvP10, double npvP50,
-        double npvP90, double irrMean, double irrP10, double irrP50, double irrP90,
-        double probabilityPositiveNpv, double[] npvDistribution) {
+    MonteCarloResult(int iterations, double npvMean, double npvStdDev, double npvP10, double npvP50, double npvP90,
+        double irrMean, double irrP10, double irrP50, double irrP90, double probabilityPositiveNpv,
+        double[] npvDistribution) {
       this.iterations = iterations;
       this.npvMean = npvMean;
       this.npvStdDev = npvStdDev;
@@ -754,12 +796,11 @@ public class SensitivityAnalyzer implements Serializable {
       sb.append(String.format("Monte Carlo Analysis (%d iterations):%n", iterations));
       sb.append(String.format("  NPV Statistics:%n"));
       sb.append(String.format("    Mean: %.1f MUSD (StdDev: %.1f)%n", npvMean, npvStdDev));
-      sb.append(
-          String.format("    P10: %.1f, P50: %.1f, P90: %.1f MUSD%n", npvP10, npvP50, npvP90));
+      sb.append(String.format("    P10: %.1f, P50: %.1f, P90: %.1f MUSD%n", npvP10, npvP50, npvP90));
       sb.append(String.format("    Probability NPV > 0: %.1f%%%n", probabilityPositiveNpv * 100));
       sb.append(String.format("  IRR Statistics:%n"));
-      sb.append(String.format("    Mean: %.1f%%, P10: %.1f%%, P50: %.1f%%, P90: %.1f%%%n",
-          irrMean * 100, irrP10 * 100, irrP50 * 100, irrP90 * 100));
+      sb.append(String.format("    Mean: %.1f%%, P10: %.1f%%, P50: %.1f%%, P90: %.1f%%%n", irrMean * 100, irrP10 * 100,
+          irrP50 * 100, irrP90 * 100));
       return sb.toString();
     }
   }
@@ -794,8 +835,9 @@ public class SensitivityAnalyzer implements Serializable {
 
     @Override
     public String toString() {
-      return String.format("Breakeven Analysis @ %.1f%% discount rate:%n" + "  Oil: %.2f USD/bbl%n"
-          + "  Gas: %.4f USD/Sm3%n", discountRate * 100, breakevenOilPrice, breakevenGasPrice);
+      return String.format(
+          "Breakeven Analysis @ %.1f%% discount rate:%n" + "  Oil: %.2f USD/bbl%n" + "  Gas: %.4f USD/Sm3%n",
+          discountRate * 100, breakevenOilPrice, breakevenGasPrice);
     }
   }
 }

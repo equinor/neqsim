@@ -6,9 +6,7 @@ import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * VSflash class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -22,9 +20,7 @@ public class VSflash extends Flash {
   Flash tpFlash;
 
   /**
-   * <p>
    * Constructor for VSflash.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param Vspec a double
@@ -40,9 +36,7 @@ public class VSflash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdPP.
-   * </p>
    *
    * @return a double
    */
@@ -56,16 +50,13 @@ public class VSflash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdTT.
-   * </p>
    *
    * @return a double
    */
   public double calcdQdTT() {
     if (system.getNumberOfPhases() == 1) {
-      return -system.getPhase(0).getCp() / system.getTemperature()
-          / neqsim.thermo.ThermodynamicConstantsInterface.R;
+      return -system.getPhase(0).getCp() / system.getTemperature() / neqsim.thermo.ThermodynamicConstantsInterface.R;
     }
 
     double dQdTT = 0.0;
@@ -76,9 +67,7 @@ public class VSflash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdT.
-   * </p>
    *
    * @return a double
    */
@@ -88,9 +77,7 @@ public class VSflash extends Flash {
   }
 
   /**
-   * <p>
    * calcdQdP.
-   * </p>
    *
    * @return a double
    */
@@ -101,8 +88,8 @@ public class VSflash extends Flash {
   }
 
   /**
-   * Calculate the cross-derivative d²Q/dTdP for coupled Newton solver. This improves convergence by
-   * accounting for T-P coupling.
+   * Calculate the cross-derivative d²Q/dTdP for coupled Newton solver. This improves convergence by accounting for T-P
+   * coupling.
    *
    * @return cross derivative d²Q/dTdP
    */
@@ -117,9 +104,7 @@ public class VSflash extends Flash {
   }
 
   /**
-   * <p>
    * solveQ.
-   * </p>
    *
    * @return a double
    */
@@ -161,7 +146,7 @@ public class VSflash extends Flash {
       }
 
       // Apply damping factor that increases with iterations
-      double factor = (double) iterations / (iterations + 5.0);
+      double factor = iterations / (iterations + 5.0);
 
       // Limit step sizes for stability
       double maxDeltaT = 0.2 * oldTemp;
@@ -197,8 +182,19 @@ public class VSflash extends Flash {
   /** {@inheritDoc} */
   @Override
   public void run() {
-    tpFlash.run();
-    solveQ();
+    // First TPflash runs COLD (Wilson K) to avoid bias from stale K-values
+    // left by a previous unrelated flash. Warm-start is then enabled for the
+    // inner TPflash iterations within the outer VS-flash loop — safe because
+    // the outer loop converges on T,P via volume/entropy residuals.
+    boolean prevWarm = neqsim.thermo.ThermodynamicModelSettings.isUseWarmStartKValues();
+    try {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(false);
+      tpFlash.run();
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(true);
+      solveQ();
+    } finally {
+      neqsim.thermo.ThermodynamicModelSettings.setUseWarmStartKValues(prevWarm);
+    }
   }
 
   /** {@inheritDoc} */
@@ -208,9 +204,7 @@ public class VSflash extends Flash {
   }
 
   /**
-   * <p>
    * main.
-   * </p>
    *
    * @param args an array of {@link java.lang.String} objects
    */

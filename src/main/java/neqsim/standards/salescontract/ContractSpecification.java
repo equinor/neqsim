@@ -10,9 +10,7 @@ import neqsim.standards.StandardInterface;
 import neqsim.util.NamedBaseClass;
 
 /**
- * <p>
  * ContractSpecification class.
- * </p>
  *
  * @author ESOL
  * @version $Id: $Id
@@ -33,9 +31,7 @@ public class ContractSpecification extends NamedBaseClass {
   private String comments = "";
 
   /**
-   * <p>
    * Constructor for ContractSpecification.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @param specification a {@link java.lang.String} object
@@ -51,9 +47,8 @@ public class ContractSpecification extends NamedBaseClass {
    * @param comments a {@link java.lang.String} object
    */
   public ContractSpecification(String name, String specification, String country, String terminal,
-      StandardInterface standard, double minValue, double maxValue, String unit,
-      double referenceTemperature, double referenceTemperatureComb, double referencePressure,
-      String comments) {
+      StandardInterface standard, double minValue, double maxValue, String unit, double referenceTemperature,
+      double referenceTemperatureComb, double referencePressure, String comments) {
     super(name);
     this.country = country;
     this.terminal = terminal;
@@ -114,9 +109,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>minValue</code>.
-   * </p>
    *
    * @param minValue a double
    */
@@ -125,9 +118,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>maxValue</code>.
-   * </p>
    *
    * @return a double
    */
@@ -136,9 +127,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>maxValue</code>.
-   * </p>
    *
    * @param maxValue a double
    */
@@ -147,9 +136,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>unit</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -158,9 +145,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>unit</code>.
-   * </p>
    *
    * @param unit a {@link java.lang.String} object
    */
@@ -169,9 +154,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>referenceTemperatureMeasurement</code>.
-   * </p>
    *
    * @return a double
    */
@@ -180,9 +163,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>referenceTemperatureMeasurement</code>.
-   * </p>
    *
    * @param referenceTemperature a double
    */
@@ -191,9 +172,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>referencePressure</code>.
-   * </p>
    *
    * @return Reference pressure in bara
    */
@@ -202,9 +181,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>referencePressure</code>.
-   * </p>
    *
    * @param referencePressure Reference pressure to set in in bara
    */
@@ -213,9 +190,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>comments</code>.
-   * </p>
    *
    * @return a {@link java.lang.String} object
    */
@@ -224,9 +199,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>comments</code>.
-   * </p>
    *
    * @param comments a {@link java.lang.String} object
    */
@@ -235,9 +208,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>referenceTemperatureCombustion</code>.
-   * </p>
    *
    * @return the referenceTemperatureCombustion
    */
@@ -246,9 +217,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>referenceTemperatureCombustion</code>.
-   * </p>
    *
    * @param referenceTemperatureCombustion the referenceTemperatureCombustion to set
    */
@@ -257,9 +226,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>country</code>.
-   * </p>
    *
    * @return the country
    */
@@ -268,9 +235,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>country</code>.
-   * </p>
    *
    * @param country the country to set
    */
@@ -279,9 +244,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Getter for the field <code>terminal</code>.
-   * </p>
    *
    * @return the terminal
    */
@@ -290,9 +253,7 @@ public class ContractSpecification extends NamedBaseClass {
   }
 
   /**
-   * <p>
    * Setter for the field <code>terminal</code>.
-   * </p>
    *
    * @param terminal the terminal to set
    */

@@ -5,9 +5,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * cricondenBarTemp1 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -47,9 +45,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   Matrix xcoef;
 
   /**
-   * <p>
    * Constructor for cricondenBarTemp1.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -67,9 +63,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * Setter for the field <code>fvec</code>.
-   * </p>
    */
   public void setfvec() {
     double xtot = 0.0;
@@ -77,8 +71,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
     for (int i = 0; i < numberOfComponents; i++) {
       xtot += system.getPhase(1).getComponent(i).getx();
       dQdT -= system.getPhase(1).getComponent(i).getx()
-          * (system.getPhase(0).getComponent(i).getdfugdt()
-              - system.getPhase(1).getComponent(i).getdfugdt());
+          * (system.getPhase(0).getComponent(i).getdfugdt() - system.getPhase(1).getComponent(i).getdfugdt());
       fvec.set(i, 0,
           Math.log(system.getPhase(0).getComponent(i).getFugacityCoefficient()
               * system.getPhase(0).getComponent(i).getz() * system.getPressure())
@@ -90,9 +83,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * setJac.
-   * </p>
    */
   public void setJac() {
     Jac.timesEquals(0.0);
@@ -108,17 +99,15 @@ public class CricondenBarTemp1 implements java.io.Serializable {
         tempJ = 1.0 / system.getBeta()
             * (dij / system.getPhases()[0].getComponent(i).getx() - 1.0
                 + system.getPhases()[0].getComponent(i).getdfugdx(j))
-            + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhases()[1].getComponent(i).getx()
-                - 1.0 + system.getPhases()[1].getComponent(i).getdfugdx(j));
+            + 1.0 / (1.0 - system.getBeta()) * (dij / system.getPhases()[1].getComponent(i).getx() - 1.0
+                + system.getPhases()[1].getComponent(i).getdfugdx(j));
         Jac.set(i, j, tempJ);
       }
     }
   }
 
   /**
-   * <p>
    * Setter for the field <code>u</code>.
-   * </p>
    */
   public void setu() {
     for (int i = 0; i < numberOfComponents; i++) {
@@ -127,9 +116,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * init.
-   * </p>
    */
   public void init() {
     double temp = 0;
@@ -141,10 +128,10 @@ public class CricondenBarTemp1 implements java.io.Serializable {
 
     for (int i = 0; i < numberOfComponents; i++) {
       system.getPhases()[0].getComponent(i).setx(u.get(i, 0) / system.getBeta());
-      system.getPhases()[1].getComponent(i).setx(
-          (system.getPhases()[0].getComponent(i).getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
-      system.getPhases()[0].getComponent(i).setK(system.getPhases()[0].getComponent(i).getx()
-          / system.getPhases()[1].getComponent(i).getx());
+      system.getPhases()[1].getComponent(i)
+          .setx((system.getPhases()[0].getComponent(i).getz() - u.get(i, 0)) / (1.0 - system.getBeta()));
+      system.getPhases()[0].getComponent(i)
+          .setK(system.getPhases()[0].getComponent(i).getx() / system.getPhases()[1].getComponent(i).getx());
       system.getPhases()[1].getComponent(i).setK(system.getPhases()[0].getComponent(i).getK());
     }
 
@@ -152,9 +139,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * solve.
-   * </p>
    *
    * @return a double
    */
@@ -170,18 +155,14 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * run.
-   * </p>
    */
   public void run() {
     solve();
   }
 
   /**
-   * <p>
    * getJFreeChart.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return a {@link org.jfree.chart.JFreeChart} object
@@ -191,9 +172,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * get.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    * @return an array of type double
@@ -203,22 +182,19 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * printToFile.
-   * </p>
    *
    * @param name a {@link java.lang.String} object
    */
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 
-  /** {@inheritDoc} */
   @ExcludeFromJacocoGeneratedReport
-  public void displayResult() {}
+  public void displayResult() {
+  }
 
   /**
-   * <p>
    * getPoints.
-   * </p>
    *
    * @param i a int
    * @return an array of type double
@@ -228,9 +204,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getResultTable.
-   * </p>
    *
    * @return an array of {@link java.lang.String} objects
    */
@@ -239,9 +213,7 @@ public class CricondenBarTemp1 implements java.io.Serializable {
   }
 
   /**
-   * <p>
    * getThermoSystem.
-   * </p>
    *
    * @return a {@link neqsim.thermo.system.SystemInterface} object
    */

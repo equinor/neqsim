@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -13,8 +12,8 @@ import org.apache.logging.log4j.Logger;
  * Examples and templates for integrating external ML frameworks with the risk system.
  *
  * <p>
- * This class provides patterns and examples for integrating machine learning models from external
- * frameworks like TensorFlow, PyTorch, ONNX, and scikit-learn with the NeqSim risk framework.
+ * This class provides patterns and examples for integrating machine learning models from external frameworks like
+ * TensorFlow, PyTorch, ONNX, and scikit-learn with the NeqSim risk framework.
  * </p>
  *
  * <h2>Supported Integration Patterns</h2>
@@ -26,16 +25,14 @@ import org.apache.logging.log4j.Logger;
  * </ul>
  *
  * <h2>Usage Example</h2>
- * 
+ *
  * <pre>
  * // Create adapter for external model
- * MLModelAdapter adapter =
- *     MLIntegrationExamples.createOnnxAdapter("/models/failure_predictor.onnx");
- * 
+ * MLModelAdapter adapter = MLIntegrationExamples.createOnnxAdapter("/models/failure_predictor.onnx");
+ *
  * // Register with risk interface
  * RiskMLInterface mlInterface = new RiskMLInterface();
- * mlInterface.registerModel("failure_predictor", RiskMLInterface.ModelType.FAILURE_PREDICTION,
- *     adapter::predict);
+ * mlInterface.registerModel("failure_predictor", RiskMLInterface.ModelType.FAILURE_PREDICTION, adapter::predict);
  * </pre>
  *
  * @author NeqSim Development Team
@@ -138,12 +135,12 @@ public class MLIntegrationExamples {
    * Adapter for ONNX Runtime models.
    *
    * <p>
-   * ONNX (Open Neural Network Exchange) provides a platform-independent format for ML models. This
-   * adapter loads ONNX models using the ONNX Runtime Java API.
+   * ONNX (Open Neural Network Exchange) provides a platform-independent format for ML models. This adapter loads ONNX
+   * models using the ONNX Runtime Java API.
    * </p>
    *
    * <h2>Dependencies Required</h2>
-   * 
+   *
    * <pre>
    * &lt;dependency&gt;
    *   &lt;groupId&gt;com.microsoft.onnxruntime&lt;/groupId&gt;
@@ -177,7 +174,7 @@ public class MLIntegrationExamples {
      * <p>
      * In production, this would use:
      * </p>
-     * 
+     *
      * <pre>
      * env = OrtEnvironment.getEnvironment();
      * session = env.createSession(modelPath, new OrtSession.SessionOptions());
@@ -232,7 +229,7 @@ public class MLIntegrationExamples {
    * </p>
    *
    * <h2>Dependencies Required</h2>
-   * 
+   *
    * <pre>
    * &lt;dependency&gt;
    *   &lt;groupId&gt;org.tensorflow&lt;/groupId&gt;
@@ -272,7 +269,7 @@ public class MLIntegrationExamples {
      * <p>
      * In production:
      * </p>
-     * 
+     *
      * <pre>
      * model = SavedModelBundle.load(modelDir, "serve");
      * </pre>
@@ -316,8 +313,7 @@ public class MLIntegrationExamples {
    * Adapter for REST API-based model serving.
    *
    * <p>
-   * Connects to external model serving endpoints like TensorFlow Serving, TorchServe, or custom
-   * APIs.
+   * Connects to external model serving endpoints like TensorFlow Serving, TorchServe, or custom APIs.
    * </p>
    */
   public static class RestApiAdapter extends BaseMLAdapter {
@@ -547,12 +543,11 @@ public class MLIntegrationExamples {
 
     // Register threshold-based models (for testing without actual ML)
     ThresholdModel failureModel = createTestFailurePredictor();
-    RiskMLInterface.MLModel failureMlModel =
-        mlInterface.createFailurePredictionModel("failure_predictor", "Failure Predictor");
+    RiskMLInterface.MLModel failureMlModel = mlInterface.createFailurePredictionModel("failure_predictor",
+        "Failure Predictor");
     failureMlModel.setPredictor(features -> {
       double score = failureModel.predict(features);
-      RiskMLInterface.MLPrediction pred =
-          new RiskMLInterface.MLPrediction(failureMlModel.getModelId());
+      RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(failureMlModel.getModelId());
       pred.setPrediction(score);
       pred.setConfidence(0.85);
       pred.setLabel(score > 0.5 ? "HIGH_RISK" : "LOW_RISK");
@@ -560,12 +555,11 @@ public class MLIntegrationExamples {
     });
 
     ThresholdModel anomalyModel = createTestAnomalyDetector();
-    RiskMLInterface.MLModel anomalyMlModel =
-        mlInterface.createAnomalyDetectionModel("anomaly_detector", "Anomaly Detector");
+    RiskMLInterface.MLModel anomalyMlModel = mlInterface.createAnomalyDetectionModel("anomaly_detector",
+        "Anomaly Detector");
     anomalyMlModel.setPredictor(features -> {
       double score = anomalyModel.predict(features);
-      RiskMLInterface.MLPrediction pred =
-          new RiskMLInterface.MLPrediction(anomalyMlModel.getModelId());
+      RiskMLInterface.MLPrediction pred = new RiskMLInterface.MLPrediction(anomalyMlModel.getModelId());
       pred.setPrediction(score);
       pred.setConfidence(0.85);
       pred.setLabel(score > 0.5 ? "ANOMALY" : "NORMAL");
@@ -584,14 +578,11 @@ public class MLIntegrationExamples {
     testFeatures.put("flow_deviation", 10.0);
 
     // Run predictions
-    RiskMLInterface.MLPrediction failurePred =
-        mlInterface.predict("failure_predictor", testFeatures);
-    RiskMLInterface.MLPrediction anomalyPred =
-        mlInterface.predict("anomaly_detector", testFeatures);
+    RiskMLInterface.MLPrediction failurePred = mlInterface.predict("failure_predictor", testFeatures);
+    RiskMLInterface.MLPrediction anomalyPred = mlInterface.predict("anomaly_detector", testFeatures);
 
     System.out.println("Equipment: Compressor-1");
-    System.out
-        .println("Failure Probability: " + String.format("%.2f", failurePred.getPrediction()));
+    System.out.println("Failure Probability: " + String.format("%.2f", failurePred.getPrediction()));
     System.out.println("Anomaly Score: " + String.format("%.2f", anomalyPred.getPrediction()));
 
     System.out.println("\n=== Production Integration ===");

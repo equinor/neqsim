@@ -4,14 +4,11 @@ import neqsim.process.equipment.separator.ThreePhaseSeparator;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * WaterLevelTransmitter class for measuring water level in three-phase separators.
- * </p>
  *
  * <p>
- * This transmitter measures the water level from the bottom of the separator. In a three-phase
- * separator, water is the heaviest phase and settles at the bottom, with oil floating on top of the
- * water, and gas in the upper portion.
+ * This transmitter measures the water level from the bottom of the separator. In a three-phase separator, water is the
+ * heaviest phase and settles at the bottom, with oil floating on top of the water, and gas in the upper portion.
  * </p>
  *
  * @author ESOL
@@ -24,9 +21,7 @@ public class WaterLevelTransmitter extends MeasurementDeviceBaseClass {
   protected ThreePhaseSeparator separator = null;
 
   /**
-   * <p>
    * Constructor for WaterLevelTransmitter.
-   * </p>
    *
    * @param separator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
    */
@@ -35,9 +30,7 @@ public class WaterLevelTransmitter extends MeasurementDeviceBaseClass {
   }
 
   /**
-   * <p>
    * Constructor for WaterLevelTransmitter.
-   * </p>
    *
    * @param name Name of WaterLevelTransmitter
    * @param separator a {@link neqsim.process.equipment.separator.ThreePhaseSeparator} object
@@ -45,7 +38,7 @@ public class WaterLevelTransmitter extends MeasurementDeviceBaseClass {
   public WaterLevelTransmitter(String name, ThreePhaseSeparator separator) {
     super(name, "m");
     this.separator = separator;
-    this.setMaximumValue(separator.getInternalDiameter());
+    this.setMaximumValue(separator.getMaxLiquidHeight());
     this.setMinimumValue(0.0);
   }
 
@@ -60,8 +53,8 @@ public class WaterLevelTransmitter extends MeasurementDeviceBaseClass {
   @Override
   public double getMeasuredValue(String unit) {
     if (!unit.equalsIgnoreCase("m") && !unit.equalsIgnoreCase("")) {
-      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this,
-          "getMeasuredValue", "unit", "currently only supports \"m\" or \"\""));
+      throw new RuntimeException(new neqsim.util.exception.InvalidInputException(this, "getMeasuredValue", "unit",
+          "currently only supports \"m\" or \"\""));
     }
     return separator.getWaterLevel();
   }

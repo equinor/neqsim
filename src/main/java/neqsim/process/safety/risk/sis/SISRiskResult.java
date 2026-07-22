@@ -141,8 +141,7 @@ public class SISRiskResult implements Serializable {
       totalMitigatedFrequency += result.getMitigatedFrequency();
     }
 
-    overallRRF =
-        totalMitigatedFrequency > 0 ? totalUnmitigatedFrequency / totalMitigatedFrequency : 0;
+    overallRRF = totalMitigatedFrequency > 0 ? totalUnmitigatedFrequency / totalMitigatedFrequency : 0;
   }
 
   // Getters
@@ -223,15 +222,12 @@ public class SISRiskResult implements Serializable {
    * @return JSON representation
    */
   public String toJson() {
-    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create()
-        .toJson(toMap());
+    return new GsonBuilder().setPrettyPrinting().serializeSpecialFloatingPointValues().create().toJson(toMap());
   }
 
   @Override
   public String toString() {
-    return String.format(
-        "SISRiskResult[%s: unmitigated=%.2e, mitigated=%.2e, RRF=%.0f, reduction=%.1f%%]",
-        studyName, totalUnmitigatedFrequency, totalMitigatedFrequency, overallRRF,
-        getRiskReductionPercent());
+    return String.format("SISRiskResult[%s: unmitigated=%.2e, mitigated=%.2e, RRF=%.0f, reduction=%.1f%%]", studyName,
+        totalUnmitigatedFrequency, totalMitigatedFrequency, overallRRF, getRiskReductionPercent());
   }
 }

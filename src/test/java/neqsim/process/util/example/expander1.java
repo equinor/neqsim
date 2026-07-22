@@ -4,9 +4,7 @@ import neqsim.process.equipment.stream.Stream;
 import neqsim.util.ExcludeFromJacocoGeneratedReport;
 
 /**
- * <p>
  * expander1 class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -20,8 +18,7 @@ public class expander1 {
    */
   @ExcludeFromJacocoGeneratedReport
   public static void main(String args[]) {
-    neqsim.thermo.system.SystemInterface testSystem =
-        new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 120.00);
+    neqsim.thermo.system.SystemInterface testSystem = new neqsim.thermo.system.SystemSrkEos((273.15 + 25.0), 120.00);
     testSystem.addComponent("methane", 180.00);
     testSystem.addComponent("ethane", 10.00);
     testSystem.addComponent("propane", 1.00);
@@ -35,16 +32,15 @@ public class expander1 {
 
     // neqsim.processSimulation.processEquipment.expander.Expander expander = new
     // neqsim.processSimulation.processEquipment.expander.Expander(stream_1);
-    neqsim.process.equipment.compressor.Compressor expander =
-        new neqsim.process.equipment.compressor.Compressor("expander", stream_1);
+    neqsim.process.equipment.compressor.Compressor expander = new neqsim.process.equipment.compressor.Compressor(
+        "expander", stream_1);
 
     expander.setOutletPressure(80.0);
     expander.setPolytropicEfficiency(0.9);
     expander.setIsentropicEfficiency(0.9);
     expander.setUsePolytropicCalc(true);
 
-    neqsim.process.processmodel.ProcessSystem operations =
-        new neqsim.process.processmodel.ProcessSystem();
+    neqsim.process.processmodel.ProcessSystem operations = new neqsim.process.processmodel.ProcessSystem();
     operations.add(stream_1);
     operations.add(expander);
 

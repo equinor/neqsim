@@ -3,13 +3,14 @@ package neqsim.thermo.util.spanwagner;
 import neqsim.thermo.phase.PhaseType;
 
 /**
- * Utility class implementing the Span–Wagner reference equation of state for carbon dioxide. All
- * properties are returned on a molar basis in SI units.
+ * Utility class implementing the Span–Wagner reference equation of state for carbon dioxide. All properties are
+ * returned on a molar basis in SI units.
  *
  * @author esol
  */
 public final class NeqSimSpanWagner {
-  private NeqSimSpanWagner() {}
+  private NeqSimSpanWagner() {
+  }
 
   // Gas constant and critical parameters for CO2
   private static final double R = 8.31451; // J/mol/K
@@ -22,33 +23,31 @@ public final class NeqSimSpanWagner {
   private static final double LOGTAU_A = 2.5;
   private static final double OFFSET_A1 = -14.4979156224319;
   private static final double OFFSET_A2 = 8.82013935801453;
-  private static final double[] N0 = {1.99427042, 0.62105248, 0.41195293, 1.04028922, 0.08327678};
-  private static final double[] T0 = {3.15163, 6.1119, 6.77708, 11.32384, 27.08792};
+  private static final double[] N0 = { 1.99427042, 0.62105248, 0.41195293, 1.04028922, 0.08327678 };
+  private static final double[] T0 = { 3.15163, 6.1119, 6.77708, 11.32384, 27.08792 };
 
   // Residual power-series terms (Span–Wagner n, d, t, c=l)
-  private static final double[] N = {0.388568232032, 2.93854759427, -5.5867188535, -0.767531995925,
-      0.317290055804, 0.548033158978, 0.122794112203, 2.16589615432, 1.58417351097, -0.231327054055,
-      0.0581169164314, -0.553691372054, 0.489466159094, -0.0242757398435, 0.0624947905017,
-      -0.121758602252, -0.370556852701, -0.0167758797004, -0.11960736638, -0.0456193625088,
-      0.0356127892703, -0.00744277271321, -0.00173957049024, -0.0218101212895, 0.0243321665592,
-      -0.0374401334235, 0.143387157569, -0.134919690833, -0.0231512250535, 0.0123631254929,
-      0.00210583219729, -0.000339585190264, 0.00559936517716, -0.000303351180556};
-  private static final double[] D = {1, 1, 1, 1, 2, 2, 3, 1, 2, 4, 5, 5, 5, 6, 6, 6, 1, 1, 4, 4, 4,
-      7, 8, 2, 3, 3, 5, 5, 6, 7, 8, 10, 4, 8};
-  private static final double[] T = {0, 0.75, 1, 2, 0.75, 2, 0.75, 1.5, 1.5, 2.5, 0, 1.5, 2, 0, 1,
-      2, 3, 6, 3, 6, 8, 6, 0, 7, 12, 16, 22, 24, 16, 24, 8, 2, 28, 14};
-  private static final double[] L = {0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2,
-      2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 6};
+  private static final double[] N = { 0.388568232032, 2.93854759427, -5.5867188535, -0.767531995925, 0.317290055804,
+      0.548033158978, 0.122794112203, 2.16589615432, 1.58417351097, -0.231327054055, 0.0581169164314, -0.553691372054,
+      0.489466159094, -0.0242757398435, 0.0624947905017, -0.121758602252, -0.370556852701, -0.0167758797004,
+      -0.11960736638, -0.0456193625088, 0.0356127892703, -0.00744277271321, -0.00173957049024, -0.0218101212895,
+      0.0243321665592, -0.0374401334235, 0.143387157569, -0.134919690833, -0.0231512250535, 0.0123631254929,
+      0.00210583219729, -0.000339585190264, 0.00559936517716, -0.000303351180556 };
+  private static final double[] D = { 1, 1, 1, 1, 2, 2, 3, 1, 2, 4, 5, 5, 5, 6, 6, 6, 1, 1, 4, 4, 4, 7, 8, 2, 3, 3, 5,
+      5, 6, 7, 8, 10, 4, 8 };
+  private static final double[] T = { 0, 0.75, 1, 2, 0.75, 2, 0.75, 1.5, 1.5, 2.5, 0, 1.5, 2, 0, 1, 2, 3, 6, 3, 6, 8, 6,
+      0, 7, 12, 16, 22, 24, 16, 24, 8, 2, 28, 14 };
+  private static final double[] L = { 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 4,
+      4, 4, 4, 4, 4, 5, 6 };
 
   // Gaussian terms
-  private static final double[] GN =
-      {-213.654886883, 26641.5691493, -24027.2122046, -283.41603424, 212.472844002};
-  private static final double[] GD = {2, 2, 2, 3, 3};
-  private static final double[] GT = {1, 0, 1, 3, 3};
-  private static final double[] GBETA = {325, 300, 300, 275, 275};
-  private static final double[] GGAMMA = {1.16, 1.19, 1.19, 1.25, 1.22};
-  private static final double[] GEPS = {1, 1, 1, 1, 1};
-  private static final double[] GETA = {25, 25, 25, 15, 20};
+  private static final double[] GN = { -213.654886883, 26641.5691493, -24027.2122046, -283.41603424, 212.472844002 };
+  private static final double[] GD = { 2, 2, 2, 3, 3 };
+  private static final double[] GT = { 1, 0, 1, 3, 3 };
+  private static final double[] GBETA = { 325, 300, 300, 275, 275 };
+  private static final double[] GGAMMA = { 1.16, 1.19, 1.19, 1.25, 1.22 };
+  private static final double[] GEPS = { 1, 1, 1, 1, 1 };
+  private static final double[] GETA = { 25, 25, 25, 15, 20 };
 
   /** Holder for Helmholtz energy derivatives. */
   private static class Derivs {
@@ -71,8 +70,7 @@ public final class NeqSimSpanWagner {
    * @param d holder for derivative terms that will be populated
    */
   private static void alpha0(double delta, double tau, Derivs d) {
-    d.a0 = Math.log(delta) + LEAD_A1 + LEAD_A2 * tau + OFFSET_A1 + OFFSET_A2 * tau
-        + LOGTAU_A * Math.log(tau);
+    d.a0 = Math.log(delta) + LEAD_A1 + LEAD_A2 * tau + OFFSET_A1 + OFFSET_A2 * tau + LOGTAU_A * Math.log(tau);
     d.a0_t = LEAD_A2 + OFFSET_A2 + LOGTAU_A / tau;
     d.a0_tt = -LOGTAU_A / (tau * tau);
     for (int i = 0; i < N0.length; i++) {
@@ -100,8 +98,8 @@ public final class NeqSimSpanWagner {
       d.ar += common;
       double dterm = D[i] / delta - (L[i] == 0 ? 0.0 : L[i] * Math.pow(delta, L[i] - 1));
       d.ar_d += common * dterm;
-      d.ar_dd += common * (dterm * dterm + (-D[i] / (delta * delta)
-          - (L[i] == 0 ? 0.0 : L[i] * (L[i] - 1) * Math.pow(delta, L[i] - 2))));
+      d.ar_dd += common * (dterm * dterm
+          + (-D[i] / (delta * delta) - (L[i] == 0 ? 0.0 : L[i] * (L[i] - 1) * Math.pow(delta, L[i] - 2))));
       double tterm = T[i] / tau;
       d.ar_t += common * tterm;
       d.ar_tt += common * tterm * (tterm - 1.0 / tau);
@@ -189,13 +187,12 @@ public final class NeqSimSpanWagner {
     double lnPhi = d.ar + delta * d.ar_d - Math.log(Z);
     double phi = Math.exp(lnPhi);
 
-    return new double[] {rho, Z, h, s, cp, cv, u, g, w, phi, muJT};
+    return new double[] { rho, Z, h, s, cp, cv, u, g, w, phi, muJT };
   }
 
   /**
-   * Calculate the saturation pressure for CO2 at a given temperature using the Span-Wagner
-   * ancillary equation. Valid for temperatures from triple point (216.592 K) to critical point
-   * (304.1282 K).
+   * Calculate the saturation pressure for CO2 at a given temperature using the Span-Wagner ancillary equation. Valid
+   * for temperatures from triple point (216.592 K) to critical point (304.1282 K).
    *
    * @param temperature Temperature in Kelvin
    * @return Saturation pressure in Pascal
@@ -219,8 +216,8 @@ public final class NeqSimSpanWagner {
     double pc = 7.3773e6; // Pa
 
     // Coefficients from Span-Wagner paper Table 34
-    double[] a = {-7.0602087, 1.9391218, -1.6463597, -3.2995634};
-    double[] t = {1.0, 1.5, 2.0, 4.0};
+    double[] a = { -7.0602087, 1.9391218, -1.6463597, -3.2995634 };
+    double[] t = { 1.0, 1.5, 2.0, 4.0 };
 
     double sum = 0.0;
     for (int i = 0; i < a.length; i++) {
@@ -231,4 +228,3 @@ public final class NeqSimSpanWagner {
     return pc * Math.exp(lnPratio);
   }
 }
-

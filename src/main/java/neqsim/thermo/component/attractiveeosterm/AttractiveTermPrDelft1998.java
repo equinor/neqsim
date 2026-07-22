@@ -3,9 +3,7 @@ package neqsim.thermo.component.attractiveeosterm;
 import neqsim.thermo.component.ComponentEosInterface;
 
 /**
- * <p>
  * AttractiveTermPrDelft1998 class.
- * </p>
  *
  * @author esol
  * @version $Id: $Id
@@ -17,9 +15,7 @@ public class AttractiveTermPrDelft1998 extends AttractiveTermPr1978 {
   boolean isMethane = false;
 
   /**
-   * <p>
    * Constructor for AttractiveTermPrDelft1998.
-   * </p>
    *
    * @param component a {@link neqsim.thermo.component.ComponentEosInterface} object
    */
@@ -65,8 +61,7 @@ public class AttractiveTermPrDelft1998 extends AttractiveTermPr1978 {
   @Override
   public double diffalphaT(double temperature) {
     if (isMethane) {
-      return 0.20089 / getComponent().getTC()
-          - 2.0 * 0.3256987 * temperature / Math.pow(getComponent().getTC(), 2.0)
+      return 0.20089 / getComponent().getTC() - 2.0 * 0.3256987 * temperature / Math.pow(getComponent().getTC(), 2.0)
           + 3.0 * 0.06653 * Math.pow(temperature, 2.0) / Math.pow(getComponent().getTC(), 3.0);
     } else {
       return -(1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
@@ -83,8 +78,7 @@ public class AttractiveTermPrDelft1998 extends AttractiveTermPr1978 {
     } else {
       return m * m / temperature / getComponent().getTC() / 2.0
           + (1.0 + m * (1.0 - Math.sqrt(temperature / getComponent().getTC()))) * m
-              / Math.sqrt(
-                  temperature * temperature * temperature / (Math.pow(getComponent().getTC(), 3.0)))
+              / Math.sqrt(temperature * temperature * temperature / (Math.pow(getComponent().getTC(), 3.0)))
               / (getComponent().getTC() * getComponent().getTC()) / 2.0;
     }
   }

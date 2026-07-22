@@ -13,9 +13,7 @@ import org.apache.logging.log4j.Logger;
 import neqsim.thermo.system.SystemInterface;
 
 /**
- * <p>
  * CalcIonicComposition class.
- * </p>
  *
  * @author even solbraa
  * @version $Id: $Id
@@ -29,9 +27,7 @@ public class CalcIonicComposition extends Flash {
   String[][] resultTable = null;
 
   /**
-   * <p>
    * Constructor for CalcIonicComposition.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    * @param phaseNum a int
@@ -58,8 +54,7 @@ public class CalcIonicComposition extends Flash {
     int ionNumber = 0;
     for (int i = 0; i < system.getPhase(phaseNumber).getNumberOfComponents(); i++) {
       // if (system.getPhase(phaseNumber).getComponent(i).isIsIon()) {
-      resultTable[ionNumber + 1][0] =
-          system.getPhase(phaseNumber).getComponent(i).getComponentName();
+      resultTable[ionNumber + 1][0] = system.getPhase(phaseNumber).getComponent(i).getComponentName();
       resultTable[ionNumber + 1][1] = Double
           .valueOf(nf.format(system.getPhase(phaseNumber).getComponent(i).getNumberOfMolesInPhase()
               / (system.getPhase(phaseNumber).getComponent("water").getNumberOfMolesInPhase()
@@ -73,11 +68,8 @@ public class CalcIonicComposition extends Flash {
                   * system.getPhase(phaseNumber).getComponent("water").getMolarMass())
               * 1e6))
           .toString();
-      resultTable[ionNumber + 1][3] =
-          Double
-              .valueOf(nf.format(system.getPhase(phaseNumber).getActivityCoefficient(i,
-                  system.getPhase(phaseNumber).getComponent("water").getComponentNumber())))
-              .toString();
+      resultTable[ionNumber + 1][3] = Double.valueOf(nf.format(system.getPhase(phaseNumber).getActivityCoefficient(i,
+          system.getPhase(phaseNumber).getComponent("water").getComponentNumber()))).toString();
 
       ionNumber++;
       // }

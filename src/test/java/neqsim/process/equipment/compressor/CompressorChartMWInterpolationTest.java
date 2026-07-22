@@ -22,27 +22,25 @@ public class CompressorChartMWInterpolationTest {
   private double[] chartConditions;
 
   // Test data for MW = 18 g/mol
-  private double[] speed18 = {10000, 11000, 12000};
-  private double[][] flow18 = {{3000, 3500, 4000, 4500, 5000}, {3300, 3800, 4300, 4800, 5300},
-      {3600, 4100, 4600, 5100, 5600}};
-  private double[][] head18 =
-      {{120, 115, 108, 98, 85}, {138, 132, 124, 113, 98}, {158, 151, 142, 130, 113}};
-  private double[][] polyEff18 = {{75, 78, 80, 78, 73}, {74, 77, 79, 77, 72}, {73, 76, 78, 76, 71}};
+  private double[] speed18 = { 10000, 11000, 12000 };
+  private double[][] flow18 = { { 3000, 3500, 4000, 4500, 5000 }, { 3300, 3800, 4300, 4800, 5300 },
+      { 3600, 4100, 4600, 5100, 5600 } };
+  private double[][] head18 = { { 120, 115, 108, 98, 85 }, { 138, 132, 124, 113, 98 }, { 158, 151, 142, 130, 113 } };
+  private double[][] polyEff18 = { { 75, 78, 80, 78, 73 }, { 74, 77, 79, 77, 72 }, { 73, 76, 78, 76, 71 } };
 
   // Test data for MW = 22 g/mol (lower head capacity due to heavier gas)
-  private double[] speed22 = {10000, 11000, 12000};
-  private double[][] flow22 = {{2800, 3300, 3800, 4300, 4800}, {3100, 3600, 4100, 4600, 5100},
-      {3400, 3900, 4400, 4900, 5400}};
-  private double[][] head22 =
-      {{100, 96, 90, 82, 71}, {115, 110, 103, 94, 82}, {132, 126, 118, 108, 94}};
-  private double[][] polyEff22 = {{73, 76, 78, 76, 71}, {72, 75, 77, 75, 70}, {71, 74, 76, 74, 69}};
+  private double[] speed22 = { 10000, 11000, 12000 };
+  private double[][] flow22 = { { 2800, 3300, 3800, 4300, 4800 }, { 3100, 3600, 4100, 4600, 5100 },
+      { 3400, 3900, 4400, 4900, 5400 } };
+  private double[][] head22 = { { 100, 96, 90, 82, 71 }, { 115, 110, 103, 94, 82 }, { 132, 126, 118, 108, 94 } };
+  private double[][] polyEff22 = { { 73, 76, 78, 76, 71 }, { 72, 75, 77, 75, 70 }, { 71, 74, 76, 74, 69 } };
 
   @BeforeEach
   void setUp() {
     chart = new CompressorChartMWInterpolation();
     chart.setHeadUnit("kJ/kg");
 
-    chartConditions = new double[] {25.0, 50.0, 50.0, 20.0};
+    chartConditions = new double[] { 25.0, 50.0, 50.0, 20.0 };
 
     // Add map at MW = 18 g/mol
     chart.addMapAtMW(18.0, chartConditions, speed18, flow18, head18, polyEff18);
@@ -98,8 +96,7 @@ public class CompressorChartMWInterpolationTest {
     double expectedHead = (head18val + head22val) / 2.0; // 50% interpolation
 
     double actualHead = chart.getPolytropicHead(flow, speed);
-    assertEquals(expectedHead, actualHead, 0.01,
-        "At MW=20 (midpoint), head should be average of both maps");
+    assertEquals(expectedHead, actualHead, 0.01, "At MW=20 (midpoint), head should be average of both maps");
 
     // Test efficiency interpolation
     double eff18val = chart.getChartAtMW(18.0).getPolytropicEfficiency(flow, speed);
@@ -107,8 +104,7 @@ public class CompressorChartMWInterpolationTest {
     double expectedEff = (eff18val + eff22val) / 2.0;
 
     double actualEff = chart.getPolytropicEfficiency(flow, speed);
-    assertEquals(expectedEff, actualEff, 0.01,
-        "At MW=20 (midpoint), efficiency should be average of both maps");
+    assertEquals(expectedEff, actualEff, 0.01, "At MW=20 (midpoint), efficiency should be average of both maps");
   }
 
   @Test
@@ -138,8 +134,7 @@ public class CompressorChartMWInterpolationTest {
     double head18val = chart.getChartAtMW(18.0).getPolytropicHead(flow, speed);
     double actualHead = chart.getPolytropicHead(flow, speed);
 
-    assertEquals(head18val, actualHead, 0.001,
-        "Below lowest MW, should use lowest MW map (no extrapolation)");
+    assertEquals(head18val, actualHead, 0.001, "Below lowest MW, should use lowest MW map (no extrapolation)");
   }
 
   @Test
@@ -153,8 +148,7 @@ public class CompressorChartMWInterpolationTest {
     double head22val = chart.getChartAtMW(22.0).getPolytropicHead(flow, speed);
     double actualHead = chart.getPolytropicHead(flow, speed);
 
-    assertEquals(head22val, actualHead, 0.001,
-        "Above highest MW, should use highest MW map (no extrapolation)");
+    assertEquals(head22val, actualHead, 0.001, "Above highest MW, should use highest MW map (no extrapolation)");
   }
 
   @Test
@@ -182,19 +176,17 @@ public class CompressorChartMWInterpolationTest {
     double head = singleMapChart.getPolytropicHead(3500.0, 10000);
     double expectedHead = singleMapChart.getChartAtMW(20.0).getPolytropicHead(3500.0, 10000);
 
-    assertEquals(expectedHead, head, 0.001,
-        "With single map, should use that map regardless of MW");
+    assertEquals(expectedHead, head, 0.001, "With single map, should use that map regardless of MW");
   }
 
   @Test
   void testThreeMapsInterpolation() {
     // Add a third map at MW = 20
-    double[] speed20 = {10000, 11000, 12000};
-    double[][] flow20 = {{2900, 3400, 3900, 4400, 4900}, {3200, 3700, 4200, 4700, 5200},
-        {3500, 4000, 4500, 5000, 5500}};
-    double[][] head20 =
-        {{110, 105, 99, 90, 78}, {126, 121, 113, 103, 90}, {145, 138, 130, 119, 103}};
-    double[][] polyEff20 = {{74, 77, 79, 77, 72}, {73, 76, 78, 76, 71}, {72, 75, 77, 75, 70}};
+    double[] speed20 = { 10000, 11000, 12000 };
+    double[][] flow20 = { { 2900, 3400, 3900, 4400, 4900 }, { 3200, 3700, 4200, 4700, 5200 },
+        { 3500, 4000, 4500, 5000, 5500 } };
+    double[][] head20 = { { 110, 105, 99, 90, 78 }, { 126, 121, 113, 103, 90 }, { 145, 138, 130, 119, 103 } };
+    double[][] polyEff20 = { { 74, 77, 79, 77, 72 }, { 73, 76, 78, 76, 71 }, { 72, 75, 77, 75, 70 } };
 
     chart.addMapAtMW(20.0, chartConditions, speed20, flow20, head20, polyEff20);
 
@@ -276,8 +268,7 @@ public class CompressorChartMWInterpolationTest {
 
     assertEquals("meter", chart.getHeadUnit());
     for (Double mw : chart.getMapMolecularWeights()) {
-      assertEquals("meter", chart.getChartAtMW(mw).getHeadUnit(),
-          "Head unit should propagate to all maps");
+      assertEquals("meter", chart.getChartAtMW(mw).getHeadUnit(), "Head unit should propagate to all maps");
     }
   }
 
@@ -314,8 +305,7 @@ public class CompressorChartMWInterpolationTest {
     double expectedSurgeFlow = (surgeFlow18 + surgeFlow22) / 2.0;
 
     double actualSurgeFlow = chart.getSurgeFlow(head);
-    assertEquals(expectedSurgeFlow, actualSurgeFlow, 0.01,
-        "Surge flow should be interpolated between MW maps");
+    assertEquals(expectedSurgeFlow, actualSurgeFlow, 0.01, "Surge flow should be interpolated between MW maps");
   }
 
   @Test
@@ -327,15 +317,12 @@ public class CompressorChartMWInterpolationTest {
 
     // Get stone wall flow at a given head using interpolation
     double head = 100.0;
-    double stoneFlow18 =
-        ((SafeSplineStoneWallCurve) chart.getChartAtMW(18.0).getStoneWallCurve()).getFlow(head);
-    double stoneFlow22 =
-        ((SafeSplineStoneWallCurve) chart.getChartAtMW(22.0).getStoneWallCurve()).getFlow(head);
+    double stoneFlow18 = ((SafeSplineStoneWallCurve) chart.getChartAtMW(18.0).getStoneWallCurve()).getFlow(head);
+    double stoneFlow22 = ((SafeSplineStoneWallCurve) chart.getChartAtMW(22.0).getStoneWallCurve()).getFlow(head);
     double expectedStoneFlow = (stoneFlow18 + stoneFlow22) / 2.0;
 
     double actualStoneFlow = chart.getStoneWallFlow(head);
-    assertEquals(expectedStoneFlow, actualStoneFlow, 0.01,
-        "Stone wall flow should be interpolated between MW maps");
+    assertEquals(expectedStoneFlow, actualStoneFlow, 0.01, "Stone wall flow should be interpolated between MW maps");
   }
 
   @Test
@@ -350,8 +337,7 @@ public class CompressorChartMWInterpolationTest {
     assertTrue(chart.isSurge(head, surgeFlow * 0.8), "Flow 20% below surge should be in surge");
 
     // Flow above surge should not be in surge
-    assertFalse(chart.isSurge(head, surgeFlow * 1.2),
-        "Flow 20% above surge should not be in surge");
+    assertFalse(chart.isSurge(head, surgeFlow * 1.2), "Flow 20% above surge should not be in surge");
   }
 
   @Test
@@ -363,12 +349,10 @@ public class CompressorChartMWInterpolationTest {
     double stoneWallFlow = chart.getStoneWallFlow(head);
 
     // Flow above stone wall should be choked
-    assertTrue(chart.isStoneWall(head, stoneWallFlow * 1.2),
-        "Flow 20% above stone wall should be choked");
+    assertTrue(chart.isStoneWall(head, stoneWallFlow * 1.2), "Flow 20% above stone wall should be choked");
 
     // Flow below stone wall should not be choked
-    assertFalse(chart.isStoneWall(head, stoneWallFlow * 0.8),
-        "Flow 20% below stone wall should not be choked");
+    assertFalse(chart.isStoneWall(head, stoneWallFlow * 0.8), "Flow 20% below stone wall should not be choked");
   }
 
   @Test
@@ -403,12 +387,12 @@ public class CompressorChartMWInterpolationTest {
     CompressorChartMWInterpolation separateFlowChart = new CompressorChartMWInterpolation();
     separateFlowChart.setHeadUnit("kJ/kg");
 
-    double[] speeds = {10000, 11000};
-    double[][] flowHead = {{3000, 3500, 4000, 4500}, {3300, 3800, 4300, 4800}};
-    double[][] heads = {{120, 115, 108, 98}, {138, 132, 124, 113}};
+    double[] speeds = { 10000, 11000 };
+    double[][] flowHead = { { 3000, 3500, 4000, 4500 }, { 3300, 3800, 4300, 4800 } };
+    double[][] heads = { { 120, 115, 108, 98 }, { 138, 132, 124, 113 } };
     // Efficiency measured at different flow points
-    double[][] flowEff = {{3100, 3600, 4100}, {3400, 3900, 4400}};
-    double[][] effs = {{76, 79, 77}, {75, 78, 76}};
+    double[][] flowEff = { { 3100, 3600, 4100 }, { 3400, 3900, 4400 } };
+    double[][] effs = { { 76, 79, 77 }, { 75, 78, 76 } };
 
     // Add map using separate flow arrays
     separateFlowChart.addMapAtMW(20.0, chartConditions, speeds, flowHead, heads, flowEff, effs);
@@ -431,16 +415,16 @@ public class CompressorChartMWInterpolationTest {
     singleSpeedChart.setHeadUnit("kJ/kg");
 
     double speed = 10000;
-    double[] flow = {3000, 3500, 4000, 4500, 5000};
-    double[] head = {120, 115, 108, 98, 85};
-    double[] eff = {75, 78, 80, 78, 73};
+    double[] flow = { 3000, 3500, 4000, 4500, 5000 };
+    double[] head = { 120, 115, 108, 98, 85 };
+    double[] eff = { 75, 78, 80, 78, 73 };
 
     // Add single-speed map at MW = 18
     singleSpeedChart.addMapAtMW(18.0, speed, flow, head, eff);
 
     // Add single-speed map at MW = 22
-    double[] head22 = {100, 96, 90, 82, 71};
-    double[] eff22 = {73, 76, 78, 76, 71};
+    double[] head22 = { 100, 96, 90, 82, 71 };
+    double[] eff22 = { 73, 76, 78, 76, 71 };
     singleSpeedChart.addMapAtMW(22.0, speed, flow, head22, eff22);
 
     assertEquals(2, singleSpeedChart.getNumberOfMaps());
@@ -456,8 +440,7 @@ public class CompressorChartMWInterpolationTest {
     // Head at MW=20 should be between MW=18 and MW=22 values
     double head18 = singleSpeedChart.getChartAtMW(18.0).getPolytropicHead(3500.0, speed);
     double headMW22 = singleSpeedChart.getChartAtMW(22.0).getPolytropicHead(3500.0, speed);
-    assertTrue(headAt20 <= head18 && headAt20 >= headMW22,
-        "Head at MW=20 should be between MW=18 and MW=22");
+    assertTrue(headAt20 <= head18 && headAt20 >= headMW22, "Head at MW=20 should be between MW=18 and MW=22");
   }
 
   @Test
@@ -467,11 +450,11 @@ public class CompressorChartMWInterpolationTest {
     singleSpeedChart.setHeadUnit("kJ/kg");
 
     double speed = 10000;
-    double[] flowHead = {3000, 3500, 4000, 4500, 5000};
-    double[] head = {120, 115, 108, 98, 85};
+    double[] flowHead = { 3000, 3500, 4000, 4500, 5000 };
+    double[] head = { 120, 115, 108, 98, 85 };
     // Efficiency at different flow points
-    double[] flowEff = {3100, 3600, 4100};
-    double[] eff = {76, 79, 77};
+    double[] flowEff = { 3100, 3600, 4100 };
+    double[] eff = { 76, 79, 77 };
 
     // Add map with separate flow arrays
     singleSpeedChart.addMapAtMW(20.0, speed, flowHead, head, flowEff, eff);
@@ -492,7 +475,7 @@ public class CompressorChartMWInterpolationTest {
     CompressorChartMWInterpolation multiSpeedChart = new CompressorChartMWInterpolation();
     multiSpeedChart.setHeadUnit("kJ/kg");
 
-    double[] speeds = {10000, 11000, 12000};
+    double[] speeds = { 10000, 11000, 12000 };
 
     // Add map at MW = 18 without chartConditions
     multiSpeedChart.addMapAtMW(18.0, speeds, flow18, head18, polyEff18);
@@ -513,8 +496,7 @@ public class CompressorChartMWInterpolationTest {
     // Head at MW=20 should be between MW=18 and MW=22 values
     double headMW18 = multiSpeedChart.getChartAtMW(18.0).getPolytropicHead(3500.0, 10000);
     double headMW22 = multiSpeedChart.getChartAtMW(22.0).getPolytropicHead(3500.0, 10000);
-    assertTrue(headAt20 <= headMW18 && headAt20 >= headMW22,
-        "Head at MW=20 should be between MW=18 and MW=22");
+    assertTrue(headAt20 <= headMW18 && headAt20 >= headMW22, "Head at MW=20 should be between MW=18 and MW=22");
   }
 
   @Test
@@ -523,12 +505,12 @@ public class CompressorChartMWInterpolationTest {
     CompressorChartMWInterpolation multiSpeedChart = new CompressorChartMWInterpolation();
     multiSpeedChart.setHeadUnit("kJ/kg");
 
-    double[] speeds = {10000, 11000};
-    double[][] flowHead = {{3000, 3500, 4000, 4500}, {3300, 3800, 4300, 4800}};
-    double[][] heads = {{120, 115, 108, 98}, {138, 132, 124, 113}};
+    double[] speeds = { 10000, 11000 };
+    double[][] flowHead = { { 3000, 3500, 4000, 4500 }, { 3300, 3800, 4300, 4800 } };
+    double[][] heads = { { 120, 115, 108, 98 }, { 138, 132, 124, 113 } };
     // Efficiency at different flow points
-    double[][] flowEff = {{3100, 3600, 4100}, {3400, 3900, 4400}};
-    double[][] effs = {{76, 79, 77}, {75, 78, 76}};
+    double[][] flowEff = { { 3100, 3600, 4100 }, { 3400, 3900, 4400 } };
+    double[][] effs = { { 76, 79, 77 }, { 75, 78, 76 } };
 
     // Add map without chartConditions
     multiSpeedChart.addMapAtMW(20.0, speeds, flowHead, heads, flowEff, effs);
@@ -554,8 +536,7 @@ public class CompressorChartMWInterpolationTest {
     double expectedHead = (surgeHead18 + surgeHead22) / 2.0;
 
     double actualHead = chart.getSurgeHeadAtSpeed(speed);
-    assertEquals(expectedHead, actualHead, 0.01,
-        "Surge head should be interpolated between MW maps");
+    assertEquals(expectedHead, actualHead, 0.01, "Surge head should be interpolated between MW maps");
   }
 
   @Test
@@ -569,8 +550,7 @@ public class CompressorChartMWInterpolationTest {
     double expectedHead = (stoneHead18 + stoneHead22) / 2.0;
 
     double actualHead = chart.getStoneWallHeadAtSpeed(speed);
-    assertEquals(expectedHead, actualHead, 0.01,
-        "Stone wall head should be interpolated between MW maps");
+    assertEquals(expectedHead, actualHead, 0.01, "Stone wall head should be interpolated between MW maps");
   }
 
   @Test
@@ -640,8 +620,7 @@ public class CompressorChartMWInterpolationTest {
     double expectedHead = chart.getChartAtMW(18.0).getPolytropicHead(flow, speed);
     double actualHead = chart.getPolytropicHead(flow, speed);
 
-    assertEquals(expectedHead, actualHead, 0.01,
-        "Should use lowest MW map when extrapolation is disabled");
+    assertEquals(expectedHead, actualHead, 0.01, "Should use lowest MW map when extrapolation is disabled");
   }
 
   @Test
@@ -659,8 +638,7 @@ public class CompressorChartMWInterpolationTest {
     double expectedHead = chart.getChartAtMW(22.0).getPolytropicHead(flow, speed);
     double actualHead = chart.getPolytropicHead(flow, speed);
 
-    assertEquals(expectedHead, actualHead, 0.01,
-        "Should use highest MW map when extrapolation is disabled");
+    assertEquals(expectedHead, actualHead, 0.01, "Should use highest MW map when extrapolation is disabled");
   }
 
   @Test
@@ -732,8 +710,7 @@ public class CompressorChartMWInterpolationTest {
     chart.getPolytropicHead(flow, speed);
 
     // MW should remain as set, not updated from stream
-    assertEquals(setMW, chart.getOperatingMW(), 0.001,
-        "MW should remain as set when useActualMW is false");
+    assertEquals(setMW, chart.getOperatingMW(), 0.001, "MW should remain as set when useActualMW is false");
   }
 
   @Test
@@ -774,8 +751,7 @@ public class CompressorChartMWInterpolationTest {
 
     // After calling a method, check that MW is updated from stream
     double expectedMW = inletStream.getFluid().getMolarMass() * 1000.0;
-    assertEquals(expectedMW, chart.getOperatingMW(), 0.1,
-        "Operating MW should be auto-updated from inlet stream");
+    assertEquals(expectedMW, chart.getOperatingMW(), 0.1, "Operating MW should be auto-updated from inlet stream");
   }
 
   @Test
@@ -819,8 +795,7 @@ public class CompressorChartMWInterpolationTest {
     double expectedSurge = surge18 * (1 - 1.5) + surge22 * 1.5;
 
     double actualSurge = chart.getSurgeFlowAtSpeed(speed);
-    assertEquals(expectedSurge, actualSurge, 0.01,
-        "Surge flow should be extrapolated above highest MW");
+    assertEquals(expectedSurge, actualSurge, 0.01, "Surge flow should be extrapolated above highest MW");
   }
 
   @Test
@@ -858,8 +833,7 @@ public class CompressorChartMWInterpolationTest {
 
     // After running, the compressor should have set the inlet stream on the chart
     assertNotNull(mwChart.getInletStream(), "Inlet stream should be set after run()");
-    assertEquals(inletStream, mwChart.getInletStream(),
-        "Chart's inlet stream should be the compressor's inlet stream");
+    assertEquals(inletStream, mwChart.getInletStream(), "Chart's inlet stream should be the compressor's inlet stream");
 
     // The chart should now use the stream's MW
     double expectedMW = inletStream.getFluid().getMolarMass() * 1000.0;
@@ -898,8 +872,7 @@ public class CompressorChartMWInterpolationTest {
 
     // Check that MW was detected from stream
     double streamMW = inletStream.getFluid().getMolarMass() * 1000.0;
-    assertEquals(streamMW, mwChart.getOperatingMW(), 0.1,
-        "Chart should use MW from compressor's inlet stream");
+    assertEquals(streamMW, mwChart.getOperatingMW(), 0.1, "Chart should use MW from compressor's inlet stream");
 
     // Now change the gas composition and run again
     gas.addComponent("propane", 0.05);
@@ -908,7 +881,6 @@ public class CompressorChartMWInterpolationTest {
 
     // MW should be updated to new composition
     double newStreamMW = inletStream.getFluid().getMolarMass() * 1000.0;
-    assertEquals(newStreamMW, mwChart.getOperatingMW(), 0.1,
-        "Chart MW should update when gas composition changes");
+    assertEquals(newStreamMW, mwChart.getOperatingMW(), 0.1, "Chart MW should update when gas composition changes");
   }
 }

@@ -4,16 +4,15 @@ package neqsim.process.mechanicaldesign.valve.choke;
  * Factory class for creating multiphase choke flow models.
  *
  * <p>
- * This factory provides a convenient way to instantiate different choke flow correlations based on
- * the application requirements.
+ * This factory provides a convenient way to instantiate different choke flow correlations based on the application
+ * requirements.
  * </p>
  *
  * <p>
  * <b>Model Selection Guidelines:</b>
  * </p>
  * <ul>
- * <li><b>Sachdeva:</b> Best for general two-phase flow, subcritical and critical, mechanistic
- * basis</li>
+ * <li><b>Sachdeva:</b> Best for general two-phase flow, subcritical and critical, mechanistic basis</li>
  * <li><b>Gilbert:</b> Quick estimates, field applications, critical flow only</li>
  * <li><b>Achong:</b> High GLR conditions (gas-dominated two-phase)</li>
  * <li><b>Baxendell:</b> General purpose empirical correlation</li>
@@ -42,7 +41,8 @@ public final class MultiphaseChokeFlowFactory {
   }
 
   /** Private constructor to prevent instantiation. */
-  private MultiphaseChokeFlowFactory() {}
+  private MultiphaseChokeFlowFactory() {
+  }
 
   /**
    * Creates a choke flow model of the specified type.
@@ -52,18 +52,18 @@ public final class MultiphaseChokeFlowFactory {
    */
   public static MultiphaseChokeFlow createModel(ModelType modelType) {
     switch (modelType) {
-      case SACHDEVA:
-        return new SachdevaChokeFlow();
-      case GILBERT:
-        return new GilbertChokeFlow(GilbertChokeFlow.CorrelationType.GILBERT);
-      case BAXENDELL:
-        return new GilbertChokeFlow(GilbertChokeFlow.CorrelationType.BAXENDELL);
-      case ROS:
-        return new GilbertChokeFlow(GilbertChokeFlow.CorrelationType.ROS);
-      case ACHONG:
-        return new GilbertChokeFlow(GilbertChokeFlow.CorrelationType.ACHONG);
-      default:
-        return new SachdevaChokeFlow();
+    case SACHDEVA:
+      return new SachdevaChokeFlow();
+    case GILBERT:
+      return new GilbertChokeFlow(GilbertChokeFlow.CorrelationType.GILBERT);
+    case BAXENDELL:
+      return new GilbertChokeFlow(GilbertChokeFlow.CorrelationType.BAXENDELL);
+    case ROS:
+      return new GilbertChokeFlow(GilbertChokeFlow.CorrelationType.ROS);
+    case ACHONG:
+      return new GilbertChokeFlow(GilbertChokeFlow.CorrelationType.ACHONG);
+    default:
+      return new SachdevaChokeFlow();
     }
   }
 

@@ -27,8 +27,8 @@ public enum WallHeatTransferModel {
   CONSTANT_HEAT_FLUX,
 
   /**
-   * Convective heat transfer to/from ambient. q'' = U_overall * (T_ambient - T_fluid) where
-   * U_overall includes pipe wall, insulation, and external convection resistances.
+   * Convective heat transfer to/from ambient. q'' = U_overall * (T_ambient - T_fluid) where U_overall includes pipe
+   * wall, insulation, and external convection resistances.
    */
   CONVECTIVE_BOUNDARY,
 

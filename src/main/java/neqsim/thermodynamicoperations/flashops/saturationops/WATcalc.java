@@ -6,9 +6,7 @@ import neqsim.thermo.system.SystemInterface;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /**
- * <p>
  * WATcalc class.
- * </p>
  *
  * @author asmund
  * @version $Id: $Id
@@ -20,9 +18,7 @@ public class WATcalc extends ConstantDutyTemperatureFlash {
   static Logger logger = LogManager.getLogger(WATcalc.class);
 
   /**
-   * <p>
    * Constructor for WATcalc.
-   * </p>
    *
    * @param system a {@link neqsim.thermo.system.SystemInterface} object
    */
@@ -50,8 +46,7 @@ public class WATcalc extends ConstantDutyTemperatureFlash {
 
       sumx = 0.0;
       for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
-        system.getPhases()[5].getComponent(i)
-            .setx(Ksolid[i] * system.getPhase(0).getComponent(i).getx());
+        system.getPhases()[5].getComponent(i).setx(Ksolid[i] * system.getPhase(0).getComponent(i).getx());
         Ksolid[i] = system.getPhase(0).getComponent(i).getFugacityCoefficient()
             / system.getPhases()[5].getComponent(i).fugcoef(system.getPhases()[5]);
         sumx += Ksolid[i] * system.getPhase(0).getComponent(i).getx();
@@ -80,5 +75,6 @@ public class WATcalc extends ConstantDutyTemperatureFlash {
 
   /** {@inheritDoc} */
   @Override
-  public void printToFile(String name) {}
+  public void printToFile(String name) {
+  }
 }

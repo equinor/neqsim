@@ -1,3 +1,8 @@
+---
+title: "Combining and Re-Characterizing Fluids in NeqSim"
+description: "This guide explains how to add a fluid into another's characterization framework in NeqSim, making them compatible for use with a common Equation of State (EOS)."
+---
+
 # Combining and Re-Characterizing Fluids in NeqSim
 
 This guide explains how to add a fluid into another's characterization framework in NeqSim, making them compatible for use with a common Equation of State (EOS).
@@ -483,6 +488,6 @@ When combining pseudo-components, NeqSim calculates mass-weighted averages for t
 
 ## See Also
 
-- [Fluid Creation Guide](../fluid_creation_guide.md)
-- [PVT Fluid Characterization](../pvt_fluid_characterization.md)
-- [Mixing Rules Guide](../mixing_rules_guide.md)
+- [Fluid Creation Guide](../fluid_creation_guide)
+- [PVT Fluid Characterization](../pvt_fluid_characterization)
+- [Mixing Rules Guide](../mixing_rules_guide)

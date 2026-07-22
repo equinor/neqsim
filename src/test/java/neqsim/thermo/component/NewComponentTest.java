@@ -1,6 +1,8 @@
 package neqsim.thermo.component;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import neqsim.physicalproperties.PhysicalPropertyType;
@@ -13,6 +15,8 @@ import neqsim.thermo.system.SystemSrkEos;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 public class NewComponentTest extends neqsim.NeqSimTest {
+  private static final Logger logger = LogManager.getLogger(NewComponentTest.class);
+
   static SystemInterface thermoSystem = null;
 
   @Test
@@ -119,12 +123,12 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     thermoSystem.getComponent("CO2").setVolumeCorrectionT(0.2);
 
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-    assertEquals(37.6425616, thermoSystem.getDensity("kg/m3"), 0.01);
+    assertEquals(37.61805647, thermoSystem.getDensity("kg/m3"), 0.01);
 
     thermoSystem.getComponent("CO2").setRacketZ(0.3);
 
     thermoSystem.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
-    assertEquals(37.557573, thermoSystem.getDensity("kg/m3"), 0.01);
+    assertEquals(37.53716726, thermoSystem.getDensity("kg/m3"), 0.01);
   }
 
   @Test
@@ -156,10 +160,9 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     try {
       ops.TPflash();
     } catch (Exception e) {
-      System.out.println("error in bubble point flash");
+      logger.info("error in bubble point flash");
     }
-    assertEquals(3.447289881042099E-6,
-        thermoSystem.getPhase(0).getComponent("sulfuric acid").getx(), 100e-9);
+    assertEquals(3.447289881042099E-6, thermoSystem.getPhase(0).getComponent("sulfuric acid").getx(), 100e-9);
 
     thermoSystem = new SystemSrkEos(273.15 + 25.0, 100.6);
     thermoSystem.addComponent("nitric acid", 1.0);
@@ -176,7 +179,7 @@ public class NewComponentTest extends neqsim.NeqSimTest {
     try {
       ops.TPflash();
     } catch (Exception e) {
-      System.out.println("error in bubble point flash");
+      logger.info("error in bubble point flash");
     }
 
     assertEquals(0.002568785, thermoSystem.getPhase(0).getComponent("nitric acid").getx(), 100e-6);

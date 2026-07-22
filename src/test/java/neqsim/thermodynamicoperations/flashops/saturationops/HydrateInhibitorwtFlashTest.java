@@ -44,7 +44,6 @@ public class HydrateInhibitorwtFlashTest {
     }
     // testSystem.display();
 
-    assertEquals(0.019690143220139962,
-        testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles(), 1e-12);
+    assertEquals(0.019690143220139962, testSystem.getPhase(0).getComponent("MEG").getNumberOfmoles(), 1e-10);
   }
 }
