@@ -8,12 +8,12 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.gson.Gson;
 import java.util.Map;
-import neqsim.NeQSimTest;
+import neqsim.NeqSimTest;
 import neqsim.thermodynamicoperations.ThermodynamicOperations;
 import org.junit.jupiter.api.Test;
 
 /** Executes the API families illustrated by the thermodynamics cookbook recipes. */
-class ThermodynamicsCookbookDocumentationTest extends NeQSimTest {
+class ThermodynamicsCookbookDocumentationTest extends NeqSimTest {
   private SystemInterface createNaturalGas() {
     SystemInterface fluid = new SystemSrkEos(298.15, 50.0);
     fluid.addComponent("nitrogen", 0.02);
@@ -41,9 +41,9 @@ class ThermodynamicsCookbookDocumentationTest extends NeQSimTest {
     oil.addComponent("n-pentane", 2.0);
     oil.addComponent("n-hexane", 2.0);
     oil.addPlusFraction("C7", 32.5, 0.220, 0.82);
+    oil.setMixingRule("classic");
     oil.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12);
     oil.getCharacterization().characterisePlusFraction();
-    oil.setMixingRule("classic");
     oil.setMultiPhaseCheck(true);
     assertTrue(oil.getNumberOfComponents() > 9);
 
