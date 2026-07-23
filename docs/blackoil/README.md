@@ -71,12 +71,18 @@ record outside the supplied pressure range. `RsEffective(pressure)` returns
 ## Flash standard totals
 
 For a table with vaporized-oil ratio `Rv`, the flash solves the standard gas
-and oil split below. For the common `Rv = 0` case, the equations reduce to
-free gas equal to total gas minus dissolved gas.
+and oil split below. It uses `RsEffective(pressure)`, so solution GOR is clamped
+to the bubble-point value above the bubble point.
 
-$$G_f^{sc} = \frac{G_t^{sc} - R_s O_t^{sc}}{1 - R_s R_v}$$
-$$O_l^{sc} = O_t^{sc} - R_v G_f^{sc}$$
-$$V_o = B_o O_l^{sc},\qquad V_g = B_g G_f^{sc},\qquad V_w = B_w W^{sc}$$
+$G_f^{sc} = \frac{G_t^{sc} - R_s^{eff} O_t^{sc}}{1 - R_s^{eff} R_v}$
+$O_l^{sc} = O_t^{sc} - R_v G_f^{sc}$
+$V_o = B_o O_l^{sc},\qquad V_g = B_g G_f^{sc},\qquad V_w = B_w W^{sc}$
+
+When `Gtot_std <= RsEffective(pressure) * Otot_std`, `BlackOilFlash` reports no
+free gas and retains the supplied stock-tank oil total. Computed free-gas and
+liquid-oil totals are also bounded at zero, preventing negative phase volumes.
+For the common `Rv = 0` case above the gas threshold, free gas equals total gas
+minus dissolved gas.
 
 ```java
 import neqsim.blackoil.BlackOilFlash;
