@@ -48,6 +48,11 @@ public class BlackOilPackageDocumentationTest {
     assertTrue(result.mu_o > 0.0);
     assertTrue(result.mu_g > 0.0);
     assertTrue(result.mu_w > 0.0);
+
+    BlackOilFlashResult undersaturated = flash.flash(300.0, 373.15, 1000.0, 100000.0, 0.0);
+    assertEquals(150.0, undersaturated.Rs, 1.0e-12);
+    assertEquals(0.0, undersaturated.Gf_std, 1.0e-12);
+    assertEquals(1000.0, undersaturated.O_std, 1.0e-12);
   }
 
   /**
