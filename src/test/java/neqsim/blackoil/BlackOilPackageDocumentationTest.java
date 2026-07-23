@@ -24,13 +24,9 @@ public class BlackOilPackageDocumentationTest {
    */
   @Test
   void tableInterpolationAndFlashProduceConsistentResults() {
-    List<Record> records = Arrays.asList(
-        new Record(100.0, 100.0, 1.30, 1.2e-3, 8.0e-3, 1.6e-5, 0.0, 1.01,
-            1.0e-3),
-        new Record(200.0, 140.0, 1.40, 9.0e-4, 5.0e-3, 1.8e-5, 0.0, 1.02,
-            9.0e-4),
-        new Record(300.0, 160.0, 1.45, 8.0e-4, 3.0e-3, 2.0e-5, 0.0, 1.03,
-            8.0e-4));
+    List<Record> records = Arrays.asList(new Record(100.0, 100.0, 1.30, 1.2e-3, 8.0e-3, 1.6e-5, 0.0, 1.01, 1.0e-3),
+        new Record(200.0, 140.0, 1.40, 9.0e-4, 5.0e-3, 1.8e-5, 0.0, 1.02, 9.0e-4),
+        new Record(300.0, 160.0, 1.45, 8.0e-4, 3.0e-3, 2.0e-5, 0.0, 1.03, 8.0e-4));
 
     BlackOilPVTTable pvt = new BlackOilPVTTable(records, 250.0);
 
@@ -39,8 +35,7 @@ public class BlackOilPackageDocumentationTest {
     assertEquals(150.0, pvt.RsEffective(300.0), 1.0e-12);
 
     BlackOilFlash flash = new BlackOilFlash(pvt, 850.0, 0.85, 1000.0);
-    BlackOilFlashResult result =
-        flash.flash(200.0, 373.15, 1000.0, 150000.0, 500.0);
+    BlackOilFlashResult result = flash.flash(200.0, 373.15, 1000.0, 150000.0, 500.0);
 
     assertEquals(1000.0, result.O_std, 1.0e-12);
     assertEquals(10000.0, result.Gf_std, 1.0e-9);
@@ -79,11 +74,8 @@ public class BlackOilPackageDocumentationTest {
     oil.useVolumeCorrection(true);
     oil.setMultiPhaseCheck(true);
 
-    double[] pressureGrid = {
-        25.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0
-    };
-    BlackOilConverter.Result converted =
-        BlackOilConverter.convert(oil, 373.15, pressureGrid, 1.01325, 288.15);
+    double[] pressureGrid = { 25.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0 };
+    BlackOilConverter.Result converted = BlackOilConverter.convert(oil, 373.15, pressureGrid, 1.01325, 288.15);
 
     assertTrue(Double.isFinite(converted.rho_o_sc));
     assertTrue(converted.rho_o_sc > 0.0);
@@ -94,12 +86,8 @@ public class BlackOilPackageDocumentationTest {
     assertTrue(Double.isFinite(converted.pvt.mu_o(100.0)));
     assertTrue(converted.pvt.mu_o(100.0) > 0.0);
 
-    String eclipseDeck =
-        EclipseEOSExporter.toString(converted.pvt, converted.rho_o_sc,
-            converted.rho_g_sc, 1000.0);
-    String cmgDeck =
-        CMGEOSExporter.toString(converted.pvt, converted.rho_o_sc,
-            converted.rho_g_sc, 1000.0);
+    String eclipseDeck = EclipseEOSExporter.toString(converted.pvt, converted.rho_o_sc, converted.rho_g_sc, 1000.0);
+    String cmgDeck = CMGEOSExporter.toString(converted.pvt, converted.rho_o_sc, converted.rho_g_sc, 1000.0);
 
     assertTrue(eclipseDeck.contains("DENSITY"));
     assertTrue(eclipseDeck.contains("PVTO"));
