@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.gson.Gson;
 import java.util.Map;
@@ -137,7 +138,13 @@ class ThermodynamicsCookbookDocumentationTest extends NeQSimTest {
     Map<String, Object> conditions = (Map<String, Object>) root.get("conditions");
     Map<String, Object> overall = (Map<String, Object>) conditions.get("overall");
     Map<String, Object> temperatureValue = (Map<String, Object>) overall.get("temperature");
-    assertTrue(Double.isFinite(Double.parseDouble((String) temperatureValue.get("value"))));
+    String temperatureStringValue = (String) temperatureValue.get("value");
+    try {
+      double parsedTemperature = Double.parseDouble(temperatureStringValue);
+      assertTrue(Double.isFinite(parsedTemperature));
+    } catch (NumberFormatException ex) {
+      fail("Temperature value is not a valid number: " + temperatureStringValue);
+    }
     assertFalse(((String) temperatureValue.get("unit")).isEmpty());
 
     SystemInterface copy = fluid.clone();
