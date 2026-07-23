@@ -1,5 +1,6 @@
 package neqsim.standards.gasquality;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -91,8 +92,18 @@ class Standard_AGA3Test extends neqsim.NeqSimTest {
     double massFlow = standard.getValue("massFlowRate");
     // Mass flow should definitely be positive
     assertTrue(massFlow > 0, "Mass flow should be positive");
-    // Standard volume flow should be non-negative (zero if std density calc fails)
-    assertTrue(svf >= 0.0, "Standard volume flow should be non-negative");
+
+    SystemInterface standardSystem = testSystem.clone();
+    standardSystem.setTemperature(288.15);
+    standardSystem.setPressure(1.01325);
+    ThermodynamicOperations standardOps = new ThermodynamicOperations(standardSystem);
+    standardOps.TPflash();
+    standardSystem.initPhysicalProperties();
+
+    double standardDensity = standardSystem.getPhase(0).getDensity("kg/m3");
+    double expectedStandardVolumeFlow = massFlow / standardDensity * 3600.0;
+    assertEquals(expectedStandardVolumeFlow, svf, expectedStandardVolumeFlow * 1.0e-10,
+        "Standard volume flow must use density refreshed at standard conditions");
   }
 
   /**
