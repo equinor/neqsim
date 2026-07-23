@@ -1,6 +1,6 @@
 ---
 title: Google Colab Quickstart
-description: Try NeqSim instantly in Google Colab with no installation. One-click notebooks for thermodynamic and process calculations.
+description: Try NeqSim in Google Colab with a one-cell install and no local setup. One-click thermodynamic and process examples.
 ---
 
 Try NeqSim in a clean Google Colab runtime. The setup cell installs the current

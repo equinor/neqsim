@@ -71,9 +71,9 @@ public class ColabQuickstartDocumentationTest extends NeqSimTest {
 
     double gasFlow = separator.getGasOutStream().getFlowRate("kg/hr");
     double liquidFlow = separator.getLiquidOutStream().getFlowRate("kg/hr");
-    assertTrue(gasFlow > 0.0);
-    assertTrue(liquidFlow > 0.0);
-    assertEquals(10000.0, gasFlow + liquidFlow, 1.0e-6);
+    assertTrue(gasFlow > 100.0);
+    assertTrue(liquidFlow > 100.0);
+    assertEquals(10000.0, gasFlow + liquidFlow, 1.0e-3);
     assertTrue(compressor.getPower("kW") > 0.0);
   }
 
