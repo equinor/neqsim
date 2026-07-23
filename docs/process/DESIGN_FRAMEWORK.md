@@ -147,11 +147,15 @@ if (result.getExecutionStatus() == DesignResult.ExecutionStatus.OPTIMIZED) {
 
 `optimize()` (and `validate()`) return a `DesignResult` you can inspect programmatically —
 convergence status, per-equipment sizes, constraint utilisation, warnings, and hard violations.
+A converged optimization requires an explicit manipulated feed and finite search bounds; without
+`configureFeedRateOptimization(...)`, `optimize()` performs validation and optional auto-sizing only.
+The example bounds bracket its 10,000 kg/hr baseline; use case-specific engineering limits in production studies.
 
 ```java
 DesignResult result = DesignOptimizer.forProcess(process)
     .autoSizeEquipment(1.2)
     .applyDefaultConstraints()
+    .configureFeedRateOptimization("Feed", 5000.0, 15000.0, "kg/hr")
     .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION)
     .optimize();
 
