@@ -1,5 +1,6 @@
 package neqsim.process.design;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -66,9 +67,11 @@ class DesignFrameworkDocExampleTest {
     ProcessSystem process = buildProcess();
 
     DesignResult result = DesignOptimizer.forProcess(process).autoSizeEquipment(1.2).applyDefaultConstraints()
+        .configureFeedRateOptimization("Feed", 5000.0, 15000.0, "kg/hr")
         .setObjective(DesignOptimizer.ObjectiveType.MAXIMIZE_PRODUCTION).optimize();
 
-    // The workflow ran to completion (no exception path).
+    // Explicit bounds cause optimize() to run a converged search rather than autosizing only.
+    assertEquals(DesignResult.ExecutionStatus.OPTIMIZED, result.getExecutionStatus());
     assertTrue(result.isConverged());
     // Objective value was recorded.
     assertTrue(result.getObjectiveValue() >= 0.0);
