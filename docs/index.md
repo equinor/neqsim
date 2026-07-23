@@ -33,7 +33,7 @@ description: "Industrial Agentic Engineering with NeqSim — AI Agents for Engin
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="java-getting-started.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Getting Started with Java</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Install, first calculations, developer setup</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="docker-getting-started.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Build &amp; Run with Docker</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Build the container; use NeqSim from Java and Python</span></li>
 <li style="padding: 0.5rem 0; border-bottom: 1px solid #f0f0f0;"><a href="modules.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Modules Overview</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Architecture and package structure</span></li>
-<li style="padding: 0.5rem 0;"><a href="REFERENCE_MANUAL_INDEX.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Reference Manual</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Topic index for guides, workflows, and examples</span></li>
+<li style="padding: 0.5rem 0;"><a href="REFERENCE_MANUAL_INDEX.html" style="color: #155799; text-decoration: none; font-weight: 500;"><strong>Reference Manual Index</strong></a><br><span style="color: #6a737d; font-size: 0.9rem;">Topic index for guides, workflows, and examples</span></li>
 </ul>
 </div>
 
