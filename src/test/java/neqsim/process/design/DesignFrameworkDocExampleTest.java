@@ -73,8 +73,10 @@ class DesignFrameworkDocExampleTest {
     // Explicit bounds cause optimize() to run a converged search rather than autosizing only.
     assertEquals(DesignResult.ExecutionStatus.OPTIMIZED, result.getExecutionStatus());
     assertTrue(result.isConverged());
-    // Objective value was recorded.
-    assertTrue(result.getObjectiveValue() >= 0.0);
+    // The selected objective is a finite feed rate inside the configured search interval.
+    assertTrue(Double.isFinite(result.getObjectiveValue()));
+    assertTrue(result.getObjectiveValue() >= 5000.0);
+    assertTrue(result.getObjectiveValue() <= 15000.0);
     // Equipment sizes were recorded for the separator.
     assertNotNull(result.getEquipmentSizes("HP-Separator"));
     assertTrue(result.getEquipmentSizes("HP-Separator").containsKey("diameter"));
