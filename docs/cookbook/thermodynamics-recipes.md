@@ -4,7 +4,8 @@ description: Copy-paste NeqSim recipes for fluids, flash calculations, propertie
 ---
 
 Copy-paste solutions for common thermodynamic tasks. Every code block defines its own fluid and
-can run independently in Python after `pip install neqsim`.
+can run independently in Python after `pip install neqsim`. The phase-envelope plotting block
+also requires `matplotlib`.
 
 ## Table of Contents
 
@@ -54,15 +55,17 @@ fluid.addComponent("n-hexane", 2.0)
 # Arguments: relative mole amount, molar mass (kg/mol), density (g/cm3).
 # Use a terminal numeric label before default Pedersen characterization.
 fluid.addPlusFraction("C7", 32.5, 0.220, 0.82)
+fluid.setMixingRule("classic")
 fluid.getCharacterization().getLumpingModel().setNumberOfPseudoComponents(12)
 fluid.getCharacterization().characterisePlusFraction()
-fluid.setMixingRule("classic")
 fluid.setMultiPhaseCheck(True)
 ```
 
 `addTBPfraction(...)` creates one specified pseudo-component. Use `addPlusFraction(...)` followed
-by `characterisePlusFraction()` when a residual fraction is to be split and lumped. The current
-default Pedersen parser expects a numeric terminal carbon label such as `C7`, not `C7+`.
+by `characterisePlusFraction()` when a residual fraction is to be split and lumped. Although
+`addPlusFraction(...)` accepts a name containing `+`, the current default Pedersen
+characterization parser does not safely parse that name. Use a numeric terminal carbon label such
+as `C7` when calling `characterisePlusFraction()`.
 
 ### Create a CO₂-Water Fluid with CPA
 
