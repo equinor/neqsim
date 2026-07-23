@@ -1,337 +1,210 @@
 ---
-title: Black Oil Package
-description: The `blackoil` package provides black oil model capabilities for reservoir engineering applications, including PVT table handling and flash calculations.
+title: Black-Oil Package
+description: Build, flash, convert, and export black-oil PVT models with the current NeqSim API.
 ---
 
-# Black Oil Package
+The `neqsim.blackoil` package supports pressure-dependent black-oil PVT tables,
+three-component black-oil flashes, conversion from compositional equations of
+state (EOS), and Eclipse or CMG table export.
 
-The `blackoil` package provides black oil model capabilities for reservoir engineering applications, including PVT table handling and flash calculations.
+## Package overview
 
-## Table of Contents
-- [Overview](#overview)
-- [Package Structure](#package-structure)
-- [Black Oil Model](#black-oil-model)
-- [PVT Tables](#pvt-tables)
-- [Flash Calculations](#flash-calculations)
-- [Usage Examples](#usage-examples)
+| Class | Purpose |
+| --- | --- |
+| `BlackOilPVTTable` | Stores pressure-indexed PVT records and interpolates between them |
+| `BlackOilFlash` | Splits standard oil, gas, and water totals at one pressure |
+| `BlackOilFlashResult` | Reports standard totals, reservoir volumes, densities, viscosities, and PVT values |
+| `BlackOilConverter` | Generates a table and `SystemBlackOil` from a compositional fluid |
+| `SystemBlackOil` | Wraps a PVT table as a NeqSim thermodynamic system |
+| `EclipseEOSExporter` | Writes Eclipse-compatible black-oil tables |
+| `CMGEOSExporter` | Writes CMG IMEX, GEM, or STARS tables |
 
----
+The table uses one consistent pressure unit, normally bar. Recommended property
+units are:
 
-## Overview
+| Property | Unit |
+| --- | --- |
+| `Rs`, `Rv` | Sm³/Sm³ |
+| `Bo`, `Bg`, `Bw` | Rm³/Sm³ |
+| `mu_o`, `mu_g`, `mu_w` | Pa·s |
+| Standard-condition densities | kg/m³ |
 
-**Location:** `neqsim.blackoil`
+The model does not apply Standing, Vasquez-Beggs, or another empirical
+correlation internally. A manually supplied table contains the user's input
+data; `BlackOilConverter` obtains its table from EOS flash calculations.
 
-**Purpose:**
-- Black oil PVT modeling
-- Generate PVT tables from compositional models
-- Black oil flash calculations
-- Export to reservoir simulators
+## Create and interpolate a PVT table
 
----
-
-## Package Structure
-
-```
-blackoil/
-├── BlackOilFlash.java           # Black oil flash calculator
-├── BlackOilFlashResult.java     # Flash results container
-├── BlackOilPVTTable.java        # PVT table storage
-├── BlackOilConverter.java       # Compositional to black oil conversion
-├── SystemBlackOil.java          # Black oil system representation
-│
-└── io/                          # I/O utilities
-    └── BlackOilTableExporter.java
-```
-
----
-
-## Black Oil Model
-
-### Theory
-
-The black oil model describes reservoir fluids using three pseudo-components:
-- **Oil** (stock tank oil)
-- **Gas** (separator gas)
-- **Water**
-
-### Key Properties
-
-| Property | Symbol | Description |
-|----------|--------|-------------|
-| Solution GOR | Rs | Gas dissolved in oil (Sm³/Sm³) |
-| Oil FVF | Bo | Oil formation volume factor |
-| Gas FVF | Bg | Gas formation volume factor |
-| Water FVF | Bw | Water formation volume factor |
-| Oil-in-Gas ratio | Rv | Oil vaporized in gas (Sm³/Sm³) |
-| Oil viscosity | μo | Dynamic viscosity of oil |
-| Gas viscosity | μg | Dynamic viscosity of gas |
-| Water viscosity | μw | Dynamic viscosity of water |
-
-### Correlations
-
-#### Standing Correlation for Rs
-
-$$R_s = \gamma_g \left( \frac{P}{18.2} \cdot 10^{0.0125 \cdot API - 0.00091 \cdot T} \right)^{1.2048}$$
-
-#### Vasquez-Beggs for Bo
-
-$$B_o = 1 + C_1 R_s + C_2 (T - 60) \left( \frac{API}{\gamma_{g,100}} \right) + C_3 R_s (T - 60) \left( \frac{API}{\gamma_{g,100}} \right)$$
-
----
-
-## PVT Tables
-
-### BlackOilPVTTable
-
-The `BlackOilPVTTable` class stores PVT properties at multiple pressure points with linear interpolation.
+Each record has the constructor order
+`(pressure, Rs, Bo, mu_o, Bg, mu_g, Rv, Bw, mu_w)`.
 
 ```java
-import neqsim.blackoil.BlackOilPVTTable;
-import neqsim.blackoil.BlackOilPVTTable.Record;
 import java.util.Arrays;
 import java.util.List;
+import neqsim.blackoil.BlackOilPVTTable;
+import neqsim.blackoil.BlackOilPVTTable.Record;
 
-// Create PVT records at each pressure point
-// Record(p, Rs, Bo, mu_o, Bg, mu_g, Rv, Bw, mu_w)
 List<Record> records = Arrays.asList(
-    new Record(50.0, 80.0, 1.25, 0.0015, 0.010, 0.000015, 0.0, 1.01, 0.001),
-    new Record(100.0, 100.0, 1.30, 0.0012, 0.008, 0.000016, 0.0, 1.01, 0.001),
-    new Record(150.0, 120.0, 1.35, 0.0010, 0.006, 0.000017, 0.0, 1.02, 0.001),
-    new Record(200.0, 140.0, 1.40, 0.0009, 0.005, 0.000018, 0.0, 1.02, 0.001),
-    new Record(250.0, 160.0, 1.45, 0.0008, 0.004, 0.000019, 0.0, 1.03, 0.001),
-    new Record(300.0, 180.0, 1.50, 0.0007, 0.003, 0.000020, 0.0, 1.03, 0.001)
-);
+    new Record(100.0, 100.0, 1.30, 1.2e-3, 8.0e-3, 1.6e-5,
+        0.0, 1.01, 1.0e-3),
+    new Record(200.0, 140.0, 1.40, 9.0e-4, 5.0e-3, 1.8e-5,
+        0.0, 1.02, 9.0e-4),
+    new Record(300.0, 160.0, 1.45, 8.0e-4, 3.0e-3, 2.0e-5,
+        0.0, 1.03, 8.0e-4));
 
-// Create PVT table with bubble point pressure
-double bubblePointPressure = 250.0;  // bar
-BlackOilPVTTable pvtTable = new BlackOilPVTTable(records, bubblePointPressure);
+double bubblePointPressure = 250.0; // same pressure unit as the records
+BlackOilPVTTable pvt = new BlackOilPVTTable(
+    records, bubblePointPressure);
+
+double pressure = 175.0;
+double rs = pvt.Rs(pressure);
+double bo = pvt.Bo(pressure);
+double bg = pvt.Bg(pressure);
+double oilViscosity = pvt.mu_o(pressure);
+double gasViscosity = pvt.mu_g(pressure);
 ```
 
-### Interpolation
+Interpolation is linear between adjacent records and clamps to the nearest
+record outside the supplied pressure range. `RsEffective(pressure)` returns
+`Rs` at the bubble point for pressures above the bubble point.
 
-```java
-// Get properties at any pressure (linear interpolation)
-double P = 175.0;  // bar
-double Rs = pvtTable.Rs(P);      // Solution GOR
-double Bo = pvtTable.Bo(P);      // Oil FVF
-double Bg = pvtTable.Bg(P);      // Gas FVF
-double muO = pvtTable.mu_o(P);   // Oil viscosity (Pa·s)
-double muG = pvtTable.mu_g(P);   // Gas viscosity (Pa·s)
+## Flash standard totals
 
-// Above bubble point, Rs stays constant
-double RsEffective = pvtTable.RsEffective(P);
-```
+For a table with vaporized-oil ratio `Rv`, the flash solves the standard gas
+and oil split below. For the common `Rv = 0` case, the equations reduce to
+free gas equal to total gas minus dissolved gas.
 
----
-
-## BlackOilFlash
-
-### Flash Calculator
+$$G_f^{sc} = \frac{G_t^{sc} - R_s O_t^{sc}}{1 - R_s R_v}$$
+$$O_l^{sc} = O_t^{sc} - R_v G_f^{sc}$$
+$$V_o = B_o O_l^{sc},\qquad V_g = B_g G_f^{sc},\qquad V_w = B_w W^{sc}$$
 
 ```java
 import neqsim.blackoil.BlackOilFlash;
 import neqsim.blackoil.BlackOilFlashResult;
 
-// Create flash calculator
-double rho_o_sc = 850.0;   // Oil density at SC, kg/m³
-double rho_g_sc = 0.85;    // Gas density at SC, kg/m³
-double rho_w_sc = 1000.0;  // Water density at SC, kg/m³
+double oilDensitySc = 850.0;   // kg/m³
+double gasDensitySc = 0.85;    // kg/m³
+double waterDensitySc = 1000.0; // kg/m³
 
-BlackOilFlash flash = new BlackOilFlash(pvtTable, rho_o_sc, rho_g_sc, rho_w_sc);
+BlackOilFlash flash = new BlackOilFlash(
+    pvt, oilDensitySc, gasDensitySc, waterDensitySc);
 
-// Perform flash at reservoir conditions
-double P = 200.0;    // bar
-double T = 373.15;   // K (not used in simple model)
-double Otot_std = 1000.0;  // Stock tank oil, Sm³
-double Gtot_std = 150000.0; // Total gas, Sm³
-double W_std = 500.0;      // Water, Sm³
+BlackOilFlashResult result = flash.flash(
+    200.0,     // pressure, same unit as the table
+    373.15,    // K; the table represents this reference temperature
+    1000.0,    // total stock-tank oil, Sm³
+    150000.0,  // total standard gas, Sm³
+    500.0);    // standard water, Sm³
 
-BlackOilFlashResult result = flash.flash(P, T, Otot_std, Gtot_std, W_std);
+double oilVolume = result.V_o;       // reservoir m³
+double gasVolume = result.V_g;       // reservoir m³
+double waterVolume = result.V_w;     // reservoir m³
+double oilDensity = result.rho_o;    // kg/m³
+double oilViscosity = result.mu_o;   // Pa·s
+double freeGasSc = result.Gf_std;    // Sm³
 ```
 
-### Flash Results
+`BlackOilFlash` treats temperature as metadata because one table represents one
+reference temperature. Build separate tables when temperature dependence is
+material.
 
-```java
-// Phase volumes at reservoir conditions
-double V_oil = result.V_o;   // Oil volume, m³
-double V_gas = result.V_g;   // Gas volume, m³
-double V_water = result.V_w; // Water volume, m³
+## Convert a compositional fluid
 
-// Phase properties
-double rho_oil = result.rho_o;   // Oil density, kg/m³
-double rho_gas = result.rho_g;   // Gas density, kg/m³
-double rho_water = result.rho_w; // Water density, kg/m³
-
-double mu_oil = result.mu_o;     // Oil viscosity, cP
-double mu_gas = result.mu_g;     // Gas viscosity, cP
-double mu_water = result.mu_w;   // Water viscosity, cP
-
-// PVT properties used
-double Rs = result.Rs;   // Solution GOR
-double Bo = result.Bo;   // Oil FVF
-double Bg = result.Bg;   // Gas FVF
-double Bw = result.Bw;   // Water FVF
-```
-
----
-
-## Compositional to Black Oil Conversion
-
-### BlackOilConverter
-
-Generate black oil tables from compositional EoS model.
+`BlackOilConverter` exposes a static `convert` method. The returned `Result`
+contains the generated table, standard-condition densities, the detected
+bubble point, and a configured `SystemBlackOil`.
 
 ```java
 import neqsim.blackoil.BlackOilConverter;
+import neqsim.thermo.system.SystemInterface;
+import neqsim.thermo.system.SystemPrEos;
 
-// Create compositional oil
 SystemInterface oil = new SystemPrEos(373.15, 300.0);
-oil.addComponent("nitrogen", 0.5);
-oil.addComponent("CO2", 2.0);
-oil.addComponent("methane", 35.0);
-oil.addComponent("ethane", 8.0);
-oil.addComponent("propane", 5.0);
-oil.addComponent("n-butane", 3.0);
-oil.addComponent("n-pentane", 2.5);
-oil.addComponent("n-hexane", 3.0);
-oil.addTBPfraction("C7+", 41.0, 220.0/1000.0, 0.85);
+oil.addComponent("nitrogen", 0.005);
+oil.addComponent("CO2", 0.010);
+oil.addComponent("methane", 0.350);
+oil.addComponent("ethane", 0.070);
+oil.addComponent("propane", 0.065);
+oil.addComponent("i-butane", 0.025);
+oil.addComponent("n-butane", 0.040);
+oil.addComponent("i-pentane", 0.020);
+oil.addComponent("n-pentane", 0.025);
+oil.addComponent("n-hexane", 0.050);
+oil.addComponent("n-heptane", 0.080);
+oil.addComponent("n-octane", 0.080);
+oil.addComponent("n-nonane", 0.060);
+oil.addComponent("nC10", 0.120);
 oil.setMixingRule("classic");
 oil.useVolumeCorrection(true);
+oil.setMultiPhaseCheck(true);
 
-// Convert to black oil
-BlackOilConverter converter = new BlackOilConverter(oil);
-converter.setTemperature(373.15, "K");
+double[] pressureGrid = {
+    25.0, 50.0, 100.0, 150.0, 200.0, 250.0, 300.0
+};
 
-// Define separator conditions
-converter.setSeparatorTemperature(288.15, "K");
-converter.setSeparatorPressure(1.01325, "bara");
+BlackOilConverter.Result converted = BlackOilConverter.convert(
+    oil,
+    373.15,      // table reference temperature, K
+    pressureGrid,
+    1.01325,     // standard pressure, bar
+    288.15);     // standard temperature, K
 
-// Generate table
-double[] pressures = {1, 50, 100, 150, 200, 250, 300};
-converter.setPressures(pressures, "bara");
-converter.run();
-
-// Get black oil table
-BlackOilPVTTable boTable = converter.getBlackOilTable();
+double bubblePoint = converted.bubblePoint;
+double oilDensitySc = converted.rho_o_sc;
+double gasDensitySc = converted.rho_g_sc;
+double boAt100Bar = converted.pvt.Bo(100.0);
 ```
 
----
+The converter sorts the pressure grid. Supply at least two points that cover
+the intended operating range. The recent phase-detection and property
+initialization fixes ensure NeqSim oil phases and finite oil, gas, and water
+viscosities are handled; callers should still reject non-finite values before
+using a generated deck.
 
-## Export to Simulators
+## Export tables
 
-### Eclipse Format
+Use the current simulator-specific exporters. There is no
+`BlackOilTableExporter` class.
 
 ```java
-import neqsim.blackoil.io.BlackOilTableExporter;
+import neqsim.blackoil.io.CMGEOSExporter;
+import neqsim.blackoil.io.EclipseEOSExporter;
 
-BlackOilTableExporter exporter = new BlackOilTableExporter(boTable);
-exporter.setFormat("ECLIPSE");
-exporter.exportToFile("PVTO.inc");
+double waterDensitySc = 1000.0; // kg/m³; dry example has no aqueous phase
+
+String eclipseDeck = EclipseEOSExporter.toString(
+    converted.pvt,
+    converted.rho_o_sc,
+    converted.rho_g_sc,
+    waterDensitySc);
+
+String cmgDeck = CMGEOSExporter.toString(
+    converted.pvt,
+    converted.rho_o_sc,
+    converted.rho_g_sc,
+    waterDensitySc);
 ```
 
-### Example PVTO Output
+To write files, call `EclipseEOSExporter.toFile(...)` or
+`CMGEOSExporter.toFile(...)` with a `java.nio.file.Path`. Both exporters also
+provide `ExportConfig` overloads for pressure grids, unit systems, comments,
+and simulator-specific options. Validate generated files in the target
+simulator before production use.
 
-```
-PVTO
--- Rs      P       Bo      viscosity
-   50.0    50.0   1.250    1.50
-          100.0   1.248    1.55
-          150.0   1.246    1.60 /
-  100.0   100.0   1.350    1.20
-          150.0   1.347    1.25
-          200.0   1.345    1.30 /
-/
-```
+## Engineering checks
 
----
+- Use a pressure grid dense enough around the saturation pressure.
+- Verify `Rs`, `Bo`, `Bg`, and all viscosities are finite and positive where
+  the corresponding phase exists.
+- Confirm the table's standard pressure, temperature, and density basis.
+- Compare generated tables with laboratory PVT data or a tuned compositional
+  model.
+- Treat gas-condensate, near-critical, and strongly temperature-dependent
+  fluids with a compositional model unless the black-oil approximation has
+  been independently validated.
 
-## Complete Example
+## Related documentation
 
-```java
-import neqsim.blackoil.*;
-import neqsim.pvtsimulation.simulation.*;
-
-// Step 1: Create compositional model
-SystemInterface oil = new SystemPrEos(373.15, 250.0);
-oil.addComponent("nitrogen", 0.3);
-oil.addComponent("CO2", 1.5);
-oil.addComponent("methane", 40.0);
-oil.addComponent("ethane", 7.0);
-oil.addComponent("propane", 4.5);
-oil.addComponent("i-butane", 1.0);
-oil.addComponent("n-butane", 2.5);
-oil.addComponent("i-pentane", 1.2);
-oil.addComponent("n-pentane", 1.8);
-oil.addComponent("n-hexane", 2.5);
-oil.addTBPfraction("C7-C10", 15.0, 120.0/1000.0, 0.78);
-oil.addTBPfraction("C11-C15", 10.0, 180.0/1000.0, 0.82);
-oil.addTBPfraction("C16+", 12.7, 350.0/1000.0, 0.90);
-oil.setMixingRule("classic");
-oil.useVolumeCorrection(true);
-
-// Step 2: Run differential liberation
-DifferentialLiberation dl = new DifferentialLiberation(oil);
-dl.setTemperature(373.15, "K");
-double[] pressures = {250, 200, 150, 100, 75, 50, 25, 1.01325};
-dl.setPressures(pressures, "bara");
-dl.run();
-
-// Step 3: Create black oil table
-BlackOilPVTTable boTable = new BlackOilPVTTable();
-boTable.setPressures(pressures);
-boTable.setRs(dl.getRs());
-boTable.setBo(dl.getBo());
-boTable.setMuO(dl.getOilViscosity());
-
-// Add gas properties
-boTable.setBg(dl.getBg());
-boTable.setMuG(dl.getGasViscosity());
-
-// Step 4: Separator test for stock tank conditions
-SeparatorTest sep = new SeparatorTest(oil.clone());
-sep.setSeparatorConditions(
-    new double[]{323.15, 288.15},
-    new double[]{30.0, 1.01325}
-);
-sep.run();
-
-double rho_o_sc = sep.getOilDensity();
-
-// Step 5: Create flash calculator
-BlackOilFlash boFlash = new BlackOilFlash(boTable, rho_o_sc, 0.85, 1000.0);
-
-// Step 6: Calculate at different conditions
-System.out.println("P (bar)\tRs\tBo\tρ_oil\tμ_oil");
-for (double P : new double[]{50, 100, 150, 200}) {
-    BlackOilFlashResult r = boFlash.flash(P, 373.15, 1000.0, 150000.0, 0.0);
-    System.out.printf("%.0f\t%.1f\t%.4f\t%.1f\t%.3f%n",
-        P, r.Rs, r.Bo, r.rho_o, r.mu_o);
-}
-```
-
----
-
-## Best Practices
-
-1. **Validate against compositional** - Compare black oil results with full EoS
-2. **Use appropriate correlations** - Match fluid type (light, medium, heavy oil)
-3. **Check consistency** - Ensure Rs and Bo are consistent at bubble point
-4. **Include undersaturated region** - Extend table above bubble point
-5. **Document separator conditions** - Record conditions used for conversion
-
----
-
-## Limitations
-
-- Temperature dependence not fully captured
-- Compositional grading not modeled
-- Gas condensate requires extended model (Rv)
-- Near-critical fluids may need compositional treatment
-
----
-
-## Related Documentation
-
-- [PVT Simulation](../pvtsimulation/) - Laboratory experiments
-- [PVT Workflow](../pvtsimulation/pvt_workflow) - End-to-end workflow
-- [Black Oil PVT Export](../pvtsimulation/blackoil_pvt_export) - Export details
+- [PVT simulation](../pvtsimulation/)
+- [PVT workflow](../pvtsimulation/pvt_workflow)
+- [Black-oil PVT export](../pvtsimulation/blackoil_pvt_export)
