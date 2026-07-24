@@ -12,7 +12,7 @@ def write_notebook(path: Path, title: str, documentation_metadata=None) -> None:
             {
                 "cell_type": "markdown",
                 "metadata": {},
-                "source": [f"# {title}\n"],
+                "source": [f"# {title}\\n"],
             }
         ],
         "metadata": {
