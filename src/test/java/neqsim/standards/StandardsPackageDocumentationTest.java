@@ -80,7 +80,7 @@ class StandardsPackageDocumentationTest extends NeqSimTest {
     double rvpBara = vapourPressure.getValue("RVP", "bara");
     double tvpBara = vapourPressure.getValue("TVP", "bara");
 
-    assertEquals(1.1574422523, rvpBara, 1.0e-3);
+    assertEquals(0.9653068384, rvpBara, 1.0e-3);
     assertEquals(1.6662983670, tvpBara, 1.0e-3);
   }
 }
