@@ -6,8 +6,6 @@ parent: Examples
 nav_order: 1
 ---
 
-# Transparent field-development screening with NeqSim
-
 > **Notebook:** This page mirrors
 > [`FieldDevelopmentWorkflow.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb)
@@ -40,29 +38,25 @@ if importlib.util.find_spec("neqsim") is None:
 ```python
 import math
 
-import jpype
 import matplotlib.pyplot as plt
 from neqsim import jneqsim  # Starts the JVM and exposes the packaged NeqSim JAR.
 
-ProductionProfileGenerator = jpype.JClass(
-    "neqsim.process.fielddevelopment.economics.ProductionProfileGenerator"
+ProductionProfileGenerator = (
+    jneqsim.process.fielddevelopment.economics.ProductionProfileGenerator
 )
-DeclineType = jpype.JClass(
-    "neqsim.process.fielddevelopment.economics."
-    "ProductionProfileGenerator$DeclineType"
-)
-CashFlowEngine = jpype.JClass(
-    "neqsim.process.fielddevelopment.economics.CashFlowEngine"
-)
+DeclineType = ProductionProfileGenerator.DeclineType
+CashFlowEngine = jneqsim.process.fielddevelopment.economics.CashFlowEngine
 
 DAYS_PER_YEAR = 365.25
 ```
 
 ## 2. Define the screening basis
 
-The example represents a synthetic four-well gas development. Rates are standard cubic metres per day; yearly
-profile values are standard cubic metres per year. Monetary inputs and outputs are million US dollars unless the API
-label states otherwise.
+The example represents a synthetic four-well gas development. Throughout this tutorial, Sm³ uses a 15 °C and
+1.01325 bara accounting basis. `ProductionProfileGenerator` treats the supplied volumes numerically; it does not
+perform a standard-condition conversion. Rates are standard cubic metres per day, and yearly profile values are
+standard cubic metres per year. Monetary inputs and outputs are million US dollars unless the API label states
+otherwise. The synthetic costs are teaching inputs, not an AACE-classified estimate.
 
 | Assumption | Value |
 |---|---:|
@@ -70,7 +64,7 @@ label states otherwise.
 | Forecast start / life | 2028 / 20 years |
 | Ramp / plateau | 1 / 4 years |
 | Exponential decline | 12%/year |
-| CAPEX | 1,384.5 MUSD over 2026–2027 |
+| Illustrative CAPEX (not AACE-classified) | 1,384.5 MUSD over 2026–2027 |
 | Fixed OPEX proxy | 4% of CAPEX/year |
 | Gas price / tariff | 0.30 / 0.02 USD/Sm³ |
 | Discount rate | 8% |
@@ -147,19 +141,35 @@ daily_rates = [
     base_profile[year] / DAYS_PER_YEAR / 1.0e6 for year in years
 ]
 
-fig, ax = plt.subplots(figsize=(8, 4.2))
-ax.plot(years, daily_rates, marker="o", linewidth=2)
+fig, ax = plt.subplots(figsize=(8, 4.2), dpi=150)
+ax.plot(
+    years,
+    daily_rates,
+    marker="o",
+    linewidth=2,
+    label="Average production rate",
+)
+ax.annotate(
+    f"{daily_rates[0]:.1f} MSm³/d",
+    xy=(years[0], daily_rates[0]),
+    xytext=(years[0] + 1, daily_rates[0] + 0.35),
+    arrowprops={"arrowstyle": "->"},
+)
 ax.set(
     title="Synthetic gas-production screening profile",
     xlabel="Calendar year",
     ylabel="Average gas rate (MSm³/d)",
 )
+ax.legend()
 ax.grid(alpha=0.3)
 fig.tight_layout()
 plt.show()
 ```
 
 ## 4. Inspect the after-tax screening economics
+
+The first figure shows the imposed plateau followed by exponential decline. It verifies the intended rate/volume
+conversion but does not establish reservoir deliverability.
 
 The model is intentionally deterministic. Its NPV, IRR, payback, and break-even price depend entirely on the synthetic
 assumptions above and the selected `NO` fiscal implementation.
@@ -200,9 +210,28 @@ for case in sensitivity_cases:
 
 assert sensitivity_cases[0]["result"].getNpv() < cash_result.getNpv()
 assert sensitivity_cases[2]["result"].getNpv() < cash_result.getNpv()
+
+case_names = [case["name"] for case in sensitivity_cases]
+npv_values = [case["result"].getNpv() for case in sensitivity_cases]
+
+fig, ax = plt.subplots(figsize=(8, 4.2), dpi=150)
+bars = ax.bar(case_names, npv_values, label="After-tax NPV")
+ax.bar_label(bars, fmt="%.0f")
+ax.set(
+    title="Deterministic field-screening sensitivities",
+    xlabel="Screening case",
+    ylabel="NPV at 8% (MUSD)",
+)
+ax.legend()
+ax.grid(axis="y", alpha=0.3)
+fig.tight_layout()
+plt.show()
 ```
 
 ## 6. Interpretation and next fidelity step
+
+The second figure confirms the expected directional response: lower gas rate and higher CAPEX both reduce NPV. These
+bounded cases are engineering checks, not probabilistic percentiles.
 
 This notebook verifies the mechanics of an annual production profile and cash-flow screen. It does **not** model
 GIIP/STOIIP depletion, well deliverability, host capacity, multiphase hydraulics, product specifications, flow
