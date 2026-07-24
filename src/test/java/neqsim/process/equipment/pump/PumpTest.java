@@ -348,4 +348,39 @@ public class PumpTest extends neqsim.NeqSimTest {
     Assertions.assertTrue(pump.getDynamicSpeed() > speedAfterTrip);
     Assertions.assertTrue(pump.getDynamicSpeed() <= speedAfterTrip + 100.0 + 1.0e-9);
   }
+
+  @Test
+  void hydraulicPowerUsesCurrentInletDensity() {
+    neqsim.thermo.system.SystemInterface fluid =
+        new neqsim.thermo.system.SystemSrkEos(293.15, 20.0);
+    fluid.addComponent("n-hexane", 0.85);
+    fluid.addComponent("n-heptane", 0.15);
+    fluid.setMixingRule("classic");
+    fluid.setTotalFlowRate(10000.0, "kg/hr");
+
+    Stream feed = new Stream("temperature-changed pump feed", fluid);
+    feed.run();
+
+    feed.getThermoSystem().setTemperature(353.15);
+    new neqsim.thermodynamicoperations.ThermodynamicOperations(feed.getThermoSystem()).TPflash();
+
+    neqsim.thermo.system.SystemInterface independentlyInitialized =
+        feed.getThermoSystem().clone();
+    independentlyInitialized.initPhysicalProperties();
+    double expectedDensity = independentlyInitialized.getDensity("kg/m3");
+
+    Pump pump = new Pump("hydraulic density regression", feed);
+    pump.calculateAsCompressor(false);
+    pump.setOutletPressure(100.0, "bara");
+    pump.setIsentropicEfficiency(0.75);
+    pump.run();
+
+    double massFlow = feed.getFlowRate("kg/sec");
+    double pressureRise = 80.0e5;
+    double expectedPowerKw = massFlow / expectedDensity * pressureRise / 0.75 / 1000.0;
+
+    Assertions.assertEquals(expectedPowerKw, pump.getPower("kW"), expectedPowerKw * 1.0e-8,
+        "Hydraulic power must use density at the current inlet state");
+  }
+
 }
