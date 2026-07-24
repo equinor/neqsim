@@ -13,11 +13,11 @@ This folder collects topic-specific documentation for using NeqSim's thermodynam
 
 ```
 thermo/
-├── system/       # Fluid system implementations (58 EoS classes)
-├── phase/        # Phase types and calculations (62 classes)
-├── component/    # Component properties (65 classes)
-├── mixingrule/   # Mixing rules for EoS
-└── characterization/  # Plus fraction characterization
+├── system/            # Fluid-system and equation-of-state implementations
+├── phase/             # Phase models and calculations
+├── component/         # Pure-component and mixture-component properties
+├── mixingrule/        # Equation-of-state mixing rules
+└── characterization/  # TBP and plus-fraction characterization
 ```
 
 ---
@@ -75,4 +75,7 @@ thermo/
 
 ---
 
-Each document favors short, reproducible code snippets using the Java API so the same ideas transfer to other supported languages (Python/Matlab) with minor syntax changes.
+Examples are written for the Java API unless a page says otherwise. Python uses the
+NeqSim gateway and different import conventions; follow the
+[Python quickstart](../quickstart/python-quickstart) rather than translating Java
+syntax literally.
