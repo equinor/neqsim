@@ -12,7 +12,7 @@ def write_notebook(path: Path, title: str, documentation_metadata=None) -> None:
             {
                 "cell_type": "markdown",
                 "metadata": {},
-                "source": [f"# {title}\\n"],
+                "source": [f"# {title}\n"],
             }
         ],
         "metadata": {
@@ -31,7 +31,7 @@ class ConvertNotebooksTest(unittest.TestCase):
             examples_dir = Path(temp_dir)
             notebook_path = examples_dir / "Curated.ipynb"
             markdown_path = examples_dir / "Curated.md"
-            curated_title = 'Curated "quoted" \\ tutorial'
+            curated_title = 'Curated "quoted" \\ tutorial – Å'
             curated_description = "Curated engineering description\nwith detail"
             write_notebook(
                 notebook_path,
@@ -47,11 +47,11 @@ class ConvertNotebooksTest(unittest.TestCase):
 
             generated_content = markdown_path.read_text(encoding="utf-8")
             self.assertIn(
-                f"title: {json.dumps(curated_title)}",
+                f"title: {json.dumps(curated_title, ensure_ascii=False)}",
                 generated_content,
             )
             self.assertIn(
-                f"description: {json.dumps(curated_description)}",
+                f"description: {json.dumps(curated_description, ensure_ascii=False)}",
                 generated_content,
             )
             self.assertNotIn(f"# {curated_title}", generated_content)
