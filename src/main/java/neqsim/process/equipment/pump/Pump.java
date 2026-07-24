@@ -14,6 +14,7 @@ import javax.swing.JTable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import com.google.gson.GsonBuilder;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.electricaldesign.pump.PumpElectricalDesign;
 import neqsim.process.equipment.ProcessEquipmentInterface;
 import neqsim.process.equipment.TwoPortEquipment;
@@ -522,6 +523,7 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
         thermoOps.PHflash(hout, 0);
       } else if (pumpChart.isUsePumpChart()) {
         thermoSystem = inStream.getThermoSystem().clone();
+        inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
         double flowRate_m3hr = inStream.getThermoSystem().getFlowRate("m3/hr");
         double densityInlet = inStream.getThermoSystem().getDensity("kg/m3");
 
@@ -596,8 +598,10 @@ public class Pump extends TwoPortEquipment implements PumpInterface,
         thermoSystem = inStream.getThermoSystem().clone();
         thermoSystem.setPressure(pressure, pressureUnit);
 
-        // Calculate hydraulic power and shaft power
-        double volumetricFlow = thermoSystem.getFlowRate("kg/sec") / thermoSystem.getDensity("kg/m3"); // m³/s
+        // Calculate hydraulic power and shaft power using the inlet liquid density.
+        inStream.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
+        double densityInlet = inStream.getThermoSystem().getDensity("kg/m3");
+        double volumetricFlow = thermoSystem.getFlowRate("kg/sec") / densityInlet; // m³/s
         double deltaP_Pa = thermoSystem.getPressure("Pa") - inStream.getThermoSystem().getPressure("Pa");
         double hydraulicPower = volumetricFlow * deltaP_Pa; // W
         double shaftPower = hydraulicPower / isentropicEfficiency; // W
