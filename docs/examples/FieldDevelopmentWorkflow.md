@@ -1,248 +1,251 @@
 ---
 layout: default
-title: "FieldDevelopmentWorkflow"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Transparent field-development screening"
+description: "Executable NeqSim tutorial for unit-safe gas-production profiles, after-tax cash flow, and bounded sensitivities."
 parent: Examples
 nav_order: 1
 ---
 
-# FieldDevelopmentWorkflow
-
-> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
+> **Notebook:** This page mirrors
 > [`FieldDevelopmentWorkflow.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb)
-> or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb).
+> or [open it in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb).
 
----
+This tutorial builds an auditable gas-production forecast and after-tax cash flow from current NeqSim APIs. It
+deliberately uses the lower-level production-profile and economics classes so every unit conversion and assumption is
+visible.
 
-# Field Development Workflow Tutorial
+> **Engineering boundary:** this is a deterministic screening example, not a reserves estimate, concept approval,
+> FEED model, or investment recommendation. Replace the synthetic rates, costs, prices, fiscal basis, and decline
+> assumptions with traceable project data and qualified engineering models.
 
-This notebook demonstrates NeqSim's integrated field development framework, showing how to use it at different fidelity levels - from quick screening studies to detailed FEED-level analysis.
+## 1. Runtime setup
 
-## Overview
-
-The `FieldDevelopmentWorkflow` class provides a unified interface for:
-- **Screening studies** (±50% accuracy): Quick initial assessment
-- **Conceptual studies** (±30% accuracy): EOS-based PVT, well models
-- **Detailed studies** (±20% accuracy): Full process simulation, Monte Carlo economics
-
-## Prerequisites
-
-Make sure you have jpype installed with neqsim:
+The setup installs the current public `neqsim` package only when it is missing. Restart the runtime after changing the
+installed NeqSim version.
 
 ```python
-# Import NeqSim - Direct Java Access via jneqsim
-from neqsim import jneqsim
+import importlib.util
+import subprocess
+import sys
 
-# Import Java classes through the jneqsim gateway
-SystemSrkEos = jneqsim.thermo.system.SystemSrkEos
-SystemSrkCPAstatoil = jneqsim.thermo.system.SystemSrkCPAstatoil
-Stream = jneqsim.process.equipment.stream.Stream
-WellSystem = jneqsim.process.equipment.reservoir.WellSystem
-SimpleReservoir = jneqsim.process.equipment.reservoir.SimpleReservoir
-FieldDevelopmentWorkflow = jneqsim.process.fielddevelopment.workflow.FieldDevelopmentWorkflow
+if importlib.util.find_spec("neqsim") is None:
+    subprocess.check_call(
+        [sys.executable, "-m", "pip", "install", "-q", "neqsim"]
+    )
+```
+
+```python
+import math
+
+import matplotlib.pyplot as plt
+from neqsim import jneqsim  # Starts the JVM and exposes the packaged NeqSim JAR.
+
+ProductionProfileGenerator = (
+    jneqsim.process.fielddevelopment.economics.ProductionProfileGenerator
+)
+DeclineType = ProductionProfileGenerator.DeclineType
 CashFlowEngine = jneqsim.process.fielddevelopment.economics.CashFlowEngine
-NorwegianTaxModel = jneqsim.process.fielddevelopment.economics.NorwegianTaxModel
-FlowAssuranceResult = jneqsim.process.fielddevelopment.screening.FlowAssuranceResult
 
-print("NeqSim Field Development Framework loaded successfully!")
+DAYS_PER_YEAR = 365.25
 ```
 
-## 1. Screening Level Study
+## 2. Define the screening basis
 
-The screening level uses correlations and empirical models for quick assessment. This is suitable for:
-- Initial opportunity screening
-- Portfolio ranking
-- Go/no-go decisions
+The example represents a synthetic four-well gas development. Throughout this tutorial, Sm³ uses a 15 °C and
+1.01325 bara accounting basis. `ProductionProfileGenerator` treats the supplied volumes numerically; it does not
+perform a standard-condition conversion. Rates are standard cubic metres per day, and yearly profile values are
+standard cubic metres per year. Monetary inputs and outputs are million US dollars unless the API label states
+otherwise. The synthetic costs are teaching inputs, not an AACE-classified estimate.
 
-### Quick Gas Tieback Example
+| Assumption | Value |
+|---|---:|
+| Plateau gas rate | 8.0 MSm³/d |
+| Forecast start / life | 2028 / 20 years |
+| Ramp / plateau | 1 / 4 years |
+| Exponential decline | 12%/year |
+| Illustrative CAPEX (not AACE-classified) | 1,384.5 MUSD over 2026–2027 |
+| Fixed OPEX proxy | 4% of CAPEX/year |
+| Gas price / tariff | 0.30 / 0.02 USD/Sm³ |
+| Discount rate | 8% |
+| Fiscal model | `CashFlowEngine("NO")` |
+
+The `ProductionProfileGenerator.generateFullProfile` input is a **daily rate**, but each returned map value is an
+**annual volume**. Passing the annual value directly to `addAnnualProduction` avoids a second, erroneous
+multiplication by days per year.
 
 ```python
-# Create a quick gas tieback screening study
-workflow = FieldDevelopmentWorkflow.quickGasTieback(
-    "Snorre_Satellite",
-    50.0,    # reserves in GSm3
-    120.0,   # distance to host in km
-    350.0,   # water depth in m
-    180.0,   # reservoir pressure in bara
-    90.0     # reservoir temperature in °C
+def build_gas_case(
+    name,
+    plateau_rate_msm3_per_day,
+    total_capex_musd,
+    gas_price_usd_per_sm3=0.30,
+):
+    """Run one transparent deterministic gas-screening case."""
+    peak_rate_sm3_per_day = plateau_rate_msm3_per_day * 1.0e6
+    profile = ProductionProfileGenerator().generateFullProfile(
+        peak_rate_sm3_per_day,
+        1,
+        4,
+        0.12,
+        DeclineType.EXPONENTIAL,
+        2028,
+        20,
+    )
+    annual_profile = {
+        int(entry.getKey()): float(entry.getValue())
+        for entry in profile.entrySet()
+    }
+
+    engine = CashFlowEngine("NO")
+    engine.setCapex(0.77 * total_capex_musd, 2026)
+    engine.addCapex(0.23 * total_capex_musd, 2027)
+    engine.setOpexPercentOfCapex(0.04)
+    engine.setGasPrice(gas_price_usd_per_sm3)
+    engine.setGasTariff(0.02)
+
+    for year, annual_gas_sm3 in annual_profile.items():
+        engine.addAnnualProduction(year, 0.0, annual_gas_sm3, 0.0)
+
+    result = engine.calculate(0.08)
+    return {
+        "name": name,
+        "annual_profile": annual_profile,
+        "engine": engine,
+        "result": result,
+    }
+```
+
+## 3. Generate and audit the production forecast
+
+```python
+base_case = build_gas_case("Base case", 8.0, 1384.5)
+base_profile = base_case["annual_profile"]
+
+first_year = min(base_profile)
+first_daily_rate_msm3 = (
+    base_profile[first_year] / DAYS_PER_YEAR / 1.0e6
 )
+cumulative_gsm3 = sum(base_profile.values()) / 1.0e9
 
-# Run the screening
-result = workflow.run()
+print(f"First-year average rate: {first_daily_rate_msm3:.6f} MSm³/d")
+print(f"Twenty-year cumulative gas: {cumulative_gsm3:.6f} GSm³")
 
-# Display results
-print(result.getSummary())
+assert math.isclose(first_daily_rate_msm3, 8.0, rel_tol=0.0, abs_tol=1e-12)
+assert cumulative_gsm3 > 0.0
 ```
 
 ```python
-# Check flow assurance screening results
-fa_result = result.getFlowAssuranceResult()
-print("Flow Assurance Screening:")
-print(f"  Hydrate Risk: {fa_result.hydrateRisk}")
-print(f"  Wax Risk: {fa_result.waxRisk}")
-print(f"  Slugging Risk: {fa_result.sluggingRisk}")
-print(f"  Recommended MEG Rate: {fa_result.recommendedMegRate:.1f} kg/hr")
-```
+years = list(base_profile)
+daily_rates = [
+    base_profile[year] / DAYS_PER_YEAR / 1.0e6 for year in years
+]
 
-```python
-# View production profile
-print(result.getProductionTable())
-```
-
-```python
-# View cash flow
-print(result.getCashFlowTable())
-```
-
-### Quick Oil Development Example
-
-```python
-# Create an oil field screening study
-oil_workflow = FieldDevelopmentWorkflow.quickOilDevelopment(
-    "Johan_Sverdrup_Satellite",
-    150.0,   # reserves in MSm3 oil
-    5,       # number of wells
-    120.0,   # water depth in m
-    200.0,   # reservoir pressure in bara
-    85.0     # reservoir temperature in °C
+fig, ax = plt.subplots(figsize=(8, 4.2), dpi=150)
+ax.plot(
+    years,
+    daily_rates,
+    marker="o",
+    linewidth=2,
+    label="Average production rate",
 )
-
-oil_result = oil_workflow.run()
-print(oil_result.getSummary())
+ax.annotate(
+    f"{daily_rates[0]:.1f} MSm³/d",
+    xy=(years[0], daily_rates[0]),
+    xytext=(years[0] + 1, daily_rates[0] + 0.35),
+    arrowprops={"arrowstyle": "->"},
+)
+ax.set(
+    title="Synthetic gas-production screening profile",
+    xlabel="Calendar year",
+    ylabel="Average gas rate (MSm³/d)",
+)
+ax.legend()
+ax.grid(alpha=0.3)
+fig.tight_layout()
+plt.show()
 ```
 
-## 2. Conceptual Level Study
+## 4. Inspect the after-tax screening economics
 
-The conceptual level adds:
-- EOS-based PVT modeling
-- Well performance models
-- More detailed cost estimation
+The first figure shows the imposed plateau followed by exponential decline. It verifies the intended rate/volume
+conversion but does not establish reservoir deliverability.
 
-### Setting Up an EOS Fluid
+The model is intentionally deterministic. Its NPV, IRR, payback, and break-even price depend entirely on the synthetic
+assumptions above and the selected `NO` fiscal implementation.
 
 ```python
-# Create a detailed PVT fluid model
-fluid = SystemSrkEos(85.0 + 273.15, 200.0)  # T in K, P in bara
+cash_result = base_case["result"]
+break_even_gas_price = base_case["engine"].calculateBreakevenGasPrice(0.08)
 
-# Add components (typical North Sea oil composition)
-fluid.addComponent("nitrogen", 0.5)
-fluid.addComponent("CO2", 1.2)
-fluid.addComponent("methane", 35.0)
-fluid.addComponent("ethane", 8.5)
-fluid.addComponent("propane", 6.2)
-fluid.addComponent("i-butane", 1.5)
-fluid.addComponent("n-butane", 3.2)
-fluid.addComponent("i-pentane", 1.8)
-fluid.addComponent("n-pentane", 2.1)
-fluid.addComponent("n-hexane", 3.5)
-fluid.addComponent("C7", 15.0)  # C7+ fraction
-fluid.addComponent("C10", 12.0)
-fluid.addComponent("C15", 6.5)
-fluid.addComponent("C20", 3.0)
+print(cash_result.getSummary())
+print(f"Break-even gas price: {break_even_gas_price:.6f} USD/Sm³")
 
-fluid.setMixingRule("classic")
-fluid.setMultiPhaseCheck(True)
-
-print(f"Fluid created with {fluid.getNumberOfComponents()} components")
+assert math.isfinite(cash_result.getNpv())
+assert math.isfinite(cash_result.getIrr())
+assert cash_result.getTotalCapex() > 0.0
+assert 0.0 < break_even_gas_price < 2.0
 ```
+
+## 5. Compare bounded sensitivities
+
+A small deterministic sensitivity is more transparent than attaching unsupported P10/P50/P90 labels. Probabilistic
+labels require distributions, correlations, sampling evidence, and a documented percentile convention.
 
 ```python
-# Create conceptual workflow with EOS fluid
-workflow_conceptual = FieldDevelopmentWorkflow("Barents_Development")
-workflow_conceptual.setFidelityLevel(FieldDevelopmentWorkflow.FidelityLevel.CONCEPTUAL)
-workflow_conceptual.setFluid(fluid)
+sensitivity_cases = [
+    build_gas_case("Lower rate", 6.0, 1384.5),
+    base_case,
+    build_gas_case("Higher CAPEX", 8.0, 1700.0),
+]
 
-# Set field parameters
-workflow_conceptual.setReserves(200.0, "MSm3")  # Oil reserves
-workflow_conceptual.setGasReserves(50.0, "GSm3")  # Associated gas
-workflow_conceptual.setWaterDepth(380.0)
-workflow_conceptual.setNumberOfWells(8)
-workflow_conceptual.setTiebackDistance(0.0)  # Standalone facility
+print("| Case | NPV (MUSD) | IRR (%) | Payback (years) |")
+print("|---|---:|---:|---:|")
+for case in sensitivity_cases:
+    result = case["result"]
+    print(
+        f"| {case['name']} | {result.getNpv():.1f} | "
+        f"{100.0 * result.getIrr():.1f} | {result.getPaybackYears():.1f} |"
+    )
 
-# Run conceptual study
-conceptual_result = workflow_conceptual.run()
-print(conceptual_result.getSummary())
+assert sensitivity_cases[0]["result"].getNpv() < cash_result.getNpv()
+assert sensitivity_cases[2]["result"].getNpv() < cash_result.getNpv()
+
+case_names = [case["name"] for case in sensitivity_cases]
+npv_values = [case["result"].getNpv() for case in sensitivity_cases]
+
+fig, ax = plt.subplots(figsize=(8, 4.2), dpi=150)
+bars = ax.bar(case_names, npv_values, label="After-tax NPV")
+ax.bar_label(bars, fmt="%.0f")
+ax.set(
+    title="Deterministic field-screening sensitivities",
+    xlabel="Screening case",
+    ylabel="NPV at 8% (MUSD)",
+)
+ax.legend()
+ax.grid(axis="y", alpha=0.3)
+fig.tight_layout()
+plt.show()
 ```
 
-## 3. Concept Comparison
+## 6. Interpretation and next fidelity step
 
-Compare multiple development concepts side by side:
+The second figure confirms the expected directional response: lower gas rate and higher CAPEX both reduce NPV. These
+bounded cases are engineering checks, not probabilistic percentiles.
 
-```python
-# Define multiple concepts to compare
-concepts = {
-    "Subsea_Tieback": FieldDevelopmentWorkflow.quickGasTieback(
-        "Concept_A", 50.0, 80.0, 350.0, 180.0, 90.0
-    ),
-    "FPSO_Standalone": FieldDevelopmentWorkflow.quickOilDevelopment(
-        "Concept_B", 150.0, 6, 350.0, 200.0, 85.0
-    ),
-}
+This notebook verifies the mechanics of an annual production profile and cash-flow screen. It does **not** model
+GIIP/STOIIP depletion, well deliverability, host capacity, multiphase hydraulics, product specifications, flow
+assurance, schedule uncertainty, or process equipment.
 
-# Run all concepts
-results = {}
-for name, wf in concepts.items():
-    results[name] = wf.run()
+Before concept selection:
 
-# Generate comparison report
-comparison = FieldDevelopmentWorkflow.generateComparisonReport(results)
-print(comparison)
-```
+1. Cap the forecast with a traceable recoverable-resource basis.
+2. Replace the synthetic profile with a reservoir/well/network forecast.
+3. Couple each concept to an independent `ProcessSystem` or `ProcessModel`.
+4. Apply host and equipment limits before advancing reservoir state and economics.
+5. Add documented uncertainty distributions and correlations before reporting percentiles.
+6. Obtain discipline review of the technical, fiscal, cost, schedule, and safety basis.
 
-## 4. Detailed Level with Monte Carlo
-
-The detailed level adds:
-- Full process simulation
-- Monte Carlo economics
-- Sensitivity analysis
-
-```python
-# Create detailed workflow
-workflow_detailed = FieldDevelopmentWorkflow("North_Sea_Oil")
-workflow_detailed.setFidelityLevel(FieldDevelopmentWorkflow.FidelityLevel.DETAILED)
-workflow_detailed.setFluid(fluid)
-
-# Set parameters
-workflow_detailed.setReserves(250.0, "MSm3")
-workflow_detailed.setWaterDepth(120.0)
-workflow_detailed.setNumberOfWells(12)
-
-# Configure Monte Carlo settings
-workflow_detailed.setMonteCarloIterations(1000)
-
-# Run detailed study (may take longer due to Monte Carlo)
-detailed_result = workflow_detailed.run()
-
-print("Economic Results with Uncertainty:")
-print(f"  NPV P10: ${detailed_result.getNpvP10() / 1e9:.2f} billion")
-print(f"  NPV P50: ${detailed_result.getNpvP50() / 1e9:.2f} billion")
-print(f"  NPV P90: ${detailed_result.getNpvP90() / 1e9:.2f} billion")
-```
-
-## 5. Viability Assessment
-
-```python
-# Check project viability
-print(f"Project Viable: {detailed_result.isViable()}")
-print(f"Viable with 80% confidence: {detailed_result.isViableWithConfidence(0.8)}")
-print(f"IRR: {detailed_result.getIrr() * 100:.1f}%")
-print(f"Payback: {detailed_result.getPaybackYears():.1f} years")
-```
-
-## Summary
-
-The FieldDevelopmentWorkflow provides:
-
-| Level | Accuracy | Use Case | Time |
-|-------|----------|----------|------|
-| Screening | ±50% | Portfolio screening | Seconds |
-| Conceptual | ±30% | Concept selection | Minutes |
-| Detailed | ±20% | FEED basis | Hours |
-
-Key integration points:
-- PVT: `SystemSrkEos`, `SystemSrkCPAstatoil`
-- Reservoir: `SimpleReservoir`, `WellSystem`  
-- Process: `ProcessSystem`, unit operations
-- Economics: `CashFlowEngine`, tax models
-
+For the physically coupled main-branch workflow, see
+[Integrated Field Lifecycle Simulation](../fielddevelopment/FIELD_LIFECYCLE_SIMULATION.md). That API may be newer than
+the latest public Python package, so use a repository build when reproducing main-branch examples.
