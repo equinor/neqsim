@@ -332,20 +332,20 @@ public class LNGTankLayeredModel implements Serializable {
     system.setPressure(tankPressure);
     system.setTemperature(layer.getTemperature());
 
-    // Set composition from layer
+    // Scale the cloned reference system to the layer inventory and composition.
+    // The reference system can contain an arbitrary number of moles (for example,
+    // a Stream flow basis), so component deltas must not be calculated from mole
+    // fractions alone.
     system.init(0);
-    double currentMoles = system.getTotalNumberOfMoles();
     Map<String, Double> comp = layer.getComposition();
+    double[] molarComposition = new double[system.getPhase(0).getNumberOfComponents()];
 
     for (int i = 0; i < system.getPhase(0).getNumberOfComponents(); i++) {
       String name = system.getPhase(0).getComponent(i).getComponentName();
-      double targetFrac = comp.containsKey(name) ? comp.get(name) : 0.0;
-      double currentFrac = system.getPhase(0).getComponent(i).getz();
-      double molesNeeded = (targetFrac - currentFrac) * layer.getTotalMoles();
-      if (Math.abs(molesNeeded) > 1e-20) {
-        system.addComponent(name, molesNeeded);
-      }
+      molarComposition[i] = comp.containsKey(name) ? comp.get(name) : 0.0;
     }
+    system.setTotalNumberOfMoles(layer.getTotalMoles());
+    system.setMolarComposition(molarComposition);
     return system;
   }
 
