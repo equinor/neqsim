@@ -1065,6 +1065,10 @@ public class NaphtaliSandholmSolver {
    * @return {@code true} when every tray supplied finite gas and liquid phase flows
    */
   private boolean initializeTrayStateFromColumn(double totalFeedMoles) {
+    if (!column.getSideDrawSpecifications().isEmpty() || !column.getPumparounds().isEmpty()) {
+      logger.info("NS: skipping scaled warm MESH state because side draws or pumparounds are configured");
+      return false;
+    }
     double previousTopVaporFlow = ((SimpleTray) column.getTray(N - 1)).getGasOutStream().getFlowRate("mole/hr");
     double previousBottomLiquidFlow = ((SimpleTray) column.getTray(0)).getLiquidOutStream().getFlowRate("mole/hr");
     double previousTotalFeedMoles = previousTopVaporFlow + previousBottomLiquidFlow;
