@@ -156,6 +156,7 @@ public class ColumnStudyRegressionTest {
     long warmSolveNanos = System.nanoTime() - warmStartNanos;
     assertColumnSolveIsValid(column, feedStream, topFeedStream, "unchanged warm solve");
     int warmIterations = column.getLastIterationCount();
+    boolean warmStateReused = column.wasNaphtaliSandholmWarmStateReused();
     ColumnProductSummary warmProducts = getProductSummary(column);
     assertProductSummaryWithinRelativeTolerance(coldProducts, warmProducts, 0.10,
         "unchanged warm solution should remain within 10 percent of the cold solution");
@@ -179,7 +180,8 @@ public class ColumnStudyRegressionTest {
     testReporter.publishEntry("cold_solve_ms", Double.toString(nanosToMillis(coldSolveNanos)));
     testReporter.publishEntry("unchanged_warm_solve_ms", Double.toString(nanosToMillis(warmSolveNanos)));
     testReporter.publishEntry("increased_inlet_solve_ms", Double.toString(nanosToMillis(changedInletSolveNanos)));
-    assertTrue(warmSolveNanos < coldSolveNanos, "unchanged warm solve should complete faster than the cold solve");
+    assertTrue(warmStateReused, "unchanged warm solve should reuse the accepted Naphtali-Sandholm state");
+    assertEquals(0, warmIterations, "unchanged warm solve should not require initializer or Newton iterations");
   }
 
   /**
