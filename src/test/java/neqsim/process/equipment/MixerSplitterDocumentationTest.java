@@ -35,6 +35,13 @@ class MixerSplitterDocumentationTest {
     Stream richGas = createGasStream("rich gas", 300.0, 30.0, 5000.0, new double[] { 0.80, 0.15, 0.05 });
     Stream leanGas = createGasStream("lean gas", 310.0, 32.0, 3000.0, new double[] { 0.95, 0.04, 0.01 });
     double inletEnthalpyJ = richGas.getFluid().getEnthalpy("J") + leanGas.getFluid().getEnthalpy("J");
+    double richMolarFlow = richGas.getFlowRate("mole/sec");
+    double leanMolarFlow = leanGas.getFlowRate("mole/sec");
+    double expectedMethaneFraction =
+        (richMolarFlow * richGas.getFluid().getMolarComposition()[0]
+            + leanMolarFlow * leanGas.getFluid().getMolarComposition()[0])
+            / (richMolarFlow + leanMolarFlow);
+    double enthalpyToleranceJ = Math.max(1.0e-3, Math.abs(inletEnthalpyJ) * 1.0e-8);
 
     Mixer mixer = new Mixer("M-100");
     mixer.addStream(richGas);
@@ -44,7 +51,8 @@ class MixerSplitterDocumentationTest {
 
     StreamInterface mixedGas = mixer.getOutletStream();
     assertEquals(8000.0, mixedGas.getFlowRate("kg/hr"), 1.0e-6);
-    assertEquals(inletEnthalpyJ, mixedGas.getFluid().getEnthalpy("J"), 1.0e-3);
+    assertEquals(inletEnthalpyJ, mixedGas.getFluid().getEnthalpy("J"), enthalpyToleranceJ);
+    assertEquals(expectedMethaneFraction, mixedGas.getFluid().getMolarComposition()[0], 1.0e-10);
     assertEquals(30.0, mixedGas.getPressure("bara"), 1.0e-6);
     assertTrue(mixer.isPressureMismatch());
     assertEquals(2.0, mixer.getInletPressureSpread(), 1.0e-6);
