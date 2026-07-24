@@ -14,6 +14,9 @@ public class CommonOps_DDRM {
 
         return new DMatrixRMaj(matrixTransposed, mat.numCols, mat.numRows);
     }
+    /*
+    * Test
+    */
     public static DMatrixRMaj mult(DMatrixRMaj mat, DMatrixRMaj mat2, DMatrixRMaj matout) {
 
 

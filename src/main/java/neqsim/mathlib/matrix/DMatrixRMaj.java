@@ -3,8 +3,8 @@ package neqsim.mathlib.matrix;
 public class DMatrixRMaj {
 
     public double[] matrix;
-    int numRows;
-    int numCols;
+    public int numRows;
+    public int numCols;
 
     public DMatrixRMaj( int numRows, int numCols ) {
 

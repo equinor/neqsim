@@ -2,12 +2,18 @@ package neqsim.thermo.phase;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.ejml.data.DMatrixRMaj;
-import org.ejml.dense.row.CommonOps_DDRM;
-import org.ejml.dense.row.NormOps_DDRM;
-import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
-import org.ejml.interfaces.linsol.LinearSolverDense;
-import org.ejml.simple.SimpleMatrix;
+
+import neqsim.mathlib.matrix.DMatrixRMaj;
+import neqsim.mathlib.matrix.CommonOps_DDRM;
+import neqsim.mathlib.matrix.NormOps_DDRM;
+
+import neqsim.mathlib.matrix.LinearSolverFactory_DDRM;
+import neqsim.mathlib.matrix.LinearSolverDense;
+
+//import org.ejml.dense.row.factory.LinearSolverFactory_DDRM;
+//import org.ejml.interfaces.linsol.LinearSolverDense;
+import neqsim.mathlib.matrix.SimpleMatrix;
+
 import neqsim.thermo.component.ComponentCPAInterface;
 import neqsim.thermo.component.ComponentSrkCPA;
 import neqsim.thermo.mixingrule.CPAMixingRuleHandler;

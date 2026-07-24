@@ -10,9 +10,17 @@ import static neqsim.thermo.ThermodynamicModelSettings.phaseFractionMinimumLimit
 import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+/*
+import neqsim.mathlib.matrix.DMatrixRMaj;
+import neqsim.mathlib.matrix.CommonOps_DDRM;
+import neqsim.mathlib.matrix.SimpleMatrix;
+*/
+
+
 import org.ejml.data.DMatrixRMaj;
 import org.ejml.dense.row.CommonOps_DDRM;
 import org.ejml.simple.SimpleMatrix;
+
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseType;
 import neqsim.thermo.system.SystemInterface;
