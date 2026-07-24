@@ -351,8 +351,7 @@ public class PumpTest extends neqsim.NeqSimTest {
 
   @Test
   void hydraulicPowerUsesCurrentInletDensity() {
-    neqsim.thermo.system.SystemInterface fluid =
-        new neqsim.thermo.system.SystemSrkEos(293.15, 20.0);
+    neqsim.thermo.system.SystemInterface fluid = new neqsim.thermo.system.SystemSrkEos(293.15, 20.0);
     fluid.addComponent("n-hexane", 0.85);
     fluid.addComponent("n-heptane", 0.15);
     fluid.setMixingRule("classic");
@@ -364,8 +363,7 @@ public class PumpTest extends neqsim.NeqSimTest {
     feed.getThermoSystem().setTemperature(353.15);
     new neqsim.thermodynamicoperations.ThermodynamicOperations(feed.getThermoSystem()).TPflash();
 
-    neqsim.thermo.system.SystemInterface independentlyInitialized =
-        feed.getThermoSystem().clone();
+    neqsim.thermo.system.SystemInterface independentlyInitialized = feed.getThermoSystem().clone();
     independentlyInitialized.initPhysicalProperties();
     double expectedDensity = independentlyInitialized.getDensity("kg/m3");
 
