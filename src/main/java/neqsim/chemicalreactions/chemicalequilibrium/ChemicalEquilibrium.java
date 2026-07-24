@@ -7,6 +7,7 @@ import neqsim.thermo.ThermodynamicConstantsInterface;
 import neqsim.thermo.component.ComponentInterface;
 import neqsim.thermo.phase.PhaseDesmukhMather;
 import neqsim.thermo.phase.PhaseInterface;
+import neqsim.thermo.phase.PhaseModifiedFurstElectrolyteEos;
 import neqsim.thermo.system.SystemInterface;
 
 /**
@@ -383,9 +384,9 @@ public class ChemicalEquilibrium implements java.io.Serializable {
    * Calculates the logarithm of the activity term used by the chemical-equilibrium solver.
    *
    * <p>
-   * The generic historical solver uses a mole-fraction standard state. Deshmukh-Mather amine reaction constants are
-   * apparent aqueous constants and must instead use a molality/concentration-like standard state for non-water reactive
-   * species.
+   * The generic historical solver uses a mole-fraction standard state. Electrolyte CPA amine reactions use the same
+   * standard state after their equilibrium constants have been transformed/refit consistently with the EOS activity
+   * model.
    * </p>
    *
    * @param componentIndex index in the reactive component array
@@ -398,7 +399,22 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     if (reactivePhase instanceof PhaseDesmukhMather) {
       return getLogDesmukhMatherReactionActivity((PhaseDesmukhMather) reactivePhase, component);
     }
+    if (isAqueousAmineElectrolytePhase(reactivePhase)) {
+      return getLogAqueousAmineReactionActivity(reactivePhase, component);
+    }
     return Math.log(molesInPhase) - Math.log(n_t) + logactivityVec[componentIndex];
+  }
+
+  /**
+   * Checks whether the reactive phase is an aqueous amine electrolyte CPA phase with constants on the EOS activity
+   * standard state.
+   *
+   * @param phase phase to inspect
+   * @return true if the phase is a Furst electrolyte phase containing water and MDEA
+   */
+  private boolean isAqueousAmineElectrolytePhase(PhaseInterface phase) {
+    return phase instanceof PhaseModifiedFurstElectrolyteEos && phase.hasComponent("water")
+        && phase.hasComponent("MDEA");
   }
 
   /**
@@ -418,6 +434,19 @@ public class ChemicalEquilibrium implements java.io.Serializable {
     double molality = Math.max(MIN_MOLES, component.getMolality(phase));
     double gammaMolality = getDesmukhMatherMolalityActivityCoefficient(phase, component, molality);
     return Math.log(molality) + Math.log(gammaMolality);
+  }
+
+  /**
+   * Calculates aqueous amine reaction activity for electrolyte CPA phases on the EOS mole-fraction activity basis.
+   *
+   * @param phase aqueous amine electrolyte phase
+   * @param component reactive component
+   * @return logarithm of the mole-fraction activity term
+   */
+  private double getLogAqueousAmineReactionActivity(PhaseInterface phase, ComponentInterface component) {
+    double moleFraction = Math.max(MIN_MOLES, component.getx());
+    double gammaMoleFraction = Math.max(MIN_MOLES, phase.getActivityCoefficient(component.getComponentNumber()));
+    return Math.log(moleFraction) + Math.log(gammaMoleFraction);
   }
 
   /**
