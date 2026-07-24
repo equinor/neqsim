@@ -2334,8 +2334,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getTargetValue());
       signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getTolerance());
       signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getMaxIterations());
-      signature = updateNaphtaliSandholmInputSignature(signature,
-          topSpecification.getComponentName() == null ? 0L : topSpecification.getComponentName().hashCode());
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getComponentName());
     }
 
     signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification == null ? 0L : 1L);
@@ -2345,8 +2344,7 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
       signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getTargetValue());
       signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getTolerance());
       signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getMaxIterations());
-      signature = updateNaphtaliSandholmInputSignature(signature,
-          bottomSpecification.getComponentName() == null ? 0L : bottomSpecification.getComponentName().hashCode());
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getComponentName());
     }
 
     return signature;
@@ -2372,6 +2370,31 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private long updateNaphtaliSandholmInputSignature(long signature, long value) {
     return 31L * signature + value;
+  }
+
+  /**
+   * Add complete text content to a Naphtali-Sandholm input fingerprint.
+   *
+   * <p>
+   * The null marker and text length distinguish {@code null}, an empty string, and sequences that otherwise share a
+   * prefix. Each UTF-16 character is folded with an independent 64-bit FNV-style step so the cache gate does not depend
+   * on a 32-bit string hash.
+   * </p>
+   *
+   * @param signature fingerprint accumulated so far
+   * @param value text input, which may be null
+   * @return updated fingerprint
+   */
+  private long updateNaphtaliSandholmInputSignature(long signature, String value) {
+    if (value == null) {
+      return updateNaphtaliSandholmInputSignature(signature, -1L);
+    }
+    long updatedSignature = updateNaphtaliSandholmInputSignature(signature, value.length());
+    for (int index = 0; index < value.length(); index++) {
+      updatedSignature ^= value.charAt(index);
+      updatedSignature *= 0x100000001b3L;
+    }
+    return updatedSignature;
   }
 
   /**
