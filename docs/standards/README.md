@@ -129,7 +129,9 @@ double rvpBara = vapourPressure.getValue("RVP", "bara");
 double tvpBara = vapourPressure.getValue("TVP", "bara");
 ```
 
-This fixture gives approximately 1.157 bara simulated RVP and 1.666 bara TVP.
+For this fixture, `RVP_ASTM_D6377` gives approximately 0.965 bara simulated
+RVP and 1.666 bara TVP. The alternative `VPCR4` route gives approximately
+1.157 bara for the same fluid; always report the selected route with the result.
 Preserve light ends when constructing the fluid; flashing or stabilizing the
 sample before this calculation changes the vapour pressure.
 
