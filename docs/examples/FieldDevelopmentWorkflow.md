@@ -1,12 +1,10 @@
 ---
 layout: default
-title: "FieldDevelopmentWorkflow"
-description: "Jupyter notebook tutorial for NeqSim"
+title: "Transparent field-development screening"
+description: "Executable NeqSim tutorial for unit-safe gas-production profiles, after-tax cash flow, and bounded sensitivities."
 parent: Examples
 nav_order: 1
 ---
-
-# FieldDevelopmentWorkflow
 
 > **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`FieldDevelopmentWorkflow.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb).

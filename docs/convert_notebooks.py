@@ -65,20 +65,35 @@ def notebook_to_markdown(notebook_path):
         nb = json.load(f)
 
     notebook_name = Path(notebook_path).stem
-    title = notebook_name.replace('_', ' ').replace('-', ' ')
+    documentation_metadata = nb.get('metadata', {}).get('neqsim_docs', {})
+    if not isinstance(documentation_metadata, dict):
+        documentation_metadata = {}
+    title = documentation_metadata.get(
+        'title',
+        notebook_name.replace('_', ' ').replace('-', ' '),
+    )
+    description = documentation_metadata.get(
+        'description',
+        'Jupyter notebook tutorial for NeqSim',
+    )
+    generated_title = (
+        f"# {title}\n\n"
+        if documentation_metadata.get('show_generated_title', True)
+        else ''
+    )
+    title_yaml = json.dumps(str(title), ensure_ascii=False)
+    description_yaml = json.dumps(str(description), ensure_ascii=False)
 
     # Jekyll front matter
     front_matter = f"""---
 layout: default
-title: "{title}"
-description: "Jupyter notebook tutorial for NeqSim"
+title: {title_yaml}
+description: {description_yaml}
 parent: Examples
 nav_order: 1
 ---
 
-# {title}
-
-> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
+{generated_title}> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`{notebook_name}.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/{notebook_name}.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/{notebook_name}.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/{notebook_name}.ipynb).
