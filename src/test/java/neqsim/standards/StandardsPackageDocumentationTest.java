@@ -53,7 +53,7 @@ class StandardsPackageDocumentationTest extends NeqSimTest {
 
     Standard_ISO6578 iso6578 = new Standard_ISO6578(lng);
     iso6578.calculate();
-    double densityKgPerM3 = iso6578.getValue("density", "kg/m3");
+    double densityKgPerM3 = iso6578.getValue("density");
 
     assertTrue(Double.isFinite(densityKgPerM3));
     assertTrue(densityKgPerM3 > 400.0);
