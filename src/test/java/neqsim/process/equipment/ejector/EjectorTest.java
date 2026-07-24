@@ -402,8 +402,7 @@ class EjectorTest {
 
     EjectorMechanicalDesign design = ejector.getMechanicalDesign();
     double totalMassFlow = motiveStream.getFlowRate("kg/sec") + suctionStream.getFlowRate("kg/sec");
-    double densityUsedForSizing =
-        totalMassFlow / (design.getDiffuserOutletArea() * design.getDiffuserOutletVelocity());
+    double densityUsedForSizing = totalMassFlow / (design.getDiffuserOutletArea() * design.getDiffuserOutletVelocity());
 
     SystemInterface independentlyInitializedOutlet = ejector.getOutStream().getThermoSystem().clone();
     independentlyInitializedOutlet.initPhysicalProperties();
