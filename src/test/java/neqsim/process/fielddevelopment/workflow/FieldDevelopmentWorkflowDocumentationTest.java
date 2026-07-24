@@ -20,8 +20,8 @@ class FieldDevelopmentWorkflowDocumentationTest {
         DeclineType.EXPONENTIAL, 2028, 20);
   }
 
-  private static CashFlowEngine createCashFlow(Map<Integer, Double> annualProfile,
-      double totalCapexMusd, double gasPriceUsdPerSm3) {
+  private static CashFlowEngine createCashFlow(Map<Integer, Double> annualProfile, double totalCapexMusd,
+      double gasPriceUsdPerSm3) {
     CashFlowEngine engine = new CashFlowEngine("NO");
     engine.setCapex(0.77 * totalCapexMusd, 2026);
     engine.addCapex(0.23 * totalCapexMusd, 2027);
@@ -60,12 +60,9 @@ class FieldDevelopmentWorkflowDocumentationTest {
 
   @Test
   void boundedSensitivitiesMoveNpvInTheExpectedDirection() {
-    CashFlowEngine.CashFlowResult lowerRate =
-        createCashFlow(createProfile(6.0e6), 1384.5, 0.30).calculate(0.08);
-    CashFlowEngine.CashFlowResult base =
-        createCashFlow(createProfile(8.0e6), 1384.5, 0.30).calculate(0.08);
-    CashFlowEngine.CashFlowResult higherCapex =
-        createCashFlow(createProfile(8.0e6), 1700.0, 0.30).calculate(0.08);
+    CashFlowEngine.CashFlowResult lowerRate = createCashFlow(createProfile(6.0e6), 1384.5, 0.30).calculate(0.08);
+    CashFlowEngine.CashFlowResult base = createCashFlow(createProfile(8.0e6), 1384.5, 0.30).calculate(0.08);
+    CashFlowEngine.CashFlowResult higherCapex = createCashFlow(createProfile(8.0e6), 1700.0, 0.30).calculate(0.08);
 
     assertTrue(lowerRate.getNpv() < base.getNpv());
     assertTrue(higherCapex.getNpv() < base.getNpv());
