@@ -162,6 +162,9 @@ public class NaphtaliSandholmSolver {
   /** Whether tray 0 is a reboiler with boilup ratio specification. */
   private boolean hasReboiler;
 
+  /** Whether to initialize the MESH variables from the converged column tray state. */
+  private boolean warmStartFromColumn = false;
+
   /** Whether tray N-1 is a condenser with reflux ratio specification. */
   private boolean hasCondenser;
 
@@ -403,6 +406,15 @@ public class NaphtaliSandholmSolver {
   }
 
   /**
+   * Enable or disable initialization from the current converged column tray state.
+   *
+   * @param warmStart {@code true} to reuse the current tray temperatures and phase flows as a Newton seed
+   */
+  public void setWarmStartFromColumn(boolean warmStart) {
+    warmStartFromColumn = warmStart;
+  }
+
+  /**
    * Set scaled residual convergence tolerance.
    *
    * @param residualTolerance positive scaled residual tolerance
@@ -434,7 +446,10 @@ public class NaphtaliSandholmSolver {
       // straight to Newton — Newton owns the (C+2)*N residual structure and
       // can converge from a reasonable CMO start.
       boolean bpConverged;
-      if (useOverallMBClosure) {
+      if (warmStartFromColumn) {
+        logger.info("NS: using converged tray MESH state as a direct Newton warm start");
+        bpConverged = true;
+      } else if (useOverallMBClosure) {
         logger.info("NS: bypassing BP/SR (useOverallMBClosure active) — direct Newton");
         seedSolutionForDirectNewton();
         bpConverged = true;
@@ -492,7 +507,7 @@ public class NaphtaliSandholmSolver {
         applyResultsToColumn(id, 0, norm, startTime);
         return true;
       }
-      if (mbErrorBP < 0.005 && energyErrorBP >= 0.01) {
+      if (!warmStartFromColumn && mbErrorBP < 0.005 && energyErrorBP >= 0.01) {
         // Mass balance OK but energy not — use Sum-Rates method to correct T
         // The BP method determines T from bubble-point (sum Kx = 1), which
         // fails for wide-boiling / absorber columns. SR determines T from
@@ -1021,7 +1036,10 @@ public class NaphtaliSandholmSolver {
           + "(L[0] = totalFeed - V[N-1]) in BP/SR init");
     }
 
-    initializeTrayState();
+    if (!warmStartFromColumn || !initializeTrayStateFromColumn(totalFeedMoles)) {
+      initializeTrayState();
+      warmStartFromColumn = false;
+    }
 
     logger.info("Naphtali-Sandholm initialized: N={}, C={}, totalFeedMoles={}, " + "hasReboiler={}, hasCondenser={}", N,
         C, String.format("%.4f", totalFeedMoles), hasReboiler, hasCondenser);
@@ -1032,6 +1050,54 @@ public class NaphtaliSandholmSolver {
             (Double.isNaN(fixedTemperature[j]) ? "" : " FIXED_T=" + fixedTemperature[j]));
       }
     }
+  }
+
+  /**
+   * Initialize MESH variables from the current column tray state for a changed-input warm solve.
+   *
+   * <p>
+   * The prior converged phase flows are scaled to the new total feed rate. The subsequent Newton correction then
+   * resolves material and energy residuals for the changed feed without repeating the cold Bubble-Point and Sum-Rates
+   * basin-finding stages.
+   * </p>
+   *
+   * @param totalFeedMoles current total external feed flow in mol/hr
+   * @return {@code true} when every tray supplied finite gas and liquid phase flows
+   */
+  private boolean initializeTrayStateFromColumn(double totalFeedMoles) {
+    double previousTopVaporFlow = ((SimpleTray) column.getTray(N - 1)).getGasOutStream().getFlowRate("mole/hr");
+    double previousBottomLiquidFlow = ((SimpleTray) column.getTray(0)).getLiquidOutStream().getFlowRate("mole/hr");
+    double previousTotalFeedMoles = previousTopVaporFlow + previousBottomLiquidFlow;
+    if (!(previousTotalFeedMoles > 1.0e-12) || !Double.isFinite(previousTotalFeedMoles)) {
+      return false;
+    }
+    double flowScaleFactor = totalFeedMoles / previousTotalFeedMoles;
+    if (!(flowScaleFactor > 0.0) || !Double.isFinite(flowScaleFactor)) {
+      return false;
+    }
+
+    for (int trayIndex = 0; trayIndex < N; trayIndex++) {
+      SimpleTray tray = (SimpleTray) column.getTray(trayIndex);
+      StreamInterface gasStream = tray.getGasOutStream();
+      StreamInterface liquidStream = tray.getLiquidOutStream();
+      double gasFlow = gasStream.getFlowRate("mole/hr") * flowScaleFactor;
+      double liquidFlow = liquidStream.getFlowRate("mole/hr") * flowScaleFactor;
+      double trayTemperature = tray.getTemperature();
+      if (!(gasFlow > 0.0) || !(liquidFlow > 0.0) || !Double.isFinite(gasFlow) || !Double.isFinite(liquidFlow)
+          || !Double.isFinite(trayTemperature)) {
+        return false;
+      }
+      T[trayIndex] = Double.isNaN(fixedTemperature[trayIndex]) ? trayTemperature : fixedTemperature[trayIndex];
+      V[trayIndex] = gasFlow;
+      L[trayIndex] = liquidFlow;
+      SystemInterface liquidSystem = liquidStream.getThermoSystem();
+      for (int componentIndex = 0; componentIndex < C; componentIndex++) {
+        liq[trayIndex][componentIndex] = Math.max(liquidFlow * liquidSystem.getComponent(componentIndex).getx(),
+            1.0e-20);
+      }
+    }
+    logger.info("NS: initialized warm MESH state from converged trays with flow scale {}", flowScaleFactor);
+    return true;
   }
 
   /**

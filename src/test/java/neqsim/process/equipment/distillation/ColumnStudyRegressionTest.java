@@ -2,7 +2,10 @@ package neqsim.process.equipment.distillation;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestReporter;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -15,12 +18,16 @@ import neqsim.thermo.system.SystemSrkEos;
  * @version 1.0
  */
 public class ColumnStudyRegressionTest {
+  /** Logger for timing reports produced by this regression test. */
+  private static final Logger logger = LogManager.getLogger(ColumnStudyRegressionTest.class);
   /** Atmospheric pressure used to convert bara to barg. */
   private static final double ATM_BARA = 1.01325;
   /** Number of answer trays excluding the reboiler. */
   private static final int NUMBER_OF_TRAYS = 10;
   /** Main feed mass flow in kg/hr. */
   private static final double MAIN_FEED_MASS_FLOW_KG_HR = 99381.1038920480;
+  /** Factor applied to the main feed flow for the changed-input warm solve. */
+  private static final double MAIN_FEED_FLOW_CHANGE_FACTOR = 1.10;
   /** Top reflux feed mass flow in kg/hr. */
   private static final double TOP_FEED_MASS_FLOW_KG_HR = 7658.93041734027;
   /** Main feed temperature in degrees Celsius. */
@@ -115,6 +122,174 @@ public class ColumnStudyRegressionTest {
     assertTrayPressureProfile(column);
     assertOverallMassBalance(feedStream, topFeedStream, column);
     assertComponentMassBalances(feedStream, topFeedStream, column);
+  }
+
+  /**
+   * Reports cold, unchanged warm, and 10-percent-increased inlet solve times for the column-study case.
+   *
+   * <p>
+   * The timing values are diagnostic only because wall-clock timings vary by machine and JVM state. Each solve is
+   * checked for convergence and external mass closure so the report cannot conceal an invalid fast path.
+   * </p>
+   *
+   * @param testReporter JUnit reporter that persists the measured timings in the Surefire test report
+   */
+  @Test
+  public void columnStudyCaseReportsColdAndWarmSolveTimes(TestReporter testReporter) {
+    SystemInterface baseFluid = createBaseFluid();
+    StreamInterface feedStream = createStream("manual_column_feed", baseFluid, MAIN_FEED_COMPOSITION,
+        MAIN_FEED_TEMPERATURE_C, MAIN_FEED_PRESSURE_BARA, MAIN_FEED_MASS_FLOW_KG_HR);
+    StreamInterface topFeedStream = createStream("top_stage_reflux", baseFluid, TOP_FEED_COMPOSITION,
+        TOP_FEED_TEMPERATURE_C, TOP_FEED_PRESSURE_BARA, TOP_FEED_MASS_FLOW_KG_HR);
+    DistillationColumn column = createColumn(feedStream, topFeedStream);
+
+    long coldStartNanos = System.nanoTime();
+    column.run();
+    long coldSolveNanos = System.nanoTime() - coldStartNanos;
+    assertColumnSolveIsValid(column, feedStream, topFeedStream, "cold solve");
+    int coldIterations = column.getLastIterationCount();
+    ColumnProductSummary coldProducts = getProductSummary(column);
+    assertTrue(!column.isDoInitializion(), "accepted cold solve should leave no pending column reinitialization");
+
+    long warmStartNanos = System.nanoTime();
+    column.run();
+    long warmSolveNanos = System.nanoTime() - warmStartNanos;
+    assertColumnSolveIsValid(column, feedStream, topFeedStream, "unchanged warm solve");
+    int warmIterations = column.getLastIterationCount();
+    ColumnProductSummary warmProducts = getProductSummary(column);
+    assertProductSummaryWithinRelativeTolerance(coldProducts, warmProducts, 0.10,
+        "unchanged warm solution should remain within 10 percent of the cold solution");
+
+    feedStream.setFlowRate(MAIN_FEED_MASS_FLOW_KG_HR * MAIN_FEED_FLOW_CHANGE_FACTOR, "kg/hr");
+    feedStream.run();
+    long changedInletStartNanos = System.nanoTime();
+    column.run();
+    long changedInletSolveNanos = System.nanoTime() - changedInletStartNanos;
+    assertColumnSolveIsValid(column, feedStream, topFeedStream, "10 percent increased-inlet solve");
+    int changedInletIterations = column.getLastIterationCount();
+    ColumnProductSummary changedInletProducts = getProductSummary(column);
+
+    logger.info(
+        "Column-study timing: cold={} ms ({} iterations), unchanged warm={} ms ({} iterations), "
+            + "10%-increased inlet={} ms ({} iterations). Products [gas kg/hr, liquid kg/hr, gas C, liquid C]: "
+            + "cold={}, warm={}, increased-inlet={}",
+        nanosToMillis(coldSolveNanos), coldIterations, nanosToMillis(warmSolveNanos), warmIterations,
+        nanosToMillis(changedInletSolveNanos), changedInletIterations, coldProducts, warmProducts,
+        changedInletProducts);
+    testReporter.publishEntry("cold_solve_ms", Double.toString(nanosToMillis(coldSolveNanos)));
+    testReporter.publishEntry("unchanged_warm_solve_ms", Double.toString(nanosToMillis(warmSolveNanos)));
+    testReporter.publishEntry("increased_inlet_solve_ms", Double.toString(nanosToMillis(changedInletSolveNanos)));
+    assertTrue(warmSolveNanos < coldSolveNanos, "unchanged warm solve should complete faster than the cold solve");
+  }
+
+  /**
+   * Capture terminal product values for timing and solution-preservation reporting.
+   *
+   * @param column solved column
+   * @return terminal product flow and temperature summary
+   */
+  private ColumnProductSummary getProductSummary(DistillationColumn column) {
+    return new ColumnProductSummary(column.getGasOutStream().getFlowRate("kg/hr"),
+        column.getLiquidOutStream().getFlowRate("kg/hr"), column.getGasOutStream().getTemperature("C"),
+        column.getLiquidOutStream().getTemperature("C"));
+  }
+
+  /**
+   * Assert that every product value stays within a specified relative tolerance.
+   *
+   * @param expected expected cold-solve summary
+   * @param actual summary to compare
+   * @param relativeTolerance maximum relative difference
+   * @param message assertion message prefix
+   */
+  private void assertProductSummaryWithinRelativeTolerance(ColumnProductSummary expected, ColumnProductSummary actual,
+      double relativeTolerance, String message) {
+    assertWithinRelativeTolerance(expected.gasFlowKgPerHour, actual.gasFlowKgPerHour, relativeTolerance,
+        message + " (gas flow)");
+    assertWithinRelativeTolerance(expected.liquidFlowKgPerHour, actual.liquidFlowKgPerHour, relativeTolerance,
+        message + " (liquid flow)");
+    assertWithinRelativeTolerance(expected.gasTemperatureC, actual.gasTemperatureC, relativeTolerance,
+        message + " (gas temperature)");
+    assertWithinRelativeTolerance(expected.liquidTemperatureC, actual.liquidTemperatureC, relativeTolerance,
+        message + " (liquid temperature)");
+  }
+
+  /**
+   * Assert two finite values have a bounded relative difference.
+   *
+   * @param expected expected value
+   * @param actual actual value
+   * @param relativeTolerance maximum relative difference
+   * @param message assertion message
+   */
+  private void assertWithinRelativeTolerance(double expected, double actual, double relativeTolerance, String message) {
+    double scale = Math.max(1.0, Math.abs(expected));
+    assertTrue(Math.abs(actual - expected) / scale <= relativeTolerance,
+        message + ": expected=" + expected + ", actual=" + actual);
+  }
+
+  /**
+   * Terminal product values reported by the timing regression.
+   *
+   * @author Copilot
+   * @version 1.0
+   */
+  private static class ColumnProductSummary {
+    private final double gasFlowKgPerHour;
+    private final double liquidFlowKgPerHour;
+    private final double gasTemperatureC;
+    private final double liquidTemperatureC;
+
+    /**
+     * Create a terminal product summary.
+     *
+     * @param gasFlowKgPerHour terminal gas product mass flow in kg/hr
+     * @param liquidFlowKgPerHour terminal liquid product mass flow in kg/hr
+     * @param gasTemperatureC terminal gas product temperature in degrees Celsius
+     * @param liquidTemperatureC terminal liquid product temperature in degrees Celsius
+     */
+    private ColumnProductSummary(double gasFlowKgPerHour, double liquidFlowKgPerHour, double gasTemperatureC,
+        double liquidTemperatureC) {
+      this.gasFlowKgPerHour = gasFlowKgPerHour;
+      this.liquidFlowKgPerHour = liquidFlowKgPerHour;
+      this.gasTemperatureC = gasTemperatureC;
+      this.liquidTemperatureC = liquidTemperatureC;
+    }
+
+    /**
+     * Format terminal product values for a timing report.
+     *
+     * @return terminal product values in reporting order
+     */
+    @Override
+    public String toString() {
+      return String.format("[%.3f, %.3f, %.3f, %.3f]", gasFlowKgPerHour, liquidFlowKgPerHour, gasTemperatureC,
+          liquidTemperatureC);
+    }
+  }
+
+  /**
+   * Assert that a completed column solve converged and preserves the external mass balance.
+   *
+   * @param column solved column
+   * @param feedStream main column feed
+   * @param topFeedStream external top reflux feed
+   * @param solveDescription description included in assertion failures
+   */
+  private void assertColumnSolveIsValid(DistillationColumn column, StreamInterface feedStream,
+      StreamInterface topFeedStream, String solveDescription) {
+    assertTrue(column.solved(), solveDescription + " should converge with Naphtali-Sandholm");
+    assertOverallMassBalance(feedStream, topFeedStream, column);
+  }
+
+  /**
+   * Convert elapsed nanoseconds to milliseconds for the timing report.
+   *
+   * @param elapsedNanos elapsed time in nanoseconds
+   * @return elapsed time in milliseconds
+   */
+  private double nanosToMillis(long elapsedNanos) {
+    return elapsedNanos / 1.0e6;
   }
 
   /**
