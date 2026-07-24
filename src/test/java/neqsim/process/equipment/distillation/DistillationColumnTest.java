@@ -1127,4 +1127,46 @@ public class DistillationColumnTest {
           "Iteration " + i + ": caller-held liquid stream must observe the solved flow");
     }
   }
+
+  /**
+   * Regression for PR #2556: multiple feeds must initialize the column from an adiabatic
+   * mixed-feed state. The rigorous tray equations still receive the individual feeds.
+   */
+  @Test
+  public void multipleFeedInitializationPreservesFeedEnthalpy() {
+    SystemSrkEos hotFluid = new SystemSrkEos(273.15 + 70.0, 10.0);
+    hotFluid.addComponent("propane", 0.30);
+    hotFluid.addComponent("n-butane", 0.70);
+    hotFluid.setMixingRule("classic");
+
+    SystemSrkEos coolFluid = new SystemSrkEos(273.15 + 20.0, 10.0);
+    coolFluid.addComponent("propane", 0.80);
+    coolFluid.addComponent("n-butane", 0.20);
+    coolFluid.setMixingRule("classic");
+
+    Stream hotFeed = new Stream("hot column feed", hotFluid);
+    hotFeed.setFlowRate(700.0, "kg/hr");
+    hotFeed.run();
+
+    Stream coolFeed = new Stream("cool column feed", coolFluid);
+    coolFeed.setFlowRate(300.0, "kg/hr");
+    coolFeed.run();
+
+    double inletEnthalpyJ = hotFeed.getFluid().getEnthalpy("J")
+        + coolFeed.getFluid().getEnthalpy("J");
+
+    DistillationColumn column = new DistillationColumn("multiple-feed initialization", 1, true, true);
+    column.addFeedStream(hotFeed, 1);
+    column.addFeedStream(coolFeed, 1);
+
+    double initialProductEnthalpyJ = column.getGasOutStream().getFluid().getEnthalpy("J")
+        + column.getLiquidOutStream().getFluid().getEnthalpy("J");
+    double enthalpyToleranceJ = Math.max(1.0e-3, Math.abs(inletEnthalpyJ) * 1.0e-8);
+
+    assertEquals(inletEnthalpyJ, column.feedmixer.getOutletStream().getFluid().getEnthalpy("J"),
+        enthalpyToleranceJ, "Internal feed mixer must preserve the total feed enthalpy");
+    assertEquals(inletEnthalpyJ, initialProductEnthalpyJ, enthalpyToleranceJ,
+        "Initial column product guesses must preserve the total feed enthalpy");
+  }
+
 }
