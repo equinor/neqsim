@@ -81,6 +81,7 @@ class MixerSplitterDocumentationTest {
   @Test
   void splitterExamplesNormalizeFactorsAndConserveSpecifiedFlows() {
     Stream inlet = createGasStream("splitter inlet", 305.0, 30.0, 8000.0, new double[] { 0.90, 0.08, 0.02 });
+    double inletMethaneFraction = inlet.getFluid().getMolarComposition()[0];
 
     Splitter ratioSplitter = new Splitter("SP-100", inlet, 2);
     ratioSplitter.setSplitFactors(new double[] { 7.0, 3.0 });
@@ -90,6 +91,8 @@ class MixerSplitterDocumentationTest {
     StreamInterface recycle = ratioSplitter.getSplitStream(1);
     assertEquals(5600.0, product.getFlowRate("kg/hr"), 1.0e-3);
     assertEquals(2400.0, recycle.getFlowRate("kg/hr"), 1.0e-3);
+    assertEquals(inletMethaneFraction, product.getFluid().getMolarComposition()[0], 1.0e-10);
+    assertEquals(inletMethaneFraction, recycle.getFluid().getMolarComposition()[0], 1.0e-10);
     assertEquals(0.0, ratioSplitter.getMassBalance("kg/hr"), 1.0e-3);
 
     Splitter flowSplitter = new Splitter("distribution splitter", inlet, 2);
@@ -100,6 +103,8 @@ class MixerSplitterDocumentationTest {
     StreamInterface remainingFlow = flowSplitter.getSplitStream(1);
     assertEquals(2500.0, fixedDemand.getFlowRate("kg/hr"), 1.0e-3);
     assertEquals(5500.0, remainingFlow.getFlowRate("kg/hr"), 1.0e-3);
+    assertEquals(inletMethaneFraction, fixedDemand.getFluid().getMolarComposition()[0], 1.0e-10);
+    assertEquals(inletMethaneFraction, remainingFlow.getFluid().getMolarComposition()[0], 1.0e-10);
     assertEquals(0.0, flowSplitter.getMassBalance("kg/hr"), 1.0e-3);
   }
 }
