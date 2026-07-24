@@ -128,7 +128,8 @@ $$
 
 ### Relative split factors
 
-`setSplitFactors` accepts nonnegative relative weights and normalizes them. The values do not have
+`setSplitFactors` treats its values as relative weights. It clamps negative values to zero and
+normalizes the remaining weights, so at least one value must be positive. The values do not have
 to sum to one. For example, `{7.0, 3.0}` becomes `{0.7, 0.3}`.
 
 The following splitter snippets continue from `mixedGas`, which is created in the complete mixer
@@ -143,9 +144,6 @@ splitter.run();
 StreamInterface product = splitter.getSplitStream(0);
 StreamInterface recycle = splitter.getSplitStream(1);
 ```
-
-Negative factor weights are clamped to zero before normalization. Supply at least one positive
-weight.
 
 ### Specified flows and remainder outlets
 
