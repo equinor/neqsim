@@ -82,6 +82,8 @@ class MixerSplitterDocumentationTest {
   void splitterExamplesNormalizeFactorsAndConserveSpecifiedFlows() {
     Stream inlet = createGasStream("splitter inlet", 305.0, 30.0, 8000.0, new double[] { 0.90, 0.08, 0.02 });
     double inletMethaneFraction = inlet.getFluid().getMolarComposition()[0];
+    double inletTemperatureK = inlet.getTemperature("K");
+    double inletPressureBara = inlet.getPressure("bara");
 
     Splitter ratioSplitter = new Splitter("SP-100", inlet, 2);
     ratioSplitter.setSplitFactors(new double[] { 7.0, 3.0 });
@@ -93,6 +95,10 @@ class MixerSplitterDocumentationTest {
     assertEquals(2400.0, recycle.getFlowRate("kg/hr"), 1.0e-3);
     assertEquals(inletMethaneFraction, product.getFluid().getMolarComposition()[0], 1.0e-10);
     assertEquals(inletMethaneFraction, recycle.getFluid().getMolarComposition()[0], 1.0e-10);
+    assertEquals(inletTemperatureK, product.getTemperature("K"), 1.0e-10);
+    assertEquals(inletTemperatureK, recycle.getTemperature("K"), 1.0e-10);
+    assertEquals(inletPressureBara, product.getPressure("bara"), 1.0e-10);
+    assertEquals(inletPressureBara, recycle.getPressure("bara"), 1.0e-10);
     assertEquals(0.0, ratioSplitter.getMassBalance("kg/hr"), 1.0e-3);
 
     Splitter flowSplitter = new Splitter("distribution splitter", inlet, 2);
@@ -105,6 +111,10 @@ class MixerSplitterDocumentationTest {
     assertEquals(5500.0, remainingFlow.getFlowRate("kg/hr"), 1.0e-3);
     assertEquals(inletMethaneFraction, fixedDemand.getFluid().getMolarComposition()[0], 1.0e-10);
     assertEquals(inletMethaneFraction, remainingFlow.getFluid().getMolarComposition()[0], 1.0e-10);
+    assertEquals(inletTemperatureK, fixedDemand.getTemperature("K"), 1.0e-10);
+    assertEquals(inletTemperatureK, remainingFlow.getTemperature("K"), 1.0e-10);
+    assertEquals(inletPressureBara, fixedDemand.getPressure("bara"), 1.0e-10);
+    assertEquals(inletPressureBara, remainingFlow.getPressure("bara"), 1.0e-10);
     assertEquals(0.0, flowSplitter.getMassBalance("kg/hr"), 1.0e-3);
   }
 }
