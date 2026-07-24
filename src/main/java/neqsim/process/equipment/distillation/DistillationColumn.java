@@ -2312,9 +2312,11 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
    */
   private long calculateNaphtaliSandholmInputSignature() {
     long signature = 1125899906842597L;
-    for (Map.Entry<Integer, List<StreamInterface>> entry : feedStreams.entrySet()) {
-      signature = updateNaphtaliSandholmInputSignature(signature, entry.getKey());
-      for (StreamInterface feed : entry.getValue()) {
+    List<Integer> feedTrayNumbers = new ArrayList<Integer>(feedStreams.keySet());
+    Collections.sort(feedTrayNumbers);
+    for (Integer trayNumber : feedTrayNumbers) {
+      signature = updateNaphtaliSandholmInputSignature(signature, trayNumber.longValue());
+      for (StreamInterface feed : feedStreams.get(trayNumber)) {
         SystemInterface system = feed.getThermoSystem();
         signature = updateNaphtaliSandholmInputSignature(signature, feed.getFlowRate("mol/hr"));
         signature = updateNaphtaliSandholmInputSignature(signature, feed.getTemperature("K"));
@@ -2324,6 +2326,29 @@ public class DistillationColumn extends ProcessEquipmentBaseClass implements Dis
         }
       }
     }
+
+    signature = updateNaphtaliSandholmInputSignature(signature, topSpecification == null ? 0L : 1L);
+    if (topSpecification != null) {
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getType().ordinal());
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getLocation().ordinal());
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getTargetValue());
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getTolerance());
+      signature = updateNaphtaliSandholmInputSignature(signature, topSpecification.getMaxIterations());
+      signature = updateNaphtaliSandholmInputSignature(signature,
+          topSpecification.getComponentName() == null ? 0L : topSpecification.getComponentName().hashCode());
+    }
+
+    signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification == null ? 0L : 1L);
+    if (bottomSpecification != null) {
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getType().ordinal());
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getLocation().ordinal());
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getTargetValue());
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getTolerance());
+      signature = updateNaphtaliSandholmInputSignature(signature, bottomSpecification.getMaxIterations());
+      signature = updateNaphtaliSandholmInputSignature(signature,
+          bottomSpecification.getComponentName() == null ? 0L : bottomSpecification.getComponentName().hashCode());
+    }
+
     return signature;
   }
 
