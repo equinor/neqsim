@@ -346,7 +346,6 @@ public class LNGTankLayeredModel implements Serializable {
     }
     system.setTotalNumberOfMoles(layer.getTotalMoles());
     system.setMolarComposition(molarComposition);
-    system.init(0);
     return system;
   }
 
