@@ -484,7 +484,7 @@ public class NaphtaliSandholmSolver {
       }
 
       if (useOverallMBClosure && norm < tolerance) {
-        System.out.println("[NS] Full residual norm (" + norm + ") < tolerance — exiting early without energy check");
+        logger.debug("NS: full residual norm {} is below tolerance; exiting without energy check", norm);
         applyResultsToColumn(id, 0, norm, startTime);
         return true;
       }
@@ -494,8 +494,7 @@ public class NaphtaliSandholmSolver {
       double energyErrorBP = computeMaxRelativeEnergyError();
       logger.info("NS after BP+EOS: massBalErr={}% energyErr={}%", String.format("%.4f", mbErrorBP * 100),
           String.format("%.2f", energyErrorBP * 100));
-      System.out.println("[NS] after BP: mbErr=" + String.format("%.4f", mbErrorBP * 100) + "% energyErr="
-          + String.format("%.2f", energyErrorBP * 100) + "%");
+      logger.debug("NS after BP: mass balance error={}%, energy error={}%", mbErrorBP * 100, energyErrorBP * 100);
       // Accept BP only if both mb and energy are very tight. If mb is OK but
       // energy is in the 1-5% range, run Sum-Rates (which adjusts T from the
       // energy balance) — that refines T without invoking Newton, which is
@@ -503,7 +502,7 @@ public class NaphtaliSandholmSolver {
       if (useOverallMBClosure && mbErrorBP < 0.005 && energyErrorBP < 0.01) {
         logger.info("NS: mass+energy balance OK (mb={}%, E={}%), accepting solution",
             String.format("%.4f", mbErrorBP * 100), String.format("%.2f", energyErrorBP * 100));
-        System.out.println("[NS] Both OK — accepting BP solution (no SR needed)");
+        logger.debug("NS: accepting Bubble-Point solution without Sum-Rates correction");
         applyResultsToColumn(id, 0, norm, startTime);
         return true;
       }
@@ -514,7 +513,7 @@ public class NaphtaliSandholmSolver {
         // energy balance instead, which is more appropriate.
         logger.info("NS: mass balance OK ({}%) but energy imbalance ({}%) — running Sum-Rates correction",
             String.format("%.4f", mbErrorBP * 100), String.format("%.2f", energyErrorBP * 100));
-        System.out.println("[NS] --> Calling solveSumRatesPhase()");
+        logger.debug("NS: starting Sum-Rates correction");
         solveSumRatesPhase();
 
         // Re-evaluate after Sum-Rates and decide whether SR was sufficient.
@@ -524,7 +523,7 @@ public class NaphtaliSandholmSolver {
         double mbAfterSR = computeMassBalanceError();
         double energyAfterSR = computeMaxRelativeEnergyError();
         if (mbAfterSR < 0.005 && energyAfterSR < 0.05 && norm < tolerance) {
-          System.out.println("[NS] SR fully converged (||F|| below tol) — accepting");
+          logger.debug("NS: Sum-Rates residual is below tolerance; accepting solution");
           applyResultsToColumn(id, 0, norm, startTime);
           return true;
         }
@@ -543,9 +542,8 @@ public class NaphtaliSandholmSolver {
         // from ||F||=4 to 1e5 in one step). Once SR has closed mass balance
         // and energy balance, accept that result and skip Newton.
         if (useOverallMBClosure && mbAfterSR < 0.05 && energyAfterSR < 0.05) {
-          System.out.println("[NS] useOverallMBClosure path: accepting SR result " + "(mb="
-              + String.format("%.4f%%", mbAfterSR * 100) + ", energy=" + String.format("%.2f%%", energyAfterSR * 100)
-              + ") — skipping Newton (ill-conditioned).");
+          logger.debug("NS: accepting Sum-Rates result without Newton because overall-MB closure is ill-conditioned "
+              + "(mass balance={}%, energy={}%);", mbAfterSR * 100, energyAfterSR * 100);
           applyResultsToColumn(id, 0, norm, startTime);
           return true;
         }
@@ -553,8 +551,8 @@ public class NaphtaliSandholmSolver {
         // above tolerance — fall through to Newton so L and V get refined
         // (SR only adjusts T; BP's L/V profile may be wrong and Newton is
         // needed to fix it).
-        System.out.println("[NS] SR closed energy but ||F||=" + String.format("%.3e", norm) + " > tol=" + tolerance
-            + " — falling through to Newton");
+        logger.debug("NS: Sum-Rates closed energy but residual {} exceeds tolerance {}; continuing to Newton", norm,
+            tolerance);
       }
 
       // Phase 2: Newton refinement from BP solution (includes energy equations)
@@ -628,7 +626,7 @@ public class NaphtaliSandholmSolver {
         // magnitude in one iteration.
         double trScale = applyTrustRegion(dx);
         if (trScale < 1.0 && (iter <= 3 || iter % 10 == 0)) {
-          System.out.println("[Newton] iter " + iter + " trust-region scale=" + String.format("%.3e", trScale));
+          logger.debug("NS Newton iteration {}: trust-region scale={}", iter, trScale);
         }
 
         // Line search: backtrack if step increases residual norm
@@ -646,19 +644,15 @@ public class NaphtaliSandholmSolver {
         logger.debug("NS iter {}: ||F|| = {} alpha={}", iter, String.format("%.6e", newNorm),
             String.format("%.4f", alpha));
 
-        // Log every iteration while we diagnose the component-imbalance signal.
-        {
+        // Compute detailed diagnostics only when debug logging is enabled.
+        if (logger.isDebugEnabled()) {
           double mbIt = computeMassBalanceError();
           double eIt = computeMaxRelativeEnergyError();
           double compIt = computeMaxComponentImbalance();
-          logger.info("NS Newton iter {}: ||F||={} mb={}% energy={}% maxComp={}% T[top]={}C alpha={}", iter,
-              String.format("%.4e", newNorm), String.format("%.4f", mbIt * 100), String.format("%.2f", eIt * 100),
-              String.format("%.4f", compIt * 100), String.format("%.1f", T[N - 1] - 273.15),
-              String.format("%.4f", alpha));
-          System.out.println("[Newton] iter " + iter + ": ||F||=" + String.format("%.4e", newNorm) + " mb="
-              + String.format("%.4f", mbIt * 100) + "% energy=" + String.format("%.2f", eIt * 100) + "% maxComp="
-              + String.format("%.4f", compIt * 100) + "% T[top]=" + String.format("%.1f", T[N - 1] - 273.15) + "C T[0]="
-              + String.format("%.1f", T[0] - 273.15) + "C alpha=" + String.format("%.4f", alpha));
+          logger.debug(
+              "NS Newton iteration {}: residual={}, mass balance={}%, energy={}%, max component={}%, "
+                  + "top temperature={} C, bottom temperature={} C, alpha={}",
+              iter, newNorm, mbIt * 100, eIt * 100, compIt * 100, T[N - 1] - 273.15, T[0] - 273.15, alpha);
         }
 
         if (Double.isNaN(newNorm) || Double.isInfinite(newNorm)) {
@@ -885,12 +879,11 @@ public class NaphtaliSandholmSolver {
           PhaseType pt = feedSys.getPhase(0).getType();
           singlePhaseIsVapor = (pt == PhaseType.GAS);
         }
-        System.out.println("[NS-FEED] tray " + trayIdx + ": feedMoles=" + String.format("%.2f", feedMoles) + " beta="
-            + String.format("%.4f", beta) + " nPhases=" + feedSys.getNumberOfPhases() + " phase0Type="
-            + feedSys.getPhase(0).getType() + " singlePhaseIsVapor=" + singlePhaseIsVapor + " T="
-            + String.format("%.1fC", feedSys.getTemperature() - 273.15) + " P="
-            + String.format("%.2fbar", feedSys.getPressure()) + " totalH="
-            + String.format("%.0f", feedSys.getEnthalpy()));
+        logger.debug(
+            "NS feed tray {}: flow={} mol/hr, beta={}, phases={}, phase 0={}, single-phase vapor={}, "
+                + "temperature={} C, pressure={} bara, enthalpy={}",
+            trayIdx, feedMoles, beta, feedSys.getNumberOfPhases(), feedSys.getPhase(0).getType(), singlePhaseIsVapor,
+            feedSys.getTemperature() - 273.15, feedSys.getPressure(), feedSys.getEnthalpy());
 
         for (int i = 0; i < C; i++) {
           double zi = feedSys.getPhase(0).getComponent(i).getx(); // overall composition
@@ -1169,7 +1162,7 @@ public class NaphtaliSandholmSolver {
       }
     }
     feedTemp /= Math.max(feedTempWeight, 1e-20);
-    System.out.println("[NS-INIT] computed feedTemp=" + String.format("%.2f", feedTemp - 273.15) + "C");
+    logger.debug("NS initializer: feed temperature={} C", feedTemp - 273.15);
 
     // Better temperature profile: compute bubble/dew point estimates using Wilson
     // K.
@@ -1202,10 +1195,10 @@ public class NaphtaliSandholmSolver {
     // Ensure reasonable temperature range (guards in Kelvin)
     topTemp = Math.max(topTemp, 150.0);
     botTemp = Math.max(botTemp, topTemp + 10.0);
-    System.out.println("[NS-INIT] bubbleT@bot=" + String.format("%.2f", bubbleTatBot - 273.15) + "C dewT@top="
-        + String.format("%.2f", dewTatTop - 273.15) + "C feedT=" + String.format("%.2f", feedTemp - 273.15)
-        + "C => botTemp=" + String.format("%.2f", botTemp - 273.15) + "C topTemp="
-        + String.format("%.2f", topTemp - 273.15) + "C");
+    logger.debug(
+        "NS initializer: bubble temperature={} C, dew temperature={} C, feed temperature={} C, "
+            + "bottom seed={} C, top seed={} C",
+        bubbleTatBot - 273.15, dewTatTop - 273.15, feedTemp - 273.15, botTemp - 273.15, topTemp - 273.15);
 
     for (int j = 0; j < N; j++) {
       if (!Double.isNaN(fixedTemperature[j])) {
@@ -2182,8 +2175,8 @@ public class NaphtaliSandholmSolver {
    * </p>
    */
   private void phaseThreePHflashCorrection() {
-    System.out.println("Phase 3: Newton-E T correction. T[0]=" + String.format("%.2f", T[0] - 273.15) + " T[N-1]="
-        + String.format("%.2f", T[N - 1] - 273.15));
+    logger.debug("NS Phase 3: Newton-E temperature correction; bottom={} C, top={} C", T[0] - 273.15,
+        T[N - 1] - 273.15);
 
     int maxIter = 40;
     double dampE = 0.3;
@@ -2234,10 +2227,9 @@ public class NaphtaliSandholmSolver {
         deltaT *= dampE;
         maxDeltaT = Math.max(maxDeltaT, Math.abs(deltaT));
 
-        if (iter == 0) {
-          System.out.println("  Tray " + j + ": T=" + String.format("%.1f", T[j] - 273.15) + " E="
-              + String.format("%.0f", energyErr[j]) + " dE/dT=" + String.format("%.0f", dEdT) + " dT="
-              + String.format("%.2f", deltaT));
+        if (iter == 0 && logger.isDebugEnabled()) {
+          logger.debug("NS Phase 3 tray {}: temperature={} C, energy={}, dE/dT={}, delta T={}", j, T[j] - 273.15,
+              energyErr[j], dEdT, deltaT);
         }
 
         T[j] += deltaT;
@@ -2275,9 +2267,8 @@ public class NaphtaliSandholmSolver {
       }
 
       double mbErr = computeMassBalanceError();
-      System.out.println("E-iter " + iter + ": maxDT=" + String.format("%.3f", maxDeltaT) + " maxE="
-          + String.format("%.0f", maxEErr) + " mb=" + String.format("%.4f%%", mbErr * 100) + " T[0]="
-          + String.format("%.1f", T[0] - 273.15) + " T[N-1]=" + String.format("%.1f", T[N - 1] - 273.15));
+      logger.debug("NS Phase 3 iteration {}: max delta T={}, max energy={}, mass balance={}%, bottom={} C, top={} C",
+          iter, maxDeltaT, maxEErr, mbErr * 100, T[0] - 273.15, T[N - 1] - 273.15);
 
       if (mbErr < bestMbErr || (mbErr < 0.005 && maxDeltaT < 1.0)) {
         bestMbErr = mbErr;
@@ -2285,12 +2276,12 @@ public class NaphtaliSandholmSolver {
       }
 
       if (maxDeltaT < 0.1 && mbErr < 0.005) {
-        System.out.println("Newton-E CONVERGED at iter " + iter);
+        logger.debug("NS Phase 3 converged at iteration {}", iter);
         break;
       }
 
       if (mbErr > 1.0) {
-        System.out.println("Newton-E diverging (mb=" + String.format("%.1f%%", mbErr * 100) + "), reducing damping");
+        logger.debug("NS Phase 3 is diverging with mass balance={}%; reducing damping", mbErr * 100);
         restoreTrayState(bestLiq, bestT, bestV);
         evaluateThermo();
         dampE *= 0.5;
@@ -2301,8 +2292,8 @@ public class NaphtaliSandholmSolver {
     restoreTrayState(bestLiq, bestT, bestV);
     evaluateThermo();
 
-    System.out.println("Phase 3 done: T[0]=" + String.format("%.2f", T[0] - 273.15) + " T[N-1]="
-        + String.format("%.2f", T[N - 1] - 273.15) + " mb=" + String.format("%.4f%%", bestMbErr * 100));
+    logger.debug("NS Phase 3 complete: bottom={} C, top={} C, mass balance={} %", T[0] - 273.15, T[N - 1] - 273.15,
+        bestMbErr * 100);
   }
 
   /**
@@ -2328,19 +2319,21 @@ public class NaphtaliSandholmSolver {
    * </p>
    */
   private void solveSumRatesPhase() {
-    System.out.println("[SR] Starting Sum-Rates energy correction. T[0]=" + String.format("%.1f", T[0] - 273.15)
-        + "C  T[N-1]=" + String.format("%.1f", T[N - 1] - 273.15) + "C");
-    // Print feed enthalpy diagnostics
-    for (int j = 0; j < N; j++) {
-      double feedMolesJ = 0;
-      for (int i = 0; i < C; i++) {
-        feedMolesJ += feedLiq[j][i] + feedVap[j][i];
-      }
-      if (feedMolesJ > 1e-10) {
-        System.out.println("[SR-FEED] tray " + j + ": feedLTotal=" + String.format("%.1f", feedLTotal[j]) + " feedHL="
-            + String.format("%.1f", feedHL[j]) + " feedVTotal=" + String.format("%.1f", feedVTotal[j]) + " feedHV="
-            + String.format("%.1f", feedHV[j]) + " feedEnthalpy="
-            + String.format("%.0f", feedLTotal[j] * feedHL[j] + feedVTotal[j] * feedHV[j]));
+    logger.debug("SR: starting energy correction; bottom={} C, top={} C", T[0] - 273.15, T[N - 1] - 273.15);
+    // Log feed enthalpy diagnostics only when debug logging is enabled.
+    if (logger.isDebugEnabled()) {
+      for (int j = 0; j < N; j++) {
+        double feedMolesJ = 0;
+        for (int i = 0; i < C; i++) {
+          feedMolesJ += feedLiq[j][i] + feedVap[j][i];
+        }
+        if (feedMolesJ > 1e-10) {
+          logger.debug(
+              "SR feed tray {}: liquid flow={}, liquid enthalpy={}, vapor flow={}, vapor enthalpy={}, "
+                  + "feed enthalpy={}",
+              j, feedLTotal[j], feedHL[j], feedVTotal[j], feedHV[j],
+              feedLTotal[j] * feedHL[j] + feedVTotal[j] * feedHV[j]);
+        }
       }
     }
     logger.info("SR: starting Sum-Rates energy correction. T[0]={} T[N-1]={}", String.format("%.1f", T[0] - 273.15),
@@ -2491,9 +2484,8 @@ public class NaphtaliSandholmSolver {
         evaluateThermoForTray(j); // restore
 
         if (Math.abs(dEdT) < 1e-6) {
-          if (iter == 0) {
-            System.out
-                .println("[SR-DIAG] tray " + j + ": dEdT too small (" + String.format("%.6f", dEdT) + "), skipping");
+          if (iter == 0 && logger.isDebugEnabled()) {
+            logger.debug("SR tray {}: dE/dT={} is too small; skipping temperature correction", j, dEdT);
           }
           continue;
         }
@@ -2501,7 +2493,7 @@ public class NaphtaliSandholmSolver {
         double rawDeltaT = -energyErr[j] / dEdT;
 
         // Diagnostic: print full details on first iteration
-        if (iter == 0) {
+        if (iter == 0 && logger.isDebugEnabled()) {
           double hOutJ = V[j] * hV[j] + L[j] * hL[j];
           double hInJ = 0;
           if (j > 0) {
@@ -2512,13 +2504,10 @@ public class NaphtaliSandholmSolver {
           }
           double feedH = feedLTotal[j] * feedHL[j] + feedVTotal[j] * feedHV[j];
           double hInTotal = hInJ + feedH;
-          System.out.println("[SR-DIAG] tray " + j + ": T=" + String.format("%.1fC", T[j] - 273.15) + " hV="
-              + String.format("%.1f", hV[j]) + " hL=" + String.format("%.1f", hL[j]) + " V="
-              + String.format("%.1f", V[j]) + " L=" + String.format("%.1f", L[j]) + " Hout="
-              + String.format("%.0f", hOutJ) + " Hin(noFeed)=" + String.format("%.0f", hInJ) + " feedH="
-              + String.format("%.0f", feedH) + " Hin(total)=" + String.format("%.0f", hInTotal) + " Ej="
-              + String.format("%.0f", energyErr[j]) + " dEdT=" + String.format("%.1f", dEdT) + " rawDT="
-              + String.format("%.2f", rawDeltaT));
+          logger.debug(
+              "SR tray {}: temperature={} C, hV={}, hL={}, V={}, L={}, Hout={}, Hin without feed={}, "
+                  + "feed H={}, total Hin={}, energy residual={}, dE/dT={}, raw delta T={}",
+              j, T[j] - 273.15, hV[j], hL[j], V[j], L[j], hOutJ, hInJ, feedH, hInTotal, energyErr[j], dEdT, rawDeltaT);
         }
 
         double deltaT = Math.max(-maxClampT, Math.min(maxClampT, rawDeltaT));
@@ -2541,14 +2530,8 @@ public class NaphtaliSandholmSolver {
       double eErr = computeMaxRelativeEnergyError();
 
       if (iter % 10 == 0 || iter < 5) {
-        System.out.println("[SR] iter " + iter + ": dT=" + String.format("%.3f", maxDeltaT) + " mb="
-            + String.format("%.4f%%", mbErr * 100) + " energy=" + String.format("%.1f%%", eErr * 100) + " T[0]="
-            + String.format("%.1f", T[0] - 273.15) + " T[top]=" + String.format("%.1f", T[N - 1] - 273.15) + " damp="
-            + String.format("%.3f", dampT));
-        logger.info("SR iter {}: maxDT={} mbErr={}% energy={}% T[0]={} T[N-1]={} damp={}", iter,
-            String.format("%.3f", maxDeltaT), String.format("%.4f", mbErr * 100), String.format("%.2f", eErr * 100),
-            String.format("%.1f", T[0] - 273.15), String.format("%.1f", T[N - 1] - 273.15),
-            String.format("%.3f", dampT));
+        logger.debug("SR iteration {}: delta T={}, mass balance={}%, energy={}%, bottom={} C, top={} C, damping={}",
+            iter, maxDeltaT, mbErr * 100, eErr * 100, T[0] - 273.15, T[N - 1] - 273.15, dampT);
       }
 
       // Track best solution (minimize energy error while keeping mass OK)
@@ -2567,8 +2550,7 @@ public class NaphtaliSandholmSolver {
 
       // Divergence check: if mass balance deteriorates badly, reduce damping
       if (mbErr > 5.0) {
-        System.out
-            .println("[SR] mass balance degraded to " + String.format("%.1f%%", mbErr * 100) + " — reducing damping");
+        logger.debug("SR: mass balance degraded to {}%; reducing damping", mbErr * 100);
         logger.warn("SR: mass balance degraded to {}%, reducing damping", String.format("%.1f", mbErr * 100));
         restoreTrayState(bestLiq, bestT, bestV);
         evaluateThermo();
@@ -2587,16 +2569,15 @@ public class NaphtaliSandholmSolver {
 
     double finalMb = computeMassBalanceError();
     double finalE = computeMaxRelativeEnergyError();
-    System.out.println(
-        "[SR] Done: mb=" + String.format("%.4f%%", finalMb * 100) + " energy=" + String.format("%.1f%%", finalE * 100)
-            + " T[0]=" + String.format("%.1f", T[0] - 273.15) + " T[top]=" + String.format("%.1f", T[N - 1] - 273.15));
+    logger.debug("SR complete: mass balance={}%, energy={}%, bottom={} C, top={} C", finalMb * 100, finalE * 100,
+        T[0] - 273.15, T[N - 1] - 273.15);
     logger.info("SR Phase done: mbErr={}% energy={}% T[0]={} T[N-1]={}", String.format("%.4f", finalMb * 100),
         String.format("%.2f", finalE * 100), String.format("%.1f", T[0] - 273.15),
         String.format("%.1f", T[N - 1] - 273.15));
 
     // If SR solution is worse than BP in both metrics, revert to BP
     if (finalMb > bpMbErr * 5 && finalE > bpEnergyErr) {
-      System.out.println("[SR] Solution worse than BP — REVERTING to BP");
+      logger.debug("SR solution is worse than Bubble-Point solution; reverting");
       logger.info("SR: solution worse than BP, reverting");
       restoreTrayState(bpLiq, bpT, bpV);
       evaluateThermo();
