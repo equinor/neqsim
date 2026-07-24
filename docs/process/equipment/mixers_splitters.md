@@ -131,10 +131,10 @@ $$
 `setSplitFactors` accepts nonnegative relative weights and normalizes them. The values do not have
 to sum to one. For example, `{7.0, 3.0}` becomes `{0.7, 0.3}`.
 
-```java
-import neqsim.process.equipment.splitter.Splitter;
-import neqsim.process.equipment.stream.StreamInterface;
+The following splitter snippets continue from `mixedGas`, which is created in the complete mixer
+example above.
 
+```java
 Splitter splitter = new Splitter("SP-100", mixedGas, 2);
 splitter.setSplitFactors(new double[] {7.0, 3.0});
 splitter.run();
@@ -170,12 +170,9 @@ clamped to zero.
 ## Static mixer
 
 `StaticMixer` supports the same multi-inlet connection pattern but uses its own mixing
-implementation:
+implementation. This snippet reuses `richGas` and `leanGas` from the complete mixer example:
 
 ```java
-import neqsim.process.equipment.mixer.StaticMixer;
-import neqsim.process.equipment.stream.StreamInterface;
-
 StaticMixer staticMixer = new StaticMixer("MX-101");
 staticMixer.addStream(richGas);
 staticMixer.addStream(leanGas);
