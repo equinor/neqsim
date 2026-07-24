@@ -4,26 +4,26 @@ title: "Transparent field-development screening"
 description: "Executable NeqSim tutorial for unit-safe gas-production profiles, after-tax cash flow, and bounded sensitivities."
 parent: Examples
 nav_order: 1
-notebook_conversion: preserve
 ---
 
-> **Notebook:** This page mirrors
+# FieldDevelopmentWorkflow
+
+> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`FieldDevelopmentWorkflow.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb)
-> or [open it in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb).
+> or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/FieldDevelopmentWorkflow.ipynb).
 
-This tutorial builds an auditable gas-production forecast and after-tax cash flow from current NeqSim APIs. It
-deliberately uses the lower-level production-profile and economics classes so every unit conversion and assumption is
-visible.
+---
 
-> **Engineering boundary:** this is a deterministic screening example, not a reserves estimate, concept approval,
-> FEED model, or investment recommendation. Replace the synthetic rates, costs, prices, fiscal basis, and decline
-> assumptions with traceable project data and qualified engineering models.
+# Transparent field-development screening with NeqSim
+
+This tutorial builds an auditable gas-production forecast and after-tax cash flow from current NeqSim APIs. It deliberately uses the lower-level production-profile and economics classes so every unit conversion and assumption is visible.
+
+> **Engineering boundary:** this is a deterministic screening example, not a reserves estimate, concept approval, FEED model, or investment recommendation. Replace the synthetic rates, costs, prices, fiscal basis, and decline assumptions with traceable project data and qualified engineering models.
 
 ## 1. Runtime setup
 
-The setup installs the current public `neqsim` package only when it is missing. Restart the runtime after changing the
-installed NeqSim version.
+The setup installs the current public `neqsim` package only when it is missing. Restart the runtime after changing the installed NeqSim version.
 
 ```python
 import importlib.util
@@ -53,11 +53,7 @@ DAYS_PER_YEAR = 365.25
 
 ## 2. Define the screening basis
 
-The example represents a synthetic four-well gas development. Throughout this tutorial, Sm³ uses a 15 °C and
-1.01325 bara accounting basis. `ProductionProfileGenerator` treats the supplied volumes numerically; it does not
-perform a standard-condition conversion. Rates are standard cubic metres per day, and yearly profile values are
-standard cubic metres per year. Monetary inputs and outputs are million US dollars unless the API label states
-otherwise. The synthetic costs are teaching inputs, not an AACE-classified estimate.
+The example represents a synthetic four-well gas development. Throughout this tutorial, Sm³ uses a 15 °C and 1.01325 bara accounting basis. `ProductionProfileGenerator` treats the supplied volumes numerically; it does not perform a standard-condition conversion. Rates are standard cubic metres per day, and yearly profile values are standard cubic metres per year. Monetary inputs and outputs are million US dollars unless the API label states otherwise. The synthetic costs are teaching inputs, not an AACE-classified estimate.
 
 | Assumption | Value |
 |---|---:|
@@ -71,9 +67,7 @@ otherwise. The synthetic costs are teaching inputs, not an AACE-classified estim
 | Discount rate | 8% |
 | Fiscal model | `CashFlowEngine("NO")` |
 
-The `ProductionProfileGenerator.generateFullProfile` input is a **daily rate**, but each returned map value is an
-**annual volume**. Passing the annual value directly to `addAnnualProduction` avoids a second, erroneous
-multiplication by days per year.
+The `ProductionProfileGenerator.generateFullProfile` input is a **daily rate**, but each returned map value is an **annual volume**. Passing the annual value directly to `addAnnualProduction` avoids a second, erroneous multiplication by days per year.
 
 ```python
 def build_gas_case(
@@ -136,6 +130,16 @@ assert math.isclose(first_daily_rate_msm3, 8.0, rel_tol=0.0, abs_tol=1e-12)
 assert cumulative_gsm3 > 0.0
 ```
 
+<details>
+<summary>Output</summary>
+
+```
+First-year average rate: 8.000000 MSm³/d
+Twenty-year cumulative gas: 36.178855 GSm³
+```
+
+</details>
+
 ```python
 years = list(base_profile)
 daily_rates = [
@@ -169,11 +173,9 @@ plt.show()
 
 ## 4. Inspect the after-tax screening economics
 
-The first figure shows the imposed plateau followed by exponential decline. It verifies the intended rate/volume
-conversion but does not establish reservoir deliverability.
+The first figure shows the imposed plateau followed by exponential decline. It verifies the intended rate/volume conversion but does not establish reservoir deliverability.
 
-The model is intentionally deterministic. Its NPV, IRR, payback, and break-even price depend entirely on the synthetic
-assumptions above and the selected `NO` fiscal implementation.
+The model is intentionally deterministic. Its NPV, IRR, payback, and break-even price depend entirely on the synthetic assumptions above and the selected `NO` fiscal implementation.
 
 ```python
 cash_result = base_case["result"]
@@ -188,10 +190,27 @@ assert cash_result.getTotalCapex() > 0.0
 assert 0.0 < break_even_gas_price < 2.0
 ```
 
+<details>
+<summary>Output</summary>
+
+```
+=== Cash Flow Summary ===
+Project period: 2026 - 2047 (22 years)
+Total CAPEX: 1384.5 MUSD
+Total Revenue: 10853.7 MUSD
+Total Tax: 5700.7 MUSD
+NPV @ 8.0%: 652.3 MUSD
+IRR: 18.6%
+Payback: 5.0 years
+
+Break-even gas price: 0.155762 USD/Sm³
+```
+
+</details>
+
 ## 5. Compare bounded sensitivities
 
-A small deterministic sensitivity is more transparent than attaching unsupported P10/P50/P90 labels. Probabilistic
-labels require distributions, correlations, sampling evidence, and a documented percentile convention.
+A small deterministic sensitivity is more transparent than attaching unsupported P10/P50/P90 labels. Probabilistic labels require distributions, correlations, sampling evidence, and a documented percentile convention.
 
 ```python
 sensitivity_cases = [
@@ -229,14 +248,24 @@ fig.tight_layout()
 plt.show()
 ```
 
+<details>
+<summary>Output</summary>
+
+```
+| Case | NPV (MUSD) | IRR (%) | Payback (years) |
+|---|---:|---:|---:|
+| Lower rate | 355.5 | 14.1 | 6.0 |
+| Base case | 652.3 | 18.6 | 5.0 |
+| Higher CAPEX | 533.0 | 15.4 | 5.0 |
+```
+
+</details>
+
 ## 6. Interpretation and next fidelity step
 
-The second figure confirms the expected directional response: lower gas rate and higher CAPEX both reduce NPV. These
-bounded cases are engineering checks, not probabilistic percentiles.
+The second figure confirms the expected directional response: lower gas rate and higher CAPEX both reduce NPV. These bounded cases are engineering checks, not probabilistic percentiles.
 
-This notebook verifies the mechanics of an annual production profile and cash-flow screen. It does **not** model
-GIIP/STOIIP depletion, well deliverability, host capacity, multiphase hydraulics, product specifications, flow
-assurance, schedule uncertainty, or process equipment.
+This notebook verifies the mechanics of an annual production profile and cash-flow screen. It does **not** model GIIP/STOIIP depletion, well deliverability, host capacity, multiphase hydraulics, product specifications, flow assurance, schedule uncertainty, or process equipment.
 
 Before concept selection:
 
@@ -247,6 +276,5 @@ Before concept selection:
 5. Add documented uncertainty distributions and correlations before reporting percentiles.
 6. Obtain discipline review of the technical, fiscal, cost, schedule, and safety basis.
 
-For the physically coupled main-branch workflow, see
-[Integrated Field Lifecycle Simulation](../fielddevelopment/FIELD_LIFECYCLE_SIMULATION.md). That API may be newer than
-the latest public Python package, so use a repository build when reproducing main-branch examples.
+For the physically coupled main-branch workflow, see [Integrated Field Lifecycle Simulation](../fielddevelopment/FIELD_LIFECYCLE_SIMULATION.md). That API may be newer than the latest public Python package, so use a repository build when reproducing main-branch examples.
+
