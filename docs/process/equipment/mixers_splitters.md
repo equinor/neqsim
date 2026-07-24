@@ -199,7 +199,7 @@ pressure loss through a physical mixing element is part of the engineering quest
 
 ## Related documentation
 
-- [Equipment index](README.md)
+- [Equipment index](index.md)
 - [Streams](streams)
 - [Heat exchangers](heat_exchangers)
 - [Valves](valves)
