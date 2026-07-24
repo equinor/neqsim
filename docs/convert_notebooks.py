@@ -66,6 +66,8 @@ def notebook_to_markdown(notebook_path):
 
     notebook_name = Path(notebook_path).stem
     documentation_metadata = nb.get('metadata', {}).get('neqsim_docs', {})
+    if not isinstance(documentation_metadata, dict):
+        documentation_metadata = {}
     title = documentation_metadata.get(
         'title',
         notebook_name.replace('_', ' ').replace('-', ' '),
@@ -79,12 +81,14 @@ def notebook_to_markdown(notebook_path):
         if documentation_metadata.get('show_generated_title', True)
         else ''
     )
+    title_yaml = json.dumps(str(title), ensure_ascii=False)
+    description_yaml = json.dumps(str(description), ensure_ascii=False)
 
     # Jekyll front matter
     front_matter = f"""---
 layout: default
-title: "{title}"
-description: "{description}"
+title: {title_yaml}
+description: {description_yaml}
 parent: Examples
 nav_order: 1
 ---
