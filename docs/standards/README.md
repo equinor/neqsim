@@ -92,7 +92,7 @@ lng.init(0);
 
 Standard_ISO6578 iso6578 = new Standard_ISO6578(lng);
 iso6578.calculate();
-double densityKgPerM3 = iso6578.getValue("density", "kg/m3");
+double densityKgPerM3 = iso6578.getValue("density");
 ```
 
 The calculation is composition-based. Confirm that the sample is a single,
