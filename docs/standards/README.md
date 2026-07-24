@@ -49,14 +49,14 @@ Standard_ISO6976 iso6976 =
 iso6976.setReferenceState("real");
 iso6976.calculate();
 
-double gcvMJPerSm3 = iso6976.getValue("GCV") / 1000.0;
-double wobbeMJPerSm3 =
+double gcvMJPerNm3 = iso6976.getValue("GCV") / 1000.0;
+double wobbeMJPerNm3 =
     iso6976.getValue("SuperiorWobbeIndex") / 1000.0;
 double relativeDensity = iso6976.getValue("RelativeDensity");
 ```
 
-Expected values for this fixture are approximately 39.615 MJ/Sm³,
-51.701 MJ/Sm³, and 0.5871. Report both reference temperatures, reference state,
+Expected values for this fixture are approximately 39.615 MJ/Nm³,
+51.701 MJ/Nm³, and 0.5871. Report both reference temperatures, reference state,
 and basis with every result. Supported combustion-energy reference temperatures
 are 0, 15, 15.55, 20, and 25°C. Although `checkReferenceCondition()` currently
 accepts 25°C as a volume reference temperature, volume-dependent corrections
