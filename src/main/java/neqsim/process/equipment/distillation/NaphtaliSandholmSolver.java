@@ -1062,8 +1062,8 @@ public class NaphtaliSandholmSolver {
       logger.info("NS: skipping scaled warm MESH state because side draws or pumparounds are configured");
       return false;
     }
-    double previousTopVaporFlow = ((SimpleTray) column.getTray(N - 1)).getGasOutStream().getFlowRate("mole/hr");
-    double previousBottomLiquidFlow = ((SimpleTray) column.getTray(0)).getLiquidOutStream().getFlowRate("mole/hr");
+    double previousTopVaporFlow = ((SimpleTray) column.getTray(N - 1)).getGasOutStream().getFlowRate("mol/hr");
+    double previousBottomLiquidFlow = ((SimpleTray) column.getTray(0)).getLiquidOutStream().getFlowRate("mol/hr");
     double previousTotalFeedMoles = previousTopVaporFlow + previousBottomLiquidFlow;
     if (!(previousTotalFeedMoles > 1.0e-12) || !Double.isFinite(previousTotalFeedMoles)) {
       return false;
@@ -1077,8 +1077,8 @@ public class NaphtaliSandholmSolver {
       SimpleTray tray = (SimpleTray) column.getTray(trayIndex);
       StreamInterface gasStream = tray.getGasOutStream();
       StreamInterface liquidStream = tray.getLiquidOutStream();
-      double gasFlow = gasStream.getFlowRate("mole/hr") * flowScaleFactor;
-      double liquidFlow = liquidStream.getFlowRate("mole/hr") * flowScaleFactor;
+      double gasFlow = gasStream.getFlowRate("mol/hr") * flowScaleFactor;
+      double liquidFlow = liquidStream.getFlowRate("mol/hr") * flowScaleFactor;
       double trayTemperature = tray.getTemperature();
       if (!(gasFlow > 0.0) || !(liquidFlow > 0.0) || !Double.isFinite(gasFlow) || !Double.isFinite(liquidFlow)
           || !Double.isFinite(trayTemperature)) {
