@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
 
 /**
@@ -188,7 +189,21 @@ class MixerTest {
     testMixer.addStream(coolStream);
     testMixer.run();
 
-    assertEquals(inletEnthalpyJ, testMixer.getOutletStream().getFluid().getEnthalpy("J"), 1e-3);
+    SystemInterface outletFluid = testMixer.getOutletStream().getFluid();
+    double enthalpyToleranceJ = Math.max(1.0e-3, Math.abs(inletEnthalpyJ) * 1.0e-8);
+    assertEquals(inletEnthalpyJ, outletFluid.getEnthalpy("J"), enthalpyToleranceJ);
+
+    double outletDensity = outletFluid.getPhase(0).getPhysicalProperties().getDensity();
+    double outletViscosity = outletFluid.getPhase(0).getPhysicalProperties().getViscosity();
+    SystemInterface independentlyInitializedOutlet = outletFluid.clone();
+    independentlyInitializedOutlet.initProperties();
+
+    double expectedDensity = independentlyInitializedOutlet.getPhase(0).getPhysicalProperties().getDensity();
+    double expectedViscosity = independentlyInitializedOutlet.getPhase(0).getPhysicalProperties().getViscosity();
+    assertEquals(expectedDensity, outletDensity, Math.abs(expectedDensity) * 1.0e-10,
+        "Mixer density must correspond to the final PH-flashed state");
+    assertEquals(expectedViscosity, outletViscosity, Math.abs(expectedViscosity) * 1.0e-10,
+        "Mixer viscosity must correspond to the final PH-flashed state");
   }
 
   /**
