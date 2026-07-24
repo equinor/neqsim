@@ -549,10 +549,6 @@ public class Mixer extends ProcessEquipmentBaseClass implements MixerInterface, 
               testOps.TPflash();
             }
           }
-          // The final PH/TP flash can change temperature and phase state after mixedStream.run()
-          // initialized transport properties. Refresh them so downstream equipment observes a
-          // thermodynamically and physically consistent outlet state.
-          mixedStream.getThermoSystem().initProperties();
         }
       } else {
         isActive(false);
