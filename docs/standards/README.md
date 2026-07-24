@@ -53,22 +53,20 @@ double gcvMJPerSm3 = iso6976.getValue("GCV") / 1000.0;
 double wobbeMJPerSm3 =
     iso6976.getValue("SuperiorWobbeIndex") / 1000.0;
 double relativeDensity = iso6976.getValue("RelativeDensity");
-
-System.out.printf("GCV: %.3f MJ/Sm3%n", gcvMJPerSm3);
-System.out.printf("Superior Wobbe index: %.3f MJ/Sm3%n", wobbeMJPerSm3);
-System.out.printf("Relative density: %.4f%n", relativeDensity);
 ```
 
 Expected values for this fixture are approximately 39.615 MJ/Sm³,
 51.701 MJ/Sm³, and 0.5871. Report both reference temperatures, reference state,
 and basis with every result. Supported combustion-energy reference temperatures
-are 0, 15, 15.55, 20, and 25°C. Use 0, 15, 15.55, or 20°C for the volume
-reference temperature.
+are 0, 15, 15.55, 20, and 25°C. Although `checkReferenceCondition()` currently
+accepts 25°C as a volume reference temperature, volume-dependent corrections
+are implemented only for 0, 15, 15.55, and 20°C; use one of those four values.
 
 `GCV` and `LCV` are aliases for `SuperiorCalorificValue` and
 `InferiorCalorificValue`. `WI` and `WobbeIndex` are aliases for
-`SuperiorWobbeIndex`. Result-specific `getValue(...)` methods belong to the
-concrete standard classes; they are not declared by `StandardInterface`.
+`SuperiorWobbeIndex`. `StandardInterface` declares the generic
+`getValue(...)` methods, but each concrete standard defines which parameter
+names and units it supports.
 
 ## ISO 6578 LNG-density quick start
 
@@ -95,8 +93,6 @@ lng.init(0);
 Standard_ISO6578 iso6578 = new Standard_ISO6578(lng);
 iso6578.calculate();
 double densityKgPerM3 = iso6578.getValue("density", "kg/m3");
-
-System.out.printf("LNG density: %.2f kg/m3%n", densityKgPerM3);
 ```
 
 The calculation is composition-based. Confirm that the sample is a single,
@@ -131,9 +127,6 @@ vapourPressure.calculate();
 
 double rvpBara = vapourPressure.getValue("RVP", "bara");
 double tvpBara = vapourPressure.getValue("TVP", "bara");
-
-System.out.printf("Simulated RVP: %.3f bara%n", rvpBara);
-System.out.printf("TVP at 37.8 C: %.3f bara%n", tvpBara);
 ```
 
 This fixture gives approximately 1.157 bara simulated RVP and 1.666 bara TVP.
@@ -186,4 +179,3 @@ After calculation:
   dew point*.
 - ASTM D6377, *Standard Test Method for Determination of Vapor Pressure of
   Crude Oil*.
-
