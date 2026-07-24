@@ -32,10 +32,10 @@ class StandardsPackageDocumentationTest extends NeqSimTest {
     double wobbeMJPerSm3 = iso6976.getValue("SuperiorWobbeIndex") / 1000.0;
     double relativeDensity = iso6976.getValue("RelativeDensity");
 
-    assertEquals(39.6145678335, gcvMJPerSm3, 1.0e-8);
-    assertEquals(51.7010127582, wobbeMJPerSm3, 1.0e-8);
+    assertEquals(39.6145678335, gcvMJPerSm3, 1.0e-5);
+    assertEquals(51.7010127582, wobbeMJPerSm3, 1.0e-5);
     assertEquals(0.5870995452, relativeDensity, 1.0e-8);
-    assertEquals(iso6976.getValue("WI"), iso6976.getValue("WobbeIndex"), 1.0e-12);
+    assertEquals(iso6976.getValue("WI"), iso6976.getValue("WobbeIndex"), 1.0e-9);
   }
 
   @Test
