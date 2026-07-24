@@ -37,10 +37,8 @@ class MixerSplitterDocumentationTest {
     double inletEnthalpyJ = richGas.getFluid().getEnthalpy("J") + leanGas.getFluid().getEnthalpy("J");
     double richMolarFlow = richGas.getFlowRate("mole/sec");
     double leanMolarFlow = leanGas.getFlowRate("mole/sec");
-    double expectedMethaneFraction =
-        (richMolarFlow * richGas.getFluid().getMolarComposition()[0]
-            + leanMolarFlow * leanGas.getFluid().getMolarComposition()[0])
-            / (richMolarFlow + leanMolarFlow);
+    double expectedMethaneFraction = (richMolarFlow * richGas.getFluid().getMolarComposition()[0]
+        + leanMolarFlow * leanGas.getFluid().getMolarComposition()[0]) / (richMolarFlow + leanMolarFlow);
     double enthalpyToleranceJ = Math.max(1.0e-3, Math.abs(inletEnthalpyJ) * 1.0e-8);
 
     Mixer mixer = new Mixer("M-100");
