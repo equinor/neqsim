@@ -135,6 +135,7 @@ The following splitter snippets continue from `mixedGas`, which is created in th
 example above.
 
 ```java
+// Continue from the complete mixer example above.
 Splitter splitter = new Splitter("SP-100", mixedGas, 2);
 splitter.setSplitFactors(new double[] {7.0, 3.0});
 splitter.run();
@@ -152,6 +153,7 @@ Use `setFlowRates` when one or more outlet flow rates are known. `Splitter.REMAI
 `-1.0`) marks an outlet that receives material left after the fixed demands:
 
 ```java
+// Continue from the complete mixer example above.
 Splitter distributor = new Splitter("distribution splitter", mixedGas, 2);
 distributor.setFlowRates(
     new double[] {2500.0, Splitter.REMAINDER},
@@ -173,6 +175,7 @@ clamped to zero.
 implementation. This snippet reuses `richGas` and `leanGas` from the complete mixer example:
 
 ```java
+// Continue from the complete mixer example above.
 StaticMixer staticMixer = new StaticMixer("MX-101");
 staticMixer.addStream(richGas);
 staticMixer.addStream(leanGas);
