@@ -65,20 +65,31 @@ def notebook_to_markdown(notebook_path):
         nb = json.load(f)
 
     notebook_name = Path(notebook_path).stem
-    title = notebook_name.replace('_', ' ').replace('-', ' ')
+    documentation_metadata = nb.get('metadata', {}).get('neqsim_docs', {})
+    title = documentation_metadata.get(
+        'title',
+        notebook_name.replace('_', ' ').replace('-', ' '),
+    )
+    description = documentation_metadata.get(
+        'description',
+        'Jupyter notebook tutorial for NeqSim',
+    )
+    generated_title = (
+        f"# {title}\n\n"
+        if documentation_metadata.get('show_generated_title', True)
+        else ''
+    )
 
     # Jekyll front matter
     front_matter = f"""---
 layout: default
 title: "{title}"
-description: "Jupyter notebook tutorial for NeqSim"
+description: "{description}"
 parent: Examples
 nav_order: 1
 ---
 
-# {title}
-
-> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
+{generated_title}> **Note:** This is an auto-generated Markdown version of the Jupyter notebook
 > [`{notebook_name}.ipynb`](https://github.com/equinor/neqsim/blob/master/docs/examples/{notebook_name}.ipynb).
 > You can also [view it on nbviewer](https://nbviewer.org/github/equinor/neqsim/blob/master/docs/examples/{notebook_name}.ipynb)
 > or [open in Google Colab](https://colab.research.google.com/github/equinor/neqsim/blob/master/docs/examples/{notebook_name}.ipynb).
@@ -159,26 +170,6 @@ nav_order: 1
     return full_content
 
 
-def should_preserve_markdown(markdown_path):
-    """Return whether an existing generated page is explicitly curated."""
-    if not markdown_path.exists():
-        return False
-
-    content = markdown_path.read_text(encoding="utf-8")
-    if not content.startswith("---\n"):
-        return False
-
-    try:
-        front_matter = content.split("---\n", 2)[1]
-    except IndexError:
-        return False
-
-    return any(
-        line.strip().lower() == "notebook_conversion: preserve"
-        for line in front_matter.splitlines()
-    )
-
-
 def convert_all_notebooks(examples_dir):
     """
     Convert all notebooks in the examples directory to Markdown.
@@ -203,10 +194,6 @@ def convert_all_notebooks(examples_dir):
     for nb_path in notebooks:
         md_filename = nb_path.stem + '.md'
         md_path = examples_path / md_filename
-
-        if should_preserve_markdown(md_path):
-            print(f"  Preserving curated page: {md_filename}")
-            continue
 
         print(f"  Converting: {nb_path.name} -> {md_filename}")
 
