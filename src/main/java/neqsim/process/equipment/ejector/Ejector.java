@@ -400,8 +400,8 @@ public class Ejector extends ProcessEquipmentBaseClass
     ThermodynamicOperations diffuserOps = new ThermodynamicOperations(mixedFluid);
     diffuserOps.PHflash(staticEnthalpyBeforeDiffuser, "J/kg");
     mixedFluid.init(3);
-    // Diffuser geometry consumes density at the flashed discharge state. Initialise only
-    // the required density model here; outlet transport properties remain lazy.
+    // Diffuser sizing consumes density at the flashed discharge state. Refresh only
+    // that required property; no other physical property is consumed by this calculation.
     mixedFluid.initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double rhoDiffuser = Math.max(mixedFluid.getDensity("kg/m3"), 1.0e-9);
 
