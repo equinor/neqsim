@@ -24,6 +24,7 @@ import neqsim.process.equipment.manifold.Manifold;
 import neqsim.process.equipment.mixer.MixerInterface;
 import neqsim.process.equipment.reactor.FurnaceBurner;
 import neqsim.process.equipment.splitter.SplitterInterface;
+import neqsim.process.equipment.stream.EnergyBus;
 import neqsim.process.equipment.stream.EnergyPort;
 import neqsim.process.equipment.stream.EnergyPortMode;
 import neqsim.process.equipment.stream.EnergyStream;
@@ -520,11 +521,13 @@ public final class ProcessGraphBuilder {
     }
 
     // Third pass: add typed energy dependencies. Calculation mode, rather than
-    // physical direction, determines scheduling order. This supports both a
-    // generator driving a load and a pressure-specified load publishing its
-    // calculated demand to a driver or utility model.
-    Map<EnergyStream, ProcessEquipmentInterface> energyToProducer = new IdentityHashMap<EnergyStream, ProcessEquipmentInterface>();
-    Map<EnergyStream, ProcessEquipmentInterface> energyToConsumer = new IdentityHashMap<EnergyStream, ProcessEquipmentInterface>();
+    // physical direction, determines scheduling order. A point-to-point
+    // EnergyStream permits one producer and one consumer; EnergyBus supports
+    // multi-party generation, demand, and balancing.
+    Map<EnergyStream, List<ProcessEquipmentInterface>> energyToProducers =
+        new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
+    Map<EnergyStream, List<ProcessEquipmentInterface>> energyToConsumers =
+        new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
 
     for (ProcessEquipmentInterface unit : units) {
       for (EnergyPort port : unit.getEnergyPorts().values()) {
@@ -532,28 +535,46 @@ public final class ProcessGraphBuilder {
           continue;
         }
         EnergyStream stream = port.getEnergyStream();
+        Map<EnergyStream, List<ProcessEquipmentInterface>> targetMap = null;
+        String role = null;
         if (port.getMode() == EnergyPortMode.CALCULATED) {
-          ProcessEquipmentInterface previous = energyToProducer.put(stream, unit);
-          if (previous != null && previous != unit) {
-            throw new IllegalStateException("Energy stream " + stream.getName()
-                + " has multiple calculation producers: " + previous.getName() + " and " + unit.getName());
-          }
+          targetMap = energyToProducers;
+          role = "calculation producers";
         } else if (port.getMode() == EnergyPortMode.SPECIFICATION) {
-          ProcessEquipmentInterface previous = energyToConsumer.put(stream, unit);
-          if (previous != null && previous != unit) {
-            throw new IllegalStateException(
-                "Energy stream " + stream.getName() + " has multiple specification consumers: " + previous.getName()
-                    + " and " + unit.getName() + ". Use a dedicated energy bus for shared distribution.");
-          }
+          targetMap = energyToConsumers;
+          role = "specification consumers";
         }
+        if (targetMap == null) {
+          continue;
+        }
+
+        List<ProcessEquipmentInterface> connectedUnits = targetMap.get(stream);
+        if (connectedUnits == null) {
+          connectedUnits = new ArrayList<ProcessEquipmentInterface>();
+          targetMap.put(stream, connectedUnits);
+        }
+        if (!(stream instanceof EnergyBus) && !connectedUnits.isEmpty()
+            && connectedUnits.get(0) != unit) {
+          throw new IllegalStateException("Point-to-point energy stream " + stream.getName()
+              + " has multiple " + role + ": " + connectedUnits.get(0).getName() + " and "
+              + unit.getName() + ". Use EnergyBus for multi-party distribution.");
+        }
+        addByIdentityIfAbsent(connectedUnits, unit);
       }
     }
 
-    for (Map.Entry<EnergyStream, ProcessEquipmentInterface> entry : energyToConsumer.entrySet()) {
-      ProcessEquipmentInterface producer = energyToProducer.get(entry.getKey());
-      ProcessEquipmentInterface consumer = entry.getValue();
-      if (producer != null && producer != consumer) {
-        addEnergyEdgeIfAbsent(graph, producer, consumer, entry.getKey());
+    for (Map.Entry<EnergyStream, List<ProcessEquipmentInterface>> entry :
+        energyToProducers.entrySet()) {
+      List<ProcessEquipmentInterface> consumers = energyToConsumers.get(entry.getKey());
+      if (consumers == null) {
+        continue;
+      }
+      for (ProcessEquipmentInterface producer : entry.getValue()) {
+        for (ProcessEquipmentInterface consumer : consumers) {
+          if (producer != consumer) {
+            addEnergyEdgeIfAbsent(graph, producer, consumer, entry.getKey());
+          }
+        }
       }
     }
 
@@ -1030,6 +1051,22 @@ public final class ProcessGraphBuilder {
         }
       }
     }
+  }
+
+  /**
+   * Adds equipment to a list unless the identical object is already present.
+   *
+   * @param units equipment list
+   * @param candidate candidate equipment
+   */
+  private static void addByIdentityIfAbsent(
+      List<ProcessEquipmentInterface> units, ProcessEquipmentInterface candidate) {
+    for (ProcessEquipmentInterface unit : units) {
+      if (unit == candidate) {
+        return;
+      }
+    }
+    units.add(candidate);
   }
 
   /**
