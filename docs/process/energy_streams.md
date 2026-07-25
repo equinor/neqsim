@@ -3,8 +3,6 @@ title: Energy streams and equipment ports
 description: Connect heat, shaft-work, and electrical duties between NeqSim unit operations.
 ---
 
-# Energy streams and equipment ports
-
 `EnergyStream` carries a power rate between process equipment. Its canonical unit is watt (W), while unit-aware APIs accept `W`, `kW`, `MW`, `hp`, and `BTU/hr`.
 
 Typed `EnergyPort` metadata separates three concepts:

@@ -3,8 +3,6 @@ title: Process Simulation Package
 description: The `process` package provides process equipment, unit operations, controllers, and process system management for building complete flowsheets.
 ---
 
-# Process Simulation Package
-
 The `process` package provides process equipment, unit operations, controllers, and process system management for building complete flowsheets.
 
 For controlled design cases, equipment and discipline sizing, safety verification, engineering deliverables, and
@@ -48,7 +46,7 @@ This documentation is organized into the following sections:
 | [bioprocessing.md](bioprocessing) | **Bio-processing** — reactors, fermenters, solid-liquid separators, LLE, evaporators, dryers, crystallizers |
 | [neqsim-studio.md](neqsim-studio) | **NeqSim Studio (Python)** — newcomer-friendly process builder: natural language, templates, guided wizard, edit-by-chat, recipe gallery |
 | [processmodel/](processmodel/) | ProcessSystem and flowsheet management |
-| [energy_streams.md](energy_streams) | **Energy streams** — typed heat, shaft-work, and electrical ports, unit-aware duties, graph ordering, and energy-driven equipment |
+| [energy_streams.md](energy_streams.md) | **Energy streams** — typed heat, shaft-work, and electrical ports, unit-aware duties, graph ordering, and energy-driven equipment |
 | [process_json_export_and_e300_fluids.md](process_json_export_and_e300_fluids) | **Process JSON export** — self-contained ProcessSystem/ProcessModel JSON for MCP, including E300-equivalent component properties and volume correction |
 | [simulation-hooks-and-events.md](simulation-hooks-and-events) | **Lifecycle hooks, event bus, auto-validation** for ProcessSystem and ProcessModel |
 | [model-change-events.md](model-change-events) | **Governed model revisions** — versioned change events, idempotent publication, fingerprints, and durable replay |
