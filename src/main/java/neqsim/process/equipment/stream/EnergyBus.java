@@ -1,5 +1,7 @@
 package neqsim.process.equipment.stream;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,6 +54,26 @@ public class EnergyBus extends EnergyStream {
    */
   public EnergyBus(String name, EnergyType energyType) {
     super(name, energyType);
+  }
+
+  /**
+   * Restores collection defaults for energy buses serialized before allocation support was introduced.
+   *
+   * @param input serialized object input
+   * @throws IOException if the stream cannot be read
+   * @throws ClassNotFoundException if a serialized class cannot be resolved
+   */
+  private void readObject(ObjectInputStream input) throws IOException, ClassNotFoundException {
+    input.defaultReadObject();
+    if (contributions == null) {
+      contributions = new LinkedHashMap<String, Double>();
+    }
+    if (allocations == null) {
+      allocations = new LinkedHashMap<String, Double>();
+    }
+    if (registeredPorts == null) {
+      registeredPorts = new LinkedHashMap<String, EnergyPort>();
+    }
   }
 
   /** {@inheritDoc} */
@@ -362,7 +384,8 @@ public class EnergyBus extends EnergyStream {
    * Gets the net unsatisfied bus duty in watts.
    *
    * <p>
-   * A positive result is surplus generation and a negative result is shortage. The value uses published calculated
+   * A positive result is unallocated published generation. A negative value can represent unsolved demand, while solved
+   * shortages are reported by {@link EnergyNetworkReport#getUnmetDemand()}. The value uses published calculated
    * contributions and solved specification/balance contributions, so it remains a useful convergence residual.
    * </p>
    *
