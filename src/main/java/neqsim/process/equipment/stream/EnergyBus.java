@@ -336,7 +336,7 @@ public class EnergyBus extends EnergyStream {
 
     lastReport = new EnergyNetworkReport(getName(), allocationResults, offeredSupply, acceptedSupply, requestedDemand,
         servedDemand, unmetDemand, curtailedSupply, balancingGeneration, balancingConsumption, conversionLoss,
-        operatingCostPerHour, co2EmissionRate);
+        getEnergyType() == EnergyType.CHEMICAL ? acceptedSupply : 0.0, operatingCostPerHour, co2EmissionRate);
     solutionValid = true;
     return lastReport;
   }
