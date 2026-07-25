@@ -1,11 +1,14 @@
 package neqsim.process.equipment.flare;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import neqsim.process.equipment.stream.Stream;
 import neqsim.process.processmodel.ProcessSystem;
+import neqsim.thermo.system.SystemInterface;
 import neqsim.thermo.system.SystemSrkEos;
+import neqsim.thermodynamicoperations.ThermodynamicOperations;
 
 /** Test of the FlareStack unit operation. */
 public class FlareStackTest {
@@ -40,4 +43,39 @@ public class FlareStackTest {
     assertTrue(flareStack.getHeatReleaseMW() > 0.0);
     assertTrue(flareStack.getEmissionsKgPerHr().get("CO2_kg_h") > 0.0);
   }
+
+  @Test
+  public void testTipBackpressureUsesFlashedReliefDensity() {
+    SystemSrkEos fluid = new SystemSrkEos(313.15, 70.0);
+    fluid.addComponent("methane", 0.90);
+    fluid.addComponent("ethane", 0.10);
+    fluid.setMixingRule("classic");
+
+    Stream relief = new Stream("flashed relief", fluid);
+    relief.setFlowRate(10000.0, "kg/hr");
+    relief.run();
+
+    SystemInterface reliefFluid = relief.getThermoSystem();
+    double inletEnthalpy = reliefFluid.getEnthalpy();
+    reliefFluid.setPressure(2.0, "bara");
+    new ThermodynamicOperations(reliefFluid).PHflash(inletEnthalpy);
+
+    SystemInterface independentlyInitialized = reliefFluid.clone();
+    independentlyInitialized.initPhysicalProperties();
+    double expectedDensity = independentlyInitialized.getDensity("kg/m3");
+
+    FlareStack stack = new FlareStack("density-aware flare stack");
+    stack.setReliefInlet(relief);
+    stack.setTipDiameter(0.1);
+    stack.setTipLossK(1.0);
+    stack.run();
+
+    double area = Math.PI * 0.1 * 0.1 / 4.0;
+    double velocity = relief.getFlowRate("kg/sec") / expectedDensity / area;
+    double expectedBackpressure = 1.01325 + 0.5 * expectedDensity * velocity * velocity / 1.0e5;
+
+    assertEquals(expectedBackpressure, stack.getTipBackpressureBar(), 1.0e-10,
+        "Tip backpressure must use density at the flashed relief state");
+  }
+
 }

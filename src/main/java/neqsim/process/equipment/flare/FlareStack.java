@@ -3,6 +3,7 @@ package neqsim.process.equipment.flare;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import neqsim.physicalproperties.PhysicalPropertyType;
 import neqsim.process.equipment.ProcessEquipmentBaseClass;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
@@ -400,7 +401,9 @@ public class FlareStack extends ProcessEquipmentBaseClass {
     this.emissionsMassKgPerSec = er.totalMassKgPerSec();
 
     // 7) Tip ΔP/backpressure
-    // Exit density & velocity from RELIEF STREAM (pre-flame), using its current T/P/comp
+    // Exit density & velocity from RELIEF STREAM (pre-flame), using its current T/P/comp.
+    // The upstream unit may intentionally leave physical properties lazy.
+    reliefInlet.getThermoSystem().initPhysicalProperties(PhysicalPropertyType.MASS_DENSITY);
     double rho_exit = Math.max(0.1, reliefInlet.getThermoSystem().getDensity("kg/m3"));
     double area = Math.PI * tipDiameter_m * tipDiameter_m / 4.0;
     double u_exit = (rho_exit > 1e-9 && area > 1e-9) ? mdot_kg_s / (rho_exit * area) : 0.0;
