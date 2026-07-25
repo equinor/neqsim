@@ -42,6 +42,44 @@ EnergyPortMode mode = pump.getEnergyPort("shaftPower").getMode();
 
 Without an externally connected energy stream, `Pump` keeps its existing pressure-specified behavior and publishes the calculated shaft duty through `getEnergyStream()`.
 
+## Multi-party buses and shafts
+
+Use `EnergyBus` when several producers or consumers share a heat or electrical network. Named contributions are signed: positive values inject power and negative values withdraw power.
+
+```java
+EnergyBus grid = new EnergyBus("main electrical bus", EnergyType.ELECTRICAL);
+grid.setContribution("solar", 2.0, "MW");
+grid.setContribution("electrolyzer", -1.5, "MW");
+double reserve = grid.getNetPower("kW");
+```
+
+`MechanicalShaft` is a shaft-work bus with convenience methods for generation and loads:
+
+```java
+MechanicalShaft shaftTrain = new MechanicalShaft("expander-compressor shaft");
+shaftTrain.setMechanicalEfficiency(0.98);
+shaftTrain.setGeneratedPower("expander", 10.0e6);
+shaftTrain.setConsumedPower("compressor", 8.0e6);
+double sparePower = shaftTrain.getNetPower("MW");
+```
+
+Point-to-point `EnergyStream` connections reject multiple calculated producers or specification consumers during graph construction. Use `EnergyBus` for intentional multi-party distribution.
+
+## Equipment coverage
+
+| Equipment group | Typed port | Supported role |
+|---|---|---|
+| Pump, Compressor | `shaftPower` input | Calculated duty or external power specification |
+| Expander, SteamTurbine | `shaftPower` output | Calculated shaft power |
+| Heater, Cooler | `heatDuty` bidirectional | Calculated duty or legacy external duty specification |
+| Condenser | `heatDuty` output | Calculated heat removal |
+| Reboiler | `heatDuty` input | Calculated duty or legacy external duty specification |
+| SolarPanel, WindTurbine, WindFarm, FuelCell | `electricalPower` output | Calculated generation |
+| BatteryStorage | `electricalPower` bidirectional | Calculated charge/discharge |
+| Electrolyzer | `electricalPower` input | Feed-calculated demand or connected power-driven specification |
+| CO2Electrolyzer, BioFeedstockPreparation | `electricalPower` input | Calculated demand |
+| AmmoniaSynthesisReactor | `reactionHeat` output | Calculated reaction heat |
+
 ## Reboiler duty reporting
 
 A `Reboiler` now publishes its calculated heat duty through `getEnergyStream()`. The stream is typed as `HEAT`, and `getDuty("kW")` or `getEnergyFlow("MW")` can be used for utility summaries and downstream coupling.
