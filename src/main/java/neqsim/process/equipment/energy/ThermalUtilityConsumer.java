@@ -33,7 +33,7 @@ public class ThermalUtilityConsumer extends ProcessEquipmentBaseClass {
   public ThermalUtilityConsumer(String name, UtilityLevel utilityLevel) {
     super(name);
     if (utilityLevel == null || utilityLevel == UtilityLevel.UNSPECIFIED) {
-      throw new IllegalArgumentException("A required thermal utility level is required");
+      throw new IllegalArgumentException("A thermal utility level is required");
     }
     this.utilityLevel = utilityLevel;
     registerEnergyPort(INPUT_PORT, EnergyType.HEAT, EnergyPortDirection.INPUT, EnergyPortMode.SPECIFICATION);
@@ -80,6 +80,12 @@ public class ThermalUtilityConsumer extends ProcessEquipmentBaseClass {
     ValidationResult result = new ValidationResult(getName());
     if (!getEnergyPort(INPUT_PORT).isConnected()) {
       result.addError("energy", "Thermal utility input is not connected",
+          "Connect " + INPUT_PORT + " to a " + utilityLevel + " UtilityEnergyBus");
+    } else if (!(getEnergyPort(INPUT_PORT).getEnergyStream() instanceof UtilityEnergyBus)) {
+      result.addError("energy", "Thermal utility input is not connected to a typed UtilityEnergyBus",
+          "Connect " + INPUT_PORT + " to a " + utilityLevel + " UtilityEnergyBus");
+    } else if (((UtilityEnergyBus) getEnergyPort(INPUT_PORT).getEnergyStream()).getUtilityLevel() != utilityLevel) {
+      result.addError("energy", "Connected utility level does not satisfy the consumer requirement",
           "Connect " + INPUT_PORT + " to a " + utilityLevel + " UtilityEnergyBus");
     }
     return result;
