@@ -96,8 +96,7 @@ public class CombinedCycleSystem extends TwoPortEquipment implements CapacityCon
    */
   public CombinedCycleSystem(String name) {
     super(name);
-    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
-        EnergyPortMode.CALCULATED);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT, EnergyPortMode.CALCULATED);
   }
 
   /**
