@@ -9,9 +9,10 @@ import neqsim.util.unit.PowerUnit;
 /**
  * A named energy-flow connection used to couple process equipment.
  *
- * <p>The canonical stored value is duty in watts. Positive and negative values remain supported for
- * compatibility with existing models; new equipment should use {@link EnergyPort} metadata to
- * express physical direction instead of encoding direction only in the duty sign.
+ * <p>
+ * The canonical stored value is duty in watts. Positive and negative values remain supported for compatibility with
+ * existing models; new equipment should use {@link EnergyPort} metadata to express physical direction instead of
+ * encoding direction only in the duty sign.
  *
  * @author asmund
  * @version $Id: $Id
@@ -23,6 +24,7 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
   private static final Logger logger = LogManager.getLogger(EnergyStream.class);
 
   private String name = "";
+  private String tagNumber = "";
   private double duty = 0.0;
   private EnergyType energyType = EnergyType.UNSPECIFIED;
 
@@ -214,6 +216,18 @@ public class EnergyStream implements ProcessElementInterface, Cloneable {
     }
     EnergyStream other = (EnergyStream) obj;
     return Double.doubleToLongBits(duty) == Double.doubleToLongBits(other.duty);
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public String getTagNumber() {
+    return tagNumber;
+  }
+
+  /** {@inheritDoc} */
+  @Override
+  public void setTagNumber(String tagNumber) {
+    this.tagNumber = Objects.requireNonNull(tagNumber, "tagNumber cannot be null");
   }
 
   /** {@inheritDoc} */
