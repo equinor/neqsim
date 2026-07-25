@@ -4,6 +4,9 @@ import java.util.UUID;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import neqsim.process.equipment.TwoPortEquipment;
+import neqsim.process.equipment.stream.EnergyPortDirection;
+import neqsim.process.equipment.stream.EnergyPortMode;
+import neqsim.process.equipment.stream.EnergyType;
 import neqsim.process.equipment.stream.StreamInterface;
 import neqsim.thermo.system.SystemInterface;
 
@@ -37,6 +40,8 @@ public class FuelCell extends TwoPortEquipment {
    */
   public FuelCell(String name) {
     super(name);
+    registerEnergyPort("electricalPower", EnergyType.ELECTRICAL, EnergyPortDirection.OUTPUT,
+        EnergyPortMode.CALCULATED);
   }
 
   /**
@@ -47,7 +52,8 @@ public class FuelCell extends TwoPortEquipment {
    * @param oxidantStream inlet oxidant stream
    */
   public FuelCell(String name, StreamInterface fuelStream, StreamInterface oxidantStream) {
-    super(name, fuelStream);
+    this(name);
+    setInletStream(fuelStream);
     this.oxidantStream = oxidantStream;
   }
 
