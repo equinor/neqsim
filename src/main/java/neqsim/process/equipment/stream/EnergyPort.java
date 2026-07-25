@@ -6,10 +6,10 @@ import java.util.Objects;
 /**
  * Named, typed connection point between process equipment and an {@link EnergyStream}.
  *
- * <p>An energy port separates three concerns that were previously implicit in the sign of a duty:
- * the physical energy domain, the physical transfer direction, and the calculation role. This lets
- * graph-based schedulers order an energy producer before a consumer without changing the legacy
- * {@code EnergyStream} duty convention.
+ * <p>
+ * An energy port separates three concerns that were previously implicit in the sign of a duty: the physical energy
+ * domain, the physical transfer direction, and the calculation role. This lets graph-based schedulers order an energy
+ * producer before a consumer without changing the legacy {@code EnergyStream} duty convention.
  *
  * @author NeqSim
  * @version 1.0
@@ -31,8 +31,7 @@ public class EnergyPort implements Serializable {
    * @param direction physical energy direction relative to the equipment
    * @param mode calculation role of the port
    */
-  public EnergyPort(String name, EnergyType energyType, EnergyPortDirection direction,
-      EnergyPortMode mode) {
+  public EnergyPort(String name, EnergyType energyType, EnergyPortDirection direction, EnergyPortMode mode) {
     if (name == null || name.trim().isEmpty()) {
       throw new IllegalArgumentException("Energy port name cannot be null or empty");
     }
@@ -90,8 +89,9 @@ public class EnergyPort implements Serializable {
   /**
    * Connects an energy stream to this port.
    *
-   * <p>A legacy stream with type {@link EnergyType#UNSPECIFIED} adopts the port type. A typed stream
-   * can only be connected to a port of the same type or to an unspecified port.
+   * <p>
+   * A legacy stream with type {@link EnergyType#UNSPECIFIED} adopts the port type. A typed stream can only be connected
+   * to a port of the same type or to an unspecified port.
    *
    * @param stream energy stream to connect
    * @throws IllegalArgumentException if the stream and port energy types conflict
@@ -99,10 +99,9 @@ public class EnergyPort implements Serializable {
   public void connect(EnergyStream stream) {
     Objects.requireNonNull(stream, "stream cannot be null");
     EnergyType streamType = stream.getEnergyType();
-    if (streamType != EnergyType.UNSPECIFIED && energyType != EnergyType.UNSPECIFIED
-        && streamType != energyType) {
-      throw new IllegalArgumentException("Energy stream type " + streamType
-          + " is incompatible with port type " + energyType + " for port " + name);
+    if (streamType != EnergyType.UNSPECIFIED && energyType != EnergyType.UNSPECIFIED && streamType != energyType) {
+      throw new IllegalArgumentException(
+          "Energy stream type " + streamType + " is incompatible with port type " + energyType + " for port " + name);
     }
     if (streamType == EnergyType.UNSPECIFIED && energyType != EnergyType.UNSPECIFIED) {
       stream.setEnergyType(energyType);
