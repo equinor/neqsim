@@ -240,8 +240,8 @@ public class MechanicalShaft extends EnergyBus {
     if (oldSpeed > 0.0 || netPower > 0.0) {
       netPower -= frictionLoss;
     }
-    double angularSpeedSquared =
-        Math.max(0.0, oldAngularSpeed * oldAngularSpeed + 2.0 * netPower * dt / momentOfInertia);
+    double angularSpeedSquared = Math.max(0.0,
+        oldAngularSpeed * oldAngularSpeed + 2.0 * netPower * dt / momentOfInertia);
     double targetSpeed = Math.sqrt(angularSpeedSquared) * 60.0 / (2.0 * Math.PI);
     targetSpeed = Math.min(targetSpeed, maximumSpeed);
 
