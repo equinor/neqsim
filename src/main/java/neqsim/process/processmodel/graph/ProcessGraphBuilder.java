@@ -524,10 +524,8 @@ public final class ProcessGraphBuilder {
     // physical direction, determines scheduling order. A point-to-point
     // EnergyStream permits one producer and one consumer; EnergyBus supports
     // multi-party generation, demand, and balancing.
-    Map<EnergyStream, List<ProcessEquipmentInterface>> energyToProducers =
-        new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
-    Map<EnergyStream, List<ProcessEquipmentInterface>> energyToConsumers =
-        new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
+    Map<EnergyStream, List<ProcessEquipmentInterface>> energyToProducers = new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
+    Map<EnergyStream, List<ProcessEquipmentInterface>> energyToConsumers = new IdentityHashMap<EnergyStream, List<ProcessEquipmentInterface>>();
 
     for (ProcessEquipmentInterface unit : units) {
       for (EnergyPort port : unit.getEnergyPorts().values()) {
@@ -553,18 +551,16 @@ public final class ProcessGraphBuilder {
           connectedUnits = new ArrayList<ProcessEquipmentInterface>();
           targetMap.put(stream, connectedUnits);
         }
-        if (!(stream instanceof EnergyBus) && !connectedUnits.isEmpty()
-            && connectedUnits.get(0) != unit) {
-          throw new IllegalStateException("Point-to-point energy stream " + stream.getName()
-              + " has multiple " + role + ": " + connectedUnits.get(0).getName() + " and "
-              + unit.getName() + ". Use EnergyBus for multi-party distribution.");
+        if (!(stream instanceof EnergyBus) && !connectedUnits.isEmpty() && connectedUnits.get(0) != unit) {
+          throw new IllegalStateException("Point-to-point energy stream " + stream.getName() + " has multiple " + role
+              + ": " + connectedUnits.get(0).getName() + " and " + unit.getName()
+              + ". Use EnergyBus for multi-party distribution.");
         }
         addByIdentityIfAbsent(connectedUnits, unit);
       }
     }
 
-    for (Map.Entry<EnergyStream, List<ProcessEquipmentInterface>> entry :
-        energyToProducers.entrySet()) {
+    for (Map.Entry<EnergyStream, List<ProcessEquipmentInterface>> entry : energyToProducers.entrySet()) {
       List<ProcessEquipmentInterface> consumers = energyToConsumers.get(entry.getKey());
       if (consumers == null) {
         continue;
@@ -1059,8 +1055,8 @@ public final class ProcessGraphBuilder {
    * @param units equipment list
    * @param candidate candidate equipment
    */
-  private static void addByIdentityIfAbsent(
-      List<ProcessEquipmentInterface> units, ProcessEquipmentInterface candidate) {
+  private static void addByIdentityIfAbsent(List<ProcessEquipmentInterface> units,
+      ProcessEquipmentInterface candidate) {
     for (ProcessEquipmentInterface unit : units) {
       if (unit == candidate) {
         return;
