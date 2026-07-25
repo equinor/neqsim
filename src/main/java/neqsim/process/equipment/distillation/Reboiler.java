@@ -39,16 +39,16 @@ public class Reboiler extends neqsim.process.equipment.distillation.SimpleTray {
    */
   @Override
   public void setEnergyStream(EnergyStream energyStream) {
-    super.setEnergyStream(energyStream);
-    getEnergyPort("heatDuty").setMode(EnergyPortMode.SPECIFICATION);
+    super.connectEnergyStream("heatDuty", energyStream, EnergyPortMode.SPECIFICATION);
   }
 
   /** {@inheritDoc} */
   @Override
   public void connectEnergyStream(String portName, EnergyStream stream) {
-    super.connectEnergyStream(portName, stream);
     if ("heatDuty".equals(portName)) {
-      getEnergyPort(portName).setMode(EnergyPortMode.SPECIFICATION);
+      super.connectEnergyStream(portName, stream, EnergyPortMode.SPECIFICATION);
+    } else {
+      super.connectEnergyStream(portName, stream);
     }
   }
 
