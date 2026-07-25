@@ -49,7 +49,7 @@ class TransientPipeDocumentationTest {
     pipe.setLength(900.0);
     pipe.setDiameter(0.20);
     pipe.setNumberOfSections(9);
-    pipe.setElevationProfile(new double[] {0.0, -2.0, -4.0, -6.0, -4.0, -2.0, 0.0, 0.0, 0.0});
+    pipe.setElevationProfile(new double[] { 0.0, -2.0, -4.0, -6.0, -4.0, -2.0, 0.0, 0.0, 0.0 });
     pipe.initializePipe();
 
     LiquidAccumulationTracker tracker = pipe.getAccumulationTracker();
