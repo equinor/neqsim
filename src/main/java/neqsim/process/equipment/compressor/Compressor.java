@@ -26,6 +26,7 @@ import neqsim.process.equipment.TwoPortEquipment;
 import neqsim.process.equipment.capacity.CapacityConstrainedEquipment;
 import neqsim.process.equipment.capacity.CapacityConstraint;
 import neqsim.process.equipment.capacity.StandardConstraintType;
+import neqsim.process.equipment.stream.EnergyBus;
 import neqsim.process.equipment.stream.EnergyPortDirection;
 import neqsim.process.equipment.stream.EnergyPortMode;
 import neqsim.process.equipment.stream.EnergyStream;
@@ -221,11 +222,25 @@ public class Compressor extends TwoPortEquipment
    */
   public Compressor(String name) {
     super(name);
-    registerEnergyPort("shaftPower", EnergyType.SHAFT_WORK, EnergyPortDirection.INPUT, EnergyPortMode.CALCULATED);
+    registerEnergyPort("shaftPower", EnergyType.SHAFT_WORK, getShaftPowerDirection(), EnergyPortMode.CALCULATED);
     initMechanicalDesign();
     initElectricalDesign();
     initInstrumentDesign();
     initializeCapacityConstraints();
+  }
+
+  /**
+   * Gets the physical direction of the shaft-power port.
+   *
+   * <p>
+   * Subclasses such as expanders override this hook so the inherited constructor registers the port once with the
+   * correct direction.
+   * </p>
+   *
+   * @return shaft-power direction
+   */
+  protected EnergyPortDirection getShaftPowerDirection() {
+    return EnergyPortDirection.INPUT;
   }
 
   /**
@@ -726,7 +741,7 @@ public class Compressor extends TwoPortEquipment
   }
 
   private void finishRun(UUID id) {
-    if (!isSetEnergyStream()) {
+    if (!isSetEnergyStream() || getEnergyPort("shaftPower").getEnergyStream() instanceof EnergyBus) {
       getEnergyPort("shaftPower").setDuty(dH);
     }
     updateRecalculationState();
